@@ -181,6 +181,20 @@ class Profile:
         for v in self.values:
             if v.getId() == id:
                 return v
+                
+        if id == 'game-mode':
+            # We can look for the game mode in the system profile.
+            sysProfFileName = os.path.join(paths.getSystemPath(paths.PROFILES), self.getFileName())
+            if os.path.exists(sysProfFileName):
+                try:
+                    p = cfparser.FileParser(sysProfFileName)
+                    while True:
+                        element = p.get()
+                        if element.isKey() and element.getName() == 'game-mode':
+                            return Value(element.getName(), element.getValue())
+                except cfparser.OutOfElements:
+                    # The file ended normally.
+                    pass           
 
         # Fall back to the Defaults profile.
         if fallbackToDefaults and self is not defaults:

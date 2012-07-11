@@ -1,24 +1,22 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file driver_fmod.cpp
+ * FMOD Ex audio plugin. @ingroup dsfmod
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "driver_fmod.h"
@@ -28,6 +26,8 @@
 #include <fmod.h>
 #include <fmod_errors.h>
 #include <fmod.hpp>
+
+#include "doomsday.h"
 
 FMOD::System* fmodSystem = 0;
 
@@ -45,7 +45,7 @@ int DS_Init(void)
     FMOD_RESULT result;
     if((result = FMOD::System_Create(&fmodSystem)) != FMOD_OK)
     {
-        printf("DS_Init: FMOD::System_Create failed: (%d) %s\n", result, FMOD_ErrorString(result));
+        Con_Message("FMOD::System_Create failed: (%d) %s\n", result, FMOD_ErrorString(result));
         fmodSystem = 0;
         return false;
     }
@@ -53,7 +53,7 @@ int DS_Init(void)
     // Initialize FMOD.
     if((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
     {
-        printf("DS_Init: FMOD init failed: (%d) %s\n", result, FMOD_ErrorString(result));
+        Con_Message("FMOD init failed: (%d) %s\n", result, FMOD_ErrorString(result));
         fmodSystem->release();
         fmodSystem = 0;
         return false;
@@ -85,6 +85,9 @@ int DS_Init(void)
                      << ", name:'" << pName << "', ver:" << pVer);
     }
 #endif
+
+    // Print the credit required by FMOD license.
+    Con_Message("FMOD Sound System (c) Firelight Technologies Pty, Ltd., 1994-2012.\n");
 
     DSFMOD_TRACE("DS_Init: FMOD initialized.");
     return true;

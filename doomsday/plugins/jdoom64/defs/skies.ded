@@ -6,69 +6,69 @@ Sky {
   Horizon offset = -0.105;
   Layer 1 {
     Flags = enable;
-    Texture = "F_SKYA";
+    Material = "textures:F_SKYA";
   };
 }
 
 Copy Sky {
   ID = "skyb";
   Layer 1 {
-    Texture = "F_SKYB";
+    Material = "textures:F_SKYB";
   };
 }
 
 Copy Sky {
   ID = "skyc";
   Layer 1 {
-    Texture = "F_SKYC";
+    Material = "textures:F_SKYC";
   };
 }
 
 Copy Sky {
   ID = "skyd";
   Layer 1 {
-    Texture = "F_SKYD";
+    Material = "textures:F_SKYD";
   };
 }
 
 Copy Sky {
   ID = "skye";
   Layer 1 {
-    Texture = "F_SKYE";
+    Material = "textures:F_SKYE";
   };
 }
 
 Copy Sky {
   ID = "skyf";
   Layer 1 {
-    Texture = "F_SKYF";
+    Material = "textures:F_SKYF";
   };
 }
 
 Copy Sky {
   ID = "skyg";
   Layer 1 {
-    Texture = "F_SKYG";
+    Material = "textures:F_SKYG";
   };
 }
 
 Copy Sky {
   ID = "skyh";
   Layer 1 {
-    Texture = "F_SKYH";
+    Material = "textures:F_SKYH";
   };
 }
 
 Copy Sky {
   ID = "skyi";
   Layer 1 {
-    Texture = "F_SKYI";
+    Material = "textures:F_SKYI";
   };
 }
 
 Copy Sky {
   ID = "skyj";
   Layer 1 {
-    Texture = "F_SKYJ";
+    Material = "textures:F_SKYJ";
   };
 }

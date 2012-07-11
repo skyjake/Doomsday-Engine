@@ -1,0 +1,342 @@
+#!/usr/bin/python
+# -*- Mode: Python; -*-
+
+# The Doomsday Host is a cron utility script that helps with maintaining
+# a set of Doomsday servers. Configure to run on every minute.
+# - configure any number of servers
+# - log file rotation
+# - automatic updates by rebuilding from source with custom options
+
+import sys
+import os
+import time
+import string
+import pickle
+import subprocess
+import signal
+from xml.dom.minidom import parse
+
+def homeFile(fn):
+    return os.path.join(os.getenv('HOME'), fn)
+
+doomsdayBinary = 'doomsday'
+commonOptions = []
+rebuildTimes = []
+branch = 'master'
+mainLogFileName = homeFile('doomsdayhost.log')
+logFile = None
+servers = []
+pidFileName = homeFile('.doomsdayhost.pid')
+buildDir = ''
+qmakeCommand = ''
+startTime = int(time.time())
+
+
+def msg(text):
+    if not logFile: 
+        print text
+    else:
+        print >> logFile, time.asctime() + ': ' + text  
+    
+
+def getText(nodelist):
+    rc = []
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+
+def getContent(node):
+    return str(getText(node.childNodes))
+    
+
+def parseRebuildTimes(rebuilds):
+    times = []
+    for node in rebuilds.getElementsByTagName('rebuild'):
+        times.append((str(node.getAttribute('weekday')),
+                      int(node.getAttribute('hour')),
+                      int(node.getAttribute('minute'))))    
+    return times
+
+
+class Server:
+    def __init__(self):
+        self.port = 13209
+        self.game = None
+        self.name = 'Multiplayer Server'
+        self.info = ''
+        self.runtime = ''
+        self.options = []
+        
+        
+def parseServers(nodes):
+    svs = []
+    for node in nodes:
+        s = Server()
+        s.port = int(node.getAttribute('port'))
+        s.game = str(node.getAttribute('game'))
+        s.name = str(node.getAttribute('name'))
+        s.info = str(node.getAttribute('info'))
+        s.runtime = str(node.getAttribute('dir'))
+        for opt in node.getElementsByTagName('option'):
+            s.options.append(getContent(opt))
+        svs.append(s)
+    return svs
+        
+
+def parseConfig(fn):
+    global commonOptions
+    global rebuildTimes
+    global doomsdayBinary
+    global mainLogFileName
+    global branch
+    global servers
+    global buildDir
+    global qmakeCommand
+
+    cfg = parse(fn)
+    for opt in cfg.getElementsByTagName('option'):
+        if opt.parentNode.tagName == u'hostconfig':
+            commonOptions.append(getContent(opt))
+    
+    rebuildTimes = \
+        parseRebuildTimes(cfg.getElementsByTagName('rebuildTimes')[0])
+        
+    doomsdayBinary = getContent(cfg.getElementsByTagName('doomsday')[0])
+    mainLogFileName = getContent(cfg.getElementsByTagName('logFile')[0])
+    branch = getContent(cfg.getElementsByTagName('branch')[0])
+    buildDir = getContent(cfg.getElementsByTagName('buildDir')[0])
+    qmakeCommand = getContent(cfg.getElementsByTagName('qmakeCommand')[0])
+    
+    servers = \
+        parseServers(cfg.getElementsByTagName('servers')[0].
+            getElementsByTagName('server'))
+
+
+def isStale(fn):
+    """Files are considered stale after some time has passed."""
+    age = time.time() - os.stat(fn).st_ctime
+    if age > 60*60:
+        msg(fn + ' is stale, ignoring it.')
+        return True
+    return False
+
+
+def timeInRange(mark, start, end):
+    def breakTime(t):
+        gt = time.gmtime(t)
+        return (time.strftime('%a', gt),
+                time.strftime('%H', gt),
+                time.strftime('%M', gt))
+    def mins(h, m): return int(m) + 60 * int(h)
+        
+    s = breakTime(start)
+    e = breakTime(end)
+    if mark[0] != s[0] or mark[0] != e[0]: return False
+    markMins = mins(mark[1], mark[2])
+    if markMins < mins(s[1], s[2]) or markMins >= mins(e[1], e[2]):
+        return False
+    return True
+
+
+def checkPid(pid):        
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def todaysBuild():
+    now = time.localtime()
+    return str((now.tm_year - 2011)*365 + now.tm_yday)
+
+
+class State:
+    def __init__(self):
+        self.lastRun = self.now()
+        self.pids = {} # port => process id
+        
+    def now(self):
+        return startTime
+        
+    def updateTime(self):
+        self.lastRun = self.now()
+        
+    def isTimeForRebuild(self):
+        if '--rebuild' in sys.argv:
+            return True 
+        for rebuild in rebuildTimes:
+            if timeInRange(rebuild, self.lastRun, self.now()):
+                return True
+        return False
+
+    def kill(self, port):
+        pid = self.pids[port]
+        msg('Stopping server at port %i (pid %i)...' % (port, pid))
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            pass
+        
+    def killAll(self):
+        for port in self.pids:
+            self.kill(port)
+        self.pids = {}
+
+    def killObsolete(self):
+        for port in self.pids:
+            if checkPid(self.pids[port]):
+                # A server for this?
+                configured = False
+                for sv in servers:
+                    if sv.port == port:
+                        configured = True
+                if not configured:
+                    self.kill(port)
+                    del self.pids[port]
+                
+    def isRunning(self, sv):
+        if sv.port not in self.pids: return False
+        pid = self.pids[sv.port]
+        # Is this process still around?
+        return checkPid(pid)        
+        
+    def start(self, sv):
+        if self.isRunning(sv):
+            msg('Server %i already running according to state!' % (sv.port))
+            return
+        
+        args = [doomsdayBinary]
+        
+        cfgFn = homeFile('server%i.cfg' % sv.port)
+        cfgFile = file(cfgFn, 'wt')
+        print >> cfgFile, 'server-name "%s"' % sv.name
+        print >> cfgFile, 'server-info "[#%s] %s"' % (todaysBuild(), sv.info)
+        print >> cfgFile, 'net-ip-port %i' % sv.port
+        cfgFile.close()
+        
+        args += ['-userdir', sv.runtime]
+        args += ['-game', sv.game]
+        args += ['-parse', cfgFn]
+        args += sv.options + commonOptions 
+
+        timestamp = '%s-' % todaysBuild() + time.strftime('%H%M%S')
+        args += ['-out', os.path.join(sv.runtime, 'doomsday-%s.out' % timestamp)]
+
+        # Join the -parse arguments.
+        i = args.index('-parse')
+        j = i+2 
+        while j < len(args):
+            if args[j] == '-parse':
+                # Move the arg.
+                del args[j]
+                opt = args[j]
+                del args[j]
+                args.insert(i+1, opt)
+                continue
+            j += 1                
+
+        try:
+            #msg('PATH=' + os.getenv('PATH'))
+            #msg('HOME=' + os.getenv('HOME'))
+            #msg('Start options: ' + string.join(args, ' '))
+            outfile = file(os.path.join(sv.runtime, 'stdout-%s.log' % timestamp), 'wt')
+            po = subprocess.Popen(args, stdout=outfile, stderr=outfile)
+            pid = po.pid
+            time.sleep(3)
+            if po.poll() is not None:
+                raise OSError('terminated')
+            self.pids[sv.port] = pid        
+            msg('Started server at port %i (pid %i).' % (sv.port, pid))
+        except OSError, x:
+            msg('Failed to start server at port %i: %s' % (sv.port, str(x)))
+    
+    
+def run(cmd, mustSucceed=True):
+    result = subprocess.call(cmd, shell=True)
+    if result and mustSucceed:
+        raise Exception("Failed: " + cmd)
+            
+    
+def rebuildAndInstall():
+    msg('Rebuilding from branch %s.' % branch)
+    try:
+        os.chdir(buildDir)
+        run('git checkout ' + branch)
+        run('git pull')
+        run('make uninstall', mustSucceed=False)
+        run('make clean')
+        run(qmakeCommand)
+        run('make')
+        run('make install')
+    except Exception:
+        msg('Failed to build!')
+        return False
+    
+    msg('Successful rebuild from branch %s.' % branch)
+    return True
+    
+    
+def startInstance():
+    # Check for an existing pid file.
+    pid = homeFile(pidFileName)
+    if os.path.exists(pid):
+        if not isStale(pid):
+            # Cannot start right now -- will be retried later.
+            sys.exit(0)
+    print >> file(pid, 'w'), str(os.getpid())
+
+    global logFile
+    logFile = file(mainLogFileName, 'at')
+    
+    
+def endInstance():
+    global logFile
+    logFile.close()
+    logFile = None
+    try:
+        os.remove(homeFile(pidFileName))
+    except Exception:
+        pass        
+    
+    
+def main():
+    startInstance()
+    
+    cfg = parseConfig(homeFile('.doomsdayhostrc'))
+
+    # Is there a saved state?
+    stateFn = homeFile('.doomsdayhoststate.bin')
+    if os.path.exists(stateFn):
+        state = pickle.load(file(stateFn, 'rb'))
+    else:
+        state = State()
+
+    # Kill instances that no longer have a configuration.
+    state.killObsolete()
+
+    # Is it time to rebuild from source?
+    if state.isTimeForRebuild():
+        state.killAll()
+        if rebuildAndInstall():
+            # Success! Update the timestamp.
+            state.updateTime()
+    else:
+        state.updateTime()
+    
+    # Are all the servers up and running?
+    for sv in servers:
+        if not state.isRunning(sv):
+            state.start(sv)
+        
+    # Save the state.
+    pickle.dump(state, file(stateFn, 'wb')) 
+    
+    # We're done.
+    endInstance()
+
+
+if __name__ == '__main__':
+    main()

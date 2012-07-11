@@ -1,0 +1,119 @@
+# HacX - Material Enhancements
+#
+# Patch the Material definitions created automatically by the engine,
+# adding new effects to them.
+#
+# For further information on Material definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Ded_material
+
+Header { Version = 6; }
+
+SkipIf -nodefaultfx;
+
+#
+# Glowing flats:
+#
+
+Material Mods "flats:FWATER1" {
+  Layer {
+      Stage { Glow = .116; Tics = 24; Rnd = .5; }
+      Stage { Glow = .033; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER2" {
+  Layer {
+      Stage { Glow = .116; Tics = 24; Rnd = .5; }
+      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER3" {
+  Layer {
+      Stage { Glow = .116; Tics = 24; Rnd = .5; }
+      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER4" {
+  Layer {
+      Stage { Glow = .116; Tics = 24; Rnd = .5; }
+      Stage { Glow = .066; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:SLIME09" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:SLIME10" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:SLIME11" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:SLIME12" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 35; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 35; Rnd = .8; }
+  }
+}
+
+#
+# Glowing textures:
+#
+
+# Computer/hologram displays:
+Material Mods "textures:BRNSMALR" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "textures:CEMENT7" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "textures:ZZZFACE1" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+# Laser trip wire:
+Material Mods "textures:BLAKWAL1" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+# Force field?
+Material Mods "textures:SLADRIP1" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:SLADRIP2" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:SLADRIP3" {
+  Layer {
+      Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
+      Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
+  }
+}

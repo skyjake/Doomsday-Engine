@@ -1,5 +1,6 @@
 name: Doom
 game: game-jdoom
+game-mode: game-mode-doom1
 banner: banner-doom1
 hidden: yes
 

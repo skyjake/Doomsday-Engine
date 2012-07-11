@@ -1,10 +1,10 @@
-/**\file
+/**\file r_lgrid.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +23,42 @@
  */
 
 /**
- * r_lgrid.h: Ambient world lighting (smoothed sector lighting).
+ * Smoothed ambient sector lighting.
  */
 
-#ifndef __DOOMSDAY_REFRESH_LIGHT_GRID_H__
-#define __DOOMSDAY_REFRESH_LIGHT_GRID_H__
+#ifndef LIBDENG_REFRESH_LIGHT_GRID_H
+#define LIBDENG_REFRESH_LIGHT_GRID_H
 
-void            LG_Register(void);
-void            LG_Init(void);
+#include "dd_types.h"
+#include "p_mapdata.h"
 
-void            LG_Update(void);
-void            LG_MarkAllForUpdate(cvar_t *unused);
-void            LG_SectorChanged(sector_t *sector);
+void LG_Register(void);
+void LG_InitForMap(void);
+void LG_Update(void);
 
-void            LG_Evaluate(const float *point, float *destColor);
-void            LG_Debug(void);
+/**
+ * Called when a setting is changed which affects the lightgrid.
+ */
+void LG_MarkAllForUpdate(void);
 
-#endif
+void LG_SectorChanged(Sector* sector);
+
+/**
+ * Calculate the light color for a 3D point in the world.
+ *
+ * @param point  3D point.
+ * @param color  Evaluated color of the point (return value).
+ */
+void LG_Evaluate(coord_t const point[3], float destColor[3]);
+
+/**
+ * Calculate the light level for a 3D point in the world.
+ *
+ * @param point  3D point.
+ * @return  Evaluated light level of the point.
+ */
+float LG_EvaluateLightLevel(coord_t const point[3]);
+
+void LG_Debug(void);
+
+#endif /// LIBDENG_REFRESH_LIGHT_GRID_H

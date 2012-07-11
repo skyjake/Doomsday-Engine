@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,14 @@
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
+
+typedef struct polyobj_s {
+    // Defined in dd_share.h; required polyobj elements.
+    DD_BASE_POLYOBJ_ELEMENTS()
+
+    // Hexen-specific data:
+    void* specialData; /* Pointer a thinker, if the poly is moving. */
+} Polyobj;
 
 typedef enum {
     PODOOR_NONE,
@@ -69,19 +77,28 @@ enum {
     PO_SPAWNCRUSH_DOOMEDNUM
 };
 
-void        PO_InitForMap(void);
-boolean     PO_Busy(int polyobj);
+void PO_InitForMap(void);
+boolean PO_Busy(int polyobj);
 
-boolean     PO_FindAndCreatePolyobj(int tag, boolean crush, float startX,
-                                    float startY);
+boolean PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float startY);
 
-void        T_PolyDoor(polydoor_t* pd);
-void        T_RotatePoly(polyevent_t* pe);
-boolean     EV_RotatePoly(linedef_t* line, byte* args, int direction,
-                          boolean overRide);
-void        T_MovePoly(polyevent_t* pe);
-boolean     EV_MovePoly(linedef_t* line, byte* args, boolean timesEight,
-                        boolean overRide);
-boolean     EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type);
+/**
+ * Lookup a Polyobj instance by unique ID or tag.
+ *
+ * @deprecated Prefer using P_PolyobjByID() or P_PolyobjByTag().
+ *
+ * @param num  If the MSB is set this is interpreted as a unique ID.
+ *             Otherwise this value is interpreted as a tag that *should*
+ *             match one polyobj.
+ */
+Polyobj* P_GetPolyobj(uint num);
+
+void T_PolyDoor(polydoor_t* pd);
+void T_RotatePoly(polyevent_t* pe);
+boolean EV_RotatePoly(LineDef* line, byte* args, int direction, boolean override);
+
+void T_MovePoly(polyevent_t* pe);
+boolean EV_MovePoly(LineDef* line, byte* args, boolean timesEight, boolean override);
+boolean EV_OpenPolyDoor(LineDef* line, byte* args, podoortype_t type);
 
 #endif

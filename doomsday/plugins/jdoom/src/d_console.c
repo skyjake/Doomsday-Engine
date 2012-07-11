@@ -1,95 +1,66 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * d_console.c: jDoom specific console stuff
+ * @file d_console.c
+ * Doom specific console stuff.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "jdoom.h"
 
+#include "hu_menu.h"
 #include "hu_stuff.h"
-#include "f_infine.h"
 
-// MACROS ------------------------------------------------------------------
+D_CMD(Cheat);
+D_CMD(CheatGod);
+D_CMD(CheatNoClip);
+D_CMD(CheatWarp);
+D_CMD(CheatReveal);
+D_CMD(CheatGive);
+D_CMD(CheatMassacre);
+D_CMD(CheatWhere);
+D_CMD(CheatLeaveMap);
+D_CMD(CheatSuicide);
 
-// TYPES -------------------------------------------------------------------
+D_CMD(MakeLocal);
+D_CMD(SetCamera);
+D_CMD(SetViewLock);
+D_CMD(SetViewMode);
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+D_CMD(CycleSpy);
 
-DEFCC(CCmdCheat);
-DEFCC(CCmdCheatGod);
-DEFCC(CCmdCheatNoClip);
-DEFCC(CCmdCheatWarp);
-DEFCC(CCmdCheatReveal);
-DEFCC(CCmdCheatGive);
-DEFCC(CCmdCheatMassacre);
-DEFCC(CCmdCheatWhere);
-DEFCC(CCmdCheatLeaveMap);
-DEFCC(CCmdCheatSuicide);
+D_CMD(PlayDemo);
+D_CMD(RecordDemo);
+D_CMD(StopDemo);
 
-DEFCC(CCmdMakeLocal);
-DEFCC(CCmdSetCamera);
-DEFCC(CCmdSetViewLock);
-DEFCC(CCmdSetViewMode);
+D_CMD(SpawnMobj);
 
-DEFCC(CCmdCycleSpy);
+D_CMD(PrintPlayerCoords);
 
-DEFCC(CCmdPlayDemo);
-DEFCC(CCmdRecordDemo);
-DEFCC(CCmdStopDemo);
+D_CMD(ScreenShot);
 
-DEFCC(CCmdSpawnMobj);
+void G_UpdateEyeHeight(void);
 
-DEFCC(CCmdPrintPlayerCoords);
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-DEFCC(CCmdScreenShot);
-DEFCC(CCmdViewSize);
-DEFCC(CCmdDoomFont);
-DEFCC(CCmdConBackground);
-
-void G_UpdateEyeHeight(cvar_t* unused);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-material_t* consoleBG = 0;
-float consoleZoom = 1;
+static void viewResizeAudioFeedback(void);
 
 // Console variables.
-cvar_t gameCVars[] = {
-// Console
-    {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
-
+cvartemplate_t gameCVars[] = {
 // View/Refresh
-    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 13},
+    {"view-size", 0, CVT_INT, &cfg.setBlocks, 3, 13, viewResizeAudioFeedback },
     {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},
     {"hud-title-author-noiwad", 0, CVT_BYTE, &cfg.hideIWADAuthor, 0, 1},
 
@@ -115,7 +86,9 @@ cvar_t gameCVars[] = {
 
     // Items
     {"server-game-nobfg", 0, CVT_BYTE, &cfg.noNetBFG, 0, 1},
-    {"server-game-coop-nothing", 0, CVT_BYTE, &cfg.noCoopAnything, 0, 1},
+#if 0
+    {"server-game-coop-nothing", 0, CVT_BYTE, &cfg.noCoopAnything, 0, 1}, // not implemented atm, see P_SpawnMobjXYZ
+#endif
     {"server-game-coop-respawn-items", 0, CVT_BYTE,
         &cfg.coopRespawnItems, 0, 1},
     {"server-game-coop-noweapons", 0, CVT_BYTE, &cfg.noCoopWeapons, 0, 1},
@@ -169,6 +142,7 @@ cvar_t gameCVars[] = {
     {"player-weapon-order8", 0, CVT_INT, &cfg.weaponOrder[8], 0, NUM_WEAPON_TYPES},
 
     {"player-weapon-nextmode", 0, CVT_BYTE, &cfg.weaponNextMode, 0, 1},
+    {"player-weapon-cycle-sequential", 0, CVT_BYTE, &cfg.weaponCycleSequential, 0, 1},
 
     // Misc
     {"player-camera-noclip", 0, CVT_INT, &cfg.cameraNoClip, 0, 1},
@@ -186,6 +160,7 @@ cvar_t gameCVars[] = {
     {"game-player-wallrun-northonly", 0, CVT_BYTE, &cfg.wallRunNorthOnly, 0, 1},
     {"game-objects-falloff", 0, CVT_BYTE, &cfg.fallOff, 0, 1},
     {"game-zclip", 0, CVT_BYTE, &cfg.moveCheckZ, 0, 1},
+    {"game-monsters-floatoverblocking", 0, CVT_BYTE, &cfg.allowMonsterFloatOverBlocking, 0, 1},
     {"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1},
 
 // Game state
@@ -200,30 +175,20 @@ cvar_t gameCVars[] = {
 };
 
 //  Console commands
-ccmd_t gameCCmds[] = {
+ccmdtemplate_t gameCCmds[] = {
     {"spy",         "",     CCmdCycleSpy},
     {"screenshot",  "",     CCmdScreenShot},
-    {"viewsize",    "s",    CCmdViewSize},
 
     // $cheats
     {"cheat",       "s",    CCmdCheat},
     {"god",         NULL,   CCmdCheatGod},
     {"noclip",      NULL,   CCmdCheatNoClip},
-    {"warp",        NULL,   CCmdCheatWarp},
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},
     {"leavemap",    "",     CCmdCheatLeaveMap},
     {"suicide",     NULL,   CCmdCheatSuicide},
     {"where",       "",     CCmdCheatWhere},
-
-    {"doomfont",    "",     CCmdDoomFont},
-    {"conbg",       "s",    CCmdConBackground},
-
-    // $infine
-    {"startinf",    "s",    CCmdStartInFine},
-    {"stopinf",     "",     CCmdStopInFine},
-    {"stopfinale",  "",     CCmdStopInFine},
 
     {"spawnmobj",   NULL,   CCmdSpawnMobj},
     {"coord",       "",     CCmdPrintPlayerCoords},
@@ -237,46 +202,27 @@ ccmd_t gameCCmds[] = {
     {NULL}
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 /**
  * Add the console variables and commands.
  */
 void G_ConsoleRegistration(void)
 {
-    uint                i;
+    uint i;
 
-    for(i = 0; gameCVars[i].name; ++i)
+    for(i = 0; gameCVars[i].path; ++i)
         Con_AddVariable(&gameCVars[i]);
     for(i = 0; gameCCmds[i].name; ++i)
         Con_AddCommand(&gameCCmds[i]);
-}
 
-/**
- * Settings for console background drawing.
- * Called EVERY FRAME by the console drawer.
- */
-void D_ConsoleBg(int *width, int *height)
-{
-    if(consoleBG)
-    {
-        DGL_SetMaterial(consoleBG);
-        *width = (int) (64 * consoleZoom);
-        *height = (int) (64 * consoleZoom);
-    }
-    else
-    {
-        DGL_SetNoMaterial();
-        *width = *height = 0;
-    }
+    C_CMD("warp", "i", CheatWarp);
+    if(gameModeBits & GM_ANY_DOOM)
+        C_CMD("warp", "ii", CheatWarp);
 }
 
 /**
  * Called when the player-eyeheight cvar is changed.
  */
-void G_UpdateEyeHeight(cvar_t* unused)
+void G_UpdateEyeHeight(void)
 {
     player_t* plr = &players[CONSOLEPLAYER];
 
@@ -284,94 +230,18 @@ void G_UpdateEyeHeight(cvar_t* unused)
         plr->viewHeight = (float) cfg.plrViewHeight;
 }
 
-/**
- * Draw (char *) text in the game's font.
- * Called by the console drawer.
- */
-int ConTextOut(const char *text, int x, int y)
-{
-    M_WriteText3(x, y, text, GF_FONTA, -1, -1, -1, -1, false, false, 0);
-    return 0;
-}
-
-/**
- * Get the visual width of (char*) text in the game's font.
- */
-int ConTextWidth(const char *text)
-{
-    return M_StringWidth(text, GF_FONTA);
-}
-
-/**
- * Console command to take a screenshot (duh).
- */
-DEFCC(CCmdScreenShot)
+D_CMD(ScreenShot)
 {
     G_ScreenShot();
     return true;
 }
 
-/**
- * Console command to change the size of the view window.
- */
-DEFCC(CCmdViewSize)
+void viewResizeAudioFeedback(void)
 {
-    int                 min = 3, max = 13, *val = &cfg.screenBlocks;
-
-    // Adjust/set the value.
-    if(!stricmp(argv[1], "+"))
-        (*val)++;
-    else if(!stricmp(argv[1], "-"))
-        (*val)--;
-    else
-        *val = strtol(argv[1], NULL, 0);
-
-    // Clamp it.
-    if(*val < min)
-        *val = min;
-    if(*val > max)
-        *val = max;
-
-    // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks);
-    return true;
-}
-
-/**
- * Configure the console to use the game's font.
- */
-DEFCC(CCmdDoomFont)
-{
-    ddfont_t            cfont;
-
-    cfont.flags = DDFONT_WHITE;
-    cfont.height = 8;
-    cfont.sizeX = 1.5f;
-    cfont.sizeY = 2;
-    cfont.drawText = ConTextOut;
-    cfont.getWidth = ConTextWidth;
-    cfont.filterText = NULL;
-
-    Con_SetFont(&cfont);
-    return true;
-}
-
-/**
- * Configure the console background.
- */
-DEFCC(CCmdConBackground)
-{
-    material_t*         mat;
-
-    if(!stricmp(argv[1], "off") || !stricmp(argv[1], "none"))
+    if(Hu_MenuIsActive())
     {
-        consoleBG = NULL;
-        return true;
+        // The menu slider plays its own audio feedback.
+        return;
     }
-
-    if((mat = P_ToPtr(DMU_MATERIAL,
-            P_MaterialCheckNumForName(argv[1], MN_ANY))))
-        consoleBG = mat;
-
-    return true;
+    S_LocalSound(SFX_STNMOV, NULL);
 }

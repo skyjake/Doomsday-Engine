@@ -1,10 +1,10 @@
-/**\file
+/**\file r_util.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,123 +23,94 @@
  */
 
 /**
- * r_util.c: Refresh Utility Routines
+ * Refresh Utility Routines.
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
+#include "de_misc.h"
 
-#include "p_dmu.h"
-
-// MACROS ------------------------------------------------------------------
-
-#define SLOPERANGE      2048
-#define SLOPEBITS       11
-#define DBITS           (FRACBITS-SLOPEBITS)
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Which side of the partition does the point lie?
- *
- * @param x             X coordinate to test.
- * @param y             Y coordinate to test.
- * @return int          @c 0 = front, else @c 1 = back.
- */
-int R_PointOnSide(const float x, const float y, const partition_t *par)
+int Partition_PointXYOnSide(const partition_t* par, coord_t x, coord_t y)
 {
-    float               dx, dy;
-    float               left, right;
+    coord_t delta[2];
+    coord_t left, right;
 
-    if(!par->dX)
+    if(!par->direction[VX])
     {
-        if(x <= par->x)
-            return (par->dY > 0? 1:0);
+        if(x <= par->origin[VX])
+            return (par->direction[VY] > 0? 1:0);
         else
-            return (par->dY < 0? 1:0);
+            return (par->direction[VY] < 0? 1:0);
     }
-    if(!par->dY)
+    if(!par->direction[VY])
     {
-        if(y <= par->y)
-            return (par->dX < 0? 1:0);
+        if(y <= par->origin[VY])
+            return (par->direction[VX] < 0? 1:0);
         else
-            return (par->dX > 0? 1:0);
+            return (par->direction[VX] > 0? 1:0);
     }
 
-    dx = (x - par->x);
-    dy = (y - par->y);
+    delta[VX] = (x - par->origin[VX]);
+    delta[VY] = (y - par->origin[VY]);
 
     // Try to quickly decide by looking at the signs.
-    if(par->dX < 0)
+    if(par->direction[VX] < 0)
     {
-        if(par->dY < 0)
+        if(par->direction[VY] < 0)
         {
-            if(dx < 0)
+            if(delta[VX] < 0)
             {
-                if(dy >= 0)
-                    return 0;
+                if(delta[VY] >= 0) return 0;
             }
-            else if(dy < 0)
+            else if(delta[VY] < 0)
+            {
                 return 1;
+            }
         }
         else
         {
-            if(dx < 0)
+            if(delta[VX] < 0)
             {
-                if(dy < 0)
-                    return 1;
+                if(delta[VY] < 0) return 1;
             }
-            else if(dy >= 0)
+            else if(delta[VY] >= 0)
+            {
                 return 0;
+            }
         }
     }
     else
     {
-        if(par->dY < 0)
+        if(par->direction[VY] < 0)
         {
-            if(dx < 0)
+            if(delta[VX] < 0)
             {
-                if(dy < 0)
-                    return 0;
+                if(delta[VY] < 0) return 0;
             }
-            else if(dy >= 0)
+            else if(delta[VY] >= 0)
+            {
                 return 1;
+            }
         }
         else
         {
-            if(dx < 0)
+            if(delta[VX] < 0)
             {
-                if(dy >= 0)
-                    return 1;
+                if(delta[VY] >= 0) return 1;
             }
-            else if(dy < 0)
+            else if(delta[VY] < 0)
+            {
                 return 0;
+            }
         }
     }
 
-    left = par->dY * dx;
-    right = dy * par->dX;
+    left = par->direction[VY] * delta[VX];
+    right = delta[VY] * par->direction[VX];
 
     if(right < left)
         return 0; // front side
@@ -147,272 +118,77 @@ int R_PointOnSide(const float x, const float y, const partition_t *par)
         return 1; // back side
 }
 
-int R_SlopeDiv(unsigned num, unsigned den)
+int Partition_PointOnSide(const partition_t* par, coord_t const point[2])
 {
-    unsigned int        ans;
-
-    if(den < 512)
-        return SLOPERANGE;
-    ans = (num << 3) / (den >> 8);
-    return ans <= SLOPERANGE ? ans : SLOPERANGE;
+    return Partition_PointXYOnSide(par, point[VX], point[VY]);
 }
 
-static angle_t pointToAngle(float x, float y)
-{
-    fixed_t pos[2];
-
-    if(x == 0 && y == 0)
-        return 0;
-
-    pos[VX] = FLT2FIX(x);
-    pos[VY] = FLT2FIX(y);
-
-    if(pos[VX] >= 0)
-    {   // x >=0
-        if(pos[VY] >= 0)
-        {   // y>= 0
-            if(pos[VX] > pos[VY])
-                return tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 0
-
-            return ANG90 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 1
-        }
-
-        // y<0
-        pos[VY] = -pos[VY];
-        if(pos[VX] > pos[VY])
-            return -tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 8
-
-        return ANG270 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 7
-    }
-
-    // x<0
-    pos[VX] = -pos[VX];
-    if(pos[VY] >= 0)
-    {   // y>= 0
-        if(pos[VX] > pos[VY])
-            return ANG180 - 1 - tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 3
-
-        return ANG90 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 2
-    }
-
-    // y<0
-    pos[VY] = -pos[VY];
-    if(pos[VX] > pos[VY])
-        return ANG180 + tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 4
-
-    return ANG270 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 5
-}
-
-/**
- * To get a global angle from cartesian coordinates, the coordinates are
- * flipped until they are in the first octant of the coordinate system, then
- * the y (<=x) is scaled and divided by x to get a tangent (slope) value
- * which is looked up in the tantoangle[] table.  The +1 size is to handle
- * the case when x==y without additional checking.
- *
- * @param   x           X coordinate to test.
- * @param   y           Y coordinate to test.
- *
- * @return  angle_t     Angle between the test point and view x,y.
- */
-angle_t R_PointToAngle(float x, float y)
+angle_t R_ViewPointXYToAngle(coord_t x, coord_t y)
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-
-    x -= viewData->current.pos[VX];
-    y -= viewData->current.pos[VY];
-
-    return pointToAngle(x, y);
+    x -= viewData->current.origin[VX];
+    y -= viewData->current.origin[VY];
+    return M_PointXYToAngle(x, y);
 }
 
-angle_t R_PointToAngle2(float x1, float y1, float x2, float y2)
-{
-    x2 -= x1;
-    y2 -= y1;
-
-    return pointToAngle(x2, y2);
-}
-
-float R_PointToDist(const float x, const float y)
+coord_t R_ViewPointXYDistance(coord_t x, coord_t y)
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
-    float dx, dy, temp, dist;
-    uint angle;
+    coord_t point[2] = { x, y };
+    return M_PointDistance(viewData->current.origin, point);
+}
 
-    dx = fabs(x - viewData->current.pos[VX]);
-    dy = fabs(y - viewData->current.pos[VY]);
+void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
+    coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
+{
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    float sinrv, cosrv;
 
-    if(dy > dx)
+    if(alignToViewPlane)
     {
-        temp = dx;
-        dx = dy;
-        dy = temp;
+        // Should be fully aligned to view plane.
+        sinrv = -viewData->viewCos;
+        cosrv = viewData->viewSin;
     }
-
-    angle =
-        (tantoangle[FLT2FIX(dy / dx) >> DBITS] + ANG90) >> ANGLETOFINESHIFT;
-
-    dist = dx / FIX2FLT(finesine[angle]); // Use as cosine
-
-    return dist;
-}
-
-subsector_t *R_PointInSubsector(const float x, const float y)
-{
-    node_t             *node = 0;
-    uint                nodenum = 0;
-
-    if(!numNodes)               // single subsector is a special case
-        return (subsector_t *) ssectors;
-
-    nodenum = numNodes - 1;
-
-    while(!(nodenum & NF_SUBSECTOR))
+    else
     {
-        node = NODE_PTR(nodenum);
-        ASSERT_DMU_TYPE(node, DMU_NODE);
-        nodenum = node->children[R_PointOnSide(x, y, &node->partition)];
+        coord_t trX, trY;
+        float thangle;
+
+        // Transform the origin point.
+        trX = center[VX] - viewData->current.origin[VX];
+        trY = center[VY] - viewData->current.origin[VY];
+
+        thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - PI / 2;
+        sinrv = sin(thangle);
+        cosrv = cos(thangle);
     }
 
-    return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
+    start[VX] = center[VX];
+    start[VY] = center[VY];
+
+    start[VX] -= cosrv * ((width / 2) + offset);
+    start[VY] -= sinrv * ((width / 2) + offset);
+    end[VX] = start[VX] + cosrv * width;
+    end[VY] = start[VY] + sinrv * width;
 }
 
-linedef_t *R_GetLineForSide(const uint sideNumber)
+void R_AmplifyColor(float rgb[3])
 {
-    uint                i;
-    sidedef_t          *side = SIDE_PTR(sideNumber);
-    sector_t           *sector = side->sector;
+    float max = 0;
+    int i;
 
-    // All sides may not have a sector.
-    if(!sector)
-        return NULL;
-
-    for(i = 0; i < sector->lineDefCount; ++i)
-        if(sector->lineDefs[i]->L_frontside == side ||
-           sector->lineDefs[i]->L_backside == side)
-        {
-            return sector->lineDefs[i];
-        }
-
-    return NULL;
-}
-
-/**
- * Is the point inside the sector, according to the edge lines of the
- * subsector. Uses the well-known algorithm described here:
- * http://www.alienryderflex.com/polygon/
- *
- * @param               X coordinate to test.
- * @param               Y coordinate to test.
- * @param               Sector to test.
- *
- * @return              @c true, if the point is inside the sector.
- */
-boolean R_IsPointInSector(const float x, const float y,
-                          const sector_t *sector)
-{
-    uint                i;
-    boolean             isOdd = false;
-
-    for(i = 0; i < sector->lineDefCount; ++i)
+    for(i = 0; i < 3; ++i)
     {
-        linedef_t          *line = sector->lineDefs[i];
-        vertex_t           *vtx[2];
-
-        // Skip lines that aren't sector boundaries.
-        if(line->L_frontside && line->L_backside &&
-           line->L_frontsector == sector &&
-           line->L_backsector == sector)
-            continue;
-
-        vtx[0] = line->L_v1;
-        vtx[1] = line->L_v2;
-        // It shouldn't matter whether the line faces inward or outward.
-        if((vtx[0]->V_pos[VY] < y && vtx[1]->V_pos[VY] >= y) ||
-           (vtx[1]->V_pos[VY] < y && vtx[0]->V_pos[VY] >= y))
-        {
-            if(vtx[0]->V_pos[VX] +
-               (((y - vtx[0]->V_pos[VY]) / (vtx[1]->V_pos[VY] - vtx[0]->V_pos[VY])) *
-                (vtx[1]->V_pos[VX] - vtx[0]->V_pos[VX])) < x)
-            {
-                // Toggle oddness.
-                isOdd = !isOdd;
-            }
-        }
+        if(rgb[i] > max)
+            max = rgb[i];
     }
+    if(!max || max == 1) return;
 
-    // The point is inside if the number of crossed nodes is odd.
-    return isOdd;
-}
-
-/**
- * Is the point inside the subsector, according to the edge lines of the
- * subsector. Uses the well-known algorithm described here:
- * http://www.alienryderflex.com/polygon/
- *
- * @param x             X coordinate to test.
- * @param y             Y coordinate to test.
- * @param ssec          Subsector to test.
- *
- * @return              @c true, if the point is inside the subsector.
- */
-boolean R_IsPointInSubsector(const float x, const float y,
-                             const subsector_t* ssec)
-{
-    uint                i;
-    fvertex_t*          vi, *vj;
-
-    for(i = 0; i < ssec->segCount; ++i)
+    for(i = 0; i < 3; ++i)
     {
-        vi = &ssec->segs[i]->SG_v1->v;
-        vj = &ssec->segs[(i + 1) % ssec->segCount]->SG_v1->v;
-
-        if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
-            (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
-        {
-            // Outside the subsector's edges.
-            return false;
-        }
-
-/*      if((vi->pos[VY] < y && vj->pos[VY] >= y) ||
-           (vj->pos[VY] < y && vi->pos[VY] >= y))
-        {
-            if(vi->pos[VX] + (((y - vi->pos[VY])/(vj->pos[VY] - vi->pos[VY])) *
-                              (vj->pos[VX] - vi->pos[VX])) < x)
-            {
-                // Toggle oddness.
-                isOdd = !isOdd;
-            }
-        }
-*/
+        rgb[i] = rgb[i] / max;
     }
-
-    return true;
-}
-
-/**
- * Is the point inside the sector, according to the edge lines of the
- * subsector.
- *
- * More accurate than R_IsPointInSector.
- *
- * @param               X coordinate to test.
- * @param               Y coordinate to test.
- * @param               Sector to test.
- *
- * @return              @c true, if the point is inside the sector.
- */
-boolean R_IsPointInSector2(const float x, const float y,
-                           const sector_t* sector)
-{
-    subsector_t*        ssec = R_PointInSubsector(x, y);
-
-    if(ssec->sector != sector)
-    {   // Wrong sector.
-        return false;
-    }
-
-    return R_IsPointInSubsector(x, y, ssec);
 }
 
 void R_ScaleAmbientRGB(float *out, const float *in, float mul)
@@ -502,34 +278,94 @@ void R_HSVToRGB(float* rgb, float h, float s, float v)
     }
 }
 
-/**
- * Returns a ptr to the sector which owns the given ddmobj_base_t.
- *
- * @param ddMobjBase    ddmobj_base_t to search for.
- *
- * @return              Ptr to the Sector where the ddmobj_base_t resides,
- *                      else @c NULL.
- */
-sector_t* R_GetSectorForOrigin(const void* ddMobjBase)
+boolean R_GenerateTexCoords(pvec2f_t s, pvec2f_t t, const_pvec3d_t point, float xScale, float yScale,
+    const_pvec3d_t v1, const_pvec3d_t v2, const_pvec3f_t tangent, const_pvec3f_t bitangent)
 {
-    uint                i, k;
-    sector_t*           sec;
+    vec3d_t vToPoint;
 
-    // Check all sectors; find where the sound is coming from.
-    for(i = 0; i < numSectors; ++i)
+    V3d_Subtract(vToPoint, v1, point);
+    s[0] = V3d_DotProductf(vToPoint, tangent)   * xScale + .5f;
+    t[0] = V3d_DotProductf(vToPoint, bitangent) * yScale + .5f;
+
+    // Is the origin point visible?
+    if(s[0] >= 1 || t[0] >= 1)
+        return false; // Right on the X axis or below on the Y axis.
+
+    V3d_Subtract(vToPoint, v2, point);
+    s[1] = V3d_DotProductf(vToPoint, tangent)   * xScale + .5f;
+    t[1] = V3d_DotProductf(vToPoint, bitangent) * yScale + .5f;
+
+    // Is the end point visible?
+    if(s[1] <= 0 || t[1] <= 0)
+        return false; // Left on the X axis or above on the Y axis.
+
+    return true;
+}
+
+/// @note Part of the Doomsday public API.
+boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
+    int availWidth, int availHeight, scalemode_t scaleMode)
+{
+    if(SCALEMODE_STRETCH == scaleMode)
     {
-        sec = SECTOR_PTR(i);
+        if(NULL != scale)
+            *scale = 1;
+        return true;
+    }
+    else
+    {
+        const float availRatio = (float)availWidth / availHeight;
+        const float origRatio  = (float)width  / height;
+        float sWidth, sHeight; // Scaled dimensions.
 
-        if(ddMobjBase == &sec->soundOrg)
-            return sec;
+        if(availWidth >= availHeight)
+        {
+            sWidth  = availWidth;
+            sHeight = sWidth  / availRatio;
+        }
         else
-        {   // Check the planes of this sector
-            for(k = 0; k < sec->planeCount; ++k)
-                if(ddMobjBase == &sec->planes[k]->soundOrg)
-                {
-                    return sec;
-                }
+        {
+            sHeight = availHeight;
+            sWidth  = sHeight * availRatio;
+        }
+
+        if(origRatio > availRatio)
+        {
+            if(NULL != scale)
+                *scale = sWidth / width;
+            return false;
+        }
+        else
+        {
+            if(NULL != scale)
+                *scale = sHeight / height;
+            return true;
         }
     }
-    return NULL;
+}
+
+/// @note Part of the Doomsday public API.
+scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
+    scalemode_t overrideMode, float stretchEpsilon)
+{
+    const float availRatio = (float)availWidth / availHeight;
+    const float origRatio  = (float)width / height;
+
+    // Considered identical?
+    if(INRANGE_OF(availRatio, origRatio, .001f))
+        return SCALEMODE_STRETCH;
+
+    if(SCALEMODE_STRETCH == overrideMode || SCALEMODE_NO_STRETCH  == overrideMode)
+        return overrideMode;
+
+    // Within tolerable stretch range?
+    return INRANGE_OF(availRatio, origRatio, stretchEpsilon)? SCALEMODE_STRETCH : SCALEMODE_NO_STRETCH;
+}
+
+/// @note Part of the Doomsday public API.
+scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
+    scalemode_t overrideMode)
+{
+    return R_ChooseScaleMode2(availWidth, availHeight, width, height, overrideMode,
+        DEFAULT_SCALEMODE_STRETCH_EPSILON);
 }

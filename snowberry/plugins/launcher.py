@@ -2,7 +2,7 @@
 # $Id$
 # Snowberry: Extensible Launcher for the Doomsday Engine
 #
-# Copyright (C) 2004, 2005
+# Copyright (C) 2004, 2011
 #   Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@
 
 # TODO: Implement a timer service so wx isn't needed here.
 
-import os, string, time
+import os, string, time, subprocess
 import ui, host
 import sb.util.dialog
 import events
@@ -38,6 +38,7 @@ import sb.widget.button as wg
 import sb.profdb as pr
 import sb.confdb as st
 import sb.aodb as ao
+import sb.expressions as ex
 
 
 class MessageTimer (ui.Timer):
@@ -208,24 +209,68 @@ def startGame(profile):
         return
 
     # Put the response file in the user's runtime directory.
-    responseFile = os.path.join(paths.getUserPath(paths.RUNTIME),
-                                'Options.rsp')
+    responseFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'Options.rsp')
 
     file(responseFile, 'w').write(options + "\n")
 
     # Execute the command line.
     if host.isWindows():
-        spawnFunc = os.spawnv
+        if '-dedicated' in options:
+            batFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'launch.bat')
+            bat = file(batFile, 'wt')
+            print >> bat, '@ECHO OFF'
+            print >> bat, 'ECHO Launching Doomsday...'
+            curDir = os.getcwd()
+            print >> bat, 'cd', paths.quote(curDir)
+            print >> bat, "%s @%s" % (paths.quote(engineBin), paths.quote(responseFile))
+            bat.close()
+            engineBin = batFile
+            spawnFunc = spawnWithTerminal
+        else:
+            spawnFunc = os.spawnv
+    elif host.isMac() and '-dedicated' in options:
+        # On the Mac, we'll tell Terminal to run it.
+        osaFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'Launch.scpt')
+        scpt = file(osaFile, 'w')
+        print >> scpt, 'tell application "Terminal"'
+        print >> scpt, '    activate'
+        def q1p(s): return '\\\"' + s + '\\\"'
+        def q2p(s): return '\\\\\\\"' + s + '\\\\\\\"'
+        curDir = os.getcwd()
+        print >> scpt, "    do script \"cd %s; %s @%s\"" % \
+            (q1p(curDir), engineBin.replace(' ', '\\\\ '), responseFile.replace(' ', '\\\\ '))
+        print >> scpt, 'end tell'
+        scpt.close()
+        engineBin = osaFile
+        spawnFunc = spawnWithTerminal
+    elif host.isUnix() and '-dedicated' in options:
+        shFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'launch.sh')
+        sh = file(shFile, 'w')
+        print >> sh, '#!/bin/sh'
+        print >> sh, "cd %s" % (paths.quote(os.getcwd()))
+        print >> sh, "%s @%s" % (paths.quote(engineBin), responseFile.replace(' ', '\\ '))
+        sh.close()
+        os.chmod(shFile, 0744)
+        engineBin = paths.quote(shFile)
+        spawnFunc = spawnWithTerminal
     else:
         spawnFunc = os.spawnvp
-    spawnFunc(os.P_NOWAIT, engineBin, 
-              [engineBin, '@' + paths.quote(responseFile)])
+
+    if host.isWindows():
+        spawnFunc(os.P_NOWAIT, engineBin, [engineBin, '@' + paths.quote(responseFile)])
+    else:
+        spawnFunc(os.P_NOWAIT, engineBin, [engineBin, '@' + responseFile])
 
     # Shut down if the configuration settings say so.
     value = profile.getValue('quit-on-launch')
     if not value or value.getValue() == 'yes':
         # Quit Snowberry.
         events.sendAfter(events.Command('quit'))
+
+
+def spawnWithTerminal(wait, launchScript, arguments):
+    term = st.getSystemString('system-terminal').split(' ')
+    subprocess.Popen(term + [launchScript])
 
 
 def generateOptions(profile):
@@ -255,7 +300,7 @@ def generateOptions(profile):
 
     # Are there any system-specific options defined?
     if st.isDefined('common-options'):
-        cmdLine.append(st.getSystemString('common-options'))
+        cmdLine.append(ex.evaluate(st.getSystemString('common-options'), None))
 
     # All profiles use the same runtime directory.
     if st.isDefined('doomsday-base'):

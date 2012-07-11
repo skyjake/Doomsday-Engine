@@ -1,10 +1,10 @@
-/**\file
+/**\file d_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,51 +22,44 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * d_main.h:
- */
-
-#ifndef __D_MAIN_H__
-#define __D_MAIN_H__
+#ifndef LIBJDOOM64_MAIN_H
+#define LIBJDOOM64_MAIN_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-#include <stdio.h>
-
 #include "doomdef.h"
 
 extern int verbose;
-extern boolean devParm;
-extern boolean noMonstersParm;
-extern boolean respawnParm;
-extern boolean fastParm;
-extern boolean turboParm;
-extern float turboMul;
-extern skillmode_t startSkill;
-extern uint startEpisode;
-extern uint startMap;
-extern boolean autoStart;
-extern FILE *debugFile;
+
+extern boolean noMonstersParm; // checkparm of -nomonsters
+extern boolean respawnParm; // checkparm of -respawn
+extern boolean turboParm; // checkparm of -turbo
+//extern boolean randomClassParm; // checkparm of -randclass
+extern boolean devParm; // checkparm of -devparm
+extern boolean fastParm; // checkparm of -fast
+
+extern float turboMul; // Multiplier for turbo.
+
 extern gamemode_t gameMode;
 extern int gameModeBits;
-extern char gameModeString[];
+
+extern char* borderGraphics[];
+
+extern const float defFontRGB[];
+extern const float defFontRGB2[];
+extern const float defFontRGB3[];
+
 extern boolean monsterInfight;
-extern char title[];
-extern int demoSequence;
-extern int pageTic;
-extern char *pageName;
-extern char *borderLumps[];
 
-void            G_PostInit(void);
-void            G_PreInit(void);
-void            G_DetectIWADs(void);
-void            G_IdentifyVersion(void);
-void            G_Shutdown(void);
-void            G_EndFrame(void);
-void            G_Ticker(timespan_t ticLength);
+void D_PreInit(void);
+void D_PostInit(void);
+void D_Shutdown(void);
 
-boolean         G_SetGameMode(gamemode_t mode);
+void D_EndFrame(void);
 
-#endif
+int D_GetInteger(int id);
+void* D_GetVariable(int id);
+
+#endif /* LIBJDOOM64_MAIN_H */

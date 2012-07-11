@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ typedef struct spawnqueuenode_s {
     void          (*callback) (mobj_t* mo, void* context);
     void*           context;
 
-    float           pos[3];
+    coord_t         pos[3];
     angle_t         angle;
     mobjtype_t      type;
     int             spawnFlags; // MSF_* flags
@@ -103,7 +103,7 @@ void P_SpawnTelefog(mobj_t* mo, void* context)
     mo->intFlags |= MIF_FADE;
 # elif __JDOOM__
     // Spawn the item teleport fog at the new spot.
-    P_SpawnMobj3fv(MT_IFOG, mo->pos, mo->angle, 0);
+    P_SpawnMobj(MT_IFOG, mo->origin, mo->angle, 0);
 # endif
 }
 
@@ -137,7 +137,7 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 # endif
            )
         {
-            P_DeferSpawnMobj3fv(RESPAWNTICS, mo->type, mo->spawnSpot.pos,
+            P_DeferSpawnMobj3fv(RESPAWNTICS, mo->type, mo->spawnSpot.origin,
                                 mo->spawnSpot.angle, mo->spawnSpot.flags,
                                 P_SpawnTelefog, NULL);
         }
@@ -160,7 +160,7 @@ justDoIt:
 /**
  * Called after a move to link the mobj back into the world.
  */
-void P_MobjSetPosition(mobj_t* mo)
+void P_MobjSetOrigin(mobj_t* mo)
 {
     int flags = DDLINK_BLOCKMAP;
 
@@ -173,7 +173,7 @@ void P_MobjSetPosition(mobj_t* mo)
 /**
  * Unlinks a mobj from the world so that it can be moved.
  */
-void P_MobjUnsetPosition(mobj_t* mo)
+void P_MobjUnsetOrigin(mobj_t* mo)
 {
     P_MobjUnlink(mo);
 }
@@ -182,7 +182,7 @@ void P_MobjUnsetPosition(mobj_t* mo)
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_MobjSetSRVO(mobj_t* mo, float stepx, float stepy)
+void P_MobjSetSRVO(mobj_t* mo, coord_t stepx, coord_t stepy)
 {
     mo->srvo[VX] = -stepx;
     mo->srvo[VY] = -stepy;
@@ -192,7 +192,7 @@ void P_MobjSetSRVO(mobj_t* mo, float stepx, float stepy)
  * The actor has taken a step, set the corresponding short-range visual
  * offset.
  */
-void P_MobjSetSRVOZ(mobj_t* mo, float stepz)
+void P_MobjSetSRVOZ(mobj_t* mo, coord_t stepz)
 {
     mo->srvo[VZ] = -stepz;
 }
@@ -270,23 +270,19 @@ boolean P_MobjIsCamera(const mobj_t* mo)
             (mo->player->plr->flags & DDPF_CAMERA));
 }
 
-/**
- * The first three bits of the selector special byte contain a relative
- * health level.
- */
-void P_UpdateHealthBits(mobj_t* mobj)
+void P_UpdateHealthBits(mobj_t* mo)
 {
-    int                 i;
+    int i;
+    if(!mo || !mo->info) return;
 
-    if(mobj->info && mobj->info->spawnHealth > 0)
+    if(mo->info->spawnHealth > 0)
     {
-        mobj->selector &= DDMOBJ_SELECTOR_MASK; // Clear high byte.
-        i = (mobj->health << 3) / mobj->info->spawnHealth;
-        if(i > 7)
-            i = 7;
-        if(i < 0)
-            i = 0;
-        mobj->selector |= i << DDMOBJ_SELECTOR_SHIFT;
+        mo->selector &= DDMOBJ_SELECTOR_MASK; // Clear high byte.
+
+        i = (mo->health << 3) / mo->info->spawnHealth;
+        i = MINMAX_OF(0, i, 7);
+
+        mo->selector |= i << DDMOBJ_SELECTOR_SHIFT;
     }
 }
 
@@ -302,7 +298,7 @@ statenum_t P_GetState(mobjtype_t type, statename_t name)
 {
     if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES))
         return S_NULL;
-    if(name < 0 || name >= NUM_STATE_NAMES)
+    if(name < 0 || name >= STATENAMES_COUNT)
         return S_NULL;
 
     return MOBJINFO[type].states[name];
@@ -310,18 +306,18 @@ statenum_t P_GetState(mobjtype_t type, statename_t name)
 
 void P_RipperBlood(mobj_t* actor)
 {
-    mobj_t*             mo;
-    float               pos[3];
+    mobj_t* mo;
+    coord_t pos[3];
 
-    pos[VX] = actor->pos[VX];
-    pos[VY] = actor->pos[VY];
-    pos[VZ] = actor->pos[VZ];
+    pos[VX] = actor->origin[VX];
+    pos[VY] = actor->origin[VY];
+    pos[VZ] = actor->origin[VZ];
 
     pos[VX] += FIX2FLT((P_Random() - P_Random()) << 12);
     pos[VY] += FIX2FLT((P_Random() - P_Random()) << 12);
     pos[VZ] += FIX2FLT((P_Random() - P_Random()) << 12);
 
-    if((mo = P_SpawnMobj3fv(MT_BLOOD, pos, actor->angle, 0)))
+    if((mo = P_SpawnMobj(MT_BLOOD, pos, actor->angle, 0)))
     {
 #if __JHERETIC__
         mo->flags |= MF_NOGRAVITY;
@@ -348,7 +344,7 @@ static spawnqueuenode_t* allocateNode(void)
     {   // We need to allocate more.
         size_t              i;
         spawnqueuenode_t*   storage =
-            Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_STATIC, 0);
+            Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_GAMESTATIC, 0);
 
         // Add all but one to the unused node list.
         for(i = 0; i < SPAWNQUEUENODE_BATCHSIZE-1; ++i)
@@ -420,8 +416,8 @@ static void emptySpawnQueue(boolean recycle)
     spawnQueueHead = NULL;
 }
 
-static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
-                         float z, angle_t angle, int spawnFlags,
+static void enqueueSpawn(int minTics, mobjtype_t type, coord_t x, coord_t y,
+                         coord_t z, angle_t angle, int spawnFlags,
                          void (*callback) (mobj_t* mo, void* context),
                          void* context)
 {
@@ -477,16 +473,16 @@ static void enqueueSpawn(int minTics, mobjtype_t type, float x, float y,
 
 static mobj_t* doDeferredSpawn(void)
 {
-    mobj_t*             mo = NULL;
+    mobj_t* mo = NULL;
 
     // Anything due to spawn?
     if(spawnQueueHead &&
        mapTime - spawnQueueHead->startTime >= spawnQueueHead->minTics)
     {
-        spawnqueuenode_t*   n = dequeueSpawn();
+        spawnqueuenode_t* n = dequeueSpawn();
 
         // Spawn it.
-        if((mo = P_SpawnMobj3fv(n->type, n->pos, n->angle, n->spawnFlags)))
+        if((mo = P_SpawnMobj(n->type, n->pos, n->angle, n->spawnFlags)))
         {
             if(n->callback)
                 n->callback(mo, n->context);
@@ -498,14 +494,9 @@ static mobj_t* doDeferredSpawn(void)
     return mo;
 }
 
-/**
- * Deferred mobj spawning until at least @minTics have passed.
- * Spawn behavior is otherwise exactly the same as an immediate spawn, via   * P_SpawnMobj*
- */
-void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x, float y,
-                        float z, angle_t angle, int spawnFlags,
-                        void (*callback) (mobj_t* mo, void* context),
-                        void* context)
+void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, coord_t x, coord_t y, coord_t z,
+    angle_t angle, int spawnFlags,  void (*callback) (mobj_t* mo, void* context),
+    void* context)
 {
     if(minTics > 0)
     {
@@ -514,9 +505,8 @@ void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x, float y,
     }
     else // Spawn immediately.
     {
-        mobj_t*             mo;
-
-        if((mo = P_SpawnMobj3f(type, x, y, z, angle, spawnFlags)))
+        mobj_t* mo;
+        if((mo = P_SpawnMobjXYZ(type, x, y, z, angle, spawnFlags)))
         {
             if(callback)
                 callback(mo, context);
@@ -524,10 +514,8 @@ void P_DeferSpawnMobj3f(int minTics, mobjtype_t type, float x, float y,
     }
 }
 
-void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, const float pos[3],
-                         angle_t angle, int spawnFlags,
-                         void (*callback) (mobj_t* mo, void* context),
-                         void* context)
+void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, coord_t const pos[3], angle_t angle,
+    int spawnFlags, void (*callback) (mobj_t* mo, void* context), void* context)
 {
     if(minTics > 0)
     {
@@ -536,9 +524,8 @@ void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, const float pos[3],
     }
     else // Spawn immediately.
     {
-        mobj_t*             mo;
-
-        if((mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags)))
+        mobj_t* mo;
+        if((mo = P_SpawnMobj(type, pos, angle, spawnFlags)))
         {
             if(callback)
                 callback(mo, context);
@@ -549,7 +536,7 @@ void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, const float pos[3],
 /**
  * Called 35 times per second by P_DoTick.
  */
-void P_DoDeferredSpawns(void)
+void P_ProcessDeferredSpawns(void)
 {
     while(doDeferredSpawn());
 }

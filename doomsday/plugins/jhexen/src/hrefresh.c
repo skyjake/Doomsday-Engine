@@ -1,11 +1,10 @@
-/**\file
+/**\file hrefresh.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +23,7 @@
  */
 
 /**
- * hrefresh.h: - jHexen specific.
+ * Refresh - Hexen specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,7 +32,6 @@
 
 #include "jhexen.h"
 
-#include "f_infine.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
 #include "g_controls.h"
@@ -41,20 +39,18 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "hu_pspr.h"
+#include "hu_log.h"
+#include "hu_stuff.h"
 #include "am_map.h"
 #include "x_hair.h"
 #include "p_tick.h"
-#include "rend_automap.h"
+#include "hu_automap.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define WINDOWHEIGHT            (Get(DD_VIEWWINDOW_HEIGHT))
 
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-extern void MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -64,308 +60,15 @@ extern void MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean setsizeneeded;
 float quitDarkenOpacity = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Don't really change anything here, because i might be in the middle of
- * a refresh.  The change will take effect next refresh.
- */
-void R_SetViewSize(int blocks)
+boolean R_ViewFilterColor(float rgba[4], int filter)
 {
-    setsizeneeded = true;
-
-    if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
-    {   // When going fullscreen, force a hud show event (to reset the timer).
-        int                 i;
-
-        for(i = 0; i < MAXPLAYERS; ++i)
-            ST_HUDUnHide(i, HUE_FORCE);
-    }
-
-    cfg.setBlocks = blocks;
-}
-
-void R_DrawMapTitle(void)
-{
-    float alpha;
-    int y = 12;
-    const char* lname, *lauthor;
-
-    if(!cfg.mapTitle || actualMapTime > 6 * 35)
-        return;
-
-    // Make the text a bit smaller.
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(160, y, 0);
-    DGL_Scalef(.75f, .75f, 1);   // Scale to 3/4
-    DGL_Translatef(-160, -y, 0);
-
-    alpha = 1;
-    if(actualMapTime < 35)
-        alpha = actualMapTime / 35.0f;
-    if(actualMapTime > 5 * 35)
-        alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
-
-    lname = P_GetMapNiceName();
-    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
-
-    // Use stardard map name if DED didn't define it.
-    if(!lname)
-        lname = P_GetMapName(gameMap);
-
-    Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
-
-    if(lname)
-    {
-        M_WriteText3(160 - M_StringWidth(lname, GF_FONTB) / 2, y, lname,
-                    GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
-                    alpha, false, true, 0);
-        y += 20;
-    }
-
-    if(lauthor)
-    {
-        M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y,
-                     lauthor, GF_FONTA, .5f, .5f, .5f, alpha, false,
-                     true, 0);
-    }
-
-    Draw_EndZoom();
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
-static void rendPlayerView(int player)
-{
-    player_t* plr = &players[player];
-    boolean special200 = false;
-    float pspriteOffsetY;
-
-    if(!plr->plr->mo)
-    {
-        Con_Message("rendPlayerView: Rendering view of player %i, who has no mobj!\n", player);
-        return;
-    }
-
-    if(IS_CLIENT)
-    {
-        // Server updates mobj flags in NetSv_Ticker.
-        R_SetAllDoomsdayFlags();
-    }
-
-    // Check for the sector special 200: use sky2.
-    // I wonder where this is used?
-    if(P_ToXSectorOfSubsector(plr->plr->mo->subsector)->special == 200)
-    {
-        special200 = true;
-        Rend_SkyParams(0, DD_DISABLE, NULL);
-        Rend_SkyParams(1, DD_ENABLE, NULL);
-    }
-
-    // View angles are updated with fractional ticks, so we can just use the current values.
-    R_SetViewAngle(player, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
-    R_SetViewPitch(player, plr->plr->lookDir);
-
-    pspriteOffsetY = HU_PSpriteYOffset(plr);
-    DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);
-
-    // $democam
-    GL_SetFilter((plr->plr->flags & DDPF_USE_VIEW_FILTER)? true : false);
-    if(plr->plr->flags & DDPF_USE_VIEW_FILTER)
-    {
-        const float* color = plr->plr->filterColor;
-        GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);
-    }
-
-    // Render the view with possible custom filters.
-    R_RenderPlayerView(player);
-
-    if(special200)
-    {
-        Rend_SkyParams(0, DD_ENABLE, NULL);
-        Rend_SkyParams(1, DD_DISABLE, NULL);
-    }
-}
-
-static void rendHUD(int player)
-{
-    player_t*           plr;
-
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
-    if(G_GetGameState() != GS_MAP)
-        return;
-
-    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-        return;
-
-    plr = &players[player];
-
-    // These various HUD's will be drawn unless Doomsday advises not to
-    if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
-    {
-        automapid_t         map = AM_MapForPlayer(player);
-
-        // Draw HUD displays only visible when the automap is open.
-        if(AM_IsActive(map))
-            HU_DrawMapCounters();
-
-        // Do we need to render a full status bar at this point?
-        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
-           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
-            if(true == (WINDOWHEIGHT == 200))
-            {
-                // Fullscreen. Which mode?
-                ST_Drawer(player, cfg.setBlocks - 10, true);
-            }
-            else
-            {
-                ST_Drawer(player, 0, true);
-            }
-        }
-
-        HU_Drawer(player);
-    }
-}
-
-/**
- * Draws the in-viewport display.
- *
- * @param layer         @c 0 = bottom layer (before the viewport border).
- *                      @c 1 = top layer (after the viewport border).
- */
-void G_Display(int layer)
-{
-    int player = DISPLAYPLAYER;
-    player_t* plr = &players[player];
-    float x, y, w, h;
-
-    if(layer != 0)
-    {
-        rendHUD(player);
-        return;
-    }
-
-    if(G_GetGameState() == GS_MAP)
-    {
-        // $democam: can be set on every frame.
-        if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
-            // Full screen.
-            R_SetViewWindowTarget(0, 0, SCREENWIDTH, SCREENHEIGHT);
-        }
-        else
-        {
-            int w = cfg.setBlocks * 32;
-            int h = cfg.setBlocks * (SCREENHEIGHT - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
-
-            R_SetViewWindowTarget(SCREENWIDTH/2 - w/2, (SCREENHEIGHT - SBARHEIGHT * cfg.statusbarScale / 20 - h) / 2, w, h);
-        }
-
-        R_GetViewWindow(&x, &y, &w, &h);
-    }
-    else
-    {
-        x = 0;
-        y = 0;
-        w = SCREENWIDTH;
-        h = SCREENHEIGHT;
-    }
-
-    R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
-
-    switch(G_GetGameState())
-    {
-    case GS_MAP:
-        if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
-           !R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
-        {
-            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-                return;
-
-            rendPlayerView(player);
-
-            // Crosshair.
-            if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
-                X_Drawer(player);
-        }
-
-        // Draw the automap.
-        AM_Drawer(player);
-        break;
-    case GS_STARTUP:
-        DGL_Disable(DGL_TEXTURING);
-        DGL_DrawRect(x, y, w, h, 0, 0, 0, 1);
-        DGL_Enable(DGL_TEXTURING);
-        break;
-    default:
-        break;
-    }
-}
-
-void G_Display2(void)
-{
-    switch(G_GetGameState())
-    {
-    case GS_MAP:
-        if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-            break;
-
-        if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
-        {
-            // Map information is shown for a few seconds in the
-            // beginning of a map.
-            R_DrawMapTitle();
-        }
-        break;
-
-    case GS_INTERMISSION:
-        IN_Drawer();
-        break;
-
-    case GS_WAITING:
-        //GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
-        //DGL_Color3f(1, 1, 1);
-        //MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
-        break;
-
-    default:
-        break;
-    }
-
-    // Draw pause pic (but not if InFine active).
-    if(paused && !fiActive)
-    {
-        GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
-    }
-
-    // InFine is drawn whenever active.
-    FI_Drawer();
-
-    // Draw HUD displays; menu, messages.
-    Hu_Drawer();
-
-    if(G_GetGameAction() == GA_QUIT)
-    {
-        DGL_Disable(DGL_TEXTURING);
-        DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
-        DGL_Enable(DGL_TEXTURING);
-    }
-}
-
-boolean R_GetFilterColor(float rgba[4], int filter)
-{
-    if(!rgba)
-        return false;
+    if(!rgba) return false;
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
@@ -418,8 +121,206 @@ boolean R_GetFilterColor(float rgba[4], int filter)
     }
 
     if(filter)
-        Con_Error("R_GetFilterColor: Strange filter number: %d.\n", filter);
+        Con_Error("R_ViewFilterColor: Strange filter number: %d.\n", filter);
     return false;
+}
+
+/**
+ * Sets the new palette based upon the current values of
+ * player_t->damageCount and player_t->bonusCount.
+ */
+void R_UpdateViewFilter(int player)
+{
+    player_t* plr = players + player;
+    int palette = 0;
+
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_UpdateViewFilter: Invalid player #%i, ignoring.\n", player);
+#endif
+        return;
+    }
+
+    // Not currently present?
+    if(!plr->plr->inGame) return;
+
+    if(G_GameState() == GS_MAP)
+    {
+        if(plr->poisonCount)
+        {
+            palette = 0;
+            palette = (plr->poisonCount + 7) >> 3;
+            if(palette >= NUMPOISONPALS)
+            {
+                palette = NUMPOISONPALS - 1;
+            }
+            palette += STARTPOISONPALS;
+        }
+        else if(plr->damageCount)
+        {
+            palette = (plr->damageCount + 7) >> 3;
+            if(palette >= NUMREDPALS)
+            {
+                palette = NUMREDPALS - 1;
+            }
+            palette += STARTREDPALS;
+        }
+        else if(plr->bonusCount)
+        {
+            palette = (plr->bonusCount + 7) >> 3;
+            if(palette >= NUMBONUSPALS)
+            {
+                palette = NUMBONUSPALS - 1;
+            }
+            palette += STARTBONUSPALS;
+        }
+        else if(plr->plr->mo->flags2 & MF2_ICEDAMAGE)
+        {   // Frozen player
+            palette = STARTICEPAL;
+        }
+    }
+
+    // $democam
+    if(palette)
+    {
+        plr->plr->flags |= DDPF_VIEW_FILTER;
+        R_ViewFilterColor(plr->plr->filterColor, palette);
+    }
+    else
+    {
+        plr->plr->flags &= ~DDPF_VIEW_FILTER;
+    }
+}
+
+static void rendPlayerView(int player)
+{
+    player_t* plr = &players[player];
+    boolean special200 = false;
+    float pspriteOffsetY;
+
+    if(!plr->plr->mo)
+    {
+        Con_Message("rendPlayerView: Rendering view of player %i, who has no mobj!\n", player);
+        return;
+    }
+
+    if(IS_CLIENT)
+    {
+        // Server updates mobj flags in NetSv_Ticker.
+        R_SetAllDoomsdayFlags();
+    }
+
+    // Check for the sector special 200: use sky2.
+    // I wonder where this is used?
+    if(P_ToXSectorOfBspLeaf(plr->plr->mo->bspLeaf)->special == 200)
+    {
+        special200 = true;
+        R_SkyParams(0, DD_DISABLE, NULL);
+        R_SkyParams(1, DD_ENABLE, NULL);
+    }
+
+    pspriteOffsetY = HU_PSpriteYOffset(plr);
+    DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);
+
+    // $democam
+    GL_SetFilter((plr->plr->flags & DDPF_USE_VIEW_FILTER)? true : false);
+    if(plr->plr->flags & DDPF_USE_VIEW_FILTER)
+    {
+        const float* color = plr->plr->filterColor;
+        GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);
+    }
+
+    // Render the view with possible custom filters.
+    R_RenderPlayerView(player);
+
+    if(special200)
+    {
+        R_SkyParams(0, DD_ENABLE, NULL);
+        R_SkyParams(1, DD_DISABLE, NULL);
+    }
+}
+
+static void rendHUD(int player, const RectRaw* portGeometry)
+{
+    if(player < 0 || player >= MAXPLAYERS) return;
+    if(G_GameState() != GS_MAP) return;
+    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
+    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT)) return; // The engine advises not to draw any HUD displays.
+
+    ST_Drawer(player);
+    HU_DrawScoreBoard(player);
+    Hu_MapTitleDrawer(portGeometry);
+}
+
+void X_DrawViewPort(int port, const RectRaw* portGeometry,
+    const RectRaw* windowGeometry, int player, int layer)
+{
+    if(layer != 0)
+    {
+        rendHUD(player, portGeometry);
+        return;
+    }
+
+    switch(G_GameState())
+    {
+    case GS_MAP: {
+        player_t* plr = players + player;
+
+        if(!ST_AutomapObscures2(player, windowGeometry))
+        {
+            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
+
+            rendPlayerView(player);
+
+            // Crosshair.
+            if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
+                X_Drawer(player);
+        }
+        break;
+      }
+    case GS_STARTUP:
+        DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
+        break;
+
+    default: break;
+    }
+}
+
+void X_DrawWindow(const Size2Raw* windowSize)
+{
+    if(G_GameState() == GS_INTERMISSION)
+    {
+        IN_Drawer();
+    }
+
+    // Draw HUD displays; menu, messages.
+    Hu_Drawer();
+
+    if(G_QuitInProgress())
+    {
+        DGL_DrawRectf2Color(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
+    }
+}
+
+void X_EndFrame(void)
+{
+    int i;
+
+    SN_UpdateActiveSequences();
+
+    if(G_GameState() != GS_MAP) return;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+
+        if(!plr->plr->inGame || !plr->plr->mo) continue;
+
+        // View angles are updated with fractional ticks, so we can just use the current values.
+        R_SetViewAngle(i, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(i)));
+        R_SetViewPitch(i, plr->plr->lookDir);
+    }
 }
 
 /**
@@ -439,7 +340,10 @@ void R_SetAllDoomsdayFlags(void)
         for(mo = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); mo; mo = mo->sNext)
         {
             if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
+            {
+                Mobj_UpdateTranslationClassAndMap(mo);
                 continue;
+            }
 
             // Reset the flags for a new frame.
             mo->ddFlags &= DDMF_CLEAR_MASK;
@@ -486,7 +390,7 @@ void R_SetAllDoomsdayFlags(void)
                                         !(mo->flags & MF_VIEWALIGN)))
                 mo->ddFlags |= DDMF_VIEWALIGN;
 
-            R_SetTranslation(mo);
+            Mobj_UpdateTranslationClassAndMap(mo);
 
             // An offset for the light emitted by this object.
             /*          Class = MobjLightOffsets[mo->type];

@@ -1,0 +1,39 @@
+@chapter{ Game modes }
+
+@a{gamemode} One game plugin, such as @plugin{libdoom}, is able to run in many
+different modes. Each mode emulates a specific version of the original game
+and typically has its own IWAD file.
+
+Below is a list of all the game modes supported by the game plugins
+distributed with Doomsday: @plugin{libdoom} (previously called jDoom),
+@plugin{libheretic} (jHeretic) and @plugin{libhexen} (jHexen).
+
+@table{19 25 56}{
+	@header{Plugin} @tab @header{Game Mode} @tab @header{Description} @row{single}
+
+@plugin{libdoom} 
+    @tab doom1-share @tab Shareware Doom @row
+	@tab doom1 @tab Registered Doom @row
+	@tab doom1-ultimate @tab Ultimate Doom* @row
+	@tab doom2 @tab Doom 2 @row
+	@tab doom2-plut @tab Final Doom: Plutonia Experiment @row
+	@tab doom2-tnt @tab Final Doom: TNT Evilution @row
+	@tab chex @tab Chex Quest @row
+	@tab hacx @tab HacX @row
+
+@plugin{libheretic} 
+    @tab heretic-share @tab Shareware Heretic @row
+	@tab heretic @tab Registered Heretic @row
+	@tab heretic-ext @tab Heretic: Shadow of the Serpent Riders** @row
+
+@plugin{libhexen} 
+    @tab hexen @tab Hexen v1.1 @row
+    @tab hexen-v10 @tab Hexen v1.0 @row
+	@tab hexen-dk @tab Hexen: Death Kings of Dark Citadel @row
+	@tab hexen-demo @tab The 4-level Hexen Demo
+}
+
+@caption{* = has a 4th episode @br ** = has episodes 4 and 5}
+
+To help @plugin{libhexen} recognize the IWAD of the 4-level
+Hexen (beta) demo, you should rename the IWAD to @file{hexendemo.wad}.

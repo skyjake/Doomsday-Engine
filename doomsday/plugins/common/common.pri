@@ -1,5 +1,5 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 common_inc = $$PWD/include
 common_src = $$PWD/src
@@ -15,12 +15,15 @@ HEADERS += \
     $$common_inc/d_netcl.h \
     $$common_inc/d_netsv.h \
     $$common_inc/dmu_lib.h \
-    $$common_inc/f_infine.h \
+    $$common_inc/fi_lib.h \
     $$common_inc/g_common.h \
     $$common_inc/g_controls.h \
     $$common_inc/g_defs.h \
     $$common_inc/g_eventsequence.h \
     $$common_inc/g_update.h \
+    $$common_inc/gl_drawpatch.h \
+    $$common_inc/hu_automap.h \
+    $$common_inc/hu_chat.h \
     $$common_inc/hu_inventory.h \
     $$common_inc/hu_lib.h \
     $$common_inc/hu_log.h \
@@ -29,9 +32,8 @@ HEADERS += \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
-    $$common_inc/m_defs.h \
+    $$common_inc/mobj.h \
     $$common_inc/p_actor.h \
-    $$common_inc/p_automap.h \
     $$common_inc/p_ceiling.h \
     $$common_inc/p_door.h \
     $$common_inc/p_floor.h \
@@ -42,9 +44,11 @@ HEADERS += \
     $$common_inc/p_mapspec.h \
     $$common_inc/p_plat.h \
     $$common_inc/p_player.h \
+    $$common_inc/p_savedef.h \
     $$common_inc/p_saveg.h \
+    $$common_inc/p_saveio.h \
+    $$common_inc/p_sound.h \
     $$common_inc/p_start.h \
-    $$common_inc/p_svtexarc.h \
     $$common_inc/p_switch.h \
     $$common_inc/p_terraintype.h \
     $$common_inc/p_tick.h \
@@ -54,8 +58,7 @@ HEADERS += \
     $$common_inc/p_xgline.h \
     $$common_inc/p_xgsec.h \
     $$common_inc/r_common.h \
-    $$common_inc/rend_automap.h \
-    $$common_inc/st_lib.h \
+    $$common_inc/saveinfo.h \
     $$common_inc/x_hair.h \
     $$common_inc/xgclass.h
 
@@ -65,12 +68,15 @@ SOURCES += \
     $$common_src/d_netcl.c \
     $$common_src/d_netsv.c \
     $$common_src/dmu_lib.c \
-    $$common_src/f_infine.c \
+    $$common_src/fi_lib.c \
     $$common_src/g_controls.c \
     $$common_src/g_defs.c \
     $$common_src/g_eventsequence.c \
     $$common_src/g_game.c \
     $$common_src/g_update.c \
+    $$common_src/gl_drawpatch.c \
+    $$common_src/hu_automap.c \
+    $$common_src/hu_chat.c \
     $$common_src/hu_inventory.c \
     $$common_src/hu_lib.c \
     $$common_src/hu_log.c \
@@ -80,9 +86,8 @@ SOURCES += \
     $$common_src/hu_stuff.c \
     $$common_src/m_ctrl.c \
     $$common_src/m_fixed.c \
-    $$common_src/m_multi.c \
+    $$common_src/mobj.c \
     $$common_src/p_actor.c \
-    $$common_src/p_automap.c \
     $$common_src/p_ceiling.c \
     $$common_src/p_door.c \
     $$common_src/p_floor.c \
@@ -94,8 +99,9 @@ SOURCES += \
     $$common_src/p_plat.c \
     $$common_src/p_player.c \
     $$common_src/p_saveg.c \
+    $$common_src/p_saveio.c \
+    $$common_src/p_sound.c \
     $$common_src/p_start.c \
-    $$common_src/p_svtexarc.c \
     $$common_src/p_switch.c \
     $$common_src/p_terraintype.c \
     $$common_src/p_tick.c \
@@ -106,6 +112,5 @@ SOURCES += \
     $$common_src/p_xgsave.c \
     $$common_src/p_xgsec.c \
     $$common_src/r_common.c \
-    $$common_src/rend_automap.c \
-    $$common_src/st_lib.c \
+    $$common_src/saveinfo.c \
     $$common_src/x_hair.c

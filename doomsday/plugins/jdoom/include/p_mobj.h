@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,11 +34,22 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#include "dd_types.h"
 #include "d_think.h"
 #include "p_terraintype.h"
 #include "doomdata.h"
 #include "info.h"
 #include "tables.h"
+
+#define NOMOM_THRESHOLD     (0.0001) // (integer) 0
+#define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
+#define MAXMOM              (30) // 30*FRACUNIT
+#define MAXMOMSTEP          (15) // 30*FRACUNIT/2
+
+#define FRICTION_LOW        (0.97265625) // 0xf900
+#define FRICTION_FLY        (0.91796875) // 0xeb00
+#define FRICTION_NORMAL     (0.90625000) // 0xe800
+#define FRICTION_HIGH       (0.41992187) // 0xd700/2
 
 /**
  * Mobj flags
@@ -137,6 +148,7 @@
 // --- mobj.flags3 ---
 
 #define MF3_NOINFIGHT       0x00000001  // Mobj will never be targeted for in-fighting
+#define MF3_CLIENTACTION    0x00000002  // States' action funcs are executed by client
 
 // --- mobj.intflags ---
 // Internal mobj flags cannot be set using an external definition.
@@ -160,6 +172,8 @@ typedef enum dirtype_s {
     NUMDIRS
 } dirtype_t;
 
+#define VALID_MOVEDIR(v)    ((v) >= DI_EAST && (v) <= DI_SOUTHEAST)
+
 // Map Object definition.
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
@@ -174,33 +188,33 @@ typedef struct mobj_s {
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
-    struct mobj_s  *target;
+    struct mobj_s*  target;
 
     // If >0, the target will be chased
     // no matter what (even if shot)
     int             threshold;
 
     int             intFlags;       // internal flags
-    float           dropOffZ;       // $dropoff_fix
+    coord_t         dropOffZ;       // $dropoff_fix
     short           gear;           // used in torque simulation
     boolean         wallRun;        // true = last move was the result of a wallrun
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    struct player_s *player;
+    struct player_s* player;
 
     // Player number last looked for.
     int             lastLook;
 
     // For nightmare/multiplayer respawn.
     struct {
-        float           pos[3];
+        coord_t         origin[3];
         angle_t         angle;
         int             flags; // MSF_* flags
     } spawnSpot;
 
     // Thing being chased/attacked for tracers.
-    struct mobj_s  *tracer;
+    struct mobj_s* tracer;
 
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
@@ -211,22 +225,22 @@ typedef struct polyobj_s {
     DD_BASE_POLYOBJ_ELEMENTS()
 
     // Doom-specific data:
-} polyobj_t;
+} Polyobj;
 
-mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
-                          angle_t angle, int spawnFlags);
-mobj_t*     P_SpawnMobj3fv(mobjtype_t type, const float pos[3],
-                           angle_t angle, int spawnFlags);
+mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle, int spawnFlags);
+mobj_t* P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
 
-mobj_t*     P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
-                              angle_t angle);
-mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
-void        P_SpawnPuff(float x, float y, float z, angle_t angle);
-void        P_SpawnBlood(float x, float y, float z, int damage,
-                         angle_t angle);
-mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);
+mobj_t* P_SpawnCustomPuff(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t angle);
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
+
+void P_SpawnPuff(coord_t x, coord_t y, coord_t z, angle_t angle);
+
+void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
+
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
-float       P_MobjGetFriction(mobj_t *mo);
+
+coord_t P_MobjGetFriction(mobj_t* mo);
 
 #endif

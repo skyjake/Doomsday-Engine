@@ -57,16 +57,9 @@ Flag { # Allow using detailtex with external resources.
 }
 
 # Materials
-Flag { ID = "matf_custom"; Value = 0x1; }
+# Flag { ID = "matf_unused1"; Value = 0x1; }
 Flag { ID = "matf_dontdraw"; Value = 0x2; } # Material should never be drawn.
-Flag { ID = "matf_glow"; Value = 0x4; } # Glowing material.
-Flag { ID = "matf_skymask"; Value = 0x8; } # Sky-mask surfaces using this material.
-
-# Material groups
-Flag { ID = "mn_textures"; Value = 0; }
-Flag { ID = "mn_flats"; Value = 1; }
-Flag { ID = "mn_sprites"; Value = 2; }
-Flag { ID = "mn_system"; Value = 3; }
+Flag { ID = "matf_skymask"; Value = 0x4; } # Sky-mask surfaces using this material.
 
 # Lights
 Flag { ID = "lgf_nohalo"; Value = 0x1; }

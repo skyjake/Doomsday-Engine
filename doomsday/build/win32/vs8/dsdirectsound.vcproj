@@ -816,10 +816,18 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\..\..\plugins\directsound\api\dsdirectsound.def"
+		<Filter
+			Name="API"
 			>
-		</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\directsound\api\dsdirectsound.def"
+					>
+				</File>
+			</Filter>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

@@ -1,10 +1,10 @@
-/**\file
+/**\file def_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,10 +24,13 @@
  */
 
 /**
- * def_main.c: Definitions Subsystem
+ * Definitions Subsystem
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <string.h>
+#include <ctype.h>
 
 #include "de_base.h"
 #include "de_system.h"
@@ -36,9 +39,17 @@
 #include "de_console.h"
 #include "de_audio.h"
 #include "de_misc.h"
+#include "de_graphics.h"
+#include "de_ui.h"
+#include "de_filesys.h"
 
-#include <string.h>
-#include <ctype.h>
+#include "r_data.h"
+
+#include "font.h"
+#include "bitmapfont.h"
+#include "texture.h"
+#include "resourcenamespace.h"
+#include "abstractresource.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
@@ -69,34 +80,38 @@ void Def_ReadProcessDED(const char* filename);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern filename_t defsFileName;
-extern filename_t topDefsFileName;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ded_t defs; // The main definitions database.
+boolean firstDED;
+
 sprname_t* sprNames; // Sprite name list.
+ded_count_t countSprNames;
+
 state_t* states; // State list.
-ded_light_t** stateLights;
-ded_ptcgen_t** statePtcGens;
+ded_count_t countStates;
+
 mobjinfo_t* mobjInfo; // Map object info database.
+ded_count_t countMobjInfo;
+
 sfxinfo_t* sounds; // Sound effect list.
+ded_count_t countSounds;
 
 ddtext_t* texts; // Text list.
-mobjinfo_t** stateOwners; // A pointer for each state.
-ded_count_t countSprNames;
-ded_count_t countStates;
-ded_count_t countMobjInfo;
-ded_count_t countSounds;
 ded_count_t countTexts;
+
+mobjinfo_t** stateOwners; // A pointer for each State.
 ded_count_t countStateOwners;
 
-boolean firstDED;
+ded_light_t** stateLights; // A pointer for each State.
+ded_count_t countStateLights;
+
+ded_ptcgen_t** statePtcGens; // A pointer for each State.
+ded_count_t countStatePtcGens;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean defsInited = false;
-static const char* dedFiles[MAX_READ];
 static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
@@ -109,9 +124,13 @@ xgclass_t* xgClassLinks;
  * XGFunc links are provided by the Game, who owns the actual
  * XG classes and their functions.
  */
-static int GetXGClasses(void)
+int Def_GetGameClasses(void)
 {
-    xgClassLinks = (xgclass_t *) gx.GetVariable(DD_XGFUNC_LINK);
+    xgClassLinks = 0;
+
+    if(gx.GetVariable)
+        xgClassLinks = (xgclass_t*) gx.GetVariable(DD_XGFUNC_LINK);
+
     if(!xgClassLinks)
     {
         memset(&nullXgClassLinks, 0, sizeof(nullXgClassLinks));
@@ -125,104 +144,58 @@ static int GetXGClasses(void)
  */
 void Def_Init(void)
 {
-    int                 i, c, p;
-
-    sprNames = NULL; // Sprite name list.
-    mobjInfo = NULL;
-    states = NULL;
-    statePtcGens = NULL;
-    stateLights = NULL;
-    sounds = NULL;
-    texts = NULL;
-    stateOwners = NULL;
+    sprNames = 0;
     DED_ZCount(&countSprNames);
+
+    mobjInfo = 0;
     DED_ZCount(&countMobjInfo);
+
+    states = 0;
     DED_ZCount(&countStates);
+
+    sounds = 0;
     DED_ZCount(&countSounds);
+
+    texts = 0;
     DED_ZCount(&countTexts);
+
+    stateOwners = 0;
     DED_ZCount(&countStateOwners);
 
-    // Retrieve the XG Class links from the game .dll
-    GetXGClasses();
+    statePtcGens = 0;
+    DED_ZCount(&countStatePtcGens);
+
+    stateLights = 0;
+    DED_ZCount(&countStateLights);
 
     DED_Init(&defs);
-
-    for(i = 0; i < MAX_READ; ++i)
-        dedFiles[i] = NULL;
-
-    // The engine defs.
-    c = 0;
-    dedFiles[c++] = defsFileName;
-
-    // Add the default ded. It will be overwritten by -defs.
-    dedFiles[c++] = topDefsFileName;
-
-    // See which .ded files are specified on the command line.
-    for(p = 0; p < Argc(); ++p)
-    {
-        const char*         arg = Argv(p);
-
-        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg))
-            continue;
-
-        while(c < MAX_READ && ++p != Argc() && !ArgIsOption(p))
-        {
-            // Add it to the list.
-            dedFiles[c++] = Argv(p);
-
-            Con_Message("Def_Init: Added '%s' to dedFiles.\n", Argv(p));
-        }
-
-        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }
 }
 
-/**
- * Destroy databases.
- */
 void Def_Destroy(void)
 {
+    int i;
+
     // To make sure...
-    DED_Destroy(&defs);
+    DED_Clear(&defs);
     DED_Init(&defs);
 
     // Destroy the databases.
-    DED_DelArray((void **) &sprNames, &countSprNames);
-    DED_DelArray((void **) &states, &countStates);
-    DED_DelArray((void **) &mobjInfo, &countMobjInfo);
-    DED_DelArray((void **) &sounds, &countSounds);
-    DED_DelArray((void **) &texts, &countTexts);
-    DED_DelArray((void **) &stateOwners, &countStateOwners);
+    DED_DelArray((void**) &sprNames, &countSprNames);
+    DED_DelArray((void**) &states, &countStates);
+    DED_DelArray((void**) &mobjInfo, &countMobjInfo);
 
-    // Destroy the state array, parallel LUTs.
-    if(statePtcGens)
-        M_Free(statePtcGens);
-    statePtcGens = NULL;
-    if(stateLights)
-        M_Free(stateLights);
-    stateLights = NULL;
+    for(i = 0; i < countSounds.num; ++i)
+    {
+        Str_Free(&sounds[i].external);
+    }
+    DED_DelArray((void**) &sounds, &countSounds);
+
+    DED_DelArray((void**) &texts, &countTexts);
+    DED_DelArray((void**) &stateOwners, &countStateOwners);
+    DED_DelArray((void**) &statePtcGens, &countStatePtcGens);
+    DED_DelArray((void**) &stateLights, &countStateLights);
 
     defsInited = false;
-}
-
-/**
- * Guesses the location of the Defs Auto directory based on main DED
- * file.
- */
-void Def_GetAutoPath(char* path, size_t len)
-{
-    char*               lastSlash;
-
-    strncpy(path, topDefsFileName, len);
-    lastSlash = strrchr(path, DIR_SEP_CHAR);
-    if(!lastSlash)
-    {
-        strncpy(path, "", len); // Failure!
-        return;
-    }
-
-    strncpy(lastSlash + 1, "auto" DIR_SEP_STR,
-            len - ((lastSlash + 1) - path));
 }
 
 /**
@@ -356,196 +329,236 @@ int Def_GetMusicNum(const char* id)
     return idx;
 }
 
-/*// A simple action function that will be executed.
-   void A_ExecuteCommand(mobj_t *mobj)
-   {
-
-   } */
-
 acfnptr_t Def_GetActionPtr(const char* name)
 {
-    // Action links are provided by the Game, who owns the actual action functions.
-    actionlink_t* link = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK);
+    actionlink_t* linkIt;
 
-    if(!link)
+    if(!name || !name[0]) return 0;
+    if(!DD_GameLoaded()) return 0;
+
+    // Action links are provided by the game, who owns the actual action functions.
+    for(linkIt = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK);
+        linkIt && linkIt->name; linkIt++)
     {
-        Con_Error("GetActionPtr: Game DLL doesn't have an action function link table.\n");
-    }
-
-    if(!name || !name[0])
-        return 0;
-
-    for(; link->name; link++)
+        actionlink_t* link = linkIt;
         if(!stricmp(name, link->name))
             return link->func;
-
-    // The engine provides a couple of simple action functions.
-    /*if(!stricmp(name, "A_ExecuteCommand"))
-       return A_ExecuteCommand;
-       if(!stricmp(name, "A_ExecuteCommandPSpr"))
-       return A_ExecuteCommandPSpr; */
-
+    }
     return 0;
 }
 
-ded_mapinfo_t* Def_GetMapInfo(const char* mapID)
+ded_mapinfo_t* Def_GetMapInfo(const Uri* uri)
 {
-    int                 i;
-
-    if(!mapID || !mapID[0])
-        return 0;
+    int i;
+    if(!uri) return 0;
 
     for(i = defs.count.mapInfo.num - 1; i >= 0; i--)
-        if(!stricmp(defs.mapInfo[i].id, mapID))
+    {
+        if(defs.mapInfo[i].uri && Uri_Equality(defs.mapInfo[i].uri, uri))
             return defs.mapInfo + i;
-
+    }
     return 0;
 }
 
 ded_sky_t* Def_GetSky(const char* id)
 {
-    int                 i;
-
-    if(!id || !id[0])
-        return NULL;
+    int i;
+    if(!id || !id[0]) return NULL;
 
     for(i = defs.count.skies.num - 1; i >= 0; i--)
+    {
         if(!stricmp(defs.skies[i].id, id))
             return defs.skies + i;
-
+    }
     return NULL;
 }
 
-ded_material_t* Def_GetMaterial(const char* name, material_namespace_t mnamespace)
+static ded_material_t* findMaterialDef(const Uri* uri)
 {
-    int                 i;
-
-    if(!name || !name[0])
-        return NULL;
-
+    int i;
     for(i = defs.count.materials.num - 1; i >= 0; i--)
     {
-        ded_material_t*     def = &defs.materials[i];
+        ded_material_t* def = &defs.materials[i];
+        if(!def->uri || !Uri_Equality(def->uri, uri)) continue;
+        return def;
+    }
+    return NULL;
+}
 
-        if(mnamespace != MN_ANY && def->id.mnamespace != mnamespace)
-            continue;
+ded_material_t* Def_GetMaterial(const char* uriCString)
+{
+    ded_material_t* def = NULL;
+    if(uriCString && uriCString[0])
+    {
+        Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
 
-        if(!stricmp(def->id.name, name))
+        if(Str_IsEmpty(Uri_Scheme(uri)))
+        {
+            // Caller doesn't care which namespace - use a priority search order.
+            Uri* temp = Uri_NewCopy(uri);
+
+            Uri_SetScheme(temp, MN_SPRITES_NAME);
+            def = findMaterialDef(temp);
+            if(!def)
+            {
+                Uri_SetScheme(temp, MN_TEXTURES_NAME);
+                def = findMaterialDef(temp);
+            }
+            if(!def)
+            {
+                Uri_SetScheme(temp, MN_FLATS_NAME);
+                def = findMaterialDef(temp);
+            }
+            Uri_Delete(temp);
+        }
+
+        if(!def)
+        {
+            def = findMaterialDef(uri);
+        }
+        Uri_Delete(uri);
+    }
+    return def;
+}
+
+static ded_compositefont_t* findCompositeFontDef(const Uri* uri)
+{
+    int i;
+    for(i = defs.count.compositeFonts.num - 1; i >= 0; i--)
+    {
+        ded_compositefont_t* def = &defs.compositeFonts[i];
+        if(!def->uri || !Uri_Equality(def->uri, uri)) continue;
+        return def;
+    }
+    return NULL;
+}
+
+ded_compositefont_t* Def_GetCompositeFont(const char* uriCString)
+{
+    ded_compositefont_t* def = NULL;
+    if(uriCString && uriCString[0])
+    {
+        Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+
+        if(Str_IsEmpty(Uri_Scheme(uri)))
+        {
+            // Caller doesn't care which namespace - use a priority search order.
+            Uri* temp = Uri_NewCopy(uri);
+
+            Uri_SetScheme(temp, FN_GAME_NAME);
+            def = findCompositeFontDef(temp);
+            if(!def)
+            {
+                Uri_SetScheme(temp, FN_SYSTEM_NAME);
+                def = findCompositeFontDef(temp);
+            }
+            Uri_Delete(temp);
+        }
+
+        if(!def)
+        {
+            def = findCompositeFontDef(uri);
+        }
+        Uri_Delete(uri);
+    }
+    return def;
+}
+
+ded_decor_t* Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean isCustom)
+{
+    ded_decor_t* def;
+    int i;
+    for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
+    {
+        materialid_t defMatId;
+
+        if(!def->material) continue;
+
+        // Is this suitable?
+        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
+        if(matId == defMatId && R_IsAllowedDecoration(def, hasExternal, isCustom))
             return def;
     }
-
-    return 0;
-}
-
-ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
-{
-    int                 i;
-    ded_decor_t*        def;
-
-    for(i = defs.count.decorations.num - 1, def = defs.decorations + i;
-        i >= 0; i--, def--)
-    {
-        material_t*         defMat =
-            P_ToMaterial(P_MaterialNumForName(def->material.name,
-                                                    def->material.mnamespace));
-
-        if(mat == defMat)
-        {
-            // Is this suitable?
-            if(R_IsAllowedDecoration(def, mat, hasExt))
-                return def;
-        }
-    }
-
-    return 0;
-}
-
-ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
-{
-    int                 i;
-    ded_reflection_t*   def;
-
-    for(i = defs.count.reflections.num - 1, def = defs.reflections + i;
-        i >= 0; i--, def--)
-    {
-        material_t*         defMat =
-            P_ToMaterial(P_MaterialNumForName(def->material.name,
-                                                    def->material.mnamespace));
-        if(mat == defMat)
-        {
-            // Is this suitable?
-            if(R_IsAllowedReflection(def, mat, hasExt))
-                return def;
-        }
-    }
-
     return NULL;
 }
 
-ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
+ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boolean isCustom)
 {
-    int                 i;
+    ded_reflection_t* def;
+    int i;
+    for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
+    {
+        materialid_t defMatId;
+
+        if(!def->material) continue;
+
+        // Is this suitable?
+        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
+        if(matId == defMatId && R_IsAllowedReflection(def, hasExternal, isCustom))
+            return def;
+    }
+    return NULL;
+}
+
+ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, boolean isCustom)
+{
     ded_detailtexture_t* def;
-
-    // Search through the assignments.
-    for(i = defs.count.details.num - 1, def = defs.details + i;
-        i >= 0; i--, def--)
+    int i;
+    for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        material_t*         defMat =
-            P_ToMaterial(P_MaterialNumForName(def->material1.name,
-                                                    def->material1.mnamespace));
-        if(mat == defMat)
+        if(def->material1)
         {
-            // Is this sutiable?
-            if(R_IsAllowedDetailTex(def, mat, hasExt))
+            materialid_t defMatId = Materials_ResolveUri2(def->material1, true/*quiet please*/);
+            // Is this suitable?
+            if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
         }
 
-        defMat =
-            P_ToMaterial(P_MaterialNumForName(def->material2.name,
-                                                    def->material2.mnamespace));
-        if(mat == defMat)
+        if(def->material2)
         {
-            // Is this sutiable?
-            if(R_IsAllowedDetailTex(def, mat, hasExt))
+            materialid_t defMatId = Materials_ResolveUri2(def->material2, true/*quiet please*/);
+            // Is this suitable?
+            if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
         }
     }
-
     return NULL;
 }
 
-ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
+ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean isCustom)
 {
-    ded_ptcgen_t*       def;
-    int                 i;
-
-    // The generator will be determined now.
+    ded_ptcgen_t* def;
+    int i;
     for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
     {
-        material_t*         defMat;
+        materialid_t defMatId;
 
-        if(!(defMat = P_ToMaterial(
-                P_MaterialNumForName(def->material.name, def->material.mnamespace))))
-            continue;
+        if(!def->material) continue;
+        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
+        if(defMatId == NOMATERIALID) continue;
 
+        // Is this suitable?
         if(def->flags & PGF_GROUP)
-        {   // Generator triggered by all materials in the (animation) group.
+        {
             /**
+             * Generator triggered by all materials in the (animation) group.
              * A search is necessary only if we know both the used material and
              * the specified material in this definition are in *a* group.
              */
-            if(defMat->inAnimGroup && mat->inAnimGroup)
+            material_t* mat = Materials_ToMaterial(matId);
+            material_t* defMat = Materials_ToMaterial(defMatId);
+            if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
             {
-                int                 g, numGroups = R_NumAnimGroups();
+                int g, numGroups = Materials_AnimGroupCount();
 
                 for(g = 0; g < numGroups; ++g)
                 {
-                    if(R_IsInAnimGroup(g, defMat) && R_IsInAnimGroup(g, mat))
-                    {
-                        if(R_IsPrecacheGroup(g))
-                            continue; // Precache groups don't apply.
+                    if(Materials_IsPrecacheAnimGroup(g))
+                        continue; // Precache groups don't apply.
 
+                    if(Materials_IsMaterialInAnimGroup(defMat, g) &&
+                       Materials_IsMaterialInAnimGroup(mat, g))
+                    {
                         // Both are in this group! This def will do.
                         return def;
                     }
@@ -553,10 +566,9 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
             }
         }
 
-        if(mat == defMat)
+        if(matId == defMatId)
             return def;
     }
-
     return NULL; // Not found.
 }
 
@@ -576,33 +588,24 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
     return NULL;
 }
 
-ded_xgclass_t* Def_GetXGClass(const char* name)
-{
-    ded_xgclass_t*      def;
-    int                 i;
-
-    if(!name || !name[0])
-        return 0;
-
-    for(i = defs.count.xgClasses.num - 1, def = defs.xgClasses + i;
-        i >= 0; i--, def--)
-    {
-        if(!(stricmp(name, def->id)))
-            return def;
-    }
-
-    return 0;
-}
-
 int Def_GetFlagValue(const char* flag)
 {
-    int                 i;
+    int i;
+
+    if(!flag || !flag[0])
+    {
+        DEBUG_Message(("Attempted Def_GetFlagValue with %s flag argument.\n",
+                       flag? "zero-length" : "<null>"));
+        return 0;
+    }
 
     for(i = defs.count.flags.num - 1; i >= 0; i--)
+    {
         if(!stricmp(defs.flags[i].id, flag))
             return defs.flags[i].value;
+    }
 
-    Con_Message("Def_GetFlagValue: Undefined flag '%s'.\n", flag);
+    Con_Message("Warning: Def_GetFlagValue: Undefined flag '%s'.\n", flag);
     return 0;
 }
 
@@ -656,7 +659,7 @@ int Def_GetTextNumForName(const char* name)
 }
 
 /**
- * Escape sequences are un-escaped (\n, \r, \t, \s, \_).
+ * Escape sequences are un-escaped (\\n, \\r, \\t, \\s, \\_).
  */
 void Def_InitTextDef(ddtext_t* txt, char* str)
 {
@@ -691,23 +694,20 @@ void Def_InitTextDef(ddtext_t* txt, char* str)
 /**
  * Callback for DD_ReadProcessDED.
  */
-int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
+int Def_ReadDEDFile(const char* fn, pathdirectorynode_type_t type, void* parm)
 {
     // Skip directories.
-    if(type == FT_DIRECTORY)
+    if(type == PT_BRANCH)
         return true;
 
-    if(M_CheckFileID(fn))
+    if(F_CheckFileId(fn))
     {
         if(!DED_Read(&defs, fn))
-        {
-            // Damn.
             Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
-        }
-        else if(verbose)
-        {
-            Con_Message("DED done: %s\n", M_PrettyPath(fn));
-        }
+    }
+    else
+    {
+        Con_Message("Warning:Def_ReadDEDFile \"%s\" not found!\n", fn);
     }
 
     // Continue processing files.
@@ -716,33 +716,8 @@ int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
 
 void Def_ReadProcessDED(const char* fileName)
 {
-    filename_t          fn, fullFn;
-    directory_t         dir;
-
-    memset(&dir, 0, sizeof(dir));
-
-    Dir_FileName(fn, fileName, FILENAME_T_MAXLEN);
-
-    // We want an absolute path.
-    if(!Dir_IsAbsolute(fileName))
-    {
-        Dir_FileDir(fileName, &dir);
-        sprintf(fullFn, "%s%s", dir.path, fn);
-    }
-    else
-    {
-        strncpy(fullFn, fileName, FILENAME_T_MAXLEN);
-    }
-
-    if(strchr(fn, '*') || strchr(fn, '?'))
-    {
-        // Wildcard search.
-        F_ForAll(fullFn, 0, Def_ReadDEDFile);
-    }
-    else
-    {
-        Def_ReadDEDFile(fullFn, FT_NORMAL, 0);
-    }
+    assert(fileName && fileName[0]);
+    Def_ReadDEDFile(fileName, PT_LEAF, 0);
 }
 
 /**
@@ -761,23 +736,22 @@ void Def_CountMsg(int count, const char* label)
  */
 void Def_ReadLumpDefs(void)
 {
-    int                 i, c;
-
-    for(i = 0, c = 0; i < numLumps; ++i)
-        if(!strnicmp(W_LumpName(i), "DD_DEFNS", 8))
-        {
-            c++;
-            if(!DED_ReadLump(&defs, i))
-            {
-                Con_Error("DD_ReadLumpDefs: Parse error when reading "
-                          "DD_DEFNS from\n  %s.\n", W_LumpSourceFile(i));
-            }
-        }
-
-    if(c || verbose)
+    int numProcessedLumps = 0;
+    int i, numLumps = F_LumpCount();
+    for(i = 0; i < numLumps; ++i)
     {
-        Con_Message("ReadLumpDefs: %i definition lump%s read.\n", c,
-                    c != 1 ? "s" : "");
+        if(strnicmp(F_LumpName(i), "DD_DEFNS", 8))
+            continue;
+        numProcessedLumps++;
+        if(!DED_ReadLump(&defs, i))
+        {
+            Con_Error("DD_ReadLumpDefs: Parse error when reading %s::DD_DEFNS.\n", F_LumpSourceFile(i));
+        }
+    }
+
+    if(verbose && numProcessedLumps > 0)
+    {
+        Con_Message("ReadLumpDefs: %i definition lump%s read.\n", numProcessedLumps, numProcessedLumps != 1 ? "s" : "");
     }
 }
 
@@ -810,7 +784,7 @@ int Def_StateForMobj(const char* state)
 
 int Def_GetIntValue(char* val, int* returned_val)
 {
-    char               *data;
+    char* data;
 
     // First look for a DED Value
     if(Def_Get(DD_DEF_VALUE, val, &data))
@@ -824,79 +798,312 @@ int Def_GetIntValue(char* val, int* returned_val)
     return false;
 }
 
-static void readDefs(void)
+static __inline void readDefinitionFile(const char* fileName)
 {
-    int                 i;
-    float               starttime = Sys_GetSeconds();
-
-    for(i = 0; dedFiles[i]; ++i)
-    {
-        Con_Message("Reading definition file: %s\n", M_PrettyPath(dedFiles[i]));
-        Def_ReadProcessDED(dedFiles[i]);
-    }
-
-    // Read definitions from WAD files.
-    Def_ReadLumpDefs();
-
-    VERBOSE(Con_Message("Def_ReadDefs: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - starttime));
+    if(!fileName || !fileName[0])
+        return;
+    Def_ReadProcessDED(fileName);
 }
 
 /**
- * Reads the specified definition files, and creates the sprite name,
- * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
+ * (f_allresourcepaths_callback_t)
  */
+static int autoDefsReader(const ddstring_t* fileName, pathdirectorynode_type_t type, void* paramaters)
+{
+    // Ignore directories.
+    if(type != PT_BRANCH)
+        readDefinitionFile(Str_Text(fileName));
+    return 0; // Continue searching.
+}
+
+static void readAllDefinitions(void)
+{
+    uint startTime = Sys_GetRealTime();
+    ddstring_t foundPath, buf;
+    int p;
+
+    // Start with engine's own top-level definition file, it is always read first.
+    Str_Init(&foundPath);
+    if(0 != F_FindResource2(RC_DEFINITION, "doomsday.ded", &foundPath))
+    {
+        VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(&foundPath))) )
+        readDefinitionFile(Str_Text(&foundPath));
+    }
+    else
+    {
+        Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
+    }
+    Str_Free(&foundPath);
+
+    // Now any definition files required by the game on load.
+    if(DD_GameLoaded())
+    {
+        Game* game = theGame;
+        AbstractResource* const* records = Game_Resources(game, RC_DEFINITION, 0);
+        AbstractResource* const* recordIt;
+
+        if(records)
+        for(recordIt = records; *recordIt; recordIt++)
+        {
+            AbstractResource* rec = *recordIt;
+            /// Try to locate this resource now.
+            const ddstring_t* path = AbstractResource_ResolvedPath(rec, true);
+
+            if(!path)//!(AbstractResource_ResourceFlags(rec) & RF_FOUND))
+            {
+                ddstring_t* names = AbstractResource_NameStringList(rec);
+                Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", Str_Text(names));
+                // Unreachable.
+                Str_Delete(names);
+            }
+
+            VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(path))) )
+
+            readDefinitionFile(Str_Text(path));
+        }
+    }
+
+    // Next up are definition files in the /auto directory.
+    if(!CommandLine_Exists("-noauto"))
+    {
+        ddstring_t pattern;
+        Str_Init(&pattern);
+        Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
+        F_AllResourcePaths(Str_Text(&pattern), 0, autoDefsReader);
+        Str_Free(&pattern);
+    }
+
+    // Any definition files on the command line?
+    Str_Init(&buf);
+    for(p = 0; p < CommandLine_Count(); ++p)
+    {
+        const char* arg = CommandLine_At(p);
+        if(!CommandLine_IsMatchingAlias("-def", arg) &&
+           !CommandLine_IsMatchingAlias("-defs", arg)) continue;
+
+        while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
+        {
+            const char* searchPath = CommandLine_PathAt(p);
+
+            Con_Message("  Processing '%s'...\n", F_PrettyPath(searchPath));
+
+            Str_Clear(&buf); Str_Set(&buf, searchPath);
+            F_FixSlashes(&buf, &buf);
+            F_ExpandBasePath(&buf, &buf);
+            // We must have an absolute path. If we still do not have one then
+            // prepend the current working directory if necessary.
+            F_PrependWorkPath(&buf, &buf);
+
+            readDefinitionFile(Str_Text(&buf));
+        }
+        p--; /* For ArgIsOption(p) necessary, for p==Argc() harmless */
+    }
+    Str_Free(&buf);
+
+    // Read DD_DEFNS definition lumps.
+    Def_ReadLumpDefs();
+
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+}
+
+void Def_GenerateGroupsFromAnims(void)
+{
+    int groupCount = R_AnimGroupCount(), i;
+    if(!groupCount) return;
+
+    // Group ids are 1-based.
+    for(i = 1; i < groupCount+1; ++i)
+    {
+        const animgroup_t* anim = R_ToAnimGroup(i);
+        ded_group_member_t* gmbr;
+        ded_group_t* grp;
+        int idx, j;
+
+        idx = DED_AddGroup(&defs);
+        grp = &defs.groups[idx];
+        grp->autoGenerated = true;
+        grp->flags = anim->flags;
+
+        for(j = 0; j < anim->count; ++j)
+        {
+            const animframe_t* frame = &anim->frames[j];
+
+            idx = DED_AddGroupMember(grp);
+            gmbr = &grp->members[idx];
+            gmbr->tics = frame->tics;
+            gmbr->randomTics = frame->randomTics;
+            gmbr->material = Textures_ComposeUri(frame->texture);
+            Uri_SetScheme(gmbr->material, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(Textures_Namespace(frame->texture))));
+        }
+    }
+}
+
+static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* paramaters)
+{
+    Uri* texUri = Textures_ComposeUri(texId);
+    ded_material_layer_stage_t* st;
+    ded_material_t* mat;
+    int stage, idx;
+    Texture* tex;
+
+    idx = DED_AddMaterial(&defs, NULL);
+    mat = &defs.materials[idx];
+    mat->autoGenerated = true;
+
+    mat->uri = Uri_NewCopy(texUri);
+    Uri_SetScheme(mat->uri, MN_TEXTURES_NAME);
+
+    tex = Textures_ToTexture(texId);
+    if(tex)
+    {
+        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserData(tex);
+        assert(pcTex);
+        mat->width  = Texture_Width(tex);
+        mat->height = Texture_Height(tex);
+        mat->flags = ((pcTex->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0);
+    }
+#if _DEBUG
+    else
+    {
+        ddstring_t* path = Uri_ToString(texUri);
+        Con_Message("Warning:generateMaterialDefForPatchCompositeTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
+        Str_Delete(path);
+    }
+#endif
+
+    stage = DED_AddMaterialLayerStage(&mat->layers[0]);
+    st = &mat->layers[0].stages[stage];
+    st->texture = texUri;
+    return 0; // Continue iteration.
+}
+
+static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters)
+{
+    Uri* texUri = Textures_ComposeUri(texId);
+    ded_material_layer_stage_t* st;
+    ded_material_t* mat;
+    int stage, idx;
+    Texture* tex;
+
+    idx = DED_AddMaterial(&defs, NULL);
+    mat = &defs.materials[idx];
+    mat->autoGenerated = true;
+
+    mat->uri = Uri_NewCopy(texUri);
+    Uri_SetScheme(mat->uri, MN_FLATS_NAME);
+
+    stage = DED_AddMaterialLayerStage(&mat->layers[0]);
+    st = &mat->layers[0].stages[stage];
+    st->texture = texUri;
+
+    tex = Textures_ToTexture(texId);
+    if(tex)
+    {
+        mat->width  = Texture_Width(tex);
+        mat->height = Texture_Height(tex);
+    }
+#if _DEBUG
+    else
+    {
+        ddstring_t* path = Uri_ToString(texUri);
+        Con_Message("Warning:generateMaterialDefForFlatTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
+        Str_Delete(path);
+    }
+#endif
+
+    return 0; // Continue iteration.
+}
+
+static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramaters)
+{
+    Uri* texUri = Textures_ComposeUri(texId);
+    ded_material_layer_stage_t* st;
+    ded_material_t* mat;
+    int stage, idx;
+    Texture* tex;
+
+    idx = DED_AddMaterial(&defs, NULL);
+    mat = &defs.materials[idx];
+    mat->autoGenerated = true;
+
+    mat->uri = Uri_NewCopy(texUri);
+    Uri_SetScheme(mat->uri, MN_SPRITES_NAME);
+
+    stage = DED_AddMaterialLayerStage(&mat->layers[0]);
+    st = &mat->layers[0].stages[stage];
+    st->texture = texUri;
+
+    tex = Textures_ToTexture(texId);
+    if(tex)
+    {
+        mat->width  = Texture_Width(tex);
+        mat->height = Texture_Height(tex);
+    }
+#if _DEBUG
+    else
+    {
+        ddstring_t* path = Uri_ToString(texUri);
+        Con_Message("Warning:generateMaterialDefForSpriteTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
+        Str_Delete(path);
+    }
+#endif
+
+    return 0; // Continue iteration.
+}
+
+void Def_GenerateAutoMaterials(void)
+{
+    Textures_IterateDeclared(TN_TEXTURES, generateMaterialDefForPatchCompositeTexture);
+    Textures_IterateDeclared(TN_FLATS,    generateMaterialDefForFlatTexture);
+    Textures_IterateDeclared(TN_SPRITES,  generateMaterialDefForSpriteTexture);
+}
+
 void Def_Read(void)
 {
-    int                 i, k;
+    int i, k;
 
     if(defsInited)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        R_ClearClassDataPath(DDRC_MODEL);
+        F_ResetResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL));
+
+        Materials_ClearDefinitionLinks();
+        Fonts_ClearDefinitionLinks();
+
         Def_Destroy();
     }
 
     firstDED = true;
 
-    // Clear all existing definitions.
-    DED_Destroy(&defs);
+    // Now we can clear all existing definitions and re-init.
+    DED_Clear(&defs);
     DED_Init(&defs);
 
-    // Reset file IDs so previously seen files can be processed again.
-    M_ResetFileIDs();
+    // Generate definitions.
+    Def_GenerateGroupsFromAnims();
+    Def_GenerateAutoMaterials();
 
-    // Read all definitions, files and lumps.
-    readDefs();
+    // Read all definitions files and lumps.
+    Con_Message("Parsing definition files%s\n", verbose >= 1? ":" : "...");
+    readAllDefinitions();
 
     // Any definition hooks?
-    Plug_DoHook(HOOK_DEFS, 0, &defs);
+    DD_CallHooks(HOOK_DEFS, 0, &defs);
 
-    // Check that enough defs were found.
-    if(!defs.count.states.num || !defs.count.mobjs.num)
-        Con_Error("DD_ReadDefs: No state or mobj definitions found!\n");
-
-    Con_Message("Definitions:\n");
+    // Composite fonts.
+    for(i = 0; i < defs.count.compositeFonts.num; ++i)
+    {
+        R_CreateFontFromDef(defs.compositeFonts + i);
+    }
 
     // Sprite names.
-    DED_NewEntries((void **) &sprNames, &countSprNames, sizeof(*sprNames),
-                   defs.count.sprites.num);
+    DED_NewEntries((void**) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);
     for(i = 0; i < countSprNames.num; ++i)
         strcpy(sprNames[i].name, defs.sprites[i].id);
-    Def_CountMsg(countSprNames.num, "sprite names");
 
     // States.
-    DED_NewEntries((void **) &states, &countStates, sizeof(*states),
-                   defs.count.states.num);
-    // Zero the parallel LUTs to the states array. These will be re-inited
-    // anyway so there is no need to worry about updating any old values.
-    statePtcGens =
-        M_Realloc(statePtcGens, sizeof(*statePtcGens) * countStates.num);
-    memset(statePtcGens, 0, sizeof(*statePtcGens) * countStates.num);
-    stateLights =
-        M_Realloc(stateLights, sizeof(*stateLights) * countStates.num);
-    memset(stateLights, 0, sizeof(*stateLights) * countStates.num);
+    DED_NewEntries((void**) &states, &countStates, sizeof(*states), defs.count.states.num);
 
     for(i = 0; i < countStates.num; ++i)
     {
@@ -936,14 +1143,11 @@ void Def_Read(void)
             dst->execute = NULL;
         }
     }
-    Def_CountMsg(countStates.num, "states");
 
-    DED_NewEntries((void **) &stateOwners, &countStateOwners,
-                   sizeof(mobjinfo_t *), defs.count.states.num);
+    DED_NewEntries((void**) &stateOwners, &countStateOwners, sizeof(mobjinfo_t *), defs.count.states.num);
 
     // Mobj info.
-    DED_NewEntries((void **) &mobjInfo, &countMobjInfo, sizeof(*mobjInfo),
-                   defs.count.mobjs.num);
+    DED_NewEntries((void**) &mobjInfo, &countMobjInfo, sizeof(*mobjInfo), defs.count.mobjs.num);
     for(i = 0; i < countMobjInfo.num; ++i)
     {
         ded_mobj_t*         dmo = &defs.mobjs[i];
@@ -963,7 +1167,7 @@ void Def_Read(void)
         mo->flags = dmo->flags[0];
         mo->flags2 = dmo->flags[1];
         mo->flags3 = dmo->flags[2];
-        for(k = 0; k < NUM_STATE_NAMES; ++k)
+        for(k = 0; k < STATENAMES_COUNT; ++k)
         {
             mo->states[k] = Def_StateForMobj(dmo->states[k]);
         }
@@ -975,43 +1179,23 @@ void Def_Read(void)
         for(k = 0; k < NUM_MOBJ_MISC; ++k)
             mo->misc[k] = dmo->misc[k];
     }
-    Def_CountMsg(countMobjInfo.num, "things");
-    Def_CountMsg(defs.count.models.num, "models");
 
     // Materials.
     for(i = 0; i < defs.count.materials.num; ++i)
     {
-        ded_material_t*     def = &defs.materials[i];
-        const gltexture_t*  tex = NULL; // No change.
-        float               width = -1, height = -1; // No change.
-        material_namespace_t mnamespace = MN_ANY; // No change.
-
-        // Sanitize so that when updating we only change what is requested.
-        if(def->width > 0)
-            width = MAX_OF(1, def->width);
-        if(def->height > 0)
-            height = MAX_OF(1, def->height);
-        if(def->id.mnamespace != MN_ANY)
-            mnamespace = def->id.mnamespace;
-
-        if(def->layers[0].stageCount.num > 0)
+        ded_material_t* def = &defs.materials[i];
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUri2(def->uri, true/*quiet please*/));
+        if(!mat)
         {
-            const ded_material_layer_t* l = &def->layers[0];
-
-            if(l->stages[0].type != -1) // Not unused.
-            {
-                if(!(tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type)))
-                VERBOSE( Con_Message("Def_Read: Warning, unknown %s "
-                                     "'%s' in material '%s' (layer %i "
-                                     "stage %i).\n",
-                                     GLTEXTURE_TYPE_STRING(l->stages[0].type),
-                                     l->stages[0].name, def->id.name, 0, 0) );
-            }
+            // A new Material.
+            Materials_CreateFromDef(def);
+            continue;
         }
-
-        P_MaterialCreate(def->id.name, width, height, def->flags,
-                         tex? tex->id : 0, mnamespace, def);
+        // Update existing.
+        Materials_Rebuild(mat, def);
     }
+
+    DED_NewEntries((void**) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
 
     // Dynamic lights. Update the sprite numbers.
     for(i = 0; i < defs.count.lights.num; ++i)
@@ -1022,55 +1206,64 @@ void Def_Read(void)
             // It's probably a bias light definition, then?
             if(!defs.lights[i].uniqueMapID[0])
             {
-                Con_Message("Def_Read: Lights: Undefined state '%s'.\n",
-                            defs.lights[i].state);
+                Con_Message("Warning: Def_Read: Undefined state '%s' in Light definition.\n", defs.lights[i].state);
             }
             continue;
         }
         stateLights[k] = &defs.lights[i];
     }
-    Def_CountMsg(defs.count.lights.num, "lights");
 
     // Sound effects.
     DED_NewEntries((void **) &sounds, &countSounds, sizeof(*sounds),
                    defs.count.sounds.num);
     for(i = 0; i < countSounds.num; ++i)
     {
-        ded_sound_t*        snd = defs.sounds + i;
+        ded_sound_t* snd = defs.sounds + i;
         // Make sure duplicate defs overwrite the earliest.
-        sfxinfo_t*          si = sounds + Def_GetSoundNum(snd->id);
+        sfxinfo_t* si = sounds + Def_GetSoundNum(snd->id);
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
-        si->lumpNum = W_CheckNumForName(snd->lumpName);
+        si->lumpNum = (strlen(snd->lumpName) > 0? F_CheckLumpNumForName2(snd->lumpName, true) : -1);
         strcpy(si->name, snd->name);
         k = Def_GetSoundNum(snd->link);
-        si->link = (k >= 0 ? sounds + k : NULL);
+        si->link = (k >= 0 ? sounds + k : 0);
         si->linkPitch = snd->linkPitch;
         si->linkVolume = snd->linkVolume;
         si->priority = snd->priority;
         si->channels = snd->channels;
         si->flags = snd->flags;
         si->group = snd->group;
-        strcpy(si->external, snd->ext.path);
+        Str_Init(&si->external);
+        if(NULL != snd->ext)
+            Str_Set(&si->external, Str_Text(Uri_Path(snd->ext)));
     }
-    Def_CountMsg(countSounds.num, "sound effects");
 
     // Music.
     for(i = 0; i < defs.count.music.num; ++i)
     {
-        ded_music_t*        mus = defs.music + i;
+        ded_music_t* mus = defs.music + i;
         // Make sure duplicate defs overwrite the earliest.
-        ded_music_t*        earliest = defs.music + Def_GetMusicNum(mus->id);
+        ded_music_t* earliest = defs.music + Def_GetMusicNum(mus->id);
 
-        if(earliest == mus)
-            continue;
+        if(earliest == mus) continue;
 
         strcpy(earliest->lumpName, mus->lumpName);
-        strcpy(earliest->path.path, mus->path.path);
         earliest->cdTrack = mus->cdTrack;
+
+        if(mus->path)
+        {
+            if(earliest->path)
+                Uri_Copy(earliest->path, mus->path);
+            else
+                earliest->path = Uri_NewCopy(mus->path);
+        }
+        else if(earliest->path)
+        {
+            Uri_Delete(earliest->path);
+            earliest->path = NULL;
+        }
     }
-    Def_CountMsg(defs.count.music.num, "songs");
 
     // Text.
     DED_NewEntries((void **) &texts, &countTexts, sizeof(*texts),
@@ -1098,7 +1291,8 @@ void Def_Read(void)
                 texts[k].text = 0;
             }
     }
-    Def_CountMsg(countTexts.num, "text strings");
+
+    DED_NewEntries((void**) &statePtcGens, &countStatePtcGens, sizeof(*statePtcGens), defs.count.states.num);
 
     // Particle generators.
     for(i = 0; i < defs.count.ptcGens.num; ++i)
@@ -1106,7 +1300,10 @@ void Def_Read(void)
         ded_ptcgen_t*       pg = &defs.ptcGens[i];
         int                 st = Def_GetStateNum(pg->state);
 
-        pg->typeNum = Def_GetMobjNum(pg->type);
+        if(!strcmp(pg->type, "*"))
+            pg->typeNum = DED_PTCGEN_ANY_MOBJ_TYPE;
+        else
+            pg->typeNum = Def_GetMobjNum(pg->type);
         pg->type2Num = Def_GetMobjNum(pg->type2);
         pg->damageNum = Def_GetMobjNum(pg->damage);
 
@@ -1149,27 +1346,11 @@ void Def_Read(void)
             pg->stateNext = NULL;
         }
     }
-    Def_CountMsg(defs.count.ptcGens.num, "particle generators");
-
-    // Detail textures. Initialize later...
-    Def_CountMsg(defs.count.details.num, "detail textures");
-
-    // Texture animation groups.
-    Def_CountMsg(defs.count.groups.num, "animation groups");
-
-    // Surface decorations.
-    Def_CountMsg(defs.count.decorations.num, "surface decorations");
-
-    // Surface reflections.
-    Def_CountMsg(defs.count.reflections.num, "surface reflections");
-
-    // Materials.
-    Def_CountMsg(defs.count.materials.num, "surface materials");
 
     // Map infos.
     for(i = 0; i < defs.count.mapInfo.num; ++i)
     {
-        ded_mapinfo_t*      mi = &defs.mapInfo[i];
+        ded_mapinfo_t* mi = &defs.mapInfo[i];
 
         /**
          * Historically, the map info flags field was used for sky flags,
@@ -1179,55 +1360,69 @@ void Def_Read(void)
         if(mi->flags & MIF_DRAW_SPHERE)
             mi->sky.flags |= SIF_DRAW_SPHERE;
     }
-    Def_CountMsg(defs.count.mapInfo.num, "map infos");
 
-    // Other data:
-    Def_CountMsg(defs.count.skies.num, "skies");
+    // Log a summary of the definition database.
+    Con_Message("Definitions:\n");
+    Def_CountMsg(defs.count.groups.num, "animation groups");
+    Def_CountMsg(defs.count.compositeFonts.num, "composite fonts");
+    Def_CountMsg(defs.count.details.num, "detail textures");
     Def_CountMsg(defs.count.finales.num, "finales");
-
+    Def_CountMsg(defs.count.lights.num, "lights");
     Def_CountMsg(defs.count.lineTypes.num, "line types");
+    Def_CountMsg(defs.count.mapInfo.num, "map infos");
+    { int nonAutoGeneratedCount = 0;
+    for(i = 0; i < defs.count.materials.num; ++i)
+        if(!defs.materials[i].autoGenerated)
+            ++nonAutoGeneratedCount;
+    Def_CountMsg(nonAutoGeneratedCount, "materials");
+    }
+    Def_CountMsg(defs.count.models.num, "models");
+    Def_CountMsg(defs.count.ptcGens.num, "particle generators");
+    Def_CountMsg(defs.count.skies.num, "skies");
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
-
-    // Init the base model search path (prepend).
-    Dir_ValidDir(defs.modelPath, FILENAME_T_MAXLEN);
-    R_AddClassDataPath(DDRC_MODEL, defs.modelPath, false);
-
-    // Model search path specified on the command line?
-    if(ArgCheckWith("-modeldir", 1))
-    {
-        filename_t          path;
-
-        strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(path, FILENAME_T_MAXLEN);
-
-        // Prepend to the search list; takes precedence.
-        R_AddClassDataPath(DDRC_MODEL, path, false);
-    }
-    if(ArgCheckWith("-modeldir2", 1))
-    {
-        filename_t          path;
-
-        strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(path, FILENAME_T_MAXLEN);
-
-        // Prepend to the search list; takes precedence.
-        R_AddClassDataPath(DDRC_MODEL, ArgNext(), false);
-    }
+    Def_CountMsg(defs.count.music.num, "songs");
+    Def_CountMsg(countSounds.num, "sound effects");
+    Def_CountMsg(countSprNames.num, "sprite names");
+    Def_CountMsg(countStates.num, "states");
+    Def_CountMsg(defs.count.decorations.num, "surface decorations");
+    Def_CountMsg(defs.count.reflections.num, "surface reflections");
+    Def_CountMsg(countTexts.num, "text strings");
+    Def_CountMsg(defs.count.textureEnv.num, "texture environments");
+    Def_CountMsg(countMobjInfo.num, "things");
 
     defsInited = true;
 }
 
-/**
- * Initialize definitions that must be initialized when engine init is
- * complete (called from R_Init).
- */
+static void initAnimGroup(ded_group_t* def)
+{
+    int i, groupNumber = -1;
+    for(i = 0; i < def->count.num; ++i)
+    {
+        ded_group_member_t* gm = &def->members[i];
+        material_t* mat;
+
+        if(!gm->material) continue;
+
+        mat = Materials_ToMaterial(Materials_ResolveUri2(gm->material, true/*quiet please*/));
+        if(!mat) continue;
+
+        // Only create a group when the first texture is found.
+        if(groupNumber == -1)
+        {
+            groupNumber = Materials_CreateAnimGroup(def->flags);
+        }
+
+        Materials_AddAnimGroupFrame(groupNumber, mat, gm->tics, gm->randomTics);
+    }
+}
+
 void Def_PostInit(void)
 {
-    int                 i, k;
-    ded_ptcgen_t*       gen;
-    char                name[40];
-    modeldef_t*         modef;
-    ded_ptcstage_t*     st;
+    ded_ptcstage_t* st;
+    ded_ptcgen_t* gen;
+    modeldef_t* modef;
+    char name[40];
+    int i, k;
 
     // Particle generators: model setup.
     for(i = 0, gen = defs.ptcGens; i < defs.count.ptcGens.num; ++i, gen++)
@@ -1261,69 +1456,64 @@ void Def_PostInit(void)
     }
 
     // Detail textures.
-    GL_DeleteAllTexturesForGLTextures(GLT_DETAIL);
-    R_DestroyDetailTextures();
+    Textures_ClearNamespace(TN_DETAILS);
     for(i = 0; i < defs.count.details.num; ++i)
     {
-        R_CreateDetailTexture(&defs.details[i]);
+        R_CreateDetailTextureFromDef(&defs.details[i]);
     }
 
     // Lightmaps and flare textures.
-    GL_DeleteAllTexturesForGLTextures(GLT_LIGHTMAP);
-    GL_DeleteAllTexturesForGLTextures(GLT_FLARE);
-    R_DestroyLightMaps();
-    R_DestroyFlareTextures();
+    Textures_ClearNamespace(TN_LIGHTMAPS);
+    Textures_ClearNamespace(TN_FLAREMAPS);
     for(i = 0; i < defs.count.lights.num; ++i)
     {
-        ded_light_t*        lig = &defs.lights[i];
+        ded_light_t* lig = &defs.lights[i];
 
-        R_CreateLightMap(&lig->up);
-        R_CreateLightMap(&lig->down);
-        R_CreateLightMap(&lig->sides);
+        R_CreateLightMap(lig->up);
+        R_CreateLightMap(lig->down);
+        R_CreateLightMap(lig->sides);
 
-        R_CreateFlareTexture(&lig->flare);
+        R_CreateFlareTexture(lig->flare);
     }
 
     for(i = 0; i < defs.count.decorations.num; ++i)
     {
-        ded_decor_t*        decor = &defs.decorations[i];
+        ded_decor_t* decor = &defs.decorations[i];
 
         for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
-            ded_decorlight_t*   lig = &decor->lights[k];
+            ded_decorlight_t* lig = &decor->lights[k];
 
-            if(!R_IsValidLightDecoration(lig))
-                break;
+            if(!R_IsValidLightDecoration(lig)) break;
 
-            R_CreateLightMap(&lig->up);
-            R_CreateLightMap(&lig->down);
-            R_CreateLightMap(&lig->sides);
+            R_CreateLightMap(lig->up);
+            R_CreateLightMap(lig->down);
+            R_CreateLightMap(lig->sides);
 
-            R_CreateFlareTexture(&lig->flare);
+            R_CreateFlareTexture(lig->flare);
         }
     }
 
     // Surface reflections.
-    GL_DeleteAllTexturesForGLTextures(GLT_SHINY);
-    GL_DeleteAllTexturesForGLTextures(GLT_MASK);
-    R_DestroyShinyTextures();
-    R_DestroyMaskTextures();
+    Textures_ClearNamespace(TN_REFLECTIONS);
+    Textures_ClearNamespace(TN_MASKS);
     for(i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
+        Size2Raw size;
 
-        if(ref->shinyMap.path[0])
-            R_CreateShinyTexture(ref);
+        R_CreateReflectionTexture(ref->shinyMap);
 
-        if(ref->maskMap.path[0])
-            R_CreateMaskTexture(ref);
+        size.width  = ref->maskWidth;
+        size.height = ref->maskHeight;
+        R_CreateMaskTexture(ref->maskMap, &size);
     }
 
     // Animation groups.
-    R_DestroyAnimGroups();
+    Materials_ClearAnimGroups();
     for(i = 0; i < defs.count.groups.num; ++i)
     {
-        R_InitAnimGroup(&defs.groups[i]);
+        initAnimGroup(&defs.groups[i]);
     }
 }
 
@@ -1376,7 +1566,7 @@ static int Friendly(int num)
  */
 void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
 {
-    int                 i, k, a, temp;
+    int i, k, a, temp;
 
     l->id = def->id;
     l->flags = def->flags[0];
@@ -1407,10 +1597,10 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->actLineType = def->actLineType;
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
-    l->actMaterial = P_MaterialCheckNumForName(def->actMaterial.name,
-                                               def->actMaterial.mnamespace);
-    l->deactMaterial = P_MaterialCheckNumForName(def->deactMaterial.name,
-                                                 def->deactMaterial.mnamespace);
+
+    l->actMaterial = Materials_ResolveUri2(def->actMaterial, true/*quiet please*/);
+    l->deactMaterial = Materials_ResolveUri2(def->deactMaterial, true/*quiet please*/);
+
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
     l->materialMoveAngle = def->materialMoveAngle;
@@ -1439,8 +1629,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] =
-                        P_MaterialCheckNumForName(def->iparmStr[k], MN_ANY);
+                    l->iparm[k] = Materials_ResolveUriCString2(def->iparmStr[k], true/*quiet please*/);
             }
         }
         else if(a & MAP_MUS)
@@ -1452,8 +1641,11 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 temp = Def_EvalFlags(def->iparmStr[k]);
                 if(temp)
                     l->iparm[k] = temp;
-            } else
+            }
+            else
+            {
                 l->iparm[k] = Friendly(Def_GetMusicNum(def->iparmStr[k]));
+            }
         }
         else
         {
@@ -1513,15 +1705,9 @@ void Def_CopySectorType(sectortype_t* s, ded_sectortype_t* def)
     LOOPi(2) s->ceilInterval[i] = def->ceilInterval[i];
 }
 
-/**
- * @return              @c true, if the definition was found.
- */
 int Def_Get(int type, const char* id, void* out)
 {
-    int                 i;
-    ded_mapinfo_t*      map;
-    ddmapinfo_t*        mout;
-    finalescript_t*     fin;
+    int i;
 
     switch(type)
     {
@@ -1548,17 +1734,20 @@ int Def_Get(int type, const char* id, void* out)
         if(i < 0 || i >= countSounds.num)
             return false;
         strcpy(out, sounds[i].lumpName);
-        break;
+        return true;
 
     case DD_DEF_MUSIC:
         return Def_GetMusicNum(id);
 
-    case DD_DEF_MAP_INFO:
-        map = Def_GetMapInfo(id);
-        if(!map)
-            return false;
+    case DD_DEF_MAP_INFO: {
+        ddmapinfo_t* mout;
+        Uri* mapUri = Uri_NewWithPath2(id, RC_NULL);
+        ded_mapinfo_t* map = Def_GetMapInfo(mapUri);
 
-        mout = (ddmapinfo_t *) out;
+        Uri_Delete(mapUri);
+        if(!map) return false;
+
+        mout = (ddmapinfo_t*) out;
         mout->name = map->name;
         mout->author = map->author;
         mout->music = Def_GetMusicNum(map->music);
@@ -1566,104 +1755,99 @@ int Def_Get(int type, const char* id, void* out)
         mout->ambient = map->ambient;
         mout->gravity = map->gravity;
         mout->parTime = map->parTime;
-        break;
-
+        return true;
+      }
     case DD_DEF_TEXT:
         if(id && id[0])
         {
-            int                 i;
-
             // Read backwards to allow patching.
             for(i = defs.count.text.num - 1; i >= 0; i--)
-                if(!stricmp(defs.text[i].id, id))
-                {
-                    // \fixme: should be returning an immutable ptr.
-                    if(out)
-                        *(char **) out = defs.text[i].text;
-                    return i;
-                }
+            {
+                if(stricmp(defs.text[i].id, id)) continue;
+                if(out) *(char**) out = defs.text[i].text;
+                return i;
+            }
         }
         return -1;
 
     case DD_DEF_VALUE:
         // Read backwards to allow patching.
         for(i = defs.count.values.num - 1; i >= 0; i--)
-            if(!stricmp(defs.values[i].id, id))
-            {
-                if(out)
-                    *(char **) out = defs.values[i].text;
-                return true;
-            }
-        return false;
-
-    case DD_DEF_FINALE:
-        // Find InFine script by ID.
-        for(i = defs.count.finales.num - 1; i >= 0; i--)
-            if(!stricmp(defs.finales[i].id, id))
-            {
-                // This has a matching ID. Return a pointer to the script.
-                *(void **) out = defs.finales[i].script;
-                return true;
-            }
-        return false;
-
-    case DD_DEF_FINALE_BEFORE:
-        fin = (finalescript_t *) out;
-        for(i = defs.count.finales.num - 1; i >= 0; i--)
-            if(!stricmp(defs.finales[i].before, id))
-            {
-                fin->before = defs.finales[i].before;
-                fin->after = defs.finales[i].after;
-                fin->script = defs.finales[i].script;
-                return true;
-            }
-        return false;
-
-    case DD_DEF_FINALE_AFTER:
-        fin = (finalescript_t *) out;
-        for(i = defs.count.finales.num - 1; i >= 0; i--)
-            if(!stricmp(defs.finales[i].after, id))
-            {
-
-                fin->before = defs.finales[i].before;
-                fin->after = defs.finales[i].after;
-                fin->script = defs.finales[i].script;
-                return true;
-            }
-        return false;
-
-    case DD_DEF_LINE_TYPE:
         {
-        int                 typeId = strtol(id, (char **)NULL, 10);
+            if(stricmp(defs.values[i].id, id)) continue;
+            if(out) *(char**) out = defs.values[i].text;
+            return true;
+        }
+        return false;
 
+    case DD_DEF_FINALE: { // Find InFine script by ID.
+        finalescript_t* fin = (finalescript_t*) out;
+        for(i = defs.count.finales.num - 1; i >= 0; i--)
+        {
+            if(stricmp(defs.finales[i].id, id)) continue;
+
+            fin->before = defs.finales[i].before;
+            fin->after  = defs.finales[i].after;
+            fin->script = defs.finales[i].script;
+            return true;
+        }
+        return false;
+      }
+    case DD_DEF_FINALE_BEFORE: {
+        finalescript_t* fin = (finalescript_t*) out;
+        Uri* uri = Uri_NewWithPath2(id, RC_NULL);
+        for(i = defs.count.finales.num - 1; i >= 0; i--)
+        {
+            if(!defs.finales[i].before || !Uri_Equality(defs.finales[i].before, uri)) continue;
+
+            fin->before = defs.finales[i].before;
+            fin->after  = defs.finales[i].after;
+            fin->script = defs.finales[i].script;
+            Uri_Delete(uri);
+            return true;
+        }
+        Uri_Delete(uri);
+        return false;
+      }
+    case DD_DEF_FINALE_AFTER: {
+        finalescript_t* fin = (finalescript_t*) out;
+        Uri* uri = Uri_NewWithPath2(id, RC_NULL);
+        for(i = defs.count.finales.num - 1; i >= 0; i--)
+        {
+            if(!defs.finales[i].after || !Uri_Equality(defs.finales[i].after, uri)) continue;
+
+            fin->before = defs.finales[i].before;
+            fin->after  = defs.finales[i].after;
+            fin->script = defs.finales[i].script;
+            Uri_Delete(uri);
+            return true;
+        }
+        Uri_Delete(uri);
+        return false;
+      }
+    case DD_DEF_LINE_TYPE: {
+        int typeId = strtol(id, (char **)NULL, 10);
         for(i = defs.count.lineTypes.num - 1; i >= 0; i--)
-            if(defs.lineTypes[i].id == typeId)
-            {
-                if(out)
-                    Def_CopyLineType(out, &defs.lineTypes[i]);
-                return true;
-            }
-        }
-        return false;
-
-    case DD_DEF_SECTOR_TYPE:
         {
-        int                 typeId = strtol(id, (char **)NULL, 10);
-
-        for(i = defs.count.sectorTypes.num - 1; i >= 0; i--)
-            if(defs.sectorTypes[i].id == typeId)
-            {
-                if(out)
-                    Def_CopySectorType(out, &defs.sectorTypes[i]);
-                return true;
-            }
+            if(defs.lineTypes[i].id != typeId) continue;
+            if(out) Def_CopyLineType(out, &defs.lineTypes[i]);
+            return true;
         }
         return false;
-
+      }
+    case DD_DEF_SECTOR_TYPE: {
+        int typeId = strtol(id, (char **)NULL, 10);
+        for(i = defs.count.sectorTypes.num - 1; i >= 0; i--)
+        {
+            if(defs.sectorTypes[i].id != typeId) continue;
+            if(out) Def_CopySectorType(out, &defs.sectorTypes[i]);
+            return true;
+        }
+        return false;
+      }
     default:
         return false;
     }
-    return true;
 }
 
 /**
@@ -1735,7 +1919,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
         case DD_LUMP:
             S_StopSound(index, 0);
             strcpy(sounds[index].lumpName, ptr);
-            sounds[index].lumpNum = W_CheckNumForName(sounds[index].lumpName);
+            sounds[index].lumpNum = F_CheckLumpNumForName(sounds[index].lumpName);
             break;
 
         default:
@@ -1789,16 +1973,43 @@ int Def_Set(int type, int index, int value, const void* ptr)
     return true;
 }
 
+StringArray* Def_ListMobjTypeIDs(void)
+{
+    StringArray* array = StringArray_New();
+    int i;
+    for(i = 0; i < defs.count.mobjs.num; ++i)
+    {
+        StringArray_Append(array, defs.mobjs[i].id);
+    }
+    return array;
+}
+
+StringArray* Def_ListStateIDs(void)
+{
+    StringArray* array = StringArray_New();
+    int i;
+    for(i = 0; i < defs.count.states.num; ++i)
+    {
+        StringArray_Append(array, defs.states[i].id);
+    }
+    return array;
+}
+
 /**
  * Prints a list of all the registered mobjs to the console.
- * \fixme Does this belong here?
+ * @todo Does this belong here?
  */
 D_CMD(ListMobjs)
 {
-    int                 i;
+    int i;
+
+    if(defs.count.mobjs.num <= 0)
+    {
+        Con_Message("There are currently no mobjtypes defined/loaded.\n");
+        return true;
+    }
 
     Con_Printf("Registered Mobjs (ID | Name):\n");
-
     for(i = 0; i < defs.count.mobjs.num; ++i)
     {
         if(defs.mobjs[i].name[0])

@@ -1,9 +1,9 @@
-/**\file
+/**\file dam_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,23 +22,32 @@
  */
 
 /**
- * dam_main.c: Doomsday Archived Map (DAM), map management.
+ * Doomsday Archived Map (DAM), map management.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_dam.h"
 #include "de_misc.h"
+#include "de_network.h"
 #include "de_refresh.h"
+#include "de_render.h"
 #include "de_defs.h"
 #include "de_edit.h"
+#include "de_filesys.h"
 
 #include <math.h>
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct listnode_s {
+    void*       data;
+    struct listnode_s* next;
+} listnode_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -57,86 +66,79 @@ byte mapCache = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const char *mapCacheDir = "mapcache\\";
+static const char* mapCacheDir = "mapcache/";
 
-static archivedmap_t **archivedMaps;
-static uint numArchivedMaps;
+static archivedmap_t** archivedMaps = NULL;
+static uint numArchivedMaps = 0;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Called during init to register the cvars and ccmds for DAM.
- */
+static void clearArchivedMaps(void)
+{
+    if(NULL != archivedMaps)
+    {
+        uint i;
+        for(i = 0; i < numArchivedMaps; ++i)
+        {
+            freeArchivedMap(archivedMaps[i]);
+        }
+        Z_Free(archivedMaps);
+        archivedMaps = NULL;
+    }
+    numArchivedMaps = 0;
+}
+
 void DAM_Register(void)
 {
     C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
 }
 
-/**
- * Initializes DAM.
- */
 void DAM_Init(void)
 {
-    archivedMaps = NULL;
-    numArchivedMaps = 0;
+    // Allow re-init.
+    clearArchivedMaps();
+}
 
-    P_InitGameMapObjDefs();
+void DAM_Shutdown(void)
+{
+    clearArchivedMaps();
 }
 
 /**
- * Shutdown DAM.
+ * @todo Do not do this here. We should instead ask the map converter to
+ * to locate the lumps it is interested in via the public API.
  */
-void DAM_Shutdown(void)
-{
-    archivedmap_t      *dam;
-
-    // Free all the archived map records.
-    dam = *archivedMaps;
-    while(dam)
-    {
-        freeArchivedMap(dam);
-    }
-
-    Z_Free(archivedMaps);
-    archivedMaps = NULL;
-    numArchivedMaps = 0;
-
-    P_ShutdownGameMapObjDefs();
-}
-
 static int mapLumpTypeForName(const char* name)
 {
-    struct maplumpinfo_s {
-        int         type;
-        const char *name;
+    static const struct maplumpinfo_s {
+        int type;
+        const char* name;
     } mapLumpInfos[] =
     {
-        {ML_THINGS,     "THINGS"},
-        {ML_LINEDEFS,   "LINEDEFS"},
-        {ML_SIDEDEFS,   "SIDEDEFS"},
-        {ML_VERTEXES,   "VERTEXES"},
-        {ML_SEGS,       "SEGS"},
-        {ML_SSECTORS,   "SSECTORS"},
-        {ML_NODES,      "NODES"},
-        {ML_SECTORS,    "SECTORS"},
-        {ML_REJECT,     "REJECT"},
-        {ML_BLOCKMAP,   "BLOCKMAP"},
-        {ML_BEHAVIOR,   "BEHAVIOR"},
-        {ML_SCRIPTS,    "SCRIPTS"},
-        {ML_LIGHTS,     "LIGHTS"},
-        {ML_MACROS,     "MACROS"},
-        {ML_LEAFS,      "LEAFS"},
-        {ML_INVALID,    NULL}
+        { ML_THINGS,     "THINGS" },
+        { ML_LINEDEFS,   "LINEDEFS" },
+        { ML_SIDEDEFS,   "SIDEDEFS" },
+        { ML_VERTEXES,   "VERTEXES" },
+        { ML_SEGS,       "SEGS" },
+        { ML_SSECTORS,   "SSECTORS" },
+        { ML_NODES,      "NODES" },
+        { ML_SECTORS,    "SECTORS" },
+        { ML_REJECT,     "REJECT" },
+        { ML_BLOCKMAP,   "BLOCKMAP" },
+        { ML_BEHAVIOR,   "BEHAVIOR" },
+        { ML_SCRIPTS,    "SCRIPTS" },
+        { ML_LIGHTS,     "LIGHTS" },
+        { ML_MACROS,     "MACROS" },
+        { ML_LEAFS,      "LEAFS" },
+        { ML_INVALID,    NULL }
     };
+    int i;
 
-    int         i;
-
-    if(!name)
-        return ML_INVALID;
+    if(!name) return ML_INVALID;
 
     for(i = 0; mapLumpInfos[i].type > ML_INVALID; ++i)
     {
-        if(!strcmp(name, mapLumpInfos[i].name))
+        if(!strnicmp(mapLumpInfos[i].name, name, strlen(mapLumpInfos[i].name)))
             return mapLumpInfos[i].type;
     }
 
@@ -148,7 +150,7 @@ static int mapLumpTypeForName(const char* name)
  */
 static listnode_t* allocListNode(void)
 {
-    listnode_t         *node = Z_Calloc(sizeof(listnode_t), PU_STATIC, 0);
+    listnode_t         *node = Z_Calloc(sizeof(listnode_t), PU_APPSTATIC, 0);
     return node;
 }
 
@@ -166,7 +168,7 @@ static void freeListNode(listnode_t *node)
  */
 static maplumpinfo_t* allocMapLumpInfo(void)
 {
-    maplumpinfo_t *info = Z_Calloc(sizeof(maplumpinfo_t), PU_STATIC, 0);
+    maplumpinfo_t *info = Z_Calloc(sizeof(maplumpinfo_t), PU_APPSTATIC, 0);
     return info;
 }
 
@@ -202,13 +204,13 @@ static void freeMapLumpInfoList(listnode_t* headPtr)
 /**
  * Create a new map lump info record.
  */
-static maplumpinfo_t* createMapLumpInfo(int lumpNum, int lumpClass)
+static maplumpinfo_t* createMapLumpInfo(lumpnum_t lumpNum, int lumpClass)
 {
-    maplumpinfo_t*      info = allocMapLumpInfo();
+    maplumpinfo_t* info = allocMapLumpInfo();
 
     info->lumpNum = lumpNum;
     info->lumpClass = lumpClass;
-    info->length = W_LumpLength(lumpNum);
+    info->length = F_LumpLength(lumpNum);
     info->format = NULL;
     info->startOffset = 0;
 
@@ -220,10 +222,8 @@ static maplumpinfo_t* createMapLumpInfo(int lumpNum, int lumpClass)
  */
 static void addLumpInfoToList(listnode_t** headPtr, maplumpinfo_t* info)
 {
-    listnode_t*         node = allocListNode();
-
+    listnode_t* node = allocListNode();
     node->data = info;
-
     node->next = *headPtr;
     *headPtr = node;
 }
@@ -233,63 +233,68 @@ static void addLumpInfoToList(listnode_t** headPtr, maplumpinfo_t* info)
  */
 static archivedmap_t* allocArchivedMap(void)
 {
-    archivedmap_t *dam = Z_Calloc(sizeof(archivedmap_t), PU_STATIC, 0);
+    archivedmap_t* dam = Z_Calloc(sizeof(*dam), PU_APPSTATIC, 0);
+    if(!dam)
+        Con_Error("allocArchivedMap: Failed on allocation of %lu bytes for new ArchivedMap.",
+            (unsigned long) sizeof(*dam));
     return dam;
 }
 
-/**
- * Free all memory acquired for an archived map record.
- */
-static void freeArchivedMap(archivedmap_t *dam)
+/// Free all memory acquired for an archived map record.
+static void freeArchivedMap(archivedmap_t* dam)
 {
-    if(!dam)
-        return;
+    assert(dam);
+    Uri_Delete(dam->uri);
+    Str_Free(&dam->cachedMapPath);
     Z_Free(dam->lumpList);
     Z_Free(dam);
 }
 
-/**
- * Create a new archivedmap record.
- */
-static archivedmap_t* createArchivedMap(const char *mapID,
-                                        listnode_t *headPtr,
-                                        filename_t cachedMapDataFile)
+/// Create a new archived map record.
+static archivedmap_t* createArchivedMap(const Uri* uri, listnode_t* headPtr,
+    const ddstring_t* cachedMapPath)
 {
-    uint                i;
-    listnode_t         *ln;
-    archivedmap_t      *dam = allocArchivedMap();
+    const char* mapId = Str_Text(Uri_Path(uri));
+    archivedmap_t* dam = allocArchivedMap();
+    listnode_t* node;
+    uint idx;
 
     VERBOSE(
-    Con_Message("createArchivedMap: Add record for map \"%s\".\n", mapID));
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("createArchivedMap: Add record for map '%s'.\n", Str_Text(path));
+        Str_Delete(path);
+        )
 
-    strncpy(dam->identifier, mapID, 8);
-    dam->identifier[8] = '\0'; // Terminate.
+    dam->uri = Uri_NewCopy(uri);
     dam->lastLoadAttemptFailed = false;
-    memcpy(dam->cachedMapDataFile, cachedMapDataFile,
-           sizeof(dam->cachedMapDataFile));
-    if(DAM_MapIsValid(dam->cachedMapDataFile,
-                      W_GetNumForName(dam->identifier)))
+    Str_Init(&dam->cachedMapPath);
+    Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
+
+    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), F_CheckLumpNumForName2(mapId, true)))
         dam->cachedMapFound = true;
 
-    // Count the lumps for this map
+    // Count the number of source data lumps.
     dam->numLumps = 0;
-    ln = headPtr;
-    while(ln)
+    node = headPtr;
+    while(node)
     {
-        dam->numLumps++;
-        ln = ln->next;
+        ++dam->numLumps;
+        node = node->next;
     }
 
-    // Allocate an array of the lump indices.
-    dam->lumpList = Z_Malloc(sizeof(int) * dam->numLumps, PU_STATIC, 0);
-    ln = headPtr;
-    i = 0;
-    while(ln)
-    {
-        maplumpinfo_t      *info = (maplumpinfo_t*) ln->data;
+    // Allocate and populate the source data lump list.
+    dam->lumpList = Z_Malloc(sizeof(*dam->lumpList) * dam->numLumps, PU_APPSTATIC, 0);
+    if(NULL == dam->lumpList)
+        Con_Error("createArchivedMap: Failed on allocation of %lu bytes for lump list.",
+            (unsigned long) (sizeof(*dam->lumpList) * dam->numLumps));
 
-        dam->lumpList[i++] = info->lumpNum;
-        ln = ln->next;
+    node = headPtr;
+    idx = 0;
+    while(NULL != node)
+    {
+        maplumpinfo_t* info = (maplumpinfo_t*) node->data;
+        dam->lumpList[idx++] = info->lumpNum;
+        node = node->next;
     }
 
     return dam;
@@ -298,27 +303,25 @@ static archivedmap_t* createArchivedMap(const char *mapID,
 /**
  * Search the list of maps for one matching the specified identifier.
  *
- * @param mapID         Identifier of the map to be searched for.
- * @return              Ptr to the found map, else @c NULL.
+ * @param uri  Identifier of the map to be searched for.
+ * @return  The found map else @c NULL.
  */
-static archivedmap_t* findArchivedMap(const char *mapID)
+static archivedmap_t* findArchivedMap(const Uri* uri)
 {
     if(numArchivedMaps)
     {
-        archivedmap_t **p = archivedMaps;
-
+        archivedmap_t** p = archivedMaps;
         while(*p)
         {
             archivedmap_t *dam = *p;
-
-             if(!strnicmp(dam->identifier, mapID, 8))
+            if(Uri_Equality(dam->uri, uri))
+            {
                 return dam;
-
+            }
             p++;
         }
     }
-
-    return NULL;
+    return 0;
 }
 
 /**
@@ -329,7 +332,7 @@ static void addArchivedMap(archivedmap_t* dam)
     archivedMaps =
         Z_Realloc(archivedMaps,
                   sizeof(archivedmap_t*) * (++numArchivedMaps + 1),
-                  PU_STATIC);
+                  PU_APPSTATIC);
     archivedMaps[numArchivedMaps - 1] = dam;
     archivedMaps[numArchivedMaps] = NULL; // Terminate.
 }
@@ -346,28 +349,28 @@ static void addArchivedMap(archivedmap_t* dam)
  *
  * @return              The number of collected lumps.
  */
-static uint collectMapLumps(listnode_t** headPtr, int startLump)
+static uint collectMapLumps(listnode_t** headPtr, lumpnum_t startLump)
 {
-    int                 i;
-    uint                numCollectedLumps = 0;
+    uint numCollectedLumps = 0;
 
-    VERBOSE(Con_Message("collectMapLumps: Locating lumps...\n"));
+    VERBOSE( Con_Message("collectMapLumps: Locating lumps...\n") )
 
-    if(startLump > 0 && startLump < numLumps)
+    if(startLump > 0 && startLump < F_LumpCount())
     {
         // Keep checking lumps to see if its a map data lump.
-        for(i = startLump; i < numLumps; ++i)
+        lumpnum_t i;
+        for(i = startLump; i < F_LumpCount(); ++i)
         {
-            int                 lumpType;
-            const char*         lumpName;
+            const char* lumpName;
+            int lumpType;
 
             // Lookup the lump name in our list of known map lump names.
-            lumpName = W_LumpName(i);
+            lumpName = F_LumpName(i);
             lumpType = mapLumpTypeForName(lumpName);
 
             if(lumpType != ML_INVALID)
             {   // Its a known map lump.
-                maplumpinfo_t *info = createMapLumpInfo(i, lumpType);
+                maplumpinfo_t* info = createMapLumpInfo(i, lumpType);
 
                 addLumpInfoToList(headPtr, info);
                 numCollectedLumps++;
@@ -382,125 +385,153 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
     return numCollectedLumps;
 }
 
-/**
- * Compose the path where to put the cached map data.
- */
-void DAM_GetCachedMapDir(char* dir,  int mainLump, size_t len)
+/// Calculate the identity key for maps loaded from this path.
+static ushort calculateIdentifierForMapPath(const char* path)
 {
-    const char*         sourceFile = W_LumpSourceFile(mainLump);
-    filename_t          base;
-    ushort              identifier = 0;
-    int                 i;
-
-    M_ExtractFileBase(base, sourceFile, FILENAME_T_MAXLEN);
-
-    for(i = 0; sourceFile[i]; ++i)
-        identifier ^= sourceFile[i] << ((i * 3) % 11);
-
-    // The cached map directory is relative to the runtime directory.
-    dd_snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir,
-            (char*) gx.GetVariable(DD_GAME_MODE),
-            base, identifier);
-
-    M_TranslatePath(dir, dir, len);
+    if(NULL != path && path[0])
+    {
+        ushort identifier = 0;
+        size_t i;
+        for(i = 0; path[i]; ++i)
+            identifier ^= path[i] << ((i * 3) % 11);
+        return identifier;
+    }
+    Con_Error("calculateMapIdentifier: Empty/NULL path given.");
+    return 0; // Unreachable.
 }
 
-static boolean loadMap(gamemap_t **map, archivedmap_t *dam)
+ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
 {
-    *map = Z_Calloc(sizeof(gamemap_t), PU_MAPSTATIC, 0);
+    const ddstring_t* gameIdentityKey;
+    ushort mapPathIdentifier;
+    ddstring_t mapFileName;
+    ddstring_t* path;
 
-    if(DAM_MapRead(*map, dam->cachedMapDataFile))
-        return true;
+    if(!sourcePath || !sourcePath[0]) return NULL;
 
-    return false;
+    gameIdentityKey = Game_IdentityKey(theGame);
+    mapPathIdentifier = calculateIdentifierForMapPath(sourcePath);
+    Str_Init(&mapFileName);
+    F_FileName(&mapFileName, sourcePath);
+
+    // Compose the final path.
+    path = Str_New();
+    Str_Appendf(path, "%s%s/%s-%04X/", mapCacheDir, Str_Text(gameIdentityKey),
+        Str_Text(&mapFileName), mapPathIdentifier);
+    F_ExpandBasePath(path, path);
+
+    Str_Free(&mapFileName);
+    return path;
 }
 
-static boolean convertMap(gamemap_t **map, archivedmap_t *dam)
+static boolean loadMap(GameMap** map, archivedmap_t* dam)
 {
-    boolean             converted = false;
+    *map = (GameMap*) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
+    if(NULL == *map)
+        Con_Error("loadMap: Failed on allocation of %lu bytes for new Map.", (unsigned long) sizeof(**map));
+    return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
+}
 
-    Con_Message("convertMap: Attempting conversion of \"%s\".\n",
-                dam->identifier);
+static boolean convertMap(GameMap** map, archivedmap_t* dam)
+{
+    boolean converted = false;
+
+    VERBOSE(
+        ddstring_t* path = Uri_ToString(dam->uri);
+        Con_Message("convertMap: Attempting conversion of '%s'.\n", Str_Text(path));
+        Str_Delete(path);
+        );
 
     // Nope. See if there is a converter available.
     if(Plug_CheckForHook(HOOK_MAP_CONVERT))
     {
         // Pass the lump list around the map converters, hopefully
         // one of them will recognise the format and convert it.
-        if(Plug_DoHook(HOOK_MAP_CONVERT,
-                       dam->numLumps, (void*) dam->lumpList))
+        if(DD_CallHooks(HOOK_MAP_CONVERT, dam->numLumps, (void*) dam->lumpList))
         {
             converted = true;
             *map = MPE_GetLastBuiltMap();
         }
     }
 
-    Con_Message("convertMap: %s.\n", (converted? "Successful" : "Failed"));
+    if(!converted || verbose >= 2)
+        Con_Message("convertMap: %s.\n", (converted? "Successful" : "Failed"));
+
     return converted;
 }
 
 /**
  * Attempt to load the map associated with the specified identifier.
  */
-boolean DAM_AttemptMapLoad(const char* mapID)
+boolean DAM_AttemptMapLoad(const Uri* uri)
 {
-    archivedmap_t*      dam;
-    boolean             loadedOK = false;
+    boolean loadedOK = false;
+    archivedmap_t* dam;
+
+    assert(uri);
 
     VERBOSE2(
-    Con_Message("DAM_AttemptMapLoad: Loading \"%s\"...\n", mapID));
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("DAM_AttemptMapLoad: Loading '%s'...\n", Str_Text(path));
+        Str_Delete(path);
+        )
 
-    dam = findArchivedMap(mapID);
-
+    dam = findArchivedMap(uri);
     if(!dam)
-    {   // We've not yet attempted to load this map.
-        int                 startLump = W_CheckNumForName(mapID);
-        listnode_t*         headPtr = NULL;
-        filename_t          cachedMapDir;
-        filename_t          cachedMapDataFile;
+    {
+        // We've not yet attempted to load this map.
+        const char* mapId = Str_Text(Uri_Path(uri));
+        lumpnum_t markerLump;
+        listnode_t* sourceLumpListHead = NULL;
+        ddstring_t* cachedMapDir;
+        ddstring_t cachedMapPath;
 
-        if(startLump == -1)
-            return false;
+        markerLump = F_CheckLumpNumForName2(mapId, true /*quiet please*/);
+        if(0 > markerLump) return false;
 
         // Add the marker lump to the list of lumps for this map.
-        addLumpInfoToList(&headPtr, createMapLumpInfo(startLump, ML_LABEL));
+        addLumpInfoToList(&sourceLumpListHead, createMapLumpInfo(markerLump, ML_LABEL));
 
         // Find the rest of the map data lumps associated with this map.
-        collectMapLumps(&headPtr, startLump + 1);
+        collectMapLumps(&sourceLumpListHead, markerLump + 1);
 
-        DAM_GetCachedMapDir(cachedMapDir, startLump, FILENAME_T_MAXLEN);
+        // Compose the cache directory path and ensure it exists.
+        cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLump));
+        F_MakePath(Str_Text(cachedMapDir));
 
-        // Make sure the directory exists.
-        M_CheckPath(cachedMapDir);
+        // Compose the full path to the cached map data file.
+        Str_Init(&cachedMapPath);
+        F_FileName(&cachedMapPath, F_LumpName(markerLump));
+        Str_Append(&cachedMapPath, ".dcm");
+        Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
 
-        // First test if we already have valid cached map data.
-        sprintf(cachedMapDataFile, "%s%s", cachedMapDir,
-                                   W_LumpName(startLump));
-        M_TranslatePath(cachedMapDataFile, cachedMapDataFile,
-                        FILENAME_T_MAXLEN);
-        strncat(cachedMapDataFile, ".dcm", FILENAME_T_MAXLEN);
-
-        // Create an archivedmap record and link it to our list
-        // of available maps.
-        dam = createArchivedMap(mapID, headPtr, cachedMapDataFile);
+        // Create an archived map record for this.
+        dam = createArchivedMap(uri, sourceLumpListHead, &cachedMapPath);
         addArchivedMap(dam);
 
-        freeMapLumpInfoList(headPtr);
+        freeMapLumpInfoList(sourceLumpListHead);
+
+        Str_Delete(cachedMapDir);
+        Str_Free(&cachedMapPath);
     }
 
     // Load it in.
     if(!dam->lastLoadAttemptFailed)
     {
-        gamemap_t      *map = NULL;
-        ded_mapinfo_t  *mapInfo;
+        GameMap* map = NULL;
+        ded_mapinfo_t* mapInfo;
+
+        Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         if(mapCache && dam->cachedMapFound)
-        {   // Attempt to load the cached map data.
+        {
+            // Attempt to load the cached map data.
             if(loadMap(&map, dam))
                 loadedOK = true;
         }
         else
-        {   // Try a JIT conversion with the help of a plugin.
+        {
+            // Try a JIT conversion with the help of a plugin.
             if(convertMap(&map, dam))
                 loadedOK = true;
         }
@@ -508,7 +539,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
         if(loadedOK)
         {
             ded_sky_t* skyDef = NULL;
-            vec2_t min, max;
+            vec2d_t min, max;
             uint i;
 
             // Do any initialization/error checking work we need to do.
@@ -516,32 +547,35 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             P_InitUnusedMobjList();
 
             // Must be called before any mobjs are spawned.
-            R_InitLinks(map);
+            GameMap_InitNodePiles(map);
 
-            R_BuildSectorLinks(map);
-
-            // Init blockmap for searching subsectors.
-            V2_Set(min, map->bBox[BOXLEFT],  map->bBox[BOXBOTTOM]);
-            V2_Set(max, map->bBox[BOXRIGHT], map->bBox[BOXTOP]);
-            Map_InitSubsectorBlockmap(map, min, max);
-            for(i = 0; i < map->numSSectors; ++i)
+            // Prepare the client-side data.
+            if(isClient)
             {
-                Map_LinkSubsectorInBlockmap(map, map->ssectors + i);
+                GameMap_InitClMobjs(map);
             }
 
-            // Init the watched object lists.
-            memset(&map->watchedPlaneList, 0, sizeof(map->watchedPlaneList));
-            memset(&map->movingSurfaceList, 0, sizeof(map->movingSurfaceList));
-            memset(&map->decoratedSurfaceList, 0, sizeof(map->decoratedSurfaceList));
+            Rend_DecorInit();
 
-            strncpy(map->mapID, dam->identifier, 8);
-            strncpy(map->uniqueID, P_GenerateUniqueMapID(dam->identifier),
-                    sizeof(map->uniqueID));
+            // Init blockmap for searching BSP leafs.
+            GameMap_Bounds(map, min, max);
+            GameMap_InitBspLeafBlockmap(map, min, max);
+            for(i = 0; i < map->numBspLeafs; ++i)
+            {
+                GameMap_LinkBspLeaf(map, GameMap_BspLeaf(map, i));
+            }
+
+            map->uri = Uri_NewCopy(dam->uri);
+            strncpy(map->uniqueId, P_GenerateUniqueMapId(Str_Text(Uri_Path(map->uri))), sizeof(map->uniqueId));
 
             // See what mapinfo says about this map.
-            mapInfo = Def_GetMapInfo(map->mapID);
+            mapInfo = Def_GetMapInfo(map->uri);
             if(!mapInfo)
-                mapInfo = Def_GetMapInfo("*");
+            {
+                Uri* mapUri = Uri_NewWithPath2("*", RC_NULL);
+                mapInfo = Def_GetMapInfo(mapUri);
+                Uri_Delete(mapUri);
+            }
 
             if(mapInfo)
             {
@@ -565,21 +599,17 @@ boolean DAM_AttemptMapLoad(const char* mapID)
                 map->ambientLightLevel = 0;
             }
 
-            // \todo should be called from P_LoadMap() but R_InitMap requires the
-            // currentMap to be set first.
+            map->effectiveGravity = map->globalGravity;
+
+            // @todo should be called from P_LoadMap() but R_InitMap requires the
+            //       theMap to be set first.
             P_SetCurrentMap(map);
 
-            R_InitSectorShadows();
+            R_InitFakeRadioForMap();
 
-            {
-            uint                startTime = Sys_GetRealTime();
-
-            R_InitSkyFix();
-
-            // How much time did we spend?
-            VERBOSE(Con_Message
-                    ("  InitialSkyFix: Done in %.2f seconds.\n",
-                     (Sys_GetRealTime() - startTime) / 1000.0f));
+            { uint startTime = Sys_GetRealTime();
+            GameMap_InitSkyFix(map);
+            VERBOSE2( Con_Message("Initial sky fix done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
             }
         }
     }

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addons>
+<addon featured="true">
+    <downloadUri>http://files.dengine.net/tracker/torrents/jdrp-packaged-20070404.zip.torrent</downloadUri>
+    <title>jDRP (packaged)</title>
+    <version>1.01</version>
+    <description>DOOM Resource Pack</description>
+    <notes><![CDATA[Unzip this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>doom1</game>
+        <game>doom1-share</game>
+        <game>doom1-ultimate</game>
+        <game>doom2</game>
+        <game>doom2-plut</game>
+        <game>doom2-tnt</game>
+    </games>
+</addon>
+<addon>
+    <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-doom-classic-20080930.pk3.torrent</downloadUri>
+    <title>DOOM Classic Music</title>
+    <version>2008.09.30</version>
+    <description>DOOM Music Recorded from a genuine Roland Sound Canvas SC-155</description>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>doom1</game>
+        <game>doom1-share</game>
+        <game>doom1-ultimate</game>
+    </games>
+</addon>
+<addon>
+    <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-doom2-classic-20080930.pk3.torrent</downloadUri>
+    <title>DOOM2 Classic Music</title>
+    <version>2008.09.30</version>
+    <description>DOOM2 Music Recorded from a genuine Roland Sound Canvas SC-155</description>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>doom2</game>
+    </games>
+</addon>
+<addon>
+    <downloadUri>http://files.dengine.net/tracker/torrents/tnt-remix-lorcan-20071225.pk3.torrent</downloadUri>
+    <title>TNT Lorcan Remix</title>
+    <version>2007.12.25</version>
+    <description>TNT Music Remixed by Lorcan</description>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>doom2-tnt</game>
+    </games>
+</addon>
+<addon>
+    <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-all-remix-Sycraft-v4.pk3.torrent</downloadUri>
+    <title>Sycraft Remixes</title>
+    <version>4</version>
+    <description>DOOM, DOOMII and Final DOOM music remastered by Sycraft</description>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>doom1</game>
+        <game>doom1-share</game>
+        <game>doom1-ultimate</game>
+        <game>doom2</game>
+        <game>doom2-plut</game>
+        <game>doom2-tnt</game>
+    </games>
+</addon>
+<addon>
+    <homepageUri>http://dhtp.freelanzer.com/</homepageUri>
+    <title>DOOM High-resolution Texture Project</title>
+    <description>DOOM high resolution textures</description>
+    <games>
+        <game>doom1</game>
+        <game>doom1-share</game>
+        <game>doom1-ultimate</game>
+        <game>doom2</game>
+        <game>doom2-plut</game>
+        <game>doom2-tnt</game>
+    </games>
+</addon>
+<addon>
+    <downloadUri>http://files.dengine.net/tracker/torrents/jdui-all-20120223.pk3.torrent</downloadUri>
+    <title>DOOM High-resolution User interface Pack</title>
+    <version>2012.02.23</version>
+    <description>DOOM High-resolution User interface Pack</description>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>doom1</game>
+        <game>doom1-share</game>
+        <game>doom1-ultimate</game>
+        <game>doom2</game>
+        <game>doom2-plut</game>
+        <game>doom2-tnt</game>
+    </games>
+</addon>
+<addon featured="true">
+    <downloadUri>http://files.dengine.net/tracker/torrents/pk-doom-sfx-20100109.pk3.torrent</downloadUri>
+    <title>DOOM High-quality sound pack</title>
+    <version>2010.01.09</version>
+    <description>Compiled by Per Kristian Risvik</description>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>doom1</game>
+        <game>doom1-share</game>
+        <game>doom1-ultimate</game>
+        <game>doom2</game>
+        <game>doom2-plut</game>
+        <game>doom2-tnt</game>
+    </games>
+</addon>
+<addon>
+    <downloadUri>http://files.dengine.net/tracker/torrents/slide-skyboxes.torrent</downloadUri>
+    <title>Slide's Skyboxes</title>
+    <description>Created by slide for all the DOOM games</description>
+    <notes><![CDATA[Move these packs into the Snowberry addon folder]]></notes>
+    <games>
+        <game>doom1</game>
+        <game>doom1-share</game>
+        <game>doom1-ultimate</game>
+        <game>doom2</game>
+        <game>doom2-plut</game>
+        <game>doom2-tnt</game>
+    </games>
+</addon>
+<addon>
+    <downloadUri>http://torrage.com/torrent/584A6DDB49940C73753CB6B425B4301E6137E945.torrent</downloadUri>
+    <title>jHRP (packaged)</title>
+    <version>2009.07.03</version>
+    <description>3D Models, hi-res interface elements and textures</description>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>heretic</game>
+        <game>heretic-share</game>
+        <game>heretic-ext</game>
+    </games>
+</addon>
+<addon>
+    <downloadUri>http://files.dengine.net/tracker/torrents/xhtp-20100714.pk3.torrent</downloadUri>
+    <title>xHTP (packaged)</title>
+    <version>2010.07.14</version>
+    <description>High resolution texture pack</description>
+    <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
+    <games>
+        <game>hexen</game>
+        <game>hexen-dk</game>
+        <game>hexen-demo</game>
+    </games>
+</addon>
+</addons>

@@ -1,34 +1,26 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * hu_msg.c: Important state change messages.
+ * @file hu_msg.c
+ * Important state change messages.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <assert.h>
 #include <stdlib.h>
@@ -46,31 +38,16 @@
 
 #include "hu_msg.h"
 #include "hu_menu.h"
+#include "hu_stuff.h"
 
-// MACROS ------------------------------------------------------------------
+D_CMD(MsgResponse);
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-DEFCC(CCmdMsgResponse);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-ccmd_t msgCCmds[] = {
+ccmdtemplate_t msgCCmds[] = {
     {"messageyes",      "",     CCmdMsgResponse},
     {"messageno",       "",     CCmdMsgResponse},
     {"messagecancel",   "",     CCmdMsgResponse},
     {NULL}
 };
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean awaitingResponse;
 static int messageToPrint; // 1 = message to be printed.
@@ -79,16 +56,11 @@ static msgresponse_t messageResponse;
 static msgtype_t msgType;
 static msgfunc_t msgCallback;
 static char* msgText;
-static void* msgContext;
+static int msgUserValue;
+static void* msgUserPointer;
 
 static char yesNoMessage[160];
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Called during the PreInit of each game during start up.
- * Register Cvars and CCmds for the important messages.
- */
 void Hu_MsgRegister(void)
 {
     int                 i;
@@ -97,9 +69,6 @@ void Hu_MsgRegister(void)
         Con_AddCommand(msgCCmds + i);
 }
 
-/**
- * Called during init.
- */
 void Hu_MsgInit(void)
 {
     awaitingResponse = false;
@@ -108,12 +77,10 @@ void Hu_MsgInit(void)
 
     msgCallback = NULL;
     msgText = NULL;
-    msgContext = NULL;
+    msgUserValue = 0;
+    msgUserPointer = NULL;
 }
 
-/**
- * Called during engine shutdown.
- */
 void Hu_MsgShutdown(void)
 {
     if(msgText)
@@ -187,83 +154,64 @@ static void composeYesNoMessage(void)
 
 static void drawMessage(void)
 {
-    int                 x, y;
-    char*               p;
+#define LEADING             (0)
 
-    y = 100 - M_StringHeight(msgText, GF_FONTA) / 2;
-    p = msgText;
-    while(*p)
-    {
-        char*           string = p, c;
-
-        while((c = *p) && *p != '\n')
-            p++;
-
-        *p = 0;
-
-        x = 160 - M_StringWidth(string, GF_FONTA) / 2;
-        M_WriteText3(x, y, string, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
-        y += M_StringHeight(string, GF_FONTA);
-
-        if(((*p) = c))
-            p++;
-    }
-
-    // An additional blank line between the message and response prompt.
-    y += M_StringHeight("A", GF_FONTA);
+    short textFlags = MN_MergeMenuEffectWithDrawTextFlags(0);
+    Point2Raw origin = { SCREENWIDTH/2, SCREENHEIGHT/2 };
+    const char* questionString;
 
     switch(msgType)
     {
-    case MSG_ANYKEY:
-        x = 160 - M_StringWidth(PRESSKEY, GF_FONTA) / 2;
-        M_WriteText3(x, y, PRESSKEY, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
-        break;
-
-    case MSG_YESNO:
-        x = 160 - M_StringWidth(yesNoMessage, GF_FONTA) / 2;
-        M_WriteText3(x, y, yesNoMessage, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
-        break;
-
+    case MSG_ANYKEY: questionString = PRESSKEY;     break;
+    case MSG_YESNO:  questionString = yesNoMessage; break;
     default:
-        Con_Error("drawMessage: Internal error, unknown message type %i.\n",
-                  (int) msgType);
+        Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
+        exit(1); // Unreachable.
     }
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(FID(GF_FONTA));
+    FR_LoadDefaultAttrib();
+    FR_SetLeading(LEADING);
+    FR_SetShadowStrength(cfg.menuTextGlitter);
+    FR_SetGlitterStrength(cfg.menuShadow);
+    FR_SetColorAndAlpha(cfg.menuTextColors[MENU_COLOR4][CR], cfg.menuTextColors[MENU_COLOR4][CG], cfg.menuTextColors[MENU_COLOR4][CB], 1);
+
+    FR_DrawText3(msgText, &origin, ALIGN_TOP, textFlags);
+    origin.y += FR_TextHeight(msgText);
+    // An additional blank line between the message and response prompt.
+    origin.y += FR_CharHeight('A') * (1+LEADING);
+
+    FR_DrawText3(questionString, &origin, ALIGN_TOP, textFlags);
+    DGL_Disable(DGL_TEXTURE_2D);
+
+#undef LEADING
 }
 
-/**
- * Draw any active message.
- */
 void Hu_MsgDrawer(void)
 {
-    if(!messageToPrint)
-        return;
+    borderedprojectionstate_t bp;
 
-    // Scale by the hudScale.
+    if(!messageToPrint) return;
+
+    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT,
+          Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.menuScaleMode);
+    GL_BeginBorderedProjection(&bp);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(160, 100, 0);
+    DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
+    DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
+    DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
-    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
-
-    DGL_Translatef(-160, -100, 0);
-
-    // Draw the message.
     drawMessage();
 
-    // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
+
+    GL_EndBorderedProjection(&bp);
 }
 
-/**
- * Updates on Game Tick.
- */
 void Hu_MsgTicker(void)
 {
     // Check if there has been a response to a message.
@@ -274,13 +222,10 @@ void Hu_MsgTicker(void)
     stopMessage();
 
     if(msgType != MSG_ANYKEY && msgCallback)
-        msgCallback(messageResponse, msgContext);
+        msgCallback(messageResponse, msgUserValue, msgUserPointer);
 }
 
-/**
- * If an "any key" message is active, respond to the event.
- */
-boolean Hu_MsgResponder(event_t* ev)
+int Hu_MsgResponder(event_t* ev)
 {
     if(!messageToPrint || msgType != MSG_ANYKEY)
         return false;
@@ -302,11 +247,12 @@ boolean Hu_IsMessageActive(void)
     return messageToPrint;
 }
 
-/**
- * Begin a new message.
- */
-void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
-                 void* context)
+boolean Hu_IsMessageActiveWithCallback(msgfunc_t callback)
+{
+    return messageToPrint && msgCallback == callback;
+}
+
+void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, int userValue, void* userPointer)
 {
     assert(msg);
 
@@ -316,7 +262,8 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
 
     msgType = type;
     msgCallback = callback;
-    msgContext = context;
+    msgUserValue = userValue;
+    msgUserPointer = userPointer;
 
     // Take a copy of the message string.
     msgText = calloc(1, strlen(msg)+1);
@@ -325,7 +272,10 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
     if(msgType == MSG_YESNO)
         composeYesNoMessage();
 
-    typeInTime = 0;
+    if(!(Get(DD_DEDICATED) || Get(DD_NOVIDEO)))
+    {
+        FR_ResetTypeinTimer();
+    }
 
     // If the console is open, close it. This message must be noticed!
     Con_Open(false);
@@ -337,7 +287,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
 /**
  * Handles responses to messages requiring input.
  */
-DEFCC(CCmdMsgResponse)
+D_CMD(MsgResponse)
 {
     if(messageToPrint)
     {

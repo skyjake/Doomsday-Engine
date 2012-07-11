@@ -1,10 +1,10 @@
-/**\file
+/**\file r_common.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,13 @@
  */
 
 /**
- * r_common.c : Common routines for refresh.
+ * Common routines for refresh.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
+#include <assert.h>
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -39,44 +39,23 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "am_map.h"
+#include "p_actor.h"
 #include "p_player.h"
+#include "g_common.h"
 #include "g_controls.h"
 
-// MACROS ------------------------------------------------------------------
+#include "r_common.h"
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// View window current position.
-static float windowX = 0, oldWindowX = 0;
-static float windowY = 0, oldWindowY = 0;
-static float windowWidth = SCREENWIDTH, oldWindowWidth = SCREENWIDTH;
-static float windowHeight = SCREENHEIGHT, oldWindowHeight = SCREENHEIGHT;
-static int targetX = -1, targetY = -1, targetWidth = -1, targetHeight = -1;
-static float windowPos = 0;
+Size2Rawf viewScale = { 1, 1 };
+float aspectScale = 1;
 
 static int gammaLevel;
 #ifndef __JHEXEN__
 char gammamsg[5][81];
 #endif
-
-// CODE --------------------------------------------------------------------
 
 void R_PrecachePSprites(void)
 {
@@ -92,174 +71,183 @@ void R_PrecachePSprites(void)
         {
             pclass = players[CONSOLEPLAYER].class_;
 
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_READY]);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK]);
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_FLASH]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_READY]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_FLASH]);
 #if __JHERETIC__ || __JHEXEN__
-            R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK_HOLD]);
+            R_PrecacheModelsForState(weaponInfo[i][pclass].mode[k].states[WSN_ATTACK_HOLD]);
 #endif
         }
     }
 }
 
-void R_SetViewWindowTarget(int x, int y, int w, int h)
+/// @return  @c true= maximized view window is in effect.
+static boolean maximizedViewWindow(int player)
 {
-    if(targetX == -1)
-    {   // First call.
-        windowX = oldWindowX = targetX = x;
-        windowY = oldWindowY = targetY = y;
-        windowWidth = oldWindowWidth = targetWidth = w;
-        windowHeight = oldWindowHeight = targetHeight = h;
-        return;
-    }
-
-    if(x == targetX && y == targetY && w == targetWidth && h == targetHeight)
+    player_t* plr = players + player;
+    if(player < 0 || player >= MAXPLAYERS)
     {
-        return;
+        Con_Error("maximizedViewWindow: Invalid player #%i.", player);
+        exit(1);
     }
-
-    oldWindowX = windowX;
-    oldWindowY = windowY;
-    oldWindowWidth = windowWidth;
-    oldWindowHeight = windowHeight;
-
-    // Restart the timer.
-    windowPos = 0;
-
-    targetX = x;
-    targetY = y;
-    targetWidth = w;
-    targetHeight = h;
+    return (!(G_GameState() == GS_MAP && cfg.screenBlocks <= 10 &&
+              !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
 }
 
-/**
- * Animates the game view window towards the target values.
- */
-void R_ViewWindowTicker(void)
+static void calcStatusBarSize(Size2Raw* size, Size2Rawf* viewScale, int maxWidth)
 {
-    if(targetX == -1)
-        return; // Nothing to do.
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+    float aspectScale = cfg.statusbarScale;
 
-    windowPos += .4f;
-    if(windowPos >= 1)
+    size->width = ST_WIDTH * viewScale->height;
+    if(size->width > maxWidth)
+        aspectScale *= (float)maxWidth/size->width;
+
+    size->width *= cfg.statusbarScale;
+    size->height = floor(ST_HEIGHT * 1.2f/*aspect correct*/ * aspectScale);
+#else
+    size->width = size->height  = 0;
+#endif
+}
+
+static void resizeViewWindow(int player, const RectRaw* newGeometry,
+    const RectRaw* oldGeometry, boolean interpolate)
+{
+    RectRaw window;
+    assert(newGeometry);
+
+    if(player < 0 || player >= MAXPLAYERS)
     {
-        windowX = targetX;
-        windowY = targetY;
-        windowWidth = targetWidth;
-        windowHeight = targetHeight;
+        Con_Error("resizeViewWindow: Invalid player #%i.", player);
+        exit(1); // Unreachable.
     }
-    else
+
+    // Calculate fixed 320x200 scale factors.
+    viewScale.width  = (float)newGeometry->size.width  / SCREENWIDTH;
+    viewScale.height = (float)newGeometry->size.height / SCREENHEIGHT;
+    aspectScale = newGeometry->size.width >= newGeometry->size.height? viewScale.width : viewScale.height;
+
+    // Determine view window geometry.
+    memcpy(&window, newGeometry, sizeof(window));
+    window.origin.x = window.origin.y = 0;
+
+    // Override @c cfg.screenBlocks and force a maximized window?
+    if(!maximizedViewWindow(player) && cfg.screenBlocks <= 10)
     {
-#define LERP(start, end, pos) (end * pos + start * (1 - pos))
-        windowX = LERP(oldWindowX, targetX, windowPos);
-        windowY = LERP(oldWindowY, targetY, windowPos);
-        windowWidth = LERP(oldWindowWidth, targetWidth, windowPos);
-        windowHeight = LERP(oldWindowHeight, targetHeight, windowPos);
-#undef LERP
-    }
-}
+        Size2Raw statusBarSize;
+        calcStatusBarSize(&statusBarSize, &viewScale, newGeometry->size.width);
 
-void R_GetViewWindow(float* x, float* y, float* w, float* h)
-{
-    if(x) *x = windowX;
-    if(y) *y = windowY;
-    if(w) *w = windowWidth;
-    if(h) *h = windowHeight;
-}
-
-boolean R_IsFullScreenViewWindow(void)
-{
-    return (windowWidth >= 320 && windowHeight >= 200 && windowX <= 0 &&
-            windowY <= 0);
-}
-
-/**
- * Does the given display player's automap obscure the window completely?
- * \note: Window dimensions are in fixed scale {x} 0 - 320, {y} 0 - 200.
- *
- * @param playerid      Index of the player whose map to check.
- * @param x             Top left X coordinate.
- * @param y             Top left Y coordinate.
- * @param w             Width.
- * @param h             Height.
- *
- * @return              @true if there is no point within the given window
- *                      which is even partially visible.
- */
-boolean R_MapObscures(int playerid, int x, int y, int w, int h)
-{
-    boolean             retVal = false;
-    automapid_t         map = AM_MapForPlayer(DISPLAYPLAYER);
-
-    if(AM_IsActive(map))
-    {
-        float   alpha;
-
-        AM_GetColorAndAlpha(map, AMO_BACKGROUND, NULL, NULL, NULL, &alpha);
-        if(!(alpha < 1) && !(AM_GlobalAlpha(map) < 1))
+        if(cfg.screenBlocks != 10)
         {
-            if(AM_IsMapWindowInFullScreenMode(map))
-            {
-                retVal = true;
-            }
-            else
-            {
-                // We'll have to compare the dimensions.
-                float       scrwidth = Get(DD_WINDOW_WIDTH);
-                float       scrheight = Get(DD_WINDOW_HEIGHT);
-                float       fx = FIXXTOSCREENX(x);
-                float       fy = FIXYTOSCREENY(x);
-                float       fw = FIXXTOSCREENX(w);
-                float       fh = FIXYTOSCREENY(h);
-                float       mx, my, mw, mh;
+            window.size.width  = cfg.screenBlocks * SCREENWIDTH/10;
+            window.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarSize.height) / 10;
 
-                AM_GetWindow(map, &mx, &my, &mw, &mh);
-                if(mx >= fx && my >= fy && mw >= fw && mh >= fh)
-                    retVal = true;
-            }
+            window.origin.x = (SCREENWIDTH - window.size.width) / 2;
+            window.origin.y = (SCREENHEIGHT - statusBarSize.height - window.size.height) / 2;
         }
+        else
+        {
+            window.origin.x = 0;
+            window.origin.y = 0;
+            window.size.width  = SCREENWIDTH;
+            window.size.height = SCREENHEIGHT - statusBarSize.height;
+        }
+
+        // Scale from fixed to viewport coordinates.
+        window.origin.x = ROUND(window.origin.x * viewScale.width);
+        window.origin.y = ROUND(window.origin.y * viewScale.height);
+        window.size.width  = ROUND(window.size.width  * viewScale.width);
+        window.size.height = ROUND(window.size.height * viewScale.height);
     }
 
-    return retVal;
+    R_SetViewWindowGeometry(player, &window, interpolate);
 }
 
-void R_CachePatch(dpatch_t* dp, const char* name)
+void R_ResizeViewWindow(int flags)
 {
-    lumppatch_t*        patch;
+    static boolean oldMaximized;
+    int i, delta, destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
+    boolean maximized;
+    RectRaw port;
 
-    if(IS_DEDICATED)
+    // Override @c cfg.screenBlocks and force a maximized window?
+    maximized = maximizedViewWindow(DISPLAYPLAYER);
+    if(maximized != oldMaximized)
+    {
+        oldMaximized = maximized;
+        flags |= RWF_FORCE|RWF_NO_LERP;
+    }
+
+    if(!(flags & RWF_FORCE))
+    {
+        if(cfg.screenBlocks == destBlocks)
+            return;
+    }
+
+    delta = MINMAX_OF(-1, destBlocks - cfg.screenBlocks, 1);
+    if(delta != 0)
+    {
+        if(cfg.screenBlocks >= 10 && destBlocks != 13)
+        {   // When going fullscreen, force a hud show event (to reset the timer).
+            for(i = 0; i < MAXPLAYERS; ++i)
+                ST_HUDUnHide(i, HUE_FORCE);
+        }
+
+        if((cfg.screenBlocks == 11 && destBlocks == 10) ||
+           (cfg.screenBlocks == 10 && destBlocks == 11))
+        {   // When going to/from statusbar span, do an instant change.
+            flags |= RWF_NO_LERP;
+        }
+
+        cfg.screenBlocks += delta;
+        flags |= RWF_FORCE;
+    }
+
+    if(!(flags & RWF_FORCE))
+    {
+        // No update necessary.
         return;
+    }
 
-    dp->lump = W_CheckNumForName(name);
-    if(dp->lump == -1)
-        return;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!R_ViewPortGeometry(i, &port))
+        {
+            // Player is not local or does not have a viewport.
+            continue;
+        }
+        resizeViewWindow(i, &port, &port, (flags & RWF_NO_LERP)==0);
+    }
+}
 
-    patch = (lumppatch_t *) W_CacheLumpNum(dp->lump, PU_CACHE);
-    dp->width = SHORT(patch->width);
-    dp->height = SHORT(patch->height);
-    dp->leftOffset = SHORT(patch->leftOffset);
-    dp->topOffset = SHORT(patch->topOffset);
-
-    // Precache the patch while we're at it.
-    R_PrecachePatch(dp->lump);
+int R_UpdateViewport(int hookType, int param, void* data)
+{
+    const ddhook_viewport_reshape_t* p = (ddhook_viewport_reshape_t*)data;
+    resizeViewWindow(param, &p->geometry, &p->oldGeometry, false);
+    return true;
 }
 
 #ifndef __JHEXEN__
 void R_GetGammaMessageStrings(void)
 {
-    int                 i;
-
-    // Init some strings.
+    int i;
     for(i = 0; i < 5; ++i)
+    {
         strcpy(gammamsg[i], GET_TXT(TXT_GAMMALVL0 + i));
+    }
 }
 #endif
 
 void R_CycleGammaLevel(void)
 {
-    char                buf[50];
+    char buf[50];
+
+    if(G_QuitInProgress())
+    {
+        return;
+    }
 
     gammaLevel++;
     if(gammaLevel > 4)
@@ -283,17 +271,17 @@ void R_CycleGammaLevel(void)
  */
 void R_UpdateConsoleView(int player)
 {
-    float viewOrigin[3];
+    coord_t viewOrigin[3];
     player_t* plr;
     mobj_t* mo;
 
     if(IS_DEDICATED || player < 0 || player >= MAXPLAYERS) return;
     plr = &players[player];
     mo = plr->plr->mo;
-    if(!mo) return; // Not present?
+    if(!mo || !plr->plr->inGame) return; // Not present?
 
-    viewOrigin[VX] = mo->pos[VX] + plr->viewOffset[VX];
-    viewOrigin[VY] = mo->pos[VY] + plr->viewOffset[VY];
+    viewOrigin[VX] = mo->origin[VX] + plr->viewOffset[VX];
+    viewOrigin[VY] = mo->origin[VY] + plr->viewOffset[VY];
     viewOrigin[VZ] = plr->viewZ + plr->viewOffset[VZ];
     R_SetViewOrigin(player, viewOrigin);
     R_SetViewAngle(player, mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));

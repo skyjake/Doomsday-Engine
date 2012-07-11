@@ -1,0 +1,556 @@
+# Chex Quest - Text Strings
+#
+
+Header { Version = 5; }
+
+Text {
+  ID = "QUITMSG";
+  Text = "Don't give up now...do \nyou still wish to quit?";
+}
+
+Text {
+  ID = "LOADNET";
+  Text = "You can't load while in a net quest!";
+}
+
+Text {
+  ID = "QLOADNET";
+  Text = "You can't quickload during a netquest!";
+}
+
+Text {
+  ID = "QSPROMPT";
+  Text = "Quicksave over your quest named\n\n'%s'?";
+}
+
+Text {
+  ID = "QLPROMPT";
+  Text = "Do you want to quickload the quest named\n\n'%s'?";
+}
+
+Text {
+  ID = "NEWGAME";
+  Text = "You can't start a new quest\nwhile in a network quest.";
+}
+
+Text {
+  ID = "NIGHTMARE";
+  Text = "Careful, this will be tough.\nDo you wish to continue?";
+}
+
+Text {
+  ID = "SWSTRING";
+  Text = "This is Chex(R) Quest. Look for\n\nfuture levels at www.chexquest.com";
+}
+
+Text {
+  ID = "NETEND";
+  Text = "You can't end a netquest!";
+}
+
+Text {
+  ID = "ENDGAME";
+  Text = "Are you sure you want to end the quest?";
+}
+
+Text {
+  ID = "GOTARMOR";
+  Text = "Picked up the Chex(R) Armor.";
+}
+
+Text {
+  ID = "GOTMEGA";
+  Text = "Picked up the Super Chex(R) Armor!";
+}
+
+Text {
+  ID = "GOTHTHBONUS";
+  Text = "Picked up a glass of water.";
+}
+
+Text {
+  ID = "GOTARMBONUS";
+  Text = "Picked up slime repellent.";
+}
+
+Text {
+  ID = "GOTSTIM";
+  Text = "Picked up a bowl of fruit.";
+}
+
+Text {
+  ID = "GOTMEDINEED";
+  Text = "Picked up some needed vegetables!";
+}
+
+Text {
+  ID = "GOTMEDIKIT";
+  Text = "Picked up a bowl of vegetables.";
+}
+
+Text {
+  ID = "GOTSUPER";
+  Text = "Supercharge Breakfast!";
+}
+
+Text {
+  ID = "GOTBLUECARD";
+  Text = "Picked up a blue key.";
+}
+
+Text {
+  ID = "GOTYELWCARD";
+  Text = "Picked up a yellow key.";
+}
+
+Text {
+  ID = "GOTREDCARD";
+  Text = "Picked up a red key.";
+}
+
+Text {
+  ID = "GOTSUIT";
+  Text = "Slimeproof Suit";
+}
+
+Text {
+  ID = "GOTCLIP";
+  Text = "Picked up a mini zorch recharge.";
+}
+
+Text {
+  ID = "GOTCLIPBOX";
+  Text = "Picked up a mini zorch pack.";
+}
+
+Text {
+  ID = "GOTROCKET";
+  Text = "Picked up a zorch propulsor recharge.";
+}
+
+Text {
+  ID = "GOTROCKBOX";
+  Text = "Picked up a zorch propulsor pack.";
+}
+
+Text {
+  ID = "GOTCELL";
+  Text = "Picked up a phasing zorcher recharge.";
+}
+
+Text {
+  ID = "GOTCELLBOX";
+  Text = "Picked up a phasing zorcher pack.";
+}
+
+Text {
+  ID = "GOTSHELLS";
+  Text = "Picked up a large zorcher recharge.";
+}
+
+Text {
+  ID = "GOTSHELLBOX";
+  Text = "Picked up a large zorcher pack.";
+}
+
+Text {
+  ID = "GOTBACKPACK";
+  Text = "Picked up a Zorchpak!";
+}
+
+Text {
+  ID = "GOTBFG9000";
+  Text = "You got the LAZ Device!";
+}
+
+Text {
+  ID = "GOTCHAINGUN";
+  Text = "You got the Rapid Zorcher!";
+}
+
+Text {
+  ID = "GOTCHAINSAW";
+  Text = "You got the Super Bootspork!";
+}
+
+Text {
+  ID = "GOTLAUNCHER";
+  Text = "You got the Zorch Propulsor!";
+}
+
+Text {
+  ID = "GOTPLASMA";
+  Text = "You got the Phasing Zorcher!";
+}
+
+Text {
+  ID = "GOTSHOTGUN";
+  Text = "You got the Large Zorcher!";
+}
+
+Text {
+  ID = "GOTSHOTGUN2";
+  Text = "You got the Super Large Zorcher!";
+}
+
+Text {
+  ID = "HUSTR_E1M1";
+  Text = "E1M1: Landing Zone";
+}
+
+Text {
+  ID = "HUSTR_E1M2";
+  Text = "E1M2: Storage Facility";
+}
+
+Text {
+  ID = "HUSTR_E1M3";
+  Text = "E1M3: Experimental Lab";
+}
+
+Text {
+  ID = "HUSTR_E1M4";
+  Text = "E1M4: Arboretum";
+}
+
+Text {
+  ID = "HUSTR_E1M5";
+  Text = "E1M5: Caverns of Bazoik";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO0";
+  Text = "No";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO1";
+  Text = "I'm ready to zorch!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO2";
+  Text = "I'm feeling great!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO3";
+  Text = "I'm getting pretty gooed up!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO4";
+  Text = "Somebody help me!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO5";
+  Text = "Go back to your own dimension!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO6";
+  Text = "Stop that Flemoid";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO7";
+  Text = "I think I'm lost!";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO8";
+  Text = "I'll get you out of this gunk.";
+}
+
+Text {
+  ID = "HUSTR_CHATMACRO9";
+  Text = "Yes";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF1";
+  Text = "I'm feeling great.";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF2";
+  Text = "I think I'm lost.";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF3";
+  Text = "Oh No...";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF4";
+  Text = "Gotta break free.";
+}
+
+Text {
+  ID = "HUSTR_TALKTOSELF5";
+  Text = "Hurry!";
+}
+
+Text {
+  ID = "STSTR_DQDON";
+  Text = "Invincible Mode On";
+}
+
+Text {
+  ID = "STSTR_DQDOFF";
+  Text = "Invincible Mode Off";
+}
+
+Text {
+  ID = "STSTR_KFAADDED";
+  Text = "Super Zorch Added";
+}
+
+Text {
+  ID = "STSTR_FAADDED";
+  Text = "Zorch Added";
+}
+
+Text {
+  ID = "STSTR_CHOPPERS";
+  Text = "... Eat Chex(R)!";
+}
+
+Text {
+  ID = "E1TEXT";
+  Text = "Mission accomplished.\n\n
+    Are you prepared for the next mission?\n
+    \n\n\n\n\n\nPress the escape key to continue...\n";
+}
+
+Text {
+  ID = "E2TEXT";
+  Text = "You've done it!";
+}
+
+Text {
+  ID = "E3TEXT";
+  Text = "Wonderful Job!";
+}
+
+Text {
+  ID = "E4TEXT";
+  Text = "Fantastic";
+}
+
+Text {
+  ID = "C1TEXT";
+  Text = "Great!";
+}
+
+Text {
+  ID = "C2TEXT";
+  Text = "Way to go!";
+}
+
+Text {
+  ID = "C3TEXT";
+  Text = "Thanks for the help!";
+}
+
+Text {
+  ID = "C4TEXT";
+  Text = "Great!\n";
+}
+
+Text {
+  ID = "C5TEXT";
+  Text = "Fabulous!";
+}
+
+Text {
+  ID = "C6TEXT";
+  Text = "\n";
+}
+
+Text {
+  ID = "P1TEXT";
+  Text = "Nicely done!";
+}
+
+Text {
+  ID = "P2TEXT";
+  Text = "Nice Job!";
+}
+
+Text {
+  ID = "P3TEXT";
+  Text = "Well done!";
+}
+
+Text {
+  ID = "P4TEXT";
+  Text = "Eat Chex(R)!";
+}
+
+Text {
+  ID = "P5TEXT";
+  Text = "Are you ready?";
+}
+
+Text {
+  ID = "P6TEXT";
+  Text = "Were you ready?";
+}
+
+Text {
+  ID = "T1TEXT";
+  Text = "There's more to come...";
+}
+
+Text {
+  ID = "T2TEXT";
+  Text = "Keep up the good work!";
+}
+
+Text {
+  ID = "T3TEXT";
+  Text = "Get ready!.";
+}
+
+Text {
+  ID = "T4TEXT";
+  Text = "Be Proud.";
+}
+
+Text {
+  ID = "T5TEXT";
+  Text = "Wow!";
+}
+
+Text {
+  ID = "T6TEXT";
+  Text = "Great.";
+}
+
+Text {
+  ID = "CC_ZOMBIE";
+  Text = "Flemoidus Commonus";
+}
+
+Text {
+  ID = "CC_SHOTGUN";
+  Text = "Flemoidus Bipedicus";
+}
+
+Text {
+  ID = "CC_DEMON";
+  Text = "Flemoidus Bipedicus With Armor";
+}
+
+Text {
+  ID = "CC_BARON";
+  Text = "The Flembrane";
+}
+
+Text {
+  ID = "QUITMESSAGE1";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE2";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE3";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE4";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE5";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE6";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE7";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE8";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE9";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE10";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE11";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE12";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE13";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "QUITMESSAGE14";
+  Text = "Please don't leave, we\nneed your help!";
+}
+
+Text {
+  ID = "JOINNET";
+  Text = "You're already in a network quest!";
+}
+
+Text {
+  ID = "SAVENET";
+  Text = "You can't save while in a net quest!";
+}
+
+Text {
+  ID = "CLNETLOAD";
+  Text = "Server loading saved quest...";
+}
+
+Text {
+  ID = "LOADMISSING";
+  Text = "You weren't in the server's saved quest.";
+}
+
+Text {
+  ID = "KEY1";
+  Text = "Blue Key";
+}
+
+Text {
+  ID = "KEY2";
+  Text = "Yellow Key";
+}
+
+Text {
+  ID = "KEY3";
+  Text = "Red Key";
+}

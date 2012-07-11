@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,7 +113,7 @@ enum {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
 } xsthinker_t;
 
 typedef struct {
@@ -135,9 +135,9 @@ typedef struct {
     int             flags;
     struct linedef_s* origin;
 
-    float           destination;
-    float           speed; // Signed.
-    float           crushSpeed; // Signed (speed to use when crushing).
+    coord_t         destination;
+    float           speed;
+    float           crushSpeed; // Speed to use when crushing.
 
     material_t*     setMaterial; // Set material when move done.
     int             setSectorType; // Sector type to set when move done
@@ -154,9 +154,9 @@ void            XS_Update(void);
 
 void            XS_Thinker(xsthinker_t* xs);
 
-float           XS_Gravity(struct sector_s *sector);
-float           XS_Friction(struct sector_s *sector);
-float           XS_ThrustMul(struct sector_s *sector);
+coord_t         XS_Gravity(struct sector_s *sector);
+coord_t         XS_Friction(struct sector_s *sector);
+coord_t         XS_ThrustMul(struct sector_s *sector);
 
 void            XS_InitMovePlane(struct linedef_s *line);
 int C_DECL      XSTrav_MovePlane(struct sector_s *sector, boolean ceiling,
@@ -187,6 +187,6 @@ void            SV_ReadXGSector(struct sector_s *sec);
 void            SV_WriteXGPlaneMover(thinker_t *th);
 int             SV_ReadXGPlaneMover(xgplanemover_t* mov);
 
-DEFCC(CCmdMovePlane);
+D_CMD(MovePlane);
 
 #endif

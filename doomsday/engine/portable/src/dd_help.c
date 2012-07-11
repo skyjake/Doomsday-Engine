@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_help.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * dd_help.c: Help Text Strings.
+ * Help Text Strings.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,6 +33,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
+#include "de_filesys.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -121,20 +122,20 @@ static void DH_DeleteNode(helpnode_t* node)
  *
  * @return              Non-zero if the file was read successfully.
  */
-static int DH_ReadStrings(char* fileName)
+static int DH_ReadStrings(const char* fileName)
 {
-    DFILE*              file = F_Open(fileName, "rt");
-    char                line[2048], *ptr, *eol, *end;
-    helpnode_t*         node = NULL;
-    int                 count = 0, length;
+    DFile* file = F_Open(fileName, "rt");
+    char line[2048], *ptr, *eol, *end;
+    helpnode_t* node = 0;
+    int count = 0, length;
 
     if(!file)
     {
-        Con_Message("DH_ReadStrings: %s not found.\n", fileName);
-        return false;           // The file was not found.
+        Con_Message("DH_ReadStrings: Warning, %s not found.\n", fileName);
+        return false;
     }
 
-    while(!deof(file))
+    while(!DFile_AtEnd(file))
     {
         M_ReadLine(line, sizeof(line), file);
         if(M_IsComment(line))
@@ -159,7 +160,7 @@ static int DH_ReadStrings(char* fileName)
         }
         else if(node && (end = strchr(ptr, '='))) // It must be a key?
         {
-            helpstring_t*           hst = node->str + count;
+            helpstring_t* hst = node->str + count;
 
             if(count == MAX_STRINGS)
                 continue; // No more room.
@@ -216,8 +217,8 @@ static int DH_ReadStrings(char* fileName)
         }
     }
 
+    F_Delete(file);
     // The file was read successfully.
-    F_Close(file);
     return true;
 }
 
@@ -230,8 +231,8 @@ static int DH_ReadStrings(char* fileName)
  */
 void* DH_Find(const char* id)
 {
-    helpnode_t*         n;
-    size_t              length;
+    helpnode_t* n;
+    size_t length;
 
     if(!helpInited)
         return NULL;
@@ -248,7 +249,7 @@ void* DH_Find(const char* id)
         if(strlen(n->id) < length)
             continue;
 
-        if(!strnicmp(id, n->id, length))
+        if(!stricmp(n->id, id))
             return n;
     }
 
@@ -283,37 +284,52 @@ char* DH_GetString(void* foundNode, int type)
 }
 
 /**
- * Initializes the help string database. After which, attempts to read
- * help strings from both the engine and game-specific help string files.
+ * Initializes the help string database. After which, attempts to read the engine's
+ * own help string file.
  */
 void DD_InitHelp(void)
 {
-    filename_t          helpFileName;
-    float               starttime;
+    float starttime;
 
-    if(helpInited)
-        return; // Already inited.
+    if(helpInited) return; // Already inited.
 
-    starttime = Sys_GetSeconds();
+    VERBOSE( Con_Message("Initializing Help subsystem...\n") )
+    starttime = (verbose >= 2? Sys_GetSeconds() : 0);
 
     // Init the links.
     helpRoot.next = helpRoot.prev = &helpRoot;
 
-    // Control Panel help.
-    M_TranslatePath(helpFileName, "}data\\cphelp.txt", FILENAME_T_MAXLEN);
-    DH_ReadStrings(helpFileName);
+    // Parse the control panel help file.
+    { ddstring_t helpFileName; Str_Init(&helpFileName);
+    Str_Set(&helpFileName, DD_BASEPATH_DATA"cphelp.txt");
+    F_ExpandBasePath(&helpFileName, &helpFileName);
 
-    // Ccmd help (game-specific).
-    sprintf(helpFileName, "}data\\%s\\conhelp.txt",
-            (char *) gx.GetVariable(DD_GAME_NAME));
-    M_TranslatePath(helpFileName, helpFileName, FILENAME_T_MAXLEN);
-    DH_ReadStrings(helpFileName);
+    DH_ReadStrings(Str_Text(&helpFileName));
+
+    Str_Free(&helpFileName);
+    }
 
     // Help is now available.
     helpInited = true;
 
-    VERBOSE(Con_Message("DD_InitHelp: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - starttime));
+    VERBOSE2( Con_Message("DD_InitHelp: Done in %.2f seconds.\n", Sys_GetSeconds() - starttime) );
+}
+
+/**
+ * Attempts to read help strings from the game-specific help file.
+ */
+void DD_ReadGameHelp(void)
+{
+    ddstring_t helpFileName;
+
+    if(!helpInited || !DD_GameLoaded())
+        return; // Nothing to do.
+
+    Str_Init(&helpFileName);
+    Str_Appendf(&helpFileName, "%sconhelp.txt", Str_Text(Game_DataPath(theGame)));
+    F_ExpandBasePath(&helpFileName, &helpFileName);
+    DH_ReadStrings(Str_Text(&helpFileName));
+    Str_Free(&helpFileName);
 }
 
 /**

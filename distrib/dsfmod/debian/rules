@@ -4,7 +4,7 @@ builddir:
 	mkdir -p builddir
 
 builddir/Makefile: builddir
-	cd builddir && qmake-qt4 PREFIX=/usr CONFIG+=release DENG_BUILD=`../build_number.py --print` ../../../doomsday/plugins/fmod/fmod.pro
+	cd builddir && qmake-qt4 PREFIX=/usr CONFIG+=release DENG_BUILD=`../../build_number.py --print` ../../../doomsday/plugins/fmod/fmod.pro
 
 build: build-stamp
 
@@ -46,7 +46,7 @@ binary-arch: build install
 	dh_compress
 	dh_fixperms
 	dh_installdeb
-	dh_shlibdeps
+	dh_shlibdeps -- --ignore-missing-info
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb

@@ -1,9 +1,10 @@
-/**\file
+/**\file x_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,38 +22,38 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * x_main.h:
- */
-
-#ifndef __X_MAIN_H__
-#define __X_MAIN_H__
+#ifndef LIBJHEXEN_MAIN_H
+#define LIBJHEXEN_MAIN_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
+
+extern int verbose;
 
 extern boolean noMonstersParm; // checkparm of -nomonsters
 extern boolean respawnParm; // checkparm of -respawn
 extern boolean turboParm; // checkparm of -turbo
 extern boolean randomClassParm; // checkparm of -randclass
 extern boolean devParm; // checkparm of -devparm
+//extern boolean fastParm; // checkparm of -fast
+
 extern float turboMul; // Multiplier for turbo.
 
+extern gamemode_t gameMode;
 extern int gameModeBits;
-extern char gameModeString[];
 
-extern char *borderLumps[];
+extern char* borderGraphics[];
 
-// Default font colours.
+// Default font colors.
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
+extern const float defFontRGB3[];
 
-void            G_DetectIWADs(void);
-void            G_PreInit(void);
-void            G_PostInit(void);
-void            G_Shutdown(void);
+void X_PreInit(void);
+void X_PostInit(void);
+void X_Shutdown(void);
+int X_GetInteger(int id);
+void* X_GetVariable(int id);
 
-void            G_EndFrame(void);
-
-#endif
+#endif /* LIBJHEXEN_MAIN_H */

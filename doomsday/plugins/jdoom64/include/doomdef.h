@@ -1,10 +1,10 @@
-/**\file
+/**\file doomdef.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -25,13 +25,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * doomdef.h: Internally used data structures for virtually everything,
- * key definitions, lots of other stuff.
- */
-
-#ifndef __DOOMDEF_H__
-#define __DOOMDEF_H__
+#ifndef LIBDOOM64_DEFS_H
+#define LIBDOOM64_DEFS_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -45,6 +40,7 @@
 #  define strupr _strupr
 #endif
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
@@ -53,11 +49,12 @@
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-#define CONFIGFILE          GAMENAMETEXT".cfg"
-#define DEFSFILE            GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH            "}data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
-#define STARTUPPK3          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
+// Verbose messages.
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
+
+extern game_import_t gi;
+extern game_export_t gx;
 
 //
 // Global parameters/defines.
@@ -67,25 +64,15 @@
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Verbose messages.
-#define VERBOSE(code)       { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
-
-/**
- * Game mode handling - identify IWAD version to handle IWAD dependant
- * animations, game logic etc.
- */
 typedef enum {
-    commercial, // DOOM 2 retail, E1 M34
-    indetermined, // Well, no IWAD found.
+    doom64,
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_COMMERCIAL       0x1
-#define GM_INDETERMINED     0x16 // Well, no IWAD found.
+#define GM_DOOM64           0x1
 
-#define GM_ANY              (GM_COMMERCIAL)
+#define GM_ANY              (GM_DOOM64)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
@@ -93,9 +80,14 @@ typedef enum {
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS          16
+#define NUMPLAYERCOLORS     4
+
+#define NUMTEAMS            4 // Color = team.
 
 // State updates, number of tics / second.
 #define TICRATE             35
+
+#define NUMSAVESLOTS        8
 
 /**
  * The current (high-level) state of the game: whether we are playing,
@@ -136,6 +128,7 @@ typedef enum {
 #define PCLASS_INFO(class)  (&classInfo[class])
 
 typedef struct classinfo_s{
+    playerclass_t plrClass;
     char*       niceName;
     boolean     userSelectable;
     mobjtype_t  mobjType;
@@ -168,7 +161,8 @@ typedef enum {
 // Key cards.
 //
 typedef enum {
-    KT_BLUECARD,
+    KT_FIRST,
+    KT_BLUECARD = KT_FIRST,
     KT_YELLOWCARD,
     KT_REDCARD,
     KT_BLUESKULL,
@@ -211,11 +205,14 @@ typedef enum {
     WT_NOCHANGE
 } weapontype_t;
 
+#define VALID_WEAPONTYPE(val) ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
+
 #define NUMWEAPLEVELS       1 // DOOM weapons have 1 power level.
 
 // Ammunition types defined.
 typedef enum {
-    AT_CLIP, // Pistol / chaingun ammo.
+    AT_FIRST,
+    AT_CLIP = AT_FIRST, // Pistol / chaingun ammo.
     AT_SHELL, // Shotgun / double barreled shotgun.
     AT_CELL, // Plasma rifle, BFG.
     AT_MISSILE, // Missile launcher.
@@ -246,7 +243,7 @@ typedef enum {
     IRONTICS = (60 * TICRATE)
 } powerduration_t;
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 
@@ -254,8 +251,6 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define IS_CLIENT           (Get(DD_CLIENT))
 #define IS_NETGAME          (Get(DD_NETGAME))
 #define IS_DEDICATED        (Get(DD_DEDICATED))
-
-#define CVAR(typ, x)        (*((typ)*) Con_GetVariable(x)->ptr)
 
 #define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
 #define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))
@@ -267,4 +262,4 @@ enum { CR, CG, CB, CA }; // Color indices.
 
 #define DEFAULT_PLAYER_VIEWHEIGHT (54)
 
-#endif
+#endif /* LIBDOOM64_DEFS_H */

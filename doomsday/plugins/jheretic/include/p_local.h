@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,6 @@
 // the spider demon is larger,
 // but we do not have any moving sectors nearby
 #define MAXRADIUS       32
-#define MAXMOVE         30
 
 #define USERANGE        64
 #define MELEERANGE      64
@@ -105,35 +104,23 @@ void            P_PostMorphWeapon(player_t* player, weapontype_t weapon);
 void            P_UpdateBeak(player_t* player, pspdef_t* psp);
 void            P_FireWeapon(player_t* player);
 
-void            P_Thrust(player_t* player, angle_t angle, float move);
 boolean         P_UndoPlayerMorph(player_t* player);
-
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
-#define FRICTION_LOW        (0.97265625f)
 
 extern mobjtype_t puffType;
 extern mobj_t* missileMobj;
 
 boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
 boolean     P_SetMobjStateNF(mobj_t* mo, statenum_t state);
-void        P_ThrustMobj(mobj_t* mo, angle_t angle, float move);
+void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 void        P_WindThrust(mobj_t* mo);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
 boolean     P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax);
 void        P_MobjThinker(mobj_t* mo);
-void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t* originator);
 void        P_RipperBlood(mobj_t* mo);
 boolean     P_HitFloor(mobj_t* thing);
 boolean     P_CheckMissileSpawn(mobj_t* missile);
 void        P_MobjMoveZ(mobj_t* mo);
 void        P_ExplodeMissile(mobj_t* mo);
-
-#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 const char*     P_GetMapName(uint episode, uint map);
 const char*     P_GetShortMapName(uint episode, uint map);

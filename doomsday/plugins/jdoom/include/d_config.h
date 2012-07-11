@@ -1,10 +1,10 @@
-/**\file
+/**\file d_config.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * d_config.h: jDoom configuration.
+ * jDoom configuration.
  * Global settings. Most of these are console variables.
  */
 
@@ -35,6 +35,7 @@
 #endif
 
 #include "doomdef.h"
+#include "hu_lib.h"
 
 enum {
     HUD_HEALTH,
@@ -43,6 +44,7 @@ enum {
     HUD_KEYS,
     HUD_FRAGS,
     HUD_FACE,
+    HUD_LOG,
     NUMHUDDISPLAYS
 };
 
@@ -59,13 +61,19 @@ typedef enum {
     NUMHUDUNHIDEEVENTS
 } hueevent_t;
 
+// Counter Cheat flags.
+#define CCH_KILLS           0x01
+#define CCH_ITEMS           0x02
+#define CCH_SECRETS         0x04
+#define CCH_KILLS_PRCNT     0x08
+#define CCH_ITEMS_PRCNT     0x10
+#define CCH_SECRETS_PRCNT   0x20
+
 // WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
 
 typedef struct jdoom_config_s {
     float           playerMoveSpeed;
-    int             dclickUse;
-    int             useMLook;      // Mouse look (mouse Y => viewpitch)
     int             useJLook;      // Joy look (joy Y => viewpitch)
     int             alwaysRun;     // Always run.
     int             noAutoAim;     // No auto-aiming?
@@ -77,25 +85,37 @@ typedef struct jdoom_config_s {
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
-    byte            setSizeNeeded;
     int             setBlocks;
     int             screenBlocks;
     byte            deathLookUp; // look up when killed
     byte            slidingCorpses;
     byte            fastMonsters;
     byte            echoMsg;
-    float           menuScale;
-    int             menuEffects;
     int             hudFog;
-    float           menuGlitter;
+
+    float           menuScale;
+    int             menuEffectFlags;
     float           menuShadow;
     int             menuQuitSound;
     byte            menuSlam;
-    byte            menuHotkeys;
-    byte            askQuickSaveLoad;
-    float           flashColor[3];
-    int             flashSpeed;
-    byte            turningSkull;
+    byte            menuShortcutsEnabled;
+    byte            menuScaleMode;
+    int             menuPatchReplaceMode;
+    byte            menuGameSaveSuggestName;
+    byte            menuCursorRotate;
+    float           menuTextColors[MENU_COLOR_COUNT][3];
+    float           menuTextFlashColor[3];
+    int             menuTextFlashSpeed;
+    float           menuTextGlitter;
+
+    byte            inludeScaleMode;
+    int             inludePatchReplaceMode;
+
+    byte            confirmQuickGameSave;
+    byte            loadAutoSaveOnReborn;
+    byte            loadLastSaveOnReborn;
+
+    int             hudPatchReplaceMode;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
     byte            hudKeysCombine; // One icon per color (e.g. if red key and red skull is owned only show red key).
     float           hudScale; // How to scale HUD data?
@@ -103,29 +123,28 @@ typedef struct jdoom_config_s {
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    byte            usePatchReplacement;
     byte            moveCheckZ;    // if true, mobjs can move over/under each other.
+    byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
     byte            berserkAutoSwitch;
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
+    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
     byte            secretMsg;
     float           filterStrength;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
-    float           menuColor[3];
-    float           menuColor2[3];
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            noCoopWeapons;
-    byte            noCoopAnything;
+    byte            noCoopAnything; // disable all multiplayer objects in co-op
     byte            noNetBFG;
     byte            coopRespawnItems;
     byte            respawnMonstersNightmare;
 
-    int             statusbarScale;
+    float           statusbarScale;
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
@@ -139,15 +158,16 @@ typedef struct jdoom_config_s {
     byte            anyBossDeath;
     byte            monstersStuckInDoors;
     byte            avoidDropoffs;
-    byte            moveBlock; // Dont handle large negative movement in P_TryMove.
+    byte            moveBlock; // Dont handle large negative movement in P_TryMoveXY.
     byte            wallRunNorthOnly; // If handle large make exception for wallrunning
     byte            zombiesCanExit; // Zombie players can exit levels.
     byte            fallOff; // Objects fall under their own weight.
     byte            fixOuchFace;
     byte            fixStatusbarOwnedWeapons;
 
-    byte            counterCheat;
-    float           counterCheatScale;
+    byte            hudShownCheatCounters;
+    float           hudCheatCounterScale;
+    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
 
     // Automap stuff.
 /*  int             automapPos;
@@ -161,6 +181,7 @@ typedef struct jdoom_config_s {
     float           automapBack[3];
     float           automapOpacity;
     float           automapLineAlpha;
+    float           automapLineWidth; ///< In fixed 320x200 pixels.
     byte            automapRotate;
     int             automapHudDisplay;
     int             automapCustomColors;
@@ -177,7 +198,6 @@ typedef struct jdoom_config_s {
     float           msgUptime;
     int             msgBlink;
     int             msgAlign;
-    byte            msgShow;
     float           msgColor[3];
 
     char           *chatMacros[10];
@@ -191,6 +211,7 @@ typedef struct jdoom_config_s {
 
     // Crosshair.
     int             xhair;
+    float           xhairAngle;
     float           xhairSize;
     byte            xhairVitality;
     float           xhairColor[4];
@@ -200,7 +221,7 @@ typedef struct jdoom_config_s {
     byte            netBFGFreeLook; // Allow free-aim with BFG.
     byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
     byte            netMobHealthModifier; // Health modifier for non-player mobjs.
-    int             netGravity; // Multiplayer custom gravity.
+    int             netGravity; // Custom gravity multiplier.
     byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
     byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
     byte            netNoMonsters;

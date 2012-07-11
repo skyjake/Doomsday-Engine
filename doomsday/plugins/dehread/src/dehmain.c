@@ -1,50 +1,41 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dehmain.c
+ * Dehacked patch reader plugin for Doomsday Engine. @ingroup dehread
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1998-2003 Randy Heit <rheit@iastate.edu> (Zdoom)
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1998-2003 Randy Heit <rheit@iastate.edu> (Zdoom)
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Much of this has been taken from or is based on ZDoom's DEH reader.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * @todo Presently unsupported Dehacked features have been commented out.
+ *       They should not be ignored, we should implement most if not all.
  *
  * In Zdoom, from which this code is based, it was originally under the
  * 3 clause BSD license as described here:
  * http://www.opensource.org/licenses/bsd-license.php
- */
-
-
-/**
- * dehmain.c: Dehacked Reader Plugin for Doomsday
  *
- * Much of this has been taken from or is based on ZDoom's DEH reader.
- * Unsupported Dehacked features have been commented out.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * Put the Doomsday Include directory in your path.
- * This DLL also serves as an example of a Doomsday plugin.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
+#include <assert.h>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -53,75 +44,70 @@
 #  define strnicmp _strnicmp
 #endif
 
-// This plugin accesses the internal definition arrays. This dependency
-// should be removed entirely, either by making the plugin modify the
-// definitions via an API or by integrating the plugin into the engine.
+/**
+ * @todo This plugin accesses the internal definition arrays. This dependency
+ * should be removed entirely, either by making the plugin modify the
+ * definitions via an API or by integrating the plugin into the engine.
+ */
 #include "../../../engine/portable/include/def_data.h"
+struct font_s;
 
 #define __INTERNAL_MAP_DATA_ACCESS__
 #include <doomsday.h>
 
-// MACROS ------------------------------------------------------------------
+#include <de/c_wrapper.h> // libdeng2
 
 #define OFF_STATE   0x04000000
 #define OFF_SOUND   0x08000000
 #define OFF_FIXED   0x10000000
 #define OFF_MASK    0x00ffffff
 
-#define myoffsetof(type,identifier,fl) (((ptrdiff_t)&((type*)0)->identifier)|fl)
-
-#define LPrintf     Con_Message
-
-//#define LINESIZE    2048
 #define NUMSPRITES  138
 #define NUMSTATES   968
 
-#define CHECKKEY(a,b)       if (!stricmp (Line1, (a))) (b) = atoi(Line2);
+#define LPrintf Con_Message
 
-// TYPES -------------------------------------------------------------------
+#define myoffsetof(type,identifier,fl) (((ptrdiff_t)&((type*)0)->identifier)|fl)
+
+#define CHECKKEY(a,b)   if(!stricmp(Line1, (a))) { (b) = atoi(Line2); }
+
+// Verbose messages.
+#define VERBOSE(code)   { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
 typedef struct Key {
-    char   *name;
+    char* name;
     ptrdiff_t offset;
 } Key_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+static int parseThing(int);
+static int parseSound(int);
+static int parseFrame(int);
+static int parseSprite(int);
+static int parseAmmo(int);
+static int parseWeapon(int);
+static int parsePointer(int);
+static int parseCheat(int);
+static int parseMisc(int);
+static int parseText(int);
+static int parseStrings(int);
+static int parsePars(int);
+static int parseCodePtr(int);
+static int parseInclude(int);
+static void ApplyDEH(char* patch, int length);
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+ded_t* ded;
 
-#ifdef UNIX
-void    InitPlugin(void) __attribute__ ((constructor));
-#endif
-
-int     PatchThing(int);
-int     PatchSound(int);
-int     PatchState(int);
-int     PatchSprite(int);
-int     PatchAmmo(int);
-int     PatchWeapon(int);
-int     PatchPointer(int);
-int     PatchCheats(int);
-int     PatchMisc(int);
-int     PatchText(int);
-int     PatchStrings(int);
-int     PatchPars(int);
-int     PatchCodePtrs(int);
-int     DoInclude(int);
-void    ApplyDEH(char *patch, int length);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-ded_t  *ded;
-
-boolean verbose;
-char   *PatchFile, *PatchPt;
-char   *Line1, *Line2;
-int     dversion, pversion;
+int verbose;
 boolean including, includenotext;
+
+char* PatchFile, *PatchPt;
+char* Line1, *Line2;
+int dversion, pversion;
+char com_token[8192];
+boolean com_eof;
+
+static char* unknown_str = "Unknown key %s encountered in %s %d.\n";
 
 static const char* SpriteMap[] = {
     "TROO",
@@ -449,6 +435,10 @@ static const char* MusicMap[] = {
     NULL
 };
 
+/**
+ * @note Replacing of texts which define strings used for the user
+ *       interface is disallowed.
+ */
 static const struct {
     const char*     id;
     const char*     str;
@@ -492,24 +482,24 @@ static const struct {
     { "CC_SPIDER", "THE SPIDER MASTERMIND" },
     { "CC_CYBER", "THE CYBERDEMON" },
     { "CC_HERO", "OUR HERO" },
-    { "D_DEVSTR", "Development mode ON.\n" },
-    { "D_CDROM", "CD-ROM Version: default.cfg from c:\\doomdata\n" },
-    { "LOADNET", "you can't do load while in a net game!\n\npress a key." },
-    { "SAVEDEAD", "you can't save if you aren't playing!\n\npress a key." },
-    { "QSPROMPT", "quicksave over your game named\n\n'%s'?\n\npress y or n." },
-    { "QLOADNET", "you can't quickload during a netgame!\n\npress a key." },
-    { "QSAVESPOT", "you haven't picked a quicksave slot yet!\n\npress a key." },
-    { "QLPROMPT", "do you want to quickload the game named\n\n'%s'?\n\npress y or n." },
-    { "NEWGAME", "you can't start a new game\nwhile in a network game.\n\npress a key." },
-    { "NIGHTMARE", "are you sure? this skill level\nisn't even remotely fair.\n\npress y or n." },
-    { "SWSTRING", "this is the shareware version of doom.\n\nyou need to order the entire trilogy.\n\npress a key." },
-    { "MSGOFF", "Messages OFF" },
-    { "MSGON", "Messages ON" },
-    { "NETEND", "you can't end a netgame!\n\npress a key." },
-    { "ENDGAME", "are you sure you want to end the game?\n\npress y or n." },
-    { "DOSY", "%s\n\n(press y to quit to dos.)" },
-    { "DETAILHI", "High detail" },
-    { "DETAILLO", "Low detail" },
+    //{ "D_DEVSTR", "Development mode ON.\n" },
+    //{ "D_CDROM", "CD-ROM Version: default.cfg from c:\\doomdata\n" },
+    //{ "LOADNET", "you can't do load while in a net game!\n\npress a key." },
+    //{ "SAVEDEAD", "you can't save if you aren't playing!\n\npress a key." },
+    //{ "QSPROMPT", "quicksave over your game named\n\n'%s'?\n\npress y or n." },
+    //{ "QLOADNET", "you can't quickload during a netgame!\n\npress a key." },
+    //{ "QSAVESPOT", "you haven't picked a quicksave slot yet!\n\npress a key." },
+    //{ "QLPROMPT", "do you want to quickload the game named\n\n'%s'?\n\npress y or n." },
+    //{ "NEWGAME", "you can't start a new game\nwhile in a network game.\n\npress a key." },
+    //{ "NIGHTMARE", "are you sure? this skill level\nisn't even remotely fair.\n\npress y or n." },
+    //{ "SWSTRING", "this is the shareware version of doom.\n\nyou need to order the entire trilogy.\n\npress a key." },
+    //{ "MSGOFF", "Messages OFF" },
+    //{ "MSGON", "Messages ON" },
+    //{ "NETEND", "you can't end a netgame!\n\npress a key." },
+    //{ "ENDGAME", "are you sure you want to end the game?\n\npress y or n." },
+    //{ "DOSY", "%s\n\n(press y to quit to dos.)" },
+    //{ "DETAILHI", "High detail" },
+    //{ "DETAILLO", "Low detail" },
     { "HUSTR_CHATMACRO0", "No" },
     { "HUSTR_CHATMACRO1", "I'm ready to kick butt!" },
     { "HUSTR_CHATMACRO2", "I'm OK." },
@@ -520,20 +510,20 @@ static const struct {
     { "HUSTR_CHATMACRO7", "Come here!" },
     { "HUSTR_CHATMACRO8", "I'll take care of it." },
     { "HUSTR_CHATMACRO9", "Yes" },
-    { "AMSTR_FOLLOWON", "Follow Mode ON" },
-    { "AMSTR_FOLLOWOFF", "Follow Mode OFF" },
-    { "AMSTR_GRIDON", "Grid ON" },
-    { "AMSTR_GRIDOFF", "Grid OFF" },
-    { "AMSTR_MARKEDSPOT", "Marked Spot" },
-    { "AMSTR_MARKSCLEARED", "All Marks Cleared" },
+    //{ "AMSTR_FOLLOWON", "Follow Mode ON" },
+    //{ "AMSTR_FOLLOWOFF", "Follow Mode OFF" },
+    //{ "AMSTR_GRIDON", "Grid ON" },
+    //{ "AMSTR_GRIDOFF", "Grid OFF" },
+    //{ "AMSTR_MARKEDSPOT", "Marked Spot" },
+    //{ "AMSTR_MARKSCLEARED", "All Marks Cleared" },
     { "PD_BLUEO", "You need a blue key to activate this object" },
     { "PD_REDO", "You need a red key to activate this object" },
     { "PD_YELLOWO", "You need a yellow key to activate this object" },
     { "PD_BLUEK", "You need a blue key to open this door" },
     { "PD_REDK", "You need a yellow key to open this door" },
     { "PD_YELLOWK", "You need a red key to open this door" },
-    { "EMPTYSTRING", "empty slot" },
-    { "GGSAVED", "game saved." },
+    //{ "EMPTYSTRING", "empty slot" },
+    //{ "GGSAVED", "game saved." },
     { "GOTARMOR", "Picked up the armor." },
     { "GOTMEGA", "Picked up the MegaArmor!" },
     { "GOTHTHBONUS", "Picked up a health bonus." },
@@ -725,24 +715,20 @@ static const struct {
     { "THUSTR_30", "Level 30: Last Call" },
     { "THUSTR_31", "Level 31: Pharaoh" },
     { "THUSTR_32", "Level 32: Caribbean" },
-    { NULL, NULL }
+    { NULL }
 };
 
 boolean BackedUpData = false;
 
 // This is the original data before it gets replaced by a patch.
-char    OrgSprNames[NUMSPRITES][5];
-char    OrgActionPtrs[NUMSTATES][40];
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static char *unknown_str = "Unknown key %s encountered in %s %d.\n";
+char OrgSprNames[NUMSPRITES][5];
+char OrgActionNames[NUMSTATES][40];
 
 // From DeHackEd source.
 static int toff[] = { 129044, 129044, 129044, 129284, 129380 };
 
-// A conversion array to convert from the 448 code pointers to the 966
-// Frames that exist.
+// A conversion array to convert from the 448 code pointers to the 966 States
+// that exist in the original game.
 // Again taken from the DeHackEd source.
 static short codepconv[448] = { 1, 2, 3, 4, 6, 9, 10, 11, 12, 14,
     16, 17, 18, 19, 20, 22, 29, 30, 31, 32,
@@ -809,200 +795,92 @@ static byte OrgHeights[] = {
 };
 
 static const struct {
-    char*           name;
-    int           (*func) (int);
-} Modes[] = {
+    char* name;
+    int (*parseFunc) (int elementIdx);
+} blockParsers[] = {
     // These appear in .deh and .bex files
-    { "Thing",      PatchThing },
-    { "Sound",      PatchSound },
-    { "Frame",      PatchState },
-    { "Sprite",     PatchSprite },
-    { "Ammo",       PatchAmmo },
-    { "Weapon",     PatchWeapon },
-    { "Pointer",    PatchPointer },
-    { "Cheat",      PatchCheats },
-    { "Misc",       PatchMisc },
-    { "Text",       PatchText },
+    { "Thing",      parseThing },
+    { "Sound",      parseSound },
+    { "Frame",      parseFrame },
+    { "Sprite",     parseSprite },
+    { "Ammo",       parseAmmo },
+    { "Weapon",     parseWeapon },
+    { "Pointer",    parsePointer },
+    { "Cheat",      parseCheat },
+    { "Misc",       parseMisc },
+    { "Text",       parseText },
     // These appear in .bex files
-    { "include",    DoInclude },
-    { "[STRINGS]",  PatchStrings },
-    { "[PARS]",     PatchPars },
-    { "[CODEPTR]",  PatchCodePtrs },
+    { "include",    parseInclude },
+    { "[STRINGS]",  parseStrings },
+    { "[PARS]",     parsePars },
+    { "[CODEPTR]",  parseCodePtr },
     { NULL,         NULL },
 };
 
-// CODE --------------------------------------------------------------------
-
-void BackupData(void)
+static void BackupData(void)
 {
-    int     i;
+    int i;
 
-    if(BackedUpData)
-        return;
+    if(BackedUpData) return;
 
     for(i = 0; i < NUMSPRITES && i < ded->count.sprites.num; i++)
         strcpy(OrgSprNames[i], ded->sprites[i].id);
 
     for(i = 0; i < NUMSTATES && i < ded->count.states.num; i++)
-        strcpy(OrgActionPtrs[i], ded->states[i].action);
+        strcpy(OrgActionNames[i], ded->states[i].action);
 }
 
-char    com_token[8192];
-boolean com_eof;
-
-/**
- * Parse a token out of a string.
- * From ZDoom cmdlib.cpp
- */
-char   *COM_Parse(char *data)
+static boolean IsNum(char* str)
 {
-    int     c;
-    int     len;
-
-    len = 0;
-    com_token[0] = 0;
-
-    if(!data)
-        return NULL;
-
-    // skip whitespace
-  skipwhite:
-    while((c = *data) <= ' ')
-    {
-        if(c == 0)
-        {
-            com_eof = true;
-            return NULL;        // end of file;
-        }
-        data++;
-    }
-
-    // skip // comments
-    if(c == '/' && data[1] == '/')
-    {
-        while(*data && *data != '\n')
-            data++;
-        goto skipwhite;
-    }
-
-    // handle quoted strings specially
-    if(c == '\"')
-    {
-        data++;
-
-        while((c = *data++) != '\"')
-        {
-            com_token[len] = c;
-            len++;
-        }
-
-        com_token[len] = 0;
-        return data;
-    }
-
-    // parse single characters
-    if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' || c == ':' ||
-       /*[RH] */ c == '=')
-    {
-        com_token[len] = c;
-        len++;
-        com_token[len] = 0;
-        return data + 1;
-    }
-
-    // parse a regular word
-    do
-    {
-        com_token[len] = c;
-        data++;
-        len++;
-        c = *data;
-        if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' ||
-           c == ':' || c == '=')
-            break;
-    } while(c > 32);
-
-    com_token[len] = 0;
-    return data;
-}
-
-boolean IsNum(char *str)
-{
-    char   *end;
-    int     value;
+    char* end;
+    int value;
 
     value = strtol(str, &end, 0); // ignoring returned value
-    if(*end && !isspace(*end))
-        return false;
-    return true;
+    return !(*end && !isspace(*end));
 }
 
-static boolean HandleKey(const struct Key *keys, void *structure,
-                         const char *key, int value)
+static boolean HandleKey(const struct Key* keys, void* structure, const char* key, int value)
 {
-    int     off;
-    void   *ptr;
+    void* ptr;
+    int offset;
 
     while(keys->name && stricmp(keys->name, key))
+    {
         keys++;
+    }
 
     if(keys->name)
     {
-        //*((int *)(((byte *)structure) + keys->offset)) = value;
-        off = keys->offset & OFF_MASK;
-        ptr = (void *) (((byte *) structure) + off);
+        offset = keys->offset & OFF_MASK;
+        ptr = (void*) (((byte*) structure) + offset);
+
         // Apply value.
         if(keys->offset & OFF_STATE)
-            strcpy((char *) ptr, ded->states[value].id);
+        {
+            strcpy((char*) ptr, ded->states[value].id);
+        }
         else if(keys->offset & OFF_SOUND)
-            strcpy((char *) ptr, ded->sounds[value].id);
+        {
+            strcpy((char*) ptr, ded->sounds[value].id);
+        }
         else if(keys->offset & OFF_FIXED)
-            *(float *) ptr = value / (float) 0x10000;
+        {
+            *(float*) ptr = value / (float) 0x10000;
+        }
         else
-            *(int *) ptr = value;
+        {
+            *(int*) ptr = value;
+        }
         return false;
     }
 
     return true;
 }
 
-static boolean ReadChars(char **stuff, int size, boolean skipJunk)
+static void ReplaceSpecialChars(char* str)
 {
-    char   *str = *stuff;
-
-    if(!size)
-    {
-        *str = 0;
-        return true;
-    }
-
-    do
-    {
-        // Ignore carriage returns
-        if(*PatchPt != '\r')
-            *str++ = *PatchPt;
-        else
-            size++;
-
-        PatchPt++;
-    } while(--size);
-
-    *str = 0;
-
-    if(skipJunk)
-    {
-        // Skip anything else on the line.
-        while(*PatchPt != '\n' && *PatchPt != 0)
-            PatchPt++;
-    }
-
-    return true;
-}
-
-void ReplaceSpecialChars(char *str)
-{
-    char   *p = str, c;
-    int     i;
+    char* p = str, c;
+    int i;
 
     while((c = *p++))
     {
@@ -1075,17 +953,131 @@ void ReplaceSpecialChars(char *str)
     *str = 0;
 }
 
-char *skipwhite(char *str)
+/**
+ * Parse a token out of a string.
+ * Derived from ZDoom's cmdlib.cpp COM_Parse()
+ */
+char* parseToken(char* data)
+{
+    int c, len;
+
+    len = 0;
+    com_token[0] = 0;
+
+    if(!data) return NULL;
+
+    // skip whitespace
+  skipwhite:
+    while((c = *data) <= ' ')
+    {
+        if(c == 0)
+        {
+            com_eof = true;
+            return NULL; // end of file;
+        }
+        data++;
+    }
+
+    // skip // comments
+    if(c == '/' && data[1] == '/')
+    {
+        while(*data && *data != '\n')
+            data++;
+        goto skipwhite;
+    }
+
+    // handle quoted strings specially
+    if(c == '\"')
+    {
+        data++;
+
+        while((c = *data++) != '\"')
+        {
+            com_token[len] = c;
+            len++;
+        }
+
+        com_token[len] = 0;
+        return data;
+    }
+
+    // parse single characters
+    if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' || c == ':' ||
+       /*[RH] */ c == '=')
+    {
+        com_token[len] = c;
+        len++;
+        com_token[len] = 0;
+        return data + 1;
+    }
+
+    // parse a regular word
+    do
+    {
+        com_token[len] = c;
+        data++;
+        len++;
+        c = *data;
+        if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' ||
+           c == ':' || c == '=')
+            break;
+    } while(c > 32);
+
+    com_token[len] = 0;
+    return data;
+}
+
+boolean parseTextString(char** stuff, int size, boolean skipJunk)
+{
+    char* str;
+
+    assert(stuff);
+    str = *stuff;
+
+    if(!size)
+    {
+        *str = 0;
+        return true;
+    }
+
+    do
+    {
+        // Ignore carriage returns.
+        if(*PatchPt != '\r')
+            *str++ = *PatchPt;
+        else
+            size++;
+
+        PatchPt++;
+    } while(--size);
+
+    *str = 0;
+
+    if(skipJunk)
+    {
+        // Skip anything else on the line.
+        while(*PatchPt != '\n' && *PatchPt != 0)
+        {
+            PatchPt++;
+        }
+    }
+
+    return true;
+}
+
+char* skipWhitespace(char* str)
 {
     if(str)
+    {
         while(*str && isspace(*str))
             str++;
+    }
     return str;
 }
 
-void stripwhite(char *str)
+void stripRight(char* str)
 {
-    char   *end = str + strlen(str) - 1;
+    char* end = str + strlen(str) - 1;
 
     while(end >= str && isspace(*end))
         end--;
@@ -1093,17 +1085,18 @@ void stripwhite(char *str)
     end[1] = '\0';
 }
 
-char *igets(void)
+char* igets(void)
 {
-    char   *line;
+    char* line;
 
-    if(*PatchPt == '\0')
-        return NULL;
+    if(*PatchPt == '\0') return NULL;
 
     line = PatchPt;
 
     while(*PatchPt != '\n' && *PatchPt != '\0')
+    {
         PatchPt++;
+    }
 
     if(*PatchPt == '\n')
         *PatchPt++ = 0;
@@ -1113,31 +1106,33 @@ char *igets(void)
 
 int GetLine(void)
 {
-    char   *line, *line2;
+    char* line, *line2;
 
+    // Loop until we get a line with more than just whitespace.
     do
     {
+        // Skip comment lines
         while((line = igets()))
-            if(line[0] != '#')  // Skip comment lines
-                break;
+        {
+            if(line[0] != '#') break;
+        }
 
-        if(!line)
-            return 0;
+        if(!line) return 0;
 
-        Line1 = skipwhite(line);
-    } while(Line1 && *Line1 == 0);  // Loop until we get a line with
-    // more than just whitespace.
+        Line1 = skipWhitespace(line);
+    } while(Line1 && *Line1 == 0);
+
     line = strchr(Line1, '=');
-
     if(line)
-    {                           // We have an '=' in the input line
+    {
+        // We have an '=' in the input line
         line2 = line;
         while(--line2 >= Line1)
             if(*line2 > ' ')
                 break;
 
-        if(line2 < Line1)
-            return 0;           // Nothing before '='
+        // Nothing before '=' ?
+        if(line2 < Line1) return 0;
 
         *(line2 + 1) = 0;
 
@@ -1145,91 +1140,100 @@ int GetLine(void)
         while(*line && *line <= ' ')
             line++;
 
-        if(*line == 0)
-            return 0;           // Nothing after '='
+        // Nothing after '=' ?
+        if(*line == 0) return 0;
 
         Line2 = line;
-
         return 1;
     }
-    else
-    {                           // No '=' in input line
-        line = Line1 + 1;
-        while(*line > ' ')
-            line++;             // Get beyond first word
 
-        *line++ = 0;
-        while(*line && *line <= ' ')
-            line++;             // Skip white space
+    // No '=' in input line.
 
-        //.bex files don't have this restriction
-        //if (*line == 0)
-        //  return 0;           // No second word
+    line = Line1 + 1;
+    // Get beyond first word...
+    while(*line > ' ') { line++; }
 
-        Line2 = line;
+    *line++ = 0;
+    // Skip white space.
+    while(*line && *line <= ' ') { line++; }
 
-        return 2;
-    }
+    Line2 = line;
+    return 2;
 }
 
-int HandleMode(const char *mode, int num)
+int skipToNextLine(void)
 {
-    int     i = 0;
-
-    while(Modes[i].name && stricmp(Modes[i].name, mode))
-        i++;
-
-    if(Modes[i].name)
-        return Modes[i].func(num);
-
-    // Handle unknown or unimplemented data
-    LPrintf("Unknown chunk %s encountered. Skipping.\n", mode);
-    do
-        i = GetLine();
-    while(i == 1);
-
-    return i;
+    int result;
+    while((result = GetLine()) == 1) {}
+    return result;
 }
 
-int PatchThing(int thingy)
+static int blockParserIndexForName(const char* name)
+{
+    int i;
+    if(name && name[0])
+    for(i = 0; blockParsers[i].name; ++i)
+    {
+        if(!stricmp(blockParsers[i].name, name)) return i;
+    }
+    return -1; // Not found.
+}
+
+static int parseBlock(const char* name, int elementIndex)
+{
+    int blockParserIdx = blockParserIndexForName(name);
+
+    if(blockParserIdx < 0)
+    {
+        // An unknown block, skip it.
+        LPrintf("Expected block name but encountered \"%s\", skipping...\n", name);
+        return skipToNextLine();
+    }
+
+    // Parse this block.
+    return blockParsers[blockParserIdx].parseFunc(elementIndex);
+}
+
+static int parseThing(int elementIndex)
 {
     static const struct Key keys[] = {
-        {"ID #", myoffsetof(ded_mobj_t, doomEdNum, 0)},
-        {"Hit points", myoffsetof(ded_mobj_t, spawnHealth, 0)},
-        {"Reaction time", myoffsetof(ded_mobj_t, reactionTime, 0)},
-        {"Pain chance", myoffsetof(ded_mobj_t, painChance, 0)},
-        {"Width", myoffsetof(ded_mobj_t, radius, OFF_FIXED)},
-        {"Height", myoffsetof(ded_mobj_t, height, OFF_FIXED)},
-        {"Mass", myoffsetof(ded_mobj_t, mass, 0)},
-        {"Missile damage", myoffsetof(ded_mobj_t, damage, 0)},
+        { "ID #",           myoffsetof(ded_mobj_t, doomEdNum, 0) },
+        { "Hit points",     myoffsetof(ded_mobj_t, spawnHealth, 0) },
+        { "Reaction time",  myoffsetof(ded_mobj_t, reactionTime, 0) },
+        { "Pain chance",    myoffsetof(ded_mobj_t, painChance, 0) },
+        { "Width",          myoffsetof(ded_mobj_t, radius, OFF_FIXED) },
+        { "Height",         myoffsetof(ded_mobj_t, height, OFF_FIXED) },
+        { "Mass",           myoffsetof(ded_mobj_t, mass, 0) },
+        { "Missile damage", myoffsetof(ded_mobj_t, damage, 0) },
         //{ "Translucency",     myoffsetof(ded_mobj_t,translucency,0) },
-        {"Alert sound", myoffsetof(ded_mobj_t, seeSound, OFF_SOUND)},
-        {"Attack sound", myoffsetof(ded_mobj_t, attackSound, OFF_SOUND)},
-        {"Pain sound", myoffsetof(ded_mobj_t, painSound, OFF_SOUND)},
-        {"Death sound", myoffsetof(ded_mobj_t, deathSound, OFF_SOUND)},
-        {"Action sound", myoffsetof(ded_mobj_t, activeSound, OFF_SOUND)},
-        {NULL,}
+        { "Alert sound",    myoffsetof(ded_mobj_t, seeSound, OFF_SOUND) },
+        { "Attack sound",   myoffsetof(ded_mobj_t, attackSound, OFF_SOUND) },
+        { "Pain sound",     myoffsetof(ded_mobj_t, painSound, OFF_SOUND) },
+        { "Death sound",    myoffsetof(ded_mobj_t, deathSound, OFF_SOUND) },
+        { "Action sound",   myoffsetof(ded_mobj_t, activeSound, OFF_SOUND) },
+        { NULL }
     };
     static const struct {
-        const char*     label;
-        size_t          labelLen;
-        statename_t     name;
+        const char* label;
+        size_t labelLen;
+        statename_t name;
+        const char* ddayName;
     } stateNames[] = {
-        { "Initial", 7, SN_SPAWN },
-        { "First moving", 12, SN_SEE },
-        { "Injury", 6, SN_PAIN },
-        { "Close attack", 12, SN_MELEE },
-        { "Far attack", 10, SN_MISSILE },
-        { "Death", 5, SN_DEATH },
-        { "Exploding", 9, SN_XDEATH },
-        { "Respawn", 7, SN_RAISE },
-        { NULL, 0 }
+        { "Initial",       7, SN_SPAWN,   "Spawn" },
+        { "First moving", 12, SN_SEE,     "See" },
+        { "Injury",        6, SN_PAIN,    "Pain" },
+        { "Close attack", 12, SN_MELEE,   "Melee" },
+        { "Far attack",   10, SN_MISSILE, "Missile" },
+        { "Death",         5, SN_DEATH,   "Death" },
+        { "Exploding",     9, SN_XDEATH,  "XDeath" },
+        { "Respawn",       7, SN_RAISE,   "Raise" },
+        { NULL }
     };
     // Flags can be specified by name (a .bex extension):
     static const struct {
-        short           bit;
-        short           whichflags;
-        const char*     name;
+        short bit;
+        short whichflags;
+        const char* name;
     } bitnames[] =
     {
         {0, 0, "SPECIAL"},
@@ -1281,7 +1285,7 @@ int PatchThing(int thingy)
         {7, 1, "NOTELEPORT"},
         {8, 1, "RIP"},
         {9, 1, "PUSHABLE"},
-        {10, 1, "CANSLIDE"},     // Avoid conflict with SLIDE from BOOM
+        {10, 1, "CANSLIDE"}, // Avoid conflict with SLIDE from BOOM
         {11, 1, "ONMOBJ"},
         {12, 1, "PASSMOBJ"},
         {13, 1, "CANNOTPUSH"},
@@ -1308,20 +1312,17 @@ int PatchThing(int thingy)
     ded_mobj_t* info, dummy;
     boolean hadHeight = false;
     boolean checkHeight = false;
-    size_t thingNum = (size_t) thingy;
+    size_t thingNum = (size_t) elementIndex;
 
     thingNum--;
     if(thingNum < (unsigned) ded->count.mobjs.num)
     {
         info = ded->mobjs + thingNum;
-        if(verbose)
-            LPrintf("Thing %lu\n", (unsigned long) thingNum);
     }
     else
     {
         info = &dummy;
-        LPrintf("Thing %lu out of range. Create more Thing defs!\n",
-                (unsigned long) (thingNum + 1));
+        LPrintf("Thing %lu out of range. Create more Thing defs!\n", (unsigned long) (thingNum + 1));
     }
 
     while((result = GetLine()) == 1)
@@ -1342,11 +1343,20 @@ int PatchThing(int thingy)
 
                 for(i = 0; stateNames[i].label; ++i)
                 {
-                    if(!strnicmp(stateNames[i].label, Line1,
-                                 stateNames[i].labelLen))
+                    if(!strnicmp(stateNames[i].label, Line1, stateNames[i].labelLen))
                     {
-                        strcpy(info->states[stateNames[i].name],
-                               ded->states[value].id);
+                        if(value >= 0 && value < ded->count.states.num)
+                        {
+                            ded_state_t* state = &ded->states[value];
+#if _DEBUG
+                            VERBOSE2( LPrintf("Thing \"%s\" (#%i) State:%s is now \"%s\".\n", info->id, (int)thingNum, stateNames[i].ddayName, state->id) )
+#endif
+                            strcpy(info->states[stateNames[i].name], state->id);
+                        }
+                        else
+                        {
+                            LPrintf("Warning: Frame #%i out of range, ignoring...\n", value);
+                        }
                         break;
                     }
                 }
@@ -1360,51 +1370,61 @@ int PatchThing(int thingy)
             }
             else if(!stricmp(Line1, "Bits"))
             {
-                int value = 0, value2 = 0;
+                int value = 0, value2 = 0, len = strlen(Line2);
                 boolean vchanged = false, v2changed = false;
-                char* strval;
 
-                for(strval = Line2; (strval = strtok(strval, ",+| \t\f\r"));
-                    strval = NULL)
+                if(len > 0)
                 {
-                    size_t  iy;
+                    // Make a copy of the line.
+                    char* strval, *buf = malloc(len+1);
+                    if(!buf) Con_Error("DehRead::ParseThing: Failed on allocation of %lu bytes for bit token buffer.", (unsigned long) len);
 
-                    if(IsNum(strval))
+                    memcpy(buf, Line2, len);
+                    buf[len] = '\0';
+
+                    for(strval = buf; (strval = strtok(strval, ",+| \t\f\r")); strval = NULL)
                     {
-                        // Force the top 4 bits to 0 so that the user is forced
-                        // to use the mnemonics to change them.
-                        value |= (atoi(strval) & 0x0fffffff);
-                        vchanged = true;
-                    }
-                    else
-                    {
-                        for(iy = 0;
-                            iy < sizeof(bitnames) / sizeof(bitnames[0]); iy++)
+                        size_t iy;
+
+                        if(IsNum(strval))
                         {
-                            if(!stricmp(strval, bitnames[iy].name))
-                            {
-                                if(bitnames[iy].whichflags)
-                                {
-                                    v2changed = true;
-                                    if(bitnames[iy].bit & 0xff00)
-                                        value2 |= 1 << (bitnames[iy].bit >> 8);
-                                    value2 |= 1 << (bitnames[iy].bit & 0xff);
-                                }
-                                else
-                                {
-                                    vchanged = true;
-                                    if(bitnames[iy].bit & 0xff00)
-                                        value |= 1 << (bitnames[iy].bit >> 8);
-                                    value |= 1 << (bitnames[iy].bit & 0xff);
-                                }
-
-                                break;
-                            }
+                            // Force the top 4 bits to 0 so that the user is forced
+                            // to use the mnemonics to change them.
+                            value |= (atoi(strval) & 0x0fffffff);
+                            vchanged = true;
                         }
+                        else
+                        {
+                            for(iy = 0;
+                                iy < sizeof(bitnames) / sizeof(bitnames[0]); iy++)
+                            {
+                                if(!stricmp(strval, bitnames[iy].name))
+                                {
+                                    if(bitnames[iy].whichflags)
+                                    {
+                                        v2changed = true;
+                                        if(bitnames[iy].bit & 0xff00)
+                                            value2 |= 1 << (bitnames[iy].bit >> 8);
+                                        value2 |= 1 << (bitnames[iy].bit & 0xff);
+                                    }
+                                    else
+                                    {
+                                        vchanged = true;
+                                        if(bitnames[iy].bit & 0xff00)
+                                            value |= 1 << (bitnames[iy].bit >> 8);
+                                        value |= 1 << (bitnames[iy].bit & 0xff);
+                                    }
 
-                        if(iy >= sizeof(bitnames) / sizeof(bitnames[0]))
-                            LPrintf("Unknown bit mnemonic %s\n", strval);
+                                    break;
+                                }
+                            }
+
+                            if(iy >= sizeof(bitnames) / sizeof(bitnames[0]))
+                                LPrintf("Unknown bit mnemonic %s\n", strval);
+                        }
                     }
+
+                    free(buf);
                 }
 
                 if(vchanged)
@@ -1422,13 +1442,11 @@ int PatchThing(int thingy)
 
                 if(v2changed)
                     info->flags[1] = value2;
-
-                if(verbose)
-                    LPrintf("Bits: %d,%d (0x%08x,0x%08x)\n", value, value2,
-                            value, value2);
             }
             else
+            {
                 LPrintf(unknown_str, Line1, "Thing", thingNum);
+            }
         }
         else if(!stricmp(Line1, "Height"))
         {
@@ -1444,7 +1462,7 @@ int PatchThing(int thingy)
     return result;
 }
 
-int PatchSound(int soundNum)
+static int parseSound(int soundNum)
 {
 /*    static struct Key keys[] = {
         {"Offset", 0}, //pointer to a name string, changed in text
@@ -1459,9 +1477,10 @@ int PatchSound(int soundNum)
         {NULL,}
     };
     ded_sound_t *info, dummy;*/
-    int     result;
+    int result;
 
-    LPrintf("Sound %d (not supported)\n", soundNum);
+    LPrintf("Warning: [Sound] patches are not supported.\n");
+
     /*
     if (soundNum >= 0 && soundNum < ded->count.sounds.num)
     {
@@ -1475,11 +1494,13 @@ int PatchSound(int soundNum)
         LPrintf ("Sound %d out of range.\n", soundNum);
     }
      */
+
     while((result = GetLine()) == 1)
     {
         /*if(HandleKey(keys, info, Line1, atoi(Line2)))
             LPrintf(unknown_str, Line1, "Sound", soundNum);*/
     }
+
     /*
        if (offset) {
        // Calculate offset from start of sound names
@@ -1502,27 +1523,25 @@ int PatchSound(int soundNum)
     return result;
 }
 
-int PatchState(int stateNum)
+static int parseFrame(int stateNum)
 {
     static struct Key keys[] = {
-        {"Duration", myoffsetof(ded_state_t, tics, 0)},
-        {"Next frame", myoffsetof(ded_state_t, nextState, OFF_STATE)},
-        {"Unknown 1", 0 /*myoffsetof(ded_state_t,misc[0],0) */ },
-        {"Unknown 2", 0 /*myoffsetof(ded_state_t,misc[1],0) */ },
-        {NULL,}
+        { "Duration",   myoffsetof(ded_state_t, tics, 0) },
+        { "Next frame", myoffsetof(ded_state_t, nextState, OFF_STATE) },
+        { "Unknown 1",  0 /*myoffsetof(ded_state_t,misc[0],0) */ },
+        { "Unknown 2",  0 /*myoffsetof(ded_state_t,misc[1],0) */ },
+        { NULL }
     };
-    int     result;
-    ded_state_t *info, dummy;
+    ded_state_t* info, dummy;
+    int result;
 
     // C doesn't allow non-constant initializers.
     keys[2].offset = myoffsetof(ded_state_t, misc[0], 0);
-    keys[3].offset = myoffsetof(ded_state_t, misc[1], 0);   
-     
+    keys[3].offset = myoffsetof(ded_state_t, misc[1], 0);
+
     if(stateNum >= 0 && stateNum < ded->count.states.num)
     {
         info = ded->states + stateNum;
-        if(verbose)
-            LPrintf("State %d\n", stateNum);
     }
     else
     {
@@ -1537,28 +1556,47 @@ int PatchState(int stateNum)
         if(HandleKey(keys, info, Line1, value))
         {
             if(!stricmp(Line1, "Sprite number"))
-                Def_Set(DD_DEF_STATE, stateNum, DD_SPRITE, &value);
+            {
+                if(value >= 0 && value < ded->count.sprites.num)
+                {
+#if _DEBUG
+                    VERBOSE2( LPrintf("State \"%s\" (#%i) Sprite is now \"%s\".\n", info->id, (int)stateNum, ded->sprites[value].id) )
+#endif
+
+                    strcpy((char*) info->sprite.id, ded->sprites[value].id);
+                }
+                else
+                {
+                    LPrintf("Warning: Sprite #%i out of range, ignoring...\n", value);
+                }
+            }
             else if(!stricmp(Line1, "Sprite subnumber"))
-                Def_Set(DD_DEF_STATE, stateNum, DD_FRAME, &value);
+            {
+#define FF_FULLBRIGHT       0x8000
+
+                if(value & FF_FULLBRIGHT)
+                    info->flags |= STF_FULLBRIGHT;
+                else
+                    info->flags &= ~STF_FULLBRIGHT;
+                info->frame = value & ~FF_FULLBRIGHT;
+
+#undef FF_FULLBRIGHT
+            }
             else
+            {
                 LPrintf(unknown_str, Line1, "State", stateNum);
+            }
         }
     }
 
     return result;
 }
 
-int PatchSprite(int sprNum)
+static int parseSprite(int sprNum)
 {
-    int     result;
-    int     offset = 0;
+    int result, offset = 0;
 
-    if(sprNum >= 0 && sprNum < NUMSPRITES)
-    {
-        if(verbose)
-            LPrintf("Sprite %d\n", sprNum);
-    }
-    else
+    if(sprNum < 0 || sprNum >= NUMSPRITES)
     {
         LPrintf("Sprite %d out of range. Create more Sprite defs!\n", sprNum);
         sprNum = -1;
@@ -1595,7 +1633,7 @@ int PatchSprite(int sprNum)
  * CRT's realloc can't access other modules' memory, so we must ask
  * Doomsday to reallocate memory for us.
  */
-void *DD_Realloc(void *ptr, int newsize)
+static void* DD_Realloc(void* ptr, int newsize)
 {
     ded_count_t cnt;
 
@@ -1605,12 +1643,10 @@ void *DD_Realloc(void *ptr, int newsize)
     return ptr;
 }
 
-void SetValueStr(const char *path, const char *id, char *str)
+static void SetValueStr(const char* path, const char* id, char* str)
 {
-    int     i;
-    char    realid[300];
-
-    //CString realid = CString(path) + "|" + id;
+    char realid[300];
+    int i;
 
     sprintf(realid, "%s|%s", path, id);
 
@@ -1618,7 +1654,7 @@ void SetValueStr(const char *path, const char *id, char *str)
         if(!stricmp(ded->values[i].id, realid))
         {
             ded->values[i].text =
-                (char *) DD_Realloc(ded->values[i].text, strlen(str) + 1);
+                (char*) DD_Realloc(ded->values[i].text, strlen(str) + 1);
             strcpy(ded->values[i].text, str);
             return;
         }
@@ -1631,57 +1667,43 @@ void SetValueStr(const char *path, const char *id, char *str)
            DD_Realloc(ded->values[i].text, strlen(str) + 1), str);
 }
 
-void SetValueInt(const char *path, const char *id, int val)
+static void SetValueInt(const char* path, const char* id, int val)
 {
-    char    buf[80];
-
+    char buf[80];
     sprintf(buf, "%i", val);
     SetValueStr(path, id, buf);
 }
 
-int PatchAmmo(int ammoNum)
+static int parseAmmo(int ammoNum)
 {
-    int     result, max, per;
-    char   *ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
-    char   *theAmmo = NULL;
-
-    //  CString str;
+    int result, max, per;
+    char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
+    char* theAmmo = 0;
 
     if(ammoNum >= 0 && ammoNum < 4)
     {
-        if(verbose)
-            LPrintf("Ammo %d.\n", ammoNum);
         theAmmo = ammostr[ammoNum];
     }
     else
+    {
         LPrintf("Ammo %d out of range.\n", ammoNum);
+    }
 
-    /*  int *max;
-       int *per;
-       int dummy;
-
-       if (ammoNum >= 0 && ammoNum < NUM_AMMO_TYPES) {
-       DPrintf ("Ammo %d.\n", ammoNum);
-       max = &maxammo[ammoNum];
-       per = &clipammo[ammoNum];
-       } else {
-       Printf (PRINT_HIGH, "Ammo %d out of range.\n", ammoNum);
-       max = per = &dummy;
-       }
-     */
     while((result = GetLine()) == 1)
     {
         max = per = -1;
+
         CHECKKEY("Max ammo", max)
         else
         CHECKKEY("Per ammo", per)
         else
         LPrintf(unknown_str, Line1, "Ammo", ammoNum);
-        if(!theAmmo)
-            continue;
+
+        if(!theAmmo) continue;
 
         if(max != -1)
             SetValueInt("Player|Max ammo", theAmmo, max);
+
         if(per != -1)
             SetValueInt("Player|Clip ammo", theAmmo, per);
     }
@@ -1689,68 +1711,24 @@ int PatchAmmo(int ammoNum)
     return result;
 }
 
-int PatchNothing()
+static int parseWeapon(int weapNum)
 {
-    int     result;
-
-    while((result = GetLine()) == 1)
-    {
-    }
-
-    return result;
-}
-
-int PatchWeapon(int weapNum)
-{
-    //  LPrintf("Weapon patches not supported.\n");
-    //  return PatchNothing();
-
-    char   *ammotypes[] =
-        { "clip", "shell", "cell", "misl", "-", "noammo", 0 };
-    char    buf[80];
-    int     val;
-    int     result;
+    char* ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo", 0 };
+    char buf[80];
+    int val, result;
 
     if(weapNum >= 0)
     {
-        if(verbose)
-            LPrintf("Weapon %d\n", weapNum);
         sprintf(buf, "Weapon Info|%d", weapNum);
     }
     else
     {
         LPrintf("Weapon %d out of range.\n", weapNum);
-        return PatchNothing();
+        return skipToNextLine();
     }
 
-    /*  static const struct Key keys[] = {
-       { "Ammo type",           myoffsetof(weaponinfo_t,ammo) },
-       { "Deselect frame",      myoffsetof(weaponinfo_t,upstate) },
-       { "Select frame",        myoffsetof(weaponinfo_t,downstate) },
-       { "Bobbing frame",       myoffsetof(weaponinfo_t,readystate) },
-       { "Shooting frame",      myoffsetof(weaponinfo_t,atkstate) },
-       { "Firing frame",        myoffsetof(weaponinfo_t,flashstate) },
-       { NULL, }
-       };
-
-       weaponinfo_t *info, dummy;
-
-       if (weapNum >= 0 && weapNum < NUM_WEAPON_TYPES) {
-       info = &weaponinfo[weapNum];
-       DPrintf ("Weapon %d\n", weapNum);
-       } else {
-       info = &dummy;
-       Printf (PRINT_HIGH, "Weapon %d out of range.\n", weapNum);
-       }
-     */
     while((result = GetLine()) == 1)
     {
-        /*
-           if (HandleKey (keys, info, Line1, atoi (Line2)))
-           Printf (PRINT_HIGH, unknown_str, Line1, "Weapon", weapNum); */
-
-        //#define CHECKKEY2(a,b)        if (!stricmp (Line1, (a))) { (b) = atoi(Line2);
-
         val = atoi(Line2);
 
         if(!stricmp(Line1, "Ammo type"))
@@ -1773,16 +1751,11 @@ int PatchWeapon(int weapNum)
     return result;
 }
 
-int PatchPointer(int ptrNum)
+static int parsePointer(int ptrNum)
 {
-    int     result;
+    int result;
 
-    if(ptrNum >= 0 && ptrNum < 448)
-    {
-        if(verbose)
-            LPrintf("Pointer %d\n", ptrNum);
-    }
-    else
+    if(ptrNum < 0 || ptrNum >= 448)
     {
         LPrintf("Pointer %d out of range.\n", ptrNum);
         ptrNum = -1;
@@ -1790,19 +1763,27 @@ int PatchPointer(int ptrNum)
 
     while((result = GetLine()) == 1)
     {
-        if((ptrNum != -1) && (!stricmp(Line1, "Codep Frame")))
+        if(ptrNum != -1 && !stricmp(Line1, "Codep Frame"))
         {
-            //states[codepconv[ptrNum]].action = OrgActionPtrs[atoi (Line2)];
-            strcpy(ded->states[codepconv[ptrNum]].action,
-                   OrgActionPtrs[atoi(Line2)]);
+            const short stateIdx = codepconv[ptrNum];
+            ded_state_t* def = &ded->states[stateIdx];
+            const int actionIdx = atoi(Line2);
+            const char* newAction = OrgActionNames[actionIdx];
+
+#if _DEBUG
+            VERBOSE2( LPrintf("State \"%s\" (#%i) Action is now \"%s\".\n", def->id, (int)stateIdx, newAction) )
+#endif
+            strcpy(def->action, newAction);
         }
         else
+        {
             LPrintf(unknown_str, Line1, "Pointer", ptrNum);
+        }
     }
     return result;
 }
 
-int PatchCheats(int dummy)
+static int parseCheat(int dummy)
 {
     /*  static const struct {
        char *name;
@@ -1844,38 +1825,13 @@ int PatchCheats(int dummy)
        }
        return result; */
 
-    LPrintf("Cheat patches are not supported!\n");
-    return PatchNothing();
+    LPrintf("Warning: [Cheat] patches are not supported.\n");
+    return skipToNextLine();
 }
 
-int PatchMisc(int dummy)
+static int parseMisc(int dummy)
 {
-    /*  static const struct Key keys[] = {
-       { "Initial Health",          myoffsetof(struct DehInfo,StartHealth) },
-       { "Initial Bullets",     myoffsetof(struct DehInfo,StartBullets) },
-       { "Max Health",              myoffsetof(struct DehInfo,MaxHealth) },
-       { "Max Armor",               myoffsetof(struct DehInfo,MaxArmor) },
-       { "Green Armor Class",       myoffsetof(struct DehInfo,GreenAC) },
-       { "Blue Armor Class",        myoffsetof(struct DehInfo,BlueAC) },
-       { "Max Soulsphere",          myoffsetof(struct DehInfo,MaxSoulsphere) },
-       { "Soulsphere Health",       myoffsetof(struct DehInfo,SoulsphereHealth) },
-       { "Megasphere Health",       myoffsetof(struct DehInfo,MegasphereHealth) },
-       { "God Mode Health",     myoffsetof(struct DehInfo,GodHealth) },
-       { "IDFA Armor",              myoffsetof(struct DehInfo,FAArmor) },
-       { "IDFA Armor Class",        myoffsetof(struct DehInfo,FAAC) },
-       { "IDKFA Armor",         myoffsetof(struct DehInfo,KFAArmor) },
-       { "IDKFA Armor Class",       myoffsetof(struct DehInfo,KFAAC) },
-       { "BFG Cells/Shot",          myoffsetof(struct DehInfo,BFGCells) },
-       { "Monsters Infight",        myoffsetof(struct DehInfo,Infight) },
-       { NULL, }
-       };
-       gitem_t *item;
-     */
-    int     result;
-    int     val;
-
-    if(verbose)
-        LPrintf("Misc\n");
+    int result, val;
 
     while((result = GetLine()) == 1)
     {
@@ -1928,6 +1884,7 @@ int PatchMisc(int dummy)
 
         else if(!stricmp(Line1, "Monsters Infight"))
             SetValueInt("AI", "Infight", val);
+
         else
             LPrintf("Unknown miscellaneous info %s = %s.\n", Line1, Line2);
     }
@@ -1935,14 +1892,12 @@ int PatchMisc(int dummy)
     return result;
 }
 
-int PatchPars(int dummy)
+static int parsePars(int dummy)
 {
-    char   *space, mapname[8], *moredata;
+    char* space, *moredata;
     ded_mapinfo_t *info;
-    int     result, par, i;
-
-    if(verbose)
-        LPrintf("[Pars]\n");
+    int result, par, i;
+    Uri* uri;
 
     while((result = GetLine()))
     {
@@ -1969,44 +1924,50 @@ int PatchPars(int dummy)
             space++;
 
         moredata = strchr(space, ' ');
-
         if(moredata)
         {
             // At least 3 items on this line, must be E?M? format
-            sprintf(mapname, "E%cM%c", *Line2, *space);
+            char mapId[8];
+            sprintf(mapId, "E%cM%c", *Line2, *space);
+            uri = Uri_NewWithPath2(mapId, RC_NULL);
             par = atoi(moredata + 1);
         }
         else
         {
             // Only 2 items, must be MAP?? format
-            sprintf(mapname, "MAP%02d", atoi(Line2) % 100);
+            char mapId[8];
+            sprintf(mapId, "MAP%02d", atoi(Line2) % 100);
+            uri = Uri_NewWithPath2(mapId, RC_NULL);
             par = atoi(space);
         }
 
         info = NULL;
-        /*if (!(info = FindLevelInfo (mapname)) ) {
-           Printf (PRINT_HIGH, "No map %s\n", mapname);
-           continue;
-           } */
         for(i = 0; i < ded->count.mapInfo.num; i++)
-            if(!stricmp(ded->mapInfo[i].id, mapname))
-            {
-                info = ded->mapInfo + i;
-                break;
-            }
+        {
+            if(!ded->mapInfo[i].uri || !Uri_Equality(ded->mapInfo[i].uri, uri)) continue;
+            info = ded->mapInfo + i;
+            break;
+        }
 
         if(info)
+        {
+            ddstring_t* path = Uri_ToString(uri);
+
             info->parTime = (float) par;
 
-        LPrintf("Par for %s changed to %d\n", mapname, par);
+            LPrintf("Par for %s changed to %d\n", Str_Text(path), par);
+            Str_Delete(path);
+        }
+
+        Uri_Delete(uri);
     }
     return result;
 }
 
-int PatchCodePtrs(int dummy)
+static int parseCodePtr(int dummy)
 {
-    LPrintf("[CodePtr] patches not supported\n");
-    return PatchNothing();
+    LPrintf("Warning: [CodePtr] patches not supported.\n");
+    return skipToNextLine();
 
     /*  int result;
 
@@ -2027,7 +1988,7 @@ int PatchCodePtrs(int dummy)
        int i = 0;
        char *data;
 
-       COM_Parse (Line2);
+       parseToken (Line2);
 
        if ((com_token[0] == 'A' || com_token[0] == 'a') && com_token[1] == '_')
        data = com_token + 2;
@@ -2050,56 +2011,59 @@ int PatchCodePtrs(int dummy)
        return result; */
 }
 
-static void replaceInString(char* str, size_t len, const char* occurance,
-                            const char* replacewith)
+static void replaceInString(char* haystack, size_t len, const char* needle,
+                            const char* replacement)
 {
-    char*               buf, *out, *in;
-    int                 oclen, replen;
+    char* buf, *out, *in;
+    int oclen, replen;
 
-    if(!str || !len || !occurance || !(oclen = strlen(occurance)) ||
-       !replacewith || !(replen = strlen(replacewith)))
+    if(!haystack || !len || !needle || !(oclen = strlen(needle)) ||
+       !replacement || !(replen = strlen(replacement)))
         return;
 
-    out = buf = calloc(strlen(str) * 2, 1);
-    in = str;
+    out = buf = calloc(strlen(haystack) * 2, 1);
+    in = haystack;
 
     for(; *in; in++)
     {
-        if(!strncmp(in, occurance, oclen))
+        if(!strncmp(in, needle, oclen))
         {
-            strcat(out, replacewith);
+            strcat(out, replacement);
             out += replen;
             in += oclen - 1;
         }
         else
+        {
             *out++ = *in;
+        }
     }
 
-    strncpy(str, buf, len);
+    strncpy(haystack, buf, len);
     free(buf);
 }
 
 static void patchSpriteNames(const char* origName, const char* newName)
 {
-    size_t              i;
-    char                old[5];
+    size_t i;
+    char old[5];
 
-    if(strlen(origName) != 4)
-        return;
+    if(strlen(origName) != 4) return;
 
     for(i = 0; i < 4; ++i)
+    {
         old[i] = (char) toupper((int) origName[i]);
+    }
     old[4] = '\0';
 
     i = 0;
     do
     {
-        int                 num;
+        int num;
 
         if(!strcmp(SpriteMap[i], old) &&
            (num = Def_Get(DD_DEF_SPRITE, old, NULL)) != -1)
         {
-            ded_sprid_t*        spr = &ded->sprites[num];
+            ded_sprid_t* spr = &ded->sprites[num];
 
             strncpy(spr->id, newName, DED_SPRITEID_LEN);
         }
@@ -2108,8 +2072,8 @@ static void patchSpriteNames(const char* origName, const char* newName)
 
 static void patchMusicLumpNames(const char* origName, const char* newName)
 {
-    char                buf[9];
-    size_t              i;
+    char buf[9];
+    size_t i;
 
     dd_snprintf(buf, 9, "d_%s", origName);
 
@@ -2118,7 +2082,7 @@ static void patchMusicLumpNames(const char* origName, const char* newName)
     {
         if(!strcmp(MusicMap[i], origName))
         {
-            int                 j;
+            int j;
 
             for(j = 0; j < ded->count.music.num; ++j)
             {
@@ -2149,11 +2113,11 @@ static void patchText(const char* origStr, const char* newStr)
 {
 #define BUF_SIZE        4096
 
-    int                 id;
+    int id;
 
     if(!((id = Def_Get(DD_DEF_TEXT, textIDForOrigString(origStr), NULL)) < 0))
     {
-        char                buf[BUF_SIZE];
+        char buf[BUF_SIZE];
 
         strncpy(buf, newStr, 4096);
         replaceInString(buf, 4096, "\n", "\\n");
@@ -2164,14 +2128,14 @@ static void patchText(const char* origStr, const char* newStr)
 #undef BUF_SIZE
 }
 
-int PatchText(int oldSize)
+static int parseText(int oldSize)
 {
-    int                 newSize;
-    char*               oldStr, *newStr, *temp;
-    boolean             parseError = false;
+    char* oldStr, *newStr, *temp;
+    boolean parseError = false;
+    int newSize;
 
-    temp = COM_Parse(Line2); // Skip old size, since we already have it
-    if(!COM_Parse(temp))
+    temp = parseToken(Line2); // Skip old size, since we already have it
+    if(!parseToken(temp))
     {
         LPrintf("Text chunk is missing size of new string.\n");
         return 2;
@@ -2183,20 +2147,16 @@ int PatchText(int oldSize)
 
     if(oldStr && newStr)
     {
-        boolean             good;
+        boolean good;
 
-        good = ReadChars(&oldStr, oldSize, false);
-        good += ReadChars(&newStr, newSize, true);
+        good = parseTextString(&oldStr, oldSize, false);
+        good += parseTextString(&newStr, newSize, true);
 
         if(good)
         {
             if(!includenotext)
             {
-                if(verbose)
-                {
-                    LPrintf("Searching for text:\n%s\n", oldStr);
-                    LPrintf("<< TO BE REPLACED WITH:\n%s\n>>\n", newStr);
-                }
+                stripRight(newStr);
 
                 patchSpriteNames(oldStr, newStr);
                 patchMusicLumpNames(oldStr, newStr);
@@ -2218,28 +2178,22 @@ int PatchText(int oldSize)
         LPrintf("Out of memory.\n");
     }
 
-    if(newStr)
-        free(newStr);
-    if(oldStr)
-        free(oldStr);
+    if(newStr) free(newStr);
+    if(oldStr) free(oldStr);
 
     if(!parseError)
     {
-        int                 result;
-
         // Fetch next identifier for main loop
-        while((result = GetLine()) == 1);
-
-        return result;
+        return skipToNextLine();
     }
 
     return 0;
 }
 
-int PatchStrings(int dummy)
+static int parseStrings(int dummy)
 {
-    LPrintf("[Strings] patches not supported\n");
-    return PatchNothing();
+    LPrintf("Warning: [Strings] patches not supported.\n");
+    return skipToNextLine();
 
     /*  static size_t maxstrlen = 128;
        static char *holdstring;
@@ -2259,8 +2213,8 @@ int PatchStrings(int dummy)
        maxstrlen += 128;
        holdstring = (char *)Realloc (holdstring, maxstrlen);
        }
-       strcat (holdstring, skipwhite (Line2));
-       stripwhite (holdstring);
+       strcat (holdstring, skipWhitespace (Line2));
+       stripRight (holdstring);
        if (holdstring[strlen(holdstring)-1] == '\\') {
        holdstring[strlen(holdstring)-1] = '\0';
        Line2 = igets ();
@@ -2285,15 +2239,15 @@ int PatchStrings(int dummy)
      */
 }
 
-int DoInclude(int dummy)
+static int parseInclude(int elementIndex/*unused*/)
 {
-    char   *data;
-    int     savedversion, savepversion;
-    char   *savepatchfile, *savepatchpt;
-    int     len;
-    FILE   *file;
-    char   *patch;
-    size_t  result;
+    char* data;
+    int savedversion, savepversion;
+    char* savepatchfile, *savepatchpt;
+    int len;
+    FILE* file;
+    char* patch;
+    size_t result;
 
     if(including)
     {
@@ -2301,11 +2255,11 @@ int DoInclude(int dummy)
         goto endinclude;
     }
 
-    data = COM_Parse(Line2);
+    data = parseToken(Line2);
     if(!stricmp(com_token, "notext"))
     {
         includenotext = true;
-        data = COM_Parse(data);
+        data = parseToken(data);
     }
 
     if(!com_token[0])
@@ -2315,8 +2269,8 @@ int DoInclude(int dummy)
         goto endinclude;
     }
 
-    if(verbose)
-        LPrintf("Including %s\n", com_token);
+    VERBOSE( LPrintf("Including %s\n", com_token) )
+
     savepatchfile = PatchFile;
     savepatchpt = PatchPt;
     savedversion = dversion;
@@ -2336,15 +2290,16 @@ int DoInclude(int dummy)
     result = fread(patch, len, 1, file); // return value ignored
     patch[len] = 0;
     fclose(file);
+
     ApplyDEH(patch, len);
     free(patch);
 
-    if(verbose)
-        LPrintf("Done with include\n");
     PatchFile = savepatchfile;
     PatchPt = savepatchpt;
     dversion = savedversion;
     pversion = savepversion;
+
+    VERBOSE( LPrintf("Done with include\n") )
 
   endinclude:
     including = false;
@@ -2352,15 +2307,14 @@ int DoInclude(int dummy)
     return GetLine();
 }
 
-void ApplyDEH(char *patch, int length)
+static void ApplyDEH(char* patch, int length)
 {
-    int     cont;
+    int cont = 0;
 
     BackupData();
     PatchFile = patch;
     dversion = pversion = -1;
 
-    cont = 0;
     if(!strncmp(PatchFile, "Patch File for DeHackEd v", 25))
     {
         PatchPt = strchr(PatchFile, '\n');
@@ -2368,7 +2322,9 @@ void ApplyDEH(char *patch, int length)
         {
             CHECKKEY("Doom version", dversion)
             else
-        CHECKKEY("Patch format", pversion)}
+            CHECKKEY("Patch format", pversion)
+        }
+
         if(!cont || dversion == -1 || pversion == -1)
         {
             Con_Message("This is not a DeHackEd patch file!");
@@ -2381,14 +2337,13 @@ void ApplyDEH(char *patch, int length)
         dversion = 19;
         pversion = 6;
         PatchPt = PatchFile;
-        while((cont = GetLine()) == 1);
+
+        cont = skipToNextLine();
     }
 
     if(pversion != 6)
     {
-        LPrintf
-            ("DeHackEd patch version is %d.\nUnexpected results may occur.\n",
-             pversion);
+        LPrintf("DeHackEd patch version is %d.\nUnexpected results may occur.\n", pversion);
     }
 
     if(dversion == 16)
@@ -2403,8 +2358,7 @@ void ApplyDEH(char *patch, int length)
         dversion = 4;
     else
     {
-        LPrintf
-            ("Patch created with unknown DOOM version.\nAssuming version 1.9.\n");
+        LPrintf("Patch created with unknown DOOM version.\nAssuming version 1.9.\n");
         dversion = 3;
     }
 
@@ -2416,50 +2370,71 @@ void ApplyDEH(char *patch, int length)
             cont = 0;
         }
         else if(cont == 2)
-            cont = HandleMode(Line1, atoi(Line2));
+        {
+            cont = parseBlock(Line1, atoi(Line2));
+        }
     } while(cont);
-
 }
 
 /**
  * Reads and applies the given lump as a DEH patch.
  */
-void ReadDehackedLump(int lumpnum)
+static void ReadDehackedLump(lumpnum_t lumpNum)
 {
-    size_t      len;
-    byte       *lump;
+    uint8_t* lump;
+    size_t len;
 
-    Con_Message("Applying Dehacked: lump %i...\n", lumpnum);
-    len = W_LumpLength(lumpnum);
-    lump = calloc(len + 1, 1);
-    memcpy(lump, W_CacheLumpNum(lumpnum, PU_CACHE), len);
+    if(0 > lumpNum || lumpNum >= DD_GetInteger(DD_NUMLUMPS))
+    {
+        LPrintf("Warning:ReadDehackedLump: Invalid lump index #%i given, ignoring.\n", lumpNum);
+        return;
+    }
+
+    len = W_LumpLength(lumpNum);
+    lump = (uint8_t*) malloc(len + 1);
+    if(!lump)
+    {
+        LPrintf("Warning:ReadDehackedLump: Failed on allocation of %lu bytes when attempting to "
+                "cache a copy of '%s(#%i)', aborting.\n", (unsigned long) (len + 1),
+                W_LumpName(lumpNum), lumpNum);
+        return;
+    }
+    W_ReadLump(lumpNum, lump);
+    lump[len] = '\0';
+
+    VERBOSE( Con_Message("Applying Dehacked patch '%s(#%i)'...\n", W_LumpName(lumpNum), lumpNum) )
+
     ApplyDEH((char*)lump, len);
+
     free(lump);
 }
 
 /**
  * Reads and applies the given Dehacked patch file.
  */
-void ReadDehacked(char *filename)
+static void ReadDehacked(char* filename)
 {
-    FILE   *file;
-    char   *deh;
-    int     len;
-    size_t  result;
+    FILE* file;
+    char* deh;
+    int len;
+    size_t result;
 
     Con_Message("Applying Dehacked: %s...\n", filename);
 
     // Read in the patch.
-    if((file = fopen(filename, "rt")) == NULL)
-        return;                 // Shouldn't happen.
+    file = fopen(filename, "rt");
+    if(!file) return; // Shouldn't happen...
+
     // How long is it?
     fseek(file, 0, SEEK_END);
     len = ftell(file) + 1;
+
     // Allocate enough memory and read it.
     deh = calloc(len + 1, 1);
     rewind(file);
     result = fread(deh, len, 1, file); // return value ignored
     fclose(file);
+
     // Process it!
     ApplyDEH(deh, len);
     free(deh);
@@ -2469,38 +2444,43 @@ void ReadDehacked(char *filename)
  * This will be called after the engine has loaded all definitions but
  * before the data they contain has been initialized.
  */
-int DefsHook(int hook_type, int parm, void *data)
+int DefsHook(int hook_type, int parm, void* data)
 {
-    int                 i;
+    int i;
 
-    verbose = ArgExists("-verbose");
-    ded = (ded_t *) data;
+    verbose = CommandLine_Exists("-verbose");
+    ded = (ded_t*) data;
 
     // Check for a DEHACKED lumps.
     for(i = DD_GetInteger(DD_NUMLUMPS) - 1; i >= 0; i--)
+    {
         if(!strnicmp(W_LumpName(i), "DEHACKED", 8))
         {
             ReadDehackedLump(i);
             // We'll only continue this if the -alldehs option is given.
-            if(!ArgCheck("-alldehs"))
-                break;
+            if(!CommandLine_Check("-alldehs")) break;
         }
+    }
 
     // How about the -deh option?
-    if(ArgCheckWith("-deh", 1))
+    if(CommandLine_CheckWith("-deh", 1))
     {
-        filename_t          temp;
-        const char*         fn;
+        ddstring_t buf;
+        const char* fn;
 
         // Aha! At least one DEH specified. Let's read all of 'em.
-        while((fn = ArgNext()) != NULL && fn[0] != '-')
+        Str_Init(&buf);
+        while(NULL != (fn = CommandLine_Next()) && '-' != fn[0])
         {
-            M_TranslatePath(temp, fn, FILENAME_T_MAXLEN);
-            if(!M_FileExists(temp))
+            Str_Set(&buf, fn);
+            Str_Strip(&buf);
+            F_TranslatePath(&buf, &buf);
+            if(!F_FileExists(Str_Text(&buf)))
                 continue;
 
-            ReadDehacked(temp);
+            ReadDehacked(Str_Text(&buf));
         }
+        Str_Free(&buf);
     }
     return true;
 }
@@ -2513,23 +2493,6 @@ void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
-
-#ifdef WIN32
-/**
- * Windows calls this when the DLL is loaded.
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        // Register our hooks.
-        DP_Initialize();
-        break;
-    }
-    return TRUE;
-}
-#endif
 
 #if 0
 /**
@@ -3005,12 +2968,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 "W_Reload: couldn't open %s"
 "W_InitFiles: no files found"
 "Couldn't allocate lumpcache"
-"W_GetNumForName: %s not found!"
+"W_GetLumpNumForName: %s not found!"
 "W_LumpLength: %i >= numlumps"
 "W_ReadLump: %i >= numlumps"
 "W_ReadLump: couldn't open %s"
 "W_ReadLump: only read %i of %i on lump %i"
-"W_CacheLumpNum: %i >= numlumps"
+"W_CacheLump: %i >= numlumps"
 "Z_CT at w_wad.c:%i"
 "w"
 "waddump.txt"

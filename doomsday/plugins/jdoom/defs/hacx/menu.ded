@@ -1,0 +1,31 @@
+# HacX - Menu Patch Replacements
+#
+# The "Patch Replacement" values are used to replace patches with 
+# strings of text. For further information on syntax see values.ded
+
+Header { Version = 5; }
+
+SkipIf -nodefaultfx;
+
+Values {
+  Patch Replacement {
+    M_NGAME  = "{tracking=-1;x=-3}New game";
+    M_OPTION = "{tracking=-1;x=-3}Options";
+    M_LOADG  = "{tracking=-1;x=-3}Load game";
+    M_SAVEG  = "{tracking=-1;x=-3}Save game";
+    M_RDTHIS = "{tracking=-1;x=-3}Help'n'Info";
+    M_QUITG  = "{tracking=-1;x=-3}Leave game";
+
+    M_NEWG   = "{tracking=-1;x=-3;y=-3}New Game";
+    M_OPTTTL = "{tracking=-1;x=-3;y=-3}Options";
+    M_SGTTL  = "{tracking=-1;x=-3;y=-3}Save a game";
+    M_LGTTL  = "{tracking=-1;x=-3;y=-3}Load a game";
+
+    M_SKILL  = "{tracking=-1;x=-45}Choose difficulty level:";
+    M_JKILL  = "{tracking=-1;x=-3;y=-3}Please don't shoot!";
+    M_ROUGH  = "{tracking=-1;x=-3;y=-3}Arrrgh, I need health!";
+    M_HURT   = "{tracking=-1;x=-3;y=-3}Let's rip them apart!";
+    M_ULTRA  = "{tracking=-1;x=-3;y=-3}I am immortal";
+    M_NMARE  = "{tracking=-1;x=-3;y=-3}Insanity!";
+  };
+}

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 
 #include "b_command.h"
 #include "p_control.h"
+#include "ui_main.h"
 
 #include <ctype.h>
 
@@ -130,6 +131,7 @@ static const keyname_t keyNames[] = {
     {DDKEY_F9,          "f9"},
     {'`',               "tilde"},
     {DDKEY_NUMLOCK,     "numlock"},
+    {DDKEY_CAPSLOCK,    "capslock"},
     {DDKEY_SCROLL,      "scrlock"},
     {DDKEY_NUMPAD0,     "pad0"},
     {DDKEY_NUMPAD1,     "pad1"},
@@ -141,10 +143,16 @@ static const keyname_t keyNames[] = {
     {DDKEY_NUMPAD7,     "pad7"},
     {DDKEY_NUMPAD8,     "pad8"},
     {DDKEY_NUMPAD9,     "pad9"},
+    {DDKEY_DECIMAL,     "decimal"},
     {DDKEY_DECIMAL,     "padcomma"},
-    {DDKEY_SUBTRACT,    "padminus"}, // not really used
-    {DDKEY_ADD,         "padplus"}, // not really used
-
+    {DDKEY_SUBTRACT,    "padminus"},
+    {DDKEY_ADD,         "padplus"},
+    {DDKEY_PRINT,       "print"},
+    {DDKEY_PRINT,       "prtsc"},
+    {DDKEY_ENTER,       "enter"},
+    {DDKEY_DIVIDE,      "divide"},
+    {DDKEY_MULTIPLY,    "multiply"},
+    {DDKEY_SECTION,     "section"},
     {0, NULL} // The terminator
 };
 
@@ -152,6 +160,10 @@ static const keyname_t keyNames[] = {
 
 void B_Register(void)
 {
+    extern byte zeroControlUponConflict;
+
+    C_VAR_BYTE("input-conflict-zerocontrol", &zeroControlUponConflict, 0, 0, 1);
+
 #define PROTECTED_FLAGS     (CMDF_NO_DEDICATED|CMDF_DED|CMDF_CLIENT)
 
     C_CMD_FLAGS("bindevent",      "ss",   BindEventToCommand, PROTECTED_FLAGS);
@@ -169,37 +181,76 @@ void B_Register(void)
 }
 
 /**
+ * Binding context fallback for the "global" context.
+ *
+ * @param ddev  Event being processed.
+ *
+ * @return @c true, if the event was eaten and can be processed by the rest of
+ * the binding context stack.
+ */
+static int globalContextFallback(const ddevent_t* ddev)
+{
+    if(UI_Responder(ddev)) return true;     // Eaten.
+    if(Con_Responder(ddev)) return true;    // Eaten.
+
+    if(DD_GameLoaded())
+    {
+        event_t ev;
+        DD_ConvertEvent(ddev, &ev);
+
+        // The game's normal responder only returns true if the bindings can't
+        // be used (like when chatting). Note that if the event is eaten here,
+        // the rest of the bindings contexts won't get a chance to process the
+        // event.
+        if(gx.Responder && gx.Responder(&ev))
+            return true;
+    }
+
+    return false;
+}
+
+/**
  * Called once on init.
  */
 void B_Init(void)
 {
-    bcontext_t*         bc = 0;
+    bcontext_t* bc = 0;
 
-    if(isDedicated)
+    // In dedicated mode we have fewer binding contexts available.
+    if(!isDedicated)
     {
-        // Why sir, we are but poor folk! Them bindings are too good for us.
-        return;
+        // The contexts are defined in reverse order, with the context of lowest
+        // priority defined first.
+
+        B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
+
+        // Game contexts.
+        /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
+        B_NewContext("map");
+        B_NewContext("map-freepan");
+        B_NewContext("finale"); // uses a fallback responder to handle script events
+        B_AcquireAll(B_NewContext("menu"), true);
+        B_NewContext("gameui");
+        B_NewContext("shortcut");
+        B_AcquireKeyboard(B_NewContext("chat"), true);
+        B_AcquireAll(B_NewContext("message"), true);
+
+        // Binding context for the console.
+        bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
+        bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
+        B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
+
+        // UI doesn't let anything past it.
+        B_AcquireAll(bc = B_NewContext(UI_BINDING_CONTEXT_NAME), true);
     }
 
-    B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
+    // Top-level context that is always active and overrides every other context.
+    // To be used only for system-level functionality.
+    bc = B_NewContext(GLOBAL_BINDING_CONTEXT_NAME);
+    bc->flags |= BCF_PROTECTED;
+    bc->ddFallbackResponder = globalContextFallback;
+    B_ActivateContext(bc, true);
 
-    // Game contexts.
-    // FIXME: Obviously belong to the game, so shouldn't be here.
-    B_NewContext("map");
-    B_NewContext("map-freepan");
-    B_AcquireAll(B_NewContext("menu"), true);
-    B_NewContext("gameui");
-    B_NewContext("shortcut");
-    B_AcquireKeyboard(B_NewContext("chat"), true);
-    B_AcquireAll(B_NewContext("message"), true);
-
-    // Binding context for the console.
-    bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
-    bc->flags |= BCF_PROTECTED; // Only we can (de)activate.
-    B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
-
-    // UI doesn't let anything past it.
-    B_AcquireAll(B_NewContext(UI_BINDING_CONTEXT_NAME), true);
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
     B_BindCommand("joy-hat-center", "print center");
@@ -226,20 +277,47 @@ void B_Init(void)
     B_BindControl("turn", "joy-x + key-shift-up + joy-hat-center + key-code123-down");
     */
 
-    // Bind all the defaults (of engine & game, everything).
-    Con_Executef(CMDS_DDAY, false, "defaultbindings");
+    // Bind all the defaults for the engine only.
+    B_BindDefaults();
 
-    // Enable the contexts for the initial state.
+    B_InitialContextActivations();
+}
+
+void B_InitialContextActivations(void)
+{
+    int i;
+
+    // Disable all contexts.
+    for(i = 0; i < B_ContextCount(); ++i)
+    {
+        B_ActivateContext(B_ContextByPos(i), false);
+   }
+
+    // These are the contexts active by default.
+    B_ActivateContext(B_ContextByName(GLOBAL_BINDING_CONTEXT_NAME), true);
     B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME), true);
+
+    if(Con_IsActive())
+    {
+        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), true);
+    }
 }
 
 void B_BindDefaults(void)
 {
     // Engine's highest priority context: opening control panel, opening the console.
+    B_BindCommand("global:key-f11-down + key-alt-down", "releasemouse");
+    B_BindCommand("global:key-f11-down", "togglefullscreen");
 
     // Console bindings (when open).
 
     // Bias editor.
+}
+
+void B_BindGameDefaults(void)
+{
+    if(!DD_GameLoaded()) return;
+    Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }
 
 /**
@@ -267,7 +345,7 @@ int B_NewIdentifier(void)
 
 const char* B_ParseContext(const char* desc, bcontext_t** bc)
 {
-    ddstring_t* str;
+    AutoStr* str;
 
     *bc = 0;
     if(!strchr(desc, ':'))
@@ -276,10 +354,9 @@ const char* B_ParseContext(const char* desc, bcontext_t** bc)
         return desc;
     }
 
-    str = Str_New();
+    str = AutoStr_New();
     desc = Str_CopyDelim(str, desc, ':');
     *bc = B_ContextByName(Str_Text(str));
-    Str_Delete(str);
 
     return desc;
 }
@@ -293,7 +370,7 @@ void B_DeleteMatching(bcontext_t* bc, evbinding_t* eventBinding,
     while(B_FindMatchingBinding(bc, eventBinding, deviceBinding, &evb, &devb))
     {
         // Only either evb or devb is returned as non-NULL.
-        int                 bid = (evb? evb->bid : (devb? devb->bid : 0));
+        int bid = (evb? evb->bid : (devb? devb->bid : 0));
 
         if(bid)
         {
@@ -338,7 +415,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     int                 localNum = 0;
     controlbinding_t*   conBin = 0;
     dbinding_t*         devBin = 0;
-    ddstring_t*         str = 0;
+    AutoStr*            str = 0;
     const char*         ptr = 0;
     playercontrol_t*    control = 0;
     boolean             justCreated = false;
@@ -347,7 +424,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         return NULL;
 
     // The control description may begin with the local player number.
-    str = Str_New();
+    str = AutoStr_New();
     ptr = Str_CopyDelim(str, controlDesc, '-');
     if(!strncasecmp(Str_Text(str), "local", 5) && Str_Length(str) > 5)
     {
@@ -355,7 +432,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         if(localNum < 0 || localNum >= DDMAXPLAYERS)
         {
             Con_Message("B_BindControl: Local player number %i is invalid.\n", localNum);
-            goto finished;
+            return NULL;
         }
 
         // Skip past it.
@@ -368,7 +445,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     if(!control)
     {
         Con_Message("B_BindControl: Player control \"%s\" not defined.\n", Str_Text(str));
-        goto finished;
+        return NULL;
     }
 
     bc = B_ContextByName(control->bindContextName);
@@ -393,7 +470,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
             B_DestroyControlBinding(conBin);
         }
         conBin = 0;
-        goto finished;
+        return NULL;
     }
 
     /**
@@ -403,8 +480,6 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     B_DeleteMatching(bc, NULL, devBin);
     B_UpdateDeviceStateAssociations();
 
-finished:
-    Str_Delete(str);
     return devBin;
 }
 
@@ -487,12 +562,11 @@ D_CMD(ClearBindingContexts)
 
 D_CMD(ClearBindings)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < B_ContextCount(); ++i)
     {
-        Con_Printf("Clearing binding context \"%s\"...\n",
-                   B_ContextByPos(i)->name);
+        Con_Printf("Clearing binding context '%s'...\n", B_ContextByPos(i)->name);
         B_ClearContext(B_ContextByPos(i));
     }
 
@@ -523,16 +597,15 @@ D_CMD(DefaultBindings)
         return false;
 
     B_BindDefaults();
+    B_BindGameDefaults();
 
-    // Set the game's default bindings.
-    Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
     return true;
 }
 
 D_CMD(ActivateBindingContext)
 {
-    boolean             doActivate = !stricmp(argv[0], "activatebcontext");
-    bcontext_t*         bc = B_ContextByName(argv[1]);
+    boolean doActivate = !stricmp(argv[0], "activatebcontext");
+    bcontext_t* bc = B_ContextByName(argv[1]);
 
     if(!bc)
     {
@@ -542,8 +615,7 @@ D_CMD(ActivateBindingContext)
 
     if(bc->flags & BCF_PROTECTED)
     {
-        Con_Message("Binding Context '%s' is protected. "
-                    "It can not be manually %s.\n", bc->name,
+        Con_Message("Binding Context '%s' is protected. It can not be manually %s.\n", bc->name,
                     doActivate? "activated" : "deactivated");
         return false;
     }
@@ -602,7 +674,7 @@ static uint searchBindListForControlID(binding_t** list, uint num,
     found = false;
     while(i < num && !found)
     {
-        // \fixme Use a faster than O(n) linear search.
+        // @todo Use a faster than O(n) linear search.
         if(controlID == (*list)[i].controlID)
             found = true;
         else
@@ -1075,26 +1147,31 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindContext)
 }
 #endif
 
-const char *B_ShortNameForKey(int ddkey)
+const char* B_ShortNameForKey2(int ddKey, boolean forceLowercase)
 {
-    uint        idx;
     static char nameBuffer[40];
+    uint idx;
 
     for(idx = 0; keyNames[idx].key; ++idx)
     {
-        if(ddkey == keyNames[idx].key)
+        if(ddKey == keyNames[idx].key)
             return keyNames[idx].name;
     }
 
-    if(isalnum(ddkey))
+    if(isalnum(ddKey))
     {
         // Printable character, fabricate a single-character name.
-        nameBuffer[0] = tolower(ddkey);
+        nameBuffer[0] = forceLowercase? tolower(ddKey) : ddKey;
         nameBuffer[1] = 0;
         return nameBuffer;
     }
 
     return NULL;
+}
+
+const char* B_ShortNameForKey(int ddKey)
+{
+    return B_ShortNameForKey2(ddKey, true/*force lowercase*/);
 }
 
 int B_KeyForShortName(const char *key)
@@ -1433,7 +1510,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                 // being pressed that have a binding in the context being
                 // enabled/disabled (classID)
                 if(!(com->command[EVS_DOWN] != NULL && bind->controlID >= 0 &&
-                     I_IsDeviceKeyDown(deviceID, (uint) bind->controlID)))
+                     I_IsKeyDown(dev, (uint) bind->controlID)))
                     continue;
                 break;
 
@@ -1443,7 +1520,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                 // We're only interested in bindings for axes which are
                 // currently outside their dead zone, that have a binding in the
                 // context being enabled/disabled (classID)
-                // \fixme Actually check the zone!
+                // @todo Actually check the zone!
                 if(!dev->axes[axis->playercontrol].position)
                     continue;
                 break;
@@ -1678,7 +1755,7 @@ static uint writeBindList(FILE *file, binding_t *list, uint num,
             bindaxis_t *axis = &ctrl->data.axiscontrol;
 
             formEventString(buffer, deviceID, bnd->controlID, true, 0);
-            // \fixme Using "after" is a hack...
+            // @todo Using "after" is a hack...
             fprintf(file, "after 1 { bindaxis %s %s ",
                     bindContexts[bindContext].name, buffer);
             if(axis->invert)

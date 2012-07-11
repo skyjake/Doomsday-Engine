@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -119,7 +119,7 @@ struct mobj_s* ClPlayer_ClMobj(int plrNum)
  * Move the (hidden, unlinked) client player mobj to the same coordinates
  * where the real mobj of the player is.
  */
-void ClPlayer_UpdatePos(int plrNum)
+void ClPlayer_UpdateOrigin(int plrNum)
 {
     player_t           *plr;
     mobj_t             *remoteClientMobj, *localMobj;
@@ -143,8 +143,8 @@ void ClPlayer_UpdatePos(int plrNum)
 
     // The player's client mobj is not linked to any lists, so position
     // can be updated without any hassles.
-    memcpy(remoteClientMobj->pos, localMobj->pos, sizeof(localMobj->pos));
-    P_MobjLink(remoteClientMobj, 0); // Update subsector pointer.
+    memcpy(remoteClientMobj->origin, localMobj->origin, sizeof(localMobj->origin));
+    P_MobjLink(remoteClientMobj, 0); // Update bspLeaf pointer.
     remoteClientMobj->floorZ = localMobj->floorZ;
     remoteClientMobj->ceilingZ = localMobj->ceilingZ;
     remoteClientMobj->mom[MX] = localMobj->mom[MX];
@@ -201,25 +201,25 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ddpl->lookDir = state->pendingLookDirFix;
     }
 
-    if(state->pendingFixes & DDPF_FIXPOS)
+    if(state->pendingFixes & DDPF_FIXORIGIN)
     {
-        state->pendingFixes &= ~DDPF_FIXPOS;
-        ddpl->fixAcked.pos = ddpl->fixCounter.pos;
+        state->pendingFixes &= ~DDPF_FIXORIGIN;
+        ddpl->fixAcked.origin = ddpl->fixCounter.origin;
         sendAck = true;
 
 #ifdef _DEBUG
         Con_Message("ClPlayer_ApplyPendingFixes: Applying pos (%f, %f, %f) to mobj %p and clmo %i...\n",
-                    state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ],
+                    state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ],
                     mo, clmo->thinker.id);
 #endif
-        P_MobjSetPos(mo, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
+        Mobj_SetOrigin(mo, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
         mo->reactionTime = 18;
 
         // The position is now known.
-        ddpl->flags &= ~DDPF_UNDEFINED_POS;
+        ddpl->flags &= ~DDPF_UNDEFINED_ORIGIN;
 
         Smoother_Clear(clients[plrNum].smoother);
-        ClPlayer_UpdatePos(plrNum);
+        ClPlayer_UpdateOrigin(plrNum);
     }
 
     if(state->pendingFixes & DDPF_FIXMOM)
@@ -244,7 +244,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         // Send an acknowledgement.
         Msg_Begin(PCL_ACK_PLAYER_FIX);
         Writer_WriteInt32(msgWriter, ddpl->fixAcked.angles);
-        Writer_WriteInt32(msgWriter, ddpl->fixAcked.pos);
+        Writer_WriteInt32(msgWriter, ddpl->fixAcked.origin);
         Writer_WriteInt32(msgWriter, ddpl->fixAcked.mom);
         Msg_End();
         Net_SendBuffer(0, 0);
@@ -285,15 +285,15 @@ void ClPlayer_HandleFix(void)
 
     if(fixes & 2) // fix pos?
     {
-        ddpl->fixCounter.pos = Reader_ReadInt32(msgReader);
-        state->pendingPosFix[VX] = Reader_ReadFloat(msgReader);
-        state->pendingPosFix[VY] = Reader_ReadFloat(msgReader);
-        state->pendingPosFix[VZ] = Reader_ReadFloat(msgReader);
-        state->pendingFixes |= DDPF_FIXPOS;
+        ddpl->fixCounter.origin = Reader_ReadInt32(msgReader);
+        state->pendingOriginFix[VX] = Reader_ReadFloat(msgReader);
+        state->pendingOriginFix[VY] = Reader_ReadFloat(msgReader);
+        state->pendingOriginFix[VZ] = Reader_ReadFloat(msgReader);
+        state->pendingFixes |= DDPF_FIXORIGIN;
 
 #ifdef _DEBUG
         Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix pos %i. Pos=%f, %f, %f\n", plrNum,
-                    ddpl->fixAcked.pos, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
+                    ddpl->fixAcked.origin, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
 #endif
     }
 
@@ -309,27 +309,15 @@ void ClPlayer_HandleFix(void)
     ClPlayer_ApplyPendingFixes(plrNum);
 }
 
-/**
- * Used in DEMOS. (Not in regular netgames.)
- * Applies the given dx and dy to the local player's coordinates.
- *
- * @param z             Absolute viewpoint height.
- * @param onground      If @c true the mobj's Z will be set to floorz, and
- *                      the player's viewheight is set so that the viewpoint
- *                      height is param 'z'.
- *                      If @c false the mobj's Z will be param 'z' and
- *                      viewheight is zero.
- */
-void ClPlayer_MoveLocal(float dx, float dy, float z, boolean onground)
+void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
 {
-    player_t           *plr = &ddPlayers[consolePlayer];
-    ddplayer_t         *ddpl = &plr->shared;
-    mobj_t             *mo = ddpl->mo;
-    int                 i;
-    float               mom[3];
+    player_t* plr = &ddPlayers[consolePlayer];
+    ddplayer_t* ddpl = &plr->shared;
+    mobj_t* mo = ddpl->mo;
+    coord_t mom[3];
+    int i;
 
-    if(!mo)
-        return;
+    if(!mo) return;
 
     // Place the new momentum in the appropriate place.
     cpMom[MX][SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dx;
@@ -351,25 +339,25 @@ void ClPlayer_MoveLocal(float dx, float dy, float z, boolean onground)
     if(dx != 0 || dy != 0)
     {
         P_MobjUnlink(mo);
-        mo->pos[VX] += dx;
-        mo->pos[VY] += dy;
+        mo->origin[VX] += dx;
+        mo->origin[VY] += dy;
         P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
 
-    mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
-    mo->floorZ = mo->subsector->sector->SP_floorheight;
-    mo->ceilingZ = mo->subsector->sector->SP_ceilheight;
+    mo->bspLeaf = P_BspLeafAtPoint(mo->origin);
+    mo->floorZ = mo->bspLeaf->sector->SP_floorheight;
+    mo->ceilingZ = mo->bspLeaf->sector->SP_ceilheight;
 
     if(onground)
     {
-        mo->pos[VZ] = z - 1;
+        mo->origin[VZ] = z - 1;
     }
     else
     {
-        mo->pos[VZ] = z;
+        mo->origin[VZ] = z;
     }
 
-    ClPlayer_UpdatePos(consolePlayer);
+    ClPlayer_UpdateOrigin(consolePlayer);
 }
 
 /**
@@ -448,7 +436,7 @@ void ClPlayer_ReadDelta2(boolean skip)
             {
                 // The client mobj is already known to us.
                 // Unlink it (not interactive or visible).
-                ClMobj_UnsetPosition(clmo);
+                ClMobj_Unlink(clmo);
             }
 
             clmo->dPlayer = ddpl;
@@ -457,7 +445,7 @@ void ClPlayer_ReadDelta2(boolean skip)
             if(old)
             {
                 old->dPlayer = NULL;
-                ClMobj_SetPosition(old);
+                ClMobj_Link(old);
             }
 
             // If it was just created, the coordinates are not yet correct.
@@ -477,21 +465,21 @@ void ClPlayer_ReadDelta2(boolean skip)
                 // mobj, which is already known.
 #if _DEBUG
                 Con_Message("Cl_RdPlrD2: Pl%i: Copying pos&angle from real mobj to clmobj.\n", num);
-                Con_Message("  x=%g y=%g z=%g\n", ddpl->mo->pos[VX], ddpl->mo->pos[VY], ddpl->mo->pos[VZ]);
+                Con_Message("  x=%g y=%g z=%g\n", ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
 #endif
-                clmo->pos[VX] = ddpl->mo->pos[VX];
-                clmo->pos[VY] = ddpl->mo->pos[VY];
-                clmo->pos[VZ] = ddpl->mo->pos[VZ];
+                clmo->pos[VX] = ddpl->mo->origin[VX];
+                clmo->pos[VY] = ddpl->mo->origin[VY];
+                clmo->pos[VZ] = ddpl->mo->origin[VZ];
                 clmo->angle = ddpl->mo->angle;
                 if(!skip)
-                    ClPlayer_UpdatePos(num);
+                    ClPlayer_UpdateOrigin(num);
             }
             */
 
 #if _DEBUG
             Con_Message("ClPlr_RdD2: Pl%i: mobj=%i old=%p\n", num, s->clMobjId, old);
-            Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", clmo->pos[VX],
-                        clmo->pos[VY], clmo->pos[VZ], clmo->floorZ, clmo->ceilingZ);
+            Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", clmo->origin[VX],
+                        clmo->origin[VY], clmo->origin[VZ], clmo->floorZ, clmo->ceilingZ);
             Con_Message("ClPlr_RdD2: pl=%i => moid=%i\n", (skip? -1 : num), s->clMobjId);
 #endif
         }
@@ -594,6 +582,6 @@ boolean ClPlayer_IsFreeToMove(int plrNum)
     mobj_t* mo = ClPlayer_LocalGameMobj(plrNum);
     if(!mo) return false;
 
-    return (mo->pos[VZ] >= mo->floorZ &&
-            mo->pos[VZ] + mo->height <= mo->ceilingZ);
+    return (mo->origin[VZ] >= mo->floorZ &&
+            mo->origin[VZ] + mo->height <= mo->ceilingZ);
 }

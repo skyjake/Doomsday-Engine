@@ -1,10 +1,10 @@
-/**\file
+/**\file def_read.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * def_read.c: Doomsday Engine Definition File Reader
+ * Doomsday Engine Definition File Reader
  *
  * A GHASTLY MESS!!! This should be rewritten.
  *
@@ -47,12 +47,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_misc.h"
 #include "de_refresh.h"
 #include "de_defs.h"
+
+#include "resourcenamespace.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
@@ -72,6 +76,11 @@
 #define READSTR(X)  if(!ReadString(X, sizeof(X))) { \
                     SetError("Syntax error in string value."); \
                     retVal = false; goto ded_end_read; }
+
+
+#define READURI(X, SHM) if(!ReadUri(X, SHM)) { \
+    SetError("Syntax error parsing resource path."); \
+    retVal = false; goto ded_end_read; }
 
 #define MISSING_SC_ERROR    SetError("Missing semicolon."); \
                             retVal = false; goto ded_end_read;
@@ -109,6 +118,7 @@
 #define RV_STR(lab, X)  if(ISLABEL(lab)) { READSTR(X); } else
 #define RV_STR_INT(lab, S, I)   if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
                                 I = strtol(token,0,0); } else
+#define RV_URI(lab, X, RN)  if(ISLABEL(lab)) { READURI(X, RN); } else
 #define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
 #define RV_BLENDMODE(lab, X) if(ISLABEL(lab)) { READBLENDMODE(X); } else
 #define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
@@ -125,8 +135,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct dedsource_s {
-    char*           buffer;
-    char*           pos;
+    const char*     buffer;
+    const char*     pos;
     boolean         atEnd;
     int             lineNumber;
     const char*     fileName;
@@ -409,6 +419,25 @@ static int ReadAnyString(char** dest)
     return true;
 }
 
+static int ReadUri(Uri** dest, const char* defaultScheme)
+{
+    char* buf = 0;
+    int result;
+    if((result = ReadAnyString(&buf)) != 0)
+    {
+        if(!*dest)
+            *dest = Uri_NewWithPath2(buf, RC_NULL);
+        else
+            Uri_SetUri3(*dest, buf, RC_NULL);
+
+        if(defaultScheme && defaultScheme[0] && Str_Length(Uri_Scheme(*dest)) == 0)
+            Uri_SetScheme(*dest, defaultScheme);
+
+        M_Free(buf);
+    }
+    return result;
+}
+
 static int ReadNByteVector(unsigned char* dest, int max)
 {
     int                 i;
@@ -475,7 +504,7 @@ static int ReadFloat(float* dest)
 
 static int ReadFlags(int* dest, const char* prefix)
 {
-    char                flag[1024];
+    char flag[1024];
 
     // By default, no flags are set.
     *dest = 0;
@@ -488,7 +517,16 @@ static int ReadFlags(int* dest, const char* prefix)
         if(!ReadString(flag, sizeof(flag)))
             return false;
 
-        *dest = Def_EvalFlags(flag);
+        M_Strip(flag, sizeof(flag));
+
+        if(strlen(flag))
+        {
+            *dest = Def_EvalFlags(flag);
+        }
+        else
+        {
+            *dest = 0;
+        }
         return true;
     }
 
@@ -506,7 +544,12 @@ static int ReadFlags(int* dest, const char* prefix)
             strcpy(flag, token);
         }
 
-        *dest |= Def_EvalFlags(flag);
+        M_Strip(flag, sizeof(flag));
+
+        if(strlen(flag))
+        {
+            *dest |= Def_EvalFlags(flag);
+        }
 
         if(!ReadToken())
             break;
@@ -596,24 +639,26 @@ static int ReadLabel(char* label)
     return true;
 }
 
-static void DED_Include(const char* fileName, directory_t* dir)
+static void DED_Include(const char* fileName, const char* parentDirectory)
 {
-    filename_t          tmp, path;
+    ddstring_t tmp;
 
-    M_TranslatePath(tmp, fileName, FILENAME_T_MAXLEN);
-    if(!Dir_IsAbsolute(tmp))
+    Str_Init(&tmp); Str_Set(&tmp, fileName);
+    F_FixSlashes(&tmp, &tmp);
+    F_ExpandBasePath(&tmp, &tmp);
+    if(!F_IsAbsolute(&tmp))
     {
-        dd_snprintf(path, FILENAME_T_MAXLEN, "%s%s", dir->path, tmp);
+        Str_Prepend(&tmp, parentDirectory);
     }
-    else
-    {
-        strncpy(path, tmp, FILENAME_T_MAXLEN);
-    }
-    Def_ReadProcessDED(path);
+
+    Def_ReadProcessDED(Str_Text(&tmp));
+    Str_Free(&tmp);
+
+    // Reset state for continuing.
     strncpy(token, "", MAX_TOKEN_LEN);
 }
 
-static void DED_InitReader(char* buffer, const char* fileName)
+static void DED_InitReader(const char* buffer, const char* fileName)
 {
     if(source && source - sourceStack >= MAX_RECUR_DEPTH)
     {
@@ -658,17 +703,15 @@ static void DED_CloseReader(void)
  */
 static boolean DED_CheckCondition(const char* cond, boolean expected)
 {
-    boolean             value = false;
+    boolean value = false;
 
     if(cond[0] == '-')
-    {
-        // It's a command line option.
-        value = (ArgCheck(token) != 0);
+    {   // A command line option.
+        value = (CommandLine_Check(token) != 0);
     }
     else if(isalnum(cond[0]))
-    {
-        // Then it must be a game mode.
-        value = !stricmp(cond, (char *) gx.GetVariable(DD_GAME_MODE));
+    {   // A game mode.
+        value = !stricmp(cond, Str_Text(Game_IdentityKey(theGame)));
     }
 
     return value == expected;
@@ -679,9 +722,9 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
  * The definition is being loaded from @sourcefile (DED or WAD).
  *
  * @param buffer        The data to be read, must be null-terminated.
- * @param sourceFile    Just FYI.
+ * @param _sourceFile   Just FYI.
  */
-static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
+static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 {
     char                dummy[128], label[128], tmp[256];
     int                 dummyInt, idx, retVal = true;
@@ -701,15 +744,18 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
     int                 depth;
     char*               rootStr = 0, *ptr;
     int                 bCopyNext = 0;
-    directory_t         fileDir;
+    ddstring_t sourceFile, sourceFileDir;
 
-    memset(&fileDir, 0, sizeof(fileDir));
+    Str_Init(&sourceFile); Str_Set(&sourceFile, _sourceFile);
+    F_FixSlashes(&sourceFile, &sourceFile);
+    F_ExpandBasePath(&sourceFile, &sourceFile);
 
     // For including other files -- we must know where we are.
-    Dir_FileDir(sourceFile, &fileDir);
+    Str_Init(&sourceFileDir);
+    F_FileDir(&sourceFileDir, &sourceFile);
 
     // Get the next entry from the source stack.
-    DED_InitReader(buffer, sourceFile);
+    DED_InitReader(buffer, Str_Text(&sourceFile));
 
     while(ReadToken())
     {
@@ -727,7 +773,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("SkipIf"))
         {
-            boolean             expected = true;
+            boolean expected = true;
 
             ReadToken();
             if(ISTOKEN("Not"))
@@ -750,13 +796,13 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             READSTR(tmp);
             CHECKSC;
 
-            DED_Include(tmp, &fileDir);
+            DED_Include(tmp, Str_Text(&sourceFileDir));
             strcpy(label, "");
         }
 
         if(ISTOKEN("IncludeIf")) // An optional include.
         {
-            boolean             expected = true;
+            boolean expected = true;
 
             ReadToken();
             if(ISTOKEN("Not"))
@@ -770,7 +816,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 READSTR(tmp);
                 CHECKSC;
 
-                DED_Include(tmp, &fileDir);
+                DED_Include(tmp, Str_Text(&sourceFileDir));
                 strcpy(label, "");
             }
             else
@@ -783,12 +829,15 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("ModelPath"))
         {
-            // A new model path. Append to the list.
+            Uri* newSearchPath;
+
             READSTR(label);
             CHECKSC;
 
-            Dir_ValidDir(label, 128);
-            R_AddClassDataPath(DDRC_MODEL, label, true);
+            newSearchPath = Uri_NewWithPath2(label, RC_NULL);
+            F_AddSearchPathToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL),
+                                               0, newSearchPath, SPG_EXTRA);
+            Uri_Delete(newSearchPath);
         }
 
         if(ISTOKEN("Header"))
@@ -808,7 +857,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_STR("Sfx prefix", dummy)
                 RV_STR("Mus prefix", dummy)
                 RV_STR("Text prefix", dummy)
-                RV_STR("Model path", ded->modelPath)
+                RV_STR("Model path", dummy)
                 RV_FLAGS("Common model flags", ded->modelFlags, "df_")
                 RV_FLT("Default model scale", ded->modelScale)
                 RV_FLT("Default model offset", ded->modelOffset)
@@ -833,13 +882,47 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             }
         }
 
-        if(ISTOKEN("Thing"))
+        if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
         {
-            ded_mobj_t*         mo;
+            boolean bModify = false;
+            ded_mobj_t* mo, dummyMo;
 
-            // A new thing.
-            idx = DED_AddMobj(ded, "");
-            mo = &ded->mobjs[idx];
+            ReadToken();
+            if(!ISTOKEN("Mods"))
+            {
+                // A new mobj type.
+                idx = DED_AddMobj(ded, "");
+                mo = &ded->mobjs[idx];
+            }
+            else if(!bCopyNext)
+            {
+                ded_mobjid_t otherMobjId;
+
+                READSTR(otherMobjId);
+                ReadToken();
+
+                idx = Def_GetMobjNum(otherMobjId);
+                if(idx < 0)
+                {
+                    VERBOSE( Con_Message("Warning: Unknown Mobj %s in %s on line #%i, will be ignored.\n",
+                                         otherMobjId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
+
+                    // We'll read into a dummy definition.
+                    memset(&dummyMo, 0, sizeof(dummyMo));
+                    mo = &dummyMo;
+                }
+                else
+                {
+                    mo = &ded->mobjs[idx];
+                    bModify = true;
+                }
+            }
+            else
+            {
+                SetError("Cannot both Copy(Previous) and Modify.");
+                retVal = false;
+                goto ded_end_read;
+            }
 
             if(prevMobjDefIdx >= 0 && bCopyNext)
             {
@@ -851,8 +934,12 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", mo->id)
-                RV_INT("DoomEd number", mo->doomEdNum)
+                // ID cannot be changed when modifying
+                if(!bModify && ISLABEL("ID"))
+                {
+                    READSTR(mo->id);
+                }
+                else RV_INT("DoomEd number", mo->doomEdNum)
                 RV_STR("Name", mo->name)
                 RV_STR("Spawn state", mo->states[SN_SPAWN])
                 RV_STR("See state", mo->states[SN_SEE])
@@ -886,29 +973,81 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prevMobjDefIdx = idx;
+
+            // If we did not read into a dummy update the previous index.
+            if(idx > 0)
+            {
+                prevMobjDefIdx = idx;
+            }
         }
 
         if(ISTOKEN("State"))
         {
-            ded_state_t*        st;
+            boolean bModify = false;
+            ded_state_t* st, dummyState;
 
-            // A new state.
-            idx = DED_AddState(ded, "");
-            st = &ded->states[idx];
+            ReadToken();
+            if(!ISTOKEN("Mods"))
+            {
+                // A new state.
+                idx = DED_AddState(ded, "");
+                st = &ded->states[idx];
+            }
+            else if(!bCopyNext)
+            {
+                ded_stateid_t otherStateId;
+
+                READSTR(otherStateId);
+                ReadToken();
+
+                idx = Def_GetStateNum(otherStateId);
+                if(idx < 0)
+                {
+                    VERBOSE( Con_Message("Warning: Unknown State %s in %s on line #%i, will be ignored.\n",
+                                         otherStateId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
+
+                    // We'll read into a dummy definition.
+                    memset(&dummyState, 0, sizeof(dummyState));
+                    st = &dummyState;
+                }
+                else
+                {
+                    st = &ded->states[idx];
+                    bModify = true;
+                }
+            }
+            else
+            {
+                SetError("Cannot both Copy(Previous) and Modify.");
+                retVal = false;
+                goto ded_end_read;
+            }
 
             if(prevStateDefIdx >= 0 && bCopyNext)
             {
                 // Should we copy the previous definition?
                 memcpy(st, ded->states + prevStateDefIdx, sizeof(*st));
+
+                if(st->execute)
+                {
+                    // Make a copy of the execute command string.
+                    size_t len = strlen(st->execute);
+                    char* newCmdStr = M_Malloc(len+1);
+                    memcpy(newCmdStr, st->execute, len+1);
+                    st->execute = newCmdStr;
+                }
             }
 
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", st->id)
-                RV_FLAGS("Flags", st->flags, "statef_")
+                // ID cannot be changed when modifying
+                if(!bModify && ISLABEL("ID"))
+                {
+                    READSTR(st->id);
+                }
+                else RV_FLAGS("Flags", st->flags, "statef_")
                 RV_STR("Sprite", st->sprite.id)
                 RV_INT("Frame", st->frame)
                 RV_INT("Tics", st->tics)
@@ -921,7 +1060,12 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_END
                 CHECKSC;
             }
-            prevStateDefIdx = idx;
+
+            // If we did not read into a dummy update the previous index.
+            if(idx > 0)
+            {
+                prevStateDefIdx = idx;
+            }
         }
 
         if(ISTOKEN("Sprite"))
@@ -940,16 +1084,22 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Light"))
         {
-            ded_light_t*        lig;
+            ded_light_t* lig;
 
             // A new light.
             idx = DED_AddLight(ded, "");
             lig = &ded->lights[idx];
 
+            // Should we copy the previous definition?
             if(prevLightDefIdx >= 0 && bCopyNext)
             {
-                // Should we copy the previous definition?
-                memcpy(lig, ded->lights + prevLightDefIdx, sizeof(*lig));
+                const ded_light_t* prevLight = ded->lights + prevLightDefIdx;
+
+                memcpy(lig, prevLight, sizeof(*lig));
+                if(lig->up)     lig->up     = Uri_NewCopy(lig->up);
+                if(lig->down)   lig->down   = Uri_NewCopy(lig->down);
+                if(lig->sides)  lig->sides  = Uri_NewCopy(lig->sides);
+                if(lig->flare)  lig->flare  = Uri_NewCopy(lig->flare);
             }
 
             FINDBEGIN;
@@ -984,10 +1134,10 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 }
                 else
                 RV_FLAGS("Flags", lig->flags, "lgf_")
-                RV_STR("Top map", lig->up.id)
-                RV_STR("Bottom map", lig->down.id)
-                RV_STR("Side map", lig->sides.id)
-                RV_STR("Flare map", lig->flare.id)
+                RV_URI("Top map", &lig->up, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("Bottom map", &lig->down, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("Side map", &lig->sides, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("Flare map", &lig->flare, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
                 RV_FLT("Halo radius", lig->haloRadius)
                 RV_END
                 CHECKSC;
@@ -997,53 +1147,121 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Material"))
         {
-            int                 stage = 0;
-            uint                layer = 0;
-            ded_material_t*     mat;
+            boolean bModify = false;
+            ded_material_t* mat, dummyMat;
+            uint layer = 0;
+            int stage;
 
-            // A new material.
-            idx = DED_AddMaterial(ded, "");
-            mat = &ded->materials[idx];
+            ReadToken();
+            if(!ISTOKEN("Mods"))
+            {
+                // A new material.
+                idx = DED_AddMaterial(ded, NULL);
+                mat = &ded->materials[idx];
+            }
+            else if(!bCopyNext)
+            {
+                Uri* otherMat = NULL;
+                ddstring_t* otherMatPath;
 
+                READURI(&otherMat, NULL);
+                ReadToken();
+
+                otherMatPath = Uri_Compose(otherMat);
+                mat = Def_GetMaterial(Str_Text(otherMatPath));
+                Str_Delete(otherMatPath);
+                if(!mat)
+                {
+                    VERBOSE(
+                        ddstring_t* path = Uri_ToString(otherMat);
+                        Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.\n",
+                            Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
+                        Str_Delete(path)
+                        )
+
+                    // We'll read into a dummy definition.
+                    idx = -1;
+                    memset(&dummyMat, 0, sizeof(dummyMat));
+                    mat = &dummyMat;
+                }
+                else
+                {
+                    idx = mat - ded->materials;
+                    bModify = true;
+                }
+                Uri_Delete(otherMat);
+            }
+            else
+            {
+                SetError("Cannot both Copy(Previous) and Modify.");
+                retVal = false;
+                goto ded_end_read;
+            }
+
+            // Should we copy the previous definition?
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
-                uint                i;
+                const ded_material_t* prevMaterial = ded->materials + prevMaterialDefIdx;
+                Uri* uri = mat->uri;
 
-                // Should we copy the previous definition?
-                memcpy(mat, ded->materials + prevMaterialDefIdx, sizeof(*mat));
+                memcpy(mat, prevMaterial, sizeof(*mat));
+                mat->uri = uri;
+                if(prevMaterial->uri)
+                {
+                    if(mat->uri)
+                        Uri_Copy(mat->uri, prevMaterial->uri);
+                    else
+                        mat->uri = Uri_NewCopy(prevMaterial->uri);
+                }
 
                 // Duplicate the stage arrays.
+                { int i;
                 for(i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
                 {
-                    ded_material_layer_t*   l =
-                        &ded->materials[prevMaterialDefIdx].layers[i];
+                    const ded_material_layer_t* l = &prevMaterial->layers[i];
 
-                    if(l->stages)
+                    if(!l->stages)
+                        continue;
+
+                    if(NULL == (mat->layers[i].stages = (ded_material_layer_stage_t*)
+                       malloc(sizeof(*mat->layers[i].stages) * l->stageCount.max)))
                     {
-                        mat->layers[i].stages =
-                            M_Malloc(sizeof(ded_material_layer_stage_t) *
-                                               mat->layers[i].stageCount.max);
-                        memcpy(mat->layers[i].stages, l->stages,
-                               sizeof(ded_material_layer_stage_t) *
-                                   mat->layers[i].stageCount.num);
+                        SetError("Out of memory.");
+                        retVal = false;
+                        goto ded_end_read;
                     }
-                }
+
+                    memcpy(mat->layers[i].stages, l->stages,
+                        sizeof(*mat->layers[i].stages) * l->stageCount.num);
+                    { int j;
+                    for(j = 0; j < l->stageCount.num; ++j)
+                        if(NULL != l->stages[j].texture)
+                            mat->layers[i].stages[j].texture = Uri_NewCopy(l->stages[j].texture);
+                    }
+                }}
             }
 
             FINDBEGIN;
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", mat->id.name)
-                RV_FLAGS("Namespace", (*(int*)&mat->id.mnamespace), "mn_")
-                RV_FLAGS("Flags", mat->flags, "matf_")
-                RV_FLT("Width", mat->width)
-                RV_FLT("Height", mat->height)
+                // ID cannot be changed when modifying
+                if(!bModify && ISLABEL("ID"))
+                {
+                    READURI(&mat->uri, NULL);
+                }
+                else RV_FLAGS("Flags", mat->flags, "matf_")
+                RV_INT("Width", mat->width)
+                RV_INT("Height", mat->height)
                 if(ISLABEL("Layer"))
                 {
+                    stage = 0;
                     if(layer >= DED_MAX_MATERIAL_LAYERS)
-                        Con_Error("DED_ReadData: Too many material layers "
-                                  "(%s).\n", mat->id.name);
+                    {
+                        SetError("Too many Material layers.");
+                        retVal = false;
+                        goto ded_end_read;
+                    }
 
                     FINDBEGIN;
                     for(;;)
@@ -1053,9 +1271,9 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                         {
                             ded_material_layer_stage_t* st = NULL;
 
+                            // Need to allocate a new stage?
                             if(stage >= mat->layers[layer].stageCount.num)
                             {
-                                // Allocate new stage.
                                 stage = DED_AddMaterialLayerStage(&mat->layers[layer]);
                             }
 
@@ -1065,39 +1283,36 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                             for(;;)
                             {
                                 READLABEL;
-                                if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                                   ISLABEL("Sprite") || ISLABEL("System"))
-                                {
-                                    st->type = (
-                                        ISLABEL("Texture")? GLT_DOOMTEXTURE :
-                                        ISLABEL("Flat")? GLT_FLAT :
-                                        ISLABEL("Sprite")? GLT_SPRITE :
-                                        GLT_SYSTEM);
-                                    READSTR(st->name);
-                                }
-                                else
+                                RV_URI("Texture", &st->texture, 0) // Default to "any" namespace.
                                 RV_INT("Tics", st->tics)
                                 RV_FLT("Rnd", st->variance)
+                                RV_VEC("Offset", st->texOrigin, 2)
+                                RV_FLT("Glow", st->glow)
                                 RV_END
                                 CHECKSC;
                             }
-                            stage++;
+                            ++stage;
                         }
                         else RV_END
                         CHECKSC;
                     }
-                    layer++;
+                    ++layer;
                 }
                 else RV_END
                 CHECKSC;
             }
-            prevMaterialDefIdx = idx;
+
+            // If we did not read into a dummy update the previous index.
+            if(idx > 0)
+            {
+                prevMaterialDefIdx = idx;
+            }
         }
 
         if(ISTOKEN("Model"))
         {
-            uint                sub = 0;
-            ded_model_t*        mdl, *prevModel = NULL;
+            ded_model_t* mdl, *prevModel = NULL;
+            uint sub = 0;
 
             // A new model.
             idx = DED_AddModel(ded, "");
@@ -1107,7 +1322,19 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 prevModel = ded->models + prevModelDefIdx;
                 // Should we copy the previous definition?
-                if(bCopyNext) memcpy(mdl, prevModel, sizeof(*mdl));
+                if(bCopyNext)
+                {
+                    int i;
+                    memcpy(mdl, prevModel, sizeof(*mdl));
+                    for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
+                    {
+                        if(mdl->sub[i].filename)
+                            mdl->sub[i].filename = Uri_NewCopy(mdl->sub[i].filename);
+
+                        if(mdl->sub[i].skinFilename)
+                            mdl->sub[i].skinFilename = Uri_NewCopy(mdl->sub[i].skinFilename);
+                    }
+                }
             }
 
             FINDBEGIN;
@@ -1138,19 +1365,22 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 if(ISLABEL("Md2") || ISLABEL("Sub"))
                 {
                     if(sub >= DED_MAX_SUB_MODELS)
-                        Con_Error("DED_ReadData: Too many submodels (%s).\n",
-                        mdl->state);
+                    {
+                        SetError("Too many Model submodels.");
+                        retVal = false;
+                        goto ded_end_read;
+                    }
 
                     FINDBEGIN;
                     for(;;)
                     {
                         READLABEL;
-                        RV_STR("File", mdl->sub[sub].filename.path)
+                        RV_URI("File", &mdl->sub[sub].filename, MODELS_RESOURCE_NAMESPACE_NAME)
                         RV_STR("Frame", mdl->sub[sub].frame)
                         RV_INT("Frame range", mdl->sub[sub].frameRange)
                         RV_BLENDMODE("Blending mode", mdl->sub[sub].blendMode)
                         RV_INT("Skin", mdl->sub[sub].skin)
-                        RV_STR("Skin file", mdl->sub[sub].skinFilename.path)
+                        RV_URI("Skin file", &mdl->sub[sub].skinFilename, MODELS_RESOURCE_NAMESPACE_NAME)
                         RV_INT("Skin range", mdl->sub[sub].skinRange)
                         RV_VEC("Offset XYZ", mdl->sub[sub].offset, 3)
                         RV_FLAGS("Flags", mdl->sub[sub].flags, "df_")
@@ -1176,7 +1406,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             // the whole reader will be rewritten sooner or later...
             if(prevModel)
             {
-                int                 i;
+                uint i;
 
                 if(!strcmp(mdl->state, "-"))
                     strcpy(mdl->state, prevModel->state);
@@ -1187,13 +1417,20 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
                 for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                 {
-                    if(!strcmp(mdl->sub[i].filename.path, "-"))
-                        strcpy(mdl->sub[i].filename.path, prevModel->sub[i].filename.path);
+                    if(mdl->sub[i].filename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].filename), "-"))
+                    {
+                        Uri_Delete(mdl->sub[i].filename);
+                        mdl->sub[i].filename = NULL;
+                    }
+
+                    if(mdl->sub[i].skinFilename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].skinFilename), "-"))
+                    {
+                        Uri_Delete(mdl->sub[i].skinFilename);
+                        mdl->sub[i].skinFilename = NULL;
+                    }
 
                     if(!strcmp(mdl->sub[i].frame, "-"))
-                        strcpy(mdl->sub[i].frame, prevModel->sub[i].frame);
-
-                    //if(!strcmp(mdl->sub[i].flags, "-"))           strcpy(mdl->sub[i].flags,           prevModel->sub[i].flags);
+                        memset(mdl->sub[i].frame, 0, sizeof(ded_string_t));
                 }
             }
 
@@ -1221,9 +1458,9 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_INT("Max channels", snd->channels)
                 RV_INT("Group", snd->group)
                 RV_FLAGS("Flags", snd->flags, "sf_")
-                RV_STR("Ext", snd->ext.path)
-                RV_STR("File", snd->ext.path)
-                RV_STR("File name", snd->ext.path)
+                RV_URI("Ext", &snd->ext, SOUNDS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("File", &snd->ext, SOUNDS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("File name", &snd->ext, SOUNDS_RESOURCE_NAMESPACE_NAME)
                 RV_END
                 CHECKSC;
             }
@@ -1242,9 +1479,9 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 READLABEL;
                 RV_STR("ID", mus->id)
                 RV_STR("Lump", mus->lumpName)
-                RV_STR("File name", mus->path.path)
-                RV_STR("File", mus->path.path)
-                RV_STR("Ext", mus->path.path) // Both work.
+                RV_URI("File name", &mus->path, MUSIC_RESOURCE_NAMESPACE_NAME)
+                RV_URI("File", &mus->path, MUSIC_RESOURCE_NAMESPACE_NAME)
+                RV_URI("Ext", &mus->path, MUSIC_RESOURCE_NAMESPACE_NAME) // Both work.
                 RV_INT("CD track", mus->cdTrack)
                 RV_END
                 CHECKSC;
@@ -1253,22 +1490,27 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Sky"))
         {   // A new sky definition.
-            uint                sub;
-            ded_sky_t*          sky;
+            ded_sky_t* sky;
+            uint sub = 0;
 
             idx = DED_AddSky(ded, "");
             sky = &ded->skies[idx];
 
+            // Should we copy the previous definition?
             if(prevSkyDefIdx >= 0 && bCopyNext)
             {
-                int                 m;
+                ded_sky_t* prevSky = ded->skies + prevSkyDefIdx;
+                int i;
 
-                // Should we copy the previous definition?
-                memcpy(sky, ded->skies + prevSkyDefIdx, sizeof(*sky));
-                for(m = 0; m < NUM_SKY_MODELS; ++m)
+                memcpy(sky, prevSky, sizeof(*sky));
+                for(i = 0; i < NUM_SKY_LAYERS; ++i)
                 {
-                    sky->models[m].execute
-                        = sdup(sky->models[m].execute);
+                    if(sky->layers[i].material)
+                        sky->layers[i].material = Uri_NewCopy(sky->layers[i].material);
+                }
+                for(i = 0; i < NUM_SKY_MODELS; ++i)
+                {
+                    sky->models[i].execute = sdup(sky->models[i].execute);
                 }
             }
             prevSkyDefIdx = idx;
@@ -1290,17 +1532,8 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     for(;;)
                     {
                         READLABEL;
-                        if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                           ISLABEL("Sprite") || ISLABEL("System"))
-                        {
-                            sl->material.mnamespace = (
-                                ISLABEL("Texture")? MN_TEXTURES :
-                                ISLABEL("Flat")? MN_FLATS :
-                                ISLABEL("Sprite")? MN_SPRITES :
-                                MN_SYSTEM);
-                            READSTR(sl->material.name);
-                        }
-                        else
+                        RV_URI("Material", &sl->material, 0)
+                        RV_URI("Texture", &sl->material, MN_TEXTURES_NAME )
                         RV_FLAGS("Flags", sl->flags, "slf_")
                         RV_FLT("Offset", sl->offset)
                         RV_FLT("Color limit", sl->colorLimit)
@@ -1313,7 +1546,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     ded_skymodel_t *sm = &sky->models[sub];
                     if(sub == NUM_SKY_MODELS)
                     {   // Too many!
-                        SetError("Too many sky models.");
+                        SetError("Too many Sky models.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1343,23 +1576,38 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Map")) // Info
         {   // A new map info.
-            uint                sub;
-            ded_mapinfo_t*      mi;
+            uint sub;
+            ded_mapinfo_t* mi;
 
-            idx = DED_AddMapInfo(ded, "");
+            idx = DED_AddMapInfo(ded, NULL);
             mi = &ded->mapInfo[idx];
 
+            // Should we copy the previous definition?
             if(prevMapInfoDefIdx >= 0 && bCopyNext)
             {
-                int                 m;
+                const ded_mapinfo_t* prevMapInfo = ded->mapInfo + prevMapInfoDefIdx;
+                Uri* uri = mi->uri;
+                int i;
 
-                // Should we copy the previous definition?
-                memcpy(mi, ded->mapInfo + prevMapInfoDefIdx, sizeof(*mi));
-                mi->execute = sdup(mi->execute);
-                for(m = 0; m < NUM_SKY_MODELS; ++m)
+                memcpy(mi, prevMapInfo, sizeof(*mi));
+                mi->uri = uri;
+                if(prevMapInfo->uri)
                 {
-                    mi->sky.models[m].execute
-                        = sdup(mi->sky.models[m].execute);
+                    if(mi->uri)
+                        Uri_Copy(mi->uri, prevMapInfo->uri);
+                    else
+                        mi->uri = Uri_NewCopy(prevMapInfo->uri);
+                }
+
+                mi->execute = sdup(mi->execute);
+                for(i = 0; i < NUM_SKY_LAYERS; ++i)
+                {
+                    if(mi->sky.layers[i].material)
+                        mi->sky.layers[i].material = Uri_NewCopy(mi->sky.layers[i].material);
+                }
+                for(i = 0; i < NUM_SKY_MODELS; ++i)
+                {
+                    mi->sky.models[i].execute = sdup(mi->sky.models[i].execute);
                 }
             }
             prevMapInfoDefIdx = idx;
@@ -1369,7 +1617,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", mi->id)
+                RV_URI("ID", &mi->uri, NULL)
                 RV_STR("Name", mi->name)
                 RV_STR("Author", mi->author)
                 RV_FLAGS("Flags", mi->flags, "mif_")
@@ -1395,17 +1643,8 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     for(;;)
                     {
                         READLABEL;
-                        if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                           ISLABEL("Sprite") || ISLABEL("System"))
-                        {
-                            sl->material.mnamespace = (
-                                ISLABEL("Texture")? MN_TEXTURES :
-                                ISLABEL("Flat")? MN_FLATS :
-                                ISLABEL("Sprite")? MN_SPRITES :
-                                MN_SYSTEM);
-                            READSTR(sl->material.name);
-                        }
-                        else
+                        RV_URI("Material", &sl->material, 0)
+                        RV_URI("Texture", &sl->material, MN_TEXTURES_NAME)
                         RV_FLAGS("Flags", sl->flags, "slf_")
                         RV_FLT("Offset", sl->offset)
                         RV_FLT("Color limit", sl->colorLimit)
@@ -1418,7 +1657,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     ded_skymodel_t *sm = &mi->sky.models[sub];
                     if(sub == NUM_SKY_MODELS)
                     {   // Too many!
-                        SetError("Too many sky models.");
+                        SetError("Too many Sky models.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1473,7 +1712,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     else
                     {
                         M_Free(temp);
-                        SetError("Syntax error in text value.");
+                        SetError("Syntax error in Text value.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1483,40 +1722,98 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             }
         }
 
-        if(ISTOKEN("Texture")) // Environment
-        {   // A new texenv.
-            ded_tenviron_t*     tenv;
+        if(ISTOKEN("Texture"))
+        {
+            ReadToken();
+            if(ISTOKEN("Environment"))
+            {   // A new environment.
+                ded_tenviron_t*     tenv;
 
-            idx = DED_AddTextureEnv(ded, "");
-            tenv = &ded->textureEnv[idx];
+                idx = DED_AddTextureEnv(ded, "");
+                tenv = &ded->textureEnv[idx];
 
-            FINDBEGIN;
-            for(;;)
+                FINDBEGIN;
+                for(;;)
+                {
+                    Uri** mn;
+
+                    READLABEL;
+                    RV_STR("ID", tenv->id)
+                    if(ISLABEL("Material") || ISLABEL("Texture") || ISLABEL("Flat"))
+                    {   // A new material path.
+                        ddstring_t mnamespace; Str_Init(&mnamespace);
+                        Str_Set(&mnamespace, ISLABEL("Material")? "" : ISLABEL("Texture")? MN_TEXTURES_NAME : MN_FLATS_NAME);
+                        mn = DED_NewEntry((void**)&tenv->materials, &tenv->count, sizeof(*mn));
+                        FINDBEGIN;
+                        for(;;)
+                        {
+                            READLABEL;
+                            RV_URI("ID", mn, Str_Text(&mnamespace))
+                            RV_END
+                            CHECKSC;
+                        }
+                        Str_Free(&mnamespace);
+                    }
+                    else RV_END
+                    CHECKSC;
+                }
+            }
+        }
+
+        if(ISTOKEN("Composite"))
+        {
+            ReadToken();
+            if(ISTOKEN("BitmapFont"))
             {
-                ded_materialid_t*   mn;
+                ded_compositefont_t* cfont;
 
-                READLABEL;
-                RV_STR("ID", tenv->id)
-                if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                   ISLABEL("Sprite") || ISLABEL("System"))
-                {   // A new material name.
-                    mn = DED_NewEntry((void**)&tenv->materials,
-                                      &tenv->count, sizeof(*mn));
-                    mn->mnamespace = (ISLABEL("Texture")? MN_TEXTURES :
-                           ISLABEL("Flat")? MN_FLATS :
-                           ISLABEL("Sprite")? MN_SPRITES : MN_SYSTEM);
+                idx = DED_AddCompositeFont(ded, NULL);
+                cfont = &ded->compositeFonts[idx];
 
-                    FINDBEGIN;
-                    for(;;)
+                FINDBEGIN;
+                for(;;)
+                {
+                    READLABEL;
+                    if(ISLABEL("ID"))
                     {
-                        READLABEL;
-                        RV_STR("ID", mn->name)
-                        RV_END
+                        READURI(&cfont->uri, FN_GAME_NAME)
                         CHECKSC;
                     }
+                    else if(M_IsStringValidInt(label))
+                    {
+                        ded_compositefont_mappedcharacter_t* mc = 0;
+                        int ascii = atoi(label);
+                        if(ascii < 0 || ascii > 255)
+                        {
+                            SetError("Invalid ascii code.");
+                            retVal = false;
+                            goto ded_end_read;
+                        }
+
+                        { int i;
+                        for(i = 0; i < cfont->charMapCount.num; ++i)
+                            if(cfont->charMap[i].ch == (unsigned char) ascii)
+                                mc = &cfont->charMap[i];
+                        }
+
+                        if(mc == 0)
+                        {
+                            mc = DED_NewEntry((void**)&cfont->charMap, &cfont->charMapCount, sizeof(*mc));
+                            mc->ch = ascii;
+                        }
+
+                        FINDBEGIN;
+                        for(;;)
+                        {
+                            READLABEL;
+                            RV_URI("Texture", &mc->path, PATCHES_RESOURCE_NAMESPACE_NAME)
+                            RV_END
+                            CHECKSC;
+                        }
+                    }
+                    else
+                    RV_END
                 }
-                else RV_END
-                CHECKSC;
             }
         }
 
@@ -1532,7 +1829,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 READLABEL_NOBREAK;
                 if(strchr(label, '|'))
                 {
-                    SetError("Value labels can't include | characters (ASCII 124).");
+                    SetError("Value labels can not include '|' characters (ASCII 124).");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1562,7 +1859,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                     else
                     {
                         M_Free(temp);
-                        SetError("Syntax error in string value.");
+                        SetError("Syntax error in Value string.");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1618,15 +1915,21 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Detail")) // Detail Texture
         {
-            ded_detailtexture_t*    dtl;
+            ded_detailtexture_t* dtl;
 
             idx = DED_AddDetail(ded, "");
             dtl = &ded->details[idx];
 
+             // Should we copy the previous definition?
             if(prevDetailDefIdx >= 0 && bCopyNext)
             {
-                // Should we copy the previous definition?
-                memcpy(dtl, ded->details + prevDetailDefIdx, sizeof(*dtl));
+                const ded_detailtexture_t* prevDetail = ded->details + prevDetailDefIdx;
+
+                memcpy(dtl, prevDetail, sizeof(*dtl));
+
+                if(dtl->material1) dtl->material1  = Uri_NewCopy(dtl->material1);
+                if(dtl->material2) dtl->material2  = Uri_NewCopy(dtl->material2);
+                if(dtl->detailTex) dtl->detailTex  = Uri_NewCopy(dtl->detailTex);
             }
 
             FINDBEGIN;
@@ -1636,28 +1939,23 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_FLAGS("Flags", dtl->flags, "dtf_")
                 if(ISLABEL("Texture"))
                 {
-                    READSTR(dtl->material1.name)
-                    dtl->material1.mnamespace = MN_TEXTURES;
+                    READURI(&dtl->material1, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Wall")) // Alias
                 {
-                    READSTR(dtl->material1.name)
-                    dtl->material1.mnamespace = MN_TEXTURES;
+                    READURI(&dtl->material1, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READSTR(dtl->material2.name)
-                    dtl->material2.mnamespace = MN_FLATS;
+                    READURI(&dtl->material2, MN_FLATS_NAME)
                 }
                 else if(ISLABEL("Lump"))
                 {
-                    READSTR(dtl->detailLump.path)
-                    dtl->isExternal = false;
+                    READURI(&dtl->detailTex, "Lumps")
                 }
                 else if(ISLABEL("File"))
                 {
-                    READSTR(dtl->detailLump.path)
-                    dtl->isExternal = true;
+                    READURI(&dtl->detailTex, 0)
                 }
                 else
                 RV_FLT("Scale", dtl->scale)
@@ -1671,15 +1969,21 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Reflection")) // Surface reflection
         {
-            ded_reflection_t *ref = NULL;
+            ded_reflection_t* ref = 0;
 
             idx = DED_AddReflection(ded);
             ref = &ded->reflections[idx];
 
+            // Should we copy the previous definition?
             if(prevRefDefIdx >= 0 && bCopyNext)
             {
-                // Should we copy the previous definition?
-                memcpy(ref, ded->reflections + prevRefDefIdx, sizeof(*ref));
+                const ded_reflection_t* prevRef = ded->reflections + prevRefDefIdx;
+
+                memcpy(ref, prevRef, sizeof(*ref));
+
+                if(ref->material)   ref->material = Uri_NewCopy(ref->material);
+                if(ref->shinyMap)   ref->shinyMap = Uri_NewCopy(ref->shinyMap);
+                if(ref->maskMap)    ref->maskMap  = Uri_NewCopy(ref->maskMap);
             }
 
             FINDBEGIN;
@@ -1690,19 +1994,21 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_FLT("Shininess", ref->shininess)
                 RV_VEC("Min color", ref->minColor, 3)
                 RV_BLENDMODE("Blending mode", ref->blendMode)
-                RV_STR("Shiny map", ref->shinyMap.path)
-                RV_STR("Mask map", ref->maskMap.path)
+                RV_URI("Shiny map", &ref->shinyMap, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("Mask map", &ref->maskMap, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
                 RV_FLT("Mask width", ref->maskWidth)
                 RV_FLT("Mask height", ref->maskHeight)
-                if(ISLABEL("Texture"))
+                if(ISLABEL("Material"))
                 {
-                    READSTR(ref->material.name)
-                    ref->material.mnamespace = MN_TEXTURES;
+                    READURI(&ref->material, 0)
+                }
+                else if(ISLABEL("Texture"))
+                {
+                    READURI(&ref->material, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READSTR(ref->material.name)
-                    ref->material.mnamespace = MN_FLATS;
+                    READURI(&ref->material, MN_FLATS_NAME)
                 }
                 else RV_END
                 CHECKSC;
@@ -1712,24 +2018,27 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Generator")) // Particle Generator
         {
-            int                 sub = 0;
-            ded_ptcgen_t*       gen;
+            ded_ptcgen_t* gen;
+            int sub = 0;
 
             idx = DED_AddPtcGen(ded, "");
             gen = &ded->ptcGens[idx];
 
+            // Should we copy the previous definition?
             if(prevGenDefIdx >= 0 && bCopyNext)
             {
-                // Should we copy the previous definition?
-                memcpy(gen, &ded->ptcGens[prevGenDefIdx], sizeof(*gen));
+                const ded_ptcgen_t* prevGen = ded->ptcGens + prevGenDefIdx;
+
+                memcpy(gen, prevGen, sizeof(*gen));
+
+                if(gen->map) gen->map = Uri_NewCopy(gen->map);
+                if(gen->material) gen->material = Uri_NewCopy(gen->material);
 
                 // Duplicate the stages array.
-                if(ded->ptcGens[prevGenDefIdx].stages)
+                if(gen->stages)
                 {
-                    gen->stages = M_Malloc(sizeof(ded_ptcstage_t) *
-                                           gen->stageCount.max);
-                    memcpy(gen->stages, ded->ptcGens[prevGenDefIdx].stages,
-                           sizeof(ded_ptcstage_t) * gen->stageCount.num);
+                    gen->stages = M_Malloc(sizeof(ded_ptcstage_t) * gen->stageCount.max);
+                    memcpy(gen->stages, prevGen->stages, sizeof(ded_ptcstage_t) * gen->stageCount.num);
                 }
             }
 
@@ -1738,21 +2047,23 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 RV_STR("State", gen->state)
-                if(ISLABEL("Flat"))
+                if(ISLABEL("Material"))
                 {
-                    READSTR(gen->material.name)
-                    gen->material.mnamespace = MN_FLATS;
+                    READURI(&gen->material, 0)
+                }
+                else if(ISLABEL("Flat"))
+                {
+                    READURI(&gen->material, MN_FLATS_NAME)
                 }
                 else if(ISLABEL("Texture"))
                 {
-                    READSTR(gen->material.name)
-                    gen->material.mnamespace = MN_TEXTURES;
+                    READURI(&gen->material, MN_TEXTURES_NAME)
                 }
                 else
                 RV_STR("Mobj", gen->type)
                 RV_STR("Alt mobj", gen->type2)
                 RV_STR("Damage mobj", gen->damage)
-                RV_STR("Map", gen->map)
+                RV_URI("Map", &gen->map, NULL)
                 RV_FLAGS("Flags", gen->flags, "gnf_")
                 RV_FLT("Speed", gen->speed)
                 RV_FLT("Speed Rnd", gen->speedVariance)
@@ -1824,7 +2135,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Finale") || ISTOKEN("InFine"))
         {
-            ded_finale_t*       fin;
+            ded_finale_t* fin;
 
             idx = DED_AddFinale(ded);
             fin = &ded->finales[idx];
@@ -1834,16 +2145,15 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", fin->id)
-                RV_STR("Before", fin->before)
-                RV_STR("After", fin->after)
+                RV_URI("Before", &fin->before, NULL)
+                RV_URI("After", &fin->after, NULL)
                 RV_INT("Game", dummyInt)
                 if(ISLABEL("Script"))
                 {
                     // Allocate an "enormous" 64K buffer.
-                    char *temp = M_Calloc(0x10000), *ptr;
+                    char* temp = M_Calloc(0x10000), *ptr;
 
-                    if(fin->script)
-                        M_Free(fin->script);
+                    if(fin->script) M_Free(fin->script);
 
                     FINDBEGIN;
                     ptr = temp;
@@ -1872,17 +2182,29 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Decoration"))
         {
-            uint                    sub;
-            ded_decor_t            *decor;
+            ded_decor_t* decor;
+            uint sub = 0;
 
             idx = DED_AddDecoration(ded);
             decor = &ded->decorations[idx];
-            sub = 0;
+
+            // Should we copy the previous definition?
             if(prevDecorDefIdx >= 0 && bCopyNext)
             {
-                // Should we copy the previous definition?
-                memcpy(decor, ded->decorations + prevDecorDefIdx,
-                       sizeof(*decor));
+                const ded_decor_t* prevDecor = ded->decorations + prevDecorDefIdx;
+
+                memcpy(decor, prevDecor, sizeof(*decor));
+
+                if(decor->material) decor->material = Uri_NewCopy(decor->material);
+                { int i;
+                for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+                {
+                    ded_decorlight_t* dl = &decor->lights[i];
+                    if(dl->flare)   dl->flare = Uri_NewCopy(dl->flare);
+                    if(dl->up)      dl->up    = Uri_NewCopy(dl->up);
+                    if(dl->down)    dl->down  = Uri_NewCopy(dl->down);
+                    if(dl->sides)   dl->sides = Uri_NewCopy(dl->sides);
+                }}
             }
 
             FINDBEGIN;
@@ -1890,58 +2212,17 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 RV_FLAGS("Flags", decor->flags, "dcf_")
-                if(ISLABEL("Texture"))
+                if(ISLABEL("Material"))
                 {
-                    READSTR(decor->material.name)
-                    decor->material.mnamespace = MN_TEXTURES;
+                    READURI(&decor->material, 0)
+                }
+                else if(ISLABEL("Texture"))
+                {
+                    READURI(&decor->material, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READSTR(decor->material.name)
-                    decor->material.mnamespace = MN_FLATS;
-                }
-                else if(ISLABEL("Model"))
-                {
-                    ded_decormodel_t *dm = &decor->models[sub];
-
-                    if(sub == DED_DECOR_NUM_MODELS)
-                    {
-                        SetError("Too many models in decoration.");
-                        retVal = false;
-                        goto ded_end_read;
-                    }
-
-                    FINDBEGIN;
-                    for(;;)
-                    {
-                        READLABEL;
-                        RV_VEC("Offset", dm->pos, 2)
-                        RV_FLT("Distance", dm->elevation)
-                        RV_IVEC("Pattern offset", dm->patternOffset, 2)
-                        RV_IVEC("Pattern skip", dm->patternSkip, 2)
-                        if(ISLABEL("Levels"))
-                        {
-                            int                     b;
-
-                            FINDBEGIN;
-                            for(b = 0; b < 2; ++b)
-                            {
-                                READFLT(dm->lightLevels[b])
-                                dm->lightLevels[b] /= 255.0f;
-                                if(dm->lightLevels[b] < 0)
-                                    dm->lightLevels[b] = 0;
-                                else if(dm->lightLevels[b] > 1)
-                                    dm->lightLevels[b] = 1;
-                            }
-                            ReadToken();
-                        }
-                        else
-                        RV_STR("ID", dm->id)
-                        RV_FLT("Frame interval", dm->frameInterval)
-                        RV_END
-                        CHECKSC;
-                    }
-                    sub++;
+                    READURI(&decor->material, MN_FLATS_NAME)
                 }
                 else if(ISLABEL("Light"))
                 {
@@ -1983,10 +2264,10 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                         }
                         else
                         RV_INT("Flare texture", dl->flareTexture)
-                        RV_STR("Flare map", dl->flare.id)
-                        RV_STR("Top map", dl->up.id)
-                        RV_STR("Bottom map", dl->down.id)
-                        RV_STR("Side map", dl->sides.id)
+                        RV_URI("Flare map", &dl->flare, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                        RV_URI("Top map", &dl->up, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                        RV_URI("Bottom map", &dl->down, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                        RV_URI("Side map", &dl->sides, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
                         RV_END
                         CHECKSC;
                     }
@@ -2011,33 +2292,28 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             for(;;)
             {
                 READLABEL;
-                if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                   ISLABEL("Sprite") || ISLABEL("System"))
+                if(ISLABEL("Texture") || ISLABEL("Flat"))
                 {
                     ded_group_member_t* memb;
+                    ddstring_t mnamespace; Str_Init(&mnamespace);
+                    Str_Set(&mnamespace, ISLABEL("Texture")? MN_TEXTURES_NAME : MN_FLATS_NAME);
 
+                    // Need to allocate new stage?
                     if(sub >= grp->count.num)
-                    {
-                        // Allocate new stage.
                         sub = DED_AddGroupMember(grp);
-                    }
-
                     memb = &grp->members[sub];
-                    memb->material.mnamespace = (
-                        ISLABEL("Texture")? MN_TEXTURES :
-                        ISLABEL("Flat")? MN_FLATS :
-                        ISLABEL("Sprite")? MN_SPRITES : MN_SYSTEM);
 
                     FINDBEGIN;
                     for(;;)
                     {
                         READLABEL;
-                        RV_STR("ID", memb->material.name)
+                        RV_URI("ID", &memb->material, Str_Text(&mnamespace))
                         RV_FLT("Tics", memb->tics)
                         RV_FLT("Random", memb->randomTics)
                         RV_END
                         CHECKSC;
                     }
+                    Str_Free(&mnamespace);
                     ++sub;
                 }
                 else RV_FLAGS("Flags", grp->flags, "tgf_")
@@ -2091,16 +2367,21 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Line")) // Line Type
         {
-            ded_linetype_t*         l;
+            ded_linetype_t* l;
 
             // A new line type.
             idx = DED_AddLineType(ded, 0);
             l = &ded->lineTypes[idx];
 
+            // Should we copy the previous definition?
             if(prevLineTypeDefIdx >= 0 && bCopyNext)
             {
-                // Should we copy the previous definition?
-                memcpy(l, ded->lineTypes + prevLineTypeDefIdx, sizeof(*l));
+                const ded_linetype_t* prevLineType = ded->lineTypes + prevLineTypeDefIdx;
+
+                memcpy(l, prevLineType, sizeof(*l));
+
+                if(l->actMaterial)   l->actMaterial   = Uri_NewCopy(l->actMaterial);
+                if(l->deactMaterial) l->deactMaterial = Uri_NewCopy(l->deactMaterial);
             }
 
             FINDBEGIN;
@@ -2146,25 +2427,21 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
                 RV_INT("Act chain", l->actChain)
                 RV_INT("Deact chain", l->deactChain)
                 RV_FLAGS("Wall section", l->wallSection, "lws_")
-                if(ISLABEL("Act texture"))
+                if(ISLABEL("Act material"))
                 {
-                    READSTR(l->actMaterial.name)
-                    l->actMaterial.mnamespace = MN_TEXTURES;
+                    READURI(&l->actMaterial, 0)
                 }
-                else if(ISLABEL("Act material")) // Alias
+                else if(ISLABEL("Act texture")) // Alias
                 {
-                    READSTR(l->actMaterial.name)
-                    l->actMaterial.mnamespace = MN_ANY;
+                    READURI(&l->actMaterial, MN_TEXTURES_NAME)
                 }
-                else if(ISLABEL("Deact texture"))
+                else if(ISLABEL("Deact material"))
                 {
-                    READSTR(l->deactMaterial.name)
-                    l->deactMaterial.mnamespace = MN_TEXTURES;
+                    READURI(&l->deactMaterial, 0)
                 }
-                else if(ISLABEL("Deact material")) // Alias
+                else if(ISLABEL("Deact texture")) // Alias
                 {
-                    READSTR(l->deactMaterial.name)
-                    l->deactMaterial.mnamespace = MN_ANY;
+                    READURI(&l->deactMaterial, MN_TEXTURES_NAME)
                 }
                 else
                 RV_INT("Act type", l->actLineType)
@@ -2376,68 +2653,76 @@ ded_end_read:
     // Free the source stack entry we were using.
     DED_CloseReader();
 
+    Str_Free(&sourceFile);
+    Str_Free(&sourceFileDir);
+
     return retVal;
 }
 /* *INDENT-ON* */
 
-/**
- * @return              @c true, if the file was successfully loaded.
- */
-int DED_Read(ded_t* ded, const char* sPathName)
+int DED_Read(ded_t* ded, const char* path)
 {
-    DFILE*              file;
-    char*               defData;
-    size_t              len;
-    int                 result;
-    filename_t          translated;
+    ddstring_t transPath;
+    size_t bufferedDefSize;
+    char* bufferedDef;
+    DFile* file;
+    int result;
 
-    M_TranslatePath(translated, sPathName, FILENAME_T_MAXLEN);
+    // Compose the (possibly-translated) path.
+    Str_Init(&transPath);
+    Str_Set(&transPath, path);
+    F_FixSlashes(&transPath, &transPath);
+    F_ExpandBasePath(&transPath, &transPath);
 
-    if((file = F_Open(translated, "rb")) == NULL)
+    // Attempt to open a definition file on this path.
+    file = F_Open(Str_Text(&transPath), "rb");
+    if(!file)
     {
-        SetError("File can't be opened for reading.");
+        SetError("File could not be opened for reading.");
+        Str_Free(&transPath);
         return false;
     }
 
-    // Allocate a large enough buffer and read the file.
-    F_Seek(file, 0, SEEK_END);
-    len = F_Tell(file);
-    F_Rewind(file);
+    // We will buffer a local copy of the file. How large a buffer do we need?
+    DFile_Seek(file, 0, SEEK_END);
+    bufferedDefSize = DFile_Tell(file);
+    DFile_Rewind(file);
+    bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
+    if(NULL == bufferedDef)
+    {
+        SetError("Out of memory while trying to buffer file for reading.");
+        Str_Free(&transPath);
+        return false;
+    }
 
-    defData = M_Calloc(len + 1);
-    F_Read(defData, len, file);
-    F_Close(file);
+    // Copy the file into the local buffer and parse definitions.
+    DFile_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
+    F_Delete(file);
+    result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 
-    // Parse the definitions.
-    result = DED_ReadData(ded, defData, translated);
-
-    // Now we can free the buffer.
-    M_Free(defData);
-
+    // Done. Release temporary storage and return the result.
+    free(bufferedDef);
+    Str_Free(&transPath);
     return result;
 }
 
 /**
  * Reads definitions from the given lump.
  */
-int DED_ReadLump(ded_t* ded, lumpnum_t lump)
+int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
 {
-    size_t lumpLength;
-
-    if(lump < 0 || lump >= numLumps)
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(fsObject)
     {
-        SetError("Bad lump number.");
-        return false;
+        if(F_LumpLength(absoluteLumpNum) != 0)
+        {
+            const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+            int result = DED_ReadData(ded, (const char*)lumpPtr, Str_Text(AbstractFile_Path(fsObject)));
+            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+        }
+        return true;
     }
-
-    if((lumpLength = W_LumpLength(lump)) > 0)
-    {
-        void* buf = M_Calloc(lumpLength + 1);
-        int result = DED_ReadData(ded, buf, W_LumpSourceFile(lump));
-
-        M_Free(buf);
-        return result;
-    }
-
+    SetError("Bad lump number.");
     return false;
 }

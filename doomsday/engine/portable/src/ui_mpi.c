@@ -1,10 +1,10 @@
-/**\file
+/**\file ui_mpi.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * ui_mpi.c: Multiplayer Setup Interface
+ * Multiplayer Setup Interface
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,6 +33,7 @@
 
 #include "de_base.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_console.h"
 #include "de_ui.h"
@@ -56,7 +57,7 @@ typedef struct serverstrings_s {
     char    desc[90];
     char    version[20];
     char    ping[20];
-    char    game[80];
+    char    plugin[80];
     char    names[256];
     char    pwads[256];
     char    warning[128];
@@ -180,7 +181,7 @@ static ui_object_t ob_client[] = {
      str_sinfo.desc},
     {UI_TEXT, 0, 0, 20, 570, 0, 70, "Game", UIText_Drawer},
     {UI_TEXT, 0, 0, 190, 570, 250, 70, "", MPIServerInfoDrawer, 0, 0, 0,
-     str_sinfo.game},
+     str_sinfo.plugin},
     {UI_TEXT, 0, 0, 460, 570, 0, 70, "Version", UIText_Drawer},
     {UI_TEXT, 0, 0, 560, 570, 200, 70, "", MPIServerInfoDrawer, 0, 0, 0,
      str_sinfo.version},
@@ -315,10 +316,10 @@ void MPIUpdateServerInfo(ui_object_t *ob)
     //      sprintf(str_sinfo.ping, "%i ms", info.ping);
     //  else
     //      strcpy(str_sinfo.ping, "?");
-    strcpy(str_sinfo.game, info.game);
+    strcpy(str_sinfo.plugin, info.plugin);
     MPITranslateString(str_sinfo.names, info.clientNames, ';', ", ");
     MPITranslateString(str, info.pwads, ';', ", ");
-    strcpy(str_sinfo.pwads, info.gameMode);
+    strcpy(str_sinfo.pwads, info.gameIdentityKey);
     if(info.gameConfig[0])
     {
         strcat(str_sinfo.pwads, " ");
@@ -331,11 +332,9 @@ void MPIUpdateServerInfo(ui_object_t *ob)
         strcat(str_sinfo.pwads, ")");
     }
 
-    W_GetIWADFileName(str, sizeof(str));
     sprintf(warningString,
-            "This server is using %s (%x), " "but you have %s (%x). "
-            "Errors may occur during game play.", info.iwad, info.wadNumber,
-            str, myCrc);
+            "This server is using %x, " "but you have %x. "
+            "Errors may occur during game play.", info.wadNumber, myCrc);
 
     // Show IWAD warning?
     if(!(lst_found.count >= 1 && lst_found.selection >= 0 &&
@@ -355,24 +354,23 @@ void MPIUpdateServerInfo(ui_object_t *ob)
 /*
  * Draw a framed text box.
  */
-void MPIServerInfoDrawer(ui_object_t *ob)
+void MPIServerInfoDrawer(ui_object_t* ob)
 {
-    UI_DrawHelpBox(ob->x, ob->y, ob->w, ob->h,
-                   ob->flags & UIF_DISABLED ? .2f : 1, ob->data);
+    UI_DrawHelpBox(&ob->geometry.origin, &ob->geometry.size, ob->flags & UIF_DISABLED ? .2f : 1, ob->data);
 }
 
-void MPIToggleMasterItems(ui_object_t *ob)
+void MPIToggleMasterItems(ui_object_t* ob)
 {
-    UI_FlagGroup(page_server.objects, 1, UIF_DISABLED, UIFG_XOR);
+    UI_FlagGroup(page_server._objects, 1, UIF_DISABLED, UIFG_XOR);
     MPIUpdatePublicButton();
 }
 
-void MPIGotoPage(ui_object_t *ob)
+void MPIGotoPage(ui_object_t* ob)
 {
-    UI_SetPage((ui_page_t *) ob->data);
+    UI_SetPage((ui_page_t*) ob->data);
 }
 
-void MPIGoBack(ui_object_t *ob)
+void MPIGoBack(ui_object_t* ob)
 {
     if(!UI_CurrentPage()->previous)
         UI_End();
@@ -380,22 +378,27 @@ void MPIGoBack(ui_object_t *ob)
         UI_SetPage(UI_CurrentPage()->previous);
 }
 
-void MPIStartServer(ui_object_t *ob)
+void MPIStartServer(ui_object_t* ob)
 {
     N_ShutdownService();
-    Con_SetInteger("net-port-control", strtol(str_ipport, 0, 0), true);
-    //Con_SetInteger("net-port-data", strtol(str_myudp, 0, 0), true);
+    Con_SetInteger2("net-port-data", strtol(str_ipport, 0, 0), SVF_WRITE_OVERRIDE);
     N_InitService(true);
 
     // Update the variables.
-    Con_SetString("server-name", str_server, true);
-    Con_SetString("server-info", str_desc, true);
-    Con_SetString("net-master-address", str_masterip, true);
+    Con_SetString2("server-name", str_server, SVF_WRITE_OVERRIDE);
+    Con_SetString2("server-info", str_desc, SVF_WRITE_OVERRIDE);
+    Con_SetString2("net-master-address", str_masterip, SVF_WRITE_OVERRIDE);
 
     // Start the server.
     Con_Execute(CMDS_DDAY,"net server start", false, false);
 
     UI_End();
+}
+
+void MPIFinishCustomServerSearch(int nodeId, const byte* data, int size)
+{
+    N_ClientHandleResponseToInfoQuery(nodeId, data, size);
+    MPIUpdateServerList();
 }
 
 void MPISearch(ui_object_t *ob)
@@ -410,10 +413,8 @@ void MPISearch(ui_object_t *ob)
     if(searchMode == SEARCH_CUSTOM)
     {
         // This is a synchronous operation.
-        N_LookForHosts(str_ipaddr, strtol(str_ipport, 0, 0));
+        N_LookForHosts(str_ipaddr, strtol(str_ipport, 0, 0), MPIFinishCustomServerSearch);
         lookedForHosts = true;
-
-        MPIUpdateServerList();
     }
     else
     {
@@ -425,10 +426,10 @@ void MPISearch(ui_object_t *ob)
 /*
  * Formats the given serverinfo_t into a list-viewable tabbed string.
  */
-void MPIFormatServerInfo(char *dest, serverinfo_t *info)
+void MPIFormatServerInfo(char* dest, serverinfo_t *info)
 {
     sprintf(dest, "%s\t%i / %i players\t%s\t%s", info->name, info->numPlayers,
-            info->maxPlayers, info->map, info->iwad);
+            info->maxPlayers, info->map, info->gameIdentityKey);
 }
 
 /*
@@ -484,14 +485,11 @@ void MPIUpdateServerList(void)
             N_MasterGet(i, &info);
 
             // Is this suitable?
-            if(info.version != DOOMSDAY_VERSION ||
-               stricmp(info.gameMode, gx.GetVariable(DD_GAME_MODE)) || !info.canJoin)
+            if(info.version != DOOMSDAY_VERSION || stricmp(info.gameIdentityKey, Str_Text(Game_IdentityKey(theGame))) || !info.canJoin)
             {
                 Con_Message("Server %s filtered out:\n", info.name);
-                Con_Message("  remote = %i, local = %i\n", info.version,
-                    DOOMSDAY_VERSION);
-                Con_Message("  remote = %s, local = %s\n",
-                            info.gameMode, (char *) gx.GetVariable(DD_GAME_MODE));
+                Con_Message("  remote = %i, local = %i\n", info.version, DOOMSDAY_VERSION);
+                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(Game_IdentityKey(theGame)));
                 Con_Message("  can join = %i\n", info.canJoin);
                 continue;
             }
@@ -557,7 +555,7 @@ void MPIRetrieveServersFromMaster()
     UI_InitColumns(list);
 
     // Update master settings.
-    Con_SetString("net-master-address", str_masterip, true);
+    Con_SetString2("net-master-address", str_masterip, SVF_WRITE_OVERRIDE);
 
     // Get the list.
     N_MAPost(MAC_REQUEST);
@@ -574,10 +572,6 @@ void MPIConnect(ui_object_t *ob)
     char    buf[80];
 
     N_ShutdownService();
-
-    // Update my UDP port.
-    //Con_SetInteger("net-port-data", strtol(str_myudp, 0, 0), true);
-
     N_InitService(false);
 
     sprintf(buf, "net %sconnect %i", searchMode == SEARCH_MASTER ? "m" : "",
@@ -612,6 +606,8 @@ void MPIHelpDrawer(ui_object_t *ob)
 
     if((text = DH_GetString(help, HST_DESCRIPTION)) != NULL)
     {
+        FR_SetFont(fontVariable[FS_LIGHT]);
+        FR_LoadDefaultAttrib();
         UI_TextOutWrap(text, ob->x, UI_ScreenY(yPos[selection]), ob->w,
                        UI_ScreenH(980 - yPos[selection]));
     }
@@ -628,14 +624,18 @@ void MPIUpdatePublicButton(void)
  */
 void DD_NetSetup(int serverMode)
 {
+    if(!DD_GameLoaded())
+    {
+        Con_Message("%s setup can only be activated when a game is loaded.\n", serverMode? "Server" : "Client");
+        return;
+    }
+
     lookedForHosts = false;
 
     if(serverMode)
     {
         // Prepare Server Setup.
         UI_InitPage(&page_server, ob_server);
-        sprintf(page_server.title, "Doomsday %s Server Setup",
-                DOOMSDAY_VERSION_TEXT);
         strcpy(str_server, serverName);
         strcpy(str_desc, serverInfo);
 
@@ -648,7 +648,6 @@ void DD_NetSetup(int serverMode)
     {
         // Prepare Client Setup.
         UI_InitPage(&page_client, ob_client);
-        sprintf(page_client.title, "Doomsday %s Client Setup", DOOMSDAY_VERSION_TEXT);
         strcpy(str_ipaddr, nptIPAddress);
 
         UI_FlagGroup(ob_client, 1, UIF_ACTIVE, searchMode == SEARCH_MASTER);
@@ -657,7 +656,7 @@ void DD_NetSetup(int serverMode)
         UI_FlagGroup(ob_client, 4, UIF_HIDDEN, searchMode == SEARCH_MASTER);
         lst_found.selection = -1;
         lst_found.count = 0;
-        myCrc = W_CRCNumber();
+        myCrc = F_CRCNumber();
         UI_FlagGroup(ob_client, 5, UIF_DISABLED, true); // warnings
         UI_FlagGroup(ob_client, UIG_CONNECT, UIF_DISABLED, true);
         MPIUpdateServerList();
@@ -674,7 +673,7 @@ void DD_NetSetup(int serverMode)
     //sprintf(str_ipport, "%.10i", nptIPPort);
     //lst_protocol.selection = nptActive;
 
-    UI_Init(true, true, false, false, false);
+    UI_PageInit(true, true, false, false, false);
     UI_SetPage(serverMode ? &page_server : &page_client);
 
     CP_InitCvarSliders(ob_server);

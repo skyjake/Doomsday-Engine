@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_direc.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,24 +23,104 @@
  */
 
 /**
- * sys_direc.h: Directory Utilities
+ * Directory Utilities.
  */
 
-#ifndef __DOOMSDAY_DIREC_H__
-#define __DOOMSDAY_DIREC_H__
+#ifndef LIBDENG_DIREC_H
+#define LIBDENG_DIREC_H
 
 #include "dd_types.h"
 
-void            Dir_GetDir(directory_t* dir);
-int             Dir_ChDir(directory_t* dir);
-void            Dir_FileDir(const char* str, directory_t* dir);
-void            Dir_FileName(char* name, const char* str, size_t len);
-void            Dir_MakeDir(const char* path, directory_t* dir);
-void            Dir_FileID(const char* str, byte identifier[16]);
-void            Dir_FixSlashes(char* path, size_t len);
-void            Dir_ValidDir(char* str, size_t len);
-boolean         Dir_IsEqual(directory_t* a, directory_t* b);
-int             Dir_IsAbsolute(const char* str);
-void            Dir_MakeAbsolute(char* path, size_t len);
+typedef struct directory_s {
+    int drive;
+    filename_t path;
+} directory_t;
 
-#endif
+/// Construct using the specified path.
+directory_t* Dir_New(const char* path);
+
+/// Construct using the current working directory path.
+directory_t* Dir_NewFromCWD(void);
+
+/**
+ * Construct by extracting the path from @a path.
+ * \note if not absolute then it will be interpeted as relative to the current
+ * working directory path.
+ */
+directory_t* Dir_ConstructFromPathDir(const char* path);
+
+void Dir_Delete(directory_t* dir);
+
+/**
+ * @return  @c true if the directories @a a and @a b are considered equal
+ *      (i.e., their paths match exactly).
+ */
+boolean Dir_IsEqual(directory_t* dir, directory_t* other);
+
+/**
+ * @return  "Raw" version of the present path.
+ */
+const char* Dir_Path(directory_t* dir);
+
+/**
+ * Change the path to that specified in @a path.
+ * \note Path directives (such as '}' and '~' on Unix) are automatically expanded.
+ */
+void Dir_SetPath(directory_t* dir, const char* path);
+
+/// Class-Static Members:
+
+/**
+ * Clean up given path. Whitespace is trimmed. Path separators are converted
+ * into their system-specific form. On Unix '~' expansion is applied.
+ */
+void Dir_CleanPath(char* path, size_t len);
+void Dir_CleanPathStr(ddstring_t* str);
+
+/**
+ * @return  Absolute path to the current working directory for the default drive.
+ *      Always ends with a '/'. Path must be released with free()
+ *      @c NULL if we are out of memory.
+ */
+char* Dir_CurrentPath(void);
+
+/**
+ * Extract just the file name including any extension from @a path.
+ */
+void Dir_FileName(char* name, const char* path, size_t len);
+
+/**
+ * Convert directory separators in @a path to their system-specifc form.
+ */
+void Dir_ToNativeSeparators(char* path, size_t len);
+
+/**
+ * Convert directory separators in @a path to our internal '/' form.
+ */
+void Dir_FixSeparators(char* path, size_t len);
+
+/// @return  @c true if @a path is absolute.
+int Dir_IsAbsolutePath(const char* path);
+
+/**
+ * Convert a path into an absolute path. If @a path is relative it is considered
+ * relative to the current working directory. On Unix '~' expansion is applied.
+ *
+ * @param path  Path to be translated.
+ * @param len  Length of the buffer used for @a path (in bytes).
+ */
+void Dir_MakeAbsolutePath(char* path, size_t len);
+
+/**
+ * Check that the given directory exists. If it doesn't, create it.
+ * @return  @c true if successful.
+ */
+boolean Dir_mkpath(const char* path);
+
+/**
+ * Attempt to change the current working directory to the path defined.
+ * @return  @c true if the change was successful.
+ */
+boolean Dir_SetCurrent(const char* path);
+
+#endif /* LIBDENG_DIREC_H */

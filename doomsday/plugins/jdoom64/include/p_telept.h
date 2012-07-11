@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -43,9 +43,9 @@
 #define MO_TELEPORTMAN          (14)
 #define TELEFOGHEIGHT           (0)
 
-int             EV_Teleport(linedef_t *line, int side, mobj_t *thing,
+int             EV_Teleport(LineDef *line, int side, mobj_t *thing,
                             boolean spawnFog);
-int             EV_FadeSpawn(linedef_t *line, mobj_t *thing);
-int             EV_FadeAway(linedef_t *line, mobj_t *thing);
+int             EV_FadeSpawn(LineDef *line, mobj_t *thing);
+int             EV_FadeAway(LineDef *line, mobj_t *thing);
 
 #endif

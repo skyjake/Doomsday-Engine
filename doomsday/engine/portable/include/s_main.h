@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,56 +23,74 @@
  */
 
 /**
- * s_main.h: Sound Subsystem
+ * Sound Subsystem.
  */
 
-#ifndef __DOOMSDAY_SOUND_MAIN_H__
-#define __DOOMSDAY_SOUND_MAIN_H__
+#ifndef LIBDENG_SOUND_MAIN_H
+#define LIBDENG_SOUND_MAIN_H
 
-#include "con_decl.h"
 #include "p_object.h"
 #include "def_main.h"
 #include "sys_audiod.h"
 
-#define SF_RANDOM_SHIFT     0x1    // Random frequency shift.
-#define SF_RANDOM_SHIFT2    0x2    // 2x bigger random frequency shift.
-#define SF_GLOBAL_EXCLUDE   0x4    // Exclude all emitters.
-#define SF_NO_ATTENUATION   0x8    // Very, very loud...
-#define SF_REPEAT           0x10   // Repeats until stopped.
-#define SF_DONT_STOP        0x20   // Sound can't be stopped while playing.
-
-extern int      showSoundInfo;
-extern int      soundMinDist, soundMaxDist;
-extern int      sfxVolume, musVolume;
-
-extern audiodriver_t* audioDriver;
-
-void            S_Register(void);
-boolean         S_Init(void);
-void            S_Shutdown(void);
-void            S_MapChange(void);
-void            S_Reset(void);
-void            S_StartFrame(void);
-void            S_EndFrame(void);
-sfxinfo_t*      S_GetSoundInfo(int sound_id, float* freq, float* volume);
-mobj_t*         S_GetListenerMobj(void);
-int             S_LocalSoundAtVolumeFrom(int sound_id, mobj_t* origin,
-                                         float* fixedpos, float volume);
-int             S_LocalSoundAtVolume(int sound_id, mobj_t* origin,
-                                     float volume);
-int             S_LocalSound(int sound_id, mobj_t* origin);
-int             S_LocalSoundFrom(int sound_id, float* fixedpos);
-int             S_StartSound(int soundId, mobj_t* origin);
-int             S_StartSoundEx(int soundId, mobj_t* origin);
-int             S_StartSoundAtVolume(int sound_id, mobj_t* origin,
-                                     float volume);
-int             S_ConsoleSound(int sound_id, mobj_t* origin,
-                               int target_console);
-void            S_StopSound(int sound_id, mobj_t* origin);
-int             S_IsPlaying(int sound_id, mobj_t* emitter);
-int             S_StartMusic(const char* musicid, boolean looped);
-void            S_StopMusic(void);
-void            S_PauseMusic(boolean paused);
-void            S_Drawer(void);
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+#define SF_RANDOM_SHIFT     0x1    ///< Random frequency shift.
+#define SF_RANDOM_SHIFT2    0x2    ///< 2x bigger random frequency shift.
+#define SF_GLOBAL_EXCLUDE   0x4    ///< Exclude all emitters.
+#define SF_NO_ATTENUATION   0x8    ///< Very, very loud...
+#define SF_REPEAT           0x10   ///< Repeats until stopped.
+#define SF_DONT_STOP        0x20   ///< Sound can't be stopped while playing.
+
+extern int showSoundInfo;
+extern int soundMinDist, soundMaxDist;
+extern int sfxVolume, musVolume;
+
+void S_Register(void);
+boolean S_Init(void);
+void S_Shutdown(void);
+void S_MapChange(void);
+
+/**
+ * Must be called after the map has been changed.
+ */
+void S_SetupForChangedMap(void);
+
+void S_Reset(void);
+void S_StartFrame(void);
+void S_EndFrame(void);
+sfxinfo_t* S_GetSoundInfo(int soundId, float* freq, float* volume);
+mobj_t* S_GetListenerMobj(void);
+int S_LocalSoundAtVolumeFrom(int soundId, mobj_t* origin, coord_t* fixedpos, float volume);
+int S_LocalSoundAtVolume(int soundId, mobj_t* origin, float volume);
+int S_LocalSound(int soundId, mobj_t* origin);
+int S_LocalSoundFrom(int soundId, coord_t* fixedpos);
+int S_StartSound(int soundId, mobj_t* origin);
+int S_StartSoundEx(int soundId, mobj_t* origin);
+int S_StartSoundAtVolume(int soundId, mobj_t* origin, float volume);
+int S_ConsoleSound(int soundId, mobj_t* origin, int targetConsole);
+
+/**
+ * Stop playing sound(s), either by their unique identifier or by their emitter(s).
+ *
+ * @param soundId       @c 0= stops all sounds emitted from the targeted origin(s).
+ * @param origin        @c NULL= stops all sounds with the ID.
+ *                      Otherwise both ID and origin must match.
+ * @param flags         @ref soundStopFlags
+ */
+void S_StopSound2(int soundId, mobj_t* origin, int flags);
+void S_StopSound(int soundId, mobj_t* origin/*flags=0*/);
+
+int S_IsPlaying(int soundId, mobj_t* emitter);
+int S_StartMusic(const char* musicid, boolean looped);
+void S_StopMusic(void);
+void S_PauseMusic(boolean paused);
+void S_Drawer(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /// LIBDENG_SOUND_MAIN_H

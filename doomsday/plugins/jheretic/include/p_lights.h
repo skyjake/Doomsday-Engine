@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
     int             count;
     float           maxLight;
     float           minLight;
@@ -49,7 +49,7 @@ typedef struct {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
     int             count;
     float           minLight;
     float           maxLight;
@@ -59,23 +59,23 @@ typedef struct {
 
 typedef struct {
     thinker_t       thinker;
-    sector_t*       sector;
+    Sector*         sector;
     float           minLight;
     float           maxLight;
     int             direction;
 } glow_t;
 
 void            T_LightFlash(lightflash_t* flash);
-void            P_SpawnLightFlash(sector_t* sector);
+void            P_SpawnLightFlash(Sector* sector);
 
 void            T_StrobeFlash(strobe_t* flash);
-void            P_SpawnStrobeFlash(sector_t* sector, int fastOrSlow,
+void            P_SpawnStrobeFlash(Sector* sector, int fastOrSlow,
                                    int inSync);
 void            T_Glow(glow_t* g);
-void            P_SpawnGlowingLight(sector_t* sector);
+void            P_SpawnGlowingLight(Sector* sector);
 
-void            EV_StartLightStrobing(linedef_t* line);
-void            EV_TurnTagLightsOff(linedef_t* line);
-void            EV_LightTurnOn(linedef_t* line, float bright);
+void            EV_StartLightStrobing(LineDef* line);
+void            EV_TurnTagLightsOff(LineDef* line);
+void            EV_LightTurnOn(LineDef* line, float bright);
 
 #endif

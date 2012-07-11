@@ -1,0 +1,22 @@
+#
+# DOOM - Doomsday Engine definitions.
+#
+# For information about DED syntax and semantics, see http://dengine.net/dew/?title=DED
+#
+
+# Include common definitions for games playable with jDoom.
+Include "jdoom.ded";
+
+Include "doom1/anim.ded";
+Include "doom1/particles.ded";
+Include "doom1/skies.ded";
+Include "doom1/maps.ded";
+Include "doom1/finales.ded";
+Include "doom1/fonts.ded";
+Include "doom1/lights.ded";
+Include "doom1/materials.ded";
+Include "doom1/materialenvironments.ded";
+Include "doom1/music.ded";
+Include "doom1/menu.ded";
+Include "doom1/hud.ded";
+Include "doom1/inlude.ded";

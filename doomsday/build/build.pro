@@ -1,6 +1,6 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 # This project file contains tasks that are done in the beginning of a build.
 
@@ -8,9 +8,12 @@ TEMPLATE = subdirs
 
 include(../config.pri)
 
+# We are not building any binaries here; disable stripping.
+QMAKE_STRIP = true
+
 # Update the PK3 files.
-deng_packres {
-    system(cd $$PWD/scripts/ && python packres.py \"$$OUT_PWD/..\")
+!deng_nopackres {
+    system(cd $$PWD/scripts/ && python packres.py --quiet \"$$OUT_PWD/..\")
 }
 
 # Install the launcher.
@@ -51,23 +54,45 @@ deng_snowberry {
         $${SB_ROOT}/plugins/wizard.py
     plugins.path = $$SB_DIR/plugins
 
-    # Include the launch script if it exists.
-    LAUNCHER = ../../distrib/linux/launch-doomsday
-    exists($$LAUNCHER) {
-        launch.files = $$LAUNCHER
-        launch.path = $$DENG_BIN_DIR
-        INSTALLS += launch
+    # Make may not have yet created the output directory at this point.
+    system(mkdir -p \"$$OUT_PWD\")
 
-        message(Installing the launch-doomsday script.)
+    isEmpty(SCRIPT_PYTHON) {
+        error("Variable SCRIPT_PYTHON not set (path of Python interpreter to be used in generated scripts)")
     }
 
-    INSTALLS += sb conf plugins
+    # Generate a script for starting the laucher.
+    LAUNCH_FILE = launch-doomsday
+    !system(sed \"s:PYTHON:$$SCRIPT_PYTHON:; s:SB_DIR:$$SB_DIR:\" \
+        <\"../../distrib/linux/$$LAUNCH_FILE\" \
+        >\"$$OUT_PWD/$$LAUNCH_FILE\" && \
+        chmod 755 \"$$OUT_PWD/$$LAUNCH_FILE\"): error(Can\'t build $$LAUNCH_FILE)
+    launch.files = $$OUT_PWD/$$LAUNCH_FILE
+    launch.path = $$DENG_BIN_DIR
+
+    # Generate a .desktop file for the applications menu.
+    DESKTOP_FILE = doomsday-engine.desktop
+    !system(sed \"s:BIN_DIR:$$DENG_BIN_DIR:; s:SB_DIR:$$SB_DIR:\" \
+        <\"../../distrib/linux/$$DESKTOP_FILE\" \
+        >\"$$OUT_PWD/$$DESKTOP_FILE\"): error(Can\'t build $$DESKTOP_FILE)
+    desktop.files = $$OUT_PWD/$$DESKTOP_FILE
+    desktop.path = $$PREFIX/share/applications
+
+    INSTALLS += conf plugins sb launch desktop
 }
 
 deng_aptunstable {
     # Include the Unstable repository for apt.
     INSTALLS += repo
 
-    repo.files = ../../distrib/linux/doomsday-builds-unstable.list
-    repo.path = /etc/apt/sources.list.d
+    repo.files += ../../distrib/linux/doomsday-builds-unstable.list
+    repo.path += /etc/apt/sources.list.d
+}
+
+deng_aptstable {
+    # Include the Stable repository for apt.
+    INSTALLS += repo
+
+    repo.files += ../../distrib/linux/doomsday-builds-stable.list
+    repo.path += /etc/apt/sources.list.d
 }

@@ -1,0 +1,1409 @@
+body {
+    font-family: georgia, serif; /* Use a serif font for the main content as its easier to read in blocks */
+    font-size: 100%;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 10px;
+    margin-right: 10px;
+    color: #807970;
+    text-align: center;
+    background: #EDEFEF;
+    background: #EDEFEF url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2JiYmZiYyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNlZGVmZWYiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+) repeat-x;
+    background: #EDEFEF -moz-linear-gradient(top, #C7CCC9 0%, #EDEFEF 100%) repeat-x;
+    background: #EDEFEF -webkit-gradient(linear, left top, left bottom, color-stop(0%,#C7CCC9), color-stop(100%,#EDEFEF)) repeat-x;
+    background: #EDEFEF -o-linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
+    background: #EDEFEF -ms-linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
+    background: #EDEFEF linear-gradient(top, #C7CCC9 0%,#EDEFEF 100%) repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c7ccc9', endColorstr='#edefef',GradientType=0 );
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    margin-top: .4em;
+    margin-bottom: 0;
+    padding:inherit;
+}
+
+p {
+    line-height: 160%;
+    padding:inherit;
+    margin:inherit;
+}
+
+p.leadparagraph {
+    font-weight: bold;
+}
+
+a {
+    text-decoration: none;
+    color: #495f5f;
+    outline: 0 none;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #FFCB0F;
+}
+
+a[class ="jump"] {
+    font-size:smaller;
+    font-family: monospace;
+}
+
+a[class ="jump"]:before {
+    content:"(";
+}
+
+a[class ="jump"]:after {
+    content:")";
+}
+
+a[class ="link-definition"] {
+    padding-right:.4em;
+    overflow:visible;
+}
+
+a[class ="link-definition"]:after {
+    position:absolute;
+    text-decoration: none;
+    color:#5f5fff;
+    font-size: .6em;
+    font-family: georgia, serif;
+    font-weight: normal;
+    content:"?";
+}
+
+a[class ="link-external"] {
+    padding-right: 18px;
+    background: transparent url(http://dl.dropbox.com/u/11948701/dengine.net/images/Icon_External_Link.png) no-repeat center right;
+}
+
+a[class ="link-rss"] {
+    padding-left: 13px;
+    background: transparent url(http://dl.dropbox.com/u/11948701/dengine.net/images/rssicon.png) no-repeat center left;
+    background-size: 13px 12px;
+}
+
+span.hidden {
+    display: none;
+}
+
+.issue_level {
+    text-align: center;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.major_issue {
+    background-color:#ff4444; /* red */
+}
+
+.minor_issue {
+    background-color:#ffee00; /* yellow */
+}
+
+.no_issue {
+    background-color:#00ee00; /* green */
+}
+
+hr {
+    background-color: rgb(210,210,210);
+    height: 1px;
+    border: none;
+    width: 80%;
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
+
+table.directory {
+    width: 100%;
+    border-width: .5em;
+    border-spacing: 0em;
+    border-style: hidden;
+    border-collapse: separate;
+    padding: inherit;
+}
+
+table tr th {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    padding-bottom:.5em;
+}
+
+table.directory th {
+    border-width: 1px;
+    padding: .6em;
+    border-style: solid;
+    border-color: lightgrey;
+}
+
+table.directory td {
+    border-width: 1px;
+    padding: .6em;
+    border-style: solid;
+    border-color: lightgrey;
+    font-size: small;
+}
+
+td {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+img {
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
+fieldset {
+    border: 2px solid #EEE;
+    border-radius: 3px;
+}
+
+dl {
+    margin: 0;
+}
+
+dt.inline-term {
+    display: inline-block;
+    float: left;
+}
+
+div {
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+div.game-sprite {
+    float: right;
+    width: auto;
+}
+
+/* Horizontally aligned lists (used for navigation bars mainly). */
+
+div.hnav {
+    white-space: nowrap;
+    text-align:center;
+}
+
+div.hnav ul {
+    margin-left: 0;
+    padding-left: 0;
+}
+
+div.hnav li {
+    display: inline-block;
+}
+
+div.jumplist_wrapper {
+    text-align: center;
+}
+
+ol.jumplist {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    text-align:left;
+    display:inline-block;
+    vertical-align:top;
+    margin:0;
+    padding:0 1em;
+}
+
+ol.jumplist li {
+    padding-right:1.8em;
+}
+
+.centered {
+    text-align:center;
+}
+
+.centered div {
+    text-align:left;
+    display: inline-block;
+}
+
+/*----------------- Picture frame ----------------*/
+
+.picture {
+    padding: .5em;
+    margin: .25em;
+    border: 1px solid rgb(180,180,180);
+    display: inline-block;
+    font-size: small;
+    vertical-align:text-top;
+}
+
+.picture p {
+    padding: 0;
+    margin: 0;
+    line-height: normal;
+    text-align: center;
+}
+
+.picture img {
+    display: block;
+    margin: .5em;
+    border: 2px solid black;
+}
+
+/*------------------ Library Icons -----------------*/
+
+#libicons {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-width: 649px;
+    z-index: 0;
+    overflow: hidden;
+}
+
+#libicons ul {
+    margin-top: 0;
+    margin-bottom: .4em;
+}
+
+#libicons li {
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+}
+
+#libicons #groupa {
+    margin: 0;
+    padding: 8px 10px;
+    float: left;
+}
+
+#libicons #groupb {
+    margin: 0;
+    padding: 6px 10px;
+    float: right;
+}
+
+.collapsible {
+    cursor: pointer;
+}
+
+/*---------------- Main site frame ----------------*/
+
+#mainouter {
+    max-width: 1280px;
+    height: auto;
+    clear: both;
+    min-width: 649px;
+    margin-top: 52px;
+    margin-bottom: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    z-index: 1;
+    text-align: left;
+}
+
+#main {
+    border: 2px solid #A6B9AA;
+    border-radius: 10px;
+    box-shadow: 0 0 20px 10px rgba(0, 0, 0, .1);
+}
+
+#maininner {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.framepanel {
+    overflow: hidden;
+    position: relative;
+}
+
+/*---------------- Navigation Bar -----------------*/
+
+#menuouter {
+    position:relative;
+    z-index: 4;
+    width: 100%;
+    height:0;
+}
+
+#menu {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+#menu ul {
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+#menu section {
+    display: inline-block;
+    min-width: 13em;
+    text-align: right;
+}
+
+#menu li {
+    position: relative;
+    list-style-type: none;
+    display: inline;
+    padding: 0;
+    vertical-align:top;
+}
+
+#menu li.logo {
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/denginelogo.png) no-repeat;
+    background-position: 0 22px;
+    padding: 75px 0;
+    margin: 0;
+}
+
+#menu li.logo a {
+    padding-top: 83px;
+    padding-bottom: 83px;
+    padding-left: 202px;
+}
+
+#menu a, span.paddle_left_select, span.paddle_right_select {
+    position:inherit;
+    font-size: 11pt;
+    text-decoration: none;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 5px;
+    padding-right: 4px;
+    color: white;
+}
+
+#menu li.logo a {
+    border: 0;
+}
+
+#menu a.paddle_left, span.paddle_left_select {
+    border-left: solid 2px #A6B9AA;
+}
+
+#menu a.paddle_right, span.paddle_right_select {
+    border-right: solid 2px #A6B9AA;
+}
+
+#menu span.paddle_left_select,
+      span.paddle_right_select,
+      a[class = "paddle_left"]:hover,
+      navigation a[class = "paddle_left"]:visited:hover,
+      a[class = "paddle_right"]:hover,
+      navigation a[class = "paddle_right"]:visited:hover {
+    margin-left: 0px;
+    box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
+}
+
+#menu span.paddle_left_select, span.paddle_right_select {
+    color: #495f5f;
+}
+
+#divider {
+    width: 100%;
+    height: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
+}
+
+#divider2 {
+    width: 100%;
+    height: 8px;
+    box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
+}
+
+/*-------------------- Top Panel -------------------*/
+
+#framepanel_top {
+    position: absolute;
+    background: #CDDCD5;
+    width: 100%;
+    height: 300px;
+    padding: 0;
+    margin: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+#panorama {
+    position: relative;
+    left:50%;
+    margin-left:-650px;
+    top: 0;
+    height: 300px;
+    width: 1300px;
+    background: #282D2B url(panoramarotator) no-repeat;
+    box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    margin-top: 10px;
+}
+
+/*------------------- Bottom Panel -----------------*/
+
+#framepanel_bottom {
+    float: right;
+    clear: both;
+    margin-top: 300px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    width: 100%;
+    background: #FAFAFA;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+#pageheading,
+#latestversion {
+    position: relative;
+    margin-top: -4.4em;
+    white-space: nowrap;
+    color: white;
+    z-index: 1;
+}
+
+#pageheading {
+    float: left;
+}
+
+#latestversion {
+    float: right;
+}
+
+#pageheading h1,
+#latestversion h1 {
+    font-size: 280%;
+    margin-top: 0;
+}
+
+#pageheading h1 {
+    margin-left: .4em;
+}
+
+#latestversion h1 {
+    margin-right: .25em;
+}
+
+#contentbox, #contentbox2 {
+    padding-left: .6em;
+    padding-right: .4em;
+    padding-top: .2em;
+    padding-bottom: .6em;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+/*----------------------- Footer ----------------------*/
+
+#footer {
+    width: 100%;
+    font-size: xx-small;
+    line-height: 110%;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    text-align: center;
+    margin-top: 1em;
+}
+
+p.disclaimer a {
+    color: rgb(50,140,100);
+}
+
+p.legal {
+    color: rgb(180,180,180);
+}
+
+p.legal a {
+    color: rgb(195,195,195);
+    font-weight: bold;
+}
+
+/*---------------------- NewsFeed ---------------------*/
+
+#projectnews {
+    position: relative;
+    top: -275px; /* minus (image height - divider height) */
+    min-width: 201px;
+    padding-left: .5em;
+    padding-top: .5em;
+    float: left;
+    text-align: left;
+    color: #FFCB0F;
+    font-size: xx-small;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-weight: lighter;
+    min-height: 139px;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/shadow.png) no-repeat;
+}
+
+#projectnews ul {
+    padding: 0;
+    margin-left: 1.8em;
+    margin-top: .4em;
+}
+
+#projectnews ul li {
+    list-style-type: none;
+    min-height: 1.6em;
+}
+
+#projectnews ul li.feed-error {
+    color: grey;
+}
+
+#projectnews a {
+    color: #FFCB0F;
+}
+
+#projectnews .new-label {
+    color: white;
+    font-weight: bold;
+}
+
+#projectnews ul li a:hover, #projectnews ul li a:visited:hover {
+    color: #ffffff;
+    font-size: x-small;
+}
+
+.projectnews-label {
+    color: white;
+    font-weight: bold;
+    min-height: 139px;
+}
+
+/*-------------------- GameServers -------------------*/
+
+#servers-label {
+    color: white;
+    font-weight: bold;
+}
+
+#servers-timestamp {
+    color: white;
+}
+
+#servers {
+    position: relative;
+    top: -275px; /* minus (image height - divider height) */
+    min-width: 201px;
+    padding-right: 1.3em;
+    padding-top: .5em;
+    float: right;
+    text-align: right;
+    color: #FFCB0F;
+    font-size: xx-small;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    min-height: 139px;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/shadow2.png) no-repeat;
+    background-position: top right;
+}
+
+#servers ul {
+    padding: 0;
+    margin-top: .4em;
+}
+
+#servers ul li {
+    list-style-type: none;
+    min-height: 1.6em;
+}
+
+#servers .name {
+    font-weight: bold;
+}
+
+#servers a {
+    color: #FFCB0F;
+}
+
+#servers a:hover, #servers a:visited:hover {
+    color: white;
+}
+
+#servers .player-summary, #servers .game-mode {
+    color: white;
+}
+
+#servers ul li {
+    list-style-type: none;
+}
+
+/*----------------- Get It Now Panel ---------------*/
+
+.asideboxgroup {
+    float: right;
+}
+
+.asidebox {
+    width: 16.5em;
+    background: #F6F9F8;
+    padding: 0.8em;
+    display: block;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    margin:.8em;
+    border-radius: 10px;
+    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
+    border: 2px solid #E0EBE7;
+}
+
+#downloadbox, #socialbookmarkbox {
+    text-align: center;
+}
+
+#downloadbox div.hnav ul {
+    margin-top: 0;
+}
+
+#downloadbox div.hnav ul li, div.platform_buttons ul li {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+#downloadbox a.platform_icon {
+    display: inline-block;
+    width: 63px;
+    height: 69px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    text-decoration: none;
+}
+
+#downloadbox ul li {
+    margin-bottom: .4em;
+    list-style-type: none;
+}
+
+#downloadbox a.windows_icon {
+    background-image: url(images/windowslogo.gif);
+    background-position: 0 0;
+}
+
+#downloadbox a.macos_icon {
+    background-image: url(images/macosxlogo.gif);
+    background-position: 0 0;
+}
+
+#downloadbox a.ubuntu_icon {
+    background-image: url(images/ubuntulogo.gif);
+    background-position: 0 0;
+}
+
+#downloadbox a.linux_icon {
+    background-image: url(images/linuxlogo.gif);
+    background-position: 0 0;
+}
+
+#downloadbox div.project_links {
+    margin-top: 1.8em;
+    padding-left: 1.5em;
+    text-align: left;
+}
+
+.getitnow-label {
+    font-size: x-large;
+    text-align:center;
+}
+
+.getitnow-label a, a:hover, a:visited:hover {
+    text-decoration: none;
+}
+
+.getitnow-label span.free-label {
+    font-style: italic;
+    font-size: medium;
+}
+
+#socialbookmarkbox div.hnav ul {
+    margin-top: .4em;
+    margin-bottom: 0;
+}
+
+.sf-button {
+    position:relative;
+    top:-3px;
+}
+
+.fb-like {
+    padding-left: .1em;
+}
+
+.google-plusone {
+    margin-top: 1em;
+    padding-left: 1.4em;
+}
+
+/*-------------------- Addons ---------------------*/
+
+#addons {
+    padding:.5em 1em;
+}
+
+.addons_list {
+    vertical-align:top;
+    margin:0 3em;
+    text-align: center;
+}
+
+.addon_badge {
+    position: relative;
+    margin: 1em 2.5em;
+    display: inline-block;
+    text-align: left;
+}
+
+.addon_badge .name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.addon_badge .icon img {
+    margin-top: 8px;
+    max-width: 48px;
+    max-height: 48px;
+}
+
+.addon_badge:hover .name, .addon_badge:visited:hover .name {
+    text-decoration: underline;
+    color: #495f5f;
+}
+
+.addon_badge .description {
+    display: block;
+    color: #807970;
+}
+
+.addon_badge .icon {
+    position: absolute;
+    left: -56px;
+    z-index: 1;
+}
+
+.addon_badge div.metadata {
+    font-size: small;
+}
+
+#overview {
+    padding-top:0;
+}
+
+#notes, #instructions {
+    font-size: small;
+}
+
+#updated {
+    font-size: small;
+    font-weight: normal;
+}
+
+#notes {
+    font-weight: 700;
+    margin-top: 1em;
+}
+
+/*-------------------- Builds ---------------------*/
+
+/* Panel */
+#builds {
+    padding:.5em 1em;
+}
+
+/* Stream navigation widget */
+#buildsnav {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+#buildsnav h3 {
+    font-size:small;
+}
+
+#buildsnav h3 span {
+    color:lightgrey;
+    padding:0 1em;
+}
+
+#buildoverview {
+    text-align:center;
+}
+
+#buildpackagelist {
+}
+
+#buildpackagelist table tr.platform {
+    padding-bottom:1em;
+}
+
+#buildeventmetadata {
+    vertical-align:top;
+    position:relative;
+    margin-right:2em;
+}
+
+#buildcommits hr {
+    visibility:hidden;
+    margin:0;
+}
+
+#buildcommits ul li {
+    list-style-type:none;
+}
+
+#buildcommits ul {
+    padding-left:0;
+}
+
+#buildcommits ol {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+#buildcommits ol li {
+    list-style-type:circle;
+}
+
+#buildcommits ol li.more {
+    list-style-type:disc;
+}
+
+#buildcommits ol.jumplist li {
+    list-style-type:none;
+}
+
+#buildcommits ol.jumplist a {
+    color:#558866;
+}
+
+#buildcommits ol.jumplist a:hover {
+    text-decoration: underline;
+    color: #FFCB0F;
+}
+
+.buildnews_list {
+    padding:inherit;
+    margin:0;
+}
+
+.buildnews_list table {
+    margin:1em 0;
+    padding:inherit;
+    border:none;
+}
+
+.buildnews_list table td {
+    padding-left:.5em;
+}
+
+.commit_list {
+}
+
+.commit_list p.collapsible:hover {
+    color: #FFCB0F;
+}
+
+.commit_list .tag {
+    color:#558866;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.commit_list span.tag {
+    margin-right:.8em;
+}
+
+div.hnav span.commit-count {
+    float:none;
+    left:initial;
+}
+
+span.commit-count {
+    padding-right:.5em;
+    color:#aaa;
+    position:relative;
+    left:-100%;
+    float:right;
+}
+
+.commit span.heading,
+.commit blockquote {
+    font-size:medium;
+}
+
+.commit blockquote {
+    margin-left:2em;
+}
+
+span.metadata {
+    font-size:smaller;
+    margin-right:1em;
+}
+
+.commit_list p.heading {
+    display:inline-block;
+}
+
+.tag_list {
+    display:inline;
+    margin: 0;
+    padding: 0;
+}
+
+.tag_list .tag {
+    display:inline-block;
+    font-size: xx-small;
+    border: 1px solid;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    padding: .25em .4em;
+    margin-left: 1em;
+    margin-right: 0;
+    background-color: #F9FFF9;
+    border-color: #BBDDBB;
+}
+
+/*----------*/
+
+.buildevent table {
+    border-collapse:separate;
+    border-spacing:.5em;
+    display:inline-block;
+    text-align:left;
+}
+
+.buildevent table tr th {
+    text-align:left;
+}
+
+.buildevents_outer {
+    float:left;
+    padding-right:.5em;
+}
+
+.buildevents_outer table thead {
+    text-align:center;
+}
+
+.buildevents_outer table tbody {
+    vertical-align:top;
+}
+
+.buildstreaminfo {
+    padding:1.2em 0;
+}
+
+#roadmap_badge {
+    padding-bottom:.5em;
+    font-size:large;
+    font-weight:bold;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.buildstreamlist {
+    border:2px solid #EEE;
+    display:inline-block;
+    background:white;
+}
+
+.buildstream {
+    float:left;
+    overflow:hidden;
+    text-align:center;
+}
+
+.buildstream ul {
+    margin:0;
+    padding:0;
+}
+
+.buildstream ul li {
+    min-width: 3.2em;
+    list-style-type:none;
+    padding:0 .5em;
+    vertical-align:top;
+}
+
+.buildstream ul li.current {
+    background-color: #F2FBF2;
+    border:1px solid #F2FBF2;
+}
+
+.release-badge {
+    padding-bottom:.5em;
+    font-size:large;
+    font-weight:bold;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.buildevent_badge {
+    width:2.5em;
+    margin-left:auto;
+    margin-right:auto;
+    padding:.3em .2em;
+    border:3px solid;
+    margin-top:.25em;
+    margin-bottom:1em;
+    border-top-left-radius:40px 10px;
+    border-top-right-radius:40px 10px;
+    border-bottom-left-radius:40px 10px;
+    border-bottom-right-radius:40px 10px;
+    font-family: Helvetica;
+    font-weight: bolder;
+}
+
+.buildevent_badge .startdate {
+    position:relative;
+    bottom:-.6em;
+    display:block;
+    margin-bottom:-1.4em;
+    white-space:nowrap;
+    font-size:60%;
+    left:-1em;
+}
+
+.buildevent_badge .startdate,
+.buildevent_badge a[class = "startdate"]:hover,
+.buildevent_badge a[class = "startdate"]:visited:hover {
+    color:grey;
+}
+
+.stable,
+.stable_disabled {
+    color:#EEE;
+    background-color:#78E;
+    border-color:#56D;
+    box-shadow:0px -10px 5px 0px rgba(30,100,230,.5) inset;
+}
+
+.stable:hover,
+.stable:visited:hover {
+    color:#EEE;
+    background-color:#9AF;
+    border-color:#56D;
+}
+
+.candidate,
+.candidate_disabled {
+    color:#555;
+    background-color:#FBA000;
+    border-color:#D71;
+    box-shadow:0px -10px 5px 0px rgba(200,80,0,.5) inset;
+}
+
+.candidate:hover,
+.candidate:visited:hover {
+    color:#555;
+    background-color:#FFC400;
+    border-color:#D71;
+}
+
+.unstable,
+.unstable_disabled {
+    color:#860;
+    background-color:#FFE400;
+    border-color:#FC6;
+    box-shadow:0px -10px 5px 0px rgba(250,140,10,.5) inset;
+}
+
+.unstable:hover,
+.unstable:visited:hover {
+    color:#860;
+    background-color:#FF3;
+    border-color:#FC6;
+}
+
+#buildEventLegend {
+    padding:1em 0;
+    margin:0;
+    margin-right:1em;
+    margin-top:.3em;
+}
+
+#buildEventLegend legend {
+    margin-left:.5em;
+    margin-right:4em;
+}
+
+#buildEventLegend dl {
+    padding:0 .5em;
+}
+
+#buildEventLegend dl dt {
+    display:inline-block;
+    float:left;
+    margin-right:.5em;
+}
+
+#buildEventLegend dl dd {
+    margin-left:0;
+    margin-bottom:.8em;
+    font-size:small;
+}
+
+#buildEventLegend div.buildevent_badge {
+    margin-top:0;
+    margin-bottom:0;
+    width:1em;
+    height:.6em;
+    padding:0;
+    border-top-left-radius:10px 2px;
+    border-top-right-radius:10px 2px;
+    border-bottom-left-radius:10px 2px;
+    border-bottom-right-radius:10px 2px;
+    border-width:2px;
+}
+
+.buildsoverview {
+    margin-top:2.2em;
+}
+
+/*----------------- Master Server ------------------*/
+
+#masterbrowser {
+    padding:.5em 1em;
+}
+
+#masterbrowser #pubDate, #summary {
+    text-align: right;
+    padding: 0;
+}
+
+#masterbrowser #serverLegend dd {
+    float: left;
+    margin-left: .5em;
+    margin-right: 2em;
+}
+
+span.port:before {
+    content:":";
+}
+
+span.port {
+    padding: .5em;
+}
+
+.server_list {
+    vertical-align:top;
+    margin-left: 1em;
+    text-align: center;
+    overflow-y: scroll;
+    max-height: 600px;
+}
+
+.server_list ul {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 56px;
+}
+
+.server_list li {
+    list-style-type: none;    
+}
+
+.server_badge {
+    position: relative;
+    text-align: left;
+    margin: 1px 0;
+}
+
+.server_badge .wrapper {
+    padding: .2em .4em;
+    border: 2px solid #eee;
+    border-radius: 3px;
+}
+
+.server_badge .game-info {
+    display: block;
+    color: #807970;
+}
+
+.server_badge .name, .game-current-map, .game-setup {
+    font-weight: bold;
+}
+
+.server_badge .player-count, .player-max {
+    font-family: monospace;
+}
+
+.server_badge .player-count {
+    margin-right: .5em;
+}
+
+.server_badge .player-max {
+    margin-left: .5em;
+}
+
+.server_badge .game-mode {
+    position: absolute;
+    left: -56px;
+    max-width: 56px;
+    max-height: 56px;
+    overflow:hidden;
+    font-size: smaller;
+    z-index: 1;
+}
+
+.server_badge .player-summary {
+    min-width: 3em;
+    display: inline-block;
+}
+
+.server_badge .name, .open .game-current-map, .game-setup {
+    padding: .6em;
+}
+
+.server_badge .game-info {
+    margin-left: 0;
+}
+
+.server_badge .server-metadata, .game-metadata {
+    font-size: small;
+    font-family: monospace;
+}
+
+.server_badge .server-metadata {
+    float: right;
+}
+
+.lock-on, .lock-off {
+    background-image: url("/images/lock.png");
+    background-size: 24px 12px;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    position: relative;
+    top: 2px;
+}
+
+.lock-on {
+    background-position-x: 12px;
+}
+
+/*------------------ Screens Page ------------------*/
+
+#screenshots {
+    padding:.5em 1em;
+}
+
+#screenshots h2, #screenshots h3, #screenshots h4, #screenshots h5, #screenshots h6, #screenshots h7 {
+    margin:0;
+}
+
+/*------------------- Games Page -------------------*/
+
+.games_list ul {
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+.games_list li {
+    position: relative;
+    list-style-type: none;
+}
+
+.games_list a {
+    color: #495f5f;
+    text-decoration: none;
+}
+
+ul.games_list li a.game_badge {
+    background-color: transparent;
+    display: block;
+    height: 200px
+}
+
+ul.games_list li a.game_badge span {
+    display: block;
+    padding-left: 3em;
+    padding-top: 140px;
+}
+
+.game_badge_doom {
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/doom_badge.png) no-repeat;
+}
+
+.game_badge_heretic {
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/heretic_badge.png) no-repeat;
+}
+
+.game_badge_hexen {
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/hexen_badge.png) no-repeat;
+}
+
+.game_badge_hacx {
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/hacx_badge.png) no-repeat;
+}
+
+.game_badge_chex {
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/chex_badge.png) no-repeat;
+}
+
+/*---------------- Platform Pages -----------------*/
+
+.downloads_list {
+    vertical-align:top;
+    display: inline-block;
+    margin-right:1em;
+}
+
+.downloads_list ul {
+    padding:inherit;
+    margin:1em 0;
+}
+
+.downloads_list ul li {
+    list-style-type:none;
+}
+
+.downloads_list div.package_badge {
+    margin: 1em;
+    display: inline-block;
+}
+
+.package_badge {
+    background-color: transparent;
+    background: url(http://dl.dropbox.com/u/11948701/dengine.net/images/download_badge.png) no-repeat;
+    height: 60px;
+    min-width: 320px;
+    padding-top: 1.5em;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    text-decoration: none;
+    font-size: x-large;
+}
+
+.package_badge a.package_name {
+    padding-top: 1.5em;
+    padding-bottom: 2em;
+    padding-left: 3em;
+    white-space:nowrap;
+}
+
+.package_badge a[class = "package_name"]:hover, .package_badge a[class = "package_name"]:visited:hover {
+    color: #495f5f;
+}
+
+.package_badge span.metalink {
+    position: absolute;
+    margin-left: 8em;
+    margin-top: .5em;
+    font-size: small;
+}
+
+.todo_iframe {
+    border: 0;
+    width: 100%;
+    height: 600px;
+}

@@ -2,10 +2,6 @@
 # CONSOLE COMMANDS - JHERETIC SPECFIC
 #
 
-[conbg]
-desc = Console background setup.
-inf = Params: conbg (materialname)
-
 [setcolor]
 desc = Set player color.
 inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
@@ -48,16 +44,15 @@ desc = Return to the previous menu page.
 desc = Show the Help screens.
 
 [savegame]
-desc = Open the save game menu.
+desc = Create a new game-save or open the save menu.
+inf = Params: savegame (game-save-name|<keyword>|save-slot-num) (new game-save-name) (confirm)\nKeywords: last, quick\nExamples:\nOpen save menu: 'savegame'\nSaving to current "quick" slot: 'savegame quick "running low on ammo"'\nSaving to slot #0: 'savegame 0 "running low on ammo"'
 
 [loadgame]
-desc = Open the load game menu.
+desc = Load a game-save or open the load menu.
+inf = Params: loadgame (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nOpen load menu: 'loadgame'\nLoading named game: 'loadgame "running low on ammo"'\nLoading current "quick" slot, confirmed: 'loadgame quick confirm'\nLoading slot #0: 'loadgame 0'
 
 [listmaps]
 desc = List all loaded maps.
-
-[soundmenu]
-desc = Open the sound settings menu.
 
 [quicksave]
 desc = Quicksave the game.
@@ -65,14 +60,8 @@ desc = Quicksave the game.
 [endgame]
 desc = End the game.
 
-[togglemsgs]
-desc = Messages on/off.
-
 [quickload]
 desc = Load the quicksaved game.
-
-[quit]
-desc = Quit the game and return to the OS.
 
 [togglegamma]
 desc = Cycle gamma correction levels.
@@ -91,10 +80,6 @@ desc = Change the viewplayer when not in deathmatch.
 
 [screenshot]
 desc = Take a screenshot.
-
-[viewsize]
-desc = Set the view size.
-inf = Params: viewsize (size)\nFor example, 'viewsize 10'.\nSize can be: +, -, (num).
 
 [pause]
 desc = Pause the game (same as pressing the pause key).
@@ -117,7 +102,7 @@ desc = Warp to a map.
 
 [reveal]
 desc = Map cheat.
-inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things\n 4=show subsectors
+inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things
 
 [give]
 desc = Cheat command to give you various kinds of things.
@@ -130,9 +115,6 @@ desc = Exit the current map.
 
 [suicide]
 desc = Kill yourself. What did you think?
-
-[hereticfont]
-desc = Use the Heretic font.
 
 [startinf]
 desc = Start an InFine script.
@@ -170,10 +152,6 @@ desc = Turn yourself into a chicken. Go ahead.
 
 [where]
 desc = Prints your map number and exact location.
-
-[sbsize]
-desc = Status bar size adjustment.
-inf = Params: sbsize (size)\nFor example, 'sbsize +'.\nSize can be: +, -, (num).
 
 [movefloor]
 desc = Move a sector's floor plane.
@@ -216,27 +194,6 @@ desc = 1=Disable exit buttons during map rotation.
 [server-game-cheat]
 desc = 1=Allow cheating in multiplayer games (god, noclip, give).
 
-[menu-scale]
-desc = Scaling for menus.
-
-[menu-flash-r]
-desc = Menu selection flash color, red component.
-
-[menu-flash-g]
-desc = Menu selection flash color, green component.
-
-[menu-flash-b]
-desc = Menu selection flash color, blue component.
-
-[menu-flash-speed]
-desc = Menu selection flash speed.
-
-[menu-turningskull]
-desc = 1=Menu skull turns at slider items.
-
-[menu-effect]
-desc = 0=Disable menu effects. 1=type-in.
-
 [menu-color-r]
 desc = Menu color red component.
 
@@ -255,6 +212,24 @@ desc = Menu color B green component.
 [menu-colorb-b]
 desc = Menu color B blue component.
 
+[menu-cursor-rotate]
+desc = 1=Menu cursor rotates on items with a range of options.
+
+[menu-effect]
+desc = 3-bit bitfield. 0=Disable menu effects. 0x1= text type-in, 0x2= text shadow, 0x4= text glitter.
+
+[menu-flash-r]
+desc = Menu selection flash color, red component.
+
+[menu-flash-g]
+desc = Menu selection flash color, green component.
+
+[menu-flash-b]
+desc = Menu selection flash color, blue component.
+
+[menu-flash-speed]
+desc = Menu selection flash speed.
+
 [menu-glitter]
 desc = Strength of type-in glitter.
 
@@ -264,20 +239,32 @@ desc = Menu fog mode: 0=off, 1=shimmer, 2=black smoke, 3=blue vertical, 4=grey s
 [menu-hotkeys]
 desc = 1=Enable hotkey navigation in the menu.
 
-[menu-shadow]
-desc = Menu text shadow darkness.
+[menu-stretch]
+desc = Menu stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
 
 [menu-patch-replacement]
 desc = Patch Replacement strings. 1=Enable external, 2=Enable built-in.
 
-[menu-slam]
-desc = 1=Slam the menu when opening.
-
 [menu-quick-ask]
 desc = 1=Ask me to confirm when quick saving/loading.
 
+[menu-save-suggestname]
+desc = 1=Suggest an auto-generated name when selecting a save slot.
+
+[menu-scale]
+desc = Scaling for menus.
+
+[menu-shadow]
+desc = Menu text shadow darkness.
+
+[menu-slam]
+desc = 1=Slam the menu when opening.
+
 [xg-dev]
 desc = 1=Print XG debug messages.
+
+[view-cross-angle]
+desc = Rotation angle for the crosshair [0..1] (1=360 degrees).
 
 [view-cross-type]
 desc = The current crosshair.
@@ -332,6 +319,21 @@ desc = Color of HUD messages blue component.
 
 [msg-blink]
 desc = HUD messages blink for this number of tics when printed.
+
+[game-save-auto-loadonreborn]
+desc = 1=Load the auto save slot on player reborn. (default: off).
+
+[game-save-confirm]
+desc = 1=Ask me to confirm when quick saving/loading.
+
+[game-save-last-loadonreborn]
+desc = 1=Load the last used save slot on player reborn. (default: off).
+
+[game-save-last-slot]
+desc = Last used save slot. -1=Not yet loaded/saved in this game session.
+
+[game-save-quick-slot]
+desc = Current "quick" save slot number. -1=None (default).
 
 [game-state]
 desc = Current game state.
@@ -492,8 +494,11 @@ desc = Chat macro 9.
 [chat-macro9]
 desc = Chat macro 10.
 
-[map-alpha-lines]
-desc = Alpha level of automap lines.
+[map-line-opacity]
+desc = Opacity of automap lines (default: .7).
+
+[map-line-width]
+desc = Scale factor for automap lines (default: 1.1).
 
 [map-babykeys]
 desc = 1=Show keys in automap (easy skill mode only).
@@ -507,11 +512,14 @@ desc = Automap background color, green component.
 [map-background-b]
 desc = Automap background color, blue component.
 
-[map-cheat-counter]
-desc = 6-bit bitfield. Show kills, items and secret counters in automap.
+[hud-cheat-counter]
+desc = 6-bit bitfield. Show kills, items and secret counters.
 
-[map-cheat-counter-scale]
-desc = Size factor for the counters in the automap.
+[hud-cheat-counter-scale]
+desc = Size factor for the counters.
+
+[hud-cheat-counter-show-mapopen]
+desc = 1=Only show the cheat counters while the automap is open.
 
 [map-customcolors]
 desc = Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.
@@ -627,9 +635,6 @@ desc = The speed of turning left/right.
 [ctl-run]
 desc = 1=Always run.
 
-[ctl-use-dclick]
-desc = 1=Doubleclick forward/strafe equals use key.
-
 [ctl-inventory-mode]
 desc = Inventory selection mode 0=cursor, 1=scroll.
 
@@ -648,12 +653,6 @@ desc = The speed of looking up/down.
 [ctl-look-spring]
 desc = 1=Lookspring active.
 
-[ctl-look-mouse]
-desc = 1=Mouse look active.
-
-[ctl-look-mouse-inverse]
-desc = 1=Inverse mouse look Y axis.
-
 [ctl-look-pov]
 desc = 1=Look around using the POV hat.
 
@@ -665,9 +664,6 @@ desc = 1=Inverse joystick look Y axis.
 
 [ctl-look-joy-delta]
 desc = 1=Joystick values => look angle delta.
-
-[con-zoom]
-desc = Zoom factor for the console background.
 
 [view-size]
 desc = View window size (3-13).
@@ -792,6 +788,9 @@ desc = Weapon change order, slot 7.
 [player-weapon-order8]
 desc = Weapon change order, slot 8.
 
+[player-weapon-cycle-sequential]
+desc = 1=Allow sequential weapon cycling whilst lowering.
+
 [player-weapon-nextmode]
 desc = 1= Use custom weapon order with Next/Previous weapon.
 
@@ -829,7 +828,7 @@ desc = Corpse vanish time in seconds, 0=disabled.
 desc = Scaling for HUD info.
 
 [hud-status-size]
-desc = Status bar size (1-20).
+desc = Status bar size.
 
 [hud-color-r]
 desc = HUD info color red component.
@@ -885,6 +884,9 @@ desc = Seconds before the inventory auto-hides.
 [hud-frags-all]
 desc = Debug: HUD shows all frags of all players.
 
+[hud-patch-replacement]
+desc = Patch Replacement strings. 1=Enable external, 2=Enable built-in.
+
 [hud-timer]
 desc = Number of seconds before the hud auto-hides.
 
@@ -914,3 +916,9 @@ desc = 1=Unhide the HUD when player collects an inventory item.
 
 [rend-dev-freeze-map]
 desc = 1=Stop updating the automap rendering lists.
+
+[inlude-stretch]
+desc = Intermission stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
+
+[inlude-patch-replacement]
+desc = Intermission Patch Replacement strings. 1=Enable external, 2=Enable built-in.

@@ -94,11 +94,15 @@
 		<Unit filename="..\..\plugins\common\include\d_netcl.h" />
 		<Unit filename="..\..\plugins\common\include\d_netsv.h" />
 		<Unit filename="..\..\plugins\common\include\dmu_lib.h" />
-		<Unit filename="..\..\plugins\common\include\f_infine.h" />
+		<Unit filename="..\..\plugins\common\include\fi_lib.h" />
 		<Unit filename="..\..\plugins\common\include\g_defs.h" />
 		<Unit filename="..\..\plugins\common\include\g_common.h" />
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
+		<Unit filename="..\..\plugins\common\include\g_eventsequence.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
+		<Unit filename="..\..\plugins\common\include\gl_drawpatch.h" />
+		<Unit filename="..\..\plugins\common\include\hu_automap.h" />
+		<Unit filename="..\..\plugins\common\include\hu_chat.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\hu_log.h" />
 		<Unit filename="..\..\plugins\common\include\hu_menu.h" />
@@ -106,9 +110,8 @@
 		<Unit filename="..\..\plugins\common\include\hu_pspr.h" />
 		<Unit filename="..\..\plugins\common\include\hu_stuff.h" />
 		<Unit filename="..\..\plugins\common\include\m_argv.h" />
-		<Unit filename="..\..\plugins\common\include\m_defs.h" />
+		<Unit filename="..\..\plugins\common\include\m_ctrl.h" />
 		<Unit filename="..\..\plugins\common\include\p_actor.h" />
-		<Unit filename="..\..\plugins\common\include\p_automap.h" />
 		<Unit filename="..\..\plugins\common\include\p_ceiling.h" />
 		<Unit filename="..\..\plugins\common\include\p_door.h" />
 		<Unit filename="..\..\plugins\common\include\p_floor.h" />
@@ -131,8 +134,6 @@
 		<Unit filename="..\..\plugins\common\include\p_xgline.h" />
 		<Unit filename="..\..\plugins\common\include\p_xgsec.h" />
 		<Unit filename="..\..\plugins\common\include\r_common.h" />
-		<Unit filename="..\..\plugins\common\include\rend_automap.h" />
-		<Unit filename="..\..\plugins\common\include\st_lib.h" />
 		<Unit filename="..\..\plugins\common\include\x_hair.h" />
 		<Unit filename="..\..\plugins\common\include\xgclass.h" />
 		<Unit filename="..\..\plugins\common\src\am_map.c">
@@ -150,21 +151,19 @@
 		<Unit filename="..\..\plugins\common\src\dmu_lib.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\f_infine.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\g_defs.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\g_controls.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\common\src\fi_lib.c" />
+		<Unit filename="..\..\plugins\common\src\g_defs.c" />
+		<Unit filename="..\..\plugins\common\src\g_controls.c" />
+		<Unit filename="..\..\plugins\common\src\g_eventsequence.c">
 		<Unit filename="..\..\plugins\common\src\g_game.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\g_update.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\plugins\common\src\gl_drawpatch.c" />
+		<Unit filename="..\..\plugins\common\src\hu_automap.c" />
+		<Unit filename="..\..\plugins\common\src\hu_chat.c" />
 		<Unit filename="..\..\plugins\common\src\hu_lib.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -186,13 +185,9 @@
 		<Unit filename="..\..\plugins\common\src\m_fixed.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\m_multi.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\plugins\common\src\p_actor.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_automap.c" />
 		<Unit filename="..\..\plugins\common\src\p_ceiling.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -259,13 +254,7 @@
 		<Unit filename="..\..\plugins\common\src\p_xgsec.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\r_common.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\rend_automap.c" />
-		<Unit filename="..\..\plugins\common\src\st_lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\common\src\r_common.c" />
 		<Unit filename="..\..\plugins\common\src\x_hair.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -287,9 +276,7 @@
 		<Unit filename="..\..\plugins\jdoom64\include\info.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\jdoom64.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\m_cheat.h" />
-		<Unit filename="..\..\plugins\jdoom64\include\m_menu.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\m_random.h" />
-		<Unit filename="..\..\plugins\jdoom64\include\mn_def.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\p_enemy.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\p_inter.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\p_lights.h" />

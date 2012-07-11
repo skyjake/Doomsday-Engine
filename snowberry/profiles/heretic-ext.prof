@@ -1,5 +1,6 @@
 name: Heretic: Shadow of the Serpent Riders
 game: game-jheretic
+game-mode: game-mode-heretic-ext
 banner: banner-heretic
 hidden: yes
 

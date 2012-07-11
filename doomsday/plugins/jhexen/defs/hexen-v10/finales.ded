@@ -1,0 +1,287 @@
+# Hexen v1.0 - Intermissions and Finales
+#
+# For further information on the InFine system, script syntax
+# and semantics see:
+#
+#   http://dengine.net/dew/?title=InFine_script_reference
+#
+
+Header { Version = 5; }
+
+# The Hexen v1.0 IWAD does not have the CLUS*MSG and WIN*MSG lumps,
+# so we must define the intermission texts here in the scripts.
+
+InFine 
+{
+  ID = "title";
+  Script {
+    # There is no skipping during the titlescreen loop.
+    NoSkip 
+    
+    # Any event shows the menu.
+    Trigger
+    
+    MARKER title_loop
+
+    # Step 1.
+    Image back "TITLE"
+    Music "hexen"
+    Wait 7
+
+    # Step 2.
+    Patch advice 4 160 "ADVISOR"
+    In 0 Alpha advice 0
+    In 1 Alpha advice 1
+    Wait 7
+    
+    # Step 3.
+    PlayDemo "demo1.cdm"
+    
+    # Step 4.
+    DelPic advice
+    Image back "CREDIT"
+    Wait 5.714  # Original is 200 tics.
+    
+    # Step 5.
+    PlayDemo "demo2.cdm"
+    
+    # Step 6.
+    Wait 5.714  # Original is 200 tics.
+
+    # Step 7.
+    PlayDemo "demo3.cdm"
+    
+    GOTO title_loop
+  };
+}
+
+InFine {
+  ID = "help";
+  Script {
+    NoTrigger; NoFlat;
+
+    Image back "HELP1"
+    Pause
+
+    Del back
+    Image back "HELP2"
+    Pause
+
+    Del back
+    Image back "CREDIT"
+    Pause
+  };
+}
+
+# First Hub: The Seven Portals
+Finale
+{
+  After = "MAP02";
+  Script
+  {
+    # Only show this after the hub has been completed.
+    ifnot leavehub end;
+    # Don't show this in deathmatch.
+    if deathmatch end;
+    music "hub";
+    image back INTERPIC;
+    wait 0.5; # Originally 10 tics.
+    text msg 10 5 
+      "having passed the seven portals\n
+      which sealed this realm, a vast\n
+      domain of harsh wilderness stretches\n
+      before you. fire, ice and steel have\n
+      tested you, but greater challenges\n
+      remain ahead. the dense tangle of\n
+      forest surely hides hostile eyes,\n
+      but what lies beyond will be worse.\n\n
+      barren desert, dank swamps and\n
+      musty caverns bar your way, but you\n
+      cannot let anything keep you from\n
+      your fate, even if you might come\n
+      to wish that it would.\n\n
+      and beyond, flickering in the\n
+      distance, the ever-shifting walls\n
+      of the hypostyle seem to mock\n
+      your every effort.";
+    waittext msg;
+    wait 5; # Original TEXTWAIT is 140+10 tics.
+  };
+}
+
+# Second Hub: The Shadowwood (exit from The Hypostyle)
+Finale
+{
+  After = "MAP12";
+  Script
+  {
+    # Only show this after the hub has been completed.
+    ifnot leavehub end;
+    # Don't show this in deathmatch.
+    if deathmatch end;
+    music "hub";
+    image back INTERPIC;
+    wait 0.5; # Originally 10 tics.
+    text msg 10 5
+      "your mind still reeling from your\n
+      encounters within the hypostyle, you\n
+      stagger toward what you hope is\n
+      a way out. things seem to move faster\n
+      and faster, your vision blurs and\n
+      begins to fade...\n
+      as the world collapses around you,\n
+      the brightness of a teleportal\n
+      engulfs you. a flash of light, and then\n
+      you climb wearily to your feet.\n\n
+      you stand atop a high tower, and\n
+      from below come the screams of the\n
+      damned. you step forward, and\n
+      instantly the sound of demonic\n
+      chanting chills your blood.\n
+      by all the gods of death! what place\n
+      have you come to? by all the gods of\n
+      pain, how will you ever find your\n
+      way out?";
+    waittext msg;
+    wait 5; # Original TEXTWAIT is 140+10 tics.
+  };
+}
+
+# Third Hub: Heresiarch's Seminary
+Finale
+{
+  After = "MAP27";
+  Script
+  {
+    # Only show this after the hub has been completed.
+    ifnot leavehub end;
+    # Don't show this in deathmatch.
+    if deathmatch end;
+    music "hub";
+    image back INTERPIC;
+    wait 0.5; # Originally 10 tics.
+    text msg 10 5 
+      "the mightiest weapons and artifacts\n
+      of the ancients barely sufficed to\n
+      defeat the heresiarch and his\n
+      minions, but now their foul remains\n
+      lie strewn at your feet. gathering\n
+      the last of your strength, you\n
+      prepare to enter the portal which\n
+      leads from the heresiarch's inner\n
+      sanctum.\n\n
+      above you, the ramparts of an\n
+      immense castle loom. silent towers\n
+      and bare walls surround a single\n
+      spire of black stone, which squats\n
+      in the center of the castle like a\n
+      brooding giant. fire and shadow\n
+      twist behind gaping windows, dozens\n
+      of baleful eyes glaring down upon\n
+      you.\n
+      somewhere within, your enemies are\n
+      waiting...";
+    waittext msg;
+    wait 5; # Original TEXTWAIT is 140+10 tics.
+  };
+}
+
+# Fourth Hub: The Castle of Grief (exit from Gibbet)
+Finale
+{
+  After = "MAP23";
+  Script
+  {
+    # Only show this after the hub has been completed.
+    ifnot leavehub end;
+    # Don't show this in deathmatch.
+    if deathmatch end;
+    music "hub";
+    image back INTERPIC;
+    wait 0.5; # Originally 10 tics.
+    text msg 10 5
+      \"... and he shall journey into the\n
+      realms of the dead, and contest with\n
+      the forces therein, unto the very\n
+      gates of despair. but whether he\n
+      shall return again to the world of\n
+      light, no man knows.\"\n
+      \_                     \n
+      \_                     \n
+      \_                     \n
+      \_                     \n
+      \_                     \n
+      damn.";
+    waittext msg;
+    wait 5; # Original TEXTWAIT is 140+10 tics.
+  };
+}
+
+# Fifth Hub: The Necropolis (ends in Dark Crucible)
+Finale
+{
+  After = "MAP40";
+  Script
+  {
+    # This is the real finale of the game.
+    noskip; # No more levels after this, disallow skipping.
+    musiconce "hall";
+    # Setup the first screen.
+    image back FINALE1;
+    # Fade into the first screen.
+    filter 0 0 0 1; in 2 filter 0 0 0 0; wait 2;
+    text msg 20 5
+      "with a scream of agony you are\n
+      wrenched from this world into\n
+      another, every part of your body\n
+      wreathed in mystic fire.  when your\n
+      vision clears, you find yourself\n
+      standing in a great hall, filled\n
+      with ghostly echoes and menacing\n
+      shadows.  in the distance you can\n
+      see a raised dais, and upon it the\n
+      only source of light in this world.";
+    waittext msg;
+    wait 7; # Original TEXTWAIT is 250 tics.
+
+    # Second screen: the Orb.
+    musiconce "orb";
+    image back FINALE2;
+    deltext msg;
+    wait 0.5;
+    text msg 20 5
+      "this can only be the chaos sphere,\n
+      the source of korax's power.  with\n
+      this, you can create worlds...  or\n
+      destroy them.  by rights of battle\n
+      and conquest it is yours, and with\n
+      trembling hands you reach to grasp\n
+      it.  perhaps, now, a new player will\n
+      join the cosmic game of power.  like\n
+      the pawn who is promoted to queen,\n
+      suddenly the very reaches of the\n
+      board seem to be within your grasp.";
+    waittext msg;
+    wait 7; # Original TEXTWAIT is 250 tics.
+    # Fade out.
+    in 2 filter 0 0 0 1; wait 2;
+    deltext msg;
+
+    # Setup the last screen: the Chess.
+    music "chess";
+    image back FINALE3;
+    # Choose the right player patch (no patch=fighter).
+    if netgame patch pl 20 0 CHESSALL;
+    if netgame goto m;
+    if cleric patch pl 60 0 CHESSC;
+    if mage patch pl 60 0 CHESSM;
+    marker m;
+    # Fade in.
+    filter 0 0 0 0; wait 2;
+    text msg 20 135
+      "                                    \n
+      but there are other players mightier\n
+      than you, and who can know their\n
+      next moves?";
+  };
+}

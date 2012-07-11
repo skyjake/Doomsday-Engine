@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,6 @@
 
 #include "doomsday.h"
 
-int             EV_Teleport(linedef_t* line, int side, mobj_t* mo,
+int             EV_Teleport(LineDef* line, int side, mobj_t* mo,
                             boolean spawnFog);
 #endif

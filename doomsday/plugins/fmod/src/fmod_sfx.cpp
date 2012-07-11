@@ -1,32 +1,27 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file fmod_sfx.cpp
+ * Sound effects interface. @ingroup dsfmod
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "driver_fmod.h"
 #include "dd_share.h"
 #include <stdlib.h>
-#ifdef WIN32
-#  define _USE_MATH_DEFINES
-#endif
 #include <cmath>
 #include <vector>
 
@@ -519,6 +514,10 @@ static int linearToLog(float vol)
 static void updateListenerEnvironmentSettings(float* reverb)
 {
     if(!fmodSystem || !reverb) return;
+
+    DSFMOD_TRACE("updateListenerEnvironmentSettings: " <<
+                 reverb[0] << " " << reverb[1] << " " <<
+                 reverb[2] << " " << reverb[3]);
 
     // No reverb?
     if(reverb[SRD_VOLUME] == 0 && reverb[SRD_SPACE]   == 0 &&

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "dd_share.h"
 
@@ -233,7 +234,7 @@ weapontype_t P_WeaponSlotCycle(weapontype_t type, boolean prev)
  * @return              Non-zero if no weapon is bound to the slot @a slot,
  *                      or callback @a callback signals an end to iteration.
  */
-int P_IterateWeaponsInSlot(byte slot, boolean reverse,
+int P_IterateWeaponsBySlot(byte slot, boolean reverse,
                            int (*callback) (weapontype_t, void* context),
                            void* context)
 {
@@ -292,7 +293,7 @@ int P_GetPlayerNum(player_t *player)
  *
  * @return              Cheats active for the given player in a bitfield.
  */
-int P_GetPlayerCheats(player_t *player)
+int P_GetPlayerCheats(const player_t* player)
 {
     if(!player)
     {
@@ -306,6 +307,17 @@ int P_GetPlayerCheats(player_t *player)
         else
             return player->cheats;
     }
+}
+
+int P_CountPlayersInGame(void)
+{
+    int c, count = 0;
+    for(c = 0; c < MAXPLAYERS; ++c)
+    {
+        player_t* player = players + c;
+        if(player->plr->inGame) count += 1;
+    }
+    return count;
 }
 
 /**
@@ -407,7 +419,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     weaponinfo_t       *winf;
     boolean             found;
 
-    if(IS_NETGAME && IS_SERVER)
+    if(IS_NETWORK_SERVER)
     {
         // This is done on clientside.
         NetSv_MaybeChangeWeapon(player - players, weapon, ammo, force);
@@ -547,7 +559,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     continue;
 
                 /**
-                 * \fixme Have we got enough of ALL used ammo types?
+                 * @todo Have we got enough of ALL used ammo types?
                  * Problem, since the ammo has not been given yet (could
                  * be an object that gives several ammo types eg backpack)
                  * we can't test for this with what we know!
@@ -570,15 +582,23 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         }
     }
 
-    // Don't change to the exisitng weapon.
+    // Don't change to the existing weapon.
     if(returnval == player->readyWeapon)
         returnval = WT_NOCHANGE;
 
     // Choosen a weapon to change to?
     if(returnval != WT_NOCHANGE)
     {
+#ifdef _DEBUG
+        Con_Message("P_MaybeChangeWeapon: Decided to change to weapon %i.\n", returnval);
+#endif
         player->pendingWeapon = returnval;
-        //player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
+
+        if(IS_CLIENT)
+        {
+            // Tell the server.
+            NetCl_PlayerActionRequest(player, GPA_CHANGE_WEAPON, player->pendingWeapon);
+        }
     }
 
     return returnval;
@@ -654,7 +674,7 @@ boolean P_CheckAmmo(player_t* plr)
  */
 weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
 {
-    weapontype_t*       list, w = 0;
+    weapontype_t*       list, w = 0, initial;
     int                 lvl, i;
 #if __JDOOM__
     static weapontype_t wp_list[] = {
@@ -698,11 +718,17 @@ weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         w = list[i];
-        if(w == player->readyWeapon)
+        if(!cfg.weaponCycleSequential || player->pendingWeapon == WT_NOCHANGE)
+        {
+            if(w == player->readyWeapon)
+                break;
+        }
+        else if(w == player->pendingWeapon)
             break;
     }
 
     // Locate the next or previous weapon owned by the player.
+    initial = w;
     for(;;)
     {
         // Move the iterator.
@@ -719,7 +745,7 @@ weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
         w = list[i];
 
         // Have we circled around?
-        if(w == player->readyWeapon)
+        if(w == initial)
             break;
 
         // Available in this game mode? And a valid weapon?
@@ -738,31 +764,32 @@ weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
  */
 void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
 {
-    int                 i;
+    int i;
 
     // Don't change if morphed.
-    if(player->morphTics)
-        return;
-
-    if(!PCLASS_INFO(newClass)->userSelectable)
-        return;
+    if(player->morphTics) return;
+    if(!PCLASS_INFO(newClass)->userSelectable) return;
 
     player->class_ = newClass;
     cfg.playerClass[player - players] = newClass;
+    P_ClassForPlayerWhenRespawning(player - players, true /*clear change request*/);
 
     // Take away armor.
     for(i = 0; i < NUMARMOR; ++i)
+    {
         player->armorPoints[i] = 0;
+    }
     player->update |= PSF_ARMOR_POINTS;
 
     P_PostMorphWeapon(player, WT_FIRST);
 
     if(player->plr->mo)
-    {   // Respawn the player and destroy the old mobj.
-        mobj_t*             oldMo = player->plr->mo;
+    {
+        // Respawn the player and destroy the old mobj.
+        mobj_t* oldMo = player->plr->mo;
 
-        P_SpawnPlayer(player - players, newClass, oldMo->pos[VX],
-                      oldMo->pos[VY], oldMo->pos[VZ], oldMo->angle, 0,
+        P_SpawnPlayer(player - players, newClass, oldMo->origin[VX],
+                      oldMo->origin[VY], oldMo->origin[VZ], oldMo->angle, 0,
                       P_MobjIsCamera(oldMo), true);
         P_MobjRemove(oldMo, true);
     }
@@ -777,14 +804,16 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetMessage(player_t* pl, const char *msg, boolean noHide)
+void P_SetMessage(player_t* pl, const char* msg, boolean noHide)
 {
     byte flags = (noHide? LMF_NOHIDE : 0);
 
-    Hu_LogPost(pl - players, flags, msg);
+    if(NULL == msg || !msg[0]) return;
+
+    ST_LogPost(pl - players, flags, msg);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
-        Con_FPrintf(CBLF_CYAN, "%s\n", msg);
+        Con_FPrintf(CPF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
     NetSv_SendMessage(pl - players, msg);
@@ -799,44 +828,60 @@ void P_SetMessage(player_t* pl, const char *msg, boolean noHide)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetYellowMessage(player_t* pl, char *msg, boolean noHide)
+void P_SetYellowMessage(player_t* pl, const char* msg, boolean noHide)
 {
-    byte                flags = LMF_YELLOW | (noHide? LMF_NOHIDE : 0);
+#define YELLOW_FMT      "{r=1;g=0.7;b=0.3;}"
+#define YELLOW_FMT_LEN  18
 
-    Hu_LogPost(pl - players, flags, msg);
+    byte flags = (noHide? LMF_NOHIDE : 0);
+    size_t len;
+    ddstring_t buf;
+
+    if(NULL == msg || !msg[0]) return;
+    len = strlen(msg);
+
+    Str_Init(&buf); Str_Reserve(&buf, YELLOW_FMT_LEN + len+1);
+    Str_Set(&buf, YELLOW_FMT);
+    Str_Appendf(&buf, "%s", msg);
+
+    ST_LogPost(pl - players, flags, Str_Text(&buf));
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
-        Con_FPrintf(CBLF_CYAN, "%s\n", msg);
+        Con_FPrintf(CPF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
-    NetSv_SendMessage(pl - players, msg);
+    /// @todo We shouldn't need to send the format string along with every
+    /// important game message. Instead flag a bit in the packet and then
+    /// reconstruct on the other end.
+    NetSv_SendMessage(pl - players, Str_Text(&buf));
+
+    Str_Free(&buf);
+
+#undef YELLOW_FMT
 }
 #endif
 
-void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
-                int forwardmovex, int sidemovex)
+void P_Thrust3D(player_t* player, angle_t angle, float lookdir,
+                coord_t forwardMove, coord_t sideMove)
 {
-    angle_t             pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
-    angle_t             sideangle = angle - ANG90;
-    mobj_t             *mo = player->plr->mo;
-    float               zmul;
-    float               mom[3];
-    float               forwardmove = FIX2FLT(forwardmovex);
-    float               sidemove = FIX2FLT(sidemovex);
+    angle_t pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
+    angle_t sideangle = angle - ANG90;
+    mobj_t* mo = player->plr->mo;
+    coord_t zmul, mom[3];
 
     angle >>= ANGLETOFINESHIFT;
     pitch >>= ANGLETOFINESHIFT;
-    mom[MX] = forwardmove * FIX2FLT(finecosine[angle]);
-    mom[MY] = forwardmove * FIX2FLT(finesine[angle]);
-    mom[MZ] = forwardmove * FIX2FLT(finesine[pitch]);
+    mom[MX] = forwardMove * FIX2FLT(finecosine[angle]);
+    mom[MY] = forwardMove * FIX2FLT(finesine[angle]);
+    mom[MZ] = forwardMove * FIX2FLT(finesine[pitch]);
 
     zmul = FIX2FLT(finecosine[pitch]);
     mom[MX] *= zmul;
     mom[MY] *= zmul;
 
     sideangle >>= ANGLETOFINESHIFT;
-    mom[MX] += sidemove * FIX2FLT(finecosine[sideangle]);
-    mom[MY] += sidemove * FIX2FLT(finesine[sideangle]);
+    mom[MX] += sideMove * FIX2FLT(finecosine[sideangle]);
+    mom[MY] += sideMove * FIX2FLT(finesine[sideangle]);
 
     mo->mom[MX] += mom[MX];
     mo->mom[MY] += mom[MY];
@@ -850,15 +895,15 @@ int P_CameraXYMovement(mobj_t *mo)
 #if __JDOOM__ || __JDOOM64__
     if(mo->flags & MF_NOCLIP ||
        // This is a very rough check! Sometimes you get stuck in things.
-       P_CheckPosition3f(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY] + mo->mom[MY], mo->pos[VZ]))
+       P_CheckPositionXYZ(mo, mo->origin[VX] + mo->mom[MX], mo->origin[VY] + mo->mom[MY], mo->origin[VZ]))
     {
 #endif
 
-        P_MobjUnsetPosition(mo);
-        mo->pos[VX] += mo->mom[MX];
-        mo->pos[VY] += mo->mom[MY];
-        P_MobjSetPosition(mo);
-        P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]);
+        P_MobjUnsetOrigin(mo);
+        mo->origin[VX] += mo->mom[MX];
+        mo->origin[VY] += mo->mom[MY];
+        P_MobjSetOrigin(mo);
+        P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]);
         mo->floorZ = tmFloorZ;
         mo->ceilingZ = tmCeilingZ;
 
@@ -870,12 +915,14 @@ int P_CameraXYMovement(mobj_t *mo)
     if(!INRANGE_OF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
        !INRANGE_OF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
        !INRANGE_OF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
-    {   // While moving; normal friction applies.
+    {
+        // While moving; normal friction applies.
         mo->mom[MX] *= FRICTION_NORMAL;
         mo->mom[MY] *= FRICTION_NORMAL;
     }
     else
-    {   // Else lose momentum, quickly!.
+    {
+        // Else lose momentum, quickly!.
         mo->mom[MX] *= FRICTION_HIGH;
         mo->mom[MY] *= FRICTION_HIGH;
     }
@@ -888,7 +935,7 @@ int P_CameraZMovement(mobj_t *mo)
     if(!P_MobjIsCamera(mo))
         return false;
 
-    mo->pos[VZ] += mo->mom[MZ];
+    mo->origin[VZ] += mo->mom[MZ];
 
     // Friction.
     if(!INRANGE_OF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
@@ -908,9 +955,9 @@ int P_CameraZMovement(mobj_t *mo)
 /**
  * Set appropriate parameters for a camera.
  */
-void P_PlayerThinkCamera(player_t *player)
+void P_PlayerThinkCamera(player_t* player)
 {
-    mobj_t *mo = player->plr->mo;
+    mobj_t* mo = player->plr->mo;
 
     if(!mo) return;
 
@@ -929,10 +976,10 @@ void P_PlayerThinkCamera(player_t *player)
     // How about viewlock?
     if(player->viewLock)
     {
-        angle_t             angle;
-        int                 full;
-        float               dist;
-        mobj_t             *target = players->viewLock;
+        angle_t angle;
+        int full;
+        coord_t dist;
+        mobj_t* target = players->viewLock;
 
         if(!target->player || !target->player->plr->inGame)
         {
@@ -942,8 +989,7 @@ void P_PlayerThinkCamera(player_t *player)
 
         full = player->lockFull;
 
-        angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
-                                target->pos[VX], target->pos[VY]);
+        angle = M_PointToAngle2(mo->origin, target->origin);
         //player->plr->flags |= DDPF_FIXANGLES;
         /* $unifiedangles */
         mo->angle = angle;
@@ -952,18 +998,18 @@ void P_PlayerThinkCamera(player_t *player)
 
         if(full)
         {
-            dist = P_ApproxDistance(mo->pos[VX] - target->pos[VX],
-                                    mo->pos[VY] - target->pos[VY]);
-            angle =
-                R_PointToAngle2(0, 0,
-                                target->pos[VZ] + (target->height / 2) - mo->pos[VZ],
-                                dist);
-            //player->plr->clLookDir =
-            player->plr->lookDir =
-                -(angle / (float) ANGLE_MAX * 360.0f - 90);
+            dist = M_ApproxDistance(mo->origin[VX] - target->origin[VX],
+                                    mo->origin[VY] - target->origin[VY]);
+            angle = M_PointXYToAngle2(0, 0,
+                                      target->origin[VZ] + (target->height / 2) - mo->origin[VZ],
+                                      dist);
+
+            player->plr->lookDir = -(angle / (float) ANGLE_MAX * 360.0f - 90);
             if(player->plr->lookDir > 180)
                 player->plr->lookDir -= 360;
+
             player->plr->lookDir *= 110.0f / 85.0f;
+
             if(player->plr->lookDir > 110)
                 player->plr->lookDir = 110;
             if(player->plr->lookDir < -110)
@@ -974,7 +1020,7 @@ void P_PlayerThinkCamera(player_t *player)
     }
 }
 
-DEFCC(CCmdSetCamera)
+D_CMD(SetCamera)
 {
     int                 p;
     player_t           *player;
@@ -994,12 +1040,12 @@ DEFCC(CCmdSetCamera)
         if(player->plr->flags & DDPF_CAMERA)
         {   // Is now a camera.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] += player->viewHeight;
+                player->plr->mo->origin[VZ] += player->viewHeight;
         }
         else
         {   // Is now a "real" player.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] -= player->viewHeight;
+                player->plr->mo->origin[VZ] -= player->viewHeight;
         }
     }
     return true;
@@ -1034,7 +1080,7 @@ int P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points)
     oldPoints = *current;
     if(points > 0)
     {
-        delta = points; /// \fixme No upper limit?
+        delta = points; /// @todo No upper limit?
     }
     else
     {
@@ -1063,7 +1109,7 @@ void P_PlayerSetArmorType(player_t* plr, int type)
 }
 #endif
 
-DEFCC(CCmdSetViewMode)
+D_CMD(SetViewMode)
 {
     int                 pl = CONSOLEPLAYER;
 
@@ -1083,7 +1129,7 @@ DEFCC(CCmdSetViewMode)
     return true;
 }
 
-DEFCC(CCmdSetViewLock)
+D_CMD(SetViewLock)
 {
     int                 pl = CONSOLEPLAYER, lock;
 
@@ -1116,13 +1162,13 @@ DEFCC(CCmdSetViewLock)
     return false;
 }
 
-DEFCC(CCmdMakeLocal)
+D_CMD(MakeLocal)
 {
     int                 p;
     char                buf[20];
     player_t           *plr;
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
         Con_Printf("You must be in a game to create a local player.\n");
         return false;
@@ -1153,25 +1199,28 @@ DEFCC(CCmdMakeLocal)
 /**
  * Print the console player's coordinates.
  */
-DEFCC(CCmdPrintPlayerCoords)
+D_CMD(PrintPlayerCoords)
 {
-    mobj_t             *mo = players[CONSOLEPLAYER].plr->mo;
+    mobj_t* mo;
 
-    if(!mo || G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
+        return false;
+
+    if(!(mo = players[CONSOLEPLAYER].plr->mo))
         return false;
 
     Con_Printf("Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,
-               mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+               mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 
     return true;
 }
 
-DEFCC(CCmdCycleSpy)
+D_CMD(CycleSpy)
 {
-    //// \fixme The engine should do this.
+    //// @todo The engine should do this.
     Con_Printf("Spying not allowed.\n");
 #if 0
-    if(G_GetGameState() == GS_MAP && !deathmatch)
+    if(G_GameState() == GS_MAP && !deathmatch)
     {   // Cycle the display player.
         do
         {
@@ -1187,10 +1236,10 @@ DEFCC(CCmdCycleSpy)
     return true;
 }
 
-DEFCC(CCmdSpawnMobj)
+D_CMD(SpawnMobj)
 {
     mobjtype_t type;
-    float pos[3];
+    coord_t pos[3];
     mobj_t* mo;
     angle_t angle;
     int spawnFlags = 0;
@@ -1242,7 +1291,7 @@ DEFCC(CCmdSpawnMobj)
     else
         angle = 0;
 
-    if((mo = P_SpawnMobj3fv(type, pos, angle, spawnFlags)))
+    if((mo = P_SpawnMobj(type, pos, angle, spawnFlags)))
     {
 #if __JDOOM64__
         // jd64 > kaiser - another cheesy hack!!!

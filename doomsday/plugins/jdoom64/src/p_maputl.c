@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *
@@ -67,13 +67,13 @@
  * If more than one linedef is contacted, the effects are cumulative, so
  * balancing is possible.
  */
-static int PIT_ApplyTorque(linedef_t* ld, void* data)
+static int PIT_ApplyTorque(LineDef* ld, void* parameters)
 {
-    mobj_t*             mo = tmThing;
-    float               dist;
-    sector_t*           frontsec, *backsec;
-    float               ffloor, bfloor;
-    float               d1[2], vtx[2];
+    mobj_t* mo = tmThing;
+    coord_t dist;
+    Sector* frontsec, *backsec;
+    coord_t ffloor, bfloor;
+    coord_t d1[2], vtx[2];
 
     if(tmThing->player)
         return false; // Skip players!
@@ -82,25 +82,25 @@ static int PIT_ApplyTorque(linedef_t* ld, void* data)
        !(backsec = P_GetPtrp(ld, DMU_BACK_SECTOR)))
         return false; // Shouldn't ever happen.
 
-    ffloor = P_GetFloatp(frontsec, DMU_FLOOR_HEIGHT);
-    bfloor = P_GetFloatp(backsec, DMU_FLOOR_HEIGHT);
-    P_GetFloatpv(ld, DMU_DXY, d1);
-    P_GetFloatpv(P_GetPtrp(ld, DMU_VERTEX0), DMU_XY, vtx);
+    ffloor = P_GetDoublep(frontsec, DMU_FLOOR_HEIGHT);
+    bfloor = P_GetDoublep(backsec, DMU_FLOOR_HEIGHT);
+    P_GetDoublepv(ld, DMU_DXY, d1);
+    P_GetDoublepv(P_GetPtrp(ld, DMU_VERTEX0), DMU_XY, vtx);
 
     // Lever-arm:
-    dist = +d1[0] * mo->pos[VY] - d1[1] * mo->pos[VX] -
-            d1[0] * vtx[VY]    +  d1[1] * vtx[VX];
+    dist = +d1[0] * mo->origin[VY] - d1[1] * mo->origin[VX] -
+            d1[0] * vtx[VY]     + d1[1] * vtx[VX];
 
-    if((dist < 0  && ffloor < mo->pos[VZ] && bfloor >= mo->pos[VZ]) ||
-       (dist >= 0 && bfloor < mo->pos[VZ] && ffloor >= mo->pos[VZ]))
+    if((dist < 0  && ffloor < mo->origin[VZ] && bfloor >= mo->origin[VZ]) ||
+       (dist >= 0 && bfloor < mo->origin[VZ] && ffloor >= mo->origin[VZ]))
     {
         // At this point, we know that the object straddles a two-sided
         // linedef, and that the object's center of mass is above-ground.
-        float               x = fabs(d1[0]), y = fabs(d1[1]);
+        coord_t x = fabs(d1[0]), y = fabs(d1[1]);
 
         if(y > x)
         {
-            float       tmp = x;
+            coord_t tmp = x;
             x = y;
             y = tmp;
         }

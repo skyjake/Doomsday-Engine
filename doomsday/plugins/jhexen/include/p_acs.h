@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ typedef struct acsinfo_s {
 typedef struct acs_s {
     thinker_t       thinker;
     mobj_t*         activator;
-    linedef_t*      line;
+    LineDef*        line;
     int             side;
     int             number;
     int             infoIndex;
@@ -87,8 +87,8 @@ extern acsstore_t* ACSStore;
 
 void            P_LoadACScripts(int lump);
 boolean         P_StartACS(int number, uint map, byte* args,
-                           mobj_t* activator, linedef_t* line, int side);
-boolean         P_StartLockedACS(linedef_t* line, byte* args, mobj_t* mo,
+                           mobj_t* activator, LineDef* line, int side);
+boolean         P_StartLockedACS(LineDef* line, byte* args, mobj_t* mo,
                                  int side);
 boolean         P_TerminateACS(int number, uint map);
 boolean         P_SuspendACS(int number, uint map);

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,21 +22,22 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * gl_tga.c: TGA file format (TARGA) reader/writer.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_graphics.h"
 
-// MACROS ------------------------------------------------------------------
+enum {
+    TGA_FALSE,
+    TGA_TRUE,
+    TGA_TARGA24, // rgb888
+    TGA_TARGA32 // rgba8888
+};
 
 #undef SHORT
 #ifdef __BIG_ENDIAN__
@@ -45,21 +46,18 @@
 #define SHORT(x)            (x)
 #endif
 
-// TYPES -------------------------------------------------------------------
-
-typedef unsigned char uchar; // 1 byte
-
+#pragma pack(1)
 typedef struct {
-    uchar           idLength; // Identification field size in bytes.
-    uchar           colorMapType; // Type of the color map.
-    uchar           imageType; // Image type code.
+    uint8_t idLength; // Identification field size in bytes.
+    uint8_t colorMapType; // Type of the color map.
+    uint8_t imageType; // Image type code.
 } tga_header_t;
 
 // Color map specification.
 typedef struct {
-    int16_t         index; // Index of first color map entry.
-    int16_t         length; // Number of color map entries.
-    uchar           entrySize; // Number of bits in a color map entry (16/24/32).
+    int16_t index; // Index of first color map entry.
+    int16_t length; // Number of color map entries.
+    uint8_t entrySize; // Number of bits in a color map entry (16/24/32).
 } tga_colormapspec_t;
 
 // Image specification flags:
@@ -70,28 +68,17 @@ typedef struct {
 
 // Image specification.
 typedef struct {
-    uchar           flags;
-    int16_t         xOrigin; // X coordinate of lower left corner.
-    int16_t         yOrigin; // Y coordinate of lower left corner.
-    int16_t         width; // Width of the image in pixels.
-    int16_t         height; // Height of the image in pixels.
-    uchar           pixelDepth; // Number of bits in a pixel (16/24/32).
-    uchar           attributeBits;
+    uint8_t flags;
+    int16_t xOrigin; // X coordinate of lower left corner.
+    int16_t yOrigin; // Y coordinate of lower left corner.
+    int16_t width; // Width of the image in pixels.
+    int16_t height; // Height of the image in pixels.
+    uint8_t pixelDepth; // Number of bits in a pixel (16/24/32).
+    uint8_t attributeBits;
 } tga_imagespec_t;
+#pragma pack()
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+static char* lastErrorMsg = 0; /// @todo potentially never free'd
 
 #ifdef __BIG_ENDIAN__
 static int16_t shortSwap(int16_t n)
@@ -100,28 +87,43 @@ static int16_t shortSwap(int16_t n)
 }
 #endif
 
-static void writeByte(FILE* f, uchar b)
+static void setLastError(const char* msg)
+{
+    size_t len;
+    if(0 == msg || 0 == (len = strlen(msg)))
+    {
+        if(lastErrorMsg != 0)
+            free(lastErrorMsg);
+        lastErrorMsg = 0;
+        return;
+    }
+
+    lastErrorMsg = realloc(lastErrorMsg, len+1);
+    strcpy(lastErrorMsg, msg);
+}
+
+static void writeByte(FILE* f, uint8_t b)
 {
     fwrite(&b, 1, 1, f);
 }
 
 static void writeShort(FILE* f, int16_t s)
 {
-    int16_t             v = SHORT(s);
+    int16_t v = SHORT(s);
     fwrite(&v, sizeof(v), 1, f);
 }
 
-static uchar readByte(DFILE* f)
+static uint8_t readByte(DFile* f)
 {
-    uchar               v;
-    F_Read(&v, 1, f);
+    uint8_t v;
+    DFile_Read(f, &v, 1);
     return v;
 }
 
-static int16_t readShort(DFILE* f)
+static int16_t readShort(DFile* f)
 {
-    int16_t             v;
-    F_Read(&v, sizeof(v), f);
+    int16_t v;
+    DFile_Read(f, (uint8_t*)&v, sizeof(v));
     return SHORT(v);
 }
 
@@ -141,15 +143,15 @@ static int16_t readShort(DFILE* f)
  *                      @c 11 = run-length encoded, grayscale image.
  * @param file          Handle to the file to be written to.
  */
-static void writeHeader(uchar idLength, uchar colorMapType, uchar imageType,
-                        FILE* file)
+static void writeHeader(uint8_t idLength, uint8_t colorMapType,
+    uint8_t imageType, FILE* file)
 {
     writeByte(file, idLength);
     writeByte(file, colorMapType? 1 : 0);
     writeByte(file, imageType);
 }
 
-static void readHeader(tga_header_t* dst, DFILE* file)
+static void readHeader(tga_header_t* dst, DFile* file)
 {
     dst->idLength = readByte(file);
     dst->colorMapType = readByte(file);
@@ -163,14 +165,14 @@ static void readHeader(tga_header_t* dst, DFILE* file)
  * @param file          Handle to the file to be written to.
  */
 static void writeColorMapSpec(int16_t index, int16_t length,
-                              uchar entrySize, FILE* file)
+    uint8_t entrySize, FILE* file)
 {
     writeShort(file, index);
     writeShort(file, length);
     writeByte(file, entrySize);
 }
 
-static void readColorMapSpec(tga_colormapspec_t* dst, DFILE* file)
+static void readColorMapSpec(tga_colormapspec_t* dst, DFile* file)
 {
     dst->index = readShort(file);
     dst->length = readShort(file);
@@ -186,8 +188,8 @@ static void readColorMapSpec(tga_colormapspec_t* dst, DFILE* file)
  * @param file          Handle to the file to be written to.
  */
 static void writeImageSpec(int16_t xOrigin, int16_t yOrigin,
-                           int16_t width, int16_t height, uchar pixDepth,
-                           FILE* file)
+    int16_t width, int16_t height, uint8_t pixDepth,
+    FILE* file)
 {
     writeShort(file, xOrigin);
     writeShort(file, yOrigin);
@@ -204,9 +206,9 @@ static void writeImageSpec(int16_t xOrigin, int16_t yOrigin,
     writeByte(file, 0);
 }
 
-static void readImageSpec(tga_imagespec_t* dst, DFILE* file)
+static void readImageSpec(tga_imagespec_t* dst, DFile* file)
 {
-    uchar               bits;
+    uint8_t bits;
 
     dst->xOrigin = readShort(file);
     dst->yOrigin = readShort(file);
@@ -226,28 +228,13 @@ static void readImageSpec(tga_imagespec_t* dst, DFILE* file)
     dst->attributeBits = (bits & 0xf);
 }
 
-/**
- * Saves the buffer (which is formatted rgb565) to a Targa 24 image file.
- *
- * @param filename      Path to the file to be written to (need not exist).
- * @param w             Width of the image in pixels.
- * @param h             Height of the image in pixels.
- * @param buf           Ptr to the image data to be written.
- *
- * @return              Non-zero iff successful.
- */
-int TGA_Save24_rgb565(const char* filename, int w, int h,
-                      const uint16_t* buf)
+int TGA_Save24_rgb565(FILE* file, int w, int h, const uint16_t* buf)
 {
-    int                 i, k;
-    FILE*               file;
-    uchar*              outBuf;
-    size_t              outBufStart;
+    int i, k;
+    uint8_t* outBuf;
+    size_t outBufStart;
 
-    if(!buf || !(w > 0 && h > 0))
-        return 0;
-
-    if((file = fopen(filename, "wb")) == NULL)
+    if(NULL == file || !buf || !(w > 0 && h > 0))
         return 0;
 
     // No identification field, no color map, Targa type 2 (unmapped RGB).
@@ -264,96 +251,42 @@ int TGA_Save24_rgb565(const char* filename, int w, int h,
     outBuf = malloc(w * h * 3);
     outBufStart = w * h - 1; // From the end.
     for(k = 0; k < h; ++k)
-        for(i = 0; i < w; ++i)
-        {
-            int16_t            r, g, b;
-            const int16_t      src = buf[k * w + i];
-            uchar*              dst = &outBuf[outBufStart - (((k + 1) * w - 1 - i)) * 3];
+    for(i = 0; i < w; ++i)
+    {
+        int16_t r, g, b;
+        const int16_t src = buf[k * w + i];
+        uint8_t* dst = &outBuf[outBufStart - (((k + 1) * w - 1 - i)) * 3];
 
-            r = (src >> 11) & 0x1f; // The last 5 bits.
-            g = (src >> 5) & 0x3f; // The middle 6 bits (one bit'll be lost).
-            b = src & 0x1f; // The first 5 bits.
+        r = (src >> 11) & 0x1f; // The last 5 bits.
+        g = (src >> 5) & 0x3f; // The middle 6 bits (one bit'll be lost).
+        b = src & 0x1f; // The first 5 bits.
 
-            dst[2] = b << 3;
-            dst[0] = g << 2;
-            dst[1] = r << 3;
-        }
+        dst[2] = b << 3;
+        dst[0] = g << 2;
+        dst[1] = r << 3;
+    }
+
     // Write the converted buffer (bytes may go the wrong way around...!).
     fwrite(outBuf, w * h * 3, 1, file);
     free(outBuf);
 
-    fclose(file);
-
     return 1; // Success.
 }
 
-/**
- * Save the rgb888 buffer as Targa 24.
- *
- * @param filename      Path to the file to be written to (need not exist).
- * @param w             Width of the image in pixels.
- * @param h             Height of the image in pixels.
- * @param buf           Ptr to the image data to be written.
- *
- * @return              Non-zero iff successful.
- */
-int TGA_Save24_rgb888(const char* filename, int w, int h, const byte* buf)
+const char* TGA_LastError(void)
 {
-    int                 i;
-    FILE*               file;
-    uchar*              outBuf;
-
-    if(!buf || !(w > 0 && h > 0))
-        return 0;
-
-    if((file = fopen(filename, "wb")) == NULL)
-        return 0; // Huh?
-
-    // No identification field, no color map, Targa type 2 (unmapped RGB).
-    writeHeader(0, 0, 2, file);
-    writeColorMapSpec(0, 0, 0, file);
-    writeImageSpec(0, 0, w, h, 24, file);
-
-    // The save format is BRG.
-    outBuf = malloc(w * h * 3);
-    for(i = 0; i < w * h; ++i)
-    {
-        const uchar*        src = &buf[i * 3];
-        uchar*              dst = &outBuf[i * 3];
-
-        dst[0] = src[2];
-        dst[1] = src[1];
-        dst[2] = src[0];
-    }
-    fwrite(outBuf, w * h * 3, 1, file);
-    free(outBuf);
-
-    fclose(file);
-
-    return 1; // Success.
+    if(lastErrorMsg)
+        return lastErrorMsg;
+    return 0;
 }
 
-/**
- * Save the rgb8888 buffer as Targa 24.
- *
- * @param filename      Path to the file to be written to (need not exist).
- * @param w             Width of the image in pixels.
- * @param h             Height of the image in pixels.
- * @param buf           Ptr to the image data to be written.
- *
- * @return              Non-zero iff successful.
- */
-int TGA_Save24_rgba8888(const char* filename, int w, int h, const byte* buf)
+int TGA_Save24_rgb888(FILE* file, int w, int h, const uint8_t* buf)
 {
-    int                 i;
-    FILE*               file;
-    uchar*              outBuf;
+    uint8_t* outBuf;
+    int i;
 
-    if(!buf || !(w > 0 && h > 0))
+    if(NULL == file || !buf || !(w > 0 && h > 0))
         return 0;
-
-    if((file = fopen(filename, "wb")) == NULL)
-        return 0; // Huh?
 
     // No identification field, no color map, Targa type 2 (unmapped RGB).
     writeHeader(0, 0, 2, file);
@@ -364,8 +297,8 @@ int TGA_Save24_rgba8888(const char* filename, int w, int h, const byte* buf)
     outBuf = malloc(w * h * 3);
     for(i = 0; i < w * h; ++i)
     {
-        const byte*         src = &buf[i * 4];
-        uchar*              dst = &outBuf[i * 3];
+        const uint8_t* src = &buf[i * 3];
+        uint8_t* dst = &outBuf[i * 3];
 
         dst[0] = src[2];
         dst[1] = src[1];
@@ -374,32 +307,46 @@ int TGA_Save24_rgba8888(const char* filename, int w, int h, const byte* buf)
     fwrite(outBuf, w * h * 3, 1, file);
     free(outBuf);
 
-    fclose(file);
+    return 1; // Success.
+}
+
+int TGA_Save24_rgba8888(FILE* file, int w, int h, const uint8_t* buf)
+{
+    uint8_t* outBuf;
+    int i;
+
+    if(NULL == file || !buf || !(w > 0 && h > 0))
+        return 0;
+
+    // No identification field, no color map, Targa type 2 (unmapped RGB).
+    writeHeader(0, 0, 2, file);
+    writeColorMapSpec(0, 0, 0, file);
+    writeImageSpec(0, 0, w, h, 24, file);
+
+    // The save format is BGR.
+    outBuf = malloc(w * h * 3);
+    for(i = 0; i < w * h; ++i)
+    {
+        const uint8_t* src = &buf[i * 4];
+        uint8_t* dst = &outBuf[i * 3];
+
+        dst[0] = src[2];
+        dst[1] = src[1];
+        dst[2] = src[0];
+    }
+    fwrite(outBuf, w * h * 3, 1, file);
+    free(outBuf);
 
     return 1; // Success.
 }
 
-/**
- * Save the rgb888 buffer as Targa 16.
- *
- * @param filename      Path to the file to be written to (need not exist).
- * @param w             Width of the image in pixels.
- * @param h             Height of the image in pixels.
- * @param buf           Ptr to the image data to be written.
- *
- * @return              Non-zero iff successful.
- */
-int TGA_Save16_rgb888(const char* filename, int w, int h, const byte* buf)
+int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf)
 {
-    int                 i;
-    FILE*               file;
-    int16_t*           outBuf;
+    int16_t* outBuf;
+    int i;
 
-    if(!buf || !(w > 0 && h > 0))
+    if(NULL == file || !buf || !(w > 0 && h > 0))
         return 0;
-
-    if((file = fopen(filename, "wb")) == NULL)
-        return 0; // Huh?
 
     // No identification field, no color map, Targa type 2 (unmapped RGB).
     writeHeader(0, 0, 2, file);
@@ -410,43 +357,37 @@ int TGA_Save16_rgb888(const char* filename, int w, int h, const byte* buf)
     outBuf = malloc(w * h * 2);
     for(i = 0; i < w * h; ++i)
     {
-        const uchar*        src = &buf[i * 3];
-        int16_t*           dst = &outBuf[i];
+        const uint8_t* src = &buf[i * 3];
+        int16_t* dst = &outBuf[i];
 
         *dst = (src[2] >> 3) + ((src[1] & 0xf8) << 2) + ((src[0] & 0xf8) << 7);
     }
     fwrite(outBuf, w * h * 2, 1, file);
     free(outBuf);
 
-    fclose(file);
-
     return 1; // Success.
 }
 
-/**
- * Loads a 24-bit or a 32-bit TGA image (24-bit color + 8-bit alpha).
- *
- * \warning: This is not a generic TGA loader. Only type 2, 24/32 pixel
- *     size, attrbits 0/8 and lower left origin supported.
- *
- * @param buf           Caller allocated memory for 'buffer', MUST be at
- *                      least 4 * w * h!
- *
- * @return              Non-zero iff the image is loaded successfully.
- */
-int TGA_Load32_rgba8888(DFILE* file, int w, int h, byte* buf)
+uint8_t* TGA_Load(DFile* file, int* w, int* h, int* pixelSize)
 {
-    int                 x, y, pixbytes, format;
-    tga_header_t        header;
-    tga_colormapspec_t  colorMapSpec;
-    tga_imagespec_t     imageSpec;
-    uchar*              srcBuf;
-    const uchar*        src;
+    assert(file && w && h && pixelSize);
+    {
+    size_t initPos = DFile_Tell(file);
+    int x, y, pixbytes, format;
+    tga_header_t header;
+    tga_colormapspec_t colorMapSpec;
+    tga_imagespec_t imageSpec;
+    uint8_t* srcBuf;
+    const uint8_t* src;
+    uint8_t* dstBuf = 0;
 
     // Read and check the header.
     readHeader(&header, file);
     readColorMapSpec(&colorMapSpec, file);
     readImageSpec(&imageSpec, file);
+
+    *w = imageSpec.width;
+    *h = imageSpec.height;
 
     if(header.imageType != 2 ||
        (imageSpec.pixelDepth != 32 && imageSpec.pixelDepth != 24) ||
@@ -454,17 +395,15 @@ int TGA_Load32_rgba8888(DFILE* file, int w, int h, byte* buf)
         imageSpec.attributeBits != 0) ||
         (imageSpec.flags & ISF_SCREEN_ORIGIN_UPPER))
     {
-        // May or may not get displayed...
-        Con_Message("TGA_Load32_rgba8888: I don't know this format!\n");
-        Con_Message("  (type=%i pxsize=%i abits=%i)\n", header.imageType,
-                   imageSpec.pixelDepth,
-                   imageSpec.attributeBits);
-        return TGA_FALSE;
+        setLastError("Unsupported format.");
+        DFile_Seek(file, initPos, SEEK_SET);
+        return 0;
     }
 
-    VERBOSE(
-        Con_Message("(TGA: type=%i pxsize=%i abits=%i)\n", header.imageType,
-               imageSpec.pixelDepth, imageSpec.attributeBits));
+/*#if _DEBUG
+    Con_Message("TGA: type=%i pxsize=%i abits=%i\n", header.imageType,
+                imageSpec.pixelDepth, imageSpec.attributeBits);
+#endif*/
 
     // Determine format.
     if(imageSpec.pixelDepth == 24)
@@ -478,17 +417,20 @@ int TGA_Load32_rgba8888(DFILE* file, int w, int h, byte* buf)
         pixbytes = 4;
     }
 
+    *pixelSize = pixbytes;
+
     // Read the pixel data.
-    srcBuf = malloc(w * h * pixbytes);
-    F_Read(srcBuf, w * h * pixbytes, file);
+    srcBuf = malloc((*w) * (*h) * pixbytes);
+    DFile_Read(file, srcBuf, (*w) * (*h) * pixbytes);
 
     // "Unpack" the pixels (origin in the lower left corner).
     // TGA pixels are in BGRA format.
+    dstBuf = malloc(4 * (*w) * (*h));
     src = srcBuf;
-    for(y = h - 1; y >= 0; y--)
-        for(x = 0; x < w; x++)
+    for(y = (*h) - 1; y >= 0; y--)
+        for(x = 0; x < (*w); x++)
         {
-            byte*               dst = &buf[(y * w + x) * pixbytes];
+            uint8_t* dst = &dstBuf[(y * (*w) + x) * pixbytes];
 
             dst[2] = *src++;
             dst[1] = *src++;
@@ -498,30 +440,8 @@ int TGA_Load32_rgba8888(DFILE* file, int w, int h, byte* buf)
         }
     free(srcBuf);
 
-    // Success!
-    return format;
-}
-
-/**
- * @return              @c true, iff a file was found and then read.
- */
-int TGA_GetSize(const char* filename, int* w, int *h)
-{
-    tga_header_t        header;
-    tga_colormapspec_t  colorMapSpec;
-    tga_imagespec_t     imageSpec;
-    DFILE*              file = F_Open(filename, "rb");
-
-    if(!file || !w || !h)
-        return 0;
-
-    readHeader(&header, file);
-    readColorMapSpec(&colorMapSpec, file);
-    readImageSpec(&imageSpec, file);
-    F_Close(file);
-
-    if(w) *w = imageSpec.width;
-    if(h) *h = imageSpec.height;
-
-    return 1; // Success.
+    setLastError(0); // Success.
+    DFile_Seek(file, initPos, SEEK_SET);
+    return dstBuf;
+    }
 }

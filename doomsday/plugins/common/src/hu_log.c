@@ -1,11 +1,10 @@
-/**\file
+/**\file hu_log.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,963 +22,483 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * hu_log.c: Player's game message log.
- *
- * \todo Chat widget is here and should be moved.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <ctype.h>
-#include <stdlib.h>
+#include <assert.h>
 #include <string.h>
+#include <stdio.h>
+
+#include "doomsday.h"
+#include "dd_api.h"
 
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
-#  include "jdoom64.h"
+# include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #endif
 
-#include "hu_log.h"
+#include "p_tick.h"
 #include "hu_stuff.h"
-#include "p_tick.h" // for P_IsPaused()
-#include "d_net.h"
-
-// MACROS ------------------------------------------------------------------
-
-#define LOG_MAX_MESSAGES    (8)
-
-#define LOG_MSG_FLASHFADETICS (1*TICSPERSEC)
-#define LOG_MSG_TIMEOUT     (4*TICRATE)
-
-// Local Message flags:
-#define MF_JUSTADDED        (0x1)
-
-// TYPES -------------------------------------------------------------------
-
-typedef struct logmsg_s {
-    char*           text;
-    size_t          maxLen;
-    uint            ticsRemain, tics;
-    byte            flags;
-} logmsg_t;
-
-typedef struct msglog_s {
-    boolean         visible;
-
-    boolean         notToBeFuckedWith;
-    boolean         dontFuckWithMe;
-
-    logmsg_t        msgs[LOG_MAX_MESSAGES];
-    uint            msgCount; // Number of used msg slots.
-    uint            nextMsg; // Index of the next slot to be used in msgs.
-    uint            numVisibleMsgs; // Number of visible messages.
-
-    int             timer; // Auto-hide timer.
-    float           yOffset; // Scroll-up offset.
-} msglog_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static msglog_t msgLogs[MAXPLAYERS];
-
-cvar_t msgLogCVars[] = {
-    // Behaviour
-    {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8},
-    {"msg-uptime", 0, CVT_FLOAT, &cfg.msgUptime, 1, 60},
-
-    // Display
-    {"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2},
-    {"msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0},
-    {"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0},
-    {"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1},
-
-    // Colour defaults
-    {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1},
-    {"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1},
-    {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[CB], 0, 1},
-    {NULL}
-};
-
-// CODE --------------------------------------------------------------------
+#include "hu_log.h"
 
 /**
- * Called during the PreInit of each game during start up.
- * Register Cvars and CCmds for the opperation/look of the message log.
+ * @addtogroup logMessageFlags
+ * Flags private to this module.
+ * @{
  */
-void Hu_LogRegister(void)
-{
-    int                 i;
+#define LMF_JUSTADDED               (0x2)
+/**@}*/
 
-    for(i = 0; msgLogCVars[i].name; ++i)
-        Con_AddVariable(msgLogCVars + i);
+/// Mask for clearing non-public flags @see logMessageFlags
+#define LOG_INTERNAL_MESSAGEFLAGMASK    0xfe
+
+void UILog_Register(void)
+{
+    cvartemplate_t cvars[] = {
+        // Behavior
+        { "msg-uptime",  0, CVT_FLOAT, &cfg.msgUptime, 1, 60 },
+
+        // Display
+        { "msg-align",   0, CVT_INT, &cfg.msgAlign, 0, 2, ST_LogUpdateAlignment },
+        { "msg-blink",   CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0 },
+        { "msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1 },
+        { "msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1 },
+        { "msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[CB], 0, 1 },
+        { "msg-count",   0, CVT_INT, &cfg.msgCount, 1, 8 },
+        { "msg-scale",   0, CVT_FLOAT, &cfg.msgScale, 0.1f, 1 },
+        { "msg-show",    0, CVT_BYTE, &cfg.hudShown[HUD_LOG], 0, 1, ST_LogPostVisibilityChangeNotification },
+        { NULL }
+    };
+    int i;
+    for(i = 0; cvars[i].path; ++i)
+        Con_AddVariable(cvars + i);
+}
+
+/// @return  Index of the first (i.e., earliest) message that is potentially visible.
+static int UILog_FirstPVisMessageIdx(const uiwidget_t* obj)
+{
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    assert(obj->type == GUI_LOG);
+
+    if(0 != log->_pvisMsgCount)
+    {
+        int n = log->_nextUsedMsg - MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
+        if(n < 0) n += LOG_MAX_MESSAGES; // Wrap around.
+        return n;
+    }
+    return -1;
+}
+
+/// @return  Index of the first (i.e., earliest) message.
+static int UILog_FirstMessageIdx(const uiwidget_t* obj)
+{
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    assert(obj->type == GUI_LOG);
+
+    if(0 != log->_pvisMsgCount)
+    {
+        int n = log->_nextUsedMsg - log->_pvisMsgCount;
+        if(n < 0) n += LOG_MAX_MESSAGES; // Wrap around.
+        return n;
+    }
+    return -1;
+}
+
+/// @return  Index of the next (possibly already used) message.
+static __inline int UILog_NextMessageIdx(const uiwidget_t* obj, int current)
+{
+    if(current < LOG_MAX_MESSAGES - 1) return current + 1;
+    return 0; // Wrap around.
+}
+
+/// @return  Index of the previous (possibly already used) message.
+static __inline int UILog_PrevMessageIdx(const uiwidget_t* obj, int current)
+{
+    if(current > 0) return current - 1;
+    return LOG_MAX_MESSAGES - 1; // Wrap around.
 }
 
 /**
- * Adds the given message to the buffer.
+ * Push a new message into the log.
  *
- * @param log           Ptr to the msglog to add the message to.
- * @param txt           The message to be added.
- * @param tics          The length of time the message should be visible.
+ * @param flags  @see messageFlags
+ * @param text  Message to be added.
+ * @param tics  Length of time the message should be visible.
  */
-static void logPush(msglog_t* log, const char* txt, int tics)
+static guidata_log_message_t* UILog_Push(uiwidget_t* obj, int flags, const char* text, int tics)
 {
-    size_t              len;
-    logmsg_t*           msg;
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    guidata_log_message_t* msg;
+    int len;
+    assert(obj->type == GUI_LOG && text);
 
-    if(!txt || !txt[0])
-        return;
-
-    len = strlen(txt);
-    msg = &log->msgs[log->nextMsg];
-
-    if(len >= msg->maxLen)
+    len = (int)strlen(text);
+    if(0 == len)
     {
-        msg->maxLen = len+1;
-        msg->text = realloc(msg->text, msg->maxLen);
+        Con_Error("Log::Push: Attempted to log zero-length message.");
+        exit(1); // Unreachable.
     }
 
-    memset(msg->text, 0, msg->maxLen);
-    dd_snprintf(msg->text, msg->maxLen, "%s", txt);
+    msg = &log->_msgs[log->_nextUsedMsg];
+    log->_nextUsedMsg = UILog_NextMessageIdx(obj, log->_nextUsedMsg);
+    if(len >= msg->textMaxLen)
+    {
+        msg->textMaxLen = len+1;
+        msg->text = (char*) Z_Realloc(msg->text, msg->textMaxLen, PU_GAMESTATIC);
+        if(!msg->text)
+            Con_Error("Log::Push: Failed on (re)allocation of %lu bytes for log message.", (unsigned long) msg->textMaxLen);
+    }
+
+    if(log->_msgCount < LOG_MAX_MESSAGES)
+        ++log->_msgCount;
+    if(log->_pvisMsgCount < LOG_MAX_MESSAGES)
+        ++log->_pvisMsgCount;
+
+    dd_snprintf(msg->text, msg->textMaxLen, "%s", text);
     msg->ticsRemain = msg->tics = tics;
-    msg->flags = MF_JUSTADDED;
-
-    if(log->nextMsg < LOG_MAX_MESSAGES - 1)
-        log->nextMsg++;
-    else
-        log->nextMsg = 0;
-
-    if(log->msgCount < LOG_MAX_MESSAGES)
-        log->msgCount++;
-
-    if(log->numVisibleMsgs < (unsigned) cfg.msgCount)
-        log->numVisibleMsgs++;
-
-    log->notToBeFuckedWith = log->dontFuckWithMe;
-    log->dontFuckWithMe = 0;
-
-    // Reset the auto-hide timer.
-    log->timer = LOG_MSG_TIMEOUT;
-
-    log->visible = true;
+    msg->flags = LMF_JUSTADDED | flags;
+    return msg;
 }
 
-/**
- * Remove the oldest message from the msglog.
- *
- * @param log           Ptr to the msglog.
- */
-static void logPop(msglog_t* log)
+/// Remove the oldest message from the log.
+static guidata_log_message_t* UILog_Pop(uiwidget_t* obj)
 {
-    int                 oldest;
-    logmsg_t*           msg;
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    guidata_log_message_t* msg;
+    int oldest;
+    assert(obj->type == GUI_LOG);
 
-    if(log->numVisibleMsgs == 0)
-        return;
+    oldest = UILog_FirstMessageIdx(obj);
+    if(0 > oldest) return NULL;
 
-    oldest = (unsigned) log->nextMsg - log->numVisibleMsgs;
-    if(oldest < 0)
-        oldest += LOG_MAX_MESSAGES;
+    msg = &log->_msgs[oldest];
+    --log->_pvisMsgCount;
 
-    msg = &log->msgs[oldest];
-    msg->ticsRemain = 10;
-    msg->flags &= ~MF_JUSTADDED;
-
-    log->numVisibleMsgs--;
+    msg->ticsRemain = LOG_MESSAGE_SCROLLTICS;
+    msg->flags &= ~LMF_JUSTADDED;
+    return msg;
 }
 
-/**
- * Tick the given msglog. Jobs include ticking messages and adjusting values
- * used when drawing the buffer for animation.
- *
- * @param log           Ptr to the msglog to tick.
- */
-static void logTicker(msglog_t* log)
+void UILog_Empty(uiwidget_t* obj)
 {
-    int                 i;
-
-    // Don't tick if the game is paused.
-    if(P_IsPaused())
-        return;
-
-    // All messags tic away. When lower than lineheight, offset the y origin
-    // of the message log. When zero, the earliest is pop'd.
-    for(i = 0; i < LOG_MAX_MESSAGES; ++i)
-    {
-        logmsg_t*           msg = &log->msgs[i];
-
-        if(msg->ticsRemain > 0)
-            msg->ticsRemain--;
-    }
-
-    if(log->numVisibleMsgs)
-    {
-        int                 oldest;
-        logmsg_t*           msg;
-
-        oldest = (unsigned) log->nextMsg - log->numVisibleMsgs;
-        if(oldest < 0)
-            oldest += LOG_MAX_MESSAGES;
-
-        msg = &log->msgs[oldest];
-
-        log->yOffset = 0;
-        if(msg->ticsRemain == 0)
-        {
-            logPop(log);
-        }
-        else
-        {
-            if(msg->ticsRemain <= LINEHEIGHT_A)
-                log->yOffset = LINEHEIGHT_A - msg->ticsRemain;
-        }
-    }
-
-    // Tic the auto-hide timer.
-    if(log->timer > 0)
-        log->timer--;
-    if(log->timer == 0)
-    {
-        log->visible = false;
-        log->notToBeFuckedWith = false;
-    }
+    while(UILog_Pop(obj)) {}
 }
 
-/**
- * Draws the contents of the given msglog to the screen.
- *
- * @param log           Ptr to the msglog to draw.
- */
-static void logDrawer(msglog_t* log)
+void UILog_Post(uiwidget_t* obj, byte flags, const char* text)
 {
-    uint                i, numVisible;
-    int                 n, x, y;
-
-    // How many messages should we print?
-    switch(cfg.msgAlign)
-    {
-    default:
-    case ALIGN_LEFT:    x = 0;              break;
-    case ALIGN_CENTER:  x = SCREENWIDTH/2;  break;
-    case ALIGN_RIGHT:   x = SCREENWIDTH;    break;
-    }
-
-    // First 'num' messages starting from the first one.
-    numVisible = MIN_OF(log->numVisibleMsgs, (unsigned) cfg.msgCount);
-    n = log->nextMsg - numVisible;
-    if(n < 0)
-        n += LOG_MAX_MESSAGES;
-
-    y = 0;
-
-    Draw_BeginZoom(cfg.msgScale, x, 0);
-    DGL_Translatef(0, -log->yOffset, 0);
-
-    for(i = 0; i < numVisible; ++i, y += LINEHEIGHT_A)
-    {
-        logmsg_t*           msg = &log->msgs[n];
-        float               col[4];
-
-        // Default colour and alpha.
-        col[CR] = cfg.msgColor[CR];
-        col[CG] = cfg.msgColor[CG];
-        col[CB] = cfg.msgColor[CB];
-        col[CA] = 1;
-
-        if(msg->flags & MF_JUSTADDED)
-        {
-            uint                msgTics, td, blinkSpeed = cfg.msgBlink;
-
-            msgTics = msg->tics - msg->ticsRemain;
-            td = (cfg.msgUptime * TICSPERSEC) - msg->ticsRemain;
-
-            if((td & 2) && blinkSpeed != 0 && msgTics < blinkSpeed)
-            {
-                // Flash color.
-                col[CR] = col[CG] = col[CB] = 1;
-            }
-            else if(blinkSpeed != 0 &&
-                    msgTics < blinkSpeed + LOG_MSG_FLASHFADETICS &&
-                    msgTics >= blinkSpeed)
-            {
-                int                 c;
-
-                // Fade color to normal.
-                for(c = 0; c < 3; ++c)
-                    col[c] += ((1.0f - col[c]) / LOG_MSG_FLASHFADETICS) *
-                                (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
-            }
-        }
-        else
-        {
-            // Fade alpha out.
-            if(i == 0 && msg->ticsRemain <= LINEHEIGHT_A)
-                col[CA] = msg->ticsRemain / (float) LINEHEIGHT_A * .9f;
-        }
-
-        // Draw using param text.
-        // Messages may use the params to override the way the message is
-        // is displayed, e.g. colour (Hexen's important messages).
-        WI_DrawParamText(x, 1 + y, msg->text, GF_FONTA,
-                         col[CR], col[CG], col[CB], col[CA], false, false,
-                         cfg.msgAlign);
-
-        n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
-    }
-
-    Draw_EndZoom();
-}
-
-/**
- * Initialize the message log of the specified player. Typically called after
- * map load or when said player enters the world.
- *
- * @param player        Player (local) number whose message log to init.
- */
-void Hu_LogStart(int player)
-{
-    player_t*           plr;
-    msglog_t*           log;
-
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
-    plr = &players[player];
-    if(!plr->plr->inGame)
-        return;
-
-    log = &msgLogs[player];
-    memset(log, 0, sizeof(msglog_t));
-}
-
-/**
- * Called during final shutdown.
- */
-void Hu_LogShutdown(void)
-{
-    int                 i;
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        msglog_t*           log = &msgLogs[i];
-        int                 j;
-
-        for(j = 0; j < LOG_MAX_MESSAGES; ++j)
-        {
-            logmsg_t*           msg = &log->msgs[j];
-
-            if(msg->text)
-                free(msg->text);
-            msg->text = NULL;
-            msg->maxLen = 0;
-        }
-
-        log->msgCount = log->numVisibleMsgs = 0;
-    }
-}
-
-/**
- * Called TICSPERSEC times a second.
- */
-void Hu_LogTicker(void)
-{
-    int                 i;
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        logTicker(&msgLogs[i]);
-    }
-}
-
-/**
- * Draw the message log of the specified player.
- *
- * @param player        Player (local) number whose message log to draw.
- */
-void Hu_LogDrawer(int player)
-{
-    if(cfg.msgShow)
-    {
-        logDrawer(&msgLogs[player]);
-    }
-}
-
-/**
- * Post a message to the specified player's log.
- *
- * @param player        Player (local) number whose log to post to.
- * @param flags         LMF_* flags
- *                      LMF_NOHIDE:
- *                      Always display this message regardless whether the
- *                      player's message log has been hidden.
- *                      LMF_YELLOW:
- *                      Prepend the YELLOW param string to msg.
- * @param msg           Message text to be posted.
- */
-void Hu_LogPost(int player, byte flags, const char* msg)
-{
-#define YELLOW_FMT      "{r=1; g=0.7; b=0.3;}"
-#define YELLOW_FMT_LEN  19
 #define SMALLBUF_MAXLEN 128
 
-    player_t* plr;
-    msglog_t* log;
+    //guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    char smallBuf[SMALLBUF_MAXLEN+1];
+    char* bigBuf = NULL, *p;
+    size_t requiredLen = strlen(text);
+    assert(obj->type == GUI_LOG && text);
 
-    if(!msg || !msg[0])
-        return;
+    if(0 == requiredLen) return;
 
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
+    flags &= ~LOG_INTERNAL_MESSAGEFLAGMASK;
 
-    plr = &players[player];
-    if(!plr->plr->inGame)
-        return;
-
-    log = &msgLogs[player];
-
-    if(!log->notToBeFuckedWith || log->dontFuckWithMe)
+    if(requiredLen <= SMALLBUF_MAXLEN)
     {
-        char smallBuf[SMALLBUF_MAXLEN+1];
-        char* bigBuf = NULL, *p;
-        size_t requiredLen = strlen(msg) +
-            ((flags & LMF_YELLOW)? YELLOW_FMT_LEN : 0);
-
-        if(requiredLen <= SMALLBUF_MAXLEN)
-        {
-            p = smallBuf;
-        }
-        else
-        {
-            bigBuf = malloc(requiredLen + 1);
-            p = bigBuf;
-        }
-
-        p[requiredLen] = '\0';
-        if(flags & LMF_YELLOW)
-            sprintf(p, YELLOW_FMT "%s", msg);
-        else
-            sprintf(p, "%s", msg);
-
-        logPush(log, p, cfg.msgUptime * TICSPERSEC);
-
-        if(bigBuf)
-            free(bigBuf);
+        p = smallBuf;
     }
+    else
+    {
+        bigBuf = (char*) malloc(requiredLen + 1);
+        if(NULL == bigBuf)
+            Con_Error("Log::Post: Failed on allocation of %lu bytes for temporary "
+                "local message buffer.", (unsigned long) (requiredLen + 1));
+        p = bigBuf;
+    }
+    p[requiredLen] = '\0';
+    sprintf(p, "%s", text);
 
-#undef YELLOW_FMT
-#undef YELLOW_FMT_LEN
+    UILog_Push(obj, flags, p, cfg.msgUptime * TICSPERSEC);
+    if(NULL != bigBuf)
+        free(bigBuf);
+
 #undef SMALLBUF_MAXLEN
 }
 
-/**
- * Rewind the message log of the specified player, making the last few
- * messages visible again.
- *
- * @param player        Player (local) number whose message log to refresh.
- */
-void Hu_LogRefresh(int player)
+void UILog_Refresh(uiwidget_t* obj)
 {
-    uint                i;
-    int                 n;
-    player_t*           plr;
-    msglog_t*           log;
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    int i, n;
+    assert(obj->type == GUI_LOG);
 
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
+    log->_pvisMsgCount = MIN_OF(log->_msgCount, MAX_OF(0, cfg.msgCount));
+    n = UILog_FirstMessageIdx(obj);
+    if(0 > n) return;
 
-    plr = &players[player];
-    if(!plr->plr->inGame)
-        return;
-
-    log = &msgLogs[player];
-    log->visible = true;
-    log->numVisibleMsgs = MIN_OF((unsigned) cfg.msgCount,
-        MIN_OF(log->msgCount, (unsigned) LOG_MAX_MESSAGES));
-
-    // Reset the auto-hide timer.
-    log->timer = LOG_MSG_TIMEOUT;
-
-    // Refresh the messages.
-    n = log->nextMsg - log->numVisibleMsgs;
-    if(n < 0)
-        n += LOG_MAX_MESSAGES;
-
-    for(i = 0; i < log->numVisibleMsgs; ++i)
+    for(i = 0; i < log->_pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
-        logmsg_t*           msg = &log->msgs[n];
+        guidata_log_message_t* msg = &log->_msgs[n];
 
         // Change the tics remaining to that at post time plus a small bonus
-        // so that they don't all disappear at once.
-        msg->ticsRemain = msg->tics + i * (TICSPERSEC >> 2);
-        msg->flags &= ~MF_JUSTADDED;
-
-        n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
+        // so that they do not all disappear at once.
+        msg->ticsRemain = msg->tics + i * TICSPERSEC;
+        msg->flags &= ~LMF_JUSTADDED;
     }
 }
 
 /**
- * Empty the message log of the specified player.
- *
- * @param player        Player (local) number whose message log to empty.
+ * Process gametic. Jobs include ticking messages and adjusting values
+ * used when drawing the buffer for animation.
  */
-void Hu_LogEmpty(int player)
+void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
-    player_t*           plr;
-    msglog_t*           log;
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    int i, oldest;
+    assert(obj->type == GUI_LOG);
 
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
-    plr = &players[player];
-    if(!plr->plr->inGame)
-        return;
-
-    log = &msgLogs[player];
-
-    while(log->numVisibleMsgs)
-        logPop(log);
-}
-
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * hu_chat.c: HUD chat widget.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <ctype.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
-#include "hu_stuff.h"
-#include "hu_log.h"
-#include "hu_lib.h"
-#include "p_tick.h" // for P_IsPaused()
-#include "g_common.h"
-#include "g_controls.h"
-#include "d_net.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-#if __JHEXEN__
-enum {
-    CT_PLR_BLUE = 1,
-    CT_PLR_RED,
-    CT_PLR_YELLOW,
-    CT_PLR_GREEN,
-    CT_PLR_PLAYER5,
-    CT_PLR_PLAYER6,
-    CT_PLR_PLAYER7,
-    CT_PLR_PLAYER8
-};
-#endif
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-DEFCC(CCmdMsgAction);
-DEFCC(CCmdLocalMessage);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-boolean shiftdown = false;
-boolean chatOn;
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-
-char* player_names[4];
-int player_names_idx[] = {
-    TXT_HUSTR_PLRGREEN,
-    TXT_HUSTR_PLRINDIGO,
-    TXT_HUSTR_PLRBROWN,
-    TXT_HUSTR_PLRRED
-};
-
-#else
-
-char* player_names[8];
-int player_names_idx[] = {
-    CT_PLR_BLUE,
-    CT_PLR_RED,
-    CT_PLR_YELLOW,
-    CT_PLR_GREEN,
-    CT_PLR_PLAYER5,
-    CT_PLR_PLAYER6,
-    CT_PLR_PLAYER7,
-    CT_PLR_PLAYER8
-};
-#endif
-
-cvar_t chatCVars[] = {
-    // Chat macros
-    {"chat-macro0", 0, CVT_CHARPTR, &cfg.chatMacros[0], 0, 0},
-    {"chat-macro1", 0, CVT_CHARPTR, &cfg.chatMacros[1], 0, 0},
-    {"chat-macro2", 0, CVT_CHARPTR, &cfg.chatMacros[2], 0, 0},
-    {"chat-macro3", 0, CVT_CHARPTR, &cfg.chatMacros[3], 0, 0},
-    {"chat-macro4", 0, CVT_CHARPTR, &cfg.chatMacros[4], 0, 0},
-    {"chat-macro5", 0, CVT_CHARPTR, &cfg.chatMacros[5], 0, 0},
-    {"chat-macro6", 0, CVT_CHARPTR, &cfg.chatMacros[6], 0, 0},
-    {"chat-macro7", 0, CVT_CHARPTR, &cfg.chatMacros[7], 0, 0},
-    {"chat-macro8", 0, CVT_CHARPTR, &cfg.chatMacros[8], 0, 0},
-    {"chat-macro9", 0, CVT_CHARPTR, &cfg.chatMacros[9], 0, 0},
-    {"chat-beep", 0, CVT_BYTE, &cfg.chatBeep, 0, 1},
-    {NULL}
-};
-
-// Console commands for the chat widget and message log.
-ccmd_t chatCCmds[] = {
-    {"chatcancel",      "",     CCmdMsgAction},
-    {"chatcomplete",    "",     CCmdMsgAction},
-    {"chatdelete",      "",     CCmdMsgAction},
-    {"chatsendmacro",   NULL,   CCmdMsgAction},
-    {"beginchat",       NULL,   CCmdMsgAction},
-    {"message",         "s",    CCmdLocalMessage},
-    {NULL}
-};
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int chatTo = 0; // 0=all, 1=player 0, etc.
-static hu_text_t chat;
-static hu_text_t chatBuffer[MAXPLAYERS];
-static boolean chatAlwaysOff = false;
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Called during the PreInit of each game during start up.
- * Register Cvars and CCmds for the opperation/look of the (message) log.
- */
-void Chat_Register(void)
-{
-    int                 i;
-
-    for(i = 0; chatCVars[i].name; ++i)
-        Con_AddVariable(chatCVars + i);
-
-    for(i = 0; chatCCmds[i].name; ++i)
-        Con_AddCommand(chatCCmds + i);
-}
-
-/**
- * Called by HU_init().
- */
-void Chat_Init(void)
-{
-    int                 i;
-
-    // Setup strings.
-    for(i = 0; i < 10; ++i)
+    // All messags tic away.
+    for(i = 0; i < LOG_MAX_MESSAGES; ++i)
     {
-        if(!cfg.chatMacros[i]) // Don't overwrite if already set.
-            cfg.chatMacros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
+        guidata_log_message_t* msg = &log->_msgs[i];
+        if(0 == msg->ticsRemain) continue;
+        --msg->ticsRemain;
     }
-}
 
-/**
- * Called by HU_Start().
- */
-void Chat_Start(void)
-{
-    int                 i;
-
-    // Create the chat widget
-    HUlib_initText(&chat, 0, M_CharHeight('A', GF_FONTA) + 1, &chatOn);
-
-    for(i = 0; i < MAXPLAYERS; ++i)
+    // Is it time to pop?
+    oldest = UILog_FirstMessageIdx(obj);
+    if(oldest >= 0)
     {
-        Chat_Open(i, false);
-
-        // Create the input buffers.
-        HUlib_initText(&chatBuffer[i], 0, 0, &chatAlwaysOff);
-    }
-}
-
-void Chat_Open(int player, boolean open)
-{
-    if(open)
-    {
-        chatOn = true;
-        chatTo = player;
-
-        HUlib_resetText(&chat);
-
-        // Enable the chat binding class
-        DD_Execute(true, "activatebcontext chat");
-    }
-    else
-    {
-        if(chatOn)
+        guidata_log_message_t* msg = &log->_msgs[oldest];
+        if(0 == msg->ticsRemain)
         {
-            chatOn = false;
-
-            // Disable the chat binding class
-            DD_Execute(true, "deactivatebcontext chat");
+            UILog_Pop(obj);
         }
     }
 }
 
-boolean Chat_Responder(event_t* ev)
+void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
-    boolean             eatkey = false;
-    unsigned char       c;
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    const int alignFlags = ALIGN_TOP| ((cfg.msgAlign == 0)? ALIGN_LEFT : (cfg.msgAlign == 2)? ALIGN_RIGHT : 0);
+    const short textFlags = DTF_NO_EFFECTS;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    //const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    int lineHeight;
+    int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
+    int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
+    float y, yOffset, scrollFactor, col[4];
+    guidata_log_message_t* msg;
+    assert(obj->type == GUI_LOG);
 
-    if(!chatOn || G_GetGameState() != GS_MAP)
-        return false;
+    /// \kludge Do not draw message logs while the map title is being displayed.
+    if(cfg.mapTitle && actualMapTime < 6 * 35) return;
+    /// kludge end.
 
-    if(ev->type != EV_KEY)
-        return false;
+    if(!pvisMsgCount) return;
 
-    if(ev->data1 == DDKEY_RSHIFT)
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
+    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
+
+    firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);
+    if(!cfg.hudShown[HUD_LOG])
     {
-        shiftdown = (ev->state == EVS_DOWN || ev->state == EVS_REPEAT);
-        return false;
+        // Advance to the first non-hidden message.
+        i = 0;
+        while(0 == (log->_msgs[firstMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        {
+            firstMsg = UILog_NextMessageIdx(obj, firstMsg);
+        }
+
+        // Nothing visible?
+        if(i == pvisMsgCount) goto stateCleanup;
+
+        // There is possibly fewer potentially-visible messages now.
+        pvisMsgCount -= firstMsg - firstPVisMsg;
     }
 
-    if(ev->state != EVS_DOWN)
-        return false;
+    lastMsg = firstMsg + pvisMsgCount-1;
+    if(lastMsg > LOG_MAX_MESSAGES-1)
+        lastMsg -= LOG_MAX_MESSAGES; // Wrap around.
 
-    c = (unsigned char) ev->data1;
+    if(!cfg.hudShown[HUD_LOG])
+    {
+        // Rewind to the last non-hidden message.
+        i = 0;
+        while(0 == (log->_msgs[lastMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        {
+            lastMsg = UILog_PrevMessageIdx(obj, lastMsg);
+        }
+    }
 
-    if(shiftdown)
-        c = shiftXForm[c];
+    FR_SetFont(obj->font);
+    /// @todo Query line height from the font.
+    lineHeight = FR_CharHeight('Q')+1;
 
-    eatkey = HUlib_keyInText(&chat, c);
+    // Scroll offset is calculated using the timeout of the first visible message.
+    msg = &log->_msgs[firstMsg];
+    if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
+    {
+        scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
+        yOffset = -lineHeight * scrollFactor;
+    }
+    else
+    {
+        scrollFactor = 0;
+        yOffset = 0;
+    }
 
-    return eatkey;
-}
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
+    DGL_Enable(DGL_TEXTURE_2D);
 
-void Chat_Drawer(int player)
-{
-    if(player == CONSOLEPLAYER)
-        HUlib_drawText(&chat, GF_FONTA);
-}
+    y = 0;
+    n = firstMsg;
+    drawnMsgCount = 0;
 
-/**
- * Sends a string to other player(s) as a chat message.
- */
-static void sendMessage(const char* msg)
-{
-    char                buff[256];
-    int                 i;
+    for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
+    {
+        msg = &log->_msgs[n];
+        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE))
+            continue;
 
-    if(chatTo == 0)
-    {   // Send the message to the other players explicitly,
-        if(!IS_NETGAME)
-        {   // Send it locally.
-            for(i = 0; i < MAXPLAYERS; ++i)
-            {
-                D_NetMessageNoSound(i, msg);
-            }
+        // Default color and alpha.
+        col[CR] = cfg.msgColor[CR];
+        col[CG] = cfg.msgColor[CG];
+        col[CB] = cfg.msgColor[CB];
+        if(n != firstMsg)
+        {
+            col[CA] = textAlpha;
         }
         else
         {
-            strcpy(buff, "chat ");
-            M_StrCatQuoted(buff, msg, 256);
-            DD_Execute(false, buff);
+            // Fade out.
+            col[CA] = textAlpha * 1.f - scrollFactor * (4/3.f);
+            col[CA] = MINMAX_OF(0, col[CA], 1);
         }
-    }
-    else
-    {   // Send to all of the destination color.
-        chatTo -= 1;
 
-        for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->inGame && cfg.playerColor[i] == chatTo)
+        if((msg->flags & LMF_JUSTADDED) && 0 != cfg.msgBlink)
+        {
+            const uint blinkSpeed = cfg.msgBlink;
+            const uint msgTics = msg->tics - msg->ticsRemain;
+
+            if(msgTics < blinkSpeed)
             {
-                if(!IS_NETGAME)
-                {   // Send it locally.
-                    D_NetMessageNoSound(i, msg);
-                }
-                else
+                const uint td = (cfg.msgUptime * TICSPERSEC) - msg->ticsRemain;
+                if(n == lastMsg && (0 == msgTics || (td & 2)))
                 {
-                    sprintf(buff, "chatNum %d ", i);
-                    M_StrCatQuoted(buff, msg, 256);
-                    DD_Execute(false, buff);
+                    // Use the "flash" color.
+                    col[CR] = col[CG] = col[CB] = 1;
                 }
             }
+            else if(msgTics < blinkSpeed + LOG_MESSAGE_FLASHFADETICS && msgTics >= blinkSpeed)
+            {
+                // Fade color to normal.
+                const float fade = (blinkSpeed + LOG_MESSAGE_FLASHFADETICS - msgTics);
+                col[CR] += (1.0f - col[CR]) / LOG_MESSAGE_FLASHFADETICS * fade;
+                col[CG] += (1.0f - col[CG]) / LOG_MESSAGE_FLASHFADETICS * fade;
+                col[CB] += (1.0f - col[CB]) / LOG_MESSAGE_FLASHFADETICS * fade;
+            }
+        }
+
+        FR_SetColorAndAlpha(col[CR], col[CG], col[CB], col[CA]);
+        FR_DrawTextXY3(msg->text, 0, y, alignFlags, textFlags);
+
+        ++drawnMsgCount;
+        y += lineHeight;
     }
 
-#if __JDOOM__
-    if(gameMode == commercial)
-        S_LocalSound(SFX_RADIO, 0);
+stateCleanup:
+    DGL_Disable(DGL_TEXTURE_2D);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+}
+
+void UILog_UpdateGeometry(uiwidget_t* obj)
+{
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    guidata_log_message_t* msg;
+    int lineHeight;
+    int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
+    int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
+    float scrollFactor;
+    RectRaw lineGeometry;
+    assert(obj->type == GUI_LOG);
+
+    Rect_SetWidthHeight(obj->geometry, 0, 0);
+
+    if(0 == pvisMsgCount) return;
+
+    firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);
+    if(!cfg.hudShown[HUD_LOG])
+    {
+        // Advance to the first non-hidden message.
+        i = 0;
+        while(0 == (log->_msgs[firstMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        {
+            firstMsg = UILog_NextMessageIdx(obj, firstMsg);
+        }
+
+        // Nothing visible?
+        if(i == pvisMsgCount) return;
+
+        // There is possibly fewer potentially-visible messages now.
+        pvisMsgCount -= firstMsg - firstPVisMsg;
+    }
+
+    lastMsg = firstMsg + pvisMsgCount-1;
+    if(lastMsg > LOG_MAX_MESSAGES-1)
+        lastMsg -= LOG_MAX_MESSAGES; // Wrap around.
+
+    if(!cfg.hudShown[HUD_LOG])
+    {
+        // Rewind to the last non-hidden message.
+        i = 0;
+        while(0 == (log->_msgs[lastMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        {
+            lastMsg = UILog_PrevMessageIdx(obj, lastMsg);
+        }
+    }
+
+    FR_SetFont(FID(GF_FONTA));
+    /// @todo Query line height from the font.
+    lineHeight = FR_CharHeight('Q')+1;
+
+    // Scroll offset is calculated using the timeout of the first visible message.
+    msg = &log->_msgs[firstMsg];
+    if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
+    {
+        scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
+    }
     else
-        S_LocalSound(SFX_TINK, 0);
-#elif __JDOOM64__
-    S_LocalSound(SFX_RADIO, 0);
-#endif
-}
-
-/**
- * Sets the chat buffer to a chat macro string.
- */
-static boolean sendMacro(int player, int num)
-{
-    if(num >= 0 && num < 9)
-    {   // Leave chat mode and notify that it was sent.
-        if(chatOn)
-            Chat_Open(player, false);
-
-        sendMessage(cfg.chatMacros[num]);
-        return true;
-    }
-
-    return false;
-}
-
-/**
- * Display a local game message.
- */
-DEFCC(CCmdLocalMessage)
-{
-    D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
-    return true;
-}
-
-/**
- * Handles controls (console commands) for the chat widget.
- */
-DEFCC(CCmdMsgAction)
-{
-    int toPlayer;
-
-    if(G_GetGameAction() == GA_QUIT)
-        return false;
-
-    if(chatOn)
     {
-        if(!stricmp(argv[0], "chatcomplete"))  // send the message
-        {
-            Chat_Open(CONSOLEPLAYER, false);
-            if(chat.l.len)
-            {
-                sendMessage(chat.l.l);
-            }
-        }
-        else if(!stricmp(argv[0], "chatcancel"))  // close chat
-        {
-            Chat_Open(CONSOLEPLAYER, false);
-        }
-        else if(!stricmp(argv[0], "chatdelete"))
-        {
-            HUlib_delCharFromText(&chat);
-        }
+        scrollFactor = 0;
     }
 
-    if(!stricmp(argv[0], "chatsendmacro"))  // send a chat macro
+    n = firstMsg;
+    drawnMsgCount = 0;
+
+    lineGeometry.origin.x = lineGeometry.origin.y = 0;
+
+    for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
-        int macroNum;
+        msg = &log->_msgs[n];
+        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE)) continue;
 
-        if(argc < 2 || argc > 3)
-        {
-            Con_Message("Usage: %s (player) (macro number)\n", argv[0]);
-            Con_Message("Send a chat macro to other player(s).\n"
-                        "If (player) is omitted, the message will be sent to all players.\n");
-            return true;
-        }
+        ++drawnMsgCount;
 
-        if(argc == 3)
-        {
-            toPlayer = atoi(argv[1]);
-            if(toPlayer < 0 || toPlayer > 3)
-            {
-                // Bad destination.
-                Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                            toPlayer);
-                return false;
-            }
+        FR_TextSize(&lineGeometry.size, msg->text);
+        Rect_UniteRaw(obj->geometry, &lineGeometry);
 
-            toPlayer = toPlayer + 1;
-        }
-        else
-            toPlayer = 0;
-
-        macroNum = atoi(((argc == 3)? argv[2] : argv[1]));
-        if(!sendMacro(CONSOLEPLAYER, macroNum))
-        {
-            Con_Message("Invalid macro number\n");
-            return false;
-        }
+        lineGeometry.origin.y += lineHeight;
     }
-    else if(!stricmp(argv[0], "beginchat")) // begin chat mode
+
+    if(0 != drawnMsgCount)
     {
-        if(chatOn)
-            return false;
-
-        if(argc == 2)
-        {
-            toPlayer = atoi(argv[1]);
-            if(toPlayer < 0 || toPlayer > 3)
-            {
-                // Bad destination.
-                Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                            toPlayer);
-                return false;
-            }
-
-            toPlayer = toPlayer + 1;
-        }
-        else
-            toPlayer = 0;
-
-        Chat_Open(toPlayer, true);
+        // Subtract the scroll offset.
+        Rect_SetHeight(obj->geometry, Rect_Height(obj->geometry) - lineHeight * scrollFactor);
     }
 
-    return true;
+    Rect_SetWidthHeight(obj->geometry, Rect_Width(obj->geometry)  * cfg.msgScale,
+                                       Rect_Height(obj->geometry) * cfg.msgScale);
 }

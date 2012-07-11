@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -135,20 +135,44 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(struct player_s *player)
+void P_BringUpWeapon(player_t* player)
 {
-    weaponmodeinfo_t   *wminfo;
+#if _DEBUG
+    const weapontype_t oldPendingWeapon = player->pendingWeapon;
+#endif
 
-    if(player->pendingWeapon == WT_NOCHANGE)
-        player->pendingWeapon = player->readyWeapon;
+    weaponmodeinfo_t* wminfo = NULL;
+    weapontype_t raiseWeapon;
 
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
+    if(!player) return;
 
-    if(wminfo->raiseSound)
-        S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
+    if(player->plr->flags & DDPF_UNDEFINED_WEAPON)
+    {
+        // We'll do this when the server informs us about the client's current weapon.
+        return;
+    }
+
+    raiseWeapon = player->pendingWeapon;
+    if(raiseWeapon == WT_NOCHANGE)
+        raiseWeapon = player->readyWeapon;
 
     player->pendingWeapon = WT_NOCHANGE;
     player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+
+    if(!VALID_WEAPONTYPE(raiseWeapon))
+    {
+        return;
+    }
+
+    wminfo = WEAPON_INFO(raiseWeapon, player->class_, 0);
+
+#if _DEBUG
+    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i\n",
+                (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
+#endif
+
+    if(wminfo->raiseSound)
+        S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
 
     P_SetPsprite(player, ps_weapon, wminfo->states[WSN_UP]);
 }
@@ -348,25 +372,24 @@ void C_DECL A_PlasmaShock(player_t* pl, pspdef_t* psp)
     P_SetPsprite(pl, ps_flash, S_PLASMASHOCK1);
 }
 
-void C_DECL A_GunFlash(player_t *player, pspdef_t *psp)
+void C_DECL A_GunFlash(player_t* player, pspdef_t* psp)
 {
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackEndState);
     P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
 }
 
-void C_DECL A_Punch(player_t *player, pspdef_t *psp)
+void C_DECL A_Punch(player_t* player, pspdef_t* psp)
 {
-    angle_t             angle;
-    int                 damage;
-    float               slope;
+    angle_t angle;
+    int damage;
+    float slope;
 
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     damage = (P_Random() % 10 + 1) * 2;
-
     if(player->powers[PT_STRENGTH])
         damage *= 10;
 
@@ -380,23 +403,21 @@ void C_DECL A_Punch(player_t *player, pspdef_t *psp)
     {
         S_StartSound(SFX_PUNCH, player->plr->mo);
 
-        player->plr->mo->angle =
-            R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
-                            lineTarget->pos[VX], lineTarget->pos[VY]);
+        player->plr->mo->angle = M_PointToAngle2(player->plr->mo->origin, lineTarget->origin);
         player->plr->flags |= DDPF_FIXANGLES;
     }
 }
 
-void C_DECL A_Saw(player_t *player, pspdef_t *psp)
+void C_DECL A_Saw(player_t* player, pspdef_t* psp)
 {
-    angle_t             angle;
-    int                 damage;
-    float               slope;
+    angle_t angle;
+    int damage;
+    float slope;
 
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     damage = (float) (P_Random() % 10 + 1) * 2;
     angle = player->plr->mo->angle;
@@ -415,9 +436,7 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
     S_StartSound(SFX_SAWHIT, player->plr->mo);
 
     // Turn to face target.
-    angle =
-        R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
-                        lineTarget->pos[VX], lineTarget->pos[VY]);
+    angle = M_PointToAngle2(player->plr->mo->origin, lineTarget->origin);
     if(angle - player->plr->mo->angle > ANG180)
     {
         if(angle - player->plr->mo->angle < -ANG90 / 32) // jd64 was "/ 20"
@@ -768,10 +787,10 @@ void C_DECL A_Light2(player_t *player, pspdef_t *psp)
 /**
  * Spawn a BFG explosion on every monster in view.
  */
-void C_DECL A_BFGSpray(mobj_t *mo)
+void C_DECL A_BFGSpray(mobj_t* mo)
 {
-    int                 i, j, damage;
-    angle_t             angle;
+    int i, j, damage;
+    angle_t angle;
 
     // Offset angles from its attack angle.
     for(i = 0; i < 40; ++i)
@@ -781,23 +800,23 @@ void C_DECL A_BFGSpray(mobj_t *mo)
         // mo->target is the originator (player) of the missile.
         P_AimLineAttack(mo->target, angle, 16 * 64);
 
-        if(!lineTarget)
-            continue;
+        if(!lineTarget) continue;
 
-        P_SpawnMobj3f(MT_EXTRABFG,
-                      lineTarget->pos[VX], lineTarget->pos[VY],
-                      lineTarget->pos[VZ] + lineTarget->height / 4,
-                      angle + ANG180, 0);
+        P_SpawnMobjXYZ(MT_EXTRABFG, lineTarget->origin[VX], lineTarget->origin[VY],
+                                    lineTarget->origin[VZ] + lineTarget->height / 4,
+                                    angle + ANG180, 0);
 
         damage = 0;
         for(j = 0; j < 15; ++j)
+        {
             damage += (P_Random() & 7) + 1;
+        }
 
         P_DamageMobj(lineTarget, mo->target, mo->target, damage, false);
     }
 }
 
-void C_DECL A_BFGsound(player_t *player, pspdef_t *psp)
+void C_DECL A_BFGsound(player_t* player, pspdef_t* psp)
 {
     S_StartSound(SFX_BFG, player->plr->mo);
 }

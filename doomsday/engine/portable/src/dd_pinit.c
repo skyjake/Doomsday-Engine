@@ -1,34 +1,26 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * dd_pinit.c: Portable Engine Initialization
+ * @file dd_pinit.c
+ * Platform independent routines for initializing the engine. @ingroup base
  *
- * Platform independent routines for initializing the engine.
+ * @todo Move these to dd_init.cpp.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -41,25 +33,12 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_network.h"
-#include "de_misc.h"
+#include "de_ui.h"
+#include "de_filesys.h"
 
 #include "def_main.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+#include "updater.h"
 
 /*
  * The game imports and exports.
@@ -67,14 +46,12 @@
 game_import_t __gi;
 game_export_t __gx;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 int DD_CheckArg(char* tag, const char** value)
 {
-    int                 i = ArgCheck(tag);
-    const char*         next = ArgNext();
+    /// @todo Add parameter for using NextAsPath().
+
+    int                 i = CommandLine_Check(tag);
+    const char*         next = CommandLine_Next();
 
     if(!i)
         return 0;
@@ -83,43 +60,17 @@ int DD_CheckArg(char* tag, const char** value)
     return 1;
 }
 
-void DD_ErrorBox(boolean error, char* format, ...)
-{
-    char                buff[200];
-    va_list             args;
-
-    va_start(args, format);
-    dd_vsnprintf(buff, sizeof(buff), format, args);
-    va_end(args);
-
-#ifdef WIN32
-    suspendMsgPump = true;
-    MessageBox(NULL, WIN_STRING(buff),
-               TEXT("Doomsday ") DOOMSDAY_VERSION_TEXT_WSTR,
-               (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
-    suspendMsgPump = false;
-#endif
-
-#ifdef UNIX
-    fputs(buff, stderr);
-#endif
-}
-
-/**
- * Compose the title for the main window.
- */
 void DD_ComposeMainWindowTitle(char* title)
 {
-    if(__gx.GetVariable)
+    if(DD_GameLoaded() && gx.GetVariable)
     {
-        char*               gameName = (char*) __gx.GetVariable(DD_GAME_ID);
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s",
-                (isDedicated? " (Dedicated)" : ""), gameName);
+        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s (%s %s)",
+            (isDedicated? " (Dedicated)" : ""), Str_Text(Game_Title(theGame)),
+            (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
     }
     else
     {
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s",
-                (isDedicated? " (Dedicated)" : ""));
+        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s", (isDedicated? " (Dedicated)" : ""));
     }
 }
 
@@ -140,119 +91,89 @@ void SetGameImports(game_import_t* imp)
 
 void DD_InitAPI(void)
 {
-    GETGAMEAPI          GetGameAPI = app.GetGameAPI;
-
-    game_export_t*      gameExPtr;
+    GETGAMEAPI GetGameAPI = app.GetGameAPI;
 
     // Put the imported stuff into the imports.
     SetGameImports(&__gi);
 
     memset(&__gx, 0, sizeof(__gx));
-    gameExPtr = GetGameAPI(&__gi);
-    memcpy(&__gx, gameExPtr,
-           MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+    if(GetGameAPI)
+    {
+        game_export_t* gameExPtr = GetGameAPI(&__gi);
+        memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+    }
 }
 
-void DD_InitCommandLine(const char* cmdLine)
+void DD_InitCommandLine(void)
 {
-    ArgInit(cmdLine);
-
-    // Register some abbreviations for command line options.
-    ArgAbbreviate("-game", "-g");
-    ArgAbbreviate("-gl", "-r"); // As in (R)enderer...
-    ArgAbbreviate("-defs", "-d");
-    ArgAbbreviate("-width", "-w");
-    ArgAbbreviate("-height", "-h");
-    ArgAbbreviate("-winsize", "-wh");
-    ArgAbbreviate("-bpp", "-b");
-    ArgAbbreviate("-window", "-wnd");
-    ArgAbbreviate("-nocenter", "-noc");
-    ArgAbbreviate("-paltex", "-ptx");
-    ArgAbbreviate("-file", "-f");
-    ArgAbbreviate("-maxZone", "-mem");
-    ArgAbbreviate("-config", "-cfg");
-    ArgAbbreviate("-parse", "-p");
-    ArgAbbreviate("-cparse", "-cp");
-    ArgAbbreviate("-command", "-cmd");
-    ArgAbbreviate("-fontdir", "-fd");
-    ArgAbbreviate("-modeldir", "-md");
-    ArgAbbreviate("-basedir", "-bd");
-    ArgAbbreviate("-stdbasedir", "-sbd");
-    ArgAbbreviate("-userdir", "-ud");
-    ArgAbbreviate("-texdir", "-td");
-    ArgAbbreviate("-texdir2", "-td2");
-    ArgAbbreviate("-anifilter", "-ani");
-    ArgAbbreviate("-verbose", "-v");
+    CommandLine_Alias("-game", "-g");
+    CommandLine_Alias("-defs", "-d");
+    CommandLine_Alias("-width", "-w");
+    CommandLine_Alias("-height", "-h");
+    CommandLine_Alias("-winsize", "-wh");
+    CommandLine_Alias("-bpp", "-b");
+    CommandLine_Alias("-window", "-wnd");
+    CommandLine_Alias("-nocenter", "-noc");
+    CommandLine_Alias("-file", "-f");
+    CommandLine_Alias("-config", "-cfg");
+    CommandLine_Alias("-parse", "-p");
+    CommandLine_Alias("-cparse", "-cp");
+    CommandLine_Alias("-command", "-cmd");
+    CommandLine_Alias("-fontdir", "-fd");
+    CommandLine_Alias("-modeldir", "-md");
+    CommandLine_Alias("-basedir", "-bd");
+    CommandLine_Alias("-stdbasedir", "-sbd");
+    CommandLine_Alias("-userdir", "-ud");
+    CommandLine_Alias("-texdir", "-td");
+    CommandLine_Alias("-texdir2", "-td2");
+    CommandLine_Alias("-anifilter", "-ani");
+    CommandLine_Alias("-verbose", "-v");
 }
 
-/**
- * Sets the level of verbosity that was requested using the -verbose
- * option(s).
- */
-void DD_Verbosity(void)
+void DD_ConsoleInit(void)
 {
-    verbose = ArgExists("-verbose");
-}
+    const char* outFileName = "doomsday.out";
+    ddstring_t nativePath;
+    boolean outFileOk;
 
-/**
- * Called early on during the startup process so that we can get the console
- * online ready for printing ASAP.
- */
-boolean DD_EarlyInit(void)
-{
-    const char*         outFileName = "doomsday.out";
+    DD_CheckArg("-out", &outFileName);
+    Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
+    F_ToNativeSlashes(&nativePath, &nativePath);
 
     // We'll redirect stdout to a log file.
-    DD_CheckArg("-out", &outFileName);
-    outFile = fopen(outFileName, "w");
-    if(!outFile)
+    outFileOk = LegacyCore_SetLogFile(Str_Text(&nativePath));
+    Str_Free(&nativePath);
+
+    if(!outFileOk)
     {
-        DD_ErrorBox(false, "Couldn't open message output file.");
-    }
-    else
-    {
-        setbuf(outFile, NULL); // Don't buffer much.
-
-        // Determine the requested degree of verbosity.
-        DD_Verbosity();
-
-        // Get the console online ASAP.
-        if(!Con_Init())
-        {
-            DD_ErrorBox(true, "Error initializing console.");
-        }
-        else
-        {
-            Con_Message("Executable: " DOOMSDAY_VERSION_FULLTEXT ".\n");
-
-            // Print the used command line.
-            if(verbose)
-            {
-                int         p;
-
-                Con_Message("Command line (%i strings):\n", Argc());
-                for(p = 0; p < Argc(); ++p)
-                    Con_Message("  %i: %s\n", p, Argv(p));
-            }
-        }
+        Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s",
+                        LegacyCore_LogFile());
     }
 
-    // Bring the window manager online.
-    Sys_InitWindowManager();
+    // Get the console online ASAP.
+    Con_Init();
 
-    return true;
+    Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
+
+    // Print the used command line.
+    if(verbose)
+    {
+        int p;
+        Con_Message("Command line (%i strings):\n", CommandLine_Count());
+        for(p = 0; p < CommandLine_Count(); ++p)
+            Con_Message("  %i: %s\n", p, CommandLine_At(p));
+    }
 }
 
-/**
- * This is called from DD_Shutdown().
- */
 void DD_ShutdownAll(void)
 {
-    int                 i;
+    int i;
 
+    Updater_Shutdown();
+    FI_Shutdown();
+    UI_Shutdown();
     Con_Shutdown();
     DD_ShutdownHelp();
-    Zip_Shutdown();
 
 #ifdef WIN32
     // Enables Alt-Tab, Alt-Esc, Ctrl-Alt-Del.
@@ -266,16 +187,10 @@ void DD_ShutdownAll(void)
     P_ControlShutdown();
     Sv_Shutdown();
     R_Shutdown();
+    Materials_Shutdown();
     Def_Destroy();
-    F_ShutdownDirec();
-    ArgShutdown();
-    Z_Shutdown();
+    F_ShutdownResourceLocator();
+    F_Shutdown();
+    Libdeng_Shutdown();
     Sys_ShutdownWindowManager();
-
-    // Close the message output file.
-    if(outFile)
-    {
-        fclose(outFile);
-        outFile = NULL;
-    }
 }

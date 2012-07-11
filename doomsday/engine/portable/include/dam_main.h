@@ -1,9 +1,9 @@
-/**\file
+/**\file dam_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@
  */
 
 /**
- * dam_main.h: Doomsday Archived Map (DAM) reader
+ * Doomsday Archived Map (DAM) reader
  */
 
-#ifndef __DOOMSDAY_ARCHIVED_MAP_MAIN_H__
-#define __DOOMSDAY_ARCHIVED_MAP_MAIN_H__
+#ifndef LIBDENG_ARCHIVED_MAP_MAIN_H
+#define LIBDENG_ARCHIVED_MAP_MAIN_H
 
 enum {
     ML_INVALID = -1,
@@ -36,7 +36,7 @@ enum {
     ML_SIDEDEFS, // SideDefs, from editing
     ML_VERTEXES, // Vertices, edited and BSP splits generated
     ML_SEGS, // LineSegs, from LineDefs split by BSP
-    ML_SSECTORS, // SubSectors, list of LineSegs
+    ML_SSECTORS, // Subsectors (BSP leafs), list of LineSegs
     ML_NODES, // BSP nodes
     ML_SECTORS, // Sectors, from editing
     ML_REJECT, // LUT, sector-sector visibility
@@ -51,42 +51,48 @@ enum {
 
 typedef struct maplumpformat_s {
     int         hversion;
-    char       *formatName;
+    char*       formatName;
     int         lumpClass;
 } maplumpformat_t;
 
 typedef struct maplumpinfo_s {
-    int         lumpNum;
-    maplumpformat_t *format;
+    lumpnum_t   lumpNum;
+    maplumpformat_t* format;
     int         lumpClass;
-    int         startOffset;
+    size_t      startOffset;
     uint        elements;
     size_t      length;
 } maplumpinfo_t;
 
-typedef struct listnode_s {
-    void       *data;
-    struct listnode_s *next;
-} listnode_t;
-
 typedef struct archivedmap_s {
-    char        identifier[9];
-    int         numLumps;
-    int        *lumpList;
-    filename_t  cachedMapDataFile;
-    boolean     cachedMapFound;
-    boolean     lastLoadAttemptFailed;
+    Uri* uri;
+    int numLumps;
+    lumpnum_t* lumpList;
+    ddstring_t cachedMapPath;
+    boolean cachedMapFound;
+    boolean lastLoadAttemptFailed;
 } archivedmap_t;
 
-extern byte     mapCache;
+extern byte mapCache;
 
-void        DAM_Register(void);
+/// To be called during init to register the cvars and ccmds for this module.
+void DAM_Register(void);
 
-void        DAM_Init(void);
-void        DAM_Shutdown(void);
+/// Initialize this module.
+void DAM_Init(void);
 
-void        DAM_GetCachedMapDir(char* dir, int mainLump, size_t len);
+/// Shutdown this module.
+void DAM_Shutdown(void);
 
-boolean     DAM_AttemptMapLoad(const char* mapID);
+/**
+ * Compose the relative path (relative to the runtime directory) to the directory
+ * within the archived map cache where maps from the specified source will reside.
+ *
+ * @param sourcePath  Path to the primary resource file for the original map data.
+ * @return  The composed path. Must be destroyed with Str_Delete().
+ */
+ddstring_t* DAM_ComposeCacheDir(const char* sourcePath);
 
-#endif
+boolean DAM_AttemptMapLoad(const Uri* uri);
+
+#endif /* LIBDENG_ARCHIVED_MAP_MAIN_H */

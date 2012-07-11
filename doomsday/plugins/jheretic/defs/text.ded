@@ -29,7 +29,7 @@ Text {
 
 Text {
   ID = "QLOADNET";
-  Text = "You can't quickload during a netgame!";
+  Text = "You can't load during a netgame!";
 }
 
 Text {
@@ -44,12 +44,12 @@ Text {
 
 Text {
   ID = "QSPROMPT";
-  Text = "Quicksave over your game named\n\n'%s'?";
+  Text = "Save over your game named\n\n'%s'?";
 }
 
 Text {
   ID = "QLPROMPT";
-  Text = "Do you want to quickload the game named\n\n'%s'?";
+  Text = "Are you sure you want to load the game named\n\n'%s'?";
 }
 
 Text {

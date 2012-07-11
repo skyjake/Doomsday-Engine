@@ -10,20 +10,29 @@ if len(sys.argv) < 2:
     print "(run in build/scripts/)"
     sys.exit(0)
 
+# Check quiet flag.
+quietMode = False
+if '--quiet' in sys.argv:
+    sys.argv.remove('--quiet')
+    quietMode = True
+    
 deng_dir = os.path.join('..', '..')
 target_dir = os.path.abspath(sys.argv[1])
 
 class Pack:
     def __init__(self):
-        self.files = [] # tuples
+        self.files = [] # tuples        
         
     def add_files(self, fileNamesArray):
         self.files += fileNamesArray
         
+    def msg(self, text):
+        if not quietMode: print text
+        
     def create(self, name):
         full_name = os.path.join(target_dir, name)
-        print "creating %s as %s" % (os.path.normpath(name), os.path.normpath(full_name))
-        
+        self.msg("Creating %s as %s..." % (os.path.normpath(name), os.path.normpath(full_name)))
+               
         pk3 = zipfile.ZipFile(full_name, 'w', zipfile.ZIP_DEFLATED)
         
         for src, dest in self.files:
@@ -31,18 +40,20 @@ class Pack:
             # Is this a file or a folder?
             if os.path.isfile(full_src):
                 # Write the file as is.
-                print "writing %s as %s" % (os.path.normpath(full_src), os.path.normpath(dest))
+                self.msg("writing %s as %s" % (os.path.normpath(full_src), os.path.normpath(dest)))
                 pk3.write(full_src, dest)
             elif os.path.isdir(full_src):
                 # Write the contents of the folder recursively.
                 def process_dir(path, dest_path):
-                    print "processing", os.path.normpath(path)
+                    self.msg("processing %s" % os.path.normpath(path))
                     for file in os.listdir(path):
                         real_file = os.path.join(path, file)
                         if file[0] == '.':
                             continue # Ignore these.
                         if os.path.isfile(real_file):
-                            print "writing %s as %s" % (os.path.normpath(real_file), os.path.normpath(os.path.join(dest_path, file)))
+                            if not quietMode:
+                                self.msg("writing %s as %s" % (os.path.normpath(real_file), 
+                                         os.path.normpath(os.path.join(dest_path, file))))
                             pk3.write(real_file, os.path.join(dest_path, file))
                         elif os.path.isdir(real_file):
                             process_dir(real_file, 
@@ -50,7 +61,7 @@ class Pack:
                 process_dir(full_src, dest)
             
         # Write it out.
-        print "closing", os.path.normpath(full_name)
+        print "Created %s (with %i files)." % (os.path.normpath(full_name), len(pk3.namelist()))
         pk3.close()
 
 # First up, doomsday.pk3.

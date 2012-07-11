@@ -1,181 +1,187 @@
-# $Id: brazilian_portuguese.lang 4338 2007-02-07 15:37:13 VictorWestmann $
+# $Id: brazilian_portuguese.lang 2012-05-03 17:58 NTI Productions $
 #
-# Strings para o Portugu√çs do Brasil
-#
-# Note that all of these are automatically inserted into the "english"
-# language, even with no "language english" block in the beginning of
-# the file.
-#
-# This file is the default language file.  If another language does
-# not have a translation for a certain string, the translation is
-# looked up in this language file.
-
-# The key 'language-portuguese-br' comes from the name of this file.
-# Supposed to appear in the language selection list.
-language-portuguese-br: Portugu√çs do Brasil
+# Strings for Brazilian Portuguese
+# I really don't understand these errors...
+# But I have hopes this will be fix :)
+language-portuguese-br: PortuguÍs do Brasil
 
 #
-# URL de Documenta√Å‚Äûo
+# Documentation URL
 #
 documentation-url: http://dengine.net/dew/index.php?title=Snowberry_Main_Page
 
 #
-# Instala√Å‚Äûo Passo a passo
+# Setup Wizard
 #
-run-setup-wizard: Instala√Å‚Äûo do Guia
-setup-wizard: Instala√Å‚Äûo do Guia
+run-setup-wizard: Assitente de InstalaÁ„o
+setup-wizard: Assistente de InstalaÁ„o
 wizard-language: Idioma
-wizard-language-explanation: Esta interface do Motor Doomsday possui suporte para diversos idiomas. Selecione o idioma que voc√ç gostaria de usar.
-wizard-games: Perfis de Jogos
-wizard-games-all: Selecionar Tudo
-wizard-games-clear: Limpar Tudo
-wizard-select-games: Selecione os jogos que voc√ç gostaria de configurar. Note que voc√ç deve ter uma c√õpia dos arquivos de dados do jogo original.
-wizard-locate-iwad: Para poder jogar este jogo, voc√ç precisar¬∑ localizar o principal arquivo de dados do jogo.
-wizard-locate-iwad-deathkings: Diferentemente de outros jogos, o arquivo WAD do jogo the Death Kings ser¬∑ instalado como uma extens‚Äûo. Death Kings √à uma extens‚Äûo de Hexen.
-wizard-suggested-iwad: Nome Original
+wizard-language-explanation: O porte Doomsday Engine Frontend suporta v·rios idiomas. Selecione o idioma que queira usar.
+wizard-games: Perfil dos jogos
+wizard-games-all: Marcar todos
+wizard-games-clear: Desmarcar todos
+wizard-select-games: EstabeleÁa os jogos a serem configurados. Veja que È obrigatÛrio ter o arquivo de dados do jogo original.
+wizard-locate-iwad: Para jogar esse jogo, È necess·rio localizar o arquivo dos dados principais dele.
+wizard-locate-iwad-deathkings: Diferente dos outros jogos, a WAD Death Kings ser· instalada como um complemento. Death Kings È uma extens„o de Hexen.
+wizard-suggested-iwad: Nome original
 deathkings-selection-title: Localizar HEXDD.WAD
-wizard-addon-paths: Minhas Pastas de Extens?es
-wizard-addon-paths-explanation: Se voc√ç j¬∑ possui os arquivos WAD, pacotes de recursos, ou outras extens?es em seu disco r√ågido, voc√ç pode dizer ao programa para carreg¬∑-los do local atual onde est‚Äûo. Especifique as pastas abaixo. As pastas podem ser editadas em Configura√Å?es Compartilhadas -> configura√Å?es -> p¬∑gina do Executador mais tarde. Se voc√ç instalar extens?es depois usando a aba Extens?es, eles ser‚Äûo copiados para a pasta de extens?es do executador.
-wizard-launching: Op√Å?es do Executador
-wizard-launching-explanation: O frontend deve ser fechado quando um jogo √à inicializado?
-wizard-unlaunchable-profiles: Alguns Perfis n‚Äûo podem ser Executados
+wizard-addon-paths: Minha Pasta de Complementos
+wizard-addon-paths-explanation: Se vocÍ j· tem as WADS, pack de recursos, ou qualquer complemento no seu drive, vocÍ pode carreg·-los direto de suas atuais locaÁıes pelo porte. Especifique-as logo abaixo. Elas podem ser editadas indo em Aspectos Gerais -> ConfiguraÁıes -> Na janela Minha Pasta de Complementos. Se resolver instal·-los depois usando a Aba Complementos, eles ser„o copiados para a pasta de extensıes do porte.
+wizard-launching: OpÁıes do Porte
+wizard-launching-explanation: Fechar a interface do porte ao iniciar um jogo?
+wizard-unlaunchable-profiles: Alguns perfis n„o podem ser executados
 wizard-unlaunchable-profiles-listed =
-"Os seguintes perfis n‚Äûo podem ser executados no momento.
-Est¬∑ faltando um um arquivo de dados do jogo (IWAD) e foram escondidos.
-Voc√ç pode torn¬∑-los vis√åveis em Perfil -> Mostrar..."
+"Os seguintes perfis n„o puderam ser executados no momento.
+Eles n„o possuem o arquivo de dados principais (IWAD) do jogo e foram
+ocultados. VocÍ pode torn·-los visÌveis indo em Profile -> Show..."
 
 #
-# Janelas e Di¬∑logos
+# Windows and Dialogs
 #
 about-dialog: Sobre o Snowberry
-about-subtitle: Interface Extend√åvel para o Motor Doomsday
-about-version: Vers‚Äûo
-about-license = "Este programa √à distribu√ådo sob a licen√Åa
-P?blica Geral GNU."
+about-subtitle: Interface Intuitiva para o Doomsday Engine 
+about-version: Vers„o
+about-license = "Esse programa est· sob distribuiÁ„o da
+LicenÁa P˙blica Geral (GNU GPL)."
 about-website: http://sourceforge.net/projects/deng/
-show-credits: Cr√àditos
-about-credits: Cr√àditos
-cr√àditos = "<html><table width=''100%'' height=''100%'' border=''0''
+show-credits: CrÈditos
+about-credits: CrÈditos
+credits = "<html><table width=''100%'' height=''100%'' border=''0''
 cellspacing=''0'' cellpadding=''10''>
 <tr>
-<td width=''30%'' valign=top align=''right''><b>Concito:</b>
+<td width=''30%'' valign=top align=''right''><b>Conceito:</b>
 <td align=left>Jaakko Keranen, Antti Kopponen, Jari Asp, Toni Kokkonen, Emma Kallio, Veikko Eeva
 <tr>
-<td width=''30%'' valign=top align=''right''><b>Codifica√Å‚Äûo:</b>
+<td width=''30%'' valign=top align=''right''><b>ProgramaÁ„o:</b>
 <td align=left>Jaakko Keranen
 <tr>
-<td width=''30%'' valign=top align=''right''><b>Gr¬∑ficos:</b>
+<td width=''30%'' valign=top align=''right''><b>Gr·ficos:</b>
 <td align=left valign=top>Daniel Swanson, Jaakko Keranen
 <tr>
-<td width=''30%'' valign=top align=''right''><b>Testes e Desenvolvimento:</b>
+<td width=''30%'' valign=top align=''right''><b>Teste e Desenvolvimento:</b>
 <td align=left valign=top>The deng Team
 <tr>
-<td width=''30%'' valign=top align=''right''><b>Documenta√Å‚Äûo:</b>
+<td width=''30%'' valign=top align=''right''><b>DocumentaÁ„o:</b>
 <td align=left valign=top>Jari Asp, Antti Kopponen, Emma Kallio, Jaakko Keranen, the deng Team
+<tr>
+<td width=''30%'' valign=top align=''right''><b>TraduÁ„o:</b>
+<td align=left valign=top>NTI Productions
 </table>"
 
 ok: OK
 cancel: Cancelar
 close: Fechar
 reset: Redefinir
-browse: Procurar
+browse: Browse
 install: Instalar
 launch-message: Executando...
 new-profile-dialog: Criar Novo Perfil
 new-profile-name: Nome
-new-profile-game: Biblioteca do Jogo
+new-profile-game: Biblioteca
 rename-profile-dialog: Renomear Perfil
 rename-profile-name: Novo nome
 reset-profile-dialog: Redefinir Perfil
-reset-profile-query: Voc√ç est¬∑ prestes a redefinir <b>%1</b> para o padr‚Äûo. Voc√ç quer redefinir os valores de todas as configura√Å?es no perfil, as extens?es selecionadas para serem carregadas no peril, ou os dois?
+reset-profile-query: Isso vai redefinir o perfil <b>%1</b>. Quer redefinir os valores desse perfil, os complementos escolhidos para carregar nele, ou ambos?
 reset-profile-values: Redefinir Valores
-reset-profile-addons: Redefinir Extens?es
-reset-profile-everything: Redefinir Tudo
-delete-profile-dialog: Apagar Perfil
-delete-profile-query: Voc√ç tem certeza de que voc√ç quer apagar <b>%1</b>?
-duplicate-profile-dialog: Perfil Duplicado
-duplicating-profile: Voc√ç est¬∑ criando uma duplicata de <b>%1</b>.
-unhide-profile-dialog: Mostrar Perfis
-unhiding-profiles: Selecione um ou mais perfis para mostrar.
-unhide-select-all: Selecionar tudo
-unhide-clear-all: Limpar tudo
+reset-profile-addons: Redefinir Complementos
+reset-profile-everything: Redefinir Ambos
+delete-profile-dialog: Deletar Perfil
+delete-profile-query: Tem certeza de que deseja deletar o perfil <b>%1</b>?
+duplicate-profile-dialog: Duplicar Perfil
+duplicating-profile: Isso vai duplicar o perfil <b>%1</b>.
+unhide-profile-dialog: Visualizar Perfis
+unhiding-profiles: Selecione um ou mais perfis a apresentar.
+unhide-select-all: Marcar todos
+unhide-clear-all: Desmarcar todos
 view-command-line-dialog: Linha de Comando
-install-addon-dialog: Instalador da Extens‚Äûo
-addon-dialog-folder: Pasta:
+install-addon-dialog: Instalar Complementos
+addon-dialog-folder: LocalizaÁ„o:
 addon-dialog-folder-browse: ...
 addon-dialog-folder-uninstalled: Mostrar Desinstalados
-addon-dialog-add-to-custom-folders: Adicionar ‚Ä°s Minhas Pastas de Extens?es
-addon-dialog-browse-prompt: Escolher Pasta
-addon-dialog-found: Extens?es da pasta selecionada:
-addon-dialog-addons-copied: Extens?es Instaladas s‚Äûo copiadas para sua pasta pessoal de extens?es. Se voc√ç quer evitar a c√õpia, adicione a pasta ‚Ä° sua pasta de extens?es.
+addon-dialog-add-to-custom-folders: Adicionar ‡ Minha Pasta de Complementos
+addon-dialog-browse-prompt: Abrir Pasta
+addon-dialog-found: Complementos na pasta selecionada:
+addon-dialog-addons-copied: Complementos instalados s„o copiados para sua pasta pessoal de extensıes. Se deseja evitar a cÛpia, adicione a pasta ‡ sua pasta de extensıes.
 addon-dialog-name: Nome
 addon-dialog-type: Tipo
 addon-dialog-type-box: Box Container
-addon-dialog-type-wad: Arquivo de Dado WAD
+addon-dialog-type-wad: Arquivo de Dados WAD
 addon-dialog-type-addon: Bundle
-addon-dialog-type-pk3: Pacote
+addon-dialog-type-pk3: Package
 addon-dialog-type-zip: Arquivo ZIP
-addon-dialog-type-ded: Arquivo de Defini√Å‚Äûo
-addon-dialog-type-deh: Corre√Å‚Äûo DeHackEd
-addon-dialog-type-manifest: Manifesto da Extens‚Äûo
-uninstall-addon-dialog: Desinstalar Extens‚Äûo
-uninstall-addon-query: Voc√ç tem certeza de que voc√ç quer desinstalar <b>%1</b>?
-uninstall-addon-query-several: Voc√ç tem certeza de que voc√ç quer desinstalar estas extens?es:
-load-order-dialog: Carregar Ordem
-load-order-message: Extens?es ser‚Äûo carregadas nesta ordem:
+addon-dialog-type-ded: Arquivo para DefiniÁ„o
+addon-dialog-type-deh: DeHackEd Patch
+addon-dialog-type-manifest: ManifestaÁ„o do Complemento
+uninstall-addon-dialog: Desinstalar Complemento
+uninstall-addon-query: Tem certeza de que deseja desinstalar <b>%1</b>?
+uninstall-addon-query-several: Tem certeza de que deseja desinstalar estes complementos:
+load-order-dialog: Configurar Ordem
+load-order-message: Os complementos ser„o carregados nessa ordem:
 load-order-move-up: Cima
 load-order-move-down: Baixo
 load-order-move-top: Primeiro
-load-order-move-bottom: ?ltimo
+load-order-move-bottom: ⁄ltimo
 
-addon-inspector-dialog: Inspetor de Extens‚Äûo
-addon-type-generic: Extens‚Äûo Gen√àrica
-addon-type-box: Caixa Snowberry
-addon-type-bundle: Combinado Snowberry
-addon-type-pk3: Pacote PK3
+addon-inspector-dialog: Inspetor de Complementos
+addon-type-generic: Complemento GenÈrico
+addon-type-box: Snowberry Box
+addon-type-bundle: Snowberry Bundle
+addon-type-pk3: Package PK3
 addon-type-wad: Arquivo WAD
-addon-type-dehacked: Corre√Å‚Äûo DeHackEd
-addon-type-ded: Defini√Å?es do Motor Doomsday
+addon-type-dehacked: DeHackEd Patch
+addon-type-ded: DefiniÁıes do Porte
 addon-type-lump: Data Lump
 
-conflict-wizard: Guia de Extens?es
+conflict-wizard: Instalador de ExtenÁ„o
 
-category-conflict-message = "<b>%1</b> exclui as
-seguintes extens?es:%2 <p>Selecione quais destas extens?es devem ser
-carregadas."
+category-conflict-message = "<b>%1</b> exclua os
+seguintes complementos:%2 <p>Escolha qual desses complementos ser„o
+carregados."
 
 conflict-choice1 = "Carregar %1.
-As extens?es apagadas n‚Äûo est‚Äûo carregadas."
-conflict-choice2: N‚Äûo carrega %1.
+Os complementos excluÌdos n„o est„o carregados."
+conflict-choice2: N„o carregar %1.
 
-value-conflict-message = "<b>%1</b> n‚Äûo pode ser usado com
-as seguintes configura√Å?es:%2 <p>%1 n‚Äûo ser¬∑ carregado."
+value-conflict-message = "<b>%1</b> n„o pode ser usado com as
+seguinte configuraÁıes:%2 <p>%1 n„o ser· carregado."
 
-keyword-conflict-message = "<b>%1</b> exclui os seguintes
-recursos:%2 <p>Selecione quais destas extens?es devem ser carregadas."
+keyword-conflict-message = "<b>%1</b> exclua os seguintes
+recursos:%2 <p>Escolha qual desses recursos ser„o carregados."
 
-provide-conflict-message = "Existem recursos conflitantes:%1
-<p>As extens?es listadas abaixo prov√ç vers?es conflitantes do
-mesmo recurso. Apenas uma das extens?es pode ser carregada.
-<p>Selecione qual delas pode ser carregada."
+provide-conflict-message = "Existem recursos em conflito:%1
+<p>Os complementos listados abaixo mostra as versıes em conflito do mesmo recurso. Apenas um desses complementos poder· ser carregado.
+<p>Escolha qual desses poder· ser carregado."
 
-missing-requirements-message = "<b>%1</b> n‚Äûo pode ser usado porque todos
-os recursos que s‚Äûo requeridos n‚Äûo est‚Äû sendo carregados.  <p>In order to use %1,
-voc√ç tamb√àm deve carregar extens?es que fornecem estes recursos requeridos:"
+missing-requirements-message = "<b>%1</b> n„o pode ser usado porque os recursos requeridos n„o est„o sendo carregados.  <p>Para poder usar o %1, È necess·rio carregar os complementos que possuem esses recursos:"
 
 #
-# Perfis e Componentes
+# Profiles and Components
 #
-defaults-profile: Configura√Å?es Compartilhadas
+defaults-profile: Aspectos Gerais
 game-jdoom: jDoom
 game-jheretic: jHeretic
 game-jhexen: jHexen
 game-jdoom-icon: orb-doom
 game-jheretic-icon: orb-heretic
 game-jhexen-icon: orb-hexen
+game-mode: Modo
+game-mode-chex: Chex Quest
+game-mode-doom1: DOOM Registered
+game-mode-doom1-ultimate: DOOM Ultimate
+game-mode-doom1-share: DOOM Shareware
+game-mode-doom2: DOOM II
+game-mode-doom2-plut: Final Doom: Plutonia Experiment
+game-mode-doom2-tnt: Final Doom: TNT Evilution
+game-mode-hacx: HacX
+game-mode-heretic: Heretic Registered
+game-mode-heretic-share: Heretic Shareware
+game-mode-heretic-ext: Heretic: Shadow of the Serpent Riders
+game-mode-hexen: Hexen
+game-mode-hexen-demo: Hexen (4 level demo)
+game-mode-hexen-dk: Hexen: Death Kings of the Dark Citadel
 
 #
-# Etiquetas de Bot?es
+# Button Labels
 #
 play: Jogar
 stop: Parar
@@ -186,13 +192,13 @@ duplicate-profile: Dup
 refresh-addon-database: Atualizar
 install-addon: +
 uninstall-addon: -
-load-order: Carregar na Ordem
+load-order: Configurar Ordem
 addon-info: Info
-addon-settings: Configura√Å?es
+addon-settings: ConfiguraÁıes
 show-addon-paths: Minhas Pastas
 about: Sobre
 popup-menu: Menu
-preferences: Prefer√çncias
+preferences: PreferÍncias
 
 #
 # Menu Items
@@ -203,27 +209,27 @@ menu-2: Ferramentas
 menu-3: Ajuda
 menu-new-profile: Novo...
 menu-rename-profile: Renomear
-menu-reset-profile: Redefinir para Padr‚Äûo
+menu-reset-profile: Ajustar para Padr„o
 menu-duplicate-profile: Duplicar
-menu-delete-profile: Apagar
-menu-hide-profile: Esconder
-menu-unhide-profiles: Mostrar...
+menu-delete-profile: Deletar
+menu-hide-profile: Ocultar
+menu-unhide-profiles: Visualizar...
 menu-uninstall-addon: Desinstalar
 menu-addon-info: Info
-menu-load-order: ...
-menu-install-addon: Instalar Extens‚Äûo...
-menu-addon-settings: Configura√Å?es
-menu-check-category: Checar Categoria
-menu-uncheck-category: Deschecar Categoria
+menu-load-order: Configurar Ordem...
+menu-install-addon: Instalar Complemento...
+menu-addon-settings: ConfiguraÁıes
+menu-check-category: Marcar Categoria
+menu-uncheck-category: Desmarcar Categoria
 menu-expand-all-categories: Expandir Tudo
 menu-collapse-all-categories: Contrair Tudo
-menu-reset-slider: Redefinir para Padr‚Äûo
+menu-reset-slider: Ajustar para Padr„o
 menu-play: Executar Jogo Selecionado
 menu-play-accel: Ctrl-L
-menu-view-command-line: Pr√à-Visualizar Linha de Comando
+menu-view-command-line: PrÈ-Visualizar a Linha de Comando
 menu-view-command-line-accel: Alt-P
-menu-run-setup-wizard: Mostrar Configura√Å‚Äûo do Guia
-menu-show-snowberry-settings: Prefer√çncias
+menu-run-setup-wizard: Visualizar Assistente de InstalaÁ„o
+menu-show-snowberry-settings: PreferÍncias
 menu-show-snowberry-settings-accel: Ctrl-,
 menu-about: Sobre o Snowberry
 menu-quit: Sair
@@ -232,168 +238,156 @@ menu-open-documentation: Ajuda do Snowberry
 menu-open-documentation-accel: Ctrl-?
 
 #
-# Etiquetas de Abas
+# Tab Labels
 #
-tab-summary: Sum¬∑rio
+tab-summary: Sum·rio
 tab-maps: Mapas
-tab-addons: Extens?es
-tab-settings: Configura√Å?es
-general-options: Interface
+tab-addons: Complementos
+tab-settings: ConfiguraÁıes
+general-options: Snowberry
 game-options: Jogo
-display-options: Mostrar
-graphics-options: Gr¬∑ficos
+display-options: ExibiÁ„o
+graphics-options: Gr·ficos
 sound-options: Som
 input-options: Entrada
-addons-options: Extens?es
-developer-options: Desenvolvedor
+addons-options: Complementos
+developer-options: Developer
 
 #
-# Aba de √ïcones
+# Tab Icons
 #
-general-options-icon: geral
+general-options-icon: general
 #game-options-icon: deng2
-display-options-icon: mostrar
-graphics-options-icon: gr¬∑ficos
-sound-options-icon: som
-input-options-icon: entrada
-addons-options-icon: extens?es
-developer-options-icon: desenvolvedor
+display-options-icon: display
+graphics-options-icon: graphics
+sound-options-icon: sound
+input-options-icon: input
+addons-options-icon: addons
+developer-options-icon: developer
 
 #
-# Etiquetas para a Aba Sum¬∑rio
+# Labels for the Summary Tab
 #
-loaded-addons: Extens?es Carregadas
-custom-settings: Configura√Å?es
-system-settings: Configura√Å‚Äûo
-summary-run-in-window: rodar em janela
-summary-color-depth-16: 16-bit de cor
-summary-color-depth-32: 32-bit de cor
+loaded-addons: Complementos Carregados
+custom-settings: ConfiguraÁıes
+system-settings: ConfiguraÁ„o
+summary-run-in-window: rodar no modo janela
+summary-color-depth-16: Cores em 16-bit
+summary-color-depth-32: Cores em 32-bit
 
 #
 # Labels for the Maps Tab
 #
-maps-list-icon:
-maps-list-identifier: Extens‚Äûo PWAD
-maps-list-count: Conte?do
-maps-list-clear: Limpar tudo
+maps-list-identifier: PWAD Addon
+maps-list-count: Conte˙do
+maps-list-clear: Desmarcar tudo
 
 wad-analysis-maps: %1 mapa(s)
 wad-analysis-custom-textures: texturas
 
 #
-# Aba de Extens?es
+# Addons Tab
 #
-addon-counter: %1 de %2 extens?es
+addon-counter: %1 de %2 complementos
 addon-list-check:
 addon-list-name: Nome
-addon-list-version: Vers‚Äûo
-addon-list-in-box: (na caixa)
-menu-addon-list-check-selected: Checar Selecionado
-menu-addon-list-uncheck-selected: Deschecar Selecionado
-menu-addon-list-check-all: Checar Tudo
-menu-addon-list-uncheck-all: Deschecar Tudo
-menu-addon-show-parent-box: Mostrar Caixa
-menu-addon-show-box-category: Mostrar Conte?do da Caixa
+addon-list-version: Vers„o
+addon-list-in-box: (in box)
+menu-addon-list-check-selected: Marcar Selecionado
+menu-addon-list-uncheck-selected: Desmarcar Selecionado
+menu-addon-list-check-all: Marcar Tudo
+menu-addon-list-uncheck-all: Desmarcar Tudo
+menu-addon-show-parent-box: Apresentar Box
+menu-addon-show-box-category: Apresentar Conte˙do do Box
 
 addon-list-filter: Filtro:
-addon-list-filter-mode-all: Mostrar tudo
-addon-list-filter-mode-compatible: Somente compat√åvel
-addon-list-filter-mode-pwad: Somente PWADs
-addon-list-filter-mode-compatible-pwad: Somente PWADs compat√åveis
-addon-list-filter-mode-all-with-boxes: Mostrar tudo (tamb√àm conte?do da caixa)
+addon-list-filter-mode-all: Mostrar todos
+addon-list-filter-mode-compatible: Apenas compatÌvel
+addon-list-filter-mode-pwad: Apenas PWADs
+addon-list-filter-mode-compatible-pwad: Apenas PWADs compatÌveis
+addon-list-filter-mode-all-with-boxes: Mostrar todos (conte˙do do box tambÈm)
 
-category-tree-root: Todas as Extens?es
-category-graphics: Gr¬∑ficos
+category-tree-root: Todos os Complementos
+category-graphics: Gr·ficos
 category-graphics-3d: Recursos 3D
 category-graphics-textures: Texturas
-category-graphics-ui: Interface do Usu¬∑rio
-category-music: M?sica
+category-graphics-ui: Interface do Usu·rio
+category-music: M˙sica
 category-sound: Som
 category-effects: Efeitos
-category-effects-particle: Efeitos Part√åcula
-category-effects-light: Efeitos de Luz
+category-effects-particle: Efeitos de PartÌcula
+category-effects-light: Efeitos de IluminaÁ„o
 category-gamedata: Dados do Jogo
-category-gamedata-doomsday: Arquivos de Jogo Doomsday
-category-gamedata-primary: Arquivos de Dados Prim¬∑rios
+category-gamedata-doomsday: Dados de Jogo do Doomsday
+category-gamedata-primary: Arquivo de Dados Prim·rios
 category-gamedata-maps: Mapas
 category-gamedata-maps-ag: A-G
 category-gamedata-maps-hm: H-M
 category-gamedata-maps-ns: N-S
 category-gamedata-maps-tz: T-Z
 category-gamedata-maps-09: 0-9
-category-gamedata-lumps: Dados Lumps
+category-gamedata-lumps: Data Lumps
 category-patches: DeHackEd Patches
-category-definitions: Defini√Å?es do Motor Doomsday
+category-definitions: DefiniÁıes de Porte
 
 #
-# Tipos de Arquivos
+# File Types
 #
-file-type-iwad: Arquivos de dados do jogo (*.wad)
-file-type-box: Caixas (*.box)
-file-type-bundle: Extens?es bundles (*.addon)
+file-type-iwad: Arquivo de dados IWAD (*.wad)
+file-type-box: Boxes (*.box)
+file-type-bundle: Addons-bundles (*.addon)
 file-type-pk3: Arquivos PK3 (*.pk3)
 file-type-wad: Arquivos WAD (*.wad)
-file-type-ded: Arquivos de defini√Å‚Äûo (*.ded)
-file-type-dehacked: Corre√Å?es DeHackEd (*.deh)
+file-type-ded: Arquivos para DefiniÁ„o (*.ded)
+file-type-dehacked: DeHackEd patches (*.deh)
 file-type-anything: Todos os arquivos
 
 #
-# Configura√Å?es
+# Settings
 #
-no: N‚Äûo
+no: N„o
 yes: Sim
-default: Padr‚Äûo
+default: Padr„o
 browse-button: ...
-#toggle-use-default-value = "padr‚Äûo: "
+#toggle-use-default-value = "padr„o: "
 toggle-use-default-value = ""
 
 language: Idioma
-quit-on-launch: Sair quando jogo for executado
-game: Componente de jogo
-iwad: Arquivo de dado do jogo
-iwad-selection-title: Escolha arquivo de dado do jogo
-memory-zone: Uso de mem√õria (MB)
+quit-on-launch: Sair ao executar o jogo
+game: Componente
+iwad: IWAD
+iwad-selection-title: Carregar IWAD
+memory-zone: Uso de MemÛria (MB)
+dedicated-server: Rodar como servidor dedicado
+server-port: Entrada do Porte TCP
 
-color-depth: Profundidade da Cor
+color-depth: Profundidade da cor
 color-depth-16: 16-bit
 color-depth-32: 32-bit
 
-run-in-window: Rodar jogo em uma janela
+run-in-window: Rodar jogo no modo janela
 
-window-size: Mostrar resolu√Å‚Äûo
-window-size-640x480: 640 x 480
-window-size-800x600: 800 x 600
-window-size-1024x768: 1024 x 768
-window-size-1152x864: 1152 x 864
-window-size-1280x960: 1280 x 960
-window-size-1280x1024: 1280 x 1024
-window-size-1400x1050: 1400 x 1050
-window-size-1600x1200: 1600 x 1200
-window-size-800x500: 800 x 500 (16:10)
-window-size-1024x640: 1024 x 640 (16:10)
-window-size-1280x800: 1280 x 800 (16:10)
-window-size-1600x1000: 1600 x 1000 (16:10)
-window-size-1680x1050: 1680 x 1050 (16:10)
-window-size-custom: Customizar
+window-size: ResoluÁ„o da Tela
+window-size-custom: Personalizado
 
-custom-window-group: Customizar Janela
+custom-window-group: Janela Personalizada
 window-width: Largura
 window-height: Altura
 center-window: Centralizar janela
-window-pos-x: posi√Å‚Äûo X
-window-pos-y: posi√Å‚Äûo Y
+window-pos-x: PosiÁ„o X
+window-pos-y: PosiÁ„o Y
 
-refresh-rate: Taxa de atualiza√Å‚Äûo (Hz)
-triple-buffering: Buffering triplo
+refresh-rate: Taxa de atualizaÁ„o (Hz)
+triple-buffering: Buffering Triplo
 
-enable-gamma: Usar ajustamentos de cor
+enable-gamma: Usar ajustes de cor
 enable-highres-textures: Usar texturas externas
-enable-highres-patches: Usar corre√Å?es externas
+enable-highres-patches: Usar patches externos
 
-texture-compression: Compress‚Äûo da textura
-disable-genmips: Desabilitar SGIS_generate_mipmap
+texture-compression: Comprimir a textura
+disable-genmips: Desativar SGIS_generate_mipmap
 
-zbuffer-depth: Profundidade do Z-buffer
+zbuffer-depth: Profundidade do Z-Buffer
 zbuffer-depth-16: 16-bit
 zbuffer-depth-32: 32-bit
 
@@ -401,188 +395,162 @@ texture-depth: Profundidade da cor da textura
 texture-depth-16: 16-bit
 texture-depth-32: 32-bit
 
-texture-options: Op√Å?es de Textura
-extres-with-pwad: Permitir externo com PWADs
-disable-anisotropic-filter: Desabilitar Filtros Anisotr√õpicos
-paletted-textures: Texturas paletizadas
+texture-options: OpÁıes de Textura
+extres-with-pwad: Permitir exterioridade com PWADs
+disable-anisotropic-filter: Desativar Filtro AnisotrÛpico
 
-maximum-texture-size: Tamanho m¬∑ximo
+maximum-texture-size: Tamanho M·ximo
 maximum-texture-size-unlimited: Hardware
-maximum-texture-size-64: 64 x 64
-maximum-texture-size-128: 128 x 128
-maximum-texture-size-256: 256 x 256
-maximum-texture-size-512: 512 x 512
-maximum-texture-size-1024: 1024 x 1024
-maximum-texture-size-2048: 2048 x 2048
-maximum-texture-size-4096: 4096 x 4096
 
 sound-driver: Driver de Som
+sound-driver-fmod: FMOD Ex
+sound-driver-directsound: DirectSound
 sound-driver-sdlmixer: SDL_mixer
 sound-driver-openal: OpenAL
-sound-driver-dummy: Bobo (sem som)
+sound-driver-dummy: Dummy (sem som)
 
-sound-channels: Canais de Som
-disable-audio: Desabilitar todo o ¬∑udio
-disable-sound-effects: Desabilitar efeitos sonoros
-disable-music: Desabilitar m?sica
-disable-primary-buffer: N‚Äûo definir formato de buffer prim¬∑rio
+sound-channels: Canais de som
+disable-audio: Desativar todo o a˙dio
+disable-sound-effects: Desativar efeitos sonoros
+disable-music: Desativar m˙sica
+disable-primary-buffer: Desligar formato buffer prim·rio
 
-eax-options: Op√Å?es EAX
-disable-eax: Desabilitar EAX
-ignore-eax-errors: Ignorar erros EAX
+eax-options: OpÁıes do EAX
+disable-eax: Desativar EAX
+ignore-eax-errors: Ignorar erros do EAX
 
-disable-win-sys-keys: Desabilitar teclas do sistema Windows
-disable-mouse: Desabilitar mouse
-disable-joystick: Desabilitar joystick
+disable-win-sys-keys: Desativar teclas do windows
+disable-mouse: Desativar mouse
+disable-joystick: Desativar joystick
 
 verbosity: Mensagens detalhadas
-verbosity-none: N‚Äûo
-verbosity-devel: N√åvel 1
-verbosity-extra: N√åvel 2
+verbosity-none: N„o
+verbosity-devel: NÌvel 1
+verbosity-extra: NÌvel 2
 
-custom-cmdline: Op√Å?es Customizadas
+custom-cmdline: OpÁıes Personalizadas
 
-addon-paths: Minhas Pastas de Extens?es
+addon-paths: Minha Pasta de Complementos
 new-addon-path: +
 delete-addon-path: -
-addon-paths-add-prompt: Adicionar aos Meus Caminhos de Extens?es
+addon-paths-add-prompt: Adicionar ‡ minha pasta
 
-ui-parts: Interface do Usu¬∑rio
-main-hide-title: Esconder t√åtulo do banner
-main-hide-help: Esconder painel de ajuda
-profile-hide-buttons: Esconder bot?es do perfil
-summary-profile-change-autoselect: Mudan√Åa do perfil mostra sum¬∑rio
-profile-large-icons: √ïcones grandes do perfil
-profile-minimal-mode: Lista m√ånima do perfil
+ui-parts: Interface do Usu·rio
+main-hide-title: Ocultar o tÌtulo do banner
+main-hide-help: Ocultar o painel de ajuda
+profile-hide-buttons: Ocultar botıes do perfil
+summary-profile-change-autoselect: Mostrar mudanÁas do perfil no sum·rio
+profile-large-icons: Õcones grandes no perfil
+profile-minimal-mode: Lista mÌnima de perfis
 
-refresh-required: Lembrar de atualiar as extens?es.
-restart-required: Mudan√Åas ser‚Äûo aplicadas depois de reiniciar.
+refresh-required: Lembre de atualizar os complementos.
+restart-required: MudanÁas entrar„o em vigor depois de reiniciar.
 
 #
-# Ajuda
+# Help
 #
-help-welcome = "<b><font size=''+1''>Bem vindo/a ao Snowberry!</font></b><p>
-Esta √à a aplica√Å‚Äûo frontend que permite a voc√ç executar o <b>Motor Doomsday</b>
-com facilidade. Selecione um perfil de jogo da lista na esquerda e pressione <b>Jogar</b>.
-<p>A interface do usu¬∑rio do frontend pode ser
-modificada em <b>Configura√Å?es Compartilhadas</b> -&gt; <b>Configura√Å?es</b> -&gt;
-<b><a href=''show-snowberry-settings''>Frontend</a></b>."
+help-welcome = "<b><font size=''+1''>Bem vindo ao Snowberry!</font></b><p>
+Este È o aplicativo de interface que permite vocÍ executar o <b>Doomsday Engine</b> com facilidade. Escolha um jogo da lista ‡ esquerda e clique em <b>Jogar</b>.
+<p>A interface do usu·rio pode ser modificada indo em <b>Aspectos Gerais</b> -&gt; <b>ConfiguraÁıes</b> -&gt;
+<b><a href=''show-snowberry-settings''>Snowberry</a></b>."
 
-help-command = "Para come√Åar um jogo, pressione o bot‚Äûo <b>Jogar</b>."
+help-command = "Para iniciar um jogo, Clique no bot„o <b>Jogar</b>."
 
-help-command-defaults = "O Perfil de <b>Configura√Å?es Compartilhadas</b> cont√àm
-op√Å?es comuns a todos os perfis."
+help-command-defaults = "O perfil <b>Aspectos Gerais</b> possui
+configuraÁıes universais para todos os perfis."
 
-help-tab-summary = "<b><font size=''+1''>Aba Sum¬∑rio</font></b><p>
-A Aba Sum¬∑rio mostra as informa√Å?es mais importantes
-sobre o perfil atual ."
+help-tab-summary = "<b><font size=''+1''>Aba Sum·rio</font></b><p>
+A Aba Sum·rio mostra as informaÁıes mais importantes sobre o perfil selecionado."
 
-help-tab-maps = "<b><font size=''+1''>Aba Mapas</font></b><p>
-A Aba mapas fornece um jeito r¬∑pido de de selecionar qual extens‚Äûo WAD
-ser¬∑ usada no perfil atual. As sele√Å?es feitas aqui ser‚Äûo refletidas
-na Aba Extens?es."
+help-tab-maps = "<b><font size=''+1''>Aba de Mapas</font></b><p>
+A Aba de Mapas proporciona uma maneira r·pida de escolher quais WADs usar com o perfil selecionado. As escolhas feitas aqui s„o refletidas na Aba de Complementos."
 
-help-tab-addons = "<b><font size=''+1''>Aba Extens?es</font></b><p>
-Selecione as extens?es que voc√ç gostaria de usar com o perfil
-atual.<p>O bot‚Äûo <b>Configura√Å?es</b> permite a voc√ç
-customizar a extens‚Äûo selecionada.<p>Para mudar a ordem na qual as extens?es
-s‚Äûo carregadas, pressione o bot‚Äûo <b>Carregar</b> button."
+help-tab-addons = "<b><font size=''+1''>Aba de Complementos</font></b><p>
+Escolha os complementos que deseja usar com o perfil selecionado.<p>O bot„o <b>ConfiguraÁıes</b> permite a vocÍ personalizar o complemento selecionado.<p>Para mudar a ordem na qual os complementos ser„o carregados, clique no bot„o <b>Configurar Ordem</b>."
 
-help-tab-settings = "<b><font size=''+1''>Aba Configura√Å?es</font></b><p>
-A Aba configura√Å?es permite a voc√ç customizar o
-atual perfil e extens?es que voc√ç selecionou para carregar.
-<p>Para mudar as configura√Å?es padr‚Äûo para todos os perfis,
-selecione o perfil <b>Configura√Å?es Compartilhadas</b>."
+help-tab-settings = "<b><font size=''+1''>Aba de ConfiguraÁıes</font></b><p>
+A Aba de ConfiguraÁıes permite a vocÍ personalizar o perfil selecionado e os complementos que vocÍ escolheu para carregar. <p>Para mudar as configuraÁıes padr„o em todos os perfis, selecione o perfil <b>Aspectos Gerais</b>."
 
 #
 # Settings Help
 #
-help-value-from-defaults = "O valor desta configura√Å‚Äûo vem do
-<b>%1</b> perfil."
+help-value-from-defaults = "O valor dessa configuraÁ„o vem do perfil <b>%1</b>."
 help-value-current: Valor atual
-help-value-min: M√ån
-help-value-max: M¬∑x
-help-value-default: Padr‚Äûo
+help-value-min: MÌnimo
+help-value-max: M·ximo
+help-value-default: Padr„o
 
-iwad-help = "O arquivo de dado do jogo cont√àm todos os mapas, gr¬∑ficos, efeitos
-sonoros, e outros conte?dos do jogo. Voc√ç deve especificar um arquivo de dado do jogo
-para poder jogar.  <p>Arquivos de dados de Jogo s‚Äûo chamados arquivos IWAD e eles usam
-a extens‚Äûo de nome de arquivo WAD. Eles possuem usualmente entre 4-20 MB em
-tamanho. Voc√ç encontrar¬∑ um no diret√õrio onde voc√ç tem instalado
-uma c√õpia do Doom, Heretic, ou Hexen original."
+iwad-help = "O arquivo de dados IWAD contem todos os mapas, gr·ficos, efeitos sonoros, e outros elementos do jogo. VocÍ deve localizar o arquivo dos dados principais dele para poder jogar.  <p>Esses arquivos de dados s„o chamados de IWAD e usam a extens„o WAD no nome. Geralmente tÍm de 4 a 20 MB de tamanho. VocÍ encontrar· um desses no lugar onde vocÍ instalou a cÛpia original do jogo Doom, Heretic ou Hexen."
 
-window-size-help = "Para definir uma resolu√Å‚Äûo (por exemplo jogar
-no modo tela mais larga):
+window-size-help = "Definir resoluÁ„o personalizada (jogar no modo widescreen por exemplo):
 <ul>
-<li>Customize esta op√Å‚Äûo.
-<li>Defina a largura e a altura nos campos correspondentes.
+<li>Personalizar esta opÁ„o.
+<li>Digite a largura e a altura nos campos correspondentes.
 </ul>"
 
-window-width-help = "A largura da janela do jogo, ou a resolu√Å‚Äûo customizada
-horizontal."
+window-width-help = "A largura da janela, ou a resoluÁ„o horizontal personalizada."
 
-window-height-help = "A altura da janela do jogo, ou a resolu√Å‚Äûo vertical
-customizada."
+window-height-help = "A altura da janela, ou a resoluÁ„o vertical personalizada."
 
-center-window-help: A janela do jogo est¬∑ posicionada no centro da tela.
+center-window-help: A janela do aplicativo est· posicionada no centro da tela.
 
 #
-# Ajuda da Extens‚Äûo
+# Addon Help
 #
-help-addon-mode-brief: Sum¬∑rio
+help-addon-mode-brief: InstruÁıes
 help-addon-mode-detailed: Detalhado
-help-addon-version: Vers‚Äûo
-help-addon-summary: Sum¬∑rio
+help-addon-version: Vers„o
+help-addon-summary: Sum·rio
 help-addon-contact: Contato
 help-addon-author: Autor
-help-addon-copyright: Copyright
-help-addon-license: Licen√Åa
+help-addon-copyright: Direitos Autorais
+help-addon-license: LicenÁa
 help-addon-date: Data
-help-addon-dependencies: Depend√çncias
-help-addon-excluded-categories: Categorias Exclu√ådas
+help-addon-dependencies: DependÍncias
+help-addon-excluded-categories: Categorias excluÌdas
 help-addon-excludes: Exclui
 help-addon-requires: Requer
 help-addon-provides: Fornece
 help-addon-offers: Oferece
-help-addon-part-of-box: Esta extens‚Äûo √à uma parte de <a href="%1">%2</a>.
+help-addon-part-of-box: Este complemento È uma parte de <a href="%1">%2</a>.
 
 #
-# Problemas
+# Issues
 #
 issue-dialog: Problemas Detectados
 
-error-runtime-exception-during-event: Erro de Execu√Å‚Äûo
-error-runtime-exception-during-event-text: Um erro inesperado ocorreu durante o processamento do evento <b>%1</b>. Por favor reporte este incidente para <tt>skyjake@users.sourceforge.net</tt>.<p><b>Exce√Å‚Äûo:</b><p>%2<p><b>Traceback:</b><p>%3
+error-runtime-exception-during-event: Erro de ExecuÁ„o
+error-runtime-exception-during-event-text: Um erro inesperado ocorreu durante o processamento do evento <b>%1</b>. Favor reportar este incidente para <tt>skyjake@users.sourceforge.net</tt>.<p><b>ExceÁ„o:</b><p>%2<p><b>An·lise:</b><p>%3
 
-error-addon-installation-failed: Erro na Instala√Å‚Äûo da Extens‚Äûo
-error-addon-installation-failed-text: Instala√Å‚Äûo da Extens‚Äûo <tt>%1</tt> falhou. <p><b>Raz‚Äûo:</b><p>%2
+error-addon-installation-failed: Erro na InstalaÁ„o do Complemento
+error-addon-installation-failed-text: Falha na instalaÁ„o do complemento <tt>%1</tt>. <p><b>Raz„o:</b><p>%2
 
-error-read-config-file: Erro de Configura√Å‚Äûo
-error-read-config-file-text: Um erro foi detectado no arquivo de configura√Å‚Äûo <tt>%1</tt>.<p><b>Raz‚Äûo:</b><p>%2
+error-read-config-file: Erro de ConfiguraÁ„o
+error-read-config-file-text: Um erro foi detectado na configuraÁ„o do arquivo <tt>%1</tt>. <p><b>Raz„o:</b><p>%2
 
-error-read-info-file: Erro da Informa√Å‚Äûo da Extens‚Äûo
-error-read-info-file-text: Houve um erro no arquivo de metadados <tt>%1</tt> da extens‚Äûo <b>%2</b>.
+error-read-info-file: Erro nos Dados do Complemento
+error-read-info-file-text: Houve um erro nos metadados do arquivo <tt>%1</tt> no complemento <b>%2</b>.
 
-error-read-zip-info-file: Erro de Informa√Å‚Äûo de PK3
-error-read-zip-info-file-text: Houve um erro na entrada de metadados da extens‚Äûo <b>%2</b>, no arquivo <tt>%1</tt>.
+error-read-zip-info-file: Erro nos Dados do Arquivo PK3
+error-read-zip-info-file-text: Houve um erro na entrada dos metadados do complemento <b>%2</b>, no arquivo <tt>%1</tt>.
 
 error-parsing-profile: Erro no Perfil
-error-parsing-profile-text: O perfil <tt>%1</tt> n‚Äûo pode ser carregado porque seu conte?do √à inv¬∑lido. Para corrigir o problema voc√ç deve editar manualmente o arquivo e consertar as partes inv¬∑lidas, ou apagar o arquivo.<p><b>Raz‚Äûo:</b><p>%2
+error-parsing-profile-text: O perfil <tt>%1</tt> n„o pode ser carregado porque seu conte˙do È inv·lido. VocÍ dever· editar manualmente o arquivo para corrigir suas configuraÁıes inv·lidas ou ent„o delet·-lo.<p><b>Raz„o:</b><p>%2
 
 error-read-profile: Erro no Perfil
-error-read-profile-text: O perfil <tt>%1</tt> n‚Äûo pode ser carregado porque ocorreu um erro inesperado. Para corrigir o problema voc√ç deve editar manualmente e consertar as partes inv¬∑lidas, ou apagar o arquivo.<p><b>Traceback:</b><p>%2
+error-read-profile-text: O perfil <tt>%1</tt> n„o pode ser carregado porque um erro inesperado ocorreu. VocÍ dever· editar manualmente o arquivo para corrigir suas configuraÁıes inv·lidas ou ent„o delet·-lo.<p><b>An·lise:</b><p>%2
 
-error-read-manifest: Erro no Manifesto da Extens‚Äûo
-error-read-manifest-text: Um erro foi detectado no arquivo de manifesto <tt>%1</tt>.<p><b>Raz‚Äûo:</b><p>%2
+error-read-manifest: Erro na ManifestaÁ„o do Complemento
+error-read-manifest-text: Um erro foi detectado no arquivo de manifestaÁ„o <tt>%1</tt>.<p><b>Raz„o:</b><p>%2
 
-error-plugin-init-failed: Erro de Extens‚Äûo
-error-plugin-init-failed-text: O carregamento da uma extens‚Äûo falhou, enquanto estava executando <tt>%1</tt>.<p><b>Raz‚Äûo:</b><p>%2
+error-plugin-init-failed: Erro no Plugin
+error-plugin-init-failed-text: O carregamento de um plugin falhou enquanto <tt>%1</tt> estava sendo executado.<p><b>Raz„o:</b><p>%2
 
 error-remove-addon-path-not-found: Erro Interno
-error-remove-addon-path-not-found-text: Algu√àm tentou remover um caminho de extens‚Äûo que n‚Äûo foi registrado: <tt>%1</tt>
+error-remove-addon-path-not-found-text: AlguÈm tentou remover as especificaÁıes locais de um complemento n„o registrado: <tt>%1</tt>
 
-warning-obsolete-plugin: Extens‚Äûo Obsoleta
-warning-obsolete-plugin-text: A Extens‚Äûo <b>%1</b> carregada de <tt>%2</tt> √à de uma vers‚Äûo obsoleta. Voc√ç deve apagar esta extens‚Äûo. Caso contr¬∑rio um comportamente inesperado deve ocorrer.
+warning-obsolete-plugin: Plugin Obsoleto
+warning-obsolete-plugin-text: O plugin <b>%1</b> carregado do <tt>%2</tt> est· desatualizado e deve ser apagado. Do contr·rio, isso pode causar problemas inesperados.
 
-warning-read-language: Defini√Å‚Äûo de Idioma
-warning-read-language-text: Houve um problema na leitura da defini√Å‚Äûo do idioma <b>%1</b> de <tt>%2</tt>. Apenas uma parte do arquivo foi lida com sucesso. Sendo assim, algumas strings de texto podem estar faltando.
+warning-read-language: DefiniÁıes do Idioma
+warning-read-language-text: Houve um erro na leitura do arquivo de idioma <b>%1</b> de <tt>%2</tt>. Somente uma parte do arquivo foi lida com sucesso. Possivelmente, estar· faltando algumas partes do texto.

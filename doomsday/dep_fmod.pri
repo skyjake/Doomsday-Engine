@@ -1,10 +1,10 @@
+# Build configuration for FMOD Ex.
 isEmpty(FMOD_DIR) {
     error("dep_fmod: FMOD SDK path not defined, check your config_user.pri (FMOD_DIR)")
 }
 
 INCLUDEPATH += $$FMOD_DIR/api/inc
 
-# Build configuration for FMOD Ex.
 win32 {
     # Windows.
     LIBS += -L$$FMOD_DIR/api/lib -lfmodex_vc

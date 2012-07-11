@@ -1,10 +1,10 @@
-/**\file
+/**\file p_start.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,10 +25,8 @@
  */
 
 /**
- * p_start.c
+ * Common player (re)spawning logic.
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <stdio.h>
@@ -37,16 +35,10 @@
 
 #if __JDOOM__
 #  include "jdoom.h"
-#  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
-#  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #endif
@@ -54,8 +46,10 @@
 #include "p_tick.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
+#include "p_player.h"
 #include "d_net.h"
 #include "p_map.h"
+#include "am_map.h"
 #include "p_terraintype.h"
 #include "g_common.h"
 #include "p_start.h"
@@ -63,8 +57,11 @@
 #include "p_switch.h"
 #include "g_defs.h"
 #include "p_inventory.h"
-
-// MACROS ------------------------------------------------------------------
+#include "p_mapspec.h"
+#include "dmu_lib.h"
+#include "hu_stuff.h"
+#include "hu_chat.h"
+#include "r_common.h"
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 #  define TELEPORTSOUND     SFX_TELEPT
@@ -77,44 +74,35 @@
 // Time interval for item respawning.
 #define SPAWNQUEUE_MAX         128
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 uint numMapSpots;
 mapspot_t* mapSpots;
 
 #if __JHERETIC__
-int maceSpotCount;
-mapspot_t* maceSpots;
-int bossSpotCount;
-mapspot_t* bossSpots;
+uint maceSpotCount;
+mapspotid_t* maceSpots;
+uint bossSpotCount;
+mapspotid_t* bossSpots;
 #endif
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int numPlayerStarts = 0;
 static playerstart_t* playerStarts;
 static int numPlayerDMStarts = 0;
 static playerstart_t* deathmatchStarts;
 
-// CODE --------------------------------------------------------------------
+/**
+ * New class (or -1) for each player to be applied when the player respawns.
+ * Actually applied on serverside, on the client only valid for the local
+ * player(s).
+ */
+static int playerRespawnAsClass[MAXPLAYERS];
 
-static boolean fuzzySpawnPosition(float* x, float* y, float* z,
-                                  angle_t* angle, int* spawnFlags)
+static boolean fuzzySpawnPosition(coord_t* x, coord_t* y, coord_t* z, angle_t* angle,
+    int* spawnFlags)
 {
 #define XOFFSET         (33) // Player radius = 16
 #define YOFFSET         (33) // Player radius = 16
 
-    int                 i;
+    int i;
 
     assert(x);
     assert(y);
@@ -122,14 +110,14 @@ static boolean fuzzySpawnPosition(float* x, float* y, float* z,
     // Try some spots in the vicinity.
     for(i = 0; i < 9; ++i)
     {
-        float               pos[2];
+        coord_t pos[2];
 
         pos[VX] = *x;
         pos[VY] = *y;
 
         if(i != 0)
         {
-            int                 k = (i == 4 ? 0 : i);
+            int k = (i == 4 ? 0 : i);
 
             // Move a bit.
             pos[VX] += (k % 3 - 1) * XOFFSET;
@@ -144,10 +132,62 @@ static boolean fuzzySpawnPosition(float* x, float* y, float* z,
         }
     }
 
-#undef XOFFSET
-#undef YOFFSET
-
     return false;
+
+#undef YOFFSET
+#undef XOFFSET
+}
+
+void P_ResetPlayerRespawnClasses(void)
+{
+    int i;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        // No change.
+        playerRespawnAsClass[i] = -1;
+    }
+}
+
+void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc)
+{
+#ifndef __JHEXEN__
+    // There's only one player class.
+    assert(pc == PCLASS_PLAYER);
+#endif
+    playerRespawnAsClass[plrNum] = pc;
+
+#ifdef _DEBUG
+    Con_Message("SetPlayerRespawnClass: plrNum=%i class=%i\n", plrNum, pc);
+#endif
+}
+
+playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
+{
+#if __JHEXEN__
+    playerclass_t pClass = cfg.playerClass[plrNum];
+#else
+    playerclass_t pClass = PCLASS_PLAYER;
+#endif
+
+#ifdef _DEBUG
+    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i reqclass=%i\n", plrNum, playerRespawnAsClass[plrNum]);
+#endif
+
+    if(playerRespawnAsClass[plrNum] != -1)
+    {
+        pClass = playerRespawnAsClass[plrNum];
+        if(clear)
+        {
+            // We can now clear the change request.
+            playerRespawnAsClass[plrNum] = -1;
+        }
+    }
+#ifdef _DEBUG
+    Con_Message("ClassForPlayerWhenRespawning: plrNum=%i actualclass=%i\n", plrNum, pClass);
+#endif
+
+    return pClass;
 }
 
 /**
@@ -158,37 +198,43 @@ static boolean fuzzySpawnPosition(float* x, float* y, float* z,
  */
 mobjtype_t P_DoomEdNumToMobjType(int doomEdNum)
 {
-    int                 i;
-
+    int i;
     for(i = 0; i < Get(DD_NUMMOBJTYPES); ++i)
     {
         if(doomEdNum == MOBJINFO[i].doomEdNum)
             return i;
     }
-
     return MT_NONE;
 }
 
-/**
- * Initializes various playsim related data
- */
 void P_Init(void)
+{
+    P_ResetPlayerRespawnClasses();
+
+    // Create the various line lists (spechits, anims, buttons etc).
+    spechit = IterList_ConstructDefault();
+    linespecials = IterList_ConstructDefault();
+
+#if __JHEXEN__
+    X_CreateLUTs();
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    P_InitLava();
+#endif
+
+    P_Update();
+}
+
+void P_Update(void)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     P_InitInventory();
 #endif
-
 #if __JHEXEN__
     P_InitMapInfo();
 #endif
-
     P_InitSwitchList();
-    P_InitPicAnims();
-
     P_InitTerrainTypes();
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    P_InitLava();
-#endif
 
     maxHealth = 100;
     GetDefInt("Player|Max Health", &maxHealth);
@@ -206,7 +252,13 @@ void P_Init(void)
     armorClass[1] = armorClass[2] = armorClass[3] = 2;
 
     GetDefInt("Player|Health Limit", &healthLimit);
-    GetDefInt("Player|God Health", &godModeHealth);
+
+    // Previous versions did not feature a separate value for God Health,
+    // so if its not found, default to the value of Max Health.
+    if(!GetDefInt("Player|God Health", &godModeHealth))
+    {
+        godModeHealth = maxHealth;
+    }
 
     GetDefInt("Player|Green Armor", &armorPoints[0]);
     GetDefInt("Player|Blue Armor", &armorPoints[1]);
@@ -225,11 +277,30 @@ void P_Init(void)
 #endif
 }
 
-void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
-                         boolean deathmatch, float x, float y, float z,
-                         angle_t angle, int spawnFlags)
+void P_Shutdown(void)
 {
-    playerstart_t*      start;
+    if(spechit)
+        IterList_Destruct(spechit);
+    spechit = 0;
+
+    if(linespecials)
+        IterList_Destruct(linespecials);
+    linespecials = 0;
+
+    P_DestroyPlayerStarts();
+    P_DestroyLineTagLists();
+    P_DestroySectorTagLists();
+    P_ShutdownTerrainTypes();
+    P_FreeWeaponSlots();
+#if __JDOOM__
+    P_BrainShutdown();
+#endif
+}
+
+void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
+    mapspotid_t spot)
+{
+    playerstart_t* start;
 
     if(deathmatch)
     {
@@ -246,11 +317,7 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
 
     start->plrNum = defaultPlrNum;
     start->entryPoint = entryPoint;
-    start->pos[VX] = x;
-    start->pos[VY] = y;
-    start->pos[VZ] = z;
-    start->angle = angle;
-    start->spawnFlags = spawnFlags;
+    start->spot = spot;
 }
 
 void P_DestroyPlayerStarts(void)
@@ -323,19 +390,19 @@ uint P_GetNumPlayerStarts(boolean deathmatch)
  */
 void P_DealPlayerStarts(uint entryPoint)
 {
-    int                 i;
+    int i;
 
     if(!numPlayerStarts)
     {
-        Con_Message("P_DealPlayerStarts: Warning, no player starts!\n");
+        Con_Message("Warning: Zero player starts found, players will spawn as cameras.\n");
         return;
     }
 
     // First assign one start per player, only accepting perfect matches.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        int                 k, spotNumber;
-        player_t*           pl = &players[i];
+        int k, spotNumber;
+        player_t* pl = &players[i];
 
         if(!pl->plr->inGame)
             continue;
@@ -384,12 +451,11 @@ void P_DealPlayerStarts(uint entryPoint)
  * Called when a player is spawned into the map. Most of the player
  * structure stays unchanged between maps.
  */
-void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
-                   float z, angle_t angle, int spawnFlags,
-                   boolean makeCamera, boolean pickupItems)
+void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord_t z,
+    angle_t angle, int spawnFlags, boolean makeCamera, boolean pickupItems)
 {
-    player_t*           p;
-    mobj_t*             mo;
+    player_t* p;
+    mobj_t* mo;
 
     plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS - 1);
 
@@ -400,21 +466,21 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     pClass = MINMAX_OF(0, pClass, NUM_PLAYER_CLASSES - 1);
 
     /* $unifiedangles */
-    if(!(mo = P_SpawnMobj3f(PCLASS_INFO(pClass)->mobjType, x, y, z, angle, spawnFlags)))
+    if(!(mo = P_SpawnMobjXYZ(PCLASS_INFO(pClass)->mobjType, x, y, z, angle, spawnFlags)))
         Con_Error("P_SpawnPlayer: Failed spawning mobj for player %i "
                   "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
                   x, y, z, angle);
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: player %i spawned at (%f,%f,%f) floorz=%f\n",
-                plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ], mo->floorZ);
+    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] floorz:%g\n",
+                plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->floorZ);
 #endif
 
     p = &players[plrNum];
     if(p->playerState == PST_REBORN)
         G_PlayerReborn(plrNum);
 
-    // \fixme Should this not occur before the reborn?
+    /// @todo Should this not occur before the reborn?
     p->class_ = pClass;
 
     // On clients, mark the remote players.
@@ -425,36 +491,23 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     }
 
     // Set color translations for player sprites.
-#if __JHEXEN__
-    if(p->class_ == PCLASS_FIGHTER &&
-       (p->colorMap == 0 || p->colorMap == 2))
+    if(p->colorMap > 0 && p->colorMap < NUMPLAYERCOLORS)
     {
-        // The first type should be blue, and the third should be the
-        // Fighter's original gold color
-        //if(spot->type == 1)
-        if(p->colorMap == 0)
-        {
-            mo->flags |= 2 << MF_TRANSSHIFT;
-        }
-    }
-    else if(p->colorMap > 0 && p->colorMap < 8)
-    {   // Set color translation bits for player sprites
-        //mo->flags |= (spot->type-1)<<MF_TRANSSHIFT;
         mo->flags |= p->colorMap << MF_TRANSSHIFT;
     }
-#else
+    /*
     if(cfg.playerColor[plrNum] > 0)
         mo->flags |= cfg.playerColor[plrNum] << MF_TRANSSHIFT;
-#endif
+        */
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player %i spawning with translation %i.\n",
+    Con_Message("P_SpawnPlayer: Player #%i spawning with color translation %i.\n",
                 plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
 #endif
 
     p->plr->lookDir = 0; /* $unifiedangles */
-    p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
-    p->plr->flags &= ~DDPF_UNDEFINED_POS;
+    p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
+    p->plr->flags &= ~DDPF_UNDEFINED_ORIGIN;
     p->jumpTics = 0;
     p->airCounter = 0;
     mo->player = p;
@@ -484,15 +537,19 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        VERBOSE(Con_Message("P_SpawnPlayer: Player %i is a camera.\n", plrNum));
+        VERBOSE( Con_Message("Player #%i spawned as a camera.\n", plrNum) )
 
-        p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
+        p->plr->mo->origin[VZ] += (coord_t) cfg.plrViewHeight;
         p->viewHeight = 0;
     }
     else
-        p->viewHeight = (float) cfg.plrViewHeight;
+    {
+        p->viewHeight = (coord_t) cfg.plrViewHeight;
+    }
+    p->viewHeightDelta = 0;
 
-    p->viewZ = p->plr->mo->pos[VZ] + p->viewHeight;
+    p->viewZ = p->plr->mo->origin[VZ] + p->viewHeight;
+    p->viewOffset[VX] = p->viewOffset[VY] = p->viewOffset[VZ] = 0;
 
     // Give all cards in death match mode.
     if(deathmatch)
@@ -500,8 +557,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 #if __JHEXEN__
         p->keys = 2047;
 #else
-        int                 i;
-
+        int i;
         for(i = 0; i < NUM_KEY_TYPES; ++i)
             p->keys[i] = true;
 #endif
@@ -514,7 +570,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
         // Check the current position so that any interactions which would
         // occur as a result of collision happen immediately
         // (e.g., weapon pickups at the current position will be collected).
-        P_CheckPosition3fv(mo, mo->pos);
+        P_CheckPosition(mo, mo->origin);
     }
 
     if(p->pendingWeapon != WT_NOCHANGE)
@@ -527,14 +583,19 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // Setup gun psprite.
     P_SetupPsprites(p);
 
-    // Wake up the status bar.
-    ST_Start(p - players);
-    // Wake up the heads up text.
-    HU_Start(p - players);
+    if(!BusyMode_Active())
+    {
+        /// @todo Is this really necessary after every time a player spawns?
+        /// During map setup there are called after the busy mode ends.
+        ST_Start(p - players);
+        HU_Start(p - players);
+    }
 
 #if __JHEXEN__
+    // Update the player class in effect.
     cfg.playerClass[plrNum] = pClass;
     NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
+    P_ClassForPlayerWhenRespawning(plrNum, true /* now applied; clear change request */);
 #endif
 
     // Player has been spawned, so tell the engine where the camera is
@@ -542,14 +603,13 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     R_UpdateConsoleView(plrNum);
 }
 
-static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
-                        float z, angle_t angle, int spawnFlags,
-                        boolean makeCamera, boolean doTeleSpark,
-                        boolean doTeleFrag)
+static void spawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y,
+    coord_t z, angle_t angle, int spawnFlags, boolean makeCamera, boolean doTeleSpark,
+    boolean doTeleFrag)
 {
-    player_t*           plr;
+    player_t* plr;
 #if __JDOOM__ || __JDOOM64__
-    boolean             queueBody = (plrNum >= 0? true : false);
+    boolean queueBody = (plrNum >= 0? true : false);
 #endif
     boolean pickupItems = true;
 
@@ -573,8 +633,8 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // Spawn a teleport fog?
     if(doTeleSpark && !makeCamera)
     {
-        mobj_t*             mo;
-        uint                an = angle >> ANGLETOFINESHIFT;
+        mobj_t* mo;
+        uint an = angle >> ANGLETOFINESHIFT;
 
         x += 20 * FIX2FLT(finecosine[an]);
         y += 20 * FIX2FLT(finesine[an]);
@@ -598,11 +658,7 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 void P_SpawnClient(int plrNum)
 {
     player_t* p;
-#if __JHEXEN__
-    playerclass_t pClass = cfg.playerClass[plrNum];
-#else
-    playerclass_t pClass = PCLASS_PLAYER;
-#endif
+    playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, true);
 
 #ifdef _DEBUG
     Con_Message("P_SpawnClient: Spawning client player mobj (for player %i; console player is %i).\n", plrNum, CONSOLEPLAYER);
@@ -617,7 +673,7 @@ void P_SpawnClient(int plrNum)
 
     // The mobj was just spawned onto invalid coordinates. The view cannot
     // be drawn until we receive the right coords.
-    p->plr->flags |= DDPF_UNDEFINED_POS;
+    p->plr->flags |= DDPF_UNDEFINED_ORIGIN;
 
     // The weapon of the player is not known. The weapon cannot be raised
     // until we know it.
@@ -633,26 +689,24 @@ void P_SpawnClient(int plrNum)
 void P_RebornPlayer(int plrNum)
 {
 #if __JHEXEN__
-    int                 oldKeys = 0, oldPieces = 0, bestWeapon;
-    boolean             oldWeaponOwned[NUM_WEAPON_TYPES];
+    int oldKeys = 0, oldPieces = 0, bestWeapon;
+    boolean oldWeaponOwned[NUM_WEAPON_TYPES];
 #endif
-    player_t*           p;
-#if __JHEXEN__
-    playerclass_t       pClass = cfg.playerClass[plrNum];
-#else
-    playerclass_t       pClass = PCLASS_PLAYER;
-#endif
-    float               pos[3] = { 0, 0, 0 };
-    angle_t             angle = 0;
-    int                 spawnFlags = 0;
-    boolean             makeCamera = false;
+    player_t* p;
+    playerclass_t       pClass;
+
+    coord_t pos[3] = { 0, 0, 0 };
+    angle_t angle = 0;
+    int spawnFlags = 0;
+    boolean makeCamera = false;
 
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
 
+    pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
     p = &players[plrNum];
 
-    Con_Message("P_RebornPlayer: %i.\n", plrNum);
+    Con_Message("P_RebornPlayer: player %i (class %i).\n", plrNum, pClass);
 
     if(p->plr->mo)
     {
@@ -661,10 +715,10 @@ void P_RebornPlayer(int plrNum)
         p->plr->mo->dPlayer = NULL;
     }
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
 #ifdef _DEBUG
-        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GetGameState());
+        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GameState());
 #endif
         return; // Nothing else to do.
     }
@@ -680,7 +734,7 @@ void P_RebornPlayer(int plrNum)
     if(!IS_CLIENT)
     {
 #if __JHEXEN__
-        int                 i;
+        int i;
 
         // Cooperative net-play, retain keys and weapons
         oldKeys = p->keys;
@@ -712,31 +766,39 @@ void P_RebornPlayer(int plrNum)
         boolean foundSpot = false;
         const playerstart_t* assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
-        if(assigned && P_CheckSpot(assigned->pos[VX], assigned->pos[VY]))
+        if(assigned)
         {
-            // Appropriate player start spot is open.
-            Con_Message("- spawning at assigned spot\n");
+            const mapspot_t* spot = &mapSpots[assigned->spot];
 
-            pos[VX] = assigned->pos[VX];
-            pos[VY] = assigned->pos[VY];
-            pos[VZ] = assigned->pos[VZ];
-            angle = assigned->angle;
-            spawnFlags = assigned->spawnFlags;
+            if(P_CheckSpot(spot->origin[VX], spot->origin[VY]))
+            {
+                // Appropriate player start spot is open.
+                Con_Printf("- spawning at assigned spot\n");
 
-            foundSpot = true;
+                pos[VX] = spot->origin[VX];
+                pos[VY] = spot->origin[VY];
+                pos[VZ] = spot->origin[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
+
+                foundSpot = true;
+            }
         }
+
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        else
+        if(!foundSpot)
         {
             Con_Message("- force spawning at %i.\n", p->startSpot);
 
             if(assigned)
             {
-                pos[VX] = assigned->pos[VX];
-                pos[VY] = assigned->pos[VY];
-                pos[VZ] = assigned->pos[VZ];
-                angle = assigned->angle;
-                spawnFlags = assigned->spawnFlags;
+                const mapspot_t* spot = &mapSpots[assigned->spot];
+
+                pos[VX] = spot->origin[VX];
+                pos[VY] = spot->origin[VY];
+                pos[VZ] = spot->origin[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
 
                 // "Fuzz" the spawn position looking for room nearby.
                 makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY],
@@ -752,9 +814,9 @@ void P_RebornPlayer(int plrNum)
             }
         }
 #else
-        else
+        if(!foundSpot)
         {
-            int                 i;
+            int i;
 
 #ifdef _DEBUG
             Con_Message("P_RebornPlayer: Trying other spots for %i.\n", plrNum);
@@ -767,24 +829,26 @@ void P_RebornPlayer(int plrNum)
 
                 if((start = P_GetPlayerStart(rebornPosition, i, false)))
                 {
-                    if(P_CheckSpot(start->pos[VX], start->pos[VY]))
+                    const mapspot_t* spot = &mapSpots[start->spot];
+
+                    if(P_CheckSpot(spot->origin[VX], spot->origin[VY]))
                     {
                         // Found an open start spot.
-                        pos[VX] = start->pos[VX];
-                        pos[VY] = start->pos[VY];
-                        pos[VZ] = start->pos[VZ];
-                        angle = start->angle;
-                        spawnFlags = start->spawnFlags;
+                        pos[VX] = spot->origin[VX];
+                        pos[VY] = spot->origin[VY];
+                        pos[VZ] = spot->origin[VZ];
+                        angle = spot->angle;
+                        spawnFlags = spot->flags;
 
                         foundSpot = true;
 
 #ifdef _DEBUG
-                        Con_Message("P_RebornPlayer: Spot (%f,%f) selected.\n", start->pos[VX], start->pos[VY]);
+                        Con_Message("P_RebornPlayer: Spot [%f, %f] selected.\n", spot->origin[VX], spot->origin[VY]);
 #endif
                         break;
                     }
 #ifdef _DEBUG
-                    Con_Message("P_RebornPlayer: Spot (%f,%f) is not available.\n", start->pos[VX], start->pos[VY]);
+                    Con_Message("P_RebornPlayer: Spot [%f, %f] is not available.\n", spot->origin[VX], spot->origin[VY]);
 #endif
                 }
             }
@@ -797,11 +861,13 @@ void P_RebornPlayer(int plrNum)
 
             if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
             {
-                pos[VX] = start->pos[VX];
-                pos[VY] = start->pos[VY];
-                pos[VZ] = start->pos[VZ];
-                angle = start->angle;
-                spawnFlags = start->spawnFlags;
+                const mapspot_t* spot = &mapSpots[start->spot];
+
+                pos[VX] = spot->origin[VX];
+                pos[VY] = spot->origin[VY];
+                pos[VZ] = spot->origin[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
             }
             else
             {
@@ -825,7 +891,7 @@ void P_RebornPlayer(int plrNum)
     if(!IS_CLIENT)
     {
 #if __JHEXEN__
-        int                 i;
+        int i;
 
         // Restore keys and weapons
         p->keys = oldKeys;
@@ -839,8 +905,8 @@ void P_RebornPlayer(int plrNum)
             }
         }
 
-        p->ammo[AT_BLUEMANA].owned = 25; //// \fixme values.ded
-        p->ammo[AT_GREENMANA].owned = 25; //// \fixme values.ded
+        p->ammo[AT_BLUEMANA].owned = 25; //// @todo values.ded
+        p->ammo[AT_GREENMANA].owned = 25; //// @todo values.ded
         if(bestWeapon)
         {   // Bring up the best weapon.
             p->pendingWeapon = bestWeapon;
@@ -849,11 +915,7 @@ void P_RebornPlayer(int plrNum)
     }
 }
 
-/**
- * @return              @c false if the player cannot be respawned at the
- *                      given location because something is occupying it.
- */
-boolean P_CheckSpot(float x, float y)
+boolean P_CheckSpot(coord_t x, coord_t y)
 {
 #if __JHEXEN__
 #define DUMMY_TYPE      MT_PLAYER_FIGHTER
@@ -861,22 +923,22 @@ boolean P_CheckSpot(float x, float y)
 #define DUMMY_TYPE      MT_PLAYER
 #endif
 
-    float               pos[3];
-    mobj_t*             dummy;
-    boolean             result;
+    coord_t pos[3];
+    mobj_t* dummy;
+    boolean result;
 
     pos[VX] = x;
     pos[VY] = y;
     pos[VZ] = 0;
 
     // Create a dummy to test with.
-    if(!(dummy = P_SpawnMobj3fv(DUMMY_TYPE, pos, 0, MSF_Z_FLOOR)))
+    if(!(dummy = P_SpawnMobj(DUMMY_TYPE, pos, 0, MSF_Z_FLOOR)))
         Con_Error("P_CheckSpot: Failed creating dummy mobj.");
 
     dummy->flags &= ~MF_PICKUP;
     dummy->flags2 &= ~MF2_PASSMOBJ;
 
-    result = P_CheckPosition3fv(dummy, pos);
+    result = P_CheckPosition(dummy, pos);
 
     P_MobjRemove(dummy, true);
 
@@ -886,30 +948,16 @@ boolean P_CheckSpot(float x, float y)
 }
 
 #if __JHERETIC__
-void P_AddMaceSpot(float x, float y, angle_t angle)
+void P_AddMaceSpot(mapspotid_t id)
 {
-    mapspot_t*          spot;
-
-    maceSpots = Z_Realloc(maceSpots, sizeof(mapspot_t) * ++maceSpotCount,
-                          PU_MAP);
-    spot = &maceSpots[maceSpotCount-1];
-
-    spot->pos[VX] = x;
-    spot->pos[VY] = y;
-    spot->angle = angle;
+    maceSpots = Z_Realloc(maceSpots, sizeof(mapspotid_t) * ++maceSpotCount, PU_MAP);
+    maceSpots[maceSpotCount-1] = id;
 }
 
-void P_AddBossSpot(float x, float y, angle_t angle)
+void P_AddBossSpot(mapspotid_t id)
 {
-    mapspot_t*          spot;
-
-    bossSpots = Z_Realloc(bossSpots, sizeof(mapspot_t) * ++bossSpotCount,
-                          PU_MAP);
-    spot = &bossSpots[bossSpotCount-1];
-
-    spot->pos[VX] = x;
-    spot->pos[VY] = y;
-    spot->angle = angle;
+    bossSpots = Z_Realloc(bossSpots, sizeof(mapspotid_t) * ++bossSpotCount, PU_MAP);
+    bossSpots[bossSpotCount-1] = id;
 }
 #endif
 
@@ -952,11 +1000,11 @@ void P_SpawnPlayers(void)
             {
                 if(players[0].startSpot != i && playerStarts[i].plrNum == 1)
                 {
-                    const playerstart_t* start = &playerStarts[i];
+                    const mapspot_t* spot = &mapSpots[playerStarts[i].spot];
 
-                    spawnPlayer(-1, PCLASS_PLAYER, start->pos[VX],
-                                start->pos[VY], start->pos[VZ],
-                                start->angle, start->spawnFlags, false,
+                    spawnPlayer(-1, PCLASS_PLAYER, spot->origin[VX],
+                                spot->origin[VY], spot->origin[VZ],
+                                spot->angle, spot->flags, false,
                                 false, false);
                 }
             }
@@ -968,26 +1016,24 @@ void P_SpawnPlayers(void)
             if(players[i].plr->inGame)
             {
                 const playerstart_t* start = NULL;
-                float               pos[3];
-                angle_t             angle;
-                int                 spawnFlags;
-                boolean             makeCamera;
-#if __JHEXEN__
-                playerclass_t       pClass = cfg.playerClass[i];
-#else
-                playerclass_t       pClass = PCLASS_PLAYER;
-#endif
+                coord_t pos[3];
+                angle_t angle;
+                int spawnFlags;
+                boolean makeCamera;
+                playerclass_t       pClass = P_ClassForPlayerWhenRespawning(i, false);
 
                 if(players[i].startSpot < numPlayerStarts)
                     start = &playerStarts[players[i].startSpot];
 
                 if(start)
                 {
-                    pos[VX] = start->pos[VX];
-                    pos[VY] = start->pos[VY];
-                    pos[VZ] = start->pos[VZ];
-                    angle = start->angle;
-                    spawnFlags = start->spawnFlags;
+                    const mapspot_t* spot = &mapSpots[start->spot];
+
+                    pos[VX] = spot->origin[VX];
+                    pos[VY] = spot->origin[VY];
+                    pos[VZ] = spot->origin[VZ];
+                    angle = spot->angle;
+                    spawnFlags = spot->flags;
 
                     // "Fuzz" the spawn position looking for room nearby.
                     makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY],
@@ -1014,9 +1060,9 @@ void P_SpawnPlayers(void)
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->inGame)
         {
-            NetSv_SendPlayerSpawnPosition(i, players[i].plr->mo->pos[VX],
-                                          players[i].plr->mo->pos[VY],
-                                          players[i].plr->mo->pos[VZ],
+            NetSv_SendPlayerSpawnPosition(i, players[i].plr->mo->origin[VX],
+                                          players[i].plr->mo->origin[VY],
+                                          players[i].plr->mo->origin[VZ],
                                           players[i].plr->mo->angle);
         }
 }
@@ -1035,20 +1081,18 @@ void G_DeathMatchSpawnPlayer(int playerNum)
     if(randomClassParm)
     {
         pClass = P_Random() % 3;
-        if(pClass == cfg.playerClass[playerNum])
+        if(pClass == cfg.playerClass[playerNum]) // Not the same class, please.
             pClass = (pClass + 1) % 3;
     }
     else
-    {
-        pClass = cfg.playerClass[playerNum];
-    }
-#else
-    pClass = PCLASS_PLAYER;
 #endif
+    {
+        pClass = P_ClassForPlayerWhenRespawning(playerNum, false);
+    }
 
     if(IS_CLIENT)
     {
-        if(G_GetGameState() == GS_MAP)
+        if(G_GameState() == GS_MAP)
         {
             // Anywhere will do, for now.
             spawnPlayer(playerNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false,
@@ -1066,32 +1110,33 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 #define NUM_TRIES 20
     for(i = 0; i < NUM_TRIES; ++i)
     {
-        const playerstart_t* start =
-            &deathmatchStarts[P_Random() % numPlayerDMStarts];
+        const mapspot_t* spot = &mapSpots[deathmatchStarts[P_Random() % numPlayerDMStarts].spot];
 
         // Last attempt will succeed even though blocked.
-        if(P_CheckSpot(start->pos[VX], start->pos[VY]) || i == NUM_TRIES-1)
+        if(P_CheckSpot(spot->origin[VX], spot->origin[VY]) || i == NUM_TRIES-1)
         {
-            spawnPlayer(playerNum, pClass, start->pos[VX], start->pos[VY],
-                        start->pos[VZ], start->angle, start->spawnFlags, false,
+            spawnPlayer(playerNum, pClass, spot->origin[VX], spot->origin[VY],
+                        spot->origin[VZ], spot->angle, spot->flags, false,
                         true, true);
             return;
         }
     }
 }
 
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
+
 typedef struct {
-    float               pos[2], minDist;
+    coord_t pos[2], minDist;
 } unstuckmobjinlinedefparams_t;
 
-int unstuckMobjInLinedef(linedef_t* li, void* context)
+int unstuckMobjInLinedef(LineDef* li, void* context)
 {
-    unstuckmobjinlinedefparams_t *params =
+    unstuckmobjinlinedefparams_t* params =
         (unstuckmobjinlinedefparams_t*) context;
 
     if(!P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        float               pos, linePoint[2], lineDelta[2], result[2];
+        coord_t pos, lineOrigin[2], lineDirection[2], result[2];
 
         /**
          * Project the point (mo position) onto this linedef. If the
@@ -1100,27 +1145,27 @@ int unstuckMobjInLinedef(linedef_t* li, void* context)
          * the projected point.
          */
 
-        P_GetFloatpv(P_GetPtrp(li, DMU_VERTEX0), DMU_XY, linePoint);
-        P_GetFloatpv(li, DMU_DXY, lineDelta);
+        P_GetDoublepv(P_GetPtrp(li, DMU_VERTEX0), DMU_XY, lineOrigin);
+        P_GetDoublepv(li, DMU_DXY, lineDirection);
 
-        pos = M_ProjectPointOnLine(params->pos, linePoint, lineDelta, 0, result);
+        pos = V2d_ProjectOnLine(result, params->pos, lineOrigin, lineDirection);
 
         if(pos > 0 && pos < 1)
         {
-            float               dist =
-                P_ApproxDistance(params->pos[VX] - result[VX],
-                                 params->pos[VY] - result[VY]);
+            coord_t dist = M_ApproxDistance(params->pos[VX] - result[VX],
+                                            params->pos[VY] - result[VY]);
 
             if(dist >= 0 && dist < params->minDist)
             {
-                float               len, unit[2], normal[2];
+                coord_t len;
+                coord_t unit[2], normal[2];
 
                 // Derive the line normal.
-                len = P_ApproxDistance(lineDelta[0], lineDelta[1]);
+                len = M_ApproxDistance(lineDirection[0], lineDirection[1]);
                 if(len)
                 {
-                    unit[VX] = lineDelta[0] / len;
-                    unit[VY] = lineDelta[1] / len;
+                    unit[VX] = lineDirection[0] / len;
+                    unit[VY] = lineDirection[1] / len;
                 }
                 else
                 {
@@ -1139,38 +1184,104 @@ int unstuckMobjInLinedef(linedef_t* li, void* context)
     return false; // Continue iteration.
 }
 
-int iterateLinedefsNearMobj(thinker_t* th, void* context)
-{
-    mobj_t*             mo = (mobj_t*) th;
-    mobjtype_t          type = *((mobjtype_t*) context);
-    unstuckmobjinlinedefparams_t params;
-    AABoxf aaBox;
+typedef struct nearestfacinglineparams_s {
+    mobj_t* mo;
+    coord_t dist;
+    LineDef* line;
+} nearestfacinglineparams_t;
 
-    // \todo Why not type-prune at an earlier point? We could specify a
-    // custom comparison func for DD_IterateThinkers...
+static int PIT_FindNearestFacingLine(LineDef* line, void* ptr)
+{
+    nearestfacinglineparams_t* params = (nearestfacinglineparams_t*) ptr;
+    coord_t dist, off;
+
+    dist = LineDef_PointDistance(line, params->mo->origin, &off);
+    if(off < 0 || off > P_GetDoublep(line, DMU_LENGTH) || dist < 0)
+        return false; // Wrong way or too far.
+
+    if(!params->line || dist < params->dist)
+    {
+        params->line = line;
+        params->dist = dist;
+    }
+
+    return false; // Continue.
+}
+
+static int turnMobjToNearestLine(thinker_t* th, void* context)
+{
+    mobj_t* mo = (mobj_t*) th;
+    mobjtype_t type = *((mobjtype_t*) context);
+    nearestfacinglineparams_t params;
+    AABoxd aaBox;
+
     if(mo->type != type)
         return false; // Continue iteration.
 
-    aaBox.minX = mo->pos[VX] - mo->radius;
-    aaBox.minY = mo->pos[VY] - mo->radius;
-    aaBox.maxX = mo->pos[VX] + mo->radius;
-    aaBox.maxY = mo->pos[VY] + mo->radius;
+#ifdef _DEBUG
+    VERBOSE( Con_Message("Checking mo %i...\n", mo->thinker.id) );
+#endif
 
-    params.pos[VX] = mo->pos[VX];
-    params.pos[VY] = mo->pos[VY];
+    memset(&params, 0, sizeof(params));
+    params.mo = mo;
+
+    aaBox.minX = mo->origin[VX] - 50;
+    aaBox.minY = mo->origin[VY] - 50;
+    aaBox.maxX = mo->origin[VX] + 50;
+    aaBox.maxY = mo->origin[VY] + 50;
+
+    VALIDCOUNT++;
+
+    P_LinesBoxIterator(&aaBox, PIT_FindNearestFacingLine, &params);
+
+    if(params.line)
+    {
+        mo->angle = P_GetAnglep(params.line, DMU_ANGLE) - ANGLE_90;
+#ifdef _DEBUG
+        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i angle=%x\n", mo->thinker.id, mo->angle) );
+#endif
+    }
+    else
+    {
+#ifdef _DEBUG
+        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i => no nearest line found\n", mo->thinker.id) );
+#endif
+    }
+
+    return false; // Continue iteration.
+}
+
+static int moveMobjOutOfNearbyLines(thinker_t* th, void* paramaters)
+{
+    mobj_t* mo = (mobj_t*) th;
+    mobjtype_t type = *((mobjtype_t*)paramaters);
+    unstuckmobjinlinedefparams_t params;
+    AABoxd aaBox;
+
+    // @todo Why not type-prune at an earlier point? We could specify a
+    //       custom comparison func for DD_IterateThinkers...
+    if(mo->type != type)
+        return false; // Continue iteration.
+
+    aaBox.minX = mo->origin[VX] - mo->radius;
+    aaBox.minY = mo->origin[VY] - mo->radius;
+    aaBox.maxX = mo->origin[VX] + mo->radius;
+    aaBox.maxY = mo->origin[VY] + mo->radius;
+
+    params.pos[VX] = mo->origin[VX];
+    params.pos[VY] = mo->origin[VY];
     params.minDist = mo->radius / 2;
 
     VALIDCOUNT++;
 
     P_LinesBoxIterator(&aaBox, unstuckMobjInLinedef, &params);
 
-    if(mo->pos[VX] != params.pos[VX] || mo->pos[VY] != params.pos[VY])
+    if(!FEQUAL(mo->origin[VX], params.pos[VX]) || !FEQUAL(mo->origin[VY], params.pos[VY]))
     {
-        mo->angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY], params.pos[VX], params.pos[VY]);
-        P_MobjUnsetPosition(mo);
-        mo->pos[VX] = params.pos[VX];
-        mo->pos[VY] = params.pos[VY];
-        P_MobjSetPosition(mo);
+        P_MobjUnsetOrigin(mo);
+        mo->origin[VX] = params.pos[VX];
+        mo->origin[VY] = params.pos[VY];
+        P_MobjSetOrigin(mo);
     }
 
     return false; // Continue iteration.
@@ -1179,7 +1290,7 @@ int iterateLinedefsNearMobj(thinker_t* th, void* context)
 /**
  * Only affects torches, which are often placed inside walls in the
  * original maps. The DOOM engine allowed these kinds of things but a
- * Z-buffer doesn't.
+ * Z-buffer doesn't. Also turns the torches so they face the nearest line.
  */
 void P_MoveThingsOutOfWalls(void)
 {
@@ -1192,39 +1303,19 @@ void P_MoveThingsOutOfWalls(void)
 #endif
         NUMMOBJTYPES // terminate.
     };
-    uint                i;
+    uint i;
 
     for(i = 0; types[i] != NUMMOBJTYPES; ++i)
     {
-        mobjtype_t          type = types[i];
-
-        DD_IterateThinkers(P_MobjThinker, iterateLinedefsNearMobj, &type);
+        mobjtype_t type = types[i];
+        DD_IterateThinkers(P_MobjThinker, moveMobjOutOfNearbyLines, &type);
+        DD_IterateThinkers(P_MobjThinker, turnMobjToNearestLine, &type);
     }
 }
 
-#if __JHERETIC__
-float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
-{
-    float   a[2], b[2], c[2], d[2], len;
+#endif
 
-    P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, a);
-    P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, b);
-
-    c[VX] = x;
-    c[VY] = y;
-
-    d[VX] = b[VX] - a[VX];
-    d[VY] = b[VY] - a[VY];
-    len = sqrt(d[VX] * d[VX] + d[VY] * d[VY]);  // Accurate.
-
-    if(offset)
-        *offset =
-            ((a[VY] - c[VY]) * (a[VY] - b[VY]) -
-             (a[VX] - c[VX]) * (b[VX] - a[VX])) / len;
-    return ((a[VY] - c[VY]) * (b[VX] - a[VX]) -
-            (a[VX] - c[VX]) * (b[VY] - a[VY])) / len;
-}
-
+#ifdef __JHERETIC__
 /**
  * Fails in some places, but works most of the time.
  */
@@ -1232,14 +1323,14 @@ void P_TurnGizmosAwayFromDoors(void)
 {
 #define MAXLIST 200
 
-    sector_t   *sec;
-    mobj_t     *iter;
-    uint        i, l;
-    int         k, t;
-    linedef_t     *closestline = NULL, *li;
-    xline_t    *xli;
-    float       closestdist = 0, dist, off, linelen;    //, minrad;
-    mobj_t     *tlist[MAXLIST];
+    Sector* sec;
+    mobj_t* iter;
+    uint i, l;
+    int k, t;
+    LineDef* closestline = NULL, *li;
+    xline_t* xli;
+    coord_t closestdist = 0, dist, off, linelen;
+    mobj_t* tlist[MAXLIST];
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -1262,11 +1353,11 @@ void P_TurnGizmosAwayFromDoors(void)
             closestline = NULL;
             for(l = 0; l < numlines; ++l)
             {
-                float               d1[2];
+                coord_t d1[2];
 
                 li = P_ToPtr(DMU_LINEDEF, l);
 
-                if(P_GetPtrp(li, DMU_BACK_SECTOR))
+                if(!P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
 
                 xli = P_ToXLine(li);
@@ -1277,11 +1368,10 @@ void P_TurnGizmosAwayFromDoors(void)
                     xli->special != 27 && xli->special != 28))
                     continue;
 
-                P_GetFloatpv(li, DMU_DXY, d1);
-                linelen = P_ApproxDistance(d1[0], d1[1]);
+                P_GetDoublepv(li, DMU_DXY, d1);
+                linelen = M_ApproxDistance(d1[0], d1[1]);
 
-                dist = fabs(P_PointLineDistance(li, iter->pos[VX],
-                                                iter->pos[VY], &off));
+                dist = fabs(LineDef_PointDistance(li, iter->origin, &off));
                 if(!closestline || dist < closestdist)
                 {
                     closestdist = dist;
@@ -1291,17 +1381,16 @@ void P_TurnGizmosAwayFromDoors(void)
 
             if(closestline)
             {
-                vertex_t*       v0, *v1;
-                float           v0p[2], v1p[2];
+                Vertex* v0, *v1;
+                coord_t v0p[2], v1p[2];
 
                 v0 = P_GetPtrp(closestline, DMU_VERTEX0);
                 v1 = P_GetPtrp(closestline, DMU_VERTEX1);
 
-                P_GetFloatpv(v0, DMU_XY, v0p);
-                P_GetFloatpv(v1, DMU_XY, v1p);
+                P_GetDoublepv(v0, DMU_XY, v0p);
+                P_GetDoublepv(v1, DMU_XY, v1p);
 
-                iter->angle = R_PointToAngle2(v0p[VX], v0p[VY],
-                                              v1p[VX], v1p[VY]) - ANG90;
+                iter->angle = M_PointToAngle2(v0p, v1p) - ANG90;
             }
         }
     }

@@ -1,10 +1,10 @@
-/**\file
+/**\file p_xgline.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_xgline.c: Extended Generalized Line Types.
+ * Extended Generalized Line Types.
  *
  * Implements all XG line interactions on a map
  */
@@ -59,6 +59,7 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 #include "p_tick.h"
+#include "p_sound.h"
 #include "p_switch.h"
 
 // MACROS ------------------------------------------------------------------
@@ -134,7 +135,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void            XL_ChangeMaterial(linedef_t* line, int sidenum, int section,
+void            XL_ChangeMaterial(LineDef* line, int sidenum, int section,
                                   material_t* mat, blendmode_t blend,
                                   byte rgba[4], int flags);
 
@@ -381,13 +382,13 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Always Stomp", "", -1} }}               // ip5: non-zero = Always telefrag
 };
 
-cvar_t xgCVars[] =
+cvartemplate_t xgCVars[] =
 {
     {"xg-dev", CVF_NO_ARCHIVE, CVT_INT, &xgDev, 0, 1},
     {NULL}
 };
 
-ccmd_t xgCCmds[] =
+ccmdtemplate_t xgCCmds[] =
 {
     {"movefloor",  NULL, CCmdMovePlane},
     {"moveceil",   NULL, CCmdMovePlane},
@@ -402,9 +403,9 @@ ccmd_t xgCCmds[] =
  */
 void XG_Register(void)
 {
-    int                 i;
+    int i;
 
-    for(i = 0; xgCVars[i].name; ++i)
+    for(i = 0; xgCVars[i].path; ++i)
         Con_AddVariable(xgCVars + i);
     for(i = 0; xgCCmds[i].name; ++i)
         Con_AddCommand(xgCCmds + i);
@@ -415,12 +416,10 @@ void XG_Register(void)
  */
 void XG_Dev(const char* format, ...)
 {
-    static char         buffer[2000];
-    va_list             args;
-
+    static char buffer[2000];
+    va_list args;
     if(!xgDev)
         return;
-
     va_start(args, format);
     dd_vsnprintf(buffer, sizeof(buffer), format, args);
     strcat(buffer, "\n");
@@ -593,7 +592,7 @@ int findXLThinker(thinker_t* th, void* context)
 {
     xlthinker_t*        xl = (xlthinker_t*) th;
 
-    if(xl->line == (linedef_t*) context)
+    if(xl->line == (LineDef*) context)
         return true; // Stop iteration, we've found it.
 
     return false; // Continue iteration.
@@ -602,7 +601,7 @@ int findXLThinker(thinker_t* th, void* context)
 /**
  * Looks for line type definition and sets the line type if one is found.
  */
-void XL_SetLineType(linedef_t* line, int id)
+void XL_SetLineType(LineDef* line, int id)
 {
     xline_t*            xline = P_ToXLine(line);
 
@@ -651,7 +650,7 @@ void XL_SetLineType(linedef_t* line, int id)
 void XL_Init(void)
 {
     uint                i;
-    linedef_t*          line;
+    LineDef*            line;
 
     memset(&dummyThing, 0, sizeof(dummyThing));
 
@@ -674,14 +673,14 @@ void XL_Init(void)
  *
  * @return              @c true, iff all callbacks return @c true.
  */
-int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
+int XL_TraversePlanes(LineDef* line, int refType, int ref, void* data,
                       void* context, boolean travsectors, mobj_t* activator,
                       int (C_DECL *func)())
 {
     int                 tag;
     mobj_t*             mo;
     boolean             ok, findSecTagged;
-    sector_t*           sec, *frontSec, *backSec;
+    Sector*             sec, *frontSec, *backSec;
     xsector_t*          xsec;
 
     if(xgDev)
@@ -865,14 +864,14 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
  * @return              @c false if 'func' returns @c false, otherwise
  *                      @c true. Stops checking when false is returned.
  */
-int XL_TraverseLines(linedef_t* line, int rtype, int ref, void* data,
+int XL_TraverseLines(LineDef* line, int rtype, int ref, void* data,
                      void* context, mobj_t* activator, int (C_DECL *func)())
 {
     uint                i;
     int                 tag;
     int                 reftype = rtype;
     char                buff[50];
-    linedef_t*          iter;
+    LineDef*            iter;
     boolean             findLineTagged;
 
     // Binary XG data from DD_XGDATA uses the old flag values.
@@ -963,11 +962,11 @@ int XL_TraverseLines(linedef_t* line, int rtype, int ref, void* data,
  *                      specified linedef, using data from either the linedef
 *                       itself or context (will always be linetype_t).
  */
-int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
+int XL_ValidateLineRef(LineDef* line, int reftype, void* context,
                        char* parmname)
 {
     int                 answer = 0;
-    sidedef_t*          side;
+    SideDef*            side;
 
     switch(reftype)
     {
@@ -1014,16 +1013,14 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
         XG_Dev("XL_ValidateLineRef: Using Line Count (%i) as %s", answer, parmname);
         break;
 
-    case LDREF_ANGLE: // Line angle.
-        {
-        float               d1[2];
+    case LDREF_ANGLE: { // Line angle.
+        coord_t d1[2];
 
-        P_GetFloatpv(line, DMU_DXY, d1);
-        answer = R_PointToAngle2(0, 0, d1[0], d1[1]) / (float) ANGLE_MAX *
-            360;
+        P_GetDoublepv(line, DMU_DXY, d1);
+        answer = M_PointXYToAngle2(0, 0, d1[0], d1[1]) / (float) ANGLE_MAX * 360;
         XG_Dev("XL_ValidateLineRef: Using Line Angle (%i) as %s", answer, parmname);
-        break;
-        }
+        break; }
+
     case LDREF_LENGTH: // Line length.
         // Answer should be in map units.
         answer = P_GetFixedp(line, DMU_LENGTH) >> FRACBITS;
@@ -1126,7 +1123,7 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
 /**
  * Executes the lines' function as defined by its class.
  */
-void XL_DoFunction(linetype_t* info, linedef_t* line, int sideNum,
+void XL_DoFunction(linetype_t* info, LineDef* line, int sideNum,
                    mobj_t* actThing, int evType)
 {
     xgclass_t*          xgClass = &xgClasses[info->lineClass];
@@ -1175,7 +1172,7 @@ void XL_DoFunction(linetype_t* info, linedef_t* line, int sideNum,
     }
 }
 
-int C_DECL XLTrav_QuickActivate(linedef_t* line, boolean dummy, void* context,
+int C_DECL XLTrav_QuickActivate(LineDef* line, boolean dummy, void* context,
                                 void* context2, mobj_t* activator)
 {
     if(line)
@@ -1195,7 +1192,7 @@ int C_DECL XLTrav_QuickActivate(linedef_t* line, boolean dummy, void* context,
 /**
  * @return              @c true, if the line is active.
  */
-int C_DECL XLTrav_CheckLine(linedef_t* line, boolean dummy, void* context,
+int C_DECL XLTrav_CheckLine(LineDef* line, boolean dummy, void* context,
                             void* context2, mobj_t* activator)
 {
     if(line)
@@ -1217,7 +1214,7 @@ int C_DECL XLTrav_CheckLine(linedef_t* line, boolean dummy, void* context,
  *                      If @c false, the line will receive a chain event if
  *                      active.
  */
-int C_DECL XLTrav_SmartActivate(linedef_t* line, boolean dummy, void* context,
+int C_DECL XLTrav_SmartActivate(LineDef* line, boolean dummy, void* context,
                                 void* context2, mobj_t* activator)
 {
     if(line)
@@ -1238,7 +1235,7 @@ int C_DECL XLTrav_SmartActivate(linedef_t* line, boolean dummy, void* context,
 // XG Line Type Classes which don't require traversal
 //
 
-int C_DECL XL_DoChainSequence(linedef_t* line, boolean dummy, void* context,
+int C_DECL XL_DoChainSequence(LineDef* line, boolean dummy, void* context,
                               void* context2, mobj_t* activator)
 {
     if(line)
@@ -1259,7 +1256,7 @@ int C_DECL XL_DoChainSequence(linedef_t* line, boolean dummy, void* context,
     return true;
 }
 
-int C_DECL XL_DoDamage(linedef_t* line, boolean dummy, void* context,
+int C_DECL XL_DoDamage(LineDef* line, boolean dummy, void* context,
                        void* context2, mobj_t* activator)
 {
     linetype_t* info = context2;
@@ -1300,7 +1297,7 @@ int C_DECL XL_DoDamage(linedef_t* line, boolean dummy, void* context,
     return true;
 }
 
-int C_DECL XL_DoPower(linedef_t* line, boolean dummy, void* context,
+int C_DECL XL_DoPower(LineDef* line, boolean dummy, void* context,
                       void* context2, mobj_t* activator)
 {
     player_t*           player = 0;
@@ -1342,7 +1339,7 @@ int C_DECL XL_DoPower(linedef_t* line, boolean dummy, void* context,
     return true;
 }
 
-int C_DECL XL_DoKey(linedef_t* line, boolean dummy, void* context,
+int C_DECL XL_DoKey(LineDef* line, boolean dummy, void* context,
                     void* context2, mobj_t* activator)
 {
     int                 i;
@@ -1373,7 +1370,7 @@ int C_DECL XL_DoKey(linedef_t* line, boolean dummy, void* context,
     return true;
 }
 
-int C_DECL XL_DoExplode(linedef_t* line, boolean dummy, void* context,
+int C_DECL XL_DoExplode(LineDef* line, boolean dummy, void* context,
                         void* context2, mobj_t* activator)
 {
     if(!activator)
@@ -1389,7 +1386,7 @@ int C_DECL XL_DoExplode(linedef_t* line, boolean dummy, void* context,
     return true;
 }
 
-int C_DECL XL_DoCommand(linedef_t* line, boolean dummy, void* context,
+int C_DECL XL_DoCommand(LineDef* line, boolean dummy, void* context,
                         void* context2, mobj_t* activator)
 {
     linetype_t*         info = context2;
@@ -1402,7 +1399,7 @@ int C_DECL XL_DoCommand(linedef_t* line, boolean dummy, void* context,
 // Following classes require traversal hence "Trav_"
 //
 
-int C_DECL XLTrav_ChangeLineType(linedef_t* line, boolean dummy,
+int C_DECL XLTrav_ChangeLineType(LineDef* line, boolean dummy,
                                  void* context, void* context2,
                                  mobj_t* activator)
 {
@@ -1416,12 +1413,12 @@ int C_DECL XLTrav_ChangeLineType(linedef_t* line, boolean dummy,
     return true; // Keep looking.
 }
 
-int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
+int C_DECL XLTrav_ChangeWallMaterial(LineDef* line, boolean dummy,
                                      void* context, void *context2,
                                      mobj_t* activator)
 {
     linetype_t*     info = context2;
-    sidedef_t*      side;
+    SideDef*        side;
     blendmode_t     blend = BM_NORMAL;
     byte            rgba[4];
     material_t*     mat = NULL;
@@ -1463,7 +1460,7 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
         side = P_GetPtrp(line, DMU_SIDEDEF0);
     }
 
-    XG_Dev("XLTrav_ChangeWallTexture: Line %i", P_ToIndex(line));
+    XG_Dev("XLTrav_ChangeWallMaterial: LineDef %i", P_ToIndex(line));
 
     rgba[0] = info->iparm[9];
     rgba[1] = info->iparm[10];
@@ -1499,7 +1496,7 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
     return true;
 }
 
-int C_DECL XLTrav_Activate(linedef_t* line, boolean dummy, void* context,
+int C_DECL XLTrav_Activate(LineDef* line, boolean dummy, void* context,
                            void* context2, mobj_t* activator)
 {
     if(line)
@@ -1508,7 +1505,7 @@ int C_DECL XLTrav_Activate(linedef_t* line, boolean dummy, void* context,
     return true; // Keep looking.
 }
 
-int C_DECL XLTrav_LineCount(linedef_t* line, boolean dummy, void* context,
+int C_DECL XLTrav_LineCount(LineDef* line, boolean dummy, void* context,
                             void* context2, mobj_t* activator)
 {
     if(line)
@@ -1528,7 +1525,7 @@ int C_DECL XLTrav_LineCount(linedef_t* line, boolean dummy, void* context,
     return true;
 }
 
-int C_DECL XLTrav_Music(linedef_t* line, boolean dummy, void* context,
+int C_DECL XLTrav_Music(LineDef* line, boolean dummy, void* context,
                         void* context2, mobj_t* activator)
 {
     int                 song = 0;
@@ -1555,7 +1552,7 @@ int C_DECL XLTrav_Music(linedef_t* line, boolean dummy, void* context,
         }
     }
 
-    //// \fixme Add code to validate song id here.
+    //// @todo Add code to validate song id here.
 
     if(song)
     {
@@ -1566,23 +1563,23 @@ int C_DECL XLTrav_Music(linedef_t* line, boolean dummy, void* context,
     return false; // Only do this once!
 }
 
-int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
+int C_DECL XLTrav_LineTeleport(LineDef* newLine, boolean dummy,
                                void* context, void* context2, mobj_t* mobj)
 {
 // Maximum units to move object to avoid hiccups.
 #define FUDGEFACTOR         10
 
-    int                 fudge = FUDGEFACTOR;
-    int                 side = 0, stepDown;
-    unsigned int        an;
-    mobj_t*             flash;
-    linedef_t*          line = (linedef_t *) context;
-    linetype_t*         info = (linetype_t *) context2;
-    vertex_t*           newV1, *newV2, *oldV1, *oldV2;
-    sector_t*           newFrontSec, *newBackSec;
-    float               newX, newY, newZ, pos, s, c;
-    float               oldLineDelta[2], newLineDelta[2];
-    angle_t             angle;
+    int fudge = FUDGEFACTOR;
+    int side = 0, stepDown;
+    unsigned int an;
+    mobj_t* flash;
+    LineDef* line = (LineDef *) context;
+    linetype_t* info = (linetype_t *) context2;
+    Vertex* newV1, *newV2, *oldV1, *oldV2;
+    Sector* newFrontSec, *newBackSec;
+    coord_t newX, newY, newZ, pos, s, c;
+    coord_t oldLineDelta[2], newLineDelta[2];
+    angle_t angle;
 
     // Don't teleport things marked noteleport!
     if(mobj->flags2 & MF2_NOTELEPORT)
@@ -1604,11 +1601,11 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // Retrieve a few properties to make this look neater.
     oldV1 = P_GetPtrp(line, DMU_VERTEX0);
     oldV2 = P_GetPtrp(line, DMU_VERTEX1);
-    P_GetFloatpv(line, DMU_DXY, oldLineDelta);
+    P_GetDoublepv(line, DMU_DXY, oldLineDelta);
 
     newV1 = P_GetPtrp(newLine, DMU_VERTEX0);
     newV2 = P_GetPtrp(newLine, DMU_VERTEX1);
-    P_GetFloatpv(newLine, DMU_DXY, newLineDelta);
+    P_GetDoublepv(newLine, DMU_DXY, newLineDelta);
     newFrontSec = P_GetPtrp(newLine, DMU_FRONT_SECTOR);
     newBackSec  = P_GetPtrp(newLine, DMU_BACK_SECTOR);
 
@@ -1624,8 +1621,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // Spawn flash at the old position?
     if(info->iparm[2])
     {
-        if((flash = P_SpawnMobj3fv(MT_TFOG, mobj->pos,
-                                    mobj->angle + ANG180, 0)))
+        if((flash = P_SpawnMobj(MT_TFOG, mobj->origin, mobj->angle + ANG180, 0)))
         {
             // Play a sound?
             if(info->iparm[3])
@@ -1635,39 +1631,39 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
 
     // Get the thing's position along the source linedef
     if(fabs(oldLineDelta[0]) > fabs(oldLineDelta[1]))
-        pos = (mobj->pos[VX] - P_GetFloatp(oldV1, DMU_X)) / oldLineDelta[0];
+        pos = (mobj->origin[VX] - P_GetDoublep(oldV1, DMU_X)) / oldLineDelta[0];
     else
-        pos = (mobj->pos[VY] - P_GetFloatp(oldV1, DMU_Y)) / oldLineDelta[1];
+        pos = (mobj->origin[VY] - P_GetDoublep(oldV1, DMU_Y)) / oldLineDelta[1];
 
     // Get the angle between the two linedefs, for rotating orientation and
     // momentum. Rotate 180 degrees, and flip the position across the exit
     // linedef, if reversed.
     angle = (info->iparm[4] ? pos = 1 - pos, 0 : ANG180) +
-             R_PointToAngle2(0, 0, newLineDelta[0], newLineDelta[1]) -
-             R_PointToAngle2(0, 0, oldLineDelta[0], oldLineDelta[1]);
+             M_PointXYToAngle2(0, 0, newLineDelta[0], newLineDelta[1]) -
+             M_PointXYToAngle2(0, 0, oldLineDelta[0], oldLineDelta[1]);
 
     // Interpolate position across the exit linedef.
-    newX = P_GetFloatp(newV2, DMU_X) - (pos * newLineDelta[0]);
-    newY = P_GetFloatp(newV2, DMU_Y) - (pos * newLineDelta[1]);
+    newX = P_GetDoublep(newV2, DMU_X) - (pos * newLineDelta[0]);
+    newY = P_GetDoublep(newV2, DMU_Y) - (pos * newLineDelta[1]);
 
     // Sine, cosine of angle adjustment
     s = FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]);
     c = FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]);
 
     // Whether walking towards first side of exit linedef steps down
-    if(P_GetFloatp(newFrontSec, DMU_FLOOR_HEIGHT) <
-       P_GetFloatp(newBackSec, DMU_FLOOR_HEIGHT))
+    if(P_GetDoublep(newFrontSec, DMU_FLOOR_HEIGHT) <
+       P_GetDoublep(newBackSec, DMU_FLOOR_HEIGHT))
         stepDown = true;
     else
         stepDown = false;
 
     // Height of thing above ground.
-    newZ = mobj->pos[VZ] - mobj->floorZ;
+    newZ = mobj->origin[VZ] - mobj->floorZ;
 
     /**
      * Side to exit the linedef on positionally.
      *
-     * \note
+     * @note
      * This flag concerns exit position, not momentum. Due to potential for
      * round-off error, the thing can land on either the left or the right
      * side of the exit linedef, and steps must be taken to make sure it
@@ -1691,7 +1687,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
         side = 1;
 
     // Make sure we are on correct side of exit linedef.
-    while(P_PointOnLinedefSideXY(newX, newY, newLine) != side && --fudge >= 0)
+    while(LineDef_PointXYOnSide(newLine, newX, newY) < 0 != side && --fudge >= 0)
     {
         if(fabs(newLineDelta[0]) > fabs(newLineDelta[1]))
             newY -= FIX2FLT((newLineDelta[0] < 0) != side ? -1 : 1);
@@ -1710,9 +1706,9 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // level at the exit is measured as the higher of the two floor heights
     // at the exit linedef.
     if(stepDown)
-        mobj->pos[VZ] = newZ + P_GetFloatp(newFrontSec, DMU_FLOOR_HEIGHT);
+        mobj->origin[VZ] = newZ + P_GetDoublep(newFrontSec, DMU_FLOOR_HEIGHT);
     else
-        mobj->pos[VZ] = newZ + P_GetFloatp(newBackSec, DMU_FLOOR_HEIGHT);
+        mobj->origin[VZ] = newZ + P_GetDoublep(newBackSec, DMU_FLOOR_HEIGHT);
 
     // Rotate mobj's orientation according to difference in linedef angles.
     mobj->angle += angle;
@@ -1730,7 +1726,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     {
         mobj->floorClip = 0;
 
-        if(mobj->pos[VZ] == P_GetFloatp(mobj->subsector, DMU_FLOOR_HEIGHT))
+        if(FEQUAL(mobj->origin[VZ], P_GetDoublep(mobj->bspLeaf, DMU_FLOOR_HEIGHT)))
         {
             const terraintype_t* tt = P_MobjGetFloorTerrainType(mobj);
 
@@ -1745,10 +1741,10 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     if(info->iparm[2])
     {
         an = mobj->angle >> ANGLETOFINESHIFT;
-        if((flash = P_SpawnMobj3f(MT_TFOG,
-                                  mobj->pos[VX] + 24 * FIX2FLT(finecosine[an]),
-                                  mobj->pos[VY] + 24 * FIX2FLT(finesine[an]),
-                                  mobj->pos[VZ], mobj->angle + ANG180, 0)))
+        if((flash = P_SpawnMobjXYZ(MT_TFOG,
+                                   mobj->origin[VX] + 24 * FIX2FLT(finecosine[an]),
+                                   mobj->origin[VY] + 24 * FIX2FLT(finesine[an]),
+                                   mobj->origin[VZ], mobj->angle + ANG180, 0)))
         {
             // Play a sound?
             if(info->iparm[3])
@@ -1759,8 +1755,8 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // Adjust the player's view, incase there has been a height change
     if(mobj->player)
     {
-        mobj->player->viewZ = mobj->pos[VZ] + mobj->player->viewHeight;
-        mobj->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+        mobj->player->viewZ = mobj->origin[VZ] + mobj->player->viewHeight;
+        mobj->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
     }
 
     return false; // Do this only once!
@@ -1774,7 +1770,7 @@ boolean XL_ValidateMap(uint* map, int type)
     uint bMap = *map, episode;
 
 #if __JDOOM__
-    if(gameMode == commercial || gameMode == shareware)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_SHAREWARE))
         episode = 0;
     else
         episode = gameEpisode;
@@ -1791,8 +1787,8 @@ boolean XL_ValidateMap(uint* map, int type)
     return result;
 }
 
-int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
-                          void* context2, mobj_t* activator)
+int C_DECL XLTrav_LeaveMap(LineDef* line, boolean dummy, void* context,
+                           void* context2, mobj_t* activator)
 {
     uint map = 0;
     int temp = 0;
@@ -1846,7 +1842,7 @@ int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
     return false; // Only do this once!
 }
 
-int C_DECL XLTrav_DisableLine(linedef_t* line, boolean dummy, void* context,
+int C_DECL XLTrav_DisableLine(LineDef* line, boolean dummy, void* context,
                               void* context2, mobj_t* activator)
 {
     if(line)
@@ -1855,7 +1851,7 @@ int C_DECL XLTrav_DisableLine(linedef_t* line, boolean dummy, void* context,
 
         if(xline->xg)
         {
-            xline_t*            origLine = P_ToXLine((linedef_t*) context);
+            xline_t*            origLine = P_ToXLine((LineDef*) context);
 
             xline->xg->disabled = origLine->xg->active;
         }
@@ -1864,7 +1860,7 @@ int C_DECL XLTrav_DisableLine(linedef_t* line, boolean dummy, void* context,
     return true; // Keep looking...
 }
 
-int C_DECL XLTrav_EnableLine(linedef_t* line, boolean dummy, void* context,
+int C_DECL XLTrav_EnableLine(LineDef* line, boolean dummy, void* context,
                              void* context2, mobj_t* activator)
 {
     if(line)
@@ -1873,7 +1869,7 @@ int C_DECL XLTrav_EnableLine(linedef_t* line, boolean dummy, void* context,
 
         if(xline->xg)
         {
-            xline_t*            origLine = P_ToXLine((linedef_t*) context);
+            xline_t*            origLine = P_ToXLine((LineDef*) context);
 
             xline->xg->disabled = !origLine->xg->active;
         }
@@ -1887,7 +1883,7 @@ int C_DECL XLTrav_EnableLine(linedef_t* line, boolean dummy, void* context,
  *
  * @return              @c true if all are in the specified state.
  */
-boolean XL_CheckLineStatus(linedef_t* line, int reftype, int ref, int active,
+boolean XL_CheckLineStatus(LineDef* line, int reftype, int ref, int active,
                            mobj_t* activator)
 {
     return XL_TraverseLines(line, reftype, ref, &active, 0, activator,
@@ -1903,18 +1899,18 @@ int XL_CheckMobjGone(thinker_t* th, void* context)
     {   // Not dead.
         XG_Dev("XL_CheckMobjGone: Thing type %i: Found mo id=%i, "
                "health=%i, pos=(%g,%g)", thingtype, mo->thinker.id,
-               mo->health, mo->pos[VX], mo->pos[VY]);
+               mo->health, mo->origin[VX], mo->origin[VY]);
         return true; // Stop iteration.
     }
 
     return false; // Continue iteration.
 }
 
-void XL_SwapSwitchTextures(linedef_t* line, int snum)
+void XL_SwapSwitchTextures(LineDef* line, int snum)
 {
     if(line)
     {
-        sidedef_t*          side = P_GetPtrp(line,
+        SideDef*            side = P_GetPtrp(line,
             snum? DMU_SIDEDEF1 : DMU_SIDEDEF0);
 
         if(side && P_ToggleSwitch(side, SFX_NONE, true, 0))
@@ -1926,13 +1922,13 @@ void XL_SwapSwitchTextures(linedef_t* line, int snum)
 /**
  * Changes material of the given line.
  */
-void XL_ChangeMaterial(linedef_t* line, int sidenum, int section,
+void XL_ChangeMaterial(LineDef* line, int sidenum, int section,
                        material_t* mat, blendmode_t blendmode, byte rgba[4],
                        int flags)
 {
     int                 i;
     int                 currentFlags;
-    sidedef_t*          side =
+    SideDef*            side =
         P_GetPtrp(line, sidenum? DMU_SIDEDEF1:DMU_SIDEDEF0);
 
     if(!side)
@@ -2026,17 +2022,12 @@ void XL_Message(mobj_t* act, char* msg, boolean global)
     P_SetMessage(pl, msg, false);
 }
 
-/**
- * XL_ActivateLine
- */
-void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
-                     int sidenum, mobj_t* data, int evtype)
+void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
+    int sidenum, mobj_t* data, int evtype)
 {
-    byte                rgba[4] = { 0, 0, 0, 0 };
-    xgline_t*           xg;
-    sector_t*           frontsector;
-    mobj_t*             activator_thing = (mobj_t *) data;
-    ddmobj_base_t*      soundOrg = 0;
+    byte rgba[4] = { 0, 0, 0, 0 };
+    xgline_t* xg;
+    mobj_t* activator_thing = (mobj_t*) data;
 
     xg = P_ToXLine(line)->xg;
 
@@ -2058,10 +2049,6 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
     }
 
     // Activation should happen on the front side.
-    frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    if(frontsector)
-        soundOrg = P_GetPtrp(frontsector, DMU_SOUND_ORIGIN);
-
     // Let the line know who's activating it.
     xg->activator = data;
 
@@ -2130,13 +2117,14 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
                    (info->flags2 & LTF2_GLOBAL_A_MSG) != 0);
 
         if(info->actSound)
-            S_StartSound(info->actSound, (mobj_t *) soundOrg);
+        {
+            S_SectorSound(P_GetPtrp(line, DMU_FRONT_SECTOR), info->actSound);
+        }
 
         // Change the texture of the line if asked to.
-        if(info->wallSection && info->actMaterial)
+        if(info->wallSection && info->actMaterial != NOMATERIALID)
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              P_ToPtr(DMU_MATERIAL, info->actMaterial),
-                              BM_NORMAL, rgba, 0);
+                P_ToPtr(DMU_MATERIAL, info->actMaterial), BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to
         if(info->actLineType)
@@ -2148,13 +2136,14 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
                    (info->flags2 & LTF2_GLOBAL_D_MSG) != 0);
 
         if(info->deactSound)
-            S_StartSound(info->deactSound, (mobj_t *) soundOrg);
+        {
+            S_SectorSound(P_GetPtrp(line, DMU_FRONT_SECTOR), info->deactSound);
+        }
 
         // Change the texture of the line if asked to.
-        if(info->wallSection && info->deactMaterial)
+        if(info->wallSection && info->deactMaterial != NOMATERIALID)
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              P_ToPtr(DMU_MATERIAL, info->deactMaterial),
-                              BM_NORMAL, rgba, 0);
+                P_ToPtr(DMU_MATERIAL, info->deactMaterial), BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to.
         if(info->deactLineType)
@@ -2177,7 +2166,7 @@ boolean XL_CheckKeys(mobj_t* mo, int flags2, boolean doMsg, boolean doSfx)
     boolean*            keys = act->keys;
     int                 badsound = SFX_PLROOF;
 #elif __JSTRIFE__
-//// \fixme FIXME!!!
+//// @todo FIXME!!!
     int                 num = 3;
     int*                keys = (int *) act->keys;
     int                 badsound = SFX_NONE;
@@ -2214,7 +2203,7 @@ boolean XL_CheckKeys(mobj_t* mo, int flags2, boolean doMsg, boolean doSfx)
  *
  * @return              @c true, iff the event is processed.
  */
-int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
+int XL_LineEvent(int evtype, int linetype, LineDef* line, int sidenum,
                  void* data)
 {
     int                 i;
@@ -2495,7 +2484,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_CrossLine(linedef_t* line, int sidenum, mobj_t* thing)
+int XL_CrossLine(LineDef* line, int sidenum, mobj_t* thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2506,7 +2495,7 @@ int XL_CrossLine(linedef_t* line, int sidenum, mobj_t* thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_UseLine(linedef_t* line, int sidenum, mobj_t* thing)
+int XL_UseLine(LineDef* line, int sidenum, mobj_t* thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2517,7 +2506,7 @@ int XL_UseLine(linedef_t* line, int sidenum, mobj_t* thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_ShootLine(linedef_t* line, int sidenum, mobj_t* thing)
+int XL_ShootLine(LineDef* line, int sidenum, mobj_t* thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2525,7 +2514,7 @@ int XL_ShootLine(linedef_t* line, int sidenum, mobj_t* thing)
     return XL_LineEvent(XLE_SHOOT, 0, line, sidenum, thing);
 }
 
-int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
+int XL_HitLine(LineDef *line, int sidenum, mobj_t *thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2533,34 +2522,44 @@ int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
     return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
-void XL_DoChain(linedef_t* line, int chain, boolean activating,
-                mobj_t* actThing)
+void XL_DoChain(LineDef* lineDef, int chain, boolean activating, mobj_t* actThing)
 {
-    linedef_t*          dummyLine;
-    xline_t*            xdummyLine;
+    SideDef* dummyFrontSideDef, *dummyBackSideDef = NULL;
+    LineDef* dummyLineDef;
+    xline_t* xdummyLineDef;
 
-    // We'll use a dummy line for the chain.
-    dummyLine = P_AllocDummyLine();
-    xdummyLine = P_ToXLine(dummyLine);
-    xdummyLine->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+    // We'll use dummies for the chain.
+    dummyLineDef = P_AllocDummyLine();
+    xdummyLineDef = P_ToXLine(dummyLineDef);
+    xdummyLineDef->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+    dummyFrontSideDef = P_AllocDummySideDef();
+    P_SetPtrp(dummyLineDef, DMU_SIDEDEF0, dummyFrontSideDef);
+    P_SetPtrp(dummyFrontSideDef, DMU_LINEDEF, dummyLineDef);
+    P_SetPtrp(dummyLineDef, DMU_FRONT_SECTOR, P_GetPtrp(lineDef, DMU_FRONT_SECTOR));
+    if(0 != P_GetPtrp(lineDef, DMU_SIDEDEF1))
+    {
+        dummyBackSideDef = P_AllocDummySideDef();
+        P_SetPtrp(dummyLineDef, DMU_SIDEDEF1, dummyBackSideDef);
+        P_SetPtrp(dummyBackSideDef, DMU_LINEDEF, dummyLineDef);
+        P_SetPtrp(dummyLineDef, DMU_BACK_SECTOR, P_GetPtrp(lineDef, DMU_BACK_SECTOR));
+    }
 
-    XG_Dev("XL_DoChain: Line %i, chained type %i", P_ToIndex(line), chain);
-    XG_Dev("  (dummy line will show up as %i)", P_ToIndex(dummyLine));
+    XG_Dev("XL_DoChain: LineDef %i, chained type %i", P_ToIndex(lineDef), chain);
+    XG_Dev("  (dummy linedef will show up as %i)", P_ToIndex(dummyLineDef));
 
-    // Copy all properties to the dummy
-    P_CopyLine(dummyLine, line);
+    // Copy all properties to the dummies.
+    P_CopyLine(dummyLineDef, lineDef);
 
-    P_SetPtrp(dummyLine, DMU_SIDEDEF0, NULL);
-    P_SetPtrp(dummyLine, DMU_SIDEDEF1, NULL);
-
-    xdummyLine->xg->active = !activating;
+    xdummyLineDef->xg->active = !activating;
 
     // Make the chain event
-    XL_LineEvent(XLE_CHAIN, chain, dummyLine, 0, actThing);
+    XL_LineEvent(XLE_CHAIN, chain, dummyLineDef, 0, actThing);
 
-    // Free the dummy
-    Z_Free(xdummyLine->xg);
-    P_FreeDummyLine(dummyLine);
+    Z_Free(xdummyLineDef->xg);
+    P_FreeDummyLine(dummyLineDef);
+    P_FreeDummySideDef(dummyFrontSideDef);
+    if(dummyBackSideDef)
+        P_FreeDummySideDef(dummyBackSideDef);
 }
 
 /**
@@ -2569,7 +2568,7 @@ void XL_DoChain(linedef_t* line, int chain, boolean activating,
 void XL_Thinker(xlthinker_t* xl)
 {
     float               levtime;
-    linedef_t*          line = xl->line;
+    LineDef*            line = xl->line;
     xline_t*            xline;
     xgline_t*           xg;
     linetype_t*         info;
@@ -2693,13 +2692,11 @@ void XL_Thinker(xlthinker_t* xl)
     if(info->materialMoveSpeed)
     {
         // The texture should be moved. Calculate the offsets.
-        float               current[2]; // The current offset.
-        sidedef_t*          side;
-        float               spd = info->materialMoveSpeed;
-        float               offset[2];
-        angle_t             ang =
-            ((angle_t) (ANGLE_MAX * (info->materialMoveAngle / 360))) >>
-            ANGLETOFINESHIFT;
+        coord_t current[2]; // The current offset.
+        SideDef* side;
+        float spd = info->materialMoveSpeed;
+        coord_t offset[2];
+        angle_t ang = ((angle_t) (ANGLE_MAX * (info->materialMoveAngle / 360))) >> ANGLETOFINESHIFT;
 
         offset[VX] = -(FIX2FLT(finecosine[ang]) * spd);
         offset[VY] = FIX2FLT(finesine[ang]) * spd;
@@ -2709,48 +2706,48 @@ void XL_Thinker(xlthinker_t* xl)
          * These are group offsets. All surfaces on a given side are moved
          * using the same texmove speed/angle.
          *
-         * \todo Implement per-surface texture movement also which would
-         * be added to each independantly.
+         * @todo Implement per-surface texture movement also which would
+         *        be added to each independantly.
          */
 
         // Front side.
         side = P_GetPtrp(line, DMU_SIDEDEF0);
         if(side)
         {
-            P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
 
-            P_GetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
 
-            P_GetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
         }
 
         // Back side.
         side = P_GetPtrp(line, DMU_SIDEDEF1);
         if(side)
         {
-            P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
 
-            P_GetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, current);
 
-            P_GetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
+            P_GetDoublepv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
             current[VX] += offset[VX];
             current[VY] += offset[VY];
-            P_SetFloatpv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
+            P_SetDoublepv(side, DMU_BOTTOM_MATERIAL_OFFSET_XY, current);
         }
     }
 }

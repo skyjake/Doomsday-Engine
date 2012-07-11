@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -64,7 +64,7 @@ void            P_SpawnSpecials(void);
 void            P_UpdateSpecials(void);
 void            P_ThunderSector(void); // jd64
 
-boolean         P_ActivateLine(linedef_t *ld, mobj_t *mo, int side,
+boolean         P_ActivateLine(LineDef *ld, mobj_t *mo, int side,
                                int activationType);
 
 void            P_PlayerInSpecialSector(player_t *player);
@@ -80,12 +80,12 @@ typedef enum {
     turbo16 // quickly build by 16
 } stair_e;
 
-int             EV_BuildStairs(linedef_t *line, stair_e type);
+int             EV_BuildStairs(LineDef *line, stair_e type);
 
-result_e    T_MovePlane(sector_t* sector, float speed, float dest,
+result_e    T_MovePlane(Sector* sector, float speed, coord_t dest,
                         int crush, int floorOrCeiling, int direction);
-int             EV_DoDonut(linedef_t *line);
+int             EV_DoDonut(LineDef *line);
 
-boolean     P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side);
+boolean     P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side);
 
 #endif

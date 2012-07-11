@@ -1,10 +1,10 @@
-/**\file
+/**\file m_cheat.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,17 +24,21 @@
  */
 
 /**
- * m_cheat.c:
+ * Cheats - Hexen specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <math.h>
+#ifdef UNIX
+# include <errno.h>
+#endif
 
 #include "jhexen.h"
 
-#include "f_infine.h"
 #include "d_net.h"
 #include "g_common.h"
 #include "p_player.h"
@@ -45,6 +49,7 @@
 #include "p_user.h"
 #include "p_start.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 #include "g_eventsequence.h"
 
 // MACROS ------------------------------------------------------------------
@@ -59,6 +64,7 @@ int Cht_GodFunc(const int* args, int player);
 int Cht_NoClipFunc(const int* args, int player);
 int Cht_WeaponsFunc(const int* args, int player);
 int Cht_HealthFunc(const int* args, int player);
+int Cht_ArmorFunc(const int* args, int player);
 int Cht_GiveKeysFunc(const int* args, int player);
 int Cht_SoundFunc(const int* args, int player);
 int Cht_InventoryFunc(const int* args, int player);
@@ -89,124 +95,111 @@ int Cht_WhereFunc(const int* args, int player);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Toggle god mode
-static unsigned char cheatGodSeq[] = {
+static char cheatGodSeq[] = {
     's', 'a', 't', 'a', 'n'
 };
 
 // Toggle no clipping mode
-static unsigned char cheatNoClipSeq[] = {
+static char cheatNoClipSeq[] = {
     'c', 'a', 's', 'p', 'e', 'r'
 };
 
 // Get all weapons and mana
-static unsigned char cheatWeaponsSeq[] = {
+static char cheatWeaponsSeq[] = {
     'n', 'r', 'a'
 };
 
 // Get full health
-static unsigned char cheatHealthSeq[] = {
+static char cheatHealthSeq[] = {
     'c', 'l', 'u', 'b', 'm', 'e', 'd'
 };
 
 // Get all keys
-static unsigned char cheatKeysSeq[] = {
+static char cheatKeysSeq[] = {
     'l', 'o', 'c', 'k', 's', 'm', 'i', 't', 'h'
 };
 
 // Toggle sound debug info
-static unsigned char cheatSoundSeq[] = {
+static char cheatSoundSeq[] = {
     'n', 'o', 'i', 's', 'e'
 };
 
-// Toggle ticker
-static unsigned char cheatTickerSeq[] = {
-    't', 'i', 'c', 'k', 'e', 'r'
-};
-
 // Get all inventory items
-static unsigned char cheatInventorySeq[] = {
+static char cheatInventorySeq[] = {
     'i', 'n', 'd', 'i', 'a', 'n', 'a'
 };
 
 // Get all puzzle pieces
-static unsigned char cheatPuzzleSeq[] = {
+static char cheatPuzzleSeq[] = {
     's', 'h', 'e', 'r', 'l', 'o', 'c', 'k'
 };
 
 // Warp to new map
-static unsigned char cheatWarpSeq[] = {
+static char cheatWarpSeq[] = {
     'v', 'i', 's', 'i', 't', 1, 0, 0
 };
 
 // Become a pig
-static unsigned char cheatPigSeq[] = {
+static char cheatPigSeq[] = {
     'd', 'e', 'l', 'i', 'v', 'e', 'r', 'a', 'n', 'c', 'e'
 };
 
 // Kill all monsters
-static unsigned char cheatMassacreSeq[] = {
+static char cheatMassacreSeq[] = {
     'b', 'u', 't', 'c', 'h', 'e', 'r'
 };
 
-static unsigned char cheatIDKFASeq[] = {
+static char cheatIDKFASeq[] = {
     'c', 'o', 'n', 'a', 'n'
 };
 
-static unsigned char cheatQuickenSeq1[] = {
+static char cheatQuickenSeq1[] = {
     'm', 'a', 'r', 't', 'e', 'k'
 };
 
-static unsigned char cheatQuickenSeq2[] = {
+static char cheatQuickenSeq2[] = {
     'm', 'a', 'r', 't', 'e', 'k', 'm', 'a', 'r', 't', 'e', 'k'
 };
 
-static unsigned char cheatQuickenSeq3[] = {
+static char cheatQuickenSeq3[] = {
     'm', 'a', 'r', 't', 'e', 'k', 'm', 'a', 'r', 't', 'e', 'k', 'm', 'a', 'r', 't', 'e', 'k'
 };
 
 // New class
-static unsigned char cheatClass1Seq[] = {
+static char cheatClass1Seq[] = {
     's', 'h', 'a', 'd', 'o', 'w', 'c', 'a', 's', 't', 'e', 'r'
 };
 
-static unsigned char cheatClass2Seq[] = {
+static char cheatClass2Seq[] = {
     's', 'h', 'a', 'd', 'o', 'w', 'c', 'a', 's', 't', 'e', 'r', 1, 0
 };
 
-static unsigned char cheatInitSeq[] = {
+static char cheatInitSeq[] = {
     'i', 'n', 'i', 't'
 };
 
-static unsigned char cheatVersionSeq[] = {
+static char cheatVersionSeq[] = {
     'm', 'r', 'j', 'o', 'n', 'e', 's'
 };
 
-static unsigned char cheatDebugSeq[] = {
+static char cheatDebugSeq[] = {
     'w', 'h', 'e', 'r', 'e'
 };
 
-static unsigned char cheatScriptSeq1[] = {
+static char cheatScriptSeq1[] = {
     'p', 'u', 'k', 'e'
 };
 
-static unsigned char cheatScriptSeq2[] = {
+static char cheatScriptSeq2[] = {
     'p', 'u', 'k', 'e', 1, 0
 };
 
-static unsigned char cheatScriptSeq3[] = {
+static char cheatScriptSeq3[] = {
     'p', 'u', 'k', 'e', 1, 0, 0
 };
 
-static unsigned char cheatRevealSeq[] = {
+static char cheatRevealSeq[] = {
     'm', 'a', 'p', 's', 'c', 'o'
-};
-
-static unsigned char cheatTrackSeq1[] = {
-    'c', 'd', 't'
-};
-
-static unsigned char cheatTrackSeq2[] = {
-    'c', 'd', 't', 1, 0, 0
 };
 
 // CODE --------------------------------------------------------------------
@@ -267,7 +260,6 @@ int Cht_GodFunc(const int* args, int player)
 static void giveArmor(player_t* plr)
 {
     int i;
-
     plr->update |= PSF_ARMOR_POINTS;
     for(i = 0; i < NUMARMOR; ++i)
         plr->armorPoints[i] = PCLASS_INFO(plr->class_)->armorIncrement[i];
@@ -276,18 +268,17 @@ static void giveArmor(player_t* plr)
 static void giveWeapons(player_t* plr)
 {
     int i;
-
-    plr->update |= PSF_OWNED_WEAPONS;
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         plr->weapons[i].owned = true;
     }
+    plr->pieces = WPIECE1|WPIECE2|WPIECE3;
+    plr->update |= PSF_OWNED_WEAPONS;
 }
 
 static void giveAmmo(player_t* plr)
 {
     int i;
-
     plr->update |= PSF_AMMO;
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
@@ -309,6 +300,26 @@ int Cht_GiveKeysFunc(const int* args, int player)
     plr->update |= PSF_KEYS;
     plr->keys = 2047;
     P_SetMessage(plr, TXT_CHEATKEYS, false);
+    S_LocalSound(SFX_PLATFORM_STOP, NULL);
+    return true;
+}
+
+int Cht_GiveArmorFunc(const int* args, int player)
+{
+    player_t* plr = &players[player];
+    int i;
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
+    for(i = (int)ARMOR_FIRST; i < (int)NUMARMOR; ++i)
+    {
+        P_GiveArmor(plr, (armortype_t)i, PCLASS_INFO(plr->class_)->armorIncrement[i]);
+    }
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -356,45 +367,61 @@ int Cht_WarpFunc(const int* args, int player)
 {
     player_t* plr = &players[player];
     int i, tens, ones;
+    ddstring_t* path;
+    Uri* uri;
     uint map;
-    char mapName[9];
 
     if(IS_NETGAME)
         return false;
 
+    if(G_GameState() == GS_MAP && plr->playerState == PST_DEAD)
+    {
+        Con_Message("Cannot warp while dead.\n");
+        return false;
+    }
+
     tens = args[0] - '0';
     ones = args[1] - '0';
-    if(tens < 0 || tens > 9 || ones < 1 || ones > 9)
+    if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
     {   // Bad map
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
         return false;
     }
 
-    map = P_TranslateMap((tens * 10 + ones) - 1);
-    if(userGame && map == gameMap)
-    {   // Don't try to teleport to the current map.
+    map = P_TranslateMapIfExists((tens * 10 + ones) - 1);
+    if((userGame && map == gameMap) || map == P_INVALID_LOGICAL_MAP)
+    {
+        // Do not allow warping to the current map.
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
         return false;
     }
 
-    // Search primary lumps.
-    sprintf(mapName, "MAP%02u", map+1);
-    if(W_CheckNumForName(mapName) == -1)
-    {   // Can't find.
+    uri = G_ComposeMapUri(0, map);
+    path = Uri_Compose(uri);
+    if(!P_MapExists(Str_Text(path)))
+    {
+        Str_Delete(path);
+        Uri_Delete(uri);
         P_SetMessage(plr, TXT_CHEATNOMAP, false);
         return false;
     }
+    Str_Delete(path);
+    Uri_Delete(uri);
 
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     P_SetMessage(plr, TXT_CHEATWARP, false);
 
     // Clear the menu if open.
-    Hu_MenuCommand(MCMD_CLOSE);
+    Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // Close any open automaps.
     for(i = 0; i < MAXPLAYERS; ++i)
-        if(players[i].plr->inGame)
-            AM_Open(AM_MapForPlayer(i), false, true);
+    {
+        if(!players[i].plr->inGame)
+            continue;
+        ST_AutomapOpen(i, false, true);
+        Hu_InventoryOpen(i, false);
+    }
 
     // So be it.
     if(userGame)
@@ -441,28 +468,40 @@ int Cht_SoundFunc(const int* args, int player)
 static void printDebugInfo(int player)
 {
     player_t* plr = &players[player];
-    char lumpName[9], textBuffer[256];
-    subsector_t* sub;
+    char textBuffer[256];
+    BspLeaf* sub;
+    ddstring_t* path, *mapPath;
+    Uri* uri, *mapUri;
 
     if(!plr->plr->mo)
         return;
 
-    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
-    sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-            lumpName, plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
-            plr->plr->mo->pos[VZ]);
+    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapPath = Uri_ToString(mapUri);
+    sprintf(textBuffer, "Map [%s]  x:%g  y:%g  z:%g",
+            Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
+            plr->plr->mo->origin[VZ]);
     P_SetMessage(plr, textBuffer, false);
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
 
     // Also print some information to the console.
     Con_Message("%s", textBuffer);
-    sub = plr->plr->mo->subsector;
-    Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
-    Con_Message("  FloorZ:%g Material:%s\n",
-                P_GetFloatp(sub, DMU_FLOOR_HEIGHT),
-                P_GetMaterialName(P_GetPtrp(sub, DMU_FLOOR_MATERIAL)));
-    Con_Message("  CeilingZ:%g Material:%s\n",
-                P_GetFloatp(sub, DMU_CEILING_HEIGHT),
-                P_GetMaterialName(P_GetPtrp(sub, DMU_CEILING_MATERIAL)));
+    sub = plr->plr->mo->bspLeaf;
+    Con_Message("\nBspLeaf %i:\n", P_ToIndex(sub));
+
+    uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
+    path = Uri_ToString(uri);
+    Con_Message("  FloorZ:%g Material:%s\n", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
+    Str_Delete(path);
+    Uri_Delete(uri);
+
+    uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
+    path = Uri_ToString(uri);
+    Con_Message("  CeilingZ:%g Material:%s\n", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
+    Str_Delete(path);
+    Uri_Delete(uri);
+
     Con_Message("Player height:%g   Player radius:%g\n",
                 plr->plr->mo->height, plr->plr->mo->radius);
 }
@@ -590,7 +629,7 @@ int Cht_PigFunc(const int* args, int player)
         P_MorphPlayer(plr);
     }
 
-    P_SetMessage(plr, "SQUEAL!!", false);
+    P_SetMessage(plr, "Squeal!!", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -609,7 +648,7 @@ int Cht_MassacreFunc(const int* args, int player)
         return false; // Dead players can't cheat.
 
     count = P_Massacre();
-    sprintf(buf, "%d MONSTERS KILLED\n", count);
+    sprintf(buf, "%d monsters killed.", count);
     P_SetMessage(plr, buf, false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
@@ -654,7 +693,7 @@ int Cht_QuickenFunc1(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "TRYING TO CHEAT?  THAT'S ONE....", false);
+    P_SetMessage(plr, "Trying to cheat? That's one....", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -670,7 +709,7 @@ int Cht_QuickenFunc2(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "THAT'S TWO....", false);
+    P_SetMessage(plr, "That's two....", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -687,7 +726,7 @@ int Cht_QuickenFunc3(const int* args, int player)
         return false; // Dead players can't cheat.
 
     P_DamageMobj(plr->plr->mo, NULL, plr->plr->mo, 10000, false);
-    P_SetMessage(plr, "THAT'S THREE!  TIME TO DIE.", false);
+    P_SetMessage(plr, "That's three! Time to die.", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -703,7 +742,7 @@ int Cht_ClassFunc1(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "ENTER NEW PLAYER CLASS NUMBER", false);
+    P_SetMessage(plr, "Enter new player class number", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -751,7 +790,7 @@ int Cht_ScriptFunc1(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "RUN WHICH SCRIPT(01-99)?", false);
+    P_SetMessage(plr, "Run which script(01-99)?", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -767,7 +806,7 @@ int Cht_ScriptFunc2(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "RUN WHICH SCRIPT(01-99)?", false);
+    P_SetMessage(plr, "Run which script(01-99)?", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -797,7 +836,7 @@ int Cht_ScriptFunc3(const int* args, int player)
 
     if(P_StartACS(script, 0, scriptArgs, plr->plr->mo, NULL, 0))
     {
-        sprintf(textBuffer, "RUNNING SCRIPT %.2d", script);
+        sprintf(textBuffer, "Running script %.2d", script);
         P_SetMessage(plr, textBuffer, false);
     }
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
@@ -807,7 +846,6 @@ int Cht_ScriptFunc3(const int* args, int player)
 int Cht_RevealFunc(const int* args, int player)
 {
     player_t* plr = &players[player];
-    automapid_t map;
 
     if(IS_NETGAME)
         return false;
@@ -816,19 +854,18 @@ int Cht_RevealFunc(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    map = AM_MapForPlayer(plr - players);
-    if(!AM_IsActive(map))
-        return false;
-
-    AM_IncMapCheatLevel(map);
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
+    if(ST_AutomapIsActive(player))
+    {
+        ST_CycleAutomapCheatLevel(player);
+        S_LocalSound(SFX_PLATFORM_STOP, NULL);
+    }
     return true;
 }
 
 /**
  * This is the multipurpose cheat ccmd.
  */
-DEFCC(CCmdCheat)
+D_CMD(Cheat)
 {
     size_t i;
 
@@ -846,9 +883,9 @@ DEFCC(CCmdCheat)
     return true;
 }
 
-DEFCC(CCmdCheatGod)
+D_CMD(CheatGod)
 {
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
         {
@@ -877,9 +914,9 @@ DEFCC(CCmdCheatGod)
     return true;
 }
 
-DEFCC(CCmdCheatNoClip)
+D_CMD(CheatNoClip)
 {
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
         {
@@ -908,7 +945,7 @@ DEFCC(CCmdCheatNoClip)
     return true;
 }
 
-static int suicideResponse(msgresponse_t response, void* context)
+static int suicideResponse(msgresponse_t response, int userValue, void* userPointer)
 {
     if(response == MSG_YES)
     {
@@ -925,9 +962,9 @@ static int suicideResponse(msgresponse_t response, void* context)
     return true;
 }
 
-DEFCC(CCmdCheatSuicide)
+D_CMD(CheatSuicide)
 {
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         player_t* plr;
 
@@ -952,7 +989,7 @@ DEFCC(CCmdCheatSuicide)
 
         if(!IS_NETGAME || IS_CLIENT)
         {
-            Hu_MsgStart(MSG_YESNO, SUICIDEASK, suicideResponse, NULL);
+            Hu_MsgStart(MSG_YESNO, SUICIDEASK, suicideResponse, 0, NULL);
             return true;
         }
 
@@ -961,13 +998,13 @@ DEFCC(CCmdCheatSuicide)
     }
     else
     {
-        Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, NULL, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, NULL, 0, NULL);
     }
 
     return true;
 }
 
-DEFCC(CCmdCheatWarp)
+D_CMD(CheatWarp)
 {
     int num, args[2];
 
@@ -988,35 +1025,37 @@ DEFCC(CCmdCheatWarp)
     return true;
 }
 
-DEFCC(CCmdCheatReveal)
+D_CMD(CheatReveal)
 {
-    int option;
-    automapid_t map;
+    int option, i;
 
     if(!cheatsEnabled())
         return false;
-
-    map = AM_MapForPlayer(CONSOLEPLAYER);
-    AM_SetCheatLevel(map, 0);
-    AM_RevealMap(map, false);
 
     option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
-    if(option == 1)
-        AM_RevealMap(map, true);
-    else if(option != 0)
-        AM_SetCheatLevel(map, option -1);
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        ST_SetAutomapCheatLevel(i, 0);
+        ST_RevealAutomap(i, false);
+
+        if(option == 1)
+            ST_RevealAutomap(i, true);
+        else if(option != 0)
+            ST_SetAutomapCheatLevel(i, option -1);
+    }
 
     return true;
 }
 
-DEFCC(CCmdCheatGive)
+D_CMD(CheatGive)
 {
-    char buf[100];
     int player = CONSOLEPLAYER;
     size_t i, stuffLen;
+    player_t* plr;
+    char buf[100];
 
     if(IS_CLIENT)
     {
@@ -1037,10 +1076,12 @@ DEFCC(CCmdCheatGive)
         Con_Printf("  give (stuff) (plr)\n");
         Con_Printf("Stuff consists of one or more of (type:id). "
                    "If no id; give all of type:\n");
-        Con_Printf(" i - items\n");
+        Con_Printf(" a - ammo\n");
         Con_Printf(" h - health\n");
+        Con_Printf(" i - items\n");
         Con_Printf(" k - keys\n");
         Con_Printf(" p - puzzle\n");
+        Con_Printf(" r - armor\n");
         Con_Printf(" w - weapons\n");
         Con_Printf("Example: 'give ikw' gives items, keys and weapons.\n");
         Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
@@ -1054,7 +1095,7 @@ DEFCC(CCmdCheatGive)
             return false;
     }
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
         Con_Printf("Can only \"give\" when in a game!\n");
         return true;
@@ -1062,6 +1103,7 @@ DEFCC(CCmdCheatGive)
 
     if(!players[player].plr->inGame)
         return true; // Can't give to a plr who's not playing.
+    plr = &players[player];
 
     strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
@@ -1070,70 +1112,134 @@ DEFCC(CCmdCheatGive)
     {
         switch(buf[i])
         {
-        case 'i':
-            Cht_InventoryFunc(NULL, player);
+        case 'a':
+            if(i < stuffLen)
+            {
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
+                    {
+                        Con_Printf("Unknown ammo #%d (valid range %d-%d).\n",
+                                   (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
+                        break;
+                    }
+
+                    // Give one specific ammo type.
+                    plr->update |= PSF_AMMO;
+                    plr->ammo[idx].owned = MAX_MANA;
+                    break;
+                }
+            }
+
+            // Give all ammo.
+            plr->update |= PSF_AMMO;
+            { int j;
+            for(j = 0; j < NUM_AMMO_TYPES; ++j)
+                plr->ammo[j].owned = MAX_MANA;
+            }
             break;
 
         case 'h':
             Cht_HealthFunc(NULL, player);
             break;
 
-        case 'k':
-            {
-            player_t* plr = &players[player];
-            boolean giveAll = true;
+        case 'i':
+            Cht_InventoryFunc(NULL, player);
+            break;
 
+        case 'k':
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
+                    {
+                        Con_Printf("Unknown key #%d (valid range %d-%d).\n",
+                                   (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_KEY_TYPES)
-                {   // Give one specific key.
+                    // Give one specific key.
                     plr->update |= PSF_KEYS;
                     plr->keys |= (1 << idx);
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                Cht_GiveKeysFunc(NULL, player);
-            }
+            // Give all keys.
+            Cht_GiveKeysFunc(NULL, player);
             break;
-            }
+
         case 'p':
             Cht_PuzzleFunc(NULL, player);
             break;
 
-        case 'w':
-            {
-            player_t* plr = &players[player];
-            boolean giveAll = true;
-
+        case 'r':
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < ARMOR_FIRST || idx >= NUMARMOR)
+                    {
+                        Con_Printf("Unknown armor #%d (valid range %d-%d).\n",
+                                   (int)idx, ARMOR_FIRST, NUMARMOR-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_WEAPON_TYPES)
-                {   // Give one specific weapon.
-                    plr->update |= PSF_OWNED_WEAPONS;
-                    plr->weapons[idx].owned = true;
-                    giveAll = false;
-                    i++;
+                    // Give one specific armor.
+                    P_GiveArmor(plr, (armortype_t)idx, PCLASS_INFO(plr->class_)->armorIncrement[idx]);
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                giveWeapons(plr);
-            }
+            // Give all armors.
+            Cht_GiveArmorFunc(NULL, player);
             break;
+
+        case 'w':
+            if(i < stuffLen)
+            {
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
+                    {
+                        Con_Printf("Unknown weapon #%d (valid range %d-%d).\n",
+                                   (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
+                        break;
+                    }
+
+                    // Give one specific weapon.
+                    plr->update |= PSF_OWNED_WEAPONS;
+                    plr->weapons[idx].owned = true;
+                    break;
+                }
             }
-        default:
-            // Unrecognized
+
+            // Give all weapons.
+            giveWeapons(plr);
+            break;
+
+        default: // Unrecognized.
             Con_Printf("What do you mean, '%c'?\n", buf[i]);
             break;
         }
@@ -1142,19 +1248,19 @@ DEFCC(CCmdCheatGive)
     return true;
 }
 
-DEFCC(CCmdCheatMassacre)
+D_CMD(CheatMassacre)
 {
     Cht_MassacreFunc(NULL, CONSOLEPLAYER);
     return true;
 }
 
-DEFCC(CCmdCheatWhere)
+D_CMD(CheatWhere)
 {
     Cht_WhereFunc(NULL, CONSOLEPLAYER);
     return true;
 }
 
-DEFCC(CCmdCheatPig)
+D_CMD(CheatPig)
 {
     if(IS_NETGAME)
         return false;
@@ -1166,7 +1272,7 @@ DEFCC(CCmdCheatPig)
     return true;
 }
 
-DEFCC(CCmdCheatShadowcaster)
+D_CMD(CheatShadowcaster)
 {
     int args[2];
 
@@ -1181,7 +1287,7 @@ DEFCC(CCmdCheatShadowcaster)
     return true;
 }
 
-DEFCC(CCmdCheatRunScript)
+D_CMD(CheatRunScript)
 {
     int num, args[2];
 

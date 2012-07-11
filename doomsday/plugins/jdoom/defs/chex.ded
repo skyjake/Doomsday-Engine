@@ -1,0 +1,27 @@
+#
+# Chex Quest - Doomsday Engine definitions.
+#
+# For information about DED syntax and semantics, see http://dengine.net/dew/?title=DED
+#
+
+# Include common definitions for games playable with jDoom.
+Include "jdoom.ded";
+
+Include "chex/anim.ded";
+Include "chex/skies.ded";
+Include "chex/objects.ded";
+Include "chex/maps.ded";
+Include "chex/finales.ded";
+
+# Chex Quest's fonts use the same Patch identifiers/names as Doom
+Include "doom1/fonts.ded";
+
+# Use the same patch replacments as Doom
+Include "doom1/menu.ded";
+Include "doom1/inlude.ded";
+
+Include "chex/text.ded";
+Include "chex/lights.ded";
+Include "chex/materials.ded";
+Include "chex/materialenvironments.ded";
+Include "chex/music.ded";

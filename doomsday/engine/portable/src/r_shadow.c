@@ -1,10 +1,10 @@
-/**\file
+/**\file r_shadow.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,299 +22,352 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * r_shadow.c: Runtime Map Shadowing (FakeRadio)
- */
-
-// HEADER FILES ------------------------------------------------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
-#include "de_misc.h"
+#include "de_render.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
+typedef struct listnode_s {
+    struct listnode_s* next, *nextUsed;
+    shadowprojection_t projection;
+} listnode_t;
 
-// TYPES -------------------------------------------------------------------
+typedef struct {
+    listnode_t* head;
+} shadowprojectionlist_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+/// Orientation is toward the projectee.
+typedef struct {
+    float blendFactor; /// Multiplied with projection alpha.
+    coord_t* v1; /// Top left vertex of the surface being projected to.
+    coord_t* v2; /// Bottom right vertex of the surface being projected to.
+    float* tangent; /// Normalized tangent of the surface being projected to.
+    float* bitangent; /// Normalized bitangent of the surface being projected to.
+    float* normal; /// Normalized normal of the surface being projected to.
+} shadowprojectparams_t;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// List nodes.
+static listnode_t* firstNode, *cursorNode;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static zblockset_t *shadowLinksBlockSet;
-
-// CODE --------------------------------------------------------------------
+// Projection lists.
+static uint projectionListCount, cursorList;
+static shadowprojectionlist_t* projectionLists;
 
 /**
- * Line1 and line2 are the (dx,dy)s for two lines, connected at the
- * origin (0,0).  Dist1 and dist2 are the distances from these lines.
- * The returned point (in 'point') is dist1 away from line1 and dist2
- * from line2, while also being the nearest point to the origin (in
- * case the lines are parallel).
+ * Create a new projection list.
+ *
+ * @param flags  @see surfaceProjectionListFlags
+ * @return  Unique identifier attributed to the new list.
  */
-void R_CornerNormalPoint(const pvec2_t line1, float dist1,
-                         const pvec2_t line2, float dist2, pvec2_t point,
-                         pvec2_t lp)
+static uint newList(void)
 {
-    float               len1, len2;
-    vec2_t              norm1, norm2;
+    shadowprojectionlist_t* list;
 
-    // Length of both lines.
-    len1 = V2_Length(line1);
-    len2 = V2_Length(line2);
-
-    // Calculate normals for both lines.
-    V2_Set(norm1, -line1[VY] / len1 * dist1, line1[VX] / len1 * dist1);
-    V2_Set(norm2, line2[VY] / len2 * dist2, -line2[VX] / len2 * dist2);
-
-    // Do we need to calculate the extended points, too?  Check that
-    // the extension does not bleed too badly outside the legal shadow
-    // area.
-    if(lp)
+    // Do we need to allocate more lists?
+    if(++cursorList >= projectionListCount)
     {
-        V2_Set(lp, line2[VX] / len2 * dist2, line2[VY] / len2 * dist2);
+        projectionListCount *= 2;
+        if(!projectionListCount) projectionListCount = 2;
+
+        projectionLists = (shadowprojectionlist_t*)Z_Realloc(projectionLists, projectionListCount * sizeof *projectionLists, PU_MAP);
+        if(!projectionLists) Con_Error(__FILE__":newList failed on allocation of %lu bytes resizing the projection list.", (unsigned long) (projectionListCount * sizeof *projectionLists));
     }
 
-    // Are the lines parallel?  If so, they won't connect at any
-    // point, and it will be impossible to determine a corner point.
-    if(V2_IsParallel(line1, line2))
-    {
-        // Just use a normal as the point.
-        if(point)
-            V2_Copy(point, norm1);
-        return;
-    }
+    list = &projectionLists[cursorList-1];
+    list->head = NULL;
 
-    // Find the intersection of normal-shifted lines.  That'll be our
-    // corner point.
-    if(point)
-        V2_Intersection(norm1, line1, norm2, line2, point);
+    return cursorList;
 }
 
 /**
- * @return          The width (world units) of the shadow edge.
- *                  It is scaled depending on the length of the edge.
+ * @param listIdx  Address holding the list index to retrieve.
+ *      If the referenced list index is non-zero return the associated list.
+ *      Otherwise allocate a new list and write it's index back to this address.
+ * @return  ProjectionList associated with the (possibly newly attributed) index.
  */
-float R_ShadowEdgeWidth(const pvec2_t edge)
+static shadowprojectionlist_t* getList(uint* listIdx)
 {
-    float       length = V2_Length(edge);
-    float       normalWidth = 20;   //16;
-    float       maxWidth = 60;
-    float       w;
-
-    // A long edge?
-    if(length > 600)
+    // Do we need to allocate a list?
+    if(!(*listIdx))
     {
-        w = length - 600;
-        if(w > 1000)
-            w = 1000;
-        return normalWidth + w / 1000 * maxWidth;
+        *listIdx = newList();
+    }
+    return projectionLists + ((*listIdx)-1); // 1-based index.
+}
+
+static listnode_t* newListNode(void)
+{
+    listnode_t* node;
+
+    // Do we need to allocate mode nodes?
+    if(cursorNode == NULL)
+    {
+        node = (listnode_t*)Z_Malloc(sizeof *node, PU_APPSTATIC, NULL);
+        if(!node) Con_Error(__FILE__":newListNode failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
+
+        // Link the new node to the list.
+        node->nextUsed = firstNode;
+        firstNode = node;
+    }
+    else
+    {
+        node = cursorNode;
+        cursorNode = cursorNode->nextUsed;
     }
 
-    return normalWidth;
+    node->next = NULL;
+    return node;
+}
+
+static listnode_t* newProjection(float const s[2], float const t[2], float alpha)
+{
+    assert(s && t);
+    {
+    listnode_t* node = newListNode();
+    shadowprojection_t* sp = &node->projection;
+    sp->s[0] = s[0];
+    sp->s[1] = s[1];
+    sp->t[0] = t[0];
+    sp->t[1] = t[1];
+    sp->alpha = MINMAX_OF(0, alpha, 1);
+    return node;
+    }
+}
+
+/// @return  Same as @a node for convenience (chaining).
+static listnode_t* linkProjectionToList(listnode_t* node, shadowprojectionlist_t* list)
+{
+    assert(node && list);
+    node->next = list->head;
+    list->head = node;
+    return node;
 }
 
 /**
- * Updates all the shadow offsets for the given vertex.
+ * Construct a new shadow projection (and a list, if one has not already been
+ * constructed for the referenced index).
  *
- * \pre Lineowner rings MUST be set up.
- *
- * @param vtx           Ptr to the vertex being updated.
+ * @param listIdx  Address holding the list index to retrieve.
+ *      If the referenced list index is non-zero return the associated list.
+ *      Otherwise allocate a new list and write it's index back to this address.
+ * @param s  GL texture coordinates on the S axis [left, right] in texture space.
+ * @param t  GL texture coordinates on the T axis [bottom, top] in texture space.
+ * @param alpha  Alpha attributed to the new projection.
  */
-void R_UpdateVertexShadowOffsets(vertex_t *vtx)
+static void newShadowProjection(uint* listIdx, float const s[2], float const t[2], float alpha)
 {
-    vec2_t              left, right;
+    linkProjectionToList(newProjection(s, t, alpha), getList(listIdx));
+}
 
-    if(vtx->numLineOwners > 0)
+static boolean genTexCoords(float s[2], float t[2], coord_t const point[3], float scale,
+    coord_t const v1[3], coord_t const v2[3], float const tangent[2], float const bitangent[2])
+{
+    // Counteract aspect correction slightly (not too round mind).
+    return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
+}
+
+float R_ShadowAttenuationFactor(coord_t distance)
+{
+    if(shadowMaxDistance > 0 && distance > 3 * shadowMaxDistance / 4)
     {
-        lineowner_t        *own, *base;
+        return (shadowMaxDistance - distance) / (shadowMaxDistance / 4);
+    }
+    return 1;
+}
 
-        own = base = vtx->lineOwners;
-        do
+typedef struct {
+    uint listIdx;
+    shadowprojectparams_t spParams;
+} projectshadowonsurfaceiteratorparams_t;
+
+/**
+ * Project a mobj shadow onto the surface. If valid and the surface is
+ * contacted a new projection node will constructed and returned.
+ *
+ * @param mobj  Mobj for which a shadow may be projected.
+ * @param paramaters  ProjectShadowToSurfaceIterator paramaters.
+ *
+ * @return  @c 0 = continue iteration.
+ */
+int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
+{
+    assert(obj && paramaters);
+    {
+    mobj_t* mo = (mobj_t*)obj;
+    projectshadowonsurfaceiteratorparams_t* p = (projectshadowonsurfaceiteratorparams_t*)paramaters;
+    shadowprojectparams_t* spParams = &p->spParams;
+    coord_t distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface;
+    float scale, shadowRadius, shadowStrength;
+    coord_t mobjOrigin[3], point[3];
+    vec2f_t s, t;
+
+    Mobj_OriginSmoothed(mo, mobjOrigin);
+
+    // Is this too far?
+    if(shadowMaxDistance > 0)
+    {
+        distanceFromViewer = Rend_PointDist2D(mobjOrigin);
+        if(distanceFromViewer > shadowMaxDistance) return false; // Continue iteration.
+    }
+
+    // Should this mobj even have a shadow?
+    shadowStrength = R_ShadowStrength(mo) * shadowFactor;
+    if(usingFog) shadowStrength /= 2;
+    if(shadowStrength <= 0) return false; // Continue iteration.
+
+    // Calculate the radius of the shadow.
+    shadowRadius = R_VisualRadius(mo);
+    if(shadowRadius <= 0) return false; // Continue iteration.
+    if(shadowRadius > (float) shadowMaxRadius)
+        shadowRadius = (float) shadowMaxRadius;
+
+    mobjOrigin[VZ] -= mo->floorClip;
+    if(mo->ddFlags & DDMF_BOB)
+        mobjOrigin[VZ] -= R_GetBobOffset(mo);
+
+    mobjHeight = mo->height;
+    if(!mobjHeight) mobjHeight = 1;
+
+    // If this were a light this is where we would check whether the origin is on
+    // the right side of the surface. However this is a shadow and light is moving
+    // in the opposite direction (inward toward the mobj's origin), therefore this
+    // has "volume/depth".
+    //
+    // vec3d_t vToMobj;
+    // V3d_Subtract(vToMobj, spParams->v1, mobjOrigin);
+    // if(V3d_DotProductf(vToMobj, spParams->normal) > 0) return false; // Continue iteration
+
+    // Calculate 3D distance between surface and mobj.
+    V3d_ClosestPointOnPlanef(point, spParams->normal, spParams->v1, mobjOrigin);
+    distanceFromSurface = V3d_Distance(point, mobjOrigin);
+
+    // Too far above or below the shadowed surface?
+    if(distanceFromSurface > mo->height) return false; // Continue iteration.
+    if(mobjOrigin[VZ] + mo->height < point[VZ]) return false; // Continue iteration.
+    if(distanceFromSurface > shadowRadius) return false; // Continue iteration.
+
+    // Calculate the final strength of the shadow's attribution to the surface.
+    shadowStrength *= 1.5f - 1.5f * distanceFromSurface / shadowRadius;
+
+    // Fade at half mobj height for smooth fade out when embedded in the surface.
+    halfMobjHeight = mobjHeight / 2;
+    if(distanceFromSurface > halfMobjHeight)
+    {
+        shadowStrength *= 1 - (distanceFromSurface - halfMobjHeight) / (mobjHeight - halfMobjHeight);
+    }
+
+    // Fade when nearing the maximum distance?
+    shadowStrength *= R_ShadowAttenuationFactor(distanceFromViewer);
+
+    // Apply the external blending factor.
+    shadowStrength *= spParams->blendFactor;
+
+    // Would this shadow be seen?
+    if(shadowStrength < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
+
+    // Project this shadow.
+    scale = 1.0f / ((2.f * shadowRadius) - distanceFromSurface);
+    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return false; // Continue iteration.
+
+    // Attach to the projection list.
+    newShadowProjection(&p->listIdx, s, t, shadowStrength);
+
+    return false; // Continue iteration.
+    }
+}
+
+void R_InitShadowProjectionListsForMap(void)
+{
+    static boolean firstTime = true;
+    if(firstTime)
+    {
+        firstNode = NULL;
+        cursorNode = NULL;
+        firstTime = false;
+    }
+    // All memory for the lists is allocated from Zone so we can "forget" it.
+    projectionLists = NULL;
+    projectionListCount = 0;
+    cursorList = 0;
+}
+
+void R_InitShadowProjectionListsForNewFrame(void)
+{
+    // Start reusing nodes from the first one in the list.
+    cursorNode = firstNode;
+
+    // Clear the lists.
+    cursorList = 0;
+    if(projectionListCount)
+    {
+        memset(projectionLists, 0, projectionListCount * sizeof *projectionLists);
+    }
+}
+
+uint R_ProjectShadowsToSurface(BspLeaf* bspLeaf, float blendFactor, coord_t topLeft[3],
+    coord_t bottomRight[3], float tangent[3], float bitangent[3], float normal[3])
+{
+    projectshadowonsurfaceiteratorparams_t p;
+
+    // Early test of the external blend factor for quick rejection.
+    if(blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0;
+
+    p.listIdx = 0;
+    p.spParams.blendFactor = blendFactor;
+    p.spParams.v1 = topLeft;
+    p.spParams.v2 = bottomRight;
+    p.spParams.tangent = tangent;
+    p.spParams.bitangent = bitangent;
+    p.spParams.normal = normal;
+
+    R_IterateBspLeafContacts2(bspLeaf, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void*)&p);
+    // Did we produce a projection list?
+    return p.listIdx;
+}
+
+int R_IterateShadowProjections2(uint listIdx, int (*callback) (const shadowprojection_t*, void*),
+    void* paramaters)
+{
+    int result = false; // Continue iteration.
+    if(callback && listIdx != 0 && listIdx <= projectionListCount)
+    {
+        listnode_t* node = projectionLists[listIdx-1].head;
+        while(node)
         {
-            linedef_t          *lineB = own->lineDef;
-            linedef_t          *lineA = own->LO_next->lineDef;
-
-            if(lineB->L_v1 == vtx)
-            {
-                right[VX] = lineB->dX;
-                right[VY] = lineB->dY;
-            }
-            else
-            {
-                right[VX] = -lineB->dX;
-                right[VY] = -lineB->dY;
-            }
-
-            if(lineA->L_v1 == vtx)
-            {
-                left[VX] = -lineA->dX;
-                left[VY] = -lineA->dY;
-            }
-            else
-            {
-                left[VX] = lineA->dX;
-                left[VY] = lineA->dY;
-            }
-
-            // The left side is always flipped.
-            V2_Scale(left, -1);
-
-            R_CornerNormalPoint(left, R_ShadowEdgeWidth(left), right,
-                                R_ShadowEdgeWidth(right),
-                                own->shadowOffsets.inner,
-                                own->shadowOffsets.extended);
-
-            own = own->LO_next;
-        } while(own != base);
+            result = callback(&node->projection, paramaters);
+            node = (!result? node->next : NULL /* Early out */);
+        }
     }
+    return result;
 }
 
-/**
- * Link a seg to an arbitary subsector for the purposes of shadowing.
- */
-static void linkShadowLineDefToSSec(linedef_t *line, byte side,
-                                    subsector_t *subsector)
+int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojection_t*, void*))
 {
-    shadowlink_t           *link;
-
-#ifdef _DEBUG
-// Check the links for dupes!
-{
-shadowlink_t *i;
-
-for(i = subsector->shadows; i; i = i->next)
-    if(i->lineDef == line && i->side == side)
-        Con_Error("R_LinkShadow: Already here!!\n");
-}
-#endif
-
-    // We'll need to allocate a new link.
-    link = Z_BlockNewElement(shadowLinksBlockSet);
-
-    // The links are stored into a linked list.
-    link->next = subsector->shadows;
-    subsector->shadows = link;
-    link->lineDef = line;
-    link->side = side;
+    return R_IterateShadowProjections2(listIdx, callback, NULL);
 }
 
-typedef struct shadowlinkerparms_s {
-    linedef_t          *lineDef;
-    byte                side;
-} shadowlinkerparms_t;
-
-/**
- * If the shadow polygon (parm) contacts the subsector, link the poly
- * to the subsector's shadow list.
- */
-int RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
+int RIT_FindShadowPlaneIterator(Sector* sector, void* paramaters)
 {
-    shadowlinkerparms_t *data = (shadowlinkerparms_t*) parm;
-
-    linkShadowLineDefToSSec(data->lineDef, data->side, subsector);
+    Plane** highest = (Plane**)paramaters;
+    Plane* compare = sector->SP_plane(PLN_FLOOR);
+    if(compare->visHeight > (*highest)->visHeight)
+        *highest = compare;
     return false; // Continue iteration.
 }
 
-/**
- * Does the given linedef qualify as an edge shadow caster?
- */
-boolean R_IsShadowingLinedef(linedef_t *line)
+Plane* R_FindShadowPlane(mobj_t* mo)
 {
-    if(line)
+    Plane* plane = NULL;
+    assert(mo);
+    if(mo->bspLeaf)
     {
-        if(!LINE_SELFREF(line) && !(line->inFlags & LF_POLYOBJ) &&
-           !(line->vo[0]->LO_next->lineDef == line ||
-             line->vo[1]->LO_next->lineDef == line))
-        {
-            return true;
-        }
+        plane = mo->bspLeaf->sector->SP_plane(PLN_FLOOR);
+        P_MobjSectorsIterator(mo, RIT_FindShadowPlaneIterator, (void*)&plane);
     }
-
-    return false;
-}
-
-/**
- * Calculate sector edge shadow points, create the shadow polygons and link
- * them to the subsectors.
- */
-void R_InitSectorShadows(void)
-{
-    uint            startTime = Sys_GetRealTime();
-
-    uint            i, j;
-    vec2_t          point;
-    vertex_t       *vtx0, *vtx1;
-    lineowner_t    *vo0, *vo1;
-    shadowlinkerparms_t data;
-    AABoxf bounds;
-
-    for(i = 0; i < numVertexes; ++i)
-    {
-        R_UpdateVertexShadowOffsets(VERTEX_PTR(i));
-    }
-
-    /**
-     * The algorithm:
-     *
-     * 1. Use the subsector blockmap to look for all the blocks that are
-     *    within the linedef's shadow bounding box.
-     *
-     * 2. Check the subsectors whose sector is the same as the linedef.
-     *
-     * 3. If any of the shadow points are in the subsector, or any of the
-     *    shadow edges cross one of the subsector's edges (not parallel),
-     *    link the linedef to the subsector.
-     */
-    shadowLinksBlockSet = Z_BlockCreate(sizeof(shadowlink_t), 1024, PU_MAP);
-
-    for(i = 0; i < numLineDefs; ++i)
-    {
-        linedef_t          *line = LINE_PTR(i);
-
-        if(R_IsShadowingLinedef(line))
-            for(j = 0; j < 2; ++j)
-            {
-                if(!line->L_side(j))
-                    continue;
-
-                vtx0 = line->L_v(j);
-                vtx1 = line->L_v(j^1);
-                vo0 = line->L_vo(j)->LO_next;
-                vo1 = line->L_vo(j^1)->LO_prev;
-
-                // Use the extended points, they are wider than inoffsets.
-                V2_Set(point, vtx0->V_pos[VX], vtx0->V_pos[VY]);
-                V2_InitBox(bounds.arvec2, point);
-
-                V2_Sum(point, point, vo0->shadowOffsets.extended);
-                V2_AddToBox(bounds.arvec2, point);
-
-                V2_Set(point, vtx1->V_pos[VX], vtx1->V_pos[VY]);
-                V2_AddToBox(bounds.arvec2, point);
-
-                V2_Sum(point, point, vo1->shadowOffsets.extended);
-                V2_AddToBox(bounds.arvec2, point);
-
-                data.lineDef = line;
-                data.side = j;
-
-                P_SubsectorsBoxIterator(&bounds, line->L_sector(j),
-                                         RIT_ShadowSubsectorLinker, &data);
-            }
-    }
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_InitSectorShadows: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    return plane;
 }

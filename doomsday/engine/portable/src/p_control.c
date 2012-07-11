@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_control.c: Player Controls
+ * Player Controls.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,6 +31,7 @@
 #include <ctype.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h" // for P_LocalToConsole()
 #include "de_network.h"
 #include "de_misc.h"
@@ -169,6 +170,7 @@ void P_NewPlayerControl(int id, controltype_t type, const char *name, const char
     pc->id = id;
     pc->type = type;
     pc->name = strdup(name);
+    pc->isTriggerable = (type == CTLT_NUMERIC_TRIGGERED || type == CTLT_IMPULSE);
     pc->bindContextName = strdup(bindContext);
     // Also allocate the impulse and double-click counters.
     controlCounts[pc - playerControls] = M_Calloc(sizeof(controlcounter_t));
@@ -210,10 +212,9 @@ playercontrol_t* P_PlayerControlByName(const char* name)
 
 void P_ControlShutdown(void)
 {
-    int             i;
-
     if(playerControls)
     {
+        int i;
         for(i = 0; i < playerControlCount; ++i)
         {
             M_Free(playerControls[i].name);
@@ -224,7 +225,8 @@ void P_ControlShutdown(void)
         M_Free(playerControls);
     }
     playerControls = 0;
-    M_Free(controlCounts);
+    if(controlCounts)
+        M_Free(controlCounts);
     controlCounts = 0;
 }
 
@@ -332,15 +334,11 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     struct bcontext_s* bc = 0;
     struct dbinding_s* binds = 0;
     int localNum;
+    playercontrol_t* pc = P_PlayerControlById(control);
 
-#if _DEBUG
     // Check that this is really a numeric control.
-    {
-        playercontrol_t* pc = P_PlayerControlById(control);
-        assert(pc);
-        assert(pc->type == CTLT_NUMERIC);
-    }
-#endif
+    assert(pc);
+    assert(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
 
     // Ignore NULLs.
     if(!pos) pos = &tmp;
@@ -351,7 +349,7 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     // P_ConsoleToLocal() is called here.
     localNum = P_ConsoleToLocal(playerNum);
     binds = B_GetControlDeviceBindings(localNum, control, &bc);
-    B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc);
+    B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc, pc->isTriggerable);
 
     // Mark for double-clicks.
     P_MaintainControlDoubleClicks(playerNum, P_PlayerControlIndexForId(control), *pos);

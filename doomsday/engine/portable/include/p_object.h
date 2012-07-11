@@ -1,10 +1,10 @@
-/**\file
+/**\file p_object.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * p_object.h: Map Objects
+ * Map Objects.
  */
 
-#ifndef __DOOMSDAY_MOBJ_H__
-#define __DOOMSDAY_MOBJ_H__
+#ifndef LIBDENG_MAP_MOBJ
+#define LIBDENG_MAP_MOBJ
 
 #include "p_mapdata.h"
 
@@ -37,32 +37,49 @@
 #endif
 
 // This macro can be used to calculate a mobj-specific 'random' number.
-#define MOBJ_TO_ID(mo) ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
+#define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
 
 // We'll use the base mobj template directly as our mobj.
 typedef struct mobj_s {
 DD_BASE_MOBJ_ELEMENTS()} mobj_t;
 
-#define MOBJ_SIZE           gx.mobjSize
+#define MOBJ_SIZE               gx.mobjSize
 
-#define DEFAULT_FRICTION    FIX2FLT(0xe800)
-#define NOMOMENTUM_THRESHOLD    (0.000001f)
+#define DEFAULT_FRICTION        FIX2FLT(0xe800)
+#define NOMOMENTUM_THRESHOLD    (0.0001)
 
-//extern float    tmpFloorZ, tmpCeilingZ;
-//extern mobj_t  *blockingMobj;
-//extern boolean  dontHitMobjs;
+#define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
+#define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
 
-#include "cl_def.h"                // for clplayerstate_s
+void P_InitUnusedMobjList(void);
 
-void            P_InitUnusedMobjList(void);
+mobj_t* P_MobjCreate(think_t function, coord_t const post[3], angle_t angle,
+    coord_t radius, coord_t height, int ddflags);
+mobj_t* P_MobjCreateXYZ(think_t function, coord_t x, coord_t y, coord_t z, angle_t angle,
+    coord_t radius, coord_t height, int ddflags);
 
-mobj_t         *P_MobjCreate(think_t function, float x, float y, float z,
-                             angle_t angle, float radius, float height,
-                             int ddflags);
-void            P_MobjDestroy(mobj_t *mo);
-void            P_MobjRecycle(mobj_t *mo);
-void            P_MobjSetState(mobj_t *mo, int statenum);
+void P_MobjDestroy(mobj_t* mobj);
+void P_MobjRecycle(mobj_t* mobj);
+void P_MobjSetState(mobj_t* mobj, int statenum);
 
-boolean         P_MobjSetPos(struct mobj_s* mo, float x, float y, float z);
+/**
+ * Sets a mobj's position.
+ *
+ * @return  @c true if successful, @c false otherwise. The object's position is
+ *          not changed if the move fails.
+ *
+ * @note Internal to the engine.
+ */
+boolean Mobj_SetOrigin(mobj_t* mobj, coord_t x, coord_t y, coord_t z);
 
-#endif
+/**
+ * Calculate the visible @a origin of @a mobj in world space, including
+ * any short range offset.
+ */
+void Mobj_OriginSmoothed(mobj_t* mobj, coord_t origin[3]);
+
+angle_t Mobj_AngleSmoothed(mobj_t* mobj);
+
+coord_t Mobj_ApproxPointDistance(mobj_t* start, coord_t const* point);
+
+#endif /// LIBDENG_MAP_MOBJ

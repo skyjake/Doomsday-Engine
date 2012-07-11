@@ -1,10 +1,10 @@
-/**\file
+/**\file doomdef.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,15 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * doomdef.h:
- *
- * Internally used data structures for virtually everything,
- * key definitions, lots of other stuff.
- */
-
-#ifndef __DOOMDEF_H__
-#define __DOOMDEF_H__
+#ifndef LIBHERETIC_DEFS_H
+#define LIBHERETIC_DEFS_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -48,23 +41,18 @@
 #  define strupr _strupr
 #endif
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
 #include "info.h"
 
-#define Set             DD_SetInteger
-#define Get             DD_GetInteger
-
-#define CONFIGFILE      GAMENAMETEXT".cfg"
-#define DEFSFILE        GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH        "}data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD      "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
-#define STARTUPPK3      "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
+#define Set                 DD_SetInteger
+#define Get                 DD_GetInteger
 
 // Verbose messages.
-#define VERBOSE(code)   { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 extern game_import_t gi;
 extern game_export_t gx;
@@ -77,24 +65,20 @@ extern game_export_t gx;
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Game mode handling - identify IWAD version to handle IWAD dependend
-// animations etc.
 typedef enum {
-    shareware, // shareware, E1, M9
-    registered, // DOOM 1 registered, E3, M27
-    extended, // episodes 4 and 5 present
-    indetermined, // Well, no IWAD found.
+    heretic_shareware,
+    heretic,
+    heretic_extended,
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_SHAREWARE        0x1 // shareware, E1, M9
-#define GM_REGISTERED       0x2 // registered episodes
-#define GM_EXTENDED         0x4 // episodes 4 and 5 present
-#define GM_INDETERMINED     0x8 // Well, no IWAD found.
+#define GM_HERETIC_SHAREWARE 0x1
+#define GM_HERETIC          0x2
+#define GM_HERETIC_EXTENDED 0x4
 
-#define GM_ANY              (GM_SHAREWARE|GM_REGISTERED|GM_EXTENDED)
-#define GM_NOTSHAREWARE     (GM_REGISTERED|GM_EXTENDED)
+#define GM_ANY              (GM_HERETIC_SHAREWARE|GM_HERETIC|GM_HERETIC_EXTENDED)
+#define GM_NOT_SHAREWARE    (GM_HERETIC|GM_HERETIC_EXTENDED)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
@@ -102,10 +86,15 @@ typedef enum {
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS          16
+#define NUMPLAYERCOLORS     4
+
+#define NUMTEAMS            4 // Color = team.
 
 // Playsim, core timing rate in cycles per second.
 #define TICRATE             35
 #define TICSPERSEC          35
+
+#define NUMSAVESLOTS        8
 
 /**
  * Player Classes
@@ -119,6 +108,7 @@ typedef enum {
 #define PCLASS_INFO(class)  (&classInfo[class])
 
 typedef struct classinfo_s{
+    playerclass_t plrClass;
     char*       niceName;
     boolean     userSelectable;
     mobjtype_t  mobjType;
@@ -170,7 +160,8 @@ typedef enum {
  * Keys (as in, keys to lockables).
  */
 typedef enum {
-    KT_YELLOW,
+    KT_FIRST,
+    KT_YELLOW = KT_FIRST,
     KT_GREEN,
     KT_BLUE,
     NUM_KEY_TYPES
@@ -196,13 +187,16 @@ typedef enum {
     WT_NOCHANGE // No pending weapon change.
 } weapontype_t;
 
+#define VALID_WEAPONTYPE(val) ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
+
 #define NUMWEAPLEVELS       2 // Number of weapon power levels.
 
 /**
  * Ammunition types.
  */
 typedef enum {
-    AT_CRYSTAL,
+    AT_FIRST,
+    AT_CRYSTAL = AT_FIRST,
     AT_ARROW,
     AT_ORB,
     AT_RUNE,
@@ -273,7 +267,7 @@ typedef enum {
 
 #define BLINKTHRESHOLD      (4*TICRATE)
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 
@@ -282,12 +276,9 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define IS_NETGAME          Get(DD_NETGAME)
 #define IS_DEDICATED        Get(DD_DEDICATED)
 
-#define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
-
 #define SFXVOLUME       (Get(DD_SFX_VOLUME)/17)
 #define MUSICVOLUME     (Get(DD_MUSIC_VOLUME)/17)
 
-void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);
 void       *G_GetVariable(int id);
 
@@ -305,61 +296,4 @@ void       *G_GetVariable(int id);
 extern fixed_t finesine[5 * FINEANGLES / 4];
 extern fixed_t *finecosine;
 
-//----------
-//BASE LEVEL
-//----------
-
-void            D_DoomMain(void);
-void            IncThermo(void);
-void            InitThermo(int max);
-void            tprintf(char *string, int initflag);
-
-// called by IO functions when input is detected
-
-void            NetUpdate(void);
-
-// create any new ticcmds and broadcast to other players
-
-void            D_QuitNetGame(void);
-
-//-----
-//PLAY
-//-----
-
-// called by C_Ticker
-// can call G_PlayerExited
-// carries out all thinking of monsters and players
-
-void            P_SetupMap(uint episode, uint map, int playermask,
-                             skillmode_t skill);
-// called by W_Ticker
-void            P_Init(void);
-
-// called by startup code
-void            R_InitTranslationTables(void);
-
-//----
-//MISC
-//----
-void            strcatQuoted(char *dest, char *src);
-
-// returns true if the episode/map combo is valid for the current
-// game configuration
-
-void            M_ForceUppercase(char *text);
-
-int             M_DrawText(int x, int y, boolean direct, char *string);
-
-//-----------------
-// MENU (MN_menu.c)
-//-----------------
-
-void            MN_ActivateMenu(void);
-void            MN_DeactivateMenu(void);
-
-// Drawing text in the Current State.
-void            MN_DrTextA_CS(char *text, int x, int y);
-void            MN_DrTextAGreen_CS(char *text, int x, int y);
-void            MN_DrTextB_CS(char *text, int x, int y);
-
-#endif
+#endif /* LIBHERETIC_DEFS_H */

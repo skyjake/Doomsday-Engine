@@ -1,32 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * cl_world.c: Clientside World Management
+ * @file cl_world.c
+ * Clientside world management.
+ *
+ * @author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -35,181 +27,306 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_refresh.h"
+#include "de_filesys.h"
+#include "de_defs.h"
+#include "de_misc.h"
 #include "dd_world.h"
 
 #include "r_util.h"
+#include "materialarchive.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define MAX_MOVERS          1024 // Definitely enough!
 #define MAX_TRANSLATIONS    16384
 
 #define MVF_CEILING         0x1 // Move ceiling.
 #define MVF_SET_FLOORPIC    0x2 // Set floor texture when move done.
 
-// TYPES -------------------------------------------------------------------
-
-typedef struct {
+typedef struct clplane_s {
     thinker_t   thinker;
-    uint        sectornum;
-    clmovertype_t type;
+    uint        sectorIndex;
+    clplanetype_t type;
     int         property; // floor or ceiling
     int         dmuPlane;
-    float       destination;
+    coord_t     destination;
     float       speed;
-} mover_t;
+} clplane_t;
 
-typedef struct {
+typedef struct clpolyobj_s {
     thinker_t   thinker;
     uint        number;
-    polyobj_t  *poly;
+    Polyobj*    polyobj;
     boolean     move;
     boolean     rotate;
-} polymover_t;
+} clpolyobj_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+typedef struct {
+    int size;
+    int* serverToLocal;
+} indextranstable_t;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+void Cl_MoverThinker(clplane_t* mover);
+void Cl_PolyMoverThinker(clpolyobj_t* mover);
 
-void Cl_MoverThinker(mover_t *mover);
-void Cl_PolyMoverThinker(polymover_t* mover);
+static MaterialArchive* serverMaterials;
+static indextranstable_t xlatMobjType;
+static indextranstable_t xlatMobjState;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static mover_t *activemovers[MAX_MOVERS];
-static polymover_t *activepolys[MAX_MOVERS];
-short *xlat_lump; // obsolete
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Allocates and inits the lump translation array. Clients use this
- * to make sure lump references are correct (in case the server and the
- * client are using different WAD configurations and the lump index
- * numbers happen to differ).
- *
- * \fixme A bit questionable? Why not allow the clients to download
- * data from the server in ambiguous cases?
- *
- * \note Only used by the obsolete cl_oldworld functions.
- */
-void Cl_InitTranslations(void)
+void Cl_ReadServerMaterials(void)
 {
-    int                 i;
-
-    xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_REFRESHTEX, 0);
-    memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
-    for(i = 0; i < numLumps; ++i)
-        xlat_lump[i] = i; // Identity translation.
-}
-
-void Cl_SetLumpTranslation(lumpnum_t lump, char *name)
-{
-    if(lump < 0 || lump >= MAX_TRANSLATIONS)
-        return; // Can't do it, sir! We just don't have the power!!
-
-    xlat_lump[lump] = W_CheckNumForName(name);
-    if(xlat_lump[lump] < 0)
+    if(!serverMaterials)
     {
-        VERBOSE(Con_Message("Cl_SetLumpTranslation: %s not found.\n", name));
-        xlat_lump[lump] = 0;
+        serverMaterials = MaterialArchive_NewEmpty(false /*no segment check*/);
     }
+    MaterialArchive_Read(serverMaterials, -1, msgReader);
+
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMaterials: Received %u materials.\n", (uint) MaterialArchive_Count(serverMaterials));
+#endif
 }
 
-/**
- * This is a fail-safe operation.
- */
-lumpnum_t Cl_TranslateLump(lumpnum_t lump)
+static void setTableSize(indextranstable_t* table, int size)
 {
-    if(lump < 0 || lump >= MAX_TRANSLATIONS)
+    if(size > 0)
+    {
+        table->serverToLocal = (int*) M_Realloc(table->serverToLocal,
+                                                sizeof(*table->serverToLocal) * size);
+    }
+    else
+    {
+        M_Free(table->serverToLocal);
+        table->serverToLocal = 0;
+    }
+    table->size = size;
+}
+
+void Cl_ReadServerMobjTypeIDs(void)
+{
+    int i;
+    StringArray* ar = StringArray_New();
+    StringArray_Read(ar, msgReader);
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMobjTypeIDs: Received %i mobj type IDs.\n", StringArray_Size(ar));
+#endif
+
+    setTableSize(&xlatMobjType, StringArray_Size(ar));
+
+    // Translate the type IDs to local.
+    for(i = 0; i < StringArray_Size(ar); ++i)
+    {
+        xlatMobjType.serverToLocal[i] = Def_GetMobjNum(StringArray_At(ar, i));
+        if(xlatMobjType.serverToLocal[i] < 0)
+        {
+            Con_Message("Could not find '%s' in local thing definitions.\n",
+                        StringArray_At(ar, i));
+        }
+    }
+
+    StringArray_Delete(ar);
+}
+
+void Cl_ReadServerMobjStateIDs(void)
+{
+    int i;
+    StringArray* ar = StringArray_New();
+    StringArray_Read(ar, msgReader);
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMobjStateIDs: Received %i mobj state IDs.\n", StringArray_Size(ar));
+#endif
+
+    setTableSize(&xlatMobjState, StringArray_Size(ar));
+
+    // Translate the type IDs to local.
+    for(i = 0; i < StringArray_Size(ar); ++i)
+    {
+        xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
+        if(xlatMobjState.serverToLocal[i] < 0)
+        {
+            Con_Message("Could not find '%s' in local state definitions.\n",
+                        StringArray_At(ar, i));
+        }
+    }
+
+    StringArray_Delete(ar);
+}
+
+static material_t* Cl_FindLocalMaterial(materialarchive_serialid_t archId)
+{
+    if(!serverMaterials)
+    {
+        // Can't do it.
+        Con_Message("Cl_FindLocalMaterial: Cannot translate serial id %i, server has not sent its materials!\n", archId);
         return 0;
-    return xlat_lump[lump];
+    }
+    return MaterialArchive_Find(serverMaterials, archId, 0);
 }
 
-static boolean Cl_IsMoverValid(int i)
+int Cl_LocalMobjType(int serverMobjType)
 {
-    if(!activemovers[i]) return false;
-    return (activemovers[i]->thinker.function == Cl_MoverThinker);
+    if(serverMobjType < 0 || serverMobjType >= xlatMobjType.size)
+        return 0; // Invalid type.
+    return xlatMobjType.serverToLocal[serverMobjType];
 }
 
-static boolean Cl_IsPolyValid(int i)
+int Cl_LocalMobjState(int serverMobjState)
 {
-    if(!activepolys[i]) return false;
-    return (activepolys[i]->thinker.function == Cl_PolyMoverThinker);
+    if(serverMobjState < 0 || serverMobjState >= xlatMobjState.size)
+        return 0; // Invalid state.
+    return xlatMobjState.serverToLocal[serverMobjState];
+}
+
+static boolean GameMap_IsValidClPlane(GameMap* map, int i)
+{
+    assert(map);
+    if(!map->clActivePlanes[i]) return false;
+    return (map->clActivePlanes[i]->thinker.function == Cl_MoverThinker);
+}
+
+static boolean GameMap_IsValidClPolyobj(GameMap* map, int i)
+{
+    assert(map);
+    if(!map->clActivePolyobjs[i]) return false;
+    return (map->clActivePolyobjs[i]->thinker.function == Cl_PolyMoverThinker);
+}
+
+void GameMap_InitClMovers(GameMap* map)
+{
+    assert(map);
+    memset(map->clActivePlanes, 0, sizeof(map->clActivePlanes));
+    memset(map->clActivePolyobjs, 0, sizeof(map->clActivePolyobjs));
+}
+
+void GameMap_ResetClMovers(GameMap* map)
+{
+    int i;
+    assert(map);
+
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    {
+        if(GameMap_IsValidClPlane(map, i))
+        {
+            GameMap_ThinkerRemove(map, &map->clActivePlanes[i]->thinker);
+        }
+        if(GameMap_IsValidClPolyobj(map, i))
+        {
+            GameMap_ThinkerRemove(map, &map->clActivePolyobjs[i]->thinker);
+        }
+    }
 }
 
 /**
  * Clears the arrays that track active plane and polyobj mover thinkers.
  */
-void Cl_InitMovers(void)
+void Cl_WorldInit(void)
 {
-    memset(activemovers, 0, sizeof(activemovers));
-    memset(activepolys, 0, sizeof(activepolys));
-}
+    if(theMap)
+    {
+        GameMap_InitClMovers(theMap);
+    }
 
-void Cl_RemoveActiveMover(mover_t *mover)
-{
-    int                 i;
-
-    for(i = 0; i < MAX_MOVERS; ++i)
-        if(activemovers[i] == mover)
-        {
-#ifdef _DEBUG
-            Con_Message("Cl_RemoveActiveMover: Removing mover [%i] in sector %i.\n", i, mover->sectornum);
-#endif
-            P_ThinkerRemove(&mover->thinker);
-            return;
-        }
-
-#ifdef _DEBUG
-    Con_Message("Cl_RemoveActiveMover: Mover in sector %i not removed!\n", mover->sectornum);
-#endif
+    serverMaterials = 0;
+    memset(&xlatMobjType, 0, sizeof(xlatMobjType));
+    memset(&xlatMobjState, 0, sizeof(xlatMobjState));
 }
 
 /**
- * Removes the given polymover from the active polys array.
+ * Removes all the active movers.
  */
-void Cl_RemoveActivePoly(polymover_t *mover)
+void Cl_WorldReset(void)
 {
-    int                 i;
+    if(serverMaterials)
+    {
+        MaterialArchive_Delete(serverMaterials);
+        serverMaterials = 0;
+    }
 
-    for(i = 0; i < MAX_MOVERS; ++i)
-        if(activepolys[i] == mover)
-        {
-            P_ThinkerRemove(&mover->thinker);
-            break;
-        }
+    setTableSize(&xlatMobjType, 0);
+    setTableSize(&xlatMobjState, 0);
+
+    if(theMap)
+    {
+        GameMap_ResetClMovers(theMap);
+    }
+}
+
+int GameMap_ClPlaneIndex(GameMap* map, clplane_t* mover)
+{
+    int i;
+    assert(map);
+    if(!map->clActivePlanes) return -1;
+
+    /// @todo Optimize lookup.
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    {
+        if(map->clActivePlanes[i] == mover)
+            return i;
+    }
+    return -1;
+}
+
+int GameMap_ClPolyobjIndex(GameMap* map, clpolyobj_t* mover)
+{
+    int i;
+    assert(map);
+    if(!map->clActivePolyobjs) return -1;
+
+    /// @todo Optimize lookup.
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    {
+        if(map->clActivePolyobjs[i] == mover)
+            return i;
+    }
+    return -1;
+}
+
+void GameMap_DeleteClPlane(GameMap* map, clplane_t* mover)
+{
+    int index;
+    assert(map);
+
+    index = GameMap_ClPlaneIndex(map, mover);
+    if(index < 0)
+    {
+        DEBUG_Message(("GameMap_DeleteClPlane: Mover in sector #%i not removed!\n", mover->sectorIndex));
+        return;
+    }
+
+    DEBUG_Message(("GameMap_DeleteClPlane: Removing mover [%i] (sector: #%i).\n", index, mover->sectorIndex));
+    GameMap_ThinkerRemove(map, &mover->thinker);
+}
+
+void GameMap_DeleteClPolyobj(GameMap* map, clpolyobj_t* mover)
+{
+    int index;
+    assert(map);
+
+    index = GameMap_ClPolyobjIndex(map, mover);
+    if(index < 0)
+    {
+        DEBUG_Message(("GameMap_DeleteClPolyobj: Mover not removed!\n"));
+        return;
+    }
+
+    DEBUG_Message(("GameMap_DeleteClPolyobj: Removing mover [%i].\n", index));
+    GameMap_ThinkerRemove(map, &mover->thinker);
 }
 
 /**
  * Plane mover. Makes changes in planes using DMU.
  */
-void Cl_MoverThinker(mover_t *mover)
+void Cl_MoverThinker(clplane_t* mover)
 {
-    float               original;
-    boolean             remove = false;
-    boolean             freeMove;
-    float               fspeed;
+    GameMap* map = theMap; /// @todo Do not assume mover is from the CURRENT map.
+    coord_t original;
+    boolean remove = false;
+    boolean freeMove;
+    float fspeed;
 
-    if(!Cl_GameReady())
-        return; // Can we think yet?
+    // Can we think yet?
+    if(!Cl_GameReady()) return;
 
 #ifdef _DEBUG
+    if(GameMap_ClPlaneIndex(map, mover) < 0)
     {
-        int i, gotIt = false;
-        for(i = 0; i < MAX_MOVERS; ++i)
-        {
-            if(activemovers[i] == mover)
-                gotIt = true;
-        }
-        if(!gotIt)
-            Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!\n");
+        Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!\n");
     }
 #endif
 
@@ -218,46 +335,42 @@ void Cl_MoverThinker(mover_t *mover)
     fspeed = mover->speed;
 
     // How's the gap?
-    original = P_GetFloat(DMU_SECTOR, mover->sectornum, mover->property);
+    original = P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property);
     if(fabs(fspeed) > 0 && fabs(mover->destination - original) > fabs(fspeed))
     {
         // Do the move.
-        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, original + fspeed);
+        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, original + fspeed);
     }
     else
     {
         // We have reached the destination.
-        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, mover->destination);
+        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, mover->destination);
 
         // This thinker can now be removed.
         remove = true;
     }
 
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("Cl_MoverThinker: plane height %f in sector %i\n",
-                P_GetFloat(DMU_SECTOR, mover->sectornum, mover->property),
-                mover->sectornum) );
-#endif
+    DEBUG_VERBOSE2_Message(("Cl_MoverThinker: plane height %f in sector #%i\n",
+                            P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property),
+                            mover->sectorIndex));
 
     // Let the game know of this.
     if(gx.SectorHeightChangeNotification)
     {
-        gx.SectorHeightChangeNotification(mover->sectornum);
+        gx.SectorHeightChangeNotification(mover->sectorIndex);
     }
 
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
     {
-#ifdef _DEBUG
-        Con_Message("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectornum);
-#endif
+        DEBUG_Message(("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectorIndex));
 
         // Something was blocking the way! Go back to original height.
-        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, original);
+        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, original);
 
         if(gx.SectorHeightChangeNotification)
         {
-            gx.SectorHeightChangeNotification(mover->sectornum);
+            gx.SectorHeightChangeNotification(mover->sectorIndex);
         }
     }
     else
@@ -265,97 +378,100 @@ void Cl_MoverThinker(mover_t *mover)
         // Can we remove this thinker?
         if(remove)
         {
-#ifdef _DEBUG
-            /*VERBOSE2*/( Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum) );
-#endif
-            // It stops.
-            P_SetFloat(DMU_SECTOR, mover->sectornum, mover->dmuPlane | DMU_SPEED, 0);
+            DEBUG_Message(("Cl_MoverThinker: finished in %i\n", mover->sectorIndex));
 
-            Cl_RemoveActiveMover(mover);
+            // It stops.
+            P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->dmuPlane | DMU_SPEED, 0);
+
+            GameMap_DeleteClPlane(map, mover);
         }
     }
 }
 
-void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
+clplane_t* GameMap_NewClPlane(GameMap* map, uint sectorIndex, clplanetype_t type, coord_t dest, float speed)
 {
-    int                 i;
-    mover_t            *mov;
-    int                 dmuPlane = (type == MVT_FLOOR ? DMU_FLOOR_OF_SECTOR
-                                                      : DMU_CEILING_OF_SECTOR);
-#ifdef _DEBUG
-    /*VERBOSE2*/( Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
-                          sectornum, type==MVT_FLOOR? "floor" : "ceiling",
-                          dest, speed) );
-#endif
+    int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
+    clplane_t* mov;
+    int i;
+    assert(map);
 
-    if(sectornum >= numSectors)
-        return;
+    DEBUG_Message(("GameMap_NewClPlane: Sector #%i, type:%s, dest:%f, speed:%f\n",
+                   sectorIndex, type==CPT_FLOOR? "floor" : "ceiling", dest, speed));
+
+    if(sectorIndex >= map->numSectors)
+    {
+        assert(0); // Invalid Sector index.
+        return NULL;
+    }
 
     // Remove any existing movers for the same plane.
-    for(i = 0; i < MAX_MOVERS; ++i)
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(Cl_IsMoverValid(i) &&
-           activemovers[i]->sectornum == sectornum &&
-           activemovers[i]->type == type)
+        if(GameMap_IsValidClPlane(map, i) &&
+           map->clActivePlanes[i]->sectorIndex == sectorIndex &&
+           map->clActivePlanes[i]->type == type)
         {
-#ifdef _DEBUG
-            Con_Message("Cl_AddMover: Removing existing mover [%i] in sector %i, type %s\n", i, sectornum,
-                        type == MVT_FLOOR? "floor" : "ceiling");
-#endif
-            Cl_RemoveActiveMover(activemovers[i]);
+            DEBUG_Message(("GameMap_NewClPlane: Removing existing mover [%i] in sector #%i, type %s\n",
+                           i, sectorIndex, type == CPT_FLOOR? "floor" : "ceiling"));
+
+            GameMap_DeleteClPlane(map, map->clActivePlanes[i]);
         }
     }
 
     // Add a new mover.
-    for(i = 0; i < MAX_MOVERS; ++i)
-        if(!activemovers[i])
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    {
+        if(map->clActivePlanes[i]) continue;
+
+        DEBUG_Message(("GameMap_NewClPlane: ...new mover [%i]\n", i));
+
+        // Allocate a new clplane_t thinker.
+        mov = map->clActivePlanes[i] = Z_Calloc(sizeof(clplane_t), PU_MAP, &map->clActivePlanes[i]);
+        mov->thinker.function = Cl_MoverThinker;
+        mov->type = type;
+        mov->sectorIndex = sectorIndex;
+        mov->destination = dest;
+        mov->speed = speed;
+        mov->property = dmuPlane | DMU_HEIGHT;
+        mov->dmuPlane = dmuPlane;
+
+        // Set the right sign for speed.
+        if(mov->destination < P_GetDouble(DMU_SECTOR, sectorIndex, mov->property))
+            mov->speed = -mov->speed;
+
+        // Update speed and target height.
+        P_SetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
+        P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_SPEED, speed);
+
+        GameMap_ThinkerAdd(map, &mov->thinker, false /*not public*/);
+
+        // Immediate move?
+        if(FEQUAL(speed, 0))
         {
-#ifdef _DEBUG
-            Con_Message("Cl_AddMover: ...new mover [%i]\n", i);
-#endif
-            // Allocate a new mover_t thinker.
-            mov = activemovers[i] = Z_Calloc(sizeof(mover_t), PU_MAP, &activemovers[i]);
-            mov->thinker.function = Cl_MoverThinker;
-            mov->type = type;
-            mov->sectornum = sectornum;
-            mov->destination = dest;
-            mov->speed = speed;
-            mov->property = dmuPlane | DMU_HEIGHT;
-            mov->dmuPlane = dmuPlane;
-
-            // Set the right sign for speed.
-            if(mov->destination < P_GetFloat(DMU_SECTOR, sectornum, mov->property))
-                mov->speed = -mov->speed;
-
-            // Update speed and target height.
-            P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_TARGET_HEIGHT, dest);
-            P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_SPEED, speed);
-
-            P_ThinkerAdd(&mov->thinker, false /*not public*/);
-
-            // Immediate move?
-            if(FEQUAL(speed, 0))
-            {
-                // This will remove the thinker immediately if the move is ok.
-                Cl_MoverThinker(mov);
-            }
-            break;
+            // This will remove the thinker immediately if the move is ok.
+            Cl_MoverThinker(mov);
         }
+        return mov;
+    }
+
+    Con_Error("GameMap_NewClPlane: Exhausted activemovers.");
+    exit(1); // Unreachable.
 }
 
-void Cl_PolyMoverThinker(polymover_t* mover)
+void Cl_PolyMoverThinker(clpolyobj_t* mover)
 {
-    polyobj_t*          poly = mover->poly;
-    float               dx, dy;
-    float               dist;
+    Polyobj* po;
+    float dx, dy, dist;
+    assert(mover);
 
+    po = mover->polyobj;
     if(mover->move)
     {
         // How much to go?
-        dx = poly->dest[VX] - poly->pos[VX];
-        dy = poly->dest[VY] - poly->pos[VY];
-        dist = P_ApproxDistance(dx, dy);
-        if(dist <= poly->speed || FEQUAL(poly->speed, 0))
+        dx = po->dest[VX] - po->origin[VX];
+        dy = po->dest[VY] - po->origin[VY];
+        dist = M_ApproxDistance(dx, dy);
+        if(dist <= po->speed || FEQUAL(po->speed, 0))
         {
             // We'll arrive at the destination.
             mover->move = false;
@@ -363,75 +479,83 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         else
         {
             // Adjust deltas to fit speed.
-            dx = poly->speed * (dx / dist);
-            dy = poly->speed * (dy / dist);
+            dx = po->speed * (dx / dist);
+            dy = po->speed * (dy / dist);
         }
 
         // Do the move.
-        P_PolyobjMove(P_GetPolyobj(mover->number | 0x80000000), dx, dy);
+        P_PolyobjMoveXY(P_PolyobjByID(mover->number), dx, dy);
     }
 
     if(mover->rotate)
     {
         // How much to go?
-        int dist = poly->destAngle - poly->angle;
-        int speed = poly->angleSpeed;
+        int dist = po->destAngle - po->angle;
+        int speed = po->angleSpeed;
 
-        //dist = FIX2FLT(poly->destAngle - poly->angle);
-        //if(!poly->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4)*/
-        //    /* && poly->destAngle != -1*/) || !poly->angleSpeed)
-        if(!poly->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
+        //dist = FIX2FLT(po->destAngle - po->angle);
+        //if(!po->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) po->angleSpeed) >> 4)*/
+        //    /* && po->destAngle != -1*/) || !po->angleSpeed)
+        if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
-#ifdef _DEBUG
-            Con_Message("Cl_PolyMoverThinker: Mover %i reached end of turn, destAngle=%x.\n", mover->number, poly->destAngle);
-#endif
+            DEBUG_Message(("Cl_PolyMoverThinker: Mover %i reached end of turn, destAngle=%x.\n",
+                           mover->number, po->destAngle));
+
             // We'll arrive at the destination.
             mover->rotate = false;
         }
         else
         {
             // Adjust to speed.
-            dist = /*FIX2FLT((int)*/ poly->angleSpeed;
+            dist = /*FIX2FLT((int)*/ po->angleSpeed;
         }
 
-/*#ifdef _DEBUG
-        Con_Message("%f\n", dist);
-#endif*/
-
-        P_PolyobjRotate(P_GetPolyobj(mover->number | 0x80000000), dist);
+        P_PolyobjRotate(P_PolyobjByID(mover->number), dist);
     }
 
     // Can we get rid of this mover?
     if(!mover->move && !mover->rotate)
-        Cl_RemoveActivePoly(mover);
+    {
+        /// @todo Do not assume the move is from the CURRENT map.
+        GameMap_DeleteClPolyobj(theMap, mover);
+    }
 }
 
-polymover_t* Cl_FindOrMakeActivePoly(uint number)
+clpolyobj_t* GameMap_ClPolyobjByPolyobjIndex(GameMap* map, uint index)
 {
     int i;
-    int available = -1;
-    polymover_t* mover;
-
-    for(i = 0; i < MAX_MOVERS; ++i)
+    assert(map);
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(available < 0 && !activepolys[i])
-            available = i;
+        if(!GameMap_IsValidClPolyobj(map, i)) continue;
 
-        if(Cl_IsPolyValid(i) && activepolys[i]->number == number)
-            return activepolys[i];
+        if(map->clActivePolyobjs[i]->number == index)
+            return map->clActivePolyobjs[i];
     }
+    return NULL;
+}
 
-    // Not found, make a new one.
-    if(available >= 0)
+/**
+ * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
+ */
+clpolyobj_t* GameMap_NewClPolyobj(GameMap* map, uint polyobjIndex)
+{
+    clpolyobj_t* mover;
+    int i;
+    assert(map);
+
+    // Take the first unused slot.
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-#ifdef _DEBUG
-        Con_Message("Cl_FindOrMakeActivePoly: New polymover [%i] in polyobj %i.\n", available, number);
-#endif
-        activepolys[available] = mover = Z_Calloc(sizeof(polymover_t), PU_MAP, &activepolys[available]);
+        if(map->clActivePolyobjs[i]) continue;
+
+        DEBUG_Message(("GameMap_NewClPolyobj: New polymover [%i] for polyobj #%i.\n", i, polyobjIndex));
+
+        map->clActivePolyobjs[i] = mover = Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &map->clActivePolyobjs[i]);
         mover->thinker.function = Cl_PolyMoverThinker;
-        mover->poly = polyObjs[number];
-        mover->number = number;
-        P_ThinkerAdd(&mover->thinker, false /*not public*/);
+        mover->polyobj = map->polyObjs[polyobjIndex];
+        mover->number = polyobjIndex;
+        GameMap_ThinkerAdd(map, &mover->thinker, false /*not public*/);
         return mover;
     }
 
@@ -439,76 +563,44 @@ polymover_t* Cl_FindOrMakeActivePoly(uint number)
     return NULL;
 }
 
+clpolyobj_t* Cl_FindOrMakeActivePoly(uint polyobjIndex)
+{
+    GameMap* map = theMap;
+    clpolyobj_t* mover = GameMap_ClPolyobjByPolyobjIndex(map, polyobjIndex);
+    if(mover) return mover;
+    // Not found; make a new one.
+    return GameMap_NewClPolyobj(map, polyobjIndex);
+}
+
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
-    polymover_t* mover = Cl_FindOrMakeActivePoly(number);
+    clpolyobj_t* mover = Cl_FindOrMakeActivePoly(number);
     if(!mover)
     {
         Con_Message("Cl_SetPolyMover: Out of polymovers.\n");
         return;
     }
+
     // Flag for moving.
-    if(move)
-        mover->move = true;
-    if(rotate)
-        mover->rotate = true;
+    if(move) mover->move = true;
+    if(rotate) mover->rotate = true;
 }
 
-/**
- * Removes all the active movers.
- */
-void Cl_RemoveMovers(void)
+clplane_t* GameMap_ClPlaneBySectorIndex(GameMap* map, uint sectorIndex, clplanetype_t type)
 {
-    int                 i;
+    int i;
+    assert(map);
 
-    for(i = 0; i < MAX_MOVERS; ++i)
+    for(i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(Cl_IsMoverValid(i))
-        {
-            P_ThinkerRemove(&activemovers[i]->thinker);
-        }
-        if(Cl_IsPolyValid(i))
-        {
-            P_ThinkerRemove(&activepolys[i]->thinker);
-        }
+        if(!GameMap_IsValidClPlane(map, i)) continue;
+        if(map->clActivePlanes[i]->sectorIndex != sectorIndex) continue;
+        if(map->clActivePlanes[i]->type != type) continue;
+
+        // Found it!
+        return map->clActivePlanes[i];
     }
-}
-
-mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
-{
-    int                 i;
-
-    for(i = 0; i < MAX_MOVERS; ++i)
-        if(Cl_IsMoverValid(i) &&
-           activemovers[i]->sectornum == sectornum &&
-           activemovers[i]->type == type)
-        {
-            return activemovers[i];
-        }
     return NULL;
-}
-
-/**
- * @return              @c false, if the end marker is found (lump
- *                      index zero).
- */
-int Cl_ReadLumpDelta(void)
-{
-    lumpnum_t           num = (lumpnum_t) Reader_ReadPackedUInt16(msgReader);
-    char                name[9];
-
-    if(!num)
-        return false; // No more.
-
-    // Read the name of the lump.
-    memset(name, 0, sizeof(name));
-    Reader_Read(msgReader, name, 8);
-
-    VERBOSE(Con_Printf("LumpTranslate: %i => %s\n", num, name));
-
-    // Set up translation.
-    Cl_SetLumpTranslation(num, name);
-    return true;
 }
 
 /**
@@ -518,12 +610,13 @@ int Cl_ReadLumpDelta(void)
 void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 {
     /// @todo Skipping is never done nowadays...
-    static sector_t dummy; // Used when skipping.
-    static plane_t* dummyPlaneArray[2];
-    static plane_t dummyPlanes[2];
+    static Sector dummy; // Used when skipping.
+    static Plane* dummyPlaneArray[2];
+    static Plane dummyPlanes[2];
 
+    GameMap* map = theMap; /// @todo Do not assume the CURRENT map.
     unsigned short num;
-    sector_t* sec;
+    Sector* sec;
     int df;
     float height[2] = { 0, 0 };
     float target[2] = { 0, 0 };
@@ -543,7 +636,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     if(!skip)
     {
 #ifdef _DEBUG
-        if(num >= numSectors)
+        if(num >= NUM_SECTORS)
         {
             // This is worrisome.
             Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
@@ -557,17 +650,15 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec = &dummy;
     }
 
-    /// @todo What if client and server materialnums differ?
-
     if(df & SDF_FLOOR_MATERIAL)
     {
-        material_t* mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
-        P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL, mat);
+        P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL,
+                  Cl_FindLocalMaterial(Reader_ReadPackedUInt16(msgReader)));
     }
     if(df & SDF_CEILING_MATERIAL)
     {
-        material_t* mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
-        P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL, mat);
+        P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL,
+                  Cl_FindLocalMaterial(Reader_ReadPackedUInt16(msgReader)));
     }
 
     if(df & SDF_LIGHT)
@@ -594,18 +685,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Surface_SetColorR(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorRed(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorGreen(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorBlue(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        Surface_SetColorR(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorRed(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorGreen(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorBlue(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
@@ -614,20 +705,20 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        Cl_AddMover(num, MVT_FLOOR, height[PLN_FLOOR], 0);
+        GameMap_NewClPlane(map, num, CPT_FLOOR, height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        Cl_AddMover(num, MVT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
+        GameMap_NewClPlane(map, num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        Cl_AddMover(num, MVT_CEILING, height[PLN_CEILING], 0);
+        GameMap_NewClPlane(map, num, CPT_CEILING, height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        Cl_AddMover(num, MVT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
+        GameMap_NewClPlane(map, num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
     }
 }
 
@@ -636,28 +727,20 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
  */
 void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
-    unsigned short      num;
+    unsigned short num;
 
-    int                 df, topMat = 0, midMat = 0, botMat = 0;
-    int                 blendmode = 0;
-    byte                lineFlags = 0, sideFlags = 0;
-    float               toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
-    float               bottomrgb[3] = {0,0,0};
-    sidedef_t          *sid;
+    int df, topMat = 0, midMat = 0, botMat = 0;
+    int blendmode = 0;
+    byte lineFlags = 0, sideFlags = 0;
+    float toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
+    float bottomrgb[3] = {0,0,0};
+    SideDef* side;
 
     // First read all the data.
     num = Reader_ReadUInt16(msgReader);
 
     // Flags.
-    /*if(deltaType == DT_SIDE_R6)
-    {
-        // The R6 protocol reserves a single byte for a side delta.
-        df = Reader_ReadByte(msgReader);
-    }
-    else*/
-    {
-        df = Reader_ReadPackedUInt32(msgReader);
-    }
+    df = Reader_ReadPackedUInt32(msgReader);
 
     if(df & SIDF_TOP_MATERIAL)
         topMat = Reader_ReadPackedUInt16(msgReader);
@@ -702,83 +785,64 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         return;
 
 #ifdef _DEBUG
-if(num >= numSideDefs)
-{
-    // This is worrisome.
-    Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
-}
+    if(num >= NUM_SIDEDEFS)
+    {
+        // This is worrisome.
+        Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
+    }
 #endif
 
-    sid = SIDE_PTR(num);
+    side = SIDE_PTR(num);
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        material_t*         mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = P_ToMaterial(topMat);
-        Surface_SetMaterial(&sid->SW_topsurface, mat);
+        Surface_SetMaterial(&side->SW_topsurface, Cl_FindLocalMaterial(topMat));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        material_t*         mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = P_ToMaterial(midMat);
-        Surface_SetMaterial(&sid->SW_middlesurface, mat);
+        Surface_SetMaterial(&side->SW_middlesurface, Cl_FindLocalMaterial(midMat));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        material_t*         mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = P_ToMaterial(botMat);
-        Surface_SetMaterial(&sid->SW_bottomsurface, mat);
+        Surface_SetMaterial(&side->SW_bottomsurface, Cl_FindLocalMaterial(botMat));
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        Surface_SetColorR(&sid->SW_topsurface, toprgb[CR]);
+        Surface_SetColorRed(&side->SW_topsurface, toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_topsurface, toprgb[CG]);
+        Surface_SetColorGreen(&side->SW_topsurface, toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_topsurface, toprgb[CB]);
+        Surface_SetColorBlue(&side->SW_topsurface, toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        Surface_SetColorR(&sid->SW_middlesurface, midrgba[CR]);
+        Surface_SetColorRed(&side->SW_middlesurface, midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_middlesurface, midrgba[CG]);
+        Surface_SetColorGreen(&side->SW_middlesurface, midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_middlesurface, midrgba[CB]);
+        Surface_SetColorBlue(&side->SW_middlesurface, midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        Surface_SetColorA(&sid->SW_middlesurface, midrgba[CA]);
+        Surface_SetAlpha(&side->SW_middlesurface, midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Surface_SetColorR(&sid->SW_bottomsurface, bottomrgb[CR]);
+        Surface_SetColorRed(&side->SW_bottomsurface, bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_bottomsurface, bottomrgb[CG]);
+        Surface_SetColorGreen(&side->SW_bottomsurface, bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_bottomsurface, bottomrgb[CB]);
+        Surface_SetColorBlue(&side->SW_bottomsurface, bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
-        Surface_SetBlendMode(&sid->SW_middlesurface, blendmode);
+        Surface_SetBlendMode(&side->SW_middlesurface, blendmode);
 
     if(df & SIDF_FLAGS)
     {
         // The delta includes the entire lowest byte.
-        sid->flags &= ~0xff;
-        sid->flags |= sideFlags;
+        side->flags &= ~0xff;
+        side->flags |= sideFlags;
     }
 
     if(df & SIDF_LINE_FLAGS)
     {
-        linedef_t *line = R_GetLineForSide(num);
-
+        LineDef* line = side->line;
         if(line)
         {
             // The delta includes the entire lowest byte.
@@ -796,7 +860,7 @@ void Cl_ReadPolyDelta2(boolean skip)
 {
     int                 df;
     unsigned short      num;
-    polyobj_t          *po;
+    Polyobj            *po;
     float               destX = 0, destY = 0;
     float               speed = 0;
     int                 destAngle = 0, angleSpeed = 0;
@@ -825,11 +889,11 @@ void Cl_ReadPolyDelta2(boolean skip)
         return;
 
 #ifdef _DEBUG
-if(num >= numPolyObjs)
-{
-    // This is worrisome.
-    Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
-}
+    if(num >= NUM_POLYOBJS)
+    {
+        // This is worrisome.
+        Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
+    }
 #endif
 
     po = polyObjs[num];

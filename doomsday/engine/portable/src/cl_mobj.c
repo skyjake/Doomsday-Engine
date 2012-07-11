@@ -1,32 +1,26 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * cl_mobj.c: Client Map Objects
+ * @file cl_mobj.c
+ * Client map objects. @ingroup client
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
+#include <math.h>
 
 #include "de_base.h"
 #include "de_defs.h"
@@ -36,69 +30,73 @@
 #include "de_play.h"
 #include "de_audio.h"
 
-// MACROS ------------------------------------------------------------------
-
-// The client mobjs are stored into a hash to speed up the searching.
-#define HASH_SIZE       256
-
-// Convert 8.8/10.6 fixed point to 16.16.
+/// Convert 8.8/10.6 fixed point to 16.16.
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
 #define UNFIXED10_6(x)  (((x) << 16) / 64)
 
-// Milliseconds it takes for Unpredictable and Hidden mobjs to be
-// removed from the hash. Under normal circumstances, the special
-// status should be removed fairly quickly.
-#define CLMOBJ_TIMEOUT  4000    // milliseconds
+/// Milliseconds it takes for Unpredictable and Hidden mobjs to be
+/// removed from the hash. Under normal circumstances, the special
+/// status should be removed fairly quickly.
+#define CLMOBJ_TIMEOUT  4000    ///< milliseconds
 
-// Missiles don't hit mobjs only after a short delay. This'll
-// allow the missile to move free of the shooter. (Quite a hack!)
+/// Missiles don't hit mobjs only after a short delay. This'll
+/// allow the missile to move free of the shooter. (Quite a hack!)
 #define MISSILE_FREE_MOVE_TIME  1000
 
-// TYPES -------------------------------------------------------------------
-
-/**
- * The client mobj hash is used for quickly finding a client mobj by
- * on its identifier.
- */
-typedef struct cmhash_s {
-    clmoinfo_t *first, *last;
-} cmhash_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int gotFrame;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-cmhash_t cmHash[HASH_SIZE];
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+extern int gotFrame; ///< @todo Remove this...
 
 /**
  * @return  Pointer to the hash chain with the specified id.
  */
-static cmhash_t *ClMobj_Hash(thid_t id)
+static cmhash_t* GameMap_ClMobjHash(GameMap* map, thid_t id)
 {
-    return &cmHash[(uint) id % HASH_SIZE];
+    assert(map);
+    return &map->clMobjHash[(uint) id % CLIENT_MOBJ_HASH_SIZE];
 }
+
+/// @note Part of the Doomsday public API.
+static cmhash_t* ClMobj_Hash(thid_t id)
+{
+    if(!theMap) return NULL;
+    return GameMap_ClMobjHash(theMap, id);
+}
+
+#ifdef _DEBUG
+void checkMobjHash(void)
+{
+    int i;
+    assert(theMap != 0);
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    {
+        int count1 = 0, count2 = 0;
+        clmoinfo_t* info;
+        for(info = theMap->clMobjHash[i].first; info; info = info->next, count1++)
+        {
+            assert(ClMobj_MobjForInfo(info) != 0);
+        }
+        for(info = theMap->clMobjHash[i].last; info; info = info->prev, count2++)
+        {
+            assert(ClMobj_MobjForInfo(info) != 0);
+        }
+        assert(count1 == count2);
+    }
+}
+#endif
 
 /**
  * Links the clmobj into the client mobj hash table.
  */
-static void ClMobj_Link(mobj_t *mo, thid_t id)
+static void ClMobj_LinkInHash(mobj_t* mo, thid_t id)
 {
-    cmhash_t   *hash = ClMobj_Hash(id);
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    /// @todo Do not assume the CURRENT map.
+    cmhash_t* hash = GameMap_ClMobjHash(theMap, id);
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 
     // Set the ID.
     mo->thinker.id = id;
@@ -115,17 +113,25 @@ static void ClMobj_Link(mobj_t *mo, thid_t id)
     {
         hash->first = info;
     }
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 }
 
 /**
  * Unlinks the clmobj from the client mobj hash table.
  */
-static void ClMobj_Unlink(mobj_t *mo)
+static void ClMobj_UnlinkInHash(mobj_t* mo)
 {
-    cmhash_t   *hash = ClMobj_Hash(mo->thinker.id);
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    cmhash_t* hash = ClMobj_Hash(mo->thinker.id);
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 
     if(hash->first == info)
         hash->first = info->next;
@@ -135,6 +141,10 @@ static void ClMobj_Unlink(mobj_t *mo)
         info->next->prev = info->prev;
     if(info->prev)
         info->prev->next = info->next;
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 }
 
 mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
@@ -145,14 +155,10 @@ mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
     return (mobj_t*) ((char*)info + sizeof(clmoinfo_t));
 }
 
-/**
- * Searches through the client mobj hash table and returns the clmobj
- * with the specified ID, if that exists.
- */
-mobj_t *ClMobj_Find(thid_t id)
+struct mobj_s* ClMobj_Find(thid_t id)
 {
-    cmhash_t   *hash = ClMobj_Hash(id);
-    clmoinfo_t *info;
+    cmhash_t* hash = ClMobj_Hash(id);
+    clmoinfo_t* info;
 
     if(!id) return NULL;
 
@@ -168,20 +174,15 @@ mobj_t *ClMobj_Find(thid_t id)
     return NULL;
 }
 
-/**
- * Iterate the client mobj hash, exec the callback on each. Abort if callback
- * returns @c false.
- *
- * @return  If the callback returns @c false.
- */
-boolean ClMobj_Iterator(boolean (*callback) (mobj_t *, void *), void *parm)
+boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (mobj_t*, void*), void* parm)
 {
-    clmoinfo_t *info;
-    int         i;
+    clmoinfo_t* info;
+    int i;
+    assert(map);
 
-    for(i = 0; i < HASH_SIZE; ++i)
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = cmHash[i].first; info; info = info->next)
+        for(info = map->clMobjHash[i].first; info; info = info->next)
         {
             if(!callback(ClMobj_MobjForInfo(info), parm))
                 return false;
@@ -194,7 +195,7 @@ boolean ClMobj_Iterator(boolean (*callback) (mobj_t *, void *), void *parm)
  * Unlinks the mobj from sectorlinks and if the object is solid,
  * the blockmap.
  */
-void ClMobj_UnsetPosition(mobj_t *mo)
+void ClMobj_Unlink(mobj_t* mo)
 {
     P_MobjUnlink(mo);
 }
@@ -205,9 +206,9 @@ void ClMobj_UnsetPosition(mobj_t *mo)
  * to the blockmap makes it possible to interact with it (collide).
  * If the client mobj is Hidden, it will not be linked anywhere.
  */
-void ClMobj_SetPosition(mobj_t *mo)
+void ClMobj_Link(mobj_t* mo)
 {
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -218,14 +219,34 @@ void ClMobj_SetPosition(mobj_t *mo)
         // Client mobjs that belong to players remain unlinked.
         return;
     }
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("ClMobj_SetPosition: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
-                          mo->pos[VX], mo->pos[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no") );
-#endif
+    DEBUG_VERBOSE2_Message(("ClMobj_Link: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
+                            mo->origin[VX], mo->origin[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no"));
 
-    P_MobjLink(mo,
-                (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
-                (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
+    P_MobjLink(mo, (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
+                   (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
+}
+
+void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
+{
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    if(!isClient || !info) return;
+    if(enable)
+    {
+        DEBUG_Message(("ClMobj_EnableLocalActions: Enabled for mobj %i.\n", mo->thinker.id));
+        info->flags |= CLMF_LOCAL_ACTIONS;
+    }
+    else
+    {
+        DEBUG_Message(("ClMobj_EnableLocalActions: Disabled for mobj %i.\n", mo->thinker.id));
+        info->flags &= ~CLMF_LOCAL_ACTIONS;
+    }
+}
+
+boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo)
+{
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    if(!isClient || !info) return true;
+    return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
 
 /**
@@ -245,53 +266,6 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
     while(!mo->tics && stnum > 0);
 }
 
-#if 1
-/**
- * Updates floorz and ceilingz of the mobj.
- */
-void ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated)
-{/*
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
-    boolean     onFloor = false, inCeiling = false;
-
-    CL_ASSERT_CLMOBJ(mo);
-
-    if(mo->pos[VZ] == DDMINFLOAT)
-    {
-        // Make the mobj stick to the floor.
-        info->flags |= CLMF_STICK_FLOOR;
-
-        // Give it a real Z coordinate.
-        onFloor = true;
-        mo->pos[VZ] = mo->floorZ;
-    }
-
-    if(mo->pos[VZ] == DDMAXFLOAT)
-    {
-        // Make the mobj stick to the ceiling.
-        info->flags |= CLMF_STICK_CEILING;
-
-        // Give it a real Z coordinate.
-        inCeiling = true;
-        mo->pos[VZ] = mo->ceilingZ - mo->height;
-    }
-
-    // Find out floor and ceiling z.
-    P_CheckPosXYZ(mo, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
-    mo->floorZ = tmpFloorZ;
-    mo->ceilingZ = tmpCeilingZ;
-
-    if(onFloor)
-    {
-        mo->pos[VZ] = mo->floorZ;
-    }
-    if(inCeiling)
-    {
-        mo->pos[VZ] = mo->ceilingZ - mo->height;
-    }*/
-}
-#endif
-
 /**
  * Make the real player mobj identical with the client mobj.
  * The client mobj is always unlinked. Only the *real* mobj is visible.
@@ -299,13 +273,11 @@ void ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated)
  */
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor)
 {
-#if _DEBUG
     if(!localMobj || !remoteClientMobj)
     {
-        VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", localMobj, remoteClientMobj) );
+        DEBUG_VERBOSE_Message(("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", localMobj, remoteClientMobj));
         return;
     }
-#endif
 
     localMobj->radius = remoteClientMobj->radius;
 
@@ -327,8 +299,13 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     //localMobj->nexttime = clmo->nexttime;
 #define DDMF_KEEP_MASK (DDMF_REMOTE | DDMF_SOLID)
     localMobj->ddFlags = (localMobj->ddFlags & DDMF_KEEP_MASK) | (remoteClientMobj->ddFlags & ~DDMF_KEEP_MASK);
-    localMobj->flags = (localMobj->flags & ~0x1c000000) |
-                       (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
+    if(flags & MDF_FLAGS)
+    {
+        localMobj->flags = (localMobj->flags & ~0x1c000000) |
+                           (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
+        //DEBUG_Message(("UpdateRealPlayerMobj: translation=%i\n", (localMobj->flags >> 26) & 7));
+    }
+
     localMobj->height = remoteClientMobj->height;
 /*#ifdef _DEBUG
     if(localMobj->floorClip != remoteClientMobj->floorClip)
@@ -341,7 +318,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     localMobj->selector |= remoteClientMobj->selector & DDMOBJ_SELECTOR_MASK;
     localMobj->visAngle = remoteClientMobj->angle >> 16;
 
-    if(flags & (MDF_POS_X | MDF_POS_Y))
+    if(flags & (MDF_ORIGIN_X | MDF_ORIGIN_Y))
     {
         /*
         // We have to unlink the real mobj before we move it.
@@ -352,21 +329,21 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
         */
 
         // This'll update the contacted floor and ceiling heights as well.
-        if(gx.MobjTryMove3f)
+        if(gx.MobjTryMoveXYZ)
         {
-            if(gx.MobjTryMove3f(localMobj,
-                                remoteClientMobj->pos[VX],
-                                remoteClientMobj->pos[VY],
-                                (flags & MDF_POS_Z)? remoteClientMobj->pos[VZ] : localMobj->pos[VZ]))
+            if(gx.MobjTryMoveXYZ(localMobj,
+                                remoteClientMobj->origin[VX],
+                                remoteClientMobj->origin[VY],
+                                (flags & MDF_ORIGIN_Z)? remoteClientMobj->origin[VZ] : localMobj->origin[VZ]))
             {
-                if((flags & MDF_POS_Z) && onFloor)
+                if((flags & MDF_ORIGIN_Z) && onFloor)
                 {
-                    localMobj->pos[VZ] = remoteClientMobj->pos[VZ] = localMobj->floorZ;
+                    localMobj->origin[VZ] = remoteClientMobj->origin[VZ] = localMobj->floorZ;
                 }
             }
         }
     }
-    if(flags & MDF_POS_Z)
+    if(flags & MDF_ORIGIN_Z)
     {
         if(!onFloor)
         {
@@ -374,80 +351,63 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
         }
         localMobj->ceilingZ = remoteClientMobj->ceilingZ;
 
-        localMobj->pos[VZ] = remoteClientMobj->pos[VZ];
+        localMobj->origin[VZ] = remoteClientMobj->origin[VZ];
 
         // Don't go below the floor level.
-        if(localMobj->pos[VZ] < localMobj->floorZ)
-            localMobj->pos[VZ] = localMobj->floorZ;
+        if(localMobj->origin[VZ] < localMobj->floorZ)
+            localMobj->origin[VZ] = localMobj->floorZ;
     }
 }
 
-/**
- * Initialize clientside data.
- */
-void Cl_InitClientMobjs(void)
+void GameMap_InitClMobjs(GameMap* map)
 {
-    //previousTime = gameTime;
-
-    // List of client mobjs.
-    memset(cmHash, 0, sizeof(cmHash));
-
-    Cl_InitPlayers();
+    assert(map);
+    memset(map->clMobjHash, 0, sizeof(map->clMobjHash));
 }
 
-/**
- * Called when the client is shut down. Unlinks everything from the
- * sectors and the blockmap and clears the clmobj list.
- */
-void Cl_DestroyClientMobjs(void)
+void GameMap_DestroyClMobjs(GameMap* map)
 {
-    int                 i;
-    clmoinfo_t*         info;
+    clmoinfo_t* info;
+    int i;
+    assert(map);
 
-    for(i = 0; i < HASH_SIZE; ++i)
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = cmHash[i].first; info; info = info->next)
+        for(info = map->clMobjHash[i].first; info; info = info->next)
         {
             mobj_t* mo = ClMobj_MobjForInfo(info);
             // Players' clmobjs are not linked anywhere.
             if(!mo->dPlayer)
-                ClMobj_UnsetPosition(mo);
+                ClMobj_Unlink(mo);
         }
     }
 
-    Cl_Reset();
+    GameMap_ClMobjReset(map);
 }
 
-/**
- * Reset the client status. Called when the map changes.
- */
-void Cl_Reset(void)
+void GameMap_ClMobjReset(GameMap* map)
 {
+    assert(map);
+
     Cl_ResetFrame();
 
     // The PU_MAP memory was freed, so just clear the hash.
-    memset(cmHash, 0, sizeof(cmHash));
-
-    // Clear player data, too, since we just lost all clmobjs.
-    Cl_InitPlayers();
+    memset(map->clMobjHash, 0, sizeof(map->clMobjHash));
 }
 
-/**
- * Deletes hidden, unpredictable or nulled mobjs for which we have not received
- * updates in a while.
- */
-void Cl_ExpireMobjs(void)
+void GameMap_ExpireClMobjs(GameMap* map)
 {
+    uint nowTime = Sys_GetRealTime();
     clmoinfo_t* info;
     clmoinfo_t* next = 0;
     mobj_t* mo;
     int i;
-    uint nowTime = Sys_GetRealTime();
+    assert(map);
 
     // Move all client mobjs.
-    for(i = 0; i < HASH_SIZE; ++i)
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
-        for(info = cmHash[i].first; info; info = next)
+        for(info = map->clMobjHash[i].first; info; info = next)
         {
             next = info->next;
             mo = ClMobj_MobjForInfo(info);
@@ -464,7 +424,7 @@ void Cl_ExpireMobjs(void)
                 if(nowTime - info->time > CLMOBJ_TIMEOUT)
                 {
 #ifdef _DEBUG
-                    Con_Message("Cl_ExpireMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].\n",
+                    Con_Message("GameMap_ExpireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].\n",
                                 mo->thinker.id,
                                 info->time, nowTime,
                                 Def_GetStateName(mo->state),
@@ -496,7 +456,7 @@ void Cl_PredictMovement(void)
     predicted_tics++;
 
     // Move all client mobjs.
-    for(i = 0; i < HASH_SIZE; ++i)
+    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
     {
         for(cmo = cmHash[i].first; cmo; cmo = next)
         {
@@ -595,27 +555,29 @@ mobj_t* ClMobj_Create(thid_t id)
     info->endMagic = CLM_MAGIC2;
     mo->ddFlags = DDMF_REMOTE;
 
-    ClMobj_Link(mo, id);
-    P_SetMobjID(id, true);      // Mark this ID as used.
+    ClMobj_LinkInHash(mo, id);
+    GameMap_SetMobjID(theMap, id, true); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
     mo->thinker.function = gx.MobjThinker;
-    P_ThinkerAdd((thinker_t*) mo, true);
+    GameMap_ThinkerAdd(theMap, (thinker_t*) mo, true);
 
     return mo;
 }
 
 /**
  * Destroys the client mobj. Before this is called, the client mobj should be
- * unlinked from the thinker list (P_ThinkerRemove).
+ * unlinked from the thinker list (GameMap_ThinkerRemove).
  */
-void ClMobj_Destroy(mobj_t *mo)
+void ClMobj_Destroy(mobj_t* mo)
 {
     clmoinfo_t* info = 0;
 
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id) );
+    checkMobjHash();
 #endif
+
+    DEBUG_VERBOSE2_Message(("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id));
 
     CL_ASSERT_CLMOBJ(mo);
     info = ClMobj_GetInfo(mo);
@@ -624,12 +586,16 @@ void ClMobj_Destroy(mobj_t *mo)
     S_StopSound(0, mo);
 
     // The ID is free once again.
-    P_SetMobjID(mo->thinker.id, false);
-    ClMobj_UnsetPosition(mo);
-    ClMobj_Unlink(mo);
+    GameMap_SetMobjID(theMap, mo->thinker.id, false);
+    ClMobj_UnlinkInHash(mo);
+    ClMobj_Unlink(mo); // from block/sector
 
     // This will free the entire mobj + info.
     Z_Free(info);
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 }
 
 /**
@@ -705,7 +671,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
         return false;
     }
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted (z=%f).\n", mo->thinker.id, mo->pos[VZ]) );
+    VERBOSE2( Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted (z=%f).\n", mo->thinker.id, mo->origin[VZ]) );
 #endif
 
     info->flags &= ~CLMF_HIDDEN;
@@ -721,19 +687,53 @@ boolean ClMobj_Reveal(mobj_t *mo)
 
 #ifdef _DEBUG
     VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
-                         mo->thinker.id, mo->state,
-                         (int)(mo->state - states)) );
+                         mo->thinker.id, mo->state, (int)(mo->state - states)) );
 #endif
 
     return true;
 }
 
 /**
- * Reads a single mobj PSV_FRAME2 delta from the message buffer and
- * applies it to the client mobj in question.
+ * Determines whether @a mo happens to reside inside one of the local players.
+ * In normal gameplay solid mobjs cannot enter inside each other.
  *
- * For client mobjs that belong to players, updates the real player mobj.
+ * @param mo  Client mobj (must be solid).
  */
+static boolean ClMobj_IsStuckInsideLocalPlayer(mobj_t* mo)
+{
+    int i;
+    mobj_t* plmo;
+    float blockRadius;
+
+    if(!(mo->ddFlags & DDMF_SOLID) || mo->dPlayer)
+        return false;
+
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if(!ddPlayers[i].shared.inGame) continue;
+        if(P_ConsoleToLocal(i) < 0) continue; // Not a local player.
+
+        plmo = ddPlayers[i].shared.mo;
+        if(!plmo) continue;
+
+        blockRadius = mo->radius + plmo->radius;
+        if(fabs(mo->origin[VX] - plmo->origin[VX]) >= blockRadius ||
+           fabs(mo->origin[VY] - plmo->origin[VY]) >= blockRadius)
+            continue; // Too far.
+
+        if(mo->origin[VZ] > plmo->origin[VZ] + plmo->height)
+            continue; // Above.
+
+        if(plmo->origin[VZ] > mo->origin[VZ] + mo->height)
+            continue; // Under.
+
+        // Seems to be blocking the player...
+        return true;
+    }
+
+    return false; // Not stuck.
+}
+
 void ClMobj_ReadDelta2(boolean skip)
 {
     boolean     needsLinking = false, justCreated = false;
@@ -746,6 +746,7 @@ void ClMobj_ReadDelta2(boolean skip)
     short       mom;
     thid_t      id = Reader_ReadUInt16(msgReader);   // Read the ID.
     boolean     onFloor = false;
+    mobj_t      oldState;
 
     // Flags.
     df = Reader_ReadUInt16(msgReader);
@@ -804,11 +805,11 @@ void ClMobj_ReadDelta2(boolean skip)
         }*/
 
         // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-        if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) &&
+        if(df & (MDF_ORIGIN_X | MDF_ORIGIN_Y | MDF_ORIGIN_Z | MDF_FLAGS) &&
            !justCreated && !d->dPlayer)
         {
             needsLinking = true;
-            ClMobj_UnsetPosition(mo);
+            ClMobj_Unlink(mo);
         }
     }
     else
@@ -818,24 +819,27 @@ void ClMobj_ReadDelta2(boolean skip)
         info = 0;
     }
 
+    // Remember where the mobj used to be in case we need to cancel a move.
+    memcpy(&oldState, d, sizeof(mobj_t));
+
     // Coordinates with three bytes.
-    if(df & MDF_POS_X)
+    if(df & MDF_ORIGIN_X)
     {
-        d->pos[VX] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
+        d->origin[VX] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
         if(info)
             info->flags |= CLMF_KNOWN_X;
     }
-    if(df & MDF_POS_Y)
+    if(df & MDF_ORIGIN_Y)
     {
-        d->pos[VY] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
+        d->origin[VY] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
         if(info)
             info->flags |= CLMF_KNOWN_Y;
     }
-    if(df & MDF_POS_Z)
+    if(df & MDF_ORIGIN_Z)
     {
         if(!(moreFlags & MDFE_Z_FLOOR))
         {
-            d->pos[VZ] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
+            d->origin[VZ] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
             if(info)
             {
                 info->flags |= CLMF_KNOWN_Z;
@@ -862,28 +866,12 @@ void ClMobj_ReadDelta2(boolean skip)
     }
 
 /*#if _DEBUG
-    if((df & MDF_POS_Z) && d->dPlayer && P_GetDDPlayerIdx(d->dPlayer) != consolePlayer)
+    if((df & MDF_ORIGIN_Z) && d->dPlayer && P_GetDDPlayerIdx(d->dPlayer) != consolePlayer)
     {
         Con_Message("ClMobj_ReadDelta2: Player=%i z=%f onFloor=%i\n", P_GetDDPlayerIdx(d->dPlayer),
                     d->pos[VZ], onFloor);
     }
 #endif*/
-
-    /*
-    // When these flags are set, the normal Z coord is not included.
-    if(moreFlags & MDFE_Z_FLOOR)
-    {
-        d->pos[VZ] = DDMINFLOAT;
-        if(info)
-            info->flags |= CLMF_KNOWN_Z;
-    }
-    if(moreFlags & MDFE_Z_CEILING)
-    {
-        d->pos[VZ] = DDMAXFLOAT;
-        if(info)
-            info->flags |= CLMF_KNOWN_Z;
-    }
-    */
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
@@ -915,7 +903,13 @@ void ClMobj_ReadDelta2(boolean skip)
     if(df & MDF_STATE)
     {
         int stateIdx = Reader_ReadPackedUInt16(msgReader);
-        if(!skip)
+
+        // Translate.
+        stateIdx = Cl_LocalMobjState(stateIdx);
+
+        // When local actions are allowed, the assumption is that
+        // the client will be doing the state changes.
+        if(!skip && !(info->flags & CLMF_LOCAL_ACTIONS))
         {
             ClMobj_SetState(d, stateIdx);
             info->flags |= CLMF_KNOWN_STATE;
@@ -928,13 +922,9 @@ void ClMobj_ReadDelta2(boolean skip)
         d->ddFlags &= ~DDMF_PACK_MASK;
         d->ddFlags |= DDMF_REMOTE | (Reader_ReadUInt32(msgReader) & DDMF_PACK_MASK);
 
-        d->flags = Reader_ReadUInt32(msgReader);
+        d->flags  = Reader_ReadUInt32(msgReader);
         d->flags2 = Reader_ReadUInt32(msgReader);
         d->flags3 = Reader_ReadUInt32(msgReader);
-
-/*#ifdef _DEBUG
-        Con_Message("ClMobj_ReadDelta2: Mobj%i: Flags %x\n", id, d->flags & 0x1c000000);
-#endif*/
     }
 
     if(df & MDF_HEALTH)
@@ -957,14 +947,8 @@ void ClMobj_ReadDelta2(boolean skip)
 
     if(moreFlags & MDFE_TYPE)
     {
-        d->type = Reader_ReadInt32(msgReader);
-        if(d->type < 0 || d->type >= defs.count.mobjs.num)
-        {
-            // The specified type is invalid.
-            d->type = 0;
-        }
-        d->info = &mobjInfo[d->type]; /// @todo check validity of d->type
-
+        d->type = Cl_LocalMobjType(Reader_ReadInt32(msgReader));
+        d->info = &mobjInfo[d->type];
         assert(d->info);
     }
 
@@ -984,23 +968,15 @@ void ClMobj_ReadDelta2(boolean skip)
         }
     }
 
-    /*
-    if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z) ||
-       moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
+    // Non-player mobjs: update the Z position to be on the local floor, which may be
+    // different than the server-side floor.
+    if(!d->dPlayer && onFloor && gx.MobjCheckPositionXYZ)
     {
-        // This'll update floorz and ceilingz.
-        ClMobj_CheckPlanes(mo, justCreated);
-    }
-    */
-
-    if(!d->dPlayer && onFloor && gx.MobjCheckPosition3f)
-    {
-        float* floorZ = gx.GetVariable(DD_TM_FLOOR_Z);
+        coord_t* floorZ = gx.GetVariable(DD_TM_FLOOR_Z);
         if(floorZ)
         {
-            // Update the Z position to be on the local floor.
-            gx.MobjCheckPosition3f(d, d->pos[VX], d->pos[VY], DDMAXFLOAT);
-            d->pos[VZ] = d->floorZ = *floorZ;
+            gx.MobjCheckPositionXYZ(d, d->origin[VX], d->origin[VY], DDMAXFLOAT);
+            d->origin[VZ] = d->floorZ = *floorZ;
         }
     }
 
@@ -1012,15 +988,25 @@ void ClMobj_ReadDelta2(boolean skip)
         // Link again.
         if(needsLinking && !d->dPlayer)
         {
-            ClMobj_SetPosition(mo);
+            ClMobj_Link(mo);
+
+            if(ClMobj_IsStuckInsideLocalPlayer(mo))
+            {
+                // Oopsie, on second thought we shouldn't do this move.
+                ClMobj_Unlink(mo);
+                V3d_Copy(mo->origin, oldState.origin);
+                mo->floorZ = oldState.floorZ;
+                mo->ceilingZ = oldState.ceilingZ;
+                ClMobj_Link(mo);
+            }
         }
 
         // Update players.
         if(d->dPlayer)
         {
 #ifdef _DEBUG
-            VERBOSE2( Con_Message("ClMobj_ReadDelta2: Updating player %i local mobj with new clmobj state (%f, %f, %f).\n",
-                                  P_GetDDPlayerIdx(d->dPlayer), d->pos[VX], d->pos[VY], d->pos[VZ]) );
+            VERBOSE2( Con_Message("ClMobj_ReadDelta2: Updating player %i local mobj with new clmobj state {%f, %f, %f}.\n",
+                                  P_GetDDPlayerIdx(d->dPlayer), d->origin[VX], d->origin[VY], d->origin[VZ]) );
 #endif
             // Players have real mobjs. The client mobj is hidden (unlinked).
             Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df, onFloor);
@@ -1063,7 +1049,7 @@ void ClMobj_ReadNullDelta2(boolean skip)
     // Get rid of this mobj.
     if(!mo->dPlayer)
     {
-        ClMobj_UnsetPosition(mo);
+        ClMobj_Unlink(mo);
     }
     else
     {
@@ -1080,4 +1066,8 @@ void ClMobj_ReadNullDelta2(boolean skip)
     // The mobj will soon time out and be permanently removed.
     info->time = Sys_GetRealTime();
     info->flags |= CLMF_UNPREDICTABLE | CLMF_NULLED;
+
+#ifdef _DEBUG
+    checkMobjHash();
+#endif
 }

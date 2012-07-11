@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,18 +22,18 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __D_NETSV_H__
-#define __D_NETSV_H__
+#ifndef LIBCOMMON_NETSV_H
+#define LIBCOMMON_NETSV_H
 
 #include "reader.h"
 #include "common.h"
 
-extern char     cyclingMaps, mapCycleNoExit;
-extern int      netSvAllowCheats;
-extern char    *mapCycle;
-extern char     gameConfigString[];
+extern char cyclingMaps, mapCycleNoExit;
+extern int netSvAllowCheats;
+extern char* mapCycle;
+extern char gameConfigString[];
 
-void            P_Telefrag(mobj_t *thing);
+void            P_Telefrag(mobj_t* thing);
 
 void            NetSv_NewPlayerEnters(int plrNum);
 void            NetSv_ResetPlayerFrags(int plrNum);
@@ -51,17 +51,18 @@ void            NetSv_Sound(mobj_t *origin, int sound_id, int toPlr);   // toPlr
 void            NetSv_SoundAtVolume(mobj_t *origin, int sound_id, int volume,
                                     int toPlr);
 void            NetSv_Intermission(int flags, int state, int time);
+/*
 void            NetSv_Finale(int flags, const char* script, const boolean* conds,
-                             byte numConds);
-void            NetSv_SendPlayerInfo(int whose, int to_whom);
+                             byte numConds); // moved to engine
+ */
 void            NetSv_ChangePlayerInfo(int from, Reader* reader);
+void            NetSv_SendPlayerInfo(int whose, int to_whom);
 void            NetSv_Ticker(void);
 void            NetSv_SaveGame(unsigned int game_id);
 void            NetSv_LoadGame(unsigned int game_id);
 void            NetSv_LoadReply(int plnum, int console);
-void            NetSv_FragsForAll(player_t *player);
-void            NetSv_KillMessage(player_t *killer, player_t *fragged,
-                                  boolean stomping);
+void            NetSv_FragsForAll(player_t* player);
+void            NetSv_KillMessage(player_t* killer, player_t* fragged, boolean stomping);
 void            NetSv_UpdateGameConfig(void);
 void            NetSv_Paused(boolean isPaused);
 void            NetSv_DoCheat(int player, Reader *reader);
@@ -71,7 +72,8 @@ void            NetSv_DoDamage(int player, Reader *reader);
 void            NetSv_DoFloorHit(int player, Reader* msg);
 void            NetSv_SendJumpPower(int target, float power);
 void            NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force);
+void            NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName);
 
-DEFCC(CCmdMapCycle);
+D_CMD(MapCycle);
 
-#endif
+#endif /* LIBCOMMON_NETSV_H */

@@ -253,7 +253,6 @@ texture-depth-32: 32-bit
 texture-options: Tekstuurivalinnat
 extres-with-pwad: Salli ulkoiset tekstuurit PWAD:ien kanssa
 disable-anisotropic-filter: Poista Anisotrooppinen suodatus
-paletted-textures: Käytä 8-bittisiä tekstuureja
 
 maximum-texture-size: Suurin tekstuurin koko
 maximum-texture-size-unlimited: Laitteisto

@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_uinit.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * dd_uinit.c: Unix Initialization
+ * Engine Initialization - Unix.
  *
  * Load libraries and set up APIs.
  */
@@ -35,10 +35,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <SDL.h>
+#include <locale.h>
+#ifndef DENG_NO_SDL
+#  include <SDL.h>
+#endif
+
+#include <de/c_wrapper.h>
 
 #ifdef UNIX
-#  include "sys_dylib.h"
+#  include "library.h"
 #endif
 
 #include "de_base.h"
@@ -50,11 +55,15 @@
 #include "de_network.h"
 #include "de_misc.h"
 
+#include "displaymode.h"
+#include "fs_util.h"
 #include "dd_uinit.h"
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
+
+typedef Library* PluginHandle;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -66,363 +75,350 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-uint            windowIDX;   // Main window.
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 application_t app;
 
 // CODE --------------------------------------------------------------------
 
-static void determineGlobalPaths(application_t *app)
+static PluginHandle* findFirstUnusedPluginHandle(application_t* app)
 {
-    if(!app)
-        return;
-
-#ifndef MACOSX
-    if(getenv("HOME"))
-    {
-        filename_t homeDir;
-        sprintf(homeDir, "%s/.deng", getenv("HOME"));
-        M_CheckPath(homeDir);
-        Dir_MakeDir(homeDir, &ddRuntimeDir);
-        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
-    }
-#endif
-
-    // The -userdir option sets the working directory.
-    if(ArgCheckWith("-userdir", 1))
-    {
-        Dir_MakeDir(ArgNext(), &ddRuntimeDir);
-        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
-    }
-
-    // The current working directory is the runtime dir.
-    Dir_GetDir(&ddRuntimeDir);
-
-    /**
-     * The base path is always the same and depends on the build
-     * configuration.  Usually this is something like
-     * "/usr/share/deng/".
-     */
-#ifdef MACOSX
-    strcpy(ddBasePath, "./");
-#else
-    strcpy(ddBasePath, DENG_BASE_DIR);
-#endif
-
-    if(ArgCheckWith("-basedir", 1))
-    {
-        strcpy(ddBasePath, ArgNext());
-        Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
-    }
-
-    Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
-    Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
-
-    printf("determineGlobalPaths: Base path = %s\n", ddBasePath);
-}
-
-static boolean loadGamePlugin(application_t *app, const char *libPath)
-{
-    if(!libPath || !app)
-        return false;
-
-    // Load the library and get the API/exports.
-    app->hInstGame = lt_dlopenext(libPath);
-    if(!app->hInstGame)
-    {
-        DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (%s).\n",
-                    libPath, lt_dlerror());
-        return false;
-    }
-
-    app->GetGameAPI = (GETGAMEAPI) lt_dlsym(app->hInstGame, "GetGameAPI");
-    if(!app->GetGameAPI)
-    {
-        DD_ErrorBox(true, "loadGamePlugin: Failed to get address of "
-                          "GetGameAPI (%s).\n", lt_dlerror());
-        return false;
-    }
-
-    // Do the API transfer.
-    DD_InitAPI();
-
-    // Everything seems to be working...
-    return true;
-}
-
-static lt_dlhandle *NextPluginHandle(void)
-{
-    int                 i;
-
+    int i;
+    assert(app);
     for(i = 0; i < MAX_PLUGS; ++i)
     {
-        if(!app.hInstPlug[i])
-            return &app.hInstPlug[i];
+        if(!app->hInstPlug[i])
+            return &app->hInstPlug[i];
     }
-
-    return NULL;
+    return 0;
 }
 
-/*
-#if 0
-int LoadPlugin(const char *pluginPath, lt_ptr data)
+static int loadPlugin(application_t* app, const char* pluginPath, void* paramaters)
 {
+    Library* plugin;
+    PluginHandle* handle;
+    void (*initializer)(void);
     filename_t name;
-    lt_dlhandle plugin, *handle;
-    void (*initializer)(void);
+    assert(app && pluginPath && pluginPath[0]);
 
-    // What is the actual file name?
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-
-    printf("LP: %s => %s\n", pluginPath, name);
-
-    if(!strncmp(name, "libdp", 5))
+    plugin = Library_New(pluginPath);
+    if(!plugin)
     {
-#if 0
-        filename_t fullPath;
-
-#ifdef DENG_LIBRARY_DIR
-        sprintf(fullPath, DENG_LIBRARY_DIR "/%s", name);
-#else
-        strcpy(fullPath, pluginPath);
-#endif
-        //if(strchr(name, '.'))
-            strcpy(name, pluginPath);
-        else
-        {
-            strcpy(name, pluginPath);
-            strcat(name, ".dylib");
-            }
-#endif
-        // Try loading this one as a Doomsday plugin.
-        if(NULL == (plugin = lt_dlopenext(pluginPath)))
-        {
-            printf("LoadPlugin: Failed to open %s!\n", pluginPath);
-            return 0;
-        }
-
-        if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
-           NULL == (handle = NextPluginHandle()))
-        {
-            printf("LoadPlugin: Failed to load %s!\n", pluginPath);
-            lt_dlclose(plugin);
-            return 0;
-        }
-
-        // This seems to be a Doomsday plugin.
-        *handle = plugin;
-
-        printf("LoadPlugin: %s\n", pluginPath);
-        initializer();
+        Con_Message("  loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, Library_LastError());
+        return 0; // Continue iteration.
     }
 
-    return 0;
+    initializer = Library_Symbol(plugin, "DP_Initialize");
+    if(!initializer)
+    {
+        // Clearly not a Doomsday plugin.
+#if _DEBUG
+        Con_Message("  loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath);
+#endif
+        Library_Delete(plugin);
+        return 0; // Continue iteration.
+    }
+
+    handle = findFirstUnusedPluginHandle(app);
+    if(!handle)
+    {
+#if _DEBUG
+        Con_Message("  loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath);
+#endif
+        Library_Delete(plugin);
+        return 0; // Continue iteration.
+    }
+
+    // This seems to be a Doomsday plugin.
+    _splitpath(pluginPath, NULL, NULL, name, NULL);
+    Con_Message("  %s\n", name);
+
+    *handle = plugin;
+    initializer();
+
+    return 0; // Continue iteration.
 }
-#endif
-*/
 
-int LoadPlugin(const char *pluginPath, lt_ptr data)
+typedef struct {
+    boolean loadingGames;
+    application_t* app;
+} loadpluginparamaters_t;
+
+static int loadPluginWorker(const char* pluginPath, void* data)
 {
-#ifndef MACOSX
-    filename_t  name;
-#endif
-    lt_dlhandle plugin, *handle;
-    void (*initializer)(void);
+    loadpluginparamaters_t* params = (loadpluginparamaters_t*) data;
+    filename_t name;
+    filename_t ext;
 
-#ifndef MACOSX
     // What is the actual file name?
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-    if(!strncmp(name, "libdp", 5))
+#ifndef MACOSX
+    _splitpath(pluginPath, NULL, NULL, name, ext);
+    if(((params->loadingGames  && !strncmp(name, "libj", 4)) ||
+        (!params->loadingGames && !strncmp(name, "libdp", 5)))
+            && !stricmp(ext, ".so")) // Only .so files
+#endif
+#ifdef MACOSX
+    _splitpath(pluginPath, NULL, NULL, name, ext);
+    if(((params->loadingGames  && !strncmp(name, "j", 1)) ||
+       (!params->loadingGames && !strncmp(name, "dp", 2)))
+            && (!stricmp(ext, ".dylib") || !stricmp(ext, ".bundle")))
 #endif
     {
-        // Try loading this one as a Doomsday plugin.
-        if(NULL == (plugin = lt_dlopenext(pluginPath)))
-            return 0;
-
-        if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
-           NULL == (handle = NextPluginHandle()))
-        {
-            printf("LoadPlugin: Failed to load %s!\n", pluginPath);
-            lt_dlclose(plugin);
-            return 0;
-        }
-
-        // This seems to be a Doomsday plugin.
-        *handle = plugin;
-
-        printf("LoadPlugin: %s\n", pluginPath);
-        initializer();
+        loadPlugin(params->app, pluginPath, NULL/*no paramaters*/);
     }
+    return 0; // Continue search.
+}
 
-    return 0;
+static boolean unloadPlugin(PluginHandle* handle)
+{
+    int result;
+    assert(handle);
+    if(!*handle) return true;
+
+    Library_Delete(*handle);
+    *handle = 0;
+    return result;
 }
 
 /**
  * Loads all the plugins from the library directory.
  */
-static boolean loadAllPlugins(void)
+static boolean loadAllPlugins(application_t* app)
 {
+    assert(app);
+
+    Con_Message("Initializing plugins...\n");
+
+    // Try to load all libraries that begin with libj.
+    { loadpluginparamaters_t params;
+    params.app = app;
+    params.loadingGames = true;
+    Library_IterateAvailableLibraries(loadPluginWorker, &params);
+    }
+
     // Try to load all libraries that begin with libdp.
-    lt_dlforeachfile(NULL, LoadPlugin, NULL);
+    { loadpluginparamaters_t params;
+    params.app = app;
+    params.loadingGames = false;
+    Library_IterateAvailableLibraries(loadPluginWorker, &params);
+    }
+    return true;
+}
+
+static boolean unloadAllPlugins(application_t* app)
+{
+    int i;
+    assert(app);
+
+    for(i = 0; i < MAX_PLUGS && app->hInstPlug[i]; ++i)
+    {
+        unloadPlugin(&app->hInstPlug[i]);
+    }
     return true;
 }
 
 static int initTimingSystem(void)
 {
-    // For timing, we use SDL under *nix, so get it initialized.
-    // SDL_Init() returns zero on success.
-    return !SDL_Init(SDL_INIT_TIMER);
+    /*
+    // For timing, we use SDL under *nix, so get it initialized. SDL_Init() returns zero on success.
+    return !SDL_Init(SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE);
+    */
+    return true;
 }
 
 static int initPluginSystem(void)
 {
-    // Initialize libtool's dynamic library routines.
-    lt_dlinit();
-
 #ifdef DENG_LIBRARY_DIR
-    // The default directory is defined in the Makefile.  For
-    // instance, "/usr/local/lib".
-    lt_dladdsearchdir(DENG_LIBRARY_DIR);
+    // The default directory is defined in the Makefile. For instance, "/usr/local/lib".
+    Library_AddSearchDir(DENG_LIBRARY_DIR);
 #endif
-
     return true;
 }
 
 static int initDGL(void)
 {
-    return Sys_PreInitGL();
+    return (int) Sys_GLPreInit();
 }
 
-int main(int argc, char** argv)
+static void determineGlobalPaths(application_t* app)
 {
-    char*               cmdLine;
-    int                 i, length;
-    int                 exitCode = 0;
-    boolean             doShutdown = true;
-    char                buf[256];
-    const char*         libName = NULL;
+    assert(app);
 
-    app.userDirOk = true;
+#ifndef MACOSX
+    if(getenv("HOME"))
+    {
+        filename_t homePath;
+        directory_t* temp;
+        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.doomsday/runtime/", getenv("HOME"));
+        temp = Dir_New(homePath);
+        Dir_mkpath(Dir_Path(temp));
+        app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
+        if(app->usingHomeDir)
+        {
+            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        }
+        Dir_Delete(temp);
+    }
+#endif
+
+    // The -userdir option sets the working directory.
+    if(CommandLine_CheckWith("-userdir", 1))
+    {
+        filename_t runtimePath;
+        directory_t* temp;
+
+        strncpy(runtimePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
+        Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
+        // Ensure the path is closed with a directory separator.
+        F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
+
+        temp = Dir_New(runtimePath);
+        app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
+        if(app->usingUserDir)
+        {
+            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+#ifndef MACOSX
+            app->usingHomeDir = false;
+#endif
+        }
+        Dir_Delete(temp);
+    }
+
+#ifndef MACOSX
+    if(!app->usingHomeDir && !app->usingUserDir)
+#else
+    if(!app->usingUserDir)
+#endif
+    {
+        // The current working directory is the runtime dir.
+        directory_t* temp = Dir_NewFromCWD();
+        strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        Dir_Delete(temp);
+    }
+
+    /**
+     * Determine the base path. Unless overridden on the command line this is
+     * determined according to the the build configuration.
+     * Usually this is something like "/usr/share/deng/".
+     */
+    if(CommandLine_CheckWith("-basedir", 1))
+    {
+        strncpy(ddBasePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
+    }
+    else
+    {
+#ifdef MACOSX
+        strncpy(ddBasePath, "./", FILENAME_T_MAXLEN);
+#else
+        strncpy(ddBasePath, DENG_BASE_DIR, FILENAME_T_MAXLEN);
+#endif
+        // Also check the system config files.
+        DD_Unix_GetConfigValue("paths", "basedir", ddBasePath, FILENAME_T_MAXLEN);
+    }
+    Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
+    // Ensure it ends with a directory separator.
+    F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
+}
+
+#if 0
+static char* buildCommandLineString(int argc, char** argv)
+{
+    char* cmdLine;
+    int i, length = 0;
 
     // Assemble a command line string.
-    for(i = 0, length = 0; i < argc; ++i)
+    for(i = 0; i < argc; ++i)
+    {
         length += strlen(argv[i]) + 1;
+    }
 
     // Allocate a large enough string.
     cmdLine = M_Malloc(length);
 
-    for(i = 0, length = 0; i < argc; ++i)
+    length = 0;
+    for(i = 0; i < argc; ++i)
     {
         strcpy(cmdLine + length, argv[i]);
         if(i < argc - 1)
             strcat(cmdLine, " ");
         length += strlen(argv[i]) + 1;
     }
+    return cmdLine;
+}
+#endif
 
+/*
+static int createMainWindow(void)
+{
+    Point2Raw origin = { 0, 0 };
+    Size2Raw size = { 640, 480 };
+    char buf[256];
+    DD_ComposeMainWindowTitle(buf);
+    mainWindowIdx = Window_Create(&app, &origin, &size, 32, 0,
+                                  isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
+    return mainWindowIdx != 0;
+}
+*/
+
+boolean DD_Unix_Init(int argc, char** argv)
+{
+    boolean failed = true;
+
+    memset(&app, 0, sizeof(app));
+
+    // We wish to use U.S. English formatting for time and numbers.
+    setlocale(LC_ALL, "en_US.UTF-8");
+
+#if 0
+    // SDL lock key behavior: send up event when key released.
+    setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
+#endif
+
+#if 0
     // Prepare the command line arguments.
-    DD_InitCommandLine(cmdLine);
+    char* cmdLine = buildCommandLineString(argc, argv);
     M_Free(cmdLine);
-    cmdLine = NULL;
+#endif
+
+    DD_InitCommandLine();
 
     // First order of business: are we running in dedicated mode?
-    if(ArgCheck("-dedicated")) isDedicated = true;
-    novideo = ArgCheck("-novideo") || isDedicated;
+    isDedicated = CommandLine_Check("-dedicated");
+    novideo = CommandLine_Check("-novideo") || isDedicated;
 
-    DD_ComposeMainWindowTitle(buf);
+    Library_Init();
 
-    // First we need to locate the game lib name among the command line
-    // arguments.
-    DD_CheckArg("-game", &libName);
+    // Determine our basedir and other global paths.
+    determineGlobalPaths(&app);
 
-    // Was a game library specified?
-    if(!libName)
+    if(!DD_EarlyInit())
     {
-        DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
+    }
+    else if(!initTimingSystem())
+    {
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initalizing timing system.", 0);
+    }
+    else if(!initPluginSystem())
+    {
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing plugin system.", 0);
+    }
+    else if(!initDGL())
+    {
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
+    }
+    else if(!loadAllPlugins(&app))
+    {
+        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error loading plugins.", 0);
     }
     else
     {
-        char                libPath[PATH_MAX];
-
-        if(!initPluginSystem())
-        {
-            DD_ErrorBox(true, "Error initializing plugin system.");
-        }
-
-        // Determine our basedir, and other global paths.
-        determineGlobalPaths(&app);
-
-        // Compose the full path to the game library.
-        // Under *nix this is handled a bit differently.
-#ifdef MACOSX
-        strcpy(libPath, libName);
-#else
-        sprintf(libPath, "lib%s.so", libName);
-#endif
-
-        if(!DD_EarlyInit())
-        {
-            DD_ErrorBox(true, "Error during early init.");
-        }
-        else if(!initTimingSystem())
-        {
-            DD_ErrorBox(true, "Error initalizing timing system.");
-        }
-        // Load the rendering DLL.
-        else if(!initDGL())
-        {
-            DD_ErrorBox(true, "Error initializing DGL.");
-        }
-        // Load the game plugin.
-        else if(!loadGamePlugin(&app, libPath))
-        {
-            DD_ErrorBox(true, "Error loading game library.");
-        }
-        // Load all other plugins that are found.
-        else if(!loadAllPlugins())
-        {
-            DD_ErrorBox(true, "Error loading plugins.");
-        }
-        // Init memory zone.
-        else if(!Z_Init())
-        {
-            DD_ErrorBox(true, "Error initializing memory zone.");
-        }
-        else
-        {
-            if(0 == (windowIDX =
-                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, isDedicated,
-                                 buf, NULL)))
-            {
-                DD_ErrorBox(true, "Error creating main window.");
-            }
-            else if(!Sys_InitGL())
-            {
-                DD_ErrorBox(true, "Error initializing OpenGL.");
-            }
-            else
-            {   // All initialization complete.
-                doShutdown = false;
-
-                // Append the main window title with the game name and ensure it
-                // is the at the foreground, with focus.
-                DD_ComposeMainWindowTitle(buf);
-                Sys_SetWindowTitle(windowIDX, buf);
-
-               // \todo Set foreground window and focus.
-            }
-        }
+        // Everything okay so far.
+        failed = false;
     }
 
-    if(!doShutdown)
-    {   // Fire up the engine. The game loop will also act as the message pump.
-        exitCode = DD_Main();
-    }
-    DD_Shutdown();
-
-    // Bye!
-    return exitCode;
+    return !failed;
 }
 
 /**
@@ -430,19 +426,56 @@ int main(int argc, char** argv)
  */
 void DD_Shutdown(void)
 {
-    int                 i;
-
     // Shutdown all subsystems.
     DD_ShutdownAll();
 
+#ifndef DENG_NO_SDL
     SDL_Quit();
+#endif
+    
+    unloadAllPlugins(&app);
+    Library_Shutdown();
+    DisplayMode_Shutdown();
+}
 
-    // Close the dynamic libraries.
-    lt_dlclose(app.hInstGame);
-    app.hInstGame = NULL;
-    for(i = 0; app.hInstPlug[i]; ++i)
-        lt_dlclose(app.hInstPlug[i]);
-    memset(app.hInstPlug, 0, sizeof(app.hInstPlug));
+boolean DD_Unix_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen)
+{
+    Info* info;
+    char buf[512];
+    ddstring_t* p;    
+    boolean success = false;
 
-    lt_dlexit();
+    // Maybe it is in the user's .doomsday dir.
+    p = Str_New();
+    Str_Appendf(p, "~/.doomsday/%s", configFile);
+    F_MakeAbsolute(p, p);
+    info = Info_NewFromFile(Str_Text(p));
+    if(info)
+    {
+        if(Info_FindValue(info, key, buf, sizeof(buf)))
+        {
+            strncpy(dest, buf, destLen);
+            success = true;
+            goto cleanup;
+        }
+    }
+
+    // Check for a config file for the library path.
+    Str_Clear(p);
+    Str_Appendf(p, "/etc/doomsday/%s", configFile);
+    info = Info_NewFromFile(Str_Text(p));
+    if(info)
+    {
+        if(Info_FindValue(info, key, buf, sizeof(buf)))
+        {
+            strncpy(dest, buf, destLen);
+            success = true;
+            goto cleanup;
+        }
+    }
+
+cleanup:
+    Info_Delete(info);
+    Str_Delete(p);
+    return success;
 }

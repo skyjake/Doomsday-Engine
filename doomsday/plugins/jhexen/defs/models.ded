@@ -1,6 +1,0 @@
-# jHexen: Models
-
-Include "models\*.ded";
-
-# This can be removed if jHexen.ded sets the default path.
-ModelPath "data\jhexen\models";

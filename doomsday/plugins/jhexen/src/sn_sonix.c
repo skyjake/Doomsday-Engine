@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -160,7 +160,7 @@ void SN_InitSequenceScript(void)
                 SC_ScriptError("SN_InitSequenceScript:  Nested Script Error");
             }
 
-            tempDataStart = Z_Malloc(SS_TEMPBUFFER_SIZE, PU_STATIC, NULL);
+            tempDataStart = Z_Malloc(SS_TEMPBUFFER_SIZE, PU_GAMESTATIC, NULL);
             memset(tempDataStart, 0, SS_TEMPBUFFER_SIZE);
             tempDataPtr = tempDataStart;
             for(i = 0; i < SS_MAX_SCRIPTS; ++i)
@@ -254,7 +254,7 @@ void SN_InitSequenceScript(void)
 
             *tempDataPtr++ = SS_CMD_END;
             dataSize = (tempDataPtr - tempDataStart) * sizeof(int);
-            SequenceData[i] = Z_Malloc(dataSize, PU_STATIC, NULL);
+            SequenceData[i] = Z_Malloc(dataSize, PU_GAMESTATIC, NULL);
             memcpy(SequenceData[i], tempDataStart, dataSize);
             Z_Free(tempDataStart);
             inSequence = -1;
@@ -271,6 +271,7 @@ void SN_InitSequenceScript(void)
             SC_ScriptError("SN_InitSequenceScript:  Unknown commmand.\n");
         }
     }
+    SC_Close();
 }
 
 void SN_StartSequence(mobj_t* mobj, int sequence)
@@ -278,7 +279,7 @@ void SN_StartSequence(mobj_t* mobj, int sequence)
     seqnode_t*          node;
 
     SN_StopSequence(mobj); // Stop any previous sequence
-    node = Z_Calloc(sizeof(seqnode_t), PU_STATIC, NULL);
+    node = Z_Calloc(sizeof(seqnode_t), PU_GAMESTATIC, NULL);
     node->sequencePtr = SequenceData[SequenceTranslate[sequence].scriptNum];
     node->sequence = sequence;
     node->mobj = mobj;
@@ -301,15 +302,15 @@ void SN_StartSequence(mobj_t* mobj, int sequence)
     ActiveSequences++;
 }
 
-void SN_StartSequenceInSec(sector_t* sector, int seqBase)
+void SN_StartSequenceInSec(Sector* sector, int seqBase)
 {
-    SN_StartSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN),
+    SN_StartSequence(P_GetPtrp(sector, DMU_BASE),
                      seqBase + P_ToXSector(sector)->seqType);
 }
 
-void SN_StopSequenceInSec(sector_t* sector)
+void SN_StopSequenceInSec(Sector* sector)
 {
-    SN_StopSequence(P_GetPtrp(sector, DMU_SOUND_ORIGIN));
+    SN_StopSequence(P_GetPtrp(sector, DMU_BASE));
 }
 
 void SN_StartSequenceName(mobj_t* mobj, const char* name)

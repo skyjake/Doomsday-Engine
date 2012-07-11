@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_uinit.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,26 +23,47 @@
  */
 
 /**
- * dd_uinit.h: Unix Initialization.
+ * Unix Initialization.
  */
 
-#ifndef __DOOMSDAY_UINIT_H__
-#define __DOOMSDAY_UINIT_H__
+#ifndef LIBDENG_UINIT_H
+#define LIBDENG_UINIT_H
 
 #include "dd_pinit.h"
-#include "sys_dylib.h"
+#include "library.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
-    boolean         userDirOk;
+    Library* hInstPlug[MAX_PLUGS];
+    GETGAMEAPI GetGameAPI;
 
-    lt_dlhandle     hInstGame; // Instance handle to the game library.
-    lt_dlhandle     hInstPlug[MAX_PLUGS]; // Instance handle to all other libs.
-    GETGAMEAPI      GetGameAPI;
+    /// @c true = We are using a custom user dir specified on the command line.
+    boolean usingUserDir;
+#ifndef MACOSX
+    /// @c true = We are using the user dir defined in the HOME environment.
+    boolean usingHomeDir;
+#endif
 } application_t;
 
-extern uint windowIDX; // Main window.
 extern application_t app;
 
-void            DD_Shutdown(void);
+boolean DD_Unix_Init(int argc, char** argv);
+void DD_Shutdown(void);
 
+/**
+ * @note This implementation re-parses the entire config file on each call, so
+ * it is not useful for performance-critical or high volume usage.
+ *
+ * @return @c true, if the found config value was written to @a dest, otherwise
+ * @c false.
+ */
+boolean DD_Unix_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen);
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* LIBDENG_UINIT_H */

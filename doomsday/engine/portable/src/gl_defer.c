@@ -1,32 +1,26 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * gl_defer.c: Deferred GL Tasks
+ * @file gl_defer.c
+ * Implementation of deferred GL tasks. @ingroup gl
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
+#define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
 #ifdef UNIX
 #   include "de_platform.h"
@@ -36,144 +30,328 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
-#include "de_misc.h"
+#include "m_misc.h"
 
-// MACROS ------------------------------------------------------------------
+#include "texturecontent.h"
 
-#define NUM_RESERVED_NAMES  512
+#define NUM_RESERVED_TEXTURENAMES  512
 
-// TYPES -------------------------------------------------------------------
+typedef enum {
+    DEFERREDTASK_TYPES_FIRST = 0,
 
-typedef struct deferred_s {
-    texturecontent_t content;
-    struct deferred_s* next;
-} deferred_t;
+    // Higher-level or non-OpenGL operations:
+    DTT_UPLOAD_TEXTURECONTENT = DEFERREDTASK_TYPES_FIRST,
+    DTT_SET_VSYNC,
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+    // OpenGL API calls:
+    DTT_FUNC_PTR_BEGIN,
+        DTT_FUNC_PTR_E = DTT_FUNC_PTR_BEGIN,
+        DTT_FUNC_PTR_EI,
+        DTT_FUNC_PTR_EF,
+        DTT_FUNC_PTR_EFV4,
+        DTT_FUNC_PTR_UINT_ARRAY,
+    DTT_FUNC_PTR_END,
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+    DEFERREDTASK_TYPES_LAST
+} deferredtask_type_t;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+#define VALID_DEFERREDTASK_TYPE(t)      ((t) >= DEFERREDTASK_TYPES_FIRST || (t) < DEFERREDTASK_TYPES_LAST)
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+typedef struct deferredtask_s {
+    struct deferredtask_s* next;
+    deferredtask_type_t type;
+    void* data;
+} deferredtask_t;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+typedef struct apifunc_s {
+    union {
+        void (GL_CALL *ptr_e)(GLenum);
+        void (GL_CALL *ptr_ei)(GLenum, GLint i);
+        void (GL_CALL *ptr_ef)(GLenum, GLfloat f);
+        void (GL_CALL *ptr_efv4)(GLenum, const GLfloat* fv4);
+        void (GL_CALL *ptr_uintArray)(GLsizei, const GLuint*);
+    } func;
+    union {
+        GLenum e;
+        struct {
+            GLenum e;
+            GLint i;
+        } ei;
+        struct {
+            GLenum e;
+            GLfloat f;
+        } ef;
+        struct {
+            GLenum e;
+            GLfloat fv4[4];
+        } efv4;
+        struct {
+            GLsizei count;
+            GLuint* values;
+        } uintArray;
+    } param;
+} apifunc_t;
 
-deferred_t* GL_GetNextDeferred(void);
-void        GL_DestroyDeferred(deferred_t* d);
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
+static boolean inited = false;
 static mutex_t deferredMutex;
-static DGLuint reservedNames[NUM_RESERVED_NAMES];
+static DGLuint reservedTextureNames[NUM_RESERVED_TEXTURENAMES];
 static volatile int reservedCount = 0;
+static volatile deferredtask_t* deferredTaskFirst = NULL;
+static volatile deferredtask_t* deferredTaskLast = NULL;
 
-static volatile deferred_t* deferredContentFirst = NULL;
-static volatile deferred_t* deferredContentLast = NULL;
-static boolean deferredInited = false;
-
-// CODE --------------------------------------------------------------------
-
-void GL_InitDeferred(void)
+static deferredtask_t* allocTask(deferredtask_type_t type, void* data)
 {
-    if(deferredInited)
+    deferredtask_t* dt = 0;
+
+    assert(inited);
+    dt = (deferredtask_t*) malloc(sizeof(*dt));
+    if(!dt)
+    {
+        Con_Error("allocDeferredTask: Failed on allocation of %lu bytes.",
+                  (unsigned long) sizeof(*dt));
+        return 0; // Unreachable.
+    }
+    dt->type = type;
+    dt->data = data;
+    dt->next = 0;
+    return dt;
+}
+
+static void enqueueTask(deferredtask_type_t type, void* data)
+{
+    deferredtask_t* d;
+
+    if(!inited)
+        Con_Error("enqueueTask: Deferred GL task system not initialized.");
+
+    d = allocTask(type, data);
+    Sys_Lock(deferredMutex);
+    if(deferredTaskLast)
+    {
+        deferredTaskLast->next = d;
+    }
+    if(!deferredTaskFirst)
+    {
+        deferredTaskFirst = d;
+    }
+    deferredTaskLast = d;
+    Sys_Unlock(deferredMutex);
+}
+
+static deferredtask_t* nextTask(void)
+{
+    assert(inited);
+    {
+    deferredtask_t* d = NULL;
+    if(NULL != (d = (deferredtask_t*) deferredTaskFirst))
+    {
+        deferredTaskFirst = d->next;
+    }
+    if(!deferredTaskFirst)
+        deferredTaskLast = NULL;
+    return d;
+    }
+}
+
+LIBDENG_GL_DEFER1(e, GLenum e)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_e = ptr;
+    api->param.e = e;
+
+    enqueueTask(DTT_FUNC_PTR_E, api);
+}
+
+LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_ei = ptr;
+    api->param.ei.e = e;
+    api->param.ei.i = i;
+    enqueueTask(DTT_FUNC_PTR_EI, api);
+}
+
+LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_ef = ptr;
+    api->param.ef.e = e;
+    api->param.ef.f = f;
+    enqueueTask(DTT_FUNC_PTR_EF, api);
+}
+
+LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_efv4 = ptr;
+    api->param.efv4.e = e;
+    memcpy(api->param.efv4.fv4, floatArrayWithFourValues, sizeof(GLfloat) * 4);
+    enqueueTask(DTT_FUNC_PTR_EFV4, api);
+}
+
+LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_uintArray = ptr;
+    api->param.uintArray.count = s;
+    api->param.uintArray.values = M_MemDup(v, sizeof(GLuint) * s);
+    enqueueTask(DTT_FUNC_PTR_UINT_ARRAY, api);
+}
+
+static void processTask(deferredtask_t* task)
+{
+    apifunc_t* api = (apifunc_t*) task->data;
+
+    switch(task->type)
+    {
+    case DTT_UPLOAD_TEXTURECONTENT:
+        GL_UploadTextureContent(task->data);
+        break;
+
+    case DTT_SET_VSYNC:
+        GL_SetVSync(*(boolean*)task->data);
+        break;
+
+    case DTT_FUNC_PTR_E:
+        api->func.ptr_e(api->param.e);
+        break;
+
+    case DTT_FUNC_PTR_EI:
+        api->func.ptr_ei(api->param.ei.e, api->param.ei.i);
+        break;
+
+    case DTT_FUNC_PTR_EF:
+        api->func.ptr_ef(api->param.ef.e, api->param.ef.f);
+        break;
+
+    case DTT_FUNC_PTR_EFV4:
+        api->func.ptr_efv4(api->param.efv4.e, api->param.efv4.fv4);
+        break;
+
+    case DTT_FUNC_PTR_UINT_ARRAY:
+        api->func.ptr_uintArray(api->param.uintArray.count, api->param.uintArray.values);
+        break;
+
+    default:
+        Con_Error("Unknown deferred GL task type %i.", (int) task->type);
+        break;
+    }
+}
+
+static void destroyTaskData(deferredtask_t* d)
+{
+    apifunc_t* api = (apifunc_t*) d->data;
+
+    assert(VALID_DEFERREDTASK_TYPE(d->type));
+
+    // Free data allocated for the task.
+    switch(d->type)
+    {
+    case DTT_UPLOAD_TEXTURECONTENT:
+        GL_DestroyTextureContent(d->data);
+        break;
+
+    case DTT_SET_VSYNC:
+        M_Free(d->data);
+        break;
+
+    case DTT_FUNC_PTR_UINT_ARRAY:
+        M_Free(api->param.uintArray.values);
+        break;
+
+    default:
+        break;
+    }
+
+    if(d->type >= DTT_FUNC_PTR_BEGIN && d->type < DTT_FUNC_PTR_END)
+    {
+        // Free the apifunc_t.
+        free(d->data);
+    }
+}
+
+static void destroyTask(deferredtask_t* d)
+{
+    assert(inited && d);
+    destroyTaskData(d);
+    free(d);
+}
+
+void GL_InitDeferredTask(void)
+{
+    if(inited)
         return; // Been here already...
 
-    deferredInited = true;
+    inited = true;
     deferredMutex = Sys_CreateMutex("DGLDeferredMutex");
     GL_ReserveNames();
 }
 
-void GL_ShutdownDeferred(void)
+void GL_ShutdownDeferredTask(void)
 {
-    deferred_t*         d;
-
-    if(!deferredInited)
+    if(!inited)
         return;
 
     GL_ReleaseReservedNames();
-
-    while((d = GL_GetNextDeferred()) != NULL)
-    {
-        GL_DestroyDeferred(d);
-    }
+    GL_PurgeDeferredTasks();
 
     Sys_DestroyMutex(deferredMutex);
     deferredMutex = 0;
-    reservedCount = 0;
 }
 
-int GL_GetDeferredCount(void)
+int GL_DeferredTaskCount(void)
 {
-    int                 count = 0;
-    deferred_t*         i = 0;
+    deferredtask_t* i = 0;
+    int count = 0;
 
-    if(!deferredInited)
+    if(!inited)
         return 0;
 
     Sys_Lock(deferredMutex);
-    for(i = (deferred_t*) deferredContentFirst; i; i = i->next, ++count);
+    for(i = (deferredtask_t*) deferredTaskFirst; i; i = i->next, ++count);
     Sys_Unlock(deferredMutex);
     return count;
 }
 
-deferred_t* GL_GetNextDeferred(void)
-{
-    deferred_t*         d = NULL;
-
-    if(!deferredInited)
-        return NULL;
-
-    Sys_Lock(deferredMutex);
-    if((d = (deferred_t*) deferredContentFirst) != NULL)
-    {
-        deferredContentFirst = d->next;
-    }
-
-    if(!deferredContentFirst) deferredContentLast = NULL;
-    Sys_Unlock(deferredMutex);
-    return d;
-}
-
-void GL_DestroyDeferred(deferred_t* d)
-{
-    M_Free(d->content.buffer);
-    M_Free(d);
-}
-
 void GL_ReserveNames(void)
 {
-    if(!deferredInited)
+    if(!inited)
         return; // Just ignore.
 
     Sys_Lock(deferredMutex);
-    if(reservedCount < NUM_RESERVED_NAMES)
+    if(reservedCount < NUM_RESERVED_TEXTURENAMES)
     {
-        glGenTextures(NUM_RESERVED_NAMES - reservedCount,
-                      (GLuint*) &reservedNames[reservedCount]);
-        reservedCount = NUM_RESERVED_NAMES;
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+        LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+        glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
+            (GLuint*) &reservedTextureNames[reservedCount]);
+        reservedCount = NUM_RESERVED_TEXTURENAMES;
     }
     Sys_Unlock(deferredMutex);
 }
 
 void GL_ReleaseReservedNames(void)
 {
-    if(!deferredInited)
+    if(!inited)
         return; // Just ignore.
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD(); // not deferring here
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
+
     Sys_Lock(deferredMutex);
-    glDeleteTextures(reservedCount, (const GLuint*) reservedNames);
-    memset(reservedNames, 0, sizeof(reservedNames));
+    glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
+    memset(reservedTextureNames, 0, sizeof(reservedTextureNames));
     reservedCount = 0;
     Sys_Unlock(deferredMutex);
 }
 
-DGLuint GL_GetReservedName(void)
+DGLuint GL_GetReservedTextureName(void)
 {
-    DGLuint             name;
+    DGLuint name;
 
-    if(!deferredInited)
-        Con_Error("GL_GetReservedName: Deferred GL task system not initialized.");
+    if(!inited)
+        Con_Error("GL_GetReservedTextureName: Deferred GL task system not initialized.");
 
     Sys_Lock(deferredMutex);
 
@@ -183,14 +361,15 @@ DGLuint GL_GetReservedName(void)
         while(reservedCount == 0)
         {
             // Wait for someone to refill the names buffer.
-            Con_Message("GL_GetReservedName: Sleeping until new names available.\n");
+            Con_Message("GL_GetReservedTextureName: Sleeping until new names available.\n");
             Sys_Sleep(5);
         }
         Sys_Lock(deferredMutex);
     }
 
-    name = reservedNames[0];
-    memmove(reservedNames, reservedNames + 1, (NUM_RESERVED_NAMES - 1) * sizeof(DGLuint));
+    name = reservedTextureNames[0];
+    memmove(reservedTextureNames, reservedTextureNames + 1,
+            (NUM_RESERVED_TEXTURENAMES - 1) * sizeof(DGLuint));
     reservedCount--;
 
     Sys_Unlock(deferredMutex);
@@ -198,271 +377,70 @@ DGLuint GL_GetReservedName(void)
     return name;
 }
 
-/**
- * Initializes a texture content struct with default params.
- */
-void GL_InitTextureContent(texturecontent_t* content)
+void GL_PurgeDeferredTasks(void)
 {
-    memset(content, 0, sizeof(*content));
-    content->palette = 0; // Use the default.
-    content->minFilter = GL_LINEAR;
-    content->magFilter = GL_LINEAR;
-    content->anisoFilter = -1; // Best.
-    content->wrap[0] = GL_CLAMP;
-    content->wrap[1] = GL_CLAMP;
-    content->grayMipmap = -1;
-}
+    if(!inited)
+        return;
 
-void GL_UploadTextureContent(texturecontent_t* content)
-{
-    if(content->flags & TXCF_EASY_UPLOAD)
-    {
-        GL_UploadTexture2(content);
+    Sys_Lock(deferredMutex);
+    { deferredtask_t* d;
+    while(NULL != (d = nextTask()))
+        destroyTask(d);
     }
-    else
+    Sys_Unlock(deferredMutex);
+}
+
+static deferredtask_t* GL_NextDeferredTask(void)
+{
+    deferredtask_t* d = NULL;
+    if(!inited)
     {
-        byte*               allocatedTempBuffer = NULL;
-        DGLuint             palid;
-
-        if(content->grayMipmap >= 0)
-        {
-            GL_SetGrayMipmap(content->grayMipmap);
-        }
-
-        // The texture name must already be created.
-        glBindTexture(GL_TEXTURE_2D, content->name);
-
-        // Upload the texture.
-        // No mipmapping or resizing is needed, upload directly.
-        if(content->flags & TXCF_NO_COMPRESSION)
-        {
-            GL_SetTextureCompression(false);
-        }
-
-        if((content->flags & TXCF_CONVERT_8BIT_TO_ALPHA) &&
-           (content->format == DGL_LUMINANCE ||
-            content->format == DGL_COLOR_INDEX_8 ||
-            content->format == DGL_DEPTH_COMPONENT))
-        {
-            int                 total = content->width * content->height;
-
-            allocatedTempBuffer = M_Malloc(total * 2);
-
-            // Move the average color to the alpha channel, make the
-            // actual color white.
-            memcpy(allocatedTempBuffer + total, content->buffer, total);
-            memset(allocatedTempBuffer, 255, total);
-
-            content->format = DGL_LUMINANCE_PLUS_A8;
-        }
-
-        // Do we need to locate a color palette?
-        if(content->format == DGL_COLOR_INDEX_8 ||
-           content->format == DGL_COLOR_INDEX_8_PLUS_A8)
-        {
-            palid = R_GetColorPalette(content->palette);
-        }
-        else
-            palid = 0;
-
-        if(!GL_TexImage(content->format, palid, content->width,
-                        content->height,
-                        (content->grayMipmap >= 0? DDMAXINT :
-                         (content->flags & TXCF_MIPMAP) != 0),
-                        allocatedTempBuffer? allocatedTempBuffer : content->buffer))
-            Con_Error("GL_UploadTextureContent: TexImage failed "
-                      "(%u:%ix%i fmt%i).", content->name, content->width,
-                      content->height, (int) content->format);
-
-        if(content->flags & TXCF_NO_COMPRESSION)
-        {
-            GL_SetTextureCompression(true);
-        }
-
-        if(allocatedTempBuffer)
-        {
-            M_Free(allocatedTempBuffer);
-        }
+        return NULL;
     }
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content->minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content->magFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, content->wrap[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, content->wrap[1]);
-    if(GL_state.useAnisotropic)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                        GL_GetTexAnisoMul(content->anisoFilter));
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    Sys_Lock(deferredMutex);
+    d = nextTask();
+    Sys_Unlock(deferredMutex);
+    return d;
 }
 
-/**
- * @return              @c true, iff this operation was deferred.
- */
-DGLuint GL_NewTexture(texturecontent_t* content, boolean* result)
+void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
 {
-    boolean deferred = true;
+    deferredtask_t* d;
+    uint startTime;
 
-    if(content->flags & TXCF_GRAY_MIPMAP)
-    {
-        content->grayMipmap = ((content->flags & TXCF_GRAY_MIPMAP_LEVEL_MASK)
-                               >> TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
-    }
+    if(novideo) return;
 
-    content->name = GL_GetReservedName();
+    if(!inited)
+        Con_Error("GL_ProcessDeferredTasks: Deferred GL task system not initialized.");
 
-    if((content->flags & TXCF_NEVER_DEFER) || !Con_IsBusy())
-    {
-        // Let's do this right away. No need to take a copy.
-        GL_UploadTextureContent(content);
-#ifdef _DEBUG
-        VERBOSE2(Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
-            "Should be precached in busy mode?\n", content->name,
-            content->width, content->height));
-#endif
-        deferred = false; // We haven't deferred.
-    }
-    else
-    {
-        // Defer this operation. We need to make a copy.
-        // First calculate the size of the buffer.
-        size_t bufferSize = 0;
-        int bytesPerPixel = 0;
-        deferred_t* d = 0;
-
-        switch(content->format)
-        {
-        case DGL_LUMINANCE:
-            bytesPerPixel = 1;
-            break;
-
-        case DGL_COLOR_INDEX_8:
-        case DGL_DEPTH_COMPONENT:
-            bytesPerPixel = 1;
-            break;
-
-        case DGL_COLOR_INDEX_8_PLUS_A8:
-        case DGL_LUMINANCE_PLUS_A8:
-            bytesPerPixel = 2;
-            break;
-
-        case DGL_RGB:
-            bytesPerPixel = 3;
-            break;
-
-        case DGL_RGBA:
-            bytesPerPixel = 4;
-            break;
-
-        default:
-            Con_Error("GL_NewTexture: Unknown format %i, "
-                      "don't know pixel size.\n", content->format);
-        }
-        bufferSize = content->width * content->height * bytesPerPixel;
-
-        d = M_Calloc(sizeof(deferred_t));
-        memcpy(&d->content, content, sizeof(*content));
-        d->content.buffer = M_Malloc(bufferSize);
-        memcpy(d->content.buffer, content->buffer, bufferSize);
-
-        Sys_Lock(deferredMutex);
-        if(deferredContentLast)
-            deferredContentLast->next = d;
-        if(!deferredContentFirst)
-            deferredContentFirst = d;
-        deferredContentLast = d;
-        Sys_Unlock(deferredMutex);
-    }
-
-    if(result)
-        *result = deferred;
-
-    return content->name;
-}
-
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width,
-                                int height, const void* pixels, int flags)
-{
-    texturecontent_t c;
-
-    GL_InitTextureContent(&c);
-    c.format = format;
-    c.width = width;
-    c.height = height;
-    c.buffer = (void*)pixels;
-    c.flags = flags;
-    return GL_NewTexture(&c, NULL);
-}
-
-DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width,
-                                 int height, const void* pixels, int flags,
-                                 int minFilter, int magFilter,
-                                 int anisoFilter, int wrapS, int wrapT)
-{
-    texturecontent_t c;
-
-    GL_InitTextureContent(&c);
-    c.format = format;
-    c.width = width;
-    c.height = height;
-    c.buffer = (void*)pixels;
-    c.flags = flags;
-    c.magFilter = magFilter;
-    c.minFilter = minFilter;
-    c.anisoFilter = anisoFilter;
-    c.wrap[0] = wrapS;
-    c.wrap[1] = wrapT;
-    return GL_NewTexture(&c, NULL);
-}
-
-/**
- * Same as above except this version is part of the public API and thus some
- * of the paramaters use the DGL counterparts.
- */
-DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width,
-                                 int height, const void* pixels, int flags,
-                                 int minFilter, int magFilter,
-                                 int anisoFilter, int wrapS, int wrapT)
-{
-    return GL_NewTextureWithParams2(format, width, height, pixels, flags,
-        (minFilter == DGL_LINEAR? GL_LINEAR :
-         minFilter == DGL_NEAREST? GL_NEAREST :
-         minFilter == DGL_NEAREST_MIPMAP_NEAREST? GL_NEAREST_MIPMAP_NEAREST :
-         minFilter == DGL_LINEAR_MIPMAP_NEAREST? GL_LINEAR_MIPMAP_NEAREST :
-         minFilter == DGL_NEAREST_MIPMAP_LINEAR? GL_NEAREST_MIPMAP_LINEAR :
-         GL_LINEAR_MIPMAP_LINEAR),
-        (magFilter == DGL_LINEAR? GL_LINEAR : GL_NEAREST), anisoFilter,
-        (wrapS == DGL_CLAMP? GL_CLAMP :
-         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
-        (wrapT == DGL_CLAMP? GL_CLAMP :
-         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
-}
-
-/**
- * @param timeOutMilliSeconds  Zero for no timeout.
- */
-void GL_UploadDeferredContent(uint timeOutMilliSeconds)
-{
-    deferred_t*         d;
-    uint                startTime;
-
-    if(!deferredInited)
-        Con_Error("GL_UploadDeferredContent: Deferred GL task system "
-                  "not initialized.");
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     startTime = Sys_GetRealTime();
 
     // We'll reserve names multiple times, because the worker thread may be
     // needing new texture names while we are uploading.
     GL_ReserveNames();
+
     while((!timeOutMilliSeconds ||
            Sys_GetRealTime() - startTime < timeOutMilliSeconds) &&
-          (d = GL_GetNextDeferred()) != NULL)
+          (d = GL_NextDeferredTask()) != NULL)
     {
-        GL_UploadTextureContent(&d->content);
-        GL_DestroyDeferred(d);
+        processTask(d);
+        destroyTask(d);
         GL_ReserveNames();
     }
+
     GL_ReserveNames();
+}
+
+void GL_DeferTextureUpload(const struct texturecontent_s* content)
+{
+    // Defer this operation. Need to make a copy.
+    enqueueTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
+}
+
+void GL_DeferSetVSync(boolean enableVSync)
+{
+    enqueueTask(DTT_SET_VSYNC, M_MemDup(&enableVSync, sizeof(enableVSync)));
 }

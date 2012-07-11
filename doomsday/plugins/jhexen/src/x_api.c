@@ -1,10 +1,10 @@
-/**\file
+/**\file x_api.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,126 +23,168 @@
  */
 
 /**
- * x_api.c: Doomsday API setup and interaction - jHexen specific
+ * Doomsday API exchange - jHexen specific
  */
 
-// HEADER FILES ------------------------------------------------------------
-
+#include <assert.h>
 #include <string.h>
+
+#include "doomsday.h"
+#include "dd_api.h"
 
 #include "jhexen.h"
 
-#include "hu_menu.h"
-#include "g_update.h"
-#include "d_net.h"
 #include "d_netsv.h"
-#include "p_setup.h"
+#include "d_net.h"
+#include "fi_lib.h"
+#include "g_common.h"
+#include "g_update.h"
+#include "hu_menu.h"
 #include "p_mapsetup.h"
+#include "r_common.h"
 #include "p_map.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+#define GID(v)          (toGameId(v))
 
 // The interface to the Doomsday engine.
 game_export_t gx;
 game_import_t gi;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+// Identifiers given to the games we register during startup.
+static gameid_t gameIds[NUM_GAME_MODES];
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Get a 32-bit integer value.
- */
-int G_GetInteger(int id)
+static __inline gameid_t toGameId(int gamemode)
 {
-    switch(id)
-    {
-    case DD_GAME_DMUAPI_VER:
-        return DMUAPI_VER;
-
-    default:
-        break;
-    }
-    // ID not recognized, return NULL.
-    return 0;
+    assert(gamemode >= 0 && gamemode < NUM_GAME_MODES);
+    return gameIds[(gamemode_t) gamemode];
 }
 
 /**
- * Get a pointer to the value of a variable. Added for 64-bit support.
+ * Register the game modes supported by this plugin.
  */
-void *G_GetVariable(int id)
+int G_RegisterGames(int hookType, int param, void* data)
 {
-    static float        bob[2];
+#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
+#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
+#define CONFIGDIR       "hexen"
+#define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
-    switch(id)
-    {
-    case DD_GAME_NAME:
-        return GAMENAMETEXT;
+    const GameDef deathkingsDef = {
+        "hexen-dk", DATAPATH, DEFSPATH, CONFIGDIR,
+        "Hexen: Deathkings of the Dark Citadel", "Raven Software"
+    };
+    const GameDef hexenDef = {
+        "hexen", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen", "Raven Software"
+    };
+    const GameDef hexenDemoDef = {
+        "hexen-demo", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen 4-map Demo", "Raven Software"
+    };
+    const GameDef hexenBetaDemoDef = {
+        "hexen-betademo", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen 4-map Beta Demo", "Raven Software"
+    };
+    const GameDef hexenV10Def = {
+        "hexen-v10", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen v1.0", "Raven Software"
+    };
 
-    case DD_GAME_NICENAME:
-        return GAME_NICENAME;
+    /* Hexen (Death Kings) */
+    gameIds[hexen_deathkings] = DD_DefineGame(&deathkingsDef);
+    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexdd.wad", "MAP59;MAP60");
+    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen_deathkings), RC_DEFINITION, 0, "hexen-dk.ded", 0);
 
-    case DD_GAME_ID:
-        return GAMENAMETEXT " " GAME_VERSION_TEXT;
+    /* Hexen */
+    gameIds[hexen] = DD_DefineGame(&hexenDef);
+    DD_AddGameResource(GID(hexen), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    DD_AddGameResource(GID(hexen), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen), RC_DEFINITION, 0, "hexen.ded", 0);
 
-    case DD_GAME_MODE:
-        return gameModeString;
+    /* Hexen (v1.0) */
+    gameIds[hexen_v10] = DD_DefineGame(&hexenV10Def);
+    DD_AddGameResource(GID(hexen_v10), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;MAP41;TINTTAB;FOGMAP;DARTA1;ARTIPORK;SKYFOG;GROVER");
+    DD_AddGameResource(GID(hexen_v10), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen_v10), RC_DEFINITION, 0, "hexen-v10.ded", 0);
 
-    case DD_GAME_CONFIG:
-        return gameConfigString;
+    /* Hexen (Demo) */
+    gameIds[hexen_demo] = DD_DefineGame(&hexenDemoDef);
+    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, "hexendemo.wad;machexendemo.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;DEMO3==18150");
+    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen_demo), RC_DEFINITION, 0, "hexen-demo.ded", 0);
 
-    case DD_VERSION_SHORT:
-        return GAME_VERSION_TEXT;
+    /* Hexen (Beta Demo) */
+    gameIds[hexen_betademo] = DD_DefineGame(&hexenBetaDemoDef);
+    DD_AddGameResource(GID(hexen_betademo), RC_PACKAGE, RF_STARTUP, "hexendemo.wad;machexendemo.wad;hexenbeta.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;AFLYA0;DEMO3==13866");
+    DD_AddGameResource(GID(hexen_betademo), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen_betademo), RC_DEFINITION, 0, "hexen-demo.ded", 0);
 
-    case DD_VERSION_LONG:
-        return GAME_VERSION_TEXTLONG "\n" GAME_DETAILS;
+    return true;
 
-    case DD_ACTION_LINK:
-        return actionlinks;
+#undef STARTUPPK3
+#undef CONFIGDIR
+#undef DEFSPATH
+#undef DATAPATH
+}
 
-    case DD_XGFUNC_LINK:
-        return NULL;
+/**
+ * Called right after the game plugin is selected into use.
+ */
+void DP_Load(void)
+{
+    // We might've been freed from memory, so refresh the game ids.
+    gameIds[hexen_deathkings] = DD_GameIdForKey("hexen-dk");
+    gameIds[hexen]            = DD_GameIdForKey("hexen");
+    gameIds[hexen_v10]        = DD_GameIdForKey("hexen-v10");
+    gameIds[hexen_demo]       = DD_GameIdForKey("hexen-demo");
+    gameIds[hexen_betademo]   = DD_GameIdForKey("hexen-betademo");
 
-    case DD_PSPRITE_BOB_X:
-        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], NULL);
-        return &bob[0];
+    Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
+}
 
-    case DD_PSPRITE_BOB_Y:
-        R_GetWeaponBob(DISPLAYPLAYER, NULL, &bob[1]);
-        return &bob[1];
+/**
+ * Called when the game plugin is freed from memory.
+ */
+void DP_Unload(void)
+{
+    Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
+}
 
-    case DD_TM_FLOOR_Z:
-        return &tmFloorZ;
-
-    case DD_TM_CEILING_Z:
-        return &tmCeilingZ;
-
-    default:
-        break;
+void G_PreInit(gameid_t gameId)
+{
+    /// \todo Refactor me away.
+    { size_t i;
+    for(i = 0; i < NUM_GAME_MODES; ++i)
+        if(gameIds[i] == gameId)
+        {
+            gameMode = (gamemode_t) i;
+            gameModeBits = 1 << gameMode;
+            break;
+        }
+    if(i == NUM_GAME_MODES)
+        Con_Error("Failed gamemode lookup for id %i.", gameId);
     }
 
-    // ID not recognized, return NULL.
-    return 0;
+    X_PreInit();
+}
+
+/**
+ * Called by the engine to initiate a soft-shutdown request.
+ */
+boolean G_TryShutdown(void)
+{
+    G_QuitGame();
+    return true;
 }
 
 /**
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-game_export_t *GetGameAPI(game_import_t *imports)
+game_export_t* GetGameAPI(game_import_t* imports)
 {
+    // Make sure this plugin isn't newer than Doomsday...
+    if(imports->version < DOOMSDAY_VERSION)
+        Con_Error(PLUGIN_NICENAME " requires at least " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "!\n");
+
     // Take a copy of the imports, but only copy as much data as is
     // allowed and legal.
     memset(&gi, 0, sizeof(gi));
@@ -154,25 +196,24 @@ game_export_t *GetGameAPI(game_import_t *imports)
     // Fill in the data for the exports.
     gx.apiSize = sizeof(gx);
     gx.PreInit = G_PreInit;
-    gx.PostInit = G_PostInit;
-    gx.Shutdown = G_Shutdown;
+    gx.PostInit = X_PostInit;
+    gx.TryShutdown = G_TryShutdown;
+    gx.Shutdown = X_Shutdown;
     gx.Ticker = G_Ticker;
-    gx.G_Drawer = G_Display;
-    gx.G_Drawer2 = G_Display2;
-    gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
-    gx.FallbackResponder = NULL; //Hu_MenuResponder;
-    gx.G_Responder = G_Responder;
+    gx.DrawViewPort = X_DrawViewPort;
+    gx.DrawWindow = X_DrawWindow;
+    gx.FinaleResponder = FI_PrivilegedResponder;
+    gx.PrivilegedResponder = G_PrivilegedResponder;
+    gx.Responder = G_Responder;
+    gx.EndFrame = X_EndFrame;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
-    gx.MobjCheckPosition3f = P_CheckPosition3f;
-    gx.MobjTryMove3f = P_TryMove3f;
+    gx.MobjFriction = (coord_t (*)(void *)) P_MobjGetFriction;
+    gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
+    gx.MobjTryMoveXYZ = P_TryMoveXYZ;
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
-    gx.EndFrame = G_EndFrame;
-    gx.ConsoleBackground = G_ConsoleBg;
     gx.UpdateState = G_UpdateState;
-#undef Get
-    gx.GetInteger = G_GetInteger;
-    gx.GetVariable = G_GetVariable;
+    gx.GetInteger = X_GetInteger;
+    gx.GetVariable = X_GetVariable;
 
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;
@@ -184,12 +225,22 @@ game_export_t *GetGameAPI(game_import_t *imports)
 
     // Data structure sizes.
     gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(polyobj_t);
+    gx.polyobjSize = sizeof(Polyobj);
 
     gx.SetupForMapData = P_SetupForMapData;
 
     // These really need better names. Ideas?
     gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
     gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
+
     return &gx;
+}
+
+/**
+ * This function is called automatically when the plugin is loaded.
+ * We let the engine know what we'd like to do.
+ */
+void DP_Initialize(void)
+{
+    Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }

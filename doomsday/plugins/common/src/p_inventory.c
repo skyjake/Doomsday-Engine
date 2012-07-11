@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -317,11 +317,11 @@ static acfnptr_t getActionPtr(const char* name)
 }
 
 /**
- * Called during (post-engine) init and after updating game/engine state.
+ * Called during (post-game) init and after updating game/engine state.
  */
 void P_InitInventory(void)
 {
-    int                 i;
+    int i;
 
     memset(invItems, 0, sizeof(invItems));
     for(i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
@@ -334,7 +334,7 @@ void P_InitInventory(void)
         data->niceName = Def_Get(DD_DEF_TEXT, (char*) def->niceName, NULL);
         data->action = getActionPtr(def->action);
         data->useSnd = Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL);
-        data->patchLump = W_CheckNumForName(def->patch);
+        data->patchId = R_DeclarePatch(def->patch);
     }
 
     memset(inventories, 0, sizeof(inventories));
@@ -585,8 +585,12 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
 
     if(IS_CLIENT)
     {
-        // Clients will send a request to use the item, nothing else.
-        NetCl_PlayerActionRequest(&players[player], GPA_USE_FROM_INVENTORY, type);
+        if(countItems(inv, type))
+        {
+            // Clients will send a request to use the item, nothing else.
+            NetCl_PlayerActionRequest(&players[player], GPA_USE_FROM_INVENTORY, type);
+            lastUsed = type;
+        }
     }
     else
     {
@@ -619,10 +623,10 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
             return false;
         }
     }
-    if(!silent)
-    {
-        invitem_t* item = &invItems[lastUsed-1];
 
+    if(!silent && lastUsed != IIT_NONE)
+    {
+        invitem_t* item = &invItems[lastUsed - 1];
         S_ConsoleSound(item->useSnd, NULL, player);
 #if __JHERETIC__ || __JHEXEN__
         ST_FlashCurrentItem(player);

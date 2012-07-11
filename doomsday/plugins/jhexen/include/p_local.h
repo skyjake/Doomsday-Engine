@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -68,7 +68,6 @@
 
 // MAXRADIUS is for precalculated sector bounding boxes.
 #define MAXRADIUS           32
-#define MAXMOVE             30
 
 #define USERANGE            64
 #define MELEERANGE          64
@@ -101,11 +100,6 @@ void        P_ArtiTeleportOther(player_t* plr);
 void        ResetBlasted(mobj_t* mo);
 boolean     P_UndoPlayerMorph(player_t* plr);
 
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
-#define FRICTION_LOW        (0.97265625f)
-
 // Time interval for item respawning.
 #define SPAWNQUEUE_MAX         128
 
@@ -114,17 +108,14 @@ extern int iquetail;
 
 extern mobjtype_t PuffType;
 extern mobj_t* MissileMobj;
-extern float* FloatBobOffset;
+extern coord_t* FloatBobOffset;
 
-void        P_Thrust(player_t* plr, angle_t angle, float move);
-void        P_ThrustMobj(mobj_t* mo, angle_t angle, float move);
+void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
 boolean     P_SeekerMissile(mobj_t* mo, angle_t thresh, angle_t turnMax);
 void        P_MobjThinker(mobj_t* mo);
 boolean     P_HealRadius(player_t* plr);
 void        P_BlastRadius(player_t* plr);
-void        P_SpawnBloodSplatter(float x, float y, float z, mobj_t* origin);
-void        P_SpawnBloodSplatter2(float x, float y, float z, mobj_t* origin);
 
 void        P_CreateTIDList(void);
 
@@ -136,7 +127,7 @@ void        P_MobjInsertIntoTIDList(mobj_t* mo, int tid);
 mobj_t*     P_FindMobjFromTID(int tid, int* searchPosition);
 
 boolean     P_CheckMissileSpawn(mobj_t* mo);
-float       P_MobjGetFriction(mobj_t* mo);
+coord_t     P_MobjGetFriction(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
 boolean     P_HitFloor(mobj_t* mo);
@@ -144,16 +135,12 @@ boolean     P_HitFloor(mobj_t* mo);
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 int         P_Massacre(void);
 boolean     P_LookForMonsters(mobj_t* mo);
-void        P_InitCreatureCorpseQueue(boolean corpseScan);
+void        P_InitCorpseQueue(void);
+void        P_AddCorpsesToQueue(void);
 
 mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
 
 void        P_Validate();
-
-#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
 extern int clipmana[NUM_AMMO_TYPES];
 

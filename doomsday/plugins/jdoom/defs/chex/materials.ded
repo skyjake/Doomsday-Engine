@@ -1,0 +1,10 @@
+# Chex Quest - Material Enhancements
+#
+# Patch the Material definitions created automatically by the engine,
+# adding new effects to them.
+#
+# For further information on Material definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Ded_material
+
+Header { Version = 6; }

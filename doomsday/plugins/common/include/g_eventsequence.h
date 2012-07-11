@@ -1,10 +1,10 @@
-/**\file
+/**\file g_eventsequence.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -24,12 +24,26 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef COMMON_EVENTSEQUENCE_H
-#define COMMON_EVENTSEQUENCE_H
+/**
+ * Event Sequences for user input.
+ */
 
-boolean         G_EventSequenceResponder(event_t* ev);
+#ifndef LIBCOMMON_EVENTSEQUENCE_H
+#define LIBCOMMON_EVENTSEQUENCE_H
 
-void            G_AddEventSequence(const unsigned char* sequence, size_t sequenceLength,
-                                   int (*callback) (const int*, int));
+void G_InitEventSequences(void);
+void G_ShutdownEventSequences(void);
 
-#endif /* COMMON_EVENTSEQUENCE_H */
+/**
+ * Responds to an input event if determined to be part of a known event
+ * sequence.
+ *
+ * @param ev  Ptr to the event to be checked.
+ *
+ * @return  @c true, if the event was 'eaten'.
+ */
+int G_EventSequenceResponder(event_t* ev);
+
+void G_AddEventSequence(const char* sequence, size_t sequenceLength, int (*callback) (const int*, int));
+
+#endif /* LIBCOMMON_EVENTSEQUENCE_H */

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,11 @@
 #include "dd_share.h"
 #include "p_object.h"
 #include "r_data.h"
-#include "p_materialmanager.h"
+#include "materials.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
@@ -62,10 +66,10 @@ typedef enum {
 
 // Mobj delta flags. These are used to determine what a delta contains.
 // (Which parts of a delta mobj_t are used.)
-#define MDF_POS_X               0x0001
-#define MDF_POS_Y               0x0002
-#define MDF_POS_Z               0x0004
-#define MDF_POS                 0x0007
+#define MDF_ORIGIN_X               0x0001
+#define MDF_ORIGIN_Y               0x0002
+#define MDF_ORIGIN_Z               0x0004
+#define MDF_ORIGIN                 0x0007
 #define MDF_MOM_X               0x0008
 #define MDF_MOM_Y               0x0010
 #define MDF_MOM_Z               0x0020
@@ -80,7 +84,7 @@ typedef enum {
 #define MDF_HEIGHT              0x2000
 #define MDF_FLAGS               0x4000
 #define MDF_FLOORCLIP           0x8000
-#define MDF_EVERYTHING          (MDF_POS | MDF_MOM | MDF_ANGLE | MDF_SELECTOR | MDF_STATE |\
+#define MDF_EVERYTHING          (MDF_ORIGIN | MDF_MOM | MDF_ANGLE | MDF_SELECTOR | MDF_STATE |\
                                  MDF_RADIUS | MDF_HEIGHT | MDF_FLAGS | MDF_HEALTH | MDF_FLOORCLIP)
 
 // Mobj Delta Control flags (not included directly in the frame).
@@ -152,16 +156,6 @@ typedef enum {
 #define SDF_CEIL_COLOR_RED      0x00080000
 #define SDF_CEIL_COLOR_GREEN    0x00100000
 #define SDF_CEIL_COLOR_BLUE     0x00200000
-/*
-#define SDF_FLOOR_GLOW_RED      0x00400000
-#define SDF_FLOOR_GLOW_GREEN    0x00800000
-#define SDF_FLOOR_GLOW_BLUE     0x01000000
-#define SDF_CEIL_GLOW_RED       0x02000000
-#define SDF_CEIL_GLOW_GREEN     0x04000000
-#define SDF_CEIL_GLOW_BLUE      0x08000000
-#define SDF_FLOOR_GLOW          0x10000000
-#define SDF_CEIL_GLOW           0x20000000
-*/
 
 #define SIDF_TOP_MATERIAL       0x0001
 #define SIDF_MID_MATERIAL       0x0002
@@ -191,8 +185,8 @@ typedef enum {
 
 #define SNDDF_VOLUME            0x01 // 0=stop, 1=full, >1=no att.
 #define SNDDF_REPEAT            0x02 // Start repeating sound.
-#define SNDDF_FLOOR             0x04 // Play sound from floor.
-#define SNDDF_CEILING           0x08 // Play sound from ceiling.
+#define SNDDF_PLANE_FLOOR       0x04 // Play sound from floor.
+#define SNDDF_PLANE_CEILING     0x08 // Play sound from ceiling.
 
 typedef enum deltastate_e {
     DELTA_NEW,
@@ -246,7 +240,7 @@ typedef struct {
     char            sideMove;
     int             angle;
     int             turnDelta;
-    float           friction;
+    coord_t         friction;
     int             extraLight;
     int             fixedColorMap;
     int             filter;
@@ -268,11 +262,9 @@ typedef struct {
 
 typedef struct {
     dt_surface_t    surface;
-    float           height;
-    float           target; // Target height.
-    float           speed; // Move speed.
-    //float           glow; // Glow amount.
-    //float           glowRGB[3]; // Glow color.
+    coord_t         height;
+    coord_t         target; // Target height.
+    coord_t         speed; // Move speed.
 } dt_plane_t;
 
 typedef struct {
@@ -305,7 +297,7 @@ typedef struct {
 } sidedelta_t;
 
 typedef struct {
-    fvertex_t       dest;
+    float           dest[2];
     float           speed;
     angle_t         destAngle;
     angle_t         angleSpeed;
@@ -359,7 +351,7 @@ typedef struct deltalink_s {
  */
 typedef struct ownerinfo_s {
     struct pool_s*  pool;
-    float           pos[3]; // Distance is the most important factor
+    coord_t         origin[3]; // Distance is the most important factor
     angle_t         angle; // Angle can change rapidly => not very important
     float           speed;
     uint            ackThreshold; // Expected ack time in milliseconds
@@ -414,9 +406,23 @@ delta_t*        Sv_PoolQueueExtract(pool_t* pool);
 void            Sv_AckDeltaSet(uint clientNumber, int set, byte resent);
 uint            Sv_CountUnackedDeltas(uint clientNumber);
 
-void            Sv_NewSoundDelta(int soundId, mobj_t* emitter,
-                                 sector_t* sourceSector, polyobj_t* sourcePoly,
-                                 float volume, boolean isRepeating,
-                                 int clientsMask);
+/**
+ * Adds a new sound delta to the selected client pools. As the starting of a
+ * sound is in itself a 'delta-like' event, there is no need for comparing or
+ * to have a register.
+ *
+ * @note Assumes no two sounds with the same ID play at the same time
+ *       from the same origin at once.
+ *
+ * @param volume  Volume at which to play the sound, or zero for stop-sound.
+ * @param clientsMask  -1= all clients.
+ */
+void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
+    Polyobj* sourcePoly, Surface* sourceSurface, float volume, boolean isRepeating,
+    int clientsMask);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -1,0 +1,26 @@
+#
+# Hexen (Demo) - Doomsday Engine definitions.
+#
+# For information about DED syntax and semantics, see http://dengine.net/dew/?title=DED
+#
+
+Header { Version = 6; }
+
+# Include common definitions for games playable with jHexen.
+Include "jhexen.ded";
+
+# Here we have a wildcard Map Info. This is sufficent for the
+# demo as user-made mods are disabled (will be configured using
+# the default metadata read from the MAPINFO lump).
+
+Map Info {
+  ID = "*";
+  Gravity = 1;
+}
+
+Include "hexen/anim.ded";
+Include "hexen/finales.ded";
+Include "hexen/lights.ded";
+Include "hexen/materials.ded";
+Include "hexen/materialenvironments.ded";
+Include "hexen/music.ded";

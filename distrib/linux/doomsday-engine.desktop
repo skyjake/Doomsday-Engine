@@ -3,8 +3,8 @@ Encoding=UTF-8
 Name=Doomsday Engine
 Comment=Doom/Heretic/Hexen with enhanced graphics
 Categories=Game;ActionGame;
-Exec=/usr/bin/launch-doomsday
+Exec=BIN_DIR/launch-doomsday
 Terminal=false
 Type=Application
-Icon=/usr/share/doomsday/snowberry/graphics/snowberry.png
+Icon=SB_DIR/graphics/snowberry.png
 

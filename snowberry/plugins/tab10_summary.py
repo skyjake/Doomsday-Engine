@@ -3,7 +3,7 @@
 # Snowberry: Extensible Launcher for the Doomsday Engine
 #
 # Copyright (C) 2004, 2005
-#   Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+#   Jaakko Ker√§nen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -199,7 +199,7 @@ def updateSummary(profile):
         try:
             setting = st.getSetting(value.getId())
             if (setting.getGroup() == 'general-options' or
-                setting.getGroup() == 'game-options'):
+                (setting.getGroup() == 'game-options' and 'server' not in setting.getId())):
                 continue
         except KeyError:
             # This isn't even a valid setting!

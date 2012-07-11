@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,8 @@
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <string.h>
 
 #include "jhexen.h"
 
@@ -69,14 +71,13 @@ void P_TeleportToPlayerStarts(mobj_t* mo)
 {
     const playerstart_t* start;
 
-    if(!mo)
-        return;
+    if(!mo) return;
 
     // Get a random player start.
     if((start = P_GetPlayerStart(0, -1, false)))
     {
-        P_Teleport(mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
     }
 }
 
@@ -84,14 +85,13 @@ void P_TeleportToDeathmatchStarts(mobj_t* mo)
 {
     const playerstart_t* start;
 
-    if(!mo)
-        return;
+    if(!mo) return;
 
     // First, try a random deathmatch start.
     if((start = P_GetPlayerStart(0, -1, true)))
     {
-        P_Teleport(mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
     }
     else
     {
@@ -99,78 +99,77 @@ void P_TeleportToDeathmatchStarts(mobj_t* mo)
     }
 }
 
-mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
 {
-    return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
+    return P_SpawnMobjXYZ(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
-                   boolean useFog)
+boolean P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean useFog)
 {
-    float               oldpos[3], aboveFloor, fogDelta;
-    player_t*           player;
-    unsigned int        an;
-    angle_t             oldAngle;
-    mobj_t*             fog;
+    coord_t oldpos[3], aboveFloor, fogDelta;
+    unsigned int an;
+    angle_t oldAngle;
+    mobj_t* fog;
 
-    memcpy(oldpos, mo->pos, sizeof(oldpos));
+    memcpy(oldpos, mo->origin, sizeof(oldpos));
     oldAngle = mo->angle;
 
-    aboveFloor = mo->pos[VZ] - mo->floorZ;
+    aboveFloor = mo->origin[VZ] - mo->floorZ;
     if(!P_TeleportMove(mo, x, y, false))
         return false;
 
-    if(mo->player)
+    // $voodoodolls Must be the real player.
+    if(mo->player && mo->player->plr->mo == mo)
     {
-        player = mo->player;
-        player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+        player_t* player = mo->player;
+
+        player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
         if(player->powers[PT_FLIGHT] && aboveFloor > 0)
         {
-            mo->pos[VZ] = mo->floorZ + aboveFloor;
-            if(mo->pos[VZ] + mo->height > mo->ceilingZ)
+            mo->origin[VZ] = mo->floorZ + aboveFloor;
+            if(mo->origin[VZ] + mo->height > mo->ceilingZ)
             {
-                mo->pos[VZ] = mo->ceilingZ - mo->height;
+                mo->origin[VZ] = mo->ceilingZ - mo->height;
             }
-            player->viewZ = mo->pos[VZ] + player->viewHeight;
         }
         else
         {
-            mo->pos[VZ] = mo->floorZ;
-            player->viewHeight = (float) cfg.plrViewHeight;
-            player->viewHeightDelta = 0;
-            player->viewZ = mo->pos[VZ] + player->viewHeight;
+            mo->origin[VZ] = mo->floorZ;
             if(useFog)
-            {
                 player->plr->lookDir = 0;
-            }
         }
+        player->viewHeight = (coord_t) cfg.plrViewHeight;
+        player->viewHeightDelta = 0;
+        player->viewZ = mo->origin[VZ] + player->viewHeight;
+        player->viewOffset[VX] = player->viewOffset[VY] = player->viewOffset[VZ] = 0;
+        player->bob = 0;
     }
     else if(mo->flags & MF_MISSILE)
     {
-        mo->pos[VZ] = mo->floorZ + aboveFloor;
-        if(mo->pos[VZ] + mo->height > mo->ceilingZ)
+        mo->origin[VZ] = mo->floorZ + aboveFloor;
+        if(mo->origin[VZ] + mo->height > mo->ceilingZ)
         {
-            mo->pos[VZ] = mo->ceilingZ - mo->height;
+            mo->origin[VZ] = mo->ceilingZ - mo->height;
         }
     }
     else
     {
-        mo->pos[VZ] = mo->floorZ;
+        mo->origin[VZ] = mo->floorZ;
     }
 
     // Spawn teleport fog at source and destination
     if(useFog)
     {
         fogDelta = (mo->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT);
-        if((fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
+        if((fog = P_SpawnMobjXYZ(MT_TFOG, oldpos[VX], oldpos[VY],
                                 oldpos[VZ] + fogDelta, oldAngle + ANG180, 0)))
             S_StartSound(SFX_TELEPORT, fog);
 
         an = angle >> ANGLETOFINESHIFT;
-        if((fog = P_SpawnMobj3f(MT_TFOG,
+        if((fog = P_SpawnMobjXYZ(MT_TFOG,
                                 x + 20 * FIX2FLT(finecosine[an]),
                                 y + 20 * FIX2FLT(finesine[an]),
-                                mo->pos[VZ] + fogDelta, angle + ANG180, 0)))
+                                mo->origin[VZ] + fogDelta, angle + ANG180, 0)))
             S_StartSound(SFX_TELEPORT, fog);
 
         if(mo->player && !mo->player->powers[PT_SPEED])
@@ -184,10 +183,9 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
     {
         mo->floorClip = 0;
 
-        if(mo->pos[VZ] == P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+        if(FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
         {
             const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
-
             if(tt->flags & TTF_FLOORCLIP)
             {
                 mo->floorClip = 10;
@@ -244,7 +242,7 @@ boolean EV_Teleport(int tid, mobj_t* thing, boolean fog)
     if(!mo)
         Con_Error("Can't find teleport mapspot\n");
 
-    return P_Teleport(thing, mo->pos[VX], mo->pos[VY], mo->angle, fog);
+    return P_Teleport(thing, mo->origin[VX], mo->origin[VY], mo->angle, fog);
 }
 
 #if __JHERETIC__ || __JHEXEN__
@@ -254,8 +252,8 @@ void P_ArtiTele(player_t* player)
 
     if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
     {
-        P_Teleport(player->plr->mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(player->plr->mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
 
 #if __JHEXEN__
         if(player->morphTics)

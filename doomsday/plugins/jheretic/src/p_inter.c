@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jheretic.h"
 
 #include "am_map.h"
@@ -36,6 +38,7 @@
 #include "dmu_lib.h"
 #include "p_player.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 #include "p_tick.h"
 #include "p_user.h"
 #include "p_mapsetup.h"
@@ -307,7 +310,7 @@ boolean P_GivePower(player_t* player, powertype_t power)
             player->powers[power] = FLIGHTTICS;
             plrmo->flags2 |= MF2_FLY;
             plrmo->flags |= MF_NOGRAVITY;
-            if(plrmo->pos[VZ] <= plrmo->floorZ)
+            if(plrmo->origin[VZ] <= plrmo->floorZ)
             {
                 player->flyHeight = 10; // Thrust the player in the air a bit.
                 player->plr->flags |= DDPF_FIXMOM;
@@ -336,7 +339,7 @@ boolean P_GivePower(player_t* player, powertype_t power)
     if(retval)
     {
         if(power == PT_ALLMAP)
-            AM_RevealMap(AM_MapForPlayer(player - players), true);
+            ST_RevealAutomap(player - players, true);
     }
 
     return retval;
@@ -829,19 +832,19 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
 
 void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 {
-    player_t*           player;
-    float               delta;
-    itemtype_t          item;
+    player_t* player;
+    coord_t delta;
+    itemtype_t item;
 
-    delta = special->pos[VZ] - toucher->pos[VZ];
+    delta = special->origin[VZ] - toucher->origin[VZ];
     if(delta > toucher->height || delta < -32)
-    {   // Out of reach.
+    {
+        // Out of reach.
         return;
     }
 
     // Dead thing touching (can happen with a sliding player corpse).
-    if(toucher->health <= 0)
-        return;
+    if(toucher->health <= 0) return;
 
     player = toucher->player;
 
@@ -956,7 +959,10 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         }
 
         // Don't die with the automap open.
-        AM_Open(AM_MapForPlayer(target->player - players), false, false);
+        ST_AutomapOpen(target->player - players, false, false);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(target->player - players, false);
+#endif
     }
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
@@ -977,10 +983,10 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
  */
 boolean P_MorphPlayer(player_t* player)
 {
-    mobj_t*             pmo, *fog, *chicken;
-    float               pos[3];
-    angle_t             angle;
-    int                 oldFlags2;
+    mobj_t* pmo, *fog, *chicken;
+    coord_t pos[3];
+    angle_t angle;
+    int oldFlags2;
 
 #ifdef _DEBUG
     Con_Message("P_MorphPlayer: Player %i.\n", (int)(player - players));
@@ -1002,16 +1008,16 @@ boolean P_MorphPlayer(player_t* player)
     }
 
     pmo = player->plr->mo;
-    memcpy(pos, pmo->pos, sizeof(pos));
+    memcpy(pos, pmo->origin, sizeof(pos));
     angle = pmo->angle;
     oldFlags2 = pmo->flags2;
 
-    if(!(chicken = P_SpawnMobj3fv(MT_CHICPLAYER, pos, angle, 0)))
+    if(!(chicken = P_SpawnMobj(MT_CHICPLAYER, pos, angle, 0)))
         return false;
 
     P_MobjChangeState(pmo, S_FREETARGMOBJ);
 
-    if((fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
+    if((fog = P_SpawnMobjXYZ(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
                             angle + ANG180, 0)))
         S_StartSound(SFX_TELEPT, fog);
 
@@ -1030,20 +1036,20 @@ boolean P_MorphPlayer(player_t* player)
         chicken->flags2 |= MF2_FLY;
 
     player->morphTics = CHICKENTICS;
-    player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
+    player->plr->flags |= DDPF_FIXORIGIN | DDPF_FIXMOM;
     player->update |= PSF_MORPH_TIME | PSF_HEALTH | PSF_POWERS | PSF_ARMOR_POINTS;
 
     P_ActivateMorphWeapon(player);
     return true;
 }
 
-boolean P_MorphMonster(mobj_t *actor)
+boolean P_MorphMonster(mobj_t* actor)
 {
-    mobj_t             *fog, *chicken, *target;
-    mobjtype_t          moType;
-    float               pos[3];
-    angle_t             angle;
-    int                 ghost;
+    mobj_t* fog, *chicken, *target;
+    mobjtype_t moType;
+    coord_t pos[3];
+    angle_t angle;
+    int ghost;
 
     if(actor->player)
         return false;
@@ -1063,16 +1069,16 @@ boolean P_MorphMonster(mobj_t *actor)
         break;
     }
 
-    memcpy(pos, actor->pos, sizeof(pos));
+    memcpy(pos, actor->origin, sizeof(pos));
     angle = actor->angle;
     ghost = actor->flags & MF_SHADOW;
     target = actor->target;
 
-    if((chicken = P_SpawnMobj3fv(MT_CHICKEN, pos, angle, 0)))
+    if((chicken = P_SpawnMobj(MT_CHICKEN, pos, angle, 0)))
     {
         P_MobjChangeState(actor, S_FREETARGMOBJ);
 
-        if((fog = P_SpawnMobj3f(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
+        if((fog = P_SpawnMobjXYZ(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
                                 angle + ANG180, 0)))
             S_StartSound(SFX_TELEPT, fog);
 
@@ -1302,14 +1308,14 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
         case MT_MINOTAUR:
             if(inflictor->flags & MF_SKULLFLY)
-            {   // Slam only when in charge mode.
-                angle_t             angle;
-                uint                an;
-                float               thrust;
-                int                 damageDone;
+            {
+                // Slam only when in charge mode.
+                angle_t angle;
+                uint an;
+                coord_t thrust;
+                int damageDone;
 
-                angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
-                                        target->pos[VX], target->pos[VY]);
+                angle = M_PointToAngle2(inflictor->origin, target->origin);
                 an = angle >> ANGLETOFINESHIFT;
                 thrust = 16 + FIX2FLT(P_Random() << 10);
                 target->mom[MX] += thrust * FIX2FLT(finecosine[an]);
@@ -1402,17 +1408,16 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         source->player->readyWeapon != WT_EIGHTH) &&
        !(inflictor->flags2 & MF2_NODMGTHRUST))
     {
-        uint                an;
-        float               thrust;
+        uint an;
+        coord_t thrust;
 
-        angle = R_PointToAngle2(inflictor->pos[VX], inflictor->pos[VY],
-                                target->pos[VX], target->pos[VY]);
+        angle = M_PointToAngle2(inflictor->origin, target->origin);
 
         thrust = FIX2FLT(damage * (FRACUNIT>>3) * 100 / target->info->mass);
 
         // Make fall forwards sometimes.
         if(damage < 40 && damage > target->health &&
-           target->pos[VZ] - inflictor->pos[VZ] > 64 && (P_Random() & 1))
+           target->origin[VZ] - inflictor->origin[VZ] > 64 && (P_Random() & 1))
         {
             angle += ANG180;
             thrust *= 4;
@@ -1421,7 +1426,8 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && (source == inflictor) &&
            source->player->powers[PT_WEAPONLEVEL2] &&
            source->player->readyWeapon == WT_FIRST)
-        {   // Staff power level 2.
+        {
+            // Staff power level 2.
             thrust = 10;
 
             if(!(target->flags & MF_NOGRAVITY))

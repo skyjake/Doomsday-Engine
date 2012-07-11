@@ -1,10 +1,10 @@
-/**\file
+/**\file d_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * d_main.h:
- */
-
-#ifndef __D_MAIN_H__
-#define __D_MAIN_H__
+#ifndef LIBJDOOM_MAIN_H
+#define LIBJDOOM_MAIN_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -36,27 +32,31 @@
 #include "doomdef.h"
 
 extern int verbose;
-extern boolean devParm;
-extern boolean noMonstersParm;
-extern boolean respawnParm;
-extern boolean fastParm;
-extern boolean turboParm;
-extern float turboMul;
+
+extern boolean noMonstersParm; // checkparm of -nomonsters
+extern boolean respawnParm; // checkparm of -respawn
+extern boolean turboParm; // checkparm of -turbo
+//extern boolean randomClassParm; // checkparm of -randclass
+extern boolean devParm; // checkparm of -devparm
+extern boolean fastParm; // checkparm of -fast
+
+extern float turboMul; // Multiplier for turbo.
+
 extern gamemode_t gameMode;
 extern int gameModeBits;
-extern gamemission_t gameMission;
-extern char gameModeString[];
+
+extern char* borderGraphics[];
+
+extern float defFontRGB[];
+extern float defFontRGB2[];
+extern float defFontRGB3[];
+
 extern boolean monsterInfight;
-extern char *borderLumps[];
 
-void            G_PostInit(void);
-void            G_PreInit(void);
-void            G_DetectIWADs(void);
-void            G_IdentifyVersion(void);
-void            G_Shutdown(void);
-void            G_EndFrame(void);
-void            G_Ticker(timespan_t ticLength);
+void D_PreInit(void);
+void D_PostInit(void);
+void D_Shutdown(void);
+int D_GetInteger(int id);
+void* D_GetVariable(int id);
 
-boolean         G_SetGameMode(gamemode_t mode);
-
-#endif
+#endif /* LIBJDOOM_MAIN_H */

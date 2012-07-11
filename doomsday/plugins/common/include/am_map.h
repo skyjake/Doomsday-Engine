@@ -1,10 +1,10 @@
-/**\file
+/**\file am_map.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,157 +22,78 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * am_map.h : Automap, automap menu and related code.
- */
+#ifndef LIBCOMMON_AUTOMAP_CONFIG
+#define LIBCOMMON_AUTOMAP_CONFIG
 
-#ifndef __COMMON_AUTOMAP_MANAGER__
-#define __COMMON_AUTOMAP_MANAGER__
-
-#define AUTOMAP_OPEN_SECONDS    (.3f) // Num of seconds to open/close the map.
+#define AUTOMAP_OPEN_SECONDS    (.3f)
 
 #if __JDOOM__ || __JDOOM64__
-// For use if I do walls with outsides/insides
-#define BLUES       (256-4*16+8)
-#define YELLOWRANGE 1
-#define BLACK       0
-#define REDS        (256-5*16)
-#define REDRANGE    16
-#define BLUERANGE   8
-#define GREENS      (7*16)
-#define GREENRANGE  16
-#define GRAYS       (6*16)
-#define GRAYSRANGE  16
-#define BROWNS      (4*16)
-#define BROWNRANGE  16
-#define YELLOWS     (256-32+7)
-#define WHITE       (256-47)
-#define YOURCOLORS      WHITE
-#define YOURRANGE       0
+#define BLACK           (0)
+#define WHITE           (256-47)
+#define REDS            (256-5*16)
+#define GREENS          (7*16)
+#define YELLOWS         (256-32+7)
+#define GRAYS           (6*16)
+#define BROWNS          (4*16)
 
 #define WALLCOLORS      REDS
-#define WALLRANGE       REDRANGE
 #define TSWALLCOLORS    GRAYS
-#define TSWALLRANGE     GRAYSRANGE
 #define CDWALLCOLORS    YELLOWS
-#define CDWALLRANGE     YELLOWRANGE
+#define FDWALLCOLORS    BROWNS
 #define THINGCOLORS     GREENS
-#define THINGRANGE      GREENRANGE
-
-#define SECRETWALLCOLORS WALLCOLORS
-#define SECRETWALLRANGE WALLRANGE
-#define GRIDCOLORS      (GRAYS + GRAYSRANGE/2)
-#define GRIDRANGE       0
-#define XHAIRCOLORS     GRAYS
-#define FDWALLCOLORS        BROWNS
-#define FDWALLRANGE     BROWNRANGE
-
-#define BORDEROFFSET 3
-
-// Automap colors
 #define BACKGROUND      BLACK
 
 // Keys for Baby Mode
-#define KEY1_COLOR   197      //  Blue Key
-#define KEY2_COLOR   (256-5*16)   //  Red Key
-#define KEY3_COLOR   (256-32+7)   //  Yellow Key
-#define KEY4_COLOR   (256-32+7)   //  Yellow Skull
-#define KEY5_COLOR   (256-5*16)   //  Red Skull
-#define KEY6_COLOR   197      //  Blue Skull
+#define KEY1_COLOR      (197)        // Blue Key
+#define KEY2_COLOR      (256-5*16)   // Red Key
+#define KEY3_COLOR      (256-32+7)   // Yellow Key
+#define KEY4_COLOR      (256-32+7)   // Yellow Skull
+#define KEY5_COLOR      (256-5*16)   // Red Skull
+#define KEY6_COLOR      (197)        // Blue Skull
 
-#define BORDERGRAPHIC "brdr_b"
-
-#define MARKERPATCHES (sprintf(namebuf, "AMMNUM%d", i))     // DJS - Patches used for marking the automap, a bit of a hack I suppose
-
+#define AM_PLR1_COLOR   GREENS
+#define AM_PLR2_COLOR   GRAYS
+#define AM_PLR3_COLOR   BROWNS
+#define AM_PLR4_COLOR   REDS
 #endif
 
-
 #ifdef __JHERETIC__
+#define BLACK           (0)
+#define WHITE           (4*8)
+#define REDS            (12*8)
+#define GREENS          (33*8)
+#define YELLOWS         (10*8)
+#define GRAYS           (5*8)
+#define BROWNS          (14*8-2)
+#define PARCH           (13*8-1)
 
-// For use if I do walls with outsides/insides
-#define REDS        12*8
-#define REDRANGE    1              //16
-#define BLUES       (256-4*16+8)
-#define BLUERANGE   1              //8
-#define GREENS      (33*8)
-#define GREENRANGE  1              //16
-#define GRAYS       (5*8)
-#define GRAYSRANGE  1              //16
-#define BROWNS      (14*8)
-#define BROWNRANGE  1              //16
-#define YELLOWS     10*8
-#define YELLOWRANGE 1
-#define BLACK       0
-#define WHITE       4*8
-#define PARCH       13*8-1
 #define WALLCOLORS      REDS
-#define FDWALLCOLORS        BROWNS
-#define CDWALLCOLORS        YELLOWS
-#define YOURCOLORS      WHITE
-#define YOURRANGE       0
-#define WALLRANGE       REDRANGE
-#define TSWALLCOLORS        GRAYS
-#define TSWALLRANGE     GRAYSRANGE
-#define FDWALLRANGE     BROWNRANGE
-#define CDWALLRANGE     YELLOWRANGE
-#define THINGCOLORS     GREENS
-#define THINGRANGE      GREENRANGE
-#define SECRETWALLCOLORS WALLCOLORS
-#define SECRETWALLRANGE WALLRANGE
-#define GRIDCOLORS      (GRAYS + GRAYSRANGE/2)
-#define GRIDRANGE       0
-#define XHAIRCOLORS     GRAYS
-
-#define BLOODRED  150
-
-// Automap colors
-#define BACKGROUND  PARCH
-#define YOURCOLORS  WHITE
-#define YOURRANGE   0
-
-#define WALLRANGE   REDRANGE
 #define TSWALLCOLORS    GRAYS
-#define TSWALLRANGE GRAYSRANGE
-
-#define FDWALLRANGE BROWNRANGE
-
-#define CDWALLRANGE YELLOWRANGE
-#define THINGCOLORS GREENS
-#define THINGRANGE  GREENRANGE
-#define SECRETWALLCOLORS WALLCOLORS
-#define SECRETWALLRANGE WALLRANGE
-#define GRIDCOLORS  (GRAYS + GRAYSRANGE/2)
-#define GRIDRANGE   0
-#define XHAIRCOLORS GRAYS
-
-#define BORDEROFFSET 4
+#define CDWALLCOLORS    YELLOWS
+#define FDWALLCOLORS    BROWNS
+#define THINGCOLORS     4
+#define BACKGROUND      PARCH
 
 // Keys for Baby Mode
-#define KEY1_COLOR   144  // HERETIC - Green Key
-#define KEY2_COLOR   197  // HERETIC - Yellow Key
-#define KEY3_COLOR   220  // HERETIC - Blue Key
+#define KEY1_COLOR      (144) // Green Key
+#define KEY2_COLOR      (197) // Yellow Key
+#define KEY3_COLOR      (220) // Blue Key
 
-#define BORDERGRAPHIC "bordb"
-
-#define MARKERPATCHES (sprintf(namebuf, "FONTA%d", (16 +i) ))       // DJS - Patches used for marking the automap, a bit of a hack I suppose
-
+#define AM_PLR1_COLOR   (220)
+#define AM_PLR2_COLOR   (197)
+#define AM_PLR3_COLOR   (150)
+#define AM_PLR4_COLOR   (144)
 #endif
 
 
 #ifdef __JHEXEN__
 // For use if I do walls with outsides/insides
 #define REDS        12*8
-#define REDRANGE    1              //16
 #define BLUES       (256-4*16+8)
-#define BLUERANGE   1              //8
 #define GREENS      (33*8)
-#define GREENRANGE  1              //16
 #define GRAYS       (5*8)
-#define GRAYSRANGE  1              //16
 #define BROWNS      (14*8)
-#define BROWNRANGE  1              //16
 #define YELLOWS     10*8
-#define YELLOWRANGE 1
 #define BLACK       0
 #define WHITE       4*8
 #define PARCH       13*8-1
@@ -180,23 +101,12 @@
 
 // Automap colors
 #define BACKGROUND  PARCH
-#define YOURCOLORS  WHITE
-#define YOURRANGE   0
 #define WALLCOLORS  83      // REDS
-#define WALLRANGE   REDRANGE
 #define TSWALLCOLORS    GRAYS
-#define TSWALLRANGE GRAYSRANGE
 #define FDWALLCOLORS    96      // BROWNS
-#define FDWALLRANGE BROWNRANGE
 #define CDWALLCOLORS    107     // YELLOWS
-#define CDWALLRANGE YELLOWRANGE
 #define THINGCOLORS GREENS
-#define THINGRANGE  GREENRANGE
 #define SECRETWALLCOLORS WALLCOLORS
-#define SECRETWALLRANGE WALLRANGE
-#define GRIDCOLORS  (GRAYS + GRAYSRANGE/2)
-#define GRIDRANGE   0
-#define XHAIRCOLORS GRAYS
 
 #define BORDEROFFSET 4
 
@@ -214,86 +124,26 @@
 #define KEY2   144  // HEXEN -
 #define KEY3   220  // HEXEN -
 
-#define BORDERGRAPHIC "bordb"
-
-#define MARKERPATCHES (sprintf(namebuf, "FONTA%d", (16 +i) ))       // DJS - Patches used for marking the automap, a bit of a hack I suppose
-
 #endif
-
-#ifdef __JSTRIFE__
-// For use if I do walls with outsides/insides
-#define REDS        12*8
-#define REDRANGE    1              //16
-#define BLUES       (256-4*16+8)
-#define BLUERANGE   1              //8
-#define GREENS      (33*8)
-#define GREENRANGE  1              //16
-#define GRAYS       (5*8)
-#define GRAYSRANGE  1              //16
-#define BROWNS      (14*8)
-#define BROWNRANGE  1              //16
-#define YELLOWS     10*8
-#define YELLOWRANGE 1
-#define BLACK       0
-#define WHITE       4*8
-#define PARCH       13*8-1
-#define BLOODRED    177
-
-// Automap colors
-#define BACKGROUND  PARCH
-#define YOURCOLORS  WHITE
-#define YOURRANGE   0
-#define WALLCOLORS  83      // REDS
-#define WALLRANGE   REDRANGE
-#define TSWALLCOLORS    GRAYS
-#define TSWALLRANGE GRAYSRANGE
-#define FDWALLCOLORS    96      // BROWNS
-#define FDWALLRANGE BROWNRANGE
-#define CDWALLCOLORS    107     // YELLOWS
-#define CDWALLRANGE YELLOWRANGE
-#define THINGCOLORS GREENS
-#define THINGRANGE  GREENRANGE
-#define SECRETWALLCOLORS WALLCOLORS
-#define SECRETWALLRANGE WALLRANGE
-#define GRIDCOLORS  (GRAYS + GRAYSRANGE/2)
-#define GRIDRANGE   0
-#define XHAIRCOLORS GRAYS
-
-#define BORDEROFFSET 4
-
-// Automap colors
-#define KEY1   197  // HEXEN -
-#define KEY2   144  // HEXEN -
-#define KEY3   220  // HEXEN -
-
-#define BORDERGRAPHIC "bordb"
-
-#define MARKERPATCHES (sprintf(namebuf, "FONTA%d", (16 +i) ))       // DJS - Patches used for marking the automap, a bit of a hack I suppose
-
-#endif
-
-typedef unsigned int automapid_t;
 
 typedef enum {
     AMO_NONE = -1,
     AMO_THING = 0,
     AMO_THINGPLAYER,
-    AMO_BACKGROUND,
     AMO_UNSEENLINE,
     AMO_SINGLESIDEDLINE,
     AMO_TWOSIDEDLINE,
     AMO_FLOORCHANGELINE,
     AMO_CEILINGCHANGELINE,
     AMO_NUMOBJECTS
-} automapobjectname_t;
+} automapcfg_objectname_t;
 
-typedef struct mapobjectinfo_s {
-    float           rgba[4];
-    int             blendMode;
-    float           glowAlpha, glowWidth;
-    boolean         glow;
-    boolean         scaleWithView;
-} mapobjectinfo_t;
+typedef enum glowtype_e {
+    GLOW_NONE,
+    GLOW_BOTH,
+    GLOW_BACK,
+    GLOW_FRONT
+} glowtype_t;
 
 enum {
     MOL_LINEDEF = 0,
@@ -304,114 +154,41 @@ enum {
     NUM_MAP_OBJECTLISTS
 };
 
-typedef enum vectorgraphname_e {
-    VG_NONE = -1,
-    VG_KEYSQUARE,
-    VG_TRIANGLE,
-    VG_ARROW,
-#if !__JHEXEN__
-    VG_CHEATARROW,
-#endif
-    NUM_VECTOR_GRAPHS
-} vectorgrapname_t;
+#define AUTOMAPCFG_MAX_LINEINFO         32
 
-typedef struct mpoint_s {
-    float               pos[3];
-} mpoint_t;
-
-typedef struct mline_s {
-    mpoint_t            a, b;
-} vgline_t;
-
-typedef struct vectorgrap_s {
-    DGLuint         dlist;
-    uint            count;
-    vgline_t*       lines;
-} vectorgrap_t;
-
-vectorgrap_t* AM_GetVectorGraph(vectorgrapname_t id);
-
-#define AM_MAXSPECIALLINES      32
-
-typedef struct automapspecialline_s {
-    int             special;
-    int             sided;
-    int             cheatLevel; // minimum cheat level for this special.
-    mapobjectinfo_t info;
-} automapspecialline_t;
+typedef struct {
+    int reqSpecial;
+    int reqSided;
+    int reqAutomapFlags;
+    float rgba[4];
+    blendmode_t blendMode;
+    float glowStrength, glowSize;
+    glowtype_t glow;
+    boolean scaleWithView;
+} automapcfg_lineinfo_t;
 
 typedef struct automapcfg_s {
-    float           lineGlowScale;
-    boolean         glowingLineSpecials;
-    float           backgroundRGBA[4];
-    float           panSpeed;
-    boolean         panResetOnOpen;
-    float           zoomSpeed;
-    float           openSeconds; // Num seconds it takes for the map to open/close.
-    automapspecialline_t specialLines[AM_MAXSPECIALLINES];
-    uint            numSpecialLines;
-    vectorgrapname_t vectorGraphicForPlayer;
-    vectorgrapname_t vectorGraphicForThing;
-    int             cheating;
-    boolean         revealed;
-    uint            followPlayer; // Player id of that to follow.
+    automapcfg_lineinfo_t lineInfo[AUTOMAPCFG_MAX_LINEINFO];
+    uint lineInfoCount;
 
-    mapobjectinfo_t mapObjectInfo[NUM_MAP_OBJECTLISTS];
+    svgid_t vectorGraphicForPlayer;
+    svgid_t vectorGraphicForThing;
+
+    automapcfg_lineinfo_t mapObjectInfo[NUM_MAP_OBJECTLISTS];
 } automapcfg_t;
 
-typedef enum glowtype_e {
-    NO_GLOW,
-    TWOSIDED_GLOW,
-    BACK_GLOW,
-    FRONT_GLOW
-} glowtype_t;
+void ST_InitAutomapConfig(void);
+automapcfg_t* ST_AutomapConfig(void);
 
-void            AM_Register(void);
-void            AM_Init(void);
-void            AM_Shutdown(void);
+void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customPal);
 
-void            AM_InitForMap(void);
-void            AM_Ticker(void);
-void            AM_Drawer(int player);
+const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_objectname_t name);
+const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special, const Sector* frontsector, const Sector* backsector, int automapFlags);
 
-automapid_t     AM_MapForPlayer(int plrnum);
+void AM_GetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float* r, float* g, float* b, float* a);
+void AM_SetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float r, float g, float b, float a);
 
-void            AM_Open(automapid_t id, boolean yes, boolean fast);
-boolean         AM_IsActive(automapid_t id);
+svgid_t AM_GetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name);
+void AM_SetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name, svgid_t svg);
 
-void            AM_UpdateLinedef(automapid_t id, uint lineIdx, boolean visible);
-int             AM_AddMark(automapid_t id, float x, float y, float z);
-void            AM_ClearMarks(automapid_t id);
-
-void            AM_IncMapCheatLevel(automapid_t id);
-void            AM_SetCheatLevel(automapid_t id, int level);
-void            AM_SetViewRotate(automapid_t id, int offOnToggle);
-
-void            AM_RevealMap(automapid_t id, boolean on);
-void            AM_ToggleZoomMax(automapid_t id);
-void            AM_ToggleFollow(automapid_t id);
-
-float           AM_GlobalAlpha(automapid_t id);
-void            AM_GetWindow(automapid_t id, float* x, float* y, float* w, float* h);
-boolean         AM_IsMapWindowInFullScreenMode(automapid_t id);
-int             AM_GetFlags(automapid_t id);
-boolean         AM_IsRevealed(automapid_t id);
-float           AM_MapToFrame(automapid_t id, float val);
-void            AM_GetViewPosition(automapid_t id, float* x, float* y);
-void            M_DrawMAP(void);
-
-const automapcfg_t* AM_GetMapConfig(automapid_t id);
-const mapobjectinfo_t* AM_GetMapObjectInfo(automapid_t id, int objectname);
-const mapobjectinfo_t* AM_GetInfoForSpecialLine(automapid_t id, int special,
-                                                const sector_t* frontsector,
-                                                const sector_t* backsector);
-void AM_GetColorAndAlpha(automapid_t id, int objectname, float* r, float* g,
-                         float* b, float* a);
-void AM_SetColorAndAlpha(automapid_t id, int objectname, float r, float g,
-                         float b, float a);
-
-void AM_GetMapColor(float* rgb, const float* uColor, int palidx,
-                    boolean customPal);
-vectorgrapname_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname);
-void AM_SetVectorGraphic(automapcfg_t* cfg, int objectname, int vgname);
-#endif
+#endif /* LIBCOMMON_AUTOMAP_CONFIG */

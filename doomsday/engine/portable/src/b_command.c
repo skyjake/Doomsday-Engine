@@ -1,10 +1,10 @@
-/**\file
+/**\file b_command.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,16 @@
  */
 
 /**
- * b_command.c: Event-Command Bindings
+ * Event-Command Bindings.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
 #include "de_play.h"
+
 #include "b_main.h"
 #include "b_command.h"
 
@@ -94,8 +96,7 @@ static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
  */
 boolean B_ParseEvent(evbinding_t* eb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
 
     // First, we expect to encounter a device name.
     desc = Str_CopyDelim(str, desc, '-');
@@ -109,14 +110,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &eb->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // The final part of a key event is the state of the key toggle.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseToggleState(Str_Text(str), &eb->state))
         {
-            goto parseEnded;
+            return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
@@ -127,7 +128,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &eb->type, &eb->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // The last part determines the toggle state or the axis position.
@@ -136,14 +137,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         {
             if(!B_ParseToggleState(Str_Text(str), &eb->state))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else // Axis position.
         {
             if(!B_ParseAxisPosition(Str_Text(str), &eb->state, &eb->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
@@ -155,7 +156,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(eb->device, Str_Text(str), &eb->type, &eb->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // What is the state of the toggle, axis, or hat?
@@ -164,21 +165,21 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
         {
             if(!B_ParseToggleState(Str_Text(str), &eb->state))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else if(eb->type == E_AXIS)
         {
             if(!B_ParseAxisPosition(Str_Text(str), &eb->state, &eb->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else // Angle.
         {
             if(!B_ParseAnglePosition(Str_Text(str), &eb->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
@@ -193,22 +194,18 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
     else
     {
         Con_Message("B_ParseEvent: Device \"%s\" unknown.\n", Str_Text(str));
-        goto parseEnded;
+        return false;
     }
 
     // Anything left that wasn't used?
     if(desc)
     {
         Con_Message("B_ParseEvent: Unrecognized \"%s\".\n", desc);
-        goto parseEnded;
+        return false;
     }
 
     // No errors detected.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 /**
@@ -222,8 +219,7 @@ parseEnded:
  */
 boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
 
     // The main part, i.e., the first part.
     desc = Str_CopyDelim(str, desc, '+');
@@ -231,7 +227,7 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
     if(!B_ParseEvent(eb, Str_Text(str)))
     {
         // Failure parsing the event.
-        goto parseEnded;
+        return false;
     }
 
     // Any conditions?
@@ -245,17 +241,13 @@ boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
         cond = B_AllocCommandBindingCondition(eb);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
-            // Failure parusing the condition.
-            goto parseEnded;
+            // Failure parsing the condition.
+            return false;
         }
     }
 
     // Success.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 /**
@@ -427,6 +419,9 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
         if(eventClass && dev->keys[eb->id].assoc.bContext != eventClass)
             return false; // Shadowed by a more important active class.
 
+        // We're checking it, so clear the triggered flag.
+        dev->keys[eb->id].assoc.flags &= ~IDAF_TRIGGERED;
+
         // Is the state as required?
         switch(eb->state)
         {
@@ -504,7 +499,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
     B_SubstituteInCommand(eb->command, event, eb, &command);
 
     // Do the command.
-    Con_Executef(CMDS_BIND, false, Str_Text(&command));
+    Con_Executef(CMDS_BIND, false, "%s", Str_Text(&command));
 
     Str_Free(&command);
     return true;

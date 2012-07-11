@@ -1,10 +1,10 @@
-/**\file
+/**\file p_telept.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,11 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_telept.c:
- */
-
-// HEADER FILES ------------------------------------------------------------
+#include <string.h>
 
 #include "jheretic.h"
 
@@ -37,149 +33,126 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
+mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
 {
-    return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
+    return P_SpawnMobjXYZ(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
-                   boolean spawnFog)
+boolean P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean spawnFog)
 {
-    float               oldpos[3];
-    float               aboveFloor;
-    float               fogDelta;
-    player_t*           player;
-    uint                an;
-    angle_t             oldAngle;
-    mobj_t*             fog;
+    coord_t oldpos[3], aboveFloor, fogDelta;
+    angle_t oldAngle;
+    mobj_t* fog;
+    uint an;
 
-    memcpy(oldpos, thing->pos, sizeof(oldpos));
-    aboveFloor = thing->pos[VZ] - thing->floorZ;
-    oldAngle = thing->angle;
-    if(!P_TeleportMove(thing, x, y, false))
+    memcpy(oldpos, mo->origin, sizeof(oldpos));
+    aboveFloor = mo->origin[VZ] - mo->floorZ;
+    oldAngle = mo->angle;
+    if(!P_TeleportMove(mo, x, y, false))
     {
         return false;
     }
 
-    if(thing->player)
+    // $voodoodolls Must be the real player.
+    if(mo->player && mo->player->plr->mo)
     {
-        player = thing->player;
+        player_t* player = mo->player;
         if(player->powers[PT_FLIGHT] && aboveFloor > 0)
         {
-            thing->pos[VZ] = thing->floorZ + aboveFloor;
-            if(thing->pos[VZ] + thing->height > thing->ceilingZ)
+            mo->origin[VZ] = mo->floorZ + aboveFloor;
+            if(mo->origin[VZ] + mo->height > mo->ceilingZ)
             {
-                thing->pos[VZ] = thing->ceilingZ - thing->height;
+                mo->origin[VZ] = mo->ceilingZ - mo->height;
             }
-            player->viewZ = thing->pos[VZ] + player->viewHeight;
+            player->viewZ = mo->origin[VZ] + player->viewHeight;
         }
         else
         {
-            thing->pos[VZ] = thing->floorZ;
-            player->viewHeight = (float) cfg.plrViewHeight;
-            player->viewHeightDelta = 0;
-            player->viewZ = thing->pos[VZ] + player->viewHeight;
             //player->plr->clLookDir = 0; /* $unifiedangles */
             player->plr->lookDir = 0;
+            mo->origin[VZ] = mo->floorZ;
         }
+
+        player->viewHeight = (coord_t) cfg.plrViewHeight;
+        player->viewHeightDelta = 0;
+        player->viewZ = mo->origin[VZ] + player->viewHeight;
+        player->viewOffset[VX] = player->viewOffset[VY] = player->viewOffset[VZ] = 0;
+        player->bob = 0;
+
         //player->plr->clAngle = angle; /* $unifiedangles */
-        player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+        player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
     }
-    else if(thing->flags & MF_MISSILE)
+    else if(mo->flags & MF_MISSILE)
     {
-        thing->pos[VZ] = thing->floorZ + aboveFloor;
-        if(thing->pos[VZ] + thing->height > thing->ceilingZ)
+        mo->origin[VZ] = mo->floorZ + aboveFloor;
+        if(mo->origin[VZ] + mo->height > mo->ceilingZ)
         {
-            thing->pos[VZ] = thing->ceilingZ - thing->height;
+            mo->origin[VZ] = mo->ceilingZ - mo->height;
         }
     }
     else
     {
-        thing->pos[VZ] = thing->floorZ;
+        mo->origin[VZ] = mo->floorZ;
     }
 
     if(spawnFog)
     {
         // Spawn teleport fog at source and destination
-        fogDelta = ((thing->flags & MF_MISSILE)? 0 : TELEFOGHEIGHT);
-        if((fog = P_SpawnMobj3f(MT_TFOG, oldpos[VX], oldpos[VY],
-                                oldpos[VZ] + fogDelta, oldAngle + ANG180, 0)))
+        fogDelta = ((mo->flags & MF_MISSILE)? 0 : TELEFOGHEIGHT);
+        if((fog = P_SpawnMobjXYZ(MT_TFOG, oldpos[VX], oldpos[VY], oldpos[VZ] + fogDelta, oldAngle + ANG180, 0)))
             S_StartSound(SFX_TELEPT, fog);
 
         an = angle >> ANGLETOFINESHIFT;
 
-        if((fog = P_SpawnMobj3f(MT_TFOG,
-                                x + 20 * FIX2FLT(finecosine[an]),
-                                y + 20 * FIX2FLT(finesine[an]),
-                                thing->pos[VZ] + fogDelta, angle + ANG180, 0)))
+        if((fog = P_SpawnMobjXYZ(MT_TFOG, x + 20 * FIX2FLT(finecosine[an]), y + 20 * FIX2FLT(finesine[an]), mo->origin[VZ] + fogDelta, angle + ANG180, 0)))
             S_StartSound(SFX_TELEPT, fog);
     }
 
-    if(thing->player && !thing->player->powers[PT_WEAPONLEVEL2])
+    if(mo->player && !mo->player->powers[PT_WEAPONLEVEL2])
     {   // Freeze player for about .5 sec.
-        thing->reactionTime = 18;
+        mo->reactionTime = 18;
     }
 
-    thing->angle = angle;
-    if(thing->flags2 & MF2_FLOORCLIP)
+    mo->angle = angle;
+    if(mo->flags2 & MF2_FLOORCLIP)
     {
-        thing->floorClip = 0;
+        mo->floorClip = 0;
 
-        if(thing->pos[VZ] ==
-           P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
+        if(FEQUAL(mo->origin[VZ], P_GetDoublep(mo->bspLeaf, DMU_FLOOR_HEIGHT)))
         {
-            const terraintype_t* tt = P_MobjGetFloorTerrainType(thing);
-
+            const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
             if(tt->flags & TTF_FLOORCLIP)
             {
-                thing->floorClip = 10;
+                mo->floorClip = 10;
             }
         }
     }
 
-    if(thing->flags & MF_MISSILE)
+    if(mo->flags & MF_MISSILE)
     {
         an = angle >> ANGLETOFINESHIFT;
-        thing->mom[MX] = thing->info->speed * FIX2FLT(finecosine[angle]);
-        thing->mom[MY] = thing->info->speed * FIX2FLT(finesine[angle]);
+        mo->mom[MX] = mo->info->speed * FIX2FLT(finecosine[angle]);
+        mo->mom[MY] = mo->info->speed * FIX2FLT(finesine[angle]);
     }
     else
     {
-        thing->mom[MX] = thing->mom[MY] = thing->mom[MZ] = 0;
+        mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
     }
 
-    P_MobjClearSRVO(thing);
+    P_MobjClearSRVO(mo);
     return true;
 }
 
 typedef struct {
-    sector_t*           sec;
-    mobjtype_t          type;
-    mobj_t*             foundMobj;
+    Sector* sec;
+    mobjtype_t type;
+    mobj_t* foundMobj;
 } findmobjparams_t;
 
 static int findMobj(thinker_t* th, void* context)
 {
-    findmobjparams_t*   params = (findmobjparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    findmobjparams_t* params = (findmobjparams_t*) context;
+    mobj_t* mo = (mobj_t *) th;
 
     // Must be of the correct type?
     if(params->type >= 0 && params->type != mo->type)
@@ -187,7 +160,7 @@ static int findMobj(thinker_t* th, void* context)
 
     // Must be in the specified sector?
     if(params->sec &&
-       params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
+       params->sec != P_GetPtrp(mo->bspLeaf, DMU_SECTOR))
         return false; // Continue iteration.
 
     // Found it!
@@ -197,13 +170,13 @@ static int findMobj(thinker_t* th, void* context)
 
 static mobj_t* getTeleportDestination(short tag)
 {
-    iterlist_t*         list;
+    iterlist_t* list;
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        sector_t*           sec = NULL;
-        findmobjparams_t    params;
+        Sector* sec = NULL;
+        findmobjparams_t params;
 
         params.type = MT_TELEPORTMAN;
         params.foundMobj = NULL;
@@ -224,25 +197,22 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-boolean EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
+boolean EV_Teleport(LineDef* line, int side, mobj_t* mo, boolean spawnFog)
 {
-    mobj_t*             dest;
+    mobj_t* dest;
 
     // Clients cannot teleport on their own.
-    if(IS_CLIENT)
-        return 0;
+    if(IS_CLIENT) return 0;
 
-    if(mo->flags2 & MF2_NOTELEPORT)
-        return false;
+    // Are we allowed to teleport this?
+    if(mo->flags2 & MF2_NOTELEPORT) return false;
 
     // Don't teleport if hit back of line, so you can get out of teleporter.
-    if(side == 1)
-        return false;
+    if(side == 1) return false;
 
     if((dest = getTeleportDestination(P_ToXLine(line)->tag)) != NULL)
     {
-        return P_Teleport(mo, dest->pos[VX], dest->pos[VY], dest->angle,
-                          spawnFog);
+        return P_Teleport(mo, dest->origin[VX], dest->origin[VY], dest->angle, spawnFog);
     }
 
     return false;
@@ -256,15 +226,15 @@ void P_ArtiTele(player_t* player)
     // Get a random deathmatch start.
     if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
     {
-        P_Teleport(player->plr->mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(player->plr->mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
 
 #if __JHEXEN__
         if(player->morphTics)
         {   // Teleporting away will undo any morph effects (pig)
             P_UndoPlayerMorph(player);
         }
-        //S_StartSound(NULL, SFX_WPNUP); // Full volume laugh
+        //S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
 #else
         /*S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
            NetSv_Sound(NULL, SFX_WPNUP, player-players); */

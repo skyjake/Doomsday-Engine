@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,7 +74,8 @@ typedef struct {
     char            skinRange;
     float           offset[3];
     byte            alpha;
-    uint            shinySkin; // Skinname ID (index)
+    struct texture_s* shinySkin;
+    blendmode_t     blendMode;
 } submodeldef_t;
 
 #define MODELDEF_ID_MAXLEN      32
@@ -112,14 +113,21 @@ extern float rModelAspectMod;
 
 void            R_InitModels(void);
 void            R_ShutdownModels(void);
-float           R_CheckModelFor(struct mobj_s* mo, modeldef_t** mdef,
-                                modeldef_t** nextmdef);
+model_t*        R_ModelForId(uint modelRepositoryId);
+float           R_CheckModelFor(struct mobj_s* mo, modeldef_t** mdef, modeldef_t** nextmdef);
 modeldef_t*     R_CheckIDModelFor(const char* id);
 int             R_ModelFrameNumForName(int modelnum, char* fname);
 void            R_SetModelFrame(modeldef_t* modef, int frame);
 void            R_SetSpriteReplacement(int sprite, char* modelname);
-void            R_PrecacheSkinsForState(int stateIndex);
-int             R_PrecacheSkinsForMobj(thinker_t* th, void* context);
-void            R_PrecacheModelSkins(modeldef_t* modef);
+
+void R_PrecacheModelsForState(int stateIndex);
+
+/**
+ * @note The skins are also bound here once so they should be ready for use
+ *       the next time they are needed.
+ */
+int R_PrecacheModelsForMobj(thinker_t* th, void* context);
+
+void R_PrecacheModel(modeldef_t* modef);
 
 #endif

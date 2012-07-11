@@ -1,0 +1,39 @@
+@chapter{ Acknowledgements }
+
+@a{acks}
+@strong{id Software} created DOOM and then released its source code.
+
+@strong{Raven Software} created Heretic and Hexen and released their source
+code.
+
+@strong{Jaakko Keränen} started the Doomsday Engine project and is the lead
+developer of the Deng Team.
+
+@strong{Daniel Swanson} is a developer and lead graphics artist in the Deng
+Team, author of the @link{dengine.net}{http://dengine.net} website
+implementation and former maintainer of the jDoom Resource Pack.
+
+@strong{Dave Gardner} is a member of the Deng Team, maintainer of
+high-resolution texture packs, and contributor to the
+@link{dengine.net}{http://dengine.net} website implementation.
+
+@strong{Abbs} maintained the jDoom model pack and did wonderful work on the
+models and particle effects.
+
+@strong{Anton Rzheshevski} (aka Cheb) created player weapon 3D models and
+other MD2 modifications/enhancements, maintained the jDoom model pack and
+wrote KickStart version 2.
+
+@strong{Greg Fisk} (Slyrr) authored many excellent 3D models for jHeretic.
+
+@strong{Daniel Norton} created detail textures for jDoom.
+
+@strong{Graham Jackson} helped with the source code, fixed Doom bugs and did a
+lot of testing.
+
+@strong{David Jarvis} did early network testing with jDoom and jHeretic and
+generously contributed essential computer hardware components.
+
+@strong{Andrew Apted} wrote @link{glBSP}{http://glbsp.sourceforge.net/}.
+
+@strong{William Mull} hosted the project's websites for many years.

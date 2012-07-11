@@ -1,0 +1,1096 @@
+# jDoom: Sound Effects
+
+Header { Version = 5; }
+
+#####====--- SOUND EFFECTS ---====#####
+
+Sound {
+  ID = "pistol";
+  Flags = "sf_shift2";
+  Lump = "DSPISTOL";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "shotgn";
+  Flags = "sf_shift2";
+  Lump = "DSSHOTGN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = 4;
+}
+
+Sound {
+  ID = "sgcock";
+  Flags = "sf_shift2";
+  Lump = "DSSGCOCK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "dshtgn";
+  Flags = "sf_shift2";
+  Lump = "DSDSHTGN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "dbopn";
+  Flags = "sf_shift2";
+  Lump = "DSDBOPN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "dbcls";
+  Flags = "sf_shift2";
+  Lump = "DSDBCLS";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "dbload";
+  Flags = "sf_shift2";
+  Lump = "DSDBLOAD";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "plasma";
+  Flags = "sf_shift2";
+  Lump = "DSPLASMA";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = 4;
+}
+
+Sound {
+  ID = "bfg";
+  Flags = "sf_shift2";
+  Lump = "DSBFG";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "sawup";
+  Flags = "sf_shift";
+  Lump = "DSSAWUP";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+  Group = 1;
+}
+
+Sound {
+  ID = "sawidl";
+  Flags = "sf_shift";
+  Lump = "DSSAWIDL";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 118;
+  Max channels = -1;
+  Group = 1;
+}
+
+Sound {
+  ID = "sawful";
+  Flags = "sf_shift";
+  Lump = "DSSAWFUL";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+  Group = 1;
+}
+
+Sound {
+  ID = "sawhit";
+  Flags = "sf_shift";
+  Lump = "DSSAWHIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+  Group = 1;
+}
+
+Sound {
+  ID = "rlaunc";
+  Flags = "sf_shift2";
+  Lump = "DSRLAUNC";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "rxplod";
+  Flags = "sf_shift2";
+  Lump = "DSRXPLOD";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "firsht";
+  Flags = "sf_shift2";
+  Lump = "DSFIRSHT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "firxpl";
+  Flags = "sf_shift2";
+  Lump = "DSFIRXPL";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = 2;
+}
+
+Sound {
+  ID = "pstart";
+  Flags = "sf_shift2";
+  Lump = "DSPSTART";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "pstop";
+  Flags = "sf_shift2";
+  Lump = "DSPSTOP";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "doropn";
+  Flags = "sf_shift2";
+  Lump = "DSDOROPN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "dorcls";
+  Flags = "sf_shift2";
+  Lump = "DSDORCLS";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "stnmov";
+  Flags = "sf_shift2";
+  Lump = "DSSTNMOV";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 119;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "swtchn";
+  Flags = "sf_shift2";
+  Lump = "DSSWTCHN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 78;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "swtchx";
+  Flags = "sf_shift2";
+  Lump = "DSSWTCHX";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 78;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "plpain";
+  Flags = "sf_shift2";
+  Lump = "DSPLPAIN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 96;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "dmpain";
+  Flags = "sf_shift2";
+  Lump = "DSDMPAIN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 96;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "popain";
+  Flags = "sf_shift2";
+  Lump = "DSPOPAIN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 96;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "vipain";
+  Flags = "sf_shift2";
+  Lump = "DSVIPAIN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 96;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "mnpain";
+  Flags = "sf_shift2";
+  Lump = "DSMNPAIN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 96;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "pepain";
+  Flags = "sf_shift2";
+  Lump = "DSPEPAIN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 96;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "slop";
+  Flags = "sf_shift2";
+  Lump = "DSSLOP";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 78;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "itemup";
+  Lump = "DSITEMUP";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 78;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "wpnup";
+  Flags = "sf_shift2";
+  Lump = "DSWPNUP";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 78;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "oof";
+  Flags = "sf_shift2";
+  Lump = "DSOOF";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 96;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "telept";
+  Flags = "sf_shift2";
+  Lump = "DSTELEPT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "posit1";
+  Flags = "sf_shift2";
+  Lump = "DSPOSIT1";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 98;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "posit2";
+  Flags = "sf_shift2";
+  Lump = "DSPOSIT2";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 98;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "posit3";
+  Flags = "sf_shift2";
+  Lump = "DSPOSIT3";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 98;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "bgsit1";
+  Flags = "sf_shift2";
+  Lump = "DSBGSIT1";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 98;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "bgsit2";
+  Flags = "sf_shift2";
+  Lump = "DSBGSIT2";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 98;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "sgtsit";
+  Flags = "sf_shift2";
+  Lump = "DSSGTSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 98;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "cacsit";
+  Flags = "sf_shift2";
+  Lump = "DSCACSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 98;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "brssit";
+  Flags = "sf_shift2";
+  Lump = "DSBRSSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 94;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "cybsit";
+  Flags = shift2 | dontstop;
+  Lump = "DSCYBSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 92;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "spisit";
+  Flags = shift2 | dontstop;
+  Lump = "DSSPISIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 90;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "bspsit";
+  Flags = "sf_shift2";
+  Lump = "DSBSPSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 90;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "kntsit";
+  Flags = "sf_shift2";
+  Lump = "DSKNTSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 90;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "vilsit";
+  Flags = "sf_shift2";
+  Lump = "DSVILSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 90;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "mansit";
+  Flags = "sf_shift2";
+  Lump = "DSMANSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 90;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "pesit";
+  Flags = "sf_shift2";
+  Lump = "DSPESIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 90;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "sklatk";
+  Flags = "sf_shift2";
+  Lump = "DSSKLATK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "sgtatk";
+  Flags = "sf_shift2";
+  Lump = "DSSGTATK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "skepch";
+  Flags = "sf_shift2";
+  Lump = "DSSKEPCH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "vilatk";
+  Flags = "sf_shift2";
+  Lump = "DSVILATK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "claw";
+  Flags = "sf_shift2";
+  Lump = "DSCLAW";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "skeswg";
+  Flags = "sf_shift2";
+  Lump = "DSSKESWG";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "pldeth";
+  Flags = "sf_shift2";
+  Lump = "DSPLDETH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "pdiehi";
+  Flags = "sf_shift2";
+  Lump = "DSPDIEHI";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "podth1";
+  Flags = "sf_shift2";
+  Lump = "DSPODTH1";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "podth2";
+  Flags = "sf_shift2";
+  Lump = "DSPODTH2";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "podth3";
+  Flags = "sf_shift2";
+  Lump = "DSPODTH3";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bgdth1";
+  Flags = "sf_shift2";
+  Lump = "DSBGDTH1";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bgdth2";
+  Flags = "sf_shift2";
+  Lump = "DSBGDTH2";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "sgtdth";
+  Flags = "sf_shift2";
+  Lump = "DSSGTDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "cacdth";
+  Flags = "sf_shift2";
+  Lump = "DSCACDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "skldth";
+  Flags = "sf_shift2";
+  Lump = "DSSKLDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "brsdth";
+  Flags = "sf_shift2";
+  Lump = "DSBRSDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "cybdth";
+  Flags = "sf_shift2";
+  Lump = "DSCYBDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "spidth";
+  Flags = "sf_shift2";
+  Lump = "DSSPIDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bspdth";
+  Flags = "sf_shift2";
+  Lump = "DSBSPDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "vildth";
+  Flags = "sf_shift2";
+  Lump = "DSVILDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "kntdth";
+  Flags = "sf_shift2";
+  Lump = "DSKNTDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "pedth";
+  Flags = "sf_shift2";
+  Lump = "DSPEDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "skedth";
+  Flags = "sf_shift2";
+  Lump = "DSSKEDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "posact";
+  Flags = "sf_shift2";
+  Lump = "DSPOSACT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 120;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "bgact";
+  Flags = "sf_shift2";
+  Lump = "DSBGACT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 120;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "dmact";
+  Flags = "sf_shift2";
+  Lump = "DSDMACT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 120;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "bspact";
+  Flags = "sf_shift2";
+  Lump = "DSBSPACT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "bspwlk";
+  Flags = "sf_shift2";
+  Lump = "DSBSPWLK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "vilact";
+  Flags = "sf_shift2";
+  Lump = "DSVILACT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = 1;
+}
+
+Sound {
+  ID = "noway";
+  Flags = "sf_shift2";
+  Lump = "DSNOWAY";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 78;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "barexp";
+  Flags = "sf_shift2 sf_dontstop";
+  Lump = "DSBAREXP";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 60;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "punch";
+  Flags = "sf_shift2";
+  Lump = "DSPUNCH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "hoof";
+  Flags = "sf_shift2";
+  Lump = "DSHOOF";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "metal";
+  Flags = "sf_shift2";
+  Lump = "DSMETAL";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "chgun";
+  Flags = "sf_shift2";
+  Lump = "DSCHGUN";
+  Link = "pistol";
+  Link pitch = 150;
+  Priority = 64;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "tink";
+  Lump = "DSTINK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 60;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bdopn";
+  Flags = "sf_shift2";
+  Lump = "DSBDOPN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bdcls";
+  Flags = "sf_shift2";
+  Lump = "DSBDCLS";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "itmbk";
+  Flags = "sf_shift2";
+  Lump = "DSITMBK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 100;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "flame";
+  Flags = "sf_shift2";
+  Lump = "DSFLAME";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "flamst";
+  Flags = "sf_shift2";
+  Lump = "DSFLAMST";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 32;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "getpow";
+  Flags = "sf_shift2";
+  Lump = "DSGETPOW";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 60;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bospit";
+  Flags = "sf_shift2";
+  Lump = "DSBOSPIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "boscub";
+  Flags = "sf_shift2";
+  Lump = "DSBOSCUB";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bossit";
+  Flags = "sf_shift2";
+  Lump = "DSBOSSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bospn";
+  Flags = "sf_shift2";
+  Lump = "DSBOSPN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "bosdth";
+  Flags = "sf_shift2";
+  Lump = "DSBOSDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "manatk";
+  Flags = "sf_shift2";
+  Lump = "DSMANATK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "mandth";
+  Flags = "sf_shift2";
+  Lump = "DSMANDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "sssit";
+  Flags = "sf_shift2";
+  Lump = "DSSSSIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "ssdth";
+  Flags = "sf_shift2";
+  Lump = "DSSSDTH";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "keenpn";
+  Flags = "sf_shift2";
+  Lump = "DSKEENPN";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "keendt";
+  Flags = "sf_shift2";
+  Lump = "DSKEENDT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "skeact";
+  Flags = "sf_shift2";
+  Lump = "DSSKEACT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "skesit";
+  Flags = "sf_shift2";
+  Lump = "DSSKESIT";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "skeatk";
+  Flags = "sf_shift2";
+  Lump = "DSSKEATK";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 70;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "radio";
+  Lump = "DSRADIO";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 60;
+  Max channels = -1;
+}
+
+Sound {
+  ID = "secret";
+  Flags = "sf_shift2";
+  Lump = "DSGETPOW";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 60;
+  Max channels = -1;
+}

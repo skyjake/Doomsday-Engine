@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -46,7 +46,7 @@
 #define PLUGIN_DETAILS      "Doomsday plugin for audio playback via OpenAL"
 
 #define PLUGIN_VERSION_TEXT "1.2.4"
-#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DSOPENAL_VER_ID ")"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DSOPENAL_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,2,4,0 // For WIN32 version info.
 
 #endif

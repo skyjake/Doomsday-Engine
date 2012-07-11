@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -90,10 +90,10 @@ extern seqnode_t* SequenceListHead;
 
 void            SN_InitSequenceScript(void);
 void            SN_StartSequence(mobj_t* mobj, int sequence);
-void            SN_StartSequenceInSec(sector_t* sector, int seqBase);
+void            SN_StartSequenceInSec(Sector* sector, int seqBase);
 void            SN_StartSequenceName(mobj_t* mobj, const char* name);
 void            SN_StopSequence(mobj_t* mobj);
-void            SN_StopSequenceInSec(sector_t* sector);
+void            SN_StopSequenceInSec(Sector* sector);
 void            SN_UpdateActiveSequences(void);
 void            SN_StopAllSequences(void);
 int             SN_GetSequenceOffset(int sequence, int* sequencePtr);

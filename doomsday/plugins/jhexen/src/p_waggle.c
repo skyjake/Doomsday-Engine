@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -56,7 +56,7 @@
 
 void T_FloorWaggle(waggle_t* waggle)
 {
-    float               fh;
+    coord_t fh;
 
     switch(waggle->state)
     {
@@ -81,9 +81,9 @@ void T_FloorWaggle(waggle_t* waggle)
 
     case WS_REDUCE:
         if((waggle->scale -= waggle->scaleDelta) <= 0)
-        {   // Remove.
-            P_SetFloatp(waggle->sector, DMU_FLOOR_HEIGHT,
-                        waggle->originalHeight);
+        {
+            // Remove.
+            P_SetDoublep(waggle->sector, DMU_FLOOR_HEIGHT, waggle->originalHeight);
             P_ChangeSector(waggle->sector, true);
             P_ToXSector(waggle->sector)->specialData = NULL;
             P_TagFinished(P_ToXSector(waggle->sector)->tag);
@@ -96,23 +96,21 @@ void T_FloorWaggle(waggle_t* waggle)
     waggle->accumulator += waggle->accDelta;
     fh = waggle->originalHeight +
         FLOATBOBOFFSET(((int) waggle->accumulator) & 63) * waggle->scale;
-    P_SetFloatp(waggle->sector, DMU_FLOOR_HEIGHT, fh);
-    P_SetFloatp(waggle->sector, DMU_FLOOR_TARGET_HEIGHT, fh);
+    P_SetDoublep(waggle->sector, DMU_FLOOR_HEIGHT, fh);
+    P_SetDoublep(waggle->sector, DMU_FLOOR_TARGET_HEIGHT, fh);
     P_SetFloatp(waggle->sector, DMU_FLOOR_SPEED, 0);
     P_ChangeSector(waggle->sector, true);
 }
 
-boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
-                            int timer)
+boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer)
 {
-    boolean             retCode = false;
-    sector_t*           sec = NULL;
-    waggle_t*      waggle;
-    iterlist_t*         list;
+    boolean retCode = false;
+    Sector* sec = NULL;
+    waggle_t* waggle;
+    iterlist_t* list;
 
     list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return retCode;
+    if(!list) return retCode;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
@@ -129,7 +127,7 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
 
         P_ToXSector(sec)->specialData = waggle;
         waggle->sector = sec;
-        waggle->originalHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
+        waggle->originalHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
         waggle->accumulator = offset;
         waggle->accDelta = FIX2FLT(speed << 10);
         waggle->scale = 0;

@@ -1,0 +1,15 @@
+@deflist{
+
+@item{@file{addons/}} Directory where to put addons (@file{.wad}, @file{.pk3},
+Snowberry @file{.addon}, etc.) so that they appear in the launcher's list.
+
+@item{@file{runtime/client.id}} Unique client identifier. Used to identify
+clients in a multiplayer game. Delete this file to generate a new identifier,
+for instance if you're getting a @dquote{duplicate ID} error.
+
+@item{@file{runtime/configs/}} Saved values for console variables and control
+bindings.
+
+@item{@file{runtime/doomsday.out}} The Doomsday message log.
+
+}

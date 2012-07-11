@@ -1,10 +1,10 @@
-/**\file
+/**\file h2def.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,10 +21,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- */
-
-/**
- * h2def.h:
  */
 
 #ifndef __H2DEF_H__
@@ -45,6 +41,7 @@
 #  define strupr _strupr
 #endif
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
@@ -84,15 +81,9 @@
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-#define CONFIGFILE          GAMENAMETEXT".cfg"
-#define DEFSFILE            GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH            "}data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
-#define STARTUPPK3          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
-
 // Verbose messages.
-#define VERBOSE(code)   { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 extern game_import_t gi;
 extern game_export_t gx;
@@ -105,40 +96,57 @@ extern game_export_t gx;
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Game mode handling - identify IWAD version to handle IWAD dependend
-// animations etc.
 typedef enum {
-    shareware, // 4 map demo
-    registered, // HEXEN registered
-    extended, // DeathKings
-    indetermined, // Well, no IWAD found.
+    hexen_demo,
+    hexen,
+    hexen_deathkings,
+    hexen_betademo, // hexen_demo with some bugs
+    hexen_v10,      // Hexen release 1.0
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_SHAREWARE        0x1 // 4 map demo
-#define GM_REGISTERED       0x2 // HEXEN registered
-#define GM_EXTENDED         0x4 // DeathKings
-#define GM_INDETERMINED     0x8 // Well, no IWAD found.
+#define GM_HEXEN_DEMO       0x1
+#define GM_HEXEN            0x2
+#define GM_HEXEN_DEATHKINGS 0x4
+#define GM_HEXEN_BETA       0x8
+#define GM_HEXEN_V10        0x10
 
-#define GM_ANY              (GM_SHAREWARE|GM_REGISTERED|GM_EXTENDED)
-#define GM_NOTSHAREWARE     (GM_REGISTERED|GM_EXTENDED)
+#define GM_ANY              (GM_HEXEN_DEMO|GM_HEXEN|GM_HEXEN_DEATHKINGS|GM_HEXEN_BETA|GM_HEXEN_V10)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
 #define SCREEN_MUL          1
 
 #define MAXPLAYERS          8
+#define NUMPLAYERCOLORS     8
+
+#define NUMTEAMS            8 // Color = team.
 
 // Playsim, core timing rate in cycles per second.
 #define TICRATE             35
 #define TICSPERSEC          35
 
+#define NUMSAVESLOTS        6
+
+/**
+ * Difficulty/skill settings/filters.
+ */
+typedef enum {
+    SM_BABY,
+    SM_EASY,
+    SM_MEDIUM,
+    SM_HARD,
+    SM_NIGHTMARE,
+    NUM_SKILL_MODES
+} skillmode_t;
+
 /**
  * Armor types.
  */
 typedef enum {
-    ARMOR_ARMOR,
+    ARMOR_FIRST,
+    ARMOR_ARMOR = ARMOR_FIRST,
     ARMOR_SHIELD,
     ARMOR_HELMET,
     ARMOR_AMULET,
@@ -149,16 +157,21 @@ typedef enum {
  * Player Classes
  */
 typedef enum {
-    PCLASS_FIGHTER,
+    PCLASS_NONE = -1,
+    PCLASS_FIRST = 0,
+    PCLASS_FIGHTER = PCLASS_FIRST,
     PCLASS_CLERIC,
     PCLASS_MAGE,
     PCLASS_PIG,
     NUM_PLAYER_CLASSES
 } playerclass_t;
 
-#define PCLASS_INFO(class)  (&classInfo[class])
+#define VALID_PLAYER_CLASS(c)       ((c) >= PCLASS_FIRST && (c) < NUM_PLAYER_CLASSES)
+
+#define PCLASS_INFO(c)              (&classInfo[c])
 
 typedef struct classinfo_s{
+    playerclass_t plrClass;
     const char* niceName;
     boolean     userSelectable;
     mobjtype_t  mobjType;
@@ -177,6 +190,7 @@ typedef struct classinfo_s{
     int         failUseSound; // sound played when a use fails.
     int         armorIncrement[NUMARMOR];
     int         pieceX[3]; // temp.
+    textenum_t  skillModeNames[NUM_SKILL_MODES];
 } classinfo_t;
 
 extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
@@ -198,22 +212,11 @@ typedef enum {
 } gamestate_t;
 
 /**
- * Difficulty/skill settings/filters.
- */
-typedef enum {
-    SM_BABY,
-    SM_EASY,
-    SM_MEDIUM,
-    SM_HARD,
-    SM_NIGHTMARE,
-    NUM_SKILL_MODES
-} skillmode_t;
-
-/**
  * Keys (as in, keys to lockables).
  */
 typedef enum {
-    KT_KEY1,
+    KT_FIRST,
+    KT_KEY1 = KT_FIRST,
     KT_KEY2,
     KT_KEY3,
     KT_KEY4,
@@ -247,13 +250,16 @@ typedef enum {
 #define WPIECE2             2
 #define WPIECE3             4
 
+#define VALID_WEAPONTYPE(val) ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
+
 #define NUMWEAPLEVELS       1 // Number of weapon power levels.
 
 /**
  * Ammunition types.
  */
 typedef enum {
-    AT_BLUEMANA,
+    AT_FIRST,
+    AT_BLUEMANA = AT_FIRST,
     AT_GREENMANA,
     NUM_AMMO_TYPES,
 
@@ -335,7 +341,7 @@ typedef enum {
 
 #define BLINKTHRESHOLD      (4*TICRATE)
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 
@@ -343,8 +349,6 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define IS_CLIENT           (Get(DD_CLIENT))
 #define IS_NETGAME          (Get(DD_NETGAME))
 #define IS_DEDICATED        (Get(DD_DEDICATED))
-
-#define CVAR(typ, x)        (*(typ*)Con_GetVariable(x)->ptr)
 
 #define SFXVOLUME           (Get(DD_SFX_VOLUME)/17)
 #define MUSICVOLUME         (Get(DD_MUSIC_VOLUME)/17)
@@ -382,54 +386,16 @@ extern boolean  modifiedgame;
 
 void            H2_Main(void);
 
-void            G_IdentifyVersion(void);
-void            G_CommonPreInit(void);
-void            G_CommonPostInit(void);
-
-int             G_GetInteger(int id);
-void*           G_GetVariable(int id);
-
-void            G_DeathMatchSpawnPlayer(int playernum);
-uint            G_GetMapNumber(uint episode, uint map);
-void            G_InitNew(skillmode_t skill, uint episode, uint map);
-void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
-void            G_DeferredNewGame(skillmode_t skill);
-void            G_DeferedPlayDemo(char* demo);
-void            G_DoPlayDemo(void);
-void            G_LoadGame(int slot);
-void            G_DoLoadGame(void);
-void            G_PlayDemo(char* name);
-void            G_TimeDemo(char* name);
-void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
-void            G_StartNewGame(skillmode_t skill);
-void            G_StartNewInit(void);
-void            G_WorldDone(void);
-void            G_ScreenShot(void);
-void            G_DoReborn(int playernum);
-void            G_StopDemo(void);
-void            G_DemoEnds(void);
-void            G_DemoAborted(void);
-
-void            G_Ticker(timespan_t ticLength);
-boolean         G_Responder(event_t* ev);
-
 void            P_Init(void);
-
-void            P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
-
-extern boolean setsizeneeded;
 
 extern int      localQuakeHappening[MAXPLAYERS];
 
 byte            P_Random(void);
 void            M_ResetRandom(void);
 
-extern unsigned char rndtable[256];
-
 void            SC_Open(const char* name);
-void            SC_OpenLump(lumpnum_t lump);
+void            SC_OpenLump(lumpnum_t lumpNum);
 void            SC_OpenFile(const char* name);
-void            SC_OpenFileCLib(const char* name);
 void            SC_Close(void);
 boolean         SC_GetString(void);
 void            SC_MustGetString(void);
@@ -450,19 +416,5 @@ extern boolean sc_End;
 extern boolean sc_Crossed;
 extern boolean sc_FileScripts;
 extern const char* sc_ScriptsDir;
-
-//----------------------
-// Chat mode (CT_chat.c)
-//----------------------
-
-void            CT_Init(void);
-void            CT_Drawer(void);
-boolean         CT_Responder(event_t* ev);
-void            CT_Ticker(void);
-char            CT_dequeueChatChar(void);
-
-extern boolean  chatmodeon;
-
-void        Draw_TeleportIcon(void);
 
 #endif // __H2DEF_H__

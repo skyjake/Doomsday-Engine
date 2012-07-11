@@ -1,9 +1,9 @@
-/**\file
+/**\file dam_file.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,17 +22,29 @@
  */
 
 /**
- * dam_file.h: Doomsday Archived Map (DAM), reader/writer.
+ * Doomsday Archived Map (DAM), reader/writer.
  */
 
-#ifndef __DOOMSDAY_ARCHIVED_MAP_FILE_H__
-#define __DOOMSDAY_ARCHIVED_MAP_FILE_H__
+#ifndef LIBDENG_ARCHIVED_MAP_FILE_H
+#define LIBDENG_ARCHIVED_MAP_FILE_H
 
 #include "de_play.h"
+#include "dd_string.h"
 
-boolean         DAM_MapIsValid(filename_t cachedMapDataFile, int markerLumpNum);
+/**
+ * Check if a map in the archive is up to date. The source data must not be
+ * newer than the cached map data.
+ */
+boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum);
 
-boolean         DAM_MapWrite(gamemap_t *map, filename_t path);
-boolean         DAM_MapRead(gamemap_t *map, filename_t path);
+/**
+ * Write the current state of the map into a Doomsday Archived Map.
+ */
+boolean DAM_MapWrite(GameMap* map, const char* path);
 
-#endif
+/**
+ * Load a map from a Doomsday Archived Map.
+ */
+boolean DAM_MapRead(GameMap* map, const char* path);
+
+#endif /* LIBDENG_ARCHIVED_MAP_FILE_H */

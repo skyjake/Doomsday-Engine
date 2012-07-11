@@ -1,0 +1,246 @@
+# DOOM2 (TNT) - Map metadata
+#
+# For further information on Map Info definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Map_Info
+#
+
+Header { Version = 5; }
+
+# The default definition, used for any maps without a map info definition.
+Map Info {
+  ID = "*";
+  Author = "Unknown";
+  Music = "runnin";
+  Gravity = 1;
+  Sky = "sky1";
+}
+
+Map Info {
+  ID = "MAP01";
+  Name = "THUSTR_1";
+  Author = "Team TNT";
+  Music = "runnin";
+  Par time = 30;
+  Gravity = 1;
+  Sky = "sky1";
+}
+
+Copy Map Info {
+  ID = "MAP02";
+  Name = "THUSTR_2";
+  Music = "stalks";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP03";
+  Name = "THUSTR_3";
+  Music = "countd";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP04";
+  Name = "THUSTR_4";
+  Music = "betwee";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP05";
+  Name = "THUSTR_5";
+  Music = "doom";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP06";
+  Name = "THUSTR_6";
+  Music = "the_da";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP07";
+  Name = "THUSTR_7";
+  Music = "shawn";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP08";
+  Name = "THUSTR_8";
+  Music = "ddtblu";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP09";
+  Name = "THUSTR_9";
+  Music = "in_cit";
+  Par time = 270;
+}
+
+Copy Map Info {
+  ID = "MAP10";
+  Name = "THUSTR_10";
+  Music = "dead";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP11";
+  Name = "THUSTR_11";
+  Music = "stlks2";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP12";
+  Name = "THUSTR_12";
+  Music = "theda2";
+  Par time = 150;
+  Sky = "sky2";
+}
+
+Copy Map Info {
+  ID = "MAP13";
+  Name = "THUSTR_13";
+  Music = "doom2";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP14";
+  Name = "THUSTR_14";
+  Music = "ddtbl2";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP15";
+  Name = "THUSTR_15";
+  Music = "runni2";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP16";
+  Name = "THUSTR_16";
+  Music = "dead2";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP17";
+  Name = "THUSTR_17";
+  Music = "stlks3";
+  Par time = 420;
+}
+
+Copy Map Info {
+  ID = "MAP18";
+  Name = "THUSTR_18";
+  Music = "romero";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP19";
+  Name = "THUSTR_19";
+  Music = "shawn2";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP20";
+  Name = "THUSTR_20";
+  Music = "messag";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP21";
+  Name = "THUSTR_21";
+  Music = "in_cit";
+  Par time = 240;
+  Sky = "sky3";
+}
+
+Copy Map Info {
+  ID = "MAP22";
+  Name = "THUSTR_22";
+  Music = "ddtbl3";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP23";
+  Name = "THUSTR_23";
+  Music = "ampie";
+  Par time = 180;
+}
+
+Copy Map Info {
+  ID = "MAP24";
+  Name = "THUSTR_24";
+  Music = "theda3";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP25";
+  Name = "THUSTR_25";
+  Music = "adrian";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP26";
+  Name = "THUSTR_26";
+  Music = "messg2";
+  Par time = 300;
+}
+
+Copy Map Info {
+  ID = "MAP27";
+  Name = "THUSTR_27";
+  Music = "romer2";
+  Par time = 330;
+}
+
+Copy Map Info {
+  ID = "MAP28";
+  Name = "THUSTR_28";
+  Music = "tense";
+  Par time = 420;
+}
+
+Copy Map Info {
+  ID = "MAP29";
+  Name = "THUSTR_29";
+  Music = "shawn3";
+  Par time = 300;
+}
+
+Copy Map Info {
+  ID = "MAP30";
+  Name = "THUSTR_30";
+  Music = "openin";
+  Par time = 180;
+}
+
+Copy Map Info {
+  ID = "MAP31";
+  Name = "THUSTR_31";
+  Music = "evil";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP32";
+  Name = "THUSTR_32";
+  Music = "ultima";
+  Par time = 30;
+}

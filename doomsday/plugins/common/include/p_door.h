@@ -1,10 +1,10 @@
-/**\file
+/**\file p_door.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * p_door.h: Common playsim routines relating to doors.
+ * Common playsim routines relating to doors.
  */
 
-#ifndef __COMMON_THINKER_DOOR_H__
-#define __COMMON_THINKER_DOOR_H__
+#ifndef LIBCOMMON_THINKER_DOOR_H
+#define LIBCOMMON_THINKER_DOOR_H
 
 typedef enum {
     DS_DOWN = -1,
@@ -61,36 +61,40 @@ typedef enum {
 } doortype_e;
 
 typedef struct {
-    thinker_t       thinker;
-    doortype_e      type;
-    sector_t*       sector;
-    float           topHeight;
-    float           speed;
-    doorstate_e     state;
-    int             topWait; // Tics to wait at the top.
-    int             topCountDown;
+    thinker_t thinker;
+    doortype_e type;
+    Sector* sector;
+    coord_t topHeight;
+    float speed;
+    doorstate_e state;
+    int topWait; // Tics to wait at the top.
+    int topCountDown;
 } door_t;
 
 #define DOORSPEED          (2)
 #define DOORWAIT           (150)
 
-void        T_Door(door_t* door);
+void T_Door(door_t* door);
 
-boolean     EV_VerticalDoor(linedef_t* li, mobj_t* mo);
+boolean EV_VerticalDoor(LineDef* li, mobj_t* mo);
+
 #if __JHEXEN__
-int         EV_DoDoor(linedef_t* li, byte* args, doortype_e type);
+int EV_DoDoor(LineDef* li, byte* args, doortype_e type);
 #else
-int         EV_DoDoor(linedef_t* li, doortype_e type);
-#endif
-#if __JDOOM__ || __JDOOM64__
-int         EV_DoLockedDoor(linedef_t* li, doortype_e type, mobj_t* mo);
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-void        P_SpawnDoorCloseIn30(sector_t* sec);
-void        P_SpawnDoorRaiseIn5Mins(sector_t* sec);
-#endif
-#if __JDOOM64__
-int         EV_AnimateDoor(linedef_t* li, mobj_t* mo);
+int EV_DoDoor(LineDef* li, doortype_e type);
 #endif
 
+#if __JDOOM__ || __JDOOM64__
+int EV_DoLockedDoor(LineDef* li, doortype_e type, mobj_t* mo);
 #endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+void P_SpawnDoorCloseIn30(Sector* sec);
+void  P_SpawnDoorRaiseIn5Mins(Sector* sec);
+#endif
+
+#if __JDOOM64__
+int EV_AnimateDoor(LineDef* li, mobj_t* mo);
+#endif
+
+#endif /// LIBCOMMON_THINKER_DOOR_H

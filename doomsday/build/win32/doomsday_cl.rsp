@@ -1,14 +1,15 @@
+ .\..\..\engine\portable\src\animator.c
  .\..\..\engine\portable\src\def_read.c
  .\..\..\engine\portable\src\def_main.c
  .\..\..\engine\portable\src\def_data.c
  .\..\..\engine\portable\src\ui_panel.c
  .\..\..\engine\portable\src\ui_mpi.c
  .\..\..\engine\portable\src\ui_main.c
+ .\..\..\engine\portable\src\ui2_main.c
  .\..\..\engine\portable\src\tab_tables.c
  .\..\..\engine\portable\src\m_vector.c
  .\..\..\engine\portable\src\m_string.c
  .\..\..\engine\portable\src\m_nodepile.c
- .\..\..\engine\portable\src\m_filehash.c
  .\..\..\plugins\common\src\m_fixed.c
  .\..\..\engine\portable\src\m_gridmap.c
  .\..\..\engine\portable\src\m_huffman.c
@@ -21,6 +22,7 @@
  .\..\..\engine\portable\src\m_linkedlist.c
  .\..\..\engine\portable\src\m_binarytree.c
  .\..\..\engine\portable\src\m_stack.c
+ .\..\..\engine\portable\src\materialvariant.c
  .\..\..\engine\portable\src\s_wav.c
  .\..\..\engine\portable\src\s_sfx.c
  .\..\..\engine\portable\src\s_mus.c
@@ -28,6 +30,13 @@
  .\..\..\engine\portable\src\s_logic.c
  .\..\..\engine\portable\src\s_environ.c
  .\..\..\engine\portable\src\s_cache.c
+ .\..\..\engine\portable\src\fi_main.c
+ .\..\..\engine\portable\src\filedirectory.c
+ .\..\..\engine\portable\src\dfile.c
+ .\..\..\engine\portable\src\filelist.c
+ .\..\..\engine\portable\src\finaleinterpreter.c
+ .\..\..\engine\portable\src\fonts.c
+ .\..\..\engine\portable\src\gameinfo.c
  .\..\..\engine\portable\src\gl_defer.c
  .\..\..\engine\portable\src\gl_texmanager.c
  .\..\..\engine\portable\src\gl_tga.c
@@ -36,12 +45,17 @@
  .\..\..\engine\portable\src\gl_pcx.c
  .\..\..\engine\portable\src\gl_main.c
  .\..\..\engine\portable\src\gl_hq2x.c
- .\..\..\engine\portable\src\gl_font.c
  .\..\..\engine\portable\src\gl_draw.c
+ .\..\..\engine\portable\src\gl_drawvectorgraphic.c
+ .\..\..\engine\portable\src\texture.c
+ .\..\..\engine\portable\src\texturevariant.c
+ .\..\..\engine\portable\src\image.c
+ .\..\..\engine\portable\src\pathdirectory.c
  .\..\..\engine\portable\src\rend_console.c
  .\..\..\engine\portable\src\rend_bias.c
  .\..\..\engine\portable\src\edit_bias.c
  .\..\..\engine\portable\src\edit_map.c
+ .\..\..\engine\portable\src\rend_dynlight.c
  .\..\..\engine\portable\src\rend_sprite.c
  .\..\..\engine\portable\src\rend_sky.c
  .\..\..\engine\portable\src\rend_shadow.c
@@ -51,17 +65,17 @@
  .\..\..\engine\portable\src\rend_list.c
  .\..\..\engine\portable\src\rend_halo.c
  .\..\..\engine\portable\src\rend_fakeradio.c
- .\..\..\engine\portable\src\rend_dyn.c
+ .\..\..\engine\portable\src\rend_font.c
  .\..\..\engine\portable\src\rend_decor.c
  .\..\..\engine\portable\src\rend_clip.c
+ .\..\..\engine\portable\src\r_fakeradio.c
  .\..\..\engine\portable\src\r_world.c
  .\..\..\engine\portable\src\r_util.c
  .\..\..\engine\portable\src\r_things.c
- .\..\..\engine\portable\src\r_sky.c
  .\..\..\engine\portable\src\r_shadow.c
+ .\..\..\engine\portable\src\r_sky.c
  .\..\..\engine\portable\src\r_model.c
  .\..\..\engine\portable\src\r_main.c
- .\..\..\engine\portable\src\r_extres.c
  .\..\..\engine\portable\src\r_draw.c
  .\..\..\engine\portable\src\r_data.c
  .\..\..\engine\portable\src\r_lgrid.c
@@ -76,7 +90,7 @@
  .\..\..\engine\portable\src\p_players.c
  .\..\..\engine\portable\src\p_mobj.c
  .\..\..\engine\portable\src\p_maputil.c
- .\..\..\engine\portable\src\p_material.c
+ .\..\..\engine\portable\src\material.c
  .\..\..\engine\portable\src\p_materialmanager.c
  .\..\..\engine\portable\src\p_intercept.c
  .\..\..\engine\portable\src\p_data.c
@@ -94,24 +108,29 @@
  .\..\..\engine\portable\src\dam_main.c
  .\..\..\engine\portable\src\dam_file.c
  .\..\..\engine\portable\src\dam_blockmap.c
+ .\..\..\engine\portable\src\bitmapfont.c
+ .\..\..\engine\portable\src\blockset.c
  .\..\..\engine\portable\src\bsp_edge.c
  .\..\..\engine\portable\src\bsp_intersection.c
  .\..\..\engine\portable\src\bsp_map.c
  .\..\..\engine\portable\src\bsp_main.c
  .\..\..\engine\portable\src\bsp_node.c
  .\..\..\engine\portable\src\bsp_superblock.c
+ .\..\..\engine\portable\src\stringpool.c
  .\..\..\engine\portable\src\sv_sound.c
  .\..\..\engine\portable\src\sv_pool.c
  .\..\..\engine\portable\src\sv_missile.c
  .\..\..\engine\portable\src\sv_main.c
  .\..\..\engine\portable\src\sv_frame.c
+ .\..\..\engine\portable\src\sv_infine.c
  .\..\..\engine\portable\src\cl_world.c
-  .\..\..\engine\portable\src\cl_sound.c
+ .\..\..\engine\portable\src\cl_sound.c
  .\..\..\engine\portable\src\cl_player.c
  .\..\..\engine\portable\src\cl_mobj.c
  .\..\..\engine\portable\src\cl_main.c
  .\..\..\engine\portable\src\cl_frame.c
-  .\..\..\engine\portable\src\net_ping.c
+ .\..\..\engine\portable\src\cl_infine.c
+ .\..\..\engine\portable\src\net_ping.c
  .\..\..\engine\portable\src\net_msg.c
  .\..\..\engine\portable\src\net_main.c
  .\..\..\engine\portable\src\net_event.c
@@ -128,24 +147,31 @@
  .\..\..\engine\portable\src\sys_master.c
  .\..\..\engine\win32\src\sys_input.c
  .\..\..\engine\win32\src\sys_findfile.c
- .\..\..\engine\portable\src\sys_filein.c
  .\..\..\engine\portable\src\sys_direc.c
  .\..\..\engine\win32\src\sys_console.c
+ .\..\..\engine\portable\src\sys_reslocator.c
  .\..\..\engine\portable\src\b_context.c
  .\..\..\engine\portable\src\b_command.c
  .\..\..\engine\portable\src\b_device.c
  .\..\..\engine\portable\src\b_main.c
  .\..\..\engine\portable\src\b_util.c
+ .\..\..\engine\portable\src\cbuffer.c
+ .\..\..\engine\portable\src\colorpalette.c
  .\..\..\engine\portable\src\con_busy.c
  .\..\..\engine\portable\src\con_data.c
- .\..\..\engine\portable\src\con_buffer.c
  .\..\..\engine\portable\src\con_main.c
  .\..\..\engine\portable\src\con_config.c
  .\..\..\engine\portable\src\con_bar.c
  .\..\..\engine\portable\src\dd_zone.c
- .\..\..\engine\portable\src\dd_zip.c
  .\..\..\engine\win32\src\dd_winit.c
  .\..\..\engine\win32\src\sys_window.c
+ .\..\..\engine\portable\src\lumpdirectory.c
+ .\..\..\engine\portable\src\abstractfile.c
+ .\..\..\engine\portable\src\lumpfile.c
+ .\..\..\engine\portable\src\wadfile.c
+ .\..\..\engine\portable\src\zipfile.c
+ .\..\..\engine\portable\src\fs_main.c
+ .\..\..\engine\portable\src\fs_util.c
  .\..\..\engine\portable\src\dd_wad.c
  .\..\..\engine\portable\src\dd_plugin.c
  .\..\..\engine\portable\src\dd_pinit.c
@@ -155,8 +181,11 @@
  .\..\..\engine\portable\src\dd_help.c
  .\..\..\engine\portable\src\dgl_common.c
  .\..\..\engine\portable\src\dgl_draw.c
- .\..\..\engine\portable\src\dgl_texture.c
+ .\..\..\engine\portable\src\resourcenamespace.c
+ .\..\..\engine\portable\src\resourcerecord.c
  .\..\..\engine\portable\src\smoother.c
+ .\..\..\engine\portable\src\stringpool.c
  .\..\..\engine\portable\src\reader.c
  .\..\..\engine\portable\src\writer.c
-  
+ .\..\..\engine\portable\src\uri.c
+

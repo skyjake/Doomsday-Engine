@@ -1,10 +1,10 @@
-/**\file
+/**\file jhexen.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * jhexen.h: All jHexen Headers
+ * All jHexen Headers
  *
  * A convenience header for including all jHexen headers.
  */
@@ -38,9 +38,7 @@
 #include "../../jhexen/include/g_game.h"
 #include "../../jhexen/include/in_lude.h"
 #include "../../jhexen/include/m_cheat.h"
-#include "../../jhexen/include/m_menu.h"
 #include "../../jhexen/include/m_random.h"
-#include "../../jhexen/include/mn_def.h"
 #include "../../jhexen/include/p_acs.h"
 #include "../../jhexen/include/p_anim.h"
 #include "../../jhexen/include/p_enemy.h"
@@ -53,7 +51,6 @@
 #include "../../jhexen/include/p_pillar.h"
 #include "../../jhexen/include/p_pspr.h"
 #include "../../jhexen/include/p_setup.h"
-#include "../../jhexen/include/p_sound.h"
 #include "../../jhexen/include/p_spec.h"
 #include "../../jhexen/include/p_telept.h"
 #include "../../jhexen/include/p_things.h"

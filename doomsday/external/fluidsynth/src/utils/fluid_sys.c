@@ -960,6 +960,7 @@ void fluid_socket_close(fluid_socket_t sock)
 static void
 fluid_server_socket_run (void *data)
 {
+#if 0
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
   fluid_socket_t client_socket;
   struct sockaddr_in addr;
@@ -991,6 +992,7 @@ fluid_server_socket_run (void *data)
   }
 
   FLUID_LOG(FLUID_DBG, "Server closing");
+#endif
 }
 
 fluid_server_socket_t*

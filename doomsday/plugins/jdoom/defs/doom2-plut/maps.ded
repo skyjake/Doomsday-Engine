@@ -1,0 +1,246 @@
+# DOOM2 (Plutonia) - Map metadata
+#
+# For further information on Map Info definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Map_Info
+#
+
+Header { Version = 5; }
+
+# The default definition, used for any maps without a map info definition.
+Map Info {
+  ID = "*";
+  Author = "Unknown";
+  Music = "runnin";
+  Gravity = 1;
+  Sky = "sky1";
+}
+
+Map Info {
+  ID = "MAP01";
+  Name = "PHUSTR_1";
+  Author = "Dario Casali and Milo Casali";
+  Music = "runnin";
+  Par time = 30;
+  Gravity = 1;
+  Sky = "sky1";
+}
+
+Copy Map Info {
+  ID = "MAP02";
+  Name = "PHUSTR_2";
+  Music = "stalks";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP03";
+  Name = "PHUSTR_3";
+  Music = "countd";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP04";
+  Name = "PHUSTR_4";
+  Music = "betwee";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP05";
+  Name = "PHUSTR_5";
+  Music = "doom";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP06";
+  Name = "PHUSTR_6";
+  Music = "the_da";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP07";
+  Name = "PHUSTR_7";
+  Music = "shawn";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP08";
+  Name = "PHUSTR_8";
+  Music = "ddtblu";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP09";
+  Name = "PHUSTR_9";
+  Music = "in_cit";
+  Par time = 270;
+}
+
+Copy Map Info {
+  ID = "MAP10";
+  Name = "PHUSTR_10";
+  Music = "dead";
+  Par time = 90;
+}
+
+Copy Map Info {
+  ID = "MAP11";
+  Name = "PHUSTR_11";
+  Music = "stlks2";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP12";
+  Name = "PHUSTR_12";
+  Music = "theda2";
+  Par time = 150;
+  Sky = "sky2";
+}
+
+Copy Map Info {
+  ID = "MAP13";
+  Name = "PHUSTR_13";
+  Music = "doom2";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP14";
+  Name = "PHUSTR_14";
+  Music = "ddtbl2";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP15";
+  Name = "PHUSTR_15";
+  Music = "runni2";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP16";
+  Name = "PHUSTR_16";
+  Music = "dead2";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP17";
+  Name = "PHUSTR_17";
+  Music = "stlks3";
+  Par time = 420;
+}
+
+Copy Map Info {
+  ID = "MAP18";
+  Name = "PHUSTR_18";
+  Music = "romero";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP19";
+  Name = "PHUSTR_19";
+  Music = "shawn2";
+  Par time = 210;
+}
+
+Copy Map Info {
+  ID = "MAP20";
+  Name = "PHUSTR_20";
+  Music = "messag";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP21";
+  Name = "PHUSTR_21";
+  Music = "count2";
+  Par time = 240;
+  Sky = "sky3";
+}
+
+Copy Map Info {
+  ID = "MAP22";
+  Name = "PHUSTR_22";
+  Music = "ddtbl3";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP23";
+  Name = "PHUSTR_23";
+  Music = "ampie";
+  Par time = 180;
+}
+
+Copy Map Info {
+  ID = "MAP24";
+  Name = "PHUSTR_24";
+  Music = "theda3";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP25";
+  Name = "PHUSTR_25";
+  Music = "adrian";
+  Par time = 150;
+}
+
+Copy Map Info {
+  ID = "MAP26";
+  Name = "PHUSTR_26";
+  Music = "messg2";
+  Par time = 300;
+}
+
+Copy Map Info {
+  ID = "MAP27";
+  Name = "PHUSTR_27";
+  Music = "romer2";
+  Par time = 330;
+}
+
+Copy Map Info {
+  ID = "MAP28";
+  Name = "PHUSTR_28";
+  Music = "tense";
+  Par time = 420;
+}
+
+Copy Map Info {
+  ID = "MAP29";
+  Name = "PHUSTR_29";
+  Music = "shawn3";
+  Par time = 300;
+}
+
+Copy Map Info {
+  ID = "MAP30";
+  Name = "PHUSTR_30";
+  Music = "openin";
+  Par time = 180;
+}
+
+Copy Map Info {
+  ID = "MAP31";
+  Name = "PHUSTR_31";
+  Music = "evil";
+  Par time = 120;
+}
+
+Copy Map Info {
+  ID = "MAP32";
+  Name = "PHUSTR_32";
+  Music = "ultima";
+  Par time = 30;
+}
