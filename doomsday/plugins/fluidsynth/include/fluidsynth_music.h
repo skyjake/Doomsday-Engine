@@ -33,8 +33,8 @@ void    DM_Music_Shutdown(void);
 void    DM_Music_Set(int prop, float value);
 int     DM_Music_Get(int prop, void* ptr);
 void    DM_Music_Update(void);
-void*   DM_Music_SongBuffer(unsigned int length); // buffered play supported
-int     DM_Music_Play(int looped);
+//void*   DM_Music_SongBuffer(unsigned int length); // buffered play supported
+//int     DM_Music_Play(int looped);
 void    DM_Music_Stop(void);
 void    DM_Music_Pause(int setPause);
 int     DM_Music_PlayFile(const char *filename, int looped);
@@ -44,6 +44,8 @@ int     DM_Music_PlayFile(const char *filename, int looped);
 #endif
 
 // Internal:
-void    DM_Music_SetSoundFont(const char* fileName);
+void    DMFluid_Update();
+void    DMFluid_Shutdown();
+void    DMFluid_SetSoundFont(const char* fileName);
 
 #endif /* end of include guard: __DSFLUIDSYNTH_MUS_H__ */

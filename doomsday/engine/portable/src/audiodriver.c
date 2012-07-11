@@ -42,6 +42,7 @@ static const char* driverIdentifier[AUDIODRIVER_COUNT] = {
     "sdlmixer",
     "openal",
     "fmod",
+    "fluidsynth",
     "dsound",
     "winmm"
 };
@@ -149,6 +150,7 @@ static const char* getDriverName(audiodriver_e id)
     /* AUDIOD_SDL_MIXER */  "SDLMixer",
     /* AUDIOD_OPENAL */     "OpenAL",
     /* AUDIOD_FMOD */       "FMOD Ex",
+    /* AUDIOD_FLUIDSYNTH */ "FluidSynth",
     /* AUDIOD_DSOUND */     "DirectSound", // Win32 only
     /* AUDIOD_WINMM */      "Windows Multimedia" // Win32 only
     };
@@ -217,6 +219,11 @@ static boolean initDriver(audiodriver_e id)
         if(!loadAudioDriver(d, "FMOD"))
             return false;
         break;
+
+    case AUDIOD_FLUIDSYNTH:
+        if(!loadAudioDriver(d, "FluidSynth"))
+            return false;
+        break;
 #else
     case AUDIOD_OPENAL:
         if(!loadAudioDriver(d, "openal"))
@@ -225,6 +232,11 @@ static boolean initDriver(audiodriver_e id)
 
     case AUDIOD_FMOD:
         if(!loadAudioDriver(d, "fmod"))
+            return false;
+        break;
+
+    case AUDIOD_FLUIDSYNTH:
+        if(!loadAudioDriver(d, "fluidsynth"))
             return false;
         break;
 #endif

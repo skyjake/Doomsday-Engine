@@ -26,5 +26,6 @@ $CP plugins/jheretic/jHeretic.bundle $BUILDDIR/jHeretic.bundle
 $CP plugins/jhexen/jHexen.bundle $BUILDDIR/jHexen.bundle
 $CP plugins/jdoom64/jDoom64.bundle $BUILDDIR/jDoom64.bundle
 $CP plugins/fmod/dsFMOD.bundle $BUILDDIR/dsFMOD.bundle
+$CP plugins/fluidsynth/dsFluidSynth.bundle $BUILDDIR/dsFluidSynth.bundle
 
 echo "Bundling done."

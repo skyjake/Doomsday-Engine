@@ -20,7 +20,25 @@
  */
 
 #include "driver_fluidsynth.h"
+#include "doomsday.h"
 #include <string.h>
+#include <de/concurrency.h>
+#include <vector>
+
+static int sfontId = -1;
+static fluid_player_t* fsPlayer = 0;
+static thread_t worker;
+static volatile bool workerShouldStop;
+
+#define MAX_BLOCKS          8
+#define SAMPLES_PER_SECOND  44100
+#define BLOCK_SAMPLES       (SAMPLES_PER_SECOND/8)
+#define BYTES_PER_SAMPLE    2
+#define BLOCK_SIZE          (2 * BYTES_PER_SAMPLE * BLOCK_SAMPLES) // 16 bit
+
+static byte* blockBuffer;
+static bool blockReady[MAX_BLOCKS];
+static int nextBlock;
 
 struct SongBuffer
 {
@@ -43,7 +61,7 @@ static bool needReleaseSong;
 static float musicVolume;
 #endif
 static SongBuffer* songBuffer;
-static const char* soundFontFileName;
+//static const char* soundFontFileName;
 
 #if 0
 static FMOD_RESULT F_CALLBACK
@@ -95,6 +113,73 @@ static void releaseSongBuffer()
     }
 }
 
+
+static int synthThread(void* parm)
+{
+    DENG_UNUSED(parm);
+    DENG_ASSERT(blockBuffer != 0);
+
+    int block = 0;
+    while(!workerShouldStop)
+    {
+        if(blockReady[block])
+        {
+            // The block we're about to write to hasn't been streamed out yet.
+            // Let's wait a while.
+            Thread_Sleep(50);
+            continue;
+        }
+
+        DSFLUIDSYNTH_TRACE("Synthesizing block " << block << "...");
+
+        // Synthesize a block of samples into our buffer.
+        void* start = blockBuffer + block * BLOCK_SIZE;
+
+        // Synthesize a portion of the music.
+        fluid_synth_write_s16(DMFluid_Synth(), BLOCK_SAMPLES, start, 0, 2, start, 1, 2);
+
+        DSFLUIDSYNTH_TRACE("Block " << block << " marked ready.");
+
+        // It can now be streamed out.
+        blockReady[block] = true;
+
+        // Advance to next block.
+        block = (block + 1) % MAX_BLOCKS;
+    }
+    return 0;
+}
+
+/**
+ * Starts the synthesizer thread.
+ */
+static void startPlayer()
+{
+    DENG_ASSERT(!worker);
+
+    workerShouldStop = false;
+    worker = Sys_StartThread(synthThread, 0);
+}
+
+static void stopPlayer()
+{
+    if(!fsPlayer) return;
+
+    if(worker)
+    {
+        DSFLUIDSYNTH_TRACE("stopPlayer: Stopping thread " << worker);
+
+        workerShouldStop = true;
+        Sys_WaitThread(worker, 1000);
+        worker = 0;
+
+        DSFLUIDSYNTH_TRACE("stopPlayer: Thread stopped.");
+    }
+
+    DSFLUIDSYNTH_TRACE("stopPlayer: " << fsPlayer);
+    delete_fluid_player(fsPlayer);
+    fsPlayer = 0;
+}
+
 #if 0
 void setDefaultStreamBufferSize()
 {
@@ -115,21 +200,60 @@ int DM_Music_Init(void)
     musicVolume = 1.f;
 #endif
     songBuffer = 0;
-    soundFontFileName = 0; // empty for the default
+
+    blockBuffer = new byte[MAX_BLOCKS * BLOCK_SIZE];
+
+    //soundFontFileName = 0; // empty for the default
     return true; //fmodSystem != 0;
 }
 
-void DM_Music_Shutdown(void)
+void DMFluid_Shutdown(void)
 {
+    stopPlayer();
+
+    delete [] blockBuffer;
+    blockBuffer = 0;
+
+    memset(blockReady, 0, sizeof(blockReady));
+    nextBlock = 0;
+
+    if(fsPlayer)
+    {
+        delete_fluid_player(fsPlayer);
+        fsPlayer = 0;
+    }
+
     releaseSongBuffer();
-    soundFontFileName = 0;
+    //soundFontFileName = 0;
 
     DSFLUIDSYNTH_TRACE("Music_Shutdown.");
 }
 
-void DM_Music_SetSoundFont(const char* fileName)
+void DM_Music_Shutdown(void)
 {
-    soundFontFileName = fileName;
+    DMFluid_Shutdown();
+}
+
+void DMFluid_SetSoundFont(const char* fileName)
+{
+    if(sfontId >= 0)
+    {
+        // First unload the previous font.
+        fluid_synth_sfunload(DMFluid_Synth(), sfontId, false);
+    }
+
+    if(!fileName) return;
+
+    // Load the new one.
+    sfontId = fluid_synth_sfload(DMFluid_Synth(), fileName, true);
+    if(sfontId >= 0)
+    {
+        Con_Message("Loaded soundfont \"%s\" with id:%i.\n", fileName, sfontId);
+    }
+    else
+    {
+        Con_Message("Failed to load soundfont \"%s\".\n", fileName);
+    }
 }
 
 void DM_Music_Set(int prop, float value)
@@ -165,11 +289,7 @@ int DM_Music_Get(int prop, void* ptr)
         break;
 
     case MUSIP_PLAYING:
-        return false;
-#if 0
-        if(!fmodSystem) return false;
-        return music != 0; // NULL when not playing.
-#endif
+        return fsPlayer != 0;
 
     default:
         break;
@@ -178,9 +298,15 @@ int DM_Music_Get(int prop, void* ptr)
     return false;
 }
 
+void DMFluid_Update(void)
+{
+    // TODO: get the buffered output and stream it to the Sfx interface
+
+}
+
 void DM_Music_Update(void)
 {
-    // No need to do anything. The callback handles restarting.
+    DMFluid_Update();
 }
 
 void DM_Music_Stop(void)
@@ -192,45 +318,14 @@ void DM_Music_Stop(void)
 
     music->stop();
 #endif
+    if(!fsPlayer) return;
+
+    fluid_player_stop(fsPlayer);
 }
 
 #if 0
-static bool startSong()
-{
-    if(!fmodSystem || !song) return false;
-
-    if(music) music->stop();
-
-    // Start playing the song.
-    FMOD_RESULT result;
-    result = fmodSystem->playSound(FMOD_CHANNEL_FREE, song, true, &music);
-    DSFMOD_ERRCHECK(result);
-
-    // Properties.
-    music->setVolume(musicVolume);
-    music->setCallback(musicCallback);
-
-    // Start playing.
-    music->setPaused(false);
-    return true;
-}
-
-/// @internal
-bool DM_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
-{
-    releaseSong();
-    releaseSongBuffer();
-
-    // Use this as the song.
-    needReleaseSong = needRelease;
-    song = customSound;
-    return startSong();
-}
-#endif
-
 int DM_Music_Play(int looped)
 {
-#if 0
     if(!fmodSystem) return false;
 
     if(songBuffer)
@@ -262,9 +357,9 @@ int DM_Music_Play(int looped)
         // The song buffer remains in memory, in case FMOD needs to stream from it.
     }
     return startSong();
-#endif
     return 0;
 }
+#endif
 
 void DM_Music_Pause(int setPause)
 {
@@ -273,8 +368,12 @@ void DM_Music_Pause(int setPause)
 
     music->setPaused(setPause != 0);
 #endif
+    if(!fsPlayer) return;
+
+    // stop/play?
 }
 
+#if 0
 void* DM_Music_SongBuffer(unsigned int length)
 {
     releaseSongBuffer();
@@ -287,34 +386,32 @@ void* DM_Music_SongBuffer(unsigned int length)
     songBuffer = new SongBuffer(length);
     return songBuffer->data;
 }
+#endif
 
 int DM_Music_PlayFile(const char *filename, int looped)
 {
-    // Get rid of the current song.
-    //releaseSong();
-    releaseSongBuffer();
-
-#if 0
-    if(!fmodSystem) return false;
-
-    setDefaultStreamBufferSize();
-
-    FMOD_CREATESOUNDEXINFO extra;
-    zeroStruct(extra);
-    if(endsWith(soundFontFileName, ".dls"))
+    if(sfontId < 0)
     {
-        extra.dlsname = soundFontFileName;
+        Con_Message("Cannot play \"%s\" without a soundfont. Define one with the cvar 'music-soundfont'.\n", filename);
+        return false;
     }
 
-    FMOD_RESULT result;
-    result = fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0),
-                                     &extra, &song);
-    DSFMOD_TRACE("Music_Play: loaded '" << filename << "' => Sound " << song);
-    DSFMOD_ERRCHECK(result);
+    // If we are playing something, make sure it's stopped.
+    stopPlayer();
 
-    needReleaseSong = true;
+    // Get rid of the current song.
+    //releaseSong();
+    //releaseSongBuffer();
 
-    return startSong();
-#endif
-    return false;
+    DENG_ASSERT(fsPlayer == NULL);
+
+    // Create a new player.
+    fsPlayer = new_fluid_player(DMFluid_Synth());
+    fluid_player_add(fsPlayer, filename);
+    fluid_player_play(fsPlayer);
+
+    startPlayer();
+
+    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << filename << "' using player " << fsPlayer);
+    return true;
 }

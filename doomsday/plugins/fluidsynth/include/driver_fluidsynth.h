@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <cassert>
 #include <iostream>
+#include <fluidsynth.h>
 
 extern "C" {
     
@@ -39,6 +40,10 @@ void    DS_Event(int type);
 int     DS_Set(int prop, const void* ptr);
 
 }
+
+fluid_synth_t* DMFluid_Synth();
+
+#define DENG_DSFLUIDSYNTH_DEBUG
 
 #ifdef DENG_DSFLUIDSYNTH_DEBUG
 #  define DSFLUIDSYNTH_TRACE(args)  std::cerr << "[dsFluidSynth] " << args << std::endl;

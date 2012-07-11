@@ -26,11 +26,37 @@
 
 #include "doomsday.h"
 
+static fluid_settings_t* fsConfig;
+static fluid_synth_t* fsSynth;
+
+fluid_synth_t* DMFluid_Synth()
+{
+    DENG_ASSERT(fsSynth != 0);
+    return fsSynth;
+}
+
 /**
  * Initialize the FluidSynth sound driver.
  */
 int DS_Init(void)
 {
+    if(fsSynth)
+    {
+        return true; // Already initialized.
+    }
+
+    fsConfig = new_fluid_settings();
+
+    // TODO: configure fluidsynth
+
+    // Create the synthesizer.
+    fsSynth = new_fluid_synth(fsConfig);
+    if(!fsSynth)
+    {
+        Con_Message("Failed to create FluidSynth synthesizer.\n");
+        return false;
+    }
+
 #if 0
     if(fmodSystem)
     {
@@ -86,6 +112,7 @@ int DS_Init(void)
     Con_Message("FMOD Sound System (c) Firelight Technologies Pty, Ltd., 1994-2012.\n");
 
 #endif
+
     DSFLUIDSYNTH_TRACE("DS_Init: FluidSynth initialized.");
     return true;
 }
@@ -95,14 +122,17 @@ int DS_Init(void)
  */
 void DS_Shutdown(void)
 {
-    DSFLUIDSYNTH_TRACE("DS_Shutdown.");
-#if 0
-    DM_Music_Shutdown();
-    DM_CDAudio_Shutdown();
+    if(!fsSynth) return;
 
-    fmodSystem->release();
-    fmodSystem = 0;
-#endif
+    DMFluid_Shutdown();
+
+    DSFLUIDSYNTH_TRACE("DS_Shutdown.");
+
+    delete_fluid_synth(fsSynth);
+    delete_fluid_settings(fsConfig);
+
+    fsSynth = 0;
+    fsConfig = 0;
 }
 
 /**
@@ -111,15 +141,13 @@ void DS_Shutdown(void)
  */
 void DS_Event(int type)
 {
-#if 0
-    if(!fmodSystem) return;
+    if(!fsSynth) return;
 
     if(type == SFXEV_END)
     {
         // End of frame, do an update.
-        fmodSystem->update();
+        DMFluid_Update();
     }
-#endif
 }
 
 int DS_Set(int prop, const void* ptr)
@@ -136,7 +164,7 @@ int DS_Set(int prop, const void* ptr)
             // Use the default.
             path = 0;
         }
-        DM_Music_SetSoundFont(path);
+        DMFluid_SetSoundFont(path);
         return true; }
 
     default:

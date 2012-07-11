@@ -33,6 +33,7 @@ typedef enum {
     AUDIOD_SDL_MIXER,
     AUDIOD_OPENAL,
     AUDIOD_FMOD,
+    AUDIOD_FLUIDSYNTH,
     AUDIOD_DSOUND,  // Win32 only
     AUDIOD_WINMM,   // Win32 only
     AUDIODRIVER_COUNT
@@ -41,7 +42,7 @@ typedef enum {
 #ifdef WIN32
 #  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) < AUDIODRIVER_COUNT)
 #else
-#  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) <= AUDIOD_FMOD)
+#  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) <= AUDIOD_FLUIDSYNTH)
 #endif
 
 // Audio driver properties.

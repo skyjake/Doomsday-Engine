@@ -165,3 +165,8 @@ SOURCES += \
     $${FS_DIR}/src/drivers/fluid_aufile.c \
     $${FS_DIR}/src/bindings/fluid_cmd.c \
     $${FS_DIR}/src/bindings/fluid_filerenderer.c
+
+macx {
+    linkToBundledLibdeng2(dsFluidSynth)
+    linkToBundledLibdeng(dsFluidSynth)
+}
