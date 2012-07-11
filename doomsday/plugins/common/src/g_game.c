@@ -1305,7 +1305,20 @@ static void initFogForMap(ddmapinfo_t* mapInfo)
 static int G_LoadMapWorker(void* params)
 {
     loadmap_params_t* p = (loadmap_params_t*) params;
+    boolean hasMapInfo = false;
+    ddmapinfo_t mapInfo;
+
+    // Is MapInfo data available for this map?
+    { ddstring_t* mapUriStr = Uri_Compose(p->mapUri);
+    if(mapUriStr)
+    {
+        hasMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
+        Str_Delete(mapUriStr);
+    }}
+
     P_SetupMap(p->mapUri, p->episode, p->map);
+    initFogForMap(hasMapInfo? &mapInfo : 0);
+
     BusyMode_WorkerEnd();
     /// @todo Fixme: Do not assume!
     return 0; // Assume success.
@@ -1313,9 +1326,8 @@ static int G_LoadMapWorker(void* params)
 
 void G_DoLoadMap(loadmap_params_t* p)
 {
-    boolean hasBrief = false, hasMapInfo = false;
+    boolean hasBrief = false;
     ddfinale_t fin;
-    ddmapinfo_t mapInfo;
 
     DENG_ASSERT(p);
 
@@ -1349,14 +1361,6 @@ void G_DoLoadMap(loadmap_params_t* p)
         S_PauseMusic(true);
     }
 
-    // Is MapInfo data available for this map?
-    { ddstring_t* mapUriStr = Uri_Compose(p->mapUri);
-    if(mapUriStr)
-    {
-        hasMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
-        Str_Delete(mapUriStr);
-    }}
-
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
@@ -1369,11 +1373,6 @@ void G_DoLoadMap(loadmap_params_t* p)
     /// @todo Use progress bar mode and update progress during the setup.
     BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 G_LoadMapWorker, p, "Loading map...");
-
-    // Process work which could not be done during busy mode...
-    /// @todo Is it still necessary to peform this fog setup in the main thread,
-    ///       or does the deferred GL-task mechanism handle it all?
-    initFogForMap(hasMapInfo? &mapInfo : 0);
 
     // Wrap up, map loading is now complete.
     G_SetGameAction(GA_NONE);
