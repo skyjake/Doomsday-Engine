@@ -1201,23 +1201,12 @@ static void printMapBanner(void)
 
 void G_BeginMap(void)
 {
-    uint i;
-
     G_ChangeGameState(GS_MAP);
 
     R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
     R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
 
     G_ControlReset(-1); // Clear all controls for all local players.
-
-    // Wake up HUD widgets for players in the game.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame) continue;
-        ST_Start(i);
-        HU_Start(i);
-    }
-
     G_UpdateGSVarsForMap();
 
     // Time can now progress in this map.
@@ -1326,68 +1315,36 @@ static int G_LoadMapWorker(void* params)
 
 void G_DoLoadMap(loadmap_params_t* p)
 {
-    boolean hasBrief = false;
-    ddfinale_t fin;
-
     DENG_ASSERT(p);
 
-    // If we're the server, let clients know the map will change.
-    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
-
-    // Determine whether there is a briefing to run before the map starts
-    // (played after the map has been loaded).
-    if(G_BriefingEnabled(p->episode, p->map, &fin))
-    {
-        hasBrief = true;
-
-#if __JHEXEN__
-        /**
-         * @note Kludge: Due to the way music is managed with Hexen, unless
-         * we explicitly stop the current playing track the engine will not
-         * change tracks. This is due to the use of the runtime-updated
-         * "currentmap" definition (the engine thinks music has not changed
-         * because the current Music definition is the same).
-         *
-         * It only worked previously was because the waiting-for-map-load
-         * song was started prior to map loading.
-         *
-         * @todo Rethink the Music definition stuff with regard to Hexen.
-         * Why not create definitions during startup by parsing MAPINFO?
-         */
-        S_StopMusic();
-        //S_StartMusic("chess", true); // Waiting-for-map-load song
-#endif
-        S_MapMusic(p->episode, p->map);
-        S_PauseMusic(true);
-    }
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
-
-    // Unpause the current game.
-    sendPause = paused = false;
-
-    /**
-     * Load the map.
-     */
-    /// @todo Use progress bar mode and update progress during the setup.
-    BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                G_LoadMapWorker, p, "Loading map...");
+    G_LoadMapWorker(p);
 
     // Wrap up, map loading is now complete.
     G_SetGameAction(GA_NONE);
-    Z_CheckHeap();
+}
+
+int G_DoLoadMapAndMaybeStartBriefing(void* parameters)
+{
+    loadmap_params_t* p = (loadmap_params_t*)parameters;
+    ddfinale_t fin;
+    boolean hasBrief;
+
+    DENG_ASSERT(p);
+
+    hasBrief = G_BriefingEnabled(p->episode, p->map, &fin);
+
+    G_LoadMapWorker(p);
+
+    // Wrap up, map loading is now complete.
+    G_SetGameAction(GA_NONE);
 
     // Start a briefing, if there is one.
     if(hasBrief)
     {
         G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
+        return true;
     }
-    else
-    {
-        // No briefing; begin the map.
-        G_BeginMap();
-    }
+    return false;
 }
 
 int G_Responder(event_t* ev)
@@ -1618,6 +1575,29 @@ void G_DoQuitGame(void)
 #undef QUITWAIT_MILLISECONDS
 }
 
+void G_QueMapMusic(uint episode, uint map)
+{
+#if __JHEXEN__
+    /**
+     * @note Kludge: Due to the way music is managed with Hexen, unless
+     * we explicitly stop the current playing track the engine will not
+     * change tracks. This is due to the use of the runtime-updated
+     * "currentmap" definition (the engine thinks music has not changed
+     * because the current Music definition is the same).
+     *
+     * It only worked previously was because the waiting-for-map-load
+     * song was started prior to map loading.
+     *
+     * @todo Rethink the Music definition stuff with regard to Hexen.
+     * Why not create definitions during startup by parsing MAPINFO?
+     */
+    S_StopMusic();
+    //S_StartMusic("chess", true); // Waiting-for-map-load song
+#endif
+    S_MapMusic(episode, map);
+    S_PauseMusic(true);
+}
+
 static void runGameAction(void)
 {
     gameaction_t currentAction;
@@ -1639,12 +1619,50 @@ static void runGameAction(void)
 
         case GA_LOADMAP: {
             loadmap_params_t p;
+            boolean hasBrief;
+
+            // Delete raw images to conserve texture memory.
+            DD_Executef(true, "texreset raw");
+
+            // Unpause the current game.
+            sendPause = paused = false;
+
             p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
             p.episode    = gameEpisode;
             p.map        = gameMap;
 
-            G_DoLoadMap(&p);
+            hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
 
+            if(hasBrief)
+            {
+                G_QueMapMusic(gameEpisode, gameMap);
+            }
+
+            // If we're the server, let clients know the map will change.
+            NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
+
+            /**
+             * Load the map.
+             */
+            if(!BusyMode_Active())
+            {
+                /// @todo Use progress bar mode and update progress during the setup.
+                BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                            G_DoLoadMapAndMaybeStartBriefing, &p, "Loading map...");
+            }
+            else
+            {
+                G_DoLoadMapAndMaybeStartBriefing(&p);
+            }
+
+            if(!hasBrief)
+            {
+                // No briefing; begin the map.
+                HU_WakeWidgets(-1 /* all players */);
+                G_BeginMap();
+            }
+
+            Z_CheckHeap();
             Uri_Delete(p.mapUri);
             break; }
 
@@ -2471,18 +2489,48 @@ void G_DoWorldDone(void)
     rebornPosition = nextMapEntryPoint;
 #else
     loadmap_params_t p;
+    boolean hasBrief;
 
-# if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     gameMap = nextMap;
-# endif
+
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+
+    // Unpause the current game.
+    sendPause = paused = false;
 
     p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
     p.episode    = gameEpisode;
     p.map        = gameMap;
 
-    G_DoLoadMap(&p);
+    hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
 
+    if(hasBrief)
+    {
+        G_QueMapMusic(gameEpisode, gameMap);
+    }
+
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
+
+    if(!BusyMode_Active())
+    {
+        /// @todo Use progress bar mode and update progress during the setup.
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    G_DoLoadMapAndMaybeStartBriefing, &p, "Loading map...");
+    }
+    else
+    {
+        G_DoLoadMapAndMaybeStartBriefing(&p);
+    }
     Uri_Delete(p.mapUri);
+
+    if(!hasBrief)
+    {
+        // No briefing; begin the map.
+        HU_WakeWidgets(-1/* all players */);
+        G_BeginMap();
+    }
 #endif
 
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
@@ -2852,20 +2900,53 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     }
 
     userGame = true; // Will be set false if a demo.
-    paused = false;
+    // Unpause the current game.
+    sendPause = paused = false;
     gameEpisode = episode;
     gameMap = map;
     gameSkill = skill;
 
     NetSv_UpdateGameConfig();
 
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+
     { loadmap_params_t p;
+    boolean hasBrief;
+
     p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
     p.episode    = gameEpisode;
     p.map        = gameMap;
 
-    G_DoLoadMap(&p);
+    hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
 
+    if(hasBrief)
+    {
+        G_QueMapMusic(gameEpisode, gameMap);
+    }
+
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
+
+    if(!BusyMode_Active())
+    {
+        /// @todo Use progress bar mode and update progress during the setup.
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    G_DoLoadMapAndMaybeStartBriefing, &p, "Loading map...");
+    }
+    else
+    {
+        G_DoLoadMapAndMaybeStartBriefing(&p);
+    }
+
+    if(!hasBrief)
+    {
+        // No briefing; begin the map.
+        HU_WakeWidgets(-1 /* all players */);
+        G_BeginMap();
+    }
+
+    Z_CheckHeap();
     Uri_Delete(p.mapUri);
     }
 }

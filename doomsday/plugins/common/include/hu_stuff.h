@@ -93,6 +93,7 @@ void            Hu_LoadData(void);
 void            Hu_Drawer(void);
 void            Hu_Ticker(void);
 void            HU_Start(int player);
+void            HU_WakeWidgets(int player);
 void            Hu_UnloadData(void);
 
 void            Hu_MapTitleDrawer(const RectRaw* portGeometry);

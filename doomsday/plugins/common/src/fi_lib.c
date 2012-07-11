@@ -36,6 +36,7 @@
 #include "p_sound.h"
 #include "p_tick.h"
 #include "hu_log.h"
+#include "hu_stuff.h"
 #include "am_map.h"
 #include "g_common.h"
 #include "r_common.h"
@@ -472,6 +473,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
     {
         // Its time to start the map; que music and begin!
         S_MapMusic(gameEpisode, gameMap);
+        HU_WakeWidgets(-1 /* all players */);
         G_BeginMap();
     }
     return true;

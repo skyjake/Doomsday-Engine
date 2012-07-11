@@ -587,8 +587,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     {
         /// @todo Is this really necessary after every time a player spawns?
         /// During map setup there are called after the busy mode ends.
-        ST_Start(p - players);
-        HU_Start(p - players);
+        HU_WakeWidgets(p - players);
     }
 
 #if __JHEXEN__
