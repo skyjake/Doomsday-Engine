@@ -1,34 +1,28 @@
-/**\file p_setup.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
+ * @file p_mapsetup.h
  * Common map setup routines.
  *
- * Management of extended map data objects (eg xlines) is done here
+ * Management of extended map data objects (e.g., xlines) is done here.
+ *
+ * @ingroup libcommon
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <ctype.h>  // has isspace
@@ -54,32 +48,17 @@
 #include "hu_pspr.h"
 #include "hu_stuff.h"
 
-// MACROS ------------------------------------------------------------------
-
 #if __JDOOM64__
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct {
-    int             gameModeBits;
-    mobjtype_t      type;
+    int gameModeBits;
+    mobjtype_t type;
 } mobjtype_precachedata_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void     P_ResetWorldState(void);
-static void     P_FinalizeMap(void);
-static void     P_PrintMapBanner(uint episode, uint map);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+static void P_ResetWorldState(void);
+static void P_FinalizeMap(void);
 
 // Our private map data structures
 xsector_t* xsectors;
@@ -88,17 +67,9 @@ xline_t* xlines;
 // If true we are in the process of setting up a map
 boolean mapSetup;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Converts a line to an xline.
- */
 xline_t* P_ToXLine(LineDef* line)
 {
-    if(!line)
-        return NULL;
+    if(!line) return NULL;
 
     // Is it a dummy?
     if(P_IsDummy(line))
@@ -130,13 +101,9 @@ void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
     xline->mapped[player] = visible;
 }
 
-/**
- * Converts a sector to an xsector.
- */
 xsector_t* P_ToXSector(Sector* sector)
 {
-    if(!sector)
-        return NULL;
+    if(!sector) return NULL;
 
     // Is it a dummy?
     if(P_IsDummy(sector))
@@ -149,9 +116,6 @@ xsector_t* P_ToXSector(Sector* sector)
     }
 }
 
-/**
- * Given a BSP leaf - find its parent xsector.
- */
 xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
 {
     Sector* sec;
@@ -179,15 +143,6 @@ xsector_t* P_GetXSector(uint index)
     return &xsectors[index];
 }
 
-/**
- * Doomsday calls this (before any data is read) for each type of map object
- * at the start of the map load process. This is to allow us (the game) to
- * do any initialization we need. For example if we maintain our own data
- * for lines (the xlines) we'll do all allocation and init here.
- *
- * @param type          (DMU object type) The id of the data type being setup.
- * @param num           The number of elements of "type" Doomsday is creating.
- */
 void P_SetupForMapData(int type, uint num)
 {
     switch(type)
@@ -228,41 +183,34 @@ static void getSurfaceColor(uint idx, float rgba[4])
 }
 
 typedef struct applysurfacecolorparams_s {
-    Sector*         frontSec;
-    float           topColor[4];
-    float           bottomColor[4];
+    Sector* frontSec;
+    float topColor[4];
+    float bottomColor[4];
 } applysurfacecolorparams_t;
 
 int applySurfaceColor(void* obj, void* context)
 {
-#define LDF_NOBLENDTOP      32
-#define LDF_NOBLENDBOTTOM   64
-#define LDF_BLEND           128
+#define LDF_NOBLENDTOP          32
+#define LDF_NOBLENDBOTTOM       64
+#define LDF_BLEND               128
 
-#define LTF_SWAPCOLORS      4
+#define LTF_SWAPCOLORS          4
 
-    LineDef*            li = (LineDef*) obj;
-    applysurfacecolorparams_t* params =
-        (applysurfacecolorparams_t*) context;
-    byte                dFlags =
-        P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_DRAWFLAGS);
-    byte                tFlags =
-        P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_TEXFLAGS);
+    LineDef* li = (LineDef*) obj;
+    applysurfacecolorparams_t* params = (applysurfacecolorparams_t*) context;
+    byte dFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_DRAWFLAGS);
+    byte tFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_TEXFLAGS);
 
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
     {
-        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF0);
+        SideDef* side = P_GetPtrp(li, DMU_SIDEDEF0);
 
         if(side)
         {
-            int                 flags;
-            float*              top, *bottom;
-
-            top = (tFlags & LTF_SWAPCOLORS)? params->bottomColor :
-                params->topColor;
-            bottom = (tFlags & LTF_SWAPCOLORS)? params->topColor :
-                params->bottomColor;
+            float* top    = (tFlags & LTF_SWAPCOLORS)? params->bottomColor : params->topColor;
+            float* bottom = (tFlags & LTF_SWAPCOLORS)? params->topColor : params->bottomColor;
+            int flags;
 
             P_SetFloatpv(side, DMU_TOP_COLOR, top);
             P_SetFloatpv(side, DMU_BOTTOM_COLOR, bottom);
@@ -280,17 +228,13 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF1);
+        SideDef* side = P_GetPtrp(li, DMU_SIDEDEF1);
 
         if(side)
         {
-            int                 flags;
-            float*              top, *bottom;
-
-            top = /*(tFlags & LTF_SWAPCOLORS)? params->bottomColor :*/
-                params->topColor;
-            bottom = /*(tFlags & LTF_SWAPCOLORS)? params->topColor :*/
-                params->bottomColor;
+            float* top    = /*(tFlags & LTF_SWAPCOLORS)? params->bottomColor :*/ params->topColor;
+            float* bottom = /*(tFlags & LTF_SWAPCOLORS)? params->topColor :*/ params->bottomColor;
+            int flags;
 
             P_SetFloatpv(side, DMU_TOP_COLOR, top);
             P_SetFloatpv(side, DMU_BOTTOM_COLOR, bottom);
@@ -312,6 +256,7 @@ int applySurfaceColor(void* obj, void* context)
 static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
 {
 #if __JHEXEN__
+    /// @todo Move to classinfo_t
     static unsigned int classFlags[] = {
         MSF_FIGHTER,
         MSF_CLERIC,
@@ -407,13 +352,13 @@ static boolean checkMapSpotAutoSpawn(const mapspot_t* spot)
     // The following are currently handled by special-case spawn logic elsewhere.
     switch(spot->doomEdNum)
     {
-    case 1: // Player starts 1 through 4.
+    case 1:    // Player starts 1 through 4.
     case 2:
     case 3:
     case 4:
-    case 11: // Player start (deathmatch).
+    case 11:   // Player start (deathmatch).
 #if __JHERETIC__
-    case 56: // Boss spot.
+    case 56:   // Boss spot.
     case 2002: // Mace spot.
 #endif
 #if __JHEXEN__
@@ -426,8 +371,8 @@ static boolean checkMapSpotAutoSpawn(const mapspot_t* spot)
     case 9103:
 #endif
         return false;
-    default:
-        break;
+
+    default: break;
     }
 
     // So far so good. Now check the flags to make the final decision.
@@ -470,7 +415,7 @@ static void initXSectors(void)
         xsector_t* xsec = &xsectors[i];
 
         xsec->special = P_GetGMOShort(MO_XSECTOR, i, MO_TYPE);
-        xsec->tag = P_GetGMOShort(MO_XSECTOR, i, MO_TAG);
+        xsec->tag     = P_GetGMOShort(MO_XSECTOR, i, MO_TAG);
 
 #if __JDOOM64__
         {
@@ -478,22 +423,16 @@ static void initXSectors(void)
         float rgba[4];
         Sector* sec = P_ToPtr(DMU_SECTOR, i);
 
-        getSurfaceColor(TOLIGHTIDX(
-            P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);
+        getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);
         P_SetFloatpv(sec, DMU_FLOOR_COLOR, rgba);
 
-        getSurfaceColor(TOLIGHTIDX(
-            P_GetGMOShort(MO_XSECTOR, i, MO_CEILINGCOLOR)), rgba);
+        getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_CEILINGCOLOR)), rgba);
         P_SetFloatpv(sec, DMU_CEILING_COLOR, rgba);
 
         // Now set the side surface colors.
         params.frontSec = sec;
-        getSurfaceColor(TOLIGHTIDX(
-            P_GetGMOShort(MO_XSECTOR, i, MO_WALLTOPCOLOR)),
-                          params.topColor);
-        getSurfaceColor(TOLIGHTIDX(
-            P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)),
-                          params.bottomColor);
+        getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLTOPCOLOR)), params.topColor);
+        getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)), params.bottomColor);
 
         P_Iteratep(sec, DMU_LINEDEF, &params, applySurfaceColor);
         }

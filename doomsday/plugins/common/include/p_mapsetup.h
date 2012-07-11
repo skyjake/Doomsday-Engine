@@ -46,6 +46,15 @@
 // If true we are in the process of setting up a map.
 extern boolean mapSetup;
 
+/**
+ * Doomsday calls this (before any data is read) for each type of map object
+ * at the start of the map load process. This is to allow us (the game) to
+ * do any initialization we need. For example if we maintain our own data
+ * for lines (the xlines) we'll do all allocation and init here.
+ *
+ * @param type    (DMU object type) The id of the data type being setup.
+ * @param num     The number of elements of "type" Doomsday is creating.
+ */
 void P_SetupForMapData(int type, uint num);
 
 /**
