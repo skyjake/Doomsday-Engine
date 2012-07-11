@@ -66,6 +66,9 @@ void            G_SetGameAction(gameaction_t action);
 
 boolean         G_QuitInProgress(void);
 
+/// @return  Generated name. Must be released with Str_Delete()
+AutoStr*        G_GenerateSaveGameName(void);
+
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);
 void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);

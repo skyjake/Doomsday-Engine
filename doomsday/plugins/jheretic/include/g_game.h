@@ -92,9 +92,6 @@ boolean G_LoadGame(int slot);
 /// @return  @c true = saving is presently possible.
 boolean G_IsSaveGamePossible(void);
 
-/// @return  Generated name. Must be released with Str_Delete()
-ddstring_t* G_GenerateSaveGameName(void);
-
 /**
  * To be called to schedule a save game-save action.
  * @param slot  Logical identifier of the save slot to use.

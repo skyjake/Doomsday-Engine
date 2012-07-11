@@ -1342,14 +1342,14 @@ void G_DoLoadMap(loadmap_params_t* p)
 
 #if __JHEXEN__
         /**
-         * @note Kludge: Due to the way music is managed with Hexen, unless we
-         * explicitly stop the current playing track the engine will not
+         * @note Kludge: Due to the way music is managed with Hexen, unless
+         * we explicitly stop the current playing track the engine will not
          * change tracks. This is due to the use of the runtime-updated
          * "currentmap" definition (the engine thinks music has not changed
          * because the current Music definition is the same).
          *
-         * The only reason it worked previously was because the
-         * waiting-for-map-load song was started prior to load.
+         * It only worked previously was because the waiting-for-map-load
+         * song was started prior to map loading.
          *
          * @todo Rethink the Music definition stuff with regard to Hexen.
          * Why not create definitions during startup by parsing MAPINFO?
@@ -2488,7 +2488,7 @@ void G_DoWorldDone(void)
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
     if(!IS_NETGAME && !deathmatch)
     {
-        ddstring_t* name = G_GenerateSaveGameName();
+        AutoStr* name = G_GenerateSaveGameName();
         savestateworker_params_t p;
 
         p.name = Str_Text(name);
@@ -2497,7 +2497,6 @@ void G_DoWorldDone(void)
         /// @todo Use progress bar mode and update progress during the setup.
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                     G_SaveStateWorker, &p, "Auto-Saving game...");
-        Str_Delete(name);
     }
 
     G_SetGameAction(GA_NONE);
@@ -2595,9 +2594,9 @@ boolean G_SaveGame(int slot)
     return G_SaveGame2(slot, NULL);
 }
 
-ddstring_t* G_GenerateSaveGameName(void)
+AutoStr* G_GenerateSaveGameName(void)
 {
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_New();
     int time = mapTime / TICRATE, hours, seconds, minutes;
     const char* baseName, *mapName;
     char baseNameBuf[256];
@@ -2648,8 +2647,6 @@ ddstring_t* G_GenerateSaveGameName(void)
 void G_DoSaveGame(void)
 {
     savestateworker_params_t p;
-    boolean mustFreeNameStr = false;
-    const ddstring_t* nameStr = NULL;
     const char* name;
     boolean didSave;
 
@@ -2664,20 +2661,18 @@ void G_DoSaveGame(void)
         if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Name(info)))
         {
             // Slot already in use; reuse the existing name.
-            nameStr = SaveInfo_Name(info);
+            name = Str_Text(SaveInfo_Name(info));
         }
         else
         {
-            nameStr = G_GenerateSaveGameName();
-            mustFreeNameStr = true;
+            name = Str_Text(G_GenerateSaveGameName());
         }
-        name = Str_Text(nameStr);
     }
 
     /**
      * Try to make a new game-save.
      */
-    p.name =  name;
+    p.name = name;
     p.slot = gaSaveGameSlot;
     /// @todo Use progress bar mode and update progress during the setup.
     didSave = 0 == BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
@@ -2688,9 +2683,6 @@ void G_DoSaveGame(void)
         P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
     }
     G_SetGameAction(GA_NONE);
-
-    if(mustFreeNameStr)
-        Str_Delete((ddstring_t*)nameStr);
 }
 
 #if __JHEXEN__
