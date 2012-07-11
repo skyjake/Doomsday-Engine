@@ -1267,10 +1267,24 @@ void G_EndGame(void)
     Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, 0, NULL);
 }
 
-static void R_SetupMapFog(void)
+/// @param mapInfo  Can be @c NULL.
+static void initFogForMap(ddmapinfo_t* mapInfo)
 {
 #if __JHEXEN__
-    int fadeTable = P_GetMapFadeTable(gameMap);
+    int fadeTable;
+#endif
+
+    if(!mapInfo || !(mapInfo->flags & MIF_FOG))
+    {
+        R_SetupFogDefaults();
+    }
+    else
+    {
+        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
+    }
+
+#if __JHEXEN__
+    fadeTable = P_GetMapFadeTable(gameMap);
     if(fadeTable == W_GetLumpNumForName("COLORMAP"))
     {
         // We don't want fog in this case.
@@ -1299,8 +1313,9 @@ static int G_LoadMapWorker(void* params)
 
 void G_DoLoadMap(loadmap_params_t* p)
 {
+    boolean hasBrief = false, hasMapInfo = false;
     ddfinale_t fin;
-    boolean hasBrief;
+    ddmapinfo_t mapInfo;
 
     DENG_ASSERT(p);
 
@@ -1309,9 +1324,10 @@ void G_DoLoadMap(loadmap_params_t* p)
 
     // Determine whether there is a briefing to run before the map starts
     // (played after the map has been loaded).
-    hasBrief = G_BriefingEnabled(p->episode, p->map, &fin);
-    if(!hasBrief)
+    if(G_BriefingEnabled(p->episode, p->map, &fin))
     {
+        hasBrief = true;
+
 #if __JHEXEN__
         /**
          * @note Kludge: Due to the way music is managed with Hexen, unless we
@@ -1333,6 +1349,14 @@ void G_DoLoadMap(loadmap_params_t* p)
         S_PauseMusic(true);
     }
 
+    // Is MapInfo data available for this map?
+    { ddstring_t* mapUriStr = Uri_Compose(p->mapUri);
+    if(mapUriStr)
+    {
+        hasMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
+        Str_Delete(mapUriStr);
+    }}
+
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
@@ -1347,8 +1371,9 @@ void G_DoLoadMap(loadmap_params_t* p)
                                 G_LoadMapWorker, p, "Loading map...");
 
     // Process work which could not be done during busy mode...
-    R_SetupMap(DDSMM_AFTER_BUSY, 0);
-    R_SetupMapFog();
+    /// @todo Is it still necessary to peform this fog setup in the main thread,
+    ///       or does the deferred GL-task mechanism handle it all?
+    initFogForMap(hasMapInfo? &mapInfo : 0);
 
     // Wrap up, map loading is now complete.
     G_SetGameAction(GA_NONE);
@@ -1361,7 +1386,7 @@ void G_DoLoadMap(loadmap_params_t* p)
     }
     else
     {
-        // No briefing, start the map.
+        // No briefing; begin the map.
         G_BeginMap();
     }
 }

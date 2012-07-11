@@ -584,6 +584,8 @@ boolean DD_IsSharpTick(void);
 int DD_GetFrameRate(void);
 
 void R_SetupMap(int mode, int flags);
+void R_SetupFogDefaults(void);
+void R_SetupFog(float start, float end, float density, float* rgb);
 
 void R_PrecacheMobjNum(int mobjtypeNum);
 void R_PrecacheModelsForState(int stateIndex);

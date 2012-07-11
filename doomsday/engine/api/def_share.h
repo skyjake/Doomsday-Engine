@@ -113,6 +113,10 @@ typedef struct {
     float           ambient;
     float           gravity;
     float           parTime;
+    float           fogColor[3]; // Fog color (RGB).
+    float           fogStart;
+    float           fogEnd;
+    float           fogDensity;
 } ddmapinfo_t;
 
 typedef struct {
