@@ -253,7 +253,7 @@ static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
 
     if(blockBuffer->availableForReading() >= int(size))
     {
-        DSFLUIDSYNTH_TRACE("Streaming out " << size << " bytes.");
+        //DSFLUIDSYNTH_TRACE("Streaming out " << size << " bytes.");
         blockBuffer->read(data, size);
         return size;
     }
@@ -420,8 +420,12 @@ int DM_Music_Get(int prop, void* ptr)
         }
         break;
 
-    case MUSIP_PLAYING:
-        return fsPlayer != 0;
+    case MUSIP_PLAYING: {
+        if(!fsPlayer) return false;
+        int playing = (fluid_player_get_status(fsPlayer) == FLUID_PLAYER_PLAYING);
+        DSFLUIDSYNTH_TRACE("Music_Get: MUSIP_PLAYING = " << playing);
+        return playing;
+    }
 
     default:
         break;
@@ -564,13 +568,21 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
     DENG_ASSERT(fsPlayer == NULL);
 
+    if(!fluid_is_midifile(filename))
+    {
+        // It doesn't look like MIDI.
+        Con_Message("Cannot play \"%s\": not a MIDI file.\n", filename);
+        return false;
+    }
+
     // Create a new player.
     fsPlayer = new_fluid_player(DMFluid_Synth());
     fluid_player_add(fsPlayer, filename);
+    fluid_player_set_loop(fsPlayer, looped? -1 /*infinite times*/ : 1);
     fluid_player_play(fsPlayer);
 
     startPlayer();
 
-    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << filename << "' using player " << fsPlayer);
+    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << filename << "' using player " << fsPlayer << " looped:" << looped);
     return true;
 }
