@@ -41,8 +41,21 @@ enum {
 extern boolean singledemo;
 
 void            G_Register(void);
+
+/**
+ * Begin the titlescreen animation sequence.
+ */
 void            G_StartTitle(void);
+
+/**
+ * Begin the helpscreen animation sequence.
+ */
 void            G_StartHelp(void);
+
+/**
+ * Signal that play on the current map may now begin.
+ */
+void            G_BeginMap(void);
 void            G_EndGame(void);
 
 gamestate_t     G_GameState(void);
@@ -51,7 +64,10 @@ void            G_ChangeGameState(gamestate_t state);
 gameaction_t    G_GameAction(void);
 void            G_SetGameAction(gameaction_t action);
 
-boolean G_QuitInProgress(void);
+boolean         G_QuitInProgress(void);
+
+/// @return  Generated name. Must be released with Str_Delete()
+AutoStr*        G_GenerateSaveGameName(void);
 
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);

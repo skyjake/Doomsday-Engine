@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 853 <--
+; Highest ordinal is currently: --> 855 <--
 ; Other free ordinals: 57
 
 NAME                            "DOOMSDAY"
@@ -640,6 +640,8 @@ EXPORTS
     DD_GetFrameRate             @88 NONAME
 
     R_SetupMap                  @89 NONAME
+    R_SetupFogDefaults          @854 NONAME
+    R_SetupFog                  @855 NONAME
 
     R_PrecacheMobjNum           @427 NONAME
     R_PrecacheModelsForState    @240 NONAME

@@ -86,8 +86,19 @@ typedef struct xline_s {
 extern xsector_t* xsectors;
 extern xline_t* xlines;
 
+/**
+ * Converts a line to an xline.
+ */
 xline_t*        P_ToXLine(LineDef* line);
+
+/**
+ * Converts a sector to an xsector.
+ */
 xsector_t*      P_ToXSector(Sector* sector);
+
+/**
+ * Given a BSP leaf - find its parent xsector.
+ */
 xsector_t*      P_ToXSectorOfBspLeaf(BspLeaf* sub);
 
 /**

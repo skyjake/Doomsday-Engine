@@ -5480,9 +5480,8 @@ int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* parameters
     // Are we suggesting a new name?
     if(cfg.menuGameSaveSuggestName)
     {
-        ddstring_t* suggestName = G_GenerateSaveGameName();
+        AutoStr* suggestName = G_GenerateSaveGameName();
         MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, Str_Text(suggestName));
-        Str_Free(suggestName);
     }
     return 0;
 }

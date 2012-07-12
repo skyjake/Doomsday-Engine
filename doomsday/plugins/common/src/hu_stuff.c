@@ -297,6 +297,26 @@ void HU_Start(int player)
     }
 }
 
+void HU_WakeWidgets(int player)
+{
+    if(player < 0)
+    {
+        uint i;
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            if(!players[i].plr->inGame) continue;
+            HU_WakeWidgets(i);
+        }
+        return;
+    }
+    if(player < MAXPLAYERS)
+    {
+        if(!players[player].plr->inGame) return;
+        ST_Start(player);
+        HU_Start(player);
+    }
+}
+
 static void drawQuad(float x, float y, float w, float h, float s, float t,
     float r, float g, float b, float a)
 {

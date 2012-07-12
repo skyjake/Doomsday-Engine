@@ -759,7 +759,6 @@ enum {
     DDSMM_AFTER_LOADING,    ///< After loading a savegame...
     DDSMM_FINALIZE,         ///< After everything else is done.
     DDSMM_INITIALIZE,       ///< Before anything else if done.
-    DDSMM_AFTER_BUSY        ///< After leaving busy mode, which was used during setup.
 };
 
 /// Sector reverb data indices. @ingroup map

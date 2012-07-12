@@ -60,8 +60,8 @@ extern boolean ddMapSetup;
  */
 void R_SetupMap(int mode, int flags);
 
-void            R_SetupFog(float start, float end, float density, float* rgb);
-void            R_SetupFogDefaults(void);
+void R_SetupFogDefaults(void);
+void R_SetupFog(float start, float end, float density, float* rgb);
 
 /**
  * Sector light color may be affected by the sky light color.

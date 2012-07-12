@@ -886,6 +886,7 @@ lineowner_t* R_GetVtxLineOwner(const Vertex *v, const LineDef *line)
     return NULL;
 }
 
+/// @note Part of the Doomsday public API.
 void R_SetupFog(float start, float end, float density, float *rgb)
 {
     Con_Execute(CMDS_DDAY, "fog on", true, false);
@@ -896,6 +897,7 @@ void R_SetupFog(float start, float end, float density, float *rgb)
                  rgb[0] * 255, rgb[1] * 255, rgb[2] * 255);
 }
 
+/// @note Part of the Doomsday public API.
 void R_SetupFogDefaults(void)
 {
     // Go with the defaults.
@@ -1437,21 +1439,10 @@ void R_SetupMap(int mode, int flags)
         Z_PrintStatus();
         return;
       }
-    case DDSMM_AFTER_BUSY: {
-        // Shouldn't do anything time-consuming, as we are no longer in busy mode.
-        ded_mapinfo_t* mapInfo;
 
-        assert(theMap);
-
-        mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
-        if(!mapInfo || !(mapInfo->flags & MIF_FOG))
-            R_SetupFogDefaults();
-        else
-            R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
-        break;
-      }
     default:
         Con_Error("R_SetupMap: Unknown setup mode %i", mode);
+        exit(1); // Unreachable.
     }
 }
 

@@ -224,6 +224,12 @@ def mac_release():
         if not 'jDoom64' in f:
             duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
 
+    print 'Signing Doomsday.app...'
+    os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app/Contents/Doomsday.app"')
+
+    print 'Signing Doomsday Engine.app...'
+    os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app"')
+
     print 'Creating disk image:', target
 
     masterDmg = target

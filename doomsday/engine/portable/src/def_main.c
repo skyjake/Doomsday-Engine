@@ -1755,8 +1755,12 @@ int Def_Get(int type, const char* id, void* out)
         mout->ambient = map->ambient;
         mout->gravity = map->gravity;
         mout->parTime = map->parTime;
-        return true;
-      }
+        mout->fogStart   = map->fogStart;
+        mout->fogEnd     = map->fogEnd;
+        mout->fogDensity = map->fogDensity;
+        memcpy(mout->fogColor, map->fogColor, sizeof(mout->fogColor));
+        return true; }
+
     case DD_DEF_TEXT:
         if(id && id[0])
         {
