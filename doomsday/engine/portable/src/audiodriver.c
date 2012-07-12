@@ -307,9 +307,15 @@ static audiodriver_e initDriverIfNeeded(const char* identifier)
     return drvId;
 }
 
+/**
+ * Choose the SFX, Music, and CD audio interfaces to use.
+ *
+ * @param defaultDriverId  Default audio driver to use unless overridden.
+ */
 static void selectInterfaces(audiodriver_e defaultDriverId)
 {
     driver_t* defaultDriver = &drivers[defaultDriverId];
+    driver_t* musicDriver = 0;
     audiodriver_e drvId;
     int p;
 
@@ -318,7 +324,11 @@ static void selectInterfaces(audiodriver_e defaultDriverId)
     iCD = 0;
 
     if(defaultDriver->sfx.gen.Init) iSFX = &defaultDriver->sfx;
-    if(defaultDriver->music.gen.Init) iMusic = &defaultDriver->music;
+    if(defaultDriver->music.gen.Init)
+    {
+        iMusic = &defaultDriver->music;
+        musicDriver = defaultDriver;
+    }
     if(defaultDriver->cd.gen.Init) iCD = &defaultDriver->cd;
 
     // Check for SFX override.
@@ -342,7 +352,8 @@ static void selectInterfaces(audiodriver_e defaultDriverId)
             Con_Error("Audio driver '%s' does not provide a Music interface.\n",
                       getDriverName(drvId));
         }
-        iMusic = &drivers[drvId].music;
+        musicDriver = &drivers[drvId];
+        iMusic = &musicDriver->music;
     }
 
     // Check for Music override.
@@ -363,7 +374,14 @@ static void selectInterfaces(audiodriver_e defaultDriverId)
         // On the Mac, use the built-in QuickTime interface as the fallback for music.
         iMusic = &audiodQuickTimeMusic;
     }
-#endif
+#endif   
+
+    if(musicDriver && musicDriver->interface.Set)
+    {
+        // Let the music driver know of the chosen sfx interface, in case it
+        // wants to play audio through it.
+        musicDriver->interface.Set(AUDIOP_SFX_INTERFACE, iSFX);
+    }
 }
 
 static boolean initInterface(audiointerface_base_t* interface)
@@ -412,17 +430,20 @@ void AudioDriver_Shutdown(void)
     int i;
 
     // Shut down all the loaded drivers.
-    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
+    for(i = AUDIODRIVER_COUNT - 1; i >= 0; --i)
     {
         driver_t* d = &drivers[i];
         if(d->interface.Shutdown) d->interface.Shutdown();
+    }
 
-        // Unload the plugins.
+    // Unload the plugins after everything has been shut down.
+    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
+    {
+        driver_t* d = &drivers[i];
         if(d->library)
         {
             Library_Delete(d->library);
         }
-
         memset(d, 0, sizeof(*d));
     }
 

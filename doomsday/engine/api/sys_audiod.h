@@ -47,7 +47,8 @@ typedef enum {
 
 // Audio driver properties.
 enum {
-    AUDIOP_SOUNDFONT_FILENAME
+    AUDIOP_SOUNDFONT_FILENAME,
+    AUDIOP_SFX_INTERFACE                ///< audiointerface_sfx_t to play sounds with
 };
 
 typedef struct audiodriver_s {
