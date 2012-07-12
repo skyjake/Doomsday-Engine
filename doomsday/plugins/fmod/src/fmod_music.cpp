@@ -111,7 +111,7 @@ int DM_Music_Init(void)
     return fmodSystem != 0;
 }
 
-void DM_Music_Shutdown(void)
+void DMFmod_Music_Shutdown(void)
 {
     if(!fmodSystem) return;
 
@@ -124,12 +124,18 @@ void DM_Music_Shutdown(void)
     DSFMOD_TRACE("Music_Shutdown.");
 }
 
-void DM_Music_SetSoundFont(const char* fileName)
+void DM_Music_Shutdown(void)
+{
+    DMFmod_Music_Shutdown();
+}
+
+/// @internal
+void DMFmod_Music_SetSoundFont(const char* fileName)
 {
     soundFontFileName = fileName;
 }
 
-void DM_Music_Set(int prop, float value)
+void DMFmod_Music_Set(int prop, float value)
 {
     if(!fmodSystem)
         return;
@@ -147,7 +153,12 @@ void DM_Music_Set(int prop, float value)
     }
 }
 
-int DM_Music_Get(int prop, void* ptr)
+void DM_Music_Set(int prop, float value)
+{
+    DMFmod_Music_Set(prop, value);
+}
+
+int DMFmod_Music_Get(int prop, void* ptr)
 {
     switch(prop)
     {
@@ -170,18 +181,28 @@ int DM_Music_Get(int prop, void* ptr)
     return false;
 }
 
+int DM_Music_Get(int prop, void* ptr)
+{
+    return DMFmod_Music_Get(prop, ptr);
+}
+
 void DM_Music_Update(void)
 {
     // No need to do anything. The callback handles restarting.
 }
 
-void DM_Music_Stop(void)
+void DMFmod_Music_Stop(void)
 {
     if(!fmodSystem || !music) return;
 
     DSFMOD_TRACE("Music_Stop.");
 
     music->stop();
+}
+
+void DM_Music_Stop(void)
+{
+    DMFmod_Music_Stop();
 }
 
 static bool startSong()
@@ -205,7 +226,7 @@ static bool startSong()
 }
 
 /// @internal
-bool DM_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
+bool DMFmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
 {
     releaseSong();
     releaseSongBuffer();
@@ -251,11 +272,16 @@ int DM_Music_Play(int looped)
     return startSong();
 }
 
-void DM_Music_Pause(int setPause)
+void DMFmod_Music_Pause(int setPause)
 {
     if(!fmodSystem || !music) return;
 
     music->setPaused(setPause != 0);
+}
+
+void DM_Music_Pause(int setPause)
+{
+    DMFmod_Music_Pause(setPause);
 }
 
 void* DM_Music_SongBuffer(unsigned int length)

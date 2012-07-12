@@ -46,7 +46,12 @@ int     DM_Music_PlayFile(const char *filename, int looped);
 #endif
 
 // Internal:
-void    DM_Music_SetSoundFont(const char* fileName);
-bool    DM_Music_PlaySound(FMOD::Sound* customSound, bool needRelease);
+void    DMFmod_Music_Shutdown(void);
+bool    DMFmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease);
+void    DMFmod_Music_Pause(int setPause);
+void    DMFmod_Music_Stop(void);
+void    DMFmod_Music_Set(int prop, float value);
+int     DMFmod_Music_Get(int prop, void* ptr);
+void    DMFmod_Music_SetSoundFont(const char* fileName);
 
 #endif /* end of include guard: __DSFMOD_MUS_H__ */
