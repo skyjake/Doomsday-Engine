@@ -31,6 +31,7 @@
 #include <cassert>
 #include <iostream>
 #include <fluidsynth.h>
+#include "sys_audiod_sfx.h"
 
 extern "C" {
     
@@ -42,8 +43,7 @@ int     DS_Set(int prop, const void* ptr);
 }
 
 fluid_synth_t* DMFluid_Synth();
-
-#define DENG_DSFLUIDSYNTH_DEBUG
+audiointerface_sfx_generic_t* DMFluid_Sfx();
 
 #ifdef DENG_DSFLUIDSYNTH_DEBUG
 #  define DSFLUIDSYNTH_TRACE(args)  std::cerr << "[dsFluidSynth] " << args << std::endl;

@@ -29,16 +29,122 @@ static int sfontId = -1;
 static fluid_player_t* fsPlayer = 0;
 static thread_t worker;
 static volatile bool workerShouldStop;
+static sfxbuffer_t* sfxBuf;
+static sfxsample_t streamSample;
 
-#define MAX_BLOCKS          8
+#define MAX_BLOCKS          6
 #define SAMPLES_PER_SECOND  44100
-#define BLOCK_SAMPLES       (SAMPLES_PER_SECOND/8)
+#define BLOCK_SAMPLES       (SAMPLES_PER_SECOND / 8)
 #define BYTES_PER_SAMPLE    2
 #define BLOCK_SIZE          (2 * BYTES_PER_SAMPLE * BLOCK_SAMPLES) // 16 bit
 
-static byte* blockBuffer;
-static bool blockReady[MAX_BLOCKS];
-static int nextBlock;
+class RingBuffer
+{
+public:
+    RingBuffer(int size) : _buf(0), _size(size)
+    {
+        _buf = new byte[size];
+        _end = _buf + size;
+        _writePos = _readPos = _buf;
+        _mutex = Sys_CreateMutex("fs_ringbuf");
+    }
+
+    ~RingBuffer()
+    {
+        delete _buf;
+        Sys_DestroyMutex(_mutex);
+    }
+
+    int size() const { return _size; }
+    void* data() { return _buf; }
+
+    int availableForWriting() const
+    {
+        return _size - availableForReading() - 1;
+    }
+
+    int availableForReading() const
+    {
+        Sys_Lock(_mutex);
+
+        int avail;
+        if(_writePos >= _readPos)
+        {
+            avail = _writePos - _readPos;
+        }
+        else
+        {
+            // Write position was wrapped around.
+            avail = (_end - _readPos) + (_writePos - _buf);
+        }
+
+        Sys_Unlock(_mutex);
+        return avail;
+    }
+
+    void write(const void* data, int length)
+    {
+        Sys_Lock(_mutex);
+
+        DENG_ASSERT(_writePos < _end);
+
+        // No need to split?
+        const int remainder = _end - _writePos;
+        if(length <= remainder)
+        {
+            memcpy(_writePos, data, length);
+            _writePos += length;
+            if(_writePos == _end) _writePos = _buf; // May wrap around.
+        }
+        else
+        {
+            // Do the write in two parts.
+            memcpy(_writePos, data, remainder);
+            memcpy(_buf, (byte*)data + remainder, length - remainder);
+            _writePos = _buf + length - remainder;
+        }
+
+        Sys_Unlock(_mutex);
+    }
+
+    int read(void* data, int length)
+    {
+        Sys_Lock(_mutex);
+
+        // We'll read as much as we have.
+        int avail = availableForReading();
+        length = MIN_OF(length, avail);
+
+        const int remainder = _end - _readPos;
+        if(length <= remainder)
+        {
+            memcpy(data, _readPos, length);
+            _readPos += length;
+            if(_readPos == _end) _readPos = _buf; // May wrap around.
+        }
+        else
+        {
+            memcpy(data, _readPos, remainder);
+            memcpy((byte*)data + remainder, _buf, length - remainder);
+            _readPos = _buf + length - remainder;
+        }
+
+        Sys_Unlock(_mutex);
+
+        // This is how much we were able to read.
+        return length;
+    }
+
+private:
+    mutex_t _mutex;
+    byte* _buf;
+    byte* _end;
+    int _size;
+    byte* _writePos;
+    byte* _readPos;
+};
+
+static RingBuffer* blockBuffer;
 
 struct SongBuffer
 {
@@ -113,40 +219,48 @@ static void releaseSongBuffer()
     }
 }
 
-
-static int synthThread(void* parm)
+static int synthWorkThread(void* parm)
 {
     DENG_UNUSED(parm);
     DENG_ASSERT(blockBuffer != 0);
 
-    int block = 0;
+    byte samples[BLOCK_SIZE];
+
     while(!workerShouldStop)
     {
-        if(blockReady[block])
+        if(blockBuffer->availableForWriting() < BLOCK_SIZE)
         {
-            // The block we're about to write to hasn't been streamed out yet.
-            // Let's wait a while.
+            // There's no room for the next block, let's sleep for a while.
             Thread_Sleep(50);
             continue;
         }
 
-        DSFLUIDSYNTH_TRACE("Synthesizing block " << block << "...");
+        //DSFLUIDSYNTH_TRACE("Synthesizing next block...");
 
         // Synthesize a block of samples into our buffer.
-        void* start = blockBuffer + block * BLOCK_SIZE;
+        fluid_synth_write_s16(DMFluid_Synth(), BLOCK_SAMPLES, samples, 0, 2, samples, 1, 2);
+        blockBuffer->write(samples, BLOCK_SIZE);
 
-        // Synthesize a portion of the music.
-        fluid_synth_write_s16(DMFluid_Synth(), BLOCK_SAMPLES, start, 0, 2, start, 1, 2);
-
-        DSFLUIDSYNTH_TRACE("Block " << block << " marked ready.");
-
-        // It can now be streamed out.
-        blockReady[block] = true;
-
-        // Advance to next block.
-        block = (block + 1) % MAX_BLOCKS;
+        //DSFLUIDSYNTH_TRACE("Block written.");
     }
     return 0;
+}
+
+static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
+{
+    DENG_UNUSED(buf);
+    DENG_ASSERT(buf == sfxBuf);
+
+    if(blockBuffer->availableForReading() >= int(size))
+    {
+        DSFLUIDSYNTH_TRACE("Streaming out " << size << " bytes.");
+        blockBuffer->read(data, size);
+        return size;
+    }
+    else
+    {
+        return 0; // Not enough data to fill the requested buffer.
+    }
 }
 
 /**
@@ -155,14 +269,36 @@ static int synthThread(void* parm)
 static void startPlayer()
 {
     DENG_ASSERT(!worker);
+    DENG_ASSERT(sfxBuf == NULL);
+
+    // Create a sound buffer for playing the music.
+    sfxBuf = DMFluid_Sfx()->Create(SFXBF_STREAM, 16, 44100);
+    DSFLUIDSYNTH_TRACE("startPlayer: Created SFX buffer " << sfxBuf);
+
+    // As a streaming buffer, the data will be read from here.
+    memset(&streamSample, 0, sizeof(streamSample));
+    streamSample.id = -1; // undefined sample
+    streamSample.data = reinterpret_cast<void*>(streamOutSamples);
+    streamSample.bytesPer = 2;
+    streamSample.numSamples = MAX_BLOCKS * BLOCK_SAMPLES;
+    streamSample.rate = 44100;
+    DMFluid_Sfx()->Load(sfxBuf, &streamSample);
 
     workerShouldStop = false;
-    worker = Sys_StartThread(synthThread, 0);
+    worker = Sys_StartThread(synthWorkThread, 0);
+
+    DMFluid_Sfx()->Play(sfxBuf);
 }
 
 static void stopPlayer()
 {
     if(!fsPlayer) return;
+
+    // Destroy the sfx buffer.
+    DENG_ASSERT(sfxBuf != 0);
+    DSFLUIDSYNTH_TRACE("stopPlayer: Destroying SFX buffer " << sfxBuf);
+    DMFluid_Sfx()->Destroy(sfxBuf);
+    sfxBuf = 0;
 
     if(worker)
     {
@@ -201,7 +337,7 @@ int DM_Music_Init(void)
 #endif
     songBuffer = 0;
 
-    blockBuffer = new byte[MAX_BLOCKS * BLOCK_SIZE];
+    blockBuffer = new RingBuffer(MAX_BLOCKS * BLOCK_SIZE);
 
     //soundFontFileName = 0; // empty for the default
     return true; //fmodSystem != 0;
@@ -211,11 +347,7 @@ void DMFluid_Shutdown(void)
 {
     stopPlayer();
 
-    delete [] blockBuffer;
-    blockBuffer = 0;
-
-    memset(blockReady, 0, sizeof(blockReady));
-    nextBlock = 0;
+    delete blockBuffer; blockBuffer = 0;
 
     if(fsPlayer)
     {
@@ -298,10 +430,29 @@ int DM_Music_Get(int prop, void* ptr)
     return false;
 }
 
+/**
+ * Get the buffered output and stream it to the Sfx interface.
+ */
 void DMFluid_Update(void)
 {
-    // TODO: get the buffered output and stream it to the Sfx interface
+    /*
+    if(!sfxBuf) return;
 
+    byte samples[2 * BLOCK_SIZE];
+    int bytes = blockBuffer->read(samples, 2 * BLOCK_SIZE);
+    if(bytes > 0)
+    {
+        DSFLUIDSYNTH_TRACE("Update: Writing " << bytes << " bytes to the play buffer");
+        playBuffer->write(samples, bytes); // will overwrite
+
+        // Need to start it now?
+        if(!(sfxBuf->flags & SFXBF_PLAYING))
+        {
+            DSFLUIDSYNTH_TRACE("Update: Playing the streaming buffer");
+            DMFluid_Sfx()->Play(sfxBuf);
+        }
+    }
+    */
 }
 
 void DM_Music_Update(void)
@@ -320,6 +471,7 @@ void DM_Music_Stop(void)
 #endif
     if(!fsPlayer) return;
 
+    DMFluid_Sfx()->Stop(sfxBuf);
     fluid_player_stop(fsPlayer);
 }
 
@@ -370,7 +522,14 @@ void DM_Music_Pause(int setPause)
 #endif
     if(!fsPlayer) return;
 
-    // stop/play?
+    if(setPause)
+    {
+        DMFluid_Sfx()->Stop(sfxBuf);
+    }
+    else
+    {
+        DMFluid_Sfx()->Play(sfxBuf);
+    }
 }
 
 #if 0

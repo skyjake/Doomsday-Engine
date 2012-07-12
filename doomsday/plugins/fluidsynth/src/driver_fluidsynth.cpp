@@ -21,18 +21,24 @@
 
 #include "driver_fluidsynth.h"
 #include "sys_audiod.h"
-#include "sys_audiod_sfx.h"
 #include <stdio.h>
 
 #include "doomsday.h"
 
 static fluid_settings_t* fsConfig;
 static fluid_synth_t* fsSynth;
+static audiointerface_sfx_t* fsSfx;
 
 fluid_synth_t* DMFluid_Synth()
 {
     DENG_ASSERT(fsSynth != 0);
     return fsSynth;
+}
+
+audiointerface_sfx_generic_t* DMFluid_Sfx()
+{
+    DENG_ASSERT(fsSfx != 0);
+    return &fsSfx->gen;
 }
 
 /**
@@ -166,6 +172,11 @@ int DS_Set(int prop, const void* ptr)
         }
         DMFluid_SetSoundFont(path);
         return true; }
+
+    case AUDIOP_SFX_INTERFACE:
+        fsSfx = (audiointerface_sfx_t*) ptr;
+        DSFLUIDSYNTH_TRACE("DS_Set: iSFX = " << fsSfx);
+        return true;
 
     default:
         DSFLUIDSYNTH_TRACE("DS_Set: Unknown property " << prop);

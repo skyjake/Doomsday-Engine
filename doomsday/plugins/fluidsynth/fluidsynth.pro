@@ -11,14 +11,8 @@ win32|macx: TARGET = dsFluidSynth
 
 CONFIG -= qt
 
-DEFINES += FLUIDSYNTH_NOT_A_DLL WITH_FLOAT \
-    HAVE_MATH_H HAVE_STDIO_H HAVE_STDLIB_H HAVE_STRING_H
-
-*-g++* {
-    QMAKE_CFLAGS += -fomit-frame-pointer -funroll-all-loops -finline-functions -fdiagnostics-show-option
-    QMAKE_CFLAGS_WARN_ON -= -Wall -W
-    QMAKE_CFLAGS_WARN_ON += -Wno-deprecated-declarations
-}
+# Define this to get debug messages.
+DEFINES += DENG_DSFLUIDSYNTH_DEBUG
 
 win32 {
     RC_FILE = res/fluidsynth.rc
@@ -28,6 +22,25 @@ win32 {
 
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
+}
+macx {
+    linkToBundledLibdeng2(dsFluidSynth)
+    linkToBundledLibdeng(dsFluidSynth)
+}
+unix:!macx {
+    INSTALLS += target
+    target.path = $$DENG_LIB_DIR
+}
+
+# libfluidsynth config ------------------------------------------------------
+
+DEFINES += FLUIDSYNTH_NOT_A_DLL WITH_FLOAT \
+    HAVE_MATH_H HAVE_STDIO_H HAVE_STDLIB_H HAVE_STRING_H
+
+*-g++* {
+    QMAKE_CFLAGS += -fomit-frame-pointer -funroll-all-loops -finline-functions -fdiagnostics-show-option
+    QMAKE_CFLAGS_WARN_ON -= -Wall -W
+    QMAKE_CFLAGS_WARN_ON += -Wno-deprecated-declarations
 }
 
 macx {
@@ -165,8 +178,3 @@ SOURCES += \
     $${FS_DIR}/src/drivers/fluid_aufile.c \
     $${FS_DIR}/src/bindings/fluid_cmd.c \
     $${FS_DIR}/src/bindings/fluid_filerenderer.c
-
-macx {
-    linkToBundledLibdeng2(dsFluidSynth)
-    linkToBundledLibdeng(dsFluidSynth)
-}
