@@ -1313,6 +1313,13 @@ static int G_LoadMap(loadmap_params_t* p)
     return 0; // Assume success.
 }
 
+void G_DoLoadMap(loadmap_params_t* p)
+{
+    G_LoadMap(p);
+    // Wrap up, map loading is now complete.
+    G_SetGameAction(GA_NONE);
+}
+
 static int G_LoadMapWorker(void* params)
 {
     loadmap_params_t* p = (loadmap_params_t*) params;
@@ -1321,16 +1328,8 @@ static int G_LoadMapWorker(void* params)
     return result;
 }
 
-void G_DoLoadMap(loadmap_params_t* p)
+int G_DoLoadMapAndMaybeStartBriefing(loadmap_params_t* p)
 {
-    G_LoadMap(p);
-    // Wrap up, map loading is now complete.
-    G_SetGameAction(GA_NONE);
-}
-
-int G_DoLoadMapAndMaybeStartBriefing(void* parameters)
-{
-    loadmap_params_t* p = (loadmap_params_t*)parameters;
     ddfinale_t fin;
     boolean hasBrief;
 
@@ -1338,7 +1337,7 @@ int G_DoLoadMapAndMaybeStartBriefing(void* parameters)
 
     hasBrief = G_BriefingEnabled(p->episode, p->map, &fin);
 
-    G_LoadMapWorker(p);
+    G_LoadMap(p);
     // Wrap up, map loading is now complete.
     G_SetGameAction(GA_NONE);
 
@@ -1346,9 +1345,16 @@ int G_DoLoadMapAndMaybeStartBriefing(void* parameters)
     if(hasBrief)
     {
         G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
-        return true;
     }
-    return false;
+    return hasBrief;
+}
+
+static int G_DoLoadMapAndMaybeStartBriefingWorker(void* parameters)
+{
+    loadmap_params_t* p = (loadmap_params_t*)parameters;
+    int result = G_DoLoadMapAndMaybeStartBriefing(p);
+    BusyMode_WorkerEnd();
+    return result;
 }
 
 int G_Responder(event_t* ev)
@@ -1651,7 +1657,7 @@ static void runGameAction(void)
             {
                 /// @todo Use progress bar mode and update progress during the setup.
                 BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                            G_DoLoadMapAndMaybeStartBriefing, &p, "Loading map...");
+                                            G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
             }
             else
             {
@@ -2610,10 +2616,16 @@ void G_DoWorldDone(void)
     loadmap_params_t p;
     boolean hasBrief;
 
-#if __JHEXEN__
-    // Make sure that the episode and map numbers are good.
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+
+    // Unpause the current game.
+    sendPause = paused = false;
+
+    // Ensure that the episode and map indices are good.
     G_ValidateMap(&gameEpisode, &nextMap);
 
+#if __JHEXEN__
     /**
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
@@ -2636,7 +2648,7 @@ void G_DoWorldDone(void)
     }
 
     // Take a copy of the player objects (they will be cleared in the process
-    // of calling G_InitNew() and we need to restore them after).
+    // of calling G_InitForNewGame() and we need to restore them after).
     SV_HxBackupPlayersInCluster(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
@@ -2648,12 +2660,6 @@ void G_DoWorldDone(void)
 
     G_InitForNewGame(gameSkill);
 #endif
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
-
-    // Unpause the current game.
-    sendPause = paused = false;
 
     p.mapUri     = G_ComposeMapUri(gameEpisode, nextMap);
     p.episode    = gameEpisode;
@@ -2680,7 +2686,7 @@ void G_DoWorldDone(void)
     {
         /// @todo Use progress bar mode and update progress during the setup.
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    G_DoLoadMapAndMaybeStartBriefing, &p, "Loading map...");
+                                    G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
     }
     else
     {
@@ -3006,7 +3012,7 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     {
         /// @todo Use progress bar mode and update progress during the setup.
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    G_DoLoadMapAndMaybeStartBriefing, &p, "Loading map...");
+                                    G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
     }
     else
     {
