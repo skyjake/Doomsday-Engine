@@ -480,7 +480,7 @@ int GameMap_LineMobjsIterator(GameMap* map, LineDef* lineDef,
     int result = false;
     assert(map);
 
-    root = map->lineLinks[GameMap_LineDefIndex(map, lineDef)], nix;
+    root = map->lineLinks[GameMap_LineDefIndex(map, lineDef)];
     ln = map->lineNodes.nodes;
 
     for(nix = ln[root].next; nix != root; nix = ln[nix].next)

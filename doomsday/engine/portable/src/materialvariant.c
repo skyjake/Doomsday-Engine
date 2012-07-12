@@ -240,7 +240,7 @@ int MaterialVariant_SnapshotPrepareFrame(const materialvariant_t* mat)
 void MaterialVariant_SetSnapshotPrepareFrame(materialvariant_t* mat, int frame)
 {
     assert(mat);
-    mat->_snapshotPrepareFrame;
+    mat->_snapshotPrepareFrame = frame;
 }
 
 materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat)
