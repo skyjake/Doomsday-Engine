@@ -38,9 +38,17 @@ static sfxsample_t streamSample;
 #define BYTES_PER_SAMPLE    2
 #define BLOCK_SIZE          (2 * BYTES_PER_SAMPLE * BLOCK_SAMPLES) // 16 bit
 
+/**
+ * Ring buffer for storing synthesized samples. This is thread-safe as there
+ * is a separate thread where the synthesizer is being run when a song plays.
+ */
 class RingBuffer
 {
 public:
+    /**
+     * Constructs a ring buffer.
+     * @param size  Size of the buffer in bytes.
+     */
     RingBuffer(int size) : _buf(0), _size(size)
     {
         _buf = new byte[size];
@@ -114,6 +122,16 @@ public:
         Sys_Unlock(_mutex);
     }
 
+    /**
+     * Reads a block of data from the buffer.
+     *
+     * @param data    The read data will be written here.
+     * @param length  Number of bytes to read. If there aren't this many
+     *                bytes currently available, reads all the available
+     *                data instead.
+     *
+     * @return  Actual number of bytes read.
+     */
     int read(void* data, int length)
     {
         Sys_Lock(_mutex);
@@ -152,80 +170,13 @@ private:
 };
 
 static RingBuffer* blockBuffer;
-
-struct SongBuffer
-{
-    int size;
-    char* data;
-
-    SongBuffer(int newSize) : size(newSize) {
-        data = new char[newSize];
-    }
-
-    ~SongBuffer() {
-        delete [] data;
-    }
-};
-
-#if 0
-static FMOD::Sound* song;
-static FMOD::Channel* music;
-static bool needReleaseSong;
-#endif
 static float musicVolume;
-static SongBuffer* songBuffer;
-//static const char* soundFontFileName;
 
-#if 0
-static FMOD_RESULT F_CALLBACK
-musicCallback(FMOD_CHANNEL* chanPtr, FMOD_CHANNEL_CALLBACKTYPE type,
-              void* /*commanddata1*/, void* /*commanddata2*/)
-{
-    if(reinterpret_cast<FMOD::Channel*>(chanPtr) != music)
-        return FMOD_OK; // Safety check.
-
-    switch(type)
-    {
-    case FMOD_CHANNEL_CALLBACKTYPE_END:
-        // The music has stopped.
-        music = 0;
-        break;
-
-    default:
-        break;
-    }
-    return FMOD_OK;
-}
-
-static void releaseSong()
-{
-    if(song)
-    {
-        if(needReleaseSong)
-        {
-            DSFMOD_TRACE("releaseSong: Song " << song << " will be released.")
-            song->release();
-        }
-        else
-        {
-            DSFMOD_TRACE("releaseSong: Song " << song << " will NOT be released.");
-        }
-        song = 0;
-        needReleaseSong = false;
-    }
-    music = 0;
-}
-#endif
-
-static void releaseSongBuffer()
-{
-    if(songBuffer)
-    {
-        delete songBuffer;
-        songBuffer = 0;
-    }
-}
-
+/**
+ * Thread entry point for the synthesizer. Runs until the song is stopped.
+ * @param parm  Not used.
+ * @return Always zero.
+ */
 static int synthWorkThread(void* parm)
 {
     DENG_UNUSED(parm);
@@ -253,6 +204,17 @@ static int synthWorkThread(void* parm)
     return 0;
 }
 
+/**
+ * Callback function for streaming out data to the SFX buffer. This is called
+ * by the SFX driver when it wants more samples.
+ *
+ * @param buf   Buffer where the samples are being played in.
+ * @param data  Data buffer for writing samples into.
+ * @param size  Number of bytes to write.
+ *
+ * @return  Number of bytes written to @a data, or 0 if there are less than
+ * the requested amount of data available.
+ */
 static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
 {
     DENG_UNUSED(buf);
@@ -271,7 +233,7 @@ static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
 }
 
 /**
- * Starts the synthesizer thread.
+ * Starts the synthesizer thread and music playback.
  */
 static void startPlayer()
 {
@@ -283,6 +245,7 @@ static void startPlayer()
     DSFLUIDSYNTH_TRACE("startPlayer: Created SFX buffer " << sfxBuf);
 
     // As a streaming buffer, the data will be read from here.
+    // The length of the buffer is ignored, streaming buffers play indefinitely.
     memset(&streamSample, 0, sizeof(streamSample));
     streamSample.id = -1; // undefined sample
     streamSample.data = reinterpret_cast<void*>(streamOutSamples);
@@ -328,27 +291,9 @@ static void stopPlayer()
     blockBuffer->clear();
 }
 
-#if 0
-void setDefaultStreamBufferSize()
-{
-    if(!fmodSystem) return;
-
-    FMOD_RESULT result;
-    result = fmodSystem->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
-    DSFMOD_ERRCHECK(result);
-}
-#endif
-
 int DM_Music_Init(void)
 {
-#if 0
-    music = 0;
-    song = 0;
-    needReleaseSong = false;
-#endif
     musicVolume = 1.f;
-    songBuffer = 0;
-
     blockBuffer = new RingBuffer(MAX_BLOCKS * BLOCK_SIZE);
 
     //soundFontFileName = 0; // empty for the default
@@ -366,9 +311,6 @@ void DMFluid_Shutdown(void)
         delete_fluid_player(fsPlayer);
         fsPlayer = 0;
     }
-
-    releaseSongBuffer();
-    //soundFontFileName = 0;
 
     DSFLUIDSYNTH_TRACE("Music_Shutdown.");
 }
@@ -527,10 +469,6 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
     // If we are playing something, make sure it's stopped.
     stopPlayer();
-
-    // Get rid of the current song.
-    //releaseSong();
-    //releaseSongBuffer();
 
     DENG_ASSERT(fsPlayer == NULL);
 
