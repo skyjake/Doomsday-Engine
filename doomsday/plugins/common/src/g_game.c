@@ -2600,23 +2600,30 @@ static int G_SaveStateWorker(void* parameters)
     return result;
 }
 
-#if __JHEXEN__
-static void mapTeleport(uint episode, uint map, uint entryPoint)
+void G_DoWorldDone(void)
 {
+#if __JHEXEN__
     playerbackup_t playerBackup[MAXPLAYERS];
     boolean revisit;
     boolean oldRandomClassParm;
+#endif
+    loadmap_params_t p;
+    boolean hasBrief;
+
+#if __JHEXEN__
+    // Make sure that the episode and map numbers are good.
+    G_ValidateMap(&gameEpisode, &nextMap);
 
     /**
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    revisit = SV_HxHaveMapSaveForSlot(BASE_SLOT, map+1);
+    revisit = SV_HxHaveMapSaveForSlot(BASE_SLOT, nextMap+1);
     if(deathmatch) revisit = false;
 
     if(!deathmatch)
     {
-        if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
+        if(P_GetMapCluster(gameMap) == P_GetMapCluster(nextMap))
         {
             // Same cluster; save current map.
             SV_HxSaveClusterMap();
@@ -2639,86 +2646,8 @@ static void mapTeleport(uint episode, uint map, uint entryPoint)
     // We don't want to see a briefing if we've already visited this map.
     if(revisit) briefDisabled = true;
 
-    // Make sure that the episode and map numbers are good.
-    G_ValidateMap(&episode, &map);
-
     G_InitForNewGame(gameSkill);
-
-    gameEpisode = episode;
-    gameMap = map;
-
-    NetSv_UpdateGameConfig();
-
-    { loadmap_params_t p;
-    boolean hasBrief;
-
-    p.mapUri     = G_ComposeMapUri(episode, map);
-    p.episode    = episode;
-    p.map        = map;
-
-    hasBrief = G_BriefingEnabled(episode, map, 0);
-    if(!hasBrief)
-    {
-        G_QueMapMusic(episode, map);
-    }
-
-    // If we're the server, let clients know the map will change.
-    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
-
-    if(!BusyMode_Active())
-    {
-        /// @todo Use progress bar mode and update progress during the setup.
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    G_DoLoadMapAndMaybeStartBriefing, &p, "Loading map...");
-    }
-    else
-    {
-        G_DoLoadMapAndMaybeStartBriefing(&p);
-    }
-
-    if(!hasBrief)
-    {
-        // No briefing; begin the map.
-        HU_WakeWidgets(-1 /* all players */);
-        G_BeginMap();
-    }
-
-    Z_CheckHeap();
-    Uri_Delete(p.mapUri);
-    }
-
-    if(revisit)
-    {
-        SV_HxLoadClusterMap();
-    }
-    else // First visit.
-    {
-        // Destroy all freshly spawned players.
-        P_RemoveAllPlayerMobjs();
-    }
-
-    SV_HxRestorePlayersInCluster(playerBackup, entryPoint);
-
-    // Restore the random class option.
-    randomClassParm = oldRandomClassParm;
-
-    // Launch waiting scripts.
-    if(!deathmatch)
-    {
-        P_CheckACSStore(map);
-    }
-
-    rebornPosition = entryPoint;
-}
 #endif
-
-void G_DoWorldDone(void)
-{
-#if __JHEXEN__
-    mapTeleport(gameEpisode, nextMap, nextMapEntryPoint);
-#else
-    loadmap_params_t p;
-    boolean hasBrief;
 
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
@@ -2737,6 +2666,12 @@ void G_DoWorldDone(void)
     }
 
     gameMap = p.map;
+
+#if __JHEXEN__
+    /// @todo It should not be necessary for the server to re-transmit the game
+    ///       config at this time (needed because of G_InitForNewGame() ?).
+    NetSv_UpdateGameConfig();
+#endif
 
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
@@ -2759,6 +2694,30 @@ void G_DoWorldDone(void)
         HU_WakeWidgets(-1/* all players */);
         G_BeginMap();
     }
+
+#if __JHEXEN__
+    if(revisit)
+    {
+        SV_HxLoadClusterMap();
+    }
+    else // First visit.
+    {
+        // Destroy all freshly spawned players.
+        P_RemoveAllPlayerMobjs();
+    }
+
+    SV_HxRestorePlayersInCluster(playerBackup, nextMapEntryPoint);
+
+    // Restore the random class option.
+    randomClassParm = oldRandomClassParm;
+
+    // Launch waiting scripts.
+    if(!deathmatch)
+    {
+        P_CheckACSStore(gameMap);
+    }
+
+    rebornPosition = nextMapEntryPoint;
 #endif
 
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
