@@ -58,6 +58,13 @@ public:
     int size() const { return _size; }
     void* data() { return _buf; }
 
+    void clear()
+    {
+        Sys_Lock(_mutex);
+        _writePos = _readPos = _buf;
+        Sys_Unlock(_mutex);
+    }
+
     int availableForWriting() const
     {
         return _size - availableForReading() - 1;
@@ -164,8 +171,8 @@ struct SongBuffer
 static FMOD::Sound* song;
 static FMOD::Channel* music;
 static bool needReleaseSong;
-static float musicVolume;
 #endif
+static float musicVolume;
 static SongBuffer* songBuffer;
 //static const char* soundFontFileName;
 
@@ -287,6 +294,9 @@ static void startPlayer()
     workerShouldStop = false;
     worker = Sys_StartThread(synthWorkThread, 0);
 
+    // Update the buffer's volume.
+    DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
+
     DMFluid_Sfx()->Play(sfxBuf);
 }
 
@@ -314,6 +324,8 @@ static void stopPlayer()
     DSFLUIDSYNTH_TRACE("stopPlayer: " << fsPlayer);
     delete_fluid_player(fsPlayer);
     fsPlayer = 0;
+
+    blockBuffer->clear();
 }
 
 #if 0
@@ -333,8 +345,8 @@ int DM_Music_Init(void)
     music = 0;
     song = 0;
     needReleaseSong = false;
-    musicVolume = 1.f;
 #endif
+    musicVolume = 1.f;
     songBuffer = 0;
 
     blockBuffer = new RingBuffer(MAX_BLOCKS * BLOCK_SIZE);
@@ -390,22 +402,20 @@ void DMFluid_SetSoundFont(const char* fileName)
 
 void DM_Music_Set(int prop, float value)
 {
-#if 0
-    if(!fmodSystem)
-        return;
-
     switch(prop)
     {
     case MUSIP_VOLUME:
         musicVolume = value;
-        if(music) music->setVolume(musicVolume);
-        DSFMOD_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
+        if(sfxBuf)
+        {
+            DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
+        }
+        DSFLUIDSYNTH_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
         break;
 
     default:
         break;
     }
-#endif
 }
 
 int DM_Music_Get(int prop, void* ptr)
@@ -439,24 +449,7 @@ int DM_Music_Get(int prop, void* ptr)
  */
 void DMFluid_Update(void)
 {
-    /*
-    if(!sfxBuf) return;
-
-    byte samples[2 * BLOCK_SIZE];
-    int bytes = blockBuffer->read(samples, 2 * BLOCK_SIZE);
-    if(bytes > 0)
-    {
-        DSFLUIDSYNTH_TRACE("Update: Writing " << bytes << " bytes to the play buffer");
-        playBuffer->write(samples, bytes); // will overwrite
-
-        // Need to start it now?
-        if(!(sfxBuf->flags & SFXBF_PLAYING))
-        {
-            DSFLUIDSYNTH_TRACE("Update: Playing the streaming buffer");
-            DMFluid_Sfx()->Play(sfxBuf);
-        }
-    }
-    */
+    // nothing to do
 }
 
 void DM_Music_Update(void)
@@ -466,13 +459,6 @@ void DM_Music_Update(void)
 
 void DM_Music_Stop(void)
 {
-#if 0
-    if(!fmodSystem || !music) return;
-
-    DSFMOD_TRACE("Music_Stop.");
-
-    music->stop();
-#endif
     if(!fsPlayer) return;
 
     DMFluid_Sfx()->Stop(sfxBuf);
@@ -519,11 +505,6 @@ int DM_Music_Play(int looped)
 
 void DM_Music_Pause(int setPause)
 {
-#if 0
-    if(!fmodSystem || !music) return;
-
-    music->setPaused(setPause != 0);
-#endif
     if(!fsPlayer) return;
 
     if(setPause)
@@ -535,21 +516,6 @@ void DM_Music_Pause(int setPause)
         DMFluid_Sfx()->Play(sfxBuf);
     }
 }
-
-#if 0
-void* DM_Music_SongBuffer(unsigned int length)
-{
-    releaseSongBuffer();
-
-    DSFLUIDSYNTH_TRACE("Music_SongBuffer: Allocating a song buffer for " << length << " bytes.");
-
-    // The caller will put data in this buffer. Before playing, we will create
-    // the FluidSynth sound based on the data in the song buffer.
-
-    songBuffer = new SongBuffer(length);
-    return songBuffer->data;
-}
-#endif
 
 int DM_Music_PlayFile(const char *filename, int looped)
 {
