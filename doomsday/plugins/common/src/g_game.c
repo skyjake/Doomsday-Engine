@@ -3037,8 +3037,7 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     p.map        = gameMap;
 
     hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
-
-    if(hasBrief)
+    if(!hasBrief)
     {
         G_QueMapMusic(gameEpisode, gameMap);
     }
