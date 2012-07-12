@@ -107,15 +107,6 @@ void P_SpawnTelefog(mobj_t* mo, void* context)
 # endif
 }
 
-/**
- * Removes the given mobj from the world.
- *
- * @param mo            The mobj to be removed.
- * @param noRespawn     Disable the automatical respawn which occurs
- *                      with mobjs of certain type(s) (also dependant on
- *                      the current gamemode).
- *                      Generally this should be @c false.
- */
 void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 {
     if(mo->ddFlags & DDMF_REMOTE) goto justDoIt;
@@ -155,6 +146,19 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 
 justDoIt:
     P_MobjDestroy(mo);
+}
+
+void P_RemoveAllPlayerMobjs(void)
+{
+    uint i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        P_MobjRemove(ddplr->mo, true);
+    }
 }
 
 /**

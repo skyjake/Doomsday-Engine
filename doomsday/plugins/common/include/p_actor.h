@@ -29,7 +29,18 @@
 #ifndef LIBCOMMON_P_ACTOR_H
 #define LIBCOMMON_P_ACTOR_H
 
+/**
+ * Removes the given mobj from the world.
+ *
+ * @param mo            The mobj to be removed.
+ * @param noRespawn     Disable the automatical respawn which occurs
+ *                      with mobjs of certain type(s) (also dependant on
+ *                      the current gamemode).
+ *                      Generally this should be @c false.
+ */
 void P_MobjRemove(mobj_t* mo, boolean noRespawn);
+
+void P_RemoveAllPlayerMobjs(void);
 
 void P_MobjUnsetOrigin(mobj_t* mo);
 void P_MobjSetOrigin(mobj_t* mo);

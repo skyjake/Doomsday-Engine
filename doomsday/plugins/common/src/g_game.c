@@ -73,6 +73,7 @@
 #include "x_hair.h"
 #include "p_player.h"
 #include "r_common.h"
+#include "p_map.h"
 #include "p_mapspec.h"
 #include "p_start.h"
 #include "p_inventory.h"
@@ -1291,11 +1292,12 @@ static void initFogForMap(ddmapinfo_t* mapInfo)
 #endif
 }
 
-static int G_LoadMapWorker(void* params)
+static int G_LoadMap(loadmap_params_t* p)
 {
-    loadmap_params_t* p = (loadmap_params_t*) params;
     boolean hasMapInfo = false;
     ddmapinfo_t mapInfo;
+
+    DENG_ASSERT(p);
 
     // Is MapInfo data available for this map?
     { ddstring_t* mapUriStr = Uri_Compose(p->mapUri);
@@ -1307,18 +1309,21 @@ static int G_LoadMapWorker(void* params)
 
     P_SetupMap(p->mapUri, p->episode, p->map);
     initFogForMap(hasMapInfo? &mapInfo : 0);
-
-    BusyMode_WorkerEnd();
     /// @todo Fixme: Do not assume!
     return 0; // Assume success.
 }
 
+static int G_LoadMapWorker(void* params)
+{
+    loadmap_params_t* p = (loadmap_params_t*) params;
+    int result = G_LoadMap(p);
+    BusyMode_WorkerEnd();
+    return result;
+}
+
 void G_DoLoadMap(loadmap_params_t* p)
 {
-    DENG_ASSERT(p);
-
-    G_LoadMapWorker(p);
-
+    G_LoadMap(p);
     // Wrap up, map loading is now complete.
     G_SetGameAction(GA_NONE);
 }
@@ -1334,7 +1339,6 @@ int G_DoLoadMapAndMaybeStartBriefing(void* parameters)
     hasBrief = G_BriefingEnabled(p->episode, p->map, &fin);
 
     G_LoadMapWorker(p);
-
     // Wrap up, map loading is now complete.
     G_SetGameAction(GA_NONE);
 
@@ -2482,11 +2486,76 @@ static int G_SaveStateWorker(void* parameters)
     return result;
 }
 
+#if __JHEXEN__
+static void mapTeleport(uint map, uint entryPoint)
+{
+    playerbackup_t playerBackup[MAXPLAYERS];
+    boolean revisit;
+    boolean oldRandomClassParm;
+
+    /**
+     * First, determine whether we've been to this map previously and if so,
+     * whether we need to load the archived map state.
+     */
+    revisit = SV_HxHaveMapSaveForSlot(BASE_SLOT, map+1);
+    if(deathmatch) revisit = false;
+
+    if(!deathmatch)
+    {
+        if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
+        {
+            // Same cluster; save current map.
+            SV_HxSaveClusterMap();
+        }
+        else
+        {
+            // Entering new cluster - clear base slot.
+            SV_ClearSlot(BASE_SLOT);
+        }
+    }
+
+    // Take a copy of the player objects (they will be cleared in the process
+    // of calling G_InitNew() and we need to restore them after).
+    SV_HxBackupPlayersInCluster(playerBackup);
+
+    // Disable class randomization (all players must spawn as their existing class).
+    oldRandomClassParm = randomClassParm;
+    randomClassParm = false;
+
+    // We don't want to see a briefing if we've already visited this map.
+    if(revisit) briefDisabled = true;
+
+    G_InitNew(gameSkill, gameEpisode, map);
+
+    if(revisit)
+    {
+        SV_HxLoadClusterMap();
+    }
+    else // First visit.
+    {
+        // Destroy all freshly spawned players.
+        P_RemoveAllPlayerMobjs();
+    }
+
+    SV_HxRestorePlayersInCluster(playerBackup, entryPoint);
+
+    // Restore the random class option.
+    randomClassParm = oldRandomClassParm;
+
+    // Launch waiting scripts.
+    if(!deathmatch)
+    {
+        P_CheckACSStore(gameMap);
+    }
+
+    rebornPosition = entryPoint;
+}
+#endif
+
 void G_DoWorldDone(void)
 {
 #if __JHEXEN__
-    SV_HxMapTeleport(nextMap, nextMapEntryPoint);
-    rebornPosition = nextMapEntryPoint;
+    mapTeleport(nextMap, nextMapEntryPoint);
 #else
     loadmap_params_t p;
     boolean hasBrief;

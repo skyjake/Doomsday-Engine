@@ -350,6 +350,19 @@ boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
     return true;
 }
 
+void P_TelefragMobjsTouchingPlayers(void)
+{
+    uint i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        P_TeleportMove(ddplr->mo, ddplr->mo->origin[VX], ddplr->mo->origin[VY], true);
+    }
+}
+
 /**
  * Checks to see if a start->end trajectory line crosses a blocking line.
  * Returns false if it does.
