@@ -42,6 +42,11 @@ DEFINES += FLUIDSYNTH_NOT_A_DLL WITH_FLOAT \
     QMAKE_CFLAGS_WARN_ON -= -Wall -W
     QMAKE_CFLAGS_WARN_ON += -Wno-deprecated-declarations
 }
+*-clang* {
+    QMAKE_CFLAGS += -fomit-frame-pointer -finline-functions -fdiagnostics-show-option
+    QMAKE_CFLAGS_WARN_ON -= -Wall -W
+    QMAKE_CFLAGS_WARN_ON += -Wno-deprecated-declarations -Wno-parentheses
+}
 
 macx {
     DEFINES += DARWIN
