@@ -1790,13 +1790,16 @@ int Def_Get(int type, const char* id, void* out)
         {
             if(stricmp(defs.finales[i].id, id)) continue;
 
-            fin->before = defs.finales[i].before;
-            fin->after  = defs.finales[i].after;
-            fin->script = defs.finales[i].script;
+            if(fin)
+            {
+                fin->before = defs.finales[i].before;
+                fin->after  = defs.finales[i].after;
+                fin->script = defs.finales[i].script;
+            }
             return true;
         }
-        return false;
-      }
+        return false; }
+
     case DD_DEF_FINALE_BEFORE: {
         finalescript_t* fin = (finalescript_t*) out;
         Uri* uri = Uri_NewWithPath2(id, RC_NULL);
@@ -1804,15 +1807,18 @@ int Def_Get(int type, const char* id, void* out)
         {
             if(!defs.finales[i].before || !Uri_Equality(defs.finales[i].before, uri)) continue;
 
-            fin->before = defs.finales[i].before;
-            fin->after  = defs.finales[i].after;
-            fin->script = defs.finales[i].script;
+            if(fin)
+            {
+                fin->before = defs.finales[i].before;
+                fin->after  = defs.finales[i].after;
+                fin->script = defs.finales[i].script;
+            }
             Uri_Delete(uri);
             return true;
         }
         Uri_Delete(uri);
-        return false;
-      }
+        return false; }
+
     case DD_DEF_FINALE_AFTER: {
         finalescript_t* fin = (finalescript_t*) out;
         Uri* uri = Uri_NewWithPath2(id, RC_NULL);
@@ -1820,15 +1826,18 @@ int Def_Get(int type, const char* id, void* out)
         {
             if(!defs.finales[i].after || !Uri_Equality(defs.finales[i].after, uri)) continue;
 
-            fin->before = defs.finales[i].before;
-            fin->after  = defs.finales[i].after;
-            fin->script = defs.finales[i].script;
+            if(fin)
+            {
+                fin->before = defs.finales[i].before;
+                fin->after  = defs.finales[i].after;
+                fin->script = defs.finales[i].script;
+            }
             Uri_Delete(uri);
             return true;
         }
         Uri_Delete(uri);
-        return false;
-      }
+        return false; }
+
     case DD_DEF_LINE_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
         for(i = defs.count.lineTypes.num - 1; i >= 0; i--)
