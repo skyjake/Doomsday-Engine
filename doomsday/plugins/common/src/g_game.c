@@ -1636,8 +1636,7 @@ static void runGameAction(void)
             p.map        = gameMap;
 
             hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
-
-            if(hasBrief)
+            if(!hasBrief)
             {
                 G_QueMapMusic(gameEpisode, gameMap);
             }
@@ -2657,8 +2656,7 @@ static void mapTeleport(uint episode, uint map, uint entryPoint)
     p.map        = map;
 
     hasBrief = G_BriefingEnabled(episode, map, 0);
-
-    if(hasBrief)
+    if(!hasBrief)
     {
         G_QueMapMusic(episode, map);
     }
@@ -2732,8 +2730,7 @@ void G_DoWorldDone(void)
     p.map        = nextMap;
 
     hasBrief = G_BriefingEnabled(p.episode, p.map, 0);
-
-    if(hasBrief)
+    if(!hasBrief)
     {
         G_QueMapMusic(p.episode, p.map);
     }
