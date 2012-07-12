@@ -481,7 +481,7 @@ void P_MobjMoveZ(mobj_t* mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(movingDown = (mo->mom[MZ] < 0))
+        if((movingDown = (mo->mom[MZ] < 0)))
         {
             if(mo->player && mo->player->plr->mo == mo &&
                mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))

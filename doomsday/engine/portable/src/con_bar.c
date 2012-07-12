@@ -77,7 +77,7 @@ void Con_ShutdownProgress(void)
     }
 }
 
-static currentProgress(void)
+static int currentProgress(void)
 {
     timespan_t nowTime = Sys_GetRealSeconds();
     timespan_t span = target.time - last.time;

@@ -794,7 +794,7 @@ void I_ClearDeviceContextAssociations(void)
 
 boolean I_IsKeyDown(inputdev_t* dev, uint id)
 {
-    if(dev && id >= 0 && id < dev->numKeys)
+    if(dev && id < dev->numKeys)
     {
         return dev->keys[id].isDown;
     }

@@ -464,7 +464,7 @@ Info::Element* Info::BlockElement::findByPath(const String &path) const
     {
         name = path;
     }
-    name.trimmed();
+    name = name.trimmed();
 
     // Does this element exist?
     Element* e = find(name);
