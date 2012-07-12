@@ -2232,6 +2232,7 @@ void G_InitForNewGame(skillmode_t skill)
         skill = SM_BABY;
     if(skill > NUM_SKILL_MODES - 1)
         skill = NUM_SKILL_MODES - 1;
+    gameSkill = skill;
 
     M_ResetRandom();
 
