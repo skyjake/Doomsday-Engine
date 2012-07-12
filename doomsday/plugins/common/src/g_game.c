@@ -2203,6 +2203,120 @@ void G_StartNewInit(void)
 }
 #endif
 
+void G_InitForNewGame(skillmode_t skill)
+{
+    int i;
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    int speed;
+#endif
+
+    // Close any open automaps.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->inGame)
+            continue;
+        ST_AutomapOpen(i, false, true);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(i, false);
+#endif
+    }
+
+    // If there are any InFine scripts running, they must be stopped.
+    FI_StackClear();
+
+    userGame = true; // Will be set false if a demo.
+
+    // Unpause the current game.
+    sendPause = paused = false;
+
+    if(skill < SM_BABY)
+        skill = SM_BABY;
+    if(skill > NUM_SKILL_MODES - 1)
+        skill = NUM_SKILL_MODES - 1;
+
+    M_ResetRandom();
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
+    respawnMonsters = respawnParm;
+#endif
+
+#if __JDOOM__ || __JHERETIC__
+    // Is respawning enabled at all in nightmare skill?
+    if(skill == SM_NIGHTMARE)
+        respawnMonsters = cfg.respawnMonstersNightmare;
+#endif
+
+#if __JDOOM__
+    // Disabled in Chex and HacX because this messes with the original games' values.
+    if(gameMode != doom2_hacx && gameMode != doom_chex)
+#endif
+    {
+        /// @kludge Doom/Heretic Fast Monters/Missiles
+#if __JDOOM__ || __JDOOM64__
+        // Fast monsters?
+        if(fastParm
+        # if __JDOOM__
+                || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
+        # endif
+                )
+        {
+            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+                STATES[i].tics = 1;
+            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+                STATES[i].tics = 4;
+            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+                STATES[i].tics = 1;
+        }
+        else
+        {
+            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+                STATES[i].tics = 2;
+            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+                STATES[i].tics = 8;
+            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+                STATES[i].tics = 2;
+        }
+#endif
+
+        // Fast missiles?
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+# if __JDOOM64__
+        speed = fastParm;
+# elif __JDOOM__
+        speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
+# else
+        speed = skill == SM_NIGHTMARE;
+# endif
+
+        for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
+        {
+            MOBJINFO[MonsterMissileInfo[i].type].speed =
+                    MonsterMissileInfo[i].speed[speed];
+        }
+#endif
+        // <-- KLUDGE
+    }
+
+    if(!IS_CLIENT)
+    {
+        // Force players to be initialized upon first map load.
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            player_t* plr = &players[i];
+
+            plr->playerState = PST_REBORN;
+#if __JHEXEN__
+            plr->worldTimer = 0;
+#else
+            plr->didSecret = false;
+#endif
+        }
+    }
+
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+}
+
 /**
  * Leave the current map and start intermission routine.
  * (if __JHEXEN__ the intermission will only be displayed when exiting a
@@ -2487,7 +2601,7 @@ static int G_SaveStateWorker(void* parameters)
 }
 
 #if __JHEXEN__
-static void mapTeleport(uint map, uint entryPoint)
+static void mapTeleport(uint episode, uint map, uint entryPoint)
 {
     playerbackup_t playerBackup[MAXPLAYERS];
     boolean revisit;
@@ -2525,7 +2639,54 @@ static void mapTeleport(uint map, uint entryPoint)
     // We don't want to see a briefing if we've already visited this map.
     if(revisit) briefDisabled = true;
 
-    G_InitNew(gameSkill, gameEpisode, map);
+    // Make sure that the episode and map numbers are good.
+    G_ValidateMap(&episode, &map);
+
+    G_InitForNewGame(gameSkill);
+
+    gameEpisode = episode;
+    gameMap = map;
+
+    NetSv_UpdateGameConfig();
+
+    { loadmap_params_t p;
+    boolean hasBrief;
+
+    p.mapUri     = G_ComposeMapUri(episode, map);
+    p.episode    = episode;
+    p.map        = map;
+
+    hasBrief = G_BriefingEnabled(episode, map, 0);
+
+    if(hasBrief)
+    {
+        G_QueMapMusic(episode, map);
+    }
+
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
+
+    if(!BusyMode_Active())
+    {
+        /// @todo Use progress bar mode and update progress during the setup.
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    G_DoLoadMapAndMaybeStartBriefing, &p, "Loading map...");
+    }
+    else
+    {
+        G_DoLoadMapAndMaybeStartBriefing(&p);
+    }
+
+    if(!hasBrief)
+    {
+        // No briefing; begin the map.
+        HU_WakeWidgets(-1 /* all players */);
+        G_BeginMap();
+    }
+
+    Z_CheckHeap();
+    Uri_Delete(p.mapUri);
+    }
 
     if(revisit)
     {
@@ -2545,7 +2706,7 @@ static void mapTeleport(uint map, uint entryPoint)
     // Launch waiting scripts.
     if(!deathmatch)
     {
-        P_CheckACSStore(gameMap);
+        P_CheckACSStore(map);
     }
 
     rebornPosition = entryPoint;
@@ -2555,12 +2716,10 @@ static void mapTeleport(uint map, uint entryPoint)
 void G_DoWorldDone(void)
 {
 #if __JHEXEN__
-    mapTeleport(nextMap, nextMapEntryPoint);
+    mapTeleport(gameEpisode, nextMap, nextMapEntryPoint);
 #else
     loadmap_params_t p;
     boolean hasBrief;
-
-    gameMap = nextMap;
 
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
@@ -2568,16 +2727,18 @@ void G_DoWorldDone(void)
     // Unpause the current game.
     sendPause = paused = false;
 
-    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+    p.mapUri     = G_ComposeMapUri(gameEpisode, nextMap);
     p.episode    = gameEpisode;
-    p.map        = gameMap;
+    p.map        = nextMap;
 
-    hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
+    hasBrief = G_BriefingEnabled(p.episode, p.map, 0);
 
     if(hasBrief)
     {
-        G_QueMapMusic(gameEpisode, gameMap);
+        G_QueMapMusic(p.episode, p.map);
     }
+
+    gameMap = p.map;
 
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
@@ -2857,128 +3018,16 @@ void G_DoNewGame(void)
  */
 void G_InitNew(skillmode_t skill, uint episode, uint map)
 {
-    int i;
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    int speed;
-#endif
-
-    // Close any open automaps.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame)
-            continue;
-        ST_AutomapOpen(i, false, true);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(i, false);
-#endif
-    }
-
-    // If there are any InFine scripts running, they must be stopped.
-    FI_StackClear();
-
-    if(paused)
-    {
-        paused = false;
-    }
-
-    if(skill < SM_BABY)
-        skill = SM_BABY;
-    if(skill > NUM_SKILL_MODES - 1)
-        skill = NUM_SKILL_MODES - 1;
-
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
-    M_ResetRandom();
+    G_InitForNewGame(skill);
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
-    respawnMonsters = respawnParm;
-#endif
-
-#if __JDOOM__ || __JHERETIC__
-    // Is respawning enabled at all in nightmare skill?
-    if(skill == SM_NIGHTMARE)
-        respawnMonsters = cfg.respawnMonstersNightmare;
-#endif
-
-#if __JDOOM__
-    // Disabled in Chex and HacX because this messes with the original games' values.
-    if(gameMode != doom2_hacx && gameMode != doom_chex)
-#endif
-    {
-        /// @kludge Doom/Heretic Fast Monters/Missiles
-#if __JDOOM__ || __JDOOM64__
-        // Fast monsters?
-        if(fastParm
-        # if __JDOOM__
-                || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
-        # endif
-                )
-        {
-            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-                STATES[i].tics = 1;
-            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-                STATES[i].tics = 4;
-            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-                STATES[i].tics = 1;
-        }
-        else
-        {
-            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-                STATES[i].tics = 2;
-            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-                STATES[i].tics = 8;
-            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-                STATES[i].tics = 2;
-        }
-#endif
-
-        // Fast missiles?
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-# if __JDOOM64__
-        speed = fastParm;
-# elif __JDOOM__
-        speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
-# else
-        speed = skill == SM_NIGHTMARE;
-# endif
-
-        for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
-        {
-            MOBJINFO[MonsterMissileInfo[i].type].speed =
-                    MonsterMissileInfo[i].speed[speed];
-        }
-#endif
-        // <-- KLUDGE
-    }
-
-    if(!IS_CLIENT)
-    {
-        // Force players to be initialized upon first map load.
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t           *plr = &players[i];
-
-            plr->playerState = PST_REBORN;
-#if __JHEXEN__
-            plr->worldTimer = 0;
-#else
-            plr->didSecret = false;
-#endif
-        }
-    }
-
-    userGame = true; // Will be set false if a demo.
-    // Unpause the current game.
-    sendPause = paused = false;
     gameEpisode = episode;
     gameMap = map;
     gameSkill = skill;
 
     NetSv_UpdateGameConfig();
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
 
     { loadmap_params_t p;
     boolean hasBrief;
