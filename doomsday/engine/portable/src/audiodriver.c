@@ -320,7 +320,7 @@ static void appendInterface(audiointerface_t** pos, audiointerfacetype_t type, v
 {
     (*pos)->type = type;
     (*pos)->i.any = ptr;
-    pos++;
+    (*pos)++;
 }
 
 /**
@@ -331,7 +331,6 @@ static void appendInterface(audiointerface_t** pos, audiointerfacetype_t type, v
 static void selectInterfaces(audiodriverid_t defaultDriverId)
 {
     driver_t* defaultDriver = &drivers[defaultDriverId];
-    driver_t* musicDriver = 0;
     audiodriverid_t drvId;
     audiointerface_t* pos = activeInterfaces;
     int p;
