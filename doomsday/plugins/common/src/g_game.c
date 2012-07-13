@@ -161,6 +161,7 @@ void    G_DoPlayDemo(void);
 void    G_DoMapCompleted(void);
 void    G_DoVictory(void);
 void    G_DoLeaveMap(void);
+void    G_DoRestartMap(void);
 void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
 void    G_DoQuitGame(void);
@@ -1308,9 +1309,6 @@ int G_DoLoadMap(loadmap_params_t* p)
     P_SetupMap(p->mapUri, p->episode, p->map);
     initFogForMap(hasMapInfo? &mapInfo : 0);
 
-    // Wrap up, map loading is now complete.
-    G_SetGameAction(GA_NONE);
-
 #if __JHEXEN__
     if(p->revisit)
     {
@@ -1621,64 +1619,18 @@ static void runGameAction(void)
 #if __JHEXEN__
         case GA_INITNEW:
             G_DoInitNew();
+            G_SetGameAction(GA_NONE);
             break;
 #endif
 
         case GA_LEAVEMAP:
             G_DoLeaveMap();
+            G_SetGameAction(GA_NONE);
             break;
 
-#if !__JHEXEN__
-        case GA_RESTARTMAP: {
-            loadmap_params_t p;
-
-            // Delete raw images to conserve texture memory.
-            DD_Executef(true, "texreset raw");
-
-            // Unpause the current game.
-            sendPause = paused = false;
-
-            p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
-            p.episode    = gameEpisode;
-            p.map        = gameMap;
-            p.revisit    = false; // Don't reload save state.
-
-            // This is a restart, so we won't brief again.
-            G_QueMapMusic(gameEpisode, gameMap);
-
-            // If we're the server, let clients know the map will change.
-            NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
-
-            /**
-             * Load the map.
-             */
-            if(!BusyMode_Active())
-            {
-                /// @todo Use progress bar mode and update progress during the setup.
-                BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                            G_DoLoadMapWorker, &p, "Loading map...");
-            }
-            else
-            {
-                G_DoLoadMap(&p);
-            }
-
-            // No briefing; begin the map.
-            HU_WakeWidgets(-1 /* all players */);
-            G_BeginMap();
-
-            Z_CheckHeap();
-            Uri_Delete(p.mapUri);
-            break; }
-#else
         case GA_RESTARTMAP:
-            // This is a restart, so we won't brief again.
-            briefDisabled = true;
-
-            // Fall through.
-#endif
-        case GA_NEWGAME:
-            G_DoNewGame();
+            G_DoRestartMap();
+            G_SetGameAction(GA_NONE);
             break;
 
         case GA_LOADGAME:
@@ -1704,7 +1656,7 @@ static void runGameAction(void)
 
         case GA_QUIT:
             G_DoQuitGame();
-            // No game state changes occur once we have begun to quit.
+            // No further game state changes occur once we have begun to quit.
             return;
 
         default: break;
@@ -2716,8 +2668,57 @@ void G_DoLeaveMap(void)
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                     G_SaveStateWorker, &p, "Auto-Saving game...");
     }
+}
 
-    G_SetGameAction(GA_NONE);
+void G_DoRestartMap(void)
+{
+#if __JHEXEN__
+    // This is a restart, so we won't brief again.
+    briefDisabled = true;
+
+    // Restart the game session entirely.
+    G_DoNewGame();
+#else
+    loadmap_params_t p;
+
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+
+    // Unpause the current game.
+    sendPause = paused = false;
+
+    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+    p.episode    = gameEpisode;
+    p.map        = gameMap;
+    p.revisit    = false; // Don't reload save state.
+
+    // This is a restart, so we won't brief again.
+    G_QueMapMusic(gameEpisode, gameMap);
+
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
+
+    /**
+     * Load the map.
+     */
+    if(!BusyMode_Active())
+    {
+        /// @todo Use progress bar mode and update progress during the setup.
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    G_DoLoadMapWorker, &p, "Loading map...");
+    }
+    else
+    {
+        G_DoLoadMap(&p);
+    }
+
+    // No briefing; begin the map.
+    HU_WakeWidgets(-1 /* all players */);
+    G_BeginMap();
+
+    Z_CheckHeap();
+    Uri_Delete(p.mapUri);
+#endif
 }
 
 boolean G_IsLoadGamePossible(void)
@@ -2915,7 +2916,6 @@ void G_DoInitNew(void)
 {
     SV_HxInitBaseSlot();
     G_InitNew(dSkill, dEpisode, dMap, dMapEntryPoint);
-    G_SetGameAction(GA_NONE);
 }
 #endif
 

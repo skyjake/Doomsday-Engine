@@ -856,6 +856,8 @@ int SV_LoadState_Dm_v19(SaveInfo* info)
 
     // Load a base map.
     G_InitNew(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
 
     // Recreate map state.
     mapTime = hdr->mapTime;

@@ -197,6 +197,9 @@ int D_NetServerStarted(int before)
 
     G_InitNew(cfg.netSkill, netEpisode, netMap, 0/*default*/);
 
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
+
     // Close the menu, the game begins!!
     Hu_MenuCommand(MCMD_CLOSE);
     return true;

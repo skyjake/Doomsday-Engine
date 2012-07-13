@@ -135,6 +135,9 @@ void NetCl_UpdateGameState(Reader* msg)
     if(gsFlags & GSF_CHANGE_MAP)
     {
         G_InitNew(gsSkill, gsEpisode, gsMap, gameMapEntryPoint /*gsMapEntryPoint*/);
+
+        /// @todo Necessary?
+        G_SetGameAction(GA_NONE);
     }
     else
     {

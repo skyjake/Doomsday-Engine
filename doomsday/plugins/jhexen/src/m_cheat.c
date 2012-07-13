@@ -436,6 +436,8 @@ int Cht_WarpFunc(const int* args, int player)
         briefDisabled = true;
         G_StartNewInit();
         G_InitNew(dSkill, 0, map, 0/* default */);
+        /// @todo Necessary?
+        G_SetGameAction(GA_NONE);
     }
 
     return true;

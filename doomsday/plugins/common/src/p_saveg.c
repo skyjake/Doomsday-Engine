@@ -4990,6 +4990,8 @@ static int SV_LoadState(SaveInfo* saveInfo)
 
     // Load the map and configure some game settings.
     G_InitNew(gameSkill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
 
 #if !__JHEXEN__
     // Set the time.
@@ -5304,6 +5306,8 @@ void SV_LoadGameClient(uint gameId)
         gameMap = hdr->map - 1;
         gameMapEntryPoint = 0;
         G_InitNew(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+        /// @todo Necessary?
+        G_SetGameAction(GA_NONE);
     }
     mapTime = hdr->mapTime;
 
