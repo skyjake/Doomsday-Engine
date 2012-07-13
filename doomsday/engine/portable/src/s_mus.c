@@ -335,22 +335,60 @@ static AutoStr* composeBufferedMusicFilename(int id, const char* ext)
 #undef BUFFERED_MUSIC_FILE
 }
 
+int AudioDriver_Music_PlayFile(const char* fileName, boolean looped)
+{
+    if(!AudioDriver_Music() || !AudioDriver_Music()->PlayFile)
+        return 0;
+
+    return AudioDriver_Music()->PlayFile(fileName, looped);
+}
+
+int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped)
+{
+    abstractfile_t* fsObject;
+    size_t lumpLength;
+    int lumpIdx;
+
+    if(!AudioDriver_Music()) return 0;
+
+    fsObject = F_FindFileForLumpNum2(lump, &lumpIdx);
+    lumpLength = F_LumpLength(lump);
+
+    if(!AudioDriver_Music()->Play || !AudioDriver_Music()->SongBuffer)
+    {
+        // Music interface does not offer buffer playback.
+        // Write this lump to disk and play from there.
+        AutoStr* musicFile = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
+        if(!F_DumpLump(lump, Str_Text(musicFile)))
+        {
+            // Failed to write the lump...
+            return 0;
+        }
+        return AudioDriver_Music_PlayFile(Str_Text(musicFile), looped);
+    }
+
+    // Buffer the data using the driver's facilities.
+    F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*) AudioDriver_Music()->SongBuffer(lumpLength),
+                      0, lumpLength);
+
+    return AudioDriver_Music()->Play(looped);
+}
+
 /**
  * @return 1, if music was started. 0, if attempted to start but failed.
  *         -1, if it was MUS data and @a canPlayMUS says we can't play it.
  */
 int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
 {
-    AutoStr* srcFile = 0;
-    abstractfile_t* fsObject;
-    size_t lumpLength;
-    int lumpIdx;
-
     if(!AudioDriver_Music() || lump < 0) return 0;
 
     if(Mus_IsMUSLump(lump))
-    {
-        // Lump is in DOOM's MUS format.
+    {    
+        // Lump is in DOOM's MUS format. We must first convert it to MIDI.
+        AutoStr* srcFile = 0;
+        abstractfile_t* fsObject;
+        size_t lumpLength;
+        int lumpIdx;
         uint8_t* buf;
 
         if(!canPlayMUS)
@@ -376,28 +414,13 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         F_ReadLumpSection(fsObject, lumpIdx, buf, 0, lumpLength);
         M_Mus2Midi((void*)buf, lumpLength, Str_Text(srcFile));
         free(buf);
-    }
-    else if(!AudioDriver_Music()->Play)
-    {
-        // Music interface does not offer buffer playback.
-        // Write this lump to disk and play from there.
-        srcFile = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
-        if(!F_DumpLump(lump, Str_Text(srcFile)))
-        {
-            return 0;
-        }
-    }
 
-    if(srcFile)
-    {
-        int result = AudioDriver_Music()->PlayFile(Str_Text(srcFile), looped);
-        return result;
+        return AudioDriver_Music_PlayFile(Str_Text(srcFile), looped);
     }
-
-    fsObject = F_FindFileForLumpNum2(lump, &lumpIdx);
-    lumpLength = F_LumpLength(lump);
-    F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)AudioDriver_Music()->SongBuffer(lumpLength), 0, lumpLength);
-    return AudioDriver_Music()->Play(looped);
+    else
+    {
+        return AudioDriver_Music_PlayLump(lump, looped);
+    }
 }
 
 /**
