@@ -5,8 +5,8 @@
  * The main purpose of this low-level thin layer is to group individual music
  * interfaces together as an aggregate that can be treated as one interface.
  *
- * @todo  Integrate the CD interface into this, too, as it is treated as an
- *        additional/alternative music interface.
+ * The CD playback interface is part of the aggregate in addition to the
+ * regular Music interfaces.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 
-void AudioDriver_Music_SetSoundFont(const char* fileName);
+void AudioDriver_Music_Set(int property, void* ptr);
 
 int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped);
 
@@ -44,6 +44,14 @@ int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped);
 
 int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped);
 
+int AudioDriver_Music_PlayCDTrack(int track, boolean looped);
+
+/**
+ * Determines if music is currently playing on any of the Music or CD audio
+ * interfaces.
+ *
+ * @return @c true if music is playing.
+ */
 boolean AudioDriver_Music_IsPlaying(void);
 
 /**

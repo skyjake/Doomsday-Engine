@@ -23,6 +23,7 @@
 #ifndef LIBDENG_AUDIO_DRIVER_H
 #define LIBDENG_AUDIO_DRIVER_H
 
+#include "dd_string.h"
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
 #include "sys_audiod_mus.h"
@@ -31,8 +32,15 @@
 extern "C" {
 #endif
 
+#define MAX_AUDIO_INTERFACES  16 // arbitrary
+
 boolean AudioDriver_Init(void);
 void AudioDriver_Shutdown(void);
+
+/**
+ * Prints a list of the selected, active interfaces to the log.
+ */
+void AudioDriver_PrintInterfaces(void);
 
 /**
  * Retrieves the main interface of the audio driver to which @a audioInterface
@@ -44,23 +52,43 @@ void AudioDriver_Shutdown(void);
  * @return Audio driver interface, or @c NULL if the none of the loaded drivers
  * match.
  */
-audiodriver_t* AudioDriver_Interface(void* audioInterface);
+audiodriver_t* AudioDriver_Interface(void* anyAudioInterface);
+
+AutoStr* AudioDriver_InterfaceName(void* anyAudioInterface);
+
+audiointerfacetype_t AudioDriver_InterfaceType(void* anyAudioInterface);
 
 /**
- * Returns the current active SFX interface. @c NULL is returned is no SFX
- * playback is available.
+ * Lists all active interfaces of a given type, in priority order. Alternatively,
+ * counts the number of active interfaces of a given type.
+ *
+ * @param type              Type of interface to look for.
+ * @param listOfInterfaces  Matching interfaces are written here. Points to an
+ *                          array of pointers. If this is @c NULL,
+ *                          just counts the number of matching interfaces.
+ *
+ * @return Number of matching interfaces.
+ */
+int AudioDriver_FindInterfaces(audiointerfacetype_t type, void** listOfInterfaces);
+
+/**
+ * Returns the current active primary SFX interface. @c NULL is returned is no
+ * SFX playback is available.
  */
 audiointerface_sfx_generic_t* AudioDriver_SFX(void);
 
 /**
- * Returns the currently active Music interface. @c NULL is returned if no music
- * playback is available.
+ * Determines if at least one music interface is available for music playback.
  */
-audiointerface_music_t* AudioDriver_Music(void);
+boolean AudioDriver_Music_Available(void);
 
 /**
  * Returns the currently active CD playback interface. @c NULL is returned if
  * CD playback is not available.
+ *
+ * @note  The CD interface is considered to belong in the music aggregate
+ *        interface (see audiodriver_music.h), and usually does not need to
+ *        be individually manipulated.
  */
 audiointerface_cd_t* AudioDriver_CD(void);
 

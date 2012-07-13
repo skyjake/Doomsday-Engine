@@ -367,7 +367,7 @@ int DM_Music_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char*) ptr, "FluidSynth/Ext");
+            strcpy((char*) ptr, "FluidSynth/Ext (MIDI only)");
             return true;
         }
         break;
