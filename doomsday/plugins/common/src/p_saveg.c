@@ -28,6 +28,7 @@
 #include <assert.h>
 
 #include "common.h"
+#include "g_common.h"
 #include "p_saveg.h"
 #include "d_net.h"
 #include "dmu_lib.h"
@@ -772,7 +773,7 @@ boolean SV_IsSlotUsed(int slot)
 #if __JHEXEN__
 boolean SV_HxHaveMapSaveForSlot(int slot, uint map)
 {
-    AutoStr* path = composeGameSavePathForSlot2(slot, (int)map);
+    AutoStr* path = composeGameSavePathForSlot2(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
     return SV_ExistingFile(Str_Text(path));
 }
@@ -4988,7 +4989,9 @@ static int SV_LoadState(SaveInfo* saveInfo)
     briefDisabled = true;
 
     // Load the map and configure some game settings.
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_NewGame(gameSkill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
 
 #if !__JHEXEN__
     // Set the time.
@@ -5299,9 +5302,12 @@ void SV_LoadGameClient(uint gameId)
     // Do we need to change the map?
     if(gameMap != hdr->map - 1 || gameEpisode != hdr->episode - 1)
     {
-        gameMap = hdr->map - 1;
         gameEpisode = hdr->episode - 1;
-        G_InitNew(gameSkill, gameEpisode, gameMap);
+        gameMap = hdr->map - 1;
+        gameMapEntryPoint = 0;
+        G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+        /// @todo Necessary?
+        G_SetGameAction(GA_NONE);
     }
     mapTime = hdr->mapTime;
 
@@ -5530,166 +5536,145 @@ boolean SV_SaveGame(int slot, const char* name)
 }
 
 #if __JHEXEN__
-void SV_HxMapTeleport(uint map, uint position)
+void SV_HxSaveClusterMap(void)
 {
-    int i, oldKeys = 0, oldPieces = 0, bestWeapon;
-    player_t playerBackup[MAXPLAYERS];
-    uint numInventoryItems[MAXPLAYERS][NUM_INVENTORYITEM_TYPES];
-    inventoryitemtype_t readyItem[MAXPLAYERS];
-    mobj_t* targetPlayerMobj;
-    boolean rClass, playerWasReborn, revisit;
-    boolean oldWeaponOwned[NUM_WEAPON_TYPES];
+    AutoStr* mapFilePath;
 
-    errorIfNotInited("SV_MapTeleport");
+    errorIfNotInited("SV_HxSaveClusterMap");
 
     playerHeaderOK = false; // Uninitialized.
 
-    /**
-     * First, determine whether we've been to this map previously and if so,
-     * whether we need to load the archived map state.
-     */
-    if(!deathmatch && SV_HxHaveMapSaveForSlot(BASE_SLOT, map+1))
-        revisit = true;
-    else
-        revisit = false;
+    // Set the mobj archive numbers
+    SV_InitThingArchive(false, false);
 
-    if(!deathmatch)
-    {
-        if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
-        {
-            /**
-             * Same cluster - save current map without saving player mobjs.
-             */
-            // Compose the full path name to the saved map file.
-            AutoStr* mapFilePath = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
+    // Create and populate the MaterialArchive.
+    materialArchive = MaterialArchive_New(true);
 
-            // Set the mobj archive numbers
-            SV_InitThingArchive(false, false);
+    // Compose the full path name to the saved map file.
+    mapFilePath = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
+    SV_OpenFile(Str_Text(mapFilePath), "wp");
+    P_ArchiveMap(false);
 
-            // Create and populate the MaterialArchive.
-            materialArchive = MaterialArchive_New(true);
+    // We are done with the MaterialArchive.
+    MaterialArchive_Delete(materialArchive);
+    materialArchive = NULL;
 
-            SV_OpenFile(Str_Text(mapFilePath), "wp");
-            P_ArchiveMap(false);
+    // Close the output file
+    SV_CloseFile();
+}
 
-            // We are done with the MaterialArchive.
-            MaterialArchive_Delete(materialArchive);
-            materialArchive = NULL;
-
-            // Close the output file
-            SV_CloseFile();
-        }
-        else
-        {
-            // Entering new cluster - clear base slot
-            SV_ClearSlot(BASE_SLOT);
-        }
-    }
-
-    // Store player structs for later
-    rClass = randomClassParm;
-    randomClassParm = false;
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        uint                j;
-
-        memcpy(&playerBackup[i], &players[i], sizeof(player_t));
-
-        for(j = 0; j < NUM_INVENTORYITEM_TYPES; ++j)
-            numInventoryItems[i][j] = P_InventoryCount(i, j);
-        readyItem[i] = P_InventoryReadyItem(i);
-    }
-
-    // Only unarchiveMap() uses targetPlayerAddrs, so it's NULLed here
-    // for the following check (player mobj redirection)
+void SV_HxLoadClusterMap(void)
+{
+    // Only unarchiveMap() uses targetPlayerAddrs, so it's NULLed here for the
+    // following check (player mobj redirection).
     targetPlayerAddrs = NULL;
 
-    // We don't want to see a briefing if we're loading a save game.
-    if(revisit)
-        briefDisabled = true;
+    playerHeaderOK = false; // Uninitialized.
 
-    G_InitNew(gameSkill, gameEpisode, map);
+    // Been here before, load the previous map state.
+    // Create the MaterialArchive.
+    materialArchive = MaterialArchive_NewEmpty(true);
 
-    if(revisit)
-    {   // Been here before, load the previous map state.
-        // Create the MaterialArchive.
-        materialArchive = MaterialArchive_NewEmpty(true);
+    unarchiveMap();
 
-        unarchiveMap();
+    // We are done with the MaterialArchive.
+    MaterialArchive_Delete(materialArchive);
+    materialArchive = NULL;
+}
 
-        // We are done with the MaterialArchive.
-        MaterialArchive_Delete(materialArchive);
-        materialArchive = NULL;
-    }
-    else
-    {   // First visit.
-        // Destroy all freshly spawned players
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(players[i].plr->inGame)
-            {
-                P_MobjRemove(players[i].plr->mo, true);
-            }
-        }
-    }
+void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS])
+{
+    uint i;
 
-    // Restore player structs.
-    targetPlayerMobj = NULL;
+    DENG_ASSERT(playerBackup);
+
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        uint                j;
+        playerbackup_t* pb = playerBackup + i;
+        player_t* plr = players + i;
+        uint j;
 
-        if(!players[i].plr->inGame)
-        {
-            continue;
-        }
+        memcpy(&pb->player, plr, sizeof(player_t));
 
-        memcpy(&players[i], &playerBackup[i], sizeof(player_t));
+        // Make a copy of the inventory states also.
         for(j = 0; j < NUM_INVENTORYITEM_TYPES; ++j)
         {
-            uint                k;
+            pb->numInventoryItems[j] = P_InventoryCount(i, j);
+        }
+        pb->readyItem = P_InventoryReadyItem(i);
+    }
+}
 
+void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
+    uint entryPoint)
+{
+    uint i, j, k;
+    mobj_t* targetPlayerMobj;
+
+    DENG_ASSERT(playerBackup);
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        playerbackup_t* pb = playerBackup + i;
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        int oldKeys = 0, oldPieces = 0;
+        boolean oldWeaponOwned[NUM_WEAPON_TYPES];
+        boolean wasReborn;
+
+        if(!ddplr->inGame) continue;
+
+        memcpy(plr, &pb->player, sizeof(player_t));
+        for(j = 0; j < NUM_INVENTORYITEM_TYPES; ++j)
+        {
             // Don't give back the wings of wrath if reborn.
-            if(j == IIT_FLY && players[i].playerState == PST_REBORN)
+            if(j == IIT_FLY && plr->playerState == PST_REBORN)
                 continue;
 
-            for(k = 0; k < numInventoryItems[i][j]; ++k)
+            for(k = 0; k < pb->numInventoryItems[j]; ++k)
+            {
                 P_InventoryGive(i, j, true);
+            }
         }
-        P_InventorySetReadyItem(i, readyItem[i]);
+        P_InventorySetReadyItem(i, pb->readyItem);
 
         ST_LogEmpty(i);
-        players[i].attacker = NULL;
-        players[i].poisoner = NULL;
+        plr->attacker = NULL;
+        plr->poisoner = NULL;
 
         if(IS_NETGAME || deathmatch)
         {
-            if(players[i].playerState == PST_DEAD)
-            {   // In a network game, force all players to be alive
-                players[i].playerState = PST_REBORN;
+            // In a network game, force all players to be alive
+            if(plr->playerState == PST_DEAD)
+            {
+                plr->playerState = PST_REBORN;
             }
+
             if(!deathmatch)
-            {   // Cooperative net-play, retain keys and weapons
-                oldKeys = players[i].keys;
-                oldPieces = players[i].pieces;
+            {
+                // Cooperative net-play; retain keys and weapons.
+                oldKeys = plr->keys;
+                oldPieces = plr->pieces;
                 for(j = 0; j < NUM_WEAPON_TYPES; j++)
                 {
-                    oldWeaponOwned[j] = players[i].weapons[j].owned;
+                    oldWeaponOwned[j] = plr->weapons[j].owned;
                 }
             }
         }
-        playerWasReborn = (players[i].playerState == PST_REBORN);
+
+        wasReborn = (plr->playerState == PST_REBORN);
+
         if(deathmatch)
         {
-            memset(players[i].frags, 0, sizeof(players[i].frags));
-            players[i].plr->mo = NULL;
+            memset(plr->frags, 0, sizeof(plr->frags));
+            ddplr->mo = NULL;
             G_DeathMatchSpawnPlayer(i);
         }
         else
         {
             const playerstart_t* start;
 
-            if((start = P_GetPlayerStart(position, i, false)))
+            if((start = P_GetPlayerStart(entryPoint, i, false)))
             {
                 const mapspot_t* spot = &mapSpots[start->spot];
                 P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
@@ -5703,69 +5688,69 @@ void SV_HxMapTeleport(uint map, uint position)
             }
         }
 
-        if(playerWasReborn && IS_NETGAME && !deathmatch)
+        if(wasReborn && IS_NETGAME && !deathmatch)
         {
-            // Restore keys and weapons when reborn in co-op
-            players[i].keys = oldKeys;
-            players[i].pieces = oldPieces;
+            int bestWeapon;
+
+            // Restore keys and weapons when reborn in co-op.
+            plr->keys = oldKeys;
+            plr->pieces = oldPieces;
+
             for(bestWeapon = 0, j = 0; j < NUM_WEAPON_TYPES; ++j)
             {
                 if(oldWeaponOwned[j])
                 {
                     bestWeapon = j;
-                    players[i].weapons[j].owned = true;
+                    plr->weapons[j].owned = true;
                 }
             }
-            players[i].ammo[AT_BLUEMANA].owned = 25; //// @todo values.ded
-            players[i].ammo[AT_GREENMANA].owned = 25; //// @todo values.ded
+
+            plr->ammo[AT_BLUEMANA].owned = 25; /// @todo values.ded
+            plr->ammo[AT_GREENMANA].owned = 25; /// @todo values.ded
+
+            // Bring up the best weapon.
             if(bestWeapon)
-            {   // Bring up the best weapon
-                players[i].pendingWeapon = bestWeapon;
+            {
+                plr->pendingWeapon = bestWeapon;
             }
         }
-
-        if(targetPlayerMobj == NULL)
-        {   // The poor sap.
-            targetPlayerMobj = players[i].plr->mo;
-        }
     }
-    randomClassParm = rClass;
 
-    //// @todo Redirect anything targeting a player mobj
-    //// FIXME! This only supports single player games!!
+    targetPlayerMobj = NULL;
+    { uint i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+
+        if(!ddplr->inGame) continue;
+
+        if(!targetPlayerMobj)
+        {
+            targetPlayerMobj = ddplr->mo;
+        }
+    }}
+
+    /// @todo Redirect anything targeting a player mobj
+    /// FIXME! This only supports single player games!!
     if(targetPlayerAddrs)
     {
-        targetplraddress_t *p;
+        targetplraddress_t* p;
 
-        p = targetPlayerAddrs;
-        while(p != NULL)
+        for(p = targetPlayerAddrs; p; p = p->next)
         {
             *(p->address) = targetPlayerMobj;
-            p = p->next;
         }
         SV_FreeTargetPlayerList();
 
-        /* dj: - When XG is available in jHexen, call this after updating
-        target player references (after a load).
+        /* dj: - When XG is available in Hexen, call this after updating
+                 target player references (after a load).
         // The activator mobjs must be set.
         XL_UpdateActivators();
         */
     }
 
-    // Destroy all things touching players
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(players[i].plr->inGame)
-        {
-            P_TeleportMove(players[i].plr->mo, players[i].plr->mo->origin[VX],
-                           players[i].plr->mo->origin[VY], true);
-        }
-    }
-
-    // Launch waiting scripts
-    if(!deathmatch)
-    {
-        P_CheckACSStore(gameMap);
-    }
+    // Destroy all things touching players.
+    P_TelefragMobjsTouchingPlayers();
 }
 #endif

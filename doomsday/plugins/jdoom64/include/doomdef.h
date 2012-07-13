@@ -106,7 +106,7 @@ typedef enum gamestate_e {
 // Game state change actions.
 typedef enum {
     GA_NONE,
-    GA_LOADMAP,
+    GA_RESTARTMAP,
     GA_NEWGAME,
     GA_LOADGAME,
     GA_SAVEGAME,

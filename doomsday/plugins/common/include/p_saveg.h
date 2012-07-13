@@ -143,7 +143,22 @@ boolean SV_LoadGame(int slot);
 
 #if __JHEXEN__
 void SV_HxInitBaseSlot(void);
-void SV_HxMapTeleport(uint map, uint position);
+void SV_HxSaveClusterMap(void);
+void SV_HxLoadClusterMap(void);
+
+typedef struct {
+    player_t player;
+    uint numInventoryItems[NUM_INVENTORYITEM_TYPES];
+    inventoryitemtype_t readyItem;
+} playerbackup_t;
+
+void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS]);
+
+/**
+ * @param playerBackup  Player state backup.
+ * @param entryPoint  Logical identifier for the entry point used to enter the map.
+ */
+void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS], uint entryPoint);
 #endif
 
 #if !__JHEXEN__

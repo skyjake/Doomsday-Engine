@@ -175,7 +175,7 @@ boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
 
     // So be it.
     briefDisabled = true;
-    G_DeferedInitNew(gameSkill, epsd, map);
+    G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
 
     return true;
 }

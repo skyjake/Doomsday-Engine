@@ -66,6 +66,32 @@ void            G_SetGameAction(gameaction_t action);
 
 boolean         G_QuitInProgress(void);
 
+/**
+ * @param map           Logical map number (i.e., not a warp/translated number).
+ * @param mapEntryPoint Logical map entry point number.
+ */
+void            G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void            G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+
+#if __JHEXEN__
+/**
+ * Same as @ref G_DeferredNewGame() except a GA_SETMAP action is queued
+ * instead of GA_NEWGAME.
+ */
+void            G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+#endif
+
+/**
+ * Leave the current map and start intermission routine.
+ * (if __JHEXEN__ the intermission will only be displayed when exiting a
+ * hub and in DeathMatch games)
+ *
+ * @param newMap        Logical map number we are entering (i.e., not a warp/translated number).
+ * @param mapEntryPoint Logical map entry point on the new map.
+ * @param secretExit    @c true if the exit taken was marked as 'secret'.
+ */
+void            G_LeaveMap(uint newMap, uint mapEntryPoint, boolean secretExit);
+
 /// @return  Generated name. Must be released with Str_Delete()
 AutoStr*        G_GenerateSaveGameName(void);
 

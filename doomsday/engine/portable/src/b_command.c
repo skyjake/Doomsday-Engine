@@ -358,6 +358,9 @@ void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* e
                     case E_SYMBOLIC:
                         id = event->symbolic.id;
                         break;
+
+                    default:
+                        break;
                 }
                 Str_Appendf(out, "%i", id);
             }

@@ -433,9 +433,7 @@ int Cht_WarpFunc(const int* args, int player)
     }
     else
     {
-        briefDisabled = true;
-        G_StartNewInit();
-        G_InitNew(dSkill, 0, map);
+        G_DeferredNewGame(dSkill, 0, map, 0/*default*/);
     }
 
     return true;
@@ -603,7 +601,7 @@ int Cht_InitFunc(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    G_DeferedInitNew(gameSkill, gameEpisode, gameMap);
+    G_SetGameAction(GA_RESTARTMAP);
     P_SetMessage(plr, TXT_CHEATWARP, false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;

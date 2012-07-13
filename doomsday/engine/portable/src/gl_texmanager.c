@@ -3107,8 +3107,8 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
 
     // Average alpha?
     if(spec->type == TST_GENERAL &&
-       (TS_GENERAL(spec)->context == TC_SPRITE_DIFFUSE) ||
-       (TS_GENERAL(spec)->context == TC_UI))
+       (TS_GENERAL(spec)->context == TC_SPRITE_DIFFUSE ||
+        TS_GENERAL(spec)->context == TC_UI))
     {
         averagealpha_analysis_t* aa = (averagealpha_analysis_t*) Texture_Analysis(tex, TA_ALPHA);
         boolean firstInit = (!aa);

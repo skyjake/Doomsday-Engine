@@ -420,6 +420,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
     songID = def - defs.music;
 
+    DEBUG_Message(("Mus_Start: Starting ID:%i looped:%i, currentSong ID:%i\n", songID, looped, currentSong));
+
     // We will not restart the currently playing song.
     if(songID == currentSong &&
        ((AudioDriver_Music() && AudioDriver_Music()->gen.Get(MUSIP_PLAYING, NULL)) ||
