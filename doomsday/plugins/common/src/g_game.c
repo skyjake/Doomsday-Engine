@@ -2622,7 +2622,7 @@ void G_DoWorldDone(void)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    revisit = SV_HxHaveMapSaveForSlot(BASE_SLOT, nextMap+1);
+    revisit = SV_HxHaveMapSaveForSlot(BASE_SLOT, nextMap);
     if(deathmatch) revisit = false;
 
     if(!deathmatch)

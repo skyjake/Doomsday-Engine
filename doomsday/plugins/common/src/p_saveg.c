@@ -773,7 +773,7 @@ boolean SV_IsSlotUsed(int slot)
 #if __JHEXEN__
 boolean SV_HxHaveMapSaveForSlot(int slot, uint map)
 {
-    AutoStr* path = composeGameSavePathForSlot2(slot, (int)map);
+    AutoStr* path = composeGameSavePathForSlot2(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
     return SV_ExistingFile(Str_Text(path));
 }
