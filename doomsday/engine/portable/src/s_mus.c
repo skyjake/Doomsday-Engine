@@ -27,8 +27,6 @@
  * Music Subsystem
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #if WIN32
 # include <math.h> // for sqrt()
 #endif
@@ -60,31 +58,17 @@ D_CMD(PlayMusic);
 D_CMD(PauseMusic);
 D_CMD(StopMusic);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void Mus_UpdateSoundFont(void);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// Music playback interfaces loaded from a sound driver plugin.
-//extern audiointerface_music_t audiodExternalIMusic;
-//extern audiointerface_cd_t audiodExternalICD;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 int musPreference = MUSP_EXT;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean musAvail = false;
 
 static int currentSong = -1;
 static boolean musicPaused = false;
-static int currentBufFile = 0;
+static boolean needBufFileSwitch = false;
 
 static char* soundFontPath = "";
-
-// CODE --------------------------------------------------------------------
 
 void Mus_Register(void)
 {
@@ -335,7 +319,20 @@ static AutoStr* composeBufferedMusicFilename(int id, const char* ext)
 #undef BUFFERED_MUSIC_FILE
 }
 
-int AudioDriver_Music_PlayFile(const char* fileName, boolean looped)
+AutoStr* Mus_ComposeBufferedMusicFilename(const char* ext)
+{
+    static int currentBufFile = 0;
+
+    // Switch the name of the buffered song file?
+    if(needBufFileSwitch)
+    {
+        currentBufFile ^= 1;
+        needBufFileSwitch = false;
+    }
+    return composeBufferedMusicFilename(currentBufFile, ext);
+}
+
+int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped)
 {
     if(!AudioDriver_Music() || !AudioDriver_Music()->PlayFile)
         return 0;
@@ -358,20 +355,62 @@ int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped)
     {
         // Music interface does not offer buffer playback.
         // Write this lump to disk and play from there.
-        AutoStr* musicFile = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
+        AutoStr* musicFile = Mus_ComposeBufferedMusicFilename(0);
         if(!F_DumpLump(lump, Str_Text(musicFile)))
         {
             // Failed to write the lump...
             return 0;
         }
-        return AudioDriver_Music_PlayFile(Str_Text(musicFile), looped);
+        return AudioDriver_Music_PlayNativeFile(Str_Text(musicFile), looped);
     }
 
     // Buffer the data using the driver's facilities.
-    F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*) AudioDriver_Music()->SongBuffer(lumpLength),
+    F_ReadLumpSection(fsObject, lumpIdx,
+                      (uint8_t*) AudioDriver_Music()->SongBuffer(lumpLength),
                       0, lumpLength);
 
     return AudioDriver_Music()->Play(looped);
+}
+
+int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped)
+{
+    size_t len;
+    DFile* file = F_Open(virtualOrNativePath, "rb");
+
+    if(!file) return 0;
+
+    len = DFile_Length(file);
+
+    if(!AudioDriver_Music()->Play || !AudioDriver_Music()->SongBuffer)
+    {
+        // Music interface does not offer buffer playback.
+        // Write to disk and play from there.
+        AutoStr* fileName = Mus_ComposeBufferedMusicFilename(NULL);
+        uint8_t* buf = (uint8_t*)malloc(len);
+        if(!buf)
+        {
+            F_Delete(file);
+            Con_Message("Warning: Failed on allocation of %lu bytes for temporary song write buffer.\n", (unsigned long) len);
+            return false;
+        }
+        DFile_Read(file, buf, len);
+        F_Dump(buf, len, Str_Text(fileName));
+        free(buf);
+
+        F_Delete(file);
+
+        // Music maestro, if you please!
+        return AudioDriver_Music_PlayNativeFile(Str_Text(fileName), looped);
+    }
+    else
+    {
+        // Music interface offers buffered playback. Use it.
+        DFile_Read(file, (uint8_t*) AudioDriver_Music()->SongBuffer(len), len);
+
+        F_Delete(file);
+
+        return AudioDriver_Music()->Play(looped);
+    }
 }
 
 /**
@@ -394,7 +433,7 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         if(!canPlayMUS)
             return -1;
 
-        srcFile = composeBufferedMusicFilename(currentBufFile ^= 1, ".mid");
+        srcFile = Mus_ComposeBufferedMusicFilename(".mid");
 
         // Read the lump, convert to MIDI and output to a temp file in the
         // working directory. Use a filename with the .mid extension so that
@@ -415,7 +454,7 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         M_Mus2Midi((void*)buf, lumpLength, Str_Text(srcFile));
         free(buf);
 
-        return AudioDriver_Music_PlayFile(Str_Text(srcFile), looped);
+        return AudioDriver_Music_PlayNativeFile(Str_Text(srcFile), looped);
     }
     else
     {
@@ -449,6 +488,9 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
     // Stop the currently playing song.
     Mus_Stop();
+
+    // Switch the buf file if one is needed.
+    needBufFileSwitch = true;
 
     // This is the song we're playing now.
     currentSong = songID;
@@ -489,62 +531,18 @@ int Mus_Start(ded_music_t* def, boolean looped)
         case MUSP_EXT:
             Str_Init(&path);
             if(Mus_GetExt(def, &path))
-            {   // Its an external file.
-                // The song may be in a virtual file, so we must buffer
-                // it ourselves.
-                DFile* file = F_Open(Str_Text(&path), "rb");
-                size_t len = DFile_Length(file);
+            {
+                VERBOSE( Con_Message("Attempting to play song '%s' (file \"%s\").\n",
+                                     def->id, F_PrettyPath(Str_Text(&path))) )
 
-                if(!AudioDriver_Music()->Play)
-                {   // Music interface does not offer buffer playback.
-                    // Write to disk and play from there.
-                    AutoStr* fileName = composeBufferedMusicFilename(currentBufFile ^= 1, NULL);
-                    FILE* outFile = fopen(Str_Text(fileName), "wb");
-                    if(outFile)
-                    {
-                        int result;
-                        uint8_t* buf = (uint8_t*)malloc(len);
-                        if(!buf)
-                        {
-                            Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for temporary song write buffer.\n", (unsigned long) len);
-                            return false;
-                        }
-
-                        // Write the song into the buffer file.
-                        DFile_Read(file, buf, len);
-                        fwrite(buf, 1, len, outFile);
-                        fclose(outFile);
-                        F_Delete(file);
-                        free(buf);
-
-                        // Music maestro, if you please!
-                        result = AudioDriver_Music()->PlayFile(Str_Text(fileName), looped);
-                        return result;
-                    }
-
-                    Con_Message("Warning:Mus_Start: Failed opening \"%s\" for writing (%s).\n",
-                                F_PrettyPath(Str_Text(fileName)), strerror(errno));
-                    F_Delete(file);
-                    return false;
-                }
-                else
-                {   // Music interface offers buffered playback. Use it.
-                    void* ptr;
-
-                    VERBOSE( Con_Message("Mus_GetExt: Opened song '%s' (file \"%s\" %lu bytes).\n",
-                        def->id, F_PrettyPath(Str_Text(&path)), (unsigned long) len) )
-
-                    ptr = AudioDriver_Music()->SongBuffer(len);
-                    DFile_Read(file, (uint8_t*)ptr, len);
-                    F_Delete(file);
-
-                    return AudioDriver_Music()->Play(looped);
-                }
+                // Its an external file.
+                return AudioDriver_Music_PlayFile(Str_Text(&path), looped);
             }
 
             // Next, try non-MUS lumps.
             canPlayMUS = false;
-            // Fall through.
+
+            // Note: Intentionally falls through to MUSP_MUS.
 
         case MUSP_MUS:
             if(AudioDriver_Music())

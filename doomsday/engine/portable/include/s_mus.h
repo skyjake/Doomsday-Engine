@@ -31,6 +31,10 @@
 
 #include "sys_audiod_mus.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Music preference. If multiple resources are available, this setting
 // is used to determine which one to use (mus < ext < cd).
 enum {
@@ -48,6 +52,8 @@ void Mus_SetVolume(float vol);
 void Mus_Pause(boolean doPause);
 void Mus_StartFrame(void);
 
+AutoStr* Mus_ComposeBufferedMusicFilename(const char* ext);
+
 /**
  * Start playing a song. The chosen interface depends on what's available
  * and what kind of resources have been associated with the song.
@@ -60,5 +66,9 @@ int Mus_Start(ded_music_t* def, boolean looped);
 int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS);
 
 void Mus_Stop(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_SOUND_MUSIC_H */
