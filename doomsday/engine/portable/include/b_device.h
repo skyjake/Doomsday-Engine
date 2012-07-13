@@ -32,9 +32,9 @@
 #include "b_util.h"
 
 typedef enum cbdevtype_e {
-    CBD_TOGGLE,
-    CBD_AXIS,
-    CBD_ANGLE,
+    CBD_TOGGLE = E_TOGGLE,
+    CBD_AXIS   = E_AXIS,
+    CBD_ANGLE  = E_ANGLE,
     NUM_CBD_TYPES
 } cbdevtype_t;
 

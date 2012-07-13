@@ -768,7 +768,7 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
         {
             if(B_AreConditionsEqual(match2->numConds, match2->conds, e->numConds, e->conds) &&
                     match2->device == e->device && match2->id == e->id &&
-                    match2->type == e->type)
+                    match2->type == (cbdevtype_t) e->type)
             {
                 *evResult = e;
                 return true;
@@ -786,7 +786,7 @@ boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
                 {
                     if(B_AreConditionsEqual(match1->numConds, match1->conds, d->numConds, d->conds) &&
                             match1->device == d->device && match1->id == d->id &&
-                            match1->type == d->type)
+                            match1->type == (ddeventtype_t) d->type)
                     {
                         *dResult = d;
                         return true;
