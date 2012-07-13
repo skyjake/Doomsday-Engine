@@ -2681,16 +2681,9 @@ void G_DoWorldDone(void)
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
-    if(!BusyMode_Active())
-    {
-        /// @todo Use progress bar mode and update progress during the setup.
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
-    }
-    else
-    {
-        G_DoLoadMapAndMaybeStartBriefing(&p);
-    }
+    /// @todo Use progress bar mode and update progress during the setup.
+    BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
     Uri_Delete(p.mapUri);
 
     if(!hasBrief)
