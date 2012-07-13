@@ -2593,7 +2593,38 @@ void G_DoLeaveMap(void)
     // We don't want to see a briefing if we've already visited this map.
     if(revisit) briefDisabled = true;
 
-    G_InitForNewGame(gameSkill);
+    if(P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap))
+    {
+        G_InitForNewGame(gameSkill);
+    }
+    else
+    {
+        uint i;
+
+        // If there are any InFine scripts running, they must be stopped.
+        FI_StackClear();
+
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            player_t* plr = &players[i];
+            ddplayer_t* ddplr = plr->plr;
+
+            if(!ddplr->inGame) continue;
+
+            ST_AutomapOpen(i, false, true);
+            Hu_InventoryOpen(i, false);
+
+            if(!IS_CLIENT)
+            {
+                // Force players to be initialized.
+                plr->playerState = PST_REBORN;
+                plr->worldTimer = 0;
+            }
+        }
+
+        // In Hexen the RNG is re-seeded each time the map changes.
+        M_ResetRandom();
+    }
 #endif
 
 #if __JHEXEN__
