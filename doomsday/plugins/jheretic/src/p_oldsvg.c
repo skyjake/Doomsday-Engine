@@ -864,7 +864,7 @@ int SV_LoadState_Hr_v13(SaveInfo* info)
     briefDisabled = true;
 
     // Load a base map.
-    G_InitNew(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+    G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);
 

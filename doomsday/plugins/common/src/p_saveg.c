@@ -4989,7 +4989,7 @@ static int SV_LoadState(SaveInfo* saveInfo)
     briefDisabled = true;
 
     // Load the map and configure some game settings.
-    G_InitNew(gameSkill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
+    G_NewGame(gameSkill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);
 
@@ -5305,7 +5305,7 @@ void SV_LoadGameClient(uint gameId)
         gameEpisode = hdr->episode - 1;
         gameMap = hdr->map - 1;
         gameMapEntryPoint = 0;
-        G_InitNew(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+        G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
     }

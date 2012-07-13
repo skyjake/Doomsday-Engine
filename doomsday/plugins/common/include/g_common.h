@@ -70,7 +70,7 @@ boolean         G_QuitInProgress(void);
  * @param map           Logical map number (i.e., not a warp/translated number).
  * @param mapEntryPoint Logical map entry point number.
  */
-void            G_InitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void            G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 void            G_DeferedNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 
 #if __JHEXEN__

@@ -195,7 +195,7 @@ int D_NetServerStarted(int before)
     netEpisode = cfg.netEpisode;
 #endif
 
-    G_InitNew(cfg.netSkill, netEpisode, netMap, 0/*default*/);
+    G_NewGame(cfg.netSkill, netEpisode, netMap, 0/*default*/);
 
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);

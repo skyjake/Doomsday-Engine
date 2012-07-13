@@ -1618,7 +1618,7 @@ static void runGameAction(void)
 #if __JHEXEN__
         case GA_INITNEW:
             SV_HxInitBaseSlot();
-            G_InitNew(dSkill, dEpisode, dMap, dMapEntryPoint);
+            G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
             G_SetGameAction(GA_NONE);
             break;
 #endif
@@ -2143,18 +2143,31 @@ void G_DoReborn(int plrNum)
     G_SetGameAction(GA_RESTARTMAP);
 }
 
-#if __JHEXEN__
 void G_StartNewInit(void)
 {
+    G_StopDemo();
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    if(!IS_NETGAME)
+    {
+        deathmatch = false;
+        respawnMonsters = false;
+        noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
+    }
+#endif
+
+#if __JHEXEN__
     SV_HxInitBaseSlot();
+#endif
+
     /// @todo Do not clear this save slot. Instead we should set a game state
     ///       flag to signal when a new game should be started instead of loading
     ///       the autosave slot.
     SV_ClearSlot(AUTO_SLOT);
 
+#if __JHEXEN__
     P_ACSInitNewGame();
-}
 #endif
+}
 
 void G_InitForNewGame(skillmode_t skill)
 {
@@ -2967,22 +2980,11 @@ void G_DeferedNewGameAlt(skillmode_t skill, uint episode, uint map, uint mapEntr
 
 void G_DoNewGame(void)
 {
-    G_StopDemo();
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if(!IS_NETGAME)
-    {
-        deathmatch = false;
-        respawnMonsters = false;
-        noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
-    }
-#endif
-#if __JHEXEN__
     G_StartNewInit();
-#endif
-    G_InitNew(dSkill, dEpisode, dMap, dMapEntryPoint);
+    G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
 }
 
-void G_InitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 {
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);

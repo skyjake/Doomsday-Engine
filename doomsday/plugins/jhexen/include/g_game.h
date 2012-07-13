@@ -124,7 +124,6 @@ void            G_DoPlayDemo(void);
 
 void            G_PlayDemo(char* name);
 void            G_TimeDemo(char* name);
-void            G_StartNewInit(void);
 void            G_WorldDone(void);
 void            G_ScreenShot(void);
 void            G_DoReborn(int playernum);
