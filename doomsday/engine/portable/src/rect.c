@@ -357,8 +357,8 @@ boolean Rect_Equality(const Rect* r, const Rect* other)
 {
     assert(r);
     if(!other) return false;
-    return r == other || Point2_Equality(r->origin, Rect_Origin(other)) &&
-                         Size2_Equality(r->size, Rect_Size(other));
+    return r == other || (Point2_Equality(r->origin, Rect_Origin(other)) &&
+                          Size2_Equality(r->size, Rect_Size(other)));
 }
 
 Rectf* Rectf_New(void)
@@ -680,6 +680,6 @@ boolean Rectf_Equality(const Rectf* r, const Rectf* other)
 {
     assert(r);
     if(!other) return false;
-    return r == other || Point2f_Equality(r->origin, Rectf_Origin(other)) &&
-                         Size2f_Equality(r->size, Rectf_Size(other));
+    return r == other || (Point2f_Equality(r->origin, Rectf_Origin(other)) &&
+                          Size2f_Equality(r->size, Rectf_Size(other)));
 }

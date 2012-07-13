@@ -643,23 +643,26 @@ void B_AppendEventToString(const ddevent_t* ev, ddstring_t* str)
 
     switch(ev->type)
     {
-        case E_TOGGLE:
-            B_AppendToggleStateToString(ev->toggle.state == ETOG_DOWN? EBTOG_DOWN :
-                                        ev->toggle.state == ETOG_UP? EBTOG_UP :
-                                        EBTOG_REPEAT, str);
-            break;
+    case E_TOGGLE:
+        B_AppendToggleStateToString(ev->toggle.state == ETOG_DOWN? EBTOG_DOWN :
+                                    ev->toggle.state == ETOG_UP? EBTOG_UP :
+                                    EBTOG_REPEAT, str);
+        break;
 
-        case E_AXIS:
-            B_AppendAxisPositionToString(ev->axis.pos >= 0? EBAXIS_BEYOND_POSITIVE :
-                                         EBAXIS_BEYOND_NEGATIVE, ev->axis.pos, str);
-            break;
+    case E_AXIS:
+        B_AppendAxisPositionToString(ev->axis.pos >= 0? EBAXIS_BEYOND_POSITIVE :
+                                     EBAXIS_BEYOND_NEGATIVE, ev->axis.pos, str);
+        break;
 
-        case E_ANGLE:
-            B_AppendAnglePositionToString(ev->angle.pos, str);
-            break;
+    case E_ANGLE:
+        B_AppendAnglePositionToString(ev->angle.pos, str);
+        break;
 
-        case E_SYMBOLIC:
-            Str_Appendf(str, "-%s", ev->symbolic.name);
-            break;
+    case E_SYMBOLIC:
+        Str_Appendf(str, "-%s", ev->symbolic.name);
+        break;
+
+    case E_FOCUS:
+        break;
     }
 }
