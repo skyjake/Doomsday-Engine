@@ -2571,7 +2571,7 @@ void G_DoLeaveMap(void)
     }
 
     // Take a copy of the player objects (they will be cleared in the process
-    // of calling G_ApplyGameRules() and we need to restore them after).
+    // of calling P_SetupMap() and we need to restore them after).
     SV_HxBackupPlayersInCluster(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
