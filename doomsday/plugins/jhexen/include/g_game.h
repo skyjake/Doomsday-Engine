@@ -125,7 +125,6 @@ void            G_DoPlayDemo(void);
 
 void            G_PlayDemo(char* name);
 void            G_TimeDemo(char* name);
-void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
 void            G_StartNewInit(void);
 void            G_WorldDone(void);
 void            G_ScreenShot(void);

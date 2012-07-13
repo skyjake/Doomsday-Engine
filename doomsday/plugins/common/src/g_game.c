@@ -160,7 +160,7 @@ void    G_DoLoadGame(void);
 void    G_DoPlayDemo(void);
 void    G_DoMapCompleted(void);
 void    G_DoVictory(void);
-void    G_DoWorldDone(void);
+void    G_DoLeaveMap(void);
 void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
 void    G_DoQuitGame(void);
@@ -1625,7 +1625,7 @@ static void runGameAction(void)
 #endif
 
         case GA_LEAVEMAP:
-            G_DoWorldDone();
+            G_DoLeaveMap();
             break;
 
 #if !__JHEXEN__
@@ -2315,15 +2315,6 @@ void G_InitForNewGame(skillmode_t skill)
     DD_Executef(true, "texreset raw");
 }
 
-/**
- * Leave the current map and start intermission routine.
- * (if __JHEXEN__ the intermission will only be displayed when exiting a
- * hub and in DeathMatch games)
- *
- * @param newMap        ID of the map we are entering.
- * @param _entryPoint   Entry point on the new map.
- * @param secretExit
- */
 void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 {
     if(IS_CLIENT || (cyclingMaps && mapCycleNoExit)) return;
@@ -2598,7 +2589,7 @@ static int G_SaveStateWorker(void* parameters)
     return result;
 }
 
-void G_DoWorldDone(void)
+void G_DoLeaveMap(void)
 {
 #if __JHEXEN__
     playerbackup_t playerBackup[MAXPLAYERS];
