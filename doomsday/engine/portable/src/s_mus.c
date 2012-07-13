@@ -129,11 +129,8 @@ boolean Mus_Init(void)
         return false;
     }
 
-    if(AudioDriver_Music() && AudioDriver_Interface(AudioDriver_Music())->Set)
-    {
-        // Tell the audio driver about our soundfont config.
-        AudioDriver_Interface(AudioDriver_Music())->Set(AUDIOP_SOUNDFONT_FILENAME, soundFontPath);
-    }
+    // Tell the audio driver about our soundfont config.
+    AudioDriver_Music_SetSoundFont(soundFontPath);
 
     musAvail = true;
     return true;
@@ -367,7 +364,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
     // We will not restart the currently playing song.
     if(songID == currentSong &&
-       ((AudioDriver_Music() && AudioDriver_Music()->gen.Get(MUSIP_PLAYING, NULL)) ||
+       (AudioDriver_Music_IsPlaying() ||
         (AudioDriver_CD() && AudioDriver_CD()->gen.Get(MUSIP_PLAYING, NULL))))
         return false;
 
@@ -455,9 +452,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
 static void Mus_UpdateSoundFont(void)
 {
-    audiodriver_t* d = AudioDriver_Interface(AudioDriver_Music());
-    if(!d || !d->Set) return;
-    d->Set(AUDIOP_SOUNDFONT_FILENAME, Con_GetString("music-soundfont"));
+    AudioDriver_Music_SetSoundFont(Con_GetString("music-soundfont"));
 }
 
 /**

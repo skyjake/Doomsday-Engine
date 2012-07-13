@@ -61,6 +61,13 @@ AutoStr* AudioDriver_Music_ComposeTempBufferFilename(const char* ext)
     return composeBufferedMusicFilename(currentBufFile, ext);
 }
 
+void AudioDriver_Music_SetSoundFont(const char* fileName)
+{
+    audiodriver_t* d = AudioDriver_Interface(AudioDriver_Music());
+    if(!d || !d->Set) return;
+    d->Set(AUDIOP_SOUNDFONT_FILENAME, fileName);
+}
+
 int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped)
 {
     if(!AudioDriver_Music() || !AudioDriver_Music()->PlayFile)
@@ -140,4 +147,10 @@ int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped)
 
         return AudioDriver_Music()->Play(looped);
     }
+}
+
+boolean AudioDriver_Music_IsPlaying(void)
+{
+    if(!AudioDriver_Music()) return false;
+    return AudioDriver_Music()->gen.Get(MUSIP_PLAYING, 0);
 }

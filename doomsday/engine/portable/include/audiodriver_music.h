@@ -5,6 +5,9 @@
  * The main purpose of this low-level thin layer is to group individual music
  * interfaces together as an aggregate that can be treated as one interface.
  *
+ * @todo  Integrate the CD interface into this, too, as it is treated as an
+ *        additional/alternative music interface.
+ *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
@@ -33,19 +36,23 @@
 extern "C" {
 #endif
 
-/**
- * Tells the audio driver to choose a new name for the buffer filename, if a
- * buffer file is needed.
- */
-void AudioDriver_Music_SwitchBufferFilenames(void);
-
-AutoStr* AudioDriver_Music_ComposeTempBufferFilename(const char* ext);
+void AudioDriver_Music_SetSoundFont(const char* fileName);
 
 int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped);
 
 int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped);
 
 int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped);
+
+boolean AudioDriver_Music_IsPlaying(void);
+
+/**
+ * Tells the audio driver to choose a new name for the buffer filename, if a
+ * buffer file is needed to play back a song.
+ */
+void AudioDriver_Music_SwitchBufferFilenames(void);
+
+AutoStr* AudioDriver_Music_ComposeTempBufferFilename(const char* ext);
 
 #ifdef __cplusplus
 } // extern "C"
