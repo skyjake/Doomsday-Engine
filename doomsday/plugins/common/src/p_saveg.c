@@ -4955,13 +4955,6 @@ static int SV_LoadState(SaveInfo* saveInfo)
     }
     hdr = SaveInfo_Header(saveInfo);
 
-    /**
-     * We now assume that loading will succeed.
-     * So first things first; stop whatever else we were doing.
-     */
-    G_StopDemo();
-    FI_StackClear();
-
     // Configure global game state:
     gameEpisode = hdr->episode - 1;
     gameMap = hdr->map - 1;
