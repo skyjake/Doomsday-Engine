@@ -6135,9 +6135,9 @@ void Hu_MenuInitNewGame(boolean confirmed)
 #endif
 
 #if __JHEXEN__
-    G_DeferedNewGameAlt(mnSkillmode, mnEpisode, P_TranslateMap(0), 0/*default*/);
+    G_DeferredNewGame(mnSkillmode, mnEpisode, P_TranslateMap(0), 0/*default*/);
 #else
-    G_DeferedNewGame(mnSkillmode, mnEpisode, 0, 0/*default*/);
+    G_DeferredNewGame(mnSkillmode, mnEpisode, 0, 0/*default*/);
 #endif
 }
 

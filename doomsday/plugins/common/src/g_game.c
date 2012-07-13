@@ -154,7 +154,6 @@ typedef struct {
 } loadmap_params_t;
 int     G_DoLoadMap(loadmap_params_t* params);
 
-void    G_DoNewGame(void);
 void    G_DoLoadGame(void);
 void    G_DoPlayDemo(void);
 void    G_DoMapCompleted(void);
@@ -184,6 +183,8 @@ void R_LoadVectorGraphics(void);
 int Hook_DemoStop(int hookType, int val, void* parameters);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void G_InitNewGame(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1615,15 +1616,9 @@ static void runGameAction(void)
     {
         switch(currentAction)
         {
-#if __JHEXEN__
-        case GA_INITNEW:
-            SV_HxInitBaseSlot();
-            G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
-            G_SetGameAction(GA_NONE);
-            break;
-#endif
         case GA_NEWGAME:
-            G_DoNewGame();
+            G_InitNewGame();
+            G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
             G_SetGameAction(GA_NONE);
             break;
 
@@ -1658,6 +1653,14 @@ static void runGameAction(void)
         case GA_MAPCOMPLETED:
             G_DoMapCompleted();
             break;
+
+#if __JHEXEN__
+        case GA_SETMAP:
+            SV_HxInitBaseSlot();
+            G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
+            G_SetGameAction(GA_NONE);
+            break;
+#endif
 
         case GA_VICTORY:
             G_SetGameAction(GA_NONE);
@@ -2143,18 +2146,8 @@ void G_DoReborn(int plrNum)
     G_SetGameAction(GA_RESTARTMAP);
 }
 
-void G_StartNewInit(void)
+static void G_InitNewGame(void)
 {
-    G_StopDemo();
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if(!IS_NETGAME)
-    {
-        deathmatch = false;
-        respawnMonsters = false;
-        noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
-    }
-#endif
-
 #if __JHEXEN__
     SV_HxInitBaseSlot();
 #endif
@@ -2169,31 +2162,11 @@ void G_StartNewInit(void)
 #endif
 }
 
-void G_InitForNewGame(skillmode_t skill)
+static void G_ApplyGameRules(skillmode_t skill)
 {
-    int i;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    int speed;
+    int i, speed;
 #endif
-
-    // Close any open automaps.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame)
-            continue;
-        ST_AutomapOpen(i, false, true);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(i, false);
-#endif
-    }
-
-    // If there are any InFine scripts running, they must be stopped.
-    FI_StackClear();
-
-    userGame = true; // Will be set false if a demo.
-
-    // Unpause the current game.
-    sendPause = paused = false;
 
     if(skill < SM_BABY)
         skill = SM_BABY;
@@ -2201,9 +2174,16 @@ void G_InitForNewGame(skillmode_t skill)
         skill = NUM_SKILL_MODES - 1;
     gameSkill = skill;
 
-    M_ResetRandom();
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    if(!IS_NETGAME)
+    {
+        deathmatch = false;
+        respawnMonsters = false;
+        noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
+    }
+#endif
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     respawnMonsters = respawnParm;
 #endif
 
@@ -2222,10 +2202,10 @@ void G_InitForNewGame(skillmode_t skill)
 #if __JDOOM__ || __JDOOM64__
         // Fast monsters?
         if(fastParm
-        # if __JDOOM__
-                || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
-        # endif
-                )
+# if __JDOOM__
+           || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
+# endif
+           )
         {
             for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
                 STATES[i].tics = 1;
@@ -2263,25 +2243,6 @@ void G_InitForNewGame(skillmode_t skill)
 #endif
         // <-- KLUDGE
     }
-
-    if(!IS_CLIENT)
-    {
-        // Force players to be initialized upon first map load.
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t* plr = &players[i];
-
-            plr->playerState = PST_REBORN;
-#if __JHEXEN__
-            plr->worldTimer = 0;
-#else
-            plr->didSecret = false;
-#endif
-        }
-    }
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
 }
 
 void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
@@ -2568,11 +2529,14 @@ void G_DoLeaveMap(void)
     boolean revisit = false;
     boolean hasBrief;
 
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
-
     // Unpause the current game.
     sendPause = paused = false;
+
+    // If there are any InFine scripts running, they must be stopped.
+    FI_StackClear();
+
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
 
     // Ensure that the episode and map indices are good.
     G_ValidateMap(&gameEpisode, &nextMap);
@@ -2585,22 +2549,29 @@ void G_DoLeaveMap(void)
     revisit = SV_HxHaveMapSaveForSlot(BASE_SLOT, nextMap);
     if(deathmatch) revisit = false;
 
-    if(!deathmatch)
+    // Same cluster?
+    if(P_GetMapCluster(gameMap) == P_GetMapCluster(nextMap))
     {
-        if(P_GetMapCluster(gameMap) == P_GetMapCluster(nextMap))
+        if(!deathmatch)
         {
-            // Same cluster; save current map.
+            // Save current map.
             SV_HxSaveClusterMap();
         }
-        else
+    }
+    else // Entering new cluster.
+    {
+        if(!deathmatch)
         {
-            // Entering new cluster - clear base slot.
             SV_ClearSlot(BASE_SLOT);
         }
+
+        // Re-apply the game rules.
+        /// @todo Necessary?
+        G_ApplyGameRules(gameSkill);
     }
 
     // Take a copy of the player objects (they will be cleared in the process
-    // of calling G_InitForNewGame() and we need to restore them after).
+    // of calling G_ApplyGameRules() and we need to restore them after).
     SV_HxBackupPlayersInCluster(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
@@ -2610,38 +2581,29 @@ void G_DoLeaveMap(void)
     // We don't want to see a briefing if we've already visited this map.
     if(revisit) briefDisabled = true;
 
-    if(P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap))
+    /// @todo Necessary?
+    { uint i;
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        G_InitForNewGame(gameSkill);
-    }
-    else
-    {
-        uint i;
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
 
-        // If there are any InFine scripts running, they must be stopped.
-        FI_StackClear();
+        if(!ddplr->inGame) continue;
 
-        for(i = 0; i < MAXPLAYERS; ++i)
+        if(!IS_CLIENT)
         {
-            player_t* plr = &players[i];
-            ddplayer_t* ddplr = plr->plr;
-
-            if(!ddplr->inGame) continue;
-
-            ST_AutomapOpen(i, false, true);
-            Hu_InventoryOpen(i, false);
-
-            if(!IS_CLIENT)
-            {
-                // Force players to be initialized.
-                plr->playerState = PST_REBORN;
-                plr->worldTimer = 0;
-            }
+            // Force players to be initialized upon first map load.
+            plr->playerState = PST_REBORN;
+            plr->worldTimer = 0;
         }
 
-        // In Hexen the RNG is re-seeded each time the map changes.
-        M_ResetRandom();
-    }
+        ST_AutomapOpen(i, false, true);
+        Hu_InventoryOpen(i, false);
+    }}
+    //<- todo end.
+
+    // In Hexen the RNG is re-seeded each time the map changes.
+    M_ResetRandom();
 #endif
 
 #if __JHEXEN__
@@ -2665,7 +2627,7 @@ void G_DoLeaveMap(void)
 
 #if __JHEXEN__
     /// @todo It should not be necessary for the server to re-transmit the game
-    ///       config at this time (needed because of G_InitForNewGame() ?).
+    ///       config at this time (needed because of G_ApplyGameRules() ?).
     NetSv_UpdateGameConfig();
 #endif
 
@@ -2720,20 +2682,26 @@ void G_DoLeaveMap(void)
 
 void G_DoRestartMap(void)
 {
+#if !__JHEXEN__
+    loadmap_params_t p;
+#endif
+
+    G_StopDemo();
+
+    // Unpause the current game.
+    sendPause = paused = false;
+
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+
 #if __JHEXEN__
     // This is a restart, so we won't brief again.
     briefDisabled = true;
 
     // Restart the game session entirely.
-    G_DoNewGame();
+    G_InitNewGame();
+    G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
 #else
-    loadmap_params_t p;
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
-
-    // Unpause the current game.
-    sendPause = paused = false;
 
     p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
     p.episode    = gameEpisode;
@@ -2768,6 +2736,18 @@ void G_DoRestartMap(void)
     Uri_Delete(p.mapUri);
 #endif
 }
+
+#if __JHEXEN__
+void G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+{
+    dSkill = skill;
+    dEpisode = episode;
+    dMap = map;
+    dMapEntryPoint = mapEntryPoint;
+
+    G_SetGameAction(GA_SETMAP);
+}
+#endif
 
 boolean G_IsLoadGamePossible(void)
 {
@@ -2952,22 +2932,7 @@ void G_DoSaveGame(void)
     G_SetGameAction(GA_NONE);
 }
 
-void G_DeferedNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
-{
-    dSkill = skill;
-    dEpisode = episode;
-    dMap = map;
-    dMapEntryPoint = mapEntryPoint;
-
-#if __JHEXEN__
-    G_SetGameAction(GA_INITNEW);
-#else
-    G_SetGameAction(GA_NEWGAME);
-#endif
-}
-
-#if __JHEXEN__
-void G_DeferedNewGameAlt(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 {
     dSkill = skill;
     dEpisode = episode;
@@ -2975,26 +2940,59 @@ void G_DeferedNewGameAlt(skillmode_t skill, uint episode, uint map, uint mapEntr
     dMapEntryPoint = mapEntryPoint;
 
     G_SetGameAction(GA_NEWGAME);
-}
-#endif
-
-void G_DoNewGame(void)
-{
-    G_StartNewInit();
-    G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
 }
 
 void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 {
+    uint i;
+
+    G_StopDemo();
+
+    userGame = true; // Will be set false if a demo.
+
+    // Unpause the current game.
+    sendPause = paused = false;
+
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
-    G_InitForNewGame(skill);
+    // If there are any InFine scripts running, they must be stopped.
+    FI_StackClear();
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+
+        if(!ddplr->inGame) continue;
+
+        if(!IS_CLIENT)
+        {
+            // Force players to be initialized upon first map load.
+            plr->playerState = PST_REBORN;
+#if __JHEXEN__
+            plr->worldTimer = 0;
+#else
+            plr->didSecret = false;
+#endif
+        }
+
+        ST_AutomapOpen(i, false, true);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(i, false);
+#endif
+    }
 
     gameSkill = skill;
     gameEpisode = episode;
     gameMap = map;
     gameMapEntryPoint = mapEntryPoint;
+
+    G_ApplyGameRules(skill);
+    M_ResetRandom();
 
     NetSv_UpdateGameConfig();
 

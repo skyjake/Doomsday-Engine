@@ -491,7 +491,7 @@ void H_PostInit(void)
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferedNewGame(startSkill, startEpisode, startMap, 0/*default*/);
+        G_DeferredNewGame(startSkill, startEpisode, startMap, 0/*default*/);
     }
     else
     {

@@ -71,17 +71,14 @@ boolean         G_QuitInProgress(void);
  * @param mapEntryPoint Logical map entry point number.
  */
 void            G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
-void            G_DeferedNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void            G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 
 #if __JHEXEN__
 /**
- * Same as @ref G_DeferedNewGame() except a GA_NEWGAME action is queued
- * instead of GA_INITNEW.
- *
- * @todo Why the distinction, surely starting a new game requires the same
- *       logic regardless of where the action originated.
+ * Same as @ref G_DeferredNewGame() except a GA_SETMAP action is queued
+ * instead of GA_NEWGAME.
  */
-void            G_DeferedNewGameAlt(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void            G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 #endif
 
 /**

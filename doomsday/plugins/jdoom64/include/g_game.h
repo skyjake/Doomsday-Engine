@@ -76,7 +76,7 @@ void            G_PrintMapList(void);
 boolean         G_ValidateMap(uint* episode, uint* map);
 uint            G_GetMapNumber(uint episode, uint map);
 
-void            G_DeferedPlayDemo(char* demo);
+void            G_DeferredPlayDemo(char* demo);
 
 void            G_QuitGame(void);
 
