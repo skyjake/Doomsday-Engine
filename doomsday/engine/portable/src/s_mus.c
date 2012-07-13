@@ -1,35 +1,29 @@
-/**\file s_mus.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Music Subsystem
+ * @file s_mus.c
+ * Music subsystem. @ingroup audio
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#if WIN32
-# include <math.h> // for sqrt()
-#endif
+//#if WIN32
+//# include <math.h> // for sqrt() ?
+//#endif
 
 #include "de_base.h"
 #include "de_console.h"
@@ -60,15 +54,12 @@ D_CMD(StopMusic);
 
 static void Mus_UpdateSoundFont(void);
 
-int musPreference = MUSP_EXT;
+static int     musPreference = MUSP_EXT;
+static char*   soundFontPath = "";
 
 static boolean musAvail = false;
-
-static int currentSong = -1;
 static boolean musicPaused = false;
-static boolean needBufFileSwitch = false;
-
-static char* soundFontPath = "";
+static int     currentSong = -1;
 
 void Mus_Register(void)
 {
@@ -305,113 +296,7 @@ int Mus_GetCD(ded_music_t* def)
 }
 
 /// @return  Composed music file name.
-static AutoStr* composeBufferedMusicFilename(int id, const char* ext)
-{
-#define BUFFERED_MUSIC_FILE      "dd-buffered-song"
 
-    if(ext && ext[0])
-    {
-        return Str_Appendf(AutoStr_New(), "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
-    }
-
-    return Str_Appendf(AutoStr_New(), "%s%i", BUFFERED_MUSIC_FILE, id);
-
-#undef BUFFERED_MUSIC_FILE
-}
-
-AutoStr* Mus_ComposeBufferedMusicFilename(const char* ext)
-{
-    static int currentBufFile = 0;
-
-    // Switch the name of the buffered song file?
-    if(needBufFileSwitch)
-    {
-        currentBufFile ^= 1;
-        needBufFileSwitch = false;
-    }
-    return composeBufferedMusicFilename(currentBufFile, ext);
-}
-
-int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped)
-{
-    if(!AudioDriver_Music() || !AudioDriver_Music()->PlayFile)
-        return 0;
-
-    return AudioDriver_Music()->PlayFile(fileName, looped);
-}
-
-int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped)
-{
-    abstractfile_t* fsObject;
-    size_t lumpLength;
-    int lumpIdx;
-
-    if(!AudioDriver_Music()) return 0;
-
-    fsObject = F_FindFileForLumpNum2(lump, &lumpIdx);
-    lumpLength = F_LumpLength(lump);
-
-    if(!AudioDriver_Music()->Play || !AudioDriver_Music()->SongBuffer)
-    {
-        // Music interface does not offer buffer playback.
-        // Write this lump to disk and play from there.
-        AutoStr* musicFile = Mus_ComposeBufferedMusicFilename(0);
-        if(!F_DumpLump(lump, Str_Text(musicFile)))
-        {
-            // Failed to write the lump...
-            return 0;
-        }
-        return AudioDriver_Music_PlayNativeFile(Str_Text(musicFile), looped);
-    }
-
-    // Buffer the data using the driver's facilities.
-    F_ReadLumpSection(fsObject, lumpIdx,
-                      (uint8_t*) AudioDriver_Music()->SongBuffer(lumpLength),
-                      0, lumpLength);
-
-    return AudioDriver_Music()->Play(looped);
-}
-
-int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped)
-{
-    size_t len;
-    DFile* file = F_Open(virtualOrNativePath, "rb");
-
-    if(!file) return 0;
-
-    len = DFile_Length(file);
-
-    if(!AudioDriver_Music()->Play || !AudioDriver_Music()->SongBuffer)
-    {
-        // Music interface does not offer buffer playback.
-        // Write to disk and play from there.
-        AutoStr* fileName = Mus_ComposeBufferedMusicFilename(NULL);
-        uint8_t* buf = (uint8_t*)malloc(len);
-        if(!buf)
-        {
-            F_Delete(file);
-            Con_Message("Warning: Failed on allocation of %lu bytes for temporary song write buffer.\n", (unsigned long) len);
-            return false;
-        }
-        DFile_Read(file, buf, len);
-        F_Dump(buf, len, Str_Text(fileName));
-        free(buf);
-
-        F_Delete(file);
-
-        // Music maestro, if you please!
-        return AudioDriver_Music_PlayNativeFile(Str_Text(fileName), looped);
-    }
-    else
-    {
-        // Music interface offers buffered playback. Use it.
-        DFile_Read(file, (uint8_t*) AudioDriver_Music()->SongBuffer(len), len);
-
-        F_Delete(file);
-
-        return AudioDriver_Music()->Play(looped);
-    }
-}
 
 /**
  * @return 1, if music was started. 0, if attempted to start but failed.
@@ -433,7 +318,7 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         if(!canPlayMUS)
             return -1;
 
-        srcFile = Mus_ComposeBufferedMusicFilename(".mid");
+        srcFile = AudioDriver_Music_ComposeTempBufferFilename(".mid");
 
         // Read the lump, convert to MIDI and output to a temp file in the
         // working directory. Use a filename with the .mid extension so that
@@ -489,8 +374,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
     // Stop the currently playing song.
     Mus_Stop();
 
-    // Switch the buf file if one is needed.
-    needBufFileSwitch = true;
+    AudioDriver_Music_SwitchBufferFilenames();
 
     // This is the song we're playing now.
     currentSong = songID;
@@ -525,7 +409,9 @@ int Mus_Start(ded_music_t* def, boolean looped)
         {
         case MUSP_CD:
             if(Mus_GetCD(def))
+            {
                 return AudioDriver_CD()->Play(Mus_GetCD(def), looped);
+            }
             break;
 
         case MUSP_EXT:
@@ -563,7 +449,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
         }
     }
 
-    // The song was not started.
+    // No song was started.
     return false;
 }
 
@@ -611,37 +497,13 @@ D_CMD(PlayMusic)
             lumpnum_t lump = F_CheckLumpNumForName2(argv[2], true);
             if(lump < 0) return false; // No such lump.
 
-            if(AudioDriver_Music())
-            {
-                return Mus_StartLump(lump, true, true);
-            }
-            else
-            {
-                Con_Printf("No music interface available.\n");
-                return false;
-            }
+            Mus_Stop();
+            return AudioDriver_Music_PlayLump(lump, true);
         }
         else if(!stricmp(argv[1], "file"))
         {
-            ddstring_t path;
-            int result = 0;
-
-            if(!AudioDriver_Music())
-            {
-                Con_Printf("No music interface available.\n");
-                return false;
-            }
-
-            // Compose the file path.
-            Str_Init(&path);
-            Str_Set(&path, argv[2]);
-            F_FixSlashes(&path, &path);
-            F_ExpandBasePath(&path, &path);
-
             Mus_Stop();
-            result = AudioDriver_Music()->PlayFile(Str_Text(&path), true);
-            Str_Free(&path);
-            return result;
+            return AudioDriver_Music_PlayFile(argv[2], true);
         }
         else
         {   // Perhaps a CD track?

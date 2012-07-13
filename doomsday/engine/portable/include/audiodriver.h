@@ -27,6 +27,10 @@
 #include "sys_audiod_sfx.h"
 #include "sys_audiod_mus.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 boolean AudioDriver_Init(void);
 void AudioDriver_Shutdown(void);
 
@@ -59,5 +63,9 @@ audiointerface_music_t* AudioDriver_Music(void);
  * CD playback is not available.
  */
 audiointerface_cd_t* AudioDriver_CD(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_AUDIO_DRIVER_H

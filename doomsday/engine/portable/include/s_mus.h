@@ -43,16 +43,12 @@ enum {
     MUSP_CD
 };
 
-extern int musPreference;
-
 void Mus_Register(void);
 boolean Mus_Init(void);
 void Mus_Shutdown(void);
 void Mus_SetVolume(float vol);
 void Mus_Pause(boolean doPause);
 void Mus_StartFrame(void);
-
-AutoStr* Mus_ComposeBufferedMusicFilename(const char* ext);
 
 /**
  * Start playing a song. The chosen interface depends on what's available

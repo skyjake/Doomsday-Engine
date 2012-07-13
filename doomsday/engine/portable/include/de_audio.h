@@ -30,6 +30,7 @@
 #define __DOOMSDAY_AUDIO__
 
 #include "audiodriver.h"
+#include "audiodriver_music.h"
 #include "s_main.h"
 #include "s_environ.h"
 #include "s_sfx.h"
