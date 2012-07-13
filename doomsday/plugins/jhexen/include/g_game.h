@@ -119,7 +119,6 @@ void*           G_GetVariable(int id);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
 uint            G_GetMapNumber(uint episode, uint map);
-void            G_DeferredNewGame(skillmode_t skill);
 void            G_DeferedPlayDemo(char* demo);
 void            G_DoPlayDemo(void);
 

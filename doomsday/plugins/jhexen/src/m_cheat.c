@@ -605,7 +605,7 @@ int Cht_InitFunc(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    G_DeferedInitNew(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+    G_DeferedNewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
     P_SetMessage(plr, TXT_CHEATWARP, false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;

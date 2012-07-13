@@ -862,7 +862,7 @@ D_CMD(SetMap)
     cfg.jumpEnabled = cfg.netJumping;
 
     // Use the configured network skill level for the new map.
-    G_DeferedInitNew(cfg.netSkill, ep, map, 0/*default*/);
+    G_DeferedNewGame(cfg.netSkill, ep, map, 0/*default*/);
     return true;
 }
 

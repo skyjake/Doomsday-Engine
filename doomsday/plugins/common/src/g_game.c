@@ -144,7 +144,6 @@ D_CMD(SaveGame);
 D_CMD(OpenSaveMenu);
 
 void    G_PlayerReborn(int player);
-void    G_DoInitNew(void);
 void    G_DoReborn(int playernum);
 
 typedef struct {
@@ -1618,18 +1617,13 @@ static void runGameAction(void)
         {
 #if __JHEXEN__
         case GA_INITNEW:
-            G_DoInitNew();
+            SV_HxInitBaseSlot();
+            G_InitNew(dSkill, dEpisode, dMap, dMapEntryPoint);
             G_SetGameAction(GA_NONE);
             break;
 #endif
-
-        case GA_LEAVEMAP:
-            G_DoLeaveMap();
-            G_SetGameAction(GA_NONE);
-            break;
-
-        case GA_RESTARTMAP:
-            G_DoRestartMap();
+        case GA_NEWGAME:
+            G_DoNewGame();
             G_SetGameAction(GA_NONE);
             break;
 
@@ -1641,6 +1635,26 @@ static void runGameAction(void)
             G_DoSaveGame();
             break;
 
+        case GA_QUIT:
+            G_DoQuitGame();
+            // No further game state changes occur once we have begun to quit.
+            return;
+
+        case GA_SCREENSHOT:
+            G_DoScreenShot();
+            G_SetGameAction(GA_NONE);
+            break;
+
+        case GA_LEAVEMAP:
+            G_DoLeaveMap();
+            G_SetGameAction(GA_NONE);
+            break;
+
+        case GA_RESTARTMAP:
+            G_DoRestartMap();
+            G_SetGameAction(GA_NONE);
+            break;
+
         case GA_MAPCOMPLETED:
             G_DoMapCompleted();
             break;
@@ -1648,16 +1662,6 @@ static void runGameAction(void)
         case GA_VICTORY:
             G_SetGameAction(GA_NONE);
             break;
-
-        case GA_SCREENSHOT:
-            G_DoScreenShot();
-            G_SetGameAction(GA_NONE);
-            break;
-
-        case GA_QUIT:
-            G_DoQuitGame();
-            // No further game state changes occur once we have begun to quit.
-            return;
 
         default: break;
         }
@@ -2935,22 +2939,7 @@ void G_DoSaveGame(void)
     G_SetGameAction(GA_NONE);
 }
 
-#if __JHEXEN__
-void G_DeferredNewGame(skillmode_t skill)
-{
-    dSkill = skill;
-    dMapEntryPoint = 0;
-    G_SetGameAction(GA_NEWGAME);
-}
-
-void G_DoInitNew(void)
-{
-    SV_HxInitBaseSlot();
-    G_InitNew(dSkill, dEpisode, dMap, dMapEntryPoint);
-}
-#endif
-
-void G_DeferedInitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+void G_DeferedNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 {
     dSkill = skill;
     dEpisode = episode;
@@ -2963,6 +2952,18 @@ void G_DeferedInitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPo
     G_SetGameAction(GA_NEWGAME);
 #endif
 }
+
+#if __JHEXEN__
+void G_DeferedNewGameAlt(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+{
+    dSkill = skill;
+    dEpisode = episode;
+    dMap = map;
+    dMapEntryPoint = mapEntryPoint;
+
+    G_SetGameAction(GA_NEWGAME);
+}
+#endif
 
 void G_DoNewGame(void)
 {
@@ -2979,7 +2980,6 @@ void G_DoNewGame(void)
     G_StartNewInit();
 #endif
     G_InitNew(dSkill, dEpisode, dMap, dMapEntryPoint);
-    G_SetGameAction(GA_NONE);
 }
 
 void G_InitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
