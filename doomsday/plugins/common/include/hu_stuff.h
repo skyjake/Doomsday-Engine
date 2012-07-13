@@ -92,7 +92,6 @@ extern patchid_t borderPatches[8];
 void            Hu_LoadData(void);
 void            Hu_Drawer(void);
 void            Hu_Ticker(void);
-void            HU_Start(int player);
 void            HU_WakeWidgets(int player);
 void            Hu_UnloadData(void);
 
@@ -117,8 +116,8 @@ void            M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags,
 void            M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags, float r, float g, float b, float a);
 
 typedef enum {
-    PRM_NONE                    = 0, /// No replacement.
-    PRM_ALLOW_TEXT,                  /// Use a text replacement if found.
+    PRM_NONE                    = 0, ///< No replacement.
+    PRM_ALLOW_TEXT                   ///< Use a text replacement if found.
 } patchreplacemode_t;
 
 #define PRM_FIRST               (PRM_NONE)
