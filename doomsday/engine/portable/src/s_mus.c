@@ -320,17 +320,17 @@ int Mus_GetCD(ded_music_t* def)
     return 0;
 }
 
-/// @return  Composed music file name. Must be released with Str_Delete()
-static ddstring_t* composeBufferedMusicFilename(int id, const char* ext)
+/// @return  Composed music file name.
+static AutoStr* composeBufferedMusicFilename(int id, const char* ext)
 {
 #define BUFFERED_MUSIC_FILE      "dd-buffered-song"
 
     if(ext && ext[0])
     {
-        return Str_Appendf(Str_New(), "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
+        return Str_Appendf(AutoStr_New(), "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
     }
 
-    return Str_Appendf(Str_New(), "%s%i", BUFFERED_MUSIC_FILE, id);
+    return Str_Appendf(AutoStr_New(), "%s%i", BUFFERED_MUSIC_FILE, id);
 
 #undef BUFFERED_MUSIC_FILE
 }
@@ -341,7 +341,7 @@ static ddstring_t* composeBufferedMusicFilename(int id, const char* ext)
  */
 int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
 {
-    ddstring_t* srcFile = NULL;
+    AutoStr* srcFile = 0;
     abstractfile_t* fsObject;
     size_t lumpLength;
     int lumpIdx;
@@ -363,14 +363,12 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         // any player which relies on the it for format recognition works as
         // expected.
 
-
         lumpLength = F_LumpLength(lump);
         buf = (uint8_t*) malloc(lumpLength);
         if(!buf)
         {
             Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for "
                         "temporary MUS to MIDI conversion buffer.\n", (unsigned long) lumpLength);
-            Str_Delete(srcFile);
             return 0;
         }
 
@@ -386,7 +384,6 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         srcFile = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
         if(!F_DumpLump(lump, Str_Text(srcFile)))
         {
-            Str_Delete(srcFile);
             return 0;
         }
     }
@@ -394,7 +391,6 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
     if(srcFile)
     {
         int result = AudioDriver_Music()->PlayFile(Str_Text(srcFile), looped);
-        Str_Delete(srcFile);
         return result;
     }
 
@@ -479,7 +475,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                 if(!AudioDriver_Music()->Play)
                 {   // Music interface does not offer buffer playback.
                     // Write to disk and play from there.
-                    ddstring_t* fileName = composeBufferedMusicFilename(currentBufFile ^= 1, NULL);
+                    AutoStr* fileName = composeBufferedMusicFilename(currentBufFile ^= 1, NULL);
                     FILE* outFile = fopen(Str_Text(fileName), "wb");
                     if(outFile)
                     {
@@ -488,7 +484,6 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         if(!buf)
                         {
                             Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for temporary song write buffer.\n", (unsigned long) len);
-                            Str_Delete(fileName);
                             return false;
                         }
 
@@ -501,14 +496,12 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
                         // Music maestro, if you please!
                         result = AudioDriver_Music()->PlayFile(Str_Text(fileName), looped);
-                        Str_Delete(fileName);
                         return result;
                     }
 
                     Con_Message("Warning:Mus_Start: Failed opening \"%s\" for writing (%s).\n",
-                        F_PrettyPath(Str_Text(fileName)), strerror(errno));
+                                F_PrettyPath(Str_Text(fileName)), strerror(errno));
                     F_Delete(file);
-                    Str_Delete(fileName);
                     return false;
                 }
                 else
