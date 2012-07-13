@@ -858,9 +858,15 @@ int SV_LoadState_Hr_v13(SaveInfo* info)
     gameSkill = hdr->skill;
     gameEpisode = hdr->episode;
     gameMap = hdr->map;
+    gameMapEntryPoint = 0;
+
+    // We don't want to see a briefing if we're loading a save game.
+    briefDisabled = true;
 
     // Load a base map.
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
 
     // Recreate map state.
     mapTime = hdr->mapTime;

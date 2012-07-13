@@ -42,7 +42,6 @@
 #include "r_common.h"
 
 typedef struct {
-    boolean         active;
     int             hideTics;
     float           alpha;
 } scoreboardstate_t;
@@ -274,29 +273,6 @@ void Hu_UnloadData(void)
     }
 }
 
-void HU_Stop(int player)
-{
-    assert(player >= 0 && player < MAXPLAYERS);
-    {
-    scoreboardstate_t* ss = &scoreStates[player];
-    ss->active = false;
-    }
-}
-
-void HU_Start(int player)
-{
-    assert(player >= 0 && player < MAXPLAYERS);
-    {
-    scoreboardstate_t* ss = &scoreStates[player];
-
-    ss = &scoreStates[player];
-    if(ss->active)
-        HU_Stop(player);
-
-    ss->active = true;
-    }
-}
-
 void HU_WakeWidgets(int player)
 {
     if(player < 0)
@@ -313,7 +289,6 @@ void HU_WakeWidgets(int player)
     {
         if(!players[player].plr->inGame) return;
         ST_Start(player);
-        HU_Start(player);
     }
 }
 

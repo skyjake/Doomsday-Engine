@@ -45,9 +45,12 @@ extern boolean deathmatch;
 extern boolean respawnMonsters;
 extern boolean userGame;
 extern player_t players[MAXPLAYERS];
+
 extern skillmode_t gameSkill;
 extern uint gameEpisode;
 extern uint gameMap;
+extern uint gameMapEntryPoint;
+
 extern uint nextMap;
 extern boolean secretExit;
 extern int mapStartTic;
@@ -70,12 +73,7 @@ void            G_PrintMapList(void);
 boolean         G_ValidateMap(uint* episode, uint* map);
 uint            G_GetMapNumber(uint episode, uint map);
 
-void            G_InitNew(skillmode_t skill, uint episode, uint map);
-
-// A normal game starts at map 1, but a warp test can start elsewhere.
-void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
-
-void            G_DeferedPlayDemo(char* demo);
+void            G_DeferredPlayDemo(char* demo);
 
 void            G_QuitGame(void);
 
@@ -110,7 +108,6 @@ int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 
 void            G_DoReborn(int playernum);
 void            G_PlayerReborn(int player);
-void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
 
 uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 

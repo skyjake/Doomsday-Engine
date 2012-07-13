@@ -6127,12 +6127,17 @@ void Hu_MenuInitNewGame(boolean confirmed)
         return;
     }
 #endif
+
     Hu_MenuCommand(chooseCloseMethod());
+
 #if __JHEXEN__
     cfg.playerClass[CONSOLEPLAYER] = mnPlrClass;
-    G_DeferredNewGame(mnSkillmode);
+#endif
+
+#if __JHEXEN__
+    G_DeferredNewGame(mnSkillmode, mnEpisode, P_TranslateMap(0), 0/*default*/);
 #else
-    G_DeferedInitNew(mnSkillmode, mnEpisode, 0);
+    G_DeferredNewGame(mnSkillmode, mnEpisode, 0, 0/*default*/);
 #endif
 }
 

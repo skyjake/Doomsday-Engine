@@ -28,6 +28,7 @@
 #include <assert.h>
 
 #include "common.h"
+#include "g_common.h"
 #include "p_saveg.h"
 #include "d_net.h"
 #include "dmu_lib.h"
@@ -772,7 +773,7 @@ boolean SV_IsSlotUsed(int slot)
 #if __JHEXEN__
 boolean SV_HxHaveMapSaveForSlot(int slot, uint map)
 {
-    AutoStr* path = composeGameSavePathForSlot2(slot, (int)map);
+    AutoStr* path = composeGameSavePathForSlot2(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
     return SV_ExistingFile(Str_Text(path));
 }
@@ -4988,7 +4989,9 @@ static int SV_LoadState(SaveInfo* saveInfo)
     briefDisabled = true;
 
     // Load the map and configure some game settings.
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_NewGame(gameSkill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
 
 #if !__JHEXEN__
     // Set the time.
@@ -5299,9 +5302,12 @@ void SV_LoadGameClient(uint gameId)
     // Do we need to change the map?
     if(gameMap != hdr->map - 1 || gameEpisode != hdr->episode - 1)
     {
-        gameMap = hdr->map - 1;
         gameEpisode = hdr->episode - 1;
-        G_InitNew(gameSkill, gameEpisode, gameMap);
+        gameMap = hdr->map - 1;
+        gameMapEntryPoint = 0;
+        G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+        /// @todo Necessary?
+        G_SetGameAction(GA_NONE);
     }
     mapTime = hdr->mapTime;
 
