@@ -630,15 +630,10 @@ void NetSv_NewPlayerEnters(int plrNum)
     }
     else
     {
-#if __JHEXEN__
-        uint nextMapEntryPoint = rebornPosition;
-#else
-        uint nextMapEntryPoint = 0;
-#endif
         playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
         const playerstart_t* start;
 
-        if((start = P_GetPlayerStart(nextMapEntryPoint, plrNum, false)))
+        if((start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false)))
         {
             const mapspot_t* spot = &mapSpots[start->spot];
             P_SpawnPlayer(plrNum, pClass, spot->origin[VX], spot->origin[VY],

@@ -195,7 +195,7 @@ int D_NetServerStarted(int before)
     netEpisode = cfg.netEpisode;
 #endif
 
-    G_InitNew(cfg.netSkill, netEpisode, netMap);
+    G_InitNew(cfg.netSkill, netEpisode, netMap, 0/*default*/);
 
     // Close the menu, the game begins!!
     Hu_MenuCommand(MCMD_CLOSE);
@@ -859,7 +859,7 @@ D_CMD(SetMap)
     cfg.jumpEnabled = cfg.netJumping;
 
     // Use the configured network skill level for the new map.
-    G_DeferedInitNew(cfg.netSkill, ep, map);
+    G_DeferedInitNew(cfg.netSkill, ep, map, 0/*default*/);
     return true;
 }
 

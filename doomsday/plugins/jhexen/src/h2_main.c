@@ -483,7 +483,7 @@ void X_PostInit(void)
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferedInitNew(startSkill, startEpisode, startMap);
+        G_DeferedInitNew(startSkill, startEpisode, startMap, 0/* default */);
     }
     else
     {

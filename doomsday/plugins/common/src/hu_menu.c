@@ -6132,7 +6132,7 @@ void Hu_MenuInitNewGame(boolean confirmed)
     cfg.playerClass[CONSOLEPLAYER] = mnPlrClass;
     G_DeferredNewGame(mnSkillmode);
 #else
-    G_DeferedInitNew(mnSkillmode, mnEpisode, 0);
+    G_DeferedInitNew(mnSkillmode, mnEpisode, 0, 0/*default*/);
 #endif
 }
 

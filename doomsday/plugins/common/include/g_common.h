@@ -66,6 +66,13 @@ void            G_SetGameAction(gameaction_t action);
 
 boolean         G_QuitInProgress(void);
 
+/**
+ * @param map   Logical map number (i.e., not a warp/translated number).
+ * @param mapEntryPoint  Logical map entry point number.
+ */
+void            G_InitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+
 /// @return  Generated name. Must be released with Str_Delete()
 AutoStr*        G_GenerateSaveGameName(void);
 

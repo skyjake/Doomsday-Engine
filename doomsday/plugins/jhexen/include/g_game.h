@@ -41,14 +41,15 @@ extern int gaLoadGameSaveSlot;
 
 extern uint gameEpisode;
 extern uint gameMap;
+extern uint gameMapEntryPoint;
 extern skillmode_t gameSkill;
+
 extern boolean deathmatch;
 extern boolean userGame;
 extern boolean customPal;
 
 extern skillmode_t dSkill;
 
-extern uint rebornPosition;
 extern uint nextMap;
 extern uint nextMapEntryPoint;
 extern boolean briefDisabled;
@@ -118,8 +119,6 @@ void*           G_GetVariable(int id);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
 uint            G_GetMapNumber(uint episode, uint map);
-void            G_InitNew(skillmode_t skill, uint episode, uint map);
-void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
 void            G_DeferredNewGame(skillmode_t skill);
 void            G_DeferedPlayDemo(char* demo);
 void            G_DoPlayDemo(void);

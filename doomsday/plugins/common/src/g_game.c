@@ -144,7 +144,6 @@ D_CMD(SaveGame);
 D_CMD(OpenSaveMenu);
 
 void    G_PlayerReborn(int player);
-void    G_InitNew(skillmode_t skill, uint episode, uint map);
 void    G_DoInitNew(void);
 void    G_DoReborn(int playernum);
 
@@ -152,8 +151,9 @@ typedef struct {
     Uri* mapUri;
     uint episode;
     uint map;
+    boolean revisit;
 } loadmap_params_t;
-void    G_DoLoadMap(loadmap_params_t* params);
+int     G_DoLoadMap(loadmap_params_t* params);
 
 void    G_DoNewGame(void);
 void    G_DoLoadGame(void);
@@ -198,6 +198,7 @@ skillmode_t dSkill;
 skillmode_t gameSkill;
 uint gameEpisode;
 uint gameMap;
+uint gameMapEntryPoint; // Position indicator for reborn.
 
 uint nextMap;
 #if __JHEXEN__
@@ -208,10 +209,6 @@ uint nextMapEntryPoint;
 boolean secretExit;
 #endif
 
-#if __JHEXEN__
-// Position indicator for cooperative net-play reborn
-uint rebornPosition;
-#endif
 #if __JHEXEN__
 uint mapHub = 0;
 #endif
@@ -451,6 +448,7 @@ ccmdtemplate_t gameCmds[] = {
 
 static uint dEpisode;
 static uint dMap;
+static uint dMapEntryPoint;
 
 static gameaction_t gameAction;
 static boolean quitInProgress;
@@ -1292,7 +1290,7 @@ static void initFogForMap(ddmapinfo_t* mapInfo)
 #endif
 }
 
-static int G_LoadMap(loadmap_params_t* p)
+int G_DoLoadMap(loadmap_params_t* p)
 {
     boolean hasMapInfo = false;
     ddmapinfo_t mapInfo;
@@ -1309,21 +1307,26 @@ static int G_LoadMap(loadmap_params_t* p)
 
     P_SetupMap(p->mapUri, p->episode, p->map);
     initFogForMap(hasMapInfo? &mapInfo : 0);
+
+    // Wrap up, map loading is now complete.
+    G_SetGameAction(GA_NONE);
+
+#if __JHEXEN__
+    if(p->revisit)
+    {
+        // We've been here before; deserialize this map's save state.
+        SV_HxLoadClusterMap();
+    }
+#endif
+
     /// @todo Fixme: Do not assume!
     return 0; // Assume success.
 }
 
-void G_DoLoadMap(loadmap_params_t* p)
-{
-    G_LoadMap(p);
-    // Wrap up, map loading is now complete.
-    G_SetGameAction(GA_NONE);
-}
-
-static int G_LoadMapWorker(void* params)
+static int G_DoLoadMapWorker(void* params)
 {
     loadmap_params_t* p = (loadmap_params_t*) params;
-    int result = G_LoadMap(p);
+    int result = G_DoLoadMap(p);
     BusyMode_WorkerEnd();
     return result;
 }
@@ -1337,9 +1340,7 @@ int G_DoLoadMapAndMaybeStartBriefing(loadmap_params_t* p)
 
     hasBrief = G_BriefingEnabled(p->episode, p->map, &fin);
 
-    G_LoadMap(p);
-    // Wrap up, map loading is now complete.
-    G_SetGameAction(GA_NONE);
+    G_DoLoadMap(p);
 
     // Start a briefing, if there is one.
     if(hasBrief)
@@ -1627,9 +1628,9 @@ static void runGameAction(void)
             G_DoWorldDone();
             break;
 
-        case GA_LOADMAP: {
+#if !__JHEXEN__
+        case GA_RESTARTMAP: {
             loadmap_params_t p;
-            boolean hasBrief;
 
             // Delete raw images to conserve texture memory.
             DD_Executef(true, "texreset raw");
@@ -1640,12 +1641,10 @@ static void runGameAction(void)
             p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
             p.episode    = gameEpisode;
             p.map        = gameMap;
+            p.revisit    = false; // Don't reload save state.
 
-            hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
-            if(!hasBrief)
-            {
-                G_QueMapMusic(gameEpisode, gameMap);
-            }
+            // This is a restart, so we won't brief again.
+            G_QueMapMusic(gameEpisode, gameMap);
 
             // If we're the server, let clients know the map will change.
             NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
@@ -1657,24 +1656,27 @@ static void runGameAction(void)
             {
                 /// @todo Use progress bar mode and update progress during the setup.
                 BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                            G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
+                                            G_DoLoadMapWorker, &p, "Loading map...");
             }
             else
             {
-                G_DoLoadMapAndMaybeStartBriefing(&p);
+                G_DoLoadMap(&p);
             }
 
-            if(!hasBrief)
-            {
-                // No briefing; begin the map.
-                HU_WakeWidgets(-1 /* all players */);
-                G_BeginMap();
-            }
+            // No briefing; begin the map.
+            HU_WakeWidgets(-1 /* all players */);
+            G_BeginMap();
 
             Z_CheckHeap();
             Uri_Delete(p.mapUri);
             break; }
+#else
+        case GA_RESTARTMAP:
+            // This is a restart, so we won't brief again.
+            briefDisabled = true;
 
+            // Fall through.
+#endif
         case GA_NEWGAME:
             G_DoNewGame();
             break;
@@ -2167,9 +2169,6 @@ void G_DoReborn(int plrNum)
         return;
     }
 
-    // We've just died, don't do a briefing now.
-    briefDisabled = true;
-
     // Use the latest save?
     if(cfg.loadLastSaveOnReborn)
     {
@@ -2184,12 +2183,8 @@ void G_DoReborn(int plrNum)
         if(G_LoadGame(AUTO_SLOT)) return;
     }
 
-    // Reload the map from scratch.
-#if __JHEXEN__
-    G_SetGameAction(GA_NEWGAME);
-#else
-    G_SetGameAction(GA_LOADMAP);
-#endif
+    // Restart the current map, discarding all items obtained by players.
+    G_SetGameAction(GA_RESTARTMAP);
 }
 
 #if __JHEXEN__
@@ -2202,9 +2197,6 @@ void G_StartNewInit(void)
     SV_ClearSlot(AUTO_SLOT);
 
     P_ACSInitNewGame();
-
-    // Default the player start spot group to 0
-    rebornPosition = 0;
 }
 #endif
 
@@ -2610,10 +2602,10 @@ void G_DoWorldDone(void)
 {
 #if __JHEXEN__
     playerbackup_t playerBackup[MAXPLAYERS];
-    boolean revisit;
     boolean oldRandomClassParm;
 #endif
     loadmap_params_t p;
+    boolean revisit = false;
     boolean hasBrief;
 
     // Delete raw images to conserve texture memory.
@@ -2661,9 +2653,16 @@ void G_DoWorldDone(void)
     G_InitForNewGame(gameSkill);
 #endif
 
+#if __JHEXEN__
+    gameMapEntryPoint = nextMapEntryPoint;
+#else
+    gameMapEntryPoint = 0;
+#endif
+
     p.mapUri     = G_ComposeMapUri(gameEpisode, nextMap);
     p.episode    = gameEpisode;
     p.map        = nextMap;
+    p.revisit    = revisit;
 
     hasBrief = G_BriefingEnabled(p.episode, p.map, 0);
     if(!hasBrief)
@@ -2702,13 +2701,9 @@ void G_DoWorldDone(void)
     }
 
 #if __JHEXEN__
-    if(revisit)
+    if(!revisit)
     {
-        SV_HxLoadClusterMap();
-    }
-    else // First visit.
-    {
-        // Destroy all freshly spawned players.
+        // First visit; destroy all freshly spawned players (??).
         P_RemoveAllPlayerMobjs();
     }
 
@@ -2722,8 +2717,6 @@ void G_DoWorldDone(void)
     {
         P_CheckACSStore(gameMap);
     }
-
-    rebornPosition = nextMapEntryPoint;
 #endif
 
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
@@ -2930,26 +2923,24 @@ void G_DoSaveGame(void)
 void G_DeferredNewGame(skillmode_t skill)
 {
     dSkill = skill;
+    dMapEntryPoint = 0;
     G_SetGameAction(GA_NEWGAME);
 }
 
 void G_DoInitNew(void)
 {
     SV_HxInitBaseSlot();
-    G_InitNew(dSkill, dEpisode, dMap);
+    G_InitNew(dSkill, dEpisode, dMap, dMapEntryPoint);
     G_SetGameAction(GA_NONE);
 }
 #endif
 
-/**
- * Can be called by the startup code or the menu task, CONSOLEPLAYER,
- * DISPLAYPLAYER, playeringame[] should be set.
- */
-void G_DeferedInitNew(skillmode_t skill, uint episode, uint map)
+void G_DeferedInitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 {
     dSkill = skill;
     dEpisode = episode;
     dMap = map;
+    dMapEntryPoint = mapEntryPoint;
 
 #if __JHEXEN__
     G_SetGameAction(GA_INITNEW);
@@ -2968,27 +2959,25 @@ void G_DoNewGame(void)
         respawnMonsters = false;
         noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
     }
-    G_InitNew(dSkill, dEpisode, dMap);
-#else
-    G_StartNewInit();
-    G_InitNew(dSkill, 0, P_TranslateMap(0)); // Hexen has translated map numbers.
 #endif
+#if __JHEXEN__
+    G_StartNewInit();
+#endif
+    G_InitNew(dSkill, dEpisode, dMap, dMapEntryPoint);
     G_SetGameAction(GA_NONE);
 }
 
-/**
- * Start a new game.
- */
-void G_InitNew(skillmode_t skill, uint episode, uint map)
+void G_InitNew(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 {
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
     G_InitForNewGame(skill);
 
+    gameSkill = skill;
     gameEpisode = episode;
     gameMap = map;
-    gameSkill = skill;
+    gameMapEntryPoint = mapEntryPoint;
 
     NetSv_UpdateGameConfig();
 
@@ -2998,6 +2987,7 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
     p.episode    = gameEpisode;
     p.map        = gameMap;
+    p.revisit    = false;
 
     hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
     if(!hasBrief)

@@ -28,6 +28,7 @@
 #include <assert.h>
 
 #include "common.h"
+#include "g_common.h"
 #include "p_saveg.h"
 #include "d_net.h"
 #include "dmu_lib.h"
@@ -4988,7 +4989,7 @@ static int SV_LoadState(SaveInfo* saveInfo)
     briefDisabled = true;
 
     // Load the map and configure some game settings.
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_InitNew(gameSkill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
 
 #if !__JHEXEN__
     // Set the time.
@@ -5299,9 +5300,10 @@ void SV_LoadGameClient(uint gameId)
     // Do we need to change the map?
     if(gameMap != hdr->map - 1 || gameEpisode != hdr->episode - 1)
     {
-        gameMap = hdr->map - 1;
         gameEpisode = hdr->episode - 1;
-        G_InitNew(gameSkill, gameEpisode, gameMap);
+        gameMap = hdr->map - 1;
+        gameMapEntryPoint = 0;
+        G_InitNew(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
     }
     mapTime = hdr->mapTime;
 

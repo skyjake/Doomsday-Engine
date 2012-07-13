@@ -757,11 +757,7 @@ void P_RebornPlayer(int plrNum)
     }
     else
     {
-#if __JHEXEN__
-        uint entryPoint = rebornPosition;
-#else
-        uint entryPoint = 0;
-#endif
+        uint entryPoint = gameMapEntryPoint;
         boolean foundSpot = false;
         const playerstart_t* assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
@@ -826,7 +822,7 @@ void P_RebornPlayer(int plrNum)
             {
                 const playerstart_t* start;
 
-                if((start = P_GetPlayerStart(rebornPosition, i, false)))
+                if((start = P_GetPlayerStart(gameMapEntryPoint, i, false)))
                 {
                     const mapspot_t* spot = &mapSpots[start->spot];
 
@@ -858,7 +854,7 @@ void P_RebornPlayer(int plrNum)
             // Player's going to be inside something.
             const playerstart_t* start;
 
-            if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
+            if((start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false)))
             {
                 const mapspot_t* spot = &mapSpots[start->spot];
 

@@ -45,6 +45,7 @@ void NetCl_UpdateGameState(Reader* msg)
     Uri* mapUri;
     byte gsEpisode = 0;
     byte gsMap = 0;
+    byte gsMapEntryPoint = 0;
     byte configFlags = 0;
     byte gsDeathmatch = 0;
     byte gsMonsters = 0;
@@ -65,6 +66,9 @@ void NetCl_UpdateGameState(Reader* msg)
 
     gsEpisode = Reader_ReadByte(msg);
     gsMap = Reader_ReadByte(msg);
+
+    /// @todo Not communicated to clients??
+    //gsMapEntryPoint = ??;
 
     configFlags = Reader_ReadByte(msg);
     gsDeathmatch = configFlags & 0x3;
@@ -107,7 +111,7 @@ void NetCl_UpdateGameState(Reader* msg)
 #endif
 
     // Some statistics.
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     Con_Message("Game state: Map=%u Skill=%i %s\n", gsMap+1, gsSkill,
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
@@ -130,13 +134,16 @@ void NetCl_UpdateGameState(Reader* msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_InitNew(gsSkill, gsEpisode, gsMap);
+        G_InitNew(gsSkill, gsEpisode, gsMap, gameMapEntryPoint /*gsMapEntryPoint*/);
     }
     else
     {
         gameSkill = gsSkill;
         gameEpisode = gsEpisode;
         gameMap = gsMap;
+
+        /// @todo Not communicated to clients??
+        //gameMapEntryPoint = gsMapEntryPoint;
     }
 
     // Set gravity.
@@ -146,8 +153,8 @@ void NetCl_UpdateGameState(Reader* msg)
     // Camera init included?
     if(gsFlags & GSF_CAMERA_INIT)
     {
-        player_t   *pl = &players[CONSOLEPLAYER];
-        mobj_t     *mo;
+        player_t* pl = &players[CONSOLEPLAYER];
+        mobj_t* mo;
 
         mo = pl->plr->mo;
         if(mo)
