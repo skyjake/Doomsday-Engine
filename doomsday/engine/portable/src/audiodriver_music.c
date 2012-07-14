@@ -163,6 +163,17 @@ void AudioDriver_Music_Set(int property, void* ptr)
     {
         musicSet((audiointerface_music_t*) ifs[i], property, ptr);
     }
+
+    if(property == AUDIOP_SOUNDFONT_FILENAME)
+    {
+        const char* fn = ptr;
+        if(!fn || !fn[0]) return; // No path.
+
+        if(F_FileExists(fn))
+            Con_Message("Current soundfont set to: \"%s\"\n", fn);
+        else
+            Con_Message("Warning: Soundfont \"%s\" not found.\n", fn);
+    }
 }
 
 int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped)
