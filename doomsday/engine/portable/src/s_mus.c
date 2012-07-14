@@ -49,22 +49,22 @@ static boolean musAvail = false;
 static boolean musicPaused = false;
 static int     currentSong = -1;
 
-void Mus_Register(void)
-{
-    // Cvars
-    C_VAR_INT("music-volume", &musVolume, 0, 0, 255);
-    C_VAR_INT("music-source", &musPreference, 0, 0, 2);
-    C_VAR_CHARPTR2("music-soundfont", &soundFontPath, 0, 0, 0, Mus_UpdateSoundFont);
-
-    // Ccmds
-    C_CMD_FLAGS("playmusic", NULL, PlayMusic, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("pausemusic", NULL, PauseMusic, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("stopmusic", "", StopMusic, CMDF_NO_DEDICATED);
-}
-
 static int getInterfaces(audiointerface_music_generic_t** ifs)
 {
     return AudioDriver_FindInterfaces(AUDIO_IMUSIC_OR_ICD, (void**) ifs);
+}
+
+void Mus_Register(void)
+{
+    // Variables:
+    C_VAR_INT     ("music-volume",    &musVolume,     0, 0, 255);
+    C_VAR_INT     ("music-source",    &musPreference, 0, 0, 2);
+    C_VAR_CHARPTR2("music-soundfont", &soundFontPath, 0, 0, 0, Mus_UpdateSoundFont);
+
+    // Commands:
+    C_CMD_FLAGS   ("playmusic",  NULL, PlayMusic,  CMDF_NO_DEDICATED);
+    C_CMD_FLAGS   ("pausemusic", NULL, PauseMusic, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS   ("stopmusic",  "",   StopMusic,  CMDF_NO_DEDICATED);
 }
 
 /**

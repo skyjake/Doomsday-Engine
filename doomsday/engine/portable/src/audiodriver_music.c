@@ -30,11 +30,6 @@
 
 static boolean needBufFileSwitch = false;
 
-void AudioDriver_Music_SwitchBufferFilenames(void)
-{
-    needBufFileSwitch = true;
-}
-
 static AutoStr* composeBufferedMusicFilename(int id, const char* ext)
 {
     if(ext && ext[0])
@@ -139,6 +134,11 @@ static int musicPlayCDTrack(audiointerface_cd_t* iCD, int track, boolean looped)
 static boolean musicIsPlaying(audiointerface_music_t* iMusic)
 {
     return iMusic->gen.Get(MUSIP_PLAYING, 0);
+}
+
+void AudioDriver_Music_SwitchBufferFilenames(void)
+{
+    needBufFileSwitch = true;
 }
 
 AutoStr* AudioDriver_Music_ComposeTempBufferFilename(const char* ext)
