@@ -56,6 +56,10 @@ typedef struct audiointerface_s {
         audiointerface_music_t* music;
         audiointerface_cd_t*    cd;
     } i;
+    /**
+     * @todo The audio interface could also declare which audio formats it is
+     * capable of playing (e.g., MIDI only, CD tracks only).
+     */
 } audiointerface_t;
 
 static audiointerface_t activeInterfaces[MAX_AUDIO_INTERFACES];

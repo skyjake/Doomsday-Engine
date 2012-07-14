@@ -59,8 +59,9 @@ AutoStr* AudioDriver_InterfaceName(void* anyAudioInterface);
 audiointerfacetype_t AudioDriver_InterfaceType(void* anyAudioInterface);
 
 /**
- * Lists all active interfaces of a given type, in priority order. Alternatively,
- * counts the number of active interfaces of a given type.
+ * Lists all active interfaces of a given type, in descending priority order:
+ * the most important interface is listed first in the returned array.
+ * Alternatively, counts the number of active interfaces of a given type.
  *
  * @param type              Type of interface to look for.
  * @param listOfInterfaces  Matching interfaces are written here. Points to an
