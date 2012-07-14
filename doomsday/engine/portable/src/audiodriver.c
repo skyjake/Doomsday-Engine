@@ -157,7 +157,7 @@ static const char* getDriverName(audiodriverid_t id)
     /* AUDIOD_DUMMY */      "Dummy",
     /* AUDIOD_SDL_MIXER */  "SDLMixer",
     /* AUDIOD_OPENAL */     "OpenAL",
-    /* AUDIOD_FMOD */       "FMOD Ex",
+    /* AUDIOD_FMOD */       "FMOD",
     /* AUDIOD_FLUIDSYNTH */ "FluidSynth",
     /* AUDIOD_DSOUND */     "DirectSound", // Win32 only
     /* AUDIOD_WINMM */      "Windows Multimedia" // Win32 only
@@ -348,6 +348,18 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
         appendInterface(&pos, AUDIO_IMUSIC, &audiodQuickTimeMusic);
     }
 #endif
+
+    // At the moment, dsFMOD supports streaming samples so we can
+    // automatically load dsFluidSynth for MIDI music.
+    if(defaultDriverId == AUDIOD_FMOD)
+    {
+        initDriverIfNeeded("fluidsynth");
+        if(isDriverInited(AUDIOD_FLUIDSYNTH))
+        {
+            appendInterface(&pos, AUDIO_IMUSIC, &drivers[AUDIOD_FLUIDSYNTH].music);
+        }
+    }
+
     if(defaultDriver->cd.gen.Init) appendInterface(&pos, AUDIO_ICD, &defaultDriver->cd);
 
     for(p = 1; p < CommandLine_Count() - 1 && pos < activeInterfaces + MAX_AUDIO_INTERFACES; p++)
