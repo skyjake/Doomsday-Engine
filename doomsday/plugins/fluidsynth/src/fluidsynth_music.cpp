@@ -23,6 +23,7 @@
 #include "doomsday.h"
 #include <string.h>
 #include <de/concurrency.h>
+#include <de/c_wrapper.h>
 #include <vector>
 
 static int sfontId = -1;
@@ -242,6 +243,7 @@ static void startPlayer()
 
     // Create a sound buffer for playing the music.
     sfxBuf = DMFluid_Sfx()->Create(SFXBF_STREAM, 16, 44100);
+
     DSFLUIDSYNTH_TRACE("startPlayer: Created SFX buffer " << sfxBuf);
 
     // As a streaming buffer, the data will be read from here.
@@ -252,6 +254,7 @@ static void startPlayer()
     streamSample.bytesPer = 2;
     streamSample.numSamples = MAX_BLOCKS * BLOCK_SAMPLES;
     streamSample.rate = 44100;
+
     DMFluid_Sfx()->Load(sfxBuf, &streamSample);
 
     workerShouldStop = false;
@@ -270,6 +273,7 @@ static void stopPlayer()
     // Destroy the sfx buffer.
     DENG_ASSERT(sfxBuf != 0);
     DSFLUIDSYNTH_TRACE("stopPlayer: Destroying SFX buffer " << sfxBuf);
+
     DMFluid_Sfx()->Destroy(sfxBuf);
     sfxBuf = 0;
 
@@ -285,6 +289,7 @@ static void stopPlayer()
     }
 
     DSFLUIDSYNTH_TRACE("stopPlayer: " << fsPlayer);
+
     delete_fluid_player(fsPlayer);
     fsPlayer = 0;
 
@@ -293,15 +298,17 @@ static void stopPlayer()
 
 int DM_Music_Init(void)
 {
+    if(blockBuffer) return true;
+
     musicVolume = 1.f;
     blockBuffer = new RingBuffer(MAX_BLOCKS * BLOCK_SIZE);
-
-    //soundFontFileName = 0; // empty for the default
-    return true; //fmodSystem != 0;
+    return true;
 }
 
 void DMFluid_Shutdown(void)
 {
+    if(!blockBuffer) return;
+
     stopPlayer();
 
     delete blockBuffer; blockBuffer = 0;
@@ -326,6 +333,7 @@ void DMFluid_SetSoundFont(const char* fileName)
     {
         // First unload the previous font.
         fluid_synth_sfunload(DMFluid_Synth(), sfontId, false);
+        sfontId = -1;
     }
 
     if(!fileName) return;
@@ -334,11 +342,13 @@ void DMFluid_SetSoundFont(const char* fileName)
     sfontId = fluid_synth_sfload(DMFluid_Synth(), fileName, true);
     if(sfontId >= 0)
     {
-        Con_Message("Loaded soundfont \"%s\" with id:%i.\n", fileName, sfontId);
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+            "FluidSynth: Loaded SF2 soundfont \"%s\" with id:%i\n", fileName, sfontId);
     }
     else
     {
-        Con_Message("Failed to load soundfont \"%s\".\n", fileName);
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+            "FluidSynth: Failed to load soundfont \"%s\" (not SF2 or not found)\n", fileName);
     }
 }
 
@@ -461,9 +471,20 @@ void DM_Music_Pause(int setPause)
 
 int DM_Music_PlayFile(const char *filename, int looped)
 {
+    if(!filename) return false;
+
+    if(!fluid_is_midifile(filename))
+    {
+        // It doesn't look like MIDI.
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+            "FluidSynth: Cannot play \"%s\": not a MIDI file.\n", filename);
+        return false;
+    }
+
     if(sfontId < 0)
     {
-        Con_Message("Cannot play \"%s\" without a soundfont. Define one with the cvar 'music-soundfont'.\n", filename);
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+            "FluidSynth: Cannot play \"%s\" without an SF2 soundfont.\n", filename);
         return false;
     }
 
@@ -471,13 +492,6 @@ int DM_Music_PlayFile(const char *filename, int looped)
     stopPlayer();
 
     DENG_ASSERT(fsPlayer == NULL);
-
-    if(!fluid_is_midifile(filename))
-    {
-        // It doesn't look like MIDI.
-        Con_Message("Cannot play \"%s\": not a MIDI file.\n", filename);
-        return false;
-    }
 
     // Create a new player.
     fsPlayer = new_fluid_player(DMFluid_Synth());
@@ -487,6 +501,7 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
     startPlayer();
 
-    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << filename << "' using player " << fsPlayer << " looped:" << looped);
+    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << filename << "' using player "
+                       << fsPlayer << " looped:" << looped << " sfont:" << sfontId);
     return true;
 }
