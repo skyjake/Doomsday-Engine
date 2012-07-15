@@ -180,6 +180,7 @@ mn_page_t* Hu_MenuActivePage(void);
 /**
  * Change the current active page.
  */
+void Hu_MenuSetActivePage2(mn_page_t* page, boolean canReactivate);
 void Hu_MenuSetActivePage(mn_page_t* page);
 
 /**

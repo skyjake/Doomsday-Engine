@@ -392,8 +392,12 @@ void MNPage_SetY(mn_page_t* page, int y);
 
 void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage);
 
+void MNPage_Refocus(mn_page_t* page);
+
 /// @return  Currently focused object else @c NULL
 mn_object_t* MNPage_FocusObject(mn_page_t* page);
+
+void MNPage_ClearFocusObject(mn_page_t* page);
 
 /**
  * Attempt to give focus to the MNObject @a obj which is thought to be on

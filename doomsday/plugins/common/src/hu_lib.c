@@ -1160,6 +1160,28 @@ mn_object_t* MNPage_FocusObject(mn_page_t* page)
     return &page->objects[page->focus];
 }
 
+void MNPage_ClearFocusObject(mn_page_t* page)
+{
+    mn_object_t* ob;
+    int i;
+    DENG_ASSERT(page);
+    if(page->focus >= 0)
+    {
+        ob = &page->objects[page->focus];
+        if(MNObject_Flags(ob) & MNF_ACTIVE)
+        {
+            return;
+        }
+    }
+    page->focus = -1;
+    ob = page->objects;
+    for(i = 0; i < page->objectsCount; ++i, ob++)
+    {
+        MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
+    }
+    MNPage_Refocus(page);
+}
+
 mn_object_t* MNPage_FindObject(mn_page_t* page, int group, int flags)
 {
     mn_object_t* obj = page->objects;
@@ -1235,11 +1257,62 @@ void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj)
     MNPage_GiveChildFocus(page, page->objects + objIndex, false);
 }
 
+void MNPage_Refocus(mn_page_t* page)
+{
+    DENG_ASSERT(page);
+
+    // If we haven't yet visited this page then find the first focusable
+    // object and select it.
+    if(0 > page->focus)
+    {
+        int i, giveFocus = -1;
+
+        // First look for a default focus object. There should only be one
+        // but find the last with this flag...
+        for(i = 0; i < page->objectsCount; ++i)
+        {
+            mn_object_t* ob = &page->objects[i];
+            if((MNObject_Flags(ob) & MNF_DEFAULT) && !(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            {
+                giveFocus = i;
+            }
+        }
+
+        // No default focus? Find the first focusable object.
+        if(-1 == giveFocus)
+        for(i = 0; i < page->objectsCount; ++i)
+        {
+            mn_object_t* ob = &page->objects[i];
+            if(!(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            {
+                giveFocus = i;
+                break;
+            }
+        }
+
+        if(-1 != giveFocus)
+        {
+            MNPage_GiveChildFocus(page, page->objects + giveFocus, false);
+        }
+#if _DEBUG
+        else
+        {
+            Con_Message("Warning:MNPage::Refocus: No focusable object on page.\n");
+        }
+#endif
+    }
+    else
+    {
+        // We've been here before; re-focus on the last focused object.
+        MNPage_GiveChildFocus(page, page->objects + page->focus, true);
+    }
+}
+
 void MNPage_Initialize(mn_page_t* page)
 {
     mn_object_t* ob;
     int i;
-    assert(page);
+    DENG_ASSERT(page);
 
     // Reset page timer.
     page->timer = 0;
@@ -1286,51 +1359,7 @@ void MNPage_Initialize(mn_page_t* page)
         return;
     }
 
-    // If we haven't yet visited this page then find the first focusable
-    // object and select it.
-    if(0 > page->focus)
-    {
-        int i, giveFocus = -1;
-
-        // First look for a default focus object. There should only be one
-        // but find the last with this flag...
-        for(i = 0; i < page->objectsCount; ++i)
-        {
-            mn_object_t* ob = &page->objects[i];
-            if((MNObject_Flags(ob) & MNF_DEFAULT) && !(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
-            {
-                giveFocus = i;
-            }
-        }
-
-        // No default focus? Find the first focusable object.
-        if(-1 == giveFocus)
-        for(i = 0; i < page->objectsCount; ++i)
-        {
-            mn_object_t* ob = &page->objects[i];
-            if(!(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
-            {
-                giveFocus = i;
-                break;
-            }
-        }
-
-        if(-1 != giveFocus)
-        {
-            MNPage_GiveChildFocus(page, page->objects + giveFocus, false);
-        }
-#if _DEBUG
-        else
-        {
-            Con_Message("Warning:MNPage::Initialize: No focusable object on page.\n");
-        }
-#endif
-    }
-    else
-    {
-        // We've been here before; re-focus on the last focused object.
-        MNPage_GiveChildFocus(page, page->objects + page->focus, true);
-    }
+    MNPage_Refocus(page);
 }
 
 void MNPage_Ticker(mn_page_t* page)

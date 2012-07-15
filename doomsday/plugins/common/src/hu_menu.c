@@ -1729,6 +1729,37 @@ void Hu_MenuInitFilesPage(void)
 }
 #endif
 
+static void deleteGameSave(int slot)
+{
+    DD_Executef(true, "deletegamesave %i", slot);
+}
+
+int Hu_MenuLoadSlotCommandResponder(mn_object_t* ob, menucommand_e cmd)
+{
+    DENG_ASSERT(ob && ob->_type == MN_EDIT);
+    if(MCMD_DELETE == cmd &&
+       (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
+    {
+        mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+        deleteGameSave(edit->data2);
+        return true;
+    }
+    return MNObject_DefaultCommandResponder(ob, cmd);
+}
+
+int Hu_MenuSaveSlotCommandResponder(mn_object_t* ob, menucommand_e cmd)
+{
+    assert(ob);
+    if(MCMD_DELETE == cmd &&
+       (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
+    {
+        mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+        deleteGameSave(edit->data2);
+        return true;
+    }
+    return MNEdit_CommandResponder(ob, cmd);
+}
+
 void Hu_MenuInitLoadGameAndSaveGamePages(void)
 {
 #if __JDOOM__ || __JDOOM64__
@@ -1777,7 +1808,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages(void)
         ob->drawer = MNEdit_Drawer;
         ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
         ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
-        ob->cmdResponder = MNObject_DefaultCommandResponder;
+        ob->cmdResponder = Hu_MenuLoadSlotCommandResponder;
         ob->_typedata = edit;
         ob->data2 = saveSlotObjectIds[i];
         Str_Init(&edit->text);
@@ -1805,7 +1836,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages(void)
         ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveSlot;
         ob->actions[MNA_ACTIVE].callback = Hu_MenuSaveSlotEdit;
         ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
-        ob->cmdResponder = MNEdit_CommandResponder;
+        ob->cmdResponder = Hu_MenuSaveSlotCommandResponder;
         ob->responder = MNEdit_Responder;
         ob->_typedata = edit;
         ob->data2 = saveSlotObjectIds[i];
@@ -4303,7 +4334,7 @@ mn_page_t* Hu_MenuActivePage(void)
     return menuActivePage;
 }
 
-void Hu_MenuSetActivePage(mn_page_t* page)
+void Hu_MenuSetActivePage2(mn_page_t* page, boolean canReactivate)
 {
     if(!menuActive) return;
     if(!page) return;
@@ -4316,13 +4347,22 @@ void Hu_MenuSetActivePage(mn_page_t* page)
     cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
     menuNominatingQuickSaveSlot = false;
 
-    if(menuActivePage == page) return;
+    if(menuActivePage == page)
+    {
+        if(!canReactivate) return;
+        MNPage_ClearFocusObject(page);
+    }
 
     updatePageObjects(page);
 
     // This is now the "active" page.
     menuActivePage = page;
     MNPage_Initialize(page);
+}
+
+void Hu_MenuSetActivePage(mn_page_t* page)
+{
+    Hu_MenuSetActivePage2(page, false/*don't reactivate*/);
 }
 
 boolean Hu_MenuIsVisible(void)
@@ -5597,6 +5637,8 @@ int Hu_MenuCvarColorBox(mn_object_t* obj, mn_actionid_t action, void* parameters
 
 void Hu_MenuDrawLoadGamePage(mn_page_t* page, const Point2Raw* origin)
 {
+    DENG_UNUSED(page);
+
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
@@ -5608,12 +5650,19 @@ void Hu_MenuDrawLoadGamePage(mn_page_t* page, const Point2Raw* origin)
     WI_DrawPatchXY3(pLoadGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pLoadGame),
         origin->x - 8, origin->y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
-
     DGL_Disable(DGL_TEXTURE_2D);
+
+    { Point2Raw helpOrigin;
+    helpOrigin.x = SCREENWIDTH/2;
+    helpOrigin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    Hu_MenuDrawPageHelp("Select to load, [Del] to clear", helpOrigin.x, helpOrigin.y);
+    }
 }
 
 void Hu_MenuDrawSaveGamePage(mn_page_t* page, const Point2Raw* origin)
 {
+    DENG_UNUSED(page);
+
 #if __JHERETIC__ || __JHEXEN__
     Hu_MenuDrawPageTitle("Save Game", SCREENWIDTH/2, origin->y - 20);
 #else
@@ -5627,6 +5676,12 @@ void Hu_MenuDrawSaveGamePage(mn_page_t* page, const Point2Raw* origin)
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
+
+    { Point2Raw helpOrigin;
+    helpOrigin.x = SCREENWIDTH/2;
+    helpOrigin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    Hu_MenuDrawPageHelp("Select to save, [Del] to clear", helpOrigin.x, helpOrigin.y);
+    }
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__

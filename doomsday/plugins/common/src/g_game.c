@@ -3895,6 +3895,18 @@ boolean G_DeleteSaveGame(int slot)
     info = SV_SaveInfoForSlot(slot);
     DENG_ASSERT(info);
     SV_ClearSlot(slot);
+
+    if(Hu_MenuIsActive())
+    {
+        mn_page_t* activePage = Hu_MenuActivePage();
+        if(activePage == Hu_MenuFindPageByName("LoadGame") ||
+           activePage == Hu_MenuFindPageByName("SaveGame"))
+        {
+            // Re-open the current menu page.
+            Hu_MenuUpdateGameSaveWidgets();
+            Hu_MenuSetActivePage2(activePage, true);
+        }
+    }
     return true;
 }
 
