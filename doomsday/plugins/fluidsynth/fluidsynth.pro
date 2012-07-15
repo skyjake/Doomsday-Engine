@@ -12,7 +12,7 @@ win32|macx: TARGET = dsFluidSynth
 CONFIG -= qt
 
 # Define this to get debug messages.
-DEFINES += DENG_DSFLUIDSYNTH_DEBUG
+deng_debug: DEFINES += DENG_DSFLUIDSYNTH_DEBUG
 
 win32 {
     RC_FILE = res/fluidsynth.rc
