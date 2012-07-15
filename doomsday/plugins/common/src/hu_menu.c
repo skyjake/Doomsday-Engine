@@ -6167,7 +6167,6 @@ int Hu_MenuSelectControlPanelLink(mn_object_t* ob, mn_actionid_t action, void* p
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
         idx = 0;
 
-    Hu_MenuCommand(MCMD_CLOSEFAST);
     DD_Execute(true, panelNames[idx]);
     return 0;
 

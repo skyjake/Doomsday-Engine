@@ -156,8 +156,6 @@ int D_NetServerStarted(int before)
 
     if(before) return true;
 
-    G_StopDemo();
-
     // We're the server, so...
     cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
 
@@ -200,8 +198,6 @@ int D_NetServerStarted(int before)
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);
 
-    // Close the menu, the game begins!!
-    Hu_MenuCommand(MCMD_CLOSE);
     return true;
 }
 
