@@ -2,6 +2,10 @@
 # CONSOLE COMMANDS - JHERETIC SPECFIC
 #
 
+[deletegamesave]
+desc = Deletes a game-save state.
+inf = Params: deletegamesave (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nA game save by name 'deletegamesave "running low on ammo"'\nLast game save in the "quick" slot, confirmed: 'deletegamesave quick confirm'
+
 [setcolor]
 desc = Set player color.
 inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.

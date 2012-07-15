@@ -133,6 +133,7 @@ MonsterMissileInfo[] =
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(CycleTextureGamma);
+D_CMD(DeleteGameSave);
 D_CMD(EndGame);
 D_CMD(HelpScreen);
 D_CMD(ListMaps);
@@ -429,6 +430,8 @@ cvartemplate_t gamestatusCVars[] = {
 };
 
 ccmdtemplate_t gameCmds[] = {
+    { "deletegamesave", "ss",   CCmdDeleteGameSave },
+    { "deletegamesave", "s",    CCmdDeleteGameSave },
     { "endgame",        "",     CCmdEndGame },
     { "helpscreen",     "",     CCmdHelpScreen },
     { "listmaps",       "",     CCmdListMaps },
@@ -3880,6 +3883,70 @@ D_CMD(QuickSaveGame)
 {
     /// @todo Implement console command scripts?
     return DD_Execute(true, "savegame quick");
+}
+
+boolean G_DeleteSaveGame(int slot)
+{
+    SaveInfo* info;
+
+    if(!SV_IsUserWritableSlot(slot) || !SV_IsSlotUsed(slot)) return false;
+
+    // A known slot identifier.
+    info = SV_SaveInfoForSlot(slot);
+    DENG_ASSERT(info);
+    SV_ClearSlot(slot);
+    return true;
+}
+
+int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+{
+    DENG_UNUSED(userPointer);
+    if(response == MSG_YES)
+    {
+        const int slot = userValue;
+        G_DeleteSaveGame(slot);
+    }
+    return true;
+}
+
+D_CMD(DeleteGameSave)
+{
+    const boolean confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    player_t* player = &players[CONSOLEPLAYER];
+    int slot;
+
+    if(G_QuitInProgress()) return false;
+
+    // Ensure we have up-to-date info.
+    SV_UpdateAllSaveInfo();
+
+    slot = SV_ParseSlotIdentifier(argv[1]);
+    if(SV_IsUserWritableSlot(slot) && SV_IsSlotUsed(slot))
+    {
+        // A known slot identifier.
+        if(confirm)
+        {
+            return G_DeleteSaveGame(slot);
+        }
+        else
+        {
+            // Compose the confirmation message.
+            SaveInfo* info = SV_SaveInfoForSlot(slot);
+            AutoStr* msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Name(info)));
+            S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
+            Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slot, 0);
+        }
+        return true;
+    }
+
+    // Clearly the caller needs some assistance...
+    if(!SV_IsValidSlot(slot))
+        Con_Message("Failed to determine game-save slot from \"%s\".\n", argv[1]);
+    else
+        Con_Message("Game-save slot #%i is non-user-writable.\n", slot);
+
+    // No action means the command failed.
+    return false;
 }
 
 D_CMD(HelpScreen)

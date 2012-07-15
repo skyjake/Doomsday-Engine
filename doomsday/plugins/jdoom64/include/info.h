@@ -1600,6 +1600,7 @@ typedef enum {
     TXT_GAMESETUP,
     TXT_PLAYERSETUP,
     TXT_DISCONNECT,
+    TXT_DELETESAVEGAME_CONFIRM,
     NUMTEXT
 } textenum_t;
 

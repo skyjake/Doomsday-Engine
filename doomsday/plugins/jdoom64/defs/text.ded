@@ -1265,3 +1265,8 @@ Text {
   ID = "DISCONNECT";
   Text = "Really disconnect?";
 }
+
+Text {
+  ID = "DELETESAVEGAME_CONFIRM";
+  Text = "Really delete save game \n\n'%s'?";
+}

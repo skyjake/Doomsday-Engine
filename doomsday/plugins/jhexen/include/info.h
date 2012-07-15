@@ -3757,6 +3757,7 @@ typedef enum {
     TXT_SKILLM3,
     TXT_SKILLM4,
     TXT_SKILLM5,
+    TXT_DELETESAVEGAME_CONFIRM,
     NUMTEXT
 } textenum_t;
 

@@ -24,6 +24,10 @@ inf = Params: cheat (cheat)\nFor example, 'cheat idclev25'.
 [coord]
 desc = Print the coordinates of the consoleplayer.
 
+[deletegamesave]
+desc = Deletes a game-save state.
+inf = Params: deletegamesave (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nA game save by name 'deletegamesave "running low on ammo"'\nLast game save in the "quick" slot, confirmed: 'deletegamesave quick confirm'
+
 [endcycle]
 desc = End map rotation.
 
