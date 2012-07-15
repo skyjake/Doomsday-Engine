@@ -22,6 +22,7 @@
 #include "driver_fluidsynth.h"
 #include "sys_audiod.h"
 #include <stdio.h>
+#include <string.h>
 
 #include "doomsday.h"
 
