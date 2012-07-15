@@ -338,7 +338,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
         p.foundNode = NULL;
 
         // Perform the search.
-        if(found = ResourceNamespace_Iterate2(rnInfo->rnamespace, name, findResourceInNamespaceWorker, (void*)&p))
+        if((found = ResourceNamespace_Iterate2(rnInfo->rnamespace, name, findResourceInNamespaceWorker, (void*)&p)))
         {
             // Does the caller want to know the matched path?
             if(foundPath)
