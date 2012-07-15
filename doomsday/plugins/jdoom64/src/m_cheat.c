@@ -158,7 +158,7 @@ void Cht_NoClipFunc(player_t* plr)
 
 boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
 {
-    uint epsd, map;
+    uint i, epsd, map;
 
     epsd = 0;
     map = (cheat->args[0] - '0') * 10 + cheat->args[1] - '0';
@@ -170,7 +170,16 @@ boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
 
     P_SetMessage(plr, STSTR_CLEV, false);
 
-    // Clear the menu if open.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        ST_AutomapOpen(i, false, true);
+    }
+
+    // Close the menu if open.
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // So be it.

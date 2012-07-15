@@ -338,7 +338,7 @@ int Cht_NoClipFunc(const int* args, int player)
 int Cht_WarpFunc(const int* args, int player)
 {
     player_t* plr = &players[player];
-    uint epsd, map;
+    uint i, epsd, map;
 
     if(IS_NETGAME)
         return false;
@@ -361,7 +361,16 @@ int Cht_WarpFunc(const int* args, int player)
 
     P_SetMessage(plr, STSTR_CLEV, false);
 
-    // Clear the menu if open.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        ST_AutomapOpen(i, false, true);
+    }
+
+    // Close the menu if open.
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // So be it.

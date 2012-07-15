@@ -366,10 +366,10 @@ int Cht_NoClipFunc(const int* args, int player)
 int Cht_WarpFunc(const int* args, int player)
 {
     player_t* plr = &players[player];
-    int i, tens, ones;
+    int tens, ones;
     ddstring_t* path;
     Uri* uri;
-    uint map;
+    uint i, map;
 
     if(IS_NETGAME)
         return false;
@@ -411,17 +411,19 @@ int Cht_WarpFunc(const int* args, int player)
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     P_SetMessage(plr, TXT_CHEATWARP, false);
 
-    // Clear the menu if open.
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // Close any open automaps.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!players[i].plr->inGame)
-            continue;
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+
+        if(!ddplr->inGame) continue;
+
         ST_AutomapOpen(i, false, true);
         Hu_InventoryOpen(i, false);
     }
+
+    // Close the menu if open.
+    Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // So be it.
     if(userGame)

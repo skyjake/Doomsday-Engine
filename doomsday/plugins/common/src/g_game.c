@@ -2682,18 +2682,6 @@ void G_DoLeaveMap(void)
 
 void G_DoRestartMap(void)
 {
-#if !__JHEXEN__
-    loadmap_params_t p;
-#endif
-
-    G_StopDemo();
-
-    // Unpause the current game.
-    sendPause = paused = false;
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
-
 #if __JHEXEN__
     // This is a restart, so we won't brief again.
     briefDisabled = true;
@@ -2702,6 +2690,15 @@ void G_DoRestartMap(void)
     G_InitNewGame();
     G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
 #else
+    loadmap_params_t p;
+
+    G_StopDemo();
+
+    // Unpause the current game.
+    sendPause = paused = false;
+
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
 
     p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
     p.episode    = gameEpisode;
@@ -2948,16 +2945,8 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 
     G_StopDemo();
 
-    userGame = true; // Will be set false if a demo.
-
-    // Unpause the current game.
-    sendPause = paused = false;
-
-    // Delete raw images to conserve texture memory.
-    DD_Executef(true, "texreset raw");
-
-    // Make sure that the episode and map numbers are good.
-    G_ValidateMap(&episode, &map);
+    // Clear the menu if open.
+    Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
@@ -2985,6 +2974,17 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
         Hu_InventoryOpen(i, false);
 #endif
     }
+
+    userGame = true; // Will be set false if a demo.
+
+    // Unpause the current game.
+    sendPause = paused = false;
+
+    // Delete raw images to conserve texture memory.
+    DD_Executef(true, "texreset raw");
+
+    // Make sure that the episode and map numbers are good.
+    G_ValidateMap(&episode, &map);
 
     gameSkill = skill;
     gameEpisode = episode;
