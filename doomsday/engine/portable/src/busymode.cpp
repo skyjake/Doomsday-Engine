@@ -403,6 +403,9 @@ static void BusyMode_Loop(void)
 
     Garbage_Recycle();
 
+    // Make sure the audio system gets regularly updated.
+    S_StartFrame();
+
     // Post and discard all input events.
     DD_ProcessEvents(0);
     DD_ProcessSharpEvents(0);
@@ -415,7 +418,6 @@ static void BusyMode_Loop(void)
         GL_ProcessDeferredTasks(15);
     }
 
-    // Make sure the audio system gets regularly updated.
     S_EndFrame();
 
     // We accumulate time in the busy loop so that the animation of a task

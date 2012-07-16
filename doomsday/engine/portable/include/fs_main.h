@@ -221,6 +221,17 @@ DFile* F_OpenLump(lumpnum_t lumpNum);
 boolean F_DumpLump(lumpnum_t lumpNum, const char* fileName);
 
 /**
+ * Write data into a file.
+ *
+ * @param data  Data to write.
+ * @param size  Size of the data in bytes.
+ * @param path  Path of the file to create (existing file replaced).
+ *
+ * @return @c true if successful, otherwise @c false.
+ */
+boolean F_Dump(const void *data, size_t size, const char* path);
+
+/**
  * @return  The time when the file was last modified, as seconds since
  * the Epoch else zero if the file is not found.
  */

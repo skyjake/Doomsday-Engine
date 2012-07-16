@@ -31,11 +31,12 @@
  * @ingroup audio apiFlags
  */
 ///@{
-#define SFXBF_PLAYING       (0x1)       ///< The buffer is playing.
-#define SFXBF_3D            (0x2)       ///< Otherwise playing in 2D mode.
-#define SFXBF_REPEAT        (0x4)       ///< Buffer will repeat until stopped.
-#define SFXBF_DONT_STOP     (0x8)       ///< Never stop until normal finish.
-#define SFXBF_RELOAD        (0x10000)   ///< Sample must be reloaded before playing.
+#define SFXBF_PLAYING       0x1         ///< The buffer is playing.
+#define SFXBF_3D            0x2         ///< Otherwise playing in 2D mode.
+#define SFXBF_REPEAT        0x4         ///< Buffer will repeat until stopped.
+#define SFXBF_DONT_STOP     0x8         ///< Never stop until normal finish.
+#define SFXBF_STREAM        0x10        ///< Buffer plays in streaming mode (looping).
+#define SFXBF_RELOAD        0x10000     ///< Sample must be reloaded before playing.
 ///@}
 
 /// Sfx interface properties.
@@ -96,6 +97,13 @@ typedef struct sfxbuffer_s {
     unsigned int    endTime;    ///< System time, milliseconds (if !repeating).
     unsigned int    freq;       ///< Played samples per second (real freq).
 } sfxbuffer_t;
+
+/**
+ * When a buffer is using SFXBF_STREAM, a sample's data pointer is interpreted
+ * as a sfxstreamfunc_t and will be called whenever the sample needs more data
+ * streamed in.
+ */
+typedef int (*sfxstreamfunc_t)(sfxbuffer_t* buf, void* data, unsigned int size);
 
 /// Generic driver interface. All other interfaces are based on this.
 typedef struct audiointerface_sfx_generic_s {

@@ -856,6 +856,11 @@ AutoStr* AutoStr_FromStr(ddstring_t* str)
     return str;
 }
 
+AutoStr* AutoStr_FromText(const char* text)
+{
+    return Str_Set(AutoStr_New(), text);
+}
+
 ddstring_t* Str_FromAutoStr(AutoStr* as)
 {
     Garbage_Untrash(as);

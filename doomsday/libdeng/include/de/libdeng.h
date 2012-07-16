@@ -22,7 +22,7 @@
 #ifndef LIBDENG_H
 #define LIBDENG_H
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(DENG_NO_QT)
 #  define DENG_USE_QT
 #endif
 

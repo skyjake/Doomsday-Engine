@@ -379,6 +379,16 @@ AutoStr* AutoStr_NewStd(void);
 AutoStr* AutoStr_FromStr(ddstring_t* str);
 
 /**
+ * Constructs an AutoStr instance (zone allocated) and initializes its
+ * contents with @a text.
+ *
+ * @param text  Text for the new string.
+ *
+ * @return  AutoStr instance.
+ */
+AutoStr* AutoStr_FromText(const char* text);
+
+/**
  * Converts an AutoStr to a normal ddstring. You must call Str_Delete()
  * on the returned string manually to destroy it.
  *

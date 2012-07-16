@@ -470,7 +470,8 @@ boolean Sys_GLInitialize(void)
 
     if(firstTimeInit)
     {
-        double version = strtod((const char*) glGetString(GL_VERSION), NULL);
+        const GLubyte* versionStr = glGetString(GL_VERSION);
+        double version = (versionStr? strtod((const char*) versionStr, NULL) : 0);
         if(version == 0)
         {
             Con_Message("Sys_GLInitialize: Failed to determine OpenGL version.\n");

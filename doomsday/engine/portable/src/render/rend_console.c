@@ -317,7 +317,7 @@ void Rend_ConsoleToggleFullscreen(void)
     if(++consoleMode > CM_SINGLELINE) consoleMode = CM_HALFSCREEN;
     switch(consoleMode)
     {
-    case CM_HALFSCREEN: y = SCREENHEIGHT/2; break;
+    case CM_HALFSCREEN: default: y = SCREENHEIGHT/2; break;
     case CM_FULLSCREEN: y = SCREENHEIGHT; break;
     case CM_SINGLELINE: y = calcConsoleMinHeight(); break;
     }

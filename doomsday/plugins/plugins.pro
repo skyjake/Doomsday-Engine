@@ -16,11 +16,8 @@ SUBDIRS += jdoom64
 deng_openal:!deng_noopenal {
     SUBDIRS += openal
 }
-deng_fmod {
-    SUBDIRS += fmod
-}
+deng_fmod: SUBDIRS += fmod
+deng_fluidsynth: SUBDIRS += fluidsynth
 
 # Platform-specific plugins.
-win32 {
-    SUBDIRS += directsound winmm
-}
+win32: SUBDIRS += directsound winmm

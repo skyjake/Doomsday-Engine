@@ -13,6 +13,7 @@
 # CONFIG options for Doomsday:
 # - deng_aptstable          Include the stable apt repository .list
 # - deng_aptunstable        Include the unstable apt repository .list
+# - deng_fluidsynth         Build the FluidSynth sound driver
 # - deng_fmod               Build the FMOD Ex sound driver
 # - deng_nativesdk          (Mac) Use current OS's SDK for non-distrib use
 # - deng_nodisplaymode      Disable native display mode changes

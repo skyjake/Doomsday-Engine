@@ -1070,15 +1070,39 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
     }
 }
 
+boolean F_Dump(const void* data, size_t size, const char* path)
+{
+    FILE* outFile;
+    AutoStr* nativePath = AutoStr_New();
+
+    if(!size) return false;
+
+    DENG_ASSERT(data != 0);
+    DENG_ASSERT(path != 0);
+
+    Str_Set(nativePath, path);
+    F_ToNativeSlashes(nativePath, nativePath);
+
+    outFile = fopen(Str_Text(nativePath), "wb");
+    if(!outFile)
+    {
+        Con_Message("Warning: Failed to open \"%s\" for writing (error: %s), aborting.\n",
+                    F_PrettyPath(Str_Text(nativePath)), strerror(errno));
+        return false;
+    }
+    fwrite(data, 1, size, outFile);
+    fclose(outFile);
+    return true;
+}
+
 boolean F_DumpLump(lumpnum_t absoluteLumpNum, const char* path)
 {
     const LumpInfo* info;
     abstractfile_t* fsObject;
-    ddstring_t nativePath;
     const char* lumpName;
     const char* fname;
     int lumpIdx;
-    FILE* outFile;
+    boolean ok;
 
     fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject) return false;
@@ -1096,23 +1120,12 @@ boolean F_DumpLump(lumpnum_t absoluteLumpNum, const char* path)
         fname = lumpName;
     }
 
-    Str_Init(&nativePath); Str_Set(&nativePath, fname);
-    F_ToNativeSlashes(&nativePath, &nativePath);
-
-    outFile = fopen(Str_Text(&nativePath), "wb");
-    if(!outFile)
-    {
-        Con_Printf("Warning: Failed to open \"%s\" for writing (error: %s), aborting.\n", F_PrettyPath(Str_Text(&nativePath)), strerror(errno));
-        Str_Free(&nativePath);
-        return false;
-    }
-
-    fwrite((void*)F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC), 1, info->size, outFile);
-    fclose(outFile);
+    ok = F_Dump(F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC), info->size, fname);
     F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+    if(!ok) return false;
 
-    Con_Printf("%s dumped to \"%s\"\n", lumpName, F_PrettyPath(Str_Text(&nativePath)));
-    Str_Free(&nativePath);
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,
+            "%s dumped to \"%s\"\n", lumpName, F_PrettyPath(fname));
     return true;
 }
 

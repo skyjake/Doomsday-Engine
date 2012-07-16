@@ -141,6 +141,7 @@ DENG_HEADERS += \
     portable/include/abstractfile.h \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
+    portable/include/audiodriver_music.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
     portable/include/b_device.h \
@@ -447,6 +448,7 @@ SOURCES += \
     portable/src/abstractresource.c \
     portable/src/animator.c \
     portable/src/audiodriver.c \
+    portable/src/audiodriver_music.c \
     portable/src/b_command.c \
     portable/src/b_context.c \
     portable/src/b_device.c \

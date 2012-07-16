@@ -44,7 +44,7 @@ extern "C" {
 #define GET_SIDE_IDX(si)        GameMap_SideDefIndex(theMap, si)
 #define GET_SECTOR_IDX(sec)     GameMap_SectorIndex(theMap, sec)
 #define GET_HEDGE_IDX(he)       GameMap_HEdgeIndex(theMap, he)
-#define GET_BSPLEAF_IDX(bspLeaf) GameMap_BspLeafIndex(theMap, bspLeaf)
+#define GET_BSPLEAF_IDX(bl)     GameMap_BspLeafIndex(theMap, bl)
 #define GET_BSPNODE_IDX(nd)     GameMap_BspNodeIndex(theMap, nd)
 
 #define VERTEX_PTR(idx)         GameMap_Vertex(theMap, idx)

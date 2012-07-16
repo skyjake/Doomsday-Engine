@@ -44,9 +44,12 @@ void F_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
 void F_ExtractFileBase(char* dest, const char* path, size_t len);
 
 /**
+ * Checks if a file exists in the native file system.
+ *
  * @param file  File to check existence of. Relative path directives are expanded
  *              automatically: '>' '}' (plus '~' on Unix-based platforms).
- * @return  @c 0 if the path points to a readable file on the local file system.
+ *
+ * @return @c 0 if the path points to a readable file on the local file system.
  */
 int F_FileExists(const char* path);
 
