@@ -1442,21 +1442,22 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_SetFloat(DGL_LINE_WIDTH, MINMAX_OF(.5f, cfg.automapLineWidth * aspectScale, 3.f));
 
 /*#if _DEBUG
-{ // Draw the rectangle described by the visible bounds.
-float topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
-UIAutomap_VisibleBounds(obj, topLeft, bottomRight, topRight, bottomLeft);
-DGL_Color4f(1, 1, 1, alpha);
-DGL_Begin(DGL_LINES);
-    DGL_Vertex2f(topLeft[0], topLeft[1]);
-    DGL_Vertex2f(topRight[0], topRight[1]);
-    DGL_Vertex2f(topRight[0], topRight[1]);
-    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
-    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
-    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
-    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
-    DGL_Vertex2f(topLeft[0], topLeft[1]);
-DGL_End();
-}
+    // Draw the rectangle described by the visible bounds.
+    {
+    coord_t topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
+    UIAutomap_VisibleBounds(obj, topLeft, bottomRight, topRight, bottomLeft);
+    DGL_Color4f(1, 1, 1, alpha);
+    DGL_Begin(DGL_LINES);
+        DGL_Vertex2f(    topLeft[0],     topLeft[1]);
+        DGL_Vertex2f(   topRight[0],    topRight[1]);
+        DGL_Vertex2f(   topRight[0],    topRight[1]);
+        DGL_Vertex2f(bottomRight[0], bottomRight[1]);
+        DGL_Vertex2f(bottomRight[0], bottomRight[1]);
+        DGL_Vertex2f( bottomLeft[0],  bottomLeft[1]);
+        DGL_Vertex2f( bottomLeft[0],  bottomLeft[1]);
+        DGL_Vertex2f(    topLeft[0],     topLeft[1]);
+    DGL_End();
+    }
 #endif*/
 
     if(amMaskTexture)

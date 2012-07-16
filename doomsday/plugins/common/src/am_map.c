@@ -62,7 +62,7 @@ void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customP
 
 const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_objectname_t name)
 {
-    assert(NULL != mcfg);
+    assert(mcfg);
 
     if(name == AMO_NONE)
         return NULL;

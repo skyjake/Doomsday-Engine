@@ -422,7 +422,7 @@ void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t r
 {
     if(!initedColorPalettes)
         Con_Error("R_GetColorPaletteRGBubv: Color palettes not yet initialized.");
-    if(NULL == rgb)
+    if(!rgb)
         Con_Error("R_GetColorPaletteRGBubv: Invalid arguments (rgb==NULL).");
 
     if(colorIdx < 0)
@@ -432,7 +432,7 @@ void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t r
     }
 
     { colorpalette_t* palette = R_ToColorPalette(paletteId);
-    if(NULL != palette)
+    if(palette)
     {
         ColorPalette_Color(palette, colorIdx, rgb);
         if(applyTexGamma)
@@ -452,7 +452,7 @@ void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3
 {
     if(!initedColorPalettes)
         Con_Error("R_GetColorPaletteRGBf: Color palettes not yet initialized.");
-    if(NULL == rgb)
+    if(!rgb)
         Con_Error("R_GetColorPaletteRGBf: Invalid arguments (rgb==NULL).");
 
     if(colorIdx < 0)
@@ -462,7 +462,7 @@ void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3
     }
 
     { colorpalette_t* palette = R_ToColorPalette(paletteId);
-    if(NULL != palette)
+    if(palette)
     {
         uint8_t ubv[3];
         ColorPalette_Color(palette, colorIdx, ubv);
