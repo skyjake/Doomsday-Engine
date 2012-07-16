@@ -2977,6 +2977,7 @@ void Hu_MenuInitAutomapOptionsPage(void)
 
     list->count = 3;
     item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+    list->data = "map-customcolors";
 
     item->text = "Never";
     item->data = 0;
@@ -3422,6 +3423,7 @@ void Hu_MenuInitWeaponsPage(void)
 
     list->count = 3;
     item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+    list->data = "player-autoswitch";
 
     item->text = "Never";
     item->data = 0;
@@ -3497,6 +3499,7 @@ void Hu_MenuInitWeaponsPage(void)
 
     list->count = 3;
     item = list->items = (mndata_listitem_t*)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+    list->data = "player-autoswitch-ammo";
 
     item->text = "Never";
     item->data = 0;
