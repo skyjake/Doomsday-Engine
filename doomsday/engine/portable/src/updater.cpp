@@ -53,6 +53,7 @@
 #include "json.h"
 #include "updater.h"
 #include "updater/downloaddialog.h"
+#include "updater/processcheckdialog.h"
 #include "updater/updateavailabledialog.h"
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
@@ -403,6 +404,10 @@ struct Updater::Instance
         atexit(runInstallerCommand);
 
 #elif defined(WIN32)
+        Updater_AskToStopProcess("snowberry.exe", "Please quit the Doomsday Engine Frontend "
+                                 "before starting the update. Windows cannot update "
+                                 "files that are currently in use.");
+
         // The distribution package is an installer executable, we can just run it.
         installerCommand = new de::CommandLine;
         installerCommand->append(distribPackagePath);
