@@ -1,0 +1,34 @@
+$@macro{TITLE}{ Doomsday Engine }
+
+@require{amestd}
+
+@macro{toc}{@apply{@.}{omit}}
+@macro{plugin}{[[@glue{@arg}]]}
+
+@ifdef{UNIX}{
+	@macro{man_opt}{ [ @apply{<tt>[[-@=]]</tt>}{@arg} ] }
+	@macro{man_opt2}{ [ @apply{<tt>[[-@=]]</tt>}{@arg{1}} @em{@arg{2}} ] }
+}
+
+@begin
+
+@toc{}
+
+@ifdef{Intro}{
+	@require{introduction}
+	@require{gamemodes}
+	@require{documentation}
+	@include{bugs}
+}
+@ifdef{Platform}{
+	@require{files}
+	@require{environment}
+}
+@ifdef{MP}{
+	@require{network}
+	$ TODO: more MP docs wouldn't hurt
+}
+@ifdef{Res}{
+	@require{resources}
+	@include{plugins}
+}

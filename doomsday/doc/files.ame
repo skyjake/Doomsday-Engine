@@ -5,7 +5,7 @@
     @include{macfiles}
 }
 @else{
-    @ifdef{MAN}{
+    @ifdef{UNIX}{
         @include{unixfiles}
     }
     @else{
