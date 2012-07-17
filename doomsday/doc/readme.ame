@@ -5,6 +5,7 @@
 @macro{LINK}{ http://dengine.net/ }
 @require{amestd}
 
+$ Readme-specific formatting macros.
 @macro{plugin}{@arg}
 
 @begin
