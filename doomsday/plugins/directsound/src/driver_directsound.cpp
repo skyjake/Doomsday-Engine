@@ -44,7 +44,6 @@
 
 #pragma warning (disable: 4035 4244)
 
-#define DENG2_C_API_ONLY
 #include <de/c_wrapper.h>
 
 #include "doomsday.h"

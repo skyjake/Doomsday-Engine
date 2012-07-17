@@ -497,7 +497,7 @@ struct LineDef
     INT     int         validCount
     -       binangle_t  angle /// Calculated from front side's normal.
     -       coord_t[2]  direction
-    -       coord_t     length /// Accurate length.
+    DOUBLE  coord_t     length /// Accurate length.
     -       AABoxd      aaBox
     -       boolean[DDMAXPLAYERS] mapped /// Whether the line has been mapped by each player yet.
     -       mlinedef_t  buildData

@@ -778,15 +778,16 @@ static void rendLinedef(LineDef* line, float r, float g, float b, float a,
  * Rather than draw the instead this will draw the linedef of which
  * the hedge is a part.
  */
-int rendPolyobjLine(void* linePtr, void* context)
+int rendPolyobjLine(LineDef* line, void* context)
 {
-    LineDef* line = (LineDef*)linePtr;
-    uiwidget_t* obj = (uiwidget_t*)context;
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    uiwidget_t* ob = (uiwidget_t*)context;
+    guidata_automap_t* am = (guidata_automap_t*)ob->typedata;
     const float alpha = uiRendState->pageAlpha;
     const automapcfg_lineinfo_t* info;
     automapcfg_objectname_t amo;
+    player_t* plr = rs.plr;
     xline_t* xLine;
+    assert(ob && ob->type == GUI_AUTOMAP);
 
     if(!(xLine = P_ToXLine(line))) return false;
 
@@ -796,16 +797,20 @@ int rendPolyobjLine(void* linePtr, void* context)
     if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES)) return false;
 
     amo = AMO_NONE;
-    if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[rs.plr - players])
+    if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
     {
         amo = AMO_SINGLESIDEDLINE;
     }
-    else if(am->flags && !(xLine->flags & ML_DONTDRAW))
-    {   // An as yet, unseen line.
-        amo = AMO_UNSEENLINE;
+    else if(rs.objType != -1 && UIAutomap_Reveal(ob))
+    {
+        if(!(xLine->flags & ML_DONTDRAW))
+        {
+            // An as yet, unseen line.
+            amo = AMO_UNSEENLINE;
+        }
     }
 
-    info = AM_GetInfoForLine(UIAutomap_Config(obj), amo);
+    info = AM_GetInfoForLine(UIAutomap_Config(ob), amo);
     if(info)
     {
         rendLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
@@ -816,15 +821,6 @@ int rendPolyobjLine(void* linePtr, void* context)
     xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
 
     return false; // Continue iteration.
-}
-
-int rendLinesOfPolyobj(Polyobj* po, void* context)
-{
-    int result = false; // Continue iteration.
-    LineDef** lineIter = po->lines;
-    while(*lineIter && !(result = rendPolyobjLine(*lineIter, context)))
-        lineIter++;
-    return result;
 }
 
 static void rendPolyobjs(uiwidget_t* ob)
@@ -841,7 +837,7 @@ static void rendPolyobjs(uiwidget_t* ob)
 
     // Draw any polyobjects in view.
     UIAutomap_PVisibleAABounds(ob, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-    P_PolyobjsBoxIterator(&aaBox, rendLinesOfPolyobj, ob);
+    P_PolyobjLinesBoxIterator(&aaBox, rendPolyobjLine, ob);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__

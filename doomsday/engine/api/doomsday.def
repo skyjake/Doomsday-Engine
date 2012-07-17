@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 855 <--
+; Highest ordinal is currently: --> 856 <--
 ; Other free ordinals: 57
 
 NAME                            "DOOMSDAY"
@@ -467,6 +467,7 @@ EXPORTS
     P_BspLeafAtPointXY          @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME
+    P_PolyobjLinesBoxIterator   @856 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
     P_BspLeafsBoxIterator       @345 NONAME

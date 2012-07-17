@@ -92,12 +92,14 @@ void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
 {
     LineDef* line = P_ToPtr(DMU_LINEDEF, lineIdx);
     xline_t* xline;
-    if(NULL == line || P_IsDummy(line)) return;
+    if(!line || P_IsDummy(line)) return;
 
-    // Will we need to rebuild one or more display lists?
     xline = P_ToXLine(line);
+    // Will we need to rebuild one or more display lists?
     if(xline->mapped[player] != visible)
+    {
         ST_RebuildAutomap(player);
+    }
     xline->mapped[player] = visible;
 }
 

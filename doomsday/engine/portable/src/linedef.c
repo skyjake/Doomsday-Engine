@@ -523,7 +523,7 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
         DMU_GetValue(DMT_LINEDEF_DY, &lin->direction[VY], args, 1);
         break;
     case DMU_LENGTH:
-        DMU_GetValue(DDVT_FLOAT, &lin->length, args, 0);
+        DMU_GetValue(DMT_LINEDEF_LENGTH, &lin->length, args, 0);
         break;
     case DMU_ANGLE: {
         angle_t lineAngle = BANG_TO_ANGLE(lin->angle);
