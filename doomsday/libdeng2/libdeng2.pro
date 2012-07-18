@@ -64,7 +64,7 @@ SOURCES += \
     src/core/commandline.cpp \
     src/core/callbacktimer.cpp \
     src/core/log.cpp \
-    src/core/logbuffer.cpp \
+    src/core/logbuffer.cpp
 
 # Installation ---------------------------------------------------------------
 
