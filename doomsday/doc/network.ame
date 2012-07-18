@@ -1,4 +1,83 @@
-@chapter{ Networking }
+@chapter{ Multiplayer }
+
+Doomsday features client/server based multiplayer for up to 15 players.
+
+Multiplayer games can be joined using the in-game GUI (under the @dquote{New
+Game} main menu option) or using the console.
+
+
+
+@section{ Modes }
+
+The following multiplayer modes are available in @plugin{libdoom},
+@plugin{libheretic} and @plugin{libhexen}:
+
+@list/thin{
+@item Cooperative
+@item Deathmatch
+@item Team Deathmatch
+}
+
+Deathmatch and Cooperative can be set directly in the GUI or console. For Team
+Deathmatch set "No Team Damage" to yes and in Player Setup make sure everybody
+on your team is the same color.
+
+Doom offers two variants of Deathmatch:
+
+@deflist{
+
+@item{Deathmatch 1} Ammo and powerups do not respawn. Non-dropped (i.e those
+from bad guys) weapons remain, but can only be picked up once per life.
+
+@item{Deathmatch 2} All non-dropped pickups, including weapons randomly
+respawn a short while after being picked up. Respawned weapons can be picked
+up more than once per life.
+}
+
+Deathmatch in Heretic and Hexen is limited to the "Deathmatch 1" mode.
+
+
+
+@section{ Public online games }
+
+The @wikiterm{Deng Team} is currently running a public multiplayer server for
+the purpose of developing the network code further. When joining these online
+games, please note the following:
+
+@list{
+@item The network code in this release has some @link{limitations}{http://dengine.net/multiplayer_issues} that we will work on in future versions.
+@item The connection should be able to sustain 100KB/s transfer rate (1 Mbps or better).
+}
+
+
+
+@section{ Hosting a game }
+
+Only @wikiterm{dedicated servers} are supported. In dedicated mode, the engine
+only shows a text mode console window. Presently you must then use the console
+to configure the server and start the game. You can start a server on your
+local system via the Doomsday Frontend.
+
+For instance, the following would set up a deathmatch without monsters in
+E1M5:
+
+@samp{@pre{server-game-deathmatch 1
+server-game-nomonsters 1
+setmap 1 5}}
+
+Note that you can set up a @file{.cfg} file where you can define the server
+configuration and @wikilink{automatically open the server}{Dedicated_server}.
+
+If your server is not public (@opt{server-public}), a client can connect to the dedicated server using a custom address search:
+
+@list{
+@item Client on the same computer: use search address @cmd{localhost}.
+@item Client on another computer: use search address @em{dedicated-server-ip-address}.
+}
+
+
+
+@section{ Networking details }
 
 Doomsday uses TCP network connections for multiplayer games. If you host a
 game and are behind a firewall or using NAT, you must make sure that other
@@ -10,7 +89,7 @@ You can see information about the network subsystem status with the command:
 
 @samp{@cmd{net info}}
 
-@section{Server settings}
+@subsec{Server}
 
 A dedicated server opens one TCP port for listening to incoming connections.
 The port number is configured with the console variable @var{net-ip-port}. 
@@ -19,7 +98,7 @@ By default a server uses TCP port 13209 (setting the port to zero will mean
 13209 will be used). The configured port must be open for incoming TCP traffic
 in the firewall.
 
-@section{Client settings}
+@subsec{Client}
 
 Clients do not require any firewall configuration for incoming connections. A
 client only needs to be able to reach the server via the server's TCP port.
