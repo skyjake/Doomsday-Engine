@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     }
 
     // Application core.
-    de::App dengApp(argc, argv, useGUI);
+    de::App dengApp(argc, argv, useGUI? de::App::GUIEnabled : de::App::GUIDisabled);
 
     // Override the system locale (affects number/time formatting).
     QLocale::setDefault(QLocale("en_US.UTF-8"));

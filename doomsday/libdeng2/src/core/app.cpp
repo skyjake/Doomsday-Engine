@@ -29,8 +29,8 @@
 
 using namespace de;
 
-App::App(int& argc, char** argv, bool useGUI)
-    : QApplication(argc, argv, useGUI),
+App::App(int& argc, char** argv, GUIMode guiMode)
+    : QApplication(argc, argv, guiMode == GUIEnabled),
       _cmdLine(argc, argv),
       _config(0)
 {

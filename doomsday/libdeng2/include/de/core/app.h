@@ -46,8 +46,13 @@ namespace de
         /// The object or resource that was being looked for was not found. @ingroup errors
         DENG2_ERROR(NotFoundError);
 
+        enum GUIMode {
+            GUIDisabled = 0,
+            GUIEnabled = 1
+        };
+
     public:
-        App(int& argc, char** argv, bool useGUI);
+        App(int& argc, char** argv, GUIMode guiMode);
 
         /**
          * Initializes all the application's subsystems. This includes Config and FS.
