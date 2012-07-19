@@ -44,6 +44,8 @@ DENG_WIN_INCLUDE_DIR = $$PWD/engine/win32/include
 # Binaries and generated files are placed here.
 DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 
+DENG_CONFIG_DIR = $$PWD/libdeng2/config
+
 # Versions -------------------------------------------------------------------
 
 include(versions.pri)

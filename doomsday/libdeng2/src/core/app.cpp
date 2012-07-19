@@ -92,19 +92,19 @@ void App::initSubsystems()
     _fs.refresh();
 
     // The configuration.
-    QScopedPointer<Config> conf(new Config("/config/doomsday.de"));
+    QScopedPointer<Config> conf(new Config("/config/deng.de"));
     conf->read();
 
     LogBuffer& logBuf = LogBuffer::appBuffer();
 
     // Update the log buffer max entry count.
-    logBuf.setMaxEntryCount(conf->getui("deng.log.bufferSize"));
+    logBuf.setMaxEntryCount(conf->getui("log.bufferSize"));
 
     // Set the log output file.
-    logBuf.setOutputFile(conf->gets("deng.log.file"));
+    logBuf.setOutputFile(conf->gets("log.file"));
 
     // The level of enabled messages.
-    logBuf.enable(Log::LogLevel(conf->getui("deng.log.level")));
+    logBuf.enable(Log::LogLevel(conf->getui("log.level")));
 
 #if 0 // not yet handled by libdeng2
     // Load the basic plugins.
@@ -203,7 +203,7 @@ Record& App::importModule(const String& name, const String& fromPath)
     ArrayValue* importPath = defaultImportPath.get();
     try
     {
-        importPath = &config().names()["deng.importPath"].value<ArrayValue>();
+        importPath = &config().names()["importPath"].value<ArrayValue>();
     }
     catch(const Record::NotFoundError&)
     {}

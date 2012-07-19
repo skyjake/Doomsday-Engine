@@ -12,7 +12,11 @@ OTHER_FILES += $$SCRIPTS
 macx {
     scripts.files = $$SCRIPTS
     scripts.path = Contents/Resources
-    QMAKE_BUNDLE_DATA += scripts
+
+    cfg.files = $$DENG_CONFIG_DIR/deng.de
+    cfg.path = Contents/Resources/config
+
+    QMAKE_BUNDLE_DATA += scripts cfg
 
     macDeployTest($$TARGET)
 }

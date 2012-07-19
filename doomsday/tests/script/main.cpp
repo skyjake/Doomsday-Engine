@@ -18,6 +18,7 @@
  */
 
 #include <de/App>
+#include <de/LogBuffer>
 #include <de/Script>
 #include <de/FS>
 #include <de/Process>

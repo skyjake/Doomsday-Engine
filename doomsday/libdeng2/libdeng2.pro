@@ -92,6 +92,9 @@ SOURCES += \
     src/core/log.cpp \
     src/core/logbuffer.cpp
 
+OTHER_FILES += \
+    config/deng.de
+
 # Installation ---------------------------------------------------------------
 
 macx {

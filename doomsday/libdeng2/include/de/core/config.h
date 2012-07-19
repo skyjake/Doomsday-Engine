@@ -31,6 +31,10 @@ namespace de
      * in the config directories. The resulting namespace is serialized for 
      * storage, and is restored from the serialized version directly before the
      * config scripts are run.
+     *
+     * The version of the engine is stored in the serialized config namespace.
+     * This is for actions needed when upgrading: the config script can check
+     * the previous version and apply changes accordingly.
      */
     class DENG2_PUBLIC Config
     {

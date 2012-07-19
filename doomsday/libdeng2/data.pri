@@ -80,6 +80,7 @@ SOURCES += \
     src/data/archive.cpp \
     src/data/arrayvalue.cpp \
     src/data/block.cpp \
+    src/data/blockvalue.cpp \
     src/data/byteorder.cpp \
     src/data/byterefarray.cpp \
     src/data/bytesubarray.cpp \
