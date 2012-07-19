@@ -47,14 +47,14 @@ namespace de
      *
      * @ingroup fs
      */
-    class LIBDENG2_API File : public IByteArray
+    class DENG2_PUBLIC File : public IByteArray
     {
     public:
         /// I/O to the native file failed. @ingroup errors
-        DEFINE_ERROR(IOError);
+        DENG2_ERROR(IOError);
 
         /// Only reading is allowed from the file. @ingroup errors
-        DEFINE_SUB_ERROR(IOError, ReadOnlyError);
+        DENG2_SUB_ERROR(IOError, ReadOnlyError);
         
         // Mode flags.
         enum Flag
@@ -62,7 +62,7 @@ namespace de
             Write = 0x1,
             Truncate = 0x2
         };
-        Q_DECLARE_FLAGS(Flags, Flag);
+        Q_DECLARE_FLAGS(Flags, Flag)
 
         /**
          * The file object is about to be deleted. This may be, e.g., due to pruning or
@@ -70,7 +70,7 @@ namespace de
          *
          * @param file  The file object being deleted.
          */
-        DEFINE_AUDIENCE(Deletion, void fileBeingDeleted(const File& file));
+        DENG2_DEFINE_AUDIENCE(Deletion, void fileBeingDeleted(const File& file))
 
         /**
          * Stores the status of a file (size, time of last modification).
@@ -307,8 +307,8 @@ namespace de
         /// File information.
         Record _info;
     }; 
-}
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(de::File::Flags);
+    Q_DECLARE_OPERATORS_FOR_FLAGS(File::Flags)
+}
 
 #endif /* LIBDENG2_FILE_H */

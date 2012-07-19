@@ -135,7 +135,7 @@ TokenRange TokenRange::between(duint startPos, duint endPos) const
 dint TokenRange::find(const QChar* token, dint startPos) const
 {
     duint len = size();
-    Q_ASSERT(startPos >= 0 && startPos <= dint(len));
+    DENG2_ASSERT(startPos >= 0 && startPos <= dint(len));
 
     for(dint i = startPos; i < dint(len); ++i)
     {
@@ -157,7 +157,7 @@ dint TokenRange::findBracketless(const QChar* token, dint startPos) const
 
 dint TokenRange::findIndexSkippingBrackets(const QChar* token, dint startIndex) const
 {
-    Q_ASSERT(startIndex >= dint(_start) && startIndex <= dint(_end));
+    DENG2_ASSERT(startIndex >= dint(_start) && startIndex <= dint(_end));
     
     for(duint i = startIndex; i < _end; ++i)
     {

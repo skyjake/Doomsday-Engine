@@ -95,7 +95,7 @@ void AssignStatement::execute(Context& context) const
     // Should we set the variable to read-only mode?
     if(_args.back().flags() & Expression::ReadOnly)
     {
-        Q_ASSERT(ref->variable() != NULL);
+        DENG2_ASSERT(ref->variable() != NULL);
         ref->variable()->setMode(Variable::ReadOnly | ref->variable()->mode());
     }
 

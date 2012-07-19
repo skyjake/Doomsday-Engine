@@ -129,7 +129,7 @@ void FS::index(File& file)
     _index.insert(IndexEntry(lowercaseName, &file));
     
     // Also make an entry in the type index.
-    Index& indexOfType = _typeIndex[TYPE_NAME(file)];
+    Index& indexOfType = _typeIndex[DENG2_TYPE_NAME(file)];
     indexOfType.insert(IndexEntry(lowercaseName, &file));
 }
 
@@ -157,7 +157,7 @@ static void removeFromIndex(FS::Index& idx, File& file)
 void FS::deindex(File& file)
 {
     removeFromIndex(_index, file);
-    removeFromIndex(_typeIndex[TYPE_NAME(file)], file);
+    removeFromIndex(_typeIndex[DENG2_TYPE_NAME(file)], file);
 }
 
 const FS::Index& FS::indexFor(const String& typeName) const

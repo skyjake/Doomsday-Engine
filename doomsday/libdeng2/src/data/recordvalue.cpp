@@ -29,7 +29,7 @@ using namespace de;
 
 RecordValue::RecordValue(Record* record, OwnershipFlags o) : _record(record), _ownership(o)
 {
-    Q_ASSERT(_record != NULL);
+    DENG2_ASSERT(_record != NULL);
     if(!_ownership.testFlag(OwnsRecord))
     {
         // If we don't own it, someone may delete the record.
@@ -157,7 +157,7 @@ void RecordValue::operator << (Reader& from)
 
 void RecordValue::recordBeingDeleted(Record& record)
 {
-    Q_ASSERT(_record == &record);
-    Q_ASSERT(!_ownership.testFlag(OwnsRecord));
+    DENG2_ASSERT(_record == &record);
+    DENG2_ASSERT(!_ownership.testFlag(OwnsRecord));
     _record = 0;
 }

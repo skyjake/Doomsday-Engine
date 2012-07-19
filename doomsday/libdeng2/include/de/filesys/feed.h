@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_FEED_H
 #define LIBDENG2_FEED_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 
 #include <list>
 
@@ -44,12 +44,12 @@ namespace de
      *
      * @ingroup fs
      */
-    class LIBDENG2_API Feed
+    class DENG2_PUBLIC Feed
     {
     public:
         /// Tried to create a new file that already exists in the native file
         /// system. @ingroup errors
-        DEFINE_ERROR(AlreadyExistsError);
+        DENG2_ERROR(AlreadyExistsError);
         
     public:
         Feed();

@@ -31,12 +31,12 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API RefValue : public Value, 
-                                  OBSERVES(Variable, Deletion)
+    class DENG2_PUBLIC RefValue : public Value, 
+                                  DENG2_OBSERVES(Variable, Deletion)
     {
     public:
         /// Attempt to dereference a NULL variable. @ingroup errors
-        DEFINE_ERROR(NullError);
+        DENG2_ERROR(NullError);
         
     public:
         /**

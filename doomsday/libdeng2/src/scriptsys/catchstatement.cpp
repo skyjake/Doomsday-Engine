@@ -59,7 +59,7 @@ bool CatchStatement::matches(const Error& err) const
     }
     
     const NameExpression* name = dynamic_cast<const NameExpression*>(&_args->at(0));
-    Q_ASSERT(name != NULL);
+    DENG2_ASSERT(name != NULL);
     
     return (name->identifier() == "Error" ||   // Generic catch-all.
             name->identifier() == err.name() || // Exact match.

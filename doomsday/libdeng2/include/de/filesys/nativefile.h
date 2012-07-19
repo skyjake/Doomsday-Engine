@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_NATIVEFILE_H
 #define LIBDENG2_NATIVEFILE_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../File"
 #include "../String"
 
@@ -33,14 +33,14 @@ namespace de
      *
      * @ingroup fs
      */
-    class LIBDENG2_API NativeFile : public File
+    class DENG2_PUBLIC NativeFile : public File
     {
     public:
         /// Input from the native file failed. @ingroup errors
-        DEFINE_SUB_ERROR(IOError, InputError);
+        DENG2_SUB_ERROR(IOError, InputError);
         
         /// Output to the native file failed. @ingroup errors
-        DEFINE_SUB_ERROR(IOError, OutputError);
+        DENG2_SUB_ERROR(IOError, OutputError);
         
     public:
         /**

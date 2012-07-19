@@ -46,7 +46,7 @@ ArchiveFeed::~ArchiveFeed()
         // If modified, the archive is written.
         if(_archive->modified())
         {
-            LOG_MESSAGE("Updating archive in ") << _file.name();
+            LOG_MSG("Updating archive in ") << _file.name();
 
             // Make sure we have either a compressed or uncompressed version of
             // each entry in memory before destroying the source file.

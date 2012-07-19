@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_WAITABLE_H
 #define LIBDENG2_WAITABLE_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../Time"
 
 #include <QSemaphore>
@@ -32,14 +32,14 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API Waitable
+    class DENG2_PUBLIC Waitable
     {
     public:
         /// wait() failed due to timing out before the resource is secured. @ingroup errors
-        DEFINE_ERROR(TimeOutError);
+        DENG2_ERROR(TimeOutError);
         
         /// wait() or waitTime() failed to secure the resource. @ingroup errors
-        DEFINE_ERROR(WaitError);
+        DENG2_ERROR(WaitError);
     
     public:
         Waitable(duint initialValue = 0);

@@ -1,7 +1,11 @@
 HEADERS += \
+    include/de/AccessorValue \
     include/de/Archive \
+    include/de/ArrayValue \
     include/de/Audience \
+    include/de/BigEndianByteOrder \
     include/de/Block \
+    include/de/BlockValue \
     include/de/ByteOrder \
     include/de/ByteRefArray \
     include/de/ByteSubArray \
@@ -16,6 +20,7 @@ HEADERS += \
     include/de/ISerializable \
     include/de/IWritable \
     include/de/Info \
+    include/de/LittleEndianByteOrder \
     include/de/Lockable \
     include/de/NoneValue \
     include/de/NumberValue \
@@ -31,8 +36,12 @@ HEADERS += \
     include/de/Waitable \
     include/de/WaitableFIFO \
     include/de/Writer \
+    include/de/Zeroed \
+    include/de/data/accessorvalue.h \
     include/de/data/archive.h \
+    include/de/data/arrayvalue.h \
     include/de/data/block.h \
+    include/de/data/blockvalue.h \
     include/de/data/byteorder.h \
     include/de/data/byterefarray.h \
     include/de/data/bytesubarray.h \
@@ -63,10 +72,13 @@ HEADERS += \
     include/de/data/variable.h \
     include/de/data/waitable.h \
     include/de/data/waitablefifo.h \
-    include/de/data/writer.h
+    include/de/data/writer.h \
+    include/de/data/zeroed.h
 
 SOURCES += \
+    src/data/accessorvalue.cpp \
     src/data/archive.cpp \
+    src/data/arrayvalue.cpp \
     src/data/block.cpp \
     src/data/byteorder.cpp \
     src/data/byterefarray.cpp \

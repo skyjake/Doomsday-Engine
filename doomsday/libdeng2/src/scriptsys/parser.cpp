@@ -103,7 +103,7 @@ void Parser::parseCompound(Compound& compound)
 
 void Parser::parseStatement(Compound& compound)
 {
-    Q_ASSERT(!_statementRange.empty());
+    DENG2_ASSERT(!_statementRange.empty());
     
     const Token& firstToken = _statementRange.firstToken();
 

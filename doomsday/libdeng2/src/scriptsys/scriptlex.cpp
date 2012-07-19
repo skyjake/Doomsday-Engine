@@ -399,7 +399,7 @@ bool ScriptLex::isKeyword(const Token& token)
 
 String ScriptLex::unescapeStringToken(const Token& token)
 {
-    Q_ASSERT(token.type() == Token::LITERAL_STRING_APOSTROPHE ||
+    DENG2_ASSERT(token.type() == Token::LITERAL_STRING_APOSTROPHE ||
              token.type() == Token::LITERAL_STRING_QUOTED ||
              token.type() == Token::LITERAL_STRING_LONG);
     
@@ -413,7 +413,7 @@ String ScriptLex::unescapeStringToken(const Token& token)
     // A long string?
     if(token.type() == Token::LITERAL_STRING_LONG)
     {
-        Q_ASSERT(token.size() >= 6);
+        DENG2_ASSERT(token.size() >= 6);
         begin += 3;
         end -= 3;
     }
@@ -495,7 +495,7 @@ String ScriptLex::unescapeStringToken(const Token& token)
             os << *ptr; 
         }
     }
-    Q_ASSERT(!escaped);
+    DENG2_ASSERT(!escaped);
     
     return result;
 }

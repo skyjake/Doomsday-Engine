@@ -28,13 +28,13 @@ using namespace de;
 LibraryFile::LibraryFile(File* source)
     : File(source->name()), _library(0)
 {
-    Q_ASSERT(source != 0);
+    DENG2_ASSERT(source != 0);
     setSource(source); // takes ownership
 }
 
 LibraryFile::~LibraryFile()
 {
-    FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion.clear();
     
     deindex();    

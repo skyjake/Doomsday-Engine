@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_FOLDER_H
 #define LIBDENG2_FOLDER_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../File"
 
 #include <map>
@@ -38,17 +38,17 @@ namespace de
      *
      * @ingroup fs
      */
-    class LIBDENG2_API Folder : public File
+    class DENG2_PUBLIC Folder : public File
     {
     public:
         /// A folder cannot contain two or more files with the same name. @ingroup errors
-        DEFINE_ERROR(DuplicateNameError);
+        DENG2_ERROR(DuplicateNameError);
         
         /// File path did not point to a file. @ingroup errors
-        DEFINE_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError);
         
         /// Creating a new file was unsuccessful. @ingroup errors
-        DEFINE_ERROR(NewFileError);
+        DENG2_ERROR(NewFileError);
         
         /**
          * Accesses the properties of a Folder.
@@ -149,7 +149,7 @@ namespace de
          */
         template <typename Type>
         Type& add(Type* fileObject) {
-            Q_ASSERT(fileObject != 0);
+            DENG2_ASSERT(fileObject != 0);
             add(static_cast<File*>(fileObject));
             return *fileObject;
         }
@@ -174,7 +174,7 @@ namespace de
 
         template <typename Type>
         Type* remove(Type* fileObject) {
-            Q_ASSERT(fileObject != 0);
+            DENG2_ASSERT(fileObject != 0);
             remove(*static_cast<File*>(fileObject));
             return fileObject;
         }

@@ -74,6 +74,11 @@
 #endif
 
 /**
+ * Macro for determining the name of a type (using RTTI).
+ */
+#define DENG2_TYPE_NAME(x) (typeid(x).name())
+
+/**
  * Macro for defining an opaque type in the C wrapper API.
  */
 #define DENG2_OPAQUE(Name) \
@@ -91,12 +96,23 @@
 /**
  * Macro for iterating through an STL container.
  *
- * @param Iter          Name of the iterator variable. Scope is limited to the for loop.
+ * @param Iter          Name/declaration of the iterator variable.
  * @param ContainerRef  Container.
- * @param IterClass     Iterator type.
  */
-#define DENG2_FOR_EACH(Iter, ContainerRef, IterClass) \
-    for(IterClass Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+#define DENG2_FOR_EACH(Iter, ContainerRef) \
+    for(Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+
+#define DENG2_FOR_EACH_i(ContainerRef, IterClass) \
+    IterClass i; DENG2_FOR_EACH(i, (ContainerRef))
+
+/**
+ * Macro for iterating through an STL container in reverse.
+ *
+ * @param Var           Name/declaration of the iterator variable.
+ * @param ContainerRef  Container.
+ */
+#define DENG2_FOR_EACH_REVERSE(Var, ContainerRef) \
+    for(Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {

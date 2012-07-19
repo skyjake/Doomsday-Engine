@@ -19,6 +19,9 @@
 
 #include "de/App"
 #include "de/Log"
+#include "de/ArrayValue"
+#include "de/Module"
+#include "de/math.h"
 #include <QDebug>
 
 using namespace de;
@@ -47,12 +50,104 @@ bool App::notify(QObject* receiver, QEvent* event)
     return false;
 }
 
-CommandLine& App::commandLine()
+App& App::app()
 {
-    return _cmdLine;
+    return *DENG2_APP;
 }
 
-String App::executablePath() const
+CommandLine& App::commandLine()
 {
-    return _appPath;
+    return DENG2_APP->_cmdLine;
+}
+
+String App::executablePath()
+{
+    return DENG2_APP->_appPath;
+}
+
+static int sortFilesByModifiedAt(const File* a, const File* b)
+{
+    return cmp(a->status().modifiedAt, b->status().modifiedAt);
+}
+
+Record& App::importModule(const String& name, const String& fromPath)
+{
+    LOG_AS("App::importModule");
+
+    App& self = app();
+
+    // There are some special modules.
+    if(name == "Config")
+    {
+        return self.config().names();
+    }
+
+    // Maybe we already have this module?
+    Modules::iterator found = self._modules.find(name);
+    if(found != self._modules.end())
+    {
+        return found->second->names();
+    }
+
+    /// @todo  Move this path searching logic to FS.
+
+    // Fall back on the default if the libdeng2 module hasn't been imported yet.
+    std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
+    defaultImportPath->add("");
+    defaultImportPath->add("*"); // Newest module with a matching name.
+    ArrayValue* importPath = defaultImportPath.get();
+    try
+    {
+        importPath = &config().names()["deng.importPath"].value<ArrayValue>();
+    }
+    catch(const Record::NotFoundError&)
+    {}
+
+    // Search the import path (array of paths).
+    DENG2_FOR_EACH_i(importPath->elements(), ArrayValue::Elements::const_iterator)
+    {
+        String dir = (*i)->asText();
+        String p;
+        FS::FoundFiles matching;
+        File* found = 0;
+        if(dir.empty())
+        {
+            if(!fromPath.empty())
+            {
+                // Try the local folder.
+                p = fromPath.fileNamePath() / name;
+            }
+            else
+            {
+                continue;
+            }
+        }
+        else if(dir == "*")
+        {
+            fileSystem().findAll(name + ".de", matching);
+            if(matching.empty())
+            {
+                continue;
+            }
+            matching.sort(sortFilesByModifiedAt);
+            found = matching.back();
+            LOG_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size()) << " candidates.";
+        }
+        else
+        {
+            p = dir / name;
+        }
+        if(!found)
+        {
+            found = fileRoot().tryLocateFile(p + ".de");
+        }
+        if(found)
+        {
+            Module* module = new Module(*found);
+            self._modules[name] = module;
+            return module->names();
+        }
+    }
+
+    throw NotFoundError("App::importModule", "Cannot find module '" + name + "'");
 }

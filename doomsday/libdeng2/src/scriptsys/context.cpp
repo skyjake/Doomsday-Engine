@@ -29,7 +29,7 @@ Context::Context(Type type, Process* owner, Record* globals)
     if(!_names)
     {
         // Create a private empty namespace.
-        Q_ASSERT(_type != GLOBAL_NAMESPACE);
+        DENG2_ASSERT(_type != GLOBAL_NAMESPACE);
         _names = new Record();
         _ownsNamespace = true;
     }
@@ -164,19 +164,19 @@ void Context::setCurrent(const Statement* statement)
     }
     else
     {
-        Q_ASSERT(statement == NULL);
+        DENG2_ASSERT(statement == NULL);
     }
 }
 
 Value* Context::iterationValue()
 {
-    Q_ASSERT(_controlFlow.size());
+    DENG2_ASSERT(_controlFlow.size());
     return _controlFlow.back().iteration;
 }
 
 void Context::setIterationValue(Value* value)
 {
-    Q_ASSERT(_controlFlow.size());
+    DENG2_ASSERT(_controlFlow.size());
     
     ControlFlow& fl = flow();
     if(fl.iteration)
@@ -188,7 +188,7 @@ void Context::setIterationValue(Value* value)
 
 void Context::popFlow()
 {
-    Q_ASSERT(!_controlFlow.empty());
+    DENG2_ASSERT(!_controlFlow.empty());
     delete flow().iteration;
     _controlFlow.pop_back();
 }

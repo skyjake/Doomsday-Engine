@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_FS_H
 #define LIBDENG2_FS_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../Folder"
 
 #include <map>
@@ -61,18 +61,18 @@ namespace de
      *
      * @ingroup fs
      */
-    class LIBDENG2_API FS
+    class DENG2_PUBLIC FS
     {
     public:
         /// No index is found for the specified type. @ingroup errors
-        DEFINE_ERROR(UnknownTypeError);
+        DENG2_ERROR(UnknownTypeError);
         
         /// No files found. @ingroup errors
-        DEFINE_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError);
         
         /// More than one file found and there is not enough information to choose 
         /// between them. @ingroup errors
-        DEFINE_ERROR(AmbiguousError);
+        DENG2_ERROR(AmbiguousError);
         
         typedef std::multimap<String, File*> Index;
         typedef std::pair<Index::iterator, Index::iterator> IndexRange;

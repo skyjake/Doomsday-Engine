@@ -372,14 +372,14 @@ Archive::~Archive()
     clear();
 }
 
-void Archive::cache(bool detachFromSource)
+void Archive::cache(CacheAttachment attach)
 {
     if(!_source)
     {
         // Nothing to read from.
         return;
-    }    
-    FOR_EACH(i, _index, Index::iterator)
+    }
+    DENG2_FOR_EACH_i(_index, Index::iterator)
     {
         Entry& entry = i->second;
         if(!entry.data && !entry.compressedData)
@@ -387,7 +387,7 @@ void Archive::cache(bool detachFromSource)
             entry.compressedData = new Block(*_source, entry.offset, entry.sizeInArchive);
         }
     }
-    if(detachFromSource)
+    if(attach == DetachFromSource)
     {
         _source = 0;
     }
@@ -403,7 +403,7 @@ void Archive::listFiles(Names& names, const String& folder) const
     names.clear();
     
     String prefix = folder.empty()? "" : folder / "";
-    FOR_EACH(i, _index, Index::const_iterator)
+    DENG2_FOR_EACH_i(_index, Index::const_iterator)
     {
         if(i->first.beginsWith(prefix))
         {
@@ -422,7 +422,7 @@ void Archive::listFolders(Names& names, const String& folder) const
     names.clear();
     
     String prefix = folder.empty()? "" : folder / "";
-    FOR_EACH(i, _index, Index::const_iterator)
+    DENG2_FOR_EACH_i(_index, Index::const_iterator)
     {
         if(i->first.beginsWith(prefix))
         {
@@ -522,7 +522,7 @@ void Archive::read(const String& path, IBlock& uncompressedData) const
         }
         else
         {
-            Q_ASSERT(_source != NULL);
+            DENG2_ASSERT(_source != NULL);
             uncompressedData.copyFrom(*_source, entry.offset, entry.size);
         }
     }
@@ -534,7 +534,7 @@ void Archive::read(const String& path, IBlock& uncompressedData) const
         // Take a copy of the compressed data for zlib.
         if(!entry.compressedData)
         {
-            Q_ASSERT(_source != NULL);
+            DENG2_ASSERT(_source != NULL);
             entry.compressedData = new Block(*_source, entry.offset, entry.sizeInArchive);
         }
 
@@ -623,7 +623,8 @@ void Archive::operator >> (Writer& to) const
     Writer writer(to, littleEndianByteOrder);
     
     // First write the local headers.
-    FOR_EACH(i, _index, Index::const_iterator)
+    Index::const_iterator i;
+    DENG2_FOR_EACH(i, _index)
     {
         Entry& entry = const_cast<Entry&>(i->second);
         updateEntry(entry);
@@ -662,7 +663,7 @@ void Archive::operator >> (Writer& to) const
         }
         else 
         {
-            Q_ASSERT(entry.data != NULL);
+            DENG2_ASSERT(entry.data != NULL);
 
             // Let's try and compress.
             Block archived(Block::Size(REQUIRED_DEFLATE_PERCENTAGE * entry.data->size()));

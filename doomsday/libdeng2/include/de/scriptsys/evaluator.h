@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_EVALUATOR_H
 #define LIBDENG2_EVALUATOR_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../NoneValue"
 
 #include <vector>
@@ -39,11 +39,11 @@ namespace de
      *
      * @ingroup script
      */
-    class LIBDENG2_API Evaluator
+    class DENG2_PUBLIC Evaluator
     {
     public:
         /// Result is of wrong type. @ingroup errors
-        DEFINE_ERROR(ResultTypeError);
+        DENG2_ERROR(ResultTypeError);
         
         typedef std::list<Record*> Namespaces;
     

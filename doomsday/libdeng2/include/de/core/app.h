@@ -22,6 +22,9 @@
 
 #include "../libdeng2.h"
 #include "../CommandLine"
+#include "../FS"
+#include "../Module"
+#include "../Config"
 #include <QApplication>
 
 /**
@@ -40,19 +43,55 @@ namespace de
         Q_OBJECT
 
     public:
+        /// The object or resource that was being looked for was not found. @ingroup errors
+        DENG2_ERROR(NotFoundError);
+
+    public:
         App(int& argc, char** argv, bool useGUI);
 
         bool notify(QObject* receiver, QEvent* event);
 
+        static App& app();
+
         /**
          * Returns the command line used to start the application.
          */
-        CommandLine& commandLine();
+        static CommandLine& commandLine();
 
         /**
          * Returns the absolute path of the application executable.
          */
-        de::String executablePath() const;
+        static String executablePath();
+
+        /**
+         * Returns the application's file system.
+         */
+        static FS& fileSystem();
+
+        /**
+         * Returns the root folder of the file system.
+         */
+        static Folder& fileRoot();
+
+        /**
+         * Returns the /home folder.
+         */
+        static Folder& homeFolder();
+
+        /**
+         * Returns the configuration.
+         */
+        static Config& config();
+
+        /**
+         * Imports a script module that is located on the import path.
+         *
+         * @param name      Name of the module.
+         * @param fromPath  Absolute path of the script doing the importing.
+         *
+         * @return  The imported module.
+         */
+        static Record& importModule(const String& name, const String& fromPath = "");
 
     signals:
         void uncaughtException(QString message);
@@ -61,7 +100,17 @@ namespace de
         CommandLine _cmdLine;
 
         /// Path of the application executable.
-        de::String _appPath;
+        String _appPath;
+
+        /// The file system.
+        FS* _fs;
+
+        /// The configuration.
+        Config* _config;
+
+        /// Modules.
+        typedef std::map<String, Module*> Modules;
+        Modules _modules;
     };
 }
 

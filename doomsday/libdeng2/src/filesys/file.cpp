@@ -42,7 +42,7 @@ File::File(const String& fileName)
 
 File::~File()
 {
-    FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
 
     flush();
     if(_source != this) 
@@ -74,7 +74,7 @@ void File::clear()
 
 FS& File::fileSystem()
 {
-    return App::fileSystem();
+    return DENG2_APP->fileSystem();
 }
 
 void File::setOriginFeed(Feed* feed)

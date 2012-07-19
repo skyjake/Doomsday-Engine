@@ -34,7 +34,7 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API NumberValue : public Value
+    class DENG2_PUBLIC NumberValue : public Value
     {
     public:
         /// Truth values for logical operations. They are treated as

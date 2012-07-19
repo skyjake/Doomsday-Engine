@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_COUNTED_H
 #define LIBDENG2_COUNTED_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 
 namespace de
 {
@@ -33,9 +33,15 @@ namespace de
     class Counted
     {
     public:
+        /**
+         * New counted objects have a reference count of 1 -- it is assumed
+         * that whoever constructs the object holds on to one reference.
+         */
         Counted();
 
-        /// When a counted object is destroyed, its reference counter must be zero.
+        /**
+         * When a counted object is destroyed, its reference counter must be zero.
+         */
         virtual ~Counted();
         
         /**

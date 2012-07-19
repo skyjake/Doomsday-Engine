@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_ASSIGNSTATEMENT_H
 #define LIBDENG2_ASSIGNSTATEMENT_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../Statement"
 #include "../ArrayExpression"
 #include <string>
@@ -37,7 +37,7 @@ namespace de
     {
     public:
         /// Trying to assign into something other than a reference (RefValue). @ingroup errors
-        DEFINE_ERROR(LeftValueError);
+        DENG2_ERROR(LeftValueError);
         
         typedef std::vector<Expression*> Indices;
         

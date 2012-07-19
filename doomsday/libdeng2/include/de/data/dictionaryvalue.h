@@ -31,11 +31,11 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API DictionaryValue : public Value
+    class DENG2_PUBLIC DictionaryValue : public Value
     {
     public:
         /// An invalid key was used. @ingroup errors
-        DEFINE_ERROR(KeyError);
+        DENG2_ERROR(KeyError);
         
         struct ValueRef {
             ValueRef(const Value* v) : value(v) {}

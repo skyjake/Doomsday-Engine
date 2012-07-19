@@ -36,7 +36,7 @@ Folder::Folder(const String& name) : File(name)
 
 Folder::~Folder()
 {
-    FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion.clear();
     
     deindex();
@@ -208,7 +208,7 @@ bool Folder::has(const String& name) const
 
 File& Folder::add(File* file)
 {
-    Q_ASSERT(file != 0);
+    DENG2_ASSERT(file != 0);
     if(has(file->name()))
     {
         /// @throw DuplicateNameError All file names in a folder must be unique.

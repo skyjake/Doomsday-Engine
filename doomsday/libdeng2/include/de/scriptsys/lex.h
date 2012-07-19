@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_LEX_H
 #define LIBDENG2_LEX_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../String"
 
 #include <QFlags>
@@ -37,7 +37,7 @@ namespace de
     {
     public:
         /// Attempt to read characters when there are non left. @ingroup errors
-        DEFINE_ERROR(OutOfInputError);
+        DENG2_ERROR(OutOfInputError);
 
         enum ModeFlag
         {

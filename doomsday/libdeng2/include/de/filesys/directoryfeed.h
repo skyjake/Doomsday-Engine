@@ -33,23 +33,23 @@ namespace de
      *
      * @ingroup fs
      */
-    class LIBDENG2_API DirectoryFeed : public Feed
+    class DENG2_PUBLIC DirectoryFeed : public Feed
     {
     public:
         /// The native directory was not found. @ingroup errors
-        DEFINE_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError);
         
         /// Failed attempt to find out the status of a file. @ingroup errors
-        DEFINE_ERROR(StatusError);
+        DENG2_ERROR(StatusError);
         
         /// An error occurred changing the working directory. @ingroup errors
-        DEFINE_ERROR(WorkingDirError);
+        DENG2_ERROR(WorkingDirError);
         
         /// Creating a directory failed. @ingroup errors
-        DEFINE_ERROR(CreateDirError);
+        DENG2_ERROR(CreateDirError);
         
         /// Failed to remove a file. @ingroup errors
-        DEFINE_ERROR(RemoveError);
+        DENG2_ERROR(RemoveError);
         
         enum Flag
         {

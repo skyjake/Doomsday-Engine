@@ -49,7 +49,7 @@ Variable::Variable(const Variable& other)
 
 Variable::~Variable()
 {
-    FOR_AUDIENCE(Deletion, i) i->variableBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE(Deletion, i) i->variableBeingDeleted(*this);
     delete _value;
 }
 
@@ -67,7 +67,7 @@ void Variable::set(Value* v)
     delete _value;
     _value = val.release();
     
-    FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
+    DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
 }
 
 void Variable::set(const Value& v)
@@ -77,18 +77,18 @@ void Variable::set(const Value& v)
     delete _value;
     _value = v.duplicate();
 
-    FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
+    DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
 }
 
 const Value& Variable::value() const
 {
-    Q_ASSERT(_value != 0);
+    DENG2_ASSERT(_value != 0);
     return *_value;
 }
 
 Value& Variable::value()
 {
-    Q_ASSERT(_value != 0);
+    DENG2_ASSERT(_value != 0);
     return *_value;
 }
 

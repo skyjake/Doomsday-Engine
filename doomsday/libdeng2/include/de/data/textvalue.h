@@ -32,11 +32,11 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API TextValue : public Value
+    class DENG2_PUBLIC TextValue : public Value
     {
     public:
         /// An error occurs in string pattern replacements. @ingroup errors
-        DEFINE_ERROR(IllegalPatternError);
+        DENG2_ERROR(IllegalPatternError);
         
     public:
         TextValue(const String& initialValue = "");

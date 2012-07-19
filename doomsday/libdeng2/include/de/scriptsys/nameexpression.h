@@ -37,13 +37,13 @@ namespace de
     {
     public:
         /// Identifier is not text. @ingroup errors
-        DEFINE_ERROR(IdentifierError);
+        DENG2_ERROR(IdentifierError);
 
         /// Variable already exists when it was required not to. @ingroup errors
-        DEFINE_ERROR(AlreadyExistsError);
+        DENG2_ERROR(AlreadyExistsError);
 
         /// The identifier does not specify an existing variable. @ingroup errors
-        DEFINE_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError);
 
     public:
         NameExpression();

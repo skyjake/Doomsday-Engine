@@ -35,12 +35,12 @@ namespace de
      *
      * @ingroup fs
      */
-    class LIBDENG2_API LibraryFile : public File
+    class DENG2_PUBLIC LibraryFile : public File
     {
     public:
         /// Attempted to load a shared library from a source file with unsupported type.
         /// @ingroup errors
-        DEFINE_ERROR(UnsupportedSourceError);
+        DENG2_ERROR(UnsupportedSourceError);
         
     public:
         /**

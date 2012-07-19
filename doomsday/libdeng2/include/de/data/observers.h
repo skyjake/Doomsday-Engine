@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_OBSERVERS_H
 #define LIBDENG2_OBSERVERS_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 
 #include <set>
 
@@ -32,7 +32,7 @@
  * @param Method  The pure virtual method that the observer has to implement. 
  *                The @c virtual keyword and <code>=0</code> are automatically included.
  */
-#define DEFINE_AUDIENCE(Name, Method) \
+#define DENG2_DEFINE_AUDIENCE(Name, Method) \
 class I##Name##Observer { \
 public: \
     virtual ~I##Name##Observer() {} \
@@ -48,7 +48,7 @@ Name##Audience audienceFor##Name;
  * @param Type      Name of the type where the audience is defined.
  * @param Audience  Audience name.
  */
-#define OBSERVES(Type, Audience) public Type::I##Audience##Observer
+#define DENG2_OBSERVES(Type, Audience) public Type::I##Audience##Observer
 
 /**
  * Macro for looping through the audience members.
@@ -56,7 +56,7 @@ Name##Audience audienceFor##Name;
  * @param Name  Name of the audience.
  * @param Var   Variable used in the loop.
  */
-#define FOR_AUDIENCE(Name, Var) for(Name##Audience::Loop Var(audienceFor##Name); !Var.done(); ++Var)
+#define DENG2_FOR_AUDIENCE(Name, Var) for(Name##Audience::Loop Var(audienceFor##Name); !Var.done(); ++Var)
 
 /**
  * Macro for looping through all observers. @note The @a Audience type needs to be defined
@@ -66,7 +66,7 @@ Name##Audience audienceFor##Name;
  * @param Var      Variable used in the loop.
  * @param Name     Name of the observer set.
  */
-#define FOR_EACH_OBSERVER(SetName, Var, Name) for(SetName::Loop Var(Name); !Var.done(); ++Var)
+#define DENG2_FOR_EACH_OBSERVER(SetName, Var, Name) for(SetName::Loop Var(Name); !Var.done(); ++Var)
 
 namespace de
 {

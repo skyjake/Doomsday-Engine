@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_OPERATOREXPRESSION_H
 #define LIBDENG2_OPERATOREXPRESSION_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../Operator"
 #include "../Expression"
 
@@ -41,20 +41,20 @@ namespace de
     public:
         /// A unary operation is attempted even though the selected operation cannot
         /// be unary. @ingroup errors
-        DEFINE_ERROR(NonUnaryError);
+        DENG2_ERROR(NonUnaryError);
         
         /// A binary operation is attempted even though the selected operation cannot be binary.
         /// @ingroup errors
-        DEFINE_ERROR(NonBinaryError);
+        DENG2_ERROR(NonBinaryError);
         
         /// Attempt to assign to a value that cannot be assigned to. @ingroup errors
-        DEFINE_ERROR(NotAssignableError);
+        DENG2_ERROR(NotAssignableError);
         
         /// The MEMBER operator receives a non-Record scope on the left side. @ingroup errors
-        DEFINE_ERROR(ScopeError);
+        DENG2_ERROR(ScopeError);
         
         /// The SLICE operator has invalid arguments. @ingroup errors
-        DEFINE_ERROR(SliceError);
+        DENG2_ERROR(SliceError);
         
     public:
         OperatorExpression();

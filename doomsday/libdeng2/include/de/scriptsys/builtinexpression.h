@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_BUILTINEXPRESSION_H
 #define LIBDENG2_BUILTINEXPRESSION_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../Expression"
 #include "../String"
 
@@ -35,7 +35,7 @@ namespace de
     {
     public:
         /// A wrong number of arguments is given to one of the built-in methods. @ingroup errors
-        DEFINE_ERROR(WrongArgumentsError);
+        DENG2_ERROR(WrongArgumentsError);
         
         /// Type of the built-in expression.
         /// @note  These are serialied as is, so do not change the existing values.

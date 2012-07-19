@@ -50,7 +50,7 @@ void PrintStatement::execute(Context& context) const
     QTextStream os(&msg);
     bool isFirst = true;
             
-    FOR_EACH(i, value.elements(), ArrayValue::Elements::const_iterator)
+    DENG2_FOR_EACH_i(value.elements(), ArrayValue::Elements::const_iterator)
     {
        if(!isFirst)
        {
@@ -63,7 +63,7 @@ void PrintStatement::execute(Context& context) const
        os << (*i)->asText();
     }
     
-    LOG_MESSAGE("") << msg;
+    LOG_MSG("") << msg;
     
     context.proceed();
 }

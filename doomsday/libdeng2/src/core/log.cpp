@@ -149,7 +149,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
     {
         Args::const_iterator arg = _args.begin();
 
-        DENG2_FOR_EACH(i, _format, String::const_iterator)
+        DENG2_FOR_EACH_i(_format, String::const_iterator)
         {
             if(*i == '%')
             {

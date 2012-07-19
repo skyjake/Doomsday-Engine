@@ -174,11 +174,11 @@ void RefValue::operator >> (Writer& to) const
 void RefValue::operator << (Reader& /*from*/)
 {
     // Should never happen.
-    Q_ASSERT(false);
+    DENG2_ASSERT(false);
 }
 
 void RefValue::variableBeingDeleted(Variable& variable)
 {
-    Q_ASSERT(_variable == &variable);
+    DENG2_ASSERT(_variable == &variable);
     _variable = 0;
 }

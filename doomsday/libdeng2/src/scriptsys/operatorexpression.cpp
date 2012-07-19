@@ -230,7 +230,7 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
             
             // Cleanup.
             delete leftValue;
-            Q_ASSERT(rightValue == NULL);
+            DENG2_ASSERT(rightValue == NULL);
 
             // The MEMBER operator does not evaluate to any result. 
             // Whatever is on the right side will be the result.
@@ -305,10 +305,10 @@ void OperatorExpression::operator << (Reader& from)
 
 Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) const
 {
-    Q_ASSERT(rightValue->size() >= 2);
+    DENG2_ASSERT(rightValue->size() >= 2);
 
     const ArrayValue* args = dynamic_cast<ArrayValue*>(rightValue);
-    Q_ASSERT(args != NULL); // Parser makes sure.
+    DENG2_ASSERT(args != NULL); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
     std::auto_ptr<ArrayValue> slice(new ArrayValue());

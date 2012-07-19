@@ -35,17 +35,17 @@ namespace de
     public:
         /// Base error for syntax errors at the level of lexical analysis (e.g., 
         /// a non-terminated string constant). @ingroup errors
-        DEFINE_ERROR(SyntaxError);
+        DENG2_ERROR(SyntaxError);
         
         /// A unexpected character is encountered. @ingroup errors
-        DEFINE_SUB_ERROR(SyntaxError, UnexpectedCharacterError);
+        DENG2_SUB_ERROR(SyntaxError, UnexpectedCharacterError);
         
         /// An unterminated string token is encountered. @ingroup errors
-        DEFINE_SUB_ERROR(SyntaxError, UnterminatedStringError);
+        DENG2_SUB_ERROR(SyntaxError, UnterminatedStringError);
         
         /// The bracket level goes below zero, i.e., when more brackets are closed 
         /// than opened, or when the input ends before all brackets are closed. @ingroup errors
-        DEFINE_SUB_ERROR(SyntaxError, MismatchedBracketError);
+        DENG2_SUB_ERROR(SyntaxError, MismatchedBracketError);
         
         // Keywords.
         static const String AND;

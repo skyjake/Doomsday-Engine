@@ -29,7 +29,7 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API NoneValue : public Value
+    class DENG2_PUBLIC NoneValue : public Value
     {
     public:
         NoneValue();

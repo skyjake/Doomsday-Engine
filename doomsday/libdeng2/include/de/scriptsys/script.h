@@ -44,7 +44,7 @@ namespace de
      *
      * @ingroup script
      */
-    class LIBDENG2_API Script
+    class DENG2_PUBLIC Script
     {
     public:
         /// Constructs an empty script with no statements.

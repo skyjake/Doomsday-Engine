@@ -39,7 +39,8 @@ Function::Function(const Arguments& args, const Defaults& defaults)
 Function::~Function()
 {
     // Delete the default argument values.
-    FOR_EACH(i, _defaults, Defaults::iterator)
+    Defaults::iterator i;
+    DENG2_FOR_EACH(i, _defaults)
     {
         delete i->second;
     }
@@ -55,7 +56,8 @@ String Function::asText() const
     String result;
     QTextStream os(&result);
     os << "[Function " << this << " (";
-    FOR_EACH(i, _arguments, Arguments::const_iterator)
+    Arguments::const_iterator i;
+    DENG2_FOR_EACH(i, _arguments)
     {
         if(i != _arguments.begin())
         {
@@ -76,7 +78,7 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
 {
     const DictionaryValue* labeledArgs = dynamic_cast<const DictionaryValue*>(
         args.elements().front());
-    Q_ASSERT(labeledArgs != NULL);
+    DENG2_ASSERT(labeledArgs != NULL);
 
     // First use all the unlabeled arguments.
     Arguments::const_iterator k = _arguments.begin();
@@ -161,7 +163,7 @@ Record* Function::globals() const
 
 bool Function::callNative(Context& /*context*/, const ArgumentValues& args) const
 {
-    Q_ASSERT(args.size() == _arguments.size());
+    DENG2_ASSERT(args.size() == _arguments.size());
     
     // Do non-native function call.
     return false;
@@ -173,7 +175,8 @@ void Function::operator >> (Writer& to) const
     to << duint16(_arguments.size());
 
     // Argument names.
-    FOR_EACH(i, _arguments, Arguments::const_iterator)
+    Arguments::const_iterator i;
+    DENG2_FOR_EACH(i, _arguments)
     {
         to << *i;
     }
@@ -182,9 +185,10 @@ void Function::operator >> (Writer& to) const
     to << duint16(_defaults.size());
     
     // Default values.
-    FOR_EACH(i, _defaults, Defaults::const_iterator)
+    Defaults::const_iterator j;
+    DENG2_FOR_EACH(j, _defaults)
     {
-        to << i->first << *i->second;        
+        to << j->first << *j->second;
     }
     
     // The statements of the function.
@@ -222,6 +226,6 @@ void Function::operator << (Reader& from)
 void Function::recordBeingDeleted(Record& record)
 {
     // The namespace of the record is being deleted.
-    Q_ASSERT(_globals == &record);
+    DENG2_ASSERT(_globals == &record);
     _globals = 0;
 }

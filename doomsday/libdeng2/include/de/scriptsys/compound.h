@@ -21,7 +21,7 @@
 #ifndef LIBDENG2_COMPOUND_H
 #define LIBDENG2_COMPOUND_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../ISerializable"
 
 #include <list>

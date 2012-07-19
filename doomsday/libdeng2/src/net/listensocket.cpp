@@ -32,7 +32,7 @@ void internal::Doorman::run()
 {
     _socket = new internal::TcpServer;
     _socket->listen(QHostAddress::Any, _port);
-    Q_ASSERT(_socket->isListening());
+    DENG2_ASSERT(_socket->isListening());
 
     connect(_socket, SIGNAL(takeIncomingSocketDesc(int)), this, SIGNAL(incomingSocketDesc(int)));
 

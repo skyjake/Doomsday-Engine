@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_PARSER_H
 #define LIBDENG2_PARSER_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../IParser"
 #include "../TokenBuffer"
 #include "../TokenRange"
@@ -56,16 +56,16 @@ namespace de
     public:
         /// A syntax error is detected during the parsing. Note that the Lex classes 
         /// also define syntax errors. @ingroup errors
-        DEFINE_ERROR(SyntaxError);
+        DENG2_ERROR(SyntaxError);
         
         /// A token is encountered where we don't know what to do with it. @ingroup errors
-        DEFINE_SUB_ERROR(SyntaxError, UnexpectedTokenError);
+        DENG2_SUB_ERROR(SyntaxError, UnexpectedTokenError);
         
         /// A token is expected, but nothing was found. @ingroup errors
-        DEFINE_SUB_ERROR(SyntaxError, MissingTokenError);
+        DENG2_SUB_ERROR(SyntaxError, MissingTokenError);
         
         /// A colon is expected but not found. @ingroup errors
-        DEFINE_SUB_ERROR(SyntaxError, MissingColonError);
+        DENG2_SUB_ERROR(SyntaxError, MissingColonError);
         
         // Flags for parsing conditional compounds.
         enum CompoundFlag
@@ -74,7 +74,7 @@ namespace de
             StayAtClosingStatement = 0x2,
             IgnoreExtraBeforeColon = 0x4
         };
-        Q_DECLARE_FLAGS(CompoundFlags, CompoundFlag);
+        Q_DECLARE_FLAGS(CompoundFlags, CompoundFlag)
         
     public:
         Parser();
@@ -153,8 +153,8 @@ namespace de
         
         duint _currentIndent;
     };    
-}
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::CompoundFlags);
+    Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::CompoundFlags)
+}
 
 #endif /* LIBDENG2_PARSER_H */

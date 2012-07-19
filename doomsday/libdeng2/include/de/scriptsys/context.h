@@ -33,11 +33,11 @@ namespace de
      *
      * @ingroup script
      */
-    class LIBDENG2_API Context
+    class DENG2_PUBLIC Context
     {
     public:
         /// Attempting a jump when there is no suitable target (continue or break). @ingroup errors
-        DEFINE_ERROR(JumpError);
+        DENG2_ERROR(JumpError);
         
         enum Type {
             PROCESS,

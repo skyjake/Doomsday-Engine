@@ -42,21 +42,21 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API Record : public ISerializable, public LogEntry::Arg::Base
+    class DENG2_PUBLIC Record : public ISerializable, public LogEntry::Arg::Base
     {
     public:
         /// Unknown variable name was given. @ingroup errors
-        DEFINE_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError)
 
         /// All variables and subrecords in the record must have a name. @ingroup errors
-        DEFINE_ERROR(UnnamedError);
+        DENG2_ERROR(UnnamedError)
         
         typedef std::map<String, Variable*> Members;
         typedef std::map<String, Record*> Subrecords;
         typedef std::pair<String, String> KeyValue;
         typedef std::list<KeyValue> List;
         
-        DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record& record));
+        DENG2_DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record& record))
         
     public:
         Record();
@@ -286,7 +286,7 @@ namespace de
     };
     
     /// Converts the record into a human-readable text representation.
-    LIBDENG2_API QTextStream& operator << (QTextStream& os, const Record& record);
+    DENG2_PUBLIC QTextStream& operator << (QTextStream& os, const Record& record);
 }
 
 #endif /* LIBDENG2_RECORD_H */

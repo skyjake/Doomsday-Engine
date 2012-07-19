@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_TOKENBUFFER_H
 #define LIBDENG2_TOKENBUFFER_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 
 #include <vector>
 
@@ -160,10 +160,10 @@ namespace de
     {  
     public:
         /// Attempt to append characters while no token is being formed. @ingroup errors
-        DEFINE_ERROR(TokenNotStartedError);
+        DENG2_ERROR(TokenNotStartedError);
         
         /// Parameter was out of range. @ingroup errors
-        DEFINE_ERROR(OutOfRangeError);
+        DENG2_ERROR(OutOfRangeError);
         
     public:
         TokenBuffer();

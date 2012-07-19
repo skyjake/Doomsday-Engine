@@ -45,11 +45,11 @@ namespace de
      *
      * @ingroup script
      */
-    class Function : public Counted, public ISerializable, OBSERVES(Record, Deletion)
+    class Function : public Counted, public ISerializable, DENG2_OBSERVES(Record, Deletion)
     {
     public:
         /// An incorrect number of arguments is given in a function call. @ingroup errors
-        DEFINE_ERROR(WrongArgumentsError);
+        DENG2_ERROR(WrongArgumentsError);
 
         typedef std::list<String> Arguments;
         typedef std::map<String, Value*> Defaults;

@@ -56,7 +56,8 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     Variable* variable = 0;
     Record* record = 0;
     
-    FOR_EACH(i, spaces, Evaluator::Namespaces::iterator)
+    Evaluator::Namespaces::iterator i;
+    DENG2_FOR_EACH(i, spaces)
     {
         Record& ns = **i;
         if(ns.hasMember(_identifier))
@@ -112,7 +113,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
             throw NotFoundError("NameExpression::evaluate", 
                 "Cannot delete nonexistent identifier '" + _identifier + "'");
         }
-        Q_ASSERT(foundInNamespace != 0);
+        DENG2_ASSERT(foundInNamespace != 0);
         if(variable)
         {
             delete foundInNamespace->remove(*variable);

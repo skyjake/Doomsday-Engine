@@ -33,17 +33,17 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API RecordValue : public Value, OBSERVES(Record, Deletion)
+    class DENG2_PUBLIC RecordValue : public Value, DENG2_OBSERVES(Record, Deletion)
     {
     public:
         /// Attempt to access the record after it has been deleted. @ingroup errors
-        DEFINE_ERROR(NullError);
+        DENG2_ERROR(NullError);
         
         /// An identifier that does not exist in the record was accessed. @ingroup errors
-        DEFINE_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError);
         
         /// The index used for accessing the record is of the wrong type. @ingroup errors
-        DEFINE_ERROR(IllegalIndexError);
+        DENG2_ERROR(IllegalIndexError);
         
         enum OwnershipFlag
         {

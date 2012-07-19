@@ -53,7 +53,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
 {
     std::auto_ptr<Value> value(evaluator.popResult());
     ArrayValue* args = dynamic_cast<ArrayValue*>(value.get());
-    Q_ASSERT(args != NULL); // must be an array
+    DENG2_ASSERT(args != NULL); // must be an array
     
     switch(_type)
     {
@@ -201,7 +201,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
     }
         
     default:
-        Q_ASSERT(false);
+        DENG2_ASSERT(false);
     }
     return NULL;
 }

@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_ARCHIVE_H
 #define LIBDENG2_ARCHIVE_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../IByteArray"
 #include "../IWritable"
 #include "../String"
@@ -43,34 +43,34 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API Archive : public IWritable
+    class DENG2_PUBLIC Archive : public IWritable
     {
     public:
         /// Base class for format-related errors. @ingroup errors
-        DEFINE_ERROR(FormatError);
+        DENG2_ERROR(FormatError);
         
         /// The central directory of the ZIP archive cannot be located. Maybe it's not 
         /// a ZIP archive after all? @ingroup errors
-        DEFINE_SUB_ERROR(FormatError, MissingCentralDirectoryError);
+        DENG2_SUB_ERROR(FormatError, MissingCentralDirectoryError);
         
         /// The source archive belongs to a multipart archive. @ingroup errors
-        DEFINE_SUB_ERROR(FormatError, MultiPartError);
+        DENG2_SUB_ERROR(FormatError, MultiPartError);
         
         /// An entry in the archive uses a compression algorithm not supported by the
         /// implementation. @ingroup errors
-        DEFINE_SUB_ERROR(FormatError, UnknownCompressionError);
+        DENG2_SUB_ERROR(FormatError, UnknownCompressionError);
         
         /// An entry is encrypted. Decrypting is not supported. @ingroup errors
-        DEFINE_SUB_ERROR(FormatError, EncryptionError);
+        DENG2_SUB_ERROR(FormatError, EncryptionError);
         
         /// The requested entry does not exist in the archive. @ingroup errors
-        DEFINE_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError);
         
         /// There is an error during decompression. @ingroup errors
-        DEFINE_ERROR(InflateError);
+        DENG2_ERROR(InflateError);
         
         /// There is an error during compression. @ingroup errors
-        DEFINE_ERROR(DeflateError);
+        DENG2_ERROR(DeflateError);
         
         typedef std::set<String> Names;
         
@@ -82,7 +82,7 @@ namespace de
         
         /**
          * Constructs a new Archive instance. The content index contained in
-         * @a archive is read during construction.
+         * @a data is read during construction.
          *
          * @param data  Data of the source archive. No copy of the
          *              data is made, so the caller must make sure the
@@ -93,15 +93,20 @@ namespace de
         
         virtual ~Archive();
 
+        enum CacheAttachment {
+            RemainAttachedToSource = 0,
+            DetachFromSource = 1
+        };
+
         /**
          * Loads a copy of the compressed data into memory for all the entries that
          * don't already have uncompressed data stored. 
          *
-         * @param detachFromSource  If @c true, the archive becomes a standalone 
-         *                          archive that no longer needs the source byte
-         *                          array to remain in existence.
+         * @param op  If DetachFromSource, the archive becomes a standalone
+         *            archive that no longer needs the source byte array to
+         *            remain in existence.
          */
-        void cache(bool detachFromSource = true);
+        void cache(CacheAttachment attach = DetachFromSource);
 
         /**
          * Determines whether the archive contains an entry.

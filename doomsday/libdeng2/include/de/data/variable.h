@@ -36,21 +36,21 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API Variable : public ISerializable
+    class DENG2_PUBLIC Variable : public ISerializable
     {
     public:
         /// There was an attempt to change the value of a read-only variable. @ingroup errors
-        DEFINE_ERROR(ReadOnlyError);
+        DENG2_ERROR(ReadOnlyError);
         
         /// An invalid value type was used. The mode flags denied using a value of the
         /// given type with the variable. @ingroup errors
-        DEFINE_ERROR(InvalidError);
+        DENG2_ERROR(InvalidError);
         
         /// Variable name contains invalid characters. @ingroup errors
-        DEFINE_ERROR(NameError);
+        DENG2_ERROR(NameError);
         
         /// Value could not be converted to the attempted type. @ingroup errors
-        DEFINE_ERROR(TypeError);
+        DENG2_ERROR(TypeError);
         
         /** @name Mode Flags */
         //@{
@@ -95,7 +95,7 @@ namespace de
                 AllowDictionary | AllowBlock | AllowFunction | AllowRecord | AllowRef
         };
         //@}
-        Q_DECLARE_FLAGS(Flags, Flag);
+        Q_DECLARE_FLAGS(Flags, Flag)
         
     public:
         /**
@@ -233,7 +233,7 @@ namespace de
          *
          * @param variable  Variable.
          */
-        DEFINE_AUDIENCE(Deletion, void variableBeingDeleted(Variable& variable));
+        DENG2_DEFINE_AUDIENCE(Deletion, void variableBeingDeleted(Variable& variable))
 
         /**
          * The value of the variable has changed.
@@ -241,7 +241,7 @@ namespace de
          * @param variable  Variable.
          * @param newValue  New value of the variable.
          */
-        DEFINE_AUDIENCE(Change, void variableValueChanged(Variable& variable, const Value& newValue));
+        DENG2_DEFINE_AUDIENCE(Change, void variableValueChanged(Variable& variable, const Value& newValue))
 
     private:        
         String _name;
@@ -252,8 +252,8 @@ namespace de
         /// Mode flags.
         Flags _mode;
     };
-}
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(de::Variable::Flags);
+    Q_DECLARE_OPERATORS_FOR_FLAGS(Variable::Flags)
+}
 
 #endif /* LIBDENG2_VARIABLE_H */

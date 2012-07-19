@@ -111,14 +111,15 @@ void Process::stop()
     
     // Clear the context stack, apart from the bottommost context, which 
     // represents the process itself.
-    FOR_EACH_REVERSE(i, _stack, ContextStack::reverse_iterator)
+    ContextStack::reverse_iterator i;
+    DENG2_FOR_EACH_REVERSE(i, _stack)
     {
         if(*i != _stack[0])
         {
             delete *i;
         }
     }
-    Q_ASSERT(!_stack.empty());
+    DENG2_ASSERT(!_stack.empty());
 
     // Erase all but the first context.
     _stack.erase(_stack.begin() + 1, _stack.end());
@@ -228,7 +229,7 @@ bool Process::jumpIntoCatch(const Error& err)
 
 Context& Process::context(duint downDepth)
 {
-    Q_ASSERT(downDepth < depth());
+    DENG2_ASSERT(downDepth < depth());
     return **(_stack.rbegin() + downDepth);
 }
 
@@ -249,7 +250,7 @@ Context* Process::popContext()
 
 void Process::finish(Value* returnValue)
 {
-    Q_ASSERT(depth() >= 1);
+    DENG2_ASSERT(depth() >= 1);
 
     // Move one level downwards in the context stack.
     if(depth() > 1)
@@ -265,7 +266,7 @@ void Process::finish(Value* returnValue)
     }
     else
     {
-        Q_ASSERT(_stack.back()->type() == Context::PROCESS);
+        DENG2_ASSERT(_stack.back()->type() == Context::PROCESS);
         
         // This was the last level.
         _state = STOPPED;
@@ -319,7 +320,8 @@ void Process::namespaces(Namespaces& spaces)
 {
     spaces.clear();
     
-    FOR_EACH_REVERSE(i, _stack, ContextStack::reverse_iterator)
+    ContextStack::reverse_iterator i;
+    DENG2_FOR_EACH_REVERSE(i, _stack)
     {
         Context& context = **i;
         spaces.push_back(&context.names());

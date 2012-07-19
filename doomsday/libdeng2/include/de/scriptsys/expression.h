@@ -42,7 +42,7 @@ namespace de
     {
     public:
         /// Deserialization of an expression failed. @ingroup errors
-        DEFINE_ERROR(DeserializationError);
+        DENG2_ERROR(DeserializationError);
 
         // Flags for evaluating expressions.
         // Note: these are serialized as is, so don't change the existing values.
@@ -91,7 +91,7 @@ namespace de
             /// Variable will be set to read-only mode.
             ReadOnly = 0x200
         };
-        Q_DECLARE_FLAGS(Flags, Flag);
+        Q_DECLARE_FLAGS(Flags, Flag)
 
     public:
         virtual ~Expression();
@@ -145,6 +145,8 @@ namespace de
     private:
         Flags _flags;
     };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(Expression::Flags)
 }
 
 #endif /* LIBDENG2_EXPRESSION_H */

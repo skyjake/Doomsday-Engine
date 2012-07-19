@@ -35,7 +35,7 @@ namespace de
     {
     public:
         /// Deserialization of a statement failed. @ingroup errors
-        DEFINE_ERROR(DeserializationError);
+        DENG2_ERROR(DeserializationError);
         
     public:
         Statement() : _next(0) {}

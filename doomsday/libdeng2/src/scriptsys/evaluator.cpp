@@ -49,8 +49,8 @@ void Evaluator::reset()
 
 Value& Evaluator::evaluate(const Expression* expression)
 {
-    Q_ASSERT(_names == NULL);
-    Q_ASSERT(_stack.empty());
+    DENG2_ASSERT(_names == NULL);
+    DENG2_ASSERT(_stack.empty());
         
     // Begin a new evaluation operation.
     _current = expression;
@@ -71,11 +71,11 @@ Value& Evaluator::evaluate(const Expression* expression)
 
     // During function call evaluation the process's context changes. We should
     // now be back at the level we started from.
-    Q_ASSERT(&process().context() == &_context);
+    DENG2_ASSERT(&process().context() == &_context);
 
     // Exactly one value should remain in the result stack: the result of the
     // evaluated expression.
-    Q_ASSERT(hasResult());
+    DENG2_ASSERT(hasResult());
 
     clearNames();
     _current = NULL;
@@ -128,7 +128,7 @@ void Evaluator::pushResult(Value* value)
 
 Value* Evaluator::popResult()
 {
-    Q_ASSERT(_results.size() > 0);
+    DENG2_ASSERT(_results.size() > 0);
 
     Value* result = _results.back();
     _results.pop_back();

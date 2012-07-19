@@ -51,7 +51,7 @@ Record::Record(const Record& other) : ISerializable(), LogEntry::Arg::Base()
 
 Record::~Record()
 {
-    FOR_AUDIENCE(Deletion, i) i->recordBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE(Deletion, i) i->recordBeingDeleted(*this);
     clear();
 }
 

@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_VALUE_H
 #define LIBDENG2_VALUE_H
 
-#include "../deng.h"
+#include "../libdeng2.h"
 #include "../ISerializable"
 #include "../String"
 
@@ -39,21 +39,21 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API Value : public String::IPatternArg, public ISerializable
+    class DENG2_PUBLIC Value : public String::IPatternArg, public ISerializable
     {
     public:
         /// An illegal operation (i.e., one that is not defined by the Value) was attempted. 
         /// @ingroup errors
-        DEFINE_ERROR(IllegalError);
+        DENG2_ERROR(IllegalError);
         
         /// An illegal conversion was attempted. @ingroup errors
-        DEFINE_SUB_ERROR(IllegalError, ConversionError);
+        DENG2_SUB_ERROR(IllegalError, ConversionError);
         
         /// An illegal arithmetic operation is attempted (e.g., division by text). @ingroup errors
-        DEFINE_SUB_ERROR(IllegalError, ArithmeticError);
+        DENG2_SUB_ERROR(IllegalError, ArithmeticError);
 
         /// Value cannot be serialized. @ingroup errors
-        DEFINE_SUB_ERROR(IllegalError, CannotSerializeError);
+        DENG2_SUB_ERROR(IllegalError, CannotSerializeError);
 
         // Types used by all values:
         typedef ddouble Number;     /**< Numbers are in double-precision. */

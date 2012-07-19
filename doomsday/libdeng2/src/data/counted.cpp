@@ -26,12 +26,12 @@ Counted::Counted() : _refCount(1)
 
 Counted::~Counted()
 {
-    Q_ASSERT(_refCount == 0);
+    DENG2_ASSERT(_refCount == 0);
 }
 
 void Counted::release()
 {
-    Q_ASSERT(_refCount > 0);
+    DENG2_ASSERT(_refCount > 0);
     if(!--_refCount)
     {
         delete this;

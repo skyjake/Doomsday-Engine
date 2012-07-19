@@ -137,7 +137,7 @@ void TokenBuffer::newToken(duint line)
 
 void TokenBuffer::appendChar(QChar c)
 {
-    Q_ASSERT(_forming != 0);
+    DENG2_ASSERT(_forming != 0);
         
     // There is at least one character available in the pool.
     _forming->appendChar(c);
@@ -151,14 +151,14 @@ void TokenBuffer::appendChar(QChar c)
         // The pool is full. Find a new pool and move the token.
         String tok = _forming->str();
         QChar* newBegin = advanceToPoolWithSpace(tok.size());
-        memmove(newBegin, tok.c_str(), tok.size());
+        memmove(newBegin, tok.data(), tok.size() * sizeof(QChar));
         *_forming = Token(newBegin, newBegin + tok.size(), _forming->line());
     }
 }
 
 void TokenBuffer::setType(Token::Type type)
 {
-    Q_ASSERT(_forming != 0);
+    DENG2_ASSERT(_forming != 0);
     _forming->setType(type);
 }
 
