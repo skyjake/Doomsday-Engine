@@ -1,0 +1,39 @@
+# The Doomsday Engine Project
+#
+# Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+
+# Module for printing and numbering sections.
+
+secNum = 0
+subSecNum = 0
+
+def printSection(msg): print "\n" + "=" * 78 + "\nSECTION %i: %s" % [secNum, msg]
+
+def printSubsection(msg): print "\n" + "_" * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
+
+def begin(msg)
+    secNum += 1
+    subSecNum := 0
+    printSection(msg)
+end
+
+def subsection(msg)
+    subSecNum += 1
+    printSubsection(msg)
+end
+
+def throwError()
+    throw 'Thrown from the sections module.'
+end

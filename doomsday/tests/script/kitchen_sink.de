@@ -1,0 +1,641 @@
+# The Doomsday Engine Project
+#
+# Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+ 
+# ================
+# THE KITCHEN SINK
+# ================
+# This script tests *all* features of the Doomsday Script Language.
+# Behold its power and glory.
+
+import sections
+
+# ---------------------------------------------------------------------------
+sections.begin('BASIC EXPRESSIONS')
+
+sections.subsection('Basic types (number, text, array, dictionary).')
+print 5, 5.5, -3.141592657
+print 0x100, 0X123
+print "Hello", 'World'
+print """I can span
+newlines."""
+print [1, 2, 3]
+print [1, [2, 3], 4]
+print {'a': 'b', 1: ['b', {5:6, 6:7}], ['array', 'as', 'key']: 'oh my'}
+
+sections.subsection('Constants: True, False, None, Pi.')
+print True, False, None, Pi
+
+sections.subsection('Built-in functions: len(), dictkeys(), dictvalues().')
+print 'len("abcd") =', len("abcd")
+print 'len([1, 2, 3, 4]) =', len([1, 2, 3, 4])
+print 'len({1:2, 3:5, 8:13}) =', len({1:2, 3:5, 8:13})
+print 'dictkeys({1:2, 3:5, 8:13}) =', dictkeys({1:2, 3:5, 8:13})
+print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
+
+sections.subsection('Built-in functions: Text(), Number().')
+print Text(123), Number("123")
+
+sections.subsection('Built-in functions: serialize() and deserialize().')
+a = [1, 'One', {1:'One'}]
+print 'a =', a
+b = serialize(a)
+print 'serialize(a) =', b
+print 'deserialize(serialize(a)) =', deserialize(b)
+del a, b
+
+# ---------------------------------------------------------------------------
+sections.begin('OPERATOR EXPRESSIONS')
+
+sections.subsection('Operators: +')
+print 'Numbers:', 1 + 1, -.5 + .5
+print 'Larger than 32-bit:', 0xffffffffff + 0xffffffffff
+print 'Text:', 'Hello' + 'World'
+print 'Array:', [1, 2, 3] + ['a', 'b', 'c']
+print 'Dictionary:', {1:2, 3:4} + {'a':'b', 'c':'d'}
+
+sections.subsection('Operators: -')
+print 'Numbers:', 1 - 1, -.5 - .5
+print 'Larger than 32-bit:', 0xffffffffff - 0xffffffffff
+print 'Dictionary:', {'a':'A', 'b':'B'} - 'a'
+
+sections.subsection('Operators: *')
+print 'Numbers:', 1 * 2, 2.5 * 4, (2 + 6) * 45
+print 'Text:', 'Word' * 3, 'Longword' * 3.5
+
+sections.subsection('Operators: /')
+print 'Numbers:', 2 / 2, 10 / 4, 1 / 0
+print 'Path concatenation:', 'folder' / 'filename.ext', 'folder/' / 'filename.ext'
+
+sections.subsection('Operators: %')
+print 'Numbers:', 7 % 3
+print 'String formatting:', \
+    '%s with "%3i" arguments. Hex %x, capital hex %X, float %f, precision %.10f.' % [
+        'Formatted', 2, 240, 240, Pi, Pi]
+print 'More formatting: Width and precision: "%10.5f"' % Pi
+
+sections.subsection('Operators: +=, -=, *=, /=, %=')
+a = 1
+print 'a =', a
+print 'a =', a += 3
+print 'a =', a -= 3
+print 'a =', a *= 100
+print 'a =', a /= 10
+print 'a =', a %= 3
+print 'a =', a
+path = '/some/path/'
+print 'path =', path
+print 'path =', path /= 'filename.ext'
+
+sections.subsection('Operators: []')
+transports = ['planes', 'trains', 'automobiles', 'bicycles']
+print transports[2]
+xlat = {'hi': 'hello', 'globe': 'world'}
+print xlat['hi'], xlat['globe']
+matrix = [[1, 2], [3, 4]]
+print 'Two level indexing:', matrix[0][1], matrix[1][1]
+matrix2 = [matrix, matrix]
+print 'Three level indexing:', matrix2[1][1][0], 'from', matrix2
+
+sections.subsection('Operators: slice.')
+fullArray = [1, 2, 3, 4, 5, 6, 7]
+print 'Full:', fullArray
+print 'Sliced:', fullArray[2:4], fullArray[3:], fullArray[:3]
+print 'Nega-sliced:', fullArray[-4:-2]
+print 'Reversing:', fullArray[::-1]
+print 'Reverse slice:', fullArray[4:2:-1]
+print 'Stepping:', fullArray[::2], fullArray[1:6:2]
+
+sections.subsection('Operators: not.')
+print not True
+print not False
+print not 'Is this true?'
+
+sections.subsection('Operators: comparisons.')
+print 'Numbers:', 1 > 3, 1 < 3, 2 >= 2, 4 >= 2, 2 <= 2, 4 <= 2
+print 'Text:', "hello" > "world", "hello" < "world", 'hello' == 'hello'
+print 'True/False:', True == True, True != False
+print 'Arrays:', [1, 0] == [1, 0], [1, 0] < [1, 1], [1, 0] > [1, 1], [2, 0] > [1, 0], [2, 0] < [1, 0]
+
+sections.subsection('Operators: in.')
+print 'transports =', transports
+if 'bicycles' in transports: print "Got a bicycle."
+if not 'jet' in transports: print "No jet."
+
+# ---------------------------------------------------------------------------
+sections.begin('STATEMENTS & COMPOUNDS')
+
+sections.subsection('Separating statements with semicolon.')
+print 'Statement 1.'; print 'Statement 2.'
+
+sections.subsection('if/elsif/else statements.')
+if True
+end
+if True
+    if True
+        if True
+            if True
+            end
+        end
+    end
+end
+if True
+    print 'Regular compound.'
+else
+    print "You won't see this."
+end
+if True: print "One statement compound."
+else: print "Not printed."
+if True
+    print "Compound A"
+    if False
+        print "Compound B"
+    else: print "Compound C"
+end
+if False: print "Lots of useless stuff here"
+elsif True
+    print "From the elsif"
+end
+if True: print 'Everything on one line.'; else: print 'Goes unseen.'
+if False; print 'Goes unseen again.'; else; print 'And with semicolons (requires "end").'; end
+
+sections.subsection('Assign statement.')
+print 'Assigning 10 to i...'
+i = 10
+print '...and i ==', i
+i = 'abc'
+print "Now i ==", i
+
+sections.subsection('Assign statement: assigning into elements.')
+array = [1, 2, 3, 4]
+originalArray = array # by value
+print array
+array[1] = 100
+print array
+array[1] = ['a', 'b', 'c']
+print array
+array[1][1] = 'Bee'
+print array
+array[1] = {1:2, 'Three':4}
+print array
+array[1][4] = 'Four'
+print array
+array[2] = array[1]
+print array
+array[2]['Three'] = '300'
+print array
+print originalArray
+
+sections.subsection('Assign statement: weak assignment with ?=.')
+print "'z' in locals():", 'z' in locals()
+z ?= 3
+print "'z' in locals():", 'z' in locals()
+print 'z =', z
+print 'Trying weak assignment: z ?= 10'
+z ?= 10
+print 'z =', z
+
+sections.subsection('Assign statement: const assignment to make read-only variables.')
+z = 1
+print 'z =', z
+const z = 10
+print 'z has been consted to', z
+try
+    z = 5
+catch ReadOnlyError
+    print 'Have to delete z before its value can change.'
+end
+del z
+z = 2
+print 'Now z =', 2
+
+sections.subsection('Delete statement: deleting identifiers.')
+def funky()
+    i = 1
+    k = 2
+    print locals()
+    del i
+    print 'After deletion:'
+    print locals()
+end
+funky()
+del funky
+
+sections.subsection('while statement.')
+i = 5
+while i > 0
+    print 'Still looping because %i > 0' % i
+    i -= 1
+end
+
+sections.subsection('break statement.')
+while True
+    print "I won't stay here."
+    break
+    print "Jumped over me."
+end
+print "Out of the while."
+while False: print "Never going in."
+while True
+    while True
+        print "Uh-oh, now I'm in trouble!"
+        break 2
+    end
+end
+print "Guess again!"
+
+sections.subsection('for statement.')
+for i in ['planes', 'trains', 'automobiles']
+    print "I would like:", i
+end
+print 'Value of i after the "for" loop is', i
+
+sections.subsection('continue statement.')
+i = 3
+while i > 0
+    print 'i =', i
+    i -= 1
+    if i == 1: continue
+    print 'Bottom of loop.'
+end
+for i in ['planes', 'trains', 'automobiles']
+    if i == 'trains': continue
+    print i, 'are cool!'
+end
+
+sections.subsection('pass statement: no operation.')
+if True: print "'Tis true."; else: pass
+
+# ---------------------------------------------------------------------------
+sections.begin('EXCEPTIONS')
+
+sections.subsection('Simple try/catch.')
+try: print 'Nothing thrown yet.'
+catch: print 'Skipped.'
+
+try: throw "OMG!"
+catch: print 'Whoa there.'
+
+try
+    throw "OMG!"
+catch
+    print 'Not so fast!'
+end
+
+try: throw "OMG!"
+catch Error
+    print 'Hold your horses.'
+end
+
+try
+    throw "OMG!"
+catch Error: print "Whatcha tryin' to pull?"
+
+sections.subsection('Minimal catch.')
+try: throw 'OMG!'
+catch: pass
+
+sections.subsection('Assigning exception message to local variable.')
+try: throw "OMG!"
+catch Error, er
+    print 'Caught:', er
+end
+try: throw "OMG!"
+catch Error, er: print 'Caught:', er
+
+sections.subsection('Nesting try/catch statements.')
+try
+    try
+        try
+            throw 'Deep.'
+        catch BogusError
+        end
+    catch BogusError
+    end
+catch Error, er: print 'Got it:', er
+try
+    try
+        try
+            throw 'Deep 2.'
+        catch BogusError
+        end
+    catch BogusError: pass
+    try
+    catch Error, er
+        print 'Should *not* be caught here.'
+    end
+catch Error, er
+    print 'Should be caught here:', er
+end
+
+sections.subsection('Throwing exception in a function.')
+def erroneous()
+    throw "I can't handle the truth!"
+end
+try
+    print "Calling erroneous()"
+    erroneous()
+    try
+        print 'This will be skipped!'
+    catch
+        print 'I am on the wrong catch level.'
+    end
+catch
+    print 'Fumbled it...'
+end
+
+sections.subsection('Catching a specific type of exception.')
+try
+    record temp
+    reference = temp
+    del temp
+    print reference
+catch NullError, er
+    print 'Oh noes:', er
+end
+
+sections.subsection('Multiple catch statements.')
+try
+    throw 'For the 2nd catch.'
+catch NullError: print 'Got NullError'
+catch Error, er: print er
+catch: print 'Never here.'
+
+sections.subsection('Exception thrown in another module.')
+try
+    sections.throwError()
+catch Error, er
+    print 'Got error from another module:', er
+end
+
+sections.subsection('Exception thrown in recursive call.')
+def recursive(i)
+    print i
+    if i == 10: throw 'Reached 10!'
+    recursive(i + 1)
+end
+try
+    recursive(1)
+catch Error, er
+    print er
+end
+
+sections.subsection('Exception from trying to change a read-only variable.')
+const SOME_CONSTANT = 3.1415
+print 'SOME_CONSTANT =', SOME_CONSTANT
+try
+    SOME_CONSTANT = 3
+catch ReadOnlyError, er
+    print 'Cannot do it.', er
+end
+try
+    const SOME_CONSTANT = 3
+catch ReadOnlyError, er
+    print 'Will not work either:', er
+end
+
+# ---------------------------------------------------------------------------
+sections.begin('RECORDS')
+
+sections.subsection('Creating a record.')
+record myrec
+print len(myrec)
+
+sections.subsection('Creating variables into a record.')
+myrec.newMember = 100
+print len(myrec)
+print 'myrec.newMember =', myrec.newMember
+print "Here's the record:"
+print myrec
+
+sections.subsection('Creating a subrecord.')
+record myrec.subrec
+print len(myrec), len(myrec.subrec)
+const myrec.subrec.something = 200
+try
+    myrec.subrec.something = 201
+    print 'THIS IS AN ERROR -- EXCEPTION SHOULD HAVE BEEN THROWN! --'
+catch ReadOnlyError, er
+    print 'Cannot change const member.'
+    print er
+end 
+print 'myrec.subrec.something =', myrec.subrec.something
+print "Here's the record:"
+print myrec
+
+sections.subsection('Checking whether members exist in record.')
+print 'subrec' in myrec, 'newMember' in myrec, 'not-there' in myrec.subrec
+
+sections.subsection('Built-in functions: members(), subrecords().')
+print 'members of myrec:', members(myrec)
+print 'subrecords of myrec:', subrecords(myrec)
+
+sections.subsection('Alternative ways to access members and subrecords.')
+print myrec['newMember']
+print myrec['subrec']
+print myrec['subrec']['something']
+print members(myrec)['newMember']
+
+sections.subsection('Having two variables reference the same record.')
+reference = myrec
+print len(reference)
+reference.otherMember = 150
+print "Here's the record:"
+print myrec
+
+sections.subsection('Deleting members from record.')
+print 'Before deleting:'
+print myrec
+del myrec.subrec.something
+print 'After deleting:'
+print myrec
+print "subrec isn't gone, though: len(myrec.subrec) =", len(myrec.subrec)
+
+sections.subsection('Deleting a record pointed to by two variables.')
+record soonDeleted
+reference = soonDeleted
+del soonDeleted
+try: print reference
+catch Error, er: print "Can't print reference:", er
+del reference
+
+sections.subsection('Serializing records.')
+print 'serialize(myrec) =', serialize(myrec)
+print 'deserialize(serialize(myrec)) ='
+print deserialize(serialize(myrec))
+
+# ---------------------------------------------------------------------------
+sections.begin('FUNCTIONS')
+
+sections.subsection('Defining a function (empty body).')
+def func1(): return
+func1()
+def func1b()
+end
+func1b()
+
+sections.subsection('Returning values from the function.')
+def func2(): return 'World'
+print 'Hello', func2()
+def func2b(a)
+    if a
+        return "It is true!"
+    else
+        return "Nay, it is false."
+    end
+end
+print func2b(1), func2b(''), func2b(True), func2b(False)
+
+sections.subsection('Passing arguments.')
+a = 'At process scope.'
+def func3(a, b, c)
+    print 'The arguments were:', a, b, c
+    return b
+end
+print 'returned:', func3(1, 2, 3)
+print a
+
+sections.subsection('Passing record as argument.')
+myrec.passed = 'Original'
+print 'myrec.passed =', myrec.passed
+def recArg(r)
+    r.passed = 'Changed'
+end
+recArg(myrec)
+print 'myrec.passed =', myrec.passed
+
+sections.subsection('Default values to function arguments.')
+def func4(a, b='default', c=100)
+    print 'Given:', a, b, c
+end
+func4(1)
+func4(1, 2)
+func4([1,2], c='world', b='hello')
+print 'func4 =', func4
+
+sections.subsection('Defining function in a record.')
+def myrec.func5(a, b)
+    return a + b
+end
+print myrec.func5("The record is\n", Text(myrec))
+
+sections.subsection('Defining a function within a function.')
+def func6()
+    print 'Inside func6.'
+    print 'func2() =', func2()
+    def func2(): return 'Shadows the global level.'
+    print 'func2() =', func2()
+end
+func6()
+print 'func2() =', func2()
+
+sections.subsection("Accessing function's locals within a subfunction.")
+def func7()
+    a = 100
+    print 'Inside func7: a =', a
+    def func()
+        print 'Inside func: a =', a
+    end
+    func()
+end
+func7()
+
+sections.subsection('Reference to function.')
+reference = func2
+print 'func2() =', func2()
+print 'reference() =', reference()
+print 'reference =', reference
+
+sections.subsection('Callback function as argument.')
+def doCallback(a, b, cb)
+    print cb(a, b)
+end
+doCallback(10, 15, myrec.func5)
+
+sections.subsection('Returning a local function from a function.')
+a = 'Process scope.'
+def testfun()
+    a = 'testfun() scope.'
+    def returningFunc()
+        print 'I come from another place.', a
+    end
+    returningFunc()
+    return returningFunc
+end
+testfun()()
+ar = [testfun]
+ar[0]()()
+
+# ---------------------------------------------------------------------------
+sections.begin('SCOPES')
+
+sections.subsection('Global assignment with :=.')
+a = 1
+print 'a =', a
+def normalAssign()
+    a = 2
+    print 'in normalAssign(), a =', a
+end
+normalAssign()
+print 'a =', a
+def globalAssign()
+    a := 2
+    print 'in globalAssign(), a =', a
+end
+globalAssign()
+print 'a =', a
+
+sections.subsection('Built-in function locals() returns the local namespace as a record.')
+print 'At global level:'
+print locals()
+print 
+print 'Within a function:'
+def func8()
+    justMe = "Function's local namespace."
+    print locals()
+end
+func8()
+
+sections.subsection('Importing modules: built-in module Config.')
+import Config
+print "Here's the Config:"
+print Config
+
+sections.subsection('Serializing namespaces.')
+sns = serialize(locals())
+print 'sns =', sns
+print 'That deserializes into:'
+dsns = deserialize(sns)
+print dsns
+print 'Calling deserialized function...'
+print dsns.func3(1, 2, 3)
+print 'Calling deserialized function that throws an exception...'
+try: dsns.erroneous(); catch: print 'Caught.'
+del dsns
+
+sections.subsection('Importing modules: import record.')
+print 'Getting rid of the imported sections module (which is just a reference).'
+print "Note that this has no effect on sections's own namespace."
+del sections
+print 'import record sections'
+import record sections
+print 'The sections namespace has become a local record.'
+print locals()
+
+# ---------------------------------------------------------------------------
+sections.begin('SCRIPT RETURN VALUE')
+
+sections.subsection('Returning value from the script: the final expression.')
+"I am the return value."

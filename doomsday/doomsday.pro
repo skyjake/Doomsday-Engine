@@ -7,4 +7,5 @@ SUBDIRS = \
     build \
     libdeng2 libdeng \
     engine plugins host \
+    tests \
     postbuild
