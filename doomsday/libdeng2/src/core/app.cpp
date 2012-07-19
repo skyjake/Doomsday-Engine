@@ -48,7 +48,8 @@ App::App(int& argc, char** argv, bool useGUI)
 
 void App::initSubsystems()
 {
-    // Initialize the built-in folders.
+    // Initialize the built-in folders. This hooks up the default native
+    // directories into the appropriate places in the file system.
 #ifdef MACOSX
     _fs.makeFolder("/bin").attach(new DirectoryFeed("MacOS"));
     _fs.makeFolder("/data").attach(new DirectoryFeed("Resources"));
@@ -84,7 +85,7 @@ void App::initSubsystems()
     _fs.refresh();
 
     // The configuration.
-    QScopedPointer<Config> conf(new Config("/home/config.de"));
+    QScopedPointer<Config> conf(new Config("/config/doomsday.de"));
     conf->read();
 
     LogBuffer& logBuf = LogBuffer::appBuffer();
