@@ -64,12 +64,17 @@ void Config::read()
         
         // If the saved config is from a different version, rerun the script.
         // Otherwise, we're done.
-        if(!names()["__version__"].value().compare(*version))
+        const Value& oldVersion = names()["__version__"].value();
+        if(!oldVersion.compare(*version))
         {
             // Versions match.
             LOG_MSG("") << _writtenConfigPath << " matches version " << version->asText();
             return;
         }
+
+        // Version mismatch: store the old version in a separate variable.
+        _config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
+                                           Variable::AllowArray | Variable::ReadOnly));
     }
     catch(const Folder::NotFoundError&)
     {
