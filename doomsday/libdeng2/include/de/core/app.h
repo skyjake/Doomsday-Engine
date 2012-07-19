@@ -49,6 +49,11 @@ namespace de
     public:
         App(int& argc, char** argv, bool useGUI);
 
+        /**
+         * Initializes all the application's subsystems. This includes Config and FS.
+         */
+        void initSubsystems();
+
         bool notify(QObject* receiver, QEvent* event);
 
         static App& app();
@@ -103,12 +108,12 @@ namespace de
         String _appPath;
 
         /// The file system.
-        FS* _fs;
+        FS _fs;
 
         /// The configuration.
         Config* _config;
 
-        /// Modules.
+        /// Resident modules.
         typedef std::map<String, Module*> Modules;
         Modules _modules;
     };

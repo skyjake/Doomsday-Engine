@@ -76,7 +76,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
     if(entryName != "." && entryName != "..")
     {
         String subFeedPath = _nativePath.concatenateNativePath(entryName);
-        Folder& subFolder = folder.fileSystem().getFolder(folder.path() / entryName);
+        Folder& subFolder = folder.fileSystem().makeFolder(folder.path() / entryName);
 
         if(_mode & AllowWrite)
         {

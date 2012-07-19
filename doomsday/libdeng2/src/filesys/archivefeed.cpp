@@ -103,7 +103,7 @@ void ArchiveFeed::populate(Folder& folder)
     for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
     {
         String subBasePath = _basePath / *i;
-        Folder& subFolder = folder.fileSystem().getFolder(folder.path() / *i);
+        Folder& subFolder = folder.fileSystem().makeFolder(folder.path() / *i);
         
         // Does it already have the appropriate feed?
         for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();

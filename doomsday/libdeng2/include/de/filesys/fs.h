@@ -81,13 +81,17 @@ namespace de
         typedef std::list<File*> FoundFiles;
         
     public:
+        /**
+         * Constructs a new file system. The file system needs to be manually
+         * refreshed; initially it is empty.
+         */
         FS();
         
         virtual ~FS();
 
         void printIndex();
         
-        Folder& root() { return _root; }
+        Folder& root();
         
         /**
          * Refresh the file system. Populates all folders with files from the feeds.
@@ -100,7 +104,7 @@ namespace de
          *
          * @param path  Path of the folder. Relative to the root folder.
          */
-        Folder& getFolder(const String& path);
+        Folder& makeFolder(const String& path);
 
         /**
          * Finds all files matching a full or partial path.
@@ -162,7 +166,7 @@ namespace de
          * efficiently looking up files based on name. @note The file names are
          * indexed in lower case.
          */
-        const Index& nameIndex() const { return _index; }
+        const Index& nameIndex() const;
         
         /**
          * Retrieves the index of files of a particular type.
@@ -193,16 +197,8 @@ namespace de
         void deindex(File& file);
 
     private:  
-        /// The main index to all files in the file system.
-        Index _index;
-        
-        /// Index of file types. Each entry in the index is another index of names 
-        /// to file instances.
-        typedef std::map<String, Index> TypeIndex;
-        TypeIndex _typeIndex;
-
-        /// The root folder of the entire file system.
-        Folder _root;
+        struct Instance;
+        Instance* d;
     };
 }
 

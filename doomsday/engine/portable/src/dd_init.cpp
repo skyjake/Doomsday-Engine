@@ -151,6 +151,8 @@ int main(int argc, char** argv)
     de2LegacyCore = LegacyCore_New(&dengApp);
     LegacyCore_SetTerminateFunc(handleLegacyCoreTerminate);
 
+    dengApp.initSubsystems(); // requires LogBuffer (currently owned by LegacyCore)
+
     Libdeng_Init();
 
     QMenuBar* menuBar = 0;

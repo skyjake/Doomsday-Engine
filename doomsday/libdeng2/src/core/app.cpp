@@ -18,19 +18,95 @@
  */
 
 #include "de/App"
-#include "de/Log"
 #include "de/ArrayValue"
+#include "de/DirectoryFeed"
+#include "de/Folder"
+#include "de/Log"
+#include "de/LogBuffer"
 #include "de/Module"
 #include "de/math.h"
-#include <QDebug>
+#include <QDesktopServices>
 
 using namespace de;
 
 App::App(int& argc, char** argv, bool useGUI)
     : QApplication(argc, argv, useGUI),
-      _cmdLine(argc, argv)
+      _cmdLine(argc, argv),
+      _config(0)
 {
     _appPath = applicationFilePath();
+
+#ifdef MACOSX
+    // When the application is started through Finder, we get a special command
+    // line argument. The working directory needs to be changed.
+    if(_cmdLine.count() >= 2 && _cmdLine.at(1).beginsWith("-psn"))
+    {
+        DirectoryFeed::changeWorkingDir(_cmdLine.at(0).fileNamePath() + "/..");
+    }
+#endif
+}
+
+void App::initSubsystems()
+{
+    // Initialize the built-in folders.
+#ifdef MACOSX
+    _fs.makeFolder("/bin").attach(new DirectoryFeed("MacOS"));
+    _fs.makeFolder("/data").attach(new DirectoryFeed("Resources"));
+    _fs.makeFolder("/config").attach(new DirectoryFeed("Resources/config"));
+    //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
+
+#elif WIN32
+    _fs.makeFolder("/bin").attach(new DirectoryFeed("bin"));
+    _fs.makeFolder("/data").attach(new DirectoryFeed("data"));
+    _fs.makeFolder("/config").attach(new DirectoryFeed("data\\config"));
+    //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
+
+#else // UNIX
+    _fs.makeFolder("/bin").attach(new DirectoryFeed("bin"));
+    _fs.makeFolder("/data").attach(new DirectoryFeed("data"));
+    _fs.makeFolder("/config").attach(new DirectoryFeed("data/config"));
+    //fs_->makeFolder("/modules").attach(new DirectoryFeed("data/modules"));
+#endif
+
+    // User's home folder.
+    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+#ifdef MACOSX
+    nativeHome = nativeHome.concatenateNativePath("Library/Application Support/Doomsday2");
+#elif WIN32
+    nativeHome = nativeHome.concatenateNativePath("Doomsday2"); /// @todo What is appropriate here?
+#else // UNIX
+    nativeHome = nativeHome.concatenateNativePath(".doomsday2");
+#endif
+    _fs.makeFolder("/home").attach(new DirectoryFeed(nativeHome,
+        DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+
+    // Populate the file system.
+    _fs.refresh();
+
+    // The configuration.
+    QScopedPointer<Config> conf(new Config("/home/config.de"));
+    conf->read();
+
+    LogBuffer& logBuf = LogBuffer::appBuffer();
+
+    // Update the log buffer max entry count.
+    logBuf.setMaxEntryCount(conf->getui("deng.log.bufferSize"));
+
+    // Set the log output file.
+    logBuf.setOutputFile(conf->gets("deng.log.file"));
+
+    // The level of enabled messages.
+    logBuf.enable(Log::LogLevel(conf->getui("deng.log.level")));
+
+#if 0 // not yet handled by libdeng2
+    // Load the basic plugins.
+    loadPlugins();
+#endif
+
+    // Successful construction without errors, so drop our guard.
+    _config = conf.take();
+
+    LOG_VERBOSE("libdeng2::App ") << LIBDENG2_VERSION << " subsystems initialized.";
 }
 
 bool App::notify(QObject* receiver, QEvent* event)
@@ -63,6 +139,27 @@ CommandLine& App::commandLine()
 String App::executablePath()
 {
     return DENG2_APP->_appPath;
+}
+
+FS &App::fileSystem()
+{
+    return DENG2_APP->_fs;
+}
+
+Folder &App::fileRoot()
+{
+    return fileSystem().root();
+}
+
+Folder &App::homeFolder()
+{
+    return fileRoot().locate<Folder>("/home");
+}
+
+Config &App::config()
+{
+    DENG2_ASSERT(DENG2_APP->_config != 0);
+    return *DENG2_APP->_config;
 }
 
 static int sortFilesByModifiedAt(const File* a, const File* b)

@@ -28,26 +28,49 @@ using namespace de;
 
 static const FS::Index emptyIndex;
 
+struct FS::Instance
+{
+    /// The main index to all files in the file system.
+    FS::Index index;
+
+    /// Index of file types. Each entry in the index is another index of names
+    /// to file instances.
+    typedef std::map<String, Index> TypeIndex;
+    TypeIndex typeIndex;
+
+    /// The root folder of the entire file system.
+    Folder root;
+};
+
 FS::FS()
-{}
+{
+    d = new Instance;
+}
 
 FS::~FS()
-{}
+{
+    delete d;
+}
 
 void FS::refresh()
 {
-    _root.populate();
+    LOG_AS("FS::refresh");
+
+    Time startedAt;
+    d->root.populate();
+
+    LOG_DEBUG("Done in %.2f seconds.") << startedAt.since();
     
     printIndex();
 }
 
-Folder& FS::getFolder(const String& path)
+Folder& FS::makeFolder(const String& path)
 {
-    Folder* subFolder = _root.tryLocate<Folder>(path);
+    Folder* subFolder = d->root.tryLocate<Folder>(path);
     if(!subFolder)
     {
         // This folder does not exist yet. Let's create it.
-        Folder& parentFolder = getFolder(path.fileNamePath());
+        Folder& parentFolder = makeFolder(path.fileNamePath());
         subFolder = new Folder(path.fileName());
         parentFolder.add(subFolder);
         index(*subFolder);
@@ -92,6 +115,11 @@ File* FS::interpret(File* sourceData)
     return sourceData;
 }
 
+const FS::Index& FS::nameIndex() const
+{
+    return d->index;
+}
+
 int FS::findAll(const String& path, FoundFiles& found) const
 {
     LOG_AS("FS::findAll");
@@ -105,7 +133,7 @@ int FS::findAll(const String& path, FoundFiles& found) const
         dir = "/" + dir;
     }
 
-    ConstIndexRange range = _index.equal_range(baseName);
+    ConstIndexRange range = d->index.equal_range(baseName);
     for(Index::const_iterator i = range.first; i != range.second; ++i)    
     {       
         File* file = i->second;
@@ -126,10 +154,10 @@ void FS::index(File& file)
 {
     const String lowercaseName = file.name().lower();
     
-    _index.insert(IndexEntry(lowercaseName, &file));
+    d->index.insert(IndexEntry(lowercaseName, &file));
     
     // Also make an entry in the type index.
-    Index& indexOfType = _typeIndex[DENG2_TYPE_NAME(file)];
+    Index& indexOfType = d->typeIndex[DENG2_TYPE_NAME(file)];
     indexOfType.insert(IndexEntry(lowercaseName, &file));
 }
 
@@ -156,14 +184,14 @@ static void removeFromIndex(FS::Index& idx, File& file)
 
 void FS::deindex(File& file)
 {
-    removeFromIndex(_index, file);
-    removeFromIndex(_typeIndex[DENG2_TYPE_NAME(file)], file);
+    removeFromIndex(d->index, file);
+    removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
 }
 
 const FS::Index& FS::indexFor(const String& typeName) const
 {
-    TypeIndex::const_iterator found = _typeIndex.find(typeName);
-    if(found != _typeIndex.end())
+    Instance::TypeIndex::const_iterator found = d->typeIndex.find(typeName);
+    if(found != d->typeIndex.end())
     {
         return found->second;
     }
@@ -176,12 +204,12 @@ const FS::Index& FS::indexFor(const String& typeName) const
 
 void FS::printIndex()
 {
-    for(Index::iterator i = _index.begin(); i != _index.end(); ++i)
+    for(Index::iterator i = d->index.begin(); i != d->index.end(); ++i)
     {
         LOG_DEBUG("\"%s\": ") << i->first << i->second->path();
     }
     
-    for(TypeIndex::iterator k = _typeIndex.begin(); k != _typeIndex.end(); ++k)
+    for(Instance::TypeIndex::iterator k = d->typeIndex.begin(); k != d->typeIndex.end(); ++k)
     {
         LOG_DEBUG("\nIndex for type '%s':") << k->first;
         for(Index::iterator i = k->second.begin(); i != k->second.end(); ++i)
@@ -189,4 +217,9 @@ void FS::printIndex()
             LOG_DEBUG("\"%s\": ") << i->first << i->second->path();
         }
     }
+}
+
+Folder& FS::root()
+{
+    return d->root;
 }
