@@ -34,6 +34,13 @@ App::App(int& argc, char** argv, GUIMode guiMode)
       _cmdLine(argc, argv),
       _config(0)
 {
+    // This instance of LogBuffer is used globally.
+    LogBuffer::setAppBuffer(_logBuffer);
+#ifdef DENG2_DEBUG
+    _logBuffer.enable(Log::DEBUG);
+#endif
+    //_logBuffer.enable(Log::TRACE);
+
     _appPath = applicationFilePath();
 
 #ifdef MACOSX

@@ -22,6 +22,7 @@
 
 #include "../libdeng2.h"
 #include "../CommandLine"
+#include "../LogBuffer"
 #include "../FS"
 #include "../Module"
 #include "../Config"
@@ -108,6 +109,8 @@ namespace de
 
     private:
         CommandLine _cmdLine;
+
+        LogBuffer _logBuffer;
 
         /// Path of the application executable.
         String _appPath;

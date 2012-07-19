@@ -51,7 +51,6 @@ struct LegacyCore::Instance
     QTimer* loopTimer;
     LegacyNetwork network;
     Loop loop;
-    LogBuffer logBuffer;
 
     /// Pointer returned to callers, see LegacyCore::logFileName().
     std::string logName;
@@ -72,13 +71,6 @@ LegacyCore::LegacyCore(App* dengApp)
     d->app = dengApp;
 
     connect(d->app, SIGNAL(uncaughtException(QString)), this, SLOT(handleUncaughtException(QString)));
-
-    // The global log buffer will be available for the entire runtime of deng2.
-    LogBuffer::setAppBuffer(d->logBuffer);
-#ifdef DENG2_DEBUG
-    d->logBuffer.enable(Log::DEBUG);
-#endif
-    //d->logBuffer.enable(Log::TRACE);
 
     // This will trigger loop callbacks.
     d->loopTimer = new QTimer(this);
@@ -210,7 +202,7 @@ void LegacyCore::timer(duint32 milliseconds, void (*func)(void))
 void LegacyCore::setLogFileName(const char *nativeFilePath)
 {
     d->logName = nativeFilePath;
-    d->logBuffer.setOutputFile(nativeFilePath);
+    LogBuffer::appBuffer().setOutputFile(nativeFilePath);
 }
 
 const char *LegacyCore::logFileName() const
