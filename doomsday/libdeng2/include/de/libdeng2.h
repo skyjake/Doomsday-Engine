@@ -132,12 +132,10 @@
  *
  * @param Iter          Name/declaration of the iterator variable.
  * @param ContainerRef  Container.
+ * @param IterClass     Class of the iterator.
  */
-#define DENG2_FOR_EACH(Iter, ContainerRef) \
-    for(Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
-
-#define DENG2_FOR_EACH_i(ContainerRef, IterClass) \
-    IterClass i; DENG2_FOR_EACH(i, (ContainerRef))
+#define DENG2_FOR_EACH(Iter, ContainerRef, IterClass) \
+    for(IterClass Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
 
 /**
  * Macro for iterating through an STL container in reverse.

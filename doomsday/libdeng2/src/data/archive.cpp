@@ -379,7 +379,7 @@ void Archive::cache(CacheAttachment attach)
         // Nothing to read from.
         return;
     }
-    DENG2_FOR_EACH_i(_index, Index::iterator)
+    DENG2_FOR_EACH(i, _index, Index::iterator)
     {
         Entry& entry = i->second;
         if(!entry.data && !entry.compressedData)
@@ -403,7 +403,7 @@ void Archive::listFiles(Names& names, const String& folder) const
     names.clear();
     
     String prefix = folder.empty()? "" : folder / "";
-    DENG2_FOR_EACH_i(_index, Index::const_iterator)
+    DENG2_FOR_EACH(i, _index, Index::const_iterator)
     {
         if(i->first.beginsWith(prefix))
         {
@@ -422,7 +422,7 @@ void Archive::listFolders(Names& names, const String& folder) const
     names.clear();
     
     String prefix = folder.empty()? "" : folder / "";
-    DENG2_FOR_EACH_i(_index, Index::const_iterator)
+    DENG2_FOR_EACH(i, _index, Index::const_iterator)
     {
         if(i->first.beginsWith(prefix))
         {
@@ -623,8 +623,7 @@ void Archive::operator >> (Writer& to) const
     Writer writer(to, littleEndianByteOrder);
     
     // First write the local headers.
-    Index::const_iterator i;
-    DENG2_FOR_EACH(i, _index)
+    DENG2_FOR_EACH(i, _index, Index::const_iterator)
     {
         Entry& entry = const_cast<Entry&>(i->second);
         updateEntry(entry);

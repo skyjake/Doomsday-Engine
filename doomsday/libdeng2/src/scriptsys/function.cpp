@@ -39,8 +39,7 @@ Function::Function(const Arguments& args, const Defaults& defaults)
 Function::~Function()
 {
     // Delete the default argument values.
-    Defaults::iterator i;
-    DENG2_FOR_EACH(i, _defaults)
+    DENG2_FOR_EACH(i, _defaults, Defaults::iterator)
     {
         delete i->second;
     }
@@ -56,8 +55,7 @@ String Function::asText() const
     String result;
     QTextStream os(&result);
     os << "[Function " << this << " (";
-    Arguments::const_iterator i;
-    DENG2_FOR_EACH(i, _arguments)
+    DENG2_FOR_EACH(i, _arguments, Arguments::const_iterator)
     {
         if(i != _arguments.begin())
         {
@@ -175,8 +173,7 @@ void Function::operator >> (Writer& to) const
     to << duint16(_arguments.size());
 
     // Argument names.
-    Arguments::const_iterator i;
-    DENG2_FOR_EACH(i, _arguments)
+    DENG2_FOR_EACH(i, _arguments, Arguments::const_iterator)
     {
         to << *i;
     }
@@ -185,10 +182,9 @@ void Function::operator >> (Writer& to) const
     to << duint16(_defaults.size());
     
     // Default values.
-    Defaults::const_iterator j;
-    DENG2_FOR_EACH(j, _defaults)
+    DENG2_FOR_EACH(i, _defaults, Defaults::const_iterator)
     {
-        to << j->first << *j->second;
+        to << i->first << *i->second;
     }
     
     // The statements of the function.

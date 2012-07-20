@@ -209,7 +209,7 @@ Record& App::importModule(const String& name, const String& fromPath)
     {}
 
     // Search the import path (array of paths).
-    DENG2_FOR_EACH_i(importPath->elements(), ArrayValue::Elements::const_iterator)
+    DENG2_FOR_EACH(i, importPath->elements(), ArrayValue::Elements::const_iterator)
     {
         String dir = (*i)->asText();
         String p;

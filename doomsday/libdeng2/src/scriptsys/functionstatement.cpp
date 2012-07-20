@@ -72,7 +72,7 @@ void FunctionStatement::execute(Context& context) const
 
     // Evaluate the argument default values.
     DictionaryValue& dict = eval.evaluateTo<DictionaryValue>(&_defaults);
-    DENG2_FOR_EACH_i(dict.elements(), DictionaryValue::Elements::const_iterator)
+    DENG2_FOR_EACH(i, dict.elements(), DictionaryValue::Elements::const_iterator)
     {
         _function->defaults()[i->first.value->asText()] = i->second->duplicate();
     }

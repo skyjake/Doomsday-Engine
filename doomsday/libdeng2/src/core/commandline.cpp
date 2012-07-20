@@ -58,7 +58,7 @@ struct CommandLine::Instance
 
     void clear()
     {
-        DENG2_FOR_EACH_i(arguments, Arguments::iterator) delete *i;
+        DENG2_FOR_EACH(i, arguments, Arguments::iterator) delete *i;
         arguments.clear();
         pointers.clear();
         pointers.push_back(0);
@@ -136,7 +136,7 @@ CommandLine::CommandLine(const CommandLine& other)
 {
     d = new Instance;
 
-    DENG2_FOR_EACH_i(other.d->arguments, Instance::Arguments::const_iterator)
+    DENG2_FOR_EACH(i, other.d->arguments, Instance::Arguments::const_iterator)
     {
         d->appendArg((*i)->c_str());
     }
@@ -213,7 +213,7 @@ dint CommandLine::has(const String& arg) const
 {
     dint howMany = 0;
     
-    DENG2_FOR_EACH_i(d->arguments, Instance::Arguments::const_iterator)
+    DENG2_FOR_EACH(i, d->arguments, Instance::Arguments::const_iterator)
     {
         if(matches(arg, String::fromStdString(**i)))
         {
@@ -403,7 +403,7 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
     Instance::Aliases::const_iterator found = d->aliases.find(full.toStdString());
     if(found != d->aliases.end())
     {
-        DENG2_FOR_EACH_i(found->second, Instance::ArgumentStrings::const_iterator)
+        DENG2_FOR_EACH(i, found->second, Instance::ArgumentStrings::const_iterator)
         {
             if(!i->compareWithoutCase(fullOrAlias))
             {
