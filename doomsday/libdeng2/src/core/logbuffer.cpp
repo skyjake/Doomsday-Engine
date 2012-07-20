@@ -21,6 +21,7 @@
 #include "de/Writer"
 #include "de/FixedByteArray"
 #include "de/Guard"
+#include "de/App"
 
 #include <stdio.h>
 #include <QTextStream>
@@ -125,20 +126,22 @@ void LogBuffer::setOutputFile(const String& path)
 
     if(_outputFile)
     {
-        delete _outputFile;
+        _outputFile->audienceForDeletion -= this;
         _outputFile = 0;
     }
-    if(path.isEmpty()) return;
 
-    _outputFile = new QFile(path);
-    if(!_outputFile->open(QFile::Text | QFile::WriteOnly))
+    if(!path.isEmpty())
     {
-        delete _outputFile;
-        _outputFile = 0;
-        throw FileError("LogBuffer::setOutputFile", "Could not open " + path);
+        _outputFile = &App::fileRoot().replaceFile(path);
+        _outputFile->setMode(File::Write);
+        _outputFile->audienceForDeletion += this;
     }
 }
 
+/**
+ * @internal
+ * Interface for output streams for printing log messages.
+ */
 class IOutputStream
 {
 public:
@@ -147,6 +150,34 @@ public:
     virtual IOutputStream& operator << (const QString& text) = 0;
 };
 
+/// Stream that outputs to a de::File.
+class FileOutputStream : public IOutputStream
+{
+public:
+    FileOutputStream(File* f) : _file(f), _writer(0) {
+        if(f) {
+            // New content is added to the end of the file.
+            _writer = new Writer(*_file, _file->size());
+        }
+    }
+    ~FileOutputStream() {
+        if(_writer) {
+            delete _writer;
+        }
+    }
+    void flush() {
+        if(_file) _file->flush();
+    }
+    IOutputStream& operator << (const QString& text) {
+        if(_writer) (*_writer) << FixedByteArray(Block(text.toUtf8()));
+        return *this;
+    }
+private:
+    File* _file;
+    Writer* _writer;
+};
+
+/// Stream that outputs to a QTextStream.
 class TextOutputStream : public IOutputStream
 {
 public:
@@ -167,6 +198,7 @@ private:
     QTextStream* _ts;
 };
 
+/// Stream that outputs to QDebug.
 class DebugOutputStream : public IOutputStream
 {
 public:
@@ -192,7 +224,7 @@ void LogBuffer::flush()
 
     if(!_toBeFlushed.isEmpty())
     {
-        TextOutputStream fs  (_outputFile?     new QTextStream(_outputFile) : 0);
+        FileOutputStream fs(_outputFile? _outputFile : 0);
 #ifndef WIN32
         TextOutputStream outs(_standardOutput? new QTextStream(stdout) : 0);
         TextOutputStream errs(_standardOutput? new QTextStream(stderr) : 0);
@@ -355,14 +387,12 @@ void LogBuffer::flush()
     }
 }
 
-#ifdef DENG2_FS_AVAILABLE
 void LogBuffer::fileBeingDeleted(const File& file)
 {
     DENG2_ASSERT(_outputFile == &file);
     flush();
     _outputFile = 0;
 }
-#endif
 
 void LogBuffer::setAppBuffer(LogBuffer &appBuffer)
 {

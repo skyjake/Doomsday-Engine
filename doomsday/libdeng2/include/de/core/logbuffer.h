@@ -21,14 +21,11 @@
 #define LIBDENG2_LOGBUFFER_H
 
 #include "../Log"
-#ifdef DENG2_FS_AVAILABLE
 #include "../File"
-#endif
 
 #include <QObject>
 #include <QTimer>
 #include <QList>
-#include <QFile>
 
 namespace de {
 
@@ -42,7 +39,7 @@ class LogEntry;
  *
  * @ingroup core
  */
-class LogBuffer : public QObject, public Lockable
+class LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(File, Deletion)
 {
     Q_OBJECT
 
@@ -125,6 +122,8 @@ public:
      */
     void setOutputFile(const String& path);
 
+    void fileBeingDeleted(const File& file);
+
 public:
     /**
      * Sets the application's global log buffer. This is available to all.
@@ -149,7 +148,7 @@ private:
     dint _enabledOverLevel;
     dint _maxEntryCount;
     bool _standardOutput;
-    QFile* _outputFile;
+    File* _outputFile;
     EntryList _entries;
     EntryList _toBeFlushed;
     Time _lastFlushedAt;

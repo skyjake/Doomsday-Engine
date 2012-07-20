@@ -140,6 +140,11 @@ namespace de
             checkExists();
             _members->insert(observer);
         }            
+
+        Observers<Type>& operator += (Type* observer) {
+            add(observer);
+            return *this;
+        }
         
         void remove(Type* observer) {
             if(_members) {
@@ -151,6 +156,11 @@ namespace de
             }
         }
         
+        Observers<Type>& operator -= (Type* observer) {
+            remove(observer);
+            return *this;
+        }
+
         size_type size() const {
             if(_members) {
                 return _members->size();

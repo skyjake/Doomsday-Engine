@@ -100,7 +100,15 @@ public:
      */
     Writer& operator << (const FixedByteArray& fixedByteArray);
 
-    /// Writes the Block @a block into the destination buffer.
+    /**
+     * Writes @a block into the destination buffer. Writes the size of the
+     * block in addition to its contents, so a Reader will not need to know
+     * beforehand how large the block is.
+     *
+     * @param block  Block to write.
+     *
+     * @return  Reference to the Writer.
+     */
     Writer& operator << (const Block& block);
 
     /// Writes a writable object into the destination buffer.
