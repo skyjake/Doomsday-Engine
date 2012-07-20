@@ -17,8 +17,8 @@ HEADERS += \
     include/wadmapconverter.h
 
 SOURCES += \
-    src/load.c \
-    src/wadmapconverter.c
+    src/load.cpp \
+    src/wadmapconverter.cpp
 
 win32 {
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpwadmapconverter.def\"
