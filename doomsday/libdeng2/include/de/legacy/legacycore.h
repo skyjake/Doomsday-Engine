@@ -111,9 +111,10 @@ public:
     /**
      * Sets the file where log output is to be written.
      *
-     * @param nativeFilePath  Path of a native file for writing output.
+     * @param filePath  Path of a native file for writing output. "/home/" will
+     *                  be automatically prepended to the path.
      */
-    void setLogFileName(const char* nativeFilePath);
+    void setLogFileName(const char* filePath);
 
     /**
      * Returns name of the the current log output file.

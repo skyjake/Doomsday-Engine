@@ -43,6 +43,8 @@ App::App(int& argc, char** argv, GUIMode guiMode)
 
     _appPath = applicationFilePath();
 
+    LOG_INFO("Application path: ") << _appPath;
+
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command
     // line argument. The working directory needs to be changed.
@@ -55,12 +57,15 @@ App::App(int& argc, char** argv, GUIMode guiMode)
 
 void App::initSubsystems()
 {
+    String appDir = _appPath.fileNameNativePath();
+
     // Initialize the built-in folders. This hooks up the default native
     // directories into the appropriate places in the file system.
+    // All of these are in read-only mode.
 #ifdef MACOSX
-    _fs.makeFolder("/bin").attach(new DirectoryFeed("MacOS"));
-    _fs.makeFolder("/data").attach(new DirectoryFeed("Resources"));
-    _fs.makeFolder("/config").attach(new DirectoryFeed("Resources/config"));
+    _fs.makeFolder("/bin").attach(new DirectoryFeed(appDir));
+    _fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
+    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 
 #elif WIN32

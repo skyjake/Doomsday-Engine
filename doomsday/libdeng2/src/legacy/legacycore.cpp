@@ -199,10 +199,11 @@ void LegacyCore::timer(duint32 milliseconds, void (*func)(void))
     timer->start(milliseconds);
 }
 
-void LegacyCore::setLogFileName(const char *nativeFilePath)
+void LegacyCore::setLogFileName(const char *filePath)
 {
-    d->logName = nativeFilePath;
-    LogBuffer::appBuffer().setOutputFile(nativeFilePath);
+    String p = String("/home") / filePath;
+    d->logName = p.toStdString();
+    LogBuffer::appBuffer().setOutputFile(p);
 }
 
 const char *LegacyCore::logFileName() const

@@ -678,6 +678,8 @@ OTHER_FILES += \
 
 data.files = $$OUT_PWD/../doomsday.pk3
 
+cfg.files = $$DENG_CONFIG_DIR/deng.de
+
 startupdata.files = \
     data/cphelp.txt
 
@@ -708,12 +710,13 @@ macx {
         mac/res/English.lproj \
         mac/res/deng.icns
 
+    cfg.path          = $${res.path}/config
     data.path         = $${res.path}
     startupdata.path  = $${res.path}/data
     startupfonts.path = $${res.path}/data/fonts
     startupgfx.path   = $${res.path}/data/graphics
 
-    QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
+    QMAKE_BUNDLE_DATA += cfg res data startupfonts startupdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
