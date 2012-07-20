@@ -26,11 +26,11 @@
 
 using namespace de;
 
-DictionaryValue::DictionaryValue() : _iteration(0), _validIteration(false)
+DictionaryValue::DictionaryValue() : /*_iteration(0),*/ _validIteration(false)
 {}
 
 DictionaryValue::DictionaryValue(const DictionaryValue& other)
-    : Value(), _iteration(0), _validIteration(false)
+    : Value(), /*_iteration(0),*/ _validIteration(false)
 {
     for(Elements::const_iterator i = other._elements.begin(); i != other._elements.end(); ++i)
     {

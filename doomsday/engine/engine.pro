@@ -749,7 +749,7 @@ macx {
 
 win32 {
     # Windows installation.
-    INSTALLS += target data startupdata startupgfx startupfonts license
+    INSTALLS += target data startupdata startupgfx startupfonts cfg license
 
     target.path = $$DENG_LIB_DIR
 
@@ -757,6 +757,7 @@ win32 {
     startupdata.path = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
+    cfg.path = $$DENG_DATA_DIR/config
 
     license.files = doc/LICENSE
     license.path = $$DENG_DOCS_DIR

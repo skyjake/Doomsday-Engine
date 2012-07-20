@@ -69,9 +69,9 @@ void App::initSubsystems()
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 
 #elif WIN32
-    _fs.makeFolder("/bin").attach(new DirectoryFeed("bin"));
-    _fs.makeFolder("/data").attach(new DirectoryFeed("data"));
-    _fs.makeFolder("/config").attach(new DirectoryFeed("data\\config"));
+    _fs.makeFolder("/bin").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\bin")));
+    _fs.makeFolder("/data").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data")));
+    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data\\config")));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 
 #else // UNIX
