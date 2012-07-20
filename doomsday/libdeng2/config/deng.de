@@ -26,6 +26,6 @@ audio = 'fmod'
 
 # Log parameters.
 record log
-log.file       ?= '/home/doomsday.log'
+log.file       ?= '/home/doomsday.out'
 log.level      ?= 1 #3
 log.bufferSize ?= 1000

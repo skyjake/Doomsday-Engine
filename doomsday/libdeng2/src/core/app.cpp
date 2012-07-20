@@ -77,13 +77,16 @@ void App::initSubsystems()
 #endif
 
     // User's home folder.
-    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
 #ifdef MACOSX
-    nativeHome = nativeHome.concatenateNativePath("Library/Application Support/Doomsday2");
+    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    nativeHome = nativeHome.concatenateNativePath("Library/Application Support/Doomsday Engine/runtime");
 #elif WIN32
-    nativeHome = nativeHome.concatenateNativePath("Doomsday2"); /// @todo What is appropriate here?
+    /// @todo We still have Snowberry, so use its runtime folder.
+    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
+    nativeHome = nativeHome.concatenateNativePath("Doomsday Frontend\\runtime");
 #else // UNIX
-    nativeHome = nativeHome.concatenateNativePath(".doomsday2");
+    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    nativeHome = nativeHome.concatenateNativePath(".doomsday/runtime");
 #endif
     _fs.makeFolder("/home").attach(new DirectoryFeed(nativeHome,
         DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
