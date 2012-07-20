@@ -35,7 +35,7 @@ namespace de
      * Template class for 2D vectors (points). The members are public for
      * convenient access. The used value type must be serializable.
      *
-     * @ingroup types
+     * @ingroup math
      */ 
     template <typename Type>
     class Vector2 : public ISerializable
@@ -140,7 +140,7 @@ namespace de
      * Template class for 3D vectors (points).
      * The members are public for convenient access.
      *
-     * @ingroup types
+     * @ingroup math
      */ 
     template <typename Type>
     class Vector3 : public Vector2<Type>
@@ -248,7 +248,7 @@ namespace de
      * Template class for 4D vectors.
      * The members are public for convenient access.
      *
-     * @ingroup types
+     * @ingroup math
      */ 
     template <typename Type>
     class Vector4 : public Vector3<Type>

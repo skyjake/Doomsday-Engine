@@ -25,19 +25,25 @@
  */
 
 /**
- * @defgroup core     Core
- * @defgroup data     Data Types and Structures
- * @defgroup input    Input Subsystem
+ * @defgroup core  Core
  *
- * @defgroup net      Network
+ * @defgroup data  Data Types and Structures
+ * Classes related to accessing, storing, and processing of data.
+ *
+ * @defgroup input  Input Subsystem
+ *
+ * @defgroup net  Network
  * Classes responsible for network communications.
  *
- * @defgroup resource Resources
- * @defgroup render   Renderer
- * @defgroup GL       Graphics Library
- * @defgroup math     Math Utilities
+ * @defgroup resource  Resources
  *
- * @defgroup types    Basic Types
+ * @defgroup render  Renderer
+ *
+ * @defgroup GL  Graphics Library
+ *
+ * @defgroup math  Math Utilities
+ *
+ * @defgroup types  Basic Types
  * Basic data types.
  */
 

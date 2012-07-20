@@ -24,12 +24,6 @@
 #include "../ISerializable"
 #include "../String"
 
-/**
- * @defgroup data Data
- *
- * Classes related to accessing, storing, and processing of data.
- */
-
 namespace de
 {
     class Process;

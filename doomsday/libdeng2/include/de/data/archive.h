@@ -102,9 +102,9 @@ namespace de
          * Loads a copy of the compressed data into memory for all the entries that
          * don't already have uncompressed data stored. 
          *
-         * @param op  If DetachFromSource, the archive becomes a standalone
-         *            archive that no longer needs the source byte array to
-         *            remain in existence.
+         * @param attach  If DetachFromSource, the archive becomes a standalone
+         *                archive that no longer needs the source byte array to
+         *                remain in existence.
          */
         void cache(CacheAttachment attach = DetachFromSource);
 

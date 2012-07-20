@@ -104,10 +104,10 @@ namespace de
          * @param name  Name for the variable. Any periods (.) are not allowed.
          * @param initial  Initial value. Variable gets ownership. If no value is given here,
          *      a NoneValue will be created for the variable.
-         * @param mode  Mode flags.
+         * @param varMode  Mode flags.
          */
         Variable(const String& name = "", Value* initial = 0,
-                 const Flags& _mode = DefaultMode);
+                 const Flags& varMode = DefaultMode);
             
         /**
          * Constructs a copy of another variable.
