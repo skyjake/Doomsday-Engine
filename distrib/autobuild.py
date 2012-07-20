@@ -309,31 +309,37 @@ def system_command(cmd):
 def generate_apidoc():
     """Run Doxygen to generate all API documentation."""
     git_pull()
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libdeng2'))    
+
+    print >> sys.stderr, "\nPublic API 2.0 docs..."
+    system_command('doxygen api2.doxy >/dev/null 2>../doxyissues-api2.txt')
+    system_command('wc -l ../doxyissues-api2.txt')
+
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
     
-    print "\nPublic API docs..."
+    print >> sys.stderr, "\nPublic API docs..."
     system_command('doxygen api.doxy >/dev/null 2>../doxyissues-api.txt')
     system_command('wc -l ../doxyissues-api.txt')
 
-    print "\nInternal Win32 docs..."
+    print >> sys.stderr, "\nInternal Win32 docs..."
     system_command('doxygen engine-win32.doxy >/dev/null 2>../doxyissues-win32.txt')
     system_command('wc -l ../doxyissues-win32.txt')
 
-    print "\nInternal Mac/Unix docs..."
+    print >> sys.stderr, "\nInternal Mac/Unix docs..."
     system_command('doxygen engine-mac.doxy >/dev/null 2>../doxyissues-mac.txt')        
     system_command('wc -l ../doxyissues-mac.txt')
 
-    print "\nDoom plugin docs..."
+    print >> sys.stderr, "\nDoom plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
     system_command('doxygen jdoom.doxy >/dev/null 2>../../doxyissues-doom.txt')
     system_command('wc -l ../../doxyissues-doom.txt')
 
-    print "\nHeretic plugin docs..."
+    print >> sys.stderr, "\nHeretic plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
     system_command('doxygen jheretic.doxy >/dev/null 2>../../doxyissues-heretic.txt')
     system_command('wc -l ../../doxyissues-heretic.txt')
 
-    print "\nHexen plugin docs..."
+    print >> sys.stderr, "\nHexen plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
     system_command('doxygen jhexen.doxy >/dev/null 2>../../doxyissues-hexen.txt')
     system_command('wc -l ../../doxyissues-hexen.txt')

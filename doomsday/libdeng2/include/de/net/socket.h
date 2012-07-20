@@ -20,12 +20,6 @@
 #ifndef LIBDENG2_SOCKET_H
 #define LIBDENG2_SOCKET_H
 
-/**
- * @defgroup net Network
- *
- * Classes responsible for network communications.
- */
-
 #include "../libdeng2.h"
 #include "../IByteArray"
 #include "../Address"

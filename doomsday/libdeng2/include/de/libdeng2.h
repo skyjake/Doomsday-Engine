@@ -24,6 +24,40 @@
  * @file libdeng2.h  Common definitions for libdeng2.
  */
 
+/**
+ * @defgroup core     Core
+ * @defgroup data     Data Types and Structures
+ * @defgroup input    Input Subsystem
+ *
+ * @defgroup net      Network
+ * Classes responsible for network communications.
+ *
+ * @defgroup resource Resources
+ * @defgroup render   Renderer
+ * @defgroup GL       Graphics Library
+ * @defgroup math     Math Utilities
+ *
+ * @defgroup types    Basic Types
+ * Basic data types.
+ */
+
+/**
+ * @mainpage libdeng2 API
+ *
+ * This documentation covers all the functions and data that Doomsday 2 makes
+ * available for games and other plugins.
+ *
+ * @section Overview
+ * The documentation has been organized into <a href="modules.html">modules</a>.
+ * The primary ones are listed below:
+ * - @ref core
+ * - @ref data
+ * - @ref input
+ * - @ref net
+ * - @ref resource
+ * - @ref render
+ */
+
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
 #endif
@@ -116,11 +150,6 @@
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
-
-/**
- * @defgroup types Basic Types
- * Basic numeric data types.
- */
 
 //@{
 /// @ingroup types

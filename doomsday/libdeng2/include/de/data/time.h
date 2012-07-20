@@ -36,7 +36,7 @@ class String;
  * one absolute point in time (since the epoch).  Instances of Time should be
  * used wherever time needs to be measured, calculated or stored.
  *
- * @ingroup core
+ * @ingroup types
  */
 class DENG2_PUBLIC Time : public ISerializable
 {
