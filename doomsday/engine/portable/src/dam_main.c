@@ -1,81 +1,54 @@
-/**\file dam_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Doomsday Archived Map (DAM), map management.
+ * @file dam_main.c
+ * Doomsday Archived Map (DAM), map management. @ingroup map
+ *
+ * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
+#include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_dam.h"
-#include "de_misc.h"
-#include "de_network.h"
-#include "de_refresh.h"
-#include "de_render.h"
 #include "de_defs.h"
 #include "de_edit.h"
 #include "de_filesys.h"
-
-#include <math.h>
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
+#include "de_network.h"
+#include "de_refresh.h"
+#include "de_render.h"
 
 typedef struct listnode_s {
     void*       data;
     struct listnode_s* next;
 } listnode_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void freeArchivedMap(archivedmap_t *dam);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+static void freeArchivedMap(archivedmap_t* dam);
 
 // Should we be caching successfully loaded maps?
 byte mapCache = true;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const char* mapCacheDir = "mapcache/";
 
 static archivedmap_t** archivedMaps = NULL;
 static uint numArchivedMaps = 0;
 
-// CODE --------------------------------------------------------------------
-
 static void clearArchivedMaps(void)
 {
-    if(NULL != archivedMaps)
+    if(archivedMaps)
     {
         uint i;
         for(i = 0; i < numArchivedMaps; ++i)
@@ -236,7 +209,7 @@ static archivedmap_t* allocArchivedMap(void)
     archivedmap_t* dam = Z_Calloc(sizeof(*dam), PU_APPSTATIC, 0);
     if(!dam)
         Con_Error("allocArchivedMap: Failed on allocation of %lu bytes for new ArchivedMap.",
-            (unsigned long) sizeof(*dam));
+                  (unsigned long) sizeof(*dam));
     return dam;
 }
 
@@ -329,10 +302,7 @@ static archivedmap_t* findArchivedMap(const Uri* uri)
  */
 static void addArchivedMap(archivedmap_t* dam)
 {
-    archivedMaps =
-        Z_Realloc(archivedMaps,
-                  sizeof(archivedmap_t*) * (++numArchivedMaps + 1),
-                  PU_APPSTATIC);
+    archivedMaps = Z_Realloc(archivedMaps, sizeof(archivedmap_t*) * (++numArchivedMaps + 1), PU_APPSTATIC);
     archivedMaps[numArchivedMaps - 1] = dam;
     archivedMaps[numArchivedMaps] = NULL; // Terminate.
 }
@@ -388,7 +358,7 @@ static uint collectMapLumps(listnode_t** headPtr, lumpnum_t startLump)
 /// Calculate the identity key for maps loaded from this path.
 static ushort calculateIdentifierForMapPath(const char* path)
 {
-    if(NULL != path && path[0])
+    if(path && path[0])
     {
         ushort identifier = 0;
         size_t i;
@@ -427,7 +397,7 @@ ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
 static boolean loadMap(GameMap** map, archivedmap_t* dam)
 {
     *map = (GameMap*) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
-    if(NULL == *map)
+    if(!*map)
         Con_Error("loadMap: Failed on allocation of %lu bytes for new Map.", (unsigned long) sizeof(**map));
     return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
 }
