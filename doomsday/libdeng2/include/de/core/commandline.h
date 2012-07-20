@@ -166,7 +166,7 @@ namespace de
          * - -cmd "echo ""this is a command""" => [-cmd] [echo "this is a command"]
          * - Hello" My"Friend => [Hello MyFriend]
          * - @@test.rsp [reads contents of test.rsp]
-         * - @@\"Program Files"\\test.rsp [reads contents of "\Program Files\test.rsp"]
+         * - <tt>@@\\"Program Files"\\test.rsp</tt> [reads contents of <tt>"\Program Files\test.rsp"</tt>]
          *
          * @param cmdLine  String containing the arguments.
          */ 

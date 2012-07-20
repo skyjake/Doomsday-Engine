@@ -1,0 +1,18 @@
+# Public API documentation for libdeng2
+@INCLUDE = ../doomsday.doxy
+
+PROJECT_NAME            = "libdeng2"
+PROJECT_NUMBER          = 2.0.0-Dev
+PROJECT_BRIEF           = "Public API"
+OUTPUT_DIRECTORY        = ../apidoc/api2/
+
+INPUT                   = include
+PREDEFINED              = __DENG2__ \ 
+                          "DENG2_ERROR(N)=class N : public de::Error {};" \
+                          "DENG2_SUB_ERROR(B,N)=class N : public B {};" 
+
+INCLUDED_BY_GRAPH       = YES
+REFERENCED_BY_RELATION  = NO
+OPTIMIZE_OUTPUT_FOR_C   = NO
+MACRO_EXPANSION         = YES
+EXPAND_ONLY_PREDEF      = YES
