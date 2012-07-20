@@ -177,7 +177,7 @@ void RefValue::operator << (Reader& /*from*/)
     DENG2_ASSERT(false);
 }
 
-void RefValue::variableBeingDeleted(Variable& variable)
+void RefValue::variableBeingDeleted(Variable& DENG2_DEBUG_ONLY(variable))
 {
     DENG2_ASSERT(_variable == &variable);
     _variable = 0;

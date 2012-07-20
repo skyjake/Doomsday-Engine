@@ -763,7 +763,7 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupdata startupgfx startupfonts readme
+    INSTALLS += target data startupdata startupgfx startupfonts cfg readme
 
     target.path = $$DENG_BIN_DIR
 
@@ -771,6 +771,7 @@ else:unix:!macx {
     startupdata.path = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
+    cfg.path = $$DENG_DATA_DIR/config
 
     readme.files = ../doc/output/doomsday.6
     readme.path = $$PREFIX/share/man/man6

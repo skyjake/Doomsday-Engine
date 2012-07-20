@@ -155,7 +155,7 @@ void RecordValue::operator << (Reader& from)
     from >> dereference();
 }
 
-void RecordValue::recordBeingDeleted(Record& record)
+void RecordValue::recordBeingDeleted(Record& DENG2_DEBUG_ONLY(record))
 {
     DENG2_ASSERT(_record == &record);
     DENG2_ASSERT(!_ownership.testFlag(OwnsRecord));

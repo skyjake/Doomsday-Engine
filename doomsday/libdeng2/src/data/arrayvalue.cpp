@@ -23,6 +23,7 @@
 #include "de/Writer"
 #include "de/Reader"
 
+#include <algorithm>
 #include <QTextStream>
 
 using namespace de;

@@ -159,7 +159,7 @@ Record* Function::globals() const
     return _globals;
 }
 
-bool Function::callNative(Context& /*context*/, const ArgumentValues& args) const
+bool Function::callNative(Context& /*context*/, const ArgumentValues& DENG2_DEBUG_ONLY(args)) const
 {
     DENG2_ASSERT(args.size() == _arguments.size());
     
@@ -219,7 +219,7 @@ void Function::operator << (Reader& from)
     from >> _compound;
 }
 
-void Function::recordBeingDeleted(Record& record)
+void Function::recordBeingDeleted(Record& DENG2_DEBUG_ONLY(record))
 {
     // The namespace of the record is being deleted.
     DENG2_ASSERT(_globals == &record);

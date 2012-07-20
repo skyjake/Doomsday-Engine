@@ -66,6 +66,8 @@
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
+#  include <typeinfo>
+#  include <memory> // auto_ptr
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
