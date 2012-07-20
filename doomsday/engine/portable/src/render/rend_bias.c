@@ -628,7 +628,7 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
     bsuf->updated = lastChangeOnFrame;
     aff.affected = bsuf->affected;
     aff.numFound = 0;
-    memset(aff.affected, -1, sizeof(aff.affected));
+    memset(aff.affected, -1, sizeof(bsuf->affected)); // array of MAX_BIAS_AFFECTED
 
     for(i = 0, src = sources; i < numSources; ++i, ++src)
     {

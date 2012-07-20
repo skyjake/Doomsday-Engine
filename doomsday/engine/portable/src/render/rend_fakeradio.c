@@ -472,7 +472,7 @@ static void scanEdges(shadowcorner_t topCorners[2],
 
     side = line->L_sidedef(sid);
 
-    memset(sideCorners, 0, sizeof(sideCorners));
+    memset(sideCorners, 0, sizeof(shadowcorner_t) * 2);
 
     // Find the sidecorners first: left and right neighbour.
     for(i = 0; i < 2; ++i)

@@ -273,7 +273,7 @@ void FR_SetTracking(int value)
 void FR_ColorAndAlpha(float rgba[4])
 {
     errorIfNotInited("FR_ColorAndAlpha");
-    memcpy(rgba, currentAttribs()->rgba, sizeof(rgba));
+    memcpy(rgba, currentAttribs()->rgba, sizeof(rgba[0]) * 4);
 }
 
 /// @note Member of the Doomsday public API.
