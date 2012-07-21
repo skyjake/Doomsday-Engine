@@ -138,21 +138,28 @@
 /**
  * Macro for iterating through an STL container.
  *
+ * @param IterClass     Class being iterated.
  * @param Iter          Name/declaration of the iterator variable.
  * @param ContainerRef  Container.
- * @param IterClass     Class of the iterator.
  */
-#define DENG2_FOR_EACH(Iter, ContainerRef, IterClass) \
-    for(IterClass Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+#define DENG2_FOR_EACH(IterClass, Iter, ContainerRef) \
+    for(IterClass::iterator Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+
+#define DENG2_FOR_EACH_CONST(IterClass, Iter, ContainerRef) \
+    for(IterClass::const_iterator Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
 
 /**
  * Macro for iterating through an STL container in reverse.
  *
+ * @param IterClass     Class being iterated.
  * @param Var           Name/declaration of the iterator variable.
  * @param ContainerRef  Container.
  */
-#define DENG2_FOR_EACH_REVERSE(Var, ContainerRef) \
-    for(Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
+#define DENG2_FOR_EACH_REVERSE(IterClass, Var, ContainerRef) \
+    for(IterClass::reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
+
+#define DENG2_FOR_EACH_CONST_REVERSE(IterClass, Var, ContainerRef) \
+    for(IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {

@@ -56,7 +56,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     Variable* variable = 0;
     Record* record = 0;
     
-    DENG2_FOR_EACH(i, spaces, Evaluator::Namespaces::iterator)
+    DENG2_FOR_EACH(Evaluator::Namespaces, i, spaces)
     {
         Record& ns = **i;
         if(ns.hasMember(_identifier))

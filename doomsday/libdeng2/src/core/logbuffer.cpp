@@ -61,7 +61,7 @@ void LogBuffer::clear()
     DENG2_GUARD(this);
 
     flush();
-    DENG2_FOR_EACH(i, _entries, EntryList::iterator)
+    DENG2_FOR_EACH(EntryList, i, _entries)
     {
         delete *i;
     }
@@ -241,7 +241,7 @@ void LogBuffer::flush()
             const duint MAX_LENGTH = 89;
 #endif
 
-            DENG2_FOR_EACH(i, _toBeFlushed, EntryList::iterator)
+            DENG2_FOR_EACH(EntryList, i, _toBeFlushed)
             {
                 // Error messages will go to stderr instead of stdout.
                 QList<IOutputStream*> os;
