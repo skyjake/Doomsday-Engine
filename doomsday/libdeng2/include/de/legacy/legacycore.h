@@ -29,7 +29,7 @@ namespace de {
 class LegacyNetwork;
 
 /**
- * Transitional kernel for supporting legacy Dooomsday C code in accessing
+ * Transitional kernel for supporting legacy Doomsday C code in accessing
  * libdeng2 functionality. The legacy engine needs to construct one of these
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
