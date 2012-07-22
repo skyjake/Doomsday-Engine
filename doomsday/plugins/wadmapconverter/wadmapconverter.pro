@@ -10,21 +10,24 @@ win32|macx: TARGET = dpWadMapConverter
 
 VERSION = $$WADMAPCONVERTER_VERSION
 
+deng_debug: DEFINES += DENG_WADMAPCONVERTER_DEBUG
+
 INCLUDEPATH += include
 
 HEADERS += \
     include/version.h \
-    include/wadmapconverter.h
+    include/wadmapconverter.h \
+    include/map.h
 
 SOURCES += \
-    src/load.cpp \
-    src/wadmapconverter.cpp
+    src/wadmapconverter.cpp \
+    src/load.cpp
 
 win32 {
+    RC_FILE = res/wadmapconverter.rc
+
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpwadmapconverter.def\"
     OTHER_FILES += api/dpwadmapconverter.def
-
-    RC_FILE = res/wadmapconverter.rc
 }
 
 !macx {

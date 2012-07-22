@@ -1,48 +1,42 @@
-/**\file load.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
+ * @file load.cpp
  * Load and analyzation of the map data structures.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include "doomsday.h"
-#include "dd_api.h"
 
 #include "wadmapconverter.h"
-
-#include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+
+#include "doomsday.h"
+#include <de/c_wrapper.h>
+#include "map.h"
 
 #ifdef WIN32
 #  define stricmp _stricmp
 #  define strnicmp _strnicmp
 #endif
 
-// MACROS ------------------------------------------------------------------
+#define VERBOSE(code)   { if(DENG_PLUGIN_GLOBAL(verbose) >= 1) { code; } }
+#define VERBOSE2(code)  { if(DENG_PLUGIN_GLOBAL(verbose) >= 2) { code; } }
+
+extern int DENG_PLUGIN_GLOBAL(verbose);
 
 #define map     DENG_PLUGIN_GLOBAL(map)
 
@@ -69,54 +63,15 @@
 
 #define SEQTYPE_NUMSEQ          (10)
 
-// TYPES -------------------------------------------------------------------
-
-typedef enum lumptype_e {
-    ML_INVALID = -1,
-    FIRST_LUMP_TYPE,
-    ML_LABEL = FIRST_LUMP_TYPE, // A separator, name, ExMx or MAPxx
-    ML_THINGS,                  // Monsters, items..
-    ML_LINEDEFS,                // LineDefs, from editing
-    ML_SIDEDEFS,                // SideDefs, from editing
-    ML_VERTEXES,                // Vertices, edited and BSP splits generated
-    ML_SEGS,                    // LineSegs, from LineDefs split by BSP
-    ML_SSECTORS,                // Subsectors, list of LineSegs
-    ML_NODES,                   // BSP nodes
-    ML_SECTORS,                 // Sectors, from editing
-    ML_REJECT,                  // LUT, sector-sector visibility
-    ML_BLOCKMAP,                // LUT, motion clipping, walls/grid element
-    ML_BEHAVIOR,                // ACS Scripts (compiled).
-    ML_SCRIPTS,                 // ACS Scripts (source).
-    ML_LIGHTS,                  // Surface color tints.
-    ML_MACROS,                  // DOOM64 format, macro scripts.
-    ML_LEAFS,                   // DOOM64 format, segs (close subsectors).
-    ML_GLVERT,                  // GL vertexes
-    ML_GLSEGS,                  // GL segs
-    ML_GLSSECT,                 // GL subsectors
-    ML_GLNODES,                 // GL nodes
-    ML_GLPVS,                   // GL PVS dataset
-    NUM_LUMP_TYPES
-} lumptype_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static uint PolyLineCount;
 
 static uint validCount = 0; // Used for Polyobj LineDef collection.
 
-// CODE --------------------------------------------------------------------
-
-static int C_DECL compareMaterialNames(const void* a, const void* b)
+static int compareMaterialNames(const void* a, const void* b)
 {
-    return stricmp((*(materialref_t**)a)->name, (*(materialref_t**)b)->name);
+    materialref_t* refA = *(materialref_t**)a;
+    materialref_t* refB = *(materialref_t**)b;
+    return stricmp(refA->name, refB->name);
 }
 
 static const materialref_t* getMaterial(const char* regName,
@@ -166,10 +121,14 @@ static const materialref_t* getMaterial(const char* regName,
                     isDone = true;
                 }
                 else
+                {
                     topIdx = pivot - 1;
+                }
             }
             else
+            {
                 bottomIdx = pivot + 1;
+            }
         }
     }
 
@@ -182,22 +141,23 @@ const materialref_t* GetMaterial(const char* name, boolean isFlat)
                        isFlat? map->numFlats : map->numTextures);
 }
 
-static void addMaterialToList(materialref_t* m, materialref_t*** list,
-                              size_t* size)
+static void addMaterialToList(materialref_t* m, materialref_t*** list, size_t* size)
 {
-    size_t              i, n;
+    size_t n;
 
     // Enlarge the list.
-    (*list) = realloc((*list), sizeof(m) * ++(*size));
+    (*list) = (materialref_t**)realloc((*list), sizeof(m) * ++(*size));
 
     // Find insertion point.
     n = 0;
-    for(i = 0; i < (*size) - 1; ++i)
+    for(size_t i = 0; i < (*size) - 1; ++i)
+    {
         if(compareMaterialNames(&(*list)[i], &m) > 0)
         {
             n = i;
             break;
         }
+    }
 
     // Shift the rest over.
     if((*size) > 1)
@@ -218,11 +178,10 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
     }
     else
     {
-        materialref_t*      m;
         /**
          * A new material.
          */
-        m = malloc(sizeof(*m));
+        materialref_t* m = (materialref_t*)malloc(sizeof(*m));
         if(map->format == MF_DOOM64)
         {
             int uniqueId = *((int*) name);
@@ -248,13 +207,10 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
             else
             {
                 // First try the prefered namespace, then any.
-                ddstring_t path;
-                Uri* uri;
-
-                Str_Init(&path);
+                ddstring_t path; Str_Init(&path);
                 Str_PercentEncode(Str_Set(&path, m->name));
 
-                uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+                Uri* uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
                 Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
                 Str_Free(&path);
 
@@ -567,7 +523,7 @@ static void buildReject(gamemap_t *map)
 }
 #endif
 
-int DataTypeForLumpName(const char* name)
+lumptype_t DataTypeForLumpName(const char* name)
 {
     static const struct lumptype_s {
         lumptype_t      type;
@@ -597,11 +553,10 @@ int DataTypeForLumpName(const char* name)
         {ML_GLPVS,      "GL_PVS"},
         {ML_INVALID,    NULL},
     };
-    lumptype_t          i;
 
     if(name && name[0])
     {
-        for(i = FIRST_LUMP_TYPE; knownLumps[i].type != ML_INVALID; ++i)
+        for(uint i = (uint)FIRST_LUMP_TYPE; knownLumps[i].type != ML_INVALID; ++i)
         {
             if(!strnicmp(knownLumps[i].name, name, strlen(knownLumps[i].name)))
                 return knownLumps[i].type;
@@ -614,30 +569,27 @@ int DataTypeForLumpName(const char* name)
 /**
  * Create a temporary polyobj (read from the original map data).
  */
-static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
-                             int tag, int sequenceType, int16_t anchorX,
-                             int16_t anchorY)
+static boolean createPolyobj(mline_t** lineList, uint num, uint* poIdx,
+    int tag, int sequenceType, int16_t anchorX, int16_t anchorY)
 {
-    uint                i;
-    mpolyobj_t          *po, **newList;
-
     if(!lineList || num == 0)
         return false;
 
     // Allocate the new polyobj.
-    po = calloc(1, sizeof(*po));
+    mpolyobj_t* po = (mpolyobj_t*)calloc(1, sizeof(*po));
 
     /**
      * Link the new polyobj into the global list.
      */
-    newList = malloc(((++map->numPolyobjs) + 1) * sizeof(mpolyobj_t*));
+    mpolyobj_t** newList = (mpolyobj_t**)malloc(((++map->numPolyobjs) + 1) * sizeof(mpolyobj_t*));
     // Copy the existing list.
-    for(i = 0; i < map->numPolyobjs - 1; ++i)
+    uint n = 0;
+    for(uint i = 0; i < map->numPolyobjs - 1; ++i, n++)
     {
         newList[i] = map->polyobjs[i];
     }
-    newList[i++] = po; // Add the new polyobj.
-    newList[i] = NULL; // Terminate.
+    newList[n++] = po; // Add the new polyobj.
+    newList[n] = NULL; // Terminate.
 
     if(map->numPolyobjs-1 > 0)
         free(map->polyobjs);
@@ -649,8 +601,8 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
     po->anchor[VX] = anchorX;
     po->anchor[VY] = anchorY;
     po->lineCount = num;
-    po->lineIndices = malloc(sizeof(uint) * num);
-    for(i = 0; i < num; ++i)
+    po->lineIndices = (uint*)malloc(sizeof(uint) * num);
+    for(uint i = 0; i < num; ++i)
     {
         mline_t* line = lineList[i];
         line->aFlags |= LAF_POLYOBJ;
@@ -731,7 +683,7 @@ static mline_t** collectPolyobjLineDefs(mline_t* lineDef, uint* num)
     lineDef->validCount = validCount;
     iterFindPolyLines(v2[VX], v2[VY], NULL);
 
-    lineList = malloc((PolyLineCount+1) * sizeof(mline_t*));
+    lineList = (mline_t**)malloc((PolyLineCount+1) * sizeof(mline_t*));
 
     lineList[0] = lineDef; // Insert the first line.
     validCount++;
@@ -751,8 +703,7 @@ static mline_t** collectPolyobjLineDefs(mline_t* lineDef, uint* num)
  *
  * @return              @c true = successfully created polyobj.
  */
-static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
-                                    int16_t anchorY)
+static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 {
 #define MAXPOLYLINES         32
 
@@ -762,14 +713,12 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
     {
         mline_t* line = &map->lines[i];
 
-        if(line->aFlags & LAF_POLYOBJ)
-            continue;
-        if(!(line->xType == PO_LINE_START && line->xArgs[0] == tag))
-            continue;
+        if(line->aFlags & LAF_POLYOBJ) continue;
+        if(!(line->xType == PO_LINE_START && line->xArgs[0] == tag)) continue;
 
-        {mline_t** lineList;
         uint num;
-        if((lineList = collectPolyobjLineDefs(line, &num)))
+        mline_t** lineList = collectPolyobjLineDefs(line, &num);
+        if(lineList)
         {
             uint poIdx;
             byte seqType;
@@ -782,19 +731,17 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
             result = createPolyobj(lineList, num, &poIdx, tag, seqType, anchorX, anchorY);
             free(lineList);
 
-            if(result)
-                return true;
-        }}
+            if(result) return true;
+        }
     }
 
     /**
      * Didn't find a polyobj through PO_LINE_START.
      * We'll try another approach...
      */
-    {
-    mline_t         *polyLineList[MAXPOLYLINES];
-    uint            lineCount = 0;
-    uint            j, psIndex, psIndexOld;
+    mline_t* polyLineList[MAXPOLYLINES];
+    uint lineCount = 0;
+    uint j, psIndex, psIndexOld;
 
     psIndex = 0;
     for(j = 1; j < MAXPOLYLINES; ++j)
@@ -802,20 +749,17 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
         psIndexOld = psIndex;
         for(i = 0; i < map->numLines; ++i)
         {
-            mline_t         *line = &map->lines[i];
+            mline_t* line = &map->lines[i];
 
-            if(line->aFlags & LAF_POLYOBJ)
-                continue;
+            if(line->aFlags & LAF_POLYOBJ) continue;
 
             if(line->xType == PO_LINE_EXPLICIT &&
                line->xArgs[0] == tag)
             {
                 if(!line->xArgs[1])
                 {
-                    Con_Error
-                        ("WadMapConverter::findAndCreatePolyobj: Explicit line missing order number "
-                         "(probably %d) in poly %d.\n",
-                         j + 1, tag);
+                    Con_Error("WadMapConverter::findAndCreatePolyobj: Explicit line missing order number "
+                              "(probably %d) in poly %d.\n", j + 1, tag);
                 }
 
                 if(line->xArgs[1] == j)
@@ -826,8 +770,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                     psIndex++;
                     if(psIndex > MAXPOLYLINES)
                     {
-                        Con_Error
-                            ("WadMapConverter::findAndCreatePolyobj: psIndex > MAXPOLYLINES\n");
+                        Con_Error("WadMapConverter::findAndCreatePolyobj: psIndex > MAXPOLYLINES\n");
                     }
 
                     // Clear out any special.
@@ -839,19 +782,18 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
         }
 
         if(psIndex == psIndexOld)
-        {   // Check if an explicit line order has been skipped
+        {
+            // Check if an explicit line order has been skipped
             // A line has been skipped if there are any more explicit
             // lines with the current tag value
             for(i = 0; i < map->numLines; ++i)
             {
-                mline_t         *line = &map->lines[i];
+                mline_t* line = &map->lines[i];
 
-                if(line->xType == PO_LINE_EXPLICIT &&
-                   line->xArgs[0] == tag)
+                if(line->xType == PO_LINE_EXPLICIT && line->xArgs[0] == tag)
                 {
-                    Con_Error
-                        ("WadMapConverter::findAndCreatePolyobj: Missing explicit line %d for poly %d\n",
-                         j, tag);
+                    Con_Error("WadMapConverter::findAndCreatePolyobj: Missing explicit line %d for poly %d\n",
+                              j, tag);
                 }
             }
         }
@@ -859,13 +801,13 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
 
     if(lineCount)
     {
-        uint            poIdx;
-        int             seqType = polyLineList[0]->xArgs[3];
+        const int seqType = polyLineList[0]->xArgs[3];
+        uint poIdx;
 
         if(createPolyobj(polyLineList, lineCount, &poIdx, tag,
                          seqType, anchorX, anchorY))
         {
-            mline_t        *line = polyLineList[0];
+            mline_t* line = polyLineList[0];
 
             // Next, change the polyobjs first line to point to a mirror
             // if it exists.
@@ -873,7 +815,6 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
 
             return true;
         }
-    }
     }
 
     return false;
@@ -883,17 +824,15 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
 
 static void findPolyobjs(void)
 {
-    uint i;
-
     VERBOSE2( Con_Message("WadMapConverter::findPolyobjs: Processing...\n") )
 
-    for(i = 0; i < map->numThings; ++i)
+    for(uint i = 0; i < map->numThings; ++i)
     {
         mthing_t* thing = &map->things[i];
-
         if(thing->doomEdNum == PO_ANCHOR_DOOMEDNUM)
-        {   // A polyobj anchor.
-            int tag = thing->angle;
+        {
+            // A polyobj anchor.
+            const int tag = thing->angle;
             findAndCreatePolyobj(tag, thing->origin[VX], thing->origin[VY]);
         }
     }
@@ -902,18 +841,19 @@ static void findPolyobjs(void)
 void AnalyzeMap(void)
 {
     if(map->format == MF_HEXEN)
+    {
         findPolyobjs();
+    }
 }
 
-boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps)
+int IsSupportedFormat(const lumpnum_t* lumpList, int numLumps)
 {
     boolean supported = false;
-    int i;
 
     // Lets first check for format specific lumps, as their prescense
     // determines the format of the map data. Assume DOOM format by default.
     map->format = MF_DOOM;
-    for(i = 0; i < numLumps; ++i)
+    for(int i = 0; i < numLumps; ++i)
     {
         const char* lumpName = W_LumpName(lumpList[i]);
 
@@ -935,14 +875,13 @@ boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps)
         }
     }
 
-    for(i = 0; i < numLumps; ++i)
+    for(int i = 0; i < numLumps; ++i)
     {
         const char* lumpName = W_LumpName(lumpList[i]);
         size_t elmSize = 0; // Num of bytes.
-        uint* ptr;
 
         // Determine the number of map data objects of each data type.
-        ptr = NULL;
+        uint* ptr = NULL;
         switch(DataTypeForLumpName(lumpName))
         {
         case ML_VERTEXES:
@@ -975,8 +914,7 @@ boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps)
             elmSize = SIZEOF_LIGHT;
             break;
 
-        default:
-            break;
+        default: break;
         }
 
         if(ptr)
@@ -999,99 +937,110 @@ boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps)
 static void freeMapData(void)
 {
     if(map->vertexes)
+    {
         free(map->vertexes);
-    map->vertexes = NULL;
+        map->vertexes = NULL;
+    }
 
     if(map->lines)
+    {
         free(map->lines);
-    map->lines = NULL;
+        map->lines = NULL;
+    }
 
     if(map->sides)
+    {
         free(map->sides);
-    map->sides = NULL;
+        map->sides = NULL;
+    }
 
     if(map->sectors)
+    {
         free(map->sectors);
-    map->sectors = NULL;
+        map->sectors = NULL;
+    }
 
     if(map->things)
+    {
         free(map->things);
-    map->things = NULL;
+        map->things = NULL;
+    }
 
     if(map->polyobjs)
     {
-        uint                i;
-        for(i = 0; i < map->numPolyobjs; ++i)
+        for(uint i = 0; i < map->numPolyobjs; ++i)
         {
-            mpolyobj_t*         po = map->polyobjs[i];
+            mpolyobj_t* po = map->polyobjs[i];
             free(po->lineIndices);
             free(po);
         }
         free(map->polyobjs);
+        map->polyobjs = NULL;
     }
-    map->polyobjs = NULL;
 
     if(map->lights)
+    {
         free(map->lights);
-    map->lights = NULL;
+        map->lights = NULL;
+    }
 
     /*if(map->macros)
+    {
         free(map->macros);
-    map->macros = NULL;*/
+        map->macros = NULL;
+    }*/
 
     if(map->textures)
     {
-        size_t              i;
-        for(i = 0; i < map->numTextures; ++i)
+        for(size_t i = 0; i < map->numTextures; ++i)
         {
-            materialref_t*      m = map->textures[i];
+            materialref_t* m = map->textures[i];
             free(m);
         }
         free(map->textures);
+        map->textures = NULL;
     }
-    map->textures = NULL;
 
     if(map->flats)
     {
-        size_t              i;
-        for(i = 0; i < map->numFlats; ++i)
+        for(size_t i = 0; i < map->numFlats; ++i)
         {
-            materialref_t*      m = map->flats[i];
+            materialref_t* m = map->flats[i];
             free(m);
         }
         free(map->flats);
+        map->flats = NULL;
     }
-    map->flats = NULL;
 }
 
 static boolean loadVertexes(const uint8_t* buf, size_t len)
 {
-    uint num, n;
-    size_t elmSize;
-    const uint8_t* ptr;
-
     VERBOSE2( Con_Message("WadMapConverter::loadVertexes: Processing...\n") )
 
-    elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-    num = len / elmSize;
+    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+    uint num = len / elmSize;
     switch(map->format)
     {
     default:
-    case MF_DOOM:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    case MF_DOOM: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             map->vertexes[n * 2]     = (coord_t)SHORT(*((const int16_t*) (ptr)));
             map->vertexes[n * 2 + 1] = (coord_t)SHORT(*((const int16_t*) (ptr+2)));
+            ptr += elmSize;
         }
-        break;
+        break; }
 
-    case MF_DOOM64:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    case MF_DOOM64: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             map->vertexes[n * 2]     = (coord_t)FIX2FLT(LONG(*((const int32_t*) (ptr))));
             map->vertexes[n * 2 + 1] = (coord_t)FIX2FLT(LONG(*((const int32_t*) (ptr+4))));
+            ptr += elmSize;
         }
-        break;
+        break; }
     }
 
     return true;
@@ -1113,7 +1062,7 @@ static void interpretLineDefFlags(mline_t* l)
     /**
      * Zero unused flags if ML_INVALID is set.
      *
-     * \attention "This has been found to be necessary because of errors
+     * @attention "This has been found to be necessary because of errors
      *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
      *  the value 0xFE00 masked into the flags value.
      *  There could potentially be many more maps with this problem,
@@ -1162,21 +1111,18 @@ static void interpretLineDefFlags(mline_t* l)
 
 static boolean loadLinedefs(const uint8_t* buf, size_t len)
 {
-    uint num, n;
-    size_t elmSize;
-    const uint8_t* ptr;
-
     VERBOSE2( Con_Message("WadMapConverter::loadLinedefs: Processing...\n") )
 
-    elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF :
-        map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
-    num = len / elmSize;
+    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF :
+                      map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+    uint num = len / elmSize;
 
     switch(map->format)
     {
     default:
-    case MF_DOOM:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    case MF_DOOM: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             mline_t* l = &map->lines[n];
             int idx;
@@ -1208,11 +1154,13 @@ static boolean loadLinedefs(const uint8_t* buf, size_t len)
             l->validCount = 0;
             l->ddFlags = 0;
             interpretLineDefFlags(l);
+            ptr += elmSize;
         }
-        break;
+        break; }
 
-    case MF_DOOM64:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    case MF_DOOM64: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             mline_t* l = &map->lines[n];
             int idx;
@@ -1247,14 +1195,16 @@ static boolean loadLinedefs(const uint8_t* buf, size_t len)
             l->validCount = 0;
             l->ddFlags = 0;
             interpretLineDefFlags(l);
+            ptr += elmSize;
         }
-        break;
+        break; }
 
-    case MF_HEXEN:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    case MF_HEXEN: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
-            int                 idx;
-            mline_t*            l = &map->lines[n];
+            int idx;
+            mline_t* l = &map->lines[n];
 
             idx = USHORT(*((const uint16_t*) (ptr)));
             if(idx == 0xFFFF)
@@ -1287,8 +1237,9 @@ static boolean loadLinedefs(const uint8_t* buf, size_t len)
             l->validCount = 0;
             l->ddFlags = 0;
             interpretLineDefFlags(l);
+            ptr += elmSize;
         }
-        break;
+        break; }
     }
 
     return true;
@@ -1296,20 +1247,17 @@ static boolean loadLinedefs(const uint8_t* buf, size_t len)
 
 static boolean loadSidedefs(const uint8_t* buf, size_t len)
 {
-    uint num, n;
-    size_t elmSize;
-    const uint8_t* ptr;
-
     VERBOSE2( Con_Message("WadMapConverter::loadSidedefs: Processing...\n") )
 
-    elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-    num = len / elmSize;
+    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+    uint num = len / elmSize;
 
     switch(map->format)
     {
     default:
-    case MF_DOOM:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    case MF_DOOM: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             mside_t* s = &map->sides[n];
             char name[9];
@@ -1331,11 +1279,13 @@ static boolean loadSidedefs(const uint8_t* buf, size_t len)
                 s->sector = 0;
             else
                 s->sector = idx + 1;
+            ptr += elmSize;
         }
-        break;
+        break; }
 
-    case MF_DOOM64:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    case MF_DOOM64: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             mside_t* s = &map->sides[n];
             int idx;
@@ -1353,8 +1303,9 @@ static boolean loadSidedefs(const uint8_t* buf, size_t len)
                 s->sector = 0;
             else
                 s->sector = idx + 1;
+            ptr += elmSize;
         }
-        break;
+        break; }
     }
 
     return true;
@@ -1362,19 +1313,16 @@ static boolean loadSidedefs(const uint8_t* buf, size_t len)
 
 static boolean loadSectors(const uint8_t* buf, size_t len)
 {
-    uint num, n;
-    size_t elmSize;
-    const uint8_t* ptr;
-
     VERBOSE2( Con_Message("WadMapConverter::loadSectors: Processing...\n") )
 
-    elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-    num = len / elmSize;
+    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+    uint num = len / elmSize;
 
     switch(map->format)
     {
-    default:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    default: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             msector_t* s = &map->sectors[n];
             char name[9];
@@ -1390,11 +1338,13 @@ static boolean loadSectors(const uint8_t* buf, size_t len)
             s->lightLevel = SHORT(*((const int16_t*) (ptr+20)));
             s->type = SHORT(*((const int16_t*) (ptr+22)));
             s->tag = SHORT(*((const int16_t*) (ptr+24)));
+            ptr += elmSize;
         }
-        break;
+        break; }
 
-    case MF_DOOM64:
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    case MF_DOOM64: {
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             msector_t* s = &map->sectors[n];
             int idx;
@@ -1414,8 +1364,9 @@ static boolean loadSectors(const uint8_t* buf, size_t len)
             s->tag = SHORT(*((const int16_t*) (ptr+20)));
             s->d64flags = USHORT(*((const uint16_t*) (ptr+22)));
             s->lightLevel = 160;
+            ptr += elmSize;
         }
-        break;
+        break; }
     }
 
     return true;
@@ -1423,26 +1374,23 @@ static boolean loadSectors(const uint8_t* buf, size_t len)
 
 static boolean loadThings(const uint8_t* buf, size_t len)
 {
-// New flags: \todo get these from a game api header.
+/// @todo Get these from a game api header.
 #define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
 #define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
 #define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
 
 #define ANG45               0x20000000
-    uint num, n;
-    size_t elmSize;
-    const uint8_t* ptr;
 
     VERBOSE2( Con_Message("WadMapConverter::loadThings: Processing...\n") )
 
-    elmSize = (map->format == MF_DOOM64? SIZEOF_64THING :
+    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64THING :
         map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
-    num = len / elmSize;
+    uint num = len / elmSize;
 
     switch(map->format)
     {
     default:
-    case MF_DOOM:
+    case MF_DOOM: {
 /**
  * DOOM Thing flags:
  */
@@ -1458,7 +1406,8 @@ static boolean loadThings(const uint8_t* buf, size_t len)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
 
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             mthing_t* t = &map->things[n];
 
@@ -1479,6 +1428,7 @@ static boolean loadThings(const uint8_t* buf, size_t len)
             // DOOM format things spawn on the floor by default unless their
             // type-specific flags override.
             t->flags |= MTF_Z_FLOOR;
+            ptr += elmSize;
         }
 
 #undef MTF_EASY
@@ -1490,9 +1440,9 @@ static boolean loadThings(const uint8_t* buf, size_t len)
 #undef MTF_NOTCOOP
 #undef MTF_FRIENDLY
 #undef MASK_UNKNOWN_THING_FLAGS
-        break;
+        break; }
 
-    case MF_DOOM64:
+    case MF_DOOM64: {
 /**
  * DOOM64 Thing flags:
  */
@@ -1512,7 +1462,8 @@ static boolean loadThings(const uint8_t* buf, size_t len)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_DONTSPAWNATSTART|MTF_SCRIPT_TOUCH|MTF_SCRIPT_DEATH|MTF_SECRET|MTF_NOTARGET|MTF_NOTDM|MTF_NOTCOOP))
 
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             mthing_t* t = &map->things[n];
 
@@ -1536,6 +1487,7 @@ static boolean loadThings(const uint8_t* buf, size_t len)
             t->flags |= MTF_Z_FLOOR;
 
             t->d64TID = SHORT(*((const int16_t*) (ptr+12)));
+            ptr += elmSize;
         }
 
 #undef MTF_EASY
@@ -1551,9 +1503,9 @@ static boolean loadThings(const uint8_t* buf, size_t len)
 #undef MTF_NOTDM
 #undef MTF_NOTCOOP
 #undef MASK_UNKNOWN_THING_FLAGS
-        break;
+        break; }
 
-    case MF_HEXEN:
+    case MF_HEXEN: {
 /**
  * Hexen Thing flags:
  */
@@ -1577,7 +1529,8 @@ static boolean loadThings(const uint8_t* buf, size_t len)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
 
-        for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+        const uint8_t* ptr = buf;
+        for(uint n = 0; n < num; ++n)
         {
             mthing_t* t = &map->things[n];
 
@@ -1622,6 +1575,7 @@ static boolean loadThings(const uint8_t* buf, size_t len)
             t->xArgs[2] = *(ptr+17);
             t->xArgs[3] = *(ptr+18);
             t->xArgs[4] = *(ptr+19);
+            ptr += elmSize;
         }
 
 #undef MTF_EASY
@@ -1641,7 +1595,7 @@ static boolean loadThings(const uint8_t* buf, size_t len)
 #undef MTF_FRIENDLY
 #undef MTF_STILL
 #undef MASK_UNKNOWN_THING_FLAGS
-        break;
+        break; }
     }
 
     return true;
@@ -1653,15 +1607,12 @@ static boolean loadThings(const uint8_t* buf, size_t len)
 
 static boolean loadLights(const uint8_t* buf, size_t len)
 {
-    uint num, n;
-    size_t elmSize;
-    const uint8_t* ptr;
-
     VERBOSE2( Con_Message("WadMapConverter::loadLights: Processing...\n") )
 
-    elmSize = SIZEOF_LIGHT;
-    num = len / elmSize;
-    for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
+    size_t elmSize = SIZEOF_LIGHT;
+    uint num = len / elmSize;
+    const uint8_t* ptr = buf;
+    for(uint n = 0; n < num; ++n)
     {
         surfacetint_t* t = &map->lights[n];
 
@@ -1671,6 +1622,7 @@ static boolean loadLights(const uint8_t* buf, size_t len)
         t->xx[0] = *(ptr+3);
         t->xx[1] = *(ptr+4);
         t->xx[2] = *(ptr+5);
+        ptr += elmSize;
     }
 
     return true;
@@ -1684,9 +1636,9 @@ static void bufferLump(lumpnum_t lumpNum, uint8_t** buf, size_t* len, size_t* ol
     if(*len > *oldLen)
     {
         *buf = (uint8_t*)realloc(*buf, *len);
-        if(NULL == *buf)
+        if(!*buf)
             Con_Error("WadMapConverter::bufferLump: Failed on (re)allocation of %lu bytes for "
-                "temporary lump buffer.", (unsigned long) *len);
+                      "temporary lump buffer.", (unsigned long) *len);
         *oldLen = *len;
     }
 
@@ -1694,22 +1646,25 @@ static void bufferLump(lumpnum_t lumpNum, uint8_t** buf, size_t* len, size_t* ol
     W_ReadLump(lumpNum, *buf);
 }
 
-boolean LoadMap(const lumpnum_t* lumpList, int numLumps)
+int LoadMap(const lumpnum_t* lumpList, int numLumps)
 {
+    VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
+                         (map->format == MF_DOOM64? "DOOM64" :
+                          map->format == MF_HEXEN?  "Hexen"  : "DOOM")) );
+
+    // Allocate the data structure arrays.
+    map->vertexes =   (coord_t*)malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
+    map->lines    =   (mline_t*)malloc(map->numLines * sizeof(mline_t));
+    map->sides    =   (mside_t*)malloc(map->numSides * sizeof(mside_t));
+    map->sectors  = (msector_t*)malloc(map->numSectors * sizeof(msector_t));
+    map->things   =  (mthing_t*)malloc(map->numThings * sizeof(mthing_t));
+    if(map->numLights)
+        map->lights = (surfacetint_t*)malloc(map->numLights * sizeof(surfacetint_t));
+
     uint8_t* buf = NULL;
     size_t oldLen = 0;
 
-    // Allocate the data structure arrays.
-    map->vertexes = malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
-    map->lines = malloc(map->numLines * sizeof(mline_t));
-    map->sides = malloc(map->numSides * sizeof(mside_t));
-    map->sectors = malloc(map->numSectors * sizeof(msector_t));
-    map->things = malloc(map->numThings * sizeof(mthing_t));
-    if(map->numLights)
-        map->lights = malloc(map->numLights * sizeof(surfacetint_t));
-
-    { int i;
-    for(i = 0; i < numLumps; ++i)
+    for(int i = 0; i < numLumps; ++i)
     {
         lumptype_t lumpType = DataTypeForLumpName(W_LumpName(lumpList[i]));
         size_t len;
@@ -1757,22 +1712,21 @@ boolean LoadMap(const lumpnum_t* lumpList, int numLumps)
             //// \todo Write me!
             break;
 
-        default:
-            break;
+        default: break;
         }
-    }}
+    }
 
     if(buf)
+    {
         free(buf);
+    }
 
     return true; // Read and converted successfully.
 }
 
-boolean TransferMap(void)
+int TransferMap(void)
 {
     uint startTime = Sys_GetRealTime();
-    uint i;
-    boolean result;
 
     VERBOSE2(Con_Message("WadMapConverter::TransferMap...\n"));
 
@@ -1783,7 +1737,7 @@ boolean TransferMap(void)
     MPE_VertexCreatev(map->numVertexes, map->vertexes, NULL);
 
     VERBOSE2(Con_Message("WadMapConverter::Transfering sectors...\n"));
-    for(i = 0; i < map->numSectors; ++i)
+    for(uint i = 0; i < map->numSectors; ++i)
     {
         msector_t* sec = &map->sectors[i];
         uint sectorIDX;
@@ -1812,13 +1766,12 @@ boolean TransferMap(void)
     }
 
     VERBOSE2(Con_Message("WadMapConverter::Transfering linedefs...\n"));
-    for(i = 0; i < map->numLines; ++i)
+    for(uint i = 0; i < map->numLines; ++i)
     {
-        mline_t*            l = &map->lines[i];
-        mside_t*            front, *back;
-        uint                frontIdx = 0, backIdx = 0;
+        mline_t* l = &map->lines[i];
 
-        front = (l->sides[RIGHT] != 0? &map->sides[l->sides[RIGHT]-1] : NULL);
+        uint frontIdx = 0;
+        mside_t* front = (l->sides[RIGHT] != 0? &map->sides[l->sides[RIGHT]-1] : NULL);
         if(front)
         {
             frontIdx =
@@ -1831,7 +1784,8 @@ boolean TransferMap(void)
                                   front->offset[VX], front->offset[VY], 1, 1, 1);
         }
 
-        back = (l->sides[LEFT] != 0? &map->sides[l->sides[LEFT]-1] : NULL);
+        uint backIdx = 0;
+        mside_t* back = (l->sides[LEFT] != 0? &map->sides[l->sides[LEFT]-1] : NULL);
         if(back)
         {
             backIdx =
@@ -1877,9 +1831,9 @@ boolean TransferMap(void)
     }
 
     VERBOSE2(Con_Message("WadMapConverter::Transfering lights...\n"));
-    for(i = 0; i < map->numLights; ++i)
+    for(uint i = 0; i < map->numLights; ++i)
     {
-        surfacetint_t*           l = &map->lights[i];
+        surfacetint_t* l = &map->lights[i];
 
         MPE_GameObjProperty("Light", i, "ColorR", DDVT_FLOAT, &l->rgb[0]);
         MPE_GameObjProperty("Light", i, "ColorG", DDVT_FLOAT, &l->rgb[1]);
@@ -1890,14 +1844,14 @@ boolean TransferMap(void)
     }
 
     VERBOSE2(Con_Message("WadMapConverter::Transfering polyobjs...\n"));
-    for(i = 0; i < map->numPolyobjs; ++i)
+    for(uint i = 0; i < map->numPolyobjs; ++i)
     {
         mpolyobj_t* po = map->polyobjs[i];
-        uint j, *lineList;
-
-        lineList = malloc(sizeof(uint) * po->lineCount);
-        for(j = 0; j < po->lineCount; ++j)
+        uint* lineList = (uint*)malloc(sizeof(uint) * po->lineCount);
+        for(uint j = 0; j < po->lineCount; ++j)
+        {
             lineList[j] = po->lineIndices[j] + 1;
+        }
         MPE_PolyobjCreate(lineList, po->lineCount, po->tag,
                           po->seqType, (coord_t) po->anchor[VX],
                           (coord_t) po->anchor[VY]);
@@ -1905,9 +1859,9 @@ boolean TransferMap(void)
     }
 
     VERBOSE2(Con_Message("WadMapConverter::Transfering things...\n"));
-    for(i = 0; i < map->numThings; ++i)
+    for(uint i = 0; i < map->numThings; ++i)
     {
-        mthing_t*           th = &map->things[i];
+        mthing_t* th = &map->things[i];
 
         MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->origin[VX]);
         MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->origin[VY]);
@@ -1938,7 +1892,7 @@ boolean TransferMap(void)
     freeMapData();
 
     // Let Doomsday know that we've finished with this map.
-    result = MPE_End();
+    boolean result = MPE_End();
 
     VERBOSE2(
     Con_Message("WadMapConverter::TransferMap: Done in %.2f seconds.\n",

@@ -1,5 +1,5 @@
 /**
- * @file wadmapconverter.c
+ * @file wadmapconverter.cpp
  * Doomsday Plugin for converting DOOM-like format maps.
  *
  * The purpose of a wadmapconverter plugin is to transform a map into
@@ -22,20 +22,17 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
+#include "wadmapconverter.h"
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 
-#include <de/c_wrapper.h>
 #include "doomsday.h"
-#include "dd_api.h"
-
-#include "wadmapconverter.h"
+#include <de/c_wrapper.h>
+#include "map.h"
 
 map_t DENG_PLUGIN_GLOBAL(theMap);
 map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
-boolean DENG_PLUGIN_GLOBAL(verbose);
+int DENG_PLUGIN_GLOBAL(verbose);
 
 /**
  * This function will be called when Doomsday is asked to load a map that is
@@ -44,25 +41,20 @@ boolean DENG_PLUGIN_GLOBAL(verbose);
  * Our job is to read in the map data structures then use the Doomsday map
  * editing interface to recreate the map in native format.
  */
-int ConvertMapHook(int hookType, int param, void *data)
+int ConvertMapHook(int hookType, int param, void* context)
 {
-    lumpnum_t* lumpList = (int*) data;
-
     DENG_UNUSED(hookType);
 
     DENG_PLUGIN_GLOBAL(verbose) = CommandLine_Exists("-verbose");
 
     memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
 
+    lumpnum_t* lumpList = reinterpret_cast<int*>(context);
     if(!IsSupportedFormat(lumpList, param))
     {
         Con_Message("WadMapConverter: Unknown map format, aborting.\n");
         return false;
     }
-
-    VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
-                         (DENG_PLUGIN_GLOBAL(map)->format == MF_DOOM64? "DOOM64" :
-                          DENG_PLUGIN_GLOBAL(map)->format == MF_HEXEN?  "Hexen"  : "DOOM")) )
 
     if(!LoadMap(lumpList, param))
     {
