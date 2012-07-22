@@ -32,6 +32,7 @@ extern "C" {
 void BusyVisual_LoadTextures(void);
 void BusyVisual_ReleaseTextures(void);
 
+void BusyVisual_PrepareFont(void);
 void BusyVisual_PrepareResources(void);
 
 /**

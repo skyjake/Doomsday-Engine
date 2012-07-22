@@ -220,6 +220,7 @@ static void preBusySetup(int initialMode)
     LegacyCore_SetLoopRate(60);
     LegacyCore_SetLoopFunc(NULL); // don't call main loop's func while busy
 
+    BusyVisual_PrepareFont();
     BusyVisual_LoadTextures();
 
     Window_SetDrawFunc(Window_Main(), 0);

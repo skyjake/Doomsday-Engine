@@ -98,31 +98,47 @@ void BusyVisual_PrepareResources(void)
         // Not in startup, so take a copy of the current frame contents.
         acquireScreenshotTexture();
     }
+}
 
-    // Need to load any fonts for log messages etc?
-    if((task->mode & BUSYF_CONSOLE_OUTPUT) || task->name)
+void BusyVisual_PrepareFont(void)
+{
+    /**
+     * @todo At the moment this is called from preBusySetup() so that the font
+     * is present throughout the busy mode during all the individual tasks.
+     * Previously the font was being prepared at the beginning of each task,
+     * but that was resulting in a rendering glitch where the font GL texture
+     * was not being properly drawn on screen during the first ~1 second of
+     * BusyVisual visibility. The exact cause was not determined, but it may be
+     * due to a conflict with the fonts being prepared from both the main
+     * thread and the worker thread, or because the GL deferring mechanism is
+     * interfering somehow.
+     */
+
+    // These must be real files in the base dir because virtual files haven't
+    // been loaded yet when the engine startup is done.
+    struct busyfont_s {
+        const char* name;
+        const char* path;
+    } static const fonts[] = {
+        { FN_SYSTEM_NAME":normal12", "}data/fonts/normal12.dfn" },
+        { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
+    };
+    int fontIdx = !(Window_Width(theWindow) > 640)? 0 : 1;
+    Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
+    font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
+    Uri_Delete(uri);
+
+    if(font)
     {
-        // These must be real files in the base dir because virtual files haven't
-        // been loaded yet when the engine startup is done.
-        struct busyFont {
-            const char* name;
-            const char* path;
-        } static const fonts[] = {
-            { FN_SYSTEM_NAME":normal12", "}data/fonts/normal12.dfn" },
-            { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
-        };
-        int fontIdx = !(Window_Width(theWindow) > 640)? 0 : 1;
-        Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
-        font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
-        Uri_Delete(uri);
-
-        if(font)
-        {
-            busyFont = Fonts_Id(font);
-            FR_SetFont(busyFont);
-            FR_LoadDefaultAttrib();
-            busyFontHgt = FR_SingleLineHeight("Busy");
-        }
+        busyFont = Fonts_Id(font);
+        FR_SetFont(busyFont);
+        FR_LoadDefaultAttrib();
+        busyFontHgt = FR_SingleLineHeight("Busy");
+    }
+    else
+    {
+        busyFont = 0;
+        busyFontHgt = 0;
     }
 }
 
