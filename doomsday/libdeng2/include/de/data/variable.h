@@ -40,17 +40,17 @@ namespace de
     {
     public:
         /// There was an attempt to change the value of a read-only variable. @ingroup errors
-        DENG2_ERROR(ReadOnlyError);
+        DENG2_ERROR(ReadOnlyError)
         
         /// An invalid value type was used. The mode flags denied using a value of the
         /// given type with the variable. @ingroup errors
-        DENG2_ERROR(InvalidError);
+        DENG2_ERROR(InvalidError)
         
         /// Variable name contains invalid characters. @ingroup errors
-        DENG2_ERROR(NameError);
+        DENG2_ERROR(NameError)
         
         /// Value could not be converted to the attempted type. @ingroup errors
-        DENG2_ERROR(TypeError);
+        DENG2_ERROR(TypeError)
         
         /** @name Mode Flags */
         //@{

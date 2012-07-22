@@ -47,30 +47,30 @@ namespace de
     {
     public:
         /// Base class for format-related errors. @ingroup errors
-        DENG2_ERROR(FormatError);
+        DENG2_ERROR(FormatError)
         
         /// The central directory of the ZIP archive cannot be located. Maybe it's not 
         /// a ZIP archive after all? @ingroup errors
-        DENG2_SUB_ERROR(FormatError, MissingCentralDirectoryError);
+        DENG2_SUB_ERROR(FormatError, MissingCentralDirectoryError)
         
         /// The source archive belongs to a multipart archive. @ingroup errors
-        DENG2_SUB_ERROR(FormatError, MultiPartError);
+        DENG2_SUB_ERROR(FormatError, MultiPartError)
         
         /// An entry in the archive uses a compression algorithm not supported by the
         /// implementation. @ingroup errors
-        DENG2_SUB_ERROR(FormatError, UnknownCompressionError);
+        DENG2_SUB_ERROR(FormatError, UnknownCompressionError)
         
         /// An entry is encrypted. Decrypting is not supported. @ingroup errors
-        DENG2_SUB_ERROR(FormatError, EncryptionError);
+        DENG2_SUB_ERROR(FormatError, EncryptionError)
         
         /// The requested entry does not exist in the archive. @ingroup errors
-        DENG2_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError)
         
         /// There is an error during decompression. @ingroup errors
-        DENG2_ERROR(InflateError);
+        DENG2_ERROR(InflateError)
         
         /// There is an error during compression. @ingroup errors
-        DENG2_ERROR(DeflateError);
+        DENG2_ERROR(DeflateError)
         
         typedef std::set<String> Names;
         

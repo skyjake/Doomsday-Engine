@@ -39,7 +39,7 @@ namespace de
             /// The final catch compound in a sequence of catch compounds.
             FinalCompound = 0x1
         };
-        Q_DECLARE_FLAGS(Flags, Flag);
+        Q_DECLARE_FLAGS(Flags, Flag)
 
         /// Flags.
         Flags flags;
@@ -80,8 +80,8 @@ namespace de
         ArrayExpression* _args;
         Compound _compound;
     };
-}
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(de::CatchStatement::Flags);
+    Q_DECLARE_OPERATORS_FOR_FLAGS(CatchStatement::Flags)
+}
 
 #endif /* LIBDENG2_CATCHSTATEMENT_H */

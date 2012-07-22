@@ -37,13 +37,13 @@ namespace de
     {
     public:
         /// Identifier is not text. @ingroup errors
-        DENG2_ERROR(IdentifierError);
+        DENG2_ERROR(IdentifierError)
 
         /// Variable already exists when it was required not to. @ingroup errors
-        DENG2_ERROR(AlreadyExistsError);
+        DENG2_ERROR(AlreadyExistsError)
 
         /// The identifier does not specify an existing variable. @ingroup errors
-        DENG2_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError)
 
     public:
         NameExpression();
@@ -63,7 +63,5 @@ namespace de
         String _identifier;
     };
 }
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(de::NameExpression::Flags);
 
 #endif /* LIBDENG2_NAMEEXPRESSION_H */

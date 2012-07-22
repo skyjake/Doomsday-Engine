@@ -36,7 +36,7 @@ namespace de
     {
     public:
         /// An error occurs in string pattern replacements. @ingroup errors
-        DENG2_ERROR(IllegalPatternError);
+        DENG2_ERROR(IllegalPatternError)
         
     public:
         TextValue(const String& initialValue = "");

@@ -56,16 +56,16 @@ namespace de
     public:
         /// A syntax error is detected during the parsing. Note that the Lex classes 
         /// also define syntax errors. @ingroup errors
-        DENG2_ERROR(SyntaxError);
+        DENG2_ERROR(SyntaxError)
         
         /// A token is encountered where we don't know what to do with it. @ingroup errors
-        DENG2_SUB_ERROR(SyntaxError, UnexpectedTokenError);
+        DENG2_SUB_ERROR(SyntaxError, UnexpectedTokenError)
         
         /// A token is expected, but nothing was found. @ingroup errors
-        DENG2_SUB_ERROR(SyntaxError, MissingTokenError);
+        DENG2_SUB_ERROR(SyntaxError, MissingTokenError)
         
         /// A colon is expected but not found. @ingroup errors
-        DENG2_SUB_ERROR(SyntaxError, MissingColonError);
+        DENG2_SUB_ERROR(SyntaxError, MissingColonError)
         
         // Flags for parsing conditional compounds.
         enum CompoundFlag

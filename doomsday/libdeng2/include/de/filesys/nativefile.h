@@ -37,10 +37,10 @@ namespace de
     {
     public:
         /// Input from the native file failed. @ingroup errors
-        DENG2_SUB_ERROR(IOError, InputError);
+        DENG2_SUB_ERROR(IOError, InputError)
         
         /// Output to the native file failed. @ingroup errors
-        DENG2_SUB_ERROR(IOError, OutputError);
+        DENG2_SUB_ERROR(IOError, OutputError)
         
     public:
         /**

@@ -40,7 +40,7 @@ namespace de
     public:
         /// Attempted to load a shared library from a source file with unsupported type.
         /// @ingroup errors
-        DENG2_ERROR(UnsupportedSourceError);
+        DENG2_ERROR(UnsupportedSourceError)
         
     public:
         /**

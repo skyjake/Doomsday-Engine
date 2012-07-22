@@ -35,7 +35,7 @@ namespace de
     {
     public:
         /// An invalid key was used. @ingroup errors
-        DENG2_ERROR(KeyError);
+        DENG2_ERROR(KeyError)
         
         struct ValueRef {
             ValueRef(const Value* v) : value(v) {}

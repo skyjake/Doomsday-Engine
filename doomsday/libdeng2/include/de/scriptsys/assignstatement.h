@@ -37,7 +37,7 @@ namespace de
     {
     public:
         /// Trying to assign into something other than a reference (RefValue). @ingroup errors
-        DENG2_ERROR(LeftValueError);
+        DENG2_ERROR(LeftValueError)
         
         typedef std::vector<Expression*> Indices;
         

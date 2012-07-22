@@ -202,6 +202,6 @@ namespace de
     private:
         Members* _members;
     };
-};
+}
 
 #endif /* LIBDENG2_OBSERVERS_H */

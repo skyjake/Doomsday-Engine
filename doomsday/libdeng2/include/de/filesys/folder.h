@@ -42,13 +42,13 @@ namespace de
     {
     public:
         /// A folder cannot contain two or more files with the same name. @ingroup errors
-        DENG2_ERROR(DuplicateNameError);
+        DENG2_ERROR(DuplicateNameError)
         
         /// File path did not point to a file. @ingroup errors
-        DENG2_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError)
         
         /// Creating a new file was unsuccessful. @ingroup errors
-        DENG2_ERROR(NewFileError);
+        DENG2_ERROR(NewFileError)
         
         /**
          * Accesses the properties of a Folder.

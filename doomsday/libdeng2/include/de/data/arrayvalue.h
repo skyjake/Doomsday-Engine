@@ -36,10 +36,10 @@ namespace de
     {
     public:
         /// Attempt to index the array with indices that are not defined for the array. @ingroup errors
-        DENG2_ERROR(OutOfBoundsError);
+        DENG2_ERROR(OutOfBoundsError)
         
         /// The index used for accessing the array is of the wrong type. @ingroup errors
-        DENG2_ERROR(IllegalIndexError);
+        DENG2_ERROR(IllegalIndexError)
 
         /// Type for the elements. Public because const access to the elements is public.
         typedef std::vector<Value*> Elements;

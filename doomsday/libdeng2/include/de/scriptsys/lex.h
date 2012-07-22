@@ -37,13 +37,13 @@ namespace de
     {
     public:
         /// Attempt to read characters when there are non left. @ingroup errors
-        DENG2_ERROR(OutOfInputError);
+        DENG2_ERROR(OutOfInputError)
 
         enum ModeFlag
         {
             SkipComments = 0x1
         };
-        Q_DECLARE_FLAGS(ModeFlags, ModeFlag);
+        Q_DECLARE_FLAGS(ModeFlags, ModeFlag)
         
         /**
          * Utility for setting flags in a Lex instance. The flags specified
@@ -158,8 +158,8 @@ namespace de
         
         ModeFlags _mode;
     };
-}
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(de::Lex::ModeFlags);
+    Q_DECLARE_OPERATORS_FOR_FLAGS(Lex::ModeFlags)
+}
 
 #endif /* LIBDENG2_LEX_H */

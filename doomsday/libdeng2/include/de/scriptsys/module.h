@@ -79,6 +79,6 @@ namespace de
         /// the namespace of the module.
         Process* _process;
     };
-};
+}
 
 #endif /* LIBDENG2_MODULE_H */

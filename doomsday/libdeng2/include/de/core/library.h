@@ -56,10 +56,10 @@ namespace de
     {
     public:
         /// Loading the shared library failed. @ingroup errors
-        DENG2_ERROR(LoadError);
+        DENG2_ERROR(LoadError)
         
         /// A symbol was not found. @ingroup errors
-        DENG2_ERROR(SymbolMissingError);
+        DENG2_ERROR(SymbolMissingError)
         
         /// Default type identifier.
         static const char* DEFAULT_TYPE;
@@ -146,12 +146,21 @@ namespace de
          * @return  A pointer to the symbol.
          */
         void* address(const String& name);
-        
+
         template <typename Type>
         Type symbol(const String& name) {
-            return reinterpret_cast<Type>(address(name));
+            /**
+             * @note Casting to a pointer-to-function type: see
+             * http://www.trilithium.com/johan/2004/12/problem-with-dlsym/
+             */
+            // This is not 100% portable to all possible memory architectures; thus:
+            DENG2_ASSERT(sizeof(void*) == sizeof(Type));
+
+            union { void* original; Type target; } forcedCast;
+            forcedCast.original = address(name);
+            return forcedCast.target;
         }
-                
+
     private:  
         /// Handle to the shared library.
         QLibrary* _library;

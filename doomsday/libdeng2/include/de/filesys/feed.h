@@ -49,7 +49,7 @@ namespace de
     public:
         /// Tried to create a new file that already exists in the native file
         /// system. @ingroup errors
-        DENG2_ERROR(AlreadyExistsError);
+        DENG2_ERROR(AlreadyExistsError)
         
     public:
         Feed();
@@ -95,6 +95,6 @@ namespace de
          */
         virtual void removeFile(const String& name);
     };
-};
+}
 
 #endif /* LIBDENG2_FEED_H */

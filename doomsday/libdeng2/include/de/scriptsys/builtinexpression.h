@@ -35,7 +35,7 @@ namespace de
     {
     public:
         /// A wrong number of arguments is given to one of the built-in methods. @ingroup errors
-        DENG2_ERROR(WrongArgumentsError);
+        DENG2_ERROR(WrongArgumentsError)
         
         /// Type of the built-in expression.
         /// @note  These are serialied as is, so do not change the existing values.

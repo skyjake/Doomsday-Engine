@@ -43,7 +43,7 @@ namespace de
     {
     public:
         /// Result is of wrong type. @ingroup errors
-        DENG2_ERROR(ResultTypeError);
+        DENG2_ERROR(ResultTypeError)
         
         typedef std::list<Record*> Namespaces;
     

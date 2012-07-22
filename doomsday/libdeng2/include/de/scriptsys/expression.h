@@ -42,23 +42,12 @@ namespace de
     {
     public:
         /// Deserialization of an expression failed. @ingroup errors
-        DENG2_ERROR(DeserializationError);
+        DENG2_ERROR(DeserializationError)
 
         // Flags for evaluating expressions.
         // Note: these are serialized as is, so don't change the existing values.
         enum Flag
         {
-            /*ByValue = 0x1,
-            ByReference = 0x2,
-            LocalNamespaceOnly = 0x4,
-            RequireNewIdentifier = 0x8,
-            AllowNewRecords = 0x10,
-            AllowNewVariables = 0x20,
-            DeleteIdentifier = 0x40,
-            ImportNamespace = 0x80,
-            ThrowawayIfInScope = 0x100,
-            SetReadOnly = 0x200*/
-
             /// Evaluates to a value. In conjunction with IMPORT, causes the imported
             /// record to be copied to the local namespace.
             ByValue = 0x1,

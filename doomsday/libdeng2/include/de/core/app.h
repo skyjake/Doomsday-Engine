@@ -46,7 +46,7 @@ namespace de
 
     public:
         /// The object or resource that was being looked for was not found. @ingroup errors
-        DENG2_ERROR(NotFoundError);
+        DENG2_ERROR(NotFoundError)
 
         enum GUIMode {
             GUIDisabled = 0,
@@ -71,9 +71,19 @@ namespace de
         static CommandLine& commandLine();
 
         /**
-         * Returns the absolute path of the application executable.
+         * Returns the absolute native path of the application executable.
          */
         static String executablePath();
+
+        /**
+         * Returns the native path of the data base directory.
+         */
+        String nativeBasePath();
+
+        /**
+         * Returns the native path of where to load binaries (plugins).
+         */
+        String nativeBinaryPath();
 
         /**
          * Returns the application's file system.

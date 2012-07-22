@@ -160,10 +160,10 @@ namespace de
     {  
     public:
         /// Attempt to append characters while no token is being formed. @ingroup errors
-        DENG2_ERROR(TokenNotStartedError);
+        DENG2_ERROR(TokenNotStartedError)
         
         /// Parameter was out of range. @ingroup errors
-        DENG2_ERROR(OutOfRangeError);
+        DENG2_ERROR(OutOfRangeError)
         
     public:
         TokenBuffer();

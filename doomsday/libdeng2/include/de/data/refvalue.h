@@ -36,7 +36,7 @@ namespace de
     {
     public:
         /// Attempt to dereference a NULL variable. @ingroup errors
-        DENG2_ERROR(NullError);
+        DENG2_ERROR(NullError)
         
     public:
         /**

@@ -33,6 +33,9 @@ namespace de {
  * expected to be found. The configuration has two levels: system-global
  * configuration under <tt>/etc</tt> and user-specific configuration under
  * <tt>~/.doomsday</tt>.
+ *
+ * On non-Unix platforms, UnixInfo is instantiated normally but no input files
+ * are parsed.
  */
 class UnixInfo
 {

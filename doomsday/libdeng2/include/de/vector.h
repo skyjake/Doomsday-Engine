@@ -370,6 +370,6 @@ namespace de
     typedef Vector4<dfloat> Vector4f;   ///< 4-component vector of floating point values.
     typedef Vector4<ddouble> Vector4d;  ///< 4-component vector of high-precision floating point values.
     //@}
-};
+}
 
 #endif /* LIBDENG2_VECTOR_H */
