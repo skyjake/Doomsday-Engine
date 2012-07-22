@@ -150,6 +150,7 @@ typedef struct zblockset_s zblockset_t;
  *
  * @param sizeOfElement  Required size of each element.
  * @param batchSize  Number of elements in each block of the set.
+ * @param tag  Purge level for the allocation.
  *
  * @return  Ptr to the newly created blockset.
  */
@@ -167,7 +168,7 @@ DENG_PUBLIC void ZBlockSet_Delete(zblockset_t* set);
 /**
  * Return a ptr to the next unused element in the blockset.
  *
- * @param blockset  The blockset to return the next element from.
+ * @param set  The blockset to return the next element from.
  *
  * @return  Ptr to the next unused element in the blockset.
  */
