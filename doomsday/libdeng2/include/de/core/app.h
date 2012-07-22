@@ -26,6 +26,7 @@
 #include "../FS"
 #include "../Module"
 #include "../Config"
+#include "../UnixInfo"
 #include <QApplication>
 
 /**
@@ -95,6 +96,11 @@ namespace de
         static Config& config();
 
         /**
+         * Returns the Unix system-level configuration preferences.
+         */
+        static UnixInfo& unixInfo();
+
+        /**
          * Imports a script module that is located on the import path.
          *
          * @param name      Name of the module.
@@ -117,6 +123,8 @@ namespace de
 
         /// The file system.
         FS _fs;
+
+        UnixInfo _unixInfo;
 
         /// The configuration.
         Config* _config;

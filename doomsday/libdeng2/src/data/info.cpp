@@ -18,6 +18,7 @@
  */
 
 #include "de/Info"
+#include <QFile>
 
 using namespace de;
 
@@ -483,14 +484,30 @@ Info::Info()
     d = new Instance;
 }
 
+Info::Info(const String& source)
+{
+    QScopedPointer<Instance> inst(new Instance); // parsing may throw exception
+    inst->parse(source);
+    d = inst.take();
+}
+
 Info::~Info()
 {
     delete d;
 }
 
-void Info::parse(const String &infoSource)
+void Info::parse(const String& infoSource)
 {
     d->parse(infoSource);
+}
+
+void Info::parseNativeFile(const String& nativePath)
+{
+    QFile file(nativePath);
+    if(file.open(QFile::ReadOnly | QFile::Text))
+    {
+        parse(file.readAll().constData());
+    }
 }
 
 const Info::BlockElement& Info::root() const
@@ -498,8 +515,19 @@ const Info::BlockElement& Info::root() const
     return d->rootBlock;
 }
 
-const Info::Element* Info::findByPath(const String &path) const
+const Info::Element* Info::findByPath(const String& path) const
 {
     if(path.isEmpty()) return &d->rootBlock;
     return d->rootBlock.findByPath(path);
+}
+
+bool Info::findValueForKey(const String& key, String& value) const
+{
+    const Element* element = findByPath(key);
+    if(element && element->isKey())
+    {
+        value = static_cast<const KeyElement*>(element)->value();
+        return true;
+    }
+    return false;
 }

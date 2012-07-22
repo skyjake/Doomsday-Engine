@@ -90,7 +90,7 @@ static void getBundlePath(char* path, size_t len)
 # endif
 
     // Check Unix-specific config files.
-    DD_Unix_GetConfigValue("paths", "libdir", path, len);
+    UnixInfo_GetConfigValue("paths", "libdir", path, len);
 #endif
 }
 #endif

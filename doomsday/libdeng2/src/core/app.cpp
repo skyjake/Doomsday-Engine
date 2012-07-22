@@ -157,25 +157,30 @@ String App::executablePath()
     return DENG2_APP->_appPath;
 }
 
-FS &App::fileSystem()
+FS& App::fileSystem()
 {
     return DENG2_APP->_fs;
 }
 
-Folder &App::fileRoot()
+Folder& App::fileRoot()
 {
     return fileSystem().root();
 }
 
-Folder &App::homeFolder()
+Folder& App::homeFolder()
 {
     return fileRoot().locate<Folder>("/home");
 }
 
-Config &App::config()
+Config& App::config()
 {
     DENG2_ASSERT(DENG2_APP->_config != 0);
     return *DENG2_APP->_config;
+}
+
+UnixInfo& App::unixInfo()
+{
+    return DENG2_APP->_unixInfo;
 }
 
 static int sortFilesByModifiedAt(const File* a, const File* b)

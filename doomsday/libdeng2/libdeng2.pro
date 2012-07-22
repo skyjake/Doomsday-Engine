@@ -61,6 +61,7 @@ HEADERS += \
     include/de/Library \
     include/de/Log \
     include/de/LogBuffer \
+    include/de/UnixInfo \
     include/de/Vector
 
 HEADERS += \
@@ -75,7 +76,8 @@ HEADERS += \
     include/de/core/commandline.h \
     include/de/core/library.h \
     include/de/core/log.h \
-    include/de/core/logbuffer.h
+    include/de/core/logbuffer.h \
+    include/de/core/unixinfo.h
 
 # Private headers.
 HEADERS += \
@@ -90,7 +92,8 @@ SOURCES += \
     src/core/callbacktimer.cpp \
     src/core/library.cpp \
     src/core/log.cpp \
-    src/core/logbuffer.cpp
+    src/core/logbuffer.cpp \
+    src/core/unixinfo.cpp
 
 OTHER_FILES += \
     config/deng.de

@@ -18,6 +18,8 @@
  */
 
 #include "de/c_wrapper.h"
+#include "de/Error"
+#include "de/App"
 #include "de/LegacyCore"
 #include "de/LegacyNetwork"
 #include "de/Address"
@@ -344,25 +346,28 @@ Info* Info_NewFromString(const char* utf8text)
 {
     try
     {
-        QScopedPointer<de::Info> self(new de::Info);
-        self->parse(QString::fromUtf8(utf8text));
-        return reinterpret_cast<Info*>(self.take());
+        return reinterpret_cast<Info*>(new de::Info(QString::fromUtf8(utf8text)));
     }
-    catch(de::Error& er)
+    catch(const de::Error& er)
     {
         LOG_WARNING(er.asText());
+        return 0;
     }
-    return 0;
 }
 
 Info* Info_NewFromFile(const char* nativePath)
 {
-    QFile file(nativePath);
-    if(file.open(QFile::ReadOnly | QFile::Text))
+    try
     {
-        return Info_NewFromString(file.readAll().constData());
+        QScopedPointer<de::Info> info(new de::Info);
+        info->parseNativeFile(QString::fromUtf8(nativePath));
+        return reinterpret_cast<Info*>(info.take());
     }
-    return 0;
+    catch(const de::Error& er)
+    {
+        LOG_WARNING(er.asText());
+        return 0;
+    }
 }
 
 void Info_Delete(Info* info)
@@ -392,4 +397,18 @@ int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize)
         // Just return the size of the value.
         return value.size();
     }
+}
+
+int UnixInfo_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen)
+{
+    // "paths" is the only config file currently being used.
+    if(qstrcmp(configFile, "paths")) return false;
+
+    de::String foundValue;
+    if(de::App::unixInfo().path(key, foundValue))
+    {
+        qstrncpy(dest, foundValue.toUtf8().constData(), destLen);
+        return true;
+    }
+    return false;
 }
