@@ -49,6 +49,9 @@ contains(QMAKE_HOST.arch, x86_64) {
 DENG_BASE_DIR = $$PREFIX/share/doomsday
 DENG_DATA_DIR = $$DENG_BASE_DIR/data
 
+DEFINES += DENG_BASE_DIR=\"\\\"$${DENG_BASE_DIR}/\\\"\"
+DEFINES += DENG_LIBRARY_DIR=\"\\\"$${DENG_LIB_DIR}/\\\"\"
+
 echo(Binary directory: $$DENG_BIN_DIR)
 echo(Library directory: $$DENG_LIB_DIR)
 echo(Doomsday base directory: $$DENG_BASE_DIR)

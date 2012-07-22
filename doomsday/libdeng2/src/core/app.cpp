@@ -55,29 +55,71 @@ App::App(int& argc, char** argv, GUIMode guiMode)
 #endif
 }
 
+String App::nativeBinaryPath()
+{
+    String path;
+#ifdef WIN32
+    path = _appPath.fileNameNativePath();
+#else
+# ifdef MACOSX
+    path = "."; /// @todo Where are the plugins supposed to go?
+# else
+    path = DENG_LIBRARY_DIR;
+# endif
+    // Also check the system config files.
+    _unixInfo.path("libdir", path);
+#endif
+    return path;
+}
+
+String App::nativeBasePath()
+{
+    int i;
+    if((i = _cmdLine.check("-basedir", 1)))
+    {
+        _cmdLine.makeAbsolutePath(i + 1);
+        return _cmdLine.at(i + 1);
+    }
+
+    String path;
+#ifdef WIN32
+    path = _appPath.fileNameNativePath().concatenateNativePath("..");
+#else
+# ifdef MACOSX
+    path = ".";
+# else
+    path = DENG_BASE_DIR;
+# endif
+    // Also check the system config files.
+    _unixInfo.path("basedir", path);
+#endif
+    return path;
+}
+
 void App::initSubsystems()
 {
-    String appDir = _appPath.fileNameNativePath();
-
     // Initialize the built-in folders. This hooks up the default native
     // directories into the appropriate places in the file system.
     // All of these are in read-only mode.
 #ifdef MACOSX
+    String appDir = _appPath.fileNameNativePath();
     _fs.makeFolder("/bin").attach(new DirectoryFeed(appDir));
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
     _fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 
 #elif WIN32
+    String appDir = _appPath.fileNameNativePath();
     _fs.makeFolder("/bin").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\bin")));
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data")));
     _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data\\config")));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 
 #else // UNIX
-    _fs.makeFolder("/bin").attach(new DirectoryFeed("bin"));
-    _fs.makeFolder("/data").attach(new DirectoryFeed("data"));
-    _fs.makeFolder("/config").attach(new DirectoryFeed("data/config"));
+    _fs.makeFolder("/bin").attach(new DirectoryFeed(nativeBinaryPath()));
+    String dataDir = nativeBasePath() / "data";
+    _fs.makeFolder("/data").attach(new DirectoryFeed(dataDir));
+    _fs.makeFolder("/config").attach(new DirectoryFeed(dataDir / "config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data/modules"));
 #endif
 
