@@ -259,10 +259,10 @@ int ConvertMapHook(int hookType, int parm, void* context)
                          Str_Text(MapFormatNameForId(DENG_PLUGIN_GLOBAL(mapFormat)))) );
 
     // Read the archived map.
-    loadError = !LoadMap(lumpInfos);
+    loadError = LoadMap(lumpInfos);
     if(loadError)
     {
-        Con_Message("WadMapConverter: Internal error, aborting conversion...\n");
+        Con_Message("WadMapConverter: Internal error %i, aborting conversion...\n", loadError);
         ret_val = false;
         goto FAIL_LOAD_ERROR;
     }

@@ -60,6 +60,11 @@ typedef struct mside_s {
 // Line flags
 #define LAF_POLYOBJ             0x1 // Line is from a polyobject.
 
+#define PO_LINE_START           (1) ///< Polyobj line start special.
+#define PO_LINE_EXPLICIT        (5)
+
+#define SEQTYPE_NUMSEQ          (10)
+
 typedef struct mline_s {
     uint            v[2];
     uint            sides[2];
@@ -104,6 +109,11 @@ typedef struct msector_s {
     uint16_t        d64wallTopColor;
     uint16_t        d64wallBottomColor;
 } msector_t;
+
+// Polyobj args.
+#define PO_ANCHOR_DOOMEDNUM     (3000)
+#define PO_SPAWN_DOOMEDNUM      (3001)
+#define PO_SPAWNCRUSH_DOOMEDNUM (3002)
 
 typedef struct mthing_s {
     int16_t         origin[3];
