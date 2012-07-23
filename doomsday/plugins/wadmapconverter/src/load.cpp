@@ -21,17 +21,9 @@
  */
 
 #include "wadmapconverter.h"
-#include <stdio.h>
-#include <string.h>
-
 #include "doomsday.h"
 #include <de/c_wrapper.h>
 #include "map.h"
-
-#ifdef WIN32
-#  define stricmp _stricmp
-#  define strnicmp _strnicmp
-#endif
 
 #define VERBOSE(code)   { if(DENG_PLUGIN_GLOBAL(verbose) >= 1) { code; } }
 #define VERBOSE2(code)  { if(DENG_PLUGIN_GLOBAL(verbose) >= 2) { code; } }
@@ -172,7 +164,7 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
     const materialref_t* m;
 
     // Check if this material has already been registered.
-    if((m = GetMaterial(name, isFlat)) != NULL)
+    if((m = GetMaterial(name, isFlat)))
     {
         return m; // Already registered.
     }

@@ -33,6 +33,12 @@
 #include <stdio.h>
 #include <cassert>
 #include <iostream>
+#include <string.h>
+
+#ifdef WIN32
+#  define stricmp _stricmp
+#  define strnicmp _strnicmp
+#endif
 
 #ifdef DENG_WADMAPCONVERTER_DEBUG
 #  define WADMAPCONVERTER_TRACE(args)  std::cerr << "[WadMapConverter] " << args << std::endl;
