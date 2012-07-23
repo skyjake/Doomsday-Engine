@@ -270,32 +270,29 @@ static void freeMapData(void)
     }
 }
 
-static bool loadVertexes(const uint8_t* buf, size_t len)
+static bool loadVertexes(Reader* reader, size_t lumpLength)
 {
-    WADMAPCONVERTER_TRACE("Processing vertexes...");
+    DENG_ASSERT(reader);
 
-    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-    uint num = len / elmSize;
+    WADMAPCONVERTER_TRACE("Processing vertexes...");
     switch(mapFormat)
     {
     default:
     case MF_DOOM: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_VERTEX;
+        for(uint n = 0; n < numElements; ++n)
         {
-            map->vertexes[n * 2]     = coord_t( SHORT(*((const int16_t*) (ptr))) );
-            map->vertexes[n * 2 + 1] = coord_t( SHORT(*((const int16_t*) (ptr+2))) );
-            ptr += elmSize;
+            map->vertexes[n * 2]     = coord_t( SHORT(Reader_ReadInt16(reader)) );
+            map->vertexes[n * 2 + 1] = coord_t( SHORT(Reader_ReadInt16(reader)) );
         }
         break; }
 
     case MF_DOOM64: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_64VERTEX;
+        for(uint n = 0; n < numElements; ++n)
         {
-            map->vertexes[n * 2]     = coord_t( FIX2FLT(LONG(*((const int32_t*) (ptr)))) );
-            map->vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(*((const int32_t*) (ptr+4)))) );
-            ptr += elmSize;
+            map->vertexes[n * 2]     = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
+            map->vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
         }
         break; }
     }
@@ -366,41 +363,38 @@ static void interpretLineDefFlags(mline_t* l)
 #undef DOOM_VALIDMASK
 }
 
-static bool loadLinedefs(const uint8_t* buf, size_t len)
+static bool loadLinedefs(Reader* reader, size_t lumpLength)
 {
+    DENG_ASSERT(reader);
+
     WADMAPCONVERTER_TRACE("Processing linedefs...");
-
-    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF :
-                      mapFormat == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
-    uint num = len / elmSize;
-
     switch(mapFormat)
     {
     default:
     case MF_DOOM: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_LINEDEF;
+        for(uint n = 0; n < numElements; ++n)
         {
             mline_t* l = &map->lines[n];
             int idx;
 
-            idx = USHORT(*((const uint16_t*) (ptr)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->v[0] = 0;
             else              l->v[0] = idx + 1;
 
-            idx = USHORT(*((const uint16_t*) (ptr+2)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->v[1] = 0;
             else              l->v[1] = idx + 1;
 
-            l->flags = SHORT(*((const int16_t*) (ptr+4)));
-            l->dType = SHORT(*((const int16_t*) (ptr+6)));
-            l->dTag  = SHORT(*((const int16_t*) (ptr+8)));
+            l->flags = SHORT( Reader_ReadInt16(reader) );
+            l->dType = SHORT( Reader_ReadInt16(reader) );
+            l->dTag  = SHORT( Reader_ReadInt16(reader) );
 
-            idx = USHORT(*((const uint16_t*) (ptr+10)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->sides[RIGHT] = 0;
             else              l->sides[RIGHT] = idx + 1;
 
-            idx = USHORT(*((const uint16_t*) (ptr+12)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->sides[LEFT] = 0;
             else              l->sides[LEFT] = idx + 1;
 
@@ -409,37 +403,36 @@ static bool loadLinedefs(const uint8_t* buf, size_t len)
             l->ddFlags      = 0;
 
             interpretLineDefFlags(l);
-            ptr += elmSize;
         }
         break; }
 
     case MF_DOOM64: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_64LINEDEF;
+        for(uint n = 0; n < numElements; ++n)
         {
             mline_t* l = &map->lines[n];
             int idx;
 
-            idx = USHORT(*((const uint16_t*) (ptr)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->v[0] = 0;
             else              l->v[0] = idx + 1;
 
-            idx = USHORT(*((const uint16_t*) (ptr+2)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->v[1] = 0;
             else              l->v[1] = idx + 1;
 
-            l->flags = USHORT(*((const uint16_t*) (ptr+4)));
-            l->d64drawFlags = *((const uint8_t*) (ptr + 6));
-            l->d64texFlags  = *((const uint8_t*) (ptr + 7));
-            l->d64type      = *((const uint8_t*) (ptr + 8));
-            l->d64useType   = *((const uint8_t*) (ptr + 9));
-            l->d64tag       = SHORT(*((const int16_t*) (ptr+10)));
+            l->flags = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+            l->d64drawFlags = Reader_ReadByte(reader);
+            l->d64texFlags  = Reader_ReadByte(reader);
+            l->d64type      = Reader_ReadByte(reader);
+            l->d64useType   = Reader_ReadByte(reader);
+            l->d64tag       = SHORT( Reader_ReadInt16(reader) );
 
-            idx = USHORT(*((const uint16_t*) (ptr+12)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->sides[RIGHT] = 0;
             else              l->sides[RIGHT] = idx + 1;
 
-            idx = USHORT(*((const uint16_t*) (ptr+14)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->sides[LEFT] = 0;
             else              l->sides[LEFT] = idx + 1;
 
@@ -448,38 +441,37 @@ static bool loadLinedefs(const uint8_t* buf, size_t len)
             l->ddFlags      = 0;
 
             interpretLineDefFlags(l);
-            ptr += elmSize;
         }
         break; }
 
     case MF_HEXEN: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_XLINEDEF;
+        for(uint n = 0; n < numElements; ++n)
         {
-            int idx;
             mline_t* l = &map->lines[n];
+            int idx;
 
-            idx = USHORT(*((const uint16_t*) (ptr)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->v[0] = 0;
             else              l->v[0] = idx + 1;
 
-            idx = USHORT(*((const uint16_t*) (ptr+2)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->v[1] = 0;
             else              l->v[1] = idx + 1;
 
-            l->flags = SHORT(*((const int16_t*) (ptr+4)));
-            l->xType    = *((const uint8_t*) (ptr+6));
-            l->xArgs[0] = *((const uint8_t*) (ptr+7));
-            l->xArgs[1] = *((const uint8_t*) (ptr+8));
-            l->xArgs[2] = *((const uint8_t*) (ptr+9));
-            l->xArgs[3] = *((const uint8_t*) (ptr+10));
-            l->xArgs[4] = *((const uint8_t*) (ptr+11));
+            l->flags = SHORT( Reader_ReadInt16(reader) );
+            l->xType    = Reader_ReadByte(reader);
+            l->xArgs[0] = Reader_ReadByte(reader);
+            l->xArgs[1] = Reader_ReadByte(reader);
+            l->xArgs[2] = Reader_ReadByte(reader);
+            l->xArgs[3] = Reader_ReadByte(reader);
+            l->xArgs[4] = Reader_ReadByte(reader);
 
-            idx = USHORT(*((const uint16_t*) (ptr+12)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->sides[RIGHT] = 0;
             else              l->sides[RIGHT] = idx + 1;
 
-            idx = USHORT(*((const uint16_t*) (ptr+14)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) l->sides[LEFT] = 0;
             else              l->sides[LEFT] = idx + 1;
 
@@ -488,7 +480,6 @@ static bool loadLinedefs(const uint8_t* buf, size_t len)
             l->ddFlags      = 0;
 
             interpretLineDefFlags(l);
-            ptr += elmSize;
         }
         break; }
     }
@@ -496,71 +487,62 @@ static bool loadLinedefs(const uint8_t* buf, size_t len)
     return true;
 }
 
-static bool loadSidedefs(const uint8_t* buf, size_t len)
+static bool loadSidedefs(Reader* reader, size_t lumpLength)
 {
+    DENG_ASSERT(reader);
+
     WADMAPCONVERTER_TRACE("Processing sidedefs...");
-
-    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-    uint num = len / elmSize;
-
     switch(mapFormat)
     {
     default:
     case MF_DOOM: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_SIDEDEF;
+        for(uint n = 0; n < numElements; ++n)
         {
             mside_t* s = &map->sides[n];
             char name[9];
             int idx;
 
-            s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
-            s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            s->offset[VX] = SHORT( Reader_ReadInt16(reader) );
+            s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
 
-            memcpy(name, ptr+4, 8);
-            name[8] = '\0';
+            Reader_Read(reader, name, 8); name[8] = '\0';
             s->topMaterial = RegisterMaterial(name, false);
 
-            memcpy(name, ptr+12, 8);
-            name[8] = '\0';
+            Reader_Read(reader, name, 8); name[8] = '\0';
             s->bottomMaterial = RegisterMaterial(name, false);
 
-            memcpy(name, ptr+20, 8);
-            name[8] = '\0';
+            Reader_Read(reader, name, 8); name[8] = '\0';
             s->middleMaterial = RegisterMaterial(name, false);
 
-            idx = USHORT(*((const uint16_t*) (ptr+28)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) s->sector = 0;
             else              s->sector = idx + 1;
-
-            ptr += elmSize;
         }
         break; }
 
     case MF_DOOM64: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_64SIDEDEF;
+        for(uint n = 0; n < numElements; ++n)
         {
             mside_t* s = &map->sides[n];
             int idx;
 
-            s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
-            s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
+            s->offset[VX] = SHORT( Reader_ReadInt16(reader) );
+            s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
 
-            idx = USHORT(*((const uint16_t*) (ptr+4)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             s->topMaterial = RegisterMaterial((const char*) &idx, false);
 
-            idx = USHORT(*((const uint16_t*) (ptr+6)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             s->bottomMaterial = RegisterMaterial((const char*) &idx, false);
 
-            idx = USHORT(*((const uint16_t*) (ptr+8)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             s->middleMaterial = RegisterMaterial((const char*) &idx, false);
 
-            idx = USHORT(*((const uint16_t*) (ptr+10)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) s->sector = 0;
             else              s->sector = idx + 1;
-
-            ptr += elmSize;
         }
         break; }
     }
@@ -568,70 +550,62 @@ static bool loadSidedefs(const uint8_t* buf, size_t len)
     return true;
 }
 
-static bool loadSectors(const uint8_t* buf, size_t len)
+static bool loadSectors(Reader* reader, size_t lumpLength)
 {
+    DENG_ASSERT(reader);
+
     WADMAPCONVERTER_TRACE("Processing sectors...");
-
-    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-    uint num = len / elmSize;
-
     switch(mapFormat)
     {
     default: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_SECTOR;
+        for(uint n = 0; n < numElements; ++n)
         {
             msector_t* s = &map->sectors[n];
             char name[9];
 
-            s->floorHeight  = SHORT(*((const int16_t*) ptr));
-            s->ceilHeight   = SHORT(*((const int16_t*) (ptr+2)));
+            s->floorHeight  = SHORT( Reader_ReadInt16(reader) );
+            s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
 
-            memcpy(name, ptr+4, 8);
-            name[8] = '\0';
+            Reader_Read(reader, name, 8); name[8] = '\0';
             s->floorMaterial = RegisterMaterial(name, true);
 
-            memcpy(name, ptr+12, 8);
-            name[8] = '\0';
+            Reader_Read(reader, name, 8); name[8] = '\0';
             s->ceilMaterial = RegisterMaterial(name, true);
 
-            s->lightLevel   = SHORT(*((const int16_t*) (ptr+20)));
-            s->type         = SHORT(*((const int16_t*) (ptr+22)));
-            s->tag          = SHORT(*((const int16_t*) (ptr+24)));
-
-            ptr += elmSize;
+            s->lightLevel   = SHORT( Reader_ReadInt16(reader) );
+            s->type         = SHORT( Reader_ReadInt16(reader) );
+            s->tag          = SHORT( Reader_ReadInt16(reader) );
         }
         break; }
 
     case MF_DOOM64: {
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_64SECTOR;
+        for(uint n = 0; n < numElements; ++n)
         {
             msector_t* s = &map->sectors[n];
             int idx;
 
-            s->floorHeight  = SHORT(*((const int16_t*) ptr));
-            s->ceilHeight   = SHORT(*((const int16_t*) (ptr+2)));
+            s->floorHeight  = SHORT( Reader_ReadInt16(reader));
+            s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
 
-            idx = USHORT(*((const uint16_t*) (ptr+4)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             s->floorMaterial = RegisterMaterial((const char*) &idx, false);
 
-            idx = USHORT(*((const uint16_t*) (ptr+6)));
+            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             s->ceilMaterial = RegisterMaterial((const char*) &idx, false);
 
-            s->d64ceilingColor  = USHORT(*((const uint16_t*) (ptr+8)));
-            s->d64floorColor    = USHORT(*((const uint16_t*) (ptr+10)));
-            s->d64unknownColor  = USHORT(*((const uint16_t*) (ptr+12)));
-            s->d64wallTopColor  = USHORT(*((const uint16_t*) (ptr+14)));
-            s->d64wallBottomColor = USHORT(*((const uint16_t*) (ptr+16)));
+            s->d64ceilingColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+            s->d64floorColor    = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+            s->d64unknownColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+            s->d64wallTopColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+            s->d64wallBottomColor = USHORT( uint16_t(Reader_ReadInt16(reader)) );
 
-            s->type     = SHORT(*((const int16_t*) (ptr+18)));
-            s->tag      = SHORT(*((const int16_t*) (ptr+20)));
-            s->d64flags = USHORT(*((const uint16_t*) (ptr+22)));
+            s->type     = SHORT( Reader_ReadInt16(reader) );
+            s->tag      = SHORT( Reader_ReadInt16(reader) );
+            s->d64flags = USHORT( uint16_t(Reader_ReadInt16(reader)) );
 
             s->lightLevel = 160; ///?
-
-            ptr += elmSize;
         }
         break; }
     }
@@ -639,7 +613,7 @@ static bool loadSectors(const uint8_t* buf, size_t len)
     return true;
 }
 
-static bool loadThings(const uint8_t* buf, size_t len)
+static bool loadThings(Reader* reader, size_t lumpLength)
 {
 /// @todo Get these from a game api header.
 #define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
@@ -648,12 +622,9 @@ static bool loadThings(const uint8_t* buf, size_t len)
 
 #define ANG45               0x20000000
 
+    DENG_ASSERT(reader);
+
     WADMAPCONVERTER_TRACE("Processing things...");
-
-    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64THING :
-        mapFormat == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
-    uint num = len / elmSize;
-
     switch(mapFormat)
     {
     default:
@@ -673,17 +644,17 @@ static bool loadThings(const uint8_t* buf, size_t len)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
 
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_THING;
+        for(uint n = 0; n < numElements; ++n)
         {
             mthing_t* t = &map->things[n];
 
-            t->origin[VX]   = SHORT(*((const int16_t*) (ptr)));
-            t->origin[VY]   = SHORT(*((const int16_t*) (ptr+2)));
+            t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
+            t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
             t->origin[VZ]   = 0;
-            t->angle        = ANG45 * (SHORT(*((const int16_t*) (ptr+4))) / 45);
-            t->doomEdNum    = SHORT(*((const int16_t*) (ptr+6)));
-            t->flags        = SHORT(*((const int16_t*) (ptr+8)));
+            t->angle        = ANG45 * (SHORT( Reader_ReadInt16(reader) ) / 45);
+            t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
+            t->flags        = SHORT( Reader_ReadInt16(reader) );
 
             t->skillModes = 0;
             if(t->flags & MTF_EASY)
@@ -697,8 +668,6 @@ static bool loadThings(const uint8_t* buf, size_t len)
             // DOOM format things spawn on the floor by default unless their
             // type-specific flags override.
             t->flags |= MTF_Z_FLOOR;
-
-            ptr += elmSize;
         }
 
 #undef MTF_EASY
@@ -732,17 +701,17 @@ static bool loadThings(const uint8_t* buf, size_t len)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_DONTSPAWNATSTART|MTF_SCRIPT_TOUCH|MTF_SCRIPT_DEATH|MTF_SECRET|MTF_NOTARGET|MTF_NOTDM|MTF_NOTCOOP))
 
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_64THING;
+        for(uint n = 0; n < numElements; ++n)
         {
             mthing_t* t = &map->things[n];
 
-            t->origin[VX]   = SHORT(*((const int16_t*) (ptr)));
-            t->origin[VY]   = SHORT(*((const int16_t*) (ptr+2)));
-            t->origin[VZ]   = SHORT(*((const int16_t*) (ptr+4)));
-            t->angle        = ANG45 * (SHORT(*((const int16_t*) (ptr+6))) / 45);
-            t->doomEdNum    = SHORT(*((const int16_t*) (ptr+8)));
-            t->flags        = SHORT(*((const int16_t*) (ptr+10)));
+            t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
+            t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
+            t->origin[VZ]   = SHORT( Reader_ReadInt16(reader) );
+            t->angle        = ANG45 * (SHORT( Reader_ReadInt16(reader) ) / 45);
+            t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
+            t->flags        = SHORT( Reader_ReadInt16(reader) );
 
             t->skillModes = 0;
             if(t->flags & MTF_EASY)
@@ -757,9 +726,7 @@ static bool loadThings(const uint8_t* buf, size_t len)
             // unless their type-specific flags override.
             t->flags |= MTF_Z_FLOOR;
 
-            t->d64TID = SHORT(*((const int16_t*) (ptr+12)));
-
-            ptr += elmSize;
+            t->d64TID = SHORT( Reader_ReadInt16(reader) );
         }
 
 #undef MTF_EASY
@@ -801,17 +768,17 @@ static bool loadThings(const uint8_t* buf, size_t len)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
 
-        const uint8_t* ptr = buf;
-        for(uint n = 0; n < num; ++n)
+        uint numElements = lumpLength / SIZEOF_XTHING;
+        for(uint n = 0; n < numElements; ++n)
         {
             mthing_t* t = &map->things[n];
 
-            t->xTID         = SHORT(*((const int16_t*) (ptr)));
-            t->origin[VX]   = SHORT(*((const int16_t*) (ptr+2)));
-            t->origin[VY]   = SHORT(*((const int16_t*) (ptr+4)));
-            t->origin[VZ]   = SHORT(*((const int16_t*) (ptr+6)));
-            t->angle        = SHORT(*((const int16_t*) (ptr+8)));
-            t->doomEdNum    = SHORT(*((const int16_t*) (ptr+10)));
+            t->xTID         = SHORT( Reader_ReadInt16(reader) );
+            t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
+            t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
+            t->origin[VZ]   = SHORT( Reader_ReadInt16(reader) );
+            t->angle        = SHORT( Reader_ReadInt16(reader) );
+            t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
 
             /**
              * For some reason, the Hexen format stores polyobject tags in
@@ -823,7 +790,7 @@ static bool loadThings(const uint8_t* buf, size_t len)
                t->doomEdNum != PO_SPAWNCRUSH_DOOMEDNUM)
                 t->angle = ANG45 * (t->angle / 45);
 
-            t->flags = SHORT(*((const int16_t*) (ptr+12)));
+            t->flags = SHORT( Reader_ReadInt16(reader) );
 
             t->skillModes = 0;
             if(t->flags & MTF_EASY)
@@ -844,14 +811,12 @@ static bool loadThings(const uint8_t* buf, size_t len)
             // unless their type-specific flags override.
             t->flags |= MTF_Z_FLOOR;
 
-            t->xSpecial = *(ptr+14);
-            t->xArgs[0] = *(ptr+15);
-            t->xArgs[1] = *(ptr+16);
-            t->xArgs[2] = *(ptr+17);
-            t->xArgs[3] = *(ptr+18);
-            t->xArgs[4] = *(ptr+19);
-
-            ptr += elmSize;
+            t->xSpecial = Reader_ReadByte(reader);
+            t->xArgs[0] = Reader_ReadByte(reader);
+            t->xArgs[1] = Reader_ReadByte(reader);
+            t->xArgs[2] = Reader_ReadByte(reader);
+            t->xArgs[3] = Reader_ReadByte(reader);
+            t->xArgs[4] = Reader_ReadByte(reader);
         }
 
 #undef MTF_EASY
@@ -881,45 +846,100 @@ static bool loadThings(const uint8_t* buf, size_t len)
 #undef MTF_Z_RANDOM
 }
 
-static bool loadLights(const uint8_t* buf, size_t len)
+static bool loadLights(Reader* reader, size_t lumpLength)
 {
+    DENG_ASSERT(reader);
+
     WADMAPCONVERTER_TRACE("Processing lights...");
 
-    size_t elmSize = SIZEOF_LIGHT;
-    uint num = len / elmSize;
-    const uint8_t* ptr = buf;
-    for(uint n = 0; n < num; ++n)
+    uint numElements = lumpLength / SIZEOF_LIGHT;
+    for(uint n = 0; n < numElements; ++n)
     {
         surfacetint_t* t = &map->lights[n];
 
-        t->rgb[0] = (float) *(ptr)   / 255;
-        t->rgb[1] = (float) *(ptr+1) / 255;
-        t->rgb[2] = (float) *(ptr+2) / 255;
-        t->xx[0] = *(ptr+3);
-        t->xx[1] = *(ptr+4);
-        t->xx[2] = *(ptr+5);
-        ptr += elmSize;
+        t->rgb[0]   = Reader_ReadByte(reader) / 255.f;
+        t->rgb[1]   = Reader_ReadByte(reader) / 255.f;
+        t->rgb[2]   = Reader_ReadByte(reader) / 255.f;
+        t->xx[0]    = Reader_ReadByte(reader);
+        t->xx[1]    = Reader_ReadByte(reader);
+        t->xx[2]    = Reader_ReadByte(reader);
     }
 
     return true;
 }
 
-static void bufferLump(lumpnum_t lumpNum, uint8_t** buf, size_t* len, size_t* oldLen)
-{
-    *len = W_LumpLength(lumpNum);
+static uint8_t* readPtr;
+static uint8_t* readBuffer = NULL;
+static size_t readBufferSize = 0;
 
-    // Need to enlarge our buffer?
-    if(*len > *oldLen)
+static char readInt8(Reader* r)
+{
+    if(!r) return 0;
+    char value = *((const int8_t*) (readPtr));
+    readPtr += 1;
+    return value;
+}
+
+static short readInt16(Reader* r)
+{
+    if(!r) return 0;
+    short value = *((const int16_t*) (readPtr));
+    readPtr += 2;
+    return value;
+}
+
+static int readInt32(Reader* r)
+{
+    if(!r) return 0;
+    int value = *((const int32_t*) (readPtr));
+    readPtr += 4;
+    return value;
+}
+
+static float readFloat(Reader* r)
+{
+    DENG_ASSERT(sizeof(float) == 4);
+    if(!r) return 0;
+    int32_t val = *((const int32_t*) (readPtr));
+    float returnValue = 0;
+    memcpy(&returnValue, &val, 4);
+    return returnValue;
+}
+
+static void readData(Reader* r, char* data, int len)
+{
+    if(!r) return;
+    memcpy(data, readPtr, len);
+    readPtr += len;
+}
+
+/// @todo It should not be necessary to buffer the lump data here.
+static Reader* bufferLump(MapLumpInfo* info)
+{
+    // Need to enlarge our read buffer?
+    if(info->length > readBufferSize)
     {
-        *buf = (uint8_t*)realloc(*buf, *len);
-        if(!*buf)
+        readBuffer = (uint8_t*)realloc(readBuffer, info->length);
+        if(!readBuffer)
             Con_Error("WadMapConverter::bufferLump: Failed on (re)allocation of %lu bytes for "
-                      "temporary lump buffer.", (unsigned long) *len);
-        *oldLen = *len;
+                      "the read buffer.", (unsigned long) info->length);
+        readBufferSize = info->length;
     }
 
     // Buffer the entire lump.
-    W_ReadLump(lumpNum, *buf);
+    W_ReadLump(info->lump, readBuffer);
+
+    // Create the reader.
+    readPtr = readBuffer;
+    return Reader_NewWithCallbacks(readInt8, readInt16, readInt32, readFloat, readData);
+}
+
+static void clearReadBuffer(void)
+{
+    if(!readBuffer) return;
+    free(readBuffer);
+    readBuffer = 0;
+    readBufferSize = 0;
 }
 
 int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
@@ -963,7 +983,7 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     }
 
     /**
-     * Allocate the map data objects used during conversion.
+     * Allocate the temporary map data objects used during conversion.
      */
     map->vertexes =   (coord_t*)malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
     map->lines    =   (mline_t*)malloc(map->numLines * sizeof(mline_t));
@@ -975,52 +995,55 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
         map->lights = (surfacetint_t*)malloc(map->numLights * sizeof(surfacetint_t));
     }
 
-    uint8_t* buf = NULL;
-    size_t oldLen = 0;
-
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
-        const MapLumpInfo* info = lumpInfos[i];
-        size_t len;
+        MapLumpInfo* info = lumpInfos[i];
+        Reader* reader;
 
         if(!info) continue;
 
-        // Process it, transforming it into our local representation.
+        // Process this data lump.
         switch(info->type)
         {
         case ML_VERTEXES:
-            bufferLump(info->lump, &buf, &len, &oldLen);
-            loadVertexes(buf, len);
+            reader = bufferLump(info);
+            loadVertexes(reader, info->length);
+            Reader_Delete(reader);
             break;
 
         case ML_LINEDEFS:
-            bufferLump(info->lump, &buf, &len, &oldLen);
-            loadLinedefs(buf, len);
+            reader = bufferLump(info);
+            loadLinedefs(reader, info->length);
+            Reader_Delete(reader);
             break;
 
         case ML_SIDEDEFS:
-            bufferLump(info->lump, &buf, &len, &oldLen);
-            loadSidedefs(buf, len);
+            reader = bufferLump(info);
+            loadSidedefs(reader, info->length);
+            Reader_Delete(reader);
             break;
 
         case ML_SECTORS:
-            bufferLump(info->lump, &buf, &len, &oldLen);
-            loadSectors(buf, len);
+            reader = bufferLump(info);
+            loadSectors(reader, info->length);
+            Reader_Delete(reader);
             break;
 
         case ML_THINGS:
-            if(map->numThings)
+            if(info->length)
             {
-                bufferLump(info->lump, &buf, &len, &oldLen);
-                loadThings(buf, len);
+                reader = bufferLump(info);
+                loadThings(reader, info->length);
+                Reader_Delete(reader);
             }
             break;
 
         case ML_LIGHTS:
-            if(map->numLights)
+            if(info->length)
             {
-                bufferLump(info->lump, &buf, &len, &oldLen);
-                loadLights(buf, len);
+                reader = bufferLump(info);
+                loadLights(reader, info->length);
+                Reader_Delete(reader);
             }
             break;
 
@@ -1032,12 +1055,10 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
         }
     }
 
-    if(buf)
-    {
-        free(buf);
-    }
+    // We're done with the read buffer.
+    clearReadBuffer();
 
-    return false; // Read and converted successfully.
+    return false; // Success.
 }
 
 int TransferMap(void)
