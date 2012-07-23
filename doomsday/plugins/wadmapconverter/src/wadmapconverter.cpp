@@ -27,90 +27,68 @@
 #include <de/c_wrapper.h>
 #include "map.h"
 
-typedef struct maplumpformat_s {
-    int hversion;
-    char* formatName;
-    int lumpClass;
-} maplumpformat_t;
-
-typedef struct maplumpinfo_s {
-    lumpnum_t lumpNum;
-    maplumpformat_t* format;
-    int lumpClass;
-    size_t startOffset;
-    uint elements;
-    size_t length;
-} maplumpinfo_t;
-
-typedef struct listnode_s {
-    void* data;
-    struct listnode_s* next;
-} listnode_t;
-
 map_t DENG_PLUGIN_GLOBAL(theMap);
 map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
 int DENG_PLUGIN_GLOBAL(verbose);
 
-static int mapLumpTypeForName(const char* name)
+static void configure(void)
+{
+    DENG_PLUGIN_GLOBAL(verbose) = CommandLine_Exists("-verbose");
+}
+
+static lumptype_t mapLumpTypeForName(const char* name)
 {
     static const struct maplumpinfo_s {
-        int type;
         const char* name;
-    } mapLumpInfos[] =
+        lumptype_t type;
+    } lumptypeForNameDict[] =
     {
-        { ML_THINGS,     "THINGS" },
-        { ML_LINEDEFS,   "LINEDEFS" },
-        { ML_SIDEDEFS,   "SIDEDEFS" },
-        { ML_VERTEXES,   "VERTEXES" },
-        { ML_SEGS,       "SEGS" },
-        { ML_SSECTORS,   "SSECTORS" },
-        { ML_NODES,      "NODES" },
-        { ML_SECTORS,    "SECTORS" },
-        { ML_REJECT,     "REJECT" },
-        { ML_BLOCKMAP,   "BLOCKMAP" },
-        { ML_BEHAVIOR,   "BEHAVIOR" },
-        { ML_SCRIPTS,    "SCRIPTS" },
-        { ML_LIGHTS,     "LIGHTS" },
-        { ML_MACROS,     "MACROS" },
-        { ML_LEAFS,      "LEAFS" },
-        { ML_INVALID,    NULL }
+        { "THINGS",     ML_THINGS },
+        { "LINEDEFS",   ML_LINEDEFS },
+        { "SIDEDEFS",   ML_SIDEDEFS },
+        { "VERTEXES",   ML_VERTEXES },
+        { "SEGS",       ML_SEGS },
+        { "SSECTORS",   ML_SSECTORS },
+        { "NODES",      ML_NODES },
+        { "SECTORS",    ML_SECTORS },
+        { "REJECT",     ML_REJECT },
+        { "BLOCKMAP",   ML_BLOCKMAP },
+        { "BEHAVIOR",   ML_BEHAVIOR },
+        { "SCRIPTS",    ML_SCRIPTS },
+        { "LIGHTS",     ML_LIGHTS },
+        { "MACROS",     ML_MACROS },
+        { "LEAFS",      ML_LEAFS },
+        { "GL_VERT",    ML_GLVERT },
+        { "GL_SEGS",    ML_GLSEGS },
+        { "GL_SSECT",   ML_GLSSECT },
+        { "GL_NODES",   ML_GLNODES },
+        { "GL_PVS",     ML_GLPVS},
+        { NULL }
     };
 
-    if(!name) return ML_INVALID;
+    DENG_ASSERT(name);
 
-    for(int i = 0; mapLumpInfos[i].type > ML_INVALID; ++i)
+    if(name[0])
+    for(int i = 0; lumptypeForNameDict[i].name; ++i)
     {
-        if(!strnicmp(mapLumpInfos[i].name, name, strlen(mapLumpInfos[i].name)))
-            return mapLumpInfos[i].type;
+        if(!strnicmp(lumptypeForNameDict[i].name, name, strlen(lumptypeForNameDict[i].name)))
+            return lumptypeForNameDict[i].type;
     }
 
     return ML_INVALID;
 }
 
 /**
- * Allocate a new list node.
+ * Create a new map lump info record.
  */
-static listnode_t* allocListNode(void)
+static maplumpinfo_t* createMapLumpInfo(lumpnum_t lumpNum, lumptype_t lumpType)
 {
-    listnode_t* node = static_cast<listnode_t*>(Z_Calloc(sizeof(listnode_t), PU_APPSTATIC, 0));
-    return node;
-}
+    maplumpinfo_t* info = static_cast<maplumpinfo_t*>(calloc(1, sizeof(*info)));
 
-/**
- * Free all memory acquired for the given list node.
- */
-static void freeListNode(listnode_t* node)
-{
-    if(!node) return;
-    Z_Free(node);
-}
+    info->lumpNum = lumpNum;
+    info->lumpType = lumpType;
+    info->length = W_LumpLength(lumpNum);
 
-/**
- * Allocate memory for a new map lump info record.
- */
-static maplumpinfo_t* allocMapLumpInfo(void)
-{
-    maplumpinfo_t* info = static_cast<maplumpinfo_t*>(Z_Calloc(sizeof(maplumpinfo_t), PU_APPSTATIC, 0));
     return info;
 }
 
@@ -120,52 +98,7 @@ static maplumpinfo_t* allocMapLumpInfo(void)
 static void freeMapLumpInfo(maplumpinfo_t* info)
 {
     if(!info) return;
-    Z_Free(info);
-}
-
-/**
- * Free a list of maplumpinfo records.
- */
-static void freeMapLumpInfoList(listnode_t* headPtr)
-{
-    listnode_t* node = headPtr;
-    while(node)
-    {
-        listnode_t* np = node->next;
-
-        if(node->data)
-            freeMapLumpInfo(reinterpret_cast<maplumpinfo_t*>(node->data));
-        freeListNode(node);
-
-        node = np;
-    }
-}
-
-/**
- * Create a new map lump info record.
- */
-static maplumpinfo_t* createMapLumpInfo(lumpnum_t lumpNum, int lumpClass)
-{
-    maplumpinfo_t* info = allocMapLumpInfo();
-
-    info->lumpNum = lumpNum;
-    info->lumpClass = lumpClass;
-    info->length = W_LumpLength(lumpNum);
-    info->format = NULL;
-    info->startOffset = 0;
-
-    return info;
-}
-
-/**
- * Link a maplumpinfo record to an archivedmap record.
- */
-static void addLumpInfoToList(listnode_t** headPtr, maplumpinfo_t* info)
-{
-    listnode_t* node = allocListNode();
-    node->data = info;
-    node->next = *headPtr;
-    *headPtr = node;
+    free(info);
 }
 
 /**
@@ -177,41 +110,43 @@ static void addLumpInfoToList(listnode_t** headPtr, maplumpinfo_t* info)
  *
  * @param headPtr       The list to link the created maplump records to.
  * @param startLump     The lump number to begin our search with.
- *
- * @return              The number of collected lumps.
  */
-static uint collectMapLumps(listnode_t** headPtr, lumpnum_t startLump)
+static void collectMapLumps(maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES], lumpnum_t startLump)
 {
-    WADMAPCONVERTER_TRACE("collectMapLumps: Locating lumps...");
+    DENG_ASSERT(lumpInfos);
+
+    WADMAPCONVERTER_TRACE("Locating data lumps...");
 
     const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
-    uint numCollectedLumps = 0;
+    if(startLump < 0 || startLump >= numLumps) return;
 
-    if(startLump > 0 && startLump < numLumps)
+    // Keep checking lumps to see if its a map data lump.
+    for(lumpnum_t i = startLump; i < numLumps; ++i)
     {
-        // Keep checking lumps to see if its a map data lump.
-        for(lumpnum_t i = startLump; i < numLumps; ++i)
+        // Lookup the lump name in our list of known map lump names.
+        const char* lumpName = W_LumpName(i);
+        lumptype_t lumpType = mapLumpTypeForName(lumpName);
+
+        if(lumpType == ML_INVALID)
         {
-            // Lookup the lump name in our list of known map lump names.
-            const char* lumpName = W_LumpName(i);
-            int lumpType = mapLumpTypeForName(lumpName);
-
-            if(lumpType != ML_INVALID)
-            {
-                // Its a known map lump.
-                maplumpinfo_t* info = createMapLumpInfo(i, lumpType);
-
-                addLumpInfoToList(headPtr, info);
-                numCollectedLumps += 1;
-                continue;
-            }
-
             // Stop looking, we *should* have found them all.
             break;
         }
-    }
 
-    return numCollectedLumps;
+        // A recognised map data lump; record it in the collection.
+        if(lumpInfos[lumpType])
+        {
+            freeMapLumpInfo(lumpInfos[lumpType]);
+        }
+        lumpInfos[lumpType] = createMapLumpInfo(i, lumpType);
+    }
+}
+
+static lumpnum_t locateMapDataMarkerLumpForUri(const Uri* uri)
+{
+    DENG_ASSERT(uri);
+    const char* mapId = Str_Text(Uri_Path(uri));
+    return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
 }
 
 /**
@@ -223,57 +158,31 @@ static uint collectMapLumps(listnode_t** headPtr, lumpnum_t startLump)
  */
 int ConvertMapHook(int hookType, int parm, void* context)
 {
-    int ret_val = true; // Assume success.
-
     DENG_UNUSED(hookType);
     DENG_UNUSED(parm);
 
-    DENG_PLUGIN_GLOBAL(verbose) = CommandLine_Exists("-verbose");
+    // Setup the processing parameters.
+    configure();
 
+    // Begin the conversion attempt.
+    int ret_val = true; // Assume success.
+
+    // Attempt to locate the identified map data marker lump.
     const Uri* uri = reinterpret_cast<const Uri*>(context);
-    const char* mapId = Str_Text(Uri_Path(uri));
-    lumpnum_t markerLump;
-
-    markerLump = W_CheckLumpNumForName2(mapId, true /*quiet please*/);
+    lumpnum_t markerLump = locateMapDataMarkerLumpForUri(uri);
     if(0 > markerLump)
     {
         ret_val = false;
         goto FAIL_LOCATE_MAP;
     }
 
-    // Add the marker lump to the list of lumps for this map.
-    listnode_t* sourceLumpListHead = NULL;
-    addLumpInfoToList(&sourceLumpListHead, createMapLumpInfo(markerLump, ML_LABEL));
-
-    // Find the rest of the map data lumps associated with this map.
-    collectMapLumps(&sourceLumpListHead, markerLump + 1);
-
-    // Count the number of source data lumps.
-    uint lumpListSize = 0;
-    listnode_t* node = sourceLumpListHead;
-    while(node)
-    {
-        ++lumpListSize;
-        node = node->next;
-    }
-
-    // Allocate and populate the source data lump list.
-    lumpnum_t* lumpList = static_cast<lumpnum_t*>(Z_Malloc(sizeof(*lumpList) * lumpListSize, PU_APPSTATIC, 0));
-    if(!lumpList)
-        Con_Error("WadMapConverter: Failed on allocation of %lu bytes for lump list.",
-                  (unsigned long) (sizeof(*lumpList) * lumpListSize));
-
-    node = sourceLumpListHead;
-    uint idx = 0;
-    while(node)
-    {
-        maplumpinfo_t* info = reinterpret_cast<maplumpinfo_t*>(node->data);
-        lumpList[idx++] = info->lumpNum;
-        node = node->next;
-    }
+    // Collect all of the map data lumps associated with this map.
+    maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES];
+    memset(lumpInfos, 0, sizeof(lumpInfos));
+    collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
     memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
-    if(!IsSupportedFormat(lumpList, lumpListSize))
+    if(!IsSupportedFormat(lumpInfos))
     {
         Con_Message("WadMapConverter: Unknown map format, aborting.\n");
         ret_val = false;
@@ -281,7 +190,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     }
 
     // Read the archived map.
-    int loadError = !LoadMap(lumpList, lumpListSize);
+    int loadError = !LoadMap(lumpInfos);
     if(loadError)
     {
         Con_Message("WadMapConverter: Internal error, load failed.\n");
@@ -298,9 +207,12 @@ int ConvertMapHook(int hookType, int parm, void* context)
     // Cleanup.
 FAIL_LOAD_ERROR:
 FAIL_UNKNOWN_FORMAT:
-    sourceLumpListHead;
-    freeMapLumpInfoList(sourceLumpListHead);
-    Z_Free(lumpList);
+    for(uint i = 0; i < (uint)NUM_LUMP_TYPES; ++i)
+    {
+        maplumpinfo_t* info = lumpInfos[i];
+        if(!info) continue;
+        freeMapLumpInfo(info);
+    }
 
 FAIL_LOCATE_MAP:
 

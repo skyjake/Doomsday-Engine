@@ -515,49 +515,6 @@ static void buildReject(gamemap_t *map)
 }
 #endif
 
-lumptype_t DataTypeForLumpName(const char* name)
-{
-    static const struct lumptype_s {
-        lumptype_t      type;
-        const char*     name;
-    } knownLumps[] =
-    {
-        {ML_LABEL,      "*"},
-        {ML_THINGS,     "THINGS"},
-        {ML_LINEDEFS,   "LINEDEFS"},
-        {ML_SIDEDEFS,   "SIDEDEFS"},
-        {ML_VERTEXES,   "VERTEXES"},
-        {ML_SEGS,       "SEGS"},
-        {ML_SSECTORS,   "SSECTORS"},
-        {ML_NODES,      "NODES"},
-        {ML_SECTORS,    "SECTORS"},
-        {ML_REJECT,     "REJECT"},
-        {ML_BLOCKMAP,   "BLOCKMAP"},
-        {ML_BEHAVIOR,   "BEHAVIOR"},
-        {ML_SCRIPTS,    "SCRIPTS"},
-        {ML_LIGHTS,     "LIGHTS"},
-        {ML_MACROS,     "MACROS"},
-        {ML_LEAFS,      "LEAFS"},
-        {ML_GLVERT,     "GL_VERT"},
-        {ML_GLSEGS,     "GL_SEGS"},
-        {ML_GLSSECT,    "GL_SSECT"},
-        {ML_GLNODES,    "GL_NODES"},
-        {ML_GLPVS,      "GL_PVS"},
-        {ML_INVALID,    NULL},
-    };
-
-    if(name && name[0])
-    {
-        for(uint i = (uint)FIRST_LUMP_TYPE; knownLumps[i].type != ML_INVALID; ++i)
-        {
-            if(!strnicmp(knownLumps[i].name, name, strlen(knownLumps[i].name)))
-                return knownLumps[i].type;
-        }
-    }
-
-    return ML_INVALID;
-}
-
 /**
  * Create a temporary polyobj (read from the original map data).
  */
@@ -838,92 +795,92 @@ void AnalyzeMap(void)
     }
 }
 
-int IsSupportedFormat(const lumpnum_t* lumpList, int numLumps)
+int IsSupportedFormat(maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES])
 {
-    boolean supported = false;
+    DENG_ASSERT(lumpInfos);
 
-    // Lets first check for format specific lumps, as their prescense
-    // determines the format of the map data. Assume DOOM format by default.
+    bool recognised = false;
+    // Assume DOOM format by default.
     map->format = MF_DOOM;
-    for(int i = 0; i < numLumps; ++i)
+
+    // Check for format specific lumps.
+    for(uint i = 0; i < (uint)NUM_LUMP_TYPES; ++i)
     {
-        const char* lumpName = W_LumpName(lumpList[i]);
+        const maplumpinfo_t* info = lumpInfos[i];
+        if(!info) continue;
 
-        if(!lumpName || !lumpName[0])
-            continue;
-
-        if(!strncmp(lumpName, "BEHAVIOR", 8))
+        switch(info->lumpType)
         {
-            map->format = MF_HEXEN;
-            break;
-        }
+        case ML_BEHAVIOR:   map->format = MF_HEXEN; break;
 
-        if(!strncmp(lumpName, "MACROS", 6) ||
-           !strncmp(lumpName, "LIGHTS", 6) ||
-           !strncmp(lumpName, "LEAFS", 5))
-        {
-            map->format = MF_DOOM64;
-            break;
+        case ML_MACROS:
+        case ML_LIGHTS:
+        case ML_LEAFS:      map->format = MF_DOOM64; break;
+
+        default: break;
         }
     }
 
-    for(int i = 0; i < numLumps; ++i)
+    for(uint i = 0; i < (uint)NUM_LUMP_TYPES; ++i)
     {
-        const char* lumpName = W_LumpName(lumpList[i]);
-        size_t elmSize = 0; // Num of bytes.
+        const maplumpinfo_t* info = lumpInfos[i];
+        if(!info) continue;
 
         // Determine the number of map data objects of each data type.
-        uint* ptr = NULL;
-        switch(DataTypeForLumpName(lumpName))
+        uint* elmCountAddr = NULL;
+        size_t elmSize = 0; // Num of bytes.
+        switch(info->lumpType)
         {
         case ML_VERTEXES:
-            ptr = &map->numVertexes;
+            elmCountAddr = &map->numVertexes;
             elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
             break;
 
         case ML_THINGS:
-            ptr = &map->numThings;
+            elmCountAddr = &map->numThings;
             elmSize = (map->format == MF_DOOM64? SIZEOF_64THING : map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
             break;
 
         case ML_LINEDEFS:
-            ptr = &map->numLines;
+            elmCountAddr = &map->numLines;
             elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF : map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
             break;
 
         case ML_SIDEDEFS:
-            ptr = &map->numSides;
+            elmCountAddr = &map->numSides;
             elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
             break;
 
         case ML_SECTORS:
-            ptr = &map->numSectors;
+            elmCountAddr = &map->numSectors;
             elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
             break;
 
         case ML_LIGHTS:
-            ptr = &map->numLights;
+            elmCountAddr = &map->numLights;
             elmSize = SIZEOF_LIGHT;
             break;
 
         default: break;
         }
 
-        if(ptr)
+        if(elmCountAddr)
         {
-            size_t lumpLength = W_LumpLength(lumpList[i]);
-            if(0 != lumpLength % elmSize)
+            if(0 != info->length % elmSize)
+            {
                 return false; // What is this??
-            *ptr += lumpLength / elmSize;
+            }
+
+            *elmCountAddr += info->length / elmSize;
         }
     }
 
     if(map->numVertexes > 0 && map->numLines > 0 && map->numSides > 0 && map->numSectors > 0)
     {
-        supported = true;
+        recognised = true;
     }
 
-    return supported;
+    return (int)recognised;
 }
 
 static void freeMapData(void)
@@ -1638,8 +1595,10 @@ static void bufferLump(lumpnum_t lumpNum, uint8_t** buf, size_t* len, size_t* ol
     W_ReadLump(lumpNum, *buf);
 }
 
-int LoadMap(const lumpnum_t* lumpList, int numLumps)
+int LoadMap(maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES])
 {
+    DENG_ASSERT(lumpInfos);
+
     VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
                          (map->format == MF_DOOM64? "DOOM64" :
                           map->format == MF_HEXEN?  "Hexen"  : "DOOM")) );
@@ -1656,38 +1615,40 @@ int LoadMap(const lumpnum_t* lumpList, int numLumps)
     uint8_t* buf = NULL;
     size_t oldLen = 0;
 
-    for(int i = 0; i < numLumps; ++i)
+    for(uint i = 0; i < (uint)NUM_LUMP_TYPES; ++i)
     {
-        lumptype_t lumpType = DataTypeForLumpName(W_LumpName(lumpList[i]));
+        const maplumpinfo_t* info = lumpInfos[i];
         size_t len;
 
+        if(!info) continue;
+
         // Process it, transforming it into our local representation.
-        switch(lumpType)
+        switch(info->lumpType)
         {
         case ML_VERTEXES:
-            bufferLump(lumpList[i], &buf, &len, &oldLen);
+            bufferLump(info->lumpNum, &buf, &len, &oldLen);
             loadVertexes(buf, len);
             break;
 
         case ML_LINEDEFS:
-            bufferLump(lumpList[i], &buf, &len, &oldLen);
+            bufferLump(info->lumpNum, &buf, &len, &oldLen);
             loadLinedefs(buf, len);
             break;
 
         case ML_SIDEDEFS:
-            bufferLump(lumpList[i], &buf, &len, &oldLen);
+            bufferLump(info->lumpNum, &buf, &len, &oldLen);
             loadSidedefs(buf, len);
             break;
 
         case ML_SECTORS:
-            bufferLump(lumpList[i], &buf, &len, &oldLen);
+            bufferLump(info->lumpNum, &buf, &len, &oldLen);
             loadSectors(buf, len);
             break;
 
         case ML_THINGS:
             if(map->numThings)
             {
-                bufferLump(lumpList[i], &buf, &len, &oldLen);
+                bufferLump(info->lumpNum, &buf, &len, &oldLen);
                 loadThings(buf, len);
             }
             break;
@@ -1695,13 +1656,13 @@ int LoadMap(const lumpnum_t* lumpList, int numLumps)
         case ML_LIGHTS:
             if(map->numLights)
             {
-                bufferLump(lumpList[i], &buf, &len, &oldLen);
+                bufferLump(info->lumpNum, &buf, &len, &oldLen);
                 loadLights(buf, len);
             }
             break;
 
         case ML_MACROS:
-            //// \todo Write me!
+            /// @todo Write me!
             break;
 
         default: break;

@@ -57,6 +57,12 @@ typedef enum lumptype_e {
     NUM_LUMP_TYPES
 } lumptype_t;
 
+typedef struct maplumpinfo_s {
+    lumpnum_t lumpNum;
+    lumptype_t lumpType;
+    size_t length;
+} maplumpinfo_t;
+
 typedef struct materialref_s {
     char            name[9];
     materialid_t    id; // Doomsday's unique identifier for this.
@@ -151,7 +157,8 @@ typedef struct mlight_s {
 } surfacetint_t;
 
 typedef enum {
-    MF_DOOM = 0,
+    MF_UNKNOWN              = -1,
+    MF_DOOM                 = 0,
     MF_HEXEN,
     MF_DOOM64
 } mapformatid_t;
@@ -186,9 +193,9 @@ typedef struct map_s {
 
 extern map_t* DENG_PLUGIN_GLOBAL(map);
 
-int IsSupportedFormat(const lumpnum_t* lumpList, int numLumps);
+int IsSupportedFormat(maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES]);
 
-int LoadMap(const lumpnum_t* lumpList, int numLumps);
+int LoadMap(maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES]);
 void AnalyzeMap(void);
 int TransferMap(void);
 
