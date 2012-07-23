@@ -32,6 +32,9 @@ map_t DENG_PLUGIN_GLOBAL(theMap);
 map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
 mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
 
+/**
+ * Configure high-level map conversion properties that define this process.
+ */
 static void configure(void)
 {
     DENG_PLUGIN_GLOBAL(verbose) = CommandLine_Exists("-verbose");
@@ -46,6 +49,13 @@ static MapLumpInfo* newMapLumpInfo(lumpnum_t lumpNum, MapLumpType lumpType)
     return info->Init(lumpNum, lumpType, W_LumpLength(lumpNum));
 }
 
+/**
+ * Given a map @a uri, attempt to locate the associated marker lump for the
+ * map data within the Doomsday file system.
+ *
+ * @param uri           Map identifier, e.g., "Map:E1M1"
+ * @return Lump number for the found data else @c -1
+ */
 static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
 {
     DENG_ASSERT(uri);
@@ -53,20 +63,31 @@ static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
     return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
 }
 
-static MapLumpType recogniseMapLump(lumpnum_t lumpNum)
+/**
+ * Given a @a lumpNumber, attempt to recognise the data as a known map format
+ * data lump.
+ *
+ * @note Presently this recognition logic is rather primitive and relies soley
+ *       on matching the lump name to a known name set. This should be expanded
+ *       to actually qualify the data itself (expected size checks, etc...).
+ *
+ * @param lumpNumber    Lump number to recognise the format of.
+ * @return MapLumpType identifier for the recognised lump, else @c ML_INVALID.
+ */
+static MapLumpType recogniseMapLump(lumpnum_t lumpNumber)
 {
     /// @todo Relocate recognition logic from IsSupportedFormat() here.
-    return MapLumpTypeForName(W_LumpName(lumpNum));
+    return MapLumpTypeForName(W_LumpName(lumpNumber));
 }
 
 /**
- * Find the lumps associated with this map dataset and link them to the
- * archivedmap record.
+ * Find all data lumps associated with this map and populate their metadata
+ * in the @a lumpInfos record set.
  *
  * @note Some obscure PWADs have these lumps in a non-standard order,
  * so we need to go resort to finding them automatically.
  *
- * @param lumpInfos     The MapLumpInfo dictionary to populate.
+ * @param lumpInfos     MapLumpInfo record set to populate.
  * @param startLump     The lump number to begin our search with.
  */
 static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t startLump)
