@@ -25,6 +25,21 @@
 #include "dd_types.h"
 #include "id1map_util.h"
 
+// Size of the map data structures in bytes in the arrived map format.
+#define SIZEOF_64VERTEX         (4 * 2)
+#define SIZEOF_VERTEX           (2 * 2)
+#define SIZEOF_64THING          (2 * 7)
+#define SIZEOF_XTHING           (2 * 7 + 1 * 6)
+#define SIZEOF_THING            (2 * 5)
+#define SIZEOF_XLINEDEF         (2 * 5 + 1 * 6)
+#define SIZEOF_64LINEDEF        (2 * 6 + 1 * 4)
+#define SIZEOF_LINEDEF          (2 * 7)
+#define SIZEOF_64SIDEDEF        (2 * 6)
+#define SIZEOF_SIDEDEF          (2 * 3 + 8 * 3)
+#define SIZEOF_64SECTOR         (2 * 12)
+#define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
+#define SIZEOF_LIGHT            (1 * 6)
+
 typedef struct materialref_s {
     char            name[9];
     materialid_t    id; // Doomsday's unique identifier for this.

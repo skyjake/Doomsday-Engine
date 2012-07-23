@@ -27,21 +27,6 @@
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
 
-// Size of the map data structures in bytes in the arrived WAD format.
-#define SIZEOF_64VERTEX         (4 * 2)
-#define SIZEOF_VERTEX           (2 * 2)
-#define SIZEOF_64THING          (2 * 7)
-#define SIZEOF_XTHING           (2 * 7 + 1 * 6)
-#define SIZEOF_THING            (2 * 5)
-#define SIZEOF_XLINEDEF         (2 * 5 + 1 * 6)
-#define SIZEOF_64LINEDEF        (2 * 6 + 1 * 4)
-#define SIZEOF_LINEDEF          (2 * 7)
-#define SIZEOF_64SIDEDEF        (2 * 6)
-#define SIZEOF_SIDEDEF          (2 * 3 + 8 * 3)
-#define SIZEOF_64SECTOR         (2 * 12)
-#define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
-#define SIZEOF_LIGHT            (1 * 6)
-
 #define PO_LINE_START           (1) // polyobj line start special
 #define PO_LINE_EXPLICIT        (5)
 #define PO_ANCHOR_DOOMEDNUM     (3000)
@@ -792,94 +777,6 @@ void AnalyzeMap(void)
     }
 }
 
-int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
-{
-    DENG_ASSERT(lumpInfos);
-
-    bool recognised = false;
-    // Assume DOOM format by default.
-    mapFormat = MF_DOOM;
-
-    // Check for format specific lumps.
-    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
-    {
-        const MapLumpInfo* info = lumpInfos[i];
-        if(!info) continue;
-
-        switch(info->type)
-        {
-        case ML_BEHAVIOR:   mapFormat = MF_HEXEN; break;
-
-        case ML_MACROS:
-        case ML_LIGHTS:
-        case ML_LEAFS:      mapFormat = MF_DOOM64; break;
-
-        default: break;
-        }
-    }
-
-    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
-    {
-        const MapLumpInfo* info = lumpInfos[i];
-        if(!info) continue;
-
-        // Determine the number of map data objects of each data type.
-        uint* elmCountAddr = NULL;
-        size_t elmSize = 0; // Num of bytes.
-        switch(info->type)
-        {
-        case ML_VERTEXES:
-            elmCountAddr = &map->numVertexes;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-            break;
-
-        case ML_THINGS:
-            elmCountAddr = &map->numThings;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64THING : mapFormat == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
-            break;
-
-        case ML_LINEDEFS:
-            elmCountAddr = &map->numLines;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF : mapFormat == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
-            break;
-
-        case ML_SIDEDEFS:
-            elmCountAddr = &map->numSides;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-            break;
-
-        case ML_SECTORS:
-            elmCountAddr = &map->numSectors;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-            break;
-
-        case ML_LIGHTS:
-            elmCountAddr = &map->numLights;
-            elmSize = SIZEOF_LIGHT;
-            break;
-
-        default: break;
-        }
-
-        if(elmCountAddr)
-        {
-            if(0 != info->length % elmSize)
-            {
-                return false; // What is this??
-            }
-
-            *elmCountAddr += info->length / elmSize;
-        }
-    }
-
-    if(map->numVertexes > 0 && map->numLines > 0 && map->numSides > 0 && map->numSectors > 0)
-    {
-        recognised = true;
-    }
-
-    return (int)recognised;
-}
-
 static void freeMapData(void)
 {
     if(map->vertexes)
@@ -1594,16 +1491,56 @@ static void bufferLump(lumpnum_t lumpNum, uint8_t** buf, size_t* len, size_t* ol
 
 int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
+    size_t elmSize;
+
     DENG_ASSERT(lumpInfos);
 
-    // Allocate the data structure arrays.
+    memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
+
+    /**
+     * Determine how many map data objects we'll need of each type.
+     */
+    // Verts.
+    elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+    map->numVertexes = lumpInfos[ML_VERTEXES]->length / elmSize;
+
+    // Things.
+    if(lumpInfos[ML_THINGS])
+    {
+        elmSize = (mapFormat == MF_DOOM64? SIZEOF_64THING : mapFormat == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
+        map->numThings = lumpInfos[ML_THINGS]->length / elmSize;
+    }
+
+    // Lines.
+    elmSize = (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF : mapFormat == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+    map->numLines = lumpInfos[ML_LINEDEFS]->length / elmSize;
+
+    // Sides.
+    elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+    map->numSides = lumpInfos[ML_SIDEDEFS]->length / elmSize;
+
+    // Sectors.
+    elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+    map->numSectors = lumpInfos[ML_SECTORS]->length / elmSize;
+
+    if(lumpInfos[ML_LIGHTS])
+    {
+        elmSize = SIZEOF_LIGHT;
+        map->numLights = lumpInfos[ML_LIGHTS]->length / elmSize;
+    }
+
+    /**
+     * Allocate the map data objects used during conversion.
+     */
     map->vertexes =   (coord_t*)malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
     map->lines    =   (mline_t*)malloc(map->numLines * sizeof(mline_t));
     map->sides    =   (mside_t*)malloc(map->numSides * sizeof(mside_t));
-    map->sectors  = (msector_t*)malloc(map->numSectors * sizeof(msector_t));
+    map->sectors  = (msector_t*)malloc(map->numSectors * sizeof(msector_t));   
     map->things   =  (mthing_t*)malloc(map->numThings * sizeof(mthing_t));
     if(map->numLights)
+    {
         map->lights = (surfacetint_t*)malloc(map->numLights * sizeof(surfacetint_t));
+    }
 
     uint8_t* buf = NULL;
     size_t oldLen = 0;

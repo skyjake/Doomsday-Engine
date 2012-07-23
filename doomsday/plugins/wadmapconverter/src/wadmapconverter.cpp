@@ -120,6 +120,96 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
     }
 }
 
+static int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
+{
+    DENG_ASSERT(lumpInfos);
+
+    uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
+    bool recognised = false;
+
+    // Assume DOOM format by default.
+    DENG_PLUGIN_GLOBAL(mapFormat) = MF_DOOM;
+
+    // Check for format specific lumps.
+    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
+    {
+        const MapLumpInfo* info = lumpInfos[i];
+        if(!info) continue;
+
+        switch(info->type)
+        {
+        case ML_BEHAVIOR:   DENG_PLUGIN_GLOBAL(mapFormat) = MF_HEXEN; break;
+
+        case ML_MACROS:
+        case ML_LIGHTS:
+        case ML_LEAFS:      DENG_PLUGIN_GLOBAL(mapFormat) = MF_DOOM64; break;
+
+        default: break;
+        }
+    }
+
+    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
+    {
+        MapLumpInfo* info = lumpInfos[i];
+        if(!info) continue;
+
+        // Determine the number of map data objects of each data type.
+        uint* elmCountAddr = NULL;
+        size_t elmSize = 0; // Num of bytes.
+        switch(info->type)
+        {
+        case ML_VERTEXES:
+            elmCountAddr = &numVertexes;
+            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+            break;
+
+        case ML_THINGS:
+            elmCountAddr = &numThings;
+            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64THING : DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
+            break;
+
+        case ML_LINEDEFS:
+            elmCountAddr = &numLines;
+            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64LINEDEF : DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+            break;
+
+        case ML_SIDEDEFS:
+            elmCountAddr = &numSides;
+            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+            break;
+
+        case ML_SECTORS:
+            elmCountAddr = &numSectors;
+            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+            break;
+
+        case ML_LIGHTS:
+            elmCountAddr = &numLights;
+            elmSize = SIZEOF_LIGHT;
+            break;
+
+        default: break;
+        }
+
+        if(elmCountAddr)
+        {
+            if(0 != info->length % elmSize)
+            {
+                return false; // What is this??
+            }
+
+            *elmCountAddr += info->length / elmSize;
+        }
+    }
+
+    if(numVertexes && numLines && numSides && numSectors)
+    {
+        recognised = true;
+    }
+
+    return (int)recognised;
+}
+
 static void recogniseMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
@@ -163,7 +253,6 @@ int ConvertMapHook(int hookType, int parm, void* context)
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
     // Do we recognise this format?
-    memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
     recogniseMapFormat(lumpInfos);
     if(DENG_PLUGIN_GLOBAL(mapFormat) == MF_UNKNOWN)
     {
