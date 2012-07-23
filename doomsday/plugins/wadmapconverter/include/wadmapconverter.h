@@ -34,6 +34,8 @@
 #include <cassert>
 #include <iostream>
 #include <string.h>
+#include "doomsday.h"
+#include "dd_plugin.h"
 
 #ifdef WIN32
 #  define stricmp _stricmp
@@ -45,5 +47,20 @@
 #else
 #  define WADMAPCONVERTER_TRACE(args)
 #endif
+
+typedef enum {
+    MF_UNKNOWN              = -1,
+    MF_DOOM                 = 0,
+    MF_HEXEN,
+    MF_DOOM64,
+    NUM_MAPFORMATS
+} mapformatid_t;
+
+#define VALID_MAPFORMATID(v)        ((v) >= MF_DOOM && (v) < NUM_MAPFORMATS)
+
+extern int DENG_PLUGIN_GLOBAL(verbose);
+
+#define VERBOSE(code)   { if(DENG_PLUGIN_GLOBAL(verbose) >= 1) { code; } }
+#define VERBOSE2(code)  { if(DENG_PLUGIN_GLOBAL(verbose) >= 2) { code; } }
 
 #endif /* end of include guard: __WADMAPCONVERTER_H__ */

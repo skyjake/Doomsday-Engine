@@ -23,24 +23,40 @@
  */
 
 #include "wadmapconverter.h"
-#include "doomsday.h"
 #include <de/c_wrapper.h>
+#include "maplumpinfo.h"
 #include "map.h"
+
+int DENG_PLUGIN_GLOBAL(verbose);
 
 map_t DENG_PLUGIN_GLOBAL(theMap);
 map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
-int DENG_PLUGIN_GLOBAL(verbose);
 
 static void configure(void)
 {
     DENG_PLUGIN_GLOBAL(verbose) = CommandLine_Exists("-verbose");
 }
 
-static lumptype_t mapLumpTypeForName(const char* name)
+static const ddstring_t* mapFormatNameForId(mapformatid_t id)
+{
+    static const ddstring_t names[1 + NUM_MAPFORMATS] = {
+        /* MF_UNKNOWN */ { "Unknown" },
+        /* MF_DOOM    */ { "Doom" },
+        /* MF_HEXEN   */ { "Hexen" },
+        /* MF_DOOM64  */ { "Doom64" }
+    };
+    if(VALID_MAPFORMATID(id))
+    {
+        return &names[1+id];
+    }
+    return &names[0];
+}
+
+static MapLumpType mapLumpTypeForName(const char* name)
 {
     static const struct maplumpinfo_s {
         const char* name;
-        lumptype_t type;
+        MapLumpType type;
     } lumptypeForNameDict[] =
     {
         { "THINGS",     ML_THINGS },
@@ -79,26 +95,25 @@ static lumptype_t mapLumpTypeForName(const char* name)
 }
 
 /**
- * Create a new map lump info record.
+ * Allocate and initialize a new MapLumpInfo record.
  */
-static maplumpinfo_t* createMapLumpInfo(lumpnum_t lumpNum, lumptype_t lumpType)
+static MapLumpInfo* newMapLumpInfo(lumpnum_t lumpNum, MapLumpType lumpType)
 {
-    maplumpinfo_t* info = static_cast<maplumpinfo_t*>(calloc(1, sizeof(*info)));
-
-    info->lumpNum = lumpNum;
-    info->lumpType = lumpType;
-    info->length = W_LumpLength(lumpNum);
-
-    return info;
+    MapLumpInfo* info = static_cast<MapLumpInfo*>(malloc(sizeof(*info)));
+    return info->Init(lumpNum, lumpType, W_LumpLength(lumpNum));
 }
 
-/**
- * Free all memory acquired for the given map lump info record.
- */
-static void freeMapLumpInfo(maplumpinfo_t* info)
+static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
 {
-    if(!info) return;
-    free(info);
+    DENG_ASSERT(uri);
+    const char* mapId = Str_Text(Uri_Path(uri));
+    return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
+}
+
+static MapLumpType recogniseMapLump(lumpnum_t lumpNum)
+{
+    /// @todo Relocate recognition logic from IsSupportedFormat() here.
+    return mapLumpTypeForName(W_LumpName(lumpNum));
 }
 
 /**
@@ -108,45 +123,44 @@ static void freeMapLumpInfo(maplumpinfo_t* info)
  * @note Some obscure PWADs have these lumps in a non-standard order,
  * so we need to go resort to finding them automatically.
  *
- * @param headPtr       The list to link the created maplump records to.
+ * @param lumpInfos     The MapLumpInfo dictionary to populate.
  * @param startLump     The lump number to begin our search with.
  */
-static void collectMapLumps(maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES], lumpnum_t startLump)
+static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t startLump)
 {
     DENG_ASSERT(lumpInfos);
 
     WADMAPCONVERTER_TRACE("Locating data lumps...");
 
-    const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
-    if(startLump < 0 || startLump >= numLumps) return;
+    if(startLump < 0) return;
 
     // Keep checking lumps to see if its a map data lump.
+    const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
     for(lumpnum_t i = startLump; i < numLumps; ++i)
     {
-        // Lookup the lump name in our list of known map lump names.
-        const char* lumpName = W_LumpName(i);
-        lumptype_t lumpType = mapLumpTypeForName(lumpName);
+        MapLumpType lumpType = recogniseMapLump(i);
 
+        // If this lump is of an invalid type then we *should* have found all
+        // the required map data lumps.
         if(lumpType == ML_INVALID)
         {
-            // Stop looking, we *should* have found them all.
-            break;
+            break; // Stop looking.
         }
 
         // A recognised map data lump; record it in the collection.
         if(lumpInfos[lumpType])
         {
-            freeMapLumpInfo(lumpInfos[lumpType]);
+            free(lumpInfos[lumpType]);
         }
-        lumpInfos[lumpType] = createMapLumpInfo(i, lumpType);
+        lumpInfos[lumpType] = newMapLumpInfo(i, lumpType);
     }
 }
 
-static lumpnum_t locateMapDataMarkerLumpForUri(const Uri* uri)
+static mapformatid_t recogniseMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
-    DENG_ASSERT(uri);
-    const char* mapId = Str_Text(Uri_Path(uri));
-    return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
+    DENG_ASSERT(lumpInfos);
+    if(!IsSupportedFormat(lumpInfos)) return MF_UNKNOWN;
+    return DENG_PLUGIN_GLOBAL(map)->format;
 }
 
 /**
@@ -160,6 +174,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
 {
     DENG_UNUSED(hookType);
     DENG_UNUSED(parm);
+    DENG_ASSERT(context);
 
     // Setup the processing parameters.
     configure();
@@ -169,7 +184,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
 
     // Attempt to locate the identified map data marker lump.
     const Uri* uri = reinterpret_cast<const Uri*>(context);
-    lumpnum_t markerLump = locateMapDataMarkerLumpForUri(uri);
+    lumpnum_t markerLump = locateMapMarkerLumpForUri(uri);
     if(0 > markerLump)
     {
         ret_val = false;
@@ -177,23 +192,28 @@ int ConvertMapHook(int hookType, int parm, void* context)
     }
 
     // Collect all of the map data lumps associated with this map.
-    maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES];
+    MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES];
     memset(lumpInfos, 0, sizeof(lumpInfos));
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
     memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
-    if(!IsSupportedFormat(lumpInfos))
+
+    // Do we recognise this format?
+    mapformatid_t mapFormat = recogniseMapFormat(lumpInfos);
+    if(mapFormat == MF_UNKNOWN)
     {
-        Con_Message("WadMapConverter: Unknown map format, aborting.\n");
         ret_val = false;
         goto FAIL_UNKNOWN_FORMAT;
     }
+
+    VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
+                         Str_Text(mapFormatNameForId(mapFormat))) );
 
     // Read the archived map.
     int loadError = !LoadMap(lumpInfos);
     if(loadError)
     {
-        Con_Message("WadMapConverter: Internal error, load failed.\n");
+        Con_Message("WadMapConverter: Internal error, aborting conversion...\n");
         ret_val = false;
         goto FAIL_LOAD_ERROR;
     }
@@ -207,11 +227,11 @@ int ConvertMapHook(int hookType, int parm, void* context)
     // Cleanup.
 FAIL_LOAD_ERROR:
 FAIL_UNKNOWN_FORMAT:
-    for(uint i = 0; i < (uint)NUM_LUMP_TYPES; ++i)
+    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
-        maplumpinfo_t* info = lumpInfos[i];
+        MapLumpInfo* info = lumpInfos[i];
         if(!info) continue;
-        freeMapLumpInfo(info);
+        free(info);
     }
 
 FAIL_LOCATE_MAP:

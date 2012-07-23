@@ -21,52 +21,18 @@
 #ifndef __WADMAPCONVERTER_MAP_H__
 #define __WADMAPCONVERTER_MAP_H__
 
-#include <stdio.h>
-#include <cassert>
 #include "doomsday.h"
 #include "dd_types.h"
-
-// Line sides.
-#define RIGHT                   0
-#define LEFT                    1
-
-typedef enum lumptype_e {
-    ML_INVALID = -1,
-    FIRST_LUMP_TYPE,
-    ML_LABEL = FIRST_LUMP_TYPE, // A separator, name, ExMx or MAPxx
-    ML_THINGS,                  // Monsters, items..
-    ML_LINEDEFS,                // LineDefs, from editing
-    ML_SIDEDEFS,                // SideDefs, from editing
-    ML_VERTEXES,                // Vertices, edited and BSP splits generated
-    ML_SEGS,                    // LineSegs, from LineDefs split by BSP
-    ML_SSECTORS,                // Subsectors, list of LineSegs
-    ML_NODES,                   // BSP nodes
-    ML_SECTORS,                 // Sectors, from editing
-    ML_REJECT,                  // LUT, sector-sector visibility
-    ML_BLOCKMAP,                // LUT, motion clipping, walls/grid element
-    ML_BEHAVIOR,                // ACS Scripts (compiled).
-    ML_SCRIPTS,                 // ACS Scripts (source).
-    ML_LIGHTS,                  // Surface color tints.
-    ML_MACROS,                  // DOOM64 format, macro scripts.
-    ML_LEAFS,                   // DOOM64 format, segs (close subsectors).
-    ML_GLVERT,                  // GL vertexes
-    ML_GLSEGS,                  // GL segs
-    ML_GLSSECT,                 // GL subsectors
-    ML_GLNODES,                 // GL nodes
-    ML_GLPVS,                   // GL PVS dataset
-    NUM_LUMP_TYPES
-} lumptype_t;
-
-typedef struct maplumpinfo_s {
-    lumpnum_t lumpNum;
-    lumptype_t lumpType;
-    size_t length;
-} maplumpinfo_t;
+#include "maplumpinfo.h"
 
 typedef struct materialref_s {
     char            name[9];
     materialid_t    id; // Doomsday's unique identifier for this.
 } materialref_t;
+
+// Line sides.
+#define RIGHT                   0
+#define LEFT                    1
 
 typedef struct mside_s {
     int16_t         offset[2];
@@ -156,13 +122,6 @@ typedef struct mlight_s {
     byte            xx[3];
 } surfacetint_t;
 
-typedef enum {
-    MF_UNKNOWN              = -1,
-    MF_DOOM                 = 0,
-    MF_HEXEN,
-    MF_DOOM64
-} mapformatid_t;
-
 typedef struct map_s {
     uint            numVertexes;
     uint            numSectors;
@@ -193,9 +152,9 @@ typedef struct map_s {
 
 extern map_t* DENG_PLUGIN_GLOBAL(map);
 
-int IsSupportedFormat(maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES]);
+int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
 
-int LoadMap(maplumpinfo_t* lumpInfos[NUM_LUMP_TYPES]);
+int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
 void AnalyzeMap(void);
 int TransferMap(void);
 

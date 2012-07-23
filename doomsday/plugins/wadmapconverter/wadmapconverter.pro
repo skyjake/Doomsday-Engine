@@ -15,13 +15,14 @@ deng_debug: DEFINES += DENG_WADMAPCONVERTER_DEBUG
 INCLUDEPATH += include
 
 HEADERS += \
+    include/map.h \
+    include/maplumpinfo.h \
     include/version.h \
-    include/wadmapconverter.h \
-    include/map.h
+    include/wadmapconverter.h
 
 SOURCES += \
-    src/wadmapconverter.cpp \
-    src/load.cpp
+    src/load.cpp \
+    src/wadmapconverter.cpp
 
 win32 {
     RC_FILE = res/wadmapconverter.rc
