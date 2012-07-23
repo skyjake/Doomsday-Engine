@@ -1,5 +1,5 @@
 /**
- * @file id1map_analyse.cpp @ingroup wadmapconverter
+ * @file id1map_analyze.cpp @ingroup wadmapconverter
  *
  * id tech 1 post load map analyses.
  *

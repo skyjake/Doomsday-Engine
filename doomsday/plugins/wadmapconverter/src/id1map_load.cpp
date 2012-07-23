@@ -35,9 +35,6 @@ static int compareMaterialNames(const void* a, const void* b)
 static const materialref_t* getMaterial(const char* regName,
     struct materialref_s*** list, size_t size)
 {
-    size_t bottomIdx, topIdx, pivot;
-    const materialref_t* m;
-    boolean isDone;
     char name[9];
     int result;
 
@@ -56,13 +53,13 @@ static const materialref_t* getMaterial(const char* regName,
         name[8] = '\0';
     }
 
-    bottomIdx = 0;
-    topIdx = size-1;
-    m = NULL;
-    isDone = false;
+    size_t bottomIdx = 0;
+    size_t topIdx = size-1;
+    const materialref_t* m = NULL;
+    bool isDone = false;
     while(bottomIdx <= topIdx && !isDone)
     {
-        pivot = bottomIdx + (topIdx - bottomIdx)/2;
+        size_t pivot = bottomIdx + (topIdx - bottomIdx)/2;
 
         result = stricmp((*list)[pivot]->name, name);
         if(result == 0)
@@ -76,7 +73,8 @@ static const materialref_t* getMaterial(const char* regName,
             if(result > 0)
             {
                 if(pivot == 0)
-                {   // Not present.
+                {
+                    // Not present.
                     isDone = true;
                 }
                 else
@@ -94,7 +92,7 @@ static const materialref_t* getMaterial(const char* regName,
     return m;
 }
 
-const materialref_t* GetMaterial(const char* name, boolean isFlat)
+const materialref_t* GetMaterial(const char* name, bool isFlat)
 {
     return getMaterial(name, (isFlat? &map->flats : &map->textures),
                        isFlat? map->numFlats : map->numTextures);
@@ -120,13 +118,15 @@ static void addMaterialToList(materialref_t* m, materialref_t*** list, size_t* s
 
     // Shift the rest over.
     if((*size) > 1)
+    {
         memmove(&(*list)[n+1], &(*list)[n], sizeof(m) * ((*size)-1-n));
+    }
 
     // Insert the new element.
     (*list)[n] = m;
 }
 
-const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
+const materialref_t* RegisterMaterial(const char* name, bool isFlat)
 {
     const materialref_t* m;
 
@@ -283,8 +283,8 @@ static bool loadVertexes(const uint8_t* buf, size_t len)
         const uint8_t* ptr = buf;
         for(uint n = 0; n < num; ++n)
         {
-            map->vertexes[n * 2]     = (coord_t)SHORT(*((const int16_t*) (ptr)));
-            map->vertexes[n * 2 + 1] = (coord_t)SHORT(*((const int16_t*) (ptr+2)));
+            map->vertexes[n * 2]     = coord_t( SHORT(*((const int16_t*) (ptr))) );
+            map->vertexes[n * 2 + 1] = coord_t( SHORT(*((const int16_t*) (ptr+2))) );
             ptr += elmSize;
         }
         break; }
@@ -293,8 +293,8 @@ static bool loadVertexes(const uint8_t* buf, size_t len)
         const uint8_t* ptr = buf;
         for(uint n = 0; n < num; ++n)
         {
-            map->vertexes[n * 2]     = (coord_t)FIX2FLT(LONG(*((const int32_t*) (ptr))));
-            map->vertexes[n * 2 + 1] = (coord_t)FIX2FLT(LONG(*((const int32_t*) (ptr+4))));
+            map->vertexes[n * 2]     = coord_t( FIX2FLT(LONG(*((const int32_t*) (ptr)))) );
+            map->vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(*((const int32_t*) (ptr+4)))) );
             ptr += elmSize;
         }
         break; }
@@ -385,31 +385,29 @@ static bool loadLinedefs(const uint8_t* buf, size_t len)
             int idx;
 
             idx = USHORT(*((const uint16_t*) (ptr)));
-            if(idx == 0xFFFF)
-                l->v[0] = 0;
-            else
-                l->v[0] = idx + 1;
+            if(idx == 0xFFFF) l->v[0] = 0;
+            else              l->v[0] = idx + 1;
+
             idx = USHORT(*((const uint16_t*) (ptr+2)));
-            if(idx == 0xFFFF)
-                l->v[1] = 0;
-            else
-                l->v[1] = idx + 1;
+            if(idx == 0xFFFF) l->v[1] = 0;
+            else              l->v[1] = idx + 1;
+
             l->flags = SHORT(*((const int16_t*) (ptr+4)));
             l->dType = SHORT(*((const int16_t*) (ptr+6)));
-            l->dTag = SHORT(*((const int16_t*) (ptr+8)));
+            l->dTag  = SHORT(*((const int16_t*) (ptr+8)));
+
             idx = USHORT(*((const uint16_t*) (ptr+10)));
-            if(idx == 0xFFFF)
-                l->sides[RIGHT] = 0;
-            else
-                l->sides[RIGHT] = idx + 1;
+            if(idx == 0xFFFF) l->sides[RIGHT] = 0;
+            else              l->sides[RIGHT] = idx + 1;
+
             idx = USHORT(*((const uint16_t*) (ptr+12)));
-            if(idx == 0xFFFF)
-                l->sides[LEFT] = 0;
-            else
-                l->sides[LEFT] = idx + 1;
-            l->aFlags = 0;
-            l->validCount = 0;
-            l->ddFlags = 0;
+            if(idx == 0xFFFF) l->sides[LEFT] = 0;
+            else              l->sides[LEFT] = idx + 1;
+
+            l->aFlags       = 0;
+            l->validCount   = 0;
+            l->ddFlags      = 0;
+
             interpretLineDefFlags(l);
             ptr += elmSize;
         }
@@ -423,34 +421,32 @@ static bool loadLinedefs(const uint8_t* buf, size_t len)
             int idx;
 
             idx = USHORT(*((const uint16_t*) (ptr)));
-            if(idx == 0xFFFF)
-                l->v[0] = 0;
-            else
-                l->v[0] = idx + 1;
+            if(idx == 0xFFFF) l->v[0] = 0;
+            else              l->v[0] = idx + 1;
+
             idx = USHORT(*((const uint16_t*) (ptr+2)));
-            if(idx == 0xFFFF)
-                l->v[1] = 0;
-            else
-                l->v[1] = idx + 1;
+            if(idx == 0xFFFF) l->v[1] = 0;
+            else              l->v[1] = idx + 1;
+
             l->flags = USHORT(*((const uint16_t*) (ptr+4)));
             l->d64drawFlags = *((const uint8_t*) (ptr + 6));
-            l->d64texFlags = *((const uint8_t*) (ptr + 7));
-            l->d64type = *((const uint8_t*) (ptr + 8));
-            l->d64useType = *((const uint8_t*) (ptr + 9));
-            l->d64tag = SHORT(*((const int16_t*) (ptr+10)));
+            l->d64texFlags  = *((const uint8_t*) (ptr + 7));
+            l->d64type      = *((const uint8_t*) (ptr + 8));
+            l->d64useType   = *((const uint8_t*) (ptr + 9));
+            l->d64tag       = SHORT(*((const int16_t*) (ptr+10)));
+
             idx = USHORT(*((const uint16_t*) (ptr+12)));
-            if(idx == 0xFFFF)
-                l->sides[RIGHT] = 0;
-            else
-                l->sides[RIGHT] = idx + 1;
+            if(idx == 0xFFFF) l->sides[RIGHT] = 0;
+            else              l->sides[RIGHT] = idx + 1;
+
             idx = USHORT(*((const uint16_t*) (ptr+14)));
-            if(idx == 0xFFFF)
-                l->sides[LEFT] = 0;
-            else
-                l->sides[LEFT] = idx + 1;
-            l->aFlags = 0;
-            l->validCount = 0;
-            l->ddFlags = 0;
+            if(idx == 0xFFFF) l->sides[LEFT] = 0;
+            else              l->sides[LEFT] = idx + 1;
+
+            l->aFlags       = 0;
+            l->validCount   = 0;
+            l->ddFlags      = 0;
+
             interpretLineDefFlags(l);
             ptr += elmSize;
         }
@@ -464,35 +460,33 @@ static bool loadLinedefs(const uint8_t* buf, size_t len)
             mline_t* l = &map->lines[n];
 
             idx = USHORT(*((const uint16_t*) (ptr)));
-            if(idx == 0xFFFF)
-                l->v[0] = 0;
-            else
-                l->v[0] = idx + 1;
+            if(idx == 0xFFFF) l->v[0] = 0;
+            else              l->v[0] = idx + 1;
+
             idx = USHORT(*((const uint16_t*) (ptr+2)));
-            if(idx == 0xFFFF)
-                l->v[1] = 0;
-            else
-                l->v[1] = idx + 1;
+            if(idx == 0xFFFF) l->v[1] = 0;
+            else              l->v[1] = idx + 1;
+
             l->flags = SHORT(*((const int16_t*) (ptr+4)));
-            l->xType = *((const uint8_t*) (ptr+6));
+            l->xType    = *((const uint8_t*) (ptr+6));
             l->xArgs[0] = *((const uint8_t*) (ptr+7));
             l->xArgs[1] = *((const uint8_t*) (ptr+8));
             l->xArgs[2] = *((const uint8_t*) (ptr+9));
             l->xArgs[3] = *((const uint8_t*) (ptr+10));
             l->xArgs[4] = *((const uint8_t*) (ptr+11));
+
             idx = USHORT(*((const uint16_t*) (ptr+12)));
-            if(idx == 0xFFFF)
-                l->sides[RIGHT] = 0;
-            else
-                l->sides[RIGHT] = idx + 1;
+            if(idx == 0xFFFF) l->sides[RIGHT] = 0;
+            else              l->sides[RIGHT] = idx + 1;
+
             idx = USHORT(*((const uint16_t*) (ptr+14)));
-            if(idx == 0xFFFF)
-                l->sides[LEFT] = 0;
-            else
-                l->sides[LEFT] = idx + 1;
-            l->aFlags = 0;
-            l->validCount = 0;
-            l->ddFlags = 0;
+            if(idx == 0xFFFF) l->sides[LEFT] = 0;
+            else              l->sides[LEFT] = idx + 1;
+
+            l->aFlags       = 0;
+            l->validCount   = 0;
+            l->ddFlags      = 0;
+
             interpretLineDefFlags(l);
             ptr += elmSize;
         }
@@ -522,20 +516,23 @@ static bool loadSidedefs(const uint8_t* buf, size_t len)
 
             s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
             s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
+
             memcpy(name, ptr+4, 8);
             name[8] = '\0';
             s->topMaterial = RegisterMaterial(name, false);
+
             memcpy(name, ptr+12, 8);
             name[8] = '\0';
             s->bottomMaterial = RegisterMaterial(name, false);
+
             memcpy(name, ptr+20, 8);
             name[8] = '\0';
             s->middleMaterial = RegisterMaterial(name, false);
+
             idx = USHORT(*((const uint16_t*) (ptr+28)));
-            if(idx == 0xFFFF)
-                s->sector = 0;
-            else
-                s->sector = idx + 1;
+            if(idx == 0xFFFF) s->sector = 0;
+            else              s->sector = idx + 1;
+
             ptr += elmSize;
         }
         break; }
@@ -549,17 +546,20 @@ static bool loadSidedefs(const uint8_t* buf, size_t len)
 
             s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
             s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
+
             idx = USHORT(*((const uint16_t*) (ptr+4)));
             s->topMaterial = RegisterMaterial((const char*) &idx, false);
+
             idx = USHORT(*((const uint16_t*) (ptr+6)));
             s->bottomMaterial = RegisterMaterial((const char*) &idx, false);
+
             idx = USHORT(*((const uint16_t*) (ptr+8)));
             s->middleMaterial = RegisterMaterial((const char*) &idx, false);
+
             idx = USHORT(*((const uint16_t*) (ptr+10)));
-            if(idx == 0xFFFF)
-                s->sector = 0;
-            else
-                s->sector = idx + 1;
+            if(idx == 0xFFFF) s->sector = 0;
+            else              s->sector = idx + 1;
+
             ptr += elmSize;
         }
         break; }
@@ -584,17 +584,21 @@ static bool loadSectors(const uint8_t* buf, size_t len)
             msector_t* s = &map->sectors[n];
             char name[9];
 
-            s->floorHeight = SHORT(*((const int16_t*) ptr));
-            s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
+            s->floorHeight  = SHORT(*((const int16_t*) ptr));
+            s->ceilHeight   = SHORT(*((const int16_t*) (ptr+2)));
+
             memcpy(name, ptr+4, 8);
             name[8] = '\0';
             s->floorMaterial = RegisterMaterial(name, true);
+
             memcpy(name, ptr+12, 8);
             name[8] = '\0';
             s->ceilMaterial = RegisterMaterial(name, true);
-            s->lightLevel = SHORT(*((const int16_t*) (ptr+20)));
-            s->type = SHORT(*((const int16_t*) (ptr+22)));
-            s->tag = SHORT(*((const int16_t*) (ptr+24)));
+
+            s->lightLevel   = SHORT(*((const int16_t*) (ptr+20)));
+            s->type         = SHORT(*((const int16_t*) (ptr+22)));
+            s->tag          = SHORT(*((const int16_t*) (ptr+24)));
+
             ptr += elmSize;
         }
         break; }
@@ -606,21 +610,27 @@ static bool loadSectors(const uint8_t* buf, size_t len)
             msector_t* s = &map->sectors[n];
             int idx;
 
-            s->floorHeight = SHORT(*((const int16_t*) ptr));
-            s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
+            s->floorHeight  = SHORT(*((const int16_t*) ptr));
+            s->ceilHeight   = SHORT(*((const int16_t*) (ptr+2)));
+
             idx = USHORT(*((const uint16_t*) (ptr+4)));
             s->floorMaterial = RegisterMaterial((const char*) &idx, false);
+
             idx = USHORT(*((const uint16_t*) (ptr+6)));
             s->ceilMaterial = RegisterMaterial((const char*) &idx, false);
-            s->d64ceilingColor = USHORT(*((const uint16_t*) (ptr+8)));
-            s->d64floorColor = USHORT(*((const uint16_t*) (ptr+10)));
-            s->d64unknownColor = USHORT(*((const uint16_t*) (ptr+12)));
-            s->d64wallTopColor = USHORT(*((const uint16_t*) (ptr+14)));
+
+            s->d64ceilingColor  = USHORT(*((const uint16_t*) (ptr+8)));
+            s->d64floorColor    = USHORT(*((const uint16_t*) (ptr+10)));
+            s->d64unknownColor  = USHORT(*((const uint16_t*) (ptr+12)));
+            s->d64wallTopColor  = USHORT(*((const uint16_t*) (ptr+14)));
             s->d64wallBottomColor = USHORT(*((const uint16_t*) (ptr+16)));
-            s->type = SHORT(*((const int16_t*) (ptr+18)));
-            s->tag = SHORT(*((const int16_t*) (ptr+20)));
+
+            s->type     = SHORT(*((const int16_t*) (ptr+18)));
+            s->tag      = SHORT(*((const int16_t*) (ptr+20)));
             s->d64flags = USHORT(*((const uint16_t*) (ptr+22)));
-            s->lightLevel = 160;
+
+            s->lightLevel = 160; ///?
+
             ptr += elmSize;
         }
         break; }
@@ -668,12 +678,13 @@ static bool loadThings(const uint8_t* buf, size_t len)
         {
             mthing_t* t = &map->things[n];
 
-            t->origin[VX] = SHORT(*((const int16_t*) (ptr)));
-            t->origin[VY] = SHORT(*((const int16_t*) (ptr+2)));
-            t->origin[VZ] = 0;
-            t->angle = ANG45 * (SHORT(*((const int16_t*) (ptr+4))) / 45);
-            t->doomEdNum = SHORT(*((const int16_t*) (ptr+6)));
-            t->flags = SHORT(*((const int16_t*) (ptr+8)));
+            t->origin[VX]   = SHORT(*((const int16_t*) (ptr)));
+            t->origin[VY]   = SHORT(*((const int16_t*) (ptr+2)));
+            t->origin[VZ]   = 0;
+            t->angle        = ANG45 * (SHORT(*((const int16_t*) (ptr+4))) / 45);
+            t->doomEdNum    = SHORT(*((const int16_t*) (ptr+6)));
+            t->flags        = SHORT(*((const int16_t*) (ptr+8)));
+
             t->skillModes = 0;
             if(t->flags & MTF_EASY)
                 t->skillModes |= 0x00000001 | 0x00000002;
@@ -681,10 +692,12 @@ static bool loadThings(const uint8_t* buf, size_t len)
                 t->skillModes |= 0x00000004;
             if(t->flags & MTF_HARD)
                 t->skillModes |= 0x00000008 | 0x00000010;
+
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
             // DOOM format things spawn on the floor by default unless their
             // type-specific flags override.
             t->flags |= MTF_Z_FLOOR;
+
             ptr += elmSize;
         }
 
@@ -724,13 +737,13 @@ static bool loadThings(const uint8_t* buf, size_t len)
         {
             mthing_t* t = &map->things[n];
 
-            t->origin[VX] = SHORT(*((const int16_t*) (ptr)));
-            t->origin[VY] = SHORT(*((const int16_t*) (ptr+2)));
-            t->origin[VZ] = SHORT(*((const int16_t*) (ptr+4)));
-            t->angle = ANG45 * (SHORT(*((const int16_t*) (ptr+6))) / 45);
-            t->doomEdNum = SHORT(*((const int16_t*) (ptr+8)));
+            t->origin[VX]   = SHORT(*((const int16_t*) (ptr)));
+            t->origin[VY]   = SHORT(*((const int16_t*) (ptr+2)));
+            t->origin[VZ]   = SHORT(*((const int16_t*) (ptr+4)));
+            t->angle        = ANG45 * (SHORT(*((const int16_t*) (ptr+6))) / 45);
+            t->doomEdNum    = SHORT(*((const int16_t*) (ptr+8)));
+            t->flags        = SHORT(*((const int16_t*) (ptr+10)));
 
-            t->flags = SHORT(*((const int16_t*) (ptr+10)));
             t->skillModes = 0;
             if(t->flags & MTF_EASY)
                 t->skillModes |= 0x00000001;
@@ -738,12 +751,14 @@ static bool loadThings(const uint8_t* buf, size_t len)
                 t->skillModes |= 0x00000002;
             if(t->flags & MTF_HARD)
                 t->skillModes |= 0x00000004 | 0x00000008;
+
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
             // DOOM64 format things spawn relative to the floor by default
             // unless their type-specific flags override.
             t->flags |= MTF_Z_FLOOR;
 
             t->d64TID = SHORT(*((const int16_t*) (ptr+12)));
+
             ptr += elmSize;
         }
 
@@ -791,12 +806,13 @@ static bool loadThings(const uint8_t* buf, size_t len)
         {
             mthing_t* t = &map->things[n];
 
-            t->xTID = SHORT(*((const int16_t*) (ptr)));
-            t->origin[VX] = SHORT(*((const int16_t*) (ptr+2)));
-            t->origin[VY] = SHORT(*((const int16_t*) (ptr+4)));
-            t->origin[VZ] = SHORT(*((const int16_t*) (ptr+6)));
-            t->angle = SHORT(*((const int16_t*) (ptr+8)));
-            t->doomEdNum = SHORT(*((const int16_t*) (ptr+10)));
+            t->xTID         = SHORT(*((const int16_t*) (ptr)));
+            t->origin[VX]   = SHORT(*((const int16_t*) (ptr+2)));
+            t->origin[VY]   = SHORT(*((const int16_t*) (ptr+4)));
+            t->origin[VZ]   = SHORT(*((const int16_t*) (ptr+6)));
+            t->angle        = SHORT(*((const int16_t*) (ptr+8)));
+            t->doomEdNum    = SHORT(*((const int16_t*) (ptr+10)));
+
             /**
              * For some reason, the Hexen format stores polyobject tags in
              * the angle field in THINGS. Thus, we cannot translate the
@@ -806,7 +822,9 @@ static bool loadThings(const uint8_t* buf, size_t len)
                t->doomEdNum != PO_SPAWN_DOOMEDNUM &&
                t->doomEdNum != PO_SPAWNCRUSH_DOOMEDNUM)
                 t->angle = ANG45 * (t->angle / 45);
+
             t->flags = SHORT(*((const int16_t*) (ptr+12)));
+
             t->skillModes = 0;
             if(t->flags & MTF_EASY)
                 t->skillModes |= 0x00000001 | 0x00000002;
@@ -814,8 +832,8 @@ static bool loadThings(const uint8_t* buf, size_t len)
                 t->skillModes |= 0x00000004;
             if(t->flags & MTF_HARD)
                 t->skillModes |= 0x00000008 | 0x00000010;
-            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
 
+            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
             /**
              * Translate flags:
              */
@@ -832,6 +850,7 @@ static bool loadThings(const uint8_t* buf, size_t len)
             t->xArgs[2] = *(ptr+17);
             t->xArgs[3] = *(ptr+18);
             t->xArgs[4] = *(ptr+19);
+
             ptr += elmSize;
         }
 
@@ -873,7 +892,7 @@ static bool loadLights(const uint8_t* buf, size_t len)
     {
         surfacetint_t* t = &map->lights[n];
 
-        t->rgb[0] = (float) *(ptr) / 255;
+        t->rgb[0] = (float) *(ptr)   / 255;
         t->rgb[1] = (float) *(ptr+1) / 255;
         t->rgb[2] = (float) *(ptr+2) / 255;
         t->xx[0] = *(ptr+3);
@@ -1039,25 +1058,23 @@ int TransferMap(void)
         msector_t* sec = &map->sectors[i];
         uint sectorIDX;
 
-        sectorIDX = MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1);
+        sectorIDX = MPE_SectorCreate(float(sec->lightLevel) / 255.0f, 1, 1, 1);
 
-        MPE_PlaneCreate(sectorIDX, sec->floorHeight,
-                        sec->floorMaterial->id,
+        MPE_PlaneCreate(sectorIDX, sec->floorHeight, sec->floorMaterial->id,
                         0, 0, 1, 1, 1, 1, 0, 0, 1);
-        MPE_PlaneCreate(sectorIDX, sec->ceilHeight,
-                        sec->ceilMaterial->id,
+        MPE_PlaneCreate(sectorIDX, sec->ceilHeight, sec->ceilMaterial->id,
                         0, 0, 1, 1, 1, 1, 0, 0, -1);
 
-        MPE_GameObjProperty("XSector", i, "Tag", DDVT_SHORT, &sec->tag);
-        MPE_GameObjProperty("XSector", i, "Type", DDVT_SHORT, &sec->type);
+        MPE_GameObjProperty("XSector", i, "Tag",    DDVT_SHORT, &sec->tag);
+        MPE_GameObjProperty("XSector", i, "Type",   DDVT_SHORT, &sec->type);
 
         if(mapFormat == MF_DOOM64)
         {
-            MPE_GameObjProperty("XSector", i, "Flags", DDVT_SHORT, &sec->d64flags);
-            MPE_GameObjProperty("XSector", i, "CeilingColor", DDVT_SHORT, &sec->d64ceilingColor);
-            MPE_GameObjProperty("XSector", i, "FloorColor", DDVT_SHORT, &sec->d64floorColor);
-            MPE_GameObjProperty("XSector", i, "UnknownColor", DDVT_SHORT, &sec->d64unknownColor);
-            MPE_GameObjProperty("XSector", i, "WallTopColor", DDVT_SHORT, &sec->d64wallTopColor);
+            MPE_GameObjProperty("XSector", i, "Flags",          DDVT_SHORT, &sec->d64flags);
+            MPE_GameObjProperty("XSector", i, "CeilingColor",   DDVT_SHORT, &sec->d64ceilingColor);
+            MPE_GameObjProperty("XSector", i, "FloorColor",     DDVT_SHORT, &sec->d64floorColor);
+            MPE_GameObjProperty("XSector", i, "UnknownColor",   DDVT_SHORT, &sec->d64unknownColor);
+            MPE_GameObjProperty("XSector", i, "WallTopColor",   DDVT_SHORT, &sec->d64wallTopColor);
             MPE_GameObjProperty("XSector", i, "WallBottomColor", DDVT_SHORT, &sec->d64wallBottomColor);
         }
     }
@@ -1104,16 +1121,16 @@ int TransferMap(void)
         {
         default:
         case MF_DOOM:
-            MPE_GameObjProperty("XLinedef", i, "Type", DDVT_SHORT, &l->dType);
-            MPE_GameObjProperty("XLinedef", i, "Tag", DDVT_SHORT, &l->dTag);
+            MPE_GameObjProperty("XLinedef", i, "Type",  DDVT_SHORT, &l->dType);
+            MPE_GameObjProperty("XLinedef", i, "Tag",   DDVT_SHORT, &l->dTag);
             break;
 
         case MF_DOOM64:
-            MPE_GameObjProperty("XLinedef", i, "DrawFlags", DDVT_BYTE, &l->d64drawFlags);
-            MPE_GameObjProperty("XLinedef", i, "TexFlags", DDVT_BYTE, &l->d64texFlags);
-            MPE_GameObjProperty("XLinedef", i, "Type", DDVT_BYTE, &l->d64type);
-            MPE_GameObjProperty("XLinedef", i, "UseType", DDVT_BYTE, &l->d64useType);
-            MPE_GameObjProperty("XLinedef", i, "Tag", DDVT_SHORT, &l->d64tag);
+            MPE_GameObjProperty("XLinedef", i, "DrawFlags", DDVT_BYTE,  &l->d64drawFlags);
+            MPE_GameObjProperty("XLinedef", i, "TexFlags",  DDVT_BYTE,  &l->d64texFlags);
+            MPE_GameObjProperty("XLinedef", i, "Type",      DDVT_BYTE,  &l->d64type);
+            MPE_GameObjProperty("XLinedef", i, "UseType",   DDVT_BYTE,  &l->d64useType);
+            MPE_GameObjProperty("XLinedef", i, "Tag",       DDVT_SHORT, &l->d64tag);
             break;
 
         case MF_HEXEN:
@@ -1132,12 +1149,12 @@ int TransferMap(void)
     {
         surfacetint_t* l = &map->lights[i];
 
-        MPE_GameObjProperty("Light", i, "ColorR", DDVT_FLOAT, &l->rgb[0]);
-        MPE_GameObjProperty("Light", i, "ColorG", DDVT_FLOAT, &l->rgb[1]);
-        MPE_GameObjProperty("Light", i, "ColorB", DDVT_FLOAT, &l->rgb[2]);
-        MPE_GameObjProperty("Light", i, "XX0", DDVT_BYTE, &l->xx[0]);
-        MPE_GameObjProperty("Light", i, "XX1", DDVT_BYTE, &l->xx[1]);
-        MPE_GameObjProperty("Light", i, "XX2", DDVT_BYTE, &l->xx[2]);
+        MPE_GameObjProperty("Light", i, "ColorR",   DDVT_FLOAT, &l->rgb[0]);
+        MPE_GameObjProperty("Light", i, "ColorG",   DDVT_FLOAT, &l->rgb[1]);
+        MPE_GameObjProperty("Light", i, "ColorB",   DDVT_FLOAT, &l->rgb[2]);
+        MPE_GameObjProperty("Light", i, "XX0",      DDVT_BYTE,  &l->xx[0]);
+        MPE_GameObjProperty("Light", i, "XX1",      DDVT_BYTE,  &l->xx[1]);
+        MPE_GameObjProperty("Light", i, "XX2",      DDVT_BYTE,  &l->xx[2]);
     }
 
     WADMAPCONVERTER_TRACE("Transfering polyobjs...");
@@ -1145,13 +1162,14 @@ int TransferMap(void)
     {
         mpolyobj_t* po = map->polyobjs[i];
         uint* lineList = (uint*)malloc(sizeof(uint) * po->lineCount);
+
         for(uint j = 0; j < po->lineCount; ++j)
         {
             lineList[j] = po->lineIndices[j] + 1;
         }
-        MPE_PolyobjCreate(lineList, po->lineCount, po->tag,
-                          po->seqType, (coord_t) po->anchor[VX],
-                          (coord_t) po->anchor[VY]);
+
+        MPE_PolyobjCreate(lineList, po->lineCount, po->tag, po->seqType,
+                          coord_t(po->anchor[VX]), coord_t(po->anchor[VY]);
         free(lineList);
     }
 
@@ -1160,28 +1178,28 @@ int TransferMap(void)
     {
         mthing_t* th = &map->things[i];
 
-        MPE_GameObjProperty("Thing", i, "X", DDVT_SHORT, &th->origin[VX]);
-        MPE_GameObjProperty("Thing", i, "Y", DDVT_SHORT, &th->origin[VY]);
-        MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->origin[VZ]);
-        MPE_GameObjProperty("Thing", i, "Angle", DDVT_ANGLE, &th->angle);
-        MPE_GameObjProperty("Thing", i, "DoomEdNum", DDVT_SHORT, &th->doomEdNum);
-        MPE_GameObjProperty("Thing", i, "SkillModes", DDVT_INT, &th->skillModes);
-        MPE_GameObjProperty("Thing", i, "Flags", DDVT_INT, &th->flags);
+        MPE_GameObjProperty("Thing", i, "X",            DDVT_SHORT, &th->origin[VX]);
+        MPE_GameObjProperty("Thing", i, "Y",            DDVT_SHORT, &th->origin[VY]);
+        MPE_GameObjProperty("Thing", i, "Z",            DDVT_SHORT, &th->origin[VZ]);
+        MPE_GameObjProperty("Thing", i, "Angle",        DDVT_ANGLE, &th->angle);
+        MPE_GameObjProperty("Thing", i, "DoomEdNum",    DDVT_SHORT, &th->doomEdNum);
+        MPE_GameObjProperty("Thing", i, "SkillModes",   DDVT_INT,   &th->skillModes);
+        MPE_GameObjProperty("Thing", i, "Flags",        DDVT_INT,   &th->flags);
 
         if(mapFormat == MF_DOOM64)
         {
-            MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->d64TID);
+            MPE_GameObjProperty("Thing", i, "ID",       DDVT_SHORT, &th->d64TID);
         }
         else if(mapFormat == MF_HEXEN)
         {
 
-            MPE_GameObjProperty("Thing", i, "Special", DDVT_BYTE, &th->xSpecial);
-            MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->xTID);
-            MPE_GameObjProperty("Thing", i, "Arg0", DDVT_BYTE, &th->xArgs[0]);
-            MPE_GameObjProperty("Thing", i, "Arg1", DDVT_BYTE, &th->xArgs[1]);
-            MPE_GameObjProperty("Thing", i, "Arg2", DDVT_BYTE, &th->xArgs[2]);
-            MPE_GameObjProperty("Thing", i, "Arg3", DDVT_BYTE, &th->xArgs[3]);
-            MPE_GameObjProperty("Thing", i, "Arg4", DDVT_BYTE, &th->xArgs[4]);
+            MPE_GameObjProperty("Thing", i, "Special",  DDVT_BYTE,  &th->xSpecial);
+            MPE_GameObjProperty("Thing", i, "ID",       DDVT_SHORT, &th->xTID);
+            MPE_GameObjProperty("Thing", i, "Arg0",     DDVT_BYTE,  &th->xArgs[0]);
+            MPE_GameObjProperty("Thing", i, "Arg1",     DDVT_BYTE,  &th->xArgs[1]);
+            MPE_GameObjProperty("Thing", i, "Arg2",     DDVT_BYTE,  &th->xArgs[2]);
+            MPE_GameObjProperty("Thing", i, "Arg3",     DDVT_BYTE,  &th->xArgs[3]);
+            MPE_GameObjProperty("Thing", i, "Arg4",     DDVT_BYTE,  &th->xArgs[4]);
         }
     }
 
@@ -1191,9 +1209,8 @@ int TransferMap(void)
     // Let Doomsday know that we've finished with this map.
     boolean result = MPE_End();
 
-    VERBOSE2(
-    Con_Message("WadMapConverter::TransferMap: Done in %.2f seconds.\n",
-                (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("WadMapConverter::TransferMap: Done in %.2f seconds.\n",
+                          (Sys_GetRealTime() - startTime) / 1000.0f) )
 
     return (int)result;
 }
