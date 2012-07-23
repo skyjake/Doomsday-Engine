@@ -1169,7 +1169,7 @@ int TransferMap(void)
         }
 
         MPE_PolyobjCreate(lineList, po->lineCount, po->tag, po->seqType,
-                          coord_t(po->anchor[VX]), coord_t(po->anchor[VY]);
+                          coord_t(po->anchor[VX]), coord_t(po->anchor[VY]));
         free(lineList);
     }
 
