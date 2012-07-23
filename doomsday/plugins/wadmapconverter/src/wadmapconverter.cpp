@@ -37,63 +37,6 @@ static void configure(void)
     DENG_PLUGIN_GLOBAL(verbose) = CommandLine_Exists("-verbose");
 }
 
-static const ddstring_t* mapFormatNameForId(mapformatid_t id)
-{
-    static const ddstring_t names[1 + NUM_MAPFORMATS] = {
-        /* MF_UNKNOWN */ { "Unknown" },
-        /* MF_DOOM    */ { "Doom" },
-        /* MF_HEXEN   */ { "Hexen" },
-        /* MF_DOOM64  */ { "Doom64" }
-    };
-    if(VALID_MAPFORMATID(id))
-    {
-        return &names[1+id];
-    }
-    return &names[0];
-}
-
-static MapLumpType mapLumpTypeForName(const char* name)
-{
-    static const struct maplumpinfo_s {
-        const char* name;
-        MapLumpType type;
-    } lumptypeForNameDict[] =
-    {
-        { "THINGS",     ML_THINGS },
-        { "LINEDEFS",   ML_LINEDEFS },
-        { "SIDEDEFS",   ML_SIDEDEFS },
-        { "VERTEXES",   ML_VERTEXES },
-        { "SEGS",       ML_SEGS },
-        { "SSECTORS",   ML_SSECTORS },
-        { "NODES",      ML_NODES },
-        { "SECTORS",    ML_SECTORS },
-        { "REJECT",     ML_REJECT },
-        { "BLOCKMAP",   ML_BLOCKMAP },
-        { "BEHAVIOR",   ML_BEHAVIOR },
-        { "SCRIPTS",    ML_SCRIPTS },
-        { "LIGHTS",     ML_LIGHTS },
-        { "MACROS",     ML_MACROS },
-        { "LEAFS",      ML_LEAFS },
-        { "GL_VERT",    ML_GLVERT },
-        { "GL_SEGS",    ML_GLSEGS },
-        { "GL_SSECT",   ML_GLSSECT },
-        { "GL_NODES",   ML_GLNODES },
-        { "GL_PVS",     ML_GLPVS},
-        { NULL }
-    };
-
-    DENG_ASSERT(name);
-
-    if(name[0])
-    for(int i = 0; lumptypeForNameDict[i].name; ++i)
-    {
-        if(!strnicmp(lumptypeForNameDict[i].name, name, strlen(lumptypeForNameDict[i].name)))
-            return lumptypeForNameDict[i].type;
-    }
-
-    return ML_INVALID;
-}
-
 /**
  * Allocate and initialize a new MapLumpInfo record.
  */
@@ -113,7 +56,7 @@ static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
 static MapLumpType recogniseMapLump(lumpnum_t lumpNum)
 {
     /// @todo Relocate recognition logic from IsSupportedFormat() here.
-    return mapLumpTypeForName(W_LumpName(lumpNum));
+    return MapLumpTypeForName(W_LumpName(lumpNum));
 }
 
 /**
@@ -207,7 +150,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     }
 
     VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
-                         Str_Text(mapFormatNameForId(mapFormat))) );
+                         Str_Text(MapFormatNameForId(mapFormat))) );
 
     // Read the archived map.
     int loadError = !LoadMap(lumpInfos);
