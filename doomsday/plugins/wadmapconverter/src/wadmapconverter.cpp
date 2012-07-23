@@ -138,6 +138,8 @@ static void recogniseMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
  */
 int ConvertMapHook(int hookType, int parm, void* context)
 {
+    int loadError;
+
     DENG_UNUSED(hookType);
     DENG_UNUSED(parm);
     DENG_ASSERT(context);
@@ -175,7 +177,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
                          Str_Text(MapFormatNameForId(DENG_PLUGIN_GLOBAL(mapFormat)))) );
 
     // Read the archived map.
-    int loadError = !LoadMap(lumpInfos);
+    loadError = !LoadMap(lumpInfos);
     if(loadError)
     {
         Con_Message("WadMapConverter: Internal error, aborting conversion...\n");
