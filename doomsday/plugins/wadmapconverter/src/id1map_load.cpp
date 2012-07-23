@@ -1495,7 +1495,7 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
     DENG_ASSERT(lumpInfos);
 
-    memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
+    memset(map, 0, sizeof(*map));
 
     /**
      * Determine how many map data objects we'll need of each type.

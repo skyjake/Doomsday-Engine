@@ -120,12 +120,11 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
     }
 }
 
-static int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
+static void recogniseMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
 
     uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-    bool recognised = false;
 
     // Assume DOOM format by default.
     DENG_PLUGIN_GLOBAL(mapFormat) = MF_DOOM;
@@ -150,7 +149,7 @@ static int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
-        MapLumpInfo* info = lumpInfos[i];
+        const MapLumpInfo* info = lumpInfos[i];
         if(!info) continue;
 
         // Determine the number of map data objects of each data type.
@@ -165,12 +164,14 @@ static int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
         case ML_THINGS:
             elmCountAddr = &numThings;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64THING : DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
+            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64THING :
+                       DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
             break;
 
         case ML_LINEDEFS:
             elmCountAddr = &numLines;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64LINEDEF : DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64LINEDEF :
+                       DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
             break;
 
         case ML_SIDEDEFS:
@@ -195,25 +196,17 @@ static int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
         {
             if(0 != info->length % elmSize)
             {
-                return false; // What is this??
+                // What is this??
+                DENG_PLUGIN_GLOBAL(mapFormat) = MF_UNKNOWN;
+                return;
             }
 
             *elmCountAddr += info->length / elmSize;
         }
     }
 
-    if(numVertexes && numLines && numSides && numSectors)
-    {
-        recognised = true;
-    }
-
-    return (int)recognised;
-}
-
-static void recogniseMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
-{
-    DENG_ASSERT(lumpInfos);
-    if(!IsSupportedFormat(lumpInfos))
+    // A valid map has at least one of each of these elements.
+    if(!numVertexes || !numLines || !numSides || !numSectors)
     {
         DENG_PLUGIN_GLOBAL(mapFormat) = MF_UNKNOWN;
     }
