@@ -23,6 +23,15 @@ win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
 }
+# Enable strict warnings.
+*-g++|*-gcc|*-clang* {
+    warnOpts = -Wall -Wextra -pedantic -Wno-long-long
+    QMAKE_CFLAGS_WARN_ON   *= $$warnOpts
+    QMAKE_CXXFLAGS_WARN_ON *= $$warnOpts
+}
+win32-msvc* {
+    #QMAKE_CXXFLAGS_WARN_ON ~= s/-W3/-W4/
+}
 
 INCLUDEPATH += src include include/de
 
