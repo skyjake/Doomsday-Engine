@@ -163,6 +163,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
     // Do we recognise this format?
+    memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
     recogniseMapFormat(lumpInfos);
     if(DENG_PLUGIN_GLOBAL(mapFormat) == MF_UNKNOWN)
     {

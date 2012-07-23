@@ -1596,8 +1596,6 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
 
-    memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
-
     // Allocate the data structure arrays.
     map->vertexes =   (coord_t*)malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
     map->lines    =   (mline_t*)malloc(map->numLines * sizeof(mline_t));
