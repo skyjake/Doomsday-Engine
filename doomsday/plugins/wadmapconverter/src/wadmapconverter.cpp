@@ -30,6 +30,7 @@ int DENG_PLUGIN_GLOBAL(verbose);
 
 map_t DENG_PLUGIN_GLOBAL(theMap);
 map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
+mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
 
 static void configure(void)
 {
@@ -98,11 +99,13 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
     }
 }
 
-static mapformatid_t recogniseMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
+static void recogniseMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
-    if(!IsSupportedFormat(lumpInfos)) return MF_UNKNOWN;
-    return DENG_PLUGIN_GLOBAL(map)->format;
+    if(!IsSupportedFormat(lumpInfos))
+    {
+        DENG_PLUGIN_GLOBAL(mapFormat) = MF_UNKNOWN;
+    }
 }
 
 /**
@@ -138,18 +141,16 @@ int ConvertMapHook(int hookType, int parm, void* context)
     memset(lumpInfos, 0, sizeof(lumpInfos));
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
-    memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
-
     // Do we recognise this format?
-    mapformatid_t mapFormat = recogniseMapFormat(lumpInfos);
-    if(mapFormat == MF_UNKNOWN)
+    recogniseMapFormat(lumpInfos);
+    if(DENG_PLUGIN_GLOBAL(mapFormat) == MF_UNKNOWN)
     {
         ret_val = false;
         goto FAIL_UNKNOWN_FORMAT;
     }
 
     VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
-                         Str_Text(MapFormatNameForId(mapFormat))) );
+                         Str_Text(MapFormatNameForId(DENG_PLUGIN_GLOBAL(mapFormat)))) );
 
     // Read the archived map.
     int loadError = !LoadMap(lumpInfos);

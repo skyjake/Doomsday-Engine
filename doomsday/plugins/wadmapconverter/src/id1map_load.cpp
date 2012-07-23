@@ -24,7 +24,8 @@
 #include <de/c_wrapper.h>
 #include "maplumpinfo.h"
 
-#define map     DENG_PLUGIN_GLOBAL(map)
+#define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
+#define map                     DENG_PLUGIN_GLOBAL(map)
 
 // Size of the map data structures in bytes in the arrived WAD format.
 #define SIZEOF_64VERTEX         (4 * 2)
@@ -72,7 +73,7 @@ static const materialref_t* getMaterial(const char* regName,
     if(size == 0)
         return NULL;
 
-    if(map->format == MF_DOOM64)
+    if(mapFormat == MF_DOOM64)
     {
         int idx = *((int*) regName);
         sprintf(name, "UNK%05i", idx);
@@ -168,7 +169,7 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
          * A new material.
          */
         materialref_t* m = (materialref_t*)malloc(sizeof(*m));
-        if(map->format == MF_DOOM64)
+        if(mapFormat == MF_DOOM64)
         {
             int uniqueId = *((int*) name);
 
@@ -785,7 +786,7 @@ static void findPolyobjs(void)
 
 void AnalyzeMap(void)
 {
-    if(map->format == MF_HEXEN)
+    if(mapFormat == MF_HEXEN)
     {
         findPolyobjs();
     }
@@ -797,7 +798,7 @@ int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
     bool recognised = false;
     // Assume DOOM format by default.
-    map->format = MF_DOOM;
+    mapFormat = MF_DOOM;
 
     // Check for format specific lumps.
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
@@ -807,11 +808,11 @@ int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
         switch(info->type)
         {
-        case ML_BEHAVIOR:   map->format = MF_HEXEN; break;
+        case ML_BEHAVIOR:   mapFormat = MF_HEXEN; break;
 
         case ML_MACROS:
         case ML_LIGHTS:
-        case ML_LEAFS:      map->format = MF_DOOM64; break;
+        case ML_LEAFS:      mapFormat = MF_DOOM64; break;
 
         default: break;
         }
@@ -829,27 +830,27 @@ int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
         {
         case ML_VERTEXES:
             elmCountAddr = &map->numVertexes;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
             break;
 
         case ML_THINGS:
             elmCountAddr = &map->numThings;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64THING : map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64THING : mapFormat == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
             break;
 
         case ML_LINEDEFS:
             elmCountAddr = &map->numLines;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF : map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF : mapFormat == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
             break;
 
         case ML_SIDEDEFS:
             elmCountAddr = &map->numSides;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
             break;
 
         case ML_SECTORS:
             elmCountAddr = &map->numSectors;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
             break;
 
         case ML_LIGHTS:
@@ -962,9 +963,9 @@ static bool loadVertexes(const uint8_t* buf, size_t len)
 {
     WADMAPCONVERTER_TRACE("Processing vertexes...");
 
-    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
     uint num = len / elmSize;
-    switch(map->format)
+    switch(mapFormat)
     {
     default:
     case MF_DOOM: {
@@ -1017,7 +1018,7 @@ static void interpretLineDefFlags(mline_t* l)
      *
      * Only valid for DOOM format maps.
      */
-    if(map->format == MF_DOOM)
+    if(mapFormat == MF_DOOM)
     {
         if(l->flags & ML_INVALID)
             l->flags &= DOOM_VALIDMASK;
@@ -1058,11 +1059,11 @@ static bool loadLinedefs(const uint8_t* buf, size_t len)
 {
     WADMAPCONVERTER_TRACE("Processing linedefs...");
 
-    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF :
-                      map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF :
+                      mapFormat == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
     uint num = len / elmSize;
 
-    switch(map->format)
+    switch(mapFormat)
     {
     default:
     case MF_DOOM: {
@@ -1194,10 +1195,10 @@ static bool loadSidedefs(const uint8_t* buf, size_t len)
 {
     WADMAPCONVERTER_TRACE("Processing sidedefs...");
 
-    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
     uint num = len / elmSize;
 
-    switch(map->format)
+    switch(mapFormat)
     {
     default:
     case MF_DOOM: {
@@ -1260,10 +1261,10 @@ static bool loadSectors(const uint8_t* buf, size_t len)
 {
     WADMAPCONVERTER_TRACE("Processing sectors...");
 
-    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
     uint num = len / elmSize;
 
-    switch(map->format)
+    switch(mapFormat)
     {
     default: {
         const uint8_t* ptr = buf;
@@ -1328,11 +1329,11 @@ static bool loadThings(const uint8_t* buf, size_t len)
 
     WADMAPCONVERTER_TRACE("Processing things...");
 
-    size_t elmSize = (map->format == MF_DOOM64? SIZEOF_64THING :
-        map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
+    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64THING :
+        mapFormat == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
     uint num = len / elmSize;
 
-    switch(map->format)
+    switch(mapFormat)
     {
     default:
     case MF_DOOM: {
@@ -1595,6 +1596,8 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
 
+    memset(DENG_PLUGIN_GLOBAL(map), 0, sizeof(*DENG_PLUGIN_GLOBAL(map)));
+
     // Allocate the data structure arrays.
     map->vertexes =   (coord_t*)malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
     map->lines    =   (mline_t*)malloc(map->numLines * sizeof(mline_t));
@@ -1699,7 +1702,7 @@ int TransferMap(void)
         MPE_GameObjProperty("XSector", i, "Tag", DDVT_SHORT, &sec->tag);
         MPE_GameObjProperty("XSector", i, "Type", DDVT_SHORT, &sec->type);
 
-        if(map->format == MF_DOOM64)
+        if(mapFormat == MF_DOOM64)
         {
             MPE_GameObjProperty("XSector", i, "Flags", DDVT_SHORT, &sec->d64flags);
             MPE_GameObjProperty("XSector", i, "CeilingColor", DDVT_SHORT, &sec->d64ceilingColor);
@@ -1720,7 +1723,7 @@ int TransferMap(void)
         if(front)
         {
             frontIdx =
-                MPE_SidedefCreate((map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+                MPE_SidedefCreate((mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
                                   front->topMaterial->id,
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
                                   front->middleMaterial->id,
@@ -1734,7 +1737,7 @@ int TransferMap(void)
         if(back)
         {
             backIdx =
-                MPE_SidedefCreate((map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
+                MPE_SidedefCreate((mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
                                   back->topMaterial->id,
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
                                   back->middleMaterial->id,
@@ -1748,7 +1751,7 @@ int TransferMap(void)
 
         MPE_GameObjProperty("XLinedef", i, "Flags", DDVT_SHORT, &l->flags);
 
-        switch(map->format)
+        switch(mapFormat)
         {
         default:
         case MF_DOOM:
@@ -1816,11 +1819,11 @@ int TransferMap(void)
         MPE_GameObjProperty("Thing", i, "SkillModes", DDVT_INT, &th->skillModes);
         MPE_GameObjProperty("Thing", i, "Flags", DDVT_INT, &th->flags);
 
-        if(map->format == MF_DOOM64)
+        if(mapFormat == MF_DOOM64)
         {
             MPE_GameObjProperty("Thing", i, "ID", DDVT_SHORT, &th->d64TID);
         }
-        else if(map->format == MF_HEXEN)
+        else if(mapFormat == MF_HEXEN)
         {
 
             MPE_GameObjProperty("Thing", i, "Special", DDVT_BYTE, &th->xSpecial);

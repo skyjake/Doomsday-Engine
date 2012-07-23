@@ -26,6 +26,7 @@
 #include "maplumpinfo.h"
 #include "id1map_datatypes.h"
 
+extern mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
 extern map_t* DENG_PLUGIN_GLOBAL(map);
 
 int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);

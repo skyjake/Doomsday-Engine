@@ -144,8 +144,6 @@ typedef struct map_s {
     size_t          numTextures;
     materialref_t** textures;
 
-    mapformatid_t   format;
-
     byte*           rejectMatrix;
     void*           blockMap;
 } map_t;
