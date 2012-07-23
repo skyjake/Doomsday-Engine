@@ -53,6 +53,7 @@ extern int DENG_PLUGIN_GLOBAL(verbose);
 #define VERBOSE(code)   { if(DENG_PLUGIN_GLOBAL(verbose) >= 1) { code; } }
 #define VERBOSE2(code)  { if(DENG_PLUGIN_GLOBAL(verbose) >= 2) { code; } }
 
+#include "id1map_load.h"
 #include "id1map_util.h"
 
 #endif /* end of include guard: __WADMAPCONVERTER_H__ */

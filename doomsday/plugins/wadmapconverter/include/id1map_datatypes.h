@@ -1,5 +1,5 @@
 /**
- * @file map.h @ingroup wadmapconverter
+ * @file id1map_datatypes.h @ingroup wadmapconverter
  *
  * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __WADMAPCONVERTER_MAP_H__
-#define __WADMAPCONVERTER_MAP_H__
+#ifndef __WADMAPCONVERTER_ID1MAP_DATATYPES_H__
+#define __WADMAPCONVERTER_ID1MAP_DATATYPES_H__
 
 #include "doomsday.h"
 #include "dd_types.h"
-#include "maplumpinfo.h"
+#include "id1map_util.h"
 
 typedef struct materialref_s {
     char            name[9];
@@ -150,12 +150,4 @@ typedef struct map_s {
     void*           blockMap;
 } map_t;
 
-extern map_t* DENG_PLUGIN_GLOBAL(map);
-
-int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
-
-int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
-void AnalyzeMap(void);
-int TransferMap(void);
-
-#endif /* __WADMAPCONVERTER_MAP_H__ */
+#endif /* __WADMAPCONVERTER_ID1MAP_DATATYPES_H__ */

@@ -25,7 +25,6 @@
 #include "wadmapconverter.h"
 #include <de/c_wrapper.h>
 #include "maplumpinfo.h"
-#include "map.h"
 
 int DENG_PLUGIN_GLOBAL(verbose);
 

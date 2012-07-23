@@ -23,7 +23,6 @@
 #include "wadmapconverter.h"
 #include <de/c_wrapper.h>
 #include "maplumpinfo.h"
-#include "map.h"
 
 #define map     DENG_PLUGIN_GLOBAL(map)
 
