@@ -22,6 +22,17 @@
 
 #include "libdeng2.h"
 
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
+using de::dint16;
+using de::dint32;
+using de::dint64;
+using de::duint16;
+using de::duint32;
+using de::duint64;
+using de::dfloat;
+using de::ddouble;
+#endif
+
 /**
  * @file c_wrapper.h
  * libdeng2 C wrapper.

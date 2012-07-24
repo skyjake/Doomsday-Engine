@@ -28,6 +28,10 @@
 #include <stdarg.h>
 #include <string.h>
 
+#if WIN32
+# define strcasecmp _stricmp
+#endif
+
 #include "de/str.h"
 #include "de/memory.h"
 #include "de/memoryzone.h"

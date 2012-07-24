@@ -329,7 +329,7 @@ void Writer_WritePackedUInt16(Writer* writer, uint16_t v)
     // Can the number be represented with 7 bits?
     if(v < 0x80)
     {
-        Writer_WriteByte(writer, v);
+        Writer_WriteByte(writer, (dbyte) v);
     }
     else
     {

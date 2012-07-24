@@ -168,19 +168,29 @@ typedef duint32 dintptr;
 
 #include "Error"
 
-#endif // !__cplusplus
+#else // !__cplusplus
 
 /*
  * Data types for C APIs.
  */
-typedef unsigned char   dbyte;
+#ifdef _MSC_VER
+typedef short           dint16;
+typedef unsigned short  duint16;
+typedef int             dint32;
+typedef unsigned int    duint32;
+typedef long long       dint64;
+typedef unsigned long long duint64;
+#else
+#  include <stdint.h>
 typedef int16_t         dint16;
 typedef uint16_t        duint16;
-typedef unsigned int    duint;  // 32-bit
 typedef int32_t         dint32;
 typedef uint32_t        duint32;
 typedef int64_t         dint64;
 typedef uint64_t        duint64;
+#endif
+typedef unsigned char   dbyte;
+typedef unsigned int    duint;  // 32-bit
 typedef float           dfloat;
 typedef double          ddouble;
 
@@ -189,5 +199,7 @@ typedef uint64_t        dsize;  // 64-bit size
 #else
 typedef unsigned int    dsize;  // 32-bit size
 #endif
+
+#endif // !__cplusplus
 
 #endif // LIBDENG2_H

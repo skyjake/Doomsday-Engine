@@ -19,76 +19,78 @@
 
 #include "de/data/byteorder.h"
 
-using namespace de;
+using de::ByteOrder;
+using de::BigEndianByteOrder;
+using de::LittleEndianByteOrder;
 
 DENG2_PUBLIC BigEndianByteOrder de::bigEndianByteOrder;
 DENG2_PUBLIC LittleEndianByteOrder de::littleEndianByteOrder;
 
-void ByteOrder::nativeToForeign(const dint16& nativeValue, dint16& foreignValue) const
+void ByteOrder::nativeToForeign(const de::dint16& nativeValue, de::dint16& foreignValue) const
 {
-    nativeToForeign(reinterpret_cast<const duint16&>(nativeValue),
-                    reinterpret_cast<      duint16&>(foreignValue));
+    nativeToForeign(reinterpret_cast<const de::duint16&>(nativeValue),
+                    reinterpret_cast<      de::duint16&>(foreignValue));
 }
 
-void ByteOrder::nativeToForeign(const dint32& nativeValue, dint32& foreignValue) const
+void ByteOrder::nativeToForeign(const de::dint32& nativeValue, de::dint32& foreignValue) const
 {
-    nativeToForeign(reinterpret_cast<const duint32&>(nativeValue),
-                    reinterpret_cast<      duint32&>(foreignValue));
+    nativeToForeign(reinterpret_cast<const de::duint32&>(nativeValue),
+                    reinterpret_cast<      de::duint32&>(foreignValue));
 }
 
-void ByteOrder::nativeToForeign(const dint64& nativeValue, dint64& foreignValue) const
+void ByteOrder::nativeToForeign(const de::dint64& nativeValue, de::dint64& foreignValue) const
 {
-    nativeToForeign(reinterpret_cast<const duint64&>(nativeValue),
-                    reinterpret_cast<      duint64&>(foreignValue));
+    nativeToForeign(reinterpret_cast<const de::duint64&>(nativeValue),
+                    reinterpret_cast<      de::duint64&>(foreignValue));
 }
 
-void ByteOrder::foreignToNative(const dint16& foreignValue, dint16& nativeValue) const
+void ByteOrder::foreignToNative(const de::dint16& foreignValue, de::dint16& nativeValue) const
 {
-    foreignToNative(reinterpret_cast<const duint16&>(foreignValue),
-                    reinterpret_cast<      duint16&>(nativeValue));
+    foreignToNative(reinterpret_cast<const de::duint16&>(foreignValue),
+                    reinterpret_cast<      de::duint16&>(nativeValue));
 }
 
-void ByteOrder::foreignToNative(const dint32& foreignValue, dint32& nativeValue) const
+void ByteOrder::foreignToNative(const de::dint32& foreignValue, de::dint32& nativeValue) const
 {
-    foreignToNative(reinterpret_cast<const duint32&>(foreignValue),
-                    reinterpret_cast<      duint32&>(nativeValue));
+    foreignToNative(reinterpret_cast<const de::duint32&>(foreignValue),
+                    reinterpret_cast<      de::duint32&>(nativeValue));
 }
 
-void ByteOrder::foreignToNative(const dint64& foreignValue, dint64& nativeValue) const
+void ByteOrder::foreignToNative(const de::dint64& foreignValue, de::dint64& nativeValue) const
 {
-    foreignToNative(reinterpret_cast<const duint64&>(foreignValue),
-                    reinterpret_cast<      duint64&>(nativeValue));
+    foreignToNative(reinterpret_cast<const de::duint64&>(foreignValue),
+                    reinterpret_cast<      de::duint64&>(nativeValue));
 }
 
-void ByteOrder::nativeToForeign(const dfloat& nativeValue, dfloat& foreignValue) const
+void ByteOrder::nativeToForeign(const de::dfloat& nativeValue, de::dfloat& foreignValue) const
 {
-    DENG2_ASSERT(sizeof(dfloat) == sizeof(duint32));
-    nativeToForeign(reinterpret_cast<const duint32&>(nativeValue),
-                    reinterpret_cast<      duint32&>(foreignValue));
+    DENG2_ASSERT(sizeof(de::dfloat) == sizeof(de::duint32));
+    nativeToForeign(reinterpret_cast<const de::duint32&>(nativeValue),
+                    reinterpret_cast<      de::duint32&>(foreignValue));
 }
 
-void ByteOrder::nativeToForeign(const ddouble& nativeValue, ddouble& foreignValue) const
+void ByteOrder::nativeToForeign(const de::ddouble& nativeValue, de::ddouble& foreignValue) const
 {
-    DENG2_ASSERT(sizeof(ddouble) == sizeof(duint64));
-    nativeToForeign(reinterpret_cast<const duint64&>(nativeValue),
-                    reinterpret_cast<      duint64&>(foreignValue));
+    DENG2_ASSERT(sizeof(de::ddouble) == sizeof(de::duint64));
+    nativeToForeign(reinterpret_cast<const de::duint64&>(nativeValue),
+                    reinterpret_cast<      de::duint64&>(foreignValue));
 }
 
-void ByteOrder::foreignToNative(const dfloat& foreignValue, dfloat& nativeValue) const
+void ByteOrder::foreignToNative(const de::dfloat& foreignValue, de::dfloat& nativeValue) const
 {
-    DENG2_ASSERT(sizeof(dfloat) == sizeof(duint32));
-    foreignToNative(reinterpret_cast<const duint32&>(foreignValue),
-                    reinterpret_cast<      duint32&>(nativeValue));
+    DENG2_ASSERT(sizeof(de::dfloat) == sizeof(de::duint32));
+    foreignToNative(reinterpret_cast<const de::duint32&>(foreignValue),
+                    reinterpret_cast<      de::duint32&>(nativeValue));
 }
 
-void ByteOrder::foreignToNative(const ddouble& foreignValue, ddouble& nativeValue) const
+void ByteOrder::foreignToNative(const de::ddouble& foreignValue, de::ddouble& nativeValue) const
 {
-    DENG2_ASSERT(sizeof(ddouble) == sizeof(duint64));
-    foreignToNative(reinterpret_cast<const duint64&>(foreignValue),
-                    reinterpret_cast<      duint64&>(nativeValue));
+    DENG2_ASSERT(sizeof(de::ddouble) == sizeof(de::duint64));
+    foreignToNative(reinterpret_cast<const de::duint64&>(foreignValue),
+                    reinterpret_cast<      de::duint64&>(nativeValue));
 }
 
-void BigEndianByteOrder::foreignToNative(const duint16& foreignValue, duint16& nativeValue) const
+void BigEndianByteOrder::foreignToNative(const de::duint16& foreignValue, de::duint16& nativeValue) const
 {
 #ifdef __BIG_ENDIAN__ 
     nativeValue = foreignValue;
@@ -97,7 +99,7 @@ void BigEndianByteOrder::foreignToNative(const duint16& foreignValue, duint16& n
 #endif
 }
 
-void BigEndianByteOrder::foreignToNative(const duint32& foreignValue, duint32& nativeValue) const
+void BigEndianByteOrder::foreignToNative(const de::duint32& foreignValue, de::duint32& nativeValue) const
 {
 #ifdef __BIG_ENDIAN__ 
     nativeValue = foreignValue;
@@ -106,7 +108,7 @@ void BigEndianByteOrder::foreignToNative(const duint32& foreignValue, duint32& n
 #endif
 }
 
-void BigEndianByteOrder::foreignToNative(const duint64& foreignValue, duint64& nativeValue) const
+void BigEndianByteOrder::foreignToNative(const de::duint64& foreignValue, de::duint64& nativeValue) const
 {
 #ifdef __BIG_ENDIAN__ 
     nativeValue = foreignValue;
@@ -115,7 +117,7 @@ void BigEndianByteOrder::foreignToNative(const duint64& foreignValue, duint64& n
 #endif
 }
 
-void BigEndianByteOrder::nativeToForeign(const duint16& nativeValue, duint16& foreignValue) const
+void BigEndianByteOrder::nativeToForeign(const de::duint16& nativeValue, de::duint16& foreignValue) const
 {
 #ifdef __BIG_ENDIAN__ 
     foreignValue = nativeValue;
@@ -124,7 +126,7 @@ void BigEndianByteOrder::nativeToForeign(const duint16& nativeValue, duint16& fo
 #endif
 }
 
-void BigEndianByteOrder::nativeToForeign(const duint32& nativeValue, duint32& foreignValue) const
+void BigEndianByteOrder::nativeToForeign(const de::duint32& nativeValue, de::duint32& foreignValue) const
 {
 #ifdef __BIG_ENDIAN__ 
     foreignValue = nativeValue;
@@ -133,7 +135,7 @@ void BigEndianByteOrder::nativeToForeign(const duint32& nativeValue, duint32& fo
 #endif
 }
 
-void BigEndianByteOrder::nativeToForeign(const duint64& nativeValue, duint64& foreignValue) const
+void BigEndianByteOrder::nativeToForeign(const de::duint64& nativeValue, de::duint64& foreignValue) const
 {
 #ifdef __BIG_ENDIAN__ 
     foreignValue = nativeValue;
@@ -142,7 +144,7 @@ void BigEndianByteOrder::nativeToForeign(const duint64& nativeValue, duint64& fo
 #endif
 }
 
-void LittleEndianByteOrder::foreignToNative(const duint16& foreignValue, duint16& nativeValue) const
+void LittleEndianByteOrder::foreignToNative(const de::duint16& foreignValue, de::duint16& nativeValue) const
 {
 #ifndef __BIG_ENDIAN__ 
     nativeValue = foreignValue;
@@ -151,7 +153,7 @@ void LittleEndianByteOrder::foreignToNative(const duint16& foreignValue, duint16
 #endif
 }
 
-void LittleEndianByteOrder::foreignToNative(const duint32& foreignValue, duint32& nativeValue) const
+void LittleEndianByteOrder::foreignToNative(const de::duint32& foreignValue, de::duint32& nativeValue) const
 {
 #ifndef __BIG_ENDIAN__ 
     nativeValue = foreignValue;
@@ -160,7 +162,7 @@ void LittleEndianByteOrder::foreignToNative(const duint32& foreignValue, duint32
 #endif
 }
 
-void LittleEndianByteOrder::foreignToNative(const duint64& foreignValue, duint64& nativeValue) const
+void LittleEndianByteOrder::foreignToNative(const de::duint64& foreignValue, de::duint64& nativeValue) const
 {
 #ifndef __BIG_ENDIAN__ 
     nativeValue = foreignValue;
@@ -169,7 +171,7 @@ void LittleEndianByteOrder::foreignToNative(const duint64& foreignValue, duint64
 #endif
 }
 
-void LittleEndianByteOrder::nativeToForeign(const duint16& nativeValue, duint16& foreignValue) const
+void LittleEndianByteOrder::nativeToForeign(const de::duint16& nativeValue, de::duint16& foreignValue) const
 {
 #ifndef __BIG_ENDIAN__ 
     foreignValue = nativeValue;
@@ -178,7 +180,7 @@ void LittleEndianByteOrder::nativeToForeign(const duint16& nativeValue, duint16&
 #endif
 }
 
-void LittleEndianByteOrder::nativeToForeign(const duint32& nativeValue, duint32& foreignValue) const
+void LittleEndianByteOrder::nativeToForeign(const de::duint32& nativeValue, de::duint32& foreignValue) const
 {
 #ifndef __BIG_ENDIAN__ 
     foreignValue = nativeValue;
@@ -187,7 +189,7 @@ void LittleEndianByteOrder::nativeToForeign(const duint32& nativeValue, duint32&
 #endif
 }
 
-void LittleEndianByteOrder::nativeToForeign(const duint64& nativeValue, duint64& foreignValue) const
+void LittleEndianByteOrder::nativeToForeign(const de::duint64& nativeValue, de::duint64& foreignValue) const
 {
 #ifndef __BIG_ENDIAN__ 
     foreignValue = nativeValue;
@@ -196,9 +198,9 @@ void LittleEndianByteOrder::nativeToForeign(const duint64& nativeValue, duint64&
 #endif
 }
 
-duint64 de::swap64(const duint64& n)
+de::duint64 de::swap64(const de::duint64& n)
 {
-    duint64 result;
+    de::duint64 result;
     const dbyte* in = reinterpret_cast<const dbyte*>(&n);
     dbyte* out = reinterpret_cast<dbyte*>(&result);
     

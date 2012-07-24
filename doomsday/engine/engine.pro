@@ -318,7 +318,6 @@ DENG_HEADERS += \
     portable/include/s_wav.h \
     portable/include/sector.h \
     portable/include/sidedef.h \
-    portable/include/string.hh \
     portable/include/stringarray.h \
     portable/include/surface.h \
     portable/include/sv_def.h \
