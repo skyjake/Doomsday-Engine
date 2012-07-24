@@ -24,19 +24,19 @@
 #include "wadmapconverter.h"
 #include "maplumpinfo.h"
 
-const ddstring_t* MapFormatNameForId(mapformatid_t id)
+const Str* MapFormatNameForId(mapformatid_t id)
 {
-    static const ddstring_t names[1 + NUM_MAPFORMATS] = {
-        /* MF_UNKNOWN */ { "Unknown" },
-        /* MF_DOOM    */ { "Doom" },
-        /* MF_HEXEN   */ { "Hexen" },
-        /* MF_DOOM64  */ { "Doom64" }
+    static const de::Str names[1 + NUM_MAPFORMATS] = {
+        /* MF_UNKNOWN */ "Unknown",
+        /* MF_DOOM    */ "Doom",
+        /* MF_HEXEN   */ "Hexen",
+        /* MF_DOOM64  */ "Doom64"
     };
     if(VALID_MAPFORMATID(id))
     {
-        return &names[1+id];
+        return names[1 + id];
     }
-    return &names[0];
+    return names[0];
 }
 
 MapLumpType MapLumpTypeForName(const char* name)
@@ -66,7 +66,7 @@ MapLumpType MapLumpTypeForName(const char* name)
         { "GL_SSECT",   ML_GLSSECT },
         { "GL_NODES",   ML_GLNODES },
         { "GL_PVS",     ML_GLPVS},
-        { NULL }
+        { NULL,         ML_INVALID }
     };
 
     DENG_ASSERT(name);
