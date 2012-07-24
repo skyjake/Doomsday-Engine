@@ -413,6 +413,8 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     DENG_ASSERT(other);
     if(!str || !other) return str;
 
+    Str_Free(str);
+
     if(!other->size)
     {
         // The original string has no memory allocated; it's a static string.
