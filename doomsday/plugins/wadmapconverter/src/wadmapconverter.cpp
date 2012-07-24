@@ -292,7 +292,7 @@ FAIL_LOCATE_MAP:
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-void DP_Initialize(void)
+extern "C" void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_MAP_CONVERT, ConvertMapHook);
 }
