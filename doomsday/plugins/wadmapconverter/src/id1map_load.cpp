@@ -1065,16 +1065,8 @@ static void transferPolyobjs(void)
     for(uint i = 0; i < map->numPolyobjs; ++i)
     {
         mpolyobj_t* po = map->polyobjs[i];
-        uint* lineList = (uint*)malloc(sizeof(uint) * po->lineCount);
-
-        for(uint j = 0; j < po->lineCount; ++j)
-        {
-            lineList[j] = po->lineIndices[j] + 1;
-        }
-
-        MPE_PolyobjCreate(lineList, po->lineCount, po->tag, po->seqType,
+        MPE_PolyobjCreate(po->lineIndices, po->lineCount, po->tag, po->seqType,
                           coord_t(po->anchor[VX]), coord_t(po->anchor[VY]));
-        free(lineList);
     }
 }
 

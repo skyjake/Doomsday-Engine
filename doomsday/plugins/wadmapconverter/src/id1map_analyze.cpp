@@ -80,7 +80,7 @@ static bool createPolyobj(mline_t** lineList, uint num, uint* poIdx,
          */
         if(line->sides[LEFT] != 0)
             line->ddFlags |= DDLF_DONTPEGBOTTOM;
-        po->lineIndices[i] = line - map->lines;
+        po->lineIndices[i] = (line - map->lines) + 1; // 1-based indices.
     }
 
     if(poIdx)

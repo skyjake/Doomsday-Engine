@@ -142,7 +142,7 @@ typedef struct mthing_s {
 typedef struct mpolyobj_s {
     uint            idx;
     uint            lineCount;
-    uint*           lineIndices;
+    uint*           lineIndices; ///< 1-based.
     int             tag;
     int             seqType;
     int16_t         anchor[2];
