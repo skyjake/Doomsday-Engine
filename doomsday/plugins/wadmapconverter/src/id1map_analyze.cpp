@@ -22,6 +22,7 @@
  */
 
 #include "wadmapconverter.h"
+#include <de/c_wrapper.h> // libdeng2
 
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
@@ -209,6 +210,8 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
     uint lineCount = 0;
     uint psIndex = 0;
 
+    LegacyCore_LogAs("WadMapConverter");
+
     for(uint j = 1; j < MAXPOLYLINES; ++j)
     {
         uint psIndexOld = psIndex;
@@ -224,8 +227,14 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
             {
                 if(!line->xArgs[1])
                 {
-                    Con_Error("WadMapConverter::findAndCreatePolyobj: Explicit line missing order number "
-                              "(probably %d) in poly %d.\n", j + 1, tag);
+                    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
+                        "Linedef missing (probably #%d) in explicit polyobj (tag:%d).\n", j + 1, tag);
+                    for(uint k = 0; k < psIndex; ++k)
+                    {
+                        mline_t* line = polyLineList[k];
+                        line->aFlags &= ~LAF_POLYOBJ;
+                    }
+                    return false;
                 }
 
                 if(line->xArgs[1] == j)
@@ -236,7 +245,14 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
                     psIndex++;
                     if(psIndex > MAXPOLYLINES)
                     {
-                        Con_Error("WadMapConverter::findAndCreatePolyobj: psIndex > MAXPOLYLINES\n");
+                        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
+                            "Too many linedefs (%d > %d) in explicit polyobj (tag:%d).\n", psIndex, MAXPOLYLINES, tag);
+                        for(uint k = 0; k < psIndex; ++k)
+                        {
+                            mline_t* line = polyLineList[k];
+                            line->aFlags &= ~LAF_POLYOBJ;
+                        }
+                        return false;
                     }
 
                     // Clear out any special.
@@ -249,17 +265,23 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 
         if(psIndex == psIndexOld)
         {
-            // Check if an explicit line order has been skipped
-            // A line has been skipped if there are any more explicit
-            // lines with the current tag value
+            // Check if an explicit line order has been skipped.
+            // A line has been skipped if there are any more explicit lines with
+            // the current tag value.
             for(uint i = 0; i < map->numLines; ++i)
             {
                 mline_t* line = &map->lines[i];
 
                 if(line->xType == PO_LINE_EXPLICIT && line->xArgs[0] == tag)
                 {
-                    Con_Error("WadMapConverter::findAndCreatePolyobj: Missing explicit line "
-                              "%d for poly %d\n", j, tag);
+                    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
+                        "Linedef missing (#%d) in explicit polyobj (tag:%d).\n", j, tag);
+                    for(uint k = 0; k < psIndex; ++k)
+                    {
+                        mline_t* line = polyLineList[k];
+                        line->aFlags &= ~LAF_POLYOBJ;
+                    }
+                    return false;
                 }
             }
         }
