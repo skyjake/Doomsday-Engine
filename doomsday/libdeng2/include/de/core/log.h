@@ -41,7 +41,7 @@
 /// a new log section with a std::string variable based name.
 #define LOG_AS_STRING(str) \
     de::String __logSectionName = str; \
-    LOG_AS(__logSectionName.c_str());
+    LOG_AS(__logSectionName.toAscii().constData());
 
 #define LOG_TRACE(str)      LOG().enter(de::Log::TRACE, str)
 #define LOG_DEBUG(str)      LOG().enter(de::Log::DEBUG, str)

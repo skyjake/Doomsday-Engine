@@ -119,6 +119,11 @@ const char* LegacyCore_LogFile()
     return DENG2_LEGACYCORE().logFileName();
 }
 
+void LegacyCore_LogAs(const char* sectionName)
+{
+    DENG2_LEGACYCORE().logAs(sectionName);
+}
+
 void LegacyCore_PrintLogFragment(const char* text)
 {
     DENG2_LEGACYCORE().printLogFragment(text);

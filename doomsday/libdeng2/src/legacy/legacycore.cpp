@@ -218,6 +218,16 @@ const char *LegacyCore::logFileName() const
     return d->logName.c_str();
 }
 
+void LegacyCore::logAs(const char* sectionName)
+{
+    LOG_AS(sectionName);
+}
+
+void LegacyCore::logAs(const String sectionName)
+{
+    LOG_AS_STRING(sectionName);
+}
+
 void LegacyCore::printLogFragment(const char* text, Log::LogLevel level)
 {
     d->currentLogLine += text;

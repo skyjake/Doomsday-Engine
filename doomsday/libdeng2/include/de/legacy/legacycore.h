@@ -23,6 +23,7 @@
 #include "../libdeng2.h"
 #include "../App"
 #include "../Log"
+#include "../String"
 
 namespace de {
 
@@ -119,6 +120,15 @@ public:
      * Returns name of the the current log output file.
      */
     const char* logFileName() const;
+
+    /**
+     * Begins a new section in the log. Sections can be nested.
+     *
+     * @param sectionName  Name of the section. No copy of this string is made,
+     *                     so it must exist while the section is in use.
+     */
+    void logAs(const char* sectionName);
+    void logAs(const String sectionName);
 
     /**
      * Prints a fragment of text to the output log. The output is added to the log
