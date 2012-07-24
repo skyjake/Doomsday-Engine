@@ -39,7 +39,9 @@
 
 /**
  * Macro for accessing the local log of the current thread and entering
- * a new log section with a std::string variable based name.
+ * a new log section with a de::String variable based name.
+ *
+ * @param str  Anything out of which a de::String can be constructed.
  *
  * @note Log::Section doesn't own the strings passed in; we have to
  * ensure that the string exists in memory as long as the section (scope)
