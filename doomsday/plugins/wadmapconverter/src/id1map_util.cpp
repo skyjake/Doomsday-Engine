@@ -23,6 +23,7 @@
 
 #include "wadmapconverter.h"
 #include "maplumpinfo.h"
+#include <de/libdeng2.h>
 
 const Str* MapFormatNameForId(mapformatid_t id)
 {
@@ -69,7 +70,7 @@ MapLumpType MapLumpTypeForName(const char* name)
         { NULL,         ML_INVALID }
     };
 
-    DENG_ASSERT(name);
+    DENG2_ASSERT(name);
 
     if(name[0])
     for(int i = 0; lumptypeForNameDict[i].name; ++i)
