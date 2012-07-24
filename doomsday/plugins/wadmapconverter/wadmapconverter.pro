@@ -2,6 +2,9 @@
 # Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
 # Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
+# This plugin uses the full libdeng2 C++ API.
+CONFIG += dengplugin_libdeng2_full
+
 include(../config_plugin.pri)
 
 TEMPLATE = lib

@@ -22,6 +22,7 @@
  */
 
 #include "wadmapconverter.h"
+#include <de/libdeng2.h>
 
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
@@ -33,7 +34,7 @@ static const ddstring_t* findMaterialInDictionary(MaterialDictId id)
 
 static MaterialDictId addMaterialToDictionary(const char* name, MaterialDictGroup group)
 {
-    DENG_ASSERT(name);
+    DENG2_ASSERT(name);
 
     // Are we yet to instantiate the dictionary itself?
     if(!map->materials)
@@ -150,7 +151,7 @@ static void freeMapData(void)
 
 static bool loadVertexes(Reader* reader, size_t lumpLength)
 {
-    DENG_ASSERT(reader);
+    DENG2_ASSERT(reader);
 
     ID1MAP_TRACE("Processing vertexes...");
     switch(mapFormat)
@@ -244,7 +245,7 @@ static void interpretLineDefFlags(mline_t* l)
 
 static bool loadLineDefs(Reader* reader, size_t lumpLength)
 {
-    DENG_ASSERT(reader);
+    DENG2_ASSERT(reader);
 
     ID1MAP_TRACE("Processing line definitions...");
     switch(mapFormat)
@@ -368,7 +369,7 @@ static bool loadLineDefs(Reader* reader, size_t lumpLength)
 
 static bool loadSideDefs(Reader* reader, size_t lumpLength)
 {
-    DENG_ASSERT(reader);
+    DENG2_ASSERT(reader);
 
     ID1MAP_TRACE("Processing side definitions...");
     switch(mapFormat)
@@ -431,7 +432,7 @@ static bool loadSideDefs(Reader* reader, size_t lumpLength)
 
 static bool loadSectors(Reader* reader, size_t lumpLength)
 {
-    DENG_ASSERT(reader);
+    DENG2_ASSERT(reader);
 
     ID1MAP_TRACE("Processing sectors...");
     switch(mapFormat)
@@ -501,7 +502,7 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 
 #define ANG45               0x20000000
 
-    DENG_ASSERT(reader);
+    DENG2_ASSERT(reader);
 
     ID1MAP_TRACE("Processing things...");
     switch(mapFormat)
@@ -726,7 +727,7 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 
 static bool loadLights(Reader* reader, size_t lumpLength)
 {
-    DENG_ASSERT(reader);
+    DENG2_ASSERT(reader);
 
     ID1MAP_TRACE("Processing lights...");
 
@@ -776,7 +777,7 @@ static int readInt32(Reader* r)
 
 static float readFloat(Reader* r)
 {
-    DENG_ASSERT(sizeof(float) == 4);
+    DENG2_ASSERT(sizeof(float) == 4);
     if(!r) return 0;
     int32_t val = *((const int32_t*) (readPtr));
     float returnValue = 0;
@@ -824,7 +825,7 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     size_t elmSize;
 
-    DENG_ASSERT(lumpInfos);
+    DENG2_ASSERT(lumpInfos);
 
     memset(map, 0, sizeof(*map));
 

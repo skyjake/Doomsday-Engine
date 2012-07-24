@@ -22,7 +22,7 @@
  */
 
 #include "wadmapconverter.h"
-#include <de/c_wrapper.h> // libdeng2
+#include <de/Log>
 
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
@@ -210,7 +210,7 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
     uint lineCount = 0;
     uint psIndex = 0;
 
-    LegacyCore_LogAs("WadMapConverter");
+    LOG_AS("WadMapConverter");
 
     for(uint j = 1; j < MAXPOLYLINES; ++j)
     {
@@ -227,8 +227,7 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
             {
                 if(!line->xArgs[1])
                 {
-                    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
-                        "Linedef missing (probably #%d) in explicit polyobj (tag:%d).\n", j + 1, tag);
+                    LOG_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d).") << j + 1 << tag;
                     for(uint k = 0; k < psIndex; ++k)
                     {
                         mline_t* line = polyLineList[k];
@@ -245,8 +244,7 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
                     psIndex++;
                     if(psIndex > MAXPOLYLINES)
                     {
-                        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
-                            "Too many linedefs (%d > %d) in explicit polyobj (tag:%d).\n", psIndex, MAXPOLYLINES, tag);
+                        LOG_WARNING("Too many linedefs (%d > %d) in explicit polyobj (tag:%d).") << psIndex << MAXPOLYLINES << tag;
                         for(uint k = 0; k < psIndex; ++k)
                         {
                             mline_t* line = polyLineList[k];
@@ -274,8 +272,7 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 
                 if(line->xType == PO_LINE_EXPLICIT && line->xArgs[0] == tag)
                 {
-                    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
-                        "Linedef missing (#%d) in explicit polyobj (tag:%d).\n", j, tag);
+                    LOG_WARNING("Linedef missing (#%d) in explicit polyobj (tag:%d).") << j << tag;
                     for(uint k = 0; k < psIndex; ++k)
                     {
                         mline_t* line = polyLineList[k];
