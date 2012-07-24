@@ -1314,13 +1314,11 @@ void R_MapInitSurfaceLists(void)
 
 void R_SetupMap(int mode, int flags)
 {
+    DENG_UNUSED(flags);
+
     switch(mode)
     {
     case DDSMM_INITIALIZE:
-#ifdef _DEBUG
-        Con_Message("R_SetupMap: ddMapSetup begins (fast mallocs).\n");
-#endif
-
         // A new map is about to be setup.
         ddMapSetup = true;
 
@@ -1428,10 +1426,6 @@ void R_SetupMap(int mode, int flags)
 
         // We've finished setting up the map.
         ddMapSetup = false;
-
-#ifdef _DEBUG
-        Con_Message("R_SetupMap: ddMapSetup done (normal mallocs from now on).\n");
-#endif
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;

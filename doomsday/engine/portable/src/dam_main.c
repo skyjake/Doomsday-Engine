@@ -207,15 +207,20 @@ static boolean convertMap(GameMap** map, archivedmap_t* dam)
         Str_Delete(path);
         );
 
-    // Nope. See if there is a converter available.
+    // Any converters available?
     if(Plug_CheckForHook(HOOK_MAP_CONVERT))
     {
-        // Pass the lump list around the map converters, hopefully
-        // one of them will recognise the format and convert it.
+        // Ask each converter in turn whether the map format is recognised
+        // and if so, to interpret/transfer it to us via the map edit interface.
         if(DD_CallHooks(HOOK_MAP_CONVERT, 0, (void*) dam->uri))
         {
-            converted = true;
-            *map = MPE_GetLastBuiltMap();
+            // Transfer went OK.
+            // Were we able to produce a valid map?
+            converted = MPE_GetLastBuiltMapResult();
+            if(converted)
+            {
+                *map = MPE_GetLastBuiltMap();
+            }
         }
     }
 

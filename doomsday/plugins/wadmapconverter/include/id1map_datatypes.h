@@ -25,10 +25,23 @@
 #include "dd_types.h"
 #include "id1map_util.h"
 
-typedef struct materialref_s {
-    char            name[9];
-    materialid_t    id; // Doomsday's unique identifier for this.
-} materialref_t;
+// Size of the map data structures in bytes in the arrived map format.
+#define SIZEOF_64VERTEX         (4 * 2)
+#define SIZEOF_VERTEX           (2 * 2)
+#define SIZEOF_64THING          (2 * 7)
+#define SIZEOF_XTHING           (2 * 7 + 1 * 6)
+#define SIZEOF_THING            (2 * 5)
+#define SIZEOF_XLINEDEF         (2 * 5 + 1 * 6)
+#define SIZEOF_64LINEDEF        (2 * 6 + 1 * 4)
+#define SIZEOF_LINEDEF          (2 * 7)
+#define SIZEOF_64SIDEDEF        (2 * 6)
+#define SIZEOF_SIDEDEF          (2 * 3 + 8 * 3)
+#define SIZEOF_64SECTOR         (2 * 12)
+#define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
+#define SIZEOF_LIGHT            (1 * 6)
+
+// Type used to identify references to materials in the material dictionary.
+typedef StringPoolId MaterialDictId;
 
 // Line sides.
 #define RIGHT                   0
@@ -36,14 +49,19 @@ typedef struct materialref_s {
 
 typedef struct mside_s {
     int16_t         offset[2];
-    const materialref_t* topMaterial;
-    const materialref_t* bottomMaterial;
-    const materialref_t* middleMaterial;
+    MaterialDictId  topMaterial;
+    MaterialDictId  bottomMaterial;
+    MaterialDictId  middleMaterial;
     uint            sector;
 } mside_t;
 
 // Line flags
 #define LAF_POLYOBJ             0x1 // Line is from a polyobject.
+
+#define PO_LINE_START           (1) ///< Polyobj line start special.
+#define PO_LINE_EXPLICIT        (5)
+
+#define SEQTYPE_NUMSEQ          (10)
 
 typedef struct mline_s {
     uint            v[2];
@@ -78,8 +96,8 @@ typedef struct msector_s {
     int16_t         lightLevel;
     int16_t         type;
     int16_t         tag;
-    const materialref_t* floorMaterial;
-    const materialref_t* ceilMaterial;
+    MaterialDictId  floorMaterial;
+    MaterialDictId  ceilMaterial;
 
     // DOOM64 format members:
     int16_t         d64flags;
@@ -89,6 +107,11 @@ typedef struct msector_s {
     uint16_t        d64wallTopColor;
     uint16_t        d64wallBottomColor;
 } msector_t;
+
+// Polyobj args.
+#define PO_ANCHOR_DOOMEDNUM     (3000)
+#define PO_SPAWN_DOOMEDNUM      (3001)
+#define PO_SPAWNCRUSH_DOOMEDNUM (3002)
 
 typedef struct mthing_s {
     int16_t         origin[3];
@@ -131,7 +154,7 @@ typedef struct map_s {
     uint            numThings;
     uint            numLights;
 
-    coord_t*        vertexes; // Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
+    coord_t*        vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
     msector_t*      sectors;
     mline_t*        lines;
     mside_t*        sides;
@@ -139,10 +162,7 @@ typedef struct map_s {
     mpolyobj_t**    polyobjs;
     surfacetint_t*  lights;
 
-    size_t          numFlats;
-    materialref_t** flats;
-    size_t          numTextures;
-    materialref_t** textures;
+    StringPool*     materials; ///< Material dictionary.
 
     byte*           rejectMatrix;
     void*           blockMap;

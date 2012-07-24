@@ -225,17 +225,17 @@ const char* P_MapSourceFile(const char* uri);
  */
 boolean P_LoadMap(const char* uri);
 
-void P_RegisterUnknownTexture(const char* name, boolean planeTex);
+void P_RegisterMissingMaterial(const char* materialUri);
 
 /**
- * Announce any bad texture names we came across when loading the map.
+ * Announce any missing materials we came across when loading the map.
  */
-void P_PrintMissingTextureList(void);
+void P_PrintMissingMaterialList(void);
 
 /**
- * Frees memory we allocated for bad texture name collection.
+ * Clear the missing material list.
  */
-void P_FreeBadTexList(void);
+void P_ClearMissingMaterialList(void);
 
 /**
  * To be called to initialize the game map object defs.

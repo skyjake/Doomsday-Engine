@@ -29,8 +29,6 @@
 extern mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
 extern map_t* DENG_PLUGIN_GLOBAL(map);
 
-int IsSupportedFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
-
 int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
 
 void AnalyzeMap(void);
