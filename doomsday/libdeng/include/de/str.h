@@ -19,13 +19,12 @@
  * return value from a function, or when you have strings with a limited scope
  * that need to be deleted after exiting the scope.
  *
- * @todo Rename to Str? (str.h)
  * @todo Make this opaque for better forward compatibility -- prevents initialization
  *       with static C strings, though (which is probably for the better anyway).
  * @todo Derive from Qt::QString
  *
- * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2008-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
