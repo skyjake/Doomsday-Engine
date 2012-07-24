@@ -37,6 +37,8 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include <de/garbage.h>
+#include <de/reader.h>
+#include <de/writer.h>
 #include <de/c_wrapper.h>
 
 #include "dd_def.h"
@@ -50,8 +52,6 @@
 #include "library.h"
 #include "nativeui.h"
 #include "busymode.h"
-#include "reader.h"
-#include "writer.h"
 #include "zonedebug.h"
 
 #endif /* LIBDENG_BASE_H */

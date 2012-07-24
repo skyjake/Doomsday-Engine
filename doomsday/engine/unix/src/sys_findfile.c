@@ -33,8 +33,6 @@
 
 #include "de_filesys.h"
 
-#include "dd_string.h"
-
 #define FIND_ERROR  -1
 
 typedef struct fdata_s {

@@ -2677,33 +2677,6 @@ char* strlwr(char* string)
 
 /**
  * Prints a formatted string into a fixed-size buffer. At most @c size
- * characters will be
- * written to the output buffer @c str. The output will always contain a
- * terminating null character.
- *
- * @param str           Output buffer.
- * @param size          Size of the output buffer.
- * @param format        Format of the output.
- * @param ap            Variable-size argument list.
- *
- * @return              Number of characters written to the output buffer
- *                      if lower than or equal to @c size, else @c -1.
- */
-int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
-{
-    int result = vsnprintf(str, size, format, ap);
-
-#ifdef WIN32
-    // Always terminate.
-    str[size - 1] = 0;
-    return result;
-#else
-    return result >= (int)size? -1 : (int)size;
-#endif
-}
-
-/**
- * Prints a formatted string into a fixed-size buffer. At most @c size
  * characters will be written to the output buffer @c str. The output will
  * always contain a terminating null character.
  *

@@ -26,8 +26,8 @@
 #define LIBCOMMON_NETWORK_DEF_H
 
 #include "dd_share.h"
-#include "reader.h"
-#include "writer.h"
+#include <de/reader.h>
+#include <de/writer.h>
 
 #include "common.h"
 

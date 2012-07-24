@@ -34,9 +34,9 @@
 extern "C" {
 #endif
 
-#include "dd_string.h"
-#include "reader.h"
-#include "writer.h"
+#include <de/str.h>
+#include <de/reader.h>
+#include <de/writer.h>
 
 struct uri_s; // The uri instance (opaque).
 

@@ -30,7 +30,6 @@
 #define LIBDENG_FILESYS_UTIL_H
 
 #include "dd_types.h"
-#include "dd_string.h"
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* str);
 

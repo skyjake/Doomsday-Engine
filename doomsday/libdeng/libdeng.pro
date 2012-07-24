@@ -46,27 +46,39 @@ DEFINES += __DENG__ __DOOMSDAY__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
+deng_writertypecheck {
+    DEFINES += DENG_WRITER_TYPECHECK
+}
+
 # Source Files ---------------------------------------------------------------
 
 # Public headers
 HEADERS += \
     include/de/concurrency.h \
+    include/de/ddstring.h \
     include/de/garbage.h \
     include/de/libdeng.h \
     include/de/memory.h \
     include/de/memoryzone.h \
+    include/de/reader.h \
     include/de/smoother.h \
-    include/de/types.h
+    include/de/str.h \
+    include/de/str.hh \
+    include/de/types.h \
+    include/de/writer.h
 
 # Sources and private headers
 SOURCES += \
     src/concurrency.cpp \
     src/garbage.cpp \
+    src/libdeng.c \
     src/memory.c \
     src/memoryzone.c \
     src/memoryzone_private.h \
+    src/reader.c \
     src/smoother.cpp \
-    src/libdeng.c
+    src/str.c \
+    src/writer.c
 
 # Installation ---------------------------------------------------------------
 

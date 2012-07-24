@@ -24,11 +24,15 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_misc.h"
+#include "de/str.h"
+#include "de/memory.h"
+#include "de/memoryzone.h"
+#include "de/garbage.h"
+#include <de/c_wrapper.h>
 
 static void* zoneAlloc(size_t n) {
     return Z_Malloc(n, PU_APPSTATIC, 0);
@@ -39,7 +43,7 @@ static void* zoneCalloc(size_t n) {
 }
 
 static void* stdCalloc(size_t n) {
-    return calloc(1, n);
+    return M_Calloc(n);
 }
 
 static void autoselectMemoryManagement(ddstring_t* str)
@@ -48,13 +52,13 @@ static void autoselectMemoryManagement(ddstring_t* str)
     {
         // If the memory model is unspecified, default to the standard,
         // it is safer for threading.
-        str->memFree = free;
-        str->memAlloc = malloc;
+        str->memFree = M_Free;
+        str->memAlloc = M_Malloc;
         str->memCalloc = stdCalloc;
     }
-    assert(str->memFree);
-    assert(str->memAlloc);
-    assert(str->memCalloc);
+    DENG_ASSERT(str->memFree);
+    DENG_ASSERT(str->memAlloc);
+    DENG_ASSERT(str->memCalloc);
 }
 
 static void allocateString(ddstring_t *str, size_t forLength, int preserve)
@@ -77,20 +81,20 @@ static void allocateString(ddstring_t *str, size_t forLength, int preserve)
         str->size *= 2;
     }
 
-    assert(str->memCalloc);
+    DENG_ASSERT(str->memCalloc);
     buf = str->memCalloc(str->size);
 
     if(preserve && str->str && oldSize)
     {
         // Copy the old contents of the string.
-        assert(oldSize <= str->size);
+        DENG_ASSERT(oldSize <= str->size);
         memcpy(buf, str->str, oldSize);
     }
 
     // Replace the old string with the new buffer.
     if(oldSize)
     {
-        assert(str->memFree);
+        DENG_ASSERT(str->memFree);
         str->memFree(str->str);
     }
     str->str = buf;
@@ -103,11 +107,8 @@ static void allocateString(ddstring_t *str, size_t forLength, int preserve)
  */
 ddstring_t* Str_Init(ddstring_t* str)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Init with invalid reference (this==0).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
 
     if(!Z_IsInited())
     {
@@ -148,11 +149,8 @@ ddstring_t* Str_InitStatic(ddstring_t* str, const char* staticConstStr)
 
 void Str_Free(ddstring_t* str)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Free with invalid reference (this==0).");
-        return; // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return;
 
     autoselectMemoryManagement(str);
 
@@ -191,11 +189,9 @@ ddstring_t* Str_NewFromReader(Reader* reader)
 
 void Str_Delete(ddstring_t* str)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Delete with invalid reference (this==0).");
-        return; // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return;
+
     Str_Free(str);
     M_Free(str);
 }
@@ -207,11 +203,9 @@ ddstring_t* Str_Clear(ddstring_t* str)
 
 ddstring_t* Str_Reserve(ddstring_t* str, int length)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Reserve with invalid reference (this==0).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
+
     if(length > 0)
     {
         allocateString(str, length, true);
@@ -221,11 +215,9 @@ ddstring_t* Str_Reserve(ddstring_t* str, int length)
 
 ddstring_t* Str_ReserveNotPreserving(ddstring_t* str, int length)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::ReserveNotPreserving with invalid reference (this==0).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
+
     if(length > 0)
     {
         allocateString(str, length, false);
@@ -235,11 +227,8 @@ ddstring_t* Str_ReserveNotPreserving(ddstring_t* str, int length)
 
 ddstring_t* Str_Set(ddstring_t* str, const char* text)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Set with invalid reference (this==0).");
-        return str; // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
 
     {
     size_t incoming = strlen(text);
@@ -255,9 +244,11 @@ ddstring_t* Str_Set(ddstring_t* str, const char* text)
 
 ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append)
 {
-    assert(str);
-    assert(append);
-    assert(str->length + append->length + 1 <= str->size); // including the null
+    DENG_ASSERT(str);
+    DENG_ASSERT(append);
+    DENG_ASSERT(str->length + append->length + 1 <= str->size); // including the null
+
+    if(!str) return 0;
 
     memcpy(str->str + str->length, append->str, append->length);
     str->length += append->length;
@@ -267,9 +258,11 @@ ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append)
 
 ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch)
 {
-    assert(str);
-    assert(ch); // null not accepted
-    assert(str->length + 2 <= str->size); // including a terminating null
+    DENG_ASSERT(str);
+    DENG_ASSERT(ch); // null not accepted
+    DENG_ASSERT(str->length + 2 <= str->size); // including a terminating null
+
+    if(!str) return 0;
 
     str->str[str->length++] = ch;
     str->str[str->length] = 0;
@@ -281,11 +274,8 @@ ddstring_t* Str_Append(ddstring_t* str, const char* append)
     size_t incoming;
     char* copied;
 
-    if(!str)
-    {
-        Con_Error("Attempted String::Append with invalid reference (this==0).");
-        return str; // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
 
     incoming = strlen(append);
 
@@ -312,11 +302,8 @@ ddstring_t* Str_AppendChar(ddstring_t* str, char ch)
 
 ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Appendf with invalid reference (this==0).");
-        return str; // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
 
     { char buf[4096];
     va_list args;
@@ -335,20 +322,11 @@ ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int c
     int partLen;
     char* copied;
 
-    if(!str)
-    {
-        Con_Error("Attempted String::PartAppend with invalid reference (this==0).");
-        return str; // Unreachable.
-    }
-    if(!append)
-    {
-#if _DEBUG
-        Con_Message("Attempted String::PartAppend with invalid reference (@a append==0).\n");
-#endif
-        return str;
-    }
-    if(start < 0 || count <= 0)
-        return str;
+    DENG_ASSERT(str);
+    DENG_ASSERT(append);
+
+    if(!str || !append) return str;
+    if(start < 0 || count <= 0) return str;
 
     copied = M_Malloc(count + 1);
     copied[0] = 0; // empty string
@@ -371,18 +349,12 @@ ddstring_t* Str_Prepend(ddstring_t* str, const char* prepend)
 {
     char* copied;
     size_t incoming;
-    if(!str)
-    {
-        Con_Error("Attempted String::Prepend with invalid reference (this==0).");
-        return str; // Unreachable.
-    }
-    if(!prepend)
-    {
-#if _DEBUG
-        Con_Message("Attempted String::PartAppend with invalid reference (@a prepend==0).\n");
-#endif
-        return str;
-    }
+
+    DENG_ASSERT(str);
+    DENG_ASSERT(prepend);
+
+    if(!str || !prepend) return str;
+
     incoming = strlen(prepend);
     if(incoming == 0)
         return str;
@@ -409,46 +381,34 @@ ddstring_t* Str_PrependChar(ddstring_t* str, char ch)
 
 char* Str_Text(const ddstring_t* str)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Text with invalid reference (this==0).");
-        return 0; // Unreachable.
-    }
+    if(!str) return "[null]";
     return str->str ? str->str : "";
 }
 
 int Str_Length(const ddstring_t* str)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Length with invalid reference (this==0).");
-        return 0; // Unreachable.
-    }
+    DENG_ASSERT(str);
+
+    if(!str) return 0;
     if(str->length)
+    {
         return str->length;
+    }
     return (int)strlen(Str_Text(str));
 }
 
 boolean Str_IsEmpty(const ddstring_t* str)
 {
+    DENG_ASSERT(str);
     return Str_Length(str) == 0;
 }
 
 ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::Copy with invalid reference (this==0).");
-        return str; // Unreachable.
-    }
-    Str_Free(str);
-    if(!other)
-    {
-#if _DEBUG
-        Con_Message("Attempted String::Copy with invalid reference (other==0).\n");
-#endif
-        return str;
-    }
+    DENG_ASSERT(str);
+    DENG_ASSERT(other);
+    if(!str || !other) return str;
+
     if(!other->size)
     {
         // The original string has no memory allocated; it's a static string.
@@ -469,11 +429,9 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
 
 ddstring_t* Str_CopyOrClear(ddstring_t* dest, const ddstring_t* src)
 {
-    if(!dest)
-    {
-        Con_Error("Attempted String::CopyOrClear with invalid reference (this==0).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(dest);
+    if(!dest) return 0;
+
     if(src)
     {
         return Str_Copy(dest, src);
@@ -486,11 +444,8 @@ ddstring_t* Str_StripLeft2(ddstring_t* str, int* count)
     int i, num;
     boolean isDone;
 
-    if(!str)
-    {
-        Con_Error("Attempted String::StripLeft with invalid reference (this==0).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
 
     if(!str->length)
     {
@@ -534,11 +489,8 @@ ddstring_t* Str_StripRight2(ddstring_t* str, int* count)
 {
     int i, num;
 
-    if(!str)
-    {
-        Con_Error("Attempted String::StripRight with invalid reference (this==0).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
 
     if(str->length == 0)
     {
@@ -581,11 +533,9 @@ ddstring_t* Str_Strip(ddstring_t* str)
 
 const char* Str_GetLine(ddstring_t* str, const char* src)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::GetLine with invalid reference (this==0).");
-        return 0; // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
+
     if(src != 0)
     {
         // We'll append the chars one by one.
@@ -612,24 +562,24 @@ const char* Str_GetLine(ddstring_t* str, const char* src)
 
 int Str_Compare(const ddstring_t* str, const char* text)
 {
+    DENG_ASSERT(str);
     return strcmp(Str_Text(str), text);
 }
 
 int Str_CompareIgnoreCase(const ddstring_t* str, const char* text)
 {
+    DENG_ASSERT(str);
     return strcasecmp(Str_Text(str), text);
 }
 
 const char* Str_CopyDelim2(ddstring_t* str, const char* src, char delimiter, int cdflags)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::CopyDelim2 with invalid reference (this==0).");
-        return 0; // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
+
     Str_Clear(str);
-    if(!src)
-        return 0;
+
+    if(!src) return 0;
 
     { const char* cursor;
     ddstring_t buf; Str_Init(&buf);
@@ -656,16 +606,14 @@ const char* Str_CopyDelim2(ddstring_t* str, const char* src, char delimiter, int
 
 const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter)
 {
-    return Str_CopyDelim2(dest, src, delimiter, CDF_OMIT_DELIMITER|CDF_OMIT_WHITESPACE);
+    return Str_CopyDelim2(dest, src, delimiter, CDF_OMIT_DELIMITER | CDF_OMIT_WHITESPACE);
 }
 
 char Str_At(const ddstring_t* str, int index)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::At with invalid reference (=NULL).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
+
     if(index < 0 || index >= (int)str->length)
         return 0;
     return str->str[index];
@@ -673,11 +621,9 @@ char Str_At(const ddstring_t* str, int index)
 
 char Str_RAt(const ddstring_t* str, int reverseIndex)
 {
-    if(!str)
-    {
-        Con_Error("Attempted String::RAt with invalid reference (=NULL).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
+
     if(reverseIndex < 0 || reverseIndex >= (int)str->length)
         return 0;
     return str->str[str->length - 1 - reverseIndex];
@@ -685,6 +631,9 @@ char Str_RAt(const ddstring_t* str, int reverseIndex)
 
 void Str_Truncate(ddstring_t* str, int position)
 {
+    DENG_ASSERT(str);
+    if(!str) return;
+
     if(position < 0)
         position = 0;
     if(!(position < Str_Length(str)))
@@ -700,11 +649,8 @@ ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const 
     int i, span, begin, len;
     ddstring_t buf;
 
-    if(!str)
-    {
-        Con_Error("Attempted String::PercentEncode with invalid reference (=NULL).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
 
     if(Str_IsEmpty(str)) return str;
 
@@ -775,11 +721,8 @@ ddstring_t* Str_PercentDecode(ddstring_t* str)
     char* data;
     char c;
 
-    if(!str)
-    {
-        Con_Error("Attempted String::PercentDecode with invalid reference (=NULL).");
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(str);
+    if(!str) return 0;
 
     if(Str_IsEmpty(str)) return str;
 
@@ -826,6 +769,9 @@ ddstring_t* Str_PercentDecode(ddstring_t* str)
 void Str_Write(const ddstring_t* str, Writer* writer)
 {
     size_t len = Str_Length(str);
+
+    DENG_ASSERT(str);
+
     Writer_WriteUInt32(writer, len);
     Writer_Write(writer, Str_Text(str), len);
 }
@@ -852,6 +798,7 @@ AutoStr* AutoStr_NewStd(void)
 
 AutoStr* AutoStr_FromStr(ddstring_t* str)
 {
+    DENG_ASSERT(str);
     Garbage_TrashInstance(str, (GarbageDestructor) Str_Delete);
     return str;
 }
@@ -863,6 +810,20 @@ AutoStr* AutoStr_FromText(const char* text)
 
 ddstring_t* Str_FromAutoStr(AutoStr* as)
 {
+    DENG_ASSERT(as);
     Garbage_Untrash(as);
     return as;
+}
+
+int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
+{
+    int result = vsnprintf(str, size, format, ap);
+
+#ifdef WIN32
+    // Always terminate.
+    str[size - 1] = 0;
+    return result;
+#else
+    return result >= (int)size? -1 : (int)size;
+#endif
 }

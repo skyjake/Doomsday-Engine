@@ -58,18 +58,6 @@
 #include "de/c_wrapper.h"
 #include "memoryzone_private.h"
 
-//#include "de_base.h"
-//#include "de_console.h"
-//#include "de_system.h"
-//#include "de_misc.h"
-
-/*
-#ifdef _DEBUG
-#  include "de_graphics.h"
-#  include "de_render.h"
-#endif
-*/
-
 // Size of one memory zone volume.
 #define MEMORY_VOLUME_SIZE  0x2000000   // 32 Mb
 

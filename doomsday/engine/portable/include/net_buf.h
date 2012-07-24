@@ -71,6 +71,9 @@ typedef struct netbuffer_s {
 extern netbuffer_t netBuffer;
 extern boolean  allowSending;
 
+Reader* Reader_New(void); // see doomsday.h
+Writer* Writer_New(void); // see doomsday.h
+
 /**
  * Functions.
  */

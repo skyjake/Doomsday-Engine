@@ -22,8 +22,8 @@
 
 #include "de_platform.h"
 #include <de/memoryzone.h>
+#include <de/str.hh>
 #include "stringpool.h"
-#include "string.hh"
 #include "unittest.h"
 
 #include <stdio.h>

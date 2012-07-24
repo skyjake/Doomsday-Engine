@@ -22,8 +22,8 @@
 #ifndef LIBDENG_DDSTRING_CPP_WRAPPER_HH
 #define LIBDENG_DDSTRING_CPP_WRAPPER_HH
 
-#include "dd_string.h"
-#include <assert.h>
+#include "libdeng.h"
+#include "str.h"
 
 namespace de {
 

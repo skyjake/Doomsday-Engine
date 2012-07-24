@@ -60,6 +60,34 @@ void ByteOrder::foreignToNative(const dint64& foreignValue, dint64& nativeValue)
                     reinterpret_cast<      duint64&>(nativeValue));
 }
 
+void ByteOrder::nativeToForeign(const dfloat& nativeValue, dfloat& foreignValue) const
+{
+    DENG2_ASSERT(sizeof(dfloat) == sizeof(duint32));
+    nativeToForeign(reinterpret_cast<const duint32&>(nativeValue),
+                    reinterpret_cast<      duint32&>(foreignValue));
+}
+
+void ByteOrder::nativeToForeign(const ddouble& nativeValue, ddouble& foreignValue) const
+{
+    DENG2_ASSERT(sizeof(ddouble) == sizeof(duint64));
+    nativeToForeign(reinterpret_cast<const duint64&>(nativeValue),
+                    reinterpret_cast<      duint64&>(foreignValue));
+}
+
+void ByteOrder::foreignToNative(const dfloat& foreignValue, dfloat& nativeValue) const
+{
+    DENG2_ASSERT(sizeof(dfloat) == sizeof(duint32));
+    foreignToNative(reinterpret_cast<const duint32&>(foreignValue),
+                    reinterpret_cast<      duint32&>(nativeValue));
+}
+
+void ByteOrder::foreignToNative(const ddouble& foreignValue, ddouble& nativeValue) const
+{
+    DENG2_ASSERT(sizeof(ddouble) == sizeof(duint64));
+    foreignToNative(reinterpret_cast<const duint64&>(foreignValue),
+                    reinterpret_cast<      duint64&>(nativeValue));
+}
+
 void BigEndianByteOrder::foreignToNative(const duint16& foreignValue, duint16& nativeValue) const
 {
 #ifdef __BIG_ENDIAN__ 

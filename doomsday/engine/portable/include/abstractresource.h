@@ -24,7 +24,6 @@
 #ifndef LIBDENG_ABSTRACTRESOURCE_H
 #define LIBDENG_ABSTRACTRESOURCE_H
 
-#include "dd_string.h"
 #include "uri.h"
 
 /**

@@ -89,6 +89,27 @@ public:
     void foreignToNative(const dint16& foreignValue, dint16& nativeValue) const;
     void foreignToNative(const dint32& foreignValue, dint32& nativeValue) const;
     void foreignToNative(const dint64& foreignValue, dint64& nativeValue) const;
+
+    // Floating point.
+    void nativeToForeign(const dfloat&  nativeValue,  dfloat&  foreignValue) const;
+    void nativeToForeign(const ddouble& nativeValue,  ddouble& foreignValue) const;
+    void foreignToNative(const dfloat&  foreignValue, dfloat&  nativeValue) const;
+    void foreignToNative(const ddouble& foreignValue, ddouble& nativeValue) const;
+
+    // Convenience.
+    template <typename T>
+    T toForeign(const T& nativeValue) const {
+        T foreignValue;
+        nativeToForeign(nativeValue, foreignValue);
+        return foreignValue;
+    }
+
+    template <typename T>
+    T toNative(const T& foreignValue) const {
+        T nativeValue;
+        foreignToNative(foreignValue, nativeValue);
+        return nativeValue;
+    }
 };
 
 /**
