@@ -1,9 +1,6 @@
 /**
  * @file wadmapconverter.cpp
- * Doomsday Plugin for converting DOOM-like format maps.
- *
- * The purpose of a wadmapconverter plugin is to transform a map into
- * Doomsday's native map format by use of the public map editing interface.
+ * Map converter plugin for id tech 1 format maps. @ingroup wadmapconverter
  *
  * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -46,12 +43,12 @@ static void configure(void)
 static MapLumpInfo* newMapLumpInfo(lumpnum_t lumpNum, MapLumpType lumpType)
 {
     MapLumpInfo* info = static_cast<MapLumpInfo*>(malloc(sizeof(*info)));
-    return info->Init(lumpNum, lumpType, W_LumpLength(lumpNum));
+    return info->init(lumpNum, lumpType, W_LumpLength(lumpNum));
 }
 
 /**
  * Given a map @a uri, attempt to locate the associated marker lump for the
- * map data within the Doomsday file system.
+ * map data using the Doomsday file system.
  *
  * @param uri           Map identifier, e.g., "Map:E1M1"
  * @return Lump number for the found data else @c -1
@@ -64,19 +61,19 @@ static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
 }
 
 /**
- * Given a @a lumpNumber, attempt to recognise the data as a known map format
+ * Given a @a lumpNumber, attempt to recognize the data as a known map format
  * data lump.
  *
  * @note Presently this recognition logic is rather primitive and relies soley
  *       on matching the lump name to a known name set. This should be expanded
  *       to actually qualify the data itself (expected size checks, etc...).
  *
- * @param lumpNumber    Lump number to recognise the format of.
- * @return MapLumpType identifier for the recognised lump, else @c ML_INVALID.
+ * @param lumpNumber    Lump number to recognize the format of.
+ * @return MapLumpType identifier for the recognized lump, else @c ML_INVALID.
  */
-static MapLumpType recogniseMapLump(lumpnum_t lumpNumber)
+static MapLumpType recognizeMapLump(lumpnum_t lumpNumber)
 {
-    /// @todo Relocate recognition logic from IsSupportedFormat() here.
+    /// @todo Relocate recognition logic from recognizeMapFormat() here.
     return MapLumpTypeForName(W_LumpName(lumpNumber));
 }
 
@@ -84,17 +81,14 @@ static MapLumpType recogniseMapLump(lumpnum_t lumpNumber)
  * Find all data lumps associated with this map and populate their metadata
  * in the @a lumpInfos record set.
  *
- * @note Some obscure PWADs have these lumps in a non-standard order,
- * so we need to go resort to finding them automatically.
- *
  * @param lumpInfos     MapLumpInfo record set to populate.
- * @param startLump     The lump number to begin our search with.
+ * @param startLump     Lump number at which to begin searching.
  */
 static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t startLump)
 {
     DENG_ASSERT(lumpInfos);
 
-    WADMAPCONVERTER_TRACE("Locating data lumps...");
+    ID1MAP_TRACE("Locating data lumps...");
 
     if(startLump < 0) return;
 
@@ -102,7 +96,7 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
     const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
     for(lumpnum_t i = startLump; i < numLumps; ++i)
     {
-        MapLumpType lumpType = recogniseMapLump(i);
+        MapLumpType lumpType = recognizeMapLump(i);
 
         // If this lump is of an invalid type then we *should* have found all
         // the required map data lumps.
@@ -111,7 +105,7 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
             break; // Stop looking.
         }
 
-        // A recognised map data lump; record it in the collection.
+        // A recognized map data lump; record it in the collection.
         if(lumpInfos[lumpType])
         {
             free(lumpInfos[lumpType]);
@@ -120,7 +114,7 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
     }
 }
 
-static void recogniseMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
+static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
 
@@ -247,15 +241,15 @@ int ConvertMapHook(int hookType, int parm, void* context)
     memset(lumpInfos, 0, sizeof(lumpInfos));
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
-    // Do we recognise this format?
-    recogniseMapFormat(lumpInfos);
+    // Do we recognize this format?
+    recognizeMapFormat(lumpInfos);
     if(DENG_PLUGIN_GLOBAL(mapFormat) == MF_UNKNOWN)
     {
         ret_val = false;
         goto FAIL_UNKNOWN_FORMAT;
     }
 
-    VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
+    VERBOSE( Con_Message("WadMapConverter: Recognized a %s format map.\n",
                          Str_Text(MapFormatNameForId(DENG_PLUGIN_GLOBAL(mapFormat)))) );
 
     // Read the archived map.
@@ -267,7 +261,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
         goto FAIL_LOAD_ERROR;
     }
 
-    // Perform post read analses.
+    // Perform post read analyses.
     AnalyzeMap();
 
     // Rebuild the map in Doomsday's native format.

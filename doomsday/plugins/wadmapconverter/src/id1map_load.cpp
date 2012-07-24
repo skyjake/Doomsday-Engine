@@ -1,6 +1,7 @@
 /**
- * @file load.cpp
- * Load and analyzation of the map data structures.
+ * @file id1map_load.cpp @ingroup wadmapconverter
+ * 
+ * Load and translation of the id tech 1 map format data structures.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -30,36 +31,35 @@ static const ddstring_t* findMaterialInDictionary(MaterialDictId id)
     return StringPool_String(map->materials, id);
 }
 
-static MaterialDictId addMaterialToDictionary(const char* rawName, bool isFlat)
+static MaterialDictId addMaterialToDictionary(const char* name, MaterialDictGroup group)
 {
+    DENG_ASSERT(name);
+
     // Are we yet to instantiate the dictionary itself?
     if(!map->materials)
     {
         map->materials = StringPool_New();
     }
 
-    // Prepare the encoded name for insertion into the dictionary.
+    // Prepare the encoded URI for insertion into the dictionary.
     ddstring_t* uriCString;
     if(mapFormat == MF_DOOM64)
     {
         // Doom64 maps reference materials with unique ids.
-        int uniqueId = *((int*) rawName);
-        char name[9];
-        sprintf(name, "UNK%05i", uniqueId); name[8] = '\0';
+        int uniqueId = *((int*) name);
+        //char name[9];
+        //sprintf(name, "UNK%05i", uniqueId); name[8] = '\0';
 
-        Uri* uri = Materials_ComposeUri(DD_MaterialForTextureUniqueId((isFlat? TN_FLATS : TN_TEXTURES), uniqueId));
+        Uri* uri = Materials_ComposeUri(DD_MaterialForTextureUniqueId((group == MG_PLANE? TN_FLATS : TN_TEXTURES), uniqueId));
         uriCString = Uri_Compose(uri);
         Uri_Delete(uri);
     }
     else
     {
-        char name[9];
-        memcpy(name, rawName, 8); name[8] = '\0';
-
         // In original DOOM, texture name references beginning with the
         // hypen '-' character are always treated as meaning "no reference"
         // or "invalid texture" and surfaces using them were not drawn.
-        if(!isFlat && !stricmp(name, "-"))
+        if(group != MG_PLANE && !stricmp(name, "-"))
         {
             return 0; // Not a valid id.
         }
@@ -69,14 +69,14 @@ static MaterialDictId addMaterialToDictionary(const char* rawName, bool isFlat)
         Str_PercentEncode(Str_Set(Str_Init(&path), name));
 
         Uri* uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
-        Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
+        Uri_SetScheme(uri, group == MG_PLANE? MN_FLATS_NAME : MN_TEXTURES_NAME);
         Str_Free(&path);
 
         uriCString = Uri_Compose(uri);
         Uri_Delete(uri);
     }
 
-    // Intern this material name in the dictionary.
+    // Intern this material URI in the dictionary.
     MaterialDictId internId = StringPool_Intern(map->materials, uriCString);
 
     // We're done (phew!).
@@ -152,7 +152,7 @@ static bool loadVertexes(Reader* reader, size_t lumpLength)
 {
     DENG_ASSERT(reader);
 
-    WADMAPCONVERTER_TRACE("Processing vertexes...");
+    ID1MAP_TRACE("Processing vertexes...");
     switch(mapFormat)
     {
     default:
@@ -179,15 +179,16 @@ static bool loadVertexes(Reader* reader, size_t lumpLength)
 }
 
 /**
- * Interpret linedef flags.
+ * Translate the line definition flags for Doomsday.
  */
 static void interpretLineDefFlags(mline_t* l)
 {
-#define ML_BLOCKING             1 // Solid, is an obstacle.
-#define ML_TWOSIDED             4 // Backside will not be present at all if not two sided.
-#define ML_DONTPEGTOP           8 // Upper texture unpegged.
-#define ML_DONTPEGBOTTOM        16 // Lower texture unpegged.
-// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
+#define ML_BLOCKING             1 ///< Solid, is an obstacle.
+#define ML_TWOSIDED             4 ///< Backside will not be present at all if not two sided.
+#define ML_DONTPEGTOP           8 ///< Upper texture unpegged.
+#define ML_DONTPEGBOTTOM        16 ///< Lower texture unpegged.
+
+/// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
 #define ML_INVALID              2048
 #define DOOM_VALIDMASK          0x000001ff
 
@@ -233,19 +234,19 @@ static void interpretLineDefFlags(mline_t* l)
         l->flags &= ~ML_DONTPEGBOTTOM;
     }
 
-#undef ML_BLOCKING
-#undef ML_TWOSIDED
-#undef ML_DONTPEGTOP
-#undef ML_DONTPEGBOTTOM
-#undef ML_INVALID
 #undef DOOM_VALIDMASK
+#undef ML_INVALID
+#undef ML_DONTPEGBOTTOM
+#undef ML_DONTPEGTOP
+#undef ML_TWOSIDED
+#undef ML_BLOCKING
 }
 
-static bool loadLinedefs(Reader* reader, size_t lumpLength)
+static bool loadLineDefs(Reader* reader, size_t lumpLength)
 {
     DENG_ASSERT(reader);
 
-    WADMAPCONVERTER_TRACE("Processing linedefs...");
+    ID1MAP_TRACE("Processing line definitions...");
     switch(mapFormat)
     {
     default:
@@ -365,11 +366,11 @@ static bool loadLinedefs(Reader* reader, size_t lumpLength)
     return true;
 }
 
-static bool loadSidedefs(Reader* reader, size_t lumpLength)
+static bool loadSideDefs(Reader* reader, size_t lumpLength)
 {
     DENG_ASSERT(reader);
 
-    WADMAPCONVERTER_TRACE("Processing sidedefs...");
+    ID1MAP_TRACE("Processing side definitions...");
     switch(mapFormat)
     {
     default:
@@ -385,13 +386,13 @@ static bool loadSidedefs(Reader* reader, size_t lumpLength)
             s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->topMaterial = addMaterialToDictionary(name, false);
+            s->topMaterial    = addMaterialToDictionary(name, MG_WALL);
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->bottomMaterial = addMaterialToDictionary(name, false);
+            s->bottomMaterial = addMaterialToDictionary(name, MG_WALL);
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->middleMaterial = addMaterialToDictionary(name, false);
+            s->middleMaterial = addMaterialToDictionary(name, MG_WALL);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) s->sector = 0;
@@ -410,13 +411,13 @@ static bool loadSidedefs(Reader* reader, size_t lumpLength)
             s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->topMaterial = addMaterialToDictionary((const char*) &idx, false);
+            s->topMaterial    = addMaterialToDictionary((const char*) &idx, MG_WALL);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->bottomMaterial = addMaterialToDictionary((const char*) &idx, false);
+            s->bottomMaterial = addMaterialToDictionary((const char*) &idx, MG_WALL);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->middleMaterial = addMaterialToDictionary((const char*) &idx, false);
+            s->middleMaterial = addMaterialToDictionary((const char*) &idx, MG_WALL);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) s->sector = 0;
@@ -432,7 +433,7 @@ static bool loadSectors(Reader* reader, size_t lumpLength)
 {
     DENG_ASSERT(reader);
 
-    WADMAPCONVERTER_TRACE("Processing sectors...");
+    ID1MAP_TRACE("Processing sectors...");
     switch(mapFormat)
     {
     default: {
@@ -446,10 +447,10 @@ static bool loadSectors(Reader* reader, size_t lumpLength)
             s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->floorMaterial = addMaterialToDictionary(name, true);
+            s->floorMaterial= addMaterialToDictionary(name, MG_PLANE);
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->ceilMaterial = addMaterialToDictionary(name, true);
+            s->ceilMaterial = addMaterialToDictionary(name, MG_PLANE);
 
             s->lightLevel   = SHORT( Reader_ReadInt16(reader) );
             s->type         = SHORT( Reader_ReadInt16(reader) );
@@ -468,10 +469,10 @@ static bool loadSectors(Reader* reader, size_t lumpLength)
             s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->floorMaterial = addMaterialToDictionary((const char*) &idx, false);
+            s->floorMaterial= addMaterialToDictionary((const char*) &idx, MG_PLANE);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->ceilMaterial = addMaterialToDictionary((const char*) &idx, false);
+            s->ceilMaterial = addMaterialToDictionary((const char*) &idx, MG_PLANE);
 
             s->d64ceilingColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             s->d64floorColor    = USHORT( uint16_t(Reader_ReadInt16(reader)) );
@@ -494,15 +495,15 @@ static bool loadSectors(Reader* reader, size_t lumpLength)
 static bool loadThings(Reader* reader, size_t lumpLength)
 {
 /// @todo Get these from a game api header.
-#define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
-#define MTF_Z_CEIL          0x40000000 // Spawn relative to ceiling height (minus thing height).
-#define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
+#define MTF_Z_FLOOR         0x20000000 ///< Spawn relative to floor height.
+#define MTF_Z_CEIL          0x40000000 ///< Spawn relative to ceiling height (minus thing height).
+#define MTF_Z_RANDOM        0x80000000 ///< Random point between floor and ceiling.
 
 #define ANG45               0x20000000
 
     DENG_ASSERT(reader);
 
-    WADMAPCONVERTER_TRACE("Processing things...");
+    ID1MAP_TRACE("Processing things...");
     switch(mapFormat)
     {
     default:
@@ -510,14 +511,14 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 /**
  * DOOM Thing flags:
  */
-#define MTF_EASY            0x00000001 // Can be spawned in Easy skill modes.
-#define MTF_MEDIUM          0x00000002 // Can be spawned in Medium skill modes.
-#define MTF_HARD            0x00000004 // Can be spawned in Hard skill modes.
-#define MTF_DEAF            0x00000008 // Mobj will be deaf spawned deaf.
-#define MTF_NOTSINGLE       0x00000010 // (BOOM) Can not be spawned in single player gamemodes.
-#define MTF_NOTDM           0x00000020 // (BOOM) Can not be spawned in the Deathmatch gameMode.
-#define MTF_NOTCOOP         0x00000040 // (BOOM) Can not be spawned in the Co-op gameMode.
-#define MTF_FRIENDLY        0x00000080 // (BOOM) friendly monster.
+#define MTF_EASY            0x00000001 ///< Can be spawned in Easy skill modes.
+#define MTF_MEDIUM          0x00000002 ///< Can be spawned in Medium skill modes.
+#define MTF_HARD            0x00000004 ///< Can be spawned in Hard skill modes.
+#define MTF_DEAF            0x00000008 ///< Mobj will be deaf spawned deaf.
+#define MTF_NOTSINGLE       0x00000010 ///< (BOOM) Can not be spawned in single player gamemodes.
+#define MTF_NOTDM           0x00000020 ///< (BOOM) Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000040 ///< (BOOM) Can not be spawned in the Co-op gameMode.
+#define MTF_FRIENDLY        0x00000080 ///< (BOOM) friendly monster.
 
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
@@ -548,33 +549,33 @@ static bool loadThings(Reader* reader, size_t lumpLength)
             t->flags |= MTF_Z_FLOOR;
         }
 
-#undef MTF_EASY
-#undef MTF_MEDIUM
-#undef MTF_HARD
-#undef MTF_AMBUSH
-#undef MTF_NOTSINGLE
-#undef MTF_NOTDM
-#undef MTF_NOTCOOP
-#undef MTF_FRIENDLY
 #undef MASK_UNKNOWN_THING_FLAGS
+#undef MTF_FRIENDLY
+#undef MTF_NOTCOOP
+#undef MTF_NOTDM
+#undef MTF_NOTSINGLE
+#undef MTF_AMBUSH
+#undef MTF_HARD
+#undef MTF_MEDIUM
+#undef MTF_EASY
         break; }
 
     case MF_DOOM64: {
 /**
  * DOOM64 Thing flags:
  */
-#define MTF_EASY            0x00000001 // Appears in easy skill modes.
-#define MTF_MEDIUM          0x00000002 // Appears in medium skill modes.
-#define MTF_HARD            0x00000004 // Appears in hard skill modes.
-#define MTF_DEAF            0x00000008 // Thing is deaf.
-#define MTF_NOTSINGLE       0x00000010 // Appears in multiplayer game modes only.
-#define MTF_DONTSPAWNATSTART 0x00000020 // Do not spawn this thing at map start.
-#define MTF_SCRIPT_TOUCH    0x00000040 // Mobjs spawned from this spot will envoke a script when touched.
-#define MTF_SCRIPT_DEATH    0x00000080 // Mobjs spawned from this spot will envoke a script on death.
-#define MTF_SECRET          0x00000100 // A secret (bonus) item.
-#define MTF_NOTARGET        0x00000200 // Mobjs spawned from this spot will not target their attacker when hurt.
-#define MTF_NOTDM           0x00000400 // Can not be spawned in the Deathmatch gameMode.
-#define MTF_NOTCOOP         0x00000800 // Can not be spawned in the Co-op gameMode.
+#define MTF_EASY            0x00000001 ///< Appears in easy skill modes.
+#define MTF_MEDIUM          0x00000002 ///< Appears in medium skill modes.
+#define MTF_HARD            0x00000004 ///< Appears in hard skill modes.
+#define MTF_DEAF            0x00000008 ///< Thing is deaf.
+#define MTF_NOTSINGLE       0x00000010 ///< Appears in multiplayer game modes only.
+#define MTF_DONTSPAWNATSTART 0x00000020 ///< Do not spawn this thing at map start.
+#define MTF_SCRIPT_TOUCH    0x00000040 ///< Mobjs spawned from this spot will envoke a script when touched.
+#define MTF_SCRIPT_DEATH    0x00000080 ///< Mobjs spawned from this spot will envoke a script on death.
+#define MTF_SECRET          0x00000100 ///< A secret (bonus) item.
+#define MTF_NOTARGET        0x00000200 ///< Mobjs spawned from this spot will not target their attacker when hurt.
+#define MTF_NOTDM           0x00000400 ///< Can not be spawned in the Deathmatch gameMode.
+#define MTF_NOTCOOP         0x00000800 ///< Can not be spawned in the Co-op gameMode.
 
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_DONTSPAWNATSTART|MTF_SCRIPT_TOUCH|MTF_SCRIPT_DEATH|MTF_SECRET|MTF_NOTARGET|MTF_NOTDM|MTF_NOTCOOP))
@@ -607,19 +608,19 @@ static bool loadThings(Reader* reader, size_t lumpLength)
             t->d64TID = SHORT( Reader_ReadInt16(reader) );
         }
 
-#undef MTF_EASY
-#undef MTF_MEDIUM
-#undef MTF_HARD
-#undef MTF_DEAF
-#undef MTF_NOTSINGLE
-#undef MTF_DONTSPAWNATSTART
-#undef MTF_SCRIPT_TOUCH
-#undef MTF_SCRIPT_DEATH
-#undef MTF_SECRET
-#undef MTF_NOTARGET
-#undef MTF_NOTDM
-#undef MTF_NOTCOOP
 #undef MASK_UNKNOWN_THING_FLAGS
+#undef MTF_NOTCOOP
+#undef MTF_NOTDM
+#undef MTF_NOTARGET
+#undef MTF_SECRET
+#undef MTF_SCRIPT_DEATH
+#undef MTF_SCRIPT_TOUCH
+#undef MTF_DONTSPAWNATSTART
+#undef MTF_NOTSINGLE
+#undef MTF_DEAF
+#undef MTF_HARD
+#undef MTF_MEDIUM
+#undef MTF_EASY
         break; }
 
     case MF_HEXEN: {
@@ -637,11 +638,11 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 #define MTF_GSINGLE         0x00000100
 #define MTF_GCOOP           0x00000200
 #define MTF_GDEATHMATCH     0x00000400
-// The following are not currently used.
-#define MTF_SHADOW          0x00000800 // (ZDOOM) Thing is 25% translucent.
-#define MTF_INVISIBLE       0x00001000 // (ZDOOM) Makes the thing invisible.
-#define MTF_FRIENDLY        0x00002000 // (ZDOOM) Friendly monster.
-#define MTF_STILL           0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
+// The following are not currently used:
+#define MTF_SHADOW          0x00000800 ///< (ZDOOM) Thing is 25% translucent.
+#define MTF_INVISIBLE       0x00001000 ///< (ZDOOM) Makes the thing invisible.
+#define MTF_FRIENDLY        0x00002000 ///< (ZDOOM) Friendly monster.
+#define MTF_STILL           0x00004000 ///< (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
 
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
@@ -697,38 +698,37 @@ static bool loadThings(Reader* reader, size_t lumpLength)
             t->xArgs[4] = Reader_ReadByte(reader);
         }
 
-#undef MTF_EASY
-#undef MTF_NORMAL
-#undef MTF_HARD
-#undef MTF_AMBUSH
-#undef MTF_DORMANT
-#undef MTF_FIGHTER
-#undef MTF_CLERIC
-#undef MTF_MAGE
-#undef MTF_GSINGLE
-#undef MTF_GCOOP
-#undef MTF_GDEATHMATCH
-// The following are not currently used.
-#undef MTF_SHADOW
-#undef MTF_INVISIBLE
-#undef MTF_FRIENDLY
-#undef MTF_STILL
 #undef MASK_UNKNOWN_THING_FLAGS
+#undef MTF_STILL
+#undef MTF_FRIENDLY
+#undef MTF_INVISIBLE
+#undef MTF_SHADOW
+#undef MTF_GDEATHMATCH
+#undef MTF_GCOOP
+#undef MTF_GSINGLE
+#undef MTF_MAGE
+#undef MTF_CLERIC
+#undef MTF_FIGHTER
+#undef MTF_DORMANT
+#undef MTF_AMBUSH
+#undef MTF_HARD
+#undef MTF_NORMAL
+#undef MTF_EASY
         break; }
     }
 
     return true;
 
-#undef MTF_Z_FLOOR
-#undef MTF_Z_CEIL
 #undef MTF_Z_RANDOM
+#undef MTF_Z_CEIL
+#undef MTF_Z_FLOOR
 }
 
 static bool loadLights(Reader* reader, size_t lumpLength)
 {
     DENG_ASSERT(reader);
 
-    WADMAPCONVERTER_TRACE("Processing lights...");
+    ID1MAP_TRACE("Processing lights...");
 
     uint numElements = lumpLength / SIZEOF_LIGHT;
     for(uint n = 0; n < numElements; ++n)
@@ -891,13 +891,13 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
         case ML_LINEDEFS:
             reader = bufferLump(info);
-            loadLinedefs(reader, info->length);
+            loadLineDefs(reader, info->length);
             Reader_Delete(reader);
             break;
 
         case ML_SIDEDEFS:
             reader = bufferLump(info);
-            loadSidedefs(reader, info->length);
+            loadSideDefs(reader, info->length);
             Reader_Delete(reader);
             break;
 
@@ -941,13 +941,13 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
 static void transferVertexes(void)
 {
-    WADMAPCONVERTER_TRACE("Transfering vertexes...");
+    ID1MAP_TRACE("Transfering vertexes...");
     MPE_VertexCreatev(map->numVertexes, map->vertexes, NULL);
 }
 
 static void transferSectors(void)
 {
-    WADMAPCONVERTER_TRACE("Transfering sectors...");
+    ID1MAP_TRACE("Transfering sectors...");
     for(uint i = 0; i < map->numSectors; ++i)
     {
         msector_t* sec = &map->sectors[i];
@@ -977,7 +977,7 @@ static void transferSectors(void)
 
 static void transferLinesAndSides(void)
 {
-    WADMAPCONVERTER_TRACE("Transfering lines and sides...");
+    ID1MAP_TRACE("Transfering lines and sides...");
     for(uint i = 0; i < map->numLines; ++i)
     {
         mline_t* l = &map->lines[i];
@@ -1045,7 +1045,7 @@ static void transferLinesAndSides(void)
 
 static void transferLights(void)
 {
-    WADMAPCONVERTER_TRACE("Transfering lights...");
+    ID1MAP_TRACE("Transfering lights...");
     for(uint i = 0; i < map->numLights; ++i)
     {
         surfacetint_t* l = &map->lights[i];
@@ -1061,7 +1061,7 @@ static void transferLights(void)
 
 static void transferPolyobjs(void)
 {
-    WADMAPCONVERTER_TRACE("Transfering polyobjs...");
+    ID1MAP_TRACE("Transfering polyobjs...");
     for(uint i = 0; i < map->numPolyobjs; ++i)
     {
         mpolyobj_t* po = map->polyobjs[i];
@@ -1080,7 +1080,7 @@ static void transferPolyobjs(void)
 
 static void transferThings(void)
 {
-    WADMAPCONVERTER_TRACE("Transfering things...");
+    ID1MAP_TRACE("Transfering things...");
     for(uint i = 0; i < map->numThings; ++i)
     {
         mthing_t* th = &map->things[i];
@@ -1114,7 +1114,7 @@ int TransferMap(void)
 {
     uint startTime = Sys_GetRealTime();
 
-    WADMAPCONVERTER_TRACE("TransferMap");
+    ID1MAP_TRACE("TransferMap");
 
     MPE_Begin("");
     transferVertexes();

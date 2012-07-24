@@ -2,8 +2,9 @@
  * @file wadmapconverter.h
  * Map converter plugin for id tech 1 format maps. @ingroup wadmapconverter
  *
- * The purpose of a wadmapconverter plugin is to transform a map into
- * Doomsday's native map format by use of the public map editing interface.
+ * The purpose of the wadmapconverter plugin is to translate a map in the
+ * id tech 1 format to Doomsday's native map format, using the engine's own
+ * public map editing interface.
  *
  * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -22,11 +23,6 @@
  * 02110-1301 USA</small>
  */
 
-/**
- * @defgroup wadmapconverter
- * WAD map converter plugin.
- */
-
 #ifndef __WADMAPCONVERTER_H__
 #define __WADMAPCONVERTER_H__
 
@@ -43,9 +39,9 @@
 #endif
 
 #ifdef DENG_WADMAPCONVERTER_DEBUG
-#  define WADMAPCONVERTER_TRACE(args)  std::cerr << "[WadMapConverter] " << args << std::endl;
+#  define ID1MAP_TRACE(args)  std::cerr << "[WadMapConverter] " << args << std::endl;
 #else
-#  define WADMAPCONVERTER_TRACE(args)
+#  define ID1MAP_TRACE(args)
 #endif
 
 extern int DENG_PLUGIN_GLOBAL(verbose);

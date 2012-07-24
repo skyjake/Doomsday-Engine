@@ -25,7 +25,7 @@
 #include "dd_types.h"
 #include "id1map_util.h"
 
-// Size of the map data structures in bytes in the arrived map format.
+/// Sizes of the map data structures in the arrived map formats (in bytes).
 #define SIZEOF_64VERTEX         (4 * 2)
 #define SIZEOF_VERTEX           (2 * 2)
 #define SIZEOF_64THING          (2 * 7)
@@ -40,10 +40,16 @@
 #define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
 #define SIZEOF_LIGHT            (1 * 6)
 
-// Type used to identify references to materials in the material dictionary.
+/// Type used to identify references to materials in the material dictionary.
 typedef StringPoolId MaterialDictId;
 
-// Line sides.
+/// Material dictionary groups.
+typedef enum materialdictgroup_e {
+    MG_PLANE = 0,
+    MG_WALL
+} MaterialDictGroup;
+
+/// Line sides.
 #define RIGHT                   0
 #define LEFT                    1
 
@@ -55,8 +61,12 @@ typedef struct mside_s {
     uint            sector;
 } mside_t;
 
-// Line flags
-#define LAF_POLYOBJ             0x1 // Line is from a polyobject.
+/**
+ * @defgroup lineAnalysisFlags  Line Analysis flags
+ */
+///@{
+#define LAF_POLYOBJ             0x1 ///< Line defines a polyobj segment.
+///@}
 
 #define PO_LINE_START           (1) ///< Polyobj line start special.
 #define PO_LINE_EXPLICIT        (5)
@@ -66,7 +76,7 @@ typedef struct mside_s {
 typedef struct mline_s {
     uint            v[2];
     uint            sides[2];
-    int16_t         flags; // MF_* flags, read from the LINEDEFS, map data lump.
+    int16_t         flags; ///< MF_* flags.
 
     // Analysis data:
     int16_t         aFlags;
@@ -87,7 +97,7 @@ typedef struct mline_s {
     int16_t         d64tag;
 
     int             ddFlags;
-    uint            validCount; // Used for Polyobj LineDef collection.
+    uint            validCount; ///< Used for polyobj line collection.
 } mline_t;
 
 typedef struct msector_s {
@@ -108,7 +118,7 @@ typedef struct msector_s {
     uint16_t        d64wallBottomColor;
 } msector_t;
 
-// Polyobj args.
+// Thing DoomEdNums for polyobj anchors/spawn spots.
 #define PO_ANCHOR_DOOMEDNUM     (3000)
 #define PO_SPAWN_DOOMEDNUM      (3001)
 #define PO_SPAWNCRUSH_DOOMEDNUM (3002)
@@ -129,17 +139,15 @@ typedef struct mthing_s {
     int16_t         d64TID;
 } mthing_t;
 
-// Hexen only (at present):
 typedef struct mpolyobj_s {
-    uint            idx; // Idx of polyobject
+    uint            idx;
     uint            lineCount;
     uint*           lineIndices;
-    int             tag; // Reference tag assigned in HereticEd
+    int             tag;
     int             seqType;
     int16_t         anchor[2];
 } mpolyobj_t;
 
-// DOOM64 only (at present):
 typedef struct mlight_s {
     float           rgb[3];
     byte            xx[3];

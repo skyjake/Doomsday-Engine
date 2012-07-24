@@ -1,7 +1,7 @@
 /**
  * @file id1map_util.cpp @ingroup wadmapconverter
  *
- * Miscellaneous map conversion utility routines.
+ * Miscellaneous map converter utility routines.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -41,7 +41,7 @@ const ddstring_t* MapFormatNameForId(mapformatid_t id)
 
 MapLumpType MapLumpTypeForName(const char* name)
 {
-    static const struct maplumpinfo_s {
+    static const struct maplumpnametypepair_s {
         const char* name;
         MapLumpType type;
     } lumptypeForNameDict[] =

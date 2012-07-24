@@ -1,7 +1,7 @@
 /**
  * @file id1map_util.h @ingroup wadmapconverter
  *
- * Miscellaneous map conversion utility routines.
+ * Miscellaneous map converter utility routines.
  *
  * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
  *
