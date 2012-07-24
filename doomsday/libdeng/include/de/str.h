@@ -1,5 +1,5 @@
 /**
- * @file dd_string.h
+ * @file str.h
  * Dynamic text string.
  *
  * Simple dynamic string management. @ingroup base

@@ -1,6 +1,6 @@
 /**
- * @file string.hh
- * C++ wrapper for ddstring_t. @ingroup base
+ * @file str.hh
+ * C++ wrapper for Str (ddstring_t). @ingroup base
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
