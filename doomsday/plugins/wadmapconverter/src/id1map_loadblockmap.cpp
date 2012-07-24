@@ -25,12 +25,11 @@
 #include "maplumpinfo.h"
 
 /**
- * Attempts to load the BLOCKMAP data resource.
+ * Attempt to load the BLOCKMAP data resource.
  *
- * If the map is too large (would overflow the size limit of
- * the BLOCKMAP lump in a WAD therefore it will have been truncated),
- * it's zero length or we are forcing a rebuild - we'll have to
- * generate the blockmap data ourselves.
+ * If the map is too large (would overflow the size limit of the BLOCKMAP lump
+ * in an id tech 1 format map; therefore truncated), it's of zero-length or we
+ * are forcing a rebuild - we'll have to generate the blockmap data ourselves.
  */
 #if 0 // Needs updating.
 bool LoadBlockmap(MapLumpInfo* lumpInfo)
@@ -39,7 +38,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 
     bool generateBMap = (createBMap == 2);
 
-    WADMAPCONVERTER_TRACE("Processing BLOCKMAP...");
+    ID1MAP_TRACE("Processing BLOCKMAP...");
 
     // Do we have a lump to process?
     if(lumpInfo->lump == -1 || lumpInfo->length == 0)
@@ -53,7 +52,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
         // was missing).
         if(lumpInfo->lump != -1)
         {
-            WADMAPCONVERTER_TRACE("Generating new blockmap data...");
+            ID1MAP_TRACE("Generating new blockmap data...");
         }
         return true;
     }
@@ -67,7 +66,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
     long* lineListOffsets, i, n, numBlocks, blockIdx;
     short* blockmapLump;
 
-    WADMAPCONVERTER_TRACE("Converting blockmap...");
+    ID1MAP_TRACE("Converting blockmap...");
 
     startTime = Sys_GetRealTime();
 

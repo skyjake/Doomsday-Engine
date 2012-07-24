@@ -37,7 +37,7 @@
 
 // Presented to the user in dialogs, messages etc.
 #define PLUGIN_NICENAME     "WAD Map Converter"
-#define PLUGIN_DETAILS      "Doomsday plugin for loading WAD format maps."
+#define PLUGIN_DETAILS      "Doomsday plugin for loading id tech 1 format maps."
 
 #define PLUGIN_VERSION_TEXT "1.1.0"
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" WADMAPCONVERTER_VER_ID ")"

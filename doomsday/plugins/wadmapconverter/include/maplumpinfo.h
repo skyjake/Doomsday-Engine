@@ -24,29 +24,32 @@
 #include "doomsday.h"
 #include "dd_types.h"
 
+/**
+ * Logical map data lump identifier (unique).
+ */
 typedef enum maplumptype_e {
     ML_INVALID          = -1,
     FIRST_MAPLUMP_TYPE  = 0,
     ML_THINGS = FIRST_MAPLUMP_TYPE, ///< Monsters, items..
-    ML_LINEDEFS,                ///< LineDefs, from editing
-    ML_SIDEDEFS,                ///< SideDefs, from editing
-    ML_VERTEXES,                ///< Vertices, edited and BSP splits generated
-    ML_SEGS,                    ///< LineSegs, from LineDefs split by BSP
-    ML_SSECTORS,                ///< Subsectors, list of LineSegs
-    ML_NODES,                   ///< BSP nodes
-    ML_SECTORS,                 ///< Sectors, from editing
+    ML_LINEDEFS,                ///< Line definitions.
+    ML_SIDEDEFS,                ///< Side definitions.
+    ML_VERTEXES,                ///< Vertices.
+    ML_SEGS,                    ///< BSP subsector segments.
+    ML_SSECTORS,                ///< BSP subsectors (open).
+    ML_NODES,                   ///< BSP nodes.
+    ML_SECTORS,                 ///< Sectors.
     ML_REJECT,                  ///< LUT, sector-sector visibility
-    ML_BLOCKMAP,                ///< LUT, motion clipping, walls/grid element
+    ML_BLOCKMAP,                ///< LUT, motion clipping, walls/grid element.
     ML_BEHAVIOR,                ///< ACS Scripts (compiled).
     ML_SCRIPTS,                 ///< ACS Scripts (source).
     ML_LIGHTS,                  ///< Surface color tints.
     ML_MACROS,                  ///< DOOM64 format, macro scripts.
-    ML_LEAFS,                   ///< DOOM64 format, segs (close subsectors).
-    ML_GLVERT,                  ///< GL vertexes
-    ML_GLSEGS,                  ///< GL segs
-    ML_GLSSECT,                 ///< GL subsectors
-    ML_GLNODES,                 ///< GL nodes
-    ML_GLPVS,                   ///< GL PVS dataset
+    ML_LEAFS,                   ///< DOOM64 format, segs (closed subsectors).
+    ML_GLVERT,                  ///< GL vertexes.
+    ML_GLSEGS,                  ///< GL segs.
+    ML_GLSSECT,                 ///< GL subsectors.
+    ML_GLNODES,                 ///< GL nodes.
+    ML_GLPVS,                   ///< GL PVS dataset.
     NUM_MAPLUMP_TYPES
 } MapLumpType;
 
@@ -56,7 +59,7 @@ typedef struct maplumpinfo_s {
     MapLumpType type; ///< Recognised lump data type.
     size_t length; ///< Length of the lump data in bytes.
 
-    struct maplumpinfo_s* Init(lumpnum_t lumpNum, MapLumpType lumpType, size_t lumpLength)
+    struct maplumpinfo_s* init(lumpnum_t lumpNum, MapLumpType lumpType, size_t lumpLength)
     {
         lump = lumpNum;
         type = lumpType;

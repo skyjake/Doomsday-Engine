@@ -27,13 +27,12 @@
 #define map                     DENG_PLUGIN_GLOBAL(map)
 
 static uint PolyLineCount;
-
 static uint validCount = 0; // Used for Polyobj LineDef collection.
 
 /**
  * Create a temporary polyobj (read from the original map data).
  */
-static boolean createPolyobj(mline_t** lineList, uint num, uint* poIdx,
+static bool createPolyobj(mline_t** lineList, uint num, uint* poIdx,
     int tag, int sequenceType, int16_t anchorX, int16_t anchorY)
 {
     if(!lineList || num == 0)
@@ -96,18 +95,18 @@ static boolean createPolyobj(mline_t** lineList, uint num, uint* poIdx,
  */
 static void iterFindPolyLines(coord_t x, coord_t y, mline_t** lineList)
 {
-    uint i;
-
-    for(i = 0; i < map->numLines; ++i)
+    for(uint i = 0; i < map->numLines; ++i)
     {
         mline_t* line = &map->lines[i];
-        coord_t v1[2], v2[2];
 
         if(line->aFlags & LAF_POLYOBJ) continue;
         if(line->validCount == validCount) continue;
 
+        coord_t v1[2];
         v1[VX] = map->vertexes[(line->v[0] - 1) * 2];
         v1[VY] = map->vertexes[(line->v[0] - 1) * 2 + 1];
+
+        coord_t v2[2];
         v2[VX] = map->vertexes[(line->v[1] - 1) * 2];
         v2[VY] = map->vertexes[(line->v[1] - 1) * 2 + 1];
 
@@ -116,9 +115,13 @@ static void iterFindPolyLines(coord_t x, coord_t y, mline_t** lineList)
             line->validCount = validCount;
 
             if(!lineList)
+            {
                 PolyLineCount++;
+            }
             else
+            {
                 *lineList++ = line;
+            }
 
             iterFindPolyLines(v2[VX], v2[VY], lineList);
         }
@@ -127,35 +130,40 @@ static void iterFindPolyLines(coord_t x, coord_t y, mline_t** lineList)
 
 /**
  * @todo This terribly inefficent (naive) algorithm may need replacing
- * (it is far outside an exceptable polynominal range!).
+ *       (it is far outside an acceptable polynomial range!).
  */
-static mline_t** collectPolyobjLineDefs(mline_t* lineDef, uint* num)
+static mline_t** collectPolyobjLines(mline_t* line, uint* num)
 {
-    mline_t** lineList;
-    coord_t v1[2], v2[2];
+    DENG_ASSERT(line);
 
-    lineDef->xType = 0;
-    lineDef->xArgs[0] = 0;
+    line->xType = 0;
+    line->xArgs[0] = 0;
 
-    v1[VX] = map->vertexes[(lineDef->v[0]-1) * 2];
-    v1[VY] = map->vertexes[(lineDef->v[0]-1) * 2 + 1];
-    v2[VX] = map->vertexes[(lineDef->v[1]-1) * 2];
-    v2[VY] = map->vertexes[(lineDef->v[1]-1) * 2 + 1];
+    coord_t v1[2];
+    v1[VX] = map->vertexes[(line->v[0]-1) * 2];
+    v1[VY] = map->vertexes[(line->v[0]-1) * 2 + 1];
+
+    coord_t v2[2];
+    v2[VX] = map->vertexes[(line->v[1]-1) * 2];
+    v2[VY] = map->vertexes[(line->v[1]-1) * 2 + 1];
 
     PolyLineCount = 1;
     validCount++;
-    lineDef->validCount = validCount;
+    line->validCount = validCount;
     iterFindPolyLines(v2[VX], v2[VY], NULL);
 
-    lineList = (mline_t**)malloc((PolyLineCount+1) * sizeof(mline_t*));
+    mline_t** lineList = (mline_t**)malloc((PolyLineCount+1) * sizeof(mline_t*));
 
-    lineList[0] = lineDef; // Insert the first line.
+    lineList[0] = line; // Insert the first line.
     validCount++;
-    lineDef->validCount = validCount;
+    line->validCount = validCount;
     iterFindPolyLines(v2[VX], v2[VY], lineList + 1);
     lineList[PolyLineCount] = 0; // Terminate.
 
-    *num = PolyLineCount;
+    if(num)
+    {
+        *num = PolyLineCount;
+    }
     return lineList;
 }
 
@@ -165,15 +173,13 @@ static mline_t** collectPolyobjLineDefs(mline_t* lineDef, uint* num)
  *
  * @param tag           Line tag of linedefs to search for.
  *
- * @return              @c true = successfully created polyobj.
+ * @return @c true = successfully created polyobj.
  */
-static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
+static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 {
 #define MAXPOLYLINES         32
 
-    uint i;
-
-    for(i = 0; i < map->numLines; ++i)
+    for(uint i = 0; i < map->numLines; ++i)
     {
         mline_t* line = &map->lines[i];
 
@@ -181,18 +187,14 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchor
         if(!(line->xType == PO_LINE_START && line->xArgs[0] == tag)) continue;
 
         uint num;
-        mline_t** lineList = collectPolyobjLineDefs(line, &num);
+        mline_t** lineList = collectPolyobjLines(line, &num);
         if(lineList)
         {
+            byte seqType = line->xArgs[2];
+            if(seqType >= SEQTYPE_NUMSEQ) seqType = 0;
+
             uint poIdx;
-            byte seqType;
-            boolean result;
-
-            seqType = line->xArgs[2];
-            if(seqType >= SEQTYPE_NUMSEQ)
-                seqType = 0;
-
-            result = createPolyobj(lineList, num, &poIdx, tag, seqType, anchorX, anchorY);
+            bool result = createPolyobj(lineList, num, &poIdx, tag, seqType, anchorX, anchorY);
             free(lineList);
 
             if(result) return true;
@@ -205,13 +207,13 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchor
      */
     mline_t* polyLineList[MAXPOLYLINES];
     uint lineCount = 0;
-    uint j, psIndex, psIndexOld;
+    uint psIndex = 0;
 
-    psIndex = 0;
-    for(j = 1; j < MAXPOLYLINES; ++j)
+    for(uint j = 1; j < MAXPOLYLINES; ++j)
     {
-        psIndexOld = psIndex;
-        for(i = 0; i < map->numLines; ++i)
+        uint psIndexOld = psIndex;
+
+        for(uint i = 0; i < map->numLines; ++i)
         {
             mline_t* line = &map->lines[i];
 
@@ -250,14 +252,14 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchor
             // Check if an explicit line order has been skipped
             // A line has been skipped if there are any more explicit
             // lines with the current tag value
-            for(i = 0; i < map->numLines; ++i)
+            for(uint i = 0; i < map->numLines; ++i)
             {
                 mline_t* line = &map->lines[i];
 
                 if(line->xType == PO_LINE_EXPLICIT && line->xArgs[0] == tag)
                 {
-                    Con_Error("WadMapConverter::findAndCreatePolyobj: Missing explicit line %d for poly %d\n",
-                              j, tag);
+                    Con_Error("WadMapConverter::findAndCreatePolyobj: Missing explicit line "
+                              "%d for poly %d\n", j, tag);
                 }
             }
         }
@@ -268,8 +270,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchor
         const int seqType = polyLineList[0]->xArgs[3];
         uint poIdx;
 
-        if(createPolyobj(polyLineList, lineCount, &poIdx, tag,
-                         seqType, anchorX, anchorY))
+        if(createPolyobj(polyLineList, lineCount, &poIdx, tag, seqType, anchorX, anchorY))
         {
             mline_t* line = polyLineList[0];
 
@@ -288,7 +289,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchor
 
 static void findPolyobjs(void)
 {
-    WADMAPCONVERTER_TRACE("Locating polyobjs...");
+    ID1MAP_TRACE("Locating polyobjs...");
 
     for(uint i = 0; i < map->numThings; ++i)
     {
