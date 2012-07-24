@@ -36,12 +36,19 @@
 /// a new log section.
 #define LOG_AS(sectionName) \
     de::Log::Section __logSection = de::Log::Section(sectionName);
-    
-/// Macro for accessing the local log of the current thread and entering
-/// a new log section with a std::string variable based name.
+
+/**
+ * Macro for accessing the local log of the current thread and entering
+ * a new log section with a std::string variable based name.
+ *
+ * @note Log::Section doesn't own the strings passed in; we have to
+ * ensure that the string exists in memory as long as the section (scope)
+ * is valid.
+ */
 #define LOG_AS_STRING(str) \
     de::String __logSectionName = str; \
-    LOG_AS(__logSectionName.toAscii().constData());
+    de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
+    LOG_AS(__logSectionUtf8.constData());
 
 #define LOG_TRACE(str)      LOG().enter(de::Log::TRACE, str)
 #define LOG_DEBUG(str)      LOG().enter(de::Log::DEBUG, str)
