@@ -338,24 +338,6 @@ boolean MPE_End(void);
 ///@{
 
 /**
- * Constructs a new reader. The reader will use the engine's netBuffer
- * as the reading buffer. The reader has to be destroyed with Reader_Delete()
- * after it is not needed any more.
- *
- * @todo Rename to Reader_NewWithNetworkBuffer().
- */
-Reader* Reader_New(void);
-
-/**
- * Constructs a new writer. The writer will use the engine's netBuffer
- * as the writing buffer. The writer has to be destroyed with Writer_Delete()
- * after it is not needed any more.
- *
- * @todo Rename to Writer_NewWithNetworkBuffer().
- */
-Writer* Writer_New(void);
-
-/**
  * Send a packet over the network.
  *
  * @param to_player  Player number to send to. The server is number zero.

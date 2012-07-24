@@ -45,7 +45,8 @@ extern "C" {
 struct reader_s; // The reader instance (opaque).
 
 /**
- * Reader instance. Constructed with Reader_New() or one of the other constructors.
+ * Reader instance. Constructed with Reader_NewWithBuffer() or one of the other
+ * constructors.
  */
 typedef struct reader_s Reader;
 

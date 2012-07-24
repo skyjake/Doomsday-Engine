@@ -61,7 +61,8 @@ enum
 struct writer_s; // The writer instance (opaque).
 
 /**
- * Writer instance. Constructed with Writer_New() or one of the other constructors.
+ * Writer instance. Constructed with Writer_NewWithBuffer() or one of the other
+ * constructors.
  */
 typedef struct writer_s Writer;
 

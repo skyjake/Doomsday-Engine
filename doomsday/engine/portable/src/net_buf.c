@@ -57,12 +57,12 @@ static size_t numOutBytes;
 // Number of bytes sent over the network (compressed).
 static size_t numSentBytes;
 
-Reader* Reader_New(void)
+Reader* Reader_NewWithNetworkBuffer(void)
 {
     return Reader_NewWithBuffer((const byte*) netBuffer.msg.data, netBuffer.length);
 }
 
-Writer* Writer_New(void)
+Writer* Writer_NewWithNetworkBuffer(void)
 {
     return Writer_NewWithBuffer(netBuffer.msg.data, NETBUFFER_MAXSIZE);
 }
