@@ -1061,18 +1061,14 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     return false; // Success.
 }
 
-int TransferMap(void)
+static void transferVertexes(void)
 {
-    uint startTime = Sys_GetRealTime();
-
-    WADMAPCONVERTER_TRACE("TransferMap");
-
-    MPE_Begin("");
-
-    // Create all the data structures.
     WADMAPCONVERTER_TRACE("Transfering vertexes...");
     MPE_VertexCreatev(map->numVertexes, map->vertexes, NULL);
+}
 
+static void transferSectors(void)
+{
     WADMAPCONVERTER_TRACE("Transfering sectors...");
     for(uint i = 0; i < map->numSectors; ++i)
     {
@@ -1099,8 +1095,11 @@ int TransferMap(void)
             MPE_GameObjProperty("XSector", i, "WallBottomColor", DDVT_SHORT, &sec->d64wallBottomColor);
         }
     }
+}
 
-    WADMAPCONVERTER_TRACE("Transfering linedefs...");
+static void transferLinesAndSides(void)
+{
+    WADMAPCONVERTER_TRACE("Transfering lines and sides...");
     for(uint i = 0; i < map->numLines; ++i)
     {
         mline_t* l = &map->lines[i];
@@ -1164,7 +1163,10 @@ int TransferMap(void)
             break;
         }
     }
+}
 
+static void transferLights(void)
+{
     WADMAPCONVERTER_TRACE("Transfering lights...");
     for(uint i = 0; i < map->numLights; ++i)
     {
@@ -1177,7 +1179,10 @@ int TransferMap(void)
         MPE_GameObjProperty("Light", i, "XX1",      DDVT_BYTE,  &l->xx[1]);
         MPE_GameObjProperty("Light", i, "XX2",      DDVT_BYTE,  &l->xx[2]);
     }
+}
 
+static void transferPolyobjs(void)
+{
     WADMAPCONVERTER_TRACE("Transfering polyobjs...");
     for(uint i = 0; i < map->numPolyobjs; ++i)
     {
@@ -1193,7 +1198,10 @@ int TransferMap(void)
                           coord_t(po->anchor[VX]), coord_t(po->anchor[VY]));
         free(lineList);
     }
+}
 
+static void transferThings(void)
+{
     WADMAPCONVERTER_TRACE("Transfering things...");
     for(uint i = 0; i < map->numThings; ++i)
     {
@@ -1213,7 +1221,6 @@ int TransferMap(void)
         }
         else if(mapFormat == MF_HEXEN)
         {
-
             MPE_GameObjProperty("Thing", i, "Special",  DDVT_BYTE,  &th->xSpecial);
             MPE_GameObjProperty("Thing", i, "ID",       DDVT_SHORT, &th->xTID);
             MPE_GameObjProperty("Thing", i, "Arg0",     DDVT_BYTE,  &th->xArgs[0]);
@@ -1223,15 +1230,30 @@ int TransferMap(void)
             MPE_GameObjProperty("Thing", i, "Arg4",     DDVT_BYTE,  &th->xArgs[4]);
         }
     }
+}
 
-    // We've now finished with the original map data.
+int TransferMap(void)
+{
+    uint startTime = Sys_GetRealTime();
+
+    WADMAPCONVERTER_TRACE("TransferMap");
+
+    MPE_Begin("");
+    transferVertexes();
+    transferSectors();
+    transferLinesAndSides();
+    transferLights();
+    transferPolyobjs();
+    transferThings();
+
+    // We have now finished with our local for-conversion map representation.
     freeMapData();
 
-    // Let Doomsday know that we've finished with this map.
-    boolean result = MPE_End();
+    // Inform Doomsday we have finished with this map.
+    MPE_End();
 
     VERBOSE2( Con_Message("WadMapConverter::TransferMap: Done in %.2f seconds.\n",
                           (Sys_GetRealTime() - startTime) / 1000.0f) )
 
-    return (int)result;
+    return false; // Success.
 }

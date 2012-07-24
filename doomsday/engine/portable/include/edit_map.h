@@ -55,8 +55,15 @@ typedef struct editmap_s {
 
 //extern editmap_t editMap;
 
-boolean         MPE_Begin(const char* mapUri);
-boolean         MPE_End(void);
+/**
+ * To be called to begin the map building process.
+ */
+boolean MPE_Begin(const char* mapUri);
+
+/**
+ * To be called to end the map building process.
+ */
+boolean MPE_End(void);
 
 /**
  * Create a new vertex in currently loaded editable map.
@@ -127,6 +134,7 @@ boolean         MPE_GameObjProperty(const char *objName, uint idx,
 void            MPE_PruneRedundantMapData(editmap_t* map, int flags);
 
 GameMap*        MPE_GetLastBuiltMap(void);
+boolean         MPE_GetLastBuiltMapResult(void);
 
 #ifdef __cplusplus
 } // extern "C"

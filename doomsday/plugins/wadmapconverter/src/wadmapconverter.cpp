@@ -271,7 +271,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     AnalyzeMap();
 
     // Rebuild the map in Doomsday's native format.
-    ret_val = TransferMap();
+    TransferMap();
 
     // Cleanup.
 FAIL_LOAD_ERROR:

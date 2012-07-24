@@ -40,7 +40,8 @@ editmap_t editMap;
 static boolean editMapInited = false;
 
 static editmap_t* map = &editMap;
-static GameMap* lastBuiltMap = NULL;
+static boolean lastBuiltMapResult;
+static GameMap* lastBuiltMap;
 
 static Vertex* rootVtx; // Used when sorting vertex line owners.
 
@@ -467,11 +468,11 @@ void MPE_PruneRedundantMapData(editmap_t* map, int flags)
 #endif
 }
 
-/**
- * Called to begin the map building process.
- */
 boolean MPE_Begin(const char* mapUri)
 {
+    /// @todo Do not ignore; assign to the editable map.
+    DENG_UNUSED(mapUri);
+
     if(editMapInited) return true; // Already been here.
 
     // Init the gameObj lists, and value db.
@@ -480,6 +481,9 @@ boolean MPE_Begin(const char* mapUri)
     map->gameObjData.objLists = NULL;
 
     destroyMap();
+
+    lastBuiltMap = 0;
+    lastBuiltMapResult = false; // Assume failure.
 
     editMapInited = true;
     return true;
@@ -1749,9 +1753,6 @@ static void buildReject(gamemap_t* map)
 }
 #endif
 
-/**
- * Called to complete the map building process.
- */
 boolean MPE_End(void)
 {
     GameMap* gamemap;
@@ -1859,7 +1860,9 @@ boolean MPE_End(void)
         // Failed. Need to clean up.
         P_DestroyGameMapObjDB(&gamemap->gameObjData);
         Z_Free(gamemap);
-        return false;
+        lastBuiltMapResult = false; // Failed.
+
+        return lastBuiltMapResult;
     }
 
     buildSectorLineLists(gamemap);
@@ -1912,14 +1915,19 @@ boolean MPE_End(void)
     }
 
     lastBuiltMap = gamemap;
+    lastBuiltMapResult = true; // Success.
 
-    // Success!
-    return true;
+    return lastBuiltMapResult;
 }
 
 GameMap* MPE_GetLastBuiltMap(void)
 {
     return lastBuiltMap;
+}
+
+boolean MPE_GetLastBuiltMapResult(void)
+{
+    return lastBuiltMapResult;
 }
 
 uint MPE_VertexCreate(coord_t x, coord_t y)
