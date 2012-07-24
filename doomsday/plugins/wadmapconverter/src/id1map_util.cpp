@@ -21,9 +21,15 @@
  * 02110-1301 USA</small>
  */
 
+#include <stdio.h>
 #include "wadmapconverter.h"
 #include "maplumpinfo.h"
 #include <de/libdeng2.h>
+
+#ifdef WIN32
+#  define stricmp _stricmp
+#  define strnicmp _strnicmp
+#endif
 
 const Str* MapFormatNameForId(mapformatid_t id)
 {

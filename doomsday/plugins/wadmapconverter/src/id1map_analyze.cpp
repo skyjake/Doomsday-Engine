@@ -210,8 +210,6 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
     uint lineCount = 0;
     uint psIndex = 0;
 
-    LOG_AS("WadMapConverter");
-
     for(uint j = 1; j < MAXPOLYLINES; ++j)
     {
         uint psIndexOld = psIndex;
@@ -308,7 +306,8 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 
 static void findPolyobjs(void)
 {
-    ID1MAP_TRACE("Locating polyobjs...");
+    LOG_AS("WadMapConverter");
+    LOG_TRACE("Locating polyobjs...");
 
     for(uint i = 0; i < map->numThings; ++i)
     {

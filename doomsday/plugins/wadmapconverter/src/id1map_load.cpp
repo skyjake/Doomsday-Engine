@@ -23,6 +23,8 @@
 
 #include "wadmapconverter.h"
 #include <de/libdeng2.h>
+#include <de/LegacyCore>
+#include <de/Log>
 
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
@@ -60,7 +62,7 @@ static MaterialDictId addMaterialToDictionary(const char* name, MaterialDictGrou
         // In original DOOM, texture name references beginning with the
         // hypen '-' character are always treated as meaning "no reference"
         // or "invalid texture" and surfaces using them were not drawn.
-        if(group != MG_PLANE && !stricmp(name, "-"))
+        if(group != MG_PLANE && name[0] == '-')
         {
             return 0; // Not a valid id.
         }
@@ -153,7 +155,7 @@ static bool loadVertexes(Reader* reader, size_t lumpLength)
 {
     DENG2_ASSERT(reader);
 
-    ID1MAP_TRACE("Processing vertexes...");
+    LOG_TRACE("Processing vertexes...");
     switch(mapFormat)
     {
     default:
@@ -247,7 +249,7 @@ static bool loadLineDefs(Reader* reader, size_t lumpLength)
 {
     DENG2_ASSERT(reader);
 
-    ID1MAP_TRACE("Processing line definitions...");
+    LOG_TRACE("Processing line definitions...");
     switch(mapFormat)
     {
     default:
@@ -371,7 +373,7 @@ static bool loadSideDefs(Reader* reader, size_t lumpLength)
 {
     DENG2_ASSERT(reader);
 
-    ID1MAP_TRACE("Processing side definitions...");
+    LOG_TRACE("Processing side definitions...");
     switch(mapFormat)
     {
     default:
@@ -434,7 +436,7 @@ static bool loadSectors(Reader* reader, size_t lumpLength)
 {
     DENG2_ASSERT(reader);
 
-    ID1MAP_TRACE("Processing sectors...");
+    LOG_TRACE("Processing sectors...");
     switch(mapFormat)
     {
     default: {
@@ -504,7 +506,7 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 
     DENG2_ASSERT(reader);
 
-    ID1MAP_TRACE("Processing things...");
+    LOG_TRACE("Processing things...");
     switch(mapFormat)
     {
     default:
@@ -729,7 +731,7 @@ static bool loadLights(Reader* reader, size_t lumpLength)
 {
     DENG2_ASSERT(reader);
 
-    ID1MAP_TRACE("Processing lights...");
+    LOG_TRACE("Processing lights...");
 
     uint numElements = lumpLength / SIZEOF_LIGHT;
     for(uint n = 0; n < numElements; ++n)
@@ -800,8 +802,9 @@ static Reader* bufferLump(MapLumpInfo* info)
     {
         readBuffer = (uint8_t*)realloc(readBuffer, info->length);
         if(!readBuffer)
-            Con_Error("WadMapConverter::bufferLump: Failed on (re)allocation of %lu bytes for "
-                      "the read buffer.", (unsigned long) info->length);
+            de::LegacyCore::instance().handleUncaughtException(
+                QString("WadMapConverter::bufferLump: Failed on (re)allocation of %1 bytes for the read buffer.")
+                        .arg((unsigned long) info->length));
         readBufferSize = info->length;
     }
 
@@ -942,13 +945,13 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
 static void transferVertexes(void)
 {
-    ID1MAP_TRACE("Transfering vertexes...");
+    LOG_TRACE("Transfering vertexes...");
     MPE_VertexCreatev(map->numVertexes, map->vertexes, NULL);
 }
 
 static void transferSectors(void)
 {
-    ID1MAP_TRACE("Transfering sectors...");
+    LOG_TRACE("Transfering sectors...");
     for(uint i = 0; i < map->numSectors; ++i)
     {
         msector_t* sec = &map->sectors[i];
@@ -978,7 +981,7 @@ static void transferSectors(void)
 
 static void transferLinesAndSides(void)
 {
-    ID1MAP_TRACE("Transfering lines and sides...");
+    LOG_TRACE("Transfering lines and sides...");
     for(uint i = 0; i < map->numLines; ++i)
     {
         mline_t* l = &map->lines[i];
@@ -1046,7 +1049,7 @@ static void transferLinesAndSides(void)
 
 static void transferLights(void)
 {
-    ID1MAP_TRACE("Transfering lights...");
+    LOG_TRACE("Transfering lights...");
     for(uint i = 0; i < map->numLights; ++i)
     {
         surfacetint_t* l = &map->lights[i];
@@ -1062,7 +1065,7 @@ static void transferLights(void)
 
 static void transferPolyobjs(void)
 {
-    ID1MAP_TRACE("Transfering polyobjs...");
+    LOG_TRACE("Transfering polyobjs...");
     for(uint i = 0; i < map->numPolyobjs; ++i)
     {
         mpolyobj_t* po = map->polyobjs[i];
@@ -1073,7 +1076,7 @@ static void transferPolyobjs(void)
 
 static void transferThings(void)
 {
-    ID1MAP_TRACE("Transfering things...");
+    LOG_TRACE("Transfering things...");
     for(uint i = 0; i < map->numThings; ++i)
     {
         mthing_t* th = &map->things[i];
@@ -1107,9 +1110,8 @@ int TransferMap(void)
 {
     uint startTime = Sys_GetRealTime();
 
-    ID1MAP_TRACE("TransferMap");
+    LOG_AS("WadMapConverter::TransferMap");
 
-    MPE_Begin("");
     transferVertexes();
     transferSectors();
     transferLinesAndSides();
@@ -1120,11 +1122,7 @@ int TransferMap(void)
     // We have now finished with our local for-conversion map representation.
     freeMapData();
 
-    // Inform Doomsday we have finished with this map.
-    MPE_End();
-
-    VERBOSE2( Con_Message("WadMapConverter::TransferMap: Done in %.2f seconds.\n",
-                          (Sys_GetRealTime() - startTime) / 1000.0f) )
+    LOG_VERBOSE("Done in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
 
     return false; // Success.
 }

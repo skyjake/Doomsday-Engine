@@ -20,22 +20,12 @@
  */
 
 #include "wadmapconverter.h"
-#include <de/c_wrapper.h>
 #include "maplumpinfo.h"
-
-int DENG_PLUGIN_GLOBAL(verbose);
+#include <de/Log>
 
 map_t DENG_PLUGIN_GLOBAL(theMap);
 map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
 mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
-
-/**
- * Configure high-level map conversion properties that define this process.
- */
-static void configure(void)
-{
-    DENG_PLUGIN_GLOBAL(verbose) = CommandLine_Exists("-verbose");
-}
 
 /**
  * Allocate and initialize a new MapLumpInfo record.
@@ -88,7 +78,8 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
 {
     DENG_ASSERT(lumpInfos);
 
-    ID1MAP_TRACE("Locating data lumps...");
+    LOG_AS("WadMapConverter");
+    LOG_TRACE("Locating data lumps...");
 
     if(startLump < 0) return;
 
@@ -118,7 +109,7 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
 
-    uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
+    LOG_AS("WadMapConverter");
 
     // Assume DOOM format by default.
     DENG_PLUGIN_GLOBAL(mapFormat) = MF_DOOM;
@@ -141,6 +132,7 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
         }
     }
 
+    uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
         const MapLumpInfo* info = lumpInfos[i];
@@ -203,7 +195,10 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     if(!numVertexes || !numLines || !numSides || !numSectors)
     {
         DENG_PLUGIN_GLOBAL(mapFormat) = MF_UNKNOWN;
+        return;
     }
+
+    LOG_INFO("Recognized a %s format map.") << Str_Text(MapFormatNameForId(DENG_PLUGIN_GLOBAL(mapFormat)));
 }
 
 /**
@@ -220,9 +215,6 @@ int ConvertMapHook(int hookType, int parm, void* context)
     DENG_UNUSED(hookType);
     DENG_UNUSED(parm);
     DENG_ASSERT(context);
-
-    // Setup the processing parameters.
-    configure();
 
     // Begin the conversion attempt.
     int ret_val = true; // Assume success.
@@ -249,14 +241,12 @@ int ConvertMapHook(int hookType, int parm, void* context)
         goto FAIL_UNKNOWN_FORMAT;
     }
 
-    VERBOSE( Con_Message("WadMapConverter: Recognized a %s format map.\n",
-                         Str_Text(MapFormatNameForId(DENG_PLUGIN_GLOBAL(mapFormat)))) );
-
     // Read the archived map.
     loadError = LoadMap(lumpInfos);
     if(loadError)
     {
-        Con_Message("WadMapConverter: Internal error %i, aborting conversion...\n", loadError);
+        LOG_AS("WadMapConverter");
+        LOG_INFO("Internal load error %i, aborting conversion...") << loadError;
         ret_val = false;
         goto FAIL_LOAD_ERROR;
     }
@@ -265,7 +255,11 @@ int ConvertMapHook(int hookType, int parm, void* context)
     AnalyzeMap();
 
     // Rebuild the map in Doomsday's native format.
-    TransferMap();
+    MPE_Begin("");
+    {
+        TransferMap();
+    }
+    MPE_End();
 
     // Cleanup.
 FAIL_LOAD_ERROR:

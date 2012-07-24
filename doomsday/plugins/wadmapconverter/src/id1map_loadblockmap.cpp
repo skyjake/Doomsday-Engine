@@ -23,6 +23,8 @@
 
 #include "wadmapconverter.h"
 #include "maplumpinfo.h"
+#include <de/LegacyCore>
+#include <de/Log>
 
 /**
  * Attempt to load the BLOCKMAP data resource.
@@ -38,7 +40,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 
     bool generateBMap = (createBMap == 2);
 
-    ID1MAP_TRACE("Processing BLOCKMAP...");
+    LOG_TRACE("Processing BLOCKMAP...");
 
     // Do we have a lump to process?
     if(lumpInfo->lump == -1 || lumpInfo->length == 0)
@@ -52,7 +54,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
         // was missing).
         if(lumpInfo->lump != -1)
         {
-            ID1MAP_TRACE("Generating new blockmap data...");
+            LOG_INFO("Generating new blockmap data...");
         }
         return true;
     }
@@ -66,7 +68,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
     long* lineListOffsets, i, n, numBlocks, blockIdx;
     short* blockmapLump;
 
-    ID1MAP_TRACE("Converting blockmap...");
+    LOG_INFO("Converting blockmap...");
 
     startTime = Sys_GetRealTime();
 
@@ -121,9 +123,13 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 #if _DEBUG
             if(SHORT(blockmapLump[offset]) != 0)
             {
-                Con_Error("loadBlockmap: Offset (%li) for block %u [%u, %u] "
-                          "does not index the beginning of a line list!\n",
-                          offset, blockIdx, x, y);
+                de::LegacyCore::instance().handleUncaughtException(
+                    QString("WadMapConverter::"loadBlockmap: Offset (%1) for block %2 [%3, %4] "
+                            "does not index the beginning of a line list!")
+                            .arg(offset)
+                            .arg(blockIdx)
+                            .arg(x)
+                            .arg(y)));
             }
 #endif
 
@@ -149,7 +155,9 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 #if _DEBUG
                     if(idx < 0 || idx >= (long) map->numLines)
                     {
-                        Con_Error("loadBlockmap: Invalid linedef id %li\n!", idx);
+                        de::LegacyCore::instance().handleUncaughtException(
+                            QString("WadMapConverter::loadBlockmap: Invalid linedef index #%1.")
+                                    .arg(idx)));
                     }
 #endif
                     *ptr++ = &map->lines[idx];
@@ -171,8 +179,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
     map->blockMap = blockmap;
 
     // How much time did we spend?
-    VERBOSE2( Con_Message("loadBlockmap: Done in %.2f seconds.\n",
-                          (Sys_GetRealTime() - startTime) / 1000.0f) )
+    LOG_INFO("  Done in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
 
     return true;
 

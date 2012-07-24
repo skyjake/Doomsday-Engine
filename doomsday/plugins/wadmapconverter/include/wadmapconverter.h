@@ -26,28 +26,8 @@
 #ifndef __WADMAPCONVERTER_H__
 #define __WADMAPCONVERTER_H__
 
-#include <stdio.h>
-#include <cassert>
-#include <iostream>
-#include <string.h>
 #include "doomsday.h"
 #include "dd_plugin.h"
-
-#ifdef WIN32
-#  define stricmp _stricmp
-#  define strnicmp _strnicmp
-#endif
-
-#ifdef DENG_WADMAPCONVERTER_DEBUG
-#  define ID1MAP_TRACE(args)  std::cerr << "[WadMapConverter] " << args << std::endl;
-#else
-#  define ID1MAP_TRACE(args)
-#endif
-
-extern int DENG_PLUGIN_GLOBAL(verbose);
-
-#define VERBOSE(code)   { if(DENG_PLUGIN_GLOBAL(verbose) >= 1) { code; } }
-#define VERBOSE2(code)  { if(DENG_PLUGIN_GLOBAL(verbose) >= 2) { code; } }
 
 #include "id1map_load.h"
 #include "id1map_util.h"
