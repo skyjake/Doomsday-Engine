@@ -394,6 +394,8 @@ const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_
 
 void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value)
 {
+    if(id == 0) return;
+
     const InternalId internalId = IMPORT_ID(id);
 
     assert(pool);
@@ -405,6 +407,8 @@ void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value)
 
 uint StringPool_UserValue(StringPool* pool, StringPoolId id)
 {
+    if(id == 0) return 0;
+
     const InternalId internalId = IMPORT_ID(id);
 
     assert(pool);
@@ -416,6 +420,8 @@ uint StringPool_UserValue(StringPool* pool, StringPoolId id)
 
 void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr)
 {
+    if(id == 0) return;
+
     const InternalId internalId = IMPORT_ID(id);
 
     assert(pool);
@@ -427,6 +433,8 @@ void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr)
 
 void* StringPool_UserPointer(StringPool* pool, StringPoolId id)
 {
+    if(id == 0) return NULL;
+
     const InternalId internalId = IMPORT_ID(id);
 
     assert(pool);
@@ -451,7 +459,11 @@ StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str
 const ddstring_t* StringPool_String(const StringPool* pool, StringPoolId id)
 {
     assert(pool);
-    return *pool->idMap[IMPORT_ID(id)];
+    if(id == 0) return NULL;
+
+    const InternalId internalId = IMPORT_ID(id);
+    assert(internalId < pool->idMap.size());
+    return *pool->idMap[internalId];
 }
 
 boolean StringPool_Remove(StringPool* pool, const ddstring_t* str)
@@ -470,9 +482,12 @@ boolean StringPool_RemoveById(StringPool* pool, StringPoolId id)
 {
     assert(pool);
 
+    if(id == 0) return false;
+
+    const InternalId internalId = IMPORT_ID(id);
     if(id >= pool->idMap.size()) return false;
 
-    CaselessStr* str = pool->idMap[IMPORT_ID(id)];
+    CaselessStr* str = pool->idMap[internalId];
     if(!str) return false;
 
     pool->interns.erase(str); // O(log n)
