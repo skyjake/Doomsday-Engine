@@ -89,9 +89,9 @@ uint MPE_VertexCreate(coord_t x, coord_t y);
 boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices);
 
 uint MPE_SidedefCreate(short flags,
-    materialid_t topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
-    materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha,
-    materialid_t bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
+    const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
+    const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha,
+    const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
 
 /**
  * Create a new linedef in the editable map.
@@ -112,7 +112,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
 
 uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
 uint            MPE_PlaneCreate(uint sector, coord_t height,
-                                materialid_t material,
+                                const ddstring_t* material,
                                 float matOffsetX, float matOffsetY,
                                 float r, float g, float b, float a,
                                 float normalX, float normalY, float normalZ);

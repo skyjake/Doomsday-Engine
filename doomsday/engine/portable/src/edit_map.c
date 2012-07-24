@@ -1815,8 +1815,8 @@ boolean MPE_End(void)
     GameMap_InitMobjBlockmap(gamemap, min, max);
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
-    // Announce any bad texture names we came across when loading the map.
-    P_PrintMissingTextureList();
+    // Announce any missing materials we encountered during the conversion.
+    P_PrintMissingMaterialList();
 
     /**
      * Build a BSP for this map.
@@ -1875,7 +1875,7 @@ boolean MPE_End(void)
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
     prepareBspLeafs(gamemap);
 
-    P_FreeBadTexList();
+    P_ClearMissingMaterialList();
 
     editMapInited = false;
 
@@ -1966,10 +1966,38 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
     return true;
 }
 
-uint MPE_SidedefCreate(short flags, materialid_t topMaterial,
+static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
+{
+    materialid_t id = NOMATERIALID;
+
+    DENG_ASSERT(suf);
+
+    /// @todo Avoid repeatedly resolving URIs with a dictionary (another StringPool?).
+    if(materialUri && !Str_IsEmpty(materialUri))
+    {
+        // First try the preferred namespace, then any.
+        id = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
+        if(id == NOMATERIALID)
+        {
+            Uri* tmp = Uri_NewWithPath2(Str_Text(materialUri), RC_NULL);
+            Uri_SetScheme(tmp, "");
+            id = Materials_ResolveUri(tmp);
+            Uri_Delete(tmp);
+        }
+
+        if(id == NOMATERIALID)
+        {
+            P_RegisterMissingMaterial(Str_Text(materialUri));
+        }
+    }
+
+    Surface_SetMaterial(suf, Materials_ToMaterial(id));
+}
+
+uint MPE_SidedefCreate(short flags, const ddstring_t* topMaterial,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
-    materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed,
-    float middleGreen, float middleBlue, float middleAlpha, materialid_t bottomMaterial,
+    const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed,
+    float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
     float bottomBlue)
 {
@@ -1980,15 +2008,15 @@ uint MPE_SidedefCreate(short flags, materialid_t topMaterial,
     s = createSide();
     s->flags = flags;
 
-    Surface_SetMaterial(&s->SW_topsurface, Materials_ToMaterial(topMaterial));
+    assignSurfaceMaterial(&s->SW_topsurface, topMaterial);
     Surface_SetMaterialOrigin(&s->SW_topsurface, topOffsetX, topOffsetY);
     Surface_SetColorAndAlpha(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
 
-    Surface_SetMaterial(&s->SW_middlesurface, Materials_ToMaterial(middleMaterial));
+    assignSurfaceMaterial(&s->SW_middlesurface, middleMaterial);
     Surface_SetMaterialOrigin(&s->SW_middlesurface, middleOffsetX, middleOffsetY);
     Surface_SetColorAndAlpha(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
 
-    Surface_SetMaterial(&s->SW_bottomsurface, Materials_ToMaterial(bottomMaterial));
+    assignSurfaceMaterial(&s->SW_bottomsurface, bottomMaterial);
     Surface_SetMaterialOrigin(&s->SW_bottomsurface, bottomOffsetX, bottomOffsetY);
     Surface_SetColorAndAlpha(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
 
@@ -2076,7 +2104,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     return l->buildData.index;
 }
 
-uint MPE_PlaneCreate(uint sector, coord_t height, materialid_t material, float matOffsetX,
+uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX,
     float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ)
 {
     Plane** newList, *pln;
@@ -2092,7 +2120,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, materialid_t material, float m
     pln->surface.owner = (void*) pln;
     pln->height = height;
 
-    Surface_SetMaterial(&pln->surface, Materials_ToMaterial(material));
+    assignSurfaceMaterial(&pln->surface, materialUri);
     Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
     Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
 

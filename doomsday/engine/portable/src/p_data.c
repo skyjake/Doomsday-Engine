@@ -36,12 +36,10 @@
 #include "rend_bias.h"
 #include "m_bams.h"
 
-// Bad texture record.
 typedef struct {
-    char* name;
-    boolean planeTex;
-    uint count;
-} badtex_t;
+    ddstring_t uri;
+    uint count; ///< Number of times this has been found missing.
+} missingmaterialrecord_t;
 
 extern boolean mapSetup;
 
@@ -62,10 +60,10 @@ BspNode** bspNodes = NULL;
 
 GameMap* theMap = NULL;
 
-// Bad texture list
-static uint numBadTexNames = 0;
-static uint maxBadTexNames = 0;
-static badtex_t* badTexNames = NULL;
+// Missing material list.
+static uint missingMaterialsSize;
+static uint missingMaterialsMaxSize;
+static missingmaterialrecord_t* missingMaterials;
 
 // Game-specific, map object type definitions.
 static uint numGameMapObjDefs;
@@ -261,80 +259,67 @@ boolean P_LoadMap(const char* uriCString)
     return false;
 }
 
-void P_RegisterUnknownTexture(const char *name, boolean planeTex)
+void P_RegisterMissingMaterial(const char* materialUri)
 {
-    uint i;
-    char namet[9];
-    boolean known = false;
-
-    namet[8] = 0;
-    memcpy(namet, name, 8);
+    if(!materialUri || !materialUri[0]) return;
 
     // Do we already know about it?
-    if(numBadTexNames > 0)
+    if(missingMaterialsSize > 0)
     {
-        for(i = 0; i < numBadTexNames && !known; ++i)
+        uint i;
+        for(i = 0; i < missingMaterialsSize; ++i)
         {
-            if(!strcmp(badTexNames[i].name, namet) &&
-                badTexNames[i].planeTex == planeTex)
+            if(!Str_CompareIgnoreCase(&missingMaterials[i].uri, materialUri))
             {
-                // Yep we already know about it.
-                known = true;
-                badTexNames[i].count++;
+                // Already known.
+                missingMaterials[i].count++;
+                return;
             }
         }
     }
 
-    if(!known)
-    {   // A new unknown texture. Add it to the list
-        if(++numBadTexNames > maxBadTexNames)
-        {
-            // Allocate more memory
-            maxBadTexNames *= 2;
-            if(maxBadTexNames < numBadTexNames)
-                maxBadTexNames = numBadTexNames;
+    // A new unknown texture. Add it to the list
+    if(++missingMaterialsSize > missingMaterialsMaxSize)
+    {
+        // Allocate more memory
+        missingMaterialsMaxSize *= 2;
+        if(missingMaterialsMaxSize < missingMaterialsSize)
+            missingMaterialsMaxSize = missingMaterialsSize;
 
-            badTexNames = M_Realloc(badTexNames, sizeof(badtex_t)
-                                                * maxBadTexNames);
-        }
-
-        badTexNames[numBadTexNames -1].name = M_Malloc(strlen(namet) +1);
-        strcpy(badTexNames[numBadTexNames -1].name, namet);
-
-        badTexNames[numBadTexNames -1].planeTex = planeTex;
-        badTexNames[numBadTexNames -1].count = 1;
+        missingMaterials = M_Realloc(missingMaterials, sizeof(missingmaterialrecord_t) * missingMaterialsMaxSize);
     }
+
+    Str_Set(Str_Init(&missingMaterials[missingMaterialsSize -1].uri), materialUri);
+    missingMaterials[missingMaterialsSize -1].count = 1;
 }
 
-void P_PrintMissingTextureList(void)
+void P_PrintMissingMaterialList(void)
 {
-    if(numBadTexNames)
+    if(missingMaterialsSize)
     {
         uint i;
-
-        Con_Message("  [110] Warning: Found %u bad texture name(s):\n", numBadTexNames);
-
-        for(i = 0; i < numBadTexNames; ++i)
-            Con_Message(" %4u x \"%s\"\n", badTexNames[i].count, badTexNames[i].name);
+        Con_Message("  [110] Warning: Found %u unknown %s:\n", missingMaterialsSize, missingMaterialsSize == 1? "material":"materials");
+        for(i = 0; i < missingMaterialsSize; ++i)
+        {
+            Con_Message(" %4u x \"%s\"\n", missingMaterials[i].count, Str_Text(&missingMaterials[i].uri));
+        }
     }
 }
 
-void P_FreeBadTexList(void)
+void P_ClearMissingMaterialList(void)
 {
-    uint i;
-
-    if(badTexNames != NULL)
+    if(missingMaterials)
     {
-        for(i = 0; i < numBadTexNames; ++i)
+        uint i;
+        for(i = 0; i < missingMaterialsSize; ++i)
         {
-            M_Free(badTexNames[i].name);
-            badTexNames[i].name = NULL;
+            Str_Free(&missingMaterials[i].uri);
         }
 
-        M_Free(badTexNames);
-        badTexNames = NULL;
+        M_Free(missingMaterials);
+        missingMaterials = NULL;
 
-        numBadTexNames = maxBadTexNames = 0;
+        missingMaterialsSize = missingMaterialsMaxSize = 0;
     }
 }
 

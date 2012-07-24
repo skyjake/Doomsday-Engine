@@ -25,170 +25,63 @@
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
 
-static int compareMaterialNames(const void* a, const void* b)
+static const ddstring_t* findMaterialInDictionary(MaterialDictId id)
 {
-    materialref_t* refA = *(materialref_t**)a;
-    materialref_t* refB = *(materialref_t**)b;
-    return stricmp(refA->name, refB->name);
+    return StringPool_String(map->materials, id);
 }
 
-static const materialref_t* getMaterial(const char* regName,
-    struct materialref_s*** list, size_t size)
+static MaterialDictId addMaterialToDictionary(const char* rawName, bool isFlat)
 {
-    char name[9];
-    int result;
+    // Are we yet to instantiate the dictionary itself?
+    if(!map->materials)
+    {
+        map->materials = StringPool_New();
+    }
 
-    if(size == 0)
-        return NULL;
-
+    // Prepare the encoded name for insertion into the dictionary.
+    ddstring_t* uriCString;
     if(mapFormat == MF_DOOM64)
     {
-        int idx = *((int*) regName);
-        sprintf(name, "UNK%05i", idx);
-        name[8] = '\0';
+        // Doom64 maps reference materials with unique ids.
+        int uniqueId = *((int*) rawName);
+        char name[9];
+        sprintf(name, "UNK%05i", uniqueId); name[8] = '\0';
+
+        Uri* uri = Materials_ComposeUri(DD_MaterialForTextureUniqueId((isFlat? TN_FLATS : TN_TEXTURES), uniqueId));
+        uriCString = Uri_Compose(uri);
+        Uri_Delete(uri);
     }
     else
     {
-        strncpy(name, regName, 8);
-        name[8] = '\0';
-    }
+        char name[9];
+        memcpy(name, rawName, 8); name[8] = '\0';
 
-    size_t bottomIdx = 0;
-    size_t topIdx = size-1;
-    const materialref_t* m = NULL;
-    bool isDone = false;
-    while(bottomIdx <= topIdx && !isDone)
-    {
-        size_t pivot = bottomIdx + (topIdx - bottomIdx)/2;
-
-        result = stricmp((*list)[pivot]->name, name);
-        if(result == 0)
+        // In original DOOM, texture name references beginning with the
+        // hypen '-' character are always treated as meaning "no reference"
+        // or "invalid texture" and surfaces using them were not drawn.
+        if(!isFlat && !stricmp(name, "-"))
         {
-            // Found.
-            m = (*list)[pivot];
-            isDone = true;
-        }
-        else
-        {
-            if(result > 0)
-            {
-                if(pivot == 0)
-                {
-                    // Not present.
-                    isDone = true;
-                }
-                else
-                {
-                    topIdx = pivot - 1;
-                }
-            }
-            else
-            {
-                bottomIdx = pivot + 1;
-            }
-        }
-    }
-
-    return m;
-}
-
-const materialref_t* GetMaterial(const char* name, bool isFlat)
-{
-    return getMaterial(name, (isFlat? &map->flats : &map->textures),
-                       isFlat? map->numFlats : map->numTextures);
-}
-
-static void addMaterialToList(materialref_t* m, materialref_t*** list, size_t* size)
-{
-    size_t n;
-
-    // Enlarge the list.
-    (*list) = (materialref_t**)realloc((*list), sizeof(m) * ++(*size));
-
-    // Find insertion point.
-    n = 0;
-    for(size_t i = 0; i < (*size) - 1; ++i)
-    {
-        if(compareMaterialNames(&(*list)[i], &m) > 0)
-        {
-            n = i;
-            break;
-        }
-    }
-
-    // Shift the rest over.
-    if((*size) > 1)
-    {
-        memmove(&(*list)[n+1], &(*list)[n], sizeof(m) * ((*size)-1-n));
-    }
-
-    // Insert the new element.
-    (*list)[n] = m;
-}
-
-const materialref_t* RegisterMaterial(const char* name, bool isFlat)
-{
-    const materialref_t* m;
-
-    // Check if this material has already been registered.
-    if((m = GetMaterial(name, isFlat)))
-    {
-        return m; // Already registered.
-    }
-    else
-    {
-        /**
-         * A new material.
-         */
-        materialref_t* m = (materialref_t*)malloc(sizeof(*m));
-        if(mapFormat == MF_DOOM64)
-        {
-            int uniqueId = *((int*) name);
-
-            sprintf(m->name, "UNK%05i", uniqueId);
-            m->name[8] = '\0';
-            m->id = DD_MaterialForTextureUniqueId((isFlat? TN_FLATS : TN_TEXTURES), uniqueId);
-        }
-        else
-        {
-            memcpy(m->name, name, 8);
-            m->name[8] = '\0';
-
-            // In original DOOM, texture name references beginning with the
-            // hypen '-' character are always treated as meaning "no reference"
-            // or "invalid texture" and surfaces using them were not drawn.
-            if(!isFlat && !stricmp(m->name, "-"))
-            {
-                // All we need do is make this a null-reference as the engine will
-                // determine the best course of action.
-                m->id = NOMATERIALID;
-            }
-            else
-            {
-                // First try the prefered namespace, then any.
-                ddstring_t path; Str_Init(&path);
-                Str_PercentEncode(Str_Set(&path, m->name));
-
-                Uri* uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
-                Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
-                Str_Free(&path);
-
-                m->id = Materials_ResolveUri(uri);
-                if(m->id == NOMATERIALID)
-                {
-                    Uri_SetScheme(uri, "");
-                    m->id = Materials_ResolveUri(uri);
-                }
-                Uri_Delete(uri);
-            }
+            return 0; // Not a valid id.
         }
 
-        // Add it to the list of known materials.
-        addMaterialToList(m, isFlat? &map->flats : &map->textures,
-                          isFlat? &map->numFlats : &map->numTextures);
+        // Material paths must be encoded.
+        ddstring_t path;
+        Str_PercentEncode(Str_Set(Str_Init(&path), name));
 
-        return m;
+        Uri* uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+        Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
+        Str_Free(&path);
+
+        uriCString = Uri_Compose(uri);
+        Uri_Delete(uri);
     }
+
+    // Intern this material name in the dictionary.
+    MaterialDictId internId = StringPool_Intern(map->materials, uriCString);
+
+    // We're done (phew!).
+    Str_Delete(uriCString);
+    return internId;
 }
 
 static void freeMapData(void)
@@ -247,26 +140,11 @@ static void freeMapData(void)
         map->macros = NULL;
     }*/
 
-    if(map->textures)
+    if(map->materials)
     {
-        for(size_t i = 0; i < map->numTextures; ++i)
-        {
-            materialref_t* m = map->textures[i];
-            free(m);
-        }
-        free(map->textures);
-        map->textures = NULL;
-    }
-
-    if(map->flats)
-    {
-        for(size_t i = 0; i < map->numFlats; ++i)
-        {
-            materialref_t* m = map->flats[i];
-            free(m);
-        }
-        free(map->flats);
-        map->flats = NULL;
+        StringPool_Clear(map->materials);
+        StringPool_Delete(map->materials);
+        map->materials = 0;
     }
 }
 
@@ -507,13 +385,13 @@ static bool loadSidedefs(Reader* reader, size_t lumpLength)
             s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->topMaterial = RegisterMaterial(name, false);
+            s->topMaterial = addMaterialToDictionary(name, false);
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->bottomMaterial = RegisterMaterial(name, false);
+            s->bottomMaterial = addMaterialToDictionary(name, false);
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->middleMaterial = RegisterMaterial(name, false);
+            s->middleMaterial = addMaterialToDictionary(name, false);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) s->sector = 0;
@@ -532,13 +410,13 @@ static bool loadSidedefs(Reader* reader, size_t lumpLength)
             s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->topMaterial = RegisterMaterial((const char*) &idx, false);
+            s->topMaterial = addMaterialToDictionary((const char*) &idx, false);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->bottomMaterial = RegisterMaterial((const char*) &idx, false);
+            s->bottomMaterial = addMaterialToDictionary((const char*) &idx, false);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->middleMaterial = RegisterMaterial((const char*) &idx, false);
+            s->middleMaterial = addMaterialToDictionary((const char*) &idx, false);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             if(idx == 0xFFFF) s->sector = 0;
@@ -568,10 +446,10 @@ static bool loadSectors(Reader* reader, size_t lumpLength)
             s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->floorMaterial = RegisterMaterial(name, true);
+            s->floorMaterial = addMaterialToDictionary(name, true);
 
             Reader_Read(reader, name, 8); name[8] = '\0';
-            s->ceilMaterial = RegisterMaterial(name, true);
+            s->ceilMaterial = addMaterialToDictionary(name, true);
 
             s->lightLevel   = SHORT( Reader_ReadInt16(reader) );
             s->type         = SHORT( Reader_ReadInt16(reader) );
@@ -590,10 +468,10 @@ static bool loadSectors(Reader* reader, size_t lumpLength)
             s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->floorMaterial = RegisterMaterial((const char*) &idx, false);
+            s->floorMaterial = addMaterialToDictionary((const char*) &idx, false);
 
             idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->ceilMaterial = RegisterMaterial((const char*) &idx, false);
+            s->ceilMaterial = addMaterialToDictionary((const char*) &idx, false);
 
             s->d64ceilingColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
             s->d64floorColor    = USHORT( uint16_t(Reader_ReadInt16(reader)) );
@@ -1077,9 +955,9 @@ static void transferSectors(void)
 
         sectorIDX = MPE_SectorCreate(float(sec->lightLevel) / 255.0f, 1, 1, 1);
 
-        MPE_PlaneCreate(sectorIDX, sec->floorHeight, sec->floorMaterial->id,
+        MPE_PlaneCreate(sectorIDX, sec->floorHeight, findMaterialInDictionary(sec->floorMaterial),
                         0, 0, 1, 1, 1, 1, 0, 0, 1);
-        MPE_PlaneCreate(sectorIDX, sec->ceilHeight, sec->ceilMaterial->id,
+        MPE_PlaneCreate(sectorIDX, sec->ceilHeight, findMaterialInDictionary(sec->ceilMaterial),
                         0, 0, 1, 1, 1, 1, 0, 0, -1);
 
         MPE_GameObjProperty("XSector", i, "Tag",    DDVT_SHORT, &sec->tag);
@@ -1110,11 +988,11 @@ static void transferLinesAndSides(void)
         {
             frontIdx =
                 MPE_SidedefCreate((mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                                  front->topMaterial->id,
+                                  findMaterialInDictionary(front->topMaterial),
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
-                                  front->middleMaterial->id,
+                                  findMaterialInDictionary(front->middleMaterial),
                                   front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                                  front->bottomMaterial->id,
+                                  findMaterialInDictionary(front->bottomMaterial),
                                   front->offset[VX], front->offset[VY], 1, 1, 1);
         }
 
@@ -1124,11 +1002,11 @@ static void transferLinesAndSides(void)
         {
             backIdx =
                 MPE_SidedefCreate((mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                                  back->topMaterial->id,
+                                  findMaterialInDictionary(back->topMaterial),
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
-                                  back->middleMaterial->id,
+                                  findMaterialInDictionary(back->middleMaterial),
                                   back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                                  back->bottomMaterial->id,
+                                  findMaterialInDictionary(back->bottomMaterial),
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }
 
