@@ -80,7 +80,6 @@ DENG2_PUBLIC void LegacyCore_Stop(int exitCode);
 DENG2_PUBLIC void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void));
 DENG2_PUBLIC int LegacyCore_SetLogFile(const char* filePath);
 DENG2_PUBLIC const char* LegacyCore_LogFile();
-DENG2_PUBLIC void LegacyCore_LogAs(const char* sectionName);
 DENG2_PUBLIC void LegacyCore_PrintLogFragment(const char* text);
 DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char* format, ...);
 DENG2_PUBLIC void LegacyCore_SetTerminateFunc(void (*func)(const char*));
