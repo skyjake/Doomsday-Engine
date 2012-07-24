@@ -413,19 +413,19 @@ dint64 LittleEndianByteOrder_ToForeignInt64(dint64 value)
     return de::littleEndianByteOrder.toForeign(de::dint64(value));
 }
 
-duint16 LittleEndianByteOrder_ToForeignInt16(duint16 value)
+duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value)
 {
     DENG2_ASSERT(sizeof(duint16) == sizeof(de::duint16));
     return de::littleEndianByteOrder.toForeign(de::duint16(value));
 }
 
-duint32 LittleEndianByteOrder_ToForeignInt32(duint32 value)
+duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value)
 {
     DENG2_ASSERT(sizeof(duint32) == sizeof(de::duint32));
     return de::littleEndianByteOrder.toForeign(de::duint32(value));
 }
 
-duint64 LittleEndianByteOrder_ToForeignInt64(duint64 value)
+duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value)
 {
     DENG2_ASSERT(sizeof(duint64) == sizeof(de::duint64));
     return de::littleEndianByteOrder.toForeign(de::duint64(value));
@@ -461,19 +461,19 @@ dint64 LittleEndianByteOrder_ToNativeInt64(dint64 value)
     return de::littleEndianByteOrder.toNative(de::dint64(value));
 }
 
-duint16 LittleEndianByteOrder_ToNativeInt16(duint16 value)
+duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value)
 {
     DENG2_ASSERT(sizeof(duint16) == sizeof(de::duint16));
     return de::littleEndianByteOrder.toNative(de::duint16(value));
 }
 
-duint32 LittleEndianByteOrder_ToNativeInt32(duint32 value)
+duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value)
 {
     DENG2_ASSERT(sizeof(duint32) == sizeof(de::duint32));
     return de::littleEndianByteOrder.toNative(de::duint32(value));
 }
 
-duint64 LittleEndianByteOrder_ToNativeInt64(duint64 value)
+duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value)
 {
     DENG2_ASSERT(sizeof(duint64) == sizeof(de::duint64));
     return de::littleEndianByteOrder.toNative(de::duint64(value));
