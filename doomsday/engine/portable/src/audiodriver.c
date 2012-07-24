@@ -353,6 +353,7 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
     }
 #endif
 
+#ifndef WIN32
     // At the moment, dsFMOD supports streaming samples so we can
     // automatically load dsFluidSynth for MIDI music.
     if(defaultDriverId == AUDIOD_FMOD)
@@ -363,6 +364,7 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             appendInterface(&pos, AUDIO_IMUSIC, &drivers[AUDIOD_FLUIDSYNTH].music);
         }
     }
+#endif
 
     if(defaultDriver->cd.gen.Init) appendInterface(&pos, AUDIO_ICD, &defaultDriver->cd);
 
