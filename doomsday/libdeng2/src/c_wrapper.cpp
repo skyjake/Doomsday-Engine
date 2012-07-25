@@ -231,6 +231,11 @@ void LogBuffer_Flush(void)
     de::LogBuffer::appBuffer().flush();
 }
 
+void LogBuffer_Clear(void)
+{
+    de::LogBuffer::appBuffer().clear();
+}
+
 void LogBuffer_EnableStandardOutput(int enable)
 {
 	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);

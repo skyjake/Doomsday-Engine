@@ -52,6 +52,9 @@ public:
 /// The logs table contains the log of each thread that uses logging.
 static Logs logs;
 
+LogEntry::LogEntry() : _level(Log::TRACE), _disabled(true)
+{}
+
 LogEntry::LogEntry(Log::LogLevel level, const String& section, const String& format)
     : _level(level), _section(section), _format(format), _disabled(false)
 {
@@ -214,7 +217,7 @@ Log::Section::~Section()
 
 Log::Log() : _throwawayEntry(0)
 {
-    _throwawayEntry = new LogEntry(MESSAGE, "", "");
+    _throwawayEntry = new LogEntry;
     _sectionStack.push_back(MAIN_SECTION);
 }
 
