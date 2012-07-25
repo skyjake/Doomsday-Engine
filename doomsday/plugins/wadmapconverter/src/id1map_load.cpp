@@ -25,6 +25,7 @@
 #include <de/libdeng2.h>
 #include <de/LegacyCore>
 #include <de/Log>
+#include <de/Error>
 
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
@@ -801,10 +802,12 @@ static Reader* bufferLump(MapLumpInfo* info)
     if(info->length > readBufferSize)
     {
         readBuffer = (uint8_t*)realloc(readBuffer, info->length);
-        if(!readBuffer)
-            de::LegacyCore::instance().handleUncaughtException(
-                QString("WadMapConverter::bufferLump: Failed on (re)allocation of %1 bytes for the read buffer.")
-                        .arg((unsigned long) info->length));
+        if(/*!*/readBuffer)
+        {
+            throw de::Error("WadMapConverter::bufferLump",
+                            QString("Failed on (re)allocation of %1 bytes for the read buffer.")
+                            .arg(info->length));
+        }
         readBufferSize = info->length;
     }
 

@@ -40,7 +40,8 @@ static MapLumpInfo* newMapLumpInfo(lumpnum_t lumpNum, MapLumpType lumpType)
  * Given a map @a uri, attempt to locate the associated marker lump for the
  * map data using the Doomsday file system.
  *
- * @param uri           Map identifier, e.g., "Map:E1M1"
+ * @param uri  Map identifier, e.g., "Map:E1M1"
+ *
  * @return Lump number for the found data else @c -1
  */
 static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
