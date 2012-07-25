@@ -96,6 +96,20 @@ BusyTask* BusyMode_CurrentTask(void)
 }
 
 /**
+ * Callback that is called from the busy worker thread when it exists.
+ * @param status Exit status.
+ */
+static void busyWorkerTerminated(systhreadexitstatus_t status)
+{
+    DENG_ASSERT(BusyMode_Active());
+
+    if(status == DENG_THREAD_STOPPED_WITH_EXCEPTION)
+    {
+        BusyMode_WorkerError("Uncaught exception from busy thread.");
+    }
+}
+
+/**
  * Sets up module state for running a busy task. After this the busy mode event
  * loop is started. The loop will run until the worker thread exits.
  */
@@ -126,6 +140,7 @@ static void beginTask(BusyTask* task)
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
+    Thread_SetCallback(busyThread, busyWorkerTerminated);
 
     // Switch the engine loop and window to the busy mode.
     LegacyCore_SetLoopFunc(BusyMode_Loop);
@@ -380,13 +395,14 @@ static void stopEventLoopWithValue(int result)
 static void BusyMode_Exit(void)
 {
     int result;
+    systhreadexitstatus_t status;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     busyDone = true;
 
     // Make sure the worker finishes before we continue.
-    result = Sys_WaitThread(busyThread, busyTaskEndedWithError? 100 : 5000);
+    result = Sys_WaitThread(busyThread, busyTaskEndedWithError? 100 : 5000, &status);
     busyThread = NULL;
     busyTask   = NULL;
 

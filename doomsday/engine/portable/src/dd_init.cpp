@@ -165,8 +165,9 @@ int main(int argc, char** argv)
         // Set up the application-wide menu.
         menuBar = new QMenuBar;
         QMenu* gameMenu = menuBar->addMenu("&Game");
-        QAction* checkForUpdates = gameMenu->addAction(
-                    "Check For &Updates...", Updater_Instance(), SLOT(checkNowShowingProgress()));
+        QAction* checkForUpdates =
+                gameMenu->addAction("Check For &Updates...",
+                                    Updater_Instance(), SLOT(checkNowShowingProgress()));
         checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
     }

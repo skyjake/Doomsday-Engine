@@ -33,7 +33,9 @@
 static uint mainThreadId = 0; ///< ID of the main thread.
 
 CallbackThread::CallbackThread(systhreadfunc_t func, void* param)
-    : _callback(func), _parm(param), _returnValue(0)
+    : _callback(func), _parm(param), _returnValue(0),
+      _exitStatus(DENG_THREAD_STOPPED_NORMALLY),
+      _terminationFunc(0)
 {
     //qDebug() << "CallbackThread:" << this << "created.";
 
@@ -65,18 +67,27 @@ void CallbackThread::deleteNow()
 
 void CallbackThread::run()
 {
+    _exitStatus = DENG_THREAD_STOPPED_WITH_FORCE;
+
     try
     {
         if(_callback)
         {
             _returnValue = _callback(_parm);
         }
+        _exitStatus = DENG_THREAD_STOPPED_NORMALLY;
     }
     catch(const std::exception& error)
     {
         LOG_AS("CallbackThread");
         LOG_ERROR(QString("Uncaught exception: ") + error.what());
         _returnValue = -1;
+        _exitStatus = DENG_THREAD_STOPPED_WITH_EXCEPTION;
+    }
+
+    if(_terminationFunc)
+    {
+        _terminationFunc(_exitStatus);
     }
 
     Garbage_ClearForThread();
@@ -85,6 +96,16 @@ void CallbackThread::run()
 int CallbackThread::exitValue() const
 {
     return _returnValue;
+}
+
+systhreadexitstatus_t CallbackThread::exitStatus() const
+{
+    return _exitStatus;
+}
+
+void CallbackThread::setTerminationFunc(void (*func)(systhreadexitstatus_t))
+{
+    _terminationFunc = func;
 }
 
 void Sys_MarkAsMainThread(void)
@@ -121,7 +142,16 @@ void Thread_KillAbnormally(thread_t handle)
     t->terminate();
 }
 
-int Sys_WaitThread(thread_t handle, int timeoutMs)
+void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitstatus_t))
+{
+    CallbackThread* t = reinterpret_cast<CallbackThread*>(thread);
+    DENG_ASSERT(t);
+    if(!t) return;
+
+    t->setTerminationFunc(terminationFunc);
+}
+
+int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t* exitStatus)
 {
     CallbackThread* t = reinterpret_cast<CallbackThread*>(handle);
     assert(static_cast<QThread*>(t) != QThread::currentThread());
@@ -129,6 +159,11 @@ int Sys_WaitThread(thread_t handle, int timeoutMs)
     if(!t->isFinished())
     {
         LOG_WARNING("Thread did not stop in time, forcibly killing it.");
+        if(exitStatus) *exitStatus = DENG_THREAD_STOPPED_WITH_FORCE;
+    }
+    else
+    {
+        if(exitStatus) *exitStatus = t->exitStatus();
     }
     t->deleteLater(); // get rid of it
     return t->exitValue();
