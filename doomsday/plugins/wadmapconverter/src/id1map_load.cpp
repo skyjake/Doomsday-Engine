@@ -802,7 +802,7 @@ static Reader* bufferLump(MapLumpInfo* info)
     if(info->length > readBufferSize)
     {
         readBuffer = (uint8_t*)realloc(readBuffer, info->length);
-        if(/*!*/readBuffer)
+        if(!readBuffer)
         {
             throw de::Error("WadMapConverter::bufferLump",
                             QString("Failed on (re)allocation of %1 bytes for the read buffer.")
