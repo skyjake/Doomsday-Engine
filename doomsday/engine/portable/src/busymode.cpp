@@ -31,6 +31,7 @@
 #include "render/busyvisual.h"
 
 #include "de/c_wrapper.h"
+#include <de/Log>
 #include <QEventLoop>
 
 extern "C" LegacyCore* de2LegacyCore; // from dd_init.cpp
@@ -75,11 +76,11 @@ timespan_t BusyMode_ElapsedTime(void)
 boolean BusyMode_IsWorkerThread(uint threadId)
 {
     boolean result;
-    if(!BusyMode_Active()) return false;
+    if(!BusyMode_Active() || !busyThread) return false;
 
     /// @todo Is locking necessary?
     Sys_Lock(busy_Mutex);
-    result = Sys_ThreadId(busyThread) == threadId;
+    result = (Sys_ThreadId(busyThread) == threadId);
     Sys_Unlock(busy_Mutex);
     return result;
 }
@@ -156,6 +157,7 @@ static void beginTask(BusyTask* task)
 static void endTask(BusyTask* task)
 {
     DENG_ASSERT(task);
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(verbose)
     {
