@@ -34,8 +34,6 @@
 #include <de/Log>
 #include <QEventLoop>
 
-extern "C" LegacyCore* de2LegacyCore; // from dd_init.cpp
-
 static QEventLoop* eventLoop;
 
 static void BusyMode_Loop(void);

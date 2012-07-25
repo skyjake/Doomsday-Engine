@@ -786,7 +786,7 @@ static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDire
     assert(Str_Length(constructedPath) == parm.length);
 
 #ifdef LIBDENG_STACK_MONITOR
-    LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_INFO,
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
             "pathConstructor: max stack depth: %u bytes\n", (uint)maxStackDepth);
 #endif
 
