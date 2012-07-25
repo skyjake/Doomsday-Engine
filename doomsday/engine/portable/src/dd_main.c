@@ -1230,6 +1230,9 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         }
     )
 
+    // Remove all entries; some may have been created by the game plugin (if it used libdeng2 C++ API).
+    LogBuffer_Clear();
+
     Library_ReleaseGames();
 
     DD_ComposeMainWindowTitle(buf);

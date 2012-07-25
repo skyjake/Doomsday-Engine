@@ -90,6 +90,7 @@ void CallbackThread::run()
         _terminationFunc(_exitStatus);
     }
 
+    de::Log::disposeThreadLog();
     Garbage_ClearForThread();
 }
 

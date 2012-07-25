@@ -210,6 +210,9 @@ static boolean unloadAllPlugins(application_t* app)
     int i;
     assert(app);
 
+    // Remove all entries; some may have been created by the plugins.
+    LogBuffer_Clear();
+
     for(i = 0; i < MAX_PLUGS && app->hInstPlug[i]; ++i)
     {
         unloadPlugin(&app->hInstPlug[i]);

@@ -105,6 +105,7 @@ DENG2_PUBLIC int CommandLine_IsMatchingAlias(const char* original, const char* o
  */
 DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
 DENG2_PUBLIC void LogBuffer_Flush(void);
+DENG2_PUBLIC void LogBuffer_Clear(void);
 
 /*
  * LegacyNetwork
