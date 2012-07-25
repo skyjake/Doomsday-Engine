@@ -26,11 +26,6 @@
 #include "maplumpinfo.h"
 #include <de/libdeng2.h>
 
-#ifdef WIN32
-#  define stricmp _stricmp
-#  define strnicmp _strnicmp
-#endif
-
 const Str* MapFormatNameForId(mapformatid_t id)
 {
     static const de::Str names[1 + NUM_MAPFORMATS] = {
@@ -81,7 +76,7 @@ MapLumpType MapLumpTypeForName(const char* name)
     if(name[0])
     for(int i = 0; lumptypeForNameDict[i].name; ++i)
     {
-        if(!strnicmp(lumptypeForNameDict[i].name, name, strlen(lumptypeForNameDict[i].name)))
+        if(!qstrnicmp(lumptypeForNameDict[i].name, name, strlen(lumptypeForNameDict[i].name)))
             return lumptypeForNameDict[i].type;
     }
 
