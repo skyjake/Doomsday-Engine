@@ -102,6 +102,8 @@ scroll_t* P_SpawnSideMaterialOriginScroller(SideDef* side, short special)
     case 48:  ///< Tagless, scroll left.
 # if __JDOOM64__
     case 150: ///< Tagless, scroll right.
+# elif __JDOOM__
+    case 85:  ///< Tagless, scroll right (BOOM).
 # elif __JHERETIC__
     case 99:  ///< Tagless, scroll right.
 # endif
@@ -141,6 +143,13 @@ scroll_t* P_SpawnSideMaterialOriginScroller(SideDef* side, short special)
         offset[1] = (special == 102? speed : -speed);
         break; }
 #endif // __JHEXEN__
+
+#if __JDOOM__
+    case 255: ///< Tagless, scroll by material origin (BOOM).
+        P_GetFloatpv(side, DMU_MIDDLE_MATERIAL_OFFSET_XY, offset);
+        offset[0] = -offset[0];
+        break;
+#endif
     }
 
     elementBits  = (1 << SS_MIDDLE) | (1 << SS_BOTTOM) | (1 << SS_TOP);
