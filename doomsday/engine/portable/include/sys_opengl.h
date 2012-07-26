@@ -45,7 +45,13 @@
 
 #ifdef UNIX
 #  define GL_GLEXT_PROTOTYPES
-#  ifdef MACOSX
+#  ifdef MACOSX_NATIVESDK
+#    define GL_EXT_compiled_vertex_array 1
+#    include <OpenGL/gl.h>
+#    include <OpenGL/glu.h>
+#    include <OpenGL/glext.h>
+#    include <OpenGL/OpenGL.h>
+#  elif defined(MACOSX)
 #    include <GL/gl.h>
 #    include <GL/glu.h>
 #    include <OpenGL/OpenGL.h>
@@ -56,6 +62,15 @@
 #    include <GL/glu.h>
 #  endif
 #  define GL_CALL
+#endif
+
+#ifndef GL_NV_texture_env_combine4
+#  define GL_NV_texture_env_combine4    1
+#  define GL_COMBINE4_NV                0x8503
+#  define GL_SOURCE3_RGB_NV             0x8583
+#  define GL_SOURCE3_ALPHA_NV           0x858B
+#  define GL_OPERAND3_RGB_NV            0x8593
+#  define GL_OPERAND3_ALPHA_NV          0x859B
 #endif
 
 #ifdef __cplusplus

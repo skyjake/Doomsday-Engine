@@ -36,6 +36,13 @@ QMAKE_LFLAGS += -flat_namespace -undefined suppress
 
 deng_nativesdk {
     echo(Using native SDK.)
+    #QMAKE_MAC_SDK = $$(SDKROOT)
+    #isEmpty(QMAKE_MAC_SDK) {
+    #    error(Set the SDKROOT environment variable to specify which Mac OS X SDK to use.)
+    #}
+    DEFINES += MACOSX_NATIVESDK
+    #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
+    #QMAKE_CFLAGS += -mmacosx-version-min=10.8
 }
 else:deng_macx7_64bit {
     echo(Using Mac OS 10.7 SDK.)

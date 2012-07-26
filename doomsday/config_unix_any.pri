@@ -17,6 +17,7 @@ QMAKE_CFLAGS_WARN_ON += -Werror-implicit-function-declaration -fdiagnostics-show
 
 # Print include directories and other info.
 #QMAKE_CFLAGS += -Wp,-v
+#QMAKE_LFLAGS += -v
 
 # Unix System Tools ----------------------------------------------------------
 

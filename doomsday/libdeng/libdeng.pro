@@ -90,6 +90,7 @@ macx {
         doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
         doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
     }
+    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng1.1.dylib libdeng1.1.dylib")
     fixDengLinkage("QtCore.framework/Versions/4/QtCore")
     fixDengLinkage("QtNetwork.framework/Versions/4/QtNetwork")
     fixDengLinkage("QtGui.framework/Versions/4/QtGui")
