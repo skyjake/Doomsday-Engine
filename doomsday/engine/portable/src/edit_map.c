@@ -34,6 +34,7 @@
 #include "de_dam.h"
 #include "de_filesys.h"
 
+#include "stringpool.h"
 #include "s_environ.h"
 
 typedef struct {
@@ -41,15 +42,20 @@ typedef struct {
     uint count; ///< Number of times this has been found missing.
 } missingmaterialrecord_t;
 
-static void printMissingMaterialList(void);
-static void registerMissingMaterial(const char* materialUri);
-static void clearMissingMaterialList(void);
+static void printMissingMaterials(void);
+static void clearMaterialDict(void);
+
 static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri);
 
-// Missing material list.
-static uint missingMaterialsSize;
-static uint missingMaterialsMaxSize;
-static missingmaterialrecord_t* missingMaterials;
+/**
+ * Material name references specified during map conversion are recorded in this
+ * dictionary. A dictionary is used to avoid repeatedly resolving the same URIs
+ * and to facilitate a log of missing materials encountered during the process.
+ *
+ * The pointer user value holds a pointer to the resolved Material (if found).
+ * The integer user value tracks the number of times a reference occurs.
+ */
+static StringPool* materialDict;
 
 editmap_t editMap;
 static boolean editMapInited = false;
@@ -1831,7 +1837,7 @@ boolean MPE_End(void)
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
     // Announce any missing materials we encountered during the conversion.
-    printMissingMaterialList();
+    printMissingMaterials();
 
     /**
      * Build a BSP for this map.
@@ -1873,7 +1879,7 @@ boolean MPE_End(void)
     if(!builtOK)
     {
         // Failed. Need to clean up.
-        clearMissingMaterialList();
+        clearMaterialDict();
         P_DestroyGameMapObjDB(&gamemap->gameObjData);
         Z_Free(gamemap);
         lastBuiltMapResult = false; // Failed.
@@ -1891,7 +1897,7 @@ boolean MPE_End(void)
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
     prepareBspLeafs(gamemap);
 
-    clearMissingMaterialList();
+    clearMaterialDict();
 
     editMapInited = false;
 
@@ -1982,102 +1988,125 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
     return true;
 }
 
-static void registerMissingMaterial(const char* materialUri)
+/**
+ * Either print or count-the-number-of unresolved references in the
+ * material dictionary.
+ *
+ * @param internId    Unique id associated with the reference.
+ * @param parameters  If a uint pointer operate in "count" mode (total written here).
+ *                    Else operate in "print" mode.
+ * @return Always @c 0 (for use as an iterator).
+ */
+static int printMissingMaterialWorker(StringPoolId internId, void* parameters)
 {
-    if(!materialUri || !materialUri[0]) return;
+    uint* count = (uint*)parameters;
 
-    // Do we already know about it?
-    if(missingMaterialsSize > 0)
+    // A valid id?
+    if(StringPool_String(materialDict, internId))
     {
-        uint i;
-        for(i = 0; i < missingMaterialsSize; ++i)
+        // Have we resolved this reference yet?
+        if(!StringPool_UserPointer(materialDict, internId))
         {
-            if(!Str_CompareIgnoreCase(&missingMaterials[i].uri, materialUri))
+            // An unresolved reference.
+            if(count)
             {
-                // Already known.
-                missingMaterials[i].count++;
-                return;
+                // Count mode.
+                *count += 1;
+            }
+            else
+            {
+                // Print mode.
+                const int refCount = StringPool_UserValue(materialDict, internId);
+                const ddstring_t* materialUri = StringPool_String(materialDict, internId);
+                Con_Message(" %4u x \"%s\"\n", refCount, Str_Text(materialUri));
             }
         }
     }
-
-    // A new unknown texture. Add it to the list
-    if(++missingMaterialsSize > missingMaterialsMaxSize)
-    {
-        // Allocate more memory
-        missingMaterialsMaxSize *= 2;
-        if(missingMaterialsMaxSize < missingMaterialsSize)
-            missingMaterialsMaxSize = missingMaterialsSize;
-
-        missingMaterials = M_Realloc(missingMaterials, sizeof(missingmaterialrecord_t) * missingMaterialsMaxSize);
-    }
-
-    Str_Set(Str_Init(&missingMaterials[missingMaterialsSize -1].uri), materialUri);
-    missingMaterials[missingMaterialsSize -1].count = 1;
+    return 0; // Continue iteration.
 }
 
 /**
  * Announce any missing materials we came across when loading the map.
  */
-static void printMissingMaterialList(void)
+static void printMissingMaterials(void)
 {
-    if(missingMaterialsSize)
-    {
-        uint i;
-        Con_Message("  [110] Warning: Found %u unknown %s:\n", missingMaterialsSize, missingMaterialsSize == 1? "material":"materials");
-        for(i = 0; i < missingMaterialsSize; ++i)
-        {
-            Con_Message(" %4u x \"%s\"\n", missingMaterials[i].count, Str_Text(&missingMaterials[i].uri));
-        }
-    }
+    uint numMissing;
+
+    if(!materialDict) return;
+
+    // Count missing materials.
+    numMissing = 0;
+    StringPool_Iterate(materialDict, printMissingMaterialWorker, &numMissing);
+    if(!numMissing) return;
+
+    Con_Message("  [110] Warning: Found %u unknown %s:\n", numMissing, numMissing == 1? "material":"materials");
+    // List the missing materials.
+    StringPool_Iterate(materialDict, printMissingMaterialWorker, 0);
 }
 
-/**
- * Clear the missing material list.
- */
-static void clearMissingMaterialList(void)
+static void clearMaterialDict(void)
 {
-    if(missingMaterials)
-    {
-        uint i;
-        for(i = 0; i < missingMaterialsSize; ++i)
-        {
-            Str_Free(&missingMaterials[i].uri);
-        }
-
-        M_Free(missingMaterials);
-        missingMaterials = NULL;
-
-        missingMaterialsSize = missingMaterialsMaxSize = 0;
-    }
+    if(!materialDict) return;
+    StringPool_Clear(materialDict);
+    StringPool_Delete(materialDict);
+    materialDict = 0;
 }
 
 static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
 {
-    materialid_t id = NOMATERIALID;
+    material_t* material = 0;
 
     DENG_ASSERT(suf);
 
-    /// @todo Avoid repeatedly resolving URIs with a dictionary (another StringPool?).
     if(materialUri && !Str_IsEmpty(materialUri))
     {
-        // First try the preferred namespace, then any.
-        id = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
-        if(id == NOMATERIALID)
+        StringPoolId internId;
+        uint refCount;
+
+        // Are we yet to instantiate the dictionary?
+        if(!materialDict)
         {
-            Uri* tmp = Uri_NewWithPath2(Str_Text(materialUri), RC_NULL);
-            Uri_SetScheme(tmp, "");
-            id = Materials_ResolveUri(tmp);
-            Uri_Delete(tmp);
+            materialDict = StringPool_New();
+            if(!materialDict) Con_Error("assignSurfaceMaterial: Failed to instantiate the material dictionary.");
         }
 
-        if(id == NOMATERIALID)
+        // Intern this reference.
+        internId = StringPool_Intern(materialDict, materialUri);
+
+        // Have we previously encountered this?.
+        refCount = StringPool_UserValue(materialDict, internId);
+        if(refCount)
         {
-            registerMissingMaterial(Str_Text(materialUri));
+            // Yes, if resolved the user pointer holds the found material.
+            material = StringPool_UserPointer(materialDict, internId);
         }
+        else
+        {
+            // No, attempt to resolve this URI and update the dictionary.
+            materialid_t materialId = NOMATERIALID;
+
+            // First try the preferred namespace, then any.
+            materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
+            if(materialId == NOMATERIALID)
+            {
+                Uri* tmp = Uri_NewWithPath2(Str_Text(materialUri), RC_NULL);
+                Uri_SetScheme(tmp, "");
+                materialId = Materials_ResolveUri(tmp);
+                Uri_Delete(tmp);
+            }
+            material = Materials_ToMaterial(materialId);
+
+            // Insert the possibly resolved material into the dictionary.
+            StringPool_SetUserPointer(materialDict, internId, material);
+        }
+
+        // There is now one more reference.
+        refCount++;
+        StringPool_SetUserValue(materialDict, internId, refCount);
     }
 
-    Surface_SetMaterial(suf, Materials_ToMaterial(id));
+    // Assign the resolved material if found.
+    Surface_SetMaterial(suf, material);
 }
 
 uint MPE_SidedefCreate(short flags, const ddstring_t* topMaterial,
