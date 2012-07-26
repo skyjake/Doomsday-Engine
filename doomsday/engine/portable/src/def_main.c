@@ -619,7 +619,7 @@ const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
     int                 i;
 
     for(i = defs.count.flags.num - 1; i >= 0; i--)
-        if(strnicmp(defs.flags[i].id, prefix, sizeof(prefix)) == 0 &&
+        if(strnicmp(defs.flags[i].id, prefix, strlen(prefix)) == 0 &&
             defs.flags[i].value == val)
             return defs.flags[i].text;
 

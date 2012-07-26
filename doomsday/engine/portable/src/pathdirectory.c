@@ -373,7 +373,8 @@ static int iteratePathsInHash(pathdirectory_pathhash_t* ph, int flags, PathDirec
     PathDirectoryNode* node, *next;
     int result = 0;
 
-    if(ph)
+    if(!ph) return 0;
+
     if(hash != PATHDIRECTORY_NOHASH)
     {
         if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
@@ -436,7 +437,8 @@ static int iteratePathsInHash_Const(const pathdirectory_pathhash_t* ph, int flag
     PathDirectoryNode* node, *next;
     int result = 0;
 
-    if(ph)
+    if(!ph) return 0;
+
     if(hash != PATHDIRECTORY_NOHASH)
     {
         if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
