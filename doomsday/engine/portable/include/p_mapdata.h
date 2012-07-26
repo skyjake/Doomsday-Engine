@@ -225,18 +225,6 @@ const char* P_MapSourceFile(const char* uri);
  */
 boolean P_LoadMap(const char* uri);
 
-void P_RegisterMissingMaterial(const char* materialUri);
-
-/**
- * Announce any missing materials we came across when loading the map.
- */
-void P_PrintMissingMaterialList(void);
-
-/**
- * Clear the missing material list.
- */
-void P_ClearMissingMaterialList(void);
-
 /**
  * To be called to initialize the game map object defs.
  */

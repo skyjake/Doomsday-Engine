@@ -36,6 +36,21 @@
 
 #include "s_environ.h"
 
+typedef struct {
+    ddstring_t uri;
+    uint count; ///< Number of times this has been found missing.
+} missingmaterialrecord_t;
+
+static void printMissingMaterialList(void);
+static void registerMissingMaterial(const char* materialUri);
+static void clearMissingMaterialList(void);
+static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri);
+
+// Missing material list.
+static uint missingMaterialsSize;
+static uint missingMaterialsMaxSize;
+static missingmaterialrecord_t* missingMaterials;
+
 editmap_t editMap;
 static boolean editMapInited = false;
 
@@ -1816,7 +1831,7 @@ boolean MPE_End(void)
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
     // Announce any missing materials we encountered during the conversion.
-    P_PrintMissingMaterialList();
+    printMissingMaterialList();
 
     /**
      * Build a BSP for this map.
@@ -1858,6 +1873,7 @@ boolean MPE_End(void)
     if(!builtOK)
     {
         // Failed. Need to clean up.
+        clearMissingMaterialList();
         P_DestroyGameMapObjDB(&gamemap->gameObjData);
         Z_Free(gamemap);
         lastBuiltMapResult = false; // Failed.
@@ -1875,7 +1891,7 @@ boolean MPE_End(void)
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
     prepareBspLeafs(gamemap);
 
-    P_ClearMissingMaterialList();
+    clearMissingMaterialList();
 
     editMapInited = false;
 
@@ -1966,6 +1982,76 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
     return true;
 }
 
+static void registerMissingMaterial(const char* materialUri)
+{
+    if(!materialUri || !materialUri[0]) return;
+
+    // Do we already know about it?
+    if(missingMaterialsSize > 0)
+    {
+        uint i;
+        for(i = 0; i < missingMaterialsSize; ++i)
+        {
+            if(!Str_CompareIgnoreCase(&missingMaterials[i].uri, materialUri))
+            {
+                // Already known.
+                missingMaterials[i].count++;
+                return;
+            }
+        }
+    }
+
+    // A new unknown texture. Add it to the list
+    if(++missingMaterialsSize > missingMaterialsMaxSize)
+    {
+        // Allocate more memory
+        missingMaterialsMaxSize *= 2;
+        if(missingMaterialsMaxSize < missingMaterialsSize)
+            missingMaterialsMaxSize = missingMaterialsSize;
+
+        missingMaterials = M_Realloc(missingMaterials, sizeof(missingmaterialrecord_t) * missingMaterialsMaxSize);
+    }
+
+    Str_Set(Str_Init(&missingMaterials[missingMaterialsSize -1].uri), materialUri);
+    missingMaterials[missingMaterialsSize -1].count = 1;
+}
+
+/**
+ * Announce any missing materials we came across when loading the map.
+ */
+static void printMissingMaterialList(void)
+{
+    if(missingMaterialsSize)
+    {
+        uint i;
+        Con_Message("  [110] Warning: Found %u unknown %s:\n", missingMaterialsSize, missingMaterialsSize == 1? "material":"materials");
+        for(i = 0; i < missingMaterialsSize; ++i)
+        {
+            Con_Message(" %4u x \"%s\"\n", missingMaterials[i].count, Str_Text(&missingMaterials[i].uri));
+        }
+    }
+}
+
+/**
+ * Clear the missing material list.
+ */
+static void clearMissingMaterialList(void)
+{
+    if(missingMaterials)
+    {
+        uint i;
+        for(i = 0; i < missingMaterialsSize; ++i)
+        {
+            Str_Free(&missingMaterials[i].uri);
+        }
+
+        M_Free(missingMaterials);
+        missingMaterials = NULL;
+
+        missingMaterialsSize = missingMaterialsMaxSize = 0;
+    }
+}
+
 static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
 {
     materialid_t id = NOMATERIALID;
@@ -1987,7 +2073,7 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
 
         if(id == NOMATERIALID)
         {
-            P_RegisterMissingMaterial(Str_Text(materialUri));
+            registerMissingMaterial(Str_Text(materialUri));
         }
     }
 

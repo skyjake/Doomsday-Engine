@@ -36,11 +36,6 @@
 #include "rend_bias.h"
 #include "m_bams.h"
 
-typedef struct {
-    ddstring_t uri;
-    uint count; ///< Number of times this has been found missing.
-} missingmaterialrecord_t;
-
 extern boolean mapSetup;
 
 Uri* mapUri; // Name by which the game referred to the current map.
@@ -59,11 +54,6 @@ BspLeaf** bspLeafs = NULL;
 BspNode** bspNodes = NULL;
 
 GameMap* theMap = NULL;
-
-// Missing material list.
-static uint missingMaterialsSize;
-static uint missingMaterialsMaxSize;
-static missingmaterialrecord_t* missingMaterials;
 
 // Game-specific, map object type definitions.
 static uint numGameMapObjDefs;
@@ -257,70 +247,6 @@ boolean P_LoadMap(const char* uriCString)
 
     Uri_Delete(uri);
     return false;
-}
-
-void P_RegisterMissingMaterial(const char* materialUri)
-{
-    if(!materialUri || !materialUri[0]) return;
-
-    // Do we already know about it?
-    if(missingMaterialsSize > 0)
-    {
-        uint i;
-        for(i = 0; i < missingMaterialsSize; ++i)
-        {
-            if(!Str_CompareIgnoreCase(&missingMaterials[i].uri, materialUri))
-            {
-                // Already known.
-                missingMaterials[i].count++;
-                return;
-            }
-        }
-    }
-
-    // A new unknown texture. Add it to the list
-    if(++missingMaterialsSize > missingMaterialsMaxSize)
-    {
-        // Allocate more memory
-        missingMaterialsMaxSize *= 2;
-        if(missingMaterialsMaxSize < missingMaterialsSize)
-            missingMaterialsMaxSize = missingMaterialsSize;
-
-        missingMaterials = M_Realloc(missingMaterials, sizeof(missingmaterialrecord_t) * missingMaterialsMaxSize);
-    }
-
-    Str_Set(Str_Init(&missingMaterials[missingMaterialsSize -1].uri), materialUri);
-    missingMaterials[missingMaterialsSize -1].count = 1;
-}
-
-void P_PrintMissingMaterialList(void)
-{
-    if(missingMaterialsSize)
-    {
-        uint i;
-        Con_Message("  [110] Warning: Found %u unknown %s:\n", missingMaterialsSize, missingMaterialsSize == 1? "material":"materials");
-        for(i = 0; i < missingMaterialsSize; ++i)
-        {
-            Con_Message(" %4u x \"%s\"\n", missingMaterials[i].count, Str_Text(&missingMaterials[i].uri));
-        }
-    }
-}
-
-void P_ClearMissingMaterialList(void)
-{
-    if(missingMaterials)
-    {
-        uint i;
-        for(i = 0; i < missingMaterialsSize; ++i)
-        {
-            Str_Free(&missingMaterials[i].uri);
-        }
-
-        M_Free(missingMaterials);
-        missingMaterials = NULL;
-
-        missingMaterialsSize = missingMaterialsMaxSize = 0;
-    }
 }
 
 gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char* objName, boolean canCreate)
