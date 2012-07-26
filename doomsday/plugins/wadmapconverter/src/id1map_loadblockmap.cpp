@@ -123,13 +123,12 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 #if _DEBUG
             if(SHORT(blockmapLump[offset]) != 0)
             {
-                de::LegacyCore::instance().handleUncaughtException(
-                    QString("WadMapConverter::"loadBlockmap: Offset (%1) for block %2 [%3, %4] "
-                            "does not index the beginning of a line list!")
-                            .arg(offset)
-                            .arg(blockIdx)
-                            .arg(x)
-                            .arg(y)));
+                throw de::Error("WadMapConverter::"loadBlockmap",
+                                QString("Offset (%1) for block %2 [%3, %4] does not index the beginning of a line list!")
+                                    .arg(offset)
+                                    .arg(blockIdx)
+                                    .arg(x)
+                                    .arg(y)));
             }
 #endif
 
@@ -155,9 +154,8 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 #if _DEBUG
                     if(idx < 0 || idx >= (long) map->numLines)
                     {
-                        de::LegacyCore::instance().handleUncaughtException(
-                            QString("WadMapConverter::loadBlockmap: Invalid linedef index #%1.")
-                                    .arg(idx)));
+                        throw de::Error("WadMapConverter::"loadBlockmap",
+                                        QString("Invalid linedef index #%1.").arg(idx)));
                     }
 #endif
                     *ptr++ = &map->lines[idx];
