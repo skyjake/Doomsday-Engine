@@ -211,9 +211,7 @@ void P_Init(void)
 {
     P_ResetPlayerRespawnClasses();
 
-    // Create the various line lists (spechits, anims, buttons etc).
     spechit = IterList_ConstructDefault();
-    linespecials = IterList_ConstructDefault();
 
 #if __JHEXEN__
     X_CreateLUTs();
@@ -280,16 +278,13 @@ void P_Update(void)
 void P_Shutdown(void)
 {
     if(spechit)
+    {
         IterList_Destruct(spechit);
-    spechit = 0;
-
-    if(linespecials)
-        IterList_Destruct(linespecials);
-    linespecials = 0;
+        spechit = 0;
+    }
 
     P_DestroyPlayerStarts();
-    P_DestroyLineTagLists();
-    P_DestroySectorTagLists();
+    P_DestroyAllTagLists();
     P_ShutdownTerrainTypes();
     P_FreeWeaponSlots();
 #if __JDOOM__

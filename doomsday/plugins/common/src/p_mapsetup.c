@@ -43,6 +43,7 @@
 #include "r_common.h"
 #include "p_actor.h"
 #include "p_mapsetup.h"
+#include "p_scroll.h"
 #include "p_start.h"
 #include "p_tick.h"
 #include "hu_pspr.h"
@@ -720,7 +721,17 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
     HU_UpdatePsprites();
 
     // Set up world state.
-    P_SpawnSpecials();
+    P_BuildAllTagLists();
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    P_FindSecrets();
+#endif
+    P_SpawnAllSpecialThinkers();
+    P_SpawnAllMaterialOriginScrollers();
+
+#if !__JHEXEN__
+    // Init extended generalized lines and sectors.
+    XG_Init();
+#endif
 
 #if __JHEXEN__
     // Initialize the sky.
@@ -984,4 +995,82 @@ const char* P_GetMapAuthor(boolean supressGameAuthor)
     if((mapIsCustom || supressGameAuthor) && !stricmp(gameInfo.author, author))
         return NULL;
     return author;
+}
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+void P_FindSecrets(void)
+{
+    uint i;
+
+    totalSecret = 0;
+
+    // Find secret sectors.
+    for(i = 0; i < numsectors; ++i)
+    {
+        Sector* sec = P_ToPtr(DMU_SECTOR, i);
+        xsector_t* xsec = P_ToXSector(sec);
+
+        if(xsec->special != 9) continue;
+
+        totalSecret++;
+    }
+
+#if __JDOOM64__
+    // Find secret lines.
+    for(i = 0; i < numlines; ++i)
+    {
+        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        xline_t* xline = P_ToXLine(line);
+
+        if(xline->special != 994) continue;
+
+        totalSecret++;
+    }
+#endif
+}
+#endif
+
+void P_SpawnSectorMaterialOriginScrollers(void)
+{
+    uint i;
+
+    // Clients do not spawn material origin scrollers on their own.
+    if(IS_CLIENT) return;
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
+        xsector_t* xsec = P_ToXSector(sec);
+
+        if(!xsec->special) continue;
+
+        // A scroller?
+        P_SpawnSectorMaterialOriginScroller(sec, PLN_FLOOR, xsec->special);
+    }
+}
+
+void P_SpawnSideMaterialOriginScrollers(void)
+{
+    uint i;
+
+    // Clients do not spawn material origin scrollers on their own.
+    if(IS_CLIENT) return;
+
+    for(i = 0; i < numlines; ++i)
+    {
+        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        xline_t* xline = P_ToXLine(line);
+        SideDef* frontSide;
+
+        if(!xline->special) continue;
+
+        frontSide = P_GetPtrp(line, DMU_SIDEDEF0);
+        P_SpawnSideMaterialOriginScroller(frontSide, xline->special);
+    }
+}
+
+void P_SpawnAllMaterialOriginScrollers(void)
+{
+    P_SpawnSideMaterialOriginScrollers();
+    P_SpawnSectorMaterialOriginScrollers();
 }

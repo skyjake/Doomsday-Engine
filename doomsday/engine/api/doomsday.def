@@ -495,6 +495,7 @@ EXPORTS
     P_LoadMap                   @254 NONAME
 
 ; Maps: Map Data Updates and Information Access.
+    DMU_GetType                 @323 NONAME
     P_ToIndex                   @256 NONAME
     P_ToPtr                     @257 NONAME
     P_Callback                  @258 NONAME
@@ -504,7 +505,6 @@ EXPORTS
     ; dummy objects
     P_AllocDummy                @321 NONAME
     P_FreeDummy                 @322 NONAME
-    P_DummyType                 @323 NONAME
     P_IsDummy                   @324 NONAME
     P_DummyExtraData            @325 NONAME
 

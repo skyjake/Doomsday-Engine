@@ -775,6 +775,8 @@ typedef enum sidedefsection_e {
     SS_TOP
 } SideDefSection;
 
+#define VALID_SIDEDEFSECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
+
 /// Helper macro for converting SideDefSection indices to their associated DMU flag. @ingroup map
 #define DMU_FLAG_FOR_SIDEDEFSECTION(s) (\
     (s) == SS_MIDDLE? DMU_MIDDLE_OF_SIDEDEF : \

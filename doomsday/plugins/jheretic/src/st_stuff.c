@@ -29,6 +29,7 @@
 
 #include "jheretic.h"
 
+#include "dmu_lib.h"
 #include "d_net.h"
 #include "hu_stuff.h"
 #include "p_tick.h" // for P_IsPaused

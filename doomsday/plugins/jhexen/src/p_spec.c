@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_spec.c:
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 #include <stdio.h>
 
@@ -45,29 +39,16 @@
 #include "p_door.h"
 #include "p_plat.h"
 #include "p_floor.h"
+#include "p_scroll.h"
 #include "p_switch.h"
 #include "p_user.h"
-
-// MACROS ------------------------------------------------------------------
 
 #define LIGHTNING_SPECIAL       198
 #define LIGHTNING_SPECIAL2      199
 #define SKYCHANGE_SPECIAL       200
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void P_LightningFlash(void);
 static boolean CheckedLockedDoor(mobj_t* mo, byte lock);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 mobj_t lavaInflictor;
 
@@ -79,14 +60,10 @@ float sky1ScrollDelta;
 float sky2ScrollDelta;
 boolean doubleSky;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean mapHasLightning;
 static int nextLightningFlash;
 static int lightningFlash;
 static float* lightningLightLevels;
-
-// CODE --------------------------------------------------------------------
 
 void P_InitLava(void)
 {
@@ -140,6 +117,15 @@ void P_InitSky(uint map)
         R_SkyParams(1, DD_MASK, &ival);
         R_SkyParams(1, DD_MATERIAL, &sky2Material);
     }
+}
+
+void P_AnimateSky(void)
+{
+    // Update sky column offsets
+    sky1ColumnOffset += sky1ScrollDelta;
+    sky2ColumnOffset += sky2ScrollDelta;
+    R_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
+    R_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
 }
 
 boolean EV_SectorSoundChange(byte* args)
@@ -786,245 +772,43 @@ void P_PlayerOnSpecialFloor(player_t* player)
     }
 }
 
-void P_UpdateSpecials(void)
+void P_SpawnSectorSpecialThinkers(void)
+{
+    uint i;
+
+    // Clients do not spawn sector specials.
+    if(IS_CLIENT) return;
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
+        xsector_t* xsec = P_ToXSector(sec);
+
+        switch(xsec->special)
+        {
+        default: break;
+
+        case 1: ///< Phased light.
+            // Static base, use sector->lightLevel as the index.
+            P_SpawnPhasedLight(sec, (80.f / 255.0f), -1);
+            break;
+
+        case 2: ///< Phased light sequence start.
+            P_SpawnLightSequence(sec, 1);
+            break;
+        }
+    }
+}
+
+void P_SpawnLineSpecialThinkers(void)
 {
     // Stub.
 }
 
-/**
- * After the map has been loaded, scan for specials that spawn thinkers.
- */
-void P_SpawnSpecials(void)
+void P_SpawnAllSpecialThinkers(void)
 {
-    uint        i;
-    LineDef    *line;
-    xline_t    *xline;
-    iterlist_t *list;
-    Sector     *sec;
-    xsector_t  *xsec;
-
-    // Init special SECTORs.
-    P_DestroySectorTagLists();
-    for(i = 0; i < numsectors; ++i)
-    {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_ToXSector(sec);
-
-        if(xsec->tag)
-        {
-           list = P_GetSectorIterListForTag(xsec->tag, true);
-           IterList_Push(list, sec);
-        }
-
-        // Clients do not spawn sector specials.
-        if(IS_CLIENT)
-            break;
-
-        switch(xsec->special)
-        {
-        case 1: // Phased light
-            // Hardcoded base, use sector->lightLevel as the index.
-            P_SpawnPhasedLight(sec, (80.f / 255.0f), -1);
-            break;
-
-        case 2: // Phased light sequence start.
-            P_SpawnLightSequence(sec, 1);
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    // Init animating line specials.
-    IterList_Empty(linespecials);
-    P_DestroyLineTagLists();
-    for(i = 0; i < numlines; ++i)
-    {
-        line = P_ToPtr(DMU_LINEDEF, i);
-        xline = P_ToXLine(line);
-
-        switch(xline->special)
-        {
-        case 100: // Scroll_Texture_Left
-        case 101: // Scroll_Texture_Right
-        case 102: // Scroll_Texture_Up
-        case 103: // Scroll_Texture_Down
-            IterList_Push(linespecials, line);
-            break;
-
-        case 121: // Line_SetIdentification
-            if(xline->arg1)
-            {
-                list = P_GetLineIterListForTag((int) xline->arg1, true);
-                IterList_Push(list, line);
-            }
-            xline->special = 0;
-            break;
-
-        default:
-            break;
-        }
-    }
-}
-
-void P_AnimateSurfaces(void)
-{
-#define PLANE_MATERIAL_SCROLLUNIT (8.f/35*2)
-
-    uint                i;
-    LineDef*            line;
-
-    // Update scrolling plane materials.
-    for(i = 0; i < numsectors; ++i)
-    {
-        xsector_t*          sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
-        float               texOff[2];
-
-        switch(sect->special)
-        {
-        case 201:
-        case 202:
-        case 203: // Scroll_North_xxx
-            texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
-            texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 201);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
-            break;
-
-        case 204:
-        case 205:
-        case 206: // Scroll_East_xxx
-            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
-            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 204);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
-            break;
-
-        case 207:
-        case 208:
-        case 209: // Scroll_South_xxx
-            texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
-            texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 207);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
-            break;
-
-        case 210:
-        case 211:
-        case 212: // Scroll_West_xxx
-            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
-            texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 210);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
-            break;
-
-        case 213:
-        case 214:
-        case 215: // Scroll_NorthWest_xxx
-            P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
-            texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 213);
-            texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 213);
-            P_SetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
-            break;
-
-        case 216:
-        case 217:
-        case 218: // Scroll_NorthEast_xxx
-            P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
-            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 216);
-            texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 216);
-            P_SetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
-            break;
-
-        case 219:
-        case 220:
-        case 221: // Scroll_SouthEast_xxx
-            P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
-            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 219);
-            texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 219);
-            P_SetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
-            break;
-
-        case 222:
-        case 223:
-        case 224: // Scroll_SouthWest_xxx
-            P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
-            texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 222);
-            texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 222);
-            P_SetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
-            break;
-
-        default:
-            // dj - Is this really necessary every tic?
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, 0);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, 0);
-            break;
-        }
-    }
-
-    // Update scrolling wall materials.
-    if(IterList_Size(linespecials))
-    {
-        IterList_SetIteratorDirection(linespecials, ITERLIST_BACKWARD);
-        IterList_RewindIterator(linespecials);
-        while((line = IterList_MoveIterator(linespecials)) != NULL)
-        {
-            SideDef*            side = 0;
-            fixed_t             texOff[2];
-            xline_t*            xline = P_ToXLine(line);
-
-            side = P_GetPtrp(line, DMU_SIDEDEF0);
-            for(i = 0; i < 3; ++i)
-            {
-                P_GetFixedpv(side,
-                             (i==0? DMU_TOP_MATERIAL_OFFSET_XY :
-                              i==1? DMU_MIDDLE_MATERIAL_OFFSET_XY :
-                              DMU_BOTTOM_MATERIAL_OFFSET_XY), texOff);
-
-                switch(xline->special)
-                {
-                case 100: // Scroll_Texture_Left
-                    texOff[0] += xline->arg1 << 10;
-                    break;
-                case 101: // Scroll_Texture_Right
-                    texOff[0] -= xline->arg1 << 10;
-                    break;
-                case 102: // Scroll_Texture_Up
-                    texOff[1] += xline->arg1 << 10;
-                    break;
-                case 103: // Scroll_Texture_Down
-                    texOff[1] -= xline->arg1 << 10;
-                    break;
-                default:
-                    Con_Error("P_AnimateSurfaces: Invalid line special %i for "
-                              "material scroller on linedef %ui.",
-                              xline->special, P_ToIndex(line));
-                }
-
-                P_SetFixedpv(side,
-                             (i==0? DMU_TOP_MATERIAL_OFFSET_XY :
-                              i==1? DMU_MIDDLE_MATERIAL_OFFSET_XY :
-                              DMU_BOTTOM_MATERIAL_OFFSET_XY), texOff);
-            }
-        }
-    }
-
-    // Update sky column offsets
-    sky1ColumnOffset += sky1ScrollDelta;
-    sky2ColumnOffset += sky2ScrollDelta;
-    R_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
-    R_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
-
-    if(mapHasLightning)
-    {
-        if(!nextLightningFlash || lightningFlash)
-        {
-            P_LightningFlash();
-        }
-        else
-        {
-            nextLightningFlash--;
-        }
-    }
-
-#undef PLANE_MATERIAL_SCROLLUNIT
+    P_SpawnSectorSpecialThinkers();
+    P_SpawnLineSpecialThinkers();
 }
 
 static boolean isLightningSector(Sector* sec)
@@ -1225,5 +1009,19 @@ void P_InitLightning(void)
     else
     {
         mapHasLightning = false;
+    }
+}
+
+void P_AnimateLightning(void)
+{
+    if(!mapHasLightning) return;
+
+    if(!nextLightningFlash || lightningFlash)
+    {
+        P_LightningFlash();
+    }
+    else
+    {
+        nextLightningFlash--;
     }
 }

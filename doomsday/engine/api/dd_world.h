@@ -37,6 +37,13 @@ extern "C" {
 /// @addtogroup map
 ///@{
 
+/**
+ * Determines the type of the map data object.
+ *
+ * @param ptr  Pointer to a map data object.
+ */
+int             DMU_GetType(const void* ptr);
+
 unsigned int    P_ToIndex(const void* ptr);
 void*           P_ToPtr(int type, uint index);
 int             P_Callback(int type, uint index, void* context,
@@ -49,7 +56,6 @@ int             P_Iteratep(void *ptr, uint prop, void* context,
 /* dummy functions */
 void*           P_AllocDummy(int type, void* extraData);
 void            P_FreeDummy(void* dummy);
-int             P_DummyType(void* dummy);
 boolean         P_IsDummy(void* dummy);
 void*           P_DummyExtraData(void* dummy);
 

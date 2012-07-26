@@ -120,7 +120,15 @@ void P_DoTick(void)
         return;
 
     DD_RunThinkers();
-    P_UpdateSpecials();
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    // Extended lines and sectors.
+    XG_Ticker();
+#endif
+
+#if __JHEXEN__
+    P_AnimateSky();
+    P_AnimateLightning();
+#endif
 
 #if __JDOOM64__
     P_ThunderSector();
@@ -130,9 +138,6 @@ void P_DoTick(void)
 
 #if __JHERETIC__
     P_AmbientSound();
-#endif
-#if __JHEXEN__
-    P_AnimateSurfaces();
 #endif
 
     // Let the engine know where the local players are now.

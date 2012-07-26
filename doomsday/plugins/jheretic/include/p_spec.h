@@ -52,12 +52,13 @@ void            P_InitPicAnims(void);
 void            P_InitLava(void);
 
 // at map load
-void            P_SpawnSpecials(void);
+void P_SpawnSectorSpecialThinkers(void);
+void P_SpawnLineSpecialThinkers(void);
+void P_SpawnAllSpecialThinkers(void);
+
 void            P_InitAmbientSound(void);
 void            P_AddAmbientSfx(int sequence);
 
-// every tic
-void            P_UpdateSpecials(void);
 void            P_AmbientSound(void);
 
 boolean         P_ActivateLine(LineDef* ld, mobj_t* mo, int side,

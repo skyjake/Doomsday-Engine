@@ -22,16 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh - Heretic specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 
 #include "jheretic.h"
 
+#include "dmu_lib.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
@@ -47,30 +42,15 @@
 #include "p_tick.h"
 #include "hu_automap.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
+/**
+ * Updates the status flags for all visible things.
+ */
 void R_SetAllDoomsdayFlags(void);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float quitDarkenOpacity = 0;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Draws a special filter over the screen.
@@ -368,23 +348,17 @@ void R_SetDoomsdayFlags(mobj_t* mo)
     Mobj_UpdateColorMap(mo);
 }
 
-/**
- * Updates the status flags for all visible things.
- */
 void R_SetAllDoomsdayFlags(void)
 {
-    uint                i;
-    mobj_t*             iter;
+    mobj_t* iter;
+    uint i;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
     {
-        iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS);
-
-        while(iter)
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
         {
             R_SetDoomsdayFlags(iter);
-            iter = iter->sNext;
         }
     }
 }

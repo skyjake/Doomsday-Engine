@@ -1,73 +1,38 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * p_xgsave.c: Extended Generalized Line Types.
+ * @file p_xgsave.c: Extended Generalized Line Types.
  *
- * Implements: Saving and loading routines for the XG data.
+ * Implements: Saving and loading routines for the XG data/thinkers.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
-// HEADER FILES ------------------------------------------------------------
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-# include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
-#endif
-
+#include "common.h"
+#include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_saveg.h"
 #include "p_xg.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-void SV_WriteXGLine(LineDef *li)
+void SV_WriteXGLine(LineDef* li)
 {
-    xgline_t *xg;
-    linetype_t *info;
+    xgline_t* xg;
+    linetype_t* info;
 
     xg = P_ToXLine(li)->xg;
     info = &xg->info;
@@ -96,10 +61,10 @@ void SV_WriteXGLine(LineDef *li)
     SV_WriteFloat(xg->chTimer);
 }
 
-void SV_ReadXGLine(LineDef *li)
+void SV_ReadXGLine(LineDef* li)
 {
-    xgline_t *xg;
-    xline_t *xline = P_ToXLine(li);
+    xgline_t* xg;
+    xline_t* xline = P_ToXLine(li);
 
     // Read version.
     SV_ReadByte();
@@ -128,9 +93,9 @@ void SV_ReadXGLine(LineDef *li)
 }
 
 /**
- * The function must belong to the specified xgsector.
+ * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
+void SV_WriteXGFunction(xgsector_t* xg, function_t* fn)
 {
     // Version byte.
     SV_WriteByte(1);
@@ -144,7 +109,10 @@ void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
     SV_WriteFloat(fn->oldValue);
 }
 
-void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
+/**
+ * @param fn  This function must belong to XG sector @a xg.
+ */
+void SV_ReadXGFunction(xgsector_t* xg, function_t* fn)
 {
     // Version byte.
     SV_ReadByte();
@@ -158,12 +126,12 @@ void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
     fn->oldValue = SV_ReadFloat();
 }
 
-void SV_WriteXGSector(struct sector_s *sec)
+void SV_WriteXGSector(struct sector_s* sec)
 {
-    int         i;
-    xgsector_t *xg;
-    sectortype_t *info;
-    xsector_t  *xsec = P_ToXSector(sec);
+    xgsector_t* xg;
+    sectortype_t* info;
+    xsector_t* xsec = P_ToXSector(sec);
+    int i;
 
     xg = xsec->xg;
     info = &xg->info;

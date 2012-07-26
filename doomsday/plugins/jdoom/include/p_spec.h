@@ -49,10 +49,9 @@
 void            P_InitPicAnims(void);
 
 // at map load
-void            P_SpawnSpecials(void);
-
-// every tic
-void            P_UpdateSpecials(void);
+void P_SpawnSectorSpecialThinkers(void);
+void P_SpawnLineSpecialThinkers(void);
+void P_SpawnAllSpecialThinkers(void);
 
 boolean         P_ActivateLine(LineDef *ld, mobj_t *mo, int side,
                                int activationType);

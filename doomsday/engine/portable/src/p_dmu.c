@@ -158,6 +158,8 @@ const char* DMU_Str(uint prop)
         { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },
         { DMU_HEDGE_COUNT, "DMU_HEDGE_COUNT" },
         { DMU_SPEED, "DMU_SPEED" },
+        { DMU_FLOOR_PLANE, "DMU_FLOOR_PLANE" },
+        { DMU_CEILING_PLANE, "DMU_CEILING_PLANE" },
         { 0, NULL }
     };
     uint                i;
@@ -170,38 +172,33 @@ const char* DMU_Str(uint prop)
     return propStr;
 }
 
-/**
- * Determines the type of the map data object.
- *
- * @param ptr  Pointer to a map data object.
- */
+/// @note Part of the Doomsday public API.
 int DMU_GetType(const void* ptr)
 {
-    int                 type;
+    int type;
+
+    if(!ptr) return DMU_NONE;
 
     type = P_DummyType((void*)ptr);
-    if(type != DMU_NONE)
-        return type;
+    if(type != DMU_NONE) return type;
 
     type = ((const runtime_mapdata_header_t*)ptr)->type;
 
     // Make sure it's valid.
     switch(type)
     {
-        case DMU_VERTEX:
-        case DMU_HEDGE:
-        case DMU_LINEDEF:
-        case DMU_SIDEDEF:
-        case DMU_BSPLEAF:
-        case DMU_SECTOR:
-        case DMU_PLANE:
-        case DMU_BSPNODE:
-        case DMU_MATERIAL:
-            return type;
+    case DMU_VERTEX:
+    case DMU_HEDGE:
+    case DMU_LINEDEF:
+    case DMU_SIDEDEF:
+    case DMU_BSPLEAF:
+    case DMU_SECTOR:
+    case DMU_PLANE:
+    case DMU_BSPNODE:
+    case DMU_MATERIAL:
+        return type;
 
-        default:
-            // Unknown.
-            break;
+    default: break; // Unknown.
     }
     return DMU_NONE;
 }
