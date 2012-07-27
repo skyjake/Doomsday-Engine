@@ -53,6 +53,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
+#include "p_scroll.h"
 #include "p_switch.h"
 #include "d_netsv.h"
 
@@ -271,20 +272,20 @@ boolean P_ActivateLine(LineDef *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
+static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing)
 {
-    int                 ok;
-    xline_t            *xline;
+    xline_t* xline;
 
     // Extended functionality overrides old.
-    if(XL_CrossLine(line, side, thing))
-        return;
+    if(XL_CrossLine(line, side, thing)) return;
 
     xline = P_ToXLine(line);
 
-    //  Triggers that other things can activate
+    // Triggers that other things can activate
     if(!thing->player)
     {
+        boolean ok = false;
+
         // Things that should NOT trigger specials...
         switch(thing->type)
         {
@@ -297,41 +298,37 @@ void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
         case MT_BRUISERSHOTRED: // jd64
         case MT_NTROSHOT: // jd64
             return;
-            break;
 
-        default:
-            break;
+        default: break;
         }
 
-        ok = 0;
         switch(xline->special)
         {
-        case 39:                // TELEPORT TRIGGER
-        case 97:                // TELEPORT RETRIGGER
+        case 39:  ///< TELEPORT TRIGGER
+        case 97:  ///< TELEPORT RETRIGGER
         case 993: // jd64
-        case 125:               // TELEPORT MONSTERONLY TRIGGER
-        case 126:               // TELEPORT MONSTERONLY RETRIGGER
-        case 4:             // RAISE DOOR
-        case 10:                // PLAT DOWN-WAIT-UP-STAY TRIGGER
-        case 88:                // PLAT DOWN-WAIT-UP-STAY RETRIGGER
+        case 125: ///< TELEPORT MONSTERONLY TRIGGER
+        case 126: ///< TELEPORT MONSTERONLY RETRIGGER
+        case 4:   ///< RAISE DOOR
+        case 10:  ///< PLAT DOWN-WAIT-UP-STAY TRIGGER
+        case 88:  ///< PLAT DOWN-WAIT-UP-STAY RETRIGGER
         case 415: // jd64
-            ok = 1;
+            ok = true;
             break;
         }
 
         // Anything can trigger this line!
         if(xline->flags & ML_ALLTRIGGER)
-            ok = 1;
+            ok = true;
 
-        if(!ok)
-            return;
+        if(!ok) return;
     }
 
     // Note: could use some const's here.
     switch(xline->special)
     {
-        // TRIGGERS.
-        // All from here to RETRIGGERS.
+    // TRIGGERS.
+    // All from here to RETRIGGERS.
     case 2:
         // Open Door
         EV_DoDoor(line, DT_OPEN);
@@ -829,50 +826,42 @@ void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
 /**
  * Called when a thing shoots a special line.
  */
-void P_ShootSpecialLine(mobj_t *thing, LineDef *line)
+static void P_ShootSpecialLine(mobj_t* thing, LineDef* line)
 {
-    int                 ok;
-    xline_t*            xline = P_ToXLine(line);
+    xline_t* xline = P_ToXLine(line);
 
     //  Impacts that other things can activate.
     if(!thing->player)
     {
-        ok = 0;
         switch(xline->special)
         {
-        case 46:
-            // OPEN DOOR IMPACT
-            ok = 1;
+        default: return;
+
+        case 46: ///< OPEN DOOR IMPACT
             break;
         }
-        if(!ok)
-            return;
     }
 
     switch(xline->special)
     {
-    case 24:
-        // RAISE FLOOR
+    case 24: ///< RAISE FLOOR
         EV_DoFloor(line, FT_RAISEFLOOR);
         P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
         xline->special = 0;
         break;
 
-    case 46:
-        // OPEN DOOR
+    case 46: ///< OPEN DOOR
         EV_DoDoor(line, DT_OPEN);
         P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
 
-    case 47:
-        // RAISE FLOOR NEAR AND CHANGE
+    case 47: ///< RAISE FLOOR NEAR AND CHANGE
         EV_DoPlat(line, PT_RAISETONEARESTANDCHANGE, 0);
         P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
         xline->special = 0;
         break;
 
-    case 191: // jd64
-        // LOWER FLOOR WAIT RAISE
+    case 191: ///< LOWER FLOOR WAIT RAISE (jd64)
         EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0);
         P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, BUTTONTIME);
         break;
@@ -889,30 +878,27 @@ void P_PlayerInSpecialSector(player_t* player)
     if(IS_CLIENT) return;
 
     // Falling, not all the way down yet?
-    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
-        return;
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT))) return;
 
     // Has hitten ground.
     switch(P_ToXSector(sector)->special)
     {
-    case 5:
-        // HELLSLIME DAMAGE
+    default: break;
+
+    case 5: ///< HELLSLIME DAMAGE
         if(!player->powers[PT_IRONFEET])
             if(!(mapTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 10, false);
         break;
 
-    case 7:
-        // NUKAGE DAMAGE
+    case 7: ///< NUKAGE DAMAGE
         if(!player->powers[PT_IRONFEET])
             if(!(mapTime & 0x1f))
                 P_DamageMobj(player->plr->mo, NULL, NULL, 5, false);
         break;
 
-    case 16:
-        // SUPER HELLSLIME DAMAGE
-    case 4:
-        // STROBE HURT
+    case 16: ///< SUPER HELLSLIME DAMAGE
+    case 4:  ///< STROBE HURT
         if(!player->powers[PT_IRONFEET] || (P_Random() < 5))
         {
             if(!(mapTime & 0x1f))
@@ -920,8 +906,7 @@ void P_PlayerInSpecialSector(player_t* player)
         }
         break;
 
-    case 9:
-        // SECRET SECTOR
+    case 9: ///< SECRET SECTOR
         player->secretCount++;
         P_ToXSector(sector)->special = 0;
         if(cfg.secretMsg)
@@ -930,137 +915,6 @@ void P_PlayerInSpecialSector(player_t* player)
             // S_ConsoleSound(SFX_SECRET, 0, player - players); // jd64
         }
         break;
-/*
-    case 11:
-        // EXIT SUPER DAMAGE! (for E1M8 finale)
-        player->cheats &= ~CF_GODMODE;
-
-        if(!(mapTime & 0x1f))
-            P_DamageMobj(player->plr->mo, NULL, NULL, 20);
-
-        if(player->health <= 10)
-            G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
-        break;
-*/
-
-    default:
-        break;
-    }
-}
-
-/**
- * Animate planes, scroll walls, etc.
- */
-void P_UpdateSpecials(void)
-{
-    float x, y;
-    LineDef* line;
-    SideDef* side;
-
-    // Extended lines and sectors.
-    XG_Ticker();
-
-    // Animate line specials.
-    if(IterList_Size(linespecials))
-    {
-        IterList_SetIteratorDirection(linespecials, ITERLIST_BACKWARD);
-        IterList_RewindIterator(linespecials);
-        while((line = IterList_MoveIterator(linespecials)) != NULL)
-        {
-            switch(P_ToXLine(line)->special)
-            {
-            case 48:
-                side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-                // EFFECT FIRSTCOL SCROLL +
-                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x += 1);
-                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x += 1);
-                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x += 1);
-                break;
-
-            case 150: // jd64
-                side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-                // EFFECT FIRSTCOL SCROLL -
-                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x -= 1);
-                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x -= 1);
-                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x -= 1);
-                break;
-
-            case 2561: // jd64
-                // Scroll_Texture_Up
-                side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-                // EFFECT FIRSTCOL SCROLL +
-                y = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += 1);
-                y = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += 1);
-                y = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += 1);
-                break;
-
-            case 2562: // jd64
-                // Scroll_Texture_Down
-                side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-                // EFFECT FIRSTCOL SCROLL +
-                y = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y, y -= 1);
-                y = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y -= 1);
-                y = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y -= 1);
-                break;
-
-            case 2080: // jd64
-                // Scroll Up/Right
-                side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-                y = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += 1);
-                y = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += 1);
-                y = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += 1);
-
-                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x -= 1);
-                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x -= 1);
-                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x -= 1);
-                break;
-
-            case 2614: // jd64
-                // Scroll Up/Left
-                side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-                y = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_Y, y += 1);
-                y = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_Y, y += 1);
-                y = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_Y, y += 1);
-
-                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x += 1);
-                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x += 1);
-                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x += 1);
-                break;
-
-            default:
-                break;
-            }
-        }
     }
 }
 
@@ -1090,50 +944,24 @@ void P_ThunderSector(void)
     S_StartSound(SFX_SSSIT | DDSF_NO_ATTENUATION, NULL);
 }
 
-/**
- * After the map has been loaded, scan for specials that spawn thinkers.
- */
-void P_SpawnSpecials(void)
+void P_SpawnSectorSpecialThinkers(void)
 {
-    uint                i;
-    LineDef            *line;
-    xline_t            *xline;
-    iterlist_t         *list;
-    Sector             *sec;
-    xsector_t          *xsec;
+    uint i;
 
-    // Init special SECTORs.
-    P_DestroySectorTagLists();
+    // Clients spawn specials only on the server's instruction.
+    if(IS_CLIENT) return;
+
     for(i = 0; i < numsectors; ++i)
     {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_ToXSector(sec);
-
-        if(xsec->tag)
-        {
-           list = P_GetSectorIterListForTag(xsec->tag, true);
-           IterList_Push(list, sec);
-        }
-
-        if(!xsec->special)
-            continue;
-
-        if(IS_CLIENT)
-        {
-            switch(xsec->special)
-            {
-            case 9:
-                // SECRET SECTOR
-                totalSecret++;
-                break;
-            }
-            continue;
-        }
+        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
+        xsector_t* xsec = P_ToXSector(sec);
 
         // jd64 >
         // DJS - yet more hacks! Why use the tag?
         switch(xsec->tag)
         {
+        default: break;
+
         case 10000:
         case 10001:
         case 10002:
@@ -1162,54 +990,42 @@ void P_SpawnSpecials(void)
 
         switch(xsec->special)
         {
-        case 1:
-            // FLICKERING LIGHTS
+        default: break;
+
+        case 1: ///< FLICKERING LIGHTS
             P_SpawnLightFlash(sec);
             break;
 
-        case 2:
-            // STROBE FAST
+        case 2: ///< STROBE FAST
             P_SpawnStrobeFlash(sec, FASTDARK, 0);
             break;
 
-        case 3:
-            // STROBE SLOW
+        case 3: ///< STROBE SLOW
             P_SpawnStrobeFlash(sec, SLOWDARK, 0);
             break;
 
-        case 4:
-            // STROBE FAST/DEATH SLIME
+        case 4: ///< STROBE FAST/DEATH SLIME
             P_SpawnStrobeFlash(sec, FASTDARK, 0);
             xsec->special = 4;
             break;
 
-        case 8:
-            // GLOWING LIGHT
+        case 8: ///< GLOWING LIGHT
             P_SpawnGlowingLight(sec);
             break;
 
-        case 9:
-            // SECRET SECTOR
-            totalSecret++;
-            break;
-
-        case 10:
-            // DOOR CLOSE IN 30 SECONDS
+        case 10: ///< DOOR CLOSE IN 30 SECONDS
             P_SpawnDoorCloseIn30(sec);
             break;
 
-        case 12:
-            // SYNC STROBE SLOW
+        case 12: ///< SYNC STROBE SLOW
             P_SpawnStrobeFlash(sec, SLOWDARK, 1);
             break;
 
-        case 13:
-            // SYNC STROBE FAST
+        case 13: ///< SYNC STROBE FAST
             P_SpawnStrobeFlash(sec, FASTDARK, 1);
             break;
 
-        case 14:
-            // DOOR RAISE IN 5 MINUTES
+        case 14: ///< DOOR RAISE IN 5 MINUTES
             P_SpawnDoorRaiseIn5Mins(sec);
             break;
 
@@ -1218,42 +1034,17 @@ void P_SpawnSpecials(void)
             break;
         }
     }
+}
 
-    // Init animating line specials.
-    IterList_Empty(linespecials);
-    P_DestroyLineTagLists();
-    for(i = 0; i < numlines; ++i)
-    {
-        line = P_ToPtr(DMU_LINEDEF, i);
-        xline = P_ToXLine(line);
+void P_SpawnLineSpecialThinkers(void)
+{
+    // Stub.
+}
 
-        switch(xline->special)
-        {
-        case 48: // EFFECT FIRSTCOL SCROLL+
-        case 150: // jd64: wall scroll right
-        case 2561: // jd64: wall scroll up
-        case 2562: // jd64: wall scroll down
-        case 2080: // jd64: wall scroll up/right
-        case 2614: // jd64: wall scroll up/left
-            IterList_Push(linespecials, line);
-            break;
-
-        case 994: // jd64
-            // kaiser - be sure to have that linedef count the secrets.
-            // FIXME: DJS - secret lines??
-            totalSecret++;
-            break;
-        }
-
-        if(xline->tag)
-        {
-           list = P_GetLineIterListForTag(xline->tag, true);
-           IterList_Push(list, line);
-        }
-    }
-
-    // Init extended generalized lines and sectors.
-    XG_Init();
+void P_SpawnAllSpecialThinkers(void)
+{
+    P_SpawnSectorSpecialThinkers();
+    P_SpawnLineSpecialThinkers();
 }
 
 boolean P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side)
@@ -1778,4 +1569,3 @@ boolean P_UseSpecialLine2(mobj_t* mo, LineDef* line, int side)
 
     return true;
 }
-

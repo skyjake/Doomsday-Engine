@@ -68,12 +68,6 @@ else {
     }
 }
 
-# Build Configuration --------------------------------------------------------
-
-deng_writertypecheck {
-    DEFINES += DENG_WRITER_TYPECHECK
-}
-
 # Linking --------------------------------------------------------------------
 
 win32 {
@@ -106,7 +100,6 @@ DENG_API_HEADERS = \
     api/dd_maptypes.h \
     api/dd_plugin.h \
     api/dd_share.h \
-    api/dd_string.h \
     api/dd_types.h \
     api/dd_ui.h \
     api/dd_vectorgraphic.h \
@@ -118,7 +111,6 @@ DENG_API_HEADERS = \
     api/doomsday.h \
     api/materialarchive.h \
     api/point.h \
-    api/reader.h \
     api/rect.h \
     api/size.h \
     api/stringpool.h \
@@ -126,8 +118,7 @@ DENG_API_HEADERS = \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
     api/thinker.h \
-    api/uri.h \
-    api/writer.h
+    api/uri.h
 
 # Convenience headers.
 DENG_HEADERS += \
@@ -324,7 +315,6 @@ DENG_HEADERS += \
     portable/include/s_wav.h \
     portable/include/sector.h \
     portable/include/sidedef.h \
-    portable/include/string.hh \
     portable/include/stringarray.h \
     portable/include/surface.h \
     portable/include/sv_def.h \
@@ -537,7 +527,6 @@ SOURCES += \
     portable/src/m_mus2midi.c \
     portable/src/m_nodepile.c \
     portable/src/m_stack.c \
-    portable/src/m_string.c \
     portable/src/m_vector.c \
     portable/src/masterserver.cpp \
     portable/src/material.c \
@@ -585,7 +574,6 @@ SOURCES += \
     portable/src/r_things.c \
     portable/src/r_util.c \
     portable/src/r_world.c \
-    portable/src/reader.c \
     portable/src/rect.c \
     portable/src/render/busyvisual.c \
     portable/src/render/rend_bias.c \
@@ -652,7 +640,6 @@ SOURCES += \
     portable/src/vertex.cpp \
     portable/src/wadfile.c \
     portable/src/window.cpp \
-    portable/src/writer.c \
     portable/src/zipfile.c \
     portable/src/zonedebug.c
 

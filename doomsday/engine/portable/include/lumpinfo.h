@@ -25,7 +25,7 @@
 #ifndef LIBDENG_FILESYS_LUMPINFO_H
 #define LIBDENG_FILESYS_LUMPINFO_H
 
-#include "dd_string.h"
+#include <de/str.h>
 
 #ifdef __cplusplus
 extern "C" {

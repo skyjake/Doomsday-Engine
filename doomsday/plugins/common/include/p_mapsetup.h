@@ -31,18 +31,6 @@
 
 #include "common.h"
 
-#define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
-#define numhedges   (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
-#define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
-#define numbspleafs (*(uint*) DD_GetVariable(DD_BSPLEAF_COUNT))
-#define numbspnodes (*(uint*) DD_GetVariable(DD_BSPNODE_COUNT))
-#define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
-#define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
-
-#if __JHEXEN__
-#define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))
-#endif
-
 // If true we are in the process of setting up a map.
 extern boolean mapSetup;
 
@@ -69,5 +57,13 @@ void P_SetupMap(Uri* uri, uint episode, uint map);
 const char* P_GetMapNiceName(void);
 patchid_t P_FindMapTitlePatch(uint episode, uint map);
 const char* P_GetMapAuthor(boolean supressGameAuthor);
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+void P_FindSecrets(void);
+#endif
+
+void P_SpawnSectorMaterialOriginScrollers(void);
+void P_SpawnSideMaterialOriginScrollers(void);
+void P_SpawnAllMaterialOriginScrollers(void);
 
 #endif /* LIBCOMMON_PLAYSETUP_H */

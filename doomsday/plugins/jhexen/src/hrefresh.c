@@ -22,16 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh - Hexen specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
 #include "g_controls.h"
@@ -46,25 +41,7 @@
 #include "p_tick.h"
 #include "hu_automap.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float quitDarkenOpacity = 0;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 boolean R_ViewFilterColor(float rgba[4], int filter)
 {

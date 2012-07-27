@@ -22,6 +22,17 @@
 
 #include "libdeng2.h"
 
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
+using de::dint16;
+using de::dint32;
+using de::dint64;
+using de::duint16;
+using de::duint32;
+using de::duint64;
+using de::dfloat;
+using de::ddouble;
+#endif
+
 /**
  * @file c_wrapper.h
  * libdeng2 C wrapper.
@@ -94,6 +105,7 @@ DENG2_PUBLIC int CommandLine_IsMatchingAlias(const char* original, const char* o
  */
 DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
 DENG2_PUBLIC void LogBuffer_Flush(void);
+DENG2_PUBLIC void LogBuffer_Clear(void);
 
 /*
  * LegacyNetwork
@@ -132,6 +144,26 @@ DENG2_PUBLIC int Info_FindValue(Info* info, const char* path, char* buffer, size
  * UnixInfo
  */
 DENG2_PUBLIC int UnixInfo_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen);
+
+/*
+ * ByteOrder
+ */
+DENG2_PUBLIC dint16 LittleEndianByteOrder_ToForeignInt16(dint16 value);
+DENG2_PUBLIC dint32 LittleEndianByteOrder_ToForeignInt32(dint32 value);
+DENG2_PUBLIC dint64 LittleEndianByteOrder_ToForeignInt64(dint64 value);
+DENG2_PUBLIC duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value);
+DENG2_PUBLIC duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value);
+DENG2_PUBLIC duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value);
+DENG2_PUBLIC dfloat LittleEndianByteOrder_ToForeignFloat(dfloat value);
+DENG2_PUBLIC ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value);
+DENG2_PUBLIC dint16 LittleEndianByteOrder_ToNativeInt16(dint16 value);
+DENG2_PUBLIC dint32 LittleEndianByteOrder_ToNativeInt32(dint32 value);
+DENG2_PUBLIC dint64 LittleEndianByteOrder_ToNativeInt64(dint64 value);
+DENG2_PUBLIC duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value);
+DENG2_PUBLIC duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value);
+DENG2_PUBLIC duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value);
+DENG2_PUBLIC dfloat LittleEndianByteOrder_ToNativeFloat(dfloat value);
+DENG2_PUBLIC ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value);
 
 #ifdef __cplusplus
 } // extern "C"

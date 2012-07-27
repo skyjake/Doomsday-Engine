@@ -58,7 +58,7 @@ typedef struct memblock_s {
     struct memvolume_s* volume; // Volume this block belongs to.
     struct memblock_s* next, *prev;
     struct memblock_s* seqLast, *seqFirst;
-#ifdef LIBDENG_LIBDENG_FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
     void*           area; // The real memory area.
     size_t          areaSize; // Size of the allocated memory area.
 #endif
@@ -105,7 +105,7 @@ struct zblockset_s {
     struct zblockset_block_s* _blocks;
 };
 
-#ifdef LIBDENG_LIBDENG_FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
 memblock_t* Z_GetBlock(void* ptr);
 #else
 // Real memory zone allocates memory from a custom heap.

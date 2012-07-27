@@ -29,8 +29,8 @@
 #ifndef __DOOMSDAY_NETMESSAGE_H__
 #define __DOOMSDAY_NETMESSAGE_H__
 
-#include "reader.h"
-#include "writer.h"
+#include <de/reader.h>
+#include <de/writer.h>
 
 extern Writer* msgWriter;
 extern Reader* msgReader;

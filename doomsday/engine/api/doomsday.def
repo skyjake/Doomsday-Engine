@@ -239,49 +239,49 @@ EXPORTS
     Point3f_Equality            @804 NONAME
 
     ; String.
-    Str_New                     @461 NONAME
-    Str_FromAutoStr             @844 NONAME
-    Str_Init                    @462 NONAME
-    Str_InitStd                 @848 NONAME
-    Str_InitStatic              @756 NONAME
-    Str_Free                    @463 NONAME
-    Str_Delete                  @464 NONAME
-    Str_Clear                   @465 NONAME
-    Str_Reserve                 @466 NONAME
-    Str_Set                     @467 NONAME
-    Str_Append                  @468 NONAME
-    Str_AppendChar              @469 NONAME
-    Str_Appendf                 @470 NONAME
-    Str_PartAppend              @471 NONAME
-    Str_Prepend                 @472 NONAME
-    Str_Length                  @473 NONAME
-    Str_IsEmpty                 @474 NONAME
-    Str_Text                    @475 NONAME
-    Str_Copy                    @476 NONAME
-    Str_CopyOrClear             @843 NONAME
-    Str_StripLeft               @477 NONAME
-    Str_StripLeft2              @761 NONAME
-    Str_StripRight              @478 NONAME
-    Str_StripRight2             @762 NONAME
-    Str_Strip                   @479 NONAME
-    Str_Strip2                  @763 NONAME
-    Str_GetLine                 @480 NONAME
-    Str_CopyDelim2              @481 NONAME
-    Str_CopyDelim               @482 NONAME
-    Str_CompareIgnoreCase       @483 NONAME
-    Str_At                      @484 NONAME
-    Str_RAt                     @485 NONAME
-    Str_Truncate                @498 NONAME
-    Str_PrependChar             @336 NONAME
-    Str_PercentEncode           @757 NONAME
-    Str_PercentEncode2          @758 NONAME
-    Str_PercentDecode           @759 NONAME
-    Str_Write                   @739 NONAME
-    Str_Read                    @740 NONAME
-
-    AutoStr_New                 @845 NONAME
-    AutoStr_NewStd              @846 NONAME
-    AutoStr_FromStr             @847 NONAME
+;    Str_New                     @461 NONAME
+;    Str_FromAutoStr             @844 NONAME
+;    Str_Init                    @462 NONAME
+;    Str_InitStd                 @848 NONAME
+;    Str_InitStatic              @756 NONAME
+;    Str_Free                    @463 NONAME
+;    Str_Delete                  @464 NONAME
+;    Str_Clear                   @465 NONAME
+;    Str_Reserve                 @466 NONAME
+;    Str_Set                     @467 NONAME
+;    Str_Append                  @468 NONAME
+;    Str_AppendChar              @469 NONAME
+;    Str_Appendf                 @470 NONAME
+;    Str_PartAppend              @471 NONAME
+;    Str_Prepend                 @472 NONAME
+;    Str_Length                  @473 NONAME
+;    Str_IsEmpty                 @474 NONAME
+;    Str_Text                    @475 NONAME
+;    Str_Copy                    @476 NONAME
+;    Str_CopyOrClear             @843 NONAME
+;    Str_StripLeft               @477 NONAME
+;    Str_StripLeft2              @761 NONAME
+;    Str_StripRight              @478 NONAME
+;    Str_StripRight2             @762 NONAME
+;    Str_Strip                   @479 NONAME
+;    Str_Strip2                  @763 NONAME
+;    Str_GetLine                 @480 NONAME
+;    Str_CopyDelim2              @481 NONAME
+;    Str_CopyDelim               @482 NONAME
+;    Str_CompareIgnoreCase       @483 NONAME
+;    Str_At                      @484 NONAME
+;    Str_RAt                     @485 NONAME
+;    Str_Truncate                @498 NONAME
+;    Str_PrependChar             @336 NONAME
+;    Str_PercentEncode           @757 NONAME
+;    Str_PercentEncode2          @758 NONAME
+;    Str_PercentDecode           @759 NONAME
+;    Str_Write                   @739 NONAME
+;    Str_Read                    @740 NONAME
+;
+;    AutoStr_New                 @845 NONAME
+;    AutoStr_NewStd              @846 NONAME
+;    AutoStr_FromStr             @847 NONAME
 
     ; StringPool.
     StringPool_New              @537 NONAME
@@ -376,7 +376,7 @@ EXPORTS
 
 ; Base: Misc.
     dd_snprintf                 @447 NONAME
-    dd_vsnprintf                @448 NONAME
+;   dd_vsnprintf                @448 NONAME
 
 ; Base: BusyMode.
     BusyMode_Active             @126 NONAME
@@ -495,6 +495,7 @@ EXPORTS
     P_LoadMap                   @254 NONAME
 
 ; Maps: Map Data Updates and Information Access.
+    DMU_GetType                 @323 NONAME
     P_ToIndex                   @256 NONAME
     P_ToPtr                     @257 NONAME
     P_Callback                  @258 NONAME
@@ -504,7 +505,6 @@ EXPORTS
     ; dummy objects
     P_AllocDummy                @321 NONAME
     P_FreeDummy                 @322 NONAME
-    P_DummyType                 @323 NONAME
     P_IsDummy                   @324 NONAME
     P_DummyExtraData            @325 NONAME
 
@@ -957,44 +957,44 @@ EXPORTS
     DED_DelArray                @195 NONAME
     
 ; Reader.
-    Reader_NewWithBuffer        @547 NONAME
-    Reader_NewWithCallbacks     @743 NONAME
-    Reader_Delete               @548 NONAME
-    Reader_ReadChar             @549 NONAME
-    Reader_ReadByte             @550 NONAME
-    Reader_ReadInt16            @551 NONAME
-    Reader_ReadUInt16           @552 NONAME
-    Reader_ReadInt32            @553 NONAME
-    Reader_ReadUInt32           @554 NONAME
-    Reader_ReadFloat            @555 NONAME
-    Reader_ReadPackedUInt16     @556 NONAME
-    Reader_ReadPackedUInt32     @557 NONAME
-    Reader_Read                 @558 NONAME
-    Reader_AtEnd                @559 NONAME
-    Reader_Pos                  @560 NONAME
-    Reader_SetPos               @561 NONAME
-    Reader_Size                 @562 NONAME
+;    Reader_NewWithBuffer        @547 NONAME
+;    Reader_NewWithCallbacks     @743 NONAME
+;    Reader_Delete               @548 NONAME
+;    Reader_ReadChar             @549 NONAME
+;    Reader_ReadByte             @550 NONAME
+;    Reader_ReadInt16            @551 NONAME
+;    Reader_ReadUInt16           @552 NONAME
+;    Reader_ReadInt32            @553 NONAME
+;    Reader_ReadUInt32           @554 NONAME
+;    Reader_ReadFloat            @555 NONAME
+;    Reader_ReadPackedUInt16     @556 NONAME
+;    Reader_ReadPackedUInt32     @557 NONAME
+;    Reader_Read                 @558 NONAME
+;    Reader_AtEnd                @559 NONAME
+;    Reader_Pos                  @560 NONAME
+;    Reader_SetPos               @561 NONAME
+;    Reader_Size                 @562 NONAME
 
 ; Writer.
-    Writer_NewWithBuffer        @563 NONAME
-    Writer_NewWithDynamicBuffer @564 NONAME
-    Writer_NewWithCallbacks     @742 NONAME
-    Writer_Delete               @565 NONAME
-    Writer_Size                 @566 NONAME
-    Writer_Data                 @567 NONAME
-    Writer_TotalBufferSize      @568 NONAME
-    Writer_BytesLeft            @569 NONAME
-    Writer_SetPos               @570 NONAME
-    Writer_WriteChar            @571 NONAME
-    Writer_WriteByte            @572 NONAME
-    Writer_WriteInt16           @573 NONAME
-    Writer_WriteUInt16          @574 NONAME
-    Writer_WriteInt32           @575 NONAME
-    Writer_WriteUInt32          @576 NONAME
-    Writer_WriteFloat           @577 NONAME
-    Writer_WritePackedUInt16    @578 NONAME
-    Writer_WritePackedUInt32    @579 NONAME
-    Writer_Write                @580 NONAME
+;    Writer_NewWithBuffer        @563 NONAME
+;    Writer_NewWithDynamicBuffer @564 NONAME
+;    Writer_NewWithCallbacks     @742 NONAME
+;    Writer_Delete               @565 NONAME
+;    Writer_Size                 @566 NONAME
+;    Writer_Data                 @567 NONAME
+;    Writer_TotalBufferSize      @568 NONAME
+;    Writer_BytesLeft            @569 NONAME
+;    Writer_SetPos               @570 NONAME
+;    Writer_WriteChar            @571 NONAME
+;    Writer_WriteByte            @572 NONAME
+;    Writer_WriteInt16           @573 NONAME
+;    Writer_WriteUInt16          @574 NONAME
+;    Writer_WriteInt32           @575 NONAME
+;    Writer_WriteUInt32          @576 NONAME
+;    Writer_WriteFloat           @577 NONAME
+;    Writer_WritePackedUInt16    @578 NONAME
+;    Writer_WritePackedUInt32    @579 NONAME
+;    Writer_Write                @580 NONAME
 
 ; Smoother.
 ;   Smoother_IsOnFloor          @581 NONAME

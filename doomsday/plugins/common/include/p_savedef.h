@@ -28,7 +28,7 @@
 #if __JDOOM__
 # define MY_SAVE_MAGIC         0x1DEAD666
 # define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
-# define MY_SAVE_VERSION       10
+# define MY_SAVE_VERSION       11
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "DoomSav"
 # define CLIENTSAVEGAMENAME    "DoomCl"
@@ -40,7 +40,7 @@
 #elif __JDOOM64__
 # define MY_SAVE_MAGIC         0x1D6420F4
 # define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
-# define MY_SAVE_VERSION       10
+# define MY_SAVE_VERSION       11
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "D64Sav"
 # define CLIENTSAVEGAMENAME    "D64Cl"
@@ -52,7 +52,7 @@
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
 # define MY_CLIENT_SAVE_MAGIC  0x1062AF43
-# define MY_SAVE_VERSION       10
+# define MY_SAVE_VERSION       11
 # define CONSISTENCY           0x9d
 # define SAVEGAMENAME          "HticSav"
 # define CLIENTSAVEGAMENAME    "HticCl"
@@ -64,7 +64,7 @@
 #elif __JHEXEN__
 # define MY_SAVE_MAGIC         0x1B17CC00
 # define MY_CLIENT_SAVE_MAGIC  0x2B17CC00
-# define MY_SAVE_VERSION       10
+# define MY_SAVE_VERSION       11
 # define SAVEGAMENAME          "hex"
 # define CLIENTSAVEGAMENAME    "hexencl"
 # define SAVEGAMEEXTENSION     "hxs"

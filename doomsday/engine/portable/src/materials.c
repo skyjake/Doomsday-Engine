@@ -894,7 +894,7 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     return NOMATERIALID;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 materialid_t Materials_ResolveUri(const Uri* uri)
 {
     return Materials_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
@@ -912,7 +912,7 @@ materialid_t Materials_ResolveUriCString2(const char* path, boolean quiet)
     return NOMATERIALID;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 materialid_t Materials_ResolveUriCString(const char* path)
 {
     return Materials_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
@@ -931,7 +931,7 @@ ddstring_t* Materials_ComposePath(materialid_t id)
     return composePathForDirectoryNode(MaterialBind_DirectoryNode(bind), MATERIALS_PATH_DELIMITER);
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 Uri* Materials_ComposeUri(materialid_t id)
 {
     materialbind_t* bind = getMaterialBindForId(id);

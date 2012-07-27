@@ -373,7 +373,8 @@ static int iteratePathsInHash(pathdirectory_pathhash_t* ph, int flags, PathDirec
     PathDirectoryNode* node, *next;
     int result = 0;
 
-    if(ph)
+    if(!ph) return 0;
+
     if(hash != PATHDIRECTORY_NOHASH)
     {
         if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
@@ -436,7 +437,8 @@ static int iteratePathsInHash_Const(const pathdirectory_pathhash_t* ph, int flag
     PathDirectoryNode* node, *next;
     int result = 0;
 
-    if(ph)
+    if(!ph) return 0;
+
     if(hash != PATHDIRECTORY_NOHASH)
     {
         if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
@@ -786,7 +788,7 @@ static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDire
     assert(Str_Length(constructedPath) == parm.length);
 
 #ifdef LIBDENG_STACK_MONITOR
-    LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_INFO,
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
             "pathConstructor: max stack depth: %u bytes\n", (uint)maxStackDepth);
 #endif
 
@@ -1343,12 +1345,14 @@ ushort PathDirectoryNode_Hash(const PathDirectoryNode* node)
 /// @note This routine is also used as an iteration callback, so only return
 ///       a non-zero value when the node is a match for the search term.
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
-    PathMap* searchPattern, void* paramaters)
+    PathMap* searchPattern, void* parameters)
 {
     PathDirectory* pd = PathDirectoryNode_Directory(node);
     const PathMapFragment* sfragment;
     const ddstring_t* fragment;
     uint i, fragmentCount;
+
+    DENG_UNUSED(parameters);
 
     if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
        ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
@@ -1372,6 +1376,8 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
             char buf[256];
             dd_snprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
             fragment = PathDirectory_GetFragment(pd, node);
+            DENG_ASSERT(fragment);
+
             if(!F_MatchFileName(Str_Text(fragment), buf))
             {
                 EXIT_POINT(1);

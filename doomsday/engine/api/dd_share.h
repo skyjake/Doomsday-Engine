@@ -98,8 +98,6 @@ char*           strlwr(char *string);
 #endif
 
 int             dd_snprintf(char* str, size_t size, const char* format, ...);
-int             dd_vsnprintf(char* str, size_t size, const char* format,
-                             va_list ap);
 
     // Format checking for printf-like functions in GCC2
 #if defined(__GNUC__) && __GNUC__ >= 2
@@ -776,6 +774,8 @@ typedef enum sidedefsection_e {
     SS_BOTTOM,
     SS_TOP
 } SideDefSection;
+
+#define VALID_SIDEDEFSECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
 
 /// Helper macro for converting SideDefSection indices to their associated DMU flag. @ingroup map
 #define DMU_FLAG_FOR_SIDEDEFSECTION(s) (\

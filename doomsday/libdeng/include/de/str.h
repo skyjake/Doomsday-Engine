@@ -1,5 +1,5 @@
 /**
- * @file dd_string.h
+ * @file str.h
  * Dynamic text string.
  *
  * Simple dynamic string management. @ingroup base
@@ -19,13 +19,12 @@
  * return value from a function, or when you have strings with a limited scope
  * that need to be deleted after exiting the scope.
  *
- * @todo Rename to Str? (str.h)
  * @todo Make this opaque for better forward compatibility -- prevents initialization
  *       with static C strings, though (which is probably for the better anyway).
  * @todo Derive from Qt::QString
  *
- * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2008-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -45,10 +44,11 @@
 #ifndef LIBDENG_API_STRING_H
 #define LIBDENG_API_STRING_H
 
-#include <stddef.h>
-#include "de/types.h"
+#include "libdeng.h"
+#include "types.h"
 #include "reader.h"
 #include "writer.h"
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,6 +79,11 @@ typedef struct ddstring_s {
 } ddstring_t;
 
 /**
+ * The primary alias for the ddstring struct.
+ */
+typedef struct ddstring_s Str;
+
+/**
  * An alias for ddstring_t that is used with the convention of automatically
  * trashing the string during construction so that it gets deleted during the
  * next recycling. Thus it is useful for strings restricted to the local scope
@@ -102,7 +107,7 @@ typedef ddstring_t AutoStr;
  *
  * @see Str_Delete
  */
-ddstring_t* Str_New(void);
+DENG_PUBLIC Str* Str_New(void);
 
 /**
  * Allocate a new uninitialized string. Use Str_Delete() to destroy
@@ -112,38 +117,38 @@ ddstring_t* Str_New(void);
  *
  * @see Str_Delete
  */
-ddstring_t* Str_NewStd(void);
+DENG_PUBLIC Str* Str_NewStd(void);
 
 /**
  * Constructs a new string by reading it from @a reader.
  * Memory for the string is allocated with de::Zone.
  */
-ddstring_t* Str_NewFromReader(Reader* reader);
+DENG_PUBLIC Str* Str_NewFromReader(Reader* reader);
 
 /**
  * Call this for uninitialized strings. Global variables are
  * automatically cleared, so they don't need initialization.
  */
-ddstring_t* Str_Init(ddstring_t* ds);
+DENG_PUBLIC Str* Str_Init(Str* ds);
 
 /**
  * Call this for uninitialized strings. Makes the string use standard
  * malloc for memory allocations.
  */
-ddstring_t* Str_InitStd(ddstring_t* ds);
+DENG_PUBLIC Str* Str_InitStd(Str* ds);
 
 /**
  * Initializes @a ds with a static const C string. No memory allocation
  * model is selected; use this for strings that remain constant.
  * If the string is never modified calling Str_Free() is not needed.
  */
-ddstring_t* Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
+DENG_PUBLIC Str* Str_InitStatic(Str* ds, const char* staticConstStr);
 
 /**
  * Empty an existing string. After this the string is in the same
  * state as just after being initialized.
  */
-void Str_Free(ddstring_t* ds);
+DENG_PUBLIC void Str_Free(Str* ds);
 
 /**
  * Destroy a string allocated with Str_New(). In addition to freeing
@@ -152,32 +157,34 @@ void Str_Free(ddstring_t* ds);
  *
  * @param ds  String to delete (that was returned by Str_New()).
  */
-void Str_Delete(ddstring_t* ds);
+DENG_PUBLIC void Str_Delete(Str* ds);
 
 /**
  * Empties a string, but does not free its memory.
  */
-ddstring_t* Str_Clear(ddstring_t* ds);
+DENG_PUBLIC Str* Str_Clear(Str* ds);
 
-ddstring_t* Str_Reserve(ddstring_t* ds, int length);
+DENG_PUBLIC Str* Str_Reserve(Str* ds, int length);
 
 /**
  * Reserves memory for the string. There will be at least @a length bytes
  * allocated for the string after this. If the string needs to be resized, its
  * contents are @em not preserved.
  */
-ddstring_t* Str_ReserveNotPreserving(ddstring_t* str, int length);
+DENG_PUBLIC Str* Str_ReserveNotPreserving(Str* str, int length);
 
-ddstring_t* Str_Set(ddstring_t* ds, const char* text);
-ddstring_t* Str_Append(ddstring_t* ds, const char* appendText);
-ddstring_t* Str_AppendChar(ddstring_t* ds, char ch);
+DENG_PUBLIC Str* Str_Set(Str* ds, const char* text);
+
+DENG_PUBLIC Str* Str_Append(Str* ds, const char* appendText);
+
+DENG_PUBLIC Str* Str_AppendChar(Str* ds, char ch);
 
 /**
  * Appends the contents of another string. Enough memory must already be
  * reserved before calling this. Use in situations where good performance is
  * critical.
  */
-ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append);
+DENG_PUBLIC Str* Str_AppendWithoutAllocs(Str* str, const Str* append);
 
 /**
  * Appends a single character. Enough memory must already be reserved before
@@ -186,35 +193,35 @@ ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append);
  * @param str  String.
  * @param ch   Character to append. Cannot be 0.
  */
-ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch);
+DENG_PUBLIC Str* Str_AppendCharWithoutAllocs(Str* str, char ch);
 
 /**
  * Append formated text.
  */
-ddstring_t* Str_Appendf(ddstring_t* ds, const char* format, ...) PRINTF_F(2,3);
+DENG_PUBLIC Str* Str_Appendf(Str* ds, const char* format, ...) PRINTF_F(2,3);
 
 /**
  * Appends a portion of a string.
  */
-ddstring_t* Str_PartAppend(ddstring_t* dest, const char* src, int start, int count);
+DENG_PUBLIC Str* Str_PartAppend(Str* dest, const char* src, int start, int count);
 
 /**
  * Prepend is not even a word, is it? It should be 'prefix'?
  */
-ddstring_t* Str_Prepend(ddstring_t* ds, const char* prependText);
-ddstring_t* Str_PrependChar(ddstring_t* ds, char ch);
+DENG_PUBLIC Str* Str_Prepend(Str* ds, const char* prependText);
+DENG_PUBLIC Str* Str_PrependChar(Str* ds, char ch);
 
 /**
  * This is safe for all strings.
  */
-int Str_Length(const ddstring_t* ds);
+DENG_PUBLIC int Str_Length(const Str* ds);
 
-boolean Str_IsEmpty(const ddstring_t* ds);
+DENG_PUBLIC boolean Str_IsEmpty(const Str* ds);
 
 /**
  * This is safe for all strings.
  */
-char* Str_Text(const ddstring_t* ds);
+DENG_PUBLIC char* Str_Text(const Str* ds);
 
 /**
  * Makes a copy of @a src and replaces the previous contents of @a dest with
@@ -229,9 +236,9 @@ char* Str_Text(const ddstring_t* ds);
  *
  * @return  The @a dest string with the copied content.
  */
-ddstring_t* Str_Copy(ddstring_t* dest, const ddstring_t* src);
+DENG_PUBLIC Str* Str_Copy(Str* dest, const Str* src);
 
-ddstring_t* Str_CopyOrClear(ddstring_t* dest, const ddstring_t* src);
+DENG_PUBLIC Str* Str_CopyOrClear(Str* dest, const Str* src);
 
 /**
  * Strip whitespace from beginning.
@@ -240,8 +247,9 @@ ddstring_t* Str_CopyOrClear(ddstring_t* dest, const ddstring_t* src);
  * @param count  If not @c NULL the number of characters stripped is written here.
  * @return  Same as @a str for caller convenience.
  */
-ddstring_t* Str_StripLeft2(ddstring_t* ds, int* count);
-ddstring_t* Str_StripLeft(ddstring_t* ds);
+DENG_PUBLIC Str* Str_StripLeft2(Str* ds, int* count);
+
+DENG_PUBLIC Str* Str_StripLeft(Str* ds);
 
 /**
  * Strip whitespace from end.
@@ -250,8 +258,9 @@ ddstring_t* Str_StripLeft(ddstring_t* ds);
  * @param count  If not @c NULL the number of characters stripped is written here.
  * @return  Same as @a str for caller convenience.
  */
-ddstring_t* Str_StripRight2(ddstring_t* ds, int* count);
-ddstring_t* Str_StripRight(ddstring_t* ds);
+DENG_PUBLIC Str* Str_StripRight2(Str* ds, int* count);
+
+DENG_PUBLIC Str* Str_StripRight(Str* ds);
 
 /**
  * Strip whitespace from beginning and end.
@@ -260,8 +269,9 @@ ddstring_t* Str_StripRight(ddstring_t* ds);
  * @param count  If not @c NULL the number of characters stripped is written here.
  * @return  Same as @a str for caller convenience.
  */
-ddstring_t* Str_Strip2(ddstring_t* ds, int* count);
-ddstring_t* Str_Strip(ddstring_t* ds);
+DENG_PUBLIC Str* Str_Strip2(Str* ds, int* count);
+
+DENG_PUBLIC Str* Str_Strip(Str* ds);
 
 /**
  * Extract a line of text from the source.
@@ -269,7 +279,7 @@ ddstring_t* Str_Strip(ddstring_t* ds);
  * @param ds   String instance where to put the extracted line.
  * @param src  Source string. Must be @c NULL terminated.
  */
-const char* Str_GetLine(ddstring_t* ds, const char* src);
+DENG_PUBLIC const char* Str_GetLine(Str* ds, const char* src);
 
 /**
  * @defgroup copyDelimiterFlags Copy Delimiter Flags
@@ -290,18 +300,19 @@ const char* Str_GetLine(ddstring_t* ds, const char* src);
  * @return              Pointer to the character within @a src where copy stopped
  *                      else @c NULL if the end was reached.
  */
-const char* Str_CopyDelim2(ddstring_t* dest, const char* src, char delimiter, int cdflags);
-const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter);
+DENG_PUBLIC const char* Str_CopyDelim2(Str* dest, const char* src, char delimiter, int cdflags);
+
+DENG_PUBLIC const char* Str_CopyDelim(Str* dest, const char* src, char delimiter);
 
 /**
  * Case sensitive comparison.
  */
-int Str_Compare(const ddstring_t* str, const char* text);
+DENG_PUBLIC int Str_Compare(const Str* str, const char* text);
 
 /**
  * Non case sensitive comparison.
  */
-int Str_CompareIgnoreCase(const ddstring_t* ds, const char* text);
+DENG_PUBLIC int Str_CompareIgnoreCase(const Str* ds, const char* text);
 
 /**
  * Retrieves a character in the string.
@@ -311,7 +322,7 @@ int Str_CompareIgnoreCase(const ddstring_t* ds, const char* text);
  *
  * @return              The character at @c index, or 0 if the index is not in range.
  */
-char Str_At(const ddstring_t* str, int index);
+DENG_PUBLIC char Str_At(const Str* str, int index);
 
 /**
  * Retrieves a character in the string. Indices start from the end of the string.
@@ -321,9 +332,9 @@ char Str_At(const ddstring_t* str, int index);
  *
  * @return              The character at @c index, or 0 if the index is not in range.
  */
-char Str_RAt(const ddstring_t* str, int reverseIndex);
+DENG_PUBLIC char Str_RAt(const Str* str, int reverseIndex);
 
-void Str_Truncate(ddstring_t* str, int position);
+DENG_PUBLIC void Str_Truncate(Str* str, int position);
 
 /**
  * Percent-encode characters in string. Will encode the default set of
@@ -332,7 +343,7 @@ void Str_Truncate(ddstring_t* str, int position);
  * @param str           String instance.
  * @return              Same as @a str.
  */
-ddstring_t* Str_PercentEncode(ddstring_t* str);
+DENG_PUBLIC Str* Str_PercentEncode(Str* str);
 
 /**
  * Percent-encode characters in string.
@@ -343,7 +354,7 @@ ddstring_t* Str_PercentEncode(ddstring_t* str);
  *                      @a excludeChars). @c 0 terminated.
  * @return              Same as @a str.
  */
-ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeChars);
+DENG_PUBLIC Str* Str_PercentEncode2(Str* str, const char* excludeChars, const char* includeChars);
 
 /**
  * Decode the percent-encoded string. Will match codes for the unicode
@@ -352,17 +363,18 @@ ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const 
  * @param str           String instance.
  * @return              Same as @a str.
  */
-ddstring_t* Str_PercentDecode(ddstring_t* str);
+DENG_PUBLIC Str* Str_PercentDecode(Str* str);
 
-void Str_Write(const ddstring_t* str, Writer* writer);
+DENG_PUBLIC void Str_Write(const Str* str, Writer* writer);
 
-void Str_Read(ddstring_t* str, Reader* reader);
+DENG_PUBLIC void Str_Read(Str* str, Reader* reader);
 
 /*
  * AutoStr
  */
-AutoStr* AutoStr_New(void);
-AutoStr* AutoStr_NewStd(void);
+DENG_PUBLIC AutoStr* AutoStr_New(void);
+
+DENG_PUBLIC AutoStr* AutoStr_NewStd(void);
 
 /**
  * Converts a ddstring to an AutoStr. After this you are not allowed
@@ -376,7 +388,7 @@ AutoStr* AutoStr_NewStd(void);
  * @return  AutoStr instance. The returned instance is @a str after
  * having been trashed.
  */
-AutoStr* AutoStr_FromStr(ddstring_t* str);
+DENG_PUBLIC AutoStr* AutoStr_FromStr(Str* str);
 
 /**
  * Constructs an AutoStr instance (zone allocated) and initializes its
@@ -386,7 +398,7 @@ AutoStr* AutoStr_FromStr(ddstring_t* str);
  *
  * @return  AutoStr instance.
  */
-AutoStr* AutoStr_FromText(const char* text);
+DENG_PUBLIC AutoStr* AutoStr_FromText(const char* text);
 
 /**
  * Converts an AutoStr to a normal ddstring. You must call Str_Delete()
@@ -399,10 +411,26 @@ AutoStr* AutoStr_FromText(const char* text);
  * @return  ddstring instance. The returned instance is @a as after
  * having been taken out of the garbage.
  */
-ddstring_t* Str_FromAutoStr(AutoStr* as);
+DENG_PUBLIC Str* Str_FromAutoStr(AutoStr* as);
+
+/**
+ * Prints a formatted string into a fixed-size buffer. At most @c size
+ * characters will be written to the output buffer @c str. The output will
+ * always contain a terminating null character.
+ *
+ * @param str     Output buffer.
+ * @param size    Size of the output buffer.
+ * @param format  Format of the output.
+ * @param ap      Variable-size argument list.
+ *
+ * @return  Number of characters written to the output buffer if lower than or
+ * equal to @c size, else @c -1.
+ */
+DENG_PUBLIC int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap);
 
 #ifdef __cplusplus
 } // extern "C"
+#  include "str.hh" // C++ wrapper for ddstring_t
 #endif
 
 #endif /* LIBDENG_API_STRING_H */

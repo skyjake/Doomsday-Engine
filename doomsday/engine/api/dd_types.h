@@ -120,7 +120,7 @@ struct plane_s;
 struct surface_s;
 struct material_s;
 
-#include "dd_string.h"
+#include "de/ddstring.h"
 #include "uri.h"
 
 #endif /* ENGINE_TYPES_H */

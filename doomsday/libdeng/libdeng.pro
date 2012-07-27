@@ -23,6 +23,15 @@ win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
 }
+# Enable strict warnings.
+*-g++|*-gcc|*-clang* {
+    warnOpts = -Wall -Wextra -pedantic -Wno-long-long
+    QMAKE_CFLAGS_WARN_ON   *= $$warnOpts
+    QMAKE_CXXFLAGS_WARN_ON *= $$warnOpts
+}
+win32-msvc* {
+    #QMAKE_CXXFLAGS_WARN_ON ~= s/-W3/-W4/
+}
 
 INCLUDEPATH += src include include/de
 
@@ -37,27 +46,39 @@ DEFINES += __DENG__ __DOOMSDAY__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
+deng_writertypecheck {
+    DEFINES += DENG_WRITER_TYPECHECK
+}
+
 # Source Files ---------------------------------------------------------------
 
 # Public headers
 HEADERS += \
     include/de/concurrency.h \
+    include/de/ddstring.h \
     include/de/garbage.h \
     include/de/libdeng.h \
     include/de/memory.h \
     include/de/memoryzone.h \
+    include/de/reader.h \
     include/de/smoother.h \
-    include/de/types.h
+    include/de/str.h \
+    include/de/str.hh \
+    include/de/types.h \
+    include/de/writer.h
 
 # Sources and private headers
 SOURCES += \
     src/concurrency.cpp \
     src/garbage.cpp \
+    src/libdeng.c \
     src/memory.c \
     src/memoryzone.c \
     src/memoryzone_private.h \
+    src/reader.c \
     src/smoother.cpp \
-    src/libdeng.c
+    src/str.c \
+    src/writer.c
 
 # Installation ---------------------------------------------------------------
 
@@ -69,6 +90,7 @@ macx {
         doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
         doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @executable_path/../Frameworks/$$1 libdeng1.1.dylib")
     }
+    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng1.1.dylib libdeng1.1.dylib")
     fixDengLinkage("QtCore.framework/Versions/4/QtCore")
     fixDengLinkage("QtNetwork.framework/Versions/4/QtNetwork")
     fixDengLinkage("QtGui.framework/Versions/4/QtGui")

@@ -192,7 +192,10 @@ void FR_SetFont(fontid_t num)
 {
     errorIfNotInited("FR_SetFont");
     if(!Fonts_ToFont(num))
+    {
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING, "Requested invalid font %i.\n", num);
         return; // No such font.
+    }
     fr.fontNum = num;
 }
 

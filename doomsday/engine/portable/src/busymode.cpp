@@ -31,9 +31,8 @@
 #include "render/busyvisual.h"
 
 #include "de/c_wrapper.h"
+#include <de/Log>
 #include <QEventLoop>
-
-extern "C" LegacyCore* de2LegacyCore; // from dd_init.cpp
 
 static QEventLoop* eventLoop;
 
@@ -75,11 +74,11 @@ timespan_t BusyMode_ElapsedTime(void)
 boolean BusyMode_IsWorkerThread(uint threadId)
 {
     boolean result;
-    if(!BusyMode_Active()) return false;
+    if(!BusyMode_Active() || !busyThread) return false;
 
     /// @todo Is locking necessary?
     Sys_Lock(busy_Mutex);
-    result = Sys_ThreadId(busyThread) == threadId;
+    result = (Sys_ThreadId(busyThread) == threadId);
     Sys_Unlock(busy_Mutex);
     return result;
 }
@@ -93,6 +92,20 @@ BusyTask* BusyMode_CurrentTask(void)
 {
     if(!BusyMode_Active()) return NULL;
     return busyTask;
+}
+
+/**
+ * Callback that is called from the busy worker thread when it exists.
+ * @param status Exit status.
+ */
+static void busyWorkerTerminated(systhreadexitstatus_t status)
+{
+    DENG_ASSERT(BusyMode_Active());
+
+    if(status == DENG_THREAD_STOPPED_WITH_EXCEPTION)
+    {
+        BusyMode_WorkerError("Uncaught exception from busy thread.");
+    }
 }
 
 /**
@@ -126,6 +139,7 @@ static void beginTask(BusyTask* task)
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(busyTask->worker, busyTask->workerData);
+    Thread_SetCallback(busyThread, busyWorkerTerminated);
 
     // Switch the engine loop and window to the busy mode.
     LegacyCore_SetLoopFunc(BusyMode_Loop);
@@ -141,6 +155,7 @@ static void beginTask(BusyTask* task)
 static void endTask(BusyTask* task)
 {
     DENG_ASSERT(task);
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(verbose)
     {
@@ -220,6 +235,7 @@ static void preBusySetup(int initialMode)
     LegacyCore_SetLoopRate(60);
     LegacyCore_SetLoopFunc(NULL); // don't call main loop's func while busy
 
+    BusyVisual_PrepareFont();
     BusyVisual_LoadTextures();
 
     Window_SetDrawFunc(Window_Main(), 0);
@@ -379,13 +395,14 @@ static void stopEventLoopWithValue(int result)
 static void BusyMode_Exit(void)
 {
     int result;
+    systhreadexitstatus_t status;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     busyDone = true;
 
     // Make sure the worker finishes before we continue.
-    result = Sys_WaitThread(busyThread, busyTaskEndedWithError? 100 : 5000);
+    result = Sys_WaitThread(busyThread, busyTaskEndedWithError? 100 : 5000, &status);
     busyThread = NULL;
     busyTask   = NULL;
 

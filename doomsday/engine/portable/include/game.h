@@ -25,7 +25,7 @@
 #define LIBDENG_GAME_H
 
 #include "dd_plugin.h"
-#include "dd_string.h"
+#include <de/ddstring.h>
 
 struct AbstractResource_s;
 struct gamedef_s;

@@ -23,7 +23,7 @@
 #ifndef LIBDENG_AUDIO_DRIVER_H
 #define LIBDENG_AUDIO_DRIVER_H
 
-#include "dd_string.h"
+#include <de/str.h>
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
 #include "sys_audiod_mus.h"

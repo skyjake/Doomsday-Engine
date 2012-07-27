@@ -29,8 +29,9 @@
 #include <string.h>
 
 #include "jhexen.h"
-#include "d_net.h"
 
+#include "dmu_lib.h"
+#include "d_net.h"
 #include "p_tick.h" // for P_IsPaused
 #include "g_common.h"
 #include "p_inventory.h"

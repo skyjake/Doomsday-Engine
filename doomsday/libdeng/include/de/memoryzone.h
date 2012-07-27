@@ -2,7 +2,7 @@
  * @file memoryzone.h
  * Memory zone. @ingroup memzone
  *
- * Define LIBDENG_LIBDENG_FAKE_MEMORY_ZONE to force all memory blocks to be allocated
+ * Define LIBDENG_FAKE_MEMORY_ZONE to force all memory blocks to be allocated
  * from the real heap. Useful when debugging memory-related problems.
  *
  * @authors Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

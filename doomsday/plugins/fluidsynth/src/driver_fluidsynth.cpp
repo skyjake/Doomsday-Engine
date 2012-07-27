@@ -52,9 +52,9 @@ int DS_Init(void)
         return true; // Already initialized.
     }
 
+    // Set up a reasonable configuration.
     fsConfig = new_fluid_settings();
-
-    // TODO: configure fluidsynth
+    fluid_settings_setnum(fsConfig, "synth.gain", 0.4);
 
     // Create the synthesizer.
     fsSynth = new_fluid_synth(fsConfig);

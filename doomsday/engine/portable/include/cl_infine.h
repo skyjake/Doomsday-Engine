@@ -28,7 +28,7 @@
 #ifndef LIBDENG_CLIENT_INFINE
 #define LIBDENG_CLIENT_INFINE
 
-#include "reader.h"
+#include <de/reader.h>
 
 finaleid_t Cl_CurrentFinale(void);
 

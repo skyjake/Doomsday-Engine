@@ -32,6 +32,12 @@ typedef int (*systhreadfunc_t) (void* parm);
 typedef void* mutex_t;
 typedef void* sem_t;
 
+typedef enum systhreadexitstatus_e {
+    DENG_THREAD_STOPPED_NORMALLY,
+    DENG_THREAD_STOPPED_WITH_FORCE, // terminated
+    DENG_THREAD_STOPPED_WITH_EXCEPTION
+} systhreadexitstatus_t;
+
 #ifdef __cplusplus
 
 #ifdef __DENG__ // libdeng internal
@@ -50,6 +56,8 @@ public:
 
     void run();
     int exitValue() const;
+    systhreadexitstatus_t exitStatus() const;
+    void setTerminationFunc(void (*func)(systhreadexitstatus_t));
 
 protected slots:
     void deleteNow();
@@ -58,6 +66,8 @@ private:
     systhreadfunc_t _callback;
     void* _parm;
     int _returnValue;
+    systhreadexitstatus_t _exitStatus;
+    void (*_terminationFunc)(systhreadexitstatus_t);
 };
 #endif // __DENG__
 
@@ -88,15 +98,27 @@ DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
 DENG_PUBLIC void Thread_Sleep(int milliseconds);
 
 /**
+ * Sets a callback function that is called from the worker thread right before
+ * it exits. The callback is given the exit status of the thread as a
+ * parameter.
+ *
+ * @param thread           Thread handle.
+ * @param terminationFunc  Callback to call before terminating the thread.
+ */
+DENG_PUBLIC void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitstatus_t));
+
+/**
  * Wait for a thread to stop. If the thread does not stop after @a timeoutMs,
  * it will be forcibly terminated.
  *
- * @param handle     Thread handle.
- * @param timeoutMs  How long to wait until the thread terminates.
+ * @param handle      Thread handle.
+ * @param timeoutMs   How long to wait until the thread terminates.
+ * @param exitStatus  If not @c NULL, the exit status is returned here.
+ *                    @c true for normal exit, @c false if exception was caught.
  *
  * @return  Return value of the thread.
  */
-DENG_PUBLIC int Sys_WaitThread(thread_t handle, int timeoutMs);
+DENG_PUBLIC int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t* exitStatus);
 
 /**
  * @param handle  Handle to the thread to return the id of.

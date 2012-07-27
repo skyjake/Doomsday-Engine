@@ -35,6 +35,7 @@
 #endif
 
 #include <assert.h>
+#include <stddef.h>
 
 /*
  * The DENG_PUBLIC macro is used for declaring exported symbols. It must be

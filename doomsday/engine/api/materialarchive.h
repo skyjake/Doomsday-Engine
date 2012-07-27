@@ -25,8 +25,8 @@
 #ifndef LIBDENG_MATERIALARCHIVE_H
 #define LIBDENG_MATERIALARCHIVE_H
 
-#include "writer.h"
-#include "reader.h"
+#include <de/writer.h>
+#include <de/reader.h>
 
 #ifdef __cplusplus
 extern "C" {

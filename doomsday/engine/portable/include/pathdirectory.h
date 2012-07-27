@@ -25,7 +25,7 @@
 #ifndef LIBDENG_PATHDIRECTORY_H
 #define LIBDENG_PATHDIRECTORY_H
 
-#include "dd_string.h"
+#include <de/str.h>
 #include "pathmap.h"
 
 /**

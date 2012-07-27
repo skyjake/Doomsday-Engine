@@ -26,6 +26,7 @@
 #include "de/ByteRefArray"
 #include "de/Block"
 #include "de/LogBuffer"
+#include "de/ByteOrder"
 #include "de/Info"
 #include <QFile>
 #include <cstring>
@@ -232,6 +233,11 @@ void LogBuffer_Flush(void)
     de::LogBuffer::appBuffer().flush();
 }
 
+void LogBuffer_Clear(void)
+{
+    de::LogBuffer::appBuffer().clear();
+}
+
 void LogBuffer_EnableStandardOutput(int enable)
 {
 	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
@@ -411,4 +417,100 @@ int UnixInfo_GetConfigValue(const char* configFile, const char* key, char* dest,
         return true;
     }
     return false;
+}
+
+dint16 LittleEndianByteOrder_ToForeignInt16(dint16 value)
+{
+    DENG2_ASSERT(sizeof(dint16) == sizeof(de::dint16));
+    return de::littleEndianByteOrder.toForeign(de::dint16(value));
+}
+
+dint32 LittleEndianByteOrder_ToForeignInt32(dint32 value)
+{
+    DENG2_ASSERT(sizeof(dint32) == sizeof(de::dint32));
+    return de::littleEndianByteOrder.toForeign(de::dint32(value));
+}
+
+dint64 LittleEndianByteOrder_ToForeignInt64(dint64 value)
+{
+    DENG2_ASSERT(sizeof(dint64) == sizeof(de::dint64));
+    return de::littleEndianByteOrder.toForeign(de::dint64(value));
+}
+
+duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value)
+{
+    DENG2_ASSERT(sizeof(duint16) == sizeof(de::duint16));
+    return de::littleEndianByteOrder.toForeign(de::duint16(value));
+}
+
+duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value)
+{
+    DENG2_ASSERT(sizeof(duint32) == sizeof(de::duint32));
+    return de::littleEndianByteOrder.toForeign(de::duint32(value));
+}
+
+duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value)
+{
+    DENG2_ASSERT(sizeof(duint64) == sizeof(de::duint64));
+    return de::littleEndianByteOrder.toForeign(de::duint64(value));
+}
+
+dfloat LittleEndianByteOrder_ToForeignFloat(dfloat value)
+{
+    DENG2_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
+    return de::littleEndianByteOrder.toForeign(de::dfloat(value));
+}
+
+ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value)
+{
+    DENG2_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
+    return de::littleEndianByteOrder.toForeign(de::ddouble(value));
+}
+
+dint16 LittleEndianByteOrder_ToNativeInt16(dint16 value)
+{
+    DENG2_ASSERT(sizeof(dint16) == sizeof(de::dint16));
+    return de::littleEndianByteOrder.toNative(de::dint16(value));
+}
+
+dint32 LittleEndianByteOrder_ToNativeInt32(dint32 value)
+{
+    DENG2_ASSERT(sizeof(dint32) == sizeof(de::dint32));
+    return de::littleEndianByteOrder.toNative(de::dint32(value));
+}
+
+dint64 LittleEndianByteOrder_ToNativeInt64(dint64 value)
+{
+    DENG2_ASSERT(sizeof(dint64) == sizeof(de::dint64));
+    return de::littleEndianByteOrder.toNative(de::dint64(value));
+}
+
+duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value)
+{
+    DENG2_ASSERT(sizeof(duint16) == sizeof(de::duint16));
+    return de::littleEndianByteOrder.toNative(de::duint16(value));
+}
+
+duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value)
+{
+    DENG2_ASSERT(sizeof(duint32) == sizeof(de::duint32));
+    return de::littleEndianByteOrder.toNative(de::duint32(value));
+}
+
+duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value)
+{
+    DENG2_ASSERT(sizeof(duint64) == sizeof(de::duint64));
+    return de::littleEndianByteOrder.toNative(de::duint64(value));
+}
+
+dfloat LittleEndianByteOrder_ToNativeFloat(dfloat value)
+{
+    DENG2_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
+    return de::littleEndianByteOrder.toNative(de::dfloat(value));
+}
+
+ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value)
+{
+    DENG2_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
+    return de::littleEndianByteOrder.toNative(de::ddouble(value));
 }

@@ -1,30 +1,29 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file de/writer.h
+ * Serializer for writing values and data into a byte array.
+ * @ingroup base
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include "de_misc.h"
-#include "de_console.h"
-#include "net_buf.h"
-#include "writer.h"
+#include "de/writer.h"
+#include "de/memory.h"
+#include <string.h>
+#include <de/c_wrapper.h>
 
 #ifdef DENG_WRITER_TYPECHECK
 #  define Writer_TypeCheck(w, code)  w->data[w->pos++] = code;
@@ -59,11 +58,12 @@ static boolean Writer_Check(const Writer* writer, size_t len)
     if(len) len++;
 #endif
 
+    DENG_ASSERT(writer);
+    DENG_ASSERT(writer->data || writer->useCustomFuncs);
+
     if(!writer || (!writer->data && !writer->useCustomFuncs))
-    {
-        Con_Message("Writer_Check: Invalid Writer!\n");
         return false;
-    }
+
     if(writer->useCustomFuncs)
     {
         // Not our responsibility.
@@ -89,21 +89,15 @@ static boolean Writer_Check(const Writer* writer, size_t len)
             if((int)writer->pos <= (int)writer->size - (int)len)
                 return true;
         }
-        Con_Error("Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.\n",
-                  (unsigned long) writer->pos,
-                  (unsigned long) len,
-                  (unsigned long) writer->size,
-                  writer->isDynamic);
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_ERROR,
+            "Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.\n",
+                (unsigned long) writer->pos,
+                (unsigned long) len,
+                (unsigned long) writer->size,
+                writer->isDynamic);
+        LegacyCore_FatalError("Writer bounds check failed.");
     }
     return true;
-}
-
-Writer* Writer_New(void)
-{
-    Writer* w = M_Calloc(sizeof(Writer));
-    w->size = NETBUFFER_MAXSIZE;
-    w->data = netBuffer.msg.data;
-    return w;
 }
 
 Writer* Writer_NewWithBuffer(byte* buffer, size_t maxLen)
@@ -220,7 +214,7 @@ void Writer_WriteInt16(Writer* writer, int16_t v)
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_INT16);
-            *(int16_t*) (writer->data + writer->pos) = SHORT(v);
+            *(int16_t*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignInt16(v);
             writer->pos += 2;
         }
         else
@@ -238,7 +232,7 @@ void Writer_WriteUInt16(Writer* writer, uint16_t v)
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_UINT16);
-            *(uint16_t*) (writer->data + writer->pos) = USHORT(v);
+            *(uint16_t*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignUInt16(v);
             writer->pos += 2;
         }
         else
@@ -256,7 +250,7 @@ void Writer_WriteInt32(Writer* writer, int32_t v)
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_INT32);
-            *(int32_t*) (writer->data + writer->pos) = LONG(v);
+            *(int32_t*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignInt32(v);
             writer->pos += 4;
         }
         else
@@ -274,7 +268,7 @@ void Writer_WriteUInt32(Writer* writer, uint32_t v)
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_UINT32);
-            *(uint32_t*) (writer->data + writer->pos) = ULONG(v);
+            *(uint32_t*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignUInt32(v);
             writer->pos += 4;
         }
         else
@@ -292,7 +286,7 @@ void Writer_WriteFloat(Writer* writer, float v)
         if(!writer->useCustomFuncs)
         {
             Writer_TypeCheck(writer, WTCC_FLOAT);
-            *(float*) (writer->data + writer->pos) = FLOAT(v);
+            *(float*) (writer->data + writer->pos) = LittleEndianByteOrder_ToForeignFloat(v);
             writer->pos += 4;
         }
         else
@@ -327,13 +321,15 @@ void Writer_WritePackedUInt16(Writer* writer, uint16_t v)
 {
     if(v & 0x8000)
     {
-        Con_Error("Writer_WritePackedUInt16: Cannot write %i (%x).\n", v, v);
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_ERROR,
+            "Writer_WritePackedUInt16: Cannot write %i (%x).\n", v, v);
+        return;
     }
 
     // Can the number be represented with 7 bits?
     if(v < 0x80)
     {
-        Writer_WriteByte(writer, v);
+        Writer_WriteByte(writer, (dbyte) v);
     }
     else
     {

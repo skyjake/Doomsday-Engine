@@ -47,6 +47,7 @@ HEADERS += \
     $$common_inc/p_savedef.h \
     $$common_inc/p_saveg.h \
     $$common_inc/p_saveio.h \
+    $$common_inc/p_scroll.h \
     $$common_inc/p_sound.h \
     $$common_inc/p_start.h \
     $$common_inc/p_switch.h \
@@ -100,6 +101,7 @@ SOURCES += \
     $$common_src/p_player.c \
     $$common_src/p_saveg.c \
     $$common_src/p_saveio.c \
+    $$common_src/p_scroll.c \
     $$common_src/p_sound.c \
     $$common_src/p_start.c \
     $$common_src/p_switch.c \

@@ -182,7 +182,7 @@ typedef duint32 duint;      ///< 32-bit unsigned integer.
 typedef qint64  dint64;     ///< 64-bit signed integer.
 typedef quint64 duint64;    ///< 64-bit unsigned integer.
 typedef float   dfloat;     ///< 32-bit floating point number.
-typedef qreal   ddouble;    ///< 64-bit floating point number.
+typedef double  ddouble;    ///< 64-bit floating point number.
 typedef quint64 dsize;
 
 // Pointer-integer conversion (used for legacy code).
@@ -202,8 +202,26 @@ typedef duint32 dintptr;
 /*
  * Data types for C APIs.
  */
+#ifdef _MSC_VER
+typedef short           dint16;
+typedef unsigned short  duint16;
+typedef int             dint32;
+typedef unsigned int    duint32;
+typedef long long       dint64;
+typedef unsigned long long duint64;
+#else
+#  include <stdint.h>
+typedef int16_t         dint16;
+typedef uint16_t        duint16;
+typedef int32_t         dint32;
+typedef uint32_t        duint32;
+typedef int64_t         dint64;
+typedef uint64_t        duint64;
+#endif
 typedef unsigned char   dbyte;
 typedef unsigned int    duint;  // 32-bit
+typedef float           dfloat;
+typedef double          ddouble;
 
 #ifdef DENG2_64BIT
 typedef uint64_t        dsize;  // 64-bit size
@@ -211,6 +229,6 @@ typedef uint64_t        dsize;  // 64-bit size
 typedef unsigned int    dsize;  // 32-bit size
 #endif
 
-#endif
+#endif // !__cplusplus
 
 #endif // LIBDENG2_H

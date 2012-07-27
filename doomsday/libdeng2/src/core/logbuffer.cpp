@@ -60,7 +60,9 @@ void LogBuffer::clear()
 {
     DENG2_GUARD(this);
 
+    // Flush first, we don't want to miss any messages.
     flush();
+
     DENG2_FOR_EACH(EntryList, i, _entries)
     {
         delete *i;

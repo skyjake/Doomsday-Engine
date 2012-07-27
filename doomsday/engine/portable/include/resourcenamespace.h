@@ -25,7 +25,6 @@
 #ifndef LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 #define LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 
-#include "dd_string.h"
 #include "uri.h"
 
 typedef enum {

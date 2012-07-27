@@ -22,17 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh - DOOM specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 #include <assert.h>
 
 #include "jdoom.h"
 
+#include "dmu_lib.h"
 #include "hu_menu.h"
 #include "hu_stuff.h"
 #include "hu_pspr.h"
@@ -46,25 +41,7 @@
 #include "p_tick.h"
 #include "hu_automap.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float quitDarkenOpacity = 0;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Draws a special filter over the screen (e.g. the inversing filter used
@@ -450,7 +427,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
      * The torches often go into the ceiling. This'll prevent them from
      * 'jumping' when they do.
      *
-     * \todo Add a thing def flag for this.
+     * @todo Add a thing def flag for this.
      */
     if(mo->type == MT_MISC41 || mo->type == MT_MISC42 || mo->type == MT_MISC43 || // tall torches
        mo->type == MT_MISC44 || mo->type == MT_MISC45 || mo->type == MT_MISC46)  // short torches
@@ -469,13 +446,10 @@ void P_SetDoomsdayFlags(mobj_t *mo)
     Mobj_UpdateColorMap(mo);
 }
 
-/**
- * Updates the status flags for all visible things.
- */
 void R_SetAllDoomsdayFlags(void)
 {
-    uint                i;
-    mobj_t             *iter;
+    mobj_t* iter;
+    uint i;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)

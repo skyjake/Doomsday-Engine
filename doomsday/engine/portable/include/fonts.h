@@ -50,7 +50,6 @@
 #ifndef LIBDENG_REFRESH_FONTS_H
 #define LIBDENG_REFRESH_FONTS_H
 
-#include "dd_string.h"
 #include "uri.h"
 #include "def_data.h"
 

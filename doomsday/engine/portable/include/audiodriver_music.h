@@ -29,7 +29,7 @@
 #ifndef LIBDENG_AUDIODRIVER_MUSIC_H
 #define LIBDENG_AUDIODRIVER_MUSIC_H
 
-#include "dd_string.h"
+#include <de/str.h>
 #include "audiodriver.h"
 
 #ifdef __cplusplus

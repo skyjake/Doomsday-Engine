@@ -36,12 +36,21 @@
 /// a new log section.
 #define LOG_AS(sectionName) \
     de::Log::Section __logSection = de::Log::Section(sectionName);
-    
-/// Macro for accessing the local log of the current thread and entering
-/// a new log section with a std::string variable based name.
+
+/**
+ * Macro for accessing the local log of the current thread and entering
+ * a new log section with a de::String variable based name.
+ *
+ * @param str  Anything out of which a de::String can be constructed.
+ *
+ * @note Log::Section doesn't own the strings passed in; we have to
+ * ensure that the string exists in memory as long as the section (scope)
+ * is valid.
+ */
 #define LOG_AS_STRING(str) \
     de::String __logSectionName = str; \
-    LOG_AS(__logSectionName.c_str());
+    de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
+    LOG_AS(__logSectionUtf8.constData());
 
 #define LOG_TRACE(str)      LOG().enter(de::Log::TRACE, str)
 #define LOG_DEBUG(str)      LOG().enter(de::Log::DEBUG, str)
@@ -259,18 +268,18 @@ public:
         };
 
     public:
-        Arg(dint i) : _type(INTEGER) { _data.intValue = i; }
-        Arg(duint i) : _type(INTEGER) { _data.intValue = i; }
-        Arg(long unsigned int i) : _type(INTEGER) { _data.intValue = i; }
-        Arg(duint64 i) : _type(INTEGER) { _data.intValue = dint64(i); }
-        Arg(dint64 i) : _type(INTEGER) { _data.intValue = i; }
-        Arg(ddouble d) : _type(FLOATING_POINT) { _data.floatValue = d; }
-        Arg(const void* p) : _type(INTEGER) { _data.intValue = dint64(p); }
+        Arg(dint i)              : _type(INTEGER)        { _data.intValue   = i; }
+        Arg(duint i)             : _type(INTEGER)        { _data.intValue   = i; }
+        Arg(long unsigned int i) : _type(INTEGER)        { _data.intValue   = i; }
+        Arg(duint64 i)           : _type(INTEGER)        { _data.intValue   = dint64(i); }
+        Arg(dint64 i)            : _type(INTEGER)        { _data.intValue   = i; }
+        Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue = d; }
+        Arg(const void* p)       : _type(INTEGER)        { _data.intValue   = dint64(p); }
         Arg(const char* s) : _type(STRING) {
             _data.stringValue = new String(s);
         }
         Arg(const String& s) : _type(STRING) {
-            _data.stringValue = new String(s);
+            _data.stringValue = new String(s.data(), s.size());
         }
         Arg(const Base& arg) : _type(arg.logEntryArgType()) {
             switch(_type) {
@@ -280,9 +289,10 @@ public:
             case FLOATING_POINT:
                 _data.floatValue = arg.asDouble();
                 break;
-            case STRING:
-                _data.stringValue = new String(arg.asText());
-                break;
+            case STRING: {
+                String s = arg.asText();
+                _data.stringValue = new String(s.data(), s.size());
+                break; }
             }
         }
         ~Arg() {
@@ -313,8 +323,7 @@ public:
             else if(_type == FLOATING_POINT) {
                 return _data.floatValue;
             }
-            throw TypeError("Log::Arg::asNumber",
-                "String argument cannot be used as a number");
+            throw TypeError("Log::Arg::asNumber", "String argument cannot be used as a number");
         }
         String asText() const {
             if(_type == STRING) {
@@ -326,8 +335,7 @@ public:
             else if(_type == FLOATING_POINT) {
                 return String::number(_data.floatValue);
             }
-            throw TypeError("Log::Arg::asText",
-                "Number argument cannot be used a string");
+            throw TypeError("Log::Arg::asText", "Number argument cannot be used a string");
         }
 
     private:
@@ -356,6 +364,7 @@ public:
     DENG2_ERROR(IllegalFormatError)
 
 public:
+    LogEntry();
     LogEntry(Log::LogLevel level, const String& section, const String& format);
     ~LogEntry();
 

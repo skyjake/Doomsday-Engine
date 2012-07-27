@@ -282,7 +282,7 @@ static void stopPlayer()
         DSFLUIDSYNTH_TRACE("stopPlayer: Stopping thread " << worker);
 
         workerShouldStop = true;
-        Sys_WaitThread(worker, 1000);
+        Sys_WaitThread(worker, 1000, NULL);
         worker = 0;
 
         DSFLUIDSYNTH_TRACE("stopPlayer: Thread stopped.");

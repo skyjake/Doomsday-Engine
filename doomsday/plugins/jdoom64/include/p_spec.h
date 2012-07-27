@@ -58,10 +58,10 @@ enum {
 void            P_InitPicAnims(void);
 
 // at map load
-void            P_SpawnSpecials(void);
+void P_SpawnSectorSpecialThinkers(void);
+void P_SpawnLineSpecialThinkers(void);
+void P_SpawnAllSpecialThinkers(void);
 
-// every tic
-void            P_UpdateSpecials(void);
 void            P_ThunderSector(void); // jd64
 
 boolean         P_ActivateLine(LineDef *ld, mobj_t *mo, int side,

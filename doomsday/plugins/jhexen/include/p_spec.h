@@ -30,30 +30,31 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "common.h"
+
 #define MO_TELEPORTMAN          14
 
-void        P_InitLava(void);
+void P_InitLava(void);
 
-void        P_SpawnSpecials(void);
-void        P_UpdateSpecials(void);
+// at map load
+void P_SpawnSectorSpecialThinkers(void);
+void P_SpawnLineSpecialThinkers(void);
+void P_SpawnAllSpecialThinkers(void);
 
-boolean     P_ExecuteLineSpecial(int special, byte *args, LineDef *line,
-                                 int side, mobj_t *mo);
-boolean     P_ActivateLine(LineDef *ld, mobj_t *mo, int side,
-                           int activationType);
+boolean P_ExecuteLineSpecial(int special, byte* args, LineDef* line, int side, mobj_t* mo);
+boolean P_ActivateLine(LineDef* ld, mobj_t* mo, int side, int activationType);
 
-void        P_PlayerInSpecialSector(player_t *plr);
-void        P_PlayerOnSpecialFloor(player_t *plr);
-
-void        P_AnimateSurfaces(void);
+void P_PlayerInSpecialSector(player_t* plr);
+void P_PlayerOnSpecialFloor(player_t* plr);
 
 /**
  * Parse an ANIMDEFS definition for flat/texture animations.
  */
 void P_InitPicAnims(void);
 
-void        P_InitLightning(void);
-void        P_ForceLightning(void);
+void P_InitLightning(void);
+void P_ForceLightning(void);
+void P_AnimateLightning(void);
 
 typedef enum {
     ok,
@@ -89,6 +90,7 @@ boolean     EV_ThingDeactivate(int tid);
 boolean     EV_ThingRemove(int tid);
 boolean     EV_ThingDestroy(int tid);
 
-void        P_InitSky(uint map);
+void P_InitSky(uint map);
+void P_AnimateSky(void);
 
 #endif /* LIBHEXEN_P_SPEC_H */

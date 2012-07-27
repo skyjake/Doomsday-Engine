@@ -209,6 +209,7 @@ typedef enum thinkclass_e {
 # endif
 #endif
     TC_MATERIALCHANGER,
+    TC_SCROLL,
     NUMTHINKERCLASSES
 } thinkerclass_t;
 

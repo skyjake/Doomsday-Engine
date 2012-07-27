@@ -44,6 +44,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_plat.h"
+#include "p_scroll.h"
 #include "p_switch.h"
 #include "hu_log.h"
 #if __JHERETIC__ || __JHEXEN__
@@ -147,6 +148,8 @@ static void SV_WriteBlink(const lightblink_t* flicker);
 static int SV_ReadBlink(lightblink_t* flicker);
 # endif
 #endif
+static void SV_WriteScroll(const scroll_t* scroll);
+static int SV_ReadScroll(scroll_t* scroll);
 
 static void unarchiveMap(void);
 
@@ -352,7 +355,14 @@ static thinkerinfo_t thinkerInfo[] = {
       SV_ReadMaterialChanger,
       sizeof(materialchanger_t)
     },
-    // Terminator
+    {
+        TC_SCROLL,
+        T_Scroll,
+        0,
+        SV_WriteScroll,
+        SV_ReadScroll,
+        sizeof(scroll_t)
+    },
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };
 
@@ -4137,6 +4147,55 @@ static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
     return true; // Add this thinker.
 }
 
+static void SV_WriteScroll(const scroll_t* scroll)
+{
+    DENG_ASSERT(scroll);
+
+    SV_WriteByte(1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    // Write a type byte. For future use (e.g., scrolling plane surface
+    // materials as well as sidedef surface materials).
+    SV_WriteByte(DMU_GetType(scroll->dmuObject));
+    SV_WriteLong(P_ToIndex(scroll->dmuObject));
+    SV_WriteLong(scroll->elementBits);
+    SV_WriteLong(FLT2FIX(scroll->offset[0]));
+    SV_WriteLong(FLT2FIX(scroll->offset[1]));
+}
+
+static int SV_ReadScroll(scroll_t* scroll)
+{
+    /*int ver;*/
+
+    DENG_ASSERT(scroll);
+
+    /*ver =*/ SV_ReadByte(); // version byte.
+    // Note: the thinker class byte has already been read.
+
+    if(SV_ReadByte() == DMU_SIDEDEF) // Type byte.
+    {
+        SideDef* side = P_ToPtr(DMU_SIDEDEF, (int) SV_ReadLong());
+        if(!side) Con_Error("t_scroll: bad sidedef number\n");
+        scroll->dmuObject = side;
+    }
+    else // Sector plane-surface.
+    {
+        Sector* sector = P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
+        if(!sector) Con_Error("t_scroll: bad sector number\n");
+        scroll->dmuObject = sector;
+    }
+
+    scroll->elementBits = SV_ReadLong();
+    scroll->offset[0] = FIX2FLT((fixed_t) SV_ReadLong());
+    scroll->offset[1] = FIX2FLT((fixed_t) SV_ReadLong());
+
+    scroll->thinker.function = T_Scroll;
+
+    return true; // Add this thinker.
+}
+
 /**
  * Archives the specified thinker.
  *
@@ -5150,9 +5209,18 @@ static int loadStateWorker(SaveInfo* saveInfo)
 #endif
     if(!loadError)
     {
+        // Material origin scrollers must be re-spawned for older save state versions.
+        const saveheader_t* hdr = SaveInfo_Header(saveInfo);
+        /// @todo Implement SaveInfo format type identifiers.
+        if((hdr->magic != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
+           hdr->version <= 10)
+        {
+            P_SpawnAllMaterialOriginScrollers();
+        }
+
         onLoadStateSuccess();
     }
-    return !loadError;
+    return loadError;
 }
 
 boolean SV_LoadGame(int slot)

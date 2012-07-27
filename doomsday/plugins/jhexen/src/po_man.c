@@ -27,32 +27,15 @@
  * po_man.c: Polyobject management.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "p_mapsetup.h"
 #include "p_map.h"
 #include "g_common.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static int getPolyobjMirror(uint polyNum);
 static void thrustMobj(struct mobj_s* mo, void* linep, void* pop);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 Polyobj* P_GetPolyobj(uint num)
 {

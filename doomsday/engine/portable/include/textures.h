@@ -46,7 +46,6 @@
 /// Unique identifier associated with each texture name in the collection.
 typedef uint textureid_t;
 
-#include "dd_string.h"
 #include "dd_share.h"
 #include "uri.h"
 

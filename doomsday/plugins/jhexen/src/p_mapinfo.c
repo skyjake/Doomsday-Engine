@@ -218,10 +218,6 @@ void P_InitMapInfo(void)
         SC_MustGetString();
         strcpy(info->name, sc_String);
 
-#ifdef _DEBUG
-        Con_Message("MAPINFO: map%i \"%s\" warp:%i\n", map, info->name, info->warpTrans);
-#endif
-
         // Process optional tokens
         while(SC_GetString())
         {
@@ -327,6 +323,11 @@ void P_InitMapInfo(void)
                 break;
             }
         }
+
+#ifdef _DEBUG
+        Con_Message("MAPINFO: map%i \"%s\" warp:%i\n", map, info->name, info->warpTrans);
+#endif
+
         mapMax = map > mapMax ? map : mapMax;
     }
 

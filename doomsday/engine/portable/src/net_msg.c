@@ -54,7 +54,7 @@ void Msg_Begin(int type)
     assert(msgWriter == NULL);
 
     // Allocate a new writer.
-    msgWriter = Writer_New();
+    msgWriter = Writer_NewWithNetworkBuffer();
     netBuffer.msg.type = type;
 }
 
@@ -88,7 +88,7 @@ void Msg_BeginRead(void)
 
     // Start reading from the netbuffer.
     assert(msgReader == NULL);
-    msgReader = Reader_New();
+    msgReader = Reader_NewWithNetworkBuffer();
 }
 
 void Msg_EndRead(void)
