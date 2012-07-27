@@ -203,7 +203,7 @@ static int iterateThinkers(thinkerlist_t* list, int (*callback) (thinker_t*, voi
         th = list->thinkerCap.next;
         while(th != &list->thinkerCap && th)
         {
-#ifdef LIBDENG_LIBDENG_FAKE_MEMORY_ZONE
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
             assert(th->next != NULL);
             assert(th->prev != NULL);
 #endif
