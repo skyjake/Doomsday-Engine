@@ -123,7 +123,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 #if _DEBUG
             if(SHORT(blockmapLump[offset]) != 0)
             {
-                throw de::Error("WadMapConverter::"loadBlockmap",
+                throw de::Error("WadMapConverter::loadBlockmap",
                                 QString("Offset (%1) for block %2 [%3, %4] does not index the beginning of a line list!")
                                     .arg(offset)
                                     .arg(blockIdx)
@@ -154,7 +154,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 #if _DEBUG
                     if(idx < 0 || idx >= (long) map->numLines)
                     {
-                        throw de::Error("WadMapConverter::"loadBlockmap",
+                        throw de::Error("WadMapConverter::loadBlockmap",
                                         QString("Invalid linedef index #%1.").arg(idx)));
                     }
 #endif
