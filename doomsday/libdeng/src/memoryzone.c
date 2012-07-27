@@ -1033,14 +1033,12 @@ size_t Z_FreeMemory(void)
 
 void Z_PrintStatus(void)
 {
-#ifdef _DEBUG
     size_t allocated = Z_AllocatedMemory();
     size_t wasted = Z_FreeMemory();
 
-    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
             "Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)\n",
             Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)allocated/(float)(allocated+wasted)*100.f);
-#endif
 }
 
 /**
