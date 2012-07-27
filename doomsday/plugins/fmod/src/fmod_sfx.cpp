@@ -413,13 +413,20 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
     DSFMOD_TRACE("SFX_Stop: sfxbuffer " << buf);
 
     BufferInfo& info = bufferInfo(buf);
+
+    Streams::iterator found = streams.find(info.sound);
+    if(found != streams.end() && info.channel)
+    {
+        info.channel->setPaused(true);
+    }
+
     if(info.channel)
     {
         info.channel->setUserData(0);
         info.channel->setCallback(0);
         info.channel->setMute(true);
         info.channel = 0;
-    }
+    }    
 
     // Clear the flag that tells the Sfx module about playing buffers.
     buf->flags &= ~SFXBF_PLAYING;

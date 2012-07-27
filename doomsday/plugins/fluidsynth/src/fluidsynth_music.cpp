@@ -189,12 +189,12 @@ static int synthWorkThread(void* parm)
     {
         if(blockBuffer->availableForWriting() < BLOCK_SIZE)
         {
-            // There's no room for the next block, let's sleep for a while.
+            // We should not or cannot produce samples right now, let's sleep for a while.
             Thread_Sleep(50);
             continue;
         }
 
-        //DSFLUIDSYNTH_TRACE("Synthesizing next block...");
+        //DSFLUIDSYNTH_TRACE("Synthesizing next block using fsPlayer " << fsPlayer);
 
         // Synthesize a block of samples into our buffer.
         fluid_synth_write_s16(DMFluid_Synth(), BLOCK_SAMPLES, samples, 0, 2, samples, 1, 2);
@@ -202,6 +202,8 @@ static int synthWorkThread(void* parm)
 
         //DSFLUIDSYNTH_TRACE("Block written.");
     }
+
+    DSFLUIDSYNTH_TRACE("Synth worker dies.");
     return 0;
 }
 
@@ -229,8 +231,17 @@ static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
     }
     else
     {
+        //DSFLUIDSYNTH_TRACE("Streaming out failed.");
         return 0; // Not enough data to fill the requested buffer.
     }
+}
+
+static void startWorker()
+{
+    DENG_ASSERT(worker == NULL);
+
+    workerShouldStop = false;
+    worker = Sys_StartThread(synthWorkThread, 0);
 }
 
 /**
@@ -257,8 +268,7 @@ static void startPlayer()
 
     DMFluid_Sfx()->Load(sfxBuf, &streamSample);
 
-    workerShouldStop = false;
-    worker = Sys_StartThread(synthWorkThread, 0);
+    startWorker();
 
     // Update the buffer's volume.
     DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
@@ -266,8 +276,24 @@ static void startPlayer()
     DMFluid_Sfx()->Play(sfxBuf);
 }
 
+static void stopWorker()
+{
+    if(worker)
+    {
+        DSFLUIDSYNTH_TRACE("stopWorker: Stopping thread " << worker);
+
+        workerShouldStop = true;
+        Sys_WaitThread(worker, 1000, NULL);
+        worker = 0;
+
+        DSFLUIDSYNTH_TRACE("stopWorker: Thread stopped.");
+    }
+}
+
 static void stopPlayer()
 {
+    DSFLUIDSYNTH_TRACE("stopPlayer: fsPlayer " << fsPlayer);
+
     if(!fsPlayer) return;
 
     // Destroy the sfx buffer.
@@ -277,16 +303,7 @@ static void stopPlayer()
     DMFluid_Sfx()->Destroy(sfxBuf);
     sfxBuf = 0;
 
-    if(worker)
-    {
-        DSFLUIDSYNTH_TRACE("stopPlayer: Stopping thread " << worker);
-
-        workerShouldStop = true;
-        Sys_WaitThread(worker, 1000, NULL);
-        worker = 0;
-
-        DSFLUIDSYNTH_TRACE("stopPlayer: Thread stopped.");
-    }
+    stopWorker();
 
     DSFLUIDSYNTH_TRACE("stopPlayer: " << fsPlayer);
 
@@ -411,10 +428,7 @@ void DM_Music_Update(void)
 
 void DM_Music_Stop(void)
 {
-    if(!fsPlayer) return;
-
-    DMFluid_Sfx()->Stop(sfxBuf);
-    fluid_player_stop(fsPlayer);
+    stopPlayer();
 }
 
 #if 0
@@ -457,15 +471,17 @@ int DM_Music_Play(int looped)
 
 void DM_Music_Pause(int setPause)
 {
-    if(!fsPlayer) return;
+    if(!fsPlayer || !sfxBuf) return;
 
     if(setPause)
     {
         DMFluid_Sfx()->Stop(sfxBuf);
+        DSFLUIDSYNTH_TRACE("Song paused.");
     }
     else
     {
         DMFluid_Sfx()->Play(sfxBuf);
+        DSFLUIDSYNTH_TRACE("Song resumed.");
     }
 }
 

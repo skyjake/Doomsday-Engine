@@ -31,6 +31,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void F_FileDir(ddstring_t* dst, const ddstring_t* str);
 
 void F_FileName(ddstring_t* dst, const char* src);
@@ -171,5 +175,9 @@ const char* F_PrettyPath(const char* path);
  * @return  @c true, if @a filePath matches the pattern.
  */
 int F_MatchFileName(const char* filePath, const char* pattern);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_FILESYS_UTIL_H

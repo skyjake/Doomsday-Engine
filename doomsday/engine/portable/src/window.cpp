@@ -46,6 +46,7 @@
 #include "con_main.h"
 #include "gl_main.h"
 #include "ui_main.h"
+#include "fs_util.h"
 
 #include <de/c_wrapper.h>
 #include <de/Log>
@@ -265,7 +266,11 @@ struct ddwindow_s
 
             if(flags & DDWF_MAXIMIZE)
             {
-                if(widget->isVisible()) widget->showMaximized();
+                if(widget->isVisible())
+                {
+                    LOG_DEBUG("Window maximized.");
+                    widget->showMaximized();
+                }
             }
             else
             {
@@ -303,8 +308,10 @@ struct ddwindow_s
         geometry.size.width = rect.width();
         geometry.size.height = rect.height();
 
-        DEBUG_VERBOSE2_Message(("Window geometry: %i,%i %ix%i (max? %i)\n", geometry.origin.x, geometry.origin.y,
-                                geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0));
+        LOG_DEBUG("Window geometry: %i,%i %ix%i (max:%b)")
+                << geometry.origin.x << geometry.origin.y
+                << geometry.size.width << geometry.size.height
+                << ((flags & DDWF_MAXIMIZE) != 0);
     }
 
     void setFlag(int flag, bool set = true)
@@ -961,6 +968,14 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
 
         // Make it so. (Not shown yet.)
         mainWindow.applyWindowGeometry();
+
+#ifdef WIN32
+        // Set an icon for the window.
+        AutoStr* iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
+        F_PrependBasePath(iconPath, iconPath);
+        LOG_DEBUG("Window icon: ") << Str_Text(iconPath);
+        mainWindow.widget->setWindowIcon(QIcon(Str_Text(iconPath)));
+#endif
 
         mainWindow.inited = true;
     }

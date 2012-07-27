@@ -733,7 +733,7 @@ macx {
 
 win32 {
     # Windows installation.
-    INSTALLS += target data startupdata startupgfx startupfonts license
+    INSTALLS += target data startupdata startupgfx startupfonts license icon
 
     target.path = $$DENG_LIB_DIR
 
@@ -744,6 +744,9 @@ win32 {
 
     license.files = doc/LICENSE
     license.path = $$DENG_DOCS_DIR
+
+    icon.files = win32/res/doomsday.ico
+    icon.path = $$DENG_DATA_DIR/graphics
 }
 else:unix:!macx {
     # Generic Unix installation.
