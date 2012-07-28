@@ -27,7 +27,7 @@
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
 
-size_t ElementSizeForMapLumpType(maplumptype_e type)
+size_t ElementSizeForMapLumpType(MapLumpType type)
 {
     switch(type)
     {

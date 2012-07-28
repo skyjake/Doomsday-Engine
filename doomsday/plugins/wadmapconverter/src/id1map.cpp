@@ -281,7 +281,8 @@ int Id1Map::load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
      */
     size_t elementSize = ElementSizeForMapLumpType(ML_VERTEXES);
     uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
-    vertexes = (coord_t*)malloc(numElements * 2 * sizeof(*vertexes));
+    numVertexes = numElements;
+    vertexes = (coord_t*)malloc(numVertexes * 2 * sizeof(*vertexes));
 
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
