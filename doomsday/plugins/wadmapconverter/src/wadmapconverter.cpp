@@ -23,8 +23,11 @@
 #include "maplumpinfo.h"
 #include <de/Log>
 
-Id1Map* DENG_PLUGIN_GLOBAL(map);
-mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
+#define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
+#define map                     DENG_PLUGIN_GLOBAL(map)
+
+Id1Map* map;
+mapformatid_t mapFormat;
 
 /**
  * Allocate and initialize a new MapLumpInfo record.
@@ -112,7 +115,7 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     LOG_AS("WadMapConverter");
 
     // Assume DOOM format by default.
-    DENG_PLUGIN_GLOBAL(mapFormat) = MF_DOOM;
+    mapFormat = MF_DOOM;
 
     // Check for format specific lumps.
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
@@ -122,11 +125,11 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
         switch(info->type)
         {
-        case ML_BEHAVIOR:   DENG_PLUGIN_GLOBAL(mapFormat) = MF_HEXEN; break;
+        case ML_BEHAVIOR:   mapFormat = MF_HEXEN; break;
 
         case ML_MACROS:
         case ML_LIGHTS:
-        case ML_LEAFS:      DENG_PLUGIN_GLOBAL(mapFormat) = MF_DOOM64; break;
+        case ML_LEAFS:      mapFormat = MF_DOOM64; break;
 
         default: break;
         }
@@ -145,29 +148,29 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
         {
         case ML_VERTEXES:
             elmCountAddr = &numVertexes;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
             break;
 
         case ML_THINGS:
             elmCountAddr = &numThings;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64THING :
-                       DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64THING :
+                       mapFormat == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
             break;
 
         case ML_LINEDEFS:
             elmCountAddr = &numLines;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64LINEDEF :
-                       DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF :
+                       mapFormat == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
             break;
 
         case ML_SIDEDEFS:
             elmCountAddr = &numSides;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
             break;
 
         case ML_SECTORS:
             elmCountAddr = &numSectors;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
             break;
 
         case ML_LIGHTS:
@@ -183,7 +186,7 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
             if(0 != info->length % elmSize)
             {
                 // What is this??
-                DENG_PLUGIN_GLOBAL(mapFormat) = MF_UNKNOWN;
+                mapFormat = MF_UNKNOWN;
                 return;
             }
 
@@ -194,11 +197,11 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     // A valid map has at least one of each of these elements.
     if(!numVertexes || !numLines || !numSides || !numSectors)
     {
-        DENG_PLUGIN_GLOBAL(mapFormat) = MF_UNKNOWN;
+        mapFormat = MF_UNKNOWN;
         return;
     }
 
-    LOG_INFO("Recognized a %s format map.") << Str_Text(MapFormatNameForId(DENG_PLUGIN_GLOBAL(mapFormat)));
+    LOG_INFO("Recognized a %s format map.") << Str_Text(MapFormatNameForId(mapFormat));
 }
 
 /**
@@ -235,15 +238,15 @@ int ConvertMapHook(int hookType, int parm, void* context)
 
     // Do we recognize this format?
     recognizeMapFormat(lumpInfos);
-    if(DENG_PLUGIN_GLOBAL(mapFormat) == MF_UNKNOWN)
+    if(mapFormat == MF_UNKNOWN)
     {
         ret_val = false;
         goto FAIL_UNKNOWN_FORMAT;
     }
 
     // Read the archived map.
-    DENG_PLUGIN_GLOBAL(map) = new Id1Map;
-    loadError = DENG_PLUGIN_GLOBAL(map)->load(lumpInfos);
+    map = new Id1Map;
+    loadError = map->load(lumpInfos);
     if(loadError)
     {
         LOG_AS("WadMapConverter");
@@ -253,17 +256,20 @@ int ConvertMapHook(int hookType, int parm, void* context)
     }
 
     // Perform post read analyses.
-    DENG_PLUGIN_GLOBAL(map)->analyze();
+    {
+        LOG_AS("WadMapConverter");
+        map->analyze();
+    }
 
     // Rebuild the map in Doomsday's native format.
     MPE_Begin("");
     {
         LOG_AS("WadMapConverter");
-        DENG_PLUGIN_GLOBAL(map)->transfer();
+        map->transfer();
 
         // We have now finished with our local for-conversion map representation.
-        delete DENG_PLUGIN_GLOBAL(map);
-        DENG_PLUGIN_GLOBAL(map) = 0;
+        delete map;
+        map = 0;
     }
     MPE_End();
 
