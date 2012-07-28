@@ -276,76 +276,37 @@ int Id1Map::load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     DENG2_ASSERT(lumpInfos);
 
     /**
-     * Allocate the vertices first as a large contiguous array suitable for passing
-     * directly to Doomsday's MPE interface.
+     * Allocate the vertices first as a large contiguous array suitable for
+     * passing directly to Doomsday's MPE interface.
      */
-    size_t elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-    numVertexes = lumpInfos[ML_VERTEXES]->length / elmSize;
-    vertexes = (coord_t*)malloc(numVertexes * 2 * sizeof(*vertexes));
+    size_t elementSize = ElementSizeForMapLumpType(ML_VERTEXES);
+    uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
+    vertexes = (coord_t*)malloc(numElements * 2 * sizeof(*vertexes));
 
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
         MapLumpInfo* info = lumpInfos[i];
-        uint numElements;
-        Reader* reader;
 
-        if(!info) continue;
+        if(!info || !info->length) continue;
+
+        elementSize = ElementSizeForMapLumpType(info->type);
+        if(!elementSize) continue;
 
         // Process this data lump.
+        numElements = info->length / elementSize;
+        Reader* reader = bufferLump(info);
         switch(info->type)
         {
         default: break;
 
-        case ML_VERTEXES:
-            numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-            reader = bufferLump(info);
-            loadVertexes(reader, numElements);
-            Reader_Delete(reader);
-            break;
-
-        case ML_LINEDEFS:
-            numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF :
-                                          mapFormat == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
-            reader = bufferLump(info);
-            loadLineDefs(reader, numElements);
-            Reader_Delete(reader);
-            break;
-
-        case ML_SIDEDEFS:
-            numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-            reader = bufferLump(info);
-            loadSideDefs(reader, numElements);
-            Reader_Delete(reader);
-            break;
-
-        case ML_SECTORS:
-            numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-            reader = bufferLump(info);
-            loadSectors(reader, numElements);
-            Reader_Delete(reader);
-            break;
-
-        case ML_THINGS:
-            if(info->length)
-            {
-                numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64THING :
-                                              mapFormat == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
-                reader = bufferLump(info);
-                loadThings(reader, numElements);
-                Reader_Delete(reader);
-            }
-            break;
-
-        case ML_LIGHTS:
-            if(info->length)
-            {
-                numElements = info->length / SIZEOF_LIGHT;
-                reader = bufferLump(info);
-                loadSurfaceTints(reader, numElements);
-                Reader_Delete(reader);
-            }
-            break;
+        case ML_VERTEXES: loadVertexes(reader, numElements);        break;
+        case ML_LINEDEFS: loadLineDefs(reader, numElements);        break;
+        case ML_SIDEDEFS: loadSideDefs(reader, numElements);        break;
+        case ML_SECTORS:  loadSectors(reader, numElements);         break;
+        case ML_THINGS:   loadThings(reader, numElements);          break;
+        case ML_LIGHTS:   loadSurfaceTints(reader, numElements);    break;
         }
+        Reader_Delete(reader);
     }
 
     // We're done with the read buffer.

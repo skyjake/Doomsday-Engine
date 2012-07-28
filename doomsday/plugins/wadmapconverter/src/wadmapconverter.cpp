@@ -117,7 +117,8 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     // Assume DOOM format by default.
     mapFormat = MF_DOOM;
 
-    // Check for format specific lumps.
+    // Some data lumps are specific to a particular map format and thus
+    // their presence unambiguously signifies which format we have.
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
         const MapLumpInfo* info = lumpInfos[i];
@@ -125,16 +126,17 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
         switch(info->type)
         {
+        default: break;
+
         case ML_BEHAVIOR:   mapFormat = MF_HEXEN; break;
 
         case ML_MACROS:
         case ML_LIGHTS:
         case ML_LEAFS:      mapFormat = MF_DOOM64; break;
-
-        default: break;
         }
     }
 
+    // Determine whether each data lump is of the expected size.
     uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
@@ -143,54 +145,29 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
         // Determine the number of map data objects of each data type.
         uint* elmCountAddr = NULL;
-        size_t elmSize = 0; // Num of bytes.
+        size_t elementSize = ElementSizeForMapLumpType(info->type);
         switch(info->type)
         {
-        case ML_VERTEXES:
-            elmCountAddr = &numVertexes;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-            break;
-
-        case ML_THINGS:
-            elmCountAddr = &numThings;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64THING :
-                       mapFormat == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
-            break;
-
-        case ML_LINEDEFS:
-            elmCountAddr = &numLines;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF :
-                       mapFormat == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
-            break;
-
-        case ML_SIDEDEFS:
-            elmCountAddr = &numSides;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-            break;
-
-        case ML_SECTORS:
-            elmCountAddr = &numSectors;
-            elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-            break;
-
-        case ML_LIGHTS:
-            elmCountAddr = &numLights;
-            elmSize = SIZEOF_LIGHT;
-            break;
-
         default: break;
+
+        case ML_VERTEXES:   elmCountAddr = &numVertexes;    break;
+        case ML_THINGS:     elmCountAddr = &numThings;      break;
+        case ML_LINEDEFS:   elmCountAddr = &numLines;       break;
+        case ML_SIDEDEFS:   elmCountAddr = &numSides;       break;
+        case ML_SECTORS:    elmCountAddr = &numSectors;     break;
+        case ML_LIGHTS:     elmCountAddr = &numLights;      break;
         }
 
         if(elmCountAddr)
         {
-            if(0 != info->length % elmSize)
+            if(0 != info->length % elementSize)
             {
                 // What is this??
                 mapFormat = MF_UNKNOWN;
                 return;
             }
 
-            *elmCountAddr += info->length / elmSize;
+            *elmCountAddr += info->length / elementSize;
         }
     }
 

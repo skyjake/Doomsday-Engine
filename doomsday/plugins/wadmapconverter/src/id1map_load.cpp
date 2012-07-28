@@ -27,14 +27,42 @@
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
 
+size_t ElementSizeForMapLumpType(maplumptype_e type)
+{
+    switch(type)
+    {
+    default: return 0;
+
+    case ML_VERTEXES:
+        return (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+
+    case ML_LINEDEFS:
+        return (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF :
+                mapFormat == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
+
+    case ML_SIDEDEFS:
+        return (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+
+    case ML_SECTORS:
+        return (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+
+    case ML_THINGS:
+        return (mapFormat == MF_DOOM64? SIZEOF_64THING :
+                mapFormat == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
+
+    case ML_LIGHTS:
+        return SIZEOF_LIGHT;
+    }
+}
+
 /**
  * Translate the line definition flags for Doomsday.
  */
 static void interpretLineDefFlags(mline_t* l)
 {
-#define ML_BLOCKING             1 ///< Solid, is an obstacle.
-#define ML_TWOSIDED             4 ///< Backside will not be present at all if not two sided.
-#define ML_DONTPEGTOP           8 ///< Upper texture unpegged.
+#define ML_BLOCKING              1 ///< Solid, is an obstacle.
+#define ML_TWOSIDED              4 ///< Backside will not be present at all if not two sided.
+#define ML_DONTPEGTOP            8 ///< Upper texture unpegged.
 #define ML_DONTPEGBOTTOM        16 ///< Lower texture unpegged.
 
 /// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.

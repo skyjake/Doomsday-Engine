@@ -24,7 +24,17 @@
 #define __WADMAPCONVERTER_ID1MAP_LOAD_H__
 
 #include "doomsday.h"
+#include "maplumpinfo.h"
 #include "id1map_datatypes.h"
+
+/**
+ * Determine the size (in bytes) of an element of the specified map data
+ * lump @a type for the current map format.
+ *
+ * @param type  Map lump data type.
+ * @return Size of an element of the specified type.
+ */
+size_t ElementSizeForMapLumpType(MapLumpType type);
 
 /**
  * Read a line definition from the archived map.

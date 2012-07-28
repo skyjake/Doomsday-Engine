@@ -23,7 +23,6 @@
 
 #include "doomsday.h"
 #include "dd_types.h"
-#include "id1map_util.h"
 
 /// Type used to identify references to materials in the material dictionary.
 typedef StringPoolId MaterialDictId;
