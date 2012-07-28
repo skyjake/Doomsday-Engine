@@ -30,6 +30,12 @@
 #include <vector>
 #include <list>
 
+/// Material dictionary groups.
+typedef enum materialdictgroup_e {
+    MG_PLANE = 0,
+    MG_WALL
+} MaterialDictGroup;
+
 typedef std::vector<mline_t> Lines;
 typedef std::vector<mside_t> Sides;
 typedef std::vector<msector_t> Sectors;

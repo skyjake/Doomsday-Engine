@@ -25,7 +25,10 @@
 #include "dd_types.h"
 #include "id1map_util.h"
 
-/// Sizes of the map data structures in the arrived map formats (in int8_ts).
+/// Type used to identify references to materials in the material dictionary.
+typedef StringPoolId MaterialDictId;
+
+/// Sizes of the map data structures in the arrived map formats (in bytes).
 #define SIZEOF_64VERTEX         (4 * 2)
 #define SIZEOF_VERTEX           (2 * 2)
 #define SIZEOF_64THING          (2 * 7)
@@ -40,19 +43,6 @@
 #define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
 #define SIZEOF_LIGHT            (1 * 6)
 
-/// Type used to identify references to materials in the material dictionary.
-typedef StringPoolId MaterialDictId;
-
-/// Material dictionary groups.
-typedef enum materialdictgroup_e {
-    MG_PLANE = 0,
-    MG_WALL
-} MaterialDictGroup;
-
-/// Line sides.
-#define RIGHT                   0
-#define LEFT                    1
-
 typedef struct mside_s {
     int16_t         offset[2];
     MaterialDictId  topMaterial;
@@ -60,6 +50,10 @@ typedef struct mside_s {
     MaterialDictId  middleMaterial;
     uint            sector;
 } mside_t;
+
+/// Line sides.
+#define RIGHT                   0
+#define LEFT                    1
 
 /**
  * @defgroup lineAnalysisFlags  Line Analysis flags
