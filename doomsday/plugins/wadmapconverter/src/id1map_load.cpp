@@ -23,14 +23,38 @@
 
 #include "wadmapconverter.h"
 #include <de/libdeng2.h>
-#include <de/LegacyCore>
 #include <de/Log>
 #include <de/Error>
 
 #define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
 
-static const ddstring_t* findMaterialInDictionary(MaterialDictId id)
+Id1Map::Id1Map()
+    : numVertexes(0), vertexes(0), materials(0)
+{}
+
+Id1Map::~Id1Map()
+{
+    if(vertexes)
+    {
+        free(vertexes);
+        vertexes = 0;
+    }
+
+    DENG2_FOR_EACH(i, polyobjs, Polyobjs::iterator)
+    {
+        free((i)->lineIndices);
+    }
+
+    if(materials)
+    {
+        StringPool_Clear(materials);
+        StringPool_Delete(materials);
+        materials = 0;
+    }
+}
+
+static const Str* findMaterialInDictionary(MaterialDictId id)
 {
     return StringPool_String(map->materials, id);
 }
@@ -46,7 +70,7 @@ static MaterialDictId addMaterialToDictionary(const char* name, MaterialDictGrou
     }
 
     // Prepare the encoded URI for insertion into the dictionary.
-    ddstring_t* uriCString;
+    Str* uriCString;
     if(mapFormat == MF_DOOM64)
     {
         // Doom64 maps reference materials with unique ids.
@@ -69,13 +93,9 @@ static MaterialDictId addMaterialToDictionary(const char* name, MaterialDictGrou
         }
 
         // Material paths must be encoded.
-        ddstring_t path;
-        Str_PercentEncode(Str_Set(Str_Init(&path), name));
-
-        Uri* uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+        AutoStr* path = Str_PercentEncode(AutoStr_FromText(name));
+        Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
         Uri_SetScheme(uri, group == MG_PLANE? MN_FLATS_NAME : MN_TEXTURES_NAME);
-        Str_Free(&path);
-
         uriCString = Uri_Compose(uri);
         Uri_Delete(uri);
     }
@@ -88,95 +108,26 @@ static MaterialDictId addMaterialToDictionary(const char* name, MaterialDictGrou
     return internId;
 }
 
-static void freeMapData(void)
-{
-    if(map->vertexes)
-    {
-        free(map->vertexes);
-        map->vertexes = NULL;
-    }
-
-    if(map->lines)
-    {
-        free(map->lines);
-        map->lines = NULL;
-    }
-
-    if(map->sides)
-    {
-        free(map->sides);
-        map->sides = NULL;
-    }
-
-    if(map->sectors)
-    {
-        free(map->sectors);
-        map->sectors = NULL;
-    }
-
-    if(map->things)
-    {
-        free(map->things);
-        map->things = NULL;
-    }
-
-    if(map->polyobjs)
-    {
-        for(uint i = 0; i < map->numPolyobjs; ++i)
-        {
-            mpolyobj_t* po = map->polyobjs[i];
-            free(po->lineIndices);
-            free(po);
-        }
-        free(map->polyobjs);
-        map->polyobjs = NULL;
-    }
-
-    if(map->lights)
-    {
-        free(map->lights);
-        map->lights = NULL;
-    }
-
-    /*if(map->macros)
-    {
-        free(map->macros);
-        map->macros = NULL;
-    }*/
-
-    if(map->materials)
-    {
-        StringPool_Clear(map->materials);
-        StringPool_Delete(map->materials);
-        map->materials = 0;
-    }
-}
-
-static bool loadVertexes(Reader* reader, size_t lumpLength)
+static bool loadVertexes(Reader* reader, uint numElements)
 {
     DENG2_ASSERT(reader);
 
     LOG_TRACE("Processing vertexes...");
-    switch(mapFormat)
+    for(uint n = 0; n < numElements; ++n)
     {
-    default:
-    case MF_DOOM: {
-        uint numElements = lumpLength / SIZEOF_VERTEX;
-        for(uint n = 0; n < numElements; ++n)
+        switch(mapFormat)
         {
+        default:
+        case MF_DOOM:
             map->vertexes[n * 2]     = coord_t( SHORT(Reader_ReadInt16(reader)) );
             map->vertexes[n * 2 + 1] = coord_t( SHORT(Reader_ReadInt16(reader)) );
-        }
-        break; }
+            break;
 
-    case MF_DOOM64: {
-        uint numElements = lumpLength / SIZEOF_64VERTEX;
-        for(uint n = 0; n < numElements; ++n)
-        {
+        case MF_DOOM64:
             map->vertexes[n * 2]     = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
             map->vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
+            break;
         }
-        break; }
     }
 
     return true;
@@ -195,6 +146,8 @@ static void interpretLineDefFlags(mline_t* l)
 /// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
 #define ML_INVALID              2048
 #define DOOM_VALIDMASK          0x000001ff
+
+    DENG2_ASSERT(l);
 
     /**
      * Zero unused flags if ML_INVALID is set.
@@ -246,258 +199,285 @@ static void interpretLineDefFlags(mline_t* l)
 #undef ML_BLOCKING
 }
 
-static bool loadLineDefs(Reader* reader, size_t lumpLength)
+static void MLine_Read(mline_t* l, Reader* reader)
+{
+    DENG2_ASSERT(l);
+    DENG2_ASSERT(reader);
+
+    int idx;
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->v[0] = 0;
+    else              l->v[0] = idx + 1;
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->v[1] = 0;
+    else              l->v[1] = idx + 1;
+
+    l->flags = SHORT( Reader_ReadInt16(reader) );
+    l->dType = SHORT( Reader_ReadInt16(reader) );
+    l->dTag  = SHORT( Reader_ReadInt16(reader) );
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->sides[RIGHT] = 0;
+    else              l->sides[RIGHT] = idx + 1;
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->sides[LEFT] = 0;
+    else              l->sides[LEFT] = idx + 1;
+
+    l->aFlags       = 0;
+    l->validCount   = 0;
+    l->ddFlags      = 0;
+
+    interpretLineDefFlags(l);
+}
+
+static void MLine64_Read(mline_t* l, Reader* reader)
+{
+    DENG2_ASSERT(l);
+    DENG2_ASSERT(reader);
+
+    int idx;
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->v[0] = 0;
+    else              l->v[0] = idx + 1;
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->v[1] = 0;
+    else              l->v[1] = idx + 1;
+
+    l->flags = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    l->d64drawFlags = Reader_ReadByte(reader);
+    l->d64texFlags  = Reader_ReadByte(reader);
+    l->d64type      = Reader_ReadByte(reader);
+    l->d64useType   = Reader_ReadByte(reader);
+    l->d64tag       = SHORT( Reader_ReadInt16(reader) );
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->sides[RIGHT] = 0;
+    else              l->sides[RIGHT] = idx + 1;
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->sides[LEFT] = 0;
+    else              l->sides[LEFT] = idx + 1;
+
+    l->aFlags       = 0;
+    l->validCount   = 0;
+    l->ddFlags      = 0;
+
+    interpretLineDefFlags(l);
+}
+
+static void MLineHx_Read(mline_t* l, Reader* reader)
+{
+    DENG2_ASSERT(l);
+    DENG2_ASSERT(reader);
+
+    int idx;
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->v[0] = 0;
+    else              l->v[0] = idx + 1;
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->v[1] = 0;
+    else              l->v[1] = idx + 1;
+
+    l->flags = SHORT( Reader_ReadInt16(reader) );
+    l->xType    = Reader_ReadByte(reader);
+    l->xArgs[0] = Reader_ReadByte(reader);
+    l->xArgs[1] = Reader_ReadByte(reader);
+    l->xArgs[2] = Reader_ReadByte(reader);
+    l->xArgs[3] = Reader_ReadByte(reader);
+    l->xArgs[4] = Reader_ReadByte(reader);
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->sides[RIGHT] = 0;
+    else              l->sides[RIGHT] = idx + 1;
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) l->sides[LEFT] = 0;
+    else              l->sides[LEFT] = idx + 1;
+
+    l->aFlags       = 0;
+    l->validCount   = 0;
+    l->ddFlags      = 0;
+
+    interpretLineDefFlags(l);
+}
+
+static bool loadLineDefs(Reader* reader, uint numElements)
 {
     DENG2_ASSERT(reader);
 
     LOG_TRACE("Processing line definitions...");
-    switch(mapFormat)
+    for(uint n = 0; n < numElements; ++n)
     {
-    default:
-    case MF_DOOM: {
-        uint numElements = lumpLength / SIZEOF_LINEDEF;
-        for(uint n = 0; n < numElements; ++n)
+        switch(mapFormat)
         {
-            mline_t* l = &map->lines[n];
-            int idx;
+        default:
+        case MF_DOOM:
+            map->lines.push_back(mline_t());
+            MLine_Read(&map->lines.back(), reader);
+            break;
 
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->v[0] = 0;
-            else              l->v[0] = idx + 1;
+        case MF_DOOM64:
+            map->lines.push_back(mline_t());
+            MLine64_Read(&map->lines.back(), reader);
+            break;
 
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->v[1] = 0;
-            else              l->v[1] = idx + 1;
-
-            l->flags = SHORT( Reader_ReadInt16(reader) );
-            l->dType = SHORT( Reader_ReadInt16(reader) );
-            l->dTag  = SHORT( Reader_ReadInt16(reader) );
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->sides[RIGHT] = 0;
-            else              l->sides[RIGHT] = idx + 1;
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->sides[LEFT] = 0;
-            else              l->sides[LEFT] = idx + 1;
-
-            l->aFlags       = 0;
-            l->validCount   = 0;
-            l->ddFlags      = 0;
-
-            interpretLineDefFlags(l);
+        case MF_HEXEN:
+            map->lines.push_back(mline_t());
+            MLineHx_Read(&map->lines.back(), reader);
+            break;
         }
-        break; }
-
-    case MF_DOOM64: {
-        uint numElements = lumpLength / SIZEOF_64LINEDEF;
-        for(uint n = 0; n < numElements; ++n)
-        {
-            mline_t* l = &map->lines[n];
-            int idx;
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->v[0] = 0;
-            else              l->v[0] = idx + 1;
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->v[1] = 0;
-            else              l->v[1] = idx + 1;
-
-            l->flags = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            l->d64drawFlags = Reader_ReadByte(reader);
-            l->d64texFlags  = Reader_ReadByte(reader);
-            l->d64type      = Reader_ReadByte(reader);
-            l->d64useType   = Reader_ReadByte(reader);
-            l->d64tag       = SHORT( Reader_ReadInt16(reader) );
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->sides[RIGHT] = 0;
-            else              l->sides[RIGHT] = idx + 1;
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->sides[LEFT] = 0;
-            else              l->sides[LEFT] = idx + 1;
-
-            l->aFlags       = 0;
-            l->validCount   = 0;
-            l->ddFlags      = 0;
-
-            interpretLineDefFlags(l);
-        }
-        break; }
-
-    case MF_HEXEN: {
-        uint numElements = lumpLength / SIZEOF_XLINEDEF;
-        for(uint n = 0; n < numElements; ++n)
-        {
-            mline_t* l = &map->lines[n];
-            int idx;
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->v[0] = 0;
-            else              l->v[0] = idx + 1;
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->v[1] = 0;
-            else              l->v[1] = idx + 1;
-
-            l->flags = SHORT( Reader_ReadInt16(reader) );
-            l->xType    = Reader_ReadByte(reader);
-            l->xArgs[0] = Reader_ReadByte(reader);
-            l->xArgs[1] = Reader_ReadByte(reader);
-            l->xArgs[2] = Reader_ReadByte(reader);
-            l->xArgs[3] = Reader_ReadByte(reader);
-            l->xArgs[4] = Reader_ReadByte(reader);
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->sides[RIGHT] = 0;
-            else              l->sides[RIGHT] = idx + 1;
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) l->sides[LEFT] = 0;
-            else              l->sides[LEFT] = idx + 1;
-
-            l->aFlags       = 0;
-            l->validCount   = 0;
-            l->ddFlags      = 0;
-
-            interpretLineDefFlags(l);
-        }
-        break; }
     }
 
     return true;
 }
 
-static bool loadSideDefs(Reader* reader, size_t lumpLength)
+static void MSide_Read(mside_t* s, Reader* reader)
+{
+    DENG2_ASSERT(s);
+    DENG2_ASSERT(reader);
+
+    s->offset[VX] = SHORT( Reader_ReadInt16(reader) );
+    s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
+
+    char name[9];
+    Reader_Read(reader, name, 8); name[8] = '\0';
+    s->topMaterial    = addMaterialToDictionary(name, MG_WALL);
+
+    Reader_Read(reader, name, 8); name[8] = '\0';
+    s->bottomMaterial = addMaterialToDictionary(name, MG_WALL);
+
+    Reader_Read(reader, name, 8); name[8] = '\0';
+    s->middleMaterial = addMaterialToDictionary(name, MG_WALL);
+
+    int idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) s->sector = 0;
+    else              s->sector = idx + 1;
+}
+
+static void MSide64_Read(mside_t* s, Reader* reader)
+{
+    DENG2_ASSERT(s);
+    DENG2_ASSERT(reader);
+
+    s->offset[VX] = SHORT( Reader_ReadInt16(reader) );
+    s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
+
+    int idx;
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->topMaterial    = addMaterialToDictionary((const char*) &idx, MG_WALL);
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->bottomMaterial = addMaterialToDictionary((const char*) &idx, MG_WALL);
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->middleMaterial = addMaterialToDictionary((const char*) &idx, MG_WALL);
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    if(idx == 0xFFFF) s->sector = 0;
+    else              s->sector = idx + 1;
+}
+
+static bool loadSideDefs(Reader* reader, uint numElements)
 {
     DENG2_ASSERT(reader);
 
     LOG_TRACE("Processing side definitions...");
-    switch(mapFormat)
+    for(uint n = 0; n < numElements; ++n)
     {
-    default:
-    case MF_DOOM: {
-        uint numElements = lumpLength / SIZEOF_SIDEDEF;
-        for(uint n = 0; n < numElements; ++n)
+        switch(mapFormat)
         {
-            mside_t* s = &map->sides[n];
-            char name[9];
-            int idx;
+        default:
+        case MF_DOOM:
+            map->sides.push_back(mside_t());
+            MSide_Read(&map->sides.back(), reader);
+            break;
 
-            s->offset[VX] = SHORT( Reader_ReadInt16(reader) );
-            s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
-
-            Reader_Read(reader, name, 8); name[8] = '\0';
-            s->topMaterial    = addMaterialToDictionary(name, MG_WALL);
-
-            Reader_Read(reader, name, 8); name[8] = '\0';
-            s->bottomMaterial = addMaterialToDictionary(name, MG_WALL);
-
-            Reader_Read(reader, name, 8); name[8] = '\0';
-            s->middleMaterial = addMaterialToDictionary(name, MG_WALL);
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) s->sector = 0;
-            else              s->sector = idx + 1;
+        case MF_DOOM64:
+            map->sides.push_back(mside_t());
+            MSide64_Read(&map->sides.back(), reader);
+            break;
         }
-        break; }
-
-    case MF_DOOM64: {
-        uint numElements = lumpLength / SIZEOF_64SIDEDEF;
-        for(uint n = 0; n < numElements; ++n)
-        {
-            mside_t* s = &map->sides[n];
-            int idx;
-
-            s->offset[VX] = SHORT( Reader_ReadInt16(reader) );
-            s->offset[VY] = SHORT( Reader_ReadInt16(reader) );
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->topMaterial    = addMaterialToDictionary((const char*) &idx, MG_WALL);
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->bottomMaterial = addMaterialToDictionary((const char*) &idx, MG_WALL);
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->middleMaterial = addMaterialToDictionary((const char*) &idx, MG_WALL);
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            if(idx == 0xFFFF) s->sector = 0;
-            else              s->sector = idx + 1;
-        }
-        break; }
     }
 
     return true;
 }
 
-static bool loadSectors(Reader* reader, size_t lumpLength)
+static void MSector_Read(msector_t* s, Reader* reader)
+{
+    DENG2_ASSERT(s);
+    DENG2_ASSERT(reader);
+
+    s->floorHeight  = SHORT( Reader_ReadInt16(reader) );
+    s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
+
+    char name[9];
+    Reader_Read(reader, name, 8); name[8] = '\0';
+    s->floorMaterial= addMaterialToDictionary(name, MG_PLANE);
+
+    Reader_Read(reader, name, 8); name[8] = '\0';
+    s->ceilMaterial = addMaterialToDictionary(name, MG_PLANE);
+
+    s->lightLevel   = SHORT( Reader_ReadInt16(reader) );
+    s->type         = SHORT( Reader_ReadInt16(reader) );
+    s->tag          = SHORT( Reader_ReadInt16(reader) );
+}
+
+static void MSector64_Read(msector_t* s, Reader* reader)
+{
+    DENG2_ASSERT(s);
+    DENG2_ASSERT(reader);
+
+    s->floorHeight  = SHORT( Reader_ReadInt16(reader));
+    s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
+
+    int idx;
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->floorMaterial= addMaterialToDictionary((const char*) &idx, MG_PLANE);
+
+    idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->ceilMaterial = addMaterialToDictionary((const char*) &idx, MG_PLANE);
+
+    s->d64ceilingColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->d64floorColor    = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->d64unknownColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->d64wallTopColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+    s->d64wallBottomColor = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+
+    s->type     = SHORT( Reader_ReadInt16(reader) );
+    s->tag      = SHORT( Reader_ReadInt16(reader) );
+    s->d64flags = USHORT( uint16_t(Reader_ReadInt16(reader)) );
+
+    s->lightLevel = 160; ///?
+}
+
+static bool loadSectors(Reader* reader, uint numElements)
 {
     DENG2_ASSERT(reader);
 
     LOG_TRACE("Processing sectors...");
-    switch(mapFormat)
+    for(uint n = 0; n < numElements; ++n)
     {
-    default: {
-        uint numElements = lumpLength / SIZEOF_SECTOR;
-        for(uint n = 0; n < numElements; ++n)
+        switch(mapFormat)
         {
-            msector_t* s = &map->sectors[n];
-            char name[9];
+        default:
+            map->sectors.push_back(msector_t());
+            MSector_Read(&map->sectors.back(), reader);
+            break;
 
-            s->floorHeight  = SHORT( Reader_ReadInt16(reader) );
-            s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
-
-            Reader_Read(reader, name, 8); name[8] = '\0';
-            s->floorMaterial= addMaterialToDictionary(name, MG_PLANE);
-
-            Reader_Read(reader, name, 8); name[8] = '\0';
-            s->ceilMaterial = addMaterialToDictionary(name, MG_PLANE);
-
-            s->lightLevel   = SHORT( Reader_ReadInt16(reader) );
-            s->type         = SHORT( Reader_ReadInt16(reader) );
-            s->tag          = SHORT( Reader_ReadInt16(reader) );
+        case MF_DOOM64:
+            map->sectors.push_back(msector_t());
+            MSector64_Read(&map->sectors.back(), reader);
+            break;
         }
-        break; }
-
-    case MF_DOOM64: {
-        uint numElements = lumpLength / SIZEOF_64SECTOR;
-        for(uint n = 0; n < numElements; ++n)
-        {
-            msector_t* s = &map->sectors[n];
-            int idx;
-
-            s->floorHeight  = SHORT( Reader_ReadInt16(reader));
-            s->ceilHeight   = SHORT( Reader_ReadInt16(reader) );
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->floorMaterial= addMaterialToDictionary((const char*) &idx, MG_PLANE);
-
-            idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->ceilMaterial = addMaterialToDictionary((const char*) &idx, MG_PLANE);
-
-            s->d64ceilingColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->d64floorColor    = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->d64unknownColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->d64wallTopColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-            s->d64wallBottomColor = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-
-            s->type     = SHORT( Reader_ReadInt16(reader) );
-            s->tag      = SHORT( Reader_ReadInt16(reader) );
-            s->d64flags = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-
-            s->lightLevel = 160; ///?
-        }
-        break; }
     }
 
     return true;
 }
 
-static bool loadThings(Reader* reader, size_t lumpLength)
-{
 /// @todo Get these from a game api header.
 #define MTF_Z_FLOOR         0x20000000 ///< Spawn relative to floor height.
 #define MTF_Z_CEIL          0x40000000 ///< Spawn relative to ceiling height (minus thing height).
@@ -505,13 +485,8 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 
 #define ANG45               0x20000000
 
-    DENG2_ASSERT(reader);
-
-    LOG_TRACE("Processing things...");
-    switch(mapFormat)
-    {
-    default:
-    case MF_DOOM: {
+static void MThing_Read(mthing_t* t, Reader* reader)
+{
 /**
  * DOOM Thing flags:
  */
@@ -527,31 +502,28 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_NOTDM|MTF_NOTCOOP|MTF_FRIENDLY))
 
-        uint numElements = lumpLength / SIZEOF_THING;
-        for(uint n = 0; n < numElements; ++n)
-        {
-            mthing_t* t = &map->things[n];
+    DENG2_ASSERT(t);
+    DENG2_ASSERT(reader);
 
-            t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
-            t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
-            t->origin[VZ]   = 0;
-            t->angle        = ANG45 * (SHORT( Reader_ReadInt16(reader) ) / 45);
-            t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
-            t->flags        = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VZ]   = 0;
+    t->angle        = ANG45 * (SHORT( Reader_ReadInt16(reader) ) / 45);
+    t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
+    t->flags        = SHORT( Reader_ReadInt16(reader) );
 
-            t->skillModes = 0;
-            if(t->flags & MTF_EASY)
-                t->skillModes |= 0x00000001 | 0x00000002;
-            if(t->flags & MTF_MEDIUM)
-                t->skillModes |= 0x00000004;
-            if(t->flags & MTF_HARD)
-                t->skillModes |= 0x00000008 | 0x00000010;
+    t->skillModes = 0;
+    if(t->flags & MTF_EASY)
+        t->skillModes |= 0x00000001 | 0x00000002;
+    if(t->flags & MTF_MEDIUM)
+        t->skillModes |= 0x00000004;
+    if(t->flags & MTF_HARD)
+        t->skillModes |= 0x00000008 | 0x00000010;
 
-            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
-            // DOOM format things spawn on the floor by default unless their
-            // type-specific flags override.
-            t->flags |= MTF_Z_FLOOR;
-        }
+    t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+    // DOOM format things spawn on the floor by default unless their
+    // type-specific flags override.
+    t->flags |= MTF_Z_FLOOR;
 
 #undef MASK_UNKNOWN_THING_FLAGS
 #undef MTF_FRIENDLY
@@ -562,9 +534,10 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 #undef MTF_HARD
 #undef MTF_MEDIUM
 #undef MTF_EASY
-        break; }
+}
 
-    case MF_DOOM64: {
+static void MThing64_Read(mthing_t* t, Reader* reader)
+{
 /**
  * DOOM64 Thing flags:
  */
@@ -584,33 +557,30 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_DEAF|MTF_NOTSINGLE|MTF_DONTSPAWNATSTART|MTF_SCRIPT_TOUCH|MTF_SCRIPT_DEATH|MTF_SECRET|MTF_NOTARGET|MTF_NOTDM|MTF_NOTCOOP))
 
-        uint numElements = lumpLength / SIZEOF_64THING;
-        for(uint n = 0; n < numElements; ++n)
-        {
-            mthing_t* t = &map->things[n];
+    DENG2_ASSERT(t);
+    DENG2_ASSERT(reader);
 
-            t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
-            t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
-            t->origin[VZ]   = SHORT( Reader_ReadInt16(reader) );
-            t->angle        = ANG45 * (SHORT( Reader_ReadInt16(reader) ) / 45);
-            t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
-            t->flags        = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VZ]   = SHORT( Reader_ReadInt16(reader) );
+    t->angle        = ANG45 * (SHORT( Reader_ReadInt16(reader) ) / 45);
+    t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
+    t->flags        = SHORT( Reader_ReadInt16(reader) );
 
-            t->skillModes = 0;
-            if(t->flags & MTF_EASY)
-                t->skillModes |= 0x00000001;
-            if(t->flags & MTF_MEDIUM)
-                t->skillModes |= 0x00000002;
-            if(t->flags & MTF_HARD)
-                t->skillModes |= 0x00000004 | 0x00000008;
+    t->skillModes = 0;
+    if(t->flags & MTF_EASY)
+        t->skillModes |= 0x00000001;
+    if(t->flags & MTF_MEDIUM)
+        t->skillModes |= 0x00000002;
+    if(t->flags & MTF_HARD)
+        t->skillModes |= 0x00000004 | 0x00000008;
 
-            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
-            // DOOM64 format things spawn relative to the floor by default
-            // unless their type-specific flags override.
-            t->flags |= MTF_Z_FLOOR;
+    t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+    // DOOM64 format things spawn relative to the floor by default
+    // unless their type-specific flags override.
+    t->flags |= MTF_Z_FLOOR;
 
-            t->d64TID = SHORT( Reader_ReadInt16(reader) );
-        }
+    t->d64TID = SHORT( Reader_ReadInt16(reader) );
 
 #undef MASK_UNKNOWN_THING_FLAGS
 #undef MTF_NOTCOOP
@@ -625,9 +595,10 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 #undef MTF_HARD
 #undef MTF_MEDIUM
 #undef MTF_EASY
-        break; }
+}
 
-    case MF_HEXEN: {
+static void MThingHx_Read(mthing_t* t, Reader* reader)
+{
 /**
  * Hexen Thing flags:
  */
@@ -651,56 +622,53 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
     ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
 
-        uint numElements = lumpLength / SIZEOF_XTHING;
-        for(uint n = 0; n < numElements; ++n)
-        {
-            mthing_t* t = &map->things[n];
+    DENG2_ASSERT(t);
+    DENG2_ASSERT(reader);
 
-            t->xTID         = SHORT( Reader_ReadInt16(reader) );
-            t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
-            t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
-            t->origin[VZ]   = SHORT( Reader_ReadInt16(reader) );
-            t->angle        = SHORT( Reader_ReadInt16(reader) );
-            t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
+    t->xTID         = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VX]   = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VY]   = SHORT( Reader_ReadInt16(reader) );
+    t->origin[VZ]   = SHORT( Reader_ReadInt16(reader) );
+    t->angle        = SHORT( Reader_ReadInt16(reader) );
+    t->doomEdNum    = SHORT( Reader_ReadInt16(reader) );
 
-            /**
-             * For some reason, the Hexen format stores polyobject tags in
-             * the angle field in THINGS. Thus, we cannot translate the
-             * angle until we know whether it is a polyobject type or not.
-             */
-            if(t->doomEdNum != PO_ANCHOR_DOOMEDNUM &&
-               t->doomEdNum != PO_SPAWN_DOOMEDNUM &&
-               t->doomEdNum != PO_SPAWNCRUSH_DOOMEDNUM)
-                t->angle = ANG45 * (t->angle / 45);
+    /**
+     * For some reason, the Hexen format stores polyobject tags in
+     * the angle field in THINGS. Thus, we cannot translate the
+     * angle until we know whether it is a polyobject type or not.
+     */
+    if(t->doomEdNum != PO_ANCHOR_DOOMEDNUM &&
+       t->doomEdNum != PO_SPAWN_DOOMEDNUM &&
+       t->doomEdNum != PO_SPAWNCRUSH_DOOMEDNUM)
+        t->angle = ANG45 * (t->angle / 45);
 
-            t->flags = SHORT( Reader_ReadInt16(reader) );
+    t->flags = SHORT( Reader_ReadInt16(reader) );
 
-            t->skillModes = 0;
-            if(t->flags & MTF_EASY)
-                t->skillModes |= 0x00000001 | 0x00000002;
-            if(t->flags & MTF_MEDIUM)
-                t->skillModes |= 0x00000004;
-            if(t->flags & MTF_HARD)
-                t->skillModes |= 0x00000008 | 0x00000010;
+    t->skillModes = 0;
+    if(t->flags & MTF_EASY)
+        t->skillModes |= 0x00000001 | 0x00000002;
+    if(t->flags & MTF_MEDIUM)
+        t->skillModes |= 0x00000004;
+    if(t->flags & MTF_HARD)
+        t->skillModes |= 0x00000008 | 0x00000010;
 
-            t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
-            /**
-             * Translate flags:
-             */
-            // Game type logic is inverted.
-            t->flags ^= (MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH);
+    t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
+    /**
+     * Translate flags:
+     */
+    // Game type logic is inverted.
+    t->flags ^= (MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH);
 
-            // HEXEN format things spawn relative to the floor by default
-            // unless their type-specific flags override.
-            t->flags |= MTF_Z_FLOOR;
+    // HEXEN format things spawn relative to the floor by default
+    // unless their type-specific flags override.
+    t->flags |= MTF_Z_FLOOR;
 
-            t->xSpecial = Reader_ReadByte(reader);
-            t->xArgs[0] = Reader_ReadByte(reader);
-            t->xArgs[1] = Reader_ReadByte(reader);
-            t->xArgs[2] = Reader_ReadByte(reader);
-            t->xArgs[3] = Reader_ReadByte(reader);
-            t->xArgs[4] = Reader_ReadByte(reader);
-        }
+    t->xSpecial = Reader_ReadByte(reader);
+    t->xArgs[0] = Reader_ReadByte(reader);
+    t->xArgs[1] = Reader_ReadByte(reader);
+    t->xArgs[2] = Reader_ReadByte(reader);
+    t->xArgs[3] = Reader_ReadByte(reader);
+    t->xArgs[4] = Reader_ReadByte(reader);
 
 #undef MASK_UNKNOWN_THING_FLAGS
 #undef MTF_STILL
@@ -718,33 +686,60 @@ static bool loadThings(Reader* reader, size_t lumpLength)
 #undef MTF_HARD
 #undef MTF_NORMAL
 #undef MTF_EASY
-        break; }
-    }
-
-    return true;
-
-#undef MTF_Z_RANDOM
-#undef MTF_Z_CEIL
-#undef MTF_Z_FLOOR
 }
 
-static bool loadLights(Reader* reader, size_t lumpLength)
+static bool loadThings(Reader* reader, uint numElements)
 {
     DENG2_ASSERT(reader);
 
-    LOG_TRACE("Processing lights...");
-
-    uint numElements = lumpLength / SIZEOF_LIGHT;
+    LOG_TRACE("Processing things...");
     for(uint n = 0; n < numElements; ++n)
     {
-        surfacetint_t* t = &map->lights[n];
+        switch(mapFormat)
+        {
+        default:
+        case MF_DOOM:
+            map->things.push_back(mthing_t());
+            MThing_Read(&map->things.back(), reader);
+            break;
 
-        t->rgb[0]   = Reader_ReadByte(reader) / 255.f;
-        t->rgb[1]   = Reader_ReadByte(reader) / 255.f;
-        t->rgb[2]   = Reader_ReadByte(reader) / 255.f;
-        t->xx[0]    = Reader_ReadByte(reader);
-        t->xx[1]    = Reader_ReadByte(reader);
-        t->xx[2]    = Reader_ReadByte(reader);
+        case MF_DOOM64:
+            map->things.push_back(mthing_t());
+            MThing64_Read(&map->things.back(), reader);
+            break;
+
+        case MF_HEXEN:
+            map->things.push_back(mthing_t());
+            MThingHx_Read(&map->things.back(), reader);
+            break;
+        }
+    }
+
+    return true;
+}
+
+static void SurfaceTint_Read(surfacetint_t* t, Reader* reader)
+{
+    DENG2_ASSERT(t);
+    DENG2_ASSERT(reader);
+
+    t->rgb[0]   = Reader_ReadByte(reader) / 255.f;
+    t->rgb[1]   = Reader_ReadByte(reader) / 255.f;
+    t->rgb[2]   = Reader_ReadByte(reader) / 255.f;
+    t->xx[0]    = Reader_ReadByte(reader);
+    t->xx[1]    = Reader_ReadByte(reader);
+    t->xx[2]    = Reader_ReadByte(reader);
+}
+
+static bool loadSurfaceTints(Reader* reader, uint numElements)
+{
+    DENG2_ASSERT(reader);
+
+    LOG_TRACE("Processing surface tints...");
+    for(uint n = 0; n < numElements; ++n)
+    {
+        map->surfaceTints.push_back(surfacetint_t());
+        SurfaceTint_Read(&map->surfaceTints.back(), reader);
     }
 
     return true;
@@ -806,7 +801,7 @@ static Reader* bufferLump(MapLumpInfo* info)
         {
             throw de::Error("WadMapConverter::bufferLump",
                             QString("Failed on (re)allocation of %1 bytes for the read buffer.")
-                            .arg(info->length));
+                                .arg(info->length));
         }
         readBufferSize = info->length;
     }
@@ -829,15 +824,15 @@ static void clearReadBuffer(void)
 
 int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
-    size_t elmSize;
-
     DENG2_ASSERT(lumpInfos);
 
-    memset(map, 0, sizeof(*map));
+    map = new Id1Map;
 
     /**
      * Determine how many map data objects we'll need of each type.
      */
+    size_t elmSize;
+
     // Verts.
     elmSize = (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
     map->numVertexes = lumpInfos[ML_VERTEXES]->length / elmSize;
@@ -846,43 +841,36 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     if(lumpInfos[ML_THINGS])
     {
         elmSize = (mapFormat == MF_DOOM64? SIZEOF_64THING : mapFormat == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
-        map->numThings = lumpInfos[ML_THINGS]->length / elmSize;
+        map->things.reserve(lumpInfos[ML_THINGS]->length / elmSize);
     }
 
     // Lines.
     elmSize = (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF : mapFormat == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
-    map->numLines = lumpInfos[ML_LINEDEFS]->length / elmSize;
+    map->lines.reserve(lumpInfos[ML_LINEDEFS]->length / elmSize);
 
     // Sides.
     elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-    map->numSides = lumpInfos[ML_SIDEDEFS]->length / elmSize;
+    map->sides.reserve(lumpInfos[ML_SIDEDEFS]->length / elmSize);
 
     // Sectors.
     elmSize = (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-    map->numSectors = lumpInfos[ML_SECTORS]->length / elmSize;
+    map->sectors.reserve(lumpInfos[ML_SECTORS]->length / elmSize);
 
     if(lumpInfos[ML_LIGHTS])
     {
         elmSize = SIZEOF_LIGHT;
-        map->numLights = lumpInfos[ML_LIGHTS]->length / elmSize;
+        map->surfaceTints.reserve(lumpInfos[ML_LIGHTS]->length / elmSize);
     }
 
     /**
      * Allocate the temporary map data objects used during conversion.
      */
-    map->vertexes =   (coord_t*)malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
-    map->lines    =   (mline_t*)malloc(map->numLines * sizeof(mline_t));
-    map->sides    =   (mside_t*)malloc(map->numSides * sizeof(mside_t));
-    map->sectors  = (msector_t*)malloc(map->numSectors * sizeof(msector_t));   
-    map->things   =  (mthing_t*)malloc(map->numThings * sizeof(mthing_t));
-    if(map->numLights)
-    {
-        map->lights = (surfacetint_t*)malloc(map->numLights * sizeof(surfacetint_t));
-    }
+    map->vertexes = (coord_t*)malloc(map->numVertexes * 2 * sizeof(*map->vertexes));
 
     for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
     {
         MapLumpInfo* info = lumpInfos[i];
+        uint numElements;
         Reader* reader;
 
         if(!info) continue;
@@ -891,34 +879,41 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
         switch(info->type)
         {
         case ML_VERTEXES:
+            numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
             reader = bufferLump(info);
-            loadVertexes(reader, info->length);
+            loadVertexes(reader, numElements);
             Reader_Delete(reader);
             break;
 
         case ML_LINEDEFS:
+            numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF :
+                                          mapFormat == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
             reader = bufferLump(info);
-            loadLineDefs(reader, info->length);
+            loadLineDefs(reader, numElements);
             Reader_Delete(reader);
             break;
 
         case ML_SIDEDEFS:
+            numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
             reader = bufferLump(info);
-            loadSideDefs(reader, info->length);
+            loadSideDefs(reader, numElements);
             Reader_Delete(reader);
             break;
 
         case ML_SECTORS:
+            numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
             reader = bufferLump(info);
-            loadSectors(reader, info->length);
+            loadSectors(reader, numElements);
             Reader_Delete(reader);
             break;
 
         case ML_THINGS:
             if(info->length)
             {
+                numElements = info->length / (mapFormat == MF_DOOM64? SIZEOF_64THING :
+                                              mapFormat == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
                 reader = bufferLump(info);
-                loadThings(reader, info->length);
+                loadThings(reader, numElements);
                 Reader_Delete(reader);
             }
             break;
@@ -926,8 +921,9 @@ int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
         case ML_LIGHTS:
             if(info->length)
             {
+                numElements = info->length / SIZEOF_LIGHT;
                 reader = bufferLump(info);
-                loadLights(reader, info->length);
+                loadSurfaceTints(reader, numElements);
                 Reader_Delete(reader);
             }
             break;
@@ -955,29 +951,27 @@ static void transferVertexes(void)
 static void transferSectors(void)
 {
     LOG_TRACE("Transfering sectors...");
-    for(uint i = 0; i < map->numSectors; ++i)
+
+    DENG2_FOR_EACH(i, map->sectors, Sectors::iterator)
     {
-        msector_t* sec = &map->sectors[i];
-        uint sectorIDX;
+        uint idx = MPE_SectorCreate(float((i)->lightLevel) / 255.0f, 1, 1, 1);
 
-        sectorIDX = MPE_SectorCreate(float(sec->lightLevel) / 255.0f, 1, 1, 1);
-
-        MPE_PlaneCreate(sectorIDX, sec->floorHeight, findMaterialInDictionary(sec->floorMaterial),
+        MPE_PlaneCreate(idx, (i)->floorHeight, findMaterialInDictionary((i)->floorMaterial),
                         0, 0, 1, 1, 1, 1, 0, 0, 1);
-        MPE_PlaneCreate(sectorIDX, sec->ceilHeight, findMaterialInDictionary(sec->ceilMaterial),
+        MPE_PlaneCreate(idx, (i)->ceilHeight, findMaterialInDictionary((i)->ceilMaterial),
                         0, 0, 1, 1, 1, 1, 0, 0, -1);
 
-        MPE_GameObjProperty("XSector", i, "Tag",    DDVT_SHORT, &sec->tag);
-        MPE_GameObjProperty("XSector", i, "Type",   DDVT_SHORT, &sec->type);
+        MPE_GameObjProperty("XSector", idx-1, "Tag",    DDVT_SHORT, &(i)->tag);
+        MPE_GameObjProperty("XSector", idx-1, "Type",   DDVT_SHORT, &(i)->type);
 
         if(mapFormat == MF_DOOM64)
         {
-            MPE_GameObjProperty("XSector", i, "Flags",          DDVT_SHORT, &sec->d64flags);
-            MPE_GameObjProperty("XSector", i, "CeilingColor",   DDVT_SHORT, &sec->d64ceilingColor);
-            MPE_GameObjProperty("XSector", i, "FloorColor",     DDVT_SHORT, &sec->d64floorColor);
-            MPE_GameObjProperty("XSector", i, "UnknownColor",   DDVT_SHORT, &sec->d64unknownColor);
-            MPE_GameObjProperty("XSector", i, "WallTopColor",   DDVT_SHORT, &sec->d64wallTopColor);
-            MPE_GameObjProperty("XSector", i, "WallBottomColor", DDVT_SHORT, &sec->d64wallBottomColor);
+            MPE_GameObjProperty("XSector", idx-1, "Flags",          DDVT_SHORT, &(i)->d64flags);
+            MPE_GameObjProperty("XSector", idx-1, "CeilingColor",   DDVT_SHORT, &(i)->d64ceilingColor);
+            MPE_GameObjProperty("XSector", idx-1, "FloorColor",     DDVT_SHORT, &(i)->d64floorColor);
+            MPE_GameObjProperty("XSector", idx-1, "UnknownColor",   DDVT_SHORT, &(i)->d64unknownColor);
+            MPE_GameObjProperty("XSector", idx-1, "WallTopColor",   DDVT_SHORT, &(i)->d64wallTopColor);
+            MPE_GameObjProperty("XSector", idx-1, "WallBottomColor", DDVT_SHORT, &(i)->d64wallBottomColor);
         }
     }
 }
@@ -985,12 +979,10 @@ static void transferSectors(void)
 static void transferLinesAndSides(void)
 {
     LOG_TRACE("Transfering lines and sides...");
-    for(uint i = 0; i < map->numLines; ++i)
+    DENG2_FOR_EACH(i, map->lines, Lines::iterator)
     {
-        mline_t* l = &map->lines[i];
-
         uint frontIdx = 0;
-        mside_t* front = (l->sides[RIGHT] != 0? &map->sides[l->sides[RIGHT]-1] : NULL);
+        mside_t* front = ((i)->sides[RIGHT] != 0? &map->sides[(i)->sides[RIGHT]-1] : NULL);
         if(front)
         {
             frontIdx =
@@ -1004,7 +996,7 @@ static void transferLinesAndSides(void)
         }
 
         uint backIdx = 0;
-        mside_t* back = (l->sides[LEFT] != 0? &map->sides[l->sides[LEFT]-1] : NULL);
+        mside_t* back = ((i)->sides[LEFT] != 0? &map->sides[(i)->sides[LEFT]-1] : NULL);
         if(back)
         {
             backIdx =
@@ -1017,94 +1009,99 @@ static void transferLinesAndSides(void)
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }
 
-        MPE_LinedefCreate(l->v[0], l->v[1], front? front->sector : 0,
-                          back? back->sector : 0, frontIdx, backIdx, l->ddFlags);
+        uint lineIdx = MPE_LinedefCreate((i)->v[0], (i)->v[1], front? front->sector : 0,
+                                         back? back->sector : 0, frontIdx, backIdx, (i)->ddFlags);
 
-        MPE_GameObjProperty("XLinedef", i, "Flags", DDVT_SHORT, &l->flags);
+        MPE_GameObjProperty("XLinedef", lineIdx-1, "Flags", DDVT_SHORT, &(i)->flags);
 
         switch(mapFormat)
         {
         default:
         case MF_DOOM:
-            MPE_GameObjProperty("XLinedef", i, "Type",  DDVT_SHORT, &l->dType);
-            MPE_GameObjProperty("XLinedef", i, "Tag",   DDVT_SHORT, &l->dTag);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Type",  DDVT_SHORT, &(i)->dType);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Tag",   DDVT_SHORT, &(i)->dTag);
             break;
 
         case MF_DOOM64:
-            MPE_GameObjProperty("XLinedef", i, "DrawFlags", DDVT_BYTE,  &l->d64drawFlags);
-            MPE_GameObjProperty("XLinedef", i, "TexFlags",  DDVT_BYTE,  &l->d64texFlags);
-            MPE_GameObjProperty("XLinedef", i, "Type",      DDVT_BYTE,  &l->d64type);
-            MPE_GameObjProperty("XLinedef", i, "UseType",   DDVT_BYTE,  &l->d64useType);
-            MPE_GameObjProperty("XLinedef", i, "Tag",       DDVT_SHORT, &l->d64tag);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "DrawFlags", DDVT_BYTE,  &(i)->d64drawFlags);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "TexFlags",  DDVT_BYTE,  &(i)->d64texFlags);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Type",      DDVT_BYTE,  &(i)->d64type);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "UseType",   DDVT_BYTE,  &(i)->d64useType);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Tag",       DDVT_SHORT, &(i)->d64tag);
             break;
 
         case MF_HEXEN:
-            MPE_GameObjProperty("XLinedef", i, "Type", DDVT_BYTE, &l->xType);
-            MPE_GameObjProperty("XLinedef", i, "Arg0", DDVT_BYTE, &l->xArgs[0]);
-            MPE_GameObjProperty("XLinedef", i, "Arg1", DDVT_BYTE, &l->xArgs[1]);
-            MPE_GameObjProperty("XLinedef", i, "Arg2", DDVT_BYTE, &l->xArgs[2]);
-            MPE_GameObjProperty("XLinedef", i, "Arg3", DDVT_BYTE, &l->xArgs[3]);
-            MPE_GameObjProperty("XLinedef", i, "Arg4", DDVT_BYTE, &l->xArgs[4]);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Type", DDVT_BYTE, &(i)->xType);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg0", DDVT_BYTE, &(i)->xArgs[0]);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg1", DDVT_BYTE, &(i)->xArgs[1]);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg2", DDVT_BYTE, &(i)->xArgs[2]);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg3", DDVT_BYTE, &(i)->xArgs[3]);
+            MPE_GameObjProperty("XLinedef", lineIdx-1, "Arg4", DDVT_BYTE, &(i)->xArgs[4]);
             break;
         }
     }
 }
 
-static void transferLights(void)
+static void transferSurfaceTints(void)
 {
-    LOG_TRACE("Transfering lights...");
-    for(uint i = 0; i < map->numLights; ++i)
-    {
-        surfacetint_t* l = &map->lights[i];
+    if(map->surfaceTints.empty()) return;
 
-        MPE_GameObjProperty("Light", i, "ColorR",   DDVT_FLOAT, &l->rgb[0]);
-        MPE_GameObjProperty("Light", i, "ColorG",   DDVT_FLOAT, &l->rgb[1]);
-        MPE_GameObjProperty("Light", i, "ColorB",   DDVT_FLOAT, &l->rgb[2]);
-        MPE_GameObjProperty("Light", i, "XX0",      DDVT_BYTE,  &l->xx[0]);
-        MPE_GameObjProperty("Light", i, "XX1",      DDVT_BYTE,  &l->xx[1]);
-        MPE_GameObjProperty("Light", i, "XX2",      DDVT_BYTE,  &l->xx[2]);
+    LOG_TRACE("Transfering surface tints...");
+    DENG2_FOR_EACH(i, map->surfaceTints, SurfaceTints::iterator)
+    {
+        uint idx = i - map->surfaceTints.begin();
+
+        MPE_GameObjProperty("Light", idx, "ColorR",   DDVT_FLOAT, &(i)->rgb[0]);
+        MPE_GameObjProperty("Light", idx, "ColorG",   DDVT_FLOAT, &(i)->rgb[1]);
+        MPE_GameObjProperty("Light", idx, "ColorB",   DDVT_FLOAT, &(i)->rgb[2]);
+        MPE_GameObjProperty("Light", idx, "XX0",      DDVT_BYTE,  &(i)->xx[0]);
+        MPE_GameObjProperty("Light", idx, "XX1",      DDVT_BYTE,  &(i)->xx[1]);
+        MPE_GameObjProperty("Light", idx, "XX2",      DDVT_BYTE,  &(i)->xx[2]);
     }
 }
 
 static void transferPolyobjs(void)
 {
+    if(map->polyobjs.empty()) return;
+
     LOG_TRACE("Transfering polyobjs...");
-    for(uint i = 0; i < map->numPolyobjs; ++i)
+    DENG2_FOR_EACH(i, map->polyobjs, Polyobjs::iterator)
     {
-        mpolyobj_t* po = map->polyobjs[i];
-        MPE_PolyobjCreate(po->lineIndices, po->lineCount, po->tag, po->seqType,
-                          coord_t(po->anchor[VX]), coord_t(po->anchor[VY]));
+        MPE_PolyobjCreate((i)->lineIndices, (i)->lineCount, (i)->tag, (i)->seqType,
+                          coord_t((i)->anchor[VX]), coord_t((i)->anchor[VY]));
     }
 }
 
 static void transferThings(void)
 {
-    LOG_TRACE("Transfering things...");
-    for(uint i = 0; i < map->numThings; ++i)
-    {
-        mthing_t* th = &map->things[i];
+    if(map->things.empty()) return;
 
-        MPE_GameObjProperty("Thing", i, "X",            DDVT_SHORT, &th->origin[VX]);
-        MPE_GameObjProperty("Thing", i, "Y",            DDVT_SHORT, &th->origin[VY]);
-        MPE_GameObjProperty("Thing", i, "Z",            DDVT_SHORT, &th->origin[VZ]);
-        MPE_GameObjProperty("Thing", i, "Angle",        DDVT_ANGLE, &th->angle);
-        MPE_GameObjProperty("Thing", i, "DoomEdNum",    DDVT_SHORT, &th->doomEdNum);
-        MPE_GameObjProperty("Thing", i, "SkillModes",   DDVT_INT,   &th->skillModes);
-        MPE_GameObjProperty("Thing", i, "Flags",        DDVT_INT,   &th->flags);
+    LOG_TRACE("Transfering things...");
+    DENG2_FOR_EACH(i, map->things, Things::iterator)
+    {
+        uint idx = i - map->things.begin();
+
+        MPE_GameObjProperty("Thing", idx, "X",            DDVT_SHORT, &(i)->origin[VX]);
+        MPE_GameObjProperty("Thing", idx, "Y",            DDVT_SHORT, &(i)->origin[VY]);
+        MPE_GameObjProperty("Thing", idx, "Z",            DDVT_SHORT, &(i)->origin[VZ]);
+        MPE_GameObjProperty("Thing", idx, "Angle",        DDVT_ANGLE, &(i)->angle);
+        MPE_GameObjProperty("Thing", idx, "DoomEdNum",    DDVT_SHORT, &(i)->doomEdNum);
+        MPE_GameObjProperty("Thing", idx, "SkillModes",   DDVT_INT,   &(i)->skillModes);
+        MPE_GameObjProperty("Thing", idx, "Flags",        DDVT_INT,   &(i)->flags);
 
         if(mapFormat == MF_DOOM64)
         {
-            MPE_GameObjProperty("Thing", i, "ID",       DDVT_SHORT, &th->d64TID);
+            MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &(i)->d64TID);
         }
         else if(mapFormat == MF_HEXEN)
         {
-            MPE_GameObjProperty("Thing", i, "Special",  DDVT_BYTE,  &th->xSpecial);
-            MPE_GameObjProperty("Thing", i, "ID",       DDVT_SHORT, &th->xTID);
-            MPE_GameObjProperty("Thing", i, "Arg0",     DDVT_BYTE,  &th->xArgs[0]);
-            MPE_GameObjProperty("Thing", i, "Arg1",     DDVT_BYTE,  &th->xArgs[1]);
-            MPE_GameObjProperty("Thing", i, "Arg2",     DDVT_BYTE,  &th->xArgs[2]);
-            MPE_GameObjProperty("Thing", i, "Arg3",     DDVT_BYTE,  &th->xArgs[3]);
-            MPE_GameObjProperty("Thing", i, "Arg4",     DDVT_BYTE,  &th->xArgs[4]);
+            MPE_GameObjProperty("Thing", idx, "Special",  DDVT_BYTE,  &(i)->xSpecial);
+            MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &(i)->xTID);
+            MPE_GameObjProperty("Thing", idx, "Arg0",     DDVT_BYTE,  &(i)->xArgs[0]);
+            MPE_GameObjProperty("Thing", idx, "Arg1",     DDVT_BYTE,  &(i)->xArgs[1]);
+            MPE_GameObjProperty("Thing", idx, "Arg2",     DDVT_BYTE,  &(i)->xArgs[2]);
+            MPE_GameObjProperty("Thing", idx, "Arg3",     DDVT_BYTE,  &(i)->xArgs[3]);
+            MPE_GameObjProperty("Thing", idx, "Arg4",     DDVT_BYTE,  &(i)->xArgs[4]);
         }
     }
 }
@@ -1118,12 +1115,9 @@ int TransferMap(void)
     transferVertexes();
     transferSectors();
     transferLinesAndSides();
-    transferLights();
+    transferSurfaceTints();
     transferPolyobjs();
     transferThings();
-
-    // We have now finished with our local for-conversion map representation.
-    freeMapData();
 
     LOG_VERBOSE("Done in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
 

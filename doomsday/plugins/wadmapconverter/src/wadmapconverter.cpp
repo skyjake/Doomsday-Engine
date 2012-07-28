@@ -23,8 +23,7 @@
 #include "maplumpinfo.h"
 #include <de/Log>
 
-map_t DENG_PLUGIN_GLOBAL(theMap);
-map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
+Id1Map* DENG_PLUGIN_GLOBAL(map);
 mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
 
 /**
@@ -32,7 +31,7 @@ mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
  */
 static MapLumpInfo* newMapLumpInfo(lumpnum_t lumpNum, MapLumpType lumpType)
 {
-    MapLumpInfo* info = static_cast<MapLumpInfo*>(malloc(sizeof(*info)));
+    MapLumpInfo* info = new MapLumpInfo();
     return info->init(lumpNum, lumpType, W_LumpLength(lumpNum));
 }
 
@@ -100,7 +99,7 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
         // A recognized map data lump; record it in the collection.
         if(lumpInfos[lumpType])
         {
-            free(lumpInfos[lumpType]);
+            delete lumpInfos[lumpType];
         }
         lumpInfos[lumpType] = newMapLumpInfo(i, lumpType);
     }
@@ -259,6 +258,10 @@ int ConvertMapHook(int hookType, int parm, void* context)
     MPE_Begin("");
     {
         TransferMap();
+
+        // We have now finished with our local for-conversion map representation.
+        delete DENG_PLUGIN_GLOBAL(map);
+        DENG_PLUGIN_GLOBAL(map) = 0;
     }
     MPE_End();
 
@@ -269,7 +272,7 @@ FAIL_UNKNOWN_FORMAT:
     {
         MapLumpInfo* info = lumpInfos[i];
         if(!info) continue;
-        free(info);
+        delete info;
     }
 
 FAIL_LOCATE_MAP:

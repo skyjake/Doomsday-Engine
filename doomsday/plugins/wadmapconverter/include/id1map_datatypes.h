@@ -24,8 +24,10 @@
 #include "doomsday.h"
 #include "dd_types.h"
 #include "id1map_util.h"
+#include <vector>
+#include <list>
 
-/// Sizes of the map data structures in the arrived map formats (in bytes).
+/// Sizes of the map data structures in the arrived map formats (in int8_ts).
 #define SIZEOF_64VERTEX         (4 * 2)
 #define SIZEOF_VERTEX           (2 * 2)
 #define SIZEOF_64THING          (2 * 7)
@@ -86,14 +88,14 @@ typedef struct mline_s {
     int16_t         dTag;
 
     // Hexen format members:
-    byte            xType;
-    byte            xArgs[5];
+    int8_t          xType;
+    int8_t          xArgs[5];
 
     // DOOM64 format members:
-    byte            d64drawFlags;
-    byte            d64texFlags;
-    byte            d64type;
-    byte            d64useType;
+    int8_t          d64drawFlags;
+    int8_t          d64texFlags;
+    int8_t          d64type;
+    int8_t          d64useType;
     int16_t         d64tag;
 
     int             ddFlags;
@@ -132,8 +134,8 @@ typedef struct mthing_s {
 
     // Hexen format members:
     int16_t         xTID;
-    byte            xSpecial;
-    byte            xArgs[5];
+    int8_t          xSpecial;
+    int8_t          xArgs[5];
 
     // DOOM64 format members:
     int16_t         d64TID;
@@ -150,30 +152,33 @@ typedef struct mpolyobj_s {
 
 typedef struct mlight_s {
     float           rgb[3];
-    byte            xx[3];
+    int8_t          xx[3];
 } surfacetint_t;
 
-typedef struct map_s {
-    uint            numVertexes;
-    uint            numSectors;
-    uint            numLines;
-    uint            numSides;
-    uint            numPolyobjs;
-    uint            numThings;
-    uint            numLights;
+typedef std::vector<mline_t> Lines;
+typedef std::vector<mside_t> Sides;
+typedef std::vector<msector_t> Sectors;
+typedef std::vector<mthing_t> Things;
+typedef std::vector<surfacetint_t> SurfaceTints;
+typedef std::list<mpolyobj_t> Polyobjs;
 
+class Id1Map
+{
+public:
+    uint            numVertexes;
     coord_t*        vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
-    msector_t*      sectors;
-    mline_t*        lines;
-    mside_t*        sides;
-    mthing_t*       things;
-    mpolyobj_t**    polyobjs;
-    surfacetint_t*  lights;
+
+    Lines           lines;
+    Sides           sides;
+    Sectors         sectors;
+    Things          things;
+    SurfaceTints    surfaceTints;
+    Polyobjs        polyobjs;
 
     StringPool*     materials; ///< Material dictionary.
 
-    byte*           rejectMatrix;
-    void*           blockMap;
-} map_t;
+    Id1Map();
+    ~Id1Map();
+};
 
 #endif /* __WADMAPCONVERTER_ID1MAP_DATATYPES_H__ */
