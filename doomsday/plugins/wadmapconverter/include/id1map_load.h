@@ -22,17 +22,18 @@
 #define __WADMAPCONVERTER_ID1MAP_LOAD_H__
 
 #include "doomsday.h"
-#include "dd_types.h"
-#include "maplumpinfo.h"
 #include "id1map_datatypes.h"
 
-extern mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
-extern Id1Map* DENG_PLUGIN_GLOBAL(map);
-
-int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
-
-void AnalyzeMap(void);
-
-int TransferMap(void);
+void MLine_Read(mline_t* l, Reader* reader);
+void MLine64_Read(mline_t* l, Reader* reader);
+void MLineHx_Read(mline_t* l, Reader* reader);
+void MSide_Read(mside_t* s, Reader* reader);
+void MSide64_Read(mside_t* s, Reader* reader);
+void MSector_Read(msector_t* s, Reader* reader);
+void MSector64_Read(msector_t* s, Reader* reader);
+void MThing_Read(mthing_t* t, Reader* reader);
+void MThing64_Read(mthing_t* t, Reader* reader);
+void MThingHx_Read(mthing_t* t, Reader* reader);
+void SurfaceTint_Read(surfacetint_t* t, Reader* reader);
 
 #endif /* __WADMAPCONVERTER_ID1MAP_LOAD_H__ */

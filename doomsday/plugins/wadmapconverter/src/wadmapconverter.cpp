@@ -242,7 +242,8 @@ int ConvertMapHook(int hookType, int parm, void* context)
     }
 
     // Read the archived map.
-    loadError = LoadMap(lumpInfos);
+    DENG_PLUGIN_GLOBAL(map) = new Id1Map;
+    loadError = DENG_PLUGIN_GLOBAL(map)->load(lumpInfos);
     if(loadError)
     {
         LOG_AS("WadMapConverter");
@@ -252,12 +253,13 @@ int ConvertMapHook(int hookType, int parm, void* context)
     }
 
     // Perform post read analyses.
-    AnalyzeMap();
+    DENG_PLUGIN_GLOBAL(map)->analyze();
 
     // Rebuild the map in Doomsday's native format.
     MPE_Begin("");
     {
-        TransferMap();
+        LOG_AS("WadMapConverter");
+        DENG_PLUGIN_GLOBAL(map)->transfer();
 
         // We have now finished with our local for-conversion map representation.
         delete DENG_PLUGIN_GLOBAL(map);

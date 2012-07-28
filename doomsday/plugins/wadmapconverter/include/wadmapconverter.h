@@ -29,7 +29,9 @@
 #include "doomsday.h"
 #include "dd_plugin.h"
 
-#include "id1map_load.h"
-#include "id1map_util.h"
+#include "id1map.h"
+
+extern mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
+extern Id1Map* DENG_PLUGIN_GLOBAL(map);
 
 #endif /* end of include guard: __WADMAPCONVERTER_H__ */

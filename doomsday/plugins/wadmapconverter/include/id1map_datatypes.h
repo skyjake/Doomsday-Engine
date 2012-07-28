@@ -24,8 +24,6 @@
 #include "doomsday.h"
 #include "dd_types.h"
 #include "id1map_util.h"
-#include <vector>
-#include <list>
 
 /// Sizes of the map data structures in the arrived map formats (in int8_ts).
 #define SIZEOF_64VERTEX         (4 * 2)
@@ -154,31 +152,5 @@ typedef struct mlight_s {
     float           rgb[3];
     int8_t          xx[3];
 } surfacetint_t;
-
-typedef std::vector<mline_t> Lines;
-typedef std::vector<mside_t> Sides;
-typedef std::vector<msector_t> Sectors;
-typedef std::vector<mthing_t> Things;
-typedef std::vector<surfacetint_t> SurfaceTints;
-typedef std::list<mpolyobj_t> Polyobjs;
-
-class Id1Map
-{
-public:
-    uint            numVertexes;
-    coord_t*        vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
-
-    Lines           lines;
-    Sides           sides;
-    Sectors         sectors;
-    Things          things;
-    SurfaceTints    surfaceTints;
-    Polyobjs        polyobjs;
-
-    StringPool*     materials; ///< Material dictionary.
-
-    Id1Map();
-    ~Id1Map();
-};
 
 #endif /* __WADMAPCONVERTER_ID1MAP_DATATYPES_H__ */

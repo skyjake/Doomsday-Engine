@@ -224,9 +224,7 @@ static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 
 static void findPolyobjs(void)
 {
-    LOG_AS("WadMapConverter");
     LOG_TRACE("Locating polyobjs...");
-
     DENG2_FOR_EACH(i, map->things, Things::iterator)
     {
         // A polyobj anchor?
@@ -238,8 +236,9 @@ static void findPolyobjs(void)
     }
 }
 
-void AnalyzeMap(void)
+void Id1Map::analyze(void)
 {
+    LOG_AS("WadMapConverter::Id1Map");
     if(mapFormat == MF_HEXEN)
     {
         findPolyobjs();

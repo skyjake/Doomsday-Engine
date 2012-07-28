@@ -18,6 +18,7 @@ deng_debug: DEFINES += DENG_WADMAPCONVERTER_DEBUG
 INCLUDEPATH += include
 
 HEADERS += \
+    include/id1map.h \
     include/id1map_datatypes.h \
     include/id1map_load.h \
     include/id1map_util.h \
@@ -26,6 +27,7 @@ HEADERS += \
     include/wadmapconverter.h
 
 SOURCES += \
+    src/id1map.cpp \
     src/id1map_analyze.cpp \
     src/id1map_load.cpp \
     src/id1map_loadblockmap.cpp \
