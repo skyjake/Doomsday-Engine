@@ -531,7 +531,7 @@ int Id1Map::transfer(void)
     transferPolyobjs();
     transferThings();
 
-    LOG_VERBOSE("Done in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
+    LOG_VERBOSE("Transfer completed in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
 
     return false; // Success.
 }

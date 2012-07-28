@@ -75,7 +75,7 @@ private:
      * @param lineList      @c NULL, will cause IterFindPolyLines to count
      *                      the number of lines in the polyobj.
      */
-    void iterFindPolyLines(LineList& lineList, coord_t x, coord_t y);
+    void collectPolyobjLinesWorker(LineList& lineList, coord_t x, coord_t y);
 
     void collectPolyobjLines(LineList& lineList, Lines::iterator lineIt);
 
