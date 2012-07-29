@@ -137,32 +137,40 @@ boolean Reader_AtEnd(const Reader* reader)
 
 int8_t Reader_ReadChar(Reader* reader)
 {
-    if(!Reader_Check(reader, 1)) return 0;
-    if(!reader->useCustomFuncs)
+    int8_t result = 0;
+    if(Reader_Check(reader, 1))
     {
-        Reader_TypeCheck(reader, WTCC_CHAR);
-        return ((int8_t*)reader->data)[reader->pos++];
+        if(!reader->useCustomFuncs)
+        {
+            Reader_TypeCheck(reader, WTCC_CHAR);
+            result = ((int8_t*)reader->data)[reader->pos++];
+        }
+        else
+        {
+            assert(reader->func.readInt8);
+            result = reader->func.readInt8(reader);
+        }
     }
-    else
-    {
-        assert(reader->func.readInt8);
-        return reader->func.readInt8(reader);
-    }
+    return result;
 }
 
 byte Reader_ReadByte(Reader* reader)
 {
-    if(!Reader_Check(reader, 1)) return 0;
-    if(!reader->useCustomFuncs)
+    byte result = 0;
+    if(Reader_Check(reader, 1))
     {
-        Reader_TypeCheck(reader, WTCC_BYTE);
-        return reader->data[reader->pos++];
+        if(!reader->useCustomFuncs)
+        {
+            Reader_TypeCheck(reader, WTCC_BYTE);
+            result = reader->data[reader->pos++];
+        }
+        else
+        {
+            assert(reader->func.readInt8);
+            result = reader->func.readInt8(reader);
+        }
     }
-    else
-    {
-        assert(reader->func.readInt8);
-        return reader->func.readInt8(reader);
-    }
+    return result;
 }
 
 int16_t Reader_ReadInt16(Reader* reader)
@@ -179,7 +187,7 @@ int16_t Reader_ReadInt16(Reader* reader)
         else
         {
             assert(reader->func.readInt16);
-            return reader->func.readInt16(reader);
+            result = reader->func.readInt16(reader);
         }
     }
     return result;
@@ -199,7 +207,7 @@ uint16_t Reader_ReadUInt16(Reader* reader)
         else
         {
             assert(reader->func.readInt16);
-            return reader->func.readInt16(reader);
+            result = reader->func.readInt16(reader);
         }
     }
     return result;
@@ -219,7 +227,7 @@ int32_t Reader_ReadInt32(Reader* reader)
         else
         {
             assert(reader->func.readInt32);
-            return reader->func.readInt32(reader);
+            result = reader->func.readInt32(reader);
         }
     }
     return result;
@@ -239,7 +247,7 @@ uint32_t Reader_ReadUInt32(Reader* reader)
         else
         {
             assert(reader->func.readInt32);
-            return reader->func.readInt32(reader);
+            result = reader->func.readInt32(reader);
         }
     }
     return result;
@@ -259,7 +267,7 @@ float Reader_ReadFloat(Reader* reader)
         else
         {
             assert(reader->func.readFloat);
-            return reader->func.readFloat(reader);
+            result = reader->func.readFloat(reader);
         }
     }
     return result;
