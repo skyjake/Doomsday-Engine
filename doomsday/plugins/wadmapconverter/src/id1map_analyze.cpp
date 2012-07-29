@@ -232,7 +232,7 @@ void Id1Map::analyze(void)
     uint startTime = Sys_GetRealTime();
 
     LOG_AS("Id1Map");
-    if(DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN)
+    if(mapFormat == MF_HEXEN)
     {
         findPolyobjs();
     }

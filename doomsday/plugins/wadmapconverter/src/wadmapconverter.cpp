@@ -20,14 +20,12 @@
  */
 
 #include "wadmapconverter.h"
-#include "maplumpinfo.h"
+#include "id1map_load.h"
+#include "id1map_util.h"
 #include <de/Log>
 
-#define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
-
 Id1Map* map;
-mapformatid_t mapFormat;
 
 /**
  * Allocate and initialize a new MapLumpInfo record.
@@ -108,14 +106,14 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
     }
 }
 
-static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
+static mapformatid_t recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
 
     LOG_AS("WadMapConverter");
 
     // Assume DOOM format by default.
-    mapFormat = MF_DOOM;
+    mapformatid_t mapFormat = MF_DOOM;
 
     // Some data lumps are specific to a particular map format and thus
     // their presence unambiguously signifies which format we have.
@@ -145,7 +143,7 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
         // Determine the number of map data objects of each data type.
         uint* elmCountAddr = NULL;
-        size_t elementSize = ElementSizeForMapLumpType(info->type);
+        size_t elementSize = ElementSizeForMapLumpType(mapFormat, info->type);
         switch(info->type)
         {
         default: break;
@@ -163,8 +161,7 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
             if(0 != info->length % elementSize)
             {
                 // What is this??
-                mapFormat = MF_UNKNOWN;
-                return;
+                return MF_UNKNOWN;
             }
 
             *elmCountAddr += info->length / elementSize;
@@ -174,11 +171,11 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     // A valid map has at least one of each of these elements.
     if(!numVertexes || !numLines || !numSides || !numSectors)
     {
-        mapFormat = MF_UNKNOWN;
-        return;
+        return MF_UNKNOWN;
     }
 
     LOG_INFO("Recognized a %s format map.") << Str_Text(MapFormatNameForId(mapFormat));
+    return mapFormat;
 }
 
 /**
@@ -214,7 +211,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
     // Do we recognize this format?
-    recognizeMapFormat(lumpInfos);
+    mapformatid_t mapFormat = recognizeMapFormat(lumpInfos);
     if(mapFormat == MF_UNKNOWN)
     {
         ret_val = false;
@@ -222,7 +219,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     }
 
     // Read the archived map.
-    map = new Id1Map;
+    map = new Id1Map(mapFormat);
     loadError = map->load(lumpInfos);
     if(loadError)
     {

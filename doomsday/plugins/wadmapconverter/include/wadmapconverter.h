@@ -31,7 +31,6 @@
 
 #include "id1map.h"
 
-extern mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
 extern Id1Map* DENG_PLUGIN_GLOBAL(map);
 
 #endif /* end of include guard: __WADMAPCONVERTER_H__ */

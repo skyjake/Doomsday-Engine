@@ -24,10 +24,9 @@
 #include "wadmapconverter.h"
 #include <de/libdeng2.h>
 
-#define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
 #define map                     DENG_PLUGIN_GLOBAL(map)
 
-size_t ElementSizeForMapLumpType(MapLumpType type)
+size_t ElementSizeForMapLumpType(mapformatid_t mapFormat, MapLumpType type)
 {
     switch(type)
     {
@@ -58,7 +57,7 @@ size_t ElementSizeForMapLumpType(MapLumpType type)
 /**
  * Translate the line definition flags for Doomsday.
  */
-static void interpretLineDefFlags(mline_t* l)
+static void interpretLineDefFlags(mline_t* l, mapformatid_t mapFormat)
 {
 #define ML_BLOCKING              1 ///< Solid, is an obstacle.
 #define ML_TWOSIDED              4 ///< Backside will not be present at all if not two sided.
@@ -151,7 +150,7 @@ void MLine_Read(mline_t* l, Reader* reader)
     l->validCount   = 0;
     l->ddFlags      = 0;
 
-    interpretLineDefFlags(l);
+    interpretLineDefFlags(l, map->format());
 }
 
 void MLine64_Read(mline_t* l, Reader* reader)
@@ -187,7 +186,7 @@ void MLine64_Read(mline_t* l, Reader* reader)
     l->validCount   = 0;
     l->ddFlags      = 0;
 
-    interpretLineDefFlags(l);
+    interpretLineDefFlags(l, map->format());
 }
 
 void MLineHx_Read(mline_t* l, Reader* reader)
@@ -224,7 +223,7 @@ void MLineHx_Read(mline_t* l, Reader* reader)
     l->validCount   = 0;
     l->ddFlags      = 0;
 
-    interpretLineDefFlags(l);
+    interpretLineDefFlags(l, map->format());
 }
 
 void MSide_Read(mside_t* s, Reader* reader)

@@ -20,17 +20,17 @@
  */
 
 #include "wadmapconverter.h"
+#include "id1map_load.h"
+#include "id1map_util.h"
 #include <de/libdeng2.h>
 #include <de/Log>
 #include <de/Error>
 
-#define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
-
 static Reader* bufferLump(MapLumpInfo* info);
 static void clearReadBuffer(void);
 
-Id1Map::Id1Map()
-    : numVertexes(0), vertexes(0), materials(0)
+Id1Map::Id1Map(mapformatid_t format)
+    : mapFormat(format), numVertexes(0), vertexes(0), materials(0)
 {}
 
 Id1Map::~Id1Map()
@@ -279,7 +279,7 @@ int Id1Map::load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
      * Allocate the vertices first as a large contiguous array suitable for
      * passing directly to Doomsday's MPE interface.
      */
-    size_t elementSize = ElementSizeForMapLumpType(ML_VERTEXES);
+    size_t elementSize = ElementSizeForMapLumpType(mapFormat, ML_VERTEXES);
     uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
     numVertexes = numElements;
     vertexes = (coord_t*)malloc(numVertexes * 2 * sizeof(*vertexes));
@@ -290,7 +290,7 @@ int Id1Map::load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 
         if(!info || !info->length) continue;
 
-        elementSize = ElementSizeForMapLumpType(info->type);
+        elementSize = ElementSizeForMapLumpType(mapFormat, info->type);
         if(!elementSize) continue;
 
         // Process this data lump.

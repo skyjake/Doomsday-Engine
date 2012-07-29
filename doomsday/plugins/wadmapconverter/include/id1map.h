@@ -25,10 +25,25 @@
 #include "dd_types.h"
 #include "maplumpinfo.h"
 #include "id1map_datatypes.h"
-#include "id1map_load.h"
-#include "id1map_util.h"
 #include <vector>
 #include <list>
+
+/**
+ * Logical map format identifier (unique).
+ */
+typedef enum {
+    MF_UNKNOWN              = -1,
+    MF_DOOM                 = 0,
+    MF_HEXEN,
+    MF_DOOM64,
+    NUM_MAPFORMATS
+} mapformatid_t;
+
+/**
+ * Helper macro for determining whether a value can be interpreted as a logical
+ * map format identifier (@see mapformatid_t).
+ */
+#define VALID_MAPFORMATID(v)        ((v) >= MF_DOOM && (v) < NUM_MAPFORMATS)
 
 /// Material dictionary groups.
 typedef enum materialdictgroup_e {
@@ -48,8 +63,10 @@ typedef std::list<uint> LineList;
 class Id1Map
 {
 public:
-    Id1Map();
+    Id1Map(mapformatid_t format);
     ~Id1Map();
+
+    mapformatid_t format(void) const { return mapFormat; }
 
     int load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
 
@@ -105,6 +122,8 @@ private:
     void transferThings(void);
 
 private:
+    mapformatid_t mapFormat;
+
     uint numVertexes;
     coord_t* vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
 
