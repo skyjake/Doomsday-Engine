@@ -9,10 +9,6 @@ TARGET = deng1
 
 include(../config.pri)
 
-deng_writertypecheck {
-    DEFINES += DENG_WRITER_TYPECHECK
-}
-
 VERSION = $$DENG_VERSION
 
 # External Dependencies ------------------------------------------------------
@@ -50,6 +46,10 @@ deng_writertypecheck {
     DEFINES += DENG_WRITER_TYPECHECK
 }
 
+deng_stringpoolzoneallocs {
+    DEFINES += DENG_STRINGPOOL_ZONE_ALLOCS
+}
+
 # Source Files ---------------------------------------------------------------
 
 # Public headers
@@ -64,7 +64,9 @@ HEADERS += \
     include/de/smoother.h \
     include/de/str.h \
     include/de/str.hh \
+    include/de/stringpool.h \
     include/de/types.h \
+    include/de/unittest.h \
     include/de/writer.h
 
 # Sources and private headers
@@ -78,6 +80,7 @@ SOURCES += \
     src/reader.c \
     src/smoother.cpp \
     src/str.c \
+    src/stringpool.cpp \
     src/writer.c
 
 # Installation ---------------------------------------------------------------

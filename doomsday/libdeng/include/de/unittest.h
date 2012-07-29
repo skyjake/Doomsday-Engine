@@ -1,8 +1,9 @@
 /**
- * @file unittest.h
+ * @file de/unittest.h
  * Macros for unit testing.
  *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

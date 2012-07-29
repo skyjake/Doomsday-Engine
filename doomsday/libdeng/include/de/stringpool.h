@@ -1,5 +1,5 @@
 /**
- * @file stringpool.h
+ * @file de/stringpool.h
  * String pool (case insensitive). @ingroup base
  *
  * Container data structure for a set of unique case-insensitive strings.
@@ -26,8 +26,8 @@
  *
  * @todo Add case-sensitive mode.
  *
- * @authors Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -47,11 +47,19 @@
 #ifndef LIBDENG_STRINGPOOL_H
 #define LIBDENG_STRINGPOOL_H
 
+/**
+ * @def DENG_STRINGPOOL_ZONE_ALLOCS
+ * Define this to make StringPool allocate memory from the memory zone instead
+ * of with system malloc().
+ */
+//#define DENG_STRINGPOOL_ZONE_ALLOCS
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "dd_types.h"
+#include "libdeng.h"
+#include "types.h"
 
 struct stringpool_s; // The stringpool instance (opaque).
 
@@ -67,7 +75,7 @@ typedef uint StringPoolId;
  * Constructs an empty StringPool. The pool must be destroyed with
  * StringPool_Delete() when no longer needed.
  */
-StringPool* StringPool_New(void);
+DENG_PUBLIC StringPool* StringPool_New(void);
 
 /**
  * Constructs an empty StringPool and interns a number of strings. The pool
@@ -76,33 +84,33 @@ StringPool* StringPool_New(void);
  * @param strings  Array of strings to be interned (must contain at least @a count strings).
  * @param count  Number of strings to be interned.
  */
-StringPool* StringPool_NewWithStrings(const ddstring_t* strings, uint count);
+DENG_PUBLIC StringPool* StringPool_NewWithStrings(const ddstring_t* strings, uint count);
 
 /**
  * Destroys the stringpool.
  * @param pool  StringPool instance.
  */
-void StringPool_Delete(StringPool* pool);
+DENG_PUBLIC void StringPool_Delete(StringPool* pool);
 
 /**
  * Clear the string pool. All strings in the pool will be destroyed.
  * @param pool  StringPool instance.
  */
-void StringPool_Clear(StringPool* pool);
+DENG_PUBLIC void StringPool_Clear(StringPool* pool);
 
 /**
  * Is the pool empty?
  * @param pool  StringPool instance.
  * @return  @c true if there are no strings present in the pool.
  */
-boolean StringPool_Empty(const StringPool* pool);
+DENG_PUBLIC boolean StringPool_Empty(const StringPool* pool);
 
 /**
  * Determines the number of strings in the pool.
  * @param pool  StringPool instance.
  * @return Number of strings in the pool.
  */
-uint StringPool_Size(const StringPool* pool);
+DENG_PUBLIC uint StringPool_Size(const StringPool* pool);
 
 /**
  * Interns string @a str. If this string is not already in the pool, a new
@@ -115,7 +123,7 @@ uint StringPool_Size(const StringPool* pool);
  *
  * @return  Unique Id associated with the internal copy of @a str.
  */
-StringPoolId StringPool_Intern(StringPool* pool, const ddstring_t* str);
+DENG_PUBLIC StringPoolId StringPool_Intern(StringPool* pool, const ddstring_t* str);
 
 /**
  * Interns string @a str. If this string is not already in the pool, a new
@@ -128,7 +136,7 @@ StringPoolId StringPool_Intern(StringPool* pool, const ddstring_t* str);
  *
  * @return The interned copy of the string owned by the pool.
  */
-const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_t* str);
+DENG_PUBLIC const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_t* str);
 
 /**
  * Sets the user-specified custom value associated with the string @a id.
@@ -138,7 +146,7 @@ const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_
  * @param id     Id of a string.
  * @param value  User value.
  */
-void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value);
+DENG_PUBLIC void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value);
 
 /**
  * Retrieves the user-specified custom value associated with the string @a id.
@@ -149,7 +157,7 @@ void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value);
  *
  * @return User value.
  */
-uint StringPool_UserValue(StringPool* pool, StringPoolId id);
+DENG_PUBLIC uint StringPool_UserValue(StringPool* pool, StringPoolId id);
 
 /**
  * Sets the user-specified custom pointer associated with the string @a id.
@@ -161,7 +169,7 @@ uint StringPool_UserValue(StringPool* pool, StringPoolId id);
  * @param id     Id of a string.
  * @param ptr    User pointer.
  */
-void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr);
+DENG_PUBLIC void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr);
 
 /**
  * Retrieves the user-specified custom pointer associated with the string @a id.
@@ -171,7 +179,7 @@ void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr);
  *
  * @return User pointer.
  */
-void* StringPool_UserPointer(StringPool* pool, StringPoolId id);
+DENG_PUBLIC void* StringPool_UserPointer(StringPool* pool, StringPoolId id);
 
 /**
  * Is @a str considered to be in the pool?
@@ -181,7 +189,7 @@ void* StringPool_UserPointer(StringPool* pool, StringPoolId id);
  *
  * @return  Id of the matching string; else @c 0.
  */
-StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str);
+DENG_PUBLIC StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str);
 
 /**
  * Retrieve an immutable copy of the interned string associated with the
@@ -192,7 +200,7 @@ StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str
  *
  * @return  Interned string associated with @a internId. Owned by the pool.
  */
-const ddstring_t* StringPool_String(const StringPool* pool, StringPoolId id);
+DENG_PUBLIC const ddstring_t* StringPool_String(const StringPool* pool, StringPoolId id);
 
 /**
  * Removes a string from the pool.
@@ -202,7 +210,7 @@ const ddstring_t* StringPool_String(const StringPool* pool, StringPoolId id);
  *
  * @return  @c true, if string @a str was found and removed.
  */
-boolean StringPool_Remove(StringPool* pool, const ddstring_t* str);
+DENG_PUBLIC boolean StringPool_Remove(StringPool* pool, const ddstring_t* str);
 
 /**
  * Removes a string from the pool.
@@ -212,7 +220,7 @@ boolean StringPool_Remove(StringPool* pool, const ddstring_t* str);
  *
  * @return  @c true if the string was found and removed.
  */
-boolean StringPool_RemoveById(StringPool* pool, StringPoolId id);
+DENG_PUBLIC boolean StringPool_RemoveById(StringPool* pool, StringPoolId id);
 
 /**
  * Iterate over all strings in the pool making a callback for each. Iteration
@@ -225,7 +233,7 @@ boolean StringPool_RemoveById(StringPool* pool, StringPoolId id);
  * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value returned
  *          by @a callback.
  */
-int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolId, void*), void* data);
+DENG_PUBLIC int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolId, void*), void* data);
 
 /**
  * Serializes the pool using @a writer.
@@ -233,7 +241,7 @@ int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolId, voi
  * @param ar StringPool instance.
  * @param writer  Writer instance.
  */
-void StringPool_Write(const StringPool* ar, Writer* writer);
+DENG_PUBLIC void StringPool_Write(const StringPool* ar, Writer* writer);
 
 /**
  * Deserializes the pool from @a reader.
@@ -241,14 +249,14 @@ void StringPool_Write(const StringPool* ar, Writer* writer);
  * @param ar StringPool instance.
  * @param reader  Reader instance.
  */
-void StringPool_Read(StringPool* ar, Reader* reader);
+DENG_PUBLIC void StringPool_Read(StringPool* ar, Reader* reader);
 
 #if _DEBUG
 /**
  * Print contents of the pool. For debug.
  * @param pool  StringPool instance.
  */
-void StringPool_Print(const StringPool* pool);
+DENG_PUBLIC void StringPool_Print(const StringPool* pool);
 #endif
 
 #ifdef __cplusplus

@@ -284,16 +284,16 @@ EXPORTS
 ;    AutoStr_FromStr             @847 NONAME
 
     ; StringPool.
-    StringPool_New              @537 NONAME
-    StringPool_NewWithStrings   @538 NONAME
-    StringPool_Delete           @539 NONAME
-    StringPool_Clear            @540 NONAME
-    StringPool_Empty            @541 NONAME
-    StringPool_Size             @542 NONAME
-    StringPool_Intern           @543 NONAME
-    StringPool_InternAndRetrieve @544 NONAME
-    StringPool_IsInterned       @545 NONAME
-    StringPool_String           @546 NONAME
+;    StringPool_New              @537 NONAME
+;    StringPool_NewWithStrings   @538 NONAME
+;    StringPool_Delete           @539 NONAME
+;    StringPool_Clear            @540 NONAME
+;    StringPool_Empty            @541 NONAME
+;    StringPool_Size             @542 NONAME
+;    StringPool_Intern           @543 NONAME
+;    StringPool_InternAndRetrieve @544 NONAME
+;    StringPool_IsInterned       @545 NONAME
+;    StringPool_String           @546 NONAME
 
     ; Uri.
     Uri_New                     @238 NONAME

@@ -84,11 +84,11 @@ struct font_s;
 #include "point.h"
 #include "rect.h"
 #include "size.h"
-#include "stringpool.h"
 #include <de/reader.h>
 #include <de/writer.h>
 #include <de/memoryzone.h>
 #include <de/smoother.h>
+#include <de/stringpool.h>
 
 //------------------------------------------------------------------------
 //

@@ -38,7 +38,7 @@
 #include "de_misc.h"
 
 #include "def_main.h"
-#include "stringpool.h"
+#include <de/stringpool.h>
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"

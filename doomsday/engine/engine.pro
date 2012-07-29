@@ -116,7 +116,6 @@ DENG_API_HEADERS = \
     api/point.h \
     api/rect.h \
     api/size.h \
-    api/stringpool.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
@@ -607,7 +606,6 @@ SOURCES += \
     portable/src/sidedef.c \
     portable/src/size.c \
     portable/src/stringarray.cpp \
-    portable/src/stringpool.cpp \
     portable/src/surface.c \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \

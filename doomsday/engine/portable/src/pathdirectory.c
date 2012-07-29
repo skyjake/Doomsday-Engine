@@ -30,7 +30,7 @@
 #include "de_system.h"
 #include "m_misc.h" // For M_NumDigits
 
-#include "stringpool.h"
+#include <de/stringpool.h>
 #include "blockset.h"
 
 #include "pathdirectory.h"

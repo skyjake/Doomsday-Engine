@@ -1,9 +1,9 @@
 /**
- * @file stringpool.cpp
+ * @file src/stringpool.cpp
  * String pool (case insensitive) implementation. @ingroup base
  *
- * @authors Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,11 +20,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include <de/memoryzone.h>
-#include <de/str.hh>
-#include "stringpool.h"
-#include "unittest.h"
+#include "de/memory.h"
+#include "de/memoryzone.h"
+#include "de/str.hh"
+#include "de/stringpool.h"
+#include "de/unittest.h"
+#include <de/c_wrapper.h>
 
 #include <stdio.h>
 #include <vector>
@@ -32,19 +33,17 @@
 #include <set>
 #include <algorithm>
 
-/**
- * @def LIBDENG_STRINGPOOL_ZONE_ALLOCS
- * Define this to make StringPool allocate memory from the memory zone instead
- * of with system malloc().
- */
-//#define LIBDENG_STRINGPOOL_ZONE_ALLOCS
+#if WIN32
+# define strcasecmp _stricmp
+# define strdup _strdup
+#endif
 
-#ifdef LIBDENG_STRINGPOOL_ZONE_ALLOCS
+#ifdef DENG_STRINGPOOL_ZONE_ALLOCS
 #  define STRINGPOOL_STRDUP(x)  Z_StrDup(x)
 #  define STRINGPOOL_FREE(x)    Z_Free(x)
 #else
 #  define STRINGPOOL_STRDUP(x)  strdup(x)
-#  define STRINGPOOL_FREE(x)    free(x)
+#  define STRINGPOOL_FREE(x)    M_Free(x)
 #endif
 
 /// Macro used for converting internal ids to externally visible StringPoolIds.
@@ -134,18 +133,18 @@ public:
         return const_cast<CaselessStr*>(_str);
     }
     InternalId id() const {
-        assert(_str);
+        DENG_ASSERT(_str);
         return _str->id();
     }
     bool operator < (const CaselessStrRef& other) const {
-        assert(_str);
-        assert(other._str);
-        return stricmp(*_str, *other._str) < 0;
+        DENG_ASSERT(_str);
+        DENG_ASSERT(other._str);
+        return strcasecmp(*_str, *other._str) < 0;
     }
     bool operator == (const CaselessStrRef& other) const {
-        assert(_str);
-        assert(other._str);
-        return !stricmp(*_str, *other._str);
+        DENG_ASSERT(_str);
+        DENG_ASSERT(other._str);
+        return !strcasecmp(*_str, *other._str);
     }
 private:
     const CaselessStr* _str;
@@ -227,8 +226,8 @@ struct stringpool_s {
 
     void inline assertCount() const
     {
-        assert(count == interns.size());
-        assert(count == idMap.size() - available.size());
+        DENG_ASSERT(count == interns.size());
+        DENG_ASSERT(count == idMap.size() - available.size());
     }
 
     void clear()
@@ -309,10 +308,10 @@ struct stringpool_s {
 
     void releaseAndDestroy(InternalId id, Interns::iterator* iterToErase = 0)
     {
-        assert(id < idMap.size());
+        DENG_ASSERT(id < idMap.size());
 
         CaselessStr* interned = idMap[id];
-        assert(interned != 0);
+        DENG_ASSERT(interned != 0);
 
         idMap[id] = 0;
         available.push_back(id);
@@ -349,33 +348,33 @@ StringPool* StringPool_NewWithStrings(const ddstring_t* strings, uint count)
 
 void StringPool_Delete(StringPool* pool)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     delete pool;
 }
 
 void StringPool_Clear(StringPool* pool)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     pool->clear();
 }
 
 boolean StringPool_Empty(const StringPool* pool)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     pool->assertCount();
     return !pool->count;
 }
 
 uint StringPool_Size(const StringPool* pool)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     pool->assertCount();
     return uint(pool->count);
 }
 
 StringPoolId StringPool_Intern(StringPool* pool, const ddstring_t* str)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     Interns::iterator found = pool->findIntern(Str_Text(str)); // O(log n)
     if(found != pool->interns.end())
     {
@@ -387,7 +386,7 @@ StringPoolId StringPool_Intern(StringPool* pool, const ddstring_t* str)
 
 const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_t* str)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     InternalId id = IMPORT_ID(StringPool_Intern(pool, str));
     return *pool->idMap[id];
 }
@@ -398,9 +397,9 @@ void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value)
 
     const InternalId internalId = IMPORT_ID(id);
 
-    assert(pool);
-    assert(internalId < pool->idMap.size());
-    assert(pool->idMap[internalId] != 0);
+    DENG_ASSERT(pool);
+    DENG_ASSERT(internalId < pool->idMap.size());
+    DENG_ASSERT(pool->idMap[internalId] != 0);
 
     pool->idMap[internalId]->setUserValue(value); // O(1)
 }
@@ -411,9 +410,9 @@ uint StringPool_UserValue(StringPool* pool, StringPoolId id)
 
     const InternalId internalId = IMPORT_ID(id);
 
-    assert(pool);
-    assert(internalId < pool->idMap.size());
-    assert(pool->idMap[internalId] != 0);
+    DENG_ASSERT(pool);
+    DENG_ASSERT(internalId < pool->idMap.size());
+    DENG_ASSERT(pool->idMap[internalId] != 0);
 
     return pool->idMap[internalId]->userValue(); // O(1)
 }
@@ -424,9 +423,9 @@ void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr)
 
     const InternalId internalId = IMPORT_ID(id);
 
-    assert(pool);
-    assert(internalId < pool->idMap.size());
-    assert(pool->idMap[internalId] != 0);
+    DENG_ASSERT(pool);
+    DENG_ASSERT(internalId < pool->idMap.size());
+    DENG_ASSERT(pool->idMap[internalId] != 0);
 
     pool->idMap[internalId]->setUserPointer(ptr); // O(1)
 }
@@ -437,16 +436,16 @@ void* StringPool_UserPointer(StringPool* pool, StringPoolId id)
 
     const InternalId internalId = IMPORT_ID(id);
 
-    assert(pool);
-    assert(internalId < pool->idMap.size());
-    assert(pool->idMap[internalId] != 0);
+    DENG_ASSERT(pool);
+    DENG_ASSERT(internalId < pool->idMap.size());
+    DENG_ASSERT(pool->idMap[internalId] != 0);
 
     return pool->idMap[internalId]->userPointer(); // O(1)
 }
 
 StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     Interns::const_iterator found = pool->findIntern(Str_Text(str)); // O(log n)
     if(found != pool->interns.end())
     {
@@ -458,17 +457,17 @@ StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str
 
 const ddstring_t* StringPool_String(const StringPool* pool, StringPoolId id)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     if(id == 0) return NULL;
 
     const InternalId internalId = IMPORT_ID(id);
-    assert(internalId < pool->idMap.size());
+    DENG_ASSERT(internalId < pool->idMap.size());
     return *pool->idMap[internalId];
 }
 
 boolean StringPool_Remove(StringPool* pool, const ddstring_t* str)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     Interns::iterator found = pool->findIntern(Str_Text(str)); // O(log n)
     if(found != pool->interns.end())
     {
@@ -480,7 +479,7 @@ boolean StringPool_Remove(StringPool* pool, const ddstring_t* str)
 
 boolean StringPool_RemoveById(StringPool* pool, StringPoolId id)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
 
     if(id == 0) return false;
 
@@ -497,7 +496,7 @@ boolean StringPool_RemoveById(StringPool* pool, StringPoolId id)
 
 int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolId, void*), void* data)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     if(!callback) return 0;
     for(uint i = 0; i < pool->idMap.size(); ++i)
     {
@@ -510,13 +509,13 @@ int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolId, voi
 
 void StringPool_Write(const StringPool* pool, Writer* writer)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     pool->serialize(writer);
 }
 
 void StringPool_Read(StringPool* pool, Reader* reader)
 {
-    assert(pool);
+    DENG_ASSERT(pool);
     pool->deserialize(reader);
 }
 
@@ -550,14 +549,14 @@ void StringPool_Print(const StringPool* pool)
     fprintf(stderr, "StringPool [%p]\n    idx    id string\n", (void*)pool);
     StringPool_Iterate(pool, printInternedString, &p);
     fprintf(stderr, "  There is %u %s in the pool.\n", StringPool_Size(pool),
-               StringPool_Size(pool)==1? "string":"strings");
+                    StringPool_Size(pool)==1? "string":"strings");
 }
 #endif
 
 #ifdef _DEBUG
 LIBDENG_DEFINE_UNITTEST(StringPool)
 {
-#ifdef LIBDENG_STRINGPOOL_ZONE_ALLOCS
+#ifdef DENG_STRINGPOOL_ZONE_ALLOCS
     return 0; // Zone is not available yet.
 #endif
 
@@ -566,50 +565,50 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
     ddstring_t* s2 = Str_NewStd();
 
     Str_Set(s, "Hello");
-    assert(!StringPool_IsInterned(p, s));
-    assert(StringPool_Empty(p));
+    DENG_ASSERT(!StringPool_IsInterned(p, s));
+    DENG_ASSERT(StringPool_Empty(p));
 
     // First string.
     StringPool_Intern(p, s);
-    assert(StringPool_IsInterned(p, s) == 1);
+    DENG_ASSERT(StringPool_IsInterned(p, s) == 1);
 
     // Re-insertion.
-    assert(StringPool_Intern(p, s) == 1);
+    DENG_ASSERT(StringPool_Intern(p, s) == 1);
 
     // Case insensitivity.
     Str_Set(s, "heLLO");
-    assert(StringPool_Intern(p, s) == 1);
+    DENG_ASSERT(StringPool_Intern(p, s) == 1);
 
     // Another string.
     Str_Set(s, "abc");
     const ddstring_t* is = StringPool_InternAndRetrieve(p, s);
-    assert(!Str_Compare(is, Str_Text(s)));
+    DENG_ASSERT(!Str_Compare(is, Str_Text(s)));
 
     Str_Set(s2, "ABC");
     is = StringPool_InternAndRetrieve(p, s2);
-    assert(!Str_Compare(is, Str_Text(s)));
+    DENG_ASSERT(!Str_Compare(is, Str_Text(s)));
 
-    assert(StringPool_Intern(p, is) == 2);
+    DENG_ASSERT(StringPool_Intern(p, is) == 2);
 
-    assert(StringPool_Size(p) == 2);
+    DENG_ASSERT(StringPool_Size(p) == 2);
     //StringPool_Print(p);
 
-    assert(!StringPool_Empty(p));
+    DENG_ASSERT(!StringPool_Empty(p));
 
     StringPool_SetUserValue(p, 1, 1234);
-    assert(StringPool_UserValue(p, 1) == 1234);
+    DENG_ASSERT(StringPool_UserValue(p, 1) == 1234);
 
-    assert(StringPool_UserValue(p, 2) == 0);
+    DENG_ASSERT(StringPool_UserValue(p, 2) == 0);
 
     Str_Set(s, "HELLO");
     StringPool_Remove(p, s);
-    assert(!StringPool_IsInterned(p, s));
-    assert(StringPool_Size(p) == 1);
-    assert(!Str_Compare(StringPool_String(p, 2), "abc"));
+    DENG_ASSERT(!StringPool_IsInterned(p, s));
+    DENG_ASSERT(StringPool_Size(p) == 1);
+    DENG_ASSERT(!Str_Compare(StringPool_String(p, 2), "abc"));
 
     Str_Set(s, "Third!");
-    assert(StringPool_Intern(p, s) == 1);
-    assert(StringPool_Size(p) == 2);
+    DENG_ASSERT(StringPool_Intern(p, s) == 1);
+    DENG_ASSERT(StringPool_Size(p) == 2);
 
     Str_Set(s, "FOUR");
     StringPool_Intern(p, s);
@@ -624,18 +623,18 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
     StringPool* p2 = StringPool_New();
     StringPool_Read(p2, r);
     //StringPool_Print(p2);
-    assert(StringPool_Size(p2) == 2);
-    assert(!Str_Compare(StringPool_String(p2, 2), "abc"));
-    assert(!Str_Compare(StringPool_String(p2, 3), "FOUR"));
+    DENG_ASSERT(StringPool_Size(p2) == 2);
+    DENG_ASSERT(!Str_Compare(StringPool_String(p2, 2), "abc"));
+    DENG_ASSERT(!Str_Compare(StringPool_String(p2, 3), "FOUR"));
     Str_Set(s, "hello again");
-    assert(StringPool_Intern(p2, s) == 1);
+    DENG_ASSERT(StringPool_Intern(p2, s) == 1);
 
     StringPool_Delete(p2);
     Reader_Delete(r);
     Writer_Delete(w);
 
     StringPool_Clear(p);
-    assert(StringPool_Empty(p));
+    DENG_ASSERT(StringPool_Empty(p));
 
     StringPool_Delete(p);
     Str_Delete(s);
