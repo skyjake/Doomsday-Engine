@@ -108,6 +108,11 @@
 #endif
 
 /**
+ * Macro for hiding the warning about an unused parameter.
+ */
+#define DENG2_UNUSED(x)     (void)x
+
+/**
  * Macro for defining an opaque type in the C wrapper API.
  */
 #define DENG2_OPAQUE(Name) \
