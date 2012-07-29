@@ -34,7 +34,7 @@
  * @return Textual name for this format. Always returns a valid ddstring_t that
  *         should NOT be free'd.
  */
-const Str* MapFormatNameForId(mapformatid_t id);
+const Str* MapFormatNameForId(MapFormatId id);
 
 /**
  * Determine type of a named map data lump.

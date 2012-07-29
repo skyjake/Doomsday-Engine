@@ -29,7 +29,7 @@
 static Reader* bufferLump(MapLumpInfo* info);
 static void clearReadBuffer(void);
 
-Id1Map::Id1Map(mapformatid_t format)
+Id1Map::Id1Map(MapFormatId format)
     : mapFormat(format), numVertexes(0), vertexes(0), materials(0)
 {}
 

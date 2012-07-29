@@ -26,7 +26,7 @@
 
 #define map                     DENG_PLUGIN_GLOBAL(map)
 
-size_t ElementSizeForMapLumpType(mapformatid_t mapFormat, MapLumpType type)
+size_t ElementSizeForMapLumpType(MapFormatId mapFormat, MapLumpType type)
 {
     switch(type)
     {
@@ -57,7 +57,7 @@ size_t ElementSizeForMapLumpType(mapformatid_t mapFormat, MapLumpType type)
 /**
  * Translate the line definition flags for Doomsday.
  */
-static void interpretLineDefFlags(mline_t* l, mapformatid_t mapFormat)
+static void interpretLineDefFlags(mline_t* l, MapFormatId mapFormat)
 {
 #define ML_BLOCKING              1 ///< Solid, is an obstacle.
 #define ML_TWOSIDED              4 ///< Backside will not be present at all if not two sided.

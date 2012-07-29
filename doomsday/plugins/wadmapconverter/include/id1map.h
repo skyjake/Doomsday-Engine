@@ -31,13 +31,13 @@
 /**
  * Logical map format identifier (unique).
  */
-typedef enum {
+typedef enum mapformatid_e {
     MF_UNKNOWN              = -1,
     MF_DOOM                 = 0,
     MF_HEXEN,
     MF_DOOM64,
     NUM_MAPFORMATS
-} mapformatid_t;
+} MapFormatId;
 
 /**
  * Helper macro for determining whether a value can be interpreted as a logical
@@ -63,10 +63,10 @@ typedef std::list<uint> LineList;
 class Id1Map
 {
 public:
-    Id1Map(mapformatid_t format);
+    Id1Map(MapFormatId format);
     ~Id1Map();
 
-    mapformatid_t format(void) const { return mapFormat; }
+    MapFormatId format(void) const { return mapFormat; }
 
     int load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
 
@@ -122,7 +122,7 @@ private:
     void transferThings(void);
 
 private:
-    mapformatid_t mapFormat;
+    MapFormatId mapFormat;
 
     uint numVertexes;
     coord_t* vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]

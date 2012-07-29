@@ -106,14 +106,14 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
     }
 }
 
-static mapformatid_t recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
+static MapFormatId recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
 {
     DENG_ASSERT(lumpInfos);
 
     LOG_AS("WadMapConverter");
 
     // Assume DOOM format by default.
-    mapformatid_t mapFormat = MF_DOOM;
+    MapFormatId mapFormat = MF_DOOM;
 
     // Some data lumps are specific to a particular map format and thus
     // their presence unambiguously signifies which format we have.
@@ -211,7 +211,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
     // Do we recognize this format?
-    mapformatid_t mapFormat = recognizeMapFormat(lumpInfos);
+    MapFormatId mapFormat = recognizeMapFormat(lumpInfos);
     if(mapFormat == MF_UNKNOWN)
     {
         ret_val = false;

@@ -33,7 +33,7 @@
  * @param type          Map lump data type.
  * @return Size of an element of the specified type.
  */
-size_t ElementSizeForMapLumpType(mapformatid_t mapFormat, MapLumpType type);
+size_t ElementSizeForMapLumpType(MapFormatId mapFormat, MapLumpType type);
 
 /**
  * Read a line definition from the archived map.
