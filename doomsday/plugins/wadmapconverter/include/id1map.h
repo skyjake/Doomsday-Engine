@@ -68,7 +68,7 @@ public:
 
     MapFormatId format(void) const { return mapFormat; }
 
-    int load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
+    int load(MapLumpInfos& lumpInfos);
 
     void analyze(void);
 

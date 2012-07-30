@@ -271,10 +271,8 @@ bool Id1Map::loadSurfaceTints(Reader* reader, uint numElements)
     return true;
 }
 
-int Id1Map::load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
+int Id1Map::load(MapLumpInfos& lumpInfos)
 {
-    DENG2_ASSERT(lumpInfos);
-
     /**
      * Allocate the vertices first as a large contiguous array suitable for
      * passing directly to Doomsday's MPE interface.
@@ -284,9 +282,9 @@ int Id1Map::load(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
     numVertexes = numElements;
     vertexes = (coord_t*)malloc(numVertexes * 2 * sizeof(*vertexes));
 
-    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
+    DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::const_iterator)
     {
-        MapLumpInfo* info = lumpInfos[i];
+        MapLumpInfo* info = i->second;
 
         if(!info || !info->length) continue;
 
