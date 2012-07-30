@@ -157,13 +157,13 @@ bool Id1Map::findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 
             if((i)->xType == PO_LINE_EXPLICIT && (i)->xArgs[0] == tag)
             {
-                if(!(i)->xArgs[1])
+                if((i)->xArgs[1] <= 0)
                 {
                     LOG_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d).") << n + 1 << tag;
                     return false;
                 }
 
-                if((i)->xArgs[1] == n+1)
+                if(uint((i)->xArgs[1]) == n+1)
                 {
                     // Add this line to the list.
                     polyLines.push_back( i - lines.begin() );
