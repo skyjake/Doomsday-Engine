@@ -187,6 +187,7 @@ static MapFormatId recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
  */
 int ConvertMapHook(int hookType, int parm, void* context)
 {
+    MapFormatId mapFormat;
     int loadError;
 
     DENG_UNUSED(hookType);
@@ -211,7 +212,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
     // Do we recognize this format?
-    MapFormatId mapFormat = recognizeMapFormat(lumpInfos);
+    mapFormat = recognizeMapFormat(lumpInfos);
     if(mapFormat == MF_UNKNOWN)
     {
         ret_val = false;
