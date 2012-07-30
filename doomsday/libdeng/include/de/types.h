@@ -89,10 +89,11 @@ typedef unsigned long long   uintmax_t;
 
 #endif
 
-#ifndef UNIX
+#ifndef MACOSX
 typedef unsigned int    uint;
 typedef unsigned short  ushort;
-#else
+#endif
+#ifdef UNIX
 #  include <sys/types.h>
 #endif
 

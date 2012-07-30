@@ -125,9 +125,9 @@ DENG_PUBLIC int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstat
  *                Can be @c NULL in which case the current thread is assumed.
  * @return  Identifier of the thread.
  */
-DENG_PUBLIC uint Sys_ThreadId(thread_t handle);
+DENG_PUBLIC uint32_t Sys_ThreadId(thread_t handle);
 
-DENG_PUBLIC uint Sys_CurrentThreadId(void);
+DENG_PUBLIC uint32_t Sys_CurrentThreadId(void);
 
 DENG_PUBLIC boolean Sys_InMainThread(void);
 

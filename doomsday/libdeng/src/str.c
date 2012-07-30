@@ -28,6 +28,8 @@
 
 #if WIN32
 # define strcasecmp _stricmp
+#else
+# include <strings.h>
 #endif
 
 #include "de/str.h"

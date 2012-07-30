@@ -1103,7 +1103,7 @@ void* ZBlockSet_Allocate(zblockset_t* set)
     return element;
 }
 
-zblockset_t* ZBlockSet_New(size_t sizeOfElement, unsigned int batchSize, int tag)
+zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize, int tag)
 {
     zblockset_t* set;
 

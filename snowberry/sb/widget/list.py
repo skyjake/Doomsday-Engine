@@ -121,7 +121,7 @@ class List (base.Widget):
             visibleText = language.translate(identifier)
         else:
             visibleText = identifier
-        w.Append(visibleText)
+        w.Append(uniConv(visibleText))
         self.items.append(identifier)
 
         # In a checklistbox, the items can be checked.

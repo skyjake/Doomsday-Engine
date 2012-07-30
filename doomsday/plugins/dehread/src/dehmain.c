@@ -42,6 +42,8 @@
 #  include <windows.h>
 #  define stricmp _stricmp
 #  define strnicmp _strnicmp
+#else
+#  include <strings.h>
 #endif
 
 /**
