@@ -170,7 +170,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t* exitSt
     return t->exitValue();
 }
 
-uint32_it Sys_ThreadId(thread_t handle)
+uint32_t Sys_ThreadId(thread_t handle)
 {
     QThread* t = reinterpret_cast<QThread*>(handle);
     if(!t) t = QThread::currentThread();
