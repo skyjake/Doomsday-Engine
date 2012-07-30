@@ -168,6 +168,11 @@ cvarbutton_t mnCVarButtons[] = {
 #if __JDOOM__
     { 0, "game-raiseghosts" },
 #endif
+    { 0, "game-save-confirm" },
+#if !__JHEXEN__
+    { 0, "game-save-auto-loadonreborn" },
+#endif
+    { 0, "game-save-last-loadonreborn" },
 #if __JDOOM__ || __JDOOM64__
     { 0, "game-skullsinwalls" },
     { 0, "game-zombiescanexit" },
@@ -722,7 +727,7 @@ mn_page_t* Hu_MenuFindPageByName(const char* name)
     return NULL;
 }
 
-/// \todo Make this state an object property flag.
+/// @todo Make this state an object property flag.
 /// @return  @c true if the rotation of a cursor on this object should be animated.
 static boolean Hu_MenuHasCursorRotation(mn_object_t* obj)
 {
@@ -1670,6 +1675,138 @@ void Hu_MenuInitPlayerSetupPage(void)
     page->objects = objects;
 }
 
+void Hu_MenuInitSaveOptionsPage(void)
+{
+    const Point2Raw origin = { 60, 50 };
+    mn_object_t* objects, *ob;
+#if !__JHEXEN__
+    const uint numObjects = 8;
+#else
+    const uint numObjects = 6;
+#endif
+    mn_page_t* page;
+
+    page = Hu_MenuNewPage("SaveOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    MNPage_SetTitle(page, "Save Options");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+
+    objects = Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    if(!objects) Con_Error("Hu_MenuInitSaveOptionsPage: Failed on allocation of %lu bytes for menu objects.", (unsigned long) (sizeof(*objects) * numObjects));
+
+    ob = objects;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Confirm quick load/save";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 'q';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-save-confirm";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR2;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Reborn preferences";
+    }
+    ob++;
+
+#if !__JHEXEN__
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Load auto save";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'a';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-save-auto-loadonreborn";
+    }
+    ob++;
+#endif
+
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Load last save";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'a';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-save-last-loadonreborn";
+    }
+    ob++;
+
+    ob->_type = MN_NONE;
+
+    page->objects = objects;
+}
+
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuInitFilesPage(void)
 {
@@ -1863,9 +2000,9 @@ void Hu_MenuInitOptionsPage(void)
 #endif
     mn_object_t* objects, *ob;
 #if __JHERETIC__ || __JHEXEN__
-    const uint numObjects = 12;
+    const uint numObjects = 13;
 #else
-    const uint numObjects = 11;
+    const uint numObjects = 12;
 #endif
     mn_page_t* page;
 
@@ -1941,6 +2078,23 @@ void Hu_MenuInitOptionsPage(void)
     ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
     btn->text = "Gameplay";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 's';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->data1 = "SaveOptions";
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->text = "Game saves";
     }
     ob++;
 
@@ -4835,6 +4989,7 @@ static void initAllPages(void)
     Hu_MenuInitLoadGameAndSaveGamePages();
     Hu_MenuInitOptionsPage();
     Hu_MenuInitGameplayOptionsPage();
+    Hu_MenuInitSaveOptionsPage();
     Hu_MenuInitHUDOptionsPage();
     Hu_MenuInitAutomapOptionsPage();
     Hu_MenuInitWeaponsPage();
