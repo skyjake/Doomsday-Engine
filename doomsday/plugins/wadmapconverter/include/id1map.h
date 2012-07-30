@@ -25,6 +25,7 @@
 #include "dd_types.h"
 #include "maplumpinfo.h"
 #include "id1map_datatypes.h"
+#include <de/Error>
 #include <vector>
 #include <list>
 
@@ -63,12 +64,16 @@ typedef std::list<uint> LineList;
 class Id1Map
 {
 public:
+    /// There was a problem opening the lump data buffer. @ingroup errors
+    DENG2_ERROR(LumpBufferError)
+
+public:
     Id1Map(MapFormatId format);
     ~Id1Map();
 
     MapFormatId format(void) const { return mapFormat; }
 
-    int load(MapLumpInfos& lumpInfos);
+    void load(MapLumpInfos& lumpInfos);
 
     void analyze(void);
 

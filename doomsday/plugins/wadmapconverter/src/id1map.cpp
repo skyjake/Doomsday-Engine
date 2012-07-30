@@ -271,7 +271,7 @@ bool Id1Map::loadSurfaceTints(Reader* reader, uint numElements)
     return true;
 }
 
-int Id1Map::load(MapLumpInfos& lumpInfos)
+void Id1Map::load(MapLumpInfos& lumpInfos)
 {
     /**
      * Allocate the vertices first as a large contiguous array suitable for
@@ -310,8 +310,6 @@ int Id1Map::load(MapLumpInfos& lumpInfos)
 
     // We're done with the read buffer.
     clearReadBuffer();
-
-    return false; // Success.
 }
 
 void Id1Map::transferVertexes(void)
@@ -550,9 +548,9 @@ static Reader* bufferLump(MapLumpInfo* info)
         readBuffer = (uint8_t*)realloc(readBuffer, info->length);
         if(!readBuffer)
         {
-            throw de::Error("WadMapConverter::bufferLump",
-                            QString("Failed on (re)allocation of %1 bytes for the read buffer.")
-                                .arg(info->length));
+            throw Id1Map::LumpBufferError("Id1Map::bufferLump",
+                QString("Failed on (re)allocation of %1 bytes for the read buffer.")
+                    .arg(info->length));
         }
         readBufferSize = info->length;
     }

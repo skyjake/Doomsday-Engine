@@ -22,6 +22,7 @@
 #include "wadmapconverter.h"
 #include "id1map_load.h"
 #include "id1map_util.h"
+#include <de/Error>
 #include <de/Log>
 
 #define map                     DENG_PLUGIN_GLOBAL(map)
@@ -166,6 +167,32 @@ static MapFormatId recognizeMapFormat(MapLumpInfos& lumpInfos)
     return mapFormat;
 }
 
+static void loadAndTransferMap(MapFormatId mapFormat, MapLumpInfos& lumpInfos)
+{
+    DENG2_ASSERT(VALID_MAPFORMATID(mapFormat));
+
+    // Load the archived map.
+    map = new Id1Map(mapFormat);
+    map->load(lumpInfos);
+
+    // Perform post read analyses.
+    {
+        LOG_AS("WadMapConverter");
+        map->analyze();
+    }
+
+    // Rebuild the map in Doomsday's native format.
+    MPE_Begin("");
+    {
+        LOG_AS("WadMapConverter");
+        map->transfer();
+
+        // We have now finished with our local for-conversion map representation.
+        delete map; map = 0;
+    }
+    MPE_End();
+}
+
 /**
  * This function will be called when Doomsday is asked to load a map that is
  * not available in its native map format.
@@ -177,7 +204,6 @@ int ConvertMapHook(int hookType, int parm, void* context)
 {
     MapLumpInfos lumpInfos;
     MapFormatId mapFormat;
-    int loadError;
 
     DENG2_UNUSED(hookType);
     DENG2_UNUSED(parm);
@@ -200,44 +226,34 @@ int ConvertMapHook(int hookType, int parm, void* context)
 
     // Do we recognize this format?
     mapFormat = recognizeMapFormat(lumpInfos);
-    if(mapFormat == MF_UNKNOWN)
+    if(!VALID_MAPFORMATID(mapFormat))
     {
         ret_val = false;
         goto FAIL_UNKNOWN_FORMAT;
     }
 
-    // Read the archived map.
-    map = new Id1Map(mapFormat);
-    loadError = map->load(lumpInfos);
-    if(loadError)
+    // Convert this map.
+    try
+    {
+        loadAndTransferMap(mapFormat, lumpInfos);
+    }
+    catch(Id1Map::LumpBufferError& er)
     {
         LOG_AS("WadMapConverter");
-        LOG_WARNING("Internal load error %i, aborting conversion...") << loadError;
+        LOG_WARNING("Load error: %s\nAborting conversion...") << er.asText();
         ret_val = false;
-        goto FAIL_LOAD_ERROR;
     }
 
-    // Perform post read analyses.
-    {
-        LOG_AS("WadMapConverter");
-        map->analyze();
-    }
-
-    // Rebuild the map in Doomsday's native format.
-    MPE_Begin("");
-    {
-        LOG_AS("WadMapConverter");
-        map->transfer();
-
-        // We have now finished with our local for-conversion map representation.
-        delete map;
-        map = 0;
-    }
-    MPE_End();
+FAIL_UNKNOWN_FORMAT:
 
     // Cleanup.
-FAIL_LOAD_ERROR:
-FAIL_UNKNOWN_FORMAT:
+    if(map)
+    {
+        // If the Id1Map instance still exists it can only mean an error occured
+        // during map data load.
+        delete map; map = 0;
+    }
+
     DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::iterator)
     {
         MapLumpInfo* info = i->second;
