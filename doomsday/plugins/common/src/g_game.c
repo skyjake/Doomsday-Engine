@@ -3055,8 +3055,8 @@ void G_QuitGame(void)
 
     if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
     {
-        // User has re-tried to quit with "quit" when the question is one the
-        // screen. Apparently we should quit...
+        // User has re-tried to quit with "quit" when the question is already on
+        // the screen. Apparently we should quit...
         DD_Execute(true, "quit!");
         return;
     }
