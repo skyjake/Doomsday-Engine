@@ -43,37 +43,25 @@ static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
 }
 
 /**
- * Allocate and initialize a new MapLumpInfo record.
- */
-static MapLumpInfo* newMapLumpInfo(lumpnum_t lumpNum, MapLumpType lumpType)
-{
-    MapLumpInfo* info = new MapLumpInfo();
-    return info->init(lumpNum, lumpType, W_LumpLength(lumpNum));
-}
-
-/**
- * Add a new MapLumpInfo record for the specified @a lumpNum to the @a lumpInfos
- * record collection. If an existing MapLumpInfo record of the specified type is
- * present in the collection it will be replaced.
+ * Add a @a newLumpInfo record to the @a lumpInfos record collection. If an
+ * existing MapLumpInfo record of the same type is present in the collection
+ * it will be replaced.
  *
  * @param lumpInfos     MapLumpInfo record set to be updated.
- * @param lumpNum       Lump number for the new record.
- * @param lumpType      Map lump type for the new record.
- * @return  Newly created MapLumpInfo record.
+ * @param newLumpInfo   New MapLumpInfo to be added to @a lumpInfos.
+ * @return  Same as @a newLumpInfo for caller convenience.
  */
-static MapLumpInfo* addMapLumpInfoToCollection(MapLumpInfos& lumpInfos,
-    lumpnum_t lumpNum, MapLumpType lumpType)
+static MapLumpInfo& addMapLumpInfoToCollection(MapLumpInfos& lumpInfos,
+    MapLumpInfo& newLumpInfo)
 {
-    DENG2_ASSERT(VALID_MAPLUMPTYPE(lumpType));
-
-    MapLumpInfo* result;
+    MapLumpType lumpType = newLumpInfo.type;
     MapLumpInfos::iterator i = lumpInfos.find(lumpType);
     if(i != lumpInfos.end())
     {
         delete i->second;
     }
-    lumpInfos[lumpType] = result = newMapLumpInfo(lumpNum, lumpType);
-    return result;
+    lumpInfos[lumpType] = &newLumpInfo;
+    return newLumpInfo;
 }
 
 /**
@@ -102,7 +90,9 @@ static void collectMapLumps(MapLumpInfos& lumpInfos, lumpnum_t startLump)
         if(lumpType == ML_INVALID) break; // Stop looking.
 
         // A recognized map data lump; record it in the collection.
-        addMapLumpInfoToCollection(lumpInfos, i, lumpType);
+        MapLumpInfo* info = new MapLumpInfo();
+        info->init(i, lumpType, W_LumpLength(i));
+        addMapLumpInfoToCollection(lumpInfos, *info);
     }
 }
 
