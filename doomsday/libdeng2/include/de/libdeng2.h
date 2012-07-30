@@ -77,6 +77,14 @@
 #include <assert.h>
 
 /*
+ * When using the C API, the Qt string functions are not available, so we
+ * must use the platform-specific functions.
+ */
+#if defined(UNIX) && defined(DENG2_C_API_ONLY)
+#  include <strings.h> // strcasecmp etc. 
+#endif
+
+/*
  * The DENG2_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
  * exporting symbols out of libdeng2.
