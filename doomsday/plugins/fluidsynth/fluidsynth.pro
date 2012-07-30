@@ -14,6 +14,10 @@ CONFIG -= qt
 # Define this to get debug messages.
 deng_debug: DEFINES += DENG_DSFLUIDSYNTH_DEBUG
 
+unix:!macx {
+    DEFINES += _BSD_SOURCE
+}
+
 win32 {
     RC_FILE = res/fluidsynth.rc
 
