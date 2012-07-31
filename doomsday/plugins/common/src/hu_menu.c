@@ -169,6 +169,7 @@ cvarbutton_t mnCVarButtons[] = {
     { 0, "game-raiseghosts" },
 #endif
     { 0, "game-save-confirm" },
+    { 0, "game-save-confirm-loadonreborn" },
 #if !__JHEXEN__
     { 0, "game-save-auto-loadonreborn" },
 #endif
@@ -1680,9 +1681,9 @@ void Hu_MenuInitSaveOptionsPage(void)
     const Point2Raw origin = { 60, 50 };
     mn_object_t* objects, *ob;
 #if !__JHEXEN__
-    const uint numObjects = 8;
+    const uint numObjects = 10;
 #else
-    const uint numObjects = 6;
+    const uint numObjects = 8;
 #endif
     mn_page_t* page;
 
@@ -1722,6 +1723,35 @@ void Hu_MenuInitSaveOptionsPage(void)
     { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
     btn->staydownMode = true;
     btn->data = "game-save-confirm";
+    }
+    ob++;
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "Confirm reborn load";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_shortcut = 'r';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-save-confirm-loadonreborn";
     }
     ob++;
 

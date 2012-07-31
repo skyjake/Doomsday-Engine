@@ -87,6 +87,7 @@ typedef struct {
     float           bobView, bobWeapon;
 
     byte            confirmQuickGameSave;
+    byte            confirmRebornLoad;
     byte            loadLastSaveOnReborn;
 
     int             jumpEnabled;

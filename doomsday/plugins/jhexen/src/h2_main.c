@@ -246,6 +246,7 @@ void X_PreInit(void)
     cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
     cfg.confirmQuickGameSave = true;
+    cfg.confirmRebornLoad = true;
     cfg.loadLastSaveOnReborn = false;
 
     cfg.hudFog = 5;

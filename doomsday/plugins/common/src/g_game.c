@@ -1675,6 +1675,45 @@ static void runGameAction(void)
 }
 
 /**
+ * Do needed reborns for any fallen players.
+ */
+static void rebornPlayers(void)
+{
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = &players[i];
+        ddplayer_t* ddplr = plr->plr;
+        mobj_t* mo = ddplr->mo;
+
+        if(ddplr->inGame && plr->playerState == PST_REBORN && !P_MobjIsCamera(mo))
+        {
+            G_DoReborn(i);
+        }
+
+        // Player has left?
+        if(plr->playerState == PST_GONE)
+        {
+            plr->playerState = PST_REBORN;
+            if(mo)
+            {
+                if(!IS_CLIENT)
+                {
+                    P_SpawnTeleFog(mo->origin[VX], mo->origin[VY], mo->angle + ANG180);
+                }
+
+                // Let's get rid of the mobj.
+#ifdef _DEBUG
+                Con_Message("rebornPlayers: Removing player %i's mobj.\n", i);
+#endif
+                P_MobjRemove(mo, true);
+                ddplr->mo = NULL;
+            }
+        }
+    }
+}
+
+/**
  * The core of the timing loop. Game state, game actions etc occur here.
  *
  * @param ticLength     How long this tick is, in seconds.
@@ -1682,52 +1721,21 @@ static void runGameAction(void)
 void G_Ticker(timespan_t ticLength)
 {
     static gamestate_t oldGameState = -1;
-    int i;
 
     // Always tic:
     Hu_FogEffectTicker(ticLength);
     Hu_MenuTicker(ticLength);
     Hu_MsgTicker();
 
-    if(IS_CLIENT && !Get(DD_GAME_READY))
-        return;
-
-    // Do player reborns if needed.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t* plr = &players[i];
-
-        if(plr->plr->inGame && plr->playerState == PST_REBORN &&
-           !P_MobjIsCamera(plr->plr->mo))
-            G_DoReborn(i);
-
-        // Player has left?
-        if(plr->playerState == PST_GONE)
-        {
-            plr->playerState = PST_REBORN;
-            if(plr->plr->mo)
-            {
-                if(!IS_CLIENT)
-                {
-                    P_SpawnTeleFog(plr->plr->mo->origin[VX],
-                                   plr->plr->mo->origin[VY],
-                                   plr->plr->mo->angle + ANG180);
-                }
-
-                // Let's get rid of the mobj.
-#ifdef _DEBUG
-                Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
-#endif
-                P_MobjRemove(plr->plr->mo, true);
-                plr->plr->mo = NULL;
-            }
-        }
-    }
+    if(IS_CLIENT && !Get(DD_GAME_READY)) return;
 
     runGameAction();
 
     if(!G_QuitInProgress())
     {
+        // Do player reborns if needed.
+        rebornPlayers();
+
         // Update the viewer's look angle
         //G_LookAround(CONSOLEPLAYER);
 
@@ -2111,19 +2119,40 @@ void G_QueueBody(mobj_t* mo)
 }
 #endif
 
+int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+{
+    DENG_UNUSED(userPointer);
+    if(response == MSG_YES)
+    {
+        gaLoadGameSlot = userValue;
+        G_SetGameAction(GA_LOADGAME);
+    }
+    else
+    {
+#if __JHEXEN__
+        // Load the last autosave? (Not optional in Hexen).
+        if(SV_IsSlotUsed(AUTO_SLOT))
+        {
+            gaLoadGameSlot = AUTO_SLOT;
+            G_SetGameAction(GA_LOADGAME);
+        }
+        else
+#endif
+        {
+            // Restart the current map, discarding all items obtained by players.
+            G_SetGameAction(GA_RESTARTMAP);
+        }
+    }
+    return true;
+}
+
 void G_DoReborn(int plrNum)
 {
+    // Are we still awaiting a response to a previous reborn confirmation?
+    if(Hu_IsMessageActiveWithCallback(rebornLoadConfirmResponse)) return;
+
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
-
-    if(plrNum == CONSOLEPLAYER)
-    {
-#ifdef _DEBUG
-        Con_Message("G_DoReborn: Console player reborn, reseting InFine.\n");
-#endif
-        // Clear the currently playing script, if any.
-        FI_StackClear();
-    }
 
     if(IS_NETGAME)
     {
@@ -2131,18 +2160,70 @@ void G_DoReborn(int plrNum)
         return;
     }
 
-    // Use the latest save?
-    if(cfg.loadLastSaveOnReborn)
+    if(G_IsLoadGamePossible())
     {
-        if(G_LoadGame(Con_GetInteger("game-save-last-slot"))) return;
-    }
-
-    // Use the latest autosave?
 #if !__JHEXEN__
-    if(cfg.loadAutoSaveOnReborn) // Cannot be disabled in Hexen.
+        int autoSlot = -1;
 #endif
-    {
-        if(G_LoadGame(AUTO_SLOT)) return;
+        int lastSlot = -1;
+
+        // First ensure we have up-to-date info.
+        SV_UpdateAllSaveInfo();
+
+        // Use the latest save?
+        if(cfg.loadLastSaveOnReborn)
+        {
+            lastSlot = Con_GetInteger("game-save-last-slot");
+            if(!SV_IsSlotUsed(lastSlot)) lastSlot = -1;
+        }
+
+        // Use the latest autosave? (Not optional in Hexen).
+#if !__JHEXEN__
+        if(cfg.loadAutoSaveOnReborn)
+        {
+            autoSlot = AUTO_SLOT;
+            if(!SV_IsSlotUsed(autoSlot)) autoSlot = -1;
+        }
+#endif
+
+        // Have we chosen a save state to load?
+        if(lastSlot > 0
+#if !__JHEXEN__
+           || autoSlot > 0
+#endif
+           )
+        {
+            // Everything appears to be in order - schedule the game-save load!
+#if !__JHEXEN__
+            const int chosenSlot = (lastSlot > 0? lastSlot : autoSlot);
+#else
+            const int chosenSlot = lastSlot;
+#endif
+            if(!cfg.confirmRebornLoad)
+            {
+                gaLoadGameSlot = chosenSlot;
+                G_SetGameAction(GA_LOADGAME);
+            }
+            else
+            {
+                // Compose the confirmation message.
+                SaveInfo* info = SV_SaveInfoForSlot(chosenSlot);
+                AutoStr* msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Name(info)));
+                S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
+            }
+            return;
+        }
+
+        // Autosave loading cannot be disabled in Hexen.
+#if __JHEXEN__
+        if(SV_IsSlotUsed(AUTO_SLOT))
+        {
+            gaLoadGameSlot = AUTO_SLOT;
+            G_SetGameAction(GA_LOADGAME);
+            return;
+        }
+#endif
     }
 
     // Restart the current map, discarding all items obtained by players.

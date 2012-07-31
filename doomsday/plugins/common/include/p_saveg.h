@@ -69,9 +69,9 @@ int SV_SlotForSaveName(const char* name);
  *                 Search is in ascending logical slot order 0..N (where N
  *                 is the number of available save slots).
  *             Pass 2: Check for keyword identifiers.
+ *                 <auto>  = The "auto save" slot.
  *                 <last>  = The last used slot.
  *                 <quick> = The currently nominated "quick save" slot.
- *                 <auto>  = The "auto save" slot.
  *             Pass 3: Check for a logical save slot number.
  *
  * @return  Save slot identifier of the slot else @c -1

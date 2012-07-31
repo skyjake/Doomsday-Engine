@@ -30,21 +30,11 @@
  * Bobbing POV/weapon, movement, pending weapon...
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <math.h>
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
+#include "fi_lib.h"
 #include "doomsday.h"
 #include "g_common.h"
 #include "p_player.h"
@@ -65,25 +55,11 @@
 #  include "hu_inventory.h"
 #endif
 
-// MACROS ------------------------------------------------------------------
-
 #define ANG5                (ANG90/18)
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 #if __JHERETIC__ || __JHEXEN__
 boolean     P_TestMobjLocation(mobj_t *mobj);
 #endif
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean onground;
 
@@ -234,14 +210,10 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
 };
 #endif
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 #if __JHERETIC__ || __JHEXEN__
 static int newTorch[MAXPLAYERS]; // Used in the torch flicker effect.
 static int newTorchDelta[MAXPLAYERS];
 #endif
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Moves the given origin along a given angle.
@@ -759,6 +731,17 @@ void P_DeathThink(player_t* player)
  */
 void P_PlayerReborn(player_t* player)
 {
+    const uint plrNum = player - players;
+
+    if(plrNum == CONSOLEPLAYER)
+    {
+#ifdef _DEBUG
+        Con_Message("P_PlayerReborn: Console player reborn, reseting InFine.\n");
+#endif
+        // Clear the currently playing script, if any.
+        FI_StackClear();
+    }
+
     player->playerState = PST_REBORN;
 #if __JHERETIC__ || __JHEXEN__
     player->plr->flags &= ~DDPF_VIEW_FILTER;

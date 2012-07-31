@@ -329,6 +329,7 @@ void D_PreInit(void)
     cfg.hideIWADAuthor = true;
 
     cfg.confirmQuickGameSave = true;
+    cfg.confirmRebornLoad = true;
     cfg.loadAutoSaveOnReborn = false;
     cfg.loadLastSaveOnReborn = false;
 

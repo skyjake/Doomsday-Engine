@@ -371,6 +371,7 @@ cvartemplate_t cvars[] = {
     { "game-save-auto-loadonreborn", 0, CVT_BYTE, &cfg.loadAutoSaveOnReborn, 0, 1 },
 #endif
     { "game-save-confirm", 0, CVT_BYTE, &cfg.confirmQuickGameSave, 0, 1 },
+    { "game-save-confirm-loadonreborn", 0, CVT_BYTE, &cfg.confirmRebornLoad, 0, 1 },
     { "game-save-last-loadonreborn", 0, CVT_BYTE, &cfg.loadLastSaveOnReborn, 0, 1 },
     { "game-save-last-slot", CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, CVT_INT, &cvarLastSlot },
     { "game-save-quick-slot", CVF_NO_MAX|CVF_NO_ARCHIVE, CVT_INT, &cvarQuickSlot, -1, 0 },
@@ -494,7 +495,7 @@ static void buildSaveInfo(void)
     }
 
     /// Scan the save paths and populate the list.
-    /// \todo We should look at all files on the save path and not just those
+    /// @todo We should look at all files on the save path and not just those
     /// which match the default game-save file naming convention.
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
@@ -557,12 +558,36 @@ void SV_Register(void)
         Con_AddVariable(cvars + i);
 }
 
+AutoStr* SV_ComposeSlotIdentifier(int slot)
+{
+    AutoStr* str = AutoStr_New();
+    if(slot < 0) return Str_Set(str, "(invalid slot)");
+    if(slot == AUTO_SLOT) return Str_Set(str, "<auto>");
+#if __JHEXEN__
+    if(slot == BASE_SLOT) return Str_Set(str, "<base>");
+#endif
+    return Str_Appendf(str, "%i", slot);
+}
+
 void SV_ClearSlot(int slot)
 {
     AutoStr* path;
 
     errorIfNotInited("SV_ClearSlot");
     if(!SV_IsValidSlot(slot)) return;
+
+    // Announce when clearing save slots (for auto and base slots too if _DEBUG).
+#if !_DEBUG
+# if __JHEXEN__
+    if(slot != AUTO_SLOT && slot != BASE_SLOT)
+# else
+    if(slot != AUTO_SLOT)
+# endif
+#endif
+    {
+        AutoStr* ident = SV_ComposeSlotIdentifier(slot);
+        Con_Message("Clearing save slot %s\n", Str_Text(ident));
+    }
 
     { int i;
     for(i = 0; i < MAX_HUB_MAPS; ++i)

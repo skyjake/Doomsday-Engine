@@ -1760,6 +1760,7 @@ typedef enum {
     TXT_HUSTR_E6M2,
     TXT_HUSTR_E6M3,
     TXT_DELETESAVEGAME_CONFIRM,
+    TXT_REBORNLOAD_CONFIRM,
     NUMTEXT
 } textenum_t;
 

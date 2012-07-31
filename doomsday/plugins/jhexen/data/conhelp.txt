@@ -366,6 +366,9 @@ desc = Currently playing music (id).
 [game-save-confirm]
 desc = 1=Ask me to confirm when quick saving/loading.
 
+[game-save-confirm-loadonreborn]
+desc = 1=Ask me to confirm when loading a save on player reborn. (default: on).
+
 [game-save-last-loadonreborn]
 desc = 1=Load the last used save slot on player reborn. (default: off).
 

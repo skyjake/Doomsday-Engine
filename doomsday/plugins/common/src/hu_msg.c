@@ -244,6 +244,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
     int userValue, void* userPointer)
 {
     DENG_ASSERT(msg);
+    DENG_ASSERT(!awaitingResponse);
 
     awaitingResponse = true;
     messageResponse = 0;
