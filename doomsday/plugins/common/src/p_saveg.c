@@ -557,7 +557,6 @@ static SaveInfo* findSaveInfoForSlot(int slot)
     return saveInfo[slot];
 }
 
-#if !__JHEXEN__
 static void replaceSaveInfo(int slot, SaveInfo* newInfo)
 {
     SaveInfo** destAdr;
@@ -579,7 +578,6 @@ static void replaceSaveInfo(int slot, SaveInfo* newInfo)
     if(*destAdr) SaveInfo_Delete(*destAdr);
     *destAdr = newInfo;
 }
-#endif
 
 void SV_Register(void)
 {
@@ -609,7 +607,6 @@ AutoStr* SV_ComposeSlotIdentifier(int slot)
 
 void SV_ClearSlot(int slot)
 {
-    SaveInfo* info;
     AutoStr* path;
 
     errorIfNotInited("SV_ClearSlot");
@@ -639,11 +636,7 @@ void SV_ClearSlot(int slot)
     SV_RemoveFile(path);
 
     // Update save info for this slot.
-    info = findSaveInfoForSlot(slot);
-    if(info)
-    {
-        updateSaveInfo(path, info);
-    }
+    updateSaveInfo(path, findSaveInfoForSlot(slot));
 }
 
 boolean SV_IsValidSlot(int slot)
@@ -851,7 +844,6 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map)
 void SV_CopySlot(int sourceSlot, int destSlot)
 {
     AutoStr* src, *dst;
-    SaveInfo* info;
 
     errorIfNotInited("SV_CopySlot");
 
@@ -886,12 +878,8 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     dst = composeGameSavePathForSlot(destSlot);
     SV_CopyFile(src, dst);
 
-    // Update save info for the destination slot.
-    info = findSaveInfoForSlot(destSlot);
-    if(info)
-    {
-        updateSaveInfo(dst, info);
-    }
+    // Copy saveinfo too.
+    replaceSaveInfo(destSlot, SaveInfo_NewCopy(findSaveInfoForSlot(sourceSlot)));
 }
 
 #if __JHEXEN__
@@ -4325,7 +4313,7 @@ assert(thInfo->Write);
  * Clients do not save all data for all thinkers (the server will send
  * it to us anyway so saving it would just bloat client save games).
  *
- * \note Some thinker classes are NEVER saved by clients.
+ * @note Some thinker classes are NEVER saved by clients.
  */
 static void P_ArchiveThinkers(boolean savePlayers)
 {
@@ -5335,7 +5323,8 @@ boolean SV_LoadGame(int slot)
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot.
-    /// @todo Why do this BEFORE loading??
+    /// @todo Why do this BEFORE loading?? (G_NewGame() does not load the serialized map state)
+    /// @todo Does any caller ever attempt to load the base slot?? (Doesn't seem logical)
     if(slot != BASE_SLOT)
     {
         SV_CopySlot(slot, BASE_SLOT);
@@ -5664,15 +5653,12 @@ boolean SV_SaveGame(int slot, const char* name)
 
     if(!saveError)
     {
-#if !__JHEXEN__
         // Swap the save info.
-        replaceSaveInfo(slot, info);
-#else
-        // We no longer need the info.
-        SaveInfo_Delete(info);
+        replaceSaveInfo(logicalSlot, info);
 
+#if !__JHEXEN__
         // Copy base slot to destination slot.
-        SV_CopySlot(BASE_SLOT, slot);
+        SV_CopySlot(logicalSlot, slot);
 #endif
 
         // The "last" save slot is now this.

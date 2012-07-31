@@ -54,14 +54,17 @@ typedef struct saveinfo_s {
 } SaveInfo;
 
 SaveInfo* SaveInfo_New(void);
+SaveInfo* SaveInfo_NewCopy(const SaveInfo* other);
 
 void SaveInfo_Delete(SaveInfo* info);
 
-uint SaveInfo_GameId(SaveInfo* info);
+SaveInfo* SaveInfo_Copy(SaveInfo* self, const SaveInfo* other);
 
-const saveheader_t* SaveInfo_Header(SaveInfo* info);
+uint SaveInfo_GameId(const SaveInfo* info);
 
-const ddstring_t* SaveInfo_Name(SaveInfo* info);
+const saveheader_t* SaveInfo_Header(const SaveInfo* info);
+
+const ddstring_t* SaveInfo_Name(const SaveInfo* info);
 
 void SaveInfo_SetGameId(SaveInfo* info, uint newGameId);
 

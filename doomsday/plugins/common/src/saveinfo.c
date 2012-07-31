@@ -41,6 +41,11 @@ SaveInfo* SaveInfo_New(void)
     return info;
 }
 
+SaveInfo* SaveInfo_NewCopy(const SaveInfo* other)
+{
+    return SaveInfo_Copy(SaveInfo_New(), other);
+}
+
 void SaveInfo_Delete(SaveInfo* info)
 {
     DENG_ASSERT(info);
@@ -48,20 +53,29 @@ void SaveInfo_Delete(SaveInfo* info)
     free(info);
 }
 
-uint SaveInfo_GameId(SaveInfo* info)
+SaveInfo* SaveInfo_Copy(SaveInfo* self, const SaveInfo* other)
+{
+    DENG_ASSERT(self);
+    if(!other) return self;
+    Str_Copy(&self->name, SaveInfo_Name(other));
+    self->gameId = SaveInfo_GameId(other);
+    memcpy(&self->header, SaveInfo_Header(other), sizeof(self->header));
+    return self;
+}
+
+uint SaveInfo_GameId(const SaveInfo* info)
 {
     DENG_ASSERT(info);
     return info->gameId;
 }
 
-const saveheader_t* SaveInfo_Header(SaveInfo* info)
+const saveheader_t* SaveInfo_Header(const SaveInfo* info)
 {
     DENG_ASSERT(info);
-    //if(!SaveInfo_IsLoadable(info)) return NULL;
     return &info->header;
 }
 
-const ddstring_t* SaveInfo_Name(SaveInfo* info)
+const ddstring_t* SaveInfo_Name(const SaveInfo* info)
 {
     DENG_ASSERT(info);
     return &info->name;
