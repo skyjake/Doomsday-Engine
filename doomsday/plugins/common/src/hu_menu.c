@@ -5578,12 +5578,12 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     {
         mn_object_t* obj = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
         mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-        SaveInfo* info = SV_SaveInfoForSlot(edit->data2);
         const char* text = "";
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
-        if(SaveInfo_IsLoadable(info))
+        if(SV_IsSlotUsed(edit->data2))
         {
+            SaveInfo* info = SV_SaveInfoForSlot(edit->data2);
             text = Str_Text(SaveInfo_Name(info));
             MNObject_SetFlags(obj, FO_CLEAR, MNF_DISABLED);
         }

@@ -30,11 +30,11 @@
 
 #include "saveinfo.h"
 
-boolean SV_RecogniseState_Dm_v19(SaveInfo* info);
+boolean SV_RecogniseState_Dm_v19(const char* path, SaveInfo* info);
 
 /**
  * @return  @c 0 on success else error code.
  */
-int SV_LoadState_Dm_v19(SaveInfo* saveInfo);
+int SV_LoadState_Dm_v19(const char* path, SaveInfo* saveInfo);
 
 #endif /// LIBDOOM_OLD_SAVESTATE

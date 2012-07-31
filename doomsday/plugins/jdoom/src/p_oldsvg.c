@@ -828,12 +828,14 @@ static void P_v19_UnArchiveSpecials(void)
     }
 }
 
-int SV_LoadState_Dm_v19(SaveInfo* info)
+int SV_LoadState_Dm_v19(const char* path, SaveInfo* info)
 {
     const saveheader_t* hdr;
-    if(!info) return 1;
-    if(!SV_OpenFile_Dm_v19(Str_Text(SaveInfo_FilePath(info))))
-        return 1;
+
+    DENG_ASSERT(path);
+    DENG_ASSERT(info);
+
+    if(!SV_OpenFile_Dm_v19(path)) return 1;
 
     svReader = SV_NewReader_Dm_v19();
 
@@ -952,12 +954,14 @@ static Reader* SV_NewReader_Dm_v19(void)
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-boolean SV_RecogniseState_Dm_v19(SaveInfo* info)
+boolean SV_RecogniseState_Dm_v19(const char* path, SaveInfo* info)
 {
-    if(!info) return false;
-    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
+    DENG_ASSERT(path);
+    DENG_ASSERT(info);
 
-    if(SV_OpenFile_Dm_v19(Str_Text(SaveInfo_FilePath(info))))
+    if(!SV_ExistingFile(path)) return false;
+
+    if(SV_OpenFile_Dm_v19(path))
     {
         Reader* svReader = SV_NewReader_Dm_v19();
         boolean result = false;

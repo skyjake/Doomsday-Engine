@@ -147,10 +147,10 @@ LZFILE* SV_File(void)
     return savefile;
 }
 
-LZFILE* SV_OpenFile(const char* fileName, const char* mode)
+LZFILE* SV_OpenFile(const char* filePath, const char* mode)
 {
     assert(savefile == 0);
-    savefile = lzOpen((char*)fileName, (char*)mode);
+    savefile = lzOpen((char*)filePath, (char*)mode);
     return savefile;
 }
 
@@ -163,10 +163,10 @@ void SV_CloseFile(void)
     }
 }
 
-boolean SV_ExistingFile(char* name)
+boolean SV_ExistingFile(const char* filePath)
 {
     FILE* fp;
-    if((fp = fopen(name, "rb")) != NULL)
+    if((fp = fopen(filePath, "rb")))
     {
         fclose(fp);
         return true;
@@ -174,13 +174,13 @@ boolean SV_ExistingFile(char* name)
     return false;
 }
 
-int SV_RemoveFile(const ddstring_t* path)
+int SV_RemoveFile(const Str* filePath)
 {
-    if(!path) return 1;
-    return remove(Str_Text(path));
+    if(!filePath) return 1;
+    return remove(Str_Text(filePath));
 }
 
-void SV_CopyFile(const ddstring_t* srcPath, const ddstring_t* destPath)
+void SV_CopyFile(const Str* srcPath, const Str* destPath)
 {
     size_t length;
     char* buffer;

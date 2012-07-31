@@ -96,9 +96,12 @@ typedef enum sectorclass_e {
 typedef enum lineclass_e {
     lc_normal,
 #if !__JHEXEN__
-    lc_xg1
+    lc_xg1,
 #endif
+    NUM_LINECLASSES
 } lineclass_t;
+
+static boolean SV_RecogniseState(const char* path, SaveInfo* info);
 
 static void SV_WriteMobj(const mobj_t* mobj);
 static int SV_ReadMobj(thinker_t* th);
@@ -464,6 +467,35 @@ static void clearSaveInfo(void)
     }
 }
 
+static void updateSaveInfo(const Str* path, SaveInfo* info)
+{
+    if(!info) return;
+
+    if(!path || Str_IsEmpty(path))
+    {
+        // The save path cannot be accessed for some reason. Perhaps its a
+        // network path? Clear the info for this slot.
+        SaveInfo_SetName(info, 0);
+        SaveInfo_SetGameId(info, 0);
+        return;
+    }
+
+    // Is this a recognisable save state?
+    if(!SV_RecogniseState(Str_Text(path), info))
+    {
+        // Clear the info for this slot.
+        SaveInfo_SetName(info, 0);
+        SaveInfo_SetGameId(info, 0);
+        return;
+    }
+
+    // Ensure we have a valid name.
+    if(Str_IsEmpty(SaveInfo_Name(info)))
+    {
+        SaveInfo_SetName(info, AutoStr_FromText("UNNAMED"));
+    }
+}
+
 /// Re-build game-save info by re-scanning the save paths and populating the list.
 static void buildSaveInfo(void)
 {
@@ -481,11 +513,11 @@ static void buildSaveInfo(void)
         // Initialize.
         for(i = 0; i < NUMSAVESLOTS; ++i)
         {
-            saveInfo[i] = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(i));
+            saveInfo[i] = SaveInfo_New();
         }
-        autoSaveInfo = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(AUTO_SLOT));
+        autoSaveInfo = SaveInfo_New();
 #if __JHEXEN__
-        baseSaveInfo = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(BASE_SLOT));
+        baseSaveInfo = SaveInfo_New();
 #endif
         nullSaveInfo = SaveInfo_New();
     }
@@ -496,11 +528,11 @@ static void buildSaveInfo(void)
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         SaveInfo* info = saveInfo[i];
-        SaveInfo_Update(info);
+        updateSaveInfo(composeGameSavePathForSlot(i), info);
     }
-    SaveInfo_Update(autoSaveInfo);
+    updateSaveInfo(composeGameSavePathForSlot(AUTO_SLOT), autoSaveInfo);
 #if __JHEXEN__
-    SaveInfo_Update(baseSaveInfo);
+    updateSaveInfo(composeGameSavePathForSlot(BASE_SLOT), baseSaveInfo);
 #endif
 }
 
@@ -610,7 +642,7 @@ void SV_ClearSlot(int slot)
     info = findSaveInfoForSlot(slot);
     if(info)
     {
-        SaveInfo_Update(info);
+        updateSaveInfo(path, info);
     }
 }
 
@@ -654,20 +686,22 @@ static void SV_SaveInfo_Read(SaveInfo* info)
     Reader_Delete(svReader);
 }
 
-static boolean recogniseState(SaveInfo* info)
+static boolean recogniseState(const char* path, SaveInfo* info)
 {
 #if __JHEXEN__
     byte* saveBuffer;
 #endif
 
-    if(!info) return false;
-    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
+    DENG_ASSERT(path);
+    DENG_ASSERT(info);
+
+    if(!SV_ExistingFile(path)) return false;
 
 #if __JHEXEN__
     /// @todo Do not buffer the whole file.
-    if(M_ReadFile(Str_Text(SaveInfo_FilePath(info)), (char**)&saveBuffer))
+    if(M_ReadFile(path, (char**)&saveBuffer))
 #else
-    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "rp"))
+    if(SV_OpenFile(path, "rp"))
 #endif
     {
 #if __JHEXEN__
@@ -703,16 +737,19 @@ static boolean recogniseState(SaveInfo* info)
     return false;
 }
 
-boolean SV_RecogniseState(SaveInfo* info)
+static boolean SV_RecogniseState(const char* path, SaveInfo* info)
 {
-    if(recogniseState(info)) return true;
-    // Perhaps an original game save?
+    if(path && info)
+    {
+        if(recogniseState(path, info)) return true;
+        // Perhaps an original game save?
 #if __JDOOM__
-    if(SV_RecogniseState_Dm_v19(info)) return true;
+        if(SV_RecogniseState_Dm_v19(path, info)) return true;
 #endif
 #if __JHERETIC__
-    if(SV_RecogniseState_Hr_v13(info)) return true;
+        if(SV_RecogniseState_Hr_v13(path, info)) return true;
 #endif
+    }
     return false;
 }
 
@@ -793,10 +830,13 @@ int SV_SlotForSaveName(const char* name)
 
 boolean SV_IsSlotUsed(int slot)
 {
-    SaveInfo* info;
     errorIfNotInited("SV_IsSlotUsed");
-    info = SV_SaveInfoForSlot(slot);
-    return info && SaveInfo_IsLoadable(info);
+    if(SV_ExistingFile(Str_Text(composeGameSavePathForSlot(slot))))
+    {
+        SaveInfo* info = SV_SaveInfoForSlot(slot);
+        return SaveInfo_IsLoadable(info);
+    }
+    return false;
 }
 
 #if __JHEXEN__
@@ -850,7 +890,7 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     info = findSaveInfoForSlot(destSlot);
     if(info)
     {
-        SaveInfo_Update(info);
+        updateSaveInfo(dst, info);
     }
 }
 
@@ -5039,18 +5079,17 @@ static boolean openGameSaveFile(const char* fileName, boolean write)
     return true;
 }
 
-static int SV_LoadState(SaveInfo* saveInfo)
+static int SV_LoadState(const char* path, SaveInfo* saveInfo)
 {
-    int i;
-    char buf[80];
     boolean loaded[MAXPLAYERS], infile[MAXPLAYERS];
-#if __JHEXEN__
-    int k;
-#endif
+    int i;
+
+    DENG_ASSERT(path);
+    DENG_ASSERT(saveInfo);
 
     playerHeaderOK = false; // Uninitialized.
 
-    if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), false))
+    if(!openGameSaveFile(path, false))
         return 1; // Failed?
 
     // Read the header again.
@@ -5160,9 +5199,13 @@ static int SV_LoadState(SaveInfo* saveInfo)
         if(players[i].plr->inGame)
         {
             // Try to find a saved player that corresponds this one.
+            uint k;
             for(k = 0; k < MAXPLAYERS; ++k)
+            {
                 if(saveToRealPlayerNum[k] == i)
                     break;
+            }
+
             if(k < MAXPLAYERS)
                 continue; // Found; don't bother this player.
 
@@ -5198,8 +5241,7 @@ static int SV_LoadState(SaveInfo* saveInfo)
         if(notLoaded)
         {
             // Kick this player out, he doesn't belong here.
-            sprintf(buf, "kick %i", i);
-            DD_Execute(false, buf);
+            DD_Executef(false, "kick %i", i);
         }
     }
 
@@ -5225,26 +5267,31 @@ static void onLoadStateSuccess(void)
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
 }
 
-static int loadStateWorker(SaveInfo* saveInfo)
+static int loadStateWorker(const char* path, SaveInfo* saveInfo)
 {
     int loadError = true; // Failed.
-    if(recogniseState(saveInfo))
+
+    if(path && saveInfo)
     {
-        loadError = SV_LoadState(saveInfo);
-    }
-    // Perhaps an original game save?
+        if(recogniseState(path, saveInfo))
+        {
+            loadError = SV_LoadState(path, saveInfo);
+        }
+        // Perhaps an original game save?
 #if __JDOOM__
-    else if(SV_RecogniseState_Dm_v19(saveInfo))
-    {
-        loadError = SV_LoadState_Dm_v19(saveInfo);
-    }
+        else if(SV_RecogniseState_Dm_v19(path, saveInfo))
+        {
+            loadError = SV_LoadState_Dm_v19(path, saveInfo);
+        }
 #endif
 #if __JHERETIC__
-    else if(SV_RecogniseState_Hr_v13(saveInfo))
-    {
-        loadError = SV_LoadState_Hr_v13(saveInfo);
-    }
+        else if(SV_RecogniseState_Hr_v13(path, saveInfo))
+        {
+            loadError = SV_LoadState_Hr_v13(path, saveInfo);
+        }
 #endif
+    }
+
     if(!loadError)
     {
         // Material origin scrollers must be re-spawned for older save state versions.
@@ -5258,6 +5305,7 @@ static int loadStateWorker(SaveInfo* saveInfo)
 
         onLoadStateSuccess();
     }
+
     return loadError;
 }
 
@@ -5269,11 +5317,19 @@ boolean SV_LoadGame(int slot)
     const int logicalSlot = slot;
 #endif
     SaveInfo* saveInfo;
+    AutoStr* path;
     int loadError;
 
     errorIfNotInited("SV_LoadGame");
 
     if(!SV_IsValidSlot(slot)) return false;
+
+    path = composeGameSavePathForSlot(slot);
+    if(Str_IsEmpty(path))
+    {
+        Con_Message("Warning: Path \"%s\" is unreachable, game not loaded.\n", SV_SavePath());
+        return false;
+    }
 
     VERBOSE( Con_Message("Attempting load of game-save slot #%i...\n", slot) )
 
@@ -5287,7 +5343,7 @@ boolean SV_LoadGame(int slot)
 #endif
 
     saveInfo = SV_SaveInfoForSlot(logicalSlot);
-    loadError = loadStateWorker(saveInfo);
+    loadError = loadStateWorker(Str_Text(path), saveInfo);
 
     if(!loadError)
     {
@@ -5476,15 +5532,13 @@ static void unarchiveMap(void)
 #endif
 }
 
-static int saveStateWorker(void* parameters)
+static int saveStateWorker(const char* path, SaveInfo* saveInfo)
 {
-    SaveInfo* saveInfo = parameters;
-
 #if _DEBUG
-    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(SaveInfo_FilePath(saveInfo))) )
+    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", path) )
 #endif
 
-    if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), true))
+    if(!openGameSaveFile(path, true))
     {
         return SV_INVALIDFILENAME; // No success.
     }
@@ -5563,10 +5617,10 @@ static int saveStateWorker(void* parameters)
 /**
  * Construct a new SaveInfo configured for the current game session.
  */
-static SaveInfo* constructNewSaveInfo(const ddstring_t* path, const char* name)
+static SaveInfo* constructNewSaveInfo(const char* name)
 {
     ddstring_t nameStr;
-    SaveInfo* info = SaveInfo_NewWithFilePath(path);
+    SaveInfo* info = SaveInfo_New();
     SaveInfo_SetName(info, Str_InitStatic(&nameStr, name));
     SaveInfo_SetGameId(info, SV_GenerateGameId());
     SaveInfo_Configure(info);
@@ -5605,8 +5659,8 @@ boolean SV_SaveGame(int slot, const char* name)
         return false;
     }
 
-    info = constructNewSaveInfo(path, name);
-    saveError = saveStateWorker(info);
+    info = constructNewSaveInfo(name);
+    saveError = saveStateWorker(Str_Text(path), info);
 
     if(!saveError)
     {

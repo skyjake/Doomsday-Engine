@@ -29,80 +29,60 @@
 #include "p_saveio.h"
 #include "saveinfo.h"
 
-SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath)
+SaveInfo* SaveInfo_New(void)
 {
     SaveInfo* info = (SaveInfo*)malloc(sizeof *info);
     if(!info) Con_Error("SaveInfo_New: Failed on allocation of %lu bytes for new SaveInfo.", (unsigned long) sizeof *info);
 
-    Str_Init(&info->filePath);
-    if(filePath) Str_Set(&info->filePath, Str_Text(filePath));
     Str_Init(&info->name);
     info->gameId = 0;
-
     memset(&info->header, 0, sizeof(info->header));
-    return info;
-}
 
-SaveInfo* SaveInfo_New(void)
-{
-    return SaveInfo_NewWithFilePath(0);
+    return info;
 }
 
 void SaveInfo_Delete(SaveInfo* info)
 {
-    assert(info);
-    Str_Free(&info->filePath);
+    DENG_ASSERT(info);
     Str_Free(&info->name);
     free(info);
 }
 
-const ddstring_t* SaveInfo_FilePath(SaveInfo* info)
-{
-    assert(info);
-    return &info->filePath;
-}
-
 uint SaveInfo_GameId(SaveInfo* info)
 {
-    assert(info);
+    DENG_ASSERT(info);
     return info->gameId;
 }
 
 const saveheader_t* SaveInfo_Header(SaveInfo* info)
 {
-    assert(info);
+    DENG_ASSERT(info);
     //if(!SaveInfo_IsLoadable(info)) return NULL;
     return &info->header;
 }
 
 const ddstring_t* SaveInfo_Name(SaveInfo* info)
 {
-    assert(info);
+    DENG_ASSERT(info);
     return &info->name;
-}
-
-void SaveInfo_SetFilePath(SaveInfo* info, ddstring_t* newFilePath)
-{
-    assert(info);
-    Str_CopyOrClear(&info->filePath, newFilePath);
 }
 
 void SaveInfo_SetGameId(SaveInfo* info, uint newGameId)
 {
-    assert(info);
+    DENG_ASSERT(info);
     info->gameId = newGameId;
 }
 
 void SaveInfo_SetName(SaveInfo* info, const ddstring_t* newName)
 {
-    assert(info);
+    DENG_ASSERT(info);
     Str_CopyOrClear(&info->name, newName);
 }
 
 void SaveInfo_Configure(SaveInfo* info)
 {
     saveheader_t* hdr;
-    assert(info);
+    DENG_ASSERT(info);
 
     hdr = &info->header;
     hdr->magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
@@ -140,9 +120,7 @@ void SaveInfo_Configure(SaveInfo* info)
 
 boolean SaveInfo_IsLoadable(SaveInfo* info)
 {
-    assert(info);
-
-    if(Str_IsEmpty(&info->filePath) || !SV_ExistingFile(Str_Text(&info->filePath))) return false;
+    DENG_ASSERT(info);
 
     // Game Mode missmatch?
     if(info->header.gameMode != gameMode) return false;
@@ -152,39 +130,10 @@ boolean SaveInfo_IsLoadable(SaveInfo* info)
     return true; // It's good!
 }
 
-void SaveInfo_Update(SaveInfo* info)
-{
-    assert(info);
-
-    if(Str_IsEmpty(&info->filePath))
-    {
-        // The save path cannot be accessed for some reason. Perhaps its a
-        // network path? Clear the info for this slot.
-        Str_Clear(&info->name);
-        info->gameId = 0;
-        return;
-    }
-
-    // Is this a recognisable save state?
-    if(!SV_RecogniseState(info))
-    {
-        // Clear the info for this slot.
-        Str_Clear(&info->name);
-        info->gameId = 0;
-        return;
-    }
-
-    // Ensure we have a valid name.
-    if(Str_IsEmpty(&info->name))
-    {
-        Str_Set(&info->name, "UNNAMED");
-    }
-}
-
 void SaveInfo_Write(SaveInfo* saveInfo, Writer* writer)
 {
     saveheader_t* info;
-    assert(saveInfo);
+    DENG_ASSERT(saveInfo);
 
     info = &saveInfo->header;
     Writer_WriteInt32(writer, info->magic);
@@ -250,7 +199,7 @@ static void translateLegacyGameMode(gamemode_t* mode)
 void SaveInfo_Read(SaveInfo* saveInfo, Reader* reader)
 {
     saveheader_t* info;
-    assert(saveInfo);
+    DENG_ASSERT(saveInfo);
 
     info = &saveInfo->header;
     info->magic = Reader_ReadInt32(reader);
@@ -318,7 +267,7 @@ void SaveInfo_Read_Hx_v9(SaveInfo* saveInfo, Reader* reader)
 
     char verText[HXS_VERSION_TEXT_LENGTH], nameBuffer[HXS_NAME_LENGTH];
     saveheader_t* info;
-    assert(saveInfo);
+    DENG_ASSERT(saveInfo);
 
     info = &saveInfo->header;
     Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
