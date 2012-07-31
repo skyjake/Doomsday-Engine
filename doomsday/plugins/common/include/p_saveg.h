@@ -102,32 +102,6 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
 SaveInfo* SV_SaveInfoForSlot(int slot);
 
 /**
- * @return  File path to the reachable save directory. If the game-save path
- *          is unreachable then a zero-length string is returned instead.
- */
-AutoStr* SV_ComposeSavePathForSlot(int slot);
-
-#if __JHEXEN__
-/**
- * @return  File path to the reachable save directory. If the game-save path
- *          is unreachable then a zero-length string is returned instead.
- */
-AutoStr* SV_ComposeSavePathForMapSlot(uint map, int slot);
-#endif
-
-#if !__JHEXEN__
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with @a gameId.
- *
- * @param gameId  Unique game identifier.
- * @return  File path to the reachable save directory. If the game-save path
- *          is unreachable then a zero-length string is returned instead.
- */
-AutoStr* SV_ComposeSavePathForClientGameId(uint gameId);
-#endif
-
-/**
  * Compose the textual identifier/name for save @a slot.
  * @return  Name/identifier associated with slot @a slot.
  */

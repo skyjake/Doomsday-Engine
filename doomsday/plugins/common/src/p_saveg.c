@@ -427,6 +427,14 @@ static AutoStr* composeGameSavePathForSlot(int slot)
 }
 
 #if !__JHEXEN__
+/**
+ * Compose the (possibly relative) path to the game-save associated
+ * with @a gameId.
+ *
+ * @param gameId  Unique game identifier.
+ * @return  File path to the reachable save directory. If the game-save path
+ *          is unreachable then a zero-length string is returned instead.
+ */
 static AutoStr* composeGameSavePathForClientGameId(uint gameId)
 {
     AutoStr* path = AutoStr_NewStd();
@@ -786,26 +794,6 @@ int SV_SlotForSaveName(const char* name)
     }
     return saveSlot;
 }
-
-AutoStr* SV_ComposeSavePathForSlot(int slot)
-{
-    errorIfNotInited("SV_ComposeSavePathForSlot");
-    return composeGameSavePathForSlot(slot);
-}
-
-#if __JHEXEN__
-AutoStr* SV_ComposeSavePathForMapSlot(uint map, int slot)
-{
-    errorIfNotInited("SV_ComposeSavePathForMapSlot");
-    return composeGameSavePathForSlot2(slot, (int)map);
-}
-#else
-AutoStr* SV_ComposeSavePathForClientGameId(uint gameId)
-{
-    errorIfNotInited("SV_ComposeSavePathForClientGameId");
-    return composeGameSavePathForClientGameId(gameId);
-}
-#endif
 
 boolean SV_IsSlotUsed(int slot)
 {
@@ -5322,7 +5310,7 @@ void SV_SaveGameClient(uint gameId)
 
     playerHeaderOK = false; // Uninitialized.
 
-    gameSavePath = SV_ComposeSavePathForClientGameId(gameId);
+    gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(Str_Text(gameSavePath), "wp"))
     {
         Con_Message("Warning:SV_SaveGameClient: Failed opening \"%s\" for writing.\n", Str_Text(gameSavePath));
@@ -5380,7 +5368,7 @@ void SV_LoadGameClient(uint gameId)
 
     playerHeaderOK = false; // Uninitialized.
 
-    gameSavePath = SV_ComposeSavePathForClientGameId(gameId);
+    gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(Str_Text(gameSavePath), "rp"))
     {
         Con_Message("Warning:SV_LoadGameClient: Failed opening \"%s\" for reading.\n", Str_Text(gameSavePath));
@@ -5451,7 +5439,7 @@ static void unarchiveMap(void)
 {
 #if __JHEXEN__
     // Compose the full path to the saved map.
-    AutoStr* path = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
+    AutoStr* path = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
     size_t bufferSize;
 
 #ifdef _DEBUG
@@ -5537,7 +5525,7 @@ static int saveStateWorker(void* parameters)
 #if __JHEXEN__
     {
     // Compose the full name to the saved map file.
-    AutoStr* mapPath = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
+    AutoStr* mapPath = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
 
     SV_OpenFile(Str_Text(mapPath), "wp");
     P_ArchiveMap(true); // true = save player info
@@ -5600,7 +5588,7 @@ boolean SV_SaveGame(int slot, const char* name)
         return false;
     }
 
-    path = SV_ComposeSavePathForSlot(logicalSlot);
+    path = composeGameSavePathForSlot(logicalSlot);
     if(Str_IsEmpty(path))
     {
         Con_Message("Warning: Path \"%s\" is unreachable, game not saved.\n", SV_SavePath());
@@ -5656,7 +5644,7 @@ void SV_HxSaveClusterMap(void)
     materialArchive = MaterialArchive_New(true);
 
     // Compose the full path name to the saved map file.
-    mapFilePath = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
+    mapFilePath = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
     SV_OpenFile(Str_Text(mapFilePath), "wp");
     P_ArchiveMap(false);
 
