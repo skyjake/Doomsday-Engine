@@ -529,6 +529,7 @@ static SaveInfo* findSaveInfoForSlot(int slot)
     return saveInfo[slot];
 }
 
+#if !__JHEXEN__
 static void replaceSaveInfo(int slot, SaveInfo* newInfo)
 {
     SaveInfo** destAdr;
@@ -550,6 +551,7 @@ static void replaceSaveInfo(int slot, SaveInfo* newInfo)
     if(*destAdr) SaveInfo_Delete(*destAdr);
     *destAdr = newInfo;
 }
+#endif
 
 void SV_Register(void)
 {
@@ -571,6 +573,7 @@ AutoStr* SV_ComposeSlotIdentifier(int slot)
 
 void SV_ClearSlot(int slot)
 {
+    SaveInfo* info;
     AutoStr* path;
 
     errorIfNotInited("SV_ClearSlot");
@@ -598,6 +601,13 @@ void SV_ClearSlot(int slot)
 
     path = composeGameSavePathForSlot(slot);
     SV_RemoveFile(path);
+
+    // Update save info for this slot.
+    info = findSaveInfoForSlot(slot);
+    if(info)
+    {
+        SaveInfo_Update(info);
+    }
 }
 
 boolean SV_IsValidSlot(int slot)
@@ -817,6 +827,7 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map)
 void SV_CopySlot(int sourceSlot, int destSlot)
 {
     AutoStr* src, *dst;
+    SaveInfo* info;
 
     errorIfNotInited("SV_CopySlot");
 
@@ -836,6 +847,9 @@ void SV_CopySlot(int sourceSlot, int destSlot)
         return;
     }
 
+    // Clear all save files at destination slot.
+    SV_ClearSlot(destSlot);
+
     { int i;
     for(i = 0; i < MAX_HUB_MAPS; ++i)
     {
@@ -848,7 +862,12 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     dst = composeGameSavePathForSlot(destSlot);
     SV_CopyFile(src, dst);
 
-    SV_UpdateAllSaveInfo();
+    // Update save info for the destination slot.
+    info = findSaveInfoForSlot(destSlot);
+    if(info)
+    {
+        SaveInfo_Update(info);
+    }
 }
 
 #if __JHEXEN__
@@ -5269,7 +5288,6 @@ boolean SV_LoadGame(int slot)
     /// @todo Why do this BEFORE loading??
     if(slot != BASE_SLOT)
     {
-        SV_ClearSlot(BASE_SLOT);
         SV_CopySlot(slot, BASE_SLOT);
     }
 #endif
@@ -5594,15 +5612,16 @@ boolean SV_SaveGame(int slot, const char* name)
 
     if(!saveError)
     {
-#if __JHEXEN__
-        // Clear all save files at destination slot.
-        SV_ClearSlot(slot);
+#if !__JHEXEN__
+        // Swap the save info.
+        replaceSaveInfo(slot, info);
+#else
+        // We no longer need the info.
+        SaveInfo_Delete(info);
 
         // Copy base slot to destination slot.
         SV_CopySlot(BASE_SLOT, slot);
 #endif
-        // Swap the save info.
-        replaceSaveInfo(slot, info);
 
         // The "last" save slot is now this.
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);

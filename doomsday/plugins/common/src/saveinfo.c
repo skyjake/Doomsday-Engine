@@ -161,11 +161,18 @@ void SaveInfo_Update(SaveInfo* info)
         // The save path cannot be accessed for some reason. Perhaps its a
         // network path? Clear the info for this slot.
         Str_Clear(&info->name);
+        info->gameId = 0;
         return;
     }
 
     // Is this a recognisable save state?
-    if(!SV_RecogniseState(info)) return;
+    if(!SV_RecogniseState(info))
+    {
+        // Clear the info for this slot.
+        Str_Clear(&info->name);
+        info->gameId = 0;
+        return;
+    }
 
     // Ensure we have a valid name.
     if(Str_IsEmpty(&info->name))

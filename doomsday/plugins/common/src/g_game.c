@@ -2875,7 +2875,6 @@ void G_DoLoadGame(void)
     if(IS_NETGAME) return;
 
     // Copy the base slot to the autosave slot.
-    SV_ClearSlot(AUTO_SLOT);
     SV_CopySlot(BASE_SLOT, AUTO_SLOT);
 #endif
 }

@@ -128,6 +128,12 @@ AutoStr* SV_ComposeSavePathForClientGameId(uint gameId);
 #endif
 
 /**
+ * Compose the textual identifier/name for save @a slot.
+ * @return  Name/identifier associated with slot @a slot.
+ */
+AutoStr* SV_ComposeSlotIdentifier(int slot);
+
+/**
  * Deletes all save game files associated with a slot number.
  */
 void SV_ClearSlot(int slot);
