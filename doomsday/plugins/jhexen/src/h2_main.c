@@ -415,7 +415,8 @@ void X_PostInit(void)
     p = CommandLine_CheckWith("-loadgame", 1);
     if(p != 0)
     {
-        if(G_LoadGame(atoi(CommandLine_At(p + 1))))
+        const int saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
+        if(SV_IsUserWritableSlot(saveSlot) && G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.
             return;
