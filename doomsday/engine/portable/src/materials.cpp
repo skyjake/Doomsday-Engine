@@ -48,7 +48,7 @@
 #define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
 
 /**
- * POD extended info about a @see MaterialBind.
+ * POD object. Contains extended info about a material binding (@see MaterialBind).
  */
 struct MaterialBindInfo
 {
@@ -187,9 +187,7 @@ D_CMD(PrintMaterialStats);
 
 static void animateAnimGroups(void);
 
-extern boolean ddMapSetup;
-
-static boolean initedOk = false;
+static boolean initedOk;
 static VariantSpecificationList* variantSpecs;
 
 static VariantCacheQueue* variantCacheQueue;
@@ -202,7 +200,7 @@ static VariantCacheQueue* variantCacheQueue;
  * 1) Pointers to Material are eternal, they are always valid and continue
  *    to reference the same logical material data even after engine reset.
  * 2) Public material identifiers (materialid_t) are similarly eternal.
- *    Note that they are used to index the material name bindings array.
+ *    Note that they are used to index the material name bindings map.
  * 3) Dynamic creation/update of materials.
  * 4) Material name bindings are semi-independant from the materials. There
  *    may be multiple name bindings for a given material (aliases).
@@ -215,11 +213,11 @@ static blockset_t* materialsBlockSet;
 static MaterialList* materials;
 static uint materialCount;
 
-static uint bindingCount = 0;
+static uint bindingCount;
 
 /// LUT which translates materialid_t to MaterialBind*. Index with materialid_t-1
-static uint bindingIdMapSize = 0;
-static MaterialBind** bindingIdMap = NULL;
+static uint bindingIdMapSize;
+static MaterialBind** bindingIdMap;
 
 // Material namespaces contain mappings between names and MaterialBind instances.
 static PathDirectory* namespaces[MATERIALNAMESPACE_COUNT];
