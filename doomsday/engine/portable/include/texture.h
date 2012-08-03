@@ -26,6 +26,10 @@
 #include "size.h"
 #include "textures.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texturevariant_s;
 
 typedef enum {
@@ -182,5 +186,9 @@ int Texture_Height(const Texture* tex);
  * @param height  Height in logical pixels.
  */
 void Texture_SetHeight(Texture* tex, int height);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_REFRESH_TEXTURE_H

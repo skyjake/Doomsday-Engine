@@ -26,6 +26,10 @@
 
 #include "texturevariantspecification.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texture_s;
 
 /**
@@ -77,5 +81,9 @@ void TextureVariant_SetCoords(TextureVariant* tex, float s, float t);
 
 DGLuint TextureVariant_GLName(const TextureVariant* tex);
 void TextureVariant_SetGLName(TextureVariant* tex, DGLuint glName);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_TEXTUREVARIANT_H */

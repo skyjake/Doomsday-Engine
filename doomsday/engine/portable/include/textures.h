@@ -43,11 +43,15 @@
 #ifndef LIBDENG_REFRESH_TEXTURES_H
 #define LIBDENG_REFRESH_TEXTURES_H
 
-/// Unique identifier associated with each texture name in the collection.
-typedef uint textureid_t;
-
 #include "dd_share.h"
 #include "uri.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/// Unique identifier associated with each texture name in the collection.
+typedef uint textureid_t;
 
 /// Special value used to signify an invalid texture id.
 #define NOTEXTUREID                 0
@@ -200,5 +204,9 @@ int Textures_Iterate(texturenamespaceid_t namespaceId, int (*callback)(struct te
  */
 int Textures_IterateDeclared2(texturenamespaceid_t namespaceId, int (*callback)(textureid_t textureId, void* paramaters), void* paramaters);
 int Textures_IterateDeclared(texturenamespaceid_t namespaceId, int (*callback)(textureid_t textureId, void* paramaters)); /*paramaters=NULL*/
+
+#ifdef __cplusplus
+} //extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_TEXTURES_H */

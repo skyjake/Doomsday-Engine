@@ -1,5 +1,5 @@
 /**
- * @file materials.c
+ * @file materials.cpp
  * Materials collection, namespaces, bindings and other management.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -36,7 +36,10 @@
 #include "texturevariant.h"
 #include "materialvariant.h"
 #include "pathdirectory.h"
+#include <de/Error>
+#include <de/Log>
 #include <de/memory.h>
+#include <de/memoryzone.h>
 
 /// Number of materials to block-allocate.
 #define MATERIALS_BLOCK_ALLOC (32)
@@ -44,110 +47,124 @@
 /// Number of elements to block-allocate in the material index to materialbind map.
 #define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
 
-typedef struct materialvariantspecificationlist_node_s {
-    struct materialvariantspecificationlist_node_s* next;
-    materialvariantspecification_t* spec;
-} materialvariantspecificationlist_node_t;
-
-typedef materialvariantspecificationlist_node_t variantspecificationlist_t;
-
-typedef struct materiallist_node_s {
-    struct materiallist_node_s* next;
-    material_t* mat;
-} materiallist_node_t;
-typedef materiallist_node_t materiallist_t;
-
-typedef struct variantcachequeue_node_s {
-    struct variantcachequeue_node_s* next;
-    material_t* mat;
-    const materialvariantspecification_t* spec;
-    boolean smooth;
-} variantcachequeue_node_t;
-
-typedef variantcachequeue_node_t variantcachequeue_t;
-
 /**
- * Info attached to a MaterialBind upon successfull preparation of the first
- * derived variant of the associated Material.
+ * POD extended info about a @see MaterialBind.
  */
-typedef struct materialbindinfo_s {
+struct MaterialBindInfo
+{
     ded_decor_t* decorationDefs[2];
     ded_detailtexture_t* detailtextureDefs[2];
     ded_ptcgen_t* ptcgenDefs[2];
     ded_reflection_t* reflectionDefs[2];
-} materialbindinfo_t;
+};
 
-typedef struct materialbind_s {
-    /// Pointer to this binding's node in the directory.
-    PathDirectoryNode* _directoryNode;
+class MaterialBind
+{
+public:
+    MaterialBind(PathDirectoryNode* _direcNode, materialid_t id)
+        : direcNode(_direcNode), asocMaterial(0), guid(id), extInfo(0)
+    {}
 
-    /// Bound material.
-    material_t* _material;
+    ~MaterialBind()
+    {
+        MaterialBindInfo* detachedInfo = detachInfo();
+        if(detachedInfo) M_Free(detachedInfo);
+    }
 
-    /// Unique identifier for this binding.
-    materialid_t _id;
+    /// @return  Unique identifier associated with this.
+    materialid_t id() const { return guid; }
 
-    /// Extended info about this binding if present.
-    materialbindinfo_t* _info;
-} materialbind_t;
+    /// @return  PathDirectory node associated with this.
+    PathDirectoryNode* directoryNode() const { return direcNode; }
 
-/// @return  Unique identifier associated with this.
-materialid_t MaterialBind_Id(const materialbind_t* mb);
+    /// @return  Material associated with this else @c NULL.
+    material_t* material() const { return asocMaterial; }
 
-/// @return  Material associated with this else @c NULL.
-material_t* MaterialBind_Material(const materialbind_t* mb);
+    /// @return  Extended info owned by this else @c NULL.
+    MaterialBindInfo* info() const { return extInfo; }
 
-/**
- * Change the Material associated with this binding. Note that only the
- * relationship between MaterialBind and Material is updated!
- *
- * @post If @a material differs from that currently associated with this,
- *     any MaterialBindInfo presently owned by this is destroyed (it is
- *     now invalid).
- *
- * @param  material  New Material to associate with this.
- * @return  Same as @a material for caller convenience.
- */
-material_t* MaterialBind_SetMaterial(materialbind_t* mb, material_t* material);
+    /**
+     * Attach extended info data to this. If existing info is present it is replaced.
+     * MaterialBind is given ownership of the info.
+     * @param info  Extended info data to attach.
+     */
+    void attachInfo(MaterialBindInfo* info);
 
-/// @return  PathDirectory node associated with this.
-PathDirectoryNode* MaterialBind_DirectoryNode(const materialbind_t* mb);
+    /**
+     * Detach any extended info owned by this and relinquish ownership to the caller.
+     * @return  Extended info or else @c NULL if not present.
+     */
+    MaterialBindInfo* detachInfo();
 
-/// @return  Extended info owned by this else @c NULL.
-materialbindinfo_t* MaterialBind_Info(const materialbind_t* mb);
+    /**
+     * Change the Material associated with this binding.
+     *
+     * @note Only the relationship from MaterialBind to @a material changes!
+     *
+     * @post If @a material differs from that currently associated with this, any
+     *       MaterialBindInfo presently owned by this will destroyed (its invalid).
+     *
+     * @param  material  New Material to associate with this.
+     * @return  Same as @a material for caller convenience.
+     */
+    material_t* setMaterial(material_t* material);
 
-/**
- * Attach extended info data to this. If existing info is present it is replaced.
- * MaterialBind is given ownership of the info.
- * @param info  Extended info data to attach.
- */
-void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info);
+    /// @return  Detail texture definition associated with this else @c NULL
+    ded_detailtexture_t* detailTextureDef() const;
 
-/**
- * Detach any extended info owned by this and relinquish ownership to the caller.
- * @return  Extended info or else @c NULL if not present.
- */
-materialbindinfo_t* MaterialBind_DetachInfo(materialbind_t* mb);
+    /// @return  Decoration definition associated with this else @c NULL
+    ded_decor_t* decorationDef() const;
 
-/// @return  Detail texture definition associated with this else @c NULL
-ded_detailtexture_t* MaterialBind_DetailTextureDef(const materialbind_t* mb);
+    /// @return  Particle generator definition associated with this else @c NULL
+    ded_ptcgen_t* ptcGenDef() const;
 
-/// @return  Decoration definition associated with this else @c NULL
-ded_decor_t* MaterialBind_DecorationDef(const materialbind_t* mb);
+    /// @return  Reflection definition associated with this else @c NULL
+    ded_reflection_t* reflectionDef() const;
 
-/// @return  Particle generator definition associated with this else @c NULL
-ded_ptcgen_t* MaterialBind_PtcGenDef(const materialbind_t* mb);
+private:
+    /// This binding's node in the directory.
+    PathDirectoryNode* direcNode;
 
-/// @return  Reflection definition associated with this else @c NULL
-ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb);
+    /// Material associated with this.
+    material_t* asocMaterial;
 
-static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate);
+    /// Unique identifier.
+    materialid_t guid;
+
+    /// Extended info about this binding. Will be attached upon successfull preparation
+    /// of the first derived variant of the associated Material.
+    MaterialBindInfo* extInfo;
+};
+
+typedef struct materialvariantspecificationlistnode_s {
+    struct materialvariantspecificationlistnode_s* next;
+    materialvariantspecification_t* spec;
+} MaterialVariantSpecificationListNode;
+
+typedef MaterialVariantSpecificationListNode VariantSpecificationList;
+
+typedef struct materiallistnode_s {
+    struct materiallistnode_s* next;
+    material_t* mat;
+} MaterialListNode;
+typedef MaterialListNode MaterialList;
+
+typedef struct variantcachequeuenode_s {
+    struct variantcachequeuenode_s* next;
+    material_t* mat;
+    const materialvariantspecification_t* spec;
+    boolean smooth;
+} VariantCacheQueueNode;
+
+typedef VariantCacheQueueNode VariantCacheQueue;
+
+static void updateMaterialBindInfo(MaterialBind* mb, boolean canCreate);
 
 typedef struct materialanim_frame_s {
     material_t* material;
     ushort tics;
     ushort random;
-} materialanim_frame_t;
+} MaterialAnimFrame;
 
 typedef struct materialanim_s {
     int id;
@@ -156,11 +173,11 @@ typedef struct materialanim_s {
     int maxTimer;
     int timer;
     int count;
-    materialanim_frame_t* frames;
-} materialanim_t;
+    MaterialAnimFrame* frames;
+} MaterialAnim;
 
 static int numgroups;
-static materialanim_t* groups;
+static MaterialAnim* groups;
 
 D_CMD(InspectMaterial);
 D_CMD(ListMaterials);
@@ -173,9 +190,9 @@ static void animateAnimGroups(void);
 extern boolean ddMapSetup;
 
 static boolean initedOk = false;
-static variantspecificationlist_t* variantSpecs;
+static VariantSpecificationList* variantSpecs;
 
-static variantcachequeue_t* variantCacheQueue;
+static VariantCacheQueue* variantCacheQueue;
 
 /**
  * The following data structures and variables are intrinsically linked and
@@ -195,14 +212,14 @@ static variantcachequeue_t* variantCacheQueue;
  * 6) Fast look up by material name (a hashing scheme is used).
  */
 static blockset_t* materialsBlockSet;
-static materiallist_t* materials;
+static MaterialList* materials;
 static uint materialCount;
 
 static uint bindingCount = 0;
 
-/// LUT which translates materialid_t to materialbind_t*. Index with materialid_t-1
+/// LUT which translates materialid_t to MaterialBind*. Index with materialid_t-1
 static uint bindingIdMapSize = 0;
-static materialbind_t** bindingIdMap = NULL;
+static MaterialBind** bindingIdMap = NULL;
 
 // Material namespaces contain mappings between names and MaterialBind instances.
 static PathDirectory* namespaces[MATERIALNAMESPACE_COUNT];
@@ -219,29 +236,28 @@ void Materials_Register(void)
 static void errorIfNotInited(const char* callerName)
 {
     if(initedOk) return;
-    Con_Error("%s: Materials collection is not presently initialized.", callerName);
-    // Unreachable. Prevents static analysers from getting rather confused, poor things.
-    exit(1);
+    throw de::Error("Materials", de::String("Collection is not presently initialized (%1).")
+                                    .arg(callerName));
 }
 
-static __inline PathDirectory* getDirectoryForNamespaceId(materialnamespaceid_t id)
+static inline PathDirectory* getDirectoryForNamespaceId(materialnamespaceid_t id)
 {
-    DENG_ASSERT(VALID_MATERIALNAMESPACEID(id));
+    DENG2_ASSERT(VALID_MATERIALNAMESPACEID(id));
     return namespaces[id-MATERIALNAMESPACE_FIRST];
 }
 
 static materialnamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
 {
-    materialnamespaceid_t id;
-    DENG_ASSERT(pd);
-
-    for(id = MATERIALNAMESPACE_FIRST; id <= MATERIALNAMESPACE_LAST; ++id)
+    DENG2_ASSERT(pd);
+    for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
     {
-        if(namespaces[id-MATERIALNAMESPACE_FIRST] == pd) return id;
+        uint idx = i - MATERIALNAMESPACE_FIRST;
+        if(namespaces[idx] == pd) return materialnamespaceid_t(i);
     }
+
     // Should never happen.
-    Con_Error("Materials::namespaceIdForDirectory: Failed to determine id for directory %p.", (void*)pd);
-    exit(1); // Unreachable.
+    throw de::Error("Materials::namespaceIdForDirectory",
+                    de::String().sprintf("Failed to determine id for directory %p.", (void*)pd));
 }
 
 static materialnamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
@@ -250,7 +266,7 @@ static materialnamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode
 }
 
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
+static Str* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
 {
     return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
 }
@@ -258,24 +274,24 @@ static ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, ch
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
 static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
 {
-    const ddstring_t* namespaceName = Materials_NamespaceName(namespaceIdForDirectoryNode(node));
-    ddstring_t* path = composePathForDirectoryNode(node, MATERIALS_PATH_DELIMITER);
+    const Str* namespaceName = Materials_NamespaceName(namespaceIdForDirectoryNode(node));
+    Str* path = composePathForDirectoryNode(node, MATERIALS_PATH_DELIMITER);
     Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
     Uri_SetScheme(uri, Str_Text(namespaceName));
     Str_Delete(path);
     return uri;
 }
 
-static materialanim_t* getAnimGroup(int number)
+static MaterialAnim* getAnimGroup(int number)
 {
     if(--number < 0 || number >= numgroups) return NULL;
     return &groups[number];
 }
 
-static boolean isInAnimGroup(const materialanim_t* group, const material_t* mat)
+static boolean isInAnimGroup(const MaterialAnim* group, const material_t* mat)
 {
     int i;
-    DENG_ASSERT(group);
+    DENG2_ASSERT(group);
 
     if(!mat) return false;
     for(i = 0; i < group->count; ++i)
@@ -299,7 +315,7 @@ static materialvariantspecification_t* copyVariantSpecification(
 static int compareVariantSpecifications(const materialvariantspecification_t* a,
     const materialvariantspecification_t* b)
 {
-    DENG_ASSERT(a && b);
+    DENG2_ASSERT(a && b);
     if(a == b) return 1;
     if(a->context != b->context) return 0;
     return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
@@ -309,7 +325,7 @@ static materialvariantspecification_t* applyVariantSpecification(
     materialvariantspecification_t* spec, materialcontext_t mc,
     texturevariantspecification_t* primarySpec)
 {
-    DENG_ASSERT(spec && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)) && primarySpec);
+    DENG2_ASSERT(spec && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)) && primarySpec);
     spec->context = mc;
     spec->primarySpec = primarySpec;
     return spec;
@@ -318,15 +334,15 @@ static materialvariantspecification_t* applyVariantSpecification(
 static materialvariantspecification_t* linkVariantSpecification(
     materialvariantspecification_t* spec)
 {
-    DENG_ASSERT(initedOk && spec);
+    DENG2_ASSERT(initedOk && spec);
     {
-    materialvariantspecificationlist_node_t* node;
-    if(NULL == (node = (materialvariantspecificationlist_node_t*) M_Malloc(sizeof(*node))))
+    MaterialVariantSpecificationListNode* node;
+    if(NULL == (node = (MaterialVariantSpecificationListNode*) M_Malloc(sizeof(*node))))
         Con_Error("Materials::linkVariantSpecification: Failed on allocation of %lu bytes for "
             "new MaterialVariantSpecificationListNode.", (unsigned long) sizeof(*node));
     node->spec = spec;
     node->next = variantSpecs;
-    variantSpecs = (variantspecificationlist_t*)node;
+    variantSpecs = (VariantSpecificationList*)node;
     return spec;
     }
 }
@@ -334,9 +350,9 @@ static materialvariantspecification_t* linkVariantSpecification(
 static materialvariantspecification_t* findVariantSpecification(
     const materialvariantspecification_t* tpl, boolean canCreate)
 {
-    DENG_ASSERT(initedOk && tpl);
+    DENG2_ASSERT(initedOk && tpl);
     {
-    materialvariantspecificationlist_node_t* node;
+    MaterialVariantSpecificationListNode* node;
     for(node = variantSpecs; node; node = node->next)
     {
         if(compareVariantSpecifications(node->spec, tpl))
@@ -354,7 +370,7 @@ static materialvariantspecification_t* getVariantSpecificationForContext(
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     static materialvariantspecification_t tpl;
-    DENG_ASSERT(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)));
+    DENG2_ASSERT(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)));
     {
     texturevariantspecification_t* primarySpec;
     texturevariantusagecontext_t primaryContext;
@@ -378,10 +394,10 @@ static materialvariantspecification_t* getVariantSpecificationForContext(
 
 static void destroyVariantSpecifications(void)
 {
-    DENG_ASSERT(initedOk);
+    DENG2_ASSERT(initedOk);
     while(variantSpecs)
     {
-        materialvariantspecificationlist_node_t* next = variantSpecs->next;
+        MaterialVariantSpecificationListNode* next = variantSpecs->next;
         M_Free(variantSpecs->spec);
         M_Free(variantSpecs);
         variantSpecs = next;
@@ -391,13 +407,13 @@ static void destroyVariantSpecifications(void)
 typedef struct {
     const materialvariantspecification_t* spec;
     materialvariant_t* chosen;
-} choosevariantworker_paramaters_t;
+} choosevariantworker_parameters_t;
 
-static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
+static int chooseVariantWorker(materialvariant_t* variant, void* parameters)
 {
-    choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) paramaters;
+    choosevariantworker_parameters_t* p = (choosevariantworker_parameters_t*) parameters;
     const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
-    DENG_ASSERT(p);
+    DENG2_ASSERT(p);
 
     if(compareVariantSpecifications(cand, p->spec))
     {
@@ -410,8 +426,8 @@ static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
 
 static materialvariant_t* chooseVariant(material_t* mat, const materialvariantspecification_t* spec)
 {
-    choosevariantworker_paramaters_t params;
-    DENG_ASSERT(mat && spec);
+    choosevariantworker_parameters_t params;
+    DENG2_ASSERT(mat && spec);
 
     params.spec = spec;
     params.chosen = NULL;
@@ -419,16 +435,16 @@ static materialvariant_t* chooseVariant(material_t* mat, const materialvariantsp
     return params.chosen;
 }
 
-static materialbind_t* getMaterialBindForId(materialid_t id)
+static MaterialBind* getMaterialBindForId(materialid_t id)
 {
     if(0 == id || id > bindingCount) return NULL;
     return bindingIdMap[id-1];
 }
 
-static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
+static void updateMaterialBindInfo(MaterialBind* mb, boolean canCreate)
 {
-    materialbindinfo_t* info = MaterialBind_Info(mb);
-    material_t* mat = MaterialBind_Material(mb);
+    MaterialBindInfo* info = mb->info();
+    material_t* mat = mb->material();
     materialid_t matId = Materials_Id(mat);
     boolean isCustom = (mat? Material_IsCustom(mat) : false);
 
@@ -437,11 +453,11 @@ static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
         if(!canCreate) return;
 
         // Create new info and attach to this binding.
-        info = (materialbindinfo_t*) M_Malloc(sizeof *info);
+        info = (MaterialBindInfo*) M_Malloc(sizeof *info);
         if(!info)
             Con_Error("MaterialBind::LinkDefinitions: Failed on allocation of %lu bytes for "
-                "new MaterialBindInfo.", (unsigned long) sizeof *info);
-        MaterialBind_AttachInfo(mb, info);
+                      "new MaterialBindInfo.", (unsigned long) sizeof *info);
+        mb->attachInfo(info);
     }
 
     // Surface decorations (lights and models).
@@ -465,33 +481,26 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
 {
     PathDirectory* matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(Str_Text(Uri_Scheme(uri))));
     PathDirectoryNode* node;
-    materialbind_t* mb;
+    MaterialBind* mb;
 
     node = PathDirectory_Insert(matDirectory, Str_Text(Uri_Path(uri)), MATERIALS_PATH_DELIMITER);
 
     // Is this a new binding?
-    mb = (materialbind_t*) PathDirectoryNode_UserData(node);
+    mb = (MaterialBind*) PathDirectoryNode_UserData(node);
     if(!mb)
     {
         // Acquire a new unique identifier for this binding.
         const materialid_t bindId = ++bindingCount;
 
-        mb = (materialbind_t*) M_Malloc(sizeof *mb);
+        mb = new MaterialBind(node, bindId);
         if(!mb)
         {
-            Con_Error("Materials::newMaterialBind: Failed on allocation of %lu bytes for new MaterialBind.",
-                (unsigned long) sizeof *mb);
-            exit(1); // Unreachable.
+            throw de::Error("Materials::newMaterialBind",
+                            de::String("Failed on allocation of %1 bytes for new MaterialBind.")
+                                .arg((unsigned long) sizeof *mb));
         }
-
-        // Init the new binding.
-        mb->_material = NULL;
-        mb->_info = NULL;
-
-        mb->_directoryNode = node;
         PathDirectoryNode_AttachUserData(node, mb);
 
-        mb->_id = bindId;
         if(material)
         {
             Material_SetPrimaryBind(material, bindId);
@@ -502,7 +511,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
         {
             // Allocate more memory.
             bindingIdMapSize += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
-            bindingIdMap = (materialbind_t**) M_Realloc(bindingIdMap, sizeof *bindingIdMap * bindingIdMapSize);
+            bindingIdMap = (MaterialBind**) M_Realloc(bindingIdMap, sizeof *bindingIdMap * bindingIdMapSize);
             if(!bindingIdMap)
                 Con_Error("Materials::newMaterialBind: Failed on (re)allocation of %lu bytes enlarging MaterialBind map.", (unsigned long) sizeof *bindingIdMap * bindingIdMapSize);
         }
@@ -510,7 +519,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
     }
 
     // (Re)configure the binding.
-    mb->_material = material;
+    mb->setMaterial(material);
     updateMaterialBindInfo(mb, false/*do not create, only update if present*/);
 
     return true;
@@ -518,7 +527,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
 
 static material_t* allocMaterial(void)
 {
-    material_t* mat = BlockSet_Allocate(materialsBlockSet);
+    material_t* mat = (material_t*)BlockSet_Allocate(materialsBlockSet);
     Material_Initialize(mat);
     materialCount++;
     return mat;
@@ -530,7 +539,7 @@ static material_t* allocMaterial(void)
  */
 static material_t* linkMaterialToGlobalList(material_t* mat)
 {
-    materiallist_node_t* node = (materiallist_node_t*)M_Malloc(sizeof *node);
+    MaterialListNode* node = (MaterialListNode*)M_Malloc(sizeof *node);
     if(!node)
         Con_Error("linkMaterialToGlobalList: Failed on allocation of %lu bytes for "
             "new MaterialList::Node.", (unsigned long) sizeof *node);
@@ -568,18 +577,12 @@ void Materials_Init(void)
     initedOk = true;
 }
 
-static int destroyVariant(materialvariant_t* variant, void* paramaters)
-{
-    MaterialVariant_Delete(variant);
-    return 1; // Continue iteration.
-}
-
 static void destroyMaterials(void)
 {
-    DENG_ASSERT(initedOk);
+    DENG2_ASSERT(initedOk);
     while(materials)
     {
-        materiallist_node_t* next = materials->next;
+        MaterialListNode* next = materials->next;
         Material_Destroy(materials->mat);
         M_Free(materials);
         materials = next;
@@ -589,22 +592,17 @@ static void destroyMaterials(void)
     materialCount = 0;
 }
 
-static int clearBinding(PathDirectoryNode* node, void* paramaters)
+static int clearBinding(PathDirectoryNode* node, void* /*parameters*/)
 {
-    materialbind_t* mb = PathDirectoryNode_DetachUserData(node);
-    materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
-    if(info)
-    {
-        M_Free(info);
-    }
-    M_Free(mb);
+    MaterialBind* mb = (MaterialBind*)PathDirectoryNode_DetachUserData(node);
+    if(mb) delete mb;
     return 0; // Continue iteration.
 }
 
 static void destroyBindings(void)
 {
     int i;
-    DENG_ASSERT(initedOk);
+    DENG2_ASSERT(initedOk);
 
     for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
     {
@@ -646,9 +644,9 @@ materialnamespaceid_t Materials_ParseNamespace(const char* str)
     return MN_INVALID; // Unknown.
 }
 
-const ddstring_t* Materials_NamespaceName(materialnamespaceid_t id)
+const Str* Materials_NamespaceName(materialnamespaceid_t id)
 {
-    static const ddstring_t namespaces[1+MATERIALNAMESPACE_COUNT] = {
+    static const Str namespaces[1+MATERIALNAMESPACE_COUNT] = {
         /* No namespace name */ { "" },
         /* MN_SYSTEM */         { MN_SYSTEM_NAME },
         /* MN_FLATS */          { MN_FLATS_NAME },
@@ -662,19 +660,19 @@ const ddstring_t* Materials_NamespaceName(materialnamespaceid_t id)
 
 materialnamespaceid_t Materials_Namespace(materialid_t id)
 {
-    materialbind_t* bind = getMaterialBindForId(id);
+    MaterialBind* bind = getMaterialBindForId(id);
     if(!bind)
     {
         DEBUG_Message(("Warning:Materials::Namespace: Attempted with unbound materialId #%u, returning 'any' namespace.\n", id));
         return MN_ANY;
     }
-    return namespaceIdForDirectoryNode(MaterialBind_DirectoryNode(bind));
+    return namespaceIdForDirectoryNode(bind->directoryNode());
 }
 
-static int clearBindingDefinitionLinks(const PathDirectoryNode* node, void* paramaters)
+static int clearBindingDefinitionLinks(const PathDirectoryNode* node, void* /*parameters*/)
 {
-    materialbind_t* mb = (materialbind_t*)PathDirectoryNode_UserData(node);
-    materialbindinfo_t* info = MaterialBind_Info(mb);
+    MaterialBind* mb = (MaterialBind*)PathDirectoryNode_UserData(node);
+    MaterialBindInfo* info = mb->info();
     if(info)
     {
         info->decorationDefs[0]    = info->decorationDefs[1]    = NULL;
@@ -687,19 +685,17 @@ static int clearBindingDefinitionLinks(const PathDirectoryNode* node, void* para
 
 void Materials_ClearDefinitionLinks(void)
 {
-    materiallist_node_t* node;
-    materialnamespaceid_t namespaceId;
-
     errorIfNotInited("Materials::ClearDefinitionLinks");
 
-    for(node = materials; node; node = node->next)
+    for(MaterialListNode* node = materials; node; node = node->next)
     {
         material_t* mat = node->mat;
         Material_SetDefinition(mat, NULL);
     }
 
-    for(namespaceId = MATERIALNAMESPACE_FIRST; namespaceId <= MATERIALNAMESPACE_LAST; ++namespaceId)
+    for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
     {
+        materialnamespaceid_t namespaceId = materialnamespaceid_t(i);
         PathDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
         PathDirectory_Iterate_Const(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, clearBindingDefinitionLinks);
     }
@@ -717,8 +713,8 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
     // Update bindings.
     for(i = 0; i < bindingCount; ++i)
     {
-        materialbind_t* mb = bindingIdMap[i];
-        if(!mb || MaterialBind_Material(mb) != mat) continue;
+        MaterialBind* mb = bindingIdMap[i];
+        if(!mb || mb->material() != mat) continue;
 
         updateMaterialBindInfo(mb, false /*do not create, only update if present*/);
     }
@@ -729,7 +725,7 @@ void Materials_PurgeCacheQueue(void)
     errorIfNotInited("Materials::PurgeCacheQueue");
     while(variantCacheQueue)
     {
-        variantcachequeue_node_t* next = variantCacheQueue->next;
+        VariantCacheQueueNode* next = variantCacheQueue->next;
         M_Free(variantCacheQueue);
         variantCacheQueue = next;
     }
@@ -740,7 +736,7 @@ void Materials_ProcessCacheQueue(void)
     errorIfNotInited("Materials::ProcessCacheQueue");
     while(variantCacheQueue)
     {
-        variantcachequeue_node_t* node = variantCacheQueue, *next = node->next;
+        VariantCacheQueueNode* node = variantCacheQueue, *next = node->next;
         Materials_Prepare(node->mat, node->spec, node->smooth);
         M_Free(node);
         variantCacheQueue = next;
@@ -749,28 +745,28 @@ void Materials_ProcessCacheQueue(void)
 
 material_t* Materials_ToMaterial(materialid_t id)
 {
-    materialbind_t* mb;
+    MaterialBind* mb;
     if(!initedOk) return NULL;
     mb = getMaterialBindForId(id);
     if(!mb) return NULL;
-    return MaterialBind_Material(mb);
+    return mb->material();
 }
 
 materialid_t Materials_Id(material_t* mat)
 {
-    materialbind_t* bind;
+    MaterialBind* bind;
     if(!initedOk || !mat) return NOMATERIALID;
     bind = getMaterialBindForId(Material_PrimaryBind(mat));
     if(!bind) return NOMATERIALID;
-    return MaterialBind_Id(bind);
+    return bind->id();
 }
 
 /**
  * @defgroup validateMaterialUriFlags  Validate Material Uri Flags
- * @{
  */
-#define VMUF_ALLOW_NAMESPACE_ANY 0x1 /// The Scheme component of the uri may be of zero-length; signifying "any namespace".
-/**@}*/
+///@{
+#define VMUF_ALLOW_NAMESPACE_ANY        0x1 ///< The Scheme component of the uri may be of zero-length; signifying "any namespace".
+///@}
 
 /**
  * @param uri  Uri to be validated.
@@ -778,7 +774,7 @@ materialid_t Materials_Id(material_t* mat)
  * @param quiet  @c true= Do not output validation remarks to the log.
  * @return  @c true if @a Uri passes validation.
  */
-static boolean validateMaterialUri2(const Uri* uri, int flags, boolean quiet)
+static boolean validateMaterialUri(const Uri* uri, int flags, boolean quiet=false)
 {
     materialnamespaceid_t namespaceId;
 
@@ -786,7 +782,7 @@ static boolean validateMaterialUri2(const Uri* uri, int flags, boolean quiet)
     {
         if(!quiet)
         {
-            ddstring_t* uriStr = Uri_ToString(uri);
+            Str* uriStr = Uri_ToString(uri);
             Con_Message("Invalid path '%s' in Material uri \"%s\".\n", Str_Text(Uri_Path(uri)), Str_Text(uriStr));
             Str_Delete(uriStr);
         }
@@ -799,7 +795,7 @@ static boolean validateMaterialUri2(const Uri* uri, int flags, boolean quiet)
     {
         if(!quiet)
         {
-            ddstring_t* uriStr = Uri_ToString(uri);
+            Str* uriStr = Uri_ToString(uri);
             Con_Message("Unknown namespace '%s' in Material uri \"%s\".\n", Str_Text(Uri_Scheme(uri)), Str_Text(uriStr));
             Str_Delete(uriStr);
         }
@@ -809,11 +805,6 @@ static boolean validateMaterialUri2(const Uri* uri, int flags, boolean quiet)
     return true;
 }
 
-static boolean validateMaterialUri(const Uri* uri, int flags)
-{
-    return validateMaterialUri2(uri, flags, false);
-}
-
 /**
  * Given a directory and path, search the Materials collection for a match.
  *
@@ -821,23 +812,23 @@ static boolean validateMaterialUri(const Uri* uri, int flags)
  * @param path  Path of the material to search for.
  * @return  Found Material else @c NULL
  */
-static materialbind_t* findMaterialBindForPath(PathDirectory* matDirectory, const char* path)
+static MaterialBind* findMaterialBindForPath(PathDirectory* matDirectory, const char* path)
 {
     PathDirectoryNode* node = PathDirectory_Find(matDirectory,
         PCF_NO_BRANCH|PCF_MATCH_FULL, path, MATERIALS_PATH_DELIMITER);
     if(node)
     {
-        return (materialbind_t*) PathDirectoryNode_UserData(node);
+        return (MaterialBind*) PathDirectoryNode_UserData(node);
     }
     return NULL; // Not found.
 }
 
 /// @pre @a uri has already been validated and is well-formed.
-static materialbind_t* findMaterialBindForUri(const Uri* uri)
+static MaterialBind* findMaterialBindForUri(const Uri* uri)
 {
     materialnamespaceid_t namespaceId = Materials_ParseNamespace(Str_Text(Uri_Scheme(uri)));
     const char* path = Str_Text(Uri_Path(uri));
-    materialbind_t* bind = NULL;
+    MaterialBind* bind = NULL;
     if(namespaceId != MN_ANY)
     {
         // Caller wants a material in a specific namespace.
@@ -861,12 +852,12 @@ static materialbind_t* findMaterialBindForUri(const Uri* uri)
 
 materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
 {
-    materialbind_t* bind;
+    MaterialBind* bind;
     if(!initedOk || !uri) return NOMATERIALID;
-    if(!validateMaterialUri2(uri, VMUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
+    if(!validateMaterialUri(uri, VMUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
     {
 #if _DEBUG
-        ddstring_t* uriStr = Uri_ToString(uri);
+        Str* uriStr = Uri_ToString(uri);
         Con_Message("Warning: Materials::ResolveUri: \"%s\" failed to validate, returning NOMATERIALID.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
@@ -875,12 +866,12 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
 
     // Perform the search.
     bind = findMaterialBindForUri(uri);
-    if(bind) return MaterialBind_Id(bind);
+    if(bind) return bind->id();
 
     // Not found.
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
-        ddstring_t* path = Uri_ToString(uri);
+        Str* path = Uri_ToString(uri);
         Con_Message("Warning: Materials::ResolveUri: \"%s\" not found, returning NOMATERIALID.\n", Str_Text(path));
         Str_Delete(path);
     }
@@ -911,43 +902,43 @@ materialid_t Materials_ResolveUriCString(const char* path)
     return Materials_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-ddstring_t* Materials_ComposePath(materialid_t id)
+Str* Materials_ComposePath(materialid_t id)
 {
-    materialbind_t* bind = getMaterialBindForId(id);
+    MaterialBind* bind = getMaterialBindForId(id);
     if(!bind)
     {
         DEBUG_Message(("Warning:Materials::ComposePath: Attempted with unbound materialId #%u, returning null-object.\n", id));
         return Str_New();
     }
-    return composePathForDirectoryNode(MaterialBind_DirectoryNode(bind), MATERIALS_PATH_DELIMITER);
+    return composePathForDirectoryNode(bind->directoryNode(), MATERIALS_PATH_DELIMITER);
 }
 
 /// @note Part of the Doomsday public API.
 Uri* Materials_ComposeUri(materialid_t id)
 {
-    materialbind_t* bind = getMaterialBindForId(id);
+    MaterialBind* bind = getMaterialBindForId(id);
     if(!bind)
     {
         DEBUG_Message(("Warning:Materials::ComposeUri: Attempted with unbound materialId #%u, returning null-object.\n", id));
         return Uri_New();
     }
-    return composeUriForDirectoryNode(MaterialBind_DirectoryNode(bind));
+    return composeUriForDirectoryNode(bind->directoryNode());
 }
 
 material_t* Materials_CreateFromDef(ded_material_t* def)
 {
     const Uri* uri = def->uri;
-    materialbind_t* bind;
+    MaterialBind* bind;
     textureid_t texId;
     material_t* mat;
-    DENG_ASSERT(def);
+    DENG2_ASSERT(def);
 
     if(!initedOk) return NULL;
 
     // We require a properly formed uri.
-    if(!validateMaterialUri2(uri, 0, (verbose >= 1)))
+    if(!validateMaterialUri(uri, 0, (verbose >= 1)))
     {
-        ddstring_t* uriStr = Uri_ToString(uri);
+        Str* uriStr = Uri_ToString(uri);
         Con_Message("Warning: Failed creating Material \"%s\" from definition %p, ignoring.\n", Str_Text(uriStr), (void*)def);
         Str_Delete(uriStr);
         return NULL;
@@ -955,14 +946,14 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
 
     // Have we already created a material for this?
     bind = findMaterialBindForUri(uri);
-    if(bind && MaterialBind_Material(bind))
+    if(bind && bind->material())
     {
 #if _DEBUG
-        ddstring_t* path = Uri_ToString(uri);
+        Str* path = Uri_ToString(uri);
         Con_Message("Warning:Materials::CreateFromDef: A Material with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
         Str_Delete(path);
 #endif
-        return MaterialBind_Material(bind);
+        return bind->material();
     }
 
     // Ensure the primary layer has a valid texture reference.
@@ -975,8 +966,8 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             texId = Textures_ResolveUri2(l->stages[0].texture, true/*quiet please*/);
             if(texId == NOTEXTUREID)
             {
-                ddstring_t* materialPath = Uri_ToString(def->uri);
-                ddstring_t* texturePath = Uri_ToString(l->stages[0].texture);
+                Str* materialPath = Uri_ToString(def->uri);
+                Str* texturePath = Uri_ToString(l->stages[0].texture);
                 Con_Message("Warning: Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).\n", Str_Text(texturePath), Str_Text(materialPath), 0, 0);
                 Str_Delete(materialPath);
                 Str_Delete(texturePath);
@@ -999,7 +990,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
     else
     {
-        MaterialBind_SetMaterial(bind, mat);
+        bind->setMaterial(mat);
     }
 
     return mat;
@@ -1007,10 +998,10 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
 
 static void pushVariantCacheQueue(material_t* mat, const materialvariantspecification_t* spec, boolean smooth)
 {
-    variantcachequeue_node_t* node;
-    DENG_ASSERT(initedOk && mat && spec);
+    VariantCacheQueueNode* node;
+    DENG2_ASSERT(initedOk && mat && spec);
 
-    node = (variantcachequeue_node_t*) M_Malloc(sizeof *node);
+    node = (VariantCacheQueueNode*) M_Malloc(sizeof *node);
     if(!node)
         Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of %lu bytes for new VariantCacheQueueNode.", (unsigned long) sizeof *node);
 
@@ -1036,7 +1027,7 @@ void Materials_Precache2(material_t* mat, const materialvariantspecification_t* 
     if(isDedicated || playback) return;
 
     // Already in the queue?
-    { variantcachequeue_node_t* node;
+    { VariantCacheQueueNode* node;
     for(node = variantCacheQueue; node; node = node->next)
     {
         if(mat == node->mat && spec == node->spec) return;
@@ -1065,7 +1056,7 @@ void Materials_Precache(material_t* mat, const materialvariantspecification_t* s
 
 void Materials_Ticker(timespan_t time)
 {
-    materiallist_node_t* node;
+    MaterialListNode* node;
 
     // The animation will only progress when the game is not paused.
     if(clientPaused || novideo) return;
@@ -1085,25 +1076,25 @@ void Materials_Ticker(timespan_t time)
 
 static Texture* findDetailTextureForDef(const ded_detailtexture_t* def)
 {
-    DENG_ASSERT(def);
+    DENG2_ASSERT(def);
     return R_FindDetailTextureForResourcePath(def->detailTex);
 }
 
 static Texture* findShinyTextureForDef(const ded_reflection_t* def)
 {
-    DENG_ASSERT(def);
+    DENG2_ASSERT(def);
     return R_FindReflectionTextureForResourcePath(def->shinyMap);
 }
 
 static Texture* findShinyMaskTextureForDef(const ded_reflection_t* def)
 {
-    DENG_ASSERT(def);
+    DENG2_ASSERT(def);
     return R_FindMaskTextureForResourcePath(def->maskMap);
 }
 
-static void updateMaterialTextureLinks(materialbind_t* mb)
+static void updateMaterialTextureLinks(MaterialBind* mb)
 {
-    material_t* mat = MaterialBind_Material(mb);
+    material_t* mat = mb->material();
     const float black[3] = { 0, 0, 0 };
     const ded_detailtexture_t* dtlDef;
     const ded_reflection_t* refDef;
@@ -1113,12 +1104,12 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
 
     if(!mat) return;
 
-    dtlDef = MaterialBind_DetailTextureDef(mb);
+    dtlDef = mb->detailTextureDef();
     Material_SetDetailTexture(mat,  (dtlDef? findDetailTextureForDef(dtlDef) : NULL));
     Material_SetDetailStrength(mat, (dtlDef? dtlDef->strength : 0));
     Material_SetDetailScale(mat,    (dtlDef? dtlDef->scale : 0));
 
-    refDef = MaterialBind_ReflectionDef(mb);
+    refDef = mb->reflectionDef();
     Material_SetShinyTexture(mat,     (refDef? findShinyTextureForDef(refDef) : NULL));
     Material_SetShinyMaskTexture(mat, (refDef? findShinyMaskTextureForDef(refDef) : NULL));
     Material_SetShinyBlendmode(mat,   (refDef? refDef->blendMode : BM_ADD));
@@ -1131,7 +1122,7 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* textur
     float tOffset, float opacity)
 {
     rtexmapunit_t* tu;
-    DENG_ASSERT(ms && unit < NUM_MATERIAL_TEXTURE_UNITS);
+    DENG2_ASSERT(ms && unit < NUM_MATERIAL_TEXTURE_UNITS);
 
     ms->textures[unit] = texture;
     tu = &ms->units[unit];
@@ -1146,7 +1137,7 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* textur
 void Materials_InitSnapshot(materialsnapshot_t* ms)
 {
     int i;
-    DENG_ASSERT(ms);
+    DENG2_ASSERT(ms);
 
     for(i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
     {
@@ -1172,7 +1163,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
     int i, layerCount;
     Texture* tex;
-    DENG_ASSERT(snapshot);
+    DENG2_ASSERT(snapshot);
 
     memset(texUnits, 0, sizeof texUnits);
 
@@ -1190,7 +1181,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
 
         if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
         {
-            materialbind_t* bind = getMaterialBindForId(Material_PrimaryBind(mat));
+            MaterialBind* bind = getMaterialBindForId(Material_PrimaryBind(mat));
 
             // Primary texture was (re)prepared.
             Material_SetPrepared(mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
@@ -1374,7 +1365,8 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         Materials_Prepare(mat, spec, false);
     }
-    return MaterialBind_DecorationDef(getMaterialBindForId(Material_PrimaryBind(mat)));
+    MaterialBind* mb = getMaterialBindForId(Material_PrimaryBind(mat));
+    return mb->decorationDef();
 }
 
 const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
@@ -1386,7 +1378,8 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         Materials_Prepare(mat, spec, false);
     }
-    return MaterialBind_PtcGenDef(getMaterialBindForId(Material_PrimaryBind(mat)));
+    MaterialBind* mb = getMaterialBindForId(Material_PrimaryBind(mat));
+    return mb->ptcGenDef();
 }
 
 uint Materials_Size(void)
@@ -1436,12 +1429,12 @@ materialvariant_t* Materials_ChooseVariant(material_t* mat,
     return variant;
 }
 
-static int printVariantInfo(materialvariant_t* variant, void* paramaters)
+static int printVariantInfo(materialvariant_t* variant, void* parameters)
 {
-    int* variantIdx = (int*)paramaters;
+    int* variantIdx = (int*)parameters;
     materialvariant_t* next = MaterialVariant_TranslationNext(variant);
     int i, layers = Material_LayerCount(MaterialVariant_GeneralCase(variant));
-    DENG_ASSERT(variantIdx);
+    DENG2_ASSERT(variantIdx);
 
     Con_Printf("Variant #%i: Spec:%p\n", *variantIdx, (void*)MaterialVariant_Spec(variant));
 
@@ -1451,9 +1444,9 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
         materialvariant_t* cur = MaterialVariant_TranslationCurrent(variant);
         float inter = MaterialVariant_TranslationPoint(variant);
         Uri* curUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(cur)));
-        ddstring_t* curPath = Uri_ToString(curUri);
+        Str* curPath = Uri_ToString(curUri);
         Uri* nextUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(next)));
-        ddstring_t* nextPath = Uri_ToString(nextUri);
+        Str* nextPath = Uri_ToString(nextUri);
 
         Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
             F_PrettyPath(Str_Text(curPath)), F_PrettyPath(Str_Text(nextPath)), inter);
@@ -1469,7 +1462,7 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
     {
         const materialvariant_layer_t* l = MaterialVariant_Layer(variant, i);
         Uri* uri = Textures_ComposeUri(Textures_Id(l->texture));
-        ddstring_t* path = Uri_ToString(uri);
+        Str* path = Uri_ToString(uri);
 
         Con_Printf("  #%i: Stage:%i Tics:%i Texture:(\"%s\" uid:%u)"
             "\n      Offset: %.2f x %.2f Glow:%.2f\n",
@@ -1488,7 +1481,7 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
 static void printMaterialInfo(material_t* mat)
 {
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    ddstring_t* path = Uri_ToString(uri);
+    Str* path = Uri_ToString(uri);
     int variantIdx = 0;
 
     Con_Printf("Material \"%s\" [%p] uid:%u origin:%s"
@@ -1517,14 +1510,14 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    ddstring_t* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(Str_New(), Str_Text(Uri_Path(uri)))));
+    Str* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(Str_New(), Str_Text(Uri_Path(uri)))));
 
     Con_Printf("%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
         numUidDigits, Materials_Id(mat),
         !Material_IsCustom(mat) ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"));
 
     Uri_Delete(uri);
-    Str_Delete((ddstring_t*)path);
+    Str_Delete((Str*)path);
 }
 
 /**
@@ -1538,15 +1531,15 @@ typedef struct {
     const char* like;
     int idx;
     PathDirectoryNode** storage;
-} collectdirectorynodeworker_paramaters_t;
+} collectdirectorynodeworker_parameters_t;
 
-static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* paramaters)
+static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* parameters)
 {
-    collectdirectorynodeworker_paramaters_t* p = (collectdirectorynodeworker_paramaters_t*)paramaters;
+    collectdirectorynodeworker_parameters_t* p = (collectdirectorynodeworker_parameters_t*)parameters;
 
     if(p->like && p->like[0])
     {
-        ddstring_t* path = composePathForDirectoryNode(node, p->delimiter);
+        Str* path = composePathForDirectoryNode(node, p->delimiter);
         int delta = strnicmp(Str_Text(path), p->like, strlen(p->like));
         Str_Delete(path);
         if(delta) return 0; // Continue iteration.
@@ -1567,8 +1560,8 @@ static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* paramaters)
 static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespaceId,
     const char* like, int* count, PathDirectoryNode** storage)
 {
-    collectdirectorynodeworker_paramaters_t p;
-    materialnamespaceid_t fromId, toId, iterId;
+    collectdirectorynodeworker_parameters_t p;
+    materialnamespaceid_t fromId, toId;
 
     if(VALID_MATERIALNAMESPACEID(namespaceId))
     {
@@ -1586,8 +1579,9 @@ static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespace
     p.like = like;
     p.idx = 0;
     p.storage = storage;
-    for(iterId  = fromId; iterId <= toId; ++iterId)
+    for(uint i = uint(fromId); i <= uint(toId); ++i)
     {
+        materialnamespaceid_t iterId = materialnamespaceid_t(i);
         PathDirectory* matDirectory = getDirectoryForNamespaceId(iterId);
         PathDirectory_Iterate2(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
             PATHDIRECTORY_NOHASH, collectDirectoryNodeWorker, (void*)&p);
@@ -1615,8 +1609,8 @@ static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespace
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
     // Decode paths before determining a lexicographical delta.
-    ddstring_t* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER));
-    ddstring_t* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER));
+    Str* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER));
+    Str* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER));
     int delta = stricmp(Str_Text(a), Str_Text(b));
     Str_Delete(b);
     Str_Delete(a);
@@ -1655,7 +1649,8 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     for(iter = foundMaterials; *iter; ++iter)
     {
         const PathDirectoryNode* node = *iter;
-        material_t* mat = MaterialBind_Material((materialbind_t*)PathDirectoryNode_UserData(node));
+        MaterialBind* mb = (MaterialBind*)PathDirectoryNode_UserData(node);
+        material_t* mat = mb->material();
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printMaterialOverview(mat, printNamespace);
     }
@@ -1698,7 +1693,7 @@ static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
 
 boolean Materials_IsMaterialInAnimGroup(material_t* mat, int groupNum)
 {
-    materialanim_t* group = getAnimGroup(groupNum);
+    MaterialAnim* group = getAnimGroup(groupNum);
     if(!group) return false;
     return isInAnimGroup(group, mat);
 }
@@ -1707,7 +1702,7 @@ boolean Materials_HasDecorations(material_t* mat)
 {
     if(novideo) return false;
 
-    DENG_ASSERT(mat);
+    DENG2_ASSERT(mat);
     /// @todo We should not need to prepare to determine this.
     /// Nor should we need to process the group each time. Cache this decision.
     if(Materials_DecorationDef(mat)) return true;
@@ -1716,7 +1711,7 @@ boolean Materials_HasDecorations(material_t* mat)
         int g, i, numGroups = Materials_AnimGroupCount();
         for(g = 0; g < numGroups; ++g)
         {
-            materialanim_t* group = &groups[g];
+            MaterialAnim* group = &groups[g];
 
             // Precache groups don't apply.
             if(Materials_IsPrecacheAnimGroup(g)) continue;
@@ -1741,13 +1736,11 @@ int Materials_AnimGroupCount(void)
 
 int Materials_CreateAnimGroup(int flags)
 {
-    materialanim_t* group;
-
     // Allocating one by one is inefficient, but it doesn't really matter.
-    groups = Z_Realloc(groups, sizeof(materialanim_t) * (numgroups + 1), PU_APPSTATIC);
+    groups = (MaterialAnim*)Z_Realloc(groups, sizeof(*groups) * (numgroups + 1), PU_APPSTATIC);
 
     // Init the new group.
-    group = &groups[numgroups];
+    MaterialAnim* group = &groups[numgroups];
     memset(group, 0, sizeof(*group));
 
     // The group number is (index + 1).
@@ -1759,12 +1752,11 @@ int Materials_CreateAnimGroup(int flags)
 
 void Materials_ClearAnimGroups(void)
 {
-    int i;
     if(numgroups <= 0) return;
 
-    for(i = 0; i < numgroups; ++i)
+    for(int i = 0; i < numgroups; ++i)
     {
-        materialanim_t* group = &groups[i];
+        MaterialAnim* group = &groups[i];
         Z_Free(group->frames);
     }
 
@@ -1775,11 +1767,13 @@ void Materials_ClearAnimGroups(void)
 
 void Materials_AddAnimGroupFrame(int groupNum, struct material_s* mat, int tics, int randomTics)
 {
-    materialanim_t* group = getAnimGroup(groupNum);
-    materialanim_frame_t* frame;
+    MaterialAnim* group = getAnimGroup(groupNum);
 
     if(!group)
-        Con_Error("Materials::AddAnimGroupFrame: Unknown anim group '%i', ignoring.\n", groupNum);
+    {
+        DEBUG_Message(("Materials::AddAnimGroupFrame: Unknown anim group '%i', ignoring.\n", groupNum));
+        return;
+    }
 
     if(!mat)
     {
@@ -1791,10 +1785,9 @@ void Materials_AddAnimGroupFrame(int groupNum, struct material_s* mat, int tics,
     Material_SetGroupAnimated(mat, true);
 
     // Allocate a new animframe.
-    group->frames = Z_Realloc(group->frames, sizeof(materialanim_frame_t) * ++group->count, PU_APPSTATIC);
+    group->frames = (MaterialAnimFrame*)Z_Realloc(group->frames, sizeof(*group->frames) * ++group->count, PU_APPSTATIC);
 
-    frame = &group->frames[group->count - 1];
-
+    MaterialAnimFrame* frame = &group->frames[group->count - 1];
     frame->material = mat;
     frame->tics = tics;
     frame->random = randomTics;
@@ -1802,12 +1795,13 @@ void Materials_AddAnimGroupFrame(int groupNum, struct material_s* mat, int tics,
 
 boolean Materials_IsPrecacheAnimGroup(int groupNum)
 {
-    materialanim_t* group = getAnimGroup(groupNum);
+    MaterialAnim* group = getAnimGroup(groupNum);
     if(!group) return false;
     return ((group->flags & AGF_PRECACHE) != 0);
 }
 
-static int clearVariantTranslationWorker(materialvariant_t* variant, void* paramaters)
+#if 0
+static int clearVariantTranslationWorker(materialvariant_t* variant, void* /*parameters*/)
 {
     MaterialVariant_SetTranslation(variant, variant, variant);
     return 0; // Continue iteration.
@@ -1815,20 +1809,21 @@ static int clearVariantTranslationWorker(materialvariant_t* variant, void* param
 
 static void Materials_ClearTranslation(material_t* mat)
 {
-    DENG_ASSERT(initedOk);
+    DENG2_ASSERT(initedOk);
     Material_IterateVariants(mat, clearVariantTranslationWorker, NULL);
 }
+#endif
 
 typedef struct {
     material_t* current, *next;
-} setmaterialtranslationworker_paramaters_t;
+} setmaterialtranslationworker_parameters_t;
 
-static int setVariantTranslationWorker(materialvariant_t* variant, void* paramaters)
+static int setVariantTranslationWorker(materialvariant_t* variant, void* parameters)
 {
-    setmaterialtranslationworker_paramaters_t* p = (setmaterialtranslationworker_paramaters_t*) paramaters;
+    setmaterialtranslationworker_parameters_t* p = (setmaterialtranslationworker_parameters_t*) parameters;
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
     materialvariant_t* current, *next;
-    DENG_ASSERT(p);
+    DENG2_ASSERT(p);
 
     current = Materials_ChooseVariant(p->current, spec, false, true/*create if necessary*/);
     next    = Materials_ChooseVariant(p->next,    spec, false, true/*create if necessary*/);
@@ -1836,16 +1831,16 @@ static int setVariantTranslationWorker(materialvariant_t* variant, void* paramat
     return 0; // Continue iteration.
 }
 
-static int setVariantTranslationPointWorker(materialvariant_t* variant, void* paramaters)
+static int setVariantTranslationPointWorker(materialvariant_t* variant, void* parameters)
 {
-    float* interPtr = (float*)paramaters;
-    DENG_ASSERT(interPtr);
+    float* interPtr = (float*)parameters;
+    DENG2_ASSERT(interPtr);
 
     MaterialVariant_SetTranslationPoint(variant, *interPtr);
     return 0; // Continue iteration.
 }
 
-void Materials_AnimateAnimGroup(materialanim_t* group)
+void Materials_AnimateAnimGroup(MaterialAnim* group)
 {
     int i;
 
@@ -1870,7 +1865,7 @@ void Materials_AnimateAnimGroup(materialanim_t* group)
         for(i = 0; i < group->count; ++i)
         {
             material_t* real = group->frames[i].material;
-            setmaterialtranslationworker_paramaters_t params;
+            setmaterialtranslationworker_parameters_t params;
 
             params.current = group->frames[(group->index + i    ) % group->count].material;
             params.next    = group->frames[(group->index + i + 1) % group->count].material;
@@ -1923,7 +1918,7 @@ static void animateAnimGroups(void)
     }
 }
 
-static int resetVariantGroupAnimWorker(materialvariant_t* mat, void* paramaters)
+static int resetVariantGroupAnimWorker(materialvariant_t* mat, void* /*parameters*/)
 {
     MaterialVariant_ResetAnim(mat);
     return 0; // Continue iteration.
@@ -1931,8 +1926,8 @@ static int resetVariantGroupAnimWorker(materialvariant_t* mat, void* paramaters)
 
 void Materials_ResetAnimGroups(void)
 {
-    materiallist_node_t* node;
-    materialanim_t* group;
+    MaterialListNode* node;
+    MaterialAnim* group;
     int i;
 
     for(node = materials; node; node = node->next)
@@ -1959,104 +1954,10 @@ void Materials_ResetAnimGroups(void)
     animateAnimGroups();
 }
 
-materialid_t MaterialBind_Id(const materialbind_t* mb)
-{
-    DENG_ASSERT(mb);
-    return mb->_id;
-}
-
-material_t* MaterialBind_Material(const materialbind_t* mb)
-{
-    DENG_ASSERT(mb);
-    return mb->_material;
-}
-
-material_t* MaterialBind_SetMaterial(materialbind_t* mb, material_t* material)
-{
-    DENG_ASSERT(mb);
-    if(mb->_material != material)
-    {
-        // Any extended info will be invalid after this op, so destroy it
-        // (it will automatically be rebuilt later, if subsequently needed).
-        materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
-        if(info) M_Free(mb->_info);
-
-        // Associate with the new Material.
-        mb->_material = material;
-    }
-    return mb->_material;
-}
-
-PathDirectoryNode* MaterialBind_DirectoryNode(const materialbind_t* mb)
-{
-    DENG_ASSERT(mb);
-    return mb->_directoryNode;
-}
-
-materialbindinfo_t* MaterialBind_Info(const materialbind_t* mb)
-{
-    DENG_ASSERT(mb);
-    return mb->_info;
-}
-
-void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
-{
-    DENG_ASSERT(mb);
-    if(!info)
-        Con_Error("MaterialBind::AttachInfo: Attempted with invalid info.");
-    if(mb->_info)
-    {
-#if _DEBUG
-        Uri* uri = Materials_ComposeUri(mb->_id);
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning:MaterialBind::AttachInfo: Info already present for \"%s\", replacing.", Str_Text(path));
-        Str_Delete(path);
-        Uri_Delete(uri);
-#endif
-        M_Free(mb->_info);
-    }
-    mb->_info = info;
-}
-
-materialbindinfo_t* MaterialBind_DetachInfo(materialbind_t* mb)
-{
-    materialbindinfo_t* info;
-    DENG_ASSERT(mb);
-    info = mb->_info;
-    mb->_info = NULL;
-    return info;
-}
-
-ded_detailtexture_t* MaterialBind_DetailTextureDef(const materialbind_t* mb)
-{
-    DENG_ASSERT(mb);
-    if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
-    return mb->_info->detailtextureDefs[Material_Prepared(mb->_material)-1];
-}
-
-ded_decor_t* MaterialBind_DecorationDef(const materialbind_t* mb)
-{
-    DENG_ASSERT(mb);
-    if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
-    return mb->_info->decorationDefs[Material_Prepared(mb->_material)-1];
-}
-
-ded_ptcgen_t* MaterialBind_PtcGenDef(const materialbind_t* mb)
-{
-    DENG_ASSERT(mb);
-    if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
-    return mb->_info->ptcgenDefs[Material_Prepared(mb->_material)-1];
-}
-
-ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb)
-{
-    DENG_ASSERT(mb);
-    if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
-    return mb->_info->reflectionDefs[Material_Prepared(mb->_material)-1];
-}
-
 D_CMD(ListMaterials)
 {
+    DENG2_UNUSED(src);
+
     materialnamespaceid_t namespaceId = MN_ANY;
     const char* like = NULL;
     Uri* uri = NULL;
@@ -2118,9 +2019,76 @@ D_CMD(ListMaterials)
     return true;
 }
 
+material_t* MaterialBind::setMaterial(material_t* newMaterial)
+{
+    if(asocMaterial != newMaterial)
+    {
+        // Any extended info will be invalid after this op, so destroy it
+        // (it will automatically be rebuilt later, if subsequently needed).
+        MaterialBindInfo* detachedInfo = detachInfo();
+        if(detachedInfo) M_Free(detachedInfo);
+
+        // Associate with the new Material.
+        asocMaterial = newMaterial;
+    }
+    return asocMaterial;
+}
+
+void MaterialBind::attachInfo(MaterialBindInfo* info)
+{
+    if(!info)
+        Con_Error("MaterialBind::attachInfo: Attempted with invalid info.");
+    if(extInfo)
+    {
+#if _DEBUG
+        Uri* uri = Materials_ComposeUri(guid);
+        Str* path = Uri_ToString(uri);
+        Con_Message("Warning:MaterialBind::attachInfo: Info already present for \"%s\", replacing.", Str_Text(path));
+        Str_Delete(path);
+        Uri_Delete(uri);
+#endif
+        M_Free(extInfo);
+    }
+    extInfo = info;
+}
+
+MaterialBindInfo* MaterialBind::detachInfo()
+{
+    MaterialBindInfo* retInfo = extInfo;
+    extInfo = NULL;
+    return retInfo;
+}
+
+ded_detailtexture_t* MaterialBind::detailTextureDef() const
+{
+    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return NULL;
+    return extInfo->detailtextureDefs[Material_Prepared(asocMaterial)-1];
+}
+
+ded_decor_t* MaterialBind::decorationDef() const
+{
+    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return NULL;
+    return extInfo->decorationDefs[Material_Prepared(asocMaterial)-1];
+}
+
+ded_ptcgen_t* MaterialBind::ptcGenDef() const
+{
+    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return NULL;
+    return extInfo->ptcgenDefs[Material_Prepared(asocMaterial)-1];
+}
+
+ded_reflection_t* MaterialBind::reflectionDef() const
+{
+    if(!extInfo || !asocMaterial || !Material_Prepared(asocMaterial)) return NULL;
+    return extInfo->reflectionDefs[Material_Prepared(asocMaterial)-1];
+}
+
 D_CMD(InspectMaterial)
 {
-    ddstring_t path;
+    DENG2_UNUSED(src);
+    DENG2_UNUSED(argc);
+
+    Str path;
     material_t* mat;
     Uri* search;
 
@@ -2147,7 +2115,7 @@ D_CMD(InspectMaterial)
     }
     else
     {
-        ddstring_t* path = Uri_ToString(search);
+        Str* path = Uri_ToString(search);
         Con_Printf("Unknown material \"%s\".\n", Str_Text(path));
         Str_Delete(path);
     }
@@ -2158,10 +2126,14 @@ D_CMD(InspectMaterial)
 #if _DEBUG
 D_CMD(PrintMaterialStats)
 {
-    materialnamespaceid_t namespaceId;
+    DENG2_UNUSED(src);
+    DENG2_UNUSED(argc);
+    DENG2_UNUSED(argv);
+
     Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
-    for(namespaceId = MATERIALNAMESPACE_FIRST; namespaceId <= MATERIALNAMESPACE_LAST; ++namespaceId)
+    for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
     {
+        materialnamespaceid_t namespaceId = materialnamespaceid_t(i);
         PathDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
         uint size;
 

@@ -28,6 +28,10 @@
 #include <de/str.h>
 #include "pathmap.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup pathComparisonFlags  Path Comparison Flags
  * @ingroup base apiFlags
@@ -275,5 +279,9 @@ void* PathDirectoryNode_UserData(const PathDirectoryNode* node);
 
 /// @return  Print-ready name for node @a type.
 const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_PATHDIRECTORY_H */

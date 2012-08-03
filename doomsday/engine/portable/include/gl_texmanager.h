@@ -36,10 +36,14 @@
 #define LIBDENG_GLTEXTURE_MANAGER_H
 
 #include "dfile.h"
-#include "r_data.h" /// \todo should not be included here.
+#include "r_data.h" /// @todo should not be included here.
 
 #include "texture.h"
 #include "texturevariantspecification.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct image_s;
 struct texturecontent_s;
@@ -330,5 +334,9 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
 DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_GLTEXTURE_MANAGER_H */
