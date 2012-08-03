@@ -5656,7 +5656,7 @@ boolean SV_SaveGame(int slot, const char* name)
         // Swap the save info.
         replaceSaveInfo(logicalSlot, info);
 
-#if !__JHEXEN__
+#if __JHEXEN__
         // Copy base slot to destination slot.
         SV_CopySlot(logicalSlot, slot);
 #endif
