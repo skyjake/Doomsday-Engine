@@ -1,29 +1,23 @@
-/**\file materials.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
+ * @file materials.c
  * Materials collection, namespaces, bindings and other management.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
@@ -42,6 +36,7 @@
 #include "texturevariant.h"
 #include "materialvariant.h"
 #include "pathdirectory.h"
+#include <de/memory.h>
 
 /// Number of materials to block-allocate.
 #define MATERIALS_BLOCK_ALLOC (32)
@@ -106,7 +101,7 @@ material_t* MaterialBind_Material(const materialbind_t* mb);
  * Change the Material associated with this binding. Note that only the
  * relationship between MaterialBind and Material is updated!
  *
- * \post If @a material differs from that currently associated with this,
+ * @post If @a material differs from that currently associated with this,
  *     any MaterialBindInfo presently owned by this is destroyed (it is
  *     now invalid).
  *
@@ -231,14 +226,14 @@ static void errorIfNotInited(const char* callerName)
 
 static __inline PathDirectory* getDirectoryForNamespaceId(materialnamespaceid_t id)
 {
-    assert(VALID_MATERIALNAMESPACEID(id));
+    DENG_ASSERT(VALID_MATERIALNAMESPACEID(id));
     return namespaces[id-MATERIALNAMESPACE_FIRST];
 }
 
 static materialnamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
 {
     materialnamespaceid_t id;
-    assert(pd);
+    DENG_ASSERT(pd);
 
     for(id = MATERIALNAMESPACE_FIRST; id <= MATERIALNAMESPACE_LAST; ++id)
     {
@@ -280,7 +275,7 @@ static materialanim_t* getAnimGroup(int number)
 static boolean isInAnimGroup(const materialanim_t* group, const material_t* mat)
 {
     int i;
-    assert(group);
+    DENG_ASSERT(group);
 
     if(!mat) return false;
     for(i = 0; i < group->count; ++i)
@@ -294,7 +289,7 @@ static boolean isInAnimGroup(const materialanim_t* group, const material_t* mat)
 static materialvariantspecification_t* copyVariantSpecification(
     const materialvariantspecification_t* tpl)
 {
-    materialvariantspecification_t* spec = (materialvariantspecification_t*) malloc(sizeof *spec);
+    materialvariantspecification_t* spec = (materialvariantspecification_t*) M_Malloc(sizeof *spec);
     if(!spec)
         Con_Error("Materials::copyVariantSpecification: Failed on allocation of %lu bytes for new MaterialVariantSpecification.", (unsigned long) sizeof *spec);
     memcpy(spec, tpl, sizeof *spec);
@@ -304,7 +299,7 @@ static materialvariantspecification_t* copyVariantSpecification(
 static int compareVariantSpecifications(const materialvariantspecification_t* a,
     const materialvariantspecification_t* b)
 {
-    assert(a && b);
+    DENG_ASSERT(a && b);
     if(a == b) return 1;
     if(a->context != b->context) return 0;
     return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
@@ -314,7 +309,7 @@ static materialvariantspecification_t* applyVariantSpecification(
     materialvariantspecification_t* spec, materialcontext_t mc,
     texturevariantspecification_t* primarySpec)
 {
-    assert(spec && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)) && primarySpec);
+    DENG_ASSERT(spec && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)) && primarySpec);
     spec->context = mc;
     spec->primarySpec = primarySpec;
     return spec;
@@ -323,10 +318,10 @@ static materialvariantspecification_t* applyVariantSpecification(
 static materialvariantspecification_t* linkVariantSpecification(
     materialvariantspecification_t* spec)
 {
-    assert(initedOk && spec);
+    DENG_ASSERT(initedOk && spec);
     {
     materialvariantspecificationlist_node_t* node;
-    if(NULL == (node = (materialvariantspecificationlist_node_t*) malloc(sizeof(*node))))
+    if(NULL == (node = (materialvariantspecificationlist_node_t*) M_Malloc(sizeof(*node))))
         Con_Error("Materials::linkVariantSpecification: Failed on allocation of %lu bytes for "
             "new MaterialVariantSpecificationListNode.", (unsigned long) sizeof(*node));
     node->spec = spec;
@@ -339,7 +334,7 @@ static materialvariantspecification_t* linkVariantSpecification(
 static materialvariantspecification_t* findVariantSpecification(
     const materialvariantspecification_t* tpl, boolean canCreate)
 {
-    assert(initedOk && tpl);
+    DENG_ASSERT(initedOk && tpl);
     {
     materialvariantspecificationlist_node_t* node;
     for(node = variantSpecs; node; node = node->next)
@@ -359,7 +354,7 @@ static materialvariantspecification_t* getVariantSpecificationForContext(
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     static materialvariantspecification_t tpl;
-    assert(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)));
+    DENG_ASSERT(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)));
     {
     texturevariantspecification_t* primarySpec;
     texturevariantusagecontext_t primaryContext;
@@ -383,12 +378,12 @@ static materialvariantspecification_t* getVariantSpecificationForContext(
 
 static void destroyVariantSpecifications(void)
 {
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
     while(variantSpecs)
     {
         materialvariantspecificationlist_node_t* next = variantSpecs->next;
-        free(variantSpecs->spec);
-        free(variantSpecs);
+        M_Free(variantSpecs->spec);
+        M_Free(variantSpecs);
         variantSpecs = next;
     }
 }
@@ -402,7 +397,7 @@ static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
 {
     choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) paramaters;
     const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
-    assert(p);
+    DENG_ASSERT(p);
 
     if(compareVariantSpecifications(cand, p->spec))
     {
@@ -416,7 +411,7 @@ static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
 static materialvariant_t* chooseVariant(material_t* mat, const materialvariantspecification_t* spec)
 {
     choosevariantworker_paramaters_t params;
-    assert(mat && spec);
+    DENG_ASSERT(mat && spec);
 
     params.spec = spec;
     params.chosen = NULL;
@@ -442,7 +437,7 @@ static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
         if(!canCreate) return;
 
         // Create new info and attach to this binding.
-        info = (materialbindinfo_t*) malloc(sizeof *info);
+        info = (materialbindinfo_t*) M_Malloc(sizeof *info);
         if(!info)
             Con_Error("MaterialBind::LinkDefinitions: Failed on allocation of %lu bytes for "
                 "new MaterialBindInfo.", (unsigned long) sizeof *info);
@@ -481,7 +476,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
         // Acquire a new unique identifier for this binding.
         const materialid_t bindId = ++bindingCount;
 
-        mb = (materialbind_t*) malloc(sizeof *mb);
+        mb = (materialbind_t*) M_Malloc(sizeof *mb);
         if(!mb)
         {
             Con_Error("Materials::newMaterialBind: Failed on allocation of %lu bytes for new MaterialBind.",
@@ -507,7 +502,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
         {
             // Allocate more memory.
             bindingIdMapSize += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
-            bindingIdMap = (materialbind_t**) realloc(bindingIdMap, sizeof *bindingIdMap * bindingIdMapSize);
+            bindingIdMap = (materialbind_t**) M_Realloc(bindingIdMap, sizeof *bindingIdMap * bindingIdMapSize);
             if(!bindingIdMap)
                 Con_Error("Materials::newMaterialBind: Failed on (re)allocation of %lu bytes enlarging MaterialBind map.", (unsigned long) sizeof *bindingIdMap * bindingIdMapSize);
         }
@@ -535,7 +530,7 @@ static material_t* allocMaterial(void)
  */
 static material_t* linkMaterialToGlobalList(material_t* mat)
 {
-    materiallist_node_t* node = (materiallist_node_t*)malloc(sizeof *node);
+    materiallist_node_t* node = (materiallist_node_t*)M_Malloc(sizeof *node);
     if(!node)
         Con_Error("linkMaterialToGlobalList: Failed on allocation of %lu bytes for "
             "new MaterialList::Node.", (unsigned long) sizeof *node);
@@ -581,12 +576,12 @@ static int destroyVariant(materialvariant_t* variant, void* paramaters)
 
 static void destroyMaterials(void)
 {
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
     while(materials)
     {
         materiallist_node_t* next = materials->next;
         Material_Destroy(materials->mat);
-        free(materials);
+        M_Free(materials);
         materials = next;
     }
     BlockSet_Delete(materialsBlockSet);
@@ -600,16 +595,16 @@ static int clearBinding(PathDirectoryNode* node, void* paramaters)
     materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
     if(info)
     {
-        free(info);
+        M_Free(info);
     }
-    free(mb);
+    M_Free(mb);
     return 0; // Continue iteration.
 }
 
 static void destroyBindings(void)
 {
     int i;
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
 
     for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
     {
@@ -620,7 +615,7 @@ static void destroyBindings(void)
     // Clear the binding index/map.
     if(bindingIdMap)
     {
-        free(bindingIdMap), bindingIdMap = NULL;
+        M_Free(bindingIdMap), bindingIdMap = NULL;
         bindingIdMapSize = 0;
     }
     bindingCount = 0;
@@ -670,9 +665,7 @@ materialnamespaceid_t Materials_Namespace(materialid_t id)
     materialbind_t* bind = getMaterialBindForId(id);
     if(!bind)
     {
-#if _DEBUG
-        Con_Message("Warning:Materials::Namespace: Attempted with unbound materialId #%u, returning 'any' namespace.\n", id);
-#endif
+        DEBUG_Message(("Warning:Materials::Namespace: Attempted with unbound materialId #%u, returning 'any' namespace.\n", id));
         return MN_ANY;
     }
     return namespaceIdForDirectoryNode(MaterialBind_DirectoryNode(bind));
@@ -717,7 +710,7 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
     uint i;
     if(!initedOk || !mat || !def) return;
 
-    /// \todo We should be able to rebuild the variants.
+    /// @todo We should be able to rebuild the variants.
     Material_DestroyVariants(mat);
     Material_SetDefinition(mat, def);
 
@@ -737,7 +730,7 @@ void Materials_PurgeCacheQueue(void)
     while(variantCacheQueue)
     {
         variantcachequeue_node_t* next = variantCacheQueue->next;
-        free(variantCacheQueue);
+        M_Free(variantCacheQueue);
         variantCacheQueue = next;
     }
 }
@@ -749,7 +742,7 @@ void Materials_ProcessCacheQueue(void)
     {
         variantcachequeue_node_t* node = variantCacheQueue, *next = node->next;
         Materials_Prepare(node->mat, node->spec, node->smooth);
-        free(node);
+        M_Free(node);
         variantCacheQueue = next;
     }
 }
@@ -923,9 +916,7 @@ ddstring_t* Materials_ComposePath(materialid_t id)
     materialbind_t* bind = getMaterialBindForId(id);
     if(!bind)
     {
-#if _DEBUG
-        Con_Message("Warning:Materials::ComposePath: Attempted with unbound materialId #%u, returning null-object.\n", id);
-#endif
+        DEBUG_Message(("Warning:Materials::ComposePath: Attempted with unbound materialId #%u, returning null-object.\n", id));
         return Str_New();
     }
     return composePathForDirectoryNode(MaterialBind_DirectoryNode(bind), MATERIALS_PATH_DELIMITER);
@@ -937,9 +928,7 @@ Uri* Materials_ComposeUri(materialid_t id)
     materialbind_t* bind = getMaterialBindForId(id);
     if(!bind)
     {
-#if _DEBUG
-        Con_Message("Warning:Materials::ComposeUri: Attempted with unbound materialId #%u, returning null-object.\n", id);
-#endif
+        DEBUG_Message(("Warning:Materials::ComposeUri: Attempted with unbound materialId #%u, returning null-object.\n", id));
         return Uri_New();
     }
     return composeUriForDirectoryNode(MaterialBind_DirectoryNode(bind));
@@ -951,7 +940,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     materialbind_t* bind;
     textureid_t texId;
     material_t* mat;
-    assert(def);
+    DENG_ASSERT(def);
 
     if(!initedOk) return NULL;
 
@@ -1019,9 +1008,9 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
 static void pushVariantCacheQueue(material_t* mat, const materialvariantspecification_t* spec, boolean smooth)
 {
     variantcachequeue_node_t* node;
-    assert(initedOk && mat && spec);
+    DENG_ASSERT(initedOk && mat && spec);
 
-    node = (variantcachequeue_node_t*) malloc(sizeof *node);
+    node = (variantcachequeue_node_t*) M_Malloc(sizeof *node);
     if(!node)
         Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of %lu bytes for new VariantCacheQueueNode.", (unsigned long) sizeof *node);
 
@@ -1096,19 +1085,19 @@ void Materials_Ticker(timespan_t time)
 
 static Texture* findDetailTextureForDef(const ded_detailtexture_t* def)
 {
-    assert(def);
+    DENG_ASSERT(def);
     return R_FindDetailTextureForResourcePath(def->detailTex);
 }
 
 static Texture* findShinyTextureForDef(const ded_reflection_t* def)
 {
-    assert(def);
+    DENG_ASSERT(def);
     return R_FindReflectionTextureForResourcePath(def->shinyMap);
 }
 
 static Texture* findShinyMaskTextureForDef(const ded_reflection_t* def)
 {
-    assert(def);
+    DENG_ASSERT(def);
     return R_FindMaskTextureForResourcePath(def->maskMap);
 }
 
@@ -1142,7 +1131,7 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* textur
     float tOffset, float opacity)
 {
     rtexmapunit_t* tu;
-    assert(ms && unit < NUM_MATERIAL_TEXTURE_UNITS);
+    DENG_ASSERT(ms && unit < NUM_MATERIAL_TEXTURE_UNITS);
 
     ms->textures[unit] = texture;
     tu = &ms->units[unit];
@@ -1157,7 +1146,7 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* textur
 void Materials_InitSnapshot(materialsnapshot_t* ms)
 {
     int i;
-    assert(ms);
+    DENG_ASSERT(ms);
 
     for(i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
     {
@@ -1183,7 +1172,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
     int i, layerCount;
     Texture* tex;
-    assert(snapshot);
+    DENG_ASSERT(snapshot);
 
     memset(texUnits, 0, sizeof texUnits);
 
@@ -1336,7 +1325,7 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
     if(!snapshot)
     {
         // Time to allocate the snapshot.
-        snapshot = (materialsnapshot_t*)malloc(sizeof *snapshot);
+        snapshot = (materialsnapshot_t*)M_Malloc(sizeof *snapshot);
         if(!snapshot)
             Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
         snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
@@ -1452,7 +1441,7 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
     int* variantIdx = (int*)paramaters;
     materialvariant_t* next = MaterialVariant_TranslationNext(variant);
     int i, layers = Material_LayerCount(MaterialVariant_GeneralCase(variant));
-    assert(variantIdx);
+    DENG_ASSERT(variantIdx);
 
     Con_Printf("Variant #%i: Spec:%p\n", *variantIdx, (void*)MaterialVariant_Spec(variant));
 
@@ -1539,7 +1528,7 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
 }
 
 /**
- * \todo A horridly inefficent algorithm. This should be implemented in PathDirectory
+ * @todo A horridly inefficent algorithm. This should be implemented in PathDirectory
  * itself and not force users of this class to implement this sort of thing themselves.
  * However this is only presently used for the material search/listing console commands
  * so is not hugely important right now.
@@ -1617,7 +1606,7 @@ static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespace
         return NULL;
     }
 
-    storage = (PathDirectoryNode**)malloc(sizeof *storage * (p.idx+1));
+    storage = (PathDirectoryNode**)M_Malloc(sizeof *storage * (p.idx+1));
     if(!storage)
         Con_Error("Materials::collectDirectoryNodes: Failed on allocation of %lu bytes for new PathDirectoryNode collection.", (unsigned long) (sizeof* storage * (p.idx+1)));
     return collectDirectoryNodes(namespaceId, like, count, storage);
@@ -1671,7 +1660,7 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
         printMaterialOverview(mat, printNamespace);
     }
 
-    free(foundMaterials);
+    M_Free(foundMaterials);
     return count;
 }
 
@@ -1718,7 +1707,7 @@ boolean Materials_HasDecorations(material_t* mat)
 {
     if(novideo) return false;
 
-    assert(mat);
+    DENG_ASSERT(mat);
     /// @todo We should not need to prepare to determine this.
     /// Nor should we need to process the group each time. Cache this decision.
     if(Materials_DecorationDef(mat)) return true;
@@ -1794,9 +1783,7 @@ void Materials_AddAnimGroupFrame(int groupNum, struct material_s* mat, int tics,
 
     if(!mat)
     {
-#if _DEBUG
-        Con_Message("Warning::Materials::AddAnimGroupFrame: Invalid material (ref=0), ignoring.\n");
-#endif
+        DEBUG_Message(("Warning::Materials::AddAnimGroupFrame: Invalid material (ref=0), ignoring.\n"));
         return;
     }
 
@@ -1828,7 +1815,7 @@ static int clearVariantTranslationWorker(materialvariant_t* variant, void* param
 
 static void Materials_ClearTranslation(material_t* mat)
 {
-    assert(initedOk);
+    DENG_ASSERT(initedOk);
     Material_IterateVariants(mat, clearVariantTranslationWorker, NULL);
 }
 
@@ -1841,7 +1828,7 @@ static int setVariantTranslationWorker(materialvariant_t* variant, void* paramat
     setmaterialtranslationworker_paramaters_t* p = (setmaterialtranslationworker_paramaters_t*) paramaters;
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
     materialvariant_t* current, *next;
-    assert(p);
+    DENG_ASSERT(p);
 
     current = Materials_ChooseVariant(p->current, spec, false, true/*create if necessary*/);
     next    = Materials_ChooseVariant(p->next,    spec, false, true/*create if necessary*/);
@@ -1852,7 +1839,7 @@ static int setVariantTranslationWorker(materialvariant_t* variant, void* paramat
 static int setVariantTranslationPointWorker(materialvariant_t* variant, void* paramaters)
 {
     float* interPtr = (float*)paramaters;
-    assert(interPtr);
+    DENG_ASSERT(interPtr);
 
     MaterialVariant_SetTranslationPoint(variant, *interPtr);
     return 0; // Continue iteration.
@@ -1974,25 +1961,25 @@ void Materials_ResetAnimGroups(void)
 
 materialid_t MaterialBind_Id(const materialbind_t* mb)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     return mb->_id;
 }
 
 material_t* MaterialBind_Material(const materialbind_t* mb)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     return mb->_material;
 }
 
 material_t* MaterialBind_SetMaterial(materialbind_t* mb, material_t* material)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     if(mb->_material != material)
     {
         // Any extended info will be invalid after this op, so destroy it
         // (it will automatically be rebuilt later, if subsequently needed).
         materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
-        if(info) free(mb->_info);
+        if(info) M_Free(mb->_info);
 
         // Associate with the new Material.
         mb->_material = material;
@@ -2002,19 +1989,19 @@ material_t* MaterialBind_SetMaterial(materialbind_t* mb, material_t* material)
 
 PathDirectoryNode* MaterialBind_DirectoryNode(const materialbind_t* mb)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     return mb->_directoryNode;
 }
 
 materialbindinfo_t* MaterialBind_Info(const materialbind_t* mb)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     return mb->_info;
 }
 
 void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     if(!info)
         Con_Error("MaterialBind::AttachInfo: Attempted with invalid info.");
     if(mb->_info)
@@ -2026,7 +2013,7 @@ void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
         Str_Delete(path);
         Uri_Delete(uri);
 #endif
-        free(mb->_info);
+        M_Free(mb->_info);
     }
     mb->_info = info;
 }
@@ -2034,7 +2021,7 @@ void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
 materialbindinfo_t* MaterialBind_DetachInfo(materialbind_t* mb)
 {
     materialbindinfo_t* info;
-    assert(mb);
+    DENG_ASSERT(mb);
     info = mb->_info;
     mb->_info = NULL;
     return info;
@@ -2042,28 +2029,28 @@ materialbindinfo_t* MaterialBind_DetachInfo(materialbind_t* mb)
 
 ded_detailtexture_t* MaterialBind_DetailTextureDef(const materialbind_t* mb)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
     return mb->_info->detailtextureDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_decor_t* MaterialBind_DecorationDef(const materialbind_t* mb)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
     return mb->_info->decorationDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_ptcgen_t* MaterialBind_PtcGenDef(const materialbind_t* mb)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
     return mb->_info->ptcgenDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb)
 {
-    assert(mb);
+    DENG_ASSERT(mb);
     if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
     return mb->_info->reflectionDefs[Material_Prepared(mb->_material)-1];
 }

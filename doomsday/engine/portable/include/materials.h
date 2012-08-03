@@ -1,25 +1,23 @@
-/**\file materials.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file materials.h
+ * Materials collection, namespaces, bindings and other management.
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_MATERIALS_H
@@ -148,7 +146,7 @@ materialid_t Materials_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 
  * (and within the same namespace) as that specified in @a def, in which case
  * it is returned instead.
  *
- * \note: May fail on invalid definitions (return= @c NULL).
+ * @note: May fail on invalid definitions (return= @c NULL).
  *
  * @param def  Material definition to construct from.
  * @return  The newly-created/existing Material else @c NULL.
@@ -170,7 +168,7 @@ void Materials_ClearAnimGroups(void);
  * be chosen in their place.
  *
  * @param materialContext Material (usage) context identifier.
- * @param flags  @see textureVariantSpecificationFlags
+ * @param flags  @ref textureVariantSpecificationFlags
  * @param border  Border size in pixels (all edges).
  * @param tClass  Color palette translation class.
  * @param tMap  Color palette translation map.
@@ -207,9 +205,10 @@ void Materials_Precache(material_t* material, const struct materialvariantspecif
  * Choose/create a variant of @a material which fulfills @a spec and then
  * immediately prepare it for render (e.g., upload textures if necessary).
  *
- * \note A convenient shorthand of the call tree:
- *
+ * @note A convenient shorthand of the call tree:
+ * <pre>
  *    Materials_PrepareVariant( Materials_ChooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
+ * </pre>
  *
  * @param material  Base Material from which to derive a variant.
  * @param spec  Specification for the derivation of @a material.
@@ -224,7 +223,7 @@ const struct materialsnapshot_s* Materials_Prepare(material_t* material, const s
 /**
  * Prepare variant @a material for render (e.g., upload textures if necessary).
  *
- * \note Same as Materials::Prepare except the caller specifies the variant.
+ * @note Same as Materials::Prepare except the caller specifies the variant.
  * @see Materials::ChooseVariant
  *
  * @param material  MaterialVariant to be prepared.
@@ -264,7 +263,7 @@ int Materials_CreateAnimGroup(int flags);
  */
 void Materials_AddAnimGroupFrame(int animGroupNum, material_t* material, int tics, int randomTics);
 
-/// \todo Refactor; does not fit the current design.
+/// @todo Refactor; does not fit the current design.
 boolean Materials_IsPrecacheAnimGroup(int animGroupNum);
 
 #endif /* LIBDENG_MATERIALS_H */
