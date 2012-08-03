@@ -26,6 +26,10 @@
 #include "def_data.h"
 #include "material.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texturevariantspecification_s;
 struct materialvariant_s;
 struct materialsnapshot_s;
@@ -265,5 +269,9 @@ void Materials_AddAnimGroupFrame(int animGroupNum, material_t* material, int tic
 
 /// @todo Refactor; does not fit the current design.
 boolean Materials_IsPrecacheAnimGroup(int animGroupNum);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_MATERIALS_H */

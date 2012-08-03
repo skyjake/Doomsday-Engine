@@ -533,7 +533,7 @@ SOURCES += \
     portable/src/masterserver.cpp \
     portable/src/material.c \
     portable/src/materialarchive.c \
-    portable/src/materials.c \
+    portable/src/materials.cpp \
     portable/src/materialvariant.c \
     portable/src/monitor.c \
     portable/src/mouse_qt.cpp \
