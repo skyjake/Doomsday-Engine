@@ -623,7 +623,7 @@ SOURCES += \
     portable/src/sys_system.c \
     portable/src/tab_tables.c \
     portable/src/texture.c \
-    portable/src/textures.c \
+    portable/src/textures.cpp \
     portable/src/texturevariant.c \
     portable/src/timer.cpp \
     portable/src/ui2_main.c \
