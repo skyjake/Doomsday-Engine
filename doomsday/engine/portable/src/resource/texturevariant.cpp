@@ -20,139 +20,169 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_refresh.h"
-
 #include "texture.h"
 #include "texturevariant.h"
+#include <de/LegacyCore>
 
-struct texturevariant_s {
-    /// Superior Texture of which this is a derivative.
-    struct texture_s* generalCase;
+de::TextureVariant::TextureVariant(Texture& generalCase, TexSource source,
+    texturevariantspecification_t& spec)
+    : texture(&generalCase),
+      texSource(source),
+      flags(0),
+      glTexName(0),
+      s(0),
+      t(0),
+      varSpec(&spec)
+{}
 
-    /// Source of this texture.
-    TexSource source;
+void de::TextureVariant::setSource(TexSource newSource)
+{
+    texSource = newSource;
+}
 
-    /// @see textureVariantFlags
-    int flags;
+void de::TextureVariant::flagMasked(bool yes)
+{
+    if(yes) flags |= Masked; else flags &= ~Masked;
+}
 
-    /// Name of the associated GL texture object.
-    DGLuint glName;
+void de::TextureVariant::flagUploaded(bool yes)
+{
+    if(yes) flags |= Uploaded; else flags &= ~Uploaded;
+}
 
-    /// Prepared coordinates for the bottom right of the texture minus border.
-    float s, t;
+bool de::TextureVariant::isPrepared() const
+{
+    return isUploaded() && 0 != glTexName;
+}
 
-    /// Specification used to derive this variant.
-    texturevariantspecification_t* spec;
-};
+void de::TextureVariant::coords(float* outS, float* outT) const
+{
+    if(outS) *outS = s;
+    if(outT) *outT = t;
+}
+
+void de::TextureVariant::setCoords(float newS, float newT)
+{
+    s = newS;
+    t = newT;
+}
+
+void de::TextureVariant::setGLName(unsigned int newGLName)
+{
+    glTexName = newGLName;
+}
+
+/**
+ * C Wrapper API:
+ */
+
+#define TOINTERNAL(inst) \
+    (inst) != 0? reinterpret_cast<de::TextureVariant*>(inst) : NULL
+
+#define TOINTERNAL_CONST(inst) \
+    (inst) != 0? reinterpret_cast<const de::TextureVariant*>(inst) : NULL
+
+#define SELF(inst) \
+    DENG2_ASSERT(inst); \
+    de::TextureVariant* self = TOINTERNAL(inst)
+
+#define SELF_CONST(inst) \
+    DENG2_ASSERT(inst); \
+    const de::TextureVariant* self = TOINTERNAL_CONST(inst)
 
 TextureVariant* TextureVariant_New(Texture* generalCase, TexSource source,
     texturevariantspecification_t* spec)
 {
-    TextureVariant* tex;
-
     if(!generalCase)
-        Con_Error("TextureVariant::New: Attempted with invalid generalCase reference (=NULL).");
+        LegacyCore_FatalError("TextureVariant::New: Attempted with invalid generalCase reference (=NULL).");
     if(!spec)
-        Con_Error("TextureVariant::New: Attempted with invalid spec reference (=NULL).");
-
-    tex = (TextureVariant*) malloc(sizeof(*tex));
-    if(!tex)
-        Con_Error("TextureVariant::New: Failed on allocation of %lu bytes for new TextureVariant.",
-                  (unsigned long) sizeof(*tex));
-
-    tex->generalCase = generalCase;
-    tex->source = source;
-    tex->spec = spec;
-    tex->flags = 0;
-    tex->s = tex->t = 0;
-    tex->glName = 0;
-    return tex;
+        LegacyCore_FatalError("TextureVariant::New: Attempted with invalid spec reference (=NULL).");
+    return reinterpret_cast<TextureVariant*>(new de::TextureVariant(*generalCase, source, *spec));
 }
 
 void TextureVariant_Delete(TextureVariant* tex)
 {
-    assert(tex);
-    free(tex);
+    if(tex)
+    {
+        SELF(tex);
+        delete self;
+    }
 }
 
 struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex)
 {
-    assert(tex);
-    return tex->generalCase;
+    SELF_CONST(tex);
+    return self->generalCase();
 }
 
 TexSource TextureVariant_Source(const TextureVariant* tex)
 {
-    assert(tex);
-    return tex->source;
+    SELF_CONST(tex);
+    return self->source();
 }
 
 void TextureVariant_SetSource(TextureVariant* tex, TexSource source)
 {
-    assert(tex);
-    tex->source = source;
+    SELF(tex);
+    self->setSource(source);
 }
 
 boolean TextureVariant_IsMasked(const TextureVariant* tex)
 {
-    assert(tex);
-    return (tex->flags & TVF_IS_MASKED) != 0;
+    SELF_CONST(tex);
+    return CPP_BOOL(self->isMasked());
 }
 
 void TextureVariant_FlagMasked(TextureVariant* tex, boolean yes)
 {
-    assert(tex);
-    // if(yes) tex->flags |= TVF_IS_MASKED; else tex->flags &= ~TVF_IS_MASKED;
-    tex->flags ^= (-yes ^ tex->flags) & TVF_IS_MASKED;
+    SELF(tex);
+    self->flagMasked(bool(yes));
 }
 
 boolean TextureVariant_IsUploaded(const TextureVariant* tex)
 {
-    assert(tex);
-    return (tex->flags & TVF_IS_UPLOADED) != 0;
+    SELF_CONST(tex);
+    return CPP_BOOL(self->isUploaded());
 }
 
 void TextureVariant_FlagUploaded(TextureVariant* tex, boolean yes)
 {
-    assert(tex);
-    // if(yes) tex->flags |= TVF_IS_UPLOADED; else tex->flags &= ~TVF_IS_UPLOADED;
-    tex->flags ^= (-yes ^ tex->flags) & TVF_IS_UPLOADED;
+    SELF(tex);
+    self->flagUploaded(bool(yes));
 }
 
 boolean TextureVariant_IsPrepared(const TextureVariant* tex)
 {
-    return TextureVariant_IsUploaded(tex) && 0 != TextureVariant_GLName(tex);
+    SELF_CONST(tex);
+    return CPP_BOOL(self->isPrepared());
 }
 
 void TextureVariant_Coords(const TextureVariant* tex, float* s, float* t)
 {
-    assert(tex);
-    if(s) *s = tex->s;
-    if(t) *t = tex->t;
+    SELF_CONST(tex);
+    self->coords(s, t);
 }
 
 void TextureVariant_SetCoords(TextureVariant* tex, float s, float t)
 {
-    assert(tex);
-    tex->s = s;
-    tex->t = t;
+    SELF(tex);
+    self->setCoords(s, t);
 }
 
 texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex)
 {
-    assert(tex);
-    return tex->spec;
+    SELF_CONST(tex);
+    return self->spec();
 }
 
 DGLuint TextureVariant_GLName(const TextureVariant* tex)
 {
-    assert(tex);
-    return tex->glName;
+    SELF_CONST(tex);
+    return self->glName();
 }
 
 void TextureVariant_SetGLName(TextureVariant* tex, DGLuint glName)
 {
-    assert(tex);
-    tex->glName = glName;
+    SELF(tex);
+    self->setGLName(glName);
 }

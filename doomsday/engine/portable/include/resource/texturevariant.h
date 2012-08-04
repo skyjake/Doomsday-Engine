@@ -30,40 +30,109 @@ extern "C" {
 
 struct texture_s;
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#ifdef __cplusplus
+namespace de {
+
+class TextureVariant
+{
+private:
+    enum Flag
+    {
+        /// Texture contains alpha.
+        Masked = 0x1,
+
+        /// Texture has been uploaded to GL.
+        Uploaded = 0x2
+    };
+
+public:
+    /**
+     * @param generalCase  Texture from which this variant is derived.
+     * @param spec  Specification used to derive this variant. Ownership
+     *              is NOT given to the resultant TextureVariant
+     */
+    TextureVariant(struct texture_s& generalCase,
+                   TexSource source, texturevariantspecification_t& spec);
+
+    /// @return  Superior Texture of which this is a derivative.
+    struct texture_s* generalCase() const { return texture; }
+
+    /// @return  Source of this variant.
+    TexSource source() const { return texSource; }
+
+    /**
+     * Change the source of this variant.
+     * @param newSource  New TextureSource.
+     */
+    void setSource(TexSource newSource);
+
+    /// @return  TextureVariantSpecification used to derive this variant.
+    texturevariantspecification_t* spec() const { return varSpec; }
+
+    bool isMasked() const { return !!(flags & Masked); }
+
+    void flagMasked(bool yes);
+
+    bool isUploaded() const { return !!(flags & Uploaded); }
+
+    void flagUploaded(bool yes);
+
+    bool isPrepared() const;
+
+    void coords(float* s, float* t) const;
+    void setCoords(float s, float t);
+
+    DGLuint glName() const { return glTexName; }
+
+    void setGLName(unsigned int glName);
+
+private:
+    /// Superior Texture of which this is a derivative.
+    struct texture_s* texture;
+
+    /// Source of this texture.
+    TexSource texSource;
+
+    /// @see textureVariantFlags
+    int flags;
+
+    /// Name of the associated GL texture object.
+    unsigned int glTexName;
+
+    /// Prepared coordinates for the bottom right of the texture minus border.
+    float s, t;
+
+    /// Specification used to derive this variant.
+    texturevariantspecification_t* varSpec;
+};
+
+} // namespace de
+
+extern "C" {
+#endif
+
 /**
- * @defgroup textureVariantFlags  Texture Variant Flags
- * @{
+ * C wrapper API:
  */
-#define TVF_IS_MASKED           0x1 /// Texture contains alpha.
-#define TVF_IS_UPLOADED         0x2 /// Texture has been uploaded to GL.
-/**@}*/
 
 struct texturevariant_s; // The texturevariant instance (opaque).
 typedef struct texturevariant_s TextureVariant;
 
-/**
- * @param generalCase  Texture from which this variant is derived.
- * @param spec  Specification used to derive this variant. Ownership
- *              is NOT given to the resultant TextureVariant
- */
 TextureVariant* TextureVariant_New(struct texture_s* generalCase,
     TexSource source, texturevariantspecification_t* spec);
 
 void TextureVariant_Delete(TextureVariant* tex);
 
-/// @return  Superior Texture of which this is a derivative.
 struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex);
 
-/// @return  Source of this variant.
 TexSource TextureVariant_Source(const TextureVariant* tex);
 
-/**
- * Change the source of this variant.
- * @param source  New TextureSource.
- */
 void TextureVariant_SetSource(TextureVariant* tex, TexSource source);
 
-/// @return  TextureVariantSpecification used to derive this variant.
 texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex);
 
 boolean TextureVariant_IsMasked(const TextureVariant* tex);
