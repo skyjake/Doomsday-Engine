@@ -595,9 +595,9 @@ SOURCES += \
     portable/src/resource/material.c \
     portable/src/resource/materials.cpp \
     portable/src/resource/materialvariant.c \
-    portable/src/resource/texture.c \
+    portable/src/resource/texture.cpp \
     portable/src/resource/textures.cpp \
-    portable/src/resource/texturevariant.c \
+    portable/src/resource/texturevariant.cpp \
     portable/src/resourcenamespace.c \
     portable/src/s_cache.c \
     portable/src/s_environ.cpp \
