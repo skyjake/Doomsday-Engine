@@ -248,9 +248,6 @@ DENG_HEADERS += \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
     portable/include/masterserver.h \
-    portable/include/material.h \
-    portable/include/materials.h \
-    portable/include/materialvariant.h \
     portable/include/monitor.h \
     portable/include/mouse_qt.h \
     portable/include/nativeui.h \
@@ -307,6 +304,13 @@ DENG_HEADERS += \
     portable/include/render/rend_sky.h \
     portable/include/render/rend_sprite.h \
     portable/include/render/vignette.h \
+    portable/include/resource/material.h \
+    portable/include/resource/materials.h \
+    portable/include/resource/materialvariant.h \
+    portable/include/resource/texture.h \
+    portable/include/resource/textures.h \
+    portable/include/resource/texturevariant.h \
+    portable/include/resource/texturevariantspecification.h \
     portable/include/resourcenamespace.h \
     portable/include/s_cache.h \
     portable/include/s_environ.h \
@@ -337,11 +341,7 @@ DENG_HEADERS += \
     portable/include/sys_reslocator.h \
     portable/include/sys_system.h \
     portable/include/tab_anorms.h \
-    portable/include/texture.h \
     portable/include/texturecontent.h \
-    portable/include/textures.h \
-    portable/include/texturevariant.h \
-    portable/include/texturevariantspecification.h \
     portable/include/timer.h \
     portable/include/ui2_main.h \
     portable/include/ui_main.h \
@@ -364,6 +364,7 @@ DENG_HEADERS += \
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
     $$DENG_INCLUDE_DIR/render \
+    $$DENG_INCLUDE_DIR/resource \
     $$DENG_API_DIR
 
 HEADERS += \
@@ -531,10 +532,7 @@ SOURCES += \
     portable/src/m_stack.c \
     portable/src/m_vector.c \
     portable/src/masterserver.cpp \
-    portable/src/material.c \
     portable/src/materialarchive.c \
-    portable/src/materials.cpp \
-    portable/src/materialvariant.c \
     portable/src/monitor.c \
     portable/src/mouse_qt.cpp \
     portable/src/nativeui.cpp \
@@ -594,6 +592,12 @@ SOURCES += \
     portable/src/render/rend_sky.c \
     portable/src/render/rend_sprite.c \
     portable/src/render/vignette.c \
+    portable/src/resource/material.c \
+    portable/src/resource/materials.cpp \
+    portable/src/resource/materialvariant.c \
+    portable/src/resource/texture.c \
+    portable/src/resource/textures.cpp \
+    portable/src/resource/texturevariant.c \
     portable/src/resourcenamespace.c \
     portable/src/s_cache.c \
     portable/src/s_environ.cpp \
@@ -622,9 +626,6 @@ SOURCES += \
     portable/src/sys_reslocator.c \
     portable/src/sys_system.c \
     portable/src/tab_tables.c \
-    portable/src/texture.c \
-    portable/src/textures.cpp \
-    portable/src/texturevariant.c \
     portable/src/timer.cpp \
     portable/src/ui2_main.c \
     portable/src/ui_main.c \
