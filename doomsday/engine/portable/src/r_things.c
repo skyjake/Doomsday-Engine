@@ -650,7 +650,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
         Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
     texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(texSpec);
@@ -1255,7 +1255,7 @@ void R_ProjectSprite(mobj_t* mo)
         Con_Error("R_ProjectSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
 
     // Align to the view plane?

@@ -93,21 +93,22 @@ public:
     void setPrimaryBind(textureid_t bindId);
 
     /**
-     * Attach new user data. If data is already present it will be replaced.
-     * Ownership is given to Texture.
+     * Retrieve the value of the associated user data pointer.
+     * @return  Associated data pointer value.
+     **/
+    void* userDataPointer() const;
+
+    /**
+     * Set the user data pointer value. Ownership of the data is not given
+     * to this instance.
+     *
+     * @note If already set the old value will be replaced (so if it points
+     *       to some dynamically constructed data/resource it is the caller's
+     *       responsibility to release it beforehand).
      *
      * @param userData  Data to be attached.
      */
-    void attachUserData(void* userData);
-
-    /**
-     * Detach any associated user data. Ownership is relinquished to caller.
-     * @return  Associated user data.
-     */
-    void* detachUserData();
-
-    /// @return  Associated user data if any else @c NULL.
-    void* userData() const;
+    void setUserDataPointer(void* userData);
 
     /// Destroy all prepared variants owned by this texture.
     void clearVariants();
@@ -192,7 +193,7 @@ private:
     Variants variants;
 
     /// User data associated with this texture.
-    void* userDataPointer;
+    void* userData;
 
     /// Dimensions in logical pixels (not necessarily the same as pixel dimensions).
     Size2Raw dimensions;
@@ -221,9 +222,8 @@ void Texture_Delete(Texture* tex);
 textureid_t Texture_PrimaryBind(const Texture* tex);
 void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId);
 
-void Texture_AttachUserData(Texture* tex, void* userData);
-void* Texture_DetachUserData(Texture* tex);
-void* Texture_UserData(const Texture* tex);
+void* Texture_UserDataPointer(const Texture* tex);
+void Texture_SetUserDataPointer(Texture* tex, void* userData);
 
 void Texture_ClearVariants(Texture* tex);
 uint Texture_VariantCount(const Texture* tex);

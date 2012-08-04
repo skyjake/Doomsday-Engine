@@ -2512,7 +2512,7 @@ TexSource GL_LoadPatchLumpAsPatch(image_t* image, DFile* file, int tclass, int t
     if(source == TEXS_ORIGINAL && tex)
     {
         // Loaded from a lump assumed to be in DOOM's Patch format.
-        patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
+        patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
         if(pTex)
         {
             // Load the extended metadata from the lump.
@@ -2562,7 +2562,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
         Con_Error("GL_LoadPatchComposite: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
-    texDef = (patchcompositetex_t*)Texture_UserData(tex);
+    texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
     assert(texDef);
 
     GL_InitImage(image);
@@ -2607,7 +2607,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
         Con_Error("GL_LoadPatchCompositeAsSky: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
-    texDef = (patchcompositetex_t*)Texture_UserData(tex);
+    texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
     assert(texDef);
 
     /**
@@ -2832,7 +2832,7 @@ TextureVariant* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT)
 #endif
         return 0;
     }
-    pTex = (patchtex_t*)Texture_UserData(tex);
+    pTex = (patchtex_t*)Texture_UserDataPointer(tex);
     assert(pTex);
 
     texSpec = GL_TextureVariantSpecificationForContext(TC_UI,
@@ -3277,7 +3277,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
         // Try to load a replacement version of this texture?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
-            patchcompositetex_t* texDef = (patchcompositetex_t*)Texture_UserData(tex);
+            patchcompositetex_t* texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
             assert(texDef);

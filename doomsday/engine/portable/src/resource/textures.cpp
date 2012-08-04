@@ -345,7 +345,7 @@ static void destroyTexture(Texture* tex)
     case TN_FLATS: break;
 
     case TN_TEXTURES: {
-        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_DetachUserData(tex);
+        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserDataPointer(tex);
         if(pcTex)
         {
             Str_Free(&pcTex->name);
@@ -355,12 +355,12 @@ static void destroyTexture(Texture* tex)
         break;
     }
     case TN_SPRITES: {
-        patchtex_t* pTex = (patchtex_t*)Texture_DetachUserData(tex);
+        patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
         if(pTex) M_Free(pTex);
         break;
     }
     case TN_PATCHES: {
-        patchtex_t* pTex = (patchtex_t*)Texture_DetachUserData(tex);
+        patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
         if(pTex) M_Free(pTex);
         break;
     }
@@ -937,7 +937,7 @@ Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw*
 #endif
         Texture_FlagCustom(tex, custom);
         Texture_SetSize(tex, size);
-        Texture_AttachUserData(tex, userData);
+        Texture_SetUserDataPointer(tex, userData);
         /// @todo Materials and Surfaces should be notified of this!
         return tex;
     }

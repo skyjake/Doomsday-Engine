@@ -1224,7 +1224,7 @@ patchid_t R_DeclarePatch(const char* name)
     }
     else
     {
-        patchtex_t* oldPatch = Texture_DetachUserData(tex);
+        patchtex_t* oldPatch = Texture_UserDataPointer(tex);
         Size2Raw size;
 
         size.width  = SHORT(patch->width);
@@ -1232,7 +1232,7 @@ patchid_t R_DeclarePatch(const char* name)
 
         Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
         Texture_SetSize(tex, &size);
-        Texture_AttachUserData(tex, (void*)p);
+        Texture_SetUserDataPointer(tex, (void*)p);
 
         free(oldPatch);
 
@@ -1252,7 +1252,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
     if(tex)
     {
-        const patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
+        const patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
         assert(tex);
 
         // Ensure we have up to date information about this patch.
@@ -2073,11 +2073,11 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
         tex = Textures_ToTexture(texId);
         if(tex)
         {
-            patchcompositetex_t* oldPcTex = Texture_DetachUserData(tex);
+            patchcompositetex_t* oldPcTex = Texture_UserDataPointer(tex);
 
             Texture_FlagCustom(tex, !!(pcTex->flags & TXDF_CUSTOM));
             Texture_SetSize(tex, &pcTex->size);
-            Texture_AttachUserData(tex, (void*)pcTex);
+            Texture_SetUserDataPointer(tex, (void*)pcTex);
 
             Str_Free(&oldPcTex->name);
             if(oldPcTex->patches) free(oldPcTex->patches);

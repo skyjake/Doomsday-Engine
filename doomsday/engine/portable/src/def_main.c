@@ -956,7 +956,7 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
     tex = Textures_ToTexture(texId);
     if(tex)
     {
-        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserData(tex);
+        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserDataPointer(tex);
         assert(pcTex);
         mat->width  = Texture_Width(tex);
         mat->height = Texture_Height(tex);

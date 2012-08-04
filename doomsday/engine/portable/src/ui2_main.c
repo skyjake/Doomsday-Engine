@@ -1057,7 +1057,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 switch(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))))
                 {
                 case TN_SPRITES: {
-                    patchtex_t* sTex = (patchtex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+                    patchtex_t* sTex = (patchtex_t*)Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
                     if(sTex)
                     {
                         V3f_Set(offset, sTex->offX, sTex->offY, 0);
@@ -1083,7 +1083,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 textureEnabled = true;
 
                 {
-                patchtex_t* pTex = (patchtex_t*)Texture_UserData(texture);
+                patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(texture);
                 assert(pTex);
                 V3f_Set(offset, pTex->offX, pTex->offY, 0);
                 V3f_Set(dimensions, Texture_Width(texture), Texture_Height(texture), 0);

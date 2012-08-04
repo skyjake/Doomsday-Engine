@@ -775,7 +775,7 @@ static void addLuminous(mobj_t* mo)
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
 
     center = -pTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;

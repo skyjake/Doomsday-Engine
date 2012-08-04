@@ -32,14 +32,14 @@
 #include <de/LegacyCore>
 #include <de/memory.h>
 
-de::Texture::Texture(textureid_t bindId, void* userData)
-    : flags(), primaryBindId(bindId), variants(), userDataPointer(userData), dimensions()
+de::Texture::Texture(textureid_t bindId, void* _userData)
+    : flags(), primaryBindId(bindId), variants(), userData(_userData), dimensions()
 {
     memset(analyses, 0, sizeof(analyses));
 }
 
-de::Texture::Texture(textureid_t bindId, const Size2Raw& size, void* userData)
-    : flags(), primaryBindId(bindId), variants(), userDataPointer(userData), dimensions()
+de::Texture::Texture(textureid_t bindId, const Size2Raw& size, void* _userData)
+    : flags(), primaryBindId(bindId), variants(), userData(_userData), dimensions()
 {
     memset(analyses, 0, sizeof(analyses));
     setSize(size);
@@ -88,28 +88,21 @@ void de::Texture::setPrimaryBind(textureid_t bindId)
     primaryBindId = bindId;
 }
 
-void de::Texture::attachUserData(void* newUserData)
+void de::Texture::setUserDataPointer(void* newUserData)
 {
-    if(userDataPointer)
+    if(userData)
     {
         textureid_t textureId = Textures_Id(reinterpret_cast<struct texture_s*>(this));
         LOG_AS("Texture::AttachUserData");
         LOG_WARNING("User data is already present for [%p id:%i], it will be replaced.")
                 << (void*)this, int(textureId);
     }
-    userDataPointer = newUserData;
+    userData = newUserData;
 }
 
-void* de::Texture::detachUserData()
+void* de::Texture::userDataPointer() const
 {
-    void* detachedUserData = userDataPointer;
-    userDataPointer = NULL;
-    return detachedUserData;
-}
-
-void* de::Texture::userData() const
-{
-    return userDataPointer;
+    return userData;
 }
 
 uint de::Texture::variantCount() const
@@ -242,22 +235,16 @@ void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId)
     self->setPrimaryBind(bindId);
 }
 
-void Texture_AttachUserData(Texture* tex, void* newUserData)
-{
-    SELF(tex);
-    self->attachUserData(newUserData);
-}
-
-void* Texture_DetachUserData(Texture* tex)
-{
-    SELF(tex);
-    return self->detachUserData();
-}
-
-void* Texture_UserData(const Texture* tex)
+void* Texture_UserDataPointer(const Texture* tex)
 {
     SELF_CONST(tex);
-    return self->userData();
+    return self->userDataPointer();
+}
+
+void Texture_SetUserDataPointer(Texture* tex, void* newUserData)
+{
+    SELF(tex);
+    self->setUserDataPointer(newUserData);
 }
 
 void Texture_ClearVariants(Texture* tex)

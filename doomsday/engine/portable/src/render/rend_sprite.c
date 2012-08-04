@@ -350,7 +350,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
         Con_Error("setupPSpriteParams: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*)Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
     texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(spec);
@@ -970,7 +970,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 
         if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) == TN_SPRITES)
         {
-            pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+            pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
             assert(pTex);
             viewOffset.x += (float) -pTex->offX;
         }
