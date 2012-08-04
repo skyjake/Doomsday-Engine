@@ -21,6 +21,7 @@
  */
 
 #include <ctype.h>
+#include <cstring>
 
 #include "de_base.h"
 #include "gl_texmanager.h"
@@ -32,15 +33,16 @@
 #include <de/memory.h>
 
 de::Texture::Texture(textureid_t bindId, void* userData)
-    :   flags(), primaryBindId(bindId), variants(), userDataPointer(userData), dimensions()
+    : flags(), primaryBindId(bindId), variants(), userDataPointer(userData), dimensions()
 {
     memset(analyses, 0, sizeof(analyses));
 }
 
 de::Texture::Texture(textureid_t bindId, const Size2Raw& size, void* userData)
+    : flags(), primaryBindId(bindId), variants(), userDataPointer(userData), dimensions()
 {
-    Texture* tex = new Texture(bindId, userData);
-    tex->setSize(size);
+    memset(analyses, 0, sizeof(analyses));
+    setSize(size);
 }
 
 de::Texture::~Texture()

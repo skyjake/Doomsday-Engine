@@ -3503,8 +3503,9 @@ void GL_BindTexture(TextureVariant* tex)
     }
 }
 
-int GL_ReleaseGLTexturesByTexture2(Texture* tex, void* paramaters)
+int GL_ReleaseGLTexturesByTexture2(Texture* tex, void* parameters)
 {
+    DENG_UNUSED(parameters);
     if(tex)
     {
         int i;
