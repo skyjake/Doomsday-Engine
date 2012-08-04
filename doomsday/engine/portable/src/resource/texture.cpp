@@ -23,304 +23,341 @@
 #include <ctype.h>
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_refresh.h"
-
 #include "gl_texmanager.h"
 #include "texturevariant.h"
-
 #include "texture.h"
+#include <de/Error>
+#include <de/Log>
+#include <de/LegacyCore>
+#include <de/memory.h>
 
-typedef struct texture_variantlist_node_s {
-    struct texture_variantlist_node_s* next;
-    TextureVariant* variant;
-} texture_variantlist_node_t;
-
-struct texture_s {
-    /// @see textureFlags
-    int flags;
-
-    /// Size in logical pixels (not necessarily the same as pixel dimensions).
-    Size2* size;
-
-    /// Unique identifier of the primary binding in the owning collection.
-    textureid_t primaryBind;
-
-    /// List of variants (e.g., color translations).
-    struct texture_variantlist_node_s* variants;
-
-    /// Table of analyses object ptrs, used for various purposes depending
-    /// on the variant specification.
-    void* analyses[TEXTURE_ANALYSIS_COUNT];
-
-    /// User data associated with this texture.
-    void* userData;
-};
-
-Texture* Texture_New(int flags, textureid_t bindId, void* userData)
+de::Texture::Texture(textureid_t bindId, void* userData)
+    :   flags(), primaryBindId(bindId), variants(), userDataPointer(userData), dimensions()
 {
-    Texture* tex = (Texture*)malloc(sizeof *tex);
-    if(!tex)
-        Con_Error("Texture::New: Failed on allocation of %lu bytes for new Texture.",
-                  (unsigned long) sizeof *tex);
-
-    tex->flags = flags;
-    tex->size = Size2_New();
-    tex->variants = NULL;
-    tex->primaryBind = bindId;
-    tex->userData = userData;
-    memset(tex->analyses, 0, sizeof(tex->analyses));
-
-    return tex;
+    memset(analyses, 0, sizeof(analyses));
 }
 
-Texture* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size,
-    void* userData)
+de::Texture::Texture(textureid_t bindId, const Size2Raw& size, void* userData)
 {
-    Texture* tex = Texture_New(flags, bindId, userData);
-    Texture_SetSize(tex, size);
-    return tex;
+    Texture* tex = new Texture(bindId, userData);
+    tex->setSize(size);
 }
 
-static uint countVariants(const Texture* tex)
+de::Texture::~Texture()
 {
-    texture_variantlist_node_t* node;
-    uint count = 0;
-    assert(tex);
-    for(node = tex->variants; node; node = node->next)
+    clearVariants();
+    destroyAnalyses();
+}
+
+void de::Texture::clearVariants()
+{
+    DENG2_FOR_EACH(i, variants, Variants::iterator)
     {
-        count += 1;
-    }
-    return count;
-}
-
-static void destroyVariants(Texture* tex)
-{
-    assert(tex);
-    while(tex->variants)
-    {
-        TextureVariant* variant = tex->variants->variant;
-        texture_variantlist_node_t* next = tex->variants->next;
 #if _DEBUG
-        DGLuint glName = TextureVariant_GLName(variant);
+        unsigned int glName = (*i)->glName();
         if(glName)
         {
-            Uri* uri = Textures_ComposeUri(Textures_Id(tex));
+            textureid_t textureId = Textures_Id(reinterpret_cast<struct texture_s*>(this));
+            Uri* uri = Textures_ComposeUri(textureId);
             ddstring_t* path = Uri_ToString(uri);
-            Con_Printf("Warning:Texture::Destruct: GLName (%i) still set for "
-                "a variant of \"%s\" (id:%i). Perhaps it wasn't released?\n",
-                (unsigned int) glName, Str_Text(path), (int) Textures_Id(tex));
-            GL_PrintTextureVariantSpecification(TextureVariant_Spec(variant));
+            LOG_AS("Texture::clearVariants")
+            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" (id:%i). Perhaps it wasn't released?")
+                << glName << Str_Text(path) << int(textureId);
+            GL_PrintTextureVariantSpecification((*i)->spec());
             Str_Delete(path);
             Uri_Delete(uri);
         }
 #endif
-        TextureVariant_Delete(variant);
-        free(tex->variants);
-        tex->variants = next;
+        delete *i;
     }
+    variants.clear();
 }
 
-static void destroyAnalyses(Texture* tex)
+void de::Texture::destroyAnalyses()
 {
-    int i;
-    assert(tex);
-    for(i = 0; i < TEXTURE_ANALYSIS_COUNT; ++i)
+    for(int i = 0; i < TEXTURE_ANALYSIS_COUNT; ++i)
     {
-        if(tex->analyses[i]) free(tex->analyses[i]);
+        if(analyses[i]) M_Free(analyses[i]);
     }
 }
 
-void Texture_Delete(Texture* tex)
+void de::Texture::setPrimaryBind(textureid_t bindId)
 {
-    assert(tex);
-    destroyVariants(tex);
-    destroyAnalyses(tex);
-    Size2_Delete(tex->size);
-    free(tex);
+    primaryBindId = bindId;
 }
 
-textureid_t Texture_PrimaryBind(const Texture* tex)
+void de::Texture::attachUserData(void* newUserData)
 {
-    assert(tex);
-    return tex->primaryBind;
+    if(userDataPointer)
+    {
+        textureid_t textureId = Textures_Id(reinterpret_cast<struct texture_s*>(this));
+        LOG_AS("Texture::AttachUserData");
+        LOG_WARNING("User data is already present for [%p id:%i], it will be replaced.")
+                << (void*)this, int(textureId);
+    }
+    userDataPointer = newUserData;
 }
 
-void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId)
+void* de::Texture::detachUserData()
 {
-    assert(tex);
-    tex->primaryBind = bindId;
+    void* detachedUserData = userDataPointer;
+    userDataPointer = NULL;
+    return detachedUserData;
 }
 
-void Texture_AttachUserData(Texture* tex, void* userData)
+void* de::Texture::userData() const
 {
-    assert(tex);
+    return userDataPointer;
+}
+
+uint de::Texture::variantCount() const
+{
+    return uint(variants.size());
+}
+
+de::TextureVariant& de::Texture::addVariant(de::TextureVariant& variant)
+{
+    variants.push_back(&variant);
+    return *variants.back();
+}
+
+void de::Texture::flagCustom(bool yes)
+{
+    if(yes) flags |= Custom; else flags &= ~Custom;
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
+}
+
+int de::Texture::width() const
+{
+    return dimensions.width;
+}
+
+void de::Texture::setWidth(int newWidth)
+{
+    dimensions.width = newWidth;
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
+}
+
+int de::Texture::height() const
+{
+    return dimensions.height;
+}
+
+void de::Texture::setHeight(int newHeight)
+{
+    dimensions.height = newHeight;
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
+}
+
+void de::Texture::setSize(const Size2Raw& newSize)
+{
+    dimensions.width  = newSize.width;
+    dimensions.height = newSize.height;
+    /// @todo Update any Materials (and thus Surfaces) which reference this.
+}
+
+void* de::Texture::analysis(texture_analysisid_t analysisId) const
+{
+    DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
+    return analyses[analysisId];
+}
+
+void de::Texture::attachAnalysis(texture_analysisid_t analysisId, void* data)
+{
+    DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
 #if _DEBUG
-    if(tex->userData)
+    if(analyses[analysisId])
     {
-        Con_Message("Warning:Texture::AttachUserData: User data is already present for [%p id:%i], it will be replaced.\n", (void*)tex, Textures_Id(tex));
-    }
-#endif
-    tex->userData = userData;
-}
-
-void* Texture_DetachUserData(Texture* tex)
-{
-    void* data;
-    assert(tex);
-    data = tex->userData;
-    tex->userData = NULL;
-    return data;
-}
-
-void* Texture_UserData(const Texture* tex)
-{
-    assert(tex);
-    return tex->userData;
-}
-
-void Texture_ClearVariants(Texture* tex)
-{
-    assert(tex);
-    destroyVariants(tex);
-}
-
-uint Texture_VariantCount(const Texture* tex)
-{
-    return countVariants(tex);
-}
-
-TextureVariant* Texture_AddVariant(Texture* tex, TextureVariant* variant)
-{
-    texture_variantlist_node_t* node;
-    assert(tex);
-
-    if(!variant)
-    {
-#if _DEBUG
-        Con_Message("Warning:Texture::AddVariant: Argument variant==NULL, ignoring.");
-#endif
-        return variant;
-    }
-
-    node = (texture_variantlist_node_t*) malloc(sizeof *node);
-    if(!node)
-        Con_Error("Texture::AddVariant: Failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
-
-    node->variant = variant;
-    node->next = tex->variants;
-    tex->variants = node;
-    return variant;
-}
-
-boolean Texture_IsCustom(const Texture* tex)
-{
-    assert(tex);
-    return (tex->flags & TXF_CUSTOM) != 0;
-}
-
-int Texture_Flags(const Texture* tex)
-{
-    assert(tex);
-    return tex->flags;
-}
-
-void Texture_SetFlags(Texture* tex, int flags)
-{
-    assert(tex);
-    tex->flags = flags;
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
-}
-
-int Texture_Width(const Texture* tex)
-{
-    assert(tex);
-    return Size2_Width(tex->size);
-}
-
-void Texture_SetWidth(Texture* tex, int width)
-{
-    assert(tex);
-    Size2_SetWidth(tex->size, width);
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
-}
-
-int Texture_Height(const Texture* tex)
-{
-    assert(tex);
-    return Size2_Height(tex->size);
-}
-
-void Texture_SetHeight(Texture* tex, int height)
-{
-    assert(tex);
-    Size2_SetHeight(tex->size, height);
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
-}
-
-const Size2* Texture_Size(const Texture* tex)
-{
-    assert(tex);
-    return tex->size;
-}
-
-void Texture_SetSize(Texture* tex, const Size2Raw* size)
-{
-    assert(tex && size);
-    Size2_SetWidthHeight(tex->size, size->width, size->height);
-    /// @todo Update any Materials (and thus Surfaces) which reference this.
-}
-
-int Texture_IterateVariants(Texture* tex,
-    int (*callback)(TextureVariant* variant, void* paramaters), void* paramaters)
-{
-    int result = 0;
-    assert(tex);
-
-    if(callback)
-    {
-        texture_variantlist_node_t* node = tex->variants;
-        while(node)
-        {
-            texture_variantlist_node_t* next = node->next;
-            result = callback(node->variant, paramaters);
-            if(result) break;
-            node = next;
-        }
-    }
-    return result;
-}
-
-void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis)
-{
-    assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
-    return tex->analyses[analysis];
-}
-
-void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis,
-    void* data)
-{
-    assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
-#if _DEBUG
-    if(tex->analyses[analysis])
-    {
-        Uri* uri = Textures_ComposeUri(Textures_Id(tex));
+        textureid_t textureId = Textures_Id(reinterpret_cast<struct texture_s*>(this));
+        Uri* uri = Textures_ComposeUri(textureId);
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning: Image analysis #%i already present for \"%s\", will replace.\n",
-            (int) analysis, Str_Text(path));
+        LOG_AS("Texture::attachAnalysis");
+        LOG_WARNING("Image analysis #%i already present for \"%s\", will replace.")
+            << int(analysisId), Str_Text(path);
         Str_Delete(path);
         Uri_Delete(uri);
     }
 #endif
-    tex->analyses[analysis] = data;
+    analyses[analysisId] = data;
+}
+
+void* de::Texture::detachAnalysis(texture_analysisid_t analysisId)
+{
+    DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
+    void* detachedAnalysis = analyses[analysisId];
+    analyses[analysisId] = NULL;
+    return detachedAnalysis;
+}
+
+/**
+ * C Wrapper API:
+ */
+
+#define TOINTERNAL(inst) \
+    (inst) != 0? reinterpret_cast<de::Texture*>(inst) : NULL
+
+#define TOINTERNAL_CONST(inst) \
+    (inst) != 0? reinterpret_cast<const de::Texture*>(inst) : NULL
+
+#define SELF(inst) \
+    DENG2_ASSERT(inst); \
+    de::Texture* self = TOINTERNAL(inst)
+
+#define SELF_CONST(inst) \
+    DENG2_ASSERT(inst); \
+    const de::Texture* self = TOINTERNAL_CONST(inst)
+
+Texture* Texture_NewWithSize(textureid_t bindId, const Size2Raw* size, void* userData)
+{
+    if(!size)
+        LegacyCore_FatalError("Texture_NewWithSize: Attempted with invalid size argument (=NULL).");
+    return reinterpret_cast<Texture*>(new de::Texture(bindId, *size, userData));
+}
+
+Texture* Texture_New(textureid_t bindId, void* userData)
+{
+    return reinterpret_cast<Texture*>(new de::Texture(bindId, userData));
+}
+
+void Texture_Delete(Texture* tex)
+{
+    if(tex)
+    {
+        SELF(tex);
+        delete self;
+    }
+}
+
+textureid_t Texture_PrimaryBind(const Texture* tex)
+{
+    SELF_CONST(tex);
+    return self->primaryBind();
+}
+
+void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId)
+{
+    SELF(tex);
+    self->setPrimaryBind(bindId);
+}
+
+void Texture_AttachUserData(Texture* tex, void* newUserData)
+{
+    SELF(tex);
+    self->attachUserData(newUserData);
+}
+
+void* Texture_DetachUserData(Texture* tex)
+{
+    SELF(tex);
+    return self->detachUserData();
+}
+
+void* Texture_UserData(const Texture* tex)
+{
+    SELF_CONST(tex);
+    return self->userData();
+}
+
+void Texture_ClearVariants(Texture* tex)
+{
+    SELF(tex);
+    self->clearVariants();
+}
+
+uint Texture_VariantCount(const Texture* tex)
+{
+    SELF_CONST(tex);
+    return self->variantCount();
+}
+
+TextureVariant* Texture_AddVariant(Texture* tex, TextureVariant* variant)
+{
+    SELF(tex);
+    if(!variant)
+    {
+        LOG_AS("Texture_AddVariant");
+        LOG_WARNING("Invalid variant argument, ignoring.");
+        return variant;
+    }
+    self->addVariant(*reinterpret_cast<de::TextureVariant*>(variant));
+    return variant;
+}
+
+void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis, void* data)
+{
+    SELF(tex);
+    self->attachAnalysis(analysis, data);
 }
 
 void* Texture_DetachAnalysis(Texture* tex, texture_analysisid_t analysis)
 {
-    void* data;
-    assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
+    SELF(tex);
+    return self->detachAnalysis(analysis);
+}
 
-    data = tex->analyses[analysis];
-    tex->analyses[analysis] = NULL;
-    return data;
+void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis)
+{
+    SELF_CONST(tex);
+    return self->analysis(analysis);
+}
+
+boolean Texture_IsCustom(const Texture* tex)
+{
+    SELF_CONST(tex);
+    return CPP_BOOL(self->isCustom());
+}
+
+void Texture_FlagCustom(Texture* tex, boolean yes)
+{
+    SELF(tex);
+    self->flagCustom(bool(yes));
+}
+
+void Texture_SetSize(Texture* tex, const Size2Raw* newSize)
+{
+    SELF(tex);
+    if(!newSize)
+        LegacyCore_FatalError("Texture_SetSize: Attempted with invalid size argument (=NULL).");
+    self->setSize(*newSize);
+}
+
+int Texture_Width(const Texture* tex)
+{
+    SELF_CONST(tex);
+    return self->width();
+}
+
+void Texture_SetWidth(Texture* tex, int newWidth)
+{
+    SELF(tex);
+    self->setWidth(newWidth);
+}
+
+int Texture_Height(const Texture* tex)
+{
+    SELF_CONST(tex);
+    return self->height();
+}
+
+void Texture_SetHeight(Texture* tex, int newHeight)
+{
+    SELF(tex);
+    self->setHeight(newHeight);
+}
+
+int Texture_IterateVariants(struct texture_s* tex,
+    int (*callback)(struct texturevariant_s* variant, void* parameters), void* parameters)
+{
+    SELF(tex);
+    int result = 0;
+    if(callback)
+    {
+        DENG2_FOR_EACH(i, self->variantList(), de::Texture::Variants::const_iterator)
+        {
+            de::TextureVariant* variant = const_cast<de::TextureVariant*>(*i);
+            result = callback(reinterpret_cast<TextureVariant*>(variant), parameters);
+            if(result) break;
+        }
+    }
+    return result;
 }

@@ -158,13 +158,13 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
  * Create/update a Texture instance in the collection.
  *
  * @param id        Unique identifier of the previously declared Texture.
- * @param flags     @ref textureFlags
+ * @param custom    @c true= this is a custom texture.
  * @param size      Logical size. Components can be @c 0 in which case their value will
  *                  be inherited from the actual pixel size of the texture at load time.
  * @param userData  User data to associate with the resultant texture.
  */
-struct texture_s* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size, void* userData);
-struct texture_s* Textures_Create(textureid_t id, int flags, void* userData); /* width=0, height=0*/
+struct texture_s* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw* size, void* userData);
+struct texture_s* Textures_Create(textureid_t id, boolean custom, void* userData); /* width=0, height=0*/
 
 /**
  * Iterate over defined Textures in the collection making a callback for each visited.

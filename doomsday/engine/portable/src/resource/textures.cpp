@@ -903,12 +903,14 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
     return Textures_Declare2(uri, uniqueId, resourcePath);
 }
 
-Texture* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size,
+Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw* size,
     void* userData)
 {
+    LOG_AS("Textures_CreateWithSize");
+
     if(!size)
     {
-        Con_Message("Warning: Failed defining Texture #%u (invalid size), ignoring.\n", id);
+        LOG_WARNING("Failed defining Texture #%u (invalid size), ignoring.") << id;
         return NULL;
     }
 
@@ -916,7 +918,7 @@ Texture* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size
     TextureRecord* record = (node? (TextureRecord*)PathDirectoryNode_UserData(node) : NULL);
     if(!record)
     {
-        Con_Message("Warning: Failed defining Texture #%u (invalid id), ignoring.\n", id);
+        LOG_WARNING("Failed defining Texture #%u (invalid id), ignoring.") << id;
         return NULL;
     }
 
@@ -929,11 +931,11 @@ Texture* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size
 #if _DEBUG
         Uri* uri = Textures_ComposeUri(id);
         Str* path = Uri_ToString(uri);
-        Con_Message("Warning:Textures::CreateWithSize: A Texture with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
+        LOG_WARNING("A Texture with uri \"%s\" already exists, returning existing.") << Str_Text(path);
         Str_Delete(path);
         Uri_Delete(uri);
 #endif
-        Texture_SetFlags(tex, flags);
+        Texture_FlagCustom(tex, custom);
         Texture_SetSize(tex, size);
         Texture_AttachUserData(tex, userData);
         /// @todo Materials and Surfaces should be notified of this!
@@ -941,13 +943,15 @@ Texture* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size
     }
 
     // A new texture.
-    return record->texture = Texture_NewWithSize(flags, id, size, userData);
+    Texture* tex = record->texture = Texture_NewWithSize(id, size, userData);
+    Texture_FlagCustom(tex, custom);
+    return tex;
 }
 
-Texture* Textures_Create(textureid_t id, int flags, void* userData)
+Texture* Textures_Create(textureid_t id, boolean custom, void* userData)
 {
     Size2Raw size = { 0, 0 };
-    return Textures_CreateWithSize(id, flags, &size, userData);
+    return Textures_CreateWithSize(id, custom, &size, userData);
 }
 
 int Textures_UniqueId(textureid_t id)

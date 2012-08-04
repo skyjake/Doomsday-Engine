@@ -88,7 +88,7 @@ public:
     void coords(float* s, float* t) const;
     void setCoords(float s, float t);
 
-    DGLuint glName() const { return glTexName; }
+    unsigned int glName() const { return glTexName; }
 
     void setGLName(unsigned int glName);
 
@@ -125,13 +125,11 @@ typedef struct texturevariant_s TextureVariant;
 
 TextureVariant* TextureVariant_New(struct texture_s* generalCase,
     texturevariantspecification_t* spec, TexSource source);
-
 void TextureVariant_Delete(TextureVariant* tex);
 
 struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex);
 
 TexSource TextureVariant_Source(const TextureVariant* tex);
-
 void TextureVariant_SetSource(TextureVariant* tex, TexSource source);
 
 texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex);
@@ -147,7 +145,7 @@ boolean TextureVariant_IsPrepared(const TextureVariant* tex);
 void TextureVariant_Coords(const TextureVariant* tex, float* s, float* t);
 void TextureVariant_SetCoords(TextureVariant* tex, float s, float t);
 
-DGLuint TextureVariant_GLName(const TextureVariant* tex);
+unsigned int TextureVariant_GLName(const TextureVariant* tex);
 void TextureVariant_SetGLName(TextureVariant* tex, DGLuint glName);
 
 #ifdef __cplusplus

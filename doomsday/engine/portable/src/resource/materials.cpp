@@ -1193,7 +1193,9 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
             if(0 == Material_Width(mat) && 0 == Material_Height(mat))
             {
                 Size2Raw texSize;
-                Material_SetSize(mat, Size2_Raw(Texture_Size(ml->texture), &texSize));
+                texSize.width  = Texture_Width(ml->texture);
+                texSize.height = Texture_Height(ml->texture);
+                Material_SetSize(mat, &texSize);
             }
         }
     }

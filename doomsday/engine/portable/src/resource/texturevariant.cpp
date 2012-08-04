@@ -24,7 +24,7 @@
 #include "texturevariant.h"
 #include <de/LegacyCore>
 
-de::TextureVariant::TextureVariant(Texture& generalCase,
+de::TextureVariant::TextureVariant(struct texture_s& generalCase,
     texturevariantspecification_t& spec, TexSource source)
     : texture(&generalCase),
       texSource(source),
@@ -94,9 +94,9 @@ TextureVariant* TextureVariant_New(Texture* generalCase,
     texturevariantspecification_t* spec, TexSource source)
 {
     if(!generalCase)
-        LegacyCore_FatalError("TextureVariant::New: Attempted with invalid generalCase reference (=NULL).");
+        LegacyCore_FatalError("TextureVariant_New: Attempted with invalid generalCase argument (=NULL).");
     if(!spec)
-        LegacyCore_FatalError("TextureVariant::New: Attempted with invalid spec reference (=NULL).");
+        LegacyCore_FatalError("TextureVariant_New: Attempted with invalid spec argument (=NULL).");
     return reinterpret_cast<TextureVariant*>(new de::TextureVariant(*generalCase, *spec, source));
 }
 
@@ -175,7 +175,7 @@ texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex)
     return self->spec();
 }
 
-DGLuint TextureVariant_GLName(const TextureVariant* tex)
+unsigned int TextureVariant_GLName(const TextureVariant* tex)
 {
     SELF_CONST(tex);
     return self->glName();

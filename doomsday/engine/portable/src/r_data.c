@@ -1105,7 +1105,7 @@ void R_InitSystemTextures(void)
 
         // Have we defined this yet?
         tex = Textures_ToTexture(texId);
-        if(!tex && !Textures_Create(texId, TXF_CUSTOM, NULL))
+        if(!tex && !Textures_Create(texId, true/*is-custom*/, NULL))
         {
             ddstring_t* path = Uri_ToString(uri);
             Con_Message("Warning: Failed defining Texture for System texture \"%s\"\n", Str_Text(path));
@@ -1129,13 +1129,13 @@ static textureid_t findPatchTextureIdByName(const char* encodedName)
     return texId;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 patchid_t R_DeclarePatch(const char* name)
 {
     const doompatch_header_t* patch;
     abstractfile_t* fsObject;
     Uri* uri, *resourcePath;
-    int lumpIdx, flags;
+    int lumpIdx;
     ddstring_t encodedName;
     lumpnum_t lumpNum;
     textureid_t texId;
@@ -1206,16 +1206,13 @@ patchid_t R_DeclarePatch(const char* name)
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
 
-    flags = 0;
-    if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
-
     tex = Textures_ToTexture(texId);
     if(!tex)
     {
         Size2Raw size;
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
-        tex = Textures_CreateWithSize(texId, flags, &size, (void*)p);
+        tex = Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, (void*)p);
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
         if(!tex)
@@ -1233,7 +1230,7 @@ patchid_t R_DeclarePatch(const char* name)
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
 
-        Texture_SetFlags(tex, flags);
+        Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
         Texture_SetSize(tex, &size);
         Texture_AttachUserData(tex, (void*)p);
 
@@ -2067,21 +2064,18 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
     for(i = 0; i < count; ++i)
     {
         patchcompositetex_t* pcTex = defs[i];
-        int flags = 0;
 
         Uri_SetPath(uri, Str_Text(&pcTex->name));
 
         texId = Textures_Declare(uri, pcTex->origIndex, NULL);
         if(texId == NOTEXTUREID) continue; // Invalid uri?
 
-        if(pcTex->flags & TXDF_CUSTOM) flags |= TXF_CUSTOM;
-
         tex = Textures_ToTexture(texId);
         if(tex)
         {
             patchcompositetex_t* oldPcTex = Texture_DetachUserData(tex);
 
-            Texture_SetFlags(tex, flags);
+            Texture_FlagCustom(tex, !!(pcTex->flags & TXDF_CUSTOM));
             Texture_SetSize(tex, &pcTex->size);
             Texture_AttachUserData(tex, (void*)pcTex);
 
@@ -2089,7 +2083,7 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
             if(oldPcTex->patches) free(oldPcTex->patches);
             free(oldPcTex);
         }
-        else if(!Textures_CreateWithSize(texId, flags, &pcTex->size, (void*)pcTex))
+        else if(!Textures_CreateWithSize(texId, !!(pcTex->flags & TXDF_CUSTOM), &pcTex->size, (void*)pcTex))
         {
             Con_Message("Warning: Failed defining Texture for new patch composite '%s', ignoring.\n", Str_Text(&pcTex->name));
             Str_Free(&pcTex->name);
@@ -2128,7 +2122,6 @@ static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
     Texture* tex;
     Size2Raw size;
     char name[9];
-    int flags;
 
     // We can only perform some basic filtering of lumps at this time.
     if(F_LumpLength(lumpNum) == 0) return NULL;
@@ -2162,25 +2155,20 @@ static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
     tex = Textures_ToTexture(texId);
     if(tex)
     {
-        flags = 0;
-        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
-        Texture_SetFlags(tex, flags);
+        Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
     }
     else
     {
         // A new flat.
-        flags = 0;
-        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
-
         /**
-         * \kludge Assume 64x64 else when the flat is loaded it will inherit the
+         * Kludge Assume 64x64 else when the flat is loaded it will inherit the
          * dimensions of the texture, which, if it has been replaced with a hires
          * version - will be much larger than it should be.
          *
-         * \todo Always determine size from the lowres original.
+         * @todo Always determine size from the lowres original.
          */
         size.width = size.height = 64;
-        tex = Textures_CreateWithSize(texId, flags, &size, NULL);
+        tex = Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, NULL);
         if(!tex)
         {
             ddstring_t* path = Uri_ToString(uri);
@@ -2305,15 +2293,12 @@ void R_DefineSpriteTexture(textureid_t texId)
         abstractfile_t* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx, PU_APPSTATIC);
         Size2Raw size;
-        int flags;
 
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
         Texture_SetSize(tex, &size);
 
-        flags = 0;
-        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
-        Texture_SetFlags(tex, flags);
+        Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
 
         F_CacheChangeTag(file, lumpIdx, PU_CACHE);
         Str_Delete(resourcePath);
@@ -2450,7 +2435,7 @@ Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, TXF_CUSTOM, NULL);
+        tex = Textures_Create(texId, true/*is-custom*/, NULL);
         if(!tex)
         {
             Con_Message("Warning: Failed defining Texture for ModelSkin '%s', ignoring.\n", name);
@@ -2775,7 +2760,7 @@ Texture* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     if(texId == NOTEXTUREID) return NULL; // Invalid uri?
 
     tex = Textures_ToTexture(texId);
-    if(!tex && !Textures_Create(texId, TXF_CUSTOM, NULL))
+    if(!tex && !Textures_Create(texId, true/*is-custom*/, NULL))
     {
         Con_Message("Warning: Failed defining Texture for DetailTexture '%s', ignoring.\n", name);
         return NULL;
@@ -2837,7 +2822,7 @@ Texture* R_CreateLightMap(const Uri* resourcePath)
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, TXF_CUSTOM, NULL);
+        tex = Textures_Create(texId, true/*is-custom*/, NULL);
         if(!tex)
         {
             Con_Message("Warning: Failed defining Texture for LightMap '%s', ignoring.\n", name);
@@ -2906,7 +2891,7 @@ Texture* R_CreateFlareTexture(const Uri* resourcePath)
     tex = Textures_ToTexture(texId);
     if(!tex)
     {
-        tex = Textures_Create(texId, TXF_CUSTOM, NULL);
+        tex = Textures_Create(texId, true/*is-custom*/, NULL);
         if(!tex)
         {
             Con_Message("Warning: Failed defining Texture for flare texture '%s', ignoring.\n", name);
@@ -2967,7 +2952,7 @@ Texture* R_CreateReflectionTexture(const Uri* resourcePath)
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, TXF_CUSTOM, NULL);
+        tex = Textures_Create(texId, true/*is-custom*/, NULL);
         if(!tex)
         {
             Con_Message("Warning: Failed defining Texture for shiny texture '%s', ignoring.\n", name);
@@ -3033,7 +3018,7 @@ Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
     else
     {
         // Create a texture for it.
-        tex = Textures_CreateWithSize(texId, TXF_CUSTOM, size, NULL);
+        tex = Textures_CreateWithSize(texId, true/*is-custom*/, size, NULL);
         if(!tex)
         {
             ddstring_t* path = Uri_ToString(resourcePath);

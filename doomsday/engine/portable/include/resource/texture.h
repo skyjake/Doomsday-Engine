@@ -25,12 +25,11 @@
 
 #include "size.h"
 #include "textures.h"
+#include "texturevariant.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct texturevariant_s;
 
 typedef enum {
     TEXTURE_ANALYSIS_FIRST = 0,
@@ -47,12 +46,14 @@ typedef enum {
 #define VALID_TEXTURE_ANALYSISID(id) (\
     (id) >= TEXTURE_ANALYSIS_FIRST && (id) < TEXTURE_ANALYSIS_COUNT)
 
-/**
- * @defgroup textureFlags  Texture Flags.
- */
-///@{
-#define TXF_CUSTOM              0x1 ///< Texture does not originate from the current game.
-///@}
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#ifdef __cplusplus
+namespace de {
+
+#include <list>
 
 /**
  * Texture
@@ -60,60 +61,186 @@ typedef enum {
  * Presents an abstract interface to all supported texture types so that
  * they may be managed transparently.
  */
+class Texture
+{
+public:
+    enum Flag
+    {
+        /// Texture is "custom" (i.e., not an original game resource).
+        Custom = 0x1
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    typedef std::list<de::TextureVariant*> Variants;
+
+public:
+    /**
+     * @param bindId  Unique identifier of the primary binding in the owning
+     *    collection. Can be @c NOTEXTUREID in which case there is no binding
+     *    for the resultant texture.
+     * @param size Logical size of the texture. Components can be zero in which
+     *    case their value will be inherited from the actual pixel size of the
+     *    image at load time.
+     * @param userData  User data to associate with the resultant texture.
+     */
+    Texture(textureid_t bindId, void* userData=NULL);
+    Texture(textureid_t bindId, const Size2Raw& size, void* userData=NULL);
+
+    ~Texture();
+
+    textureid_t primaryBind() const { return primaryBindId; }
+
+    void setPrimaryBind(textureid_t bindId);
+
+    /**
+     * Attach new user data. If data is already present it will be replaced.
+     * Ownership is given to Texture.
+     *
+     * @param userData  Data to be attached.
+     */
+    void attachUserData(void* userData);
+
+    /**
+     * Detach any associated user data. Ownership is relinquished to caller.
+     * @return  Associated user data.
+     */
+    void* detachUserData();
+
+    /// @return  Associated user data if any else @c NULL.
+    void* userData() const;
+
+    /// Destroy all prepared variants owned by this texture.
+    void clearVariants();
+
+    /// @return  Number of variants for this texture.
+    uint variantCount() const;
+
+    /**
+     * Add a new prepared variant to the list of resources for this Texture.
+     * Texture takes ownership of the variant.
+     *
+     * @param variant  Variant instance to add to the resource list.
+     */
+    de::TextureVariant& addVariant(de::TextureVariant& variant);
+
+    /**
+     * Attach new analysis data. If data is already present it will be replaced.
+     * Ownership is given to the Texture.
+     *
+     * @param analysis  Identifier of the data being attached.
+     * @param data  Data to be attached.
+     */
+    void attachAnalysis(texture_analysisid_t analysis, void* data);
+
+    /**
+     * Detach any associated analysis data. Ownership is relinquished to caller.
+     *
+     * @return  Associated data for the specified analysis identifier.
+     */
+    void* detachAnalysis(texture_analysisid_t analysis);
+
+    /// @return  Associated data for the specified analysis identifier.
+    void* analysis(texture_analysisid_t analysis) const;
+
+    /// @return  @c true iff the data associated with @a tex does not originate from the current game.
+    bool isCustom() const { return !!(flags & Custom); }
+
+    void flagCustom(bool yes);
+
+    /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
+    const Size2Raw& size() const { return dimensions; }
+
+    /**
+     * Change logical pixel dimensions.
+     * @param size  New size.
+     */
+    void setSize(const Size2Raw& size);
+
+    /// @return  Logical width (not necessarily the same as pixel width).
+    int width() const;
+
+    /**
+     * Change logical width.
+     * @param width  Width in logical pixels.
+     */
+    void setWidth(int width);
+
+    /// @return  Logical height (not necessarily the same as pixel height).
+    int height() const;
+
+    /**
+     * Change logical height.
+     * @param height  Height in logical pixels.
+     */
+    void setHeight(int height);
+
+    /**
+     * Provides access to the list of variant textures for efficent traversals.
+     */
+    const Variants& variantList() const { return variants; }
+
+private:
+    void destroyAnalyses();
+
+private:
+    Flags flags;
+
+    /// Unique identifier of the primary binding in the owning collection.
+    textureid_t primaryBindId;
+
+    /// List of variants (e.g., color translations).
+    Variants variants;
+
+    /// User data associated with this texture.
+    void* userDataPointer;
+
+    /// Dimensions in logical pixels (not necessarily the same as pixel dimensions).
+    Size2Raw dimensions;
+
+    /// Table of analyses object ptrs, used for various purposes depending
+    /// on the variant specification.
+    void* analyses[TEXTURE_ANALYSIS_COUNT];
+};
+
+} // namespace de
+
+extern "C" {
+#endif // __cplusplus
+
+/**
+ * C wrapper API:
+ */
+
 struct texture_s; // The texture instance (opaque).
 typedef struct texture_s Texture;
 
-/**
- * Construct a new Texture.
- *
- * @param flags  @ref textureFlags
- * @param bindId  Unique identifier of the primary binding in the owning
- *    collection. Can be @c NOTEXTUREID in which case there is no binding
- *    for the resultant texture.
- * @param size Logical size of the texture. Components can be zero in which
- *    case their value will be inherited from the actual pixel size of the
- *    texture at load time.
- * @param userData  User data to associate with the resultant texture.
- */
-Texture* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size, void* userData);
-Texture* Texture_New(int flags, textureid_t bindId, void* userData);
-
+Texture* Texture_NewWithSize(textureid_t bindId, const Size2Raw* size, void* userData);
+Texture* Texture_New(textureid_t bindId, void* userData);
 void Texture_Delete(Texture* tex);
 
 textureid_t Texture_PrimaryBind(const Texture* tex);
-
 void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId);
 
-/**
- * Attach new user data. If data is already present it will be replaced.
- * Ownership is given to Texture.
- *
- * @param userData  Data to be attached.
- */
 void Texture_AttachUserData(Texture* tex, void* userData);
-
-/**
- * Detach any associated user data. Ownership is relinquished to caller.
- * @return  Associated user data.
- */
 void* Texture_DetachUserData(Texture* tex);
-
-/// @return  Associated user data if any else @c NULL.
 void* Texture_UserData(const Texture* tex);
 
-/// Destroy all prepared variants owned by this texture.
 void Texture_ClearVariants(Texture* tex);
-
-/// @return  Number of variants for this texture.
 uint Texture_VariantCount(const Texture* tex);
-
-/**
- * Add a new prepared variant to the list of resources for this Texture.
- * Texture takes ownership of the variant.
- *
- * @param variant  Variant instance to add to the resource list.
- */
 struct texturevariant_s* Texture_AddVariant(Texture* tex, struct texturevariant_s* variant);
+
+void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis, void* data);
+void* Texture_DetachAnalysis(Texture* tex, texture_analysisid_t analysis);
+void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis);
+
+boolean Texture_IsCustom(const Texture* tex);
+void Texture_FlagCustom(Texture* tex, boolean yes);
+
+void Texture_SetSize(Texture* tex, const Size2Raw* size);
+int Texture_Width(const Texture* tex);
+void Texture_SetWidth(Texture* tex, int width);
+int Texture_Height(const Texture* tex);
+void Texture_SetHeight(Texture* tex, int height);
 
 /**
  * Iterate over all derived TextureVariants, making a callback for each.
@@ -126,66 +253,7 @@ struct texturevariant_s* Texture_AddVariant(Texture* tex, struct texturevariant_
  * @return  @c 0 iff iteration completed wholly.
  */
 int Texture_IterateVariants(Texture* tex,
-    int (*callback)(struct texturevariant_s* instance, void* paramaters),
-    void* paramaters);
-
-/**
- * Attach new analysis data. If data is already present it will be replaced.
- * Ownership is given to the Texture.
- *
- * @param analysis  Identifier of the data being attached.
- * @param data  Data to be attached.
- */
-void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis, void* data);
-
-/**
- * Detach any associated analysis data. Ownership is relinquished to caller.
- *
- * @return  Associated data for the specified analysis identifier.
- */
-void* Texture_DetachAnalysis(Texture* tex, texture_analysisid_t analysis);
-
-/// @return  Associated data for the specified analysis identifier.
-void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis);
-
-/// @return  @c true iff the data associated with @a tex does not originate from the current game.
-boolean Texture_IsCustom(const Texture* tex);
-
-/// @return  @see textureFlags
-int Texture_Flags(const Texture* tex);
-
-/**
- * Change the value of the flags property.
- * @param flags  @see textureFlags
- */
-void Texture_SetFlags(Texture* tex, int flags);
-
-/// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
-const Size2* Texture_Size(const Texture* tex);
-
-/**
- * Change logical pixel dimensions.
- * @param size  New size.
- */
-void Texture_SetSize(Texture* tex, const Size2Raw* size);
-
-/// @return  Logical width (not necessarily the same as pixel width).
-int Texture_Width(const Texture* tex);
-
-/**
- * Change logical width.
- * @param width  Width in logical pixels.
- */
-void Texture_SetWidth(Texture* tex, int width);
-
-/// @return  Logical height (not necessarily the same as pixel height).
-int Texture_Height(const Texture* tex);
-
-/**
- * Change logical height.
- * @param height  Height in logical pixels.
- */
-void Texture_SetHeight(Texture* tex, int height);
+    int (*callback)(struct texturevariant_s* instance, void* parameters), void* parameters);
 
 #ifdef __cplusplus
 } // extern "C"
