@@ -1,6 +1,6 @@
 /**
  * @file materials.cpp
- * Materials collection, namespaces, bindings and other management.
+ * Materials collection, namespaces, bindings and other management. @ingroup resource
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>

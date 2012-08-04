@@ -1,6 +1,6 @@
 /**
  * @file textures.cpp
- * Textures collection. @ingroup refresh
+ * Textures collection. @ingroup resource
  *
  * @authors Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  *

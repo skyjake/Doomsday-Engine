@@ -1,6 +1,6 @@
 /**
  * @file texture.h
- * Abstract Texture component used to model a logical texture. @ingroup refresh
+ * Abstract Texture component used to model a logical texture. @ingroup resource
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_REFRESH_TEXTURE_H
-#define LIBDENG_REFRESH_TEXTURE_H
+#ifndef LIBDENG_RESOURCE_TEXTURE_H
+#define LIBDENG_RESOURCE_TEXTURE_H
 
 #include "size.h"
 #include "textures.h"
@@ -191,4 +191,4 @@ void Texture_SetHeight(Texture* tex, int height);
 } // extern "C"
 #endif
 
-#endif /// LIBDENG_REFRESH_TEXTURE_H
+#endif /// LIBDENG_RESOURCE_TEXTURE_H

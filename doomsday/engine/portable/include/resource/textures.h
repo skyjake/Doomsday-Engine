@@ -1,6 +1,6 @@
 /**
  * @file textures.h
- * Textures collection. @ingroup refresh
+ * Textures collection. @ingroup resource
  *
  * "Clear"ing a Texture is to 'undefine' it - any names bound to it are deleted,
  * any GL textures acquired for it are 'released'. The Texture instance record
@@ -32,8 +32,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_REFRESH_TEXTURES_H
-#define LIBDENG_REFRESH_TEXTURES_H
+#ifndef LIBDENG_RESOURCE_TEXTURES_H
+#define LIBDENG_RESOURCE_TEXTURES_H
 
 #include "dd_share.h"
 #include "uri.h"
@@ -198,4 +198,4 @@ int Textures_IterateDeclared(texturenamespaceid_t namespaceId, int (*callback)(t
 } //extern "C"
 #endif
 
-#endif /* LIBDENG_REFRESH_TEXTURES_H */
+#endif /* LIBDENG_RESOURCE_TEXTURES_H */

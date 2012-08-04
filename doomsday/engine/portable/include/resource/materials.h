@@ -1,6 +1,6 @@
 /**
  * @file materials.h
- * Materials collection, namespaces, bindings and other management.
+ * Materials collection, namespaces, bindings and other management. @ingroup resource
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_MATERIALS_H
-#define LIBDENG_MATERIALS_H
+#ifndef LIBDENG_RESOURCE_MATERIALS_H
+#define LIBDENG_RESOURCE_MATERIALS_H
 
 #include "def_data.h"
 #include "material.h"
@@ -274,4 +274,4 @@ boolean Materials_IsPrecacheAnimGroup(int animGroupNum);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_MATERIALS_H */
+#endif /* LIBDENG_RESOURCE_MATERIALS_H */
