@@ -48,15 +48,17 @@ private:
         /// Texture has been uploaded to GL.
         Uploaded = 0x2
     };
+    Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
     /**
-     * @param generalCase  Texture from which this variant is derived.
-     * @param spec  Specification used to derive this variant. Ownership
-     *              is NOT given to the resultant TextureVariant
+     * @param generalCase   Texture from which this variant is derived.
+     * @param spec          Specification used to derive this variant.
+     *                      Ownership is NOT given to the resultant TextureVariant
+     * @param source        Source of this variant.
      */
-    TextureVariant(struct texture_s& generalCase,
-                   TexSource source, texturevariantspecification_t& spec);
+    TextureVariant(struct texture_s& generalCase, texturevariantspecification_t& spec,
+                   TexSource source=TEXS_NONE);
 
     /// @return  Superior Texture of which this is a derivative.
     struct texture_s* generalCase() const { return texture; }
@@ -97,8 +99,7 @@ private:
     /// Source of this texture.
     TexSource texSource;
 
-    /// @see textureVariantFlags
-    int flags;
+    Flags flags;
 
     /// Name of the associated GL texture object.
     unsigned int glTexName;
@@ -123,7 +124,7 @@ struct texturevariant_s; // The texturevariant instance (opaque).
 typedef struct texturevariant_s TextureVariant;
 
 TextureVariant* TextureVariant_New(struct texture_s* generalCase,
-    TexSource source, texturevariantspecification_t* spec);
+    texturevariantspecification_t* spec, TexSource source);
 
 void TextureVariant_Delete(TextureVariant* tex);
 

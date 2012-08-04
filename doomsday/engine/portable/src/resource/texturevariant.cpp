@@ -24,8 +24,8 @@
 #include "texturevariant.h"
 #include <de/LegacyCore>
 
-de::TextureVariant::TextureVariant(Texture& generalCase, TexSource source,
-    texturevariantspecification_t& spec)
+de::TextureVariant::TextureVariant(Texture& generalCase,
+    texturevariantspecification_t& spec, TexSource source)
     : texture(&generalCase),
       texSource(source),
       flags(0),
@@ -90,14 +90,14 @@ void de::TextureVariant::setGLName(unsigned int newGLName)
     DENG2_ASSERT(inst); \
     const de::TextureVariant* self = TOINTERNAL_CONST(inst)
 
-TextureVariant* TextureVariant_New(Texture* generalCase, TexSource source,
-    texturevariantspecification_t* spec)
+TextureVariant* TextureVariant_New(Texture* generalCase,
+    texturevariantspecification_t* spec, TexSource source)
 {
     if(!generalCase)
         LegacyCore_FatalError("TextureVariant::New: Attempted with invalid generalCase reference (=NULL).");
     if(!spec)
         LegacyCore_FatalError("TextureVariant::New: Attempted with invalid spec reference (=NULL).");
-    return reinterpret_cast<TextureVariant*>(new de::TextureVariant(*generalCase, source, *spec));
+    return reinterpret_cast<TextureVariant*>(new de::TextureVariant(*generalCase, *spec, source));
 }
 
 void TextureVariant_Delete(TextureVariant* tex)

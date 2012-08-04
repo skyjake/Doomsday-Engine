@@ -3334,7 +3334,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     if(!*variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        *variant = TextureVariant_New(tex, source, spec);
+        *variant = TextureVariant_New(tex, spec, source);
         TextureVariant_SetGLName(*variant, newGLName);
         Texture_AddVariant(tex, *variant);
     }
