@@ -1003,7 +1003,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean viewAligned)
 {
     const materialvariantspecification_t* spec;
-    materialvariant_t* variant;
+    MaterialVariant* variant;
 
     if(!params) return; // Wha?
 

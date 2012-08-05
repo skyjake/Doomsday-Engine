@@ -1,5 +1,5 @@
 /**
- * @file materialvariant.c
+ * @file materialvariant.cpp
  * Logical material variant. @ingroup resource
  *
  * @authors Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
@@ -21,79 +21,43 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "m_misc.h"
 #include "texture.h"
-
 #include "materialvariant.h"
+#include <de/Error>
+#include <de/LegacyCore>
+#include <de/Log>
+#include <de/memory.h>
 
-struct materialvariant_s {
-    materialvariant_layer_t _layers[MATERIALVARIANT_MAXLAYERS];
-
-    /// Superior Material of which this is a derivative.
-    struct material_s* _generalCase;
-
-    /// For "smoothed" Material animation:
-    struct materialvariant_s* _current;
-    struct materialvariant_s* _next;
-    float _inter;
-
-    /// Specification used to derive this variant.
-    const materialvariantspecification_t* _spec;
-
-    /// Cached copy of current state if any.
-    materialsnapshot_t* _snapshot;
-
-    /// Frame count when MaterialVariant::_snapshot was last prepared/updated.
-    int _snapshotPrepareFrame;
-};
-
-materialvariant_t* MaterialVariant_New(material_t* generalCase,
-    const materialvariantspecification_t* spec)
+de::MaterialVariant::MaterialVariant(material_t& generalCase,
+    const materialvariantspecification_t& spec, const ded_material_t& def)
+    : material(&generalCase),
+      hasTranslation(false), current(0), next(0), inter(0),
+      varSpec(&spec), snapshot_(0), snapshotPrepareFrame_(0)
 {
-    materialvariant_t* mat;
-    ded_material_t* def = Material_Definition(generalCase);
-    int i, layerCount = Material_LayerCount(generalCase);
-    assert(generalCase && spec);
-
-    mat = (materialvariant_t*) malloc(sizeof *mat);
-    if(!mat)
-        Con_Error("MaterialVariant::Construct: Failed on allocation of %lu bytes for new MaterialVariant.", (unsigned long) sizeof *mat);
-
-    mat->_generalCase = generalCase;
-    mat->_spec = spec;
-    mat->_current = mat->_next = mat;
-    mat->_inter = 0;
-    mat->_snapshot = NULL;
-
     // Initialize layers.
-    for(i = 0; i < layerCount; ++i)
+    const int layerCount = Material_LayerCount(material);
+    for(int i = 0; i < layerCount; ++i)
     {
-        mat->_layers[i].stage = 0;
-        mat->_layers[i].tics = def->layers[i].stages[0].tics;
-        mat->_layers[i].glow = def->layers[i].stages[0].glow;
-        mat->_layers[i].texture = Textures_ToTexture(Textures_ResolveUri2(def->layers[i].stages[0].texture, true/*quiet please*/));
-        mat->_layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
-        mat->_layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
+        layers[i].stage = 0;
+        layers[i].tics = def.layers[i].stages[0].tics;
+        layers[i].glow = def.layers[i].stages[0].glow;
+
+        layers[i].texture = Textures_ToTexture(Textures_ResolveUri2(def.layers[i].stages[0].texture, true/*quiet please*/));
+
+        layers[i].texOrigin[0] = def.layers[i].stages[0].texOrigin[0];
+        layers[i].texOrigin[1] = def.layers[i].stages[0].texOrigin[1];
     }
-    return mat;
 }
 
-void MaterialVariant_Delete(materialvariant_t* mat)
+de::MaterialVariant::~MaterialVariant()
 {
-    assert(mat);
-    if(mat->_snapshot)
-        free(mat->_snapshot), mat->_snapshot = NULL;
-    free(mat);
+    if(snapshot_) M_Free(snapshot_);
 }
 
-void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
+void de::MaterialVariant::ticker(timespan_t /*time*/)
 {
-    const ded_material_t* def;
-    int i, layerCount;
-    assert(mat);
-
-    def = Material_Definition(mat->_generalCase);
+    const ded_material_t* def = Material_Definition(material);
     if(!def)
     {
         // Material is no longer valid. We can't yet purge them because
@@ -103,12 +67,12 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
     }
 
     // Update layers.
-    layerCount = Material_LayerCount(mat->_generalCase);
-    for(i = 0; i < layerCount; ++i)
+    const int layerCount = Material_LayerCount(material);
+    for(int i = 0; i < layerCount; ++i)
     {
         const ded_material_layer_t* lDef = &def->layers[i];
         const ded_material_layer_stage_t* lsDef, *lsDefNext;
-        materialvariant_layer_t* layer = &mat->_layers[i];
+        materialvariant_layer_t* layer = &layers[i];
         float inter;
 
         if(!(lDef->stageCount.num > 1)) continue;
@@ -136,18 +100,18 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
             inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
         }
 
-        /*{const Texture* glTex;
+        /*const Texture* glTex;
         if((glTex = Textures_ResolveUri(lsDef->texture)))
         {
             layer->tex = Texture_Id(glTex);
-            MaterialVariant_SetTranslationPoint(mat, inter);
+            setTranslationPoint(inter);
         }
         else
         {
             /// @todo Should reset this to the non-stage animated texture here.
             //layer->tex = 0;
             //generalCase->inter = 0;
-        }}*/
+        }*/
 
         if(inter == 0)
         {
@@ -166,117 +130,221 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
     }
 }
 
-void MaterialVariant_ResetAnim(materialvariant_t* mat)
+void de::MaterialVariant::resetAnim()
 {
-    int i, layerCount;
-    assert(mat);
-
-    layerCount = Material_LayerCount(mat->_generalCase);
-    for(i = 0; i < layerCount; ++i)
+    const int layerCount = Material_LayerCount(material);
+    for(int i = 0; i < layerCount; ++i)
     {
-        materialvariant_layer_t* ml = &mat->_layers[i];
+        materialvariant_layer_t* ml = &layers[i];
         if(ml->stage == -1) break;
         ml->stage = 0;
     }
 }
 
-material_t* MaterialVariant_GeneralCase(materialvariant_t* mat)
+const materialvariant_layer_t* de::MaterialVariant::layer(int layer)
 {
-    assert(mat);
-    return mat->_generalCase;
+    if(layer >= 0 && layer < Material_LayerCount(material))
+        return &layers[layer];
+    return 0;
 }
 
-const materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat)
+materialsnapshot_t& de::MaterialVariant::attachSnapshot(materialsnapshot_t& newSnapshot)
 {
-    assert(mat);
-    return mat->_spec;
-}
-
-const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int layer)
-{
-    assert(mat);
-    if(layer >= 0 && layer < Material_LayerCount(mat->_generalCase))
-        return &mat->_layers[layer];
-    return NULL;
-}
-
-materialsnapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, materialsnapshot_t* ms)
-{
-    assert(mat && ms);
-    if(mat->_snapshot)
+    if(snapshot_)
     {
-#if _DEBUG
-        Con_Message("Warning:MaterialVariant::AttachSnapshot: A snapshot is already attached to %p, it will be replaced.\n", (void*) mat);
-#endif
-        free(mat->_snapshot);
+        LOG_AS("MaterialVariant::AttachSnapshot");
+        LOG_WARNING("A snapshot is already attached to %p, it will be replaced.") << (void*) this;
+        M_Free(snapshot_);
     }
-    mat->_snapshot = ms;
-    return ms;
+    snapshot_ = &newSnapshot;
+    return newSnapshot;
 }
 
-materialsnapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat)
+materialsnapshot_t* de::MaterialVariant::detachSnapshot()
 {
-    materialsnapshot_t* ms;
-    assert(mat);
-    ms = mat->_snapshot;
-    mat->_snapshot = NULL;
-    return ms;
+    materialsnapshot_t* detachedSnapshot = snapshot_;
+    snapshot_ = 0;
+    return detachedSnapshot;
 }
 
-materialsnapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat)
+void de::MaterialVariant::setSnapshotPrepareFrame(int frame)
 {
-    assert(mat);
-    return mat->_snapshot;
+    snapshotPrepareFrame_ = frame;
 }
 
-int MaterialVariant_SnapshotPrepareFrame(const materialvariant_t* mat)
+de::MaterialVariant* de::MaterialVariant::translationNext()
 {
-    assert(mat);
-    return mat->_snapshotPrepareFrame;
+    if(!hasTranslation) return this;
+    return next;
 }
 
-void MaterialVariant_SetSnapshotPrepareFrame(materialvariant_t* mat, int frame)
+de::MaterialVariant* de::MaterialVariant::translationCurrent()
 {
-    assert(mat);
-    mat->_snapshotPrepareFrame = frame;
+    if(!hasTranslation) return this;
+    return current;
 }
 
-materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat)
+float de::MaterialVariant::translationPoint()
 {
-    assert(mat);
-    return mat->_next;
+    return inter;
 }
 
-materialvariant_t* MaterialVariant_TranslationCurrent(materialvariant_t* mat)
+void de::MaterialVariant::setTranslation(MaterialVariant* newCurrent, MaterialVariant* newNext)
 {
-    assert(mat);
-    return mat->_current;
-}
-
-float MaterialVariant_TranslationPoint(materialvariant_t* mat)
-{
-    assert(mat);
-    return mat->_inter;
-}
-
-void MaterialVariant_SetTranslation(materialvariant_t* mat,
-    materialvariant_t* current, materialvariant_t* next)
-{
-    assert(mat);
-    if(next && current)
+    if(newCurrent && newNext && (newCurrent != this || newNext != this))
     {
-        mat->_current = current;
-        mat->_next = next;
-        mat->_inter = 0;
-        return;
+        hasTranslation = true;
+        current = newCurrent;
+        next    = newNext;
     }
-
-    mat->_current = mat->_next = mat;
-    mat->_inter = 0;
+    else
+    {
+        hasTranslation = false;
+        current = next = 0;
+    }
+    inter = 0;
 }
 
-void MaterialVariant_SetTranslationPoint(materialvariant_t* mat, float inter)
+void de::MaterialVariant::setTranslationPoint(float newInter)
 {
-    assert(mat);
-    mat->_inter = inter;
+    inter = newInter;
+}
+
+/**
+ * C wrapper API
+ **/
+
+#define TOINTERNAL(inst) \
+    (inst) != 0? reinterpret_cast<de::MaterialVariant*>(inst) : NULL
+
+#define TOINTERNAL_CONST(inst) \
+    (inst) != 0? reinterpret_cast<const de::MaterialVariant*>(inst) : NULL
+
+#define TOPUBLIC(inst) \
+    (inst) != 0? reinterpret_cast<MaterialVariant*>(inst) : NULL
+
+#define TOPUBLIC_CONST(inst) \
+    (inst) != 0? reinterpret_cast<const MaterialVariant*>(inst) : NULL
+
+#define SELF(inst) \
+    DENG2_ASSERT(inst); \
+    de::MaterialVariant* self = TOINTERNAL(inst)
+
+#define SELF_CONST(inst) \
+    DENG2_ASSERT(inst); \
+    const de::MaterialVariant* self = TOINTERNAL_CONST(inst)
+
+MaterialVariant* MaterialVariant_New(struct material_s* generalCase,
+    const materialvariantspecification_t* spec)
+{
+    if(!generalCase)
+        LegacyCore_FatalError("MaterialVariant_New: Attempted with invalid generalCase argument (=NULL).");
+    if(!spec)
+        LegacyCore_FatalError("MaterialVariant_New: Attempted with invalid spec argument (=NULL).");
+    const ded_material_t* def = Material_Definition(generalCase);
+    if(!def)
+        LegacyCore_FatalError("MaterialVariant_New: Attempted on a material without a definition (=NULL).");
+    return TOPUBLIC(new de::MaterialVariant(*generalCase, *spec, *def));
+}
+
+void MaterialVariant_Delete(MaterialVariant* mat)
+{
+    if(mat)
+    {
+        SELF(mat);
+        delete self;
+    }
+}
+
+void MaterialVariant_Ticker(MaterialVariant* mat, timespan_t time)
+{
+    SELF(mat);
+    self->ticker(time);
+}
+
+void MaterialVariant_ResetAnim(MaterialVariant* mat)
+{
+    SELF(mat);
+    self->resetAnim();
+}
+
+material_t* MaterialVariant_GeneralCase(MaterialVariant* mat)
+{
+    SELF(mat);
+    return self->generalCase();
+}
+
+const materialvariantspecification_t* MaterialVariant_Spec(const MaterialVariant* mat)
+{
+    SELF_CONST(mat);
+    return self->spec();
+}
+
+const materialvariant_layer_t* MaterialVariant_Layer(MaterialVariant* mat, int layer)
+{
+    SELF(mat);
+    return self->layer(layer);
+}
+
+materialsnapshot_t* MaterialVariant_AttachSnapshot(MaterialVariant* mat, materialsnapshot_t* snapshot)
+{
+    if(!snapshot)
+        LegacyCore_FatalError("MaterialVariant_AttachSnapshot: Attempted with invalid snapshot argument (=NULL).");
+    SELF(mat);
+    return &self->attachSnapshot(*snapshot);
+}
+
+materialsnapshot_t* MaterialVariant_DetachSnapshot(MaterialVariant* mat)
+{
+    SELF(mat);
+    return self->detachSnapshot();
+}
+
+materialsnapshot_t* MaterialVariant_Snapshot(const MaterialVariant* mat)
+{
+    SELF_CONST(mat);
+    return self->snapshot();
+}
+
+int MaterialVariant_SnapshotPrepareFrame(const MaterialVariant* mat)
+{
+    SELF_CONST(mat);
+    return self->snapshotPrepareFrame();
+}
+
+void MaterialVariant_SetSnapshotPrepareFrame(MaterialVariant* mat, int frame)
+{
+    SELF(mat);
+    self->setSnapshotPrepareFrame(frame);
+}
+
+MaterialVariant* MaterialVariant_TranslationNext(MaterialVariant* mat)
+{
+    SELF(mat);
+    return TOPUBLIC(self->translationNext());
+}
+
+MaterialVariant* MaterialVariant_TranslationCurrent(MaterialVariant* mat)
+{
+    SELF(mat);
+    return TOPUBLIC(self->translationCurrent());
+}
+
+float MaterialVariant_TranslationPoint(MaterialVariant* mat)
+{
+    SELF(mat);
+    return self->translationPoint();
+}
+
+void MaterialVariant_SetTranslation(MaterialVariant* mat,
+    MaterialVariant* current, MaterialVariant* next)
+{
+    SELF(mat);
+    self->setTranslation(TOINTERNAL(current), TOINTERNAL(next));
+}
+
+void MaterialVariant_SetTranslationPoint(MaterialVariant* mat, float inter)
+{
+    SELF(mat);
+    self->setTranslationPoint(inter);
 }

@@ -480,7 +480,7 @@ mapSurfaceMaterialSpec(int wrapS, int wrapT)
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
-    coord_t wallLength, materialvariant_t* material, float const texOffset[2],
+    coord_t wallLength, MaterialVariant* material, float const texOffset[2],
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t* vis = R_NewVisSprite();
@@ -700,10 +700,10 @@ static float getSnapshots(const materialsnapshot_t** msA,
     // Smooth Texture Animation?
     if(msB)
     {
-        materialvariant_t* variant = Materials_ChooseVariant(mat, spec, false, false);
+        MaterialVariant* variant = Materials_ChooseVariant(mat, spec, false, false);
         if(MaterialVariant_TranslationCurrent(variant) != MaterialVariant_TranslationNext(variant))
         {
-            materialvariant_t* matB = MaterialVariant_TranslationNext(variant);
+            MaterialVariant* matB = MaterialVariant_TranslationNext(variant);
 
             // Prepare the inter texture.
             *msB = Materials_PrepareVariant(matB);

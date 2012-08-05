@@ -134,7 +134,7 @@ public:
      * Retrieve the value of an identified @a analysis data pointer.
      * @return  Associated data pointer value.
      **/
-    void* analysis(texture_analysisid_t analysis) const;
+    void* analysisDataPointer(texture_analysisid_t analysis) const;
 
     /**
      * Set the value of an identified @a analysis data pointer. Ownership of

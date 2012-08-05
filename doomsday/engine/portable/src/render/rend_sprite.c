@@ -916,7 +916,7 @@ void Rend_DrawMasked(void)
     }
 }
 
-static materialvariant_t* chooseSpriteMaterial(const rendspriteparams_t* p)
+static MaterialVariant* chooseSpriteMaterial(const rendspriteparams_t* p)
 {
     assert(p);
 
@@ -946,7 +946,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     boolean restoreZ = false;
     coord_t spriteCenter[3];
     coord_t surfaceNormal[3];
-    materialvariant_t* mat = NULL;
+    MaterialVariant* mat = NULL;
     const materialsnapshot_t* ms = NULL;
     float s = 1, t = 1; ///< Bottom right coords.
     int i;

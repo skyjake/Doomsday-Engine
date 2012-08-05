@@ -1,5 +1,5 @@
 /**
- * @file material.c
+ * @file material.cpp
  * Logical material. @ingroup resource
  *
  * @authors Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
@@ -32,7 +32,7 @@
 
 typedef struct material_variantlist_node_s {
     struct material_variantlist_node_s* next;
-    materialvariant_t* variant;
+    MaterialVariant* variant;
 } material_variantlist_node_t;
 
 static void destroyVariants(material_t* mat)
@@ -375,7 +375,7 @@ void Material_SetShinyMaskTexture(material_t* mat, Texture* tex)
     mat->_shinyMaskTex = tex;
 }
 
-materialvariant_t* Material_AddVariant(material_t* mat, materialvariant_t* variant)
+MaterialVariant* Material_AddVariant(material_t* mat, MaterialVariant* variant)
 {
     material_variantlist_node_t* node;
     assert(mat);
@@ -399,7 +399,7 @@ materialvariant_t* Material_AddVariant(material_t* mat, materialvariant_t* varia
 }
 
 int Material_IterateVariants(material_t* mat,
-    int (*callback)(materialvariant_t* variant, void* paramaters), void* paramaters)
+    int (*callback)(MaterialVariant* variant, void* paramaters), void* paramaters)
 {
     int result = 0;
     assert(mat);

@@ -404,10 +404,10 @@ static void destroyVariantSpecifications(void)
 
 typedef struct {
     const materialvariantspecification_t* spec;
-    materialvariant_t* chosen;
+    MaterialVariant* chosen;
 } choosevariantworker_parameters_t;
 
-static int chooseVariantWorker(materialvariant_t* variant, void* parameters)
+static int chooseVariantWorker(MaterialVariant* variant, void* parameters)
 {
     choosevariantworker_parameters_t* p = (choosevariantworker_parameters_t*) parameters;
     const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
@@ -422,7 +422,7 @@ static int chooseVariantWorker(materialvariant_t* variant, void* parameters)
     return false; // Continue iteration.
 }
 
-static materialvariant_t* chooseVariant(material_t* mat, const materialvariantspecification_t* spec)
+static MaterialVariant* chooseVariant(material_t* mat, const materialvariantspecification_t* spec)
 {
     choosevariantworker_parameters_t params;
     DENG2_ASSERT(mat && spec);
@@ -1151,7 +1151,7 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
 }
 
 /// @return  Same as @a snapshot for caller convenience.
-const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
+const materialsnapshot_t* updateMaterialSnapshot(MaterialVariant* variant,
     materialsnapshot_t* snapshot)
 {
     static struct materialtextureunit_s {
@@ -1309,7 +1309,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     return snapshot;
 }
 
-const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, boolean updateSnapshot)
+const materialsnapshot_t* Materials_PrepareVariant2(MaterialVariant* variant, boolean updateSnapshot)
 {
     // Acquire the snapshot we are interested in.
     materialsnapshot_t* snapshot = MaterialVariant_Snapshot(variant);
@@ -1339,7 +1339,7 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
     return updateMaterialSnapshot(variant, snapshot);
 }
 
-const materialsnapshot_t* Materials_PrepareVariant(materialvariant_t* variant)
+const materialsnapshot_t* Materials_PrepareVariant(MaterialVariant* variant)
 {
     return Materials_PrepareVariant2(variant, false/*do not force a snapshot update*/);
 }
@@ -1407,10 +1407,10 @@ const struct materialvariantspecification_s* Materials_VariantSpecificationForCo
                                              mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-materialvariant_t* Materials_ChooseVariant(material_t* mat,
+MaterialVariant* Materials_ChooseVariant(material_t* mat,
     const materialvariantspecification_t* spec, boolean smoothed, boolean canCreate)
 {
-    materialvariant_t* variant;
+    MaterialVariant* variant;
 
     errorIfNotInited("Materials::ChooseVariant");
 
@@ -1429,10 +1429,10 @@ materialvariant_t* Materials_ChooseVariant(material_t* mat,
     return variant;
 }
 
-static int printVariantInfo(materialvariant_t* variant, void* parameters)
+static int printVariantInfo(MaterialVariant* variant, void* parameters)
 {
     int* variantIdx = (int*)parameters;
-    materialvariant_t* next = MaterialVariant_TranslationNext(variant);
+    MaterialVariant* next = MaterialVariant_TranslationNext(variant);
     int i, layers = Material_LayerCount(MaterialVariant_GeneralCase(variant));
     DENG2_ASSERT(variantIdx);
 
@@ -1441,7 +1441,7 @@ static int printVariantInfo(materialvariant_t* variant, void* parameters)
     // Print translation info:
     if(Material_HasTranslation(MaterialVariant_GeneralCase(variant)))
     {
-        materialvariant_t* cur = MaterialVariant_TranslationCurrent(variant);
+        MaterialVariant* cur = MaterialVariant_TranslationCurrent(variant);
         float inter = MaterialVariant_TranslationPoint(variant);
         Uri* curUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(cur)));
         Str* curPath = Uri_ToString(curUri);
@@ -1801,7 +1801,7 @@ boolean Materials_IsPrecacheAnimGroup(int groupNum)
 }
 
 #if 0
-static int clearVariantTranslationWorker(materialvariant_t* variant, void* /*parameters*/)
+static int clearVariantTranslationWorker(MaterialVariant* variant, void* /*parameters*/)
 {
     MaterialVariant_SetTranslation(variant, variant, variant);
     return 0; // Continue iteration.
@@ -1818,11 +1818,11 @@ typedef struct {
     material_t* current, *next;
 } setmaterialtranslationworker_parameters_t;
 
-static int setVariantTranslationWorker(materialvariant_t* variant, void* parameters)
+static int setVariantTranslationWorker(MaterialVariant* variant, void* parameters)
 {
     setmaterialtranslationworker_parameters_t* p = (setmaterialtranslationworker_parameters_t*) parameters;
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
-    materialvariant_t* current, *next;
+    MaterialVariant* current, *next;
     DENG2_ASSERT(p);
 
     current = Materials_ChooseVariant(p->current, spec, false, true/*create if necessary*/);
@@ -1831,7 +1831,7 @@ static int setVariantTranslationWorker(materialvariant_t* variant, void* paramet
     return 0; // Continue iteration.
 }
 
-static int setVariantTranslationPointWorker(materialvariant_t* variant, void* parameters)
+static int setVariantTranslationPointWorker(MaterialVariant* variant, void* parameters)
 {
     float* interPtr = (float*)parameters;
     DENG2_ASSERT(interPtr);
@@ -1918,7 +1918,7 @@ static void animateAnimGroups(void)
     }
 }
 
-static int resetVariantGroupAnimWorker(materialvariant_t* mat, void* /*parameters*/)
+static int resetVariantGroupAnimWorker(MaterialVariant* mat, void* /*parameters*/)
 {
     MaterialVariant_ResetAnim(mat);
     return 0; // Continue iteration.

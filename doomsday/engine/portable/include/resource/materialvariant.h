@@ -23,6 +23,7 @@
 #define LIBDENG_RESOURCE_MATERIALVARIANT_H
 
 #include "r_data.h"
+#include "materials.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,83 +88,152 @@ typedef struct materialvariant_layer_s {
     short tics;
 } materialvariant_layer_t;
 
-typedef struct materialvariant_s materialvariant_t;
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
-materialvariant_t* MaterialVariant_New(struct material_s* generalCase,
+#ifdef __cplusplus
+namespace de {
+
+class MaterialVariant
+{
+public:
+    MaterialVariant(material_t& generalCase, const materialvariantspecification_t& spec,
+                    const ded_material_t& def);
+    ~MaterialVariant();
+
+    /**
+     * Process a system tick event.
+     * @param ticLength  Length of the tick in seconds.
+     */
+    void ticker(timespan_t time);
+
+    /**
+     * Reset the staged animation point for this Material.
+     */
+    void resetAnim();
+
+    /// @return  Material from which this variant is derived.
+    material_t* generalCase() const { return material; }
+
+    /// @return  MaterialVariantSpecification from which this variant is derived.
+    const materialvariantspecification_t* spec() const { return varSpec; }
+
+    /**
+     * Retrieve a handle for a staged animation layer form this variant.
+     * @param layer  Index of the layer to retrieve.
+     * @return  MaterialVariantLayer for the specified layer index.
+     */
+    const materialvariant_layer_t* layer(int layer);
+
+    /**
+     * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
+     * @return  Same as @a materialSnapshot for caller convenience.
+     */
+    materialsnapshot_t& attachSnapshot(materialsnapshot_t& materialSnapshot);
+
+    /**
+     * Detach MaterialSnapshot data from this. Ownership of the data is relinquished to the caller.
+     */
+    materialsnapshot_t* detachSnapshot();
+
+    /// @return  MaterialSnapshot data associated with this.
+    materialsnapshot_t* snapshot() const { return snapshot_; }
+
+    /// @return  Frame count when the snapshot was last prepared/updated.
+    int snapshotPrepareFrame() const { return snapshotPrepareFrame_; }
+
+    /**
+     * Change the frame when the snapshot was last prepared/updated.
+     * @param frame  Frame to mark the snapshot with.
+     */
+    void setSnapshotPrepareFrame(int frame);
+
+    /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
+    MaterialVariant* translationNext();
+
+    /// @return  Translated 'current' MaterialVariant if set, else this.
+    MaterialVariant* translationCurrent();
+
+    /// @return  Translation position [0..1]
+    float translationPoint();
+
+    /**
+     * Change the translation target for this variant.
+     *
+     * @param current  Translated 'current' MaterialVariant.
+     * @param next  Translated 'next' (or target) MaterialVariant.
+     */
+    void setTranslation(MaterialVariant* current, MaterialVariant* next);
+
+    /**
+     * Change the translation point for this variant.
+     * @param inter  Translation point.
+     */
+    void setTranslationPoint(float inter);
+
+private:
+    /// Superior Material of which this is a derivative.
+    material_t* material;
+
+    /// For "smoothed" Material animation:
+    bool hasTranslation;
+    MaterialVariant* current;
+    MaterialVariant* next;
+    float inter;
+
+    /// Specification used to derive this variant.
+    const materialvariantspecification_t* varSpec;
+
+    /// Cached copy of current state if any.
+    materialsnapshot_t* snapshot_;
+
+    /// Frame count when the snapshot was last prepared/updated.
+    int snapshotPrepareFrame_;
+
+    materialvariant_layer_t layers[MATERIALVARIANT_MAXLAYERS];
+};
+
+} // namespace de
+
+extern "C" {
+#endif
+
+/**
+ * C wrapper API:
+ */
+
+struct materialvariant_s; // The materialvariant instance (opaque).
+typedef struct materialvariant_s MaterialVariant;
+
+MaterialVariant* MaterialVariant_New(struct material_s* generalCase,
     const materialvariantspecification_t* spec);
+void MaterialVariant_Delete(MaterialVariant* mat);
 
-void MaterialVariant_Delete(materialvariant_t* mat);
+void MaterialVariant_Ticker(MaterialVariant* mat, timespan_t time);
 
-/**
- * Process a system tick event.
- * @param ticLength  Length of the tick in seconds.
- */
-void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time);
+void MaterialVariant_ResetAnim(MaterialVariant* mat);
 
-/**
- * Reset the staged animation point for this Material.
- */
-void MaterialVariant_ResetAnim(materialvariant_t* mat);
+material_t* MaterialVariant_GeneralCase(MaterialVariant* mat);
+const materialvariantspecification_t* MaterialVariant_Spec(const MaterialVariant* mat);
+const materialvariant_layer_t* MaterialVariant_Layer(MaterialVariant* mat, int layer);
 
-/// @return  Material from which this variant is derived.
-struct material_s* MaterialVariant_GeneralCase(materialvariant_t* mat);
+materialsnapshot_t* MaterialVariant_AttachSnapshot(MaterialVariant* mat, materialsnapshot_t* materialSnapshot);
+materialsnapshot_t* MaterialVariant_DetachSnapshot(MaterialVariant* mat);
+materialsnapshot_t* MaterialVariant_Snapshot(const MaterialVariant* mat);
 
-/// @return  MaterialVariantSpecification from which this variant is derived.
-const materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat);
+int MaterialVariant_SnapshotPrepareFrame(const MaterialVariant* mat);
+void MaterialVariant_SetSnapshotPrepareFrame(MaterialVariant* mat, int frame);
 
-/**
- * Retrieve a handle for a staged animation layer form this variant.
- * @param layer  Index of the layer to retrieve.
- * @return  MaterialVariantLayer for the specified layer index.
- */
-const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int layer);
+MaterialVariant* MaterialVariant_TranslationNext(MaterialVariant* mat);
+MaterialVariant* MaterialVariant_TranslationCurrent(MaterialVariant* mat);
 
-/**
- * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
- * @return  Same as @a materialSnapshot for caller convenience.
- */
-materialsnapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, materialsnapshot_t* materialSnapshot);
+float MaterialVariant_TranslationPoint(MaterialVariant* mat);
 
-/**
- * Detach MaterialSnapshot data from this. Ownership of the data is relinquished to the caller.
- */
-materialsnapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat);
+void MaterialVariant_SetTranslation(MaterialVariant* mat,
+    MaterialVariant* current, MaterialVariant* next);
 
-/// @return  MaterialSnapshot data associated with this.
-materialsnapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat);
-
-/// @return  Frame count when the snapshot was last prepared/updated.
-int MaterialVariant_SnapshotPrepareFrame(const materialvariant_t* mat);
-
-/**
- * Change the frame when the snapshot was last prepared/updated.
- * @param frame  Frame to mark the snapshot with.
- */
-void MaterialVariant_SetSnapshotPrepareFrame(materialvariant_t* mat, int frame);
-
-/// @return  Translated 'next' (or target) MaterialVariant if set, else this.
-materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat);
-
-/// @return  Translated 'current' MaterialVariant if set, else this.
-materialvariant_t* MaterialVariant_TranslationCurrent(materialvariant_t* mat);
-
-/// @return  Translation position [0..1]
-float MaterialVariant_TranslationPoint(materialvariant_t* mat);
-
-/**
- * Change the translation target for this variant.
- *
- * @param current  Translated 'current' MaterialVariant.
- * @param next  Translated 'next' (or target) MaterialVariant.
- */
-void MaterialVariant_SetTranslation(materialvariant_t* mat,
-    materialvariant_t* current, materialvariant_t* next);
-
-/**
- * Change the translation point for this variant.
- * @param inter  Translation point.
- */
-void MaterialVariant_SetTranslationPoint(materialvariant_t* mat, float inter);
+void MaterialVariant_SetTranslationPoint(MaterialVariant* mat, float inter);
 
 #ifdef __cplusplus
 } // extern "C"

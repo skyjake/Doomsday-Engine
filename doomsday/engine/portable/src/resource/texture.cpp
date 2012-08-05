@@ -24,7 +24,9 @@
 #include <cstring>
 
 #include "de_base.h"
-#include "gl_texmanager.h"
+#if _DEBUG
+#  include "gl_texmanager.h" // For GL_PrintTextureVariantSpecification()
+#endif
 #include "texturevariant.h"
 #include "texture.h"
 #include <de/Error>
@@ -142,7 +144,7 @@ void de::Texture::setSize(const Size2Raw& newSize)
     /// @todo Update any Materials (and thus Surfaces) which reference this.
 }
 
-void* de::Texture::analysis(texture_analysisid_t analysisId) const
+void* de::Texture::analysisDataPointer(texture_analysisid_t analysisId) const
 {
     DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
     return analyses[analysisId];
@@ -159,7 +161,7 @@ void de::Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void* 
         ddstring_t* path = Uri_ToString(uri);
         LOG_AS("Texture::attachAnalysis");
         LOG_WARNING("Image analysis #%i already present for \"%s\", will replace.")
-            << int(analysisId), Str_Text(path);
+            << int(analysisId) << Str_Text(path);
         Str_Delete(path);
         Uri_Delete(uri);
 #endif
@@ -255,10 +257,10 @@ TextureVariant* Texture_AddVariant(Texture* tex, TextureVariant* variant)
     return variant;
 }
 
-void* Texture_AnalysisDataPointer(const Texture* tex, texture_analysisid_t analysis)
+void* Texture_AnalysisDataPointer(const Texture* tex, texture_analysisid_t analysisId)
 {
     SELF_CONST(tex);
-    return self->analysis(analysis);
+    return self->analysisDataPointer(analysisId);
 }
 
 void Texture_SetAnalysisDataPointer(Texture* tex, texture_analysisid_t analysis, void* data)
