@@ -2187,8 +2187,11 @@ D_CMD(Help)
     Con_Printf("End            Jump to the end of the buffer.\n");
     Con_Printf("PageUp/Down    Scroll up/down a couple of lines.\n");
     Con_Printf("\n");
-    Con_Printf("Type \"listcmds\" to see a list of available commands.\n");
-    Con_Printf("Type \"help (what)\" to see information about (what).\n");
+    Con_Printf("Getting started:\n");
+    Con_Printf("Enter \"help (what)\" for information about (what).\n");
+    Con_Printf("Enter \"listcmds\"  to list available commands.\n");
+    Con_Printf("Enter \"listgames\" to list installed games and their status.\n");
+    Con_Printf("Enter \"listvars\"  to list available variables.\n");
     Con_PrintRuler();
     return true;
 }
