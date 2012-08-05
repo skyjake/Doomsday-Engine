@@ -305,6 +305,12 @@ int Texture_Height(const Texture* tex)
     return self->height();
 }
 
+const Size2Raw* Texture_Size(const Texture* tex)
+{
+    SELF_CONST(tex);
+    return &self->size();
+}
+
 void Texture_SetHeight(Texture* tex, int newHeight)
 {
     SELF(tex);

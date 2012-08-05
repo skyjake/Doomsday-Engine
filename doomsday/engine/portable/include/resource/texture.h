@@ -88,6 +88,12 @@ public:
 
     ~Texture();
 
+    /// @return  @c true iff this texture instance is flagged as "custom".
+    bool isCustom() const { return !!(flags & Custom); }
+
+    /// Change the "custom" status of this texture instance.
+    void flagCustom(bool yes);
+
     textureid_t primaryBind() const { return primaryBindId; }
 
     void setPrimaryBind(textureid_t bindId);
@@ -110,12 +116,6 @@ public:
      */
     void setUserDataPointer(void* userData);
 
-    /// Destroy all prepared variants owned by this texture.
-    void clearVariants();
-
-    /// @return  Number of variants for this texture.
-    uint variantCount() const;
-
     /**
      * Add a new prepared variant to the list of resources for this Texture.
      * Texture takes ownership of the variant.
@@ -123,6 +123,12 @@ public:
      * @param variant  Variant instance to add to the resource list.
      */
     de::TextureVariant& addVariant(de::TextureVariant& variant);
+
+    /// @return  Number of variants for this texture.
+    uint variantCount() const;
+
+    /// Destroy all prepared variants owned by this texture.
+    void clearVariants();
 
     /**
      * Retrieve the value of an identified @a analysis data pointer.
@@ -143,22 +149,14 @@ public:
      */
     void setAnalysisDataPointer(texture_analysisid_t analysis, void* data);
 
-    /// @return  @c true iff this texture instance is flagged as "custom".
-    bool isCustom() const { return !!(flags & Custom); }
+    /// @return  Logical width (not necessarily the same as pixel width).
+    int width() const;
 
-    void flagCustom(bool yes);
+    /// @return  Logical height (not necessarily the same as pixel height).
+    int height() const;
 
     /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
     const Size2Raw& size() const { return dimensions; }
-
-    /**
-     * Change logical pixel dimensions.
-     * @param size  New size.
-     */
-    void setSize(const Size2Raw& size);
-
-    /// @return  Logical width (not necessarily the same as pixel width).
-    int width() const;
 
     /**
      * Change logical width.
@@ -166,14 +164,17 @@ public:
      */
     void setWidth(int width);
 
-    /// @return  Logical height (not necessarily the same as pixel height).
-    int height() const;
-
     /**
      * Change logical height.
      * @param height  Height in logical pixels.
      */
     void setHeight(int height);
+
+    /**
+     * Change logical pixel dimensions.
+     * @param size  New size.
+     */
+    void setSize(const Size2Raw& size);
 
     /**
      * Provides access to the list of variant textures for efficent traversals.
@@ -192,7 +193,7 @@ private:
     /// User data associated with this texture.
     void* userData;
 
-    /// Dimensions in logical pixels (not necessarily the same as pixel dimensions).
+    /// Dimensions in logical pixels.
     Size2Raw dimensions;
 
     /// Table of analyses object ptrs, used for various purposes depending
@@ -232,11 +233,12 @@ void Texture_SetAnalysisDataPointer(Texture* tex, texture_analysisid_t analysis,
 boolean Texture_IsCustom(const Texture* tex);
 void Texture_FlagCustom(Texture* tex, boolean yes);
 
-void Texture_SetSize(Texture* tex, const Size2Raw* size);
 int Texture_Width(const Texture* tex);
-void Texture_SetWidth(Texture* tex, int width);
 int Texture_Height(const Texture* tex);
+const Size2Raw* Texture_Size(const Texture* tex);
+void Texture_SetWidth(Texture* tex, int width);
 void Texture_SetHeight(Texture* tex, int height);
+void Texture_SetSize(Texture* tex, const Size2Raw* size);
 
 /**
  * Iterate over all derived TextureVariants, making a callback for each.
