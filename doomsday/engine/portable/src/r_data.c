@@ -1261,7 +1261,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         info->id = id;
         info->flags.isCustom = Texture_IsCustom(tex);
 
-        { averagealpha_analysis_t* aa = (averagealpha_analysis_t*)Texture_Analysis(tex, TA_ALPHA);
+        { averagealpha_analysis_t* aa = (averagealpha_analysis_t*)Texture_AnalysisDataPointer(tex, TA_ALPHA);
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
         }
 

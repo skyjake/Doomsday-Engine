@@ -755,7 +755,7 @@ static void addLuminous(mobj_t* mo)
     ms = Materials_Prepare(mat, spec, true);
 
     pl = (const pointlight_analysis_t*)
-        Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+        Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
     if(!pl)
         Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
@@ -988,7 +988,7 @@ static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
         if(!(ms->glowing > .001f)) return true; // Continue iteration.
 
         avgColorAmplified = (const averagecolor_analysis_t*)
-            Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
+            Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
         if(!avgColorAmplified)
             Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 

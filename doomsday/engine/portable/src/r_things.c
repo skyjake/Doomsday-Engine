@@ -747,7 +747,7 @@ float R_ShadowStrength(mobj_t* mo)
         {
             // Ensure we've prepared this.
             const materialsnapshot_t* ms = Materials_Prepare(mat, spriteMaterialSpec(), true);
-            const averagealpha_analysis_t* aa = (const averagealpha_analysis_t*) Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
+            const averagealpha_analysis_t* aa = (const averagealpha_analysis_t*) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
             float weightedSpriteAlpha;
             if(!aa) Con_Error("R_ShadowStrength: Texture id:%u has no TA_ALPHA analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
@@ -1538,7 +1538,7 @@ void R_ProjectSprite(mobj_t* mo)
         ms = Materials_Prepare(mat, spec, true);
 
         pl = (const pointlight_analysis_t*)
-            Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+            Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
         if(!pl)
             Con_Error("R_ProjectSprite: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 

@@ -327,6 +327,18 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
     return node;
 }
 
+static void clearTextureAnalyses(Texture* tex)
+{
+    DENG2_ASSERT(tex);
+    for(uint i = uint(TEXTURE_ANALYSIS_FIRST); i < uint(TEXTURE_ANALYSIS_COUNT); ++i)
+    {
+        texture_analysisid_t analysis = texture_analysisid_t(i);
+        void* data = Texture_AnalysisDataPointer(tex, analysis);
+        if(data) M_Free(data);
+        Texture_SetAnalysisDataPointer(tex, analysis, 0);
+    }
+}
+
 static void destroyTexture(Texture* tex)
 {
     DENG2_ASSERT(tex);
@@ -369,6 +381,8 @@ static void destroyTexture(Texture* tex)
                         de::String("Internal error, invalid namespace id %1.")
                             .arg((int)Textures_Namespace(Textures_Id(tex))));
     }
+
+    clearTextureAnalyses(tex);
     Texture_Delete(tex);
 }
 

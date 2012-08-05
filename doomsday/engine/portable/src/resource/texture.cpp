@@ -48,7 +48,6 @@ de::Texture::Texture(textureid_t bindId, const Size2Raw& size, void* _userData)
 de::Texture::~Texture()
 {
     clearVariants();
-    destroyAnalyses();
 }
 
 void de::Texture::clearVariants()
@@ -75,14 +74,6 @@ void de::Texture::clearVariants()
     variants.clear();
 }
 
-void de::Texture::destroyAnalyses()
-{
-    for(int i = 0; i < TEXTURE_ANALYSIS_COUNT; ++i)
-    {
-        if(analyses[i]) M_Free(analyses[i]);
-    }
-}
-
 void de::Texture::setPrimaryBind(textureid_t bindId)
 {
     primaryBindId = bindId;
@@ -93,9 +84,9 @@ void de::Texture::setUserDataPointer(void* newUserData)
     if(userData)
     {
         textureid_t textureId = Textures_Id(reinterpret_cast<struct texture_s*>(this));
-        LOG_AS("Texture::AttachUserData");
-        LOG_WARNING("User data is already present for [%p id:%i], it will be replaced.")
-                << (void*)this, int(textureId);
+        LOG_AS("Texture::setUserDataPointer");
+        LOG_DEBUG("User data is already present for [%p id:%i], it will be replaced.")
+            << (void*)this, int(textureId);
     }
     userData = newUserData;
 }
@@ -157,12 +148,12 @@ void* de::Texture::analysis(texture_analysisid_t analysisId) const
     return analyses[analysisId];
 }
 
-void de::Texture::attachAnalysis(texture_analysisid_t analysisId, void* data)
+void de::Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void* data)
 {
     DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
-#if _DEBUG
     if(analyses[analysisId])
     {
+#if _DEBUG
         textureid_t textureId = Textures_Id(reinterpret_cast<struct texture_s*>(this));
         Uri* uri = Textures_ComposeUri(textureId);
         ddstring_t* path = Uri_ToString(uri);
@@ -171,17 +162,9 @@ void de::Texture::attachAnalysis(texture_analysisid_t analysisId, void* data)
             << int(analysisId), Str_Text(path);
         Str_Delete(path);
         Uri_Delete(uri);
-    }
 #endif
+    }
     analyses[analysisId] = data;
-}
-
-void* de::Texture::detachAnalysis(texture_analysisid_t analysisId)
-{
-    DENG2_ASSERT(VALID_TEXTURE_ANALYSISID(analysisId));
-    void* detachedAnalysis = analyses[analysisId];
-    analyses[analysisId] = NULL;
-    return detachedAnalysis;
 }
 
 /**
@@ -272,22 +255,16 @@ TextureVariant* Texture_AddVariant(Texture* tex, TextureVariant* variant)
     return variant;
 }
 
-void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis, void* data)
-{
-    SELF(tex);
-    self->attachAnalysis(analysis, data);
-}
-
-void* Texture_DetachAnalysis(Texture* tex, texture_analysisid_t analysis)
-{
-    SELF(tex);
-    return self->detachAnalysis(analysis);
-}
-
-void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis)
+void* Texture_AnalysisDataPointer(const Texture* tex, texture_analysisid_t analysis)
 {
     SELF_CONST(tex);
     return self->analysis(analysis);
+}
+
+void Texture_SetAnalysisDataPointer(Texture* tex, texture_analysisid_t analysis, void* data)
+{
+    SELF(tex);
+    self->setAnalysisDataPointer(analysis, data);
 }
 
 boolean Texture_IsCustom(const Texture* tex)
@@ -306,7 +283,7 @@ void Texture_SetSize(Texture* tex, const Size2Raw* newSize)
 {
     SELF(tex);
     if(!newSize)
-        LegacyCore_FatalError("Texture_SetSize: Attempted with invalid size argument (=NULL).");
+        LegacyCore_FatalError("Texture_SetSize: Attempted with invalid newSize argument (=NULL).");
     self->setSize(*newSize);
 }
 

@@ -99,14 +99,14 @@ public:
     void* userDataPointer() const;
 
     /**
-     * Set the user data pointer value. Ownership of the data is not given
-     * to this instance.
+     * Set the user data pointer value. Ownership of the data is not given to
+     * this instance.
      *
      * @note If already set the old value will be replaced (so if it points
      *       to some dynamically constructed data/resource it is the caller's
      *       responsibility to release it beforehand).
      *
-     * @param userData  Data to be attached.
+     * @param userData  User data pointer value.
      */
     void setUserDataPointer(void* userData);
 
@@ -125,25 +125,25 @@ public:
     de::TextureVariant& addVariant(de::TextureVariant& variant);
 
     /**
-     * Attach new analysis data. If data is already present it will be replaced.
-     * Ownership is given to the Texture.
+     * Retrieve the value of an identified @a analysis data pointer.
+     * @return  Associated data pointer value.
+     **/
+    void* analysis(texture_analysisid_t analysis) const;
+
+    /**
+     * Set the value of an identified @a analysis data pointer. Ownership of
+     * the data is not given to this instance.
+     *
+     * @note If already set the old value will be replaced (so if it points
+     *       to some dynamically constructed data/resource it is the caller's
+     *       responsibility to release it beforehand).
      *
      * @param analysis  Identifier of the data being attached.
      * @param data  Data to be attached.
      */
-    void attachAnalysis(texture_analysisid_t analysis, void* data);
+    void setAnalysisDataPointer(texture_analysisid_t analysis, void* data);
 
-    /**
-     * Detach any associated analysis data. Ownership is relinquished to caller.
-     *
-     * @return  Associated data for the specified analysis identifier.
-     */
-    void* detachAnalysis(texture_analysisid_t analysis);
-
-    /// @return  Associated data for the specified analysis identifier.
-    void* analysis(texture_analysisid_t analysis) const;
-
-    /// @return  @c true iff the data associated with @a tex does not originate from the current game.
+    /// @return  @c true iff this texture instance is flagged as "custom".
     bool isCustom() const { return !!(flags & Custom); }
 
     void flagCustom(bool yes);
@@ -179,9 +179,6 @@ public:
      * Provides access to the list of variant textures for efficent traversals.
      */
     const Variants& variantList() const { return variants; }
-
-private:
-    void destroyAnalyses();
 
 private:
     Flags flags;
@@ -229,9 +226,8 @@ void Texture_ClearVariants(Texture* tex);
 uint Texture_VariantCount(const Texture* tex);
 struct texturevariant_s* Texture_AddVariant(Texture* tex, struct texturevariant_s* variant);
 
-void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis, void* data);
-void* Texture_DetachAnalysis(Texture* tex, texture_analysisid_t analysis);
-void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis);
+void* Texture_AnalysisDataPointer(const Texture* tex, texture_analysisid_t analysis);
+void Texture_SetAnalysisDataPointer(Texture* tex, texture_analysisid_t analysis, void* data);
 
 boolean Texture_IsCustom(const Texture* tex);
 void Texture_FlagCustom(Texture* tex, boolean yes);
