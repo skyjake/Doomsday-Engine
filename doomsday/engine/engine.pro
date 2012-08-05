@@ -592,9 +592,9 @@ SOURCES += \
     portable/src/render/rend_sky.c \
     portable/src/render/rend_sprite.c \
     portable/src/render/vignette.c \
-    portable/src/resource/material.c \
+    portable/src/resource/material.cpp \
     portable/src/resource/materials.cpp \
-    portable/src/resource/materialvariant.c \
+    portable/src/resource/materialvariant.cpp \
     portable/src/resource/texture.cpp \
     portable/src/resource/textures.cpp \
     portable/src/resource/texturevariant.cpp \
