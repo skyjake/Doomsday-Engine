@@ -644,16 +644,16 @@ materialnamespaceid_t Materials_ParseNamespace(const char* str)
 
 const Str* Materials_NamespaceName(materialnamespaceid_t id)
 {
-    static const Str namespaces[1+MATERIALNAMESPACE_COUNT] = {
-        /* No namespace name */ { "" },
-        /* MN_SYSTEM */         { MN_SYSTEM_NAME },
-        /* MN_FLATS */          { MN_FLATS_NAME },
-        /* MN_TEXTURES */       { MN_TEXTURES_NAME },
-        /* MN_SPRITES */        { MN_SPRITES_NAME }
+    static const de::Str namespaces[1+MATERIALNAMESPACE_COUNT] = {
+        /* No namespace name */ "",
+        /* MN_SYSTEM */         MN_SYSTEM_NAME,
+        /* MN_FLATS */          MN_FLATS_NAME,
+        /* MN_TEXTURES */       MN_TEXTURES_NAME,
+        /* MN_SPRITES */        MN_SPRITES_NAME
     };
     if(VALID_MATERIALNAMESPACEID(id))
-        return namespaces + 1 + (id - MATERIALNAMESPACE_FIRST);
-    return namespaces + 0;
+        return namespaces[1 + (id - MATERIALNAMESPACE_FIRST)];
+    return namespaces[0];
 }
 
 materialnamespaceid_t Materials_Namespace(materialid_t id)

@@ -90,7 +90,7 @@ void Materials_ClearDefinitionLinks(void);
 enum materialnamespaceid_e Materials_ParseNamespace(const char* str);
 
 /// @return  Name associated with the identified @a namespaceId else a zero-length string.
-const ddstring_t* Materials_NamespaceName(enum materialnamespaceid_e namespaceId);
+const Str* Materials_NamespaceName(enum materialnamespaceid_e namespaceId);
 
 /// @return  Total number of unique Materials in the collection.
 uint Materials_Size(void);
