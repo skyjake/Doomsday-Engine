@@ -502,6 +502,7 @@ ol.jumplist li {
     padding-bottom: .6em;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
+    line-height: 160%;
 }
 
 /*----------------------- Footer ----------------------*/
@@ -513,6 +514,7 @@ ol.jumplist li {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: center;
     margin-top: 1em;
+    margin-bottom: 1em;
 }
 
 p.disclaimer a {
