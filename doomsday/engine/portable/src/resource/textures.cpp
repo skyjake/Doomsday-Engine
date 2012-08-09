@@ -507,7 +507,7 @@ texturenamespaceid_t Textures_ParseNamespace(const char* str)
         { TN_MODELREFLECTIONSKINS_NAME, sizeof(TN_MODELREFLECTIONSKINS_NAME)-1, TN_MODELREFLECTIONSKINS },
         { TN_LIGHTMAPS_NAME,    sizeof(TN_LIGHTMAPS_NAME)-1,    TN_LIGHTMAPS },
         { TN_FLAREMAPS_NAME,    sizeof(TN_FLAREMAPS_NAME)-1,    TN_FLAREMAPS },
-        { NULL }
+        { NULL,                 0,                              TN_INVALID }
     };
 
     // Special case: zero-length string means "any namespace".
@@ -701,8 +701,8 @@ static void rebuildUniqueIdMap(texturenamespaceid_t namespaceId)
     if(!tn->uniqueIdMap && tn->uniqueIdMapSize)
     {
         throw de::Error("Textures::rebuildUniqueIdMap",
-                        de::String().sprintf("Failed on (re)allocation of %1 bytes resizing the map.")
-                            .arg((unsigned long) sizeof *tn->uniqueIdMap * tn->uniqueIdMapSize));
+                        de::String("Failed on (re)allocation of %1 bytes resizing the map.")
+                            .arg(sizeof(*tn->uniqueIdMap) * tn->uniqueIdMapSize));
     }
 
     if(tn->uniqueIdMapSize)

@@ -88,7 +88,7 @@ void de::Texture::setUserDataPointer(void* newUserData)
         textureid_t textureId = Textures_Id(reinterpret_cast<struct texture_s*>(this));
         LOG_AS("Texture::setUserDataPointer");
         LOG_DEBUG("User data is already present for [%p id:%i], it will be replaced.")
-            << (void*)this, int(textureId);
+            << (void*)this << int(textureId);
     }
     userData = newUserData;
 }
