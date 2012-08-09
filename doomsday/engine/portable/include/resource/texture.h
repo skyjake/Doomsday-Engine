@@ -51,9 +51,10 @@ typedef enum {
 #endif
 
 #ifdef __cplusplus
-namespace de {
 
 #include <list>
+
+namespace de {
 
 /**
  * Texture
