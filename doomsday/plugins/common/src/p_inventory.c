@@ -206,10 +206,10 @@ static boolean useItem(playerinventory_t* inv, inventoryitemtype_t type,
     }
 
     /**
-     * \kludge
+     * @attention Kludge:
      * Action ptrs do not currently support return values. For now, rather
-     * than rewrite each invitem use routine, use a global var to get the
-     * result. Ugly.
+     * than rewrite each use routine, use a global var to get the result.
+     * Ugly.
      */
     didUseItem = false;
     item->action(players[plrnum].plr->mo);

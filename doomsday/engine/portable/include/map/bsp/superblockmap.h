@@ -254,7 +254,7 @@ private:
     /**
      * SuperBlock objects must be constructed within the context of an
      * owning SuperBlockmap. Instantiation outside of this context is not
-     * permitted. @see SuperBlockmap
+     * permitted. @ref SuperBlockmap
      */
     SuperBlock(SuperBlockmap& blockmap);
     SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical);

@@ -1566,7 +1566,7 @@ static void Rend_RenderPlane(planetype_t type, coord_t height,
 }
 
 /**
- * @defgroup rendHEdgeFlags
+ * @defgroup rendHEdgeFlags Rend Half-edge Flags
  * Flags for rendHEdgeSection()
  */
 ///@{

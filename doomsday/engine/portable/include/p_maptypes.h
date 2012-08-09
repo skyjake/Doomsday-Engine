@@ -126,7 +126,7 @@ typedef struct hedge_s {
 typedef struct bspleaf_s {
     runtime_mapdata_header_t header;
     struct hedge_s*     hedge; /// First HEdge in this leaf.
-    int                 flags; /// @ref BspLeafFlags.
+    int                 flags; /// @ref bspLeafFlags.
     uint                index; /// Unique. Set when saving the BSP.
     int                 addSpriteCount; /// Frame number of last R_AddSprites.
     int                 validCount;

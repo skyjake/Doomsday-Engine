@@ -148,7 +148,7 @@ typedef struct centralend_s {
 /**
  * The path inside the zip might be mapped to another virtual location.
  *
- * \todo This is clearly implemented in the wrong place. Path mapping
+ * @todo This is clearly implemented in the wrong place. Path mapping
  *       should be done at LumpDirectory level.
  *
  * Data files (pk3, zip, lmp, wad, deh) in the root are mapped to Data/Game/Auto.
@@ -220,8 +220,8 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         resourceclass_t rclass;
         ddstring_t mapped;
 
-        /// \kludge
-        // Some files require special handling...
+        // Certain resource files require special handling.
+        // Something of a kludge, at this level.
         switch(type)
         {
         case RT_DEH: // Treat DeHackEd patches as packages so they are mapped to Data.
@@ -243,7 +243,7 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
             rclass = F_DefaultResourceClassForType(type);
             break;
         }
-        /// < kludge end
+        // Kludge end
 
         Str_Init(&mapped);
         switch(rclass)

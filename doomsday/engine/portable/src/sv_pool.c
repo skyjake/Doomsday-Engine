@@ -748,7 +748,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
 }
 
 /**
- * @eturn               @c true, if the result is not void.
+ * @return @c true= the result is not void.
  */
 boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
                                byte doUpdate)

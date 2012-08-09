@@ -126,7 +126,7 @@ static PathDirectoryNode* getDirectoryNodeForBindId(fontid_t id)
 static fontid_t findBindIdForDirectoryNode(const PathDirectoryNode* node)
 {
     uint i;
-    /// \optimize (Low priority) do not use a linear search.
+    /// @todo Optimize (Low priority): Do not use a linear search.
     for(i = 0; i < fontIdMapSize; ++i)
     {
         if(fontIdMap[i] == node)

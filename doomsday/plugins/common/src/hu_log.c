@@ -289,9 +289,9 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     guidata_log_message_t* msg;
     assert(obj->type == GUI_LOG);
 
-    /// \kludge Do not draw message logs while the map title is being displayed.
+    // Do not draw message logs while the map title is being displayed.
+    // Rather a kludge...
     if(cfg.mapTitle && actualMapTime < 6 * 35) return;
-    /// kludge end.
 
     if(!pvisMsgCount) return;
 

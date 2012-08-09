@@ -2591,13 +2591,13 @@ static boolean isInList(void** list, size_t len, void* elm)
 
 int findSpriteOwner(thinker_t* th, void* context)
 {
-    int                 i;
-    mobj_t*             mo = (mobj_t*) th;
-    spritedef_t*        sprDef = (spritedef_t*) context;
+    mobj_t* mo = (mobj_t*) th;
+    spritedef_t* sprDef = (spritedef_t*) context;
 
     if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
     {
-        //// \optimize Traverses the entire state list!
+        //// @todo Optimize: traverses the entire state list!
+        int i;
         for(i = 0; i < defs.count.states.num; ++i)
         {
             if(stateOwners[i] != &mobjInfo[mo->type])
@@ -2611,53 +2611,61 @@ int findSpriteOwner(thinker_t* th, void* context)
     return false; // Keep looking...
 }
 
-/// \note Part of the Doomsday public API.
+void R_CacheSpritesForState(int stateIndex, const materialvariantspecification_t* spec)
+{
+    spritedef_t* sprDef;
+    state_t* state;
+    int j;
+
+    if(stateIndex < 0 || stateIndex >= defs.count.states.num) return;
+    if(!spec) return;
+
+    state = &states[stateIndex];
+    sprDef = &sprites[state->sprite];
+
+    for(j = 0; j < sprDef->numFrames; ++j)
+    {
+        spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
+        int k;
+        for(k = 0; k < 8; ++k)
+        {
+            Materials_Precache(sprFrame->mats[k], spec, true);
+        }
+    }
+}
+
+/// @note Part of the Doomsday public API.
 void R_PrecacheMobjNum(int num)
 {
     const materialvariantspecification_t* spec;
+    int i;
 
-    if(novideo || !((useModels && precacheSkins) || precacheSprites))
-        return;
-
-    if(num < 0 || num >= defs.count.mobjs.num)
-        return;
+    if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
+    if(num < 0 || num >= defs.count.mobjs.num) return;
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    assert(spec);
+                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                    1, -2, -1, true, true, true, false);
 
-    /// \optimize Traverses the entire state list!
-    { int i;
+    /// @todo Optimize: Traverses the entire state list!
     for(i = 0; i < defs.count.states.num; ++i)
     {
-        state_t* state;
-
-        if(stateOwners[i] != &mobjInfo[num])
-            continue;
-        state = &states[i];
+        if(stateOwners[i] != &mobjInfo[num]) continue;
 
         R_PrecacheModelsForState(i);
 
         if(precacheSprites)
         {
-            spritedef_t* sprDef = &sprites[state->sprite];
-            int j;
-            for(j = 0; j < sprDef->numFrames; ++j)
-            {
-                spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
-                int k;
-                for(k = 0; k < 8; ++k)
-                    Materials_Precache(sprFrame->mats[k], spec, true);
-            }
+            R_CacheSpritesForState(i, spec);
         }
-    }}
+        /// @todo What about sounds?
+    }
 }
 
 void R_PrecacheForMap(void)
 {
     // Don't precache when playing demo.
-    if(isDedicated || playback)
-        return;
+    if(isDedicated || playback) return;
 
     // Precaching from 100 to 200.
     Con_SetProgress(100);

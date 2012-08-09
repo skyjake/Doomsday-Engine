@@ -539,7 +539,7 @@ void R_InitSprites(void)
     buildSpriteRotations();
 
     /**
-     * \kludge
+     * @attention Kludge:
      * As the games still rely upon the sprite definition indices matching
      * those of the sprite name table, use the latter to re-index the sprite
      * record database.
@@ -549,7 +549,7 @@ void R_InitSprites(void)
      * present in their game-side sprite index tables. Similarly, DeHackED
      * does not allow for new sprite frames to be added anyway).
      *
-     * \todo
+     * @todo
      * This unobvious requirement should be broken somehow and perhaps even
      * get rid of the sprite name definitions entirely.
      */
@@ -573,7 +573,7 @@ void R_InitSprites(void)
             M_Free(list);
         }
     }
-    /// \kludge end
+    // Kludge end
 
     // We are now done with the sprite records.
     BlockSet_Delete(spriteRecordBlockSet);

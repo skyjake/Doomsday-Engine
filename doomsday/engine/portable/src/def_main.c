@@ -659,34 +659,45 @@ int Def_GetTextNumForName(const char* name)
 }
 
 /**
- * Escape sequences are un-escaped (\\n, \\r, \\t, \\s, \\_).
+ * The following escape sequences are un-escaped:
+ * <pre>
+ *     \n   Newline
+ *     \r   Carriage return
+ *     \t   Tab
+ *     \_   Space
+ *     \s   Space
+ * </pre>
  */
-void Def_InitTextDef(ddtext_t* txt, char* str)
+static void Def_InitTextDef(ddtext_t* txt, char* str)
 {
-    char*               out, *in;
+    char* out, *in;
 
-    if(!str)
-        str = ""; // Handle null pointers with "".
+    // Handle null pointers with "".
+    if(!str) str = "";
+
     txt->text = M_Calloc(strlen(str) + 1);
     for(out = txt->text, in = str; *in; out++, in++)
     {
         if(*in == '\\')
         {
             in++;
-            if(*in == 'n')
-                *out = '\n'; // Newline.
-            else if(*in == 'r')
-                *out = '\r'; // Carriage return.
-            else if(*in == 't')
-                *out = '\t'; // Tab.
-            else if(*in == '_' || *in == 's')
-                *out = ' '; // Space.
+
+            if(*in == 'n')      *out = '\n'; // Newline.
+            else if(*in == 'r') *out = '\r'; // Carriage return.
+            else if(*in == 't') *out = '\t'; // Tab.
+            else if(*in == '_'
+                 || *in == 's') *out = ' '; // Space.
             else
+            {
                 *out = *in;
-            continue;
+            }
         }
-        *out = *in;
+        else
+        {
+            *out = *in;
+        }
     }
+
     // Adjust buffer to fix exactly.
     txt->text = M_Realloc(txt->text, strlen(txt->text) + 1);
 }

@@ -47,7 +47,7 @@ extern "C" {
 
 #define DED_MAX_SUB_MODELS          8
 
-#define DED_MAX_MATERIAL_LAYERS     1   ///< \temp
+#define DED_MAX_MATERIAL_LAYERS     1   ///< Maximum number of material layers.
 
 #define DED_PTCGEN_ANY_MOBJ_TYPE    -2  ///< Particle generator applies to ANY mobj type.
 

@@ -818,14 +818,16 @@ static boolean generateHaloForVisSprite(const vissprite_t* spr, boolean primary)
     if(spr->data.flare.isDecoration)
     {
         /**
-         * \kludge surface decorations do not yet persist over frames,
-         * thus we do not smoothly occlude their flares. Instead, we will
-         * have to put up with them instantly appearing/disappearing.
+         * Surface decorations do not yet persist over frames, so we do
+         * not smoothly occlude their flares. Instead, we will have to
+         * put up with them instantly appearing/disappearing.
          */
         occlussionFactor = (LO_IsClipped(spr->data.flare.lumIdx, viewPlayer - ddPlayers)? 0 : 1);
     }
     else
+    {
         occlussionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
+    }
 
     return H_RenderHalo(spr->origin[VX], spr->origin[VY], spr->origin[VZ],
                         spr->data.flare.size,

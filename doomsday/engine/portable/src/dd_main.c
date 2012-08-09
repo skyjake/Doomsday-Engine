@@ -603,7 +603,7 @@ static void locateGameStartupResources(Game* game)
 
     if(theGame != game)
     {
-        /// \kludge Temporarily switch Game.
+        /// @attention Kludge: Temporarily switch Game.
         theGame = game;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
@@ -628,7 +628,7 @@ static void locateGameStartupResources(Game* game)
 
     if(theGame != oldGame)
     {
-        /// \kludge Restore the old Game.
+        // Kludge end - Restore the old Game.
         theGame = oldGame;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();

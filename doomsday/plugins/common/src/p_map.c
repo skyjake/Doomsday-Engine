@@ -621,7 +621,11 @@ int PIT_CheckThing(mobj_t* thing, void* data)
         }
 #endif
 #if __JDOOM__
-        if(tmThing->damage == DDMAXINT) //// \kludge to support old save games.
+        /// @attention Kludge:
+        /// Older save versions did not serialize the damage property,
+        /// so here we take the damage from the current Thing definition.
+        /// @fixme Do this during map state deserialization.
+        if(tmThing->damage == DDMAXINT)
             damage = tmThing->info->damage;
         else
 #endif
@@ -856,7 +860,11 @@ int PIT_CheckThing(mobj_t* thing, void* data)
             S_StartSound(SFX_RIPSLOP, tmThing);
 #endif
 #if __JDOOM__
-            if(tmThing->damage == DDMAXINT) //// \kludge to support old save games.
+            /// @attention Kludge:
+            /// Older save versions did not serialize the damage property,
+            /// so here we take the damage from the current Thing definition.
+            /// @fixme Do this during map state deserialization.
+            if(tmThing->damage == DDMAXINT)
                 damage = tmThing->info->damage;
             else
 #endif
@@ -879,7 +887,11 @@ int PIT_CheckThing(mobj_t* thing, void* data)
 
         // Do damage
 #if __JDOOM__
-        if(tmThing->damage == DDMAXINT) //// \kludge to support old save games.
+        /// @attention Kludge:
+        /// Older save versions did not serialize the damage property,
+        /// so here we take the damage from the current Thing definition.
+        /// @fixme Do this during map state deserialization.
+        if(tmThing->damage == DDMAXINT)
             damage = tmThing->info->damage;
         else
 #endif
@@ -919,13 +931,13 @@ int PIT_CheckThing(mobj_t* thing, void* data)
         NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
     }
 
-    // \kludge: Always treat blood as a solid.
+    // @fixme Kludge: Always treat blood as a solid.
     if(tmThing->type == MT_BLOOD)
         solid = true;
     else
         solid = (thing->flags & MF_SOLID) && !(thing->flags & MF_NOCLIP) &&
                 (tmThing->flags & MF_SOLID);
-    // \kludge: end.
+    // Kludge end.
 
 #if __JHEXEN__
     if(tmThing->player && tmThing->onMobj && solid)
