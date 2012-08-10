@@ -21,8 +21,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-
-#include "pathdirectory.h" // For PathDirectory_HashPathFragment()
+#if _DEBUG
+#  include "pathdirectory.h" // For PathDirectory_HashPathFragment()
+#endif
 #include "pathmap.h"
 
 static ushort PathMap_HashFragment(PathMap* pm, PathMapFragment* fragment)
