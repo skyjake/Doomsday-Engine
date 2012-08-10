@@ -61,7 +61,7 @@ struct MaterialBindInfo
 class MaterialBind
 {
 public:
-    MaterialBind(PathDirectoryNode* _direcNode, materialid_t id)
+    MaterialBind(de::PathDirectoryNode* _direcNode, materialid_t id)
         : direcNode(_direcNode), asocMaterial(0), guid(id), extInfo(0)
     {}
 
@@ -74,8 +74,8 @@ public:
     /// @return  Unique identifier associated with this.
     materialid_t id() const { return guid; }
 
-    /// @return  PathDirectory node associated with this.
-    PathDirectoryNode* directoryNode() const { return direcNode; }
+    /// @return  de::PathDirectory node associated with this.
+    de::PathDirectoryNode* directoryNode() const { return direcNode; }
 
     /// @return  Material associated with this else @c NULL.
     material_t* material() const { return asocMaterial; }
@@ -123,7 +123,7 @@ public:
 
 private:
     /// This binding's node in the directory.
-    PathDirectoryNode* direcNode;
+    de::PathDirectoryNode* direcNode;
 
     /// Material associated with this.
     material_t* asocMaterial;
@@ -220,7 +220,7 @@ static uint bindingIdMapSize;
 static MaterialBind** bindingIdMap;
 
 // Material namespaces contain mappings between names and MaterialBind instances.
-static PathDirectory* namespaces[MATERIALNAMESPACE_COUNT];
+static de::PathDirectory* namespaces[MATERIALNAMESPACE_COUNT];
 
 void Materials_Register(void)
 {
@@ -238,13 +238,13 @@ static void errorIfNotInited(const char* callerName)
                                     .arg(callerName));
 }
 
-static inline PathDirectory* getDirectoryForNamespaceId(materialnamespaceid_t id)
+static inline de::PathDirectory* getDirectoryForNamespaceId(materialnamespaceid_t id)
 {
     DENG2_ASSERT(VALID_MATERIALNAMESPACEID(id));
     return namespaces[id-MATERIALNAMESPACE_FIRST];
 }
 
-static materialnamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
+static materialnamespaceid_t namespaceIdForDirectory(de::PathDirectory* pd)
 {
     DENG2_ASSERT(pd);
     for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
@@ -258,19 +258,19 @@ static materialnamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
                     de::String().sprintf("Failed to determine id for directory %p.", (void*)pd));
 }
 
-static materialnamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
+static materialnamespaceid_t namespaceIdForDirectoryNode(const de::PathDirectoryNode* node)
 {
-    return namespaceIdForDirectory(PathDirectoryNode_Directory(node));
+    return namespaceIdForDirectory(node->directory());
 }
 
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static Str* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
+static Str* composePathForDirectoryNode(const de::PathDirectoryNode* node, char delimiter)
 {
-    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
+    return node->directory()->composePath(node, Str_New(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
-static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
+static Uri* composeUriForDirectoryNode(const de::PathDirectoryNode* node)
 {
     const Str* namespaceName = Materials_NamespaceName(namespaceIdForDirectoryNode(node));
     Str* path = composePathForDirectoryNode(node, MATERIALS_PATH_DELIMITER);
@@ -349,7 +349,6 @@ static materialvariantspecification_t* findVariantSpecification(
     const materialvariantspecification_t* tpl, boolean canCreate)
 {
     DENG2_ASSERT(initedOk && tpl);
-    {
     MaterialVariantSpecificationListNode* node;
     for(node = variantSpecs; node; node = node->next)
     {
@@ -359,7 +358,6 @@ static materialvariantspecification_t* findVariantSpecification(
     if(!canCreate)
         return NULL;
     return linkVariantSpecification(copyVariantSpecification(tpl));
-    }
 }
 
 static materialvariantspecification_t* getVariantSpecificationForContext(
@@ -368,9 +366,9 @@ static materialvariantspecification_t* getVariantSpecificationForContext(
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     static materialvariantspecification_t tpl;
+
     DENG2_ASSERT(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)));
-    {
-    texturevariantspecification_t* primarySpec;
+
     texturevariantusagecontext_t primaryContext;
     switch(mc)
     {
@@ -382,12 +380,13 @@ static materialvariantspecification_t* getVariantSpecificationForContext(
     case MC_SKYSPHERE:      primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
     default:                primaryContext = TC_UNKNOWN;            break;
     }
-    primarySpec = GL_TextureVariantSpecificationForContext(primaryContext, flags,
-        border, tClass, tMap, wrapS, wrapT, minFilter, magFilter, anisoFilter, mipmapped,
-        gammaCorrection, noStretch, toAlpha);
+
+    texturevariantspecification_t* primarySpec =
+            GL_TextureVariantSpecificationForContext(primaryContext, flags,
+                border, tClass, tMap, wrapS, wrapT, minFilter, magFilter, anisoFilter, mipmapped,
+                gammaCorrection, noStretch, toAlpha);
     applyVariantSpecification(&tpl, mc, primarySpec);
     return findVariantSpecification(&tpl, true);
-    }
 }
 
 static void destroyVariantSpecifications(void)
@@ -477,14 +476,14 @@ static void updateMaterialBindInfo(MaterialBind* mb, boolean canCreate)
 
 static boolean newMaterialBind(const Uri* uri, material_t* material)
 {
-    PathDirectory* matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(Str_Text(Uri_Scheme(uri))));
-    PathDirectoryNode* node;
+    de::PathDirectory* matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(Str_Text(Uri_Scheme(uri))));
+    de::PathDirectoryNode* node;
     MaterialBind* mb;
 
-    node = PathDirectory_Insert(matDirectory, Str_Text(Uri_Path(uri)), MATERIALS_PATH_DELIMITER);
+    node = matDirectory->insert(Str_Text(Uri_Path(uri)), MATERIALS_PATH_DELIMITER);
 
     // Is this a new binding?
-    mb = (MaterialBind*) PathDirectoryNode_UserData(node);
+    mb = reinterpret_cast<MaterialBind*>(node->userData());
     if(!mb)
     {
         // Acquire a new unique identifier for this binding.
@@ -497,7 +496,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
                             de::String("Failed on allocation of %1 bytes for new MaterialBind.")
                                 .arg((unsigned long) sizeof *mb));
         }
-        PathDirectoryNode_AttachUserData(node, mb);
+        node->attachUserData(mb);
 
         if(material)
         {
@@ -569,7 +568,7 @@ void Materials_Init(void)
 
     for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
     {
-        namespaces[i] = PathDirectory_New();
+        namespaces[i] = new de::PathDirectory();
     }
 
     initedOk = true;
@@ -590,13 +589,6 @@ static void destroyMaterials(void)
     materialCount = 0;
 }
 
-static int clearBinding(PathDirectoryNode* node, void* /*parameters*/)
-{
-    MaterialBind* mb = (MaterialBind*)PathDirectoryNode_DetachUserData(node);
-    if(mb) delete mb;
-    return 0; // Continue iteration.
-}
-
 static void destroyBindings(void)
 {
     int i;
@@ -604,14 +596,24 @@ static void destroyBindings(void)
 
     for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
     {
-        PathDirectory_Iterate(namespaces[i], PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, clearBinding);
-        PathDirectory_Delete(namespaces[i]), namespaces[i] = NULL;
+        if(!namespaces[i]) continue;
+
+        de::PathDirectory::NodeHash* nodes = namespaces[i]->nodeHash(PT_LEAF);
+        if(nodes)
+        {
+            DENG2_FOR_EACH(nodeIt, *nodes, de::PathDirectory::NodeHash::const_iterator)
+            {
+                MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->detachUserData());
+                if(mb) delete mb;
+            }
+        }
+        delete namespaces[i]; namespaces[i] = NULL;
     }
 
     // Clear the binding index/map.
     if(bindingIdMap)
     {
-        M_Free(bindingIdMap), bindingIdMap = NULL;
+        M_Free(bindingIdMap); bindingIdMap = NULL;
         bindingIdMapSize = 0;
     }
     bindingCount = 0;
@@ -667,9 +669,9 @@ materialnamespaceid_t Materials_Namespace(materialid_t id)
     return namespaceIdForDirectoryNode(bind->directoryNode());
 }
 
-static int clearBindingDefinitionLinks(const PathDirectoryNode* node, void* /*parameters*/)
+static void clearBindingDefinitionLinks(MaterialBind* mb)
 {
-    MaterialBind* mb = (MaterialBind*)PathDirectoryNode_UserData(node);
+    DENG2_ASSERT(mb);
     MaterialBindInfo* info = mb->info();
     if(info)
     {
@@ -678,7 +680,6 @@ static int clearBindingDefinitionLinks(const PathDirectoryNode* node, void* /*pa
         info->ptcgenDefs[0]        = info->ptcgenDefs[1]        = NULL;
         info->reflectionDefs[0]    = info->reflectionDefs[1]    = NULL;
     }
-    return 0; // Continue iteration.
 }
 
 void Materials_ClearDefinitionLinks(void)
@@ -694,8 +695,21 @@ void Materials_ClearDefinitionLinks(void)
     for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
     {
         materialnamespaceid_t namespaceId = materialnamespaceid_t(i);
-        PathDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
-        PathDirectory_Iterate_Const(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, clearBindingDefinitionLinks);
+        de::PathDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
+        if(!matDirectory) continue;
+
+        de::PathDirectory::NodeHash* nodes = matDirectory->nodeHash(PT_LEAF);
+        if(nodes)
+        {
+            DENG2_FOR_EACH(nodeIt, *nodes, de::PathDirectory::NodeHash::const_iterator)
+            {
+                MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
+                if(mb)
+                {
+                    clearBindingDefinitionLinks(mb);
+                }
+            }
+        }
     }
 }
 
@@ -806,17 +820,18 @@ static boolean validateMaterialUri(const Uri* uri, int flags, boolean quiet=fals
 /**
  * Given a directory and path, search the Materials collection for a match.
  *
- * @param directory  Namespace-specific PathDirectory to search in.
+ * @param directory  Namespace-specific de::PathDirectory to search in.
  * @param path  Path of the material to search for.
  * @return  Found Material else @c NULL
  */
-static MaterialBind* findMaterialBindForPath(PathDirectory* matDirectory, const char* path)
+static MaterialBind* findMaterialBindForPath(de::PathDirectory* matDirectory, const char* path)
 {
-    PathDirectoryNode* node = PathDirectory_Find(matDirectory,
-        PCF_NO_BRANCH|PCF_MATCH_FULL, path, MATERIALS_PATH_DELIMITER);
+    DENG2_ASSERT(matDirectory);
+    de::PathDirectoryNode* node = matDirectory->find(PCF_NO_BRANCH|PCF_MATCH_FULL,
+                                                     path, MATERIALS_PATH_DELIMITER);
     if(node)
     {
-        return (MaterialBind*) PathDirectoryNode_UserData(node);
+        return reinterpret_cast<MaterialBind*>(node->userData());
     }
     return NULL; // Not found.
 }
@@ -1389,11 +1404,11 @@ uint Materials_Size(void)
 
 uint Materials_Count(materialnamespaceid_t namespaceId)
 {
-    PathDirectory* matDirectory;
+    de::PathDirectory* matDirectory;
     if(!VALID_MATERIALNAMESPACEID(namespaceId) || !Materials_Size()) return 0;
     matDirectory = getDirectoryForNamespaceId(namespaceId);
     if(!matDirectory) return 0;
-    return PathDirectory_Size(matDirectory);
+    return matDirectory->size();
 }
 
 const struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
@@ -1521,46 +1536,15 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
 }
 
 /**
- * @todo A horridly inefficent algorithm. This should be implemented in PathDirectory
+ * @todo A horridly inefficent algorithm. This should be implemented in de::PathDirectory
  * itself and not force users of this class to implement this sort of thing themselves.
  * However this is only presently used for the material search/listing console commands
  * so is not hugely important right now.
  */
-typedef struct {
-    char delimiter;
-    const char* like;
-    int idx;
-    PathDirectoryNode** storage;
-} collectdirectorynodeworker_parameters_t;
-
-static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* parameters)
+static de::PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespaceId,
+    const char* like, int* count, de::PathDirectoryNode** storage)
 {
-    collectdirectorynodeworker_parameters_t* p = (collectdirectorynodeworker_parameters_t*)parameters;
-
-    if(p->like && p->like[0])
-    {
-        Str* path = composePathForDirectoryNode(node, p->delimiter);
-        int delta = strnicmp(Str_Text(path), p->like, strlen(p->like));
-        Str_Delete(path);
-        if(delta) return 0; // Continue iteration.
-    }
-
-    if(p->storage)
-    {
-        p->storage[p->idx++] = node;
-    }
-    else
-    {
-        ++p->idx;
-    }
-
-    return 0; // Continue iteration.
-}
-
-static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespaceId,
-    const char* like, int* count, PathDirectoryNode** storage)
-{
-    collectdirectorynodeworker_parameters_t p;
+    const char delimiter = MATERIALS_PATH_DELIMITER;
     materialnamespaceid_t fromId, toId;
 
     if(VALID_MATERIALNAMESPACEID(namespaceId))
@@ -1575,42 +1559,64 @@ static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespace
         toId   = MATERIALNAMESPACE_LAST;
     }
 
-    p.delimiter = MATERIALS_PATH_DELIMITER;
-    p.like = like;
-    p.idx = 0;
-    p.storage = storage;
+    int idx = 0;
     for(uint i = uint(fromId); i <= uint(toId); ++i)
     {
         materialnamespaceid_t iterId = materialnamespaceid_t(i);
-        PathDirectory* matDirectory = getDirectoryForNamespaceId(iterId);
-        PathDirectory_Iterate2(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
-            PATHDIRECTORY_NOHASH, collectDirectoryNodeWorker, (void*)&p);
+        de::PathDirectory* matDirectory = getDirectoryForNamespaceId(iterId);
+        if(!matDirectory) continue;
+
+        de::PathDirectory::NodeHash* nodes = matDirectory->nodeHash(PT_LEAF);
+        if(nodes)
+        {
+            DENG2_FOR_EACH(nodeIt, *nodes, de::PathDirectory::NodeHash::const_iterator)
+            {
+                if(like && like[0])
+                {
+                    Str* path = composePathForDirectoryNode((*nodeIt), delimiter);
+                    int delta = strnicmp(Str_Text(path), like, strlen(like));
+                    Str_Delete(path);
+                    if(delta) continue; // Continue iteration.
+                }
+
+                if(storage)
+                {
+                    // Store mode.
+                    storage[idx++] = *nodeIt;
+                }
+                else
+                {
+                    // Count mode.
+                    ++idx;
+                }
+            }
+        }
     }
 
     if(storage)
     {
-        storage[p.idx] = 0; // Terminate.
-        if(count) *count = p.idx;
+        storage[idx] = 0; // Terminate.
+        if(count) *count = idx;
         return storage;
     }
 
-    if(p.idx == 0)
+    if(idx == 0)
     {
         if(count) *count = 0;
         return NULL;
     }
 
-    storage = (PathDirectoryNode**)M_Malloc(sizeof *storage * (p.idx+1));
+    storage = (de::PathDirectoryNode**)M_Malloc(sizeof *storage * (idx+1));
     if(!storage)
-        Con_Error("Materials::collectDirectoryNodes: Failed on allocation of %lu bytes for new PathDirectoryNode collection.", (unsigned long) (sizeof* storage * (p.idx+1)));
+        Con_Error("Materials::collectDirectoryNodes: Failed on allocation of %lu bytes for new de::PathDirectoryNode collection.", (unsigned long) (sizeof* storage * (idx+1)));
     return collectDirectoryNodes(namespaceId, like, count, storage);
 }
 
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
     // Decode paths before determining a lexicographical delta.
-    Str* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER));
-    Str* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER));
+    Str* a = Str_PercentDecode(composePathForDirectoryNode(*(const de::PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER));
+    Str* b = Str_PercentDecode(composePathForDirectoryNode(*(const de::PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER));
     int delta = stricmp(Str_Text(a), Str_Text(b));
     Str_Delete(b);
     Str_Delete(a);
@@ -1621,8 +1627,8 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     boolean printNamespace)
 {
     int numFoundDigits, numUidDigits, idx, count = 0;
-    PathDirectoryNode** foundMaterials = collectDirectoryNodes(namespaceId, like, &count, NULL);
-    PathDirectoryNode** iter;
+    de::PathDirectoryNode** foundMaterials = collectDirectoryNodes(namespaceId, like, &count, NULL);
+    de::PathDirectoryNode** iter;
 
     if(!foundMaterials) return 0;
 
@@ -1648,8 +1654,8 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     idx = 0;
     for(iter = foundMaterials; *iter; ++iter)
     {
-        const PathDirectoryNode* node = *iter;
-        MaterialBind* mb = (MaterialBind*)PathDirectoryNode_UserData(node);
+        const de::PathDirectoryNode* node = *iter;
+        MaterialBind* mb = reinterpret_cast<MaterialBind*>(node->userData());
         material_t* mat = mb->material();
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printMaterialOverview(mat, printNamespace);
@@ -2134,15 +2140,15 @@ D_CMD(PrintMaterialStats)
     for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
     {
         materialnamespaceid_t namespaceId = materialnamespaceid_t(i);
-        PathDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
+        de::PathDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
         uint size;
 
         if(!matDirectory) continue;
 
-        size = PathDirectory_Size(matDirectory);
+        size = matDirectory->size();
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Materials_NamespaceName(namespaceId)), size, size==1? "material":"materials");
-        PathDirectory_DebugPrintHashDistribution(matDirectory);
-        PathDirectory_DebugPrint(matDirectory, MATERIALS_PATH_DELIMITER);
+        de::PathDirectory::debugPrintHashDistribution(matDirectory);
+        de::PathDirectory::debugPrint(matDirectory, MATERIALS_PATH_DELIMITER);
     }
     return true;
 }
