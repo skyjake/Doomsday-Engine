@@ -56,7 +56,7 @@ struct TextureRecord
 struct TextureNamespace
 {
     /// PathDirectory containing mappings between names and unique texture records.
-    PathDirectory* directory;
+    de::PathDirectory* directory;
 
     /// LUT which translates namespace-unique-ids to their associated textureid_t (if any).
     /// Index with uniqueId - uniqueIdBase.
@@ -73,13 +73,13 @@ D_CMD(PrintTextureStats);
 #endif
 
 static int iterateDirectory(texturenamespaceid_t namespaceId,
-    int (*callback)(PathDirectoryNode* node, void* parameters), void* parameters);
+    int (*callback)(de::PathDirectoryNode* node, void* parameters), void* parameters);
 
 static Uri* emptyUri;
 
-// LUT which translates textureid_t to PathDirectoryNode*. Index with textureid_t-1
+// LUT which translates textureid_t to de::PathDirectoryNode*. Index with textureid_t-1
 static uint textureIdMapSize;
-static PathDirectoryNode** textureIdMap;
+static de::PathDirectoryNode** textureIdMap;
 
 // Texture namespaces contain mappings between names and TextureRecord instances.
 static TextureNamespace namespaces[TEXTURENAMESPACE_COUNT];
@@ -100,13 +100,13 @@ const char* TexSource_Name(TexSource source)
     return "none";
 }
 
-static inline PathDirectory* getDirectoryForNamespaceId(texturenamespaceid_t id)
+static inline de::PathDirectory* getDirectoryForNamespaceId(texturenamespaceid_t id)
 {
     DENG2_ASSERT(VALID_TEXTURENAMESPACEID(id));
     return namespaces[id-TEXTURENAMESPACE_FIRST].directory;
 }
 
-static texturenamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
+static texturenamespaceid_t namespaceIdForDirectory(de::PathDirectory* pd)
 {
     DENG2_ASSERT(pd);
     for(uint i = uint(TEXTURENAMESPACE_FIRST); i <= uint(TEXTURENAMESPACE_LAST); ++i)
@@ -126,13 +126,13 @@ static inline bool validTextureId(textureid_t id)
     return (id != NOTEXTUREID && id <= textureIdMapSize);
 }
 
-static PathDirectoryNode* directoryNodeForBindId(textureid_t id)
+static de::PathDirectoryNode* directoryNodeForBindId(textureid_t id)
 {
     if(!validTextureId(id)) return NULL;
     return textureIdMap[id-1/*1-based index*/];
 }
 
-static textureid_t findBindIdForDirectoryNode(const PathDirectoryNode* node)
+static textureid_t findBindIdForDirectoryNode(const de::PathDirectoryNode* node)
 {
     /// @optimize (Low priority) do not use a linear search.
     for(uint i = 0; i < textureIdMapSize; ++i)
@@ -143,19 +143,19 @@ static textureid_t findBindIdForDirectoryNode(const PathDirectoryNode* node)
     return NOTEXTUREID; // Not linked.
 }
 
-static inline texturenamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
+static inline texturenamespaceid_t namespaceIdForDirectoryNode(const de::PathDirectoryNode* node)
 {
-    return namespaceIdForDirectory(PathDirectoryNode_Directory(node));
+    return namespaceIdForDirectory(node->directory());
 }
 
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static inline Str* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
+static inline Str* composePathForDirectoryNode(const de::PathDirectoryNode* node, char delimiter)
 {
-    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
+    return node->directory()->composePath(node, Str_New(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
-static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
+static Uri* composeUriForDirectoryNode(const de::PathDirectoryNode* node)
 {
     const Str* namespaceName = Textures_NamespaceName(namespaceIdForDirectoryNode(node));
     Str* path = composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
@@ -166,7 +166,7 @@ static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
 }
 
 /// @pre textureIdMap has been initialized and is large enough!
-static void unlinkDirectoryNodeFromBindIdMap(const PathDirectoryNode* node)
+static void unlinkDirectoryNodeFromBindIdMap(const de::PathDirectoryNode* node)
 {
     textureid_t id = findBindIdForDirectoryNode(node);
     if(!validTextureId(id)) return; // Not linked.
@@ -174,10 +174,10 @@ static void unlinkDirectoryNodeFromBindIdMap(const PathDirectoryNode* node)
 }
 
 /// @pre uniqueIdMap has been initialized and is large enough!
-static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* /*parameters*/)
+static int linkRecordInUniqueIdMap(de::PathDirectoryNode* node, void* /*parameters*/)
 {
-    const TextureRecord* record = (TextureRecord*)PathDirectoryNode_UserData(node);
-    const texturenamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
+    const TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
+    const texturenamespaceid_t namespaceId = namespaceIdForDirectory(node->directory());
     TextureNamespace* tn = &namespaces[namespaceId-TEXTURENAMESPACE_FIRST];
     DENG2_ASSERT(record->uniqueId - tn->uniqueIdBase >= 0 && (unsigned)(record->uniqueId - tn->uniqueIdBase) < tn->uniqueIdMapSize);
     tn->uniqueIdMap[record->uniqueId - tn->uniqueIdBase] = findBindIdForDirectoryNode(node);
@@ -185,10 +185,10 @@ static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* /*parameters*/
 }
 
 /// @pre uniqueIdMap is large enough if initialized!
-static int unlinkRecordInUniqueIdMap(PathDirectoryNode* node, void* /*parameters*/)
+static int unlinkRecordInUniqueIdMap(de::PathDirectoryNode* node, void* /*parameters*/)
 {
-    const TextureRecord* record = (TextureRecord*)PathDirectoryNode_UserData(node);
-    const texturenamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
+    const TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
+    const texturenamespaceid_t namespaceId = namespaceIdForDirectory(node->directory());
     TextureNamespace* tn = &namespaces[namespaceId-TEXTURENAMESPACE_FIRST];
 
     // If the map is already considered 'dirty' do not unlink.
@@ -264,13 +264,13 @@ static bool validateTextureUri(const Uri* uri, int flags, bool quiet=false)
  *
  * @return  Found DirectoryNode else @c NULL
  */
-static PathDirectoryNode* findDirectoryNodeForPath(PathDirectory* texDirectory, const char* path)
+static de::PathDirectoryNode* findDirectoryNodeForPath(de::PathDirectory* texDirectory, const char* path)
 {
-    return PathDirectory_Find(texDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, TEXTURES_PATH_DELIMITER);
+    return texDirectory->find(PCF_NO_BRANCH|PCF_MATCH_FULL, path, TEXTURES_PATH_DELIMITER);
 }
 
 /// @pre @a uri has already been validated and is well-formed.
-static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
+static de::PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
 {
     if(!Str_CompareIgnoreCase(Uri_Scheme(uri), "urn"))
     {
@@ -293,7 +293,7 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
     texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(Uri_Scheme(uri)));
     const char* path = Str_Text(Uri_Path(uri));
 
-    PathDirectoryNode* node = NULL;
+    de::PathDirectoryNode* node = NULL;
     if(namespaceId != TN_ANY)
     {
         // Caller wants a texture in a specific namespace.
@@ -386,9 +386,9 @@ static void destroyTexture(Texture* tex)
     Texture_Delete(tex);
 }
 
-static int destroyBoundTexture(PathDirectoryNode* node, void* /*parameters*/)
+static int destroyBoundTexture(de::PathDirectoryNode* node, void* /*parameters*/)
 {
-    TextureRecord* record = (TextureRecord*)PathDirectoryNode_UserData(node);
+    TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
     if(record && record->texture)
     {
         destroyTexture(record->texture); record->texture = NULL;
@@ -396,9 +396,9 @@ static int destroyBoundTexture(PathDirectoryNode* node, void* /*parameters*/)
     return 0; // Continue iteration.
 }
 
-static int destroyRecord(PathDirectoryNode* node, void* /*parameters*/)
+static int destroyRecord(de::PathDirectoryNode* node, void* /*parameters*/)
 {
-    TextureRecord* record = (TextureRecord*)PathDirectoryNode_UserData(node);
+    TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
     if(record)
     {
         if(record->texture)
@@ -421,13 +421,13 @@ static int destroyRecord(PathDirectoryNode* node, void* /*parameters*/)
         unlinkDirectoryNodeFromBindIdMap(node);
         unlinkRecordInUniqueIdMap(node, NULL/*no parameters*/);
 
-        PathDirectoryNode_DetachUserData(node);
+        node->detachUserData();
         M_Free(record);
     }
     return 0; // Continue iteration.
 }
 
-static int destroyTextureAndRecord(PathDirectoryNode* node, void* parameters)
+static int destroyTextureAndRecord(de::PathDirectoryNode* node, void* parameters)
 {
     destroyBoundTexture(node, parameters);
     destroyRecord(node, parameters);
@@ -446,7 +446,7 @@ void Textures_Init(void)
     for(uint i = 0; i < TEXTURENAMESPACE_COUNT; ++i)
     {
         TextureNamespace* tn = &namespaces[i];
-        tn->directory = PathDirectory_New();
+        tn->directory = new de::PathDirectory();
         tn->uniqueIdBase = 0;
         tn->uniqueIdMapSize = 0;
         tn->uniqueIdMap = NULL;
@@ -462,9 +462,15 @@ void Textures_Shutdown(void)
     {
         TextureNamespace* tn = &namespaces[i];
 
-        PathDirectory_Iterate(tn->directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyRecord);
-        PathDirectory_Delete(tn->directory);
-        namespaces[i].directory = NULL;
+        de::PathDirectory::NodeHash* nodes = tn->directory->nodeHash(PT_LEAF);
+        if(nodes)
+        {
+            DENG2_FOR_EACH(nodeIt, *nodes, de::PathDirectory::NodeHash::iterator)
+            {
+                destroyRecord(reinterpret_cast<de::PathDirectoryNode*>(*nodeIt), NULL);
+            }
+        }
+        delete tn->directory; tn->directory = NULL;
 
         if(!tn->uniqueIdMap) continue;
         M_Free(tn->uniqueIdMap);
@@ -474,7 +480,7 @@ void Textures_Shutdown(void)
         tn->uniqueIdMapDirty = false;
     }
 
-    // Clear the bindId to PathDirectoryNode LUT.
+    // Clear the bindId to de::PathDirectoryNode LUT.
     if(textureIdMap)
     {
         M_Free(textureIdMap); textureIdMap = NULL;
@@ -561,9 +567,9 @@ uint Textures_Count(texturenamespaceid_t namespaceId)
 {
     if(!VALID_TEXTURENAMESPACEID(namespaceId) || !Textures_Size()) return 0;
 
-    PathDirectory* directory = getDirectoryForNamespaceId(namespaceId);
+    de::PathDirectory* directory = getDirectoryForNamespaceId(namespaceId);
     if(!directory) return 0;
-    return PathDirectory_Size(directory);
+    return directory->size();
 }
 
 void Textures_Clear(void)
@@ -625,9 +631,16 @@ void Textures_ClearNamespace(texturenamespaceid_t namespaceId)
     {
         texturenamespaceid_t iter = texturenamespaceid_t(i);
         TextureNamespace* tn = &namespaces[iter - TEXTURENAMESPACE_FIRST];
-        PathDirectory_Iterate(tn->directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH,
-                              destroyTextureAndRecord);
-        PathDirectory_Clear(tn->directory);
+
+        de::PathDirectory::NodeHash* nodes = tn->directory->nodeHash(PT_LEAF);
+        if(nodes)
+        {
+            DENG2_FOR_EACH(nodeIt, *nodes, de::PathDirectory::NodeHash::iterator)
+            {
+                destroyTextureAndRecord(reinterpret_cast<de::PathDirectoryNode*>(*nodeIt), NULL);
+            }
+        }
+        tn->directory->clear();
         tn->uniqueIdMapDirty = true;
     }
 }
@@ -641,8 +654,8 @@ void Textures_Release(Texture* tex)
 
 Texture* Textures_ToTexture(textureid_t id)
 {
-    PathDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord* record = (node? (TextureRecord*)PathDirectoryNode_UserData(node) : NULL);
+    de::PathDirectoryNode* node = directoryNodeForBindId(id);
+    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
     if(record)
     {
         return record->texture;
@@ -660,9 +673,9 @@ typedef struct {
     int minId, maxId;
 } finduniqueidbounds_params_t;
 
-static int findUniqueIdBounds(PathDirectoryNode* node, void* parameters)
+static int findUniqueIdBounds(de::PathDirectoryNode* node, void* parameters)
 {
-    const TextureRecord* record = (TextureRecord*)PathDirectoryNode_UserData(node);
+    const TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
     finduniqueidbounds_params_t* p = (finduniqueidbounds_params_t*)parameters;
     if(record->uniqueId < p->minId) p->minId = record->uniqueId;
     if(record->uniqueId > p->maxId) p->maxId = record->uniqueId;
@@ -744,11 +757,11 @@ textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet)
     }
 
     // Perform the search.
-    PathDirectoryNode* node = findDirectoryNodeForUri(uri);
+    de::PathDirectoryNode* node = findDirectoryNodeForUri(uri);
     if(node)
     {
         // If we have bound a texture - it can provide the id.
-        TextureRecord* record = (TextureRecord*)PathDirectoryNode_UserData(node);
+        TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
         DENG2_ASSERT(record);
         if(record->texture)
         {
@@ -805,12 +818,12 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
     }
 
     // Have we already created a binding for this?
-    PathDirectoryNode* node = findDirectoryNodeForUri(uri);
+    de::PathDirectoryNode* node = findDirectoryNodeForUri(uri);
     TextureRecord* record;
     textureid_t id;
     if(node)
     {
-        record = (TextureRecord*)PathDirectoryNode_UserData(node);
+        record = reinterpret_cast<TextureRecord*>(node->userData());
         DENG2_ASSERT(record);
         id = findBindIdForDirectoryNode(node);
     }
@@ -843,19 +856,18 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
         record->resourcePath = NULL;
         record->uniqueId     = uniqueId;
 
-        node = PathDirectory_Insert(tn->directory, Str_Text(&path), TEXTURES_PATH_DELIMITER);
-        PathDirectoryNode_AttachUserData(node, record);
+        node = tn->directory->insert(Str_Text(&path), TEXTURES_PATH_DELIMITER, record);
 
         // We'll need to rebuild the unique id map too.
         tn->uniqueIdMapDirty = true;
 
         id = textureIdMapSize + 1; // 1-based identfier
         // Link it into the id map.
-        textureIdMap = (PathDirectoryNode**) M_Realloc(textureIdMap, sizeof *textureIdMap * ++textureIdMapSize);
+        textureIdMap = (de::PathDirectoryNode**) M_Realloc(textureIdMap, sizeof *textureIdMap * ++textureIdMapSize);
         if(!textureIdMap)
         {
             throw de::Error("Textures::Declare",
-                            de::String("Failed on (re)allocation of %1 bytes enlarging bindId => PathDirectoryNode LUT.")
+                            de::String("Failed on (re)allocation of %1 bytes enlarging bindId => de::PathDirectoryNode LUT.")
                                 .arg((unsigned long) sizeof *textureIdMap * textureIdMapSize));
         }
         textureIdMap[id - 1] = node;
@@ -872,7 +884,7 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
     bool releaseTexture = false;
     if(record->uniqueId != uniqueId)
     {
-        texturenamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
+        texturenamespaceid_t namespaceId = namespaceIdForDirectory(node->directory());
         TextureNamespace* tn = &namespaces[namespaceId - TEXTURENAMESPACE_FIRST];
 
         record->uniqueId = uniqueId;
@@ -928,8 +940,8 @@ Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw*
         return NULL;
     }
 
-    PathDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord* record = (node? (TextureRecord*)PathDirectoryNode_UserData(node) : NULL);
+    de::PathDirectoryNode* node = directoryNodeForBindId(id);
+    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
     if(!record)
     {
         LOG_WARNING("Failed defining Texture #%u (invalid id), ignoring.") << id;
@@ -970,8 +982,8 @@ Texture* Textures_Create(textureid_t id, boolean custom, void* userData)
 
 int Textures_UniqueId(textureid_t id)
 {
-    PathDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord* record = (node? (TextureRecord*)PathDirectoryNode_UserData(node) : NULL);
+    de::PathDirectoryNode* node = directoryNodeForBindId(id);
+    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
     if(record)
     {
         return record->uniqueId;
@@ -985,8 +997,8 @@ int Textures_UniqueId(textureid_t id)
 
 const Uri* Textures_ResourcePath(textureid_t id)
 {
-    PathDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord* record = (node? (TextureRecord*)PathDirectoryNode_UserData(node) : NULL);
+    de::PathDirectoryNode* node = directoryNodeForBindId(id);
+    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
     if(record)
     {
         if(record->resourcePath)
@@ -1015,7 +1027,7 @@ textureid_t Textures_Id(Texture* tex)
 
 texturenamespaceid_t Textures_Namespace(textureid_t id)
 {
-    PathDirectoryNode* node = directoryNodeForBindId(id);
+    de::PathDirectoryNode* node = directoryNodeForBindId(id);
     if(node)
     {
         return namespaceIdForDirectoryNode(node);
@@ -1029,7 +1041,7 @@ texturenamespaceid_t Textures_Namespace(textureid_t id)
 
 Str* Textures_ComposePath(textureid_t id)
 {
-    PathDirectoryNode* node = directoryNodeForBindId(id);
+    de::PathDirectoryNode* node = directoryNodeForBindId(id);
     if(node)
     {
         return composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
@@ -1040,7 +1052,7 @@ Str* Textures_ComposePath(textureid_t id)
 
 Uri* Textures_ComposeUri(textureid_t id)
 {
-    PathDirectoryNode* node = directoryNodeForBindId(id);
+    de::PathDirectoryNode* node = directoryNodeForBindId(id);
     if(node)
     {
         return composeUriForDirectoryNode(node);
@@ -1054,8 +1066,8 @@ Uri* Textures_ComposeUri(textureid_t id)
 
 Uri* Textures_ComposeUrn(textureid_t id)
 {
-    PathDirectoryNode* node = directoryNodeForBindId(id);
-    const TextureRecord* record = (node? (TextureRecord*)PathDirectoryNode_UserData(node) : NULL);
+    de::PathDirectoryNode* node = directoryNodeForBindId(id);
+    const TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
     Uri* uri = Uri_New();
 
     if(record)
@@ -1087,12 +1099,12 @@ typedef struct {
     void* parameters;
 } iteratedirectoryworker_params_t;
 
-static int iterateDirectoryWorker(PathDirectoryNode* node, void* parameters)
+static int iterateDirectoryWorker(de::PathDirectoryNode* node, void* parameters)
 {
     DENG2_ASSERT(node && parameters);
 
     iteratedirectoryworker_params_t* p = (iteratedirectoryworker_params_t*)parameters;
-    TextureRecord* record = (TextureRecord*)PathDirectoryNode_UserData(node);
+    TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
     DENG2_ASSERT(record);
 
     if(p->definedCallback)
@@ -1123,7 +1135,7 @@ static int iterateDirectoryWorker(PathDirectoryNode* node, void* parameters)
 }
 
 static int iterateDirectory(texturenamespaceid_t namespaceId,
-    int (*callback)(PathDirectoryNode* node, void* parameters), void* parameters)
+    int (*callback)(de::PathDirectoryNode* node, void* parameters), void* parameters)
 {
     texturenamespaceid_t from, to;
 
@@ -1141,10 +1153,16 @@ static int iterateDirectory(texturenamespaceid_t namespaceId,
     for(uint i = uint(from); i <= uint(to); ++i)
     {
         texturenamespaceid_t iter = texturenamespaceid_t(i);
-        PathDirectory* directory = getDirectoryForNamespaceId(iter);
-        result = PathDirectory_Iterate2(directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH,
-                                        callback, parameters);
-        if(result) break;
+        de::PathDirectory* directory = getDirectoryForNamespaceId(iter);
+        const de::PathDirectory::NodeHash* nodes = directory->nodeHash(PT_LEAF);
+        if(nodes)
+        {
+            DENG2_FOR_EACH(nodeIt, *nodes, de::PathDirectory::NodeHash::const_iterator)
+            {
+                result = callback(*nodeIt, parameters);
+                if(result) break;
+            }
+        }
     }
     return result;
 }
@@ -1225,9 +1243,9 @@ static void printTextureInfo(Texture* tex)
     Uri_Delete(uri);
 }
 
-static void printTextureOverview(PathDirectoryNode* node, boolean printNamespace)
+static void printTextureOverview(de::PathDirectoryNode* node, boolean printNamespace)
 {
-    TextureRecord* record = (TextureRecord*) PathDirectoryNode_UserData(node);
+    TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
     textureid_t texId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
     Uri* uri = record->texture? Textures_ComposeUri(texId) : Uri_New();
@@ -1254,10 +1272,10 @@ typedef struct {
     char delimiter;
     const char* like;
     uint idx;
-    PathDirectoryNode** storage;
+    de::PathDirectoryNode** storage;
 } collectdirectorynodeworker_parameters_t;
 
-static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* parameters)
+static int collectDirectoryNodeWorker(de::PathDirectoryNode* node, void* parameters)
 {
     collectdirectorynodeworker_parameters_t* p = (collectdirectorynodeworker_parameters_t*)parameters;
 
@@ -1281,8 +1299,8 @@ static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* parameters)
     return 0; // Continue iteration.
 }
 
-static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceId,
-    const char* like, uint* count, PathDirectoryNode** storage)
+static de::PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceId,
+    const char* like, uint* count, de::PathDirectoryNode** storage)
 {
     texturenamespaceid_t fromId, toId;
 
@@ -1307,9 +1325,15 @@ static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceI
     for(uint i = uint(fromId); i <= uint(toId); ++i)
     {
         texturenamespaceid_t iterId = texturenamespaceid_t(i);
-        PathDirectory* texDirectory = getDirectoryForNamespaceId(iterId);
-        PathDirectory_Iterate2(texDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL, PATHDIRECTORY_NOHASH,
-                               collectDirectoryNodeWorker, (void*)&p);
+        de::PathDirectory* directory = getDirectoryForNamespaceId(iterId);
+        de::PathDirectory::NodeHash* nodes = directory->nodeHash(PT_LEAF);
+        if(nodes)
+        {
+            DENG2_FOR_EACH(nodeIt, *nodes, de::PathDirectory::NodeHash::const_iterator)
+            {
+                collectDirectoryNodeWorker(*nodeIt, (void*)&p);
+            }
+        }
     }
 
     if(storage)
@@ -1325,7 +1349,7 @@ static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceI
         return NULL;
     }
 
-    storage = (PathDirectoryNode**)M_Malloc(sizeof *storage * (p.idx+1));
+    storage = (de::PathDirectoryNode**)M_Malloc(sizeof *storage * (p.idx+1));
     if(!storage)
     {
         throw de::Error("Textures::collectDirectoryNodes",
@@ -1338,8 +1362,8 @@ static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceI
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
     // Decode paths before determining a lexicographical delta.
-    Str* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER));
-    Str* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER));
+    Str* a = Str_PercentDecode(composePathForDirectoryNode(*(const de::PathDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER));
+    Str* b = Str_PercentDecode(composePathForDirectoryNode(*(const de::PathDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER));
     int delta = stricmp(Str_Text(a), Str_Text(b));
     Str_Delete(b);
     Str_Delete(a);
@@ -1362,7 +1386,7 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
 {
     const boolean printNamespace = !(flags & PTF_TRANSFORM_PATH_NO_NAMESPACE);
     uint count = 0;
-    PathDirectoryNode** foundTextures = collectDirectoryNodes(namespaceId, like, &count, NULL);
+    de::PathDirectoryNode** foundTextures = collectDirectoryNodes(namespaceId, like, &count, NULL);
 
     if(!foundTextures) return 0;
 
@@ -1388,9 +1412,9 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     qsort(foundTextures, (size_t)count, sizeof(*foundTextures), composeAndCompareDirectoryNodePaths);
 
     uint idx = 0;
-    for(PathDirectoryNode** iter = foundTextures; *iter; ++iter)
+    for(de::PathDirectoryNode** iter = foundTextures; *iter; ++iter)
     {
-        PathDirectoryNode* node = *iter;
+        de::PathDirectoryNode* node = *iter;
         Con_Printf(" %*u: ", numFoundDigits, idx++);
         printTextureOverview(node, printNamespace);
     }
@@ -1555,11 +1579,11 @@ D_CMD(PrintTextureStats)
     for(uint i = uint(TEXTURENAMESPACE_FIRST); i <= uint(TEXTURENAMESPACE_LAST); ++i)
     {
         texturenamespaceid_t namespaceId = texturenamespaceid_t(i);
-        PathDirectory* texDirectory = getDirectoryForNamespaceId(namespaceId);
+        de::PathDirectory* directory = getDirectoryForNamespaceId(namespaceId);
 
-        if(!texDirectory) continue;
+        if(!directory) continue;
 
-        uint size = PathDirectory_Size(texDirectory);
+        uint size = directory->size();
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Textures_NamespaceName(namespaceId)), size, size==1? "texture":"textures");
         de::PathDirectory::debugPrintHashDistribution(directory);
         de::PathDirectory::debugPrint(directory, TEXTURES_PATH_DELIMITER);
