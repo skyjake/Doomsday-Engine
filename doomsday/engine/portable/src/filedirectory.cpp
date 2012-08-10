@@ -34,66 +34,113 @@ struct FileDirectoryNodeInfo
     FileDirectoryNodeInfo() : processed(false) {}
 };
 
-struct filedirectory_s {
-    /// Path hash table.
-    PathDirectory* pathDirectory;
-
-    /// Used with relative path directories.
-    ddstring_t* basePath;
-
-    /// Used with relative path directories.
-    PathDirectoryNode* baseNode;
-};
-
-typedef struct {
-    FileDirectory* fileDirectory; ///< FileDirectory instance.
-
-    int flags; ///< @ref searchPathFlags
-
-    /// If not @c NULL the callback's logic dictates whether iteration continues.
-    int (*callback) (PathDirectoryNode* node, void* parameters);
-
-    /// Passed to the callback.
-    void* parameters;
-} addpathworker_paramaters_t;
-
 static int addPathNodesAndMaybeDescendBranch(int flags, const ddstring_t* filePath,
     pathdirectorynode_type_t nodeType, void* parameters);
 
-static PathDirectoryNode* attachMissingNodeInfo(PathDirectoryNode* node)
+static de::PathDirectoryNode* attachMissingNodeInfo(de::PathDirectoryNode* node)
 {
-    FileDirectoryNodeInfo* info;
-
     if(!node) return NULL;
-
     // Has this already been processed?
-    info = reinterpret_cast<FileDirectoryNodeInfo*>(PathDirectoryNode_UserData(node));
+    FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>(node->userData());
     if(!info)
     {
-        // Clearly not. Attach our node info.
-        info = new FileDirectoryNodeInfo();
-        PathDirectoryNode_AttachUserData(node, info);
+        // Clearly not. Attach new node info.
+        node->attachUserData(new FileDirectoryNodeInfo());
     }
-
     return node;
 }
 
-static PathDirectoryNode* addPathNodes(FileDirectory* fd, const ddstring_t* rawPath)
+de::FileDirectory::FileDirectory(const char* _basePath)
+    : PathDirectory(), basePath(0), baseNode(0)
 {
-    const ddstring_t* path;
-    PathDirectoryNode* node;
-    ddstring_t buf;
+    if(_basePath && _basePath[0])
+    {
+        basePath = Str_Set(Str_NewStd(), _basePath);
+        // Ensure path is correctly formed.
+        F_AppendMissingSlash(basePath);
+    }
+}
 
-    DENG2_ASSERT(fd);
+de::FileDirectory::~FileDirectory()
+{
+    clearNodeInfo();
+    if(basePath) Str_Delete(basePath);
+}
 
+void de::FileDirectory::clearNodeInfo()
+{
+    NodeHash* nodes = nodeHash(PT_LEAF);
+    if(nodes)
+    DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
+    {
+        FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->detachUserData());
+        if(info) delete info;
+    }
+
+    nodes = nodeHash(PT_BRANCH);
+    if(nodes)
+    DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
+    {
+        FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->detachUserData());
+        if(info) delete info;
+    }
+}
+
+void de::FileDirectory::clear()
+{
+    clearNodeInfo();
+    PathDirectory::clear();
+    baseNode = NULL;
+}
+
+bool de::FileDirectory::find(pathdirectorynode_type_t nodeType,
+    const char* _searchPath, char searchDelimiter, ddstring_t* foundPath,
+    char foundDelimiter)
+{
+    if(foundPath)
+    {
+        Str_Clear(foundPath);
+    }
+
+    if(!_searchPath || !_searchPath[0]) return false;
+
+    // Convert the raw path into one we can process.
+    ddstring_t searchPath;
+    Str_Init(&searchPath); Str_Set(&searchPath, _searchPath);
+    F_FixSlashes(&searchPath, &searchPath);
+
+    // Try to make it a relative path?
+    if(basePath && !F_IsAbsolute(&searchPath))
+    {
+        F_RemoveBasePath2(&searchPath, &searchPath, basePath);
+    }
+
+    // Perform the search.
+    int flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF) | PCF_MATCH_FULL;
+    const de::PathDirectoryNode* foundNode = PathDirectory::find(flags, Str_Text(&searchPath), searchDelimiter);
+    Str_Free(&searchPath);
+
+    // Does caller want to know the full path?
+    if(foundPath && foundNode)
+    {
+        foundNode->directory()->composePath(foundNode, foundPath, NULL, foundDelimiter);
+    }
+
+    return !!foundNode;
+}
+
+de::PathDirectoryNode* de::FileDirectory::addPathNodes(const ddstring_t* rawPath)
+{
     if(!rawPath || Str_IsEmpty(rawPath)) return NULL;
 
-    if(fd->basePath)
+    const ddstring_t* path;
+    ddstring_t buf;
+    if(basePath)
     {
         // Try to make it a relative path?
         if(F_IsAbsolute(rawPath))
         {
-            F_RemoveBasePath2(Str_InitStd(&buf), rawPath, fd->basePath);
+            F_RemoveBasePath2(Str_InitStd(&buf), rawPath, basePath);
             path = &buf;
         }
         else
@@ -106,14 +153,14 @@ static PathDirectoryNode* addPathNodes(FileDirectory* fd, const ddstring_t* rawP
         {
             // Time to construct the relative base node?
             // This node is purely symbolic, its only necessary for our internal use.
-            if(!fd->baseNode)
+            if(!baseNode)
             {
-                fd->baseNode = PathDirectory_Insert(fd->pathDirectory, "./", '/');
-                attachMissingNodeInfo(fd->baseNode);
+                baseNode = insert("./", '/');
+                attachMissingNodeInfo(baseNode);
             }
 
             if(path == &buf) Str_Free(&buf);
-            return fd->baseNode;
+            return baseNode;
         }
     }
     else
@@ -125,13 +172,25 @@ static PathDirectoryNode* addPathNodes(FileDirectory* fd, const ddstring_t* rawP
         }
     }
 
-    node = PathDirectory_Insert(fd->pathDirectory, Str_Text(path), '/');
+    de::PathDirectoryNode* node = insert(Str_Text(path), '/');
     attachMissingNodeInfo(node);
 
     if(path == &buf) Str_Free(&buf);
 
     return node;
 }
+
+typedef struct {
+    de::FileDirectory* fileDirectory; ///< FileDirectory instance.
+
+    int flags; ///< @ref searchPathFlags
+
+    /// If not @c NULL the callback's logic dictates whether iteration continues.
+    int (*callback) (struct pathdirectorynode_s* node, void* parameters);
+
+    /// Passed to the callback.
+    void* parameters;
+} addpathworker_paramaters_t;
 
 static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t nodeType,
     void* parameters)
@@ -140,26 +199,24 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
     return addPathNodesAndMaybeDescendBranch(p->flags, filePath, nodeType, parameters);
 }
 
-static int addChildNodes(FileDirectory* fd, PathDirectoryNode* node, int flags,
-    int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters)
+int de::FileDirectory::addChildNodes(de::PathDirectoryNode* node, int flags,
+    int (*callback) (struct pathdirectorynode_s* node, void* parameters), void* parameters)
 {
     int result = 0; // Continue iteration.
 
-    DENG2_ASSERT(fd);
-
-    if(node && PT_BRANCH == PathDirectoryNode_Type(node))
+    if(node && PT_BRANCH == node->type())
     {
         addpathworker_paramaters_t p;
         ddstring_t searchPattern;
 
         // Compose the search pattern.
         Str_Init(&searchPattern);
-        PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, &searchPattern, NULL, '/');
+        node->directory()->composePath(node, &searchPattern, NULL, '/');
         // We're interested in *everything*.
         Str_AppendChar(&searchPattern, '*');
 
         // Take a copy of the caller's iteration parameters.
-        p.fileDirectory = fd;
+        p.fileDirectory = this;
         p.callback = callback;
         p.flags = flags;
         p.parameters = parameters;
@@ -168,6 +225,79 @@ static int addChildNodes(FileDirectory* fd, PathDirectoryNode* node, int flags,
         result = F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
 
         Str_Free(&searchPattern);
+    }
+
+    return result;
+}
+
+int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
+    const ddstring_t* filePath, pathdirectorynode_type_t nodeType,
+    int flags, int (*callback) (struct pathdirectorynode_s* node, void* parameters),
+    void* parameters)
+{
+    DENG2_ASSERT(VALID_PATHDIRECTORYNODE_TYPE(nodeType));
+
+    int result = 0; // Continue iteration.
+
+    // Add this path to the directory.
+    de::PathDirectoryNode* node = addPathNodes(filePath);
+    if(node)
+    {
+        FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>(node->userData());
+
+        if(PT_BRANCH == node->type())
+        {
+            // Descend into this subdirectory?
+            if(descendBranches)
+            {
+                if(info->processed)
+                {
+                    // Does caller want to process it again?
+                    if(callback)
+                    {
+                        NodeHash* nodes = nodeHash(PT_LEAF);
+                        if(nodes)
+                        DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
+                        {
+                            if(node == (*i)->parent())
+                            {
+                                result = callback(reinterpret_cast<struct pathdirectorynode_s*>(*i), parameters);
+                                if(result) break;
+                            }
+                        }
+
+                        if(!result)
+                        {
+                            nodes = nodeHash(PT_BRANCH);
+                            if(nodes)
+                            DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
+                            {
+                                if(node == (*i)->parent())
+                                {
+                                    result = callback(reinterpret_cast<struct pathdirectorynode_s*>(*i), parameters);
+                                    if(result) break;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    result = addChildNodes(node, flags, callback, parameters);
+
+                    // This node is now considered processed.
+                    info->processed = true;
+                }
+            }
+        }
+        // Node is a leaf.
+        else if(callback)
+        {
+            result = callback(reinterpret_cast<struct pathdirectorynode_s*>(node), parameters);
+
+            // This node is now considered processed (if it wasn't already).
+            info->processed = true;
+        }
     }
 
     return result;
@@ -183,184 +313,29 @@ static int addPathNodesAndMaybeDescendBranch(int flags, const ddstring_t* filePa
     pathdirectorynode_type_t nodeType, void* parameters)
 {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)parameters;
-    FileDirectory* fd = p->fileDirectory;
-    PathDirectoryNode* node;
-    int result = 0; // Continue iteration.
-
-    DENG2_ASSERT(VALID_PATHDIRECTORYNODE_TYPE(nodeType) && p);
-
-    // Add this path to the directory.
-    node = addPathNodes(p->fileDirectory, filePath);
-    if(node)
-    {
-        FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>(PathDirectoryNode_UserData(node));
-
-        if(PT_BRANCH == PathDirectoryNode_Type(node))
-        {
-            // Descend into this subdirectory?
-            if(!(flags & SPF_NO_DESCEND))
-            {
-                if(info->processed)
-                {
-                    // Does caller want to process it again?
-                    if(p->callback)
-                    {
-                        result = PathDirectory_Iterate2(fd->pathDirectory, PCF_MATCH_PARENT, node,
-                                                        PATHDIRECTORY_NOHASH, p->callback, p->parameters);
-                    }
-                }
-                else
-                {
-                    result = addChildNodes(fd, node, p->flags, p->callback, p->parameters);
-
-                    // This node is now considered processed.
-                    info->processed = true;
-                }
-            }
-        }
-        // Node is a leaf.
-        else if(p->callback)
-        {
-            result = p->callback(node, p->parameters);
-
-            // This node is now considered processed (if it wasn't already).
-            info->processed = true;
-        }
-    }
-
-    return result;
+    DENG2_ASSERT(p);
+    return p->fileDirectory->addPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND),
+                                                               filePath, nodeType,
+                                                               p->flags, p->callback, p->parameters);
 }
 
-static void resolveSearchPathsAndAddNodes(FileDirectory* fd,
-    int flags, const Uri* const* searchPaths, uint searchPathsCount,
-    int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters)
-{
-    uint i;
-    DENG2_ASSERT(fd);
-
-    for(i = 0; i < searchPathsCount; ++i)
-    {
-        const ddstring_t* searchPath = Uri_ResolvedConst(searchPaths[i]);
-        addpathworker_paramaters_t p;
-        if(!searchPath) continue;
-
-        // Take a copy of the caller's iteration parameters.
-        p.fileDirectory = fd;
-        p.callback = callback;
-        p.parameters = parameters;
-        p.flags = flags;
-
-        // Add new nodes on this path and/or re-process previously seen nodes.
-        addPathNodesAndMaybeDescendBranch(0/*do descend*/, searchPath, PT_BRANCH, (void*)&p);
-    }
-
-/*#if _DEBUG
-    FileDirectory_Print(fd);
-#endif*/
-}
-
+DENG_DEBUG_ONLY(
 static void printUriList(const Uri* const* pathList, size_t pathCount, int indent)
 {
-    const Uri* const* pathsIt = pathList;
-    size_t i;
     if(!pathList) return;
 
-    for(i = 0; i < pathCount && NULL != *pathsIt; ++i, pathsIt++)
+    const Uri* const* pathsIt = pathList;
+    for(size_t i = 0; i < pathCount && (*pathsIt); ++i, pathsIt++)
     {
         Uri_Print(*pathsIt, indent);
     }
-}
+})
 
-FileDirectory* FileDirectory_NewWithPathListStr(const char* basePath,
-    const ddstring_t* pathList, int flags)
+void de::FileDirectory::addPaths(int flags,
+    const Uri* const* searchPaths, uint searchPathsCount,
+    int (*callback) (struct pathdirectorynode_s* node, void* parameters), void* parameters)
 {
-    FileDirectory* fd = static_cast<FileDirectory*>(M_Malloc(sizeof *fd));
-    if(!fd)
-        Con_Error("FileDirectory::Construct: Failed on allocation of %lu bytes for new FileDirectory.", (unsigned long) sizeof *fd);
-
-    fd->pathDirectory = PathDirectory_New();
-    fd->baseNode = NULL;
-
-    if(basePath && basePath[0])
-    {
-        fd->basePath = Str_Set(Str_NewStd(), basePath);
-        // Ensure path is correctly formed.
-        F_AppendMissingSlash(fd->basePath);
-    }
-    else
-    {
-        fd->basePath = NULL;
-    }
-
-    if(pathList)
-    {
-        size_t count;
-        Uri** uris = F_CreateUriListStr2(RC_NULL, pathList, &count);
-        resolveSearchPathsAndAddNodes(fd, flags, (const Uri**)uris, (uint)count, 0, 0);
-        F_DestroyUriList(uris);
-    }
-    return fd;
-}
-
-FileDirectory* FileDirectory_NewWithPathList(const char* basePath,
-    const char* pathList, int flags)
-{
-    FileDirectory* fd;
-    ddstring_t _pathList, *paths = NULL;
-    size_t len = (pathList != NULL? strlen(pathList) : 0);
-    if(len != 0)
-    {
-        Str_Init(&_pathList);
-        Str_Set(&_pathList, pathList);
-        paths = &_pathList;
-    }
-    fd = FileDirectory_NewWithPathListStr(basePath, paths, flags);
-    if(len != 0) Str_Free(paths);
-    return fd;
-}
-
-FileDirectory* FileDirectory_New(const char* basePath)
-{
-    return FileDirectory_NewWithPathListStr(basePath, NULL, 0);
-}
-
-static int deleteNodeInfo(PathDirectoryNode* node, void* /*parameters*/)
-{
-    FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>(PathDirectoryNode_DetachUserData(node));
-    if(info) delete info;
-    return 0; // Continue iteration.
-}
-
-static void clearNodeInfo(FileDirectory* fd)
-{
-    DENG2_ASSERT(fd);
-    if(!fd->pathDirectory) return;
-    PathDirectory_Iterate(fd->pathDirectory, 0, NULL, PATHDIRECTORY_NOHASH, deleteNodeInfo);
-}
-
-void FileDirectory_Delete(FileDirectory* fd)
-{
-    DENG2_ASSERT(fd);
-    clearNodeInfo(fd);
-    if(fd->pathDirectory) PathDirectory_Delete(fd->pathDirectory);
-    if(fd->basePath) Str_Delete(fd->basePath);
-    M_Free(fd);
-}
-
-void FileDirectory_Clear(FileDirectory* fd)
-{
-    DENG2_ASSERT(fd);
-    clearNodeInfo(fd);
-    PathDirectory_Clear(fd->pathDirectory);
-    fd->baseNode = NULL;
-}
-
-void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* paths,
-    uint pathsCount, int (*callback) (PathDirectoryNode*, void*),
-    void* parameters)
-{
-    DENG2_ASSERT(fd);
-    if(!paths || pathsCount == 0)
+    if(!searchPaths || searchPathsCount == 0)
     {
         DEBUG_Message(("Warning: FileDirectory::AddPaths: Attempt to add zero-sized path list, ignoring.\n"));
         return;
@@ -368,56 +343,183 @@ void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* pat
 
 #if _DEBUG
     VERBOSE2( Con_Message("Adding paths to FileDirectory...\n");
-              printUriList(paths, pathsCount, 2/*indent*/) )
+              printUriList(searchPaths, searchPathsCount, 2/*indent*/) )
 #endif
 
-    resolveSearchPathsAndAddNodes(fd, flags, paths, pathsCount, callback, parameters);
+    for(uint i = 0; i < searchPathsCount; ++i)
+    {
+        const ddstring_t* searchPath = Uri_ResolvedConst(searchPaths[i]);
+        if(!searchPath) continue;
+
+        // Add new nodes on this path and/or re-process previously seen nodes.
+        addPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath, PT_BRANCH,
+                                          flags, callback, parameters);
+    }
+
+/*#if _DEBUG
+    debugPrint(fd);
+#endif*/
+}
+
+void de::FileDirectory::addPathList(int flags, const char* pathList,
+    int (*callback) (struct pathdirectorynode_s*, void*), void* parameters)
+{
+    Uri** paths = NULL;
+    size_t pathsCount = 0;
+
+    if(pathList && pathList[0])
+        paths = F_CreateUriList2(RC_UNKNOWN, pathList, &pathsCount);
+
+    addPaths(flags, (const Uri**)paths, (uint)pathsCount, callback, parameters);
+    if(paths) F_DestroyUriList(paths);
+}
+
+ddstring_t* de::FileDirectory::collectPaths(int flags, char delimiter, size_t* count)
+{
+    return PathDirectory::collectPaths(flags, delimiter, count);
+}
+
+#if _DEBUG
+/// @return Lexicographical delta between the two ddstring_ts @a and @a b.
+static int C_DECL comparePaths(const void* a, const void* b)
+{
+    return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
+}
+
+static void printPathList(const ddstring_t* pathList, size_t numPaths, int indent)
+{
+    if(!pathList) return;
+    for(size_t n = 0; n < numPaths; ++n)
+    {
+        const ddstring_t* path = pathList + n;
+        Con_Printf("%*s\n", indent, Str_Text(path));
+    }
+}
+
+static void deletePathList(ddstring_t* pathList, size_t numPaths)
+{
+    if(!pathList) return;
+    for(size_t n = 0; n < numPaths; ++n)
+    {
+        ddstring_t* path = pathList + n;
+        Str_Free(path);
+    }
+    M_Free(pathList);
+}
+
+void de::FileDirectory::debugPrint(FileDirectory* inst)
+{
+    Con_Printf("FileDirectory [%p]:\n", (void*)inst);
+
+    size_t numFiles;
+    ddstring_t* pathList = inst->collectPaths(0, DIR_SEP_CHAR, &numFiles);
+    if(pathList)
+    {
+        qsort(pathList, numFiles, sizeof *pathList, comparePaths);
+
+        printPathList(pathList, numFiles, 2/*indent*/);
+
+        deletePathList(pathList, numFiles);
+    }
+    Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "path":"paths"));
+}
+
+void de::FileDirectory::debugPrintHashDistribution(FileDirectory* inst)
+{
+    PathDirectory::debugPrintHashDistribution(inst);
+}
+
+#endif
+
+/**
+ * C Wrapper API:
+ */
+
+#define TOINTERNAL(inst) \
+    (inst) != 0? reinterpret_cast<de::FileDirectory*>(inst) : NULL
+
+#define TOINTERNAL_CONST(inst) \
+    (inst) != 0? reinterpret_cast<const de::FileDirectory*>(inst) : NULL
+
+#define SELF(inst) \
+    DENG2_ASSERT(inst); \
+    de::FileDirectory* self = TOINTERNAL(inst)
+
+#define SELF_CONST(inst) \
+    DENG2_ASSERT(inst); \
+    const de::FileDirectory* self = TOINTERNAL_CONST(inst)
+
+FileDirectory* FileDirectory_New(const char* basePath)
+{
+    return reinterpret_cast<FileDirectory*>(new de::FileDirectory(basePath));
+}
+
+void FileDirectory_Delete(FileDirectory* fd)
+{
+    if(fd)
+    {
+        SELF(fd);
+        delete self;
+    }
+}
+
+void FileDirectory_Clear(FileDirectory* fd)
+{
+    SELF(fd);
+    self->clear();
+}
+
+void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* paths,
+    uint pathsCount, int (*callback) (PathDirectoryNode*, void*),
+    void* parameters)
+{
+    SELF(fd);
+    self->addPaths(flags, paths, pathsCount, callback, parameters);
 }
 
 void FileDirectory_AddPaths2(FileDirectory* fd, int flags, const Uri* const* paths,
     uint pathsCount, int (*callback) (PathDirectoryNode*, void*))
 {
-    FileDirectory_AddPaths3(fd, flags, paths, pathsCount, callback, NULL);
+    SELF(fd);
+    self->addPaths(flags, paths, pathsCount, callback);
 }
 
 void FileDirectory_AddPaths(FileDirectory* fd, int flags, const Uri* const* paths,
     uint pathsCount)
 {
-    FileDirectory_AddPaths2(fd, flags, paths, pathsCount, NULL);
+    SELF(fd);
+    self->addPaths(flags, paths, pathsCount);
 }
 
 void FileDirectory_AddPathList3(FileDirectory* fd, int flags, const char* pathList,
     int (*callback) (PathDirectoryNode*, void*), void* parameters)
 {
-    Uri** paths = NULL;
-    size_t pathsCount = 0;
-    DENG2_ASSERT(fd);
-
-    if(pathList && pathList[0])
-        paths = F_CreateUriList2(RC_UNKNOWN, pathList, &pathsCount);
-
-    FileDirectory_AddPaths3(fd, flags, (const Uri**)paths, (uint)pathsCount, callback, parameters);
-    if(paths) F_DestroyUriList(paths);
+    SELF(fd);
+    self->addPathList(flags, pathList, callback, parameters);
 }
 
 void FileDirectory_AddPathList2(FileDirectory* fd, int flags, const char* pathList,
     int (*callback) (PathDirectoryNode*, void*))
 {
-    FileDirectory_AddPathList3(fd, flags, pathList, callback, NULL);
+    SELF(fd);
+    self->addPathList(flags, pathList, callback);
 }
 
 void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathList)
 {
-    FileDirectory_AddPathList2(fd, flags, pathList, NULL);
+    SELF(fd);
+    self->addPathList(flags, pathList);
 }
 
 int FileDirectory_Iterate2(FileDirectory* fd, pathdirectorynode_type_t nodeType,
     PathDirectoryNode* parent, ushort hash, filedirectory_iteratecallback_t callback,
     void* parameters)
 {
+    SELF(fd);
+
     int flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
-    DENG2_ASSERT(fd);
-    return PathDirectory_Iterate2(fd->pathDirectory, flags, parent, hash, callback, parameters);
+    return PathDirectory_Iterate2(reinterpret_cast<PathDirectory*>(self),
+                                  flags, parent, hash, callback, parameters);
 }
 
 int FileDirectory_Iterate(FileDirectory* fd, pathdirectorynode_type_t nodeType,
@@ -430,9 +532,11 @@ int FileDirectory_Iterate2_Const(const FileDirectory* fd, pathdirectorynode_type
     const PathDirectoryNode* parent, ushort hash,
     filedirectory_iterateconstcallback_t callback, void* parameters)
 {
+    SELF_CONST(fd);
+
     int flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
-    DENG2_ASSERT(fd);
-    return PathDirectory_Iterate2_Const(fd->pathDirectory, flags, parent, hash, callback, parameters);
+    return PathDirectory_Iterate2_Const(reinterpret_cast<const PathDirectory*>(self),
+                                        flags, parent, hash, callback, parameters);
 }
 
 int FileDirectory_Iterate_Const(const FileDirectory* fd, pathdirectorynode_type_t nodeType,
@@ -442,98 +546,22 @@ int FileDirectory_Iterate_Const(const FileDirectory* fd, pathdirectorynode_type_
 }
 
 boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t nodeType,
-    const char* _searchPath, char searchDelimiter, ddstring_t* foundPath,
+    const char* searchPath, char searchDelimiter, ddstring_t* foundPath,
     char foundDelimiter)
 {
-    const PathDirectoryNode* foundNode;
-    ddstring_t searchPath;
-    int flags;
-    DENG2_ASSERT(fd);
-
-    if(foundPath)
-    {
-        Str_Clear(foundPath);
-    }
-
-    if(!_searchPath || !_searchPath[0]) return false;
-
-    // Convert the raw path into one we can process.
-    Str_Init(&searchPath); Str_Set(&searchPath, _searchPath);
-    F_FixSlashes(&searchPath, &searchPath);
-
-    // Try to make it a relative path?
-    if(fd->basePath && !F_IsAbsolute(&searchPath))
-    {
-        F_RemoveBasePath2(&searchPath, &searchPath, fd->basePath);
-    }
-
-    // Perform the search.
-    flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF) | PCF_MATCH_FULL;
-    foundNode = PathDirectory_Find(fd->pathDirectory, flags, Str_Text(&searchPath), searchDelimiter);
-    Str_Free(&searchPath);
-
-    // Does caller want to know the full path?
-    if(foundPath && foundNode)
-    {
-        PathDirectory_ComposePath(PathDirectoryNode_Directory(foundNode), foundNode,
-                                  foundPath, NULL, foundDelimiter);
-    }
-
-    return !!foundNode;
-}
-
-/// @return Lexicographical delta between the two ddstring_ts @a and @a b.
-static int C_DECL comparePaths(const void* a, const void* b)
-{
-    return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
+    SELF(fd);
+    return CPP_BOOL(self->find(nodeType, searchPath, searchDelimiter,
+                               foundPath, foundDelimiter));
 }
 
 #if _DEBUG
-static void printPathList(const ddstring_t* pathList, size_t numPaths, int indent)
+void FileDirectory_DebugPrint(FileDirectory* fd)
 {
-    size_t n = 0;
-    if(!pathList) return;
-    for(n = 0; n < numPaths; ++n)
-    {
-        const ddstring_t* path = pathList + n;
-        Con_Printf("%*s\n", indent, Str_Text(path));
-    }
+    de::FileDirectory::debugPrint(TOINTERNAL(fd));
 }
 
-static void deletePathList(ddstring_t* pathList, size_t numPaths)
+void FileDirectory_DebugPrintHashDistribution(FileDirectory* fd)
 {
-    size_t n = 0;
-    if(!pathList) return;
-    for(n = 0; n < numPaths; ++n)
-    {
-        ddstring_t* path = pathList + n;
-        Str_Free(path);
-    }
-    M_Free(pathList);
-}
-
-void FileDirectory_Print(FileDirectory* fd)
-{
-    size_t numFiles;
-    ddstring_t* pathList;
-    DENG2_ASSERT(fd);
-
-    Con_Printf("FileDirectory [%p]:\n", (void*)fd);
-    pathList = PathDirectory_CollectPaths(fd->pathDirectory, 0, DIR_SEP_CHAR, &numFiles);
-    if(pathList)
-    {
-        qsort(pathList, numFiles, sizeof *pathList, comparePaths);
-
-        printPathList(pathList, numFiles, 2/*indent*/);
-
-        deletePathList(pathList, numFiles);
-    }
-    Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "path":"paths"));
-}
-
-void FileDirectory_PrintHashDistribution(FileDirectory* fd)
-{
-    DENG2_ASSERT(fd);
-    PathDirectory_DebugPrintHashDistribution(fd->pathDirectory);
+    de::FileDirectory::debugPrintHashDistribution(TOINTERNAL(fd));
 }
 #endif

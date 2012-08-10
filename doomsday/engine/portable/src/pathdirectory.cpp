@@ -416,7 +416,8 @@ PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, ch
 
 PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path, char delimiter)
 {
-    return PathDirectory_Insert2(pd, path, delimiter, NULL/*no user data*/);
+    D_SELF(pd);
+    return reinterpret_cast<PathDirectoryNode*>(self->insert(path, delimiter));
 }
 
 static int iteratePathsInHash(PathDirectory* pd,
@@ -446,7 +447,7 @@ static int iteratePathsInHash(PathDirectory* pd,
             de::PathDirectory::NodeHash::iterator i = nodes->find(hash);
             for(; i != nodes->end() && i.key() == hash; ++i)
             {
-                if(!((flags & PCF_MATCH_PARENT) && parent == (*i)->parent()))
+                if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
                 {
                     result = callback(reinterpret_cast<PathDirectoryNode*>(*i), parameters);
                     if(result) break;
@@ -458,7 +459,7 @@ static int iteratePathsInHash(PathDirectory* pd,
             // No - iterate all nodes.
             DENG2_FOR_EACH(i, *nodes, de::PathDirectory::NodeHash::iterator)
             {
-                if(!((flags & PCF_MATCH_PARENT) && parent == (*i)->parent()))
+                if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
                 {
                     result = callback(reinterpret_cast<PathDirectoryNode*>(*i), parameters);
                     if(result) break;
@@ -496,7 +497,7 @@ static int iteratePathsInHash_Const(const PathDirectory* pd,
             de::PathDirectory::NodeHash::const_iterator i = nodes->find(hash);
             for(; i != nodes->end() && i.key() == hash; ++i)
             {
-                if(!((flags & PCF_MATCH_PARENT) && parent == (*i)->parent()))
+                if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
                 {
                     result = callback(reinterpret_cast<const PathDirectoryNode*>(*i), parameters);
                     if(result) break;
@@ -508,7 +509,7 @@ static int iteratePathsInHash_Const(const PathDirectory* pd,
             // No - iterate all nodes.
             DENG2_FOR_EACH(i, *nodes, de::PathDirectory::NodeHash::const_iterator)
             {
-                if(!((flags & PCF_MATCH_PARENT) && parent == (*i)->parent()))
+                if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
                 {
                     result = callback(reinterpret_cast<const PathDirectoryNode*>(*i), parameters);
                     if(result) break;
@@ -832,7 +833,7 @@ static int C_DECL comparePaths(const void* a, const void* b)
 #if _DEBUG
 void de::PathDirectory::debugPrint(de::PathDirectory* pd, char delimiter)
 {
-    DENG2_ASSERT(pd);
+    if(!pd) return;
 
     LOG_AS("PathDirectory");
     LOG_INFO("Directory [%p]:") << (void*)pd;
@@ -989,7 +990,7 @@ static void printDistributionOverview(PathDirectory* pd,
 #endif
 }
 
-void printDistributionHistogram(PathDirectory* pd, ushort size,
+static void printDistributionHistogram(PathDirectory* pd, ushort size,
     size_t nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT])
 {
 #if 0
@@ -1147,6 +1148,8 @@ void printDistributionHistogram(PathDirectory* pd, ushort size,
 
 void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory* pd)
 {
+    if(!pd) return;
+
 #if 0
     size_t nodeCountSum[PATHDIRECTORYNODE_TYPE_COUNT],
            nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketHeight = 0,

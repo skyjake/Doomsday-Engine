@@ -274,7 +274,7 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
     rnInfo->flags &= ~RNF_IS_DIRTY;
 
 /*#if _DEBUG
-    VERBOSE2( FileDirectory_Print(rnInfo->directory) )
+    VERBOSE2( FileDirectory_DebugPrint(rnInfo->directory) )
     VERBOSE2( ResourceNamespace_Print(rnInfo->rnamespace) )
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 #endif*/
