@@ -60,6 +60,7 @@ extern "C" {
 
 #include "libdeng.h"
 #include "types.h"
+#include "de/ddstring.h"
 
 struct stringpool_s; // The stringpool instance (opaque).
 

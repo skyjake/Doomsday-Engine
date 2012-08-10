@@ -24,6 +24,10 @@
 #ifndef LIBDENG_FILESYS_PATHMAP_H
 #define LIBDENG_FILESYS_PATHMAP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Path fragment info.
  */
@@ -61,7 +65,7 @@ typedef struct pathmap_s {
 /**
  * Initialize the specified PathMap from @a path.
  *
- * \post The path will have been subdivided into a fragment map
+ * @post The path will have been subdivided into a fragment map
  * and some or all of the fragment hashes will have been calculated
  * (dependant on the number of discreet fragments).
  *
@@ -94,9 +98,9 @@ uint PathMap_Size(PathMap* pathMap);
  *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
  * </pre>
  *
- * \post Hash may have been calculated for the referenced fragment.
+ * @post Hash may have been calculated for the referenced fragment.
  *
- * @param idx           Reverse-index of the fragment to be retrieved.
+ * @param idx  Reverse-index of the fragment to be retrieved.
  *
  * @return  Processed fragment info else @c NULL if @a idx is invalid.
  */
@@ -107,6 +111,10 @@ const PathMapFragment* PathMap_Fragment(PathMap* pathMap, uint idx);
  * Perform unit tests for this class.
  */
 void PathMap_Test(void);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_FILESYS_PATHMAP_H

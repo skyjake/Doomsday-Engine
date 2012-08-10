@@ -1663,8 +1663,8 @@ D_CMD(PrintFontStats)
 
         size = PathDirectory_Size(fontDirectory);
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Fonts_NamespaceName(namespaceId)), size, size==1? "font":"fonts");
-        PathDirectory_PrintHashDistribution(fontDirectory);
-        PathDirectory_Print(fontDirectory, FONTS_PATH_DELIMITER);
+        PathDirectory_DebugPrintHashDistribution(fontDirectory);
+        PathDirectory_DebugPrint(fontDirectory, FONTS_PATH_DELIMITER);
     }
     return true;
 }

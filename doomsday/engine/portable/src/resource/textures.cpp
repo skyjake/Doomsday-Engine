@@ -1561,8 +1561,8 @@ D_CMD(PrintTextureStats)
 
         uint size = PathDirectory_Size(texDirectory);
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Textures_NamespaceName(namespaceId)), size, size==1? "texture":"textures");
-        PathDirectory_PrintHashDistribution(texDirectory);
-        PathDirectory_Print(texDirectory, TEXTURES_PATH_DELIMITER);
+        de::PathDirectory::debugPrintHashDistribution(directory);
+        de::PathDirectory::debugPrint(directory, TEXTURES_PATH_DELIMITER);
     }
     return true;
 }

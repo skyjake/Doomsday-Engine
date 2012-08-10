@@ -64,8 +64,8 @@ void de::Texture::clearVariants()
             Uri* uri = Textures_ComposeUri(textureId);
             ddstring_t* path = Uri_ToString(uri);
             LOG_AS("Texture::clearVariants")
-            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" (id:%i). Perhaps it wasn't released?")
-                << glName << Str_Text(path) << int(textureId);
+            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p id:%i]. Perhaps it wasn't released?")
+                << glName << Str_Text(path) << (void*)this << int(textureId);
             GL_PrintTextureVariantSpecification((*i)->spec());
             Str_Delete(path);
             Uri_Delete(uri);
@@ -160,7 +160,7 @@ void de::Texture::setAnalysisDataPointer(texture_analysisid_t analysisId, void* 
         Uri* uri = Textures_ComposeUri(textureId);
         ddstring_t* path = Uri_ToString(uri);
         LOG_AS("Texture::attachAnalysis");
-        LOG_WARNING("Image analysis #%i already present for \"%s\", will replace.")
+        LOG_WARNING("Image analysis (id:%i) already present for \"%s\", will replace.")
             << int(analysisId) << Str_Text(path);
         Str_Delete(path);
         Uri_Delete(uri);

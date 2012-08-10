@@ -2141,8 +2141,8 @@ D_CMD(PrintMaterialStats)
 
         size = PathDirectory_Size(matDirectory);
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Materials_NamespaceName(namespaceId)), size, size==1? "material":"materials");
-        PathDirectory_PrintHashDistribution(matDirectory);
-        PathDirectory_Print(matDirectory, MATERIALS_PATH_DELIMITER);
+        PathDirectory_DebugPrintHashDistribution(matDirectory);
+        PathDirectory_DebugPrint(matDirectory, MATERIALS_PATH_DELIMITER);
     }
     return true;
 }

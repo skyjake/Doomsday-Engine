@@ -1821,8 +1821,8 @@ D_CMD(PrintVarStats)
     p.hidden = true;
     PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
     Con_Printf("       Total: %u\n      Hidden: %u\n\n", PathDirectory_Size(cvarDirectory), p.count);
-    PathDirectory_PrintHashDistribution(cvarDirectory);
-    PathDirectory_Print(cvarDirectory, CVARDIRECTORY_DELIMITER);
+    PathDirectory_DebugPrintHashDistribution(cvarDirectory);
+    PathDirectory_DebugPrint(cvarDirectory, CVARDIRECTORY_DELIMITER);
     return true;
 }
 #endif

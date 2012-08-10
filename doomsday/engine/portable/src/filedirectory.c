@@ -535,6 +535,6 @@ void FileDirectory_Print(FileDirectory* fd)
 void FileDirectory_PrintHashDistribution(FileDirectory* fd)
 {
     assert(fd);
-    PathDirectory_PrintHashDistribution(fd->_pathDirectory);
+    PathDirectory_DebugPrintHashDistribution(fd->_pathDirectory);
 }
 #endif
