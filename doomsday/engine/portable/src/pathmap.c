@@ -22,6 +22,7 @@
 #include "de_base.h"
 #include "de_console.h"
 
+#include "pathdirectory.h" // For PathDirectory_HashPathFragment()
 #include "pathmap.h"
 
 static ushort PathMap_HashFragment(PathMap* pm, PathMapFragment* fragment)
@@ -30,8 +31,8 @@ static ushort PathMap_HashFragment(PathMap* pm, PathMapFragment* fragment)
     // Is it time to compute the hash for this fragment?
     if(fragment->hash == PATHDIRECTORY_NOHASH)
     {
-        fragment->hash = PathDirectory_HashPath(fragment->from,
-            (fragment->to - fragment->from) + 1, pm->delimiter);
+        size_t fragmentLength = (fragment->to - fragment->from) + 1;
+        fragment->hash = pm->hashFragmentCallback(fragment->from, fragmentLength, pm->delimiter);
     }
     return fragment->hash;
 }
@@ -145,9 +146,10 @@ static void PathMap_ClearFragments(PathMap* pm)
     }
 }
 
-PathMap* PathMap_Initialize2(PathMap* pm, const char* path, char delimiter)
+PathMap* PathMap_Initialize2(PathMap* pm,
+    hashpathfragmentcallback_t hashFragmentCallback, const char* path, char delimiter)
 {
-    assert(pm);
+    DENG_ASSERT(pm && hashFragmentCallback);
 
 #if _DEBUG
     // Perform unit tests.
@@ -156,6 +158,7 @@ PathMap* PathMap_Initialize2(PathMap* pm, const char* path, char delimiter)
 
     pm->path = path;
     pm->delimiter = delimiter;
+    pm->hashFragmentCallback = hashFragmentCallback;
 
     // Create the fragment map of the path.
     PathMap_MapAllFragments(pm, pm->path, pm->path? strlen(pm->path) : 0);
@@ -166,9 +169,10 @@ PathMap* PathMap_Initialize2(PathMap* pm, const char* path, char delimiter)
     return pm;
 }
 
-PathMap* PathMap_Initialize(PathMap* pm, const char* path)
+PathMap* PathMap_Initialize(PathMap* pm,
+    hashpathfragmentcallback_t hashFragmentCallback, const char* path)
 {
-    return PathMap_Initialize2(pm, path, '/');
+    return PathMap_Initialize2(pm, hashFragmentCallback, path, '/');
 }
 
 void PathMap_Destroy(PathMap* pm)
@@ -217,12 +221,12 @@ void PathMap_Test(void)
     alreadyTested = true;
 
     // Test a zero-length path.
-    PathMap_Initialize(&pm, "");
+    PathMap_Initialize(&pm, PathDirectory_HashPathFragment, "");
     assert(PathMap_Size(&pm) == 0);
     PathMap_Destroy(&pm);
 
     // Test a Windows style path with a drive plus file path.
-    PathMap_Initialize(&pm, "c:/something.ext");
+    PathMap_Initialize(&pm, PathDirectory_HashPathFragment, "c:/something.ext");
     assert(PathMap_Size(&pm) == 2);
 
     fragment = PathMap_Fragment(&pm, 0);
@@ -238,7 +242,7 @@ void PathMap_Test(void)
     PathMap_Destroy(&pm);
 
     // Test a Unix style path with a zero-length root node name.
-    PathMap_Initialize(&pm, "/something.ext");
+    PathMap_Initialize(&pm, PathDirectory_HashPathFragment, "/something.ext");
     assert(PathMap_Size(&pm) == 2);
 
     fragment = PathMap_Fragment(&pm, 0);
@@ -254,7 +258,7 @@ void PathMap_Test(void)
     PathMap_Destroy(&pm);
 
     // Test a relative directory.
-    PathMap_Initialize(&pm, "some/dir/structure/");
+    PathMap_Initialize(&pm, PathDirectory_HashPathFragment, "some/dir/structure/");
     assert(PathMap_Size(&pm) == 3);
 
     fragment = PathMap_Fragment(&pm, 0);

@@ -1404,7 +1404,7 @@ int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
     p.paramaters = paramaters;
     p.flags = flags;
     Str_Init(&p.pattern); Str_Set(&p.pattern, Str_Text(&searchPattern));
-    PathMap_Initialize(&p.patternMap, Str_Text(&searchPattern));
+    PathMap_Initialize(&p.patternMap, PathDirectory_HashPathFragment, Str_Text(&searchPattern));
 
     result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findLumpWorker, (void*)&p);
     PathMap_Destroy(&p.patternMap);

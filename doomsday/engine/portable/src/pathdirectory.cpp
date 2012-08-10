@@ -320,7 +320,7 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
     if(searchPath && searchPath[0] && size_)
     {
         PathMap mappedSearchPath;
-        PathMap_Initialize2(&mappedSearchPath, searchPath, delimiter);
+        PathMap_Initialize2(&mappedSearchPath, PathDirectory_HashPathFragment, searchPath, delimiter);
 
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF) && pathLeafHash)
@@ -652,7 +652,7 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
     return reinterpret_cast<PathDirectoryNode*>(self->find(flags, searchPath, delimiter));
 }
 
-ushort PathDirectory_HashPath(const char* path, size_t len, char delimiter)
+ushort PathDirectory_HashPathFragment(const char* path, size_t len, char delimiter)
 {
     return de::PathDirectory::hashPathFragment(path, len, delimiter);
 }

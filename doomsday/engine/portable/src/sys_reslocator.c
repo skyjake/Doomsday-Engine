@@ -295,7 +295,7 @@ static int findResourceInNamespaceWorker(PathDirectoryNode* node, void* paramate
     // Are we yet to initialize the search?
     if(!p->searchInited)
     {
-        PathMap_Initialize2(&p->searchPattern, p->path, p->delimiter);
+        PathMap_Initialize2(&p->searchPattern, PathDirectory_HashPathFragment, p->path, p->delimiter);
         p->searchInited = true;
     }
     // Stop iteration of resources as soon as a match is found.

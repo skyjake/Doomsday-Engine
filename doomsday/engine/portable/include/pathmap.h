@@ -40,6 +40,17 @@ typedef struct pathmapfragment_s {
 /// Size of the fixed-length "short" fragment buffer allocated with the map.
 #define PATHMAP_FRAGMENTBUFFER_SIZE 24
 
+/**
+ * Callback function type for path fragment hashing algorithms.
+ *
+ * @param path          Path fragment to be hashed.
+ * @param len           Length of @a path in characters (excluding terminator).
+ * @param delimiter     Fragments in @a path are delimited by this character.
+ *
+ * @return The resultant hash key.
+ */
+typedef ushort (*hashpathfragmentcallback_t)(const char* path, size_t len, char delimiter);
+
 typedef struct pathmap_s {
     const char* path; ///< The mapped path.
     char delimiter; ///< Character used to delimit path fragments.
@@ -49,8 +60,8 @@ typedef struct pathmap_s {
      * Fragment map of the path. The map is composed of two
      * components; the first PATHMAP_FRAGMENTBUFFER_SIZE elements
      * are placed into a fixed-size buffer allocated along with
-     * the map (perhaps on the stack). Any additional fragments
-     * are attached to "this" using a linked list of nodes.
+     * the map. Any additional fragments are attached to "this" using
+     * a linked list of nodes.
      *
      * This optimized representation hopefully means that the
      * majority of paths can be represented without dynamically
@@ -60,6 +71,9 @@ typedef struct pathmap_s {
 
     ///< Head of the linked list of "extra" fragments, in reverse order.
     PathMapFragment* extraFragments;
+
+    /// Path fragment hashing callback.
+    hashpathfragmentcallback_t hashFragmentCallback;
 } PathMap;
 
 /**
@@ -72,12 +86,16 @@ typedef struct pathmap_s {
  * @param path          Relative or absolute path to be mapped. Assumed to remain
  *                      accessible until PathMap_Destroy() is called.
  *
+ * @param hashFragmentCallback  Path fragment hashing algorithm callback.
+ *
  * @param delimiter     Fragments of @a path are delimited by this character.
  *
  * @return  Pointer to "this" instance for caller convenience.
  */
-PathMap* PathMap_Initialize2(PathMap* pathMap, const char* path, char delimiter);
-PathMap* PathMap_Initialize(PathMap* pathMap, const char* path); /*delimiter='/'*/
+PathMap* PathMap_Initialize2(PathMap* pathMap,
+    hashpathfragmentcallback_t hashFragmentCallback, const char* path, char delimiter);
+PathMap* PathMap_Initialize(PathMap* pathMap,
+    hashpathfragmentcallback_t hashFragmentCallback, const char* path); /*delimiter='/'*/
 
 /**
  * Destroy @a pathMap releasing any resources acquired for it.

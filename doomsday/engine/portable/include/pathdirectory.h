@@ -435,7 +435,7 @@ const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirecto
 
 ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, int flags, char delimiter, size_t* count);
 
-ushort PathDirectory_HashPath(const char* path, size_t len, char delimiter);
+ushort PathDirectory_HashPathFragment(const char* path, size_t len, char delimiter);
 
 #if _DEBUG
 void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter);
