@@ -53,6 +53,10 @@
 #include "filelist.h"
 #include "pathdirectory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define AUXILIARY_BASE      100000000
 
 /// Register the console commands, variables, etc..., of this module.
@@ -306,5 +310,9 @@ int F_AllResourcePaths2(const char* searchPath, int flags,
     void* paramaters);
 int F_AllResourcePaths(const char* searchPath, int flags,
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters));
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_MAIN_H */

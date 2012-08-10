@@ -28,11 +28,15 @@
 #include "uri.h"
 #include "pathdirectory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Callback function type for FileDirectory::Iterate
  *
  * @param node  PathDirectoryNode being processed.
- * @param paramaters  User data passed to this.
+ * @param parameters  User data passed to this.
  * @return  Non-zero if iteration should stop.
  */
 typedef pathdirectory_iteratecallback_t filedirectory_iteratecallback_t;
@@ -99,12 +103,12 @@ ddstring_t* FileDirectory_AllPaths(FileDirectory* fd, pathdirectorynode_type_t t
  * @param paths  One or more paths.
  * @param pathsCount  Number of elements in @a paths.
  * @param callback  Callback function ptr.
- * @param paramaters  Passed to the callback.
+ * @param parameters  Passed to the callback.
  */
 void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* paths, uint pathsCount,
-    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters);
+    int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters);
 void FileDirectory_AddPaths2(FileDirectory* fd, int flags, const Uri* const* paths, uint pathsCount,
-    int (*callback) (PathDirectoryNode* node, void* paramaters)); /*paramaters=NULL*/
+    int (*callback) (PathDirectoryNode* node, void* parameters)); /*parameters=NULL*/
 void FileDirectory_AddPaths(FileDirectory* fd,  int flags, const Uri* const* paths, uint pathsCount); /*callback=NULL*/
 
 /**
@@ -114,12 +118,12 @@ void FileDirectory_AddPaths(FileDirectory* fd,  int flags, const Uri* const* pat
  * @param flags  @see searchPathFlags
  * @param pathList  One or more paths separated by semicolons.
  * @param callback  Callback function ptr.
- * @param paramaters  Passed to the callback.
+ * @param parameters  Passed to the callback.
  */
 void FileDirectory_AddPathList3(FileDirectory* fd, int flags, const char* pathList,
-    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters);
+    int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters);
 void FileDirectory_AddPathList2(FileDirectory* fd, int flags, const char* pathList,
-    int (*callback) (PathDirectoryNode* node, void* paramaters)); /*paramaters=NULL*/
+    int (*callback) (PathDirectoryNode* node, void* parameters)); /*parameters=NULL*/
 void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathList); /*callback=NULL*/
 
 /**
@@ -145,23 +149,27 @@ boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t type,
  * @param type  If a valid path type only process nodes of this type.
  * @param parent  If not @c NULL, only process child nodes of this node.
  * @param callback  Callback function ptr.
- * @param paramaters  Passed to the callback.
+ * @param parameters  Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
 int FileDirectory_Iterate2(FileDirectory* fd, pathdirectorynode_type_t type, PathDirectoryNode* parent, ushort hash,
-    filedirectory_iteratecallback_t callback, void* paramaters);
+    filedirectory_iteratecallback_t callback, void* parameters);
 int FileDirectory_Iterate(FileDirectory* fd, pathdirectorynode_type_t type, PathDirectoryNode* parent, ushort hash,
-    filedirectory_iteratecallback_t callback); /*paramaters=NULL*/
+    filedirectory_iteratecallback_t callback); /*parameters=NULL*/
 
 int FileDirectory_Iterate2_Const(const FileDirectory* fd, pathdirectorynode_type_t type, const PathDirectoryNode* parent, ushort hash,
-    filedirectory_iterateconstcallback_t callback, void* paramaters);
+    filedirectory_iterateconstcallback_t callback, void* parameters);
 int FileDirectory_Iterate_Const(const FileDirectory* fd, pathdirectorynode_type_t type, const PathDirectoryNode* parent, ushort hash,
-    filedirectory_iterateconstcallback_t callback); /*paramaters=NULL*/
+    filedirectory_iterateconstcallback_t callback); /*parameters=NULL*/
 
 #if _DEBUG
 void FileDirectory_Print(FileDirectory* fd);
 void FileDirectory_PrintHashDistribution(FileDirectory* fd);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_FILEDIRECTORY_H */

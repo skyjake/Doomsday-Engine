@@ -35,6 +35,10 @@
 #include "abstractresource.h"
 #include "filedirectory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct uri_s;
 
 #define PACKAGES_RESOURCE_NAMESPACE_NAME    "Packages"
@@ -291,6 +295,10 @@ void F_DestroyStringList(ddstring_t** list);
 
 #if _DEBUG
 void F_PrintStringList(const ddstring_t** strings, size_t stringsCount);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_SYSTEM_RESOURCE_LOCATOR_H */

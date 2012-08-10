@@ -493,7 +493,7 @@ SOURCES += \
     portable/src/edit_bsp.cpp \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
-    portable/src/filedirectory.c \
+    portable/src/filedirectory.cpp \
     portable/src/filelist.c \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \
