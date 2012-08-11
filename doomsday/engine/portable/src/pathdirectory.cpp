@@ -20,17 +20,21 @@
  * 02110-1301 USA</small>
  */
 
-#include <ctype.h>
-//#include "de_console.h"
+#if _DEBUG
+#  include <cstdlib>
+#endif
 
 #include <de/Error>
 #include <de/Log>
 #include <de/stringpool.h>
 #include <de/memory.h>
-#include "blockset.h"
-#include "m_misc.h" // For M_NumDigits()
 #if 0
-#include "de_system.h"
+#  include "blockset.h"
+#endif
+#if 0
+#  include "de_console.h"
+#  include "de_system.h"
+#  include "m_misc.h" // For M_NumDigits()
 #endif
 
 #include "pathdirectory.h"
@@ -57,7 +61,6 @@ typedef struct pathconstructorparams_s {
     size_t length;
     Str* dest;
     char delimiter;
-    size_t delimiterLen;
 } pathconstructorparams_t;
 
 /**
@@ -79,8 +82,11 @@ static void pathConstructor(pathconstructorparams_t* parm, const de::PathDirecto
 
     if(trav->parent())
     {
-        // There also needs to be a separator.
-        parm->length += parm->delimiterLen;
+        if(parm->delimiter)
+        {
+            // There also needs to be a delimiter (a single character).
+            parm->length += 1;
+        }
 
         // Descend to parent level.
         pathConstructor(parm, trav->parent());
@@ -347,11 +353,10 @@ struct de::PathDirectory::Instance
         parm.dest = constructedPath;
         parm.length = 0;
         parm.delimiter = delimiter;
-        parm.delimiterLen = (delimiter? 1 : 0);
 
-        // Include a terminating path separator for branches (directories).
-        if(node->type() == PT_BRANCH)
-            parm.length += parm.delimiterLen;
+        // Include a terminating path delimiter for branches.
+        if(delimiter && node->type() == PT_BRANCH)
+            parm.length += 1; // A single character.
 
         // Recursively construct the path from fragments and delimiters.
         Str_Clear(constructedPath);
@@ -630,7 +635,7 @@ ddstring_t* de::PathDirectory::collectPaths(size_t* retCount, int flags, char de
 }
 
 #if _DEBUG
-static int C_DECL comparePaths(const void* a, const void* b)
+static int comparePaths(const void* a, const void* b)
 {
     return qstricmp(Str_Text((Str*)a), Str_Text((Str*)b));
 }
@@ -1276,6 +1281,13 @@ ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, const PathDirectoryNod
     return self->composePath(reinterpret_cast<const de::PathDirectoryNode*>(node), path, length, delimiter);
 }
 
+ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node,
+    ddstring_t* path, int* length)
+{
+    SELF(pd);
+    return self->composePath(reinterpret_cast<const de::PathDirectoryNode*>(node), path, length);
+}
+
 const ddstring_t* PathDirectory_PathFragment(PathDirectory* pd, const PathDirectoryNode* node)
 {
     SELF(pd);
@@ -1370,6 +1382,11 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
 ushort PathDirectory_HashPathFragment2(const char* path, size_t len, char delimiter)
 {
     return de::PathDirectory::hashPathFragment(path, len, delimiter);
+}
+
+ushort PathDirectory_HashPathFragment(const char* path, size_t len)
+{
+    return de::PathDirectory::hashPathFragment(path, len);
 }
 
 #if _DEBUG
