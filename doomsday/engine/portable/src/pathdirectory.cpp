@@ -54,7 +54,6 @@ static size_t maxStackDepth;
 #endif
 
 typedef struct pathconstructorparams_s {
-    de::PathDirectory* pd;
     size_t length;
     Str* dest;
     char delimiter;
@@ -70,7 +69,7 @@ static void pathConstructor(pathconstructorparams_t* parm, const de::PathDirecto
 {
     DENG2_ASSERT(parm);
 
-    const Str* fragment = parm->pd->pathFragment(trav);
+    const Str* fragment = trav->pathFragment();
 
 #ifdef LIBDENG_STACK_MONITOR
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
@@ -347,7 +346,6 @@ struct de::PathDirectory::Instance
 
         parm.dest = constructedPath;
         parm.length = 0;
-        parm.pd = self;
         parm.delimiter = delimiter;
         parm.delimiterLen = (delimiter? 1 : 0);
 
@@ -782,7 +780,7 @@ ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, const PathDirectoryNod
     return self->composePath(reinterpret_cast<const de::PathDirectoryNode*>(node), path, length, delimiter);
 }
 
-const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node)
+const ddstring_t* PathDirectory_PathFragment(PathDirectory* pd, const PathDirectoryNode* node)
 {
     D_SELF(pd);
     return self->pathFragment(reinterpret_cast<const de::PathDirectoryNode*>(node));
@@ -1590,6 +1588,11 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
 #undef EXIT_POINT
 }
 
+const ddstring_t* de::PathDirectoryNode::pathFragment() const
+{
+    return d->directory.pathFragment(this);
+}
+
 ddstring_t* de::PathDirectoryNode::composePath(ddstring_t* path, int* length,
     char delimiter) const
 {
@@ -1674,6 +1677,12 @@ ddstring_t* PathDirectoryNode_ComposePath(const PathDirectoryNode* node,
 {
     SELF_CONST(node);
     return self->composePath(path, length);
+}
+
+const ddstring_t* PathDirectoryNode_PathFragment(const PathDirectoryNode* node)
+{
+    SELF_CONST(node);
+    return self->pathFragment();
 }
 
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node)

@@ -212,7 +212,7 @@ static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo,
     ddstring_t* name;
     assert(rnInfo && node);
 
-    name = rnInfo->composeName(PathDirectory_GetFragment(PathDirectoryNode_Directory(node), node));
+    name = rnInfo->composeName(PathDirectoryNode_PathFragment(node));
     if(ResourceNamespace_Add(rnInfo->rnamespace, name, node, NULL))
     {
         // We will need to rebuild this namespace (if we aren't already doing so,

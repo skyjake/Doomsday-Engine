@@ -786,7 +786,7 @@ const char* F_LumpName(lumpnum_t absoluteLumpNum)
     if(info)
     {
         PathDirectoryNode* node = F_LumpDirectoryNode(info->container, info->lumpIdx);
-        return Str_Text(PathDirectory_GetFragment(PathDirectoryNode_Directory(node), node));
+        return Str_Text(PathDirectoryNode_PathFragment(node));
     }
     return "";
 }

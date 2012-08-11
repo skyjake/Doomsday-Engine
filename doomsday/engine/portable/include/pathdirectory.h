@@ -116,6 +116,9 @@ public:
      */
     int matchDirectory(int flags, PathMap* candidatePath);
 
+    /// @return  The path fragment which this node represents.
+    const ddstring_t* pathFragment() const;
+
     /**
      * Composes and/or calculates the composed-length of the path for this node.
      *
@@ -379,7 +382,7 @@ int PathDirectory_Iterate_Const (const PathDirectory* pd, int flags, const PathD
 ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, const PathDirectoryNode* node, ddstring_t* path, int* length, char delimiter);
 ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node, ddstring_t* path, int* length); /*delimiter='/'*/
 
-const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node);
+const ddstring_t* PathDirectory_PathFragment(PathDirectory* pd, const PathDirectoryNode* node);
 
 ddstring_t* PathDirectory_CollectPaths2(PathDirectory* pd, size_t* count, int flags, char delimiter);
 ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, size_t* count, int flags); /*delimiter='/'*/
@@ -392,10 +395,6 @@ void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter);
 void PathDirectory_DebugPrintHashDistribution(PathDirectory* pd);
 #endif
 
-/**
- * C wrapper API:
- */
-
 PathDirectory* PathDirectoryNode_Directory(const PathDirectoryNode* node);
 PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node);
 PathDirectoryNodeType PathDirectoryNode_Type(const PathDirectoryNode* node);
@@ -403,6 +402,7 @@ ushort PathDirectoryNode_Hash(const PathDirectoryNode* node);
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags, PathMap* candidatePath, void* parameters);
 ddstring_t* PathDirectoryNode_ComposePath2(const PathDirectoryNode* node, ddstring_t* path, int* length, char delimiter);
 ddstring_t* PathDirectoryNode_ComposePath(const PathDirectoryNode* node, ddstring_t* path, int* length); /*delimiter='/'*/
+const ddstring_t* PathDirectoryNode_PathFragment(const PathDirectoryNode* node);
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node);
 void PathDirectoryNode_SetUserData(PathDirectoryNode* node, void* data);
 

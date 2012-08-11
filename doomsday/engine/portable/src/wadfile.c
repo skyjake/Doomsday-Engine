@@ -378,7 +378,7 @@ uint WadFile_CalculateCRC(WadFile* wad)
     {
         PathDirectoryNode* node = WadFile_LumpDirectoryNode(wad, i);
         wadfile_lumprecord_t* rec = PathDirectoryNode_UserData(node);
-        const ddstring_t* lumpName = PathDirectory_GetFragment(wad->lumpDirectory, node);
+        const ddstring_t* lumpName = PathDirectoryNode_PathFragment(node);
 
         crc += (uint) rec->info.size;
         for(k = 0; k < LUMPNAME_T_LASTINDEX; ++k)
