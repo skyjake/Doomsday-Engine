@@ -172,7 +172,7 @@ namespace de {
 class PathDirectory
 {
 public:
-    typedef QMultiHash<ushort, PathDirectoryNode*> NodeHash;
+    typedef QMultiHash<ushort, PathDirectoryNode*> PathNodes;
 
 public:
     explicit PathDirectory(int flags=0);
@@ -250,9 +250,9 @@ public:
     ddstring_t* collectPaths(size_t* count, int flags, char delimiter='/');
 
     /**
-     * Provides access to the PathDirectoryNode hash for efficent traversals.
+     * Provides access to the PathDirectoryNodes for efficent traversals.
      */
-    /*const*/ NodeHash* nodeHash(PathDirectoryNodeType type) const;
+    const PathNodes* const pathNodes(PathDirectoryNodeType type) const;
 
     /**
      * This is a hash function. It uses the path fragment string to generate

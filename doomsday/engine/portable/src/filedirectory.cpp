@@ -69,9 +69,9 @@ de::FileDirectory::~FileDirectory()
 
 void de::FileDirectory::clearNodeInfo()
 {
-    NodeHash* nodes = nodeHash(PT_LEAF);
+    const PathNodes* nodes = pathNodes(PT_LEAF);
     if(nodes)
-    DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
+    DENG2_FOR_EACH(i, *nodes, PathNodes::const_iterator)
     {
         FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->userData());
         if(info)
@@ -82,9 +82,9 @@ void de::FileDirectory::clearNodeInfo()
         }
     }
 
-    nodes = nodeHash(PT_BRANCH);
+    nodes = pathNodes(PT_BRANCH);
     if(nodes)
-    DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
+    DENG2_FOR_EACH(i, *nodes, PathNodes::const_iterator)
     {
         FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->userData());
         if(info)
@@ -265,9 +265,9 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
                     // Does caller want to process it again?
                     if(callback)
                     {
-                        NodeHash* nodes = nodeHash(PT_LEAF);
+                        const PathNodes* nodes = pathNodes(PT_LEAF);
                         if(nodes)
-                        DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
+                        DENG2_FOR_EACH(i, *nodes, PathNodes::const_iterator)
                         {
                             if(node == (*i)->parent())
                             {
@@ -278,9 +278,9 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
 
                         if(!result)
                         {
-                            nodes = nodeHash(PT_BRANCH);
+                            nodes = pathNodes(PT_BRANCH);
                             if(nodes)
-                            DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
+                            DENG2_FOR_EACH(i, *nodes, PathNodes::const_iterator)
                             {
                                 if(node == (*i)->parent())
                                 {

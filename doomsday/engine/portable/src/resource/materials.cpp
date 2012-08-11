@@ -601,10 +601,10 @@ static void destroyBindings(void)
     {
         if(!namespaces[i]) continue;
 
-        MaterialDirectory::NodeHash* nodes = namespaces[i]->nodeHash(PT_LEAF);
+        const MaterialDirectory::PathNodes* nodes = namespaces[i]->pathNodes(PT_LEAF);
         if(nodes)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, MaterialDirectory::NodeHash::const_iterator)
+            DENG2_FOR_EACH(nodeIt, *nodes, MaterialDirectory::PathNodes::const_iterator)
             {
                 MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
                 if(mb)
@@ -706,10 +706,10 @@ void Materials_ClearDefinitionLinks(void)
         MaterialDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
         if(!matDirectory) continue;
 
-        MaterialDirectory::NodeHash* nodes = matDirectory->nodeHash(PT_LEAF);
+        const MaterialDirectory::PathNodes* nodes = matDirectory->pathNodes(PT_LEAF);
         if(nodes)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, MaterialDirectory::NodeHash::const_iterator)
+            DENG2_FOR_EACH(nodeIt, *nodes, MaterialDirectory::PathNodes::const_iterator)
             {
                 MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
                 if(mb)
@@ -1574,10 +1574,10 @@ static MaterialDirectoryNode** collectDirectoryNodes(materialnamespaceid_t names
         MaterialDirectory* matDirectory = getDirectoryForNamespaceId(iterId);
         if(!matDirectory) continue;
 
-        MaterialDirectory::NodeHash* nodes = matDirectory->nodeHash(PT_LEAF);
+        const MaterialDirectory::PathNodes* nodes = matDirectory->pathNodes(PT_LEAF);
         if(nodes)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, MaterialDirectory::NodeHash::const_iterator)
+            DENG2_FOR_EACH(nodeIt, *nodes, MaterialDirectory::PathNodes::const_iterator)
             {
                 if(like && like[0])
                 {

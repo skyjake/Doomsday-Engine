@@ -110,8 +110,8 @@ struct de::PathDirectory::Instance
     int flags; /// @see pathDirectoryFlags
 
     /// Path node hashes.
-    de::PathDirectory::NodeHash* pathLeafHash;
-    de::PathDirectory::NodeHash* pathBranchHash;
+    de::PathDirectory::PathNodes* pathLeafHash;
+    de::PathDirectory::PathNodes* pathBranchHash;
 
     /// Total number of unique paths in the directory.
     uint size;
@@ -172,11 +172,11 @@ struct de::PathDirectory::Instance
     de::PathDirectoryNode* findNode(de::PathDirectoryNode* parent,
         PathDirectoryNodeType nodeType, StringPoolId internId)
     {
-        de::PathDirectory::NodeHash* ph = (nodeType == PT_LEAF? pathLeafHash : pathBranchHash);
+        de::PathDirectory::PathNodes* ph = (nodeType == PT_LEAF? pathLeafHash : pathBranchHash);
         if(ph)
         {
             ushort hash = StringPool_UserValue(stringPool, internId);
-            de::PathDirectory::NodeHash::const_iterator i = ph->find(hash);
+            de::PathDirectory::PathNodes::const_iterator i = ph->find(hash);
             while(i != ph->end() && i.key() == hash)
             {
                 if(parent == (*i)->parent() && internId == (*i)->internId())
@@ -255,7 +255,7 @@ struct de::PathDirectory::Instance
             // Do we need to init the path hash?
             if(!pathLeafHash)
             {
-                pathLeafHash = new NodeHash;
+                pathLeafHash = new PathNodes;
             }
             pathLeafHash->insert(hash, node);
         }
@@ -264,7 +264,7 @@ struct de::PathDirectory::Instance
             // Do we need to init the path hash?
             if(!pathBranchHash)
             {
-                pathBranchHash = new NodeHash;
+                pathBranchHash = new PathNodes;
             }
             pathBranchHash->insert(hash, node);
         }
@@ -411,10 +411,10 @@ struct de::PathDirectory::Instance
         return node;
     }
 
-    static void collectPathsInHash(de::PathDirectory::NodeHash& ph, char delimiter,
+    static void collectPathsInHash(de::PathDirectory::PathNodes& ph, char delimiter,
         ddstring_t** pathListAdr)
     {
-        DENG2_FOR_EACH(i, ph, de::PathDirectory::NodeHash::const_iterator)
+        DENG2_FOR_EACH(i, ph, de::PathDirectory::PathNodes::const_iterator)
         {
             Str_Init(*pathListAdr);
             (*i)->directory()->composePath(*i, (*pathListAdr), NULL, delimiter);
@@ -422,9 +422,9 @@ struct de::PathDirectory::Instance
         }
     }
 
-    static void clearPathHash(de::PathDirectory::NodeHash& ph)
+    static void clearPathHash(de::PathDirectory::PathNodes& ph)
     {
-        DENG2_FOR_EACH(i, ph, de::PathDirectory::NodeHash::iterator)
+        DENG2_FOR_EACH(i, ph, de::PathDirectory::PathNodes::iterator)
         {
 #if _DEBUG
             if((*i)->userData())
@@ -528,8 +528,8 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF) && d->pathLeafHash)
         {
-            de::PathDirectory::NodeHash* nodes = d->pathLeafHash;
-            de::PathDirectory::NodeHash::iterator i = nodes->find(hash);
+            de::PathDirectory::PathNodes* nodes = d->pathLeafHash;
+            de::PathDirectory::PathNodes::iterator i = nodes->find(hash);
             for(; i != nodes->end() && i.key() == hash; ++i)
             {
                 if((*i)->matchDirectory(flags, &mappedSearchPath))
@@ -544,8 +544,8 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
         if(!foundNode)
         if(!(flags & PCF_NO_BRANCH) && d->pathBranchHash)
         {
-            de::PathDirectory::NodeHash* nodes = d->pathBranchHash;
-            de::PathDirectory::NodeHash::iterator i = nodes->find(hash);
+            de::PathDirectory::PathNodes* nodes = d->pathBranchHash;
+            de::PathDirectory::PathNodes::iterator i = nodes->find(hash);
             for(; i != nodes->end() && i.key() == hash; ++i)
             {
                 if((*i)->matchDirectory(flags, &mappedSearchPath))
@@ -644,7 +644,7 @@ static int iteratePathsInHash(PathDirectory* pd,
                             .arg(hash).arg(PATHDIRECTORY_PATHHASH_SIZE-1));
     }
 
-    de::PathDirectory::NodeHash* nodes = self->nodeHash(type);
+    const de::PathDirectory::PathNodes* nodes = self->pathNodes(type);
     if(nodes)
     {
         de::PathDirectoryNode* parent = reinterpret_cast<de::PathDirectoryNode*>(parent_);
@@ -653,7 +653,7 @@ static int iteratePathsInHash(PathDirectory* pd,
         if(hash != PATHDIRECTORY_NOHASH)
         {
             // Yes.
-            de::PathDirectory::NodeHash::iterator i = nodes->find(hash);
+            de::PathDirectory::PathNodes::const_iterator i = nodes->constFind(hash);
             for(; i != nodes->end() && i.key() == hash; ++i)
             {
                 if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
@@ -666,7 +666,7 @@ static int iteratePathsInHash(PathDirectory* pd,
         else
         {
             // No - iterate all nodes.
-            DENG2_FOR_EACH(i, *nodes, de::PathDirectory::NodeHash::iterator)
+            DENG2_FOR_EACH(i, *nodes, de::PathDirectory::PathNodes::const_iterator)
             {
                 if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
                 {
@@ -694,7 +694,7 @@ static int iteratePathsInHash_Const(const PathDirectory* pd,
                             .arg(hash).arg(PATHDIRECTORY_PATHHASH_SIZE-1));
     }
 
-    const de::PathDirectory::NodeHash* nodes = self->nodeHash(type);
+    const de::PathDirectory::PathNodes* nodes = self->pathNodes(type);
     if(nodes)
     {
         const de::PathDirectoryNode* parent = reinterpret_cast<const de::PathDirectoryNode*>(parent_);
@@ -703,7 +703,7 @@ static int iteratePathsInHash_Const(const PathDirectory* pd,
         if(hash != PATHDIRECTORY_NOHASH)
         {
             // Yes.
-            de::PathDirectory::NodeHash::const_iterator i = nodes->find(hash);
+            de::PathDirectory::PathNodes::const_iterator i = nodes->find(hash);
             for(; i != nodes->end() && i.key() == hash; ++i)
             {
                 if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
@@ -716,7 +716,7 @@ static int iteratePathsInHash_Const(const PathDirectory* pd,
         else
         {
             // No - iterate all nodes.
-            DENG2_FOR_EACH(i, *nodes, de::PathDirectory::NodeHash::const_iterator)
+            DENG2_FOR_EACH(i, *nodes, de::PathDirectory::PathNodes::const_iterator)
             {
                 if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
                 {
@@ -905,8 +905,8 @@ ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,
     return d->constructPath(node, foundPath, delimiter);
 }
 
-de::PathDirectory::NodeHash*
-de::PathDirectory::nodeHash(PathDirectoryNodeType type) const
+const de::PathDirectory::PathNodes* const
+de::PathDirectory::pathNodes(PathDirectoryNodeType type) const
 {
     return (type == PT_LEAF? d->pathLeafHash : d->pathBranchHash);
 }
