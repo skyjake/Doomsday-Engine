@@ -324,6 +324,15 @@ struct de::PathDirectory::Instance
      * @todo This is a good candidate for result caching: the constructed path
      * could be saved and returned on subsequent calls. Are there any circumstances
      * in which the cached result becomes obsolete? -jk
+     *
+     * The only times the result becomes obsolete is when the delimiter is changed
+     * or when the directory itself is rebuilt (in which case the nodes themselves
+     * will be free'd). Note that any caching mechanism should not counteract one
+     * of the primary goals of this class, i.e., optimal memory usage for the whole
+     * directory. Caching constructed paths for every root node in the directory
+     * would completely negate the benefits of the design of this class.
+     *
+     * Perhaps a fixed size MRU cache? -ds
      */
     ddstring_t* constructPath(const de::PathDirectoryNode* node,
                               ddstring_t* constructedPath, char delimiter)
