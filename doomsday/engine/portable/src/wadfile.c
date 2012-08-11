@@ -179,7 +179,7 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
             wad->lumpDirectory = PathDirectory_NewWithFlags(PDF_ALLOW_DUPLICATE_LEAF);
         }
         node = PathDirectory_Insert(wad->lumpDirectory, Str_Text(&absPath), '/');
-        PathDirectoryNode_AttachUserData(node, record);
+        PathDirectoryNode_SetUserData(node, record);
     }
 
     Str_Free(&absPath);
@@ -188,9 +188,9 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
     free(lumpDir);
 }
 
-static int insertNodeInLumpDirectoryMap(PathDirectoryNode* node, void* paramaters)
+static int insertNodeInLumpDirectoryMap(PathDirectoryNode* node, void* parameters)
 {
-    WadFile* wad = (WadFile*)paramaters;
+    WadFile* wad = (WadFile*)parameters;
     wadfile_lumprecord_t* lumpRecord = (wadfile_lumprecord_t*)PathDirectoryNode_UserData(node);
     assert(lumpRecord && lumpRecord->info.lumpIdx >= 0 && lumpRecord->info.lumpIdx < WadFile_LumpCount(wad));
     wad->lumpDirectoryMap[lumpRecord->info.lumpIdx] = node;
@@ -295,11 +295,16 @@ const LumpInfo* WadFile_LumpInfo(WadFile* wad, int lumpIdx)
     return &lumpRecord->info;
 }
 
-static int destroyRecord(PathDirectoryNode* node, void* paramaters)
+static int destroyRecord(PathDirectoryNode* node, void* parameters)
 {
-    wadfile_lumprecord_t* rec = PathDirectoryNode_DetachUserData(node);
+    wadfile_lumprecord_t* rec = PathDirectoryNode_UserData(node);
+
+    DENG_UNUSED(parameters);
+
     if(rec)
     {
+        // Detach our user data from this node.
+        PathDirectoryNode_SetUserData(node, 0);
         F_DestroyLumpInfo(&rec->info);
         // The record itself is free'd later.
     }

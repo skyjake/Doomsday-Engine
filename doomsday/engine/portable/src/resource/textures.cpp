@@ -418,7 +418,8 @@ static void destroyRecord(TextureDirectoryNode* node)
         TextureNamespace* tn = &namespaces[namespaceId-TEXTURENAMESPACE_FIRST];
         unlinkRecordInUniqueIdMap(record, tn);
 
-        node->detachUserData();
+        // Detach our user data from this node.
+        node->setUserData(0);
         M_Free(record);
     }
 }

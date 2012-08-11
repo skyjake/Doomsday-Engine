@@ -97,25 +97,20 @@ public:
     /// @return  Hash for this directory node path fragment.
     ushort hash() const;
 
+    /// @return  User data pointer associated with this.
+    void* userData() const;
+
+    /**
+     * Change the associated user data pointer.
+     */
+    PathDirectoryNode& setUserData(void* data);
+
     /**
      * @param flags  @see pathComparisonFlags
      * @param searchPattern  Fragment mapped search pattern (path).
      * @return  @c true iff the directory matched this.
      */
     int matchDirectory(int flags, PathMap* candidatePath);
-
-    /**
-     * Attach user data to this. PathDirectoryNode is given ownership of @a data
-     */
-    PathDirectoryNode& attachUserData(void* data);
-
-    /**
-     * Detach user data from this. Ownership of the data is relinquished to the caller.
-     */
-    void* detachUserData();
-
-    /// @return  Data associated with this.
-    void* userData() const;
 
     /// @return  Print-ready name for node @a type.
     static const ddstring_t* typeName(pathdirectorynode_type_t type);
@@ -386,9 +381,8 @@ PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node);
 pathdirectorynode_type_t PathDirectoryNode_Type(const PathDirectoryNode* node);
 ushort PathDirectoryNode_Hash(const PathDirectoryNode* node);
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags, PathMap* candidatePath, void* parameters);
-void PathDirectoryNode_AttachUserData(PathDirectoryNode* node, void* data);
-void* PathDirectoryNode_DetachUserData(PathDirectoryNode* node);
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node);
+void PathDirectoryNode_SetUserData(PathDirectoryNode* node, void* data);
 const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type);
 
 #ifdef __cplusplus

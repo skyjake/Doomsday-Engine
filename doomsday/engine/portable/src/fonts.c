@@ -72,7 +72,7 @@ D_CMD(PrintFontStats);
 #endif
 
 static int iterateDirectory(fontnamespaceid_t namespaceId,
-    int (*callback)(PathDirectoryNode* node, void* paramaters), void* paramaters);
+    int (*callback)(PathDirectoryNode* node, void* parameters), void* parameters);
 
 static Uri* emptyUri;
 
@@ -166,7 +166,7 @@ static void unlinkDirectoryNodeFromBindIdMap(const PathDirectoryNode* node)
 }
 
 /// @pre uniqueIdMap has been initialized and is large enough!
-static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
+static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* parameters)
 {
     const fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
     const fontnamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
@@ -176,7 +176,7 @@ static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
 }
 
 /// @pre uniqueIdMap is large enough if initialized!
-static int unlinkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
+static int unlinkRecordInUniqueIdMap(PathDirectoryNode* node, void* parameters)
 {
     const fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
     const fontnamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
@@ -324,7 +324,7 @@ static void destroyFont(font_t* font)
     }
 }
 
-static int destroyBoundFont(PathDirectoryNode* node, void* paramaters)
+static int destroyBoundFont(PathDirectoryNode* node, void* parameters)
 {
     fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
     if(record && record->font)
@@ -334,9 +334,12 @@ static int destroyBoundFont(PathDirectoryNode* node, void* paramaters)
     return 0; // Continue iteration.
 }
 
-static int destroyRecord(PathDirectoryNode* node, void* paramaters)
+static int destroyRecord(PathDirectoryNode* node, void* parameters)
 {
     fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+
+    DENG_UNUSED(parameters);
+
     if(record)
     {
         if(record->font)
@@ -357,18 +360,20 @@ static int destroyRecord(PathDirectoryNode* node, void* paramaters)
         }*/
 
         unlinkDirectoryNodeFromBindIdMap(node);
-        unlinkRecordInUniqueIdMap(node, NULL/*no paramaters*/);
+        unlinkRecordInUniqueIdMap(node, NULL/*no parameters*/);
 
-        PathDirectoryNode_DetachUserData(node);
+        // Detach our user data from this node.
+        PathDirectoryNode_SetUserData(node, 0);
+
         free(record);
     }
     return 0; // Continue iteration.
 }
 
-static int destroyFontAndRecord(PathDirectoryNode* node, void* paramaters)
+static int destroyFontAndRecord(PathDirectoryNode* node, void* parameters)
 {
-    destroyBoundFont(node, paramaters);
-    destroyRecord(node, paramaters);
+    destroyBoundFont(node, parameters);
+    destroyRecord(node, parameters);
     return 0; // Continue iteration.
 }
 
@@ -649,10 +654,10 @@ typedef struct {
     int minId, maxId;
 } finduniqueidbounds_params_t;
 
-static int findUniqueIdBounds(PathDirectoryNode* node, void* paramaters)
+static int findUniqueIdBounds(PathDirectoryNode* node, void* parameters)
 {
     const fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
-    finduniqueidbounds_params_t* p = (finduniqueidbounds_params_t*)paramaters;
+    finduniqueidbounds_params_t* p = (finduniqueidbounds_params_t*)parameters;
     if(record->uniqueId < p->minId) p->minId = record->uniqueId;
     if(record->uniqueId > p->maxId) p->maxId = record->uniqueId;
     return 0; // Continue iteration.
@@ -827,7 +832,7 @@ fontid_t Fonts_Declare(const Uri* uri, int uniqueId)//, const Uri* resourcePath)
         record->uniqueId = uniqueId;
 
         node = PathDirectory_Insert(fn->directory, Str_Text(&path), FONTS_PATH_DELIMITER);
-        PathDirectoryNode_AttachUserData(node, record);
+        PathDirectoryNode_SetUserData(node, record);
 
         // We'll need to rebuild the unique id map too.
         fn->uniqueIdMapDirty = true;
@@ -1175,21 +1180,21 @@ Uri* Fonts_ComposeUrn(fontid_t id)
 }
 
 typedef struct {
-    int (*definedCallback)(font_t* font, void* paramaters);
-    int (*declaredCallback)(fontid_t id, void* paramaters);
-    void* paramaters;
+    int (*definedCallback)(font_t* font, void* parameters);
+    int (*declaredCallback)(fontid_t id, void* parameters);
+    void* parameters;
 } iteratedirectoryworker_params_t;
 
-static int iterateDirectoryWorker(PathDirectoryNode* node, void* paramaters)
+static int iterateDirectoryWorker(PathDirectoryNode* node, void* parameters)
 {
-    iteratedirectoryworker_params_t* p = (iteratedirectoryworker_params_t*)paramaters;
+    iteratedirectoryworker_params_t* p = (iteratedirectoryworker_params_t*)parameters;
     fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
     assert(node && p && record);
     if(p->definedCallback)
     {
         if(record->font)
         {
-            return p->definedCallback(record->font, p->paramaters);
+            return p->definedCallback(record->font, p->parameters);
         }
     }
     else
@@ -1205,13 +1210,13 @@ static int iterateDirectoryWorker(PathDirectoryNode* node, void* paramaters)
         // Sanity check.
         assert(validFontId(id));
 
-        return p->declaredCallback(id, p->paramaters);
+        return p->declaredCallback(id, p->parameters);
     }
     return 0; // Continue iteration.
 }
 
 static int iterateDirectory(fontnamespaceid_t namespaceId,
-    int (*callback)(PathDirectoryNode* node, void* paramaters), void* paramaters)
+    int (*callback)(PathDirectoryNode* node, void* parameters), void* parameters)
 {
     fontnamespaceid_t from, to, iter;
     int result = 0;
@@ -1229,44 +1234,44 @@ static int iterateDirectory(fontnamespaceid_t namespaceId,
     for(iter = from; iter <= to; ++iter)
     {
         PathDirectory* directory = getDirectoryForNamespaceId(iter);
-        result = PathDirectory_Iterate2(directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, callback, paramaters);
+        result = PathDirectory_Iterate2(directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, callback, parameters);
         if(result) break;
     }
     return result;
 }
 
 int Fonts_Iterate2(fontnamespaceid_t namespaceId,
-    int (*callback)(font_t* font, void* paramaters), void* paramaters)
+    int (*callback)(font_t* font, void* parameters), void* parameters)
 {
     iteratedirectoryworker_params_t p;
     if(!callback) return 0;
     p.definedCallback = callback;
     p.declaredCallback = NULL;
-    p.paramaters = paramaters;
+    p.parameters = parameters;
     return iterateDirectory(namespaceId, iterateDirectoryWorker, &p);
 }
 
 int Fonts_Iterate(fontnamespaceid_t namespaceId,
-    int (*callback)(font_t* font, void* paramaters))
+    int (*callback)(font_t* font, void* parameters))
 {
-    return Fonts_Iterate2(namespaceId, callback, NULL/*no paramaters*/);
+    return Fonts_Iterate2(namespaceId, callback, NULL/*no parameters*/);
 }
 
 int Fonts_IterateDeclared2(fontnamespaceid_t namespaceId,
-    int (*callback)(fontid_t fontId, void* paramaters), void* paramaters)
+    int (*callback)(fontid_t fontId, void* parameters), void* parameters)
 {
     iteratedirectoryworker_params_t p;
     if(!callback) return 0;
     p.declaredCallback = callback;
     p.definedCallback = NULL;
-    p.paramaters = paramaters;
+    p.parameters = parameters;
     return iterateDirectory(namespaceId, iterateDirectoryWorker, &p);
 }
 
 int Fonts_IterateDeclared(fontnamespaceid_t namespaceId,
-    int (*callback)(fontid_t fontId, void* paramaters))
+    int (*callback)(fontid_t fontId, void* parameters))
 {
-    return Fonts_IterateDeclared2(namespaceId, callback, NULL/*no paramaters*/);
+    return Fonts_IterateDeclared2(namespaceId, callback, NULL/*no parameters*/);
 }
 
 static void printFontOverview(PathDirectoryNode* node, boolean printNamespace)
@@ -1314,9 +1319,9 @@ typedef struct {
     PathDirectoryNode** storage;
 } collectdirectorynodeworker_params_t;
 
-static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* paramaters)
+static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* parameters)
 {
-    collectdirectorynodeworker_params_t* p = (collectdirectorynodeworker_params_t*)paramaters;
+    collectdirectorynodeworker_params_t* p = (collectdirectorynodeworker_params_t*)parameters;
 
     if(p->like && p->like[0])
     {
@@ -1495,7 +1500,7 @@ static void printFonts(fontnamespaceid_t namespaceId, const char* like)
     printFonts2(namespaceId, like, DEFAULT_PRINTFONTFLAGS);
 }
 
-static int clearDefinitionLinks(font_t* font, void* paramaters)
+static int clearDefinitionLinks(font_t* font, void* parameters)
 {
     if(Font_Type(font) == FT_BITMAPCOMPOSITE)
     {
@@ -1510,7 +1515,7 @@ void Fonts_ClearDefinitionLinks(void)
     Fonts_Iterate(FN_ANY, clearDefinitionLinks);
 }
 
-static int releaseFontTextures(font_t* font, void* paramaters)
+static int releaseFontTextures(font_t* font, void* parameters)
 {
     switch(Font_Type(font))
     {

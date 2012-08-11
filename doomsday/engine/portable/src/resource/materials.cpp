@@ -499,7 +499,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
                             de::String("Failed on allocation of %1 bytes for new MaterialBind.")
                                 .arg((unsigned long) sizeof *mb));
         }
-        node->attachUserData(mb);
+        node->setUserData(mb);
 
         if(material)
         {
@@ -606,8 +606,13 @@ static void destroyBindings(void)
         {
             DENG2_FOR_EACH(nodeIt, *nodes, MaterialDirectory::NodeHash::const_iterator)
             {
-                MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->detachUserData());
-                if(mb) delete mb;
+                MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
+                if(mb)
+                {
+                    // Detach our user data from this node.
+                    (*nodeIt)->setUserData(0);
+                    delete mb;
+                }
             }
         }
         delete namespaces[i]; namespaces[i] = NULL;

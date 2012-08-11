@@ -480,7 +480,7 @@ de::PathDirectory::insert(const char* path, char delimiter, void* userData)
 
         if(userData)
         {
-            node->attachUserData(userData);
+            node->setUserData(userData);
         }
     }
     return node;
@@ -1392,7 +1392,7 @@ de::PathDirectoryNode::PathDirectoryNode(PathDirectory& directory,
     void* userData)
 {
     d = new Instance(this, directory, type, internId, parent);
-    attachUserData(userData);
+    setUserData(userData);
 }
 
 de::PathDirectoryNode::~PathDirectoryNode()
@@ -1573,24 +1573,10 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
 #undef EXIT_POINT
 }
 
-de::PathDirectoryNode& de::PathDirectoryNode::attachUserData(void* userData)
+de::PathDirectoryNode& de::PathDirectoryNode::setUserData(void* userData)
 {
-#if _DEBUG
-    if(d->pair.data)
-    {
-        LOG_AS("PathDirectoryNode::attachUserData");
-        LOG_WARNING("Data is already associated with this node, will be replaced.\n");
-    }
-#endif
     d->pair.data = userData;
     return *this;
-}
-
-void* de::PathDirectoryNode::detachUserData()
-{
-    void* detachedData = d->pair.data;
-    d->pair.data = NULL;
-    return detachedData;
 }
 
 void* de::PathDirectoryNode::userData() const
@@ -1658,20 +1644,14 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     return self->matchDirectory(flags, searchPattern);
 }
 
-void PathDirectoryNode_AttachUserData(PathDirectoryNode* node, void* userData)
-{
-    SELF(node);
-    self->attachUserData(userData);
-}
-
-void* PathDirectoryNode_DetachUserData(PathDirectoryNode* node)
-{
-    SELF(node);
-    return self->detachUserData();
-}
-
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node)
 {
     SELF_CONST(node);
     return self->userData();
+}
+
+void PathDirectoryNode_SetUserData(PathDirectoryNode* node, void* userData)
+{
+    SELF(node);
+    self->setUserData(userData);
 }

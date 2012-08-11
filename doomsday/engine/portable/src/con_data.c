@@ -107,12 +107,12 @@ void Con_DataRegister(void)
 #endif
 }
 
-static int markVariableUserDataFreed(PathDirectoryNode* node, void* paramaters)
+static int markVariableUserDataFreed(PathDirectoryNode* node, void* parameters)
 {
-    assert(node && paramaters);
+    assert(node && parameters);
     {
     cvar_t* var = PathDirectoryNode_UserData(node);
-    void** ptr = (void**) paramaters;
+    void** ptr = (void**) parameters;
     if(var)
     switch(CVar_Type(var))
     {
@@ -128,12 +128,19 @@ static int markVariableUserDataFreed(PathDirectoryNode* node, void* paramaters)
     }
 }
 
-static int clearVariable(PathDirectoryNode* node, void* paramaters)
+static int clearVariable(PathDirectoryNode* node, void* parameters)
 {
-    cvar_t* var = (cvar_t*)PathDirectoryNode_DetachUserData(node);
+    cvar_t* var = (cvar_t*)PathDirectoryNode_UserData(node);
+
+    DENG_UNUSED(parameters);
+
     if(var)
     {
         assert(PT_LEAF == PathDirectoryNode_Type(node));
+
+        // Detach our user data from this node.
+        PathDirectoryNode_SetUserData(node, 0);
+
         if(CVar_Flags(var) & CVF_CAN_FREE)
         {
             void** ptr = NULL;
@@ -143,17 +150,17 @@ static int clearVariable(PathDirectoryNode* node, void* paramaters)
                 if(!CV_CHARPTR(var)) break;
 
                 ptr = (void**)var->ptr;
-                // \note Multiple vars could be using the same pointer (so only free once).
+                /// @note Multiple vars could be using the same pointer (so only free once).
                 PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, markVariableUserDataFreed, ptr);
-                free(*ptr), *ptr = emptyString;
+                free(*ptr); *ptr = emptyString;
                 break;
             case CVT_URIPTR:
                 if(!CV_URIPTR(var)) break;
 
                 ptr = (void**)var->ptr;
-                // \note Multiple vars could be using the same pointer (so only free once).
+                /// @note Multiple vars could be using the same pointer (so only free once).
                 PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, markVariableUserDataFreed, ptr);
-                Uri_Delete((Uri*)*ptr), *ptr = emptyUri;
+                Uri_Delete((Uri*)*ptr); *ptr = emptyUri;
                 break;
             default: {
 #if _DEBUG
@@ -206,7 +213,7 @@ static cvar_t* addVariable(const cvartemplate_t* tpl)
     newVar->max = tpl->max;
     newVar->notifyChanged = tpl->notifyChanged;
     newVar->directoryNode = node;
-    PathDirectoryNode_AttachUserData(node, newVar);
+    PathDirectoryNode_SetUserData(node, newVar);
 
     knownWordsNeedUpdate = true;
     return newVar;
@@ -328,11 +335,11 @@ typedef struct {
     boolean ignoreHidden;
 } countvariableparams_t;
 
-static int countVariable(const PathDirectoryNode* node, void* paramaters)
+static int countVariable(const PathDirectoryNode* node, void* parameters)
 {
-    assert(NULL != node && NULL != paramaters);
+    assert(NULL != node && NULL != parameters);
     {
-    countvariableparams_t* p = (countvariableparams_t*) paramaters;
+    countvariableparams_t* p = (countvariableparams_t*) parameters;
     cvar_t* var = PathDirectoryNode_UserData(node);
     if(!(p->ignoreHidden && (var->flags & CVF_HIDE)))
     {
@@ -351,12 +358,12 @@ static int countVariable(const PathDirectoryNode* node, void* paramaters)
     }
 }
 
-static int addVariableToKnownWords(const PathDirectoryNode* node, void* paramaters)
+static int addVariableToKnownWords(const PathDirectoryNode* node, void* parameters)
 {
-    assert(NULL != node && NULL != paramaters);
+    assert(NULL != node && NULL != parameters);
     {
     cvar_t* var = PathDirectoryNode_UserData(node);
-    uint* index = (uint*) paramaters;
+    uint* index = (uint*) parameters;
     if(NULL != var && !(var->flags & CVF_HIDE))
     {
         knownWords[*index].type = WT_CVAR;
@@ -1348,7 +1355,7 @@ static ddstring_t* textForKnownWord(const knownword_t* word)
 }
 
 int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
-    int (*callback) (const knownword_t* word, void* paramaters), void* paramaters)
+    int (*callback) (const knownword_t* word, void* parameters), void* parameters)
 {
     assert(inited && callback);
     {
@@ -1374,7 +1381,7 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
             if(compareResult)
                 continue; // Didn't match.
         }
-        if(0 != (result = callback(word, paramaters)))
+        if(0 != (result = callback(word, parameters)))
             break;
     }}
 
@@ -1382,11 +1389,11 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
     }
 }
 
-static int countMatchedWordWorker(const knownword_t* word, void* paramaters)
+static int countMatchedWordWorker(const knownword_t* word, void* parameters)
 {
-    assert(word && paramaters);
+    assert(word && parameters);
     {
-    uint* count = (uint*) paramaters;
+    uint* count = (uint*) parameters;
     ++(*count);
     return 0; // Continue iteration.
     }
@@ -1397,11 +1404,11 @@ typedef struct {
     uint index; /// Current position in the collection.
 } collectmatchedwordworker_paramaters_t;
 
-static int collectMatchedWordWorker(const knownword_t* word, void* paramaters)
+static int collectMatchedWordWorker(const knownword_t* word, void* parameters)
 {
-    assert(word && paramaters);
+    assert(word && parameters);
     {
-    collectmatchedwordworker_paramaters_t* p = (collectmatchedwordworker_paramaters_t*) paramaters;
+    collectmatchedwordworker_paramaters_t* p = (collectmatchedwordworker_paramaters_t*) parameters;
     p->matches[p->index++] = word;
     return 0; // Continue iteration.
     }
@@ -1639,11 +1646,11 @@ D_CMD(HelpWhat)
     return true;
 }
 
-static int printKnownWordWorker(const knownword_t* word, void* paramaters)
+static int printKnownWordWorker(const knownword_t* word, void* parameters)
 {
     assert(word);
     {
-    uint* numPrinted = (void*)paramaters;
+    uint* numPrinted = (void*)parameters;
     switch(word->type)
     {
     case WT_CCMD: {

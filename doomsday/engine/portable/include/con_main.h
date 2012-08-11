@@ -313,12 +313,12 @@ void Con_AbnormalShutdown(const char* error);
  *                          words which match this pattern.
  * @param type              If a valid word type, only process words of this type.
  * @param callback          Callback to make for each processed word.
- * @param paramaters        Passed to the callback.
+ * @param parameters        Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
 int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
-    int (*callback)(const knownword_t* word, void* paramaters), void* paramaters);
+    int (*callback)(const knownword_t* word, void* parameters), void* parameters);
 
 /**
  * Collect an array of knownWords which match the given word (at least

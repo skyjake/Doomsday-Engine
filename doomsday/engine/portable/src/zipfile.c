@@ -429,7 +429,7 @@ static void ZipFile_ReadLumpDirectory(ZipFile* zip)
 
             F_InitLumpInfo(&record->info);
             node = PathDirectory_Insert(zip->lumpDirectory, Str_Text(&entryPath), '/');
-            PathDirectoryNode_AttachUserData(node, record);
+            PathDirectoryNode_SetUserData(node, record);
 
             record->info.lumpIdx = lumpIdx++;
             record->info.size = ULONG(header->size);
@@ -463,9 +463,9 @@ static void ZipFile_ReadLumpDirectory(ZipFile* zip)
     Str_Free(&entryPath);
 }
 
-static int insertNodeInLumpDirectoryMap(PathDirectoryNode* node, void* paramaters)
+static int insertNodeInLumpDirectoryMap(PathDirectoryNode* node, void* parameters)
 {
-    ZipFile* zip = (ZipFile*)paramaters;
+    ZipFile* zip = (ZipFile*)parameters;
     zipfile_lumprecord_t* lumpRecord = (zipfile_lumprecord_t*)PathDirectoryNode_UserData(node);
     assert(lumpRecord && lumpRecord->info.lumpIdx >= 0 && lumpRecord->info.lumpIdx < ZipFile_LumpCount(zip));
     zip->lumpDirectoryMap[lumpRecord->info.lumpIdx] = node;
@@ -561,11 +561,16 @@ const LumpInfo* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx)
     return &lumpRecord->info;
 }
 
-static int destroyRecord(PathDirectoryNode* node, void* paramaters)
+static int destroyRecord(PathDirectoryNode* node, void* parameters)
 {
-    zipfile_lumprecord_t* rec = PathDirectoryNode_DetachUserData(node);
+    zipfile_lumprecord_t* rec = PathDirectoryNode_UserData(node);
+
+    DENG_UNUSED(parameters);
+
     if(rec)
     {
+        // Detach our user data from this node.
+        PathDirectoryNode_SetUserData(node, 0);
         F_DestroyLumpInfo(&rec->info);
         // The record itself is free'd later.
     }

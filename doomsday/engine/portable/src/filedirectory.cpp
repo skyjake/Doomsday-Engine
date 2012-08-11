@@ -45,7 +45,7 @@ static de::PathDirectoryNode* attachMissingNodeInfo(de::PathDirectoryNode* node)
     if(!info)
     {
         // Clearly not. Attach new node info.
-        node->attachUserData(new FileDirectoryNodeInfo());
+        node->setUserData(new FileDirectoryNodeInfo());
     }
     return node;
 }
@@ -73,16 +73,26 @@ void de::FileDirectory::clearNodeInfo()
     if(nodes)
     DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
     {
-        FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->detachUserData());
-        if(info) delete info;
+        FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->userData());
+        if(info)
+        {
+            // Detach our user data from this node.
+            (*i)->setUserData(0);
+            delete info;
+        }
     }
 
     nodes = nodeHash(PT_BRANCH);
     if(nodes)
     DENG2_FOR_EACH(i, *nodes, NodeHash::iterator)
     {
-        FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->detachUserData());
-        if(info) delete info;
+        FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->userData());
+        if(info)
+        {
+            // Detach our user data from this node.
+            (*i)->setUserData(0);
+            delete info;
+        }
     }
 }
 
