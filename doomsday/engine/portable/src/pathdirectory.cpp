@@ -401,8 +401,8 @@ struct de::PathDirectory::Instance
 #endif
         {
             //void* element = BlockSet_Allocate(NodeBlockSet);
-            node = /*new (element)*/ new de::PathDirectoryNode(*directory, type, parent,
-                                                               internId, userData);
+            node = /*new (element)*/ new de::PathDirectoryNode(*directory, type, internId,
+                                                               parent, userData);
         }
 #if 0
         Sys_Unlock(nodeAllocator_Mutex);
@@ -1357,17 +1357,48 @@ void PathDirectory_DebugPrintHashDistribution(PathDirectory* pd)
 }
 #endif
 
-de::PathDirectoryNode::PathDirectoryNode(de::PathDirectory& directory,
-    pathdirectorynode_type_t type, de::PathDirectoryNode* parent,
-    StringPoolId internId, void* userData)
-    : next(0), parent_(parent), type_(type), directory_(&directory)
+struct de::PathDirectoryNode::Instance
 {
-    pair.internId = internId;
-    pair.data = userData;
+    de::PathDirectoryNode* self;
+
+    /// Parent node in the user's logical hierarchy.
+    PathDirectoryNode* parent;
+
+    /// Symbolic node type.
+    pathdirectorynode_type_t type;
+
+    /// PathDirectory which owns this node.
+    PathDirectory* directory;
+
+    /// User data present at this node.
+    typedef struct userdatapair_s {
+        StringPoolId internId;
+        void* data;
+    } userdatapair_t;
+    userdatapair_t pair;
+
+    Instance(de::PathDirectoryNode* d, de::PathDirectory& _directory,
+             pathdirectorynode_type_t _type, StringPoolId internId,
+             de::PathDirectoryNode* _parent)
+        : self(d), parent(_parent), type(_type), directory(&_directory)
+    {
+        pair.internId = internId;
+        pair.data = 0;
+    }
+};
+
+de::PathDirectoryNode::PathDirectoryNode(PathDirectory& directory,
+    pathdirectorynode_type_t type, StringPoolId internId, de::PathDirectoryNode* parent,
+    void* userData)
+{
+    d = new Instance(this, directory, type, internId, parent);
+    attachUserData(userData);
 }
 
 de::PathDirectoryNode::~PathDirectoryNode()
 {
+    delete d;
+
 #if 0
     // Add this node to the list of used nodes for re-use.
     Sys_Lock(nodeAllocator_Mutex);
@@ -1388,14 +1419,32 @@ const Str* de::PathDirectoryNode::typeName(pathdirectorynode_type_t type)
     return nodeNames[1 + (type - PATHDIRECTORYNODE_TYPE_FIRST)];
 }
 
+/// @return  PathDirectory which owns this node.
+de::PathDirectory* de::PathDirectoryNode::directory() const
+{
+    return d->directory;
+}
+
+/// @return  Parent of this directory node else @c NULL
+de::PathDirectoryNode* de::PathDirectoryNode::parent() const
+{
+    return d->parent;
+}
+
+/// @return  Type of this directory node.
+pathdirectorynode_type_t de::PathDirectoryNode::type() const
+{
+    return d->type;
+}
+
 StringPoolId de::PathDirectoryNode::internId() const
 {
-    return pair.internId;
+    return d->pair.internId;
 }
 
 ushort de::PathDirectoryNode::hash() const
 {
-    return directory_->hashForInternId(pair.internId);
+    return d->directory->hashForInternId(d->pair.internId);
 }
 
 static int matchPathFragment(const char* string, const char* pattern)
@@ -1524,28 +1573,29 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
 #undef EXIT_POINT
 }
 
-void de::PathDirectoryNode::attachUserData(void* userData)
+de::PathDirectoryNode& de::PathDirectoryNode::attachUserData(void* userData)
 {
 #if _DEBUG
-    if(pair.data)
+    if(d->pair.data)
     {
         LOG_AS("PathDirectoryNode::attachUserData");
         LOG_WARNING("Data is already associated with this node, will be replaced.\n");
     }
 #endif
-    pair.data = userData;
+    d->pair.data = userData;
+    return *this;
 }
 
 void* de::PathDirectoryNode::detachUserData()
 {
-    void* detachedData = pair.data;
-    pair.data = NULL;
+    void* detachedData = d->pair.data;
+    d->pair.data = NULL;
     return detachedData;
 }
 
 void* de::PathDirectoryNode::userData() const
 {
-    return pair.data;
+    return d->pair.data;
 }
 
 /**

@@ -80,19 +80,19 @@ class PathDirectoryNode
 {
 public:
     /// @todo ctor/dtor should be private or made callable only by de::PathDirectory
-    PathDirectoryNode(de::PathDirectory& directory, pathdirectorynode_type_t type,
-                      de::PathDirectoryNode* parent, StringPoolId internId,
+    PathDirectoryNode(PathDirectory& directory, pathdirectorynode_type_t type,
+                      StringPoolId internId, PathDirectoryNode* parent=NULL,
                       void* userData=NULL);
     ~PathDirectoryNode();
 
     /// @return  PathDirectory which owns this node.
-    PathDirectory* directory() const { return directory_; }
+    PathDirectory* directory() const;
 
     /// @return  Parent of this directory node else @c NULL
-    PathDirectoryNode* parent() const { return parent_; }
+    PathDirectoryNode* parent() const;
 
     /// @return  Type of this directory node.
-    pathdirectorynode_type_t type() const { return type_; }
+    pathdirectorynode_type_t type() const;
 
     /// @return  Hash for this directory node path fragment.
     ushort hash() const;
@@ -107,7 +107,7 @@ public:
     /**
      * Attach user data to this. PathDirectoryNode is given ownership of @a data
      */
-    void attachUserData(void* data);
+    PathDirectoryNode& attachUserData(void* data);
 
     /**
      * Detach user data from this. Ownership of the data is relinquished to the caller.
@@ -124,25 +124,8 @@ public:
     StringPoolId internId() const;
 
 private:
-    typedef struct pathdirectorynode_userdatapair_s {
-        StringPoolId internId;
-        void* data;
-    } pathdirectorynode_userdatapair_t;
-
-    /// Next node in the hashed path bucket.
-    PathDirectoryNode* next;
-
-    /// Parent node in the user's logical hierarchy.
-    PathDirectoryNode* parent_;
-
-    /// Symbolic node type.
-    pathdirectorynode_type_t type_;
-
-    /// PathDirectory which owns this node.
-    PathDirectory* directory_;
-
-    /// User data present at this node.
-    pathdirectorynode_userdatapair_t pair;
+    struct Instance;
+    Instance* d;
 };
 
 } // namespace de
@@ -193,7 +176,7 @@ namespace de {
 class PathDirectory
 {
 public:
-    typedef QMultiHash<ushort, de::PathDirectoryNode*> NodeHash;
+    typedef QMultiHash<ushort, PathDirectoryNode*> NodeHash;
 
 public:
     explicit PathDirectory(int flags=0);
