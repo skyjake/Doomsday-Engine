@@ -200,7 +200,7 @@ public:
     virtual ~PathDirectory();
 
     /// @return  Number of unique paths in the directory.
-    uint size() const { return size_; }
+    uint size() const;
 
     /**
      * Clear the directory contents.
@@ -288,65 +288,12 @@ public:
     static void debugPrintHashDistribution(PathDirectory* pd);
 #endif
 
-private:
-    void clearInternPool();
-
-    PathDirectoryNode* findNode(PathDirectoryNode* parent, pathdirectorynode_type_t nodeType,
-                                StringPoolId internId);
-
-    StringPoolId internNameAndUpdateIdHashMap(const ddstring_t* name, ushort hash);
-
-    /**
-     * @return  [ a new | the ] directory node that matches the name and type and
-     * which has the specified parent node.
-     */
-    PathDirectoryNode* direcNode(PathDirectoryNode* parent, pathdirectorynode_type_t nodeType,
-                                 const ddstring_t* name, char delimiter, void* userData);
-
-    /**
-     * The path is split into as many nodes as necessary. Parent links are set.
-     *
-     * @return  The node that identifies the given path.
-     */
-    PathDirectoryNode* buildDirecNodes(const char* path, char delimiter);
-
-    /**
-     * @param node              Node whose path to construct.
-     * @param constructedPath   The constructed path is written here. Previous contents discarded.
-     * @param delimiter         Character to use for separating fragments.
-     *
-     * @return @a constructedPath
-     *
-     * @todo This is a good candidate for result caching: the constructed path
-     * could be saved and returned on subsequent calls. Are there any circumstances
-     * in which the cached result becomes obsolete? -jk
-     */
-    ddstring_t* constructPath(const PathDirectoryNode* node, ddstring_t* constructedPath,
-                              char delimiter);
-
-    static void collectPathsInHash(NodeHash& ph, char delimiter, ddstring_t** pathListAdr);
-
-    static PathDirectoryNode* newNode(PathDirectory* directory, pathdirectorynode_type_t type,
-                                      PathDirectoryNode* parent, StringPoolId internId,
-                                      void* userData);
-
-    static void clearPathHash(NodeHash& ph);
-
-public: ///@fixme should be private
+    /// @fixme Should be private:
     ushort hashForInternId(StringPoolId internId);
 
-public:
-    /// Path name fragment intern pool.
-    StringPool* stringPool;
-
-    int flags; /// @see pathDirectoryFlags
-
-    /// Path node hashes.
-    NodeHash* pathLeafHash;
-    NodeHash* pathBranchHash;
-
-    /// Total number of unique paths in the directory.
-    uint size_;
+private:
+    struct Instance;
+    Instance* d;
 };
 
 } // namespace de

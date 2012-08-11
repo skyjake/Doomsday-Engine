@@ -48,6 +48,388 @@ static blockset_t* NodeBlockSet;
 static de::PathDirectoryNode* UsedNodes;
 #endif
 
+#ifdef LIBDENG_STACK_MONITOR
+static void* stackStart;
+static size_t maxStackDepth;
+#endif
+
+typedef struct pathconstructorparams_s {
+    de::PathDirectory* pd;
+    size_t length;
+    Str* dest;
+    char delimiter;
+    size_t delimiterLen;
+} pathconstructorparams_t;
+
+/**
+ * Recursive path constructor. First finds the root and the full length of the
+ * path (when descending), then allocates memory for the string, and finally
+ * copies each fragment with the delimiters (on the way out).
+ */
+static void pathConstructor(pathconstructorparams_t* parm, const de::PathDirectoryNode* trav)
+{
+    DENG2_ASSERT(parm);
+
+    const Str* fragment = parm->pd->pathFragment(trav);
+
+#ifdef LIBDENG_STACK_MONITOR
+    maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
+#endif
+
+    parm->length += Str_Length(fragment);
+
+    if(trav->parent())
+    {
+        // There also needs to be a separator.
+        parm->length += parm->delimiterLen;
+
+        // Descend to parent level.
+        pathConstructor(parm, trav->parent());
+
+        // Append the separator.
+        if(parm->delimiter)
+            Str_AppendCharWithoutAllocs(parm->dest, parm->delimiter);
+    }
+    else
+    {
+        // We've arrived at the deepest level. The full length is now known.
+        // Ensure there's enough memory for the string.
+        Str_ReserveNotPreserving(parm->dest, parm->length);
+    }
+
+    // Assemble the path by appending the fragment.
+    Str_AppendWithoutAllocs(parm->dest, fragment);
+}
+
+struct de::PathDirectory::Instance
+{
+    de::PathDirectory* self;
+    /// Path name fragment intern pool.
+    StringPool* stringPool;
+
+    int flags; /// @see pathDirectoryFlags
+
+    /// Path node hashes.
+    de::PathDirectory::NodeHash* pathLeafHash;
+    de::PathDirectory::NodeHash* pathBranchHash;
+
+    /// Total number of unique paths in the directory.
+    uint size;
+
+    Instance(de::PathDirectory* d, int flags_)
+        : self(d), stringPool(0), flags(flags_), pathLeafHash(0), pathBranchHash(0), size(0)
+    {
+#if 0
+        // We'll block-allocate nodes and maintain a list of unused ones
+        // to accelerate directory construction/population.
+        if(!nodeAllocator_Mutex)
+        {
+            nodeAllocator_Mutex = Sys_CreateMutex("PathDirectoryNodeAllocator_MUTEX");
+
+            Sys_Lock(nodeAllocator_Mutex);
+            NodeBlockSet = BlockSet_New(sizeof(de::PathDirectoryNode), 128);
+            UsedNodes = NULL;
+            Sys_Unlock(nodeAllocator_Mutex);
+        }
+
+        pathDirectoryInstanceCount += 1;
+#endif
+    }
+
+    ~Instance()
+    {
+        if(pathLeafHash)
+        {
+            delete pathLeafHash;
+        }
+        if(pathBranchHash)
+        {
+            delete pathBranchHash;
+        }
+
+#if 0
+        if(--pathDirectoryInstanceCount == 0)
+        {
+            Sys_Lock(nodeAllocator_Mutex);
+            BlockSet_Delete(NodeBlockSet);
+            NodeBlockSet = NULL;
+            UsedNodes = NULL;
+            Sys_DestroyMutex(nodeAllocator_Mutex);
+            nodeAllocator_Mutex = 0;
+        }
+#endif
+    }
+
+    void clearInternPool()
+    {
+        if(stringPool)
+        {
+            StringPool_Delete(stringPool);
+            stringPool = NULL;
+        }
+    }
+
+    de::PathDirectoryNode* findNode(de::PathDirectoryNode* parent,
+        pathdirectorynode_type_t nodeType, StringPoolId internId)
+    {
+        de::PathDirectory::NodeHash* ph = (nodeType == PT_LEAF? pathLeafHash : pathBranchHash);
+        if(ph)
+        {
+            ushort hash = StringPool_UserValue(stringPool, internId);
+            de::PathDirectory::NodeHash::const_iterator i = ph->find(hash);
+            while(i != ph->end() && i.key() == hash)
+            {
+                if(parent == (*i)->parent() && internId == (*i)->pair.internId)
+                {
+                    return *i;
+                }
+                ++i;
+            }
+        }
+        return 0; // Not found.
+    }
+
+    StringPoolId internNameAndUpdateIdHashMap(const ddstring_t* name, ushort hash)
+    {
+        if(!stringPool)
+        {
+            stringPool = StringPool_New();
+        }
+
+        StringPoolId internId = StringPool_Intern(stringPool, name);
+        StringPool_SetUserValue(stringPool, internId, hash);
+        return internId;
+    }
+
+    /**
+     * @return  [ a new | the ] directory node that matches the name and type and
+     * which has the specified parent node.
+     */
+    de::PathDirectoryNode* direcNode(de::PathDirectoryNode* parent,
+        pathdirectorynode_type_t nodeType, const ddstring_t* name, char delimiter,
+        void* userData)
+    {
+        DENG2_ASSERT(name);
+
+        // Have we already encountered this?
+        StringPoolId internId = 0;
+        if(stringPool)
+        {
+            internId = StringPool_IsInterned(stringPool, name);
+            if(internId)
+            {
+                // The name is known. Perhaps we have.
+                de::PathDirectoryNode* node = findNode(parent, nodeType, internId);
+                if(node)
+                {
+                    if(nodeType == PT_BRANCH || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
+                        return node;
+                }
+            }
+        }
+
+        /**
+         * A new node is needed.
+         */
+
+        // Do we need a new name identifier (and hash)?
+        ushort hash;
+        if(!internId)
+        {
+            hash = hashPathFragment(Str_Text(name), Str_Length(name), delimiter);
+            internId = internNameAndUpdateIdHashMap(name, hash);
+        }
+        else
+        {
+            hash = self->hashForInternId(internId);
+        }
+
+        // Are we out of name indices?
+        if(!internId) return NULL;
+
+        de::PathDirectoryNode* node = newNode(self, nodeType, parent, internId, userData);
+
+        // Insert the new node into the path hash.
+        if(nodeType == PT_LEAF)
+        {
+            // Do we need to init the path hash?
+            if(!pathLeafHash)
+            {
+                pathLeafHash = new NodeHash;
+            }
+            pathLeafHash->insert(hash, node);
+        }
+        else // PT_BRANCH
+        {
+            // Do we need to init the path hash?
+            if(!pathBranchHash)
+            {
+                pathBranchHash = new NodeHash;
+            }
+            pathBranchHash->insert(hash, node);
+        }
+
+        return node;
+    }
+
+    /**
+     * The path is split into as many nodes as necessary. Parent links are set.
+     *
+     * @return  The node that identifies the given path.
+     */
+    de::PathDirectoryNode* buildDirecNodes(const char* path, char delimiter)
+    {
+        DENG2_ASSERT(path);
+
+        de::PathDirectoryNode* node = NULL, *parent = NULL;
+
+        // Continue splitting as long as there are parts.
+        AutoStr* part = AutoStr_NewStd();
+        const char* p = path;
+        while((p = Str_CopyDelim2(part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
+        {
+            node = direcNode(parent, PT_BRANCH, part, delimiter, NULL);
+            /// @todo Do not error here. If we're out of storage undo this action and return.
+            if(!node)
+            {
+                throw de::Error("PathDirectory::buildDirecNodes",
+                                de::String("Exhausted storage while attempting to insert nodes for path \"%1\".")
+                                    .arg(path));
+            }
+            parent = node;
+        }
+
+        if(!Str_IsEmpty(part))
+        {
+            node = direcNode(parent, PT_LEAF, part, delimiter, NULL);
+            /// @todo Do not error here. If we're out of storage undo this action and return.
+            if(!node)
+            {
+                throw de::Error("PathDirectory::buildDirecNodes",
+                                de::String("Exhausted storage while attempting to insert nodes for path \"%1\".")
+                                    .arg(path));
+            }
+        }
+
+        return node;
+    }
+
+    /**
+     * @param node              Node whose path to construct.
+     * @param constructedPath   The constructed path is written here. Previous contents discarded.
+     * @param delimiter         Character to use for separating fragments.
+     *
+     * @return @a constructedPath
+     *
+     * @todo This is a good candidate for result caching: the constructed path
+     * could be saved and returned on subsequent calls. Are there any circumstances
+     * in which the cached result becomes obsolete? -jk
+     */
+    ddstring_t* constructPath(const de::PathDirectoryNode* node,
+                              ddstring_t* constructedPath, char delimiter)
+    {
+        pathconstructorparams_t parm;
+
+#ifdef LIBDENG_STACK_MONITOR
+        stackStart = &parm;
+#endif
+
+        DENG2_ASSERT(node && constructedPath);
+
+        parm.dest = constructedPath;
+        parm.length = 0;
+        parm.pd = self;
+        parm.delimiter = delimiter;
+        parm.delimiterLen = (delimiter? 1 : 0);
+
+        // Include a terminating path separator for branches (directories).
+        if(node->type() == PT_BRANCH)
+            parm.length += parm.delimiterLen;
+
+        // Recursively construct the path from fragments and delimiters.
+        Str_Clear(constructedPath);
+        pathConstructor(&parm, node);
+
+        // Terminating delimiter for branches.
+        if(delimiter && node->type() == PT_BRANCH)
+            Str_AppendCharWithoutAllocs(constructedPath, delimiter);
+
+        DENG2_ASSERT(Str_Length(constructedPath) == parm.length);
+
+#ifdef LIBDENG_STACK_MONITOR
+        LOG_AS("pathConstructor");
+        LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
+#endif
+
+        return constructedPath;
+    }
+
+    static de::PathDirectoryNode*
+    newNode(de::PathDirectory* directory, pathdirectorynode_type_t type,
+            de::PathDirectoryNode* parent, StringPoolId internId, void* userData)
+    {
+        de::PathDirectoryNode* node;
+
+        DENG2_ASSERT(directory);
+
+#if 0
+        // Acquire a new node, either from the used list or the block allocator.
+        Sys_Lock(nodeAllocator_Mutex);
+        if(UsedNodes)
+        {
+            node = UsedNodes;
+            UsedNodes = node->next;
+
+            // Reconfigure the node.
+            node->next = NULL;
+            node->directory_ = directory;
+            node->type_ = type;
+            node->parent_ = parent;
+            node->pair.internId = internId;
+            node->pair.data = userData;
+        }
+        else
+#endif
+        {
+            //void* element = BlockSet_Allocate(NodeBlockSet);
+            node = /*new (element)*/ new de::PathDirectoryNode(*directory, type, parent,
+                                                               internId, userData);
+        }
+#if 0
+        Sys_Unlock(nodeAllocator_Mutex);
+#endif
+
+        return node;
+    }
+
+    static void collectPathsInHash(de::PathDirectory::NodeHash& ph, char delimiter,
+        ddstring_t** pathListAdr)
+    {
+        DENG2_FOR_EACH(i, ph, de::PathDirectory::NodeHash::const_iterator)
+        {
+            Str_Init(*pathListAdr);
+            (*i)->directory()->composePath(*i, (*pathListAdr), NULL, delimiter);
+            (*pathListAdr)++;
+        }
+    }
+
+    static void clearPathHash(de::PathDirectory::NodeHash& ph)
+    {
+        DENG2_FOR_EACH(i, ph, de::PathDirectory::NodeHash::iterator)
+        {
+#if _DEBUG
+            if((*i)->userData())
+            {
+                LOG_AS("PathDirectory::clearPathHash");
+                LOG_ERROR("Node %p has non-NULL user data.") << (void*)(*i);
+            }
+#endif
+            delete (*i);
+        }
+        ph.clear();
+    }
+};
+
 ushort de::PathDirectory::hashPathFragment(const char* fragment, size_t len, char delimiter)
 {
     ushort key = 0;
@@ -72,260 +454,72 @@ ushort de::PathDirectory::hashPathFragment(const char* fragment, size_t len, cha
     return key % PATHDIRECTORY_PATHHASH_SIZE;
 }
 
-void de::PathDirectory::clearInternPool()
-{
-    if(stringPool)
-    {
-        StringPool_Delete(stringPool);
-        stringPool = NULL;
-    }
-}
-
-void de::PathDirectory::clearPathHash(NodeHash& ph)
-{
-    DENG2_FOR_EACH(i, ph, NodeHash::iterator)
-    {
-#if _DEBUG
-        if((*i)->userData())
-        {
-            LOG_AS("PathDirectory::clearPathHash");
-            LOG_ERROR("Node %p has non-NULL user data.") << (void*)(*i);
-        }
-#endif
-        delete (*i);
-    }
-    ph.clear();
-}
-
-de::PathDirectoryNode* de::PathDirectory::findNode(de::PathDirectoryNode* parent,
-    pathdirectorynode_type_t nodeType, StringPoolId internId)
-{
-    NodeHash* ph = (nodeType == PT_LEAF? pathLeafHash : pathBranchHash);
-    if(ph)
-    {
-        ushort hash = StringPool_UserValue(stringPool, internId);
-        NodeHash::const_iterator i = ph->find(hash);
-        while(i != ph->end() && i.key() == hash)
-        {
-            if(parent == (*i)->parent() && internId == (*i)->pair.internId)
-            {
-                return *i;
-            }
-            ++i;
-        }
-    }
-    return 0; // Not found.
-}
-
 ushort de::PathDirectory::hashForInternId(StringPoolId internId)
 {
     DENG2_ASSERT(internId > 0);
-    return StringPool_UserValue(stringPool, internId);
-}
-
-StringPoolId de::PathDirectory::internNameAndUpdateIdHashMap(const ddstring_t* name, ushort hash)
-{
-    if(!stringPool)
-    {
-        stringPool = StringPool_New();
-    }
-
-    StringPoolId internId = StringPool_Intern(stringPool, name);
-    StringPool_SetUserValue(stringPool, internId, hash);
-    return internId;
-}
-
-de::PathDirectoryNode*
-de::PathDirectory::direcNode(de::PathDirectoryNode* parent,
-    pathdirectorynode_type_t nodeType, const ddstring_t* name, char delimiter, void* userData)
-{
-    DENG2_ASSERT(name);
-
-    // Have we already encountered this?
-    StringPoolId internId = 0;
-    if(stringPool)
-    {
-        internId = StringPool_IsInterned(stringPool, name);
-        if(internId)
-        {
-            // The name is known. Perhaps we have.
-            de::PathDirectoryNode* node = findNode(parent, nodeType, internId);
-            if(node)
-            {
-                if(nodeType == PT_BRANCH || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
-                    return node;
-            }
-        }
-    }
-
-    /**
-     * A new node is needed.
-     */
-
-    // Do we need a new name identifier (and hash)?
-    ushort hash;
-    if(!internId)
-    {
-        hash = hashPathFragment(Str_Text(name), Str_Length(name), delimiter);
-        internId = internNameAndUpdateIdHashMap(name, hash);
-    }
-    else
-    {
-        hash = hashForInternId(internId);
-    }
-
-    // Are we out of name indices?
-    if(!internId) return NULL;
-
-    de::PathDirectoryNode* node = newNode(this, nodeType, parent, internId, userData);
-
-    // Insert the new node into the path hash.
-    if(nodeType == PT_LEAF)
-    {
-        // Do we need to init the path hash?
-        if(!pathLeafHash)
-        {
-            pathLeafHash = new NodeHash;
-        }
-        pathLeafHash->insert(hash, node);
-    }
-    else // PT_BRANCH
-    {
-        // Do we need to init the path hash?
-        if(!pathBranchHash)
-        {
-            pathBranchHash = new NodeHash;
-        }
-        pathBranchHash->insert(hash, node);
-    }
-
-    return node;
-}
-
-de::PathDirectoryNode*
-de::PathDirectory::buildDirecNodes(const char* path, char delimiter)
-{
-    DENG2_ASSERT(path);
-
-    de::PathDirectoryNode* node = NULL, *parent = NULL;
-
-    // Continue splitting as long as there are parts.
-    AutoStr* part = AutoStr_NewStd();
-    const char* p = path;
-    while((p = Str_CopyDelim2(part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
-    {
-        node = direcNode(parent, PT_BRANCH, part, delimiter, NULL);
-        /// @todo Do not error here. If we're out of storage undo this action and return.
-        if(!node)
-        {
-            throw de::Error("PathDirectory::buildDirecNodes",
-                            de::String("Exhausted storage while attempting to insert nodes for path \"%1\".")
-                                .arg(path));
-        }
-        parent = node;
-    }
-
-    if(!Str_IsEmpty(part))
-    {
-        node = direcNode(parent, PT_LEAF, part, delimiter, NULL);
-        /// @todo Do not error here. If we're out of storage undo this action and return.
-        if(!node)
-        {
-            throw de::Error("PathDirectory::buildDirecNodes",
-                            de::String("Exhausted storage while attempting to insert nodes for path \"%1\".")
-                                .arg(path));
-        }
-    }
-
-    return node;
+    return StringPool_UserValue(d->stringPool, internId);
 }
 
 de::PathDirectoryNode*
 de::PathDirectory::insert(const char* path, char delimiter, void* userData)
 {
-    de::PathDirectoryNode* node = buildDirecNodes(path, delimiter);
+    de::PathDirectoryNode* node = d->buildDirecNodes(path, delimiter);
     if(node)
     {
         // There is now one more unique path in the directory.
-        ++size_;
+        d->size += 1;
+
         if(userData)
+        {
             node->attachUserData(userData);
+        }
     }
     return node;
 }
 
-de::PathDirectory::PathDirectory(int flags_)
-    : stringPool(0), flags(flags_), pathLeafHash(0), pathBranchHash(0), size_(0)
+de::PathDirectory::PathDirectory(int flags)
 {
-#if 0
-    // We'll block-allocate nodes and maintain a list of unused ones
-    // to accelerate directory construction/population.
-    if(!nodeAllocator_Mutex)
-    {
-        nodeAllocator_Mutex = Sys_CreateMutex("PathDirectoryNodeAllocator_MUTEX");
-
-        Sys_Lock(nodeAllocator_Mutex);
-        NodeBlockSet = BlockSet_New(sizeof(de::PathDirectoryNode), 128);
-        UsedNodes = NULL;
-        Sys_Unlock(nodeAllocator_Mutex);
-    }
-
-    pathDirectoryInstanceCount += 1;
-#endif
+    d = new Instance(this, flags);
 }
 
 de::PathDirectory::~PathDirectory()
 {
     clear();
-    if(pathLeafHash)
-    {
-        delete pathLeafHash;
-    }
-    if(pathBranchHash)
-    {
-        delete pathBranchHash;
-    }
+    delete d;
+}
 
-#if 0
-    if(--pathDirectoryInstanceCount == 0)
-    {
-        Sys_Lock(nodeAllocator_Mutex);
-        BlockSet_Delete(NodeBlockSet);
-        NodeBlockSet = NULL;
-        UsedNodes = NULL;
-        Sys_DestroyMutex(nodeAllocator_Mutex);
-        nodeAllocator_Mutex = 0;
-    }
-#endif
+uint de::PathDirectory::size() const
+{
+    return d->size;
 }
 
 void de::PathDirectory::clear()
 {
-    if(pathLeafHash)
+    if(d->pathLeafHash)
     {
-        clearPathHash(*pathLeafHash);
+        d->clearPathHash(*d->pathLeafHash);
     }
-    if(pathBranchHash)
+    if(d->pathBranchHash)
     {
-        clearPathHash(*pathBranchHash);
+        d->clearPathHash(*d->pathBranchHash);
     }
-    clearInternPool();
-    size_ = 0;
+    d->clearInternPool();
+    d->size = 0;
 }
 
 de::PathDirectoryNode* de::PathDirectory::find(int flags,
     const char* searchPath, char delimiter)
 {
     PathDirectoryNode* foundNode = NULL;
-    if(searchPath && searchPath[0] && size_)
+    if(searchPath && searchPath[0] && d->size)
     {
         PathMap mappedSearchPath;
         PathMap_Initialize2(&mappedSearchPath, PathDirectory_HashPathFragment, searchPath, delimiter);
 
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
-        if(!(flags & PCF_NO_LEAF) && pathLeafHash)
+        if(!(flags & PCF_NO_LEAF) && d->pathLeafHash)
         {
-            de::PathDirectory::NodeHash* nodes = pathLeafHash;
+            de::PathDirectory::NodeHash* nodes = d->pathLeafHash;
             de::PathDirectory::NodeHash::iterator i = nodes->find(hash);
             for(; i != nodes->end() && i.key() == hash; ++i)
             {
@@ -339,9 +533,9 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
         }
 
         if(!foundNode)
-        if(!(flags & PCF_NO_BRANCH) && pathBranchHash)
+        if(!(flags & PCF_NO_BRANCH) && d->pathBranchHash)
         {
-            de::PathDirectory::NodeHash* nodes = pathBranchHash;
+            de::PathDirectory::NodeHash* nodes = d->pathBranchHash;
             de::PathDirectory::NodeHash::iterator i = nodes->find(hash);
             for(; i != nodes->end() && i.key() == hash; ++i)
             {
@@ -669,99 +863,7 @@ void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter)
 const ddstring_t* de::PathDirectory::pathFragment(const de::PathDirectoryNode* node)
 {
     DENG2_ASSERT(node);
-    return StringPool_String(stringPool, node->pair.internId);
-}
-
-#ifdef LIBDENG_STACK_MONITOR
-static void* stackStart;
-static size_t maxStackDepth;
-#endif
-
-typedef struct pathconstructorparams_s {
-    de::PathDirectory* pd;
-    size_t length;
-    Str* dest;
-    char delimiter;
-    size_t delimiterLen;
-} pathconstructorparams_t;
-
-/**
- * Recursive path constructor. First finds the root and the full length of the
- * path (when descending), then allocates memory for the string, and finally
- * copies each fragment with the delimiters (on the way out).
- */
-static void pathConstructor(pathconstructorparams_t* parm, const de::PathDirectoryNode* trav)
-{
-    DENG2_ASSERT(parm);
-
-    const Str* fragment = parm->pd->pathFragment(trav);
-
-#ifdef LIBDENG_STACK_MONITOR
-    maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
-#endif
-
-    parm->length += Str_Length(fragment);
-
-    if(trav->parent())
-    {
-        // There also needs to be a separator.
-        parm->length += parm->delimiterLen;
-
-        // Descend to parent level.
-        pathConstructor(parm, trav->parent());
-
-        // Append the separator.
-        if(parm->delimiter)
-            Str_AppendCharWithoutAllocs(parm->dest, parm->delimiter);
-    }
-    else
-    {
-        // We've arrived at the deepest level. The full length is now known.
-        // Ensure there's enough memory for the string.
-        Str_ReserveNotPreserving(parm->dest, parm->length);
-    }
-
-    // Assemble the path by appending the fragment.
-    Str_AppendWithoutAllocs(parm->dest, fragment);
-}
-
-ddstring_t* de::PathDirectory::constructPath(const de::PathDirectoryNode* node,
-    ddstring_t* constructedPath, char delimiter)
-{
-    pathconstructorparams_t parm;
-
-#ifdef LIBDENG_STACK_MONITOR
-    stackStart = &parm;
-#endif
-
-    DENG2_ASSERT(node && constructedPath);
-
-    parm.dest = constructedPath;
-    parm.length = 0;
-    parm.pd = this;
-    parm.delimiter = delimiter;
-    parm.delimiterLen = (delimiter? 1 : 0);
-
-    // Include a terminating path separator for branches (directories).
-    if(node->type() == PT_BRANCH)
-        parm.length += parm.delimiterLen;
-
-    // Recursively construct the path from fragments and delimiters.
-    Str_Clear(constructedPath);
-    pathConstructor(&parm, node);
-
-    // Terminating delimiter for branches.
-    if(delimiter && node->type() == PT_BRANCH)
-        Str_AppendCharWithoutAllocs(constructedPath, delimiter);
-
-    DENG2_ASSERT(Str_Length(constructedPath) == parm.length);
-
-#ifdef LIBDENG_STACK_MONITOR
-    LOG_AS("pathConstructor");
-    LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
-#endif
-
-    return constructedPath;
+    return StringPool_String(d->stringPool, node->pair.internId);
 }
 
 ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,
@@ -772,24 +874,13 @@ ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,
         if(length) composePath(node, NULL, length, delimiter);
         return 0;
     }
-    return constructPath(node, foundPath, delimiter);
-}
-
-void de::PathDirectory::collectPathsInHash(NodeHash& ph, char delimiter,
-    ddstring_t** pathListAdr)
-{
-    DENG2_FOR_EACH(i, ph, NodeHash::const_iterator)
-    {
-        Str_Init(*pathListAdr);
-        (*i)->directory()->composePath(*i, (*pathListAdr), NULL, delimiter);
-        (*pathListAdr)++;
-    }
+    return d->constructPath(node, foundPath, delimiter);
 }
 
 de::PathDirectory::NodeHash*
 de::PathDirectory::nodeHash(pathdirectorynode_type_t type) const
 {
-    return (type == PT_LEAF? pathLeafHash : pathBranchHash);
+    return (type == PT_LEAF? d->pathLeafHash : d->pathBranchHash);
 }
 
 ddstring_t* de::PathDirectory::collectPaths(int flags, char delimiter, size_t* retCount)
@@ -798,9 +889,9 @@ ddstring_t* de::PathDirectory::collectPaths(int flags, char delimiter, size_t* r
     size_t count = 0;
 
     if(!(flags & PCF_NO_LEAF))
-        count += (pathLeafHash  ? pathLeafHash->size()   : 0);
+        count += (d->pathLeafHash  ? d->pathLeafHash->size()   : 0);
     if(!(flags & PCF_NO_BRANCH))
-        count += (pathBranchHash? pathBranchHash->size() : 0);
+        count += (d->pathBranchHash? d->pathBranchHash->size() : 0);
 
     if(count)
     {
@@ -814,11 +905,11 @@ ddstring_t* de::PathDirectory::collectPaths(int flags, char delimiter, size_t* r
         }
 
         ddstring_t* pathPtr = paths;
-        if(!(flags & PCF_NO_BRANCH) && pathBranchHash)
-            collectPathsInHash(*pathBranchHash, delimiter, &pathPtr);
+        if(!(flags & PCF_NO_BRANCH) && d->pathBranchHash)
+            Instance::collectPathsInHash(*d->pathBranchHash, delimiter, &pathPtr);
 
-        if(!(flags & PCF_NO_LEAF) && pathLeafHash)
-            collectPathsInHash(*pathLeafHash, delimiter, &pathPtr);
+        if(!(flags & PCF_NO_LEAF) && d->pathLeafHash)
+            Instance::collectPathsInHash(*d->pathLeafHash, delimiter, &pathPtr);
     }
 
     if(retCount) *retCount = count;
@@ -1256,45 +1347,6 @@ void PathDirectory_DebugPrintHashDistribution(PathDirectory* pd)
     de::PathDirectory::debugPrintHashDistribution(D_TOINTERNAL(pd));
 }
 #endif
-
-de::PathDirectoryNode*
-de::PathDirectory::newNode(de::PathDirectory* directory,
-    pathdirectorynode_type_t type, de::PathDirectoryNode* parent,
-    StringPoolId internId, void* userData)
-{
-    de::PathDirectoryNode* node;
-
-    DENG2_ASSERT(directory);
-
-#if 0
-    // Acquire a new node, either from the used list or the block allocator.
-    Sys_Lock(nodeAllocator_Mutex);
-    if(UsedNodes)
-    {
-        node = UsedNodes;
-        UsedNodes = node->next;
-
-        // Reconfigure the node.
-        node->next = NULL;
-        node->directory_ = directory;
-        node->type_ = type;
-        node->parent_ = parent;
-        node->pair.internId = internId;
-        node->pair.data = userData;
-    }
-    else
-#endif
-    {
-        //void* element = BlockSet_Allocate(NodeBlockSet);
-        node = /*new (element)*/ new de::PathDirectoryNode(*directory, type, parent,
-                                                           internId, userData);
-    }
-#if 0
-    Sys_Unlock(nodeAllocator_Mutex);
-#endif
-
-    return node;
-}
 
 de::PathDirectoryNode::PathDirectoryNode(de::PathDirectory& directory,
     pathdirectorynode_type_t type, de::PathDirectoryNode* parent,
