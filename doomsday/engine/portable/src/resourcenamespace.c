@@ -418,7 +418,7 @@ static void printResourceRecord(resourcenamespace_record_t* res)
 {
     ddstring_t path;
     Str_Init(&path);
-    PathDirectory_ComposePath(PathDirectoryNode_Directory(res->directoryNode), res->directoryNode, &path, NULL, DIR_SEP_CHAR);
+    PathDirectory_ComposePath2(PathDirectoryNode_Directory(res->directoryNode), res->directoryNode, &path, NULL, DIR_SEP_CHAR);
     Con_Printf("\"%s\" -> %s\n", Str_Text(&res->name), Str_Text(&path));
     Str_Free(&path);
 }

@@ -143,7 +143,7 @@ static __inline fontnamespaceid_t namespaceIdForDirectoryNode(const PathDirector
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
 static __inline ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
 {
-    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
+    return PathDirectory_ComposePath2(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
@@ -259,7 +259,7 @@ static boolean validateFontUri(const Uri* uri, int flags)
  */
 static PathDirectoryNode* findDirectoryNodeForPath(PathDirectory* directory, const char* path)
 {
-    return PathDirectory_Find(directory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, FONTS_PATH_DELIMITER);
+    return PathDirectory_Find2(directory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, FONTS_PATH_DELIMITER);
 }
 
 /// @pre @a uri has already been validated and is well-formed.
@@ -831,7 +831,7 @@ fontid_t Fonts_Declare(const Uri* uri, int uniqueId)//, const Uri* resourcePath)
         //record->resourcePath = NULL;
         record->uniqueId = uniqueId;
 
-        node = PathDirectory_Insert(fn->directory, Str_Text(&path), FONTS_PATH_DELIMITER);
+        node = PathDirectory_Insert2(fn->directory, Str_Text(&path), FONTS_PATH_DELIMITER);
         PathDirectoryNode_SetUserData(node, record);
 
         // We'll need to rebuild the unique id map too.

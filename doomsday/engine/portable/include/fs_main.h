@@ -306,10 +306,10 @@ void F_CacheChangeTag(abstractfile_t* file, int lumpIdx, int tag);
  * @param flags  @see searchPathFlags
  */
 int F_AllResourcePaths2(const char* searchPath, int flags,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters),
     void* paramaters);
 int F_AllResourcePaths(const char* searchPath, int flags,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters));
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters));
 
 #ifdef __cplusplus
 } // extern "C"

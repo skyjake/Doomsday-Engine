@@ -178,7 +178,7 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
         {
             wad->lumpDirectory = PathDirectory_NewWithFlags(PDF_ALLOW_DUPLICATE_LEAF);
         }
-        node = PathDirectory_Insert(wad->lumpDirectory, Str_Text(&absPath), '/');
+        node = PathDirectory_Insert2(wad->lumpDirectory, Str_Text(&absPath), '/');
         PathDirectoryNode_SetUserData(node, record);
     }
 
@@ -279,7 +279,7 @@ ddstring_t* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter)
     PathDirectoryNode* node = WadFile_LumpDirectoryNode(wad, lumpIdx);
     if(node)
     {
-        return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
+        return PathDirectory_ComposePath2(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
     }
     return Str_New();
 }

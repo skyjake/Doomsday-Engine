@@ -22,7 +22,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #if _DEBUG
-#  include "pathdirectory.h" // For PathDirectory_HashPathFragment()
+#  include "pathdirectory.h" // For PathDirectory_HashPathFragment2()
 #endif
 #include "pathmap.h"
 
@@ -222,12 +222,12 @@ void PathMap_Test(void)
     alreadyTested = true;
 
     // Test a zero-length path.
-    PathMap_Initialize(&pm, PathDirectory_HashPathFragment, "");
+    PathMap_Initialize(&pm, PathDirectory_HashPathFragment2, "");
     assert(PathMap_Size(&pm) == 0);
     PathMap_Destroy(&pm);
 
     // Test a Windows style path with a drive plus file path.
-    PathMap_Initialize(&pm, PathDirectory_HashPathFragment, "c:/something.ext");
+    PathMap_Initialize(&pm, PathDirectory_HashPathFragment2, "c:/something.ext");
     assert(PathMap_Size(&pm) == 2);
 
     fragment = PathMap_Fragment(&pm, 0);
@@ -243,7 +243,7 @@ void PathMap_Test(void)
     PathMap_Destroy(&pm);
 
     // Test a Unix style path with a zero-length root node name.
-    PathMap_Initialize(&pm, PathDirectory_HashPathFragment, "/something.ext");
+    PathMap_Initialize(&pm, PathDirectory_HashPathFragment2, "/something.ext");
     assert(PathMap_Size(&pm) == 2);
 
     fragment = PathMap_Fragment(&pm, 0);
@@ -259,7 +259,7 @@ void PathMap_Test(void)
     PathMap_Destroy(&pm);
 
     // Test a relative directory.
-    PathMap_Initialize(&pm, PathDirectory_HashPathFragment, "some/dir/structure/");
+    PathMap_Initialize(&pm, PathDirectory_HashPathFragment2, "some/dir/structure/");
     assert(PathMap_Size(&pm) == 3);
 
     fragment = PathMap_Fragment(&pm, 0);

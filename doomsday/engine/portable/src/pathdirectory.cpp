@@ -170,7 +170,7 @@ struct de::PathDirectory::Instance
     }
 
     de::PathDirectoryNode* findNode(de::PathDirectoryNode* parent,
-        pathdirectorynode_type_t nodeType, StringPoolId internId)
+        PathDirectoryNodeType nodeType, StringPoolId internId)
     {
         de::PathDirectory::NodeHash* ph = (nodeType == PT_LEAF? pathLeafHash : pathBranchHash);
         if(ph)
@@ -206,7 +206,7 @@ struct de::PathDirectory::Instance
      * which has the specified parent node.
      */
     de::PathDirectoryNode* direcNode(de::PathDirectoryNode* parent,
-        pathdirectorynode_type_t nodeType, const ddstring_t* name, char delimiter,
+        PathDirectoryNodeType nodeType, const ddstring_t* name, char delimiter,
         void* userData)
     {
         DENG2_ASSERT(name);
@@ -374,7 +374,7 @@ struct de::PathDirectory::Instance
     }
 
     static de::PathDirectoryNode*
-    newNode(de::PathDirectory* directory, pathdirectorynode_type_t type,
+    newNode(de::PathDirectory* directory, PathDirectoryNodeType type,
             de::PathDirectoryNode* parent, StringPoolId internId, void* userData)
     {
         de::PathDirectoryNode* node;
@@ -523,7 +523,7 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
     if(searchPath && searchPath[0] && d->size)
     {
         PathMap mappedSearchPath;
-        PathMap_Initialize2(&mappedSearchPath, PathDirectory_HashPathFragment, searchPath, delimiter);
+        PathMap_Initialize2(&mappedSearchPath, PathDirectory_HashPathFragment2, searchPath, delimiter);
 
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF) && d->pathLeafHash)
@@ -611,20 +611,26 @@ void PathDirectory_Clear(PathDirectory* pd)
     self->clear();
 }
 
-PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter, void* userData)
+PathDirectoryNode* PathDirectory_Insert3(PathDirectory* pd, const char* path, char delimiter, void* userData)
 {
     D_SELF(pd);
     return reinterpret_cast<PathDirectoryNode*>(self->insert(path, delimiter, userData));
 }
 
-PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path, char delimiter)
+PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter)
 {
     D_SELF(pd);
     return reinterpret_cast<PathDirectoryNode*>(self->insert(path, delimiter));
 }
 
+PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path)
+{
+    D_SELF(pd);
+    return reinterpret_cast<PathDirectoryNode*>(self->insert(path));
+}
+
 static int iteratePathsInHash(PathDirectory* pd,
-    ushort hash, pathdirectorynode_type_t type, int flags, PathDirectoryNode* parent_,
+    ushort hash, PathDirectoryNodeType type, int flags, PathDirectoryNode* parent_,
     int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters)
 {
     int result = 0;
@@ -674,7 +680,7 @@ static int iteratePathsInHash(PathDirectory* pd,
 }
 
 static int iteratePathsInHash_Const(const PathDirectory* pd,
-    ushort hash, pathdirectorynode_type_t type, int flags, const PathDirectoryNode* parent_,
+    ushort hash, PathDirectoryNodeType type, int flags, const PathDirectoryNode* parent_,
     int (*callback) (const PathDirectoryNode* node, void* parameters), void* parameters)
 {
     int result = 0;
@@ -769,7 +775,7 @@ int PathDirectory_Iterate_Const(const PathDirectory* pd, int flags, const PathDi
     return PathDirectory_Iterate2_Const(pd, flags, parent, hash, callback, NULL);
 }
 
-ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node,
+ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, const PathDirectoryNode* node,
     ddstring_t* path, int* length, char delimiter)
 {
     D_SELF(pd);
@@ -782,10 +788,16 @@ const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirecto
     return self->pathFragment(reinterpret_cast<const de::PathDirectoryNode*>(node));
 }
 
-ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, int flags, char delimiter, size_t* count)
+ddstring_t* PathDirectory_CollectPaths2(PathDirectory* pd, size_t* count, int flags, char delimiter)
 {
     D_SELF(pd);
-    return self->collectPaths(flags, delimiter, count);
+    return self->collectPaths(count, flags, delimiter);
+}
+
+ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, size_t* count, int flags)
+{
+    D_SELF(pd);
+    return self->collectPaths(count, flags);
 }
 
 typedef struct {
@@ -849,14 +861,21 @@ PathDirectoryNode* PathDirectory_Search(PathDirectory* pd, int flags,
     return PathDirectory_Search2(pd, flags, mappedSearchPath, callback, NULL);
 }
 
-PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
+PathDirectoryNode* PathDirectory_Find2(PathDirectory* pd, int flags,
     const char* searchPath, char delimiter)
 {
     D_SELF(pd);
     return reinterpret_cast<PathDirectoryNode*>(self->find(flags, searchPath, delimiter));
 }
 
-ushort PathDirectory_HashPathFragment(const char* path, size_t len, char delimiter)
+PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
+    const char* searchPath)
+{
+    D_SELF(pd);
+    return reinterpret_cast<PathDirectoryNode*>(self->find(flags, searchPath));
+}
+
+ushort PathDirectory_HashPathFragment2(const char* path, size_t len, char delimiter)
 {
     return de::PathDirectory::hashPathFragment(path, len, delimiter);
 }
@@ -887,12 +906,12 @@ ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,
 }
 
 de::PathDirectory::NodeHash*
-de::PathDirectory::nodeHash(pathdirectorynode_type_t type) const
+de::PathDirectory::nodeHash(PathDirectoryNodeType type) const
 {
     return (type == PT_LEAF? d->pathLeafHash : d->pathBranchHash);
 }
 
-ddstring_t* de::PathDirectory::collectPaths(int flags, char delimiter, size_t* retCount)
+ddstring_t* de::PathDirectory::collectPaths(size_t* retCount, int flags, char delimiter)
 {
     ddstring_t* paths = NULL;
     size_t count = 0;
@@ -938,7 +957,7 @@ void de::PathDirectory::debugPrint(de::PathDirectory* pd, char delimiter)
     LOG_AS("PathDirectory");
     LOG_INFO("Directory [%p]:") << (void*)pd;
     size_t numLeafs;
-    ddstring_t* pathList = pd->collectPaths(PT_LEAF, delimiter, &numLeafs);
+    ddstring_t* pathList = pd->collectPaths(&numLeafs, PT_LEAF, delimiter);
     if(pathList)
     {
         size_t n = 0;
@@ -1019,7 +1038,7 @@ static void printDistributionOverview(PathDirectory* pd,
     *col = 0;
     for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
     {
-        pathdirectorynode_type_t type = pathdirectorynode_type_t(i);
+        PathDirectoryNodeType type = PathDirectoryNodeType(i);
         if(Str_Length(de::PathDirectoryNode::typeName(type)) > *col)
             *col = Str_Length(de::PathDirectoryNode::typeName(type));
     }
@@ -1072,7 +1091,7 @@ static void printDistributionOverview(PathDirectory* pd,
     {
         for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
         {
-            pathdirectorynode_type_t type = pathdirectorynode_type_t(i);
+            PathDirectoryNodeType type = PathDirectoryNodeType(i);
             printDistributionOverviewElement(colWidths, Str_Text(de::PathDirectoryNode::typeName(type)),
                 nodeBucketEmpty[i], (i == PT_LEAF? nodeBucketHeight : 0),
                 nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
@@ -1130,7 +1149,7 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
 
     for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i, ++col)
     {
-        pathdirectorynode_type_t type = pathdirectorynode_type_t(i);
+        PathDirectoryNodeType type = PathDirectoryNodeType(i);
         colWidths[col] = Str_Length(de::PathDirectoryNode::typeName(type));
     }
 
@@ -1144,7 +1163,7 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
     Con_Printf("%*s", colWidths[col++], "total");
     for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
     {
-        pathdirectorynode_type_t type = pathdirectorynode_type_t(i);
+        PathDirectoryNodeType type = PathDirectoryNodeType(i);
         Con_Printf("%*s", colWidths[col++], Str_Text(de::PathDirectoryNode::typeName(type)));
     }
     Con_Printf("\n");
@@ -1365,7 +1384,7 @@ struct de::PathDirectoryNode::Instance
     PathDirectoryNode* parent;
 
     /// Symbolic node type.
-    pathdirectorynode_type_t type;
+    PathDirectoryNodeType type;
 
     /// PathDirectory which owns this node.
     PathDirectory* directory;
@@ -1378,7 +1397,7 @@ struct de::PathDirectoryNode::Instance
     userdatapair_t pair;
 
     Instance(de::PathDirectoryNode* d, de::PathDirectory& _directory,
-             pathdirectorynode_type_t _type, StringPoolId internId,
+             PathDirectoryNodeType _type, StringPoolId internId,
              de::PathDirectoryNode* _parent)
         : self(d), parent(_parent), type(_type), directory(&_directory)
     {
@@ -1388,7 +1407,7 @@ struct de::PathDirectoryNode::Instance
 };
 
 de::PathDirectoryNode::PathDirectoryNode(PathDirectory& directory,
-    pathdirectorynode_type_t type, StringPoolId internId, de::PathDirectoryNode* parent,
+    PathDirectoryNodeType type, StringPoolId internId, de::PathDirectoryNode* parent,
     void* userData)
 {
     d = new Instance(this, directory, type, internId, parent);
@@ -1408,7 +1427,7 @@ de::PathDirectoryNode::~PathDirectoryNode()
 #endif
 }
 
-const Str* de::PathDirectoryNode::typeName(pathdirectorynode_type_t type)
+const Str* de::PathDirectoryNode::typeName(PathDirectoryNodeType type)
 {
     static const de::Str nodeNames[1+PATHDIRECTORYNODE_TYPE_COUNT] = {
         "(invalidtype)",
@@ -1432,7 +1451,7 @@ de::PathDirectoryNode* de::PathDirectoryNode::parent() const
 }
 
 /// @return  Type of this directory node.
-pathdirectorynode_type_t de::PathDirectoryNode::type() const
+PathDirectoryNodeType de::PathDirectoryNode::type() const
 {
     return d->type;
 }
@@ -1614,15 +1633,10 @@ PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node)
     return reinterpret_cast<PathDirectoryNode*>(self->parent());
 }
 
-pathdirectorynode_type_t PathDirectoryNode_Type(const PathDirectoryNode* node)
+PathDirectoryNodeType PathDirectoryNode_Type(const PathDirectoryNode* node)
 {
     SELF_CONST(node);
     return self->type();
-}
-
-const Str* PathDirectoryNode_TypeName(pathdirectorynode_type_t type)
-{
-    return de::PathDirectoryNode::typeName(type);
 }
 
 StringPoolId PathDirectoryNode_InternId(const PathDirectoryNode* node)
@@ -1654,4 +1668,9 @@ void PathDirectoryNode_SetUserData(PathDirectoryNode* node, void* userData)
 {
     SELF(node);
     self->setUserData(userData);
+}
+
+const Str* PathDirectoryNodeType_Name(PathDirectoryNodeType type)
+{
+    return de::PathDirectoryNode::typeName(type);
 }

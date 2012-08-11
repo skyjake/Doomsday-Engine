@@ -705,7 +705,7 @@ static void Def_InitTextDef(ddtext_t* txt, char* str)
 /**
  * Callback for DD_ReadProcessDED.
  */
-int Def_ReadDEDFile(const char* fn, pathdirectorynode_type_t type, void* parm)
+int Def_ReadDEDFile(const char* fn, PathDirectoryNodeType type, void* parm)
 {
     // Skip directories.
     if(type == PT_BRANCH)
@@ -819,7 +819,7 @@ static __inline void readDefinitionFile(const char* fileName)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDefsReader(const ddstring_t* fileName, pathdirectorynode_type_t type, void* paramaters)
+static int autoDefsReader(const ddstring_t* fileName, PathDirectoryNodeType type, void* paramaters)
 {
     // Ignore directories.
     if(type != PT_BRANCH)

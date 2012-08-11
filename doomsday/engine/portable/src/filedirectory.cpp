@@ -35,7 +35,7 @@ struct FileDirectoryNodeInfo
 };
 
 static int addPathNodesAndMaybeDescendBranch(int flags, const ddstring_t* filePath,
-    pathdirectorynode_type_t nodeType, void* parameters);
+    PathDirectoryNodeType nodeType, void* parameters);
 
 static de::PathDirectoryNode* attachMissingNodeInfo(de::PathDirectoryNode* node)
 {
@@ -103,7 +103,7 @@ void de::FileDirectory::clear()
     baseNode = NULL;
 }
 
-bool de::FileDirectory::find(pathdirectorynode_type_t nodeType,
+bool de::FileDirectory::find(PathDirectoryNodeType nodeType,
     const char* _searchPath, char searchDelimiter, ddstring_t* foundPath,
     char foundDelimiter)
 {
@@ -202,7 +202,7 @@ typedef struct {
     void* parameters;
 } addpathworker_paramaters_t;
 
-static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t nodeType,
+static int addPathWorker(const ddstring_t* filePath, PathDirectoryNodeType nodeType,
     void* parameters)
 {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)parameters;
@@ -241,7 +241,7 @@ int de::FileDirectory::addChildNodes(de::PathDirectoryNode* node, int flags,
 }
 
 int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
-    const ddstring_t* filePath, pathdirectorynode_type_t nodeType,
+    const ddstring_t* filePath, PathDirectoryNodeType nodeType,
     int flags, int (*callback) (struct pathdirectorynode_s* node, void* parameters),
     void* parameters)
 {
@@ -320,7 +320,7 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
  * @return  Non-zero if iteration should stop else @c 0.
  */
 static int addPathNodesAndMaybeDescendBranch(int flags, const ddstring_t* filePath,
-    pathdirectorynode_type_t nodeType, void* parameters)
+    PathDirectoryNodeType nodeType, void* parameters)
 {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)parameters;
     DENG2_ASSERT(p);
@@ -384,9 +384,9 @@ void de::FileDirectory::addPathList(int flags, const char* pathList,
     if(paths) F_DestroyUriList(paths);
 }
 
-ddstring_t* de::FileDirectory::collectPaths(int flags, char delimiter, size_t* count)
+ddstring_t* de::FileDirectory::collectPaths(size_t* count, int flags, char delimiter)
 {
-    return PathDirectory::collectPaths(flags, delimiter, count);
+    return PathDirectory::collectPaths(count, flags, delimiter);
 }
 
 #if _DEBUG
@@ -422,7 +422,7 @@ void de::FileDirectory::debugPrint(FileDirectory* inst)
     Con_Printf("FileDirectory [%p]:\n", (void*)inst);
 
     size_t numFiles;
-    ddstring_t* pathList = inst->collectPaths(0, DIR_SEP_CHAR, &numFiles);
+    ddstring_t* pathList = inst->collectPaths(&numFiles, 0, DIR_SEP_CHAR);
     if(pathList)
     {
         qsort(pathList, numFiles, sizeof *pathList, comparePaths);
@@ -521,7 +521,7 @@ void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathLis
     self->addPathList(flags, pathList);
 }
 
-int FileDirectory_Iterate2(FileDirectory* fd, pathdirectorynode_type_t nodeType,
+int FileDirectory_Iterate2(FileDirectory* fd, PathDirectoryNodeType nodeType,
     PathDirectoryNode* parent, ushort hash, filedirectory_iteratecallback_t callback,
     void* parameters)
 {
@@ -532,13 +532,13 @@ int FileDirectory_Iterate2(FileDirectory* fd, pathdirectorynode_type_t nodeType,
                                   flags, parent, hash, callback, parameters);
 }
 
-int FileDirectory_Iterate(FileDirectory* fd, pathdirectorynode_type_t nodeType,
+int FileDirectory_Iterate(FileDirectory* fd, PathDirectoryNodeType nodeType,
     PathDirectoryNode* parent, ushort hash, filedirectory_iteratecallback_t callback)
 {
     return FileDirectory_Iterate2(fd, nodeType, parent, hash, callback, NULL);
 }
 
-int FileDirectory_Iterate2_Const(const FileDirectory* fd, pathdirectorynode_type_t nodeType,
+int FileDirectory_Iterate2_Const(const FileDirectory* fd, PathDirectoryNodeType nodeType,
     const PathDirectoryNode* parent, ushort hash,
     filedirectory_iterateconstcallback_t callback, void* parameters)
 {
@@ -549,13 +549,13 @@ int FileDirectory_Iterate2_Const(const FileDirectory* fd, pathdirectorynode_type
                                         flags, parent, hash, callback, parameters);
 }
 
-int FileDirectory_Iterate_Const(const FileDirectory* fd, pathdirectorynode_type_t nodeType,
+int FileDirectory_Iterate_Const(const FileDirectory* fd, PathDirectoryNodeType nodeType,
     const PathDirectoryNode* parent, ushort hash, filedirectory_iterateconstcallback_t callback)
 {
     return FileDirectory_Iterate2_Const(fd, nodeType, parent, hash, callback, NULL);
 }
 
-boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t nodeType,
+boolean FileDirectory_Find(FileDirectory* fd, PathDirectoryNodeType nodeType,
     const char* searchPath, char searchDelimiter, ddstring_t* foundPath,
     char foundDelimiter)
 {

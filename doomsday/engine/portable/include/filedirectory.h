@@ -68,7 +68,7 @@ public:
      *
      * @return  @c true iff successful.
      */
-    bool find(pathdirectorynode_type_t type, const char* searchPath, char searchDelimiter='/',
+    bool find(PathDirectoryNodeType type, const char* searchPath, char searchDelimiter='/',
               ddstring_t* foundPath=NULL, char foundDelimiter='/');
 
     /**
@@ -99,14 +99,14 @@ public:
     /**
      * Collate all paths in the directory into a list.
      *
+     * @param count         Total number of collated paths is written back here.
      * @param flags         @ref pathComparisonFlags
      * @param delimiter     Fragments of the path will be delimited by this character.
-     * @param count         Total number of collated paths is written back here.
      *
      * @return  The allocated list; it is the responsibility of the caller to Str_Free()
      *          each string in the list and free() the list itself.
      */
-    ddstring_t* collectPaths(int flags, char delimiter, size_t* count);
+    ddstring_t* collectPaths(size_t* count, int flags, char delimiter='/');
 
 #if _DEBUG
     static void debugPrint(FileDirectory* inst);
@@ -133,7 +133,7 @@ public: /// @todo Should be private.
      * @return  Non-zero if the current iteration should stop else @c 0.
      */
     int addPathNodesAndMaybeDescendBranch(bool descendBranches, const ddstring_t* filePath,
-                                          pathdirectorynode_type_t nodeType,
+                                          PathDirectoryNodeType nodeType,
                                           int flags,
                                           int (*callback) (struct pathdirectorynode_s* node, void* parameters),
                                           void* parameters);
@@ -175,7 +175,7 @@ void FileDirectory_AddPathList2(FileDirectory* fd, int flags, const char* pathLi
     int (*callback) (PathDirectoryNode* node, void* parameters)); /*parameters=NULL*/
 void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathList); /*callback=NULL*/
 
-boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t type,
+boolean FileDirectory_Find(FileDirectory* fd, PathDirectoryNodeType type,
     const char* searchPath, char searchDelimiter, ddstring_t* foundPath, char foundDelimiter);
 
 /**
@@ -202,14 +202,14 @@ typedef pathdirectory_iterateconstcallback_t filedirectory_iterateconstcallback_
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int FileDirectory_Iterate2(FileDirectory* fd, pathdirectorynode_type_t type, PathDirectoryNode* parent, ushort hash,
+int FileDirectory_Iterate2(FileDirectory* fd, PathDirectoryNodeType type, PathDirectoryNode* parent, ushort hash,
     filedirectory_iteratecallback_t callback, void* parameters);
-int FileDirectory_Iterate(FileDirectory* fd, pathdirectorynode_type_t type, PathDirectoryNode* parent, ushort hash,
+int FileDirectory_Iterate(FileDirectory* fd, PathDirectoryNodeType type, PathDirectoryNode* parent, ushort hash,
     filedirectory_iteratecallback_t callback); /*parameters=NULL*/
 
-int FileDirectory_Iterate2_Const(const FileDirectory* fd, pathdirectorynode_type_t type, const PathDirectoryNode* parent, ushort hash,
+int FileDirectory_Iterate2_Const(const FileDirectory* fd, PathDirectoryNodeType type, const PathDirectoryNode* parent, ushort hash,
     filedirectory_iterateconstcallback_t callback, void* parameters);
-int FileDirectory_Iterate_Const(const FileDirectory* fd, pathdirectorynode_type_t type, const PathDirectoryNode* parent, ushort hash,
+int FileDirectory_Iterate_Const(const FileDirectory* fd, PathDirectoryNodeType type, const PathDirectoryNode* parent, ushort hash,
     filedirectory_iterateconstcallback_t callback); /*parameters=NULL*/
 
 #if _DEBUG

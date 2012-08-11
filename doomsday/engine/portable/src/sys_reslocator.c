@@ -295,7 +295,7 @@ static int findResourceInNamespaceWorker(PathDirectoryNode* node, void* paramate
     // Are we yet to initialize the search?
     if(!p->searchInited)
     {
-        PathMap_Initialize2(&p->searchPattern, PathDirectory_HashPathFragment, p->path, p->delimiter);
+        PathMap_Initialize2(&p->searchPattern, PathDirectory_HashPathFragment2, p->path, p->delimiter);
         p->searchInited = true;
     }
     // Stop iteration of resources as soon as a match is found.
@@ -344,7 +344,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
             if(foundPath)
             {
                 PathDirectoryNode* node = p.foundNode;
-                PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, foundPath, NULL, foundDelimiter);
+                PathDirectory_ComposePath2(PathDirectoryNode_Directory(node), node, foundPath, NULL, foundDelimiter);
             }
         }
 

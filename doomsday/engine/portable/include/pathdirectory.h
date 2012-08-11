@@ -56,7 +56,7 @@ typedef enum {
     PT_BRANCH = PATHDIRECTORYNODE_TYPE_FIRST,
     PT_LEAF,
     PATHDIRECTORYNODE_TYPE_COUNT
-} pathdirectorynode_type_t;
+} PathDirectoryNodeType;
 
 // Helper macro for determining if the value v can be interpreted as a valid node type.
 #define VALID_PATHDIRECTORYNODE_TYPE(v) (\
@@ -79,8 +79,12 @@ class PathDirectory;
 class PathDirectoryNode
 {
 public:
+    /// @return  Print-ready name for node @a type.
+    static const ddstring_t* typeName(PathDirectoryNodeType type);
+
+public:
     /// @todo ctor/dtor should be private or made callable only by de::PathDirectory
-    PathDirectoryNode(PathDirectory& directory, pathdirectorynode_type_t type,
+    PathDirectoryNode(PathDirectory& directory, PathDirectoryNodeType type,
                       StringPoolId internId, PathDirectoryNode* parent=NULL,
                       void* userData=NULL);
     ~PathDirectoryNode();
@@ -92,7 +96,7 @@ public:
     PathDirectoryNode* parent() const;
 
     /// @return  Type of this directory node.
-    pathdirectorynode_type_t type() const;
+    PathDirectoryNodeType type() const;
 
     /// @return  Hash for this directory node path fragment.
     ushort hash() const;
@@ -108,12 +112,9 @@ public:
     /**
      * @param flags  @see pathComparisonFlags
      * @param searchPattern  Fragment mapped search pattern (path).
-     * @return  @c true iff the directory matched this.
+     * @return  Non-zero iff the directory matched this.
      */
     int matchDirectory(int flags, PathMap* candidatePath);
-
-    /// @return  Print-ready name for node @a type.
-    static const ddstring_t* typeName(pathdirectorynode_type_t type);
 
 /// @fixme should be private:
     StringPoolId internId() const;
@@ -197,7 +198,7 @@ public:
      *         "c:/somewhere/something" where @a delimiter @c= '/' the resultant node
      *         is that for the path fragment "something".
      */
-    PathDirectoryNode* insert(const char* path, char delimiter, void* userData=NULL);
+    PathDirectoryNode* insert(const char* path, char delimiter='/', void* userData=NULL);
 
     /**
      * Find a node in the directory.
@@ -219,7 +220,7 @@ public:
      *
      * @return  Found node else @c NULL.
      */
-    PathDirectoryNode* find(int flags, const char* path, char delimiter);
+    PathDirectoryNode* find(int flags, const char* path, char delimiter='/');
 
     /**
      * Composes and/or calculates the composed-length of the relative path for a node.
@@ -231,7 +232,7 @@ public:
      * @return  The composed path pointer specified with @a path, for caller's convenience.
      */
     ddstring_t* composePath(const PathDirectoryNode* node, ddstring_t* path,
-                            int* length, char delimiter);
+                            int* length, char delimiter='/');
 
     /// @return  The path fragment which @a node represents.
     const ddstring_t* pathFragment(const PathDirectoryNode* node);
@@ -239,19 +240,19 @@ public:
     /**
      * Collate all paths in the directory into a list.
      *
+     * @param count         Number of visited paths is written back here.
      * @param flags         @ref pathComparisonFlags
      * @param delimiter     Fragments of the path will be delimited by this character.
-     * @param count         Number of visited paths is written back here.
      *
      * @return  The allocated list; it is the responsibility of the caller to Str_Free()
      *          each string in the list and free() the list itself.
      */
-    ddstring_t* collectPaths(int flags, char delimiter, size_t* count);
+    ddstring_t* collectPaths(size_t* count, int flags, char delimiter='/');
 
     /**
      * Provides access to the PathDirectoryNode hash for efficent traversals.
      */
-    /*const*/ NodeHash* nodeHash(pathdirectorynode_type_t type) const;
+    /*const*/ NodeHash* nodeHash(PathDirectoryNodeType type) const;
 
     /**
      * This is a hash function. It uses the path fragment string to generate
@@ -259,7 +260,7 @@ public:
      *
      * @return  The generated hash key.
      */
-    static ushort hashPathFragment(const char* fragment, size_t len, char delimiter);
+    static ushort hashPathFragment(const char* fragment, size_t len, char delimiter='/');
 
 #if _DEBUG
     static void debugPrint(PathDirectory* pd, char delimiter='/');
@@ -292,8 +293,9 @@ void PathDirectory_Delete(PathDirectory* pd);
 uint PathDirectory_Size(PathDirectory* pd);
 void PathDirectory_Clear(PathDirectory* pd);
 
-PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter, void* userData);
-PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path, char delimiter); /*userData = NULL*/
+PathDirectoryNode* PathDirectory_Insert3(PathDirectory* pd, const char* path, char delimiter, void* userData);
+PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter); /*userData=NULL*/
+PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path); /*delimiter='/'*/
 
 /**
  * Callback function type for PathDirectory::Iterate
@@ -340,7 +342,8 @@ typedef int (*pathdirectory_searchcallback_t) (PathDirectoryNode* node, int flag
 PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, int flags, PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback, void* parameters);
 PathDirectoryNode* PathDirectory_Search (PathDirectory* pd, int flags, PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback); /*parameters=NULL*/
 
-PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags, const char* path, char delimiter);
+PathDirectoryNode* PathDirectory_Find2(PathDirectory* pd, int flags, const char* path, char delimiter);
+PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags, const char* path); /* delimiter='/' */
 
 /**
  * Iterate over nodes in the directory making a callback for each.
@@ -361,11 +364,16 @@ int PathDirectory_Iterate (PathDirectory* pd, int flags, PathDirectoryNode* pare
 int PathDirectory_Iterate2_Const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent, ushort hash, pathdirectory_iterateconstcallback_t callback, void* parameters);
 int PathDirectory_Iterate_Const (const PathDirectory* pd, int flags, const PathDirectoryNode* parent, ushort hash, pathdirectory_iterateconstcallback_t callback); /*parameters=NULL*/
 
-ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node, ddstring_t* path, int* length, char delimiter);
-const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node);
-ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, int flags, char delimiter, size_t* count);
+ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, const PathDirectoryNode* node, ddstring_t* path, int* length, char delimiter);
+ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node, ddstring_t* path, int* length); /*delimiter='/'*/
 
-ushort PathDirectory_HashPathFragment(const char* path, size_t len, char delimiter);
+const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node);
+
+ddstring_t* PathDirectory_CollectPaths2(PathDirectory* pd, size_t* count, int flags, char delimiter);
+ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, size_t* count, int flags); /* delimiter='/' */
+
+ushort PathDirectory_HashPathFragment2(const char* path, size_t len, char delimiter);
+ushort PathDirectory_HashPathFragment(const char* path, size_t len);/* delimiter='/' */
 
 #if _DEBUG
 void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter);
@@ -378,12 +386,13 @@ void PathDirectory_DebugPrintHashDistribution(PathDirectory* pd);
 
 PathDirectory* PathDirectoryNode_Directory(const PathDirectoryNode* node);
 PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node);
-pathdirectorynode_type_t PathDirectoryNode_Type(const PathDirectoryNode* node);
+PathDirectoryNodeType PathDirectoryNode_Type(const PathDirectoryNode* node);
 ushort PathDirectoryNode_Hash(const PathDirectoryNode* node);
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags, PathMap* candidatePath, void* parameters);
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node);
 void PathDirectoryNode_SetUserData(PathDirectoryNode* node, void* data);
-const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type);
+
+const ddstring_t* PathDirectoryNodeType_Name(PathDirectoryNodeType type);
 
 #ifdef __cplusplus
 } // extern "C"

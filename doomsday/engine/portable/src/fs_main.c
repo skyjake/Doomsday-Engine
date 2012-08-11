@@ -1287,7 +1287,7 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
 }
 
 static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t* pattern,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters),
     void* paramaters)
 {
     int result = 0, count;
@@ -1335,7 +1335,7 @@ static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t
 
 typedef struct {
     /// Callback to make for each processed file.
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters);
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters);
 
     /// Data passed to the callback.
     void* paramaters;
@@ -1382,7 +1382,7 @@ static int findLumpWorker(const LumpInfo* lumpInfo, void* paramaters)
 }
 
 int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters),
     void* paramaters)
 {
     ddstring_t searchPattern, searchName, searchDirectory;
@@ -1404,7 +1404,7 @@ int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
     p.paramaters = paramaters;
     p.flags = flags;
     Str_Init(&p.pattern); Str_Set(&p.pattern, Str_Text(&searchPattern));
-    PathMap_Initialize(&p.patternMap, PathDirectory_HashPathFragment, Str_Text(&searchPattern));
+    PathMap_Initialize(&p.patternMap, PathDirectory_HashPathFragment2, Str_Text(&searchPattern));
 
     result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findLumpWorker, (void*)&p);
     PathMap_Destroy(&p.patternMap);
@@ -1453,7 +1453,7 @@ searchEnded:
 }
 
 int F_AllResourcePaths(const char* searchPath, int flags,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters))
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters))
 {
     return F_AllResourcePaths2(searchPath, flags, callback, 0);
 }
@@ -2312,7 +2312,7 @@ static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
  * Prints the resource path to the console.
  * This is a f_allresourcepaths_callback_t.
  */
-int printResourcePath(const ddstring_t* fileNameStr, pathdirectorynode_type_t type,
+int printResourcePath(const ddstring_t* fileNameStr, PathDirectoryNodeType type,
     void* paramaters)
 {
     //assert(fileNameStr && VALID_PATHDIRECTORYNODE_TYPE(type));

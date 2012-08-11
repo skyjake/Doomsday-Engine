@@ -428,7 +428,7 @@ static void ZipFile_ReadLumpDirectory(ZipFile* zip)
             }
 
             F_InitLumpInfo(&record->info);
-            node = PathDirectory_Insert(zip->lumpDirectory, Str_Text(&entryPath), '/');
+            node = PathDirectory_Insert2(zip->lumpDirectory, Str_Text(&entryPath), '/');
             PathDirectoryNode_SetUserData(node, record);
 
             record->info.lumpIdx = lumpIdx++;
@@ -545,7 +545,7 @@ ddstring_t* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter)
     PathDirectoryNode* node = ZipFile_LumpDirectoryNode(zip, lumpIdx);
     if(node)
     {
-        return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
+        return PathDirectory_ComposePath2(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
     }
     return Str_New();
 }

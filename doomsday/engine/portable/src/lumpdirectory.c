@@ -354,7 +354,7 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
     LumpDirectory_BuildHash(ld);
 
     // Perform the search.
-    hash = PathDirectory_HashPathFragment(path, strlen(path), '/') % ld->numRecords;
+    hash = PathDirectory_HashPathFragment2(path, strlen(path), '/') % ld->numRecords;
     for(idx = ld->records[hash].hashRoot; idx != -1; idx = ld->records[idx].hashNext)
     {
         const LumpInfo* lumpInfo = ld->records[idx].lumpInfo;
@@ -363,7 +363,7 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
         // Time to build the pattern?
         if(!builtSearchPattern)
         {
-            PathMap_Initialize(&searchPattern, PathDirectory_HashPathFragment, path);
+            PathMap_Initialize(&searchPattern, PathDirectory_HashPathFragment2, path);
             builtSearchPattern = true;
         }
 

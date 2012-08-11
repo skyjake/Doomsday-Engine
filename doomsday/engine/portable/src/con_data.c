@@ -193,7 +193,7 @@ static void clearVariables(void)
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(const cvartemplate_t* tpl)
 {
-    PathDirectoryNode* node = PathDirectory_Insert(cvarDirectory, tpl->path, CVARDIRECTORY_DELIMITER);
+    PathDirectoryNode* node = PathDirectory_Insert2(cvarDirectory, tpl->path, CVARDIRECTORY_DELIMITER);
     cvar_t* newVar;
 
     if(PathDirectoryNode_UserData(node))
@@ -479,7 +479,7 @@ int CVar_Flags(const cvar_t* var)
 ddstring_t* CVar_ComposePath(const cvar_t* var)
 {
     assert(var);
-    return PathDirectory_ComposePath(PathDirectoryNode_Directory(var->directoryNode), var->directoryNode, Str_New(), NULL, CVARDIRECTORY_DELIMITER);
+    return PathDirectory_ComposePath2(PathDirectoryNode_Directory(var->directoryNode), var->directoryNode, Str_New(), NULL, CVARDIRECTORY_DELIMITER);
 }
 
 void CVar_SetUri2(cvar_t* var, const Uri* uri, int svFlags)
@@ -826,7 +826,7 @@ cvar_t* Con_FindVariable(const char* path)
 {
     PathDirectoryNode* node;
     assert(inited);
-    node = PathDirectory_Find(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
+    node = PathDirectory_Find2(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
     if(!node) return NULL;
     return (cvar_t*) PathDirectoryNode_UserData(node);
 }
