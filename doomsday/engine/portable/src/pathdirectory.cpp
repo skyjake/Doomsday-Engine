@@ -179,7 +179,7 @@ struct de::PathDirectory::Instance
             de::PathDirectory::NodeHash::const_iterator i = ph->find(hash);
             while(i != ph->end() && i.key() == hash)
             {
-                if(parent == (*i)->parent() && internId == (*i)->pair.internId)
+                if(parent == (*i)->parent() && internId == (*i)->internId())
                 {
                     return *i;
                 }
@@ -863,7 +863,7 @@ void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter)
 const ddstring_t* de::PathDirectory::pathFragment(const de::PathDirectoryNode* node)
 {
     DENG2_ASSERT(node);
-    return StringPool_String(d->stringPool, node->pair.internId);
+    return StringPool_String(d->stringPool, node->internId());
 }
 
 ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,

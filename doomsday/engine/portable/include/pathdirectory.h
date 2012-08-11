@@ -123,7 +123,7 @@ public:
 /// @fixme should be private:
     StringPoolId internId() const;
 
-public:
+private:
     typedef struct pathdirectorynode_userdatapair_s {
         StringPoolId internId;
         void* data;
