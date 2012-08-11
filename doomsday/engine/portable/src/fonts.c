@@ -143,7 +143,7 @@ static __inline fontnamespaceid_t namespaceIdForDirectoryNode(const PathDirector
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
 static __inline ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
 {
-    return PathDirectory_ComposePath2(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
+    return PathDirectoryNode_ComposePath2(node, Str_New(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()

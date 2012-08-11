@@ -90,7 +90,7 @@ public:
     ~PathDirectoryNode();
 
     /// @return  PathDirectory which owns this node.
-    PathDirectory* directory() const;
+    PathDirectory& directory() const;
 
     /// @return  Parent of this directory node else @c NULL
     PathDirectoryNode* parent() const;
@@ -116,7 +116,18 @@ public:
      */
     int matchDirectory(int flags, PathMap* candidatePath);
 
-/// @fixme should be private:
+    /**
+     * Composes and/or calculates the composed-length of the path for this node.
+     *
+     * @param path          If not @c NULL the composed path is written here.
+     * @param length        If not @c NULL the length of the composed path is written here.
+     * @param delimiter     Path is composed with fragments delimited by this character.
+     *
+     * @return  The composed path pointer specified with @a path, for caller's convenience.
+     */
+    ddstring_t* composePath(ddstring_t* path, int* length, char delimiter='/') const;
+
+    /// @fixme should be private:
     StringPoolId internId() const;
 
 private:
@@ -223,7 +234,7 @@ public:
     PathDirectoryNode* find(int flags, const char* path, char delimiter='/');
 
     /**
-     * Composes and/or calculates the composed-length of the relative path for a node.
+     * Composes and/or calculates the composed-length of the path for a node.
      *
      * @param path          If not @c NULL the composed path is written here.
      * @param length        If not @c NULL the length of the composed path is written here.
@@ -254,6 +265,7 @@ public:
      */
     const PathNodes* const pathNodes(PathDirectoryNodeType type) const;
 
+public:
     /**
      * This is a hash function. It uses the path fragment string to generate
      * a somewhat-random number between @c 0 and @c PATHDIRECTORY_PATHHASH_SIZE
@@ -370,10 +382,10 @@ ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode
 const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node);
 
 ddstring_t* PathDirectory_CollectPaths2(PathDirectory* pd, size_t* count, int flags, char delimiter);
-ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, size_t* count, int flags); /* delimiter='/' */
+ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, size_t* count, int flags); /*delimiter='/'*/
 
 ushort PathDirectory_HashPathFragment2(const char* path, size_t len, char delimiter);
-ushort PathDirectory_HashPathFragment(const char* path, size_t len);/* delimiter='/' */
+ushort PathDirectory_HashPathFragment(const char* path, size_t len);/*delimiter='/'*/
 
 #if _DEBUG
 void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter);
@@ -389,6 +401,8 @@ PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node);
 PathDirectoryNodeType PathDirectoryNode_Type(const PathDirectoryNode* node);
 ushort PathDirectoryNode_Hash(const PathDirectoryNode* node);
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags, PathMap* candidatePath, void* parameters);
+ddstring_t* PathDirectoryNode_ComposePath2(const PathDirectoryNode* node, ddstring_t* path, int* length, char delimiter);
+ddstring_t* PathDirectoryNode_ComposePath(const PathDirectoryNode* node, ddstring_t* path, int* length); /*delimiter='/'*/
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node);
 void PathDirectoryNode_SetUserData(PathDirectoryNode* node, void* data);
 

@@ -133,7 +133,7 @@ bool de::FileDirectory::find(PathDirectoryNodeType nodeType,
     // Does caller want to know the full path?
     if(foundPath && foundNode)
     {
-        foundNode->directory()->composePath(foundNode, foundPath, NULL, foundDelimiter);
+        foundNode->composePath(foundPath, NULL, foundDelimiter);
     }
 
     return !!foundNode;
@@ -221,7 +221,7 @@ int de::FileDirectory::addChildNodes(de::PathDirectoryNode* node, int flags,
 
         // Compose the search pattern.
         Str_Init(&searchPattern);
-        node->directory()->composePath(node, &searchPattern, NULL, '/');
+        node->composePath(&searchPattern, NULL, '/');
         // We're interested in *everything*.
         Str_AppendChar(&searchPattern, '*');
 

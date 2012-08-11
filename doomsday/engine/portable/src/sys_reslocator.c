@@ -344,7 +344,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
             if(foundPath)
             {
                 PathDirectoryNode* node = p.foundNode;
-                PathDirectory_ComposePath2(PathDirectoryNode_Directory(node), node, foundPath, NULL, foundDelimiter);
+                PathDirectoryNode_ComposePath2(node, foundPath, NULL, foundDelimiter);
             }
         }
 

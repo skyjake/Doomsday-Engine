@@ -417,7 +417,7 @@ struct de::PathDirectory::Instance
         DENG2_FOR_EACH(i, ph, de::PathDirectory::PathNodes::const_iterator)
         {
             Str_Init(*pathListAdr);
-            (*i)->directory()->composePath(*i, (*pathListAdr), NULL, delimiter);
+            (*i)->composePath((*pathListAdr), NULL, delimiter);
             (*pathListAdr)++;
         }
     }
@@ -1380,30 +1380,28 @@ struct de::PathDirectoryNode::Instance
 {
     de::PathDirectoryNode* self;
 
-    /// Parent node in the user's logical hierarchy.
-    PathDirectoryNode* parent;
+    /// PathDirectory which owns this node.
+    PathDirectory& directory;
 
     /// Symbolic node type.
     PathDirectoryNodeType type;
 
-    /// PathDirectory which owns this node.
-    PathDirectory* directory;
+    /// Unique identifier for the path fragment this node represents,
+    /// in the owning PathDirectory.
+    StringPoolId internId;
 
-    /// User data present at this node.
-    typedef struct userdatapair_s {
-        StringPoolId internId;
-        void* data;
-    } userdatapair_t;
-    userdatapair_t pair;
+    /// Parent node in the user's logical hierarchy.
+    PathDirectoryNode* parent;
+
+    /// User data pointer associated with this node.
+    void* userData;
 
     Instance(de::PathDirectoryNode* d, de::PathDirectory& _directory,
-             PathDirectoryNodeType _type, StringPoolId internId,
+             PathDirectoryNodeType _type, StringPoolId _internId,
              de::PathDirectoryNode* _parent)
-        : self(d), parent(_parent), type(_type), directory(&_directory)
-    {
-        pair.internId = internId;
-        pair.data = 0;
-    }
+        : self(d), directory(_directory), type(_type), internId(_internId), parent(_parent),
+          userData(0)
+    {}
 };
 
 de::PathDirectoryNode::PathDirectoryNode(PathDirectory& directory,
@@ -1439,7 +1437,7 @@ const Str* de::PathDirectoryNode::typeName(PathDirectoryNodeType type)
 }
 
 /// @return  PathDirectory which owns this node.
-de::PathDirectory* de::PathDirectoryNode::directory() const
+de::PathDirectory& de::PathDirectoryNode::directory() const
 {
     return d->directory;
 }
@@ -1458,12 +1456,12 @@ PathDirectoryNodeType de::PathDirectoryNode::type() const
 
 StringPoolId de::PathDirectoryNode::internId() const
 {
-    return d->pair.internId;
+    return d->internId;
 }
 
 ushort de::PathDirectoryNode::hash() const
 {
-    return d->directory->hashForInternId(d->pair.internId);
+    return d->directory.hashForInternId(d->internId);
 }
 
 static int matchPathFragment(const char* string, const char* pattern)
@@ -1518,7 +1516,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
 //#endif
 
     // In reverse order, compare path fragments in the search term.
-    PathDirectory* pd = directory();
+    PathDirectory& pd = directory();
     uint fragmentCount = PathMap_Size(searchPattern);
 
     de::PathDirectoryNode* node = this;
@@ -1529,7 +1527,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
             char buf[256];
             qsnprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
 
-            const ddstring_t* fragment = pd->pathFragment(node);
+            const ddstring_t* fragment = pd.pathFragment(node);
             DENG2_ASSERT(fragment);
 
             if(!matchPathFragment(Str_Text(fragment), buf))
@@ -1544,7 +1542,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
             if(!isWild)
             {
                 // If the hashes don't match it can't possibly be this.
-                if(sfragment->hash != pd->hashForInternId(node->internId()))
+                if(sfragment->hash != pd.hashForInternId(node->internId()))
                 {
                     EXIT_POINT(2);
                     return false;
@@ -1558,7 +1556,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
                     sfraglen = (sfragment->to - sfragment->from) + 1;
 
                 // Compare the path fragment to that of the search term.
-                const ddstring_t* fragment = pd->pathFragment(node);
+                const ddstring_t* fragment = pd.pathFragment(node);
                 if(Str_Length(fragment) < sfraglen ||
                    qstrnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
                 {
@@ -1592,15 +1590,21 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
 #undef EXIT_POINT
 }
 
-de::PathDirectoryNode& de::PathDirectoryNode::setUserData(void* userData)
+ddstring_t* de::PathDirectoryNode::composePath(ddstring_t* path, int* length,
+    char delimiter) const
 {
-    d->pair.data = userData;
-    return *this;
+    return d->directory.composePath(this, path, length, delimiter);
 }
 
 void* de::PathDirectoryNode::userData() const
 {
-    return d->pair.data;
+    return d->userData;
+}
+
+de::PathDirectoryNode& de::PathDirectoryNode::setUserData(void* userData)
+{
+    d->userData = userData;
+    return *this;
 }
 
 /**
@@ -1624,7 +1628,7 @@ void* de::PathDirectoryNode::userData() const
 PathDirectory* PathDirectoryNode_Directory(const PathDirectoryNode* node)
 {
     SELF_CONST(node);
-    return reinterpret_cast<PathDirectory*>(self->directory());
+    return reinterpret_cast<PathDirectory*>(&self->directory());
 }
 
 PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node)
@@ -1656,6 +1660,20 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
 {
     SELF(node);
     return self->matchDirectory(flags, searchPattern);
+}
+
+ddstring_t* PathDirectoryNode_ComposePath2(const PathDirectoryNode* node,
+    ddstring_t* path, int* length, char delimiter)
+{
+    SELF_CONST(node);
+    return self->composePath(path, length, delimiter);
+}
+
+ddstring_t* PathDirectoryNode_ComposePath(const PathDirectoryNode* node,
+    ddstring_t* path, int* length)
+{
+    SELF_CONST(node);
+    return self->composePath(path, length);
 }
 
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node)

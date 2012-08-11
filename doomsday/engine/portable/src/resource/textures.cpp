@@ -145,13 +145,13 @@ static textureid_t findBindIdForDirectoryNode(const TextureDirectoryNode* node)
 
 static inline texturenamespaceid_t namespaceIdForDirectoryNode(const TextureDirectoryNode* node)
 {
-    return namespaceIdForDirectory(node->directory());
+    return namespaceIdForDirectory(&node->directory());
 }
 
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
 static inline Str* composePathForDirectoryNode(const TextureDirectoryNode* node, char delimiter)
 {
-    return node->directory()->composePath(node, Str_New(), NULL, delimiter);
+    return node->composePath(Str_New(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
@@ -414,7 +414,7 @@ static void destroyRecord(TextureDirectoryNode* node)
 
         unlinkDirectoryNodeFromBindIdMap(node);
 
-        const texturenamespaceid_t namespaceId = namespaceIdForDirectory(node->directory());
+        const texturenamespaceid_t namespaceId = namespaceIdForDirectory(&node->directory());
         TextureNamespace* tn = &namespaces[namespaceId-TEXTURENAMESPACE_FIRST];
         unlinkRecordInUniqueIdMap(record, tn);
 
@@ -895,7 +895,7 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
     bool releaseTexture = false;
     if(record->uniqueId != uniqueId)
     {
-        texturenamespaceid_t namespaceId = namespaceIdForDirectory(node->directory());
+        texturenamespaceid_t namespaceId = namespaceIdForDirectory(&node->directory());
         TextureNamespace* tn = &namespaces[namespaceId - TEXTURENAMESPACE_FIRST];
 
         record->uniqueId = uniqueId;

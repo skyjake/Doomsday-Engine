@@ -279,7 +279,7 @@ ddstring_t* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter)
     PathDirectoryNode* node = WadFile_LumpDirectoryNode(wad, lumpIdx);
     if(node)
     {
-        return PathDirectory_ComposePath2(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
+        return PathDirectoryNode_ComposePath2(node, Str_New(), NULL, delimiter);
     }
     return Str_New();
 }

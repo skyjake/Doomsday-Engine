@@ -263,13 +263,13 @@ static materialnamespaceid_t namespaceIdForDirectory(MaterialDirectory* pd)
 
 static materialnamespaceid_t namespaceIdForDirectoryNode(const MaterialDirectoryNode* node)
 {
-    return namespaceIdForDirectory(node->directory());
+    return namespaceIdForDirectory(&node->directory());
 }
 
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
 static Str* composePathForDirectoryNode(const MaterialDirectoryNode* node, char delimiter)
 {
-    return node->directory()->composePath(node, Str_New(), NULL, delimiter);
+    return node->composePath(Str_New(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()

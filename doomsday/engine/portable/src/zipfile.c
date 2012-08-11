@@ -545,7 +545,7 @@ ddstring_t* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter)
     PathDirectoryNode* node = ZipFile_LumpDirectoryNode(zip, lumpIdx);
     if(node)
     {
-        return PathDirectory_ComposePath2(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
+        return PathDirectoryNode_ComposePath2(node, Str_New(), NULL, delimiter);
     }
     return Str_New();
 }

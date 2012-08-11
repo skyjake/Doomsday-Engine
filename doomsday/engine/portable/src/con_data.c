@@ -479,7 +479,7 @@ int CVar_Flags(const cvar_t* var)
 ddstring_t* CVar_ComposePath(const cvar_t* var)
 {
     assert(var);
-    return PathDirectory_ComposePath2(PathDirectoryNode_Directory(var->directoryNode), var->directoryNode, Str_New(), NULL, CVARDIRECTORY_DELIMITER);
+    return PathDirectoryNode_ComposePath2(var->directoryNode, Str_New(), NULL, CVARDIRECTORY_DELIMITER);
 }
 
 void CVar_SetUri2(cvar_t* var, const Uri* uri, int svFlags)
