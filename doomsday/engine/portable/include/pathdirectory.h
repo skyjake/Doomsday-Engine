@@ -215,9 +215,9 @@ public:
      * @param delimiter     Fragments of the path are delimited by this character.
      * @param userData      User data to associate with the new path.
      *
-     * @return Head node for inserted path else @c NULL. For example, given the path
+     * @return Tail node for inserted path else @c NULL. For example, given the path
      *         "c:/somewhere/something" where @a delimiter @c= '/' the resultant node
-     *         is that for the path fragment "c:".
+     *         is that for the path fragment "something".
      */
     PathDirectoryNode* insert(const char* path, char delimiter, void* userData=NULL);
 
