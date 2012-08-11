@@ -59,16 +59,17 @@ public:
     /**
      * Find a path in this directory.
      *
-     * @param type              If a valid path type only consider nodes of this type.
+     * @param type              Only consider nodes of this type.
      * @param searchPath        Relative or absolute path.
-     * @param searchDelimiter   Fragments of @a searchPath are delimited by this character.
-     * @param foundPath         If not @c NULL, the full path of the node is written back here if found.
-     * @param foundDelimiter    Delimiter to be used when composing @a foundPath.
+     * @param searchDelimiter   Fragments of @a searchPath are delimited by this.
+     * @param foundPath         If not @c NULL, the fully composed path to the found
+     *                          directory node is written back here.
+     * @param foundDelimiter    Delimiter to be use when composing @a foundPath.
      *
      * @return  @c true iff successful.
      */
-    bool find(pathdirectorynode_type_t nodeType, const char* searchPath,
-              char searchDelimiter, ddstring_t* foundPath, char foundDelimiter);
+    bool find(pathdirectorynode_type_t type, const char* searchPath, char searchDelimiter='/',
+              ddstring_t* foundPath=NULL, char foundDelimiter='/');
 
     /**
      * Add a new set of paths. Duplicates are automatically pruned.
@@ -76,7 +77,7 @@ public:
      * @param flags         @ref searchPathFlags
      * @param paths         One or more paths.
      * @param pathsCount    Number of elements in @a paths.
-     * @param callback      Callback function ptr.
+     * @param callback      Callback to make for each path added to this directory.
      * @param parameters    Passed to the callback.
      */
     void addPaths(int flags, const Uri* const* searchPaths, uint searchPathsCount,
@@ -88,18 +89,19 @@ public:
      *
      * @param flags         @ref searchPathFlags
      * @param pathList      One or more paths separated by semicolons.
-     * @param callback      Callback function ptr.
+     * @param callback      Callback to make for each path added to this directory.
      * @param parameters    Passed to the callback.
      */
     void addPathList(int flags, const char* pathList,
-                     int (*callback) (struct pathdirectorynode_s*, void*)=NULL, void* parameters=NULL);
+                     int (*callback) (struct pathdirectorynode_s*, void*)=NULL,
+                     void* parameters=NULL);
 
     /**
      * Collate all paths in the directory into a list.
      *
      * @param flags         @ref pathComparisonFlags
      * @param delimiter     Fragments of the path will be delimited by this character.
-     * @param count         Number of visited paths is written back here.
+     * @param count         Total number of collated paths is written back here.
      *
      * @return  The allocated list; it is the responsibility of the caller to Str_Free()
      *          each string in the list and free() the list itself.
@@ -114,9 +116,9 @@ public:
 private:
     void clearNodeInfo();
 
-    de::PathDirectoryNode* addPathNodes(const ddstring_t* rawPath);
+    PathDirectoryNode* addPathNodes(const ddstring_t* rawPath);
 
-    int addChildNodes(de::PathDirectoryNode* node, int flags,
+    int addChildNodes(PathDirectoryNode* node, int flags,
                       int (*callback) (struct pathdirectorynode_s* node, void* parameters),
                       void* parameters);
 

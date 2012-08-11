@@ -825,12 +825,12 @@ ddstring_t* de::PathDirectory::collectPaths(int flags, char delimiter, size_t* r
     return paths;
 }
 
+#if _DEBUG
 static int C_DECL comparePaths(const void* a, const void* b)
 {
     return qstricmp(Str_Text((Str*)a), Str_Text((Str*)b));
 }
 
-#if _DEBUG
 void de::PathDirectory::debugPrint(de::PathDirectory* pd, char delimiter)
 {
     if(!pd) return;
