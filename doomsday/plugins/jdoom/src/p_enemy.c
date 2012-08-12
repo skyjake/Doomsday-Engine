@@ -71,8 +71,6 @@ braindata_t brain; // Global state of boss brain.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static mobj_t* corpseHit;
-
 static coord_t dropoffDelta[2], floorZ;
 
 // Eight directional movement speeds.
@@ -1004,7 +1002,8 @@ void C_DECL A_SkelFist(mobj_t* actor)
  */
 typedef struct {
     mobj_t* resurrector;
-    coord_t raisePoint[2];
+    coord_t resurrectorOrigin[2]; ///< Use this predicted origin (factors momentum).
+    mobj_t* foundCorpse;
 } pit_vilecheckparams_t;
 
 int PIT_VileCheck(mobj_t* corpse, void* parameters)
@@ -1024,88 +1023,94 @@ int PIT_VileCheck(mobj_t* corpse, void* parameters)
 
     // Don't raise if its too close to the resurrector.
     maxDist = corpse->info->radius + MOBJINFO[ MT_VILE ].radius;
-    if(fabs(corpse->origin[VX] - parm->raisePoint[VX]) > maxDist ||
-       fabs(corpse->origin[VY] - parm->raisePoint[VY]) > maxDist) return false;
+    if(fabs(corpse->origin[VX] - parm->resurrectorOrigin[VX]) > maxDist ||
+       fabs(corpse->origin[VY] - parm->resurrectorOrigin[VY]) > maxDist) return false;
 
-    corpseHit = corpse;
-    corpseHit->mom[MX] = corpseHit->mom[MY] = 0;
+    corpse->mom[MX] = corpse->mom[MY] = 0;
 
     if(!cfg.raiseGhosts) // Compat option.
     {
-        const coord_t oldHeight = corpseHit->height;
-        const coord_t oldRadius = corpseHit->radius;
+        const coord_t oldHeight = corpse->height;
+        const coord_t oldRadius = corpse->radius;
 
-        corpseHit->height = corpseHit->info->height;
-        corpseHit->radius = corpseHit->info->radius;
-        corpseHit->flags |= MF_SOLID;
+        corpse->height = corpse->info->height;
+        corpse->radius = corpse->info->radius;
+        corpse->flags |= MF_SOLID;
 
-        raisePointOpen = P_CheckPositionXY(corpseHit, corpseHit->origin[VX], corpseHit->origin[VY]);
+        raisePointOpen = P_CheckPositionXY(corpse, corpse->origin[VX], corpse->origin[VY]);
 
-        corpseHit->height = oldHeight;
-        corpseHit->radius = oldRadius;
-        corpseHit->flags &= ~MF_SOLID;
+        corpse->height = oldHeight;
+        corpse->radius = oldRadius;
+        corpse->flags &= ~MF_SOLID;
     }
     else
     {
         // Use the original more buggy approach, which may result in
         // non-solid "ghost" monsters.
-        corpseHit->height = (coord_t)(((fixed_t)corpseHit->height) << 2);
-        raisePointOpen = P_CheckPositionXY(corpseHit, corpseHit->origin[VX], corpseHit->origin[VY]);
-        corpseHit->height = (coord_t)(((fixed_t)corpseHit->height) >> 2);
+        corpse->height = (coord_t)FIX2FLT(FLT2FIX(corpse->height) << 2);
+        raisePointOpen = P_CheckPositionXY(corpse, corpse->origin[VX], corpse->origin[VY]);
+        corpse->height = (coord_t)FIX2FLT(FLT2FIX(corpse->height) >> 2);
+    }
+
+    if(raisePointOpen)
+    {
+        parm->foundCorpse = corpse;
     }
 
     // Stop iteration as soon as a suitable corpse is found.
-    return raisePointOpen;
+    return !!(parm->foundCorpse);
 }
 
 void C_DECL A_VileChase(mobj_t* actor)
 {
     if(actor->moveDir != DI_NODIR)
     {
-        // Search for a monster corpse that can be raised.
+        // Search for a monster corpse that can be resurrected.
         pit_vilecheckparams_t parm;
         AABoxd aaBB;
 
         parm.resurrector = actor;
-        V2d_Copy(parm.raisePoint, dirSpeed[actor->moveDir]);
-        V2d_Scale(parm.raisePoint, actor->info->speed);
-        V2d_Sum(parm.raisePoint, parm.raisePoint, actor->origin);
+        parm.foundCorpse = NULL;
+        V2d_Copy (parm.resurrectorOrigin, dirSpeed[actor->moveDir]);
+        V2d_Scale(parm.resurrectorOrigin, actor->info->speed);
+        V2d_Sum  (parm.resurrectorOrigin, parm.resurrectorOrigin, actor->origin);
 
-        aaBB.minX = parm.raisePoint[VX] - MAXRADIUS * 2;
-        aaBB.minY = parm.raisePoint[VY] - MAXRADIUS * 2;
-        aaBB.maxX = parm.raisePoint[VX] + MAXRADIUS * 2;
-        aaBB.maxY = parm.raisePoint[VY] + MAXRADIUS * 2;
+        aaBB.minX = parm.resurrectorOrigin[VX] - MAXRADIUS * 2;
+        aaBB.minY = parm.resurrectorOrigin[VY] - MAXRADIUS * 2;
+        aaBB.maxX = parm.resurrectorOrigin[VX] + MAXRADIUS * 2;
+        aaBB.maxY = parm.resurrectorOrigin[VY] + MAXRADIUS * 2;
 
         VALIDCOUNT++;
         if(P_MobjsBoxIterator(&aaBB, PIT_VileCheck, &parm))
         {
+            mobj_t* corpse = parm.foundCorpse;
             mobj_t* oldTarget = actor->target;
 
             // Rotate the corpse to face it's new master.
-            actor->target = corpseHit;
+            actor->target = corpse;
             A_FaceTarget(actor);
             actor->target = oldTarget;
 
             // Posture a little while we work our magic.
             P_MobjChangeState(actor, S_VILE_HEAL1);
-            S_StartSound(SFX_SLOP, corpseHit);
+            S_StartSound(SFX_SLOP, corpse);
 
             // Re-animate the corpse (mostly initial state):
-            P_MobjChangeState(corpseHit, P_GetState(corpseHit->type, SN_RAISE));
+            P_MobjChangeState(corpse, P_GetState(corpse->type, SN_RAISE));
             if(!cfg.raiseGhosts)
             {
-                corpseHit->height = corpseHit->info->height;
-                corpseHit->radius = corpseHit->info->radius;
+                corpse->height = corpse->info->height;
+                corpse->radius = corpse->info->radius;
             }
             else
             {
                 // The original more buggy approach.
-                corpseHit->height = (coord_t)(((fixed_t)corpseHit->height) << 2);
+                corpse->height = (coord_t)FIX2FLT(FLT2FIX(corpse->height) << 2);
             }
-            corpseHit->flags  = corpseHit->info->flags;
-            corpseHit->health = corpseHit->info->spawnHealth;
-            corpseHit->target = NULL;
-            corpseHit->corpseTics = 0;
+            corpse->flags  = corpse->info->flags;
+            corpse->health = corpse->info->spawnHealth;
+            corpse->target = NULL;
+            corpse->corpseTics = 0;
 
             return;
         }
