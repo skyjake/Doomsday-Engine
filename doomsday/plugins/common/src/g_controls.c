@@ -447,7 +447,9 @@ D_CMD(DefaultGameBinds)
 
         // On-screen messages:
         "bindevent message:key-y messageyes",
+        "bindevent message:mouse-left messageyes",
         "bindevent message:key-n messageno",
+        "bindevent message:mouse-right messageno",
         "bindevent message:key-escape messagecancel",
 
         NULL
