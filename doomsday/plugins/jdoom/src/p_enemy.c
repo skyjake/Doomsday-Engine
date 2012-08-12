@@ -72,8 +72,6 @@ braindata_t brain; // Global state of boss brain.
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static mobj_t* corpseHit;
-static mobj_t* vileObj;
-static coord_t vileTry[3];
 
 static coord_t dropoffDelta[2], floorZ;
 
@@ -1004,114 +1002,111 @@ void C_DECL A_SkelFist(mobj_t* actor)
 /**
  * Detect a corpse that could be raised.
  */
-int PIT_VileCheck(mobj_t* thing, void* data)
+typedef struct {
+    mobj_t* resurrector;
+    coord_t raisePoint[2];
+} pit_vilecheckparams_t;
+
+int PIT_VileCheck(mobj_t* corpse, void* parameters)
 {
-    coord_t maxdist;
-    boolean check;
+    pit_vilecheckparams_t* parm = (pit_vilecheckparams_t*)parameters;
+    boolean raisePointOpen;
+    coord_t maxDist;
 
-    if(!(thing->flags & MF_CORPSE))
-        return false; // Not a monster.
+    // Not actually a monster corpse?
+    if(!(corpse->flags & MF_CORPSE)) return false;
 
-    if(thing->tics != -1)
-        return false; // Not lying still yet.
+    // Not lying still yet?
+    if(corpse->tics != -1) return false;
 
-    if(P_GetState(thing->type, SN_RAISE) == S_NULL)
-        return false; // Monster doesn't have a raise state.
+    // Does this mobj type have a raise state?
+    if(P_GetState(corpse->type, SN_RAISE) == S_NULL) return false;
 
-    maxdist = thing->info->radius + MOBJINFO[MT_VILE].radius;
+    // Don't raise if its too close to the resurrector.
+    maxDist = corpse->info->radius + MOBJINFO[ MT_VILE ].radius;
+    if(fabs(corpse->origin[VX] - parm->raisePoint[VX]) > maxDist ||
+       fabs(corpse->origin[VY] - parm->raisePoint[VY]) > maxDist) return false;
 
-    if(fabs(thing->origin[VX] - vileTry[VX]) > maxdist ||
-       fabs(thing->origin[VY] - vileTry[VY]) > maxdist)
-        return false; // Not actually touching.
-
-    corpseHit = thing;
+    corpseHit = corpse;
     corpseHit->mom[MX] = corpseHit->mom[MY] = 0;
 
-    // DJS - Used the PRBoom method to fix archvile raising ghosts
-    // If !raiseghosts then ressurect a "normal" MF_SOLID one.
-    if(cfg.raiseGhosts)
+    if(!cfg.raiseGhosts) // Compat option.
     {
-        corpseHit->height *= 2*2;
-        check = P_CheckPositionXY(corpseHit, corpseHit->origin[VX], corpseHit->origin[VY]);
-        corpseHit->height /= 2*2;
-    }
-    else
-    {
-        coord_t radius, height;
+        const coord_t oldHeight = corpseHit->height;
+        const coord_t oldRadius = corpseHit->radius;
 
-        height = corpseHit->height; // Save temporarily.
-        radius = corpseHit->radius; // Save temporarily.
         corpseHit->height = corpseHit->info->height;
         corpseHit->radius = corpseHit->info->radius;
         corpseHit->flags |= MF_SOLID;
 
-        check = P_CheckPositionXY(corpseHit, corpseHit->origin[VX], corpseHit->origin[VY]);
+        raisePointOpen = P_CheckPositionXY(corpseHit, corpseHit->origin[VX], corpseHit->origin[VY]);
 
-        corpseHit->height = height; // Restore.
-        corpseHit->radius = radius; // Restore.
+        corpseHit->height = oldHeight;
+        corpseHit->radius = oldRadius;
         corpseHit->flags &= ~MF_SOLID;
     }
-    // End raiseghosts.
+    else
+    {
+        // Use the original more buggy approach, which may result in
+        // non-solid "ghost" monsters.
+        corpseHit->height = (coord_t)(((fixed_t)corpseHit->height) << 2);
+        raisePointOpen = P_CheckPositionXY(corpseHit, corpseHit->origin[VX], corpseHit->origin[VY]);
+        corpseHit->height = (coord_t)(((fixed_t)corpseHit->height) >> 2);
+    }
 
-    if(!check)
-        return false; // Doesn't fit here.
-
-    return true; // Got one, so stop checking.
+    // Stop iteration as soon as a suitable corpse is found.
+    return raisePointOpen;
 }
 
-/**
- * Check for ressurecting a body.
- */
-void C_DECL A_VileChase(mobj_t *actor)
+void C_DECL A_VileChase(mobj_t* actor)
 {
-    mobjinfo_t* info;
-    mobj_t* temp;
-    AABoxd box;
-
     if(actor->moveDir != DI_NODIR)
     {
-        // Check for corpses to raise.
-        vileTry[VX] = actor->origin[VX] + actor->info->speed * dirSpeed[actor->moveDir][VX];
-        vileTry[VY] = actor->origin[VY] + actor->info->speed * dirSpeed[actor->moveDir][VY];
+        // Search for a monster corpse that can be raised.
+        pit_vilecheckparams_t parm;
+        AABoxd aaBB;
 
-        box.minX = vileTry[VX] - MAXRADIUS * 2;
-        box.minY = vileTry[VY] - MAXRADIUS * 2;
-        box.maxX = vileTry[VX] + MAXRADIUS * 2;
-        box.maxY = vileTry[VY] + MAXRADIUS * 2;
+        parm.resurrector = actor;
+        V2d_Copy(parm.raisePoint, dirSpeed[actor->moveDir]);
+        V2d_Scale(parm.raisePoint, actor->info->speed);
+        V2d_Sum(parm.raisePoint, parm.raisePoint, actor->origin);
 
-        vileObj = actor;
+        aaBB.minX = parm.raisePoint[VX] - MAXRADIUS * 2;
+        aaBB.minY = parm.raisePoint[VY] - MAXRADIUS * 2;
+        aaBB.maxX = parm.raisePoint[VX] + MAXRADIUS * 2;
+        aaBB.maxY = parm.raisePoint[VY] + MAXRADIUS * 2;
 
-        // Call PIT_VileCheck to check whether object is a corpse
-        // that can be raised.
         VALIDCOUNT++;
-        if(P_MobjsBoxIterator(&box, PIT_VileCheck, 0))
+        if(P_MobjsBoxIterator(&aaBB, PIT_VileCheck, &parm))
         {
-            // Got one!
-            temp = actor->target;
+            mobj_t* oldTarget = actor->target;
+
+            // Rotate the corpse to face it's new master.
             actor->target = corpseHit;
             A_FaceTarget(actor);
-            actor->target = temp;
+            actor->target = oldTarget;
 
+            // Posture a little while we work our magic.
             P_MobjChangeState(actor, S_VILE_HEAL1);
             S_StartSound(SFX_SLOP, corpseHit);
-            info = corpseHit->info;
 
+            // Re-animate the corpse (mostly initial state):
             P_MobjChangeState(corpseHit, P_GetState(corpseHit->type, SN_RAISE));
-
-            if(cfg.raiseGhosts)
+            if(!cfg.raiseGhosts)
             {
-                corpseHit->height *= 2*2;
+                corpseHit->height = corpseHit->info->height;
+                corpseHit->radius = corpseHit->info->radius;
             }
             else
             {
-                corpseHit->height = info->height;
-                corpseHit->radius = info->radius;
+                // The original more buggy approach.
+                corpseHit->height = (coord_t)(((fixed_t)corpseHit->height) << 2);
             }
-
-            corpseHit->flags = info->flags;
-            corpseHit->health = info->spawnHealth;
+            corpseHit->flags  = corpseHit->info->flags;
+            corpseHit->health = corpseHit->info->spawnHealth;
             corpseHit->target = NULL;
             corpseHit->corpseTics = 0;
+
             return;
         }
     }
