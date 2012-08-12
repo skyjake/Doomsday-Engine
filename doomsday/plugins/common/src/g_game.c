@@ -2246,12 +2246,49 @@ static void G_InitNewGame(void)
 #endif
 }
 
-static void G_ApplyGameRules(skillmode_t skill)
+#if __JDOOM__ || __JDOOM64__
+static void G_ApplyGameRuleFastMonsters(boolean fast)
 {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    int i, speed;
+    static boolean oldFast = false;
+    int i;
+
+    // Only modify when the rule changes state.
+    if(fast == oldFast) return;
+    oldFast = fast;
+
+    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+    for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+        STATES[i].tics = fast? 1 : 2;
+    for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+        STATES[i].tics = fast? 4 : 8;
+    for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+        STATES[i].tics = fast? 1 : 2;
+    // Kludge end.
+}
 #endif
 
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+static void G_ApplyGameRuleFastMissiles(boolean fast)
+{
+    static boolean oldFast = false;
+    int i;
+
+    // Only modify when the rule changes state.
+    if(fast == oldFast) return;
+    oldFast = fast;
+
+    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+    for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
+    {
+        MOBJINFO[MonsterMissileInfo[i].type].speed =
+            MonsterMissileInfo[i].speed[fast? 1 : 0];
+    }
+    // Kludge end.
+}
+#endif
+
+static void G_ApplyGameRules(skillmode_t skill)
+{
     if(skill < SM_BABY)
         skill = SM_BABY;
     if(skill > NUM_SKILL_MODES - 1)
@@ -2277,56 +2314,27 @@ static void G_ApplyGameRules(skillmode_t skill)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
-#if __JDOOM__
-    // Disabled in Chex and HacX because this messes with the original games' values.
-    if(gameMode != doom2_hacx && gameMode != doom_chex)
-#endif
-    {
-        /// @kludge Doom/Heretic Fast Monters/Missiles
+    // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
-        // Fast monsters?
-        if(fastParm
+    {
+        boolean fastMonsters = fastParm;
 # if __JDOOM__
-           || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
+        if(gameSkill == SM_NIGHTMARE) fastMonsters = true;
 # endif
-           )
-        {
-            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-                STATES[i].tics = 1;
-            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-                STATES[i].tics = 4;
-            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-                STATES[i].tics = 1;
-        }
-        else
-        {
-            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-                STATES[i].tics = 2;
-            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-                STATES[i].tics = 8;
-            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-                STATES[i].tics = 2;
-        }
-#endif
-
-        // Fast missiles?
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-# if __JDOOM64__
-        speed = fastParm;
-# elif __JDOOM__
-        speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
-# else
-        speed = skill == SM_NIGHTMARE;
-# endif
-
-        for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
-        {
-            MOBJINFO[MonsterMissileInfo[i].type].speed =
-                    MonsterMissileInfo[i].speed[speed];
-        }
-#endif
-        // <-- KLUDGE
+        G_ApplyGameRuleFastMonsters(fastMonsters);
     }
+#endif
+
+    // Fast missiles?
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    {
+        boolean fastMissiles = fastParm;
+# if !__JDOOM64__
+        if(gameSkill == SM_NIGHTMARE) fastMissiles = true;
+# endif
+        G_ApplyGameRuleFastMissiles(fastMissiles);
+    }
+#endif
 }
 
 void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
