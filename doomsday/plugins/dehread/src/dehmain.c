@@ -2442,6 +2442,27 @@ static void ReadDehacked(char* filename)
     free(deh);
 }
 
+static boolean RecogniseDehackedLump(lumpnum_t lumpNum)
+{
+    const char* ext, *lumpName = W_LumpName(lumpNum);
+    if(!lumpName) return false;
+
+    // Perhaps an in-WAD patch?
+    if(!strnicmp(lumpName, "DEHACKED", 8))
+    {
+        return true;
+    }
+
+    // Maybe a patch from some other virtual file?
+    ext = F_FindFileExtension(lumpName);
+    if(ext && !stricmp(ext, "deh"))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * This will be called after the engine has loaded all definitions but
  * before the data they contain has been initialized.
@@ -2450,18 +2471,21 @@ int DefsHook(int hook_type, int parm, void* data)
 {
     int i;
 
+    DENG_UNUSED(hook_type);
+    DENG_UNUSED(parm);
+
     verbose = CommandLine_Exists("-verbose");
     ded = (ded_t*) data;
 
     // Check for a DEHACKED lumps.
     for(i = DD_GetInteger(DD_NUMLUMPS) - 1; i >= 0; i--)
     {
-        if(!strnicmp(W_LumpName(i), "DEHACKED", 8))
-        {
-            ReadDehackedLump(i);
-            // We'll only continue this if the -alldehs option is given.
-            if(!CommandLine_Check("-alldehs")) break;
-        }
+        if(!RecogniseDehackedLump(i)) continue;
+
+        ReadDehackedLump(i);
+
+        // We'll only continue this if the -alldehs option is given.
+        if(!CommandLine_Check("-alldehs")) break;
     }
 
     // How about the -deh option?
