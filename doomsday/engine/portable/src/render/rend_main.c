@@ -1753,17 +1753,10 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         SideDef* frontSide = HEDGE_SIDEDEF(hedge);
         float deltaL, deltaR;
 
-        /**
-         * Do not apply an angle based lighting delta if:
-         * a) This surface is the middle wall section of a two-sided line. The
-         *    id tech 1 software renderer does not apply this effect to such
-         *    surfaces. @todo Make this a sidedef flag?
-         * b) This surface's material has been chosen as a HOM fix (we must remain
-         *    consistent with the lighting applied to the relative back plane (on
-         *    this half-edge's back side)).
-         */
-        if(frontSide && isTwoSided &&
-           (section == SS_MIDDLE || (surface->inFlags & SUIF_FIX_MISSING_MATERIAL)))
+        // Do not apply an angle based lighting delta if this surface's material
+        // has been chosen as a HOM fix (we must remain consistent with the lighting
+        // applied to the back plane (on this half-edge's back side)).
+        if(frontSide && isTwoSided && section != SS_MIDDLE && (surface->inFlags & SUIF_FIX_MISSING_MATERIAL))
         {
             deltaL = deltaR = 0;
         }
