@@ -2187,15 +2187,15 @@ void G_DoReborn(int plrNum)
 #endif
 
         // Have we chosen a save state to load?
-        if(lastSlot > 0
+        if(lastSlot >= 0
 #if !__JHEXEN__
-           || autoSlot > 0
+           || autoSlot >= 0
 #endif
            )
         {
             // Everything appears to be in order - schedule the game-save load!
 #if !__JHEXEN__
-            const int chosenSlot = (lastSlot > 0? lastSlot : autoSlot);
+            const int chosenSlot = (lastSlot >= 0? lastSlot : autoSlot);
 #else
             const int chosenSlot = lastSlot;
 #endif
