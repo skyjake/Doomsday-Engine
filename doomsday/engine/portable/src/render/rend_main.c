@@ -1751,7 +1751,7 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
 
         {
         SideDef* frontSide = HEDGE_SIDEDEF(hedge);
-        float deltaL, deltaR, diff;
+        float deltaL, deltaR;
 
         /**
          * Do not apply an angle based lighting delta if:
@@ -1769,13 +1769,15 @@ static boolean rendHEdgeSection(HEdge* hedge, SideDefSection section,
         }
         else
         {
-            LineDef_LightLevelDelta(hedge->lineDef, hedge->side, &deltaL, &deltaR);
-        }
+            float diff;
 
-        // Linear interpolation of the linedef light deltas to the edges of the hedge.
-        diff = deltaR - deltaL;
-        deltaR = deltaL + ((hedge->offset + hedge->length) / hedge->lineDef->length) * diff;
-        deltaL += (hedge->offset / hedge->lineDef->length) * diff;
+            LineDef_LightLevelDelta(hedge->lineDef, hedge->side, &deltaL, &deltaR);
+
+            // Linear interpolation of the linedef light deltas to the edges of the hedge.
+            diff = deltaR - deltaL;
+            deltaR = deltaL + ((hedge->offset + hedge->length) / hedge->lineDef->length) * diff;
+            deltaL += (hedge->offset / hedge->lineDef->length) * diff;
+        }
 
         opaque = doRenderHEdge(hedge,
                                surface->normal, ((flags & RHF_FORCE_OPAQUE)? -1 : alpha),
