@@ -1968,49 +1968,57 @@ static int parsePars(int dummy)
 
 static int parseCodePtr(int dummy)
 {
-    LPrintf("Warning: [CodePtr] patches not supported.\n");
-    return skipToNextLine();
+    int result;
 
-    /*  int result;
+    DENG_UNUSED(dummy);
 
-       LPrintf ("[CodePtr]\n");
+    while((result = GetLine()) == 1)
+    {
+        if(!strnicmp("Frame", Line1, 5) && isspace(Line1[5]))
+        {
+            int stateNum = atoi(Line1 + 5);
+            ded_state_t* def;
+            char buff[32];
 
-       while ((result = GetLine()) == 1)
-       {
-       if (!strnicmp ("Frame", Line1, 5) && isspace(Line1[5]))
-       {
-       int frame = atoi (Line1 + 5);
+            if(stateNum < 0 && stateNum >= ded->count.states.num)
+            {
+                LPrintf("State %d out of range (Create more State defs!)\n", stateNum);
+                continue;
+            }
+            def = &ded->states[stateNum];
 
-       if (frame < 0 || frame >= NUMSTATES)
-       {
-       Printf (PRINT_HIGH, "Frame %d out of range\n", frame);
-       }
-       else
-       {
-       int i = 0;
-       char *data;
+            // Skip the assignment operator.
+            parseToken(Line2);
 
-       parseToken (Line2);
+            // Compose the action name.
+            if((com_token[0] == 'A' || com_token[0] == 'a') && com_token[1] == '_')
+                strncpy(buff, com_token, 32);
+            else
+                dd_snprintf(buff, 32, "A_%s", com_token);
 
-       if ((com_token[0] == 'A' || com_token[0] == 'a') && com_token[1] == '_')
-       data = com_token + 2;
-       else
-       data = com_token;
+            // Is this a known action?
+            if(!stricmp(buff, "A_NULL"))
+            {
+                strcpy(def->action, "NULL");
+#if _DEBUG
+                VERBOSE2( LPrintf("State \"%s\" (#%i) Action is now \"NULL\".\n", def->id, (int)stateNum) )
+#endif
+            }
+            else if(Def_Get(DD_DEF_ACTION, buff, 0) >= 0)
+            {
+                strcpy(def->action, buff);
+#if _DEBUG
+                VERBOSE2( LPrintf("State \"%s\" (#%i) Action is now \"%s\".\n", def->id, (int)stateNum, def->action) )
+#endif
+            }
+            else
+            {
+                LPrintf("Unknown action \"%s\".\n", buff);
+            }
+        }
+    }
 
-       while (CodePtrs[i].name && stricmp (CodePtrs[i].name, data))
-       i++;
-
-       if (CodePtrs[i].name) {
-       states[frame].action.acp1 = CodePtrs[i].func.acp1;
-       DPrintf ("Frame %d set to %s\n", frame, CodePtrs[i].name);
-       } else {
-       states[frame].action.acp1 = NULL;
-       DPrintf ("Unknown code pointer: %s\n", com_token);
-       }
-       }
-       }
-       }
-       return result; */
+    return result;
 }
 
 static void replaceInString(char* haystack, size_t len, const char* needle,

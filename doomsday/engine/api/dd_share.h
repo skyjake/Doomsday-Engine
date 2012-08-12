@@ -259,6 +259,7 @@ enum {
     DD_PLUGIN_HOMEURL,
     DD_PLUGIN_DOCSURL,
     DD_DMU_VERSION, ///< Used in the exchange of DMU API versions.
+    DD_DEF_ACTION,
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,

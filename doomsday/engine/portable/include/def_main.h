@@ -85,6 +85,7 @@ int             Def_GetMobjNumForName(const char* name);
 const char*     Def_GetMobjName(int num);
 int             Def_GetStateNum(const char* id);
 const char*     Def_GetStateName(state_t* state);
+int             Def_GetActionNum(const char* id);
 int             Def_GetSpriteNum(const char* name);
 int             Def_GetModelNum(const char* id);
 int             Def_GetMusicNum(const char* id);

@@ -347,6 +347,23 @@ acfnptr_t Def_GetActionPtr(const char* name)
     return 0;
 }
 
+int Def_GetActionNum(const char* name)
+{
+    if(name && name[0] && DD_GameLoaded())
+    {
+        // Action links are provided by the game, who owns the actual action functions.
+        actionlink_t* links = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK);
+        actionlink_t* linkIt;
+        for(linkIt = links; linkIt && linkIt->name; linkIt++)
+        {
+            actionlink_t* link = linkIt;
+            if(!stricmp(name, link->name))
+                return linkIt - links;
+        }
+    }
+    return -1; // Not found.
+}
+
 ded_mapinfo_t* Def_GetMapInfo(const Uri* uri)
 {
     int i;
@@ -1730,6 +1747,9 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_STATE:
         return Def_GetStateNum(id);
+
+    case DD_DEF_ACTION:
+        return Def_GetActionNum(id);
 
     case DD_DEF_SPRITE:
         return Def_GetSpriteNum(id);
