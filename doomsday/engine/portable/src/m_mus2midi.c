@@ -1,34 +1,27 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * m_mus2midi.c: MUS to MIDI conversion.
+ * @file m_mus2midi.c
+ *
+ * MUS to MIDI conversion. @ingroup audio
  *
  * Converts Doom's MUS music format to equivalent MIDI data.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
@@ -36,18 +29,16 @@
 #include "doomsday.h"
 #include "fs_util.h"
 
-// MACROS ------------------------------------------------------------------
-
 // MUS event types.
 enum {
     MUS_EV_RELEASE_NOTE,
     MUS_EV_PLAY_NOTE,
     MUS_EV_PITCH_WHEEL,
-    MUS_EV_SYSTEM, // Valueless controller.
+    MUS_EV_SYSTEM,      ///< Valueless controller.
     MUS_EV_CONTROLLER,
-    MUS_EV_FIVE, // ?
+    MUS_EV_FIVE,
     MUS_EV_SCORE_END,
-    MUS_EV_SEVEN // ?
+    MUS_EV_SEVEN
 };
 
 // MUS controllers.
@@ -72,15 +63,13 @@ enum {
     NUM_MUS_CTRLS
 };
 
-// TYPES -------------------------------------------------------------------
-
 #pragma pack(1)
 struct mus_header {
-    char            ID[4]; // Identifier "MUS" 0x1A.
+    char            ID[4]; ///< Identifier "MUS" 0x1A.
     ushort          scoreLen;
     ushort          scoreStart;
-    ushort          channels; // Number of primary channels.
-    ushort          secondaryChannels; // Number of secondary channels.
+    ushort          channels; ///< Number of primary channels.
+    ushort          secondaryChannels; ///< Number of secondary channels.
     ushort          instrCnt;
     ushort          padding;
     // The instrument list begins here.
@@ -100,50 +89,36 @@ typedef struct midi_event_s {
     byte            parms[2];
 } midi_event_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static int readTime; // In ticks.
 static byte* readPos;
 
 static byte chanVols[16]; // Last volume for each channel.
 
 static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
-    0, // Not used.
-    0, // Bank select.
-    1, // Modulation.
-    7, // Volume.
-    10, // Pan.
-    11, // Expression.
-    91, // Reverb.
-    93, // Chorus.
-    64, // Sustain pedal.
-    67, // Soft pedal.
+     0, ///< Not used.
+     0, ///< Bank select.
+     1, ///< Modulation.
+     7, ///< Volume.
+    10, ///< Pan.
+    11, ///< Expression.
+    91, ///< Reverb.
+    93, ///< Chorus.
+    64, ///< Sustain pedal.
+    67, ///< Soft pedal.
 
     // The valueless controllers:
-    120, // All sounds off.
-    123, // All notes off.
-    126, // Mono.
-    127, // Poly.
-    121 // Reset all controllers.
+    120, ///< All sounds off.
+    123, ///< All notes off.
+    126, ///< Mono.
+    127, ///< Poly.
+    121  ///< Reset all controllers.
 };
-
-// CODE --------------------------------------------------------------------
 
 static boolean getNextEvent(midi_event_t* ev)
 {
-    int                 i;
-    mus_event_t         evDesc;
-    byte                musEvent;
+    int i;
+    mus_event_t evDesc;
+    byte musEvent;
 
     ev->deltaTime = readTime;
     readTime = 0;
@@ -261,6 +236,8 @@ boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
     ddstring_t nativePath;
     midi_event_t ev;
     FILE* file;
+
+    DENG_UNUSED(length);
 
     if(!outFile || !outFile[0]) return false;
 
