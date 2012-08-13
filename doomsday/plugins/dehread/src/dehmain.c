@@ -92,10 +92,16 @@ static int parsePointer(int);
 static int parseCheat(int);
 static int parseMisc(int);
 static int parseText(int);
-static int parseStrings(int);
-static int parsePars(int);
-static int parseCodePtr(int);
+
 static int parseInclude(int);
+static int parseStringsBex(int);
+static int parsePointerBex(int);
+static int parseParsBex(int);
+static int parseHelperBex(int);
+static int parseSpritesBex(int);
+static int parseSoundsBex(int);
+static int parseMusicBex(int);
+
 static void ApplyDEH(char* patch, int length);
 
 ded_t* ded;
@@ -801,22 +807,27 @@ static const struct {
     int (*parseFunc) (int elementIdx);
 } blockParsers[] = {
     // These appear in .deh and .bex files
-    { "Thing",      parseThing },
-    { "Sound",      parseSound },
-    { "Frame",      parseFrame },
-    { "Sprite",     parseSprite },
-    { "Ammo",       parseAmmo },
-    { "Weapon",     parseWeapon },
-    { "Pointer",    parsePointer },
-    { "Cheat",      parseCheat },
-    { "Misc",       parseMisc },
-    { "Text",       parseText },
+    { "Thing",      parseThing      },
+    { "Sound",      parseSound      }, // Not yet supported.
+    { "Frame",      parseFrame      },
+    { "Sprite",     parseSprite     },
+    { "Ammo",       parseAmmo       },
+    { "Weapon",     parseWeapon     },
+    { "Pointer",    parsePointer    },
+    { "Cheat",      parseCheat      }, // No intention of support.
+    { "Misc",       parseMisc       },
+    { "Text",       parseText       },
+
     // These appear in .bex files
-    { "include",    parseInclude },
-    { "[STRINGS]",  parseStrings },
-    { "[PARS]",     parsePars },
-    { "[CODEPTR]",  parseCodePtr },
-    { NULL,         NULL },
+    { "include",    parseInclude    },
+    { "[STRINGS]",  parseStringsBex }, // Not yet supported.
+    { "[PARS]",     parseParsBex    },
+    { "[CODEPTR]",  parsePointerBex },
+    { "[HELPER]",   parseHelperBex  }, // (Helper Dogs from MBF) Not yet supported.
+    { "[SPRITES]",  parseSpritesBex }, // Not yet supported.
+    { "[SOUNDS]",   parseSoundsBex  }, // Not yet supported.
+    { "[MUSIC]",    parseMusicBex   }, // Not yet supported.
+    { NULL,         NULL            },
 };
 
 static void BackupData(void)
@@ -1894,7 +1905,7 @@ static int parseMisc(int dummy)
     return result;
 }
 
-static int parsePars(int dummy)
+static int parseParsBex(int dummy)
 {
     char* space, *moredata;
     ded_mapinfo_t *info;
@@ -1966,7 +1977,35 @@ static int parsePars(int dummy)
     return result;
 }
 
-static int parseCodePtr(int dummy)
+static int parseHelperBex(int elementIdx)
+{
+    DENG_UNUSED(elementIdx);
+    LPrintf("Warning: [HELPER] patches are not supported.\n");
+    return skipToNextLine();
+}
+
+static int parseSpritesBex(int elementIdx)
+{
+    DENG_UNUSED(elementIdx);
+    LPrintf("Warning: [SPRITES] patches are not supported.\n");
+    return skipToNextLine();
+}
+
+static int parseSoundsBex(int elementIdx)
+{
+    DENG_UNUSED(elementIdx);
+    LPrintf("Warning: [SOUNDS] patches are not supported.\n");
+    return skipToNextLine();
+}
+
+static int parseMusicBex(int elementIdx)
+{
+    DENG_UNUSED(elementIdx);
+    LPrintf("Warning: [MUSIC] patches are not supported.\n");
+    return skipToNextLine();
+}
+
+static int parsePointerBex(int dummy)
 {
     int result;
 
@@ -2200,7 +2239,7 @@ static int parseText(int oldSize)
     return 0;
 }
 
-static int parseStrings(int dummy)
+static int parseStringsBex(int dummy)
 {
     LPrintf("Warning: [Strings] patches not supported.\n");
     return skipToNextLine();
