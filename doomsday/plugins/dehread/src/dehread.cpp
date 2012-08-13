@@ -53,9 +53,6 @@ struct font_s;
 #include <de/Log>
 #include <de/memory.h>
 
-/// @todo This macro should probably be defined at API level.
-#define DENG2_COMMANDLINE()     DENG2_APP->commandLine()
-
 #define OFF_STATE   0x04000000
 #define OFF_SOUND   0x08000000
 #define OFF_FIXED   0x10000000
@@ -2545,15 +2542,17 @@ static void processPatchLumps()
 
 static void processPatchFiles()
 {
-    for(int p = 0; p < DENG2_APP->commandLine().count(); ++p)
-    {
-        const char* arg = *(DENG2_COMMANDLINE().argv() + p);
-        if(!DENG2_COMMANDLINE().matches("-deh", arg)) continue;
+    de::CommandLine& cmdLine = DENG2_APP->commandLine();
 
-        while(++p != DENG2_COMMANDLINE().count() && !DENG2_COMMANDLINE().isOption(p))
+    for(int p = 0; p < cmdLine.count(); ++p)
+    {
+        const char* arg = *(cmdLine.argv() + p);
+        if(!cmdLine.matches("-deh", arg)) continue;
+
+        while(++p != cmdLine.count() && !cmdLine.isOption(p))
         {
-            DENG2_COMMANDLINE().makeAbsolutePath(p);
-            const char* filePath = *(DENG2_COMMANDLINE().argv() + p);
+            cmdLine.makeAbsolutePath(p);
+            const char* filePath = *(cmdLine.argv() + p);
             readDehackedFile(filePath);
         }
 
@@ -2573,7 +2572,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void* data)
     ded = reinterpret_cast<ded_t*>(data);
 
     // Are we processing all lump patches?
-    processAllPatchLumps = DENG2_COMMANDLINE().check("-alldehs");
+    processAllPatchLumps = DENG2_APP->commandLine().check("-alldehs");
 
     // Check for DEHACKED lumps.
     processPatchLumps();
