@@ -1021,8 +1021,16 @@ int PIT_VileCheck(mobj_t* corpse, void* parameters)
     // Does this mobj type have a raise state?
     if(P_GetState(corpse->type, SN_RAISE) == S_NULL) return false;
 
-    // Don't raise if its too close to the resurrector.
-    maxDist = corpse->info->radius + MOBJINFO[ MT_VILE ].radius;
+    // Don't raise if its too far from the resurrector.
+    maxDist = corpse->info->radius +
+        /**
+         * Compat option: The original game would always use the radius of the
+         * MT_VILE mobj type regardless of the actual type of the resurrector.
+         * This means that HacX v1.2 must have been developed and tested with
+         * a port that changes this behavior by default.
+         */
+        (cfg.vileChaseUseVileRadius? MOBJINFO[ MT_VILE ].radius :
+                                     parm->resurrector->info->radius);
     if(fabs(corpse->origin[VX] - parm->resurrectorOrigin[VX]) > maxDist ||
        fabs(corpse->origin[VY] - parm->resurrectorOrigin[VY]) > maxDist) return false;
 

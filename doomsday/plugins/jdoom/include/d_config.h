@@ -149,11 +149,13 @@ typedef struct jdoom_config_s {
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
-    /** Compatibility options.
-    * \todo Put these into an array so we can use a bit array to change
-    * multiple options based on a compatibility mode (ala PrBoom).
-    */
+    /**
+     * Compatibility options:
+     * @todo Put these into an array so we can use a bit array to change
+     * multiple options based on a compatibility mode (ala PrBoom).
+     */
     byte            raiseGhosts;
+    byte            vileChaseUseVileRadius;
     byte            maxSkulls;
     byte            allowSkullsInWalls;
     byte            anyBossDeath;

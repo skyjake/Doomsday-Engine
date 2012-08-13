@@ -879,6 +879,9 @@ desc = 1=Pain Elementals can't spawn Lost Souls if more than twenty exist (origi
 [game-skullsinwalls]
 desc = 1=Pain Elementals can spawn Lost Souls inside walls (disables DOOM bug fix).
 
+[game-vilechase-usevileradius]
+desc = 1=Always use the radius of the Archvile with the VileChase action (disables DOOM bug fix).
+
 [game-anybossdeath666]
 desc = 1=The death of ANY boss monster triggers a 666 special (on applicable maps).
 

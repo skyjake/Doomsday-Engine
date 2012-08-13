@@ -150,6 +150,7 @@ cvartemplate_t gameCVars[] = {
 
 // Compatibility options
     {"game-raiseghosts", 0, CVT_BYTE, &cfg.raiseGhosts, 0, 1},
+    {"game-vilechase-usevileradius", 0, CVT_BYTE, &cfg.vileChaseUseVileRadius, 0, 1},
     {"game-maxskulls", 0, CVT_BYTE, &cfg.maxSkulls, 0, 1},
     {"game-skullsinwalls", 0, CVT_BYTE, &cfg.allowSkullsInWalls, 0, 1},
     {"game-anybossdeath666", 0, CVT_BYTE, &cfg.anyBossDeath, 0, 1},

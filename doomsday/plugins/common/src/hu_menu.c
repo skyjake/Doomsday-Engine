@@ -176,6 +176,9 @@ cvarbutton_t mnCVarButtons[] = {
     { 0, "game-save-last-loadonreborn" },
 #if __JDOOM__ || __JDOOM64__
     { 0, "game-skullsinwalls" },
+#if __JDOOM__
+    { 0, "game-vilechase-usevileradius" },
+#endif
     { 0, "game-zombiescanexit" },
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -2267,7 +2270,7 @@ void Hu_MenuInitGameplayOptionsPage(void)
 #if __JDOOM64__
     const uint numObjects = 38;
 #elif __JDOOM__
-    const uint numObjects = 38;
+    const uint numObjects = 40;
 #elif __JHERETIC__
     const uint numObjects = 24;
 #elif __JHEXEN__
@@ -2510,6 +2513,39 @@ void Hu_MenuInitGameplayOptionsPage(void)
     btn->data = "game-raiseghosts";
     }
     ob++;
+
+# if __JDOOM__
+    ob->_type = MN_TEXT;
+    ob->_group = 1;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->ticker = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer = MNText_Drawer;
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    { mndata_text_t* text = (mndata_text_t*)ob->_typedata;
+    text->text = "VileChase uses Av radius";
+    }
+    ob++;
+
+    ob->_type = MN_BUTTON;
+    ob->_group = 1;
+    ob->_shortcut = 'g';
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR3;
+    ob->ticker = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder = MNButton_CommandResponder;
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    { mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+    btn->staydownMode = true;
+    btn->data = "game-vilechase-usevileradius";
+    }
+    ob++;
+# endif
 #  endif // !__JDOOM64__
 
     ob->_type = MN_TEXT;
