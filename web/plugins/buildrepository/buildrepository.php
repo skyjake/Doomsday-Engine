@@ -1165,6 +1165,13 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             {
                 $logUri = $pack->compileLogUri();
 
+                /// @todo Temporary kludge to patch the build log URIs
+                /// while code.iki.fi is offline. Remove me.
+                {
+                    $logUri = str_replace("code.iki.fi", "dl.dropbox.com/u/11948701", $logUri);
+                }
+                ///< Kludge end.
+
 ?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo htmlspecialchars($pack->composeFullTitle()); ?>">txt.gz</a><?php
 
             }
