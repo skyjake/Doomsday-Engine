@@ -188,6 +188,18 @@ public:
      */
     Block toLatin1() const;
 
+    /**
+     * Emulates the behavior of the standard C library's atoi(). Builds a number
+     * by reading characters from @a src until the first non-digit, non-sign
+     * character is encountered. The read substring is then decoded, making use
+     * of @see QString::toInt() into an integer.
+     *
+     * @return Returns the string converted to an int using base @a base, else
+     *         @c 0 if the conversion fails. If @c 0 is expected in the input
+               then the @a ok argument may be used to disambiguate this case.
+     */
+    dint toIntLeft(bool* ok = 0, int base = 10) const;
+
 public:
     /**
      * Builds a String out of an array of bytes that contains a UTF-8 string.

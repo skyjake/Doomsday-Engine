@@ -361,6 +361,26 @@ void String::skipSpace(String::const_iterator& i, const String::const_iterator& 
     while(i != end && (*i).isSpace()) ++i;
 }
 
+// Seems like an ommission on the part of QChar...
+static inline bool isSign(const QChar& ch)
+{
+    return ch == '-' || ch == '+';
+}
+
+dint String::toIntLeft(bool* ok, int base) const
+{
+    String token = leftStrip();
+
+    // Truncate at the first non-numeric or sign character.
+    int endOfNumber = 0;
+    while(endOfNumber < token.size() &&
+          (token.at(endOfNumber).isDigit() || (endOfNumber == 0 && isSign(token.at(endOfNumber)))))
+    { ++endOfNumber; }
+    token.truncate(endOfNumber);
+
+    return token.toInt(ok, base);
+}
+
 void String::advanceFormat(String::const_iterator& i, const String::const_iterator& end)
 {
     ++i;

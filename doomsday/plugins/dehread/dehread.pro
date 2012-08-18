@@ -20,9 +20,16 @@ INCLUDEPATH += include \
     ../../engine/portable/include \
     ../../engine/portable/include/render
 
-HEADERS += include/version.h
+HEADERS += include/dehread.h \
+    include/dehreader.h \
+    include/dehreader_util.h \
+    include/info.h \
+    include/version.h
 
-SOURCES += src/dehread.cpp
+SOURCES += src/dehread.cpp \
+    src/dehreader.cpp \
+    src/dehreader_util.cpp \
+    src/info.cpp
 
 win32 {
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpdehread.def\"

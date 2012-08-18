@@ -1,10 +1,9 @@
 /**
  * @file version.h
- * Version numbering, naming etc.
+ * Version information for the DeHackEd patch plugin. @ingroup dehread
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -37,10 +36,10 @@
 
 // Presented to the user in dialogs, messages etc.
 #define PLUGIN_NICENAME     "Deh Reader"
-#define PLUGIN_DETAILS      "Deh Reader is based on ZDoom's Deh patch reader."
+#define PLUGIN_DETAILS      "Doomsday plugin for reading DeHackEd patches."
 
-#define PLUGIN_VERSION_TEXT "1.3.0"
+#define PLUGIN_VERSION_TEXT "2.0.0"
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DEHREAD_VER_ID ")"
-#define PLUGIN_VERSION_NUMBER 1,3,0,0 // For WIN32 version info.
+#define PLUGIN_VERSION_NUMBER 2,0,0,0 // For WIN32 version info.
 
 #endif /// LIBDEHREAD_VERSION_H
