@@ -351,6 +351,7 @@ public:
             }
         }
 
+        // Fetch next identifier for main loop.
         return readAndSplitLine();
     }
 
@@ -921,14 +922,8 @@ public:
     {
         LOG_AS("parseSound");
         LOG_WARNING("[Sound] patches are not supported.");
-
         //const int soundNum = lineRight.toIntLeft();
-
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
-        {}
-
-        return cont;
+        return skipToNextSection();
     }
 
     int parseAmmo()
@@ -1111,7 +1106,7 @@ public:
         LOG_AS("parseParsBex");
 
         int cont;
-        while((cont = readAndSplitLine()))
+        while((cont = readAndSplitLine()) == 1)
         {
             // Argh! .bex doesn't follow the same rules as .deh
             if(cont == 1)
