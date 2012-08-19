@@ -80,6 +80,8 @@ class DehReader
     int patchVersion;
     int doomVersion;
 
+    size_t currentLineNumber;
+
     /**
      * Each text line in the source patch is split into (at most) two parts
      * depending on the number of discreet tokens on that line.
@@ -98,6 +100,7 @@ public:
         : patch(_patch), patchPt(patch.constData()), flags(_flags),
           // Initialize as unknown Patch & Doom version.
           patchVersion(-1), doomVersion(-1),
+          currentLineNumber(0),
           lineLeft(""), lineRight(""),
           com_eof(false)
     {
@@ -113,9 +116,8 @@ public:
 
     void error(const QString& message)
     {
-        //throw de::Error("JSONParser", de::String("Error at position %1 (%2^%3): %4")
-        //                .arg(pos).arg(source.mid(pos - 4, 4)).arg(source.mid(pos, 4)).arg(message));
-        throw de::Error("DehReader", de::String("Error %1").arg(message));
+        throw de::Error("DehReader", de::String("Error \"%1\" on line #%2")
+                                        .arg(message).arg(currentLineNumber));
     }
 
     LogEntry& log(Log::LogLevel level, const String& format)
@@ -161,7 +163,10 @@ public:
             {
                 String line = String::fromAscii(start, (patchPt - start));
                 if(*patchPt == '\n')
+                {
                     *patchPt++;
+                    currentLineNumber++;
+                }
                 return line;
             }
         }
@@ -546,7 +551,7 @@ public:
                 continue;
             }
 
-            LOG_WARNING("Unknown flag mnemonic '%s', ignoring.") << token;
+            LOG_WARNING("Unknown flag mnemonic '%s' on line #%i, ignoring.") << token << currentLineNumber;
         }
 
         return changedGroups;
@@ -575,7 +580,7 @@ public:
                 const String dehStateName = lineLeft.left(lineLeft.size() - 6);
                 if(!parseMobjTypeState(dehStateName, &mapping))
                 {
-                    if(!ignore) LOG_WARNING("Unknown frame '%s'', ignoring.") << dehStateName;
+                    if(!ignore) LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.") << dehStateName << currentLineNumber;
                 }
                 else
                 {
@@ -605,7 +610,7 @@ public:
                 const String dehSoundName = lineLeft.left(lineLeft.size() - 6);
                 if(!parseMobjTypeSound(dehSoundName, &mapping))
                 {
-                    if(!ignore) LOG_WARNING("Unknown sound '%s'', ignoring.") << dehSoundName;
+                    if(!ignore) LOG_WARNING("Unknown sound '%s' on line #%i, ignoring.") << dehSoundName << currentLineNumber;
                 }
                 else
                 {
@@ -754,7 +759,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered in #%i, ignoring.") << lineLeft << mobjType;
+                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
 
@@ -848,7 +853,7 @@ public:
                 if(!ignore)
                 if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
                 {
-                    LOG_WARNING("Unknown unknown-value '%s', ignoring.") << lineLeft.mid(8);
+                    LOG_WARNING("Unknown unknown-value '%s' on line #%i, ignoring.") << lineLeft.mid(8) << currentLineNumber;
                 }
                 else
                 {
@@ -858,7 +863,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered in #%i, ignoring.") << lineLeft << stateNum;
+                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
 
@@ -911,7 +916,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered in #%i, ignoring.") << lineLeft << sprNum;
+                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
 
@@ -956,7 +961,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered in #%i, ignoring.") << lineLeft << ammoNum;
+                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
 
@@ -986,7 +991,7 @@ public:
                 const WeaponStateMapping* weapon;
                 if(!parseWeaponState(dehStateName, &weapon))
                 {
-                    if(!ignore) LOG_WARNING("Unknown frame '%s', ignoring.") << dehStateName;
+                    if(!ignore) LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.") << dehStateName << currentLineNumber;
                 }
                 else
                 {
@@ -1012,7 +1017,7 @@ public:
                 if(!ignore)
                 if(value < 0 || value >= 6)
                 {
-                    LOG_WARNING("Unknown ammotype #%i, ignoring.") << value;
+                    LOG_WARNING("Unknown ammotype %i on line #%i, ignoring.") << value << currentLineNumber;
                 }
                 else
                 {
@@ -1026,7 +1031,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered in #%i, ignoring.") << lineLeft << weapNum;
+                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
         return cont;
@@ -1068,7 +1073,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered in #%i, ignoring.") << lineLeft << ptrNum;
+                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
         return cont;
@@ -1095,7 +1100,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown value \"%s = %s\", ignoring.") << lineLeft << lineRight;
+                LOG_WARNING("Unknown value \"%s = %s\" on line #%i, ignoring.") << lineLeft << lineRight << currentLineNumber;
             }
         }
         return cont;
@@ -1111,7 +1116,7 @@ public:
             // Argh! .bex doesn't follow the same rules as .deh
             if(cont == 1)
             {
-                LOG_WARNING("Unknown key \"%s\", ignoring") << lineLeft;
+                LOG_WARNING("Unknown key \"%s\" on line #%i, ignoring") << lineLeft << currentLineNumber;
                 continue;
             }
 
@@ -1136,7 +1141,7 @@ public:
                 QStringList args = splitMax(lineRight.leftStrip(), ' ', maxTokens);
                 if(args.size() < 2)
                 {
-                    LOG_WARNING("Unknown format string \"%s\", ignoring.") << lineRight;
+                    LOG_WARNING("Unknown format string \"%s\" on line #%i, ignoring.") << lineRight << currentLineNumber;
                     continue;
                 }
 
@@ -1241,7 +1246,7 @@ public:
                         }
                         else
                         {
-                            LOG_WARNING("Unknown action '%s', ignoring.") << action.mid(2);
+                            LOG_WARNING("Unknown action '%s' on line #%i, ignoring.") << action.mid(2) << currentLineNumber;
                         }
                     }
                 }
