@@ -234,6 +234,7 @@ public:
             doomVersion  = 19;
             patchVersion = 6;
             patchPt = patch; // Rewind reader.
+            currentLineNumber = 0;
 
             cont = skipToNextSection();
         }
@@ -245,8 +246,8 @@ public:
         }
 
         // Log reader settings and patch version information.
-        LOG_INFO("Patch version: %i Doom version: %i") << patchVersion << doomVersion;
-        LOG_INFO("NoText: %b") << bool(flags & NoText);
+        LOG_INFO("Patch version: %i Doom version: %i\nNoText: %b")
+            << patchVersion << doomVersion << bool(flags & NoText);
         if(patchVersion != 6)
         {
             LOG_WARNING("Unknown patch version. Unexpected results may occur.") << patchVersion;
