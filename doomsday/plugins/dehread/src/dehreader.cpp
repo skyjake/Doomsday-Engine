@@ -289,7 +289,7 @@ public:
         return true;
     }
 
-    int parseInclude(int /*elementIdx*/)
+    int parseInclude()
     {
         if(stackDepth > maxIncludeDepth)
         {
@@ -359,87 +359,86 @@ public:
     {
         // Parse the section header/identifier.
         const String& ident  = lineLeft;
-        const int elementIdx = lineRight.toIntLeft();
 
         // These appear in .deh and .bex files:
         if(!ident.compareWithoutCase("Thing"))
         {
-            return parseThing(elementIdx);
+            return parseThing();
         }
         else if(!ident.compareWithoutCase("Frame"))
         {
-            return parseFrame(elementIdx);
+            return parseFrame();
         }
         else if(!ident.compareWithoutCase("Pointer"))
         {
-            return parsePointer(elementIdx);
+            return parsePointer();
         }
         else if(!ident.compareWithoutCase("Sprite"))
         {
-            return parseSprite(elementIdx);
+            return parseSprite();
         }
         else if(!ident.compareWithoutCase("Ammo"))
         {
-            return parseAmmo(elementIdx);
+            return parseAmmo();
         }
         else if(!ident.compareWithoutCase("Misc"))
         {
-            return parseMisc(elementIdx);
+            return parseMisc();
         }
         else if(!ident.compareWithoutCase("Weapon"))
         {
-            return parseWeapon(elementIdx);
+            return parseWeapon();
         }
         else if(!ident.compareWithoutCase("Sound"))
         {
             // Not yet supported.
-            return parseSound(elementIdx);
+            return parseSound();
         }
         else if(!ident.compareWithoutCase("Text"))
         {
-            return parseText(elementIdx);
+            return parseText();
         }
         else if(!ident.compareWithoutCase("Cheat"))
         {
             // No intention of support.
-            return parseCheat(elementIdx);
+            return parseCheat();
         }
         else if(!ident.compareWithoutCase("include")) // .bex
         {
-            return parseInclude(elementIdx);
+            return parseInclude();
         }
         else if(!ident.compareWithoutCase("[STRINGS]")) // .bex
         {
             // Not yet supported.
-            return parseStringsBex(elementIdx);
+            return parseStringsBex();
         }
         else if(!ident.compareWithoutCase("[PARS]")) // .bex
         {
-            return parseParsBex(elementIdx);
+            return parseParsBex();
         }
         else if(!ident.compareWithoutCase("[CODEPTR]")) // .bex
         {
-            return parsePointerBex(elementIdx);
+            return parsePointerBex();
         }
         else if(!ident.compareWithoutCase("[HELPER]")) // .bex
         {
             // (Helper Dogs from MBF) Not yet supported.
-            return parseHelperBex(elementIdx);
+            return parseHelperBex();
         }
         else if(!ident.compareWithoutCase("[SPRITES]")) // .bex
         {
             // Not yet supported.
-            return parseSpritesBex(elementIdx);
+            return parseSpritesBex();
         }
         else if(!ident.compareWithoutCase("[SOUNDS]")) // .bex
         {
             // Not yet supported.
-            return parseSoundsBex(elementIdx);
+            return parseSoundsBex();
         }
         else if(!ident.compareWithoutCase("[MUSIC]")) // .bex
         {
             // Not yet supported.
-            return parseMusicBex(elementIdx);
+            return parseMusicBex();
         }
         else
         {
@@ -468,9 +467,29 @@ public:
         return string.trimmed();
     }
 
+    bool parseMobjTypeState(const QString& token, const StateMapping** state)
+    {
+        return findStateMappingByDehLabel(token, state) >= 0;
+    }
+
     bool parseMobjTypeFlag(const QString& token, const FlagMapping** flag)
     {
         return findMobjTypeFlagMappingByDehLabel(token, flag) >= 0;
+    }
+
+    bool parseMobjTypeSound(const QString& token, const SoundMapping** sound)
+    {
+        return findSoundMappingByDehLabel(token, sound) >= 0;
+    }
+
+    bool parseWeaponState(const QString& token, const WeaponStateMapping** state)
+    {
+        return findWeaponStateMappingByDehLabel(token, state) >= 0;
+    }
+
+    bool parseMiscValue(const QString& token, const ValueMapping** value)
+    {
+        return findValueMappingForDehLabel(token, value) >= 0;
     }
 
     /**
@@ -532,11 +551,11 @@ public:
         return changedGroups;
     }
 
-    int parseThing(int elementIndex)
+    int parseThing()
     {
         LOG_AS("parseThing");
 
-        const int mobjType = elementIndex - 1; // Patch indices are 1-based.
+        const int mobjType = lineRight.toIntLeft() - 1; // Patch indices are 1-based.
         bool ignore = false, hadHeight = false, checkHeight = false;
 
         ded_mobj_t* mobj = ded->mobjs + mobjType;
@@ -553,7 +572,7 @@ public:
             {
                 const StateMapping* mapping;
                 const String dehStateName = lineLeft.left(lineLeft.size() - 6);
-                if(findStateMappingByDehLabel(dehStateName, &mapping) < 0)
+                if(!parseMobjTypeState(dehStateName, &mapping))
                 {
                     if(!ignore) LOG_WARNING("Unknown frame '%s'', ignoring.") << dehStateName;
                 }
@@ -583,7 +602,7 @@ public:
             {
                 const SoundMapping* mapping;
                 const String dehSoundName = lineLeft.left(lineLeft.size() - 6);
-                if(findSoundMappingByDehLabel(dehSoundName, &mapping) < 0)
+                if(!parseMobjTypeSound(dehSoundName, &mapping))
                 {
                     if(!ignore) LOG_WARNING("Unknown sound '%s'', ignoring.") << dehSoundName;
                 }
@@ -747,10 +766,11 @@ public:
         return cont;
     }
 
-    int parseFrame(int stateNum)
+    int parseFrame()
     {
         LOG_AS("parseFrame");
 
+        const int stateNum = lineRight.toIntLeft();
         bool ignore = false;
 
         ded_state_t* state = ded->states + stateNum;
@@ -844,10 +864,11 @@ public:
         return cont;
     }
 
-    int parseSprite(int sprNum)
+    int parseSprite()
     {
         LOG_AS("parseSprite");
 
+        const int sprNum = lineRight.toIntLeft();
         bool ignore = false;
 
         ded_sprid_t* sprite = ded->sprites + sprNum;
@@ -896,10 +917,12 @@ public:
         return cont;
     }
 
-    int parseSound(int /*soundNum*/)
+    int parseSound()
     {
         LOG_AS("parseSound");
         LOG_WARNING("[Sound] patches are not supported.");
+
+        //const int soundNum = lineRight.toIntLeft();
 
         int cont;
         while((cont = readAndSplitLine()) == 1)
@@ -908,11 +931,12 @@ public:
         return cont;
     }
 
-    int parseAmmo(int ammoNum)
+    int parseAmmo()
     {
         LOG_AS("parseAmmo");
 
         const char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
+        const int ammoNum = lineRight.toIntLeft();
         bool ignore = false;
 
         const char* theAmmo = ammostr[ammoNum];
@@ -944,9 +968,12 @@ public:
         return cont;
     }
 
-    int parseWeapon(int weapNum)
+    int parseWeapon()
     {
         LOG_AS("parseWeapon");
+
+        const int weapNum = lineRight.toIntLeft();
+        bool ignore = false;
 
         if(weapNum < 0)
         {
@@ -962,13 +989,13 @@ public:
                 const String dehStateName = lineLeft.left(lineLeft.size() - 6);
                 const int value = lineRight.toIntLeft();
                 const WeaponStateMapping* weapon;
-
-                if(findWeaponStateMappingByDehLabel(dehStateName, &weapon) < 0)
+                if(!parseWeaponState(dehStateName, &weapon))
                 {
-                    LOG_WARNING("Unknown frame '%s', ignoring.") << dehStateName;
+                    if(!ignore) LOG_WARNING("Unknown frame '%s', ignoring.") << dehStateName;
                 }
                 else
                 {
+                    if(!ignore)
                     if(value < 0 || value > ded->count.states.num)
                     {
                         LOG_WARNING("Frame #%i out of range, ignoring.") << value;
@@ -979,7 +1006,7 @@ public:
 
                         const ded_state_t& state = ded->states[value];
                         createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
-                                    QString::fromUtf8(state.id));
+                                       QString::fromUtf8(state.id));
                     }
                 }
             }
@@ -987,6 +1014,7 @@ public:
             {
                 const String ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
                 const int value = lineRight.toIntLeft();
+                if(!ignore)
                 if(value < 0 || value >= 6)
                 {
                     LOG_WARNING("Unknown ammotype #%i, ignoring.") << value;
@@ -999,7 +1027,7 @@ public:
             else if(!lineLeft.compareWithoutCase("Ammo per shot"))
             {
                 const int value = lineRight.toIntLeft();
-                createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), QString::number(value));
+                if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), QString::number(value));
             }
             else
             {
@@ -1009,10 +1037,11 @@ public:
         return cont;
     }
 
-    int parsePointer(int ptrNum)
+    int parsePointer()
     {
         LOG_AS("parsePointer");
 
+        const int ptrNum = lineRight.toIntLeft();
         bool ignore = false;
         const int stateIdx = stateIndexForActionOffset(ptrNum);
         ded_state_t* state = ded->states + stateIdx;
@@ -1050,23 +1079,23 @@ public:
         return cont;
     }
 
-    int parseCheat(int /*elementIdx*/)
+    int parseCheat()
     {
         LOG_AS("parseCheat");
         LOG_WARNING("[Cheat] patches are not supported.");
         return skipToNextSection();
     }
 
-    int parseMisc(int /*elementIdx*/)
+    int parseMisc()
     {
         LOG_AS("parseMisc");
         int cont;
         while((cont = readAndSplitLine()) == 1)
         {
             const ValueMapping* mapping;
-            if(findValueMappingForDehLabel(lineLeft, &mapping) >= 0)
+            if(parseMiscValue(lineLeft, &mapping))
             {
-                int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft();
                 createValueDef(mapping->valuePath, QString::number(value));
             }
             else
@@ -1077,7 +1106,7 @@ public:
         return cont;
     }
 
-    int parseParsBex(int /*elementIdx*/)
+    int parseParsBex()
     {
         LOG_AS("parseParsBex");
 
@@ -1109,7 +1138,7 @@ public:
                  * on the last.
                  */
                 const int maxTokens = 3;
-                QStringList args = splitMax(String(lineRight).leftStrip(), ' ', maxTokens);
+                QStringList args = splitMax(lineRight.leftStrip(), ' ', maxTokens);
                 if(args.size() < 2)
                 {
                     LOG_WARNING("Unknown format string \"%s\", ignoring.") << lineRight;
@@ -1145,35 +1174,35 @@ public:
         return cont;
     }
 
-    int parseHelperBex(int /*elementIdx*/)
+    int parseHelperBex()
     {
         LOG_AS("parseHelperBex");
         LOG_WARNING("[HELPER] patches are not supported.");
         return skipToNextSection();
     }
 
-    int parseSpritesBex(int /*elementIdx*/)
+    int parseSpritesBex()
     {
         LOG_AS("parseSpritesBex");
         LOG_WARNING("[SPRITES] patches are not supported.");
         return skipToNextSection();
     }
 
-    int parseSoundsBex(int /*elementIdx*/)
+    int parseSoundsBex()
     {
         LOG_AS("parseSoundsBex");
         LOG_WARNING("[SOUNDS] patches are not supported.");
         return skipToNextSection();
     }
 
-    int parseMusicBex(int /*elementIdx*/)
+    int parseMusicBex()
     {
         LOG_AS("parseMusicBex");
         LOG_WARNING("[MUSIC] patches are not supported.");
         return skipToNextSection();
     }
 
-    int parsePointerBex(int /*elementIdx*/)
+    int parsePointerBex()
     {
         LOG_AS("parsePointerBex");
 
@@ -1227,18 +1256,19 @@ public:
         return cont;
     }
 
-    int parseText(int oldSize)
+    int parseText()
     {
         LOG_AS("parseText");
 
+        const int oldSize = lineRight.toIntLeft();
         Block temp = lineRight.toAscii();
-        const char* ch = parseToken(temp.constData()); // Skip old size, since we already have it
+        const char* ch = parseToken(temp.constData());
         if(!parseToken(ch))
         {
             LOG_WARNING("Missing new text size, ignoring.");
             return 2;
         }
-        int newSize = String(com_token).toIntLeft();
+        const int newSize = String(com_token).toIntLeft();
 
         String oldStr = readTextBlob(oldSize);
         String newStr = readTextBlob(newSize);
@@ -1270,7 +1300,7 @@ public:
         return skipToNextSection();
     }
 
-    int parseStringsBex(int /*elementIdx*/)
+    int parseStringsBex()
     {
         LOG_AS("parseStringsBex");
         LOG_WARNING("[Strings] patches not supported.");
