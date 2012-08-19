@@ -269,11 +269,6 @@ void F_GetPWADFileNames(char* buf, size_t bufSize, const char* delimiter);
  */
 uint F_CRCNumber(void);
 
-/**
- * Print the contents of the primary lump directory to stdout.
- */
-void F_PrintLumpDirectory(void);
-
 /// Clear all references to this file.
 void F_ReleaseFile(abstractfile_t* file);
 

@@ -393,7 +393,10 @@ desc = List all event binding classes.
 desc = List all console commands.
 
 [listfiles]
-desc = List all loaded resource data files.
+desc = List all loaded resource files.
+
+[listlumps]
+desc = List all loaded virtual resource files from container archives.
 
 [listfonts]
 desc = List all known fonts.
