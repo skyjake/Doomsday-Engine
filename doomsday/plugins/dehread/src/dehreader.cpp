@@ -3,7 +3,7 @@
  * DeHackEd patch reader plugin for Doomsday Engine. @ingroup dehread
  *
  * @todo Presently there are a number of unsupported features, they should not
- *       not be ignored. (Most if not all features should be supported.)
+ *       be ignored. (Most if not all features should be supported.)
  *
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -218,8 +218,7 @@ public:
 
     void parse()
     {
-        LOG_AS_STRING(stackDepth == 1? "DehReader" :
-                      QString("[%1]").arg(stackDepth - 1));
+        LOG_AS_STRING(stackDepth == 1? "DehReader" : QString("[%1]").arg(stackDepth - 1));
 
         // Attempt to parse the DeHackEd patch signature and version numbers.
         int cont = 0;
@@ -240,8 +239,9 @@ public:
             error("This is not a DeHackEd patch!");
         }
 
-        // Log patch version information.
+        // Log reader settings and patch version information.
         LOG_INFO("Patch version: %i Doom version: %i") << patchVersion << doomVersion;
+        LOG_INFO("NoText: %b") << bool(flags & NoText);
         if(patchVersion != 6)
         {
             LOG_WARNING("Unknown patch version. Unexpected results may occur.") << patchVersion;
@@ -715,10 +715,10 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Speed"))
             {
-                /// @todo Is this right??
                 const int value = lineRight.toIntLeft();
                 if(!ignore)
                 {
+                    /// @todo Is this right??
                     mobj->speed = (abs(value) < 256 ? float(value) : FIX2FLT(value));
                     LOG_DEBUG("Type #%i \"%s\" speed => %f") << mobjType << mobj->id << mobj->speed;
                 }
@@ -1105,8 +1105,8 @@ public:
                  * obtain the last argument (i.e., par time).
                  *
                  * Here we emulate this behavior by splitting the line into at most
-                 * three arguments and then apply atoi()-like readNumberAtStart() on
-                 * the last.
+                 * three arguments and then apply atoi()-like de::String::toIntLeft()
+                 * on the last.
                  */
                 const int maxTokens = 3;
                 QStringList args = splitMax(String(lineRight).leftStrip(), ' ', maxTokens);
