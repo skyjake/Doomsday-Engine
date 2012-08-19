@@ -36,7 +36,6 @@ void* DD_Realloc(void* ptr, int newSize)
 
 Uri* composeMapUri(int episode, int map)
 {
-    /// @todo broken format strings.
     if(episode > 0) // ExMy format.
     {
         de::Block pathUtf8 = QString("E%1M%2").arg(episode).arg(map).toUtf8();
@@ -44,7 +43,7 @@ Uri* composeMapUri(int episode, int map)
     }
     else // MAPxx format.
     {
-        de::Block pathUtf8 = QString("MAP%1").arg(map % 100).toUtf8();
+        de::Block pathUtf8 = QString("MAP%1").arg(map % 100, 2, 10, QChar('0')).toUtf8();
         return Uri_NewWithPath2(pathUtf8.constData(), RC_NULL);
     }
 }
