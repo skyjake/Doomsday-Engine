@@ -279,11 +279,11 @@ public:
         {
             if(!lineLeft.compareWithoutCase("Doom version"))
             {
-                doomVersion = lineRight.toIntLeft();
+                doomVersion = lineRight.toIntLeft(0, 10);
             }
             else if(!lineLeft.compareWithoutCase("Patch format"))
             {
-                patchVersion = lineRight.toIntLeft();
+                patchVersion = lineRight.toIntLeft(0, 10);
             }
         }
         return true;
@@ -516,7 +516,7 @@ public:
             const String& token = *i;
             bool tokenIsNumber;
 
-            int flagsValue = token.toIntLeft(&tokenIsNumber);
+            int flagsValue = token.toIntLeft(&tokenIsNumber, 10);
             if(tokenIsNumber)
             {
                 // Force the top 4 bits to 0 so that the user is forced to use
@@ -671,7 +671,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("ID #"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->doomEdNum = value;
@@ -680,7 +680,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Height"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->height = value / float(0x10000);
@@ -690,7 +690,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Hit points"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->spawnHealth = value;
@@ -699,7 +699,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Mass"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->mass = value;
@@ -708,7 +708,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Missile damage"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->damage = value;
@@ -717,7 +717,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Pain chance"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->painChance = value;
@@ -726,7 +726,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Reaction time"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->reactionTime = value;
@@ -735,7 +735,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Speed"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     /// @todo Is this right??
@@ -745,7 +745,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Width"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->radius = value / float(0x10000);
@@ -786,7 +786,7 @@ public:
         {
             if(!lineLeft.compareWithoutCase("Duration"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     state->tics = value;
@@ -811,7 +811,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Sprite number"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 if(value < 0 || value > ded->count.sprites.num)
                 {
@@ -828,7 +828,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Sprite subnumber"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     const int FF_FULLBRIGHT = 0x8000;
@@ -843,8 +843,8 @@ public:
             }
             else if(lineLeft.startsWith("Unknown ", Qt::CaseInsensitive))
             {
-                const int miscIdx = lineLeft.substr(8).toIntLeft();
-                const int value   = lineRight.toIntLeft();
+                const int miscIdx = lineLeft.substr(8).toIntLeft(0, 10);
+                const int value   = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
                 {
@@ -946,12 +946,12 @@ public:
         {
             if(!lineLeft.compareWithoutCase("Max ammo"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore) createValueDef(String("Player|Max ammo|%1").arg(theAmmo), QString::number(value));
             }
             else if(!lineLeft.compareWithoutCase("Per ammo"))
             {
-                int per = lineRight.toIntLeft();
+                int per = lineRight.toIntLeft(0, 10);
                 if(!ignore) createValueDef(String("Player|Clip ammo|%1").arg(theAmmo), QString::number(per));
             }
             else
@@ -1008,7 +1008,7 @@ public:
             else if(!lineLeft.compareWithoutCase("Ammo type"))
             {
                 const String ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore)
                 if(value < 0 || value >= 6)
                 {
@@ -1021,7 +1021,7 @@ public:
             }
             else if(!lineLeft.compareWithoutCase("Ammo per shot"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), QString::number(value));
             }
             else
@@ -1090,7 +1090,7 @@ public:
             const ValueMapping* mapping;
             if(parseMiscValue(lineLeft, &mapping))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = lineRight.toIntLeft(0, 10);
                 createValueDef(mapping->valuePath, QString::number(value));
             }
             else
@@ -1106,7 +1106,7 @@ public:
         LOG_AS("parseParsBex");
 
         int cont;
-        while((cont = readAndSplitLine()) == 1)
+        while((cont = readAndSplitLine()) /*== 1*/)
         {
             // Argh! .bex doesn't follow the same rules as .deh
             if(cont == 1)
@@ -1144,7 +1144,7 @@ public:
                 int arg = 0;
                 int episode   = (args.size() > 2? args.at(arg++).toInt() : 0);
                 int map       = args.at(arg++).toInt();
-                float parTime = float(String(args.at(arg++)).toIntLeft());
+                float parTime = float(String(args.at(arg++)).toIntLeft(0, 10));
 
                 // Apply.
                 Uri* uri  = composeMapUri(episode, map);

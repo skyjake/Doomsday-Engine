@@ -371,10 +371,12 @@ dint String::toIntLeft(bool* ok, int base) const
 {
     String token = leftStrip();
 
-    // Truncate at the first non-numeric or sign character.
+    // Truncate at the first non-numeric, non-notation or sign character.
     int endOfNumber = 0;
     while(endOfNumber < token.size() &&
-          (token.at(endOfNumber).isDigit() || (endOfNumber == 0 && isSign(token.at(endOfNumber)))))
+          (token.at(endOfNumber).isDigit() || (endOfNumber == 0 && isSign(token.at(endOfNumber))) ||
+           ((base == 0 || base == 16) && endOfNumber <= 1 &&
+            (token.at(endOfNumber) == QChar('x') || token.at(endOfNumber) == QChar('X')))))
     { ++endOfNumber; }
     token.truncate(endOfNumber);
 

@@ -198,7 +198,7 @@ public:
      *         @c 0 if the conversion fails. If @c 0 is expected in the input
                then the @a ok argument may be used to disambiguate this case.
      */
-    dint toIntLeft(bool* ok = 0, int base = 10) const;
+    dint toIntLeft(bool* ok = 0, int base = 0) const;
 
 public:
     /**
