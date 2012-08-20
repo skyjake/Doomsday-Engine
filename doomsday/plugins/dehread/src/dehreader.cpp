@@ -72,15 +72,21 @@ static const int maxIncludeDepth = MAX_OF(0, DEHREADER_INCLUDE_DEPTH_MAX);
  */
 class DehReader
 {
+    /// The parser encountered a syntax error in the source file. @ingroup errors
+    DENG2_ERROR(SyntaxError)
+    /// The parser encountered an unknown section in the source file. @ingroup errors
+    DENG2_ERROR(UnknownSection)
+    /// The parser reached the end of the source file. @ingroup errors
+    DENG2_ERROR(EndOfFile)
+
     const Block& patch;
-    const char* patchPt;
+    int pos;
+    int currentLineNumber;
 
     DehReaderFlags flags;
 
     int patchVersion;
     int doomVersion;
-
-    size_t currentLineNumber;
 
     /**
      * Each text line in the source patch is split into (at most) two parts
@@ -97,10 +103,10 @@ class DehReader
 
 public:
     DehReader(const Block& _patch, DehReaderFlags _flags = 0)
-        : patch(_patch), patchPt(patch.constData()), flags(_flags),
+        : patch(_patch), pos(0), currentLineNumber(0),
+          flags(_flags),
           // Initialize as unknown Patch & Doom version.
           patchVersion(-1), doomVersion(-1),
-          currentLineNumber(0),
           lineLeft(""), lineRight(""),
           com_eof(false)
     {
@@ -112,12 +118,6 @@ public:
     ~DehReader()
     {
         stackDepth--;
-    }
-
-    void error(const QString& message)
-    {
-        throw de::Error("DehReader", de::String("Error \"%1\" on line #%2")
-                                        .arg(message).arg(currentLineNumber));
     }
 
     LogEntry& log(Log::LogLevel level, const String& format)
@@ -144,33 +144,38 @@ public:
 
     bool atEnd()
     {
-        return (!patchPt || *patchPt == '\0');
+        return (pos >= patch.size() || patch.at(pos) == '\0');
     }
 
-    void skipToBreakLine()
+    void advance()
     {
-        while(!atEnd() && *patchPt != '\n')
-        { patchPt++; }
+        if(atEnd()) return;
+        if(currentChar() == '\n') currentLineNumber++;
+        pos++;
+    }
+
+    QChar currentChar()
+    {
+        if(atEnd()) return 0;
+        return QChar::fromAscii(patch.at(pos));
+    }
+
+    void skipToEOL()
+    {
+        while(!atEnd() && currentChar() != '\n') advance();
     }
 
     String readLine()
     {
+        int start = pos;
+        skipToEOL();
         if(!atEnd())
         {
-            const char* start = patchPt;
-            skipToBreakLine();
-            if(!atEnd())
-            {
-                String line = String::fromAscii(start, (patchPt - start));
-                if(*patchPt == '\n')
-                {
-                    *patchPt++;
-                    currentLineNumber++;
-                }
-                return line;
-            }
+            String line = String::fromAscii(patch.mid(start, pos - start));
+            if(currentChar() == '\n') advance();
+            return line;
         }
-        return String();
+        throw EndOfFile(String("EOF on line #%1").arg(currentLineNumber));
     }
 
     int readAndSplitLine()
@@ -180,8 +185,6 @@ public:
         do
         {
             line = readLine();
-            // EOF?
-            if(line.isNull()) return 0; // STOP PARSE
 
         } while(line.isEmpty() || line.at(0) == '#' || line.trimmed().isEmpty());
 
@@ -203,10 +206,18 @@ public:
         if(assign != -1)
         {
             // Nothing before '=' ?
-            if(lineLeft.isEmpty()) return 0; // STOP PARSE
+            if(lineLeft.isEmpty())
+            {
+                throw SyntaxError("DehReader::readAndSplitLine",
+                                  String("Expected keyword before '=' on line #%1").arg(currentLineNumber));
+            }
 
             // Nothing after '=' ?
-            if(lineRight.isEmpty()) return 0; // STOP PARSE
+            if(lineRight.isEmpty())
+            {
+                throw SyntaxError("DehReader::readAndSplitLine",
+                                  String("Expected value after '=' on line #%1").arg(currentLineNumber));
+            }
 
             return 1;
         }
@@ -225,62 +236,168 @@ public:
     {
         LOG_AS_STRING(stackDepth == 1? "DehReader" : QString("[%1]").arg(stackDepth - 1));
 
-        // Attempt to parse the DeHackEd patch signature and version numbers.
-        int cont = 0;
-        if(!parsePatchSignature(cont))
+        // Patches are subdivided into sections.
+        try
         {
-            LOG_WARNING("Patch is missing a signature, assuming BEX.");
+            int cont = 0;
+            forever
+            {
+                try
+                {
+                    if(cont == 0)
+                    {
+                        // Attempt to parse the DeHackEd patch signature and version numbers.
+                        if(!qstrncmp(patch, "Patch File for DeHackEd v", 25))
+                        {
+                            skipToEOL();
+                            cont = parsePatchSignature();
+                        }
+                        else
+                        {
+                            LOG_WARNING("Patch is missing a signature, assuming BEX.");
 
-            doomVersion  = 19;
-            patchVersion = 6;
-            patchPt = patch; // Rewind reader.
-            currentLineNumber = 0;
+                            doomVersion  = 19;
+                            patchVersion = 6;
+                            pos = 0; // Rewind reader.
+                            currentLineNumber = 0;
+                            cont = skipToNextSection();
+                        }
 
-            cont = skipToNextSection();
+                        logPatchInfo();
+
+                        // Is this for a known Doom version?
+                        if(!normalizeDoomVersion(doomVersion))
+                        {
+                            LOG_WARNING("Unknown Doom version, assuming v1.9.");
+                            doomVersion = 3;
+                        }
+                    }
+                    else if(cont == 1)
+                    {
+                        throw SyntaxError("parse", String("Statement \"%1\" on line #%2 encountered out of context.")
+                                                       .arg(lineLeft).arg(currentLineNumber));
+                    }
+                    else if(cont == 2) // A new section begins.
+                    {
+                        /// @note Some sections have their own grammar quirks!
+                        // Parse the section header/identifier.
+                        const String& ident  = lineLeft;
+                        if(!ident.compareWithoutCase("include")) // .bex
+                        {
+                            cont = parseInclude();
+                        }
+                        // These appear in .deh and .bex files:
+                        else if(!ident.compareWithoutCase("Thing"))
+                        {
+                            cont = parseThing();
+                        }
+                        else if(!ident.compareWithoutCase("Frame"))
+                        {
+                            cont = parseFrame();
+                        }
+                        else if(!ident.compareWithoutCase("Pointer"))
+                        {
+                            cont = parsePointer();
+                        }
+                        else if(!ident.compareWithoutCase("Sprite"))
+                        {
+                            cont = parseSprite();
+                        }
+                        else if(!ident.compareWithoutCase("Ammo"))
+                        {
+                            cont = parseAmmo();
+                        }
+                        else if(!ident.compareWithoutCase("Misc"))
+                        {
+                            cont = parseMisc();
+                        }
+                        else if(!ident.compareWithoutCase("Weapon"))
+                        {
+                            cont = parseWeapon();
+                        }
+                        else if(!ident.compareWithoutCase("Sound"))
+                        {
+                            // Not yet supported.
+                            cont = parseSound();
+                        }
+                        else if(!ident.compareWithoutCase("Text"))
+                        {
+                            cont = parseText();
+                        }
+                        else if(!ident.compareWithoutCase("Cheat"))
+                        {
+                            // No intention of support.
+                            cont = parseCheat();
+                        }
+                        else if(!ident.compareWithoutCase("[STRINGS]")) // .bex
+                        {
+                            // Not yet supported.
+                            cont = parseStringsBex();
+                        }
+                        else if(!ident.compareWithoutCase("[PARS]")) // .bex
+                        {
+                            cont = parseParsBex();
+                        }
+                        else if(!ident.compareWithoutCase("[CODEPTR]")) // .bex
+                        {
+                            cont = parsePointerBex();
+                        }
+                        else if(!ident.compareWithoutCase("[HELPER]")) // .bex
+                        {
+                            // (Helper Dogs from MBF) Not yet supported.
+                            cont = parseHelperBex();
+                        }
+                        else if(!ident.compareWithoutCase("[SPRITES]")) // .bex
+                        {
+                            // Not yet supported.
+                            cont = parseSpritesBex();
+                        }
+                        else if(!ident.compareWithoutCase("[SOUNDS]")) // .bex
+                        {
+                            // Not yet supported.
+                            cont = parseSoundsBex();
+                        }
+                        else if(!ident.compareWithoutCase("[MUSIC]")) // .bex
+                        {
+                            // Not yet supported.
+                            cont = parseMusicBex();
+                        }
+                        else
+                        {
+                            // An unknown section.
+                            throw UnknownSection("parse", String("Expected section name but encountered \"%1\" on line #%2.")
+                                                              .arg(ident).arg(currentLineNumber));
+                        }
+                    }
+                }
+                catch(const UnknownSection& er)
+                {
+                    LOG_WARNING("%s. Skipping...") << er.asText();
+                    cont = skipToNextSection();
+                }
+            }
         }
-
-        /// @todo fixme - dead code!
-        if(doomVersion == -1 || patchVersion == -1)
+        catch(const EndOfFile& /*er*/)
         {
-            error("This is not a DeHackEd patch!");
+            // Ignore.
         }
+    }
 
+    void logPatchInfo()
+    {
         // Log reader settings and patch version information.
         LOG_INFO("Patch version: %i Doom version: %i\nNoText: %b")
             << patchVersion << doomVersion << bool(flags & NoText);
+
         if(patchVersion != 6)
         {
             LOG_WARNING("Unknown patch version. Unexpected results may occur.") << patchVersion;
         }
-
-        // Is this for a known Doom version?
-        if(!normalizeDoomVersion(doomVersion))
-        {
-            LOG_WARNING("Unknown Doom version, assuming v1.9.");
-            doomVersion = 3;
-        }
-
-        // Patches are subdivided into sections.
-        do
-        {
-            if(cont == 2) // A new section begins.
-            {
-                cont = parseSection();
-            }
-            else if(cont == 1)
-            {
-                LOG_WARNING("Token '%s' encountered out of context, cannot continue.") << lineLeft;
-                cont = 0;
-            }
-        } while(cont);
     }
 
-    bool parsePatchSignature(int& cont)
+    int parsePatchSignature(void)
     {
-        if(qstrncmp(patch, "Patch File for DeHackEd v", 25)) return false;
-
-        skipToBreakLine();
-
+        int cont;
         while((cont = readAndSplitLine()) == 1)
         {
             if(!lineLeft.compareWithoutCase("Doom version"))
@@ -292,7 +409,7 @@ public:
                 patchVersion = lineRight.toIntLeft(0, 10);
             }
         }
-        return true;
+        return cont;
     }
 
     int parseInclude()
@@ -344,9 +461,9 @@ public:
                     {
                         DehReader(deh, includeFlags).parse();
                     }
-                    catch(const de::Error& er)
+                    catch(const Error& er)
                     {
-                        LOG().enter(de::Log::WARNING, er.asText());
+                        LOG().enter(Log::WARNING, er.asText());
                     }
                 }
             }
@@ -361,100 +478,6 @@ public:
         return readAndSplitLine();
     }
 
-    /// @note Some sections have their own grammar quirks!
-    int parseSection()
-    {
-        // Parse the section header/identifier.
-        const String& ident  = lineLeft;
-
-        // These appear in .deh and .bex files:
-        if(!ident.compareWithoutCase("Thing"))
-        {
-            return parseThing();
-        }
-        else if(!ident.compareWithoutCase("Frame"))
-        {
-            return parseFrame();
-        }
-        else if(!ident.compareWithoutCase("Pointer"))
-        {
-            return parsePointer();
-        }
-        else if(!ident.compareWithoutCase("Sprite"))
-        {
-            return parseSprite();
-        }
-        else if(!ident.compareWithoutCase("Ammo"))
-        {
-            return parseAmmo();
-        }
-        else if(!ident.compareWithoutCase("Misc"))
-        {
-            return parseMisc();
-        }
-        else if(!ident.compareWithoutCase("Weapon"))
-        {
-            return parseWeapon();
-        }
-        else if(!ident.compareWithoutCase("Sound"))
-        {
-            // Not yet supported.
-            return parseSound();
-        }
-        else if(!ident.compareWithoutCase("Text"))
-        {
-            return parseText();
-        }
-        else if(!ident.compareWithoutCase("Cheat"))
-        {
-            // No intention of support.
-            return parseCheat();
-        }
-        else if(!ident.compareWithoutCase("include")) // .bex
-        {
-            return parseInclude();
-        }
-        else if(!ident.compareWithoutCase("[STRINGS]")) // .bex
-        {
-            // Not yet supported.
-            return parseStringsBex();
-        }
-        else if(!ident.compareWithoutCase("[PARS]")) // .bex
-        {
-            return parseParsBex();
-        }
-        else if(!ident.compareWithoutCase("[CODEPTR]")) // .bex
-        {
-            return parsePointerBex();
-        }
-        else if(!ident.compareWithoutCase("[HELPER]")) // .bex
-        {
-            // (Helper Dogs from MBF) Not yet supported.
-            return parseHelperBex();
-        }
-        else if(!ident.compareWithoutCase("[SPRITES]")) // .bex
-        {
-            // Not yet supported.
-            return parseSpritesBex();
-        }
-        else if(!ident.compareWithoutCase("[SOUNDS]")) // .bex
-        {
-            // Not yet supported.
-            return parseSoundsBex();
-        }
-        else if(!ident.compareWithoutCase("[MUSIC]")) // .bex
-        {
-            // Not yet supported.
-            return parseMusicBex();
-        }
-        else
-        {
-            // An unknown section - skip it.
-            LOG_WARNING("Expected section name but encountered \"%s\", skipping...") << ident;
-            return skipToNextSection();
-        }
-    }
-
     String readTextBlob(int size)
     {
         if(!size) return String(); // Return an empty string.
@@ -463,12 +486,13 @@ public:
         do
         {
             // Ignore carriage returns.
-            if(*patchPt != '\r')
-                string += *patchPt; ///@todo fixme implicit fromAscii conversion.
+            QChar c = currentChar();
+            if(c != '\r')
+                string += c;
             else
                 size++;
 
-            patchPt++;
+            advance();
         } while(--size);
 
         return string.trimmed();
@@ -633,7 +657,7 @@ public:
                         case SDN_ATTACK:    soundAdr = &mobj->attackSound; break;
                         case SDN_SEE:       soundAdr = &mobj->seeSound;    break;
                         default:
-                            error(String("Unexpected soundname id %i.").arg(mapping->id));
+                            throw Error("DehReader", String("Unknown soundname id %i").arg(mapping->id));
                         }
 
                         const ded_sound_t& sound = ded->sounds[soundsIdx];
@@ -1101,7 +1125,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown value \"%s = %s\" on line #%i, ignoring.") << lineLeft << lineRight << currentLineNumber;
+                LOG_WARNING("Unknown value \"%s\" on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
         return cont;
@@ -1117,7 +1141,7 @@ public:
             // Argh! .bex doesn't follow the same rules as .deh
             if(cont == 1)
             {
-                LOG_WARNING("Unknown key \"%s\" on line #%i, ignoring") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
                 continue;
             }
 
@@ -1275,7 +1299,7 @@ public:
         String newStr = readTextBlob(newSize);
 
         // Skip anything else on the line.
-        skipToBreakLine();
+        skipToEOL();
 
         if(!(flags & NoText)) // Disabled?
         {
@@ -1488,8 +1512,8 @@ void readDehPatch(const Block& patch, DehReaderFlags flags)
     {
         DehReader(patch, flags).parse();
     }
-    catch(const de::Error& er)
+    catch(const Error& er)
     {
-        LOG().enter(de::Log::WARNING, er.asText());
+        LOG().enter(Log::WARNING, er.asText());
     }
 }
