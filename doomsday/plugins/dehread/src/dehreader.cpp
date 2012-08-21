@@ -82,20 +82,14 @@ class DehReader
     const Block& patch;
     int pos;
     int currentLineNumber;
+    int cont; ///< temp
 
     DehReaderFlags flags;
 
     int patchVersion;
     int doomVersion;
 
-    /**
-     * Each text line in the source patch is split into (at most) two parts
-     * depending on the number of discreet tokens on that line.
-     * The left side contains the first token only.
-     * The right side is either empty or contains the rest of the tokens.
-     */
-    String lineLeft;
-    String lineRight;
+    String line; ///< Current line.
 
     // Token parse buffer.
     bool com_eof;
@@ -103,12 +97,11 @@ class DehReader
 
 public:
     DehReader(const Block& _patch, DehReaderFlags _flags = 0)
-        : patch(_patch), pos(0), currentLineNumber(0),
+        : patch(_patch), pos(0), currentLineNumber(0), cont(0),
           flags(_flags),
           // Initialize as unknown Patch & Doom version.
           patchVersion(-1), doomVersion(-1),
-          lineLeft(""), lineRight(""),
-          com_eof(false)
+          line(""), com_eof(false)
     {
         std::memset(com_token, 0, sizeof(com_token));
 
@@ -165,33 +158,47 @@ public:
         while(!atEnd() && currentChar() != '\n') advance();
     }
 
-    String readLine()
+    void readLine()
     {
         int start = pos;
         skipToEOL();
         if(!atEnd())
         {
-            String line = String::fromAscii(patch.mid(start, pos - start));
+            line = String::fromAscii(patch.mid(start, pos - start));
             if(currentChar() == '\n') advance();
-            return line;
+            return;
         }
         throw EndOfFile(String("EOF on line #%1").arg(currentLineNumber));
     }
 
-    int readAndSplitLine()
+    /**
+     * Keep reading lines until we find one that is something other than
+     * whitespace or a whole-line comment.
+     */
+    const String& skipToNextLine()
     {
-        // Loop until we get a line with more than just whitespace or a whole-line comment.
-        String line;
-        do
+        forever
         {
-            line = readLine();
+            readLine();
+            if(!line.trimmed().isEmpty() && line.at(0) != '#') break;
+        }
+        return line;
+    }
 
-        } while(line.isEmpty() || line.at(0) == '#' || line.trimmed().isEmpty());
+    bool lineInCurrentSection()
+    {
+        if(line.indexOf('=') != -1) cont = 1;
+        else                        cont = 2;
+        return cont == 1;
+    }
 
-        /**
-         * We are looking at a non-comment, non-zero-length line.
-         */
-
+    /**
+     * Split the line into (at most) two parts depending on the number of
+     * discreet tokens on that line. The left side contains the first token
+     * only. The right side is either empty or contains the rest of the tokens.
+     */
+    void splitLine(const String& line, String& lineLeft, String& lineRight)
+    {
         // Determine the split (or 'pivot') position.
         int assign = line.indexOf('=');
 
@@ -218,169 +225,13 @@ public:
                 throw SyntaxError("DehReader::readAndSplitLine",
                                   String("Expected value after '=' on line #%1").arg(currentLineNumber));
             }
-
-            return 1;
         }
-
-        return 2;
     }
 
-    int skipToNextSection(void)
+    void skipToNextSection()
     {
-        int cont;
-        while((cont = readAndSplitLine()) == 1) {}
-        return cont;
-    }
-
-    void parse()
-    {
-        LOG_AS_STRING(stackDepth == 1? "DehReader" : QString("[%1]").arg(stackDepth - 1));
-
-        // Patches are subdivided into sections.
-        try
-        {
-            int cont = 0;
-            forever
-            {
-                try
-                {
-                    if(cont == 0)
-                    {
-                        // Attempt to parse the DeHackEd patch signature and version numbers.
-                        if(!qstrncmp(patch, "Patch File for DeHackEd v", 25))
-                        {
-                            skipToEOL();
-                            cont = parsePatchSignature();
-                        }
-                        else
-                        {
-                            LOG_WARNING("Patch is missing a signature, assuming BEX.");
-
-                            doomVersion  = 19;
-                            patchVersion = 6;
-                            pos = 0; // Rewind reader.
-                            currentLineNumber = 0;
-                            cont = skipToNextSection();
-                        }
-
-                        logPatchInfo();
-
-                        // Is this for a known Doom version?
-                        if(!normalizeDoomVersion(doomVersion))
-                        {
-                            LOG_WARNING("Unknown Doom version, assuming v1.9.");
-                            doomVersion = 3;
-                        }
-                    }
-                    else if(cont == 1)
-                    {
-                        throw SyntaxError("parse", String("Statement \"%1\" on line #%2 encountered out of context.")
-                                                       .arg(lineLeft).arg(currentLineNumber));
-                    }
-                    else if(cont == 2) // A new section begins.
-                    {
-                        /// @note Some sections have their own grammar quirks!
-                        // Parse the section header/identifier.
-                        const String& ident  = lineLeft;
-                        if(!ident.compareWithoutCase("include")) // .bex
-                        {
-                            cont = parseInclude();
-                        }
-                        // These appear in .deh and .bex files:
-                        else if(!ident.compareWithoutCase("Thing"))
-                        {
-                            cont = parseThing();
-                        }
-                        else if(!ident.compareWithoutCase("Frame"))
-                        {
-                            cont = parseFrame();
-                        }
-                        else if(!ident.compareWithoutCase("Pointer"))
-                        {
-                            cont = parsePointer();
-                        }
-                        else if(!ident.compareWithoutCase("Sprite"))
-                        {
-                            cont = parseSprite();
-                        }
-                        else if(!ident.compareWithoutCase("Ammo"))
-                        {
-                            cont = parseAmmo();
-                        }
-                        else if(!ident.compareWithoutCase("Misc"))
-                        {
-                            cont = parseMisc();
-                        }
-                        else if(!ident.compareWithoutCase("Weapon"))
-                        {
-                            cont = parseWeapon();
-                        }
-                        else if(!ident.compareWithoutCase("Sound"))
-                        {
-                            // Not yet supported.
-                            cont = parseSound();
-                        }
-                        else if(!ident.compareWithoutCase("Text"))
-                        {
-                            cont = parseText();
-                        }
-                        else if(!ident.compareWithoutCase("Cheat"))
-                        {
-                            // No intention of support.
-                            cont = parseCheat();
-                        }
-                        else if(!ident.compareWithoutCase("[STRINGS]")) // .bex
-                        {
-                            // Not yet supported.
-                            cont = parseStringsBex();
-                        }
-                        else if(!ident.compareWithoutCase("[PARS]")) // .bex
-                        {
-                            cont = parseParsBex();
-                        }
-                        else if(!ident.compareWithoutCase("[CODEPTR]")) // .bex
-                        {
-                            cont = parsePointerBex();
-                        }
-                        else if(!ident.compareWithoutCase("[HELPER]")) // .bex
-                        {
-                            // (Helper Dogs from MBF) Not yet supported.
-                            cont = parseHelperBex();
-                        }
-                        else if(!ident.compareWithoutCase("[SPRITES]")) // .bex
-                        {
-                            // Not yet supported.
-                            cont = parseSpritesBex();
-                        }
-                        else if(!ident.compareWithoutCase("[SOUNDS]")) // .bex
-                        {
-                            // Not yet supported.
-                            cont = parseSoundsBex();
-                        }
-                        else if(!ident.compareWithoutCase("[MUSIC]")) // .bex
-                        {
-                            // Not yet supported.
-                            cont = parseMusicBex();
-                        }
-                        else
-                        {
-                            // An unknown section.
-                            throw UnknownSection("parse", String("Expected section name but encountered \"%1\" on line #%2.")
-                                                              .arg(ident).arg(currentLineNumber));
-                        }
-                    }
-                }
-                catch(const UnknownSection& er)
-                {
-                    LOG_WARNING("%s. Skipping...") << er.asText();
-                    cont = skipToNextSection();
-                }
-            }
-        }
-        catch(const EndOfFile& /*er*/)
-        {
-            // Ignore.
-        }
+        do  skipToNextLine();
+        while(lineInCurrentSection());
     }
 
     void logPatchInfo()
@@ -395,11 +246,316 @@ public:
         }
     }
 
-    int parsePatchSignature(void)
+    void parse()
     {
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
+        LOG_AS_STRING(stackDepth == 1? "DehReader" : QString("[%1]").arg(stackDepth - 1));
+
+        // Patches are subdivided into sections.
+        readLine();
+        try
         {
+            forever
+            {
+                try
+                {
+                    switch(cont)
+                    {
+                    case 0:
+                        // Attempt to parse the DeHackEd patch signature and version numbers.
+                        if(line.beginsWith("Patch File for DeHackEd v", Qt::CaseInsensitive))
+                        {
+                            skipToNextLine();
+                            parsePatchSignature();
+                        }
+                        else
+                        {
+                            LOG_WARNING("Patch is missing a signature, assuming BEX.");
+                            doomVersion  = 19;
+                            patchVersion = 6;
+                        }
+
+                        logPatchInfo();
+
+                        // Is this for a known Doom version?
+                        if(!normalizeDoomVersion(doomVersion))
+                        {
+                            LOG_WARNING("Unknown Doom version, assuming v1.9.");
+                            doomVersion = 3;
+                        }
+                        break;
+
+                    case 2: { // A new section begins.
+                        if(line.beginsWith("include ")) // .bex
+                        {
+                            parseInclude(line.mid(8));
+                            skipToNextSection();
+                            break;
+                        }
+
+                        /// @note Some sections have their own grammar quirks!
+                        String lineLeft, lineRight;
+                        splitLine(line, lineLeft, lineRight);
+                        if(!lineLeft.compareWithoutCase("Thing"))
+                        {
+                            int mobjType = 0;
+                            const bool isKnownMobjType = parseMobjType(lineRight, &mobjType);
+                            const bool ignore = !isKnownMobjType;
+
+                            if(!isKnownMobjType)
+                            {
+                                LOG_WARNING("Thing '%s' out of range, ignoring. (Create more Thing defs.)") << lineRight;
+                            }
+
+                            skipToNextLine();
+                            parseThing(ded->mobjs + mobjType, ignore);
+                        }
+                        else if(!lineLeft.compareWithoutCase("Frame"))
+                        {
+                            int stateNum = 0;
+                            const bool isKnownStateNum = parseStateNum(lineRight, &stateNum);
+                            const bool ignore = !isKnownStateNum;
+
+                            if(!isKnownStateNum)
+                            {
+                                LOG_WARNING("Frame '%s' out of range, ignoring. (Create more State defs.)") << lineRight;
+                            }
+
+                            skipToNextLine();
+                            parseFrame(ded->states + stateNum, ignore);
+                        }
+                        else if(!lineLeft.compareWithoutCase("Pointer"))
+                        {
+                            int stateNum = 0;
+                            const bool isKnownStateNum = parseStateNumFromActionOffset(lineRight, &stateNum);
+                            const bool ignore = !isKnownStateNum;
+
+                            if(!isKnownStateNum)
+                            {
+                                LOG_WARNING("Pointer '%s' out of range, ignoring. (Create more State defs.)") << lineRight;
+                            }
+
+                            skipToNextLine();
+                            parsePointer(ded->states + stateNum, ignore);
+                        }
+                        else if(!lineLeft.compareWithoutCase("Sprite"))
+                        {
+                            int spriteNum = 0;
+                            const bool isKnownSpriteNum = parseSpriteNum(lineRight, &spriteNum);
+                            const bool ignore = !isKnownSpriteNum;
+
+                            if(!isKnownSpriteNum)
+                            {
+                                LOG_WARNING("Sprite '%s' out of range, ignoring. (Create more Sprite defs.)") << lineRight;
+                            }
+
+                            skipToNextLine();
+                            parseSprite(ded->sprites + spriteNum, ignore);
+                        }
+                        else if(!lineLeft.compareWithoutCase("Ammo"))
+                        {
+                            int ammoNum = 0;
+                            const bool isKnownAmmoNum = parseAmmoNum(lineRight, &ammoNum);
+                            const bool ignore = !isKnownAmmoNum;
+
+                            if(!isKnownAmmoNum)
+                            {
+                                LOG_WARNING("Ammo '%s' out of range, ignoring.") << lineRight;
+                            }
+
+                            skipToNextLine();
+                            parseAmmo(ammoNum, ignore);
+                        }
+                        else if(!lineLeft.compareWithoutCase("Weapon"))
+                        {
+                            int weaponNum = 0;
+                            const bool isKnownWeaponNum = parseWeaponNum(lineRight, &weaponNum);
+                            const bool ignore = !isKnownWeaponNum;
+
+                            if(!isKnownWeaponNum)
+                            {
+                                LOG_WARNING("Weapon '%s' out of range, ignoring.") << lineRight;
+                            }
+
+                            skipToNextLine();
+                            parseWeapon(weaponNum, ignore);
+                        }
+                        else if(!lineLeft.compareWithoutCase("Sound"))
+                        {
+                            // Not yet supported.
+                            //const int soundNum = lineRight.toIntLeft();
+                            //skipToNextLine();
+                            parseSound();
+                            skipToNextSection();
+                        }
+                        else if(!lineLeft.compareWithoutCase("Misc"))
+                        {
+                            skipToNextLine();
+                            parseMisc();
+                        }
+                        else if(!lineLeft.compareWithoutCase("Text"))
+                        {
+                            const int oldSize = lineRight.toIntLeft();
+                            Block temp = lineRight.toAscii();
+                            const char* ch = parseToken(temp.constData());
+                            if(!parseToken(ch))
+                            {
+                                throw SyntaxError(String("Expected new text size on line #%1")
+                                                      .arg(currentLineNumber));
+                            }
+                            bool isNumber = false;
+                            const int newSize = String(com_token).toIntLeft(&isNumber);
+                            if(!isNumber)
+                            {
+                                throw SyntaxError(String("Expected new text size but encountered \"%1\" on line #%2")
+                                                      .arg(com_token).arg(currentLineNumber));
+                            }
+
+                            parseText(oldSize, newSize);
+                            skipToNextSection();
+                        }
+                        else if(!lineLeft.compareWithoutCase("Cheat"))
+                        {
+                            LOG_WARNING("[Cheat] patches are not supported.");
+                            skipToNextSection();
+                        }
+                        else if(!lineLeft.compareWithoutCase("[CODEPTR]")) // .bex
+                        {
+                            skipToNextLine();
+                            parsePointerBex();
+                        }
+                        else if(!lineLeft.compareWithoutCase("[PARS]")) // .bex
+                        {
+                            skipToNextLine();
+                            parseParsBex();
+                        }
+                        else if(!lineLeft.compareWithoutCase("[STRINGS]")) // .bex
+                        {
+                            // Not yet supported.
+                            parseStringsBex();
+                            skipToNextSection();
+                        }
+                        else if(!lineLeft.compareWithoutCase("[HELPER]")) // .bex
+                        {
+                            // Not yet supported (Helper Dogs from MBF).
+                            parseHelperBex();
+                            skipToNextSection();
+                        }
+                        else if(!lineLeft.compareWithoutCase("[SPRITES]")) // .bex
+                        {
+                            // Not yet supported.
+                            parseSpritesBex();
+                            skipToNextSection();
+                        }
+                        else if(!lineLeft.compareWithoutCase("[SOUNDS]")) // .bex
+                        {
+                            // Not yet supported.
+                            parseSoundsBex();
+                            skipToNextSection();
+                        }
+                        else if(!lineLeft.compareWithoutCase("[MUSIC]")) // .bex
+                        {
+                            // Not yet supported.
+                            parseMusicBex();
+                            skipToNextSection();
+                        }
+                        else
+                        {
+                            // An unknown section.
+                            throw UnknownSection(String("Expected section name but encountered \"%1\" on line #%2")
+                                                     .arg(lineLeft).arg(currentLineNumber));
+                        }
+                        break; }
+
+                    default:
+                        throw SyntaxError(String("Statement \"%1\" on line #%2 encountered out of context")
+                                              .arg(line).arg(currentLineNumber));
+                    }
+                }
+                catch(const UnknownSection& er)
+                {
+                    LOG_WARNING("%s. Skipping section...") << er.asText();
+                    skipToNextSection();
+                }
+            }
+        }
+        catch(const EndOfFile& /*er*/)
+        {} // Ignore.
+    }
+
+    bool parseMobjType(const String& str, int* mobjType)
+    {
+        int result = str.toIntLeft() - 1; // Patch indices are 1-based.
+        if(mobjType) *mobjType = result;
+        return (result >= 0 && result < ded->count.mobjs.num);
+    }
+
+    bool parseStateNum(const String& str, int* stateNum)
+    {
+        int result = str.toIntLeft();
+        if(stateNum) *stateNum = result;
+        return (result >= 0 && result < ded->count.states.num);
+    }
+
+    bool parseStateNumFromActionOffset(const String& str, int* stateNum)
+    {
+        int result = stateIndexForActionOffset(str.toIntLeft());
+        if(stateNum) *stateNum = result;
+        return (result >= 0 && result < ded->count.states.num);
+    }
+
+    bool parseSpriteNum(const String& str, int* spriteNum)
+    {
+        int result = str.toIntLeft();
+        if(spriteNum) *spriteNum = result;
+        return (result >= 0 && result < NUMSPRITES);
+    }
+
+    bool parseAmmoNum(const String& str, int* ammoNum)
+    {
+        int result = str.toIntLeft();
+        if(ammoNum) *ammoNum = result;
+        return (result >= 0 && result < 4);
+    }
+
+    bool parseWeaponNum(const String& str, int* weaponNum)
+    {
+        int result = str.toIntLeft();
+        if(weaponNum) *weaponNum = result;
+        return (weaponNum >= 0);
+    }
+
+    bool parseMobjTypeState(const QString& token, const StateMapping** state)
+    {
+        return findStateMappingByDehLabel(token, state) >= 0;
+    }
+
+    bool parseMobjTypeFlag(const QString& token, const FlagMapping** flag)
+    {
+        return findMobjTypeFlagMappingByDehLabel(token, flag) >= 0;
+    }
+
+    bool parseMobjTypeSound(const QString& token, const SoundMapping** sound)
+    {
+        return findSoundMappingByDehLabel(token, sound) >= 0;
+    }
+
+    bool parseWeaponState(const QString& token, const WeaponStateMapping** state)
+    {
+        return findWeaponStateMappingByDehLabel(token, state) >= 0;
+    }
+
+    bool parseMiscValue(const QString& token, const ValueMapping** value)
+    {
+        return findValueMappingForDehLabel(token, value) >= 0;
+    }
+
+    void parsePatchSignature()
+    {
+        for(; lineInCurrentSection(); skipToNextLine())
+        {
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
+
             if(!lineLeft.compareWithoutCase("Doom version"))
             {
                 doomVersion = lineRight.toIntLeft(0, 10);
@@ -408,11 +564,14 @@ public:
             {
                 patchVersion = lineRight.toIntLeft(0, 10);
             }
+            else
+            {
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+            }
         }
-        return cont;
     }
 
-    int parseInclude()
+    void parseInclude(QString& arg)
     {
         if(stackDepth > maxIncludeDepth)
         {
@@ -430,7 +589,6 @@ public:
         }
         else
         {
-            QString arg = lineRight;
             DehReaderFlags includeFlags = 0;
 
             if(arg.startsWith("notext ", Qt::CaseInsensitive))
@@ -463,7 +621,7 @@ public:
                     }
                     catch(const Error& er)
                     {
-                        LOG().enter(Log::WARNING, er.asText());
+                        LOG().enter(Log::WARNING, er.asText() + ".");
                     }
                 }
             }
@@ -473,9 +631,6 @@ public:
                 LOG_WARNING("Include directive missing filename, ignoring.");
             }
         }
-
-        // Fetch next identifier for main loop.
-        return readAndSplitLine();
     }
 
     String readTextBlob(int size)
@@ -496,31 +651,6 @@ public:
         } while(--size);
 
         return string.trimmed();
-    }
-
-    bool parseMobjTypeState(const QString& token, const StateMapping** state)
-    {
-        return findStateMappingByDehLabel(token, state) >= 0;
-    }
-
-    bool parseMobjTypeFlag(const QString& token, const FlagMapping** flag)
-    {
-        return findMobjTypeFlagMappingByDehLabel(token, flag) >= 0;
-    }
-
-    bool parseMobjTypeSound(const QString& token, const SoundMapping** sound)
-    {
-        return findSoundMappingByDehLabel(token, sound) >= 0;
-    }
-
-    bool parseWeaponState(const QString& token, const WeaponStateMapping** state)
-    {
-        return findWeaponStateMappingByDehLabel(token, state) >= 0;
-    }
-
-    bool parseMiscValue(const QString& token, const ValueMapping** value)
-    {
-        return findValueMappingForDehLabel(token, value) >= 0;
     }
 
     /**
@@ -582,23 +712,17 @@ public:
         return changedGroups;
     }
 
-    int parseThing()
+    void parseThing(ded_mobj_t* mobj, bool ignore = false)
     {
+        const int mobjType = (mobj - ded->mobjs);
+        bool hadHeight = false, checkHeight = false;
+
         LOG_AS("parseThing");
-
-        const int mobjType = lineRight.toIntLeft() - 1; // Patch indices are 1-based.
-        bool ignore = false, hadHeight = false, checkHeight = false;
-
-        ded_mobj_t* mobj = ded->mobjs + mobjType;
-        if(mobjType < 0 || mobjType >= ded->count.mobjs.num)
+        for(; lineInCurrentSection(); skipToNextLine())
         {
-            LOG_WARNING("Thing #%i out of range, ignoring. (Create more Thing defs!)") << (mobjType + 1);
-            ignore = true;
-        }
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
 
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
-        {
             if(lineLeft.endsWith(" frame", Qt::CaseInsensitive))
             {
                 const StateMapping* mapping;
@@ -784,7 +908,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
 
@@ -793,27 +917,17 @@ public:
         {
             mobj->height = originalHeightForMobjType(mobjType);
         }
-
-        return cont;
     }
 
-    int parseFrame()
+    void parseFrame(ded_state_t* state, bool ignore = false)
     {
+        const int stateNum = (state - ded->states);
         LOG_AS("parseFrame");
-
-        const int stateNum = lineRight.toIntLeft();
-        bool ignore = false;
-
-        ded_state_t* state = ded->states + stateNum;
-        if(stateNum < 0 || stateNum >= ded->count.states.num)
+        for(; lineInCurrentSection(); skipToNextLine())
         {
-            LOG_WARNING("Frame #%i out of range, ignoring. (Create more State defs!)") << stateNum;
-            ignore = true;
-        }
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
 
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
-        {
             if(!lineLeft.compareWithoutCase("Duration"))
             {
                 const int value = lineRight.toIntLeft(0, 10);
@@ -888,30 +1002,20 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
-
-        return cont;
     }
 
-    int parseSprite()
+    void parseSprite(ded_sprid_t* sprite, bool ignore = false)
     {
+        const int sprNum = sprite - ded->sprites;
         LOG_AS("parseSprite");
-
-        const int sprNum = lineRight.toIntLeft();
-        bool ignore = false;
-
-        ded_sprid_t* sprite = ded->sprites + sprNum;
-        if(sprNum < 0 || sprNum >= NUMSPRITES)
+        for(; lineInCurrentSection(); skipToNextLine())
         {
-            LOG_WARNING("Sprite #%d out of range, ignoring. (Create more Sprite defs!)") << sprNum;
-            ignore = true;
-        }
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
 
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
-        {
             if(!lineLeft.compareWithoutCase("Offset"))
             {
                 const int value = lineRight.toIntLeft();
@@ -941,39 +1045,27 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
-
-        return cont;
     }
 
-    int parseSound()
+    void parseSound()
     {
         LOG_AS("parseSound");
         LOG_WARNING("[Sound] patches are not supported.");
-        //const int soundNum = lineRight.toIntLeft();
-        return skipToNextSection();
     }
 
-    int parseAmmo()
+    void parseAmmo(const int ammoNum, bool ignore = false)
     {
-        LOG_AS("parseAmmo");
-
-        const char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
-        const int ammoNum = lineRight.toIntLeft();
-        bool ignore = false;
-
+        static const char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
         const char* theAmmo = ammostr[ammoNum];
-        if(ammoNum < 0 || ammoNum >= 4)
+        LOG_AS("parseAmmo");
+        for(; lineInCurrentSection(); skipToNextLine())
         {
-            LOG_WARNING("Ammo #%d out of range, ignoring.") << ammoNum;
-            ignore = true;
-        }
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
 
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
-        {
             if(!lineLeft.compareWithoutCase("Max ammo"))
             {
                 const int value = lineRight.toIntLeft(0, 10);
@@ -986,29 +1078,19 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
-
-        return cont;
     }
 
-    int parseWeapon()
+    void parseWeapon(const int weapNum, bool ignore = false)
     {
         LOG_AS("parseWeapon");
-
-        const int weapNum = lineRight.toIntLeft();
-        bool ignore = false;
-
-        if(weapNum < 0)
+        for(; lineInCurrentSection(); skipToNextLine())
         {
-            LOG_WARNING("Weapon #%i out of range, ignoring.") << weapNum;
-            return skipToNextSection();
-        }
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
 
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
-        {
             if(lineLeft.endsWith(" frame", Qt::CaseInsensitive))
             {
                 const String dehStateName = lineLeft.left(lineLeft.size() - 6);
@@ -1056,30 +1138,19 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
-        return cont;
     }
 
-    int parsePointer()
+    void parsePointer(ded_state_t* state, bool ignore)
     {
+        const int stateIdx = state - ded->states;
         LOG_AS("parsePointer");
-
-        const int ptrNum = lineRight.toIntLeft();
-        bool ignore = false;
-        const int stateIdx = stateIndexForActionOffset(ptrNum);
-        ded_state_t* state = ded->states + stateIdx;
-
-        if(stateIdx < 0 || stateIdx >= ded->count.states.num)
+        for(; lineInCurrentSection(); skipToNextLine())
         {
-            LOG_WARNING("Pointer #%i out of range, ignoring.") << ptrNum;
-            ignore = true;
-        }
-
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
-        {
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
             if(!lineLeft.compareWithoutCase("Codep Frame"))
             {
                 const int actionIdx = lineRight.toIntLeft();
@@ -1098,25 +1169,19 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
-        return cont;
     }
 
-    int parseCheat()
-    {
-        LOG_AS("parseCheat");
-        LOG_WARNING("[Cheat] patches are not supported.");
-        return skipToNextSection();
-    }
-
-    int parseMisc()
+    void parseMisc()
     {
         LOG_AS("parseMisc");
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
+        for(; !lineInCurrentSection(); skipToNextLine())
         {
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
+
             const ValueMapping* mapping;
             if(parseMiscValue(lineLeft, &mapping))
             {
@@ -1128,112 +1193,111 @@ public:
                 LOG_WARNING("Unknown value \"%s\" on line #%i, ignoring.") << lineLeft << currentLineNumber;
             }
         }
-        return cont;
     }
 
-    int parseParsBex()
+    void parseParsBex()
     {
         LOG_AS("parseParsBex");
-
-        int cont;
-        while((cont = readAndSplitLine()) /*== 1*/)
+        // .bex doesn't follow the same rules as .deh
+        for(; ; skipToNextLine())
         {
-            // Argh! .bex doesn't follow the same rules as .deh
-            if(cont == 1)
+            try
             {
-                LOG_WARNING("Unknown key \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
-                continue;
-            }
-
-            if(lineLeft.startsWith("par", Qt::CaseInsensitive))
-            {
-                if(lineRight.isEmpty())
+                String lineLeft, lineRight;
+                splitLine(line, lineLeft, lineRight);
+                if(!lineLeft.compareWithoutCase("par"))
                 {
-                    LOG_WARNING("Need data after par, ignoring.");
-                    continue;
-                }
+                    if(lineRight.isEmpty())
+                    {
+                        throw SyntaxError("parseParsBex", String("Expected format string on line #%1")
+                                                              .arg(currentLineNumber));
+                    }
 
-                /**
-                 * @attention Team TNT's original DEH parser would read the first one
-                 * or two tokens then applied atoi() on the remainder of the line to
-                 * obtain the last argument (i.e., par time).
-                 *
-                 * Here we emulate this behavior by splitting the line into at most
-                 * three arguments and then apply atoi()-like de::String::toIntLeft()
-                 * on the last.
-                 */
-                const int maxTokens = 3;
-                QStringList args = splitMax(lineRight.leftStrip(), ' ', maxTokens);
-                if(args.size() < 2)
-                {
-                    LOG_WARNING("Unknown format string \"%s\" on line #%i, ignoring.") << lineRight << currentLineNumber;
-                    continue;
-                }
+                    /**
+                     * @attention Team TNT's original DEH parser would read the first one
+                     * or two tokens then applied atoi() on the remainder of the line to
+                     * obtain the last argument (i.e., par time).
+                     *
+                     * Here we emulate this behavior by splitting the line into at most
+                     * three arguments and then apply atoi()-like de::String::toIntLeft()
+                     * on the last.
+                     */
+                    const int maxTokens = 3;
+                    QStringList args = splitMax(lineRight.leftStrip(), ' ', maxTokens);
+                    if(args.size() < 2)
+                    {
+                        throw SyntaxError("parseParsBex", String("Invalid format string \"%1\" on line #%2")
+                                                              .arg(lineRight).arg(currentLineNumber));
+                    }
 
-                // Parse values from the arguments.
-                int arg = 0;
-                int episode   = (args.size() > 2? args.at(arg++).toInt() : 0);
-                int map       = args.at(arg++).toInt();
-                float parTime = float(String(args.at(arg++)).toIntLeft(0, 10));
+                    // Parse values from the arguments.
+                    int arg = 0;
+                    int episode   = (args.size() > 2? args.at(arg++).toInt() : 0);
+                    int map       = args.at(arg++).toInt();
+                    float parTime = float(String(args.at(arg++)).toIntLeft(0, 10));
 
-                // Apply.
-                Uri* uri  = composeMapUri(episode, map);
-                ddstring_t* path = Uri_ToString(uri);
+                    // Apply.
+                    Uri* uri  = composeMapUri(episode, map);
+                    ddstring_t* path = Uri_ToString(uri);
 
-                ded_mapinfo_t* def;
-                int idx = mapInfoDefForUri(*uri, &def);
-                if(idx >= 0)
-                {
-                    def->parTime = parTime;
-                    LOG_DEBUG("MapInfo #%i \"%s\" parTime => %d") << idx << Str_Text(path) << def->parTime;
+                    ded_mapinfo_t* def;
+                    int idx = mapInfoDefForUri(*uri, &def);
+                    if(idx >= 0)
+                    {
+                        def->parTime = parTime;
+                        LOG_DEBUG("MapInfo #%i \"%s\" parTime => %d") << idx << Str_Text(path) << def->parTime;
+                    }
+                    else
+                    {
+                        LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i), ignoring.")
+                            << Str_Text(path) << episode << map;
+                    }
+                    Str_Delete(path);
+                    Uri_Delete(uri);
                 }
                 else
                 {
-                    LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i), ignoring.")
-                        << Str_Text(path) << episode << map;
+                    LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
                 }
-                Str_Delete(path);
-                Uri_Delete(uri);
+            }
+            catch(const SyntaxError& er)
+            {
+                LOG_WARNING("%s. ignoring.") << er.asText();
             }
         }
-        return cont;
     }
 
-    int parseHelperBex()
+    void parseHelperBex()
     {
         LOG_AS("parseHelperBex");
         LOG_WARNING("[HELPER] patches are not supported.");
-        return skipToNextSection();
     }
 
-    int parseSpritesBex()
+    void parseSpritesBex()
     {
         LOG_AS("parseSpritesBex");
         LOG_WARNING("[SPRITES] patches are not supported.");
-        return skipToNextSection();
     }
 
-    int parseSoundsBex()
+    void parseSoundsBex()
     {
         LOG_AS("parseSoundsBex");
         LOG_WARNING("[SOUNDS] patches are not supported.");
-        return skipToNextSection();
     }
 
-    int parseMusicBex()
+    void parseMusicBex()
     {
         LOG_AS("parseMusicBex");
         LOG_WARNING("[MUSIC] patches are not supported.");
-        return skipToNextSection();
     }
 
-    int parsePointerBex()
+    void parsePointerBex()
     {
         LOG_AS("parsePointerBex");
-
-        int cont;
-        while((cont = readAndSplitLine()) == 1)
+        for(; lineInCurrentSection(); skipToNextLine())
         {
+            String lineLeft, lineRight;
+            splitLine(line, lineLeft, lineRight);
             if(lineLeft.startsWith("Frame ", Qt::CaseInsensitive))
             {
                 const int stateNum = lineLeft.substr(6).toIntLeft();
@@ -1277,23 +1341,11 @@ public:
                 }
             }
         }
-
-        return cont;
     }
 
-    int parseText()
+    void parseText(const int oldSize, const int newSize)
     {
         LOG_AS("parseText");
-
-        const int oldSize = lineRight.toIntLeft();
-        Block temp = lineRight.toAscii();
-        const char* ch = parseToken(temp.constData());
-        if(!parseToken(ch))
-        {
-            LOG_WARNING("Missing new text size, ignoring.");
-            return 2;
-        }
-        const int newSize = String(com_token).toIntLeft();
 
         String oldStr = readTextBlob(oldSize);
         String newStr = readTextBlob(newSize);
@@ -1320,16 +1372,12 @@ public:
         {
             LOG_DEBUG("Skipping disabled Text patch.");
         }
-
-        // Fetch next identifier for main loop.
-        return skipToNextSection();
     }
 
-    int parseStringsBex()
+    void parseStringsBex()
     {
         LOG_AS("parseStringsBex");
         LOG_WARNING("[Strings] patches not supported.");
-        return skipToNextSection();
     }
 
     void createValueDef(const QString& path, const QString& value)
@@ -1514,6 +1562,6 @@ void readDehPatch(const Block& patch, DehReaderFlags flags)
     }
     catch(const Error& er)
     {
-        LOG().enter(Log::WARNING, er.asText());
+        LOG().enter(Log::WARNING, er.asText() + ".");
     }
 }
