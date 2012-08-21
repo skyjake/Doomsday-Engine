@@ -194,42 +194,6 @@ public:
         return line.indexOf('=') != -1;
     }
 
-    /**
-     * Split the line into (at most) two parts depending on the number of
-     * discreet tokens on that line. The left side contains the first token
-     * only. The right side is either empty or contains the rest of the tokens.
-     */
-    void splitLine(const String& line, String& lineLeft, String& lineRight)
-    {
-        // Determine the split (or 'pivot') position.
-        int assign = line.indexOf('=');
-
-        QStringList parts = splitMax(line, assign != -1? '=' : ' ', 2);
-        lineLeft = String(parts.at(0)).rightStrip();
-        if(parts.size() == 2)
-            lineRight = String(parts.at(1)).leftStrip();
-        else
-            lineRight.clear();
-
-        // Basic grammar checking.
-        if(assign != -1)
-        {
-            // Nothing before '=' ?
-            if(lineLeft.isEmpty())
-            {
-                throw SyntaxError("DehReader::readAndSplitLine",
-                                  String("Expected keyword before '=' on line #%1").arg(currentLineNumber));
-            }
-
-            // Nothing after '=' ?
-            if(lineRight.isEmpty())
-            {
-                throw SyntaxError("DehReader::readAndSplitLine",
-                                  String("Expected value after '=' on line #%1").arg(currentLineNumber));
-            }
-        }
-    }
-
     void skipToNextSection()
     {
         do  skipToNextLine();
@@ -490,6 +454,36 @@ public:
         {} // Ignore.
     }
 
+    void parseAssignmentStatement(const String& line, String& var, String& expr)
+    {
+        // Determine the split (or 'pivot') position.
+        int assign = line.indexOf('=');
+        if(assign < 0)
+        {
+            throw SyntaxError("parseAssignmentStatement",
+                              String("Expected assignment statement but encountered \"%1\" on line #%2")
+                                  .arg(line).arg(currentLineNumber));
+        }
+
+        var  = line.substr(0, assign).rightStrip();
+        expr = line.substr(assign + 1).leftStrip();
+
+        // Basic grammar checking.
+        // Nothing before '=' ?
+        if(var.isEmpty())
+        {
+            throw SyntaxError("parseAssignmentStatement",
+                              String("Expected keyword before '=' on line #%1").arg(currentLineNumber));
+        }
+
+        // Nothing after '=' ?
+        if(expr.isEmpty())
+        {
+            throw SyntaxError("parseAssignmentStatement",
+                              String("Expected expression after '=' on line #%1").arg(currentLineNumber));
+        }
+    }
+
     bool parseMobjType(const String& str, int* mobjType)
     {
         int result = str.toIntLeft() - 1; // Patch indices are 1-based.
@@ -561,20 +555,20 @@ public:
     {
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
-            if(!lineLeft.compareWithoutCase("Doom version"))
+            if(!var.compareWithoutCase("Doom version"))
             {
-                doomVersion = lineRight.toIntLeft(0, 10);
+                doomVersion = expr.toIntLeft(0, 10);
             }
-            else if(!lineLeft.compareWithoutCase("Patch format"))
+            else if(!var.compareWithoutCase("Patch format"))
             {
-                patchVersion = lineRight.toIntLeft(0, 10);
+                patchVersion = expr.toIntLeft(0, 10);
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
             }
         }
     }
@@ -728,20 +722,20 @@ public:
         LOG_AS("parseThing");
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
-            if(lineLeft.endsWith(" frame", Qt::CaseInsensitive))
+            if(var.endsWith(" frame", Qt::CaseInsensitive))
             {
                 const StateMapping* mapping;
-                const String dehStateName = lineLeft.left(lineLeft.size() - 6);
+                const String dehStateName = var.left(var.size() - 6);
                 if(!parseMobjTypeState(dehStateName, &mapping))
                 {
                     if(!ignore) LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.") << dehStateName << currentLineNumber;
                 }
                 else
                 {
-                    const int value = lineRight.toIntLeft();
+                    const int value = expr.toIntLeft();
                     if(!ignore)
                     if(value < 0 || value >= ded->count.states.num)
                     {
@@ -761,17 +755,17 @@ public:
                     }
                 }
             }
-            else if(lineLeft.endsWith(" sound", Qt::CaseInsensitive))
+            else if(var.endsWith(" sound", Qt::CaseInsensitive))
             {
                 const SoundMapping* mapping;
-                const String dehSoundName = lineLeft.left(lineLeft.size() - 6);
+                const String dehSoundName = var.left(var.size() - 6);
                 if(!parseMobjTypeSound(dehSoundName, &mapping))
                 {
                     if(!ignore) LOG_WARNING("Unknown sound '%s' on line #%i, ignoring.") << dehSoundName << currentLineNumber;
                 }
                 else
                 {
-                    const int value = lineRight.toIntLeft();
+                    const int value = expr.toIntLeft();
                     if(!ignore)
                     if(value < 0 || value >= ded->count.sounds.num)
                     {
@@ -801,10 +795,10 @@ public:
                     }
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Bits"))
+            else if(!var.compareWithoutCase("Bits"))
             {
                 int flags[NUM_MOBJ_FLAGS] = { 0, 0, 0 };
-                int changedFlagGroups = parseMobjTypeFlags(lineRight, flags);
+                int changedFlagGroups = parseMobjTypeFlags(expr, flags);
                 if(!ignore)
                 {
                     // Apply the new flags.
@@ -831,18 +825,18 @@ public:
                     }
                 }
             }
-            else if(!lineLeft.compareWithoutCase("ID #"))
+            else if(!var.compareWithoutCase("ID #"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->doomEdNum = value;
                     LOG_DEBUG("Type #%i \"%s\" doomEdNum => %i") << mobjType << mobj->id << mobj->doomEdNum;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Height"))
+            else if(!var.compareWithoutCase("Height"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->height = value / float(0x10000);
@@ -850,54 +844,54 @@ public:
                     LOG_DEBUG("Type #%i \"%s\" height => %f") << mobjType << mobj->id << mobj->height;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Hit points"))
+            else if(!var.compareWithoutCase("Hit points"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->spawnHealth = value;
                     LOG_DEBUG("Type #%i \"%s\" spawnHealth => %i") << mobjType << mobj->id << mobj->spawnHealth;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Mass"))
+            else if(!var.compareWithoutCase("Mass"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->mass = value;
                     LOG_DEBUG("Type #%i \"%s\" mass => %i") << mobjType << mobj->id << mobj->mass;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Missile damage"))
+            else if(!var.compareWithoutCase("Missile damage"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->damage = value;
                     LOG_DEBUG("Type #%i \"%s\" damage => %i") << mobjType << mobj->id << mobj->damage;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Pain chance"))
+            else if(!var.compareWithoutCase("Pain chance"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->painChance = value;
                     LOG_DEBUG("Type #%i \"%s\" painChance => %i") << mobjType << mobj->id << mobj->painChance;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Reaction time"))
+            else if(!var.compareWithoutCase("Reaction time"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->reactionTime = value;
                     LOG_DEBUG("Type #%i \"%s\" reactionTime => %i") << mobjType << mobj->id << mobj->reactionTime;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Speed"))
+            else if(!var.compareWithoutCase("Speed"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     /// @todo Is this right??
@@ -905,9 +899,9 @@ public:
                     LOG_DEBUG("Type #%i \"%s\" speed => %f") << mobjType << mobj->id << mobj->speed;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Width"))
+            else if(!var.compareWithoutCase("Width"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     mobj->radius = value / float(0x10000);
@@ -916,7 +910,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
             }
         }
 
@@ -933,21 +927,21 @@ public:
         LOG_AS("parseFrame");
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
-            if(!lineLeft.compareWithoutCase("Duration"))
+            if(!var.compareWithoutCase("Duration"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     state->tics = value;
                     LOG_DEBUG("State #%i \"%s\" tics => %i") << stateNum << state->id << state->tics;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Next frame"))
+            else if(!var.compareWithoutCase("Next frame"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = expr.toIntLeft();
                 if(!ignore)
                 if(value < 0 || value >= ded->count.states.num)
                 {
@@ -961,9 +955,9 @@ public:
                         << stateNum << state->id << state->nextState << nextStateIdx;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Sprite number"))
+            else if(!var.compareWithoutCase("Sprite number"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 if(value < 0 || value > ded->count.sprites.num)
                 {
@@ -978,9 +972,9 @@ public:
                         << stateNum << state->id << state->sprite.id << spriteIdx;
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Sprite subnumber"))
+            else if(!var.compareWithoutCase("Sprite subnumber"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 {
                     const int FF_FULLBRIGHT = 0x8000;
@@ -993,14 +987,14 @@ public:
                     LOG_DEBUG("State #%i \"%s\" frame => %i") << stateNum << state->id << state->frame;
                 }
             }
-            else if(lineLeft.startsWith("Unknown ", Qt::CaseInsensitive))
+            else if(var.startsWith("Unknown ", Qt::CaseInsensitive))
             {
-                const int miscIdx = lineLeft.substr(8).toIntLeft(0, 10);
-                const int value   = lineRight.toIntLeft(0, 10);
+                const int miscIdx = var.substr(8).toIntLeft(0, 10);
+                const int value   = expr.toIntLeft(0, 10);
                 if(!ignore)
                 if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
                 {
-                    LOG_WARNING("Unknown unknown-value '%s' on line #%i, ignoring.") << lineLeft.mid(8) << currentLineNumber;
+                    LOG_WARNING("Unknown unknown-value '%s' on line #%i, ignoring.") << var.mid(8) << currentLineNumber;
                 }
                 else
                 {
@@ -1010,7 +1004,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
             }
         }
     }
@@ -1021,12 +1015,12 @@ public:
         LOG_AS("parseSprite");
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
-            if(!lineLeft.compareWithoutCase("Offset"))
+            if(!var.compareWithoutCase("Offset"))
             {
-                const int value = lineRight.toIntLeft();
+                const int value = expr.toIntLeft();
                 if(!ignore)
                 {
                     // Calculate offset from beginning of sprite names.
@@ -1053,7 +1047,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
             }
         }
     }
@@ -1071,22 +1065,22 @@ public:
         LOG_AS("parseAmmo");
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
-            if(!lineLeft.compareWithoutCase("Max ammo"))
+            if(!var.compareWithoutCase("Max ammo"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore) createValueDef(String("Player|Max ammo|%1").arg(theAmmo), QString::number(value));
             }
-            else if(!lineLeft.compareWithoutCase("Per ammo"))
+            else if(!var.compareWithoutCase("Per ammo"))
             {
-                int per = lineRight.toIntLeft(0, 10);
+                int per = expr.toIntLeft(0, 10);
                 if(!ignore) createValueDef(String("Player|Clip ammo|%1").arg(theAmmo), QString::number(per));
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
             }
         }
     }
@@ -1096,13 +1090,13 @@ public:
         LOG_AS("parseWeapon");
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
-            if(lineLeft.endsWith(" frame", Qt::CaseInsensitive))
+            if(var.endsWith(" frame", Qt::CaseInsensitive))
             {
-                const String dehStateName = lineLeft.left(lineLeft.size() - 6);
-                const int value = lineRight.toIntLeft();
+                const String dehStateName = var.left(var.size() - 6);
+                const int value = expr.toIntLeft();
                 const WeaponStateMapping* weapon;
                 if(!parseWeaponState(dehStateName, &weapon))
                 {
@@ -1125,10 +1119,10 @@ public:
                     }
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Ammo type"))
+            else if(!var.compareWithoutCase("Ammo type"))
             {
                 const String ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
                 if(value < 0 || value >= 6)
                 {
@@ -1139,14 +1133,14 @@ public:
                     createValueDef(String("Weapon Info|%1|Type").arg(weapNum), ammotypes[value]);
                 }
             }
-            else if(!lineLeft.compareWithoutCase("Ammo per shot"))
+            else if(!var.compareWithoutCase("Ammo per shot"))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), QString::number(value));
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
             }
         }
     }
@@ -1157,12 +1151,12 @@ public:
         LOG_AS("parsePointer");
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
-            if(!lineLeft.compareWithoutCase("Codep Frame"))
+            if(!var.compareWithoutCase("Codep Frame"))
             {
-                const int actionIdx = lineRight.toIntLeft();
+                const int actionIdx = expr.toIntLeft();
                 if(!ignore)
                 if(actionIdx < 0 || actionIdx >= NUMSTATES)
                 {
@@ -1178,7 +1172,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
             }
         }
     }
@@ -1188,18 +1182,18 @@ public:
         LOG_AS("parseMisc");
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
             const ValueMapping* mapping;
-            if(parseMiscValue(lineLeft, &mapping))
+            if(parseMiscValue(var, &mapping))
             {
-                const int value = lineRight.toIntLeft(0, 10);
+                const int value = expr.toIntLeft(0, 10);
                 createValueDef(mapping->valuePath, QString::number(value));
             }
             else
             {
-                LOG_WARNING("Unknown value \"%s\" on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                LOG_WARNING("Unknown value \"%s\" on line #%i, ignoring.") << var << currentLineNumber;
             }
         }
     }
@@ -1208,12 +1202,21 @@ public:
     {
         LOG_AS("parseParsBex");
         // .bex doesn't follow the same rules as .deh
-        for(; ; skipToNextLine())
+        for(; !line.trimmed().isEmpty(); readLine())
         {
+            // Skip comment lines.
+            if(line.at(0) == '#') continue;
+
             try
             {
                 String lineLeft, lineRight;
-                splitLine(line, lineLeft, lineRight);
+
+                QStringList parts = splitMax(line, ' ', 2);
+                lineLeft = String(parts.at(0)).rightStrip();
+                if(parts.size() == 2)
+                    lineRight = String(parts.at(1)).leftStrip();
+                else
+                    lineRight.clear();
 
                 if(!lineLeft.compareWithoutCase("par"))
                 {
@@ -1267,13 +1270,18 @@ public:
                 }
                 else
                 {
-                    LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << lineLeft << currentLineNumber;
+                    LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << line << currentLineNumber;
                 }
             }
             catch(const SyntaxError& er)
             {
-                LOG_WARNING("%s. ignoring.") << er.asText();
+                LOG_WARNING("%s, ignoring.") << er.asText();
             }
+        }
+
+        if(line.trimmed().isEmpty())
+        {
+            skipToNextSection();
         }
     }
 
@@ -1306,12 +1314,12 @@ public:
         LOG_AS("parsePointerBex");
         for(; lineInCurrentSection(); skipToNextLine())
         {
-            String lineLeft, lineRight;
-            splitLine(line, lineLeft, lineRight);
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
 
-            if(lineLeft.startsWith("Frame ", Qt::CaseInsensitive))
+            if(var.startsWith("Frame ", Qt::CaseInsensitive))
             {
-                const int stateNum = lineLeft.substr(6).toIntLeft();
+                const int stateNum = var.substr(6).toIntLeft();
                 if(stateNum < 0 || stateNum >= ded->count.states.num)
                 {
                     LOG_WARNING("Frame #%d out of range, ignoring. (Create more State defs!)") << stateNum;
@@ -1320,12 +1328,8 @@ public:
                 {
                     ded_state_t& state = ded->states[stateNum];
 
-                    // Skip the assignment operator.
-                    Block temp = lineRight.toAscii();
-                    parseToken(temp.constData());
-
                     // Compose the action name.
-                    String action = String::fromAscii(com_token);
+                    String action = expr.rightStrip();
                     if(!action.startsWith("A_", Qt::CaseInsensitive))
                         action.prepend("A_");
                     action.truncate(32);
@@ -1493,75 +1497,6 @@ public:
         LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
             << textIdx << textMapping->name << newStrUtf8.constData();
         return true;
-    }
-
-    /**
-     * Parse a token out of a string.
-     * @note Derived from ZDoom's cmdlib.cpp COM_Parse()
-     */
-    const char* parseToken(const char* data)
-    {
-        com_token[0] = 0;
-        if(!data) return NULL;
-
-        // Skip whitespace.
-        int c, len = 0;
-      skipwhite:
-        while((c = *data) <= ' ')
-        {
-            if(c == 0)
-            {
-                com_eof = true;
-                return NULL; // end of file;
-            }
-            data++;
-        }
-
-        // Skip // comments.
-        if(c == '/' && data[1] == '/')
-        {
-            while(*data && *data != '\n') { data++; }
-            goto skipwhite;
-        }
-
-        // Handle quoted strings specially.
-        if(c == '\"')
-        {
-            data++;
-
-            while((c = *data++) != '\"')
-            {
-                com_token[len] = c;
-                len++;
-            }
-
-            com_token[len] = 0;
-            return data;
-        }
-
-        // Parse single characters.
-        if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' || c == ':' || /*[RH] */ c == '=')
-        {
-            com_token[len] = c;
-            len++;
-            com_token[len] = 0;
-            return data + 1;
-        }
-
-        // Parse a regular word.
-        do
-        {
-            com_token[len] = c;
-            data++;
-            len++;
-            c = *data;
-
-            if(c == '{' || c == '}' || c == ')' || c == '(' || c == '\'' || c == ':' || c == '=')
-                break;
-        } while(c > 32);
-
-        com_token[len] = 0;
-        return data;
     }
 };
 
