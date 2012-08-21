@@ -90,20 +90,14 @@ class DehReader
 
     String line; ///< Current line.
 
-    // Token parse buffer.
-    bool com_eof;
-    char com_token[8192];
-
 public:
     DehReader(const Block& _patch, DehReaderFlags _flags = 0)
         : patch(_patch), pos(0), currentLineNumber(0),
           flags(_flags),
           // Initialize as unknown Patch & Doom version.
           patchVersion(-1), doomVersion(-1),
-          line(""), com_eof(false)
+          line("")
     {
-        std::memset(com_token, 0, sizeof(com_token));
-
         stackDepth++;
     }
 
@@ -1209,44 +1203,36 @@ public:
 
             try
             {
-                String lineLeft, lineRight;
-
-                QStringList parts = splitMax(line, ' ', 2);
-                lineLeft = String(parts.at(0)).rightStrip();
-                if(parts.size() == 2)
-                    lineRight = String(parts.at(1)).leftStrip();
-                else
-                    lineRight.clear();
-
-                if(!lineLeft.compareWithoutCase("par"))
+                if(line.beginsWith("par", Qt::CaseInsensitive))
                 {
-                    if(lineRight.isEmpty())
+                    const String argStr = line.substr(3).leftStrip();
+                    if(argStr.isEmpty())
                     {
-                        throw SyntaxError("parseParsBex", String("Expected format string on line #%1")
+                        throw SyntaxError("parseParsBex", String("Expected format expression on line #%1")
                                                               .arg(currentLineNumber));
                     }
 
                     /**
                      * @attention Team TNT's original DEH parser would read the first one
-                     * or two tokens then applied atoi() on the remainder of the line to
+                     * or two tokens then apply atoi() on the remainder of the line to
                      * obtain the last argument (i.e., par time).
                      *
                      * Here we emulate this behavior by splitting the line into at most
                      * three arguments and then apply atoi()-like de::String::toIntLeft()
                      * on the last.
                      */
-                    const int maxTokens = 3;
-                    QStringList args = splitMax(lineRight.leftStrip(), ' ', maxTokens);
+                    const int maxArgs = 3;
+                    QStringList args = splitMax(argStr, ' ', maxArgs);
                     if(args.size() < 2)
                     {
                         throw SyntaxError("parseParsBex", String("Invalid format string \"%1\" on line #%2")
-                                                              .arg(lineRight).arg(currentLineNumber));
+                                                              .arg(argStr).arg(currentLineNumber));
                     }
 
                     // Parse values from the arguments.
                     int arg = 0;
-                    int episode   = (args.size() > 2? args.at(arg++).toInt() : 0);
-                    int map       = args.at(arg++).toInt();
+                    int episode   = (args.size() > 2? args.at(arg++).toInt(0, 10) : 0);
+                    int map       = args.at(arg++).toInt(0, 10);
                     float parTime = float(String(args.at(arg++)).toIntLeft(0, 10));
 
                     // Apply.
