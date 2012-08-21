@@ -82,7 +82,6 @@ class DehReader
     const Block& patch;
     int pos;
     int currentLineNumber;
-    int cont; ///< temp
 
     DehReaderFlags flags;
 
@@ -97,7 +96,7 @@ class DehReader
 
 public:
     DehReader(const Block& _patch, DehReaderFlags _flags = 0)
-        : patch(_patch), pos(0), currentLineNumber(0), cont(0),
+        : patch(_patch), pos(0), currentLineNumber(0),
           flags(_flags),
           // Initialize as unknown Patch & Doom version.
           patchVersion(-1), doomVersion(-1),
@@ -187,9 +186,7 @@ public:
 
     bool lineInCurrentSection()
     {
-        if(line.indexOf('=') != -1) cont = 1;
-        else                        cont = 2;
-        return cont == 1;
+        return line.indexOf('=') != -1;
     }
 
     /**
@@ -250,242 +247,231 @@ public:
     {
         LOG_AS_STRING(stackDepth == 1? "DehReader" : QString("[%1]").arg(stackDepth - 1));
 
+        skipToNextLine();
+
+        // Attempt to parse the DeHackEd patch signature and version numbers.
+        if(line.beginsWith("Patch File for DeHackEd v", Qt::CaseInsensitive))
+        {
+            skipToNextLine();
+            parsePatchSignature();
+        }
+        else
+        {
+            LOG_WARNING("Patch is missing a signature, assuming BEX.");
+            doomVersion  = 19;
+            patchVersion = 6;
+        }
+
+        logPatchInfo();
+
+        // Is this for a known Doom version?
+        if(!normalizeDoomVersion(doomVersion))
+        {
+            LOG_WARNING("Unknown Doom version, assuming v1.9.");
+            doomVersion = 3;
+        }
+
         // Patches are subdivided into sections.
-        readLine();
         try
         {
             forever
             {
                 try
                 {
-                    switch(cont)
+                    /// @note Some sections have their own grammar quirks!
+                    if(line.beginsWith("include", Qt::CaseInsensitive)) // .bex
                     {
-                    case 0:
-                        // Attempt to parse the DeHackEd patch signature and version numbers.
-                        if(line.beginsWith("Patch File for DeHackEd v", Qt::CaseInsensitive))
+                        parseInclude(line.substr(7).leftStrip());
+                        skipToNextSection();
+                    }
+                    else if(line.beginsWith("Thing", Qt::CaseInsensitive))
+                    {
+                        const String arg = line.substr(5).leftStrip();
+                        int mobjType = 0;
+                        const bool isKnownMobjType = parseMobjType(arg, &mobjType);
+                        const bool ignore = !isKnownMobjType;
+
+                        if(!isKnownMobjType)
                         {
-                            skipToNextLine();
-                            parsePatchSignature();
-                        }
-                        else
-                        {
-                            LOG_WARNING("Patch is missing a signature, assuming BEX.");
-                            doomVersion  = 19;
-                            patchVersion = 6;
+                            LOG_WARNING("Thing '%s' out of range, ignoring. (Create more Thing defs.)") << arg;
                         }
 
-                        logPatchInfo();
+                        skipToNextLine();
+                        parseThing(ded->mobjs + mobjType, ignore);
+                    }
+                    else if(line.beginsWith("Frame", Qt::CaseInsensitive))
+                    {
+                        const String arg = line.substr(5).leftStrip();
+                        int stateNum = 0;
+                        const bool isKnownStateNum = parseStateNum(arg, &stateNum);
+                        const bool ignore = !isKnownStateNum;
 
-                        // Is this for a known Doom version?
-                        if(!normalizeDoomVersion(doomVersion))
+                        if(!isKnownStateNum)
                         {
-                            LOG_WARNING("Unknown Doom version, assuming v1.9.");
-                            doomVersion = 3;
+                            LOG_WARNING("Frame '%s' out of range, ignoring. (Create more State defs.)") << arg;
                         }
-                        break;
 
-                    case 2: {
-                        /// A new section begins.
-                        /// @note Some sections have their own grammar quirks!
-                        if(line.beginsWith("include", Qt::CaseInsensitive)) // .bex
-                        {
-                            parseInclude(line.substr(7).leftStrip());
-                            skipToNextSection();
-                        }
-                        else if(line.beginsWith("Thing", Qt::CaseInsensitive))
-                        {
-                            const String arg = line.substr(5).leftStrip();
-                            int mobjType = 0;
-                            const bool isKnownMobjType = parseMobjType(arg, &mobjType);
-                            const bool ignore = !isKnownMobjType;
+                        skipToNextLine();
+                        parseFrame(ded->states + stateNum, ignore);
+                    }
+                    else if(line.beginsWith("Pointer", Qt::CaseInsensitive))
+                    {
+                        const String arg = line.substr(7).leftStrip();
+                        int stateNum = 0;
+                        const bool isKnownStateNum = parseStateNumFromActionOffset(arg, &stateNum);
+                        const bool ignore = !isKnownStateNum;
 
-                            if(!isKnownMobjType)
-                            {
-                                LOG_WARNING("Thing '%s' out of range, ignoring. (Create more Thing defs.)") << arg;
-                            }
+                        if(!isKnownStateNum)
+                        {
+                            LOG_WARNING("Pointer '%s' out of range, ignoring. (Create more State defs.)") << arg;
+                        }
 
-                            skipToNextLine();
-                            parseThing(ded->mobjs + mobjType, ignore);
-                        }
-                        else if(line.beginsWith("Frame", Qt::CaseInsensitive))
-                        {
-                            const String arg = line.substr(5).leftStrip();
-                            int stateNum = 0;
-                            const bool isKnownStateNum = parseStateNum(arg, &stateNum);
-                            const bool ignore = !isKnownStateNum;
+                        skipToNextLine();
+                        parsePointer(ded->states + stateNum, ignore);
+                    }
+                    else if(line.beginsWith("Sprite", Qt::CaseInsensitive))
+                    {
+                        const String arg = line.substr(6).leftStrip();
+                        int spriteNum = 0;
+                        const bool isKnownSpriteNum = parseSpriteNum(arg, &spriteNum);
+                        const bool ignore = !isKnownSpriteNum;
 
-                            if(!isKnownStateNum)
-                            {
-                                LOG_WARNING("Frame '%s' out of range, ignoring. (Create more State defs.)") << arg;
-                            }
+                        if(!isKnownSpriteNum)
+                        {
+                            LOG_WARNING("Sprite '%s' out of range, ignoring. (Create more Sprite defs.)") << arg;
+                        }
 
-                            skipToNextLine();
-                            parseFrame(ded->states + stateNum, ignore);
-                        }
-                        else if(line.beginsWith("Pointer", Qt::CaseInsensitive))
-                        {
-                            const String arg = line.substr(7).leftStrip();
-                            int stateNum = 0;
-                            const bool isKnownStateNum = parseStateNumFromActionOffset(arg, &stateNum);
-                            const bool ignore = !isKnownStateNum;
+                        skipToNextLine();
+                        parseSprite(ded->sprites + spriteNum, ignore);
+                    }
+                    else if(line.beginsWith("Ammo", Qt::CaseInsensitive))
+                    {
+                        const String arg = line.substr(4).leftStrip();
+                        int ammoNum = 0;
+                        const bool isKnownAmmoNum = parseAmmoNum(arg, &ammoNum);
+                        const bool ignore = !isKnownAmmoNum;
 
-                            if(!isKnownStateNum)
-                            {
-                                LOG_WARNING("Pointer '%s' out of range, ignoring. (Create more State defs.)") << arg;
-                            }
+                        if(!isKnownAmmoNum)
+                        {
+                            LOG_WARNING("Ammo '%s' out of range, ignoring.") << arg;
+                        }
 
-                            skipToNextLine();
-                            parsePointer(ded->states + stateNum, ignore);
-                        }
-                        else if(line.beginsWith("Sprite", Qt::CaseInsensitive))
-                        {
-                            const String arg = line.substr(6).leftStrip();
-                            int spriteNum = 0;
-                            const bool isKnownSpriteNum = parseSpriteNum(arg, &spriteNum);
-                            const bool ignore = !isKnownSpriteNum;
+                        skipToNextLine();
+                        parseAmmo(ammoNum, ignore);
+                    }
+                    else if(line.beginsWith("Weapon", Qt::CaseInsensitive))
+                    {
+                        const String arg = line.substr(6).leftStrip();
+                        int weaponNum = 0;
+                        const bool isKnownWeaponNum = parseWeaponNum(arg, &weaponNum);
+                        const bool ignore = !isKnownWeaponNum;
 
-                            if(!isKnownSpriteNum)
-                            {
-                                LOG_WARNING("Sprite '%s' out of range, ignoring. (Create more Sprite defs.)") << arg;
-                            }
+                        if(!isKnownWeaponNum)
+                        {
+                            LOG_WARNING("Weapon '%s' out of range, ignoring.") << arg;
+                        }
 
-                            skipToNextLine();
-                            parseSprite(ded->sprites + spriteNum, ignore);
-                        }
-                        else if(line.beginsWith("Ammo", Qt::CaseInsensitive))
+                        skipToNextLine();
+                        parseWeapon(weaponNum, ignore);
+                    }
+                    else if(line.beginsWith("Sound", Qt::CaseInsensitive))
+                    {
+                        // Not yet supported.
+                        //const String arg = line.substr(5).leftStrip()
+                        //const int soundNum = arg.toIntLeft();
+                        //skipToNextLine();
+                        parseSound();
+                        skipToNextSection();
+                    }
+                    else if(line.beginsWith("Text", Qt::CaseInsensitive))
+                    {
+                        String args = line.substr(4).leftStrip();
+                        int firstArgEnd = args.indexOf(' ');
+                        if(firstArgEnd < 0)
                         {
-                            const String arg = line.substr(4).leftStrip();
-                            int ammoNum = 0;
-                            const bool isKnownAmmoNum = parseAmmoNum(arg, &ammoNum);
-                            const bool ignore = !isKnownAmmoNum;
+                            throw SyntaxError(String("Expected old text size on line #%1")
+                                                  .arg(currentLineNumber));
+                        }
+                        bool isNumber;
+                        const int oldSize = args.toIntLeft(&isNumber, 10);
+                        if(!isNumber)
+                        {
+                            throw SyntaxError(String("Expected old text size but encountered \"%1\" on line #%2")
+                                                  .arg(args.substr(firstArgEnd)).arg(currentLineNumber));
+                        }
 
-                            if(!isKnownAmmoNum)
-                            {
-                                LOG_WARNING("Ammo '%s' out of range, ignoring.") << arg;
-                            }
+                        args.remove(0, firstArgEnd + 1);
 
-                            skipToNextLine();
-                            parseAmmo(ammoNum, ignore);
-                        }
-                        else if(line.beginsWith("Weapon"), Qt::CaseInsensitive)
+                        const int newSize = args.toIntLeft(&isNumber, 10);
+                        if(!isNumber)
                         {
-                            const String arg = line.substr(6).leftStrip();
-                            int weaponNum = 0;
-                            const bool isKnownWeaponNum = parseWeaponNum(arg, &weaponNum);
-                            const bool ignore = !isKnownWeaponNum;
+                            throw SyntaxError(String("Expected new text size but encountered \"%1\" on line #%2")
+                                                  .arg(args).arg(currentLineNumber));
+                        }
 
-                            if(!isKnownWeaponNum)
-                            {
-                                LOG_WARNING("Weapon '%s' out of range, ignoring.") << arg;
-                            }
-
-                            skipToNextLine();
-                            parseWeapon(weaponNum, ignore);
-                        }
-                        else if(line.beginsWith("Sound", Qt::CaseInsensitive))
-                        {
-                            // Not yet supported.
-                            //const String arg = line.substr(5).leftStrip()
-                            //const int soundNum = arg.toIntLeft();
-                            //skipToNextLine();
-                            parseSound();
-                            skipToNextSection();
-                        }
-                        else if(line.beginsWith("Text", Qt::CaseInsensitive))
-                        {
-                            String args = line.substr(4).leftStrip();
-                            int firstArgEnd = args.indexOf(' ');
-                            if(firstArgEnd < 0)
-                            {
-                                throw SyntaxError(String("Expected old text size on line #%1")
-                                                      .arg(currentLineNumber));
-                            }
-                            bool isNumber;
-                            const int oldSize = args.toIntLeft(&isNumber, 10);
-                            if(!isNumber)
-                            {
-                                throw SyntaxError(String("Expected old text size but encountered \"%1\" on line #%2")
-                                                      .arg(args.substr(firstArgEnd)).arg(currentLineNumber));
-                            }
-
-                            args.remove(0, firstArgEnd + 1);
-
-                            const int newSize = args.toIntLeft(&isNumber, 10);
-                            if(!isNumber)
-                            {
-                                throw SyntaxError(String("Expected new text size but encountered \"%1\" on line #%2")
-                                                      .arg(args).arg(currentLineNumber));
-                            }
-
-                            parseText(oldSize, newSize);
-                            skipToNextSection();
-                        }
-                        else if(line.beginsWith("Misc", Qt::CaseInsensitive))
-                        {
-                            skipToNextLine();
-                            parseMisc();
-                        }
-                        else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
-                        {
-                            LOG_WARNING("[Cheat] patches are not supported.");
-                            skipToNextSection();
-                        }
-                        else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // .bex
-                        {
-                            skipToNextLine();
-                            parsePointerBex();
-                        }
-                        else if(line.beginsWith("[PARS]", Qt::CaseInsensitive)) // .bex
-                        {
-                            skipToNextLine();
-                            parseParsBex();
-                        }
-                        else if(line.beginsWith("[STRINGS]", Qt::CaseInsensitive)) // .bex
-                        {
-                            // Not yet supported.
-                            //skipToNextLine();
-                            parseStringsBex();
-                            skipToNextSection();
-                        }
-                        else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // .bex
-                        {
-                            // Not yet supported (Helper Dogs from MBF).
-                            //skipToNextLine();
-                            parseHelperBex();
-                            skipToNextSection();
-                        }
-                        else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // .bex
-                        {
-                            // Not yet supported.
-                            //skipToNextLine();
-                            parseSpritesBex();
-                            skipToNextSection();
-                        }
-                        else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // .bex
-                        {
-                            // Not yet supported.
-                            //skipToNextLine();
-                            parseSoundsBex();
-                            skipToNextSection();
-                        }
-                        else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // .bex
-                        {
-                            // Not yet supported.
-                            //skipToNextLine();
-                            parseMusicBex();
-                            skipToNextSection();
-                        }
-                        else
-                        {
-                            // An unknown section.
-                            throw UnknownSection(String("Expected section name but encountered \"%1\" on line #%2")
-                                                     .arg(line).arg(currentLineNumber));
-                        }
-                        break; }
-
-                    default:
-                        throw SyntaxError(String("Statement \"%1\" on line #%2 encountered out of context")
-                                              .arg(line).arg(currentLineNumber));
+                        parseText(oldSize, newSize);
+                        skipToNextSection();
+                    }
+                    else if(line.beginsWith("Misc", Qt::CaseInsensitive))
+                    {
+                        skipToNextLine();
+                        parseMisc();
+                    }
+                    else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
+                    {
+                        LOG_WARNING("[Cheat] patches are not supported.");
+                        skipToNextSection();
+                    }
+                    else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // .bex
+                    {
+                        skipToNextLine();
+                        parsePointerBex();
+                    }
+                    else if(line.beginsWith("[PARS]", Qt::CaseInsensitive)) // .bex
+                    {
+                        skipToNextLine();
+                        parseParsBex();
+                    }
+                    else if(line.beginsWith("[STRINGS]", Qt::CaseInsensitive)) // .bex
+                    {
+                        // Not yet supported.
+                        //skipToNextLine();
+                        parseStringsBex();
+                        skipToNextSection();
+                    }
+                    else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // .bex
+                    {
+                        // Not yet supported (Helper Dogs from MBF).
+                        //skipToNextLine();
+                        parseHelperBex();
+                        skipToNextSection();
+                    }
+                    else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // .bex
+                    {
+                        // Not yet supported.
+                        //skipToNextLine();
+                        parseSpritesBex();
+                        skipToNextSection();
+                    }
+                    else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // .bex
+                    {
+                        // Not yet supported.
+                        //skipToNextLine();
+                        parseSoundsBex();
+                        skipToNextSection();
+                    }
+                    else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // .bex
+                    {
+                        // Not yet supported.
+                        //skipToNextLine();
+                        parseMusicBex();
+                        skipToNextSection();
+                    }
+                    else
+                    {
+                        // An unknown section.
+                        throw UnknownSection(String("Expected section name but encountered \"%1\" on line #%2")
+                                                 .arg(line).arg(currentLineNumber));
                     }
                 }
                 catch(const UnknownSection& er)
@@ -1195,7 +1181,7 @@ public:
     void parseMisc()
     {
         LOG_AS("parseMisc");
-        for(; !lineInCurrentSection(); skipToNextLine())
+        for(; lineInCurrentSection(); skipToNextLine())
         {
             String lineLeft, lineRight;
             splitLine(line, lineLeft, lineRight);
