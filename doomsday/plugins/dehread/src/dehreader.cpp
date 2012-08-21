@@ -163,7 +163,12 @@ public:
         skipToEOL();
         if(!atEnd())
         {
-            line = String::fromAscii(patch.mid(start, pos - start));
+            int endOfLine = pos - start;
+            // Ignore any trailing carriage return.
+            if(endOfLine > 0 && patch.at(endOfLine - 1) == '\r') endOfLine -= 1;
+
+            // Extract a copy of this line and move on.
+            line = String::fromAscii(patch.mid(start, endOfLine));
             if(currentChar() == '\n') advance();
             return;
         }
