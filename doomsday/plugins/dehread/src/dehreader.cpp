@@ -284,177 +284,194 @@ public:
                         }
                         break;
 
-                    case 2: { // A new section begins.
-                        if(line.beginsWith("include ")) // .bex
-                        {
-                            parseInclude(line.mid(8));
-                            skipToNextSection();
-                            break;
-                        }
-
+                    case 2: {
+                        /// A new section begins.
                         /// @note Some sections have their own grammar quirks!
-                        String lineLeft, lineRight;
-                        splitLine(line, lineLeft, lineRight);
-                        if(!lineLeft.compareWithoutCase("Thing"))
+                        if(line.beginsWith("include", Qt::CaseInsensitive)) // .bex
                         {
+                            parseInclude(line.substr(7).leftStrip());
+                            skipToNextSection();
+                        }
+                        else if(line.beginsWith("Thing", Qt::CaseInsensitive))
+                        {
+                            const String arg = line.substr(5).leftStrip();
                             int mobjType = 0;
-                            const bool isKnownMobjType = parseMobjType(lineRight, &mobjType);
+                            const bool isKnownMobjType = parseMobjType(arg, &mobjType);
                             const bool ignore = !isKnownMobjType;
 
                             if(!isKnownMobjType)
                             {
-                                LOG_WARNING("Thing '%s' out of range, ignoring. (Create more Thing defs.)") << lineRight;
+                                LOG_WARNING("Thing '%s' out of range, ignoring. (Create more Thing defs.)") << arg;
                             }
 
                             skipToNextLine();
                             parseThing(ded->mobjs + mobjType, ignore);
                         }
-                        else if(!lineLeft.compareWithoutCase("Frame"))
+                        else if(line.beginsWith("Frame", Qt::CaseInsensitive))
                         {
+                            const String arg = line.substr(5).leftStrip();
                             int stateNum = 0;
-                            const bool isKnownStateNum = parseStateNum(lineRight, &stateNum);
+                            const bool isKnownStateNum = parseStateNum(arg, &stateNum);
                             const bool ignore = !isKnownStateNum;
 
                             if(!isKnownStateNum)
                             {
-                                LOG_WARNING("Frame '%s' out of range, ignoring. (Create more State defs.)") << lineRight;
+                                LOG_WARNING("Frame '%s' out of range, ignoring. (Create more State defs.)") << arg;
                             }
 
                             skipToNextLine();
                             parseFrame(ded->states + stateNum, ignore);
                         }
-                        else if(!lineLeft.compareWithoutCase("Pointer"))
+                        else if(line.beginsWith("Pointer", Qt::CaseInsensitive))
                         {
+                            const String arg = line.substr(7).leftStrip();
                             int stateNum = 0;
-                            const bool isKnownStateNum = parseStateNumFromActionOffset(lineRight, &stateNum);
+                            const bool isKnownStateNum = parseStateNumFromActionOffset(arg, &stateNum);
                             const bool ignore = !isKnownStateNum;
 
                             if(!isKnownStateNum)
                             {
-                                LOG_WARNING("Pointer '%s' out of range, ignoring. (Create more State defs.)") << lineRight;
+                                LOG_WARNING("Pointer '%s' out of range, ignoring. (Create more State defs.)") << arg;
                             }
 
                             skipToNextLine();
                             parsePointer(ded->states + stateNum, ignore);
                         }
-                        else if(!lineLeft.compareWithoutCase("Sprite"))
+                        else if(line.beginsWith("Sprite", Qt::CaseInsensitive))
                         {
+                            const String arg = line.substr(6).leftStrip();
                             int spriteNum = 0;
-                            const bool isKnownSpriteNum = parseSpriteNum(lineRight, &spriteNum);
+                            const bool isKnownSpriteNum = parseSpriteNum(arg, &spriteNum);
                             const bool ignore = !isKnownSpriteNum;
 
                             if(!isKnownSpriteNum)
                             {
-                                LOG_WARNING("Sprite '%s' out of range, ignoring. (Create more Sprite defs.)") << lineRight;
+                                LOG_WARNING("Sprite '%s' out of range, ignoring. (Create more Sprite defs.)") << arg;
                             }
 
                             skipToNextLine();
                             parseSprite(ded->sprites + spriteNum, ignore);
                         }
-                        else if(!lineLeft.compareWithoutCase("Ammo"))
+                        else if(line.beginsWith("Ammo", Qt::CaseInsensitive))
                         {
+                            const String arg = line.substr(4).leftStrip();
                             int ammoNum = 0;
-                            const bool isKnownAmmoNum = parseAmmoNum(lineRight, &ammoNum);
+                            const bool isKnownAmmoNum = parseAmmoNum(arg, &ammoNum);
                             const bool ignore = !isKnownAmmoNum;
 
                             if(!isKnownAmmoNum)
                             {
-                                LOG_WARNING("Ammo '%s' out of range, ignoring.") << lineRight;
+                                LOG_WARNING("Ammo '%s' out of range, ignoring.") << arg;
                             }
 
                             skipToNextLine();
                             parseAmmo(ammoNum, ignore);
                         }
-                        else if(!lineLeft.compareWithoutCase("Weapon"))
+                        else if(line.beginsWith("Weapon"), Qt::CaseInsensitive)
                         {
+                            const String arg = line.substr(6).leftStrip();
                             int weaponNum = 0;
-                            const bool isKnownWeaponNum = parseWeaponNum(lineRight, &weaponNum);
+                            const bool isKnownWeaponNum = parseWeaponNum(arg, &weaponNum);
                             const bool ignore = !isKnownWeaponNum;
 
                             if(!isKnownWeaponNum)
                             {
-                                LOG_WARNING("Weapon '%s' out of range, ignoring.") << lineRight;
+                                LOG_WARNING("Weapon '%s' out of range, ignoring.") << arg;
                             }
 
                             skipToNextLine();
                             parseWeapon(weaponNum, ignore);
                         }
-                        else if(!lineLeft.compareWithoutCase("Sound"))
+                        else if(line.beginsWith("Sound", Qt::CaseInsensitive))
                         {
                             // Not yet supported.
-                            //const int soundNum = lineRight.toIntLeft();
+                            //const String arg = line.substr(5).leftStrip()
+                            //const int soundNum = arg.toIntLeft();
                             //skipToNextLine();
                             parseSound();
                             skipToNextSection();
                         }
-                        else if(!lineLeft.compareWithoutCase("Misc"))
+                        else if(line.beginsWith("Text", Qt::CaseInsensitive))
                         {
-                            skipToNextLine();
-                            parseMisc();
-                        }
-                        else if(!lineLeft.compareWithoutCase("Text"))
-                        {
-                            const int oldSize = lineRight.toIntLeft();
-                            Block temp = lineRight.toAscii();
-                            const char* ch = parseToken(temp.constData());
-                            if(!parseToken(ch))
+                            String args = line.substr(4).leftStrip();
+                            int firstArgEnd = args.indexOf(' ');
+                            if(firstArgEnd < 0)
                             {
-                                throw SyntaxError(String("Expected new text size on line #%1")
+                                throw SyntaxError(String("Expected old text size on line #%1")
                                                       .arg(currentLineNumber));
                             }
-                            bool isNumber = false;
-                            const int newSize = String(com_token).toIntLeft(&isNumber);
+                            bool isNumber;
+                            const int oldSize = args.toIntLeft(&isNumber, 10);
+                            if(!isNumber)
+                            {
+                                throw SyntaxError(String("Expected old text size but encountered \"%1\" on line #%2")
+                                                      .arg(args.substr(firstArgEnd)).arg(currentLineNumber));
+                            }
+
+                            args.remove(0, firstArgEnd + 1);
+
+                            const int newSize = args.toIntLeft(&isNumber, 10);
                             if(!isNumber)
                             {
                                 throw SyntaxError(String("Expected new text size but encountered \"%1\" on line #%2")
-                                                      .arg(com_token).arg(currentLineNumber));
+                                                      .arg(args).arg(currentLineNumber));
                             }
 
                             parseText(oldSize, newSize);
                             skipToNextSection();
                         }
-                        else if(!lineLeft.compareWithoutCase("Cheat"))
+                        else if(line.beginsWith("Misc", Qt::CaseInsensitive))
+                        {
+                            skipToNextLine();
+                            parseMisc();
+                        }
+                        else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
                         {
                             LOG_WARNING("[Cheat] patches are not supported.");
                             skipToNextSection();
                         }
-                        else if(!lineLeft.compareWithoutCase("[CODEPTR]")) // .bex
+                        else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // .bex
                         {
                             skipToNextLine();
                             parsePointerBex();
                         }
-                        else if(!lineLeft.compareWithoutCase("[PARS]")) // .bex
+                        else if(line.beginsWith("[PARS]", Qt::CaseInsensitive)) // .bex
                         {
                             skipToNextLine();
                             parseParsBex();
                         }
-                        else if(!lineLeft.compareWithoutCase("[STRINGS]")) // .bex
+                        else if(line.beginsWith("[STRINGS]", Qt::CaseInsensitive)) // .bex
                         {
                             // Not yet supported.
+                            //skipToNextLine();
                             parseStringsBex();
                             skipToNextSection();
                         }
-                        else if(!lineLeft.compareWithoutCase("[HELPER]")) // .bex
+                        else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // .bex
                         {
                             // Not yet supported (Helper Dogs from MBF).
+                            //skipToNextLine();
                             parseHelperBex();
                             skipToNextSection();
                         }
-                        else if(!lineLeft.compareWithoutCase("[SPRITES]")) // .bex
+                        else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // .bex
                         {
                             // Not yet supported.
+                            //skipToNextLine();
                             parseSpritesBex();
                             skipToNextSection();
                         }
-                        else if(!lineLeft.compareWithoutCase("[SOUNDS]")) // .bex
+                        else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // .bex
                         {
                             // Not yet supported.
+                            //skipToNextLine();
                             parseSoundsBex();
                             skipToNextSection();
                         }
-                        else if(!lineLeft.compareWithoutCase("[MUSIC]")) // .bex
+                        else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // .bex
                         {
                             // Not yet supported.
+                            //skipToNextLine();
                             parseMusicBex();
                             skipToNextSection();
                         }
@@ -462,7 +479,7 @@ public:
                         {
                             // An unknown section.
                             throw UnknownSection(String("Expected section name but encountered \"%1\" on line #%2")
-                                                     .arg(lineLeft).arg(currentLineNumber));
+                                                     .arg(line).arg(currentLineNumber));
                         }
                         break; }
 
@@ -1151,6 +1168,7 @@ public:
         {
             String lineLeft, lineRight;
             splitLine(line, lineLeft, lineRight);
+
             if(!lineLeft.compareWithoutCase("Codep Frame"))
             {
                 const int actionIdx = lineRight.toIntLeft();
@@ -1205,6 +1223,7 @@ public:
             {
                 String lineLeft, lineRight;
                 splitLine(line, lineLeft, lineRight);
+
                 if(!lineLeft.compareWithoutCase("par"))
                 {
                     if(lineRight.isEmpty())
@@ -1298,6 +1317,7 @@ public:
         {
             String lineLeft, lineRight;
             splitLine(line, lineLeft, lineRight);
+
             if(lineLeft.startsWith("Frame ", Qt::CaseInsensitive))
             {
                 const int stateNum = lineLeft.substr(6).toIntLeft();
