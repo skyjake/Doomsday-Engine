@@ -339,12 +339,18 @@ public:
                     }
                     else if(line.beginsWith("Sound", Qt::CaseInsensitive))
                     {
-                        // Not yet supported.
-                        //const String arg = line.substr(5).leftStrip()
-                        //const int soundNum = arg.toIntLeft();
-                        //skipToNextLine();
-                        parseSound();
-                        skipToNextSection();
+                        const String arg = line.substr(5).leftStrip();
+                        int soundNum = 0;
+                        const bool isKnownSoundNum = parseSoundNum(arg, &soundNum);
+                        const bool ignore = !isKnownSoundNum;
+
+                        if(!isKnownSoundNum)
+                        {
+                            LOG_WARNING("Sound '%s' out of range, ignoring. (Create more Sound defs.)") << arg;
+                        }
+
+                        skipToNextLine();
+                        parseSound(ded->sounds + soundNum, ignore);
                     }
                     else if(line.beginsWith("Text", Qt::CaseInsensitive))
                     {
@@ -478,11 +484,32 @@ public:
         }
     }
 
+    bool parseAmmoNum(const String& str, int* ammoNum)
+    {
+        int result = str.toIntLeft();
+        if(ammoNum) *ammoNum = result;
+        return (result >= 0 && result < 4);
+    }
+
     bool parseMobjType(const String& str, int* mobjType)
     {
         int result = str.toIntLeft() - 1; // Patch indices are 1-based.
         if(mobjType) *mobjType = result;
         return (result >= 0 && result < ded->count.mobjs.num);
+    }
+
+    bool parseSoundNum(const String& str, int* soundNum)
+    {
+        int result = str.toIntLeft();
+        if(soundNum) *soundNum = result;
+        return (result >= 0 && result < ded->count.sounds.num);
+    }
+
+    bool parseSpriteNum(const String& str, int* spriteNum)
+    {
+        int result = str.toIntLeft();
+        if(spriteNum) *spriteNum = result;
+        return (result >= 0 && result < NUMSPRITES);
     }
 
     bool parseStateNum(const String& str, int* stateNum)
@@ -497,20 +524,6 @@ public:
         int result = stateIndexForActionOffset(str.toIntLeft());
         if(stateNum) *stateNum = result;
         return (result >= 0 && result < ded->count.states.num);
-    }
-
-    bool parseSpriteNum(const String& str, int* spriteNum)
-    {
-        int result = str.toIntLeft();
-        if(spriteNum) *spriteNum = result;
-        return (result >= 0 && result < NUMSPRITES);
-    }
-
-    bool parseAmmoNum(const String& str, int* ammoNum)
-    {
-        int result = str.toIntLeft();
-        if(ammoNum) *ammoNum = result;
-        return (result >= 0 && result < 4);
     }
 
     bool parseWeaponNum(const String& str, int* weaponNum)
@@ -1046,10 +1059,85 @@ public:
         }
     }
 
-    void parseSound()
+    void parseSound(ded_sound_t* sound, bool ignore = false)
     {
+        const int soundIdx = sound - ded->sounds;
         LOG_AS("parseSound");
-        LOG_WARNING("[Sound] patches are not supported.");
+        for(; lineInCurrentSection(); skipToNextLine())
+        {
+            String var, expr;
+            parseAssignmentStatement(line, var, expr);
+
+            if(!var.compareWithoutCase("Offset")) // sound->id
+            {
+                LOG_WARNING("Sound - \"Offset\" patches are not supported.");
+            }
+            else if(!var.compareWithoutCase("Zero/One")) // old priority flag?
+            {
+                LOG_WARNING("Sound - \"Zero/One\" patches are not supported.");
+            }
+            else if(!var.compareWithoutCase("Value"))
+            {
+                const int value = expr.toIntLeft(0, 10);
+                if(!ignore)
+                {
+                    sound->priority = value;
+                    LOG_DEBUG("Sound #%i \"%s\" priority => %i") << soundIdx << sound->id << sound->priority;
+                }
+            }
+            else if(!var.compareWithoutCase("Zero 1")) // sound->link
+            {
+                LOG_WARNING("Sound - \"Zero 1\" patches are not supported.");
+            }
+            else if(!var.compareWithoutCase("Zero 2"))
+            {
+                const int value = expr.toIntLeft(0, 10);
+                if(!ignore)
+                {
+                    sound->linkPitch = value;
+                    LOG_DEBUG("Sound #%i \"%s\" linkPitch => %i") << soundIdx << sound->id << sound->linkPitch;
+                }
+            }
+            else if(!var.compareWithoutCase("Zero 3"))
+            {
+                const int value = expr.toIntLeft(0, 10);
+                if(!ignore)
+                {
+                    sound->linkVolume = value;
+                    LOG_DEBUG("Sound #%i \"%s\" linkVolume => %i") << soundIdx << sound->id << sound->linkVolume;
+                }
+            }
+            else if(!var.compareWithoutCase("Zero 4")) // ??
+            {
+                LOG_WARNING("Sound - \"Zero 4\" patches are not supported.");
+            }
+            else if(!var.compareWithoutCase("Neg. One 1")) // ??
+            {
+                LOG_WARNING("Sound - \"Neg. One 1\" patches are not supported.");
+            }
+            else if(!var.compareWithoutCase("Neg. One 2"))
+            {
+                const int lumpNum  = expr.toIntLeft();
+                if(!ignore)
+                {
+                    const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
+                    if(lumpNum < 0 || lumpNum >= numLumps)
+                    {
+                        LOG_WARNING("Neg. One 2 #%i out of range, ignoring.") << lumpNum;
+                    }
+                    else
+                    {
+                        qstrncpy(sound->lumpName, W_LumpName(lumpNum), DED_STRINGID_LEN + 1);
+                        LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
+                            << soundIdx << sound->id << sound->lumpName;
+                    }
+                }
+            }
+            else
+            {
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << var << currentLineNumber;
+            }
+        }
     }
 
     void parseAmmo(const int ammoNum, bool ignore = false)
