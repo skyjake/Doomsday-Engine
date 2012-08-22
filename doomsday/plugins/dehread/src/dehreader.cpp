@@ -1117,9 +1117,14 @@ public:
             {
                 LOG_WARNING("Sound - \"Offset\" patches are not supported.");
             }
-            else if(!var.compareWithoutCase("Zero/One")) // old priority flag?
+            else if(!var.compareWithoutCase("Zero/One"))
             {
-                LOG_WARNING("Sound - \"Zero/One\" patches are not supported.");
+                const int value = expr.toIntLeft(0, 10);
+                if(!ignore)
+                {
+                    sound->group = value;
+                    LOG_DEBUG("Sound #%i \"%s\" group => %i") << soundIdx << sound->id << sound->group;
+                }
             }
             else if(!var.compareWithoutCase("Value"))
             {
