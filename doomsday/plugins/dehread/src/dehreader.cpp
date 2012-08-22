@@ -1254,10 +1254,6 @@ public:
                     Str_Delete(path);
                     Uri_Delete(uri);
                 }
-                else
-                {
-                    LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.") << line << currentLineNumber;
-                }
             }
             catch(const SyntaxError& er)
             {
@@ -1298,8 +1294,12 @@ public:
     void parsePointerBex()
     {
         LOG_AS("parsePointerBex");
-        for(; lineInCurrentSection(); skipToNextLine())
+        // .bex doesn't follow the same rules as .deh
+        for(; !line.trimmed().isEmpty(); skipToNextLine())
         {
+            // Skip comment lines.
+            if(line.at(0) == '#') continue;
+
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
@@ -1341,6 +1341,11 @@ public:
                     }
                 }
             }
+        }
+
+        if(line.trimmed().isEmpty())
+        {
+            skipToNextSection();
         }
     }
 
