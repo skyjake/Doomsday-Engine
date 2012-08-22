@@ -146,11 +146,20 @@ int findValueMappingForDehLabel(const QString& dehLabel, const ValueMapping** ma
 /**
  * Lookup a record in the music lump name table.
  *
- * @param name          Unique name of the sprite to lookup.
- * @return Index of the found sprite name in the mapping table (0-index).
+ * @param name          Unique name of the music to lookup.
+ * @return Index of the found music name in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
 int findMusicLumpNameInMap(const QString& name);
+
+/**
+ * Lookup a record in the sound lump name table.
+ *
+ * @param name          Unique name of the sound to lookup.
+ * @return Index of the found sound name in the mapping table (0-index).
+ *         Returns a negative value if not found.
+ */
+int findSoundLumpNameInMap(const QString& name);
 
 /**
  * Lookup a record in the sprite name table.

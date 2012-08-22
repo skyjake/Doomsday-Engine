@@ -1452,6 +1452,7 @@ public:
             // Try each type of "text" replacement in turn...
             bool found = false;
             if(patchSpriteNames(oldStr, newStr))    found = true;
+            if(patchSoundLumpNames(oldStr, newStr)) found = true;
             if(patchMusicLumpNames(oldStr, newStr)) found = true;
             if(patchText(oldStr, newStr))           found = true;
 
@@ -1548,6 +1549,31 @@ public:
 
             LOG_DEBUG("Music #%i \"%s\" lumpName => \"%s\"")
                 << i << music.id << music.lumpName;
+        }
+        return (numPatched > 0);
+    }
+
+    bool patchSoundLumpNames(const String& origName, const String& newName)
+    {
+        // Only sound lump names in the original name map can be patched.
+        /// @todo Why the restriction?
+        if(findSoundLumpNameInMap(origName) < 0) return false;
+
+        Block origNamePrefUtf8 = String("DS%s").arg(origName).toUtf8();
+        Block newNamePrefUtf8  = String("DS%s").arg(newName ).toUtf8();
+
+        // Update ALL sounds using this lump name.
+        int numPatched = 0;
+        for(int i = 0; i < ded->count.sounds.num; ++i)
+        {
+            ded_sound_t& sound = ded->sounds[i];
+            if(qstricmp(sound.lumpName, origNamePrefUtf8.constData())) continue;
+
+            qstrncpy(sound.lumpName, newNamePrefUtf8.constData(), 9);
+            numPatched++;
+
+            LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
+                << i << sound.id << sound.lumpName;
         }
         return (numPatched > 0);
     }
