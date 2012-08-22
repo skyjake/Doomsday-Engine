@@ -424,17 +424,13 @@ public:
                     }
                     else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // .bex
                     {
-                        // Not yet supported.
-                        //skipToNextLine();
+                        skipToNextLine();
                         parseSoundsBex();
-                        skipToNextSection();
                     }
                     else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // .bex
                     {
-                        // Not yet supported.
-                        //skipToNextLine();
+                        skipToNextLine();
                         parseMusicBex();
-                        skipToNextSection();
                     }
                     else
                     {
@@ -1370,13 +1366,61 @@ public:
     void parseSoundsBex()
     {
         LOG_AS("parseSoundsBex");
-        LOG_WARNING("[SOUNDS] patches are not supported.");
+        // .bex doesn't follow the same rules as .deh
+        for(; !line.trimmed().isEmpty(); readLine())
+        {
+            // Skip comment lines.
+            if(line.at(0) == '#') continue;
+
+            try
+            {
+                String var, expr;
+                parseAssignmentStatement(line, var, expr);
+                if(!patchSoundLumpNames(var, expr))
+                {
+                    LOG_WARNING("Failed to locate sound \"%s\" for patching.") << var;
+                }
+            }
+            catch(const SyntaxError& er)
+            {
+                LOG_WARNING("%s, ignoring.") << er.asText();
+            }
+        }
+
+        if(line.trimmed().isEmpty())
+        {
+            skipToNextSection();
+        }
     }
 
     void parseMusicBex()
     {
         LOG_AS("parseMusicBex");
-        LOG_WARNING("[MUSIC] patches are not supported.");
+        // .bex doesn't follow the same rules as .deh
+        for(; !line.trimmed().isEmpty(); readLine())
+        {
+            // Skip comment lines.
+            if(line.at(0) == '#') continue;
+
+            try
+            {
+                String var, expr;
+                parseAssignmentStatement(line, var, expr);
+                if(!patchMusicLumpNames(var, expr))
+                {
+                    LOG_WARNING("Failed to locate music \"%s\" for patching.") << var;
+                }
+            }
+            catch(const SyntaxError& er)
+            {
+                LOG_WARNING("%s, ignoring.") << er.asText();
+            }
+        }
+
+        if(line.trimmed().isEmpty())
+        {
+            skipToNextSection();
+        }
     }
 
     void parsePointerBex()

@@ -352,7 +352,7 @@ int findSpriteNameInMap(const QString& name)
     return -1; // Not found.
 }
 
-static const char* SoundMap[] = {
+static const QString SoundMap[] = {
     "None",
     "pistol",
     "shotgn",
@@ -464,6 +464,18 @@ static const char* SoundMap[] = {
     "radio",
     NULL
 };
+
+int findSoundLumpNameInMap(const QString& name)
+{
+    /// @todo Optimize - replace linear search.
+    if(!name.isEmpty())
+    for(int i = 0; !SoundMap[i].isEmpty(); ++i)
+    {
+        if(!SoundMap[i].compare(name, Qt::CaseInsensitive))
+            return i;
+    }
+    return -1; // Not found.
+}
 
 static SoundMapping soundMappings[] = {
     { "Alert",    SDN_SEE,        "See" },
