@@ -36,7 +36,8 @@
 /// Flags used with @see readDehPatch() to alter read behavior.
 enum DehReaderFlag
 {
-    NoText      = 0x1 ///< Ignore Text patches.
+    NoInclude   = 0x1, ///< Including of other patch files is disabled.
+    NoText      = 0x2  ///< Ignore Text patches.
 };
 Q_DECLARE_FLAGS(DehReaderFlags, DehReaderFlag)
 

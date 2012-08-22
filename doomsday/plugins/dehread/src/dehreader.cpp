@@ -578,6 +578,13 @@ public:
 
     void parseInclude(QString& arg)
     {
+        if(flags & NoInclude)
+        {
+            LOG_AS("parseInclude");
+            LOG_DEBUG("Skipping disabled Include directive.");
+            return;
+        }
+
         if(stackDepth > maxIncludeDepth)
         {
             LOG_AS("parseInclude");
