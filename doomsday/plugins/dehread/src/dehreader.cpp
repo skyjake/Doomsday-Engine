@@ -1265,7 +1265,7 @@ public:
                     createValueDef(String("Weapon Info|%1|Type").arg(weapNum), ammotypes[value]);
                 }
             }
-            else if(!var.compareWithoutCase("Ammo per shot"))
+            else if(!var.compareWithoutCase("Ammo per shot")) // Eternity
             {
                 const int value = expr.toIntLeft(0, 10);
                 if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), QString::number(value));
@@ -1549,10 +1549,11 @@ public:
         {
             // Try each type of "text" replacement in turn...
             bool found = false;
-            if(patchSpriteNames(oldStr, newStr))    found = true;
-            if(patchSoundLumpNames(oldStr, newStr)) found = true;
-            if(patchMusicLumpNames(oldStr, newStr)) found = true;
-            if(patchText(oldStr, newStr))           found = true;
+            if(patchFinaleBackgroundNames(oldStr, newStr))  found = true;
+            if(patchMusicLumpNames(oldStr, newStr))         found = true;
+            if(patchSpriteNames(oldStr, newStr))            found = true;
+            if(patchSoundLumpNames(oldStr, newStr))         found = true;
+            if(patchText(oldStr, newStr))                   found = true;
 
             // Give up?
             if(!found)
@@ -1624,6 +1625,16 @@ public:
         LOG_DEBUG("Sprite #%i id => \"%s\"") << spriteIdx << def.id;
         return true;
 #endif
+    }
+
+    bool patchFinaleBackgroundNames(const String& origName, const String& newName)
+    {
+        const FinaleBackgroundMapping* mapping;
+        if(findFinaleBackgroundMappingForText(origName, &mapping) < 0) return false;
+        /// @todo Presently unsupported.
+        DENG2_UNUSED(newName);
+        LOG_WARNING("Finale background name remapping is not supported.");
+        return true; // Pretend success.
     }
 
     bool patchMusicLumpNames(const String& origName, const String& newName)

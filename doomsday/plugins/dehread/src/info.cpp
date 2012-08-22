@@ -23,6 +23,35 @@
 #include "dehread.h"
 #include "info.h"
 
+static const FinaleBackgroundMapping finaleBGMappings[] = {
+    { "FLOOR4_8",   "BGFLATE1" }, ///< DOOM end of episode 1
+    { "SFLR6_1",    "BGFLATE2" }, ///< DOOM end of episode 2
+    { "MFLR8_4",    "BGFLATE3" }, ///< DOOM end of episode 3
+    { "MFLR8_3",    "BGFLATE4" }, ///< DOOM end of episode 4
+    { "SLIME16",    "BGFLAT06" }, ///< DOOM2 before MAP06
+    { "RROCK14",    "BGFLAT11" }, ///< DOOM2 before MAP11
+    { "RROCK07",    "BGFLAT20" }, ///< DOOM2 before MAP20
+    { "RROCK17",    "BGFLAT30" }, ///< DOOM2 before MAP30
+    { "RROCK13",    "BGFLAT15" }, ///< DOOM2 from MAP15 to MAP31
+    { "RROCK19",    "BGFLAT31" }, ///< DOOM2 from MAP31 to MAP32
+    { "BOSSBACK",   "BGCASTCALL" }, ///< End of game cast call
+    { "",           ""}
+};
+
+int findFinaleBackgroundMappingForText(const QString& text, const FinaleBackgroundMapping** mapping)
+{
+    if(!text.isEmpty())
+    for(int i = 0; !finaleBGMappings[i].text.isEmpty(); ++i)
+    {
+        if(!finaleBGMappings[i].text.compare(text, Qt::CaseInsensitive))
+        {
+            if(mapping) *mapping = &finaleBGMappings[i];
+            return i;
+        }
+    }
+    return -1; // Not found.
+}
+
 static FlagMapping mobjtypeFlagMappings[] = {
 // Group #0:
     {  0, 0, "SPECIAL"      },

@@ -26,6 +26,26 @@
 #include <QString>
 #include "dehread.h"
 
+struct FinaleBackgroundMapping
+{
+    const QString text;
+    const QString mnemonic;
+};
+
+/**
+ * Lookup a record in the FinaleBackgrounMapping table by the flat name that
+ * was originally used for this background.
+ *
+ * @param text          Deh label/name (identifier) of the sound to search for.
+ * @param mapping       If not @c NULL the address of the FinaleBackgroundMapping
+ *                      record will be written back here. Caller should not derive
+ *                      meaning from the returned address itself.
+ *
+ * @return Index of the found finale-background-mapping in the mapping table (0-index).
+ *         Returns a negative value if not found.
+ */
+int findFinaleBackgroundMappingForText(const QString& text, const FinaleBackgroundMapping** mapping);
+
 struct FlagMapping
 {
     ushort bit;
