@@ -835,6 +835,32 @@ public:
                     }
                 }
             }
+            else if(!var.compareWithoutCase("Bits2")) // Eternity
+            {
+                /// @todo Support this extension.
+                LOG_WARNING("Thing - \"Bits2\" patches are not supported.");
+            }
+            else if(!var.compareWithoutCase("Bits3")) // Eternity
+            {
+                /// @todo Support this extension.
+                LOG_WARNING("Thing - \"Bits3\" patches are not supported.");
+            }
+            else if(!var.compareWithoutCase("Blood color")) // Eternity
+            {
+                /**
+                 * Red (normal)        0
+                 * Grey                1
+                 * Green               2
+                 * Blue                3
+                 * Yellow              4
+                 * Black               5
+                 * Purple              6
+                 * White               7
+                 * Orange              8
+                 */
+                /// @todo Support this extension.
+                LOG_WARNING("Thing - \"Blood color\" patches are not supported.");
+            }
             else if(!var.compareWithoutCase("ID #"))
             {
                 const int value = expr.toIntLeft(0, 10);
@@ -909,6 +935,13 @@ public:
                     LOG_DEBUG("Type #%i \"%s\" speed => %f") << mobjType << mobj->id << mobj->speed;
                 }
             }
+            else if(!var.compareWithoutCase("Translucency")) // Eternity
+            {
+                //const int value = expr.toIntLeft(0, 10);
+                //const float opacity = MINMAX_OF(0, value, 65536) / 65536.f;
+                /// @todo Support this extension.
+                LOG_WARNING("Thing - \"Translucency\" patches are not supported.");
+            }
             else if(!var.compareWithoutCase("Width"))
             {
                 const int value = expr.toIntLeft(0, 10);
@@ -965,6 +998,11 @@ public:
                         << stateNum << state->id << state->nextState << nextStateIdx;
                 }
             }
+            else if(!var.compareWithoutCase("Particle event")) // Eternity
+            {
+                /// @todo Support this extension.
+                LOG_WARNING("Frame - \"Particle event\" patches are not supported.");
+            }
             else if(!var.compareWithoutCase("Sprite number"))
             {
                 const int value = expr.toIntLeft(0, 10);
@@ -1011,6 +1049,10 @@ public:
                     state->misc[miscIdx] = value;
                     LOG_DEBUG("State #%i \"%s\" misc:%i => %i") << stateNum << state->id << miscIdx << value;
                 }
+            }
+            else if(var.beginsWith("Args", Qt::CaseInsensitive)) // Eternity
+            {
+                LOG_WARNING("Frame - \"%s\" patches are not supported.") << var;
             }
             else
             {
