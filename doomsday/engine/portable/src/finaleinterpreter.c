@@ -1,32 +1,24 @@
-/**\file finaleinterpreter.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * InFine: "Finale" script interpreter.
+ * @file finaleinterpreter.c
+ * InFine "Finale" script interpreter.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
 #include <stdio.h>
@@ -47,8 +39,6 @@
 #include "de_ui.h"
 #include "de_filesys.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
 
 // Helper macro for defining infine command functions.
@@ -59,14 +49,14 @@
 #define OP_FLOAT(n)         (ops[n].data.flt)
 #define OP_CSTRING(n)       (ops[n].data.cstring)
 #define OP_OBJECT(n)        (ops[n].data.obj)
-
-// TYPES -------------------------------------------------------------------
+#define OP_URI(n)           (ops[n].data.uri)
 
 typedef enum {
     FVT_INT,
     FVT_FLOAT,
-    FVT_SCRIPT_STRING, // ptr points to a char*, which points to the string.
-    FVT_OBJECT
+    FVT_SCRIPT_STRING,
+    FVT_OBJECT,
+    FVT_URI
 } fi_operand_type_t;
 
 typedef struct {
@@ -76,6 +66,7 @@ typedef struct {
         float       flt;
         const char* cstring;
         fi_object_t* obj;
+        Uri*        uri;
     } data;
 } fi_operand_t;
 
@@ -100,15 +91,10 @@ typedef struct fi_namespace_record_s {
     fi_objectid_t   objectId;
 } fi_namespace_record_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 // Command functions.
 DEFFC(Do);
 DEFFC(End);
-DEFFC(BGFlat);
-DEFFC(BGTexture);
+DEFFC(BGMaterial);
 DEFFC(NoBGMaterial);
 DEFFC(Wait);
 DEFFC(WaitText);
@@ -196,18 +182,19 @@ DEFFC(Command);
 DEFFC(ShowMenu);
 DEFFC(NoShowMenu);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obtype_e type);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-/// Time is measured in seconds.
-/// Colors are floating point and [0,1].
+/**
+ * Time is measured in seconds.
+ * Colors are floating point and [0..1].
+ *
+ * @todo This data should be pre-processed (i.e., parsed) during module init
+ *       and any symbolic references or other indirections resolved once
+ *       rather than repeatedly during script interpretation.
+ *
+ *       At this time the command names could also be hashed and chained to
+ *       improve performance. -ds
+ */
 static const command_t commands[] = {
     // Run Control
     { "DO",         "", FIC_Do, true, true },
@@ -234,8 +221,8 @@ static const command_t commands[] = {
     // Screen Control
     { "color",      "fff", FIC_Color }, // color (red) (green) (blue)
     { "coloralpha", "ffff", FIC_ColorAlpha }, // coloralpha (r) (g) (b) (a)
-    { "flat",       "s", FIC_BGFlat }, // flat (flat-id)
-    { "texture",    "s", FIC_BGTexture }, // texture (texture-id)
+    { "flat",       "u(flats:)", FIC_BGMaterial }, // flat (flat-id)
+    { "texture",    "u(textures:)", FIC_BGMaterial }, // texture (texture-id)
     { "noflat",     "", FIC_NoBGMaterial },
     { "notexture",  "", FIC_NoBGMaterial },
     { "offx",       "f", FIC_OffsetX }, // offx (x)
@@ -295,7 +282,7 @@ static const command_t commands[] = {
     { "scroll",     "sf", FIC_TextScroll }, // scroll (id) (speed)
     { "pos",        "si", FIC_TextPos }, // pos (id) (pos)
     { "rate",       "si", FIC_TextRate }, // rate (id) (rate)
-    { "font",       "ss", FIC_Font }, // font (id) (font)
+    { "font",       "su", FIC_Font }, // font (id) (font)
     { "linehgt",    "sf", FIC_TextLineHeight }, // linehgt (hndl) (hgt)
 
     // Game Control
@@ -306,7 +293,7 @@ static const command_t commands[] = {
 
     // Misc.
     { "precolor",   "ifff", FIC_PredefinedColor }, // precolor (num) (r) (g) (b)
-    { "prefont",    "is", FIC_PredefinedFont }, // prefont (num) (font)
+    { "prefont",    "iu", FIC_PredefinedFont }, // prefont (num) (font)
 
     // Deprecated Font commands
     { "fonta",      "s", FIC_FontA }, // fonta (id)
@@ -328,7 +315,20 @@ static const command_t commands[] = {
     { NULL, 0, NULL } // Terminate.
 };
 
-// CODE --------------------------------------------------------------------
+static __inline fi_operand_type_t operandTypeForCharCode(char code)
+{
+    switch(code)
+    {
+    case 'i': return FVT_INT;
+    case 'f': return FVT_FLOAT;
+    case 's': return FVT_SCRIPT_STRING;
+    case 'o': return FVT_OBJECT;
+    case 'u': return FVT_URI;
+    default:
+        Con_Error("Error: operandTypeForCharCode: Unknown char-code %c", code);
+        exit(1); // Unreachable.
+    }
+}
 
 static fi_objectid_t findIdForName(fi_namespace_t* names, const char* name)
 {
@@ -397,7 +397,7 @@ static __inline boolean objectInNamespace(fi_namespace_t* names, fi_object_t* ob
 }
 
 /**
- * \note Does not check if the object already exists in this scope.
+ * @note Does not check if the object already exists in this scope.
  */
 static fi_object_t* addObjectToNamespace(fi_namespace_t* names, const char* name, fi_object_t* obj)
 {
@@ -502,90 +502,161 @@ static const char* nextToken(finaleinterpreter_t* fi)
     return fi->_token;
 }
 
+static __inline const char* findDefaultValueEnd(const char* str)
+{
+    const char* defaultValueEnd;
+    for(defaultValueEnd = str; defaultValueEnd && *defaultValueEnd != ')'; defaultValueEnd++)
+    {}
+    DENG_ASSERT(defaultValueEnd < str + strlen(str));
+    return defaultValueEnd;
+}
+
+static const char* nextOperand(const char* operands)
+{
+    if(operands && operands[0])
+    {
+        // Some operands might include a default value.
+        int len = strlen(operands);
+        if(len > 1 && operands[1] == '(')
+        {
+            // A default value begins. Find the end.
+            return findDefaultValueEnd(operands + 2) + 1;
+        }
+        return operands + 1;
+    }
+    return NULL; // No more operands.
+}
+
+/// @return Total number of command operands in the control string @a operands.
+static int countCommandOperands(const char* operands)
+{
+    int count = 0;
+    while(operands && operands[0])
+    {
+        count += 1;
+        operands = nextOperand(operands);
+    }
+    return count;
+}
+
 /**
- * Parse the command operands from the script. If successfull, a ptr to a new
+ * Prepare the command operands from the script. If successfull, a ptr to a new
  * vector of @c fi_operand_t objects is returned. Ownership of the vector is
  * given to the caller.
  *
- * @return  Ptr to a new vector of @c fi_operand_t or @c 0.
+ * @return  A new array of @c fi_operand_t else @c NULL
  */
-static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi,
-    const command_t* cmd, uint* count)
+static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const command_t* cmd,
+    int* count)
 {
-    const char* origCursorPos;
-    uint numOperands;
-    fi_operand_t* ops = 0;
+    const char* origCursorPos = fi->_cp;
+    int operandCount = 0;
+    fi_operand_t* operands = 0, *op;
+    const char* opRover;
 
-    if(!cmd->operands || !cmd->operands[0])
-        return 0;
+    DENG_ASSERT(fi && cmd);
 
-    origCursorPos = fi->_cp;
-    numOperands = (uint)strlen(cmd->operands);
+    operandCount = countCommandOperands(cmd->operands);
+    if(operandCount <= 0) return NULL;
 
-    // Operands are read sequentially.
-    {uint i = 0;
-    do
+    operands = M_Malloc(sizeof(*operands) * operandCount);
+    opRover = cmd->operands;
+    for(op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
     {
-        char typeSymbol = cmd->operands[i];
-        fi_operand_t* op;
-        fi_operand_type_t type;
+        const char charCode = *opRover;
+        boolean opHasDefaultValue, haveValue;
 
-        if(!nextToken(fi))
+        op->type = operandTypeForCharCode(charCode);
+        opHasDefaultValue = (opRover < cmd->operands + (strlen(cmd->operands) - 2) && opRover[1] == '(');
+
+        haveValue = !!nextToken(fi);
+        if(!haveValue && !opHasDefaultValue)
         {
             fi->_cp = origCursorPos;
-            if(ops)
-                free(ops);
-            if(count)
-                *count = 0;
-            Con_Error("parseCommandArguments: Too few operands for command '%s'.\n", cmd->token);
+
+            if(operands) free(operands);
+            if(count) *count = 0;
+
+            Con_Error("prepareCommandOperands: Too few operands for command '%s'.\n", cmd->token);
             return 0; // Unreachable.
         }
 
-        switch(typeSymbol)
+        switch(op->type)
         {
-        // Supported operand type symbols:
-        case 'i': type = FVT_INT;           break;
-        case 'f': type = FVT_FLOAT;         break;
-        case 's': type = FVT_SCRIPT_STRING; break;
-        case 'o': type = FVT_OBJECT;        break;
-        default:
-            Con_Error("parseCommandArguments: Invalid symbol '%c' in operand list for command '%s'.", typeSymbol, cmd->token);
-            return 0; // Unreachable.
-        }
-
-        if(!ops)
-            ops = malloc(sizeof(*ops));
-        else
-            ops = realloc(ops, sizeof(*ops) * (i+1));
-        op = &ops[i];
-
-        op->type = type;
-        switch(type)
-        {
-        case FVT_INT:
-            op->data.integer = strtol(fi->_token, NULL, 0);
-            break;
-
-        case FVT_FLOAT:
-            op->data.flt = strtod(fi->_token, NULL);
-            break;
-        case FVT_SCRIPT_STRING:
+        case FVT_INT: {
+            const char* valueStr = haveValue? fi->_token : 0;
+            if(!valueStr)
             {
-            size_t len = strlen(fi->_token)+1;
-            char* str = malloc(len);
-            dd_snprintf(str, len, "%s", fi->_token);
-            op->data.cstring = str;
-            break;
+                // Use the default.
+                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                valueStr = Str_Text(defaultValue);
             }
-        case FVT_OBJECT:
-            op->data.obj = FI_Object(findObjectIdForName(&fi->_namespace, fi->_token, FI_NONE));
-            break;
-        }
-    } while(++i < numOperands);}
+            op->data.integer = strtol(valueStr, NULL, 0);
+            break; }
 
-    if(count)
-        *count = numOperands;
-    return ops;
+        case FVT_FLOAT: {
+            const char* valueStr = haveValue? fi->_token : 0;
+            if(!valueStr)
+            {
+                // Use the default.
+                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                valueStr = Str_Text(defaultValue);
+            }
+            op->data.flt = strtod(valueStr, NULL);
+            break; }
+
+        case FVT_SCRIPT_STRING: {
+            const char* valueStr = haveValue? fi->_token : 0;
+            int valueLen         = haveValue? strlen(fi->_token) : 0;
+            if(!valueStr)
+            {
+                // Use the default.
+                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                valueStr = Str_Text(defaultValue);
+                valueLen = defaultValueLen;
+            }
+            op->data.cstring = (char*)malloc(valueLen+1);
+            strcpy((char*)op->data.cstring, fi->_token);
+            break; }
+
+        case FVT_OBJECT: {
+            const char* obName = haveValue? fi->_token : 0;
+            if(!obName)
+            {
+                // Use the default.
+                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                obName = Str_Text(defaultValue);
+            }
+            op->data.obj = FI_Object(findObjectIdForName(&fi->_namespace, obName, FI_NONE));
+            break; }
+
+        case FVT_URI: {
+            Uri* uri = Uri_New();
+            // Always apply the default as it may contain a default scheme.
+            if(opHasDefaultValue)
+            {
+                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                Uri_SetUri3(uri, Str_Text(defaultValue), RC_NULL);
+            }
+            if(haveValue)
+            {
+                Uri_SetUri3(uri, fi->_token, RC_NULL);
+            }
+            op->data.uri = uri;
+            break; }
+
+        default: break; // Unreachable.
+        }
+    }
+
+    if(count) *count = operandCount;
+
+    return operands;
 }
 
 static boolean skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
@@ -637,7 +708,7 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     {
         boolean requiredOperands;
         fi_operand_t* ops = NULL;
-        uint numOps = 0;
+        int numOps = 0;
 
         // Is this command supported for this directive?
         if(directive != 0 && cmd->excludeDirectives != 0 &&
@@ -647,7 +718,8 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
 
         // Check that there are enough operands.
         requiredOperands = (cmd->operands && cmd->operands[0]);
-        if(0 == requiredOperands || NULL != (ops = parseCommandArguments(fi, cmd, &numOps)))
+        /// @todo Dynamic memory allocation during script interpretation should be avoided.
+        if(0 == requiredOperands || (ops = prepareCommandOperands(fi, cmd, &numOps)))
         {
             // Should we skip this command?
             if(!(didSkip = skippingCommand(fi, cmd)))
@@ -671,12 +743,20 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
 
         if(ops)
         {
-            uint i;
+            int i;
             for(i = 0; i < numOps; ++i)
             {
                 fi_operand_t* op = &ops[i];
-                if(op->type == FVT_SCRIPT_STRING)
+                switch(op->type)
+                {
+                case FVT_SCRIPT_STRING:
                     free((char*)op->data.cstring);
+                    break;
+                case FVT_URI:
+                    Uri_Delete(op->data.uri);
+                    break;
+                default: break;
+                }
             }
             free(ops);
         }
@@ -1240,20 +1320,10 @@ DEFFC(End)
     fi->_gotoEnd = true;
 }
 
-DEFFC(BGFlat)
+DEFFC(BGMaterial)
 {
-    ddstring_t path; Str_Init(&path);
-    Str_Appendf(&path, MN_FLATS_NAME":%s", OP_CSTRING(0));
-    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_ResolveUriCString(Str_Text(&path))));
-    Str_Free(&path);
-}
-
-DEFFC(BGTexture)
-{
-    ddstring_t path; Str_Init(&path);
-    Str_Appendf(&path, MN_TEXTURES_NAME":%s", OP_CSTRING(0));
-    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_ResolveUriCString(Str_Text(&path))));
-    Str_Free(&path);
+    material_t* material = Materials_ToMaterial(Materials_ResolveUri(OP_URI(0)));
+    changePageBackground(fi->_pages[PAGE_PICS], material);
 }
 
 DEFFC(NoBGMaterial)
@@ -1998,10 +2068,7 @@ DEFFC(PredefinedColor)
 
 DEFFC(PredefinedFont)
 {
-    const char* fontPath = OP_CSTRING(1);
-    Uri* uri = Uri_SetUri3(Uri_New(), fontPath, RC_NULL);
-    fontid_t fontNum = Fonts_ResolveUri(uri);
-    Uri_Delete(uri);
+    fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
         int idx = MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS)-1;
@@ -2009,7 +2076,10 @@ DEFFC(PredefinedFont)
         FIPage_SetPredefinedFont(fi->_pages[PAGE_PICS], idx, fontNum);
         return;
     }
-    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", fontPath);
+
+    { Str* fontPath = Uri_ToString(OP_URI(1));
+    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", Str_Text(fontPath));
+    }
 }
 
 DEFFC(TextRGB)
@@ -2076,16 +2146,16 @@ DEFFC(TextLineHeight)
 DEFFC(Font)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    const char* fontPath = OP_CSTRING(1);
-    Uri* uri = Uri_SetUri3(Uri_New(), fontPath, RC_NULL);
-    fontid_t fontNum = Fonts_ResolveUri(uri);
-    Uri_Delete(uri);
+    fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
         FIData_TextSetFont(obj, fontNum);
         return;
     }
-    Con_Message("FIC_Font: Warning, unknown font '%s'.\n", fontPath);
+
+    { Str* fontPath = Uri_ToString(OP_URI(1));
+    Con_Message("FIC_Font: Warning, unknown font '%s'.\n", Str_Text(fontPath));
+    }
 }
 
 DEFFC(FontA)
