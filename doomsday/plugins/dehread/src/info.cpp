@@ -612,6 +612,10 @@ static const TextMapping TextMap[] = {
     { ""/*"AMSTR_MARKSCLEARED"*/, "All Marks Cleared" },
     { ""/*"EMPTYSTRING"*/,        "empty slot" },
     { ""/*"GGSAVED"*/,            "game saved." },
+    { "",                         "===========================================================================\nATTENTION:  This version of DOOM has been modified.  If you would like to\nget a copy of the original game, call 1-800-IDGAMES or see the readme file.\n        You will not receive technical support for modified games.\n                      press enter to continue\n===========================================================================" },
+    { "",                         "===========================================================================\n             This version is NOT SHAREWARE, do not distribute!\n         Please report software piracy to the SPA: 1-800-388-PIR8\n===========================================================================" },
+    { "",                         "===========================================================================\n                            Do not distribute!\n         Please report software piracy to the SPA: 1-800-388-PIR8\n===========================================================================" },
+
 
     // Supported replacements:
     { "E1TEXT", "Once you beat the big badasses and\nclean out the moon base you're supposed\nto win, aren't you? Aren't you? Where's\nyour fat reward and ticket home? What\nthe hell is this? It's not supposed to\nend this way!\n\nIt stinks like rotten meat, but looks\nlike the lost Deimos base.  Looks like\nyou're stuck on The Shores of Hell.\nThe only way out is through.\n\nTo continue the DOOM experience, play\nThe Shores of Hell and its amazing\nsequel, Inferno!\n" },
@@ -1226,12 +1230,9 @@ int originalHeightForMobjType(int type)
 "W_Init: Init WADfiles.\n"
 "\nYou cannot -file with the shareware version. Register!"
 "\nThis is not the registered version."
-"===========================================================================\nATTENTION:  This version of DOOM has been modified.  If you would like to\nget a copy of the original game, call 1-800-IDGAMES or see the readme file.\n        You will not receive technical support for modified games.\n                      press enter to continue\n===========================================================================\n"
 "\tregistered version.\n"
-"===========================================================================\n             This version is NOT SHAREWARE, do not distribute!\n         Please report software piracy to the SPA: 1-800-388-PIR8\n===========================================================================\n"
 "\tshareware version.\n"
 "\tcommercial version.\n"
-"===========================================================================\n                            Do not distribute!\n         Please report software piracy to the SPA: 1-800-388-PIR8\n===========================================================================\n"
 "M_Init: Init miscellaneous info.\n"
 "R_Init: Init DOOM refresh daemon - "
 "\nP_Init: Init Playloop state.\n"
