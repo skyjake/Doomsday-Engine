@@ -1641,8 +1641,8 @@ public:
         /// @todo Why the restriction?
         if(findMusicLumpNameInMap(origName) < 0) return false;
 
-        Block origNamePrefUtf8 = String("D_%s").arg(origName).toUtf8();
-        Block newNamePrefUtf8  = String("D_%s").arg(newName ).toUtf8();
+        Block origNamePrefUtf8 = String("D_%1").arg(origName).toUtf8();
+        Block newNamePrefUtf8  = String("D_%1").arg(newName ).toUtf8();
 
         // Update ALL songs using this lump name.
         int numPatched = 0;
@@ -1666,8 +1666,8 @@ public:
         /// @todo Why the restriction?
         if(findSoundLumpNameInMap(origName) < 0) return false;
 
-        Block origNamePrefUtf8 = String("DS%s").arg(origName).toUtf8();
-        Block newNamePrefUtf8  = String("DS%s").arg(newName ).toUtf8();
+        Block origNamePrefUtf8 = String("DS%1").arg(origName).toUtf8();
+        Block newNamePrefUtf8  = String("DS%1").arg(newName ).toUtf8();
 
         // Update ALL sounds using this lump name.
         int numPatched = 0;
