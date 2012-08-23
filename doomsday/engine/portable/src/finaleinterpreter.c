@@ -1322,7 +1322,18 @@ DEFFC(End)
 
 DEFFC(BGMaterial)
 {
-    material_t* material = Materials_ToMaterial(Materials_ResolveUri(OP_URI(0)));
+    // First attempt to resolve as a Values URI (which defines the material URI).
+    material_t* material;
+    ded_value_t* value = Def_GetValueByUri(OP_URI(0));
+    if(value)
+    {
+        material = Materials_ToMaterial(Materials_ResolveUriCString(value->text));
+    }
+    else
+    {
+        material = Materials_ToMaterial(Materials_ResolveUri(OP_URI(0)));
+    }
+
     changePageBackground(fi->_pages[PAGE_PICS], material);
 }
 

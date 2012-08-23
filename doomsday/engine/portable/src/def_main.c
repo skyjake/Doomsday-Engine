@@ -364,6 +364,26 @@ int Def_GetActionNum(const char* name)
     return -1; // Not found.
 }
 
+ded_value_t* Def_GetValueById(const char* id)
+{
+    int i;
+    if(!id || !id[0]) return NULL;
+
+    // Read backwards to allow patching.
+    for(i = defs.count.values.num - 1; i >= 0; i--)
+    {
+        if(!stricmp(defs.values[i].id, id))
+            return defs.values + i;
+    }
+    return 0;
+}
+
+ded_value_t* Def_GetValueByUri(const Uri* uri)
+{
+    if(!uri || stricmp("Values", Str_Text(Uri_Scheme(uri)))) return 0; // Not found.
+    return Def_GetValueById(Str_Text(Uri_Path(uri)));
+}
+
 ded_mapinfo_t* Def_GetMapInfo(const Uri* uri)
 {
     int i;
@@ -1805,15 +1825,11 @@ int Def_Get(int type, const char* id, void* out)
         }
         return -1;
 
-    case DD_DEF_VALUE:
-        // Read backwards to allow patching.
-        for(i = defs.count.values.num - 1; i >= 0; i--)
-        {
-            if(stricmp(defs.values[i].id, id)) continue;
-            if(out) *(char**) out = defs.values[i].text;
-            return true;
-        }
-        return false;
+    case DD_DEF_VALUE: {
+        ded_value_t* value = Def_GetValueById(id);
+        if(!value) return false;
+        if(out) *(char**) out = value->text;
+        return true; }
 
     case DD_DEF_FINALE: { // Find InFine script by ID.
         finalescript_t* fin = (finalescript_t*) out;

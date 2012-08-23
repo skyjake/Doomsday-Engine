@@ -91,6 +91,8 @@ int             Def_GetModelNum(const char* id);
 int             Def_GetMusicNum(const char* id);
 int             Def_GetSoundNum(const char* id);
 int             Def_EvalFlags(char* ptr);
+ded_value_t*    Def_GetValueById(const char* id);
+ded_value_t*    Def_GetValueByUri(const Uri* uri);
 ded_mapinfo_t*  Def_GetMapInfo(const Uri* uri);
 ded_sky_t*      Def_GetSky(const char* id);
 ded_material_t* Def_GetMaterial(const char* uri);
