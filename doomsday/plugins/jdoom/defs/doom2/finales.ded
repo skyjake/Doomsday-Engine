@@ -77,7 +77,7 @@ Finale
   Before = "MAP07";
   Script {
     music "read_m"
-    flat SLIME16
+    flat Values:BGFLAT06
     wait 0.5
     textdef msg 10 10 "C1TEXT"
     waittext msg
@@ -90,7 +90,7 @@ Finale
   Before = "MAP12";
   Script {
     music "read_m"
-    flat RROCK14
+    flat Values:BGFLAT11
     wait 0.5
     textdef msg 10 10 "C2TEXT"
     waittext msg
@@ -103,7 +103,7 @@ Finale
   Before = "MAP21";
   Script {
     music "read_m"
-    flat RROCK07
+    flat Values:BGFLAT20
     wait 0.5
     textdef msg 10 10 "C3TEXT"
     waittext msg
@@ -117,7 +117,7 @@ Finale
   After = "MAP30";
   Script {
     music "read_m"
-    flat RROCK17
+    flat Values:BGFLAT30
     wait 0.5
     textdef msg 10 10 "C4TEXT"
     waittext msg; wait 7
@@ -367,7 +367,7 @@ Finale
   Before = "MAP31";
   Script {
     music "read_m";
-    flat RROCK13;
+    flat Values:BGFLAT15;
     wait 0.5;
     textdef msg 10 10 "C5TEXT";
     waittext msg;
@@ -381,7 +381,7 @@ Finale
   Before = "MAP32";
   Script {
     music "read_m";
-    flat RROCK19;
+    flat Values:BGFLAT31;
     wait 0.5;
     textdef msg 10 10 "C6TEXT";
     waittext msg;
