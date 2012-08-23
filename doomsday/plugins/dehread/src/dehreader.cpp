@@ -1631,10 +1631,8 @@ public:
     {
         const FinaleBackgroundMapping* mapping;
         if(findFinaleBackgroundMappingForText(origName, &mapping) < 0) return false;
-        /// @todo Presently unsupported.
-        DENG2_UNUSED(newName);
-        LOG_WARNING("Finale background name remapping is not supported.");
-        return true; // Pretend success.
+        createValueDef(mapping->mnemonic, newName);
+        return true;
     }
 
     bool patchMusicLumpNames(const String& origName, const String& newName)
