@@ -86,11 +86,6 @@ typedef struct vertex_s {
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
-/// @todo Refactor me away.
-typedef struct mhedge_s {
-    uint                index;
-} mhedge_t;
-
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2]; /// [Start, End] of the segment.
@@ -112,7 +107,6 @@ typedef struct hedge_s {
     biassurface_t*      bsuf[3]; /// For each @ref SideDefSection.
     short               frameFlags;
     uint                index; /// Unique. Set when saving the BSP.
-    mhedge_t            buildData;
 } HEdge;
 
 /**

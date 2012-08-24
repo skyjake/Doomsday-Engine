@@ -76,11 +76,6 @@ internal
 
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
-
-/// @todo Refactor me away.
-typedef struct mhedge_s {
-    uint                index;
-} mhedge_t;
 end
 
 public
@@ -107,7 +102,6 @@ struct HEdge
     -       biassurface_t*[3] bsuf /// For each @ref SideDefSection.
     -       short       frameFlags
     -       uint        index /// Unique. Set when saving the BSP.
-    -       mhedge_t    buildData
 end
 
 internal
