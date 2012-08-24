@@ -106,7 +106,7 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
     size_t lumpDirSize;
     ddstring_t absPath;
     const char* ext;
-    int i, j;
+    int i, j, nameLen;
     assert(wad);
 
     if(wad->lumpRecordsCount <= 0) return;
@@ -138,8 +138,12 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
         F_InitLumpInfo(&record->info);
         record->info.lumpIdx = i;
 
+        nameLen = 0;
+        while(nameLen < LUMPNAME_T_LASTINDEX && src->name[nameLen])
+        { nameLen++; }
+
         Str_Clear(&absPath);
-        for(j = 0; j < LUMPNAME_T_LASTINDEX; ++j)
+        for(j = 0; j < nameLen; ++j)
         {
             /// The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
             /// @todo Ensure that this doesn't break other IWADs. The 0x80-0xff

@@ -1678,7 +1678,7 @@ boolean DD_Init(void)
 
     if(CommandLine_Check("-dumpwaddir"))
     {
-        F_PrintLumpDirectory();
+        Con_Executef(CMDS_CMDLINE, false, "listlumps");
     }
 
     // Try to load the autoexec file. This is done here to make sure everything is

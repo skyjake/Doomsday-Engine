@@ -43,6 +43,7 @@
 D_CMD(Dir);
 D_CMD(DumpLump);
 D_CMD(ListFiles);
+D_CMD(ListLumps);
 
 /**
  * Lump Directory Mapping.  Maps lump to resource path.
@@ -116,6 +117,7 @@ void F_Register(void)
 
     C_CMD("dump", "s", DumpLump);
     C_CMD("listfiles", "", ListFiles);
+    C_CMD("listlumps", "", ListLumps);
 }
 
 static void errorIfNotInited(const char* callerName)
@@ -1189,13 +1191,6 @@ void F_GetPWADFileNames(char* outBuf, size_t outBufSize, const char* delimiter)
         strncpy(outBuf, Str_Text(str), outBufSize);
         Str_Delete(str);
     }
-}
-
-void F_PrintLumpDirectory(void)
-{
-    if(!inited) return;
-    // Always the primary directory.
-    LumpDirectory_Print(primaryWadLumpDirectory);
 }
 
 typedef struct foundentry_s {
@@ -2343,9 +2338,7 @@ static void printVFDirectory(const ddstring_t* path)
     Str_Free(&dir);
 }
 
-/**
- * Print contents of directories as Doomsday sees them.
- */
+/// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
     ddstring_t path;
@@ -2368,6 +2361,7 @@ D_CMD(Dir)
     return true;
 }
 
+/// Dump a copy of a virtual file to the runtime directory.
 D_CMD(DumpLump)
 {
     if(inited)
@@ -2384,6 +2378,20 @@ D_CMD(DumpLump)
     return false;
 }
 
+/// List virtual files inside containers.
+D_CMD(ListLumps)
+{
+    if(inited)
+    {
+        // Always the primary directory.
+        LumpDirectory_Print(primaryWadLumpDirectory);
+        return true;
+    }
+    Con_Printf("WAD module is not presently initialized.\n");
+    return false;
+}
+
+/// List the "real" files presently loaded in original load order.
 D_CMD(ListFiles)
 {
     size_t totalFiles = 0, totalPackages = 0;
