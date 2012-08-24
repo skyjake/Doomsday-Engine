@@ -391,6 +391,11 @@ char* Str_Text(const ddstring_t* str)
 
 int Str_Length(const ddstring_t* str)
 {
+    return (int) Str_Size(str);
+}
+
+size_t Str_Size(const Str* str)
+{
     DENG_ASSERT(str);
 
     if(!str) return 0;
@@ -398,7 +403,7 @@ int Str_Length(const ddstring_t* str)
     {
         return str->length;
     }
-    return (int)strlen(Str_Text(str));
+    return strlen(Str_Text(str));
 }
 
 boolean Str_IsEmpty(const ddstring_t* str)
