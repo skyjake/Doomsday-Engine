@@ -581,7 +581,7 @@ static void buildSectorLineLists(GameMap* map)
         uint secIDX;
         linelink_t* link;
 
-        if(li->L_frontsidedef)
+        if(li->L_frontsector)
         {
             link = ZBlockSet_Allocate(lineLinksBlockSet);
 
@@ -594,7 +594,7 @@ static void buildSectorLineLists(GameMap* map)
             totallinks++;
         }
 
-        if(li->L_backsidedef && li->L_backsector != li->L_frontsector)
+        if(li->L_backsector && !LINE_SELFREF(li))
         {
             link = ZBlockSet_Allocate(lineLinksBlockSet);
 

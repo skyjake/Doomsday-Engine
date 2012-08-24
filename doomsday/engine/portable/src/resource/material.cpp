@@ -98,9 +98,7 @@ void Material_SetDefinition(material_t* mat, struct ded_material_s* def)
 
     mat->_flags = mat->_def->flags;
 
-    Size2Raw size;
-    size.width  = def->width;
-    size.height = def->height;
+    Size2Raw size(def->width, def->height);
     Material_SetSize(mat, &size);
 
     Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->uri));
@@ -225,6 +223,7 @@ boolean Material_HasTranslation(const material_t* mat)
 int Material_LayerCount(const material_t* mat)
 {
     DENG2_ASSERT(mat);
+    DENG2_UNUSED(mat);
     return 1;
 }
 

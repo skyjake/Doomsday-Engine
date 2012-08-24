@@ -366,7 +366,7 @@ struct de::PathDirectory::Instance
         if(delimiter && node->type() == PT_BRANCH)
             Str_AppendCharWithoutAllocs(constructedPath, delimiter);
 
-        DENG2_ASSERT(Str_Length(constructedPath) == parm.length);
+        DENG2_ASSERT(Str_Size(constructedPath) == parm.length);
 
 #ifdef LIBDENG_STACK_MONITOR
         LOG_AS("pathConstructor");
@@ -595,8 +595,7 @@ ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,
     return d->constructPath(node, foundPath, delimiter);
 }
 
-const de::PathDirectory::PathNodes* const
-de::PathDirectory::pathNodes(PathDirectoryNodeType type) const
+const de::PathDirectory::PathNodes* de::PathDirectory::pathNodes(PathDirectoryNodeType type) const
 {
     return (type == PT_LEAF? d->pathLeafHash : d->pathBranchHash);
 }
@@ -662,11 +661,11 @@ void de::PathDirectory::debugPrint(de::PathDirectory* pd, char delimiter)
     LOG_INFO("  %lu %s in directory.") << numLeafs << (numLeafs==1? "path":"paths");
 }
 
+#if 0
 static void printDistributionOverviewElement(const int* colWidths, const char* name,
     size_t numEmpty, size_t maxHeight, size_t numCollisions, size_t maxCollisions,
     size_t sum, size_t total)
 {
-#if 0
     DENG2_ASSERT(colWidths);
 
     float coverage, collision, variance;
@@ -695,7 +694,6 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     Con_Printf("%*.2f ",  *col++, coverage);
     Con_Printf("%*.2f ",  *col++, variance);
     Con_Printf("%*lu\n",  *col++, (unsigned long)maxHeight);
-#endif
 }
 
 static void printDistributionOverview(PathDirectory* pd,
@@ -706,7 +704,6 @@ static void printDistributionOverview(PathDirectory* pd,
     size_t nodeBucketEmpty[PATHDIRECTORYNODE_TYPE_COUNT], size_t nodeBucketEmptyTotal, size_t nodeBucketHeight,
     size_t /*nodeCount*/[PATHDIRECTORYNODE_TYPE_COUNT])
 {
-#if 0
 #define NUMCOLS             10/*type+count+used:+empty+collideMax+collideCount+collidePercent+coverage+variance+maxheight*/
 
     DENG2_ASSERT(pd);
@@ -796,13 +793,13 @@ static void printDistributionOverview(PathDirectory* pd,
         countSum / PATHDIRECTORYNODE_TYPE_COUNT, countTotal);
 
 #undef NUMCOLS
-#endif
 }
+#endif
 
+#if 0
 static void printDistributionHistogram(PathDirectory* pd, ushort size,
     size_t nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT])
 {
-#if 0
 #define NUMCOLS             4/*range+total+PATHDIRECTORYNODE_TYPE_COUNT*/
 
     size_t totalForRange, total, nodeCount[PATHDIRECTORYNODE_TYPE_COUNT];
@@ -952,8 +949,8 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
     Con_Printf("\n");
 
 #undef NUMCOLS
-#endif
 }
+#endif
 
 void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory* pd)
 {

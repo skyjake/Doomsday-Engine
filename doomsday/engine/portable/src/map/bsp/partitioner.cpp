@@ -29,9 +29,11 @@
 
 #include <cmath>
 #include <vector>
+#include <map>
 #include <list>
 #include <algorithm>
 
+#include <de/Error>
 #include <de/Log>
 
 #include "de_base.h"
@@ -132,11 +134,18 @@ struct Partitioner::Instance
      * Retrieve the extended build info for the specified @a hedge.
      * @return  Extended info for that HEdge.
      */
-    HEdgeInfo& hedgeInfo(const HEdge& hedge) {
-        return hedgeInfos[hedge.buildData.index - 1];
+    HEdgeInfo& hedgeInfo(HEdge& hedge)
+    {
+        HEdgeInfos::iterator found = hedgeInfos.find(&hedge);
+        if(found != hedgeInfos.end()) return found->second;
+        throw de::Error("Partitioner::hedgeInfo", QString().sprintf("Failed locating HEdgeInfo for %p", &hedge));
     }
-    const HEdgeInfo& hedgeInfo(const HEdge& hedge) const {
-        return hedgeInfos[hedge.buildData.index - 1];
+
+    const HEdgeInfo& hedgeInfo(const HEdge& hedge) const
+    {
+        HEdgeInfos::const_iterator found = hedgeInfos.find(const_cast<HEdge*>(&hedge));
+        if(found != hedgeInfos.end()) return found->second;
+        throw de::Error("Partitioner::hedgeInfo", QString().sprintf("Failed locating HEdgeInfo for %p", &hedge));
     }
 
     /**
@@ -1144,11 +1153,16 @@ struct Partitioner::Instance
         HEdge* hedge = chooseNextPartition(hedgeList);
         if(!hedge)
         {
-            // No partition required, already convex.
-            //LOG_TRACE("Partitioner::buildNodes: Convex.");
-
-            BspLeaf* leaf = newBspLeaf(hedgeList);
-            *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+            // No partition required/possible - already convex (or degenerate).
+            BspLeaf* leaf = buildBspLeaf(hedgeList);
+            if(leaf)
+            {
+                *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+            }
+            else
+            {
+                *subtree = 0;
+            }
             return true;
         }
 
@@ -1177,15 +1191,31 @@ struct Partitioner::Instance
         rightHEdges->findHEdgeBounds(rightHEdgesBounds);
         leftHEdges->findHEdgeBounds(leftHEdgesBounds);
 
-        BspNode* node = newBspNode(partition->origin(), partition->direction(),
+        HPlanePartition origPartition = HPlanePartition(partition->origin(), partition->direction());
+        BspTreeNode* rightChild = 0, *leftChild = 0;
+
+        // Recurse on the right subset.
+        bool builtOK = buildNodes(rightHEdges->root(), &rightChild);
+        delete rightHEdges;
+
+        if(builtOK)
+        {
+            // Recurse on the left subset.
+            builtOK = buildNodes(leftHEdges->root(), &leftChild);
+        }
+        delete leftHEdges;
+
+        if(!rightChild || !leftChild)
+        {
+            *subtree = rightChild? rightChild : leftChild;
+            return builtOK;
+        }
+        BspNode* node = newBspNode(origPartition.origin, origPartition.direction,
                                    &rightHEdgesBounds, &leftHEdgesBounds);
 
         *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
 
-        // Recurse on the right subset.
-        BspTreeNode* child;
-        bool builtOK = buildNodes(rightHEdges->root(), &child);
-        (*subtree)->setRight(child);
+        (*subtree)->setRight(rightChild);
         if((*subtree)->hasRight())
         {
             (*subtree)->right()->setParent(*subtree);
@@ -1193,23 +1223,15 @@ struct Partitioner::Instance
             // Link the BSP object too.
             BspNode_SetRight(node, (*subtree)->right()->userData());
         }
-        delete rightHEdges;
 
-        if(builtOK)
+        (*subtree)->setLeft(leftChild);
+        if((*subtree)->hasLeft())
         {
-            // Recurse on the left subset.
-            builtOK = buildNodes(leftHEdges->root(), &child);
-            (*subtree)->setLeft(child);
-            if((*subtree)->hasLeft())
-            {
-                (*subtree)->left()->setParent(*subtree);
+            (*subtree)->left()->setParent(*subtree);
 
-                // Link the BSP object too.
-                BspNode_SetLeft(node, (*subtree)->left()->userData());
-            }
+            // Link the BSP object too.
+            BspNode_SetLeft(node, (*subtree)->left()->userData());
         }
-
-        delete leftHEdges;
 
         return builtOK;
     }
@@ -1915,8 +1937,8 @@ struct Partitioner::Instance
         hedge->lineDef = lineDef;
 
         // There is now one more HEdge.
-        hedge->buildData.index = numHEdges += 1;
-        hedgeInfos.push_back(HEdgeInfo());
+        numHEdges += 1;
+        hedgeInfos.insert(std::pair<HEdge*, HEdgeInfo>(hedge, HEdgeInfo()));
 
         HEdgeInfo& info = hedgeInfo(*hedge);
         info.sourceLineDef = sourceLineDef;
@@ -1933,8 +1955,8 @@ struct Partitioner::Instance
         HEdge* hedge = HEdge_NewCopy(&other);
 
         // There is now one more HEdge.
-        hedge->buildData.index = numHEdges += 1;
-        hedgeInfos.push_back(HEdgeInfo());
+        numHEdges += 1;
+        hedgeInfos.insert(std::pair<HEdge*, HEdgeInfo>(hedge, HEdgeInfo()));
 
         memcpy(&hedgeInfo(*hedge), &hedgeInfo(other), sizeof(HEdgeInfo));
 
@@ -1942,15 +1964,16 @@ struct Partitioner::Instance
     }
 
     /**
-     * Allocate another BspLeaf and populate it with half-edges from the supplied list.
+     * Construct a new BspLeaf and populate it with half-edges from the supplied list.
      *
      * @param hedgeList  SuperBlock containing the list of half-edges with which
      *                   to build the leaf using.
-     * @return  Newly created BspLeaf.
+     * @return  Newly created BspLeaf else @c NULL if degenerate.
      */
-    BspLeaf* newBspLeaf(SuperBlock& hedgeList)
+    BspLeaf* buildBspLeaf(SuperBlock& hedgeList)
     {
-        BspLeaf* leaf = BspLeaf_New();
+        const bool isDegenerate = hedgeList.totalHEdgeCount() < 3;
+        BspLeaf* leaf = 0;
 
         // Iterative pre-order traversal of SuperBlock.
         SuperBlock* cur = &hedgeList;
@@ -1962,8 +1985,33 @@ struct Partitioner::Instance
                 HEdge* hedge;
                 while((hedge = cur->pop()))
                 {
+                    if(isDegenerate && hedge->side)
+                    {
+                        if(hedge->twin)
+                        {
+                            hedge->twin->twin = 0;
+                        }
+
+                        if(hedge->lineDef)
+                        {
+                            lineside_t* lside = HEDGE_SIDE(hedge);
+                            lside->sector = 0;
+                            /// @todo We could delete the SideDef also?
+                            lside->sideDef = 0;
+
+                            lineDefInfo(*hedge->lineDef).flags &= ~(LineDefInfo::SELFREF | LineDefInfo::TWOSIDED);
+                        }
+
+                        hedgeInfos.erase( hedgeInfos.find(hedge) );
+                        HEdge_Delete(hedge);
+                        numHEdges -= 1;
+                        continue;
+                    }
+
                     // Disassociate the half-edge from the blockmap.
                     hedgeInfo(*hedge).bmapBlock = 0;
+
+                    if(!leaf) leaf = BspLeaf_New();
 
                     // Link it into head of the leaf's list.
                     hedge->next = leaf->hedge;
@@ -2004,8 +2052,11 @@ struct Partitioner::Instance
             }
         }
 
-        // There is now one more BspLeaf;
-        numLeafs += 1;
+        if(leaf)
+        {
+            // There is now one more BspLeaf;
+            numLeafs += 1;
+        }
         return leaf;
     }
 
@@ -2283,7 +2334,7 @@ struct Partitioner::Instance
     LineDefInfos lineDefInfos;
 
     /// Extended info about HEdges in the BSP object tree.
-    typedef std::vector<HEdgeInfo> HEdgeInfos;
+    typedef std::map<HEdge*, HEdgeInfo> HEdgeInfos;
     HEdgeInfos hedgeInfos;
 
     /// Extended info about Vertexes in the current map (including extras).

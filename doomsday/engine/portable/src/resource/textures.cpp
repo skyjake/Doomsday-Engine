@@ -987,7 +987,7 @@ Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw*
 
 Texture* Textures_Create(textureid_t id, boolean custom, void* userData)
 {
-    Size2Raw size = { 0, 0 };
+    Size2Raw size(0, 0);
     return Textures_CreateWithSize(id, custom, &size, userData);
 }
 
