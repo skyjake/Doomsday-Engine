@@ -1215,9 +1215,8 @@ const materialsnapshot_t* updateMaterialSnapshot(MaterialVariant* variant,
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(mat) && 0 == Material_Height(mat))
             {
-                Size2Raw texSize;
-                texSize.width  = Texture_Width(ml->texture);
-                texSize.height = Texture_Height(ml->texture);
+                Size2Raw texSize(Texture_Width(ml->texture),
+                                 Texture_Height(ml->texture));
                 Material_SetSize(mat, &texSize);
             }
         }
