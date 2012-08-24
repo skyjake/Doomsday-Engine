@@ -595,8 +595,7 @@ ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,
     return d->constructPath(node, foundPath, delimiter);
 }
 
-const de::PathDirectory::PathNodes* const
-de::PathDirectory::pathNodes(PathDirectoryNodeType type) const
+const de::PathDirectory::PathNodes* de::PathDirectory::pathNodes(PathDirectoryNodeType type) const
 {
     return (type == PT_LEAF? d->pathLeafHash : d->pathBranchHash);
 }

@@ -266,7 +266,7 @@ public:
     /**
      * Provides access to the PathDirectoryNodes for efficent traversals.
      */
-    const PathNodes* const pathNodes(PathDirectoryNodeType type) const;
+    const PathNodes* pathNodes(PathDirectoryNodeType type) const;
 
 public:
     /**
