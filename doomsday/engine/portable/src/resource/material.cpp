@@ -223,6 +223,7 @@ boolean Material_HasTranslation(const material_t* mat)
 int Material_LayerCount(const material_t* mat)
 {
     DENG2_ASSERT(mat);
+    DENG2_UNUSED(mat);
     return 1;
 }
 

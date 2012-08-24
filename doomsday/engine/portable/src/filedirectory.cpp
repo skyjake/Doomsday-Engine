@@ -246,6 +246,7 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
     void* parameters)
 {
     DENG2_ASSERT(VALID_PATHDIRECTORYNODE_TYPE(nodeType));
+    DENG2_UNUSED(nodeType);
 
     int result = 0; // Continue iteration.
 

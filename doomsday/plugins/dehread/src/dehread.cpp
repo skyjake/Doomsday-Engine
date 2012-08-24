@@ -66,7 +66,7 @@ struct font_s;
 #define CHECKKEY(a,b)   if(!qstricmp(line1, (a))) { (b) = atoi(line2); }
 
 typedef struct Key {
-    char* name;
+    const char* name;
     ptrdiff_t offset;
 } Key_t;
 
@@ -708,7 +708,7 @@ static const struct {
     { "THUSTR_30", "Level 30: Last Call" },
     { "THUSTR_31", "Level 31: Pharaoh" },
     { "THUSTR_32", "Level 32: Caribbean" },
-    { NULL }
+    { NULL, NULL }
 };
 
 static bool BackedUpData = false;
@@ -788,7 +788,7 @@ static byte OrgHeights[] = {
 };
 
 static const struct {
-    char* name;
+    const char* name;
     int (*parseFunc) (int elementIdx);
 } blockParsers[] = {
     // These appear in .deh and .bex files
@@ -1529,7 +1529,7 @@ static int parseFrame(int stateNum)
         { "Next frame", myoffsetof(ded_state_t, nextState, OFF_STATE) },
         { "Unknown 1",  0 /*myoffsetof(ded_state_t,misc[0],0) */ },
         { "Unknown 2",  0 /*myoffsetof(ded_state_t,misc[1],0) */ },
-        { NULL }
+        { NULL, 0 }
     };
     ded_state_t* info, dummy;
     int result;
@@ -1646,7 +1646,7 @@ static void* DD_Realloc(void* ptr, int newsize)
     return ptr;
 }
 
-static void SetValueStr(const char* path, const char* id, char* str)
+static void SetValueStr(const char* path, const char* id, const char* str)
 {
     char realid[300];
     int i;
@@ -1682,8 +1682,8 @@ static int parseAmmo(int ammoNum)
     LOG_AS("parseAmmo");
 
     int result, max, per;
-    char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
-    char* theAmmo = 0;
+    const char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
+    const char* theAmmo = 0;
 
     if(ammoNum >= 0 && ammoNum < 4)
     {
@@ -1720,7 +1720,7 @@ static int parseWeapon(int weapNum)
 {
     LOG_AS("parseWeapon");
 
-    char* ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo", 0 };
+    const char* ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo", 0 };
     char buf[80];
     int val, result;
 
@@ -2047,7 +2047,7 @@ static int parsePointerBex(int /*elementIdx*/)
             {
                 qstrcpy(def->action, buff);
                 LOG_DEBUG("State \"%s\" (#%i) Action is now \"%s\".")
-                    << def->id << stateNum, def->action;
+                    << def->id << stateNum << def->action;
             }
             else
             {
