@@ -325,13 +325,16 @@ static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
     return rec;
 }
 
-static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
+static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
 {
-    ddstring_t* path, decodedPath;
+    AutoStr* path;
+    Str decodedPath;
     spriterecord_frame_t* frame;
     spriterecord_t* rec;
     boolean link;
     Uri* uri;
+
+    DENG_UNUSED(parameters);
 
     // Have we already encountered this name?
     path = Textures_ComposePath(texId);
@@ -351,7 +354,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     }
 
     // Add the frame(s).
-    Str_Init(&decodedPath);
+    Str_InitStd(&decodedPath);
     Str_PercentDecode(Str_Set(&decodedPath, Str_Text(path)));
 
     link = false;
@@ -395,7 +398,6 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     }
 
     Str_Free(&decodedPath);
-    Str_Delete(path);
     return 0; // Continue iteration.
 }
 

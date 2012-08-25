@@ -148,20 +148,19 @@ static inline texturenamespaceid_t namespaceIdForDirectoryNode(const TextureDire
     return namespaceIdForDirectory(&node->directory());
 }
 
-/// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static inline Str* composePathForDirectoryNode(const TextureDirectoryNode* node, char delimiter)
+/// @return  Newly composed path for @a node.
+static inline AutoStr* composePathForDirectoryNode(const TextureDirectoryNode* node, char delimiter)
 {
-    return node->composePath(Str_New(), NULL, delimiter);
+    return node->composePath(AutoStr_NewStd(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
 static Uri* composeUriForDirectoryNode(const TextureDirectoryNode* node)
 {
     const Str* namespaceName = Textures_NamespaceName(namespaceIdForDirectoryNode(node));
-    Str* path = composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
+    AutoStr* path = composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
     Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
     Uri_SetScheme(uri, Str_Text(namespaceName));
-    Str_Delete(path);
     return uri;
 }
 
@@ -1043,7 +1042,7 @@ texturenamespaceid_t Textures_Namespace(textureid_t id)
     return TN_ANY;
 }
 
-Str* Textures_ComposePath(textureid_t id)
+AutoStr* Textures_ComposePath(textureid_t id)
 {
     TextureDirectoryNode* node = directoryNodeForBindId(id);
     if(node)
@@ -1051,7 +1050,7 @@ Str* Textures_ComposePath(textureid_t id)
         return composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
     }
     DEBUG_Message(("Warning:Textures::ComposePath: Attempted with unbound textureId #%u, returning null-object.\n", id));
-    return Str_New();
+    return AutoStr_NewStd();
 }
 
 Uri* Textures_ComposeUri(textureid_t id)
@@ -1285,9 +1284,8 @@ static TextureDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespa
             {
                 if(like && like[0])
                 {
-                    Str* path = composePathForDirectoryNode(*nodeIt, delimiter);
+                    AutoStr* path = composePathForDirectoryNode(*nodeIt, delimiter);
                     int delta = qstrnicmp(Str_Text(path), like, strlen(like));
-                    Str_Delete(path);
                     if(delta) continue; // Continue iteration.
                 }
 
@@ -1331,12 +1329,9 @@ static TextureDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespa
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
     // Decode paths before determining a lexicographical delta.
-    Str* a = Str_PercentDecode(composePathForDirectoryNode(*(const TextureDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER));
-    Str* b = Str_PercentDecode(composePathForDirectoryNode(*(const TextureDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER));
-    int delta = stricmp(Str_Text(a), Str_Text(b));
-    Str_Delete(b);
-    Str_Delete(a);
-    return delta;
+    AutoStr* a = Str_PercentDecode(composePathForDirectoryNode(*(const TextureDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER));
+    AutoStr* b = Str_PercentDecode(composePathForDirectoryNode(*(const TextureDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER));
+    return stricmp(Str_Text(a), Str_Text(b));
 }
 
 /**

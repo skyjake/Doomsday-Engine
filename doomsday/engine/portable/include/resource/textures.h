@@ -118,7 +118,7 @@ texturenamespaceid_t Textures_Namespace(textureid_t textureId);
 
 /// @return  Symbolic, percent-encoded name/path-to this texture as a string.
 ///          Must be destroyed with Str_Delete().
-Str* Textures_ComposePath(textureid_t textureId);
+AutoStr* Textures_ComposePath(textureid_t textureId);
 
 /// @return  URI to this texture, percent-encoded. Must be destroyed with Uri_Delete().
 Uri* Textures_ComposeUri(textureid_t textureId);

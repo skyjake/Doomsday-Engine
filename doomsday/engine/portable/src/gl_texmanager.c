@@ -705,21 +705,17 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
-            const ddstring_t suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
-            ddstring_t searchPath;
-
+            const Str suffix = { "-ck" };
+            AutoStr* path = Textures_ComposePath(Textures_Id(tex));
             // First try the flats namespace then the old-fashioned "flat-name"
             // in the textures namespace.
-            Str_Init(&searchPath);
-            Str_Appendf(&searchPath,
-                FLATS_RESOURCE_NAMESPACE_NAME":%s;"
-                TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(path), Str_Text(path));
+            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(),
+                                              FLATS_RESOURCE_NAMESPACE_NAME":%s;"
+                                              TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(path), Str_Text(path));
 
-            source = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
-            Str_Free(&searchPath);
-            Str_Delete(path);
+            source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
+
         if(source == TEXS_NONE)
         {
             const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
@@ -754,17 +750,12 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         // Attempt to load an external replacement for this patch?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
-            const ddstring_t suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
-            ddstring_t searchPath;
-
-            Str_Init(&searchPath);
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(path));
-
-            source = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
-            Str_Free(&searchPath);
-            Str_Delete(path);
+            const Str suffix = { "-ck" };
+            AutoStr* path = Textures_ComposePath(Textures_Id(tex));
+            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(), PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(path));
+            source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
+
         if(source == TEXS_NONE)
         {
             const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
@@ -779,8 +770,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
                 }
             }
         }
-        break;
-      }
+        break; }
+
     case TN_SPRITES: {
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
@@ -793,26 +784,25 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         // Attempt to load an external replacement for this sprite?
         if(!noHighResPatches)
         {
-            ddstring_t searchPath, suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
+            const Str suffix = { "-ck" };
+            AutoStr* path = Textures_ComposePath(Textures_Id(tex));
 
             // Prefer psprite or translated versions if available.
-            Str_Init(&searchPath);
+            AutoStr* searchPath = AutoStr_NewStd();
             if(TC_PSPRITE_DIFFUSE == spec->context)
             {
-                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", Str_Text(path));
+                Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", Str_Text(path));
             }
             else if(tclass || tmap)
             {
-                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
-                    Str_Text(path), tclass, tmap);
+                Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
+                                        Str_Text(path), tclass, tmap);
             }
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(path));
+            Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(path));
 
-            source = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
-            Str_Free(&searchPath);
-            Str_Delete(path);
+            source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
+
         if(source == TEXS_NONE)
         {
             const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
@@ -827,8 +817,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
                 }
             }
         }
-        break;
-      }
+        break; }
+
     case TN_DETAILS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         if(Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
@@ -846,8 +836,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
                 F_Delete(file);
             }
         }
-        break;
-      }
+        break; }
+
     case TN_SYSTEM:
     case TN_REFLECTIONS:
     case TN_MASKS:
@@ -858,8 +848,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         AutoStr* path = Uri_Compose(resourcePath);
         source = GL_LoadExtTextureEX(image, Str_Text(path), NULL, true/*quiet please*/);
-        break;
-      }
+        break; }
+
     default:
         Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.", (int) Textures_Namespace(Textures_Id(tex)));
         exit(1); // Unreachable.
@@ -3643,10 +3633,9 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
 AutoStr* GL_ComposeCacheNameForTexture(Texture* tex)
 {
     textureid_t texId = Textures_Id(tex);
-    Str* path = Textures_ComposePath(texId);
+    AutoStr* path = Textures_ComposePath(texId);
     AutoStr* cacheName = Str_Appendf(AutoStr_NewStd(), "texcache/%s/%s.png",
                                      Str_Text(Textures_NamespaceName(Textures_Namespace(texId))), Str_Text(path));
-    Str_Delete(path);
     return cacheName;
 }
 
