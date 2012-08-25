@@ -266,20 +266,19 @@ static materialnamespaceid_t namespaceIdForDirectoryNode(const MaterialDirectory
     return namespaceIdForDirectory(&node->directory());
 }
 
-/// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static Str* composePathForDirectoryNode(const MaterialDirectoryNode* node, char delimiter)
+/// @return  Newly composed path for @a node.
+static AutoStr* composePathForDirectoryNode(const MaterialDirectoryNode* node, char delimiter)
 {
-    return node->composePath(Str_New(), NULL, delimiter);
+    return node->composePath(AutoStr_NewStd(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
 static Uri* composeUriForDirectoryNode(const MaterialDirectoryNode* node)
 {
     const Str* namespaceName = Materials_NamespaceName(namespaceIdForDirectoryNode(node));
-    Str* path = composePathForDirectoryNode(node, MATERIALS_PATH_DELIMITER);
+    AutoStr* path = composePathForDirectoryNode(node, MATERIALS_PATH_DELIMITER);
     Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
     Uri_SetScheme(uri, Str_Text(namespaceName));
-    Str_Delete(path);
     return uri;
 }
 
@@ -919,13 +918,13 @@ materialid_t Materials_ResolveUriCString(const char* path)
     return Materials_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-Str* Materials_ComposePath(materialid_t id)
+AutoStr* Materials_ComposePath(materialid_t id)
 {
     MaterialBind* bind = getMaterialBindForId(id);
     if(!bind)
     {
         DEBUG_Message(("Warning:Materials::ComposePath: Attempted with unbound materialId #%u, returning null-object.\n", id));
-        return Str_New();
+        return AutoStr_New();
     }
     return composePathForDirectoryNode(bind->directoryNode(), MATERIALS_PATH_DELIMITER);
 }
@@ -1567,9 +1566,8 @@ static MaterialDirectoryNode** collectDirectoryNodes(materialnamespaceid_t names
             {
                 if(like && like[0])
                 {
-                    Str* path = composePathForDirectoryNode((*nodeIt), delimiter);
+                    AutoStr* path = composePathForDirectoryNode((*nodeIt), delimiter);
                     int delta = qstrnicmp(Str_Text(path), like, strlen(like));
-                    Str_Delete(path);
                     if(delta) continue; // Continue iteration.
                 }
 
@@ -1609,12 +1607,9 @@ static MaterialDirectoryNode** collectDirectoryNodes(materialnamespaceid_t names
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
     // Decode paths before determining a lexicographical delta.
-    Str* a = Str_PercentDecode(composePathForDirectoryNode(*(const MaterialDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER));
-    Str* b = Str_PercentDecode(composePathForDirectoryNode(*(const MaterialDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER));
-    int delta = stricmp(Str_Text(a), Str_Text(b));
-    Str_Delete(b);
-    Str_Delete(a);
-    return delta;
+    AutoStr* a = Str_PercentDecode(composePathForDirectoryNode(*(const MaterialDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER));
+    AutoStr* b = Str_PercentDecode(composePathForDirectoryNode(*(const MaterialDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER));
+    return stricmp(Str_Text(a), Str_Text(b));
 }
 
 static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* like,

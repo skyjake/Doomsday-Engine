@@ -108,7 +108,7 @@ material_t* Materials_ToMaterial(materialid_t materialId);
 enum materialnamespaceid_e Materials_Namespace(materialid_t materialId);
 
 /// @return  Symbolic name/path-to this material. Must be destroyed with Str_Delete().
-ddstring_t* Materials_ComposePath(materialid_t materialId);
+AutoStr* Materials_ComposePath(materialid_t materialId);
 
 /// @return  Unique name/path-to this material. Must be destroyed with Uri_Delete().
 Uri* Materials_ComposeUri(materialid_t materialId);
