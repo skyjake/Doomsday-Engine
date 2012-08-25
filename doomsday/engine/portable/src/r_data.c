@@ -2132,7 +2132,7 @@ static lumpnum_t firstLumpWithName(const char* lumpName)
 static Uri* composeFlatUri(const char* lumpName)
 {
     Uri* uri;
-    AutoStr* flatName = AutoStr_New();
+    AutoStr* flatName = AutoStr_NewStd();
     F_FileName(flatName, lumpName);
     uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(flatName));

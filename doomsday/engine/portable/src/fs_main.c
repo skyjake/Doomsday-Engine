@@ -1075,7 +1075,7 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
 boolean F_Dump(const void* data, size_t size, const char* path)
 {
     FILE* outFile;
-    AutoStr* nativePath = AutoStr_New();
+    AutoStr* nativePath = AutoStr_NewStd();
 
     if(!size) return false;
 

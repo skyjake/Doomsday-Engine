@@ -833,7 +833,7 @@ void B_PrintAllBindings(void)
     evbinding_t*        e;
     controlbinding_t*   c;
     dbinding_t*         d;
-    AutoStr*            str = AutoStr_New();
+    AutoStr*            str = AutoStr_NewStd();
 
     Con_Printf("%i binding contexts defined.\n", bindContextCount);
 
@@ -897,7 +897,7 @@ void B_WriteContextToFile(const bcontext_t* bc, FILE* file)
     controlbinding_t*   c;
     dbinding_t*         d;
     int                 k;
-    AutoStr*            str = AutoStr_New();
+    AutoStr*            str = AutoStr_NewStd();
 
     // Commands.
     for(e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)

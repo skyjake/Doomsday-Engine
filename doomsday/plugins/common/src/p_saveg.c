@@ -596,7 +596,7 @@ void SV_Register(void)
 
 AutoStr* SV_ComposeSlotIdentifier(int slot)
 {
-    AutoStr* str = AutoStr_New();
+    AutoStr* str = AutoStr_NewStd();
     if(slot < 0) return Str_Set(str, "(invalid slot)");
     if(slot == AUTO_SLOT) return Str_Set(str, "<auto>");
 #if __JHEXEN__

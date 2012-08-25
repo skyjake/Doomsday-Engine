@@ -34,11 +34,11 @@ static AutoStr* composeBufferedMusicFilename(int id, const char* ext)
 {
     if(ext && ext[0])
     {
-        return Str_Appendf(AutoStr_New(), "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
+        return Str_Appendf(AutoStr_NewStd(), "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
     }
     else
     {
-        return Str_Appendf(AutoStr_New(), "%s%i", BUFFERED_MUSIC_FILE, id);
+        return Str_Appendf(AutoStr_NewStd(), "%s%i", BUFFERED_MUSIC_FILE, id);
     }
 }
 

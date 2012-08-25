@@ -96,7 +96,7 @@ static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
  */
 boolean B_ParseEvent(evbinding_t* eb, const char* desc)
 {
-    AutoStr* str = AutoStr_New();
+    AutoStr* str = AutoStr_NewStd();
 
     // First, we expect to encounter a device name.
     desc = Str_CopyDelim(str, desc, '-');
@@ -219,7 +219,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
  */
 boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
 {
-    AutoStr* str = AutoStr_New();
+    AutoStr* str = AutoStr_NewStd();
 
     // The main part, i.e., the first part.
     desc = Str_CopyDelim(str, desc, '+');

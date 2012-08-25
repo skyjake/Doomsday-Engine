@@ -233,7 +233,7 @@ int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
     if(def->path && !Str_IsEmpty(Uri_Path(def->path)))
     {
         ddstring_t* path;
-        AutoStr* fullPath = AutoStr_New();
+        AutoStr* fullPath = AutoStr_NewStd();
         F_PrependBasePath(fullPath, Uri_Path(def->path));
         if(F_Access(Str_Text(fullPath)))
         {

@@ -354,7 +354,7 @@ const char* B_ParseContext(const char* desc, bcontext_t** bc)
         return desc;
     }
 
-    str = AutoStr_New();
+    str = AutoStr_NewStd();
     desc = Str_CopyDelim(str, desc, ':');
     *bc = B_ContextByName(Str_Text(str));
 
@@ -424,7 +424,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         return NULL;
 
     // The control description may begin with the local player number.
-    str = AutoStr_New();
+    str = AutoStr_NewStd();
     ptr = Str_CopyDelim(str, controlDesc, '-');
     if(!strncasecmp(Str_Text(str), "local", 5) && Str_Length(str) > 5)
     {

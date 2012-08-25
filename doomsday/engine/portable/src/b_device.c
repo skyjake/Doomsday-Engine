@@ -96,7 +96,7 @@ void B_DestroyDeviceBindingList(dbinding_t* listRoot)
 
 boolean B_ParseDevice(dbinding_t* cb, const char* desc)
 {
-    AutoStr* str = AutoStr_New();
+    AutoStr* str = AutoStr_NewStd();
     ddeventtype_t type;
 
     // First, the device name.
@@ -171,7 +171,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
 
 boolean B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
 {
-    AutoStr* str = AutoStr_New();
+    AutoStr* str = AutoStr_NewStd();
 
     // The first part specifies the device state.
     desc = Str_CopyDelim(str, desc, '+');
