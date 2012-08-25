@@ -576,7 +576,7 @@ public:
         }
     }
 
-    void parseInclude(QString& arg)
+    void parseInclude(QString arg)
     {
         if(flags & NoInclude)
         {
