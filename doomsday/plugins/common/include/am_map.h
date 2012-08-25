@@ -159,6 +159,7 @@ enum {
 typedef struct {
     int reqSpecial;
     int reqSided;
+    int reqNotFlagged;
     int reqAutomapFlags;
     float rgba[4];
     blendmode_t blendMode;
@@ -183,7 +184,9 @@ automapcfg_t* ST_AutomapConfig(void);
 void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customPal);
 
 const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_objectname_t name);
-const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special, const Sector* frontsector, const Sector* backsector, int automapFlags);
+
+const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special,
+    int flags, const Sector* frontsector, const Sector* backsector, int automapFlags);
 
 void AM_GetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float* r, float* g, float* b, float* a);
 void AM_SetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float r, float g, float b, float a);
