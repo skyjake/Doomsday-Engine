@@ -130,7 +130,7 @@ public:
 
     bool atEnd()
     {
-        return (pos >= patch.size() || patch.at(pos) == '\0');
+        return (size_t(pos) >= patch.size() || patch.at(pos) == '\0');
     }
 
     void advance()
