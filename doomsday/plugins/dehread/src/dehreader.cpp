@@ -747,21 +747,23 @@ public:
                 {
                     const int value = expr.toIntLeft();
                     if(!ignore)
-                    if(value < 0 || value >= ded->count.states.num)
                     {
-                        LOG_WARNING("Frame #%i out of range, ignoring.") << value;
-                    }
-                    else
-                    {
-                        const int stateIdx = value;
-                        const ded_state_t& state = ded->states[stateIdx];
+                        if(value < 0 || value >= ded->count.states.num)
+                        {
+                            LOG_WARNING("Frame #%i out of range, ignoring.") << value;
+                        }
+                        else
+                        {
+                            const int stateIdx = value;
+                            const ded_state_t& state = ded->states[stateIdx];
 
-                        DENG2_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
-                        qstrncpy(mobj->states[mapping->id], state.id, DED_STRINGID_LEN + 1);
+                            DENG2_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
+                            qstrncpy(mobj->states[mapping->id], state.id, DED_STRINGID_LEN + 1);
 
-                        LOG_DEBUG("Type #%i \"%s\" state:%s => \"%s\" (#%i)")
-                            << mobjType << mobj->id << mapping->name
-                            << mobj->states[mapping->id] << stateIdx;
+                            LOG_DEBUG("Type #%i \"%s\" state:%s => \"%s\" (#%i)")
+                                << mobjType << mobj->id << mapping->name
+                                << mobj->states[mapping->id] << stateIdx;
+                        }
                     }
                 }
             }
@@ -777,31 +779,33 @@ public:
                 {
                     const int value = expr.toIntLeft();
                     if(!ignore)
-                    if(value < 0 || value >= ded->count.sounds.num)
                     {
-                        LOG_WARNING("Sound #%i out of range, ignoring.") << value;
-                    }
-                    else
-                    {
-                        const int soundsIdx = value;
-                        void* soundAdr;
-                        switch(mapping->id)
+                        if(value < 0 || value >= ded->count.sounds.num)
                         {
-                        case SDN_PAIN:      soundAdr = &mobj->painSound;   break;
-                        case SDN_DEATH:     soundAdr = &mobj->deathSound;  break;
-                        case SDN_ACTIVE:    soundAdr = &mobj->activeSound; break;
-                        case SDN_ATTACK:    soundAdr = &mobj->attackSound; break;
-                        case SDN_SEE:       soundAdr = &mobj->seeSound;    break;
-                        default:
-                            throw Error("DehReader", String("Unknown soundname id %i").arg(mapping->id));
+                            LOG_WARNING("Sound #%i out of range, ignoring.") << value;
                         }
+                        else
+                        {
+                            const int soundsIdx = value;
+                            void* soundAdr;
+                            switch(mapping->id)
+                            {
+                            case SDN_PAIN:      soundAdr = &mobj->painSound;   break;
+                            case SDN_DEATH:     soundAdr = &mobj->deathSound;  break;
+                            case SDN_ACTIVE:    soundAdr = &mobj->activeSound; break;
+                            case SDN_ATTACK:    soundAdr = &mobj->attackSound; break;
+                            case SDN_SEE:       soundAdr = &mobj->seeSound;    break;
+                            default:
+                                throw Error("DehReader", String("Unknown soundname id %i").arg(mapping->id));
+                            }
 
-                        const ded_sound_t& sound = ded->sounds[soundsIdx];
-                        qstrncpy((char*)soundAdr, sound.id, DED_STRINGID_LEN + 1);
+                            const ded_sound_t& sound = ded->sounds[soundsIdx];
+                            qstrncpy((char*)soundAdr, sound.id, DED_STRINGID_LEN + 1);
 
-                        LOG_DEBUG("Type #%i \"%s\" sound:%s => \"%s\" (#%i)")
-                            << mobjType << mobj->id << mapping->name
-                            << (char*)soundAdr << soundsIdx;
+                            LOG_DEBUG("Type #%i \"%s\" sound:%s => \"%s\" (#%i)")
+                                << mobjType << mobj->id << mapping->name
+                                << (char*)soundAdr << soundsIdx;
+                        }
                     }
                 }
             }
@@ -986,16 +990,18 @@ public:
             {
                 const int value = expr.toIntLeft();
                 if(!ignore)
-                if(value < 0 || value >= ded->count.states.num)
                 {
-                    LOG_WARNING("Frame #%i out of range, ignoring.") << value;
-                }
-                else
-                {
-                    const int nextStateIdx = value;
-                    qstrncpy(state->nextState, ded->states[nextStateIdx].id, DED_STRINGID_LEN + 1);
-                    LOG_DEBUG("State #%i \"%s\" nextState => \"%s\" (#%i)")
-                        << stateNum << state->id << state->nextState << nextStateIdx;
+                    if(value < 0 || value >= ded->count.states.num)
+                    {
+                        LOG_WARNING("Frame #%i out of range, ignoring.") << value;
+                    }
+                    else
+                    {
+                        const int nextStateIdx = value;
+                        qstrncpy(state->nextState, ded->states[nextStateIdx].id, DED_STRINGID_LEN + 1);
+                        LOG_DEBUG("State #%i \"%s\" nextState => \"%s\" (#%i)")
+                            << stateNum << state->id << state->nextState << nextStateIdx;
+                    }
                 }
             }
             else if(!var.compareWithoutCase("Particle event")) // Eternity
@@ -1007,17 +1013,19 @@ public:
             {
                 const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
-                if(value < 0 || value > ded->count.sprites.num)
                 {
-                    LOG_WARNING("Sprite #%i out of range, ignoring.") << value;
-                }
-                else
-                {
-                    const int spriteIdx = value;
-                    const ded_sprid_t& sprite = ded->sprites[spriteIdx];
-                    qstrncpy(state->sprite.id, sprite.id, DED_SPRITEID_LEN + 1);
-                    LOG_DEBUG("State #%i \"%s\" sprite => \"%s\" (#%i)")
-                        << stateNum << state->id << state->sprite.id << spriteIdx;
+                    if(value < 0 || value > ded->count.sprites.num)
+                    {
+                        LOG_WARNING("Sprite #%i out of range, ignoring.") << value;
+                    }
+                    else
+                    {
+                        const int spriteIdx = value;
+                        const ded_sprid_t& sprite = ded->sprites[spriteIdx];
+                        qstrncpy(state->sprite.id, sprite.id, DED_SPRITEID_LEN + 1);
+                        LOG_DEBUG("State #%i \"%s\" sprite => \"%s\" (#%i)")
+                            << stateNum << state->id << state->sprite.id << spriteIdx;
+                    }
                 }
             }
             else if(!var.compareWithoutCase("Sprite subnumber"))
@@ -1040,14 +1048,16 @@ public:
                 const int miscIdx = var.substr(8).toIntLeft(0, 10);
                 const int value   = expr.toIntLeft(0, 10);
                 if(!ignore)
-                if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
                 {
-                    LOG_WARNING("Unknown unknown-value '%s' on line #%i, ignoring.") << var.mid(8) << currentLineNumber;
-                }
-                else
-                {
-                    state->misc[miscIdx] = value;
-                    LOG_DEBUG("State #%i \"%s\" misc:%i => %i") << stateNum << state->id << miscIdx << value;
+                    if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
+                    {
+                        LOG_WARNING("Unknown unknown-value '%s' on line #%i, ignoring.") << var.mid(8) << currentLineNumber;
+                    }
+                    else
+                    {
+                        state->misc[miscIdx] = value;
+                        LOG_DEBUG("State #%i \"%s\" misc:%i => %i") << stateNum << state->id << miscIdx << value;
+                    }
                 }
             }
             else if(var.beginsWith("Args", Qt::CaseInsensitive)) // Eternity
@@ -1167,7 +1177,7 @@ public:
             }
             else if(!var.compareWithoutCase("Neg. One 2"))
             {
-                const int lumpNum  = expr.toIntLeft();
+                const int lumpNum = expr.toIntLeft();
                 if(!ignore)
                 {
                     const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
@@ -1237,17 +1247,19 @@ public:
                 else
                 {
                     if(!ignore)
-                    if(value < 0 || value > ded->count.states.num)
                     {
-                        LOG_WARNING("Frame #%i out of range, ignoring.") << value;
-                    }
-                    else
-                    {
-                        DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->count.states.num);
+                        if(value < 0 || value > ded->count.states.num)
+                        {
+                            LOG_WARNING("Frame #%i out of range, ignoring.") << value;
+                        }
+                        else
+                        {
+                            DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->count.states.num);
 
-                        const ded_state_t& state = ded->states[value];
-                        createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
-                                       QString::fromUtf8(state.id));
+                            const ded_state_t& state = ded->states[value];
+                            createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
+                                           QString::fromUtf8(state.id));
+                        }
                     }
                 }
             }
@@ -1256,13 +1268,15 @@ public:
                 const String ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
                 const int value = expr.toIntLeft(0, 10);
                 if(!ignore)
-                if(value < 0 || value >= 6)
                 {
-                    LOG_WARNING("Unknown ammotype %i on line #%i, ignoring.") << value << currentLineNumber;
-                }
-                else
-                {
-                    createValueDef(String("Weapon Info|%1|Type").arg(weapNum), ammotypes[value]);
+                    if(value < 0 || value >= 6)
+                    {
+                        LOG_WARNING("Unknown ammotype %i on line #%i, ignoring.") << value << currentLineNumber;
+                    }
+                    else
+                    {
+                        createValueDef(String("Weapon Info|%1|Type").arg(weapNum), ammotypes[value]);
+                    }
                 }
             }
             else if(!var.compareWithoutCase("Ammo per shot")) // Eternity
@@ -1290,16 +1304,18 @@ public:
             {
                 const int actionIdx = expr.toIntLeft();
                 if(!ignore)
-                if(actionIdx < 0 || actionIdx >= NUMSTATES)
                 {
-                    LOG_WARNING("Codep frame #%i out of range, ignoring.") << actionIdx;
-                }
-                else
-                {
-                    const ded_funcid_t& newAction = origActionNames[actionIdx];
-                    qstrncpy(state->action, newAction, DED_STRINGID_LEN + 1);
-                    LOG_DEBUG("State #%i \"%s\" action => \"%s\"")
-                        << stateIdx << state->id << state->action;
+                    if(actionIdx < 0 || actionIdx >= NUMSTATES)
+                    {
+                        LOG_WARNING("Codep frame #%i out of range, ignoring.") << actionIdx;
+                    }
+                    else
+                    {
+                        const ded_funcid_t& newAction = origActionNames[actionIdx];
+                        qstrncpy(state->action, newAction, DED_STRINGID_LEN + 1);
+                        LOG_DEBUG("State #%i \"%s\" action => \"%s\"")
+                            << stateIdx << state->id << state->action;
+                    }
                 }
             }
             else
