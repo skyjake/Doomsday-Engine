@@ -102,10 +102,10 @@ void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespa
  * Compose the list of search paths into a delimited string.
  *
  * @param delimiter  Discreet paths will be delimited by this character.
- * @return  Resultant string which should be released with Str_Delete().
+ * @return  Resultant string.
  */
-ddstring_t* ResourceNamespace_ComposeSearchPathList2(resourcenamespace_t* rn, char delimiter);
-ddstring_t* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn); /*delimiter= ';'*/
+AutoStr* ResourceNamespace_ComposeSearchPathList2(resourcenamespace_t* rn, char delimiter);
+AutoStr* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn); /*delimiter= ';'*/
 
 int ResourceNamespace_IterateSearchPaths2(resourcenamespace_t* rn,
     int (*callback) (const Uri* uri, int flags, void* paramaters), void* paramaters);

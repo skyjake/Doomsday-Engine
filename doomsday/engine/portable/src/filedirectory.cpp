@@ -220,7 +220,7 @@ int de::FileDirectory::addChildNodes(de::PathDirectoryNode* node, int flags,
         ddstring_t searchPattern;
 
         // Compose the search pattern.
-        Str_Init(&searchPattern);
+        Str_InitStd(&searchPattern);
         node->composePath(&searchPattern, NULL, '/');
         // We're interested in *everything*.
         Str_AppendChar(&searchPattern, '*');

@@ -136,7 +136,7 @@ boolean Demo_BeginRecording(const char* fileName, int plrNum)
         return false;
 
     // Compose the real file name.
-    Str_Init(&buf);
+    Str_InitStd(&buf);
     Str_Appendf(&buf, "%s%s", demoPath, fileName);
     F_ExpandBasePath(&buf, &buf);
     F_ToNativeSlashes(&buf, &buf);
@@ -325,7 +325,7 @@ boolean Demo_BeginPlayback(const char* fileName)
     }}
 
     // Compose the real file name.
-    Str_Init(&buf);
+    Str_InitStd(&buf);
     Str_Set(&buf, fileName);
     if(!F_IsAbsolute(&buf))
     {

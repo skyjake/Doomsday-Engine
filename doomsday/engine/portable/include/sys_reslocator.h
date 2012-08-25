@@ -128,7 +128,7 @@ void F_CreateNamespacesForFileResourcePaths(void);
  * @return  Newly created hash name. Ownership passes to the caller who should
  * ensure to release it with Str_Delete when done.
  */
-ddstring_t* F_ComposeHashNameForFilePath(const ddstring_t* filePath);
+AutoStr* F_ComposeHashNameForFilePath(const Str* filePath);
 
 /**
  * This is a hash function. It uses the resource name to generate a
@@ -141,8 +141,8 @@ resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const dd
 #define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
 
 resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    FileDirectory* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
+    FileDirectory* directory, AutoStr* (*composeHashNameFunc) (const Str* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const Str* name), byte flags);
 
 /**
  * @param rni  Unique identifier of the namespace to add to.

@@ -164,22 +164,22 @@ static ushort calculateIdentifierForMapPath(const char* path)
     return 0; // Unreachable.
 }
 
-ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
+AutoStr* DAM_ComposeCacheDir(const char* sourcePath)
 {
-    const ddstring_t* gameIdentityKey;
+    const Str* gameIdentityKey;
     ushort mapPathIdentifier;
-    ddstring_t mapFileName;
-    ddstring_t* path;
+    Str mapFileName;
+    AutoStr* path;
 
     if(!sourcePath || !sourcePath[0]) return NULL;
 
     gameIdentityKey = Game_IdentityKey(theGame);
     mapPathIdentifier = calculateIdentifierForMapPath(sourcePath);
-    Str_Init(&mapFileName);
+    Str_InitStd(&mapFileName);
     F_FileName(&mapFileName, sourcePath);
 
     // Compose the final path.
-    path = Str_New();
+    path = AutoStr_NewStd();
     Str_Appendf(path, "%s%s/%s-%04X/", mapCacheDir, Str_Text(gameIdentityKey),
         Str_Text(&mapFileName), mapPathIdentifier);
     F_ExpandBasePath(path, path);
@@ -249,8 +249,8 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         // We've not yet attempted to load this map.
         const char* mapId = Str_Text(Uri_Path(uri));
         lumpnum_t markerLump;
-        ddstring_t* cachedMapDir;
-        ddstring_t cachedMapPath;
+        AutoStr* cachedMapDir;
+        Str cachedMapPath;
 
         markerLump = F_CheckLumpNumForName2(mapId, true /*quiet please*/);
         if(0 > markerLump) return false;
@@ -260,7 +260,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         F_MakePath(Str_Text(cachedMapDir));
 
         // Compose the full path to the cached map data file.
-        Str_Init(&cachedMapPath);
+        Str_InitStd(&cachedMapPath);
         F_FileName(&cachedMapPath, F_LumpName(markerLump));
         Str_Append(&cachedMapPath, ".dcm");
         Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
@@ -269,7 +269,6 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         dam = createArchivedMap(uri, &cachedMapPath);
         addArchivedMap(dam);
 
-        Str_Delete(cachedMapDir);
         Str_Free(&cachedMapPath);
     }
 

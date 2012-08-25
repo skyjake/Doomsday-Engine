@@ -540,14 +540,14 @@ PathDirectoryNode* ZipFile_LumpDirectoryNode(ZipFile* zip, int lumpIdx)
     return zip->lumpDirectoryMap[lumpIdx];
 }
 
-ddstring_t* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter)
+AutoStr* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter)
 {
     PathDirectoryNode* node = ZipFile_LumpDirectoryNode(zip, lumpIdx);
     if(node)
     {
-        return PathDirectoryNode_ComposePath2(node, Str_New(), NULL, delimiter);
+        return PathDirectoryNode_ComposePath2(node, AutoStr_NewStd(), NULL, delimiter);
     }
-    return Str_New();
+    return AutoStr_NewStd();
 }
 
 const LumpInfo* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx)
@@ -844,13 +844,12 @@ size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer,
     if(!lumpRecord) return 0;
 
     VERBOSE2(
-        ddstring_t* path = ZipFile_ComposeLumpPath(zip, lumpIdx, '/');
+        AutoStr* path = ZipFile_ComposeLumpPath(zip, lumpIdx, '/');
         Con_Printf("ZipFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
                    F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)zip))),
                    F_PrettyPath(Str_Text(path)), (unsigned long) lumpRecord->info.size,
                    (lumpRecord->info.compressedSize != lumpRecord->info.size? ", compressed" : ""),
                    (unsigned long) startOffset, (unsigned long)length);
-        Str_Delete(path);
     )
 
     // Try to avoid a file system read by checking for a cached copy.
@@ -941,12 +940,11 @@ const uint8_t* ZipFile_CacheLump(ZipFile* zip, int lumpIdx, int tag)
     void** cachePtr;
 
     VERBOSE2(
-        ddstring_t* path = ZipFile_ComposeLumpPath(zip, lumpIdx, '/');
+        AutoStr* path = ZipFile_ComposeLumpPath(zip, lumpIdx, '/');
         Con_Printf("ZipFile::CacheLump: \"%s:%s\" (%lu bytes%s)",
                 F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)zip))),
                 F_PrettyPath(Str_Text(path)), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""));
-        Str_Delete(path);
     )
 
     if(ZipFile_LumpCount(zip) > 1)
@@ -1004,11 +1002,10 @@ void ZipFile_ChangeLumpCacheTag(ZipFile* zip, int lumpIdx, int tag)
     if(isCached)
     {
         VERBOSE2(
-            ddstring_t* path = ZipFile_ComposeLumpPath(zip, lumpIdx, '/');
+            AutoStr* path = ZipFile_ComposeLumpPath(zip, lumpIdx, '/');
             Con_Printf("ZipFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
                     F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)zip))),
                     F_PrettyPath(Str_Text(path)), tag);
-            Str_Delete(path);
         )
 
         Z_ChangeTag2(*cachePtr, tag);

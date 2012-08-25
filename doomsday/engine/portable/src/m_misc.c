@@ -999,7 +999,7 @@ int M_ScreenShot(const char* name, int bits)
 
     /*
     byte* screen = (byte*) GL_GrabScreen();
-    ddstring_t fullName;
+    Str fullName;
     FILE* file;
 
     if(!screen)
@@ -1009,7 +1009,7 @@ int M_ScreenShot(const char* name, int bits)
     }
 
     // Compose the final file name.
-    Str_Init(&fullName); Str_Set(&fullName, name);
+    Str_InitStd(&fullName); Str_Set(&fullName, name);
     if(!F_FindFileExtension(Str_Text(&fullName)))
         Str_Append(&fullName, ".tga");
     F_ToNativeSlashes(&fullName, &fullName);

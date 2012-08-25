@@ -1005,7 +1005,7 @@ PathDirectoryNode* F_LumpDirectoryNode(abstractfile_t* fsObject, int lumpIdx)
     }
 }
 
-ddstring_t* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delimiter)
+AutoStr* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delimiter)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
@@ -1020,7 +1020,7 @@ ddstring_t* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delim
     }
 }
 
-ddstring_t* F_ComposeLumpPath(abstractfile_t* fsObject, int lumpIdx)
+AutoStr* F_ComposeLumpPath(abstractfile_t* fsObject, int lumpIdx)
 {
     return F_ComposeLumpPath2(fsObject, lumpIdx, '/');
 }
@@ -1346,7 +1346,7 @@ static int findLumpWorker(const LumpInfo* lumpInfo, void* paramaters)
 {
     findlumpworker_paramaters_t* p = (findlumpworker_paramaters_t*)paramaters;
     PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx);
-    ddstring_t* filePath = NULL;
+    AutoStr* filePath = NULL;
     boolean patternMatched;
     int result = 0; // Continue iteration.
     assert(lumpInfo && p);
@@ -1372,7 +1372,6 @@ static int findLumpWorker(const LumpInfo* lumpInfo, void* paramaters)
         result = p->callback(filePath, PT_LEAF, p->paramaters);
     }
 
-    if(filePath) Str_Delete(filePath);
     return result;
 }
 
@@ -1946,12 +1945,11 @@ DFile* F_OpenLump(lumpnum_t absoluteLumpNum)
     abstractfile_t* container = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(container)
     {
-        ddstring_t* path = F_ComposeLumpPath(container, lumpIdx);
+        AutoStr* path = F_ComposeLumpPath(container, lumpIdx);
         abstractfile_t* fsObject = newLumpFile(
             DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, false),
             Str_Text(path), F_LumpInfo(container, lumpIdx));
 
-        Str_Delete(path);
         if(fsObject)
         {
             return FileList_AddBack(openFiles, DFileBuilder_NewFromAbstractFile(fsObject));

@@ -93,10 +93,9 @@ const LumpInfo* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx);
  * @param zip  ZipFile instance.
  * @param lumpIdx  Logical index for the lump.
  * @param delimiter  Delimit directory separators using this character (default: '/').
- * @return  String containing the full path. Has to be destroyed with Str_Delete()
- *          once it is no longer needed.
+ * @return  String containing the full path.
  */
-ddstring_t* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter);
+AutoStr* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.

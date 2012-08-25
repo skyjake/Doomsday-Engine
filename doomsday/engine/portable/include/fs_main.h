@@ -278,9 +278,8 @@ void F_Close(DFile* file);
 /// Completely destroy this file; close if open, clear references and any acquired identifiers.
 void F_Delete(DFile* file);
 
-/// @return  Must be free'd with Str_Delete
-ddstring_t* F_ComposeLumpPath2(abstractfile_t* file, int lumpIdx, char delimiter);
-ddstring_t* F_ComposeLumpPath(abstractfile_t* file, int lumpIdx); /*delimiter='/'*/
+AutoStr* F_ComposeLumpPath2(abstractfile_t* file, int lumpIdx, char delimiter);
+AutoStr* F_ComposeLumpPath(abstractfile_t* file, int lumpIdx); /*delimiter='/'*/
 
 struct pathdirectorynode_s* F_LumpDirectoryNode(abstractfile_t* file, int lumpIdx);
 

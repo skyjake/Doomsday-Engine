@@ -278,14 +278,14 @@ PathDirectoryNode* WadFile_LumpDirectoryNode(WadFile* wad, int lumpIdx)
     return wad->lumpDirectoryMap[lumpIdx];
 }
 
-ddstring_t* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter)
+AutoStr* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter)
 {
     PathDirectoryNode* node = WadFile_LumpDirectoryNode(wad, lumpIdx);
     if(node)
     {
-        return PathDirectoryNode_ComposePath2(node, Str_New(), NULL, delimiter);
+        return PathDirectoryNode_ComposePath2(node, AutoStr_NewStd(), NULL, delimiter);
     }
-    return Str_New();
+    return AutoStr_NewStd();
 }
 
 const LumpInfo* WadFile_LumpInfo(WadFile* wad, int lumpIdx)
@@ -403,14 +403,13 @@ size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx, uint8_t* buffer,
     if(!lumpRecord) return 0;
 
     VERBOSE2(
-        ddstring_t* path = WadFile_ComposeLumpPath(wad, lumpIdx, '/');
+        AutoStr* path = WadFile_ComposeLumpPath(wad, lumpIdx, '/');
         Con_Printf("WadFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
                 F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)wad))),
                 F_PrettyPath(Str_Text(path)),
                 (unsigned long) lumpRecord->info.size,
                 (lumpRecord->info.compressedSize != lumpRecord->info.size? ", compressed" : ""),
                 (unsigned long) startOffset, (unsigned long)length);
-        Str_Delete(path)
     )
 
     // Try to avoid a file system read by checking for a cached copy.
@@ -478,12 +477,11 @@ const uint8_t* WadFile_CacheLump(WadFile* wad, int lumpIdx, int tag)
     void** cachePtr;
 
     VERBOSE2(
-        ddstring_t* path = WadFile_ComposeLumpPath(wad, lumpIdx, '/');
+        AutoStr* path = WadFile_ComposeLumpPath(wad, lumpIdx, '/');
         Con_Printf("WadFile::CacheLump: \"%s:%s\" (%lu bytes%s)",
                 F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)wad))),
                 F_PrettyPath(Str_Text(path)), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""));
-        Str_Delete(path)
     )
 
     if(WadFile_LumpCount(wad) > 1)
@@ -541,11 +539,10 @@ void WadFile_ChangeLumpCacheTag(WadFile* wad, int lumpIdx, int tag)
     if(isCached)
     {
         VERBOSE2(
-            ddstring_t* path = WadFile_ComposeLumpPath(wad, lumpIdx, '/');
+            AutoStr* path = WadFile_ComposeLumpPath(wad, lumpIdx, '/');
             Con_Printf("WadFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
                     F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)wad))),
                     F_PrettyPath(Str_Text(path)), tag);
-            Str_Delete(path)
         )
 
         Z_ChangeTag2(*cachePtr, tag);

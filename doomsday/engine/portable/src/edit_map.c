@@ -1917,10 +1917,10 @@ boolean MPE_End(void)
     {
         // Yes, write the cached map data file.
         lumpnum_t markerLumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(gamemap->uri)), true);
-        ddstring_t* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
-        ddstring_t cachedMapPath;
+        AutoStr* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
+        Str cachedMapPath;
 
-        Str_Init(&cachedMapPath);
+        Str_InitStd(&cachedMapPath);
         F_FileName(&cachedMapPath, F_LumpName(markerLumpNum));
         Str_Append(&cachedMapPath, ".dcm");
         Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
@@ -1932,7 +1932,6 @@ boolean MPE_End(void)
         // Archive this map!
         DAM_MapWrite(gamemap, Str_Text(&cachedMapPath));
 
-        Str_Delete(cachedMapDir);
         Str_Free(&cachedMapPath);
     }
 

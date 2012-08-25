@@ -46,7 +46,7 @@ int WadFile_PublishLumpsToDirectory(WadFile* wad, struct lumpdirectory_s* direct
 
 struct pathdirectorynode_s* WadFile_LumpDirectoryNode(WadFile* wad, int lumpIdx);
 
-ddstring_t* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter);
+AutoStr* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter);
 
 const LumpInfo* WadFile_LumpInfo(WadFile* wad, int lumpIdx);
 

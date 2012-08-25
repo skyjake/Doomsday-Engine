@@ -2660,14 +2660,14 @@ ded_end_read:
 
 int DED_Read(ded_t* ded, const char* path)
 {
-    ddstring_t transPath;
+    Str transPath;
     size_t bufferedDefSize;
     char* bufferedDef;
     DFile* file;
     int result;
 
     // Compose the (possibly-translated) path.
-    Str_Init(&transPath);
+    Str_InitStd(&transPath);
     Str_Set(&transPath, path);
     F_FixSlashes(&transPath, &transPath);
     F_ExpandBasePath(&transPath, &transPath);

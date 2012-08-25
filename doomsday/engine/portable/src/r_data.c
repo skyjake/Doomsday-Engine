@@ -1401,10 +1401,9 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 
     if(lumpSize < 4)
     {
-        ddstring_t* path = F_ComposeLumpPath(file, lumpIdx);
+        AutoStr* path = F_ComposeLumpPath(file, lumpIdx);
         Con_Message("Warning:loadPatchNames: \"%s\"(#%i) is not valid PNAMES data.\n",
                     F_PrettyPath(Str_Text(path)), lumpNum);
-        Str_Delete(path);
 
         if(num) *num = 0;
         return NULL;
@@ -1422,12 +1421,11 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 
     if((unsigned)numNames > (lumpSize - 4) / 8)
     {
-        // Lump is truncated.
-        ddstring_t* path = F_ComposeLumpPath(file, lumpIdx);
+        // Lump appears to be truncated.
+        AutoStr* path = F_ComposeLumpPath(file, lumpIdx);
         Con_Message("Warning:loadPatchNames: Patch '%s'(#%i) is truncated (%lu bytes, expected %lu).\n",
                     F_PrettyPath(Str_Text(path)), lumpNum, (unsigned long) lumpSize,
                     (unsigned long) (numNames * 8 + 4));
-        Str_Delete(path);
 
         numNames = (int) ((lumpSize - 4) / 8);
     }
@@ -1528,9 +1526,8 @@ typedef struct {
     numTexDefs = LONG(*maptex1);
 
     VERBOSE(
-        ddstring_t* path = F_ComposeLumpPath(fsObject, lumpIdx);
+        AutoStr* path = F_ComposeLumpPath(fsObject, lumpIdx);
         Con_Message("  Processing \"%s\"...\n", F_PrettyPath(Str_Text(path)));
-        Str_Delete(path);
     )
 
     validTexDefs = (byte*) calloc(1, sizeof(*validTexDefs) * numTexDefs);
@@ -1554,9 +1551,8 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            ddstring_t* path = F_ComposeLumpPath(fsObject, lumpIdx);
+            AutoStr* path = F_ComposeLumpPath(fsObject, lumpIdx);
             Con_Message("Warning: Invalid offset %lu for definition %i in \"%s\", ignoring.\n", (unsigned long) offset, i, F_PrettyPath(Str_Text(path)));
-            Str_Delete(path);
             continue;
         }
 
