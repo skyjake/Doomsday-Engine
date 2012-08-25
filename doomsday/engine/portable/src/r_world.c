@@ -1620,12 +1620,11 @@ static void addMissingMaterial(SideDef* s, SideDefSection section)
     {
         VERBOSE(
             Uri* uri = suf->material? Materials_ComposeUri(Materials_Id(suf->material)) : 0;
-            ddstring_t* path = uri? Uri_ToString(uri) : 0;
+            AutoStr* path = uri? Uri_ToString(uri) : 0;
             Con_Message("Warning: SideDef #%u is missing a material for the %s section.\n"
                         "  %s was chosen to complete the definition.\n", s->buildData.index-1,
                         (section == SS_MIDDLE? "middle" : section == SS_TOP? "top" : "bottom"),
                         path? Str_Text(path) : "<null>");
-            if(path) Str_Delete(path);
             if(uri) Uri_Delete(uri);
         )
     }

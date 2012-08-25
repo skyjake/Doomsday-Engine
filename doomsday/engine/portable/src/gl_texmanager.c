@@ -833,9 +833,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         if(Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
         {
-            ddstring_t* searchPath = Uri_Compose(resourcePath);
+            AutoStr* searchPath = Uri_Compose(resourcePath);
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), NULL, true/*quiet please*/);
-            Str_Delete(searchPath);
         }
         else
         {
@@ -857,9 +856,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
     case TN_MODELSKINS:
     case TN_MODELREFLECTIONSKINS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
-        ddstring_t* path = Uri_Compose(resourcePath);
+        AutoStr* path = Uri_Compose(resourcePath);
         source = GL_LoadExtTextureEX(image, Str_Text(path), NULL, true/*quiet please*/);
-        Str_Delete(path);
         break;
       }
     default:
@@ -1080,10 +1078,9 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant* tex, 
         // Announce the normalization.
         VERBOSE(
             Uri* uri = Textures_ComposeUri(Textures_Id(TextureVariant_GeneralCase(tex)));
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
                         Str_Text(path), baMul, hiMul, loMul);
-            Str_Delete(path);
             Uri_Delete(uri);
         )
     }
@@ -3322,10 +3319,9 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     {
 #if _DEBUG
         Uri* uri = Textures_ComposeUri(Textures_Id(tex));
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         VERBOSE2( Con_Message("Logical dimensions for \"%s\" taken from image pixels [%ix%i].\n",
-            Str_Text(path), image.size.width, image.size.height) );
-        Str_Delete(path);
+                              Str_Text(path), image.size.width, image.size.height) )
         Uri_Delete(uri);
 #endif
         Texture_SetSize(tex, &image.size);
@@ -3365,11 +3361,10 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
 #ifdef _DEBUG
     VERBOSE(
         Uri* uri = Textures_ComposeUri(Textures_Id(tex));
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Printf("Prepared TextureVariant (name:\"%s\" glName:%u)%s\n",
-            Str_Text(path), (unsigned int) TextureVariant_GLName(*variant),
-            (METHOD_IMMEDIATE == uploadMethod)? " while not busy!" : "");
-        Str_Delete(path);
+                   Str_Text(path), (unsigned int) TextureVariant_GLName(*variant),
+                   (METHOD_IMMEDIATE == uploadMethod)? " while not busy!" : "");
         Uri_Delete(uri);
         )
     VERBOSE2(

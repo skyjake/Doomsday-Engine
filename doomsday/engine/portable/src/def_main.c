@@ -1013,9 +1013,8 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
 #if _DEBUG
     else
     {
-        ddstring_t* path = Uri_ToString(texUri);
+        AutoStr* path = Uri_ToString(texUri);
         Con_Message("Warning:generateMaterialDefForPatchCompositeTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
-        Str_Delete(path);
     }
 #endif
 
@@ -1053,9 +1052,8 @@ static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters
 #if _DEBUG
     else
     {
-        ddstring_t* path = Uri_ToString(texUri);
+        AutoStr* path = Uri_ToString(texUri);
         Con_Message("Warning:generateMaterialDefForFlatTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
-        Str_Delete(path);
     }
 #endif
 
@@ -1090,9 +1088,8 @@ static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramate
 #if _DEBUG
     else
     {
-        ddstring_t* path = Uri_ToString(texUri);
+        AutoStr* path = Uri_ToString(texUri);
         Con_Message("Warning:generateMaterialDefForSpriteTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
-        Str_Delete(path);
     }
 #endif
 

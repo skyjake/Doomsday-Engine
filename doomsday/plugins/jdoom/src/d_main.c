@@ -444,7 +444,7 @@ void D_PreInit(void)
  */
 void D_PostInit(void)
 {
-    ddstring_t* path;
+    AutoStr* path;
     Uri* uri;
     int p;
 
@@ -573,7 +573,6 @@ void D_PostInit(void)
         startEpisode = 0;
         startMap = 0;
     }
-    Str_Delete(path);
     Uri_Delete(uri);
 
     if(autoStart || IS_NETGAME)

@@ -100,9 +100,8 @@ static archivedmap_t* createArchivedMap(const Uri* uri, const ddstring_t* cached
     archivedmap_t* dam = allocArchivedMap();
 
     VERBOSE(
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("createArchivedMap: Add record for map '%s'.\n", Str_Text(path));
-        Str_Delete(path);
         )
 
     dam->uri = Uri_NewCopy(uri);
@@ -202,9 +201,8 @@ static boolean convertMap(GameMap** map, archivedmap_t* dam)
     boolean converted = false;
 
     VERBOSE(
-        ddstring_t* path = Uri_ToString(dam->uri);
+        AutoStr* path = Uri_ToString(dam->uri);
         Con_Message("convertMap: Attempting conversion of '%s'.\n", Str_Text(path));
-        Str_Delete(path);
         );
 
     // Any converters available?
@@ -241,9 +239,8 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
     assert(uri);
 
     VERBOSE2(
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("DAM_AttemptMapLoad: Loading '%s'...\n", Str_Text(path));
-        Str_Delete(path);
         )
 
     dam = findArchivedMap(uri);

@@ -117,9 +117,8 @@ static void appendSearchPathsInGroup(resourcenamespace_t* rn,
 
     for(i = 0; i < rn->_searchPathsCount[group]; ++i)
     {
-        ddstring_t* path = Uri_Compose(rn->_searchPaths[group][i].uri);
+        AutoStr* path = Uri_Compose(rn->_searchPaths[group][i].uri);
         Str_Appendf(pathList, "%s%c", Str_Text(path), delimiter);
-        Str_Delete(path);
     }
 }
 
@@ -209,13 +208,12 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, int flags,
     }
 
     // Ensure this is a well formed path.
-    { ddstring_t* path = Uri_Compose(_searchPath);
+    { AutoStr* path = Uri_Compose(_searchPath);
 
     // Only directories can be search paths.
     F_AppendMissingSlash(path);
 
     searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-    Str_Delete(path);
     }
 
     // Have we seen this path already (we don't want duplicates)?

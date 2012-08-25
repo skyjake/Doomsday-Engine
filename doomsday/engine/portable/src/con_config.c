@@ -112,9 +112,8 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
         fprintf(file, "\"");
         if(CV_URIPTR(var))
         {
-            ddstring_t* valPath = Uri_Compose(CV_URIPTR(var));
+            AutoStr* valPath = Uri_Compose(CV_URIPTR(var));
             fprintf(file, "%s", Str_Text(valPath));
-            Str_Delete(valPath);
         }
         fprintf(file, "\"");
         break;

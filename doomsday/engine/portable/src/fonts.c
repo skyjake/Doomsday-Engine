@@ -211,9 +211,8 @@ static boolean validateFontUri2(const Uri* uri, int flags, boolean quiet)
     {
         if(!quiet)
         {
-            ddstring_t* uriStr = Uri_ToString(uri);
+            AutoStr* uriStr = Uri_ToString(uri);
             Con_Message("Invalid path '%s' in Font uri \"%s\".\n", Str_Text(Uri_Path(uri)), Str_Text(uriStr));
-            Str_Delete(uriStr);
         }
         return false;
     }
@@ -235,9 +234,8 @@ static boolean validateFontUri2(const Uri* uri, int flags, boolean quiet)
     {
         if(!quiet)
         {
-            ddstring_t* uriStr = Uri_ToString(uri);
+            AutoStr* uriStr = Uri_ToString(uri);
             Con_Message("Unknown namespace in Font uri \"%s\".\n", Str_Text(uriStr));
-            Str_Delete(uriStr);
         }
         return false;
     }
@@ -346,9 +344,8 @@ static int destroyRecord(PathDirectoryNode* node, void* parameters)
         {
 #if _DEBUG
             Uri* uri = composeUriForDirectoryNode(node);
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Warning:Fonts::destroyRecord: Record for \"%s\" still has Font data!\n", Str_Text(path));
-            Str_Delete(path);
             Uri_Delete(uri);
 #endif
             destroyFont(record->font);
@@ -726,9 +723,8 @@ fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet)
     if(!validateFontUri2(uri, VFUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
     {
 #if _DEBUG
-        ddstring_t* uriStr = Uri_ToString(uri);
+        AutoStr* uriStr = Uri_ToString(uri);
         Con_Message("Warning:Fonts::ResolveUri: Uri \"%s\" failed to validate, returning NULL.\n", Str_Text(uriStr));
-        Str_Delete(uriStr);
 #endif
         return NOFONTID;
     }
@@ -752,14 +748,13 @@ fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet)
     // Not found.
     if(!quiet)
     {
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Fonts::ResolveUri: \"%s\" not found!\n", Str_Text(path));
-        Str_Delete(path);
     }
     return NOFONTID;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 fontid_t Fonts_ResolveUri(const Uri* uri)
 {
     return Fonts_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
@@ -793,9 +788,8 @@ fontid_t Fonts_Declare(const Uri* uri, int uniqueId)//, const Uri* resourcePath)
     // We require a properly formed uri (but not a urn - this is a path).
     if(!validateFontUri2(uri, VFUF_NO_URN, (verbose >= 1)))
     {
-        ddstring_t* uriStr = Uri_ToString(uri);
+        AutoStr* uriStr = Uri_ToString(uri);
         Con_Message("Warning: Failed creating Font \"%s\", ignoring.\n", Str_Text(uriStr));
-        Str_Delete(uriStr);
         return NOFONTID;
     }
 
@@ -990,15 +984,14 @@ font_t* Fonts_CreateFromDef(fontid_t id, ded_compositefont_t* def)
     assert(record);
     if(record->font)
     {
-        /// \todo Do not update fonts here (not enough knowledge). We should instead
+        /// @todo Do not update fonts here (not enough knowledge). We should instead
         /// return an invalid reference/signal and force the caller to implement the
         /// necessary update logic.
         font_t* font = record->font;
 #if _DEBUG
         Uri* uri = Fonts_ComposeUri(id);
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning:Fonts::CreateFromDef: A Font with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
-        Str_Delete(path);
         Uri_Delete(uri);
 #endif
         Fonts_RebuildFromDef(font, def);
@@ -1010,9 +1003,8 @@ font_t* Fonts_CreateFromDef(fontid_t id, ded_compositefont_t* def)
     if(record->font && verbose >= 1)
     {
         Uri* uri = Fonts_ComposeUri(id);
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("New font \"%s\"\n", Str_Text(path));
-        Str_Delete(path);
         Uri_Delete(uri);
     }
 
@@ -1049,15 +1041,14 @@ font_t* Fonts_CreateFromFile(fontid_t id, const char* resourcePath)
     assert(record);
     if(record->font)
     {
-        /// \todo Do not update fonts here (not enough knowledge). We should instead
+        /// @todo Do not update fonts here (not enough knowledge). We should instead
         /// return an invalid reference/signal and force the caller to implement the
         /// necessary update logic.
         font_t* font = record->font;
 #if _DEBUG
         Uri* uri = Fonts_ComposeUri(id);
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning:Fonts::CreateFromFile: A Font with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
-        Str_Delete(path);
         Uri_Delete(uri);
 #endif
         Fonts_RebuildFromFile(font, resourcePath);
@@ -1069,9 +1060,8 @@ font_t* Fonts_CreateFromFile(fontid_t id, const char* resourcePath)
     if(record->font && verbose >= 1)
     {
         Uri* uri = Fonts_ComposeUri(id);
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("New font \"%s\"\n", Str_Text(path));
-        Str_Delete(path);
         Uri_Delete(uri);
     }
 
@@ -1280,7 +1270,7 @@ static void printFontOverview(PathDirectoryNode* node, boolean printNamespace)
     fontid_t fontId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Fonts_Size()));
     Uri* uri = record->font? Fonts_ComposeUri(fontId) : Uri_New();
-    const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
+    const Str* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
     font_t* font = record->font;
 
     Con_FPrintf(!font? CPF_LIGHT : CPF_WHITE,
@@ -1302,8 +1292,6 @@ static void printFontOverview(PathDirectoryNode* node, boolean printNamespace)
     }
 
     Uri_Delete(uri);
-    if(printNamespace)
-        Str_Delete((ddstring_t*)path);
 }
 
 /**

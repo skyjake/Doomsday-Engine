@@ -663,7 +663,7 @@ static void spawnMapObjects(void)
 
 void P_SetupMap(Uri* mapUri, uint episode, uint map)
 {
-    ddstring_t* mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
+    AutoStr* mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
 
     if(!mapUriStr) return;
 
@@ -687,11 +687,10 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
 
     if(!P_LoadMap(Str_Text(mapUriStr)))
     {
-        ddstring_t* path = Uri_ToString(mapUri);
+        AutoStr* path = Uri_ToString(mapUri);
         Con_Error("P_SetupMap: Failed loading map \"%s\".\n", Str_Text(path));
         exit(1); // Unreachable.
     }
-    Str_Delete(mapUriStr);
 
     DD_InitThinkers();
 #if __JHERETIC__

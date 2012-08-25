@@ -2088,7 +2088,7 @@ DEFFC(PredefinedFont)
         return;
     }
 
-    { Str* fontPath = Uri_ToString(OP_URI(1));
+    { AutoStr* fontPath = Uri_ToString(OP_URI(1));
     Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", Str_Text(fontPath));
     }
 }
@@ -2164,7 +2164,7 @@ DEFFC(Font)
         return;
     }
 
-    { Str* fontPath = Uri_ToString(OP_URI(1));
+    { AutoStr* fontPath = Uri_ToString(OP_URI(1));
     Con_Message("FIC_Font: Warning, unknown font '%s'.\n", Str_Text(fontPath));
     }
 }

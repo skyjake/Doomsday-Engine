@@ -1162,21 +1162,19 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             else if(!bCopyNext)
             {
                 Uri* otherMat = NULL;
-                ddstring_t* otherMatPath;
+                AutoStr* otherMatPath;
 
                 READURI(&otherMat, NULL);
                 ReadToken();
 
                 otherMatPath = Uri_Compose(otherMat);
                 mat = Def_GetMaterial(Str_Text(otherMatPath));
-                Str_Delete(otherMatPath);
                 if(!mat)
                 {
                     VERBOSE(
-                        ddstring_t* path = Uri_ToString(otherMat);
+                        AutoStr* path = Uri_ToString(otherMat);
                         Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.\n",
-                            Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
-                        Str_Delete(path)
+                                    Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
                         )
 
                     // We'll read into a dummy definition.

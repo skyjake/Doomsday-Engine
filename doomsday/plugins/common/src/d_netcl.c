@@ -79,9 +79,8 @@ void NetCl_UpdateGameState(Reader* msg)
     gsGravity = Reader_ReadFloat(msg);
 
     VERBOSE(
-        ddstring_t* str = Uri_ToString(mapUri);
+        AutoStr* str = Uri_ToString(mapUri);
         Con_Message("NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"\n", gsFlags, Str_Text(str));
-        Str_Delete(str);
     )
 
     // Demo game state changes are only effective during demo playback.

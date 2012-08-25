@@ -1052,7 +1052,7 @@ void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
 #undef COPYVCOLOR
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_TextureUniqueId2(const Uri* uri, boolean quiet)
 {
     textureid_t texId = Textures_ResolveUri2(uri, quiet);
@@ -1062,14 +1062,13 @@ int R_TextureUniqueId2(const Uri* uri, boolean quiet)
     }
     if(!quiet)
     {
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning: Unknown Texture \"%s\"\n", Str_Text(path));
-        Str_Delete(path);
     }
     return -1;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_TextureUniqueId(const Uri* uri)
 {
     return R_TextureUniqueId2(uri, false);
@@ -1107,9 +1106,8 @@ void R_InitSystemTextures(void)
         tex = Textures_ToTexture(texId);
         if(!tex && !Textures_Create(texId, true/*is-custom*/, NULL))
         {
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Warning: Failed defining Texture for System texture \"%s\"\n", Str_Text(path));
-            Str_Delete(path);
         }
     }
     Uri_Delete(resourcePath);
@@ -2214,9 +2212,8 @@ void R_InitFlatTextures(void)
                 textureid_t texId = Textures_Declare(uri, uniqueId, resourcePath);
                 if(!Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, NULL))
                 {
-                    ddstring_t* path = Uri_ToString(uri);
+                    AutoStr* path = Uri_ToString(uri);
                     Con_Message("Warning: Failed defining Texture for new flat '%s', ignoring.\n", Str_Text(path));
-                    Str_Delete(path);
                 }
                 Uri_Delete(resourcePath);
             }
@@ -2257,9 +2254,8 @@ void R_DefineSpriteTexture(textureid_t texId)
         if(!tex)
         {
             Uri* uri = Textures_ComposeUri(texId);
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Warning: Failed defining Texture for \"%s\", ignoring.\n", Str_Text(path));
-            Str_Delete(path);
             Uri_Delete(uri);
             free(pTex);
         }
@@ -3009,9 +3005,8 @@ Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
         tex = Textures_CreateWithSize(texId, true/*is-custom*/, size, NULL);
         if(!tex)
         {
-            ddstring_t* path = Uri_ToString(resourcePath);
+            AutoStr* path = Uri_ToString(resourcePath);
             Con_Message("Warning: Failed defining Texture for mask texture \"%s\"\n", F_PrettyPath(Str_Text(path)));
-            Str_Delete(path);
             return NULL;
         }
     }
@@ -3128,9 +3123,8 @@ void R_AddAnimGroupFrame(int groupNum, const Uri* texture, int tics, int randomT
     if(texId == NOTEXTUREID)
     {
 #if _DEBUG
-        ddstring_t* path = Uri_ToString(texture);
+        AutoStr* path = Uri_ToString(texture);
         Con_Message("Warning::R_AddAnimGroupFrame: Invalid texture uri \"%s\", ignoring.\n", Str_Text(path));
-        Str_Delete(path);
 #endif
         return;
     }
@@ -3173,9 +3167,8 @@ font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
     namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
     if(!VALID_FONTNAMESPACEID(namespaceId))
     {
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning: Invalid font namespace in Font Uri \"%s\", ignoring.\n", Str_Text(path));
-        Str_Delete(path);
         return NULL;
     }
 
@@ -3195,9 +3188,8 @@ font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
         font = Fonts_CreateFromFile(fontId, resourcePath);
         if(!font)
         {
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Warning: Failed defining new Font for \"%s\", ignoring.\n", Str_Text(path));
-            Str_Delete(path);
         }
     }
     return font;
@@ -3221,9 +3213,8 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
     namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(def->uri)));
     if(!VALID_FONTNAMESPACEID(namespaceId))
     {
-        ddstring_t* path = Uri_ToString(def->uri);
+        AutoStr* path = Uri_ToString(def->uri);
         Con_Message("Warning: Invalid font namespace in Font Definition Uri \"%s\", ignoring.\n", Str_Text(path));
-        Str_Delete(path);
         return NULL;
     }
 
@@ -3243,9 +3234,8 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
         font = Fonts_CreateFromDef(fontId, def);
         if(!font)
         {
-            ddstring_t* path = Uri_ToString(def->uri);
+            AutoStr* path = Uri_ToString(def->uri);
             Con_Message("Warning: Failed defining new Font for \"%s\", ignoring.\n", Str_Text(path));
-            Str_Delete(path);
         }
     }
     return font;

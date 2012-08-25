@@ -215,9 +215,8 @@ static bool validateTextureUri(const Uri* uri, int flags, bool quiet=false)
     {
         if(!quiet)
         {
-            Str* uriStr = Uri_ToString(uri);
+            AutoStr* uriStr = Uri_ToString(uri);
             Con_Message("Invalid path '%s' in Texture uri \"%s\".\n", Str_Text(Uri_Path(uri)), Str_Text(uriStr));
-            Str_Delete(uriStr);
         }
         return false;
     }
@@ -240,9 +239,8 @@ static bool validateTextureUri(const Uri* uri, int flags, bool quiet=false)
     {
         if(!quiet)
         {
-            Str* uriStr = Uri_ToString(uri);
+            AutoStr* uriStr = Uri_ToString(uri);
             Con_Message("Unknown namespace in Texture uri \"%s\".\n", Str_Text(uriStr));
-            Str_Delete(uriStr);
         }
         return false;
     }
@@ -399,9 +397,8 @@ static void destroyRecord(TextureDirectoryNode* node)
         {
 #if _DEBUG
             Uri* uri = composeUriForDirectoryNode(node);
-            Str* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Warning:Textures::destroyRecord: Record for \"%s\" still has Texture data!\n", Str_Text(path));
-            Str_Delete(path);
             Uri_Delete(uri);
 #endif
             destroyTexture(record->texture);
@@ -760,9 +757,8 @@ textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet)
     if(!validateTextureUri(uri, VTUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
     {
 #if _DEBUG
-        Str* uriStr = Uri_ToString(uri);
+        AutoStr* uriStr = Uri_ToString(uri);
         Con_Message("Warning:Textures::ResolveUri: Uri \"%s\" failed to validate, returning NULL.\n", Str_Text(uriStr));
-        Str_Delete(uriStr);
 #endif
         return NOTEXTUREID;
     }
@@ -786,9 +782,8 @@ textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet)
     // Not found.
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
-        Str* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Textures::ResolveUri: \"%s\" not found!\n", Str_Text(path));
-        Str_Delete(path);
     }
     return NOTEXTUREID;
 }
@@ -822,9 +817,8 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
     // We require a properly formed uri (but not a urn - this is a path).
     if(!validateTextureUri(uri, VTUF_NO_URN, (verbose >= 1)))
     {
-        Str* uriStr = Uri_ToString(uri);
+        AutoStr* uriStr = Uri_ToString(uri);
         Con_Message("Warning: Failed declaring texture \"%s\" (invalid Uri), ignoring.\n", Str_Text(uriStr));
-        Str_Delete(uriStr);
         return NOTEXTUREID;
     }
 
@@ -967,9 +961,8 @@ Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw*
         Texture* tex = record->texture;
 #if _DEBUG
         Uri* uri = Textures_ComposeUri(id);
-        Str* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         LOG_WARNING("A Texture with uri \"%s\" already exists, returning existing.") << Str_Text(path);
-        Str_Delete(path);
         Uri_Delete(uri);
 #endif
         Texture_FlagCustom(tex, custom);
@@ -1226,17 +1219,16 @@ static int printVariantInfo(TextureVariant* variant, void* parameters)
 static void printTextureInfo(Texture* tex)
 {
     Uri* uri = Textures_ComposeUri(Textures_Id(tex));
-    Str* path = Uri_ToString(uri);
+    AutoStr* path = Uri_ToString(uri);
 
     Con_Printf("Texture \"%s\" [%p] x%u uid:%u origin:%s\nSize: %d x %d\n",
-        F_PrettyPath(Str_Text(path)), (void*) tex, Texture_VariantCount(tex),
-        (uint) Textures_Id(tex), Texture_IsCustom(tex)? "addon" : "game",
-        Texture_Width(tex), Texture_Height(tex));
+               F_PrettyPath(Str_Text(path)), (void*) tex, Texture_VariantCount(tex),
+               (uint) Textures_Id(tex), Texture_IsCustom(tex)? "addon" : "game",
+               Texture_Width(tex), Texture_Height(tex));
 
     uint variantIdx = 0;
     Texture_IterateVariants(tex, printVariantInfo, (void*)&variantIdx);
 
-    Str_Delete(path);
     Uri_Delete(uri);
 }
 
@@ -1246,16 +1238,14 @@ static void printTextureOverview(TextureDirectoryNode* node, boolean printNamesp
     textureid_t texId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
     Uri* uri = record->texture? Textures_ComposeUri(texId) : Uri_New();
-    Str* path = printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(Str_NewStd(), Str_Text(Uri_Path(uri))));
-    Str* resourcePath = Uri_ToString(Textures_ResourcePath(texId));
+    AutoStr* path = printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(AutoStr_NewStd(), Str_Text(Uri_Path(uri))));
+    AutoStr* resourcePath = Uri_ToString(Textures_ResourcePath(texId));
 
     Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,
-        "%-*s %*u %-6s x%u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
-        numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game",
-        Texture_VariantCount(record->texture), resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
+                "%-*s %*u %-6s x%u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
+                numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game",
+                Texture_VariantCount(record->texture), resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
 
-    Str_Delete(resourcePath);
-    Str_Delete(path);
     Uri_Delete(uri);
 }
 
@@ -1532,9 +1522,8 @@ D_CMD(InspectTexture)
     }
     else
     {
-        Str* path = Uri_ToString(search);
+        AutoStr* path = Uri_ToString(search);
         Con_Printf("Unknown texture \"%s\".\n", Str_Text(path));
-        Str_Delete(path);
     }
 
     Uri_Delete(search);

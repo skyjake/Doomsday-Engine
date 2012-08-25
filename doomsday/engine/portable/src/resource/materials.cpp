@@ -802,9 +802,8 @@ static boolean validateMaterialUri(const Uri* uri, int flags, boolean quiet=fals
     {
         if(!quiet)
         {
-            Str* uriStr = Uri_ToString(uri);
+            AutoStr* uriStr = Uri_ToString(uri);
             Con_Message("Invalid path '%s' in Material uri \"%s\".\n", Str_Text(Uri_Path(uri)), Str_Text(uriStr));
-            Str_Delete(uriStr);
         }
         return false;
     }
@@ -815,9 +814,8 @@ static boolean validateMaterialUri(const Uri* uri, int flags, boolean quiet=fals
     {
         if(!quiet)
         {
-            Str* uriStr = Uri_ToString(uri);
+            AutoStr* uriStr = Uri_ToString(uri);
             Con_Message("Unknown namespace '%s' in Material uri \"%s\".\n", Str_Text(Uri_Scheme(uri)), Str_Text(uriStr));
-            Str_Delete(uriStr);
         }
         return false;
     }
@@ -878,9 +876,8 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     if(!validateMaterialUri(uri, VMUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
     {
 #if _DEBUG
-        Str* uriStr = Uri_ToString(uri);
+        AutoStr* uriStr = Uri_ToString(uri);
         Con_Message("Warning: Materials::ResolveUri: \"%s\" failed to validate, returning NOMATERIALID.\n", Str_Text(uriStr));
-        Str_Delete(uriStr);
 #endif
         return NOMATERIALID;
     }
@@ -892,9 +889,8 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     // Not found.
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
-        Str* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning: Materials::ResolveUri: \"%s\" not found, returning NOMATERIALID.\n", Str_Text(path));
-        Str_Delete(path);
     }
     return NOMATERIALID;
 }
@@ -959,9 +955,8 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     // We require a properly formed uri.
     if(!validateMaterialUri(uri, 0, (verbose >= 1)))
     {
-        Str* uriStr = Uri_ToString(uri);
+        AutoStr* uriStr = Uri_ToString(uri);
         Con_Message("Warning: Failed creating Material \"%s\" from definition %p, ignoring.\n", Str_Text(uriStr), (void*)def);
-        Str_Delete(uriStr);
         return NULL;
     }
 
@@ -970,9 +965,8 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     if(bind && bind->material())
     {
 #if _DEBUG
-        Str* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning:Materials::CreateFromDef: A Material with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
-        Str_Delete(path);
 #endif
         return bind->material();
     }
@@ -987,11 +981,9 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             texId = Textures_ResolveUri2(l->stages[0].texture, true/*quiet please*/);
             if(texId == NOTEXTUREID)
             {
-                Str* materialPath = Uri_ToString(def->uri);
-                Str* texturePath = Uri_ToString(l->stages[0].texture);
+                AutoStr* materialPath = Uri_ToString(def->uri);
+                AutoStr* texturePath  = Uri_ToString(l->stages[0].texture);
                 Con_Message("Warning: Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).\n", Str_Text(texturePath), Str_Text(materialPath), 0, 0);
-                Str_Delete(materialPath);
-                Str_Delete(texturePath);
             }
         }
     }
@@ -1466,17 +1458,15 @@ static int printVariantInfo(MaterialVariant* variant, void* parameters)
         MaterialVariant* cur = MaterialVariant_TranslationCurrent(variant);
         float inter = MaterialVariant_TranslationPoint(variant);
         Uri* curUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(cur)));
-        Str* curPath = Uri_ToString(curUri);
+        AutoStr* curPath = Uri_ToString(curUri);
         Uri* nextUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(next)));
-        Str* nextPath = Uri_ToString(nextUri);
+        AutoStr* nextPath = Uri_ToString(nextUri);
 
         Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
-            F_PrettyPath(Str_Text(curPath)), F_PrettyPath(Str_Text(nextPath)), inter);
+                   F_PrettyPath(Str_Text(curPath)), F_PrettyPath(Str_Text(nextPath)), inter);
 
         Uri_Delete(curUri);
-        Str_Delete(curPath);
         Uri_Delete(nextUri);
-        Str_Delete(nextPath);
     }
 
     // Print layer info:
@@ -1484,15 +1474,14 @@ static int printVariantInfo(MaterialVariant* variant, void* parameters)
     {
         const materialvariant_layer_t* l = MaterialVariant_Layer(variant, i);
         Uri* uri = Textures_ComposeUri(Textures_Id(l->texture));
-        Str* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
 
         Con_Printf("  #%i: Stage:%i Tics:%i Texture:(\"%s\" uid:%u)"
-            "\n      Offset: %.2f x %.2f Glow:%.2f\n",
-            i, l->stage, (int)l->tics, F_PrettyPath(Str_Text(path)), Textures_Id(l->texture),
-            l->texOrigin[0], l->texOrigin[1], l->glow);
+                   "\n      Offset: %.2f x %.2f Glow:%.2f\n",
+                   i, l->stage, (int)l->tics, F_PrettyPath(Str_Text(path)), Textures_Id(l->texture),
+                   l->texOrigin[0], l->texOrigin[1], l->glow);
 
         Uri_Delete(uri);
-        Str_Delete(path);
     }
 
     ++(*variantIdx);
@@ -1503,28 +1492,27 @@ static int printVariantInfo(MaterialVariant* variant, void* parameters)
 static void printMaterialInfo(material_t* mat)
 {
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    Str* path = Uri_ToString(uri);
+    AutoStr* path = Uri_ToString(uri);
     int variantIdx = 0;
 
     Con_Printf("Material \"%s\" [%p] uid:%u origin:%s"
-        "\nSize: %d x %d Layers:%i InGroup:%s Drawable:%s EnvClass:%s"
-        "\nDecorated:%s Detailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
-        F_PrettyPath(Str_Text(path)), (void*) mat, Materials_Id(mat),
-        !Material_IsCustom(mat)     ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"),
-        Material_Width(mat), Material_Height(mat), Material_LayerCount(mat),
-        Material_IsGroupAnimated(mat)? "yes" : "no",
-        Material_IsDrawable(mat)     ? "yes" : "no",
-        Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(mat)),
-        Materials_HasDecorations(mat) ? "yes" : "no",
-        Material_DetailTexture(mat)  ? "yes" : "no",
-        Material_HasGlow(mat)        ? "yes" : "no",
-        Material_ShinyTexture(mat)   ? "yes" : "no",
-        Material_ShinyMaskTexture(mat)? "(masked)" : "",
-        Material_IsSkyMasked(mat)    ? "yes" : "no");
+               "\nSize: %d x %d Layers:%i InGroup:%s Drawable:%s EnvClass:%s"
+               "\nDecorated:%s Detailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
+               F_PrettyPath(Str_Text(path)), (void*) mat, Materials_Id(mat),
+               !Material_IsCustom(mat)     ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"),
+               Material_Width(mat), Material_Height(mat), Material_LayerCount(mat),
+               Material_IsGroupAnimated(mat)? "yes" : "no",
+               Material_IsDrawable(mat)     ? "yes" : "no",
+               Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(mat)),
+               Materials_HasDecorations(mat) ? "yes" : "no",
+               Material_DetailTexture(mat)  ? "yes" : "no",
+               Material_HasGlow(mat)        ? "yes" : "no",
+               Material_ShinyTexture(mat)   ? "yes" : "no",
+               Material_ShinyMaskTexture(mat)? "(masked)" : "",
+               Material_IsSkyMasked(mat)    ? "yes" : "no");
 
     Material_IterateVariants(mat, printVariantInfo, (void*)&variantIdx);
 
-    Str_Delete(path);
     Uri_Delete(uri);
 }
 
@@ -1532,14 +1520,13 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    Str* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(Str_New(), Str_Text(Uri_Path(uri)))));
+    AutoStr* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(AutoStr_NewStd(), Str_Text(Uri_Path(uri)))));
 
     Con_Printf("%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
-        numUidDigits, Materials_Id(mat),
-        !Material_IsCustom(mat) ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"));
+               numUidDigits, Materials_Id(mat),
+               !Material_IsCustom(mat) ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"));
 
     Uri_Delete(uri);
-    Str_Delete((Str*)path);
 }
 
 /**
@@ -2055,9 +2042,8 @@ void MaterialBind::attachInfo(MaterialBindInfo* info)
     {
 #if _DEBUG
         Uri* uri = Materials_ComposeUri(guid);
-        Str* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning:MaterialBind::attachInfo: Info already present for \"%s\", replacing.", Str_Text(path));
-        Str_Delete(path);
         Uri_Delete(uri);
 #endif
         M_Free(extInfo);
@@ -2128,9 +2114,8 @@ D_CMD(InspectMaterial)
     }
     else
     {
-        Str* path = Uri_ToString(search);
+        AutoStr* path = Uri_ToString(search);
         Con_Printf("Unknown material \"%s\".\n", Str_Text(path));
-        Str_Delete(path);
     }
     Uri_Delete(search);
     return true;

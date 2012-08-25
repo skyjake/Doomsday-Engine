@@ -379,7 +379,7 @@ void H_PreInit(void)
  */
 void H_PostInit(void)
 {
-    ddstring_t* path;
+    AutoStr* path;
     Uri* uri;
     int p;
 
@@ -487,7 +487,6 @@ void H_PostInit(void)
         startEpisode = 0;
         startMap = 0;
     }
-    Str_Delete(path);
     Uri_Delete(uri);
 
     if(autoStart || IS_NETGAME)

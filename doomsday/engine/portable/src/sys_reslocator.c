@@ -538,9 +538,9 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
 #if _DEBUG
                 else
                 {
-                    ddstring_t* rawPath = Uri_ToString(searchPath);
-                    Con_Message("Warning:findResource: Unknown namespace in searchPath \"%s\", using default for %s.\n", Str_Text(rawPath), F_ResourceClassStr(rclass));
-                    Str_Delete(rawPath);
+                    AutoStr* rawPath = Uri_ToString(searchPath);
+                    Con_Message("Warning:findResource: Unknown namespace in searchPath \"%s\", using default for %s.\n",
+                                Str_Text(rawPath), F_ResourceClassStr(rclass));
                 }
 #endif
             }
@@ -554,7 +554,7 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
 
 ddstring_t* F_ComposeHashNameForFilePath(const ddstring_t* filePath)
 {
-    ddstring_t* hashName = Str_New();
+    ddstring_t* hashName = Str_NewStd();
     F_FileName(hashName, Str_Text(filePath));
     return hashName;
 }

@@ -541,11 +541,10 @@ static void printDebugInfo(player_t* plr)
 {
     char textBuffer[256];
     BspLeaf* sub;
-    ddstring_t* path, *mapPath;
+    AutoStr* path, *mapPath;
     Uri* uri, *mapUri;
 
-    if(!plr->plr->mo || !userGame)
-        return;
+    if(!plr->plr->mo || !userGame) return;
 
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);
     mapPath = Uri_ToString(mapUri);
@@ -553,7 +552,6 @@ static void printDebugInfo(player_t* plr)
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
             plr->plr->mo->origin[VZ]);
     P_SetMessage(plr, textBuffer, false);
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
 
     // Also print some information to the console.
@@ -564,13 +562,11 @@ static void printDebugInfo(player_t* plr)
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
     Con_Message("  FloorZ:%g Material:%s\n", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
-    Str_Delete(path);
     Uri_Delete(uri);
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
     Con_Message("  CeilingZ:%g Material:%s\n", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
-    Str_Delete(path);
     Uri_Delete(uri);
 
     Con_Message("Player height:%g   Player radius:%g\n",

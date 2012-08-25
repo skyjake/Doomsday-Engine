@@ -65,7 +65,7 @@ MaterialDictId Id1Map::addMaterialToDictionary(const char* name, MaterialDictGro
     }
 
     // Prepare the encoded URI for insertion into the dictionary.
-    Str* uriCString;
+    AutoStr* uriCString;
     if(mapFormat == MF_DOOM64)
     {
         // Doom64 maps reference materials with unique ids.
@@ -99,7 +99,6 @@ MaterialDictId Id1Map::addMaterialToDictionary(const char* name, MaterialDictGro
     MaterialDictId internId = StringPool_Intern(materials, uriCString);
 
     // We're done (phew!).
-    Str_Delete(uriCString);
     return internId;
 }
 

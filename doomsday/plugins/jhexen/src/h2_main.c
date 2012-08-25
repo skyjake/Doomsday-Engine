@@ -351,7 +351,7 @@ void X_PreInit(void)
  */
 void X_PostInit(void)
 {
-    ddstring_t* path;
+    AutoStr* path;
     int p, warpMap;
     Uri* uri;
 
@@ -480,7 +480,6 @@ void X_PostInit(void)
     {
         startMap = 0;
     }
-    Str_Delete(path);
     Uri_Delete(uri);
 
     if(autoStart || IS_NETGAME)

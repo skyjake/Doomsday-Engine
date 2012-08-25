@@ -149,7 +149,7 @@ const char* P_MapSourceFile(const char* uriCString)
 /// @note Part of the Doomsday public API.
 boolean P_LoadMap(const char* uriCString)
 {
-    ddstring_t* path;
+    AutoStr* path;
     Uri* uri;
     uint i;
 
@@ -163,7 +163,6 @@ boolean P_LoadMap(const char* uriCString)
 
     path = Uri_ToString(uri);
     Con_Message("Loading Map \"%s\"...\n", Str_Text(path));
-    Str_Delete(path);
 
     // It would be very cool if map loading happened in another
     // thread. That way we could be keeping ourselves busy while

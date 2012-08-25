@@ -863,10 +863,10 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
     case CVT_FLOAT:     Con_Printf("%s %c %g",       Str_Text(path), equals, CV_FLOAT(var)); break;
     case CVT_CHARPTR:   Con_Printf("%s %c \"%s\"",   Str_Text(path), equals, CV_CHARPTR(var)); break;
     case CVT_URIPTR: {
-        ddstring_t* valPath = (CV_URIPTR(var)? Uri_ToString(CV_URIPTR(var)) : NULL);
-        Con_Printf("%s %c \"%s\"",   Str_Text(path), equals, (CV_URIPTR(var)? Str_Text(valPath) : "")); break;
-        if(valPath) Str_Delete(valPath);
-      }
+        AutoStr* valPath = (CV_URIPTR(var)? Uri_ToString(CV_URIPTR(var)) : NULL);
+        Con_Printf("%s %c \"%s\"",   Str_Text(path), equals, (CV_URIPTR(var)? Str_Text(valPath) : ""));
+        break; }
+
     default:            Con_Printf("%s (bad type!)", Str_Text(path)); break;
     }
     Str_Delete(path);

@@ -387,11 +387,10 @@ static void printDebugInfo(int player)
     player_t* plr = &players[player];
     char textBuffer[256];
     BspLeaf* sub;
-    ddstring_t* path, *mapPath;
+    AutoStr* path, *mapPath;
     Uri* uri, *mapUri;
 
-    if(!plr->plr->mo || !userGame)
-        return;
+    if(!plr->plr->mo || !userGame) return;
 
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);
     mapPath = Uri_ToString(mapUri);
@@ -409,13 +408,11 @@ static void printDebugInfo(int player)
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
     Con_Message("  FloorZ:%g Material:%s\n", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
-    Str_Delete(path);
     Uri_Delete(uri);
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
     Con_Message("  CeilingZ:%g Material:%s\n", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
-    Str_Delete(path);
     Uri_Delete(uri);
 
     Con_Message("Player height:%g   Player radius:%g\n",

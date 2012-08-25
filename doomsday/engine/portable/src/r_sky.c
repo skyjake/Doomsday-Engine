@@ -211,9 +211,8 @@ void R_SetupSky(ded_sky_t* def)
             }
             else
             {
-                ddstring_t* path = Uri_ToString(sl->material);
+                AutoStr* path = Uri_ToString(sl->material);
                 Con_Message("Warning: Unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
-                Str_Delete(path);
             }
         }
         R_SkyLayerSetOffset(i, sl->offset);

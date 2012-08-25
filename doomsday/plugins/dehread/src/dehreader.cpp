@@ -1375,7 +1375,7 @@ public:
 
                     // Apply.
                     Uri* uri  = composeMapUri(episode, map);
-                    ddstring_t* path = Uri_ToString(uri);
+                    AutoStr* path = Uri_ToString(uri);
 
                     ded_mapinfo_t* def;
                     int idx = mapInfoDefForUri(*uri, &def);
@@ -1389,7 +1389,6 @@ public:
                         LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i), ignoring.")
                             << Str_Text(path) << episode << map;
                     }
-                    Str_Delete(path);
                     Uri_Delete(uri);
                 }
             }
