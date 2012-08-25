@@ -141,19 +141,18 @@ static __inline fontnamespaceid_t namespaceIdForDirectoryNode(const PathDirector
 }
 
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static __inline ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
+static __inline AutoStr* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
 {
-    return PathDirectoryNode_ComposePath2(node, Str_New(), NULL, delimiter);
+    return PathDirectoryNode_ComposePath2(node, AutoStr_NewStd(), NULL, delimiter);
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
 static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
 {
-    const ddstring_t* namespaceName = Fonts_NamespaceName(namespaceIdForDirectoryNode(node));
-    ddstring_t* path = composePathForDirectoryNode(node, FONTS_PATH_DELIMITER);
+    const Str* namespaceName = Fonts_NamespaceName(namespaceIdForDirectoryNode(node));
+    AutoStr* path = composePathForDirectoryNode(node, FONTS_PATH_DELIMITER);
     Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
     Uri_SetScheme(uri, Str_Text(namespaceName));
-    Str_Delete(path);
     return uri;
 }
 
@@ -1111,7 +1110,7 @@ fontnamespaceid_t Fonts_Namespace(fontid_t id)
     return namespaceIdForDirectoryNode(node);
 }
 
-ddstring_t* Fonts_ComposePath(fontid_t id)
+AutoStr* Fonts_ComposePath(fontid_t id)
 {
     PathDirectoryNode* node = getDirectoryNodeForBindId(id);
     if(!node)
@@ -1119,7 +1118,7 @@ ddstring_t* Fonts_ComposePath(fontid_t id)
 #if _DEBUG
         Con_Message("Warning:Fonts::ComposePath: Attempted with unbound fontId #%u, returning null-object.\n", id);
 #endif
-        return Str_New();
+        return AutoStr_NewStd();
     }
     return composePathForDirectoryNode(node, FONTS_PATH_DELIMITER);
 }
@@ -1313,9 +1312,8 @@ static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* parameters)
 
     if(p->like && p->like[0])
     {
-        ddstring_t* path = composePathForDirectoryNode(node, p->delimiter);
+        AutoStr* path = composePathForDirectoryNode(node, p->delimiter);
         int delta = strnicmp(Str_Text(path), p->like, strlen(p->like));
-        Str_Delete(path);
         if(delta) return 0; // Continue iteration.
     }
 
@@ -1382,20 +1380,17 @@ static PathDirectoryNode** collectDirectoryNodes(fontnamespaceid_t namespaceId,
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
     // Decode paths before determining a lexicographical delta.
-    ddstring_t* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, FONTS_PATH_DELIMITER));
-    ddstring_t* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, FONTS_PATH_DELIMITER));
-    int delta = stricmp(Str_Text(a), Str_Text(b));
-    Str_Delete(b);
-    Str_Delete(a);
-    return delta;
+    AutoStr* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, FONTS_PATH_DELIMITER));
+    AutoStr* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, FONTS_PATH_DELIMITER));
+    return stricmp(Str_Text(a), Str_Text(b));
 }
 
 /**
  * @defgroup printFontFlags  Print Font Flags
- * @{
  */
+///@{
 #define PFF_TRANSFORM_PATH_NO_NAMESPACE 0x1 /// Do not print the namespace.
-/**@}*/
+///@}
 
 #define DEFAULT_PRINTFONTFLAGS          0
 
@@ -1563,7 +1558,7 @@ ddstring_t** Fonts_CollectNames(int* rCount)
         idx = 0;
         for(iter = foundFonts; *iter; ++iter)
         {
-            list[idx++] = composePathForDirectoryNode(*iter, FONTS_PATH_DELIMITER);
+            list[idx++] = Str_FromAutoStr(composePathForDirectoryNode(*iter, FONTS_PATH_DELIMITER));
         }
         list[idx] = NULL; // Terminate.
     }
