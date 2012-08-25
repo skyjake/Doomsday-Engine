@@ -77,6 +77,8 @@ uint8_t* Image_LoadFromFile(image_t* image, DFile* file);
 
 boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* file);
 
+boolean Image_Save(const image_t *image, const char* filePath);
+
 /// Release image pixel data.
 void GL_DestroyImage(image_t* image);
 

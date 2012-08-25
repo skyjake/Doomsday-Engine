@@ -2114,134 +2114,114 @@ void R_InitPatchComposites(void)
     VERBOSE2( Con_Message("R_InitPatchComposites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
+/// @todo Do this in the lump directory where we can make use of the hash!
+static lumpnum_t firstLumpWithName(const char* lumpName)
 {
-    Uri* uri, *resourcePath;
-    ddstring_t flatName;
-    textureid_t texId;
-    Texture* tex;
-    Size2Raw size;
-    char name[9];
-
-    // We can only perform some basic filtering of lumps at this time.
-    if(F_LumpLength(lumpNum) == 0) return NULL;
-
-    // Compose the resource name.
-    Str_Init(&flatName);
-    F_FileName(&flatName, F_LumpName(lumpNum));
-
-    uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
-    Uri_SetPath(uri, Str_Text(&flatName));
-    Str_Free(&flatName);
-
-    // Compose the path to the data resource.
-    // Note that we do not use the lump name and instead use the logical lump index
-    // in the global LumpDirectory. This is necessary because of the way id tech 1
-    // manages flat references in animations (intermediate frames are chosen by their
-    // 'original indices' rather than by name).
-    dd_snprintf(name, 9, "%i", lumpNum);
-    resourcePath = Uri_NewWithPath2("LumpDir:", RC_NULL);
-    Uri_SetPath(resourcePath, name);
-
-    texId = Textures_Declare(uri, uniqueId, resourcePath);
-    Uri_Delete(resourcePath);
-    if(texId == NOTEXTUREID)
+    if(lumpName && lumpName[0])
     {
-        Uri_Delete(uri);
-        return NULL; // Invalid uri?
-    }
-
-    // Have we already encountered this name?
-    tex = Textures_ToTexture(texId);
-    if(tex)
-    {
-        Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
-    }
-    else
-    {
-        // A new flat.
-        /**
-         * Kludge Assume 64x64 else when the flat is loaded it will inherit the
-         * dimensions of the texture, which, if it has been replaced with a hires
-         * version - will be much larger than it should be.
-         *
-         * @todo Always determine size from the lowres original.
-         */
-        size.width = size.height = 64;
-        tex = Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, NULL);
-        if(!tex)
+        lumpnum_t lumpNum, numLumps = F_LumpCount();
+        for(lumpNum = 0; lumpNum < numLumps; ++lumpNum)
         {
-            ddstring_t* path = Uri_ToString(uri);
-            Con_Message("Warning: Failed defining Texture for new flat '%s', ignoring.\n", Str_Text(path));
-            Str_Delete(path);
-            Uri_Delete(uri);
-            return NULL;
+            if(!stricmp(F_LumpName(lumpNum), lumpName))
+                return lumpNum;
         }
     }
-    Uri_Delete(uri);
+    return -1;
+}
 
-    return tex;
+static Uri* composeFlatUri(const char* lumpName)
+{
+    Uri* uri;
+    AutoStr* flatName = AutoStr_New();
+    F_FileName(flatName, lumpName);
+    uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(flatName));
+    return uri;
+}
+
+/**
+ * Compose the path to the data resource.
+ * @note We do not use the lump name, instead we use the logical lump index
+ * in the global LumpDirectory. This is necessary because of the way id tech 1
+ * manages flat references in animations (intermediate frames are chosen by their
+ * 'original indices' rather than by name).
+ */
+static Uri* composeFlatResourceUrn(lumpnum_t lumpNum)
+{
+    Uri* uri;
+    char name[9];
+    dd_snprintf(name, 9, "%i", lumpNum);
+    uri = Uri_NewWithPath2("LumpDir:", RC_NULL);
+    Uri_SetPath(uri, name);
+    return uri;
 }
 
 void R_InitFlatTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
-    lumpnum_t origRangeFrom, origRangeTo;
+    lumpnum_t firstFlatMarkerLumpNum;
 
     VERBOSE( Con_Message("Initializing Flat textures...\n") )
 
-    origRangeFrom = W_CheckLumpNumForName2("F_START", true/*quiet please*/);
-    origRangeTo   = W_CheckLumpNumForName2("F_END", true/*quiet please*/);
-
-    if(origRangeFrom >= 0 && origRangeTo >= 0)
+    firstFlatMarkerLumpNum = firstLumpWithName("F_START.lmp");
+    if(firstFlatMarkerLumpNum >= 0)
     {
-        int i, numLumps, origIndexBase = 0;
-        ddstack_t* stack;
-        Texture* tex;
-        lumpnum_t n;
-
-        // First add all flats between all flat marker lumps exclusive of the
-        // range defined by the last marker lumps.
-        origIndexBase = (int)origRangeTo;
-        stack = Stack_New();
-        numLumps = F_LumpCount();
-        for(i = 0; i < numLumps; ++i)
+        lumpnum_t lumpNum, numLumps = F_LumpCount();
+        abstractfile_t* blockFile = 0;
+        for(lumpNum = numLumps; lumpNum --> firstFlatMarkerLumpNum + 1;)
         {
-            const char* lumpName = F_LumpName(i);
+            const char* lumpName = F_LumpName(lumpNum);
+            abstractfile_t* lumpFile = F_FindFileForLumpNum(lumpNum);
 
-            if(lumpName[0] == 'F' && strlen(lumpName) >= 5)
+            if(blockFile && blockFile != lumpFile)
             {
-                if(!strnicmp(lumpName + 1, "_START", 6) ||
-                   !strnicmp(lumpName + 2, "_START", 6))
-                {
-                    // We've arrived at *a* sprite block.
-                    Stack_Push(stack, NULL);
-                    continue;
-                }
-                else if(!strnicmp(lumpName + 1, "_END", 4) ||
-                        !strnicmp(lumpName + 2, "_END", 4))
-                {
-                    // The sprite block ends.
-                    Stack_Pop(stack);
-                    continue;
-                }
+                blockFile = 0;
             }
 
-            if(!Stack_Height(stack)) continue;
-            if(i >= origRangeFrom && i <= origRangeTo) continue;
+            if(!blockFile)
+            {
+                if(!stricmp(lumpName, "F_END.lmp") || !stricmp(lumpName, "FF_END.lmp"))
+                {
+                    blockFile = lumpFile;
+                }
+                continue;
+            }
 
-            tex = createFlatForLump(i, origIndexBase);
-            if(tex) origIndexBase++;
-        }
+            if(!stricmp(lumpName, "F_START.lmp"))
+            {
+                blockFile = 0;
+                continue;
+            }
 
-        while(Stack_Height(stack)) { Stack_Pop(stack); }
-        Stack_Delete(stack);
+            // Ignore extra marker lumps.
+            if(!stricmp(lumpName, "FF_START.lmp") ||
+               !stricmp(lumpName, "F_END.lmp") || !stricmp(lumpName, "FF_END.lmp")) continue;
 
-        // Now add all lumps in the primary (overridding) range.
-        origRangeFrom += 1; // Skip over marker lump.
-        for(n = origRangeFrom; n < origRangeTo; ++n)
-        {
-            createFlatForLump(n, (int)(n - origRangeFrom));
+            {
+            Uri* uri = composeFlatUri(F_LumpName(lumpNum));
+            if(Textures_ResolveUri(uri) == NOTEXTUREID) // A new flat?
+            {
+                /**
+                 * Kludge Assume 64x64 else when the flat is loaded it will inherit the
+                 * dimensions of the texture, which, if it has been replaced with a hires
+                 * version - will be much larger than it should be.
+                 *
+                 * @todo Always determine size from the lowres original.
+                 */
+                const Size2Raw size = { 64, 64 };
+                const int uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
+                Uri* resourcePath = composeFlatResourceUrn(lumpNum);
+                textureid_t texId = Textures_Declare(uri, uniqueId, resourcePath);
+                if(!Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, NULL))
+                {
+                    ddstring_t* path = Uri_ToString(uri);
+                    Con_Message("Warning: Failed defining Texture for new flat '%s', ignoring.\n", Str_Text(path));
+                    Str_Delete(path);
+                }
+                Uri_Delete(resourcePath);
+            }
+            Uri_Delete(uri);
+            }
         }
     }
 
