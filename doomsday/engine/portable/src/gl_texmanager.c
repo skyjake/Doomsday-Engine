@@ -2594,6 +2594,9 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
         image->flags |= IMGF_IS_MASKED;
 
+    // For debug:
+    // GL_DumpImage(image, Str_Text(GL_ComposeCacheNameForTexture(tex)));
+
     return TEXS_ORIGINAL;
 }
 
@@ -3641,6 +3644,46 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     uploadContentUnmanaged(chooseContentUploadMethod(&c), &c);
     return c.name;
 }
+
+AutoStr* GL_ComposeCacheNameForTexture(Texture* tex)
+{
+    textureid_t texId = Textures_Id(tex);
+    Str* path = Textures_ComposePath(texId);
+    AutoStr* cacheName = Str_Appendf(AutoStr_NewStd(), "texcache/%s/%s.png",
+                                     Str_Text(Textures_NamespaceName(Textures_Namespace(texId))), Str_Text(path));
+    Str_Delete(path);
+    return cacheName;
+}
+
+boolean GL_DumpImage(const image_t* origImg, const char* filePath)
+{
+    DENG_ASSERT(origImg);
+{
+    boolean savedOK;
+
+    // Do we need to convert to ABGR32 first?
+    image_t imgABGR32;
+    const image_t* img = origImg;
+    if(img->pixelSize != 4 || img->paletteId)
+    {
+        GL_InitImage(&imgABGR32);
+        imgABGR32.pixels = GL_ConvertBuffer(img->pixels, img->size.width, img->size.height,
+                                            ((img->flags & IMGF_IS_MASKED)? 2 : 1),
+                                            R_ToColorPalette(img->paletteId), 4);
+        imgABGR32.pixelSize = 4;
+        imgABGR32.size.width  = img->size.width;
+        imgABGR32.size.height = img->size.height;
+        img = &imgABGR32;
+    }
+
+    savedOK = Image_Save(img, filePath);
+
+    if(img == &imgABGR32)
+    {
+        GL_DestroyImage(&imgABGR32);
+    }
+    return savedOK;
+}}
 
 D_CMD(LowRes)
 {
