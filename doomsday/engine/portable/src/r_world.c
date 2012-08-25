@@ -1442,12 +1442,10 @@ void R_SetupMap(int mode, int flags)
 
 void R_ClearSectorFlags(void)
 {
-    uint        i;
-    Sector     *sec;
-
+    uint i;
     for(i = 0; i < NUM_SECTORS; ++i)
     {
-        sec = SECTOR_PTR(i);
+        Sector* sec = SECTOR_PTR(i);
         // Clear all flags that can be cleared before each frame.
         sec->frameFlags &= ~SIF_FRAME_CLEAR;
     }
@@ -1457,11 +1455,15 @@ boolean R_IsGlowingPlane(const Plane* pln)
 {
     /// @todo We should not need to prepare to determine this.
     material_t* mat = pln->surface.material;
-    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-    const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
+    if(mat)
+    {
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+        const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-    return ((mat && !Material_IsDrawable(mat)) || ms->glowing > 0 || Surface_IsSkyMasked(&pln->surface));
+        if(!Material_IsDrawable(mat) || ms->glowing > 0) return true;
+    }
+    return Surface_IsSkyMasked(&pln->surface);
 }
 
 float R_GlowStrength(const Plane* pln)
