@@ -112,8 +112,8 @@ int CVar_Flags(const cvar_t* var);
 /// @return  Type of the variable.
 cvartype_t CVar_Type(const cvar_t* var);
 
-/// @return  Symbolic name/path-to the variable. Must be destroyed with Str_Delete().
-ddstring_t* CVar_ComposePath(const cvar_t* var);
+/// @return  Symbolic name/path-to the variable.
+AutoStr* CVar_ComposePath(const cvar_t* var);
 
 int CVar_Integer(const cvar_t* var);
 float CVar_Float(const cvar_t* var);

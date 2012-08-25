@@ -75,7 +75,7 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
 {
     FILE* file = (FILE*)paramaters;
     cvar_t* var = (cvar_t*)word->data;
-    ddstring_t* path;
+    AutoStr* path;
     assert(file && var);
 
     if(var->flags & CVF_NO_ARCHIVE)
@@ -121,7 +121,6 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     }
     fprintf(file, "\n\n");
 
-    Str_Delete(path);
     return 0; // Continue iteration.
 }
 

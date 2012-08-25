@@ -154,6 +154,7 @@ static int clearVariable(PathDirectoryNode* node, void* parameters)
                 PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, markVariableUserDataFreed, ptr);
                 free(*ptr); *ptr = emptyString;
                 break;
+
             case CVT_URIPTR:
                 if(!CV_URIPTR(var)) break;
 
@@ -162,15 +163,14 @@ static int clearVariable(PathDirectoryNode* node, void* parameters)
                 PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, markVariableUserDataFreed, ptr);
                 Uri_Delete((Uri*)*ptr); *ptr = emptyUri;
                 break;
+
             default: {
 #if _DEBUG
-                ddstring_t* path = CVar_ComposePath(var);
+                AutoStr* path = CVar_ComposePath(var);
                 Con_Message("Warning:clearVariable: Attempt to free user data for non-pointer type variable %s [%p], ignoring.\n",
-                    Str_Text(path), (void*)var);
-                Str_Delete(path);
+                            Str_Text(path), (void*)var);
 #endif
-                break;
-              }
+                break; }
             }
         }
         free(var);
@@ -260,9 +260,8 @@ static int C_DECL compareKnownWordByName(const void* a, const void* b)
 {
     const knownword_t* wA = (const knownword_t*)a;
     const knownword_t* wB = (const knownword_t*)b;
-    ddstring_t* textAString = NULL, *textBString = NULL;
+    AutoStr* textAString = NULL, *textBString = NULL;
     const char* textA, *textB;
-    int result;
 
     switch(wA->type)
     {
@@ -292,12 +291,7 @@ static int C_DECL compareKnownWordByName(const void* a, const void* b)
         exit(1); // Unreachable
     }
 
-    result = stricmp(textA, textB);
-
-    if(NULL != textAString) Str_Delete(textAString);
-    if(NULL != textBString) Str_Delete(textBString);
-
-    return result;
+    return stricmp(textA, textB);
 }
 
 static boolean removeFromKnownWords(knownwordtype_t type, void* data)
@@ -476,10 +470,10 @@ int CVar_Flags(const cvar_t* var)
     return var->flags;
 }
 
-ddstring_t* CVar_ComposePath(const cvar_t* var)
+AutoStr* CVar_ComposePath(const cvar_t* var)
 {
     assert(var);
-    return PathDirectoryNode_ComposePath2(var->directoryNode, Str_New(), NULL, CVARDIRECTORY_DELIMITER);
+    return PathDirectoryNode_ComposePath2(var->directoryNode, AutoStr_NewStd(), NULL, CVARDIRECTORY_DELIMITER);
 }
 
 void CVar_SetUri2(cvar_t* var, const Uri* uri, int svFlags)
@@ -491,9 +485,8 @@ void CVar_SetUri2(cvar_t* var, const Uri* uri, int svFlags)
 
     if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        ddstring_t* path = CVar_ComposePath(var);
+        AutoStr* path = CVar_ComposePath(var);
         Con_Printf("%s (var) is read-only. It can't be changed (not even with force)\n", Str_Text(path));
-        Str_Delete(path);
         return;
     }
 
@@ -539,9 +532,8 @@ void CVar_SetString2(cvar_t* var, const char* text, int svFlags)
 
     if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        ddstring_t* path = CVar_ComposePath(var);
+        AutoStr* path = CVar_ComposePath(var);
         Con_Printf("%s (var) is read-only. It can't be changed (not even with force)\n", Str_Text(path));
-        Str_Delete(path);
         return;
     }
 
@@ -590,9 +582,8 @@ void CVar_SetInteger2(cvar_t* var, int value, int svFlags)
 
     if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        ddstring_t* path = CVar_ComposePath(var);
+        AutoStr* path = CVar_ComposePath(var);
         Con_Printf("%s (var) is read-only. It can't be changed (not even with force).\n", Str_Text(path));
-        Str_Delete(path);
         return;
     }
 
@@ -613,12 +604,11 @@ void CVar_SetInteger2(cvar_t* var, int value, int svFlags)
             changed = true;
         CV_FLOAT(var) = (float) value;
         break;
+
     default: {
-        ddstring_t* path = CVar_ComposePath(var);
+        AutoStr* path = CVar_ComposePath(var);
         Con_Message("Warning:CVar::SetInteger: Attempt to set incompatible var %s to %i, ignoring.\n", Str_Text(path), value);
-        Str_Delete(path);
-        return;
-      }
+        return; }
     }
 
     // Make a change notification callback?
@@ -640,9 +630,8 @@ void CVar_SetFloat2(cvar_t* var, float value, int svFlags)
 
     if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        ddstring_t* path = CVar_ComposePath(var);
+        AutoStr* path = CVar_ComposePath(var);
         Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force).\n", Str_Text(path));
-        Str_Delete(path);
         return;
     }
 
@@ -663,12 +652,11 @@ void CVar_SetFloat2(cvar_t* var, float value, int svFlags)
             changed = true;
         CV_FLOAT(var) = value;
         break;
+
     default: {
-        ddstring_t* path = CVar_ComposePath(var);
-        Con_Message("Warning:CVar::SetFloat: Attempt to set incompatible cvar %s to %g, ignoring.\n", Str_Text(path), value);
-        Str_Delete(path);
-        return;
-      }
+        AutoStr* path = CVar_ComposePath(var);
+        Con_Message("Warning: CVar::SetFloat: Attempt to set incompatible cvar %s to %g, ignoring.\n", Str_Text(path), value);
+        return; }
     }
 
     // Make a change notification callback?
@@ -693,13 +681,11 @@ int CVar_Integer(const cvar_t* var)
     case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
     default: {
 #if _DEBUG
-        ddstring_t* path = CVar_ComposePath(var);
-        Con_Message("Warning:CVar::Integer: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
-            Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
-        Str_Delete(path);
+        AutoStr* path = CVar_ComposePath(var);
+        Con_Message("Warning: CVar::Integer: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+                    Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
-        return 0;
-      }
+        return 0; }
     }
 }
 
@@ -714,10 +700,9 @@ float CVar_Float(const cvar_t* var)
     case CVT_CHARPTR:   return strtod(CV_CHARPTR(var), 0);
     default: {
 #if _DEBUG
-        ddstring_t* path = CVar_ComposePath(var);
-        Con_Message("Warning:CVar::Float: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
-            Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
-        Str_Delete(path);
+        AutoStr* path = CVar_ComposePath(var);
+        Con_Message("Warning: CVar::Float: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+                    Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return 0;
       }
@@ -735,10 +720,9 @@ byte CVar_Byte(const cvar_t* var)
     case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
     default: {
 #if _DEBUG
-        ddstring_t* path = CVar_ComposePath(var);
-        Con_Message("Warning:CVar::Byte: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
-            Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
-        Str_Delete(path);
+        AutoStr* path = CVar_ComposePath(var);
+        Con_Message("Warning: CVar::Byte: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+                    Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return 0;
       }
@@ -748,16 +732,15 @@ byte CVar_Byte(const cvar_t* var)
 char* CVar_String(const cvar_t* var)
 {
     assert(var);
-    /// \todo Why not implement in-place value to string conversion?
+    /// @todo Why not implement in-place value to string conversion?
     switch(var->type)
     {
     case CVT_CHARPTR:   return CV_CHARPTR(var);
     default: {
 #if _DEBUG
-        ddstring_t* path = CVar_ComposePath(var);
-        Con_Message("Warning:CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyString\n",
-            Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
-        Str_Delete(path);
+        AutoStr* path = CVar_ComposePath(var);
+        Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyString\n",
+                    Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return emptyString;
       }
@@ -767,16 +750,15 @@ char* CVar_String(const cvar_t* var)
 Uri* CVar_Uri(const cvar_t* var)
 {
     assert(var);
-    /// \todo Why not implement in-place string to uri conversion?
+    /// @todo Why not implement in-place string to uri conversion?
     switch(var->type)
     {
     case CVT_URIPTR:   return CV_URIPTR(var);
     default: {
 #if _DEBUG
-        ddstring_t* path = CVar_ComposePath(var);
-        Con_Message("Warning:CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyUri\n",
-            Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
-        Str_Delete(path);
+        AutoStr* path = CVar_ComposePath(var);
+        Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyUri\n",
+                    Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
         return emptyUri;
       }
@@ -794,7 +776,7 @@ void Con_AddVariable(const cvartemplate_t* tpl)
     if(CVT_NULL == tpl->type)
     {
         Con_Message("Warning:Con_AddVariable: Attempt to register variable '%s' as type "
-            "%s, ignoring.\n", Str_Text(CVar_TypeName(CVT_NULL)), tpl->path);
+                    "%s, ignoring.\n", Str_Text(CVar_TypeName(CVT_NULL)), tpl->path);
         return;
     }
 
@@ -844,10 +826,9 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
     assert(inited);
     {
     char equals = '=';
-    ddstring_t* path;
+    AutoStr* path;
 
-    if(!var)
-        return;
+    if(!var) return;
 
     if((var->flags & CVF_PROTECTED) || (var->flags & CVF_READ_ONLY))
         equals = ':';
@@ -869,7 +850,6 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
 
     default:            Con_Printf("%s (bad type!)", Str_Text(path)); break;
     }
-    Str_Delete(path);
     Con_Printf("\n");
     }
 }
@@ -882,8 +862,7 @@ void Con_AddCommand(const ccmdtemplate_t* ccmd)
     cvartype_t args[MAX_ARGS];
     ccmd_t* newCCmd, *overloaded = 0;
 
-    if(!ccmd)
-        return;
+    if(!ccmd) return;
 
     if(!ccmd->name)
         Con_Error("Con_AddCommand: CCmd missing a name.");
@@ -1334,18 +1313,18 @@ void Con_DeleteAlias(calias_t* cal)
 }
 
 /**
- * @return New ddstring with the text of the known word. Caller gets ownership.
+ * @return New AutoStr with the text of the known word. Caller gets ownership.
  */
-static ddstring_t* textForKnownWord(const knownword_t* word)
+static AutoStr* textForKnownWord(const knownword_t* word)
 {
-    ddstring_t* text = 0;
+    AutoStr* text = 0;
 
     switch(word->type)
     {
-    case WT_CALIAS:   Str_Set(text = Str_New(), ((calias_t*)word->data)->name); break;
-    case WT_CCMD:     Str_Set(text = Str_New(), ((ccmd_t*)word->data)->name); break;
+    case WT_CALIAS:   Str_Set(text = AutoStr_NewStd(), ((calias_t*)word->data)->name); break;
+    case WT_CCMD:     Str_Set(text = AutoStr_NewStd(), ((ccmd_t*)word->data)->name); break;
     case WT_CVAR:     text = CVar_ComposePath((cvar_t*)word->data); break;
-    case WT_GAME:     Str_Set(text = Str_New(), Str_Text(Game_IdentityKey((Game*)word->data))); break;
+    case WT_GAME:     Str_Set(text = AutoStr_NewStd(), Str_Text(Game_IdentityKey((Game*)word->data))); break;
     default:
         Con_Error("textForKnownWord: Invalid type %i for word.", word->type);
         exit(1); // Unreachable
@@ -1369,20 +1348,19 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
     for(i = 0; i < numKnownWords; ++i)
     {
         const knownword_t* word = &knownWords[i];
-        if(matchType != WT_ANY && word->type != type)
-            continue;
+        if(matchType != WT_ANY && word->type != type) continue;
+
         if(patternLength)
         {
             int compareResult;
-            ddstring_t* textString = textForKnownWord(word);
+            AutoStr* textString = textForKnownWord(word);
             compareResult = strnicmp(Str_Text(textString), pattern, patternLength);
-            Str_Delete(textString);
 
-            if(compareResult)
-                continue; // Didn't match.
+            if(compareResult) continue; // Didn't match.
         }
-        if(0 != (result = callback(word, parameters)))
-            break;
+
+        result = callback(word, parameters);
+        if(result) break;
     }}
 
     return result;
@@ -1490,7 +1468,7 @@ void Con_ShutdownDatabases(void)
 
 static int aproposPrinter(const knownword_t* word, void* matching)
 {
-    ddstring_t* text = textForKnownWord(word);
+    AutoStr* text = textForKnownWord(word);
 
     // See if 'matching' is anywhere in the known word.
     if(strcasestr(Str_Text(text), matching))
@@ -1537,7 +1515,6 @@ static int aproposPrinter(const knownword_t* word, void* matching)
         Str_Free(&buf);
     }
 
-    Str_Delete(text);
     return 0;
 }
 
@@ -1594,14 +1571,13 @@ static void printHelpAbout(const char* query)
         cvar_t* var = Con_FindVariable(query);
         if(var)
         {
-            ddstring_t* path = CVar_ComposePath(var);
+            AutoStr* path = CVar_ComposePath(var);
             char* str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION);
             if(str)
             {
                 Con_Printf("%s\n", str);
                 found = true;
             }
-            Str_Delete(path);
         }
     }
 
