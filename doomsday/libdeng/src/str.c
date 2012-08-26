@@ -191,13 +191,25 @@ ddstring_t* Str_NewFromReader(Reader* reader)
     return str;
 }
 
-void Str_Delete(ddstring_t* str)
+static void deleteString(Str* str)
 {
     DENG_ASSERT(str);
     if(!str) return;
 
     Str_Free(str);
     M_Free(str);
+}
+
+void Str_Delete(Str* str)
+{
+    DENG_ASSERT(!Garbage_IsTrashed(str));
+
+    if(Garbage_IsTrashed(str))
+    {
+        LegacyCore_FatalError("Str_Delete: Trying to manually delete an AutoStr!");
+    }
+
+    deleteString(str);
 }
 
 ddstring_t* Str_Clear(ddstring_t* str)
@@ -807,10 +819,15 @@ AutoStr* AutoStr_NewStd(void)
     return AutoStr_FromStr(Str_NewStd());
 }
 
-AutoStr* AutoStr_FromStr(ddstring_t* str)
+void AutoStr_Delete(AutoStr* as)
+{
+    deleteString(as);
+}
+
+AutoStr* AutoStr_FromStr(Str* str)
 {
     DENG_ASSERT(str);
-    Garbage_TrashInstance(str, (GarbageDestructor) Str_Delete);
+    Garbage_TrashInstance(str, (GarbageDestructor) AutoStr_Delete);
     return str;
 }
 

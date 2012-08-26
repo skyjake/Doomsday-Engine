@@ -32,6 +32,10 @@ struct Garbage
 {
     typedef std::map<void*, GarbageDestructor> Allocs; // O(log n) search
     Allocs allocs;
+    bool beingRecycled;
+
+    Garbage() : beingRecycled(false)
+    {}
 
     ~Garbage()
     {
@@ -40,6 +44,8 @@ struct Garbage
 
     bool contains(const void* ptr) const
     {
+        if(beingRecycled) return false;
+
         Allocs::const_iterator i = allocs.find(const_cast<void*>(ptr));
         return i != allocs.end();
     }
@@ -47,6 +53,8 @@ struct Garbage
     void recycle()
     {
         if(allocs.empty()) return;
+
+        beingRecycled = true;
 
         LOG_DEBUG("Recycling %i allocations/instances.") << allocs.size();
 
@@ -56,6 +64,8 @@ struct Garbage
             i->second(i->first);
         }
         allocs.clear();
+
+        beingRecycled = false;
     }
 };
 
@@ -129,6 +139,7 @@ void Garbage_TrashInstance(void* ptr, GarbageDestructor destructor)
 
 boolean Garbage_IsTrashed(const void* ptr)
 {
+    if(!garbages) return false;
     Garbage* g = garbageForThread(Sys_CurrentThreadId());
     return g->contains(ptr);
 }
