@@ -2,15 +2,15 @@
  * @file partitioner.cpp
  * BSP Partitioner. Recursive node creation and sorting. @ingroup map
  *
- * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
- * SourceForge: http://sourceforge.net/projects/glbsp/
+ * Originally based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted
+ * on SourceForge: http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
- * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
- * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
- * @authors Copyright © 1997-1998 Raphael.Quinet <raphael.quinet@eed.ericsson.se>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @author Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
+ * @author Copyright &copy; 1998-2000 Colin Reed <cph@moria.org.uk>
+ * @author Copyright &copy; 1998-2000 Lee Killough <killough@rsn.hp.com>
+ * @author Copyright &copy; 1997-1998 Raphael.Quinet <raphael.quinet@eed.ericsson.se>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -35,12 +35,10 @@
 
 #include <de/Error>
 #include <de/Log>
+#include <de/memory.h>
 
 #include "de_base.h"
-#include "de_console.h"
 #include "p_mapdata.h"
-#include "p_maputil.h"
-#include "m_misc.h"
 
 #include "bspleaf.h"
 #include "bspnode.h"
@@ -78,9 +76,98 @@ struct Partitioner::Instance
     // Used when sorting BSP leaf half-edges by angle around midpoint.
     typedef std::vector<HEdge*>HEdgeSortBuffer;
 
+    /// HEdge split cost factor.
+    int splitCostFactor;
+
+    /// Current map which we are building BSP data for.
+    GameMap* map;
+
+    /// @todo Refactor me away:
+    uint* numEditableVertexes;
+    Vertex*** editableVertexes;
+
+    /// Running totals of constructed BSP data objects.
+    uint numNodes;
+    uint numLeafs;
+    uint numHEdges;
+    uint numVertexes;
+
+    /// Extended info about LineDefs in the current map.
+    typedef std::vector<LineDefInfo> LineDefInfos;
+    LineDefInfos lineDefInfos;
+
+    /// Extended info about HEdges in the BSP object tree.
+    typedef std::map<HEdge*, HEdgeInfo> HEdgeInfos;
+    HEdgeInfos hedgeInfos;
+
+    /// Extended info about Vertexes in the current map (including extras).
+    /// @note May be larger than Instance::numVertexes (deallocation is lazy).
+    typedef std::vector<VertexInfo> VertexInfos;
+    VertexInfos vertexInfos;
+
+    /// Extra vertexes allocated for the current map.
+    /// @note May be larger than Instance::numVertexes (deallocation is lazy).
+    typedef std::vector<Vertex*> Vertexes;
+    Vertexes vertexes;
+
+    /// Root node of our internal binary tree around which the final BSP data
+    /// objects are constructed.
+    BspTreeNode* rootNode;
+
+    /// HPlane used to model the current BSP partition and the list of intercepts.
+    HPlane* partition;
+
+    /// Extra info about the partition plane.
+    HEdgeInfo partitionInfo;
+    LineDef* partitionLineDef;
+
+    /// Unclosed sectors are recorded here so we don't print too many warnings.
+    struct UnclosedSectorRecord
+    {
+        Sector* sector;
+        vec2d_t nearPoint;
+
+        UnclosedSectorRecord(Sector* _sector, coord_t x, coord_t y)
+            : sector(_sector)
+        {
+            V2d_Set(nearPoint, x, y);
+        }
+    };
+    typedef std::list<UnclosedSectorRecord> UnclosedSectors;
+    UnclosedSectors unclosedSectors;
+
+    /// Unclosed BSP leafs are recorded here so we don't print too many warnings.
+    struct UnclosedBspLeafRecord
+    {
+        BspLeaf* leaf;
+        uint gapTotal;
+
+        UnclosedBspLeafRecord(BspLeaf* _leaf, uint _gapTotal)
+            : leaf(_leaf), gapTotal(_gapTotal)
+        {}
+    };
+    typedef std::list<UnclosedBspLeafRecord> UnclosedBspLeafs;
+    UnclosedBspLeafs unclosedBspLeafs;
+
+    /// Migrant hedges are recorded here so we don't print too many warnings.
+    struct MigrantHEdgeRecord
+    {
+        HEdge* hedge;
+        Sector* facingSector;
+
+        MigrantHEdgeRecord(HEdge* _hedge, Sector* _facingSector)
+            : hedge(_hedge), facingSector(_facingSector)
+        {}
+    };
+    typedef std::list<MigrantHEdgeRecord> MigrantHEdges;
+    MigrantHEdges migrantHEdges;
+
+    /// @c true = a BSP for the current map has been built successfully.
+    bool builtOK;
+
     Instance(GameMap* _map, uint* _numEditableVertexes,
-        Vertex*** _editableVertexes, int _splitCostFactor) :
-        splitCostFactor(_splitCostFactor),
+             Vertex*** _editableVertexes, int _splitCostFactor)
+      : splitCostFactor(_splitCostFactor),
         map(_map),
         numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
@@ -105,7 +192,7 @@ struct Partitioner::Instance
             if(!vtx) continue;
 
             clearHEdgeTipsByVertex(vtx);
-            free(vtx);
+            M_Free(vtx);
         }
 
         // We are finished with the BSP data.
@@ -190,7 +277,7 @@ struct Partitioner::Instance
 
     void findMapBounds(AABoxd* aaBox) const
     {
-        Q_ASSERT(aaBox);
+        DENG_ASSERT(aaBox);
 
         AABoxd bounds;
         boolean initialized = false;
@@ -247,7 +334,7 @@ struct Partitioner::Instance
      */
     void createInitialHEdges(SuperBlock& hedgeList)
     {
-        Q_ASSERT(map);
+        DENG_ASSERT(map);
 
         for(uint i = 0; i < map->numLineDefs; ++i)
         {
@@ -338,7 +425,7 @@ struct Partitioner::Instance
 
     void initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
     {
-        Q_ASSERT(map);
+        DENG_ASSERT(map);
         // It begins...
         rootNode = NULL;
 
@@ -356,7 +443,7 @@ struct Partitioner::Instance
 
     const HPlaneIntercept* makePartitionIntersection(HEdge* hedge, int leftSide)
     {
-        Q_ASSERT(hedge);
+        DENG_ASSERT(hedge);
 
         // Already present on this edge?
         Vertex* vertex = hedge->v[leftSide?1:0];
@@ -530,7 +617,7 @@ struct Partitioner::Instance
      */
     HEdge* splitHEdge(HEdge* oldHEdge, const_pvec2d_t point)
     {
-        Q_ASSERT(oldHEdge);
+        DENG_ASSERT(oldHEdge);
 
         //LOG_DEBUG("Splitting hedge %p at [%1.1f, %1.1f].")
         //    << de::dintptr(oldHEdge) << x << y;
@@ -601,8 +688,8 @@ struct Partitioner::Instance
      */
     void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList)
     {
-    #define RIGHT 0
-    #define LEFT  1
+#define RIGHT 0
+#define LEFT  1
 
         // Determine the relationship between this half-edge and the partition plane.
         coord_t a = hedgeDistanceFromPartition(hedge, false/*start vertex*/);
@@ -674,7 +761,7 @@ struct Partitioner::Instance
         if(hedge->twin && !hedge->twin->bspLeaf)
         {
             SuperBlock* bmapBlock = hedgeInfo(*hedge->twin).bmapBlock;
-            Q_ASSERT(bmapBlock);
+            DENG_ASSERT(bmapBlock);
             linkHEdgeInSuperBlockmap(*bmapBlock, newHEdge->twin);
         }
 
@@ -691,8 +778,8 @@ struct Partitioner::Instance
             linkHEdgeInSuperBlockmap(leftList,  newHEdge);
         }
 
-    #undef LEFT
-    #undef RIGHT
+#undef LEFT
+#undef RIGHT
     }
 
     /**
@@ -765,7 +852,7 @@ struct Partitioner::Instance
         if (hedge->lineDef) cost.realRight += 1;  \
         else                cost.miniRight += 1;  \
 
-        Q_ASSERT(hedge);
+        DENG_ASSERT(hedge);
 
         coord_t a, b, fa, fb;
 
@@ -1023,7 +1110,7 @@ struct Partitioner::Instance
     void chooseNextPartitionFromSuperBlock(const SuperBlock& partList, const SuperBlock& hedgeList,
         HEdge** best, PartitionCost& bestCost)
     {
-        Q_ASSERT(best);
+        DENG_ASSERT(best);
 
         // Test each half-edge as a potential partition.
         for(SuperBlock::HEdges::const_iterator it = partList.hedgesBegin();
@@ -1296,7 +1383,7 @@ struct Partitioner::Instance
      */
     inline coord_t vertexDistanceFromPartition(const Vertex* vertex) const
     {
-        Q_ASSERT(vertex);
+        DENG_ASSERT(vertex);
         const HEdgeInfo& info = partitionInfo;
         return V2d_PointLineParaDistance(vertex->origin, info.direction, info.pPara, info.pLength);
     }
@@ -1309,7 +1396,7 @@ struct Partitioner::Instance
      */
     inline coord_t hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
     {
-        Q_ASSERT(hedge);
+        DENG_ASSERT(hedge);
         const HEdgeInfo& pInfo = partitionInfo;
         const HEdgeInfo& hInfo = hedgeInfo(*hedge);
         return V2d_PointLinePerpDistance(end? hInfo.end : hInfo.start,
@@ -1402,7 +1489,7 @@ struct Partitioner::Instance
     static void sortHEdgesByAngleAroundPoint(HEdgeSortBuffer::iterator begin,
         HEdgeSortBuffer::iterator end, pvec2d_t point)
     {
-        Q_ASSERT(point);
+        DENG_ASSERT(point);
 
         /// @par Algorithm
         /// "double bubble"
@@ -1498,7 +1585,7 @@ struct Partitioner::Instance
 
     void clockwiseLeaf(BspTreeNode& tree, HEdgeSortBuffer& sortBuffer)
     {
-        Q_ASSERT(tree.isLeaf());
+        DENG_ASSERT(tree.isLeaf());
 
         BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
         vec2d_t center;
@@ -1630,7 +1717,7 @@ struct Partitioner::Instance
     void addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end,
         HEdge** right, HEdge** left)
     {
-        Q_ASSERT(start && end);
+        DENG_ASSERT(start && end);
 
         // Create the half-edge pair.
         // Leave 'linedef' field as NULL as these are not linedef-linked.
@@ -1699,7 +1786,7 @@ struct Partitioner::Instance
      */
     HEdgeIntercept* newHEdgeIntercept(Vertex* vertex, bool lineDefIsSelfReferencing)
     {
-        Q_ASSERT(vertex);
+        DENG_ASSERT(vertex);
 
         HEdgeIntercept* inter = new HEdgeIntercept();
         inter->vertex = vertex;
@@ -1889,8 +1976,8 @@ struct Partitioner::Instance
     {
         Vertex* vtx;
 
-        // Allocate with calloc for uniformity with the editable vertexes.
-        vtx = static_cast<Vertex*>(calloc(1, sizeof *vtx));
+        // Allocate with M_Calloc for uniformity with the editable vertexes.
+        vtx = static_cast<Vertex*>(M_Calloc(sizeof *vtx));
         vtx->header.type = DMU_VERTEX;
         vtx->buildData.index = *numEditableVertexes + uint(vertexes.size() + 1); // 1-based index, 0 = NIL.
         vertexes.push_back(vtx);
@@ -1908,7 +1995,7 @@ struct Partitioner::Instance
 
     void addHEdgeTip(Vertex* vtx, coord_t angle, HEdge* back, HEdge* front)
     {
-        Q_ASSERT(vtx);
+        DENG_ASSERT(vtx);
 
         HEdgeTip* tip = new HEdgeTip();
         tip->angle = angle;
@@ -1958,7 +2045,7 @@ struct Partitioner::Instance
         hedge->v[0] = start;
         hedge->v[1] = end;
         hedge->sector = sec;
-        Q_ASSERT(sec == NULL || GameMap_SectorIndex(map, sec) >= 0);
+        DENG_ASSERT(sec == NULL || GameMap_SectorIndex(map, sec) >= 0);
         hedge->side = (back? 1 : 0);
         hedge->lineDef = lineDef;
 
@@ -2123,7 +2210,7 @@ struct Partitioner::Instance
      */
     Sector* openSectorAtAngle(Vertex* vtx, coord_t angle)
     {
-        Q_ASSERT(vtx);
+        DENG_ASSERT(vtx);
 
         // First check whether there's a wall_tip that lies in the exact direction of
         // the given direction (which is relative to the vtxex).
@@ -2155,8 +2242,8 @@ struct Partitioner::Instance
             }
         }
 
-        Con_Error("Vertex %d has no hedge tips !", vtx->buildData.index);
-        exit(1); // Unreachable.
+        throw de::Error("Partitioner::openSectorAtAngle",
+                        QString("Vertex %1 has no hedge tips!").arg(vtx->buildData.index));
     }
 
     /**
@@ -2330,7 +2417,7 @@ struct Partitioner::Instance
 
     bool sanityCheckHasRealHEdge(const BspLeaf* leaf) const
     {
-        Q_ASSERT(leaf);
+        DENG_ASSERT(leaf);
         HEdge* hedge = leaf->hedge;
         do
         {
@@ -2338,95 +2425,6 @@ struct Partitioner::Instance
         } while((hedge = hedge->next) != leaf->hedge);
         return false;
     }
-
-    /// HEdge split cost factor.
-    int splitCostFactor;
-
-    /// Current map which we are building BSP data for.
-    GameMap* map;
-
-    /// @todo Refactor me away:
-    uint* numEditableVertexes;
-    Vertex*** editableVertexes;
-
-    /// Running totals of constructed BSP data objects.
-    uint numNodes;
-    uint numLeafs;
-    uint numHEdges;
-    uint numVertexes;
-
-    /// Extended info about LineDefs in the current map.
-    typedef std::vector<LineDefInfo> LineDefInfos;
-    LineDefInfos lineDefInfos;
-
-    /// Extended info about HEdges in the BSP object tree.
-    typedef std::map<HEdge*, HEdgeInfo> HEdgeInfos;
-    HEdgeInfos hedgeInfos;
-
-    /// Extended info about Vertexes in the current map (including extras).
-    /// @note May be larger than Instance::numVertexes (deallocation is lazy).
-    typedef std::vector<VertexInfo> VertexInfos;
-    VertexInfos vertexInfos;
-
-    /// Extra vertexes allocated for the current map.
-    /// @note May be larger than Instance::numVertexes (deallocation is lazy).
-    typedef std::vector<Vertex*> Vertexes;
-    Vertexes vertexes;
-
-    /// Root node of our internal binary tree around which the final BSP data
-    /// objects are constructed.
-    BspTreeNode* rootNode;
-
-    /// HPlane used to model the current BSP partition and the list of intercepts.
-    HPlane* partition;
-
-    /// Extra info about the partition plane.
-    HEdgeInfo partitionInfo;
-    LineDef* partitionLineDef;
-
-    /// Unclosed sectors are recorded here so we don't print too many warnings.
-    struct UnclosedSectorRecord
-    {
-        Sector* sector;
-        vec2d_t nearPoint;
-
-        UnclosedSectorRecord(Sector* _sector, coord_t x, coord_t y)
-            : sector(_sector)
-        {
-            V2d_Set(nearPoint, x, y);
-        }
-    };
-    typedef std::list<UnclosedSectorRecord> UnclosedSectors;
-    UnclosedSectors unclosedSectors;
-
-    /// Unclosed BSP leafs are recorded here so we don't print too many warnings.
-    struct UnclosedBspLeafRecord
-    {
-        BspLeaf* leaf;
-        uint gapTotal;
-
-        UnclosedBspLeafRecord(BspLeaf* _leaf, uint _gapTotal)
-            : leaf(_leaf), gapTotal(_gapTotal)
-        {}
-    };
-    typedef std::list<UnclosedBspLeafRecord> UnclosedBspLeafs;
-    UnclosedBspLeafs unclosedBspLeafs;
-
-    /// Migrant hedges are recorded here so we don't print too many warnings.
-    struct MigrantHEdgeRecord
-    {
-        HEdge* hedge;
-        Sector* facingSector;
-
-        MigrantHEdgeRecord(HEdge* _hedge, Sector* _facingSector)
-            : hedge(_hedge), facingSector(_facingSector)
-        {}
-    };
-    typedef std::list<MigrantHEdgeRecord> MigrantHEdges;
-    MigrantHEdges migrantHEdges;
-
-    /// @c true = a BSP for the current map has been built successfully.
-    bool builtOK;
 };
 
 Partitioner::Partitioner(GameMap* map, uint* numEditableVertexes,
@@ -2478,8 +2476,8 @@ uint Partitioner::numVertexes()
 
 Vertex const& Partitioner::vertex(uint idx)
 {
-    Q_ASSERT(idx < d->vertexes.size());
-    Q_ASSERT(d->vertexes[idx]);
+    DENG_ASSERT(idx < d->vertexes.size());
+    DENG_ASSERT(d->vertexes[idx]);
     return *d->vertexes[idx];
 }
 
@@ -2521,7 +2519,7 @@ Partitioner& Partitioner::releaseOwnership(runtime_mapdata_header_t const& ob)
             d->numNodes -= 1;
             break;
 
-        default: Q_ASSERT(0);
+        default: DENG_ASSERT(0);
         }
         return *this;
     }
@@ -2532,7 +2530,7 @@ Partitioner& Partitioner::releaseOwnership(runtime_mapdata_header_t const& ob)
 
 static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t center)
 {
-    Q_ASSERT(center);
+    DENG_ASSERT(center);
 
     vec2d_t avg;
     V2d_Set(avg, 0, 0);
@@ -2574,7 +2572,7 @@ static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* l
 
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)
 {
-    Q_ASSERT(leaf);
+    DENG_ASSERT(leaf);
     HEdge* hedge = leaf->hedge;
     do
     {
