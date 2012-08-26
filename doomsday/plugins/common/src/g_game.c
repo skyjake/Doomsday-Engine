@@ -968,7 +968,7 @@ void G_CommonPostInit(void)
 
     G_InitEventSequences();
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-    Cht_Init();
+    G_RegisterCheats();
 #endif
 
     // From this point on, the shortcuts are always active.
