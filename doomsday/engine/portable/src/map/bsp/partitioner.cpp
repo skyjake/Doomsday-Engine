@@ -138,14 +138,14 @@ struct Partitioner::Instance
     {
         HEdgeInfos::iterator found = hedgeInfos.find(&hedge);
         if(found != hedgeInfos.end()) return found->second;
-        throw de::Error("Partitioner::hedgeInfo", QString().sprintf("Failed locating HEdgeInfo for %p", &hedge));
+        throw de::Error("Partitioner::hedgeInfo", QString("Failed locating HEdgeInfo for 0x%1").arg(de::dintptr(&hedge), 0, 16));
     }
 
     const HEdgeInfo& hedgeInfo(const HEdge& hedge) const
     {
         HEdgeInfos::const_iterator found = hedgeInfos.find(const_cast<HEdge*>(&hedge));
         if(found != hedgeInfos.end()) return found->second;
-        throw de::Error("Partitioner::hedgeInfo", QString().sprintf("Failed locating HEdgeInfo for %p", &hedge));
+        throw de::Error("Partitioner::hedgeInfo", QString("Failed locating HEdgeInfo for 0x%1").arg(de::dintptr(&hedge), 0, 16));
     }
 
     /**
@@ -418,8 +418,8 @@ struct Partitioner::Instance
             coord_t len = *np - *node;
             if(len < -0.1)
             {
-                Con_Error("Partitioner::MergeIntersections: Invalid intercept order - %1.3f > %1.3f\n",
-                          node->distance(), np->distance());
+                throw de::Error("Partitioner::MergeIntersections",
+                                QString("Invalid intercept order - %1 > %2").arg(node->distance(), 0, 'f', 3).arg(np->distance(), 0, 'f', 3));
             }
             else if(len > 0.2)
             {
@@ -433,7 +433,7 @@ struct Partitioner::Instance
             /*if(len > DIST_EPSILON)
             {
                 LOG_DEBUG("Skipping very short half-edge (len: %1.3f) near [%1.1f, %1.1f]")
-                        << len << cur->vertex->V_pos[VX] << cur->vertex->V_pos[VY];
+                    << len << cur->vertex->V_pos[VX] << cur->vertex->V_pos[VY];
             }*/
 
             // Merge info for the two intersections into one (next is destroyed).
@@ -533,7 +533,7 @@ struct Partitioner::Instance
         Q_ASSERT(oldHEdge);
 
         //LOG_DEBUG("Splitting hedge %p at [%1.1f, %1.1f].")
-        //        << oldHEdge << x << y;
+        //    << de::dintptr(oldHEdge) << x << y;
 
         Vertex* newVert = newVertex(point);
         { HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
@@ -557,7 +557,7 @@ struct Partitioner::Instance
         // Handle the twin.
         if(oldHEdge->twin)
         {
-            //LOG_DEBUG("Splitting hedge twin %p.") << oldHEdge->twin;
+            //LOG_DEBUG("Splitting hedge twin %p.") << de::dintptr(oldHEdge->twin);
 
             // Copy the old hedge info.
             newHEdge->twin = cloneHEdge(*oldHEdge->twin);
@@ -748,10 +748,10 @@ struct Partitioner::Instance
 
         // Sanity checks...
         if(!rights.totalHEdgeCount())
-            Con_Error("Partitioner::partitionhedges: Separated half-edge has no right side.");
+            throw de::Error("Partitioner::partitionhedges", "Separated half-edge has no right side.");
 
         if(!lefts.totalHEdgeCount())
-            Con_Error("Partitioner::partitionhedges: Separated half-edge has no left side.");
+            throw de::Error("Partitioner::partitionhedges", "Separated half-edge has no left side.");
     }
 
     void evalPartitionCostForHEdge(const HEdgeInfo& partInfo, int costFactorMultiplier,
@@ -1013,7 +1013,7 @@ struct Partitioner::Instance
             cost.total += 25;
 
         //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d left=%d+%d right=%d+%d cost=%d.%02d")
-        //    << &hInfo << cost.splits << cost.iffy << cost.nearMiss
+        //    << de::dintptr(&hInfo) << cost.splits << cost.iffy << cost.nearMiss
         //    << cost.realLeft << cost.miniLeft << cost.realRight << cost.miniRight
         //    << cost.total / 100 << cost.total % 100;
 
@@ -1032,7 +1032,7 @@ struct Partitioner::Instance
             HEdge* hedge = *it;
 
             //LOG_DEBUG("chooseNextPartitionFromSuperBlock: %shedge %p sector:%d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-            //    << (lineDef? "" : "mini-") << hedge
+            //    << (lineDef? "" : "mini-") << de::dintptr(hedge)
             //    << (hedge->bspBuildInfo->sector? hedge->bspBuildInfo->sector->index : -1)
             //    << hedge->v[0]->pos[VX] << hedge->v[0]->pos[VY]
             //    << hedge->v[1]->pos[VX] << hedge->v[1]->pos[VY];
@@ -1071,6 +1071,8 @@ struct Partitioner::Instance
      */
     HEdge* chooseNextPartition(const SuperBlock& hedgeList)
     {
+        LOG_AS("Partitioner::choosePartition");
+
         PartitionCost bestCost;
         HEdge* best = 0;
 
@@ -1117,8 +1119,8 @@ struct Partitioner::Instance
 
         /*if(best)
         {
-            LOG_DEBUG("Partitioner::choosePartition: best %p score: %d.%02d.")
-                << best << bestCost.total / 100 << bestCost.total % 100;
+            LOG_DEBUG("best %p score: %d.%02d.")
+                << de::dintptr(best) << bestCost.total / 100 << bestCost.total % 100;
         }*/
 
         return best;
@@ -1145,6 +1147,8 @@ struct Partitioner::Instance
      */
     bool buildNodes(SuperBlock& hedgeList, BspTreeNode** subtree)
     {
+        LOG_AS("Partitioner::buildNodes");
+
         *subtree = NULL;
 
         //hedgeList.traverse(printSuperBlockHEdgesWorker);
@@ -1166,8 +1170,8 @@ struct Partitioner::Instance
             return true;
         }
 
-        //LOG_TRACE("Partitioner::buildNodes: Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].")
-        //      << hedge << hedge->v[0]->V_pos[VX] << hedge->v[0]->V_pos[VY]
+        //LOG_TRACE("Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].")
+        //      << de::dintptr(hedge) << hedge->v[0]->V_pos[VX] << hedge->v[0]->V_pos[VY]
         //      << hedge->v[1]->V_pos[VX] << hedge->v[1]->V_pos[VY];
 
         // Reconfigure the half plane for the next round of hedge sorting.
@@ -1268,7 +1272,16 @@ struct Partitioner::Instance
         SuperBlockmap* blockmap = new SuperBlockmap(blockBounds);
         partition = new HPlane();
 
-        initHEdgesAndBuildBsp(*blockmap);
+        try
+        {
+            initHEdgesAndBuildBsp(*blockmap);
+        }
+        catch(de::Error& er)
+        {
+            LOG_AS("BspBuilder");
+            LOG_WARNING("%s.") << er.asText();
+            builtOK = false;
+        }
 
         delete partition;
         delete blockmap;
@@ -1355,6 +1368,8 @@ struct Partitioner::Instance
 
     bool configurePartition(const HEdge* hedge)
     {
+        LOG_AS("Partitioner::configurePartition");
+
         if(!hedge) return false;
 
         LineDef* lineDef = hedge->lineDef;
@@ -1373,8 +1388,8 @@ struct Partitioner::Instance
         vec2d_t angle; V2d_Subtract(angle, to->origin, from->origin);
         partition->setDirection(angle);
 
-        //LOG_DEBUG("Partitioner::configureHPlane: hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
-        //    << best << from->origin[VX] << from->origin[VY]
+        //LOG_DEBUG("hedge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f].")
+        //    << de::dintptr(best) << from->origin[VX] << from->origin[VY]
         //    << angle[VX] << angle[VY];
 
         return true;
@@ -1474,7 +1489,7 @@ struct Partitioner::Instance
                                            hedge->v[0]->V_pos[VY] - point[VY]);
 
             LOG_DEBUG("  half-edge %p: Angle %1.6f [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                << hedge << angle
+                << de::dintptr(hedge) << angle
                 << hedge->v[0]->V_pos[VX] << hedge->v[0]->V_pos[VY]
                 << hedge->v[1]->V_pos[VX] << hedge->v[1]->V_pos[VY];
         }
@@ -1546,7 +1561,7 @@ struct Partitioner::Instance
 
         if(!leaf->sector)
         {
-            LOG_WARNING("BspLeaf %p is orphan.") << leaf;
+            LOG_WARNING("BspLeaf %p is orphan.") << de::dintptr(leaf);
         }
 
         logMigrantHEdges(leaf);
@@ -1554,7 +1569,8 @@ struct Partitioner::Instance
 
         if(!sanityCheckHasRealHEdge(leaf))
         {
-            Con_Error("BSP Leaf #%p has no linedef-linked half-edge!", leaf);
+            throw de::Error("Partitioner::clockwiseLeaf",
+                            QString("BSP Leaf 0x%p has no linedef-linked half-edge!").arg(de::dintptr(leaf), 0, 16));
         }
     }
 
@@ -1629,11 +1645,11 @@ struct Partitioner::Instance
         /*
         DEBUG_Message(("buildHEdgesBetweenIntersections: Capped intersection:\n"));
         DEBUG_Message(("  %p RIGHT sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-                       (*right), ((*right)->sector? (*right)->sector->index : -1),
+                       de::dintptr(*right), ((*right)->sector? (*right)->sector->index : -1),
                        (*right)->v[0]->V_pos[VX], (*right)->v[0]->V_pos[VY],
                        (*right)->v[1]->V_pos[VX], (*right)->v[1]->V_pos[VY]));
         DEBUG_Message(("  %p LEFT  sector %d (%1.1f,%1.1f) -> (%1.1f,%1.1f)\n",
-                       (*left), ((*left)->sector? (*left)->sector->index : -1),
+                       de::dintptr(*left), ((*left)->sector? (*left)->sector->index : -1),
                        (*left)->v[0]->V_pos[VX], (*left)->v[0]->V_pos[VY],
                        (*left)->v[1]->V_pos[VX], (*left)->v[1]->V_pos[VY]));
         */
@@ -1714,13 +1730,18 @@ struct Partitioner::Instance
 
     void clearBspObject(BspTreeNode& tree)
     {
+        LOG_AS("Partitioner::clearBspObject");
         if(tree.isLeaf())
         {
             BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
             if(leaf)
             {
-                LOG_DEBUG("Partitioner: Clearing unclaimed leaf %p.") << leaf;
+                if(builtOK)
+                {
+                    LOG_DEBUG("Clearing unclaimed leaf %p.") << de::dintptr(leaf);
+                }
                 BspLeaf_Delete(leaf);
+                tree.setUserData(0);
                 // There is now one less BspLeaf.
                 numLeafs -= 1;
             }
@@ -1730,8 +1751,12 @@ struct Partitioner::Instance
             BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
             if(node)
             {
-                LOG_DEBUG("Partitioner: Clearing unclaimed node %p.") << node;
+                if(builtOK)
+                {
+                    LOG_DEBUG("Clearing unclaimed node %p.") << de::dintptr(node);
+                }
                 BspNode_Delete(node);
+                tree.setUserData(0);
                 // There is now one less BspNode.
                 numNodes -= 1;
             }
@@ -1780,6 +1805,7 @@ struct Partitioner::Instance
 
     BspTreeNode* treeNodeForBspObject(runtime_mapdata_header_t const& ob)
     {
+        LOG_AS("Partitioner::treeNodeForBspObject");
         if(DMU_GetType(&ob) == DMU_BSPLEAF || DMU_GetType(&ob) == DMU_BSPNODE)
         {
             // Iterative pre-order traversal of the BSP tree.
@@ -1835,7 +1861,7 @@ struct Partitioner::Instance
             }
         }
 
-        LOG_DEBUG("Partitioner::treeNodeForBspObject: Attempted to locate using an unknown object %p.") << &ob;
+        LOG_DEBUG("Attempted to locate using an unknown object %p.") << de::dintptr(&ob);
         return 0;
     }
 
@@ -2178,8 +2204,8 @@ struct Partitioner::Instance
 
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
-        LOG_WARNING("Sector %p #%d is unclosed near [%1.1f, %1.1f].")
-                << sector << sector->buildData.index - 1 << x << y;
+        LOG_WARNING("Sector %p (#%d) is unclosed near [%1.1f, %1.1f].")
+                << de::dintptr(sector) << sector->buildData.index - 1 << x << y;
 
         return true;
     }
@@ -2202,14 +2228,14 @@ struct Partitioner::Instance
 
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
-        LOG_WARNING("HEdge list for BspLeaf #%p is not closed (%u gaps, %u hedges).")
-                << leaf << gapTotal << leaf->hedgeCount;
+        LOG_WARNING("HEdge list for BspLeaf %p is not closed (%u gaps, %u hedges).")
+                << de::dintptr(leaf) << gapTotal << leaf->hedgeCount;
         /*
         HEdge* hedge = leaf->hedge;
         do
         {
             LOG_DEBUG("  half-edge %p [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                << hedge
+                << de::dintptr(hedge)
                 << hedge->v[0]->pos[VX] << hedge->v[0]->pos[VY],
                 << hedge->v[1]->pos[VX] << hedge->v[1]->pos[VY];
 
@@ -2459,6 +2485,7 @@ Vertex const& Partitioner::vertex(uint idx)
 
 Partitioner& Partitioner::releaseOwnership(runtime_mapdata_header_t const& ob)
 {
+    LOG_AS("Partitioner::releaseOwnership");
     // Is this object owned?
     if(DMU_GetType(&ob) == DMU_VERTEX)
     {
@@ -2499,7 +2526,7 @@ Partitioner& Partitioner::releaseOwnership(runtime_mapdata_header_t const& ob)
         return *this;
     }
 
-    LOG_DEBUG("Partitioner::releaseOwnership: Attempted to release an unknown/unowned object %p.") << &ob;
+    LOG_DEBUG("Attempted to release an unknown/unowned object %p.") << de::dintptr(&ob);
     return *this;
 }
 
