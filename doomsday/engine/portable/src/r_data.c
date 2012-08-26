@@ -2193,7 +2193,7 @@ void R_InitFlatTextures(void)
 
             {
             Uri* uri = composeFlatUri(F_LumpName(lumpNum));
-            if(Textures_ResolveUri(uri) == NOTEXTUREID) // A new flat?
+            if(Textures_ResolveUri2(uri, true/*quiet please*/) == NOTEXTUREID) // A new flat?
             {
                 /**
                  * Kludge Assume 64x64 else when the flat is loaded it will inherit the
