@@ -204,10 +204,12 @@ void Str_Delete(Str* str)
 {
     DENG_ASSERT(!Garbage_IsTrashed(str));
 
+#if 0 // use this is release builds if encountering Str/AutoStr errors
     if(Garbage_IsTrashed(str))
     {
         LegacyCore_FatalError("Str_Delete: Trying to manually delete an AutoStr!");
     }
+#endif
 
     deleteString(str);
 }
