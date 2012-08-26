@@ -3523,7 +3523,6 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
                 AutoStr* path = Uri_ToString(mapUri);
 
                 Con_Printf("%s-", Str_Text(path));
-                Str_Delete(path);
                 Uri_Delete(mapUri);
 
                 mapUri = G_ComposeMapUri(episode, i-1);
