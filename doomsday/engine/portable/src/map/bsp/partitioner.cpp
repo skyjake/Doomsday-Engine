@@ -493,43 +493,30 @@ struct Partitioner::Instance
         return final;
     }
 
+    static bool mergeInterceptDecide(HPlaneIntercept& a, HPlaneIntercept& b, void* userData)
+    {
+        const coord_t distance = b - a;
+
+        // Too great a distance between the two?
+        if(distance > 0.2) return false;
+        /*else if(distance <= DIST_EPSILON)
+        {
+            LOG_DEBUG("Skipping very short half-edge (len: %1.3f) near [%1.1f, %1.1f]")
+                << len << cur->vertex->V_pos[VX] << cur->vertex->V_pos[VY];
+        }*/
+
+        HEdgeIntercept* cur  = reinterpret_cast<HEdgeIntercept*>(a.userData());
+        HEdgeIntercept* next = reinterpret_cast<HEdgeIntercept*>(b.userData());
+
+        // Merge info for the two intersections into one (next is destroyed).
+        reinterpret_cast<Partitioner::Instance*>(userData)->mergeHEdgeIntercepts(*cur, *next);
+        return true;
+    }
+
     void mergeIntersections()
     {
-        HPlane::Intercepts::const_iterator node = partition->intercepts().begin();
-        while(node != partition->intercepts().end())
-        {
-            HPlane::Intercepts::const_iterator np = node; np++;
-            if(np == partition->intercepts().end()) break;
-
-            coord_t len = *np - *node;
-            if(len < -0.1)
-            {
-                throw de::Error("Partitioner::MergeIntersections",
-                                QString("Invalid intercept order - %1 > %2")
-                                    .arg(node->distance(), 0, 'f', 3)
-                                    .arg(  np->distance(), 0, 'f', 3));
-            }
-            else if(len > 0.2)
-            {
-                node++;
-                continue;
-            }
-
-            HEdgeIntercept* cur  = reinterpret_cast<HEdgeIntercept*>(node->userData());
-            HEdgeIntercept* next = reinterpret_cast<HEdgeIntercept*>(np->userData());
-
-            /*if(len > DIST_EPSILON)
-            {
-                LOG_DEBUG("Skipping very short half-edge (len: %1.3f) near [%1.1f, %1.1f]")
-                    << len << cur->vertex->V_pos[VX] << cur->vertex->V_pos[VY];
-            }*/
-
-            // Merge info for the two intersections into one (next is destroyed).
-            mergeHEdgeIntercepts(*cur, *next);
-
-            // Unlink this intercept.
-            partition->deleteIntercept(np);
-        }
+        HPlane::mergepredicate_t callback = &Partitioner::Instance::mergeInterceptDecide;
+        partition->mergeIntercepts(callback, this);
     }
 
     void buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList)

@@ -110,14 +110,36 @@ HPlaneIntercept& HPlane::newIntercept(coord_t distance, void* userData)
     return *intercepts_.insert(after.base(), HPlaneIntercept(distance, userData));
 }
 
-HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::iterator at)
+void HPlane::mergeIntercepts(mergepredicate_t predicate, void* userData)
 {
-    return intercepts_.erase(at);
-}
+    Intercepts::iterator node = intercepts_.begin();
+    while(node != intercepts_.end())
+    {
+        Intercepts::iterator np = node; np++;
+        if(np == intercepts_.end()) break;
 
-HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::const_iterator at)
-{
-    return intercepts_.erase(at);
+        // Sanity check.
+        coord_t distance = *np - *node;
+        if(distance < -0.1)
+        {
+            throw de::Error("HPlane::MergeIntersections",
+                            QString("Invalid intercept order - %1 > %2")
+                                .arg(node->distance(), 0, 'f', 3)
+                                .arg(  np->distance(), 0, 'f', 3));
+        }
+
+        // Are we merging this pair?
+        if(predicate(*node, *np, userData))
+        {
+            // Yes - Unlink this intercept.
+            intercepts_.erase(np);
+        }
+        else
+        {
+            // No.
+            node++;
+        }
+    }
 }
 
 const HPlane::Intercepts& HPlane::intercepts() const

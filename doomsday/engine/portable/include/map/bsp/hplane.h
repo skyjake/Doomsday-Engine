@@ -90,10 +90,14 @@ private:
     void* _userData;
 };
 
-class HPlane {
+class HPlane
+{
 public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
+    typedef bool (*mergepredicate_t)(HPlaneIntercept& a, HPlaneIntercept& b, void* userData);
+
+public:
     HPlane() : partition(), intercepts_(0){}
     HPlane(coord_t const origin[2], coord_t const direction[2]) :
         partition(origin, direction), intercepts_(0) {}
@@ -132,8 +136,7 @@ public:
      */
     HPlaneIntercept& newIntercept(coord_t distance, void* userData=NULL);
 
-    Intercepts::const_iterator deleteIntercept(Intercepts::iterator at);
-    Intercepts::const_iterator deleteIntercept(Intercepts::const_iterator at);
+    void mergeIntercepts(mergepredicate_t predicate, void* userData);
 
     const Intercepts& intercepts() const;
 
