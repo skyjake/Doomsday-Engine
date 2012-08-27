@@ -30,7 +30,6 @@
 #include <cmath>
 #include <vector>
 #include <map>
-#include <list>
 #include <algorithm>
 
 #include <de/Error>
@@ -133,7 +132,7 @@ struct Partitioner::Instance
             V2d_Set(nearPoint, x, y);
         }
     };
-    typedef std::list<UnclosedSectorRecord> UnclosedSectors;
+    typedef std::map<Sector*, UnclosedSectorRecord> UnclosedSectors;
     UnclosedSectors unclosedSectors;
 
     /// Unclosed BSP leafs are recorded here so we don't print too many warnings.
@@ -146,7 +145,7 @@ struct Partitioner::Instance
             : leaf(_leaf), gapTotal(_gapTotal)
         {}
     };
-    typedef std::list<UnclosedBspLeafRecord> UnclosedBspLeafs;
+    typedef std::map<BspLeaf*, UnclosedBspLeafRecord> UnclosedBspLeafs;
     UnclosedBspLeafs unclosedBspLeafs;
 
     /// Migrant hedges are recorded here so we don't print too many warnings.
@@ -159,7 +158,7 @@ struct Partitioner::Instance
             : hedge(_hedge), facingSector(_facingSector)
         {}
     };
-    typedef std::list<MigrantHEdgeRecord> MigrantHEdges;
+    typedef std::map<HEdge*, MigrantHEdgeRecord> MigrantHEdges;
     MigrantHEdges migrantHEdges;
 
     /// @c true = a BSP for the current map has been built successfully.
@@ -185,7 +184,7 @@ struct Partitioner::Instance
             clearHEdgeTipsByVertex((*editableVertexes)[i]);
         }
 
-        for(Vertexes::iterator it = vertexes.begin(); it != vertexes.end(); ++it)
+        DENG2_FOR_EACH(it, vertexes, Vertexes::iterator)
         {
             Vertex* vtx = *it;
             // Has ownership of this vertex been claimed?
@@ -418,8 +417,8 @@ struct Partitioner::Instance
             const coord_t x2 = line->L_v2origin[VX];
             const coord_t y2 = line->L_v2origin[VY];
 
-            addHEdgeTip(line->v[0], M_DirectionToAngleXY(x2 - x1, y2 - y1), back, front);
-            addHEdgeTip(line->v[1], M_DirectionToAngleXY(x1 - x2, y1 - y2), front, back);
+            addHEdgeTip(line->v[0], M_DirectionToAngleXY(x2 - x1, y2 - y1), front, back);
+            addHEdgeTip(line->v[1], M_DirectionToAngleXY(x1 - x2, y1 - y2), back, front);
         }
     }
 
@@ -624,8 +623,8 @@ struct Partitioner::Instance
 
         Vertex* newVert = newVertex(point);
         { HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
-        addHEdgeTip(newVert, M_DirectionToAngleXY(-oldInfo.direction[VX], -oldInfo.direction[VY]), oldHEdge, oldHEdge->twin);
-        addHEdgeTip(newVert, M_DirectionToAngleXY( oldInfo.direction[VX],  oldInfo.direction[VY]), oldHEdge->twin, oldHEdge);
+        addHEdgeTip(newVert, M_DirectionToAngleXY(-oldInfo.direction[VX], -oldInfo.direction[VY]), oldHEdge->twin, oldHEdge);
+        addHEdgeTip(newVert, M_DirectionToAngleXY( oldInfo.direction[VX],  oldInfo.direction[VY]), oldHEdge, oldHEdge->twin);
         }
 
         HEdge* newHEdge = cloneHEdge(*oldHEdge);
@@ -1338,8 +1337,8 @@ struct Partitioner::Instance
         findMapBounds(&mapBounds);
 
         LOG_VERBOSE("Map bounds:")
-                << " min[x:" << mapBounds.minX << ", y:" << mapBounds.minY << "]"
-                << " max[x:" << mapBounds.maxX << ", y:" << mapBounds.maxY << "]";
+            << " min[x:" << mapBounds.minX << ", y:" << mapBounds.minY << "]"
+            << " max[x:" << mapBounds.maxX << ", y:" << mapBounds.maxY << "]";
 
         AABox mapBoundsi;
         mapBoundsi.minX = (int) floor(mapBounds.minX);
@@ -1505,9 +1504,9 @@ struct Partitioner::Instance
                 HEdge* a = *it;
                 HEdge* b = *next;
                 coord_t angle1 = M_DirectionToAngleXY(a->v[0]->origin[VX] - point[VX],
-                                                a->v[0]->origin[VY] - point[VY]);
+                                                      a->v[0]->origin[VY] - point[VY]);
                 coord_t angle2 = M_DirectionToAngleXY(b->v[0]->origin[VX] - point[VX],
-                                                b->v[0]->origin[VY] - point[VY]);
+                                                      b->v[0]->origin[VY] - point[VY]);
 
                 if(angle1 + ANG_EPSILON < angle2)
                 {
@@ -1955,15 +1954,7 @@ struct Partitioner::Instance
     void clearHEdgeTipsByVertex(Vertex* vtx)
     {
         if(!vtx) return;
-
-        HEdgeTip* tip = vertexInfo(*vtx).tipSet;
-        while(tip)
-        {
-            HEdgeTip* next = tip->ET_next;
-            delete tip;
-            tip = next;
-        }
-        vertexInfo(*vtx).tipSet = 0;
+        vertexInfo(*vtx).clearHEdgeTips();
     }
 
     /**
@@ -1993,45 +1984,10 @@ struct Partitioner::Instance
         return vtx;
     }
 
-    void addHEdgeTip(Vertex* vtx, coord_t angle, HEdge* back, HEdge* front)
+    void addHEdgeTip(Vertex* vtx, coord_t angle, HEdge* front, HEdge* back)
     {
         DENG_ASSERT(vtx);
-
-        HEdgeTip* tip = new HEdgeTip();
-        tip->angle = angle;
-        tip->ET_back  = back;
-        tip->ET_front = front;
-
-        // Find the correct place (order is increasing angle).
-        VertexInfo& vtxInfo = vertexInfo(*vtx);
-        HEdgeTip* after;
-        for(after = vtxInfo.tipSet; after && after->ET_next;
-            after = after->ET_next) {}
-
-        while(after && tip->angle + ANG_EPSILON < after->angle)
-            after = after->ET_prev;
-
-        // Link it in.
-        if(after)
-            tip->ET_next = after->ET_next;
-        else
-            tip->ET_next = vtxInfo.tipSet;
-        tip->ET_prev = after;
-
-        if(after)
-        {
-            if(after->ET_next)
-                after->ET_next->ET_prev = tip;
-
-            after->ET_next = tip;
-        }
-        else
-        {
-            if(vtxInfo.tipSet)
-                vtxInfo.tipSet->ET_prev = tip;
-
-            vtxInfo.tipSet = tip;
-        }
+        vertexInfo(*vtx).addHEdgeTip(angle, front, back, ANG_EPSILON);
     }
 
     /**
@@ -2211,39 +2167,42 @@ struct Partitioner::Instance
     Sector* openSectorAtAngle(Vertex* vtx, coord_t angle)
     {
         DENG_ASSERT(vtx);
+        const VertexInfo::HEdgeTips& hedgeTips = vertexInfo(*vtx).hedgeTips();
+
+        if(hedgeTips.empty())
+        {
+            throw de::Error("Partitioner::openSectorAtAngle",
+                            QString("Vertex #%1 has no hedge tips!").arg(vtx->buildData.index - 1));
+        }
 
         // First check whether there's a wall_tip that lies in the exact direction of
         // the given direction (which is relative to the vtxex).
-        for(HEdgeTip* tip = vertexInfo(*vtx).tipSet; tip; tip = tip->ET_next)
+        DENG2_FOR_EACH(it, hedgeTips, VertexInfo::HEdgeTips::const_iterator)
         {
-            coord_t diff = fabs(tip->angle - angle);
-
+            const HEdgeTip& tip = *it;
+            coord_t diff = fabs(tip.angle() - angle);
             if(diff < ANG_EPSILON || diff > (360.0 - ANG_EPSILON))
             {
-                // Yes, found one.
-                return NULL;
+                return NULL; // Yes, found one.
             }
         }
 
         // OK, now just find the first wall_tip whose angle is greater than the angle
         // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
-        for(HEdgeTip* tip = vertexInfo(*vtx).tipSet; tip; tip = tip->ET_next)
+        DENG2_FOR_EACH(it, hedgeTips, VertexInfo::HEdgeTips::const_iterator)
         {
-            if(angle + ANG_EPSILON < tip->angle)
+            const HEdgeTip& tip = *it;
+            if(angle + ANG_EPSILON < tip.angle())
             {
                 // Found it.
-                return (tip->ET_front? tip->ET_front->sector : NULL);
-            }
-
-            if(!tip->ET_next)
-            {
-                // No more tips, therefore this is the BACK of the tip with the largest angle.
-                return (tip->ET_back? tip->ET_back->sector : NULL);
+                return (tip.hasFront()? tip.front().sector : NULL);
             }
         }
 
-        throw de::Error("Partitioner::openSectorAtAngle",
-                        QString("Vertex %1 has no hedge tips!").arg(vtx->buildData.index));
+        // Not found. The open sector will therefore be on the BACK of the tip at the
+        // greatest angle.
+        const HEdgeTip& tip = hedgeTips.back();
+        return (tip.hasBack()? tip.back().sector : NULL);
     }
 
     /**
@@ -2278,21 +2237,15 @@ struct Partitioner::Instance
         if(!sector) return false;
 
         // Has this sector already been registered?
-        for(UnclosedSectors::const_iterator it = unclosedSectors.begin();
-            it != unclosedSectors.end(); ++it)
-        {
-            UnclosedSectorRecord const& record = *it;
-            if(record.sector == sector)
-                return false;
-        }
+        if(unclosedSectors.count(sector)) return false;
 
         // Add a new record.
-        unclosedSectors.push_back(UnclosedSectorRecord(sector, x, y));
+        unclosedSectors.insert(std::pair<Sector*, UnclosedSectorRecord>(sector, UnclosedSectorRecord(sector, x, y)));
 
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
         LOG_WARNING("Sector %p (#%d) is unclosed near [%1.1f, %1.1f].")
-                << de::dintptr(sector) << sector->buildData.index - 1 << x << y;
+            << de::dintptr(sector) << sector->buildData.index - 1 << x << y;
 
         return true;
     }
@@ -2302,21 +2255,16 @@ struct Partitioner::Instance
         if(!leaf) return false;
 
         // Has this leaf already been registered?
-        for(UnclosedBspLeafs::const_iterator it = unclosedBspLeafs.begin();
-            it != unclosedBspLeafs.end(); ++it)
-        {
-            UnclosedBspLeafRecord const& record = *it;
-            if(record.leaf == leaf)
-                return false;
-        }
+        if(unclosedBspLeafs.count(leaf)) return false;
 
         // Add a new record.
-        unclosedBspLeafs.push_back(UnclosedBspLeafRecord(leaf, gapTotal));
+        unclosedBspLeafs.insert(std::pair<BspLeaf*, UnclosedBspLeafRecord>(leaf, UnclosedBspLeafRecord(leaf, gapTotal)));
 
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
         LOG_WARNING("HEdge list for BspLeaf %p is not closed (%u gaps, %u hedges).")
-                << de::dintptr(leaf) << gapTotal << leaf->hedgeCount;
+            << de::dintptr(leaf) << gapTotal << leaf->hedgeCount;
+
         /*
         HEdge* hedge = leaf->hedge;
         do
@@ -2366,26 +2314,20 @@ struct Partitioner::Instance
         if(!migrant || !sector) return false;
 
         // Has this pair already been registered?
-        for(MigrantHEdges::const_iterator it = migrantHEdges.begin();
-            it != migrantHEdges.end(); ++it)
-        {
-            MigrantHEdgeRecord const& record = *it;
-            if(record.facingSector == sector && record.hedge == migrant)
-                return false;
-        }
+        if(migrantHEdges.count(migrant)) return false;
 
         // Add a new record.
-        migrantHEdges.push_back(MigrantHEdgeRecord(migrant, sector));
+        migrantHEdges.insert(std::pair<HEdge*, MigrantHEdgeRecord>(migrant, MigrantHEdgeRecord(migrant, sector)));
 
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
         if(migrant->lineDef)
             LOG_WARNING("Sector #%d has HEdge facing #%d (line #%d).")
-                    << sector->buildData.index - 1 << migrant->sector->buildData.index - 1
-                    << migrant->lineDef->buildData.index - 1;
+                << sector->buildData.index - 1 << migrant->sector->buildData.index - 1
+                << migrant->lineDef->buildData.index - 1;
         else
             LOG_WARNING("Sector #%d has HEdge facing #%d.")
-                    << sector->buildData.index - 1 << migrant->sector->buildData.index - 1;
+                << sector->buildData.index - 1 << migrant->sector->buildData.index - 1;
 
         return true;
     }
