@@ -1505,6 +1505,9 @@ boolean P_HitFloor(mobj_t* thing)
     case MT_LEAF2:
     case MT_SPLASH:
     case MT_SLUDGECHUNK:
+    case MT_FOGPATCHS:
+    case MT_FOGPATCHM:
+    case MT_FOGPATCHL:
         return false;
 
     default:
