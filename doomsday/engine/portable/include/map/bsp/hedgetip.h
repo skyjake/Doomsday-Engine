@@ -34,32 +34,62 @@
 namespace de {
 namespace bsp {
 
-#define ET_prev             link[0]
-#define ET_next             link[1]
-#define ET_front            hedges[0]
-#define ET_back             hedges[1]
-
-// A "hedgetip" is where a half-edge meets a vertex.
-struct HEdgeTip
+/**
+ * A "hedgetip" is where a half-edge meets a vertex.
+ */
+class HEdgeTip
 {
-    // Link in list. List is kept in ANTI-clockwise order.
-    HEdgeTip* link[2]; // {prev, next};
-
-    /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
-    coord_t angle;
-
-    // Half-edge on each side of the edge. Left is the side of increasing
-    // angles, right is the side of decreasing angles. Either can be NULL
-    // for one sided edges.
-    HEdge* hedges[2];
-
-    HEdgeTip() : angle()
+public:
+    enum Side
     {
-        link[0] = 0;
-        link[1] = 0;
-        hedges[0] = 0;
-        hedges[1] = 0;
+        Front = 0,
+        Back
+    };
+
+public:
+    explicit HEdgeTip(coord_t angle = 0, HEdge* front = 0, HEdge* back = 0)
+        : angle_(angle), front_(front), back_(back)
+    {}
+
+    inline coord_t angle() const { return angle_; }
+    inline HEdgeTip& setAngle(coord_t newAngle) {
+        angle_ = newAngle;
+        return *this;
     }
+
+    inline HEdge& front() const { return *front_; }
+    inline HEdge& back() const { return *back_; }
+    inline HEdge& side(Side sid) const {
+        return sid == Front? front() : back();
+    }
+
+    inline bool hasFront() const { return !!front_; }
+    inline bool hasBack() const { return !!back_; }
+    inline bool hasSide(Side sid) const {
+        return sid == Front? hasFront() : hasBack();
+    }
+
+    inline HEdgeTip& setFront(HEdge* hedge) {
+        front_ = hedge;
+        return *this;
+    }
+
+    inline HEdgeTip& setBack(HEdge* hedge) {
+        back_ = hedge;
+        return *this;
+    }
+
+    inline HEdgeTip& setSide(Side sid, HEdge* hedge) {
+        return sid == Front? setFront(hedge) : setBack(hedge);
+    }
+
+private:
+    /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
+    coord_t angle_;
+
+    /// Half-edge on each side of the tip. Front is the side of increasing
+    /// angles, back is the side of decreasing angles. Either can be @c NULL
+    HEdge* front_, *back_;
 };
 
 } // namespace bsp

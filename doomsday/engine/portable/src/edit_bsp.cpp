@@ -321,7 +321,7 @@ void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexe
         rHeight = lHeight = 0;
     }
 
-    LOG_INFO("BSP built: (%d:%d) #%d Nodes, #%d Leafs, #%d HEdges, #%d Vertexes.")
+    LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d HEdges, %d Vertexes.")
             << rHeight << lHeight << builder.numNodes() << builder.numLeafs()
             << builder.numHEdges() << builder.numVertexes();
 
