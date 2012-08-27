@@ -1505,7 +1505,13 @@ static int massacreMobj(thinker_t* th, void* context)
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
 
-    if(!mo->player && sentient(mo) && (mo->flags & MF_SHOOTABLE))
+    if(!mo->player && mo->type == MT_WRAITHB)
+    {
+        // Get rid of buried Wraiths.
+        P_MobjRemove(mo, true);
+        (*count)++;
+    }
+    else if(!mo->player && sentient(mo) && (mo->flags & (MF_SHOOTABLE | MF_COUNTKILL)))
     {
         mo->flags2 &= ~(MF2_NONSHOOTABLE + MF2_INVULNERABLE);
         mo->flags |= MF_SHOOTABLE;
