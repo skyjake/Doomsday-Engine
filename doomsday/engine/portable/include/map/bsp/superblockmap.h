@@ -232,21 +232,19 @@ public:
      */
     HEdge* pop();
 
-    HEdges::const_iterator hedgesBegin() const;
-    HEdges::const_iterator hedgesEnd() const;
+    const HEdges& hedges() const;
 
     DENG_DEBUG_ONLY(
     static void DebugPrint(SuperBlock const& inst)
     {
-        for(SuperBlock::HEdges::const_iterator it = inst.hedgesBegin();
-            it != inst.hedgesEnd(); ++it)
+        DENG2_FOR_EACH(it, inst.hedges(), SuperBlock::HEdges::const_iterator)
         {
             HEdge* hedge = *it;
             LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                    << (hedge->lineDef? "NORM" : "MINI")
-                    << hedge << hedge->sector->buildData.index
-                    << hedge->v[0]->origin[VX] << hedge->v[0]->origin[VY]
-                    << hedge->v[1]->origin[VX] << hedge->v[1]->origin[VY];
+                << (hedge->lineDef? "NORM" : "MINI")
+                << hedge << hedge->sector->buildData.index
+                << hedge->v[0]->origin[VX] << hedge->v[0]->origin[VY]
+                << hedge->v[1]->origin[VX] << hedge->v[1]->origin[VY];
         }
     })
 

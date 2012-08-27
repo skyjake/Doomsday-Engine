@@ -35,7 +35,7 @@ using namespace de::bsp;
 
 void HPlane::clear()
 {
-    intercepts.clear();
+    intercepts_.clear();
 }
 
 HPlane* HPlane::setOrigin(coord_t const newOrigin[2])
@@ -99,33 +99,40 @@ HPlane* HPlane::setDY(coord_t newDY)
     return this;
 }
 
-HPlaneIntercept* HPlane::newIntercept(coord_t distance, void* userData)
+HPlaneIntercept& HPlane::newIntercept(coord_t distance, void* userData)
 {
     Intercepts::reverse_iterator after;
-    HPlaneIntercept* inter;
 
-    for(after = intercepts.rbegin();
-        after != intercepts.rend() && distance < (*after).distance(); after++)
+    for(after = intercepts_.rbegin();
+        after != intercepts_.rend() && distance < (*after).distance(); after++)
     {}
 
-    inter = &*intercepts.insert(after.base(), HPlaneIntercept(distance, userData));
-    return inter;
+    return *intercepts_.insert(after.base(), HPlaneIntercept(distance, userData));
 }
 
 HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::iterator at)
 {
-    //if(at < intercepts.begin() || at >= intercepts.end()) return at;
-    return intercepts.erase(at);
+    return intercepts_.erase(at);
+}
+
+HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::const_iterator at)
+{
+    return intercepts_.erase(at);
+}
+
+const HPlane::Intercepts& HPlane::intercepts() const
+{
+    return intercepts_;
 }
 
 #if _DEBUG
 void HPlane::DebugPrint(const HPlane& inst)
 {
-    uint n = 0;
-    for(HPlane::Intercepts::const_iterator it = inst.begin(); it != inst.end(); it++, n++)
+    uint index = 0;
+    DENG2_FOR_EACH(it, inst.intercepts(), HPlane::Intercepts::const_iterator)
     {
         const HPlaneIntercept* inter = &*it;
-        Con_Printf(" %u: >%1.2f ", n, inter->distance());
+        Con_Printf(" %u: >%1.2f ", index++, inter->distance());
         HEdgeIntercept::DebugPrint(*static_cast<HEdgeIntercept*>(inter->userData()));
     }
 }

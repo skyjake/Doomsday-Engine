@@ -452,7 +452,7 @@ struct Partitioner::Instance
         LineDef* line = hedge->lineDef;
         HEdgeIntercept* intercept = newHEdgeIntercept(vertex, line && lineDefInfo(*line).flags.testFlag(LineDefInfo::SELFREF));
 
-        return partition->newIntercept(vertexDistanceFromPartition(vertex), intercept);
+        return &partition->newIntercept(vertexDistanceFromPartition(vertex), intercept);
     }
 
     /**
@@ -495,17 +495,19 @@ struct Partitioner::Instance
 
     void mergeIntersections()
     {
-        HPlane::Intercepts::iterator node = partition->begin();
-        while(node != partition->end())
+        HPlane::Intercepts::const_iterator node = partition->intercepts().begin();
+        while(node != partition->intercepts().end())
         {
-            HPlane::Intercepts::iterator np = node; np++;
-            if(np == partition->end()) break;
+            HPlane::Intercepts::const_iterator np = node; np++;
+            if(np == partition->intercepts().end()) break;
 
             coord_t len = *np - *node;
             if(len < -0.1)
             {
                 throw de::Error("Partitioner::MergeIntersections",
-                                QString("Invalid intercept order - %1 > %2").arg(node->distance(), 0, 'f', 3).arg(np->distance(), 0, 'f', 3));
+                                QString("Invalid intercept order - %1 > %2")
+                                    .arg(node->distance(), 0, 'f', 3)
+                                    .arg(  np->distance(), 0, 'f', 3));
             }
             else if(len > 0.2)
             {
@@ -532,11 +534,11 @@ struct Partitioner::Instance
 
     void buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList)
     {
-        HPlane::Intercepts::const_iterator node = partition->begin();
-        while(node != partition->end())
+        HPlane::Intercepts::const_iterator node = partition->intercepts().begin();
+        while(node != partition->intercepts().end())
         {
             HPlane::Intercepts::const_iterator np = node; np++;
-            if(np == partition->end()) break;
+            if(np == partition->intercepts().end()) break;
 
             HEdgeIntercept* cur = reinterpret_cast<HEdgeIntercept*>((*node).userData());
             HEdgeIntercept* next = reinterpret_cast<HEdgeIntercept*>((*np).userData());
@@ -1019,8 +1021,7 @@ struct Partitioner::Instance
         }
 
         // Check partition against all half-edges.
-        for(SuperBlock::HEdges::const_iterator it = block.hedgesBegin();
-            it != block.hedgesEnd(); ++it)
+        DENG2_FOR_EACH(it, block.hedges(), SuperBlock::HEdges::const_iterator)
         {
             // Do we already have a better choice?
             if(best && !(cost < bestCost)) return false; // Stop iteration.
@@ -1112,8 +1113,7 @@ struct Partitioner::Instance
         DENG_ASSERT(best);
 
         // Test each half-edge as a potential partition.
-        for(SuperBlock::HEdges::const_iterator it = partList.hedgesBegin();
-            it != partList.hedgesEnd(); ++it)
+        DENG2_FOR_EACH(it, partList.hedges(), SuperBlock::HEdges::const_iterator)
         {
             HEdge* hedge = *it;
 
@@ -1444,7 +1444,7 @@ struct Partitioner::Instance
 
     void clearPartitionIntercepts()
     {
-        for(HPlane::Intercepts::iterator it = partition->begin(); it != partition->end(); ++it)
+        DENG2_FOR_EACH(it, partition->intercepts(), HPlane::Intercepts::const_iterator)
         {
             HEdgeIntercept* intercept = static_cast<HEdgeIntercept*>((*it).userData());
             deleteHEdgeIntercept(*intercept);
@@ -1753,7 +1753,8 @@ struct Partitioner::Instance
         mergeIntersections();
 
         LOG_TRACE("Building HEdges along partition [%1.1f, %1.1f] > [%1.1f, %1.1f]")
-                << partitionInfo.start[VX] << partitionInfo.start[VY] << partitionInfo.direction[VX] << partitionInfo.direction[VY];
+            <<     partitionInfo.start[VX] <<     partitionInfo.start[VY]
+            << partitionInfo.direction[VX] << partitionInfo.direction[VY];
 
         // Find connections in the intersections.
         buildHEdgesAtIntersectionGaps(rightList, leftList);
@@ -1771,10 +1772,11 @@ struct Partitioner::Instance
     {
         if(!vertex) return NULL; // Hmm...
 
-        for(HPlane::Intercepts::const_iterator it = partition->begin(); it != partition->end(); ++it)
+        DENG2_FOR_EACH(it, partition->intercepts(), HPlane::Intercepts::const_iterator)
         {
             const HPlaneIntercept* inter = &*it;
-            if(reinterpret_cast<HEdgeIntercept*>(inter->userData())->vertex == vertex) return inter;
+            HEdgeIntercept* hedgeInter = reinterpret_cast<HEdgeIntercept*>(inter->userData());
+            if(hedgeInter->vertex == vertex) return inter;
         }
 
         return NULL;

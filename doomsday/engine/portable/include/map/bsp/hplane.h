@@ -94,9 +94,9 @@ class HPlane {
 public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
-    HPlane() : partition(), intercepts(0){}
+    HPlane() : partition(), intercepts_(0){}
     HPlane(coord_t const origin[2], coord_t const direction[2]) :
-        partition(origin, direction), intercepts(0) {}
+        partition(origin, direction), intercepts_(0) {}
 
     ~HPlane() { clear(); }
 
@@ -130,29 +130,20 @@ public:
      *
      * @param userData  Ownership passes to HPlane.
      */
-    HPlaneIntercept* newIntercept(coord_t distance, void* userData=NULL);
+    HPlaneIntercept& newIntercept(coord_t distance, void* userData=NULL);
 
     Intercepts::const_iterator deleteIntercept(Intercepts::iterator at);
+    Intercepts::const_iterator deleteIntercept(Intercepts::const_iterator at);
 
-    inline bool empty() const { return intercepts.empty(); }
-
-    inline Intercepts::iterator begin() { return intercepts.begin(); }
-
-    inline Intercepts::const_iterator begin() const { return intercepts.begin(); }
-
-    inline Intercepts::iterator end() { return intercepts.end(); }
-
-    inline Intercepts::const_iterator end() const { return intercepts.end(); }
-
-    inline Intercepts::size_type size() const { return intercepts.size(); }
+    const Intercepts& intercepts() const;
 
     static void DebugPrint(const HPlane& inst);
 
 private:
     HPlanePartition partition;
 
-    /// The intercept list. Kept sorted by along_dist, in ascending order.
-    Intercepts intercepts;
+    /// The intercept list. Kept sorted by distance, in ascending order.
+    Intercepts intercepts_;
 };
 
 } // namespace bsp

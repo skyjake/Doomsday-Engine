@@ -44,8 +44,8 @@ struct SuperBlock::Instance
     int realNum;
     int miniNum;
 
-    Instance(SuperBlockmap& blockmap) :
-        bmap(blockmap), tree(0), hedges(0), realNum(0), miniNum(0)
+    Instance(SuperBlockmap& blockmap)
+      : bmap(blockmap), tree(0), hedges(0), realNum(0), miniNum(0)
     {}
 
     ~Instance()
@@ -53,18 +53,18 @@ struct SuperBlock::Instance
         KdTreeNode_SetUserData(tree, NULL);
     }
 
-    void inline linkHEdge(HEdge& hedge)
+    inline void linkHEdge(HEdge& hedge)
     {
         hedges.push_front(&hedge);
     }
 
-    void inline incrementHEdgeCount(HEdge const& hedge)
+    inline void incrementHEdgeCount(HEdge const& hedge)
     {
         if(hedge.lineDef) realNum++;
         else              miniNum++;
     }
 
-    void inline decrementHEdgeCount(HEdge const& hedge)
+    inline void decrementHEdgeCount(HEdge const& hedge)
     {
         if(hedge.lineDef) realNum--;
         else              miniNum--;
@@ -136,14 +136,9 @@ SuperBlock* SuperBlock::addChild(ChildId childId, bool splitVertical)
     return child;
 }
 
-SuperBlock::HEdges::const_iterator SuperBlock::hedgesBegin() const
+const SuperBlock::HEdges& SuperBlock::hedges() const
 {
-    return d->hedges.begin();
-}
-
-SuperBlock::HEdges::const_iterator SuperBlock::hedgesEnd() const
-{
-    return d->hedges.end();
+    return d->hedges;
 }
 
 uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
@@ -171,7 +166,7 @@ void SuperBlock::findHEdgeBounds(AABoxd& bounds)
     bool initialized = false;
     AABoxd hedgeAABox;
 
-    for(HEdges::iterator it = d->hedges.begin(); it != d->hedges.end(); ++it)
+    DENG2_FOR_EACH(it, d->hedges, HEdges::iterator)
     {
         HEdge* hedge = *it;
         initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);
@@ -191,9 +186,9 @@ void SuperBlock::findHEdgeBounds(AABoxd& bounds)
 SuperBlock& SuperBlock::push(HEdge& hedge)
 {
     SuperBlock* sb = this;
-    for(;;)
+    forever
     {
-        Q_ASSERT(sb);
+        DENG2_ASSERT(sb);
 
         // Update half-edge counts.
         sb->d->incrementHEdgeCount(hedge);
@@ -241,7 +236,6 @@ SuperBlock& SuperBlock::push(HEdge& hedge)
 
         sb = sb->child(p1);
     }
-
     return *sb;
 }
 
@@ -344,7 +338,7 @@ void SuperBlockmap::clear()
 
 static void findHEdgeBoundsWorker(SuperBlock& block, AABoxd& bounds, bool* initialized)
 {
-    Q_ASSERT(initialized);
+    DENG2_ASSERT(initialized);
     if(block.hedgeCount(true, true))
     {
         AABoxd blockHEdgeAABox;
