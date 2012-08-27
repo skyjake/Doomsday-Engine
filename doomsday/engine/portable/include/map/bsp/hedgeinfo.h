@@ -81,12 +81,12 @@ struct HEdgeInfo
         V2d_Subtract(direction, end, start);
 
         pLength = V2d_Length(direction);
+        DENG2_ASSERT(pLength > 0);
         pAngle  = M_DirectionToAngle(direction);
 
         pPerp =  start[VY] * direction[VX] - start[VX] * direction[VY];
         pPara = -start[VX] * direction[VX] - start[VY] * direction[VY];
 
-        Q_ASSERT(pLength > 0);
         return *this;
     }
 };

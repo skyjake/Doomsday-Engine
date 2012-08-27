@@ -661,109 +661,169 @@ struct Partitioner::Instance
         return newHEdge;
     }
 
-    /**
-     * Partition the given edge and perform any further necessary action (moving it
-     * into either the left list, right list, or splitting it).
-     *
-     * Take the given half-edge 'cur', compare it with the partition line and determine
-     * it's fate: moving it into either the left or right lists (perhaps both, when
-     * splitting it in two). Handles the twin as well. Updates the intersection list
-     * if the half-edge lies on or crosses the partition line.
-     *
-     * @note AJA: I have rewritten this routine based on evalPartition() (which I've
-     *       also reworked, heavily). I think it is important that both these routines
-     *       follow the exact same logic.
-     */
-    void divideHEdge(HEdge* hedge, SuperBlock& rightList, SuperBlock& leftList)
+    void hedgePartitionDistance(const HEdge* hedge, const HEdgeInfo& pInfo, coord_t& a, coord_t& b)
     {
-#define RIGHT 0
-#define LEFT  1
-
-        // Determine the relationship between this half-edge and the partition plane.
-        coord_t a = hedgeDistanceFromPartition(hedge, false/*start vertex*/);
-        coord_t b = hedgeDistanceFromPartition(hedge, true/*end vertex*/);
-
-        /// @kludge Half-edges produced from the same source linedef must always
-        ///         be treated as collinear.
-        /// @todo   Why is this override necessary?
-        HEdgeInfo& hInfo = hedgeInfo(*hedge);
-        if(hInfo.sourceLineDef == partitionInfo.sourceLineDef)
-            a = b = 0;
-        // kludge end
-
-        // Collinear with the partition plane?
-        if(fabs(a) <= DIST_EPSILON && fabs(b) <= DIST_EPSILON)
+        DENG2_ASSERT(hedge);
+        /// @attention Ensure half-edges produced from the partition's source linedef
+        ///            are always handled as collinear. This special case is necessary
+        ///            due to precision inaccuracies when a line is split into multiple
+        ///            segments.
+        const HEdgeInfo& hInfo = hedgeInfo(*hedge);
+        if(hInfo.sourceLineDef == pInfo.sourceLineDef)
         {
-            makePartitionIntersection(hedge, RIGHT);
-            makePartitionIntersection(hedge, LEFT);
+            a = b = 0;
+        }
+        else
+        {
+            a = V2d_PointLinePerpDistance(hInfo.start, pInfo.direction, pInfo.pPerp, pInfo.pLength);
+            b = V2d_PointLinePerpDistance(hInfo.end,   pInfo.direction, pInfo.pPerp, pInfo.pLength);
+        }
+    }
 
-            // Direction (vs that of the partition plane) determines in which subset
-            // this half-edge belongs.
-            if(hInfo.direction[VX] * partitionInfo.direction[VX] +
-               hInfo.direction[VY] * partitionInfo.direction[VY] < 0)
-            {
-                linkHEdgeInSuperBlockmap(leftList, hedge);
-            }
-            else
-            {
-                linkHEdgeInSuperBlockmap(rightList, hedge);
-            }
-            return;
+    /**
+     * LineRelationship delineates the possible logical relationships between two
+     * line segments in the plane.
+     */
+    enum LineRelationship
+    {
+        Collinear = 0,
+        Right,
+        RightIntercept, ///< Right vertex intercepts.
+        Left,
+        LeftIntercept,  ///< Left vertex intercepts.
+        Intersects
+    };
+
+    static LineRelationship lineRelationship(coord_t a, coord_t b)
+    {
+        // Collinear with the partition plane?
+        if(abs(a) <= DIST_EPSILON && abs(b) <= DIST_EPSILON)
+        {
+            return Collinear;
         }
 
         // Right of the partition plane?.
         if(a > -DIST_EPSILON && b > -DIST_EPSILON)
         {
-            // Close enough to intersect?
-            if(a < DIST_EPSILON)
-                makePartitionIntersection(hedge, RIGHT);
-            else if(b < DIST_EPSILON)
-                makePartitionIntersection(hedge, LEFT);
-
-            linkHEdgeInSuperBlockmap(rightList, hedge);
-            return;
+            // Close enough to intercept?
+            if(a < DIST_EPSILON || b < DIST_EPSILON) return RightIntercept;
+            return Right;
         }
 
         // Left of the partition plane?
         if(a < DIST_EPSILON && b < DIST_EPSILON)
         {
-            // Close enough to intersect?
-            if(a > -DIST_EPSILON)
-                makePartitionIntersection(hedge, RIGHT);
-            else if(b > -DIST_EPSILON)
-                makePartitionIntersection(hedge, LEFT);
-
-            linkHEdgeInSuperBlockmap(leftList, hedge);
-            return;
+            // Close enough to intercept?
+            if(a > -DIST_EPSILON || b > -DIST_EPSILON) return LeftIntercept;
+            return Left;
         }
 
-        /**
-         * Straddles the partition plane and must therefore be split.
-         */
-        vec2d_t point;
-        interceptHEdgePartition(hedge, a, b, point);
+        return Intersects;
+    }
 
-        HEdge* newHEdge = splitHEdge(hedge, point);
+    /**
+     * Determine the relationship half-edge @a hedge and the partition @a pInfo.
+     * @return LineRelationship between the half-edge and the partition plane.
+     */
+    inline LineRelationship hedgePartitionRelationship(const HEdge* hedge,
+        const HEdgeInfo& pInfo, coord_t& a, coord_t& b)
+    {
+        hedgePartitionDistance(hedge, pInfo, a, b);
+        return lineRelationship(a, b);
+    }
 
-        // Ensure the new twin is inserted into the same block as the old twin.
-        if(hedge->twin && !hedge->twin->bspLeaf)
+    /**
+     * Take the given half-edge @a hedge, compare it with the partition plane and
+     * determine which of the two sets it should be added to. If the half-edge is
+     * found to intersect the partition, the intercept point is calculated and the
+     * half-edge split at this point before then adding each to the relevant set
+     * (any existing twin is handled uniformly, also).
+     *
+     * If the half-edge lies on, or crosses the partition then a new intercept is
+     * added to the partition plane.
+     *
+     * @param hedge         Half-edge to be "divided".
+     * @param rights        Set of half-edges on the right side of the partition.
+     * @param lefts         Set of half-edges on the left side of the partition.
+     */
+    void divideHEdge(HEdge* hedge, SuperBlock& rights, SuperBlock& lefts)
+    {
+#define RIGHT 0
+#define LEFT  1
+
+        coord_t a, b;
+        LineRelationship rel = hedgePartitionRelationship(hedge, partitionInfo, a, b);
+        switch(rel)
         {
-            SuperBlock* bmapBlock = hedgeInfo(*hedge->twin).bmapBlock;
-            DENG_ASSERT(bmapBlock);
-            linkHEdgeInSuperBlockmap(*bmapBlock, newHEdge->twin);
-        }
+        case Collinear: {
+            makePartitionIntersection(hedge, RIGHT);
+            makePartitionIntersection(hedge, LEFT);
 
-        makePartitionIntersection(hedge, LEFT);
+            // Direction (vs that of the partition plane) determines in which subset
+            // this half-edge belongs.
+            const HEdgeInfo& hInfo = hedgeInfo(*hedge);
+            if(hInfo.direction[VX] * partitionInfo.direction[VX] +
+               hInfo.direction[VY] * partitionInfo.direction[VY] < 0)
+            {
+                linkHEdgeInSuperBlockmap(lefts, hedge);
+            }
+            else
+            {
+                linkHEdgeInSuperBlockmap(rights, hedge);
+            }
+            break; }
 
-        if(a < 0)
-        {
-            linkHEdgeInSuperBlockmap(rightList, newHEdge);
-            linkHEdgeInSuperBlockmap(leftList,  hedge);
-        }
-        else
-        {
-            linkHEdgeInSuperBlockmap(rightList, hedge);
-            linkHEdgeInSuperBlockmap(leftList,  newHEdge);
+        case Right:
+        case RightIntercept:
+            if(rel == RightIntercept)
+            {
+                // Direction determines which side of the half-edge interfaces with
+                // the new partition plane intercept.
+                const int side = (a < DIST_EPSILON? RIGHT : LEFT);
+                makePartitionIntersection(hedge, side);
+            }
+            linkHEdgeInSuperBlockmap(rights, hedge);
+            break;
+
+        case Left:
+        case LeftIntercept:
+            if(rel == LeftIntercept)
+            {
+                const int side = (a > -DIST_EPSILON? RIGHT : LEFT);
+                makePartitionIntersection(hedge, side);
+            }
+            linkHEdgeInSuperBlockmap(lefts, hedge);
+            break;
+
+        case Intersects: {
+            // Calculate the intercept point and split this half-edge.
+            vec2d_t point;
+            interceptHEdgePartition(hedge, a, b, point);
+            HEdge* newHEdge = splitHEdge(hedge, point);
+
+            // Ensure the new twin half-edge is inserted into the same block as the old twin.
+            /// @todo This logic can now be moved into splitHEdge().
+            if(hedge->twin && !hedge->twin->bspLeaf)
+            {
+                SuperBlock* bmapBlock = hedgeInfo(*hedge->twin).bmapBlock;
+                DENG_ASSERT(bmapBlock);
+                linkHEdgeInSuperBlockmap(*bmapBlock, newHEdge->twin);
+            }
+
+            makePartitionIntersection(hedge, LEFT);
+
+            // Direction determines which subset the hedges are added to.
+            if(a < 0)
+            {
+                linkHEdgeInSuperBlockmap(rights, newHEdge);
+                linkHEdgeInSuperBlockmap(lefts,  hedge);
+            }
+            else
+            {
+                linkHEdgeInSuperBlockmap(rights, hedge);
+                linkHEdgeInSuperBlockmap(lefts,  newHEdge);
+            }
+            break; }
         }
 
 #undef LEFT
@@ -823,149 +883,148 @@ struct Partitioner::Instance
 
         // Sanity checks...
         if(!rights.totalHEdgeCount())
-            throw de::Error("Partitioner::partitionhedges", "Separated half-edge has no right side.");
+            throw de::Error("Partitioner::partitionhedges", "Right half-edge set is empty");
 
         if(!lefts.totalHEdgeCount())
-            throw de::Error("Partitioner::partitionhedges", "Separated half-edge has no left side.");
+            throw de::Error("Partitioner::partitionhedges", "Left half-edge set is empty");
+    }
+
+    /**
+     * "Near miss" predicate.
+     */
+    static bool nearMiss(LineRelationship rel, coord_t a, coord_t b, coord_t* distance)
+    {
+        if(rel == Right &&
+           !((a >= SHORT_HEDGE_EPSILON && b >= SHORT_HEDGE_EPSILON) ||
+             (a <= DIST_EPSILON        && b >= SHORT_HEDGE_EPSILON) ||
+             (b <= DIST_EPSILON        && a >= SHORT_HEDGE_EPSILON)))
+        {
+            // Need to know how close?
+            if(distance)
+            {
+                if(a <= DIST_EPSILON || b <= DIST_EPSILON)
+                    *distance = SHORT_HEDGE_EPSILON / MAX_OF(a, b);
+                else
+                    *distance = SHORT_HEDGE_EPSILON / MIN_OF(a, b);
+            }
+            return true;
+        }
+
+        if(rel == Left &&
+           !((a <= -SHORT_HEDGE_EPSILON && b <= -SHORT_HEDGE_EPSILON) ||
+             (a >= -DIST_EPSILON        && b <= -SHORT_HEDGE_EPSILON) ||
+             (b >= -DIST_EPSILON        && a <= -SHORT_HEDGE_EPSILON)))
+        {
+            // Need to know how close?
+            if(distance)
+            {
+                if(a >= -DIST_EPSILON || b >= -DIST_EPSILON)
+                    *distance = SHORT_HEDGE_EPSILON / -MIN_OF(a, b);
+                else
+                    *distance = SHORT_HEDGE_EPSILON / -MAX_OF(a, b);
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * "Near edge" predicate. Assumes intersecting line segment relationship.
+     */
+    static bool nearEdge(coord_t a, coord_t b, coord_t* distance)
+    {
+        if(abs(a) < SHORT_HEDGE_EPSILON || abs(b) < SHORT_HEDGE_EPSILON)
+        {
+            // Need to know how close?
+            if(distance) *distance = SHORT_HEDGE_EPSILON / MIN_OF(abs(a), abs(b));
+            return true;
+        }
+        return false;
     }
 
     void evalPartitionCostForHEdge(const HEdgeInfo& partInfo, int costFactorMultiplier,
         const HEdge* hedge, PartitionCost& cost)
     {
-#define ADD_LEFT()  \
-        if (hedge->lineDef) cost.realLeft += 1;  \
-        else                cost.miniLeft += 1;  \
-
-#define ADD_RIGHT()  \
-        if (hedge->lineDef) cost.realRight += 1;  \
-        else                cost.miniRight += 1;  \
-
-        DENG_ASSERT(hedge);
-
-        coord_t a, b, fa, fb;
-
-        // Get state of lines' relation to each other.
-        const HEdgeInfo& hInfo = hedgeInfo(*hedge);
-        if(hInfo.sourceLineDef == partInfo.sourceLineDef)
+        // Determine the relationship between this half-edge and the partition plane.
+        coord_t a, b;
+        LineRelationship rel = hedgePartitionRelationship(hedge, partInfo, a, b);
+        switch(rel)
         {
-            a = b = fa = fb = 0;
-        }
-        else
-        {
-            a = V2d_PointLinePerpDistance(hInfo.start, partInfo.direction, partInfo.pPerp, partInfo.pLength);
-            b = V2d_PointLinePerpDistance(hInfo.end,   partInfo.direction, partInfo.pPerp, partInfo.pLength);
-
-            fa = fabs(a);
-            fb = fabs(b);
-        }
-
-        // Collinear?
-        if(fa <= DIST_EPSILON && fb <= DIST_EPSILON)
-        {
+        case Collinear: {
             // This half-edge runs along the same line as the partition.
-            // hedge whether it goes in the same direction or the opposite.
-            if(hInfo.direction[VX] * partInfo.direction[VX] + hInfo.direction[VY] * partInfo.direction[VY] < 0)
+            // Check whether it goes in the same direction or the opposite.
+            const HEdgeInfo& hInfo = hedgeInfo(*hedge);
+            if(hInfo.direction[VX] * partInfo.direction[VX] +
+               hInfo.direction[VY] * partInfo.direction[VY] < 0)
             {
-                ADD_LEFT();
+                cost.addHEdgeLeft(hedge);
             }
             else
             {
-                ADD_RIGHT();
+                cost.addHEdgeRight(hedge);
             }
+            break; }
 
-            return;
-        }
-
-        // Off to the right?
-        if(a > -DIST_EPSILON && b > -DIST_EPSILON)
-        {
-            ADD_RIGHT();
-
-            // Near miss?
-            if((a >= SHORT_HEDGE_EPSILON && b >= SHORT_HEDGE_EPSILON) ||
-               (a <= DIST_EPSILON && b >= SHORT_HEDGE_EPSILON) ||
-               (b <= DIST_EPSILON && a >= SHORT_HEDGE_EPSILON))
-            {
-                // No.
-                return;
-            }
-
-            cost.nearMiss += 1;
+        case Right:
+        case RightIntercept: {
+            cost.addHEdgeRight(hedge);
 
             /**
-             * Near misses are bad, since they have the potential to cause really short
-             * minihedges to be created in future processing. Thus the closer the near
-             * miss, the higher the cost.
+             * Near misses are bad, as they have the potential to result in really short
+             * half-hedges being produced further down the line.
+             *
+             * The closer the near miss, the higher the cost.
              */
+            coord_t nearDist;
+            if(nearMiss(Right, a, b, &nearDist))
+            {
+                cost.nearMiss += 1;
+                cost.total += (int) (100 * costFactorMultiplier * (nearDist * nearDist - 1.0));
+            }
+            break; }
 
-            double qnty;
-            if(a <= DIST_EPSILON || b <= DIST_EPSILON)
-                qnty = SHORT_HEDGE_EPSILON / MAX_OF(a, b);
-            else
-                qnty = SHORT_HEDGE_EPSILON / MIN_OF(a, b);
-
-            cost.total += (int) (100 * costFactorMultiplier * (qnty * qnty - 1.0));
-            return;
-        }
-
-        // Off to the left?
-        if(a < DIST_EPSILON && b < DIST_EPSILON)
-        {
-            ADD_LEFT();
+        case Left:
+        case LeftIntercept: {
+            cost.addHEdgeLeft(hedge);
 
             // Near miss?
-            if((a <= -SHORT_HEDGE_EPSILON && b <= -SHORT_HEDGE_EPSILON) ||
-               (a >= -DIST_EPSILON && b <= -SHORT_HEDGE_EPSILON) ||
-               (b >= -DIST_EPSILON && a <= -SHORT_HEDGE_EPSILON))
+            coord_t nearDist;
+            if(nearMiss(Left, a, b, &nearDist))
             {
-                // No.
-                return;
+                /// @todo Why the cost multiplier imbalance between the left and right
+                ///       edge near misses?
+                cost.nearMiss += 1;
+                cost.total += (int) (70 * costFactorMultiplier * (nearDist * nearDist - 1.0));
             }
+            break; }
 
-            cost.nearMiss += 1;
+        case Intersects: {
+            cost.splits += 1;
+            cost.total  += 100 * costFactorMultiplier;
 
-            // The closer the miss, the higher the cost (see note above).
-            double qnty;
-            if(a >= -DIST_EPSILON || b >= -DIST_EPSILON)
-                qnty = SHORT_HEDGE_EPSILON / -MIN_OF(a, b);
-            else
-                qnty = SHORT_HEDGE_EPSILON / -MAX_OF(a, b);
-
-            cost.total += (int) (70 * costFactorMultiplier * (qnty * qnty - 1.0));
-            return;
+            /**
+             * If the split point is very close to one end, which is quite an undesirable
+             * situation (producing really short edges), thus a rather hefty surcharge.
+             *
+             * The closer to the edge, the higher the cost.
+             */
+            coord_t nearDist;
+            if(nearEdge(a, b, &nearDist))
+            {
+                cost.iffy += 1;
+                cost.total += (int) (140 * costFactorMultiplier * (nearDist * nearDist - 1.0));
+            }
+            break; }
         }
-
-        /**
-         * When we reach here, we have a and b non-zero and opposite sign,
-         * hence this half-edge will be split by the partition line.
-         */
-
-        cost.splits += 1;
-        cost.total += 100 * costFactorMultiplier;
-
-        /**
-         * If the split point is very close to one end, which is quite an undesirable
-         * situation (producing really short edges), thus a rather hefty surcharge.
-         */
-        if(fa < SHORT_HEDGE_EPSILON || fb < SHORT_HEDGE_EPSILON)
-        {
-            cost.iffy += 1;
-
-            // The closer to the end, the higher the cost.
-            double qnty = SHORT_HEDGE_EPSILON / MIN_OF(fa, fb);
-            cost.total += (int) (140 * costFactorMultiplier * (qnty * qnty - 1.0));
-        }
-
-    #undef ADD_RIGHT
-    #undef ADD_LEFT
     }
 
     /**
-     * @param best  Best half-edge found thus far.
-     * @param bestCost  Running cost total result for the best half-edge found thus far.
-     * @param hedge  The candidate half-edge to be evaluated.
-     * @param cost  PartitionCost analysis to be completed for this candidate. Must have
-     *              been initialized prior to calling this.
+     * @param best      Best half-edge found thus far.
+     * @param bestCost  Running cost total result for the best half-edge thus far.
+     * @param hedge     The candidate half-edge to be evaluated.
+     * @param cost      PartitionCost analysis to be completed for this candidate.
+     *                  Must have been initialized prior to calling.
      * @return  @c true iff this half-edge is suitable for use as a partition.
      */
     int evalPartitionCostForSuperBlock(const SuperBlock& block, int splitCostFactor,
@@ -981,7 +1040,7 @@ struct Partitioner::Instance
         AABoxd bounds;
 
         /// @todo Why are we extending the bounding box for this test? Also, there is
-        ///       no need to changed from integer to floating-point each time this is
+        ///       no need to convert from integer to floating-point each time this is
         ///       tested. (If we intend to do this with floating-point then we should
         ///       return that representation in SuperBlock::bounds() ).
         bounds.minX = (double)blockBounds.minX - SHORT_HEDGE_EPSILON * 1.5;
@@ -999,7 +1058,7 @@ struct Partitioner::Instance
             cost.miniRight += block.miniHEdgeCount();
             return true;
         }
-        else if(side < 0)
+        if(side < 0)
         {
             // Left.
             cost.realLeft += block.realHEdgeCount();
@@ -1110,12 +1169,14 @@ struct Partitioner::Instance
             //    << hedge->v[0]->pos[VX] << hedge->v[0]->pos[VY]
             //    << hedge->v[1]->pos[VX] << hedge->v[1]->pos[VY];
 
-            // Only test half-edges from the same linedef once per round of
-            // partition picking (they are collinear).
+            // Optimization: Only the first half-edge produced from a given linedef
+            // is tested per round of partition costing (they are all collinear).
             if(hedge->lineDef)
             {
+                // Can we skip this half-edge?
                 LineDefInfo& lInfo = lineDefInfo(*hedge->lineDef);
-                if(lInfo.validCount == validCount) continue;
+                if(lInfo.validCount == validCount) continue; // Yes.
+
                 lInfo.validCount = validCount;
             }
 
@@ -1372,21 +1433,6 @@ struct Partitioner::Instance
         DENG_ASSERT(vertex);
         const HEdgeInfo& info = partitionInfo;
         return V2d_PointLineParaDistance(vertex->origin, info.direction, info.pPara, info.pLength);
-    }
-
-    /**
-     * Determine the distance (euclidean) from @a hedge to the current partition plane.
-     *
-     * @param hedge  Half-edge to test.
-     * @param end    @c true= use the point defined by the end (else start) vertex.
-     */
-    inline coord_t hedgeDistanceFromPartition(const HEdge* hedge, bool end) const
-    {
-        DENG_ASSERT(hedge);
-        const HEdgeInfo& pInfo = partitionInfo;
-        const HEdgeInfo& hInfo = hedgeInfo(*hedge);
-        return V2d_PointLinePerpDistance(end? hInfo.end : hInfo.start,
-                                         pInfo.direction, pInfo.pPerp, pInfo.pLength);
     }
 
     /**
