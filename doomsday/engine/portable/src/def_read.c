@@ -510,6 +510,17 @@ static int ReadFlags(int* dest, const char* prefix)
     *dest = 0;
 
     ReadToken();
+    if(ISTOKEN(";"))
+    {
+        SetError("Missing flags value.");
+        return false;
+    }
+    if(ISTOKEN("0"))
+    {
+        // No flags defined.
+        return true;
+    }
+
     UnreadToken(token);
     if(ISTOKEN("\""))
     {
