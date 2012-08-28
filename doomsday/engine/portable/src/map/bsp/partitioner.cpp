@@ -2089,8 +2089,20 @@ struct Partitioner::Instance
                 HEdge* hedge;
                 while((hedge = cur->pop()))
                 {
+                    HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
+                    HEdgeInfo& hInfo = hInfoIt->second;
+
                     if(isDegenerate && hedge->side)
                     {
+                        if(hInfo.prevOnSide)
+                        {
+                            hedgeInfo(*hInfo.prevOnSide).nextOnSide = hInfo.nextOnSide;
+                        }
+                        if(hInfo.nextOnSide)
+                        {
+                            hedgeInfo(*hInfo.nextOnSide).prevOnSide = hInfo.prevOnSide;
+                        }
+
                         if(hedge->twin)
                         {
                             hedge->twin->twin = 0;
@@ -2106,14 +2118,14 @@ struct Partitioner::Instance
                             lineDefInfo(*hedge->lineDef).flags &= ~(LineDefInfo::SELFREF | LineDefInfo::TWOSIDED);
                         }
 
-                        hedgeInfos.erase( hedgeInfos.find(hedge) );
+                        hedgeInfos.erase(hInfoIt);
                         HEdge_Delete(hedge);
                         numHEdges -= 1;
                         continue;
                     }
 
                     // Disassociate the half-edge from the blockmap.
-                    hedgeInfo(*hedge).bmapBlock = 0;
+                    hInfo.bmapBlock = 0;
 
                     if(!leaf) leaf = BspLeaf_New();
 
