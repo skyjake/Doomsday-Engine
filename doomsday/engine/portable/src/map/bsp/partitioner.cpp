@@ -977,7 +977,7 @@ struct Partitioner::Instance
              * The closer the near miss, the higher the cost.
              */
             coord_t nearDist;
-            if(nearMiss(Right, a, b, &nearDist))
+            if(nearMiss(rel, a, b, &nearDist))
             {
                 cost.nearMiss += 1;
                 cost.total += (int) (100 * costFactorMultiplier * (nearDist * nearDist - 1.0));
@@ -990,7 +990,7 @@ struct Partitioner::Instance
 
             // Near miss?
             coord_t nearDist;
-            if(nearMiss(Left, a, b, &nearDist))
+            if(nearMiss(rel, a, b, &nearDist))
             {
                 /// @todo Why the cost multiplier imbalance between the left and right
                 ///       edge near misses?
