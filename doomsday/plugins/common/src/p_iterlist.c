@@ -1,145 +1,159 @@
-/**\file p_iterlist.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file p_iterlist.c
  *
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <assert.h>
 #include <stdlib.h>
 
 #include "doomsday.h"
 
 #include "p_iterlist.h"
 
-iterlist_t* IterList_ConstructDefault(void)
+struct iterlist_s
+{
+    /// Direction of traversal.
+    iterlist_iterator_direction_t direction;
+
+    /// Index of the current element being pointed at by the iterator.
+    int iter;
+
+    /// Current maximum number of elements that can be pointed at in elements.
+    int maxElements;
+
+    /// List of elements present.
+    int elementsCount;
+    void** elements;
+};
+
+iterlist_t* IterList_New(void)
 {
     iterlist_t* list = (iterlist_t*) malloc(sizeof(*list));
-    if(NULL == list)
-        Con_Error("IterList::ConstructDefault: Failed on allocation of %u bytes for "
-            "new IterList.", (unsigned int) sizeof(*list));
-    list->_objects = NULL;
-    list->_objectsCount = list->_maxObjects = list->_currentObject = 0;
-    list->_direction = ITERLIST_BACKWARD;
+    if(!list) Con_Error("IterList::New: Failed on allocation of %lu bytes for new IterList.", (unsigned long) sizeof(*list));
+
+    list->elements = NULL;
+    list->elementsCount = list->maxElements = list->iter = 0;
+    list->direction = ITERLIST_BACKWARD;
     return list;
 }
 
-void IterList_Destruct(iterlist_t* list)
+void IterList_Delete(iterlist_t* list)
 {
-    assert(NULL != list);
-    if(NULL != list->_objects)
+    if(!list) return;
+    if(list->elements)
     {
-        free(list->_objects);
-        list->_objects = NULL;
+        free(list->elements); list->elements = NULL;
     }
     free(list);
 }
 
-int IterList_Push(iterlist_t* list, void* obj)
+int IterList_Size(iterlist_t* list)
 {
-    assert(NULL != list);
-    if(++list->_objectsCount > list->_maxObjects)
+    DENG_ASSERT(list);
+    return list->elementsCount;
+}
+
+boolean IterList_Empty(iterlist_t* list)
+{
+    return IterList_Size(list) == 0;
+}
+
+int IterList_PushBack(iterlist_t* list, void* data)
+{
+    DENG_ASSERT(list);
+
+    if(++list->elementsCount > list->maxElements)
     {
-         list->_maxObjects = (list->_maxObjects? list->_maxObjects * 2 : 8);
-         list->_objects = (void**) realloc(list->_objects, sizeof(*list->_objects) * list->_maxObjects);
-         if(NULL == list->_objects)
-             Con_Error("IterList::Push: Failed on (re)allocation of %u bytes for "
-                "object list.", (unsigned int) sizeof(*list->_objects));
+         list->maxElements = (list->maxElements? list->maxElements * 2 : 8);
+         list->elements = (void**) realloc(list->elements, sizeof(*list->elements) * list->maxElements);
+         if(!list->elements) Con_Error("IterList::PushBack: Failed on (re)allocation of %lu bytes for element list.", (unsigned long) sizeof(*list->elements));
     }
 
-    list->_objects[list->_objectsCount - 1] = obj;
-    if(1 == list->_objectsCount)
+    list->elements[list->elementsCount - 1] = data;
+    if(1 == list->elementsCount)
     {
-        if(ITERLIST_FORWARD == list->_direction)
-            list->_currentObject = -1;
+        if(ITERLIST_FORWARD == list->direction)
+            list->iter = -1;
         else // Backward iteration.
-            list->_currentObject = list->_objectsCount;
+            list->iter = list->elementsCount;
     }
 
-    return list->_objectsCount - 1;
+    return list->elementsCount - 1;
 }
 
 void* IterList_Pop(iterlist_t* list)
 {
-    assert(NULL != list);
-    if(list->_objectsCount > 0)
-        return list->_objects[--list->_objectsCount];
+    DENG_ASSERT(list);
+    if(list->elementsCount > 0)
+        return list->elements[--list->elementsCount];
     return NULL;
 }
 
-void IterList_Empty(iterlist_t* list)
+void IterList_Clear(iterlist_t* list)
 {
-    assert(NULL != list);
-    list->_objectsCount = list->_maxObjects = list->_currentObject = 0;
-}
-
-int IterList_Size(iterlist_t* list)
-{
-    assert(NULL != list);
-    return list->_objectsCount;
+    DENG_ASSERT(list);
+    list->elementsCount = list->maxElements = list->iter = 0;
 }
 
 void* IterList_MoveIterator(iterlist_t* list)
 {
-    assert(NULL != list);
+    DENG_ASSERT(list);
 
-    if(!list->_objectsCount)
+    if(!list->elementsCount)
         return NULL;
 
-    if(ITERLIST_FORWARD == list->_direction)
+    if(ITERLIST_FORWARD == list->direction)
     {
-        if(list->_currentObject < list->_objectsCount - 1)
-            return list->_objects[++list->_currentObject];
+        if(list->iter < list->elementsCount - 1)
+            return list->elements[++list->iter];
         return NULL;
     }
     // Backward iteration.
-    if(list->_currentObject > 0)
-        return list->_objects[--list->_currentObject];
+    if(list->iter > 0)
+        return list->elements[--list->iter];
     return NULL;
 }
 
 void IterList_RewindIterator(iterlist_t* list)
 {
-    assert(NULL != list);
-    if(ITERLIST_FORWARD == list->_direction)
+    DENG_ASSERT(list);
+    if(ITERLIST_FORWARD == list->direction)
     {
-        list->_currentObject = -1;
+        list->iter = -1;
         return;
     }
     // Backward iteration.
-    list->_currentObject = list->_objectsCount;
+    list->iter = list->elementsCount;
 }
 
 void IterList_SetIteratorDirection(iterlist_t* list, iterlist_iterator_direction_t direction)
 {
-    assert(NULL != list);
+    DENG_ASSERT(list);
 
-    list->_direction = direction;
-    if(0 == list->_objectsCount)
+    list->direction = direction;
+    if(0 == list->elementsCount)
         return;
 
     // Do we need to reposition?
-    if(-1 == list->_currentObject)
+    if(-1 == list->iter)
     {
-        list->_currentObject = list->_objectsCount;
+        list->iter = list->elementsCount;
         return;
     }
-    if(list->_objectsCount == list->_currentObject)
-        list->_currentObject = -1;
+    if(list->elementsCount == list->iter)
+        list->iter = -1;
 }

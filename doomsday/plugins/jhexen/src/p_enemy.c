@@ -273,8 +273,7 @@ boolean P_Move(mobj_t* mo)
             return true;
         }
 
-        if(!IterList_Size(spechit))
-            return false;
+        if(IterList_Empty(spechit)) return false;
 
         mo->moveDir = DI_NODIR;
         good = false;

@@ -211,7 +211,7 @@ void P_Init(void)
 {
     P_ResetPlayerRespawnClasses();
 
-    spechit = IterList_ConstructDefault();
+    spechit = IterList_New();
 
 #if __JHEXEN__
     X_CreateLUTs();
@@ -279,7 +279,7 @@ void P_Shutdown(void)
 {
     if(spechit)
     {
-        IterList_Destruct(spechit);
+        IterList_Delete(spechit);
         spechit = 0;
     }
 

@@ -321,7 +321,7 @@ boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    IterList_Empty(spechit);
+    IterList_Clear(spechit);
 
     tmBoxExpanded.minX = tmBox.minX - MAXRADIUS;
     tmBoxExpanded.minY = tmBox.minY - MAXRADIUS;
@@ -881,7 +881,7 @@ int PIT_CheckThing(mobj_t* thing, void* data)
                 thing->mom[MY] += tmThing->mom[MY] / 4;
                 NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
             }
-            IterList_Empty(spechit);
+            IterList_Clear(spechit);
             return false;
         }
 
@@ -1066,7 +1066,7 @@ int PIT_CheckLine(LineDef* ld, void* data)
         {
             // Missiles can trigger impact specials
             if(xline->special)
-                IterList_Push(spechit, ld);
+                IterList_PushBack(spechit, ld);
         }
         return true;
     }
@@ -1143,7 +1143,7 @@ int PIT_CheckLine(LineDef* ld, void* data)
 
     // If contacted a special line, add it to the list.
     if(P_ToXLine(ld)->special)
-        IterList_Push(spechit, ld);
+        IterList_PushBack(spechit, ld);
 
 #if !__JHEXEN__
     tmThing->wallHit = false;
@@ -1214,7 +1214,7 @@ boolean P_CheckPositionXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
     tmFloorMaterial = P_GetPtrp(newSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    IterList_Empty(spechit);
+    IterList_Clear(spechit);
 
 #if __JHEXEN__
     if((tmThing->flags & MF_NOCLIP) && !(tmThing->flags & MF_SKULLFLY))
@@ -2887,21 +2887,20 @@ boolean P_TestMobjLocation(mobj_t* mo)
 #endif
 
 #if __JDOOM64__ || __JHERETIC__
-static void CheckMissileImpact(mobj_t* mobj)
+static void CheckMissileImpact(mobj_t* mo)
 {
-    int                 size;
-    LineDef*            ld;
+    LineDef* ld;
 
-    if(IS_CLIENT || !mobj->target || !mobj->target->player || !(mobj->flags & MF_MISSILE))
-        return;
-
-    if(!(size = IterList_Size(spechit)))
-        return;
+    if(IS_CLIENT) return;
+    if(!mo || !mo->target || !mo->target->player || !(mo->flags & MF_MISSILE)) return;
+    if(IterList_Empty(spechit)) return;
 
     IterList_SetIteratorDirection(spechit, ITERLIST_BACKWARD);
     IterList_RewindIterator(spechit);
     while((ld = IterList_MoveIterator(spechit)) != NULL)
-        P_ActivateLine(ld, mobj->target, 0, SPAC_IMPACT);
+    {
+        P_ActivateLine(ld, mo->target, 0, SPAC_IMPACT);
+    }
 }
 #endif
 
@@ -3022,7 +3021,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmCeilingZ = P_GetDoublep(newSSec, DMU_CEILING_HEIGHT);
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 
-    IterList_Empty(spechit);
+    IterList_Clear(spechit);
 
     if(tmThing->flags & MF_NOCLIP)
         goto nothingUnderneath;

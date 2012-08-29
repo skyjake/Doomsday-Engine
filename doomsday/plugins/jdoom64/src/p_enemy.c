@@ -226,8 +226,7 @@ static boolean moveMobj(mobj_t* actor, boolean dropoff)
             return true;
         }
 
-        if(!IterList_Size(spechit))
-            return false;
+        if(IterList_Empty(spechit)) return false;
 
         actor->moveDir = DI_NODIR;
         good = false;

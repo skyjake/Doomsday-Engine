@@ -237,7 +237,7 @@ void P_BuildLineTagLists(void)
         if(xline->tag)
         {
            iterlist_t* list = P_GetLineIterListForTag(xline->tag, true);
-           IterList_Push(list, line);
+           IterList_PushBack(list, line);
         }
 #else
         switch(xline->special)
@@ -247,7 +247,7 @@ void P_BuildLineTagLists(void)
             if(xline->arg1)
             {
                 iterlist_t* list = P_GetLineIterListForTag((int) xline->arg1, true);
-                IterList_Push(list, line);
+                IterList_PushBack(list, line);
             }
             xline->special = 0;
             break;
@@ -264,8 +264,8 @@ void P_DestroyLineTagLists(void)
     { uint i;
     for(i = 0; i < numLineTagLists; ++i)
     {
-        IterList_Empty(lineTagLists[i].list);
-        IterList_Destruct(lineTagLists[i].list);
+        IterList_Clear(lineTagLists[i].list);
+        IterList_Delete(lineTagLists[i].list);
     }}
 
     free(lineTagLists);
@@ -292,7 +292,7 @@ iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList)
     tagList = &lineTagLists[numLineTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = IterList_ConstructDefault());
+    return (tagList->list = IterList_New());
 }
 
 void P_BuildSectorTagLists(void)
@@ -309,7 +309,7 @@ void P_BuildSectorTagLists(void)
         if(xsec->tag)
         {
             iterlist_t* list = P_GetSectorIterListForTag(xsec->tag, true);
-            IterList_Push(list, sec);
+            IterList_PushBack(list, sec);
         }
     }
 }
@@ -322,8 +322,8 @@ void P_DestroySectorTagLists(void)
     { uint i;
     for(i = 0; i < numSectorTagLists; ++i)
     {
-        IterList_Empty(sectorTagLists[i].list);
-        IterList_Destruct(sectorTagLists[i].list);
+        IterList_Clear(sectorTagLists[i].list);
+        IterList_Delete(sectorTagLists[i].list);
     }}
 
     free(sectorTagLists);
@@ -350,7 +350,7 @@ iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList)
     tagList = &sectorTagLists[numSectorTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = IterList_ConstructDefault());
+    return (tagList->list = IterList_New());
 }
 
 void P_BuildAllTagLists(void)
