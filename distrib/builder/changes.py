@@ -92,8 +92,7 @@ class Changes:
         format = '[[Subject]]%s[[/Subject]]' + \
                  '[[Author]]%an[[/Author]]' + \
                  '[[Date]]%ai[[/Date]]' + \
-                 '[[Link]]http://deng.git.sourceforge.net/git/gitweb.cgi?' + \
-                 'p=deng/deng;a=commit;h=%H[[/Link]]' + \
+                 '[[Link]]http://sourceforge.net/p/deng/code/ci/%H/[[/Link]]' + \
                  '[[Hash]]%H[[/Hash]]' + \
                  '[[Message]]%b[[/Message]]'
         os.system("git log %s..%s --format=\"%s\" >> %s" % (self.fromTag, self.toTag, format, tmpName))
