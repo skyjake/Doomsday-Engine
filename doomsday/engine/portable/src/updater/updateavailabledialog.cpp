@@ -137,11 +137,12 @@ struct UpdateAvailableDialog::Instance
         info->setTextFormat(Qt::RichText);
 
         VersionInfo currentVersion;
-        int bigFontSize = self->font().pointSize() * 1.2;
-        de::String channel = (UpdaterSettings().channel() == UpdaterSettings::Stable?
-                                  "stable" : "unstable");
-        bool askUpgrade = false;
-        bool askDowngrade = false;
+
+        int bigFontSize        = self->font().pointSize() * 1.2;
+        de::String channel     = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
+        de::String builtInType = (de::String(DOOMSDAY_RELEASE_TYPE) == "Stable"? "stable" : "unstable");
+        bool askUpgrade        = false;
+        bool askDowngrade      = false;
 
         if(latestVersion > currentVersion)
         {
@@ -154,7 +155,7 @@ struct UpdateAvailableDialog::Instance
                           .arg(latestVersion.asText())
                           .arg(currentVersion.asText()));
         }
-        else if(!channel.compareWithoutCase(DOOMSDAY_RELEASE_TYPE)) // same release type
+        else if(channel == builtInType) // same release type
         {
             info->setText(("<span style=\"font-weight:bold; font-size:%1pt;\">" +
                            tr("You are up to date.") + "</span><p>" +
