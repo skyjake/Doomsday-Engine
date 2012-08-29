@@ -1689,7 +1689,7 @@ struct Partitioner::Instance
         if(!sanityCheckHasRealHEdge(leaf))
         {
             throw de::Error("Partitioner::clockwiseLeaf",
-                            QString("BSP Leaf 0x%p has no linedef-linked half-edge!").arg(de::dintptr(leaf), 0, 16));
+                            QString("BSP Leaf 0x%1 has no linedef-linked half-edge").arg(dintptr(leaf), 0, 16));
         }
     }
 
