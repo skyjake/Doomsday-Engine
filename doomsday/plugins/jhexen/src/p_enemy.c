@@ -1609,33 +1609,21 @@ void C_DECL A_FreeTargMobj(mobj_t *mo)
     mo->health = -1000; // Don't resurrect.
 }
 
-/**
- * Throw another corpse on the queue.
- */
-void C_DECL A_QueueCorpse(mobj_t *actor)
+void P_InitCorpseQueue(void)
 {
-    mobj_t         *corpse;
-
-    if(corpseQueueSlot >= CORPSEQUEUESIZE)
-    {   // Too many corpses - remove an old one
-        corpse = corpseQueue[corpseQueueSlot % CORPSEQUEUESIZE];
-        if(corpse)
-            P_MobjRemove(corpse, false);
-    }
-    corpseQueue[corpseQueueSlot % CORPSEQUEUESIZE] = actor;
-    corpseQueueSlot++;
+    corpseQueueSlot = 0;
+    memset(corpseQueue, 0, sizeof(mobj_t *) * CORPSEQUEUESIZE);
 }
 
-/**
- * Remove a mobj from the queue (for resurrection).
- */
-void C_DECL A_DeQueueCorpse(mobj_t *actor)
+void P_RemoveCorpseInQueue(mobj_t* mo)
 {
-    int             slot;
+    int slot;
+
+    if(!mo) return;
 
     for(slot = 0; slot < CORPSEQUEUESIZE; ++slot)
     {
-        if(corpseQueue[slot] == actor)
+        if(corpseQueue[slot] == mo)
         {
             corpseQueue[slot] = NULL;
             break;
@@ -1643,75 +1631,49 @@ void C_DECL A_DeQueueCorpse(mobj_t *actor)
     }
 }
 
-static int addMobjToCorpseQueue(thinker_t* th, void* context)
+void P_AddCorpseToQueue(mobj_t* mo)
 {
-    mobj_t*             mo = (mobj_t *) th;
+    if(!mo) return;
 
-    // Must be a corpse.
-    if(!(mo->flags & MF_CORPSE))
-        return false; // Continue iteration.
+    /// @todo fixme: Shouldn't we ensure its not already queued?
+    //P_RemoveCorpseInQueue(mo);
 
-    // Not ice corpses.
-    if(mo->flags & MF_ICECORPSE)
-        return false; // Continue iteration.
-
-    // Only corpses that call A_QueueCorpse from death routine.
-    switch(mo->type)
+    if(corpseQueueSlot >= CORPSEQUEUESIZE)
     {
-    case MT_CENTAUR:
-    case MT_CENTAURLEADER:
-    case MT_DEMON:
-    case MT_DEMON2:
-    case MT_WRAITH:
-    case MT_WRAITHB:
-    case MT_BISHOP:
-    case MT_ETTIN:
-    case MT_PIG:
-    case MT_CENTAUR_SHIELD:
-    case MT_CENTAUR_SWORD:
-    case MT_DEMONCHUNK1:
-    case MT_DEMONCHUNK2:
-    case MT_DEMONCHUNK3:
-    case MT_DEMONCHUNK4:
-    case MT_DEMONCHUNK5:
-    case MT_DEMON2CHUNK1:
-    case MT_DEMON2CHUNK2:
-    case MT_DEMON2CHUNK3:
-    case MT_DEMON2CHUNK4:
-    case MT_DEMON2CHUNK5:
-    case MT_FIREDEMON_SPLOTCH1:
-    case MT_FIREDEMON_SPLOTCH2:
-        A_QueueCorpse(mo); // Add corpse to queue.
-        break;
-
-    default:
-        break;
+        // Too many corpses - remove an old one
+        mobj_t* corpse = corpseQueue[corpseQueueSlot % CORPSEQUEUESIZE];
+        if(corpse)
+        {
+            P_MobjRemove(corpse, false);
+        }
     }
-
-    return false; // Continue iteration.
+    corpseQueue[corpseQueueSlot % CORPSEQUEUESIZE] = mo;
+    corpseQueueSlot++;
 }
 
 /**
- * Initialize queue.
+ * Throw another corpse on the queue.
  */
-void P_InitCorpseQueue(void)
+void C_DECL A_QueueCorpse(mobj_t* actor)
 {
-    corpseQueueSlot = 0;
-    memset(corpseQueue, 0, sizeof(mobj_t *) * CORPSEQUEUESIZE);
+    P_AddCorpseToQueue(actor);
 }
 
 /**
- * Search the thinker list for corpses and place them in this queue.
+ * Remove a mobj from the queue (for resurrection).
  */
-void P_AddCorpsesToQueue(void)
+#if 0
+void C_DECL A_DeQueueCorpse(mobj_t* actor)
 {
-    DD_IterateThinkers(P_MobjThinker, addMobjToCorpseQueue, NULL);
+    P_RemoveCorpseInQueue(actor);
 }
+#endif
 
 void C_DECL A_AddPlayerCorpse(mobj_t *actor)
 {
     if(bodyqueslot >= BODYQUESIZE)
-    {   // Too many player corpses - remove an old one.
+    {
+        // Too many player corpses - remove an old one.
         P_MobjRemove(bodyque[bodyqueslot % BODYQUESIZE], true);
     }
     bodyque[bodyqueslot % BODYQUESIZE] = actor;

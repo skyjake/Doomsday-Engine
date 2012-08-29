@@ -101,7 +101,7 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 #if __JHEXEN__
     if((mo->flags & MF_COUNTKILL) && (mo->flags & MF_CORPSE))
     {
-        A_DeQueueCorpse(mo);
+        P_RemoveCorpseInQueue(mo);
     }
 
     P_MobjRemoveFromTIDList(mo);

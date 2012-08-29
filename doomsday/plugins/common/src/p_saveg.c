@@ -4396,6 +4396,68 @@ static int restoreMobjLinks(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
+#if __JHEXEN__
+static boolean mobjtypeHasCorpse(mobjtype_t type)
+{
+    // Only corpses that call A_QueueCorpse from death routine.
+    /// @todo fixme: What about mods? Look for this action in the death state sequence?
+    switch(type)
+    {
+    case MT_CENTAUR:
+    case MT_CENTAURLEADER:
+    case MT_DEMON:
+    case MT_DEMON2:
+    case MT_WRAITH:
+    case MT_WRAITHB:
+    case MT_BISHOP:
+    case MT_ETTIN:
+    case MT_PIG:
+    case MT_CENTAUR_SHIELD:
+    case MT_CENTAUR_SWORD:
+    case MT_DEMONCHUNK1:
+    case MT_DEMONCHUNK2:
+    case MT_DEMONCHUNK3:
+    case MT_DEMONCHUNK4:
+    case MT_DEMONCHUNK5:
+    case MT_DEMON2CHUNK1:
+    case MT_DEMON2CHUNK2:
+    case MT_DEMON2CHUNK3:
+    case MT_DEMON2CHUNK4:
+    case MT_DEMON2CHUNK5:
+    case MT_FIREDEMON_SPLOTCH1:
+    case MT_FIREDEMON_SPLOTCH2:
+        return true;
+
+    default: return false;
+    }
+}
+
+static int rebuildCorpseQueueWorker(thinker_t* th, void* parameters)
+{
+    DENG_UNUSED(parameters);
+{
+    mobj_t* mo = (mobj_t*) th;
+
+    // Must be a non-iced corpse.
+    if((mo->flags & MF_CORPSE) && !(mo->flags & MF_ICECORPSE) && mobjtypeHasCorpse(mo->type))
+    {
+        A_QueueCorpse(mo); // Add a corpse to the queue.
+    }
+
+    return false; // Continue iteration.
+}}
+
+/**
+ * @todo fixme: the corpse queue should be serialized (original order unknown).
+ */
+static void rebuildCorpseQueue(void)
+{
+    P_InitCorpseQueue();
+    // Search the thinker list for corpses and place them in the queue.
+    DD_IterateThinkers(P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
+}
+#endif
+
 /**
  * Un-Archives thinkers for both client and server.
  */
@@ -4565,8 +4627,7 @@ static void P_UnArchiveThinkers(void)
 
 #if __JHEXEN__
     P_CreateTIDList();
-    P_InitCorpseQueue();
-    P_AddCorpsesToQueue();
+    rebuildCorpseQueue();
 #endif
 }
 
