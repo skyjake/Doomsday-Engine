@@ -70,12 +70,12 @@ uint BspBuilder::numVertexes()
     return partitioner->numVertexes();
 }
 
-Vertex const& BspBuilder::vertex(uint idx)
+Vertex& BspBuilder::vertex(uint idx)
 {
     return partitioner->vertex(idx);
 }
 
-BspBuilder& BspBuilder::releaseOwnership(runtime_mapdata_header_t const& ob)
+BspBuilder& BspBuilder::releaseOwnership(runtime_mapdata_header_t* ob)
 {
     partitioner->releaseOwnership(ob);
     return *this;

@@ -113,7 +113,7 @@ public:
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using Partitioner::numVertexes()
      */
-    Vertex const& vertex(uint index);
+    Vertex& vertex(uint index);
 
     /**
      * Release ownership of the specified object.
@@ -121,7 +121,7 @@ public:
      * @param ob  Map data object to release ownership of.
      * @return  Reference to this Partitioner.
      */
-    Partitioner& releaseOwnership(runtime_mapdata_header_t const& ob);
+    Partitioner& releaseOwnership(runtime_mapdata_header_t* ob);
 
 private:
     struct Instance;

@@ -119,7 +119,7 @@ public:
      * this will result in fatal error. The caller should ensure the index is
      * within valid range using Partitioner::numVertexes()
      */
-    Vertex const& vertex(uint idx);
+    Vertex& vertex(uint idx);
 
     /**
      * Release ownership of the specified object.
@@ -127,7 +127,7 @@ public:
      * @param ob  Map data object to release ownership of.
      * @return  Reference to this Partitioner.
      */
-    BspBuilder& releaseOwnership(runtime_mapdata_header_t const& ob);
+    BspBuilder& releaseOwnership(runtime_mapdata_header_t* ob);
 
 private:
     bsp::Partitioner* partitioner;

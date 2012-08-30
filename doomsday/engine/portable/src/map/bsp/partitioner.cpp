@@ -75,6 +75,8 @@ struct Partitioner::Instance
     // Used when sorting BSP leaf half-edges by angle around midpoint.
     typedef std::vector<HEdge*>HEdgeSortBuffer;
 
+    typedef std::map<runtime_mapdata_header_t*, BspTreeNode*> BspTreeNodeMap;
+
     /// HEdge split cost factor.
     int splitCostFactor;
 
@@ -112,6 +114,9 @@ struct Partitioner::Instance
     /// Root node of our internal binary tree around which the final BSP data
     /// objects are constructed.
     BspTreeNode* rootNode;
+
+    /// Built BSP object to internal tree node LUT.
+    BspTreeNodeMap treeNodeMap;
 
     /// HPlane used to model the current BSP partition and the list of intercepts.
     HPlane* partition;
@@ -170,7 +175,7 @@ struct Partitioner::Instance
         map(_map),
         numEditableVertexes(_numEditableVertexes), editableVertexes(_editableVertexes),
         numNodes(0), numLeafs(0), numHEdges(0), numVertexes(0),
-        rootNode(0), partition(0), partitionLineDef(0),
+        rootNode(0), treeNodeMap(), partition(0), partitionLineDef(0),
         unclosedSectors(), unclosedBspLeafs(), migrantHEdges(),
         builtOK(false)
     {
@@ -1296,7 +1301,9 @@ struct Partitioner::Instance
             BspLeaf* leaf = buildBspLeaf(hedges);
             if(leaf)
             {
-                *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
+                runtime_mapdata_header_t* bspOb = reinterpret_cast<runtime_mapdata_header_t*>(leaf);
+                *subtree = new BspTreeNode(bspOb);
+                treeNodeMap.insert(std::pair<runtime_mapdata_header_t*, BspTreeNode*>(bspOb, *subtree));
             }
             else
             {
@@ -1353,7 +1360,9 @@ struct Partitioner::Instance
         BspNode* node = newBspNode(origPartition.origin, origPartition.direction,
                                    &rightHEdgesBounds, &leftHEdgesBounds);
 
-        *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(node));
+        runtime_mapdata_header_t* bspOb = reinterpret_cast<runtime_mapdata_header_t*>(node);
+        *subtree = new BspTreeNode(bspOb);
+        treeNodeMap.insert(std::pair<runtime_mapdata_header_t*, BspTreeNode*>(bspOb, *subtree));
 
         (*subtree)->setRight(rightChild);
         if((*subtree)->hasRight())
@@ -1724,8 +1733,7 @@ struct Partitioner::Instance
     }
 
     /**
-     * Traverse the BSP tree and sort all half-edges in each BSP leaf into a
-     * clockwise order.
+     * Sort all half-edges in each BSP leaf into a clockwise order.
      *
      * @note This cannot be done during Partitioner::buildNodes() as splitting
      * a half-edge with a twin will result in another half-edge being inserted
@@ -1734,47 +1742,13 @@ struct Partitioner::Instance
     void windLeafs()
     {
         HEdgeSortBuffer sortBuffer;
-
-        // Iterative pre-order traversal of the BSP tree.
-        BspTreeNode* cur = rootNode;
-        BspTreeNode* prev = 0;
-        while(cur)
+        DENG2_FOR_EACH(it, treeNodeMap, BspTreeNodeMap::iterator)
         {
-            while(cur)
-            {
-                if(cur->isLeaf())
-                {
-                    clockwiseLeaf(*cur, sortBuffer);
-                }
-
-                if(prev == cur->parent())
-                {
-                    // Descending - right first, then left.
-                    prev = cur;
-                    if(cur->hasRight()) cur = cur->right();
-                    else                cur = cur->left();
-                }
-                else if(prev == cur->right())
-                {
-                    // Last moved up the right branch - descend the left.
-                    prev = cur;
-                    cur = cur->left();
-                }
-                else if(prev == cur->left())
-                {
-                    // Last moved up the left branch - continue upward.
-                    prev = cur;
-                    cur = cur->parent();
-                }
-            }
-
-            if(prev)
-            {
-                // No left child - back up.
-                cur = prev->parent();
-            }
+            BspTreeNode* node = it->second;
+            if(!node->isLeaf()) continue;
+            clockwiseLeaf(*node, sortBuffer);
         }
-    }
+   }
 
     void addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end,
         HEdge** right, HEdge** left)
@@ -1882,137 +1856,52 @@ struct Partitioner::Instance
     void clearBspObject(BspTreeNode& tree)
     {
         LOG_AS("Partitioner::clearBspObject");
+        runtime_mapdata_header_t* dmuOb = tree.userData();
+        if(!dmuOb) return;
+
+        if(builtOK)
+        {
+            LOG_DEBUG("Clearing unclaimed %s %p.") << (tree.isLeaf()? "leaf" : "node") << de::dintptr(dmuOb);
+        }
+
         if(tree.isLeaf())
         {
-            BspLeaf* leaf = reinterpret_cast<BspLeaf*>(tree.userData());
-            if(leaf)
-            {
-                if(builtOK)
-                {
-                    LOG_DEBUG("Clearing unclaimed leaf %p.") << de::dintptr(leaf);
-                }
-                BspLeaf_Delete(leaf);
-                tree.setUserData(0);
-                // There is now one less BspLeaf.
-                numLeafs -= 1;
-            }
+            BspLeaf_Delete(reinterpret_cast<BspLeaf*>(dmuOb));
+            // There is now one less BspLeaf.
+            numLeafs -= 1;
         }
         else
         {
-            BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
-            if(node)
-            {
-                if(builtOK)
-                {
-                    LOG_DEBUG("Clearing unclaimed node %p.") << de::dintptr(node);
-                }
-                BspNode_Delete(node);
-                tree.setUserData(0);
-                // There is now one less BspNode.
-                numNodes -= 1;
-            }
+            BspNode_Delete(reinterpret_cast<BspNode*>(dmuOb));
+            // There is now one less BspNode.
+            numNodes -= 1;
         }
+        tree.setUserData(0);
+
+        BspTreeNodeMap::iterator found = treeNodeMap.find(dmuOb);
+        DENG2_ASSERT(found != treeNodeMap.end());
+        treeNodeMap.erase(found);
     }
 
     void clearAllBspObjects()
     {
-        // Iterative pre-order traversal of the BSP tree.
-        BspTreeNode* cur = rootNode;
-        BspTreeNode* prev = 0;
-        while(cur)
+        DENG2_FOR_EACH(it, treeNodeMap, BspTreeNodeMap::iterator)
         {
-            while(cur)
-            {
-                clearBspObject(*cur);
-
-                if(prev == cur->parent())
-                {
-                    // Descending - right first, then left.
-                    prev = cur;
-                    if(cur->hasRight()) cur = cur->right();
-                    else                cur = cur->left();
-                }
-                else if(prev == cur->right())
-                {
-                    // Last moved up the right branch - descend the left.
-                    prev = cur;
-                    cur = cur->left();
-                }
-                else if(prev == cur->left())
-                {
-                    // Last moved up the left branch - continue upward.
-                    prev = cur;
-                    cur = cur->parent();
-                }
-            }
-
-            if(prev)
-            {
-                // No left child - back up.
-                cur = prev->parent();
-            }
+            clearBspObject(*it->second);
         }
     }
 
-    BspTreeNode* treeNodeForBspObject(runtime_mapdata_header_t const& ob)
+    BspTreeNode* treeNodeForBspObject(runtime_mapdata_header_t* ob)
     {
         LOG_AS("Partitioner::treeNodeForBspObject");
-        if(DMU_GetType(&ob) == DMU_BSPLEAF || DMU_GetType(&ob) == DMU_BSPNODE)
+        const int dmuType = DMU_GetType(ob);
+        if(dmuType == DMU_BSPLEAF || dmuType == DMU_BSPNODE)
         {
-            // Iterative pre-order traversal of the BSP tree.
-            BspTreeNode* cur = rootNode;
-            BspTreeNode* prev = 0;
-            while(cur)
-            {
-                while(cur)
-                {
-                    if(cur->isLeaf() && DMU_GetType(&ob) == DMU_BSPLEAF)
-                    {
-                        const BspLeaf* leaf = reinterpret_cast<BspLeaf const*>(&ob);
-                        if(cur->userData() && leaf == reinterpret_cast<BspLeaf*>(cur->userData()))
-                        {
-                            return cur;
-                        }
-                    }
-                    else if(DMU_GetType(&ob) == DMU_BSPNODE)
-                    {
-                        const BspNode* node = reinterpret_cast<BspNode const*>(&ob);
-                        if(cur->userData() && node == reinterpret_cast<BspNode*>(cur->userData()))
-                        {
-                            return cur;
-                        }
-                    }
-
-                    if(prev == cur->parent())
-                    {
-                        // Descending - right first, then left.
-                        prev = cur;
-                        if(cur->hasRight()) cur = cur->right();
-                        else                cur = cur->left();
-                    }
-                    else if(prev == cur->right())
-                    {
-                        // Last moved up the right branch - descend the left.
-                        prev = cur;
-                        cur = cur->left();
-                    }
-                    else if(prev == cur->left())
-                    {
-                        // Last moved up the left branch - continue upward.
-                        prev = cur;
-                        cur = cur->parent();
-                    }
-                }
-
-                if(prev)
-                {
-                    // No left child - back up.
-                    cur = prev->parent();
-                }
-            }
+            BspTreeNodeMap::const_iterator found = treeNodeMap.find(ob);
+            if(found == treeNodeMap.end()) return 0;
+            return found->second;
         }
-
-        LOG_DEBUG("Attempted to locate using an unknown object %p.") << de::dintptr(&ob);
+        LOG_DEBUG("Attempted to locate using an unknown object %p.") << de::dintptr(ob);
         return 0;
     }
 
@@ -2331,6 +2220,62 @@ struct Partitioner::Instance
         partitionLineDef = lineDef;
     }
 
+    bool releaseOwnership(runtime_mapdata_header_t* dmuOb)
+    {
+        int dmuType = DMU_GetType(dmuOb);
+        switch(dmuType)
+        {
+        case DMU_VERTEX: {
+            Vertex* vtx = reinterpret_cast<Vertex*>(dmuOb);
+            if(vtx->buildData.index > 0 && uint(vtx->buildData.index) > *numEditableVertexes)
+            {
+                // Is this object owned?
+                uint idx = uint(vtx->buildData.index) - 1 - *numEditableVertexes;
+                if(idx < vertexes.size() && vertexes[idx])
+                {
+                    vertexes[idx] = 0;
+                    // There is now one fewer Vertex.
+                    numVertexes -= 1;
+                    return true;
+                }
+            }
+            break; }
+
+        case DMU_HEDGE:
+            /// @todo fixme: Implement a mechanic for tracking HEdge ownership.
+            return true;
+
+        case DMU_BSPLEAF:
+        case DMU_BSPNODE: {
+            BspTreeNode* treeNode = treeNodeForBspObject(dmuOb);
+            if(treeNode)
+            {
+                BspTreeNodeMap::iterator found = treeNodeMap.find(dmuOb);
+                DENG2_ASSERT(found != treeNodeMap.end());
+                treeNodeMap.erase(found);
+
+                treeNode->setUserData(0);
+                if(treeNode->isLeaf())
+                {
+                    // There is now one fewer BspLeaf.
+                    numLeafs -= 1;
+                }
+                else
+                {
+                    // There is now one fewer BspNode.
+                    numNodes -= 1;
+                }
+                return true;
+            }
+            break; }
+
+        default: break;
+        }
+
+        // This object is not owned by us.
+        return false;
+    }
+
     /**
      * Register the specified sector in the list of unclosed sectors.
      *
@@ -2524,57 +2469,20 @@ uint Partitioner::numVertexes()
     return d->numVertexes;
 }
 
-Vertex const& Partitioner::vertex(uint idx)
+Vertex& Partitioner::vertex(uint idx)
 {
     DENG_ASSERT(idx < d->vertexes.size());
     DENG_ASSERT(d->vertexes[idx]);
     return *d->vertexes[idx];
 }
 
-Partitioner& Partitioner::releaseOwnership(runtime_mapdata_header_t const& ob)
+Partitioner& Partitioner::releaseOwnership(runtime_mapdata_header_t* ob)
 {
-    LOG_AS("Partitioner::releaseOwnership");
-    // Is this object owned?
-    if(DMU_GetType(&ob) == DMU_VERTEX)
+    if(!d->releaseOwnership(ob))
     {
-        const Vertex* vtx = reinterpret_cast<Vertex const*>(&ob);
-        if(vtx->buildData.index > 0 && uint(vtx->buildData.index) > *d->numEditableVertexes)
-        {
-            uint idx = uint(vtx->buildData.index) - 1 - *d->numEditableVertexes;
-            if(idx < d->vertexes.size() && d->vertexes[idx])
-            {
-                d->vertexes[idx] = 0;
-                // There is now one fewer Vertex.
-                d->numVertexes -= 1;
-                return *this;
-            }
-        }
+        LOG_AS("Partitioner::releaseOwnership");
+        LOG_DEBUG("Attempted to release an unknown/unowned object %p.") << de::dintptr(ob);
     }
-    else if(DMU_GetType(&ob) == DMU_HEDGE)
-    {
-        /// @todo Implement a mechanic for tracking HEdge ownership.
-        return *this;
-    }
-    else if(BspTreeNode* treeNode = d->treeNodeForBspObject(ob))
-    {
-        treeNode->setUserData(0);
-        switch(DMU_GetType(&ob))
-        {
-        case DMU_BSPLEAF:
-            // There is now one fewer BspLeaf.
-            d->numLeafs -= 1;
-            break;
-        case DMU_BSPNODE:
-            // There is now one fewer BspNode.
-            d->numNodes -= 1;
-            break;
-
-        default: DENG_ASSERT(0);
-        }
-        return *this;
-    }
-
-    LOG_DEBUG("Attempted to release an unknown/unowned object %p.") << de::dintptr(&ob);
     return *this;
 }
 
