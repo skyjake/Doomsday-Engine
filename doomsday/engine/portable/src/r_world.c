@@ -1806,7 +1806,7 @@ boolean R_UpdateSector(Sector* sec, boolean forceUpdate)
     {
         Sector_UpdateBaseOrigin(sec);
         R_UpdateLinedefsOfSector(sec);
-        S_CalcSectorReverb(sec);
+        S_MarkSectorReverbDirty(sec);
         changed = true;
     }
 

@@ -200,7 +200,6 @@ BEGIN_PROF( PROF_SOUND_STARTFRAME );
 
     Sfx_StartFrame();
     Mus_StartFrame();
-    S_UpdateReverb();
 
     // Remove stopped sounds from the LSM.
     Sfx_PurgeLogical();

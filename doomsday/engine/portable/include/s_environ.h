@@ -30,15 +30,17 @@ extern "C" {
 #endif
 
 /**
- * Re-calculate the reverb properties of the given sector. Should be called
- * whenever any of the properties governing reverb properties have changed
- * (i.e. hedge/plane texture or plane height changes).
+ * Requests re-calculation of the reverb properties of the given sector. Should
+ * be called whenever any of the properties governing reverb properties have
+ * changed (i.e. hedge/plane texture or plane height changes).
  *
- * PRE: BspLeaf attributors must have been determined first.
+ * Call S_UpdateReverbForSector() to do the actual calculation.
  *
- * @param sec  Ptr to the sector to calculate reverb properties of.
+ * @pre BspLeaf attributors must have been determined first.
+ *
+ * @param sec  Sector to calculate reverb properties of.
  */
-void S_CalcSectorReverb(Sector* sec);
+void S_MarkSectorReverbDirty(Sector* sec);
 
 /**
  * Called during map init to determine which BSP leafs affect the reverb
@@ -49,9 +51,13 @@ void S_CalcSectorReverb(Sector* sec);
 void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map);
 
 /**
- * Recalculate reverb properties in the sectors where update has been requested.
+ * Recalculates reverb properties for a sector. One must first mark the sector
+ * eligible for update using S_MarkSectorReverbDirty() or this function will do
+ * nothing.
+ *
+ * @param sec  Sector in which to update reverb properties.
  */
-void S_UpdateReverb(void);
+void S_UpdateReverbForSector(Sector* sec);
 
 /**
  * Must be called when the map changes.
