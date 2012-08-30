@@ -75,28 +75,30 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
 void Rend_RadioUpdateLinedef(LineDef* line, boolean backSide)
 {
     SideDef* s;
+    uint i;
 
-    if(!rendFakeRadio || levelFullBright || !line) return;
+    // Fakeradio disabled?
+    if(!rendFakeRadio || levelFullBright) return;
 
     // Update disabled?
     if(!devFakeRadioUpdate) return;
 
-    // Have we yet determined the shadow properties to be used with hedges
-    // on this sidedef?
-    s = line->L_sidedef(backSide);
-    if(s->fakeRadioUpdateCount != frameCount)
-    {
-        // Not yet. Calculate now.
-        uint i;
-        for(i = 0; i < 2; ++i)
-        {
-            s->spans[i].length = line->length;
-            s->spans[i].shift = 0;
-        }
+    // Sides without sectors don't need updating. $degenleaf
+    if(!line || !line->L_sector(backSide)) return;
 
-        scanEdges(s->topCorners, s->bottomCorners, s->sideCorners, s->spans, line, backSide);
-        s->fakeRadioUpdateCount = frameCount; // Mark as done.
+    // Have already determined the shadow properties on this side?
+    s = line->L_sidedef(backSide);
+    if(s->fakeRadioUpdateCount == frameCount) return;
+
+    // Not yet - Calculate now.
+    for(i = 0; i < 2; ++i)
+    {
+        s->spans[i].length = line->length;
+        s->spans[i].shift = 0;
     }
+
+    scanEdges(s->topCorners, s->bottomCorners, s->sideCorners, s->spans, line, backSide);
+    s->fakeRadioUpdateCount = frameCount; // Mark as done.
 }
 
 /**
@@ -143,6 +145,7 @@ static __inline float calcTexCoordY(float z, float bottom, float top, float texH
     return bottom - z;
 }
 
+/// @todo This algorithm should be rewritten to work at HEdge level.
 static void scanNeighbor(boolean scanTop, const LineDef* line, uint side,
     edge_t* edge, boolean toLeft)
 {
@@ -163,7 +166,7 @@ static void scanNeighbor(boolean scanTop, const LineDef* line, uint side,
     coord_t fCeil, fFloor;
 
     fFloor = line->L_sector(side)->SP_floorvisheight;
-    fCeil = line->L_sector(side)->SP_ceilvisheight;
+    fCeil  = line->L_sector(side)->SP_ceilvisheight;
 
     // Retrieve the start owner node.
     own = R_GetVtxLineOwner(line->L_v(side^!toLeft), line);
@@ -174,10 +177,11 @@ static void scanNeighbor(boolean scanTop, const LineDef* line, uint side,
         diff = (clockwise? own->angle : own->LO_prev->angle);
         iter = own->link[clockwise]->lineDef;
 
-        scanSecSide = (iter->L_frontsector == startSector);
+        scanSecSide = (iter->L_frontsector && iter->L_frontsector == startSector);
 
-        // Step over selfreferencing lines?
-        while(LINE_SELFREF(iter))
+        // Step over selfreferencing lines.
+        while((!iter->L_frontsector && !iter->L_backsector) || // $degenleaf
+              LINE_SELFREF(iter))
         {
             own = own->link[clockwise];
             diff += (clockwise? own->angle : own->LO_prev->angle);

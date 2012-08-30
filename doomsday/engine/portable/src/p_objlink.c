@@ -351,7 +351,8 @@ static void processSeg(HEdge* hedge, void* paramaters)
     Vertex* vtx;
 
     // HEdge must be between two different BspLeafs.
-    if(hedge->lineDef && (!hedge->twin || hedge->bspLeaf == hedge->twin->bspLeaf))
+    if(/*hedge->lineDef $degenleaf &&*/
+       (!hedge->twin || hedge->bspLeaf == hedge->twin->bspLeaf))
         return;
 
     // Which way does the spread go?

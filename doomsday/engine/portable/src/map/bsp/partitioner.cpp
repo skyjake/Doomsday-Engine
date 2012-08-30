@@ -1292,13 +1292,15 @@ struct Partitioner::Instance
         if(!hedge)
         {
             // No partition required/possible - already convex (or degenerate).
-            BspLeaf* leaf = buildBspLeaf(hedgeList);
+            std::vector<HEdge*> hedges = collectHEdges(hedgeList);
+            BspLeaf* leaf = buildBspLeaf(hedges);
             if(leaf)
             {
                 *subtree = new BspTreeNode(reinterpret_cast<runtime_mapdata_header_t*>(leaf));
             }
             else
             {
+                // This is not a convex leaf (parent node will be collapsed).
                 *subtree = 0;
             }
             return true;
@@ -1615,6 +1617,40 @@ struct Partitioner::Instance
         */
     }
 
+    /**
+     * Determine which sector this BSP leaf belongs to.
+     */
+    Sector* chooseSectorForBspLeaf(BspLeaf* leaf)
+    {
+        if(leaf && leaf->hedge)
+        {
+            HEdge* hedge = leaf->hedge;
+            do
+            {
+                if(hedge->lineDef)
+                {
+                    Sector* sector = hedge->lineDef->L_sector(hedge->side);
+                    if(sector) return sector;
+                }
+            } while((hedge = hedge->next) != leaf->hedge);
+
+            // Last resort:
+            /// @todo This is only necessary because of other failure cases in the
+            ///       partitioning algorithm and to avoid producing a potentially
+            ///       dangerous BSP - not assigning a sector to each leaf may result
+            ///       in obscure fatal errors when in-game.
+            /*hedge = leaf->hedge;
+            do
+            {
+                if(hedge->sector)
+                {
+                    return hedge->sector;
+                }
+            } while((hedge = hedge->next) != leaf->hedge);*/
+        }
+        return 0;
+    }
+
     void clockwiseLeaf(BspTreeNode& tree, HEdgeSortBuffer& sortBuffer)
     {
         DENG_ASSERT(tree.isLeaf());
@@ -1626,11 +1662,11 @@ struct Partitioner::Instance
         findBspLeafCenter(*leaf, center);
         clockwiseOrder(*leaf, center, sortBuffer);
 
+        /// Construct the leaf's hedge ring.
         if(leaf->hedge)
         {
-            /// @todo Construct the leaf's hedge ring as we go?
-            HEdge* hedge;
-            for(hedge = leaf->hedge; ;)
+            HEdge* hedge = leaf->hedge;
+            forever
             {
                 /// @kludge This should not be done here!
                 if(hedge->lineDef)
@@ -1666,31 +1702,25 @@ struct Partitioner::Instance
                     break;
                 }
             }
-
-            // Determine which sector this BSP leaf belongs to.
-            hedge = leaf->hedge;
-            do
-            {
-                if(hedge->lineDef)
-                {
-                    leaf->sector = hedge->lineDef->L_sector(hedge->side);
-                }
-            } while(!leaf->sector && (hedge = hedge->next) != leaf->hedge);
         }
 
+        leaf->sector = chooseSectorForBspLeaf(leaf);
+        // This should now be impossible...
         if(!leaf->sector)
         {
-            LOG_WARNING("BspLeaf %p is orphan.") << de::dintptr(leaf);
+            leaf->sector = 0;
+            LOG_WARNING("BspLeaf %p is degenerate/orphan (%d HEdges).")
+                << de::dintptr(leaf) << leaf->hedgeCount;
         }
 
         logMigrantHEdges(leaf);
         logUnclosedBspLeaf(leaf);
 
-        if(!sanityCheckHasRealHEdge(leaf))
+        /*if(!sanityCheckHasRealHEdge(leaf))
         {
             throw de::Error("Partitioner::clockwiseLeaf",
                             QString("BSP Leaf 0x%1 has no linedef-linked half-edge").arg(dintptr(leaf), 0, 16));
-        }
+        }*/
     }
 
     /**
@@ -2031,12 +2061,12 @@ struct Partitioner::Instance
     HEdge* newHEdge(LineDef* lineDef, LineDef* sourceLineDef, Vertex* start, Vertex* end,
         Sector* sec, bool back)
     {
-        HEdge* hedge = HEdge_New();
+        DENG_ASSERT(sec);
 
+        HEdge* hedge = HEdge_New();
         hedge->v[0] = start;
         hedge->v[1] = end;
         hedge->sector = sec;
-        DENG_ASSERT(sec == NULL || GameMap_SectorIndex(map, sec) >= 0);
         hedge->side = (back? 1 : 0);
         hedge->lineDef = lineDef;
 
@@ -2067,20 +2097,12 @@ struct Partitioner::Instance
         return hedge;
     }
 
-    /**
-     * Construct a new BspLeaf and populate it with half-edges from the supplied list.
-     *
-     * @param hedgeList  SuperBlock containing the list of half-edges with which
-     *                   to build the leaf using.
-     * @return  Newly created BspLeaf else @c NULL if degenerate.
-     */
-    BspLeaf* buildBspLeaf(SuperBlock& hedgeList)
+    std::vector<HEdge*> collectHEdges(SuperBlock& partList)
     {
-        const bool isDegenerate = hedgeList.totalHEdgeCount() < 3;
-        BspLeaf* leaf = 0;
+        std::vector<HEdge*> hedges;
 
         // Iterative pre-order traversal of SuperBlock.
-        SuperBlock* cur = &hedgeList;
+        SuperBlock* cur = &partList;
         SuperBlock* prev = 0;
         while(cur)
         {
@@ -2092,52 +2114,10 @@ struct Partitioner::Instance
                     HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
                     HEdgeInfo& hInfo = hInfoIt->second;
 
-                    if(isDegenerate && hedge->side)
-                    {
-                        if(hInfo.prevOnSide)
-                        {
-                            hedgeInfo(*hInfo.prevOnSide).nextOnSide = hInfo.nextOnSide;
-                        }
-                        if(hInfo.nextOnSide)
-                        {
-                            hedgeInfo(*hInfo.nextOnSide).prevOnSide = hInfo.prevOnSide;
-                        }
-
-                        if(hedge->twin)
-                        {
-                            hedge->twin->twin = 0;
-                        }
-
-                        if(hedge->lineDef)
-                        {
-                            lineside_t* lside = HEDGE_SIDE(hedge);
-                            lside->sector = 0;
-                            /// @todo We could delete the SideDef also?
-                            lside->sideDef = 0;
-
-                            lineDefInfo(*hedge->lineDef).flags &= ~(LineDefInfo::SELFREF | LineDefInfo::TWOSIDED);
-                        }
-
-                        hedgeInfos.erase(hInfoIt);
-                        HEdge_Delete(hedge);
-                        numHEdges -= 1;
-                        continue;
-                    }
-
                     // Disassociate the half-edge from the blockmap.
                     hInfo.bmapBlock = 0;
 
-                    if(!leaf) leaf = BspLeaf_New();
-
-                    // Link it into head of the leaf's list.
-                    hedge->next = leaf->hedge;
-                    leaf->hedge = hedge;
-
-                    // Link hedge to this leaf.
-                    hedge->bspLeaf = leaf;
-
-                    // There is now one more half-edge in this leaf.
-                    leaf->hedgeCount += 1;
+                    hedges.push_back(hedge);
                 }
 
                 if(prev == cur->parent())
@@ -2166,6 +2146,89 @@ struct Partitioner::Instance
                 // No left child - back up.
                 cur = prev->parent();
             }
+        }
+        return hedges;
+    }
+
+    /**
+     * Attempt to construct a new BspLeaf and from the supplied list of
+     * half-edges.
+     *
+     * @param hedgeList  SuperBlock containing the list of half-edges with which
+     *                   to build the leaf using.
+     * @return  Newly created BspLeaf else @c NULL if degenerate.
+     */
+    BspLeaf* buildBspLeaf(std::vector<HEdge*>& hedges)
+    {
+        if(!hedges.size()) return 0;
+
+        // Collapse all degenerate and orphaned leafs.
+        const bool isDegenerate = hedges.size() < 3;
+        bool isOrphan = true;
+        DENG2_FOR_EACH(it, hedges, std::vector<HEdge*>::const_iterator)
+        {
+            const HEdge* hedge = *it;
+            if(hedge->lineDef && hedge->lineDef->L_sector(hedge->side))
+            {
+                isOrphan = false;
+            }
+        }
+
+        BspLeaf* leaf = 0;
+        DENG2_FOR_EACH(it, hedges, std::vector<HEdge*>::const_iterator)
+        {
+            HEdge* hedge = *it;
+            HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
+            HEdgeInfo& hInfo = hInfoIt->second;
+
+            if(isDegenerate || isOrphan)
+            {
+                if(hInfo.prevOnSide)
+                {
+                    hedgeInfo(*hInfo.prevOnSide).nextOnSide = hInfo.nextOnSide;
+                }
+                if(hInfo.nextOnSide)
+                {
+                    hedgeInfo(*hInfo.nextOnSide).prevOnSide = hInfo.prevOnSide;
+                }
+
+                if(hedge->twin)
+                {
+                    hedge->twin->twin = 0;
+                }
+
+                /// @todo This is not logically correct from a mod compatibility
+                ///       point of view. We should never clear the line > sector
+                ///       references as these are used by the game(s) playsim in
+                ///       various ways (for example, stair building). We should
+                ///       instead flag the linedef accordingly. -ds
+                if(hedge->lineDef)
+                {
+                    lineside_t* lside = HEDGE_SIDE(hedge);
+                    lside->sector = 0;
+                    /// @todo We could delete the SideDef also.
+                    lside->sideDef = 0;
+
+                    lineDefInfo(*hedge->lineDef).flags &= ~(LineDefInfo::SELFREF | LineDefInfo::TWOSIDED);
+                }
+
+                hedgeInfos.erase(hInfoIt);
+                HEdge_Delete(hedge);
+                numHEdges -= 1;
+                continue;
+            }
+
+            if(!leaf) leaf = BspLeaf_New();
+
+            // Link it into head of the leaf's list.
+            hedge->next = leaf->hedge;
+            leaf->hedge = hedge;
+
+            // Link hedge to this leaf.
+            hedge->bspLeaf = leaf;
+
+            // There is now one more half-edge in this leaf.
+            leaf->hedgeCount += 1;
         }
 
         if(leaf)
@@ -2404,7 +2467,7 @@ struct Partitioner::Instance
         } while((hedge = hedge->next) != leaf->hedge);
     }
 
-    bool sanityCheckHasRealHEdge(const BspLeaf* leaf) const
+    /*bool sanityCheckHasRealHEdge(const BspLeaf* leaf) const
     {
         DENG_ASSERT(leaf);
         HEdge* hedge = leaf->hedge;
@@ -2413,7 +2476,7 @@ struct Partitioner::Instance
             if(hedge->lineDef) return true;
         } while((hedge = hedge->next) != leaf->hedge);
         return false;
-    }
+    }*/
 };
 
 Partitioner::Partitioner(GameMap* map, uint* numEditableVertexes,

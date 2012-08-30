@@ -2185,7 +2185,8 @@ static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
 static int chooseHEdgeSkyFixes(HEdge* hedge, int skyCap)
 {
     int fixes = 0;
-    if(hedge && hedge->lineDef) // "minisegs" have no linedefs.
+    if(hedge && hedge->lineDef && // "minisegs" have no linedefs.
+       hedge->sector) // $degenleaf
     {
         const Sector* frontSec = hedge->sector;
         const Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
