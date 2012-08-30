@@ -554,3 +554,28 @@ Text {
   ID = "KEY3";
   Text = "Red Key";
 }
+
+Text {
+  ID = "SKILL1";
+  Text = "Easy does it.";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Not so sticky.";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Gobs of goo.";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "Extreme ooze.";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Super slimey!";
+}
