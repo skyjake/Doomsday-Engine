@@ -399,23 +399,19 @@ void S_ResetReverb(void)
     reverbUpdateRequested.clear();
 }
 
-void S_UpdateReverb(void)
+void S_UpdateReverbForSector(Sector* sec)
 {
-    if(sfx3D)
-    {
-        if(reverbUpdateRequested.empty()) return;
+    if(reverbUpdateRequested.empty()) return;
 
-        for(ReverbUpdateRequested::iterator i = reverbUpdateRequested.begin(); i != reverbUpdateRequested.end(); ++i)
-        {
-            Sector_CalculateReverb(*i);
-        }
+    // If update has been requested for this sector, calculate it now.
+    if(reverbUpdateRequested.find(sec) != reverbUpdateRequested.end())
+    {
+        Sector_CalculateReverb(sec);
+        reverbUpdateRequested.erase(sec);
     }
-    reverbUpdateRequested.clear();
 }
 
-void S_CalcSectorReverb(Sector* sec)
+void S_MarkSectorReverbDirty(Sector* sec)
 {
-    if(!sfx3D) return;
-
     reverbUpdateRequested.insert(sec);
 }

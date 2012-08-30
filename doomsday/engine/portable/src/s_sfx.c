@@ -565,11 +565,16 @@ void Sfx_ListenerUpdate(void)
         {
             listenerSector = listener->bspLeaf->sector;
 
+            // It may be necessary to recalculate the reverb properties.
+            S_UpdateReverbForSector(listenerSector);
+
             for(i = 0; i < NUM_REVERB_DATA; ++i)
             {
                 vec[i] = listenerSector->reverb[i];
                 if(i == SRD_VOLUME)
+                {
                     vec[i] *= sfxReverbStrength;
+                }
             }
 
             AudioDriver_SFX()->Listenerv(SFXLP_REVERB, vec);
