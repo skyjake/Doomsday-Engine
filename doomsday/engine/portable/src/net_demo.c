@@ -127,6 +127,11 @@ void Demo_Init(void)
  */
 boolean Demo_BeginRecording(const char* fileName, int plrNum)
 {
+    DENG_UNUSED(fileName);
+    DENG_UNUSED(plrNum);
+    return false;
+
+#if 0
     client_t* cl = &clients[plrNum];
     player_t* plr = &ddPlayers[plrNum];
     ddstring_t buf;
@@ -177,11 +182,12 @@ boolean Demo_BeginRecording(const char* fileName, int plrNum)
 
     // The operation is a success.
     return true;
+#endif
 }
 
 void Demo_PauseRecording(int playerNum)
 {
-    client_t       *cl = clients + playerNum;
+    client_t *cl = clients + playerNum;
 
     // A demo is not being recorded?
     if(!cl->recording || cl->recordPaused)
