@@ -1292,7 +1292,7 @@ struct Partitioner::Instance
         if(!hedge)
         {
             // No partition required/possible - already convex (or degenerate).
-            std::vector<HEdge*> hedges = collectHEdges(hedgeList);
+            std::list<HEdge*> hedges = collectHEdges(hedgeList);
             BspLeaf* leaf = buildBspLeaf(hedges);
             if(leaf)
             {
@@ -2097,9 +2097,9 @@ struct Partitioner::Instance
         return hedge;
     }
 
-    std::vector<HEdge*> collectHEdges(SuperBlock& partList)
+    std::list<HEdge*> collectHEdges(SuperBlock& partList)
     {
-        std::vector<HEdge*> hedges;
+        std::list<HEdge*> hedges;
 
         // Iterative pre-order traversal of SuperBlock.
         SuperBlock* cur = &partList;
@@ -2111,11 +2111,8 @@ struct Partitioner::Instance
                 HEdge* hedge;
                 while((hedge = cur->pop()))
                 {
-                    HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
-                    HEdgeInfo& hInfo = hInfoIt->second;
-
                     // Disassociate the half-edge from the blockmap.
-                    hInfo.bmapBlock = 0;
+                    hedgeInfo(*hedge).bmapBlock = 0;
 
                     hedges.push_back(hedge);
                 }
@@ -2158,24 +2155,25 @@ struct Partitioner::Instance
      *                   to build the leaf using.
      * @return  Newly created BspLeaf else @c NULL if degenerate.
      */
-    BspLeaf* buildBspLeaf(std::vector<HEdge*>& hedges)
+    BspLeaf* buildBspLeaf(std::list<HEdge*>& hedges)
     {
         if(!hedges.size()) return 0;
 
         // Collapse all degenerate and orphaned leafs.
         const bool isDegenerate = hedges.size() < 3;
         bool isOrphan = true;
-        DENG2_FOR_EACH(it, hedges, std::vector<HEdge*>::const_iterator)
+        DENG2_FOR_EACH(it, hedges, std::list<HEdge*>::const_iterator)
         {
             const HEdge* hedge = *it;
             if(hedge->lineDef && hedge->lineDef->L_sector(hedge->side))
             {
                 isOrphan = false;
+                break;
             }
         }
 
         BspLeaf* leaf = 0;
-        DENG2_FOR_EACH(it, hedges, std::vector<HEdge*>::const_iterator)
+        DENG2_FOR_EACH(it, hedges, std::list<HEdge*>::const_iterator)
         {
             HEdge* hedge = *it;
             HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
