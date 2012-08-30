@@ -401,16 +401,21 @@ void S_ResetReverb(void)
 
 void S_UpdateReverb(void)
 {
-    if(reverbUpdateRequested.empty()) return;
-
-    for(ReverbUpdateRequested::iterator i = reverbUpdateRequested.begin(); i != reverbUpdateRequested.end(); ++i)
+    if(sfx3D)
     {
-        Sector_CalculateReverb(*i);
+        if(reverbUpdateRequested.empty()) return;
+
+        for(ReverbUpdateRequested::iterator i = reverbUpdateRequested.begin(); i != reverbUpdateRequested.end(); ++i)
+        {
+            Sector_CalculateReverb(*i);
+        }
     }
     reverbUpdateRequested.clear();
 }
 
 void S_CalcSectorReverb(Sector* sec)
 {
+    if(!sfx3D) return;
+
     reverbUpdateRequested.insert(sec);
 }
