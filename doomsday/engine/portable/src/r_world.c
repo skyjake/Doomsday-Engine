@@ -1716,7 +1716,10 @@ boolean R_UpdatePlane(Plane* pln, boolean forceUpdate)
         for(i = 0; i < sec->lineDefCount; ++i)
         {
             LineDef* line = sec->lineDefs[i];
-            SideDef_UpdateBaseOrigins(line->L_frontsidedef);
+            if(line->L_frontsidedef) // $degenleaf
+            {
+                SideDef_UpdateBaseOrigins(line->L_frontsidedef);
+            }
             if(line->L_backsidedef)
             {
                 SideDef_UpdateBaseOrigins(line->L_backsidedef);
