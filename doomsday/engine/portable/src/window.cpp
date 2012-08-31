@@ -49,6 +49,7 @@
 #include "fs_util.h"
 
 #include <de/c_wrapper.h>
+#include <de/App>
 #include <de/Log>
 #include <QDebug>
 
@@ -75,6 +76,12 @@ static QRect desktopValidRect()
 }
 
 static void updateMainWindowLayout(void);
+
+static void notifyAboutModeChange()
+{
+    LOG_MSG("Display mode has changed.");
+    DENG2_APP->notifyDisplayModeChanged();
+}
 
 struct ddwindow_s
 {
@@ -218,6 +225,12 @@ struct ddwindow_s
         assertWindow();
 
         bool modeChanged = applyDisplayMode();
+
+        if(modeChanged)
+        {
+            // Others might be interested to hear about the mode change.
+            LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, notifyAboutModeChange);
+        }
 
         if(flags & DDWF_FULLSCREEN)
         {

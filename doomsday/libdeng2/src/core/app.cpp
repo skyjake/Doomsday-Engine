@@ -56,3 +56,8 @@ String App::executablePath() const
 {
     return _appPath;
 }
+
+void App::notifyDisplayModeChanged()
+{
+    emit displayModeChanged();
+}
