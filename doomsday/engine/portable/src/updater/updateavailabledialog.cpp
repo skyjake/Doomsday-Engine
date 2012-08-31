@@ -25,8 +25,10 @@
 #include "updatersettingsdialog.h"
 #include "versioninfo.h"
 #include "window.h"
+#include <de/App>
 #include <de/Log>
 #include <QUrl>
+#include <QDesktopWidget>
 #include <QDesktopServices>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
@@ -235,6 +237,8 @@ UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, d
 {
     d = new Instance(this, latestVersion);
     d->changeLog = changeLogUri;
+
+    connect(DENG2_APP, SIGNAL(displayModeChanged()), this, SLOT(recenterDialog()));
 }
 
 UpdateAvailableDialog::~UpdateAvailableDialog()
@@ -271,4 +275,12 @@ void UpdateAvailableDialog::editSettings()
         // Rerun the check.
         emit checkAgain();
     }
+}
+
+void UpdateAvailableDialog::recenterDialog()
+{
+    LOG_DEBUG("Recentering the updater notification dialog.");
+
+    QRect screen = QApplication::desktop()->screenGeometry(0);
+    move(screen.center() - rect().center());
 }
