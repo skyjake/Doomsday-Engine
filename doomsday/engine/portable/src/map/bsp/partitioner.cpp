@@ -1288,7 +1288,11 @@ struct Partitioner::Instance
         if(!hedges.size()) return 0;
 
         // Collapse all degenerate and orphaned leafs.
+#ifdef _MSC_VER
         const bool isDegenerate = hedges.size() < 3;
+#else
+        const bool isDegenerate = false;
+#endif
         bool isOrphan = true;
         DENG2_FOR_EACH(it, hedges, std::list<HEdge*>::const_iterator)
         {
