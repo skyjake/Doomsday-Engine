@@ -71,14 +71,16 @@ public:
      * this then @a bounds will be initialized to the "cleared" state
      * (i.e., min[x,y] > max[x,y]).
      *
-     * @param bounds  Determined bounds are written here.
+     * @return bounds  Determined bounds are written here.
      */
-    void findHEdgeBounds(AABoxd& bounds);
+    AABoxd findHEdgeBounds();
 
     /**
      * Empty this SuperBlockmap clearing all HEdges and sub-blocks.
      */
     void clear();
+
+    operator SuperBlock&() { return root(); }
 
 private:
     struct Instance;

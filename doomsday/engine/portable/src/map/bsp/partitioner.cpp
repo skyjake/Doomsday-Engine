@@ -66,6 +66,7 @@ static const coord_t ANG_EPSILON = (1.0 / 1024.0);
 
 //DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
 
+static AABox blockmapBounds(AABoxd const& mapBounds);
 static bool findBspLeafCenter(BspLeaf const& leaf, pvec2d_t midPoint);
 static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* line);
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
@@ -279,12 +280,10 @@ struct Partitioner::Instance
         vertexInfos.resize(*numEditableVertexes);
     }
 
-    void findMapBounds(AABoxd* aaBox) const
+    AABoxd findMapBounds2()
     {
-        DENG_ASSERT(aaBox);
-
         AABoxd bounds;
-        boolean initialized = false;
+        bool initialized = false;
 
         for(uint i = 0; i < GameMap_LineDefCount(map); ++i)
         {
@@ -309,15 +308,22 @@ struct Partitioner::Instance
             V2d_AddToBox(bounds.arvec2, lineAABox.max);
         }
 
-        if(initialized)
+        if(!initialized)
         {
-            V2d_CopyBox(aaBox->arvec2, bounds.arvec2);
-            return;
+            // Clear.
+            V2d_Set(bounds.min, DDMAXFLOAT, DDMAXFLOAT);
+            V2d_Set(bounds.max, DDMINFLOAT, DDMINFLOAT);
         }
+        return bounds;
+    }
 
-        // Clear.
-        V2d_Set(aaBox->min, DDMAXFLOAT, DDMAXFLOAT);
-        V2d_Set(aaBox->max, DDMINFLOAT, DDMINFLOAT);
+    AABoxd findMapBounds()
+    {
+        AABoxd mapBounds = findMapBounds2();
+        LOG_VERBOSE("Map bounds:")
+            << " min[x:" << mapBounds.minX << ", y:" << mapBounds.minY << "]"
+            << " max[x:" << mapBounds.maxX << ", y:" << mapBounds.maxY << "]";
+        return mapBounds;
     }
 
     HEdge* linkHEdgeInSuperBlockmap(SuperBlock& block, HEdge* hedge)
@@ -427,14 +433,18 @@ struct Partitioner::Instance
         }
     }
 
-    void initHEdgesAndBuildBsp(SuperBlockmap& blockmap)
+    void initHEdgesAndBuildBsp(SuperBlock& rootBlock)
     {
         DENG_ASSERT(map);
         // It begins...
         rootNode = NULL;
 
-        createInitialHEdges(blockmap.root());
-        builtOK = buildNodes(blockmap.root(), &rootNode);
+        createInitialHEdges(rootBlock);
+
+        partition = new HPlane();
+        rootNode = buildNodes(rootBlock);
+        if(partition) delete partition;
+        builtOK = true;
 
         if(rootNode)
         {
@@ -1266,6 +1276,148 @@ struct Partitioner::Instance
     }
 
     /**
+     * Attempt to construct a new BspLeaf and from the supplied list of
+     * half-edges.
+     *
+     * @param hedgeList  SuperBlock containing the list of half-edges with which
+     *                   to build the leaf using.
+     * @return  Newly created BspLeaf else @c NULL if degenerate.
+     */
+    BspLeaf* buildBspLeaf(std::list<HEdge*>& hedges)
+    {
+        if(!hedges.size()) return 0;
+
+        // Collapse all degenerate and orphaned leafs.
+        const bool isDegenerate = hedges.size() < 3;
+        bool isOrphan = true;
+        DENG2_FOR_EACH(it, hedges, std::list<HEdge*>::const_iterator)
+        {
+            const HEdge* hedge = *it;
+            if(hedge->lineDef && hedge->lineDef->L_sector(hedge->side))
+            {
+                isOrphan = false;
+                break;
+            }
+        }
+
+        BspLeaf* leaf = 0;
+        DENG2_FOR_EACH(it, hedges, std::list<HEdge*>::const_iterator)
+        {
+            HEdge* hedge = *it;
+            HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
+            HEdgeInfo& hInfo = hInfoIt->second;
+
+            if(isDegenerate || isOrphan)
+            {
+                if(hInfo.prevOnSide)
+                {
+                    hedgeInfo(*hInfo.prevOnSide).nextOnSide = hInfo.nextOnSide;
+                }
+                if(hInfo.nextOnSide)
+                {
+                    hedgeInfo(*hInfo.nextOnSide).prevOnSide = hInfo.prevOnSide;
+                }
+
+                if(hedge->twin)
+                {
+                    hedge->twin->twin = 0;
+                }
+
+                /// @todo This is not logically correct from a mod compatibility
+                ///       point of view. We should never clear the line > sector
+                ///       references as these are used by the game(s) playsim in
+                ///       various ways (for example, stair building). We should
+                ///       instead flag the linedef accordingly. -ds
+                if(hedge->lineDef)
+                {
+                    lineside_t* lside = HEDGE_SIDE(hedge);
+                    lside->sector = 0;
+                    /// @todo We could delete the SideDef also.
+                    lside->sideDef = 0;
+
+                    lineDefInfo(*hedge->lineDef).flags &= ~(LineDefInfo::SELFREF | LineDefInfo::TWOSIDED);
+                }
+
+                hedgeInfos.erase(hInfoIt);
+                HEdge_Delete(hedge);
+                numHEdges -= 1;
+                continue;
+            }
+
+            if(!leaf) leaf = BspLeaf_New();
+
+            // Link it into head of the leaf's list.
+            hedge->next = leaf->hedge;
+            leaf->hedge = hedge;
+
+            // Link hedge to this leaf.
+            hedge->bspLeaf = leaf;
+
+            // There is now one more half-edge in this leaf.
+            leaf->hedgeCount += 1;
+        }
+
+        if(leaf)
+        {
+            // There is now one more BspLeaf;
+            numLeafs += 1;
+        }
+        return leaf;
+    }
+
+    /**
+     * Allocate another BspNode.
+     *
+     * @param origin  Origin of the half-plane in the map coordinate space.
+     * @param angle  Angle of the half-plane in the map coordinate space.
+     * @param rightBounds  Boundary of the right child map coordinate subspace. Can be @c NULL.
+     * @param leftBoubds   Boundary of the left child map coordinate subspace. Can be @a NULL.
+     *
+     * @return  Newly created BspNode.
+     */
+    BspNode* newBspNode(coord_t const origin[2], coord_t const angle[2],
+        AABoxd& rightBounds, AABoxd& leftBounds,
+        runtime_mapdata_header_t* rightChild = 0,
+        runtime_mapdata_header_t* leftChild = 0)
+    {
+        BspNode* node = BspNode_New(origin, angle);
+        if(rightChild)
+        {
+            BspNode_SetRight(node, rightChild);
+        }
+        if(leftChild)
+        {
+            BspNode_SetLeft(node, leftChild);
+        }
+
+        BspNode_SetRightBounds(node, &rightBounds);
+        BspNode_SetLeftBounds(node,  &leftBounds);
+
+        // There is now one more BspNode.
+        numNodes += 1;
+        return node;
+    }
+
+    BspTreeNode* newTreeNode(runtime_mapdata_header_t* bspOb,
+        BspTreeNode* rightChild = 0, BspTreeNode* leftChild = 0)
+    {
+        BspTreeNode* subtree = new BspTreeNode(bspOb);
+        if(rightChild)
+        {
+            subtree->setRight(rightChild);
+            rightChild->setParent(subtree);
+        }
+        if(leftChild)
+        {
+            subtree->setLeft(leftChild);
+            leftChild->setParent(subtree);
+        }
+
+        treeNodeMap.insert(std::pair<runtime_mapdata_header_t*, BspTreeNode*>(bspOb, subtree));
+        return subtree;
+    }
+
+    /**
      * Takes the half-edge list and determines if it is convex, possibly converting
      * it into a BSP leaf. Otherwise, the list is divided into two halves and recursion
      * will continue on the new sub list.
@@ -1280,109 +1432,69 @@ struct Partitioner::Instance
      * If the ones on the right side make a BspLeaf, then create another BspLeaf
      * else put the half-edges into the right list.
      *
-     * @param superblock    The list of half edges at the current node.
-     * @param subtree       Ptr to write back the address of any newly created subtree.
-     * @return  @c true iff successfull.
+     * @param partList  The list of half-edges to be partitioned.
+     * @return  Newly created subtree else @c NULL if degenerate..
      */
-    bool buildNodes(SuperBlock& hedgeList, BspTreeNode** subtree)
+    BspTreeNode* buildNodes(SuperBlock& partList)
     {
         LOG_AS("Partitioner::buildNodes");
 
-        *subtree = NULL;
-
-        //hedgeList.traverse(printSuperBlockHEdgesWorker);
+        runtime_mapdata_header_t* bspObject = 0; ///< Built BSP object at this node.
+        BspTreeNode* rightTree = 0, *leftTree = 0;
 
         // Pick a half-edge to use as the next partition plane.
-        HEdge* hedge = chooseNextPartition(hedgeList);
-        if(!hedge)
+        HEdge* partHEdge = chooseNextPartition(partList);
+        if(partHEdge)
+        {
+            //LOG_TRACE("Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].") << de::dintptr(hedge)
+            //      << hedge->HE_v1origin[VX] << hedge->HE_v1origin[VY]
+            //      << hedge->HE_v2origin[VX] << hedge->HE_v2origin[VY];
+
+            // Reconfigure the half-plane for the next round of partitioning.
+            configurePartition(partHEdge);
+            HPlanePartition origPartition = HPlanePartition(partition->origin(), partition->direction());
+
+            // Create left and right super blockmaps.
+            /// @todo There should be no need to construct entirely independent
+            ///       data structures to contain these hedge subsets.
+            // Copy the bounding box of the edge list to the superblocks.
+            SuperBlockmap rightHEdges = SuperBlockmap(partList.bounds());
+            SuperBlockmap leftHEdges  = SuperBlockmap(partList.bounds());
+
+            // Divide the half-edges into two lists: left & right.
+            partitionHEdges(partList, rightHEdges, leftHEdges);
+            addMiniHEdges(rightHEdges, leftHEdges);
+            clearPartitionIntercepts();
+
+            // Make a copy of the child bounds as we'll need this info to populate
+            // a BspNode node should we produce (after the subtrees are processed).
+            AABoxd rightBounds = rightHEdges.findHEdgeBounds();
+            AABoxd leftBounds  = leftHEdges.findHEdgeBounds();
+
+            // Recurse on each subset, right then left.
+            rightTree = buildNodes(rightHEdges);
+            leftTree  = buildNodes(leftHEdges);
+
+            // Collapse degenerates upward.
+            if(!rightTree || !leftTree)
+                return rightTree? rightTree : leftTree;
+
+            // Construct the new node and link up the subtrees.
+            BspNode* node = newBspNode(origPartition.origin, origPartition.direction, rightBounds, leftBounds,
+                                       rightTree->userData(), leftTree->userData());
+            bspObject = reinterpret_cast<runtime_mapdata_header_t*>(node);
+        }
+        else
         {
             // No partition required/possible - already convex (or degenerate).
-            std::list<HEdge*> hedges = collectHEdges(hedgeList);
-            BspLeaf* leaf = buildBspLeaf(hedges);
-            if(leaf)
-            {
-                runtime_mapdata_header_t* bspOb = reinterpret_cast<runtime_mapdata_header_t*>(leaf);
-                *subtree = new BspTreeNode(bspOb);
-                treeNodeMap.insert(std::pair<runtime_mapdata_header_t*, BspTreeNode*>(bspOb, *subtree));
-            }
-            else
-            {
-                // This is not a convex leaf (parent node will be collapsed).
-                *subtree = 0;
-            }
-            return true;
+            BspLeaf* leaf = buildBspLeaf(collectHEdges(partList));
+            // Not a leaf? (collapse upward).
+            if(!leaf) return 0;
+
+            bspObject = reinterpret_cast<runtime_mapdata_header_t*>(leaf);
         }
 
-        //LOG_TRACE("Partition %p [%1.0f, %1.0f] -> [%1.0f, %1.0f].")
-        //      << de::dintptr(hedge) << hedge->v[0]->V_pos[VX] << hedge->v[0]->V_pos[VY]
-        //      << hedge->v[1]->V_pos[VX] << hedge->v[1]->V_pos[VY];
-
-        // Reconfigure the half plane for the next round of hedge sorting.
-        configurePartition(hedge);
-
-        // Create left and right super blockmaps.
-        /// @todo There should be no need to construct entirely independent
-        ///       data structures to contain these hedge subsets.
-        // Copy the bounding box of the edge list to the superblocks.
-        SuperBlockmap* rightHEdges = new SuperBlockmap(hedgeList.bounds());
-        SuperBlockmap* leftHEdges  = new SuperBlockmap(hedgeList.bounds());
-
-        // Divide the half-edges into two lists: left & right.
-        partitionHEdges(hedgeList, rightHEdges->root(), leftHEdges->root());
-
-        addMiniHEdges(rightHEdges->root(), leftHEdges->root());
-
-        clearPartitionIntercepts();
-
-        AABoxd rightHEdgesBounds, leftHEdgesBounds;
-        rightHEdges->findHEdgeBounds(rightHEdgesBounds);
-        leftHEdges->findHEdgeBounds(leftHEdgesBounds);
-
-        HPlanePartition origPartition = HPlanePartition(partition->origin(), partition->direction());
-        BspTreeNode* rightChild = 0, *leftChild = 0;
-
-        // Recurse on the right subset.
-        bool builtOK = buildNodes(rightHEdges->root(), &rightChild);
-        delete rightHEdges;
-
-        if(builtOK)
-        {
-            // Recurse on the left subset.
-            builtOK = buildNodes(leftHEdges->root(), &leftChild);
-        }
-        delete leftHEdges;
-
-        if(!rightChild || !leftChild)
-        {
-            *subtree = rightChild? rightChild : leftChild;
-            return builtOK;
-        }
-        BspNode* node = newBspNode(origPartition.origin, origPartition.direction,
-                                   &rightHEdgesBounds, &leftHEdgesBounds);
-
-        runtime_mapdata_header_t* bspOb = reinterpret_cast<runtime_mapdata_header_t*>(node);
-        *subtree = new BspTreeNode(bspOb);
-        treeNodeMap.insert(std::pair<runtime_mapdata_header_t*, BspTreeNode*>(bspOb, *subtree));
-
-        (*subtree)->setRight(rightChild);
-        if((*subtree)->hasRight())
-        {
-            (*subtree)->right()->setParent(*subtree);
-
-            // Link the BSP object too.
-            BspNode_SetRight(node, (*subtree)->right()->userData());
-        }
-
-        (*subtree)->setLeft(leftChild);
-        if((*subtree)->hasLeft())
-        {
-            (*subtree)->left()->setParent(*subtree);
-
-            // Link the BSP object too.
-            BspNode_SetLeft(node, (*subtree)->left()->userData());
-        }
-
-        return builtOK;
+        return newTreeNode(bspObject, rightTree, leftTree);
     }
 
     bool build()
@@ -1391,35 +1503,9 @@ struct Partitioner::Instance
 
         initForMap();
 
-        // Find maximal vertexes.
-        AABoxd mapBounds;
-        findMapBounds(&mapBounds);
-
-        LOG_VERBOSE("Map bounds:")
-            << " min[x:" << mapBounds.minX << ", y:" << mapBounds.minY << "]"
-            << " max[x:" << mapBounds.maxX << ", y:" << mapBounds.maxY << "]";
-
-        AABox mapBoundsi;
-        mapBoundsi.minX = (int) floor(mapBounds.minX);
-        mapBoundsi.minY = (int) floor(mapBounds.minY);
-        mapBoundsi.maxX = (int)  ceil(mapBounds.maxX);
-        mapBoundsi.maxY = (int)  ceil(mapBounds.maxY);
-
-        AABox blockBounds;
-        blockBounds.minX = mapBoundsi.minX - (mapBoundsi.minX & 0x7);
-        blockBounds.minY = mapBoundsi.minY - (mapBoundsi.minY & 0x7);
-        int bw = ((mapBoundsi.maxX - blockBounds.minX) / 128) + 1;
-        int bh = ((mapBoundsi.maxY - blockBounds.minY) / 128) + 1;
-
-        blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
-        blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
-
-        SuperBlockmap* blockmap = new SuperBlockmap(blockBounds);
-        partition = new HPlane();
-
         try
         {
-            initHEdgesAndBuildBsp(*blockmap);
+            initHEdgesAndBuildBsp(SuperBlockmap(blockmapBounds(findMapBounds())));
         }
         catch(de::Error& er)
         {
@@ -1427,9 +1513,6 @@ struct Partitioner::Instance
             LOG_WARNING("%s.") << er.asText();
             builtOK = false;
         }
-
-        delete partition;
-        delete blockmap;
 
         return builtOK;
     }
@@ -2037,126 +2120,6 @@ struct Partitioner::Instance
     }
 
     /**
-     * Attempt to construct a new BspLeaf and from the supplied list of
-     * half-edges.
-     *
-     * @param hedgeList  SuperBlock containing the list of half-edges with which
-     *                   to build the leaf using.
-     * @return  Newly created BspLeaf else @c NULL if degenerate.
-     */
-    BspLeaf* buildBspLeaf(std::list<HEdge*>& hedges)
-    {
-        if(!hedges.size()) return 0;
-
-        // Collapse all degenerate and orphaned leafs.
-        const bool isDegenerate = hedges.size() < 3;
-        bool isOrphan = true;
-        DENG2_FOR_EACH(it, hedges, std::list<HEdge*>::const_iterator)
-        {
-            const HEdge* hedge = *it;
-            if(hedge->lineDef && hedge->lineDef->L_sector(hedge->side))
-            {
-                isOrphan = false;
-                break;
-            }
-        }
-
-        BspLeaf* leaf = 0;
-        DENG2_FOR_EACH(it, hedges, std::list<HEdge*>::const_iterator)
-        {
-            HEdge* hedge = *it;
-            HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
-            HEdgeInfo& hInfo = hInfoIt->second;
-
-            if(isDegenerate || isOrphan)
-            {
-                if(hInfo.prevOnSide)
-                {
-                    hedgeInfo(*hInfo.prevOnSide).nextOnSide = hInfo.nextOnSide;
-                }
-                if(hInfo.nextOnSide)
-                {
-                    hedgeInfo(*hInfo.nextOnSide).prevOnSide = hInfo.prevOnSide;
-                }
-
-                if(hedge->twin)
-                {
-                    hedge->twin->twin = 0;
-                }
-
-                /// @todo This is not logically correct from a mod compatibility
-                ///       point of view. We should never clear the line > sector
-                ///       references as these are used by the game(s) playsim in
-                ///       various ways (for example, stair building). We should
-                ///       instead flag the linedef accordingly. -ds
-                if(hedge->lineDef)
-                {
-                    lineside_t* lside = HEDGE_SIDE(hedge);
-                    lside->sector = 0;
-                    /// @todo We could delete the SideDef also.
-                    lside->sideDef = 0;
-
-                    lineDefInfo(*hedge->lineDef).flags &= ~(LineDefInfo::SELFREF | LineDefInfo::TWOSIDED);
-                }
-
-                hedgeInfos.erase(hInfoIt);
-                HEdge_Delete(hedge);
-                numHEdges -= 1;
-                continue;
-            }
-
-            if(!leaf) leaf = BspLeaf_New();
-
-            // Link it into head of the leaf's list.
-            hedge->next = leaf->hedge;
-            leaf->hedge = hedge;
-
-            // Link hedge to this leaf.
-            hedge->bspLeaf = leaf;
-
-            // There is now one more half-edge in this leaf.
-            leaf->hedgeCount += 1;
-        }
-
-        if(leaf)
-        {
-            // There is now one more BspLeaf;
-            numLeafs += 1;
-        }
-        return leaf;
-    }
-
-    /**
-     * Allocate another BspNode.
-     *
-     * @param origin  Origin of the half-plane in the map coordinate space.
-     * @param angle  Angle of the half-plane in the map coordinate space.
-     * @param rightBounds  Boundary of the right child map coordinate subspace. Can be @c NULL.
-     * @param leftBoubds   Boundary of the left child map coordinate subspace. Can be @a NULL.
-     *
-     * @return  Newly created BspNode.
-     */
-    BspNode* newBspNode(coord_t const origin[2], coord_t const angle[2],
-        AABoxd* rightBounds, AABoxd* leftBounds)
-    {
-        BspNode* node = BspNode_New(origin, angle);
-
-        if(rightBounds)
-        {
-            BspNode_SetRightBounds(node, rightBounds);
-        }
-
-        if(leftBounds)
-        {
-            BspNode_SetLeftBounds(node, leftBounds);
-        }
-
-        // There is now one more BspNode.
-        numNodes += 1;
-        return node;
-    }
-
-    /**
      * Check whether a line with the given delta coordinates and beginning at this
      * vertex is open. Returns a sector reference if it's open, or NULL if closed
      * (void space or directly along a linedef).
@@ -2526,6 +2489,25 @@ static void initAABoxFromEditableLineDefVertexes(AABoxd* aaBox, const LineDef* l
     aaBox->minY = MIN_OF(from[VY], to[VY]);
     aaBox->maxX = MAX_OF(from[VX], to[VX]);
     aaBox->maxY = MAX_OF(from[VY], to[VY]);
+}
+
+static AABox blockmapBounds(AABoxd const& mapBounds)
+{
+    AABox mapBoundsi;
+    mapBoundsi.minX = (int) floor(mapBounds.minX);
+    mapBoundsi.minY = (int) floor(mapBounds.minY);
+    mapBoundsi.maxX = (int)  ceil(mapBounds.maxX);
+    mapBoundsi.maxY = (int)  ceil(mapBounds.maxY);
+
+    AABox blockBounds;
+    blockBounds.minX = mapBoundsi.minX - (mapBoundsi.minX & 0x7);
+    blockBounds.minY = mapBoundsi.minY - (mapBoundsi.minY & 0x7);
+    int bw = ((mapBoundsi.maxX - blockBounds.minX) / 128) + 1;
+    int bh = ((mapBoundsi.maxY - blockBounds.minY) / 128) + 1;
+
+    blockBounds.maxX = blockBounds.minX + 128 * M_CeilPow2(bw);
+    blockBounds.maxY = blockBounds.minY + 128 * M_CeilPow2(bh);
+    return blockBounds;
 }
 
 static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf)

@@ -356,7 +356,7 @@ static void findHEdgeBoundsWorker(SuperBlock& block, AABoxd& bounds, bool* initi
     }
 }
 
-void SuperBlockmap::findHEdgeBounds(AABoxd& aaBox)
+AABoxd SuperBlockmap::findHEdgeBounds()
 {
     bool initialized = false;
     AABoxd bounds;
@@ -398,13 +398,12 @@ void SuperBlockmap::findHEdgeBounds(AABoxd& aaBox)
         }
     }
 
-    if(initialized)
+    if(!initialized)
     {
-        V2d_CopyBox(aaBox.arvec2, bounds.arvec2);
-        return;
+        // Clear.
+        V2d_Set(bounds.min, DDMAXFLOAT, DDMAXFLOAT);
+        V2d_Set(bounds.max, DDMINFLOAT, DDMINFLOAT);
     }
 
-    // Clear.
-    V2d_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    return bounds;
 }

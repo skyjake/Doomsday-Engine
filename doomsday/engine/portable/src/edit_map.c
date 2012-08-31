@@ -1623,7 +1623,8 @@ static boolean buildBsp(GameMap* gamemap)
 
     if(!map) return false;
 
-    VERBOSE( Con_Message("Building BSP using tunable split factor of %d...\n", bspFactor) )
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+        "Building BSP using tunable split factor of %d...\n", bspFactor);
 
     // It begins...
     startTime = Sys_GetRealTime();
@@ -1640,7 +1641,8 @@ static boolean buildBsp(GameMap* gamemap)
     BspBuilder_Delete(bspBuilder);
 
     // How much time did we spend?
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+        "BSP built in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f);
     return builtOK;
 }
 
