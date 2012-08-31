@@ -1145,12 +1145,16 @@ struct Partitioner::Instance
      *                   to build the leaf using.
      * @return  Newly created BspLeaf else @c NULL if degenerate.
      */
-    BspLeaf* buildBspLeaf(HEdgeList& hedges)
+    BspLeaf* buildBspLeaf(HEdgeList const& hedges)
     {
         if(!hedges.size()) return 0;
 
         // Collapse all degenerate and orphaned leafs.
+#ifdef _MSC_VER
         const bool isDegenerate = hedges.size() < 3;
+#else
+        const bool isDegenerate = false;
+#endif
         bool isOrphan = true;
         DENG2_FOR_EACH(it, hedges, HEdgeList::const_iterator)
         {
