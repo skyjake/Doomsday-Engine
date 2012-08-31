@@ -29,6 +29,7 @@
 #define LIBDENG_BSP_LINEDEFINFO
 
 #include "p_mapdata.h"
+#include "map/bsp/partitioner.h"
 
 #include <QGlobalStatic>
 
@@ -43,24 +44,38 @@ struct LineDefInfo
 {
     enum Flag
     {
-        TWOSIDED   =        0x1, ///< Line is marked two-sided.
-        ZEROLENGTH =        0x2, ///< Zero length (line should be totally ignored).
-        SELFREF    =        0x4, ///< Sector is the same on both sides.
-        POLYOBJ    =        0x8  ///< Line is part of a polyobj.
+        Twosided   =        0x1, ///< Line is marked two-sided.
+        ZeroLength =        0x2, ///< Zero length (line should be totally ignored).
+        SelfRef    =        0x4  ///< Sector is the same on both sides.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
     Flags flags;
 
-    /// Normally NULL, except when this linedef directly overlaps an earlier
-    /// one (a rarely-used trick to create higher mid-masked textures).
-    /// No hedges should be created for these overlapping linedefs.
-    LineDef* overlap;
-
     /// @todo Refactor me away.
     int validCount;
 
-    LineDefInfo() : flags(0), overlap(0), validCount(0)
+    LineDefInfo() : flags(0), validCount(0)
     {}
+
+    LineDefInfo& configure(LineDef& line, coord_t distEpsilon = 0.0001)
+    {
+        const Vertex* start = line.L_v1;
+        const Vertex* end   = line.L_v2;
+
+        // Check for zero-length line.
+        if((fabs(start->origin[VX] - end->origin[VX]) < distEpsilon) &&
+           (fabs(start->origin[VY] - end->origin[VY]) < distEpsilon))
+            flags |= ZeroLength;
+
+        if(line.L_backsidedef && line.L_frontsidedef)
+        {
+            flags |= Twosided;
+
+            if(line.L_backsector == line.L_frontsector)
+                flags |= SelfRef;
+        }
+        return *this;
+    }
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(LineDefInfo::Flags)

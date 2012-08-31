@@ -74,7 +74,7 @@ struct HEdgeInfo
         V2d_Set(direction, 0, 0);
     }
 
-    HEdgeInfo& initFromHEdge(const HEdge& hedge)
+    HEdgeInfo& initFromHEdge(HEdge const& hedge)
     {
         V2d_Copy(start, hedge.v[0]->origin);
         V2d_Copy(end,   hedge.v[1]->origin);

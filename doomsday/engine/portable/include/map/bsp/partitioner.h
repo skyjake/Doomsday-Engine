@@ -34,11 +34,20 @@
 namespace de {
 namespace bsp {
 
+/// Minimum length of a half-edge post partitioning. Used in cost evaluation.
+static const coord_t SHORT_HEDGE_EPSILON = 4.0;
+
+/// Smallest distance between two points before being considered equal.
+static const coord_t DIST_EPSILON = (1.0 / 128.0);
+
+/// Smallest difference between two angles before being considered equal (in degrees).
+static const coord_t ANG_EPSILON = (1.0 / 1024.0);
+
 class Partitioner
 {
 public:
-    explicit Partitioner(GameMap* _map, uint* numEditableVertexes,
-                         Vertex*** editableVertexes, int _splitCostFactor=7);
+    Partitioner(GameMap&  _map, uint* numEditableVertexes,
+                Vertex*** editableVertexes, int _splitCostFactor=7);
     ~Partitioner();
 
     /**
@@ -121,7 +130,7 @@ public:
      * @param ob  Map data object to release ownership of.
      * @return  Reference to this Partitioner.
      */
-    Partitioner& releaseOwnership(runtime_mapdata_header_t* ob);
+    Partitioner& release(runtime_mapdata_header_t* ob);
 
 private:
     struct Instance;

@@ -41,19 +41,19 @@ namespace bsp {
 class VertexInfo
 {
 public:
-    typedef std::list<HEdgeTip>HEdgeTips;
+    typedef std::list<HEdgeTip> HEdgeTips;
 
     /**
      * Add a new HEdgeTip to the set in it's rightful place according to an
      * anti-clockwise (increasing angle) order.
      */
     HEdgeTip& addHEdgeTip(coord_t angle, HEdge* front = 0, HEdge* back = 0,
-                          coord_t epsilon = 0)
+                          coord_t angleEpsilon = 0.0001)
     {
         HEdgeTips::reverse_iterator after;
 
         for(after = tips.rbegin();
-            after != tips.rend() && angle + epsilon < (*after).angle(); after++)
+            after != tips.rend() && angle + angleEpsilon < (*after).angle(); after++)
         {}
 
         return *tips.insert(after.base(), HEdgeTip(angle, front, back));
