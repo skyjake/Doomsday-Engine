@@ -572,7 +572,7 @@ void Updater_ShowSettings(void)
 
 void Updater_PrintLastUpdated(void)
 {
-    UpdaterSettings st;
-    Con_Message("Latest update check was made on %s.\n",
-                st.lastCheckTime().asText(de::Time::FriendlyFormat).toAscii().constData());
+    de::Time when = UpdaterSettings().lastCheckTime();
+    Con_Message("Latest update check was made %s.\n",
+                UpdaterSettings().lastCheckAgo().toAscii().constData());
 }

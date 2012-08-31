@@ -62,6 +62,12 @@ public:
     de::String downloadPath() const;
     de::String pathToDeleteAtStartup() const;
 
+    /**
+     * @return Human-readable description of when the latest update
+     * check was made.
+     */
+    de::String lastCheckAgo() const;
+
     void setFrequency(Frequency freq);
     void setChannel(Channel channel);
     void setLastCheckTime(const de::Time& time);

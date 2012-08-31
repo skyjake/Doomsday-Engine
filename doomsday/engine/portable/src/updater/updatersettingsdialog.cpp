@@ -113,8 +113,8 @@ struct UpdaterSettingsDialog::Instance
     {
         UpdaterSettings st;
 
-        lastChecked->setText(tr("<small>Last checked on %1.</small>")
-                             .arg(st.lastCheckTime().asText(de::Time::FriendlyFormat)));
+        lastChecked->setText(tr("<small>Last checked %1.</small>")
+                             .arg(st.lastCheckAgo()));
 
         autoCheck->setChecked(!st.onlyCheckManually());
         freqList->setEnabled(!st.onlyCheckManually());
