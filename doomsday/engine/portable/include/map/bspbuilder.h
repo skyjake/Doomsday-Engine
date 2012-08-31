@@ -53,8 +53,8 @@ public:
      * @param map  GameMap for which to construct a BSP object tree.
      * @param splitCostFactor  Cost factor attributed to splitting an existing half-edge.
      */
-    explicit BspBuilder(GameMap* map, uint* numEditableVertexes, Vertex*** editableVertexes,
-                        int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
+    BspBuilder(GameMap& map, uint* numEditableVertexes, Vertex*** editableVertexes,
+               int splitCostFactor = DEFAULT_PARTITION_COST_HEDGESPLIT);
     ~BspBuilder();
 
     /**
@@ -127,7 +127,7 @@ public:
      * @param ob  Map data object to release ownership of.
      * @return  Reference to this Partitioner.
      */
-    BspBuilder& releaseOwnership(runtime_mapdata_header_t* ob);
+    BspBuilder& take(runtime_mapdata_header_t* ob);
 
 private:
     bsp::Partitioner* partitioner;
