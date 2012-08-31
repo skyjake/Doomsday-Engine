@@ -1283,7 +1283,7 @@ struct Partitioner::Instance
      *                   to build the leaf using.
      * @return  Newly created BspLeaf else @c NULL if degenerate.
      */
-    BspLeaf* buildBspLeaf(std::list<HEdge*>& hedges)
+    BspLeaf* buildBspLeaf(const std::list<HEdge*>& hedges)
     {
         if(!hedges.size()) return 0;
 
