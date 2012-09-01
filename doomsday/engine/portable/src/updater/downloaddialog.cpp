@@ -22,6 +22,8 @@
 
 #include "downloaddialog.h"
 #include "updatersettings.h"
+#include "dd_version.h"
+#include "window.h"
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDialogButtonBox>
@@ -121,6 +123,11 @@ DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, Q
     : UpdaterDialog(parent)
 {
     d = new Instance(this, downloadUri, fallbackUri);
+
+#ifndef MACOSX
+    setWindowTitle(DOOMSDAY_NICENAME" Update");
+    setWindowIcon(Window_Widget(Window_Main())->windowIcon());
+#endif
 }
 
 DownloadDialog::~DownloadDialog()

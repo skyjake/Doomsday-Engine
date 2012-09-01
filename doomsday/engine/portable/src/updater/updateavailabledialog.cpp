@@ -83,7 +83,7 @@ struct UpdateAvailableDialog::Instance
     void init()
     {
 #ifndef MACOSX
-        self->setWindowTitle(tr("Doomsday %1").arg(VersionInfo().asText()));
+        self->setWindowTitle(tr(DOOMSDAY_NICENAME" %1").arg(VersionInfo().asText()));
 #endif
 
         emptyResultPage = true;

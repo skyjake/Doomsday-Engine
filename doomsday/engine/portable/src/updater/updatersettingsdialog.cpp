@@ -56,6 +56,8 @@ struct UpdaterSettingsDialog::Instance
 
     Instance(UpdaterSettingsDialog* dlg) : self(dlg)
     {
+        // As a modal dialog it is implicitly clear that this belongs to
+        // Doomsday, so we don't need to have the name in the window title.
         self->setWindowTitle(tr("Updater Settings"));
 
         QVBoxLayout* mainLayout = new QVBoxLayout;
