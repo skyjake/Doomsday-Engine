@@ -1550,21 +1550,29 @@ struct Partitioner::Instance
     /**
      * Determine which sector this BSP leaf belongs to.
      */
-    static Sector* chooseSectorForBspLeaf(BspLeaf* leaf)
+    Sector* chooseSectorForBspLeaf(BspLeaf* leaf)
     {
-        if(leaf && leaf->hedge)
+        if(!leaf || !leaf->hedge) return 0;
+
+        Sector* selfRefChoice = 0;
+        HEdge* hedge = leaf->hedge;
+        do
         {
-            HEdge* hedge = leaf->hedge;
-            do
+            LineDef* line = hedge->lineDef;
+            Sector* sector = line? line->L_sector(hedge->side) : 0;
+            if(sector)
             {
-                if(hedge->lineDef)
-                {
-                    Sector* sector = hedge->lineDef->L_sector(hedge->side);
-                    if(sector) return sector;
-                }
-            } while((hedge = hedge->next) != leaf->hedge);
-        }
-        return 0;
+                // The first sector from a non self-referencing line is our best choice.
+                if(!(lineDefInfo(*line).flags & LineDefInfo::SelfRef))
+                    return sector;
+
+                // Remember the self-referencing choice in case we've no better option.
+                if(!selfRefChoice)
+                    selfRefChoice = sector;
+            }
+        } while((hedge = hedge->next) != leaf->hedge);
+
+        return selfRefChoice;
     }
 
     void clockwiseLeaf(BspTreeNode& tree, HEdgeSortBuffer& sortBuffer)
