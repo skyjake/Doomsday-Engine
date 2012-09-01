@@ -352,59 +352,56 @@ void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertic
     }
 }
 
-static void markSideDefSectionsPVisible(HEdge* hedge)
+/**
+ * Determine which sections of @a line on @a backSide are potentially visible
+ * according to the relative heights of the line's plane interfaces.
+ *
+ * @param line          Line to determine the potentially visible sections of.
+ * @param backSide      If non-zero consider the back side, else the front.
+ *
+ * @return @see sideSectionFlags denoting which sections are potentially visible.
+ */
+static byte pvisibleLineSections(LineDef* line, int backSide)
 {
-    const Plane* fceil, *bceil, *ffloor, *bfloor;
-    Sector* fsec, *bsec;
-    SideDef* side;
-    uint i;
+    byte sections = 0;
 
-    if(!hedge->lineDef || !hedge->lineDef->L_sidedef(hedge->side)) return;
-    side = hedge->lineDef->L_sidedef(hedge->side);
+    if(!line || !line->L_sidedef(backSide)) return 0;
 
-    for(i = 0; i < 3; ++i)
+    if(!line->L_sector(backSide^1) /*$degenleaf*/ || !line->L_backsidedef)
     {
-        side->sections[i].inFlags |= SUIF_PVIS;
+        // Only a middle.
+        sections |= SSF_MIDDLE;
+    }
+    else
+    {
+        const SideDef* sideDef = line->L_sidedef(backSide);
+        const Sector* fsec  = line->L_sector(backSide);
+        const Sector* bsec  = line->L_sector(backSide^1);
+        const Plane* fceil  = fsec->SP_plane(PLN_CEILING);
+        const Plane* ffloor = fsec->SP_plane(PLN_FLOOR);
+        const Plane* bceil  = bsec->SP_plane(PLN_CEILING);
+        const Plane* bfloor = bsec->SP_plane(PLN_FLOOR);
+
+        sections |= SSF_MIDDLE | SSF_BOTTOM | SSF_TOP;
+
+        // Middle?
+        if(!sideDef->SW_middlematerial || !Material_IsDrawable(sideDef->SW_middlematerial) || sideDef->SW_middlergba[3] <= 0)
+            sections &= ~SSF_MIDDLE;
+
+        // Top?
+        if((!devRendSkyMode && Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface)) ||
+           //(!devRendSkyMode && Surface_IsSkyMasked(&bceil->surface) && (sideDef->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+           (fceil->visHeight <= bceil->visHeight))
+            sections &= ~SSF_TOP;
+
+        // Bottom?
+        if((!devRendSkyMode && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface)) ||
+           //(!devRendSkyMode && Surface_IsSkyMasked(&bfloor->surface) && (sideDef->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+           (ffloor->visHeight >= bfloor->visHeight))
+            sections &= ~SSF_BOTTOM;
     }
 
-    bsec = hedge->lineDef->L_sector(hedge->side^1);
-    if(!bsec /*$degenleaf*/ || !hedge->lineDef->L_backsidedef)
-    {
-        side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
-        side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
-        return;
-    }
-
-    fsec = hedge->lineDef->L_sector(hedge->side);
-    fceil  = fsec->SP_plane(PLN_CEILING);
-    ffloor = fsec->SP_plane(PLN_FLOOR);
-    bceil  = bsec->SP_plane(PLN_CEILING);
-    bfloor = bsec->SP_plane(PLN_FLOOR);
-
-    // Middle.
-    if(!side->SW_middlematerial || !Material_IsDrawable(side->SW_middlematerial) || side->SW_middlergba[3] <= 0)
-        side->SW_middlesurface.inFlags &= ~SUIF_PVIS;
-
-    // Top.
-    if((!devRendSkyMode && Surface_IsSkyMasked(&fceil->surface) && Surface_IsSkyMasked(&bceil->surface)) ||
-       //(!devRendSkyMode && Surface_IsSkyMasked(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
-       (fceil->visHeight <= bceil->visHeight))
-        side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
-
-    // Bottom.
-    if((!devRendSkyMode && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface)) ||
-       //(!devRendSkyMode && Surface_IsSkyMasked(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
-       (ffloor->visHeight >= bfloor->visHeight))
-        side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
-}
-
-static void Rend_MarkSideDefSectionsPVisible(HEdge* hedge)
-{
-    assert(hedge);
-    /// @todo Do we really need to do this for both sides? Surely not.
-    markSideDefSectionsPVisible(hedge);
-    if(hedge->twin)
-        markSideDefSectionsPVisible(hedge->twin);
+    return sections;
 }
 
 static void selectSurfaceColors(const float** topColor,
@@ -1814,17 +1811,17 @@ static void reportLineDefDrawn(LineDef* line)
 /**
  * @param hedge  HEdge to draw wall surfaces for.
  */
-static boolean Rend_RenderHEdge(HEdge* hedge)
+static boolean Rend_RenderHEdge(HEdge* hedge, byte sections)
 {
     BspLeaf* leaf = currentBspLeaf;
     Sector* frontSec = leaf->sector;
     Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
-    SideDef* frontSide = HEDGE_SIDEDEF(hedge);
+    lineside_t* front = HEDGE_SIDE(hedge);
 
-    if(!frontSide) return false;
+    if(!front->sideDef) return false;
 
     // Only a "middle" section.
-    if(frontSide->SW_middleinflags & SUIF_PVIS)
+    if(sections & SSF_MIDDLE)
     {
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
@@ -1849,34 +1846,30 @@ static boolean Rend_RenderHEdge(HEdge* hedge)
 /**
  * Render wall sections for a HEdge belonging to a two-sided LineDef.
  */
-static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
+static boolean Rend_RenderHEdgeTwosided(HEdge* hedge, byte sections)
 {
     BspLeaf* leaf = currentBspLeaf;
-    Sector* frontSec, *backSec;
-    SideDef* frontSide, *backSide;
+    LineDef* line = hedge->lineDef;
     Plane* ffloor, *fceil, *bfloor, *bceil;
-    LineDef* line;
+    lineside_t* front, *back;
     int solidSeg = false;
 
-    line = hedge->lineDef;
     if(!line) return false;
 
-    frontSide = HEDGE_SIDEDEF(hedge);
-    backSide = HEDGE_SIDEDEF(hedge->twin);
-    frontSec = line->L_sector(hedge->side);
-    backSec  = line->L_sector(hedge->side^1);
+    front = HEDGE_SIDE(hedge);
+    back  = HEDGE_SIDE(hedge->twin);
 
     reportLineDefDrawn(line);
 
-    if(backSec == frontSec &&
-       !frontSide->SW_topmaterial && !frontSide->SW_bottommaterial &&
-       !frontSide->SW_middlematerial)
+    if(back->sector == front->sector &&
+       !front->sideDef->SW_topmaterial && !front->sideDef->SW_bottommaterial &&
+       !front->sideDef->SW_middlematerial)
        return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
     ffloor = leaf->sector->SP_plane(PLN_FLOOR);
     fceil  = leaf->sector->SP_plane(PLN_CEILING);
-    bfloor = backSec->SP_plane(PLN_FLOOR);
-    bceil  = backSec->SP_plane(PLN_CEILING);
+    bfloor = back->sector->SP_plane(PLN_FLOOR);
+    bceil  = back->sector->SP_plane(PLN_CEILING);
 
     /**
      * Create the wall sections.
@@ -1885,8 +1878,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
      * Determine which parts of the segment are really visible.
      */
 
-    // Middle section.
-    if(frontSide->SW_middleinflags & SUIF_PVIS)
+    // Middle section?
+    if(sections & SSF_MIDDLE)
     {
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
@@ -1902,11 +1895,11 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
 
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             solidSeg = rendHEdgeSection(hedge, SS_MIDDLE, rhFlags,
-                                        frontSec->lightLevel, R_GetSectorLightColor(frontSec),
+                                        front->sector->lightLevel, R_GetSectorLightColor(front->sector),
                                         &leftWallDivs, &rightWallDivs, matOffset);
             if(solidSeg)
             {
-                Surface* suf = &frontSide->SW_middlesurface;
+                Surface* suf = &front->sideDef->SW_middlesurface;
                 coord_t xbottom, xtop;
 
                 if(LINE_SELFREF(line))
@@ -1931,8 +1924,8 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
         }
     }
 
-    // Upper section.
-    if(frontSide->SW_topinflags & SUIF_PVIS)
+    // Upper section?
+    if(sections & SSF_TOP)
     {
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
@@ -1942,13 +1935,13 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_TOP, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             frontSec->lightLevel, R_GetSectorLightColor(frontSec),
+                             front->sector->lightLevel, R_GetSectorLightColor(front->sector),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
 
-    // Lower section.
-    if(frontSide->SW_bottominflags & SUIF_PVIS)
+    // Lower section?
+    if(sections & SSF_BOTTOM)
     {
         walldivs_t leftWallDivs, rightWallDivs;
         float matOffset[2];
@@ -1958,7 +1951,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
         {
             Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
             rendHEdgeSection(hedge, SS_BOTTOM, RHF_ADD_DYNLIGHTS|RHF_ADD_DYNSHADOWS|RHF_ADD_RADIO,
-                             frontSec->lightLevel, R_GetSectorLightColor(frontSec),
+                             front->sector->lightLevel, R_GetSectorLightColor(front->sector),
                              &leftWallDivs, &rightWallDivs, matOffset);
         }
     }
@@ -1967,21 +1960,19 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
     if(solidSeg == -1)
         return false; // NEVER (we have a hole we couldn't fix).
 
-    if(line->L_frontsidedef && line->L_backsidedef &&
-       line->L_frontsector == line->L_backsector)
+    if(front->sideDef && back->sideDef && front->sector == back->sector)
        return false;
 
     if(!solidSeg) // We'll have to determine whether we can...
     {
-        if(backSec == frontSec)
+        if(back->sector == front->sector)
         {
             // An obvious hack, what to do though??
         }
-        else if((bceil->visHeight <= ffloor->visHeight &&
-                    ((frontSide->SW_topmaterial /* && !(frontSide->flags & SDF_MIDTEXUPPER)*/) ||
-                     (frontSide->SW_middlematerial))) ||
-                (bfloor->visHeight >= fceil->visHeight &&
-                    (frontSide->SW_bottommaterial || frontSide->SW_middlematerial)))
+        else if(   (bceil->visHeight <= ffloor->visHeight &&
+                        (front->sideDef->SW_topmaterial    || front->sideDef->SW_middlematerial))
+                || (bfloor->visHeight >= fceil->visHeight &&
+                        (front->sideDef->SW_bottommaterial || front->sideDef->SW_middlematerial)))
         {
             // A closed gap?
             if(FEQUAL(fceil->visHeight, bfloor->visHeight))
@@ -2004,8 +1995,7 @@ static boolean Rend_RenderHEdgeTwosided(HEdge* hedge)
         /// @todo Is this still necessary?
         else if(bceil->visHeight <= bfloor->visHeight ||
                 (!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
-                (frontSide->SW_topmaterial /*&& !(frontSide->flags & SDF_MIDTEXUPPER)*/) &&
-                (frontSide->SW_bottommaterial)))
+                front->sideDef->SW_topmaterial && front->sideDef->SW_bottommaterial))
         {
             // A zero height back segment
             solidSeg = true;
@@ -2033,8 +2023,6 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
                     hedge->frameFlags |= HEDGEINF_FACINGFRONT;
                 else
                     hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
-
-                Rend_MarkSideDefSectionsPVisible(hedge);
             }
         } while((hedge = hedge->next) != leaf->hedge);
     }
@@ -2046,7 +2034,7 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
         uint i;
         for(i = 0; i < leaf->polyObj->lineCount; ++i)
         {
-            line = leaf->polyObj->lines[i];
+            line  = leaf->polyObj->lines[i];
             hedge = line->L_frontside.hedgeLeft;
 
             // Which way should it be facing?
@@ -2054,8 +2042,6 @@ static void Rend_MarkSegsFacingFront(BspLeaf* leaf)
                 hedge->frameFlags |= HEDGEINF_FACINGFRONT;
             else
                 hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
-
-            Rend_MarkSideDefSectionsPVisible(hedge);
         }
     }
 }
@@ -2714,16 +2700,17 @@ static void Rend_RenderWalls(void)
         {
             Sector* frontSec = hedge->sector;
             Sector* backSec  = HEDGE_BACK_SECTOR(hedge);
+            byte sections = pvisibleLineSections(hedge->lineDef, hedge->side);
             boolean opaque;
 
             if(!frontSec || !backSec ||
                (hedge->twin && !HEDGE_SIDEDEF(hedge->twin)) /* front side of a "window" */)
             {
-                opaque = Rend_RenderHEdge(hedge);
+                opaque = Rend_RenderHEdge(hedge, sections);
             }
             else
             {
-                opaque = Rend_RenderHEdgeTwosided(hedge);
+                opaque = Rend_RenderHEdgeTwosided(hedge, sections);
             }
 
             // When the viewer is in the void do not range-occlude.
@@ -2752,7 +2739,8 @@ static void Rend_RenderPolyobjs(void)
         // Let's first check which way this hedge is facing.
         if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
         {
-            boolean opaque = Rend_RenderHEdge(hedge);
+            byte sections  = pvisibleLineSections(hedge->lineDef, hedge->side);
+            boolean opaque = Rend_RenderHEdge(hedge, sections);
 
             // When the viewer is in the void do not range-occlude.
             if(opaque && !P_IsInVoid(viewPlayer))

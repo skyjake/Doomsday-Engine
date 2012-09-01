@@ -176,11 +176,9 @@ end
 
 internal
 // Internal surface flags:
-#define SUIF_PVIS             0x0001
-#define SUIF_FIX_MISSING_MATERIAL 0x0002 // Current Material is a fix replacement
-                                     // (not sent to clients, returned via DMU etc).
-#define SUIF_BLEND            0x0004 // Surface possibly has a blended texture.
-#define SUIF_NO_RADIO         0x0008 // No fakeradio for this surface.
+#define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
+                                           /// (not sent to clients, returned via DMU etc).
+#define SUIF_NO_RADIO               0x0002 ///< No fakeradio for this surface.
 
 #define SUIF_UPDATE_FLAG_MASK 0xff00
 #define SUIF_UPDATE_DECORATIONS 0x8000
@@ -460,10 +458,19 @@ typedef struct mlinedef_s {
     
     // One-sided linedef used for a special effect (windows).
     // The value refers to the opposite sector on the back side.
-    /// @todo Refactor so this information is represented using the
-    ///       BSP data objects.
+    /// @todo This reference is now only used during map conversion - we can use a temporary LUT.
     struct sector_s* windowEffect;
 } mlinedef_t;
+
+/**
+ * @defgroup sideSectionFlags  Side Section Flags
+ * @ingroup map
+ */
+///@{
+#define SSF_MIDDLE          0x1
+#define SSF_BOTTOM          0x2
+#define SSF_TOP             0x4
+///@}
 
 typedef struct lineside_s {
     struct sector_s* sector; /// Sector on this side.
