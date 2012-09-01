@@ -89,9 +89,12 @@ static boolean crossLineDef(const LineDef* li, byte side, losdata_t* los)
     if(!li->L_sidedef(side))
         return true; // HEdge is on the back side of a one-sided window.
 
+    if(!li->L_sector(side)) /*$degenleaf*/
+        return false;
+
     fsec = li->L_sector(side);
     bsec  = (li->L_backsidedef? li->L_sector(side^1) : NULL);
-    noBack = li->L_backsidedef? false : true;
+    noBack = (li->L_backsidedef? false : true);
 
     if(!noBack && !(los->flags & LS_PASSLEFT) &&
        (!(bsec->SP_floorheight < fsec->SP_ceilheight) ||

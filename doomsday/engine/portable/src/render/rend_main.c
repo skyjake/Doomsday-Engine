@@ -355,6 +355,7 @@ void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertic
 static void markSideDefSectionsPVisible(HEdge* hedge)
 {
     const Plane* fceil, *bceil, *ffloor, *bfloor;
+    Sector* fsec, *bsec;
     SideDef* side;
     uint i;
 
@@ -366,17 +367,19 @@ static void markSideDefSectionsPVisible(HEdge* hedge)
         side->sections[i].inFlags |= SUIF_PVIS;
     }
 
-    if(!hedge->lineDef->L_backsidedef)
+    bsec = hedge->lineDef->L_sector(hedge->side^1);
+    if(!bsec /*$degenleaf*/ || !hedge->lineDef->L_backsidedef)
     {
         side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
         return;
     }
 
-    fceil  = hedge->lineDef->L_sector(hedge->side  )->SP_plane(PLN_CEILING);
-    ffloor = hedge->lineDef->L_sector(hedge->side  )->SP_plane(PLN_FLOOR);
-    bceil  = hedge->lineDef->L_sector(hedge->side^1)->SP_plane(PLN_CEILING);
-    bfloor = hedge->lineDef->L_sector(hedge->side^1)->SP_plane(PLN_FLOOR);
+    fsec = hedge->lineDef->L_sector(hedge->side);
+    fceil  = fsec->SP_plane(PLN_CEILING);
+    ffloor = fsec->SP_plane(PLN_FLOOR);
+    bceil  = bsec->SP_plane(PLN_CEILING);
+    bfloor = bsec->SP_plane(PLN_FLOOR);
 
     // Middle.
     if(!side->SW_middlematerial || !Material_IsDrawable(side->SW_middlematerial) || side->SW_middlergba[3] <= 0)
