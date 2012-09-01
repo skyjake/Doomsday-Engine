@@ -115,6 +115,9 @@ public:
         Q_ASSERT(childId == RIGHT || childId == LEFT);
     }
 
+public:
+    SuperBlock& clear();
+
     /**
      * Retrieve the SuperBlockmap which owns this block.
      * @return  The owning SuperBlockmap instance.

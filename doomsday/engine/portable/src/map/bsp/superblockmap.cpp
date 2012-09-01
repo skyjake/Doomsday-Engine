@@ -50,7 +50,7 @@ struct SuperBlock::Instance
 
     ~Instance()
     {
-        KdTreeNode_SetUserData(tree, NULL);
+        KdTreeNode_Delete(tree);
     }
 
     inline void linkHEdge(HEdge& hedge)
@@ -84,7 +84,26 @@ SuperBlock::SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical)
 
 SuperBlock::~SuperBlock()
 {
+    clear();
     delete d;
+}
+
+SuperBlock& SuperBlock::clear()
+{
+    if(d->tree)
+    {
+        // Recursively handle sub-blocks.
+        KdTreeNode* child;
+        for(uint num = 0; num < 2; ++num)
+        {
+            child = KdTreeNode_Child(d->tree, num);
+            if(!child) continue;
+
+            SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
+            if(blockPtr) delete blockPtr;
+        }
+    }
+    return *this;
 }
 
 SuperBlockmap& SuperBlock::blockmap() const
@@ -295,24 +314,6 @@ struct SuperBlockmap::Instance
     {
         KdTree_Delete(kdTree);
     }
-
-    void clearBlockWorker(SuperBlock& block)
-    {
-        if(block.d->tree)
-        {
-            // Recursively handle sub-blocks.
-            KdTreeNode* child;
-            for(uint num = 0; num < 2; ++num)
-            {
-                child = KdTreeNode_Child(block.d->tree, num);
-                if(!child) continue;
-
-                SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
-                if(blockPtr) clearBlockWorker(*blockPtr);
-            }
-        }
-        delete &block;
-    }
 };
 
 SuperBlockmap::SuperBlockmap(const AABox& bounds)
@@ -333,7 +334,7 @@ SuperBlock& SuperBlockmap::root()
 
 void SuperBlockmap::clear()
 {
-    d->clearBlockWorker(root());
+    root().clear();
 }
 
 static void findHEdgeBoundsWorker(SuperBlock& block, AABoxd& bounds, bool* initialized)

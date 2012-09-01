@@ -58,6 +58,8 @@ struct kdtreenode_s* KdTree_Root(KdTree* kdTree);
 int KdTree_PostTraverse2(KdTree* kdTree, int(*callback)(KdTreeNode*, void*), void* parameters);
 int KdTree_PostTraverse(KdTree* kdTree, int(*callback)(KdTreeNode*, void*)/*, parameters=NULL*/);
 
+void KdTreeNode_Delete(KdTreeNode* kdTreeNode);
+
 KdTree* KdTreeNode_KdTree(KdTreeNode* kdTreeNode);
 
 const AABox* KdTreeNode_Bounds(KdTreeNode* kdTreeNode);

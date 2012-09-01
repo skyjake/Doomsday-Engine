@@ -1330,6 +1330,7 @@ struct Partitioner::Instance
             // Divide the half-edges into two subsets according to their spacial
             // relationship with the half-plane (splitting any which intersect).
             partitionHEdges(partList, rightHEdges, leftHEdges);
+            partList.clear();
             addMiniHEdges(rightHEdges, leftHEdges);
             clearPartitionIntercepts();
 
@@ -1355,6 +1356,8 @@ struct Partitioner::Instance
         {
             // No partition required/possible - already convex (or degenerate).
             BspLeaf* leaf = buildBspLeaf(collectHEdges(partList));
+            partList.clear();
+
             // Not a leaf? (collapse upward).
             if(!leaf) return 0;
 
