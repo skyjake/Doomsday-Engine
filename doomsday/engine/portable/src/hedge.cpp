@@ -297,7 +297,7 @@ boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
 
     int lineFlags = hedge->lineDef? hedge->lineDef->flags : 0;
     SideDef* frontDef = HEDGE_SIDEDEF(hedge);
-    SideDef* backDef  = hedge->twin? HEDGE_SIDEDEF(hedge) : 0;
+    SideDef* backDef  = hedge->twin? HEDGE_SIDEDEF(hedge->twin) : 0;
     coord_t low, hi;
     boolean visible = R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
                                        &low, &hi, matOffset);
