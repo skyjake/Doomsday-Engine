@@ -1008,29 +1008,54 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
             *low = MAX_OF(bfloor->visHeight, ffloor->visHeight);
             *hi  = MIN_OF(bceil->visHeight,  fceil->visHeight);
 
-            if(!stretchMiddle)
+            if(matOffset)
+            {
+                matOffset[0] = suf->visOffset[0];
+                matOffset[1] = 0;
+            }
+
+            if(suf->material && !stretchMiddle)
             {
                 const boolean clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&ffloor->surface) && Surface_IsSkyMasked(&bfloor->surface));
                 const boolean clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&fceil->surface)  && Surface_IsSkyMasked(&bceil->surface));
-                coord_t bottomRight = *low, topRight = *hi;
 
-                if(LineDef_MiddleMaterialCoords(line, side, low, &bottomRight, hi,
-                                                &topRight, matOffset? &matOffset[1] : NULL,
-                                                unpegBottom, clipBottom, clipTop))
+                const coord_t openBottom = *low;
+                const coord_t openTop    = *hi;
+                const int matHeight      = Material_Height(suf->material);
+                const coord_t matYOffset = suf->visOffset[VY];
+
+                if(openTop > openBottom)
                 {
-                    if(matOffset)
+                    if(unpegBottom)
                     {
-                        matOffset[0] = suf->visOffset[0];
-                        if(!clipTop) matOffset[1] = 0;
+                        *low += matYOffset;
+                        *hi   = *low + matHeight;
                     }
-                }
-            }
-            else
-            {
-                if(matOffset)
-                {
-                    matOffset[0] = suf->visOffset[0];
-                    matOffset[1] = 0; /// @todo Always??
+                    else
+                    {
+                        *hi += matYOffset;
+                        *low = *hi - matHeight;
+                    }
+
+                    if(matOffset && *hi > openTop)
+                    {
+                        matOffset[1] = *hi - openTop;
+                    }
+
+                    // Clip it?
+                    if(clipTop || clipBottom)
+                    {
+                        if(clipBottom && *low < openBottom)
+                            *low = openBottom;
+
+                        if(clipTop && *hi > openTop)
+                            *hi = openTop;
+                    }
+
+                    if(matOffset && !clipTop)
+                    {
+                        matOffset[1] = 0;
+                    }
                 }
             }
             break;
@@ -1039,6 +1064,47 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
 
     return /*is_visible=*/ *hi > *low;
 }
+
+boolean R_MiddleMaterialCoversOpening(LineDef* line, int side, boolean ignoreOpacity)
+{
+    DENG_ASSERT(line);
+{
+    SideDef* frontDef;
+    material_t* material;
+    const materialsnapshot_t* ms;
+
+    if(!line->L_sector(side^1)) return false; // Never.
+
+    frontDef = line->L_sidedef(side);
+    material = frontDef->SW_middlematerial;
+    if(!material) return false;
+
+    // Ensure we have up to date info about the material.
+    ms = Materials_Prepare(material, Rend_MapSurfaceDiffuseMaterialSpec(), true);
+    if(ignoreOpacity || (ms->isOpaque && !frontDef->SW_middleblendmode && frontDef->SW_middlergba[3] >= 1))
+    {
+        coord_t openRange, openBottom, openTop;
+
+        // Stretched middles always cover the opening.
+        if(frontDef->flags & SDF_MIDDLE_STRETCH) return true;
+
+        // Might the material cover the opening?
+        openRange = LineDef_OpenRange(line, side, &openBottom, &openTop);
+        if(ms->size.height >= openRange)
+        {
+            // Possibly; check the placement.
+            Sector* frontSec = line->L_sector(side);
+            Sector* backSec  = line->L_sector(side^1);
+            coord_t bottom, top;
+            if(R_FindBottomTop(line, side, SS_MIDDLE, frontSec, backSec, frontDef, &bottom, &top, 0))
+            {
+                return (top >= openTop && bottom <= openBottom);
+            }
+        }
+    }
+
+    return false;
+}}
 
 LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
     const lineowner_t* own, boolean antiClockwise, binangle_t *diff)
@@ -1121,7 +1187,7 @@ LineDef* R_FindSolidLineNeighbor(const Sector* sector, const LineDef* line,
                       oFCeil > sector->SP_floorvisheight)))  )
             {
 
-                if(!LineDef_MiddleMaterialCoversOpening(other, side, false))
+                if(!R_MiddleMaterialCoversOpening(other, side, false))
                     return 0;
             }
         }

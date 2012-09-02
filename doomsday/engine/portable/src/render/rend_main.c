@@ -259,6 +259,12 @@ static __inline double viewFacingDot(coord_t v1[2], coord_t v2[2])
     return (v1[VY] - v2[VY]) * (v1[VX] - vOrigin[VX]) + (v2[VX] - v1[VX]) * (v1[VY] - vOrigin[VZ]);
 }
 
+const materialvariantspecification_t* Rend_MapSurfaceDiffuseMaterialSpec(void)
+{
+    return Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                                    -1, -1, -1, true, true, false, false);
+}
+
 void Rend_VertexColorsGlow(ColorRawf* colors, size_t num, float glow)
 {
     size_t i;
@@ -2162,7 +2168,7 @@ static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
         if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
     }
 
-    return LineDef_MiddleMaterialCoversOpening(lineDef, side, false/*don't ignore opacity*/);
+    return R_MiddleMaterialCoversOpening(lineDef, side, false/*don't ignore opacity*/);
 }
 
 /**

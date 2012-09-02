@@ -89,8 +89,7 @@ void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
 void R_MapInitSurfaceLists(void);
 
-void            R_OrderVertices(const LineDef* line, const Sector* sector,
-                                Vertex* verts[2]);
+void R_OrderVertices(const LineDef* line, const Sector* sector, Vertex* verts[2]);
 
 /**
  * @param matOffset  Can be @c NULL.
@@ -98,6 +97,16 @@ void            R_OrderVertices(const LineDef* line, const Sector* sector,
 boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
     Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
     coord_t* low, coord_t* hi, float matOffset[2]);
+
+/**
+ * @param lineDef  LineDef instance.
+ * @param side  Side of LineDef to test. Non-zero value signifies the BACK side.
+  *
+ * @return  @c true iff the SideDef on the referenced @a lineDef @a side has
+ *     a "middle" Material which completely covers any opening (gap between
+ *     floor and ceiling planes) on that side of the line.
+ */
+boolean R_MiddleMaterialCoversOpening(LineDef* lineDef, int side, boolean ignoreAlpha);
 
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
