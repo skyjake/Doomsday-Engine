@@ -92,11 +92,28 @@ void R_MapInitSurfaceLists(void);
 void R_OrderVertices(const LineDef* line, const Sector* sector, Vertex* verts[2]);
 
 /**
- * @param matOffset  Can be @c NULL.
+ * Determine the map space Z coordinates of a wall section.
+ *
+ * @param section       Identifier of the section to determine coordinates for.
+ * @param lineFlags     @ref ldefFlags.
+ * @param frontSec      Sector in front of the wall.
+ * @param backSec       Sector behind the wall. Can be @c NULL
+ * @param frontDef      Definition for the front side. Can be @c NULL
+ * @param backDef       Definition for the back side. Can be @c NULL
+ *
+ * Return values:
+ * @param low           Z map space coordinate at the bottom of the wall section.
+ * @param hi            Z map space coordinate at the top of the wall section.
+ * @param matOffset     Surface space material coordinate offset. Can be @c NULL
+ *
+ * @return  @c true iff the determined wall section height is @c >0
  */
-boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
-    Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
+boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
     coord_t* low, coord_t* hi, float matOffset[2]);
+boolean R_FindBottomTop(SideDefSection section, int lineFlags,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
+    coord_t* low, coord_t* hi) /* matOffset = 0 */;
 
 /**
  * @param lineDef  LineDef instance.

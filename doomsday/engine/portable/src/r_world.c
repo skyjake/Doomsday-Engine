@@ -916,22 +916,22 @@ void R_OrderVertices(const LineDef* line, const Sector* sector, Vertex* verts[2]
     verts[1] = line->L_v(edge^1);
 }
 
-boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
-    Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
+boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
     coord_t* low, coord_t* hi, float matOffset[2])
 {
-    const boolean unpegBottom = !!(line->flags & DDLF_DONTPEGBOTTOM);
-    const boolean unpegTop    = !!(line->flags & DDLF_DONTPEGTOP);
+    const boolean unpegBottom = !!(lineFlags & DDLF_DONTPEGBOTTOM);
+    const boolean unpegTop    = !!(lineFlags & DDLF_DONTPEGTOP);
 
     // Single sided?
-    if(!frontSec || !backSec || !line->L_sidedef(side^1)/*front side of a "window"*/)
+    if(!frontSec || !backSec || !backDef/*front side of a "window"*/)
     {
         *low = frontSec->SP_floorvisheight;
         *hi  = frontSec->SP_ceilvisheight;
 
         if(matOffset)
         {
-            Surface* suf = &frontSideDef->SW_middlesurface;
+            Surface* suf = &frontDef->SW_middlesurface;
             matOffset[0] = suf->visOffset[0];
             matOffset[1] = suf->visOffset[1];
             if(unpegBottom)
@@ -942,12 +942,12 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
     }
     else
     {
-        const boolean stretchMiddle = !!(frontSideDef->flags & SDF_MIDDLE_STRETCH);
+        const boolean stretchMiddle = !!(frontDef->flags & SDF_MIDDLE_STRETCH);
         Plane* ffloor = frontSec->SP_plane(PLN_FLOOR);
         Plane* fceil  = frontSec->SP_plane(PLN_CEILING);
         Plane* bfloor = backSec->SP_plane(PLN_FLOOR);
         Plane* bceil  = backSec->SP_plane(PLN_CEILING);
-        Surface* suf = &frontSideDef->SW_surface(section);
+        Surface* suf = &frontDef->SW_surface(section);
 
         switch(section)
         {
@@ -1065,6 +1065,14 @@ boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
     return /*is_visible=*/ *hi > *low;
 }
 
+boolean R_FindBottomTop(SideDefSection section, int lineFlags,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
+    coord_t* low, coord_t* hi)
+{
+    return R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
+                            low, hi, 0/*offset not needed*/);
+}
+
 boolean R_MiddleMaterialCoversOpening(LineDef* line, int side, boolean ignoreOpacity)
 {
     DENG_ASSERT(line);
@@ -1095,8 +1103,10 @@ boolean R_MiddleMaterialCoversOpening(LineDef* line, int side, boolean ignoreOpa
             // Possibly; check the placement.
             Sector* frontSec = line->L_sector(side);
             Sector* backSec  = line->L_sector(side^1);
+            SideDef* backDef = line->L_sidedef(side^1);
             coord_t bottom, top;
-            if(R_FindBottomTop(line, side, SS_MIDDLE, frontSec, backSec, frontDef, &bottom, &top, 0))
+            if(R_FindBottomTop(SS_MIDDLE, line->flags, frontSec, backSec, frontDef, backDef,
+                               &bottom, &top))
             {
                 return (top >= openTop && bottom <= openBottom);
             }

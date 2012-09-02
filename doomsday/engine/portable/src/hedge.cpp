@@ -293,12 +293,15 @@ boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
     Sector* frontSec, Sector* backSec,
     walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2])
 {
-    Q_ASSERT(hedge);
+    DENG_ASSERT(hedge);
+
+    int lineFlags = hedge->lineDef? hedge->lineDef->flags : 0;
+    SideDef* frontDef = HEDGE_SIDEDEF(hedge);
+    SideDef* backDef  = hedge->twin? HEDGE_SIDEDEF(hedge) : 0;
     coord_t low, hi;
-    boolean visible = R_FindBottomTop(hedge->lineDef, hedge->side, section,
-                                      frontSec, backSec, HEDGE_SIDEDEF(hedge),
-                                      &low, &hi, matOffset);
-    matOffset[0] += (float)(hedge->offset);
+    boolean visible = R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
+                                       &low, &hi, matOffset);
+    matOffset[0] += float(hedge->offset);
     if(!visible) return false;
 
     buildWallDiv(leftWallDivs,  hedge, section, low, hi, false/*is-left-edge*/);
