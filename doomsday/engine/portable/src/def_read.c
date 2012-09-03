@@ -580,38 +580,26 @@ static int ReadBlendmode(blendmode_t* dest)
     char flag[1024];
     blendmode_t bm;
 
-    // By default, the blendmode is "normal".
-    *dest = BM_NORMAL;
-
     ReadToken();
     UnreadToken(token);
     if(ISTOKEN("\""))
     {
         // The old format.
-        if(!ReadString(flag, sizeof(flag)))
-            return false;
+        if(!ReadString(flag, sizeof(flag))) return false;
 
         bm = (blendmode_t) Def_EvalFlags(flag);
-        if(bm != BM_NORMAL)
-        {
-            *dest = bm;
-        }
-        else
-        {
-            Con_Message("Warning: Unknown BlendMode %s in %s on line #%i, ignored (blendmode not changed).\n",
-                        flag, source ? source->fileName : "?", source ? source->lineNumber : 0);
-        }
+    }
+    else
+    {
+        // Read the blendmode.
+        ReadToken();
 
-        return true;
+        strcpy(flag, "bm_");
+        strcat(flag, token);
+
+        bm = (blendmode_t) Def_EvalFlags(flag);
     }
 
-    // Read the blendmode.
-    ReadToken();
-
-    strcpy(flag, "bm_");
-    strcat(flag, token);
-
-    bm = (blendmode_t) Def_EvalFlags(flag);
     if(bm != BM_NORMAL)
     {
         *dest = bm;
