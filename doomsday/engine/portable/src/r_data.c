@@ -1281,10 +1281,18 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     return false;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 Uri* R_ComposePatchUri(patchid_t id)
 {
     return Textures_ComposeUri(Textures_TextureForUniqueId(TN_PATCHES, id));
+}
+
+/// @note Part of the Doomsday public API.
+AutoStr* R_ComposePatchPath(patchid_t id)
+{
+    textureid_t texId = Textures_TextureForUniqueId(TN_PATCHES, id);
+    if(texId == NOTEXTUREID) return AutoStr_NewStd();
+    return Textures_ComposePath(texId);
 }
 
 rawtex_t** R_CollectRawTexs(int* count)

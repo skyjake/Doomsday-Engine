@@ -1065,22 +1065,16 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags
 
 const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
 {
-    Uri* uri = R_ComposePatchUri(patchId);
-    ddstring_t valueStr;
+    AutoStr* patchPath = R_ComposePatchPath(patchId);
+    AutoStr* valueStr;
     char* replacement;
     int result;
 
-    if(!uri) return NULL; // Invalid id?
+    if(Str_IsEmpty(patchPath)) return NULL; // Invalid id?
 
-    Str_Init(&valueStr);
-    Str_Appendf(&valueStr, "Patch Replacement|%s", Str_Text(Uri_Path(uri)));
-    result = Def_Get(DD_DEF_VALUE, Str_Text(&valueStr), (void*)&replacement);
-    Str_Free(&valueStr);
-    Uri_Delete(uri);
-    if(result == 0) // Not found.
-    {
-        return NULL;
-    }
+    valueStr = Str_Appendf(AutoStr_New(), "Patch Replacement|%s", Str_Text(patchPath));
+    result = Def_Get(DD_DEF_VALUE, Str_Text(valueStr), (void*)&replacement);
+    if(result == 0) return NULL; // Not found.
 
     if(flags & (PRF_NO_IWAD|PRF_NO_PWAD))
     {

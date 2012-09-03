@@ -633,6 +633,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 patchid_t R_DeclarePatch(const char* name);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 Uri* R_ComposePatchUri(patchid_t id);
+AutoStr* R_ComposePatchPath(patchid_t id);
 
 int R_TextureUniqueId2(const Uri* uri, boolean quiet);
 int R_TextureUniqueId(const Uri* uri); /*quiet=false*/
