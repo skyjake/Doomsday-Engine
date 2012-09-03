@@ -1060,9 +1060,24 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     READSTR(st->id);
                 }
+                else if(ISLABEL("Frame"))
+                {
+// Legacy state frame flags:
+#define FF_FULLBRIGHT               0x8000
+#define FF_FRAMEMASK                0x7fff
+
+                    READINT(st->frame);
+                    if(st->frame & FF_FULLBRIGHT)
+                    {
+                        st->frame &= FF_FRAMEMASK;
+                        st->flags |= STF_FULLBRIGHT;
+                    }
+
+#undef FF_FRAMEMASK
+#undef FF_FULLBRIGHT
+                }
                 else RV_FLAGS("Flags", st->flags, "statef_")
                 RV_STR("Sprite", st->sprite.id)
-                RV_INT("Frame", st->frame)
                 RV_INT("Tics", st->tics)
                 RV_STR("Action", st->action)
                 RV_STR("Next state", st->nextState)

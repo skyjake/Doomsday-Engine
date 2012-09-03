@@ -59,10 +59,6 @@
 #define LOOPi(n)    for(i = 0; i < (n); ++i)
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
 
-// Legacy frame flags.
-#define FF_FULLBRIGHT       0x8000 // flag in mobj->frame
-#define FF_FRAMEMASK        0x7fff
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
@@ -1160,26 +1156,18 @@ void Def_Read(void)
 
     for(i = 0; i < countStates.num; ++i)
     {
-        ded_state_t*        dstNew, *dst = &defs.states[i];
+        ded_state_t* dstNew, *dst = &defs.states[i];
         // Make sure duplicate IDs overwrite the earliest.
-        int                 stateNum = Def_GetStateNum(dst->id);
-        state_t*            st;
+        int stateNum = Def_GetStateNum(dst->id);
+        state_t* st;
 
-        if(stateNum == -1)
-            continue;
+        if(stateNum == -1) continue;
 
         dstNew = defs.states + stateNum;
         st = states + stateNum;
         st->sprite = Def_GetSpriteNum(dst->sprite.id);
         st->flags = dst->flags;
         st->frame = dst->frame;
-
-        // Check for the old or'd in fullbright flag.
-        if(st->frame & FF_FULLBRIGHT)
-        {
-            st->frame &= FF_FRAMEMASK;
-            st->flags |= STF_FULLBRIGHT;
-        }
 
         st->tics = dst->tics;
         st->action = Def_GetActionPtr(dst->action);
@@ -1921,8 +1909,8 @@ int Def_Get(int type, const char* id, void* out)
  */
 int Def_Set(int type, int index, int value, const void* ptr)
 {
-    int                 i;
-    ded_music_t*        musdef = 0;
+    ded_music_t* musdef = 0;
+    int i;
 
     switch(type)
     {
@@ -1930,13 +1918,11 @@ int Def_Set(int type, int index, int value, const void* ptr)
         if(index < 0 || index >= defs.count.text.num)
             Con_Error("Def_Set: Text index %i is invalid.\n", index);
 
-        defs.text[index].text = M_Realloc(defs.text[index].text,
-            strlen((char*)ptr) + 1);
+        defs.text[index].text = M_Realloc(defs.text[index].text, strlen((char*)ptr) + 1);
         strcpy(defs.text[index].text, ptr);
         break;
 
-    case DD_DEF_STATE:
-        {
+    case DD_DEF_STATE: {
         ded_state_t* stateDef;
 
         if(index < 0 || index >= defs.count.states.num)
@@ -1945,36 +1931,26 @@ int Def_Set(int type, int index, int value, const void* ptr)
         stateDef = &defs.states[index];
         switch(value)
         {
-        case DD_SPRITE:
-            {
+        case DD_SPRITE: {
             int sprite = *(int*) ptr;
 
             if(sprite < 0 || sprite >= defs.count.sprites.num)
             {
-                Con_Message("Def_Set: Warning, invalid sprite index %i.\n",
-                            sprite);
+                Con_Message("Def_Set: Warning, invalid sprite index %i.\n", sprite);
                 break;
             }
 
             strcpy((char*) stateDef->sprite.id, defs.sprites[value].id);
-            break;
-            }
-        case DD_FRAME:
-            {
-            int frame = *(int*) ptr;
+            break; }
 
-            if(frame & FF_FULLBRIGHT)
-                stateDef->flags |= STF_FULLBRIGHT;
-            else
-                stateDef->flags &= ~STF_FULLBRIGHT;
-            stateDef->frame = frame & ~FF_FULLBRIGHT;
+        case DD_FRAME:
+            stateDef->frame = *(int*)ptr;
             break;
-            }
-        default:
-            break;
+
+        default: break;
         }
-        break;
-        }
+        break; }
+
     case DD_DEF_SOUND:
         if(index < 0 || index >= countSounds.num)
             Con_Error("Def_Set: Sound index %i is invalid.\n", index);
