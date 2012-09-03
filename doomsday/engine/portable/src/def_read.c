@@ -577,8 +577,8 @@ static int ReadFlags(int* dest, const char* prefix)
 
 static int ReadBlendmode(blendmode_t* dest)
 {
-    char                flag[1024];
-    blendmode_t         bm;
+    char flag[1024];
+    blendmode_t bm;
 
     // By default, the blendmode is "normal".
     *dest = BM_NORMAL;
@@ -593,7 +593,14 @@ static int ReadBlendmode(blendmode_t* dest)
 
         bm = (blendmode_t) Def_EvalFlags(flag);
         if(bm != BM_NORMAL)
+        {
             *dest = bm;
+        }
+        else
+        {
+            Con_Message("Warning: Unknown BlendMode %s in %s on line #%i, ignored (blendmode not changed).\n",
+                        flag, source ? source->fileName : "?", source ? source->lineNumber : 0);
+        }
 
         return true;
     }
@@ -606,7 +613,14 @@ static int ReadBlendmode(blendmode_t* dest)
 
     bm = (blendmode_t) Def_EvalFlags(flag);
     if(bm != BM_NORMAL)
+    {
         *dest = bm;
+    }
+    else
+    {
+        Con_Message("Warning: Unknown BlendMode %s in %s on line #%i, ignored (blendmode not changed).\n",
+                    flag, source ? source->fileName : "?", source ? source->lineNumber : 0);
+    }
 
     return true;
 }
