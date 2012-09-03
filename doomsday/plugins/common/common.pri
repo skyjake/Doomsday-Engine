@@ -84,7 +84,7 @@ SOURCES += \
     $$common_src/hu_menu.c \
     $$common_src/hu_msg.c \
     $$common_src/hu_pspr.c \
-    $$common_src/hu_stuff.c \
+    $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.c \
     $$common_src/m_fixed.c \
     $$common_src/mobj.c \
