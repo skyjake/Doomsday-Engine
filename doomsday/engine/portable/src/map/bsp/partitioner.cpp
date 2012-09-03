@@ -1150,11 +1150,8 @@ struct Partitioner::Instance
         if(!hedges.size()) return 0;
 
         // Collapse all degenerate and orphaned leafs.
-#ifdef _MSC_VER
+#if 0
         const bool isDegenerate = hedges.size() < 3;
-#else
-        const bool isDegenerate = false;
-#endif
         bool isOrphan = true;
         DENG2_FOR_EACH(it, hedges, HEdgeList::const_iterator)
         {
@@ -1165,11 +1162,13 @@ struct Partitioner::Instance
                 break;
             }
         }
+#endif
 
         BspLeaf* leaf = 0;
         DENG2_FOR_EACH(it, hedges, HEdgeList::const_iterator)
         {
             HEdge* hedge = *it;
+#if 0
             HEdgeInfos::iterator hInfoIt = hedgeInfos.find(hedge);
             HEdgeInfo& hInfo = hInfoIt->second;
 
@@ -1209,6 +1208,7 @@ struct Partitioner::Instance
                 numHEdges -= 1;
                 continue;
             }
+#endif
 
             if(!leaf) leaf = BspLeaf_New();
 
@@ -1572,7 +1572,23 @@ struct Partitioner::Instance
             }
         } while((hedge = hedge->next) != leaf->hedge);
 
-        return selfRefChoice;
+        if(selfRefChoice) return selfRefChoice;
+
+        // Last resort:
+        /// @todo This is only necessary because of other failure cases in the
+        ///       partitioning algorithm and to avoid producing a potentially
+        ///       dangerous BSP - not assigning a sector to each leaf may result
+        ///       in obscure fatal errors when in-game.
+        hedge = leaf->hedge;
+        do
+        {
+            if(hedge->sector)
+            {
+                return hedge->sector;
+            }
+        } while((hedge = hedge->next) != leaf->hedge);
+
+        return 0; // Not reachable.
     }
 
     void clockwiseLeaf(BspTreeNode& tree, HEdgeSortBuffer& sortBuffer)
@@ -1629,7 +1645,6 @@ struct Partitioner::Instance
         }
 
         leaf->sector = chooseSectorForBspLeaf(leaf);
-        // This should now be impossible...
         if(!leaf->sector)
         {
             leaf->sector = 0;
@@ -1639,6 +1654,12 @@ struct Partitioner::Instance
 
         logMigrantHEdges(leaf);
         logUnclosedBspLeaf(leaf);
+
+        if(!sanityCheckHasRealHEdge(leaf))
+        {
+            throw de::Error("Partitioner::clockwiseLeaf",
+                            QString("BSP Leaf 0x%1 has no linedef-linked half-edge").arg(dintptr(leaf), 0, 16));
+        }
     }
 
     /**
@@ -2207,6 +2228,17 @@ struct Partitioner::Instance
                 registerMigrantHEdge(hedge, sector);
             }
         } while((hedge = hedge->next) != leaf->hedge);
+    }
+
+    bool sanityCheckHasRealHEdge(const BspLeaf* leaf) const
+    {
+        DENG_ASSERT(leaf);
+        HEdge* hedge = leaf->hedge;
+        do
+        {
+            if(hedge->lineDef) return true;
+        } while((hedge = hedge->next) != leaf->hedge);
+        return false;
     }
 };
 
