@@ -31,6 +31,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int mapTime;
 extern int actualMapTime;
 extern int timerGame;
@@ -38,5 +42,9 @@ extern int timerGame;
 void    P_RunPlayers(timespan_t ticLength);
 boolean P_IsPaused(void);
 void    P_DoTick(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_P_TICK_H */

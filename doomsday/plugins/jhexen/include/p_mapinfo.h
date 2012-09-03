@@ -34,6 +34,10 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#if __cplusplus
+extern "C" {
+#endif
+
 void            P_InitMapInfo(void);
 void            P_InitMapMusicInfo(void);
 
@@ -81,5 +85,9 @@ int             P_GetCDEnd2Track(void);
 int             P_GetCDEnd3Track(void);
 int             P_GetCDIntermissionTrack(void);
 int             P_GetCDTitleTrack(void);
+
+#if __cplusplus
+} // extern "C"
+#endif
 
 #endif

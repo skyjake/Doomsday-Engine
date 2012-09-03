@@ -1,5 +1,5 @@
 /**
- * @file hu_stuff.c
+ * @file hu_stuff.cpp
  * Miscellaneous routines for heads-up displays and UI.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -195,7 +195,7 @@ void Hu_LoadData(void)
 # if __JDOOM64__
     {
         pMapNamesSize = 32;
-        pMapNames = Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
+        pMapNames = (patchid_t*) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
         for(i = 0; i < pMapNamesSize; ++i)
         {
             sprintf(name, "WILV%2.2u", i);
@@ -206,7 +206,7 @@ void Hu_LoadData(void)
     if(gameModeBits & GM_ANY_DOOM2)
     {
         pMapNamesSize = 32;
-        pMapNames = Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
+        pMapNames = (patchid_t*) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
         for(i = 0; i < pMapNamesSize; ++i)
         {
             sprintf(name, "CWILV%2.2u", i);
@@ -221,7 +221,7 @@ void Hu_LoadData(void)
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
         pMapNamesSize = 9*4;
-        pMapNames = Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
+        pMapNames = (patchid_t*) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
         for(i = 0; i < numEpisodes; ++i)
         {
             for(j = 0; j < 9; ++j) // Number of maps per episode.
@@ -292,6 +292,7 @@ void HU_WakeWidgets(int player)
     }
 }
 
+#if __JHERETIC__ || __JHEXEN__
 static void drawQuad(float x, float y, float w, float h, float s, float t,
     float r, float g, float b, float a)
 {
@@ -310,6 +311,7 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
         DGL_Vertex2f(x, y + h);
     DGL_End();
 }
+#endif
 
 void HU_DrawText(const char* str, float x, float y, float scale,
     float r, float g, float b, float a, int alignFlags, short textFlags)
@@ -374,6 +376,8 @@ static void sortScoreInfo(scoreinfo_t* vec, size_t size)
 
 static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
 {
+    DENG_UNUSED(player);
+
 #if __JHEXEN__
     static const int plrColors[] = {
         AM_PLR1_COLOR,
@@ -505,8 +509,12 @@ static void drawTable(float x, float ly, float width, float height,
 
     if(!numCols) return;
 
-    colX = calloc(1, sizeof(*colX) * numCols);
-    colW = calloc(1, sizeof(*colW) * numCols);
+    /// @todo - Preprocess the table to avoid constant allocations.
+    colX = (float*) calloc(1, sizeof(*colX) * numCols);
+    if(!colX) Con_Error("drawTable: Failed on allocation of %lu bytes for colX data table.", (unsigned long) (sizeof(*colX) * numCols));
+
+    colW = (float*) calloc(1, sizeof(*colW) * numCols);
+    if(!colW) Con_Error("drawTable: Failed on allocation of %lu bytes for colW data table.", (unsigned long) (sizeof(*colW) * numCols));
 
     lineHeight = .5f + height / (MAXPLAYERS + 1);
     fontHeight = FR_CharHeight('A');
@@ -1478,7 +1486,7 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 
     R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
                                     portGeometry->size.width, portGeometry->size.height,
-                                    cfg.menuScaleMode);
+                                    scalemode_t(cfg.menuScaleMode));
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();

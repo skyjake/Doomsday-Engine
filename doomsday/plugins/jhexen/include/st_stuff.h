@@ -38,6 +38,10 @@
 #include "hu_lib.h"
 #include "x_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Size of statusbar.
 #define ST_HEIGHT                   (38*SCREEN_MUL)
 #define ST_WIDTH                    (SCREENWIDTH)
@@ -144,5 +148,9 @@ void ST_FlashCurrentItem(int player);
 D_CMD(ChatOpen);
 D_CMD(ChatAction);
 D_CMD(ChatSendMacro);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBHEXEN_STUFF_H */

@@ -33,6 +33,10 @@
 #include "dd_types.h"
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
 #define SFX_MENU_CLOSE      (SFX_SWTCHX)
@@ -210,5 +214,9 @@ int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* 
 
 D_CMD(MenuOpen);
 D_CMD(MenuCommand);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_HU_MENU_H */

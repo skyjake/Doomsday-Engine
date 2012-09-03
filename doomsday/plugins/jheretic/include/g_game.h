@@ -38,13 +38,20 @@
 #include "h_event.h"
 #include "h_player.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int gaSaveGameSaveSlot;
 extern int gaLoadGameSaveSlot;
+
+extern player_t players[MAXPLAYERS];
 
 extern boolean deathmatch;
 extern boolean respawnMonsters;
 extern boolean userGame;
-extern player_t players[MAXPLAYERS];
+extern boolean paused;
+extern boolean precache;
 
 extern skillmode_t gameSkill;
 extern uint gameEpisode;
@@ -137,5 +144,9 @@ int G_PrivilegedResponder(event_t* ev);
 int G_Responder(event_t* ev);
 
 void            G_ScreenShot(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJHERETIC_G_GAME_H */

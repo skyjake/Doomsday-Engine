@@ -31,6 +31,10 @@
 
 #include "doomdef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int verbose;
 
 extern boolean noMonstersParm; // checkparm of -nomonsters
@@ -58,5 +62,9 @@ void D_PostInit(void);
 void D_Shutdown(void);
 int D_GetInteger(int id);
 void* D_GetVariable(int id);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJDOOM_MAIN_H */

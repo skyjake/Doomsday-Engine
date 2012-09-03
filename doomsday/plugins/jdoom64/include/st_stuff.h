@@ -39,6 +39,10 @@
 #include "hu_lib.h"
 #include "d_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Palette indices.
 // For damage/bonus red-/gold-shifts
 #define STARTREDPALS                (1)
@@ -152,5 +156,9 @@ void ST_RebuildAutomap(int player);
 D_CMD(ChatOpen);
 D_CMD(ChatAction);
 D_CMD(ChatSendMacro);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDOOM64_STUFF_H */

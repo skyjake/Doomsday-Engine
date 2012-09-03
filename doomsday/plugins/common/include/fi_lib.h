@@ -32,6 +32,10 @@
 
 #include "d_net.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup finaleMode Finale Mode.
  */
@@ -103,5 +107,9 @@ boolean FI_IsMenuTrigger(void);
 int FI_PrivilegedResponder(const void* ev);
 
 void NetCl_UpdateFinaleState(Reader* msg);
+
+#ifdef __cplusplus
+} extern "C"
+#endif
 
 #endif /* LIBCOMMON_INFINE_LIB */

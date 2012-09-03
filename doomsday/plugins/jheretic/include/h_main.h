@@ -29,6 +29,10 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int verbose;
 
 extern boolean noMonstersParm; // checkparm of -nomonsters
@@ -56,5 +60,9 @@ void H_PostInit(void);
 void H_Shutdown(void);
 int H_GetInteger(int id);
 void* H_GetVariable(int id);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJHERETIC_MAIN_H */

@@ -25,6 +25,10 @@
 
 #include "dd_share.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The data exported out of the Doomsday engine. @ingroup game
  * @todo Refactor away - there should be no need for an ABI in this direction.
@@ -178,5 +182,9 @@ typedef struct {
 
 /// Function pointer for @c GetGameAPI() (exported by game plugin). @ingroup game
 typedef game_export_t* (*GETGAMEAPI) (game_import_t *);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_API_H */

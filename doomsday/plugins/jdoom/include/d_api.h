@@ -35,7 +35,15 @@
 
 #include "dd_api.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern game_import_t gi;
 extern game_export_t gx;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJDOOM_API_H */

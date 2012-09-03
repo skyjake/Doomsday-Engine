@@ -60,7 +60,6 @@ extern int      viewangleoffset;
 // Timer, for scores.
 extern int mapStartTic; // Game tic at map start.
 extern int mapTime; // Tics in game play for par.
-extern int actualMapTime;
 
 // Quit after playing a demo from cmdline.
 extern boolean singledemo;
@@ -73,16 +72,10 @@ extern boolean singledemo;
 
 //#define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
 
-// Bookkeeping on players - state.
-extern player_t players[MAXPLAYERS];
-
 //-----------------------------------------
 // Internal parameters, used for engine.
 //
 
-
-// if true, load all graphics at map load
-extern boolean  precache;
 extern int      bodyqueslot;
 
 #endif

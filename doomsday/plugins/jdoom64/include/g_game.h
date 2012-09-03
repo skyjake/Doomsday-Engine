@@ -38,6 +38,10 @@
 #include "d_player.h"
 #include "wi_stuff.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int gaSaveGameSaveSlot;
 extern int gaLoadGameSaveSlot;
 
@@ -145,5 +149,9 @@ void            G_ScreenShot(void);
 void            G_PrepareWIData(void);
 
 void            G_QueueBody(mobj_t* body);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJDOOM64_G_GAME_H */

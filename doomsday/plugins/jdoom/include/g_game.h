@@ -38,6 +38,10 @@
 #include "d_event.h"
 #include "d_player.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int gaSaveGameSlot;
 extern int gaLoadGameSlot;
 
@@ -143,5 +147,9 @@ void            G_ScreenShot(void);
 void            G_PrepareWIData(void);
 
 void            G_QueueBody(mobj_t* body);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJDOOM_G_GAME_H */

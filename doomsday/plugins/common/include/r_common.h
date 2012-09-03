@@ -27,6 +27,10 @@
 
 #include "doomsday.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Translate between fixed screen dimensions to actual, current.
 #define FIXXTOSCREENX(x) (portSize.width * ((x) / (float) SCREENWIDTH))
 #define FIXYTOSCREENY(y) (portSize.height * ((y) / (float) SCREENHEIGHT))
@@ -65,5 +69,9 @@ void R_PrecachePSprites(void);
 void R_GetGammaMessageStrings(void);
 
 void R_CycleGammaLevel(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_REFRESH_H */

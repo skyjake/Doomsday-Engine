@@ -33,11 +33,18 @@
 #endif
 
 #include "p_mobj.h"
+#include "x_player.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern int debugSound; // debug flag for displaying sound info
 
 extern int gaSaveGameSaveSlot;
 extern int gaLoadGameSaveSlot;
+
+extern player_t players[MAXPLAYERS];
 
 extern uint gameEpisode;
 extern uint gameMap;
@@ -45,6 +52,8 @@ extern uint gameMapEntryPoint;
 extern skillmode_t gameSkill;
 
 extern boolean deathmatch;
+extern boolean paused;
+extern boolean precache;
 extern boolean userGame;
 extern boolean customPal;
 
@@ -136,5 +145,9 @@ int G_PrivilegedResponder(event_t* ev);
 
 /// @return  @c true if the input event @a ev was eaten.
 int G_Responder(event_t* ev);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJHEXEN_G_GAME_H */
