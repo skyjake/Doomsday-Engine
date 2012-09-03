@@ -90,7 +90,7 @@ int             Def_GetSpriteNum(const char* name);
 int             Def_GetModelNum(const char* id);
 int             Def_GetMusicNum(const char* id);
 int             Def_GetSoundNum(const char* id);
-int             Def_EvalFlags(char* ptr);
+ded_flag_t*     Def_GetFlag(const char* id);
 ded_value_t*    Def_GetValueById(const char* id);
 ded_value_t*    Def_GetValueByUri(const Uri* uri);
 ded_mapinfo_t*  Def_GetMapInfo(const Uri* uri);
@@ -103,6 +103,8 @@ ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boo
 ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, boolean isCustom);
 ded_ptcgen_t*   Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean isCustom);
 ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
+
+int             Def_EvalFlags(char* string);
 
 /**
  * @return  @c true= the definition was found.

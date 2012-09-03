@@ -625,7 +625,7 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
     return NULL;
 }
 
-int Def_GetFlagValue(const char* flag)
+ded_flag_t* Def_GetFlag(const char* flag)
 {
     int i;
 
@@ -639,10 +639,9 @@ int Def_GetFlagValue(const char* flag)
     for(i = defs.count.flags.num - 1; i >= 0; i--)
     {
         if(!stricmp(defs.flags[i].id, flag))
-            return defs.flags[i].value;
+            return defs.flags + i;
     }
 
-    Con_Message("Warning: Def_GetFlagValue: Undefined flag '%s'.\n", flag);
     return 0;
 }
 
@@ -653,20 +652,20 @@ int Def_GetFlagValue(const char* flag)
  */
 const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
 {
-    int                 i;
-
+    int i;
     for(i = defs.count.flags.num - 1; i >= 0; i--)
-        if(strnicmp(defs.flags[i].id, prefix, strlen(prefix)) == 0 &&
-            defs.flags[i].value == val)
+    {
+        if(strnicmp(defs.flags[i].id, prefix, strlen(prefix)) == 0 && defs.flags[i].value == val)
             return defs.flags[i].text;
-
+    }
     return NULL;
 }
 
 int Def_EvalFlags(char* ptr)
 {
-    int                 value = 0, len;
-    char                buf[64];
+    ded_flag_t* flag;
+    int value = 0, len;
+    char buf[64];
 
     while(*ptr)
     {
@@ -674,7 +673,16 @@ int Def_EvalFlags(char* ptr)
         len = M_FindWhite(ptr) - ptr;
         strncpy(buf, ptr, len);
         buf[len] = 0;
-        value |= Def_GetFlagValue(buf);
+
+        flag = Def_GetFlag(buf);
+        if(flag)
+        {
+            value |= flag->value;
+        }
+        else
+        {
+            Con_Message("Warning: Def_EvalFlags: Undefined flag '%s'.\n", buf);
+        }
         ptr += len;
     }
     return value;
