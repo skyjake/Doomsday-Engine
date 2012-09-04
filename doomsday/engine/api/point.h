@@ -38,6 +38,9 @@ typedef struct Point2Raw_s {
         };
         int xy[2];
     };
+#ifdef __cplusplus
+    Point2Raw_s(int x_ = 0, int y_ = 0) : x(x_), y(y_) {}
+#endif
 } Point2Raw;
 
 struct point2_s; // The Point2f instance (opaque).
