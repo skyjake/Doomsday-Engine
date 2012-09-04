@@ -230,7 +230,7 @@ function json_encode_clean(&$array, $flags=0, $indent_level=0)
     return $result;
 }
 
-function generateHyperlinkHTML($uri, $maxLength=40, $cssClass=NULL)
+function generateHyperlinkHTML($uri, $attributes = array(), $maxLength = 40)
 {
     if($uri instanceof Url)
     {
@@ -257,11 +257,15 @@ function generateHyperlinkHTML($uri, $maxLength=40, $cssClass=NULL)
     else
         $shortUri = $uri;
 
-    $html = '<a';
-    if(strlen($cssClass) > 0)
+    $attribs = '';
+    if(is_array($attributes))
     {
-        $html .= " class={$cssClass}";
+        foreach($attributes as $attribute => $value)
+        {
+            $attribs .= " {$attribute}=\"{$value}\"";
+        }
     }
-    $html .= " href=\"{$uri}\">". htmlspecialchars($shortUri) .'</a>';
+
+    $html = "<a href=\"{$uri}\"{$attribs}>". htmlspecialchars($shortUri) .'</a>';
     return $html;
 }

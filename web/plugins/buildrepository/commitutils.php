@@ -79,7 +79,7 @@ function make_pretty_hyperlink($matches)
         $uri->setScheme()->setHost();
     }
 
-    return generateHyperlinkHTML($uri, 40, $isExternal? 'link-external' : NULL);
+    return generateHyperlinkHTML($uri, $isExternal? array('class'=>'link-external') : NULL, 40);
 }
 
 function formatCommitHTML($msg)
@@ -89,7 +89,19 @@ function formatCommitHTML($msg)
     // Process the commit message, replacing web URIs with clickable links.
     htmlspecialchars($msg);
 
-    $msg = preg_replace_callback('/((?:[\w\d]+\:\/\/)?(?:[\w\-\d]+\.)+[\w\-\d]+(?:\/[\w\-\d]+)*(?:\/|\.[\w\-\d]+)?(?:\?[\w\-\d]+\=[\w\-\d]+\&?)?(?:\#[\w\-\d]*)?)/',
+    // Rules derived from Søren Løvborg's UrlLinker (see: http://www.kwi.dk/projects/php/UrlLinker/)
+    $rexProtocol  = '((http|https|ftp)\:\/\/)';
+    $rexDomain    = '(?:[-a-zA-Z0-9]{1,63}\.)+[a-zA-Z][-a-zA-Z0-9]{1,62}';
+    $rexIp        = '(?:[1-9][0-9]{0,2}\.|0\.){3}(?:[1-9][0-9]{0,2}|0)';
+    $rexPort      = '(:[0-9]{1,5})?';
+    $rexPath      = '(/[!$-/0-9:;=@_\':;!a-zA-Z\x7f-\xff]*?)?';
+    $rexQuery     = '(\?[!$-/0-9:;=@_\':;!a-zA-Z\x7f-\xff]+?)?';
+    $rexFragment  = '(#[!$-/0-9:;=@_\':;!a-zA-Z\x7f-\xff]+?)?';
+    $rexUsername  = '[^]\\\\\x00-\x20\"(),:-<>[\x7f-\xff]{1,64}';
+    $rexPassword  = $rexUsername; // allow the same characters as in the username
+    $rexUrl       = "$rexProtocol(?:($rexUsername)(:$rexPassword)?@)?($rexDomain|$rexIp)($rexPort$rexPath$rexQuery$rexFragment)";
+
+    $msg = preg_replace_callback("&\\b$rexUrl(?=[?.!,;:\"]?(\s|$))&",
         "make_pretty_hyperlink", $msg);
 
     return $msg;
