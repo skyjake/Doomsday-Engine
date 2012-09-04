@@ -37,10 +37,6 @@
 // We need the playr data structure as well.
 #include "x_player.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 // ------------------------
 // Command line parameters.
 //

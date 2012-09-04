@@ -38,10 +38,6 @@
 
 #include "p_xg.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 #define SP_floororigheight      planes[PLN_FLOOR].origHeight
 #define SP_ceilorigheight       planes[PLN_CEILING].origHeight
 

@@ -37,10 +37,6 @@
 #include "tables.h"
 #include "info.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 struct player_s;
 
 /**

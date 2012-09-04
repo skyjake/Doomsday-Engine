@@ -2,7 +2,7 @@
  * @file hu_stuff.cpp
  * Miscellaneous routines for heads-up displays and UI.
  *
- * @authors Copyright &copy; 2003-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2003-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 1993-1996 by id Software, Inc.
  *
@@ -81,7 +81,7 @@ uint pMapNamesSize;
 
 #if __JDOOM__ || __JDOOM64__
 /// The end message strings.
-char* endmsg[NUM_QUITMESSAGES + 1];
+const char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -756,11 +756,11 @@ void HU_DrawScoreBoard(int player)
 #define LINE_BORDER         4
 
     column_t columns[] = {
-        { "cl",       0, CF_FIXEDWIDTH },
-        { "name",     1 },
-        { "suicides", 2, CF_FIXEDWIDTH, true },
-        { "frags",    3, CF_FIXEDWIDTH, true },
-        { NULL }
+        { "cl",       0, CF_FIXEDWIDTH, false },
+        { "name",     1, 0,             false },
+        { "suicides", 2, CF_FIXEDWIDTH, true  },
+        { "frags",    3, CF_FIXEDWIDTH, true  },
+        { NULL,       0, 0,             false }
     };
 
     scoreinfo_t scoreBoard[MAXPLAYERS];
@@ -1506,7 +1506,7 @@ void Hu_DrawMapTitle(const Point2Raw* offset)
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 {
-    Point2Raw origin = { SCREENWIDTH/2, 6 };
+    Point2Raw origin(SCREENWIDTH/2, 6);
     float scale;
 
     if(!portGeometry) return;

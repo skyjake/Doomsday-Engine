@@ -46,10 +46,6 @@
 
 #include "g_controls.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 //
 // Player states.
 //

@@ -2,7 +2,7 @@
  * @file hu_stuff.h
  * Miscellaneous routines for heads-up displays and UI.
  *
- * @authors Copyright &copy; 2005-2012 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 1993-1996 by id Software, Inc.
  *
@@ -84,7 +84,7 @@ extern patchid_t pInvPageRight[2];
 #if __JDOOM__ || __JDOOM64__
 // Quit messages.
 #define NUM_QUITMESSAGES    22
-extern char* endmsg[NUM_QUITMESSAGES + 1];
+extern const char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
 extern boolean shiftdown;
