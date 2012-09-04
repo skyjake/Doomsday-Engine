@@ -232,21 +232,27 @@ function json_encode_clean(&$array, $flags=0, $indent_level=0)
 
 function generateHyperlinkHTML($uri, $attributes = array(), $maxLength = 40)
 {
+    $shortUri = NULL;
+
     if($uri instanceof Url)
     {
+        if(!strcmp($uri->host(), 'sourceforge.net') &&
+           !substr_compare($uri->path(), '/p/deng/bugs/', 0, 13))
+        {
+            $bugStr = substr($uri->path(), 13);
+            $bugNum = intval(substr($bugStr, 0, strpos($bugStr, '/')));
+
+            $shortUri = "Bug#$bugNum";
+            if(is_null($attributes))
+                $attributes = array();
+            $attributes['title'] = "View bug report #$bugNum in the tracker";
+        }
         $uri = $uri->toString();
     }
     else
     {
         $uri = strval($uri);
     }
-
-    $maxLength = (integer)$maxLength;
-    if($maxLength < 0) $maxLength = 0;
-    if($maxLength > 0 && strlen($uri) > $maxLength)
-        $shortUri = substr($uri, 0, $maxLength).'...';
-    else
-        $shortUri = $uri;
 
     $attribs = '';
     if(is_array($attributes))
@@ -255,6 +261,16 @@ function generateHyperlinkHTML($uri, $attributes = array(), $maxLength = 40)
         {
             $attribs .= " {$attribute}=\"{$value}\"";
         }
+    }
+
+    if(!isset($shortUri))
+    {
+        $maxLength = (integer)$maxLength;
+        if($maxLength < 0) $maxLength = 0;
+        if($maxLength > 0 && strlen($uri) > $maxLength)
+            $shortUri = substr($uri, 0, $maxLength).'...';
+        else
+            $shortUri = $uri;
     }
 
     $html = "<a href=\"{$uri}\"{$attribs}>". htmlspecialchars($shortUri) .'</a>';
