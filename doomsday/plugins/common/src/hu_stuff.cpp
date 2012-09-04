@@ -1082,7 +1082,7 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
 
     valueStr = Str_Appendf(AutoStr_New(), "Patch Replacement|%s", Str_Text(patchPath));
     result = Def_Get(DD_DEF_VALUE, Str_Text(valueStr), (void*)&replacement);
-    if(result == 0) return NULL; // Not found.
+    if(result < 0) return NULL; // Not found.
 
     if(flags & (PRF_NO_IWAD|PRF_NO_PWAD))
     {

@@ -839,7 +839,7 @@ int Def_GetIntValue(char* val, int* returned_val)
     char* data;
 
     // First look for a DED Value
-    if(Def_Get(DD_DEF_VALUE, val, &data))
+    if(Def_Get(DD_DEF_VALUE, val, &data) >= 0)
     {
         *returned_val = strtol(data, 0, 0);
         return true;
@@ -1819,10 +1819,18 @@ int Def_Get(int type, const char* id, void* out)
         return -1;
 
     case DD_DEF_VALUE: {
-        ded_value_t* value = Def_GetValueById(id);
-        if(!value) return false;
-        if(out) *(char**) out = value->text;
-        return true; }
+        int idx = -1; // Not found.
+        if(id && id[0])
+        {
+            // Read backwards to allow patching.
+            for(idx = defs.count.values.num - 1; idx >= 0; idx--)
+            {
+                if(!stricmp(defs.values[idx].id, id))
+                    break;
+            }
+        }
+        if(out) *(char**) out = (idx >= 0? defs.values[idx].text : 0);
+        return idx; }
 
     case DD_DEF_FINALE: { // Find InFine script by ID.
         finalescript_t* fin = (finalescript_t*) out;

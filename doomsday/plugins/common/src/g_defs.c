@@ -69,7 +69,7 @@ int GetDefInt(char* def, int* returnVal)
     int                 val;
 
     // Get the value.
-    if(!Def_Get(DD_DEF_VALUE, def, &data))
+    if(Def_Get(DD_DEF_VALUE, def, &data) < 0)
         return 0; // No such value...
 
     // Convert to integer.
@@ -85,7 +85,7 @@ void GetDefState(char* def, int* val)
     char*               data;
 
     // Get the value.
-    if(!Def_Get(DD_DEF_VALUE, def, &data))
+    if(Def_Get(DD_DEF_VALUE, def, &data) < 0)
         return;
 
     // Get the state number.

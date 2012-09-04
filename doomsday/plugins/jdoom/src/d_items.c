@@ -196,7 +196,7 @@ void P_InitWeaponInfo(void)
     {
         //// \todo Only allows for one type of ammo per weapon.
         sprintf(buf, WPINF "%i|Type", i);
-        if(Def_Get(DD_DEF_VALUE, buf, &data))
+        if(Def_Get(DD_DEF_VALUE, buf, &data) >= 0)
         {
             memset(weaponInfo[i][pclass].mode[0].ammoType, 0,
                    sizeof(int) * NUM_AMMO_TYPES);
