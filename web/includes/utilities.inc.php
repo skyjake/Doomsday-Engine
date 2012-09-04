@@ -243,15 +243,6 @@ function generateHyperlinkHTML($uri, $attributes = array(), $maxLength = 40)
 
     $maxLength = (integer)$maxLength;
     if($maxLength < 0) $maxLength = 0;
-    if(!is_null($cssClass))
-    {
-        $cssClass = strval($cssClass);
-    }
-    else
-    {
-        $cssClass = '';
-    }
-
     if($maxLength > 0 && strlen($uri) > $maxLength)
         $shortUri = substr($uri, 0, $maxLength).'...';
     else
