@@ -21,12 +21,12 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+#include <cstdlib>
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <map>
 
 #include "common.h"
 
@@ -139,12 +139,41 @@ static fogeffectdata_t fogEffectData;
 
 static patchid_t m_pause; // Paused graphic.
 
+typedef std::map<patchid_t, int> PatchReplacementValues;
+PatchReplacementValues patchReplacements;
+
+static int patchReplacementValueIndex(patchid_t patchId, bool canCreate = true)
+{
+    // Have we previously encountered this?
+    PatchReplacementValues::const_iterator found = patchReplacements.find(patchId);
+    if(found != patchReplacements.end()) return found->second;
+
+    // No. Look it up.
+    int valueIndex = -1;
+    AutoStr* patchPath = R_ComposePatchPath(patchId);
+    if(!Str_IsEmpty(patchPath))
+    {
+        AutoStr* valueStr = Str_Appendf(AutoStr_New(), "Patch Replacement|%s", Str_Text(patchPath));
+        valueIndex = Def_Get(DD_DEF_VALUE, Str_Text(valueStr), 0);
+    }
+
+    if(canCreate)
+    {
+        patchReplacements.insert(std::pair<patchid_t, int>(patchId, valueIndex));
+    }
+
+    return valueIndex;
+}
+
 /**
  * Loads the font patches and inits various strings
  * JHEXEN Note: Don't bother with the yellow font, we'll colour the white version
  */
 void Hu_LoadData(void)
 {
+    // Clear the patch replacement value map (definitions have been re-read).
+    patchReplacements.clear();
+
 #if __JDOOM__ || __JDOOM64__
     char name[9];
 #endif
@@ -1071,19 +1100,21 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags
     FR_DrawTextXY3(string, x, y, alignFlags, textFlags);
 }
 
+static const char* patchReplacement(patchid_t patchId)
+{
+    char* replacement = 0; // Not found.
+    int valueIndex = patchReplacementValueIndex(patchId);
+    if(valueIndex >= 0)
+    {
+        if(Def_Get(DD_DEF_VALUE_BY_INDEX, (char*)&valueIndex, (void*)&replacement) < 0)
+            Con_Error("Hu_FindPatchReplacementString: Failed retrieving text value #%i.", valueIndex);
+    }
+    return replacement;
+}
+
 const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
 {
-    AutoStr* patchPath = R_ComposePatchPath(patchId);
-    AutoStr* valueStr;
-    char* replacement;
-    int result;
-
-    if(Str_IsEmpty(patchPath)) return NULL; // Invalid id?
-
-    valueStr = Str_Appendf(AutoStr_New(), "Patch Replacement|%s", Str_Text(patchPath));
-    result = Def_Get(DD_DEF_VALUE, Str_Text(valueStr), (void*)&replacement);
-    if(result < 0) return NULL; // Not found.
-
+    const char* replacement = patchReplacement(patchId);
     if(flags & (PRF_NO_IWAD|PRF_NO_PWAD))
     {
         patchinfo_t info;
@@ -1099,7 +1130,6 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
                 return NULL;
         }
     }
-
     return replacement;
 }
 
