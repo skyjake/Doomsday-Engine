@@ -1832,6 +1832,16 @@ int Def_Get(int type, const char* id, void* out)
         if(out) *(char**) out = (idx >= 0? defs.values[idx].text : 0);
         return idx; }
 
+    case DD_DEF_VALUE_BY_INDEX: {
+        int idx = *((long*) id);
+        if(idx >= 0 && idx < defs.count.values.num)
+        {
+            if(out) *(char**) out = defs.values[idx].text;
+            return true;
+        }
+        if(out) *(char**) out = 0;
+        return false; }
+
     case DD_DEF_FINALE: { // Find InFine script by ID.
         finalescript_t* fin = (finalescript_t*) out;
         for(i = defs.count.finales.num - 1; i >= 0; i--)
