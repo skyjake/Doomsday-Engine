@@ -36,6 +36,10 @@ extern "C" {
 typedef struct RectRaw_s {
     Point2Raw origin;
     Size2Raw size;
+#ifdef __cplusplus
+    RectRaw_s(int x = 0, int y = 0, int width = 0, int height = 0)
+        : origin(x, y), size(width, height) {}
+#endif
 } RectRaw;
 
 /**
