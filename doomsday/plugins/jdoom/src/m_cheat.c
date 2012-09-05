@@ -65,8 +65,8 @@ CHEAT_FUNC(God);
 CHEAT_FUNC(Music);
 CHEAT_FUNC(MyPos);
 CHEAT_FUNC(NoClip);
+CHEAT_FUNC(Powerup2);
 CHEAT_FUNC(Powerup);
-CHEAT_FUNC(PowerupMessage);
 CHEAT_FUNC(Reveal);
 CHEAT_FUNC(Warp);
 
@@ -87,7 +87,8 @@ void G_RegisterCheats(void)
         ADDCHEAT("boots",           GiveIronFeet);
         ADDCHEAT("bright",          GiveInfrared);
         ADDCHEAT("ghost",           GiveInvisibility);
-        ADDCHEAT("seeit%1",         Powerup);
+        ADDCHEAT("seeit%1",         Powerup2);
+        ADDCHEAT("seeit",           Powerup);
         ADDCHEAT("show",            Reveal);
         ADDCHEAT("superman",        GiveInvulnerability);
         ADDCHEAT("tunes%1%2",       Music);
@@ -118,7 +119,8 @@ void G_RegisterCheats(void)
         break;
 
     default: // Doom
-        ADDCHEAT("idbehold%1",      Powerup);
+        ADDCHEAT("idbehold%1",      Powerup2);
+        ADDCHEAT("idbehold",        Powerup);
         ADDCHEAT("idchoppers",      GiveChainsaw);
         ADDCHEAT("idclev%1%2",      Warp);
         ADDCHEAT("idclip",          NoClip);
@@ -365,7 +367,7 @@ CHEAT_FUNC(Reveal)
     return true;
 }
 
-CHEAT_FUNC(PowerupMessage)
+CHEAT_FUNC(Powerup)
 {
     player_t* plr = &players[player];
 
@@ -395,7 +397,7 @@ static void givePower(player_t* plr, powertype_t type)
     }
 }
 
-CHEAT_FUNC(Powerup)
+CHEAT_FUNC(Powerup2)
 {
     static const char values[] = { 'v', 's', 'i', 'r', 'a', 'l' };
     static const int numValues = (int)(sizeof(values) / sizeof(values[0]));
