@@ -63,11 +63,49 @@ public:
     }
     virtual void invoke(int player, EventSequenceArg* args, int numArgs)
     {
-        DENG_UNUSED(player);
-        DENG_UNUSED(args);
-        DENG_UNUSED(numArgs);
-        /// @todo Compose the real command substituting arguments in the template.
-        DD_Execute(true/*silent*/, Str_Text(&commandTemplate));
+        if(!strchr(Str_Text(&commandTemplate), '%'))
+        {
+            DD_Execute(true/*silent*/, Str_Text(&commandTemplate));
+            return;
+        }
+
+        // Compose the command from the template, inserting values for named arguments.
+        /// @todo This logic should be extracted and made into an Str method.
+        AutoStr* cmd = AutoStr_NewStd();
+        // Reserve an estimate of the composed command length.
+        Str_Reserve(cmd, Str_Length(&commandTemplate) + numArgs + 1);
+
+        int len = Str_Length(&commandTemplate);
+        const char* start = Str_Text(&commandTemplate);
+        const char* ch = start, *substart = start;
+        while(ch + 1 < start + len)
+        {
+            if(ch[0] == '%' && ch[1] && ch[1] != '%')
+            {
+                Str_PartAppend(cmd, substart, 0, ch - substart);
+
+                if(ch[1] == 'p')
+                {
+                    Str_AppendChar(cmd, '0' + player);
+                }
+                else
+                {
+                    int arg = ch[1] - '0' - 1;
+                    DENG_ASSERT(arg >= 0 && arg < 9);
+                    Str_AppendChar(cmd, char(args[arg]));
+                }
+                ch += 2;
+                substart = ch;
+            }
+            else
+            {
+                ch++;
+            }
+        }
+        // Add anything remaining.
+        Str_Append(cmd, substart);
+
+        DD_Execute(true/*silent*/, Str_Text(cmd));
     }
 private:
     Str commandTemplate;
