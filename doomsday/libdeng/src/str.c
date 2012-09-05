@@ -289,24 +289,23 @@ ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch)
 
 ddstring_t* Str_Append(ddstring_t* str, const char* append)
 {
-    size_t incoming;
-    char* copied;
-
     DENG_ASSERT(str);
     if(!str) return 0;
 
-    incoming = strlen(append);
+    if(append && append[0])
+    {
+        size_t incoming = strlen(append);
+        // Take a copy in case append_text points to (a part of) ds->str, which may
+        // be invalidated by allocateString.
+        char* copied = M_Malloc(incoming + 1);
 
-    // Take a copy in case append_text points to (a part of) ds->str, which may
-    // be invalidated by allocateString.
-    copied = M_Malloc(incoming + 1);
+        strcpy(copied, append);
+        allocateString(str, str->length + incoming, true);
+        strcpy(str->str + str->length, copied);
+        str->length += incoming;
 
-    strcpy(copied, append);
-    allocateString(str, str->length + incoming, true);
-    strcpy(str->str + str->length, copied);
-    str->length += incoming;
-
-    M_Free(copied);
+        M_Free(copied);
+    }
     return str;
 }
 
