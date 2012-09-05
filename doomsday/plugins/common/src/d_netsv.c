@@ -1285,18 +1285,25 @@ void NetSv_SendJumpPower(int target, float power)
 void NetSv_ExecuteCheat(int player, const char* command)
 {
     // Killing self is always allowed.
+    /// @todo fixme: really? Even in deathmatch??
     if(!strnicmp(command, "suicide", 7))
     {
         DD_Executef(false, "suicide %i", player);
     }
-    else if(netSvAllowCheats) // If cheating is not allowed, we ain't doing nuthin'.
+
+    // If cheating is not allowed, we ain't doing nuthin'.
+    if(!netSvAllowCheats)
     {
-        if(!strnicmp(command, "god", 3) ||
-           !strnicmp(command, "noclip", 6) ||
-           !strnicmp(command, "give", 4))
-        {
-            DD_Executef(false, "%s %i", command, player);
-        }
+        NetSv_SendMessage(player, "--- CHEATS DISABLED ON THIS SERVER ---");
+        return;
+    }
+
+    /// @todo Can't we use the multipurpose cheat command here?
+    if(!strnicmp(command, "god",    3) ||
+       !strnicmp(command, "noclip", 6) ||
+       !strnicmp(command, "give",   4))
+    {
+        DD_Executef(false, "%s %i", command, player);
     }
 }
 
