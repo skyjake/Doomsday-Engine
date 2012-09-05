@@ -44,16 +44,16 @@
 #include "hu_inventory.h"
 #include "g_eventsequence.h"
 
-typedef int (*cheatfunc_t)(const int*, int);
+typedef eventsequencehandler_t cheatfunc_t;
 
 /// Helper macro for forming cheat callback function names.
 #define CHEAT(x) G_Cheat##x
 
 /// Helper macro for declaring cheat callback functions.
-#define CHEAT_FUNC(x) int G_Cheat##x(const int* args, int player)
+#define CHEAT_FUNC(x) int G_Cheat##x(int player, const EventSequenceArg* args, int numArgs)
 
 /// Helper macro for registering new cheat event sequence handlers.
-#define ADDCHEAT(name, len, callback) G_AddEventSequence((name), (len), CHEAT(callback))
+#define ADDCHEAT(name, callback) G_AddEventSequence((name), CHEAT(callback))
 
 CHEAT_FUNC(Armor);
 CHEAT_FUNC(Class);
@@ -88,43 +88,30 @@ static boolean cheatsEnabled(void)
 
 void G_RegisterCheats(void)
 {
-    ADDCHEAT("butcher",              7, Massacre);
-    ADDCHEAT("casper",               6, NoClip);
-    ADDCHEAT("clubmed",              7, Health);
-    ADDCHEAT("conan",                5, IDKFA);
-    ADDCHEAT("deliverance",         11, Pig);
-    ADDCHEAT("indiana",              7, Inventory);
-    ADDCHEAT("init",                 4, Init);
-    ADDCHEAT("locksmith",            9, GiveKeys);
-    ADDCHEAT("mapsco",               6, Reveal);
-    ADDCHEAT("martek",               6, Quicken);
-    ADDCHEAT("martekmartek",        12, Quicken2);
-    ADDCHEAT("martekmartekmartek",  18, Quicken3);
-    ADDCHEAT("mrjones",              7, Version);
-    ADDCHEAT("nra",                  3, Weapons);
-    ADDCHEAT("noise",                5, Sound);
-    ADDCHEAT("satan",                5, God);
-    ADDCHEAT("sherlock",             8, Puzzle);
-    ADDCHEAT("where",                5, Where);
-
-    // Cheats with arguments:
-
-    { char seq[] = { 'p', 'u', 'k', 'e', 1, 0, 0 };
-    ADDCHEAT(seq, 7, Script3);
-    ADDCHEAT(seq, 6, Script2);
-    ADDCHEAT(seq, 4, Script);
-    }
-
-    // Change player class.
-    { char seq[] = { 's', 'h', 'a', 'd', 'o', 'w', 'c', 'a', 's', 't', 'e', 'r', 1, 0 };
-    ADDCHEAT(seq, 14, Class2);
-    ADDCHEAT(seq, 12, Class);
-    }
-
-    // Warp to a new map.
-    { char seq[] = { 'v', 'i', 's', 'i', 't', 1, 0, 0 };
-    ADDCHEAT(seq, 8, Warp);
-    }
+    ADDCHEAT("butcher",             Massacre);
+    ADDCHEAT("casper",              NoClip);
+    ADDCHEAT("clubmed",             Health);
+    ADDCHEAT("conan",               IDKFA);
+    ADDCHEAT("deliverance",         Pig);
+    ADDCHEAT("indiana",             Inventory);
+    ADDCHEAT("init",                Init);
+    ADDCHEAT("locksmith",           GiveKeys);
+    ADDCHEAT("mapsco",              Reveal);
+    ADDCHEAT("martekmartekmartek",  Quicken3);
+    ADDCHEAT("martekmartek",        Quicken2);
+    ADDCHEAT("martek",              Quicken);
+    ADDCHEAT("mrjones",             Version);
+    ADDCHEAT("nra",                 Weapons);
+    ADDCHEAT("noise",               Sound);
+    ADDCHEAT("puke%1%2",            Script3);
+    ADDCHEAT("puke%1",              Script2);
+    ADDCHEAT("puke",                Script);
+    ADDCHEAT("satan",               God);
+    ADDCHEAT("shadowcaster%1",      Class2);
+    ADDCHEAT("shadowcaster",        Class);
+    ADDCHEAT("sherlock",            Puzzle);
+    ADDCHEAT("visit%1%2",           Warp);
+    ADDCHEAT("where",               Where);
 }
 
 CHEAT_FUNC(God)
@@ -803,7 +790,7 @@ D_CMD(CheatGod)
 
             if(!players[player].plr->inGame) return false;
 
-            CHEAT(God)(NULL, player);
+            CHEAT(God)(player, 0/*no args*/, 0/*no args*/);
         }
     }
     return true;
@@ -831,7 +818,7 @@ D_CMD(CheatNoClip)
 
             if(!players[player].plr->inGame) return false;
 
-            CHEAT(NoClip)(NULL, player);
+            CHEAT(NoClip)(player, 0/*no args*/, 0/*no args*/);
         }
     }
     return true;
@@ -895,7 +882,8 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatWarp)
 {
-    int num, args[2];
+    EventSequenceArg args[2];
+    int num;
 
     if(IS_NETGAME) return false;
 
@@ -909,7 +897,7 @@ D_CMD(CheatWarp)
     args[0] = num / 10 + '0';
     args[1] = num % 10 + '0';
 
-    CHEAT(Warp)(args, CONSOLEPLAYER);
+    CHEAT(Warp)(CONSOLEPLAYER, args, 2);
     return true;
 }
 
@@ -1032,11 +1020,11 @@ D_CMD(CheatGive)
             break;
 
         case 'h':
-            CHEAT(Health)(NULL, player);
+            CHEAT(Health)(player, 0/*no args*/, 0/*no args*/);
             break;
 
         case 'i':
-            CHEAT(Inventory)(NULL, player);
+            CHEAT(Inventory)(player, 0/*no args*/, 0/*no args*/);
             break;
 
         case 'k':
@@ -1064,11 +1052,11 @@ D_CMD(CheatGive)
             }
 
             // Give all keys.
-            CHEAT(GiveKeys)(NULL, player);
+            CHEAT(GiveKeys)(player, 0/*no args*/, 0/*no args*/);
             break;
 
         case 'p':
-            CHEAT(Puzzle)(NULL, player);
+            CHEAT(Puzzle)(player, 0/*no args*/, 0/*no args*/);
             break;
 
         case 'r':
@@ -1095,7 +1083,7 @@ D_CMD(CheatGive)
             }
 
             // Give all armors.
-            CHEAT(GiveArmor)(NULL, player);
+            CHEAT(GiveArmor)(player, 0/*no args*/, 0/*no args*/);
             break;
 
         case 'w':
@@ -1137,13 +1125,13 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    CHEAT(Massacre)(NULL, CONSOLEPLAYER);
+    CHEAT(Massacre)(CONSOLEPLAYER, 0/*no args*/, 0/*no args*/);
     return true;
 }
 
 D_CMD(CheatWhere)
 {
-    CHEAT(Where)(NULL, CONSOLEPLAYER);
+    CHEAT(Where)(CONSOLEPLAYER, 0/*no args*/, 0/*no args*/);
     return true;
 }
 
@@ -1152,25 +1140,26 @@ D_CMD(CheatPig)
     if(IS_NETGAME || !userGame) return false;
     if(gameSkill == SM_NIGHTMARE || players[CONSOLEPLAYER].health <= 0) return false;
 
-    CHEAT(Pig)(NULL, CONSOLEPLAYER);
+    CHEAT(Pig)(CONSOLEPLAYER, 0/*no args*/, 0/*no args*/);
     return true;
 }
 
 D_CMD(CheatShadowcaster)
 {
-    int args[2];
+    EventSequenceArg args[2];
 
     if(IS_NETGAME || !userGame) return false;
     if(gameSkill == SM_NIGHTMARE || players[CONSOLEPLAYER].health <= 0) return false;
 
     args[0] = atoi(argv[1]) + '0';
-    CHEAT(Class2)(args, CONSOLEPLAYER);
+    CHEAT(Class2)(CONSOLEPLAYER, args, 1);
     return true;
 }
 
 D_CMD(CheatRunScript)
 {
-    int num, args[2];
+    EventSequenceArg args[2];
+    int num;
 
     if(IS_NETGAME) return false;
     if(!userGame) return false;
@@ -1178,6 +1167,6 @@ D_CMD(CheatRunScript)
     num = atoi(argv[1]);
     args[0] = num / 10 + '0';
     args[1] = num % 10 + '0';
-    CHEAT(Script3)(args, CONSOLEPLAYER);
+    CHEAT(Script3)(CONSOLEPLAYER, args, 2);
     return true;
 }

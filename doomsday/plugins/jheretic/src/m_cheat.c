@@ -44,16 +44,16 @@
 #include "p_inventory.h"
 #include "g_eventsequence.h"
 
-typedef int (*cheatfunc_t)(const int*, int);
+typedef eventsequencehandler_t cheatfunc_t;
 
 /// Helper macro for forming cheat callback function names.
 #define CHEAT(x) G_Cheat##x
 
 /// Helper macro for declaring cheat callback functions.
-#define CHEAT_FUNC(x) int G_Cheat##x(const int* args, int player)
+#define CHEAT_FUNC(x) int G_Cheat##x(int player, const EventSequenceArg* args, int numArgs)
 
 /// Helper macro for registering new cheat event sequence handlers.
-#define ADDCHEAT(name, len, callback) G_AddEventSequence((name), (len), CHEAT(callback))
+#define ADDCHEAT(name, callback) G_AddEventSequence((name), CHEAT(callback))
 
 CHEAT_FUNC(God);
 CHEAT_FUNC(NoClip);
@@ -61,7 +61,7 @@ CHEAT_FUNC(Weapons);
 CHEAT_FUNC(Powerup);
 CHEAT_FUNC(Health);
 CHEAT_FUNC(GiveKeys);
-CHEAT_FUNC(InvItem1);
+CHEAT_FUNC(InvItem);
 CHEAT_FUNC(InvItem2);
 CHEAT_FUNC(InvItem3);
 CHEAT_FUNC(Warp);
@@ -80,32 +80,23 @@ static boolean cheatsEnabled(void)
 
 void G_RegisterCheats(void)
 {
-    ADDCHEAT("cockadoodledoo", 14, Chicken);
-    ADDCHEAT("iddqd",           5, IDDQD);
-    ADDCHEAT("idkfa",           5, IDKFA);
-    ADDCHEAT("kitty",           5, NoClip);
-    ADDCHEAT("massacre",        8, Massacre);
-    ADDCHEAT("noise",           5, Sound);
-    ADDCHEAT("ponce",           5, Health);
-    ADDCHEAT("quicken",         7, God);
-    ADDCHEAT("rambo",           5, Weapons);
-    ADDCHEAT("ravmap",          6, Reveal);
-    ADDCHEAT("shazam",          6, Powerup);
-    ADDCHEAT("skel",            4, GiveKeys);
-    ADDCHEAT("ticker",          6, Ticker);
-
-    // Cheats with arguments:
-
-    // Get an inventory item.
-    { char seq[] = { 'g', 'i', 'm', 'm', 'e', 1, 0, 0 };
-    ADDCHEAT(seq, 8, InvItem1); // Final stage.
-    ADDCHEAT(seq, 7, InvItem1); // 2nd stage (ask for count).
-    ADDCHEAT(seq, 5, InvItem1); // 1st stage (ask for type).
-    }
-
-    // Warp to new level.
-    { char seq[] = { 'e', 'n', 'g', 'a', 'g', 'e', 1, 0, 0 };
-    ADDCHEAT(seq, 9, Warp); }
+    ADDCHEAT("cockadoodledoo",  Chicken);
+    ADDCHEAT("engage%1%2",      Warp);
+    ADDCHEAT("gimme%1%2",       InvItem3); // Final stage.
+    ADDCHEAT("gimme%1",         InvItem2); // 2nd stage (ask for count).
+    ADDCHEAT("gimme",           InvItem);  // 1st stage (ask for type).
+    ADDCHEAT("iddqd",           IDDQD);
+    ADDCHEAT("idkfa",           IDKFA);
+    ADDCHEAT("kitty",           NoClip);
+    ADDCHEAT("massacre",        Massacre);
+    ADDCHEAT("noise",           Sound);
+    ADDCHEAT("ponce",           Health);
+    ADDCHEAT("quicken",         God);
+    ADDCHEAT("rambo",           Weapons);
+    ADDCHEAT("ravmap",          Reveal);
+    ADDCHEAT("shazam",          Powerup);
+    ADDCHEAT("skel",            GiveKeys);
+    ADDCHEAT("ticker",          Ticker);
 }
 
 CHEAT_FUNC(God)
@@ -361,7 +352,7 @@ CHEAT_FUNC(Health)
     return true;
 }
 
-CHEAT_FUNC(InvItem1)
+CHEAT_FUNC(InvItem)
 {
     player_t* plr = &players[player];
 
@@ -616,7 +607,7 @@ D_CMD(CheatGod)
 
             if(!players[player].plr->inGame) return false;
 
-            CHEAT(God)(NULL, player);
+            CHEAT(God)(player, 0/*no args*/, 0/*no args*/);
         }
     }
     return true;
@@ -644,7 +635,7 @@ D_CMD(CheatNoClip)
 
             if(!players[player].plr->inGame) return false;
 
-            CHEAT(NoClip)(NULL, player);
+            CHEAT(NoClip)(player, 0/*no args*/, 0/*no args*/);
         }
     }
     return true;
@@ -708,7 +699,8 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatWarp)
 {
-    int num, args[2];
+    EventSequenceArg args[2];
+    int num;
 
     if(!cheatsEnabled()) return false;
 
@@ -729,7 +721,7 @@ D_CMD(CheatWarp)
         return true;
     }
 
-    CHEAT(Warp)(args, CONSOLEPLAYER);
+    CHEAT(Warp)(CONSOLEPLAYER, args, 2);
     return true;
 }
 
@@ -897,7 +889,7 @@ D_CMD(CheatGive)
             break;
 
         case 'h':
-            CHEAT(Health)(NULL, player);
+            CHEAT(Health)(player, 0/*no args*/, 0/*no args*/);
             break;
 
         case 'k':
@@ -925,7 +917,7 @@ D_CMD(CheatGive)
             }
 
             // Give all keys.
-            CHEAT(GiveKeys)(NULL, player);
+            CHEAT(GiveKeys)(player, 0/*no args*/, 0/*no args*/);
             break;
 
         case 'p':
@@ -953,7 +945,7 @@ D_CMD(CheatGive)
             break;
 
         case 't':
-            CHEAT(Powerup)(NULL, player);
+            CHEAT(Powerup)(player, 0/*no args*/, 0/*no args*/);
             break;
 
         case 'w':
@@ -998,7 +990,7 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    CHEAT(Massacre)(NULL, CONSOLEPLAYER);
+    CHEAT(Massacre)(CONSOLEPLAYER, 0/*no args*/, 0/*no args*/);
     return true;
 }
 
@@ -1032,6 +1024,6 @@ D_CMD(CheatPig)
     if(gameSkill == SM_NIGHTMARE) return false;
     if(players[CONSOLEPLAYER].health <= 0)  return false;
 
-    CHEAT(Chicken)(NULL, CONSOLEPLAYER);
+    CHEAT(Chicken)(CONSOLEPLAYER, 0/*no args*/, 0/*no args*/);
     return true;
 }

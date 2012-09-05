@@ -41,16 +41,16 @@
 #include "p_start.h"
 #include "g_eventsequence.h"
 
-typedef int (*cheatfunc_t)(const int*, int);
+typedef eventsequencehandler_t cheatfunc_t;
 
 /// Helper macro for forming cheat callback function names.
 #define CHEAT(x) G_Cheat##x
 
 /// Helper macro for declaring cheat callback functions.
-#define CHEAT_FUNC(x) int G_Cheat##x(const int* args, int player)
+#define CHEAT_FUNC(x) int G_Cheat##x(int player, const EventSequenceArg* args, int numArgs)
 
 /// Helper macro for registering new cheat event sequence handlers.
-#define ADDCHEAT(name, len, callback) G_AddEventSequence((name), (len), CHEAT(callback))
+#define ADDCHEAT(name, callback) G_AddEventSequence((name), CHEAT(callback))
 
 CHEAT_FUNC(GiveAllMap);
 CHEAT_FUNC(GiveChainsaw);
@@ -83,68 +83,52 @@ void G_RegisterCheats(void)
     switch(gameMode)
     {
     case doom2_hacx:
-        { char seq[] = { 'w', 'a', 'r', 'p', 'm', 'e', 1, 0, 0 };
-        ADDCHEAT(seq, 9, Warp); }
-
-        { char seq[] = { 's', 'e', 'e', 'i', 't', 1, 0 };
-        ADDCHEAT(seq, 7, Powerup); }
-
-        { char seq[] = { 't', 'u', 'n', 'e', 's', 1, 0, 0 };
-        ADDCHEAT(seq, 8, Music); }
-
-        ADDCHEAT("show",          4, Reveal);
-        ADDCHEAT("wuss",          4, God);
-        ADDCHEAT("blast",         5, GiveWeaponsAmmoArmorKeys);
-        ADDCHEAT("walk",          4, NoClip);
-        ADDCHEAT("zap",           3, GiveChainsaw);
-        ADDCHEAT("wheream",       7, MyPos);
-        ADDCHEAT("superman",      8, GiveInvulnerability);
-        ADDCHEAT("whacko",        6, GiveStrength);
-        ADDCHEAT("ghost",         5, GiveInvisibility);
-        ADDCHEAT("boots",         5, GiveIronFeet);
-        ADDCHEAT("bright",        6, GiveInfrared);
+        ADDCHEAT("blast",           GiveWeaponsAmmoArmorKeys);
+        ADDCHEAT("boots",           GiveIronFeet);
+        ADDCHEAT("bright",          GiveInfrared);
+        ADDCHEAT("ghost",           GiveInvisibility);
+        ADDCHEAT("seeit%1",         Powerup);
+        ADDCHEAT("show",            Reveal);
+        ADDCHEAT("superman",        GiveInvulnerability);
+        ADDCHEAT("tunes%1%2",       Music);
+        ADDCHEAT("walk",            NoClip);
+        ADDCHEAT("warpme%1%2",      Warp);
+        ADDCHEAT("whacko",          GiveStrength);
+        ADDCHEAT("wheream",         MyPos);
+        ADDCHEAT("wuss",            God);
+        ADDCHEAT("zap",             GiveChainsaw);
         break;
 
     case doom_chex:
-        { char seq[] = { 'l', 'e', 'e', 's', 'n', 'y', 'd', 'e', 'r', 1, 0, 0 };
-        ADDCHEAT(seq, 12, Warp); }
-
-        { char seq[] = { 'i', 'd', 'm', 'u', 's', 1, 0, 0 };
-        ADDCHEAT(seq, 8, Music); }
-
-        ADDCHEAT("joelkoenigs",   11, GiveChainsaw);
-        ADDCHEAT("davidbrus",     9,  God);
-        ADDCHEAT("scottholman",   11, GiveWeaponsAmmoArmorKeys);
-        ADDCHEAT("mikekoenigs",   11, GiveWeaponsAmmoArmor);
-        ADDCHEAT("charlesjacobi", 13, NoClip);
-        ADDCHEAT("kimhyers",      8,  MyPos);
-        ADDCHEAT("sherrill",      8,  Reveal);
-        ADDCHEAT("andrewbenson",  12, GiveInvulnerability);
-        ADDCHEAT("deanhyers",     9,  GiveStrength);
-        ADDCHEAT("marybregi",     9,  GiveInvisibility);
-        ADDCHEAT("allen",         5,  GiveIronFeet);
-        ADDCHEAT("digitalcafe",   11, GiveAllMap);
-        ADDCHEAT("joshuastorms",  12, GiveInfrared);
+        ADDCHEAT("allen",           GiveIronFeet);
+        ADDCHEAT("andrewbenson",    GiveInvulnerability);
+        ADDCHEAT("charlesjacobi",   NoClip);
+        ADDCHEAT("davidbrus",       God);
+        ADDCHEAT("deanhyers",       GiveStrength);
+        ADDCHEAT("digitalcafe",     GiveAllMap);
+        ADDCHEAT("idmus%1%2",       Music);
+        ADDCHEAT("joelkoenigs",     GiveChainsaw);
+        ADDCHEAT("joshuastorms",    GiveInfrared);
+        ADDCHEAT("kimhyers",        MyPos);
+        ADDCHEAT("leesnyder%1%2",   Warp);
+        ADDCHEAT("marybregi",       GiveInvisibility);
+        ADDCHEAT("mikekoenigs",     GiveWeaponsAmmoArmor);
+        ADDCHEAT("scottholman",     GiveWeaponsAmmoArmorKeys);
+        ADDCHEAT("sherrill",        Reveal);
         break;
 
     default: // Doom
-        { char seq[] = { 'i', 'd', 'c', 'l', 'e', 'v', 1, 0, 0 };
-        ADDCHEAT(seq, 9, Warp); }
-
-        { char seq[] = { 'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd', 1, 0 };
-        ADDCHEAT(seq, 10, Powerup); }
-
-        { char seq[] = { 'i', 'd', 'm', 'u', 's', 1, 0, 0 };
-        ADDCHEAT(seq, 8, Music); }
-
-        ADDCHEAT("iddt",          4,  Reveal);
-        ADDCHEAT("iddqd",         5,  God);
-        ADDCHEAT("idfa",          4,  GiveWeaponsAmmoArmor);
-        ADDCHEAT("idkfa",         5,  GiveWeaponsAmmoArmorKeys);
-        ADDCHEAT("idclip",        6,  NoClip);
-        ADDCHEAT("idspispopd",    10, NoClip);
-        ADDCHEAT("idchoppers",    10, GiveChainsaw);
-        ADDCHEAT("idmypos",       7,  MyPos);
+        ADDCHEAT("idbehold%1",      Powerup);
+        ADDCHEAT("idchoppers",      GiveChainsaw);
+        ADDCHEAT("idclev%1%2",      Warp);
+        ADDCHEAT("idclip",          NoClip);
+        ADDCHEAT("iddqd",           God);
+        ADDCHEAT("iddt",            Reveal);
+        ADDCHEAT("idfa",            GiveWeaponsAmmoArmor);
+        ADDCHEAT("idkfa",           GiveWeaponsAmmoArmorKeys);
+        ADDCHEAT("idmus%1%2",       Music);
+        ADDCHEAT("idmypos",         MyPos);
+        ADDCHEAT("idspispopd",      NoClip);
         break;
     }
 }
@@ -440,44 +424,44 @@ CHEAT_FUNC(Powerup)
 
 CHEAT_FUNC(GiveInvulnerability)
 {
-    int _args[1] = {'v'};
+    EventSequenceArg _args[1] = {'v'};
     DENG_UNUSED(args);
-    return CHEAT(Powerup)(_args, player);
+    return CHEAT(Powerup)(player, _args, 1);
 }
 
 CHEAT_FUNC(GiveStrength)
 {
-    int _args[1] = {'s'};
+    EventSequenceArg _args[1] = {'s'};
     DENG_UNUSED(args);
-    return CHEAT(Powerup)(_args, player);
+    return CHEAT(Powerup)(player, _args, 1);
 }
 
 CHEAT_FUNC(GiveInvisibility)
 {
-    int _args[1] = {'i'};
+    EventSequenceArg _args[1] = {'i'};
     DENG_UNUSED(args);
-    return CHEAT(Powerup)(_args, player);
+    return CHEAT(Powerup)(player, _args, 1);
 }
 
 CHEAT_FUNC(GiveIronFeet)
 {
-    int _args[1] = {'r'};
+    EventSequenceArg _args[1] = {'r'};
     DENG_UNUSED(args);
-    return CHEAT(Powerup)(_args, player);
+    return CHEAT(Powerup)(player, _args, 1);
 }
 
 CHEAT_FUNC(GiveAllMap)
 {
-    int _args[1] = {'a'};
+    EventSequenceArg _args[1] = {'a'};
     DENG_UNUSED(args);
-    return CHEAT(Powerup)(_args, player);
+    return CHEAT(Powerup)(player, _args, 1);
 }
 
 CHEAT_FUNC(GiveInfrared)
 {
-    int _args[1] = {'l'};
+    EventSequenceArg _args[1] = {'l'};
     DENG_UNUSED(args);
-    return CHEAT(Powerup)(_args, player);
+    return CHEAT(Powerup)(player, _args, 1);
 }
 
 CHEAT_FUNC(GiveChainsaw)
@@ -598,7 +582,7 @@ D_CMD(CheatGod)
 
             if(!players[player].plr->inGame) return false;
 
-            CHEAT(God)(NULL, player);
+            CHEAT(God)(player, 0/*no args*/, 0/*no args*/);
         }
     }
     return true;
@@ -626,7 +610,7 @@ D_CMD(CheatNoClip)
 
             if(!players[player].plr->inGame) return false;
 
-            CHEAT(NoClip)(NULL, player);
+            CHEAT(NoClip)(player, 0/*no args*/, 0/*no args*/);
         }
     }
     return true;
@@ -693,7 +677,7 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatWarp)
 {
-    int args[2];
+    EventSequenceArg args[2];
 
     if(!cheatsEnabled()) return false;
 
@@ -717,7 +701,7 @@ D_CMD(CheatWarp)
         }
     }
 
-    CHEAT(Warp)(args, CONSOLEPLAYER);
+    CHEAT(Warp)(CONSOLEPLAYER, args, 2);
     return true;
 }
 

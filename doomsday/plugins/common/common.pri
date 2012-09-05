@@ -72,7 +72,7 @@ SOURCES += \
     $$common_src/fi_lib.c \
     $$common_src/g_controls.c \
     $$common_src/g_defs.c \
-    $$common_src/g_eventsequence.c \
+    $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.c \
     $$common_src/g_update.c \
     $$common_src/gl_drawpatch.c \
