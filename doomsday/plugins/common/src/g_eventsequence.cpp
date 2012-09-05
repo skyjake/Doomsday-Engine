@@ -28,10 +28,55 @@
 #include "common.h"
 #include "g_eventsequence.h"
 
+/// Base class for all sequence complete handlers.
+class ISequenceCompleteHandler
+{
+public:
+    virtual ~ISequenceCompleteHandler() {}
+    virtual void invoke(int player, EventSequenceArg* args, int numArgs) = 0;
+};
+
+/// Sequence complete Callback handler.
+class SequenceCompleteHandler : public ISequenceCompleteHandler
+{
+public:
+    SequenceCompleteHandler(eventsequencehandler_t _callback) : callback(_callback) {}
+    virtual void invoke(int player, EventSequenceArg* args, int numArgs)
+    {
+        callback(player, args, numArgs);
+    }
+private:
+    eventsequencehandler_t callback;
+};
+
+/// Sequence complete Command handler.
+class SequenceCompleteCommandHandler : public ISequenceCompleteHandler
+{
+public:
+    SequenceCompleteCommandHandler(const char* _commandTemplate)
+    {
+        Str_Set(Str_InitStd(&commandTemplate), _commandTemplate);
+    }
+    virtual ~SequenceCompleteCommandHandler()
+    {
+        Str_Free(&commandTemplate);
+    }
+    virtual void invoke(int player, EventSequenceArg* args, int numArgs)
+    {
+        DENG_UNUSED(player);
+        DENG_UNUSED(args);
+        DENG_UNUSED(numArgs);
+        /// @todo Compose the real command substituting arguments in the template.
+        DD_Execute(true/*silent*/, Str_Text(&commandTemplate));
+    }
+private:
+    Str commandTemplate;
+};
+
 class EventSequence
 {
 public:
-    EventSequence(const char* _sequence, eventsequencehandler_t _handler)
+    EventSequence(const char* _sequence, ISequenceCompleteHandler& _handler)
         : sequence(), handler(_handler), pos(0), numArgs(0), args(0)
     {
         int len = strlen(_sequence);
@@ -47,7 +92,7 @@ public:
                     int arg = ch[1] - '0';
                     if(arg < 1 || arg > 9)
                     {
-                        Con_Message("Warning: EventSequence: Bad suffix %c in sequence %s, sequence truncated.", *ch, _sequence);
+                        Con_Message("Warning: EventSequence: Bad suffix %c in sequence %s, sequence truncated.", ch[1], _sequence);
                         len = ch - _sequence;
                         break;
                     }
@@ -76,6 +121,7 @@ public:
     {
         Str_Free(&sequence);
         if(args) delete[] args;
+        delete &handler;
     }
 
     /**
@@ -121,7 +167,7 @@ public:
         if(pos < Str_Length(&sequence)) return false;
 
         // Sequence completed.
-        handler(player, args, numArgs);
+        handler.invoke(player, args, numArgs);
         rewind();
 
         return true;
@@ -129,7 +175,7 @@ public:
 
 private:
     Str sequence;
-    eventsequencehandler_t handler;
+    ISequenceCompleteHandler& handler;
     int pos;
     int numArgs;
     EventSequenceArg* args;
@@ -185,10 +231,20 @@ int G_EventSequenceResponder(event_t* ev)
     return eventWasEaten;
 }
 
-void G_AddEventSequence(const char* sequence, eventsequencehandler_t handler)
+void G_AddEventSequence(const char* sequence, eventsequencehandler_t callback)
 {
     if(!inited) Con_Error("G_AddEventSequence: Subsystem not presently initialized.");
-    if(!sequence || !sequence[0] || !handler) Con_Error("G_AddEventSequence: Invalid argument(s).");
+    if(!sequence || !sequence[0] || !callback) Con_Error("G_AddEventSequence: Invalid argument(s).");
 
-    sequences.push_back(new EventSequence(sequence, handler));
+    SequenceCompleteHandler* handler = new SequenceCompleteHandler(callback);
+    sequences.push_back(new EventSequence(sequence, *handler));
+}
+
+void G_AddEventSequenceCommand(const char* sequence, const char* commandTemplate)
+{
+    if(!inited) Con_Error("G_AddEventSequenceCommand: Subsystem not presently initialized.");
+    if(!sequence || !sequence[0] || !commandTemplate || !commandTemplate[0]) Con_Error("G_AddEventSequenceCommand: Invalid argument(s).");
+
+    SequenceCompleteCommandHandler* handler = new SequenceCompleteCommandHandler(commandTemplate);
+    sequences.push_back(new EventSequence(sequence, *handler));
 }

@@ -67,6 +67,14 @@ int G_EventSequenceResponder(event_t* ev);
  */
 void G_AddEventSequence(const char* sequence, eventsequencehandler_t callback);
 
+/**
+ * Add a new event sequence.
+ *
+ * @param sequence      Text description of the sequence.
+ * @param cmdTemplate   Templated console command to be executed upon sequence completion.
+ */
+void G_AddEventSequenceCommand(const char* sequence, const char* commandTemplate);
+
 #if __cplusplus
 } // extern "C"
 #endif
