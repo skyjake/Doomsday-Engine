@@ -35,27 +35,51 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"
+#include "g_common.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "am_map.h"
 #include "fi_lib.h"
 #include "r_common.h"
 
+/**
+ * @defgroup tableColumnFlags  Table Column flags
+ */
+///@{
+#define CF_HIDE                 0x0001 ///< Column is presently hidden (will be collapsed).
+#define CF_STRETCH_WIDTH        0x0002 ///< Column width is not fixed.
+///@}
+
+/**
+ * Defines a column in a table layout.
+ */
+typedef struct {
+    const char*     label;
+    int             type;
+    int             flags; ///< @ref tableColumnFlags
+    int             alignFlags; ///< @ref alignFlags
+
+    /// Auto-initialized:
+    float           x;
+    float           width;
+} column_t;
+
+/**
+ * Player "score" information, kills, suicides, etc...
+ */
+typedef struct {
+    int             player, pClass, team;
+    int             kills, suicides;
+    float           color[3];
+} scoreinfo_t;
+
+/**
+ * Per-player scoreboard state.
+ */
 typedef struct {
     int             hideTics;
     float           alpha;
 } scoreboardstate_t;
-
-// Column flags
-#define CF_HIDE                 0x0001
-#define CF_FIXEDWIDTH           0x0002
-
-typedef struct {
-    const char*     label;
-    int             type;
-    short           flags; // CF_* flags.
-    boolean         alignRight;
-} column_t;
 
 typedef struct fogeffectlayer_s {
     float           texOffset[2];
@@ -74,21 +98,8 @@ typedef struct fogeffectdata_s {
 fontid_t fonts[NUM_GAME_FONTS];
 
 #if __JDOOM__ || __JDOOM64__
-// Name graphics of each map.
-patchid_t* pMapNames;
-uint pMapNamesSize;
-#endif
-
-#if __JDOOM__ || __JDOOM64__
 /// The end message strings.
 const char* endmsg[NUM_QUITMESSAGES + 1];
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-patchid_t pInvItemBox;
-patchid_t pInvSelectBox;
-patchid_t pInvPageLeft[2];
-patchid_t pInvPageRight[2];
 #endif
 
 boolean shiftdown = false;
@@ -132,13 +143,27 @@ const char shiftXForm[] = {
     '{', '|', '}', '~', 127
 };
 
+// Misc UI patches:
 patchid_t borderPatches[8];
-
-static scoreboardstate_t scoreStates[MAXPLAYERS];
-static fogeffectdata_t fogEffectData;
-
+#if __JDOOM__ || __JDOOM64__
+patchid_t* pMapNames; // Name graphics for each map.
+uint pMapNamesSize;
+#endif
+#if __JHERETIC__ || __JHEXEN__
+patchid_t pInvItemBox;
+patchid_t pInvSelectBox;
+patchid_t pInvPageLeft[2];
+patchid_t pInvPageRight[2];
+#endif
 static patchid_t m_pause; // Paused graphic.
 
+// Menu and message background fog effect state.
+static fogeffectdata_t fogEffectData;
+
+// Scoreboard states for each player.
+static scoreboardstate_t scoreStates[MAXPLAYERS];
+
+// Patch => Text Replacement LUT.
 typedef std::map<patchid_t, int> PatchReplacementValues;
 PatchReplacementValues patchReplacements;
 
@@ -166,52 +191,59 @@ static int patchReplacementValueIndex(patchid_t patchId, bool canCreate = true)
 }
 
 /**
- * Loads the font patches and inits various strings
- * JHEXEN Note: Don't bother with the yellow font, we'll colour the white version
+ * Intialize the background fog effect.
  */
-void Hu_LoadData(void)
+static void initFogEffect()
 {
-    // Clear the patch replacement value map (definitions have been re-read).
-    patchReplacements.clear();
+    fogeffectdata_t* fog = &fogEffectData;
 
-#if __JDOOM__ || __JDOOM64__
-    char name[9];
-#endif
-    uint i;
+    fog->texture = 0;
+    fog->alpha = fog->targetAlpha = 0;
+    fog->joinY = 0.5f;
+    fog->scrollDir = true;
 
-    // Intialize the background fog effect.
+    fog->layers[0].texOffset[VX] = fog->layers[0].texOffset[VY] = 0;
+    fog->layers[0].texAngle = 93;
+    fog->layers[0].posAngle = 35;
+
+    fog->layers[1].texOffset[VX] = fog->layers[1].texOffset[VY] = 0;
+    fog->layers[1].texAngle = 12;
+    fog->layers[1].posAngle = 77;
+}
+
+static void prepareFogTexture()
+{
+    if(Get(DD_NOVIDEO) || Get(DD_DEDICATED)) return;
+    // Already prepared?
+    if(fogEffectData.texture) return;
+
+    lumpnum_t lumpNum     = W_GetLumpNumForName("menufog");
+    const uint8_t* pixels = W_CacheLump(lumpNum, PU_GAMESTATIC);
+    const int width = 64, height = 64; /// @todo fixme: Do not assume dimensions.
+
+    fogEffectData.texture = DGL_NewTextureWithParams(DGL_LUMINANCE, width, height,
+        pixels, 0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
+
+    W_CacheChangeTag(lumpNum, PU_CACHE);
+}
+
+static void releaseFogTexture()
+{
+    if(Get(DD_NOVIDEO) || Get(DD_DEDICATED)) return;
+    // Not prepared?
+    if(!fogEffectData.texture) return;
+
+    DGL_DeleteTextures(1, (DGLuint*) &fogEffectData.texture);
     fogEffectData.texture = 0;
-    fogEffectData.alpha = fogEffectData.targetAlpha = 0;
-    fogEffectData.joinY = 0.5f;
-    fogEffectData.scrollDir = true;
-    fogEffectData.layers[0].texOffset[VX] =
-        fogEffectData.layers[0].texOffset[VY] = 0;
-    fogEffectData.layers[0].texAngle = 93;
-    fogEffectData.layers[0].posAngle = 35;
-    fogEffectData.layers[1].texOffset[VX] =
-        fogEffectData.layers[1].texOffset[VY] = 0;
-    fogEffectData.layers[1].texAngle = 12;
-    fogEffectData.layers[1].posAngle = 77;
+}
 
-    // Load the background fog texture.
-    if(!fogEffectData.texture && !(Get(DD_NOVIDEO) || Get(DD_DEDICATED)))
+static void declareGraphicPatches()
+{
+    // View border patches:
+    for(uint i = 1; i < 9; ++i)
     {
-        lumpnum_t lumpNum = W_GetLumpNumForName("menufog");
-        if(lumpNum >= 0)
-        {
-            const uint8_t* pixels = (const uint8_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
-            int width = 64, height = 64;
-
-            fogEffectData.texture = DGL_NewTextureWithParams(DGL_LUMINANCE, width, height,
-                pixels, 0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
-
-            W_CacheChangeTag(lumpNum, PU_CACHE);
-        }
-    }
-
-    // Load the border patches
-    for(i = 1; i < 9; ++i)
         borderPatches[i-1] = R_DeclarePatch(borderGraphics[i]);
+    }
 
 #if __JDOOM__ || __JDOOM64__
     m_pause = R_DeclarePatch("M_PAUSE");
@@ -219,41 +251,38 @@ void Hu_LoadData(void)
     m_pause = R_DeclarePatch("PAUSED");
 #endif
 
+    // Map name patches:
 #if __JDOOM__ || __JDOOM64__
-    // Load the map name patches.
-# if __JDOOM64__
-    {
-        pMapNamesSize = 32;
-        pMapNames = (patchid_t*) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
-        for(i = 0; i < pMapNamesSize; ++i)
-        {
-            sprintf(name, "WILV%2.2u", i);
-            pMapNames[i] = R_DeclarePatch(name);
-        }
-    }
-# else
+# if !__JDOOM64__
     if(gameModeBits & GM_ANY_DOOM2)
+# endif
     {
         pMapNamesSize = 32;
         pMapNames = (patchid_t*) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
-        for(i = 0; i < pMapNamesSize; ++i)
+        for(uint i = 0; i < pMapNamesSize; ++i)
         {
+            lumpname_t name;
+# if __JDOOM64__
+            sprintf(name, "WILV%2.2u", i);
+# else // __JDOOM__
             sprintf(name, "CWILV%2.2u", i);
+# endif
             pMapNames[i] = R_DeclarePatch(name);
         }
     }
+# if !__JDOOM64__
     else
     {
-        uint numEpisodes = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate? 4 : 3);
-        uint j;
+        const uint numEpisodes = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate? 4 : 3);
+        lumpname_t name;
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
         pMapNamesSize = 9*4;
         pMapNames = (patchid_t*) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
-        for(i = 0; i < numEpisodes; ++i)
+        for(uint i = 0; i < numEpisodes; ++i)
         {
-            for(j = 0; j < 9; ++j) // Number of maps per episode.
+            for(uint j = 0; j < 9; ++j) // Number of maps per episode.
             {
                 sprintf(name, "WILV%2.2u", (i * 10) + j);
                 pMapNames[(i* 9) + j] = R_DeclarePatch(name);
@@ -264,22 +293,37 @@ void Hu_LoadData(void)
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    pInvItemBox = R_DeclarePatch("ARTIBOX");
-    pInvSelectBox = R_DeclarePatch("SELECTBO");
-    pInvPageLeft[0] = R_DeclarePatch("INVGEML1");
-    pInvPageLeft[1] = R_DeclarePatch("INVGEML2");
+    pInvItemBox      = R_DeclarePatch("ARTIBOX");
+    pInvSelectBox    = R_DeclarePatch("SELECTBO");
+    pInvPageLeft[0]  = R_DeclarePatch("INVGEML1");
+    pInvPageLeft[1]  = R_DeclarePatch("INVGEML2");
     pInvPageRight[0] = R_DeclarePatch("INVGEMR1");
     pInvPageRight[1] = R_DeclarePatch("INVGEMR2");
 #endif
+}
+
+/**
+ * Loads the font patches and inits various strings
+ * JHEXEN Note: Don't bother with the yellow font, we'll colour the white version
+ */
+void Hu_LoadData()
+{
+    // Clear the patch replacement value map (definitions have been re-read).
+    patchReplacements.clear();
+
+    initFogEffect();
+    prepareFogTexture();
+
+    declareGraphicPatches();
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     R_GetGammaMessageStrings();
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    // Quit messages.
+    // Quit messages:
     endmsg[0] = GET_TXT(TXT_QUITMSG);
-    for(i = 1; i <= NUM_QUITMESSAGES; ++i)
+    for(uint i = 1; i <= NUM_QUITMESSAGES; ++i)
     {
         endmsg[i] = GET_TXT(TXT_QUITMESSAGE1 + i - 1);
     }
@@ -290,24 +334,20 @@ void Hu_UnloadData(void)
 {
 #if __JDOOM__ || __JDOOM64__
     if(pMapNames)
-        Z_Free(pMapNames);
-    pMapNames = 0;
+    {
+        Z_Free(pMapNames); pMapNames = 0;
+    }
 #endif
 
-    if(!Get(DD_NOVIDEO))
-    {
-        if(fogEffectData.texture)
-            DGL_DeleteTextures(1, (DGLuint*) &fogEffectData.texture);
-        fogEffectData.texture = 0;
-    }
+    releaseFogTexture();
 }
 
 void HU_WakeWidgets(int player)
 {
     if(player < 0)
     {
-        uint i;
-        for(i = 0; i < MAXPLAYERS; ++i)
+        // Wake the widgets of all players.
+        for(uint i = 0; i < MAXPLAYERS; ++i)
         {
             if(!players[i].plr->inGame) continue;
             HU_WakeWidgets(i);
@@ -345,10 +385,9 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
 void HU_DrawText(const char* str, float x, float y, float scale,
     float r, float g, float b, float a, int alignFlags, short textFlags)
 {
-    const boolean applyScale = !FEQUAL(scale, 1.0f);
-
     if(!str || !str[0]) return;
 
+    const bool applyScale = !FEQUAL(scale, 1.0f);
     if(applyScale)
     {
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -369,30 +408,20 @@ void HU_DrawText(const char* str, float x, float y, float scale,
     }
 }
 
-typedef struct {
-    int player, pClass, team;
-    int kills, suicides;
-    float color[3];
-} scoreinfo_t;
-
-int scoreInfoCompare(const void* a, const void* b)
+/// Predicate for sorting score infos.
+int scoreInfoCompare(const void* a_, const void* b_)
 {
-    const scoreinfo_t* infoA = (scoreinfo_t*) a;
-    const scoreinfo_t* infoB = (scoreinfo_t*) b;
+    const scoreinfo_t* a = (scoreinfo_t*) a_;
+    const scoreinfo_t* b = (scoreinfo_t*) b_;
 
-    if(infoA->kills > infoB->kills)
-        return -1;
-
-    if(infoB->kills > infoA->kills)
-        return 1;
+    if(a->kills > b->kills) return -1;
+    if(b->kills > a->kills) return 1;
 
     if(deathmatch)
-    {   // In deathmatch, suicides affect your place on the scoreboard.
-        if(infoA->suicides < infoB->suicides)
-            return -1;
-
-        if(infoB->suicides < infoA->suicides)
-            return 1;
+    {
+        // In deathmatch, suicides affect your place on the scoreboard.
+        if(a->suicides < b->suicides) return -1;
+        if(b->suicides < a->suicides) return 1;
     }
 
     return 0;
@@ -403,7 +432,7 @@ static void sortScoreInfo(scoreinfo_t* vec, size_t size)
     qsort(vec, size, sizeof(scoreinfo_t), scoreInfoCompare);
 }
 
-static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
+static int populateScoreInfo(scoreinfo_t* scoreBoard, int maxPlayers, int player)
 {
     DENG_UNUSED(player);
 
@@ -424,17 +453,16 @@ static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
     static const float brown[3] = {  .7f,   .5f,   .4f  };
     static const float red[3]   = { 1.f,   0.f,   0.f   };
 #endif
-    int i, j, n, inCount;
+    int n = 0, inCount;
 
     memset(scoreBoard, 0, sizeof(*scoreBoard) * maxPlayers);
     inCount = 0;
-    for(i = 0, n = 0; i < maxPlayers; ++i)
+    for(int i = 0; i < maxPlayers; ++i)
     {
         player_t* plr = &players[i];
         scoreinfo_t* info;
 
-        if(!plr->plr->inGame)
-            continue;
+        if(!plr->plr->inGame) continue;
 
         inCount++;
         info = &scoreBoard[n++];
@@ -466,7 +494,7 @@ static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
 
         if(deathmatch)
         {
-            for(j = 0; j < maxPlayers; ++j)
+            for(int j = 0; j < maxPlayers; ++j)
             {
                 if(j != i)
                 {
@@ -496,111 +524,118 @@ static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
 
 void HU_ScoreBoardUnHide(int player)
 {
-    scoreboardstate_t* ss;
-    player_t* plr;
+    if(player < 0 || player >= MAXPLAYERS) return;
 
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
+    player_t* plr = &players[player];
+    if(!plr->plr->inGame) return;
 
-    plr = &players[player];
-    if(!plr->plr->inGame)
-        return;
-
-    ss = &scoreStates[player];
+    scoreboardstate_t* ss = &scoreStates[player];
     ss->alpha = 1;
     ss->hideTics = 35;
+}
+
+static int countTableColumns(const column_t* columns)
+{
+    int count = 0;
+    while(columns[count].label){ count++; }
+    return count;
+}
+
+static void applyTableLayout(column_t* columns, int numCols, float x, float width,
+                             int cellPadding = 0)
+{
+    DENG_ASSERT(columns);
+    column_t* col;
+
+    col = columns;
+    int numStretchCols = 0;
+    for(int n = 0; n < numCols; ++n, col++)
+    {
+        col->x     = 0;
+        col->width = 0;
+
+        // Count the total number of non-fixed width ("stretched") columns.
+        if(!(col->flags & CF_HIDE) && (col->flags & CF_STRETCH_WIDTH))
+            numStretchCols++;
+    }
+
+    col = columns;
+    int fixedWidth = 0;
+    for(int n = 0; n < numCols; ++n, col++)
+    {
+        col->width = 0;
+        if(col->flags & CF_HIDE) continue; // Collapse.
+
+        if(!(col->flags & CF_STRETCH_WIDTH))
+        {
+            col->width = FR_TextWidth(col->label) + cellPadding * 2;
+            fixedWidth += col->width;
+        }
+    }
+
+    col = columns;
+    for(int n = 0; n < numCols; ++n, col++)
+    {
+        if(col->flags & CF_HIDE) continue; // Collapse.
+
+        if(col->flags & CF_STRETCH_WIDTH)
+        {
+            col->width = (width - fixedWidth) / numStretchCols;
+        }
+    }
+
+    col = columns;
+    for(int n = 0; n < numCols; ++n, col++)
+    {
+        col->x = x;
+        if(!(col->flags & CF_HIDE)) // Collapse.
+        {
+            x += col->width;
+        }
+    }
 }
 
 static void drawTable(float x, float ly, float width, float height,
     column_t* columns, scoreinfo_t* scoreBoard, int inCount, float alpha,
     int player)
 {
-#define CELL_PADDING    (1)
-
-    int i, n, numCols, numStretchCols;
-    int cX, cY, fixedWidth, lineHeight, fontHeight, fontOffsetY;
-    float fontScale, *colX, *colW;
+#define CELL_PADDING            1
 
     if(!columns) return;
     if(!(alpha > 0)) return;
 
-    numStretchCols = 0;
-    numCols = 0;
-    for(n = 0; columns[n].label; n++)
-    {
-        numCols++;
-
-        if(columns[n].flags & CF_HIDE) continue;
-
-        if(!(columns[n].flags & CF_FIXEDWIDTH))
-            numStretchCols++;
-    }
-
+    int numCols = countTableColumns(columns);
     if(!numCols) return;
 
-    /// @todo - Preprocess the table to avoid constant allocations.
-    colX = (float*) calloc(1, sizeof(*colX) * numCols);
-    if(!colX) Con_Error("drawTable: Failed on allocation of %lu bytes for colX data table.", (unsigned long) (sizeof(*colX) * numCols));
+    const int lineHeight  = .5f + height / (MAXPLAYERS + 1);
+    const int fontHeight  = FR_CharHeight('A');
+    const float fontScale = float(lineHeight) / (fontHeight + CELL_PADDING * 2);
 
-    colW = (float*) calloc(1, sizeof(*colW) * numCols);
-    if(!colW) Con_Error("drawTable: Failed on allocation of %lu bytes for colW data table.", (unsigned long) (sizeof(*colW) * numCols));
+    applyTableLayout(columns, numCols, x, width, CELL_PADDING);
 
-    lineHeight = .5f + height / (MAXPLAYERS + 1);
-    fontHeight = FR_CharHeight('A');
-    fontScale = (float)lineHeight / (fontHeight + CELL_PADDING * 2);
-    fontOffsetY = 0;
-
-    fixedWidth = 0;
-    for(n = 0; n < numCols; ++n)
-    {
-        if(columns[n].flags & CF_HIDE) continue;
-
-        if(columns[n].flags & CF_FIXEDWIDTH)
-        {
-            colW[n] = FR_TextWidth(columns[n].label) + CELL_PADDING * 2;
-            fixedWidth += colW[n];
-        }
-    }
-
-    for(n = 0; n < numCols; ++n)
-    {
-        if(columns[n].flags & CF_HIDE) continue;
-
-        if(!(columns[n].flags & CF_FIXEDWIDTH))
-            colW[n] = (width - fixedWidth) / numStretchCols;
-    }
-
-    colX[0] = x;
-    for(n = 1; n < numCols; ++n)
-    {
-        if(columns[n].flags & CF_HIDE)
-            colX[n] = colX[n-1];
-        else
-            colX[n] = colX[n-1] + colW[n-1];
-    }
+    /// @todo fixme: all layout/placement should be done in applyTableLayout()
 
     // Draw the table header:
     DGL_Enable(DGL_TEXTURE_2D);
-    for(n = 0; n < numCols; ++n)
+    const column_t* col = columns;
+    for(int n = 0; n < numCols; ++n, col++)
     {
-        if(columns[n].flags & CF_HIDE) continue;
+        if(col->flags & CF_HIDE) continue;
 
-        cX = colX[n];
-        cY = ly + lineHeight - CELL_PADDING + fontOffsetY;
+        int cX = col->x;
+        if(col->alignFlags & ALIGN_RIGHT) cX += col->width - CELL_PADDING;
+        else                              cX += CELL_PADDING;
 
-        if(columns[n].alignRight)
-            cX += colW[n] - CELL_PADDING;
-        else
-            cX += CELL_PADDING;
+        int cY = ly + lineHeight - CELL_PADDING;
+        int alignFlags = (col->alignFlags & ~ALIGN_TOP) | ALIGN_BOTTOM;
 
-        HU_DrawText(columns[n].label, cX, cY, fontScale, 1.f, 1.f, 1.f, alpha,
-                    ALIGN_BOTTOM|(columns[n].alignRight? ALIGN_RIGHT : ALIGN_LEFT), DTF_ONLY_SHADOW);
+        HU_DrawText(col->label, cX, cY, fontScale, 1.f, 1.f, 1.f, alpha, alignFlags, DTF_ONLY_SHADOW);
     }
     ly += lineHeight;
     DGL_Disable(DGL_TEXTURE_2D);
 
     // Draw the table from left to right, top to bottom:
-    for(i = 0; i < inCount; ++i, ly += lineHeight)
+    for(int i = 0; i < inCount; ++i, ly += lineHeight)
     {
         scoreinfo_t* info = &scoreBoard[i];
         const char* name = Net_GetPlayerName(info->player);
@@ -619,21 +654,18 @@ static void drawTable(float x, float ly, float width, float height,
 
         // Now draw the fields:
         DGL_Enable(DGL_TEXTURE_2D);
-
-        for(n = 0; n < numCols; ++n)
+        const column_t* col = columns;
+        for(int n = 0; n < numCols; ++n, col++)
         {
-            if(columns[n].flags & CF_HIDE) continue;
+            if(col->flags & CF_HIDE) continue;
 
-            cX = colX[n];
-            cY = ly;
+            int cX = col->x;
+            if(col->alignFlags & ALIGN_RIGHT) cX += col->width - CELL_PADDING;
+            else                              cX += CELL_PADDING;
 
-            cY += CELL_PADDING;
-            if(columns[n].alignRight)
-                cX += colW[n] - CELL_PADDING;
-            else
-                cX += CELL_PADDING;
+            int cY = ly + CELL_PADDING;
 
-            switch(columns[n].type)
+            switch(col->type)
             {
             case 0: // Class icon.
                 {
@@ -661,16 +693,14 @@ static void drawTable(float x, float ly, float width, float height,
                     w = sprInfo.geometry.size.width;
                     h = sprInfo.geometry.size.height;
 
-                    if(h > w)
-                        scale = (float) (lineHeight - CELL_PADDING * 2) / h;
-                    else
-                        scale = (float) (colW[n] - CELL_PADDING * 2) / w;
+                    if(h > w) scale = float(lineHeight - CELL_PADDING * 2) / h;
+                    else      scale = float(col->width - CELL_PADDING * 2) / w;
 
                     w *= scale;
                     h *= scale;
 
                     // Align to center on both X+Y axes.
-                    cX += ((colW[n] - CELL_PADDING * 2) - w) / 2.0f;
+                    cX += ((col->width - CELL_PADDING * 2) - w) / 2.0f;
                     cY += ((lineHeight - CELL_PADDING * 2) - h) / 2.0f;
 
                     DGL_SetMaterialUI(sprInfo.material, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
@@ -682,26 +712,23 @@ static void drawTable(float x, float ly, float width, float height,
                 }
 
             case 1: // Name.
-                HU_DrawText(name, cX, cY + fontOffsetY, fontScale,
+                HU_DrawText(name, cX, cY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, ALIGN_TOP|(columns[n].alignRight? ALIGN_RIGHT : ALIGN_LEFT),
-                            DTF_ONLY_SHADOW);
+                            alpha, col->alignFlags, DTF_ONLY_SHADOW);
                 break;
 
             case 2: // #Suicides.
                 sprintf(buf, "%4i", info->suicides);
-                HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
+                HU_DrawText(buf, cX, cY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, ALIGN_TOP|(columns[n].alignRight? ALIGN_RIGHT : ALIGN_LEFT),
-                            DTF_ONLY_SHADOW);
+                            alpha, col->alignFlags, DTF_ONLY_SHADOW);
                 break;
 
             case 3: // #Kills.
                 sprintf(buf, "%4i", info->kills);
-                HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
+                HU_DrawText(buf, cX, cY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, ALIGN_TOP|(columns[n].alignRight? ALIGN_RIGHT : ALIGN_LEFT),
-                            DTF_ONLY_SHADOW);
+                            alpha, col->alignFlags, DTF_ONLY_SHADOW);
                 break;
             }
         }
@@ -709,23 +736,7 @@ static void drawTable(float x, float ly, float width, float height,
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
-    free(colX);
-    free(colW);
-
 #undef CELL_PADDING
-}
-
-const char* P_GetGameModeName(void)
-{
-    static const char* dm = "deathmatch";
-    static const char* coop = "cooperative";
-    static const char* sp = "singleplayer";
-    if(IS_NETGAME)
-    {
-        if(deathmatch) return dm;
-        return coop;
-    }
-    return sp;
 }
 
 static void drawMapMetaData(float x, float y, float alpha)
@@ -755,24 +766,30 @@ void HU_DrawScoreBoard(int player)
 {
 #define LINE_BORDER         4
 
-    column_t columns[] = {
-        { "cl",       0, CF_FIXEDWIDTH, false },
-        { "name",     1, 0,             false },
-        { "suicides", 2, CF_FIXEDWIDTH, true  },
-        { "frags",    3, CF_FIXEDWIDTH, true  },
-        { NULL,       0, 0,             false }
+    static column_t columns[] = {
+        { "cl",       0, 0,                 0,              0, 0 },
+        { "name",     1, CF_STRETCH_WIDTH,  ALIGN_TOPLEFT,  0, 0 },
+        { "suicides", 2, 0,                 ALIGN_TOPRIGHT, 0, 0 },
+        { "frags",    3, 0,                 ALIGN_TOPRIGHT, 0, 0 },
+        { NULL,       0, 0,                 0,              0, 0 }
     };
-
-    scoreinfo_t scoreBoard[MAXPLAYERS];
-    int x, y, width, height, inCount;
-    scoreboardstate_t* ss;
+    static bool tableInitialized = false;
 
     if(!IS_NETGAME) return;
 
     if(player < 0 || player >= MAXPLAYERS) return;
-    ss = &scoreStates[player];
+    scoreboardstate_t* ss = &scoreStates[player];
 
     if(!(ss->alpha > 0)) return;
+
+    // Are we yet to initialize the table for this game mode?
+    if(!tableInitialized)
+    {
+        // Only display the player class column if more than one class is defined.
+        if(NUM_PLAYER_CLASSES == 1)
+            columns[0].flags |= CF_HIDE;
+        tableInitialized = true;
+    }
 
     // Set up the fixed 320x200 projection.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -780,26 +797,20 @@ void HU_DrawScoreBoard(int player)
     DGL_LoadIdentity();
     DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
+    // Populate and sort the scoreboard according to game rules, type, etc.
+    scoreinfo_t scoreBoard[MAXPLAYERS];
+    int inCount = populateScoreInfo(scoreBoard, MAXPLAYERS, player);
+
     // Determine the dimensions of the scoreboard:
-    x = 0;
-    y = 0;
-    width = SCREENWIDTH - 32;
-    height = SCREENHEIGHT - 32;
+    RectRaw geom = RectRaw(0, 0, SCREENWIDTH - 32, SCREENHEIGHT - 32);
 
-    // Build and sort the scoreboard according to game rules, type, etc.
-    inCount = buildScoreBoard(scoreBoard, MAXPLAYERS, player);
-
-    // Only display the player class column if more than one.
-    if(NUM_PLAYER_CLASSES == 1)
-        columns[0].flags |= CF_HIDE;
-
-    // Scale by HUD scale.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(16, 16, 0);
 
     // Draw a background around the whole thing.
-    DGL_DrawRectf2Color(x, y, width, height, 0, 0, 0, .4f * ss->alpha);
+    DGL_DrawRectf2Color(geom.origin.x, geom.origin.y, geom.size.width, geom.size.height,
+                        0, 0, 0, .4f * ss->alpha);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -807,11 +818,12 @@ void HU_DrawScoreBoard(int player)
     FR_LoadDefaultAttrib();
     FR_SetLeading(0);
     FR_SetColorAndAlpha(1, 0, 0, ss->alpha);
-    FR_DrawTextXY3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("ranking", geom.origin.x + geom.size.width / 2, geom.origin.y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    drawMapMetaData(x, y + height, ss->alpha);
-    drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount, ss->alpha, player);
+    drawMapMetaData(geom.origin.x, geom.origin.y + geom.size.height, ss->alpha);
+    drawTable(geom.origin.x, geom.origin.y + 20, geom.size.width, geom.size.height - 20,
+              columns, scoreBoard, inCount, ss->alpha, player);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -830,8 +842,7 @@ void Hu_Ticker(void)
         scoreboardstate_t* ss = &scoreStates[i];
         player_t* plr = &players[i];
 
-        if(!plr->plr->inGame)
-            continue;
+        if(!plr->plr->inGame) continue;
 
         if(ss->hideTics > 0)
         {

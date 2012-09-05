@@ -30,6 +30,10 @@
 #include "mobj.h"
 #include "common.h"
 
+#if __cplusplus
+extern "C" {
+#endif
+
 enum {
     JOYAXIS_NONE,
     JOYAXIS_MOVE,
@@ -42,6 +46,9 @@ extern boolean singledemo;
 
 void            G_Register(void);
 
+void            G_EndGame(void);
+boolean         G_QuitInProgress(void);
+
 /**
  * Begin the titlescreen animation sequence.
  */
@@ -52,19 +59,13 @@ void            G_StartTitle(void);
  */
 void            G_StartHelp(void);
 
-/**
- * Signal that play on the current map may now begin.
- */
-void            G_BeginMap(void);
-void            G_EndGame(void);
+const char*     P_GetGameModeName(void);
 
 gamestate_t     G_GameState(void);
 void            G_ChangeGameState(gamestate_t state);
 
 gameaction_t    G_GameAction(void);
 void            G_SetGameAction(gameaction_t action);
-
-boolean         G_QuitInProgress(void);
 
 /**
  * @param map           Logical map number (i.e., not a warp/translated number).
@@ -80,6 +81,11 @@ void            G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uin
  */
 void            G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 #endif
+
+/**
+ * Signal that play on the current map may now begin.
+ */
+void            G_BeginMap(void);
 
 /**
  * Leave the current map and start intermission routine.
@@ -104,4 +110,9 @@ D_CMD( CCmdSetCamera );
 D_CMD( CCmdSetViewLock );
 D_CMD( CCmdLocalMessage );
 D_CMD( CCmdExitLevel );
+
+#if __cplusplus
+} // extern "C"
+#endif
+
 #endif /* LIBCOMMON_GAME_H */

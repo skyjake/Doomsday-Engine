@@ -3159,6 +3159,19 @@ void G_QuitGame(void)
     Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
+const char* P_GetGameModeName(void)
+{
+    static const char* dm   = "deathmatch";
+    static const char* coop = "cooperative";
+    static const char* sp   = "singleplayer";
+    if(IS_NETGAME)
+    {
+        if(deathmatch) return dm;
+        return coop;
+    }
+    return sp;
+}
+
 /**
  * Return the index of this map.
  */
