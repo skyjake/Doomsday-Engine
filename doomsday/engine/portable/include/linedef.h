@@ -68,9 +68,9 @@ coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
 void LineDef_SetDivline(const LineDef* lineDef, divline_t* divline);
 
 /**
- * Find the Z coordinate range of the opening on @a side. The open range is defined
- * as the gap between foor and ceiling on @a side clipped by the floor and ceiling
- * planes on the back side (if present).
+ * Find the "sharp" Z coordinate range of the opening on @a side. The open range is
+ * defined as the gap between foor and ceiling on @a side clipped by the floor and
+ * ceiling planes on the back side (if present).
  *
  * @param line      LineDef instance.
  * @param bottom    Bottom Z height is written here. Can be @c NULL.
@@ -79,6 +79,10 @@ void LineDef_SetDivline(const LineDef* lineDef, divline_t* divline);
  * @return Height of the open range.
  */
 coord_t LineDef_OpenRange(const LineDef* line, int side, coord_t* bottom, coord_t* top);
+
+/// Same as @ref LineDef_OpenRange() but works with the "visual" (i.e., smoothed)
+/// plane height coordinates rather than the "sharp" coordinates.
+coord_t LineDef_VisOpenRange(const LineDef* line, int side, coord_t* bottom, coord_t* top);
 
 /**
  * Configure the specified TraceOpening according to the opening defined by the

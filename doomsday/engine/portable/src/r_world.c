@@ -1097,7 +1097,7 @@ boolean R_MiddleMaterialCoversOpening(LineDef* line, int side, boolean ignoreOpa
         if(frontDef->flags & SDF_MIDDLE_STRETCH) return true;
 
         // Might the material cover the opening?
-        openRange = LineDef_OpenRange(line, side, &openBottom, &openTop);
+        openRange = LineDef_VisOpenRange(line, side, &openBottom, &openTop);
         if(ms->size.height >= openRange)
         {
             // Possibly; check the placement.

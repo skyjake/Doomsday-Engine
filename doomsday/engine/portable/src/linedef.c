@@ -141,6 +141,38 @@ coord_t LineDef_OpenRange(const LineDef* line, int side, coord_t* retBottom, coo
     Sector* backSec  = line->L_sector(side^1);
     coord_t bottom, top;
 
+    if(backSec && backSec->SP_ceilheight < frontSec->SP_ceilheight)
+    {
+        top = backSec->SP_ceilheight;
+    }
+    else
+    {
+        top = frontSec->SP_ceilheight;
+    }
+
+    if(backSec && backSec->SP_floorheight > frontSec->SP_floorheight)
+    {
+        bottom = backSec->SP_floorheight;
+    }
+    else
+    {
+        bottom = frontSec->SP_floorheight;
+    }
+
+    if(retBottom) *retBottom = bottom;
+    if(retTop)    *retTop    = top;
+
+    return top - bottom;
+}}
+
+coord_t LineDef_VisOpenRange(const LineDef* line, int side, coord_t* retBottom, coord_t* retTop)
+{
+    DENG_ASSERT(line);
+{
+    Sector* frontSec = line->L_sector(side);
+    Sector* backSec  = line->L_sector(side^1);
+    coord_t bottom, top;
+
     if(backSec && backSec->SP_ceilvisheight < frontSec->SP_ceilvisheight)
     {
         top = backSec->SP_ceilvisheight;
