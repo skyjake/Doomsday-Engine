@@ -72,26 +72,9 @@ void            R_GetTranslation(int plrClass, int plrColor, int* tclass, int* t
 void            Mobj_UpdateTranslationClassAndMap(mobj_t* mo);
 
 void            G_PrintMapList(void);
-boolean         G_ValidateMap(uint* episode, uint* map);
-uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 
 int             G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
-
-/**
- * Compose a Uri for the identified @a episode and @a map combination.
- *
- * @param episode  Logical episode number.
- * @param map  Logical map number.
- * @return  Resultant Uri. Caller should destroy with Uri_Delete.
- */
-Uri* G_ComposeMapUri(uint episode, uint map);
-
-/**
- * Compose the name of the map identifier.
- * \note Deprecated. Prefer to use G_ComposeMapUri
- */
-void G_MapId(uint episode, uint map, lumpname_t mapId);
 
 void            G_QuitGame(void);
 
@@ -127,7 +110,6 @@ void*           G_GetVariable(int id);
 
 void            G_PlayerReborn(int player);
 void            G_DeathMatchSpawnPlayer(int playernum);
-uint            G_GetMapNumber(uint episode, uint map);
 void            G_DeferredPlayDemo(char* demo);
 void            G_DoPlayDemo(void);
 

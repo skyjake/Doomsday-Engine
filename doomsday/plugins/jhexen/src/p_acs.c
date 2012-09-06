@@ -256,6 +256,8 @@ void P_LoadACScripts(int lump)
     acsinfo_t* info;
     int i;
 
+    VERBOSE( Con_Message("Loading ACS bytecode lump %s:%s (#%i)...\n",
+                         F_PrettyPath(W_LumpSourceFile(lump)), W_LumpName(lump), lump) )
     ACScriptCount = 0;
 
     if(lumpLength >= sizeof(acsheader_t))
@@ -271,8 +273,9 @@ void P_LoadACScripts(int lump)
     }
 
     if(ACScriptCount == 0 || IS_CLIENT)
-    {   // Empty/Invalid lump.
-        Con_Message("Warning:P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.\n", lump);
+    {
+        // Empty/Invalid lump.
+        Con_Message("Warning: P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.\n", lump);
         return;
     }
 

@@ -158,8 +158,6 @@ void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
 void    G_DoQuitGame(void);
 
-boolean G_ValidateMap(uint* episode, uint* map);
-
 void    G_StopDemo(void);
 
 /**
@@ -3175,9 +3173,6 @@ const char* P_GetGameModeName(void)
     return sp;
 }
 
-/**
- * Return the index of this map.
- */
 uint G_GetMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__
@@ -3199,12 +3194,6 @@ uint G_GetMapNumber(uint episode, uint map)
 Uri* G_ComposeMapUri(uint episode, uint map)
 {
     lumpname_t mapId;
-    G_MapId(episode, map, mapId);
-    return Uri_NewWithPath2(mapId, RC_NULL);
-}
-
-void G_MapId(uint episode, uint map, lumpname_t mapId)
-{
 #if __JDOOM64__
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #elif __JDOOM__
@@ -3217,12 +3206,9 @@ void G_MapId(uint episode, uint map, lumpname_t mapId)
 #else
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #endif
+    return Uri_NewWithPath2(mapId, RC_NULL);
 }
 
-/**
- * Returns true if the specified (episode, map) pair can be used.
- * Otherwise the values are adjusted so they are valid.
- */
 boolean G_ValidateMap(uint* episode, uint* map)
 {
     boolean ok = true;
@@ -3347,14 +3333,6 @@ boolean G_ValidateMap(uint* episode, uint* map)
     return ok;
 }
 
-/**
- * Return the next map according to the default map progression.
- *
- * @param episode       Current episode.
- * @param map           Current map.
- * @param secretExit
- * @return              The next map.
- */
 uint G_GetNextMap(uint episode, uint map, boolean secretExit)
 {
 #if __JHEXEN__

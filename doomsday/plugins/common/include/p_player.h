@@ -101,4 +101,8 @@ int             P_PlayerGiveArmorBonus(player_t* plr, int points);
 int             P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points);
 #endif
 
+int             P_CameraXYMovement(mobj_t* mo);
+int             P_CameraZMovement(mobj_t* mo);
+void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
+
 #endif /* LIBCOMMON_PLAYER_H */
