@@ -55,6 +55,9 @@ typedef eventsequencehandler_t cheatfunc_t;
 /// Helper macro for registering new cheat event sequence handlers.
 #define ADDCHEAT(name, callback) G_AddEventSequence((name), CHEAT(callback))
 
+/// Helper macro for registering new cheat event sequence command handlers.
+#define ADDCHEATCMD(name, cmdTemplate) G_AddEventSequenceCommand((name), cmdTemplate)
+
 CHEAT_FUNC(God);
 CHEAT_FUNC(NoClip);
 CHEAT_FUNC(Weapons);
@@ -64,7 +67,6 @@ CHEAT_FUNC(GiveKeys);
 CHEAT_FUNC(InvItem);
 CHEAT_FUNC(InvItem2);
 CHEAT_FUNC(InvItem3);
-CHEAT_FUNC(Warp);
 CHEAT_FUNC(Chicken);
 CHEAT_FUNC(Massacre);
 CHEAT_FUNC(IDKFA);
@@ -81,7 +83,7 @@ static boolean cheatsEnabled(void)
 void G_RegisterCheats(void)
 {
     ADDCHEAT("cockadoodledoo",  Chicken);
-    ADDCHEAT("engage%1%2",      Warp);
+    ADDCHEATCMD("engage%1%2",   "warp %1%2");
     ADDCHEAT("gimme%1%2",       InvItem3); // Final stage.
     ADDCHEAT("gimme%1",         InvItem2); // 2nd stage (ask for count).
     ADDCHEAT("gimme",           InvItem);  // 1st stage (ask for type).
@@ -217,45 +219,6 @@ CHEAT_FUNC(NoClip)
     plr->update |= PSF_STATE;
     P_SetMessage(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF), false);
     S_LocalSound(SFX_DORCLS, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Warp)
-{
-    player_t* plr = &players[player];
-    uint i, epsd, map;
-
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-
-    epsd = (args[0] > '0')? args[0] - '1' : 0;
-    map  = (args[1] > '0')? args[1] - '1' : 0;
-
-    // Catch invalid maps.
-    if(!G_ValidateMap(&epsd, &map)) return false;
-
-    P_SetMessage(plr, TXT_CHEATWARP, false);
-    S_LocalSound(SFX_DORCLS, NULL);
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
-
-        if(!ddplr->inGame) continue;
-
-        ST_AutomapOpen(i, false, true);
-        Hu_InventoryOpen(i, false);
-    }
-
-    // Close the menu if open.
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // So be it.
-    briefDisabled = true;
-    G_DeferredNewGame(gameSkill, epsd, map, 0/* default*/);
-
     return true;
 }
 
@@ -699,29 +662,55 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatWarp)
 {
-    EventSequenceArg args[2];
-    int num;
+    int epsd, map, i;
 
     if(!cheatsEnabled()) return false;
 
     if(argc == 2)
     {
-        num = atoi(argv[1]);
-        args[0] = num / 10 + '0';
-        args[1] = num % 10 + '0';
+        // "warp EM"
+        epsd = argv[1][0] - '0';
+        map  = atoi(argv[1] + 1);
     }
-    else if(argc == 3)
+    else // (argc == 3)
     {
-        args[0] = atoi(argv[1]) % 10 + '0';
-        args[1] = atoi(argv[2]) % 10 + '0';
-    }
-    else
-    {
-        Con_Printf("Usage: warp (num)\n");
-        return true;
+        // "warp E M"
+        epsd = atoi(argv[1]);
+        map  = atoi(argv[2]);
     }
 
-    CHEAT(Warp)(CONSOLEPLAYER, args, 2);
+    // Internally epsiode and map numbers are zero-based.
+    if(epsd > 0) epsd -= 1;
+    if(map > 0)  map  -= 1;
+
+    // Catch invalid maps.
+    if(!G_ValidateMap(&epsd, &map)) return false;
+
+    // Close any left open UIs.
+    /// @todo Still necessary here?
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        ST_AutomapOpen(i, false, true);
+        Hu_InventoryOpen(i, false);
+    }
+    Hu_MenuCommand(MCMD_CLOSEFAST);
+
+    // So be it.
+    briefDisabled = true;
+    G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
+
+    // If the command src was "us" the game library then it was probably in response to
+    // the local player entering a cheat event sequence, so set the "CHANGING MAP" message.
+    // Somewhat of a kludge...
+    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
+    {
+        P_SetMessage(players + CONSOLEPLAYER, TXT_CHEATWARP, false);
+        S_LocalSound(SFX_DORCLS, NULL);
+    }
     return true;
 }
 

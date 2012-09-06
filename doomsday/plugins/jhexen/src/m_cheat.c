@@ -55,6 +55,9 @@ typedef eventsequencehandler_t cheatfunc_t;
 /// Helper macro for registering new cheat event sequence handlers.
 #define ADDCHEAT(name, callback) G_AddEventSequence((name), CHEAT(callback))
 
+/// Helper macro for registering new cheat event sequence command handlers.
+#define ADDCHEATCMD(name, cmdTemplate) G_AddEventSequenceCommand((name), cmdTemplate)
+
 CHEAT_FUNC(Armor);
 CHEAT_FUNC(Class);
 CHEAT_FUNC(Class2);
@@ -77,7 +80,6 @@ CHEAT_FUNC(Script2);
 CHEAT_FUNC(Script3);
 CHEAT_FUNC(Sound);
 CHEAT_FUNC(Version);
-CHEAT_FUNC(Warp);
 CHEAT_FUNC(Weapons);
 CHEAT_FUNC(Where);
 
@@ -110,7 +112,7 @@ void G_RegisterCheats(void)
     ADDCHEAT("shadowcaster%1",      Class2);
     ADDCHEAT("shadowcaster",        Class);
     ADDCHEAT("sherlock",            Puzzle);
-    ADDCHEAT("visit%1%2",           Warp);
+    ADDCHEATCMD("visit%1%2",        "warp %1%2");
     ADDCHEAT("where",               Where);
 }
 
@@ -242,84 +244,6 @@ CHEAT_FUNC(NoClip)
     plr->update |= PSF_STATE;
     P_SetMessage(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF), false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    return true;
-}
-
-CHEAT_FUNC(Warp)
-{
-    player_t* plr = &players[player];
-    int tens, ones;
-    AutoStr* path;
-    Uri* uri;
-    uint i, map;
-
-    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
-
-    if(IS_NETGAME) return false;
-
-    if(G_GameState() == GS_MAP && plr->playerState == PST_DEAD)
-    {
-        Con_Message("Cannot warp while dead.\n");
-        return false;
-    }
-
-    tens = args[0] - '0';
-    ones = args[1] - '0';
-    if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
-    {
-        // Bad map
-        P_SetMessage(plr, TXT_CHEATBADINPUT, false);
-        return false;
-    }
-
-    map = P_TranslateMapIfExists((tens * 10 + ones) - 1);
-    if((userGame && map == gameMap) || map == P_INVALID_LOGICAL_MAP)
-    {
-        // Do not allow warping to the current map.
-        P_SetMessage(plr, TXT_CHEATBADINPUT, false);
-        return false;
-    }
-
-    uri = G_ComposeMapUri(0, map);
-    path = Uri_Compose(uri);
-    if(!P_MapExists(Str_Text(path)))
-    {
-        Uri_Delete(uri);
-        P_SetMessage(plr, TXT_CHEATNOMAP, false);
-        return false;
-    }
-    Uri_Delete(uri);
-
-    S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    P_SetMessage(plr, TXT_CHEATWARP, false);
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
-
-        if(!ddplr->inGame) continue;
-
-        ST_AutomapOpen(i, false, true);
-        Hu_InventoryOpen(i, false);
-    }
-
-    // Close the menu if open.
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // So be it.
-    if(userGame)
-    {
-        nextMap = map;
-        nextMapEntryPoint = 0;
-        briefDisabled = true;
-        G_SetGameAction(GA_LEAVEMAP);
-    }
-    else
-    {
-        G_DeferredNewGame(dSkill, 0, map, 0/*default*/);
-    }
-
     return true;
 }
 
@@ -882,22 +806,76 @@ D_CMD(CheatSuicide)
 
 D_CMD(CheatWarp)
 {
-    EventSequenceArg args[2];
-    int num;
+    int epsd, map, i;
+    AutoStr* path;
+    Uri* uri;
 
-    if(IS_NETGAME) return false;
+    if(!cheatsEnabled()) return false;
 
-    if(argc != 2)
+    if(G_GameState() == GS_MAP && players[CONSOLEPLAYER].playerState == PST_DEAD)
     {
-        Con_Printf("Usage: warp (num)\n");
-        return true;
+        Con_Message("Cannot warp while dead.\n");
+        return false;
     }
 
-    num = atoi(argv[1]);
-    args[0] = num / 10 + '0';
-    args[1] = num % 10 + '0';
+    epsd = 0;
+    map  = atoi(argv[1]);
 
-    CHEAT(Warp)(CONSOLEPLAYER, args, 2);
+    // Internally epsiode and map numbers are zero-based.
+    if(map > 0)  map -= 1;
+
+    // Catch invalid maps.
+    map = P_TranslateMapIfExists(map);
+    if((userGame && map == gameMap) || map == P_INVALID_LOGICAL_MAP)
+    {
+        // Do not allow warping to the current map.
+        Con_Message("Cannot warp to the current map.\n");
+        return false;
+    }
+
+    uri = G_ComposeMapUri(0, map);
+    path = Uri_Compose(uri);
+    Uri_Delete(uri);
+    if(!P_MapExists(Str_Text(path)))
+    {
+        P_SetMessage(players + CONSOLEPLAYER, TXT_CHEATNOMAP, false);
+        return false;
+    }
+
+    // Close any left open UIs.
+    /// @todo Still necessary here?
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        ST_AutomapOpen(i, false, true);
+        Hu_InventoryOpen(i, false);
+    }
+    Hu_MenuCommand(MCMD_CLOSEFAST);
+
+    // So be it.
+    if(userGame)
+    {
+        nextMap = map;
+        nextMapEntryPoint = 0;
+        briefDisabled = true;
+        G_SetGameAction(GA_LEAVEMAP);
+    }
+    else
+    {
+        G_DeferredNewGame(dSkill, 0, map, 0/*default*/);
+    }
+
+    // If the command src was "us" the game library then it was probably in response to
+    // the local player entering a cheat event sequence, so set the "CHANGING MAP" message.
+    // Somewhat of a kludge...
+    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
+    {
+        P_SetMessage(players + CONSOLEPLAYER, TXT_CHEATWARP, false);
+        S_LocalSound(SFX_PLATFORM_STOP, NULL);
+    }
     return true;
 }
 
