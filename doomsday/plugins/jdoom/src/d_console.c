@@ -28,7 +28,6 @@
 D_CMD(Cheat);
 D_CMD(CheatGod);
 D_CMD(CheatNoClip);
-D_CMD(CheatWarp);
 D_CMD(CheatReveal);
 D_CMD(CheatGive);
 D_CMD(CheatMassacre);
@@ -214,10 +213,6 @@ void G_ConsoleRegistration(void)
         Con_AddVariable(&gameCVars[i]);
     for(i = 0; gameCCmds[i].name; ++i)
         Con_AddCommand(&gameCCmds[i]);
-
-    C_CMD("warp", "i", CheatWarp);
-    if(gameModeBits & GM_ANY_DOOM)
-        C_CMD("warp", "ii", CheatWarp);
 }
 
 /**

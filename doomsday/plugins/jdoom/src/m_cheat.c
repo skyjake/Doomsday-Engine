@@ -632,67 +632,6 @@ D_CMD(CheatSuicide)
     return true;
 }
 
-D_CMD(CheatWarp)
-{
-    int epsd, map, i;
-
-    if(!cheatsEnabled()) return false;
-
-    if(gameModeBits & GM_ANY_DOOM2)
-    {
-        // "warp M"
-        epsd = 0;
-        map = atoi(argv[1]);
-    }
-    else
-    {
-        if(argc == 2)
-        {
-            // "warp EM"
-            epsd = argv[1][0] - '0';
-            map  = atoi(argv[1] + 1);
-        }
-        else // (argc == 3)
-        {
-            // "warp E M"
-            epsd = atoi(argv[1]);
-            map  = atoi(argv[2]);
-        }
-    }
-
-    // Internally epsiode and map numbers are zero-based.
-    if(epsd > 0) epsd -= 1;
-    if(map > 0)  map  -= 1;
-
-    // Catch invalid maps.
-    if(!G_ValidateMap(&epsd, &map)) return false;
-
-    // Close any left open UIs.
-    /// @todo Still necessary here?
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
-        if(!ddplr->inGame) continue;
-
-        ST_AutomapOpen(i, false, true);
-    }
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // So be it.
-    briefDisabled = true;
-    G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
-
-    // If the command src was "us" the game library then it was probably in response to
-    // the local player entering a cheat event sequence, so set the "CHANGING MAP" message.
-    // Somewhat of a kludge...
-    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
-    {
-        P_SetMessage(players + CONSOLEPLAYER, STSTR_CLEV, false);
-    }
-    return true;
-}
-
 D_CMD(CheatReveal)
 {
     int option, i;

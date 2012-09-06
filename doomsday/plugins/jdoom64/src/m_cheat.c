@@ -74,7 +74,6 @@ void Cht_GiveAmmoFunc(player_t* plr);
 void Cht_GiveKeysFunc(player_t* plr);
 void Cht_NoClipFunc(player_t* plr);
 void Cht_GiveArmorFunc(player_t* plr);
-boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat);
 boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -154,39 +153,6 @@ void Cht_NoClipFunc(player_t* plr)
     plr->update |= PSF_STATE;
     P_SetMessage(plr,
                  ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), false);
-}
-
-boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
-{
-    uint i, epsd, map;
-
-    epsd = 0;
-    map = (cheat->args[0] - '0') * 10 + cheat->args[1] - '0';
-    if(map != 0) map -= 1;
-
-    // Catch invalid maps.
-    if(!G_ValidateMap(&epsd, &map))
-        return false;
-
-    P_SetMessage(plr, STSTR_CLEV, false);
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
-        if(!ddplr->inGame) continue;
-
-        ST_AutomapOpen(i, false, true);
-    }
-
-    // Close the menu if open.
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // So be it.
-    briefDisabled = true;
-    G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
-
-    return true;
 }
 
 boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
@@ -398,25 +364,6 @@ D_CMD(CheatSuicide)
         Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, NULL, 0, NULL);
     }
 
-    return true;
-}
-
-D_CMD(CheatWarp)
-{
-    cheatseq_t cheat;
-    int num;
-
-    if(!cheatsEnabled())
-        return false;
-
-    if(argc != 2)
-        return false;
-
-    num = atoi(argv[1]);
-    cheat.args[0] = num / 10 + '0';
-    cheat.args[1] = num % 10 + '0';
-
-    Cht_WarpFunc(&players[CONSOLEPLAYER], &cheat);
     return true;
 }
 

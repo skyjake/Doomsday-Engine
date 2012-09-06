@@ -72,8 +72,7 @@ void            R_GetTranslation(int plrClass, int plrColor, int* tclass, int* t
 void            Mobj_UpdateTranslationClassAndMap(mobj_t* mo);
 
 void            G_PrintMapList(void);
-void            G_PlayerReborn(int player);
-
+boolean         G_ValidateMap(uint* episode, uint* map);
 uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 
 int             G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin);
@@ -126,6 +125,7 @@ void            G_CommonPostInit(void);
 int             G_GetInteger(int id);
 void*           G_GetVariable(int id);
 
+void            G_PlayerReborn(int player);
 void            G_DeathMatchSpawnPlayer(int playernum);
 uint            G_GetMapNumber(uint episode, uint map);
 void            G_DeferredPlayDemo(char* demo);

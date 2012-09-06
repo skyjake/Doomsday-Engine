@@ -38,15 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 #include "dmu_lib.h"
 #include "fi_lib.h"
@@ -143,6 +135,7 @@ D_CMD(QuickLoadGame);
 D_CMD(QuickSaveGame);
 D_CMD(SaveGame);
 D_CMD(OpenSaveMenu);
+D_CMD(WarpMap);
 
 void    G_PlayerReborn(int player);
 void    G_DoReborn(int playernum);
@@ -472,6 +465,16 @@ void G_Register(void)
 
     for(i = 0; gameCmds[i].name; ++i)
         Con_AddCommand(gameCmds + i);
+
+    C_CMD("warp", "i", WarpMap);
+#if __JDOOM__ || __JHERETIC__
+# if __JDOOM__
+    if(!(gameModeBits & GM_ANY_DOOM2))
+# endif
+    {
+        C_CMD("warp", "ii", WarpMap);
+    }
+#endif
 }
 
 boolean G_QuitInProgress(void)
@@ -4067,5 +4070,122 @@ D_CMD(ListMaps)
 {
     Con_Message("Available maps:\n");
     G_PrintMapList();
+    return true;
+}
+
+D_CMD(WarpMap)
+{
+    int epsd, map, i;
+
+    // Only server operators can warp maps in network games.
+    /// @todo Implement vote or similar mechanics.
+    if(IS_NETGAME && !IS_NETWORK_SERVER) return false;
+
+#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
+# if __JDOOM__
+    if(gameModeBits & GM_ANY_DOOM2)
+# endif
+    {
+        // "warp M":
+        epsd = 0;
+        map = atoi(argv[1]);
+    }
+#endif
+#if __JDOOM__
+    else
+#endif
+#if __JDOOM__ || __JHERETIC__
+        if(argc == 2)
+    {
+        // "warp EM" or "warp M":
+        int num = atoi(argv[1]);
+        epsd = num / 10;
+        map  = num % 10;
+    }
+    else // (argc == 3)
+    {
+        // "warp E M":
+        epsd = atoi(argv[1]);
+        map  = atoi(argv[2]);
+    }
+#endif
+
+    // Internally epsiode and map numbers are zero-based.
+    if(epsd > 0) epsd -= 1;
+    if(map > 0)  map  -= 1;
+
+    // Catch invalid maps.
+#if __JHEXEN__
+    // Hexen map numbers require translation.
+    map = P_TranslateMapIfExists(map);
+#endif
+    if(!G_ValidateMap(&epsd, &map))
+    {
+        const char* fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
+        AutoStr* msg = Str_Appendf(AutoStr_NewStd(), fmtString, argv[1], argc == 3? argv[2] : "");
+        P_SetMessage(players + CONSOLEPLAYER, Str_Text(msg), true);
+        return false;
+    }
+
+#if __JHEXEN__
+    // Hexen does not allow warping to the current map.
+    if(userGame && map == gameMap)
+    {
+        P_SetMessage(players + CONSOLEPLAYER, "Cannot warp to the current map.", true);
+        return false;
+    }
+#endif
+
+    // Close any left open UIs.
+    /// @todo Still necessary here?
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        ST_AutomapOpen(i, false, true);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(i, false);
+#endif
+    }
+    Hu_MenuCommand(MCMD_CLOSEFAST);
+
+    // So be it.
+#if __JHEXEN__
+    if(userGame)
+    {
+        nextMap = map;
+        nextMapEntryPoint = 0;
+        briefDisabled = true;
+        G_SetGameAction(GA_LEAVEMAP);
+    }
+    else
+    {
+        G_DeferredNewGame(dSkill, epsd, map, 0/*default*/);
+    }
+#else
+    briefDisabled = true;
+    G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
+#endif
+
+    // If the command src was "us" the game library then it was probably in response to
+    // the local player entering a cheat event sequence, so set the "CHANGING MAP" message.
+    // Somewhat of a kludge...
+    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
+    {
+#if __JHEXEN__
+        const char* msg = TXT_CHEATWARP;
+        int soundId     = SFX_PLATFORM_STOP;
+#elif __JHERETIC__
+        const char* msg = TXT_CHEATWARP;
+        int soundId     = SFX_DORCLS;
+#else //__JDOOM__ || __JDOOM64__
+        const char* msg = STSTR_CLEV;
+        int soundId     = SFX_NONE;
+#endif
+        P_SetMessage(players + CONSOLEPLAYER, msg, true);
+        S_LocalSound(soundId, NULL);
+    }
     return true;
 }
