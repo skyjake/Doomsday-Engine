@@ -176,10 +176,8 @@ de::PathDirectoryNode* de::FileDirectory::addPathNodes(const ddstring_t* rawPath
     else
     {
         // Do not add relative paths.
-        if(!F_IsAbsolute(rawPath))
-        {
-            return NULL;
-        }
+        path = rawPath;
+        if(!F_IsAbsolute(path)) return NULL;
     }
 
     de::PathDirectoryNode* node = insert(Str_Text(path), '/');
