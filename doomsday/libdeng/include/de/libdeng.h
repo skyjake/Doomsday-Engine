@@ -54,6 +54,12 @@
 #  define DENG_PUBLIC
 #endif
 
+#ifdef __cplusplus
+#  define DENG_EXTERN_C extern "C"
+#else
+#  define DENG_EXTERN_C extern
+#endif
+
 #ifndef NDEBUG
 #  define DENG_DEBUG
 #  ifdef DENG_USE_QT
