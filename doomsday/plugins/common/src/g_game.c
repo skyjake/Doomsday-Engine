@@ -4053,7 +4053,7 @@ D_CMD(ListMaps)
 
 D_CMD(WarpMap)
 {
-    int epsd, map, i;
+    uint epsd, map, i;
 
     // Only server operators can warp maps in network games.
     /// @todo Implement vote or similar mechanics.
@@ -4066,7 +4066,7 @@ D_CMD(WarpMap)
     {
         // "warp M":
         epsd = 0;
-        map = atoi(argv[1]);
+        map = MAX_OF(0, atoi(argv[1]));
     }
 #endif
 #if __JDOOM__
@@ -4077,20 +4077,20 @@ D_CMD(WarpMap)
     {
         // "warp EM" or "warp M":
         int num = atoi(argv[1]);
-        epsd = num / 10;
-        map  = num % 10;
+        epsd = MAX_OF(0, num / 10);
+        map  = MAX_OF(0, num % 10);
     }
     else // (argc == 3)
     {
         // "warp E M":
-        epsd = atoi(argv[1]);
-        map  = atoi(argv[2]);
+        epsd = MAX_OF(0, atoi(argv[1]));
+        map  = MAX_OF(0, atoi(argv[2]));
     }
 #endif
 
     // Internally epsiode and map numbers are zero-based.
-    if(epsd > 0) epsd -= 1;
-    if(map > 0)  map  -= 1;
+    if(epsd != 0) epsd -= 1;
+    if(map != 0)  map  -= 1;
 
     // Catch invalid maps.
 #if __JHEXEN__
