@@ -492,10 +492,12 @@ struct Partitioner::Instance
                 {
                     // This is definitetly open space.
                     HEdge* right, *left;
+                    Sector* sector = cur->after;
 
-                    // Do a sanity check on the sectors (just for good measure).
+                    // Choose the non-self-referencing sector when we can.
                     if(cur->after != next->before)
                     {
+                        // Do a sanity check on the sectors (just for good measure).
                         if(!cur->selfRef && !next->selfRef)
                         {
                             LOG_DEBUG("Sector mismatch (#%d [%1.1f, %1.1f] != #%d [%1.1f, %1.1f]).")
@@ -503,12 +505,11 @@ struct Partitioner::Instance
                                 << next->before->buildData.index-1 << next->vertex->origin[VX] << next->vertex->origin[VY];
                         }
 
-                        // Choose the non-self-referencing sector when we can.
                         if(cur->selfRef && !next->selfRef)
-                            cur->after = next->before;
+                            sector = next->before;
                     }
 
-                    right = addHEdgesBetweenIntercepts(cur, next);
+                    right = addHEdgesBetweenIntercepts(cur, next, sector);
                     left  = right->twin;
 
                     // Add the new half-edges to the appropriate lists.
@@ -1690,15 +1691,16 @@ struct Partitioner::Instance
     }
 
     /// @return The right half-edge,
-    HEdge* addHEdgesBetweenIntercepts(HEdgeIntercept* start, HEdgeIntercept* end)
+    HEdge* addHEdgesBetweenIntercepts(HEdgeIntercept const* start,
+        HEdgeIntercept const* end, Sector* sector)
     {
         DENG2_ASSERT(start && end);
 
         // Create the half-edge pair.
         // Leave 'linedef' field as NULL as these are not linedef-linked.
         // Leave 'side' as zero too.
-        HEdge* right = newHEdge(start->vertex, end->vertex, start->after, NULL, partitionLineDef);
-        HEdge* left  = newHEdge(end->vertex, start->vertex, start->after, NULL, partitionLineDef);
+        HEdge* right = newHEdge(start->vertex, end->vertex, sector, 0 /*no linedef*/, partitionLineDef);
+        HEdge* left  = newHEdge(end->vertex, start->vertex, sector, 0 /*no linedef*/, partitionLineDef);
 
         // Twin the half-edges together.
         right->twin = left;
