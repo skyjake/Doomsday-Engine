@@ -416,12 +416,7 @@ struct Partitioner::Instance
         const coord_t distance = b - a;
 
         // Too great a distance between the two?
-        if(distance > 0.2) return false;
-        /*else if(distance <= DIST_EPSILON)
-        {
-            LOG_DEBUG("Skipping very short half-edge (len: %1.3f) near [%1.1f, %1.1f]")
-                << len << cur->vertex->V_pos[VX] << cur->vertex->V_pos[VY];
-        }*/
+        if(distance > DIST_EPSILON) return false;
 
         HEdgeIntercept* cur  = reinterpret_cast<HEdgeIntercept*>(a.userData());
         HEdgeIntercept* next = reinterpret_cast<HEdgeIntercept*>(b.userData());
