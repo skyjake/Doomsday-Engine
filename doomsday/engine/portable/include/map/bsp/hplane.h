@@ -40,7 +40,7 @@ struct HPlanePartition
     coord_t origin[2];
     coord_t direction[2];
 
-    HPlanePartition(coord_t x=0, coord_t y=0, coord_t dX=0, coord_t dY=0)
+    explicit HPlanePartition(coord_t x=0, coord_t y=0, coord_t dX=0, coord_t dY=0)
     {
         V2d_Set(origin, x, y);
         V2d_Set(direction, dX, dY);
@@ -50,6 +50,28 @@ struct HPlanePartition
     {
         V2d_Copy(origin, _origin);
         V2d_Copy(direction, _direction);
+    }
+
+    HPlanePartition& setOrigin(coord_t x, coord_t y)
+    {
+        V2d_Set(origin, x, y);
+        return *this;
+    }
+
+    HPlanePartition& setOrigin(coord_t const newOrigin[2])
+    {
+        return setOrigin(newOrigin[0], newOrigin[1]);
+    }
+
+    HPlanePartition& setDirection(coord_t dx, coord_t dy)
+    {
+        V2d_Set(direction, dx, dy);
+        return *this;
+    }
+
+    HPlanePartition& setDirection(coord_t const newDirection[2])
+    {
+        return setDirection(newDirection[0], newDirection[1]);
     }
 };
 
@@ -135,7 +157,7 @@ public:
      * @param userData  User data object to link with the new intercept.
      *                  Ownership remains unchanged.
      */
-    HPlaneIntercept& newIntercept(coord_t distance, void* userData=NULL);
+    HPlaneIntercept& newIntercept(coord_t distance, void* userData = NULL);
 
     void mergeIntercepts(mergepredicate_t predicate, void* userData);
 

@@ -81,6 +81,7 @@ static Sector* findFirstSectorInHEdgeList(const BspLeaf* leaf);
 //DENG_DEBUG_ONLY(static bool bspLeafHasRealHEdge(BspLeaf const& leaf));
 //DENG_DEBUG_ONLY(static void printBspLeafHEdges(BspLeaf const& leaf));
 //DENG_DEBUG_ONLY(static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/));
+//DENG_DEBUG_ONLY(static void printPartitionIntercepts(HPlane const& partition));
 
 struct Partitioner::Instance
 {
@@ -446,7 +447,7 @@ struct Partitioner::Instance
         partition.mergeIntercepts(callback, this);
     }
 
-    void buildHEdgesAtIntersectionGaps(SuperBlock& rightList, SuperBlock& leftList)
+    void buildHEdgesAtPartitionGaps(SuperBlock& rightList, SuperBlock& leftList)
     {
         HPlane::Intercepts::const_iterator node = partition.intercepts().begin();
         while(node != partition.intercepts().end())
@@ -454,8 +455,8 @@ struct Partitioner::Instance
             HPlane::Intercepts::const_iterator np = node; np++;
             if(np == partition.intercepts().end()) break;
 
-            HEdgeIntercept* cur  = reinterpret_cast<HEdgeIntercept*>((*node).userData());
-            HEdgeIntercept* next = reinterpret_cast<HEdgeIntercept*>(  (*np).userData());
+            HEdgeIntercept const* cur  = reinterpret_cast<HEdgeIntercept*>((*node).userData());
+            HEdgeIntercept const* next = reinterpret_cast<HEdgeIntercept*>(  (*np).userData());
 
             if(!(!cur->after && !next->before))
             {
@@ -1727,7 +1728,7 @@ struct Partitioner::Instance
      */
     void addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
     {
-        //DEND_DEBUG_ONLY(HPlane::DebugPrint(*partition));
+        //DEND_DEBUG_ONLY(printPartitionIntercepts(partition));
 
         // Fix any issues with the current intersections.
         mergeIntercepts();
@@ -1737,7 +1738,7 @@ struct Partitioner::Instance
             << partitionInfo.direction[VX] << partitionInfo.direction[VY];
 
         // Find connections in the intersections.
-        buildHEdgesAtIntersectionGaps(rightList, leftList);
+        buildHEdgesAtPartitionGaps(rightList, leftList);
     }
 
     /**
@@ -1777,13 +1778,6 @@ struct Partitioner::Instance
         inter->after  = openSectorAtAngle(vertex, partitionInfo.pAngle);
 
         return inter;
-    }
-
-    HEdgeIntercept* hedgeInterceptByVertex(Vertex* vertex)
-    {
-        HPlaneIntercept const* hpi = partitionInterceptByVertex(vertex);
-        if(!hpi) return NULL; // Not found.
-        return reinterpret_cast<HEdgeIntercept*>(hpi->userData());
     }
 
     void clearBspObject(BspTreeNode& tree)
@@ -2400,6 +2394,17 @@ static int printSuperBlockHEdgesWorker(SuperBlock* block, void* /*parameters*/)
 {
     SuperBlock::DebugPrint(*block);
     return false; // Continue iteration.
+})
+
+DENG_DEBUG_ONLY(
+static void printPartitionIntercepts(HPlane const& partition)
+{
+    uint index = 0;
+    DENG2_FOR_EACH(i, partition.intercepts(), HPlane::Intercepts::const_iterator)
+    {
+        Con_Printf(" %u: >%1.2f ", index++, i->distance());
+        HEdgeIntercept::DebugPrint(*reinterpret_cast<HEdgeIntercept*>(i->userData()));
+    }
 })
 #endif
 

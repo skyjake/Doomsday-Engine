@@ -28,7 +28,6 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hplane.h"
 
 using namespace de::bsp;
@@ -42,8 +41,7 @@ HPlane* HPlane::setOrigin(coord_t const newOrigin[2])
 {
     if(newOrigin)
     {
-        partition.origin[0] = newOrigin[0];
-        partition.origin[1] = newOrigin[1];
+        partition.setOrigin(newOrigin);
         clear();
     }
     return this;
@@ -73,7 +71,7 @@ HPlane* HPlane::setDirection(coord_t const newDirection[2])
 {
     if(newDirection)
     {
-        V2d_Copy(partition.direction, newDirection);
+        partition.setDirection(newDirection);
         clear();
     }
     return this;
@@ -122,7 +120,7 @@ void HPlane::mergeIntercepts(mergepredicate_t predicate, void* userData)
         coord_t distance = *np - *node;
         if(distance < -0.1)
         {
-            throw de::Error("HPlane::MergeIntersections",
+            throw de::Error("HPlane::mergeIntercepts",
                             QString("Invalid intercept order - %1 > %2")
                                 .arg(node->distance(), 0, 'f', 3)
                                 .arg(  np->distance(), 0, 'f', 3));
@@ -151,11 +149,9 @@ const HPlane::Intercepts& HPlane::intercepts() const
 void HPlane::DebugPrint(const HPlane& inst)
 {
     uint index = 0;
-    DENG2_FOR_EACH(it, inst.intercepts(), HPlane::Intercepts::const_iterator)
+    DENG2_FOR_EACH(i, inst.intercepts(), HPlane::Intercepts::const_iterator)
     {
-        const HPlaneIntercept* inter = &*it;
-        Con_Printf(" %u: >%1.2f ", index++, inter->distance());
-        HEdgeIntercept::DebugPrint(*static_cast<HEdgeIntercept*>(inter->userData()));
+        Con_Printf(" %u: >%1.2f ", index++, i->distance());
     }
 }
 #endif
