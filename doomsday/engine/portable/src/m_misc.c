@@ -466,6 +466,15 @@ double M_DirectionToAngle(double const direction[])
     return M_DirectionToAngleXY(direction[VX], direction[VY]);
 }
 
+double M_InverseAngle(double angle)
+{
+    if(angle < 180.0)
+    {
+        return (180.0 - -angle);
+    }
+    return angle - 180.0;
+}
+
 slopetype_t M_SlopeTypeXY(double dx, double dy)
 {
     if(FEQUAL(dx, 0))

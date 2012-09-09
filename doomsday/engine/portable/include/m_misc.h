@@ -139,6 +139,9 @@ angle_t M_PointXYToAngle(double x, double y);
 double M_DirectionToAngle(double const direction[2]);
 double M_DirectionToAngleXY(double directionX, double directionY);
 
+/// @param angle  Normalised angle in the range [0..360].
+double M_InverseAngle(double angle);
+
 angle_t M_PointToAngle2(double const a[], double const b[]);
 angle_t M_PointXYToAngle2(double aX, double aY, double bX, double bY);
 

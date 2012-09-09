@@ -537,8 +537,8 @@ struct Partitioner::Instance
 
         Vertex* newVert = newVertex(point);
         { HEdgeInfo& oldInfo = hedgeInfo(*oldHEdge);
-        addHEdgeTip(newVert, M_DirectionToAngleXY(-oldInfo.direction[VX], -oldInfo.direction[VY]), oldHEdge->twin, oldHEdge);
-        addHEdgeTip(newVert, M_DirectionToAngleXY( oldInfo.direction[VX],  oldInfo.direction[VY]), oldHEdge, oldHEdge->twin);
+        addHEdgeTip(newVert, M_InverseAngle(oldInfo.pAngle), oldHEdge->twin, oldHEdge);
+        addHEdgeTip(newVert, oldInfo.pAngle, oldHEdge, oldHEdge->twin);
         }
 
         HEdge* newHEdge = cloneHEdge(*oldHEdge);
@@ -1028,7 +1028,7 @@ struct Partitioner::Instance
         // Another little twist, here we show a slight preference for partition
         // lines that lie either purely horizontally or purely vertically.
         HEdgeInfo const& hInfo = hedgeInfo(*hedge);
-        if(!FEQUAL(hInfo.direction[VX], 0) && !FEQUAL(hInfo.direction[VY], 0))
+        if(hInfo.pSlopeType != ST_HORIZONTAL && hInfo.pSlopeType != ST_VERTICAL)
             cost.total += 25;
 
         //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d left=%d+%d right=%d+%d cost=%d.%02d")
@@ -1401,14 +1401,14 @@ struct Partitioner::Instance
         HEdgeInfo const& hInfo = hedgeInfo(*hedge);
 
         // Horizontal partition against vertical half-edge.
-        if(partitionInfo.direction[VY] == 0 && hInfo.direction[VX] == 0)
+        if(partitionInfo.pSlopeType == ST_HORIZONTAL && hInfo.pSlopeType == ST_VERTICAL)
         {
             V2d_Set(point, hInfo.start[VX], partitionInfo.start[VY]);
             return;
         }
 
         // Vertical partition against horizontal half-edge.
-        if(partitionInfo.direction[VX] == 0 && hInfo.direction[VY] == 0)
+        if(partitionInfo.pSlopeType == ST_VERTICAL && hInfo.pSlopeType == ST_HORIZONTAL)
         {
             V2d_Set(point, partitionInfo.start[VX], hInfo.start[VY]);
             return;
@@ -1417,12 +1417,12 @@ struct Partitioner::Instance
         // 0 = start, 1 = end.
         coord_t ds = perpC / (perpC - perpD);
 
-        if(hInfo.direction[VX] == 0)
+        if(hInfo.pSlopeType == ST_VERTICAL)
             point[VX] = hInfo.start[VX];
         else
             point[VX] = hInfo.start[VX] + (hInfo.direction[VX] * ds);
 
-        if(hInfo.direction[VY] == 0)
+        if(hInfo.pSlopeType == ST_HORIZONTAL)
             point[VY] = hInfo.start[VY];
         else
             point[VY] = hInfo.start[VY] + (hInfo.direction[VY] * ds);
@@ -1771,8 +1771,8 @@ struct Partitioner::Instance
         inter->vertex = vertex;
         inter->selfRef = lineDefIsSelfReferencing;
 
-        inter->before = openSectorAtAngle(vertex, M_DirectionToAngleXY(-partitionInfo.direction[VX], -partitionInfo.direction[VY]));
-        inter->after  = openSectorAtAngle(vertex, M_DirectionToAngleXY( partitionInfo.direction[VX],  partitionInfo.direction[VY]));
+        inter->before = openSectorAtAngle(vertex, M_InverseAngle(partitionInfo.pAngle));
+        inter->after  = openSectorAtAngle(vertex, partitionInfo.pAngle);
 
         return inter;
     }

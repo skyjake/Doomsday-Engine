@@ -130,9 +130,10 @@ public:
     /**
      * Insert a point at the given intersection into the intersection list.
      *
-     * @todo Ownership of the user data should NOT be passed to this object.
-     *
-     * @param userData  Ownership passes to HPlane.
+     * @param distance  Distance along the partition for the new intercept,
+     *                  in map units.
+     * @param userData  User data object to link with the new intercept.
+     *                  Ownership remains unchanged.
      */
     HPlaneIntercept& newIntercept(coord_t distance, void* userData=NULL);
 
