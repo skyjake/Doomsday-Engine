@@ -1380,7 +1380,7 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
         neighbor = vo->lineDef;
 
         if(neighbor != lineDef && !neighbor->L_backsidedef &&
-           neighbor->buildData.windowEffect &&
+           (neighbor->inFlags & LF_BSPWINDOW) &&
            neighbor->L_frontsector != bspLeaf->sector)
         {
             // A one-way window, edgeOpen side.

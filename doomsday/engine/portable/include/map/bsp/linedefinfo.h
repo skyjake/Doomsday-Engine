@@ -42,6 +42,7 @@ namespace bsp {
  */
 struct LineDefInfo
 {
+    /// @todo Refactor me away.
     enum Flag
     {
         Twosided   =        0x1, ///< Line is marked two-sided.
@@ -54,7 +55,10 @@ struct LineDefInfo
     /// @todo Refactor me away.
     int validCount;
 
-    LineDefInfo() : flags(0), validCount(0)
+    /// If the line is used for a window effect, this is the sector on the back side.
+    Sector* windowEffect;
+
+    LineDefInfo() : flags(0), validCount(0), windowEffect(0)
     {}
 
     LineDefInfo& configure(LineDef& line, coord_t distEpsilon = 0.0001)

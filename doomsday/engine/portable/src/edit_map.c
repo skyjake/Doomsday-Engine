@@ -92,7 +92,7 @@ static LineDef* createLine(void)
     map->lineDefs[map->numLineDefs-1] = line;
     map->lineDefs[map->numLineDefs] = NULL;
 
-    line->buildData.index = map->numLineDefs; // 1-based index, 0 = NIL.
+    line->origIndex = map->numLineDefs; // 1-based index, 0 = NIL.
     return line;
 }
 
@@ -1050,7 +1050,7 @@ static void hardenVertexOwnerRings(GameMap* dest, editmap_t* src)
             p = v->lineOwners;
             while(p)
             {
-                p->lineDef = &dest->lineDefs[p->lineDef->buildData.index - 1];
+                p->lineDef = &dest->lineDefs[p->lineDef->origIndex - 1];
                 p = p->LO_next;
             }
 
@@ -1131,9 +1131,6 @@ static void hardenLinedefs(GameMap* dest, editmap_t* src)
             &dest->sideDefs[srcL->L_frontsidedef->buildData.index - 1] : NULL);
         destL->L_backsidedef = (srcL->L_backsidedef?
             &dest->sideDefs[srcL->L_backsidedef->buildData.index - 1] : NULL);
-
-        if(srcL->buildData.windowEffect)
-            destL->buildData.windowEffect = &dest->sectors[srcL->buildData.windowEffect->buildData.index - 1];
 
         if(destL->L_frontsidedef)
             destL->L_frontsidedef->line = destL;
@@ -1255,7 +1252,7 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
         destP->lines = Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
         for(j = 0; j < destP->lineCount; ++j)
         {
-            LineDef* line = &dest->lineDefs[srcP->lines[j]->buildData.index - 1];
+            LineDef* line = &dest->lineDefs[srcP->lines[j]->origIndex - 1];
             HEdge* hedge = &hedges[j];
 
             // This line belongs to a polyobj.
@@ -1278,194 +1275,6 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
         dest->polyObjs[i] = destP;
     }
     dest->polyObjs[i] = NULL; // Terminate.
-}
-
-/**
- * @par Algorithm
- * Cast a line horizontally or vertically and see what we hit.
- * (OUCH, we have to iterate over all linedefs!).
- */
-static void testForWindowEffect(editmap_t* map, LineDef* l)
-{
-// Smallest distance between two points before being considered equal.
-#define DIST_EPSILON        (1.0 / 128.0)
-
-    uint i;
-    double mX, mY, dX, dY;
-    boolean castHoriz;
-    double backDist = DDMAXFLOAT;
-    Sector* backOpen = NULL;
-    double frontDist = DDMAXFLOAT;
-    Sector* frontOpen = NULL;
-    LineDef* frontLine = NULL, *backLine = NULL;
-
-    mX = (l->L_v1origin[VX] + l->L_v2origin[VX]) / 2.0;
-    mY = (l->L_v1origin[VY] + l->L_v2origin[VY]) / 2.0;
-
-    dX = l->L_v2origin[VX] - l->L_v1origin[VX];
-    dY = l->L_v2origin[VY] - l->L_v1origin[VY];
-
-    castHoriz = (fabs(dX) < fabs(dY)? true : false);
-
-    for(i = 0; i < map->numLineDefs; ++i)
-    {
-        LineDef* n = map->lineDefs[i];
-        double dist;
-        boolean isFront;
-        Sector* hitSector;
-        double dX2, dY2;
-
-        if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap || n->length <= 0*/)
-            continue;
-        if(n->inFlags & LF_POLYOBJ)
-            continue;
-
-        dX2 = n->L_v2origin[VX] - n->L_v1origin[VX];
-        dY2 = n->L_v2origin[VY] - n->L_v1origin[VY];
-
-        if(castHoriz)
-        {
-            // Horizontal.
-            if(fabs(dY2) < DIST_EPSILON)
-                continue;
-
-            if((MAX_OF(n->L_v1origin[VY], n->L_v2origin[VY]) < mY - DIST_EPSILON) ||
-               (MIN_OF(n->L_v1origin[VY], n->L_v2origin[VY]) > mY + DIST_EPSILON))
-                continue;
-
-            dist = (n->L_v1origin[VX] +
-                (mY - n->L_v1origin[VY]) * dX2 / dY2) - mX;
-
-            isFront = (((dY > 0) != (dist > 0)) ? true : false);
-
-            dist = fabs(dist);
-            if(dist < DIST_EPSILON)
-                continue; // Too close (overlapping lines ?)
-
-            hitSector = n->L_sector((dY > 0) ^ (dY2 > 0) ^ !isFront);
-        }
-        else
-        {   // Vertical.
-            if(fabs(dX2) < DIST_EPSILON)
-                continue;
-
-            if((MAX_OF(n->L_v1origin[VX], n->L_v2origin[VX]) < mX - DIST_EPSILON) ||
-               (MIN_OF(n->L_v1origin[VX], n->L_v2origin[VX]) > mX + DIST_EPSILON))
-                continue;
-
-            dist = (n->L_v1origin[VY] +
-                (mX - n->L_v1origin[VX]) * dY2 / dX2) - mY;
-
-            isFront = (((dX > 0) == (dist > 0)) ? true : false);
-
-            dist = fabs(dist);
-
-            hitSector = n->L_sector((dX > 0) ^ (dX2 > 0) ^ !isFront);
-        }
-
-        if(dist < DIST_EPSILON) // Too close (overlapping lines ?)
-            continue;
-
-        if(isFront)
-        {
-            if(dist < frontDist)
-            {
-                frontDist = dist;
-                frontOpen = hitSector;
-                frontLine = n;
-            }
-        }
-        else
-        {
-            if(dist < backDist)
-            {
-                backDist = dist;
-                backOpen = hitSector;
-                backLine = n;
-            }
-        }
-    }
-
-    /*
-    DEBUG_Message(("back line: %d  back dist: %1.1f  back_open: %s\n",
-                   (backLine? backLine->buildData.index : -1), backDist,
-                   (backOpen? "OPEN" : "CLOSED")));
-    DEBUG_Message(("front line: %d  front dist: %1.1f  front_open: %s\n",
-                   (frontLine? frontLine->buildData.index : -1), frontDist,
-                   (frontOpen? "OPEN" : "CLOSED")));
-    */
-
-    if(backOpen && frontOpen && l->L_frontsector == backOpen)
-    {
-        VERBOSE( Con_Message("Linedef #%d seems to be a One-Sided Window "
-                             "(back faces sector #%d).\n", l->buildData.index - 1,
-                             backOpen->buildData.index - 1) );
-
-        l->buildData.windowEffect = frontOpen;
-    }
-
-#undef DIST_EPSILON
-}
-
-static void countVertexLineOwners(Vertex* vtx, uint* oneSided, uint* twoSided)
-{
-    lineowner_t* p;
-
-    p = vtx->lineOwners;
-    while(p)
-    {
-        if(!p->lineDef->L_frontsidedef || !p->lineDef->L_backsidedef)
-            (*oneSided)++;
-        else
-            (*twoSided)++;
-
-        p = p->LO_next;
-    }
-}
-
-/**
- * @par Algorithm
- * Scan the linedef list looking for possible candidates, checking for
- * an odd number of one-sided linedefs connected to a single vertex. This idea
- * courtesy of Graham Jackson.
- */
-void MPE_DetectWindowEffects(editmap_t* map)
-{
-    uint i, oneSiders, twoSiders;
-
-    for(i = 0; i < map->numLineDefs; ++i)
-    {
-        LineDef* l = map->lineDefs[i];
-
-        if((l->L_frontsidedef && l->L_backsidedef) || !l->L_frontsidedef /*|| l->length <= 0 ||
-           l->buildData.overlap*/)
-            continue;
-        if(l->inFlags & LF_POLYOBJ)
-            continue;
-
-        oneSiders = twoSiders = 0;
-        countVertexLineOwners(l->v[0], &oneSiders, &twoSiders);
-
-        if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
-        {
-            //DEBUG_Message(("Warning: LineDef #%d start vertex %d has odd number of one-siders\n",
-            //               i, l->buildData.v[0]->index));
-
-            testForWindowEffect(map, l);
-            continue;
-        }
-
-        oneSiders = twoSiders = 0;
-        countVertexLineOwners(l->v[1], &oneSiders, &twoSiders);
-
-        if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
-        {
-            //DEBUG_Message(("Warning: LineDef #%d end vertex %d has odd number of one-siders\n",
-            //               i, l->buildData.v[1]->index));
-
-            testForWindowEffect(map, l);
-        }
-    }
 }
 
 #if 0 /* Currently unused. */
@@ -1800,8 +1609,6 @@ boolean MPE_End(void)
     MPE_PruneRedundantMapData(map, PRUNE_ALL);
 
     buildVertexOwnerRings(map);
-
-    MPE_DetectWindowEffects(map);
 
     /**
      * Harden most of the map data so that we can construct some of the more
@@ -2217,7 +2024,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
     if(!front || !back)
         l->flags |= DDLF_BLOCKING;
 
-    return l->buildData.index;
+    return l->origIndex;
 }
 
 uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX,

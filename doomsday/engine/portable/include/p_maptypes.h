@@ -425,18 +425,8 @@ typedef struct sidedef_s {
                                  (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_POLYOBJ              0x1 // Line is part of a polyobject.
-
-typedef struct mlinedef_s {
-    // Linedef index. Always valid after loading & pruning of zero
-    // length lines has occurred.
-    int index;
-
-    // One-sided linedef used for a special effect (windows).
-    // The value refers to the opposite sector on the back side.
-    /// @todo This reference is now only used during map conversion - we can use a temporary LUT.
-    struct sector_s* windowEffect;
-} mlinedef_t;
+#define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
+#define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
 
 /**
  * @defgroup sideSectionFlags  Side Section Flags
@@ -470,7 +460,7 @@ typedef struct linedef_s {
     coord_t             length; /// Accurate length.
     AABoxd              aaBox;
     boolean             mapped[DDMAXPLAYERS]; /// Whether the line has been mapped by each player yet.
-    mlinedef_t          buildData;
+    int                 origIndex; /// Original index in the archived map.
 } LineDef;
 
 #define RIGHT                   0

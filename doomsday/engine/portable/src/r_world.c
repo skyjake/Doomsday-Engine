@@ -1156,7 +1156,7 @@ LineDef* R_FindSolidLineNeighbor(const Sector* sector, const LineDef* line,
 
     if(diff) *diff += (antiClockwise? cown->angle : own->angle);
 
-    if(!(other->buildData.windowEffect && other->L_frontsector != sector))
+    if(!((other->inFlags & LF_BSPWINDOW) && other->L_frontsector != sector))
     {
         if(!other->L_frontsidedef || !other->L_backsidedef)
             return other;
@@ -1219,7 +1219,7 @@ LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
     if(diff) *diff += (antiClockwise? cown->angle : own->angle);
 
     if(!other->L_backsidedef || other->L_frontsector != other->L_backsector ||
-       other->buildData.windowEffect)
+       (other->inFlags & LF_BSPWINDOW))
     {
         if(!(other->L_frontsector == sector ||
              (other->L_backsidedef && other->L_backsector == sector)))

@@ -29,6 +29,7 @@
 #define LIBDENG_BSP_VERTEXINFO
 
 #include <list>
+#include "map/bsp/partitioner.h"
 #include "map/bsp/hedgetip.h"
 
 namespace de {
@@ -43,12 +44,18 @@ class VertexInfo
 public:
     typedef std::list<HEdgeTip> HEdgeTips;
 
+    VertexInfo() : oneSidedOwnerCount(0), twoSidedOwnerCount(0), tips(0) {}
+
+    // Total number of one and two-sided line owners.
+    uint oneSidedOwnerCount;
+    uint twoSidedOwnerCount;
+
     /**
      * Add a new HEdgeTip to the set in it's rightful place according to an
      * anti-clockwise (increasing angle) order.
      */
     HEdgeTip& addHEdgeTip(coord_t angle, HEdge* front = 0, HEdge* back = 0,
-                          coord_t angleEpsilon = 0.0001)
+                          coord_t angleEpsilon = ANG_EPSILON)
     {
         HEdgeTips::reverse_iterator after;
 

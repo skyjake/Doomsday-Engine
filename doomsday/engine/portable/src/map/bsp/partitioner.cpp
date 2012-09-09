@@ -43,6 +43,7 @@
 #include "bspleaf.h"
 #include "bspnode.h"
 #include "hedge.h"
+#include "vertex.h"
 #include "map/bsp/hedgeinfo.h"
 #include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hedgetip.h"
@@ -220,11 +221,11 @@ struct Partitioner::Instance
      */
     LineDefInfo& lineDefInfo(const LineDef& lineDef)
     {
-        return lineDefInfos[lineDef.buildData.index - 1];
+        return lineDefInfos[lineDef.origIndex - 1];
     }
     const LineDefInfo& lineDefInfo(const LineDef& lineDef) const
     {
-        return lineDefInfos[lineDef.buildData.index - 1];
+        return lineDefInfos[lineDef.origIndex - 1];
     }
 
     /**
@@ -253,23 +254,151 @@ struct Partitioner::Instance
     {
         return vertexInfos[vertex.buildData.index - 1];
     }
-    const VertexInfo& vertexInfo(const Vertex& vertex) const
+
+    inline bool lineMightHaveWindowEffect(LineDef const* line)
     {
-        return vertexInfos[vertex.buildData.index - 1];
+        if(!line) return false;
+        if(line->inFlags & LF_POLYOBJ) return false;
+        if((line->L_frontsidedef && line->L_backsidedef) || !line->L_frontsidedef) return false;
+        //if(line->length <= 0 || line->buildData.overlap) return false;
+
+        // Look for window effects by checking for an odd number of one-sided
+        // linedefs owners for a single vertex. Idea courtesy of Graham Jackson.
+        VertexInfo const& v1Info = vertexInfo(*line->L_v1);
+        if((v1Info.oneSidedOwnerCount % 2) == 1 && (v1Info.oneSidedOwnerCount + v1Info.twoSidedOwnerCount) > 1) return true;
+
+        VertexInfo const& v2Info = vertexInfo(*line->L_v2);
+        if((v2Info.oneSidedOwnerCount % 2) == 1 && (v2Info.oneSidedOwnerCount + v2Info.twoSidedOwnerCount) > 1) return true;
+
+        return false;
+    }
+
+    /**
+     * @par Algorithm
+     * Cast a line horizontally or vertically and see what we hit.
+     * (OUCH, we have to iterate over all linedefs!).
+     *
+     * @todo Make use of the linedef blockmap to accelerate this.
+     */
+    void testForWindowEffect(LineDef* line)
+    {
+        if(!lineMightHaveWindowEffect(line)) return;
+
+        const coord_t mX = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2.0;
+        const coord_t mY = (line->L_v1origin[VY] + line->L_v2origin[VY]) / 2.0;
+
+        const coord_t dX = line->L_v2origin[VX] - line->L_v1origin[VX];
+        const coord_t dY = line->L_v2origin[VY] - line->L_v1origin[VY];
+
+        const bool castHoriz = (fabs(dX) < fabs(dY)? true : false);
+
+        double backDist  = DDMAXFLOAT;
+        double frontDist = DDMAXFLOAT;
+        Sector* frontOpen = 0, *backOpen = 0;
+        LineDef* frontLine = 0, *backLine = 0;
+
+        uint lineDefCount = GameMap_LineDefCount(map);
+        for(uint i = 0; i < lineDefCount; ++i)
+        {
+            LineDef* n = GameMap_LineDef(map, i);
+
+            if((n->inFlags & LF_POLYOBJ) || n == line) continue;
+            if(LINE_SELFREF(n) /*|| n->buildData.overlap || n->length <= 0*/) continue;
+
+            const coord_t dX2 = n->L_v2origin[VX] - n->L_v1origin[VX];
+            const coord_t dY2 = n->L_v2origin[VY] - n->L_v1origin[VY];
+
+            double dist = 0;
+            Sector* hitSector = 0;
+            bool isFront = false;
+            if(castHoriz)
+            {
+                if(fabs(dY2) < DIST_EPSILON) continue;
+
+                if((MAX_OF(n->L_v1origin[VY], n->L_v2origin[VY]) < mY - DIST_EPSILON) ||
+                   (MIN_OF(n->L_v1origin[VY], n->L_v2origin[VY]) > mY + DIST_EPSILON)) continue;
+
+                dist = (n->L_v1origin[VX] + (mY - n->L_v1origin[VY]) * dX2 / dY2) - mX;
+
+                isFront = ((dY > 0) != (dist > 0));
+
+                dist = fabs(dist);
+                if(dist < DIST_EPSILON) continue; // Too close (overlapping lines ?)
+
+                hitSector = n->L_sector((dY > 0) ^ (dY2 > 0) ^ !isFront);
+            }
+            else // Cast vertically.
+            {
+                if(fabs(dX2) < DIST_EPSILON) continue;
+
+                if((MAX_OF(n->L_v1origin[VX], n->L_v2origin[VX]) < mX - DIST_EPSILON) ||
+                   (MIN_OF(n->L_v1origin[VX], n->L_v2origin[VX]) > mX + DIST_EPSILON)) continue;
+
+                dist = (n->L_v1origin[VY] + (mX - n->L_v1origin[VX]) * dY2 / dX2) - mY;
+
+                isFront = ((dX > 0) == (dist > 0));
+
+                dist = fabs(dist);
+
+                hitSector = n->L_sector((dX > 0) ^ (dX2 > 0) ^ !isFront);
+            }
+
+            if(dist < DIST_EPSILON) continue; // Too close (overlapping lines ?)
+
+            if(isFront)
+            {
+                if(dist < frontDist)
+                {
+                    frontDist = dist;
+                    frontOpen = hitSector;
+                    frontLine = n;
+                }
+            }
+            else
+            {
+                if(dist < backDist)
+                {
+                    backDist = dist;
+                    backOpen = hitSector;
+                    backLine = n;
+                }
+            }
+        }
+
+        if(backOpen && frontOpen && line->L_frontsector == backOpen)
+        {
+            LOG_VERBOSE("LineDef #%d seems to be a One-Sided Window (back faces sector #%d).")
+                << line->origIndex - 1 << backOpen->buildData.index - 1;
+
+            lineDefInfo(*line).windowEffect = frontOpen;
+            line->inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
+        }
     }
 
     void initForMap()
     {
-        uint numLineDefs = GameMap_LineDefCount(map);
-        lineDefInfos.resize(numLineDefs);
+        // Initialize vertex info for the initial set of vertexes.
+        vertexInfos.resize(*numEditableVertexes);
 
-        for(uint i = 0; i < numLineDefs; ++i)
+        // Count the total number of one and two-sided line owners for each vertex.
+        // (Used in the process of locating window effect lines.)
+        for(uint i = 0; i < *numEditableVertexes; ++i)
         {
-            LineDef& line = *GameMap_LineDef(map, i);
-            lineDefInfo(line).configure(line, DIST_EPSILON);
+            Vertex* vtx = (*editableVertexes)[i];
+            VertexInfo& vtxInfo = vertexInfo(*vtx);
+            Vertex_CountLineOwners(vtx, &vtxInfo.oneSidedOwnerCount, &vtxInfo.twoSidedOwnerCount);
         }
 
-        vertexInfos.resize(*numEditableVertexes);
+        // Initialize linedef info.
+        uint numLineDefs = GameMap_LineDefCount(map);
+        lineDefInfos.resize(numLineDefs);
+        for(uint i = 0; i < numLineDefs; ++i)
+        {
+            LineDef* line = GameMap_LineDef(map, i);
+            lineDefInfo(*line).configure(*line, DIST_EPSILON);
+
+            testForWindowEffect(line);
+        }
     }
 
     /// @return The right half-edge (from @a start to @a end).
@@ -319,12 +448,22 @@ struct Partitioner::Instance
 
             HEdge* front  = 0;
             coord_t angle = 0;
-            if(!lineDefInfo(*line).flags.testFlag(LineDefInfo::ZeroLength))
+
+            LineDefInfo const& lineInfo = lineDefInfo(*line);
+            if(!lineInfo.flags.testFlag(LineDefInfo::ZeroLength))
             {
                 Sector* frontSec = line->L_frontsector;
-                // Handle the 'One-Sided Window' trick.
-                Sector* backSec  =          line->L_backsidedef? line->L_backsector :
-                                   line->buildData.windowEffect? line->buildData.windowEffect : 0;
+                Sector* backSec  = 0;
+                if(line->L_backsidedef)
+                {
+                    backSec = line->L_backsector;
+                }
+                else
+                {
+                    // Handle the 'One-Sided Window' trick.
+                    Sector* windowSec = lineInfo.windowEffect;
+                    if(windowSec) backSec = windowSec;
+                }
 
                 front = buildHEdgesBetweenVertexes(line->L_v1, line->L_v2,
                                                    frontSec, backSec, line, line);
@@ -495,7 +634,7 @@ struct Partitioner::Instance
                         registerUnclosedSector(next->before, pos[VX], pos[VY]);
                     }
                 }
-                else // This is definitetly open space.
+                else // This is definitely open space.
                 {
                     // Choose the non-self-referencing sector when we can.
                     Sector* sector = cur->after;
@@ -1860,7 +1999,7 @@ struct Partitioner::Instance
     inline void addHEdgeTip(Vertex* vtx, coord_t angle, HEdge* front, HEdge* back)
     {
         DENG2_ASSERT(vtx);
-        vertexInfo(*vtx).addHEdgeTip(angle, front, back, ANG_EPSILON);
+        vertexInfo(*vtx).addHEdgeTip(angle, front, back);
     }
 
     inline void clearHEdgeTipsByVertex(Vertex* vtx)
@@ -2187,11 +2326,11 @@ struct Partitioner::Instance
         // In the absence of a better mechanism, simply log this right away.
         /// @todo Implement something better!
         if(migrant->lineDef)
-            LOG_WARNING("Sector #%d has HEdge facing #%d (line #%d).")
+            LOG_WARNING("Sector #%d has migrant HEdge facing #%d (line #%d).")
                 << sector->buildData.index - 1 << migrant->sector->buildData.index - 1
-                << migrant->lineDef->buildData.index - 1;
+                << migrant->lineDef->origIndex - 1;
         else
-            LOG_WARNING("Sector #%d has HEdge facing #%d.")
+            LOG_WARNING("Sector #%d has migrant HEdge facing #%d.")
                 << sector->buildData.index - 1 << migrant->sector->buildData.index - 1;
 
         return true;

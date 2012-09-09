@@ -24,6 +24,33 @@
 #include "de_console.h"
 #include "de_play.h"
 
+void Vertex_CountLineOwners(Vertex* vtx, uint* oneSided, uint* twoSided)
+{
+    DENG_ASSERT(vtx);
+
+    if(!oneSided && !twoSided) return;
+
+    uint ones = 0, twos = 0;
+    if(vtx->lineOwners)
+    {
+        lineowner_t* vo = vtx->lineOwners;
+        do
+        {
+            if(!vo->lineDef->L_frontsidedef || !vo->lineDef->L_backsidedef)
+            {
+                ++ones;
+            }
+            else
+            {
+                ++twos;
+            }
+        } while((vo = vo->LO_next) != vtx->lineOwners);
+    }
+
+    if(oneSided) *oneSided += ones;
+    if(twoSided) *twoSided += twos;
+}
+
 int Vertex_SetProperty(Vertex* /*vtx*/, const setargs_t* /*args*/)
 {
     // Vertices are not writable through DMU.
@@ -33,6 +60,7 @@ int Vertex_SetProperty(Vertex* /*vtx*/, const setargs_t* /*args*/)
 
 int Vertex_GetProperty(const Vertex* vtx, setargs_t* args)
 {
+    DENG_ASSERT(vtx);
     switch(args->prop)
     {
     case DMU_X:
