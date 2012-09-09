@@ -317,7 +317,8 @@ struct Partitioner::Instance
             // Polyobj lines are completely ignored.
             if(line->inFlags & LF_POLYOBJ) continue;
 
-            HEdge* front = 0;
+            HEdge* front  = 0;
+            coord_t angle = 0;
             if(!lineDefInfo(*line).flags.testFlag(LineDefInfo::ZeroLength))
             {
                 Sector* frontSec = line->L_frontsector;
@@ -327,6 +328,7 @@ struct Partitioner::Instance
 
                 front = buildHEdgesBetweenVertexes(line->L_v1, line->L_v2,
                                                    frontSec, backSec, line, line);
+                angle = hedgeInfo(*front).pAngle;
 
                 linkHEdgeInSuperBlockmap(hedgeList, front);
                 if(front->twin)
@@ -336,13 +338,8 @@ struct Partitioner::Instance
             }
 
             // @todo edge tips should be created when half-edges are created.
-            const coord_t x1 = line->L_v1origin[VX];
-            const coord_t y1 = line->L_v1origin[VY];
-            const coord_t x2 = line->L_v2origin[VX];
-            const coord_t y2 = line->L_v2origin[VY];
-
-            addHEdgeTip(line->L_v1, M_DirectionToAngleXY(x2 - x1, y2 - y1), front, front? front->twin : 0);
-            addHEdgeTip(line->L_v2, M_DirectionToAngleXY(x1 - x2, y1 - y2), front? front->twin : 0, front);
+            addHEdgeTip(line->L_v1, angle,                 front, front? front->twin : 0);
+            addHEdgeTip(line->L_v2, M_InverseAngle(angle), front? front->twin : 0, front);
         }
     }
 
