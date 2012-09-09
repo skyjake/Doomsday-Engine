@@ -426,7 +426,21 @@ struct Partitioner::Instance
         return true;
     }
 
-    void mergeIntersections()
+    /**
+     * @todo fixme: Logically this is very suspect. Implementing this logic by merging
+     *       near-intercepts at hplane level is wrong because this does nothing about
+     *       any intercepting half-edge vertices. Consequently, rather than moving the
+     *       existing vertices and welding them, this will result in the creation of
+     *       new gaps gaps along the partition (which buildHEdgesAtIntersectionGaps()
+     *       will then warn about) and result in holes in the map.
+     *
+     *       This should be redesigned so that near-intercepting vertices are welded
+     *       in a stable manner (i.e., not incrementally, which can result in vertices
+     *       drifting away from the hplane). Logically, therefore, this should not be
+     *       done prior to creating hedges along the partition - instead this should
+     *       happen afterwards. -ds
+     */
+    void mergeIntercepts()
     {
         HPlane::mergepredicate_t callback = &Partitioner::Instance::mergeInterceptDecide;
         partition.mergeIntercepts(callback, this);
@@ -1714,7 +1728,7 @@ struct Partitioner::Instance
         //DEND_DEBUG_ONLY(HPlane::DebugPrint(*partition));
 
         // Fix any issues with the current intersections.
-        mergeIntersections();
+        mergeIntercepts();
 
         LOG_TRACE("Building HEdges along partition [%1.1f, %1.1f] > [%1.1f, %1.1f]")
             <<     partitionInfo.start[VX] <<     partitionInfo.start[VY]
