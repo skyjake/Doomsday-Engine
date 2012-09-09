@@ -272,6 +272,29 @@ struct Partitioner::Instance
         vertexInfos.resize(*numEditableVertexes);
     }
 
+    /// @return The right half-edge (from @a start to @a end).
+    HEdge* buildHEdgesBetweenVertexes(Vertex* start, Vertex* end, Sector* frontSec,
+        Sector* backSec, LineDef* lineDef, LineDef* partitionLineDef)
+    {
+        DENG2_ASSERT(start && end);
+
+        HEdge* right = newHEdge(start, end, frontSec, lineDef, partitionLineDef);
+        if(backSec)
+        {
+            HEdge* left  = newHEdge(end, start, backSec, lineDef, partitionLineDef);
+            if(lineDef)
+            {
+                left->side = BACK;
+            }
+
+            // Twin the half-edges together.
+            right->twin = left;
+            left->twin  = right;
+        }
+
+        return right;
+    }
+
     inline HEdge* linkHEdgeInSuperBlockmap(SuperBlock& block, HEdge* hedge)
     {
         DENG2_ASSERT(hedge);
@@ -295,34 +318,20 @@ struct Partitioner::Instance
             if(line->inFlags & LF_POLYOBJ) continue;
 
             HEdge* front = 0;
-            HEdge* back  = 0;
             if(!lineDefInfo(*line).flags.testFlag(LineDefInfo::ZeroLength))
             {
-                front = newHEdge(line->L_v1, line->L_v2, line->L_frontsector, line, line);
-                linkHEdgeInSuperBlockmap(hedgeList, front);
-
-                if(line->L_backsidedef)
-                {
-                    back = newHEdge(line->L_v2, line->L_v1, line->L_backsector, line, line);
-                    back->side = BACK;
-                    linkHEdgeInSuperBlockmap(hedgeList, back);
-
-                    if(front)
-                    {
-                        front->twin = back;
-                        back->twin  = front;
-                    }
-                }
+                Sector* frontSec = line->L_frontsector;
                 // Handle the 'One-Sided Window' trick.
-                else if(line->buildData.windowEffect && front)
-                {
-                    HEdge* other = newHEdge(line->L_v2, line->L_v1, line->buildData.windowEffect,
-                                            front->lineDef, line);
-                    other->side = BACK;
-                    linkHEdgeInSuperBlockmap(hedgeList, other);
+                Sector* backSec  =          line->L_backsidedef? line->L_backsector :
+                                   line->buildData.windowEffect? line->buildData.windowEffect : 0;
 
-                    front->twin = other;
-                    other->twin = front;
+                front = buildHEdgesBetweenVertexes(line->L_v1, line->L_v2,
+                                                   frontSec, backSec, line, line);
+
+                linkHEdgeInSuperBlockmap(hedgeList, front);
+                if(front->twin)
+                {
+                    linkHEdgeInSuperBlockmap(hedgeList, front->twin);
                 }
             }
 
@@ -332,8 +341,8 @@ struct Partitioner::Instance
             const coord_t x2 = line->L_v2origin[VX];
             const coord_t y2 = line->L_v2origin[VY];
 
-            addHEdgeTip(line->L_v1, M_DirectionToAngleXY(x2 - x1, y2 - y1), front, back);
-            addHEdgeTip(line->L_v2, M_DirectionToAngleXY(x1 - x2, y1 - y2), back, front);
+            addHEdgeTip(line->L_v1, M_DirectionToAngleXY(x2 - x1, y2 - y1), front, front? front->twin : 0);
+            addHEdgeTip(line->L_v2, M_DirectionToAngleXY(x1 - x2, y1 - y2), front? front->twin : 0, front);
         }
     }
 
@@ -489,13 +498,10 @@ struct Partitioner::Instance
                         registerUnclosedSector(next->before, pos[VX], pos[VY]);
                     }
                 }
-                else
+                else // This is definitetly open space.
                 {
-                    // This is definitetly open space.
-                    HEdge* right, *left;
-                    Sector* sector = cur->after;
-
                     // Choose the non-self-referencing sector when we can.
+                    Sector* sector = cur->after;
                     if(cur->after != next->before)
                     {
                         // Do a sanity check on the sectors (just for good measure).
@@ -510,12 +516,25 @@ struct Partitioner::Instance
                             sector = next->before;
                     }
 
-                    right = addHEdgesBetweenIntercepts(cur, next, sector);
-                    left  = right->twin;
+                    HEdge* right = buildHEdgesBetweenVertexes(cur->vertex, next->vertex, sector, sector,
+                                                              0 /*no linedef*/, partitionLineDef);
 
                     // Add the new half-edges to the appropriate lists.
                     linkHEdgeInSuperBlockmap(rightList, right);
-                    linkHEdgeInSuperBlockmap(leftList,  left);
+                    linkHEdgeInSuperBlockmap(leftList,  right->twin);
+
+                    /*
+                    HEdge* left = right->twin;
+                    LOG_DEBUG("Capped partition gap:\n"
+                              "  %p RIGHT sector #%d [%1.1f, %1.1f] to [%1.1f, %1.1f]\n"
+                              "  %p LEFT  sector #%d [%1.1f, %1.1f] to [%1.1f, %1.1f]")
+                        << de::dintptr(right) << (right->sector? right->sector->buildData.index - 1 : -1)
+                        << right->HE_v1origin[VX] << right->HE_v1origin[VY]
+                        << right->HE_v2origin[VX] << right->HE_v2origin[VY]
+                        << de::dintptr(left) << (left->sector? left->sector->buildData.index - 1 : -1)
+                        << left->HE_v1origin[VX]  << left->HE_v1origin[VY]
+                        << left->HE_v2origin[VX]  << left->HE_v2origin[VY];
+                    */
                 }
             }
 
@@ -1691,53 +1710,24 @@ struct Partitioner::Instance
         }
     }
 
-    /// @return The right half-edge,
-    HEdge* addHEdgesBetweenIntercepts(HEdgeIntercept const* start,
-        HEdgeIntercept const* end, Sector* sector)
-    {
-        DENG2_ASSERT(start && end);
-
-        // Create the half-edge pair.
-        // Leave 'linedef' field as NULL as these are not linedef-linked.
-        // Leave 'side' as zero too.
-        HEdge* right = newHEdge(start->vertex, end->vertex, sector, 0 /*no linedef*/, partitionLineDef);
-        HEdge* left  = newHEdge(end->vertex, start->vertex, sector, 0 /*no linedef*/, partitionLineDef);
-
-        // Twin the half-edges together.
-        right->twin = left;
-        left->twin  = right;
-
-        /*
-        LOG_DEBUG("Capped partition gap:\n"
-                  "  %p RIGHT sector #%d [%1.1f, %1.1f] -> [%1.1f, %1.1f]\n"
-                  "  %p LEFT  sector #%d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-            << de::dintptr(right) << (right->sector? right->sector->buildData.index - 1 : -1)
-            << right->HE_v1origin[VX] << right->HE_v1origin[VY]
-            << right->HE_v2origin[VX] << right->HE_v2origin[VY]
-            << de::dintptr(left) << (left->sector? left->sector->buildData.index - 1 : -1)
-            << left->HE_v1origin[VX]  << left->HE_v1origin[VY]
-            << left->HE_v2origin[VX]  << left->HE_v2origin[VY];
-        */
-
-        return right;
-    }
-
     /**
-     * Analyze the intersection list, and add any needed minihedges to the given
-     * half-edge lists (one minihedge on each side).
+     * Analyze the partition intercepts, building new half-edges to cap
+     * any gaps (new hedges are added onto the end of the appropriate list
+     *(rights to @a rightList and lefts to @a leftList)).
+     *
+     * @param rightList  List of hedges on the right of the partition.
+     * @param leftList   List of hedges on the left of the partition.
      */
     void addMiniHEdges(SuperBlock& rightList, SuperBlock& leftList)
     {
-        //DEND_DEBUG_ONLY(printPartitionIntercepts(partition));
-
-        // Fix any issues with the current intersections.
-        mergeIntercepts();
-
         LOG_TRACE("Building HEdges along partition [%1.1f, %1.1f] > [%1.1f, %1.1f]")
             <<     partitionInfo.start[VX] <<     partitionInfo.start[VY]
             << partitionInfo.direction[VX] << partitionInfo.direction[VY];
 
-        // Find connections in the intersections.
+        //DEND_DEBUG_ONLY(printPartitionIntercepts(partition));
+
+        // First, fix any near-distance issues with the intercepts.
+        mergeIntercepts();
         buildHEdgesAtPartitionGaps(rightList, leftList);
     }
 
