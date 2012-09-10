@@ -544,7 +544,7 @@ SOURCES += \
     portable/src/net_ping.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
-    portable/src/p_data.c \
+    portable/src/p_data.cpp \
     portable/src/p_dmu.c \
     portable/src/p_intercept.c \
     portable/src/p_maputil.c \
