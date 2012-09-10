@@ -955,6 +955,26 @@ typedef struct aabox_s {
             int maxY;
         };
     };
+#ifdef __cplusplus
+    aabox_s() : minX(DDMAXINT), minY(DDMAXINT), maxX(DDMININT), maxY(DDMININT) {}
+    aabox_s(int _minX, int _minY, int _maxX, int _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aabox_s& operator = (aabox_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aabox_s& clear()
+    {
+        minX = minY = DDMAXINT;
+        maxX = maxY = DDMININT;
+        return *this;
+    }
+#endif
 } AABox;
 
 /**
@@ -980,6 +1000,26 @@ typedef struct aaboxf_s {
             float maxY;
         };
     };
+#ifdef __cplusplus
+    aaboxf_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
+    aaboxf_s(float _minX, float _minY, float _maxX, float _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aaboxf_s& operator = (aaboxf_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aaboxf_s& clear()
+    {
+        minX = minY = DDMAXFLOAT;
+        maxX = maxY = DDMINFLOAT;
+        return *this;
+    }
+#endif
 } AABoxf;
 
 /**
@@ -1005,6 +1045,27 @@ typedef struct aaboxd_s {
             double maxY;
         };
     };
+#ifdef __cplusplus
+    aaboxd_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
+    aaboxd_s(double _minX, double _minY, double _maxX, double _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aaboxd_s& operator = (aaboxd_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aaboxd_s& clear()
+    {
+        minX = minY = DDMAXFLOAT;
+        maxX = maxY = DDMINFLOAT;
+        return *this;
+    }
+
+#endif
 } AABoxd;
 
 /// Base mobj_t elements. Games MUST use this as the basis for mobj_t. @ingroup mobj
