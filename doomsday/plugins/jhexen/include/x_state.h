@@ -51,14 +51,14 @@ extern boolean  paused;            // Game Pause?
 
 // This one is related to the 3-screen display mode.
 // ANG90 = left side, ANG270 = right
-extern int      viewangleoffset;
+DENG_EXTERN_C int viewangleoffset;
 
 // Timer, for scores.
-extern int mapStartTic; // Game tic at map start.
-extern int mapTime; // Tics in game play for par.
+DENG_EXTERN_C int mapStartTic; // Game tic at map start.
+DENG_EXTERN_C int mapTime; // Tics in game play for par.
 
 // Quit after playing a demo from cmdline.
-extern boolean singledemo;
+DENG_EXTERN_C boolean singledemo;
 
 //-----------------------------
 // Internal parameters, fixed.

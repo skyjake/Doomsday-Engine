@@ -54,8 +54,8 @@
 #define VERBOSE(code)       { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
-extern game_import_t gi;
-extern game_export_t gx;
+DENG_EXTERN_C game_import_t gi;
+DENG_EXTERN_C game_export_t gx;
 
 //
 // Global parameters/defines.
