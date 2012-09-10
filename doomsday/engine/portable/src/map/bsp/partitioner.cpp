@@ -101,6 +101,8 @@ struct Partitioner::Instance
     /// Current map which we are building BSP data for.
     GameMap* map;
 
+    AABoxd mapBounds;
+
     /// @todo Refactor me away:
     uint* numEditableVertexes;
     Vertex*** editableVertexes;
@@ -273,110 +275,127 @@ struct Partitioner::Instance
         return false;
     }
 
-    /**
-     * @par Algorithm
-     * Cast a line horizontally or vertically and see what we hit.
-     * (OUCH, we have to iterate over all linedefs!).
-     *
-     * @todo Make use of the linedef blockmap to accelerate this.
-     */
+    struct testForWindowEffectParams
+    {
+        double frontDist, backDist;
+        Sector* frontOpen, *backOpen;
+        LineDef* frontLine, *backLine;
+        LineDef* testLine;
+        coord_t mX, mY;
+        bool castHoriz;
+
+        testForWindowEffectParams()
+            : frontDist(0), backDist(0), frontOpen(0), backOpen(0),
+              frontLine(0), backLine(0), testLine(0), mX(0), mY(0), castHoriz(false)
+        {}
+    };
+
+    /// @return  Always @c 0 (used as a traverser callback).
+    static int testForWindowEffectWorker(LineDef* line, void* parameters = 0)
+    {
+        testForWindowEffectParams& p = *reinterpret_cast<testForWindowEffectParams*>(parameters);
+
+        if(line == p.testLine) return false;
+        if(LINE_SELFREF(line) /*|| line->buildData.overlap || line->length <= 0*/) return false;
+
+        double dist = 0;
+        Sector* hitSector = 0;
+        bool isFront = false;
+        if(p.castHoriz)
+        {
+            if(fabs(line->direction[VY]) < DIST_EPSILON) return false;
+
+            if((MAX_OF(line->L_v1origin[VY], line->L_v2origin[VY]) < p.mY - DIST_EPSILON) ||
+               (MIN_OF(line->L_v1origin[VY], line->L_v2origin[VY]) > p.mY + DIST_EPSILON)) return false;
+
+            dist = (line->L_v1origin[VX] + (p.mY - line->L_v1origin[VY]) * line->direction[VX] / line->direction[VY]) - p.mX;
+
+            isFront = ((p.testLine->direction[VY] > 0) != (dist > 0));
+
+            dist = fabs(dist);
+            if(dist < DIST_EPSILON) return false; // Too close (overlapping lines ?)
+
+            hitSector = line->L_sector((p.testLine->direction[VY] > 0) ^ (line->direction[VY] > 0) ^ !isFront);
+        }
+        else // Cast vertically.
+        {
+            if(fabs(line->direction[VX]) < DIST_EPSILON) return false;
+
+            if((MAX_OF(line->L_v1origin[VX], line->L_v2origin[VX]) < p.mX - DIST_EPSILON) ||
+               (MIN_OF(line->L_v1origin[VX], line->L_v2origin[VX]) > p.mX + DIST_EPSILON)) return false;
+
+            dist = (line->L_v1origin[VY] + (p.mX - line->L_v1origin[VX]) * line->direction[VY] / line->direction[VX]) - p.mY;
+
+            isFront = ((p.testLine->direction[VX] > 0) == (dist > 0));
+
+            dist = fabs(dist);
+
+            hitSector = line->L_sector((p.testLine->direction[VX] > 0) ^ (line->direction[VX] > 0) ^ !isFront);
+        }
+
+        if(dist < DIST_EPSILON) return false; // Too close (overlapping lines ?)
+
+        if(isFront)
+        {
+            if(dist < p.frontDist)
+            {
+                p.frontDist = dist;
+                p.frontOpen = hitSector;
+                p.frontLine = line;
+            }
+        }
+        else
+        {
+            if(dist < p.backDist)
+            {
+                p.backDist = dist;
+                p.backOpen = hitSector;
+                p.backLine = line;
+            }
+        }
+
+        return false;
+    }
+
     void testForWindowEffect(LineDef* line)
     {
         if(!lineMightHaveWindowEffect(line)) return;
 
-        const coord_t mX = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2.0;
-        const coord_t mY = (line->L_v1origin[VY] + line->L_v2origin[VY]) / 2.0;
+        testForWindowEffectParams p;
+        p.frontDist = p.backDist = DDMAXFLOAT;
+        p.testLine = line;
+        p.mX = (line->L_v1origin[VX] + line->L_v2origin[VX]) / 2.0;
+        p.mY = (line->L_v1origin[VY] + line->L_v2origin[VY]) / 2.0;
+        p.castHoriz = (fabs(line->direction[VX]) < fabs(line->direction[VY])? true : false);
 
-        const coord_t dX = line->L_v2origin[VX] - line->L_v1origin[VX];
-        const coord_t dY = line->L_v2origin[VY] - line->L_v1origin[VY];
-
-        const bool castHoriz = (fabs(dX) < fabs(dY)? true : false);
-
-        double backDist  = DDMAXFLOAT;
-        double frontDist = DDMAXFLOAT;
-        Sector* frontOpen = 0, *backOpen = 0;
-        LineDef* frontLine = 0, *backLine = 0;
-
-        uint lineDefCount = GameMap_LineDefCount(map);
-        for(uint i = 0; i < lineDefCount; ++i)
+        AABoxd scanRegion = mapBounds;
+        if(p.castHoriz)
         {
-            LineDef* n = GameMap_LineDef(map, i);
-
-            if((n->inFlags & LF_POLYOBJ) || n == line) continue;
-            if(LINE_SELFREF(n) /*|| n->buildData.overlap || n->length <= 0*/) continue;
-
-            const coord_t dX2 = n->L_v2origin[VX] - n->L_v1origin[VX];
-            const coord_t dY2 = n->L_v2origin[VY] - n->L_v1origin[VY];
-
-            double dist = 0;
-            Sector* hitSector = 0;
-            bool isFront = false;
-            if(castHoriz)
-            {
-                if(fabs(dY2) < DIST_EPSILON) continue;
-
-                if((MAX_OF(n->L_v1origin[VY], n->L_v2origin[VY]) < mY - DIST_EPSILON) ||
-                   (MIN_OF(n->L_v1origin[VY], n->L_v2origin[VY]) > mY + DIST_EPSILON)) continue;
-
-                dist = (n->L_v1origin[VX] + (mY - n->L_v1origin[VY]) * dX2 / dY2) - mX;
-
-                isFront = ((dY > 0) != (dist > 0));
-
-                dist = fabs(dist);
-                if(dist < DIST_EPSILON) continue; // Too close (overlapping lines ?)
-
-                hitSector = n->L_sector((dY > 0) ^ (dY2 > 0) ^ !isFront);
-            }
-            else // Cast vertically.
-            {
-                if(fabs(dX2) < DIST_EPSILON) continue;
-
-                if((MAX_OF(n->L_v1origin[VX], n->L_v2origin[VX]) < mX - DIST_EPSILON) ||
-                   (MIN_OF(n->L_v1origin[VX], n->L_v2origin[VX]) > mX + DIST_EPSILON)) continue;
-
-                dist = (n->L_v1origin[VY] + (mX - n->L_v1origin[VX]) * dY2 / dX2) - mY;
-
-                isFront = ((dX > 0) == (dist > 0));
-
-                dist = fabs(dist);
-
-                hitSector = n->L_sector((dX > 0) ^ (dX2 > 0) ^ !isFront);
-            }
-
-            if(dist < DIST_EPSILON) continue; // Too close (overlapping lines ?)
-
-            if(isFront)
-            {
-                if(dist < frontDist)
-                {
-                    frontDist = dist;
-                    frontOpen = hitSector;
-                    frontLine = n;
-                }
-            }
-            else
-            {
-                if(dist < backDist)
-                {
-                    backDist = dist;
-                    backOpen = hitSector;
-                    backLine = n;
-                }
-            }
+            scanRegion.minY = MIN_OF(line->L_v1origin[VY], line->L_v2origin[VY]) - DIST_EPSILON;
+            scanRegion.maxY = MAX_OF(line->L_v1origin[VY], line->L_v2origin[VY]) + DIST_EPSILON;
         }
+        else
+        {
+            scanRegion.minX = MIN_OF(line->L_v1origin[VX], line->L_v2origin[VX]) - DIST_EPSILON;
+            scanRegion.maxX = MAX_OF(line->L_v1origin[VX], line->L_v2origin[VX]) + DIST_EPSILON;
+        }
+        validCount++;
+        GameMap_LineDefsBoxIterator(map, &scanRegion, testForWindowEffectWorker, (void*)&p);
 
-        if(backOpen && frontOpen && line->L_frontsector == backOpen)
+        if(p.backOpen && p.frontOpen && line->L_frontsector == p.backOpen)
         {
             LOG_VERBOSE("LineDef #%d seems to be a One-Sided Window (back faces sector #%d).")
-                << line->origIndex - 1 << backOpen->buildData.index - 1;
+                << line->origIndex - 1 << p.backOpen->buildData.index - 1;
 
-            lineDefInfo(*line).windowEffect = frontOpen;
+            lineDefInfo(*line).windowEffect = p.frontOpen;
             line->inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
         }
     }
 
     void initForMap()
     {
+        mapBounds = findMapBounds(map);
+
         // Initialize vertex info for the initial set of vertexes.
         vertexInfos.resize(*numEditableVertexes);
 
@@ -2393,7 +2412,7 @@ Partitioner& Partitioner::setSplitCostFactor(int factor)
 
 bool Partitioner::build()
 {
-    return d->buildBsp(SuperBlockmap(blockmapBounds(findMapBounds(d->map))));
+    return d->buildBsp(SuperBlockmap(blockmapBounds(d->mapBounds)));
 }
 
 BspTreeNode* Partitioner::root() const
