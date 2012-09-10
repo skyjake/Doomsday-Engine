@@ -208,6 +208,8 @@ const char* P_GenerateUniqueMapId(const char* mapId);
  */
 boolean P_MapExists(const char* uri);
 
+boolean P_MapIsCustom(const char* uri);
+
 /**
  * Retrieve the name of the source file containing the map referenced by @a uri
  * if known and available for loading.

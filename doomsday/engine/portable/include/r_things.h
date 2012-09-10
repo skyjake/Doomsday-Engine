@@ -34,6 +34,10 @@
 #include "materials.h"
 #include "rend_model.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct materialvariant_s;
 
 // Sprites are patches with a special naming convention so they can be
@@ -274,5 +278,9 @@ void VL_InitForNewFrame(void);
  * @return  @c true, iff every callback returns @c true.
  */
 boolean VL_ListIterator(uint listIdx, void* data, boolean (*func) (const vlight_t*, void*));
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_THINGS_H */

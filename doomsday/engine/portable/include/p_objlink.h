@@ -31,6 +31,10 @@
 #ifndef LIBDENG_OBJLINK_BLOCKMAP_H
 #define LIBDENG_OBJLINK_BLOCKMAP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     OT_MOBJ,
     OT_LUMOBJ,
@@ -106,5 +110,9 @@ int R_IterateBspLeafContacts2(BspLeaf* bspLeaf, objtype_t type,
     int (*func) (void* object, void* paramaters), void* paramaters);
 int R_IterateBspLeafContacts(BspLeaf* bspLeaf, objtype_t type,
     int (*func) (void* object, void* paramaters)); /*paramaters=NULL*/
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_OBJLINK_BLOCKMAP_H */

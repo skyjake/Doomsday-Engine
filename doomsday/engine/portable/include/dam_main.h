@@ -22,6 +22,10 @@
 #ifndef LIBDENG_ARCHIVED_MAP_MAIN_H
 #define LIBDENG_ARCHIVED_MAP_MAIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct archivedmap_s {
     Uri* uri;
     ddstring_t cachedMapPath;
@@ -50,5 +54,9 @@ void DAM_Shutdown(void);
 AutoStr* DAM_ComposeCacheDir(const char* sourcePath);
 
 boolean DAM_AttemptMapLoad(const Uri* uri);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_ARCHIVED_MAP_MAIN_H */

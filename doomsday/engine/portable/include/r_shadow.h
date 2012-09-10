@@ -31,6 +31,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mobj_s;
 
 /**
@@ -96,5 +100,9 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojec
  * @return  Found plane else @c NULL if @a mobj is not presently sector-linked.
  */
 Plane* R_FindShadowPlane(struct mobj_s* mobj);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_SHADOW_H */

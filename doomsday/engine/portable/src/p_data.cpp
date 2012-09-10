@@ -1,5 +1,5 @@
 /**
- * @file p_data.c
+ * @file p_data.cpp
  * Playsim Data Structures. @ingroup play
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -8,7 +8,7 @@
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * <small>This program is free software; you can redistribute it and/or modify
+ * <small>This program is M_Free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
@@ -20,21 +20,25 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
-#include <stddef.h>
+#include <cmath>
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_render.h"
 #include "de_refresh.h"
 #include "de_system.h"
 #include "de_filesys.h"
-#include "de_misc.h"
 
+#include "game.h"
 #include "rend_bias.h"
 #include "m_bams.h"
+
+#include <de/Error>
+#include <de/LegacyCore>
+#include <de/Log>
+#include <de/String>
+#include <de/memory.h>
 
 extern boolean mapSetup;
 
@@ -43,17 +47,17 @@ Uri* mapUri; // Name by which the game referred to the current map.
 /**
  * These map data arrays are internal to the engine.
  */
-Vertex* vertexes = NULL;
-SideDef* sideDefs = NULL;
-LineDef* lineDefs = NULL;
-Sector* sectors = NULL;
-Polyobj** polyObjs = NULL; // List of all poly-objects in the map.
+Vertex* vertexes;
+SideDef* sideDefs;
+LineDef* lineDefs;
+Sector* sectors;
+Polyobj** polyObjs;
 
-HEdge** hedges = NULL;
-BspLeaf** bspLeafs = NULL;
-BspNode** bspNodes = NULL;
+HEdge** hedges;
+BspLeaf** bspLeafs;
+BspNode** bspNodes;
 
-GameMap* theMap = NULL;
+GameMap* theMap;
 
 // Game-specific, map object type definitions.
 static uint numGameMapObjDefs;
@@ -67,8 +71,8 @@ const char* P_GenerateUniqueMapId(const char* mapID)
 
     Str_Init(&fileName);
     F_FileName(&fileName, F_LumpSourceFile(lumpNum));
-    dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(&fileName),
-        (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(Game_IdentityKey(theGame)));
+    qsnprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(&fileName),
+              (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(Game_IdentityKey(theGame)));
     strlwr(uid);
 
     Str_Free(&fileName);
@@ -108,10 +112,10 @@ void P_SetCurrentMap(GameMap* map)
     vertexes = map->vertexes;
     sideDefs = map->sideDefs;
     lineDefs = map->lineDefs;
-    sectors = map->sectors;
+    sectors  = map->sectors;
     polyObjs = map->polyObjs;
 
-    hedges = map->hedges;
+    hedges   = map->hedges;
     bspLeafs = map->bspLeafs;
     bspNodes = map->bspNodes;
 
@@ -149,20 +153,14 @@ const char* P_MapSourceFile(const char* uriCString)
 /// @note Part of the Doomsday public API.
 boolean P_LoadMap(const char* uriCString)
 {
-    AutoStr* path;
-    Uri* uri;
-    uint i;
-
     if(!uriCString || !uriCString[0])
     {
-        DEBUG_Message(("Warning: P_LoadMap: Passed invalid Uri reference, ignoring.\n"));
-        return false; // Yeah, ok... :P
+        LegacyCore_FatalError("P_LoadMap: Invalid Uri argument.");
     }
 
-    uri = Uri_NewWithPath2(uriCString, RC_NULL);
-
-    path = Uri_ToString(uri);
-    Con_Message("Loading Map \"%s\"...\n", Str_Text(path));
+    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+    AutoStr* path = Uri_ToString(uri);
+    LOG_MSG("Loading Map \"%s\"...") << Str_Text(path);
 
     // It would be very cool if map loading happened in another
     // thread. That way we could be keeping ourselves busy while
@@ -171,19 +169,19 @@ boolean P_LoadMap(const char* uriCString)
     // We could even try to divide a HUB up into zones, so that
     // when a player enters a zone we could begin loading the map(s)
     // reachable through exits in that zone (providing they have
-    // enough free memory of course) so that transitions are
+    // enough M_Free memory of course) so that transitions are
     // (potentially) seamless :-)
 
     if(isServer)
     {
         // Whenever the map changes, remote players must tell us when
         // they're ready to begin receiving frames.
-        for(i = 0; i < DDMAXPLAYERS; ++i)
+        for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
             //player_t *plr = &ddPlayers[i];
             if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
             {
-                DEBUG_Message(("Client %i marked as 'not ready' to receive frames.\n", i));
+                LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
                 clients[i].ready = false;
             }
         }
@@ -208,7 +206,7 @@ boolean P_LoadMap(const char* uriCString)
         Rend_CalcLightModRange();
 
         // Invalidate old cmds and init player values.
-        for(i = 0; i < DDMAXPLAYERS; ++i)
+        for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t* plr = &ddPlayers[i];
 
@@ -250,55 +248,41 @@ boolean P_LoadMap(const char* uriCString)
 
 gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char* objName, boolean canCreate)
 {
-    size_t len = (objName? strlen(objName) : 0);
+    const int len = (objName? strlen(objName) : 0);
     gamemapobjdef_t* def;
-    uint i;
 
     // Is this a known game object?
-    for(i = 0; i < numGameMapObjDefs; ++i)
+    for(uint i = 0; i < numGameMapObjDefs; ++i)
     {
         def = &gameMapObjDefs[i];
 
         if(objName && objName[0])
         {
-            if(!strnicmp(objName, def->name, len))
-            {   // Found it!
-                return def;
-            }
+            if(!strnicmp(objName, def->name, len)) return def; // Found it!
         }
         else
         {
-            if(identifier == def->identifier)
-            {   // Found it!
-                return def;
-            }
+            if(identifier == def->identifier) return def; // Found it!
         }
     }
 
-    if(!canCreate)
-        return NULL; // Not a known game map object.
+    if(!canCreate) return NULL; // Not a known game map object.
 
-    if(identifier == 0)
-        return NULL; // Not a valid indentifier.
-
-    if(!objName || !objName[0])
-        return NULL; // Must have a name.
+    if(identifier == 0) return NULL; // Not a valid indentifier.
+    if(!objName || !objName[0]) return NULL; // Must have a name.
 
     // Ensure the name is unique.
-    for(i = 0; i < numGameMapObjDefs; ++i)
+    for(uint i = 0; i < numGameMapObjDefs; ++i)
     {
         def = &gameMapObjDefs[i];
-        if(!strnicmp(objName, def->name, len))
-        {   // Oh dear, a duplicate.
-            return NULL;
-        }
+        if(!strnicmp(objName, def->name, len)) return NULL; // Oh dear, a duplicate.
     }
 
-    gameMapObjDefs = M_Realloc(gameMapObjDefs, ++numGameMapObjDefs * sizeof(*gameMapObjDefs));
+    gameMapObjDefs = (gamemapobjdef_t*)M_Realloc(gameMapObjDefs, ++numGameMapObjDefs * sizeof(*gameMapObjDefs));
 
     def = &gameMapObjDefs[numGameMapObjDefs - 1];
     def->identifier = identifier;
-    def->name = M_Malloc(len+1);
+    def->name = (char*) M_Malloc(len + 1);
     strncpy(def->name, objName, len);
     def->name[len] = '\0';
     def->numProps = 0;
@@ -309,27 +293,22 @@ gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char* objName, boolean
 
 boolean P_RegisterMapObj(int identifier, const char* name)
 {
-    return NULL != P_GetGameMapObjDef(identifier, name, true);
+    return !!P_GetGameMapObjDef(identifier, name, true);
 }
 
-boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
+static void registerMapObjProperty(int identifier, int propIdentifier,
     const char* propName, valuetype_t type)
 {
     gamemapobjdef_t* def = P_GetGameMapObjDef(identifier, NULL, false);
-    mapobjprop_t* prop;
-    size_t len;
-    uint i;
 
     if(!def) // Not a valid identifier.
-    {
-        Con_Error("P_RegisterMapObjProperty: Unknown mapobj identifier %i.", identifier);
-    }
+        throw de::Error("registerMapObjProperty", QString("Unknown map object identifier %1").arg(identifier));
 
     if(propIdentifier == 0) // Not a valid identifier.
-        Con_Error("P_RegisterMapObjProperty: 0 not valid for propIdentifier.");
+        throw de::Error("registerMapObjProperty", "0 is not valid argument for propIdentifier");
 
     if(!propName || !propName[0]) // Must have a name.
-        Con_Error("P_RegisterMapObjProperty: Cannot register without name.");
+        throw de::Error("registerMapObjProperty", "Cannot register a property with a zero-length name");
 
     // Screen out value types we don't currently support for gmos.
     switch(type)
@@ -343,62 +322,78 @@ boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
         break;
 
     default:
-        Con_Error("P_RegisterMapObjProperty: Unknown/not supported value type %i.", type);
+        throw de::Error("registerMapObjProperty", QString("Unknown/not supported value type %1").arg(type));
     }
 
     // Next, make sure propIdentifer and propName are unique.
-    len = strlen(propName);
-    for(i = 0; i < def->numProps; ++i)
+    int len = (int)strlen(propName);
+    for(uint i = 0; i < def->numProps; ++i)
     {
-        prop = &def->props[i];
+        mapobjprop_t* prop = &def->props[i];
 
         if(prop->identifier == propIdentifier)
-            Con_Error("P_RegisterMapObjProperty: propIdentifier %i not unique for %s.",
-                      propIdentifier, def->name);
+            throw de::Error("registerMapObjProperty",
+                            QString("propIdentifier %1 not unique for %2")
+                                .arg(propIdentifier).arg(def->name));
 
         if(!strnicmp(propName, prop->name, len))
-            Con_Error("P_RegisterMapObjProperty: propName \"%s\" not unique for %s.",
-                      propName, def->name);
+            throw de::Error("registerMapObjProperty",
+                            QString("propName \"1\" not unique for %2")
+                                .arg(propName).arg(def->name));
     }
 
     // Looks good! Add it to the list of properties.
-    def->props = (mapobjprop_t*) realloc(def->props, ++def->numProps * sizeof(*def->props));
+    def->props = (mapobjprop_t*) M_Realloc(def->props, ++def->numProps * sizeof(*def->props));
     if(!def->props)
-        Con_Error("P_RegisterMapObjProperty: Failed on (re)allocation of %lu bytes for "
-                  "new MapObjProperty.", (unsigned long) sizeof(*def->props));
+        throw de::Error("registerMapObjProperty",
+                        QString("Failed on (re)allocation of %1 bytes for new MapObjProperty")
+                            .arg((unsigned long) sizeof(*def->props)));
 
-    prop = &def->props[def->numProps - 1];
+    mapobjprop_t* prop = &def->props[def->numProps - 1];
     prop->identifier = propIdentifier;
 
-    prop->name = (char*) malloc(sizeof(*prop->name) * (len + 1));
+    prop->name = (char*) M_Malloc(sizeof(*prop->name) * (len + 1));
     if(!prop->name)
-        Con_Error("P_RegisterMapObjProperty: Failed on allocation of %lu bytes for "
-                  "MapObjProperty::name.", (unsigned long) (sizeof(*prop->name) * (len + 1)));
+        throw de::Error("registerMapObjProperty",
+                        QString("Failed on allocation of %1 bytes for MapObjProperty::name")
+                            .arg((unsigned long) (sizeof(*prop->name) * (len + 1))));
 
     strncpy(prop->name, propName, len);
     prop->name[len] = '\0';
     prop->type = type;
+}
 
-    return true; // Success!
+boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
+    const char* propName, valuetype_t type)
+{
+    try
+    {
+        registerMapObjProperty(identifier, propIdentifier, propName, type);
+        return true; // Success!
+    }
+    catch(de::Error& er)
+    {
+        LOG_WARNING("%s. Ignoring.") << er.asText();
+    }
+    return false;
 }
 
 static void clearGameMapObjDefs(void)
 {
     if(gameMapObjDefs)
     {
-        uint i, j;
-        for(i = 0; i < numGameMapObjDefs; ++i)
+        for(uint i = 0; i < numGameMapObjDefs; ++i)
         {
             gamemapobjdef_t* def = &gameMapObjDefs[i];
-            for(j = 0; j < def->numProps; ++j)
+            for(uint k = 0; k < def->numProps; ++k)
             {
-                mapobjprop_t* prop = &def->props[j];
-                free(prop->name);
+                mapobjprop_t* prop = &def->props[k];
+                M_Free(prop->name);
             }
-            free(def->props);
-            free(def->name);
+            M_Free(def->props);
+            M_Free(def->name);
         }
-        free(gameMapObjDefs);
+        M_Free(gameMapObjDefs);
         gameMapObjDefs = NULL;
     }
     numGameMapObjDefs = 0;
@@ -434,8 +429,8 @@ static valuetable_t* getDBTable(valuedb_t* db, valuetype_t type, boolean canCrea
     if(!canCreate) return NULL;
 
     // We need to add a new value table to the db.
-    db->tables = M_Realloc(db->tables, ++db->numTables * sizeof(*db->tables));
-    tbl = db->tables[db->numTables - 1] = M_Malloc(sizeof(valuetable_t));
+    db->tables = (valuetable_t**) M_Realloc(db->tables, ++db->numTables * sizeof(*db->tables));
+    tbl = db->tables[db->numTables - 1] = (valuetable_t*) M_Malloc(sizeof(valuetable_t));
 
     tbl->data = NULL;
     tbl->type = type;
@@ -482,7 +477,7 @@ static uint insertIntoDB(valuedb_t* db, valuetype_t type, void *data)
         break;
 
     default:
-        Con_Error("insetIntoDB: Unknown value type %d.", type);
+        throw de::Error("insetIntoDB", QString("Unknown value type %1").arg(type));
     }
 
     return tbl->numElms - 1;
@@ -493,11 +488,11 @@ static void* getPtrToDBElm(valuedb_t* db, valuetype_t type, uint elmIdx)
     valuetable_t* tbl = getDBTable(db, type, false);
 
     if(!tbl)
-        Con_Error("getPtrToDBElm: Table for type %i not found.", (int) type);
+        throw de::Error("getPtrToDBElm", QString("Table for type %1 not found").arg(int(type)));
 
     // Sanity check: ensure the elmIdx is in bounds.
     if(elmIdx >= tbl->numElms)
-        Con_Error("P_GetGMOByte: valueIdx out of bounds.");
+        throw de::Error("getPtrToDBElm", "valueIdx out of range");
 
     switch(tbl->type)
     {
@@ -520,53 +515,44 @@ static void* getPtrToDBElm(valuedb_t* db, valuetype_t type, uint elmIdx)
         return &(((float*) tbl->data)[elmIdx]);
 
     default:
-        Con_Error("P_GetGMOByte: Invalid table type %i.", tbl->type);
+        throw de::Error("P_GetGMOByte", QString("Invalid table type %1").arg(tbl->type));
     }
 
     // Should never reach here.
     return NULL;
 }
 
-void P_DestroyGameMapObjDB(gameobjdata_t *moData)
+void P_DestroyGameMapObjDB(gameobjdata_t* moData)
 {
-    uint i, j;
+    if(!moData) return;
 
     if(moData->objLists)
     {
-        for(i = 0; i < numGameMapObjDefs; ++i)
+        for(uint i = 0; i < numGameMapObjDefs; ++i)
         {
             gamemapobjlist_t* objList = &moData->objLists[i];
-
-            for(j = 0; j < objList->num; ++j)
+            for(uint k = 0; k < objList->num; ++k)
             {
-                gamemapobj_t* gmo = objList->objs[j];
-
-                if(gmo->props)
-                    M_Free(gmo->props);
-
+                gamemapobj_t* gmo = objList->objs[k];
+                if(gmo->props) M_Free(gmo->props);
                 M_Free(gmo);
             }
         }
-
         M_Free(moData->objLists);
     }
-    moData->objLists = NULL;
+    moData->objLists = 0;
 
     if(moData->db.tables)
     {
-        for(i = 0; i < moData->db.numTables; ++i)
+        for(uint i = 0; i < moData->db.numTables; ++i)
         {
             valuetable_t* tbl = moData->db.tables[i];
-
-            if(tbl->data)
-                M_Free(tbl->data);
-
+            if(tbl->data) M_Free(tbl->data);
             M_Free(tbl);
         }
-
         M_Free(moData->db.tables);
     }
-    moData->db.tables = NULL;
+    moData->db.tables = 0;
     moData->db.numTables = 0;
 }
 
@@ -574,11 +560,9 @@ static uint countGameMapObjs(gameobjdata_t* moData, int identifier)
 {
     if(moData)
     {
-        uint i;
-        for(i = 0; i < numGameMapObjDefs; ++i)
+        for(uint i = 0; i < numGameMapObjDefs; ++i)
         {
             gamemapobjlist_t* objList = &moData->objLists[i];
-
             if(objList->def->identifier == identifier)
                 return objList->num;
         }
@@ -594,11 +578,13 @@ uint P_CountGameMapObjs(int identifier)
 
 static gamemapobjlist_t* getMapObjList(gameobjdata_t* moData, gamemapobjdef_t* def)
 {
-    uint i;
-    for(i = 0; i < numGameMapObjDefs; ++i)
+    if(moData && def)
     {
-        if(moData->objLists[i].def == def)
-            return &moData->objLists[i];
+        for(uint i = 0; i < numGameMapObjDefs; ++i)
+        {
+            if(moData->objLists[i].def == def)
+                return &moData->objLists[i];
+        }
     }
     return NULL;
 }
@@ -606,17 +592,13 @@ static gamemapobjlist_t* getMapObjList(gameobjdata_t* moData, gamemapobjdef_t* d
 gamemapobj_t* P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def, uint elmIdx,
     boolean canCreate)
 {
-    gamemapobjlist_t* objList;
-    gamemapobj_t* gmo;
-    uint i;
-
     if(!moData->objLists)
     {
         // We haven't yet created the lists.
-        moData->objLists = M_Malloc(sizeof(*objList) * numGameMapObjDefs);
-        for(i = 0; i < numGameMapObjDefs; ++i)
+        moData->objLists = (gamemapobjlist_t*) M_Malloc(sizeof(*moData->objLists) * numGameMapObjDefs);
+        for(uint i = 0; i < numGameMapObjDefs; ++i)
         {
-            objList = &moData->objLists[i];
+            gamemapobjlist_t* objList = &moData->objLists[i];
 
             objList->def = &gameMapObjDefs[i];
             objList->objs = NULL;
@@ -624,13 +606,13 @@ gamemapobj_t* P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def, uint 
         }
     }
 
-    objList = getMapObjList(moData, def);
-    assert(objList);
+    gamemapobjlist_t* objList = getMapObjList(moData, def);
+    DENG2_ASSERT(objList);
 
     // Have we already created this gmo?
-    for(i = 0; i < objList->num; ++i)
+    for(uint i = 0; i < objList->num; ++i)
     {
-        gmo = objList->objs[i];
+        gamemapobj_t* gmo = objList->objs[i];
         if(gmo->elmIdx == elmIdx)
             return gmo; // Yep, return it.
     }
@@ -639,9 +621,9 @@ gamemapobj_t* P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def, uint 
         return NULL;
 
     // It is a new gamemapobj.
-    objList->objs = M_Realloc(objList->objs, ++objList->num * sizeof(gamemapobj_t*));
+    objList->objs = (gamemapobj_t**) M_Realloc(objList->objs, ++objList->num * sizeof(*objList->objs));
 
-    gmo = objList->objs[objList->num - 1] = M_Malloc(sizeof(*gmo));
+    gamemapobj_t* gmo = objList->objs[objList->num - 1] = (gamemapobj_t*) M_Malloc(sizeof(*gmo));
     gmo->elmIdx = elmIdx;
     gmo->numProps = 0;
     gmo->props = NULL;
@@ -649,18 +631,17 @@ gamemapobj_t* P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def, uint 
     return gmo;
 }
 
-void P_AddGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef, uint propIdx,
-    uint elmIdx, valuetype_t type, void *data)
+static void addGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef,
+    uint propIdx, uint elmIdx, valuetype_t type, void* data)
 {
     gamemapobj_t* gmo = P_GetGameMapObj(moData, gmoDef, elmIdx, true);
-    customproperty_t* prop;
-    uint i;
 
-    if(!gmo) Con_Error("addGameMapObj: Failed creation.");
+    if(!gmo)
+        throw de::Error("addGameMapObj", "Failed creating new game object def");
 
     // Check whether this is a new value or whether we are updating an
     // existing one.
-    for(i = 0; i < gmo->numProps; ++i)
+    for(uint i = 0; i < gmo->numProps; ++i)
     {
         if(gmo->props[i].idx == propIdx)
         {
@@ -668,42 +649,54 @@ void P_AddGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef, uint p
             //if(gmo->props[i].type == type)
             //    updateInDB(map->values, type, gmo->props[i].valueIdx, data);
             //else
-                Con_Error("addGameMapObj: Value type change not currently supported.");
+                throw de::Error("addGameMapObj", "Value type changes not currently supported");
             return;
         }
     }
 
     // Its a new value.
-    gmo->props = M_Realloc(gmo->props, ++gmo->numProps * sizeof(*gmo->props));
+    gmo->props = (customproperty_t*) M_Realloc(gmo->props, ++gmo->numProps * sizeof(*gmo->props));
 
-    prop = &gmo->props[gmo->numProps - 1];
+    customproperty_t* prop = &gmo->props[gmo->numProps - 1];
     prop->idx = propIdx;
     prop->type = type;
     prop->valueIdx = insertIntoDB(&moData->db, type, data);
 }
 
+void P_AddGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef, uint propIdx,
+    uint elmIdx, valuetype_t type, void* data)
+{
+    try
+    {
+        addGameMapObjValue(moData, gmoDef, propIdx, elmIdx, type, data);
+    }
+    catch(de::Error& er)
+    {
+        LOG_WARNING("%s. Ignoring.") << er.asText();
+    }
+}
+
 static void* getGMOPropValue(gameobjdata_t* data, int identifier, uint elmIdx,
     int propIdentifier, valuetype_t *type)
 {
-    gamemapobjdef_t* def;
-    gamemapobj_t* gmo;
-    uint i;
+    gamemapobjdef_t* def = P_GetGameMapObjDef(identifier, NULL, false);
+    if(!def)
+        throw de::Error("getGMOPropValue", QString("Invalid identifier %1").arg(identifier));
 
-    def = P_GetGameMapObjDef(identifier, NULL, false);
-    if(!def) Con_Error("P_GetGMOByte: Invalid identifier %i.", identifier);
-
-    gmo = P_GetGameMapObj(data, def, elmIdx, false);
-    if(!gmo) Con_Error("P_GetGMOByte: There is no element %i of type %s.", elmIdx, def->name);
+    gamemapobj_t* gmo = P_GetGameMapObj(data, def, elmIdx, false);
+    if(!gmo)
+        throw de::Error("getGMOPropValue", QString("There is no element %1 of type %2").arg(elmIdx).arg(def->name));
 
     // Find the requested property.
-    for(i = 0; i < gmo->numProps; ++i)
+    for(uint i = 0; i < gmo->numProps; ++i)
     {
         customproperty_t* prop = &gmo->props[i];
 
         if(def->props[prop->idx].identifier == propIdentifier)
         {
             void* ptr = getPtrToDBElm(&data->db, prop->type, prop->valueIdx);
-            if(!ptr) Con_Error("P_GetGMOByte: Failed db look up.");
+            if(!ptr)
+                throw de::Error("getGMOPropValue", "Failed value look up");
 
             if(type) *type = prop->type;
 
@@ -721,7 +714,7 @@ static void setValue(void* dst, valuetype_t dstType, void* src, valuetype_t srcT
 {
     if(dstType == DDVT_FIXED)
     {
-        fixed_t* d = dst;
+        fixed_t* d = reinterpret_cast<fixed_t*>(dst);
 
         switch(srcType)
         {
@@ -738,12 +731,12 @@ static void setValue(void* dst, valuetype_t dstType, void* src, valuetype_t srcT
             *d = FLT2FIX(*((float*) src));
             break;
         default:
-            Con_Error("SetValue: DDVT_FIXED incompatible with value type %s.\n", value_Str(srcType));
+            throw de::Error("setValue", QString("DDVT_FIXED incompatible with value type %1").arg(value_Str(srcType)));
         }
     }
     else if(dstType == DDVT_FLOAT)
     {
-        float* d = dst;
+        float* d = reinterpret_cast<float*>(dst);
 
         switch(srcType)
         {
@@ -763,12 +756,12 @@ static void setValue(void* dst, valuetype_t dstType, void* src, valuetype_t srcT
             *d = *((float*) src);
             break;
         default:
-            Con_Error("SetValue: DDVT_FLOAT incompatible with value type %s.\n", value_Str(srcType));
+            throw de::Error("setValue", QString("DDVT_FLOAT incompatible with value type %1").arg(value_Str(srcType)));
         }
     }
     else if(dstType == DDVT_BYTE)
     {
-        byte* d = dst;
+        byte* d = reinterpret_cast<byte*>(dst);
 
         switch(srcType)
         {
@@ -782,12 +775,12 @@ static void setValue(void* dst, valuetype_t dstType, void* src, valuetype_t srcT
             *d = (byte) *((float*) src);
             break;
         default:
-            Con_Error("SetValue: DDVT_BYTE incompatible with value type %s.\n", value_Str(srcType));
+            throw de::Error("setValue", QString("DDVT_BYTE incompatible with value type %1").arg(value_Str(srcType)));
         }
     }
     else if(dstType == DDVT_INT)
     {
-        int* d = dst;
+        int* d = reinterpret_cast<int*>(dst);
 
         switch(srcType)
         {
@@ -807,12 +800,12 @@ static void setValue(void* dst, valuetype_t dstType, void* src, valuetype_t srcT
             *d = (*((fixed_t*) src) >> FRACBITS);
             break;
         default:
-            Con_Error("SetValue: DDVT_INT incompatible with value type %s.\n", value_Str(srcType));
+            throw de::Error("setValue", QString("DDVT_INT incompatible with value type %1.").arg(value_Str(srcType)));
         }
     }
     else if(dstType == DDVT_SHORT)
     {
-        short* d = dst;
+        short* d = reinterpret_cast<short*>(dst);
 
         switch(srcType)
         {
@@ -832,12 +825,12 @@ static void setValue(void* dst, valuetype_t dstType, void* src, valuetype_t srcT
             *d = (*((fixed_t*) src) >> FRACBITS);
             break;
         default:
-            Con_Error("SetValue: DDVT_SHORT incompatible with value type %s.\n", value_Str(srcType));
+            throw de::Error("setValue", QString("DDVT_SHORT incompatible with value type %1").arg(value_Str(srcType)));
         }
     }
     else if(dstType == DDVT_ANGLE)
     {
-        angle_t* d = dst;
+        angle_t* d = reinterpret_cast<angle_t*>(dst);
 
         switch(srcType)
         {
@@ -845,12 +838,12 @@ static void setValue(void* dst, valuetype_t dstType, void* src, valuetype_t srcT
             *d = *((angle_t*) src);
             break;
         default:
-            Con_Error("SetValue: DDVT_ANGLE incompatible with value type %s.\n", value_Str(srcType));
+            throw de::Error("setValue", QString("DDVT_ANGLE incompatible with value type %1").arg(value_Str(srcType)));
         }
     }
     else
     {
-        Con_Error("SetValue: unknown value type %d.\n", dstType);
+        throw de::Error("setValue", QString("Unknown value type %d").arg(dstType));
     }
 }
 
@@ -874,11 +867,15 @@ short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier)
     short returnVal = 0;
     if(theMap)
     {
-        valuetype_t type;
-        void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-        if(ptr)
+        try
         {
-            setValue(&returnVal, DDVT_SHORT, ptr, type);
+            valuetype_t type;
+            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
+            if(ptr) setValue(&returnVal, DDVT_SHORT, ptr, type);
+        }
+        catch(de::Error& er)
+        {
+            LOG_WARNING("%s. Returning 0.") << er.asText();
         }
     }
     return returnVal;
@@ -889,11 +886,15 @@ int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier)
     int returnVal = 0;
     if(theMap)
     {
-        valuetype_t type;
-        void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-        if(ptr)
+        try
         {
-            setValue(&returnVal, DDVT_INT, ptr, type);
+            valuetype_t type;
+            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
+            if(ptr) setValue(&returnVal, DDVT_INT, ptr, type);
+        }
+        catch(de::Error& er)
+        {
+            LOG_WARNING("%s. Returning 0.") << er.asText();
         }
     }
     return returnVal;
@@ -904,11 +905,15 @@ fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier)
     fixed_t returnVal = 0;
     if(theMap)
     {
-        valuetype_t type;
-        void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-        if(ptr)
+        try
         {
-            setValue(&returnVal, DDVT_FIXED, ptr, type);
+            valuetype_t type;
+            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
+            if(ptr) setValue(&returnVal, DDVT_FIXED, ptr, type);
+        }
+        catch(de::Error& er)
+        {
+            LOG_WARNING("%s. Returning 0.") << er.asText();
         }
     }
     return returnVal;
@@ -919,11 +924,15 @@ angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier)
     angle_t returnVal = 0;
     if(theMap)
     {
-        valuetype_t type;
-        void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-        if(ptr)
+        try
         {
-            setValue(&returnVal, DDVT_ANGLE, ptr, type);
+            valuetype_t type;
+            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
+            if(ptr) setValue(&returnVal, DDVT_ANGLE, ptr, type);
+        }
+        catch(de::Error& er)
+        {
+            LOG_WARNING("%s. Returning 0.") << er.asText();
         }
     }
     return returnVal;
@@ -934,11 +943,15 @@ float P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier)
     float returnVal = 0;
     if(theMap)
     {
-        valuetype_t type;
-        void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-        if(ptr)
+        try
         {
-            setValue(&returnVal, DDVT_FLOAT, ptr, type);
+            valuetype_t type;
+            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
+            if(ptr) setValue(&returnVal, DDVT_FLOAT, ptr, type);
+        }
+        catch(de::Error& er)
+        {
+            LOG_WARNING("%s. Returning 0.") << er.asText();
         }
     }
     return returnVal;
