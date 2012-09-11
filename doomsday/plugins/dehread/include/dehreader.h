@@ -37,9 +37,11 @@
 enum DehReaderFlag
 {
     NoInclude   = 0x1, ///< Including of other patch files is disabled.
-    NoText      = 0x2  ///< Ignore Text patches.
+    NoText      = 0x2, ///< Ignore Text patches.
+    IgnoreEOF   = 0x4  ///< Ignore unexpected EOF characters in patches.
 };
 Q_DECLARE_FLAGS(DehReaderFlags, DehReaderFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(DehReaderFlags)
 
 /**
  * Parses a text stream as a DeHackEd patch and updates the engine's definition

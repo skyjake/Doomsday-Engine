@@ -67,6 +67,10 @@ using namespace de;
 static int stackDepth;
 static const int maxIncludeDepth = MAX_OF(0, DEHREADER_INCLUDE_DEPTH_MAX);
 
+/// Mask containing only those reader flags which should be passed from the current
+/// parser to any child parsers for file include statements.
+static const DehReaderFlag DehReaderFlagsIncludeMask = IgnoreEOF;
+
 /**
  * Not exposed outside this source file; use readDehPatch() instead.
  */
@@ -128,15 +132,38 @@ public:
         }
     }
 
+    bool atRealEnd()
+    {
+        return size_t(pos) >= patch.size();
+    }
+
     bool atEnd()
     {
-        return (size_t(pos) >= patch.size() || patch.at(pos) == '\0');
+        if(atRealEnd()) return true;
+        if(!(flags & IgnoreEOF) && patch.at(pos) == '\0') return true;
+        return false;
     }
 
     void advance()
     {
         if(atEnd()) return;
-        if(currentChar() == '\n') currentLineNumber++;
+
+        // Handle special characters in the input.
+        char ch = currentChar().toAscii();
+        switch(ch)
+        {
+        case '\0':
+            if(size_t(pos) != patch.size() - 1)
+            {
+                LOG_WARNING("Unexpected EOF encountered on line #%i, ignoring.") << currentLineNumber;
+            }
+            break;
+        case '\n':
+            currentLineNumber++;
+            break;
+        default: break;
+        }
+
         pos++;
     }
 
@@ -159,10 +186,19 @@ public:
         {
             int endOfLine = pos - start;
             // Ignore any trailing carriage return.
-            if(endOfLine > 0 && patch.at(endOfLine - 1) == '\r') endOfLine -= 1;
+            if(endOfLine > 0 && patch.at(start + endOfLine - 1) == '\r') endOfLine -= 1;
 
-            // Extract a copy of this line and move on.
-            line = String::fromAscii(patch.mid(start, endOfLine));
+            QByteArray rawLine = patch.mid(start, endOfLine);
+
+            // When tolerating mid stream EOF characters, we must first
+            // strip them before doing attempting encoding conversion.
+            if(flags & IgnoreEOF)
+            {
+                rawLine.replace('\0', "");
+            }
+
+            // Perform encoding conversion for this line and move on.
+            line = String::fromAscii(rawLine);
             if(currentChar() == '\n') advance();
             return;
         }
@@ -601,7 +637,7 @@ public:
         }
         else
         {
-            DehReaderFlags includeFlags = 0;
+            DehReaderFlags includeFlags = flags & DehReaderFlagsIncludeMask;
 
             if(arg.startsWith("notext ", Qt::CaseInsensitive))
             {

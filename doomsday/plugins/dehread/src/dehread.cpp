@@ -84,7 +84,7 @@ static void readLump(lumpnum_t lumpNum)
     Con_Message("Applying DeHackEd patch lump #%i \"%s:%s\"...\n", lumpNum,
                 F_PrettyPath(W_LumpSourceFile(lumpNum)), W_LumpName(lumpNum));
 
-    readDehPatch(deh, NoInclude);
+    readDehPatch(deh, NoInclude | IgnoreEOF);
 }
 
 static void readFile(const String& filePath)
@@ -103,7 +103,7 @@ static void readFile(const String& filePath)
 
     Con_Message("Applying DeHackEd patch file \"%s\"...\n", F_PrettyPath(filePath.toUtf8().constData()));
 
-    readDehPatch(deh);
+    readDehPatch(deh, IgnoreEOF);
 }
 
 static void processPatchLumps()
