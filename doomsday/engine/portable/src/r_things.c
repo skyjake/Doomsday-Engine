@@ -1252,10 +1252,8 @@ void R_ProjectSprite(mobj_t* mo)
         mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
 
-#if _DEBUG
     if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
-        Con_Error("R_ProjectSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
-#endif
+        return; // An invalid sprite texture.
 
     pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);

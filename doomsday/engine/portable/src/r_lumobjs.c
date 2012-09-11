@@ -753,6 +753,7 @@ static void addLuminous(mobj_t* mo)
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
+    if(!MSU_texture(ms, MTU_PRIMARY)) return; // An invalid sprite texture.
 
     pl = (const pointlight_analysis_t*)
         Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
