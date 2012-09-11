@@ -191,7 +191,7 @@ public:
             QByteArray rawLine = patch.mid(start, endOfLine);
 
             // When tolerating mid stream EOF characters, we must first
-            // strip them before doing attempting encoding conversion.
+            // strip them before attempting any encoding conversion.
             if(flags & IgnoreEOF)
             {
                 rawLine.replace('\0', "");
