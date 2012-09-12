@@ -57,6 +57,7 @@ static binangle_t atantable[BAMS_TABLE_ACCURACY];
 
 // CODE --------------------------------------------------------------------
 
+#ifdef DENG_BAMS_TABLE_ATAN2
 /**
  * Fills the BAM LUTs.
  */
@@ -119,3 +120,17 @@ binangle_t bamsAtan2(int y, int x)
     // This is the final angle.
     return bang;
 }
+
+#else // using native floating point atan2
+
+void bamsInit(void)
+{
+    // nothing to do
+}
+
+binangle_t bamsAtan2(int y, int x)
+{
+    float rad = atan2f((float) y, (float) x);
+    return RAD2BANG(rad);
+}
+#endif
