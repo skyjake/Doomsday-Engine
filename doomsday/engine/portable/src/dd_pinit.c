@@ -135,6 +135,7 @@ void DD_ConsoleInit(void)
     const char* outFileName = "doomsday.out";
     ddstring_t nativePath;
     boolean outFileOk;
+    int p;
 
     DD_CheckArg("-out", &outFileName);
     Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
@@ -156,12 +157,10 @@ void DD_ConsoleInit(void)
     Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
 
     // Print the used command line.
-    if(verbose)
+    Con_Message("Command line (%i strings):\n", CommandLine_Count());
+    for(p = 0; p < CommandLine_Count(); ++p)
     {
-        int p;
-        Con_Message("Command line (%i strings):\n", CommandLine_Count());
-        for(p = 0; p < CommandLine_Count(); ++p)
-            Con_Message("  %i: %s\n", p, CommandLine_At(p));
+        Con_Message("  %i: %s\n", p, CommandLine_At(p));
     }
 }
 
