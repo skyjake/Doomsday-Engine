@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 858 <--
+; Highest ordinal is currently: --> 859 <--
 ; Other free ordinals: None
 
 NAME                            "DOOMSDAY"
@@ -480,6 +480,7 @@ EXPORTS
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
+    Game_Notify                 @859 NONAME
 
 ; Play: Controls.
     P_NewPlayerControl          @251 NONAME
