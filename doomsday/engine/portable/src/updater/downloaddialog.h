@@ -49,6 +49,8 @@ public:
      * successfully.
      */
     de::String downloadedFilePath() const;
+
+    bool isReadyToInstall() const;
     
 signals:
     void downloadFailed(QString uri);
@@ -71,6 +73,8 @@ extern "C" {
 #endif
 
 int Updater_IsDownloadInProgress(void);
+
+void Updater_RaiseCompletedDownloadDialog(void);
 
 #ifdef __cplusplus
 } // extern "C"

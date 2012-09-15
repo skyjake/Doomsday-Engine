@@ -46,7 +46,9 @@
 #include <stdlib.h>
 #include "sys_system.h"
 #include "dd_version.h"
+#include "dd_def.h"
 #include "dd_types.h"
+#include "dd_main.h"
 #include "con_main.h"
 #include "nativeui.h"
 #include "window.h"
@@ -130,13 +132,21 @@ struct Updater::Instance
     UpdateAvailableDialog* availableDlg;
     UpdaterSettingsDialog* settingsDlg;
     bool backToFullscreen;
+    bool savingSuggested;
 
     VersionInfo latestVersion;
     QString latestPackageUri;
     QString latestPackageUri2; // fallback location
     QString latestLogUri;
 
-    Instance(Updater* up) : self(up), network(0), download(0), availableDlg(0), settingsDlg(0), backToFullscreen(false)
+    Instance(Updater* up)
+        : self(up),
+          network(0),
+          download(0),
+          availableDlg(0),
+          settingsDlg(0),
+          backToFullscreen(false),
+          savingSuggested(false)
     {
         network = new QNetworkAccessManager(self);
 
@@ -468,6 +478,23 @@ void Updater::downloadCompleted(int result)
     if(result == DownloadDialog::Accepted)
     {
         // Autosave the game.
+        // Well, we can't do that yet so just remind the user about saving.
+        if(!d->savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
+        {
+            d->savingSuggested = true;
+
+            const char* buttons[] = { "I'll Save First", "Discard Progress && Install", NULL };
+            if(Sys_MessageBoxWithButtons(MBT_INFORMATION, DOOMSDAY_NICENAME,
+                                         "Installing the update will discard unsaved progress in the game.",
+                                         "Doomsday will be shut down before the installation can start. "
+                                         "The game is not saved automatically, so you will have to "
+                                         "save the game before installing the update.",
+                                         buttons) == 0)
+            {
+                Con_Execute(CMDS_DDAY, "savegame", false, false);
+                return;
+            }
+        }
 
         // Check the signature of the downloaded file.
 
@@ -478,6 +505,7 @@ void Updater::downloadCompleted(int result)
     // The download dialgo can be dismissed now.
     d->download->deleteLater();
     d->download = 0;
+    d->savingSuggested = false;
 }
 
 void Updater::settingsDialogClosed(int /*result*/)

@@ -303,9 +303,11 @@ enum {
     DD_TORCH_GREEN,
     DD_TORCH_BLUE,
     DD_TORCH_ADDITIVE,
-    DD_TM_FLOOR_Z,      ///< output from P_CheckPosition
-    DD_TM_CEILING_Z,    ///< output from P_CheckPosition
-    DD_SHIFT_DOWN
+    DD_TM_FLOOR_Z,              ///< output from P_CheckPosition
+    DD_TM_CEILING_Z,            ///< output from P_CheckPosition
+    DD_SHIFT_DOWN,
+    DD_GAME_RECOMMENDS_SAVING,  ///< engine asks whether game should be saved (e.g., when upgrading) (game's GetInteger)
+    DD_NOTIFY_GAME_SAVED        ///< savegame was written
 };
 
 /// Bounding box coordinates.
@@ -367,6 +369,16 @@ typedef struct gameinfo_s {
     const char* author;
     const char* identityKey;
 } GameInfo;
+
+/**
+ * Provides a way for games (or other plugins) to notify the engine of game-related
+ * important events.
+ *
+ * @param notification  One of the DD_NOTIFY_* enums.
+ * @param param         Additional arguments about the notification, dependin
+ *                      on the notification type.
+ */
+void Game_Notify(int notification, void* param);
 
 /**
  * @defgroup resourceFlags Resource Flags
@@ -758,7 +770,7 @@ typedef struct ddmobj_base_s {
 enum {
     DDSMM_AFTER_LOADING,    ///< After loading a savegame...
     DDSMM_FINALIZE,         ///< After everything else is done.
-    DDSMM_INITIALIZE,       ///< Before anything else if done.
+    DDSMM_INITIALIZE        ///< Before anything else if done.
 };
 
 /// Sector reverb data indices. @ingroup map
