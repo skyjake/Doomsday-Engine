@@ -40,11 +40,17 @@ void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, c
 
 void Sys_MessageBox2(messageboxtype_t type, const char* title, const char* msg, const char* informativeMsg, const char* detailedMsg)
 {
+    Sys_MessageBox3(type, title, msg, informativeMsg, detailedMsg, 0);
+}
+
+int Sys_MessageBox3(messageboxtype_t type, const char* title, const char* msg, const char* informativeMsg, const char* detailedMsg,
+                    const char** buttons)
+{
     if(novideo)
     {
         // There's no GUI...
         qWarning("%s", msg);
-        return;
+        return 0;
     }
 
     QMessageBox box;
@@ -53,8 +59,9 @@ void Sys_MessageBox2(messageboxtype_t type, const char* title, const char* msg, 
     switch(type)
     {
     case MBT_INFORMATION: box.setIcon(QMessageBox::Information); break;
-    case MBT_WARNING:     box.setIcon(QMessageBox::Warning); break;
-    case MBT_ERROR:       box.setIcon(QMessageBox::Critical); break;
+    case MBT_QUESTION:    box.setIcon(QMessageBox::Question);    break;
+    case MBT_WARNING:     box.setIcon(QMessageBox::Warning);     break;
+    case MBT_ERROR:       box.setIcon(QMessageBox::Critical);    break;
     default:
         break;
     }
@@ -69,7 +76,17 @@ void Sys_MessageBox2(messageboxtype_t type, const char* title, const char* msg, 
     {
         box.setInformativeText(informativeMsg);
     }
-    box.exec();
+    if(buttons)
+    {
+        for(int i = 0; buttons[i]; ++i)
+        {
+            box.addButton(buttons[i],
+                          i == 0? QMessageBox::AcceptRole :
+                          i == 1? QMessageBox::RejectRole :
+                                  QMessageBox::ActionRole);
+        }
+    }
+    return box.exec();
 }
 
 void Sys_MessageBoxf(messageboxtype_t type, const char* title, const char* format, ...)
@@ -82,6 +99,12 @@ void Sys_MessageBoxf(messageboxtype_t type, const char* title, const char* forma
     va_end(args);
 
     Sys_MessageBox(type, title, buffer, 0);
+}
+
+int Sys_MessageBoxWithButtons(messageboxtype_t type, const char* title, const char* msg,
+                              const char* informativeMsg, const char** buttons)
+{
+    return Sys_MessageBox3(type, title, msg, informativeMsg, 0, buttons);
 }
 
 void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type, const char* title, const char* msg,
