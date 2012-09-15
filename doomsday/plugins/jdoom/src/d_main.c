@@ -102,15 +102,7 @@ static boolean autoStart;
  */
 int D_GetInteger(int id)
 {
-    switch(id)
-    {
-    case DD_DMU_VERSION:
-        return DMUAPI_VER;
-
-    default:
-        break;
-    }
-    return 0;
+    return Common_GetInteger(id);
 }
 
 /**

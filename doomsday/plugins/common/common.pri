@@ -65,6 +65,7 @@ HEADERS += \
 
 SOURCES += \
     $$common_src/am_map.c \
+    $$common_src/common.c \
     $$common_src/d_net.c \
     $$common_src/d_netcl.c \
     $$common_src/d_netsv.c \

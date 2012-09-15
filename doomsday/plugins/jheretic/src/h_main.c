@@ -104,16 +104,7 @@ static boolean autoStart;
  */
 int H_GetInteger(int id)
 {
-    switch(id)
-    {
-    case DD_DMU_VERSION:
-        return DMUAPI_VER;
-
-    default:
-        break;
-    }
-    // ID not recognized, return NULL.
-    return 0;
+    return Common_GetInteger(id);
 }
 
 /**

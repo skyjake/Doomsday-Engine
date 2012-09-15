@@ -1,7 +1,8 @@
 /**
- * @file common.h
+ * @file common.c
+ * Top-level libcommon routines.
  *
- * @authors Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -19,24 +20,24 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GAME_INCLUDES
-#define LIBCOMMON_GAME_INCLUDES
+#include "common.h"
+#include "g_common.h"
 
-#define WEAPONBOTTOM            (128)   // from p_pspr.c
+int Common_GetInteger(int id)
+{
+    switch(id)
+    {
+    case DD_DMU_VERSION:
+        return DMUAPI_VER;
 
-#define IS_NETWORK_SERVER       (DD_GetInteger(DD_SERVER) && DD_GetInteger(DD_NETGAME))
-#define IS_NETWORK_CLIENT       (DD_GetInteger(DD_CLIENT) && DD_GetInteger(DD_NETGAME))
+    case DD_GAME_RECOMMENDS_SAVING:
+        // The engine will use this as a hint whether to remind the user to
+        // manually save the game before, e.g., upgrading to a new version.
+        return G_GameState() == GS_MAP;
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+    default:
+        break;
+    }
+    return 0;
+}
 
-int Common_GetInteger(int id);
-
-#endif /// LIBCOMMON_GAME_INCLUDES
