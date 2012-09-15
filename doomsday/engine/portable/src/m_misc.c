@@ -786,6 +786,12 @@ static size_t FileReader(const char* name, char** buffer)
     }
 
     length = fileinfo.st_size;
+    if(!length)
+    {
+        *buffer = 0;
+        return 0;
+    }
+
     buf = Z_Malloc(length, PU_APPSTATIC, 0);
     if(buf == NULL)
     {
