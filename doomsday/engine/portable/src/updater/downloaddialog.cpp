@@ -151,7 +151,6 @@ void DownloadDialog::finished(QNetworkReply* reply)
 {
     LOG_AS("Download");
 
-    downloadInProgress = 0;
     reply->deleteLater();
     d->reply = 0;
 
@@ -159,6 +158,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
     {
         LOG_WARNING("Failure: ") << reply->errorString();
         d->setProgressText(reply->errorString());
+        downloadInProgress = 0;
         return;
     }
 

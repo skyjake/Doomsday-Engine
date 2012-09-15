@@ -316,6 +316,7 @@ void Game_Notify(int notification, void* param)
         // If an update has been downloaded and is ready to go, we should
         // re-show the dialog now that the user has saved the game as
         // prompted.
+        DEBUG_Message(("Game_Notify: Game saved.\n"));
         Updater_RaiseCompletedDownloadDialog();
         break;
     }

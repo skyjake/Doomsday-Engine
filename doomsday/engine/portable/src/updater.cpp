@@ -502,7 +502,7 @@ void Updater::downloadCompleted(int result)
         d->startInstall(d->download->downloadedFilePath());
     }
 
-    // The download dialgo can be dismissed now.
+    // The download dialog can be dismissed now.
     d->download->deleteLater();
     d->download = 0;
     d->savingSuggested = false;
