@@ -2145,20 +2145,17 @@ static void skyFixZCoords(HEdge* hedge, int skyCap, coord_t* bottom, coord_t* to
  */
 static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
 {
-    LineDef* lineDef;
-    Sector* frontSec;
-    Sector* backSec;
-    byte side;
-    assert(hedge && hedge->lineDef);
+    DENG_ASSERT(hedge && hedge->lineDef);
+{
+    byte side = hedge->side;
+    LineDef* line = hedge->lineDef;
+    Sector* frontSec  = line->L_sector(side);
+    Sector* backSec   = line->L_sector(side^1);
+    SideDef* frontDef = line->L_sidedef(side);
+    SideDef* backDef  = line->L_sidedef(side^1);
 
-    lineDef = hedge->lineDef;
-    side = hedge->side;
-
-    if(!lineDef->L_sidedef(side))   return false;
-    if(!lineDef->L_sidedef(side^1)) return true;
-
-    frontSec = lineDef->L_sector(side);
-    backSec  = lineDef->L_sector(side^1);
+    if(!frontDef) return false;
+    if(!backDef) return true;
     if(frontSec == backSec) return false; // Never.
 
     if(frontSec && backSec)
@@ -2168,8 +2165,9 @@ static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
         if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
     }
 
-    return R_MiddleMaterialCoversOpening(lineDef, side, false/*don't ignore opacity*/);
-}
+    return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef,
+                                         false/*don't ignore opacity*/);
+}}
 
 /**
  * Determine which sky fixes are necessary for the specified @a hedge.

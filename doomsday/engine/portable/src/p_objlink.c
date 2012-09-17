@@ -394,7 +394,7 @@ static void processSeg(HEdge* hedge, void* paramaters)
 
         // Don't spread if the middle material completely fills the gap between
         // floor and ceiling (direction is from dest to source).
-        if(R_MiddleMaterialCoversOpening(hedge->lineDef,
+        if(R_MiddleMaterialCoversLineOpening(hedge->lineDef,
             dest == hedge->twin->bspLeaf? false : true, false))
             return;
     }

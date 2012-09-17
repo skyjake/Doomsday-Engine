@@ -1067,17 +1067,74 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
                             low, hi, 0/*offset not needed*/);
 }
 
-boolean R_MiddleMaterialCoversOpening(LineDef* line, int side, boolean ignoreOpacity)
+coord_t R_OpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop)
 {
-    DENG_ASSERT(line);
+    coord_t bottom, top;
+
+    DENG_ASSERT(frontSec);
+
+    if(backSec && backSec->SP_ceilheight < frontSec->SP_ceilheight)
+    {
+        top = backSec->SP_ceilheight;
+    }
+    else
+    {
+        top = frontSec->SP_ceilheight;
+    }
+
+    if(backSec && backSec->SP_floorheight > frontSec->SP_floorheight)
+    {
+        bottom = backSec->SP_floorheight;
+    }
+    else
+    {
+        bottom = frontSec->SP_floorheight;
+    }
+
+    if(retBottom) *retBottom = bottom;
+    if(retTop)    *retTop    = top;
+
+    return top - bottom;
+}
+
+coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop)
 {
-    SideDef* frontDef;
+    coord_t bottom, top;
+
+    DENG_ASSERT(frontSec);
+
+    if(backSec && backSec->SP_ceilvisheight < frontSec->SP_ceilvisheight)
+    {
+        top = backSec->SP_ceilvisheight;
+    }
+    else
+    {
+        top = frontSec->SP_ceilvisheight;
+    }
+
+    if(backSec && backSec->SP_floorvisheight > frontSec->SP_floorvisheight)
+    {
+        bottom = backSec->SP_floorvisheight;
+    }
+    else
+    {
+        bottom = frontSec->SP_floorvisheight;
+    }
+
+    if(retBottom) *retBottom = bottom;
+    if(retTop)    *retTop    = top;
+
+    return top - bottom;
+}
+
+boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector* frontSec, Sector* backSec,
+    SideDef* frontDef, SideDef* backDef, boolean ignoreOpacity)
+{
     material_t* material;
     const materialsnapshot_t* ms;
 
-    if(!line->L_sector(side^1)) return false; // Never.
+    if(!frontSec || !frontDef) return false; // Never.
 
-    frontDef = line->L_sidedef(side);
     material = frontDef->SW_middlematerial;
     if(!material) return false;
 
@@ -1091,15 +1148,12 @@ boolean R_MiddleMaterialCoversOpening(LineDef* line, int side, boolean ignoreOpa
         if(frontDef->flags & SDF_MIDDLE_STRETCH) return true;
 
         // Might the material cover the opening?
-        openRange = LineDef_VisOpenRange(line, side, &openBottom, &openTop);
+        openRange = R_VisOpenRange(frontSec, backSec, &openBottom, &openTop);
         if(ms->size.height >= openRange)
         {
             // Possibly; check the placement.
-            Sector* frontSec = line->L_sector(side);
-            Sector* backSec  = line->L_sector(side^1);
-            SideDef* backDef = line->L_sidedef(side^1);
             coord_t bottom, top;
-            if(R_FindBottomTop(SS_MIDDLE, line->flags, frontSec, backSec, frontDef, backDef,
+            if(R_FindBottomTop(SS_MIDDLE, lineFlags, frontSec, backSec, frontDef, backDef,
                                &bottom, &top))
             {
                 return (top >= openTop && bottom <= openBottom);
@@ -1108,6 +1162,17 @@ boolean R_MiddleMaterialCoversOpening(LineDef* line, int side, boolean ignoreOpa
     }
 
     return false;
+}
+
+boolean R_MiddleMaterialCoversLineOpening(LineDef* line, int side, boolean ignoreOpacity)
+{
+    DENG_ASSERT(line);
+{
+    Sector* frontSec  = line->L_sector(side);
+    Sector* backSec   = line->L_sector(side^1);
+    SideDef* frontDef = line->L_sidedef(side);
+    SideDef* backDef  = line->L_sidedef(side^1);
+    return R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef, ignoreOpacity);
 }}
 
 LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
@@ -1191,7 +1256,7 @@ LineDef* R_FindSolidLineNeighbor(const Sector* sector, const LineDef* line,
                       oFCeil > sector->SP_floorvisheight)))  )
             {
 
-                if(!R_MiddleMaterialCoversOpening(other, side, false))
+                if(!R_MiddleMaterialCoversLineOpening(other, side, false))
                     return 0;
             }
         }

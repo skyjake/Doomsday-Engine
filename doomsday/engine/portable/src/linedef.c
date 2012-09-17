@@ -72,7 +72,7 @@ static boolean backClosedForBlendNeighbor(LineDef* lineDef, int side, boolean ig
         if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
     }
 
-    return R_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
+    return R_MiddleMaterialCoversLineOpening(lineDef, side, ignoreOpacity);
 }
 
 static LineDef* findBlendNeighbor(LineDef* l, byte side, byte right,
@@ -136,66 +136,14 @@ void LineDef_SetDivline(const LineDef* line, divline_t* dl)
 coord_t LineDef_OpenRange(const LineDef* line, int side, coord_t* retBottom, coord_t* retTop)
 {
     DENG_ASSERT(line);
-{
-    Sector* frontSec = line->L_sector(side);
-    Sector* backSec  = line->L_sector(side^1);
-    coord_t bottom, top;
-
-    if(backSec && backSec->SP_ceilheight < frontSec->SP_ceilheight)
-    {
-        top = backSec->SP_ceilheight;
-    }
-    else
-    {
-        top = frontSec->SP_ceilheight;
-    }
-
-    if(backSec && backSec->SP_floorheight > frontSec->SP_floorheight)
-    {
-        bottom = backSec->SP_floorheight;
-    }
-    else
-    {
-        bottom = frontSec->SP_floorheight;
-    }
-
-    if(retBottom) *retBottom = bottom;
-    if(retTop)    *retTop    = top;
-
-    return top - bottom;
-}}
+    return R_OpenRange(line->L_sector(side), line->L_sector(side^1), retBottom, retTop);
+}
 
 coord_t LineDef_VisOpenRange(const LineDef* line, int side, coord_t* retBottom, coord_t* retTop)
 {
     DENG_ASSERT(line);
-{
-    Sector* frontSec = line->L_sector(side);
-    Sector* backSec  = line->L_sector(side^1);
-    coord_t bottom, top;
-
-    if(backSec && backSec->SP_ceilvisheight < frontSec->SP_ceilvisheight)
-    {
-        top = backSec->SP_ceilvisheight;
-    }
-    else
-    {
-        top = frontSec->SP_ceilvisheight;
-    }
-
-    if(backSec && backSec->SP_floorvisheight > frontSec->SP_floorvisheight)
-    {
-        bottom = backSec->SP_floorvisheight;
-    }
-    else
-    {
-        bottom = frontSec->SP_floorvisheight;
-    }
-
-    if(retBottom) *retBottom = bottom;
-    if(retTop)    *retTop    = top;
-
-    return top - bottom;
-}}
+    return R_VisOpenRange(line->L_sector(side), line->L_sector(side^1), retBottom, retTop);
+}
 
 void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
 {

@@ -1230,7 +1230,7 @@ static uint radioEdgeHackType(const LineDef* line, const Sector* front, const Se
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(R_MiddleMaterialCoversOpening((LineDef*)line, backside, false))
+    if(R_MiddleMaterialCoversLineOpening((LineDef*)line, backside, false))
         return 1; // Consider it fully closed.
 
     return 0;
@@ -1394,7 +1394,7 @@ static void processEdgeShadow(const BspLeaf* bspLeaf, const LineDef* lineDef,
             otherSide = (lineDef->L_v(i^side) == neighbor->L_v1? i : i^1);
             othersec = neighbor->L_sector(otherSide);
 
-            if(R_MiddleMaterialCoversOpening(neighbor, otherSide^1, false))
+            if(R_MiddleMaterialCoversLineOpening(neighbor, otherSide^1, false))
             {
                 sideOpen[i] = 0;
             }

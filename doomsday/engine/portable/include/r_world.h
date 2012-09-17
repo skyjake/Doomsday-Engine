@@ -116,14 +116,45 @@ boolean R_FindBottomTop(SideDefSection section, int lineFlags,
     coord_t* low, coord_t* hi) /* matOffset = 0 */;
 
 /**
- * @param lineDef  LineDef instance.
- * @param side  Side of LineDef to test. Non-zero value signifies the BACK side.
-  *
- * @return  @c true iff the SideDef on the referenced @a lineDef @a side has
- *     a "middle" Material which completely covers any opening (gap between
- *     floor and ceiling planes) on that side of the line.
+ * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
+ * and @a backSec. The open range is defined as the gap between foor and ceiling on
+ * the front side clipped by the floor and ceiling planes on the back side (if present).
+ *
+ * @param frontSec  Sector on the front side.
+ * @param backSec   Sector on the back side. Can be @c NULL.
+ * @param bottom    Bottom Z height is written here. Can be @c NULL.
+ * @param top       Top Z height is written here. Can be @c NULL.
+ *
+ * @return Height of the open range.
  */
-boolean R_MiddleMaterialCoversOpening(LineDef* lineDef, int side, boolean ignoreAlpha);
+coord_t R_OpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
+
+/// Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
+/// height coordinates rather than the "sharp" coordinates.
+coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
+
+/**
+ * @param lineFlags     @ref ldefFlags.
+ * @param frontSec      Sector in front of the wall.
+ * @param backSec       Sector behind the wall. Can be @c NULL
+ * @param frontDef      Definition for the front side. Can be @c NULL
+ * @param backDef       Definition for the back side. Can be @c NULL
+ * @param ignoreOpacity @c true= material opacity should be ignored.
+ *
+ * @return  @c true iff SideDef @a frontDef has a "middle" Material which completely
+ *     covers the open range defined by sectors @a frontSec and @a backSec.
+ */
+boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector* frontSec, Sector* backSec,
+    SideDef* frontDef, SideDef* backDef, boolean ignoreOpacity);
+
+/**
+ * Same as @ref R_MiddleMaterialCoversOpening except all arguments are derived from
+ * the specified linedef @a line.
+ *
+ * @note Anything calling this is likely working at the wrong level (should work with
+ *       hedges instead).
+ */
+boolean R_MiddleMaterialCoversLineOpening(LineDef* line, int side, boolean ignoreOpacity);
 
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
