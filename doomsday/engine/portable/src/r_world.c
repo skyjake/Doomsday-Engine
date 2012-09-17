@@ -480,16 +480,18 @@ void R_InterpolateTrackedPlanes(boolean resetNextViewer)
 }
 
 /**
- * Called when a floor or ceiling height changes to update the plotted
+ * To be called when a floor or ceiling height changes to update the plotted
  * decoration origins for surfaces whose material offset is dependant upon
  * the given plane.
  */
 void R_MarkDependantSurfacesForDecorationUpdate(Plane* pln)
 {
-    LineDef**           linep;
+    LineDef** linep;
 
-    if(!pln || !pln->sector->lineDefs)
-        return;
+    if(!pln || !pln->sector->lineDefs) return;
+
+    // "Middle" planes have no dependent surfaces.
+    if(pln->type == PLN_MID) return;
 
     // Mark the decor lights on the sides of this plane as requiring
     // an update.
@@ -497,25 +499,17 @@ void R_MarkDependantSurfacesForDecorationUpdate(Plane* pln)
 
     while(*linep)
     {
-        LineDef*            li = *linep;
+        LineDef* li = *linep;
 
-        if(!li->L_backsidedef)
+        Surface_Update(&li->L_frontsidedef->SW_surface(SS_MIDDLE));
+        Surface_Update(&li->L_frontsidedef->SW_surface(SS_BOTTOM));
+        Surface_Update(&li->L_frontsidedef->SW_surface(SS_TOP));
+
+        if(li->L_backsidedef)
         {
-            if(pln->type != PLN_MID)
-                Surface_Update(&li->L_frontsidedef->SW_surface(SS_MIDDLE));
-        }
-        else if(li->L_backsector != li->L_frontsector)
-        {
-            byte                side =
-                (li->L_frontsector == pln->sector? FRONT : BACK);
-
-            Surface_Update(&li->L_sidedef(side)->SW_surface(SS_BOTTOM));
-            Surface_Update(&li->L_sidedef(side)->SW_surface(SS_TOP));
-
-            if(pln->type == PLN_FLOOR)
-                Surface_Update(&li->L_sidedef(side^1)->SW_surface(SS_BOTTOM));
-            else
-                Surface_Update(&li->L_sidedef(side^1)->SW_surface(SS_TOP));
+            Surface_Update(&li->L_backsidedef->SW_surface(SS_MIDDLE));
+            Surface_Update(&li->L_backsidedef->SW_surface(SS_BOTTOM));
+            Surface_Update(&li->L_backsidedef->SW_surface(SS_TOP));
         }
 
         linep++;
