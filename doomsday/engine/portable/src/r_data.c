@@ -1971,13 +1971,18 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
                     {
                         hasReplacement = true; // Uses a non-IWAD patch.
                     }
-                    else if(custom->size.height == orig->size.height &&
-                            custom->size.width  == orig->size.width  &&
-                            custom->patchCount  == orig->patchCount)
+                    // Do the definitions differ?
+                    else if(custom->size.height != orig->size.height ||
+                            custom->size.width  != orig->size.width  ||
+                            custom->patchCount  != orig->patchCount)
+                    {
+                        custom->flags |= TXDF_CUSTOM;
+                        hasReplacement = true;
+                    }
+                    else
                     {
                         // Check the patches.
                         short k = 0;
-
                         while(k < orig->patchCount && !(custom->flags & TXDF_CUSTOM))
                         {
                             texpatch_t* origP   = orig->patches  + k;
@@ -1988,14 +1993,13 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
                                origP->offY != customP->offY)
                             {
                                 custom->flags |= TXDF_CUSTOM;
+                                hasReplacement = true;
                             }
                             else
                             {
                                 k++;
                             }
                         }
-
-                        hasReplacement = true;
                     }
 
                     // The non-drawable flag must pass to the replacement.
