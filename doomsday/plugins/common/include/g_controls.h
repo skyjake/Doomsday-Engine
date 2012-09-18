@@ -147,7 +147,12 @@ typedef struct playerbrain_s {
     uint        logRefresh: 1;
 } playerbrain_t;
 
+/**
+ * Register the CVars and CCmds for input/controls.
+ */
 void        G_ControlRegister(void);
+
+void        G_DefineControls(void);
 void        G_DefaultBindings(void);
 void        G_RegisterBindClasses(void);
 
