@@ -1063,6 +1063,9 @@ end_read:
 
     // Any hooks?
     DD_CallHooks(HOOK_FINALE_SCRIPT_BEGIN, fi->_id, 0);
+
+    // Run a single tic so that the script can be drawn.
+    FinaleInterpreter_RunTic(fi);
     }
 }
 
