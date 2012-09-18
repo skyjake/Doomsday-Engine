@@ -1080,8 +1080,7 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
 
     // Apply the defaults.
     // Default to the center of the texture.
-    *retBrightX = width  / 2.0f;
-    *retBrightY = height / 2.0f;
+    *retBrightX = *retBrightY = .5f;
 
     // Default to black (i.e., no light).
     for(c = 0; c < 3; ++c)
