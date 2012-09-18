@@ -1330,15 +1330,13 @@ void R_ProjectSprite(mobj_t* mo)
     params.floorAdjust = floorAdjust;
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
 
-    floorAdjust = false;
-
     gzt = vis->origin[VZ] + -pTex->offY;
 
     viewAlign  = (align || alwaysAlign == 3)? true : false;
     fullBright = ((mo->state->flags & STF_FULLBRIGHT) || levelFullBright)? true : false;
 
     // Foot clipping.
-    floorClip = 0; //mo->floorClip;
+    floorClip = mo->floorClip;
     if(mo->ddFlags & DDMF_BOB)
     {
         // Bobbing is applied to the floorclip.
