@@ -1151,7 +1151,13 @@ void G_StartTitle(void)
 void G_StartHelp(void)
 {
     ddfinale_t fin;
+
     if(G_QuitInProgress()) return;
+    if(IS_CLIENT)
+    {
+        /// @todo Fix this properly: http://sf.net/p/deng/bugs/1082/
+        return;
+    }
 
     if(Def_Get(DD_DEF_FINALE, "help", &fin))
     {
