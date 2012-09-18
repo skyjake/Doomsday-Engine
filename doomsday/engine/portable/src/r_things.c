@@ -1417,8 +1417,8 @@ void R_ProjectSprite(mobj_t* mo)
     if(!mf && mat)
     {
         const boolean brightShadow = !!(mo->ddFlags & DDMF_BRIGHTSHADOW);
-        const boolean fitTop       = false; //!!(mo->ddFlags & DDMF_FITTOP);
-        const boolean fitBottom    = false; //!(mo->ddFlags & DDMF_NOFITBOTTOM);
+        const boolean fitTop       = !!(mo->ddFlags & DDMF_FITTOP);
+        const boolean fitBottom    = !(mo->ddFlags & DDMF_NOFITBOTTOM);
         blendmode_t blendMode;
 
         // Additive blending?
