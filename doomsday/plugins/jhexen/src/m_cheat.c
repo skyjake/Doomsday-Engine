@@ -131,7 +131,7 @@ CHEAT_FUNC(God)
     plr->cheats ^= CF_GODMODE;
     plr->update |= PSF_STATE;
 
-    P_SetMessage(plr, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF));
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -181,7 +181,7 @@ CHEAT_FUNC(GiveKeys)
 
     plr->update |= PSF_KEYS;
     plr->keys = 2047;
-    P_SetMessage(plr, TXT_CHEATKEYS, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATKEYS);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -223,7 +223,7 @@ CHEAT_FUNC(Weapons)
     giveAmmo(plr);
     giveArmor(plr);
 
-    P_SetMessage(plr, TXT_CHEATWEAPONS, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATWEAPONS);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -242,7 +242,7 @@ CHEAT_FUNC(NoClip)
 
     plr->cheats ^= CF_NOCLIP;
     plr->update |= PSF_STATE;
-    P_SetMessage(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF));
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -260,14 +260,7 @@ CHEAT_FUNC(Sound)
     if(plr->health <= 0) return false;
 
     debugSound = !debugSound;
-    if(debugSound)
-    {
-        P_SetMessage(plr, TXT_CHEATSOUNDON, false);
-    }
-    else
-    {
-        P_SetMessage(plr, TXT_CHEATSOUNDOFF, false);
-    }
+    P_SetMessage(plr, LMF_NO_HIDE, debugSound? TXT_CHEATSOUNDON : TXT_CHEATSOUNDOFF);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -287,7 +280,7 @@ static void printDebugInfo(int player)
     sprintf(textBuffer, "Map [%s]  x:%g  y:%g  z:%g",
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
             plr->plr->mo->origin[VZ]);
-    P_SetMessage(plr, textBuffer, false);
+    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
     Uri_Delete(mapUri);
 
     // Also print some information to the console.
@@ -343,7 +336,7 @@ CHEAT_FUNC(Health)
     {
         plr->health = plr->plr->mo->health = maxHealth;
     }
-    P_SetMessage(plr, TXT_CHEATHEALTH, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATHEALTH);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -369,7 +362,7 @@ CHEAT_FUNC(Inventory)
         }
     }
 
-    P_SetMessage(plr, TXT_CHEATINVITEMS3, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -392,7 +385,7 @@ CHEAT_FUNC(Puzzle)
         P_InventoryGive(player, i, false);
     }
 
-    P_SetMessage(plr, TXT_CHEATINVITEMS3, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -410,7 +403,7 @@ CHEAT_FUNC(Init)
     if(plr->health <= 0) return false;
 
     G_SetGameAction(GA_RESTARTMAP);
-    P_SetMessage(plr, TXT_CHEATWARP, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATWARP);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -436,7 +429,7 @@ CHEAT_FUNC(Pig)
         P_MorphPlayer(plr);
     }
 
-    P_SetMessage(plr, "Squeal!!", false);
+    P_SetMessage(plr, LMF_NO_HIDE, "Squeal!!");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -457,7 +450,7 @@ CHEAT_FUNC(Massacre)
 
     count = P_Massacre();
     sprintf(buf, "%d monsters killed.", count);
-    P_SetMessage(plr, buf, false);
+    P_SetMessage(plr, LMF_NO_HIDE, buf);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -482,7 +475,7 @@ CHEAT_FUNC(IDKFA)
     }
 
     plr->pendingWeapon = WT_FIRST;
-    P_SetMessage(plr, TXT_CHEATIDKFA, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATIDKFA);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -499,7 +492,7 @@ CHEAT_FUNC(Quicken)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    P_SetMessage(plr, "Trying to cheat? That's one...", false);
+    P_SetMessage(plr, LMF_NO_HIDE, "Trying to cheat? That's one...");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -516,7 +509,7 @@ CHEAT_FUNC(Quicken2)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    P_SetMessage(plr, "That's two...", false);
+    P_SetMessage(plr, LMF_NO_HIDE, "That's two...");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -534,7 +527,7 @@ CHEAT_FUNC(Quicken3)
     if(plr->health <= 0) return false;
 
     P_DamageMobj(plr->plr->mo, NULL, plr->plr->mo, 10000, false);
-    P_SetMessage(plr, "That's three! Time to die.", false);
+    P_SetMessage(plr, LMF_NO_HIDE, "That's three! Time to die.");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -551,7 +544,7 @@ CHEAT_FUNC(Class)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    P_SetMessage(plr, "Enter new player class number", false);
+    P_SetMessage(plr, LMF_NO_HIDE, "Enter new player class number");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -601,7 +594,7 @@ CHEAT_FUNC(Script)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    P_SetMessage(plr, "Run which script(01-99)?", false);
+    P_SetMessage(plr, LMF_NO_HIDE, "Run which script(01-99)?");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -618,7 +611,7 @@ CHEAT_FUNC(Script2)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    P_SetMessage(plr, "Run which script(01-99)?", false);
+    P_SetMessage(plr, LMF_NO_HIDE, "Run which script(01-99)?");
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -647,7 +640,7 @@ CHEAT_FUNC(Script3)
     if(P_StartACS(script, 0, scriptArgs, plr->plr->mo, NULL, 0))
     {
         sprintf(textBuffer, "Running script %.2d", script);
-        P_SetMessage(plr, textBuffer, false);
+        P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
     }
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;

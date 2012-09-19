@@ -1416,7 +1416,7 @@ void P_PlayerThinkMap(player_t* player)
     {
         cfg.automapRotate = !cfg.automapRotate;
         ST_SetAutomapCameraRotation(playerIdx, cfg.automapRotate);
-        P_SetMessage(player, (cfg.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), false);
+        P_SetMessage(player, LMF_NO_HIDE, (cfg.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF));
     }
 
     if(brain->mapZoomMax)

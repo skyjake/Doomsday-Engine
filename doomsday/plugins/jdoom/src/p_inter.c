@@ -152,7 +152,7 @@ boolean P_GiveWeapon(player_t* player, weapontype_t weapon, boolean dropped,
         S_ConsoleSound(pickupSound, NULL, player - players);
         if(pickupMessage)
         {
-            P_SetMessage(player, pickupMessage, false);
+            P_SetMessage(player, 0, pickupMessage);
         }
         return false;
     }
@@ -198,7 +198,7 @@ boolean P_GiveWeapon(player_t* player, weapontype_t weapon, boolean dropped,
             S_ConsoleSound(pickupSound, NULL, player - players);
             if(pickupMessage)
             {
-                P_SetMessage(player, pickupMessage, false);
+                P_SetMessage(player, 0, pickupMessage);
             }
         }
 
@@ -259,7 +259,7 @@ void P_GiveKey(player_t* plr, keytype_t card)
 
 void P_GiveBackpack(player_t* plr)
 {
-    int                 i;
+    int i;
 
     if(!plr->backpack)
     {
@@ -277,7 +277,7 @@ void P_GiveBackpack(player_t* plr)
         P_GiveAmmo(plr, i, 1);
     }
 
-    P_SetMessage(plr, GOTBACKPACK, false);
+    P_SetMessage(plr, 0, GOTBACKPACK);
 }
 
 boolean P_GivePower(player_t* player, int power)
@@ -476,7 +476,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
                         armorPoints[MINMAX_OF(0, armorClass[0] - 1, 1)]))
             return false;
 
-        P_SetMessage(plr, GOTARMOR, false);
+        P_SetMessage(plr, 0, GOTARMOR);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -485,7 +485,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveArmor(plr, armorClass[1],
                         armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]))
             return false;
-        P_SetMessage(plr, GOTMEGA, false);
+        P_SetMessage(plr, 0, GOTMEGA);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -496,7 +496,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(plr->armorPoints < armorPoints[1])
             P_PlayerGiveArmorBonus(plr, 1);
 
-        P_SetMessage(plr, GOTARMBONUS, false);
+        P_SetMessage(plr, 0, GOTARMBONUS);
         if(!mapSetup)
         {
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
@@ -508,14 +508,13 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
     case IT_HEALTH_PACK:
         if(!P_GiveBody(plr, 10))
             return false;
-        P_SetMessage(plr, GOTSTIM, false);
+        P_SetMessage(plr, 0, GOTSTIM);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
-    case IT_HEALTH_KIT:
-        {
-        int                 oldHealth = plr->health;
+    case IT_HEALTH_KIT: {
+        int oldHealth = plr->health;
 
         /**
          * DOOM bug:
@@ -526,22 +525,20 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
          * was never used.
          */
 
-        if(!P_GiveBody(plr, 25))
-            return false;
+        if(!P_GiveBody(plr, 25)) return false;
 
-        P_SetMessage(plr, GET_TXT(
-            (oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT), false);
+        P_SetMessage(plr, 0, GET_TXT((oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT));
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-        break;
-        }
+        break; }
+
     case IT_HEALTH_BONUS:
         plr->health++; // Can go over 100%.
         if(plr->health > healthLimit)
             plr->health = healthLimit;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
-        P_SetMessage(plr, GOTHTHBONUS, false);
+        P_SetMessage(plr, 0, GOTHTHBONUS);
         if(!mapSetup)
         {
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
@@ -556,7 +553,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
             plr->health = soulSphereLimit;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
-        P_SetMessage(plr, GOTSUPER, false);
+        P_SetMessage(plr, 0, GOTSUPER);
         if(!mapSetup)
         {
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
@@ -569,7 +566,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!plr->keys[KT_BLUECARD])
         {
             P_GiveKey(plr, KT_BLUECARD);
-            P_SetMessage(plr, GOTBLUECARD, false);
+            P_SetMessage(plr, 0, GOTBLUECARD);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -581,7 +578,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!plr->keys[KT_YELLOWCARD])
         {
             P_GiveKey(plr, KT_YELLOWCARD);
-            P_SetMessage(plr, GOTYELWCARD, false);
+            P_SetMessage(plr, 0, GOTYELWCARD);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -593,7 +590,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!plr->keys[KT_REDCARD])
         {
             P_GiveKey(plr, KT_REDCARD);
-            P_SetMessage(plr, GOTREDCARD, false);
+            P_SetMessage(plr, 0, GOTREDCARD);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -605,7 +602,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!plr->keys[KT_BLUESKULL])
         {
             P_GiveKey(plr, KT_BLUESKULL);
-            P_SetMessage(plr, GOTBLUESKUL, false);
+            P_SetMessage(plr, 0, GOTBLUESKUL);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -617,7 +614,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!plr->keys[KT_YELLOWSKULL])
         {
             P_GiveKey(plr, KT_YELLOWSKULL);
-            P_SetMessage(plr, GOTYELWSKUL, false);
+            P_SetMessage(plr, 0,  GOTYELWSKUL);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -629,7 +626,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!plr->keys[KT_REDSKULL])
         {
             P_GiveKey(plr, KT_REDSKULL);
-            P_SetMessage(plr, GOTREDSKULL, false);
+            P_SetMessage(plr, 0, GOTREDSKULL);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -645,7 +642,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         plr->update |= PSF_HEALTH;
         P_GiveArmor(plr, armorClass[1],
                     armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
-        P_SetMessage(plr, GOTMSPHERE, false);
+        P_SetMessage(plr, 0, GOTMSPHERE);
         if(!mapSetup)
         {
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
@@ -658,7 +655,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GivePower(plr, PT_INVULNERABILITY))
             return false;
 
-        P_SetMessage(plr, GOTINVUL, false);
+        P_SetMessage(plr, 0, GOTINVUL);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -667,7 +664,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GivePower(plr, PT_STRENGTH))
             return false;
 
-        P_SetMessage(plr, GOTBERSERK, false);
+        P_SetMessage(plr, 0, GOTBERSERK);
         if(plr->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
         {
             plr->pendingWeapon = WT_FIRST;
@@ -681,7 +678,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GivePower(plr, PT_INVISIBILITY))
             return false;
 
-        P_SetMessage(plr, GOTINVIS, false);
+        P_SetMessage(plr, 0, GOTINVIS);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -690,7 +687,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GivePower(plr, PT_IRONFEET))
             return false;
 
-        P_SetMessage(plr, GOTSUIT, false);
+        P_SetMessage(plr, 0, GOTSUIT);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -699,7 +696,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GivePower(plr, PT_ALLMAP))
             return false;
 
-        P_SetMessage(plr, GOTMAP, false);
+        P_SetMessage(plr, 0, GOTMAP);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -708,7 +705,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GivePower(plr, PT_INFRARED))
             return false;
 
-        P_SetMessage(plr, GOTVISOR, false);
+        P_SetMessage(plr, 0, GOTVISOR);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -723,7 +720,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveAmmo(plr, AT_CLIP, dropped? 0 : 1))
             return false;
 
-        P_SetMessage(plr, GOTCLIP, false);
+        P_SetMessage(plr, 0, GOTCLIP);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -732,7 +729,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveAmmo(plr, AT_CLIP, 5))
             return false;
 
-        P_SetMessage(plr, GOTCLIPBOX, false);
+        P_SetMessage(plr, 0, GOTCLIPBOX);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -741,7 +738,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveAmmo(plr, AT_MISSILE, 1))
             return false;
 
-        P_SetMessage(plr, GOTROCKET, false);
+        P_SetMessage(plr, 0, GOTROCKET);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -750,7 +747,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveAmmo(plr, AT_MISSILE, 5))
             return false;
 
-        P_SetMessage(plr, GOTROCKBOX, false);
+        P_SetMessage(plr, 0, GOTROCKBOX);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -759,7 +756,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveAmmo(plr, AT_CELL, 1))
             return false;
 
-        P_SetMessage(plr, GOTCELL, false);
+        P_SetMessage(plr, 0, GOTCELL);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -768,7 +765,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveAmmo(plr, AT_CELL, 5))
             return false;
 
-        P_SetMessage(plr, GOTCELLBOX, false);
+        P_SetMessage(plr, 0, GOTCELLBOX);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -777,7 +774,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveAmmo(plr, AT_SHELL, 1))
             return false;
 
-        P_SetMessage(plr, GOTSHELLS, false);
+        P_SetMessage(plr, 0, GOTSHELLS);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -786,7 +783,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(!P_GiveAmmo(plr, AT_SHELL, 5))
             return false;
 
-        P_SetMessage(plr, GOTSHELLBOX, false);
+        P_SetMessage(plr, 0, GOTSHELLBOX);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;

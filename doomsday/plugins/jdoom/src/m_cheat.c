@@ -160,7 +160,7 @@ CHEAT_FUNC(God)
         plr->update |= PSF_HEALTH;
     }
 
-    P_SetMessage(plr, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
     return true;
 }
 
@@ -233,7 +233,7 @@ CHEAT_FUNC(GiveWeaponsAmmoArmor)
     giveAmmo(plr);
     giveArmor(player, 2);
 
-    P_SetMessage(plr, STSTR_FAADDED, false);
+    P_SetMessage(plr, LMF_NO_HIDE, STSTR_FAADDED);
     return true;
 }
 
@@ -254,7 +254,7 @@ CHEAT_FUNC(GiveWeaponsAmmoArmorKeys)
     giveKeys(plr);
     giveArmor(player, 3);
 
-    P_SetMessage(plr, STSTR_KFAADDED, false);
+    P_SetMessage(plr, LMF_NO_HIDE, STSTR_KFAADDED);
     return true;
 }
 
@@ -278,11 +278,11 @@ CHEAT_FUNC(Music)
 
     if(S_StartMusicNum(musnum, true))
     {
-        P_SetMessage(plr, STSTR_MUS, false);
+        P_SetMessage(plr, LMF_NO_HIDE, STSTR_MUS);
         return true;
     }
 
-    P_SetMessage(plr, STSTR_NOMUS, false);
+    P_SetMessage(plr, LMF_NO_HIDE, STSTR_NOMUS);
     return false;
 }
 
@@ -300,7 +300,7 @@ CHEAT_FUNC(NoClip)
 
     plr->cheats ^= CF_NOCLIP;
     plr->update |= PSF_STATE;
-    P_SetMessage(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
     return true;
 }
 
@@ -334,7 +334,7 @@ CHEAT_FUNC(Powerup)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    P_SetMessage(plr, STSTR_BEHOLD, false);
+    P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLD);
     return true;
 }
 
@@ -373,7 +373,7 @@ CHEAT_FUNC(Powerup2)
         if(args[0] != values[i]) continue;
 
         givePower(plr, (powertype_t) i);
-        P_SetMessage(plr, STSTR_BEHOLDX, false);
+        P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
         return true;
     }
     return false;
@@ -435,7 +435,7 @@ CHEAT_FUNC(GiveChainsaw)
 
     plr->weapons[WT_EIGHTH].owned = true;
     plr->powers[PT_INVULNERABILITY] = true;
-    P_SetMessage(plr, STSTR_CHOPPERS, false);
+    P_SetMessage(plr, LMF_NO_HIDE, STSTR_CHOPPERS);
     return true;
 }
 
@@ -457,7 +457,7 @@ CHEAT_FUNC(MyPos)
             players[CONSOLEPLAYER].plr->mo->origin[VX],
             players[CONSOLEPLAYER].plr->mo->origin[VY],
             players[CONSOLEPLAYER].plr->mo->origin[VZ]);
-    P_SetMessage(plr, buf, false);
+    P_SetMessage(plr, LMF_NO_HIDE, buf);
     return true;
 }
 
@@ -475,7 +475,7 @@ static void printDebugInfo(player_t* plr)
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
             plr->plr->mo->origin[VZ]);
-    P_SetMessage(plr, textBuffer, false);
+    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
     Uri_Delete(mapUri);
 
     // Also print some information to the console.

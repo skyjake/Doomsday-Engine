@@ -841,30 +841,33 @@ void NetCl_SendPlayerInfo()
 
 void NetCl_SaveGame(Reader* msg)
 {
-    if(Get(DD_PLAYBACK))
-        return;
+#if __JHEXEN__
+    DENG_UNUSED(msg);
+#endif
 
-    /// @todo: Why not Hexen?
+    if(Get(DD_PLAYBACK)) return;
+
 #if !__JHEXEN__
     SV_SaveGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
+    P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, TXT_GAMESAVED);
 #endif
 }
 
 void NetCl_LoadGame(Reader* msg)
 {
-    if(!IS_CLIENT)
-        return;
-    if(Get(DD_PLAYBACK))
-        return;
+#if __JHEXEN__
+    DENG_UNUSED(msg);
+#endif
+
+    if(!IS_CLIENT || Get(DD_PLAYBACK)) return;
 
 #if !__JHEXEN__
     SV_LoadGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);
+    P_SetMessage(&players[CONSOLEPLAYER], 0, GET_TXT(TXT_CLNETLOAD));
 #endif
 }
 

@@ -5264,7 +5264,7 @@ static int SV_LoadState(const char* path, SaveInfo* saveInfo)
             {
                 // If the CONSOLEPLAYER isn't in the save, it must be some
                 // other player's file?
-                P_SetMessage(players, GET_TXT(TXT_LOADMISSING), false);
+                P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
             }
             else
             {
@@ -5277,7 +5277,7 @@ static int SV_LoadState(const char* path, SaveInfo* saveInfo)
         {
             if(!i)
             {
-                P_SetMessage(players, GET_TXT(TXT_LOADMISSING), false);
+                P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
             }
             else
             {

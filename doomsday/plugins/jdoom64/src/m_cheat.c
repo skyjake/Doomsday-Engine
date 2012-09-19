@@ -104,8 +104,7 @@ void Cht_GodFunc(player_t* plr)
         plr->update |= PSF_HEALTH;
     }
 
-    P_SetMessage(plr,
-                 ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
 }
 
 void Cht_SuicideFunc(player_t* plr)
@@ -151,8 +150,7 @@ void Cht_NoClipFunc(player_t* plr)
 {
     plr->cheats ^= CF_NOCLIP;
     plr->update |= PSF_STATE;
-    P_SetMessage(plr,
-                 ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
 }
 
 boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
@@ -162,22 +160,19 @@ boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
 
     for(i = 0; i < numArgs; ++i)
     {
-        powertype_t type;
+        powertype_t type = (powertype_t) i;
 
-        if(cheat->args[0] != args[i])
-            continue;
-        type = (powertype_t) i;
+        if(cheat->args[0] != args[i]) continue;
 
         if(!plr->powers[type])
         {
             P_GivePower(plr, type);
-            P_SetMessage(plr, STSTR_BEHOLDX, false);
+            P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
         }
-        else if(type == PT_STRENGTH || type == PT_FLIGHT ||
-                type == PT_ALLMAP)
+        else if(type == PT_STRENGTH || type == PT_FLIGHT || type == PT_ALLMAP)
         {
             P_TakePower(plr, type);
-            P_SetMessage(plr, STSTR_BEHOLDX, false);
+            P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
         }
 
         return true;
@@ -201,7 +196,7 @@ void printDebugInfo(player_t* plr)
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
             plr->plr->mo->origin[VZ]);
-    P_SetMessage(plr, textBuffer, false);
+    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
     Uri_Delete(mapUri);
 
     // Also print some information to the console.
@@ -231,18 +226,18 @@ void Cht_LaserFunc(player_t* p)
 {
     if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
     {
-        P_SetMessage(p, STSTR_BEHOLDX, false);
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
         return;
     }
 
     if(P_InventoryGive(p - players, IIT_DEMONKEY2, true))
     {
-        P_SetMessage(p, STSTR_BEHOLDX, false);
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
         return;
     }
 
     if(P_InventoryGive(p - players, IIT_DEMONKEY3, true))
-        P_SetMessage(p, STSTR_BEHOLDX, false);
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
 }
 
 D_CMD(CheatGod)

@@ -486,7 +486,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
 
     case GPT_MESSAGE:
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     case GPT_YELLOW_MESSAGE:
 #endif
     {
@@ -500,15 +500,15 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         Reader_Read(reader, msg, len);
         msg[len] = 0;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         if(type == GPT_YELLOW_MESSAGE)
         {
-            P_SetYellowMessage(&players[CONSOLEPLAYER], msg, false);
+            P_SetYellowMessage(&players[CONSOLEPLAYER], 0, msg);
         }
         else
 #endif
         {
-            P_SetMessage(&players[CONSOLEPLAYER], msg, false);
+            P_SetMessage(&players[CONSOLEPLAYER], 0, msg);
         }
         Z_Free(msg);
         break;
@@ -653,7 +653,7 @@ static void D_NetMessageEx(int player, const char* msg, boolean playSound)
     // This is intended to be a local message.
     // Let's make sure P_SetMessage doesn't forward it anywhere.
     netSvAllowSendMsg = false;
-    P_SetMessage(plr, msgBuff, false);
+    P_SetMessage(plr, 0, msgBuff);
 
     if(playSound)
         D_ChatSound();

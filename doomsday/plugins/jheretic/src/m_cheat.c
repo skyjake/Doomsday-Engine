@@ -116,8 +116,7 @@ CHEAT_FUNC(God)
     plr->cheats ^= CF_GODMODE;
     plr->update |= PSF_STATE;
 
-    P_SetMessage(plr,
-                 ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF));
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -177,7 +176,7 @@ CHEAT_FUNC(Weapons)
     giveAmmo(plr);
     giveArmor(plr);
 
-    P_SetMessage(plr, TXT_CHEATWEAPONS, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATWEAPONS);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -198,7 +197,7 @@ CHEAT_FUNC(GiveKeys)
     plr->keys[KT_YELLOW] = true;
     plr->keys[KT_GREEN]  = true;
     plr->keys[KT_BLUE]   = true;
-    P_SetMessage(plr, TXT_CHEATKEYS, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATKEYS);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -217,7 +216,7 @@ CHEAT_FUNC(NoClip)
 
     plr->cheats ^= CF_NOCLIP;
     plr->update |= PSF_STATE;
-    P_SetMessage(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF));
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -238,7 +237,7 @@ CHEAT_FUNC(Powerup)
     if(plr->powers[PT_WEAPONLEVEL2])
     {
         plr->powers[PT_WEAPONLEVEL2] = 0;
-        P_SetMessage(plr, TXT_CHEATPOWEROFF, false);
+        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATPOWEROFF);
     }
     else
     {
@@ -246,7 +245,7 @@ CHEAT_FUNC(Powerup)
 
         P_InventoryGive(plrnum, IIT_TOMBOFPOWER, true);
         P_InventoryUse(plrnum, IIT_TOMBOFPOWER, true);
-        P_SetMessage(plr, TXT_CHEATPOWERON, false);
+        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATPOWERON);
     }
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
@@ -267,7 +266,7 @@ static void printDebugInfo(int player)
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
             plr->plr->mo->origin[VZ]);
-    P_SetMessage(plr, textBuffer, false);
+    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
     Uri_Delete(mapUri);
 
     // Also print some information to the console.
@@ -310,7 +309,7 @@ CHEAT_FUNC(Health)
     {
         plr->health = plr->plr->mo->health = maxHealth;
     }
-    P_SetMessage(plr, TXT_CHEATHEALTH, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATHEALTH);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -327,7 +326,7 @@ CHEAT_FUNC(InvItem)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    P_SetMessage(plr, TXT_CHEATINVITEMS1, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS1);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -344,7 +343,7 @@ CHEAT_FUNC(InvItem2)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    P_SetMessage(plr, TXT_CHEATINVITEMS2, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS2);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -369,7 +368,7 @@ CHEAT_FUNC(InvItem3)
         int i;
         if(gameMode == heretic_shareware && (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
         {
-            P_SetMessage(plr, TXT_CHEATITEMSFAIL, false);
+            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATITEMSFAIL);
             return false;
         }
 
@@ -377,11 +376,11 @@ CHEAT_FUNC(InvItem3)
         {
             P_InventoryGive(player, type, false);
         }
-        P_SetMessage(plr, TXT_CHEATINVITEMS3, false);
+        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
     }
     else
     {   // Bad input
-        P_SetMessage(plr, TXT_CHEATITEMSFAIL, false);
+        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATITEMSFAIL);
     }
 
     S_LocalSound(SFX_DORCLS, NULL);
@@ -404,12 +403,12 @@ CHEAT_FUNC(Chicken)
     {
         if(P_UndoPlayerMorph(plr))
         {
-            P_SetMessage(plr, TXT_CHEATCHICKENOFF, false);
+            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATCHICKENOFF);
         }
     }
     else if(P_MorphPlayer(plr))
     {
-        P_SetMessage(plr, TXT_CHEATCHICKENON, false);
+        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATCHICKENON);
     }
 
     S_LocalSound(SFX_DORCLS, NULL);
@@ -429,7 +428,7 @@ CHEAT_FUNC(Massacre)
     if(plr->health <= 0) return false;
 
     P_Massacre();
-    P_SetMessage(plr, TXT_CHEATMASSACRE, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATMASSACRE);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -454,7 +453,7 @@ CHEAT_FUNC(IDKFA)
     }
 
     plr->pendingWeapon = WT_FIRST;
-    P_SetMessage(plr, TXT_CHEATIDKFA, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATIDKFA);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -472,7 +471,7 @@ CHEAT_FUNC(IDDQD)
     if(plr->health <= 0) return false;
 
     P_DamageMobj(plr->plr->mo, NULL, plr->plr->mo, 10000, false);
-    P_SetMessage(plr, TXT_CHEATIDDQD, false);
+    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATIDDQD);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }

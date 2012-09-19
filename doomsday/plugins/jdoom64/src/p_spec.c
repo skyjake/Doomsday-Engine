@@ -487,16 +487,16 @@ static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing)
         break;
 
     case 994: // jd64
-        // FIXME: DJS - Might as well do this in XG.
-        // Also, export this text string to DED.
-        P_SetMessage(thing->player, "You've found a secret area!", false);
+        /// @todo Might as well do this with XG.
+        /// Also, export this text string to DED.
+        P_SetMessage(thing->player, 0, "You've found a secret area!");
         thing->player->secretCount++;
         xline->special = 0;
         break;
 
     case 995: // jd64
-        // FIXME: DJS - Might as well do this in XG.
-        P_SetMessage(thing->player, "You've found a shrine!", false);
+        /// @todo Might as well do this with XG.
+        P_SetMessage(thing->player, 0, "You've found a shrine!");
         xline->special = 0;
         break;
 
@@ -909,7 +909,7 @@ void P_PlayerInSpecialSector(player_t* player)
         P_ToXSector(sector)->special = 0;
         if(cfg.secretMsg)
         {
-            P_SetMessage(player, "You've found a secret area!", false);
+            P_SetMessage(player, 0, "You've found a secret area!");
             // S_ConsoleSound(SFX_SECRET, 0, player - players); // jd64
         }
         break;

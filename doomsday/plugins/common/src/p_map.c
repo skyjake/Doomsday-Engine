@@ -3347,7 +3347,7 @@ boolean P_UsePuzzleItem(player_t* player, int itemType)
 
     if(!puzzleActivated)
     {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        P_SetYellowMessage(player, 0, TXT_USEPUZZLEFAILED);
     }
 
     return puzzleActivated;

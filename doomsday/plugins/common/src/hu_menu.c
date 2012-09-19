@@ -6284,7 +6284,7 @@ int Hu_MenuSelectPlayerClass(mn_object_t* ob, mn_actionid_t action, void* parame
     if(MNA_ACTIVEOUT != action) return 1;
     if(IS_NETGAME)
     {
-        P_SetMessage(&players[CONSOLEPLAYER], "You can't start a new game from within a netgame!", false);
+        P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, "You can't start a new game from within a netgame!");
         return 0;
     }
 

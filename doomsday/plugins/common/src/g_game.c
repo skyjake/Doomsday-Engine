@@ -2348,7 +2348,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 #if __JHEXEN__
     if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
     {   // Not possible in the 4-map demo.
-        P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO", false);
+        P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
         return;
     }
 #endif
@@ -3014,7 +3014,7 @@ void G_DoSaveGame(void)
     if(didSave)
     {
         //Hu_MenuUpdateGameSaveWidgets();
-        P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
+        P_SetMessage(&players[CONSOLEPLAYER], 0, TXT_GAMESAVED);
 
         // Notify the engine that the game was saved.
         /// @todo After the engine has the primary responsibility of
@@ -4112,7 +4112,7 @@ D_CMD(WarpMap)
     {
         const char* fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
         AutoStr* msg = Str_Appendf(AutoStr_NewStd(), fmtString, argv[1], argc == 3? argv[2] : "");
-        P_SetMessage(players + CONSOLEPLAYER, Str_Text(msg), true);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return false;
     }
 
@@ -4120,7 +4120,7 @@ D_CMD(WarpMap)
     // Hexen does not allow warping to the current map.
     if(userGame && map == gameMap)
     {
-        P_SetMessage(players + CONSOLEPLAYER, "Cannot warp to the current map.", true);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
         return false;
     }
 #endif
@@ -4173,7 +4173,7 @@ D_CMD(WarpMap)
         const char* msg = STSTR_CLEV;
         int soundId     = SFX_NONE;
 #endif
-        P_SetMessage(players + CONSOLEPLAYER, msg, true);
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
         S_LocalSound(soundId, NULL);
     }
     return true;

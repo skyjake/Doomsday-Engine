@@ -867,7 +867,7 @@ void P_PlayerInSpecialSector(player_t* player)
             P_ToXSector(sector)->special = 0;
             if(cfg.secretMsg)
             {
-                P_SetMessage(player, "You've found a secret area!", false);
+                P_SetMessage(player, 0, "You've found a secret area!");
                 S_ConsoleSound(SFX_SECRET, 0, player - players);
             }
         }

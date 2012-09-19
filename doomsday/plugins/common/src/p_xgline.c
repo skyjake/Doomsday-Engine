@@ -1987,11 +1987,10 @@ void XL_ChangeMaterial(LineDef* line, int sidenum, int section,
 
 void XL_Message(mobj_t* act, char* msg, boolean global)
 {
-    int                 i;
-    player_t*           pl;
+    player_t* pl;
+    int i;
 
-    if(!msg || !msg[0])
-        return;
+    if(!msg || !msg[0]) return;
 
     if(global)
     {
@@ -1999,7 +1998,7 @@ void XL_Message(mobj_t* act, char* msg, boolean global)
         // Send to all players in the game.
         for(i = 0; i < MAXPLAYERS; ++i)
             if(players[i].plr->inGame)
-                P_SetMessage(players + i, msg, false);
+                P_SetMessage(players + i, 0, msg);
         return;
     }
 
@@ -2019,7 +2018,7 @@ void XL_Message(mobj_t* act, char* msg, boolean global)
         XG_Dev("  NO DESTINATION, MESSAGE DISCARDED");
         return;
     }
-    P_SetMessage(pl, msg, false);
+    P_SetMessage(pl, 0, msg);
 }
 
 void XL_ActivateLine(boolean activating, linetype_t* info, LineDef* line,
