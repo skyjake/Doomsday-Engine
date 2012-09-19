@@ -3704,28 +3704,27 @@ void G_ScreenShot(void)
 /**
  * Find an unused screenshot file name. Uses the game's identity key as the
  * file name base.
- * @return  Composed file name. Must be released with Str_Delete().
+ * @return  Composed file name.
  */
-static ddstring_t* composeScreenshotFileName(void)
+static AutoStr* composeScreenshotFileName(void)
 {
     GameInfo gameInfo;
-    ddstring_t* name;
+    AutoStr* name;
     int numPos;
 
     if(!DD_GameInfo(&gameInfo))
     {
-        Con_Error("composeScreenshotFileName: Failed retrieving Game.");
-        return NULL; // Unreachable.
+        Con_Error("composeScreenshotFileName: Failed retrieving GameInfo.");
+        return 0; // Unreachable.
     }
 
-    name = Str_Appendf(Str_New(), "%s-", gameInfo.identityKey);
+    name = Str_Appendf(AutoStr_NewStd(), "%s-", gameInfo.identityKey);
     numPos = Str_Length(name);
     { int i;
     for(i = 0; i < 1e6; ++i) // Stop eventually...
     {
         Str_Appendf(name, "%03i.png", i);
-        if(!F_FileExists(Str_Text(name)))
-            break;
+        if(!F_FileExists(Str_Text(name))) break;
         Str_Truncate(name, numPos);
     }}
     return name;
@@ -3733,22 +3732,18 @@ static ddstring_t* composeScreenshotFileName(void)
 
 void G_DoScreenShot(void)
 {
-    ddstring_t* name = composeScreenshotFileName();
-    if(!name)
+    AutoStr* fileName = composeScreenshotFileName();
+    if(fileName && M_ScreenShot(Str_Text(fileName), 24))
     {
-        Con_Message("G_DoScreenShot: Failed composing file name, screenshot not saved.\n");
+        /// @todo Do not use the console player's message log for this notification.
+        ///       The engine should implement it's own notification UI system for
+        ///       this sort of thing.
+        AutoStr* msg = Str_Appendf(AutoStr_NewStd(), "Saved screenshot: %s", F_PrettyPath(Str_Text(fileName)));
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return;
     }
 
-    if(M_ScreenShot(Str_Text(name), 24))
-    {
-        Con_Message("Wrote screenshot: %s\n", F_PrettyPath(Str_Text(name)));
-    }
-    else
-    {
-        Con_Message("Failed to write screenshot \"%s\".\n", F_PrettyPath(Str_Text(name)));
-    }
-    Str_Delete(name);
+    Con_Message("Failed to write screenshot \"%s\".\n", fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
 }
 
 static void openLoadMenu(void)
