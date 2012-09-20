@@ -1487,8 +1487,8 @@ void R_SetupMap(int mode, int flags)
             gameTime = 0;
         }
 
-        // We are now finished with the game data, map object db.
-        P_DestroyGameMapObjDB(&theMap->gameObjData);
+        // We are now finished with the map entity db.
+        EntityDatabase_Delete(theMap->entityDatabase);
 
         // Init server data.
         Sv_InitPools();

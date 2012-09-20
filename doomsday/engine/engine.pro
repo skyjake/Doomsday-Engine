@@ -125,6 +125,7 @@ DENG_API_HEADERS = \
 # Convenience headers.
 DENG_HEADERS += \
     portable/include/BspBuilder \
+    portable/include/EntityDatabase \
 
 # Private headers.
 DENG_HEADERS += \
@@ -144,6 +145,7 @@ DENG_HEADERS += \
     portable/include/blockset.h \
     portable/include/busymode.h \
     portable/include/map/bspbuilder.h \
+    portable/include/map/entitydatabase.h \
     portable/include/map/bsp/hedgeinfo.h \
     portable/include/map/bsp/hedgeintercept.h \
     portable/include/map/bsp/hedgetip.h \
@@ -274,6 +276,7 @@ DENG_HEADERS += \
     portable/include/pathmap.h \
     portable/include/plane.h \
     portable/include/polyobj.h \
+    portable/include/propertyvalue.h \
     portable/include/protocol.h \
     portable/include/r_data.h \
     portable/include/r_draw.h \
@@ -455,6 +458,7 @@ SOURCES += \
     portable/src/map/bsp/hplane.cpp \
     portable/src/map/bsp/partitioner.cpp \
     portable/src/map/bsp/superblockmap.cpp \
+    portable/src/map/entitydatabase.cpp \
     portable/src/bspleaf.cpp \
     portable/src/bspnode.c \
     portable/src/canvas.cpp \
@@ -563,6 +567,7 @@ SOURCES += \
     portable/src/point.c \
     portable/src/polyobj.c \
     portable/src/protocol.c \
+    portable/src/propertyvalue.cpp \
     portable/src/r_data.c \
     portable/src/r_draw.c \
     portable/src/r_fakeradio.c \

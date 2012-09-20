@@ -116,55 +116,97 @@ typedef struct biassurface_s {
 #include "polyobj.h"
 #include "p_maptypes.h"
 
-// Game-specific, map object type definitions.
-typedef struct {
-    int             identifier;
-    char*           name;
-    valuetype_t     type;
-} mapobjprop_t;
+// Map entity definitions.
+struct mapentitydef_s;
 
-typedef struct {
-    int             identifier;
-    char*           name;
-    uint            numProps;
-    mapobjprop_t*   props;
-} gamemapobjdef_t;
+typedef struct mapentitypropertydef_s {
+    /// Entity-unique identifier associated with this property.
+    int id;
 
-// Map objects.
-typedef struct {
-    uint            idx;
-    valuetype_t     type;
-    uint            valueIdx;
-} customproperty_t;
+    /// Entity-unique name for this property.
+    char* name;
 
-typedef struct {
-    uint            elmIdx;
-    uint            numProps;
-    customproperty_t* props;
-} gamemapobj_t;
+    /// Value type identifier for this property.
+    valuetype_t type;
 
-typedef struct {
-    uint            num;
-    gamemapobjdef_t* def;
-    gamemapobj_t**  objs;
-} gamemapobjlist_t;
+    /// Entity definition which owns this property.
+    struct mapentitydef_s* entity;
+} MapEntityPropertyDef;
 
-// Map value databases.
-typedef struct {
-    valuetype_t     type;
-    uint            numElms;
-    void*           data;
-} valuetable_t;
+typedef struct mapentitydef_s {
+    /// Unique identifier associated with this entity.
+    int id;
 
-typedef struct {
-    uint            numTables;
-    valuetable_t**  tables;
-} valuedb_t;
+    /// Set of known properties for this entity.
+    uint numProps;
+    MapEntityPropertyDef* props;
 
-typedef struct {
-    gamemapobjlist_t* objLists;
-    valuedb_t       db;
-} gameobjdata_t;
+#ifdef __cplusplus
+    mapentitydef_s(int _id) : id(_id), numProps(0), props(0) {}
+#endif
+} MapEntityDef;
+
+/**
+ * Lookup a defined property by identifier.
+ *
+ * @param def           MapEntityDef instance.
+ * @param propertyId    Entity-unique identifier for the property to lookup.
+ * @param retDef        If not @c NULL, the found property definition is written here (else @c 0 if not found).
+ *
+ * @return Logical index of the found property (zero-based) else @c -1 if not found.
+ */
+int MapEntityDef_Property2(MapEntityDef* def, int propertyId, MapEntityPropertyDef** retDef);
+int MapEntityDef_Property(MapEntityDef* def, int propertyId/*,MapEntityPropertyDef** retDef = NULL*/);
+
+/**
+ * Lookup a defined property by name.
+ *
+ * @param def           MapEntityDef instance.
+ * @param propertyName  Entity-unique name for the property to lookup.
+ * @param retDef        If not @c NULL, the found property definition is written here (else @c 0 if not found).
+ *
+ * @return Logical index of the found property (zero-based) else @c -1 if not found.
+ */
+int MapEntityDef_PropertyByName2(MapEntityDef* def, const char* propertyName, MapEntityPropertyDef** retDef);
+int MapEntityDef_PropertyByName(MapEntityDef* def, const char* propertyName/*,MapEntityPropertyDef** retDef = NULL*/);
+
+/**
+ * Lookup a MapEntityDef by unique identfier @a id.
+ *
+ * @note Performance is O(log n).
+ *
+ * @return Found MapEntityDef else @c NULL.
+ */
+MapEntityDef* P_MapEntityDef(int id);
+
+/**
+ * Lookup a MapEntityDef by unique name.
+ *
+ * @note Performance is O(log n).
+ *
+ * @return Found MapEntityDef else @c NULL.
+ */
+MapEntityDef* P_MapEntityDefByName(char const* name);
+
+/**
+ * Lookup the unique name associated with MapEntityDef @a def.
+ *
+ * @note Performance is O(n).
+ *
+ * @return Unique name associated with @a def if found, else a zero-length string.
+ */
+Str const* P_NameForMapEntityDef(MapEntityDef* def);
+
+#include <EntityDatabase>
+
+boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef, uint elementIndex, valuetype_t valueType, void* valueAdr);
+
+byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
+short P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
+int P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
+fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
+angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
+float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
 
 extern Uri* mapUri;
 
@@ -230,15 +272,12 @@ boolean P_LoadMap(const char* uri);
 /**
  * To be called to initialize the game map object defs.
  */
-void P_InitGameMapObjDefs(void);
+void P_InitMapEntityDefs(void);
 
 /**
  * To be called to free all memory allocated for the map obj defs.
  */
-void P_ShutdownGameMapObjDefs(void);
-
-void P_InitGameMapObjDefs(void);
-void P_ShutdownGameMapObjDefs(void);
+void P_ShutdownMapEntityDefs(void);
 
 /**
  * Called by the game to register the map object types it wishes us to make
@@ -252,32 +291,6 @@ boolean P_RegisterMapObj(int identifier, const char* name);
  */
 boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
     const char* propName, valuetype_t type);
-
-/**
- * Look up a mapobj definition.
- *
- * @param identifer     If objName is @c NULL, compare using this unique identifier.
- * @param objName       If not @c NULL, compare using this unique name.
- */
-gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char *objName, boolean canCreate);
-
-/**
- * Destroy the given game map obj database.
- */
-void P_DestroyGameMapObjDB(gameobjdata_t* moData);
-
-void P_AddGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef, uint propIdx,
-    uint elmIdx, valuetype_t type, void* data);
-
-gamemapobj_t* P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def, uint elmIdx, boolean canCreate);
-
-uint P_CountGameMapObjs(int identifier);
-byte P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
-short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
-int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
-fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
-angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
-float P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -859,7 +859,7 @@ static int DD_BeginGameChangeWorker(void* paramaters)
     assert(p);
 
     P_InitMapUpdate();
-    P_InitGameMapObjDefs();
+    P_InitMapEntityDefs();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(100);
@@ -1172,7 +1172,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         P_SetCurrentMap(0);
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
-        P_ShutdownGameMapObjDefs();
+        P_ShutdownMapEntityDefs();
 
         R_ShutdownSvgs();
         R_DestroyColorPalettes();

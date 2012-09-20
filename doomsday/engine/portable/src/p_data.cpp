@@ -33,12 +33,22 @@
 #include "game.h"
 #include "rend_bias.h"
 #include "m_bams.h"
+#include "propertyvalue.h"
+
+#include <map>
+#include <EntityDatabase>
 
 #include <de/Error>
 #include <de/LegacyCore>
 #include <de/Log>
 #include <de/String>
+#include <de/stringpool.h>
 #include <de/memory.h>
+
+// Map entity definitions.
+static StringPool* entityDefs;
+typedef std::map<int, StringPoolId> EntityDefIdMap;
+static EntityDefIdMap entityDefIdMap;
 
 extern boolean mapSetup;
 
@@ -58,10 +68,6 @@ BspLeaf** bspLeafs;
 BspNode** bspNodes;
 
 GameMap* theMap;
-
-// Game-specific, map object type definitions.
-static uint numGameMapObjDefs;
-static gamemapobjdef_t* gameMapObjDefs;
 
 const char* P_GenerateUniqueMapId(const char* mapID)
 {
@@ -246,71 +252,129 @@ boolean P_LoadMap(const char* uriCString)
     return false;
 }
 
-gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char* objName, boolean canCreate)
+static int clearEntityDefsWorker(StringPoolId id, void* /*parameters*/)
 {
-    const int len = (objName? strlen(objName) : 0);
-    gamemapobjdef_t* def;
-
-    // Is this a known game object?
-    for(uint i = 0; i < numGameMapObjDefs; ++i)
+    MapEntityDef* def = static_cast<MapEntityDef*>( StringPool_UserPointer(entityDefs, id) );
+    DENG2_ASSERT(def);
+    for(uint k = 0; k < def->numProps; ++k)
     {
-        def = &gameMapObjDefs[i];
-
-        if(objName && objName[0])
-        {
-            if(!strnicmp(objName, def->name, len)) return def; // Found it!
-        }
-        else
-        {
-            if(identifier == def->identifier) return def; // Found it!
-        }
+        MapEntityPropertyDef* prop = def->props + k;
+        M_Free(prop->name);
     }
-
-    if(!canCreate) return NULL; // Not a known game map object.
-
-    if(identifier == 0) return NULL; // Not a valid indentifier.
-    if(!objName || !objName[0]) return NULL; // Must have a name.
-
-    // Ensure the name is unique.
-    for(uint i = 0; i < numGameMapObjDefs; ++i)
-    {
-        def = &gameMapObjDefs[i];
-        if(!strnicmp(objName, def->name, len)) return NULL; // Oh dear, a duplicate.
-    }
-
-    gameMapObjDefs = (gamemapobjdef_t*)M_Realloc(gameMapObjDefs, ++numGameMapObjDefs * sizeof(*gameMapObjDefs));
-
-    def = &gameMapObjDefs[numGameMapObjDefs - 1];
-    def->identifier = identifier;
-    def->name = (char*) M_Malloc(len + 1);
-    strncpy(def->name, objName, len);
-    def->name[len] = '\0';
-    def->numProps = 0;
-    def->props = NULL;
-
-    return def;
+    M_Free(def->props);
+    delete def;
+    return false; // Continue iteration.
 }
 
-boolean P_RegisterMapObj(int identifier, const char* name)
+static void clearEntityDefs(void)
 {
-    return !!P_GetGameMapObjDef(identifier, name, true);
+    if(!entityDefs) return;
+
+    StringPool_Iterate(entityDefs, clearEntityDefsWorker, 0/*no parameters*/);
+    StringPool_Delete(entityDefs); entityDefs = 0;
+    entityDefIdMap.clear();
 }
 
-static void registerMapObjProperty(int identifier, int propIdentifier,
-    const char* propName, valuetype_t type)
+MapEntityDef* P_MapEntityDef(int id)
 {
-    gamemapobjdef_t* def = P_GetGameMapObjDef(identifier, NULL, false);
+    EntityDefIdMap::iterator i = entityDefIdMap.find(id);
+    if(i != entityDefIdMap.end())
+    {
+        StringPoolId id = i->second;
+        return static_cast<MapEntityDef*>( StringPool_UserPointer(entityDefs, id) );
+    }
+    return 0; // Not found.
+}
 
-    if(!def) // Not a valid identifier.
-        throw de::Error("registerMapObjProperty", QString("Unknown map object identifier %1").arg(identifier));
+MapEntityDef* P_MapEntityDefByName(char const* _name)
+{
+    if(entityDefs)
+    {
+        ddstring_t name;
+        Str_InitStatic(&name, _name);
+        StringPoolId id = StringPool_IsInterned(entityDefs, &name);
+        return static_cast<MapEntityDef*>( StringPool_UserPointer(entityDefs, id) );
+    }
+    return 0; // Not found.
+}
 
-    if(propIdentifier == 0) // Not a valid identifier.
-        throw de::Error("registerMapObjProperty", "0 is not valid argument for propIdentifier");
+static int P_NameForMapEntityDefWorker(StringPoolId id, void* parameters)
+{
+    MapEntityDef* def = static_cast<MapEntityDef*>( parameters );
+    if(StringPool_UserPointer(entityDefs, id) == def) return id;
+    return 0; // Continue iteration.
+}
 
-    if(!propName || !propName[0]) // Must have a name.
-        throw de::Error("registerMapObjProperty", "Cannot register a property with a zero-length name");
+Str const* P_NameForMapEntityDef(MapEntityDef* def)
+{
+    if(def)
+    {
+        StringPoolId id = StringPool_Iterate(entityDefs, P_NameForMapEntityDefWorker, def);
+        return StringPool_String(entityDefs, id);
+    }
+    static ddstring_t zeroLengthString = { "" };
+    return &zeroLengthString;
+}
 
-    // Screen out value types we don't currently support for gmos.
+int MapEntityDef_Property2(MapEntityDef* def, int propertyId, MapEntityPropertyDef** retDef)
+{
+    DENG2_ASSERT(def);
+    MapEntityPropertyDef* found = 0;
+    for(uint i = 0; i < def->numProps; ++i)
+    {
+        MapEntityPropertyDef* prop = def->props + i;
+        if(prop->id == propertyId)
+        {
+            found = prop;
+            break;
+        }
+    }
+    if(retDef) *retDef = found;
+    return found? found - def->props : -1/* not found */;
+}
+
+int MapEntityDef_Property(MapEntityDef* def, int propertyId)
+{
+    return MapEntityDef_Property2(def, propertyId, NULL/*do not retrieve the property def*/);
+}
+
+int MapEntityDef_PropertyByName2(MapEntityDef* def, const char* propertyName, MapEntityPropertyDef** retDef)
+{
+    DENG2_ASSERT(def);
+    MapEntityPropertyDef* found = 0;
+    if(propertyName && propertyName[0])
+    {
+        for(uint i = 0; i < def->numProps; ++i)
+        {
+            MapEntityPropertyDef* prop = def->props + i;
+            if(!stricmp(prop->name, propertyName))
+            {
+                found = prop;
+                break;
+            }
+        }
+    }
+    if(retDef) *retDef = found;
+    return found? found - def->props : -1/* not found */;
+}
+
+int MapEntityDef_PropertyByName(MapEntityDef* def, const char* propertyName)
+{
+    return MapEntityDef_PropertyByName2(def, propertyName, NULL/*do not retrieve the property def*/);
+}
+
+void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* propertyName,
+                              valuetype_t type)
+{
+    DENG2_ASSERT(def);
+
+    if(propertyId == 0) // Not a valid identifier.
+        throw de::Error("MapEntityDef_AddProperty", "0 is not a valid propertyId");
+
+    if(!propertyName || !propertyName[0]) // Must have a name.
+        throw de::Error("MapEntityDef_AddProperty", "Invalid propertyName (zero-length string)");
+
+    // A supported value type?
     switch(type)
     {
     case DDVT_BYTE:
@@ -322,53 +386,103 @@ static void registerMapObjProperty(int identifier, int propIdentifier,
         break;
 
     default:
-        throw de::Error("registerMapObjProperty", QString("Unknown/not supported value type %1").arg(type));
+        throw de::Error("MapEntityDef_AddProperty", QString("Unknown/not supported value type %1").arg(type));
     }
 
-    // Next, make sure propIdentifer and propName are unique.
-    int len = (int)strlen(propName);
-    for(uint i = 0; i < def->numProps; ++i)
-    {
-        mapobjprop_t* prop = &def->props[i];
-
-        if(prop->identifier == propIdentifier)
-            throw de::Error("registerMapObjProperty",
-                            QString("propIdentifier %1 not unique for %2")
-                                .arg(propIdentifier).arg(def->name));
-
-        if(!strnicmp(propName, prop->name, len))
-            throw de::Error("registerMapObjProperty",
-                            QString("propName \"1\" not unique for %2")
-                                .arg(propName).arg(def->name));
-    }
+    // Ensure both the identifer and the name for the new property are unique.
+    if(MapEntityDef_Property(def, propertyId) >= 0)
+        throw de::Error("MapEntityDef_AddProperty", QString("propertyId %1 not unique for %2")
+                                                    .arg(propertyId).arg(Str_Text(P_NameForMapEntityDef(def))));
+    if(MapEntityDef_PropertyByName(def, propertyName) >= 0)
+        throw de::Error("MapEntityDef_AddProperty", QString("propertyName \"%1\" not unique for %2")
+                                                    .arg(propertyName).arg(Str_Text(P_NameForMapEntityDef(def))));
 
     // Looks good! Add it to the list of properties.
-    def->props = (mapobjprop_t*) M_Realloc(def->props, ++def->numProps * sizeof(*def->props));
+    def->props = (MapEntityPropertyDef*) M_Realloc(def->props, ++def->numProps * sizeof(*def->props));
     if(!def->props)
-        throw de::Error("registerMapObjProperty",
-                        QString("Failed on (re)allocation of %1 bytes for new MapObjProperty")
+        throw de::Error("MapEntityDef_AddProperty",
+                        QString("Failed on (re)allocation of %1 bytes for new MapEntityPropertyDef array")
                             .arg((unsigned long) sizeof(*def->props)));
 
-    mapobjprop_t* prop = &def->props[def->numProps - 1];
-    prop->identifier = propIdentifier;
+    MapEntityPropertyDef* prop = &def->props[def->numProps - 1];
+    prop->id = propertyId;
 
+    int len = (int)strlen(propertyName);
     prop->name = (char*) M_Malloc(sizeof(*prop->name) * (len + 1));
     if(!prop->name)
-        throw de::Error("registerMapObjProperty",
-                        QString("Failed on allocation of %1 bytes for MapObjProperty::name")
+        throw de::Error("MapEntityDef_AddProperty",
+                        QString("Failed on allocation of %1 bytes for property name")
                             .arg((unsigned long) (sizeof(*prop->name) * (len + 1))));
 
-    strncpy(prop->name, propName, len);
+    strncpy(prop->name, propertyName, len);
     prop->name[len] = '\0';
     prop->type = type;
+    prop->entity = def;
 }
 
-boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
-    const char* propName, valuetype_t type)
+/**
+ * Look up a mapobj definition.
+ *
+ * @param identifer     If objName is @c NULL, compare using this unique identifier.
+ * @param objName       If not @c NULL, compare using this unique name.
+ */
+static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, boolean canCreate)
+{
+    if(identifier == 0 && (!entityName || !entityName[0])) return 0;
+
+    // Is this an already known entity?
+    if(entityName && entityName[0])
+    {
+        MapEntityDef* found = P_MapEntityDefByName(entityName);
+        if(found) return found;
+    }
+    else
+    {
+        MapEntityDef* found = P_MapEntityDef(identifier);
+        if(found) return found;
+    }
+
+    // An unknown entity. Are we creating?
+    if(!canCreate) return 0;
+
+    // Ensure the name is unique.
+    if(P_MapEntityDefByName(entityName)) return 0;
+
+    // Ensure the identifier is unique.
+    if(P_MapEntityDef(identifier)) return 0;
+
+    // Have we yet to initialize the map entity definition dataset?
+    if(!entityDefs)
+    {
+        entityDefs = StringPool_New();
+    }
+
+    Str name; Str_InitStatic(&name, entityName);
+    StringPoolId id = StringPool_Intern(entityDefs, &name);
+    MapEntityDef* def = new MapEntityDef(identifier);
+    StringPool_SetUserPointer(entityDefs, id, def);
+
+    entityDefIdMap.insert(std::pair<int, StringPoolId>(identifier, id));
+
+    return def;
+}
+
+/// @note Part of the Doomsday public API.
+boolean P_RegisterMapObj(int identifier, const char* name)
+{
+    return !!findMapEntityDef(identifier, name, true /*do create*/);
+}
+
+/// @note Part of the Doomsday public API.
+boolean P_RegisterMapObjProperty(int entityId, int propertyId,
+    const char* propertyName, valuetype_t type)
 {
     try
     {
-        registerMapObjProperty(identifier, propIdentifier, propName, type);
+        MapEntityDef* def = findMapEntityDef(entityId, 0, false /*do not create*/);
+        if(!def) throw de::Error("P_RegisterMapObjProperty", QString("Unknown entityId %1").arg(entityId));
+
+        MapEntityDef_AddProperty(def, propertyId, propertyName, type);
         return true; // Success!
     }
     catch(de::Error& er)
@@ -378,500 +492,103 @@ boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
     return false;
 }
 
-static void clearGameMapObjDefs(void)
-{
-    if(gameMapObjDefs)
-    {
-        for(uint i = 0; i < numGameMapObjDefs; ++i)
-        {
-            gamemapobjdef_t* def = &gameMapObjDefs[i];
-            for(uint k = 0; k < def->numProps; ++k)
-            {
-                mapobjprop_t* prop = &def->props[k];
-                M_Free(prop->name);
-            }
-            M_Free(def->props);
-            M_Free(def->name);
-        }
-        M_Free(gameMapObjDefs);
-        gameMapObjDefs = NULL;
-    }
-    numGameMapObjDefs = 0;
-}
-
-void P_InitGameMapObjDefs(void)
+void P_InitMapEntityDefs(void)
 {
     // Allow re-init.
-    clearGameMapObjDefs();
+    clearEntityDefs();
 }
 
-void P_ShutdownGameMapObjDefs(void)
+void P_ShutdownMapEntityDefs(void)
 {
-    clearGameMapObjDefs();
+    clearEntityDefs();
 }
 
-static valuetable_t* getDBTable(valuedb_t* db, valuetype_t type, boolean canCreate)
+/// @note Part of the Doomsday public API.
+extern "C" uint P_CountGameMapObjs(int entityId)
 {
-    valuetable_t* tbl;
-    uint i;
-
-    if(!db) return NULL;
-
-    for(i = 0; i < db->numTables; ++i)
-    {
-        tbl = db->tables[i];
-        if(tbl->type == type)
-        {   // Found it!
-            return tbl;
-        }
-    }
-
-    if(!canCreate) return NULL;
-
-    // We need to add a new value table to the db.
-    db->tables = (valuetable_t**) M_Realloc(db->tables, ++db->numTables * sizeof(*db->tables));
-    tbl = db->tables[db->numTables - 1] = (valuetable_t*) M_Malloc(sizeof(valuetable_t));
-
-    tbl->data = NULL;
-    tbl->type = type;
-    tbl->numElms = 0;
-
-    return tbl;
+    if(!theMap || !theMap->entityDatabase) return 0;
+    EntityDatabase* db = theMap->entityDatabase;
+    return EntityDatabase_EntityCount(db, P_MapEntityDef(entityId));
 }
 
-static uint insertIntoDB(valuedb_t* db, valuetype_t type, void *data)
-{
-    valuetable_t* tbl = getDBTable(db, type, true);
-
-    // Insert the new value.
-    switch(type)
-    {
-    case DDVT_BYTE:
-        tbl->data = M_Realloc(tbl->data, ++tbl->numElms);
-        ((byte*) tbl->data)[tbl->numElms - 1] = *((byte*) data);
-        break;
-
-    case DDVT_SHORT:
-        tbl->data = M_Realloc(tbl->data, ++tbl->numElms * sizeof(short));
-        ((short*) tbl->data)[tbl->numElms - 1] = *((short*) data);
-        break;
-
-    case DDVT_INT:
-        tbl->data = M_Realloc(tbl->data, ++tbl->numElms * sizeof(int));
-        ((int*) tbl->data)[tbl->numElms - 1] = *((int*) data);
-        break;
-
-    case DDVT_FIXED:
-        tbl->data = M_Realloc(tbl->data, ++tbl->numElms * sizeof(fixed_t));
-        ((fixed_t*) tbl->data)[tbl->numElms - 1] = *((fixed_t*) data);
-        break;
-
-    case DDVT_ANGLE:
-        tbl->data = M_Realloc(tbl->data, ++tbl->numElms * sizeof(angle_t));
-        ((angle_t*) tbl->data)[tbl->numElms - 1] = *((angle_t*) data);
-        break;
-
-    case DDVT_FLOAT:
-        tbl->data = M_Realloc(tbl->data, ++tbl->numElms * sizeof(float));
-        ((float*) tbl->data)[tbl->numElms - 1] = *((float*) data);
-        break;
-
-    default:
-        throw de::Error("insetIntoDB", QString("Unknown value type %1").arg(type));
-    }
-
-    return tbl->numElms - 1;
-}
-
-static void* getPtrToDBElm(valuedb_t* db, valuetype_t type, uint elmIdx)
-{
-    valuetable_t* tbl = getDBTable(db, type, false);
-
-    if(!tbl)
-        throw de::Error("getPtrToDBElm", QString("Table for type %1 not found").arg(int(type)));
-
-    // Sanity check: ensure the elmIdx is in bounds.
-    if(elmIdx >= tbl->numElms)
-        throw de::Error("getPtrToDBElm", "valueIdx out of range");
-
-    switch(tbl->type)
-    {
-    case DDVT_BYTE:
-        return &(((byte*) tbl->data)[elmIdx]);
-
-    case DDVT_SHORT:
-        return &(((short*)tbl->data)[elmIdx]);
-
-    case DDVT_INT:
-        return &(((int*) tbl->data)[elmIdx]);
-
-    case DDVT_FIXED:
-        return &(((fixed_t*) tbl->data)[elmIdx]);
-
-    case DDVT_ANGLE:
-        return &(((angle_t*) tbl->data)[elmIdx]);
-
-    case DDVT_FLOAT:
-        return &(((float*) tbl->data)[elmIdx]);
-
-    default:
-        throw de::Error("P_GetGMOByte", QString("Invalid table type %1").arg(tbl->type));
-    }
-
-    // Should never reach here.
-    return NULL;
-}
-
-void P_DestroyGameMapObjDB(gameobjdata_t* moData)
-{
-    if(!moData) return;
-
-    if(moData->objLists)
-    {
-        for(uint i = 0; i < numGameMapObjDefs; ++i)
-        {
-            gamemapobjlist_t* objList = &moData->objLists[i];
-            for(uint k = 0; k < objList->num; ++k)
-            {
-                gamemapobj_t* gmo = objList->objs[k];
-                if(gmo->props) M_Free(gmo->props);
-                M_Free(gmo);
-            }
-        }
-        M_Free(moData->objLists);
-    }
-    moData->objLists = 0;
-
-    if(moData->db.tables)
-    {
-        for(uint i = 0; i < moData->db.numTables; ++i)
-        {
-            valuetable_t* tbl = moData->db.tables[i];
-            if(tbl->data) M_Free(tbl->data);
-            M_Free(tbl);
-        }
-        M_Free(moData->db.tables);
-    }
-    moData->db.tables = 0;
-    moData->db.numTables = 0;
-}
-
-static uint countGameMapObjs(gameobjdata_t* moData, int identifier)
-{
-    if(moData)
-    {
-        for(uint i = 0; i < numGameMapObjDefs; ++i)
-        {
-            gamemapobjlist_t* objList = &moData->objLists[i];
-            if(objList->def->identifier == identifier)
-                return objList->num;
-        }
-    }
-    return 0;
-}
-
-uint P_CountGameMapObjs(int identifier)
-{
-    if(!theMap) return 0;
-    return countGameMapObjs(&theMap->gameObjData, identifier);
-}
-
-static gamemapobjlist_t* getMapObjList(gameobjdata_t* moData, gamemapobjdef_t* def)
-{
-    if(moData && def)
-    {
-        for(uint i = 0; i < numGameMapObjDefs; ++i)
-        {
-            if(moData->objLists[i].def == def)
-                return &moData->objLists[i];
-        }
-    }
-    return NULL;
-}
-
-gamemapobj_t* P_GetGameMapObj(gameobjdata_t* moData, gamemapobjdef_t* def, uint elmIdx,
-    boolean canCreate)
-{
-    if(!moData->objLists)
-    {
-        // We haven't yet created the lists.
-        moData->objLists = (gamemapobjlist_t*) M_Malloc(sizeof(*moData->objLists) * numGameMapObjDefs);
-        for(uint i = 0; i < numGameMapObjDefs; ++i)
-        {
-            gamemapobjlist_t* objList = &moData->objLists[i];
-
-            objList->def = &gameMapObjDefs[i];
-            objList->objs = NULL;
-            objList->num = 0;
-        }
-    }
-
-    gamemapobjlist_t* objList = getMapObjList(moData, def);
-    DENG2_ASSERT(objList);
-
-    // Have we already created this gmo?
-    for(uint i = 0; i < objList->num; ++i)
-    {
-        gamemapobj_t* gmo = objList->objs[i];
-        if(gmo->elmIdx == elmIdx)
-            return gmo; // Yep, return it.
-    }
-
-    if(!canCreate)
-        return NULL;
-
-    // It is a new gamemapobj.
-    objList->objs = (gamemapobj_t**) M_Realloc(objList->objs, ++objList->num * sizeof(*objList->objs));
-
-    gamemapobj_t* gmo = objList->objs[objList->num - 1] = (gamemapobj_t*) M_Malloc(sizeof(*gmo));
-    gmo->elmIdx = elmIdx;
-    gmo->numProps = 0;
-    gmo->props = NULL;
-
-    return gmo;
-}
-
-static void addGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef,
-    uint propIdx, uint elmIdx, valuetype_t type, void* data)
-{
-    gamemapobj_t* gmo = P_GetGameMapObj(moData, gmoDef, elmIdx, true);
-
-    if(!gmo)
-        throw de::Error("addGameMapObj", "Failed creating new game object def");
-
-    // Check whether this is a new value or whether we are updating an
-    // existing one.
-    for(uint i = 0; i < gmo->numProps; ++i)
-    {
-        if(gmo->props[i].idx == propIdx)
-        {
-            // We are updating.
-            //if(gmo->props[i].type == type)
-            //    updateInDB(map->values, type, gmo->props[i].valueIdx, data);
-            //else
-                throw de::Error("addGameMapObj", "Value type changes not currently supported");
-            return;
-        }
-    }
-
-    // Its a new value.
-    gmo->props = (customproperty_t*) M_Realloc(gmo->props, ++gmo->numProps * sizeof(*gmo->props));
-
-    customproperty_t* prop = &gmo->props[gmo->numProps - 1];
-    prop->idx = propIdx;
-    prop->type = type;
-    prop->valueIdx = insertIntoDB(&moData->db, type, data);
-}
-
-void P_AddGameMapObjValue(gameobjdata_t* moData, gamemapobjdef_t* gmoDef, uint propIdx,
-    uint elmIdx, valuetype_t type, void* data)
+boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef,
+    uint elementIndex, valuetype_t valueType, void* valueAdr)
 {
     try
     {
-        addGameMapObjValue(moData, gmoDef, propIdx, elmIdx, type, data);
+        return EntityDatabase_SetProperty(db, propertyDef, elementIndex, valueType, valueAdr);
     }
     catch(de::Error& er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
+    return false;
 }
 
-static void* getGMOPropValue(gameobjdata_t* data, int identifier, uint elmIdx,
-    int propIdentifier, valuetype_t *type)
+static MapEntityPropertyDef* entityPropertyDef(int entityId, int propertyId)
 {
-    gamemapobjdef_t* def = P_GetGameMapObjDef(identifier, NULL, false);
-    if(!def)
-        throw de::Error("getGMOPropValue", QString("Invalid identifier %1").arg(identifier));
+    // Is this a known entity?
+    MapEntityDef* entity = P_MapEntityDef(entityId);
+    if(!entity) throw de::Error("entityPropertyDef", QString("Unknown entity definition id %1").arg(entityId));
 
-    gamemapobj_t* gmo = P_GetGameMapObj(data, def, elmIdx, false);
-    if(!gmo)
-        throw de::Error("getGMOPropValue", QString("There is no element %1 of type %2").arg(elmIdx).arg(def->name));
+    // Is this a known property?
+    MapEntityPropertyDef* property;
+    if(MapEntityDef_Property2(entity, propertyId, &property) < 0)
+        throw de::Error("entityPropertyDef", QString("Entity definition %1 has no property with id %2")
+                                                 .arg(Str_Text(P_NameForMapEntityDef(entity)))
+                                                 .arg(propertyId));
 
-    // Find the requested property.
-    for(uint i = 0; i < gmo->numProps; ++i)
-    {
-        customproperty_t* prop = &gmo->props[i];
-
-        if(def->props[prop->idx].identifier == propIdentifier)
-        {
-            void* ptr = getPtrToDBElm(&data->db, prop->type, prop->valueIdx);
-            if(!ptr)
-                throw de::Error("getGMOPropValue", "Failed value look up");
-
-            if(type) *type = prop->type;
-
-            return ptr;
-        }
-    }
-
-    return NULL;
+    return property; // Found it.
 }
 
-/**
- * Takes care of some basic type conversions.
- */
-static void setValue(void* dst, valuetype_t dstType, void* src, valuetype_t srcType)
+static void setValue(void* dst, valuetype_t dstType, PropertyValue const* pvalue)
 {
-    if(dstType == DDVT_FIXED)
+    switch(dstType)
     {
-        fixed_t* d = reinterpret_cast<fixed_t*>(dst);
-
-        switch(srcType)
-        {
-        case DDVT_BYTE:
-            *d = (*((byte*) src) << FRACBITS);
-            break;
-        case DDVT_INT:
-            *d = (*((int*) src) << FRACBITS);
-            break;
-        case DDVT_FIXED:
-            *d = *((fixed_t*) src);
-            break;
-        case DDVT_FLOAT:
-            *d = FLT2FIX(*((float*) src));
-            break;
-        default:
-            throw de::Error("setValue", QString("DDVT_FIXED incompatible with value type %1").arg(value_Str(srcType)));
-        }
-    }
-    else if(dstType == DDVT_FLOAT)
-    {
-        float* d = reinterpret_cast<float*>(dst);
-
-        switch(srcType)
-        {
-        case DDVT_BYTE:
-            *d = *((byte*) src);
-            break;
-        case DDVT_INT:
-            *d = *((int*) src);
-            break;
-        case DDVT_SHORT:
-            *d = *((short*) src);
-            break;
-        case DDVT_FIXED:
-            *d = FIX2FLT(*((fixed_t*) src));
-            break;
-        case DDVT_FLOAT:
-            *d = *((float*) src);
-            break;
-        default:
-            throw de::Error("setValue", QString("DDVT_FLOAT incompatible with value type %1").arg(value_Str(srcType)));
-        }
-    }
-    else if(dstType == DDVT_BYTE)
-    {
-        byte* d = reinterpret_cast<byte*>(dst);
-
-        switch(srcType)
-        {
-        case DDVT_BYTE:
-            *d = *((byte*) src);
-            break;
-        case DDVT_INT:
-            *d = *((int*) src);
-            break;
-        case DDVT_FLOAT:
-            *d = (byte) *((float*) src);
-            break;
-        default:
-            throw de::Error("setValue", QString("DDVT_BYTE incompatible with value type %1").arg(value_Str(srcType)));
-        }
-    }
-    else if(dstType == DDVT_INT)
-    {
-        int* d = reinterpret_cast<int*>(dst);
-
-        switch(srcType)
-        {
-        case DDVT_BYTE:
-            *d = *((byte*) src);
-            break;
-        case DDVT_INT:
-            *d = *((int*) src);
-            break;
-        case DDVT_SHORT:
-            *d = *((short*) src);
-            break;
-        case DDVT_FLOAT:
-            *d = *((float*) src);
-            break;
-        case DDVT_FIXED:
-            *d = (*((fixed_t*) src) >> FRACBITS);
-            break;
-        default:
-            throw de::Error("setValue", QString("DDVT_INT incompatible with value type %1.").arg(value_Str(srcType)));
-        }
-    }
-    else if(dstType == DDVT_SHORT)
-    {
-        short* d = reinterpret_cast<short*>(dst);
-
-        switch(srcType)
-        {
-        case DDVT_BYTE:
-            *d = *((byte*) src);
-            break;
-        case DDVT_INT:
-            *d = *((int*) src);
-            break;
-        case DDVT_SHORT:
-            *d = *((short*) src);
-            break;
-        case DDVT_FLOAT:
-            *d = *((float*) src);
-            break;
-        case DDVT_FIXED:
-            *d = (*((fixed_t*) src) >> FRACBITS);
-            break;
-        default:
-            throw de::Error("setValue", QString("DDVT_SHORT incompatible with value type %1").arg(value_Str(srcType)));
-        }
-    }
-    else if(dstType == DDVT_ANGLE)
-    {
-        angle_t* d = reinterpret_cast<angle_t*>(dst);
-
-        switch(srcType)
-        {
-        case DDVT_ANGLE:
-            *d = *((angle_t*) src);
-            break;
-        default:
-            throw de::Error("setValue", QString("DDVT_ANGLE incompatible with value type %1").arg(value_Str(srcType)));
-        }
-    }
-    else
-    {
+    case DDVT_FIXED: *((fixed_t*) dst) = pvalue->asFixed(); break;
+    case DDVT_FLOAT: *(  (float*) dst) = pvalue->asFloat(); break;
+    case DDVT_BYTE:  *(   (byte*) dst) = pvalue->asByte();  break;
+    case DDVT_INT:   *(    (int*) dst) = pvalue->asInt32(); break;
+    case DDVT_SHORT: *(  (short*) dst) = pvalue->asInt16(); break;
+    case DDVT_ANGLE: *((angle_t*) dst) = pvalue->asAngle(); break;
+    default:
         throw de::Error("setValue", QString("Unknown value type %d").arg(dstType));
     }
 }
 
-byte P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier)
+/// @note Part of the Doomsday public API.
+byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
 {
     byte returnVal = 0;
-    if(theMap)
+    if(theMap && theMap->entityDatabase)
     {
-        valuetype_t type;
-        void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-        if(ptr)
+        try
         {
-            setValue(&returnVal, DDVT_BYTE, ptr, type);
+            EntityDatabase* db = theMap->entityDatabase;
+            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+
+            setValue(&returnVal, DDVT_BYTE, EntityDatabase_Property(db, propDef, elementIndex));
+        }
+        catch(de::Error& er)
+        {
+            LOG_WARNING("%s. Returning 0.") << er.asText();
         }
     }
     return returnVal;
 }
 
-short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier)
+/// @note Part of the Doomsday public API.
+short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
 {
     short returnVal = 0;
-    if(theMap)
+    if(theMap && theMap->entityDatabase)
     {
         try
         {
-            valuetype_t type;
-            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-            if(ptr) setValue(&returnVal, DDVT_SHORT, ptr, type);
+            EntityDatabase* db = theMap->entityDatabase;
+            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+
+            setValue(&returnVal, DDVT_SHORT, EntityDatabase_Property(db, propDef, elementIndex));
         }
         catch(de::Error& er)
         {
@@ -881,16 +598,18 @@ short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier)
     return returnVal;
 }
 
-int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier)
+/// @note Part of the Doomsday public API.
+int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
 {
     int returnVal = 0;
-    if(theMap)
+    if(theMap && theMap->entityDatabase)
     {
         try
         {
-            valuetype_t type;
-            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-            if(ptr) setValue(&returnVal, DDVT_INT, ptr, type);
+            EntityDatabase* db = theMap->entityDatabase;
+            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+
+            setValue(&returnVal, DDVT_INT, EntityDatabase_Property(db, propDef, elementIndex));
         }
         catch(de::Error& er)
         {
@@ -900,16 +619,18 @@ int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier)
     return returnVal;
 }
 
-fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier)
+/// @note Part of the Doomsday public API.
+fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
-    if(theMap)
+    if(theMap && theMap->entityDatabase)
     {
         try
         {
-            valuetype_t type;
-            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-            if(ptr) setValue(&returnVal, DDVT_FIXED, ptr, type);
+            EntityDatabase* db = theMap->entityDatabase;
+            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+
+            setValue(&returnVal, DDVT_FIXED, EntityDatabase_Property(db, propDef, elementIndex));
         }
         catch(de::Error& er)
         {
@@ -919,16 +640,18 @@ fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier)
     return returnVal;
 }
 
-angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier)
+/// @note Part of the Doomsday public API.
+angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
-    if(theMap)
+    if(theMap && theMap->entityDatabase)
     {
         try
         {
-            valuetype_t type;
-            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-            if(ptr) setValue(&returnVal, DDVT_ANGLE, ptr, type);
+            EntityDatabase* db = theMap->entityDatabase;
+            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+
+            setValue(&returnVal, DDVT_ANGLE, EntityDatabase_Property(db, propDef, elementIndex));
         }
         catch(de::Error& er)
         {
@@ -938,16 +661,18 @@ angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier)
     return returnVal;
 }
 
-float P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier)
+/// @note Part of the Doomsday public API.
+float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
 {
     float returnVal = 0;
-    if(theMap)
+    if(theMap && theMap->entityDatabase)
     {
         try
         {
-            valuetype_t type;
-            void* ptr = getGMOPropValue(&theMap->gameObjData, identifier, elmIdx, propIdentifier, &type);
-            if(ptr) setValue(&returnVal, DDVT_FLOAT, ptr, type);
+            EntityDatabase* db = theMap->entityDatabase;
+            MapEntityPropertyDef* propDef = entityPropertyDef(entityId, propertyId);
+
+            setValue(&returnVal, DDVT_FLOAT, EntityDatabase_Property(db, propDef, elementIndex));
         }
         catch(de::Error& er)
         {

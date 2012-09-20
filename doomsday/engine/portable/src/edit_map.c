@@ -496,10 +496,8 @@ boolean MPE_Begin(const char* mapUri)
 
     if(editMapInited) return true; // Already been here.
 
-    // Init the gameObj lists, and value db.
-    map->gameObjData.db.numTables = 0;
-    map->gameObjData.db.tables = NULL;
-    map->gameObjData.objLists = NULL;
+    // Initialize the game-specific map entity property database.
+    map->entityDatabase = EntityDatabase_New();
 
     destroyMap();
 
@@ -1597,9 +1595,9 @@ boolean MPE_End(void)
 
     gamemap = Z_Calloc(sizeof(*gamemap), PU_MAPSTATIC, 0);
 
-    // Pass on the game map obj database. The game will want to query it
-    // once we have finished constructing the map.
-    memcpy(&gamemap->gameObjData, &map->gameObjData, sizeof gamemap->gameObjData);
+    // Pass on the game-specific map entity property database. The game will
+    // want to query it once we have finished constructing the map.
+    gamemap->entityDatabase = map->entityDatabase;
 
     /**
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
@@ -1689,7 +1687,7 @@ boolean MPE_End(void)
     {
         // Failed. Need to clean up.
         clearMaterialDict();
-        P_DestroyGameMapObjDB(&gamemap->gameObjData);
+        EntityDatabase_Delete(gamemap->entityDatabase);
         Z_Free(gamemap);
         lastBuiltMapResult = false; // Failed.
 
@@ -2128,35 +2126,31 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     return po->buildData.index;
 }
 
-boolean MPE_GameObjProperty(const char* objName, uint idx, const char* propName,
-    valuetype_t type, void* data)
+boolean MPE_GameObjProperty(const char* entityName, uint elementIndex,
+                            const char* propertyName, valuetype_t type, void* valueAdr)
 {
-    gamemapobjdef_t* def;
-    size_t len;
-    uint i;
+    MapEntityDef* entityDef;
+    MapEntityPropertyDef* propertyDef;
 
-    if(!objName || !propName || !data)
+    if(!editMapInited) return false;
+
+    if(!entityName || !propertyName || !valueAdr)
         return false; // Hmm...
 
-    // Is this a known object?
-    def = P_GetGameMapObjDef(0, objName, false);
-    if(!def) return false; // No.
-
-    // Is this a known property?
-    len = strlen(propName);
-    for(i = 0; i < def->numProps; ++i)
+    // Is this a known entity?
+    entityDef = P_MapEntityDefByName(entityName);
+    if(!entityDef)
     {
-        if(!strnicmp(propName, def->props[i].name, len))
-        {
-            // Create a record of this so that the game can query it later.
-            P_AddGameMapObjValue(&map->gameObjData, def, i, idx, type, data);
-            return true; // We're done.
-        }
+        Con_Message("Warning: MPE_GameObjProperty: Unknown entity name:\"%s\", ignoring.\n", entityName);
+        return false;
     }
 
-    // An unknown property.
-    VERBOSE( Con_Message("MPE_GameObjProperty: %s has no property \"%s\".\n",
-                         def->name, propName) );
+    // Is this a known property?
+    if(MapEntityDef_PropertyByName2(entityDef, propertyName, &propertyDef) < 0)
+    {
+        Con_Message("Warning: MPE_GameObjProperty: Entity \"%s\" has no \"%s\" property, ignoring.\n", entityName, propertyName);
+        return false;
+    }
 
-    return false;
+    return P_SetMapEntityProperty(map->entityDatabase, propertyDef, elementIndex, type, valueAdr);
 }

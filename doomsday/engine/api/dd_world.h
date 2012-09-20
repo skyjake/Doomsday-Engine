@@ -53,19 +53,19 @@ int             P_Callbackp(int type, void* ptr, void* context,
 int             P_Iteratep(void *ptr, uint prop, void* context,
                            int (*callback) (void* p, void* ctx));
 
-/* dummy functions */
+/* dummy objects */
 void*           P_AllocDummy(int type, void* extraData);
 void            P_FreeDummy(void* dummy);
 boolean         P_IsDummy(void* dummy);
 void*           P_DummyExtraData(void* dummy);
 
-uint            P_CountGameMapObjs(int identifier);
-byte            P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
-short           P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
-int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
-fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
-angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
-float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
+uint            P_CountGameMapObjs(int entityId);
+byte            P_GetGMOByte(int entityId, uint elementIndex, int propertyId);
+short           P_GetGMOShort(int entityId, uint elementIndex, int propertyId);
+int             P_GetGMOInt(int entityId, uint elementIndex, int propertyId);
+fixed_t         P_GetGMOFixed(int entityId, uint elementIndex, int propertyId);
+angle_t         P_GetGMOAngle(int entityId, uint elementIndex, int propertyId);
+float           P_GetGMOFloat(int entityId, uint elementIndex, int propertyId);
 
 ///@}
 
