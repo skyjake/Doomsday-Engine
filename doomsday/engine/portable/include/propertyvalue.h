@@ -30,6 +30,8 @@
 class PropertyValue
 {
 public:
+    virtual ~PropertyValue() {}
+
     virtual valuetype_t type() const = 0;
     virtual char const* typeName() const = 0;
 
