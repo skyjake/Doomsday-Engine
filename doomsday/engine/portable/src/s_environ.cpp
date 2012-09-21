@@ -22,18 +22,19 @@
  * 02110-1301 USA</small>
  */
 
-#include <ctype.h>
-#include <string.h>
+#include <cctype>
+#include <cstring>
 #include <set>
 
 #include "de_base.h"
-#include "de_console.h"
+#include "de_audio.h"
 #include "de_play.h"
 #include "de_refresh.h"
-#include "de_audio.h"
-#include "de_misc.h"
+#include "de_system.h"
 
 #include "materialvariant.h"
+
+#include <de/Log>
 
 typedef struct {
     const char  name[9];    // Material type name.
@@ -49,7 +50,7 @@ static materialenvinfo_t matInfo[NUM_MATERIAL_ENV_CLASSES] = {
     {"Cloth",     5,       5,      255}
 };
 
-static ownernode_t *unusedNodeList = NULL;
+static ownernode_t* unusedNodeList;
 
 typedef std::set<Sector*> ReverbUpdateRequested;
 ReverbUpdateRequested reverbUpdateRequested;
@@ -63,25 +64,21 @@ const char* S_MaterialEnvClassName(material_env_class_t mclass)
 
 material_env_class_t S_MaterialEnvClassForUri(const Uri* uri)
 {
-    ded_tenviron_t* env;
-    int i;
-    for(i = 0, env = defs.textureEnv; i < defs.count.textureEnv.num; ++i, env++)
+    if(uri)
     {
-        int j;
-        for(j = 0; j < env->count.num; ++j)
+        ded_tenviron_t* env = defs.textureEnv;
+        for(int i = 0; i < defs.count.textureEnv.num; ++i, env++)
         {
-            Uri* ref = env->materials[j];
+            for(int k = 0; k < env->count.num; ++k)
+            {
+                Uri* ref = env->materials[k];
+                if(!ref || !Uri_Equality(ref, uri)) continue;
 
-            if(!ref) continue;
-
-            if(Uri_Equality(ref, uri))
-            {   // A match!
                 // See if we recognise the material name.
-                int k;
-                for(k = 0; k < NUM_MATERIAL_ENV_CLASSES; ++k)
+                for(int l = 0; l < NUM_MATERIAL_ENV_CLASSES; ++l)
                 {
-                    if(!stricmp(env->id, matInfo[k].name))
-                        return material_env_class_t(MEC_FIRST + k);
+                    if(!stricmp(env->id, matInfo[l].name))
+                        return material_env_class_t(MEC_FIRST + l);
                 }
                 return MEC_UNKNOWN;
             }
@@ -90,12 +87,24 @@ material_env_class_t S_MaterialEnvClassForUri(const Uri* uri)
     return MEC_UNKNOWN;
 }
 
+// Free any nodes left in the unused list.
+static void clearUnusedNodes()
+{
+    while(unusedNodeList)
+    {
+        ownernode_t* next = unusedNodeList->next;
+        M_Free(unusedNodeList);
+        unusedNodeList = next;
+    }
+}
+
 static ownernode_t* newOwnerNode(void)
 {
     ownernode_t* node;
 
     if(unusedNodeList)
-    {   // An existing node is available for re-use.
+    {
+        // An existing node is available for re-use.
         node = unusedNodeList;
         unusedNodeList = unusedNodeList->next;
 
@@ -103,7 +112,8 @@ static ownernode_t* newOwnerNode(void)
         node->data = NULL;
     }
     else
-    {   // Need to allocate another.
+    {
+        // Need to allocate another.
         node = (ownernode_t*) M_Malloc(sizeof(ownernode_t));
     }
 
@@ -112,15 +122,14 @@ static ownernode_t* newOwnerNode(void)
 
 static void setBspLeafSectorOwner(ownerlist_t* ownerList, BspLeaf* bspLeaf)
 {
-    ownernode_t* node;
-
+    DENG2_ASSERT(ownerList);
     if(!bspLeaf) return;
 
     // Add a new owner.
     // NOTE: No need to check for duplicates.
     ownerList->count++;
 
-    node = newOwnerNode();
+    ownernode_t* node = newOwnerNode();
     node->data = bspLeaf;
     node->next = ownerList->head;
     ownerList->head = node;
@@ -128,32 +137,24 @@ static void setBspLeafSectorOwner(ownerlist_t* ownerList, BspLeaf* bspLeaf)
 
 static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 {
-    assert(map && secIDX < map->numSectors);
-    {
-    Sector* sec = &map->sectors[secIDX];
+    Sector* sec = GameMap_Sector(map, secIDX);
+    if(!sec || !sec->lineDefCount) return;
+
     ownerlist_t bspLeafOwnerList;
-    ownernode_t* node, *p;
-    BspLeaf* bspLeaf;
-    AABoxf aaBox;
-    uint i;
-
-    if(0 == sec->lineDefCount)
-        return;
-
     memset(&bspLeafOwnerList, 0, sizeof(bspLeafOwnerList));
 
-    memcpy(&aaBox, &sec->aaBox, sizeof(aaBox));
+    AABoxd aaBox = sec->aaBox;
     aaBox.minX -= 128;
     aaBox.minY -= 128;
     aaBox.maxX += 128;
     aaBox.maxY += 128;
 
-    /*DEBUG_Message(("sector %i: (%f,%f) - (%f,%f)\n", c,
-                     bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]));*/
+    // LOG_DEBUG("sector %u: min[x:%f, y:%f]  max[x:%f, y:%f]")
+    //    << secIDX <<  aaBox.minX << aaBox.minY << aaBox.maxX << aaBox.maxY;
 
-    for(i = 0; i < map->numBspLeafs; ++i)
+    for(uint i = 0; i < map->numBspLeafs; ++i)
     {
-        bspLeaf = GameMap_BspLeaf(map, i);
+        BspLeaf* bspLeaf = GameMap_BspLeaf(map, i);
 
         // Is this BSP leaf close enough?
         if(bspLeaf->sector == sec || // leaf is IN this sector
@@ -171,15 +172,14 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
     sec->numReverbBspLeafAttributors = bspLeafOwnerList.count;
     if(sec->numReverbBspLeafAttributors)
     {
-        BspLeaf **ptr;
-
         sec->reverbBspLeafs = (BspLeaf**)
             Z_Malloc((sec->numReverbBspLeafAttributors + 1) * sizeof(BspLeaf*), PU_MAPSTATIC, 0);
 
-        for(i = 0, ptr = sec->reverbBspLeafs, node = bspLeafOwnerList.head;
-            i < sec->numReverbBspLeafAttributors; ++i, ptr++)
+        BspLeaf** ptr = sec->reverbBspLeafs;
+        ownernode_t* node = bspLeafOwnerList.head;
+        for(uint i = 0; i < sec->numReverbBspLeafAttributors; ++i, ptr++)
         {
-            p = node->next;
+            ownernode_t* next = node->next;
             *ptr = (BspLeaf*) node->data;
 
             if(i < map->numSectors - 1)
@@ -189,53 +189,37 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
                 unusedNodeList = node;
             }
             else
-            {   // No further use for the nodes.
+            {
+                // No further use for the node.
                 M_Free(node);
             }
-            node = p;
+            node = next;
         }
-        *ptr = NULL; // terminate.
-    }
+        *ptr = 0; // terminate.
     }
 }
 
 void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map)
 {
-    uint i, startTime;
-    ownernode_t* node, *p;
-    assert(map);
+    uint startTime = Sys_GetRealTime();
 
-    startTime = Sys_GetRealTime();
-
-    /// @optimize Make use of the BSP leaf blockmap.
-    for(i = 0; i < map->numSectors; ++i)
+    /// @todo optimize: Make use of the BSP leaf blockmap.
+    uint numSectors = GameMap_SectorCount(map);
+    for(uint i = 0; i < numSectors; ++i)
     {
         findBspLeafsAffectingSector(map, i);
     }
 
-    // Free any nodes left in the unused list.
-    node = unusedNodeList;
-    while(node)
-    {
-        p = node->next;
-        M_Free(node);
-        node = p;
-    }
-    unusedNodeList = NULL;
+    clearUnusedNodes();
 
     // How much time did we spend?
-    VERBOSE(Con_Message
-            ("S_DetermineBspLeafsAffectingSectorReverb: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    LOG_VERBOSE("S_DetermineBspLeafsAffectingSectorReverb: Done in %.2f seconds.")
+        << (Sys_GetRealTime() - startTime) / 1000.0f;
 }
 
 static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
 {
-    float materials[NUM_MATERIAL_ENV_CLASSES];
-    material_env_class_t mclass;
-    HEdge* hedge;
-    float total = 0;
-    uint i, v;
+    DENG2_ASSERT(bspLeaf);
 
     if(!bspLeaf->sector || isDedicated)
     {
@@ -244,6 +228,7 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
         return false;
     }
 
+    float materials[NUM_MATERIAL_ENV_CLASSES];
     memset(&materials, 0, sizeof(materials));
 
     // Space is the rough volume of the BSP leaf (bounding box).
@@ -252,19 +237,21 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
         (bspLeaf->aaBox.maxX - bspLeaf->aaBox.minX) *
         (bspLeaf->aaBox.maxY - bspLeaf->aaBox.minY);
 
+    float total = 0;
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    hedge = bspLeaf->hedge;
+    HEdge* hedge = bspLeaf->hedge;
     do
     {
         if(hedge->lineDef && HEDGE_SIDEDEF(hedge) && HEDGE_SIDEDEF(hedge)->SW_middlematerial)
         {
             material_t* mat = HEDGE_SIDEDEF(hedge)->SW_middlematerial;
-
-            mclass = Material_EnvironmentClass(mat);
-            total += hedge->length;
+            material_env_class_t mclass = Material_EnvironmentClass(mat);
             if(!(mclass >= 0 && mclass < NUM_MATERIAL_ENV_CLASSES))
                 mclass = MEC_WOOD; // Assume it's wood if unknown.
+
+            total += hedge->length;
+
             materials[mclass] += hedge->length;
         }
     } while((hedge = hedge->next) != bspLeaf->hedge);
@@ -278,28 +265,34 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
     }
 
     // Average the results.
+    uint i, v;
     for(i = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
+    {
         materials[i] /= total;
+    }
 
     // Volume.
     for(i = 0, v = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
+    {
         v += materials[i] * matInfo[i].volumeMul;
-    if(v > 255)
-        v = 255;
+    }
+    if(v > 255) v = 255;
     bspLeaf->reverb[SRD_VOLUME] = v;
 
     // Decay time.
     for(i = 0, v = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
+    {
         v += materials[i] * matInfo[i].decayMul;
-    if(v > 255)
-        v = 255;
+    }
+    if(v > 255) v = 255;
     bspLeaf->reverb[SRD_DECAY] = v;
 
     // High frequency damping.
     for(i = 0, v = 0; i < NUM_MATERIAL_ENV_CLASSES; ++i)
+    {
         v += materials[i] * matInfo[i].dampingMul;
-    if(v > 255)
-        v = 255;
+    }
+    if(v > 255) v = 255;
     bspLeaf->reverb[SRD_DAMPING] = v;
 
     /* DEBUG_Message(("bspLeaf %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
@@ -312,42 +305,38 @@ static boolean calcBspLeafReverb(BspLeaf* bspLeaf)
 
 static void Sector_CalculateReverb(Sector* sec)
 {
-    BspLeaf* sub;
-    float spaceScatter;
-    uint sectorSpace;
-
     if(!sec || !sec->lineDefCount) return;
 
-    sectorSpace = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
+    /// @todo fixme: This 3D volume rough estimate may be massively off.
+    ///       Consider the case of a single sector used over an entire map
+    ///       with multiple disjoint groups of small geometries.
+    ///       In general a sector should never be considered as playing any
+    ///       part in the definition of a map's geometry. -ds
+    uint spaceVolume = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
         (sec->aaBox.maxX - sec->aaBox.minX) *
         (sec->aaBox.maxY - sec->aaBox.minY);
-
-    // DEBUG_Message(("sector %i: secsp:%i\n", c, sectorSpace));
 
     sec->reverb[SRD_SPACE] = sec->reverb[SRD_VOLUME] =
         sec->reverb[SRD_DECAY] = sec->reverb[SRD_DAMPING] = 0;
 
-    { uint i;
-    for(i = 0; i < sec->numReverbBspLeafAttributors; ++i)
+    for(uint i = 0; i < sec->numReverbBspLeafAttributors; ++i)
     {
-        sub = sec->reverbBspLeafs[i];
+        BspLeaf* bspLeaf = sec->reverbBspLeafs[i];
 
-        if(calcBspLeafReverb(sub))
+        if(calcBspLeafReverb(bspLeaf))
         {
-            sec->reverb[SRD_SPACE]   += sub->reverb[SRD_SPACE];
+            sec->reverb[SRD_SPACE]   += bspLeaf->reverb[SRD_SPACE];
 
-            sec->reverb[SRD_VOLUME]  +=
-                sub->reverb[SRD_VOLUME]  / 255.0f * sub->reverb[SRD_SPACE];
-            sec->reverb[SRD_DECAY]   +=
-                sub->reverb[SRD_DECAY]   / 255.0f * sub->reverb[SRD_SPACE];
-            sec->reverb[SRD_DAMPING] +=
-                sub->reverb[SRD_DAMPING] / 255.0f * sub->reverb[SRD_SPACE];
+            sec->reverb[SRD_VOLUME]  += bspLeaf->reverb[SRD_VOLUME]  / 255.0f * bspLeaf->reverb[SRD_SPACE];
+            sec->reverb[SRD_DECAY]   += bspLeaf->reverb[SRD_DECAY]   / 255.0f * bspLeaf->reverb[SRD_SPACE];
+            sec->reverb[SRD_DAMPING] += bspLeaf->reverb[SRD_DAMPING] / 255.0f * bspLeaf->reverb[SRD_SPACE];
         }
-    }}
+    }
 
+    float spaceScatter;
     if(sec->reverb[SRD_SPACE])
     {
-        spaceScatter = sectorSpace / sec->reverb[SRD_SPACE];
+        spaceScatter = spaceVolume / sec->reverb[SRD_SPACE];
         // These three are weighted by the space.
         sec->reverb[SRD_VOLUME]  /= sec->reverb[SRD_SPACE];
         sec->reverb[SRD_DECAY]   /= sec->reverb[SRD_SPACE];
@@ -362,20 +351,19 @@ static void Sector_CalculateReverb(Sector* sec)
     }
 
     // If the space is scattered, the reverb effect lessens.
-    sec->reverb[SRD_SPACE] /=
-        (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
+    sec->reverb[SRD_SPACE] /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
 
-    // Normalize the reverb space [0...1].
-    // 0= very small
+    // Normalize the reverb space [0..1]
+    //   0= very small
     // .99= very large
     // 1.0= only for open areas (special case).
     sec->reverb[SRD_SPACE] /= 120e6;
     if(sec->reverb[SRD_SPACE] > .99)
         sec->reverb[SRD_SPACE] = .99f;
 
-    if(Surface_IsSkyMasked(&sec->SP_ceilsurface) ||
-       Surface_IsSkyMasked(&sec->SP_floorsurface))
-    {   // An "open" sector.
+    if(Surface_IsSkyMasked(&sec->SP_ceilsurface) || Surface_IsSkyMasked(&sec->SP_floorsurface))
+    {
+        // An "open" sector.
         // It can still be small, in which case; reverb is diminished a bit.
         if(sec->reverb[SRD_SPACE] > .5)
             sec->reverb[SRD_VOLUME] = 1; // Full volume.
@@ -385,7 +373,8 @@ static void Sector_CalculateReverb(Sector* sec)
         sec->reverb[SRD_SPACE] = 1;
     }
     else
-    {   // A "closed" sector.
+    {
+        // A "closed" sector.
         // Large spaces have automatically a bit more audible reverb.
         sec->reverb[SRD_VOLUME] += sec->reverb[SRD_SPACE] / 4;
     }
