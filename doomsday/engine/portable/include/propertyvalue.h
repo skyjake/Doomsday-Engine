@@ -173,7 +173,7 @@ private:
  * Factory constructor for instantiation of new PropertyValues.
  *
  * @param type          DDVT_* value type identifier for the value pointed at by @a valueAdr.
- * @param valueAdr      Address of the value to be read into the the new property value.
+ * @param valueAdr      Address of the value to be read into the new property value.
  *
  * @return Newly constructed PropertyValue-derived instance.
  */

@@ -1,6 +1,6 @@
 /**
  * @file mapentitydatabase.cpp
- * Database of map entity proerty values. @ingroup map
+ * Database of map entity property values. @ingroup map
  *
  * @author Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -49,7 +49,7 @@ public:
         }
     }
 
-    /// @return Total number of entities with the identifier @a entityId.
+    /// @return Total number of entities by definition @a entityDef.
     uint entityCount(MapEntityDef const* entityDef)
     {
         DENG2_ASSERT(entityDef);
@@ -57,7 +57,7 @@ public:
         return set->size();
     }
 
-    /// @return @c true= An entity with @a definition and @a elementIndex is known/present.
+    /// @return @c true= An entity by definition @a entityDef and @a elementIndex is known/present.
     bool hasEntity(MapEntityDef const* entityDef, uint elementIndex)
     {
         DENG2_ASSERT(entityDef);
