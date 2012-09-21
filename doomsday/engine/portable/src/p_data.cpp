@@ -312,8 +312,8 @@ Str const* P_NameForMapEntityDef(MapEntityDef* def)
         StringPoolId id = StringPool_Iterate(entityDefs, P_NameForMapEntityDefWorker, def);
         return StringPool_String(entityDefs, id);
     }
-    static ddstring_t zeroLengthString = { "" };
-    return &zeroLengthString;
+    static de::Str zeroLengthString;
+    return zeroLengthString;
 }
 
 int MapEntityDef_Property2(MapEntityDef* def, int propertyId, MapEntityPropertyDef** retDef)
