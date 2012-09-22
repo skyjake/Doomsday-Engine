@@ -61,6 +61,9 @@ struct HEdgeInfo
     // is no longer in any superblock (e.g. now in a leaf).
     class SuperBlock* bmapBlock;
 
+    /// Linedef this half-edge initially comes from else @c NULL if a "mini-edge".
+    LineDef* lineDef;
+
     // Linedef that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
     // above. For "miniedges", this is the linedef of the partition line.

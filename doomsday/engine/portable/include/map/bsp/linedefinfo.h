@@ -50,6 +50,10 @@ struct LineDefInfo
         SelfRef    =        0x4  ///< Sector is the same on both sides.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
+
+    /// The map's definition of this line segment.
+    LineDef* lineDef;
+
     Flags flags;
 
     /// @todo Refactor me away.
@@ -58,27 +62,25 @@ struct LineDefInfo
     /// If the line is used for a window effect, this is the sector on the back side.
     Sector* windowEffect;
 
-    LineDefInfo() : flags(0), validCount(0), windowEffect(0)
-    {}
-
-    LineDefInfo& configure(LineDef& line, coord_t distEpsilon = 0.0001)
+    explicit LineDefInfo(LineDef* _lineDef, coord_t distEpsilon = 0.0001)
+        : lineDef(_lineDef), flags(0), validCount(0), windowEffect(0)
     {
-        const Vertex* start = line.L_v1;
-        const Vertex* end   = line.L_v2;
+        DENG2_ASSERT(_lineDef);
+        const Vertex* start = lineDef->L_v1;
+        const Vertex* end   = lineDef->L_v2;
 
         // Check for zero-length line.
         if((fabs(start->origin[VX] - end->origin[VX]) < distEpsilon) &&
            (fabs(start->origin[VY] - end->origin[VY]) < distEpsilon))
             flags |= ZeroLength;
 
-        if(line.L_backsidedef && line.L_frontsidedef)
+        if(lineDef->L_backsidedef && lineDef->L_frontsidedef)
         {
             flags |= Twosided;
 
-            if(line.L_backsector == line.L_frontsector)
+            if(lineDef->L_backsector == lineDef->L_frontsector)
                 flags |= SelfRef;
         }
-        return *this;
     }
 };
 

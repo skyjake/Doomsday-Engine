@@ -218,19 +218,6 @@ struct Partitioner::Instance
     }
 
     /**
-     * Retrieve the extended build info for the specified @a lineDef.
-     * @return  Extended info for that LineDef.
-     */
-    LineDefInfo& lineDefInfo(const LineDef& lineDef)
-    {
-        return lineDefInfos[lineDef.origIndex - 1];
-    }
-    const LineDefInfo& lineDefInfo(const LineDef& lineDef) const
-    {
-        return lineDefInfos[lineDef.origIndex - 1];
-    }
-
-    /**
      * Retrieve the extended build info for the specified @a hedge.
      * @return  Extended info for that HEdge.
      */
@@ -357,8 +344,9 @@ struct Partitioner::Instance
         return false;
     }
 
-    void testForWindowEffect(LineDef* line)
+    void testForWindowEffect(LineDefInfo& lineInfo)
     {
+        LineDef* line = lineInfo.lineDef;
         if(!lineMightHaveWindowEffect(line)) return;
 
         testForWindowEffectParams p;
@@ -387,7 +375,7 @@ struct Partitioner::Instance
             LOG_VERBOSE("LineDef #%d seems to be a One-Sided Window (back faces sector #%d).")
                 << line->origIndex - 1 << p.backOpen->buildData.index - 1;
 
-            lineDefInfo(*line).windowEffect = p.frontOpen;
+            lineInfo.windowEffect = p.frontOpen;
             line->inFlags |= LF_BSPWINDOW; /// @todo Refactor away.
         }
     }
@@ -410,13 +398,14 @@ struct Partitioner::Instance
 
         // Initialize linedef info.
         uint numLineDefs = GameMap_LineDefCount(map);
-        lineDefInfos.resize(numLineDefs);
+        lineDefInfos.reserve(numLineDefs);
         for(uint i = 0; i < numLineDefs; ++i)
         {
             LineDef* line = GameMap_LineDef(map, i);
-            lineDefInfo(*line).configure(*line, DIST_EPSILON);
+            lineDefInfos.push_back(LineDefInfo(line, DIST_EPSILON));
+            LineDefInfo& lineInfo = lineDefInfos.back();
 
-            testForWindowEffect(line);
+            testForWindowEffect(lineInfo);
         }
     }
 
@@ -456,19 +445,16 @@ struct Partitioner::Instance
      */
     void createInitialHEdges(SuperBlock& hedgeList)
     {
-        DENG2_ASSERT(map);
-
-        uint numLineDefs = GameMap_LineDefCount(map);
-        for(uint i = 0; i < numLineDefs; ++i)
+        DENG2_FOR_EACH(i, lineDefInfos, LineDefInfos::iterator)
         {
-            LineDef* line = GameMap_LineDef(map, i);
+            LineDefInfo const& lineInfo = *i;
+            LineDef* line = lineInfo.lineDef;
             // Polyobj lines are completely ignored.
             if(line->inFlags & LF_POLYOBJ) continue;
 
             HEdge* front  = 0;
             coord_t angle = 0;
 
-            LineDefInfo const& lineInfo = lineDefInfo(*line);
             if(!lineInfo.flags.testFlag(LineDefInfo::ZeroLength))
             {
                 Sector* frontSec = line->L_frontsector;
@@ -532,8 +518,9 @@ struct Partitioner::Instance
         const HPlaneIntercept* inter = partitionInterceptByVertex(vertex);
         if(inter) return inter;
 
-        LineDef* line = hedge->lineDef;
-        HEdgeIntercept* intercept = newHEdgeIntercept(vertex, line && lineDefInfo(*line).flags.testFlag(LineDefInfo::SelfRef));
+        HEdgeInfo& hInfo = hedgeInfo(*hedge);
+        bool isSelfRefLine = (hInfo.lineDef && lineDefInfos[hInfo.lineDef->origIndex-1].flags.testFlag(LineDefInfo::SelfRef));
+        HEdgeIntercept* intercept = newHEdgeIntercept(vertex, isSelfRefLine);
 
         return &partition.newIntercept(vertexDistanceFromPartition(vertex), intercept);
     }
@@ -1233,10 +1220,11 @@ struct Partitioner::Instance
 
             // Optimization: Only the first half-edge produced from a given linedef
             // is tested per round of partition costing (they are all collinear).
-            if(hedge->lineDef)
+            HEdgeInfo& hInfo = hedgeInfo(*hedge);
+            if(hInfo.lineDef)
             {
                 // Can we skip this half-edge?
-                LineDefInfo& lInfo = lineDefInfo(*hedge->lineDef);
+                LineDefInfo& lInfo = lineDefInfos[hInfo.lineDef->origIndex-1];
                 if(lInfo.validCount == validCount) continue; // Yes.
 
                 lInfo.validCount = validCount;
@@ -1748,8 +1736,7 @@ struct Partitioner::Instance
             if(sector)
             {
                 // The first sector from a non self-referencing line is our best choice.
-                if(!(lineDefInfo(*line).flags & LineDefInfo::SelfRef))
-                    return sector;
+                if(!LINE_SELFREF(line)) return sector;
 
                 // Remember the self-referencing choice in case we've no better option.
                 if(!selfRefChoice)
@@ -2054,6 +2041,7 @@ struct Partitioner::Instance
         hedgeInfos.insert(std::pair<HEdge*, HEdgeInfo>(hedge, HEdgeInfo()));
 
         HEdgeInfo& info = hedgeInfo(*hedge);
+        info.lineDef = lineDef;
         info.sourceLineDef = sourceLineDef;
         info.initFromHEdge(*hedge);
 
