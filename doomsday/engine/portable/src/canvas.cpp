@@ -214,7 +214,10 @@ void Canvas::useCallbacksFrom(Canvas &other)
 
 QImage Canvas::grabImage(const QSize& outputSize)
 {
+    // We will be grabbing the visible, latest complete frame.
+    glReadBuffer(GL_FRONT);
     QImage grabbed = grabFrameBuffer(); // no alpha
+    glReadBuffer(GL_BACK);
     if(outputSize.isValid())
     {
         grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
