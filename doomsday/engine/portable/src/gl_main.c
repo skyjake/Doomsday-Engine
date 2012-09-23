@@ -1059,11 +1059,11 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize, colorpalette_t* palette,
     float* retBrightX, float* retBrightY, ColorRawf* retColor, float* retLumSize)
 {
-    const int sizeLimit = 0xc0, brightLimit = 0xe0, colLimit = 0xc0;
+    const uint8_t sizeLimit = 192, brightLimit = 224, colLimit = 192;
     const uint8_t* src, *alphaSrc;
     int avgCnt = 0, lowCnt = 0;
     int cnt = 0, posCnt = 0;
-    int i, k, x, y, c;
+    int i, x, y, c;
     long average[3], lowAvg[3];
     long bright[2];
     uint8_t rgb[3];
@@ -1119,7 +1119,7 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
         alphaSrc += width * region[2];
     }
 
-    for(k = region[2], y = 0; k <= region[3]; ++k, ++y)
+    for(y = region[2]; y <= region[3]; ++y)
     {
         // Skip to the beginning of the row.
         if(region[0] > 0)
@@ -1128,7 +1128,7 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
             alphaSrc += region[0];
         }
 
-        for(i = region[0], x = 0; i <= region[1]; ++i, ++x, src += pixelSize, alphaSrc++)
+        for(x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
         {
             // Alpha pixels don't count. Why? -ds
             const boolean pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
@@ -1183,17 +1183,25 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
 
     if(posCnt)
     {
-        // Calculate the average and then apply the region offset.
-        long double x = (long double) bright[0] / posCnt + region[0];
-        long double y = (long double) bright[1] / posCnt + region[2];
+        // Calculate the average of the bright pixels.
+        *retBrightX = (long double) bright[0] / posCnt;
+        *retBrightY = (long double) bright[1] / posCnt;
+    }
+    else
+    {
+        // No bright pixels - Place the origin at the center of the non-alpha region.
+        *retBrightX = region[0] + (region[1] - region[0]) / 2.0f;
+        *retBrightY = region[2] + (region[3] - region[2]) / 2.0f;
+    }
 
-        // Determine rounding (to the nearest pixel center).
-        int roundXDir = (int) (x + .5f) == (int) x ? 1 : -1;
-        int roundYDir = (int) (y + .5f) == (int) y ? 1 : -1;
+    // Determine rounding (to the nearest pixel center).
+    {
+    int roundXDir = (int) (*retBrightX + .5f) == (int) *retBrightX ? 1 : -1;
+    int roundYDir = (int) (*retBrightY + .5f) == (int) *retBrightY ? 1 : -1;
 
-        // Apply all rounding and output as decimal.
-        *retBrightX = (ROUND(x) + .5f * roundXDir) / (float) width;
-        *retBrightY = (ROUND(y) + .5f * roundYDir) / (float) height;
+    // Apply all rounding and output as decimal.
+    *retBrightX = (ROUND(*retBrightX) + .5f * roundXDir) / (float) width;
+    *retBrightY = (ROUND(*retBrightY) + .5f * roundYDir) / (float) height;
     }
 
     if(avgCnt || lowCnt)
