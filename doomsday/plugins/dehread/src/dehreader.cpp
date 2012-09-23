@@ -1532,7 +1532,7 @@ public:
     {
         LOG_AS("parsePointerBex");
         // .bex doesn't follow the same rules as .deh
-        for(; !line.trimmed().isEmpty(); skipToNextLine())
+        for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
             if(line.at(0) == '#') continue;
