@@ -105,6 +105,10 @@ class BuildLogParser
                         {
                             $pack = PackageFactory::newFromSimpleXMLElement($child, $build->releaseTypeId());
                             $pack->setBuildUniqueId($build->uniqueId());
+                            if($pack instanceof iDownloadable)
+                            {
+                                $pack->setReleaseDate($build->startDate());
+                            }
                             if($build->hasReleaseNotesUri())
                             {
                                 $pack->setReleaseNotesUri($build->releaseNotesUri());
