@@ -406,6 +406,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.8',
@@ -413,6 +414,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.8',
@@ -420,6 +422,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.8',
@@ -427,6 +430,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.8',
@@ -434,6 +438,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.9.7',
@@ -441,6 +446,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.7',
@@ -448,6 +454,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.7',
@@ -455,6 +462,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.7',
@@ -462,6 +470,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.7',
@@ -469,6 +478,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.8.6',
@@ -656,7 +666,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             {
                 // No - this must be a symbolic package.
                 // We'll instantiate a symbolic BuildEvent for this.
-                $build = new BuildEvent(0, strtotime('Jan 8, 2005'), 'skyjake',
+                $build = new BuildEvent(0, $pack->hasReleaseDate()? $pack->releaseDate() : strtotime('Jan 8, 2005'), 'skyjake',
                                         'jaakko.keranen@iki.fi', RT_STABLE/*assumed*/);
                 if($pack->hasReleaseNotesUri())
                 {
@@ -1386,7 +1396,7 @@ jQuery(document).ready(function() {
             {
                 // No - this must be a symbolic package.
                 // We'll instantiate a symbolic BuildEvent for this.
-                $build = new BuildEvent(0, strtotime('Jan 8, 2005'), 'skyjake',
+                $build = new BuildEvent(0, $pack->hasReleaseDate()? $pack->releaseDate() : strtotime('Jan 8, 2005'), 'skyjake',
                                         'jaakko.keranen@iki.fi', RT_STABLE/*assumed*/);
                 if($pack->hasReleaseNotesUri())
                 {
