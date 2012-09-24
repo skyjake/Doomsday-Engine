@@ -881,13 +881,17 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     private function outputBuildStreamNavigation(&$event)
     {
         $headEvent = $event->prevForStartDate();
+        $offset = 0;
         if(!$headEvent instanceof BuildEvent)
+        {
             $headEvent = $event;
+            $offset = 1;
+        }
 
 ?><div id="buildsnav" class="hnav"><h3><span>&larr;Older</span> <a href="builds" title="Back to the Build Repository index">Index</a> <span>Newer&rarr;</span></h3><?php
 ?><div class="buildstreamlist"><?php
 
-        $this->outputBuildStreamWidget($headEvent, 'startdate', TRUE/*ascend*/, 3,
+        $this->outputBuildStreamWidget($headEvent, 'startdate', TRUE/*ascend*/, 3, $offset,
                                        NULL/*no release header*/,
                                        TRUE/*use the horiztonal variant*/,
                                        $event, TRUE/*current is inactive*/);
@@ -1423,12 +1427,14 @@ jQuery(document).ready(function() {
         return $numEventsAdded;
     }
 
-    private function outputBuildStreamWidget(&$headEvent, $chainProperty='version',
-        $chainDirection=FALSE, $chainLengthMax=-1, $releaseInfo=NULL, $horizontal=FALSE,
-        $currentEvent=NULL, $currentInactive=FALSE)
+    private function outputBuildStreamWidget(&$headEvent, $chainProperty = 'version',
+        $chainDirection = FALSE, $chainLengthMax = -1, $chainOffset = 0,
+        $releaseInfo = NULL, $horizontal = FALSE,
+        $currentEvent = NULL, $currentInactive = FALSE)
     {
-        $chainDirection = (boolean)$chainDirection;
-        $chainLengthMax = (integer)$chainLengthMax;
+        $chainDirection  = (boolean)$chainDirection;
+        $chainLengthMax  = (integer)$chainLengthMax;
+        $chainOffset     = (integer)$chainOffset;
         $currentInactive = (boolean)$currentInactive;
 
 ?><div class="buildstream<?php echo ($horizontal ? ' hnav' : ''); ?>"><ul><?php
@@ -1458,7 +1464,12 @@ jQuery(document).ready(function() {
 
         if($headEvent instanceof BuildEvent)
         {
-            $n = (integer) 0;
+            $n = $chainOffset;
+            while($chainOffset-- > 0)
+            {
+                ?><li></li><?php
+            }
+
             for($event = $headEvent; !is_null($event);
                 $event = $chainProperty === 'version' ? ($chainDirection? $event->nextForVersion()   : $event->prevForVersion())
                                                       : ($chainDirection? $event->nextForStartDate() : $event->prevForStartDate()))
@@ -1517,7 +1528,7 @@ jQuery(document).ready(function() {
 
             $current = $event;
 
-            $this->outputBuildStreamWidget($event, 'version', FALSE/*descend*/, -1/*no length limit*/,
+            $this->outputBuildStreamWidget($event, 'version', FALSE/*descend*/, -1/*no length limit*/, 0/*no offset*/,
                                            $releaseInfo, FALSE/*vertical*/, $current, FALSE);
         }
 
