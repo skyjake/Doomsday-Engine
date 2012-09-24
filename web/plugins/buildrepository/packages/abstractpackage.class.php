@@ -78,6 +78,9 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
         if($this->hasReleaseNotesUri())
             $tpl['release_notesuri'] = $this->releaseNotesUri;
 
+        if($this->hasReleaseDate())
+            $tpl['release_date'] = date(DATE_RFC1123, $this->releaseDate);
+
         if($this->hasCompileLogUri())
             $tpl['compile_loguri'] = $this->compileLogUri;
 
