@@ -442,42 +442,42 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.9.7',
-                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.exe/download',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.exe/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
-        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.7',
-                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.dmg/download',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.dmg/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
-        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.7',
-                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.dmg/download',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.dmg/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
-        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.7',
-                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.deb/download',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.deb/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
-        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.7',
-                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.deb/download',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.deb/download',
                                                 NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
-        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
         $pack->setReleaseDate(strtotime('March 14, 2012'));
         $packages[] = $pack;
 
