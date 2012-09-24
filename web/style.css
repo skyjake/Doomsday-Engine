@@ -407,6 +407,7 @@ ol.jumplist li {
     position:inherit;
     font-size: 11pt;
     text-decoration: none;
+    text-shadow: #969696 0px -1px 0px;
     padding-top: 8px;
     padding-bottom: 8px;
     padding-left: 5px;
@@ -437,10 +438,6 @@ ol.jumplist li {
     -webkit-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
     -o-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
     box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
-}
-
-#menu span.paddle_left_select, span.paddle_right_select {
-    color: #495f5f;
 }
 
 #divider {

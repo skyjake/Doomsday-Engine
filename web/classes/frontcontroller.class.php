@@ -422,7 +422,7 @@ class FrontController
 
                 $result .= '<li>';
 
-                if(!is_null($page) && !strcasecmp($page, $tab['page']))
+                if(!is_null($page) && !strcasecmp($page, substr($tab['page'], 1)))
                 {
                     $result .= '<span ';
                     if(isset($selectClassName))
