@@ -39,6 +39,11 @@ a {
     outline: 0 none;
 }
 
+a:focus {
+    outline: dotted 2px;
+    outline-offset: 2px;
+}
+
 a:hover {
     text-decoration: underline;
     color: #FFCB0F;
@@ -395,6 +400,7 @@ ol.jumplist li {
     padding-top: 83px;
     padding-bottom: 83px;
     padding-left: 202px;
+    outline: 0 none;
 }
 
 #menu a, span.paddle_left_select, span.paddle_right_select {
