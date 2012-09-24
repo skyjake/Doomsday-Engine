@@ -401,6 +401,75 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
          * @todo Read this information from a config file, we should not
          * expect to edit this file in order to change these...
          */
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_64bit.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_i386.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_amd64.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7');
+        $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.8.6',
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download',
@@ -901,7 +970,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             // Filtered out?
             if($pack === $notThisPack) continue;
-            if($unstable != -1 && (boolean)$unstable == ($pack instanceof AbstractUnstablePackage)) continue;
+            if($unstable != -1 && (boolean)$unstable != ($pack instanceof AbstractUnstablePackage)) continue;
             if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))) continue;
             if(!is_null($chosenPlatformId) && $pack->platformId() === $chosenPlatformId) continue;
 
@@ -1504,13 +1573,13 @@ jQuery(document).ready(function() {
         $packageListTitle = '<h3>Downloads for the latest packages</h3>';
 
         $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
-                                 TRUE/*stable filter*/, TRUE/*only downloadables*/,
+                                 FALSE/*stable filter*/, TRUE/*only downloadables*/,
                                  -1/*no result limit*/, $packageListTitle);
 
         $packageListTitle = '<h3>Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>)</h3>';
 
         $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
-                                 FALSE/*no stable filter*/, TRUE/*only downloadables*/,
+                                 TRUE/*unstable filter*/, TRUE/*only downloadables*/,
                                  -1/*no result limit*/, $packageListTitle);
 
 ?></div><?php
