@@ -1317,6 +1317,9 @@ D_CMD(DisplayModeInfo)
                 Window_IsFullscreen(wnd)? "yes" : "no",
                 Window_IsCentered(wnd)? "yes" : "no",
                 Window_IsMaximized(wnd)? "yes" : "no");
+    Con_Message("Normal geometry: (%i,%i) %ix%i\n",
+                Window_NormalX(wnd), Window_NormalY(wnd),
+                Window_NormalWidth(wnd), Window_NormalHeight(wnd));
     return true;
 }
 

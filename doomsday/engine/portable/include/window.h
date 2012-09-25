@@ -188,6 +188,11 @@ int Window_Width(const Window* wnd);
  */
 int Window_Height(const Window* wnd);
 
+int Window_NormalX(const Window* wnd);
+int Window_NormalY(const Window* wnd);
+int Window_NormalWidth(const Window* wnd);
+int Window_NormalHeight(const Window* wnd);
+
 /**
  * Determines the size of the window.
  * @param wnd  Window instance.
