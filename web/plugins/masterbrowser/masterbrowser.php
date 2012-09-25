@@ -257,8 +257,8 @@ jQuery(document).ready(function() {
     {
         global $FrontController;
 
-        $FrontController->outputHeader($this->title());
-        $FrontController->beginPage($this->title());
+        $FrontController->outputHeader($this->title(), 'masterserver');
+        $FrontController->beginPage($this->title(), 'masterserver');
 
 ?><div id="masterbrowser"><?php
 

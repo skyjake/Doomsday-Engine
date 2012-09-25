@@ -39,6 +39,11 @@ a {
     outline: 0 none;
 }
 
+a:focus {
+    outline: dotted 2px;
+    outline-offset: 2px;
+}
+
 a:hover {
     text-decoration: underline;
     color: #FFCB0F;
@@ -395,12 +400,14 @@ ol.jumplist li {
     padding-top: 83px;
     padding-bottom: 83px;
     padding-left: 202px;
+    outline: 0 none;
 }
 
 #menu a, span.paddle_left_select, span.paddle_right_select {
     position:inherit;
     font-size: 11pt;
     text-decoration: none;
+    text-shadow: #A7B6AC 0px -1px 0px;
     padding-top: 8px;
     padding-bottom: 8px;
     padding-left: 5px;
@@ -431,10 +438,6 @@ ol.jumplist li {
     -webkit-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
     -o-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
     box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
-}
-
-#menu span.paddle_left_select, span.paddle_right_select {
-    color: #495f5f;
 }
 
 #divider {
