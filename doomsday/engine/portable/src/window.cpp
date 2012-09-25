@@ -93,11 +93,13 @@ static QRect desktopRect()
     return QApplication::desktop()->screenGeometry();
 }
 
+/*
 static QRect desktopValidRect()
 {
     return desktopRect().adjusted(DESKTOP_EDGE_GRACE, DESKTOP_EDGE_GRACE,
                                   -DESKTOP_EDGE_GRACE, -DESKTOP_EDGE_GRACE);
 }
+*/
 
 static void updateMainWindowLayout(void);
 static void updateWindowStateAfterUserChange(void);
@@ -302,6 +304,13 @@ struct ddwindow_s
                 LOG_DEBUG("widget is visible, need showFS:%b reshowFS:%b")
                         << needShowFullscreen << needReshowFullscreen;
 
+#ifdef MACOSX
+                // Kludge! See updateMainWindowLayout().
+                appliedGeometry = QRect(0, 0,
+                                        DisplayMode_Current()->width,
+                                        DisplayMode_Current()->height);
+#endif
+
                 // The window is already visible, so let's allow a mode change to resolve itself
                 // before we go changing the window.
                 LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
@@ -430,6 +439,7 @@ struct ddwindow_s
         }
     }
 
+    /*
     bool isGeometryValid() const
     {
         if(width() < WINDOW_MIN_WIDTH) return false;
@@ -437,6 +447,7 @@ struct ddwindow_s
         qDebug() << desktopValidRect() << rect() << desktopValidRect().contains(rect());
         return desktopValidRect().contains(rect());
     }
+    */
 
     bool applyAttributes(int* attribs)
     {
@@ -628,8 +639,7 @@ static void updateMainWindowLayout(void)
         // For some interesting reason, we have to scale the window twice in fullscreen mode
         // or the resulting layout won't be correct.
         win->widget->setGeometry(QRect(0, 0, 320, 240));
-
-        win->widget->setGeometry(QRect(0, 0, win->geometry.size.width, win->geometry.size.height));
+        win->widget->setGeometry(win->appliedGeometry);
 
         DisplayMode_Native_Raise(Window_NativeHandle(win));
 #endif
