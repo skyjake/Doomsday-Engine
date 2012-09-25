@@ -1,25 +1,23 @@
-/**\file wadfile.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file wadfile.h
+ * WAD archives. @ingroup fs
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_FILESYS_WADFILE_H
@@ -28,18 +26,28 @@
 #include "lumpinfo.h"
 #include "abstractfile.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct lumpdirectory_s;
 struct pathdirectorynode_s;
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /**
- * WadFile. Runtime representation of a WAD file.
- *
- * @ingroup FS
+ * WadFile. Runtime representation of an opened WAD file.
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct wadfile_s; // The wadfile instance (opaque)
 typedef struct wadfile_s WadFile;
 
-WadFile* WadFile_New(DFile* file, const char* path, const LumpInfo* info);
+WadFile* WadFile_New(DFile* file, char const* path, LumpInfo const* info);
 void WadFile_Delete(WadFile* wad);
 
 int WadFile_PublishLumpsToDirectory(WadFile* wad, struct lumpdirectory_s* directory);
@@ -71,10 +79,8 @@ size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer);
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx,
-    uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
-size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx,
-    uint8_t* buffer, size_t startOffset, size_t length);
+size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
+size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length);
 
 /**
  * Read the data associated with the specified lump index into the cache.
@@ -118,5 +124,9 @@ int WadFile_LumpCount(WadFile* wad);
  * @return  @c true iff this is a file that can be represented using WadFile.
  */
 boolean WadFile_Recognise(DFile* file);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_WADFILE_H */

@@ -30,6 +30,10 @@
 #include "abstractfile.h"
 #include "lumpinfo.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct lumpdirectory_s;
 
 /**
@@ -132,5 +136,9 @@ int LumpDirectory_Iterate(LumpDirectory* dir, abstractfile_t* file,
  * Print a content listing of lumps in this directory to stdout (for debug).
  */
 void LumpDirectory_Print(LumpDirectory* dir);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_FILESYS_LUMPDIRECTORY_H
