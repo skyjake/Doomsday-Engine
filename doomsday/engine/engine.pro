@@ -648,7 +648,7 @@ SOURCES += \
     portable/src/vertex.cpp \
     portable/src/wadfile.cpp \
     portable/src/window.cpp \
-    portable/src/zipfile.c \
+    portable/src/zipfile.cpp \
     portable/src/zonedebug.c
 
 !deng_nosdlmixer:!deng_nosdl {
