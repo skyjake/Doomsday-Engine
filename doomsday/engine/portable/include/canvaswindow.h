@@ -52,6 +52,13 @@ public:
      */
     void setMoveFunc(void (*func)(CanvasWindow&));
 
+    /**
+     * Sets a callback function for notifying about window closing.
+     * The window closing is cancelled if the callback is defined
+     * and returned false.
+     */
+    void setCloseFunc(bool (*func)(CanvasWindow&));
+
     // Events.
     bool event(QEvent* ev);
     void closeEvent(QCloseEvent* ev);

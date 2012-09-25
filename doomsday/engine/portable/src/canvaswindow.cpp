@@ -38,9 +38,10 @@ struct CanvasWindow::Instance
     Canvas* canvas;
     Canvas* recreated;
     void (*moveFunc)(CanvasWindow&);
+    bool (*closeFunc)(CanvasWindow&);
     bool mouseWasTrapped;
 
-    Instance() : canvas(0), moveFunc(0), mouseWasTrapped(false) {}
+    Instance() : canvas(0), moveFunc(0), closeFunc(0), mouseWasTrapped(false) {}
 };
 
 CanvasWindow::CanvasWindow(QWidget *parent)
@@ -149,6 +150,11 @@ void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
     d->moveFunc = func;
 }
 
+void CanvasWindow::setCloseFunc(bool (*func)(CanvasWindow &))
+{
+    d->closeFunc = func;
+}
+
 bool CanvasWindow::event(QEvent* ev)
 {
     if(ev->type() == QEvent::ActivationChange)
@@ -162,9 +168,16 @@ bool CanvasWindow::event(QEvent* ev)
 
 void CanvasWindow::closeEvent(QCloseEvent* ev)
 {
-    /// @todo autosave and quit?
-    Con_Execute(CMDS_DDAY, "quit", true, false);
-    ev->ignore();
+    if(d->closeFunc)
+    {
+        if(!d->closeFunc(*this))
+        {
+            ev->ignore();
+            return;
+        }
+    }
+
+    QMainWindow::closeEvent(ev);
 }
 
 void CanvasWindow::moveEvent(QMoveEvent *ev)
