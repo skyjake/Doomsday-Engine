@@ -646,7 +646,7 @@ SOURCES += \
     portable/src/updater/updatersettingsdialog.cpp \
     portable/src/uri.c \
     portable/src/vertex.cpp \
-    portable/src/wadfile.c \
+    portable/src/wadfile.cpp \
     portable/src/window.cpp \
     portable/src/zipfile.c \
     portable/src/zonedebug.c
