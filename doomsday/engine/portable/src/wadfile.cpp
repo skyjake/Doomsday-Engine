@@ -168,10 +168,9 @@ struct de::WadFile::Instance
     static void normalizeName(wadlumprecord_t const& lrec, ddstring_t* normName)
     {
         LOG_AS("WadFile");
-
         if(!normName) return;
-        Str_Clear(normName);
 
+        Str_Clear(normName);
         int nameLen = nameLength(lrec);
         for(int i = 0; i < nameLen; ++i)
         {
@@ -181,17 +180,20 @@ struct de::WadFile::Instance
             char ch = lrec.name[i] & 0x7f;
             Str_AppendChar(normName, ch);
         }
-        Str_StripRight(normName);
 
         // Lump names allow characters the file system does not. Therefore they
         // will be percent-encoded here and later decoded if/when necessary.
-        Str_PercentEncode(normName);
-
-        /// We do not consider zero-length names to be valid, so replace with
-        /// with _something_.
-        /// @todo Handle this more elegantly...
-        if(Str_IsEmpty(normName))
+        if(!Str_IsEmpty(normName))
+        {
+            Str_PercentEncode(normName);
+        }
+        else
+        {
+            /// We do not consider zero-length names to be valid, so replace with
+            /// with _something_.
+            /// @todo fixme: Handle this more elegantly...
             Str_Set(normName, "________");
+        }
 
         // All lumps are ordained with the .lmp extension if they don't have one.
         char const* ext = F_FindFileExtension(Str_Text(normName));
@@ -256,12 +258,12 @@ struct de::WadFile::Instance
         delete[] arcRecords;
     }
 
-    static int buildLumpDirectoryMapWorker(pathdirectorynode_s* _node, void* parameters)
+    static int buildLumpNodeLutWorker(pathdirectorynode_s* _node, void* parameters)
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
         Instance* wadInst = (Instance*)parameters;
         LumpRecord* lumpRecord = reinterpret_cast<LumpRecord*>(node->userData());
-        DENG2_ASSERT(lumpRecord && wadInst->self->isValidIndex(lumpRecord->info.lumpIdx));
+        DENG2_ASSERT(lumpRecord && wadInst->self->isValidIndex(lumpRecord->info.lumpIdx)); // Sanity check.
         (*wadInst->lumpNodeLut)[lumpRecord->info.lumpIdx] = node;
         return 0; // Continue iteration.
     }
@@ -274,7 +276,7 @@ struct de::WadFile::Instance
 
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         PathDirectory_Iterate2(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
-                               NULL, PATHDIRECTORY_NOHASH, buildLumpDirectoryMapWorker, (void*)this);
+                               NULL, PATHDIRECTORY_NOHASH, buildLumpNodeLutWorker, (void*)this);
     }
 
     void** lumpCacheAddress(int lumpIdx)
