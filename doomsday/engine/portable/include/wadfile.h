@@ -61,11 +61,17 @@ public:
     WadFile(DFile& file, char const* path, LumpInfo const& info);
     ~WadFile();
 
-    /// @return Number of lumps contained by this file.
-    int lumpCount();
-
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
     bool isValidIndex(int lumpIdx);
+
+    /// @return Logical index of the last lump in this file's directory or @c 0 if empty.
+    int lastIndex();
+
+    /// @return Number of lumps contained by this file or @c 0 if empty.
+    int lumpCount();
+
+    /// @return @c true= There are no lumps in this file's directory.
+    bool empty();
 
     /**
      * Lookup a directory node for a lump contained by this file.
@@ -259,7 +265,13 @@ void WadFile_ClearLumpCache(WadFile* wad);
 
 uint WadFile_CalculateCRC(WadFile* wad);
 
+boolean WadFile_IsValidIndex(WadFile* wad, int lumpIdx);
+
+int WadFile_LastIndex(WadFile* wad);
+
 int WadFile_LumpCount(WadFile* wad);
+
+boolean WadFile_Empty(WadFile* wad);
 
 boolean WadFile_Recognise(DFile* file);
 
