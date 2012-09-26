@@ -133,17 +133,17 @@ typedef struct centralend_s {
 
 static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src);
 
-struct LumpRecord
+struct ZipLumpRecord
 {
     size_t baseOffset;
     LumpInfo info;
 
-    LumpRecord() : baseOffset(0)
+    ZipLumpRecord() : baseOffset(0)
     {
         F_InitLumpInfo(&info);
     }
 
-    ~LumpRecord()
+    ~ZipLumpRecord()
     {
         F_DestroyLumpInfo(&info);
     }
@@ -184,17 +184,17 @@ struct de::ZipFile::Instance
         if(lumpNodeLut) delete lumpNodeLut;
     }
 
-    LumpRecord* lumpRecord(int lumpIdx)
+    ZipLumpRecord* lumpRecord(int lumpIdx)
     {
         if(!self->isValidIndex(lumpIdx)) return NULL;
         buildLumpNodeLut();
-        return reinterpret_cast<LumpRecord*>((*lumpNodeLut)[lumpIdx]->userData());
+        return reinterpret_cast<ZipLumpRecord*>((*lumpNodeLut)[lumpIdx]->userData());
     }
 
     static int clearLumpRecordWorker(pathdirectorynode_s* _node, void* /*parameters*/)
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
-        LumpRecord* rec = reinterpret_cast<LumpRecord*>(node->userData());
+        ZipLumpRecord* rec = reinterpret_cast<ZipLumpRecord*>(node->userData());
         if(rec)
         {
             // Detach our user data from this node.
@@ -369,7 +369,7 @@ struct de::ZipFile::Instance
                     continue;
                 }
 
-                LumpRecord* record = new LumpRecord();
+                ZipLumpRecord* record = new ZipLumpRecord();
 
                 // Convert all slashes to our internal separator.
                 F_FixSlashes(&entryPath, &entryPath);
@@ -417,7 +417,7 @@ struct de::ZipFile::Instance
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
         Instance* zipInst = (Instance*)parameters;
-        LumpRecord* lumpRecord = reinterpret_cast<LumpRecord*>(node->userData());
+        ZipLumpRecord* lumpRecord = reinterpret_cast<ZipLumpRecord*>(node->userData());
         DENG2_ASSERT(lumpRecord && zipInst->self->isValidIndex(lumpRecord->info.lumpIdx)); // Sanity check.
         (*zipInst->lumpNodeLut)[lumpRecord->info.lumpIdx] = node;
         return 0; // Continue iteration.
@@ -452,7 +452,7 @@ struct de::ZipFile::Instance
     /**
      * @param buffer  Must be large enough to hold the entire uncompressed data lump.
      */
-    size_t bufferLump(LumpRecord const* lumpRecord, uint8_t* buffer)
+    size_t bufferLump(ZipLumpRecord const* lumpRecord, uint8_t* buffer)
     {
         DENG2_ASSERT(lumpRecord && buffer);
         LOG_AS("ZipFile");
@@ -536,7 +536,7 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
 LumpInfo const* de::ZipFile::lumpInfo(int lumpIdx)
 {
     LOG_AS("ZipFile");
-    LumpRecord* lrec = d->lumpRecord(lumpIdx);
+    ZipLumpRecord* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) throw de::Error("ZipFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
     return &lrec->info;
 }
@@ -544,7 +544,7 @@ LumpInfo const* de::ZipFile::lumpInfo(int lumpIdx)
 size_t de::ZipFile::lumpSize(int lumpIdx)
 {
     LOG_AS("ZipFile");
-    LumpRecord* lrec = d->lumpRecord(lumpIdx);
+    ZipLumpRecord* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) throw de::Error("ZipFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info.size;
 }
@@ -668,7 +668,7 @@ size_t de::ZipFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
     size_t length, bool tryCache)
 {
     LOG_AS("ZipFile::readLumpSection");
-    LumpRecord const* lrec = d->lumpRecord(lumpIdx);
+    ZipLumpRecord const* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) return 0;
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")

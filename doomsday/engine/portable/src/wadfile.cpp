@@ -52,15 +52,20 @@ typedef struct {
 } wadlumprecord_t;
 #pragma pack()
 
-struct LumpRecord
+struct WadLumpRecord
 {
     size_t baseOffset;
     uint crc;
     LumpInfo info;
 
-    LumpRecord() : baseOffset(0), crc(0)
+    WadLumpRecord() : baseOffset(0), crc(0)
     {
         F_InitLumpInfo(&info);
+    }
+
+    ~WadLumpRecord()
+    {
+        F_DestroyLumpInfo(&info);
     }
 };
 
@@ -120,22 +125,21 @@ struct de::WadFile::Instance
         if(lumpNodeLut) delete lumpNodeLut;
     }
 
-    LumpRecord* lumpRecord(int lumpIdx)
+    WadLumpRecord* lumpRecord(int lumpIdx)
     {
         if(!self->isValidIndex(lumpIdx)) return NULL;
         buildLumpNodeLut();
-        return reinterpret_cast<LumpRecord*>((*lumpNodeLut)[lumpIdx]->userData());
+        return reinterpret_cast<WadLumpRecord*>((*lumpNodeLut)[lumpIdx]->userData());
     }
 
     static int clearLumpRecordWorker(pathdirectorynode_s* _node, void* /*parameters*/)
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
-        LumpRecord* rec = reinterpret_cast<LumpRecord*>(node->userData());
+        WadLumpRecord* rec = reinterpret_cast<WadLumpRecord*>(node->userData());
         if(rec)
         {
             // Detach our user data from this node.
             node->setUserData(0);
-            F_DestroyLumpInfo(&rec->info);
             delete rec;
         }
         return 0; // Continue iteration.
@@ -223,7 +227,7 @@ struct de::WadFile::Instance
         wadlumprecord_t const* arcRecord = arcRecords;
         for(int i = 0; i < arcRecordsCount; ++i, arcRecord++)
         {
-            LumpRecord* record = new LumpRecord();
+            WadLumpRecord* record = new WadLumpRecord();
 
             record->baseOffset     = de::littleEndianByteOrder.toNative(arcRecord->filePos);
             record->info.size      = de::littleEndianByteOrder.toNative(arcRecord->size);
@@ -262,7 +266,7 @@ struct de::WadFile::Instance
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
         Instance* wadInst = (Instance*)parameters;
-        LumpRecord* lumpRecord = reinterpret_cast<LumpRecord*>(node->userData());
+        WadLumpRecord* lumpRecord = reinterpret_cast<WadLumpRecord*>(node->userData());
         DENG2_ASSERT(lumpRecord && wadInst->self->isValidIndex(lumpRecord->info.lumpIdx)); // Sanity check.
         (*wadInst->lumpNodeLut)[lumpRecord->info.lumpIdx] = node;
         return 0; // Continue iteration.
@@ -347,7 +351,7 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
 LumpInfo const* de::WadFile::lumpInfo(int lumpIdx)
 {
     LOG_AS("WadFile");
-    LumpRecord* lrec = d->lumpRecord(lumpIdx);
+    WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) throw de::Error("WadFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
     return &lrec->info;
 }
@@ -355,7 +359,7 @@ LumpInfo const* de::WadFile::lumpInfo(int lumpIdx)
 size_t de::WadFile::lumpSize(int lumpIdx)
 {
     LOG_AS("WadFile");
-    LumpRecord* lrec = d->lumpRecord(lumpIdx);
+    WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) throw de::Error("WadFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info.size;
 }
@@ -478,7 +482,7 @@ size_t de::WadFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
     size_t length, bool tryCache)
 {
     LOG_AS("WadFile::readLumpSection");
-    LumpRecord const* lrec = d->lumpRecord(lumpIdx);
+    WadLumpRecord const* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) return 0;
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
@@ -527,7 +531,7 @@ uint de::WadFile::calculateCRC()
     const int numLumps = lumpCount();
     for(int i = 0; i < numLumps; ++i)
     {
-        LumpRecord const* lrec = d->lumpRecord(i);
+        WadLumpRecord const* lrec = d->lumpRecord(i);
         crc += lrec->crc;
     }
     return crc;
