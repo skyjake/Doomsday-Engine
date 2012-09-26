@@ -656,5 +656,5 @@ int WadFile_LumpCount(WadFile* wad)
 boolean WadFile_Recognise(DFile* file)
 {
     if(!file) return false;
-    return CPP_BOOL( de::WadFile::recognise(*file) );
+    return de::WadFile::recognise(*file);
 }
