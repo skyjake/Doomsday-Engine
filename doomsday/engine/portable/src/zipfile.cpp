@@ -1091,7 +1091,7 @@ uint8_t* ZipFile_Uncompress(uint8_t* in, size_t inSize, size_t* outSize)
 
 boolean ZipFile_UncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
 {
-    return CPP_BOOL( zipfile_s::uncompressRaw(in, inSize, out, outSize) );
+    return zipfile_s::uncompressRaw(in, inSize, out, outSize);
 }
 
 size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer,
@@ -1141,5 +1141,5 @@ int ZipFile_LumpCount(ZipFile* zip)
 boolean ZipFile_Recognise(DFile* file)
 {
     if(!file) return false;
-    return CPP_BOOL( zipfile_s::recognise(*file) );
+    return zipfile_s::recognise(*file);
 }
