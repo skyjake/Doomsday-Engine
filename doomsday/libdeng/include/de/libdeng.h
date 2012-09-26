@@ -78,6 +78,14 @@
  * Utility macros.
  */
 
+/**
+ * Converts a numerical value to a C++ bool type. Zero is the only accepted
+ * 'false' value, any other value is considered 'true'.
+ *
+ * @param x  Any value that can be compared against zero.
+ *
+ * @return  @c true or @c false (C++ bool type).
+ */
 #define CPP_BOOL(x)         ((x) != 0)
 
 #define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
