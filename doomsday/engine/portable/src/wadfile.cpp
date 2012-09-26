@@ -314,8 +314,7 @@ bool de::WadFile::isValidIndex(int lumpIdx)
 
 int de::WadFile::lastIndex()
 {
-    int numLumps = lumpCount();
-    return numLumps? numLumps - 1 : 0;
+    return lumpCount() - 1;
 }
 
 int de::WadFile::lumpCount()
@@ -335,11 +334,19 @@ de::PathDirectoryNode* de::WadFile::lumpDirectoryNode(int lumpIdx)
     return (*d->lumpNodeLut)[lumpIdx];
 }
 
+static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
+{
+    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
+    if(lastValidIdx < 0) msg += "(file is empty)";
+    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
+    return msg;
+}
+
 LumpInfo const* de::WadFile::lumpInfo(int lumpIdx)
 {
     LOG_AS("WadFile");
     LumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw de::Error("WadFile::lumpInfo", QString("Invalid lump index %1 (valid range: [0..%2])").arg(lumpIdx).arg(lastIndex()));
+    if(!lrec) throw de::Error("WadFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
     return &lrec->info;
 }
 
@@ -347,7 +354,7 @@ size_t de::WadFile::lumpSize(int lumpIdx)
 {
     LOG_AS("WadFile");
     LumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw de::Error("WadFile::lumpSize", QString("Invalid lump index %1 (valid range: [0..%2])").arg(lumpIdx).arg(lastIndex()));
+    if(!lrec) throw de::Error("WadFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info.size;
 }
 

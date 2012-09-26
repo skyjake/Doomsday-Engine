@@ -64,7 +64,7 @@ public:
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
     bool isValidIndex(int lumpIdx);
 
-    /// @return Logical index of the last lump in this file's directory or @c 0 if empty.
+    /// @return Logical index of the last lump in this file's directory or @c -1 if empty.
     int lastIndex();
 
     /// @return Number of lumps contained by this file or @c 0 if empty.
