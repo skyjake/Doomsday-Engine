@@ -103,8 +103,9 @@ void Z_DebugDrawVolume(MemoryZonePrivateData* pd, memvolume_t* volume, RectRaw* 
         case PU_MAP:        color = colMap; break;
         case PU_MAPSTATIC:  color = colMapStatic; break;
         case PU_APPSTATIC:  color = colAppStatic; break;
-        case PU_CACHE:      color = colCache; break;
         default:
+            if(block->tag >= PU_PURGELEVEL)
+                color = colCache;
             break;
         }
 

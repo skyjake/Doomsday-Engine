@@ -1206,9 +1206,6 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         R_InitSvgs();
         R_InitViewWindow();
 
-        /// @todo Assumes we only cache lumps from non-startup wads.
-        Z_FreeTags(PU_CACHE, PU_CACHE);
-
         F_Reset();
         F_ResetAllResourceNamespaces();
     }

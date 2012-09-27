@@ -399,13 +399,13 @@ de::WadFile& de::WadFile::clearCachedLump(int lumpIdx, bool* retCleared)
     bool isCached = (cacheAdr && *cacheAdr);
     if(isCached)
     {
-        // If the block has a user, it must be explicitly freed.
-        if(Z_GetTag(*cacheAdr) < PU_MAP)
+        // Elevate the cached data to purge level so it will be explicitly
+        // free'd by the Zone the next time the rover passes it.
+        if(Z_GetTag(*cacheAdr) != PU_PURGELEVEL)
         {
-            Z_ChangeTag2(*cacheAdr, PU_MAP);
+            Z_ChangeTag2(*cacheAdr, PU_PURGELEVEL);
         }
-
-        // Mark the memory pointer in use, but unowned.
+        // Mark the data as unowned.
         Z_ChangeUser(*cacheAdr, (void*) 0x2);
     }
 
@@ -468,7 +468,7 @@ de::WadFile& de::WadFile::unlockLump(int lumpIdx)
     bool isCached = cacheAdr && *cacheAdr;
     if(isCached)
     {
-        Z_ChangeTag2(*cacheAdr, PU_CACHE);
+        Z_ChangeTag2(*cacheAdr, PU_PURGELEVEL);
     }
     return *this;
 }
