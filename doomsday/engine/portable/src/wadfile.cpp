@@ -37,6 +37,126 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
+class LumpCache
+{
+public:
+    LumpCache(uint size) : size_(size)
+    {
+        if(size_ > 1)
+        {
+            lumps = (void**) M_Calloc(size_ * sizeof(*lumps));
+        }
+    }
+
+    ~LumpCache()
+    {
+        clear();
+        if(size_ > 1 && lumps)
+        {
+            M_Free(lumps);
+        }
+    }
+
+    uint size() const { return size_; }
+
+    bool isValidIndex(uint idx) const { return idx < size_; }
+
+    uint8_t const* data(uint lumpIdx) const
+    {
+        void** cacheAdr = address(lumpIdx);
+        return reinterpret_cast<uint8_t*>(cacheAdr? *cacheAdr : 0);
+    }
+
+    LumpCache& insert(uint lumpIdx, uint8_t* data)
+    {
+        LOG_AS("LumpCache::insert");
+        if(!isValidIndex(lumpIdx)) throw de::Error("LumpCache::insert", QString("Invalid index %1").arg(lumpIdx));
+
+        remove(lumpIdx);
+
+        void** cacheAdr = address(lumpIdx);
+        *cacheAdr = data;
+        Z_ChangeUser(*cacheAdr, cacheAdr);
+        return *this;
+    }
+
+    LumpCache& insertAndLock(uint lumpIdx, uint8_t* data)
+    {
+        return insert(lumpIdx, data).lock(lumpIdx);
+    }
+
+    LumpCache& lock(uint /*lumpIdx*/)
+    {
+        /// @todo Implement a proper thread-safe locking mechanism.
+        return *this;
+    }
+
+    LumpCache& unlock(uint lumpIdx)
+    {
+        /// @todo Implement a proper thread-safe locking mechanism.
+        void** cacheAdr = address(lumpIdx);
+        bool isCached = cacheAdr && *cacheAdr;
+        if(isCached)
+        {
+            Z_ChangeTag2(*cacheAdr, PU_PURGELEVEL);
+        }
+        return *this;
+    }
+
+    LumpCache& remove(uint lumpIdx, bool* retRemoved = 0)
+    {
+        void** cacheAdr = address(lumpIdx);
+        bool isCached = (cacheAdr && *cacheAdr);
+        if(isCached)
+        {
+            /// @todo Implement a proper thread-safe locking mechanism.
+
+            // Elevate the cached data to purge level so it will be explicitly
+            // free'd by the Zone the next time the rover passes it.
+            if(Z_GetTag(*cacheAdr) != PU_PURGELEVEL)
+            {
+                Z_ChangeTag2(*cacheAdr, PU_PURGELEVEL);
+            }
+            // Mark the data as unowned.
+            Z_ChangeUser(*cacheAdr, (void*) 0x2);
+        }
+
+        if(retRemoved) *retRemoved = isCached;
+        return *this;
+    }
+
+    LumpCache& clear()
+    {
+        for(uint i = 0; i < size_; ++i)
+        {
+            remove(i);
+        }
+        return *this;
+    }
+
+private:
+    void** address(uint lumpIdx) const
+    {
+        if(!lumps) return 0;
+        if(!isValidIndex(lumpIdx)) return 0;
+        if(size_ > 1)
+        {
+            return &lumps[lumpIdx];
+        }
+        else
+        {
+            return (void**)&lumps;
+        }
+    }
+
+private:
+    /// Number of data lumps which can be stored in the cache.
+    uint size_;
+
+    /// Lump data pointers.
+    void** lumps;
+};
+
 /// The following structures are used to read data directly from WAD files.
 #pragma pack(1)
 typedef struct {
@@ -86,8 +206,8 @@ struct de::WadFile::Instance
     typedef std::vector<PathDirectoryNode*> LumpNodeLut;
     LumpNodeLut* lumpNodeLut;
 
-    /// Lump cache data pointers.
-    void** lumpCache;
+    /// Lump data cache.
+    LumpCache* lumpCache;
 
     Instance(de::WadFile* d, DFile& file, const char* path)
         : self(d),
@@ -110,11 +230,6 @@ struct de::WadFile::Instance
 
     ~Instance()
     {
-        if(self->lumpCount() > 1 && lumpCache)
-        {
-            M_Free(lumpCache);
-        }
-
         if(lumpDirectory)
         {
             PathDirectory_Iterate(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
@@ -123,6 +238,7 @@ struct de::WadFile::Instance
         }
 
         if(lumpNodeLut) delete lumpNodeLut;
+        if(lumpCache) delete lumpCache;
     }
 
     WadLumpRecord* lumpRecord(int lumpIdx)
@@ -282,21 +398,6 @@ struct de::WadFile::Instance
         PathDirectory_Iterate2(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
                                NULL, PATHDIRECTORY_NOHASH, buildLumpNodeLutWorker, (void*)this);
     }
-
-    void** lumpCacheAddress(int lumpIdx)
-    {
-        if(!lumpCache) return 0;
-        if(!self->isValidIndex(lumpIdx)) return 0;
-        if(self->lumpCount() > 1)
-        {
-            const uint cacheIdx = lumpIdx;
-            return &lumpCache[cacheIdx];
-        }
-        else
-        {
-            return (void**)&lumpCache;
-        }
-    }
 };
 
 de::WadFile::WadFile(DFile& file, char const* path, LumpInfo const& info)
@@ -394,67 +495,66 @@ int de::WadFile::publishLumpsToDirectory(LumpDirectory* directory)
 
 de::WadFile& de::WadFile::clearCachedLump(int lumpIdx, bool* retCleared)
 {
-    LOG_AS("WadFile");
-    void** cacheAdr = d->lumpCacheAddress(lumpIdx);
-    bool isCached = (cacheAdr && *cacheAdr);
-    if(isCached)
-    {
-        // Elevate the cached data to purge level so it will be explicitly
-        // free'd by the Zone the next time the rover passes it.
-        if(Z_GetTag(*cacheAdr) != PU_PURGELEVEL)
-        {
-            Z_ChangeTag2(*cacheAdr, PU_PURGELEVEL);
-        }
-        // Mark the data as unowned.
-        Z_ChangeUser(*cacheAdr, (void*) 0x2);
-    }
+    LOG_AS("WadFile::clearCachedLump");
 
-    if(retCleared) *retCleared = isCached;
+    if(retCleared) *retCleared = false;
+
+    if(isValidIndex(lumpIdx))
+    {
+        if(d->lumpCache)
+        {
+            d->lumpCache->remove(lumpIdx, retCleared);
+        }
+        else
+        {
+            LOG_DEBUG("LumpCache not in use, ignoring.");
+        }
+    }
+    else
+    {
+        QString msg = invalidIndexMessage(lumpIdx, lastIndex());
+        LOG_DEBUG(msg + ", ignoring.");
+    }
     return *this;
 }
 
 de::WadFile& de::WadFile::clearLumpCache()
 {
-    LOG_AS("WadFile");
-    const int numLumps = lumpCount();
-    for(int i = 0; i < numLumps; ++i)
-    {
-        clearCachedLump(i);
-    }
+    LOG_AS("WadFile::clearLumpCache");
+    if(d->lumpCache) d->lumpCache->clear();
     return *this;
 }
 
 uint8_t const* de::WadFile::cacheLump(int lumpIdx)
 {
     LOG_AS("WadFile::cacheLump");
-    const LumpInfo* info = lumpInfo(lumpIdx);
 
+    if(!isValidIndex(lumpIdx))
+        throw de::Error("WadFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
+
+    const LumpInfo* info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
         << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) info->size
         << (info->compressedSize != info->size? ", compressed" : "");
 
-    // Time to create the lump cache?
+    // Time to create the cache?
     if(!d->lumpCache)
     {
-        if(lumpCount() > 1)
-        {
-            d->lumpCache = (void**) M_Calloc(lumpCount() * sizeof(*d->lumpCache));
-        }
+        d->lumpCache = new LumpCache(lumpCount());
     }
 
-    void** cacheAdr = d->lumpCacheAddress(lumpIdx);
-    bool isCached = cacheAdr && *cacheAdr;
-    if(!isCached)
-    {
-        uint8_t* buffer = (uint8_t*) Z_Malloc(info->size, PU_APPSTATIC, cacheAdr);
-        if(!buffer) throw de::Error("WadFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
+    uint8_t const* data = d->lumpCache->data(lumpIdx);
+    if(data) return data;
 
-        readLump(lumpIdx, buffer, false);
-    }
+    uint8_t* region = (uint8_t*) Z_Malloc(info->size, PU_APPSTATIC, 0);
+    if(!region) throw de::Error("WadFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
 
-    return (uint8_t*)(*cacheAdr);
+    readLump(lumpIdx, region, false);
+    d->lumpCache->insert(lumpIdx, region);
+
+    return region;
 }
 
 de::WadFile& de::WadFile::unlockLump(int lumpIdx)
@@ -464,11 +564,21 @@ de::WadFile& de::WadFile::unlockLump(int lumpIdx)
         << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
 
-    void** cacheAdr = d->lumpCacheAddress(lumpIdx);
-    bool isCached = cacheAdr && *cacheAdr;
-    if(isCached)
+    if(isValidIndex(lumpIdx))
     {
-        Z_ChangeTag2(*cacheAdr, PU_PURGELEVEL);
+        if(d->lumpCache)
+        {
+            d->lumpCache->unlock(lumpIdx);
+        }
+        else
+        {
+            LOG_DEBUG("LumpCache not in use, ignoring.");
+        }
+    }
+    else
+    {
+        QString msg = invalidIndexMessage(lumpIdx, lastIndex());
+        LOG_DEBUG(msg + ", ignoring.");
     }
     return *this;
 }
@@ -491,13 +601,12 @@ size_t de::WadFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache)
     {
-        void** cacheAdr = d->lumpCacheAddress(lumpIdx);
-        bool isCached = cacheAdr && *cacheAdr;
-        LOG_DEBUG("Cache %s on #%i") << (isCached? "hit" : "miss") << lumpIdx;
-        if(isCached)
+        uint8_t const* data = d->lumpCache? d->lumpCache->data(lumpIdx) : 0;
+        LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
+        if(data)
         {
             size_t readBytes = MIN_OF(lrec->info.size, length);
-            memcpy(buffer, (char*)*cacheAdr + startOffset, readBytes);
+            memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
     }
