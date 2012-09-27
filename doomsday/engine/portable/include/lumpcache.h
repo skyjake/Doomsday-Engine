@@ -36,19 +36,13 @@ class LumpCache
 public:
     LumpCache(uint size) : size_(size)
     {
-        if(size_ > 1)
-        {
-            lumps = (void**) M_Calloc(size_ * sizeof(*lumps));
-        }
+        lumps = (void**) M_Calloc(size_ * sizeof(*lumps));
     }
 
     ~LumpCache()
     {
         clear();
-        if(size_ > 1 && lumps)
-        {
-            M_Free(lumps);
-        }
+        if(lumps) M_Free(lumps);
     }
 
     uint size() const { return size_; }
@@ -133,14 +127,7 @@ private:
     {
         if(!lumps) return 0;
         if(!isValidIndex(lumpIdx)) return 0;
-        if(size_ > 1)
-        {
-            return &lumps[lumpIdx];
-        }
-        else
-        {
-            return (void**)&lumps;
-        }
+        return &lumps[lumpIdx];
     }
 
 private:
