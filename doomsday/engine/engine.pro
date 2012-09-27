@@ -236,6 +236,7 @@ DENG_HEADERS += \
     portable/include/keycode.h \
     portable/include/library.h \
     portable/include/linedef.h \
+    portable/include/lumpcache.h \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
