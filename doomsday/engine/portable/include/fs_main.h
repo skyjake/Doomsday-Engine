@@ -288,9 +288,9 @@ const LumpInfo* F_LumpInfo(abstractfile_t* file, int lumpIdx);
 size_t F_ReadLumpSection(abstractfile_t* file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);
 
-const uint8_t* F_CacheLump(abstractfile_t* file, int lumpIdx, int tag);
+const uint8_t* F_CacheLump(abstractfile_t* file, int lumpIdx);
 
-void F_CacheChangeTag(abstractfile_t* file, int lumpIdx, int tag);
+void F_UnlockLump(abstractfile_t* file, int lumpIdx);
 
 /**
  * Parm is passed on to the callback, which is called for each file

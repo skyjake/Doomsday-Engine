@@ -424,7 +424,7 @@ de::WadFile& de::WadFile::clearLumpCache()
     return *this;
 }
 
-uint8_t const* de::WadFile::cacheLump(int lumpIdx, int tag)
+uint8_t const* de::WadFile::cacheLump(int lumpIdx)
 {
     LOG_AS("WadFile::cacheLump");
     const LumpInfo* info = lumpInfo(lumpIdx);
@@ -448,32 +448,27 @@ uint8_t const* de::WadFile::cacheLump(int lumpIdx, int tag)
     bool isCached = cacheAdr && *cacheAdr;
     if(!isCached)
     {
-        uint8_t* buffer = (uint8_t*) Z_Malloc(info->size, tag, cacheAdr);
+        uint8_t* buffer = (uint8_t*) Z_Malloc(info->size, PU_APPSTATIC, cacheAdr);
         if(!buffer) throw de::Error("WadFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
 
         readLump(lumpIdx, buffer, false);
-    }
-    else
-    {
-        Z_ChangeTag2(*cacheAdr, tag);
     }
 
     return (uint8_t*)(*cacheAdr);
 }
 
-de::WadFile& de::WadFile::changeLumpCacheTag(int lumpIdx, int tag)
+de::WadFile& de::WadFile::unlockLump(int lumpIdx)
 {
-    LOG_AS("WadFile::changeLumpCacheTag");
-    LOG_TRACE("\"%s:%s\" tag=%i")
+    LOG_AS("WadFile::unlockLump");
+    LOG_TRACE("\"%s:%s\"")
         << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
-        << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << tag;
+        << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
 
     void** cacheAdr = d->lumpCacheAddress(lumpIdx);
     bool isCached = cacheAdr && *cacheAdr;
     if(isCached)
     {
-        Z_ChangeTag2(*cacheAdr, tag);
+        Z_ChangeTag2(*cacheAdr, PU_CACHE);
     }
     return *this;
 }
@@ -659,16 +654,16 @@ size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer)
     return self->readLump(lumpIdx, buffer);
 }
 
-const uint8_t* WadFile_CacheLump(WadFile* wad, int lumpIdx, int tag)
+const uint8_t* WadFile_CacheLump(WadFile* wad, int lumpIdx)
 {
     SELF(wad);
-    return self->cacheLump(lumpIdx, tag);
+    return self->cacheLump(lumpIdx);
 }
 
-void WadFile_ChangeLumpCacheTag(WadFile* wad, int lumpIdx, int tag)
+void WadFile_UnlockLump(WadFile* wad, int lumpIdx)
 {
     SELF(wad);
-    self->changeLumpCacheTag(lumpIdx, tag);
+    self->unlockLump(lumpIdx);
 }
 
 boolean WadFile_IsValidIndex(WadFile* wad, int lumpIdx)

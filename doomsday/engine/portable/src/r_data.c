@@ -1200,7 +1200,7 @@ patchid_t R_DeclarePatch(const char* name)
      * is made. We should not read this info here!
      */
     fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-    patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+    patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx);
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
 
@@ -1211,7 +1211,7 @@ patchid_t R_DeclarePatch(const char* name)
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
         tex = Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, (void*)p);
-        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+        F_UnlockLump(fsObject, lumpIdx);
 
         if(!tex)
         {
@@ -1234,7 +1234,7 @@ patchid_t R_DeclarePatch(const char* name)
 
         free(oldPatch);
 
-        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+        F_UnlockLump(fsObject, lumpIdx);
     }
 
     return uniqueId;
@@ -1417,11 +1417,11 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
         return NULL;
     }
 
-    lump = F_CacheLump(file, lumpIdx, PU_APPSTATIC);
+    lump = F_CacheLump(file, lumpIdx);
     numNames = LONG(*((const int*) lump));
     if(numNames <= 0)
     {
-        F_CacheChangeTag(file, lumpIdx, PU_CACHE);
+        F_UnlockLump(file, lumpIdx);
 
         if(num) *num = 0;
         return NULL;
@@ -1450,7 +1450,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
         name++;
     }
 
-    F_CacheChangeTag(file, lumpIdx, PU_CACHE);
+    F_UnlockLump(file, lumpIdx);
 
     if(num) *num = numNames;
     return names;
@@ -2275,7 +2275,7 @@ void R_DefineSpriteTexture(textureid_t texId)
         lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(resourcePath), true/*quiet please*/);
         int lumpIdx;
         abstractfile_t* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-        const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx, PU_APPSTATIC);
+        const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx);
         Size2Raw size;
 
         size.width  = SHORT(patch->width);
@@ -2284,7 +2284,7 @@ void R_DefineSpriteTexture(textureid_t texId)
 
         Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
 
-        F_CacheChangeTag(file, lumpIdx, PU_CACHE);
+        F_UnlockLump(file, lumpIdx);
         Str_Delete(resourcePath);
     }
 }

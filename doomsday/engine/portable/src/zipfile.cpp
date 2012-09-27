@@ -609,7 +609,7 @@ de::ZipFile& de::ZipFile::clearLumpCache()
     return *this;
 }
 
-uint8_t const* de::ZipFile::cacheLump(int lumpIdx, int tag)
+uint8_t const* de::ZipFile::cacheLump(int lumpIdx)
 {
     LOG_AS("ZipFile::cacheLump");
     LumpInfo const* info = lumpInfo(lumpIdx);
@@ -634,32 +634,27 @@ uint8_t const* de::ZipFile::cacheLump(int lumpIdx, int tag)
     bool isCached = cacheAdr && *cacheAdr;
     if(!isCached)
     {
-        uint8_t* buffer = (uint8_t*) Z_Malloc(info->size, tag, cacheAdr);
+        uint8_t* buffer = (uint8_t*) Z_Malloc(info->size, PU_APPSTATIC, cacheAdr);
         if(!buffer) throw de::Error("ZipFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
 
         readLump(lumpIdx, buffer, false);
-    }
-    else
-    {
-        Z_ChangeTag2(*cacheAdr, tag);
     }
 
     return (uint8_t*)(*cacheAdr);
 }
 
-de::ZipFile& de::ZipFile::changeLumpCacheTag(int lumpIdx, int tag)
+de::ZipFile& de::ZipFile::unlockLump(int lumpIdx)
 {
-    LOG_AS("ZipFile::changeLumpCacheTag");
-    LOG_TRACE("\"%s:%s\" tag=%i")
+    LOG_AS("ZipFile::unlockLump");
+    LOG_TRACE("\"%s:%s\"")
         << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
-        << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << tag;
+        << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
 
     void** cacheAdr = d->lumpCacheAddress(lumpIdx);
     bool isCached = cacheAdr && *cacheAdr;
     if(isCached)
     {
-        Z_ChangeTag2(*cacheAdr, tag);
+        Z_ChangeTag2(*cacheAdr, PU_CACHE);
     }
     return *this;
 }
@@ -1142,16 +1137,16 @@ size_t ZipFile_ReadLump(ZipFile* zip, int lumpIdx, uint8_t* buffer)
     return self->readLump(lumpIdx, buffer);
 }
 
-uint8_t const* ZipFile_CacheLump(ZipFile* zip, int lumpIdx, int tag)
+uint8_t const* ZipFile_CacheLump(ZipFile* zip, int lumpIdx)
 {
     SELF(zip);
-    return self->cacheLump(lumpIdx, tag);
+    return self->cacheLump(lumpIdx);
 }
 
-void ZipFile_ChangeLumpCacheTag(ZipFile* zip, int lumpIdx, int tag)
+void ZipFile_UnlockLump(ZipFile* zip, int lumpIdx)
 {
     SELF(zip);
-    self->changeLumpCacheTag(lumpIdx, tag);
+    self->unlockLump(lumpIdx);
 }
 
 boolean ZipFile_IsValidIndex(ZipFile* zip, int lumpIdx)

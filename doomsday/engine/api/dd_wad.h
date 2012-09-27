@@ -87,18 +87,16 @@ size_t W_ReadLumpSection(lumpnum_t lumpNum, uint8_t* buffer, size_t startOffset,
  * Read the data associated with @a lumpNum into the cache.
  *
  * @param lumpNum  Logical lump index associated with the data being read.
- * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const uint8_t* W_CacheLump(lumpnum_t lumpNum, int tag);
+const uint8_t* W_CacheLump(lumpnum_t lumpNum);
 
 /**
- * Change the Zone purge level/cache tag associated with a cached data lump.
+ * Remove a lock on a cached data lump associated with @a lumpNum.
  *
  * @param lumpNum  Logical lump index associated with the data.
- * @param tag  Zone purge level/cache tag to use.
  */
-void W_CacheChangeTag(lumpnum_t lumpNum, int tag);
+void W_UnlockLump(lumpnum_t lumpNum);
 
 #ifdef __cplusplus
 } // extern "C"

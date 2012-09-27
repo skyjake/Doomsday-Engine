@@ -1041,33 +1041,33 @@ size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
     }
 }
 
-const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx, int tag)
+const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:  return ZipFile_CacheLump((ZipFile*)fsObject, lumpIdx, tag);
-    case FT_WADFILE:  return WadFile_CacheLump((WadFile*)fsObject, lumpIdx, tag);
+    case FT_ZIPFILE:  return ZipFile_CacheLump((ZipFile*)fsObject, lumpIdx);
+    case FT_WADFILE:  return WadFile_CacheLump((WadFile*)fsObject, lumpIdx);
     case FT_LUMPFILE: return F_CacheLump(AbstractFile_Container(fsObject),
-                                         LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx, tag);
+                                         LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx);
     default:
         Con_Error("F_CacheLump: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
     }
 }
 
-void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
+void F_UnlockLump(abstractfile_t* fsObject, int lumpIdx)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:  ZipFile_ChangeLumpCacheTag((ZipFile*)fsObject, lumpIdx, tag); break;
-    case FT_WADFILE:  WadFile_ChangeLumpCacheTag((WadFile*)fsObject, lumpIdx, tag); break;
-    case FT_LUMPFILE: F_CacheChangeTag(AbstractFile_Container(fsObject),
-                                       LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx, tag); break;
+    case FT_ZIPFILE:  ZipFile_UnlockLump((ZipFile*)fsObject, lumpIdx); break;
+    case FT_WADFILE:  WadFile_UnlockLump((WadFile*)fsObject, lumpIdx); break;
+    case FT_LUMPFILE: F_UnlockLump(AbstractFile_Container(fsObject),
+                                   LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx); break;
 
     default:
-        Con_Error("F_CacheChangeTag: Invalid file type %i.", AbstractFile_Type(fsObject));
+        Con_Error("F_UnlockLump: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
     }
 }
@@ -1122,8 +1122,8 @@ boolean F_DumpLump(lumpnum_t absoluteLumpNum, const char* path)
         fname = lumpName;
     }
 
-    ok = F_Dump(F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC), info->size, fname);
-    F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+    ok = F_Dump(F_CacheLump(fsObject, lumpIdx), info->size, fname);
+    F_UnlockLump(fsObject, lumpIdx);
     if(!ok) return false;
 
     LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_VERBOSE,

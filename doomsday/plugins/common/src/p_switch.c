@@ -222,7 +222,7 @@ void P_InitSwitchList(void)
     if(lumpNum > 0)
     {
         VERBOSE( Con_Message("Processing lump %s::SWITCHES...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))) );
-        sList = (switchlist_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
+        sList = (switchlist_t*) W_CacheLump(lumpNum);
     }
     else
     {
@@ -262,7 +262,7 @@ void P_InitSwitchList(void)
     Uri_Delete(uri);
 
     if(lumpNum > 0)
-        W_CacheChangeTag(lumpNum, PU_CACHE);
+        W_UnlockLump(lumpNum);
 
     numswitches = index / 2;
     switchlist[index] = 0;
