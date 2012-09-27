@@ -27,6 +27,7 @@
 #include "de_filesys.h"
 
 #include "game.h"
+#include "lumpcache.h"
 #include "lumpdirectory.h"
 #include "pathdirectory.h"
 #include "zipfile.h"
@@ -160,8 +161,8 @@ struct de::ZipFile::Instance
     typedef std::vector<PathDirectoryNode*> LumpNodeLut;
     LumpNodeLut* lumpNodeLut;
 
-    /// Lump cache data pointers.
-    void** lumpCache;
+    /// Lump data cache.
+    LumpCache* lumpCache;
 
     Instance(de::ZipFile* d)
         : self(d), lumpDirectory(0), lumpNodeLut(0), lumpCache(0)
@@ -169,11 +170,6 @@ struct de::ZipFile::Instance
 
     ~Instance()
     {
-        if(self->lumpCount() > 1 && lumpCache)
-        {
-            M_Free(lumpCache);
-        }
-
         if(lumpDirectory)
         {
             PathDirectory_Iterate(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
@@ -182,6 +178,7 @@ struct de::ZipFile::Instance
         }
 
         if(lumpNodeLut) delete lumpNodeLut;
+        if(lumpCache) delete lumpCache;
     }
 
     ZipLumpRecord* lumpRecord(int lumpIdx)
@@ -434,21 +431,6 @@ struct de::ZipFile::Instance
                                NULL, PATHDIRECTORY_NOHASH, buildLumpNodeLutWorker, (void*)this);
     }
 
-    void** lumpCacheAddress(int lumpIdx)
-    {
-        if(!lumpCache) return 0;
-        if(!self->isValidIndex(lumpIdx)) return 0;
-        if(self->lumpCount() > 1)
-        {
-            const uint cacheIdx = lumpIdx;
-            return &lumpCache[cacheIdx];
-        }
-        else
-        {
-            return (void**)&lumpCache;
-        }
-    }
-
     /**
      * @param buffer  Must be large enough to hold the entire uncompressed data lump.
      */
@@ -579,68 +561,66 @@ int de::ZipFile::publishLumpsToDirectory(LumpDirectory* directory)
 
 de::ZipFile& de::ZipFile::clearCachedLump(int lumpIdx, bool* retCleared)
 {
-    LOG_AS("ZipFile");
-    void** cacheAdr = d->lumpCacheAddress(lumpIdx);
-    bool isCached = (cacheAdr && *cacheAdr);
-    if(isCached)
-    {
-        // Elevate the cached data to purge level so it will be explicitly
-        // free'd by the Zone the next time the rover passes it.
-        if(Z_GetTag(*cacheAdr) != PU_PURGELEVEL)
-        {
-            Z_ChangeTag2(*cacheAdr, PU_PURGELEVEL);
-        }
-        // Mark the data as unowned.
-        Z_ChangeUser(*cacheAdr, (void*) 0x2);
-    }
+    LOG_AS("ZipFile::clearCachedLump");
 
-    if(retCleared) *retCleared = isCached;
+    if(retCleared) *retCleared = false;
+
+    if(isValidIndex(lumpIdx))
+    {
+        if(d->lumpCache)
+        {
+            d->lumpCache->remove(lumpIdx, retCleared);
+        }
+        else
+        {
+            LOG_DEBUG("LumpCache not in use, ignoring.");
+        }
+    }
+    else
+    {
+        QString msg = invalidIndexMessage(lumpIdx, lastIndex());
+        LOG_DEBUG(msg + ", ignoring.");
+    }
     return *this;
 }
 
 de::ZipFile& de::ZipFile::clearLumpCache()
 {
-    LOG_AS("ZipFile");
-    const int numLumps = lumpCount();
-    for(int i = 0; i < numLumps; ++i)
-    {
-        clearCachedLump(i);
-    }
+    LOG_AS("ZipFile::clearLumpCache");
+    if(d->lumpCache) d->lumpCache->clear();
     return *this;
 }
 
 uint8_t const* de::ZipFile::cacheLump(int lumpIdx)
 {
     LOG_AS("ZipFile::cacheLump");
-    LumpInfo const* info = lumpInfo(lumpIdx);
 
+    if(!isValidIndex(lumpIdx))
+        throw de::Error("ZipFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
+
+    const LumpInfo* info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
         << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) info->size
         << (info->compressedSize != info->size? ", compressed" : "");
 
-    // Time to create the lump cache?
+    // Time to create the cache?
     if(!d->lumpCache)
     {
-        if(lumpCount() > 1)
-        {
-            d->lumpCache = (void**) M_Calloc(lumpCount() * sizeof(*d->lumpCache));
-            if(!d->lumpCache) throw de::Error("ZipFile::cacheLump", QString("Failed on allocation of %1 bytes for lump cache data list").arg(sizeof(*d->lumpCache)));
-        }
+        d->lumpCache = new LumpCache(lumpCount());
     }
 
-    void** cacheAdr = d->lumpCacheAddress(lumpIdx);
-    bool isCached = cacheAdr && *cacheAdr;
-    if(!isCached)
-    {
-        uint8_t* buffer = (uint8_t*) Z_Malloc(info->size, PU_APPSTATIC, cacheAdr);
-        if(!buffer) throw de::Error("ZipFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
+    uint8_t const* data = d->lumpCache->data(lumpIdx);
+    if(data) return data;
 
-        readLump(lumpIdx, buffer, false);
-    }
+    uint8_t* region = (uint8_t*) Z_Malloc(info->size, PU_APPSTATIC, 0);
+    if(!region) throw de::Error("ZipFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
 
-    return (uint8_t*)(*cacheAdr);
+    readLump(lumpIdx, region, false);
+    d->lumpCache->insert(lumpIdx, region);
+
+    return region;
 }
 
 de::ZipFile& de::ZipFile::unlockLump(int lumpIdx)
@@ -650,11 +630,21 @@ de::ZipFile& de::ZipFile::unlockLump(int lumpIdx)
         << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
 
-    void** cacheAdr = d->lumpCacheAddress(lumpIdx);
-    bool isCached = cacheAdr && *cacheAdr;
-    if(isCached)
+    if(isValidIndex(lumpIdx))
     {
-        Z_ChangeTag2(*cacheAdr, PU_PURGELEVEL);
+        if(d->lumpCache)
+        {
+            d->lumpCache->unlock(lumpIdx);
+        }
+        else
+        {
+            LOG_DEBUG("LumpCache not in use, ignoring.");
+        }
+    }
+    else
+    {
+        QString msg = invalidIndexMessage(lumpIdx, lastIndex());
+        LOG_DEBUG(msg + ", ignoring.");
     }
     return *this;
 }
@@ -677,13 +667,12 @@ size_t de::ZipFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache)
     {
-        void** cacheAdr = d->lumpCacheAddress(lumpIdx);
-        bool isCached = cacheAdr && *cacheAdr;
-        LOG_DEBUG("Cache %s on #%i") << (isCached? "hit" : "miss") << lumpIdx;
-        if(isCached)
+        uint8_t const* data = d->lumpCache? d->lumpCache->data(lumpIdx) : 0;
+        LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
+        if(data)
         {
             size_t readBytes = MIN_OF(lrec->info.size, length);
-            memcpy(buffer, (char*)*cacheAdr + startOffset, readBytes);
+            memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
     }
