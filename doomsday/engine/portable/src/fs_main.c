@@ -148,7 +148,7 @@ static int findFileNodeIndexForPath(FileList* list, const char* path_)
     int found = -1;
     if(path_ && path_[0] && !FileList_Empty(list))
     {
-        abstractfile_t* file;
+        AbstractFile* file;
         ddstring_t path;
         int i;
 
@@ -171,30 +171,27 @@ static int findFileNodeIndexForPath(FileList* list, const char* path_)
     return found;
 }
 
-static abstractfile_t* newUnknownFile(DFile* file, const char* path, const LumpInfo* info)
+static AbstractFile* newUnknownFile(DFile* file, const char* path, const LumpInfo* info)
 {
-    abstractfile_t* af = (abstractfile_t*)malloc(sizeof *af);
-    if(!af) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.",
-        (unsigned long) sizeof *af);
-    return AbstractFile_Init(af, FT_UNKNOWNFILE, path, file, info);
+    return (AbstractFile*)UnknownFile_New(file, path, info);
 }
 
-static abstractfile_t* newZipFile(DFile* file, const char* path, const LumpInfo* info)
+static AbstractFile* newZipFile(DFile* file, const char* path, const LumpInfo* info)
 {
-    return (abstractfile_t*)ZipFile_New(file, path, info);
+    return (AbstractFile*)ZipFile_New(file, path, info);
 }
 
-static abstractfile_t* newWadFile(DFile* file, const char* path, const LumpInfo* info)
+static AbstractFile* newWadFile(DFile* file, const char* path, const LumpInfo* info)
 {
-    return (abstractfile_t*)WadFile_New(file, path, info);
+    return (AbstractFile*)WadFile_New(file, path, info);
 }
 
-static abstractfile_t* newLumpFile(DFile* file, const char* path, const LumpInfo* info)
+static AbstractFile* newLumpFile(DFile* file, const char* path, const LumpInfo* info)
 {
-    return (abstractfile_t*)LumpFile_New(file, path, info);
+    return (AbstractFile*)LumpFile_New(file, path, info);
 }
 
-static int pruneLumpsFromDirectorysByFile(abstractfile_t* af)
+static int pruneLumpsFromDirectorysByFile(AbstractFile* af)
 {
     int pruned = LumpDirectory_PruneByFile(zipLumpDirectory, af);
     pruned += LumpDirectory_PruneByFile(primaryWadLumpDirectory, af);
@@ -206,7 +203,7 @@ static int pruneLumpsFromDirectorysByFile(abstractfile_t* af)
 static boolean removeLoadedFile(int loadedFilesNodeIndex)
 {
     DFile* file = FileList_Get(loadedFiles, loadedFilesNodeIndex);
-    abstractfile_t* af = DFile_File(file);
+    AbstractFile* af = DFile_File(file);
 
     switch(AbstractFile_Type(af))
     {
@@ -224,7 +221,7 @@ static boolean removeLoadedFile(int loadedFilesNodeIndex)
 
 static void clearLoadedFiles(LumpDirectory* directory)
 {
-    abstractfile_t* file;
+    AbstractFile* file;
     int i;
     for(i = FileList_Size(loadedFiles) - 1; i >= 0; i--)
     {
@@ -528,7 +525,7 @@ void F_EndStartup(void)
 
 static int unloadListFiles(FileList* list, boolean nonStartup)
 {
-    abstractfile_t* file;
+    AbstractFile* file;
     int i, unloaded = 0;
     assert(list);
 
@@ -807,28 +804,28 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
-abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
+AbstractFile* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
     const LumpInfo* lumpInfo = F_FindInfoForLumpNum2(absoluteLumpNum, lumpIdx);
     if(!lumpInfo) return NULL;
     return lumpInfo->container;
 }
 
-abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
+AbstractFile* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
 {
     return F_FindFileForLumpNum2(absoluteLumpNum, NULL);
 }
 
 const char* F_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
-    abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
+    AbstractFile* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
     if(fsObject) return Str_Text(AbstractFile_Path(fsObject));
     return "";
 }
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 {
-    abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
+    AbstractFile* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
     if(fsObject) return AbstractFile_HasCustom(fsObject);
     return false;
 }
@@ -936,7 +933,7 @@ void F_CloseAuxiliary(void)
     usePrimaryWadLumpDirectory();
 }
 
-void F_ReleaseFile(abstractfile_t* fsObject)
+void F_ReleaseFile(AbstractFile* fsObject)
 {
     DFile* file;
     int i;
@@ -958,7 +955,7 @@ void F_Close(DFile* file)
 
 void F_Delete(DFile* file)
 {
-    abstractfile_t* af = DFile_File(file);
+    AbstractFile* af = DFile_File(file);
     DFile_Close(file);
     switch(AbstractFile_Type(af))
     {
@@ -978,7 +975,7 @@ void F_Delete(DFile* file)
     DFile_Delete(file, true);
 }
 
-const LumpInfo* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx)
+const LumpInfo* F_LumpInfo(AbstractFile* fsObject, int lumpIdx)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
@@ -992,7 +989,7 @@ const LumpInfo* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx)
     }
 }
 
-PathDirectoryNode* F_LumpDirectoryNode(abstractfile_t* fsObject, int lumpIdx)
+PathDirectoryNode* F_LumpDirectoryNode(AbstractFile* fsObject, int lumpIdx)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
@@ -1005,7 +1002,7 @@ PathDirectoryNode* F_LumpDirectoryNode(abstractfile_t* fsObject, int lumpIdx)
     }
 }
 
-AutoStr* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delimiter)
+AutoStr* F_ComposeLumpPath2(AbstractFile* fsObject, int lumpIdx, char delimiter)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
@@ -1020,12 +1017,12 @@ AutoStr* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delimite
     }
 }
 
-AutoStr* F_ComposeLumpPath(abstractfile_t* fsObject, int lumpIdx)
+AutoStr* F_ComposeLumpPath(AbstractFile* fsObject, int lumpIdx)
 {
     return F_ComposeLumpPath2(fsObject, lumpIdx, '/');
 }
 
-size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
+size_t F_ReadLumpSection(AbstractFile* fsObject, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
     assert(fsObject);
@@ -1041,7 +1038,7 @@ size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
     }
 }
 
-const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx)
+const uint8_t* F_CacheLump(AbstractFile* fsObject, int lumpIdx)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
@@ -1056,7 +1053,7 @@ const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx)
     }
 }
 
-void F_UnlockLump(abstractfile_t* fsObject, int lumpIdx)
+void F_UnlockLump(AbstractFile* fsObject, int lumpIdx)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
@@ -1100,7 +1097,7 @@ boolean F_Dump(const void* data, size_t size, const char* path)
 boolean F_DumpLump(lumpnum_t absoluteLumpNum, const char* path)
 {
     const LumpInfo* info;
-    abstractfile_t* fsObject;
+    AbstractFile* fsObject;
     const char* lumpName;
     const char* fname;
     int lumpIdx;
@@ -1139,7 +1136,7 @@ uint F_CRCNumber(void)
      */
     if(!FileList_Empty(loadedFiles))
     {
-        abstractfile_t* file, *found = NULL;
+        AbstractFile* file, *found = NULL;
         int i = 0;
         do
         {
@@ -1166,7 +1163,7 @@ typedef struct {
 boolean C_DECL compositePathPredicate(DFile* hndl, void* paramaters)
 {
     compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)paramaters;
-    abstractfile_t* file = DFile_File(hndl);
+    AbstractFile* file = DFile_File(hndl);
     assert(p);
     if((!VALID_FILETYPE(p->type) || p->type == AbstractFile_Type(file)) &&
        ((p->includeOriginal && !AbstractFile_HasCustom(file)) ||
@@ -1512,7 +1509,7 @@ static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** fou
     return NULL;
 }
 
-abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx)
+AbstractFile* F_FindLumpFile(const char* path, int* lumpIdx)
 {
     ddstring_t absSearchPath;
     lumpnum_t lumpNum;
@@ -1571,7 +1568,7 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx)
 
 static DFile* tryOpenFile3(DFile* file, const char* path, const LumpInfo* info);
 
-static DFile* openAsLumpFile(abstractfile_t* container, int lumpIdx,
+static DFile* openAsLumpFile(AbstractFile* container, int lumpIdx,
     const char* _absPath, boolean isDehackedPatch, boolean dontBuffer)
 {
     DFile* file, *hndl;
@@ -1712,7 +1709,7 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     if(!reqRealFile)
     {
         int lumpIdx;
-        abstractfile_t* container = F_FindLumpFile(Str_Text(&searchPath), &lumpIdx);
+        AbstractFile* container = F_FindLumpFile(Str_Text(&searchPath), &lumpIdx);
         if(container)
         {
             resourcetype_t type;
@@ -1837,7 +1834,7 @@ uint F_GetLastModified(const char* fileName)
 DFile* F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
 {
     DFile* file = F_Open3(path, "rb", baseOffset, allowDuplicate);
-    abstractfile_t* fsObject;
+    AbstractFile* fsObject;
 
     if(!file)
     {
@@ -1942,11 +1939,11 @@ boolean F_RemoveFiles(const char* const* filenames, size_t num, boolean permitRe
 DFile* F_OpenLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    abstractfile_t* container = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* container = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(container)
     {
         AutoStr* path = F_ComposeLumpPath(container, lumpIdx);
-        abstractfile_t* fsObject = newLumpFile(
+        AbstractFile* fsObject = newLumpFile(
             DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, false),
             Str_Text(path), F_LumpInfo(container, lumpIdx));
 
@@ -2147,7 +2144,7 @@ void F_InitLumpDirectoryMappings(void)
     for(i = 0; i < F_LumpCount(); ++i)
     {
         const LumpInfo* info;
-        abstractfile_t* fsObject;
+        AbstractFile* fsObject;
         size_t lumpLength;
         int lumpIdx;
 
@@ -2296,8 +2293,8 @@ void F_InitVirtualDirectoryMappings(void)
 
 static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
 {
-    abstractfile_t* a = *((abstractfile_t* const*)a_);
-    abstractfile_t* b = *((abstractfile_t* const*)b_);
+    AbstractFile* a = *((AbstractFile* const*)a_);
+    AbstractFile* b = *((AbstractFile* const*)b_);
     return Str_CompareIgnoreCase(AbstractFile_Path(a), Str_Text(AbstractFile_Path(b)));
 }
 
@@ -2396,7 +2393,7 @@ D_CMD(ListFiles)
     if(inited)
     {
         int fileCount, i;
-        abstractfile_t** ptr, **arr = FileList_ToArray(loadedFiles, &fileCount);
+        AbstractFile** ptr, **arr = FileList_ToArray(loadedFiles, &fileCount);
         if(!arr) return true;
 
         // Sort files so we get a nice alpha-numerical list.

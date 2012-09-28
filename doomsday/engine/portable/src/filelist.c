@@ -138,21 +138,21 @@ DFile* FileList_Back(FileList* fl)
     return FileList_Get(fl, -1);
 }
 
-abstractfile_t* FileList_GetFile(FileList* fl, int idx)
+AbstractFile* FileList_GetFile(FileList* fl, int idx)
 {
     DFile* hndl = FileList_Get(fl, idx);
     if(hndl) return DFile_File(hndl);
     return NULL;
 }
 
-abstractfile_t* FileList_FrontFile(FileList* fl)
+AbstractFile* FileList_FrontFile(FileList* fl)
 {
     DFile* hndl = FileList_Front(fl);
     if(hndl) return DFile_File(hndl);
     return NULL;
 }
 
-abstractfile_t* FileList_BackFile(FileList* fl)
+AbstractFile* FileList_BackFile(FileList* fl)
 {
     DFile* hndl = FileList_Back(fl);
     if(hndl) return DFile_File(hndl);
@@ -216,12 +216,12 @@ boolean FileList_Empty(FileList* fl)
     return FileList_Size(fl) == 0;
 }
 
-abstractfile_t** FileList_ToArray(FileList* fl, int* count)
+AbstractFile** FileList_ToArray(FileList* fl, int* count)
 {
     assert(fl);
     if(!FileList_Empty(fl))
     {
-        abstractfile_t** arr = (abstractfile_t**)malloc(fl->_size * sizeof *arr);
+        AbstractFile** arr = (AbstractFile**)malloc(fl->_size * sizeof *arr);
         if(!arr)
             Con_Error("FileList::ToArray: Failed on allocation of %lu bytes for file list.",
                 (unsigned long) (fl->_size * sizeof *arr));

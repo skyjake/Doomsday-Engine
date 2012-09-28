@@ -136,7 +136,7 @@ DFile* FileList_RemoveAt(FileList* fl, int idx);
  *      Ownership of the array passes to the caller who should ensure to
  *      release it with free() when no longer needed.
  */
-abstractfile_t** FileList_ToArray(FileList* fl, int* size);
+AbstractFile** FileList_ToArray(FileList* fl, int* size);
 
 /**
  * @defgroup pathToStringFlags  Path To String Flags.
@@ -183,7 +183,7 @@ void DFileBuilder_Shutdown(void);
  *
  * @param af  File system object representing the file being opened.
  */
-DFile* DFileBuilder_NewFromAbstractFile(abstractfile_t* af);
+DFile* DFileBuilder_NewFromAbstractFile(AbstractFile* af);
 
 /**
  * Open a new read-only stream on the specified lump-file.
@@ -192,7 +192,7 @@ DFile* DFileBuilder_NewFromAbstractFile(abstractfile_t* af);
  * @param lumpIdx  Logical index of the lump within @a container to be opened.
  * @param dontBuffer  @c true= do not buffer a copy of the lump.
  */
-DFile* DFileBuilder_NewFromAbstractFileLump(abstractfile_t* af, int lumpIdx, boolean dontBuffer);
+DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* af, int lumpIdx, boolean dontBuffer);
 
 /**
  * Open a new read-only stream on the specified system file.

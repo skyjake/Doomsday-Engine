@@ -42,7 +42,7 @@ class LumpFile
 public:
     /// Base file instance.
     /// @todo Inherit from this instead.
-    abstractfile_t base;
+    AbstractFile base;
 
 public:
     LumpFile(DFile& file, char const* path, LumpInfo const& info);

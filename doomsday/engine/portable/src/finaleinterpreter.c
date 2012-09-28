@@ -2018,7 +2018,7 @@ DEFFC(TextFromLump)
     {
         int lumpIdx;
         size_t lumpSize = F_LumpLength(absoluteLumpNum);
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
         const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx);
         size_t bufSize = 2 * lumpSize + 1, i;
         char* str, *out;

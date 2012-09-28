@@ -228,9 +228,9 @@ struct de::WadFile::Instance
             record->baseOffset     = de::littleEndianByteOrder.toNative(arcRecord->filePos);
             record->info.size      = de::littleEndianByteOrder.toNative(arcRecord->size);
             record->info.compressedSize = record->info.size;
-            record->info.container = reinterpret_cast<abstractfile_t*>(&self->base);
+            record->info.container = reinterpret_cast<abstractfile_s*>(&self->base);
             // The modification date is inherited from the file (note recursion).
-            record->info.lastModified = AbstractFile_LastModified(reinterpret_cast<abstractfile_t*>(&self->base));
+            record->info.lastModified = reinterpret_cast<de::AbstractFile*>(&self->base)->lastModified();
             record->info.lumpIdx   = i;
 
             // Determine the name for this lump in the VFS.
@@ -282,16 +282,16 @@ struct de::WadFile::Instance
 
 de::WadFile::WadFile(DFile& file, char const* path, LumpInfo const& info)
 {
-    AbstractFile_Init(reinterpret_cast<abstractfile_t*>(this), FT_WADFILE, path, &file, &info);
+    reinterpret_cast<de::AbstractFile*>(this)->init(FT_WADFILE, path, &file, &info);
     d = new Instance(this, file, path);
 }
 
 de::WadFile::~WadFile()
 {
-    F_ReleaseFile(reinterpret_cast<abstractfile_t*>(this));
+    F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
     clearLumpCache();
     delete d;
-    AbstractFile_Destroy(reinterpret_cast<abstractfile_t*>(this));
+    reinterpret_cast<de::AbstractFile*>(this)->destroy();
 }
 
 bool de::WadFile::isValidIndex(int lumpIdx)
@@ -366,7 +366,7 @@ int de::WadFile::publishLumpsToDirectory(LumpDirectory* directory)
         if(numLumps)
         {
             // Insert the lumps into their rightful places in the directory.
-            LumpDirectory_CatalogLumps(directory, (abstractfile_t*)this, 0, numLumps);
+            LumpDirectory_CatalogLumps(directory, reinterpret_cast<abstractfile_s*>(this), 0, numLumps);
             numPublished += numLumps;
         }
     }
@@ -414,7 +414,7 @@ uint8_t const* de::WadFile::cacheLump(int lumpIdx)
 
     const LumpInfo* info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
-        << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
+        << F_PrettyPath(Str_Text(reinterpret_cast<de::AbstractFile*>(this)->path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) info->size
         << (info->compressedSize != info->size? ", compressed" : "");
@@ -441,7 +441,7 @@ de::WadFile& de::WadFile::unlockLump(int lumpIdx)
 {
     LOG_AS("WadFile::unlockLump");
     LOG_TRACE("\"%s:%s\"")
-        << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
+        << F_PrettyPath(Str_Text(reinterpret_cast<de::AbstractFile*>(this)->path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
 
     if(isValidIndex(lumpIdx))
@@ -471,7 +471,7 @@ size_t de::WadFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
     if(!lrec) return 0;
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
-        << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
+        << F_PrettyPath(Str_Text(reinterpret_cast<de::AbstractFile*>(this)->path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) lrec->info.size
         << (lrec->info.compressedSize != lrec->info.size? ", compressed" : "")

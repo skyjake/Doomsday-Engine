@@ -210,7 +210,7 @@ boolean Mus_IsMUSLump(lumpnum_t lumpNum)
 {
     char buf[4];
     int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    AbstractFile* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
     if(!fsObject) return false;
 
     F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)buf, 0, 4);
@@ -281,7 +281,7 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
     {    
         // Lump is in DOOM's MUS format. We must first convert it to MIDI.
         AutoStr* srcFile = 0;
-        abstractfile_t* fsObject;
+        AbstractFile* fsObject;
         size_t lumpLength;
         int lumpIdx;
         uint8_t* buf;

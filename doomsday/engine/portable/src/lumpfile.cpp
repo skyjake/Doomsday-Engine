@@ -31,19 +31,19 @@
 
 de::LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
 {
-    AbstractFile_Init(reinterpret_cast<abstractfile_t*>(this), FT_LUMPFILE, path, &file, &info);
+    reinterpret_cast<de::AbstractFile*>(this)->init(FT_LUMPFILE, path, &file, &info);
 }
 
 de::LumpFile::~LumpFile()
 {
-    F_ReleaseFile(reinterpret_cast<abstractfile_t*>(this));
-    AbstractFile_Destroy(reinterpret_cast<abstractfile_t*>(this));
+    F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
+    reinterpret_cast<de::AbstractFile*>(this)->destroy();
 }
 
 LumpInfo const* de::LumpFile::lumpInfo(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
-    return AbstractFile_Info(reinterpret_cast<abstractfile_t*>(this));
+    return reinterpret_cast<de::AbstractFile*>(this)->info();
 }
 
 int de::LumpFile::lumpCount()

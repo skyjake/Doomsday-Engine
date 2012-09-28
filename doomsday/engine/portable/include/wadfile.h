@@ -55,7 +55,7 @@ class WadFile
 public:
     /// Base file instance.
     /// @todo Inherit from this instead.
-    abstractfile_t base;
+    AbstractFile base;
 
 public:
     WadFile(DFile& file, char const* path, LumpInfo const& info);

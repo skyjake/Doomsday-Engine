@@ -74,7 +74,7 @@ void LumpDirectory_Clear(LumpDirectory* dir);
  * @param file  File containing the lumps to look for.
  * @return  @c true if one or more lumps are included.
  */
-boolean LumpDirectory_Catalogues(LumpDirectory* dir, abstractfile_t* file);
+boolean LumpDirectory_Catalogues(LumpDirectory* dir, AbstractFile* file);
 
 /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
 lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* dir, const char* path);
@@ -95,7 +95,7 @@ const LumpInfo* LumpDirectory_LumpInfo(LumpDirectory* dir, lumpnum_t lumpNum);
  * @param lumpIdxBase  Base index for the range of lumps being added.
  * @param lumpIdxCount  Number of lumps in the range being added.
  */
-void LumpDirectory_CatalogLumps(LumpDirectory* dir, abstractfile_t* file,
+void LumpDirectory_CatalogLumps(LumpDirectory* dir, AbstractFile* file,
     int lumpIdxBase, int lumpIdxCount);
 
 /**
@@ -105,7 +105,7 @@ void LumpDirectory_CatalogLumps(LumpDirectory* dir, abstractfile_t* file,
  * @param file  File containing the lumps to prune
  * @return  Number of lumps pruned.
  */
-int LumpDirectory_PruneByFile(LumpDirectory* dir, abstractfile_t* file);
+int LumpDirectory_PruneByFile(LumpDirectory* dir, AbstractFile* file);
 
 /**
  * Prune the lump referenced by @a lumpInfo.
@@ -127,9 +127,9 @@ boolean LumpDirectory_PruneLump(LumpDirectory* dir, LumpInfo* lumpInfo);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LumpDirectory_Iterate2(LumpDirectory* dir, abstractfile_t* file,
+int LumpDirectory_Iterate2(LumpDirectory* dir, AbstractFile* file,
     int (*callback) (const LumpInfo*, void*), void* paramaters);
-int LumpDirectory_Iterate(LumpDirectory* dir, abstractfile_t* file,
+int LumpDirectory_Iterate(LumpDirectory* dir, AbstractFile* file,
     int (*callback) (const LumpInfo*, void*));
 
 /**

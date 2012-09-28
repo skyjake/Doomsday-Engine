@@ -57,7 +57,7 @@ static int musicPlayNativeFile(audiointerface_music_t* iMusic, const char* fileN
 
 static int musicPlayLump(audiointerface_music_t* iMusic, lumpnum_t lump, boolean looped)
 {
-    abstractfile_t* fsObject;
+    AbstractFile* fsObject;
     size_t lumpLength;
     int lumpIdx;
 

@@ -39,7 +39,7 @@
 struct dfile_s
 {
     /// The referenced abstract file (if any).
-    abstractfile_t* _file;
+    AbstractFile* _file;
 
     /// Either the FileList which owns this or the next DFile in the used object pool.
     void* _list;
@@ -103,7 +103,7 @@ void DFileBuilder_Shutdown(void)
 #endif
 }
 
-DFile* DFileBuilder_NewFromAbstractFileLump(abstractfile_t* container, int lumpIdx, boolean dontBuffer)
+DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* container, int lumpIdx, boolean dontBuffer)
 {
     const LumpInfo* info = F_LumpInfo(container, lumpIdx);
     DFile* file;
@@ -132,7 +132,7 @@ DFile* DFileBuilder_NewFromAbstractFileLump(abstractfile_t* container, int lumpI
     return file;
 }
 
-DFile* DFileBuilder_NewFromAbstractFile(abstractfile_t* af)
+DFile* DFileBuilder_NewFromAbstractFile(AbstractFile* af)
 {
     DFile* file = DFile_New();
     assert(af);
@@ -256,13 +256,13 @@ void DFile_SetList(DFile* file, FileList* list)
     file->_list = list;
 }
 
-abstractfile_t* DFile_File(DFile* file)
+AbstractFile* DFile_File(DFile* file)
 {
     errorIfNotValid(file, "DFile::File");
     return file->_file;
 }
 
-abstractfile_t* DFile_File_Const(const DFile* file)
+AbstractFile* DFile_File_Const(const DFile* file)
 {
     errorIfNotValid(file, "DFile::File const");
     return file->_file;

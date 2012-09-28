@@ -70,7 +70,7 @@ uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
 
 const char* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
-    abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
+    AbstractFile* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
     if(!fsObject)
     {
         W_Error("W_LumpSourceFile: Invalid lumpnum %i.", absoluteLumpNum);
@@ -122,7 +122,7 @@ lumpnum_t W_GetLumpNumForName(const char* name)
 size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t startOffset, size_t length)
 {
     int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject)
     {
         W_Error("W_ReadLumpSection: Invalid lumpnum %i.", absoluteLumpNum);
@@ -134,7 +134,7 @@ size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t star
 size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 {
     int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject)
     {
         W_Error("W_ReadLump: Invalid lumpnum %i.", absoluteLumpNum);
@@ -146,7 +146,7 @@ size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 const uint8_t* W_CacheLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject)
     {
         W_Error("W_CacheLump: Invalid lumpnum %i.", absoluteLumpNum);
@@ -158,7 +158,7 @@ const uint8_t* W_CacheLump(lumpnum_t absoluteLumpNum)
 void W_UnlockLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject)
     {
         W_Error("W_UnlockLump: Invalid lumpnum %i.", absoluteLumpNum);

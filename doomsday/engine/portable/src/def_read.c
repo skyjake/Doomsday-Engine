@@ -2738,7 +2738,7 @@ int DED_Read(ded_t* ded, const char* path)
 int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(fsObject)
     {
         if(F_LumpLength(absoluteLumpNum) != 0)

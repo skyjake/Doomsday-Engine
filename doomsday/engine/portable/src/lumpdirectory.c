@@ -152,7 +152,7 @@ static void LumpDirectory_Resize(LumpDirectory* ld, int numItems)
     }
 }
 
-int LumpDirectory_PruneByFile(LumpDirectory* ld, abstractfile_t* file)
+int LumpDirectory_PruneByFile(LumpDirectory* ld, AbstractFile* file)
 {
     int i, origNumLumps;
     assert(ld);
@@ -213,7 +213,7 @@ boolean LumpDirectory_PruneLump(LumpDirectory* ld, LumpInfo* lumpInfo)
     return false;
 }
 
-void LumpDirectory_CatalogLumps(LumpDirectory* ld, abstractfile_t* file,
+void LumpDirectory_CatalogLumps(LumpDirectory* ld, AbstractFile* file,
     int lumpIdxBase, int numLumps)
 {
     lumpdirectory_lumprecord_t* record;
@@ -300,13 +300,13 @@ static int findFirstLumpWorker(const LumpInfo* info, void* paramaters)
     return 1; // Stop iteration we need go no further.
 }
 
-boolean LumpDirectory_Catalogues(LumpDirectory* ld, abstractfile_t* file)
+boolean LumpDirectory_Catalogues(LumpDirectory* ld, AbstractFile* file)
 {
     if(!file) return false;
     return LumpDirectory_Iterate(ld, file, findFirstLumpWorker);
 }
 
-int LumpDirectory_Iterate2(LumpDirectory* ld, abstractfile_t* file,
+int LumpDirectory_Iterate2(LumpDirectory* ld, AbstractFile* file,
     int (*callback) (const LumpInfo*, void*), void* paramaters)
 {
     int result = 0;
@@ -332,7 +332,7 @@ int LumpDirectory_Iterate2(LumpDirectory* ld, abstractfile_t* file,
     return result;
 }
 
-int LumpDirectory_Iterate(LumpDirectory* ld, abstractfile_t* file,
+int LumpDirectory_Iterate(LumpDirectory* ld, AbstractFile* file,
     int (*callback) (const LumpInfo*, void*))
 {
     return LumpDirectory_Iterate2(ld, file, callback, 0);

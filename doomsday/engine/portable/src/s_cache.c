@@ -593,7 +593,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
     // No sample loaded yet?
     if(!data)
     {
-        abstractfile_t* fsObject;
+        AbstractFile* fsObject;
         int lumpIdx;
         char hdr[12];
 
@@ -644,7 +644,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
     if(lumpLength > 8)
     {
         int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
         uint8_t hdr[8];
         int head;
 

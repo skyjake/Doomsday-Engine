@@ -187,7 +187,7 @@ boolean Game_IsRequiredResource(Game* game, const char* absolutePath)
     {
         AbstractResource* const* recordIt;
         // Is this resource from a container?
-        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
+        AbstractFile* file = F_FindLumpFile(absolutePath, NULL);
         if(file)
         {
             // Yes; use the container's path instead.

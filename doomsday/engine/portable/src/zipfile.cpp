@@ -280,7 +280,7 @@ struct de::ZipFile::Instance
 
         // Scan the end of the file for the central directory end record.
         if(!locateCentralDirectory())
-            throw de::Error("ZipFile::readLumpDirectory", QString("Central directory in %1 not found").arg(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(&self->base)))));
+            throw de::Error("ZipFile::readLumpDirectory", QString("Central directory in %1 not found").arg(Str_Text(reinterpret_cast<de::AbstractFile*>(&self->base)->path())));
 
         // Read the central directory end record.
         centralend_t summary;
@@ -288,7 +288,7 @@ struct de::ZipFile::Instance
 
         // Does the summary say something we don't like?
         if(summary.diskEntryCount != summary.totalEntryCount)
-            throw de::Error("ZipFile::readLumpDirectory", QString("Multipart zip file \"%1\" not supported").arg(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(&self->base)))));
+            throw de::Error("ZipFile::readLumpDirectory", QString("Multipart zip file \"%1\" not supported").arg(Str_Text(reinterpret_cast<de::AbstractFile*>(&self->base)->path())));
 
         // We'll load the file directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
@@ -347,7 +347,7 @@ struct de::ZipFile::Instance
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' uses an unsupported compression algorithm, ignoring.")
-                        << Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(&self->base)))
+                        << Str_Text(reinterpret_cast<de::AbstractFile*>(&self->base)->path())
                         << Str_Text(&entryPath);
                 }
 
@@ -355,7 +355,7 @@ struct de::ZipFile::Instance
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' is encrypted.\n  Encryption is not supported, ignoring.")
-                        << Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(&self->base)))
+                        << Str_Text(reinterpret_cast<de::AbstractFile*>(&self->base)->path())
                         << Str_Text(&entryPath);
                 }
 
@@ -393,8 +393,8 @@ struct de::ZipFile::Instance
                 }
 
                 // The modification date is inherited from the real file (note recursion).
-                record->info.lastModified = AbstractFile_LastModified(reinterpret_cast<abstractfile_t*>(&self->base));
-                record->info.container = reinterpret_cast<abstractfile_t*>(&self->base);
+                record->info.lastModified = reinterpret_cast<de::AbstractFile*>(&self->base)->lastModified();
+                record->info.container = reinterpret_cast<abstractfile_s*>(&self->base);
 
                 // Read the local file header, which contains the extra field size (Info-ZIP!).
                 DFile_Seek(self->base._file, ULONG(header->relOffset), SEEK_SET);
@@ -468,16 +468,16 @@ struct de::ZipFile::Instance
 
 de::ZipFile::ZipFile(DFile& file, char const* path, LumpInfo const& info)
 {
-    AbstractFile_Init(reinterpret_cast<abstractfile_t*>(this), FT_ZIPFILE, path, &file, &info);
+    reinterpret_cast<de::AbstractFile*>(this)->init(FT_ZIPFILE, path, &file, &info);
     d = new Instance(this);
 }
 
 de::ZipFile::~ZipFile()
 {
-    F_ReleaseFile(reinterpret_cast<abstractfile_t*>(this));
+    F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
     clearLumpCache();
     delete d;
-    AbstractFile_Destroy(reinterpret_cast<abstractfile_t*>(this));
+    reinterpret_cast<de::AbstractFile*>(this)->destroy();
 }
 
 bool de::ZipFile::isValidIndex(int lumpIdx)
@@ -552,7 +552,7 @@ int de::ZipFile::publishLumpsToDirectory(LumpDirectory* directory)
         if(numLumps)
         {
             // Insert the lumps into their rightful places in the directory.
-            LumpDirectory_CatalogLumps(directory, reinterpret_cast<abstractfile_t*>(this), 0, numLumps);
+            LumpDirectory_CatalogLumps(directory, reinterpret_cast<abstractfile_s*>(this), 0, numLumps);
             numPublished += numLumps;
         }
     }
@@ -600,7 +600,7 @@ uint8_t const* de::ZipFile::cacheLump(int lumpIdx)
 
     const LumpInfo* info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
-        << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
+        << F_PrettyPath(Str_Text(reinterpret_cast<de::AbstractFile*>(this)->path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) info->size
         << (info->compressedSize != info->size? ", compressed" : "");
@@ -627,7 +627,7 @@ de::ZipFile& de::ZipFile::unlockLump(int lumpIdx)
 {
     LOG_AS("ZipFile::unlockLump");
     LOG_TRACE("\"%s:%s\"")
-        << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
+        << F_PrettyPath(Str_Text(reinterpret_cast<de::AbstractFile*>(this)->path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
 
     if(isValidIndex(lumpIdx))
@@ -657,7 +657,7 @@ size_t de::ZipFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
     if(!lrec) return 0;
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
-        << F_PrettyPath(Str_Text(AbstractFile_Path(reinterpret_cast<abstractfile_t*>(this))))
+        << F_PrettyPath(Str_Text(reinterpret_cast<de::AbstractFile*>(this)->path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) lrec->info.size
         << (lrec->info.compressedSize != lrec->info.size? ", compressed" : "")

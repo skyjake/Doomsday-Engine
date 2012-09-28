@@ -128,8 +128,8 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
  * @param lumpIdx  If not @c NULL the translated lumpnum within the owning file object is written here.
  * @return  Found file object else @c NULL
  */
-abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
+AbstractFile* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
+AbstractFile* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
 
 const LumpInfo* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 const LumpInfo* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
@@ -154,7 +154,7 @@ void F_CloseAuxiliary(void);
  * @param lumpIdx  If not @c NULL the translated lumpnum within the owning file object is written here.
  * @return  File system object representing the file which contains the found lump else @c NULL.
  */
-abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx);
+AbstractFile* F_FindLumpFile(const char* path, int* lumpIdx);
 
 /**
  * Files with a .wad extension are archived data files with multiple 'lumps',
@@ -270,7 +270,7 @@ void F_GetPWADFileNames(char* buf, size_t bufSize, const char* delimiter);
 uint F_CRCNumber(void);
 
 /// Clear all references to this file.
-void F_ReleaseFile(abstractfile_t* file);
+void F_ReleaseFile(AbstractFile* file);
 
 /// Close this file.
 void F_Close(DFile* file);
@@ -278,19 +278,19 @@ void F_Close(DFile* file);
 /// Completely destroy this file; close if open, clear references and any acquired identifiers.
 void F_Delete(DFile* file);
 
-AutoStr* F_ComposeLumpPath2(abstractfile_t* file, int lumpIdx, char delimiter);
-AutoStr* F_ComposeLumpPath(abstractfile_t* file, int lumpIdx); /*delimiter='/'*/
+AutoStr* F_ComposeLumpPath2(AbstractFile* file, int lumpIdx, char delimiter);
+AutoStr* F_ComposeLumpPath(AbstractFile* file, int lumpIdx); /*delimiter='/'*/
 
-struct pathdirectorynode_s* F_LumpDirectoryNode(abstractfile_t* file, int lumpIdx);
+struct pathdirectorynode_s* F_LumpDirectoryNode(AbstractFile* file, int lumpIdx);
 
-const LumpInfo* F_LumpInfo(abstractfile_t* file, int lumpIdx);
+const LumpInfo* F_LumpInfo(AbstractFile* file, int lumpIdx);
 
-size_t F_ReadLumpSection(abstractfile_t* file, int lumpIdx, uint8_t* buffer,
+size_t F_ReadLumpSection(AbstractFile* file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);
 
-const uint8_t* F_CacheLump(abstractfile_t* file, int lumpIdx);
+const uint8_t* F_CacheLump(AbstractFile* file, int lumpIdx);
 
-void F_UnlockLump(abstractfile_t* file, int lumpIdx);
+void F_UnlockLump(AbstractFile* file, int lumpIdx);
 
 /**
  * Parm is passed on to the callback, which is called for each file

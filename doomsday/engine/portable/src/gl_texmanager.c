@@ -2566,7 +2566,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
         int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
         const uint8_t* patch = F_CacheLump(fsObject, lumpIdx);
 
         if(validPatch(patch, F_LumpInfo(fsObject, lumpIdx)->size))
@@ -2610,7 +2610,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     if(texDef->patchCount == 1)
     {
         int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(texDef->patches[0].lumpNum, &lumpIdx);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(texDef->patches[0].lumpNum, &lumpIdx);
         const doompatch_header_t* hdr = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx);
         int bufHeight = SHORT(hdr->height) > height ? SHORT(hdr->height) : height;
         if(bufHeight > height)
@@ -2636,7 +2636,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     {
         const texpatch_t* patchDef = &texDef->patches[i];
         int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx);
 
         if(validPatch((const uint8_t*)patch, F_LumpInfo(fsObject, lumpIdx)->size))

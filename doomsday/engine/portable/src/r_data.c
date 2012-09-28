@@ -1131,7 +1131,7 @@ static textureid_t findPatchTextureIdByName(const char* encodedName)
 patchid_t R_DeclarePatch(const char* name)
 {
     const doompatch_header_t* patch;
-    abstractfile_t* fsObject;
+    AbstractFile* fsObject;
     Uri* uri, *resourcePath;
     int lumpIdx;
     ddstring_t encodedName;
@@ -1401,7 +1401,7 @@ void R_UpdateRawTexs(void)
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
     int lumpIdx;
-    abstractfile_t* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    AbstractFile* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
     size_t lumpSize = F_LumpLength(lumpNum);
     patchname_t* names, *name;
     const uint8_t* lump;
@@ -1511,7 +1511,7 @@ typedef struct {
     patchcompositetex_t** texDefs = NULL;
     size_t lumpSize, offset, n, numValidPatchRefs;
     int numTexDefs, numValidTexDefs;
-    abstractfile_t* fsObject;
+    AbstractFile* fsObject;
     int* directory, *maptex1;
     short* texDefNumPatches;
     patchinfo_t* patchInfo;
@@ -2173,11 +2173,11 @@ void R_InitFlatTextures(void)
     if(firstFlatMarkerLumpNum >= 0)
     {
         lumpnum_t lumpNum, numLumps = F_LumpCount();
-        abstractfile_t* blockFile = 0;
+        AbstractFile* blockFile = 0;
         for(lumpNum = numLumps; lumpNum --> firstFlatMarkerLumpNum + 1;)
         {
             const char* lumpName = F_LumpName(lumpNum);
-            abstractfile_t* lumpFile = F_FindFileForLumpNum(lumpNum);
+            AbstractFile* lumpFile = F_FindFileForLumpNum(lumpNum);
 
             if(blockFile && blockFile != lumpFile)
             {
@@ -2274,7 +2274,7 @@ void R_DefineSpriteTexture(textureid_t texId)
         ddstring_t* resourcePath = Uri_Resolved(resourceUri);
         lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(resourcePath), true/*quiet please*/);
         int lumpIdx;
-        abstractfile_t* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        AbstractFile* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx);
         Size2Raw size;
 
