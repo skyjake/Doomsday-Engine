@@ -959,15 +959,10 @@ void F_Delete(DFile* file)
     DFile_Close(file);
     switch(AbstractFile_Type(af))
     {
-    case FT_UNKNOWNFILE:
-        F_ReleaseFile(af);
-        AbstractFile_Destroy(af);
-        free(af);
-        break;
-
-    case FT_ZIPFILE:  ZipFile_Delete( ( ZipFile*)af); break;
-    case FT_WADFILE:  WadFile_Delete( ( WadFile*)af); break;
-    case FT_LUMPFILE: LumpFile_Delete((LumpFile*)af); break;
+    case FT_UNKNOWNFILE:    UnknownFile_Delete(        af); break;
+    case FT_ZIPFILE:        ZipFile_Delete( ( ZipFile*)af); break;
+    case FT_WADFILE:        WadFile_Delete( ( WadFile*)af); break;
+    case FT_LUMPFILE:       LumpFile_Delete((LumpFile*)af); break;
     default:
         Con_Error("F_Delete: Invalid file type %i.", AbstractFile_Type(af));
         exit(1); // Unreachable.

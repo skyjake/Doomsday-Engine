@@ -30,20 +30,18 @@
 #include <de/memory.h>
 
 de::LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
-{
-    reinterpret_cast<de::AbstractFile*>(this)->init(FT_LUMPFILE, path, &file, &info);
-}
+    : AbstractFile(FT_LUMPFILE, path, &file, &info)
+{}
 
 de::LumpFile::~LumpFile()
 {
     F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
-    reinterpret_cast<de::AbstractFile*>(this)->destroy();
 }
 
 LumpInfo const* de::LumpFile::lumpInfo(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
-    return reinterpret_cast<de::AbstractFile*>(this)->info();
+    return this->info();
 }
 
 int de::LumpFile::lumpCount()

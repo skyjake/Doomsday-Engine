@@ -52,13 +52,8 @@ class PathDirectoryNode;
 /**
  * ZipFile. Runtime representation of an opened ZIP file.
  */
-class ZipFile
+class ZipFile : AbstractFile
 {
-public:
-    /// Base file instance.
-    /// @todo Inherit from this instead.
-    AbstractFile base;
-
 public:
     ZipFile(DFile& file, char const* path, LumpInfo const& info);
     ~ZipFile();

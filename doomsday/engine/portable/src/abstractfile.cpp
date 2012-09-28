@@ -28,25 +28,21 @@
 
 #include "abstractfile.h"
 
-de::AbstractFile& de::AbstractFile::init(filetype_t type, char const* path,
-    DFile* file, const LumpInfo* info)
+de::AbstractFile::AbstractFile(filetype_t type_, char const* path_, DFile* file, LumpInfo const* info_)
+    : _type(type_), _file(file)
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
-    DENG2_ASSERT(VALID_FILETYPE(type) && info);
-
+    DENG2_ASSERT(VALID_FILETYPE(type_) && info_);
     _order = fileCounter++;
-    _type = type;
-    _file = file;
+
     _flags.startup = false;
     _flags.custom = true;
-    Str_Init(&_path); Str_Set(&_path, path);
-    F_CopyLumpInfo(&_info, info);
-
-    return *this;
+    Str_Init(&_path); Str_Set(&_path, path_);
+    F_CopyLumpInfo(&_info, info_);
 }
 
-void de::AbstractFile::destroy()
+de::AbstractFile::~AbstractFile()
 {
     Str_Free(&_path);
     F_DestroyLumpInfo(&_info);
@@ -131,19 +127,6 @@ void de::AbstractFile::setCustom(bool yes)
     DENG2_ASSERT(inst); \
     de::AbstractFile const* self = TOINTERNAL_CONST(inst)
 
-AbstractFile* AbstractFile_Init(AbstractFile* af, filetype_t type,
-    char const* path, DFile* file, const LumpInfo* info)
-{
-    SELF(af);
-    return reinterpret_cast<AbstractFile*>(&self->init(type, path, file, info));
-}
-
-void AbstractFile_Destroy(AbstractFile* af)
-{
-    SELF(af);
-    self->destroy();
-}
-
 filetype_t AbstractFile_Type(AbstractFile const* af)
 {
     SELF_CONST(af);
@@ -218,7 +201,17 @@ void AbstractFile_SetCustom(AbstractFile* af, boolean yes)
 
 AbstractFile* UnknownFile_New(DFile* file, char const* path, LumpInfo const* info)
 {
-    de::AbstractFile* af = new de::AbstractFile();
+    de::AbstractFile* af = new de::AbstractFile(FT_UNKNOWNFILE, path, file, info);
     if(!af) LegacyCore_FatalError("UnknownFile_New: Failed to instantiate new AbstractFile.");
-    return reinterpret_cast<AbstractFile*>(&af->init(FT_UNKNOWNFILE, path, file, info));
+    return reinterpret_cast<AbstractFile*>(af);
+}
+
+void UnknownFile_Delete(AbstractFile* af)
+{
+    if(af)
+    {
+        SELF(af);
+        F_ReleaseFile(reinterpret_cast<AbstractFile*>(self));
+        delete self;
+    }
 }

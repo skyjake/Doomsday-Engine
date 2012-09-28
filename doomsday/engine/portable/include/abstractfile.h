@@ -82,21 +82,17 @@ public:
     uint _order;
 
     /**
-     * Initialize this resource.
-     *
      * @param type  File type identifier.
      * @param path  Path to this file in the virtual file system.
-     * @param file  Handle to the file. AbstractFile takes ownership of the handle.
+     * @param file  Handle to the file. Ownership of the handle is given to this instance.
      * @param info  Lump info descriptor for the file. A copy is made.
-     *
-     * @return This instance.
      */
-    AbstractFile& init(filetype_t type, char const* path, DFile* file, LumpInfo const* info);
+    AbstractFile(filetype_t type_, char const* path_, DFile* file, LumpInfo const* info_);
 
     /**
      * Release all memory acquired for objects linked with this resource.
      */
-    void destroy();
+    ~AbstractFile();
 
     /**
      * @return  Type of this resource @see filetype_t
@@ -175,11 +171,6 @@ extern "C" {
 struct abstractfile_s; // The abstractfile instance (opaque)
 typedef struct abstractfile_s AbstractFile;
 
-AbstractFile* AbstractFile_Init(AbstractFile* af, filetype_t type,
-    char const* path, DFile* file, LumpInfo const* info);
-
-void AbstractFile_Destroy(AbstractFile* af);
-
 filetype_t AbstractFile_Type(AbstractFile const* af);
 
 LumpInfo const* AbstractFile_Info(AbstractFile const* af);
@@ -210,6 +201,8 @@ int AbstractFile_LumpCount(AbstractFile* af);
 
 /// @todo Refactor away:
 AbstractFile* UnknownFile_New(DFile* file, char const* path, LumpInfo const* info);
+
+void UnknownFile_Delete(AbstractFile* af);
 
 #ifdef __cplusplus
 } // extern "C"

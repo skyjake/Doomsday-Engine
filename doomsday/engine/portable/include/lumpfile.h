@@ -37,13 +37,8 @@ namespace de {
 /**
  * LumpFile. Runtime representation of a lump-file for use with LumpDirectory
  */
-class LumpFile
+class LumpFile : public AbstractFile
 {
-public:
-    /// Base file instance.
-    /// @todo Inherit from this instead.
-    AbstractFile base;
-
 public:
     LumpFile(DFile& file, char const* path, LumpInfo const& info);
     ~LumpFile();

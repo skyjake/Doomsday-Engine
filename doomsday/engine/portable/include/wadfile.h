@@ -50,13 +50,8 @@ class PathDirectoryNode;
 /**
  * WadFile. Runtime representation of an opened WAD file.
  */
-class WadFile
+class WadFile : public AbstractFile
 {
-public:
-    /// Base file instance.
-    /// @todo Inherit from this instead.
-    AbstractFile base;
-
 public:
     WadFile(DFile& file, char const* path, LumpInfo const& info);
     ~WadFile();
