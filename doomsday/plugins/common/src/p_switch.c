@@ -219,7 +219,7 @@ void P_InitSwitchList(void)
 # endif
 
     // Has a custom SWITCHES lump been loaded?
-    if(lumpNum > 0)
+    if(lumpNum >= 0)
     {
         VERBOSE( Con_Message("Processing lump %s::SWITCHES...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))) );
         sList = (switchlist_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
@@ -251,7 +251,7 @@ void P_InitSwitchList(void)
             Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name2)));
             Uri_SetPath(uri, Str_Text(&path));
             switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
-            if(verbose > (lumpNum > 0? 1 : 2))
+            if(verbose > (lumpNum >= 0? 1 : 2))
             {
                 Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);
             }
@@ -261,8 +261,13 @@ void P_InitSwitchList(void)
     Str_Free(&path);
     Uri_Delete(uri);
 
+<<<<<<< HEAD
     if(lumpNum > 0)
         W_CacheChangeTag(lumpNum, PU_CACHE);
+=======
+    if(lumpNum >= 0)
+        W_UnlockLump(lumpNum);
+>>>>>>> dde7d0f... Fixed|libcommon: Failed read SWITCHES lumps at directory index #0
 
     numswitches = index / 2;
     switchlist[index] = 0;
