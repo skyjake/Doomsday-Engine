@@ -28,85 +28,85 @@
 
 #include "abstractfile.h"
 
-de::AbstractFile::AbstractFile(filetype_t type_, char const* path_, DFile* file, LumpInfo const* info_)
-    : _type(type_), _file(file)
+de::AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
+    : type_(_type), file(&file)
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
-    DENG2_ASSERT(VALID_FILETYPE(type_) && info_);
-    _order = fileCounter++;
+    DENG2_ASSERT(VALID_FILETYPE(_type));
+    order = fileCounter++;
 
-    _flags.startup = false;
-    _flags.custom = true;
-    Str_Init(&_path); Str_Set(&_path, path_);
-    F_CopyLumpInfo(&_info, info_);
+    flags.startup = false;
+    flags.custom = true;
+    Str_Init(&path_); Str_Set(&path_, _path);
+    F_CopyLumpInfo(&info_, &_info);
 }
 
 de::AbstractFile::~AbstractFile()
 {
-    Str_Free(&_path);
-    F_DestroyLumpInfo(&_info);
-    if(_file) DFile_Delete(_file, true);
+    Str_Free(&path_);
+    F_DestroyLumpInfo(&info_);
+    if(file) DFile_Delete(file, true);
 }
 
 filetype_t de::AbstractFile::type() const
 {
-    return _type;
+    return type_;
 }
 
 LumpInfo const* de::AbstractFile::info() const
 {
-    return &_info;
+    return &info_;
 }
 
 de::AbstractFile* de::AbstractFile::container() const
 {
-    return reinterpret_cast<de::AbstractFile*>(_info.container);
+    return reinterpret_cast<de::AbstractFile*>(info_.container);
 }
 
 size_t de::AbstractFile::baseOffset() const
 {
-    return (_file? DFile_BaseOffset(_file) : 0);
+    return (file? DFile_BaseOffset(file) : 0);
 }
 
 DFile* de::AbstractFile::handle()
 {
-    return _file;
+    return file;
 }
 
 ddstring_t const* de::AbstractFile::path() const
 {
-    return &_path;
+    return &path_;
 }
 
 uint de::AbstractFile::loadOrderIndex() const
 {
-    return _order;
+    return order;
 }
 
 uint de::AbstractFile::lastModified() const
 {
-    return _info.lastModified;
+    return info_.lastModified;
 }
 
 bool de::AbstractFile::hasStartup() const
 {
-    return !!_flags.startup;
+    return !!flags.startup;
 }
 
 void de::AbstractFile::setStartup(bool yes)
 {
-    _flags.startup = yes;
+    flags.startup = yes;
 }
 
 bool de::AbstractFile::hasCustom() const
 {
-    return !!_flags.custom;
+    return !!flags.custom;
 }
 
 void de::AbstractFile::setCustom(bool yes)
 {
-    _flags.custom = yes;
+    flags.custom = yes;
 }
 
 /**
@@ -201,7 +201,8 @@ void AbstractFile_SetCustom(AbstractFile* af, boolean yes)
 
 AbstractFile* UnknownFile_New(DFile* file, char const* path, LumpInfo const* info)
 {
-    de::AbstractFile* af = new de::AbstractFile(FT_UNKNOWNFILE, path, file, info);
+    DENG2_ASSERT(file && info);
+    de::AbstractFile* af = new de::AbstractFile(FT_UNKNOWNFILE, path, *file, *info);
     if(!af) LegacyCore_FatalError("UnknownFile_New: Failed to instantiate new AbstractFile.");
     return reinterpret_cast<AbstractFile*>(af);
 }

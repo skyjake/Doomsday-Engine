@@ -30,7 +30,7 @@
 #include <de/memory.h>
 
 de::LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
-    : AbstractFile(FT_LUMPFILE, path, &file, &info)
+    : AbstractFile(FT_LUMPFILE, path, file, info)
 {}
 
 de::LumpFile::~LumpFile()

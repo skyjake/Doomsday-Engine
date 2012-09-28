@@ -34,6 +34,7 @@ extern "C" {
 #endif
 
 // File types.
+/// @todo Refactor away.
 typedef enum {
     FT_UNKNOWNFILE,
     FT_ZIPFILE,
@@ -60,34 +61,13 @@ namespace de {
 class AbstractFile
 {
 public:
-    /// @see filetype_t
-    filetype_t _type;
-
-    struct abstractfile_flags_s
-    {
-        uint startup:1; ///< Loaded during the startup process.
-        uint custom:1; /// < Not an original game resource.
-    } _flags;
-
-    /// protected: File stream handle/wrapper.
-    DFile* _file;
-
-    /// Absolute variable-length path in the vfs.
-    ddstring_t _path;
-
-    /// Info descriptor (file metadata).
-    LumpInfo _info;
-
-    /// Load order depth index.
-    uint _order;
-
     /**
      * @param type  File type identifier.
      * @param path  Path to this file in the virtual file system.
      * @param file  Handle to the file. Ownership of the handle is given to this instance.
      * @param info  Lump info descriptor for the file. A copy is made.
      */
-    AbstractFile(filetype_t type_, char const* path_, DFile* file, LumpInfo const* info_);
+    AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info);
 
     /**
      * Release all memory acquired for objects linked with this resource.
@@ -148,15 +128,41 @@ public:
      * @param lumpIdx  Lump index associated with the data being read.
      * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
      * @return  Number of bytes read.
+     *
+     * @todo Should be virtual
      */
     size_t readLump(int lumpIdx, uint8_t* buffer);
 
     /**
-     * Accessors:
+     * @return  Number of "lumps" contained within this resource.
+     *
+     * @todo Should be virtual
      */
-
-    /// @return  Number of "lumps" contained within this resource.
     int lumpCount();
+
+private:
+    /// @see filetype_t
+    filetype_t type_;
+
+    struct abstractfile_flags_s
+    {
+        uint startup:1; ///< Loaded during the startup process.
+        uint custom:1; /// < Not an original game resource.
+    } flags;
+
+protected:
+    /// File stream handle/wrapper.
+    DFile* file;
+
+private:
+    /// Absolute variable-length path in the vfs.
+    ddstring_t path_;
+
+    /// Info descriptor (file metadata).
+    LumpInfo info_;
+
+    /// Load order depth index.
+    uint order;
 };
 
 } // namespace de

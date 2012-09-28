@@ -209,8 +209,8 @@ struct de::WadFile::Instance
         // We'll load the lump directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
         wadlumprecord_t* arcRecords = new wadlumprecord_t[arcRecordsCount];
-        DFile_Seek(self->_file, arcRecordsOffset, SEEK_SET);
-        DFile_Read(self->_file, (uint8_t*)arcRecords, arcRecordsCount * sizeof(*arcRecords));
+        DFile_Seek(self->file, arcRecordsOffset, SEEK_SET);
+        DFile_Read(self->file, (uint8_t*)arcRecords, arcRecordsCount * sizeof(*arcRecords));
 
         // Reserve a small work buffer for processing archived lump names.
         ddstring_t absPath;
@@ -281,7 +281,7 @@ struct de::WadFile::Instance
 };
 
 de::WadFile::WadFile(DFile& file, char const* path, LumpInfo const& info)
-    : AbstractFile(FT_WADFILE, path, &file, &info)
+    : AbstractFile(FT_WADFILE, path, file, info)
 {
     d = new Instance(this, file, path);
 }
@@ -489,8 +489,8 @@ size_t de::WadFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
         }
     }
 
-    DFile_Seek(_file, lrec->baseOffset + startOffset, SEEK_SET);
-    size_t readBytes = DFile_Read(_file, buffer, length);
+    DFile_Seek(file, lrec->baseOffset + startOffset, SEEK_SET);
+    size_t readBytes = DFile_Read(file, buffer, length);
 
     /// @todo Do not check the read length here.
     if(readBytes < length)
