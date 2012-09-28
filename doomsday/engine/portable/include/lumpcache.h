@@ -50,6 +50,7 @@ private:
             if(data_ && Z_GetTag(data_) == PU_PURGELEVEL)
             {
                 // Reaquire the data.
+                Z_ChangeTag2(data_, PU_APPSTATIC);
                 Z_ChangeUser(data_, (void*)&data_);
             }
             return data_;
