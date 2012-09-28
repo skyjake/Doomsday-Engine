@@ -439,7 +439,7 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
-    portable/src/abstractfile.c \
+    portable/src/abstractfile.cpp \
     portable/src/abstractresource.c \
     portable/src/animator.c \
     portable/src/audiodriver.c \
