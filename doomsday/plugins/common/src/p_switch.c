@@ -261,13 +261,8 @@ void P_InitSwitchList(void)
     Str_Free(&path);
     Uri_Delete(uri);
 
-<<<<<<< HEAD
-    if(lumpNum > 0)
-        W_CacheChangeTag(lumpNum, PU_CACHE);
-=======
     if(lumpNum >= 0)
-        W_UnlockLump(lumpNum);
->>>>>>> dde7d0f... Fixed|libcommon: Failed read SWITCHES lumps at directory index #0
+        W_CacheChangeTag(lumpNum, PU_CACHE);
 
     numswitches = index / 2;
     switchlist[index] = 0;
