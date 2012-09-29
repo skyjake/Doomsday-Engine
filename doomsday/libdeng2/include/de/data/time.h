@@ -36,7 +36,7 @@ class String;
  * one absolute point in time (since the epoch).  Instances of Time should be
  * used wherever time needs to be measured, calculated or stored.
  *
- * @ingroup core
+ * @ingroup types
  */
 class DENG2_PUBLIC Time : public ISerializable
 {
@@ -78,6 +78,12 @@ public:
          */
         duint64 asMilliSeconds() const;
 
+        ddouble asMinutes() const;
+
+        ddouble asHours() const;
+
+        ddouble asDays() const;
+
         static Delta fromMilliSeconds(duint64 milliseconds) {
             return Delta(milliseconds/1000.0);
         }
@@ -93,7 +99,8 @@ public:
 
     enum Format {
         ISOFormat,
-        BuildNumberAndTime
+        BuildNumberAndTime,
+        FriendlyFormat
     };
 
 public:
@@ -203,6 +210,11 @@ public:
      * Converts the time into a Date.
      */
     Date asDate() const;
+
+    /**
+     * Converts the time to a build number.
+     */
+    dint asBuildNumber() const;
 
     // Implements ISerializable.
     void operator >> (Writer& to) const;

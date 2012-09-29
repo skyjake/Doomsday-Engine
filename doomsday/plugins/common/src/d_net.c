@@ -156,8 +156,6 @@ int D_NetServerStarted(int before)
 
     if(before) return true;
 
-    G_StopDemo();
-
     // We're the server, so...
     cfg.playerColor[0] = PLR_COLOR(0, cfg.netColor);
 
@@ -195,10 +193,11 @@ int D_NetServerStarted(int before)
     netEpisode = cfg.netEpisode;
 #endif
 
-    G_InitNew(cfg.netSkill, netEpisode, netMap);
+    G_NewGame(cfg.netSkill, netEpisode, netMap, 0/*default*/);
 
-    // Close the menu, the game begins!!
-    Hu_MenuCommand(MCMD_CLOSE);
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
+
     return true;
 }
 
@@ -487,7 +486,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
 
     case GPT_MESSAGE:
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     case GPT_YELLOW_MESSAGE:
 #endif
     {
@@ -501,15 +500,15 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         Reader_Read(reader, msg, len);
         msg[len] = 0;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         if(type == GPT_YELLOW_MESSAGE)
         {
-            P_SetYellowMessage(&players[CONSOLEPLAYER], msg, false);
+            P_SetYellowMessage(&players[CONSOLEPLAYER], 0, msg);
         }
         else
 #endif
         {
-            P_SetMessage(&players[CONSOLEPLAYER], msg, false);
+            P_SetMessage(&players[CONSOLEPLAYER], 0, msg);
         }
         Z_Free(msg);
         break;
@@ -654,7 +653,7 @@ static void D_NetMessageEx(int player, const char* msg, boolean playSound)
     // This is intended to be a local message.
     // Let's make sure P_SetMessage doesn't forward it anywhere.
     netSvAllowSendMsg = false;
-    P_SetMessage(plr, msgBuff, false);
+    P_SetMessage(plr, 0, msgBuff);
 
     if(playSound)
         D_ChatSound();
@@ -748,25 +747,13 @@ D_CMD(SetColor)
         // bits directly.
 
         cfg.playerColor[player] = PLR_COLOR(player, cfg.netColor);
+        players[player].colorMap = cfg.playerColor[player];
 
         if(players[player].plr->mo)
         {
             // Change the color of the mobj (translation flags).
             players[player].plr->mo->flags &= ~MF_TRANSLATION;
-
-#if __JHEXEN__
-            // Additional difficulty is caused by the fact that the Fighter's
-            // colors 0 (blue) and 2 (yellow) must be swapped.
-            players[player].plr->mo->flags |=
-                (cfg.playerClass[player] ==
-                 PCLASS_FIGHTER ? (cfg.playerColor[player] ==
-                                   0 ? 2 : cfg.playerColor[player] ==
-                                   2 ? 0 : cfg.playerColor[player]) : cfg.
-                 playerColor[player]) << MF_TRANSSHIFT;
-            players[player].colorMap = cfg.playerColor[player];
-#else
-            players[player].plr->mo->flags |= cfg.playerColor[player] << MF_TRANSSHIFT;
-#endif
+            players[player].plr->mo->flags |= (cfg.playerColor[player] << MF_TRANSSHIFT);
         }
 
         // Tell the clients about the change.
@@ -822,6 +809,7 @@ D_CMD(SetMap)
     // Only the server can change the map.
     if(!IS_SERVER)
         return false;
+
 #if __JDOOM__ || __JHERETIC__
     if(argc != 3)
     {
@@ -836,17 +824,7 @@ D_CMD(SetMap)
     }
 #endif
 
-    // Update game mode.
-    deathmatch = cfg.netDeathmatch;
-    noMonstersParm = cfg.netNoMonsters;
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    respawnMonsters = cfg.netRespawn;
-#endif
-#if __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
-#endif
-    cfg.jumpEnabled = cfg.netJumping;
-
+    // Parse arguments.
 #if __JDOOM__ || __JHERETIC__
     ep = atoi(argv[1]);
     if(ep != 0) ep -= 1;
@@ -860,11 +838,31 @@ D_CMD(SetMap)
     map = atoi(argv[1]); if(map != 0) map -= 1;
 #endif
 #if __JHEXEN__
-    map = P_TranslateMap(map);
+    map = P_TranslateMapIfExists(map);
+    if(map == P_INVALID_LOGICAL_MAP)
+    {
+        Con_Message("Map not found.\n");
+        return false;
+    }
 #endif
 
+    // Update game mode.
+    deathmatch      = cfg.netDeathmatch;
+    noMonstersParm  = cfg.netNoMonsters;
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    respawnMonsters = cfg.netRespawn;
+#endif
+#if __JHEXEN__
+    randomClassParm = cfg.netRandomClass;
+#endif
+    cfg.jumpEnabled = cfg.netJumping;
+
     // Use the configured network skill level for the new map.
-    G_DeferedInitNew(cfg.netSkill, ep, map);
+#if __JHEXEN__
+    G_DeferredSetMap(cfg.netSkill, ep, map, 0/*default*/);
+#else
+    G_DeferredNewGame(cfg.netSkill, ep, map, 0/*default*/);
+#endif
     return true;
 }
 

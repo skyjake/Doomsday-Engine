@@ -30,7 +30,6 @@
  */
 
 #include "m_misc.h"
-#include "m_args.h"
 #include "m_bams.h"
 #include "m_vector.h"
 #include "m_nodepile.h"
@@ -41,7 +40,7 @@
 #include "binarytree.h"
 #include "gridmap.h"
 #include "m_decomp64.h"
-#include "smoother.h"
 #include "stringarray.h"
+#include <de/smoother.h>
 
 #endif /* LIBDENG_MISC_H */

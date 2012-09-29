@@ -34,13 +34,35 @@
 #include "de_dam.h"
 #include "de_filesys.h"
 
+#include <de/stringpool.h>
 #include "s_environ.h"
+
+typedef struct {
+    ddstring_t uri;
+    uint count; ///< Number of times this has been found missing.
+} missingmaterialrecord_t;
+
+static void printMissingMaterials(void);
+static void clearMaterialDict(void);
+
+static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri);
+
+/**
+ * Material name references specified during map conversion are recorded in this
+ * dictionary. A dictionary is used to avoid repeatedly resolving the same URIs
+ * and to facilitate a log of missing materials encountered during the process.
+ *
+ * The pointer user value holds a pointer to the resolved Material (if found).
+ * The integer user value tracks the number of times a reference occurs.
+ */
+static StringPool* materialDict;
 
 editmap_t editMap;
 static boolean editMapInited = false;
 
 static editmap_t* map = &editMap;
-static GameMap* lastBuiltMap = NULL;
+static boolean lastBuiltMapResult;
+static GameMap* lastBuiltMap;
 
 static Vertex* rootVtx; // Used when sorting vertex line owners.
 
@@ -70,7 +92,7 @@ static LineDef* createLine(void)
     map->lineDefs[map->numLineDefs-1] = line;
     map->lineDefs[map->numLineDefs] = NULL;
 
-    line->buildData.index = map->numLineDefs; // 1-based index, 0 = NIL.
+    line->origIndex = map->numLineDefs; // 1-based index, 0 = NIL.
     return line;
 }
 
@@ -308,7 +330,7 @@ static void pruneLinedefs(editmap_t* map)
     {
         LineDef* l = map->lineDefs[i];
 
-        if(!l->L_frontside && !l->L_backside)
+        if(!l->L_frontsidedef && !l->L_backsidedef)
         {
             unused++;
 
@@ -438,7 +460,7 @@ static void pruneUnusedSectors(editmap_t* map)
 #endif
 
 /**
- * @important Order here is critical!
+ * @warning Order here is critical!
  */
 void MPE_PruneRedundantMapData(editmap_t* map, int flags)
 {
@@ -467,19 +489,20 @@ void MPE_PruneRedundantMapData(editmap_t* map, int flags)
 #endif
 }
 
-/**
- * Called to begin the map building process.
- */
 boolean MPE_Begin(const char* mapUri)
 {
+    /// @todo Do not ignore; assign to the editable map.
+    DENG_UNUSED(mapUri);
+
     if(editMapInited) return true; // Already been here.
 
-    // Init the gameObj lists, and value db.
-    map->gameObjData.db.numTables = 0;
-    map->gameObjData.db.tables = NULL;
-    map->gameObjData.objLists = NULL;
+    // Initialize the game-specific map entity property database.
+    map->entityDatabase = EntityDatabase_New();
 
     destroyMap();
+
+    lastBuiltMap = 0;
+    lastBuiltMapResult = false; // Assume failure.
 
     editMapInited = true;
     return true;
@@ -556,7 +579,7 @@ static void buildSectorLineLists(GameMap* map)
         uint secIDX;
         linelink_t* link;
 
-        if(li->L_frontside)
+        if(li->L_frontsector)
         {
             link = ZBlockSet_Allocate(lineLinksBlockSet);
 
@@ -569,7 +592,7 @@ static void buildSectorLineLists(GameMap* map)
             totallinks++;
         }
 
-        if(li->L_backside && li->L_backsector != li->L_frontsector)
+        if(li->L_backsector && !LINE_SELFREF(li))
         {
             link = ZBlockSet_Allocate(lineLinksBlockSet);
 
@@ -709,14 +732,14 @@ static void chainSectorBases(GameMap* map)
             LineDef* line = sec->lineDefs[j];
             if(line->L_frontsector == sec)
             {
-                SideDef* side = line->L_frontside;
+                SideDef* side = line->L_frontsidedef;
                 linkBaseToSectorChain(sec, &side->SW_middlesurface.base);
                 linkBaseToSectorChain(sec, &side->SW_bottomsurface.base);
                 linkBaseToSectorChain(sec, &side->SW_topsurface.base);
             }
-            if(line->L_backside && line->L_backsector == sec)
+            if(line->L_backsidedef && line->L_backsector == sec)
             {
-                SideDef* side = line->L_backside;
+                SideDef* side = line->L_backsidedef;
                 linkBaseToSectorChain(sec, &side->SW_middlesurface.base);
                 linkBaseToSectorChain(sec, &side->SW_bottomsurface.base);
                 linkBaseToSectorChain(sec, &side->SW_topsurface.base);
@@ -748,10 +771,10 @@ static void finishLineDefs(GameMap* map)
         LineDef* ld = &map->lineDefs[i];
         const HEdge* leftHEdge, *rightHEdge;
 
-        if(!ld->L_frontside->hedgeLeft) continue;
+        if(!ld->L_frontside.hedgeLeft) continue;
 
-        leftHEdge  = ld->L_frontside->hedgeLeft;
-        rightHEdge = ld->L_frontside->hedgeRight;
+        leftHEdge  = ld->L_frontside.hedgeLeft;
+        rightHEdge = ld->L_frontside.hedgeRight;
 
         ld->v[0] = leftHEdge->HE_v1;
         ld->v[1] = rightHEdge->HE_v2;
@@ -1025,7 +1048,7 @@ static void hardenVertexOwnerRings(GameMap* dest, editmap_t* src)
             p = v->lineOwners;
             while(p)
             {
-                p->lineDef = &dest->lineDefs[p->lineDef->buildData.index - 1];
+                p->lineDef = &dest->lineDefs[p->lineDef->origIndex - 1];
                 p = p->LO_next;
             }
 
@@ -1102,18 +1125,21 @@ static void hardenLinedefs(GameMap* dest, editmap_t* src)
         memcpy(destL, srcL, sizeof(*destL));
 
         /// @todo We shouldn't still have lines with missing fronts but...
-        destL->L_frontside = (srcL->L_frontside?
-            &dest->sideDefs[srcL->L_frontside->buildData.index - 1] : NULL);
-        destL->L_backside = (srcL->L_backside?
-            &dest->sideDefs[srcL->L_backside->buildData.index - 1] : NULL);
+        destL->L_frontsidedef = (srcL->L_frontsidedef?
+            &dest->sideDefs[srcL->L_frontsidedef->buildData.index - 1] : NULL);
+        destL->L_backsidedef = (srcL->L_backsidedef?
+            &dest->sideDefs[srcL->L_backsidedef->buildData.index - 1] : NULL);
 
-        if(srcL->buildData.windowEffect)
-            destL->buildData.windowEffect = &dest->sectors[srcL->buildData.windowEffect->buildData.index - 1];
+        if(destL->L_frontsidedef)
+            destL->L_frontsidedef->line = destL;
+        if(destL->L_backsidedef)
+            destL->L_backsidedef->line = destL;
 
-        if(destL->L_frontside)
-            destL->L_frontside->line = destL;
-        if(destL->L_backside)
-            destL->L_backside->line = destL;
+        destL->L_frontsector = (srcL->L_frontsector?
+            &dest->sectors[srcL->L_frontsector->buildData.index - 1] : NULL);
+
+        destL->L_backsector  = (srcL->L_backsector?
+            &dest->sectors[srcL->L_backsector->buildData.index - 1] : NULL);
     }
 }
 
@@ -1130,7 +1156,6 @@ static void hardenSidedefs(GameMap* dest, editmap_t* src)
         SideDef* srcS = src->sideDefs[i];
 
         memcpy(destS, srcS, sizeof(*destS));
-        destS->sector = &dest->sectors[srcS->sector->buildData.index - 1];
         destS->SW_bottomsurface.owner = destS;
         destS->SW_middlesurface.owner = destS;
         destS->SW_topsurface.owner = destS;
@@ -1225,7 +1250,7 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
         destP->lines = Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
         for(j = 0; j < destP->lineCount; ++j)
         {
-            LineDef* line = &dest->lineDefs[srcP->lines[j]->buildData.index - 1];
+            LineDef* line = &dest->lineDefs[srcP->lines[j]->origIndex - 1];
             HEdge* hedge = &hedges[j];
 
             // This line belongs to a polyobj.
@@ -1238,7 +1263,7 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
             hedge->bspLeaf = NULL;
             hedge->sector = line->L_frontsector;
 
-            line->L_frontside->hedgeLeft = line->L_frontside->hedgeRight = hedge;
+            line->L_frontside.hedgeLeft = line->L_frontside.hedgeRight = hedge;
 
             destP->lines[j] = line;
         }
@@ -1248,200 +1273,6 @@ static void hardenPolyobjs(GameMap* dest, editmap_t* src)
         dest->polyObjs[i] = destP;
     }
     dest->polyObjs[i] = NULL; // Terminate.
-}
-
-/**
- * @algorithm Cast a line horizontally or vertically and see what we hit.
- *           (OUCH, we have to iterate over all linedefs!).
- */
-static void testForWindowEffect(editmap_t* map, LineDef* l)
-{
-// Smallest distance between two points before being considered equal.
-#define DIST_EPSILON        (1.0 / 128.0)
-
-    uint i;
-    double mX, mY, dX, dY;
-    boolean castHoriz;
-    double backDist = DDMAXFLOAT;
-    Sector* backOpen = NULL;
-    double frontDist = DDMAXFLOAT;
-    Sector* frontOpen = NULL;
-    LineDef* frontLine = NULL, *backLine = NULL;
-
-    mX = (l->L_v1origin[VX] + l->L_v2origin[VX]) / 2.0;
-    mY = (l->L_v1origin[VY] + l->L_v2origin[VY]) / 2.0;
-
-    dX = l->L_v2origin[VX] - l->L_v1origin[VX];
-    dY = l->L_v2origin[VY] - l->L_v1origin[VY];
-
-    castHoriz = (fabs(dX) < fabs(dY)? true : false);
-
-    for(i = 0; i < map->numLineDefs; ++i)
-    {
-        LineDef* n = map->lineDefs[i];
-        double dist;
-        boolean isFront;
-        SideDef* hitSide;
-        double dX2, dY2;
-
-        if(n == l || LINE_SELFREF(n) /*|| n->buildData.overlap || n->length <= 0*/)
-            continue;
-        if(n->inFlags & LF_POLYOBJ)
-            continue;
-
-        dX2 = n->L_v2origin[VX] - n->L_v1origin[VX];
-        dY2 = n->L_v2origin[VY] - n->L_v1origin[VY];
-
-        if(castHoriz)
-        {
-            // Horizontal.
-            if(fabs(dY2) < DIST_EPSILON)
-                continue;
-
-            if((MAX_OF(n->L_v1origin[VY], n->L_v2origin[VY]) < mY - DIST_EPSILON) ||
-               (MIN_OF(n->L_v1origin[VY], n->L_v2origin[VY]) > mY + DIST_EPSILON))
-                continue;
-
-            dist = (n->L_v1origin[VX] +
-                (mY - n->L_v1origin[VY]) * dX2 / dY2) - mX;
-
-            isFront = (((dY > 0) != (dist > 0)) ? true : false);
-
-            dist = fabs(dist);
-            if(dist < DIST_EPSILON)
-                continue; // Too close (overlapping lines ?)
-
-            hitSide = n->sideDefs[(dY > 0) ^ (dY2 > 0) ^ !isFront];
-        }
-        else
-        {   // Vertical.
-            if(fabs(dX2) < DIST_EPSILON)
-                continue;
-
-            if((MAX_OF(n->L_v1origin[VX], n->L_v2origin[VX]) < mX - DIST_EPSILON) ||
-               (MIN_OF(n->L_v1origin[VX], n->L_v2origin[VX]) > mX + DIST_EPSILON))
-                continue;
-
-            dist = (n->L_v1origin[VY] +
-                (mX - n->L_v1origin[VX]) * dY2 / dX2) - mY;
-
-            isFront = (((dX > 0) == (dist > 0)) ? true : false);
-
-            dist = fabs(dist);
-
-            hitSide = n->sideDefs[(dX > 0) ^ (dX2 > 0) ^ !isFront];
-        }
-
-        if(dist < DIST_EPSILON) // Too close (overlapping lines ?)
-            continue;
-
-        if(isFront)
-        {
-            if(dist < frontDist)
-            {
-                frontDist = dist;
-                if(hitSide)
-                    frontOpen = hitSide->sector;
-                else
-                    frontOpen = NULL;
-
-                frontLine = n;
-            }
-        }
-        else
-        {
-            if(dist < backDist)
-            {
-                backDist = dist;
-                if(hitSide)
-                    backOpen = hitSide->sector;
-                else
-                    backOpen = NULL;
-
-                backLine = n;
-            }
-        }
-    }
-
-    /*
-    DEBUG_Message(("back line: %d  back dist: %1.1f  back_open: %s\n",
-                   (backLine? backLine->buildData.index : -1), backDist,
-                   (backOpen? "OPEN" : "CLOSED")));
-    DEBUG_Message(("front line: %d  front dist: %1.1f  front_open: %s\n",
-                   (frontLine? frontLine->buildData.index : -1), frontDist,
-                   (frontOpen? "OPEN" : "CLOSED")));
-    */
-
-    if(backOpen && frontOpen && l->sideDefs[FRONT]->sector == backOpen)
-    {
-        VERBOSE( Con_Message("Linedef #%d seems to be a One-Sided Window "
-                             "(back faces sector #%d).\n", l->buildData.index - 1,
-                             backOpen->buildData.index - 1) );
-
-        l->buildData.windowEffect = frontOpen;
-    }
-
-#undef DIST_EPSILON
-}
-
-static void countVertexLineOwners(Vertex* vtx, uint* oneSided, uint* twoSided)
-{
-    lineowner_t* p;
-
-    p = vtx->lineOwners;
-    while(p)
-    {
-        if(!p->lineDef->L_frontside || !p->lineDef->L_backside)
-            (*oneSided)++;
-        else
-            (*twoSided)++;
-
-        p = p->LO_next;
-    }
-}
-
-/**
- * @algorithm Scan the linedef list looking for possible candidates, checking for
- * an odd number of one-sided linedefs connected to a single vertex. This idea
- * courtesy of Graham Jackson.
- */
-void MPE_DetectWindowEffects(editmap_t* map)
-{
-    uint i, oneSiders, twoSiders;
-
-    for(i = 0; i < map->numLineDefs; ++i)
-    {
-        LineDef* l = map->lineDefs[i];
-
-        if((l->L_frontside && l->L_backside) || !l->L_frontside /*|| l->length <= 0 ||
-           l->buildData.overlap*/)
-            continue;
-        if(l->inFlags & LF_POLYOBJ)
-            continue;
-
-        oneSiders = twoSiders = 0;
-        countVertexLineOwners(l->v[0], &oneSiders, &twoSiders);
-
-        if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
-        {
-            //DEBUG_Message(("Warning: LineDef #%d start vertex %d has odd number of one-siders\n",
-            //               i, l->buildData.v[0]->index));
-
-            testForWindowEffect(map, l);
-            continue;
-        }
-
-        oneSiders = twoSiders = 0;
-        countVertexLineOwners(l->v[1], &oneSiders, &twoSiders);
-
-        if((oneSiders % 2) == 1 && (oneSiders + twoSiders) > 1)
-        {
-            //DEBUG_Message(("Warning: LineDef #%d end vertex %d has odd number of one-siders\n",
-            //               i, l->buildData.v[1]->index));
-
-            testForWindowEffect(map, l);
-        }
-    }
 }
 
 #if 0 /* Currently unused. */
@@ -1599,7 +1430,8 @@ static boolean buildBsp(GameMap* gamemap)
 
     if(!map) return false;
 
-    VERBOSE( Con_Message("Building BSP using tunable split factor of %d...\n", bspFactor) )
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+        "Building BSP using tunable split factor of %d...\n", bspFactor);
 
     // It begins...
     startTime = Sys_GetRealTime();
@@ -1616,13 +1448,141 @@ static boolean buildBsp(GameMap* gamemap)
     BspBuilder_Delete(bspBuilder);
 
     // How much time did we spend?
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
+        "BSP built in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f);
     return builtOK;
 }
 
+#if 0
 /**
- * Called to complete the map building process.
+ * The REJECT resource is a LUT that provides the results of trivial
+ * line-of-sight tests between sectors. This is done with a matrix of sector
+ * pairs i.e. if a monster in sector 4 can see the player in sector 2; the
+ * inverse should be true.
+ *
+ * Note however, some PWADS have carefully constructed REJECT data to create
+ * special effects. For example it is possible to make a player completely
+ * invissible in certain sectors.
+ *
+ * The format of the table is a simple matrix of boolean values, a (true)
+ * value indicates that it is impossible for mobjs in sector A to see mobjs
+ * in sector B (and vice-versa). A (false) value indicates that a
+ * line-of-sight MIGHT be possible and a more accurate (thus more expensive)
+ * calculation will have to be made.
+ *
+ * The table itself is constructed as follows:
+ *
+ *     X = sector num player is in
+ *     Y = sector num monster is in
+ *
+ *         X
+ *
+ *       0 1 2 3 4 ->
+ *     0 1 - 1 - -
+ *  Y  1 - - 1 - -
+ *     2 1 1 - - 1
+ *     3 - - - 1 -
+ *    \|/
+ *
+ * These results are read left-to-right, top-to-bottom and are packed into
+ * bytes (each byte represents eight results). As are all lumps in WAD the
+ * data is in little-endian order.
+ *
+ * Thus the size of a valid REJECT lump can be calculated as:
+ *
+ *     ceiling(numSectors^2)
+ *
+ * For now we only do very basic reject processing, limited to determining
+ * all isolated sector groups (islands that are surrounded by void space).
+ *
+ * @note Algorithm:
+ * Initially all sectors are in individual groups. Next, we scan the linedef
+ * list. For each 2-sectored line, merge the two sector groups into one.
  */
+static void buildReject(gamemap_t* map)
+{
+    int i, group;
+    int* secGroups;
+    int view, target;
+    size_t rejectSize;
+    byte* matrix;
+
+    secGroups = M_Malloc(sizeof(int) * numSectors);
+    for(i = 0; i < numSectors; ++i)
+    {
+        sector_t  *sec = LookupSector(i);
+        secGroups[i] = group++;
+        sec->rejNext = sec->rejPrev = sec;
+    }
+
+    for(i = 0; i < numLinedefs; ++i)
+    {
+        linedef_t* line = LookupLinedef(i);
+        sector_t* sec1, *sec2, *p;
+
+        if(!line->sideDefs[FRONT] || !line->sideDefs[BACK])
+            continue;
+
+        sec1 = line->sideDefs[FRONT]->sector;
+        sec2 = line->sideDefs[BACK]->sector;
+
+        if(!sec1 || !sec2 || sec1 == sec2)
+            continue;
+
+        // Already in the same group?
+        if(secGroups[sec1->index] == secGroups[sec2->index])
+            continue;
+
+        // Swap sectors so that the smallest group is added to the biggest
+        // group. This is based on the assumption that sector numbers in
+        // wads will generally increase over the set of linedefs, and so
+        // (by swapping) we'll tend to add small groups into larger
+        // groups, thereby minimising the updates to 'rej_group' fields
+        // that is required when merging.
+        if(secGroups[sec1->index] > secGroups[sec2->index])
+        {
+            p = sec1;
+            sec1 = sec2;
+            sec2 = p;
+        }
+
+        // Update the group numbers in the second group
+        secGroups[sec2->index] = secGroups[sec1->index];
+        for(p = sec2->rejNext; p != sec2; p = p->rejNext)
+            secGroups[p->index] = secGroups[sec1->index];
+
+        // Merge 'em baby...
+        sec1->rejNext->rejPrev = sec2;
+        sec2->rejNext->rejPrev = sec1;
+
+        p = sec1->rejNext;
+        sec1->rejNext = sec2->rejNext;
+        sec2->rejNext = p;
+    }
+
+    rejectSize = (numSectors * numSectors + 7) / 8;
+    matrix = Z_Calloc(rejectSize, PU_MAPSTATIC, 0);
+
+    for(view = 0; view < numSectors; ++view)
+        for(target = 0; target < view; ++target)
+        {
+            int p1, p2;
+
+            if(secGroups[view] == secGroups[target])
+                continue;
+
+            // For symmetry, do two bits at a time.
+            p1 = view * numSectors + target;
+            p2 = target * numSectors + view;
+
+            matrix[p1 >> 3] |= (1 << (p1 & 7));
+            matrix[p2 >> 3] |= (1 << (p2 & 7));
+        }
+
+    M_Free(secGroups);
+}
+#endif
+
 boolean MPE_End(void)
 {
     GameMap* gamemap;
@@ -1635,9 +1595,9 @@ boolean MPE_End(void)
 
     gamemap = Z_Calloc(sizeof(*gamemap), PU_MAPSTATIC, 0);
 
-    // Pass on the game map obj database. The game will want to query it
-    // once we have finished constructing the map.
-    memcpy(&gamemap->gameObjData, &map->gameObjData, sizeof gamemap->gameObjData);
+    // Pass on the game-specific map entity property database. The game will
+    // want to query it once we have finished constructing the map.
+    gamemap->entityDatabase = map->entityDatabase;
 
     /**
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
@@ -1647,8 +1607,6 @@ boolean MPE_End(void)
     MPE_PruneRedundantMapData(map, PRUNE_ALL);
 
     buildVertexOwnerRings(map);
-
-    MPE_DetectWindowEffects(map);
 
     /**
      * Harden most of the map data so that we can construct some of the more
@@ -1685,8 +1643,8 @@ boolean MPE_End(void)
     GameMap_InitMobjBlockmap(gamemap, min, max);
     GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
-    // Announce any bad texture names we came across when loading the map.
-    P_PrintMissingTextureList();
+    // Announce any missing materials we encountered during the conversion.
+    printMissingMaterials();
 
     /**
      * Build a BSP for this map.
@@ -1703,7 +1661,7 @@ boolean MPE_End(void)
         for(lineIter = po->lines; *lineIter; lineIter++, n++)
         {
             LineDef* line = *lineIter;
-            HEdge* hedge = line->L_frontside->hedgeLeft;
+            HEdge* hedge = line->L_frontside.hedgeLeft;
 
             hedge->HE_v1 = line->L_v1;
             hedge->HE_v2 = line->L_v2;
@@ -1713,12 +1671,6 @@ boolean MPE_End(void)
             po->originalPts[n].origin[VX] = line->L_v1origin[VX] - po->origin[VX];
             po->originalPts[n].origin[VY] = line->L_v1origin[VY] - po->origin[VY];
         }
-    }
-
-    for(i = 0; i < gamemap->numBspLeafs; ++i)
-    {
-        BspLeaf* leaf = GameMap_BspLeaf(gamemap, i);
-        BspLeaf_ChooseFanBase(leaf);
     }
 
     buildSectorBspLeafLists(gamemap);
@@ -1734,9 +1686,12 @@ boolean MPE_End(void)
     if(!builtOK)
     {
         // Failed. Need to clean up.
-        P_DestroyGameMapObjDB(&gamemap->gameObjData);
+        clearMaterialDict();
+        EntityDatabase_Delete(gamemap->entityDatabase);
         Z_Free(gamemap);
-        return false;
+        lastBuiltMapResult = false; // Failed.
+
+        return lastBuiltMapResult;
     }
 
     buildSectorLineLists(gamemap);
@@ -1749,7 +1704,7 @@ boolean MPE_End(void)
     S_DetermineBspLeafsAffectingSectorReverb(gamemap);
     prepareBspLeafs(gamemap);
 
-    P_FreeBadTexList();
+    clearMaterialDict();
 
     editMapInited = false;
 
@@ -1769,10 +1724,10 @@ boolean MPE_End(void)
     {
         // Yes, write the cached map data file.
         lumpnum_t markerLumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(gamemap->uri)), true);
-        ddstring_t* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
-        ddstring_t cachedMapPath;
+        AutoStr* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
+        Str cachedMapPath;
 
-        Str_Init(&cachedMapPath);
+        Str_InitStd(&cachedMapPath);
         F_FileName(&cachedMapPath, F_LumpName(markerLumpNum));
         Str_Append(&cachedMapPath, ".dcm");
         Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
@@ -1784,19 +1739,23 @@ boolean MPE_End(void)
         // Archive this map!
         DAM_MapWrite(gamemap, Str_Text(&cachedMapPath));
 
-        Str_Delete(cachedMapDir);
         Str_Free(&cachedMapPath);
     }
 
     lastBuiltMap = gamemap;
+    lastBuiltMapResult = true; // Success.
 
-    // Success!
-    return true;
+    return lastBuiltMapResult;
 }
 
 GameMap* MPE_GetLastBuiltMap(void)
 {
     return lastBuiltMap;
+}
+
+boolean MPE_GetLastBuiltMapResult(void)
+{
+    return lastBuiltMapResult;
 }
 
 uint MPE_VertexCreate(coord_t x, coord_t y)
@@ -1835,50 +1794,158 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
     return true;
 }
 
-uint MPE_SidedefCreate(uint sector, short flags, materialid_t topMaterial,
+/**
+ * Either print or count-the-number-of unresolved references in the
+ * material dictionary.
+ *
+ * @param internId    Unique id associated with the reference.
+ * @param parameters  If a uint pointer operate in "count" mode (total written here).
+ *                    Else operate in "print" mode.
+ * @return Always @c 0 (for use as an iterator).
+ */
+static int printMissingMaterialWorker(StringPoolId internId, void* parameters)
+{
+    uint* count = (uint*)parameters;
+
+    // A valid id?
+    if(StringPool_String(materialDict, internId))
+    {
+        // Have we resolved this reference yet?
+        if(!StringPool_UserPointer(materialDict, internId))
+        {
+            // An unresolved reference.
+            if(count)
+            {
+                // Count mode.
+                *count += 1;
+            }
+            else
+            {
+                // Print mode.
+                const int refCount = StringPool_UserValue(materialDict, internId);
+                const ddstring_t* materialUri = StringPool_String(materialDict, internId);
+                Con_Message(" %4u x \"%s\"\n", refCount, Str_Text(materialUri));
+            }
+        }
+    }
+    return 0; // Continue iteration.
+}
+
+/**
+ * Announce any missing materials we came across when loading the map.
+ */
+static void printMissingMaterials(void)
+{
+    uint numMissing;
+
+    if(!materialDict) return;
+
+    // Count missing materials.
+    numMissing = 0;
+    StringPool_Iterate(materialDict, printMissingMaterialWorker, &numMissing);
+    if(!numMissing) return;
+
+    Con_Message("  [110] Warning: Found %u unknown %s:\n", numMissing, numMissing == 1? "material":"materials");
+    // List the missing materials.
+    StringPool_Iterate(materialDict, printMissingMaterialWorker, 0);
+}
+
+static void clearMaterialDict(void)
+{
+    if(!materialDict) return;
+    StringPool_Clear(materialDict);
+    StringPool_Delete(materialDict);
+    materialDict = 0;
+}
+
+static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
+{
+    material_t* material = 0;
+
+    DENG_ASSERT(suf);
+
+    if(materialUri && !Str_IsEmpty(materialUri))
+    {
+        StringPoolId internId;
+        uint refCount;
+
+        // Are we yet to instantiate the dictionary?
+        if(!materialDict)
+        {
+            materialDict = StringPool_New();
+            if(!materialDict) Con_Error("assignSurfaceMaterial: Failed to instantiate the material dictionary.");
+        }
+
+        // Intern this reference.
+        internId = StringPool_Intern(materialDict, materialUri);
+
+        // Have we previously encountered this?.
+        refCount = StringPool_UserValue(materialDict, internId);
+        if(refCount)
+        {
+            // Yes, if resolved the user pointer holds the found material.
+            material = StringPool_UserPointer(materialDict, internId);
+        }
+        else
+        {
+            // No, attempt to resolve this URI and update the dictionary.
+            materialid_t materialId = NOMATERIALID;
+
+            // First try the preferred namespace, then any.
+            materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
+            if(materialId == NOMATERIALID)
+            {
+                Uri* tmp = Uri_NewWithPath2(Str_Text(materialUri), RC_NULL);
+                Uri_SetScheme(tmp, "");
+                materialId = Materials_ResolveUri(tmp);
+                Uri_Delete(tmp);
+            }
+            material = Materials_ToMaterial(materialId);
+
+            // Insert the possibly resolved material into the dictionary.
+            StringPool_SetUserPointer(materialDict, internId, material);
+        }
+
+        // There is now one more reference.
+        refCount++;
+        StringPool_SetUserValue(materialDict, internId, refCount);
+    }
+
+    // Assign the resolved material if found.
+    Surface_SetMaterial(suf, material);
+}
+
+uint MPE_SidedefCreate(short flags, const ddstring_t* topMaterial,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
-    materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed,
-    float middleGreen, float middleBlue, float middleAlpha, materialid_t bottomMaterial,
+    const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed,
+    float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
     float bottomBlue)
 {
     SideDef* s;
 
     if(!editMapInited) return 0;
-    if(sector > map->numSectors) return 0;
 
     s = createSide();
     s->flags = flags;
-    s->sector = (sector == 0? NULL: map->sectors[sector-1]);
 
-    Surface_SetMaterial(&s->SW_topsurface, Materials_ToMaterial(topMaterial));
+    assignSurfaceMaterial(&s->SW_topsurface, topMaterial);
     Surface_SetMaterialOrigin(&s->SW_topsurface, topOffsetX, topOffsetY);
     Surface_SetColorAndAlpha(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
 
-    Surface_SetMaterial(&s->SW_middlesurface, Materials_ToMaterial(middleMaterial));
+    assignSurfaceMaterial(&s->SW_middlesurface, middleMaterial);
     Surface_SetMaterialOrigin(&s->SW_middlesurface, middleOffsetX, middleOffsetY);
     Surface_SetColorAndAlpha(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
 
-    Surface_SetMaterial(&s->SW_bottomsurface, Materials_ToMaterial(bottomMaterial));
+    assignSurfaceMaterial(&s->SW_bottomsurface, bottomMaterial);
     Surface_SetMaterialOrigin(&s->SW_bottomsurface, bottomOffsetX, bottomOffsetY);
     Surface_SetColorAndAlpha(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
 
     return s->buildData.index;
 }
 
-/**
- * Create a new linedef in the editable map.
- *
- * @param v1            Idx of the start vertex.
- * @param v2            Idx of the end vertex.
- * @param frontSide     Idx of the front sidedef.
- * @param backSide      Idx of the back sidedef.
- * @param flags         DDLF_* flags.
- *
- * @return              Idx of the newly created linedef else @c 0 if there
- *                      was an error.
- */
-uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flags)
+uint MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector,
+    uint frontSide, uint backSide, int flags)
 {
     LineDef* l;
     SideDef* front = NULL, *back = NULL;
@@ -1886,6 +1953,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flag
     float length;
 
     if(!editMapInited) return 0;
+    if(frontSector > map->numSectors) return 0;
+    if(backSector > map->numSectors) return 0;
     if(frontSide > map->numSideDefs) return 0;
     if(backSide > map->numSideDefs) return 0;
     if(v1 == 0 || v1 > map->numVertexes) return 0;
@@ -1920,8 +1989,11 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flag
     l->L_v1->buildData.refCount++;
     l->L_v2->buildData.refCount++;
 
-    l->L_frontside = front;
-    l->L_backside = back;
+    l->L_frontsector = (frontSector == 0? NULL: map->sectors[frontSector-1]);
+    l->L_backsector  = (backSector  == 0? NULL: map->sectors[backSector-1]);
+
+    l->L_frontsidedef = front;
+    l->L_backsidedef = back;
 
     l->length = length;
 
@@ -1931,16 +2003,16 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flag
     l->angle = bamsAtan2((int) l->direction[VY], (int) l->direction[VX]);
 
     // Remember the number of unique references.
-    if(l->L_frontside)
+    if(l->L_frontsidedef)
     {
-        l->L_frontside->line = l;
-        l->L_frontside->buildData.refCount++;
+        l->L_frontsidedef->line = l;
+        l->L_frontsidedef->buildData.refCount++;
     }
 
-    if(l->L_backside)
+    if(l->L_backsidedef)
     {
-        l->L_backside->line = l;
-        l->L_backside->buildData.refCount++;
+        l->L_backsidedef->line = l;
+        l->L_backsidedef->buildData.refCount++;
     }
 
     l->inFlags = 0;
@@ -1950,10 +2022,10 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flag
     if(!front || !back)
         l->flags |= DDLF_BLOCKING;
 
-    return l->buildData.index;
+    return l->origIndex;
 }
 
-uint MPE_PlaneCreate(uint sector, coord_t height, materialid_t material, float matOffsetX,
+uint MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX,
     float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ)
 {
     Plane** newList, *pln;
@@ -1969,7 +2041,7 @@ uint MPE_PlaneCreate(uint sector, coord_t height, materialid_t material, float m
     pln->surface.owner = (void*) pln;
     pln->height = height;
 
-    Surface_SetMaterial(&pln->surface, Materials_ToMaterial(material));
+    assignSurfaceMaterial(&pln->surface, materialUri);
     Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
     Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
 
@@ -2054,35 +2126,31 @@ uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
     return po->buildData.index;
 }
 
-boolean MPE_GameObjProperty(const char* objName, uint idx, const char* propName,
-    valuetype_t type, void* data)
+boolean MPE_GameObjProperty(const char* entityName, uint elementIndex,
+                            const char* propertyName, valuetype_t type, void* valueAdr)
 {
-    gamemapobjdef_t* def;
-    size_t len;
-    uint i;
+    MapEntityDef* entityDef;
+    MapEntityPropertyDef* propertyDef;
 
-    if(!objName || !propName || !data)
+    if(!editMapInited) return false;
+
+    if(!entityName || !propertyName || !valueAdr)
         return false; // Hmm...
 
-    // Is this a known object?
-    def = P_GetGameMapObjDef(0, objName, false);
-    if(!def) return false; // No.
-
-    // Is this a known property?
-    len = strlen(propName);
-    for(i = 0; i < def->numProps; ++i)
+    // Is this a known entity?
+    entityDef = P_MapEntityDefByName(entityName);
+    if(!entityDef)
     {
-        if(!strnicmp(propName, def->props[i].name, len))
-        {
-            // Create a record of this so that the game can query it later.
-            P_AddGameMapObjValue(&map->gameObjData, def, i, idx, type, data);
-            return true; // We're done.
-        }
+        Con_Message("Warning: MPE_GameObjProperty: Unknown entity name:\"%s\", ignoring.\n", entityName);
+        return false;
     }
 
-    // An unknown property.
-    VERBOSE( Con_Message("MPE_GameObjProperty: %s has no property \"%s\".\n",
-                         def->name, propName) );
+    // Is this a known property?
+    if(MapEntityDef_PropertyByName2(entityDef, propertyName, &propertyDef) < 0)
+    {
+        Con_Message("Warning: MPE_GameObjProperty: Entity \"%s\" has no \"%s\" property, ignoring.\n", entityName, propertyName);
+        return false;
+    }
 
-    return false;
+    return P_SetMapEntityProperty(map->entityDatabase, propertyDef, elementIndex, type, valueAdr);
 }

@@ -38,14 +38,20 @@
 #include "d_event.h"
 #include "d_player.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int gaSaveGameSlot;
 extern int gaLoadGameSlot;
 
 extern player_t players[MAXPLAYERS];
-extern uint nextMap;
+
 extern skillmode_t gameSkill;
 extern uint gameEpisode;
 extern uint gameMap;
+extern uint gameMapEntryPoint;
+
 extern uint nextMap; // If non zero this will be the next map.
 extern boolean secretExit;
 extern int totalKills, totalItems, totalSecret;
@@ -66,19 +72,12 @@ void            G_Register(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
 void            G_CommonShutdown(void);
+
 void            R_InitRefresh(void);
 
 void            G_PrintMapList(void);
-boolean         G_ValidateMap(uint* episode, uint* map);
-uint            G_GetMapNumber(uint episode, uint map);
 
-void            G_InitNew(skillmode_t skill, uint episode, uint map);
-
-// A normal game starts at map 1,
-// but a warp test can start elsewhere
-void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
-
-void            G_DeferedPlayDemo(char* demo);
+void            G_DeferredPlayDemo(char* demo);
 
 void            G_QuitGame(void);
 
@@ -88,15 +87,12 @@ boolean G_IsLoadGamePossible(void);
 /**
  * To be called to schedule a load game-save action.
  * @param slot  Logical identifier of the save slot to use.
- * @return  @c true iff @a saveSlot is in use and loading is presently possible.
+ * @return  @c true iff @a slot is in use and loading is presently possible.
  */
 boolean G_LoadGame(int slot);
 
 /// @return  @c true = saving is presently possible.
 boolean G_IsSaveGamePossible(void);
-
-/// @return  Generated name. Must be released with Str_Delete()
-ddstring_t* G_GenerateSaveGameName(void);
 
 /**
  * To be called to schedule a save game-save action.
@@ -104,7 +100,7 @@ ddstring_t* G_GenerateSaveGameName(void);
  * @param name  New name for the game-save. Can be @c NULL in which case
  *      the name will not change if the slot has already been used.
  *      If an empty string a new name will be generated automatically.
- * @return  @c true iff @a saveSlot is valid and saving is presently possible.
+ * @return  @c true iff @a slot is valid and saving is presently possible.
  */
 boolean G_SaveGame2(int slot, const char* name);
 boolean G_SaveGame(int slot);
@@ -116,24 +112,6 @@ int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 
 void            G_DoReborn(int playernum);
 void            G_PlayerReborn(int player);
-void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
-
-uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
-
-/**
- * Compose a Uri for the identified @a episode and @a map combination.
- *
- * @param episode  Logical episode number.
- * @param map  Logical map number.
- * @return  Resultant Uri. Caller should destroy with Uri_Delete.
- */
-Uri* G_ComposeMapUri(uint episode, uint map);
-
-/**
- * Compose the name of the map identifier.
- * \note Deprecated. Prefer to use G_ComposeMapUri
- */
-void G_MapId(uint episode, uint map, lumpname_t mapId);
 
 void            G_WorldDone(void);
 
@@ -150,5 +128,9 @@ void            G_ScreenShot(void);
 void            G_PrepareWIData(void);
 
 void            G_QueueBody(mobj_t* body);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJDOOM_G_GAME_H */

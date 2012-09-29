@@ -23,6 +23,8 @@
  * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  */
 
+require_once(DIR_CLASSES.'/url.class.php');
+
 includeGuard('Utils');
 
 function checkImagePath($path, $formats)
@@ -69,7 +71,7 @@ function includeHTML($page, $pluginName=NULL)
 function fopen_recursive($path, $mode, $chmod=0755)
 {
     $matches = NULL;
-    preg_match('`^(.+)/([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)$`i', $path, $matches);
+    preg_match('`^(.+)/([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)$`i', $path, $matches);
 
     $directory = $matches[1];
     $file = $matches[2];
@@ -228,30 +230,49 @@ function json_encode_clean(&$array, $flags=0, $indent_level=0)
     return $result;
 }
 
-function generateHyperlinkHTML($uri, $maxLength=40, $cssClass=NULL)
+function generateHyperlinkHTML($uri, $attributes = array(), $maxLength = 40)
 {
-    $uri = strval($uri);
-    $maxLength = (integer)$maxLength;
-    if($maxLength < 0) $maxLength = 0;
-    if(!is_null($cssClass))
+    $shortUri = NULL;
+
+    if($uri instanceof Url)
     {
-        $cssClass = strval($cssClass);
+        if(!strcmp($uri->host(), 'sourceforge.net') &&
+           !substr_compare($uri->path(), '/p/deng/bugs/', 0, 13))
+        {
+            $bugStr = substr($uri->path(), 13);
+            $bugNum = intval(substr($bugStr, 0, strpos($bugStr, '/')));
+
+            $shortUri = "Bug#$bugNum";
+            if(is_null($attributes))
+                $attributes = array();
+            $attributes['title'] = "View bug report #$bugNum in the tracker";
+        }
+        $uri = $uri->toString();
     }
     else
     {
-        $cssClass = '';
+        $uri = strval($uri);
     }
 
-    if($maxLength > 0 && strlen($uri) > $maxLength)
-        $shortUri = substr($uri, 0, $maxLength).'...';
-    else
-        $shortUri = $uri;
-
-    $html = '<a';
-    if(strlen($cssClass) > 0)
+    $attribs = '';
+    if(is_array($attributes))
     {
-        $html .= " class={$cssClass}";
+        foreach($attributes as $attribute => $value)
+        {
+            $attribs .= " {$attribute}=\"{$value}\"";
+        }
     }
-    $html .= " href=\"{$uri}\">". htmlspecialchars($shortUri) .'</a>';
+
+    if(!isset($shortUri))
+    {
+        $maxLength = (integer)$maxLength;
+        if($maxLength < 0) $maxLength = 0;
+        if($maxLength > 0 && strlen($uri) > $maxLength)
+            $shortUri = substr($uri, 0, $maxLength).'...';
+        else
+            $shortUri = $uri;
+    }
+
+    $html = "<a href=\"{$uri}\"{$attribs}>". htmlspecialchars($shortUri) .'</a>';
     return $html;
 }

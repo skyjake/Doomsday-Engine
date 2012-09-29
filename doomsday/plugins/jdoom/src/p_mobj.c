@@ -586,10 +586,6 @@ void P_MobjThinker(mobj_t* mo)
     if(IS_CLIENT && !ClMobj_IsValid(mo))
         return; // We should not touch this right now.
 
-    // Spectres get selector = 1.
-    if(mo->type == MT_SHADOWS)
-        mo->selector = (mo->selector & ~DDMOBJ_SELECTOR_MASK) | 1;
-
     // The first three bits of the selector special byte contain a
     // relative health level.
     P_UpdateHealthBits(mo);
@@ -615,7 +611,7 @@ void P_MobjThinker(mobj_t* mo)
     {
         P_MobjMoveXY(mo);
 
-        /// @fixme decent NOP/NULL/Nil function pointer please.
+        /// @todo decent NOP/NULL/Nil function pointer please.
         if(mo->thinker.function == NOPFUNC)
             return; // Mobj was removed.
     }
@@ -820,6 +816,10 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     mo->damage = info->damage;
     mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
+
+    // Spectres get selector = 1.
+    mo->selector = (type == MT_SHADOWS)? 1 : 0;
+    P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
     // Let the engine know about solid objects.
     P_SetDoomsdayFlags(mo);

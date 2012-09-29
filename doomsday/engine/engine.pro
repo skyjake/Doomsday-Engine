@@ -19,13 +19,13 @@ echo(Doomsday version $${DENG_VERSION}.)
 include(../dep_sdl.pri)
 include(../dep_opengl.pri)
 include(../dep_zlib.pri)
-include(../dep_png.pri)
 include(../dep_curses.pri)
 include(../dep_lzss.pri)
 win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
+include(../dep_deng.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -48,8 +48,8 @@ else:macx {
 }
 else {
     # Generic Unix.
-    DEFINES += DENG_BASE_DIR=\\\"$${DENG_BASE_DIR}/\\\"
-    DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
+    DEFINES += DENG_BASE_DIR=\"\\\"$${DENG_BASE_DIR}/\\\"\"
+    DEFINES += DENG_LIBRARY_DIR=\"\\\"$${DENG_LIB_DIR}/\\\"\"
 
     QMAKE_LFLAGS += -rdynamic
 
@@ -69,12 +69,6 @@ else {
         QMAKE_CXXFLAGS += $$system(pkg-config xrandr xxf86vm --cflags)
                   LIBS += $$system(pkg-config xrandr xxf86vm --libs)
     }
-}
-
-# Build Configuration --------------------------------------------------------
-
-deng_writertypecheck {
-    DEFINES += DENG_WRITER_TYPECHECK
 }
 
 # Linking --------------------------------------------------------------------
@@ -100,6 +94,7 @@ else {
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
+    api/busytask.h \
     api/dd_animator.h \
     api/dd_api.h \
     api/dd_fontrenderer.h \
@@ -108,7 +103,6 @@ DENG_API_HEADERS = \
     api/dd_maptypes.h \
     api/dd_plugin.h \
     api/dd_share.h \
-    api/dd_string.h \
     api/dd_types.h \
     api/dd_ui.h \
     api/dd_vectorgraphic.h \
@@ -120,27 +114,25 @@ DENG_API_HEADERS = \
     api/doomsday.h \
     api/materialarchive.h \
     api/point.h \
-    api/reader.h \
     api/rect.h \
     api/size.h \
-    api/smoother.h \
-    api/stringpool.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
     api/thinker.h \
-    api/uri.h \
-    api/writer.h
+    api/uri.h
 
 # Convenience headers.
 DENG_HEADERS += \
     portable/include/BspBuilder \
+    portable/include/EntityDatabase \
 
 # Private headers.
 DENG_HEADERS += \
     portable/include/abstractfile.h \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
+    portable/include/audiodriver_music.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
     portable/include/b_device.h \
@@ -151,7 +143,9 @@ DENG_HEADERS += \
     portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
+    portable/include/busymode.h \
     portable/include/map/bspbuilder.h \
+    portable/include/map/entitydatabase.h \
     portable/include/map/bsp/hedgeinfo.h \
     portable/include/map/bsp/hedgeintercept.h \
     portable/include/map/bsp/hedgetip.h \
@@ -175,10 +169,8 @@ DENG_HEADERS += \
     portable/include/colorpalette.h \
     portable/include/con_bar.h \
     portable/include/con_bind.h \
-    portable/include/con_busy.h \
     portable/include/con_config.h \
     portable/include/con_main.h \
-    portable/include/concurrency.h \
     portable/include/consolewindow.h \
     portable/include/dam_file.h \
     portable/include/dam_main.h \
@@ -189,7 +181,6 @@ DENG_HEADERS += \
     portable/include/dd_main.h \
     portable/include/dd_pinit.h \
     portable/include/dd_version.h \
-    portable/include/dd_zone.h \
     portable/include/de_audio.h \
     portable/include/de_base.h \
     portable/include/de_bsp.h \
@@ -233,7 +224,6 @@ DENG_HEADERS += \
     portable/include/gl_main.h \
     portable/include/gl_model.h \
     portable/include/gl_pcx.h \
-    portable/include/gl_png.h \
     portable/include/gl_tex.h \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
@@ -241,6 +231,7 @@ DENG_HEADERS += \
     portable/include/hedge.h \
     portable/include/image.h \
     portable/include/joystick.h \
+    portable/include/json.h \
     portable/include/kdtree.h \
     portable/include/keycode.h \
     portable/include/library.h \
@@ -248,7 +239,6 @@ DENG_HEADERS += \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
-    portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_decomp64.h \
     portable/include/m_linkedlist.h \
@@ -260,9 +250,6 @@ DENG_HEADERS += \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
     portable/include/masterserver.h \
-    portable/include/material.h \
-    portable/include/materials.h \
-    portable/include/materialvariant.h \
     portable/include/monitor.h \
     portable/include/mouse_qt.h \
     portable/include/nativeui.h \
@@ -289,6 +276,7 @@ DENG_HEADERS += \
     portable/include/pathmap.h \
     portable/include/plane.h \
     portable/include/polyobj.h \
+    portable/include/propertyvalue.h \
     portable/include/protocol.h \
     portable/include/r_data.h \
     portable/include/r_draw.h \
@@ -302,21 +290,30 @@ DENG_HEADERS += \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
-    portable/include/rend_bias.h \
-    portable/include/rend_clip.h \
-    portable/include/rend_console.h \
-    portable/include/rend_decor.h \
-    portable/include/rend_dynlight.h \
-    portable/include/rend_fakeradio.h \
-    portable/include/rend_font.h \
-    portable/include/rend_halo.h \
-    portable/include/rend_list.h \
-    portable/include/rend_main.h \
-    portable/include/rend_model.h \
-    portable/include/rend_particle.h \
-    portable/include/rend_shadow.h \
-    portable/include/rend_sky.h \
-    portable/include/rend_sprite.h \
+    portable/include/render/busyvisual.h \
+    portable/include/render/rend_bias.h \
+    portable/include/render/rend_clip.h \
+    portable/include/render/rend_console.h \
+    portable/include/render/rend_decor.h \
+    portable/include/render/rend_dynlight.h \
+    portable/include/render/rend_fakeradio.h \
+    portable/include/render/rend_font.h \
+    portable/include/render/rend_halo.h \
+    portable/include/render/rend_list.h \
+    portable/include/render/rend_main.h \
+    portable/include/render/rend_model.h \
+    portable/include/render/rend_particle.h \
+    portable/include/render/rend_shadow.h \
+    portable/include/render/rend_sky.h \
+    portable/include/render/rend_sprite.h \
+    portable/include/render/vignette.h \
+    portable/include/resource/material.h \
+    portable/include/resource/materials.h \
+    portable/include/resource/materialvariant.h \
+    portable/include/resource/texture.h \
+    portable/include/resource/textures.h \
+    portable/include/resource/texturevariant.h \
+    portable/include/resource/texturevariantspecification.h \
     portable/include/resourcenamespace.h \
     portable/include/s_cache.h \
     portable/include/s_environ.h \
@@ -327,7 +324,6 @@ DENG_HEADERS += \
     portable/include/s_wav.h \
     portable/include/sector.h \
     portable/include/sidedef.h \
-    portable/include/string.hh \
     portable/include/stringarray.h \
     portable/include/surface.h \
     portable/include/sv_def.h \
@@ -348,23 +344,30 @@ DENG_HEADERS += \
     portable/include/sys_reslocator.h \
     portable/include/sys_system.h \
     portable/include/tab_anorms.h \
-    portable/include/texture.h \
     portable/include/texturecontent.h \
-    portable/include/textures.h \
-    portable/include/texturevariant.h \
-    portable/include/texturevariantspecification.h \
     portable/include/timer.h \
     portable/include/ui2_main.h \
     portable/include/ui_main.h \
     portable/include/ui_mpi.h \
     portable/include/ui_panel.h \
+    portable/include/updater.h \
     portable/include/vertex.h \
     portable/include/wadfile.h \
     portable/include/window.h \
-    portable/include/zipfile.h
+    portable/include/zipfile.h \
+    portable/include/zonedebug.h \
+    portable/src/updater/downloaddialog.h \
+    portable/src/updater/processcheckdialog.h \
+    portable/src/updater/updateavailabledialog.h \
+    portable/src/updater/updaterdialog.h \
+    portable/src/updater/updatersettings.h \
+    portable/src/updater/updatersettingsdialog.h \
+    portable/src/updater/versioninfo.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
+    $$DENG_INCLUDE_DIR/render \
+    $$DENG_INCLUDE_DIR/resource \
     $$DENG_API_DIR
 
 HEADERS += \
@@ -439,6 +442,7 @@ SOURCES += \
     portable/src/abstractresource.c \
     portable/src/animator.c \
     portable/src/audiodriver.c \
+    portable/src/audiodriver_music.c \
     portable/src/b_command.c \
     portable/src/b_context.c \
     portable/src/b_device.c \
@@ -449,13 +453,14 @@ SOURCES += \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
     portable/src/blockset.c \
+    portable/src/busymode.cpp \
     portable/src/map/bspbuilder.cpp \
     portable/src/map/bsp/hplane.cpp \
     portable/src/map/bsp/partitioner.cpp \
     portable/src/map/bsp/superblockmap.cpp \
+    portable/src/map/entitydatabase.cpp \
     portable/src/bspleaf.cpp \
     portable/src/bspnode.c \
-    portable/src/busytask.cpp \
     portable/src/canvas.cpp \
     portable/src/canvaswindow.cpp \
     portable/src/cbuffer.c \
@@ -468,11 +473,9 @@ SOURCES += \
     portable/src/cl_world.c \
     portable/src/colorpalette.c \
     portable/src/con_bar.c \
-    portable/src/con_busy.c \
     portable/src/con_config.c \
     portable/src/con_data.c \
     portable/src/con_main.c \
-    portable/src/concurrency.cpp \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
     portable/src/dd_help.c \
@@ -483,7 +486,6 @@ SOURCES += \
     portable/src/dd_pinit.c \
     portable/src/dd_plugin.c \
     portable/src/dd_wad.c \
-    portable/src/dd_zone.c \
     portable/src/def_data.c \
     portable/src/def_main.c \
     portable/src/def_read.c \
@@ -495,7 +497,7 @@ SOURCES += \
     portable/src/edit_bsp.cpp \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
-    portable/src/filedirectory.c \
+    portable/src/filedirectory.cpp \
     portable/src/filelist.c \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \
@@ -511,20 +513,19 @@ SOURCES += \
     portable/src/gl_hq2x.c \
     portable/src/gl_main.c \
     portable/src/gl_pcx.c \
-    portable/src/gl_png.c \
     portable/src/gl_tex.c \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
     portable/src/gridmap.c \
-    portable/src/hedge.c \
-    portable/src/image.c \
+    portable/src/hedge.cpp \
+    portable/src/image.cpp \
+    portable/src/json.cpp \
     portable/src/kdtree.c \
     portable/src/keycode.cpp \
     portable/src/library.c \
     portable/src/linedef.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
-    portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_decomp64.c \
     portable/src/m_linkedlist.c \
@@ -533,13 +534,9 @@ SOURCES += \
     portable/src/m_mus2midi.c \
     portable/src/m_nodepile.c \
     portable/src/m_stack.c \
-    portable/src/m_string.c \
     portable/src/m_vector.c \
     portable/src/masterserver.cpp \
-    portable/src/material.c \
     portable/src/materialarchive.c \
-    portable/src/materials.c \
-    portable/src/materialvariant.c \
     portable/src/monitor.c \
     portable/src/mouse_qt.cpp \
     portable/src/nativeui.cpp \
@@ -551,7 +548,7 @@ SOURCES += \
     portable/src/net_ping.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
-    portable/src/p_data.c \
+    portable/src/p_data.cpp \
     portable/src/p_dmu.c \
     portable/src/p_intercept.c \
     portable/src/p_maputil.c \
@@ -563,12 +560,14 @@ SOURCES += \
     portable/src/p_sight.c \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
-    portable/src/pathdirectory.c \
+    portable/src/pathdirectory.cpp \
+    portable/src/pathdirectorynode.cpp \
     portable/src/pathmap.c \
     portable/src/plane.c \
     portable/src/point.c \
     portable/src/polyobj.c \
     portable/src/protocol.c \
+    portable/src/propertyvalue.cpp \
     portable/src/r_data.c \
     portable/src/r_draw.c \
     portable/src/r_fakeradio.c \
@@ -581,23 +580,30 @@ SOURCES += \
     portable/src/r_things.c \
     portable/src/r_util.c \
     portable/src/r_world.c \
-    portable/src/reader.c \
     portable/src/rect.c \
-    portable/src/rend_bias.c \
-    portable/src/rend_clip.cpp \
-    portable/src/rend_console.c \
-    portable/src/rend_decor.c \
-    portable/src/rend_dynlight.c \
-    portable/src/rend_fakeradio.c \
-    portable/src/rend_font.c \
-    portable/src/rend_halo.c \
-    portable/src/rend_list.c \
-    portable/src/rend_main.c \
-    portable/src/rend_model.c \
-    portable/src/rend_particle.c \
-    portable/src/rend_shadow.c \
-    portable/src/rend_sky.c \
-    portable/src/rend_sprite.c \
+    portable/src/render/busyvisual.c \
+    portable/src/render/rend_bias.c \
+    portable/src/render/rend_clip.cpp \
+    portable/src/render/rend_console.c \
+    portable/src/render/rend_decor.c \
+    portable/src/render/rend_dynlight.c \
+    portable/src/render/rend_fakeradio.c \
+    portable/src/render/rend_font.c \
+    portable/src/render/rend_halo.c \
+    portable/src/render/rend_list.c \
+    portable/src/render/rend_main.c \
+    portable/src/render/rend_model.c \
+    portable/src/render/rend_particle.c \
+    portable/src/render/rend_shadow.c \
+    portable/src/render/rend_sky.c \
+    portable/src/render/rend_sprite.c \
+    portable/src/render/vignette.c \
+    portable/src/resource/material.cpp \
+    portable/src/resource/materials.cpp \
+    portable/src/resource/materialvariant.cpp \
+    portable/src/resource/texture.cpp \
+    portable/src/resource/textures.cpp \
+    portable/src/resource/texturevariant.cpp \
     portable/src/resourcenamespace.c \
     portable/src/s_cache.c \
     portable/src/s_environ.cpp \
@@ -609,9 +615,7 @@ SOURCES += \
     portable/src/sector.c \
     portable/src/sidedef.c \
     portable/src/size.c \
-    portable/src/smoother.c \
     portable/src/stringarray.cpp \
-    portable/src/stringpool.cpp \
     portable/src/surface.c \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
@@ -628,20 +632,24 @@ SOURCES += \
     portable/src/sys_reslocator.c \
     portable/src/sys_system.c \
     portable/src/tab_tables.c \
-    portable/src/texture.c \
-    portable/src/textures.c \
-    portable/src/texturevariant.c \
     portable/src/timer.cpp \
     portable/src/ui2_main.c \
     portable/src/ui_main.c \
     portable/src/ui_mpi.c \
     portable/src/ui_panel.c \
+    portable/src/updater.cpp \
+    portable/src/updater/downloaddialog.cpp \
+    portable/src/updater/processcheckdialog.cpp \
+    portable/src/updater/updateavailabledialog.cpp \
+    portable/src/updater/updaterdialog.cpp \
+    portable/src/updater/updatersettings.cpp \
+    portable/src/updater/updatersettingsdialog.cpp \
     portable/src/uri.c \
-    portable/src/vertex.c \
-    portable/src/wadfile.c \
+    portable/src/vertex.cpp \
+    portable/src/wadfile.cpp \
     portable/src/window.cpp \
-    portable/src/writer.c \
-    portable/src/zipfile.c
+    portable/src/zipfile.cpp \
+    portable/src/zonedebug.c
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += portable/include/sys_audiod_sdlmixer.h
@@ -692,10 +700,10 @@ macx {
         mac/res/English.lproj \
         mac/res/deng.icns
 
-    data.path = $$res.path
-    startupdata.path = $${res.path}/data
+    data.path         = $${res.path}
+    startupdata.path  = $${res.path}/data
     startupfonts.path = $${res.path}/data/fonts
-    startupgfx.path = $${res.path}/data/graphics
+    startupgfx.path   = $${res.path}/data/graphics
 
     QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
 
@@ -703,7 +711,7 @@ macx {
 
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
-    FW_DIR = \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"
+    FW_DIR = \"$${OUT_PWD}/Doomsday.app/Contents/Frameworks/\"
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
     !deng_nosdl {
@@ -711,14 +719,13 @@ macx {
         !deng_nosdlmixer: doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
     }
 
-    # libdeng2 dynamic library.
+    # libdeng1 and 2 dynamic libraries.
     doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
+    doPostLink("cp -fRp $$OUT_PWD/../libdeng/libdeng1*dylib $$FW_DIR")
 
-    # Fix the dynamic linker paths so they point to ../Frameworks/.
-    defineTest(fixInstallName) {
-        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 doomsday.app/Contents/MacOS/doomsday")
-    }
-    fixInstallName("libdeng2.2.dylib")
+    # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
+    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
+    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng1.1.dylib, ..)
 
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")
@@ -731,7 +738,7 @@ macx {
 
 win32 {
     # Windows installation.
-    INSTALLS += target data startupdata startupgfx startupfonts license
+    INSTALLS += target data startupdata startupgfx startupfonts license icon
 
     target.path = $$DENG_LIB_DIR
 
@@ -742,6 +749,9 @@ win32 {
 
     license.files = doc/LICENSE
     license.path = $$DENG_DOCS_DIR
+
+    icon.files = win32/res/doomsday.ico
+    icon.path = $$DENG_DATA_DIR/graphics
 }
 else:unix:!macx {
     # Generic Unix installation.

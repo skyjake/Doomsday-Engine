@@ -38,7 +38,7 @@
 #include "de_misc.h"
 
 #include "def_main.h"
-#include "stringpool.h"
+#include <de/stringpool.h>
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
@@ -136,7 +136,7 @@ static void R_VertexNormals(model_t *mdl)
     dmd_triangle_t *tri;
 
     // Renormalizing?
-    if(!ArgCheck("-renorm"))
+    if(!CommandLine_Check("-renorm"))
         return;
 
     normals = Z_Malloc(sizeof(vector_t) * tris, PU_APPSTATIC, 0);
@@ -414,16 +414,14 @@ static void R_LoadModelDMD(DFile* file, model_t* mo)
         M_Free(triangles[i]);
 }
 
-static void registerModelSkin(model_t* mdl, int index)
+static boolean registerModelSkin(model_t* mdl, int index)
 {
     mdl->skins[index].texture = R_RegisterModelSkin(0, mdl->skins[index].name, mdl->fileName, false);
+    if(mdl->skins[index].texture) return true;
 
-    if(!mdl->skins[index].texture)
-    {
-        Con_Message("Warning: Failed locating skin \"%s\" (#%i) for model \"%s\".\n"
-                    "  This model will be rendered without a skin.\n",
-                    mdl->skins[index].name, index, F_PrettyPath(mdl->fileName));
-    }
+    Con_Message("Warning: Failed locating skin \"%s\" (#%i) for model \"%s\".\n",
+                mdl->skins[index].name, index, F_PrettyPath(mdl->fileName));
+    return false;
 }
 
 model_t* R_ModelForId(uint modelRepositoryId)
@@ -441,7 +439,7 @@ static int R_LoadModel(const Uri* uri)
     ddstring_t foundPath;
     DFile* file = NULL;
     model_t* mdl;
-    int i;
+    int i, foundSkins;
     uint index;
 
     if(!uri) return 0;
@@ -521,9 +519,46 @@ static int R_LoadModel(const Uri* uri)
     mdl->fileName = Str_Text(StringPool_String(modelRepository, index));
 
     // Determine the actual (full) paths.
+    foundSkins = 0;
     for(i = 0; i < mdl->info.numSkins; ++i)
     {
-        registerModelSkin(mdl, i);
+        if(registerModelSkin(mdl, i))
+        {
+            // We have found one more skin for this model.
+            foundSkins += 1;
+        }
+    }
+
+    if(!foundSkins)
+    {
+        // Lastly try a skin named similarly to the model in the same directory.
+        directory_t* mydir = Dir_ConstructFromPathDir(mdl->fileName);
+        AutoStr* skinSearchPath = AutoStr_NewStd();
+
+        F_FileName(skinSearchPath, mdl->fileName);
+        Str_Prepend(skinSearchPath, mydir->path);
+        if(F_FindResourceStr2(RC_GRAPHIC, skinSearchPath, &foundPath))
+        {
+            // Huzzah! we found a skin.
+            Uri* uri = Uri_NewWithPath2(Str_Text(&foundPath), RC_NULL);
+            mdl->skins[0].texture = R_CreateSkinTex(uri, false/*not a shiny skin*/);
+            Uri_Delete(uri);
+
+            foundSkins = 1;
+
+            VERBOSE(
+                Con_Message("Note: Assigned fallback skin \"%s\" to slot #0 for model \"%s\".\n",
+                            F_PrettyPath(Str_Text(&foundPath)), F_PrettyPath(mdl->fileName));
+            )
+        }
+        Dir_Delete(mydir);
+    }
+
+    if(!foundSkins)
+    {
+        Con_Message("Warning: Failed to locate a skin for model \"%s\".\n"
+                    "  This model will be rendered without a skin.\n",
+                    F_PrettyPath(mdl->fileName));
     }
 
     // Enlarge the vertex buffers to enable drawing of this model.
@@ -825,7 +860,7 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
         Con_Error("R_ScaleModelToSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
 
     off = -pTex->offY - ms->size.height;
@@ -1201,7 +1236,7 @@ void R_InitModels(void)
     uint usedTime;
 
     // Dedicated servers do nothing with models.
-    if(isDedicated || ArgCheck("-nomd2"))
+    if(isDedicated || CommandLine_Check("-nomd2"))
         return;
 
     modelRepository = StringPool_New();

@@ -52,6 +52,7 @@
 #include "p_floor.h"
 #include "p_plat.h"
 #include "p_user.h"
+#include "p_scroll.h"
 #include "p_switch.h"
 #include "d_netsv.h"
 
@@ -334,11 +335,9 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 
         if(verbose > (isCustom? 1 : 2))
         {
-            ddstring_t* from = Uri_ToString(startUri);
-            ddstring_t* to = Uri_ToString(endUri);
+            AutoStr* from = Uri_ToString(startUri);
+            AutoStr* to = Uri_ToString(endUri);
             Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, Str_Text(from), Str_Text(to), ticsPerFrame);
-            Str_Delete(to);
-            Str_Delete(from);
         }
 
         // Find an animation group for this.
@@ -386,13 +385,10 @@ void P_InitPicAnims(void)
     loadAnimDefs(anims, false);
 }
 
-boolean P_ActivateLine(LineDef *ld, mobj_t *mo, int side, int actType)
+boolean P_ActivateLine(LineDef* ld, mobj_t* mo, int side, int actType)
 {
-    if(IS_CLIENT)
-    {
-        // Clients do not activate lines.
-        return false;
-    }
+    // Clients do not activate lines.
+    if(IS_CLIENT) return false;
 
     switch(actType)
     {
@@ -419,64 +415,36 @@ boolean P_ActivateLine(LineDef *ld, mobj_t *mo, int side, int actType)
  * Called every time a thing origin is about to cross a line with
  * a non 0 special.
  */
-static void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
+static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing)
 {
-    int                 ok;
-    xline_t*            xline;
+    xline_t* xline;
 
     // Extended functionality overrides old.
-    if(XL_CrossLine(line, side, thing))
-        return;
+    if(XL_CrossLine(line, side, thing)) return;
 
     xline = P_ToXLine(line);
 
     // Triggers that other things can activate.
     if(!thing->player)
     {
-/*      // DJS - All things can trigger specials in Heretic
-        // Things that should NOT trigger specials...
-        switch (thing->type)
-        {
-        case MT_ROCKET:
-        case MT_PLASMA:
-        case MT_BFG:
-        case MT_TROOPSHOT:
-        case MT_HEADSHOT:
-        case MT_BRUISERSHOT:
-            return;
-            break;
-
-        default:
-            break;
-        }
-*/
-        ok = 0;
         switch(xline->special)
         {
-        case 39:                // TELEPORT TRIGGER
-        case 97:                // TELEPORT RETRIGGER
-      //case 125:               // TELEPORT MONSTERONLY TRIGGER
-      //case 126:               // TELEPORT MONSTERONLY RETRIGGER
-        case 4:                 // RAISE DOOR
-      //case 10:                // PLAT DOWN-WAIT-UP-STAY TRIGGER
-      //case 88:                // PLAT DOWN-WAIT-UP-STAY RETRIGGER
-            ok = 1;
+        default: return;
+
+        case 39: ///< TELEPORT TRIGGER
+        case 97: ///< TELEPORT RETRIGGER
+        case 4:  ///< RAISE DOOR
             break;
         }
-/*      // DJS - Not implemented in jHeretic
-        // Anything can trigger this line!
-        if(P_GetInt(DMU_LINEDEF, linenum, DMU_FLAGS) & ML_ALLTRIGGER)
-            ok = 1;
-*/
-        if(!ok)
-            return;
     }
 
     // Note: could use some const's here.
     switch(xline->special)
     {
+    default: break;
+
         // TRIGGERS.
-        // All from here to RETRIGGERS.
+    // All from here to RETRIGGERS.
     case 2:
         // Open Door
         EV_DoDoor(line, DT_OPEN);
@@ -658,82 +626,18 @@ static void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
         xline->special = 0;
         break;
 
-/*
-    // DJS - This stuff isn't in Heretic
-    case 108:
-        // Blazing Door Raise (faster than TURBO!)
-        EV_DoDoor(line, DT_BLAZERAISE);
-        xline->special = 0;
-        break;
-
-    case 109:
-        // Blazing Door Open (faster than TURBO!)
-        EV_DoDoor(line, DT_BLAZEOPEN);
-        xline->special = 0;
-        break;
-
-    case 100:
-        // Build Stairs Turbo 16
-        EV_BuildStairs(line, turbo16);
-        xline->special = 0;
-        break;
-
-    case 110:
-        // Blazing Door Close (faster than TURBO!)
-        EV_DoDoor(line, DT_BLAZECLOSE);
-        xline->special = 0;
-        break;
-
-    case 119:
-        // Raise floor to nearest surr. floor
-        EV_DoFloor(line, FT_RAISEFLOORTONEAREST);
-        xline->special = 0;
-        break;
-
-    case 121:
-        // Blazing PlatDownWaitUpStay
-        EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0);
-        xline->special = 0;
-        break;
-*/
-  //case 124: // DJS - In Heretic, the secret exit is 105
     case 105:
         // Secret EXIT
         G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, true), 0, true);
         break;
 
-    // DJS - Heretic has an additional stair build special
-    //       that moves in steps of 16.
     case 106:
         // Build Stairs
         EV_BuildStairs(line, build16);
         xline->special = 0;
         break;
 
-/*  // DJS - more specials that arn't in Heretic
-    case 125:
-        // TELEPORT MonsterONLY
-        if(!thing->player)
-        {
-            EV_Teleport(line, side, thing);
-            xline->special = 0;
-        }
-        break;
-
-    case 130:
-        // Raise Floor Turbo
-        EV_DoFloor(line, FT_RAISEFLOORTURBO);
-        xline->special = 0;
-        break;
-
-    case 141:
-        // Silent Ceiling Crush & Raise
-        EV_DoCeiling(line, CT_SILENTCRUSHANDRAISE);
-        xline->special = 0;
-        break;
-*/
-
-        // RETRIGGERS.  All from here till end.
+    // RETRIGGERS.  All from here till end.
     case 72:
         // Ceiling Crush
         EV_DoCeiling(line, CT_LOWERANDCRUSH);
@@ -860,50 +764,6 @@ static void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
         // DJS - Heretic has one turbo door raise
         EV_DoDoor(line, DT_BLAZEOPEN);
         break;
-
-/*
-    // DJS - Yet more specials not in Heretic
-    case 98:
-        // Lower Floor (TURBO)
-        EV_DoFloor(line, FT_LOWERTURBO);
-        break;
-
-    case 105:
-        // Blazing Door Raise (faster than TURBO!)
-        EV_DoDoor(line, DT_BLAZERAISE);
-        break;
-
-    case 106:
-        // Blazing Door Open (faster than TURBO!)
-        EV_DoDoor(line, DT_BLAZEOPEN);
-        break;
-
-    case 107:
-        // Blazing Door Close (faster than TURBO!)
-        EV_DoDoor(line, DT_BLAZECLOSE);
-        break;
-
-    case 120:
-        // Blazing PlatDownWaitUpStay.
-        EV_DoPlat(line, PT_DOWNWAITUPSTAYBLAZE, 0);
-        break;
-
-    case 126:
-        // TELEPORT MonsterONLY.
-        if(!thing->player)
-            EV_Teleport(line, side, thing);
-        break;
-
-    case 128:
-        // Raise To Nearest Floor
-        EV_DoFloor(line, FT_RAISEFLOORTONEAREST);
-        break;
-
-    case 129:
-        // Raise Floor Turbo
-        EV_DoFloor(line, FT_RAISEFLOORTURBO);
-        break;
-*/
     }
 }
 
@@ -912,24 +772,24 @@ static void P_CrossSpecialLine(LineDef *line, int side, mobj_t *thing)
  */
 static void P_ShootSpecialLine(mobj_t* thing, LineDef* line)
 {
-    xline_t*            xline = P_ToXLine(line);
+    xline_t* xline = P_ToXLine(line);
 
     // Impacts that other things can activate.
     if(!thing->player)
     {
         switch(xline->special)
         {
-        case 46:
-            // OPEN DOOR IMPACT
-            break;
+        default: return;
 
-        default:
-            return;
+        case 46: ///< OPEN DOOR IMPACT
+            break;
         }
     }
 
     switch(xline->special)
     {
+    default: break;
+
     case 24:
         // RAISE FLOOR
         EV_DoFloor(line, FT_RAISEFLOOR);
@@ -949,9 +809,6 @@ static void P_ShootSpecialLine(mobj_t* thing, LineDef* line)
         P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
         xline->special = 0;
         break;
-
-    default:
-        break;
     }
 }
 
@@ -960,11 +817,10 @@ static void P_ShootSpecialLine(mobj_t* thing, LineDef* line)
  */
 void P_PlayerInSpecialSector(player_t* player)
 {
-    Sector *sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
+    Sector* sector = P_GetPtrp(player->plr->mo->bspLeaf, DMU_SECTOR);
 
     // Falling, not all the way down yet?
-    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
-        return;
+    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT))) return;
 
     // Has hitten ground.
     switch(P_ToXSector(sector)->special)
@@ -1011,7 +867,7 @@ void P_PlayerInSpecialSector(player_t* player)
             P_ToXSector(sector)->special = 0;
             if(cfg.secretMsg)
             {
-                P_SetMessage(player, "You've found a secret area!", false);
+                P_SetMessage(player, 0, "You've found a secret area!");
                 S_ConsoleSound(SFX_SECRET, 0, player - players);
             }
         }
@@ -1019,7 +875,7 @@ void P_PlayerInSpecialSector(player_t* player)
 
     case 11:
         // EXIT SUPER DAMAGE! (for E1M8 finale)
-/*      // DJS - Not used in Heretic
+/*      // Not used in Heretic
         player->cheats &= ~CF_GODMODE;
 
         if(!(leveltime & 0x1f))
@@ -1030,7 +886,7 @@ void P_PlayerInSpecialSector(player_t* player)
 */
         break;
 
-    // DJS - These specials are handled elsewhere in jHeretic.
+    // These specials are handled elsewhere in jHeretic.
     case 15: // LOW FRICTION
 
     case 40: // WIND SPECIALS
@@ -1053,268 +909,71 @@ void P_PlayerInSpecialSector(player_t* player)
     }
 }
 
-/**
- * Animate planes, scroll walls, etc.
- */
-void P_UpdateSpecials(void)
+void P_SpawnSectorSpecialThinkers(void)
 {
-#define PLANE_MATERIAL_SCROLLUNIT (8.f/35*2)
-
     uint i;
-    float x;
-    LineDef* line;
-    SideDef* side;
 
-    // Extended lines and sectors.
-    XG_Ticker();
+    // Clients spawn specials only on the server's instruction.
+    if(IS_CLIENT) return;
 
-    // Update scrolling plane materials.
     for(i = 0; i < numsectors; ++i)
     {
-        xsector_t* sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
-        float texOff[2];
-
-        switch(sect->special)
-        {
-        case 25: // Scroll north.
-        case 26:
-        case 27:
-        case 28:
-        case 29:
-            if(!cfg.fixPlaneScrollMaterialsEastOnly)
-                break;
-            texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
-            texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + (sect->special - 25)*2);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
-            break;
-
-        case 20: // Scroll east.
-        case 21:
-        case 22:
-        case 23:
-        case 24:
-            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
-            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + (sect->special - 20)*2);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
-            break;
-
-        case 4: // Scroll east (lava damage).
-            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
-            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * 8 * (1 + sect->special - 4);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
-            break;
-
-        case 30: // Scroll south.
-        case 31:
-        case 32:
-        case 33:
-        case 34:
-            if(!cfg.fixPlaneScrollMaterialsEastOnly)
-                break;
-            texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
-            texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + (sect->special - 30)*2);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
-            break;
-
-        case 35: // Scroll west.
-        case 36:
-        case 37:
-        case 38:
-        case 39:
-            if(!cfg.fixPlaneScrollMaterialsEastOnly)
-                break;
-            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
-            texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + (sect->special - 35)*2);
-            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    // ANIMATE LINE SPECIALS
-    if(IterList_Size(linespecials))
-    {
-        IterList_SetIteratorDirection(linespecials, ITERLIST_BACKWARD);
-        IterList_RewindIterator(linespecials);
-        while((line = IterList_MoveIterator(linespecials)) != NULL)
-        {
-            switch(P_ToXLine(line)->special)
-            {
-            case 48:
-                side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-                // EFFECT FIRSTCOL SCROLL +
-                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x + 1);
-                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x + 1);
-                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x + 1);
-                break;
-
-            // DJS - Heretic also has a backwards wall scroller.
-            case 99:
-                side = P_GetPtrp(line, DMU_SIDEDEF0);
-
-                // EFFECT FIRSTCOL SCROLL +
-                x = P_GetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_TOP_MATERIAL_OFFSET_X, x - 1);
-                x = P_GetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_MIDDLE_MATERIAL_OFFSET_X, x - 1);
-                x = P_GetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X);
-                P_SetFloatp(side, DMU_BOTTOM_MATERIAL_OFFSET_X, x - 1);
-                break;
-
-            default:
-                break;
-            }
-        }
-    }
-
-#undef PLANE_MATERIAL_SCROLLUNIT
-}
-
-/**
- * After the map has been loaded, scan for specials that spawn thinkers.
- */
-void P_SpawnSpecials(void)
-{
-    uint        i;
-    LineDef    *line;
-    xline_t    *xline;
-    iterlist_t *list;
-    Sector     *sec;
-    xsector_t  *xsec;
-
-    // Init special SECTORs.
-    P_DestroySectorTagLists();
-    for(i = 0; i < numsectors; ++i)
-    {
-        sec = P_ToPtr(DMU_SECTOR, i);
-        xsec = P_ToXSector(sec);
-
-        if(xsec->tag)
-        {
-            list = P_GetSectorIterListForTag(xsec->tag, true);
-            IterList_Push(list, sec);
-        }
-
-        if(!xsec->special)
-            continue;
-
-        if(IS_CLIENT)
-        {
-            switch(xsec->special)
-            {
-            case 9:
-                // SECRET SECTOR
-                totalSecret++;
-                break;
-
-            default:
-                break;
-            }
-
-            continue;
-        }
+        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
+        xsector_t* xsec = P_ToXSector(sec);
 
         switch(xsec->special)
         {
-        case 1:
-            // FLICKERING LIGHTS
+        default: break;
+
+        case 1: ///< FLICKERING LIGHTS
             P_SpawnLightFlash(sec);
             break;
 
-        case 2:
-            // STROBE FAST
+        case 2: ///< STROBE FAST
             P_SpawnStrobeFlash(sec, FASTDARK, 0);
             break;
 
-        case 3:
-            // STROBE SLOW
+        case 3: ///, STROBE SLOW
             P_SpawnStrobeFlash(sec, SLOWDARK, 0);
             break;
 
-        case 4:
-            // STROBE FAST/DEATH SLIME
+        case 4: ///< STROBE FAST/DEATH SLIME
             P_SpawnStrobeFlash(sec, FASTDARK, 0);
             xsec->special = 4;
             break;
 
-        case 8:
-            // GLOWING LIGHT
+        case 8: ///< GLOWING LIGHT
             P_SpawnGlowingLight(sec);
             break;
 
-        case 9:
-            // SECRET SECTOR
-            totalSecret++;
-            break;
-
-        case 10:
-            // DOOR CLOSE IN 30 SECONDS
-            P_SpawnDoorCloseIn30(sec);
-            break;
-
-        case 12:
-            // SYNC STROBE SLOW
+        case 12: ///< SYNC STROBE SLOW
             P_SpawnStrobeFlash(sec, SLOWDARK, 1);
             break;
 
-        case 13:
-            // SYNC STROBE FAST
+        case 13: ///< SYNC STROBE FAST
             P_SpawnStrobeFlash(sec, FASTDARK, 1);
             break;
 
-        case 14:
-            // DOOR RAISE IN 5 MINUTES
+        case 10: ///< DOOR CLOSE IN 30 SECONDS
+            P_SpawnDoorCloseIn30(sec);
+            break;
+
+        case 14: ///< DOOR RAISE IN 5 MINUTES
             P_SpawnDoorRaiseIn5Mins(sec);
             break;
-
-/*
-        // DJS - Heretic doesn't use these.
-        case 17:
-            P_SpawnFireFlicker(sec);
-            break;
-*/
-        default:
-            break;
         }
     }
+}
 
-    // Init animating line specials.
-    IterList_Empty(linespecials);
-    P_DestroyLineTagLists();
-    for(i = 0; i < numlines; ++i)
-    {
-        line = P_ToPtr(DMU_LINEDEF, i);
-        xline = P_ToXLine(line);
+void P_SpawnLineSpecialThinkers(void)
+{
+    // Stub.
+}
 
-        switch(xline->special)
-        {
-        case 48:
-            // EFFECT FIRSTCOL SCROLL+
-        case 99:
-            // EFFECT FIRSTCOL SCROLL-
-            // DJS - Heretic also has a backwards wall scroller.
-            IterList_Push(linespecials, line);
-            break;
-
-        default:
-            break;
-        }
-
-        if(xline->tag)
-        {
-           list = P_GetLineIterListForTag(xline->tag, true);
-           IterList_Push(list, line);
-        }
-    }
-
-    // Init extended generalized lines and sectors.
-    XG_Init();
+void P_SpawnAllSpecialThinkers(void)
+{
+    P_SpawnSectorSpecialThinkers();
+    P_SpawnLineSpecialThinkers();
 }
 
 void P_InitLava(void)

@@ -28,6 +28,10 @@
 #include "dfile.h"
 #include "lumpinfo.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // File types.
 typedef enum {
     FT_UNKNOWNFILE,
@@ -70,27 +74,39 @@ typedef struct abstractfile_s {
 /**
  * Initialize this resource.
  *
+ * @param af    AbstractFile instance.
  * @param type  File type identifier.
  * @param path  Path to this file in the virtual file system.
  * @param file  Handle to the file. AbstractFile takes ownership of the handle.
  * @param info  Lump info descriptor for the file. A copy is made.
- * @return  Same as @a af for convenience (chaining).
+ *
+ * @return  @a af for convenience (chaining).
  */
 abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
     const char* path, DFile* file, const LumpInfo* info);
 
 /**
  * Release all memory acquired for objects linked with this resource.
+ * @param af    AbstractFile instance.
  */
 void AbstractFile_Destroy(abstractfile_t* af);
 
-/// @return  Type of this resource @see filetype_t
+/**
+ * @param af    AbstractFile instance.
+ * @return  Type of this resource @see filetype_t
+ */
 filetype_t AbstractFile_Type(const abstractfile_t* af);
 
-/// @return  Immutable copy of the info descriptor for this resource.
+/**
+ * @param af    AbstractFile instance.
+ * @return  Immutable copy of the info descriptor for this resource.
+ */
 const LumpInfo* AbstractFile_Info(abstractfile_t* af);
 
-/// @return  Owning package else @c NULL if not contained.
+/**
+ * @param af    AbstractFile instance.
+ * @return  Owning package else @c NULL if not contained.
+ */
 abstractfile_t* AbstractFile_Container(const abstractfile_t* af);
 
 /**
@@ -141,5 +157,9 @@ size_t AbstractFile_ReadLump(abstractfile_t* af, int lumpIdx, uint8_t* buffer);
 
 /// @return  Number of "lumps" contained within this resource.
 int AbstractFile_LumpCount(abstractfile_t* af);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_ABSTRACTFILE_H */

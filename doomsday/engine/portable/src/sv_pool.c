@@ -502,8 +502,7 @@ void Sv_RegisterPoly(dt_poly_t* reg, uint number)
 /**
  * @return              @c true, if the result is not void.
  */
-boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
-                               mobjdelta_t* d)
+boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s, mobjdelta_t* d)
 {
     int                 df;
     reg_mobj_t*         regMo = NULL;
@@ -749,7 +748,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
 }
 
 /**
- * @eturn               @c true, if the result is not void.
+ * @return @c true= the result is not void.
  */
 boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
                                byte doUpdate)
@@ -1215,7 +1214,12 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
         if(sf & MDF_HEIGHT)
             d->height = s->height;
         if(sf & MDF_FLAGS)
+        {
             d->ddFlags = s->ddFlags;
+            d->flags   = s->flags;
+            d->flags2  = s->flags2;
+            d->flags3  = s->flags3;
+        }
         if(sf & MDF_FLOORCLIP)
             d->floorClip = s->floorClip;
         if(sf & MDFC_TRANSLUCENCY)
@@ -1494,7 +1498,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isRea
 {
     coord_t z;
 
-    /// @fixme Do not assume mobj is from the CURRENT map.
+    /// @todo Do not assume mobj is from the CURRENT map.
     if(isReal && !GameMap_IsUsedMobjID(theMap, mo->thinker.id))
     {
         // This mobj does not exist any more!
@@ -1568,9 +1572,10 @@ coord_t Sv_DeltaDistance(const void* deltaPtr, const ownerinfo_t* info)
     if(delta->type == DT_SIDE)
     {
         SideDef* sideDef = &sideDefs[delta->id];
+        LineDef* line = sideDef->line;
         vec2d_t origin;
-        V2d_Set(origin, sideDef->line->L_v1origin[VX] + sideDef->line->direction[VX] / 2,
-                        sideDef->line->L_v1origin[VY] + sideDef->line->direction[VY] / 2);
+        V2d_Set(origin, line->L_v1origin[VX] + line->direction[VX] / 2,
+                        line->L_v1origin[VY] + line->direction[VY] / 2);
         return M_ApproxDistance(info->origin[VX] - origin[VX],
                                 info->origin[VY] - origin[VY]);
     }
@@ -2058,7 +2063,7 @@ void Sv_NewNullDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
             // This reg_mobj_t might be removed.
             next = obj->next;
 
-            /// @fixme Do not assume mobj is from the CURRENT map.
+            /// @todo Do not assume mobj is from the CURRENT map.
             if(!GameMap_IsUsedMobjID(theMap, obj->mo.thinker.id))
             {
                 // This object no longer exists!
@@ -2240,9 +2245,9 @@ void Sv_NewSectorDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  */
 void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
-    static uint         numShifts = 2, shift = 0;
-    sidedelta_t         delta;
-    uint                i, start, end;
+    static uint numShifts = 2, shift = 0;
+    sidedelta_t delta;
+    uint i, start, end;
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
@@ -2710,7 +2715,7 @@ boolean Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
     // Deltas become more important with age (milliseconds).
     score *= 1 + age / (ageScoreDouble * 1000.0f);
 
-    /// @fixme Consider viewpoint speed and angle.
+    /// @todo Consider viewpoint speed and angle.
 
     // Priority bonuses based on the contents of the delta.
     if(delta->type == DT_MOBJ)

@@ -61,9 +61,7 @@ void T_BuildPillar(pillar_t *pillar)
     // First, raise the floor
     res1 = T_MovePlane(pillar->sector, pillar->floorSpeed, pillar->floorDest, pillar->crush, 0, pillar->direction); // floorOrCeiling, direction
     // Then, lower the ceiling
-    res2 =
-        T_MovePlane(pillar->sector, pillar->ceilingSpeed, pillar->ceilingDest,
-                    pillar->crush, 1, -pillar->direction);
+    res2 = T_MovePlane(pillar->sector, pillar->ceilingSpeed, pillar->ceilingDest, pillar->crush, 1, -pillar->direction);
     if(res1 == pastdest && res2 == pastdest)
     {
         P_ToXSector(pillar->sector)->specialData = NULL;

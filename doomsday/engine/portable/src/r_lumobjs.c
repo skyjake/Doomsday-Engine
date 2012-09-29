@@ -590,7 +590,7 @@ static lumobj_t* allocLumobj(void)
     lumobj_t* lum;
 
     // Only allocate memory when it's needed.
-    /// @fixme No upper limit?
+    /// @todo No upper limit?
     if(++numLuminous > maxLuminous)
     {
         uint i, newMax = maxLuminous + LUMOBJ_BATCH_SIZE;
@@ -725,12 +725,16 @@ static void addLuminous(mobj_t* mo)
        (mo->ddFlags & DDMF_ALWAYSLIT)))
         return;
 
-    // Are the automatically calculated light values for fullbright
-    // sprite frames in use?
+    // Are the automatically calculated light values for fullbright sprite frames in use?
     if(mo->state &&
        (!useMobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
        !stateLights[mo->state - states])
        return;
+
+    // If the mobj's origin is outside the BSP leaf it is linked within, then
+    // this means it is outside the playable map (and no light should be emitted).
+    /// @todo Optimize: P_MobjLink() should do this and flag the mobj accordingly.
+    if(!P_IsPointInBspLeaf(mo->origin, mo->bspLeaf)) return;
 
     def = (mo->state? stateLights[mo->state - states] : NULL);
 
@@ -749,9 +753,10 @@ static void addLuminous(mobj_t* mo)
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
+    if(!MSU_texture(ms, MTU_PRIMARY)) return; // An invalid sprite texture.
 
     pl = (const pointlight_analysis_t*)
-        Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+        Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
     if(!pl)
         Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
@@ -771,7 +776,7 @@ static void addLuminous(mobj_t* mo)
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
 
     center = -pTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
@@ -890,7 +895,7 @@ void LO_BeginFrame(void)
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     uint i;
 
-    if(useDynlights || useLightDecorations)
+    if(useDynLights || useLightDecorations)
     {
         /**
          * Clear the projected dynlight lists. This is done here as
@@ -984,13 +989,14 @@ static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
         if(!(ms->glowing > .001f)) return true; // Continue iteration.
 
         avgColorAmplified = (const averagecolor_analysis_t*)
-            Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
+            Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
         if(!avgColorAmplified)
             Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
         // @note Plane lights do not spread so simply link to all BspLeafs of this sector.
         lum = createLuminous(LT_PLANE, sec->bspLeafs[0]);
         V3d_Copy(lum->origin, pln->PS_base.origin);
+        lum->origin[VZ] = pln->visHeight; // base.origin[VZ] is not smoothed
 
         V3f_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
         V3f_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
@@ -1021,11 +1027,11 @@ static boolean createGlowLightForSurface(Surface* suf, void* paramaters)
 
 void LO_AddLuminousMobjs(void)
 {
-    if(!useDynlights && !useWallGlow) return;
+    if(!useDynLights && !useWallGlow) return;
 
 BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
-    if(useDynlights)
+    if(useDynLights)
     {
         Sector* seciter;
         uint i;
@@ -1108,7 +1114,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
 
     luminousClipped[lumIdx] = 0;
 
-    /// @fixme Determine the exact centerpoint of the light in addLuminous!
+    /// @todo Determine the exact centerpoint of the light in addLuminous!
     V3d_Set(origin, lum->origin[VX], lum->origin[VY], lum->origin[VZ] + LUM_OMNI(lum)->zOff);
 
     /**
@@ -1165,7 +1171,7 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
         for(i = 0; i < bspLeaf->polyObj->lineCount; ++i)
         {
             LineDef* line = bspLeaf->polyObj->lines[i];
-            HEdge* hedge = line->L_frontside->hedgeLeft;
+            HEdge* hedge = line->L_frontside.hedgeLeft;
 
             // Ignore hedges facing the wrong way.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
@@ -1217,7 +1223,7 @@ int LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 
 void LO_UnlinkMobjLumobjs(void)
 {
-    if(!useDynlights && theMap)
+    if(!useDynLights && theMap)
     {
         // Mobjs are always public.
         GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, LOIT_UnlinkMobjLumobj, NULL);

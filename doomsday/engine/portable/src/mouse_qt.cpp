@@ -1,5 +1,5 @@
 /**
- * @file mouse_qt.c
+ * @file mouse_qt.cpp
  * Mouse driver that gets mouse input from the Qt based canvas widget.
  * @ingroup input
  *

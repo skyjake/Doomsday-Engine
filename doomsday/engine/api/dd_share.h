@@ -55,6 +55,7 @@ extern "C" {
 #include "dd_ui.h"
 #include "dd_infine.h"
 #include "def_share.h"
+#include "busytask.h"
 #include "thinker.h"
 
 /** @file
@@ -97,8 +98,6 @@ char*           strlwr(char *string);
 #endif
 
 int             dd_snprintf(char* str, size_t size, const char* format, ...);
-int             dd_vsnprintf(char* str, size_t size, const char* format,
-                             va_list ap);
 
     // Format checking for printf-like functions in GCC2
 #if defined(__GNUC__) && __GNUC__ >= 2
@@ -238,6 +237,7 @@ enum {
     DD_DEF_MAP_INFO,
     DD_DEF_TEXT,
     DD_DEF_VALUE,
+    DD_DEF_VALUE_BY_INDEX,
     DD_DEF_LINE_TYPE,
     DD_DEF_SECTOR_TYPE,
     DD_PSPRITE_BOB_X,
@@ -260,6 +260,7 @@ enum {
     DD_PLUGIN_HOMEURL,
     DD_PLUGIN_DOCSURL,
     DD_DMU_VERSION, ///< Used in the exchange of DMU API versions.
+    DD_DEF_ACTION,
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
@@ -302,9 +303,11 @@ enum {
     DD_TORCH_GREEN,
     DD_TORCH_BLUE,
     DD_TORCH_ADDITIVE,
-    DD_TM_FLOOR_Z,      ///< output from P_CheckPosition
-    DD_TM_CEILING_Z,    ///< output from P_CheckPosition
-    DD_SHIFT_DOWN
+    DD_TM_FLOOR_Z,              ///< output from P_CheckPosition
+    DD_TM_CEILING_Z,            ///< output from P_CheckPosition
+    DD_SHIFT_DOWN,
+    DD_GAME_RECOMMENDS_SAVING,  ///< engine asks whether game should be saved (e.g., when upgrading) (game's GetInteger)
+    DD_NOTIFY_GAME_SAVED        ///< savegame was written
 };
 
 /// Bounding box coordinates.
@@ -368,6 +371,16 @@ typedef struct gameinfo_s {
 } GameInfo;
 
 /**
+ * Provides a way for games (or other plugins) to notify the engine of game-related
+ * important events.
+ *
+ * @param notification  One of the DD_NOTIFY_* enums.
+ * @param param         Additional arguments about the notification, dependin
+ *                      on the notification type.
+ */
+void Game_Notify(int notification, void* param);
+
+/**
  * @defgroup resourceFlags Resource Flags
  * @ingroup apiFlags resource
  */
@@ -385,18 +398,6 @@ typedef struct gameinfo_s {
 #define FRACUNIT            (1<<FRACBITS)
 #define FRACEPSILON         (1.0f/65535.f) // ~ 1.5e-5
 #define FLOATEPSILON        .000001f
-
-#define MAX_OF(x, y)        ((x) > (y)? (x) : (y))
-#define MIN_OF(x, y)        ((x) < (y)? (x) : (y))
-#define MINMAX_OF(a, x, b)  ((x) < (a)? (a) : (x) > (b)? (b) : (x))
-#define SIGN_OF(x)          ((x) > 0? +1 : (x) < 0? -1 : 0)
-#define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
-#define FEQUAL(x, y)        (INRANGE_OF(x, y, FLOATEPSILON))
-#define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
-#define ABS(x)              ((x) >= 0 ? (x) : -(x))
-
-/// Ceiling of integer quotient of @a a divided by @a b.
-#define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
 
 /**
  * Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
@@ -591,31 +592,6 @@ typedef struct event_s {
 
 //------------------------------------------------------------------------
 //
-// Purge Levels
-//
-//------------------------------------------------------------------------
-
-/**
- * @defgroup memzone Memory Zone
- * @ingroup base
- */
-
-/**
- * @defgroup purgeLevels Purge Levels
- * @ingroup memzone
- */
-///@{
-#define PU_APPSTATIC         1 ///< Static entire execution time.
-#define PU_GAMESTATIC       40 ///< Static until the game plugin which allocated it is unloaded.
-#define PU_MAP              50 ///< Static until map exited (may still be freed during the map, though).
-#define PU_MAPSTATIC        52 ///< Not freed until map exited.
-
-#define PU_PURGELEVEL       100 ///< Tags >= 100 are purgable whenever needed.
-#define PU_CACHE            101
-///@}
-
-//------------------------------------------------------------------------
-//
 // Map Data
 //
 //------------------------------------------------------------------------
@@ -794,8 +770,7 @@ typedef struct ddmobj_base_s {
 enum {
     DDSMM_AFTER_LOADING,    ///< After loading a savegame...
     DDSMM_FINALIZE,         ///< After everything else is done.
-    DDSMM_INITIALIZE,       ///< Before anything else if done.
-    DDSMM_AFTER_BUSY        ///< After leaving busy mode, which was used during setup.
+    DDSMM_INITIALIZE        ///< Before anything else if done.
 };
 
 /// Sector reverb data indices. @ingroup map
@@ -813,6 +788,8 @@ typedef enum sidedefsection_e {
     SS_BOTTOM,
     SS_TOP
 } SideDefSection;
+
+#define VALID_SIDEDEFSECTION(v) ((v) >= SS_MIDDLE && (v) <= SS_TOP)
 
 /// Helper macro for converting SideDefSection indices to their associated DMU flag. @ingroup map
 #define DMU_FLAG_FOR_SIDEDEFSECTION(s) (\
@@ -990,6 +967,26 @@ typedef struct aabox_s {
             int maxY;
         };
     };
+#ifdef __cplusplus
+    aabox_s() : minX(DDMAXINT), minY(DDMAXINT), maxX(DDMININT), maxY(DDMININT) {}
+    aabox_s(int _minX, int _minY, int _maxX, int _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aabox_s& operator = (aabox_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aabox_s& clear()
+    {
+        minX = minY = DDMAXINT;
+        maxX = maxY = DDMININT;
+        return *this;
+    }
+#endif
 } AABox;
 
 /**
@@ -1015,6 +1012,26 @@ typedef struct aaboxf_s {
             float maxY;
         };
     };
+#ifdef __cplusplus
+    aaboxf_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
+    aaboxf_s(float _minX, float _minY, float _maxX, float _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aaboxf_s& operator = (aaboxf_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aaboxf_s& clear()
+    {
+        minX = minY = DDMAXFLOAT;
+        maxX = maxY = DDMINFLOAT;
+        return *this;
+    }
+#endif
 } AABoxf;
 
 /**
@@ -1040,6 +1057,27 @@ typedef struct aaboxd_s {
             double maxY;
         };
     };
+#ifdef __cplusplus
+    aaboxd_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
+    aaboxd_s(double _minX, double _minY, double _maxX, double _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aaboxd_s& operator = (aaboxd_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aaboxd_s& clear()
+    {
+        minX = minY = DDMAXFLOAT;
+        maxX = maxY = DDMINFLOAT;
+        return *this;
+    }
+
+#endif
 } AABoxd;
 
 /// Base mobj_t elements. Games MUST use this as the basis for mobj_t. @ingroup mobj
@@ -1078,7 +1116,7 @@ typedef struct aaboxd_s {
     short           visTarget; /* -1 = mobj is becoming less visible, */ \
                                /* 0 = no change, 2= mobj is becoming more visible */ \
     int             reactionTime; /* if not zero, freeze controls */ \
-    int             tmap, tclass;\
+    int             tmap, tclass; /* color translation (0, 0 == none) */ \
     int             flags;\
     int             flags2;\
     int             flags3;\

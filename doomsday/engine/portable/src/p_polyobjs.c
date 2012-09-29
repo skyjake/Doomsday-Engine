@@ -45,7 +45,7 @@ void P_PolyobjChanged(Polyobj* po)
     for(lineIter = po->lines; *lineIter; lineIter++)
     {
         LineDef* line = *lineIter;
-        HEdge* hedge = line->L_frontside->hedgeLeft;
+        HEdge* hedge = line->L_frontside.hedgeLeft;
         int i;
 
         // Shadow bias must be told.
@@ -58,13 +58,13 @@ void P_PolyobjChanged(Polyobj* po)
 
 void P_PolyobjUnlink(Polyobj* po)
 {
-    GameMap* map = theMap; /// @fixme Do not assume polyobj is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume polyobj is from the CURRENT map.
     GameMap_UnlinkPolyobj(map, po);
 }
 
 void P_PolyobjLink(Polyobj* po)
 {
-    GameMap* map = theMap; /// @fixme Do not assume polyobj is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume polyobj is from the CURRENT map.
     GameMap_LinkPolyobj(map, po);
 }
 

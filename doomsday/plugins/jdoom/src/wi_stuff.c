@@ -267,7 +267,7 @@ static void drawFinishedTitle(void)
     patchid_t patchId;
     patchinfo_t info;
     char* mapName;
-    int mapNum;
+    uint mapNum;
 
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         mapNum = wbs->currentMap;
@@ -276,10 +276,10 @@ static void drawFinishedTitle(void)
 
     mapName = (char*) DD_GetVariable(DD_MAP_NAME);
     // Skip the E#M# or Map #.
-    if(NULL != mapName)
+    if(mapName)
     {
         char* ptr = strchr(mapName, ':');
-        if(NULL != ptr)
+        if(ptr)
         {
             mapName = M_SkipWhite(ptr + 1);
         }
@@ -293,12 +293,12 @@ static void drawFinishedTitle(void)
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
     // Draw <MapName>
-    patchId = pMapNames[mapNum];
+    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
-
-    // Draw "Finished!"
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.geometry.size.height) / 4;
+
+    // Draw "Finished!"
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
     WI_DrawPatchXY3(pFinished, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFinished), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
@@ -309,10 +309,11 @@ static void drawEnteringTitle(void)
 {
     int x = SCREENWIDTH/2, y = WI_TITLEY;
     char* mapName = NULL;
+    uint mapNum;
     ddmapinfo_t minfo;
     patchid_t patchId;
     patchinfo_t info;
-    ddstring_t* mapPath;
+    AutoStr* mapPath;
     Uri* mapUri;
 
     /// @kludge We need to properly externalize the map progression.
@@ -330,7 +331,6 @@ static void drawEnteringTitle(void)
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
             mapName = minfo.name;
     }
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
 
     // Skip the E#M# or Map #.
@@ -353,11 +353,12 @@ static void drawEnteringTitle(void)
     // Draw "Entering"
     WI_DrawPatchXY3(pEntering, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
-    // Draw map.
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.geometry.size.height) / 4;
-    patchId = pMapNames[(wbs->episode * 8) + wbs->nextMap];
 
+    // Draw map.
+    mapNum = (wbs->episode * 8) + wbs->nextMap;
+    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
     WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 

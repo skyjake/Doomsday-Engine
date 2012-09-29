@@ -29,5 +29,12 @@ interface iDownloadable
 {
      public function &directDownloadUri();
      public function hasDirectDownloadUri();
+
+     public function &directDownloadFallbackUri();
+     public function hasDirectDownloadFallbackUri();
+
+     public function &releaseDate();
+     public function hasReleaseDate();
+
      public function genDownloadBadge();
 }

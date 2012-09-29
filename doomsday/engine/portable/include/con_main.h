@@ -112,8 +112,8 @@ int CVar_Flags(const cvar_t* var);
 /// @return  Type of the variable.
 cvartype_t CVar_Type(const cvar_t* var);
 
-/// @return  Symbolic name/path-to the variable. Must be destroyed with Str_Delete().
-ddstring_t* CVar_ComposePath(const cvar_t* var);
+/// @return  Symbolic name/path-to the variable.
+AutoStr* CVar_ComposePath(const cvar_t* var);
 
 int CVar_Integer(const cvar_t* var);
 float CVar_Float(const cvar_t* var);
@@ -180,7 +180,7 @@ void Con_ShutdownDatabases(void);
 void Con_Ticker(timespan_t time);
 
 /// @return  @c true iff the event is 'eaten'.
-boolean Con_Responder(ddevent_t* ev);
+boolean Con_Responder(const ddevent_t* ev);
 
 /**
  * Attempt to change the 'open' state of the console.
@@ -313,12 +313,12 @@ void Con_AbnormalShutdown(const char* error);
  *                          words which match this pattern.
  * @param type              If a valid word type, only process words of this type.
  * @param callback          Callback to make for each processed word.
- * @param paramaters        Passed to the callback.
+ * @param parameters        Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
 int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
-    int (*callback)(const knownword_t* word, void* paramaters), void* paramaters);
+    int (*callback)(const knownword_t* word, void* parameters), void* parameters);
 
 /**
  * Collect an array of knownWords which match the given word (at least

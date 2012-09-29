@@ -40,6 +40,7 @@
 #  define strupr _strupr
 #endif
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
@@ -105,7 +106,7 @@ typedef enum gamestate_e {
 // Game state change actions.
 typedef enum {
     GA_NONE,
-    GA_LOADMAP,
+    GA_RESTARTMAP,
     GA_NEWGAME,
     GA_LOADGAME,
     GA_SAVEGAME,
@@ -242,7 +243,7 @@ typedef enum {
     IRONTICS = (60 * TICRATE)
 } powerduration_t;
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 

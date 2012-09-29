@@ -92,6 +92,16 @@ def todays_platform_release():
     git_checkout(builder.config.BRANCH)
 
 
+def sign_packages():
+    """Sign all packages in today's build."""
+    ev = builder.Event()
+    print "Signing today's build %i." % ev.number()    
+    for fn in os.listdir(ev.path()):
+        if fn.endswith('.exe') or fn.endswith('.dmg') or fn.endswith('.deb'):
+            # Make a signature for this.
+            os.system("gpg --output %s -ba %s" % (ev.file_path(fn) + '.sig', ev.file_path(fn)))
+
+
 def find_previous_tag(toTag, version):
     builds = builder.events_by_time()
     #print [(e[1].number(), e[1].timestamp()) for e in builds]
@@ -299,28 +309,40 @@ def system_command(cmd):
 def generate_apidoc():
     """Run Doxygen to generate all API documentation."""
     git_pull()
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/libdeng2'))    
+
+    print >> sys.stderr, "\nPublic API 2.0 docs..."
+    system_command('doxygen api2.doxy >/dev/null 2>../doxyissues-api2.txt')
+    system_command('wc -l ../doxyissues-api2.txt')
+
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
     
-    print "\n-=-=- PUBLIC API DOCS -=-=-"
-    system_command('doxygen api.doxy >/dev/null')
+    print >> sys.stderr, "\nPublic API docs..."
+    system_command('doxygen api.doxy >/dev/null 2>../doxyissues-api.txt')
+    system_command('wc -l ../doxyissues-api.txt')
 
-    print "\n-=-=- INTERNAL WIN32 DOCS -=-=-"
-    system_command('doxygen engine-win32.doxy >/dev/null')
+    print >> sys.stderr, "\nInternal Win32 docs..."
+    system_command('doxygen engine-win32.doxy >/dev/null 2>../doxyissues-win32.txt')
+    system_command('wc -l ../doxyissues-win32.txt')
 
-    print "\n-=-=- INTERNAL MAC/UNIX DOCS -=-=-"
-    system_command('doxygen engine-mac.doxy >/dev/null')        
+    print >> sys.stderr, "\nInternal Mac/Unix docs..."
+    system_command('doxygen engine-mac.doxy >/dev/null 2>../doxyissues-mac.txt')        
+    system_command('wc -l ../doxyissues-mac.txt')
 
-    print "\n-=-=- JDOOM DOCS -=-=-"
+    print >> sys.stderr, "\nDoom plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
-    system_command('doxygen jdoom.doxy >/dev/null')
+    system_command('doxygen jdoom.doxy >/dev/null 2>../../doxyissues-doom.txt')
+    system_command('wc -l ../../doxyissues-doom.txt')
 
-    print "\n-=-=- JHERETIC DOCS -=-=-"
+    print >> sys.stderr, "\nHeretic plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
-    system_command('doxygen jheretic.doxy >/dev/null')
+    system_command('doxygen jheretic.doxy >/dev/null 2>../../doxyissues-heretic.txt')
+    system_command('wc -l ../../doxyissues-heretic.txt')
 
-    print "\n-=-=- JHEXEN DOCS -=-=-"
+    print >> sys.stderr, "\nHexen plugin docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
-    system_command('doxygen jhexen.doxy >/dev/null')
+    system_command('doxygen jhexen.doxy >/dev/null 2>../../doxyissues-hexen.txt')
+    system_command('wc -l ../../doxyissues-hexen.txt')
 
 
 def generate_readme():
@@ -411,6 +433,7 @@ commands = {
     'pull': pull_from_branch,
     'create': create_build_event,
     'platform_release': todays_platform_release,
+    'sign': sign_packages,
     'changes': update_changes,
     'debchanges': update_debian_changelog,
     'apt': rebuild_apt_repository,

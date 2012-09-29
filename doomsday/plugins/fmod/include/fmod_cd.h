@@ -41,4 +41,7 @@ void    DM_CDAudio_Stop(void);
 }
 #endif
 
+// Internal:
+void    DMFmod_CDAudio_Shutdown(void);
+
 #endif /* end of include guard: __FMOD_CD_H__ */

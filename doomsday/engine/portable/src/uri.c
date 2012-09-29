@@ -26,7 +26,6 @@
 #include "de_play.h"
 #include "de_filesys.h"
 
-#include "m_args.h"
 #include "resourcenamespace.h"
 #include "uri.h"
 
@@ -395,28 +394,28 @@ Uri* Uri_SetUri(Uri* uri, const ddstring_t* path)
     return Uri_SetUri2(uri, path != 0? Str_Text(path) : 0);
 }
 
-ddstring_t* Uri_Compose(const Uri* uri)
+AutoStr* Uri_Compose(const Uri* uri)
 {
-    ddstring_t* out;
-    if(!uri) return Str_Set(Str_New(), "(nullptr)");
+    AutoStr* out;
+    if(!uri) return Str_Set(AutoStr_New(), "(nullptr)");
 
-    out = Str_New();
+    out = AutoStr_New();
     if(!Str_IsEmpty(&uri->scheme))
         Str_Appendf(out, "%s:", Str_Text(&uri->scheme));
     Str_Append(out, Str_Text(&uri->path));
     return out;
 }
 
-ddstring_t* Uri_ToString2(const Uri* uri, boolean percentDecode)
+AutoStr* Uri_ToString2(const Uri* uri, boolean percentDecode)
 {
     // Just compose it for now, we can worry about making it 'pretty' later.
-    ddstring_t* path = Uri_Compose(uri);
+    AutoStr* path = Uri_Compose(uri);
     if(percentDecode)
         Str_PercentDecode(path);
     return path;
 }
 
-ddstring_t* Uri_ToString(const Uri* uri)
+AutoStr* Uri_ToString(const Uri* uri)
 {
     return Uri_ToString2(uri, true/*apply percent-decoding*/);
 }
@@ -456,7 +455,7 @@ boolean Uri_Equality(const Uri* uri, const Uri* other)
     }
 }
 
-static writeUri(const ddstring_t* scheme, const ddstring_t* path, Writer* writer)
+static void writeUri(const ddstring_t* scheme, const ddstring_t* path, Writer* writer)
 {
     Str_Write(scheme, writer);
     Str_Write(path, writer);
@@ -508,7 +507,7 @@ void Uri_ReadWithDefaultScheme(Uri* uri, Reader* reader, const char* defaultSche
 
 void Uri_Print3(const Uri* uri, int indent, int flags, const char* unresolvedText)
 {
-    ddstring_t* raw;
+    AutoStr* raw;
     assert(uri);
 
     indent = MAX_OF(0, indent);
@@ -528,8 +527,6 @@ void Uri_Print3(const Uri* uri, int indent, int flags, const char* unresolvedTex
                                 : "");
     }
     Con_Printf("\n");
-
-    Str_Delete(raw);
 }
 
 void Uri_Print2(const Uri* uri, int indent, int flags)

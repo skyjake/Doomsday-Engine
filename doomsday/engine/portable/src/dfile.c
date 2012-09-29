@@ -121,11 +121,10 @@ DFile* DFileBuilder_NewFromAbstractFileLump(abstractfile_t* container, int lumpI
                 (unsigned long) file->_size);
 #if _DEBUG
         VERBOSE2(
-            ddstring_t* path = F_ComposeLumpPath(container, lumpIdx);
+            AutoStr* path = F_ComposeLumpPath(container, lumpIdx);
             Con_Printf("DFile [%p] buffering \"%s:%s\"...\n", (void*)file,
                        F_PrettyPath(Str_Text(AbstractFile_Path(container))),
                        F_PrettyPath(Str_Text(path)));
-            Str_Delete(path);
         )
 #endif
         F_ReadLumpSection(container, lumpIdx, (uint8_t*)file->_data, 0, info->size);

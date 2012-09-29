@@ -29,7 +29,6 @@
 #define LIBDENG_ARCHIVED_MAP_FILE_H
 
 #include "de_play.h"
-#include "dd_string.h"
 
 /**
  * Check if a map in the archive is up to date. The source data must not be

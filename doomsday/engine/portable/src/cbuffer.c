@@ -78,7 +78,7 @@ static void lock(CBuffer* cb, boolean yes)
     Sys_Unlock(cb->mutex);
 }
 
-/// \notes Also destroys the data object.
+/// @note Also destroys the data object.
 static void destroyNode(cbnode_t* node)
 {
     assert(node);

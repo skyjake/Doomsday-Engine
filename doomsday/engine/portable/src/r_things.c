@@ -325,13 +325,16 @@ static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
     return rec;
 }
 
-static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
+static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
 {
-    ddstring_t* path, decodedPath;
+    AutoStr* path;
+    Str decodedPath;
     spriterecord_frame_t* frame;
     spriterecord_t* rec;
     boolean link;
     Uri* uri;
+
+    DENG_UNUSED(parameters);
 
     // Have we already encountered this name?
     path = Textures_ComposePath(texId);
@@ -351,7 +354,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     }
 
     // Add the frame(s).
-    Str_Init(&decodedPath);
+    Str_InitStd(&decodedPath);
     Str_PercentDecode(Str_Set(&decodedPath, Str_Text(path)));
 
     link = false;
@@ -395,7 +398,6 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     }
 
     Str_Free(&decodedPath);
-    Str_Delete(path);
     return 0; // Continue iteration.
 }
 
@@ -539,7 +541,7 @@ void R_InitSprites(void)
     buildSpriteRotations();
 
     /**
-     * \kludge
+     * @attention Kludge:
      * As the games still rely upon the sprite definition indices matching
      * those of the sprite name table, use the latter to re-index the sprite
      * record database.
@@ -549,7 +551,7 @@ void R_InitSprites(void)
      * present in their game-side sprite index tables. Similarly, DeHackED
      * does not allow for new sprite frames to be added anyway).
      *
-     * \todo
+     * @todo
      * This unobvious requirement should be broken somehow and perhaps even
      * get rid of the sprite name definitions entirely.
      */
@@ -573,7 +575,7 @@ void R_InitSprites(void)
             M_Free(list);
         }
     }
-    /// \kludge end
+    // Kludge end
 
     // We are now done with the sprite records.
     BlockSet_Delete(spriteRecordBlockSet);
@@ -650,7 +652,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
         Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
     texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(texSpec);
@@ -747,7 +749,7 @@ float R_ShadowStrength(mobj_t* mo)
         {
             // Ensure we've prepared this.
             const materialsnapshot_t* ms = Materials_Prepare(mat, spriteMaterialSpec(), true);
-            const averagealpha_analysis_t* aa = (const averagealpha_analysis_t*) Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
+            const averagealpha_analysis_t* aa = (const averagealpha_analysis_t*) Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_ALPHA);
             float weightedSpriteAlpha;
             if(!aa) Con_Error("R_ShadowStrength: Texture id:%u has no TA_ALPHA analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
@@ -998,18 +1000,22 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           material_t* mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
                                           float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                           uint vLightListIdx,
-                                          int tMap, int tClass, BspLeaf* bspLeaf,
+                                          int tClass, int tMap, BspLeaf* bspLeaf,
                                           boolean floorAdjust, boolean fitTop, boolean fitBottom,
                                           boolean viewAligned)
 {
     const materialvariantspecification_t* spec;
-    materialvariant_t* variant;
+    MaterialVariant* variant;
 
     if(!params) return; // Wha?
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     variant = Materials_ChooseVariant(mat, spec, true, true);
+
+#ifdef _DEBUG
+    if(tClass || tMap) assert(spec->primarySpec->data.variant.translated);
+#endif
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -1144,24 +1150,29 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
     }
 }
 
+const materialvariantspecification_t* Rend_SpriteMaterialSpec(int tclass, int tmap)
+{
+    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tclass, tmap,
+                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                    1, -2, -1, true, true, true, false);
+}
+
 /**
  * Generates a vissprite for a mobj if it might be visible.
  */
 void R_ProjectSprite(mobj_t* mo)
 {
-    Sector* sect = mo->bspLeaf->sector;
-    float thangle = 0, alpha, floorClip, secFloor, secCeil;
-    float pos[2], yaw = 0, pitch = 0;
+    Sector* moSec;
+    float thangle = 0, alpha, yaw = 0, pitch = 0;
+    coord_t distance, gzt, floorClip, secFloor, secCeil;
     vec3d_t visOff;
     spritedef_t* sprDef;
     spriteframe_t* sprFrame = NULL;
-    int tmap = 0, tclass = 0;
     boolean matFlipS, matFlipT;
     vissprite_t* vis;
     boolean align, fullBright, viewAlign, floorAdjust;
-    modeldef_t* mf = NULL, *nextmf = NULL;
+    modeldef_t* mf = 0, *nextmf = 0;
     float interp = 0;
-    coord_t distance, gzt;
     patchtex_t* pTex;
     vismobjzparams_t params;
     visspritetype_t visType = VSPR_SPRITE;
@@ -1173,11 +1184,19 @@ void R_ProjectSprite(mobj_t* mo)
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     coord_t moPos[3];
 
-    // Never make a vissprite when DDMF_DONTDRAW is set or when
-    // when the mo hasn't got a valid state.
-    if(mo->ddFlags & DDMF_DONTDRAW || mo->state == NULL || mo->state == states) return;
+    if(!mo) return;
+
+    // Never make a vissprite when DDMF_DONTDRAW is set or when when the mobj
+    // is in an invalid state.
+    if((mo->ddFlags & DDMF_DONTDRAW) || !mo->state || mo->state == states) return;
+
+    moSec       = mo->bspLeaf->sector;
+    secFloor    = moSec->SP_floorvisheight;
+    secCeil     = moSec->SP_ceilvisheight;
+    floorAdjust = (fabs(moSec->SP_floorvisheight - moSec->SP_floorheight) < 8);
+
     // Never make a vissprite when the mobj's origin sector is of zero height.
-    if(sect->SP_floorvisheight >= sect->SP_ceilvisheight) return;
+    if(secFloor >= secCeil) return;
 
     alpha = R_Alpha(mo);
     // Never make a vissprite when the mobj is fully transparent.
@@ -1193,30 +1212,25 @@ void R_ProjectSprite(mobj_t* mo)
         Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, moPos);
     }
 
-    // Transform the origin point.
-    pos[VX] = moPos[VX] - viewData->current.origin[VX];
-    pos[VY] = moPos[VY] - viewData->current.origin[VY];
-
-    // Decide which patch to use for sprite relative to player.
+    // Decide which patch to use according to the sprite's angle and position
+    // relative to that of the viewer.
 
 #ifdef RANGECHECK
-    if((unsigned) mo->sprite >= (unsigned) numSprites)
+    if(mo->sprite < 0 || (unsigned) mo->sprite >= (unsigned) numSprites)
     {
         Con_Error("R_ProjectSprite: invalid sprite number %i\n", mo->sprite);
     }
 #endif
     sprDef = &sprites[mo->sprite];
-    if(mo->frame >= sprDef->numFrames)
-    {
-        // The frame is not defined, we can't display this object.
-        return;
-    }
+
+    // If the frame is not defined, we can't display this object.
+    if(mo->frame >= sprDef->numFrames) return;
     sprFrame = &sprDef->spriteFrames[mo->frame];
 
     // Determine distance to object.
     distance = Rend_PointDist2D(moPos);
 
-    // Check for a 3D model.
+    // Should we use a 3D model?
     if(useModels)
     {
         interp = R_CheckModelFor(mo, &mf, &nextmf);
@@ -1228,94 +1242,73 @@ void R_ProjectSprite(mobj_t* mo)
             interp = -1;
         }
     }
+    visType = !mf? VSPR_SPRITE : VSPR_MODEL;
 
     if(sprFrame->rotate && !mf)
-    {   // Choose a different rotation based on player view.
+    {
+        // Choose a different rotation according to the relative angle to the viewer.
         angle_t ang = R_ViewPointXYToAngle(mo->origin[VX], mo->origin[VY]);
         uint rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
         mat = sprFrame->mats[rot];
         matFlipS = (boolean) sprFrame->flip[rot];
     }
     else
-    {   // Use single rotation for all views.
+    {
+        // Use single rotation for all views.
         mat = sprFrame->mats[0];
         matFlipS = (boolean) sprFrame->flip[0];
     }
     matFlipT = false;
 
-    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, mo->tclass,
-        mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    ms = Materials_Prepare(mat, spec, true);
+    spec = Rend_SpriteMaterialSpec(mo->tclass, mo->tmap);
+    ms   = Materials_Prepare(mat, spec, true);
 
-#if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
-        Con_Error("R_ProjectSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
-#endif
+    // An invalid sprite texture?
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES) return;
 
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
 
     // Align to the view plane?
-    if(mo->ddFlags & DDMF_VIEWALIGN)
-        align = true;
-    else
+    align = (mo->ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1;
+    if(mf)
+    {
+        // Transform the origin point.
+        coord_t delta[2];
+        delta[0] = moPos[VY] - viewData->current.origin[VY];
+        delta[1] = moPos[VX] - viewData->current.origin[VX];
+
+        thangle = BANG2RAD(bamsAtan2(delta[0] * 10, delta[1] * 10)) - PI / 2;
+        // View-aligning means scaling down Z with models.
         align = false;
-
-    if(alwaysAlign == 1)
-        align = true;
-
-    // Perform visibility checking.
-    /// @fixme R_VisualRadius() does not consider sprite rotation.
-    {
-    coord_t center[2], v1[2], v2[2];
-    coord_t width = R_VisualRadius(mo)*2, offset = 0;
-
-    if(!mf)
-    {
-        offset = (coord_t) -pTex->offX - (width / 2);
     }
 
-    // Project a line segment relative to the view in 2D, then check
-    // if not entirely clipped away in the 360 degree angle clipper.
-    center[VX] = moPos[VX];
-    center[VY] = moPos[VY];
-    R_ProjectViewRelativeLine2D(center, mf || (align || alwaysAlign == 3),
-                                width, offset, v1, v2);
+    // Perform visibility checking.
+    /// @todo R_VisualRadius() does not consider sprite rotation.
+    {
+    const coord_t width = R_VisualRadius(mo) * 2;
+    const coord_t offset = (mf? 0 : (coord_t)(-pTex->offX) - (width / 2.0f));
+    coord_t v1[2], v2[2];
+
+    // Project a line segment relative to the view in 2D, then check if not
+    // entirely clipped away in the 360 degree angle clipper.
+    R_ProjectViewRelativeLine2D(moPos, mf || (align || alwaysAlign == 3), width, offset, v1, v2);
 
     // Check for visibility.
     if(!C_CheckRangeFromViewRelPoints(v1, v2))
     {
-        // Isn't visible.
-        if(mf)
-        {
-            // If the model is close to the viewpoint we will need to
-            // draw it. Otherwise large models are likely to disappear
-            // too early.
-            if(M_ApproxDistance(distance, moPos[VZ] + (mo->height / 2) -
-                                          viewData->current.origin[VZ]) > MAX_OBJECT_RADIUS)
-            {
-                return; // Can't be visible.
-            }
-        }
-        else
-        {
-            return;
-        }
-    }
-    }
+        // Not visible.
+        coord_t delta[2];
 
-    if(!mf)
-    {
-        visType = mf? VSPR_MODEL : VSPR_SPRITE;
-    }
-    else
-    {   // Its a model.
-        visType = VSPR_MODEL;
-        thangle = BANG2RAD(bamsAtan2(pos[VY] * 10, pos[VX] * 10)) -
-            PI / 2;
+        // Sprite visibility is absolute.
+        if(!mf) return;
 
-        // Viewaligning means scaling down Z with models.
-        align = false;
+        // If the model is close to the viewpoint we will need to draw it.
+        // Otherwise large models are likely to disappear too early.
+        delta[0] = distance;
+        delta[1] = moPos[VZ] + (mo->height / 2) - viewData->current.origin[VZ];
+        if(M_ApproxDistance(delta[0], delta[1]) > MAX_OBJECT_RADIUS) return;
+    }
     }
 
     // Store information in a vissprite.
@@ -1325,8 +1318,6 @@ void R_ProjectSprite(mobj_t* mo)
     vis->origin[VY] = moPos[VY];
     vis->origin[VZ] = moPos[VZ];
     vis->distance = distance;
-
-    floorAdjust = (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
 
     /**
      * The mobj's Z coordinate must match the actual visible floor/ceiling
@@ -1339,13 +1330,10 @@ void R_ProjectSprite(mobj_t* mo)
     params.floorAdjust = floorAdjust;
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
 
-    gzt = vis->origin[VZ] + ((float) -pTex->offY);
+    gzt = vis->origin[VZ] + -pTex->offY;
 
-    viewAlign = (align || alwaysAlign == 3)? true : false;
+    viewAlign  = (align || alwaysAlign == 3)? true : false;
     fullBright = ((mo->state->flags & STF_FULLBRIGHT) || levelFullBright)? true : false;
-
-    secFloor = mo->bspLeaf->sector->SP_floorvisheight;
-    secCeil = mo->bspLeaf->sector->SP_ceilvisheight;
 
     // Foot clipping.
     floorClip = mo->floorClip;
@@ -1378,15 +1366,16 @@ void R_ProjectSprite(mobj_t* mo)
         // How about a unique offset?
         if(mf->sub[0].flags & MFF_IDANGLE)
         {
-            // Multiply with an arbitrary factor.
+            // Add an arbitrary offset.
             yaw += MOBJ_TO_ID(mo) % 360;
         }
 
         if(mf->sub[0].flags & MFF_ALIGN_PITCH)
         {
-            pitch = -BANG2DEG(bamsAtan2
-                (((vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ]) * 10,
-                              distance * 10));
+            coord_t delta[2];
+            delta[0] = (vis->origin[VZ] + gzt) / 2 - viewData->current.origin[VZ];
+            delta[1] = distance;
+            pitch = -BANG2DEG(bamsAtan2(delta[0] * 10, delta[1] * 10));
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)
         {
@@ -1425,17 +1414,19 @@ void R_ProjectSprite(mobj_t* mo)
 
     if(!mf && mat)
     {
-        boolean brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW)? true : false;
-        boolean fitTop = (mo->ddFlags & DDMF_FITTOP)? true : false;
-        boolean fitBottom = (mo->ddFlags & DDMF_NOFITBOTTOM)? false : true;
+        const boolean brightShadow = !!(mo->ddFlags & DDMF_BRIGHTSHADOW);
+        const boolean fitTop       = !!(mo->ddFlags & DDMF_FITTOP);
+        const boolean fitBottom    = !(mo->ddFlags & DDMF_NOFITBOTTOM);
         blendmode_t blendMode;
 
+        // Additive blending?
         if(brightShadow)
-        {   // Additive blending.
+        {
             blendMode = BM_ADD;
         }
+        // Use the "no translucency" blending mode?
         else if(noSpriteTrans && alpha >= .98f)
-        {   // Use the "no translucency" blending mode.
+        {
             blendMode = BM_ZEROALPHA;
         }
         else
@@ -1446,13 +1437,13 @@ void R_ProjectSprite(mobj_t* mo)
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
         if(ms->size.height < secCeil - secFloor)
-        {   // Sprite fits in, adjustment possible?
+        {
+            // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
-            if(floorAdjust && fitBottom &&
-               gzt - ms->size.height < secFloor)
+            if(floorAdjust && fitBottom && gzt - ms->size.height < secFloor)
                 gzt = secFloor + ms->size.height;
         }
         // Adjust by the floor clip.
@@ -1472,13 +1463,9 @@ void R_ProjectSprite(mobj_t* mo)
                                       floorClip, gzt, mat, matFlipS, matFlipT, blendMode,
                                       ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                       vLightListIdx,
-                                      tmap,
-                                      tclass,
+                                      mo->tclass, mo->tmap,
                                       mo->bspLeaf,
-                                      floorAdjust,
-                                      fitTop,
-                                      fitBottom,
-                                      viewAlign);
+                                      floorAdjust, fitTop, fitBottom, viewAlign);
     }
     else
     {
@@ -1535,7 +1522,7 @@ void R_ProjectSprite(mobj_t* mo)
         ms = Materials_Prepare(mat, spec, true);
 
         pl = (const pointlight_analysis_t*)
-            Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+            Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
         if(!pl)
             Con_Error("R_ProjectSprite: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
@@ -1601,7 +1588,7 @@ int RIT_AddSprite(void* ptr, void* paramaters)
     mobj_t* mo = (mobj_t*) ptr;
     addspriteparams_t* params = (addspriteparams_t*)paramaters;
     Sector* sec = params->bspLeaf->sector;
-    GameMap* map = theMap; /// @fixme Do not assume mobj is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume mobj is from the CURRENT map.
 
     if(mo->addFrameCount != frameCount)
     {
@@ -1811,7 +1798,7 @@ int RIT_VisSpriteLightIterator(const lumobj_t* lum, coord_t xyDist, void* parama
                  * Calculate the normalized direction vector, pointing out of
                  * the vissprite.
                  *
-                 * @fixme Project the nearest point on the surface to determine
+                 * @todo Project the nearest point on the surface to determine
                  *        the real direction vector.
                  */
                 vlight->vector[VX] =  LUM_PLANE(lum)->normal[VX];

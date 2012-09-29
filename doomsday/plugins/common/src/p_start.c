@@ -211,9 +211,7 @@ void P_Init(void)
 {
     P_ResetPlayerRespawnClasses();
 
-    // Create the various line lists (spechits, anims, buttons etc).
-    spechit = IterList_ConstructDefault();
-    linespecials = IterList_ConstructDefault();
+    spechit = IterList_New();
 
 #if __JHEXEN__
     X_CreateLUTs();
@@ -280,16 +278,13 @@ void P_Update(void)
 void P_Shutdown(void)
 {
     if(spechit)
-        IterList_Destruct(spechit);
-    spechit = 0;
-
-    if(linespecials)
-        IterList_Destruct(linespecials);
-    linespecials = 0;
+    {
+        IterList_Delete(spechit);
+        spechit = 0;
+    }
 
     P_DestroyPlayerStarts();
-    P_DestroyLineTagLists();
-    P_DestroySectorTagLists();
+    P_DestroyAllTagLists();
     P_ShutdownTerrainTypes();
     P_FreeWeaponSlots();
 #if __JDOOM__
@@ -480,7 +475,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     if(p->playerState == PST_REBORN)
         G_PlayerReborn(plrNum);
 
-    /// @fixme Should this not occur before the reborn?
+    /// @todo Should this not occur before the reborn?
     p->class_ = pClass;
 
     // On clients, mark the remote players.
@@ -491,30 +486,17 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     }
 
     // Set color translations for player sprites.
-#if __JHEXEN__
-    if(p->class_ == PCLASS_FIGHTER &&
-       (p->colorMap == 0 || p->colorMap == 2))
+    if(p->colorMap > 0 && p->colorMap < NUMPLAYERCOLORS)
     {
-        // The first type should be blue, and the third should be the
-        // Fighter's original gold color
-        //if(spot->type == 1)
-        if(p->colorMap == 0)
-        {
-            mo->flags |= 2 << MF_TRANSSHIFT;
-        }
-    }
-    else if(p->colorMap > 0 && p->colorMap < 8)
-    {   // Set color translation bits for player sprites
-        //mo->flags |= (spot->type-1)<<MF_TRANSSHIFT;
         mo->flags |= p->colorMap << MF_TRANSSHIFT;
     }
-#else
+    /*
     if(cfg.playerColor[plrNum] > 0)
         mo->flags |= cfg.playerColor[plrNum] << MF_TRANSSHIFT;
-#endif
+        */
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawning with translation %i.\n",
+    Con_Message("P_SpawnPlayer: Player #%i spawning with color translation %i.\n",
                 plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
 #endif
 
@@ -596,12 +578,11 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     // Setup gun psprite.
     P_SetupPsprites(p);
 
-    if(!Con_IsBusy())
+    if(!BusyMode_Active())
     {
         /// @todo Is this really necessary after every time a player spawns?
         /// During map setup there are called after the busy mode ends.
-        ST_Start(p - players);
-        HU_Start(p - players);
+        HU_WakeWidgets(p - players);
     }
 
 #if __JHEXEN__
@@ -771,11 +752,7 @@ void P_RebornPlayer(int plrNum)
     }
     else
     {
-#if __JHEXEN__
-        uint entryPoint = rebornPosition;
-#else
-        uint entryPoint = 0;
-#endif
+        uint entryPoint = gameMapEntryPoint;
         boolean foundSpot = false;
         const playerstart_t* assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
@@ -840,7 +817,7 @@ void P_RebornPlayer(int plrNum)
             {
                 const playerstart_t* start;
 
-                if((start = P_GetPlayerStart(rebornPosition, i, false)))
+                if((start = P_GetPlayerStart(gameMapEntryPoint, i, false)))
                 {
                     const mapspot_t* spot = &mapSpots[start->spot];
 
@@ -872,7 +849,7 @@ void P_RebornPlayer(int plrNum)
             // Player's going to be inside something.
             const playerstart_t* start;
 
-            if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
+            if((start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false)))
             {
                 const mapspot_t* spot = &mapSpots[start->spot];
 
@@ -1257,7 +1234,7 @@ static int turnMobjToNearestLine(thinker_t* th, void* context)
     else
     {
 #ifdef _DEBUG
-        VERBOSE( Con_Message(" => no nearest list found\n") );
+        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i => no nearest line found\n", mo->thinker.id) );
 #endif
     }
 

@@ -115,7 +115,7 @@ extern "C" {
 #define HEAP_LEFT(i)    (2*(i) + 1)
 #define HEAP_RIGHT(i)   (2*(i) + 2)
 
-enum { VX, VY, VZ };               // Vertex indices.
+//enum { VX, VY, VZ };               // Vertex indices.
 enum { CR, CG, CB, CA };           // Color indices.
 
 // dd_pinit.c

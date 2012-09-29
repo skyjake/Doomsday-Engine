@@ -23,12 +23,13 @@
 #include <QApplication>
 #include <QGLFormat>
 #include <QMoveEvent>
+#include <QSettings>
 #include <de/Log>
+#include <de/c_wrapper.h>
 
 #include "de_platform.h"
 #include "con_main.h"
 #include "gl_main.h"
-#include "m_args.h"
 #include "canvaswindow.h"
 #include <assert.h>
 
@@ -37,9 +38,10 @@ struct CanvasWindow::Instance
     Canvas* canvas;
     Canvas* recreated;
     void (*moveFunc)(CanvasWindow&);
+    bool (*closeFunc)(CanvasWindow&);
     bool mouseWasTrapped;
 
-    Instance() : canvas(0), moveFunc(0), mouseWasTrapped(false) {}
+    Instance() : canvas(0), moveFunc(0), closeFunc(0), mouseWasTrapped(false) {}
 };
 
 CanvasWindow::CanvasWindow(QWidget *parent)
@@ -94,7 +96,12 @@ void CanvasWindow::initCanvasAfterRecreation(Canvas& canvas)
 void CanvasWindow::recreateCanvas()
 {
     // Update the GL format for subsequently created Canvases.
-    setDefaultGLFormat();
+    if(!setDefaultGLFormat())
+    {
+        // No need to recreate.
+        LOG_DEBUG("Canvas not recreated because the format was not changed.");
+        return;
+    }
 
 #if 0
     canvas().setFormat(QGLFormat::defaultFormat());
@@ -122,7 +129,7 @@ void CanvasWindow::recreateCanvas()
     d->recreated->setGeometry(d->canvas->geometry());
     d->recreated->show();
 
-    LOG_DEBUG("Canvas recreated, old one still exists");
+    LOG_DEBUG("Canvas recreated, old one still exists.");
 #endif
 }
 
@@ -143,6 +150,11 @@ void CanvasWindow::setMoveFunc(void (*func)(CanvasWindow&))
     d->moveFunc = func;
 }
 
+void CanvasWindow::setCloseFunc(bool (*func)(CanvasWindow &))
+{
+    d->closeFunc = func;
+}
+
 bool CanvasWindow::event(QEvent* ev)
 {
     if(ev->type() == QEvent::ActivationChange)
@@ -156,9 +168,16 @@ bool CanvasWindow::event(QEvent* ev)
 
 void CanvasWindow::closeEvent(QCloseEvent* ev)
 {
-    /// @todo autosave and quit?
-    Con_Execute(CMDS_DDAY, "quit", true, false);
-    ev->ignore();
+    if(d->closeFunc)
+    {
+        if(!d->closeFunc(*this))
+        {
+            ev->ignore();
+            return;
+        }
+    }
+
+    QMainWindow::closeEvent(ev);
 }
 
 void CanvasWindow::moveEvent(QMoveEvent *ev)
@@ -178,32 +197,52 @@ void CanvasWindow::hideEvent(QHideEvent* ev)
     LOG_DEBUG("CanvasWindow: hide event (hidden:%b)") << isHidden();
 }
 
-void CanvasWindow::setDefaultGLFormat() // static
+bool CanvasWindow::setDefaultGLFormat() // static
 {
+    LOG_AS("DefaultGLFormat");
+
     // Configure the GL settings for all subsequently created canvases.
     QGLFormat fmt;
     fmt.setDepthBufferSize(16);
     fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
 
-    if(ArgExists("-novsync") || !Con_GetByte("vid-vsync"))
+    if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
         fmt.setSwapInterval(0); // vsync off
+        LOG_DEBUG("vsync off");
     }
     else
     {
         fmt.setSwapInterval(1);
+        LOG_DEBUG("vsync on");
     }
 
-    if(ArgExists("-nofsaa") || !Con_GetByte("vid-fsaa"))
+    // The value of the "vid-fsaa" variable is written to this settings
+    // key when the value of the variable changes.
+    bool configured = QSettings().value("window/fsaa", true).toBool();
+
+    if(CommandLine_Exists("-nofsaa") || !configured)
     {
         fmt.setSampleBuffers(false);
+        LOG_DEBUG("multisampling off");
     }
     else
     {
         fmt.setSampleBuffers(true); // multisampling on (default: highest available)
         //fmt.setSamples(4);
+        LOG_DEBUG("multisampling on (max)");
     }
 
-    QGLFormat::setDefaultFormat(fmt);
+    if(fmt != QGLFormat::defaultFormat())
+    {
+        LOG_DEBUG("Applying new format...");
+        QGLFormat::setDefaultFormat(fmt);
+        return true;
+    }
+    else
+    {
+        LOG_DEBUG("New format is the same as before.");
+        return false;
+    }
 }

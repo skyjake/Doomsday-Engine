@@ -78,7 +78,7 @@ void PtcGen_Delete(ptcgen_t* gen)
 
 static int destroyGenerator(ptcgen_t* gen, void* parameters)
 {
-    GameMap* map = theMap; /// @fixme Do not assume generator is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume generator is from the CURRENT map.
 
     Generators_Unlink(GameMap_Generators(map), gen);
     GameMap_ThinkerRemove(map, &gen->thinker);
@@ -300,7 +300,7 @@ void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
 
     if(isDedicated || !useParticles)return;
 
-    /// @fixme Do not assume the source mobj is from the CURRENT map.
+    /// @todo Do not assume the source mobj is from the CURRENT map.
     gen = P_NewGenerator();
     if(!gen) return;
 
@@ -346,7 +346,7 @@ static int generatorByPlaneIterator(ptcgen_t* gen, void* parameters)
 
 static ptcgen_t* generatorByPlane(Plane* plane)
 {
-    GameMap* map = theMap; /// @fixme Do not assume plane is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume plane is from the CURRENT map.
     Generators* gens = GameMap_Generators(map);
     generatorbyplaneiterator_params_t parm;
     parm.plane = plane;
@@ -641,7 +641,7 @@ static void P_NewParticle(ptcgen_t* gen)
          * Choosing the XY spot is a bit more difficult.
          * But we must be fast and only sufficiently accurate.
          *
-         * @fixme Nothing prevents spawning on the wrong side (or inside)
+         * @todo Nothing prevents spawning on the wrong side (or inside)
          * of one-sided walls (large diagonal BSP leafs!).
          */
         for(i = 0; i < 5; ++i) // Try a couple of times (max).
@@ -740,7 +740,7 @@ static int manyNewParticles(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t *) th;
 
     // Type match?
-    if(mo->type == gen->type || mo->type == gen->type2)
+    if(gen->type == DED_PTCGEN_ANY_MOBJ_TYPE || mo->type == gen->type || mo->type == gen->type2)
     {
         // Someone might think this is a slight hack...
         gen->source = mo;
@@ -768,7 +768,7 @@ int PIT_CheckLinePtc(LineDef* ld, void* parameters)
 
     // We are possibly hitting something here.
     ptcHitLine = ld;
-    if(!ld->L_backside)
+    if(!ld->L_backsidedef)
         return true; // Boing!
 
     // Determine the opening we have here.
@@ -875,7 +875,7 @@ static void P_SpinParticle(ptcgen_t* gen, particle_t* pt)
     static const int yawSigns[4]   = { 1,  1, -1, -1 };
     static const int pitchSigns[4] = { 1, -1,  1, -1 };
 
-    Generators* gens = GameMap_Generators(theMap); /// @fixme Do not assume generator is from the CURRENT map.
+    Generators* gens = GameMap_Generators(theMap); /// @todo Do not assume generator is from the CURRENT map.
     ded_ptcstage_t* stDef = &gen->def->stages[pt->stage];
     uint index = pt - &gen->ptcs[Generators_GeneratorId(gens, gen) / 8];
     int yawSign, pitchSign;
@@ -914,7 +914,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     P_SpinParticle(gen, pt);
 
     // Changes to momentum.
-    /// @fixme Do not assume generator is from the CURRENT map.
+    /// @todo Do not assume generator is from the CURRENT map.
     pt->mov[VZ] -= FixedMul(FLT2FIX(GameMap_Gravity(theMap)), st->gravity);
 
     // Vector force.
@@ -1078,15 +1078,15 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         {
             Sector* front, *back;
 
-            front = (pt->contact->L_frontside? pt->contact->L_frontsector : NULL);
-            back = (pt->contact->L_backside? pt->contact->L_backsector : NULL);
+            front = (pt->contact->L_frontsidedef? pt->contact->L_frontsector : NULL);
+            back = (pt->contact->L_backsidedef? pt->contact->L_backsector : NULL);
 
             if(front && back && abs(pt->mov[VZ]) < FRACUNIT / 2)
             {
                 coord_t pz = P_GetParticleZ(pt);
                 coord_t fz, cz;
 
-                /// @fixme $nplanes
+                /// @todo $nplanes
                 if(front->SP_floorheight > back->SP_floorheight)
                     fz = front->SP_floorheight;
                 else
@@ -1208,7 +1208,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
 
     // Spawn new particles?
     if((gen->age <= def->spawnAge || def->spawnAge < 0) &&
-       (gen->source || gen->plane || gen->type >= 0 ||
+       (gen->source || gen->plane || gen->type >= 0 || gen->type == DED_PTCGEN_ANY_MOBJ_TYPE ||
         (gen->flags & PGF_UNTRIGGERED)))
     {
         newparts = def->spawnRate * gen->spawnRateMultiplier;
@@ -1220,7 +1220,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
         while(gen->spawnCount >= 1)
         {
             // Spawn a new particle.
-            if(gen->type >= 0) // Type-triggered?
+            if(gen->type == DED_PTCGEN_ANY_MOBJ_TYPE || gen->type >= 0) // Type-triggered?
             {
                 // Client's should also check the client mobjs.
                 if(isClient)
@@ -1284,8 +1284,8 @@ void P_SpawnTypeParticleGens(void)
     if(isDedicated || !useParticles) return;
 
     for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
-    {
-        if(def->typeNum < 0) continue;
+    {       
+        if(def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0) continue;
 
         gen = P_NewGenerator();
         if(!gen) return; // No more generators.
@@ -1390,6 +1390,10 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
     for(i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         // A type generator?
+        if(def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
+        {
+            return i+1; // Stop iteration.
+        }
         if(def->typeNum >= 0 &&
            (gen->type == def->typeNum || gen->type2 == def->type2Num))
         {
@@ -1399,7 +1403,7 @@ static int findDefForGenerator(ptcgen_t* gen, void* parameters)
         // A damage generator?
         if(gen->source && gen->source->type == def->damageNum)
         {
-            return i+1;
+            return i+1; // Stop iteration.
         }
 
         // A flat generator?

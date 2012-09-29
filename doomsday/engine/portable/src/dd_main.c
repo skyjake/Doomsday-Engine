@@ -56,9 +56,9 @@
 #include "abstractresource.h"
 #include "resourcenamespace.h"
 #include "m_misc.h"
-#include "m_args.h"
 #include "texture.h"
 #include "displaymode.h"
+#include "updater.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -125,11 +125,43 @@ static Game* nullGame; // Special "null-game" object.
 
 // CODE --------------------------------------------------------------------
 
+D_CMD(CheckForUpdates)
+{
+    Con_Message("Checking for available updates...\n");
+    Updater_CheckNow(false);
+    return true;
+}
+
+D_CMD(CheckForUpdatesAndNotify)
+{
+    /// @todo Combine into the same command with CheckForUpdates?
+    Con_Message("Checking for available updates...\n");
+    Updater_CheckNow(true);
+    return true;
+}
+
+D_CMD(LastUpdated)
+{
+    Updater_PrintLastUpdated();
+    return true;
+}
+
+D_CMD(ShowUpdateSettings)
+{
+    Updater_ShowSettings();
+    return true;
+}
+
 /**
  * Register the engine commands and variables.
  */
 void DD_Register(void)
 {
+    C_CMD("update",          "", CheckForUpdates);
+    C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
+    C_CMD("updatesettings",  "", ShowUpdateSettings);
+    C_CMD("lastupdated",     "", LastUpdated);
+
     DD_RegisterLoop();
     DD_RegisterInput();
     F_Register();
@@ -571,7 +603,7 @@ static void locateGameStartupResources(Game* game)
 
     if(theGame != game)
     {
-        /// \kludge Temporarily switch Game.
+        /// @attention Kludge: Temporarily switch Game.
         theGame = game;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
@@ -596,7 +628,7 @@ static void locateGameStartupResources(Game* game)
 
     if(theGame != oldGame)
     {
-        /// \kludge Restore the old Game.
+        // Kludge end - Restore the old Game.
         theGame = oldGame;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
@@ -712,7 +744,7 @@ void DD_PrintGame(Game* game, int flags)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDataAdder(const ddstring_t* fileName, pathdirectorynode_type_t type, void* paramaters)
+static int autoDataAdder(const ddstring_t* fileName, PathDirectoryNodeType type, void* paramaters)
 {
     assert(fileName && paramaters);
     // We are only interested in files.
@@ -827,7 +859,7 @@ static int DD_BeginGameChangeWorker(void* paramaters)
     assert(p);
 
     P_InitMapUpdate();
-    P_InitGameMapObjDefs();
+    P_InitMapEntityDefs();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(100);
@@ -837,7 +869,7 @@ static int DD_BeginGameChangeWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -900,7 +932,7 @@ static int DD_LoadGameStartupResourcesWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -955,7 +987,7 @@ static int DD_LoadAddonResourcesWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -987,9 +1019,9 @@ static int DD_ActivateGameWorker(void* paramaters)
      */
     { const ddstring_t* configFileName = 0;
     ddstring_t tmp;
-    if(ArgCheckWith("-config", 1))
+    if(CommandLine_CheckWith("-config", 1))
     {
-        Str_Init(&tmp); Str_Set(&tmp, ArgNext());
+        Str_Init(&tmp); Str_Set(&tmp, CommandLine_Next());
         F_FixSlashes(&tmp, &tmp);
         configFileName = &tmp;
     }
@@ -1056,7 +1088,7 @@ static int DD_ActivateGameWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -1140,7 +1172,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         P_SetCurrentMap(0);
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
-        P_ShutdownGameMapObjDefs();
+        P_ShutdownMapEntityDefs();
 
         R_ShutdownSvgs();
         R_DestroyColorPalettes();
@@ -1150,7 +1182,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         Sfx_InitLogical();
 
-        /// @fixme Why is this being done here?
+        /// @todo Why is this being done here?
         if(theMap)
         {
             GameMap_InitThinkerLists(theMap, 0x1|0x2);
@@ -1174,7 +1206,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         R_InitSvgs();
         R_InitViewWindow();
 
-        /// @fixme Assumes we only cache lumps from non-startup wads.
+        /// @todo Assumes we only cache lumps from non-startup wads.
         Z_FreeTags(PU_CACHE, PU_CACHE);
 
         F_Reset();
@@ -1184,7 +1216,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
-    /// @fixme Materials database should not be shutdown during a reload.
+    /// @todo Materials database should not be shutdown during a reload.
     Materials_Shutdown();
 
     VERBOSE(
@@ -1197,6 +1229,9 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             Con_Message("Unloaded game.\n");
         }
     )
+
+    // Remove all entries; some may have been created by the game plugin (if it used libdeng2 C++ API).
+    LogBuffer_Clear();
 
     Library_ReleaseGames();
 
@@ -1250,7 +1285,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
         };
 
-        p.initiatedBusyMode = !Con_IsBusy();
+        p.initiatedBusyMode = !BusyMode_Active();
 
         if(!DD_IsNullGame(theGame))
         {
@@ -1269,7 +1304,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         }
         // kludge end
 
-        Con_BusyList(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
+        BusyMode_RunTasks(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
 
         // Process any GL-related tasks we couldn't while Busy.
         Rend_ParticleLoadExtraTextures();
@@ -1350,9 +1385,9 @@ static Game* findFirstPlayableGame(void)
  */
 Game* DD_AutoselectGame(void)
 {
-    if(ArgCheckWith("-game", 1))
+    if(CommandLine_CheckWith("-game", 1))
     {
-        const char* identityKey = ArgNext();
+        const char* identityKey = CommandLine_Next();
         Game* game = findGameForIdentityKey(identityKey);
 
         if(game && allGameStartupResourcesFound(game))
@@ -1375,13 +1410,8 @@ int DD_EarlyInit(void)
 {
     ddstring_t dataPath, defsPath;
 
-    Sys_MarkAsMainThread();
-
     // Determine the requested degree of verbosity.
-    verbose = ArgExists("-verbose");
-
-    // The memory zone must be online before the console module.
-    Z_Init();
+    verbose = CommandLine_Exists("-verbose");
 
     // Bring the console online as soon as we can.
     DD_ConsoleInit();
@@ -1436,7 +1466,7 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
 
         VERBOSE( DD_PrintGame(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
     }
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -1463,7 +1493,7 @@ void DD_FinishInitializationAfterWindowReady(void)
     }
 
     // Now we can start executing the engine's main loop.
-    LegacyCore_SetLoopFunc(de2LegacyCore, DD_GameLoopCallback);
+    LegacyCore_SetLoopFunc(DD_GameLoopCallback);
 
     // Initialize engine subsystems and initial state.
     if(!DD_Init())
@@ -1542,8 +1572,8 @@ boolean DD_Init(void)
 
     // Enter busy mode until startup complete.
     Con_InitProgress2(200, 0, .25f); // First half.
-    Con_Busy(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-            "Starting up...", DD_StartupWorker, 0);
+    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
     GL_Init();
@@ -1551,21 +1581,21 @@ boolean DD_Init(void)
 
     // Do deferred uploads.
     Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
-    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-             "Buffering...", DD_DummyWorker, 0);
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
     { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
     int p;
 
-    for(p = 0; p < Argc(); ++p)
+    for(p = 0; p < CommandLine_Count(); ++p)
     {
-        if(!ArgRecognize("-iwad", Argv(p)))
+        if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
             continue;
 
-        while(++p != Argc() && !ArgIsOption(p))
+        while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            const char* filePath = Argv(p);
+            const char* filePath = CommandLine_PathAt(p);
             directory_t* dir;
             Uri* searchPath;
 
@@ -1585,8 +1615,8 @@ boolean DD_Init(void)
 
     // Try to locate all required data files for all registered games.
     Con_InitProgress2(200, .25f, 1); // Second half.
-    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-             "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_LocateAllGameResourcesWorker, 0, "Locating game resources...");
 
     /*
     // Unless we reenter busy-mode due to automatic game selection, we won't be
@@ -1599,7 +1629,7 @@ boolean DD_Init(void)
     */
 
     // Attempt automatic game selection.
-    if(!ArgExists("-noautoselect"))
+    if(!CommandLine_Exists("-noautoselect"))
     {
         Game* game = DD_AutoselectGame();
 
@@ -1610,13 +1640,13 @@ boolean DD_Init(void)
 
             // Add all resources specified using -file options on the command line
             // to the list for this session.
-            for(p = 0; p < Argc(); ++p)
+            for(p = 0; p < CommandLine_Count(); ++p)
             {
-                if(!ArgRecognize("-file", Argv(p))) continue;
+                if(!CommandLine_IsMatchingAlias("-file", CommandLine_At(p))) continue;
 
-                while(++p != Argc() && !ArgIsOption(p))
+                while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
-                    addToPathList(&gameResourceFileList, &numGameResourceFileList, Argv(p));
+                    addToPathList(&gameResourceFileList, &numGameResourceFileList, CommandLine_PathAt(p));
                 }
 
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
@@ -1636,9 +1666,9 @@ boolean DD_Init(void)
     F_ResetAllResourceNamespaces();
 
     // One-time execution of various command line features available during startup.
-    if(ArgCheckWith("-dumplump", 1))
+    if(CommandLine_CheckWith("-dumplump", 1))
     {
-        const char* name = ArgNext();
+        const char* name = CommandLine_Next();
         lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name);
         if(absoluteLumpNum >= 0)
         {
@@ -1646,9 +1676,9 @@ boolean DD_Init(void)
         }
     }
 
-    if(ArgCheck("-dumpwaddir"))
+    if(CommandLine_Check("-dumpwaddir"))
     {
-        F_PrintLumpDirectory();
+        Con_Executef(CMDS_CMDLINE, false, "listlumps");
     }
 
     // Try to load the autoexec file. This is done here to make sure everything is
@@ -1657,14 +1687,14 @@ boolean DD_Init(void)
     Con_ParseCommands("autoexec.cfg");
 
     // Read additional config files that should be processed post engine init.
-    if(ArgCheckWith("-parse", 1))
+    if(CommandLine_CheckWith("-parse", 1))
     {
         uint startTime;
         Con_Message("Parsing additional (pre-init) config files:\n");
         startTime = Sys_GetRealTime();
         for(;;)
         {
-            const char* arg = ArgNext();
+            const char* arg = CommandLine_Next();
             if(!arg || arg[0] == '-') break;
 
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
@@ -1675,14 +1705,14 @@ boolean DD_Init(void)
 
     // A console command on the command line?
     { int p;
-    for(p = 1; p < Argc() - 1; p++)
+    for(p = 1; p < CommandLine_Count() - 1; p++)
     {
-        if(stricmp(Argv(p), "-command") && stricmp(Argv(p), "-cmd"))
+        if(stricmp(CommandLine_At(p), "-command") && stricmp(CommandLine_At(p), "-cmd"))
             continue;
 
-        for(++p; p < Argc(); p++)
+        for(++p; p < CommandLine_Count(); p++)
         {
-            const char* arg = Argv(p);
+            const char* arg = CommandLine_At(p);
 
             if(arg[0] == '-')
             {
@@ -1700,16 +1730,16 @@ boolean DD_Init(void)
     if(DD_GameLoaded())
     {
         // Client connection command.
-        if(ArgCheckWith("-connect", 1))
-            Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
+        if(CommandLine_CheckWith("-connect", 1))
+            Con_Executef(CMDS_CMDLINE, false, "connect %s", CommandLine_Next());
 
         // Incoming TCP port.
-        if(ArgCheckWith("-port", 1))
-            Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", ArgNext());
+        if(CommandLine_CheckWith("-port", 1))
+            Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", CommandLine_Next());
 
         // Server start command.
         // (shortcut for -command "net init tcpip; net server start").
-        if(ArgExists("-server"))
+        if(CommandLine_Exists("-server"))
         {
             if(!N_InitService(true))
                 Con_Message("Can't start server: network init failed.\n");
@@ -1743,7 +1773,7 @@ boolean DD_Init(void)
 
         // We'll open the console and print a list of the known games too.
         Con_Execute(CMDS_DDAY, "conopen", true, false);
-        if(!ArgExists("-noautoselect"))
+        if(!CommandLine_Exists("-noautoselect"))
             Con_Message("Automatic game selection failed.\n");
         Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
@@ -1779,7 +1809,7 @@ static int DD_StartupWorker(void* parm)
     Con_SetProgress(20);
 
     // Was the change to userdir OK?
-    if(ArgCheckWith("-userdir", 1) && !app.usingUserDir)
+    if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
         Con_Message("--(!)-- User directory not found (check -userdir).\n");
 
     bamsInit(); // Binary angle calculations.
@@ -1793,14 +1823,14 @@ static int DD_StartupWorker(void* parm)
     Sys_HideMouse();
 
     // Read config files that should be read BEFORE engine init.
-    if(ArgCheckWith("-cparse", 1))
+    if(CommandLine_CheckWith("-cparse", 1))
     {
         uint startTime;
         Con_Message("Parsing additional (pre-init) config files:\n");
         startTime = Sys_GetRealTime();
         for(;;)
         {
-            const char* arg = ArgNext();
+            const char* arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-')
                 break;
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
@@ -1861,7 +1891,7 @@ static int DD_StartupWorker(void* parm)
         Con_Open(true);
 
         // Also make sure the game loop isn't running needlessly often.
-        LegacyCore_SetLoopRate(de2LegacyCore, 35);
+        LegacyCore_SetLoopRate(35);
     }
 
     Con_SetProgress(199);
@@ -1875,7 +1905,7 @@ static int DD_StartupWorker(void* parm)
     CoUninitialize();
 #endif
 
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -1886,7 +1916,7 @@ static int DD_StartupWorker(void* parm)
 static int DD_DummyWorker(void *parm)
 {
     Con_SetProgress(200);
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -1897,12 +1927,12 @@ void DD_CheckTimeDemo(void)
     if(!checked)
     {
         checked = true;
-        if(ArgCheckWith("-timedemo", 1) || // Timedemo mode.
-           ArgCheckWith("-playdemo", 1)) // Play-once mode.
+        if(CommandLine_CheckWith("-timedemo", 1) || // Timedemo mode.
+           CommandLine_CheckWith("-playdemo", 1)) // Play-once mode.
         {
             char            buf[200];
 
-            sprintf(buf, "playdemo %s", ArgNext());
+            sprintf(buf, "playdemo %s", CommandLine_Next());
             Con_Execute(CMDS_CMDLINE, buf, false, false);
         }
     }
@@ -1932,7 +1962,7 @@ static int DD_UpdateEngineStateWorker(void* paramaters)
     if(p->initiatedBusyMode)
     {
         Con_SetProgress(200);
-        Con_BusyWorkerEnd();
+        BusyMode_WorkerEnd();
     }
     return 0;
     }
@@ -1977,15 +2007,16 @@ void DD_UpdateEngineState(void)
      * (which can happen during a runtime game change).
      */
     { ddupdateenginestateworker_paramaters_t p;
-    p.initiatedBusyMode = !Con_IsBusy();
+    p.initiatedBusyMode = !BusyMode_Active();
     if(p.initiatedBusyMode)
     {
         Con_InitProgress(200);
-        Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                 "Updating engine state...", DD_UpdateEngineStateWorker, &p);
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    DD_UpdateEngineStateWorker, &p, "Updating engine state...");
     }
     else
-    {   /// \todo Update the current task name and push progress.
+    {
+        /// @todo Update the current task name and push progress.
         DD_UpdateEngineStateWorker(&p);
     }
     }
@@ -2139,7 +2170,7 @@ void* DD_GetVariable(int ddvalue)
         return &valueU;
 
     case DD_TRACE_ADDRESS:
-        /// @fixme Do not cast away const.
+        /// @todo Do not cast away const.
         return (void*)P_TraceLOS();
 
     case DD_TRANSLATIONTABLES_ADDRESS:
@@ -2646,33 +2677,6 @@ char* strlwr(char* string)
     return string;
 }
 #endif
-
-/**
- * Prints a formatted string into a fixed-size buffer. At most @c size
- * characters will be
- * written to the output buffer @c str. The output will always contain a
- * terminating null character.
- *
- * @param str           Output buffer.
- * @param size          Size of the output buffer.
- * @param format        Format of the output.
- * @param ap            Variable-size argument list.
- *
- * @return              Number of characters written to the output buffer
- *                      if lower than or equal to @c size, else @c -1.
- */
-int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
-{
-    int result = vsnprintf(str, size, format, ap);
-
-#ifdef WIN32
-    // Always terminate.
-    str[size - 1] = 0;
-    return result;
-#else
-    return result >= (int)size? -1 : (int)size;
-#endif
-}
 
 /**
  * Prints a formatted string into a fixed-size buffer. At most @c size

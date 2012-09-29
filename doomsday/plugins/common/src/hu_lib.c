@@ -868,6 +868,25 @@ static void applyPageLayout(mn_page_t* page)
             continue;
         }
 
+        // If the object has a fixed position, we will ignore it while doing
+        // dynamic layout.
+        if(MNObject_Flags(ob) & MNF_POSITION_FIXED)
+        {
+            Rect_SetXY(ob->_geometry, ob->_origin.x, ob->_origin.y);
+            Rect_Unite(page->geometry, ob->_geometry);
+
+            // To the next object.
+            i += 1;
+            continue;
+        }
+
+        // An additional offset requested?
+        if(MNObject_Flags(ob) & MNF_LAYOUT_OFFSET)
+        {
+            origin.x += ob->_origin.x;
+            origin.y += ob->_origin.y;
+        }
+
         Rect_SetXY(ob->_geometry, origin.x, origin.y);
 
         // Orient label plus button/inline-list/textual-slider pairs about a
@@ -1141,6 +1160,28 @@ mn_object_t* MNPage_FocusObject(mn_page_t* page)
     return &page->objects[page->focus];
 }
 
+void MNPage_ClearFocusObject(mn_page_t* page)
+{
+    mn_object_t* ob;
+    int i;
+    DENG_ASSERT(page);
+    if(page->focus >= 0)
+    {
+        ob = &page->objects[page->focus];
+        if(MNObject_Flags(ob) & MNF_ACTIVE)
+        {
+            return;
+        }
+    }
+    page->focus = -1;
+    ob = page->objects;
+    for(i = 0; i < page->objectsCount; ++i, ob++)
+    {
+        MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
+    }
+    MNPage_Refocus(page);
+}
+
 mn_object_t* MNPage_FindObject(mn_page_t* page, int group, int flags)
 {
     mn_object_t* obj = page->objects;
@@ -1173,7 +1214,7 @@ static mn_object_t* MNPage_ObjectByIndex(mn_page_t* page, int idx)
     return page->objects + idx;
 }
 
-/// @assume @a ob is a child of @a page.
+/// @pre @a ob is a child of @a page.
 static void MNPage_GiveChildFocus(mn_page_t* page, mn_object_t* ob, boolean allowRefocus)
 {
     assert(page && ob);
@@ -1216,11 +1257,62 @@ void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj)
     MNPage_GiveChildFocus(page, page->objects + objIndex, false);
 }
 
+void MNPage_Refocus(mn_page_t* page)
+{
+    DENG_ASSERT(page);
+
+    // If we haven't yet visited this page then find the first focusable
+    // object and select it.
+    if(0 > page->focus)
+    {
+        int i, giveFocus = -1;
+
+        // First look for a default focus object. There should only be one
+        // but find the last with this flag...
+        for(i = 0; i < page->objectsCount; ++i)
+        {
+            mn_object_t* ob = &page->objects[i];
+            if((MNObject_Flags(ob) & MNF_DEFAULT) && !(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            {
+                giveFocus = i;
+            }
+        }
+
+        // No default focus? Find the first focusable object.
+        if(-1 == giveFocus)
+        for(i = 0; i < page->objectsCount; ++i)
+        {
+            mn_object_t* ob = &page->objects[i];
+            if(!(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            {
+                giveFocus = i;
+                break;
+            }
+        }
+
+        if(-1 != giveFocus)
+        {
+            MNPage_GiveChildFocus(page, page->objects + giveFocus, false);
+        }
+#if _DEBUG
+        else
+        {
+            Con_Message("Warning:MNPage::Refocus: No focusable object on page.\n");
+        }
+#endif
+    }
+    else
+    {
+        // We've been here before; re-focus on the last focused object.
+        MNPage_GiveChildFocus(page, page->objects + page->focus, true);
+    }
+}
+
 void MNPage_Initialize(mn_page_t* page)
 {
     mn_object_t* ob;
     int i;
-    assert(page);
+    DENG_ASSERT(page);
 
     // Reset page timer.
     page->timer = 0;
@@ -1267,51 +1359,7 @@ void MNPage_Initialize(mn_page_t* page)
         return;
     }
 
-    // If we haven't yet visited this page then find the first focusable
-    // object and select it.
-    if(0 > page->focus)
-    {
-        int i, giveFocus = -1;
-
-        // First look for a default focus object. There should only be one
-        // but find the last with this flag...
-        for(i = 0; i < page->objectsCount; ++i)
-        {
-            mn_object_t* ob = &page->objects[i];
-            if((MNObject_Flags(ob) & MNF_DEFAULT) && !(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
-            {
-                giveFocus = i;
-            }
-        }
-
-        // No default focus? Find the first focusable object.
-        if(-1 == giveFocus)
-        for(i = 0; i < page->objectsCount; ++i)
-        {
-            mn_object_t* ob = &page->objects[i];
-            if(!(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
-            {
-                giveFocus = i;
-                break;
-            }
-        }
-
-        if(-1 != giveFocus)
-        {
-            MNPage_GiveChildFocus(page, page->objects + giveFocus, false);
-        }
-#if _DEBUG
-        else
-        {
-            Con_Message("Warning:MNPage::Initialize: No focusable object on page.\n");
-        }
-#endif
-    }
-    else
-    {
-        // We've been here before; re-focus on the last focused object.
-        MNPage_GiveChildFocus(page, page->objects + page->focus, true);
-    }
+    MNPage_Refocus(page);
 }
 
 void MNPage_Ticker(mn_page_t* page)
@@ -1580,7 +1628,7 @@ int MNObject_ExecAction(mn_object_t* ob, mn_actionid_t id, void* paramaters)
 #if _DEBUG
     Con_Error("MNObject::ExecAction: Attempt to execute non-existent action #%i on object %p.", (int) id, ob);
 #endif
-    /// @fixme Need an error handling mechanic.
+    /// @todo Need an error handling mechanic.
     return -1; // NOP
 }
 
@@ -1748,7 +1796,7 @@ void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
     Size2Raw size;
     assert(obj->_type == MN_TEXT);
-    /// @fixme What if patch replacement is disabled?
+    /// @todo What if patch replacement is disabled?
     if(txt->patch != 0)
     {
         patchinfo_t info;
@@ -1792,13 +1840,20 @@ mn_object_t* MNEdit_New(void)
     ob->updateGeometry = MNEdit_UpdateGeometry;
     ob->cmdResponder = MNEdit_CommandResponder;
     ob->responder = MNEdit_Responder;
+    { mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
+    Str_Init(&edit->text);
+    Str_Init(&edit->oldtext);
+    }
 
     return ob;
 }
 
 void MNEdit_Delete(mn_object_t* ob)
 {
+    mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
     assert(ob && ob->_type == MN_EDIT);
+    Str_Free(&edit->text);
+    Str_Free(&edit->oldtext);
     Z_Free(ob->_typedata);
     Z_Free(ob);
 }
@@ -1843,50 +1898,36 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
 {
     const mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
     fontid_t fontId = rs.textFonts[ob->_pageFontIdx];
-    char buf[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
     float light = 1, textAlpha = rs.pageAlpha;
-    int width, numVisCharacters;
-    const char* string;
+    uint numVisCharacters;
+    const char* string = 0;
     Point2Raw origin;
     assert(ob->_type == MN_EDIT);
 
     origin.x = _origin->x + MNDATA_EDIT_OFFSET_X;
     origin.y = _origin->y + MNDATA_EDIT_OFFSET_Y;
 
-    if((ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS))
+    if(!Str_IsEmpty(&edit->text))
     {
-        if((menuTime & 8) && strlen(edit->text) < MNDATA_EDIT_TEXT_MAX_LENGTH)
-        {
-            dd_snprintf(buf, MNDATA_EDIT_TEXT_MAX_LENGTH+1, "%s_", edit->text);
-            string = buf;
-        }
-        else
-            string = edit->text;
+        string = Str_Text(&edit->text);
     }
-    else
+    else if(!((ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS)))
     {
-        if(edit->text[0])
-        {
-            string = edit->text;
-        }
-        else
-        {
-            string = edit->emptyString;
-            light *= .5f;
-            textAlpha = rs.pageAlpha * .75f;
-        }
+        string = edit->emptyString;
+        light *= .5f;
+        textAlpha = rs.pageAlpha * .75f;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(fontId);
 
-    if(edit->maxVisibleChars > 0)
-        numVisCharacters = MIN_OF(edit->maxVisibleChars, MNDATA_EDIT_TEXT_MAX_LENGTH);
-    else
-        numVisCharacters = MNDATA_EDIT_TEXT_MAX_LENGTH;
-    width = numVisCharacters * FR_CharWidth('_') + 20;
+    numVisCharacters = string? strlen(string) : 0;
+    if(edit->maxVisibleChars > 0 && edit->maxVisibleChars < numVisCharacters)
+        numVisCharacters = edit->maxVisibleChars;
+
     drawEditBackground(ob, origin.x + MNDATA_EDIT_BACKGROUND_OFFSET_X,
-                            origin.y + MNDATA_EDIT_BACKGROUND_OFFSET_Y, width, rs.pageAlpha);
+                           origin.y + MNDATA_EDIT_BACKGROUND_OFFSET_Y,
+                       Rect_Width(ob->_geometry), rs.pageAlpha);
 
     if(string)
     {
@@ -1905,52 +1946,61 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
         // Light the text.
         color[CR] *= light; color[CG] *= light; color[CB] *= light;
 
+        // Draw the text:
         FR_SetColorAndAlphav(color);
         FR_DrawText3(string, &origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+
+        // Are we drawing a cursor?
+        if((ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS) && (menuTime & 8) &&
+           (!edit->maxLength || (unsigned)Str_Length(&edit->text) < edit->maxLength))
+        {
+            origin.x += FR_TextWidth(string);
+            FR_DrawChar3('_', &origin, ALIGN_TOPLEFT,  MN_MergeMenuEffectWithDrawTextFlags(0));
+        }
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e cmd)
+int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e cmd)
 {
-    mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
-    assert(obj->_type == MN_EDIT);
+    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    assert(ob->_type == MN_EDIT);
 
     switch(cmd)
     {
     case MCMD_SELECT:
-        if(!(obj->_flags & MNF_ACTIVE))
+        if(!(ob->_flags & MNF_ACTIVE))
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            obj->_flags |= MNF_ACTIVE;
-            obj->timer = 0;
+            ob->_flags |= MNF_ACTIVE;
+            ob->timer = 0;
             // Store a copy of the present text value so we can restore it.
-            memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
-            if(MNObject_HasAction(obj, MNA_ACTIVE))
+            Str_Copy(&edit->oldtext, &edit->text);
+            if(MNObject_HasAction(ob, MNA_ACTIVE))
             {
-                MNObject_ExecAction(obj, MNA_ACTIVE, NULL);
+                MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
-            obj->_flags &= ~MNF_ACTIVE;
-            if(MNObject_HasAction(obj, MNA_ACTIVEOUT))
+            Str_Copy(&edit->oldtext, &edit->text);
+            ob->_flags &= ~MNF_ACTIVE;
+            if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
             {
-                MNObject_ExecAction(obj, MNA_ACTIVEOUT, NULL);
+                MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
     case MCMD_NAV_OUT:
-        if(obj->_flags & MNF_ACTIVE)
+        if(ob->_flags & MNF_ACTIVE)
         {
-            memcpy(edit->text, edit->oldtext, sizeof(edit->text));
-            obj->_flags &= ~MNF_ACTIVE;
-            if(MNObject_HasAction(obj, MNA_CLOSE))
+            Str_Copy(&edit->text, &edit->oldtext);
+            ob->_flags &= ~MNF_ACTIVE;
+            if(MNObject_HasAction(ob, MNA_CLOSE))
             {
-                MNObject_ExecAction(obj, MNA_CLOSE, NULL);
+                MNObject_ExecAction(ob, MNA_CLOSE, NULL);
             }
             return true;
         }
@@ -1960,40 +2010,67 @@ int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-const char* MNEdit_Text(mn_object_t* obj)
+uint MNEdit_MaxLength(mn_object_t* ob)
 {
-    mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
-    assert(obj->_type == MN_EDIT);
-    return edit->text;
+    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    assert(ob->_type == MN_EDIT);
+    return edit->maxLength;
 }
 
-void MNEdit_SetText(mn_object_t* obj, int flags, const char* string)
+void MNEdit_SetMaxLength(mn_object_t* ob, uint newMaxLength)
 {
-    mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
-    assert(obj && obj->_type == MN_EDIT);
+    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    assert(ob->_type == MN_EDIT);
+    if(newMaxLength < edit->maxLength)
+    {
+        Str_Truncate(&edit->text, newMaxLength);
+        Str_Truncate(&edit->oldtext, newMaxLength);
+    }
+    edit->maxLength = newMaxLength;
+}
 
-    dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH+1, "%s", string);
+const ddstring_t* MNEdit_Text(mn_object_t* ob)
+{
+    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    assert(ob->_type == MN_EDIT);
+    return &edit->text;
+}
+
+void MNEdit_SetText(mn_object_t* ob, int flags, const char* string)
+{
+    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
+    assert(ob && ob->_type == MN_EDIT);
+
+    if(!edit->maxLength)
+    {
+        Str_Set(&edit->text, string);
+    }
+    else
+    {
+        Str_Clear(&edit->text);
+        Str_PartAppend(&edit->text, string, 0, edit->maxLength);
+    }
+
     if(flags & MNEDIT_STF_REPLACEOLD)
     {
-        memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
+        Str_Copy(&edit->oldtext, &edit->text);
     }
-    if(!(flags & MNEDIT_STF_NO_ACTION) && MNObject_HasAction(obj, MNA_MODIFIED))
+    if(!(flags & MNEDIT_STF_NO_ACTION) && MNObject_HasAction(ob, MNA_MODIFIED))
     {
-        MNObject_ExecAction(obj, MNA_MODIFIED, NULL);
+        MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
     }
 }
 
 /**
  * Responds to alphanumeric input for edit fields.
  */
-int MNEdit_Responder(mn_object_t* obj, event_t* ev)
+int MNEdit_Responder(mn_object_t* ob, event_t* ev)
 {
-    mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
+    mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
     int ch = -1;
-    char* ptr;
-    assert(obj && obj->_type == MN_EDIT);
+    assert(ob && ob->_type == MN_EDIT);
 
-    if(!(obj->_flags & MNF_ACTIVE) || ev->type != EV_KEY)
+    if(!(ob->_flags & MNF_ACTIVE) || ev->type != EV_KEY)
         return false;
 
     if(DDKEY_RSHIFT == ev->data1)
@@ -2007,13 +2084,12 @@ int MNEdit_Responder(mn_object_t* obj, event_t* ev)
 
     if(DDKEY_BACKSPACE == ev->data1)
     {
-        size_t len = strlen(edit->text);
-        if(0 != len)
+        if(!Str_IsEmpty(&edit->text))
         {
-            edit->text[len - 1] = '\0';
-            if(MNObject_HasAction(obj, MNA_MODIFIED))
+            Str_Truncate(&edit->text, Str_Length(&edit->text)-1);
+            if(MNObject_HasAction(ob, MNA_MODIFIED))
             {
-                MNObject_ExecAction(obj, MNA_MODIFIED, NULL);
+                MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2029,14 +2105,12 @@ int MNEdit_Responder(mn_object_t* obj, event_t* ev)
         if(ch == '%')
             return true;
 
-        if(strlen(edit->text) < MNDATA_EDIT_TEXT_MAX_LENGTH)
+        if(!edit->maxLength || (unsigned)Str_Length(&edit->text) < edit->maxLength)
         {
-            ptr = edit->text + strlen(edit->text);
-            ptr[0] = ch;
-            ptr[1] = '\0';
-            if(MNObject_HasAction(obj, MNA_MODIFIED))
+            Str_AppendChar(&edit->text, ch);
+            if(MNObject_HasAction(ob, MNA_MODIFIED))
             {
-                MNObject_ExecAction(obj, MNA_MODIFIED, NULL);
+                MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2045,11 +2119,11 @@ int MNEdit_Responder(mn_object_t* obj, event_t* ev)
     return false;
 }
 
-void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
+void MNEdit_UpdateGeometry(mn_object_t* ob, mn_page_t* page)
 {
-    // @fixme calculate visible dimensions properly.
-    assert(obj);
-    Rect_SetWidthHeight(obj->_geometry, 170, 14);
+    // @todo calculate visible dimensions properly.
+    assert(ob);
+    Rect_SetWidthHeight(ob->_geometry, 170, 14);
 }
 
 mn_object_t* MNList_New(void)
@@ -2227,6 +2301,18 @@ boolean MNList_SelectionIsVisible(mn_object_t* obj)
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
     return (list->selection >= list->first && list->selection < list->first + list->numvis);
+}
+
+int MNList_ItemData(const mn_object_t* obj, int index)
+{
+    mndata_list_t* list = (mndata_list_t*)obj->_typedata;
+    mndata_listitem_t* item;
+
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
+    if(index < 0 || index >= list->count) return 0;
+
+    item = &((mndata_listitem_t*) list->items)[index];
+    return item->data;
 }
 
 int MNList_FindItem(const mn_object_t* obj, int dataValue)
@@ -2553,7 +2639,7 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     const char* text = btn->text;
     Size2Raw size;
 
-    // @fixme What if patch replacement is disabled?
+    // @todo What if patch replacement is disabled?
     if(btn->patch)
     {
         if(!(btn->flags & MNBUTTON_NO_ALTTEXT))
@@ -3417,6 +3503,7 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
     float s, t, scale;
     Point2Raw origin;
     Size2Raw size;
+
     assert(ob->_type == MN_MOBJPREVIEW);
 
     if(MT_NONE == mop->mobjType) return;
@@ -3439,10 +3526,19 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
     tMap = mop->tMap;
     // Are we cycling the translation map?
     if(tMap == NUMPLAYERCOLORS)
+    {
         tMap = menuTime / 5 % NUMPLAYERCOLORS;
+    }
 #if __JHEXEN__
+    if(gameMode == hexen_v10)
+    {
+        // Cycle through the four available colors.
+        if(mop->tMap == NUMPLAYERCOLORS) tMap = menuTime / 5 % 4;
+    }
     if(mop->plrClass >= PCLASS_FIGHTER)
+    {
         R_GetTranslation(mop->plrClass, tMap, &tClass, &tMap);
+    }
 #endif
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -3479,7 +3575,7 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
 
 void MNMobjPreview_UpdateGeometry(mn_object_t* ob, mn_page_t* page)
 {
-    // @fixme calculate visible dimensions properly!
+    // @todo calculate visible dimensions properly!
     assert(ob && ob->_type == MN_MOBJPREVIEW);
     Rect_SetWidthHeight(ob->_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
 }

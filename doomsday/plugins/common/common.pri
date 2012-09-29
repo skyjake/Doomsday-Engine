@@ -47,6 +47,7 @@ HEADERS += \
     $$common_inc/p_savedef.h \
     $$common_inc/p_saveg.h \
     $$common_inc/p_saveio.h \
+    $$common_inc/p_scroll.h \
     $$common_inc/p_sound.h \
     $$common_inc/p_start.h \
     $$common_inc/p_switch.h \
@@ -58,11 +59,13 @@ HEADERS += \
     $$common_inc/p_xgline.h \
     $$common_inc/p_xgsec.h \
     $$common_inc/r_common.h \
+    $$common_inc/saveinfo.h \
     $$common_inc/x_hair.h \
     $$common_inc/xgclass.h
 
 SOURCES += \
     $$common_src/am_map.c \
+    $$common_src/common.c \
     $$common_src/d_net.c \
     $$common_src/d_netcl.c \
     $$common_src/d_netsv.c \
@@ -70,7 +73,7 @@ SOURCES += \
     $$common_src/fi_lib.c \
     $$common_src/g_controls.c \
     $$common_src/g_defs.c \
-    $$common_src/g_eventsequence.c \
+    $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.c \
     $$common_src/g_update.c \
     $$common_src/gl_drawpatch.c \
@@ -82,7 +85,7 @@ SOURCES += \
     $$common_src/hu_menu.c \
     $$common_src/hu_msg.c \
     $$common_src/hu_pspr.c \
-    $$common_src/hu_stuff.c \
+    $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.c \
     $$common_src/m_fixed.c \
     $$common_src/mobj.c \
@@ -99,6 +102,7 @@ SOURCES += \
     $$common_src/p_player.c \
     $$common_src/p_saveg.c \
     $$common_src/p_saveio.c \
+    $$common_src/p_scroll.c \
     $$common_src/p_sound.c \
     $$common_src/p_start.c \
     $$common_src/p_switch.c \
@@ -111,4 +115,5 @@ SOURCES += \
     $$common_src/p_xgsave.c \
     $$common_src/p_xgsec.c \
     $$common_src/r_common.c \
+    $$common_src/saveinfo.c \
     $$common_src/x_hair.c

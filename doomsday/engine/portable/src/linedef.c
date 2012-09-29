@@ -22,8 +22,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_play.h"
+#include "de_refresh.h"
+#include "de_render.h"
 
 #include "m_bams.h"
 #include "m_misc.h"
@@ -51,14 +52,14 @@ static float lightLevelDelta(const pvec2f_t normal)
  *     Tests consider all Planes which interface with this and the "middle"
  *     Material used on the relative front side (if any).
  */
-static boolean backClosedForBlendNeighbor(const LineDef* lineDef, int side, boolean ignoreOpacity)
+static boolean backClosedForBlendNeighbor(LineDef* lineDef, int side, boolean ignoreOpacity)
 {
     Sector* frontSec;
     Sector* backSec;
     assert(lineDef);
 
-    if(!lineDef->L_side(side))   return false;
-    if(!lineDef->L_side(side^1)) return true;
+    if(!lineDef->L_frontsidedef)   return false;
+    if(!lineDef->L_backsidedef) return true;
 
     frontSec = lineDef->L_sector(side);
     backSec  = lineDef->L_sector(side^1);
@@ -71,10 +72,10 @@ static boolean backClosedForBlendNeighbor(const LineDef* lineDef, int side, bool
         if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
     }
 
-    return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
+    return R_MiddleMaterialCoversLineOpening(lineDef, side, ignoreOpacity);
 }
 
-static LineDef* findBlendNeighbor(const LineDef* l, byte side, byte right,
+static LineDef* findBlendNeighbor(LineDef* l, byte side, byte right,
     binangle_t* diff)
 {
     const lineowner_t* farVertOwner = l->L_vo(right^side);
@@ -132,40 +133,50 @@ void LineDef_SetDivline(const LineDef* line, divline_t* dl)
     dl->direction[VY] = FLT2FIX(line->direction[VY]);
 }
 
+coord_t LineDef_OpenRange(const LineDef* line, int side, coord_t* retBottom, coord_t* retTop)
+{
+    DENG_ASSERT(line);
+    return R_OpenRange(line->L_sector(side), line->L_sector(side^1), retBottom, retTop);
+}
+
+coord_t LineDef_VisOpenRange(const LineDef* line, int side, coord_t* retBottom, coord_t* retTop)
+{
+    DENG_ASSERT(line);
+    return R_VisOpenRange(line->L_sector(side), line->L_sector(side^1), retBottom, retTop);
+}
+
 void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
 {
+    DENG_ASSERT(line);
+{
     Sector* front, *back;
-    assert(line);
+    coord_t bottom, top;
 
     if(!opening) return;
 
-    if(!line->L_backside)
+    if(!line->L_backsidedef)
     {
         opening->range = 0;
         return;
     }
 
+    opening->range  = (float)LineDef_OpenRange(line, FRONT, &bottom, &top);
+    opening->bottom = (float)bottom;
+    opening->top    = (float)top;
+
+    // Determine the "low floor".
     front = line->L_frontsector;
     back  = line->L_backsector;
 
-    if(front->SP_ceilheight < back->SP_ceilheight)
-        opening->top = front->SP_ceilheight;
-    else
-        opening->top = back->SP_ceilheight;
-
     if(front->SP_floorheight > back->SP_floorheight)
     {
-        opening->bottom   = front->SP_floorheight;
-        opening->lowFloor = back->SP_floorheight;
+        opening->lowFloor = (float)back->SP_floorheight;
     }
     else
     {
-        opening->bottom   = back->SP_floorheight;
-        opening->lowFloor = front->SP_floorheight;
+        opening->lowFloor = (float)front->SP_floorheight;
     }
-
-    opening->range = opening->top - opening->bottom;
-}
+}}
 
 void LineDef_UpdateSlope(LineDef* line)
 {
@@ -208,7 +219,7 @@ void LineDef_UpdateAABox(LineDef* line)
 /**
  * @todo Now that we store surface tangent space normals use those rather than angles.
  */
-void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* deltaR)
+void LineDef_LightLevelDelta(LineDef* l, int side, float* deltaL, float* deltaR)
 {
     binangle_t diff;
     LineDef* other;
@@ -276,195 +287,21 @@ void LineDef_LightLevelDelta(const LineDef* l, int side, float* deltaL, float* d
     }
 }
 
-int LineDef_MiddleMaterialCoords(const LineDef* lineDef, int side,
-    coord_t* bottomLeft, coord_t* bottomRight, coord_t* topLeft, coord_t* topRight,
-    float* texOffY, boolean lowerUnpeg, boolean clipTop, boolean clipBottom)
-{
-    coord_t* top[2], *bottom[2], openingTop[2], openingBottom[2]; // {left, right}
-    coord_t tcYOff;
-    SideDef* sideDef;
-    int i, texHeight;
-    assert(lineDef && bottomLeft && bottomRight && topLeft && topRight);
-
-    if(texOffY)  *texOffY  = 0;
-
-    sideDef = lineDef->L_side(side);
-    if(!sideDef || !sideDef->SW_middlematerial) return false;
-
-    texHeight = Material_Height(sideDef->SW_middlematerial);
-    tcYOff = sideDef->SW_middlevisoffset[VY];
-
-    top[0] = topLeft;
-    top[1] = topRight;
-    bottom[0] = bottomLeft;
-    bottom[1] = bottomRight;
-
-    openingTop[0] = *top[0];
-    openingTop[1] = *top[1];
-    openingBottom[0] = *bottom[0];
-    openingBottom[1] = *bottom[1];
-
-    if(openingTop[0] <= openingBottom[0] &&
-       openingTop[1] <= openingBottom[1]) return false;
-
-    // For each edge (left then right).
-    for(i = 0; i < 2; ++i)
-    {
-        if(lowerUnpeg)
-        {
-            *bottom[i] += tcYOff;
-            *top[i] = *bottom[i] + texHeight;
-        }
-        else
-        {
-            *top[i] += tcYOff;
-            *bottom[i] = *top[i] - texHeight;
-        }
-    }
-
-    if(texOffY && (*top[0] > openingTop[0] || *top[1] > openingTop[1]))
-    {
-        if(*top[1] > *top[0])
-            *texOffY += *top[1] - openingTop[1];
-        else
-            *texOffY += *top[0] - openingTop[0];
-    }
-
-    // Clip it.
-    if(clipTop || clipBottom)
-    {
-        // For each edge (left then right).
-        for(i = 0; i < 2; ++i)
-        {
-            if(clipBottom && *bottom[i] < openingBottom[i])
-                *bottom[i] = openingBottom[i];
-
-            if(clipTop && *top[i] > openingTop[i])
-                *top[i] = openingTop[i];
-        }
-    }
-
-    return true;
-}
-
-/**
- * @fixme No need to do this each frame. Set a flag in SideDef->flags to
- * denote this. Is sensitive to plane heights, surface properties
- * (e.g. alpha) and surface texture properties.
- */
-boolean LineDef_MiddleMaterialCoversOpening(const LineDef *line, int side,
-    boolean ignoreOpacity)
-{
-    assert(line);
-    if(line->L_backside)
-    {
-        SideDef* sideDef = line->L_side(side);
-        Sector* frontSec = line->L_sector(side);
-        Sector*  backSec = line->L_sector(side^1);
-
-        if(sideDef->SW_middlematerial)
-        {
-            // Ensure we have up to date info.
-            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-                MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-            material_t* mat = sideDef->SW_middlematerial;
-            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
-
-            if(ignoreOpacity || (ms->isOpaque && !sideDef->SW_middleblendmode && sideDef->SW_middlergba[3] >= 1))
-            {
-                coord_t openTop[2], matTop[2];
-                coord_t openBottom[2], matBottom[2];
-
-                if(sideDef->flags & SDF_MIDDLE_STRETCH)
-                    return true;
-
-                openTop[0] = openTop[1] =
-                    matTop[0] = matTop[1] = LineDef_CeilingMin(line)->visHeight;
-                openBottom[0] = openBottom[1] =
-                    matBottom[0] = matBottom[1] = LineDef_FloorMax(line)->visHeight;
-
-                // Could the mid texture fill enough of this gap for us
-                // to consider it completely closed?
-                if(ms->size.height >= (openTop[0] - openBottom[0]) &&
-                   ms->size.height >= (openTop[1] - openBottom[1]))
-                {
-                    // Possibly. Check the placement of the mid texture.
-                    if(LineDef_MiddleMaterialCoords(line, side, &matBottom[0], &matBottom[1],
-                        &matTop[0], &matTop[1], NULL, 0 != (line->flags & DDLF_DONTPEGBOTTOM),
-                        !(Surface_IsSkyMasked(&frontSec->SP_ceilsurface) &&
-                          Surface_IsSkyMasked(&backSec->SP_ceilsurface)),
-                        !(Surface_IsSkyMasked(&frontSec->SP_floorsurface) &&
-                          Surface_IsSkyMasked(&backSec->SP_floorsurface))))
-                    {
-                        if(matTop[0] >= openTop[0] &&
-                           matTop[1] >= openTop[1] &&
-                           matBottom[0] <= openBottom[0] &&
-                           matBottom[1] <= openBottom[1])
-                            return true;
-                    }
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
-Plane* LineDef_FloorMin(const LineDef* lineDef)
-{
-    assert(lineDef);
-    if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backside || lineDef->L_backsector == lineDef->L_frontsector)
-        return lineDef->L_frontsector->SP_plane(PLN_FLOOR);
-    return lineDef->L_backsector->SP_floorvisheight < lineDef->L_frontsector->SP_floorvisheight?
-               lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
-}
-
-Plane* LineDef_FloorMax(const LineDef* lineDef)
-{
-    assert(lineDef);
-    if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backside || lineDef->L_backsector == lineDef->L_frontsector)
-        return lineDef->L_frontsector->SP_plane(PLN_FLOOR);
-    return lineDef->L_backsector->SP_floorvisheight > lineDef->L_frontsector->SP_floorvisheight?
-               lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
-}
-
-Plane* LineDef_CeilingMin(const LineDef* lineDef)
-{
-    assert(lineDef);
-    if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backside || lineDef->L_backsector == lineDef->L_frontsector)
-        return lineDef->L_frontsector->SP_plane(PLN_CEILING);
-    return lineDef->L_backsector->SP_ceilvisheight < lineDef->L_frontsector->SP_ceilvisheight?
-               lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
-}
-
-Plane* LineDef_CeilingMax(const LineDef* lineDef)
-{
-    assert(lineDef);
-    if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backside || lineDef->L_backsector == lineDef->L_frontsector)
-        return lineDef->L_frontsector->SP_plane(PLN_CEILING);
-    return lineDef->L_backsector->SP_ceilvisheight > lineDef->L_frontsector->SP_ceilvisheight?
-               lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
-}
-
 int LineDef_SetProperty(LineDef* lin, const setargs_t* args)
 {
     switch(args->prop)
     {
     case DMU_FRONT_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SEC, &lin->L_frontsector, args, 0);
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &lin->L_frontsector, args, 0);
         break;
     case DMU_BACK_SECTOR:
-        DMU_SetValue(DMT_LINEDEF_SEC, &lin->L_backsector, args, 0);
+        DMU_SetValue(DMT_LINEDEF_SECTOR, &lin->L_backsector, args, 0);
         break;
     case DMU_SIDEDEF0:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEFS, &lin->L_frontside, args, 0);
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &lin->L_frontsidedef, args, 0);
         break;
     case DMU_SIDEDEF1:
-        DMU_SetValue(DMT_LINEDEF_SIDEDEFS, &lin->L_backside, args, 0);
+        DMU_SetValue(DMT_LINEDEF_SIDEDEF, &lin->L_backsidedef, args, 0);
         break;
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &lin->validCount, args, 0);
@@ -474,13 +311,13 @@ int LineDef_SetProperty(LineDef* lin, const setargs_t* args)
 
         DMU_SetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
 
-        s = lin->L_frontside;
+        s = lin->L_frontsidedef;
         Surface_Update(&s->SW_topsurface);
         Surface_Update(&s->SW_bottomsurface);
         Surface_Update(&s->SW_middlesurface);
-        if(lin->L_backside)
+        if(lin->L_backsidedef)
         {
-            s = lin->L_backside;
+            s = lin->L_backsidedef;
             Surface_Update(&s->SW_topsurface);
             Surface_Update(&s->SW_bottomsurface);
             Surface_Update(&s->SW_middlesurface);
@@ -515,7 +352,7 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
         DMU_GetValue(DMT_LINEDEF_DY, &lin->direction[VY], args, 1);
         break;
     case DMU_LENGTH:
-        DMU_GetValue(DDVT_FLOAT, &lin->length, args, 0);
+        DMU_GetValue(DMT_LINEDEF_LENGTH, &lin->length, args, 0);
         break;
     case DMU_ANGLE: {
         angle_t lineAngle = BANG_TO_ANGLE(lin->angle);
@@ -526,23 +363,23 @@ int LineDef_GetProperty(const LineDef* lin, setargs_t* args)
         DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &lin->slopeType, args, 0);
         break;
     case DMU_FRONT_SECTOR: {
-        Sector* sec = (lin->L_frontside? lin->L_frontsector : NULL);
-        DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
+        Sector* sec = (lin->L_frontsidedef? lin->L_frontsector : NULL);
+        DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, args, 0);
         break;
       }
     case DMU_BACK_SECTOR: {
-        Sector* sec = (lin->L_backside? lin->L_backsector : NULL);
-        DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
+        Sector* sec = (lin->L_backsidedef? lin->L_backsector : NULL);
+        DMU_GetValue(DMT_LINEDEF_SECTOR, &sec, args, 0);
         break;
       }
     case DMU_FLAGS:
         DMU_GetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
         break;
     case DMU_SIDEDEF0:
-        DMU_GetValue(DDVT_PTR, &lin->L_frontside, args, 0);
+        DMU_GetValue(DDVT_PTR, &lin->L_frontsidedef, args, 0);
         break;
     case DMU_SIDEDEF1:
-        DMU_GetValue(DDVT_PTR, &lin->L_backside, args, 0);
+        DMU_GetValue(DDVT_PTR, &lin->L_backsidedef, args, 0);
         break;
     case DMU_BOUNDING_BOX:
         if(args->valueType == DDVT_PTR)

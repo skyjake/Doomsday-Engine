@@ -1,32 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * con_bar.c: Console Progress Bar
+ * @file con_bar.c
+ * Console progress bar @ingroup console
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
 #include "de_system.h"
@@ -34,36 +26,19 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 
-// MACROS ------------------------------------------------------------------
-
 // Time for the progress to reach the new target (seconds).
 #define PROGRESS_DELTA_TIME     0.5f
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 typedef struct tval_s {
     int         value;
     timespan_t  time;
 } tval_t;
 
-static int progressMax;
-static float progressStart, progressEnd;
-static tval_t target, last;
 static mutex_t progressMutex;
 
-// CODE --------------------------------------------------------------------
+static int   progressMax;
+static float progressStart, progressEnd;
+static tval_t target, last;
 
 static void lockProgress(boolean lock)
 {
@@ -102,7 +77,7 @@ void Con_ShutdownProgress(void)
     }
 }
 
-static currentProgress(void)
+static int currentProgress(void)
 {
     timespan_t nowTime = Sys_GetRealSeconds();
     timespan_t span = target.time - last.time;
@@ -130,9 +105,6 @@ boolean Con_IsProgressAnimationCompleted(void)
     return done;
 }
 
-/**
- * Updates the progress indicator.
- */
 void Con_SetProgress(int progress)
 {
     timespan_t nowTime;
@@ -150,9 +122,6 @@ void Con_SetProgress(int progress)
     lockProgress(false);
 }
 
-/**
- * Calculate the progress at the current time.
- */
 float Con_GetProgress(void)
 {
     float prog;

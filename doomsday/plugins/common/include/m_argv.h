@@ -28,7 +28,7 @@
 #ifndef __M_ARGV__
 #define __M_ARGV__
 
-#define myargc      Argc()
+#define myargc      CommandLine_Count()
 
 #define M_CheckParm     gi.CheckParm
 

@@ -34,18 +34,24 @@
 
 #include "de_platform.h"
 
+#include <de/memory.h>
+#include <de/memoryzone.h>
+#include <de/garbage.h>
+#include <de/reader.h>
+#include <de/writer.h>
+#include <de/c_wrapper.h>
+
 #include "dd_def.h"
 #include "dd_share.h"
 #include "dd_api.h"
 #include "dd_plugin.h"
-#include "dd_zone.h"
 #include "dd_main.h"
 #include "dd_input.h"
 #include "dd_loop.h"
 #include "dd_help.h"
-#include "nativeui.h"
 #include "library.h"
-#include "reader.h"
-#include "writer.h"
+#include "nativeui.h"
+#include "busymode.h"
+#include "zonedebug.h"
 
 #endif /* LIBDENG_BASE_H */

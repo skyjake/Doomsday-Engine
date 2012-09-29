@@ -24,12 +24,15 @@
 #include "de/ByteRefArray"
 #include "de/Block"
 #include "de/LogBuffer"
+#include "de/ByteOrder"
 #include "de/Info"
 #include <QFile>
 #include <cstring>
 #include <stdarg.h>
 
-#define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
+#define DENG2_LEGACYCORE()      de::LegacyCore::instance()
+#define DENG2_LEGACYNETWORK()   DENG2_LEGACYCORE().network()
+#define DENG2_COMMANDLINE()     static_cast<de::App*>(qApp)->commandLine()
 
 LegacyCore* LegacyCore_New(void* dengApp)
 {
@@ -46,66 +49,61 @@ void LegacyCore_Delete(LegacyCore* lc)
     }
 }
 
-int LegacyCore_RunEventLoop(LegacyCore* lc)
+LegacyCore* LegacyCore_Instance()
 {
-    DENG2_SELF(LegacyCore, lc);
-    return self->runEventLoop();
+    return reinterpret_cast<LegacyCore*>(&de::LegacyCore::instance());
 }
 
-void LegacyCore_Stop(LegacyCore *lc, int exitCode)
+int LegacyCore_RunEventLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->stop(exitCode);
+    return DENG2_LEGACYCORE().runEventLoop();
 }
 
-void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz)
+void LegacyCore_Stop(int exitCode)
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->setLoopRate(freqHz);
+    DENG2_LEGACYCORE().stop(exitCode);
 }
 
-void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void))
+void LegacyCore_SetLoopRate(int freqHz)
 {
-    DENG2_SELF(LegacyCore, lc);
-    return self->setLoopFunc(callback);
+    DENG2_LEGACYCORE().setLoopRate(freqHz);
 }
 
-void LegacyCore_PushLoop(LegacyCore* lc)
+void LegacyCore_SetLoopFunc(void (*callback)(void))
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->pushLoop();
+    return DENG2_LEGACYCORE().setLoopFunc(callback);
 }
 
-void LegacyCore_PopLoop(LegacyCore* lc)
+void LegacyCore_PushLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->popLoop();
+    DENG2_LEGACYCORE().pushLoop();
 }
 
-void LegacyCore_PauseLoop(LegacyCore* lc)
+void LegacyCore_PopLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->pauseLoop();
+    DENG2_LEGACYCORE().popLoop();
 }
 
-void LegacyCore_ResumeLoop(LegacyCore* lc)
+void LegacyCore_PauseLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->resumeLoop();
+    DENG2_LEGACYCORE().pauseLoop();
 }
 
-void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback)(void))
+void LegacyCore_ResumeLoop()
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->timer(milliseconds, callback);
+    DENG2_LEGACYCORE().resumeLoop();
 }
 
-int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath)
+void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void))
+{
+    DENG2_LEGACYCORE().timer(milliseconds, callback);
+}
+
+int LegacyCore_SetLogFile(const char* filePath)
 {
     try
     {
-        DENG2_SELF(LegacyCore, lc);
-        self->setLogFileName(filePath);
+        DENG2_LEGACYCORE().setLogFileName(filePath);
         return true;
     }
     catch(de::LogBuffer::FileError& er)
@@ -116,26 +114,18 @@ int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath)
     }
 }
 
-const char* LegacyCore_LogFile(LegacyCore* lc)
+const char* LegacyCore_LogFile()
 {
-    DENG2_SELF(LegacyCore, lc);
-    return self->logFileName();
+    return DENG2_LEGACYCORE().logFileName();
 }
 
-void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text)
+void LegacyCore_PrintLogFragment(const char* text)
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->printLogFragment(text);
+    DENG2_LEGACYCORE().printLogFragment(text);
 }
 
-void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...)
+void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char* format, ...)
 {
-    char buffer[2048];
-    va_list args;
-    va_start(args, format);
-    vsprintf(buffer, format, args); /// @todo unsafe
-    va_end(args);
-
     // Validate the level.
     de::Log::LogLevel logLevel = de::Log::LogLevel(level);
     if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
@@ -143,19 +133,107 @@ void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t l
         logLevel = de::Log::MESSAGE;
     }
 
-    DENG2_SELF(LegacyCore, lc);
-    self->printLogFragment(buffer, logLevel);
+    // If this level is not enabled, just ignore.
+    if(!de::LogBuffer::appBuffer().enabled(logLevel)) return;
+
+    char buffer[2048];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args); /// @todo unsafe
+    va_end(args);
+
+    DENG2_LEGACYCORE().printLogFragment(buffer, logLevel);
 }
 
-void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*))
+void LegacyCore_SetTerminateFunc(void (*func)(const char*))
 {
-    DENG2_SELF(LegacyCore, lc);
-    self->setTerminateFunc(func);
+    DENG2_LEGACYCORE().setTerminateFunc(func);
+}
+
+void LegacyCore_FatalError(const char* msg)
+{
+    DENG2_LEGACYCORE().handleUncaughtException(msg);
+}
+
+void CommandLine_Alias(const char* longname, const char* shortname)
+{
+    DENG2_COMMANDLINE().alias(longname, shortname);
+}
+
+int CommandLine_Count(void)
+{
+    return DENG2_COMMANDLINE().count();
+}
+
+const char* CommandLine_At(int i)
+{
+    DENG2_ASSERT(i >= 0);
+    DENG2_ASSERT(i < DENG2_COMMANDLINE().count());
+    return *(DENG2_COMMANDLINE().argv() + i);
+}
+
+const char* CommandLine_PathAt(int i)
+{
+    DENG2_COMMANDLINE().makeAbsolutePath(i);
+    return CommandLine_At(i);
+}
+
+static int argLastMatch = 0; // used only in ArgCheck/ArgNext (not thread-safe)
+
+const char* CommandLine_Next(void)
+{
+    if(!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
+    {
+        // No more arguments following the last match.
+        return 0;
+    }
+    return CommandLine_At(++argLastMatch);
+}
+
+const char* CommandLine_NextAsPath(void)
+{
+    if(!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
+    {
+        // No more arguments following the last match.
+        return 0;
+    }
+    DENG2_COMMANDLINE().makeAbsolutePath(argLastMatch + 1);
+    return CommandLine_Next();
+}
+
+int CommandLine_Check(const char* check)
+{
+    return argLastMatch = DENG2_COMMANDLINE().check(check);
+}
+
+int CommandLine_CheckWith(const char* check, int num)
+{
+    return argLastMatch = DENG2_COMMANDLINE().check(check, num);
+}
+
+int CommandLine_Exists(const char* check)
+{
+    return DENG2_COMMANDLINE().has(check);
+}
+
+int CommandLine_IsOption(int i)
+{
+    return DENG2_COMMANDLINE().isOption(i);
+}
+
+int CommandLine_IsMatchingAlias(const char* original, const char* originalOrAlias)
+{
+    return DENG2_COMMANDLINE().matches(original, originalOrAlias);
 }
 
 void LogBuffer_Flush(void)
 {
     de::LogBuffer::appBuffer().flush();
+}
+
+void LogBuffer_Clear(void)
+{
+    de::LogBuffer::appBuffer().clear();
 }
 
 void LogBuffer_EnableStandardOutput(int enable)
@@ -320,4 +398,100 @@ int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize)
         // Just return the size of the value.
         return value.size();
     }
+}
+
+dint16 LittleEndianByteOrder_ToForeignInt16(dint16 value)
+{
+    DENG2_ASSERT(sizeof(dint16) == sizeof(de::dint16));
+    return de::littleEndianByteOrder.toForeign(de::dint16(value));
+}
+
+dint32 LittleEndianByteOrder_ToForeignInt32(dint32 value)
+{
+    DENG2_ASSERT(sizeof(dint32) == sizeof(de::dint32));
+    return de::littleEndianByteOrder.toForeign(de::dint32(value));
+}
+
+dint64 LittleEndianByteOrder_ToForeignInt64(dint64 value)
+{
+    DENG2_ASSERT(sizeof(dint64) == sizeof(de::dint64));
+    return de::littleEndianByteOrder.toForeign(de::dint64(value));
+}
+
+duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value)
+{
+    DENG2_ASSERT(sizeof(duint16) == sizeof(de::duint16));
+    return de::littleEndianByteOrder.toForeign(de::duint16(value));
+}
+
+duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value)
+{
+    DENG2_ASSERT(sizeof(duint32) == sizeof(de::duint32));
+    return de::littleEndianByteOrder.toForeign(de::duint32(value));
+}
+
+duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value)
+{
+    DENG2_ASSERT(sizeof(duint64) == sizeof(de::duint64));
+    return de::littleEndianByteOrder.toForeign(de::duint64(value));
+}
+
+dfloat LittleEndianByteOrder_ToForeignFloat(dfloat value)
+{
+    DENG2_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
+    return de::littleEndianByteOrder.toForeign(de::dfloat(value));
+}
+
+ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value)
+{
+    DENG2_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
+    return de::littleEndianByteOrder.toForeign(de::ddouble(value));
+}
+
+dint16 LittleEndianByteOrder_ToNativeInt16(dint16 value)
+{
+    DENG2_ASSERT(sizeof(dint16) == sizeof(de::dint16));
+    return de::littleEndianByteOrder.toNative(de::dint16(value));
+}
+
+dint32 LittleEndianByteOrder_ToNativeInt32(dint32 value)
+{
+    DENG2_ASSERT(sizeof(dint32) == sizeof(de::dint32));
+    return de::littleEndianByteOrder.toNative(de::dint32(value));
+}
+
+dint64 LittleEndianByteOrder_ToNativeInt64(dint64 value)
+{
+    DENG2_ASSERT(sizeof(dint64) == sizeof(de::dint64));
+    return de::littleEndianByteOrder.toNative(de::dint64(value));
+}
+
+duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value)
+{
+    DENG2_ASSERT(sizeof(duint16) == sizeof(de::duint16));
+    return de::littleEndianByteOrder.toNative(de::duint16(value));
+}
+
+duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value)
+{
+    DENG2_ASSERT(sizeof(duint32) == sizeof(de::duint32));
+    return de::littleEndianByteOrder.toNative(de::duint32(value));
+}
+
+duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value)
+{
+    DENG2_ASSERT(sizeof(duint64) == sizeof(de::duint64));
+    return de::littleEndianByteOrder.toNative(de::duint64(value));
+}
+
+dfloat LittleEndianByteOrder_ToNativeFloat(dfloat value)
+{
+    DENG2_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
+    return de::littleEndianByteOrder.toNative(de::dfloat(value));
+}
+
+ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value)
+{
+    DENG2_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
+    return de::littleEndianByteOrder.toNative(de::ddouble(value));
 }

@@ -121,7 +121,7 @@ class List (base.Widget):
             visibleText = language.translate(identifier)
         else:
             visibleText = identifier
-        w.Append(visibleText)
+        w.Append(uniConv(visibleText))
         self.items.append(identifier)
 
         # In a checklistbox, the items can be checked.
@@ -176,10 +176,10 @@ class List (base.Widget):
             #info.m_format = wx.LIST_FORMAT_CENTRE
             #w.SetItem(info)
         else:
-            index = w.InsertStringItem(w.GetItemCount(), columns[0])
+            index = w.InsertStringItem(w.GetItemCount(), uniConv(columns[0]))
             
         for i in range(1, len(columns)):
-            w.SetStringItem(index, i, columns[i])
+            w.SetStringItem(index, i, uniConv(columns[i]))
 
         # Put the identifier into the data.
         w.SetItemData(index, index)

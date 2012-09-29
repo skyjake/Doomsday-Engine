@@ -28,9 +28,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "m_args.h"
 #include "pathdirectory.h"
-
 #include "resourcenamespace.h"
 
 typedef struct {
@@ -112,20 +110,19 @@ static void destroyNameHash(resourcenamespace_t* rn)
 }
 
 static void appendSearchPathsInGroup(resourcenamespace_t* rn,
-    resourcenamespace_searchpathgroup_t group, char delimiter, ddstring_t* pathList)
+    resourcenamespace_searchpathgroup_t group, char delimiter, Str* pathList)
 {
     uint i;
     assert(rn && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group) && pathList);
 
     for(i = 0; i < rn->_searchPathsCount[group]; ++i)
     {
-        ddstring_t* path = Uri_Compose(rn->_searchPaths[group][i].uri);
+        AutoStr* path = Uri_Compose(rn->_searchPaths[group][i].uri);
         Str_Appendf(pathList, "%s%c", Str_Text(path), delimiter);
-        Str_Delete(path);
     }
 }
 
-static ddstring_t* formSearchPathList(resourcenamespace_t* rn, ddstring_t* pathList, char delimiter)
+static ddstring_t* formSearchPathList(resourcenamespace_t* rn, Str* pathList, char delimiter)
 {
     appendSearchPathsInGroup(rn, SPG_OVERRIDE, delimiter, pathList);
     appendSearchPathsInGroup(rn, SPG_EXTRA, delimiter, pathList);
@@ -211,13 +208,12 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, int flags,
     }
 
     // Ensure this is a well formed path.
-    { ddstring_t* path = Uri_Compose(_searchPath);
+    { AutoStr* path = Uri_Compose(_searchPath);
 
     // Only directories can be search paths.
     F_AppendMissingSlash(path);
 
     searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-    Str_Delete(path);
     }
 
     // Have we seen this path already (we don't want duplicates)?
@@ -273,12 +269,12 @@ void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespa
     rn->_searchPathsCount[group] = 0;
 }
 
-ddstring_t* ResourceNamespace_ComposeSearchPathList2(resourcenamespace_t* rn, char delimiter)
+AutoStr* ResourceNamespace_ComposeSearchPathList2(resourcenamespace_t* rn, char delimiter)
 {
-    return formSearchPathList(rn, Str_New(), delimiter);
+    return formSearchPathList(rn, AutoStr_NewStd(), delimiter);
 }
 
-ddstring_t* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn)
+AutoStr* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn)
 {
     return ResourceNamespace_ComposeSearchPathList2(rn, ';');
 }
@@ -418,11 +414,9 @@ boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
 #if _DEBUG
 static void printResourceRecord(resourcenamespace_record_t* res)
 {
-    ddstring_t path;
-    Str_Init(&path);
-    PathDirectory_ComposePath(PathDirectoryNode_Directory(res->directoryNode), res->directoryNode, &path, NULL, DIR_SEP_CHAR);
-    Con_Printf("\"%s\" -> %s\n", Str_Text(&res->name), Str_Text(&path));
-    Str_Free(&path);
+    AutoStr* path = AutoStr_NewStd();
+    PathDirectoryNode_ComposePath2(res->directoryNode, path, NULL, DIR_SEP_CHAR);
+    Con_Printf("\"%s\" -> %s\n", Str_Text(&res->name), Str_Text(path));
 }
 
 void ResourceNamespace_Print(resourcenamespace_t* rn)

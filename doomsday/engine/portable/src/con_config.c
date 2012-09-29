@@ -75,7 +75,7 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
 {
     FILE* file = (FILE*)paramaters;
     cvar_t* var = (cvar_t*)word->data;
-    ddstring_t* path;
+    AutoStr* path;
     assert(file && var);
 
     if(var->flags & CVF_NO_ARCHIVE)
@@ -112,9 +112,8 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
         fprintf(file, "\"");
         if(CV_URIPTR(var))
         {
-            ddstring_t* valPath = Uri_Compose(CV_URIPTR(var));
+            AutoStr* valPath = Uri_Compose(CV_URIPTR(var));
             fprintf(file, "%s", Str_Text(valPath));
-            Str_Delete(valPath);
         }
         fprintf(file, "\"");
         break;
@@ -122,7 +121,6 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     }
     fprintf(file, "\n\n");
 
-    Str_Delete(path);
     return 0; // Continue iteration.
 }
 

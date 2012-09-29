@@ -36,7 +36,6 @@
 #include "gl_hq2x.h"
 #include "gl_model.h"
 #include "gl_pcx.h"
-#include "gl_png.h"
 #include "gl_tga.h"
 #include "gl_defer.h"
 

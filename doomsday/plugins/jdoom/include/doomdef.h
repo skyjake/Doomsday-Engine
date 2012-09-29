@@ -41,6 +41,7 @@
 #  define strupr _strupr
 #endif
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
@@ -231,7 +232,7 @@ typedef enum {
     IRONTICS = (60 * TICRATE)
 } powerduration_t;
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 

@@ -50,7 +50,6 @@
 #ifndef LIBDENG_REFRESH_FONTS_H
 #define LIBDENG_REFRESH_FONTS_H
 
-#include "dd_string.h"
 #include "uri.h"
 #include "def_data.h"
 
@@ -128,8 +127,8 @@ int Fonts_UniqueId(fontid_t fontId);
 /// @return  Unique identifier of the namespace this name is in.
 fontnamespaceid_t Fonts_Namespace(fontid_t fontId);
 
-/// @return  Symbolic name/path-to this font as a string. Must be destroyed with Str_Delete().
-ddstring_t* Fonts_ComposePath(fontid_t fontId);
+/// @return  Symbolic name/path-to this font as a string.
+AutoStr* Fonts_ComposePath(fontid_t fontId);
 
 /// @return  URI to this font. Must be destroyed with Uri_Delete().
 Uri* Fonts_ComposeUri(fontid_t fontid);

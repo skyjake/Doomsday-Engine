@@ -34,9 +34,9 @@
 extern "C" {
 #endif
 
-#include "dd_string.h"
-#include "reader.h"
-#include "writer.h"
+#include <de/str.h>
+#include <de/reader.h>
+#include <de/writer.h>
 
 struct uri_s; // The uri instance (opaque).
 
@@ -185,10 +185,9 @@ Uri* Uri_SetUri(Uri* uri, const ddstring_t* path);
  * the resultant string.
  *
  * @param uri  Uri instance.
- * @return  Plain-text String representation. Should be destroyed with Str_Delete()
- *          once no longer needed.
+ * @return  Plain-text String representation.
  */
-ddstring_t* Uri_Compose(const Uri* uri);
+AutoStr* Uri_Compose(const Uri* uri);
 
 /**
  * Transform the uri into a human-friendly representation.
@@ -196,11 +195,10 @@ ddstring_t* Uri_Compose(const Uri* uri);
  * @param uri  Uri instance.
  * @param percentDecode  Apply percent-decoding to the composed path.
  *
- * @return  Human-friendly String representation. Should be destroyed with Str_Delete()
- *          once no longer needed.
+ * @return  Human-friendly String representation.
  */
-ddstring_t* Uri_ToString2(const Uri* uri, boolean percentDecode);
-ddstring_t* Uri_ToString(const Uri* uri); /*percentDecode=true*/
+AutoStr* Uri_ToString2(const Uri* uri, boolean percentDecode);
+AutoStr* Uri_ToString(const Uri* uri); /*percentDecode=true*/
 
 /**
  * Are these two uri instances considered equal once resolved?

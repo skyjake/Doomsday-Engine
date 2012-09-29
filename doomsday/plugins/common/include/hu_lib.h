@@ -75,13 +75,15 @@ typedef enum {
  */
 ///@{
 #define MNF_HIDDEN              0x1
-#define MNF_DISABLED            0x2 // Can't be interacted with.
-#define MNF_PAUSED              0x4 // Ticker not called.
+#define MNF_DISABLED            0x2     ///< Can't be interacted with.
+#define MNF_PAUSED              0x4     ///< Ticker not called.
 #define MNF_CLICKED             0x8
-#define MNF_ACTIVE              0x10 // Object active.
-#define MNF_FOCUS               0x20 // Has focus.
-#define MNF_NO_FOCUS            0x40 // Can't receive focus.
-#define MNF_DEFAULT             0x80 // Has focus by default.
+#define MNF_ACTIVE              0x10    ///< Object active.
+#define MNF_FOCUS               0x20    ///< Has focus.
+#define MNF_NO_FOCUS            0x40    ///< Can't receive focus.
+#define MNF_DEFAULT             0x80    ///< Has focus by default.
+#define MNF_POSITION_FIXED      0x100   ///< XY position is fixed and predefined; automatic layout does not apply.
+#define MNF_LAYOUT_OFFSET       0x200   ///< Predefined XY position is applied to the dynamic layout origin.
 //#define MNF_LEFT_ALIGN          0x100
 //#define MNF_FADE_AWAY           0x200 // Fade UI away while the control is active.
 //#define MNF_NEVER_FADE          0x400
@@ -390,8 +392,12 @@ void MNPage_SetY(mn_page_t* page, int y);
 
 void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage);
 
+void MNPage_Refocus(mn_page_t* page);
+
 /// @return  Currently focused object else @c NULL
 mn_object_t* MNPage_FocusObject(mn_page_t* page);
+
+void MNPage_ClearFocusObject(mn_page_t* page);
 
 /**
  * Attempt to give focus to the MNObject @a obj which is thought to be on
@@ -530,7 +536,6 @@ int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags);
 /**
  * Edit field.
  */
-#define MNDATA_EDIT_TEXT_MAX_LENGTH             (24)
 #if __JDOOM__ || __JDOOM64__
 #  define MNDATA_EDIT_TEXT_COLORIDX             (0)
 #  define MNDATA_EDIT_OFFSET_X                  (0)
@@ -552,8 +557,9 @@ int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags);
 #endif
 
 typedef struct mndata_edit_s {
-    char text[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
-    char oldtext[MNDATA_EDIT_TEXT_MAX_LENGTH+1]; // If the current edit is canceled...
+    ddstring_t text;
+    ddstring_t oldtext; // If the current edit is canceled...
+    uint maxLength;
     uint maxVisibleChars;
     const char* emptyString; // Drawn when editfield is empty/null.
     void* data1;
@@ -569,6 +575,9 @@ int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e command);
 int MNEdit_Responder(mn_object_t* ob, event_t* ev);
 void MNEdit_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
+uint MNEdit_MaxLength(mn_object_t* ob);
+void MNEdit_SetMaxLength(mn_object_t* ob, uint newMaxLength);
+
 /**
  * @defgroup mneditSetTextFlags  MNEdit Set Text Flags
  * @{
@@ -578,7 +587,7 @@ void MNEdit_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 /**@}*/
 
 /// @return  A pointer to an immutable copy of the current contents of the edit field.
-const char* MNEdit_Text(mn_object_t* ob);
+const ddstring_t* MNEdit_Text(mn_object_t* ob);
 
 /**
  * Change the current contents of the edit field.
@@ -622,6 +631,9 @@ void MNList_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /// @return  Index of the currently selected item else -1.
 int MNList_Selection(mn_object_t* ob);
+
+/// @return  Data of item at position @a index. 0 if index is out of bounds.
+int MNList_ItemData(const mn_object_t* obj, int index);
 
 /// @return  @c true if the currently selected item is presently visible.
 boolean MNList_SelectionIsVisible(mn_object_t* ob);

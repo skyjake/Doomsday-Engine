@@ -3,17 +3,23 @@
 Graphics:
 @list/thin{
 @item OpenGL graphics engine
-@item Colored, dynamic lights and lens flares
-@item Dynamic ambient occlusion (corner shadowing) for all maps
+@item Colored, @wikiterm{dynamic lights} and @wikiterm{lens flares}
+@item Dynamic @wikiterm{ambient occlusion} (corner shadowing) for all maps
 @item Object shadowing effects
-@item High-resolution and detail textures
-@item Shiny and glowing surfaces
-@item Particle effects
-@item Fog
-@item 3D models: Quake II's MD2 format, Doomsday's own DMD with LOD
-@item Simple environmental mapping for 3D models (shiny effects)
-@item MD2 skymodels and skyboxes
-@item Game world movement smoothing (monsters, surfaces)
+@item @wikiterm{High-resolution textures}: @wikiterm{PNG}, @wikiterm{JPG}, @wikiterm{TGA}, @wikiterm{PCX}
+@item @wikiterm{Detail textures}
+@item @wikiterm{Smart texture filtering}
+@item Shiny and @wikiterm{glowing surfaces}
+@item @wikiterm{Fog}
+@item 3D models
+@list/thin{
+	@item Quake II's @wikiterm{MD2} format
+	@item Doomsday's own @wikiterm{DMD} with LOD support
+	@item Surface shininess: simple environmental mapping for 3D models
+	@item 3D @wikiterm{sky models} and @wikiterm{skyboxes}
+}
+@item @wikiterm{Particle effects}: point sprite and @wikiterm{3D model particles} 
+@item Game world @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces)
 @item Smart texture filtering using a modified hq2x algorithm
 @item Runs glBSP internally when needed
 }
@@ -22,28 +28,32 @@ Sound:
 @list/thin{
 @item Uses @link{FMOD Ex}{http://www.fmod.org/} for audio playback (sound effects, music, CD tracks)
 @item Supports SDL_mixer for sound effects and music files
+@ifndef{WIN32}{@item FluidSynth for MIDI playback using @wikiterm{SF2} soundfonts}
 @ifdef{WIN32}{@item DirectSound3D, EAX 2.0, Windows Multimedia (for MIDI)}
-@item External music files in MP3 and other formats
+@ifdef{MACOSX}{@item QuickTime for music playback}
+@ifdef{UNIX}{@item @wikiterm{OpenAL}}
+@item External @wikiterm{music files} in MP3 and other formats
 @item 3D positional sound effects
-@item Environmental reverb/echo effects
+@item Environmental @wikiterm{reverb} and echo effects
+@item Runtime @wikiterm{sound effect resamping} to 22/44 KHz with 8/16 bits
 }
 
 Networking:
 @list/thin{
-@item TCP-based client/server networking
-@item Up to 15 players
+@item TCP-based client/server @wikilink{networking}{Multiplayer_(Readme)}
+@item Up to @wikiterm{15 player games}
 @item Clients can join games in progress
-@item Dedicated server mode for hosting your own game
+@item @wikiterm{Dedicated server} mode for hosting your own game
 }
 
 Other:
 @list/thin{
-@item Console: Quake-style runtime command line interface
-@item Control Panel: engine configuration
-@item Flexible input controls binding system
-@item Plain text definition files (DED) for game objects and other data
-@item Files can be loaded from WAD files (see @file{wadtool})
-@item Game profile based launcher for managing custom maps, resource packs, add-ons, and starting different game configurations easily
+@item Runtime @wikiterm{console}
+@item @wikiterm{Control panel}: engine configuration
+@item Flexible input control @wikiterm{bindings} system
+@item Plain text definition files (@wikiterm{DED}) for game objects and other data
+@item Files can be loaded from @wikiterm{WAD} files (see @file{wadtool})
+@item @wikiterm{Snowberry}: GUI frontend based on game profiles; for managing custom maps, resource packs, add-ons, and starting different game configurations easily (written in Python)
 @item Open source: software developers should visit the @link{SourceForge project page}{http://sourceforge.net/projects/deng/}
 }
 

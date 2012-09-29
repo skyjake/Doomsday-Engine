@@ -1,4 +1,4 @@
-@ifdef{MAN}{
+@ifdef{UNIX}{
     @include{unixintro}
 }
 @else {

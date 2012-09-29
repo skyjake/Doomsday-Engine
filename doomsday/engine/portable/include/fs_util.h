@@ -30,7 +30,10 @@
 #define LIBDENG_FILESYS_UTIL_H
 
 #include "dd_types.h"
-#include "dd_string.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* str);
 
@@ -44,9 +47,12 @@ void F_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
 void F_ExtractFileBase(char* dest, const char* path, size_t len);
 
 /**
+ * Checks if a file exists in the native file system.
+ *
  * @param file  File to check existence of. Relative path directives are expanded
  *              automatically: '>' '}' (plus '~' on Unix-based platforms).
- * @return  @c 0 if the path points to a readable file on the local file system.
+ *
+ * @return @c 0 if the path points to a readable file on the local file system.
  */
 int F_FileExists(const char* path);
 
@@ -157,7 +163,7 @@ boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
 boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
 
 /**
- * @important Not thread-safe!
+ * @warning Not thread-safe!
  * @return  A prettier copy of the original path.
  */
 const char* F_PrettyPath(const char* path);
@@ -169,5 +175,9 @@ const char* F_PrettyPath(const char* path);
  * @return  @c true, if @a filePath matches the pattern.
  */
 int F_MatchFileName(const char* filePath, const char* pattern);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_FILESYS_UTIL_H

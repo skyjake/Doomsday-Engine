@@ -32,6 +32,10 @@
 #include "h2def.h"
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     HUD_MANA,
     HUD_HEALTH,
@@ -85,7 +89,11 @@ typedef struct {
     byte            overrideHubMsg; // skip the transition hub message when 1
     int             cameraNoClip;
     float           bobView, bobWeapon;
+
     byte            confirmQuickGameSave;
+    byte            confirmRebornLoad;
+    byte            loadLastSaveOnReborn;
+
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
@@ -198,5 +206,9 @@ typedef struct {
 } game_config_t;
 
 extern game_config_t cfg;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

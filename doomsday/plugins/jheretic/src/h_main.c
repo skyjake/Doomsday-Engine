@@ -104,16 +104,7 @@ static boolean autoStart;
  */
 int H_GetInteger(int id)
 {
-    switch(id)
-    {
-    case DD_DMU_VERSION:
-        return DMUAPI_VER;
-
-    default:
-        break;
-    }
-    // ID not recognized, return NULL.
-    return 0;
+    return Common_GetInteger(id);
 }
 
 /**
@@ -267,6 +258,10 @@ void H_PreInit(void)
     cfg.menuGameSaveSuggestName = true;
 
     cfg.confirmQuickGameSave = true;
+    cfg.confirmRebornLoad = true;
+    cfg.loadAutoSaveOnReborn = false;
+    cfg.loadLastSaveOnReborn = false;
+
     cfg.monstersStuckInDoors = false;
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
@@ -375,7 +370,7 @@ void H_PreInit(void)
  */
 void H_PostInit(void)
 {
-    ddstring_t* path;
+    AutoStr* path;
     Uri* uri;
     int p;
 
@@ -405,17 +400,17 @@ void H_PostInit(void)
     /* None */
 
     // Command line options.
-    noMonstersParm = ArgCheck("-nomonsters");
-    respawnParm = ArgCheck("-respawn");
-    devParm = ArgCheck("-devparm");
+    noMonstersParm = CommandLine_Check("-nomonsters");
+    respawnParm = CommandLine_Check("-respawn");
+    devParm = CommandLine_Check("-devparm");
 
-    if(ArgCheck("-deathmatch"))
+    if(CommandLine_Check("-deathmatch"))
     {
         cfg.netDeathmatch = true;
     }
 
     // turbo option.
-    p = ArgCheck("-turbo");
+    p = CommandLine_Check("-turbo");
     turboMul = 1.0f;
     if(p)
     {
@@ -423,7 +418,7 @@ void H_PostInit(void)
 
         turboParm = true;
         if(p < myargc - 1)
-            scale = atoi(Argv(p + 1));
+            scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)
             scale = 10;
         if(scale > 400)
@@ -434,37 +429,37 @@ void H_PostInit(void)
     }
 
     // Load a saved game?
-    p = ArgCheck("-loadgame");
+    p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        const int saveSlot = Argv(p + 1)[0] - '0';
-        if(G_LoadGame(saveSlot))
+        const int saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
+        if(SV_IsUserWritableSlot(saveSlot) && G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.
             return;
         }
     }
 
-    p = ArgCheck("-skill");
+    p = CommandLine_Check("-skill");
     if(p && p < myargc - 1)
     {
-        startSkill = Argv(p + 1)[0] - '1';
+        startSkill = CommandLine_At(p + 1)[0] - '1';
         autoStart = true;
     }
 
-    p = ArgCheck("-episode");
+    p = CommandLine_Check("-episode");
     if(p && p < myargc - 1)
     {
-        startEpisode = Argv(p + 1)[0] - '1';
+        startEpisode = CommandLine_At(p + 1)[0] - '1';
         startMap = 0;
         autoStart = true;
     }
 
-    p = ArgCheck("-warp");
+    p = CommandLine_Check("-warp");
     if(p && p < myargc - 2)
     {
-        startEpisode = Argv(p + 1)[0] - '1';
-        startMap = Argv(p + 2)[0] - '1';
+        startEpisode = CommandLine_At(p + 1)[0] - '1';
+        startMap = CommandLine_At(p + 2)[0] - '1';
         autoStart = true;
     }
 
@@ -483,12 +478,11 @@ void H_PostInit(void)
         startEpisode = 0;
         startMap = 0;
     }
-    Str_Delete(path);
     Uri_Delete(uri);
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferedInitNew(startSkill, startEpisode, startMap);
+        G_DeferredNewGame(startSkill, startEpisode, startMap, 0/*default*/);
     }
     else
     {

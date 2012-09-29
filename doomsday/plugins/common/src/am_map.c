@@ -36,7 +36,7 @@
 #include "hu_automap.h"
 
 static void registerSpecialLine(automapcfg_t* mcfg, int reqAutomapFlags, int reqSpecial,
-    int reqSided, float r, float g, float b, float a, blendmode_t blendmode,
+    int reqSided, int reqNotFlagged, float r, float g, float b, float a, blendmode_t blendmode,
     glowtype_t glowType, float glowStrength, float glowSize, boolean scaleGlowWithView);
 
 static automapcfg_t automapCFG;
@@ -62,7 +62,7 @@ void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customP
 
 const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_objectname_t name)
 {
-    assert(NULL != mcfg);
+    assert(mcfg);
 
     if(name == AMO_NONE)
         return NULL;
@@ -95,38 +95,36 @@ const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_ob
 }
 
 const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special,
-    const Sector* frontsector, const Sector* backsector, int automapFlags)
+    int flags, const Sector* frontsector, const Sector* backsector, int automapFlags)
 {
-    assert(NULL != mcfg);
-    {
-    automapcfg_lineinfo_t* info = NULL;
+    DENG_ASSERT(mcfg);
+{
     if(special > 0)
     {
+        automapcfg_lineinfo_t* info;
         uint i;
-        for(i = 0; i < mcfg->lineInfoCount && !info; ++i)
+        for(i = 0, info = mcfg->lineInfo; i < mcfg->lineInfoCount; ++i, info++)
         {
-            automapcfg_lineinfo_t* l = &mcfg->lineInfo[i];
-
             // Special restriction?
-            if(l->reqSpecial != special)
-                continue;
+            if(info->reqSpecial != special) continue;
 
             // Sided restriction?
-            if((l->reqSided == 1 && backsector && frontsector) ||
-               (l->reqSided == 2 && (!backsector || !frontsector)))
+            if((info->reqSided == 1 && backsector && frontsector) ||
+               (info->reqSided == 2 && (!backsector || !frontsector)))
                 continue;
+
+            // Line flags restriction?
+            if(info->reqNotFlagged && (flags & info->reqNotFlagged)) continue;
 
             // Automap flags restriction?
-            if(l->reqAutomapFlags != 0 && !(automapFlags & l->reqAutomapFlags))
-                continue;
+            if(info->reqAutomapFlags != 0 && !(automapFlags & info->reqAutomapFlags)) continue;
 
             // This is the one!
-            info = l;
+            return info;
         }
     }
-    return info;
-    }
-}
+    return 0; // Not found.
+}}
 
 static void initAutomapConfig(automapcfg_t* mcfg)
 {
@@ -184,55 +182,55 @@ static void initAutomapConfig(automapcfg_t* mcfg)
     // Register lines we want to display in a special way.
 #if __JDOOM__ || __JDOOM64__
     // Blue locked door, open.
-    registerSpecialLine(mcfg, 0, 32, 2, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0,  32, 2, ML_SECRET, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Blue locked door, locked.
-    registerSpecialLine(mcfg, 0, 26, 2, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 99, 0, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 133, 0, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0,  26, 2, ML_SECRET, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0,  99, 0, ML_SECRET, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 133, 0, ML_SECRET, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Red locked door, open.
-    registerSpecialLine(mcfg, 0, 33, 2, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0,  33, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Red locked door, locked.
-    registerSpecialLine(mcfg, 0, 28, 2, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 134, 2, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 135, 2, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0,  28, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 134, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 135, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Yellow locked door, open.
-    registerSpecialLine(mcfg, 0, 34, 2, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0,  34, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Yellow locked door, locked.
-    registerSpecialLine(mcfg, 0, 27, 2, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 136, 2, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 137, 2, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0,  27, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 136, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 137, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Exit switch.
-    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES, 11, 1, 0, 1, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES,  11, 1, ML_SECRET, 0, 1, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Exit cross line.
-    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES, 52, 2, 0, 1, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES,  52, 2, ML_SECRET, 0, 1, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Secret Exit switch.
-    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES, 51, 1, 0, 1, 1, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES,  51, 1, ML_SECRET, 0, 1, 1, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Secret Exit cross line.
-    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES, 124, 2, 0, 1, 1, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES, 124, 2, ML_SECRET, 0, 1, 1, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
 #elif __JHERETIC__
     // Blue locked door.
-    registerSpecialLine(mcfg, 0, 26, 2, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 26, 2, ML_SECRET, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Blue switch?
-    registerSpecialLine(mcfg, 0, 32, 0, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 32, 0, ML_SECRET, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Yellow locked door.
-    registerSpecialLine(mcfg, 0, 27, 2, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 27, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Yellow switch?
-    registerSpecialLine(mcfg, 0, 34, 0, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 34, 0, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Green locked door.
-    registerSpecialLine(mcfg, 0, 28, 2, 0, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 28, 2, ML_SECRET, 0, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Green switch?
-    registerSpecialLine(mcfg, 0, 33, 0, 0, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 33, 0, ML_SECRET, 0, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
 #elif __JHEXEN__
     // A locked door (all are green).
-    registerSpecialLine(mcfg, 0, 13, 0, 0, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 83, 0, 0, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 13, 0, ML_SECRET, 0, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 83, 0, ML_SECRET, 0, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Intra-map teleporters (all are blue).
-    registerSpecialLine(mcfg, 0, 70, 2, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 71, 2, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 70, 2, ML_SECRET, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 71, 2, ML_SECRET, 0, 0, .776f, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Inter-map teleport.
-    registerSpecialLine(mcfg, 0, 74, 2, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 74, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Game-winning exit.
-    registerSpecialLine(mcfg, 0, 75, 2, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 75, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
 #endif
 
     AM_SetVectorGraphic(mcfg, AMO_THING, VG_TRIANGLE);
@@ -526,54 +524,60 @@ void AM_SetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name,
     }
 }
 
+static automapcfg_lineinfo_t* findLineInfo(automapcfg_t* mcfg, int reqAutomapFlags,
+    int reqSpecial, int reqSided, int reqNotFlagged)
+{
+    DENG_ASSERT(mcfg);
+{
+    automapcfg_lineinfo_t* info;
+    uint i;
+    for(i = 0, info = mcfg->lineInfo; i < mcfg->lineInfoCount; ++i, info++)
+    {
+        if(info->reqSpecial      != reqSpecial) continue;
+        if(info->reqAutomapFlags != reqAutomapFlags) continue;
+        if(info->reqSided        != reqSided) continue;
+        if(info->reqNotFlagged   != reqNotFlagged) continue;
+
+        // This is the one.
+        return info;
+    }
+    return 0; // Not found.
+}}
+
 static void registerSpecialLine(automapcfg_t* mcfg, int reqAutomapFlags, int reqSpecial,
-    int reqSided, float r, float g, float b, float a, blendmode_t blendmode,
+    int reqSided, int reqNotFlagged, float r, float g, float b, float a, blendmode_t blendmode,
     glowtype_t glowType, float glowStrength, float glowSize, boolean scaleGlowWithView)
 {
-    assert(NULL != mcfg);
-    {
-    automapcfg_lineinfo_t* line, *p;
-    uint i;
-
+    DENG_ASSERT(mcfg);
+{
     // Later re-registrations override earlier ones.
-    i = 0;
-    line = NULL;
-    while(i < mcfg->lineInfoCount && !line)
-    {
-        p = &mcfg->lineInfo[i];
-        if(p->reqSpecial == reqSpecial && p->reqAutomapFlags == reqAutomapFlags && p->reqSided == reqSided)
-            line = p;
-        else
-            i++;
-    }
-
-    if(!line) // It must be a new one.
+    automapcfg_lineinfo_t* info = findLineInfo(mcfg, reqAutomapFlags, reqSpecial, reqSided, reqNotFlagged);
+    if(!info)
     {
         // Any room for a new special line?
         if(mcfg->lineInfoCount >= AUTOMAPCFG_MAX_LINEINFO)
             Con_Error("AM_RegisterSpecialLine: No available slot.");
-
-        line = &mcfg->lineInfo[mcfg->lineInfoCount++];
+        info = &mcfg->lineInfo[mcfg->lineInfoCount++];
     }
 
-    line->reqAutomapFlags = reqAutomapFlags;
-    line->reqSpecial = reqSpecial;
-    line->reqSided = reqSided;
+    info->reqAutomapFlags   = reqAutomapFlags;
+    info->reqSpecial        = reqSpecial;
+    info->reqSided          = reqSided;
+    info->reqNotFlagged     = reqNotFlagged;
 
-    line->rgba[0] = MINMAX_OF(0, r, 1);
-    line->rgba[1] = MINMAX_OF(0, g, 1);
-    line->rgba[2] = MINMAX_OF(0, b, 1);
-    line->rgba[3] = MINMAX_OF(0, a, 1);
-    line->glow = glowType;
-    line->glowStrength = MINMAX_OF(0, glowStrength, 1);
-    line->glowSize = glowSize;
-    line->scaleWithView = scaleGlowWithView;
-    line->blendMode = blendmode;
-    }
-}
+    info->rgba[CR] = MINMAX_OF(0, r, 1);
+    info->rgba[CG] = MINMAX_OF(0, g, 1);
+    info->rgba[CB] = MINMAX_OF(0, b, 1);
+    info->rgba[CA] = MINMAX_OF(0, a, 1);
+    info->glow          = glowType;
+    info->glowStrength  = MINMAX_OF(0, glowStrength, 1);
+    info->glowSize      = glowSize;
+    info->scaleWithView = scaleGlowWithView;
+    info->blendMode     = blendmode;
+}}
 
 void AM_RegisterSpecialLine(automapcfg_t* mcfg, int reqMapFlags, int reqSpecial,
-    int reqSided, float r, float g, float b, float a, blendmode_t blendmode,
+    int reqSided, int reqNotFlagged, float r, float g, float b, float a, blendmode_t blendmode,
     glowtype_t glowType, float glowStrength, float glowSize, boolean scaleGlowWithView)
 {
     if(reqSpecial < 0)
@@ -581,6 +585,6 @@ void AM_RegisterSpecialLine(automapcfg_t* mcfg, int reqMapFlags, int reqSpecial,
     if(reqSided < 0 || reqSided > 2)
         Con_Error("AM_RegisterSpecialLine: sided requirement '%i' invalid.", reqSided);
 
-    registerSpecialLine(mcfg, reqMapFlags, reqSpecial, reqSided, r, g, b, a, blendmode,
-        glowType, glowStrength, glowSize, scaleGlowWithView);
+    registerSpecialLine(mcfg, reqMapFlags, reqSpecial, reqSided, reqNotFlagged,
+                        r, g, b, a, blendmode, glowType, glowStrength, glowSize, scaleGlowWithView);
 }

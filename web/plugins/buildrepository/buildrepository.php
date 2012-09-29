@@ -59,8 +59,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     public static $name = 'buildrepository';
 
     /// Feed URIs:
-    const XML_FEED_URI = 'http://code.iki.fi/builds/events.xml';
-    const RSS_FEED_URI = 'http://code.iki.fi/builds/events.rss';
+    const XML_FEED_URI = 'http://dl.dropbox.com/u/11948701/builds/events.xml';
+    const RSS_FEED_URI = 'http://dl.dropbox.com/u/11948701/builds/events.rss';
 
     /**
      * Plaform (Record):
@@ -401,9 +401,89 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
          * @todo Read this information from a config file, we should not
          * expect to edit this file in order to change these...
          */
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_64bit.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_i386.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.8',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.8/deng-inst-1.9.8-1_amd64.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.8-1');
+        $pack->setReleaseDate(strtotime('June 26, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.exe/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_4_X86_PPC, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_MAC10_6_X86_X86_64, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.dmg/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
+        $packages[] = $pack;
+
+        $pack = PackageFactory::newDistribution(PID_LINUX_X86_64, 'Doomsday', '1.9.7',
+                                                'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.9.7/deng-inst-1.9.7-1.deb/download',
+                                                NULL/*no fallback download uri*/,
+                                                false/*not an autobuilder packaged*/);
+        $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.9.7-1');
+        $pack->setReleaseDate(strtotime('March 14, 2012'));
+        $packages[] = $pack;
 
         $pack = PackageFactory::newDistribution(PID_WIN_X86, 'Doomsday', '1.8.6',
                                                 'http://sourceforge.net/projects/deng/files/Doomsday%20Engine/1.8.6/deng-inst-1.8.6.exe/download',
+                                                NULL/*no fallback download uri*/,
                                                 false/*not an autobuilder packaged*/);
         $pack->setReleaseNotesUri('http://dengine.net/dew/index.php?title=Doomsday_version_1.8.6');
         $packages[] = $pack;
@@ -586,11 +666,15 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             {
                 // No - this must be a symbolic package.
                 // We'll instantiate a symbolic BuildEvent for this.
-                $build = new BuildEvent(0, strtotime('Jan 8, 2005'), 'skyjake',
+                $build = new BuildEvent(0, $pack->hasReleaseDate()? $pack->releaseDate() : strtotime('Jan 8, 2005'), 'skyjake',
                                         'jaakko.keranen@iki.fi', RT_STABLE/*assumed*/);
                 if($pack->hasReleaseNotesUri())
                 {
                     $build->setReleaseNotesUri($pack->releaseNotesUri());
+                }
+                if($pack->hasReleaseChangeLogUri())
+                {
+                    $build->setReleaseChangeLogUri($pack->releaseChangeLogUri());
                 }
                 $build->addPackage($pack);
             }
@@ -701,7 +785,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 if($pack->platformId() !== $platformId) continue;
                 if($matchTitle && strcasecmp($pack->title(), $title)) continue;
                 if($unstable != ($pack instanceof AbstractUnstablePackage)) continue;
-                if($downloadable != ($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())) continue;
+                if($downloadable != ($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))) continue;
 
                 // Found something suitable.
                 return $pack;
@@ -807,13 +891,17 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     private function outputBuildStreamNavigation(&$event)
     {
         $headEvent = $event->prevForStartDate();
+        $offset = 0;
         if(!$headEvent instanceof BuildEvent)
+        {
             $headEvent = $event;
+            $offset = 1;
+        }
 
 ?><div id="buildsnav" class="hnav"><h3><span>&larr;Older</span> <a href="builds" title="Back to the Build Repository index">Index</a> <span>Newer&rarr;</span></h3><?php
 ?><div class="buildstreamlist"><?php
 
-        $this->outputBuildStreamWidget($headEvent, 'startdate', TRUE/*ascend*/, 3,
+        $this->outputBuildStreamWidget($headEvent, 'startdate', TRUE/*ascend*/, 3, $offset,
                                        NULL/*no release header*/,
                                        TRUE/*use the horiztonal variant*/,
                                        $event, TRUE/*current is inactive*/);
@@ -897,7 +985,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             // Filtered out?
             if($pack === $notThisPack) continue;
             if($unstable != -1 && (boolean)$unstable != ($pack instanceof AbstractUnstablePackage)) continue;
-            if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())) continue;
+            if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))) continue;
             if(!is_null($chosenPlatformId) && $pack->platformId() === $chosenPlatformId) continue;
 
             // Begin the list?
@@ -941,12 +1029,17 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $FrontController->beginPage($pageTitle);
 
         // Output the redirect directive.
-?><meta http-equiv="REFRESH" content="2;url=<?php echo $pack->directDownloadUri(); ?>"><?php
+        if($pack->hasDirectDownloadUri())
+            $downloadUri = $pack->directDownloadUri();
+        else
+            $downloadUri = $pack->directDownloadFallbackUri();
+
+?><meta http-equiv="REFRESH" content="2;url=<?php echo $downloadUri; ?>"><?php
 
         // Generate page content.
 ?><div id="builds"><?php
 
-?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $pack->directDownloadUri(); ?>" title="<?php echo htmlspecialchars('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
+?><p>Redirecting to the download for <em><?php echo htmlspecialchars($pack->composeFullTitle()); ?></em>. Your package should begin to download automatically within a few seconds, if not please use this <a href="<?php echo $downloadUri; ?>" title="<?php echo htmlspecialchars('Download '. $pack->composeFullTitle()); ?>">direct link</a> instead.</p><?php
 
 ?><p>Not what you wanted? Here are some alternatives:</p><?php
 
@@ -1042,7 +1135,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             foreach($build->packages as &$pack)
             {
-                if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
+                if($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))
                 {
                     $count++;
                 }
@@ -1113,7 +1206,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             }
 
             // Determine issue level (think defcon).
-            if($errors > 0 || !$pack->hasDirectDownloadUri())
+            if($errors > 0 || (!$pack->hasDirectDownloadUri() && !$pack->hasDirectDownloadFallbackUri()))
             {
                 $issueLevel = 'major';
                 $issueTooltip = "$errors major errors occurred during the build";
@@ -1135,9 +1228,14 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <td><?php
 
             $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include the platform name*/, false/*do not include build Id*/);
-            if($pack instanceof iDownloadable && $pack->hasDirectDownloadUri())
+            if($pack instanceof iDownloadable && ($pack->hasDirectDownloadUri() || $pack->hasDirectDownloadFallbackUri()))
             {
-?><a href="<?php echo $pack->directDownloadUri(); ?>" title="Download <?php echo htmlspecialchars($pack->composeFullTitle()); ?>"><?php echo htmlspecialchars($packTitle); ?></a><?php
+                if($pack->hasDirectDownloadUri())
+                    $downloadUri = $pack->directDownloadUri();
+                else
+                    $downloadUri = $pack->directDownloadFallbackUri();
+
+?><a href="<?php echo $downloadUri; ?>" title="Download <?php echo htmlspecialchars($pack->composeFullTitle()); ?>"><?php echo htmlspecialchars($packTitle); ?></a><?php
             }
             else
             {
@@ -1149,6 +1247,13 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             if($pack instanceof AbstractPackage)
             {
                 $logUri = $pack->compileLogUri();
+
+                /// @todo Temporary kludge to patch the build log URIs
+                /// while code.iki.fi is offline. Remove me.
+                {
+                    $logUri = str_replace("code.iki.fi", "dl.dropbox.com/u/11948701", $logUri);
+                }
+                ///< Kludge end.
 
 ?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo htmlspecialchars($pack->composeFullTitle()); ?>">txt.gz</a><?php
 
@@ -1291,11 +1396,15 @@ jQuery(document).ready(function() {
             {
                 // No - this must be a symbolic package.
                 // We'll instantiate a symbolic BuildEvent for this.
-                $build = new BuildEvent(0, strtotime('Jan 8, 2005'), 'skyjake',
+                $build = new BuildEvent(0, $pack->hasReleaseDate()? $pack->releaseDate() : strtotime('Jan 8, 2005'), 'skyjake',
                                         'jaakko.keranen@iki.fi', RT_STABLE/*assumed*/);
                 if($pack->hasReleaseNotesUri())
                 {
                     $build->setReleaseNotesUri($pack->releaseNotesUri());
+                }
+                if($pack->hasReleaseChangeLogUri())
+                {
+                    $build->setReleaseChangeLogUri($pack->releaseChangeLogUri());
                 }
                 $build->addPackage($pack);
             }
@@ -1328,12 +1437,14 @@ jQuery(document).ready(function() {
         return $numEventsAdded;
     }
 
-    private function outputBuildStreamWidget(&$headEvent, $chainProperty='version',
-        $chainDirection=FALSE, $chainLengthMax=-1, $releaseInfo=NULL, $horizontal=FALSE,
-        $currentEvent=NULL, $currentInactive=FALSE)
+    private function outputBuildStreamWidget(&$headEvent, $chainProperty = 'version',
+        $chainDirection = FALSE, $chainLengthMax = -1, $chainOffset = 0,
+        $releaseInfo = NULL, $horizontal = FALSE,
+        $currentEvent = NULL, $currentInactive = FALSE)
     {
-        $chainDirection = (boolean)$chainDirection;
-        $chainLengthMax = (integer)$chainLengthMax;
+        $chainDirection  = (boolean)$chainDirection;
+        $chainLengthMax  = (integer)$chainLengthMax;
+        $chainOffset     = (integer)$chainOffset;
         $currentInactive = (boolean)$currentInactive;
 
 ?><div class="buildstream<?php echo ($horizontal ? ' hnav' : ''); ?>"><ul><?php
@@ -1363,7 +1474,12 @@ jQuery(document).ready(function() {
 
         if($headEvent instanceof BuildEvent)
         {
-            $n = (integer) 0;
+            $n = $chainOffset;
+            while($chainOffset-- > 0)
+            {
+                ?><li></li><?php
+            }
+
             for($event = $headEvent; !is_null($event);
                 $event = $chainProperty === 'version' ? ($chainDirection? $event->nextForVersion()   : $event->prevForVersion())
                                                       : ($chainDirection? $event->nextForStartDate() : $event->prevForStartDate()))
@@ -1422,7 +1538,7 @@ jQuery(document).ready(function() {
 
             $current = $event;
 
-            $this->outputBuildStreamWidget($event, 'version', FALSE/*descend*/, -1/*no length limit*/,
+            $this->outputBuildStreamWidget($event, 'version', FALSE/*descend*/, -1/*no length limit*/, 0/*no offset*/,
                                            $releaseInfo, FALSE/*vertical*/, $current, FALSE);
         }
 
@@ -1478,13 +1594,13 @@ jQuery(document).ready(function() {
         $packageListTitle = '<h3>Downloads for the latest packages</h3>';
 
         $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
-                                 TRUE/*stable filter*/, TRUE/*only downloadables*/,
+                                 FALSE/*stable filter*/, TRUE/*only downloadables*/,
                                  -1/*no result limit*/, $packageListTitle);
 
         $packageListTitle = '<h3>Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>)</h3>';
 
         $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
-                                 FALSE/*no stable filter*/, TRUE/*only downloadables*/,
+                                 TRUE/*unstable filter*/, TRUE/*only downloadables*/,
                                  -1/*no result limit*/, $packageListTitle);
 
 ?></div><?php

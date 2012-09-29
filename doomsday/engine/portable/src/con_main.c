@@ -58,6 +58,8 @@
 #include "de_filesys.h"
 
 #include "displaymode.h"
+#include "render/busyvisual.h"
+#include "updater/downloaddialog.h"
 #include "cbuffer.h"
 #include "font.h"
 
@@ -232,10 +234,9 @@ void Con_Register(void)
     // File
     C_VAR_CHARPTR("file-startup", &gameStartupFiles, 0, 0, 0);
 
-    C_VAR_INT("con-transition", &rTransition, 0, FIRST_TRANSITIONSTYLE, LAST_TRANSITIONSTYLE);
-    C_VAR_INT("con-transition-tics", &rTransitionTics, 0, 0, 60);
-
     Con_DataRegister();
+
+    Con_TransitionRegister();
 }
 
 void Con_ResizeHistoryBuffer(void)
@@ -942,17 +943,15 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             setting = true;
             if(cvar->flags & CVF_READ_ONLY)
             {
-                ddstring_t* name = CVar_ComposePath(cvar);
+                AutoStr* name = CVar_ComposePath(cvar);
                 Con_Printf("%s is read-only. It can't be changed (not even with force)\n", Str_Text(name));
-                Str_Delete(name);
             }
             else if((cvar->flags & CVF_PROTECTED) && !forced)
             {
-                ddstring_t* name = CVar_ComposePath(cvar);
+                AutoStr* name = CVar_ComposePath(cvar);
                 Con_Printf("%s is protected. You shouldn't change its value.\n"
                            "Use the command: '%s force %s' to modify it anyway.\n",
                            Str_Text(name), Str_Text(name), argptr);
-                Str_Delete(name);
             }
             else
             {
@@ -1005,7 +1004,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 
         if(out_of_range)
         {
-            ddstring_t* name = CVar_ComposePath(cvar);
+            AutoStr* name = CVar_ComposePath(cvar);
             if(!(cvar->flags & (CVF_NO_MIN | CVF_NO_MAX)))
             {
                 char temp[20];
@@ -1020,7 +1019,6 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             {
                 Con_Printf("Error: %s <= %s\n", Str_Text(name), M_TrimmedFloat(cvar->max));
             }
-            Str_Delete(name);
         }
         else if(!setting || !conSilentCVars) // Show the value.
         {
@@ -1221,14 +1219,13 @@ static int completeWord(int mode)
 
         for(match = matches; *match; ++match)
         {
-            ddstring_t* foundName = NULL;
             const char* foundWord;
 
             switch((*match)->type)
             {
             case WT_CVAR: {
                 cvar_t* cvar = (cvar_t*)(*match)->data;
-                foundName = CVar_ComposePath(cvar);
+                AutoStr* foundName = CVar_ComposePath(cvar);
                 foundWord = Str_Text(foundName);
                 if(printCompletions)
                     Con_PrintCVar(cvar, "  ");
@@ -1270,26 +1267,22 @@ static int completeWord(int mode)
                 completeWord = *match;
                 updated = true;
             }
-
-            if(NULL != foundName)
-                Str_Delete(foundName);
         }
     }
 
     // Was a single match found?
     if(numMatches == 1 || (mode == 1 && numMatches > 1))
     {
-        ddstring_t* foundName = NULL;
         const char* str;
 
         switch(completeWord->type)
         {
         case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
         case WT_CCMD:     str = ((ccmd_t*)completeWord->data)->name; break;
-        case WT_CVAR:
-            foundName = CVar_ComposePath((cvar_t*)completeWord->data);
+        case WT_CVAR: {
+            AutoStr* foundName = CVar_ComposePath((cvar_t*)completeWord->data);
             str = Str_Text(foundName);
-            break;
+            break; }
         case WT_GAME: str = Str_Text(Game_IdentityKey((Game*)completeWord->data)); break;
         default:
             Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
@@ -1301,9 +1294,6 @@ static int completeWord(int mode)
             strcpy(wordBegin, str);
             cmdCursor = (uint) strlen(cmdLine);
         }
-
-        if(NULL != foundName)
-            Str_Delete(foundName);
     }
     else if(numMatches > 1)
     {
@@ -1512,7 +1502,7 @@ static void insertOnCommandLine(byte ch)
     complPos = cmdCursor;
 }
 
-boolean Con_Responder(ddevent_t* ev)
+boolean Con_Responder(const ddevent_t* ev)
 {
     // The console is only interested in keyboard toggle events.
     if(!IS_KEY_TOGGLE(ev))
@@ -1561,16 +1551,7 @@ boolean Con_Responder(ddevent_t* ev)
     if(!IS_KEY_PRESS(ev))
         return false;
 
-    // The console is active and operational.
-
-    // Temporary kludge: since bindings are not presently accessible when the
-    // console is open, use some hardcoded keys.
-    if(ev->toggle.id == DDKEY_F11)
-    {
-        DD_Execute(true, altDown? "releasemouse" : "togglefullscreen");
-        return true;
-    }
-
+    // In this case the console is active and operational.
     // Check the shutdown key.
     if(!conInputLock)
     {
@@ -1864,7 +1845,7 @@ void Con_PrintRuler(void)
     if(consoleDump)
     {
         // A 70 characters long line.
-        if(isDedicated)
+        if(isDedicated || novideo)
         {
             int i;
             for(i = 0; i < 7; ++i)
@@ -1874,7 +1855,7 @@ void Con_PrintRuler(void)
             Sys_ConPrint(mainWindowIdx, "\n", 0);
         }
 
-        LegacyCore_PrintLogFragment(de2LegacyCore, "$R\n");
+        LegacyCore_PrintLogFragment("$R\n");
     }
 }
 
@@ -1894,7 +1875,7 @@ static void conPrintf(int flags, const char* format, va_list args)
 
         if(consoleDump)
         {
-            LegacyCore_PrintLogFragment(de2LegacyCore, prbuff);
+            LegacyCore_PrintLogFragment(prbuff);
         }
     }
 
@@ -1907,7 +1888,7 @@ static void conPrintf(int flags, const char* format, va_list args)
             Sv_SendText(netRemoteUser, flags | SV_CONSOLE_PRINT_FLAGS, text);
     }
 
-    if(isDedicated)
+    if(isDedicated || novideo)
     {
         Sys_ConPrint(mainWindowIdx, text, flags);
     }
@@ -2029,7 +2010,7 @@ void Con_Message(const char *message, ...)
         if(!consoleDump)
         {
             //printf("%s", buffer);
-            LegacyCore_PrintLogFragment(de2LegacyCore, buffer);
+            LegacyCore_PrintLogFragment(buffer);
         }
 
         // Also print in the console.
@@ -2057,7 +2038,7 @@ void Con_Error(const char* error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-        if(!Con_InBusyWorker())
+        if(!BusyMode_InWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
         }
@@ -2076,8 +2057,8 @@ void Con_Error(const char* error, ...)
     dd_vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
     //fprintf(outFile, "%s\n", err);
-    LegacyCore_PrintLogFragment(de2LegacyCore, err);
-    LegacyCore_PrintLogFragment(de2LegacyCore, "\n");
+    LegacyCore_PrintLogFragment(err);
+    LegacyCore_PrintLogFragment("\n");
 
     strcpy(buff, "");
     if(histBuf != NULL)
@@ -2096,10 +2077,10 @@ void Con_Error(const char* error, ...)
     strcat(buff, "\n");
     strcat(buff, err);
 
-    if(Con_IsBusy())
+    if(BusyMode_Active())
     {
-        Con_BusyWorkerError(buff);
-        if(Con_InBusyWorker())
+        BusyMode_WorkerError(buff);
+        if(BusyMode_InWorkerThread())
         {
             // We should not continue to execute the worker any more.
             for(;;) Thread_Sleep(10000);
@@ -2128,7 +2109,7 @@ void Con_AbnormalShutdown(const char* message)
         /// @todo Get the actual output filename (might be a custom one).
         Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
                                           "See Details for complete messsage log contents.",
-                                          LegacyCore_LogFile(de2LegacyCore));
+                                          LegacyCore_LogFile());
     }
 
     DD_Shutdown();
@@ -2195,8 +2176,11 @@ D_CMD(Help)
     Con_Printf("End            Jump to the end of the buffer.\n");
     Con_Printf("PageUp/Down    Scroll up/down a couple of lines.\n");
     Con_Printf("\n");
-    Con_Printf("Type \"listcmds\" to see a list of available commands.\n");
-    Con_Printf("Type \"help (what)\" to see information about (what).\n");
+    Con_Printf("Getting started:\n");
+    Con_Printf("Enter \"help (what)\" for information about (what).\n");
+    Con_Printf("Enter \"listcmds\"  to list available commands.\n");
+    Con_Printf("Enter \"listgames\" to list installed games and their status.\n");
+    Con_Printf("Enter \"listvars\"  to list available variables.\n");
     Con_PrintRuler();
     return true;
 }
@@ -2223,6 +2207,12 @@ D_CMD(Version)
 
 D_CMD(Quit)
 {
+    if(Updater_IsDownloadInProgress())
+    {
+        Con_Message("Cannot quit while downloading update.\n");
+        return false;
+    }
+
     if(argv[0][4] == '!' || isDedicated || !DD_GameLoaded() ||
        gx.TryShutdown == 0)
     {

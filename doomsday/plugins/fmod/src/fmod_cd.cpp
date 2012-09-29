@@ -35,10 +35,15 @@ int DM_CDAudio_Init(void)
     return fmodSystem != 0;
 }
 
-void DM_CDAudio_Shutdown(void)
+void DMFmod_CDAudio_Shutdown(void)
 {
     // Will be shut down with the rest of FMOD.
     DSFMOD_TRACE("CDAudio_Shutdown.");
+}
+
+void DM_CDAudio_Shutdown(void)
+{
+    DMFmod_CDAudio_Shutdown();
 }
 
 void DM_CDAudio_Update(void)
@@ -53,7 +58,7 @@ void DM_CDAudio_Set(int prop, float value)
     switch(prop)
     {
     case MUSIP_VOLUME:
-        DM_Music_Set(MUSIP_VOLUME, value);
+        DMFmod_Music_Set(MUSIP_VOLUME, value);
         break;
 
     default:
@@ -76,7 +81,7 @@ int DM_CDAudio_Get(int prop, void* ptr)
         break;
 
     case MUSIP_PLAYING:
-        return DM_Music_Get(MUSIP_PLAYING, ptr);
+        return DMFmod_Music_Get(MUSIP_PLAYING, ptr);
 
     default:
         return false;
@@ -160,17 +165,17 @@ int DM_CDAudio_Play(int track, int looped)
     }
 #endif
 
-    return DM_Music_PlaySound(trackSound, needRelease); // takes ownership
+    return DMFmod_Music_PlaySound(trackSound, needRelease); // takes ownership
 }
 
 void DM_CDAudio_Pause(int pause)
 {
-    DM_Music_Pause(pause);
+    DMFmod_Music_Pause(pause);
 }
 
 void DM_CDAudio_Stop(void)
 {
-    DM_Music_Stop();
+    DMFmod_Music_Stop();
 
     if(cdSound)
     {

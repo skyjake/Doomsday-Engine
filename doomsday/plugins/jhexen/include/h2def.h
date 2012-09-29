@@ -41,6 +41,7 @@
 #  define strupr _strupr
 #endif
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
@@ -84,8 +85,8 @@
 #define VERBOSE(code)       { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
-extern game_import_t gi;
-extern game_export_t gx;
+DENG_EXTERN_C game_import_t gi;
+DENG_EXTERN_C game_export_t gx;
 
 //
 // Global parameters/defines.
@@ -100,6 +101,7 @@ typedef enum {
     hexen,
     hexen_deathkings,
     hexen_betademo, // hexen_demo with some bugs
+    hexen_v10,      // Hexen release 1.0
     NUM_GAME_MODES
 } gamemode_t;
 
@@ -108,8 +110,9 @@ typedef enum {
 #define GM_HEXEN            0x2
 #define GM_HEXEN_DEATHKINGS 0x4
 #define GM_HEXEN_BETA       0x8
+#define GM_HEXEN_V10        0x10
 
-#define GM_ANY              (GM_HEXEN_DEMO|GM_HEXEN|GM_HEXEN_DEATHKINGS|GM_HEXEN_BETA)
+#define GM_ANY              (GM_HEXEN_DEMO|GM_HEXEN|GM_HEXEN_DEATHKINGS|GM_HEXEN_BETA|GM_HEXEN_V10)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
@@ -338,7 +341,7 @@ typedef enum {
 
 #define BLINKTHRESHOLD      (4*TICRATE)
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 
@@ -385,17 +388,10 @@ void            H2_Main(void);
 
 void            P_Init(void);
 
-void            P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
-
-extern boolean setsizeneeded;
-
 extern int      localQuakeHappening[MAXPLAYERS];
 
 byte            P_Random(void);
 void            M_ResetRandom(void);
-
-extern unsigned char rndtable[256];
-extern boolean  chatmodeon;
 
 void            SC_Open(const char* name);
 void            SC_OpenLump(lumpnum_t lumpNum);

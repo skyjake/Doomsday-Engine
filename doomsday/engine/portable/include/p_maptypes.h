@@ -20,6 +20,29 @@ typedef struct lineowner_s {
     shadowvert_t    shadowOffsets;
 } lineowner_t;
 
+struct walldivs_s;
+
+typedef struct walldivnode_s {
+    struct walldivs_s* divs;
+    coord_t height;
+} walldivnode_t;
+
+coord_t WallDivNode_Height(walldivnode_t* node);
+walldivnode_t* WallDivNode_Next(walldivnode_t* node);
+walldivnode_t* WallDivNode_Prev(walldivnode_t* node);
+
+/// Maximum number of walldivnode_ts in a walldivs_t dataset.
+#define WALLDIVS_MAX_NODES          64
+
+typedef struct walldivs_s {
+    uint num;
+    struct walldivnode_s nodes[WALLDIVS_MAX_NODES];
+} walldivs_t;
+
+uint WallDivs_Size(const walldivs_t* wallDivs);
+walldivnode_t* WallDivs_First(walldivs_t* wallDivs);
+walldivnode_t* WallDivs_Last(walldivs_t* wallDivs);
+
 typedef struct mvertex_s {
     // Vertex index. Always valid after loading and pruning of unused
     // vertices has occurred.
@@ -56,19 +79,16 @@ typedef struct vertex_s {
 #define HE_v2origin               HE_v(1)->origin
 
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
-#define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
+
+#define HEDGE_SIDE(h)             ((h)->lineDef ? &(h)->lineDef->L_side((h)->side) : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef ? (h)->lineDef->L_sidedef((h)->side) : NULL)
 
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
 
-/// @todo Refactor me away.
-typedef struct mhedge_s {
-    uint                index;
-} mhedge_t;
-
 typedef struct hedge_s {
     runtime_mapdata_header_t header;
-    struct vertex_s*    v[2];          // [Start, End] of the segment.
+    struct vertex_s*    v[2]; /// [Start, End] of the segment.
     struct hedge_s*     next;
     struct hedge_s*     prev;
 
@@ -81,31 +101,39 @@ typedef struct hedge_s {
     struct linedef_s*   lineDef;
     struct sector_s*    sector;
     angle_t             angle;
-    byte                side;          // 0=front, 1=back
-    coord_t             length;        // Accurate length of the segment (v1 -> v2).
+    byte                side; /// On which side of the LineDef (0=front, 1=back)?
+    coord_t             length; /// Accurate length of the segment (v1 -> v2).
     coord_t             offset;
-    biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
+    biassurface_t*      bsuf[3]; /// For each @ref SideDefSection.
     short               frameFlags;
     uint                index; /// Unique. Set when saving the BSP.
-    mhedge_t            buildData;
 } HEdge;
+
+/**
+ * @defgroup bspLeafFlags  Bsp Leaf Flags
+ * @addtogroup map
+ */
+///@{
+#define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.
+///@}
 
 typedef struct bspleaf_s {
     runtime_mapdata_header_t header;
-    unsigned int        hedgeCount;
-    struct hedge_s*     hedge;
-    struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
-    struct sector_s*    sector;
-    int                 addSpriteCount; // frame number of last R_AddSprites
+    struct hedge_s*     hedge; /// First HEdge in this leaf.
+    int                 flags; /// @ref bspLeafFlags.
+    uint                index; /// Unique. Set when saving the BSP.
+    int                 addSpriteCount; /// Frame number of last R_AddSprites.
     int                 validCount;
-    unsigned int        reverb[NUM_REVERB_DATA];
-    AABoxd              aaBox;         // Min and max points.
-    coord_t             worldGridOffset[2]; // Offset to align the top left of the bBox to the world grid.
-    coord_t             midPoint[2]; /// Center of vertices.
+    uint                hedgeCount; /// Number of HEdge's in this leaf.
+    struct sector_s*    sector;
+    struct polyobj_s*   polyObj; /// First polyobj in this leaf. Can be @c NULL.
     struct hedge_s*     fanBase; /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     struct shadowlink_s* shadows;
-    struct biassurface_s** bsuf;       // [sector->planeCount] size.
-    uint                index; /// Unique. Set when saving the BSP.
+    AABoxd              aaBox; /// HEdge Vertex bounding box in the map coordinate space.
+    coord_t             midPoint[2]; /// Center of vertices.
+    coord_t             worldGridOffset[2]; /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
+    struct biassurface_s** bsuf; /// [sector->planeCount] size.
+    unsigned int        reverb[NUM_REVERB_DATA];
 } BspLeaf;
 
 typedef enum {
@@ -144,11 +172,9 @@ typedef struct material_s {
 } material_t;
 
 // Internal surface flags:
-#define SUIF_PVIS             0x0001
-#define SUIF_FIX_MISSING_MATERIAL 0x0002 // Current texture is a fix replacement
-                                     // (not sent to clients, returned via DMU etc).
-#define SUIF_BLEND            0x0004 // Surface possibly has a blended texture.
-#define SUIF_NO_RADIO         0x0008 // No fakeradio for this surface.
+#define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
+                                           /// (not sent to clients, returned via DMU etc).
+#define SUIF_NO_RADIO               0x0002 ///< No fakeradio for this surface.
 
 #define SUIF_UPDATE_FLAG_MASK 0xff00
 #define SUIF_UPDATE_DECORATIONS 0x8000
@@ -200,15 +226,15 @@ typedef enum {
 
 typedef struct plane_s {
     runtime_mapdata_header_t header;
-    struct sector_s*    sector;        // Owner of the plane (temp)
+    struct sector_s*    sector;        /// Owner of the plane.
     Surface             surface;
-    coord_t             height;        // Current height
+    coord_t             height;        /// Current height.
     coord_t             oldHeight[2];
-    coord_t             target;        // Target height
-    coord_t             speed;         // Move speed
-    coord_t             visHeight;     // Visible plane height (smoothed)
+    coord_t             target;        /// Target height.
+    coord_t             speed;         /// Move speed.
+    coord_t             visHeight;     /// Visible plane height (smoothed).
     coord_t             visHeightDelta;
-    planetype_t         type;          // PLN_* type.
+    planetype_t         type;          /// PLN_* type.
     int                 planeID;
 } Plane;
 
@@ -358,10 +384,7 @@ typedef struct msidedef_s {
 typedef struct sidedef_s {
     runtime_mapdata_header_t header;
     Surface             sections[3];
-    struct hedge_s*     hedgeLeft;  /// Left-most HEdge on this SideDef's side of the owning LineDef
-    struct hedge_s*     hedgeRight; /// Right-most HEdge on this SideDef's side of the owning LineDef
     struct linedef_s*   line;
-    struct sector_s*    sector;
     short               flags;
     msidedef_t          buildData;
     int                 fakeRadioUpdateCount; // frame number of last update
@@ -385,48 +408,59 @@ typedef struct sidedef_s {
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)               sideDefs[(n)? 1:0]
-#define L_frontside             L_side(FRONT)
-#define L_backside              L_side(BACK)
-#define L_sector(n)             sideDefs[(n)? 1:0]->sector
+#define L_frontside             sides[0]
+#define L_backside              sides[1]
+#define L_side(n)               sides[(n)? 1:0]
+
+#define L_sidedef(n)            L_side(n).sideDef
+#define L_frontsidedef          L_sidedef(FRONT)
+#define L_backsidedef           L_sidedef(BACK)
+
+#define L_sector(n)             L_side(n).sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
 // Is this line self-referencing (front sec == back sec)?
-#define LINE_SELFREF(l)         ((l)->L_frontside && (l)->L_backside && \
+#define LINE_SELFREF(l)         ((l)->L_frontsidedef && (l)->L_backsidedef && \
                                  (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_POLYOBJ              0x1 // Line is part of a polyobject.
+#define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
+#define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
 
-typedef struct mlinedef_s {
-    // Linedef index. Always valid after loading & pruning of zero
-    // length lines has occurred.
-    int index;
+/**
+ * @defgroup sideSectionFlags  Side Section Flags
+ * @ingroup map
+ */
+///@{
+#define SSF_MIDDLE          0x1
+#define SSF_BOTTOM          0x2
+#define SSF_TOP             0x4
+///@}
 
-    // One-sided linedef used for a special effect (windows).
-    // The value refers to the opposite sector on the back side.
-    /// @todo Refactor so this information is represented using the
-    ///       BSP data objects.
-    struct sector_s* windowEffect;
-} mlinedef_t;
+typedef struct lineside_s {
+    struct sector_s* sector; /// Sector on this side.
+    struct sidedef_s* sideDef; /// SideDef on this side.
+    struct hedge_s* hedgeLeft;  /// Left-most HEdge on this side.
+    struct hedge_s* hedgeRight; /// Right-most HEdge on this side.
+    unsigned short shadowVisFrame; /// Framecount of last time shadows were drawn on this side.
+} lineside_t;
 
 typedef struct linedef_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];
-    struct lineowner_s* vo[2];         // Links to vertex line owner nodes [left, right]
-    struct sidedef_s*   sideDefs[2];
-    int                 flags;         // Public DDLF_* flags.
-    byte                inFlags;       // Internal LF_* flags
+    struct lineowner_s* vo[2]; /// Links to vertex line owner nodes [left, right].
+    lineside_t          sides[2];
+    int                 flags; /// Public DDLF_* flags.
+    byte                inFlags; /// Internal LF_* flags.
     slopetype_t         slopeType;
     int                 validCount;
-    binangle_t          angle;         // Calculated from front side's normal
+    binangle_t          angle; /// Calculated from front side's normal.
     coord_t             direction[2];
-    coord_t             length;        // Accurate length
+    coord_t             length; /// Accurate length.
     AABoxd              aaBox;
-    boolean             mapped[DDMAXPLAYERS]; // Whether the line has been mapped by each player yet.
-    mlinedef_t          buildData;
-    unsigned short      shadowVisFrame[2]; // Framecount of last time shadows were drawn for this line, for each side [right, left].
+    boolean             mapped[DDMAXPLAYERS]; /// Whether the line has been mapped by each player yet.
+    int                 origIndex; /// Original index in the archived map.
 } LineDef;
 
 #define RIGHT                   0
@@ -443,7 +477,7 @@ typedef struct partition_s {
 typedef struct bspnode_s {
     runtime_mapdata_header_t header;
     partition_t         partition;
-    AABoxd              aaBox[2];      // Bounding box for each child.
+    AABoxd              aaBox[2]; /// Bounding box for each child.
     runtime_mapdata_header_t* children[2];
     uint                index; /// Unique. Set when saving the BSP.
 } BspNode;

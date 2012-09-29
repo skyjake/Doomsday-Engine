@@ -62,6 +62,16 @@ typedef enum {
     STATENAMES_COUNT
 } statename_t;
 
+typedef enum {
+    SOUNDNAMES_FIRST,
+    SDN_PAIN = SOUNDNAMES_FIRST,
+    SDN_DEATH,
+    SDN_ACTIVE,
+    SDN_ATTACK,
+    SDN_SEE,
+    SOUNDNAMES_COUNT
+} soundname_t;
+
 typedef struct {
     int             doomEdNum;
     int             spawnHealth;
@@ -113,6 +123,10 @@ typedef struct {
     float           ambient;
     float           gravity;
     float           parTime;
+    float           fogColor[3]; // Fog color (RGB).
+    float           fogStart;
+    float           fogEnd;
+    float           fogDensity;
 } ddmapinfo_t;
 
 typedef struct {

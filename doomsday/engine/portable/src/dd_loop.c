@@ -35,6 +35,8 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
+#include "render/busyvisual.h"
+
 /// Development utility: on sharp tics, print player 0 movement state.
 //#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
 
@@ -111,16 +113,18 @@ int DD_GameLoopExitCode(void)
 
 int DD_GameLoop(void)
 {
-    noninteractive = ArgExists("-noinput");
+    noninteractive = CommandLine_Exists("-noinput");
 
     // Start the deng2 event loop.
-    return LegacyCore_RunEventLoop(de2LegacyCore);
+    return LegacyCore_RunEventLoop();
 }
 
 void DD_GameLoopCallback(void)
 {
     if(Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
+
+    Garbage_Recycle();
 
     if(isDedicated)
     {
@@ -129,7 +133,7 @@ void DD_GameLoopCallback(void)
         for(i = 1; i < DDMAXPLAYERS; ++i)
             if(ddPlayers[i].shared.inGame) count++;
 
-        LegacyCore_SetLoopRate(de2LegacyCore, count || !noninteractive? 35 : 3);
+        LegacyCore_SetLoopRate(count || !noninteractive? 35 : 3);
 
         runTics();
 
@@ -139,7 +143,7 @@ void DD_GameLoopCallback(void)
     else
     {
         // Normal client-side/singleplayer mode.
-        assert(!novideo);
+        //assert(!novideo);
 
         // We may be performing GL operations.
         Window_GLActivate(Window_Main());
@@ -166,7 +170,7 @@ void DD_GameLoopDrawer(void)
 {
     if(novideo || Sys_IsShuttingDown()) return;
 
-    assert(!Con_IsBusy()); // Busy mode has its own drawer.
+    assert(!BusyMode_Active()); // Busy mode has its own drawer.
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -305,7 +309,7 @@ boolean DD_IsSharpTick(void)
 
 boolean DD_IsFrameTimeAdvancing(void)
 {
-    if(Con_IsBusy()) return false;
+    if(BusyMode_Active()) return false;
     if(Con_TransitionInProgress()) return false;
     return tickFrame || netGame;
 }
@@ -540,7 +544,7 @@ void DD_WaitForOptimalUpdateTime(void)
 
 timespan_t DD_LatestRunTicsStartTime(void)
 {
-    if(Con_IsBusy()) return Sys_GetSeconds();
+    if(BusyMode_Active()) return Sys_GetSeconds();
     return lastRunTicsTime;
 }
 

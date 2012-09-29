@@ -88,7 +88,7 @@ void checkMobjHash(void)
  */
 static void ClMobj_LinkInHash(mobj_t* mo, thid_t id)
 {
-    /// @fixme Do not assume the CURRENT map.
+    /// @todo Do not assume the CURRENT map.
     cmhash_t* hash = GameMap_ClMobjHash(theMap, id);
     clmoinfo_t* info = ClMobj_GetInfo(mo);
 
@@ -299,8 +299,13 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     //localMobj->nexttime = clmo->nexttime;
 #define DDMF_KEEP_MASK (DDMF_REMOTE | DDMF_SOLID)
     localMobj->ddFlags = (localMobj->ddFlags & DDMF_KEEP_MASK) | (remoteClientMobj->ddFlags & ~DDMF_KEEP_MASK);
-    localMobj->flags = (localMobj->flags & ~0x1c000000) |
-                       (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
+    if(flags & MDF_FLAGS)
+    {
+        localMobj->flags = (localMobj->flags & ~0x1c000000) |
+                           (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
+        //DEBUG_Message(("UpdateRealPlayerMobj: translation=%i\n", (localMobj->flags >> 26) & 7));
+    }
+
     localMobj->height = remoteClientMobj->height;
 /*#ifdef _DEBUG
     if(localMobj->floorClip != remoteClientMobj->floorClip)
@@ -917,7 +922,7 @@ void ClMobj_ReadDelta2(boolean skip)
         d->ddFlags &= ~DDMF_PACK_MASK;
         d->ddFlags |= DDMF_REMOTE | (Reader_ReadUInt32(msgReader) & DDMF_PACK_MASK);
 
-        d->flags = Reader_ReadUInt32(msgReader);
+        d->flags  = Reader_ReadUInt32(msgReader);
         d->flags2 = Reader_ReadUInt32(msgReader);
         d->flags3 = Reader_ReadUInt32(msgReader);
     }

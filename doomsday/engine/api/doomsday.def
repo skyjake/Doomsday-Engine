@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 842 <--
-; Other free ordinals: 57
+; Highest ordinal is currently: --> 859 <--
+; Other free ordinals: None
 
 NAME                            "DOOMSDAY"
 
@@ -239,54 +239,61 @@ EXPORTS
     Point3f_Equality            @804 NONAME
 
     ; String.
-    Str_New                     @461 NONAME
-    Str_Init                    @462 NONAME
-    Str_InitStatic              @756 NONAME
-    Str_Free                    @463 NONAME
-    Str_Delete                  @464 NONAME
-    Str_Clear                   @465 NONAME
-    Str_Reserve                 @466 NONAME
-    Str_Set                     @467 NONAME
-    Str_Append                  @468 NONAME
-    Str_AppendChar              @469 NONAME
-    Str_Appendf                 @470 NONAME
-    Str_PartAppend              @471 NONAME
-    Str_Prepend                 @472 NONAME
-    Str_Length                  @473 NONAME
-    Str_IsEmpty                 @474 NONAME
-    Str_Text                    @475 NONAME
-    Str_Copy                    @476 NONAME
-    Str_StripLeft               @477 NONAME
-    Str_StripLeft2              @761 NONAME
-    Str_StripRight              @478 NONAME
-    Str_StripRight2             @762 NONAME
-    Str_Strip                   @479 NONAME
-    Str_Strip2                  @763 NONAME
-    Str_GetLine                 @480 NONAME
-    Str_CopyDelim2              @481 NONAME
-    Str_CopyDelim               @482 NONAME
-    Str_CompareIgnoreCase       @483 NONAME
-    Str_At                      @484 NONAME
-    Str_RAt                     @485 NONAME
-    Str_Truncate                @498 NONAME
-    Str_PrependChar             @336 NONAME
-    Str_PercentEncode           @757 NONAME
-    Str_PercentEncode2          @758 NONAME
-    Str_PercentDecode           @759 NONAME
-    Str_Write                   @739 NONAME
-    Str_Read                    @740 NONAME
+;    Str_New                     @461 NONAME
+;    Str_FromAutoStr             @844 NONAME
+;    Str_Init                    @462 NONAME
+;    Str_InitStd                 @848 NONAME
+;    Str_InitStatic              @756 NONAME
+;    Str_Free                    @463 NONAME
+;    Str_Delete                  @464 NONAME
+;    Str_Clear                   @465 NONAME
+;    Str_Reserve                 @466 NONAME
+;    Str_Set                     @467 NONAME
+;    Str_Append                  @468 NONAME
+;    Str_AppendChar              @469 NONAME
+;    Str_Appendf                 @470 NONAME
+;    Str_PartAppend              @471 NONAME
+;    Str_Prepend                 @472 NONAME
+;    Str_Length                  @473 NONAME
+;    Str_IsEmpty                 @474 NONAME
+;    Str_Text                    @475 NONAME
+;    Str_Copy                    @476 NONAME
+;    Str_CopyOrClear             @843 NONAME
+;    Str_StripLeft               @477 NONAME
+;    Str_StripLeft2              @761 NONAME
+;    Str_StripRight              @478 NONAME
+;    Str_StripRight2             @762 NONAME
+;    Str_Strip                   @479 NONAME
+;    Str_Strip2                  @763 NONAME
+;    Str_GetLine                 @480 NONAME
+;    Str_CopyDelim2              @481 NONAME
+;    Str_CopyDelim               @482 NONAME
+;    Str_CompareIgnoreCase       @483 NONAME
+;    Str_At                      @484 NONAME
+;    Str_RAt                     @485 NONAME
+;    Str_Truncate                @498 NONAME
+;    Str_PrependChar             @336 NONAME
+;    Str_PercentEncode           @757 NONAME
+;    Str_PercentEncode2          @758 NONAME
+;    Str_PercentDecode           @759 NONAME
+;    Str_Write                   @739 NONAME
+;    Str_Read                    @740 NONAME
+;
+;    AutoStr_New                 @845 NONAME
+;    AutoStr_NewStd              @846 NONAME
+;    AutoStr_FromStr             @847 NONAME
 
     ; StringPool.
-    StringPool_New              @537 NONAME
-    StringPool_NewWithStrings   @538 NONAME
-    StringPool_Delete           @539 NONAME
-    StringPool_Clear            @540 NONAME
-    StringPool_Empty            @541 NONAME
-    StringPool_Size             @542 NONAME
-    StringPool_Intern           @543 NONAME
-    StringPool_InternAndRetrieve @544 NONAME
-    StringPool_IsInterned       @545 NONAME
-    StringPool_String           @546 NONAME
+;    StringPool_New              @537 NONAME
+;    StringPool_NewWithStrings   @538 NONAME
+;    StringPool_Delete           @539 NONAME
+;    StringPool_Clear            @540 NONAME
+;    StringPool_Empty            @541 NONAME
+;    StringPool_Size             @542 NONAME
+;    StringPool_Intern           @543 NONAME
+;    StringPool_InternAndRetrieve @544 NONAME
+;    StringPool_IsInterned       @545 NONAME
+;    StringPool_String           @546 NONAME
 
     ; Uri.
     Uri_New                     @238 NONAME
@@ -358,18 +365,28 @@ EXPORTS
     W_LumpIsCustom              @239 NONAME
 
 ; Base: Zone.
-    Z_Malloc                    @24 NONAME
-    Z_Calloc                    @211 NONAME
-    Z_Realloc                   @212 NONAME
-    Z_Recalloc                  @213 NONAME
-    Z_Free                      @25 NONAME
-    Z_FreeTags                  @26 NONAME
-    Z_ChangeTag2                @27 NONAME
-    Z_CheckHeap                 @28 NONAME
+;   Z_Malloc                    @24 NONAME
+;   Z_Calloc                    @211 NONAME
+;   Z_Realloc                   @212 NONAME
+;   Z_Recalloc                  @213 NONAME
+;   Z_Free                      @25 NONAME
+;   Z_FreeTags                  @26 NONAME
+;   Z_ChangeTag2                @27 NONAME
+;   Z_CheckHeap                 @28 NONAME
 
 ; Base: Misc.
     dd_snprintf                 @447 NONAME
-    dd_vsnprintf                @448 NONAME
+;   dd_vsnprintf                @448 NONAME
+
+; Base: BusyMode.
+    BusyMode_Active             @126 NONAME
+    BusyMode_ElapsedTime        @851 NONAME
+    BusyMode_RunTask            @852 NONAME
+    BusyMode_RunTasks           @849 NONAME
+    BusyMode_RunNewTask         @853 NONAME
+    BusyMode_RunNewTaskWithName @330 NONAME
+    BusyMode_WorkerEnd          @331 NONAME
+    BusyMode_WorkerError        @850 NONAME
 
 ; Console.
     Con_Open                    @29 NONAME
@@ -398,10 +415,7 @@ EXPORTS
     DD_Executef                 @40 NONAME
     Con_Message                 @41 NONAME
     Con_Error                   @42 NONAME
-    Con_Busy                    @330 NONAME
-    Con_BusyWorkerEnd           @331 NONAME
     Con_SetPrintFilter          @536 NONAME
-    Con_IsBusy                  @126 NONAME
 
 ; Console: Bindings.
     B_BindingsForCommand        @428 NONAME
@@ -453,6 +467,7 @@ EXPORTS
     P_BspLeafAtPointXY          @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME
+    P_PolyobjLinesBoxIterator   @856 NONAME
     P_AllLinesBoxIterator       @347 NONAME
     P_PolyobjsBoxIterator       @348 NONAME
     P_BspLeafsBoxIterator       @345 NONAME
@@ -465,6 +480,7 @@ EXPORTS
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
+    Game_Notify                 @859 NONAME
 
 ; Play: Controls.
     P_NewPlayerControl          @251 NONAME
@@ -480,6 +496,7 @@ EXPORTS
     P_LoadMap                   @254 NONAME
 
 ; Maps: Map Data Updates and Information Access.
+    DMU_GetType                 @323 NONAME
     P_ToIndex                   @256 NONAME
     P_ToPtr                     @257 NONAME
     P_Callback                  @258 NONAME
@@ -489,7 +506,6 @@ EXPORTS
     ; dummy objects
     P_AllocDummy                @321 NONAME
     P_FreeDummy                 @322 NONAME
-    P_DummyType                 @323 NONAME
     P_IsDummy                   @324 NONAME
     P_DummyExtraData            @325 NONAME
 
@@ -626,6 +642,8 @@ EXPORTS
     DD_GetFrameRate             @88 NONAME
 
     R_SetupMap                  @89 NONAME
+    R_SetupFogDefaults          @854 NONAME
+    R_SetupFog                  @855 NONAME
 
     R_PrecacheMobjNum           @427 NONAME
     R_PrecacheModelsForState    @240 NONAME
@@ -653,6 +671,7 @@ EXPORTS
     R_DeclarePatch              @335 NONAME
     R_GetPatchInfo              @237 NONAME
     R_ComposePatchUri           @247 NONAME
+    R_ComposePatchPath          @858 NONAME
 
     R_TextureUniqueId           @438 NONAME
     R_TextureUniqueId2          @501 NONAME
@@ -873,12 +892,14 @@ EXPORTS
 
     ; Vectors.
     V2d_Sum                     @54 NONAME
+    V2d_Scale                   @57 NONAME
     V2d_Subtract                @341 NONAME
     V2d_Rotate                  @344 NONAME
     V2d_PointOnLineSide         @376 NONAME
     V2d_PointLineDistance       @442 NONAME
     V2d_ProjectOnLine           @443 NONAME
     V2d_Intersection            @349 NONAME
+    V2d_Copy                    @857 NONAME
 
     ; Utilities.
     M_ApproxDistance            @58 NONAME
@@ -888,15 +909,15 @@ EXPORTS
     M_PointXYToAngle2           @101 NONAME
 
 ; Miscellaneous: Command line.
-    ArgAbbreviate               @146 NONAME
-    Argc                        @147 NONAME
-    Argv                        @148 NONAME
-    ArgvPtr                     @149 NONAME
-    ArgNext                     @150 NONAME
-    ArgCheck                    @151 NONAME
-    ArgCheckWith                @152 NONAME
-    ArgExists                   @153 NONAME
-    ArgIsOption                 @154 NONAME
+;   ArgAbbreviate               @146 NONAME
+;   Argc                        @147 NONAME
+;   Argv                        @148 NONAME
+;   ArgvPtr                     @149 NONAME
+;   ArgNext                     @150 NONAME
+;   ArgCheck                    @151 NONAME
+;   ArgCheckWith                @152 NONAME
+;   ArgExists                   @153 NONAME
+;   ArgIsOption                 @154 NONAME
 
 ; Doomsday Engine Definitions.
     DED_Init                    @155 NONAME
@@ -940,49 +961,49 @@ EXPORTS
     DED_DelArray                @195 NONAME
     
 ; Reader.
-    Reader_NewWithBuffer        @547 NONAME
-    Reader_NewWithCallbacks     @743 NONAME
-    Reader_Delete               @548 NONAME
-    Reader_ReadChar             @549 NONAME
-    Reader_ReadByte             @550 NONAME
-    Reader_ReadInt16            @551 NONAME
-    Reader_ReadUInt16           @552 NONAME
-    Reader_ReadInt32            @553 NONAME
-    Reader_ReadUInt32           @554 NONAME
-    Reader_ReadFloat            @555 NONAME
-    Reader_ReadPackedUInt16     @556 NONAME
-    Reader_ReadPackedUInt32     @557 NONAME
-    Reader_Read                 @558 NONAME
-    Reader_AtEnd                @559 NONAME
-    Reader_Pos                  @560 NONAME
-    Reader_SetPos               @561 NONAME
-    Reader_Size                 @562 NONAME
+;    Reader_NewWithBuffer        @547 NONAME
+;    Reader_NewWithCallbacks     @743 NONAME
+;    Reader_Delete               @548 NONAME
+;    Reader_ReadChar             @549 NONAME
+;    Reader_ReadByte             @550 NONAME
+;    Reader_ReadInt16            @551 NONAME
+;    Reader_ReadUInt16           @552 NONAME
+;    Reader_ReadInt32            @553 NONAME
+;    Reader_ReadUInt32           @554 NONAME
+;    Reader_ReadFloat            @555 NONAME
+;    Reader_ReadPackedUInt16     @556 NONAME
+;    Reader_ReadPackedUInt32     @557 NONAME
+;    Reader_Read                 @558 NONAME
+;    Reader_AtEnd                @559 NONAME
+;    Reader_Pos                  @560 NONAME
+;    Reader_SetPos               @561 NONAME
+;    Reader_Size                 @562 NONAME
 
 ; Writer.
-    Writer_NewWithBuffer        @563 NONAME
-    Writer_NewWithDynamicBuffer @564 NONAME
-    Writer_NewWithCallbacks     @742 NONAME
-    Writer_Delete               @565 NONAME
-    Writer_Size                 @566 NONAME
-    Writer_Data                 @567 NONAME
-    Writer_TotalBufferSize      @568 NONAME
-    Writer_BytesLeft            @569 NONAME
-    Writer_SetPos               @570 NONAME
-    Writer_WriteChar            @571 NONAME
-    Writer_WriteByte            @572 NONAME
-    Writer_WriteInt16           @573 NONAME
-    Writer_WriteUInt16          @574 NONAME
-    Writer_WriteInt32           @575 NONAME
-    Writer_WriteUInt32          @576 NONAME
-    Writer_WriteFloat           @577 NONAME
-    Writer_WritePackedUInt16    @578 NONAME
-    Writer_WritePackedUInt32    @579 NONAME
-    Writer_Write                @580 NONAME
+;    Writer_NewWithBuffer        @563 NONAME
+;    Writer_NewWithDynamicBuffer @564 NONAME
+;    Writer_NewWithCallbacks     @742 NONAME
+;    Writer_Delete               @565 NONAME
+;    Writer_Size                 @566 NONAME
+;    Writer_Data                 @567 NONAME
+;    Writer_TotalBufferSize      @568 NONAME
+;    Writer_BytesLeft            @569 NONAME
+;    Writer_SetPos               @570 NONAME
+;    Writer_WriteChar            @571 NONAME
+;    Writer_WriteByte            @572 NONAME
+;    Writer_WriteInt16           @573 NONAME
+;    Writer_WriteUInt16          @574 NONAME
+;    Writer_WriteInt32           @575 NONAME
+;    Writer_WriteUInt32          @576 NONAME
+;    Writer_WriteFloat           @577 NONAME
+;    Writer_WritePackedUInt16    @578 NONAME
+;    Writer_WritePackedUInt32    @579 NONAME
+;    Writer_Write                @580 NONAME
 
 ; Smoother.
-    Smoother_IsOnFloor          @581 NONAME
-    Smoother_Evaluate           @582 NONAME
-    Smoother_Clear              @583 NONAME
+;   Smoother_IsOnFloor          @581 NONAME
+;   Smoother_Evaluate           @582 NONAME
+;   Smoother_Clear              @583 NONAME
 
 ; MaterialArchive.
     MaterialArchive_New         @744 NONAME

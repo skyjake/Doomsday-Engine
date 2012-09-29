@@ -36,14 +36,13 @@
 
 typedef enum {
     GA_NONE,
-    GA_LOADMAP,
-    GA_INITNEW,
+    GA_RESTARTMAP,
+    GA_SETMAP, ///< Same as GA_NEWGAME except autosave is retained and ACS scripts aren't reset.
     GA_NEWGAME,
     GA_LOADGAME,
     GA_SAVEGAME,
     GA_MAPCOMPLETED,
     GA_LEAVEMAP,
-    GA_SINGLEREBORN,
     GA_VICTORY,
     GA_SCREENSHOT,
     GA_QUIT

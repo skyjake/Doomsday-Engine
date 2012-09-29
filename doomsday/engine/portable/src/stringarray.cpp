@@ -23,7 +23,7 @@
 #include <assert.h>
 #include <vector>
 #include <string.h>
-#include "string.hh"
+#include <de/str.hh>
 
 struct stringarray_s {
     typedef std::vector<de::Str*> Strings;

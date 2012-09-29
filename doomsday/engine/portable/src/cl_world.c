@@ -314,7 +314,7 @@ void GameMap_DeleteClPolyobj(GameMap* map, clpolyobj_t* mover)
  */
 void Cl_MoverThinker(clplane_t* mover)
 {
-    GameMap* map = theMap; /// @fixme Do not assume mover is from the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume mover is from the CURRENT map.
     coord_t original;
     boolean remove = false;
     boolean freeMove;
@@ -516,7 +516,7 @@ void Cl_PolyMoverThinker(clpolyobj_t* mover)
     // Can we get rid of this mover?
     if(!mover->move && !mover->rotate)
     {
-        /// @fixme Do not assume the move is from the CURRENT map.
+        /// @todo Do not assume the move is from the CURRENT map.
         GameMap_DeleteClPolyobj(theMap, mover);
     }
 }
@@ -536,7 +536,7 @@ clpolyobj_t* GameMap_ClPolyobjByPolyobjIndex(GameMap* map, uint index)
 }
 
 /**
- * @important Assumes there is no existing ClPolyobj for Polyobj @a index.
+ * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
  */
 clpolyobj_t* GameMap_NewClPolyobj(GameMap* map, uint polyobjIndex)
 {
@@ -614,7 +614,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     static Plane* dummyPlaneArray[2];
     static Plane dummyPlanes[2];
 
-    GameMap* map = theMap; /// @fixme Do not assume the CURRENT map.
+    GameMap* map = theMap; /// @todo Do not assume the CURRENT map.
     unsigned short num;
     Sector* sec;
     int df;
@@ -727,14 +727,14 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
  */
 void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
-    unsigned short      num;
+    unsigned short num;
 
-    int                 df, topMat = 0, midMat = 0, botMat = 0;
-    int                 blendmode = 0;
-    byte                lineFlags = 0, sideFlags = 0;
-    float               toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
-    float               bottomrgb[3] = {0,0,0};
-    SideDef*            sid;
+    int df, topMat = 0, midMat = 0, botMat = 0;
+    int blendmode = 0;
+    byte lineFlags = 0, sideFlags = 0;
+    float toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
+    float bottomrgb[3] = {0,0,0};
+    SideDef* side;
 
     // First read all the data.
     num = Reader_ReadUInt16(msgReader);
@@ -792,57 +792,57 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     }
 #endif
 
-    sid = SIDE_PTR(num);
+    side = SIDE_PTR(num);
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        Surface_SetMaterial(&sid->SW_topsurface, Cl_FindLocalMaterial(topMat));
+        Surface_SetMaterial(&side->SW_topsurface, Cl_FindLocalMaterial(topMat));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        Surface_SetMaterial(&sid->SW_middlesurface, Cl_FindLocalMaterial(midMat));
+        Surface_SetMaterial(&side->SW_middlesurface, Cl_FindLocalMaterial(midMat));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        Surface_SetMaterial(&sid->SW_bottomsurface, Cl_FindLocalMaterial(botMat));
+        Surface_SetMaterial(&side->SW_bottomsurface, Cl_FindLocalMaterial(botMat));
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        Surface_SetColorRed(&sid->SW_topsurface, toprgb[CR]);
+        Surface_SetColorRed(&side->SW_topsurface, toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        Surface_SetColorGreen(&sid->SW_topsurface, toprgb[CG]);
+        Surface_SetColorGreen(&side->SW_topsurface, toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        Surface_SetColorBlue(&sid->SW_topsurface, toprgb[CB]);
+        Surface_SetColorBlue(&side->SW_topsurface, toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        Surface_SetColorRed(&sid->SW_middlesurface, midrgba[CR]);
+        Surface_SetColorRed(&side->SW_middlesurface, midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        Surface_SetColorGreen(&sid->SW_middlesurface, midrgba[CG]);
+        Surface_SetColorGreen(&side->SW_middlesurface, midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        Surface_SetColorBlue(&sid->SW_middlesurface, midrgba[CB]);
+        Surface_SetColorBlue(&side->SW_middlesurface, midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        Surface_SetAlpha(&sid->SW_middlesurface, midrgba[CA]);
+        Surface_SetAlpha(&side->SW_middlesurface, midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Surface_SetColorRed(&sid->SW_bottomsurface, bottomrgb[CR]);
+        Surface_SetColorRed(&side->SW_bottomsurface, bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Surface_SetColorGreen(&sid->SW_bottomsurface, bottomrgb[CG]);
+        Surface_SetColorGreen(&side->SW_bottomsurface, bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Surface_SetColorBlue(&sid->SW_bottomsurface, bottomrgb[CB]);
+        Surface_SetColorBlue(&side->SW_bottomsurface, bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
-        Surface_SetBlendMode(&sid->SW_middlesurface, blendmode);
+        Surface_SetBlendMode(&side->SW_middlesurface, blendmode);
 
     if(df & SIDF_FLAGS)
     {
         // The delta includes the entire lowest byte.
-        sid->flags &= ~0xff;
-        sid->flags |= sideFlags;
+        side->flags &= ~0xff;
+        side->flags |= sideFlags;
     }
 
     if(df & SIDF_LINE_FLAGS)
     {
-        LineDef* line = sid->line;
+        LineDef* line = side->line;
         if(line)
         {
             // The delta includes the entire lowest byte.

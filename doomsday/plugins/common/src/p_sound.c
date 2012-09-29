@@ -48,7 +48,7 @@ void S_MapMusic(uint episode, uint map)
     }
 #else
     Uri* mapUri = G_ComposeMapUri(episode, map);
-    ddstring_t* mapPath = Uri_Compose(mapUri);
+    AutoStr* mapPath = Uri_Compose(mapUri);
     ddmapinfo_t mapInfo;
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &mapInfo))
     {
@@ -58,7 +58,6 @@ void S_MapMusic(uint episode, uint map)
             gsvMapMusic = mapInfo.music;
         }
     }
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
 #endif
 }
@@ -147,7 +146,7 @@ void S_ParseSndInfoLump(void)
     for(i = 0; i < Get(DD_NUMSOUNDS); ++i)
     {
         /// @kludge This uses a kludge to traverse the entire sound list.
-        /// @fixme Implement a mechanism for walking the Def databases.
+        /// @todo Implement a mechanism for walking the Def databases.
         Def_Get(DD_DEF_SOUND_LUMPNAME, (char*) &i, buf);
         if(!strcmp(buf, ""))
             Def_Set(DD_DEF_SOUND, i, DD_LUMP, "default");

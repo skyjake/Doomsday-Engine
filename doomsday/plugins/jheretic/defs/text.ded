@@ -1148,3 +1148,13 @@ Text {
   ID = "HUSTR_E6M3";
   Text = "E6M3: American's Legacy";
 }
+
+Text {
+  ID = "DELETESAVEGAME_CONFIRM";
+  Text = "Really delete save game\n\n'%s'?";
+}
+
+Text {
+  ID = "REBORNLOAD_CONFIRM";
+  Text = "Load save game\n\n'%s'?\n\n(No to restart map)";
+}

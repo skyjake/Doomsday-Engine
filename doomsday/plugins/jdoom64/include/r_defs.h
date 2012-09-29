@@ -114,14 +114,25 @@ typedef struct xline_s {
 } xline_t;
 
 // Our private map data structures.
-extern xsector_t* xsectors;
-extern xline_t* xlines;
+DENG_EXTERN_C xsector_t* xsectors;
+DENG_EXTERN_C xline_t* xlines;
 
 // If true we are in the process of setting up a map.
-extern boolean mapSetup;
+DENG_EXTERN_C boolean mapSetup;
 
+/**
+ * Converts a line to an xline.
+ */
 xline_t*        P_ToXLine(LineDef* line);
+
+/**
+ * Converts a sector to an xsector.
+ */
 xsector_t*      P_ToXSector(Sector* sector);
+
+/**
+ * Given a BSP leaf - find its parent xsector.
+ */
 xsector_t*      P_ToXSectorOfBspLeaf(BspLeaf* sub);
 
 /**

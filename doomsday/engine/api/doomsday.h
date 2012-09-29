@@ -65,14 +65,14 @@ extern "C" {
  * structures is needed.
  */
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
-    typedef struct bspnode_s { int type; } BspNode;
-    typedef struct vertex_s {int type; } Vertex;
-    typedef struct linedef_s { int type; } LineDef;
-    typedef struct sidedef_s { int type; } SideDef;
-    typedef struct hedge_s { int type; } HEdge;
-    typedef struct bspleaf_s { int type; } BspLeaf;
-    typedef struct sector_s { int type; } Sector;
-    typedef struct plane_s { int type; } Plane;
+    typedef struct bspnode_s  { int type; } BspNode;
+    typedef struct vertex_s   { int type; } Vertex;
+    typedef struct linedef_s  { int type; } LineDef;
+    typedef struct sidedef_s  { int type; } SideDef;
+    typedef struct hedge_s    { int type; } HEdge;
+    typedef struct bspleaf_s  { int type; } BspLeaf;
+    typedef struct sector_s   { int type; } Sector;
+    typedef struct plane_s    { int type; } Plane;
     typedef struct material_s { int type; } material_t;
 #endif
 
@@ -82,12 +82,13 @@ struct font_s;
 #include "dd_plugin.h"
 #include "dfile.h"
 #include "point.h"
-#include "reader.h"
 #include "rect.h"
 #include "size.h"
-#include "smoother.h"
-#include "stringpool.h"
-#include "writer.h"
+#include <de/reader.h>
+#include <de/writer.h>
+#include <de/memoryzone.h>
+#include <de/smoother.h>
+#include <de/stringpool.h>
 
 //------------------------------------------------------------------------
 //
@@ -108,6 +109,19 @@ struct font_s;
  * @defgroup fs File System
  * @ingroup base
  */
+
+/// @addtogroup base
+///@{
+    boolean         BusyMode_Active(void);
+    timespan_t      BusyMode_ElapsedTime(void);
+    int             BusyMode_RunTask(BusyTask* task);
+    int             BusyMode_RunTasks(BusyTask* tasks, int numTasks);
+    int             BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void* workerData);
+    int             BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void* workerData, const char* taskName);
+
+    void            BusyMode_WorkerEnd(void);
+    void            BusyMode_WorkerError(const char* message);
+///@}
 
 /// @addtogroup game
 ///@{
@@ -211,19 +225,6 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
     const char*     F_PrettyPath(const char* path);
 ///@}
 
-/// @addtogroup memzone
-///@{
-    // Base: Zone.
-    void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);
-    void* _DECALL   Z_Calloc(size_t size, int tag, void* user);
-    void*           Z_Realloc(void* ptr, size_t n, int mallocTag);
-    void*           Z_Recalloc(void* ptr, size_t n, int callocTag);
-    void _DECALL    Z_Free(void* ptr);
-    void            Z_FreeTags(int lowTag, int highTag);
-    void            Z_ChangeTag2(void* ptr, int tag);
-    void            Z_CheckHeap(void);
-///@}
-
 //------------------------------------------------------------------------
 //
 // Console.
@@ -232,9 +233,6 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 
 /// @addtogroup console
 ///@{
-    int             Con_Busy(int flags, const char* taskName, int (*workerFunc)(void*), void* workerData);
-    void            Con_BusyWorkerEnd(void);
-    boolean         Con_IsBusy(void);
     void            Con_Open(int yes);
     void            Con_AddCommand(const ccmdtemplate_t* cmd);
     void            Con_AddVariable(const cvartemplate_t* var);
@@ -315,10 +313,10 @@ boolean MPE_End(void);
 
     uint            MPE_VertexCreate(coord_t x, coord_t y);
     boolean         MPE_VertexCreatev(size_t num, coord_t* values, uint* indices);
-    uint            MPE_SidedefCreate(uint sector, short flags, materialid_t topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, materialid_t bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
-    uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flags);
+    uint            MPE_SidedefCreate(short flags, const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
+    uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSector, uint backSector, uint frontSide, uint backSide, int flags);
     uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
-    uint            MPE_PlaneCreate(uint sector, coord_t height, materialid_t materialId, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
+    uint            MPE_PlaneCreate(uint sector, coord_t height, const ddstring_t* materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
     uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, coord_t originX, coord_t originY);
     boolean         MPE_GameObjProperty(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
 ///@}
@@ -438,6 +436,8 @@ int P_MobjsBoxIterator(const AABoxd* box, int (*callback) (struct mobj_s*, void*
 int P_LinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
 
 int P_AllLinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
+
+int P_PolyobjLinesBoxIterator(const AABoxd* box, int (*callback) (struct linedef_s*, void*), void* parameters);
 
 int P_BspLeafsBoxIterator(const AABoxd* box, Sector* sector, int (*callback) (struct bspleaf_s*, void*), void* parameters);
 
@@ -586,6 +586,8 @@ boolean DD_IsSharpTick(void);
 int DD_GetFrameRate(void);
 
 void R_SetupMap(int mode, int flags);
+void R_SetupFogDefaults(void);
+void R_SetupFog(float start, float end, float density, float* rgb);
 
 void R_PrecacheMobjNum(int mobjtypeNum);
 void R_PrecacheModelsForState(int stateIndex);
@@ -631,6 +633,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 patchid_t R_DeclarePatch(const char* name);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 Uri* R_ComposePatchUri(patchid_t id);
+AutoStr* R_ComposePatchPath(patchid_t id);
 
 int R_TextureUniqueId2(const Uri* uri, boolean quiet);
 int R_TextureUniqueId(const Uri* uri); /*quiet=false*/
@@ -747,6 +750,8 @@ angle_t M_PointXYToAngle(double x, double y);
 angle_t M_PointToAngle2(double const a[2], double const b[2]);
 angle_t M_PointXYToAngle2(double x1, double y1, double x2, double y2);
 
+void V2d_Copy(double dest[2], double const src[2]);
+void V2d_Scale(double vector[2], double scalar);
 void V2d_Sum(double dest[2], double const a[2], double const b[2]);
 void V2d_Subtract(double dest[2], double const a[2], double const b[2]);
 void V2d_Rotate(double vec[2], double radians);
@@ -765,17 +770,6 @@ binangle_t bamsAtan2(int y, int x);
 
 /// @addtogroup base
 ///@{
-
-    // Miscellaneous: Command line.
-    void _DECALL    ArgAbbreviate(const char* longName, const char* shortName);
-    int _DECALL     Argc(void);
-    const char* _DECALL Argv(int i);
-    const char* const* _DECALL ArgvPtr(int i);
-    const char* _DECALL ArgNext(void);
-    int _DECALL     ArgCheck(const char* check);
-    int _DECALL     ArgCheckWith(const char* check, int num);
-    int _DECALL     ArgExists(const char* check);
-    int _DECALL     ArgIsOption(int i);
 
     // Miscellaneous: Random Number Generator facilities.
     byte            RNG_RandByte(void);

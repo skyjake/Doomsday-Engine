@@ -65,7 +65,26 @@ static DisplayMode modeFromDict(CFDictionaryRef dict)
 
 static std::vector<DisplayMode> displayModes;
 static std::vector<CFDictionaryRef> displayDicts;
-static CFDictionaryRef currentDisplayDict;
+//static CFDictionaryRef currentDisplayDict;
+
+static CFDictionaryRef getCurrentDisplayDict(void)
+{
+    return (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
+}
+
+static void updateDisplayDicts(void)
+{
+    displayDicts.clear();
+
+    CFArrayRef modes = CGDisplayAvailableModes(kCGDirectMainDisplay);
+    CFIndex count = CFArrayGetCount(modes);
+    for(CFIndex i = 0; i < count; ++i)
+    {
+        displayDicts.push_back((CFDictionaryRef) CFArrayGetValueAtIndex(modes, i));
+    }
+
+    assert(displayModes.size() == displayDicts.size());
+}
 
 void DisplayMode_Native_Init(void)
 {
@@ -78,7 +97,7 @@ void DisplayMode_Native_Init(void)
         displayModes.push_back(modeFromDict(dict));
         displayDicts.push_back(dict);
     }
-    currentDisplayDict = (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
+    //currentDisplayDict = (CFDictionaryRef) CGDisplayCurrentMode(kCGDirectMainDisplay);
 }
 
 static bool captureDisplays(int capture)
@@ -119,7 +138,7 @@ void DisplayMode_Native_GetMode(int index, DisplayMode* mode)
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode* mode)
 {
-    *mode = modeFromDict(currentDisplayDict);
+    *mode = modeFromDict(getCurrentDisplayDict());
 }
 
 static int findIndex(const DisplayMode* mode)
@@ -141,6 +160,8 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
 {
     const CGDisplayFadeInterval fadeTime = .5f;
 
+    updateDisplayDicts();
+
     assert(mode);
     assert(findIndex(mode) >= 0); // mode must be an enumerated one
 
@@ -161,20 +182,22 @@ int DisplayMode_Native_Change(const DisplayMode* mode, boolean shouldCapture)
         result = kCGErrorFailure;
     }
 
-    if(result == kCGErrorSuccess && currentDisplayDict != newModeDict)
+    if(result == kCGErrorSuccess && getCurrentDisplayDict() != newModeDict)
     {
         // Try to change.
         result = CGDisplaySwitchToMode(kCGDirectMainDisplay, newModeDict);
         if(result != kCGErrorSuccess)
         {
             // Oh no!
-            CGDisplaySwitchToMode(kCGDirectMainDisplay, currentDisplayDict);
+            //CGDisplaySwitchToMode(kCGDirectMainDisplay, currentDisplayDict);
             if(!wasPreviouslyCaptured) releaseDisplays();
         }
+        /*
         else
         {
             currentDisplayDict = displayDicts[findIndex(mode)];
         }
+        */
     }
 
     // Fade back to normal.

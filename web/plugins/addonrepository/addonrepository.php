@@ -212,8 +212,8 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         uasort($this->addons, array('self', 'packageSorter'));
 
         // Output the page.
-        $FrontController->outputHeader($this->title());
-        $FrontController->beginPage($this->title());
+        $FrontController->outputHeader($this->title(), 'addons');
+        $FrontController->beginPage($this->title(), 'addons');
 
 ?><div id="addons"><?php
 

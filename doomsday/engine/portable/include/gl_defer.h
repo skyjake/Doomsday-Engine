@@ -28,6 +28,10 @@
 
 #include "sys_opengl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texturecontent_s;
 
 /**
@@ -85,5 +89,9 @@ LIBDENG_GL_DEFER2(i,         GLenum e, GLint i);
 LIBDENG_GL_DEFER2(f,         GLenum e, GLfloat f);
 LIBDENG_GL_DEFER2(fv4,       GLenum e, const GLfloat* floatArrayFourValues);
 LIBDENG_GL_DEFER2(uintArray, GLsizei count, const GLuint* values);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_GL_DEFERRED_H */

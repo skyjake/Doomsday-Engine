@@ -22,6 +22,7 @@
 includeGuard('commitutils.php');
 
 require_once(DIR_INCLUDES.'/utilities.inc.php');
+require_once(DIR_CLASSES.'/url.class.php');
 require_once('buildevent.class.php');
 
 function addCommitToGroup(&$groups, $groupName, &$commit)
@@ -67,18 +68,50 @@ function groupBuildCommits(&$build, &$groups)
 
 function make_pretty_hyperlink($matches)
 {
-    $uri = implode('', array_slice($matches, 1));
-    return generateHyperlinkHTML($uri, 40, 'link-external');
+    global $FrontController;
+
+    $uri = new Url(implode('', array_slice($matches, 1)));
+    $homeUri = new Url($FrontController->homeURL());
+
+    $isExternal = ($uri->host() !== $homeUri->host());
+    if(!$isExternal)
+    {
+        $uri->setScheme()->setHost();
+    }
+
+    return generateHyperlinkHTML($uri, $isExternal? array('class'=>'link-external') : NULL, 40);
+}
+
+function formatCommitHTML($msg)
+{
+    if(strcasecmp(gettype($msg), 'string')) return $msg;
+
+    // Process the commit message, replacing web URIs with clickable links.
+    htmlspecialchars($msg);
+
+    // Rules derived from Søren Løvborg's UrlLinker (see: http://www.kwi.dk/projects/php/UrlLinker/)
+    $rexProtocol = '(https?:\/\/|ftp:\/\/)';
+    $rexDomain   = '(?:[-a-zA-Z0-9]{1,63}\.)+[a-zA-Z][-a-zA-Z0-9]{1,62}';
+    $rexIp       = '(?:[1-9][0-9]{0,2}\.|0\.){3}(?:[1-9][0-9]{0,2}|0)';
+    $rexPort     = '(:[0-9]{1,5})?';
+    $rexPath     = '(/[!$-/0-9:;=@_\':;!a-zA-Z\x7f-\xff]*?)?';
+    $rexQuery    = '(\?[!$-/0-9:;=@_\':;!a-zA-Z\x7f-\xff]+?)?';
+    $rexFragment = '(#[!$-/0-9:;=@_\':;!a-zA-Z\x7f-\xff]+?)?';
+    $rexUsername = '[^]\\\\\x00-\x20\"(),:-<>[\x7f-\xff]{1,64}';
+    $rexPassword = $rexUsername; // allow the same characters as in the username
+    $rexUrl      = "$rexProtocol(?:($rexUsername)(:$rexPassword)?@)?($rexDomain|$rexIp)$rexPort$rexPath$rexQuery$rexFragment";
+
+    $msg = preg_replace_callback("&\\b$rexUrl(?=[?.!,;:\"]?(\s|$))&",
+                                 "make_pretty_hyperlink", $msg);
+
+    return $msg;
 }
 
 function formatCommitMessageHTML($msg)
 {
     if(strcasecmp(gettype($msg), 'string')) return $msg;
 
-    // Process the commit message, replacing web URIs with clickable links.
-    htmlspecialchars($msg);
-    $msg =  preg_replace_callback("/([^A-z0-9])(http|ftp|https)([\:\/\/])([^\\s]+)/",
-        "make_pretty_hyperlink", $msg);
+    $msg = formatCommitHTML($msg);
     $msg = nl2br($msg);
     return $msg;
 }
@@ -89,6 +122,7 @@ function outputCommitHTML(&$commit)
         throw new Exception('Invalid commit argument, array expected');
 
     // Format the commit message for HTML output.
+    $title = formatCommitHTML($commit['title']);
     $message = formatCommitMessageHTML($commit['message']);
     $haveMessage = (bool)(strlen($message) > 0);
 
@@ -116,7 +150,7 @@ function outputCommitHTML(&$commit)
     // Ouput HTML for the commit.
 ?><span class="metadata"><a href="<?php echo $commit['repositoryUri']; ?>" class="link-external" title="<?php echo htmlspecialchars($repoLinkTitle); ?>"><?php echo htmlspecialchars(date('Y-m-d', $commit['submitDate'])); ?></a></span><?php
 
-?><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><span class="title"><?php echo htmlspecialchars($commit['title']); ?></span></strong> by <em><?php echo htmlspecialchars($commit['author']); ?></em></p><?php echo $tagList;
+?><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><span class="title"><?php echo $title; ?></span></strong> by <em><?php echo htmlspecialchars($commit['author']); ?></em></p><?php echo $tagList;
 
     if($haveMessage)
     {

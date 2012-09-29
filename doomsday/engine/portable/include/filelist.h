@@ -26,6 +26,10 @@
 
 #include "dfile.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct abstractfile_s;
 struct ddstring_s;
 
@@ -118,7 +122,7 @@ DFile* FileList_RemoveFront(FileList* fl);
 DFile* FileList_RemoveBack(FileList* fl);
 
 /**
- * Remove file reference at position @idx.
+ * Remove file reference at position @a idx.
  *
  * @param idx  Index of the reference to be removed. Negative indexes allowed.
  * @return  Ptr to file referenced by the removed node if successful else @c NULL.
@@ -213,5 +217,9 @@ void DFile_SetList(DFile* file, FileList* list);
 
 /// @return  File object represented by this handle.
 struct abstractfile_s* DFile_File_Const(const DFile* file);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_FILELIST_H */

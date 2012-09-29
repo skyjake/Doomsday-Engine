@@ -58,16 +58,21 @@
 
 #include <QApplication>
 #include <QSettings>
+#include <QAction>
+#include <QMenuBar>
+#include <QNetworkProxyFactory>
 #include <QDebug>
 #include <stdlib.h>
 #include <de/App>
 #include <de/Log>
 #include <de/c_wrapper.h>
+#include <de/garbage.h>
 #include "de_platform.h"
 #include "dd_loop.h"
 #include "con_main.h"
 #include "window.h"
 #include "displaymode.h"
+#include "updater.h"
 #include "sys_system.h"
 
 extern "C" {
@@ -86,14 +91,14 @@ boolean DD_Init(void);
 /**
  * libdeng2 application core.
  */
-LegacyCore* de2LegacyCore;
+static LegacyCore* de2LegacyCore;
 
 }
 
 static void continueInitWithEventLoopRunning(void)
 {
     // This function only needs to be called once, so clear the callback.
-    LegacyCore_SetLoopFunc(de2LegacyCore, 0);
+    LegacyCore_SetLoopFunc(0);
 
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
@@ -133,6 +138,9 @@ int main(int argc, char** argv)
     // Override the system locale (affects number/time formatting).
     QLocale::setDefault(QLocale("en_US.UTF-8"));
 
+    // Use the host system's proxy configuration.
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
+
     // Metadata.
     QApplication::setOrganizationDomain("dengine.net");
     QApplication::setOrganizationName("Deng Team");
@@ -141,11 +149,27 @@ int main(int argc, char** argv)
 
     // C interface to the app.
     de2LegacyCore = LegacyCore_New(&dengApp);
-    LegacyCore_SetTerminateFunc(de2LegacyCore, handleLegacyCoreTerminate);
+    LegacyCore_SetTerminateFunc(handleLegacyCoreTerminate);
 
+    Libdeng_Init();
+
+    QMenuBar* menuBar = 0;
     if(useGUI)
     {
         DisplayMode_Init();
+
+        // Check for updates automatically.
+        Updater_Init();
+
+#ifdef MACOSX
+        // Set up the application-wide menu.
+        menuBar = new QMenuBar;
+        QMenu* gameMenu = menuBar->addMenu("&Game");
+        QAction* checkForUpdates =
+                gameMenu->addAction("Check For &Updates...",
+                                    Updater_Instance(), SLOT(checkNowShowingProgress()));
+        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
+#endif
     }
 
     // Initialize.
@@ -160,7 +184,7 @@ int main(int argc, char** argv)
     DD_ComposeMainWindowTitle(title);
     Window_New(novideo? WT_CONSOLE : WT_NORMAL, title);
 
-    LegacyCore_SetLoopFunc(de2LegacyCore, continueInitWithEventLoopRunning);
+    LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
 
     // Run the main loop.
     int result = DD_GameLoop();
@@ -169,6 +193,8 @@ int main(int argc, char** argv)
     Sys_Shutdown();
     DD_Shutdown();
     LegacyCore_Delete(de2LegacyCore);
+
+    delete menuBar;
 
     return result;
 }

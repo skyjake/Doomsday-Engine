@@ -34,7 +34,7 @@ class LegacyNetwork;
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
  */
-class LegacyCore : public QObject
+class DENG2_PUBLIC LegacyCore : public QObject
 {
     Q_OBJECT
 
@@ -149,6 +149,19 @@ public:
 
 public slots:
     void callback();
+
+    /**
+     * Requests engine shutdown by calling the specified termination callback
+     * (see setTerminateFunc()). Called when an exception is caught at the
+     * de::App level, at which point there is no way to gracefully handle it
+     * and the application has to be shut down.
+     *
+     * This should not be called directly. From C++ code, one should throw an
+     * exception in unrecoverable error situations. From C code, one should
+     * call the LegacyCore_FatalError() function.
+     *
+     * @param message  Error message to be shown to the user.
+     */
     void handleUncaughtException(QString message);
 
 private:

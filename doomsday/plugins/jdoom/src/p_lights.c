@@ -181,11 +181,11 @@ void T_StrobeFlash(strobe_t *flash)
  * After the map has been loaded, scan each sector for specials that spawn
  * thinkers.
  */
-void P_SpawnStrobeFlash(Sector *sector, int fastOrSlow, int inSync)
+void P_SpawnStrobeFlash(Sector* sector, int fastOrSlow, int inSync)
 {
-    strobe_t           *flash;
-    float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    float               otherLevel = DDMAXFLOAT;
+    strobe_t* flash;
+    float lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    float otherLevel = DDMAXFLOAT;
 
     flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
     flash->thinker.function = T_StrobeFlash;
@@ -209,9 +209,13 @@ void P_SpawnStrobeFlash(Sector *sector, int fastOrSlow, int inSync)
     P_ToXSector(sector)->special = 0;
 
     if(!inSync)
+    {
         flash->count = (P_Random() & 7) + 1;
+    }
     else
+    {
         flash->count = 1;
+    }
 }
 
 /**

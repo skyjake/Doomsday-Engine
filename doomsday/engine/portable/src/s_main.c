@@ -112,7 +112,7 @@ boolean S_Init(void)
 {
     boolean ok = false, sfxOK, musOK;
 
-    if(ArgExists("-nosound"))
+    if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
         return true;
 
     // Try to load the audio driver plugin(s).
@@ -123,7 +123,7 @@ boolean S_Init(void)
     }
 
     // Disable random pitch changes?
-    noRndPitch = ArgExists("-noRndPitch");
+    noRndPitch = CommandLine_Exists("-norndpitch");
 
     sfxOK = Sfx_Init();
     musOK = Mus_Init();
@@ -173,6 +173,7 @@ void S_Reset(void)
 {
     Sfx_Reset();
     S_StopMusic();
+    S_ResetReverb();
 }
 
 void S_StartFrame(void)
@@ -199,7 +200,6 @@ BEGIN_PROF( PROF_SOUND_STARTFRAME );
 
     Sfx_StartFrame();
     Mus_StartFrame();
-    S_UpdateReverb();
 
     // Remove stopped sounds from the LSM.
     Sfx_PurgeLogical();
@@ -296,7 +296,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
     boolean             isRepeating = false;
 
     // A dedicated server never starts any local sounds (only logical sounds in the LSM).
-    if(isDedicated || Con_IsBusy())
+    if(isDedicated || BusyMode_Active())
         return false;
 
     if(soundId <= 0 || soundId >= defs.count.sounds.num || sfxVolume <= 0 ||

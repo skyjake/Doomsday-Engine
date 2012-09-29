@@ -234,8 +234,10 @@ void Mobj_OriginSmoothed(mobj_t* mo, coord_t origin[3])
 
     if(mo->dPlayer)
     {
-        /// @fixme What about splitscreen? We have smoothed coords for all local players.
-        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
+        /// @todo What about splitscreen? We have smoothed origins for all local players.
+        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer &&
+           // $voodoodolls: Must be a real player to use the smoothed origin.
+           mo->dPlayer->mo == mo)
         {
             const viewdata_t* vd = R_ViewData(consolePlayer);
             V3d_Copy(origin, vd->current.origin);
@@ -254,8 +256,10 @@ angle_t Mobj_AngleSmoothed(mobj_t* mo)
 
     if(mo->dPlayer)
     {
-        /// @fixme What about splitscreen? We have smoothed angles for all local players.
-        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
+        /// @todo What about splitscreen? We have smoothed angles for all local players.
+        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer &&
+           // $voodoodolls: Must be a real player to use the smoothed angle.
+           mo->dPlayer->mo == mo)
         {
             const viewdata_t* vd = R_ViewData(consolePlayer);
             return vd->current.angle;

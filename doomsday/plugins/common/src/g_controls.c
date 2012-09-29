@@ -1,49 +1,29 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file g_controls.c
+ * Game controls, default bindings. @ingroup libcommon
  *
- *\author Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @author Copyright &copy; 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 1993-1996 by id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
- /**
-  * g_controls.c: Game controls, ticcmd building/merging
-  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h> // required for sqrt, fabs
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#  include "p_inventory.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#  include "p_inventory.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
-#endif
+#include "common.h"
 
 #include "g_controls.h"
 #include "p_tick.h" // for P_IsPaused()
@@ -51,8 +31,9 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "g_common.h"
-
-// MACROS ------------------------------------------------------------------
+#if __JHERETIC__ || __JHEXEN__
+#  include "p_inventory.h"
+#endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 #  define GOTWPN(x)         (plr->weaponOwned[x])
@@ -64,8 +45,6 @@
 #define JOY(x)              ((x) / 100)
 #define TOCENTER            (-8)
 #define DELTAMUL            (6.324555320) // Used when calculating ticcmd_t.lookdirdelta
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct pcontrolstate_s {
     // Looking around.
@@ -91,35 +70,10 @@ typedef enum joyaxis_e {
     NUM_JOYSTICK_AXES
 } joyaxis_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(DefaultGameBinds);
 D_CMD(Pause);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
 extern boolean sendpause;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-/*
-// Binding classes (for the dynamic event responder chain)
-bindcontext_t BindClasses[] = {
-    {"map",             GBC_CLASS1,     0, 0},
-    {"mapfollowoff",    GBC_CLASS2,     0, 0},
-    {"menu",            GBC_CLASS3,     0, BCF_ABSOLUTE},
-    {"menuhotkey",      GBC_MENUHOTKEY, 1, 0},
-    {"chat",            GBC_CHAT,       0, 0},
-    {"message",         GBC_MESSAGE,    0, BCF_ABSOLUTE},
-    {NULL}
-};
-*/
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Input devices; state controls.
 static int     povangle = -1;          // -1 means centered (really 0 - 7).
@@ -129,52 +83,35 @@ static float   mousey;
 // Player control state.
 static pcontrolstate_t controlStates[MAXPLAYERS];
 
-// CVars for control/input
-cvartemplate_t controlCVars[] = {
-// Control (options/preferences)
-    {"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1},
-
-    {"ctl-turn-speed", 0, CVT_FLOAT, &cfg.turnSpeed, 1, 5},
-    {"ctl-run", 0, CVT_INT, &cfg.alwaysRun, 0, 1},
-
-#if __JHERETIC__ || __JHEXEN__
-    {"ctl-inventory-mode", 0, CVT_BYTE, &cfg.inventorySelectMode, 0, 1},
-    {"ctl-inventory-wrap", 0, CVT_BYTE, &cfg.inventoryWrap, 0, 1},
-    {"ctl-inventory-use-immediate", 0, CVT_BYTE, &cfg.inventoryUseImmediate, 0, 1},
-    {"ctl-inventory-use-next", 0, CVT_BYTE, &cfg.inventoryUseNext, 0, 1},
-#endif
-
-    {"ctl-look-speed", 0, CVT_FLOAT, &cfg.lookSpeed, 1, 5},
-    {"ctl-look-spring", 0, CVT_INT, &cfg.lookSpring, 0, 1},
-
-    {"ctl-look-pov", 0, CVT_BYTE, &cfg.povLookAround, 0, 1},
-    {"ctl-look-joy", 0, CVT_INT, &cfg.useJLook, 0, 1},
-    {"ctl-look-joy-delta", 0, CVT_INT, &cfg.jLookDeltaMode, 0, 1},
-    {NULL}
-};
-
-ccmdtemplate_t  controlCmds[] = {
-    { "defaultgamebindings",    "",     CCmdDefaultGameBinds },
-    { "pause",                  "",     CCmdPause },
-    { NULL }
-};
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Register the CVars and CCmds for input/controls.
- */
 void G_ControlRegister(void)
 {
-    uint i;
+    // Control (options/preferences)
+    C_VAR_INT   ("ctl-aim-noauto",  &cfg.noAutoAim, 0, 0, 1);
+    C_VAR_FLOAT ("ctl-turn-speed",  &cfg.turnSpeed, 0, 1, 5);
+    C_VAR_INT   ("ctl-run",         &cfg.alwaysRun, 0, 0, 1);
 
-    for(i = 0; controlCVars[i].path; ++i)
-        Con_AddVariable(controlCVars + i);
+#if __JHERETIC__ || __JHEXEN__
+    C_VAR_BYTE  ("ctl-inventory-mode", &cfg.inventorySelectMode, 0, 0, 1);
+    C_VAR_BYTE  ("ctl-inventory-wrap", &cfg.inventoryWrap, 0, 0, 1);
+    C_VAR_BYTE  ("ctl-inventory-use-immediate", &cfg.inventoryUseImmediate, 0, 0, 1);
+    C_VAR_BYTE  ("ctl-inventory-use-next", &cfg.inventoryUseNext, 0, 0, 1);
+#endif
 
-    for(i = 0; controlCmds[i].name; ++i)
-        Con_AddCommand(controlCmds + i);
+    C_VAR_FLOAT ("ctl-look-speed",  &cfg.lookSpeed, 0, 1, 5);
+    C_VAR_INT   ("ctl-look-spring", &cfg.lookSpring, 0, 0, 1);
 
-    /// @todo  Move the control setup to a separate function.
+    C_VAR_BYTE  ("ctl-look-pov",    &cfg.povLookAround, 0, 0, 1);
+    C_VAR_INT   ("ctl-look-joy",    &cfg.useJLook, 0, 0, 1);
+    C_VAR_INT   ("ctl-look-joy-delta", &cfg.jLookDeltaMode, 0, 0, 1);
+
+    C_CMD("defaultgamebindings",    "",     DefaultGameBinds);
+    C_CMD("pause",                  "",     Pause);
+
+    G_DefineControls();
+}
+
+void G_DefineControls(void)
+{
     P_NewPlayerControl(CTL_WALK, CTLT_NUMERIC, "walk", "game");
     P_NewPlayerControl(CTL_SIDESTEP, CTLT_NUMERIC, "sidestep", "game");
     P_NewPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
@@ -255,12 +192,11 @@ void G_ControlRegister(void)
 
 D_CMD(DefaultGameBinds)
 {
-    // TODO: When the actual bindings setup UI is done, these default bindings
-    // should be generated by the engine based on some higher level metadata,
-    // described in a text file.
+    /// @todo: When the actual bindings setup UI is done, these default bindings
+    /// should be generated by the engine based on some higher level metadata,
+    /// described in a text file.
 
-    // Traditional key bindings plus WASD and mouse look, and reasonable
-    // joystick defaults.
+    // Traditional key bindings plus WASD and mouse look, and reasonable joystick defaults.
     const char* binds[] = {
         // Basic movement:
         "bindcontrol attack key-ctrl",
@@ -447,16 +383,18 @@ D_CMD(DefaultGameBinds)
 
         // On-screen messages:
         "bindevent message:key-y messageyes",
+        "bindevent message:mouse-left messageyes",
         "bindevent message:key-n messageno",
+        "bindevent message:mouse-right messageno",
         "bindevent message:key-escape messagecancel",
 
         NULL
     };
-    int                 i;
-
+    int i;
     for(i = 0; binds[i]; ++i)
+    {
         DD_Execute(false, binds[i]);
-
+    }
     return true;
 }
 

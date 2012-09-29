@@ -10,7 +10,7 @@ Vcs-Browser: http://deng.git.sourceforge.net/git/gitweb.cgi?p=deng/deng;a=summar
 
 Package: doomsday
 Architecture: ${Arch}
-Depends: ${shlibs:Depends}, ${misc:Depends}, python-wxgtk2.8, libsdl1.2debian, libsdl-net1.2, libsdl-mixer1.2, libcurl3
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-wxgtk2.8, libsdl1.2debian, libsdl-mixer1.2
 Description: Doom/Heretic/Hexen port with enhanced graphics
  The Doomsday Engine is a portable version of the classic first person 
  shooters DOOM, Heretic, and Hexen. It lets you enjoy the original games

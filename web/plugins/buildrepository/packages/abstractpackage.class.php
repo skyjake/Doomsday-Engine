@@ -31,18 +31,29 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     static protected $emptyString = '';
 
     protected $directDownloadUri = NULL;
+    protected $directDownloadFallbackUri = NULL;
     protected $releaseNotesUri = NULL;
+    protected $releaseChangeLogUri = NULL;
+    protected $releaseDate = 0;
 
     protected $compileLogUri = NULL;
     protected $compileWarnCount = NULL;
     protected $compileErrorCount = NULL;
 
-    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $directDownloadUri=NULL)
+    public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL,
+                                $directDownloadUri=NULL,
+                                $directDownloadFallbackUri=NULL,
+                                $releaseDate = 0)
     {
         parent::__construct($platformId, $title, $version);
 
         if(!is_null($directDownloadUri) && strlen($directDownloadUri) > 0)
             $this->directDownloadUri = "$directDownloadUri";
+
+        if(!is_null($directDownloadFallbackUri) && strlen($directDownloadFallbackUri) > 0)
+            $this->directDownloadFallbackUri = "$directDownloadFallbackUri";
+
+        $this->releaseDate = (integer)$releaseDate;
     }
 
     // Extends implementation in AbstractPackage.
@@ -55,10 +66,20 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
 
         parent::populateGraphTemplate($tpl);
 
-        $tpl['direct_download_uri'] = $this->directDownloadUri();
+        if($this->hasDirectDownloadUri())
+            $tpl['direct_download_uri'] = $this->directDownloadUri();
+
+        if($this->hasDirectDownloadFallbackUri())
+            $tpl['direct_download_fallback_uri'] = $this->directDownloadFallbackUri();
+
+        if($this->hasReleaseChangeLogUri())
+            $tpl['release_changeloguri'] = $this->releaseChangeLogUri;
 
         if($this->hasReleaseNotesUri())
             $tpl['release_notesuri'] = $this->releaseNotesUri;
+
+        if($this->hasReleaseDate())
+            $tpl['release_date'] = date(DATE_RFC1123, $this->releaseDate);
 
         if($this->hasCompileLogUri())
             $tpl['compile_loguri'] = $this->compileLogUri;
@@ -83,6 +104,21 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     public function setReleaseNotesUri($newUri)
     {
         $this->releaseNotesUri = "$newUri";
+    }
+
+    public function hasReleaseChangeLogUri()
+    {
+        return !is_null($this->releaseChangeLogUri);
+    }
+
+    public function releaseChangeLogUri()
+    {
+        return $this->releaseChangeLogUri;
+    }
+
+    public function setReleaseChangeLogUri($newUri)
+    {
+        $this->releaseChangeLogUri = "$newUri";
     }
 
     public function hasCompileLogUri()
@@ -152,12 +188,47 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     }
 
     // Implements iDownloadable
+    public function &directDownloadFallbackUri()
+    {
+        if(!$this->hasDirectDownloadFallbackUri()) return $emptyString;
+        return $this->directDownloadFallbackUri;
+    }
+
+    // Implements iDownloadable
+    public function hasDirectDownloadFallbackUri()
+    {
+        return !is_null($this->directDownloadFallbackUri);
+    }
+
+    // Implements iDownloadable
+    public function &releaseDate()
+    {
+        return $this->releaseDate;
+    }
+
+    // Implements iDownloadable
+    public function hasReleaseDate()
+    {
+        return $this->releaseDate > 0;
+    }
+
+    public function setReleaseDate($releaseDate)
+    {
+        $this->releaseDate = (integer)$releaseDate;
+    }
+
+    // Implements iDownloadable
     public function genDownloadBadge()
     {
         $fullTitle = $this->composeFullTitle();
-        if($this->hasDirectDownloadUri())
+        if($this->hasDirectDownloadUri() || $this->hasDirectDownloadFallbackUri())
         {
-            $html = '<a href="'. htmlspecialchars($this->directDownloadUri)
+            if($this->hasDirectDownloadUri())
+                $downloadUri = $this->directDownloadUri();
+            else
+                $downloadUri = $this->directDownloadFallbackUri();
+
+            $html = '<a href="'. htmlspecialchars($downloadUri)
                    .'" title="'. htmlspecialchars("Download $fullTitle")
                           .'">'. htmlspecialchars($fullTitle) .'</a>';
         }

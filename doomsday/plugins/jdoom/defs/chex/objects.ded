@@ -33,51 +33,51 @@ Thing Mods "PLASMA" {
 }
 
 State Mods "TBALL1" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "TBALL2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "TBALLX1" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "TBALLX2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "TBALLX3" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "POSS_ATK2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "SPOS_ATK2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BRBALL1" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BRBALL2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BRBALLX1" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BRBALLX2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BRBALLX3" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BOSS_ATK1" {
@@ -105,27 +105,27 @@ State Mods "YKEY2" {
 }
 
 State Mods "BON1" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BON1A" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BON1B" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BON1C" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BON1D" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BON1E" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "SOUL" {
@@ -153,11 +153,11 @@ State Mods "SOUL6" {
 }
 
 State Mods "CANDLESTIK" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "CANDELABRA" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "PMAP" {
@@ -189,65 +189,65 @@ State Mods "SUIT" {
 }
 
 State Mods "BLUETORCH" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BLUETORCH2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BLUETORCH3" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "BLUETORCH4" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "GREENTORCH" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "GREENTORCH2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "GREENTORCH3" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "GREENTORCH4" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "GTORCHSHRT" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "GTORCHSHRT2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "GTORCHSHRT3" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "GTORCHSHRT4" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "RTORCHSHRT" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "RTORCHSHRT2" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "RTORCHSHRT3" {
-  Flags = ;
+  Flags = 0;
 }
 
 State Mods "RTORCHSHRT4" {
-  Flags = ;
+  Flags = 0;
 }

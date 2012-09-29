@@ -43,7 +43,7 @@ void SideDef_UpdateSurfaceTangents(SideDef* side)
 
     if(!line) return;
 
-    sid = line->L_frontside == side? FRONT : BACK;
+    sid = line->L_frontsidedef == side? FRONT : BACK;
     surface->normal[VY] = (line->L_vorigin(sid  )[VX] - line->L_vorigin(sid^1)[VX]) / line->length;
     surface->normal[VX] = (line->L_vorigin(sid^1)[VY] - line->L_vorigin(sid  )[VY]) / line->length;
     surface->normal[VZ] = 0;
@@ -83,9 +83,10 @@ int SideDef_GetProperty(const SideDef* side, setargs_t* args)
     assert(side);
     switch(args->prop)
     {
-    case DMU_SECTOR:
-        DMU_GetValue(DMT_SIDEDEF_SECTOR, &side->sector, args, 0);
-        break;
+    case DMU_SECTOR: {
+        Sector* sector = side->line->L_sector(side == side->line->L_frontsidedef? FRONT : BACK);
+        DMU_GetValue(DMT_SIDEDEF_SECTOR, &sector, args, 0);
+        break; }
     case DMU_LINEDEF:
         DMU_GetValue(DMT_SIDEDEF_LINE, &side->line, args, 0);
         break;

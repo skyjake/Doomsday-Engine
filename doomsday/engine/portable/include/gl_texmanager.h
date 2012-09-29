@@ -36,10 +36,14 @@
 #define LIBDENG_GLTEXTURE_MANAGER_H
 
 #include "dfile.h"
-#include "r_data.h" /// \todo should not be included here.
+#include "r_data.h" /// @todo should not be included here.
 
 #include "texture.h"
 #include "texturevariantspecification.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct image_s;
 struct texturecontent_s;
@@ -126,7 +130,7 @@ void GL_ReleaseTexturesByNamespace(texturenamespaceid_t namespaceId);
  * Release all textures associated with the specified @a texture.
  * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
  *
- * \note Can also be used as an iterator callback.
+ * @note Can also be used as an iterator callback.
  */
 int GL_ReleaseGLTexturesByTexture2(Texture* texture, void* paramaters);
 int GL_ReleaseGLTexturesByTexture(Texture* texture); /*paramaters=NULL*/
@@ -185,7 +189,7 @@ boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* 
     int width, int height, float grayFactor);
 
 /**
- * \note Can be rather time-consuming due to forced scaling operations and
+ * @note Can be rather time-consuming due to forced scaling operations and
  * the generation of mipmaps.
  */
 void GL_UploadTextureContent(const struct texturecontent_s* content);
@@ -320,8 +324,8 @@ struct texturevariant_s* GL_PreparePatchTexture(Texture* tex);
  * Somewhat more complicated than it needs to be due to the fact there
  * are two different selection methods.
  *
- * @param name  Name of a flare texture or "0" to "4".
- * @param oldIdx  Old method of flare texture selection, by id.
+ * @param name          Name of a flare texture or "0" to "4".
+ * @param oldIdx        Old method of flare texture selection, by id.
  */
 DGLuint GL_PrepareFlareTexture(const Uri* path, int oldIdx);
 
@@ -330,5 +334,28 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
 DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT);
+
+/**
+ * @param tex           Texture instance to compose the cache name of.
+ * @return The chosen cache name for this texture.
+ */
+AutoStr* GL_ComposeCacheNameForTexture(Texture* tex);
+
+/**
+ * Dump the pixel data of @a img to an ARGB32 at @a filePath.
+ *
+ * @param img           The image to be dumped. A temporary copy will be made if
+ *                      the pixel data is not already in either ARGB32 or ABGR32
+ *                      formats.
+ * @param filePath      Location to write the new file. If an extension is not
+ *                      specified the file will be in PNG format.
+ *
+ * @return @c true= Dump was successful.
+ */
+boolean GL_DumpImage(const struct image_s* img, const char* filePath);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_GLTEXTURE_MANAGER_H */

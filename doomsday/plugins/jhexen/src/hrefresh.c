@@ -22,16 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh - Hexen specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
 #include "g_controls.h"
@@ -46,25 +41,7 @@
 #include "p_tick.h"
 #include "hu_automap.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float quitDarkenOpacity = 0;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 boolean R_ViewFilterColor(float rgba[4], int filter)
 {
@@ -340,7 +317,10 @@ void R_SetAllDoomsdayFlags(void)
         for(mo = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); mo; mo = mo->sNext)
         {
             if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
+            {
+                Mobj_UpdateTranslationClassAndMap(mo);
                 continue;
+            }
 
             // Reset the flags for a new frame.
             mo->ddFlags &= DDMF_CLEAR_MASK;
@@ -387,7 +367,7 @@ void R_SetAllDoomsdayFlags(void)
                                         !(mo->flags & MF_VIEWALIGN)))
                 mo->ddFlags |= DDMF_VIEWALIGN;
 
-            R_SetTranslation(mo);
+            Mobj_UpdateTranslationClassAndMap(mo);
 
             // An offset for the light emitted by this object.
             /*          Class = MobjLightOffsets[mo->type];

@@ -45,6 +45,7 @@ void NetCl_UpdateGameState(Reader* msg)
     Uri* mapUri;
     byte gsEpisode = 0;
     byte gsMap = 0;
+    byte gsMapEntryPoint = 0;
     byte configFlags = 0;
     byte gsDeathmatch = 0;
     byte gsMonsters = 0;
@@ -66,6 +67,9 @@ void NetCl_UpdateGameState(Reader* msg)
     gsEpisode = Reader_ReadByte(msg);
     gsMap = Reader_ReadByte(msg);
 
+    /// @todo Not communicated to clients??
+    //gsMapEntryPoint = ??;
+
     configFlags = Reader_ReadByte(msg);
     gsDeathmatch = configFlags & 0x3;
     gsMonsters = (configFlags & 0x4? true : false);
@@ -75,9 +79,8 @@ void NetCl_UpdateGameState(Reader* msg)
     gsGravity = Reader_ReadFloat(msg);
 
     VERBOSE(
-        ddstring_t* str = Uri_ToString(mapUri);
+        AutoStr* str = Uri_ToString(mapUri);
         Con_Message("NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"\n", gsFlags, Str_Text(str));
-        Str_Delete(str);
     )
 
     // Demo game state changes are only effective during demo playback.
@@ -107,7 +110,7 @@ void NetCl_UpdateGameState(Reader* msg)
 #endif
 
     // Some statistics.
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     Con_Message("Game state: Map=%u Skill=%i %s\n", gsMap+1, gsSkill,
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
@@ -130,24 +133,30 @@ void NetCl_UpdateGameState(Reader* msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_InitNew(gsSkill, gsEpisode, gsMap);
+        G_NewGame(gsSkill, gsEpisode, gsMap, gameMapEntryPoint /*gsMapEntryPoint*/);
+
+        /// @todo Necessary?
+        G_SetGameAction(GA_NONE);
     }
     else
     {
         gameSkill = gsSkill;
         gameEpisode = gsEpisode;
         gameMap = gsMap;
+
+        /// @todo Not communicated to clients??
+        //gameMapEntryPoint = gsMapEntryPoint;
     }
 
     // Set gravity.
-    /// @fixme This is a map-property, not a global property.
+    /// @todo This is a map-property, not a global property.
     DD_SetVariable(DD_GRAVITY, &gsGravity);
 
     // Camera init included?
     if(gsFlags & GSF_CAMERA_INIT)
     {
-        player_t   *pl = &players[CONSOLEPLAYER];
-        mobj_t     *mo;
+        player_t* pl = &players[CONSOLEPLAYER];
+        mobj_t* mo;
 
         mo = pl->plr->mo;
         if(mo)
@@ -675,7 +684,7 @@ void NetCl_Intermission(Reader* msg)
         SN_StopAllSequences();
 #endif
 
-        // @fixme jHeretic does not transmit the intermission info!
+        // @todo jHeretic does not transmit the intermission info!
 #if __JDOOM__ || __JDOOM64__
         wmInfo.maxKills = Reader_ReadUInt16(msg);
         wmInfo.maxItems = Reader_ReadUInt16(msg);
@@ -795,17 +804,16 @@ void NetCl_UpdatePlayerInfo(Reader *msg)
 
     num = Reader_ReadByte(msg);
     cfg.playerColor[num] = Reader_ReadByte(msg);
+    players[num].colorMap = cfg.playerColor[num];
 #if __JHEXEN__ || __JHERETIC__
     cfg.playerClass[num] = Reader_ReadByte(msg);
     players[num].class_ = cfg.playerClass[num];
 #endif
 
 #if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
-                cfg.playerColor[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num, cfg.playerColor[num]);
 #else
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
-                cfg.playerColor[num], cfg.playerClass[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num, cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 
@@ -833,30 +841,33 @@ void NetCl_SendPlayerInfo()
 
 void NetCl_SaveGame(Reader* msg)
 {
-    if(Get(DD_PLAYBACK))
-        return;
+#if __JHEXEN__
+    DENG_UNUSED(msg);
+#endif
 
-    /// @todo: Why not Hexen?
+    if(Get(DD_PLAYBACK)) return;
+
 #if !__JHEXEN__
-    SV_SaveClient(Reader_ReadUInt32(msg));
+    SV_SaveGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
+    P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, TXT_GAMESAVED);
 #endif
 }
 
 void NetCl_LoadGame(Reader* msg)
 {
-    if(!IS_CLIENT)
-        return;
-    if(Get(DD_PLAYBACK))
-        return;
+#if __JHEXEN__
+    DENG_UNUSED(msg);
+#endif
+
+    if(!IS_CLIENT || Get(DD_PLAYBACK)) return;
 
 #if !__JHEXEN__
-    SV_LoadClient(Reader_ReadUInt32(msg));
+    SV_LoadGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);
+    P_SetMessage(&players[CONSOLEPLAYER], 0, GET_TXT(TXT_CLNETLOAD));
 #endif
 }
 

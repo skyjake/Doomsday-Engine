@@ -34,11 +34,6 @@
 #endif
 
 #include <signal.h>
-/*
-#include <SDL.h>
-#include <SDL_thread.h>
-*/
-#include "concurrency.h"
 
 #include "de_base.h"
 #include "de_console.h"
@@ -280,7 +275,7 @@ void Sys_HideMouse(void)
  */
 void Sys_Quit(void)
 {
-    if(Con_IsBusy())
+    if(BusyMode_Active())
     {
         // The busy worker is running; we cannot just stop it abruptly.
         Sys_MessageBox2(MBT_WARNING, DOOMSDAY_NICENAME, "Cannot quit while in busy mode.",
@@ -291,5 +286,5 @@ void Sys_Quit(void)
     appShutdown = true;
 
     // It's time to stop the main loop.
-    LegacyCore_Stop(de2LegacyCore, DD_GameLoopExitCode());
+    LegacyCore_Stop(DD_GameLoopExitCode());
 }

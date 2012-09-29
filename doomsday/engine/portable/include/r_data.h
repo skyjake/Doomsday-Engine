@@ -37,8 +37,17 @@
 #include "def_data.h"
 #include "textures.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texture_s;
 struct font_s;
+
+// Maximum number of palette translation tables.
+#define NUM_TRANSLATION_CLASSES         3
+#define NUM_TRANSLATION_MAPS_PER_CLASS  7
+#define NUM_TRANSLATION_TABLES            (NUM_TRANSLATION_CLASSES * NUM_TRANSLATION_MAPS_PER_CLASS)
 
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
@@ -140,12 +149,6 @@ typedef struct glcommand_vertex_s {
     float           s, t;
     int             index;
 } glcommand_vertex_t;
-
-#define RL_MAX_DIVS         64
-typedef struct walldiv_s {
-    unsigned int    num;
-    coord_t         pos[RL_MAX_DIVS];
-} walldiv_t;
 
 typedef struct rvertex_s {
     float           pos[3];
@@ -260,6 +263,7 @@ typedef enum lightingtexid_e {
     LST_RADIO_CC, // FakeRadio closed/closed corner shadow
     LST_RADIO_OO, // FakeRadio open/open shadow
     LST_RADIO_OE, // FakeRadio open/edge shadow
+    LST_CAMERA_VIGNETTE,
     NUM_LIGHTING_TEXTURES
 } lightingtexid_t;
 
@@ -294,12 +298,15 @@ void            R_FreeRendColors(ColorRawf* rcolors);
 void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
 void            R_InfoRendVerticesPool(void);
 
-void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs);
+void R_DivVerts(rvertex_t* dst, const rvertex_t* src,
+    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount);
 
-void R_DivVertColors(ColorRawf* dst, const ColorRawf* src, const walldiv_t* divs,
+void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
+    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount,
     float bL, float tL, float bR, float tR);
 
-void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldiv_t* divs,
+void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
+    walldivnode_t* leftDivFirst, uint leftDivCount, walldivnode_t* rightDivFirst, uint rightDivCount,
     float bL, float tL, float bR, float tR);
 
 void R_InitTranslationTables(void);
@@ -322,6 +329,12 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 
 /// @return  Uri for the patch associated with @a id. Should be released with Uri_Delete()
 Uri* R_ComposePatchUri(patchid_t id);
+
+/// @return  Path for the patch associated with @a id. A zero-length string is
+///          returned if the id is invalid/unknown.
+AutoStr* R_ComposePatchPath(patchid_t id);
+
+struct texture_s* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin);
 
 struct texture_s* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isReflection);
 struct texture_s* R_FindModelSkinForResourcePath(const Uri* resourcePath);
@@ -545,4 +558,8 @@ boolean R_IsTextureInAnimGroup(const Uri* texture, int animGroupNum);
 struct font_s* R_CreateFontFromFile(const Uri* uri, const char* resourcePath);
 struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
-#endif /* LIBDENG_REFRESH_DATA_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /// LIBDENG_REFRESH_DATA_H

@@ -50,21 +50,26 @@ typedef struct setargs_s {
     void          **ptrValues;
 } setargs_t;
 
-void        P_InitMapUpdate(void);
-void       *P_AllocDummy(int type, void* extraData);
-void        P_FreeDummy(void* dummy);
-int         P_DummyType(void* dummy);
-boolean     P_IsDummy(void* dummy);
-void       *P_DummyExtraData(void* dummy);
+void P_InitMapUpdate(void);
+void* P_AllocDummy(int type, void* extraData);
 
-uint        P_ToIndex(const void* ptr);
+/**
+ * Determines the type of a dummy object. For extra safety (in a debug build)
+ * it would be possible to look through the dummy arrays and make sure the
+ * pointer refers to a real dummy.
+ */
+int P_DummyType(void* dummy);
 
-const char *DMU_Str(uint prop);
-int         DMU_GetType(const void* ptr);
-void        DMU_SetValue(valuetype_t valueType, void* dst,
-                         const setargs_t* args, uint index);
-void        DMU_GetValue(valuetype_t valueType, const void* src,
-                         setargs_t* args, uint index);
+void P_FreeDummy(void* dummy);
+boolean P_IsDummy(void* dummy);
+void* P_DummyExtraData(void* dummy);
+
+uint P_ToIndex(const void* ptr);
+
+const char* DMU_Str(uint prop);
+int DMU_GetType(const void* ptr);
+void DMU_SetValue(valuetype_t valueType, void* dst, const setargs_t* args, uint index);
+void DMU_GetValue(valuetype_t valueType, const void* src, setargs_t* args, uint index);
 
 /// To be called to update in response to a DMU property change event.
 int DMU_SetMaterialProperty(struct material_s* material, const setargs_t* args);

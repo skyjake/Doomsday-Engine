@@ -190,14 +190,16 @@ void R_ResizeViewWindow(int flags)
     if(delta != 0)
     {
         if(cfg.screenBlocks >= 10 && destBlocks != 13)
-        {   // When going fullscreen, force a hud show event (to reset the timer).
+        {
+            // When going fullscreen, force a hud show event (to reset the timer).
             for(i = 0; i < MAXPLAYERS; ++i)
                 ST_HUDUnHide(i, HUE_FORCE);
         }
 
         if((cfg.screenBlocks == 11 && destBlocks == 10) ||
            (cfg.screenBlocks == 10 && destBlocks == 11))
-        {   // When going to/from statusbar span, do an instant change.
+        {
+            // When going to/from statusbar span, do an instant change.
             flags |= RWF_NO_LERP;
         }
 
@@ -205,11 +207,8 @@ void R_ResizeViewWindow(int flags)
         flags |= RWF_FORCE;
     }
 
-    if(!(flags & RWF_FORCE))
-    {
-        // No update necessary.
-        return;
-    }
+    // No update necessary?
+    if(!(flags & RWF_FORCE)) return;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -244,17 +243,14 @@ void R_CycleGammaLevel(void)
 {
     char buf[50];
 
-    if(G_QuitInProgress())
-    {
-        return;
-    }
+    if(G_QuitInProgress()) return;
 
     gammaLevel++;
     if(gammaLevel > 4)
         gammaLevel = 0;
 
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(players + CONSOLEPLAYER, gammamsg[gammaLevel], true);
+    P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, gammamsg[gammaLevel]);
 #endif
 
     sprintf(buf, "rend-tex-gamma %f", ((float) gammaLevel / 8.0f) * 1.5f);

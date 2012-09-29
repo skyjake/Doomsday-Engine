@@ -33,6 +33,10 @@
 #include "m_vector.h"
 #include "p_mapdata.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Lumobject types.
 typedef enum {
     LT_OMNI, ///< Omni (spherical) light.
@@ -198,7 +202,7 @@ int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t rad
  * Project all lights affecting the given quad (world space), calculate
  * coordinates (in texture space) then store into a new list of projections.
  *
- * @assume The coordinates of the given quad must be contained wholly within
+ * @pre The coordinates of the given quad must be contained wholly within
  * the BSP leaf specified. This is due to an optimization within the lumobj
  * management which separates them according to their position in the BSP.
  *
@@ -233,5 +237,9 @@ int LO_IterateProjections2(uint listIdx, int (*callback) (const dynlight_t*, voi
 int LO_IterateProjections(uint listIdx, int (*callback) (const dynlight_t*, void*)/* paramaters=NULL*/);
 
 void LO_DrawLumobjs(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_REFRESH_LUMINOUS_H

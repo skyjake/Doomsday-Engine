@@ -361,6 +361,28 @@ void String::skipSpace(String::const_iterator& i, const String::const_iterator& 
     while(i != end && (*i).isSpace()) ++i;
 }
 
+// Seems like an ommission on the part of QChar...
+static inline bool isSign(const QChar& ch)
+{
+    return ch == '-' || ch == '+';
+}
+
+dint String::toIntLeft(bool* ok, int base) const
+{
+    String token = leftStrip();
+
+    // Truncate at the first non-numeric, non-notation or sign character.
+    int endOfNumber = 0;
+    while(endOfNumber < token.size() &&
+          (token.at(endOfNumber).isDigit() || (endOfNumber == 0 && isSign(token.at(endOfNumber))) ||
+           ((base == 0 || base == 16) && endOfNumber <= 1 &&
+            (token.at(endOfNumber) == QChar('x') || token.at(endOfNumber) == QChar('X')))))
+    { ++endOfNumber; }
+    token.truncate(endOfNumber);
+
+    return token.toInt(ok, base);
+}
+
 void String::advanceFormat(String::const_iterator& i, const String::const_iterator& end)
 {
     ++i;
@@ -500,4 +522,13 @@ String String::fromUtf8(const IByteArray& byteArray)
 String String::fromLatin1(const IByteArray& byteArray)
 {
     return QString::fromLatin1(reinterpret_cast<const char*>(Block(byteArray).data()));
+}
+
+String String::fromNativePath(const String& nativePath)
+{
+    String s = nativePath;
+#ifdef Q_OS_WIN32
+    s.replace("\\", "/");
+#endif
+    return s;
 }

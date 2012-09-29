@@ -24,7 +24,9 @@
 #include <stdlib.h>
 #include <cmath>
 #include <vector>
+#include <map>
 
+typedef std::map<FMOD::Sound*, sfxbuffer_t*> Streams;
 typedef std::vector<char> RawSamplePCM8;
 
 struct BufferInfo
@@ -95,6 +97,7 @@ struct Listener
 static float unitsPerMeter = 1.f;
 static float dopplerScale = 1.f;
 static Listener listener;
+static Streams streams;
 
 const char* sfxPropToString(int prop)
 {
@@ -183,7 +186,11 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
     DSFMOD_TRACE("SFX_DestroyBuffer: Destroying sfxbuffer " << buf);
 
     BufferInfo& info = bufferInfo(buf);
-    if(info.sound) info.sound->release();
+    if(info.sound)
+    {
+        info.sound->release();
+        streams.erase(info.sound);
+    }
 
     // Free the memory allocated for the buffer.
     delete reinterpret_cast<BufferInfo*>(buf->ptr);
@@ -200,6 +207,33 @@ static void toSigned8bit(const unsigned char* source, int size, RawSamplePCM8& o
     }
 }
 
+static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, unsigned int datalen)
+{
+    FMOD::Sound* sound = reinterpret_cast<FMOD::Sound*>(soundPtr);
+
+    Streams::iterator found = streams.find(sound);
+    if(found == streams.end())
+    {
+        return FMOD_ERR_NOTREADY;
+    }
+
+    sfxbuffer_t* buf = found->second;
+    DENG_ASSERT(buf != NULL);
+    DENG_ASSERT(buf->flags & SFXBF_STREAM);
+
+    // Call the stream callback.
+    sfxstreamfunc_t func = reinterpret_cast<sfxstreamfunc_t>(buf->sample->data);
+    if(func(buf, data, datalen))
+    {
+        return FMOD_OK;
+    }
+    else
+    {
+        // The stream function failed to produce data.
+        return FMOD_ERR_NOTREADY;
+    }
+}
+
 /**
  * Prepare the buffer for playing a sample by filling the buffer with as
  * much sample data as fits. The pointer to sample is saved, so the caller
@@ -208,6 +242,8 @@ static void toSigned8bit(const unsigned char* source, int size, RawSamplePCM8& o
 void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
     if(!fmodSystem || !buf || !sample) return;
+
+    bool streaming = (buf->flags & SFXBF_STREAM) != 0;
 
     // Tell the engine we have used up the entire sample already.
     buf->sample = sample;
@@ -233,20 +269,38 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     {
         DSFMOD_TRACE("SFX_Load: Releasing buffer's old Sound " << info.sound);
         info.sound->release();
+        streams.erase(info.sound);
     }
 
     RawSamplePCM8 signConverted;
     const char* sampleData = reinterpret_cast<const char*>(sample->data);
-    if(sample->bytesPer == 1)
+    if(!streaming)
     {
-        // Doomsday gives us unsigned 8-bit audio samples.
-        toSigned8bit(reinterpret_cast<const unsigned char*>(sample->data), sample->size, signConverted);
-        sampleData = &signConverted[0];
+        if(sample->bytesPer == 1)
+        {
+            // Doomsday gives us unsigned 8-bit audio samples.
+            toSigned8bit(reinterpret_cast<const unsigned char*>(sample->data), sample->size, signConverted);
+            sampleData = &signConverted[0];
+        }
+        info.mode = FMOD_OPENMEMORY |
+                    FMOD_OPENRAW |
+                    FMOD_HARDWARE |
+                    (buf->flags & SFXBF_3D? FMOD_3D : FMOD_2D) |
+                    (buf->flags & SFXBF_REPEAT? FMOD_LOOP_NORMAL : 0);
     }
+    else // Set up for streaming.
+    {
+        info.mode = FMOD_OPENUSER |
+                    FMOD_CREATESTREAM |
+                    FMOD_HARDWARE |
+                    FMOD_LOOP_NORMAL;
 
-    info.mode = FMOD_HARDWARE |
-                (buf->flags & SFXBF_3D? FMOD_3D : FMOD_2D) |
-                (buf->flags & SFXBF_REPEAT? FMOD_LOOP_NORMAL : 0);
+        params.numchannels = 2; /// @todo  Make this configurable.
+        params.length = sample->numSamples;
+        params.decodebuffersize = sample->rate / 4;
+        params.pcmreadcallback = pcmReadCallback;
+        sampleData = 0; // will be streamed
+    }
     if(buf->flags & SFXBF_3D)
     {
         info.mode |= FMOD_3D_WORLDRELATIVE;
@@ -254,11 +308,16 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     // Pass the sample to FMOD.
     FMOD_RESULT result;
-    result = fmodSystem->createSound(sampleData,
-                                     FMOD_OPENMEMORY | FMOD_OPENRAW | info.mode,
-                                     &params, &info.sound);
+    result = fmodSystem->createSound(sampleData, info.mode, &params, &info.sound);
     DSFMOD_ERRCHECK(result);
-    DSFMOD_TRACE("SFX_Load: created Sound " << info.sound);
+    DSFMOD_TRACE("SFX_Load: created Sound " << info.sound << (streaming? " as streaming" : ""));
+
+    if(streaming)
+    {
+        // Keep a record of the playing stream for the PCM read callback.
+        streams[info.sound] = buf;
+        DSFMOD_TRACE("SFX_Load: noting " << info.sound << " belongs to streaming buffer " << buf);
+    }
 
     // Not started yet.
     info.channel = 0;
@@ -293,6 +352,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     {
         DSFMOD_TRACE("SFX_Reset: releasing Sound " << info.sound);
         info.sound->release();
+        streams.erase(info.sound);
     }
     if(info.channel)
     {
@@ -353,13 +413,20 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
     DSFMOD_TRACE("SFX_Stop: sfxbuffer " << buf);
 
     BufferInfo& info = bufferInfo(buf);
+
+    Streams::iterator found = streams.find(info.sound);
+    if(found != streams.end() && info.channel)
+    {
+        info.channel->setPaused(true);
+    }
+
     if(info.channel)
     {
         info.channel->setUserData(0);
         info.channel->setCallback(0);
         info.channel->setMute(true);
         info.channel = 0;
-    }
+    }    
 
     // Clear the flag that tells the Sfx module about playing buffers.
     buf->flags &= ~SFXBF_PLAYING;

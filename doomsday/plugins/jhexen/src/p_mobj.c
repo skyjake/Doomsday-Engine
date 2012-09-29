@@ -1248,9 +1248,10 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->flags3 = info->flags3;
     // This doesn't appear to actually be used see P_DamageMobj in P_inter.c
     mo->damage = info->damage;
-    mo->health = info->spawnHealth *
-        (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
+    mo->selector = 0;
+    P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
     if(gameSkill != SM_NIGHTMARE)
     {
@@ -1504,6 +1505,9 @@ boolean P_HitFloor(mobj_t* thing)
     case MT_LEAF2:
     case MT_SPLASH:
     case MT_SLUDGECHUNK:
+    case MT_FOGPATCHS:
+    case MT_FOGPATCHM:
+    case MT_FOGPATCHL:
         return false;
 
     default:

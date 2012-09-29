@@ -32,6 +32,18 @@
 #include "doomsday.h"
 #include "p_iterlist.h"
 
+#define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
+#define numhedges   (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
+#define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
+#define numbspleafs (*(uint*) DD_GetVariable(DD_BSPLEAF_COUNT))
+#define numbspnodes (*(uint*) DD_GetVariable(DD_BSPNODE_COUNT))
+#define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
+#define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
+
+#if __JHEXEN__
+#define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))
+#endif
+
 // DMU property aliases. For short-hand purposes:
 #define DMU_TOP_MATERIAL        (DMU_TOP_OF_SIDEDEF | DMU_MATERIAL)
 #define DMU_TOP_MATERIAL_OFFSET_X (DMU_TOP_OF_SIDEDEF | DMU_OFFSET_X)
@@ -120,13 +132,16 @@
 #define DMU_CEILING_NORMAL_Z    (DMU_CEILING_OF_SECTOR | DMU_NORMAL_Z)
 #define DMU_CEILING_NORMAL_XYZ  (DMU_CEILING_OF_SECTOR | DMU_NORMAL_XYZ)
 
-extern iterlist_t* linespecials; /// For surfaces that tick eg wall scrollers.
-
+void P_BuildLineTagLists(void);
 void P_DestroyLineTagLists(void);
 iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList);
 
+void P_BuildSectorTagLists(void);
 void P_DestroySectorTagLists(void);
 iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList);
+
+void P_BuildAllTagLists(void);
+void P_DestroyAllTagLists(void);
 
 LineDef* P_AllocDummyLine(void);
 void P_FreeDummyLine(LineDef* line);
@@ -245,5 +260,11 @@ void P_SectorSetLight(Sector* sector, float level);
 void P_SectorModifyLight(Sector* sector, float value);
 void P_SectorModifyLightx(Sector* sector, fixed_t value);
 void* P_SectorOrigin(Sector* sector);
+
+void P_TranslateSideMaterialOrigin(SideDef* side, SideDefSection section, float deltaXY[2]);
+void P_TranslateSideMaterialOriginXY(SideDef* side, SideDefSection section, float deltaX, float deltaY);
+
+void P_TranslatePlaneMaterialOrigin(Plane* plane, float deltaXY[2]);
+void P_TranslatePlaneMaterialOriginXY(Plane* plane, float deltaX, float deltaY);
 
 #endif /* LIBCOMMON_DMU_LIB_H */

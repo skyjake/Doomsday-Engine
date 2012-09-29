@@ -342,99 +342,68 @@ static void spreadInBspLeaf(BspLeaf* bspLeaf, void* paramaters)
     } while((hedge = hedge->next) != bspLeaf->hedge);
 }
 
-static void processSeg(HEdge* hedge, void* paramaters)
+static void processSeg(HEdge* hedge, void* parameters)
 {
-    contactfinderparams_t* p = (contactfinderparams_t*) paramaters;
+    contactfinderparams_t* parms = (contactfinderparams_t*) parameters;
+    DENG2_ASSERT(hedge && parms);
+{
+    BspLeaf* leaf = hedge->bspLeaf;
+    BspLeaf* backLeaf = hedge->twin? hedge->twin->bspLeaf : 0;
     linkobjtobspleafparams_t loParams;
-    BspLeaf* source, *dest;
     coord_t distance;
-    Vertex* vtx;
 
-    // HEdge must be between two different BspLeafs.
-    if(hedge->lineDef && (!hedge->twin || hedge->bspLeaf == hedge->twin->bspLeaf))
-        return;
+    // There must be a back leaf to spread to.
+    if(!backLeaf) return;
 
     // Which way does the spread go?
-    if(hedge->bspLeaf->validCount == validCount &&
-       hedge->twin->bspLeaf->validCount != validCount)
+    if(!(leaf->validCount == validCount && backLeaf->validCount != validCount))
     {
-        source = hedge->bspLeaf;
-        dest = hedge->twin->bspLeaf;
-    }
-    else
-    {
-        // Not eligible for spreading.
-        return;
+        return; // Not eligible for spreading.
     }
 
-    // Is the dest BspLeaf inside the objlink's AABB?
-    if(dest->aaBox.maxX <= p->box[BOXLEFT] ||
-       dest->aaBox.minX >= p->box[BOXRIGHT] ||
-       dest->aaBox.maxY <= p->box[BOXBOTTOM] ||
-       dest->aaBox.minY >= p->box[BOXTOP])
-    {
-        // The BspLeaf is not inside the params's bounds.
-        return;
-    }
+    // Is the leaf on the back side outside the origin's AABB?
+    if(backLeaf->aaBox.maxX <= parms->box[BOXLEFT]   ||
+       backLeaf->aaBox.minX >= parms->box[BOXRIGHT]  ||
+       backLeaf->aaBox.maxY <= parms->box[BOXBOTTOM] ||
+       backLeaf->aaBox.minY >= parms->box[BOXTOP]) return;
 
-    // Can the spread happen?
+    // Do not spread if the sector on the back side is closed with no height.
+    if(backLeaf->sector && backLeaf->sector->SP_ceilheight <= backLeaf->sector->SP_floorheight) return;
+    if(backLeaf->sector && leaf->sector &&
+       (backLeaf->sector->SP_ceilheight  <= leaf->sector->SP_floorheight ||
+        backLeaf->sector->SP_floorheight >= leaf->sector->SP_ceilheight)) return;
+
+    // Too far from the object?
+    distance = HEdge_PointOnSide(hedge, parms->objOrigin) / hedge->length;
+    if(fabs(distance) >= parms->objRadius) return;
+
+    // Don't spread if the middle material covers the opening.
     if(hedge->lineDef)
     {
-        if(dest->sector)
-        {
-            if(dest->sector->planes[PLN_CEILING]->height <= dest->sector->planes[PLN_FLOOR]->height ||
-               dest->sector->planes[PLN_CEILING]->height <= source->sector->planes[PLN_FLOOR]->height ||
-               dest->sector->planes[PLN_FLOOR]->height   >= source->sector->planes[PLN_CEILING]->height)
-            {
-                // No; destination sector is closed with no height.
-                return;
-            }
-        }
+        // On which side of the line are we? (distance is from hedge to origin).
+        byte lineSide = hedge->side ^ (distance < 0);
+        LineDef* line = hedge->lineDef;
+        Sector* frontSec  = lineSide == FRONT? leaf->sector : backLeaf->sector;
+        Sector* backSec   = lineSide == FRONT? backLeaf->sector : leaf->sector;
+        SideDef* frontDef = line->L_sidedef(lineSide);
+        SideDef* backDef  = line->L_sidedef(lineSide^1);
 
-        // Don't spread if the middle material completely fills the gap between
-        // floor and ceiling (direction is from dest to source).
-        if(LineDef_MiddleMaterialCoversOpening(hedge->lineDef,
-            dest == hedge->twin->bspLeaf? false : true, false))
-            return;
-    }
+        if(backSec && !backDef) return; // One-sided window.
 
-    // Calculate 2D distance to hedge.
-    {
-    const coord_t dx = hedge->HE_v2origin[VX] - hedge->HE_v1origin[VX];
-    const coord_t dy = hedge->HE_v2origin[VY] - hedge->HE_v1origin[VY];
-    vtx = hedge->HE_v1;
-    distance = ((vtx->origin[VY] - p->objOrigin[VY]) * dx -
-                (vtx->origin[VX] - p->objOrigin[VX]) * dy) / hedge->length;
-    }
-
-    if(hedge->lineDef)
-    {
-        if((source == hedge->bspLeaf && distance < 0) ||
-           (source == hedge->twin->bspLeaf && distance > 0))
-        {
-            // Can't spread in this direction.
-            return;
-        }
-    }
-
-    // Check distance against the obj radius.
-    if(distance < 0)
-        distance = -distance;
-    if(distance >= p->objRadius)
-    {   // The obj doesn't reach that far.
-        return;
+        if(R_MiddleMaterialCoversOpening(line->flags, frontSec, backSec, frontDef, backDef,
+                                         false /*do not ignore material opacity*/)) return;
     }
 
     // During next step, obj will continue spreading from there.
-    dest->validCount = validCount;
+    backLeaf->validCount = validCount;
 
-    // Add this obj to the destination BspLeaf.
-    loParams.obj   = p->obj;
-    loParams.type = p->objType;
-    RIT_LinkObjToBspLeaf(dest, &loParams);
+    // Link up a new contact with the back BSP leaf.
+    loParams.obj  = parms->obj;
+    loParams.type = parms->objType;
+    RIT_LinkObjToBspLeaf(backLeaf, &loParams);
 
-    spreadInBspLeaf(dest, paramaters);
-}
+    spreadInBspLeaf(backLeaf, parms);
+}}
 
 /**
  * Create a contact for the objlink in all the BspLeafs the linked obj is
@@ -557,7 +526,7 @@ BEGIN_PROF( PROF_OBJLINK_SPREAD );
 END_PROF( PROF_OBJLINK_SPREAD );
 }
 
-/// @assume  Coordinates held by @a blockXY are within valid range.
+/// @pre  Coordinates held by @a blockXY are within valid range.
 static void linkObjlinkInBlockmap(objlinkblockmap_t* obm, objlink_t* link, uint blockXY[2])
 {
     objlinkblock_t* block;

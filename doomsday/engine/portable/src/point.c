@@ -149,7 +149,7 @@ void Point2_Sum(Point2* p, const Point2* other)
 boolean Point2_Equality(const Point2* p, const Point2* other)
 {
     assert(p && other);
-    return p == other || p->raw.x == Point2_X(other) && p->raw.y == Point2_Y(other);
+    return p == other || (p->raw.x == Point2_X(other) && p->raw.y == Point2_Y(other));
 }
 
 Point2f* Point2f_New(void)
@@ -265,7 +265,7 @@ void Point2f_Sum(Point2f* p, const Point2f* other)
 boolean Point2f_Equality(const Point2f* p, const Point2f* other)
 {
     assert(p && other);
-    return p == other || p->raw.x == Point2f_X(other) && p->raw.y == Point2f_Y(other);
+    return p == other || (p->raw.x == Point2f_X(other) && p->raw.y == Point2f_Y(other));
 }
 
 struct point3_s {
@@ -404,7 +404,9 @@ void Point3_Sum(Point3* p, const Point3* other)
 boolean Point3_Equality(const Point3* p, const Point3* other)
 {
     assert(p && other);
-    return p == other || p->raw.x == Point3_X(other) && p->raw.y == Point3_Y(other) && p->raw.z == Point3_Z(other);
+    return p == other || (p->raw.x == Point3_X(other) &&
+                          p->raw.y == Point3_Y(other) &&
+                          p->raw.z == Point3_Z(other));
 }
 
 Point3f* Point3f_New(void)
@@ -533,5 +535,7 @@ void Point3f_Sum(Point3f* p, const Point3f* other)
 boolean Point3f_Equality(const Point3f* p, const Point3f* other)
 {
     assert(p && other);
-    return p == other || p->raw.x == Point3f_X(other) && p->raw.y == Point3f_Y(other) && p->raw.z == Point3f_Z(other);
+    return p == other || (p->raw.x == Point3f_X(other) &&
+                          p->raw.y == Point3f_Y(other) &&
+                          p->raw.z == Point3f_Z(other));
 }

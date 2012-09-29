@@ -44,27 +44,27 @@ struct SuperBlock::Instance
     int realNum;
     int miniNum;
 
-    Instance(SuperBlockmap& blockmap) :
-        bmap(blockmap), tree(0), hedges(0), realNum(0), miniNum(0)
+    Instance(SuperBlockmap& blockmap)
+      : bmap(blockmap), tree(0), hedges(0), realNum(0), miniNum(0)
     {}
 
     ~Instance()
     {
-        KdTreeNode_SetUserData(tree, NULL);
+        KdTreeNode_Delete(tree);
     }
 
-    void inline linkHEdge(HEdge& hedge)
+    inline void linkHEdge(HEdge& hedge)
     {
         hedges.push_front(&hedge);
     }
 
-    void inline incrementHEdgeCount(HEdge const& hedge)
+    inline void incrementHEdgeCount(HEdge const& hedge)
     {
         if(hedge.lineDef) realNum++;
         else              miniNum++;
     }
 
-    void inline decrementHEdgeCount(HEdge const& hedge)
+    inline void decrementHEdgeCount(HEdge const& hedge)
     {
         if(hedge.lineDef) realNum--;
         else              miniNum--;
@@ -84,7 +84,26 @@ SuperBlock::SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical)
 
 SuperBlock::~SuperBlock()
 {
+    clear();
     delete d;
+}
+
+SuperBlock& SuperBlock::clear()
+{
+    if(d->tree)
+    {
+        // Recursively handle sub-blocks.
+        KdTreeNode* child;
+        for(uint num = 0; num < 2; ++num)
+        {
+            child = KdTreeNode_Child(d->tree, num);
+            if(!child) continue;
+
+            SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
+            if(blockPtr) delete blockPtr;
+        }
+    }
+    return *this;
 }
 
 SuperBlockmap& SuperBlock::blockmap() const
@@ -136,14 +155,9 @@ SuperBlock* SuperBlock::addChild(ChildId childId, bool splitVertical)
     return child;
 }
 
-SuperBlock::HEdges::const_iterator SuperBlock::hedgesBegin() const
+const SuperBlock::HEdges& SuperBlock::hedges() const
 {
-    return d->hedges.begin();
-}
-
-SuperBlock::HEdges::const_iterator SuperBlock::hedgesEnd() const
-{
-    return d->hedges.end();
+    return d->hedges;
 }
 
 uint SuperBlock::hedgeCount(bool addReal, bool addMini) const
@@ -171,7 +185,7 @@ void SuperBlock::findHEdgeBounds(AABoxd& bounds)
     bool initialized = false;
     AABoxd hedgeAABox;
 
-    for(HEdges::iterator it = d->hedges.begin(); it != d->hedges.end(); ++it)
+    DENG2_FOR_EACH(it, d->hedges, HEdges::iterator)
     {
         HEdge* hedge = *it;
         initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);
@@ -191,9 +205,9 @@ void SuperBlock::findHEdgeBounds(AABoxd& bounds)
 SuperBlock& SuperBlock::push(HEdge& hedge)
 {
     SuperBlock* sb = this;
-    for(;;)
+    forever
     {
-        Q_ASSERT(sb);
+        DENG2_ASSERT(sb);
 
         // Update half-edge counts.
         sb->d->incrementHEdgeCount(hedge);
@@ -241,7 +255,6 @@ SuperBlock& SuperBlock::push(HEdge& hedge)
 
         sb = sb->child(p1);
     }
-
     return *sb;
 }
 
@@ -301,24 +314,6 @@ struct SuperBlockmap::Instance
     {
         KdTree_Delete(kdTree);
     }
-
-    void clearBlockWorker(SuperBlock& block)
-    {
-        if(block.d->tree)
-        {
-            // Recursively handle sub-blocks.
-            KdTreeNode* child;
-            for(uint num = 0; num < 2; ++num)
-            {
-                child = KdTreeNode_Child(block.d->tree, num);
-                if(!child) continue;
-
-                SuperBlock* blockPtr = static_cast<SuperBlock*>(KdTreeNode_UserData(child));
-                if(blockPtr) clearBlockWorker(*blockPtr);
-            }
-        }
-        delete &block;
-    }
 };
 
 SuperBlockmap::SuperBlockmap(const AABox& bounds)
@@ -339,12 +334,12 @@ SuperBlock& SuperBlockmap::root()
 
 void SuperBlockmap::clear()
 {
-    d->clearBlockWorker(root());
+    root().clear();
 }
 
 static void findHEdgeBoundsWorker(SuperBlock& block, AABoxd& bounds, bool* initialized)
 {
-    Q_ASSERT(initialized);
+    DENG2_ASSERT(initialized);
     if(block.hedgeCount(true, true))
     {
         AABoxd blockHEdgeAABox;
@@ -362,7 +357,7 @@ static void findHEdgeBoundsWorker(SuperBlock& block, AABoxd& bounds, bool* initi
     }
 }
 
-void SuperBlockmap::findHEdgeBounds(AABoxd& aaBox)
+AABoxd SuperBlockmap::findHEdgeBounds()
 {
     bool initialized = false;
     AABoxd bounds;
@@ -404,13 +399,12 @@ void SuperBlockmap::findHEdgeBounds(AABoxd& aaBox)
         }
     }
 
-    if(initialized)
+    if(!initialized)
     {
-        V2d_CopyBox(aaBox.arvec2, bounds.arvec2);
-        return;
+        // Clear.
+        V2d_Set(bounds.min, DDMAXFLOAT, DDMAXFLOAT);
+        V2d_Set(bounds.max, DDMINFLOAT, DDMINFLOAT);
     }
 
-    // Clear.
-    V2d_Set(aaBox.min, DDMAXFLOAT, DDMAXFLOAT);
-    V2d_Set(aaBox.max, DDMINFLOAT, DDMINFLOAT);
+    return bounds;
 }

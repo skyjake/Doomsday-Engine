@@ -29,6 +29,10 @@
 #ifndef LIBDENG_DEMO_H
 #define LIBDENG_DEMO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int      playback;
 
 void            Demo_Register(void);
@@ -47,5 +51,9 @@ void            Demo_ReadLocalCamera(void); // PKT_DEMOCAM
 boolean         Demo_BeginPlayback(const char* filename);
 boolean         Demo_ReadPacket(void);
 void            Demo_StopPlayback(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_DEMO_H */

@@ -481,7 +481,7 @@ void P_MobjMoveZ(mobj_t* mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(movingDown = (mo->mom[MZ] < 0))
+        if((movingDown = (mo->mom[MZ] < 0)))
         {
             if(mo->player && mo->player->plr->mo == mo &&
                mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
@@ -610,10 +610,6 @@ void P_MobjThinker(mobj_t *mobj)
 {
     if(mobj->ddFlags & DDMF_REMOTE)
         return; // Remote mobjs are handled separately.
-
-    // Spectres get selector = 1.
-    if(mobj->type == MT_SHADOWS)
-        mobj->selector = (mobj->selector & ~DDMOBJ_SELECTOR_MASK) | 1;
 
     // The first three bits of the selector special byte contain a
     // relative health level.
@@ -838,9 +834,12 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     mo->flags2 = info->flags2;
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
-    mo->health =
-        info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
+
+    // Spectres get selector = 1.
+    mo->selector = (type == MT_SHADOWS)? 1 : 0;
+    P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
     mo->reactionTime = info->reactionTime;
 

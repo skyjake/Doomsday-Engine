@@ -171,7 +171,7 @@ void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
     int texW, int texH, const float topColor[3], float topAlpha,
     const float bottomColor[3], float bottomAlpha)
 {
-    if(!(topAlpha > 0 || bottomAlpha > 0)) return;
+    if(topAlpha <= 0 && bottomAlpha <= 0) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();

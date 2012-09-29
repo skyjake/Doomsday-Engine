@@ -38,8 +38,6 @@
 #  include "de_render.h"
 #endif
 
-#include "con_busy.h"
-
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
 
 #define MAX_AXIS_FILTER 40
@@ -338,7 +336,7 @@ void I_DeviceReset(uint ident)
     inputdev_t* dev = &inputDevices[ident];
     int k;
 
-    DEBUG_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
+    DEBUG_VERBOSE_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
 
     for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
     {
@@ -796,7 +794,7 @@ void I_ClearDeviceContextAssociations(void)
 
 boolean I_IsKeyDown(inputdev_t* dev, uint id)
 {
-    if(dev && id >= 0 && id < dev->numKeys)
+    if(dev && id < dev->numKeys)
     {
         return dev->keys[id].isDown;
     }
@@ -826,7 +824,7 @@ void DD_InitInput(void)
 {
     int i;
 
-    inputDisabledFully = ArgExists("-noinput");
+    inputDisabledFully = CommandLine_Exists("-noinput");
 
     for(i = 0; i < 256; ++i)
     {
@@ -1096,29 +1094,12 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
 
         DD_ConvertEvent(ddev, &ev);
 
-        /**
-         * @todo Refactor: all event processing should occur within the binding
-         * context stack. Convert all of these special case handlers to context
-         * fallbacks (may require adding new contexts).
-         */
-
         if(callGameResponders)
         {
             // Does the game's special responder use this event? This is
             // intended for grabbing events when creating bindings in the
             // Controls menu.
             if(gx.PrivilegedResponder && gx.PrivilegedResponder(&ev))
-                continue;
-        }
-
-        if(UI_Responder(ddev)) continue; /// @todo: use the bindings system (deui context fallback)
-        if(Con_Responder(ddev)) continue; /// @todo refactor: use the bindings system
-
-        if(callGameResponders) /// @todo refactor: use the bindings system (chat context fallback)
-        {
-            // The game's normal responder only returns true if the bindings can't
-            // be used (like when chatting).
-            if(gx.Responder && gx.Responder(&ev))
                 continue;
         }
 
@@ -1617,7 +1598,7 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
     origin.x = _origin? _origin->x : 0;
     origin.y = _origin? _origin->y : 0;
 
-    Str_Init(&label);
+    Str_InitStd(&label);
 
     // Compose the key label.
     if(key->name)

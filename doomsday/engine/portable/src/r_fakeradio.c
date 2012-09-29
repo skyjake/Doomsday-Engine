@@ -274,7 +274,7 @@ void R_InitFakeRadioForMap(void)
 
         for(j = 0; j < 2; ++j)
         {
-            if(!line->L_side(j)) continue;
+            if(!line->L_sector(j) || !line->L_sidedef(j)) continue;
 
             vtx0 = line->L_v(j);
             vtx1 = line->L_v(j^1);

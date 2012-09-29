@@ -22,6 +22,7 @@
 
 #ifdef UNIX
 #  include <sys/types.h>
+#  include <sys/stat.h>
 #  include <unistd.h>
 #  include <dirent.h>
 #  include <dlfcn.h>
@@ -32,7 +33,6 @@
 #include "de_base.h"
 #include "de_filesys.h"
 #include "m_misc.h"
-#include "m_args.h"
 
 #ifdef WIN32
 #  include "de_platform.h"
@@ -63,15 +63,15 @@ static Library* loadedLibs[MAX_LIBRARIES];
 #ifdef UNIX
 static void getBundlePath(char* path, size_t len)
 {
-    if(ArgCheckWith("-libdir", 1))
+    if(CommandLine_CheckWith("-libdir", 1))
     {
-        strncpy(path, ArgNext(), len);
+        strncpy(path, CommandLine_Next(), len);
         return;
     }
 
-    if(ArgCheckWith("-appdir", 1))
+    if(CommandLine_CheckWith("-appdir", 1))
     {
-        dd_snprintf(path, len, "%s/%s", appDir, ArgNext());
+        dd_snprintf(path, len, "%s/%s", appDir, CommandLine_Next());
         return;
     }
 
@@ -153,7 +153,7 @@ void Library_ReleaseGames(void)
         if(!lib) continue;
         if(lib->isGamePlugin && lib->handle)
         {
-            LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+            LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
                     "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
 
             dlclose(lib->handle);
@@ -169,7 +169,7 @@ static void reopenLibraryIfNeeded(Library* lib)
     assert(lib);
     if(!lib->handle)
     {
-        LegacyCore_PrintfLogFragmentAtLevel(de2LegacyCore, DE2_LOG_DEBUG,
+        LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
                 "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
 
         lib->handle = dlopen(Str_Text(lib->path), RTLD_NOW);
@@ -306,6 +306,32 @@ void Library_AddSearchDir(const char *dir)
     /// @todo  Implement this (and use it in the lookup)
 }
 
+#ifdef UNIX
+static boolean isPossiblyLibraryFile(const char* path, const struct dirent* entry)
+{
+    if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) return false;
+
+#ifdef MACOSX
+    // Mac plugins are bundled in a subdir.
+    if(entry->d_type != DT_REG &&
+       entry->d_type != DT_DIR &&
+       entry->d_type != DT_LNK) return false;
+#else
+    {
+        struct stat st;
+        AutoStr* fn = AutoStr_FromText(path);
+        Str_Appendf(fn, "/%s", entry->d_name);
+        if(lstat(Str_Text(fn), &st)) return false; // stat failed...
+        // Only regular files and symlinks are considered.
+        if(!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode)) return false;
+    }
+#endif
+
+    // Could be a shared library...
+    return true;
+}
+#endif
+
 int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *data)
 {
 #ifdef UNIX
@@ -327,22 +353,14 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
 
     while((entry = readdir(dir)))
     {
-        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
-#ifdef MACOSX
-        // Mac plugins are bundled in a subdir.
-        if(entry->d_type != DT_REG && entry->d_type != DT_DIR &&
-           entry->d_type != DT_LNK) continue;
-#else
-        // Also include symlinks.
-        if(entry->d_type != DT_REG && entry->d_type != DT_LNK) continue;
-#endif
+        if(!isPossiblyLibraryFile(bundlePath, entry)) continue;
         if(func(entry->d_name, data)) break;
     }
     closedir(dir);
 #endif
 
 #ifdef WIN32
-    printf("TODO: a similar routine should be in dd_winit.c; move the code here\n");
+    printf("TODO: a similar routine exists in dd_winit.c; move the code here\n");
 #endif
 
     return 0;

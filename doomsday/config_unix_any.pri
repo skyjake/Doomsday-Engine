@@ -9,10 +9,19 @@ DEFINES += UNIX
 # Ease up on the warnings. (The old C code is a bit messy.)
 QMAKE_CFLAGS_WARN_ON -= -Wall
 QMAKE_CFLAGS_WARN_ON -= -W
-QMAKE_CFLAGS_WARN_ON += -Werror-implicit-function-declaration
+QMAKE_CFLAGS_WARN_ON += -Werror-implicit-function-declaration -fdiagnostics-show-option
+
+*-g++*|*-gcc* {
+    # Allow //-comments and anonymous structs inside unions.
+    QMAKE_CFLAGS += -std=c99 -fms-extensions
+}
+*-clang* {
+    QMAKE_CFLAGS_WARN_ON += -Wno-tautological-compare
+}
 
 # Print include directories and other info.
 #QMAKE_CFLAGS += -Wp,-v
+#QMAKE_LFLAGS += -v
 
 # Unix System Tools ----------------------------------------------------------
 

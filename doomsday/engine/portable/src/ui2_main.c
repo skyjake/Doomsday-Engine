@@ -195,7 +195,7 @@ static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 }
 
 /**
- * \assume There is at most one reference to the object in this collection.
+ * @pre There is at most one reference to the object in this collection.
  */
 static fi_object_t* objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
 {
@@ -542,6 +542,14 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     vec3f_t topColor, bottomColor;
     float topAlpha, bottomAlpha;
 
+    V3f_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
+    topAlpha = p->_bg.topColor[3].value * alpha;
+
+    V3f_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
+    bottomAlpha = p->_bg.bottomColor[3].value * alpha;
+
+    if(topAlpha <= 0 && bottomAlpha <= 0) return;
+
     if(p->_bg.material)
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
@@ -551,12 +559,6 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
         GL_BindTexture(MST(ms, MTU_PRIMARY));
         glEnable(GL_TEXTURE_2D);
     }
-
-    V3f_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
-    topAlpha = p->_bg.topColor[3].value * alpha;
-
-    V3f_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
-    bottomAlpha = p->_bg.bottomColor[3].value * alpha;
 
     if(p->_bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
     {
@@ -1055,7 +1057,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 switch(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))))
                 {
                 case TN_SPRITES: {
-                    patchtex_t* sTex = (patchtex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+                    patchtex_t* sTex = (patchtex_t*)Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
                     if(sTex)
                     {
                         V3f_Set(offset, sTex->offX, sTex->offY, 0);
@@ -1081,7 +1083,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 textureEnabled = true;
 
                 {
-                patchtex_t* pTex = (patchtex_t*)Texture_UserData(texture);
+                patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(texture);
                 assert(pTex);
                 V3f_Set(offset, pTex->offX, pTex->offY, 0);
                 V3f_Set(dimensions, Texture_Width(texture), Texture_Height(texture), 0);
@@ -1095,7 +1097,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     }
 
     // If we've not chosen a texture by now set some defaults.
-    /// @fixme This is some seriously funky logic... refactor or remove.
+    /// @todo This is some seriously funky logic... refactor or remove.
     if(!textureEnabled)
     {
         V3f_Copy(dimensions, scale);

@@ -59,10 +59,6 @@
 #define LOOPi(n)    for(i = 0; i < (n); ++i)
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
 
-// Legacy frame flags.
-#define FF_FULLBRIGHT       0x8000 // flag in mobj->frame
-#define FF_FRAMEMASK        0x7fff
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
@@ -347,6 +343,43 @@ acfnptr_t Def_GetActionPtr(const char* name)
     return 0;
 }
 
+int Def_GetActionNum(const char* name)
+{
+    if(name && name[0] && DD_GameLoaded())
+    {
+        // Action links are provided by the game, who owns the actual action functions.
+        actionlink_t* links = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK);
+        actionlink_t* linkIt;
+        for(linkIt = links; linkIt && linkIt->name; linkIt++)
+        {
+            actionlink_t* link = linkIt;
+            if(!stricmp(name, link->name))
+                return linkIt - links;
+        }
+    }
+    return -1; // Not found.
+}
+
+ded_value_t* Def_GetValueById(const char* id)
+{
+    int i;
+    if(!id || !id[0]) return NULL;
+
+    // Read backwards to allow patching.
+    for(i = defs.count.values.num - 1; i >= 0; i--)
+    {
+        if(!stricmp(defs.values[i].id, id))
+            return defs.values + i;
+    }
+    return 0;
+}
+
+ded_value_t* Def_GetValueByUri(const Uri* uri)
+{
+    if(!uri || stricmp("Values", Str_Text(Uri_Scheme(uri)))) return 0; // Not found.
+    return Def_GetValueById(Str_Text(Uri_Path(uri)));
+}
+
 ded_mapinfo_t* Def_GetMapInfo(const Uri* uri)
 {
     int i;
@@ -588,15 +621,23 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
     return NULL;
 }
 
-int Def_GetFlagValue(const char* flag)
+ded_flag_t* Def_GetFlag(const char* flag)
 {
-    int                 i;
+    int i;
+
+    if(!flag || !flag[0])
+    {
+        DEBUG_Message(("Attempted Def_GetFlagValue with %s flag argument.\n",
+                       flag? "zero-length" : "<null>"));
+        return 0;
+    }
 
     for(i = defs.count.flags.num - 1; i >= 0; i--)
+    {
         if(!stricmp(defs.flags[i].id, flag))
-            return defs.flags[i].value;
+            return defs.flags + i;
+    }
 
-    Con_Message("Warning: Def_GetFlagValue: Undefined flag '%s'.\n", flag);
     return 0;
 }
 
@@ -607,20 +648,20 @@ int Def_GetFlagValue(const char* flag)
  */
 const char* Def_GetFlagTextByPrefixVal(const char* prefix, int val)
 {
-    int                 i;
-
+    int i;
     for(i = defs.count.flags.num - 1; i >= 0; i--)
-        if(strnicmp(defs.flags[i].id, prefix, sizeof(prefix)) == 0 &&
-            defs.flags[i].value == val)
+    {
+        if(strnicmp(defs.flags[i].id, prefix, strlen(prefix)) == 0 && defs.flags[i].value == val)
             return defs.flags[i].text;
-
+    }
     return NULL;
 }
 
 int Def_EvalFlags(char* ptr)
 {
-    int                 value = 0, len;
-    char                buf[64];
+    ded_flag_t* flag;
+    int value = 0, len;
+    char buf[64];
 
     while(*ptr)
     {
@@ -628,7 +669,16 @@ int Def_EvalFlags(char* ptr)
         len = M_FindWhite(ptr) - ptr;
         strncpy(buf, ptr, len);
         buf[len] = 0;
-        value |= Def_GetFlagValue(buf);
+
+        flag = Def_GetFlag(buf);
+        if(flag)
+        {
+            value |= flag->value;
+        }
+        else
+        {
+            Con_Message("Warning: Def_EvalFlags: Undefined flag '%s'.\n", buf);
+        }
         ptr += len;
     }
     return value;
@@ -650,34 +700,45 @@ int Def_GetTextNumForName(const char* name)
 }
 
 /**
- * Escape sequences are un-escaped (\n, \r, \t, \s, \_).
+ * The following escape sequences are un-escaped:
+ * <pre>
+ *     \n   Newline
+ *     \r   Carriage return
+ *     \t   Tab
+ *     \_   Space
+ *     \s   Space
+ * </pre>
  */
-void Def_InitTextDef(ddtext_t* txt, char* str)
+static void Def_InitTextDef(ddtext_t* txt, char* str)
 {
-    char*               out, *in;
+    char* out, *in;
 
-    if(!str)
-        str = ""; // Handle null pointers with "".
+    // Handle null pointers with "".
+    if(!str) str = "";
+
     txt->text = M_Calloc(strlen(str) + 1);
     for(out = txt->text, in = str; *in; out++, in++)
     {
         if(*in == '\\')
         {
             in++;
-            if(*in == 'n')
-                *out = '\n'; // Newline.
-            else if(*in == 'r')
-                *out = '\r'; // Carriage return.
-            else if(*in == 't')
-                *out = '\t'; // Tab.
-            else if(*in == '_' || *in == 's')
-                *out = ' '; // Space.
+
+            if(*in == 'n')      *out = '\n'; // Newline.
+            else if(*in == 'r') *out = '\r'; // Carriage return.
+            else if(*in == 't') *out = '\t'; // Tab.
+            else if(*in == '_'
+                 || *in == 's') *out = ' '; // Space.
             else
+            {
                 *out = *in;
-            continue;
+            }
         }
-        *out = *in;
+        else
+        {
+            *out = *in;
+        }
     }
+
     // Adjust buffer to fix exactly.
     txt->text = M_Realloc(txt->text, strlen(txt->text) + 1);
 }
@@ -685,7 +746,7 @@ void Def_InitTextDef(ddtext_t* txt, char* str)
 /**
  * Callback for DD_ReadProcessDED.
  */
-int Def_ReadDEDFile(const char* fn, pathdirectorynode_type_t type, void* parm)
+int Def_ReadDEDFile(const char* fn, PathDirectoryNodeType type, void* parm)
 {
     // Skip directories.
     if(type == PT_BRANCH)
@@ -778,7 +839,7 @@ int Def_GetIntValue(char* val, int* returned_val)
     char* data;
 
     // First look for a DED Value
-    if(Def_Get(DD_DEF_VALUE, val, &data))
+    if(Def_Get(DD_DEF_VALUE, val, &data) >= 0)
     {
         *returned_val = strtol(data, 0, 0);
         return true;
@@ -799,7 +860,7 @@ static __inline void readDefinitionFile(const char* fileName)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDefsReader(const ddstring_t* fileName, pathdirectorynode_type_t type, void* paramaters)
+static int autoDefsReader(const ddstring_t* fileName, PathDirectoryNodeType type, void* paramaters)
 {
     // Ignore directories.
     if(type != PT_BRANCH)
@@ -855,7 +916,7 @@ static void readAllDefinitions(void)
     }
 
     // Next up are definition files in the /auto directory.
-    if(!ArgExists("-noauto"))
+    if(!CommandLine_Exists("-noauto"))
     {
         ddstring_t pattern;
         Str_Init(&pattern);
@@ -866,14 +927,15 @@ static void readAllDefinitions(void)
 
     // Any definition files on the command line?
     Str_Init(&buf);
-    for(p = 0; p < Argc(); ++p)
+    for(p = 0; p < CommandLine_Count(); ++p)
     {
-        const char* arg = Argv(p);
-        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg)) continue;
+        const char* arg = CommandLine_At(p);
+        if(!CommandLine_IsMatchingAlias("-def", arg) &&
+           !CommandLine_IsMatchingAlias("-defs", arg)) continue;
 
-        while(++p != Argc() && !ArgIsOption(p))
+        while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            const char* searchPath = Argv(p);
+            const char* searchPath = CommandLine_PathAt(p);
 
             Con_Message("  Processing '%s'...\n", F_PrettyPath(searchPath));
 
@@ -946,7 +1008,7 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
     tex = Textures_ToTexture(texId);
     if(tex)
     {
-        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserData(tex);
+        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserDataPointer(tex);
         assert(pcTex);
         mat->width  = Texture_Width(tex);
         mat->height = Texture_Height(tex);
@@ -955,9 +1017,8 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
 #if _DEBUG
     else
     {
-        ddstring_t* path = Uri_ToString(texUri);
+        AutoStr* path = Uri_ToString(texUri);
         Con_Message("Warning:generateMaterialDefForPatchCompositeTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
-        Str_Delete(path);
     }
 #endif
 
@@ -995,9 +1056,8 @@ static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters
 #if _DEBUG
     else
     {
-        ddstring_t* path = Uri_ToString(texUri);
+        AutoStr* path = Uri_ToString(texUri);
         Con_Message("Warning:generateMaterialDefForFlatTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
-        Str_Delete(path);
     }
 #endif
 
@@ -1032,9 +1092,8 @@ static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramate
 #if _DEBUG
     else
     {
-        ddstring_t* path = Uri_ToString(texUri);
+        AutoStr* path = Uri_ToString(texUri);
         Con_Message("Warning:generateMaterialDefForSpriteTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
-        Str_Delete(path);
     }
 #endif
 
@@ -1097,26 +1156,18 @@ void Def_Read(void)
 
     for(i = 0; i < countStates.num; ++i)
     {
-        ded_state_t*        dstNew, *dst = &defs.states[i];
+        ded_state_t* dstNew, *dst = &defs.states[i];
         // Make sure duplicate IDs overwrite the earliest.
-        int                 stateNum = Def_GetStateNum(dst->id);
-        state_t*            st;
+        int stateNum = Def_GetStateNum(dst->id);
+        state_t* st;
 
-        if(stateNum == -1)
-            continue;
+        if(stateNum == -1) continue;
 
         dstNew = defs.states + stateNum;
         st = states + stateNum;
         st->sprite = Def_GetSpriteNum(dst->sprite.id);
         st->flags = dst->flags;
         st->frame = dst->frame;
-
-        // Check for the old or'd in fullbright flag.
-        if(st->frame & FF_FULLBRIGHT)
-        {
-            st->frame &= FF_FRAMEMASK;
-            st->flags |= STF_FULLBRIGHT;
-        }
 
         st->tics = dst->tics;
         st->action = Def_GetActionPtr(dst->action);
@@ -1290,7 +1341,10 @@ void Def_Read(void)
         ded_ptcgen_t*       pg = &defs.ptcGens[i];
         int                 st = Def_GetStateNum(pg->state);
 
-        pg->typeNum = Def_GetMobjNum(pg->type);
+        if(!strcmp(pg->type, "*"))
+            pg->typeNum = DED_PTCGEN_ANY_MOBJ_TYPE;
+        else
+            pg->typeNum = Def_GetMobjNum(pg->type);
         pg->type2Num = Def_GetMobjNum(pg->type2);
         pg->damageNum = Def_GetMobjNum(pg->damage);
 
@@ -1553,7 +1607,7 @@ static int Friendly(int num)
  */
 void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
 {
-    int                 i, k, a, temp;
+    int i, k, a, temp;
 
     l->id = def->id;
     l->flags = def->flags[0];
@@ -1628,8 +1682,11 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 temp = Def_EvalFlags(def->iparmStr[k]);
                 if(temp)
                     l->iparm[k] = temp;
-            } else
+            }
+            else
+            {
                 l->iparm[k] = Friendly(Def_GetMusicNum(def->iparmStr[k]));
+            }
         }
         else
         {
@@ -1704,6 +1761,9 @@ int Def_Get(int type, const char* id, void* out)
     case DD_DEF_STATE:
         return Def_GetStateNum(id);
 
+    case DD_DEF_ACTION:
+        return Def_GetActionNum(id);
+
     case DD_DEF_SPRITE:
         return Def_GetSpriteNum(id);
 
@@ -1739,8 +1799,12 @@ int Def_Get(int type, const char* id, void* out)
         mout->ambient = map->ambient;
         mout->gravity = map->gravity;
         mout->parTime = map->parTime;
-        return true;
-      }
+        mout->fogStart   = map->fogStart;
+        mout->fogEnd     = map->fogEnd;
+        mout->fogDensity = map->fogDensity;
+        memcpy(mout->fogColor, map->fogColor, sizeof(mout->fogColor));
+        return true; }
+
     case DD_DEF_TEXT:
         if(id && id[0])
         {
@@ -1754,15 +1818,29 @@ int Def_Get(int type, const char* id, void* out)
         }
         return -1;
 
-    case DD_DEF_VALUE:
-        // Read backwards to allow patching.
-        for(i = defs.count.values.num - 1; i >= 0; i--)
+    case DD_DEF_VALUE: {
+        int idx = -1; // Not found.
+        if(id && id[0])
         {
-            if(stricmp(defs.values[i].id, id)) continue;
-            if(out) *(char**) out = defs.values[i].text;
+            // Read backwards to allow patching.
+            for(idx = defs.count.values.num - 1; idx >= 0; idx--)
+            {
+                if(!stricmp(defs.values[idx].id, id))
+                    break;
+            }
+        }
+        if(out) *(char**) out = (idx >= 0? defs.values[idx].text : 0);
+        return idx; }
+
+    case DD_DEF_VALUE_BY_INDEX: {
+        int idx = *((long*) id);
+        if(idx >= 0 && idx < defs.count.values.num)
+        {
+            if(out) *(char**) out = defs.values[idx].text;
             return true;
         }
-        return false;
+        if(out) *(char**) out = 0;
+        return false; }
 
     case DD_DEF_FINALE: { // Find InFine script by ID.
         finalescript_t* fin = (finalescript_t*) out;
@@ -1770,13 +1848,16 @@ int Def_Get(int type, const char* id, void* out)
         {
             if(stricmp(defs.finales[i].id, id)) continue;
 
-            fin->before = defs.finales[i].before;
-            fin->after  = defs.finales[i].after;
-            fin->script = defs.finales[i].script;
+            if(fin)
+            {
+                fin->before = defs.finales[i].before;
+                fin->after  = defs.finales[i].after;
+                fin->script = defs.finales[i].script;
+            }
             return true;
         }
-        return false;
-      }
+        return false; }
+
     case DD_DEF_FINALE_BEFORE: {
         finalescript_t* fin = (finalescript_t*) out;
         Uri* uri = Uri_NewWithPath2(id, RC_NULL);
@@ -1784,15 +1865,18 @@ int Def_Get(int type, const char* id, void* out)
         {
             if(!defs.finales[i].before || !Uri_Equality(defs.finales[i].before, uri)) continue;
 
-            fin->before = defs.finales[i].before;
-            fin->after  = defs.finales[i].after;
-            fin->script = defs.finales[i].script;
+            if(fin)
+            {
+                fin->before = defs.finales[i].before;
+                fin->after  = defs.finales[i].after;
+                fin->script = defs.finales[i].script;
+            }
             Uri_Delete(uri);
             return true;
         }
         Uri_Delete(uri);
-        return false;
-      }
+        return false; }
+
     case DD_DEF_FINALE_AFTER: {
         finalescript_t* fin = (finalescript_t*) out;
         Uri* uri = Uri_NewWithPath2(id, RC_NULL);
@@ -1800,15 +1884,18 @@ int Def_Get(int type, const char* id, void* out)
         {
             if(!defs.finales[i].after || !Uri_Equality(defs.finales[i].after, uri)) continue;
 
-            fin->before = defs.finales[i].before;
-            fin->after  = defs.finales[i].after;
-            fin->script = defs.finales[i].script;
+            if(fin)
+            {
+                fin->before = defs.finales[i].before;
+                fin->after  = defs.finales[i].after;
+                fin->script = defs.finales[i].script;
+            }
             Uri_Delete(uri);
             return true;
         }
         Uri_Delete(uri);
-        return false;
-      }
+        return false; }
+
     case DD_DEF_LINE_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
         for(i = defs.count.lineTypes.num - 1; i >= 0; i--)
@@ -1840,8 +1927,8 @@ int Def_Get(int type, const char* id, void* out)
  */
 int Def_Set(int type, int index, int value, const void* ptr)
 {
-    int                 i;
-    ded_music_t*        musdef = 0;
+    ded_music_t* musdef = 0;
+    int i;
 
     switch(type)
     {
@@ -1849,13 +1936,11 @@ int Def_Set(int type, int index, int value, const void* ptr)
         if(index < 0 || index >= defs.count.text.num)
             Con_Error("Def_Set: Text index %i is invalid.\n", index);
 
-        defs.text[index].text = M_Realloc(defs.text[index].text,
-            strlen((char*)ptr) + 1);
+        defs.text[index].text = M_Realloc(defs.text[index].text, strlen((char*)ptr) + 1);
         strcpy(defs.text[index].text, ptr);
         break;
 
-    case DD_DEF_STATE:
-        {
+    case DD_DEF_STATE: {
         ded_state_t* stateDef;
 
         if(index < 0 || index >= defs.count.states.num)
@@ -1864,36 +1949,26 @@ int Def_Set(int type, int index, int value, const void* ptr)
         stateDef = &defs.states[index];
         switch(value)
         {
-        case DD_SPRITE:
-            {
+        case DD_SPRITE: {
             int sprite = *(int*) ptr;
 
             if(sprite < 0 || sprite >= defs.count.sprites.num)
             {
-                Con_Message("Def_Set: Warning, invalid sprite index %i.\n",
-                            sprite);
+                Con_Message("Def_Set: Warning, invalid sprite index %i.\n", sprite);
                 break;
             }
 
             strcpy((char*) stateDef->sprite.id, defs.sprites[value].id);
-            break;
-            }
-        case DD_FRAME:
-            {
-            int frame = *(int*) ptr;
+            break; }
 
-            if(frame & FF_FULLBRIGHT)
-                stateDef->flags |= STF_FULLBRIGHT;
-            else
-                stateDef->flags &= ~STF_FULLBRIGHT;
-            stateDef->frame = frame & ~FF_FULLBRIGHT;
+        case DD_FRAME:
+            stateDef->frame = *(int*)ptr;
             break;
-            }
-        default:
-            break;
+
+        default: break;
         }
-        break;
-        }
+        break; }
+
     case DD_DEF_SOUND:
         if(index < 0 || index >= countSounds.num)
             Con_Error("Def_Set: Sound index %i is invalid.\n", index);

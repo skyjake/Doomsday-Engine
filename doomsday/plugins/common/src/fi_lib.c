@@ -36,6 +36,7 @@
 #include "p_sound.h"
 #include "p_tick.h"
 #include "hu_log.h"
+#include "hu_stuff.h"
 #include "am_map.h"
 #include "g_common.h"
 #include "r_common.h"
@@ -412,11 +413,14 @@ void FI_StackClearAll(void)
     stackClear(false);
 }
 
-int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
+int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
 {
     gamestate_t initialGamestate;
     finale_mode_t mode;
     fi_state_t* s = stateForFinaleId(finaleId);
+
+    DENG_UNUSED(hookType);
+    DENG_UNUSED(parameters);
 
     if(IS_CLIENT && s == &remoteFinaleState)
     {
@@ -459,20 +463,18 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
     // Go to the next game mode?
     if(mode == FIMODE_AFTER) // A map has been completed.
     {
-        if(IS_CLIENT)
-            return true;
+        if(IS_CLIENT) return true;
+
         G_SetGameAction(GA_MAPCOMPLETED);
         // Don't play the debriefing again.
         briefDisabled = true;
     }
-    else if(mode == FIMODE_BEFORE)
+    else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
-        // Enter the map, this was a briefing.
-        G_ChangeGameState(GS_MAP);
+        // Its time to start the map; que music and begin!
         S_MapMusic(gameEpisode, gameMap);
-        R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
-        mapStartTic = (int) GAMETIC;
-        mapTime = actualMapTime = 0;
+        HU_WakeWidgets(-1 /* all players */);
+        G_BeginMap();
     }
     return true;
 }

@@ -1149,13 +1149,12 @@ static boolean giveItem(player_t* plr, itemtype_t item)
         if(plr->pieces != oldPieces &&
            plr->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
         {
-            int                 msg;
+            int msg;
 
             switch(item)
             {
             default:
-                Con_Error("Internal Error: Item type %i not handled in "
-                          "giveItem.", (int) item);
+                Con_Error("Internal Error: Item type %i not handled in giveItem.", (int) item);
                 break; // Unreachable.
 
             case IT_WEAPON_QUIETUS1:
@@ -1177,7 +1176,7 @@ static boolean giveItem(player_t* plr, itemtype_t item)
                 break;
             }
 
-            P_SetMessage(plr, GET_TXT(msg), false);
+            P_SetMessage(plr, 0, GET_TXT(msg));
             // Play the build-sound full volume for all players.
             S_StartSound(SFX_WEAPON_BUILD, NULL);
             break;
@@ -1186,7 +1185,7 @@ static boolean giveItem(player_t* plr, itemtype_t item)
 
     default:
         S_StartSound(info->pickupSound, plr->plr->mo);
-        P_SetMessage(plr, GET_TXT(info->pickupMsg), false);
+        P_SetMessage(plr, 0, GET_TXT(info->pickupMsg));
         break;
     }
 
@@ -1434,8 +1433,9 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         }
 
         if(target->flags2 & MF2_ICEDAMAGE)
-        {   // Player ice death.
-            target->flags &= ~(7 << MF_TRANSSHIFT); //no translation
+        {
+            // Player ice death.
+            target->flags &= ~MF_TRANSLATION; // no translation
             target->flags |= MF_ICECORPSE;
             //// \todo Should be pulled from the player class definition.
             switch(target->player->class_)
@@ -1713,7 +1713,7 @@ boolean P_MorphMonster(mobj_t* actor)
         break;
     }
 
-    /// @fixme Do this properly!
+    /// @todo Do this properly!
     oldMonster = *actor;
 
     pos[VX] = actor->origin[VX];

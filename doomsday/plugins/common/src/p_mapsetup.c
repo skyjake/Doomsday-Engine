@@ -1,85 +1,58 @@
-/**\file p_setup.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
+ * @file p_mapsetup.h
  * Common map setup routines.
  *
- * Management of extended map data objects (eg xlines) is done here
+ * Management of extended map data objects (e.g., xlines) is done here.
+ *
+ * @ingroup libcommon
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 #include <ctype.h>  // has isspace
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 #include "am_map.h"
 #include "dmu_lib.h"
+#include "g_common.h"
 #include "r_common.h"
 #include "p_actor.h"
 #include "p_mapsetup.h"
+#include "p_scroll.h"
 #include "p_start.h"
 #include "p_tick.h"
 #include "hu_pspr.h"
 #include "hu_stuff.h"
 
-// MACROS ------------------------------------------------------------------
-
 #if __JDOOM64__
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct {
-    int             gameModeBits;
-    mobjtype_t      type;
+    int gameModeBits;
+    mobjtype_t type;
 } mobjtype_precachedata_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void     P_ResetWorldState(void);
-static void     P_FinalizeMap(void);
-static void     P_PrintMapBanner(uint episode, uint map);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+static void P_ResetWorldState(void);
+static void P_FinalizeMap(void);
 
 // Our private map data structures
 xsector_t* xsectors;
@@ -88,17 +61,9 @@ xline_t* xlines;
 // If true we are in the process of setting up a map
 boolean mapSetup;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Converts a line to an xline.
- */
 xline_t* P_ToXLine(LineDef* line)
 {
-    if(!line)
-        return NULL;
+    if(!line) return NULL;
 
     // Is it a dummy?
     if(P_IsDummy(line))
@@ -121,22 +86,20 @@ void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
 {
     LineDef* line = P_ToPtr(DMU_LINEDEF, lineIdx);
     xline_t* xline;
-    if(NULL == line || P_IsDummy(line)) return;
+    if(!line || P_IsDummy(line)) return;
 
-    // Will we need to rebuild one or more display lists?
     xline = P_ToXLine(line);
+    // Will we need to rebuild one or more display lists?
     if(xline->mapped[player] != visible)
+    {
         ST_RebuildAutomap(player);
+    }
     xline->mapped[player] = visible;
 }
 
-/**
- * Converts a sector to an xsector.
- */
 xsector_t* P_ToXSector(Sector* sector)
 {
-    if(!sector)
-        return NULL;
+    if(!sector) return NULL;
 
     // Is it a dummy?
     if(P_IsDummy(sector))
@@ -149,9 +112,6 @@ xsector_t* P_ToXSector(Sector* sector)
     }
 }
 
-/**
- * Given a BSP leaf - find its parent xsector.
- */
 xsector_t* P_ToXSectorOfBspLeaf(BspLeaf* bspLeaf)
 {
     Sector* sec;
@@ -179,15 +139,6 @@ xsector_t* P_GetXSector(uint index)
     return &xsectors[index];
 }
 
-/**
- * Doomsday calls this (before any data is read) for each type of map object
- * at the start of the map load process. This is to allow us (the game) to
- * do any initialization we need. For example if we maintain our own data
- * for lines (the xlines) we'll do all allocation and init here.
- *
- * @param type          (DMU object type) The id of the data type being setup.
- * @param num           The number of elements of "type" Doomsday is creating.
- */
 void P_SetupForMapData(int type, uint num)
 {
     switch(type)
@@ -228,41 +179,34 @@ static void getSurfaceColor(uint idx, float rgba[4])
 }
 
 typedef struct applysurfacecolorparams_s {
-    Sector*         frontSec;
-    float           topColor[4];
-    float           bottomColor[4];
+    Sector* frontSec;
+    float topColor[4];
+    float bottomColor[4];
 } applysurfacecolorparams_t;
 
 int applySurfaceColor(void* obj, void* context)
 {
-#define LDF_NOBLENDTOP      32
-#define LDF_NOBLENDBOTTOM   64
-#define LDF_BLEND           128
+#define LDF_NOBLENDTOP          32
+#define LDF_NOBLENDBOTTOM       64
+#define LDF_BLEND               128
 
-#define LTF_SWAPCOLORS      4
+#define LTF_SWAPCOLORS          4
 
-    LineDef*            li = (LineDef*) obj;
-    applysurfacecolorparams_t* params =
-        (applysurfacecolorparams_t*) context;
-    byte                dFlags =
-        P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_DRAWFLAGS);
-    byte                tFlags =
-        P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_TEXFLAGS);
+    LineDef* li = (LineDef*) obj;
+    applysurfacecolorparams_t* params = (applysurfacecolorparams_t*) context;
+    byte dFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_DRAWFLAGS);
+    byte tFlags = P_GetGMOByte(MO_XLINEDEF, P_ToIndex(li), MO_TEXFLAGS);
 
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_FRONT_SECTOR))
     {
-        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF0);
+        SideDef* side = P_GetPtrp(li, DMU_SIDEDEF0);
 
         if(side)
         {
-            int                 flags;
-            float*              top, *bottom;
-
-            top = (tFlags & LTF_SWAPCOLORS)? params->bottomColor :
-                params->topColor;
-            bottom = (tFlags & LTF_SWAPCOLORS)? params->topColor :
-                params->bottomColor;
+            float* top    = (tFlags & LTF_SWAPCOLORS)? params->bottomColor : params->topColor;
+            float* bottom = (tFlags & LTF_SWAPCOLORS)? params->topColor : params->bottomColor;
+            int flags;
 
             P_SetFloatpv(side, DMU_TOP_COLOR, top);
             P_SetFloatpv(side, DMU_BOTTOM_COLOR, bottom);
@@ -280,17 +224,13 @@ int applySurfaceColor(void* obj, void* context)
     if((dFlags & LDF_BLEND) &&
        params->frontSec == P_GetPtrp(li, DMU_BACK_SECTOR))
     {
-        SideDef*            side = P_GetPtrp(li, DMU_SIDEDEF1);
+        SideDef* side = P_GetPtrp(li, DMU_SIDEDEF1);
 
         if(side)
         {
-            int                 flags;
-            float*              top, *bottom;
-
-            top = /*(tFlags & LTF_SWAPCOLORS)? params->bottomColor :*/
-                params->topColor;
-            bottom = /*(tFlags & LTF_SWAPCOLORS)? params->topColor :*/
-                params->bottomColor;
+            float* top    = /*(tFlags & LTF_SWAPCOLORS)? params->bottomColor :*/ params->topColor;
+            float* bottom = /*(tFlags & LTF_SWAPCOLORS)? params->topColor :*/ params->bottomColor;
+            int flags;
 
             P_SetFloatpv(side, DMU_TOP_COLOR, top);
             P_SetFloatpv(side, DMU_BOTTOM_COLOR, bottom);
@@ -312,6 +252,7 @@ int applySurfaceColor(void* obj, void* context)
 static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
 {
 #if __JHEXEN__
+    /// @todo Move to classinfo_t
     static unsigned int classFlags[] = {
         MSF_FIGHTER,
         MSF_CLERIC,
@@ -407,13 +348,13 @@ static boolean checkMapSpotAutoSpawn(const mapspot_t* spot)
     // The following are currently handled by special-case spawn logic elsewhere.
     switch(spot->doomEdNum)
     {
-    case 1: // Player starts 1 through 4.
+    case 1:    // Player starts 1 through 4.
     case 2:
     case 3:
     case 4:
-    case 11: // Player start (deathmatch).
+    case 11:   // Player start (deathmatch).
 #if __JHERETIC__
-    case 56: // Boss spot.
+    case 56:   // Boss spot.
     case 2002: // Mace spot.
 #endif
 #if __JHEXEN__
@@ -426,8 +367,8 @@ static boolean checkMapSpotAutoSpawn(const mapspot_t* spot)
     case 9103:
 #endif
         return false;
-    default:
-        break;
+
+    default: break;
     }
 
     // So far so good. Now check the flags to make the final decision.
@@ -470,7 +411,7 @@ static void initXSectors(void)
         xsector_t* xsec = &xsectors[i];
 
         xsec->special = P_GetGMOShort(MO_XSECTOR, i, MO_TYPE);
-        xsec->tag = P_GetGMOShort(MO_XSECTOR, i, MO_TAG);
+        xsec->tag     = P_GetGMOShort(MO_XSECTOR, i, MO_TAG);
 
 #if __JDOOM64__
         {
@@ -478,22 +419,16 @@ static void initXSectors(void)
         float rgba[4];
         Sector* sec = P_ToPtr(DMU_SECTOR, i);
 
-        getSurfaceColor(TOLIGHTIDX(
-            P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);
+        getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);
         P_SetFloatpv(sec, DMU_FLOOR_COLOR, rgba);
 
-        getSurfaceColor(TOLIGHTIDX(
-            P_GetGMOShort(MO_XSECTOR, i, MO_CEILINGCOLOR)), rgba);
+        getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_CEILINGCOLOR)), rgba);
         P_SetFloatpv(sec, DMU_CEILING_COLOR, rgba);
 
         // Now set the side surface colors.
         params.frontSec = sec;
-        getSurfaceColor(TOLIGHTIDX(
-            P_GetGMOShort(MO_XSECTOR, i, MO_WALLTOPCOLOR)),
-                          params.topColor);
-        getSurfaceColor(TOLIGHTIDX(
-            P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)),
-                          params.bottomColor);
+        getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLTOPCOLOR)), params.topColor);
+        getSurfaceColor(TOLIGHTIDX(P_GetGMOShort(MO_XSECTOR, i, MO_WALLBOTTOMCOLOR)), params.bottomColor);
 
         P_Iteratep(sec, DMU_LINEDEF, &params, applySurfaceColor);
         }
@@ -719,17 +654,11 @@ static void spawnMapObjects(void)
     P_SpawnPlayers();
 }
 
-typedef struct setupmapparams_s {
-    uint episode;
-    uint map;
-    skillmode_t skill;
-} setupmapparams_t;
-
-int P_SetupMapWorker(void* paramaters)
+void P_SetupMap(Uri* mapUri, uint episode, uint map)
 {
-    setupmapparams_t* param = (setupmapparams_t*)paramaters;
-    ddstring_t* mapPath;
-    Uri* mapUri;
+    AutoStr* mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
+
+    if(!mapUriStr) return;
 
     // It begins...
     mapSetup = true;
@@ -749,15 +678,12 @@ int P_SetupMapWorker(void* paramaters)
     P_ClearBodyQueue();
 #endif
 
-    mapUri = G_ComposeMapUri(param->episode, param->map);
-    mapPath = Uri_Compose(mapUri);
-    if(!P_LoadMap(Str_Text(mapPath)))
+    if(!P_LoadMap(Str_Text(mapUriStr)))
     {
-        ddstring_t* path = Uri_ToString(mapUri);
+        AutoStr* path = Uri_ToString(mapUri);
         Con_Error("P_SetupMap: Failed loading map \"%s\".\n", Str_Text(path));
+        exit(1); // Unreachable.
     }
-    Str_Delete(mapPath);
-    Uri_Delete(mapUri);
 
     DD_InitThinkers();
 #if __JHERETIC__
@@ -776,25 +702,31 @@ int P_SetupMapWorker(void* paramaters)
 #if __JHEXEN__
     PO_InitForMap();
 
-    { lumpname_t mapId;
-    G_MapId(param->episode, param->map, mapId);
-    Con_Message("Load ACS scripts\n");
     // @todo Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetLumpNumForName(mapId) + 11 /*ML_BEHAVIOR*/); // ACS object code
-    }
+    P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(mapUri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
 
     HU_UpdatePsprites();
 
     // Set up world state.
-    P_SpawnSpecials();
+    P_BuildAllTagLists();
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    P_FindSecrets();
+#endif
+    P_SpawnAllSpecialThinkers();
+    P_SpawnAllMaterialOriginScrollers();
+
+#if !__JHEXEN__
+    // Init extended generalized lines and sectors.
+    XG_Init();
+#endif
 
 #if __JHEXEN__
     // Initialize the sky.
-    P_InitSky(param->map);
+    P_InitSky(map);
 #endif
 
-    // Preload graphics.
+    // Preload resources we'll likely need but which aren't present (usually) in the map.
     if(precache)
     {
 #if __JDOOM__
@@ -832,8 +764,10 @@ int P_SetupMapWorker(void* paramaters)
 
 #if __JDOOM__
         for(i = 0; types[i].type != 0; ++i)
+        {
             if(types[i].gameModeBits & gameModeBits)
                 R_PrecacheMobjNum(types[i].type);
+        }
 
         if(IS_NETGAME)
             R_PrecacheMobjNum(MT_IFOG);
@@ -845,68 +779,8 @@ int P_SetupMapWorker(void* paramaters)
 
     P_FinalizeMap();
 
-    // Someone may want to do something special now that the map has been
-    // fully set up.
-    R_SetupMap(DDSMM_FINALIZE, 0);
-
-    P_PrintMapBanner(param->episode, param->map);
-
     // It ends.
     mapSetup = false;
-
-    Con_BusyWorkerEnd();
-    return 0;
-}
-
-/**
- * Loads map and glnode data for the requested episode and map.
- */
-void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
-{
-    setupmapparams_t param;
-    int i;
-
-    param.episode = episode;
-    param.map = map;
-    param.skill = skill;
-
-    DD_Executef(true, "texreset raw"); // Delete raw images to save memory.
-
-    // \todo Use progress bar mode and update progress during the setup.
-    Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-             "Loading map...", P_SetupMapWorker, &param);
-
-    // Wake up HUD widgets for players in the game.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame) continue;
-        ST_Start(i);
-        HU_Start(i);
-    }
-
-    R_SetupMap(DDSMM_AFTER_BUSY, 0);
-
-#if __JHEXEN__
-    {
-    int i;
-    // Load colormap and set the fullbright flag
-    i = P_GetMapFadeTable(map);
-    if(i == W_GetLumpNumForName("COLORMAP"))
-    {
-        // We don't want fog in this case.
-        GL_UseFog(false);
-    }
-    else
-    {
-        // Probably fog ... don't use fullbright sprites
-        if(i == W_GetLumpNumForName("FOGMAP"))
-        {
-            // Tell the renderer to turn on the fog.
-            GL_UseFog(true);
-        }
-    }
-    }
-#endif
 }
 
 /**
@@ -914,7 +788,12 @@ void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
  */
 static void P_ResetWorldState(void)
 {
-    int                 i, parm;
+#if __JHEXEN__
+    static int firstFragReset = 1;
+#endif
+    int i, parm;
+
+    nextMap = 0;
 
 #if __JDOOM__ || __JDOOM64__
     wmInfo.maxFrags = 0;
@@ -926,6 +805,10 @@ static void P_ResetWorldState(void)
 
 #if __JDOOM__
     P_BrainInitForMap();
+#endif
+
+#if __JHEXEN__
+    SN_StopAllSequences();
 #endif
 
 #if __JHERETIC__
@@ -944,17 +827,35 @@ static void P_ResetWorldState(void)
     timerGame = 0;
     if(deathmatch)
     {
-        parm = ArgCheck("-timer");
-        if(parm && parm < Argc() - 1)
+        parm = CommandLine_Check("-timer");
+        if(parm && parm < CommandLine_Count() - 1)
         {
-            timerGame = atoi(Argv(parm + 1)) * 35 * 60;
+            timerGame = atoi(CommandLine_At(parm + 1)) * 35 * 60;
         }
     }
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* plr = &players[i];
+        ddplayer_t* ddplr = plr->plr;
+
+        ddplr->mo = NULL;
         plr->killCount = plr->secretCount = plr->itemCount = 0;
+
+        if(ddplr->inGame && plr->playerState == PST_DEAD)
+            plr->playerState = PST_REBORN;
+
+#if __JHEXEN__
+        if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) || firstFragReset == 1)
+        {
+            memset(plr->frags, 0, sizeof(plr->frags));
+            firstFragReset = 0;
+        }
+#else
+        memset(plr->frags, 0, sizeof(plr->frags));
+#endif
+
+        G_ResetLookOffset(i);
     }
 
 #if __JDOOM__ || __JDOOM64__
@@ -962,8 +863,6 @@ static void P_ResetWorldState(void)
 #endif
 
     P_DestroyPlayerStarts();
-
-    mapTime = actualMapTime = 0;
 }
 
 /**
@@ -1007,10 +906,8 @@ static void P_FinalizeMap(void)
     }
 
 #elif __JHEXEN__
-    // Check if the map should have lightening.
+    // Initialize lightning & thunder clap effects (if in use).
     P_InitLightning();
-
-    SN_StopAllSequences();
 #endif
 
     // Do some fine tuning with mobj placement and orientation.
@@ -1020,6 +917,9 @@ static void P_FinalizeMap(void)
 #if __JHERETIC__
     P_TurnGizmosAwayFromDoors();
 #endif
+
+    // Someone may want to do something special now that the map has been fully set up.
+    R_SetupMap(DDSMM_FINALIZE, 0);
 }
 
 const char* P_GetMapNiceName(void)
@@ -1055,7 +955,8 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
     if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
         map = (episode * 9) + map;
 #  endif
-    return pMapNames[map];
+    if(map < pMapNamesSize)
+        return pMapNames[map];
 #endif
     return 0;
 }
@@ -1084,43 +985,80 @@ const char* P_GetMapAuthor(boolean supressGameAuthor)
     return author;
 }
 
-/**
- * Prints a banner to the console containing information pertinent to the
- * current map (e.g., map name, author...).
- */
-static void P_PrintMapBanner(uint episode, uint map)
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+void P_FindSecrets(void)
 {
-    const char* lname;
+    uint i;
 
-    Con_Printf("\n");
-    lname = P_GetMapNiceName();
-    if(lname)
+    totalSecret = 0;
+
+    // Find secret sectors.
+    for(i = 0; i < numsectors; ++i)
     {
-        char name[64];
-#if __JHEXEN__
-        dd_snprintf(name, 64, "Map %u (%u): %s", P_GetMapWarpTrans(map)+1, map+1, lname);
-#else
-        dd_snprintf(name, 64, "Map %u: %s", map+1, lname);
-#endif
-        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "%s\n", name);
+        Sector* sec = P_ToPtr(DMU_SECTOR, i);
+        xsector_t* xsec = P_ToXSector(sec);
+
+        if(xsec->special != 9) continue;
+
+        totalSecret++;
     }
 
-#if !__JHEXEN__
+#if __JDOOM64__
+    // Find secret lines.
+    for(i = 0; i < numlines; ++i)
     {
-    static const char* unknownAuthorStr = "Unknown";
-    Uri* uri = G_ComposeMapUri(episode, map);
-    ddstring_t* path = Uri_Compose(uri);
-    const char* lauthor;
+        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        xline_t* xline = P_ToXLine(line);
 
-    lauthor = P_GetMapAuthor(P_MapIsCustom(Str_Text(path)));
-    if(!lauthor)
-        lauthor = unknownAuthorStr;
+        if(xline->special != 994) continue;
 
-    Con_FPrintf(CPF_LIGHT|CPF_BLUE, "Author: %s\n", lauthor);
-
-    Str_Delete(path);
-    Uri_Delete(uri);
+        totalSecret++;
     }
 #endif
-    Con_Printf("\n");
+}
+#endif
+
+void P_SpawnSectorMaterialOriginScrollers(void)
+{
+    uint i;
+
+    // Clients do not spawn material origin scrollers on their own.
+    if(IS_CLIENT) return;
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
+        xsector_t* xsec = P_ToXSector(sec);
+
+        if(!xsec->special) continue;
+
+        // A scroller?
+        P_SpawnSectorMaterialOriginScroller(sec, PLN_FLOOR, xsec->special);
+    }
+}
+
+void P_SpawnSideMaterialOriginScrollers(void)
+{
+    uint i;
+
+    // Clients do not spawn material origin scrollers on their own.
+    if(IS_CLIENT) return;
+
+    for(i = 0; i < numlines; ++i)
+    {
+        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        xline_t* xline = P_ToXLine(line);
+        SideDef* frontSide;
+
+        if(!xline->special) continue;
+
+        frontSide = P_GetPtrp(line, DMU_SIDEDEF0);
+        P_SpawnSideMaterialOriginScroller(frontSide, xline->special);
+    }
+}
+
+void P_SpawnAllMaterialOriginScrollers(void)
+{
+    P_SpawnSideMaterialOriginScrollers();
+    P_SpawnSectorMaterialOriginScrollers();
 }

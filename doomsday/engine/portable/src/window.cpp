@@ -1,6 +1,30 @@
 /** @file window.cpp
  * Qt-based window management implementation. @ingroup base
  *
+ * The Doomsday window management is responsible for the positioning, sizing,
+ * and state of the game's native windows. In practice, the code operates on Qt
+ * top-level windows.
+ *
+ * At the moment, the quality of the code is adequate at best. See the todo
+ * notes below for ideas for future improvements.
+ *
+ * @todo It is not a good idea to duplicate window state locally (position,
+ * size, flags). Much of the complexity here is due to this duplication, trying
+ * to keep all the state consistent. Instead, the real QWidget should be used
+ * for these properties. Qt has a mechanism for storing the state of a window:
+ * QWidget::saveGeometry(), QMainWindow::saveState().
+ *
+ * @todo Refactor for multiple window support. One window should be the "main"
+ * window while others are secondary windows.
+ *
+ * @todo Deferred window changes should be done using a queue-type solution
+ * where it is possible to schedule multiple tasks into the future separately
+ * for each window. Each window could have its own queue.
+ *
+ * @todo Platform-specific behavior should be encapsulated in subclasses, e.g.,
+ * MacWindowBehavior. This would make the code easier to follow and more adaptable
+ * to the quirks of each platform.
+ *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -28,9 +52,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef UNIX
-#  include "m_args.h"
-#endif
 
 #ifdef MACOSX
 #  include "displaymode_native.h"
@@ -42,14 +63,17 @@
 #include "consolewindow.h"
 #include "canvaswindow.h"
 #include "displaymode.h"
+#include "updater/downloaddialog.h"
 #include "sys_system.h"
+#include "busymode.h"
 #include "dd_main.h"
 #include "con_main.h"
-#include "con_busy.h"
 #include "gl_main.h"
 #include "ui_main.h"
-#include "m_args.h"
+#include "fs_util.h"
 
+#include <de/c_wrapper.h>
+#include <de/App>
 #include <de/Log>
 #include <QDebug>
 
@@ -69,13 +93,19 @@ static QRect desktopRect()
     return QApplication::desktop()->screenGeometry();
 }
 
+/*
 static QRect desktopValidRect()
 {
     return desktopRect().adjusted(DESKTOP_EDGE_GRACE, DESKTOP_EDGE_GRACE,
                                   -DESKTOP_EDGE_GRACE, -DESKTOP_EDGE_GRACE);
 }
+*/
 
 static void updateMainWindowLayout(void);
+static void updateWindowStateAfterUserChange(void);
+static void useAppliedGeometryForWindows(void);
+static void notifyAboutModeChange(void);
+static void endWindowWait(void);
 
 struct ddwindow_s
 {
@@ -86,10 +116,13 @@ struct ddwindow_s
     bool needReshowFullscreen;
     bool needShowNormal;
     bool needRecreateCanvas;
+    bool needWait;
+    bool willUpdateWindowState;
 
     ddwindowtype_t type;
     boolean inited;
     RectRaw geometry;       ///< Current actual geometry.
+    RectRaw normalGeometry; ///< Normal-mode geometry (when not maximized or fullscreen).
     int colorDepthBits;
     int flags;
     consolewindow_t console; ///< Only used for WT_CONSOLE windows.
@@ -100,11 +133,20 @@ struct ddwindow_s
         assert(widget);
     }
 
+    bool isBeingAdjusted() const {
+        return needShowFullscreen || needReshowFullscreen || needShowNormal || needRecreateCanvas || needWait;
+    }
+
     int x() const      { return geometry.origin.x; }
     int y() const      { return geometry.origin.y; }
     int width() const  { return geometry.size.width; }
     int height() const { return geometry.size.height; }
     QRect rect() const { return QRect(x(), y(), width(), height()); }
+
+    QRect normalRect() const { return QRect(normalGeometry.origin.x,
+                                            normalGeometry.origin.y,
+                                            normalGeometry.size.width,
+                                            normalGeometry.size.height); }
 
     bool checkFlag(int flag) const { return (flags & flag) != 0; }
 
@@ -114,67 +156,81 @@ struct ddwindow_s
      */
     void modifyAccordingToOptions()
     {
-        if(ArgCheckWith("-width", 1))
-        {
-            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(ArgNext()));
-        }
-
-        if(ArgCheckWith("-height", 1))
-        {
-            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(ArgNext()));
-        }
-
-        if(ArgCheckWith("-winsize", 2))
-        {
-            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(ArgNext()));
-            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(ArgNext()));
-        }
-
-        if(ArgCheckWith("-colordepth", 1) || ArgCheckWith("-bpp", 1))
-        {
-            colorDepthBits = qBound(8, atoi(ArgNext()), 32);
-        }
-
-        if(ArgCheck("-nocenter"))
-        {
-            setFlag(DDWF_CENTER, false);
-        }
-
-        if(ArgCheckWith("-xpos", 1))
-        {
-            geometry.origin.x = atoi(ArgNext());
-            setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
-        }
-
-        if(ArgCheckWith("-ypos", 1))
-        {
-            geometry.origin.y = atoi(ArgNext());
-            setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
-        }
-
-        if(ArgCheck("-center"))
-        {
-            setFlag(DDWF_CENTER);
-        }
-
-        if(ArgCheck("-maximize"))
-        {
-            setFlag(DDWF_MAXIMIZE);
-        }
-
-        if(ArgCheck("-nomaximize"))
-        {
-            setFlag(DDWF_MAXIMIZE, false);
-        }
-
-        if(ArgExists("-nofullscreen") || ArgExists("-window"))
+        if(CommandLine_Exists("-nofullscreen") || CommandLine_Exists("-window"))
         {
             setFlag(DDWF_FULLSCREEN, false);
         }
 
-        if(ArgExists("-fullscreen") || ArgExists("-nowindow"))
+        if(CommandLine_Exists("-fullscreen") || CommandLine_Exists("-nowindow"))
         {
             setFlag(DDWF_FULLSCREEN);
+        }
+
+        if(CommandLine_CheckWith("-width", 1))
+        {
+            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(CommandLine_Next()));
+            if(!(flags & DDWF_FULLSCREEN))
+            {
+                normalGeometry.size.width = geometry.size.width;
+            }
+        }
+
+        if(CommandLine_CheckWith("-height", 1))
+        {
+            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
+            if(!(flags & DDWF_FULLSCREEN))
+            {
+                normalGeometry.size.height = geometry.size.height;
+            }
+        }
+
+        if(CommandLine_CheckWith("-winsize", 2))
+        {
+            geometry.size.width  = qMax(WINDOW_MIN_WIDTH,  atoi(CommandLine_Next()));
+            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
+
+            if(!(flags & DDWF_FULLSCREEN))
+            {
+                normalGeometry.size.width  = geometry.size.width;
+                normalGeometry.size.height = geometry.size.height;
+            }
+        }
+
+        if(CommandLine_CheckWith("-colordepth", 1) || CommandLine_CheckWith("-bpp", 1))
+        {
+            colorDepthBits = qBound(8, atoi(CommandLine_Next()), 32);
+        }
+
+        if(CommandLine_Check("-nocenter"))
+        {
+            setFlag(DDWF_CENTER, false);
+        }
+
+        if(CommandLine_CheckWith("-xpos", 1))
+        {
+            normalGeometry.origin.x = atoi(CommandLine_Next());
+            setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
+        }
+
+        if(CommandLine_CheckWith("-ypos", 1))
+        {
+            normalGeometry.origin.y = atoi(CommandLine_Next());
+            setFlag(DDWF_CENTER | DDWF_MAXIMIZE, false);
+        }
+
+        if(CommandLine_Check("-center"))
+        {
+            setFlag(DDWF_CENTER);
+        }
+
+        if(CommandLine_Check("-maximize"))
+        {
+            setFlag(DDWF_MAXIMIZE);
+        }
+
+        if(CommandLine_Check("-nomaximize"))
+        {
+            setFlag(DDWF_MAXIMIZE, false);
         }
     }
 
@@ -218,7 +274,29 @@ struct ddwindow_s
 
         assertWindow();
 
+        // While we're adjusting the window, the window move/resizing callbacks
+        // should've mess with the geometry values.
+        needWait = true;
+        LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE * 2, endWindowWait);
+
         bool modeChanged = applyDisplayMode();
+
+        if(modeChanged)
+        {
+            // Others might be interested to hear about the mode change.
+            LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, notifyAboutModeChange);
+        }
+
+        /*
+         * The following is a bit convoluted. The core idea is this, though: on
+         * some platforms, changes to the window's mode (normal, maximized,
+         * fullscreen/frameless) do not occur immediately. Instead, control
+         * needs to return to the event loop and the native window events need
+         * to play out. Thus some of the operations have to be performed in a
+         * deferred way, after a short wait. The ideal would be to listen to
+         * the native events and trigger the necessary updates after they
+         * occur; however, now we just use a naive time-based delays.
+         */
 
         if(flags & DDWF_FULLSCREEN)
         {
@@ -240,9 +318,16 @@ struct ddwindow_s
                 LOG_DEBUG("widget is visible, need showFS:%b reshowFS:%b")
                         << needShowFullscreen << needReshowFullscreen;
 
+#ifdef MACOSX
+                // Kludge! See updateMainWindowLayout().
+                appliedGeometry = QRect(0, 0,
+                                        DisplayMode_Current()->width,
+                                        DisplayMode_Current()->height);
+#endif
+
                 // The window is already visible, so let's allow a mode change to resolve itself
                 // before we go changing the window.
-                LegacyCore_Timer(de2LegacyCore, POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
+                LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
             }
             else
             {
@@ -254,7 +339,9 @@ struct ddwindow_s
         }
         else
         {
-            QRect geom = rect();
+            // The window is in windowed mode (frames and window decoration visible).
+            // We will restore it to its previous position and size.
+            QRect geom = normalRect(); // Previously stored normal geometry.
 
             if(flags & DDWF_CENTER)
             {
@@ -267,24 +354,53 @@ struct ddwindow_s
 
             if(flags & DDWF_MAXIMIZE)
             {
-                if(widget->isVisible()) widget->showMaximized();
+                // When a window is maximized, we'll let the native WM handle the sizing.
+                if(widget->isVisible())
+                {
+                    LOG_DEBUG("Window maximized.");
+                    widget->showMaximized();
+                }
+
+                // Non-visible windows will be shown later
+                // (as maximized, if the flag is set).
             }
             else
             {
+                // The window is in normal mode: not maximized or fullscreen.
+
+                // If the window is already visible, changes to it need to be deferred
+                // so that the native counterpart can be updated, too
                 if(widget->isVisible() && (modeChanged || widget->isMaximized()))
                 {
                     if(modeChanged)
                     {
+                        // We'll wait before the mode change takes full effect.
                         needShowNormal = true;
-                        LegacyCore_Timer(de2LegacyCore, POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
-                        /// @todo  Save the correct xy coordinate for the window and use them here.
-                        return;
+                        LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
                     }
-
-                    widget->showNormal();
+                    else
+                    {
+                        // Display mode was not changed, so we can immediately
+                        // change the window state.
+                        widget->showNormal();
+                    }
                 }
-                widget->setGeometry(geom);
-                appliedGeometry = geom; // Saved for detecting changes.
+
+                appliedGeometry = geom;
+
+                if(widget->isVisible())
+                {
+                    // The native window may not be ready to receive the updated geometry
+                    // (e.g., window decoration not made visible yet). We'll apply the
+                    // geometry after a delay.
+                    LegacyCore_Timer(50 + POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, useAppliedGeometryForWindows);
+                }
+                else
+                {
+                    // The native window is not visible yet, so we can apply any number
+                    // of changes we like.
+                    widget->setGeometry(geom);
+                }
             }
         }
     }
@@ -299,14 +415,30 @@ struct ddwindow_s
 
         setFlag(DDWF_MAXIMIZE, widget->isMaximized());
 
-        QRect rect = widget->normalGeometry();
+        QRect rect = widget->geometry();
         geometry.origin.x = rect.x();
         geometry.origin.y = rect.y();
         geometry.size.width = rect.width();
         geometry.size.height = rect.height();
 
-        DEBUG_VERBOSE2_Message(("Window geometry: %i,%i %ix%i (max? %i)\n", geometry.origin.x, geometry.origin.y,
-                                geometry.size.width, geometry.size.height, (flags & DDWF_MAXIMIZE) != 0));
+        // If the window is presently maximized or fullscreen, we will not
+        // store the actual coordinates.
+        if(!widget->isMaximized() && !(flags & DDWF_FULLSCREEN) && !isBeingAdjusted())
+        {
+            normalGeometry.origin.x = rect.x();
+            normalGeometry.origin.y = rect.y();
+            normalGeometry.size.width = rect.width();
+            DEBUG_Message(("ngw=%i [A]\n", normalGeometry.size.width));
+            normalGeometry.size.height = rect.height();
+        }
+
+        LOG_DEBUG("Current window geometry: %i,%i %ix%i (max:%b)")
+                << geometry.origin.x << geometry.origin.y
+                << geometry.size.width << geometry.size.height
+                << ((flags & DDWF_MAXIMIZE) != 0);
+        LOG_DEBUG("Normal window geometry:  %i,%i %ix%i")
+                << normalGeometry.origin.x << normalGeometry.origin.y
+                << normalGeometry.size.width << normalGeometry.size.height;
     }
 
     void setFlag(int flag, bool set = true)
@@ -321,6 +453,7 @@ struct ddwindow_s
         }
     }
 
+    /*
     bool isGeometryValid() const
     {
         if(width() < WINDOW_MIN_WIDTH) return false;
@@ -328,6 +461,7 @@ struct ddwindow_s
         qDebug() << desktopValidRect() << rect() << desktopValidRect().contains(rect());
         return desktopValidRect().contains(rect());
     }
+    */
 
     bool applyAttributes(int* attribs)
     {
@@ -343,30 +477,31 @@ struct ddwindow_s
             case DDWA_X:
                 if(x() != attribs[i])
                 {
-                    geometry.origin.x = attribs[i];
+                    normalGeometry.origin.x = attribs[i];
                     changed = true;
                 }
                 break;
             case DDWA_Y:
                 if(y() != attribs[i])
                 {
-                    geometry.origin.y = attribs[i];
+                    normalGeometry.origin.y = attribs[i];
                     changed = true;
                 }
                 break;
             case DDWA_WIDTH:
                 if(width() != attribs[i])
                 {
-                    geometry.size.width = attribs[i];
-                    if(geometry.size.width < WINDOW_MIN_WIDTH) return false;
+                    if(attribs[i] < WINDOW_MIN_WIDTH) return false;
+                    normalGeometry.size.width = geometry.size.width = attribs[i];
+                    DEBUG_Message(("ngw=%i [B]\n", normalGeometry.size.width));
                     changed = true;
                 }
                 break;
             case DDWA_HEIGHT:
                 if(height() != attribs[i])
                 {
-                    geometry.size.height = attribs[i];
-                    if(geometry.size.height < WINDOW_MIN_HEIGHT) return false;
+                    if(attribs[i] < WINDOW_MIN_HEIGHT) return false;
+                    normalGeometry.size.height = geometry.size.height = attribs[i];
                     changed = true;
                 }
                 break;
@@ -388,6 +523,11 @@ struct ddwindow_s
             case DDWA_FULLSCREEN:
                 if(IS_NONZERO(attribs[i]) != IS_NONZERO(checkFlag(DDWF_FULLSCREEN)))
                 {
+                    if(attribs[i] && Updater_IsDownloadInProgress())
+                    {
+                        // Can't go to fullscreen when downloading.
+                        return false;
+                    }
                     setFlag(DDWF_FULLSCREEN, attribs[i]);
                     changed = true;
                 }
@@ -441,22 +581,33 @@ struct ddwindow_s
     {
         //qDebug() << "Window::updateLayout:" << widget->geometry() << widget->canvas().geometry();
 
+        setFlag(DDWF_MAXIMIZE, widget->isMaximized());
+
+        geometry.size.width = widget->width();
+        geometry.size.height = widget->height();
+
         if(!(flags & DDWF_FULLSCREEN))
         {
-            setFlag(DDWF_CENTER, false);
-            geometry.size.width = widget->width();
-            geometry.size.height = widget->height();
+            DEBUG_Message(("Updating current view geometry for window, fetched %i x %i.\n", width(), height()));
 
-            DEBUG_VERBOSE2_Message(("Updating view geometry for window, fetched %i x %i.\n", width(), height()));
+            if(!(flags & DDWF_MAXIMIZE) && !isBeingAdjusted())
+            {
+                // Update the normal-mode geometry (not fullscreen, not maximized).
+                normalGeometry.size.width = geometry.size.width;
+                DEBUG_Message(("ngw=%i [C]\n", normalGeometry.size.width));
+                normalGeometry.size.height = geometry.size.height;
+
+                DEBUG_Message(("Updating normal view geometry for window, fetched %i x %i.\n", width(), height()));
+            }
         }
         else
         {
-            DEBUG_VERBOSE2_Message(("Updating view geometry for fullscreen (%i x %i).\n", width(), height()));
+            DEBUG_Message(("Updating view geometry for fullscreen (%i x %i).\n", width(), height()));
         }
 
         // Update viewports.
         R_SetViewGrid(0, 0);
-        if(Con_IsBusy() || UI_IsActive() || !DD_GameLoaded())
+        if(BusyMode_Active() || UI_IsActive() || !DD_GameLoaded())
         {
             // Update for busy mode.
             R_UseViewPort(0);
@@ -502,8 +653,7 @@ static void updateMainWindowLayout(void)
         // For some interesting reason, we have to scale the window twice in fullscreen mode
         // or the resulting layout won't be correct.
         win->widget->setGeometry(QRect(0, 0, 320, 240));
-
-        win->widget->setGeometry(QRect(0, 0, win->geometry.size.width, win->geometry.size.height));
+        win->widget->setGeometry(win->appliedGeometry);
 
         DisplayMode_Native_Raise(Window_NativeHandle(win));
 #endif
@@ -518,9 +668,40 @@ static void updateMainWindowLayout(void)
     }
 }
 
+static void useAppliedGeometryForWindows(void)
+{
+    Window* win = Window_Main();
+    if(!win || !win->widget) return;
+
+    DEBUG_Message(("Using applied geometry: (%i,%i) %ix%i\n",
+                   win->appliedGeometry.x(),
+                   win->appliedGeometry.y(),
+                   win->appliedGeometry.width(),
+                   win->appliedGeometry.height()));
+    win->widget->setGeometry(win->appliedGeometry);
+}
+
 Window* Window_Main(void)
 {
     return &mainWindow;
+}
+
+static void notifyAboutModeChange(void)
+{
+    LOG_MSG("Display mode has changed.");
+    DENG2_APP->notifyDisplayModeChanged();
+}
+
+static void endWindowWait(void)
+{
+    Window* win = Window_Main();
+    if(win)
+    {
+        DEBUG_Message(("Window is no longer waiting for geometry changes.\n"));
+
+        // This flag is used for protecting against mode change resizings.
+        win->needWait = false;
+    }
 }
 
 static int getWindowIdx(const Window* wnd)
@@ -823,7 +1004,7 @@ static void drawCanvasWithCallback(Canvas& canvas)
         win->drawFunc();
     }
     // Now we can continue with the main loop (if it was paused).
-    LegacyCore_ResumeLoop(de2LegacyCore);
+    LegacyCore_ResumeLoop();
 }
 
 static void windowFocusChanged(Canvas& canvas, bool focus)
@@ -905,15 +1086,47 @@ static void finishMainWindowInit(Canvas& canvas)
     DD_FinishInitializationAfterWindowReady();
 }
 
+static bool windowIsClosing(CanvasWindow&)
+{
+    LOG_DEBUG("Window is about to close, executing 'quit'.");
+
+    /// @todo autosave and quit?
+    Con_Execute(CMDS_DDAY, "quit", true, false);
+
+    // We are not authorizing immediate closing of the window;
+    // engine shutdown will take care of it later.
+    return false; // don't close
+}
+
+/**
+ * See the todo notes. Duplicating state is not a good idea.
+ */
+static void updateWindowStateAfterUserChange()
+{
+    Window* win = Window_Main();
+    if(!win || !win->widget) return;
+
+    win->fetchWindowGeometry();
+    win->willUpdateWindowState = false;
+}
+
 static void windowWasMoved(CanvasWindow& cw)
 {
     Window* win = canvasToWindow(cw.canvas());
-    assert(win);
+    DENG_ASSERT(win);
 
-    if(win->flags & DDWF_FULLSCREEN) return;
+    if(!(win->flags & DDWF_FULLSCREEN))
+    {
+        // The window was moved from its initial position; it is therefore
+        // not centered any more (most likely).
+        win->setFlag(DDWF_CENTER, false);
+    }
 
-    win->fetchWindowGeometry();
-    win->setFlag(DDWF_CENTER, false);
+    if(!win->willUpdateWindowState)
+    {
+        win->willUpdateWindowState = true;
+        LegacyCore_Timer(500, updateWindowStateAfterUserChange);
+    }
 }
 
 static void windowWasResized(Canvas& canvas)
@@ -950,6 +1163,7 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
         // After the main window is created, we can finish with the engine init.
         mainWindow.widget->canvas().setInitFunc(finishMainWindowInit);
 
+        mainWindow.widget->setCloseFunc(windowIsClosing);
         mainWindow.widget->setMoveFunc(windowWasMoved);
         mainWindow.widget->canvas().setResizedFunc(windowWasResized);
 
@@ -958,6 +1172,14 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
 
         // Make it so. (Not shown yet.)
         mainWindow.applyWindowGeometry();
+
+#ifdef WIN32
+        // Set an icon for the window.
+        AutoStr* iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
+        F_PrependBasePath(iconPath, iconPath);
+        LOG_DEBUG("Window icon: ") << Str_Text(iconPath);
+        mainWindow.widget->setWindowIcon(QIcon(Str_Text(iconPath)));
+#endif
 
         mainWindow.inited = true;
     }
@@ -1107,7 +1329,16 @@ boolean Window_IsMaximized(const Window* wnd)
 
 void* Window_NativeHandle(const Window* wnd)
 {
-    if(!wnd || !wnd->widget) return 0;
+    if(!wnd) return 0;
+
+#ifdef WIN32
+    if(wnd->type == WT_CONSOLE)
+    {
+        return reinterpret_cast<void*>(wnd->console.hWnd);
+    }
+#endif
+
+    if(!wnd->widget) return 0;
     return reinterpret_cast<void*>(wnd->widget->winId());
 }
 
@@ -1149,7 +1380,7 @@ void Window_Draw(Window* win)
     else
     {
         // Don't run the main loop until after the paint event has been dealt with.
-        LegacyCore_PauseLoop(de2LegacyCore);
+        LegacyCore_PauseLoop();
 
         // Request update at the earliest convenience.
         win->widget->canvas().update();
@@ -1231,6 +1462,30 @@ int Window_Height(const Window *wnd)
     return wnd->height();
 }
 
+int Window_NormalX(const Window* wnd)
+{
+    DENG_ASSERT(wnd);
+    return wnd->normalRect().x();
+}
+
+int Window_NormalY(const Window* wnd)
+{
+    DENG_ASSERT(wnd);
+    return wnd->normalRect().y();
+}
+
+int Window_NormalWidth(const Window* wnd)
+{
+    DENG_ASSERT(wnd);
+    return wnd->normalRect().width();
+}
+
+int Window_NormalHeight(const Window* wnd)
+{
+    DENG_ASSERT(wnd);
+    return wnd->normalRect().height();
+}
+
 int Window_ColorDepthBits(const Window* wnd)
 {
     assert(wnd);
@@ -1260,7 +1515,7 @@ void Window_SaveState(Window* wnd)
     assert(idx == 1);
 
     QSettings st;
-    st.setValue(settingsKey(idx, "rect"), QRect(wnd->x(), wnd->y(), wnd->width(), wnd->height()));
+    st.setValue(settingsKey(idx, "rect"), wnd->normalRect());
     st.setValue(settingsKey(idx, "center"), (wnd->flags & DDWF_CENTER) != 0);
     st.setValue(settingsKey(idx, "maximize"), (wnd->flags & DDWF_MAXIMIZE) != 0);
     st.setValue(settingsKey(idx, "fullscreen"), (wnd->flags & DDWF_FULLSCREEN) != 0);
@@ -1281,10 +1536,10 @@ void Window_RestoreState(Window* wnd)
     // The default state of the window is determined by these values.
     QSettings st;
     QRect geom = st.value(settingsKey(idx, "rect"), QRect(0, 0, 640, 480)).toRect();
-    wnd->geometry.origin.x = geom.x();
-    wnd->geometry.origin.y = geom.y();
-    wnd->geometry.size.width = geom.width();
-    wnd->geometry.size.height = geom.height();
+    wnd->normalGeometry.origin.x = wnd->geometry.origin.x = geom.x();
+    wnd->normalGeometry.origin.y = wnd->geometry.origin.y = geom.y();
+    wnd->normalGeometry.size.width = wnd->geometry.size.width = geom.width();
+    wnd->normalGeometry.size.height = wnd->geometry.size.height = geom.height();
     wnd->colorDepthBits = st.value(settingsKey(idx, "colorDepth"), 32).toInt();
     wnd->setFlag(DDWF_CENTER, st.value(settingsKey(idx, "center"), true).toBool());
     wnd->setFlag(DDWF_MAXIMIZE, st.value(settingsKey(idx, "maximize"), false).toBool());
@@ -1318,6 +1573,9 @@ void Window_UpdateCanvasFormat(Window* wnd)
 {
     assert(wnd != 0);
     wnd->needRecreateCanvas = true;
+
+    // Save the relevant format settings.
+    QSettings().setValue("window/fsaa", bool(Con_GetByte("vid-fsaa") != 0));
 }
 
 #if defined(UNIX) && !defined(MACOSX)

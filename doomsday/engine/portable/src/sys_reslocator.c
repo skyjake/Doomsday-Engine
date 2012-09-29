@@ -39,7 +39,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-#include "m_args.h"
 #include "m_misc.h"
 
 #include "filedirectory.h"
@@ -79,7 +78,7 @@ typedef struct {
     FileDirectory* directory;
 
     /// Algorithm used to compose the name of a resource in this namespace.
-    ddstring_t* (*composeName) (const ddstring_t* path);
+    AutoStr* (*composeName) (const Str* path);
 
     byte flags; // @see resourceNamespaceFlags
 } resourcenamespaceinfo_t;
@@ -91,6 +90,7 @@ static const resourcetypeinfo_t typeInfo[NUM_RESOURCE_TYPES] = {
     /* RT_WAD */        { RC_PACKAGE,      {"wad", 0} },
     /* RT_DED */        { RC_DEFINITION,   {"ded", 0} },
     /* RT_PNG */        { RC_GRAPHIC,      {"png", 0} },
+    /* RT_JPG */        { RC_GRAPHIC,      {"jpg", 0} },
     /* RT_TGA */        { RC_GRAPHIC,      {"tga", 0} },
     /* RT_PCX */        { RC_GRAPHIC,      {"pcx", 0} },
     /* RT_DMD */        { RC_MODEL,        {"dmd", 0} },
@@ -109,7 +109,7 @@ static const resourcetypeinfo_t typeInfo[NUM_RESOURCE_TYPES] = {
 static const resourcetype_t searchTypeOrder[RESOURCECLASS_COUNT][MAX_TYPEORDER] = {
     /* RC_PACKAGE */    { RT_ZIP, RT_WAD, 0 }, // Favor ZIP over WAD.
     /* RC_DEFINITION */ { RT_DED, 0 }, // Only DED files.
-    /* RC_GRAPHIC */    { RT_PNG, RT_TGA, RT_PCX, 0 }, // Favour quality.
+    /* RC_GRAPHIC */    { RT_PNG, RT_TGA, RT_JPG, RT_PCX, 0 }, // Favour quality.
     /* RC_MODEL */      { RT_DMD, RT_MD2, 0 }, // Favour DMD over MD2.
     /* RC_SOUND */      { RT_WAV, 0 }, // Only WAV files.
     /* RC_MUSIC */      { RT_OGG, RT_MP3, RT_WAV, RT_MOD, RT_MID, 0 },
@@ -209,17 +209,16 @@ static void resetAllNamespaces(void)
 static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo,
     PathDirectoryNode* node)
 {
-    ddstring_t* name;
+    AutoStr* name;
     assert(rnInfo && node);
 
-    name = rnInfo->composeName(PathDirectory_GetFragment(PathDirectoryNode_Directory(node), node));
+    name = rnInfo->composeName(PathDirectoryNode_PathFragment(node));
     if(ResourceNamespace_Add(rnInfo->rnamespace, name, node, NULL))
     {
         // We will need to rebuild this namespace (if we aren't already doing so,
         // in the case of auto-populated namespaces built from FileDirectorys).
         rnInfo->flags |= RNF_IS_DIRTY;
     }
-    Str_Delete(name);
 }
 
 static int addFileResourceWorker(PathDirectoryNode* node, void* paramaters)
@@ -264,9 +263,8 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
 
 /*#if _DEBUG
     VERBOSE2(
-        ddstring_t* searchPathList = ResourceNamespace_ComposeSearchPathList(rnInfo->rnamespace);
+        AutoStr* searchPathList = ResourceNamespace_ComposeSearchPathList(rnInfo->rnamespace);
         Con_PrintPathList(Str_Text(searchPathList));
-        Str_Delete(searchPathList)
         )
 #endif*/
 
@@ -274,7 +272,7 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
     rnInfo->flags &= ~RNF_IS_DIRTY;
 
 /*#if _DEBUG
-    VERBOSE2( FileDirectory_Print(rnInfo->directory) )
+    VERBOSE2( FileDirectory_DebugPrint(rnInfo->directory) )
     VERBOSE2( ResourceNamespace_Print(rnInfo->rnamespace) )
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 #endif*/
@@ -295,7 +293,7 @@ static int findResourceInNamespaceWorker(PathDirectoryNode* node, void* paramate
     // Are we yet to initialize the search?
     if(!p->searchInited)
     {
-        PathMap_Initialize2(&p->searchPattern, p->path, p->delimiter);
+        PathMap_Initialize2(&p->searchPattern, PathDirectory_HashPathFragment2, p->path, p->delimiter);
         p->searchInited = true;
     }
     // Stop iteration of resources as soon as a match is found.
@@ -338,13 +336,13 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
         p.foundNode = NULL;
 
         // Perform the search.
-        if(found = ResourceNamespace_Iterate2(rnInfo->rnamespace, name, findResourceInNamespaceWorker, (void*)&p))
+        if((found = ResourceNamespace_Iterate2(rnInfo->rnamespace, name, findResourceInNamespaceWorker, (void*)&p)))
         {
             // Does the caller want to know the matched path?
             if(foundPath)
             {
                 PathDirectoryNode* node = p.foundNode;
-                PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, foundPath, NULL, foundDelimiter);
+                PathDirectoryNode_ComposePath2(node, foundPath, NULL, foundDelimiter);
             }
         }
 
@@ -360,21 +358,21 @@ static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* rawSea
     ddstring_t searchPath;
     assert(inited && rawSearchPath && !Str_IsEmpty(rawSearchPath));
 
+    DENG_UNUSED(rclass);
+
     Str_Init(&searchPath);
     F_FixSlashes(&searchPath, rawSearchPath);
 
     // Is there a namespace we should use?
     if(rnamespaceInfo)
     {
-        ddstring_t* name = rnamespaceInfo->composeName(&searchPath);
+        AutoStr* name = rnamespaceInfo->composeName(&searchPath);
         if(findResourceInNamespace(rnamespaceInfo, name, &searchPath, '/', foundPath, '/'))
         {
             Str_Free(&searchPath);
-            Str_Delete(name);
             if(foundPath) F_PrependBasePath(foundPath, foundPath);
             return true;
         }
-        Str_Delete(name);
     }
 
     if(0 != F_Access(Str_Text(&searchPath)))
@@ -538,9 +536,9 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
 #if _DEBUG
                 else
                 {
-                    ddstring_t* rawPath = Uri_ToString(searchPath);
-                    Con_Message("Warning:findResource: Unknown namespace in searchPath \"%s\", using default for %s.\n", Str_Text(rawPath), F_ResourceClassStr(rclass));
-                    Str_Delete(rawPath);
+                    AutoStr* rawPath = Uri_ToString(searchPath);
+                    Con_Message("Warning:findResource: Unknown namespace in searchPath \"%s\", using default for %s.\n",
+                                Str_Text(rawPath), F_ResourceClassStr(rclass));
                 }
 #endif
             }
@@ -552,9 +550,9 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
     return result;
 }
 
-ddstring_t* F_ComposeHashNameForFilePath(const ddstring_t* filePath)
+AutoStr* F_ComposeHashNameForFilePath(const Str* filePath)
 {
-    ddstring_t* hashName = Str_New();
+    AutoStr* hashName = AutoStr_NewStd();
     F_FileName(hashName, Str_Text(filePath));
     return hashName;
 }
@@ -598,7 +596,7 @@ static void createPackagesResourceNamespace(void)
 #endif
 
     // Is the DOOMWADPATH environment variable in use?
-    if(!ArgCheck("-nodoomwadpath") && getenv("DOOMWADPATH"))
+    if(!CommandLine_Check("-nodoomwadpath") && getenv("DOOMWADPATH"))
     {
 #if WIN32
 # define PATH_DELIMITER_CHAR    ';'
@@ -657,7 +655,7 @@ static void createPackagesResourceNamespace(void)
     }
 
     // Is the DOOMWADDIR environment variable in use?
-    if(!doomWadDir && !ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
+    if(!doomWadDir && !CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
         doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
         Str_Strip(doomWadDir);
@@ -792,9 +790,9 @@ void F_CreateNamespacesForFileResourcePaths(void)
             ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_DEFAULT);
         }
 
-        if(def->optOverridePath && ArgCheckWith(def->optOverridePath, 1))
+        if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
         {
-            const char* path = ArgNext();
+            const char* path = CommandLine_NextAsPath();
             ddstring_t path2;
 
             // Override paths are added in reverse order.
@@ -809,9 +807,9 @@ void F_CreateNamespacesForFileResourcePaths(void)
             Str_Free(&path2);
         }
 
-        if(def->optFallbackPath && ArgCheckWith(def->optFallbackPath, 1))
+        if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
-            Uri_SetUri3(uri, ArgNext(), RC_NULL);
+            Uri_SetUri3(uri, CommandLine_NextAsPath(), RC_NULL);
             ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_FALLBACK);
         }
     }}
@@ -888,8 +886,8 @@ boolean F_IsValidResourceNamespaceId(int val)
 }
 
 resourcenamespace_t* F_CreateResourceNamespace(const char* name, FileDirectory* directory,
-    ddstring_t* (*composeNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags)
+    AutoStr* (*composeNameFunc) (const Str* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const Str* name), byte flags)
 {
     resourcenamespaceinfo_t* info;
     resourcenamespace_t* rn;

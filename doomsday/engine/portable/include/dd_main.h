@@ -56,8 +56,6 @@ extern "C" {
 #  define DEBUG_VERBOSE2_Message(code)
 #endif
 
-extern LegacyCore* de2LegacyCore;
-
 extern int verbose;
 //extern FILE* outFile; // Output file for console messages.
 

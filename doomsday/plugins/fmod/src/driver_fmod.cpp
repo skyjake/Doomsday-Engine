@@ -98,8 +98,8 @@ int DS_Init(void)
  */
 void DS_Shutdown(void)
 {
-    DM_Music_Shutdown();
-    DM_CDAudio_Shutdown();
+    DMFmod_Music_Shutdown();
+    DMFmod_CDAudio_Shutdown();
 
     DSFMOD_TRACE("DS_Shutdown.");
     fmodSystem->release();
@@ -135,7 +135,7 @@ int DS_Set(int prop, const void* ptr)
             // Use the default.
             path = 0;
         }
-        DM_Music_SetSoundFont(path);
+        DMFmod_Music_SetSoundFont(path);
         return true; }
 
     default:

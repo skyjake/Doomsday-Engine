@@ -1,34 +1,26 @@
-/**\file dd_pinit.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Portable Engine Initialization
+ * @file dd_pinit.c
+ * Platform independent routines for initializing the engine. @ingroup base
  *
- * Platform independent routines for initializing the engine.
+ * @todo Move these to dd_init.cpp.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -45,22 +37,8 @@
 #include "de_ui.h"
 #include "de_filesys.h"
 
-#include "m_args.h"
 #include "def_main.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+#include "updater.h"
 
 /*
  * The game imports and exports.
@@ -68,14 +46,12 @@
 game_import_t __gi;
 game_export_t __gx;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 int DD_CheckArg(char* tag, const char** value)
 {
-    int                 i = ArgCheck(tag);
-    const char*         next = ArgNext();
+    /// @todo Add parameter for using NextAsPath().
+
+    int                 i = CommandLine_Check(tag);
+    const char*         next = CommandLine_Next();
 
     if(!i)
         return 0;
@@ -84,9 +60,6 @@ int DD_CheckArg(char* tag, const char** value)
     return 1;
 }
 
-/**
- * Compose the title for the main window.
- */
 void DD_ComposeMainWindowTitle(char* title)
 {
     if(DD_GameLoaded() && gx.GetVariable)
@@ -131,58 +104,51 @@ void DD_InitAPI(void)
     }
 }
 
-void DD_InitCommandLine(const char* cmdLine)
+void DD_InitCommandLine(void)
 {
-    ArgInit(cmdLine);
-
-    // Register some abbreviations for command line options.
-    ArgAbbreviate("-game", "-g");
-    ArgAbbreviate("-defs", "-d");
-    ArgAbbreviate("-width", "-w");
-    ArgAbbreviate("-height", "-h");
-    ArgAbbreviate("-winsize", "-wh");
-    ArgAbbreviate("-bpp", "-b");
-    ArgAbbreviate("-window", "-wnd");
-    ArgAbbreviate("-nocenter", "-noc");
-    ArgAbbreviate("-file", "-f");
-    ArgAbbreviate("-config", "-cfg");
-    ArgAbbreviate("-parse", "-p");
-    ArgAbbreviate("-cparse", "-cp");
-    ArgAbbreviate("-command", "-cmd");
-    ArgAbbreviate("-fontdir", "-fd");
-    ArgAbbreviate("-modeldir", "-md");
-    ArgAbbreviate("-basedir", "-bd");
-    ArgAbbreviate("-stdbasedir", "-sbd");
-    ArgAbbreviate("-userdir", "-ud");
-    ArgAbbreviate("-texdir", "-td");
-    ArgAbbreviate("-texdir2", "-td2");
-    ArgAbbreviate("-anifilter", "-ani");
-    ArgAbbreviate("-verbose", "-v");
+    CommandLine_Alias("-game", "-g");
+    CommandLine_Alias("-defs", "-d");
+    CommandLine_Alias("-width", "-w");
+    CommandLine_Alias("-height", "-h");
+    CommandLine_Alias("-winsize", "-wh");
+    CommandLine_Alias("-bpp", "-b");
+    CommandLine_Alias("-window", "-wnd");
+    CommandLine_Alias("-nocenter", "-noc");
+    CommandLine_Alias("-file", "-f");
+    CommandLine_Alias("-config", "-cfg");
+    CommandLine_Alias("-parse", "-p");
+    CommandLine_Alias("-cparse", "-cp");
+    CommandLine_Alias("-command", "-cmd");
+    CommandLine_Alias("-fontdir", "-fd");
+    CommandLine_Alias("-modeldir", "-md");
+    CommandLine_Alias("-basedir", "-bd");
+    CommandLine_Alias("-stdbasedir", "-sbd");
+    CommandLine_Alias("-userdir", "-ud");
+    CommandLine_Alias("-texdir", "-td");
+    CommandLine_Alias("-texdir2", "-td2");
+    CommandLine_Alias("-anifilter", "-ani");
+    CommandLine_Alias("-verbose", "-v");
 }
 
-/**
- * Called early on during the startup process so that we can get the console
- * online ready for printing ASAP.
- */
 void DD_ConsoleInit(void)
 {
     const char* outFileName = "doomsday.out";
     ddstring_t nativePath;
     boolean outFileOk;
+    int p;
 
     DD_CheckArg("-out", &outFileName);
     Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
     F_ToNativeSlashes(&nativePath, &nativePath);
 
     // We'll redirect stdout to a log file.
-    outFileOk = LegacyCore_SetLogFile(de2LegacyCore, Str_Text(&nativePath));
-    //outFile = fopen(Str_Text(&nativePath), "w");
+    outFileOk = LegacyCore_SetLogFile(Str_Text(&nativePath));
     Str_Free(&nativePath);
 
     if(!outFileOk)
     {
         Sys_MessageBoxf(MBT_WARNING, "Console", "Couldn't open message output file: %s",
-                        LegacyCore_LogFile(de2LegacyCore));
+                        LegacyCore_LogFile());
     }
 
     // Get the console online ASAP.
@@ -191,22 +157,18 @@ void DD_ConsoleInit(void)
     Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
 
     // Print the used command line.
-    if(verbose)
+    Con_Message("Command line (%i strings):\n", CommandLine_Count());
+    for(p = 0; p < CommandLine_Count(); ++p)
     {
-        int p;
-        Con_Message("Command line (%i strings):\n", Argc());
-        for(p = 0; p < Argc(); ++p)
-            Con_Message("  %i: %s\n", p, Argv(p));
+        Con_Message("  %i: %s\n", p, CommandLine_At(p));
     }
 }
 
-/**
- * This is called from DD_Shutdown().
- */
 void DD_ShutdownAll(void)
 {
     int i;
 
+    Updater_Shutdown();
     FI_Shutdown();
     UI_Shutdown();
     Con_Shutdown();
@@ -228,16 +190,6 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_Shutdown();
-    ArgShutdown();
-    Z_Shutdown();
+    Libdeng_Shutdown();
     Sys_ShutdownWindowManager();
-
-    /*
-    // Close the message output file.
-    if(outFile)
-    {
-        fclose(outFile);
-        outFile = NULL;
-    }
-    */
 }

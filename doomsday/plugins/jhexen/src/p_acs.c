@@ -256,6 +256,8 @@ void P_LoadACScripts(int lump)
     acsinfo_t* info;
     int i;
 
+    VERBOSE( Con_Message("Loading ACS bytecode lump %s:%s (#%i)...\n",
+                         F_PrettyPath(W_LumpSourceFile(lump)), W_LumpName(lump), lump) )
     ACScriptCount = 0;
 
     if(lumpLength >= sizeof(acsheader_t))
@@ -271,8 +273,9 @@ void P_LoadACScripts(int lump)
     }
 
     if(ACScriptCount == 0 || IS_CLIENT)
-    {   // Empty/Invalid lump.
-        Con_Message("Warning:P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.\n", lump);
+    {
+        // Empty/Invalid lump.
+        Con_Message("Warning: P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.\n", lump);
         return;
     }
 
@@ -371,9 +374,9 @@ void P_CheckACSStore(uint map)
 boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
                    LineDef* line, int side)
 {
-    int                 i, infoIndex;
-    acs_t*              script;
-    aste_t*             statePtr;
+    int i, infoIndex;
+    acs_t* script;
+    aste_t* statePtr;
 
 #ifdef _DEBUG
     if(IS_CLIENT)
@@ -391,9 +394,10 @@ boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
 
     infoIndex = GetACSIndex(number);
     if(infoIndex == -1)
-    {   // Script not found.
+    {
+        // Script not found.
         sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", number);
-        P_SetMessage(&players[CONSOLEPLAYER], ErrorMsg, false);
+        P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, ErrorMsg);
         return false;
     }
 
@@ -483,9 +487,8 @@ boolean P_StartLockedACS(LineDef *line, byte *args, mobj_t *mo, int side)
     {
         if(!(mo->player->keys & (1 << (lock - 1))))
         {
-            sprintf(LockedBuffer, "YOU NEED THE %s\n",
-                    GET_TXT(TextKeyMessages[lock - 1]));
-            P_SetMessage(mo->player, LockedBuffer, false);
+            sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
+            P_SetMessage(mo->player, 0, LockedBuffer);
             S_StartSound(SFX_DOOR_LOCKED, mo);
             return false;
         }
@@ -1554,16 +1557,17 @@ static int CmdEndPrint(void)
 {
     if(ACScript->activator && ACScript->activator->player)
     {
-        P_SetMessage(ACScript->activator->player, PrintBuffer, false);
+        P_SetMessage(ACScript->activator->player, 0, PrintBuffer);
     }
     else
     {
-        int                 i;
-
         // Send to everybody.
+        int i;
         for(i = 0; i < MAXPLAYERS; ++i)
+        {
             if(players[i].plr->inGame)
-                P_SetMessage(&players[i], PrintBuffer, false);
+                P_SetMessage(&players[i], 0, PrintBuffer);
+        }
     }
 
     return SCRIPT_CONTINUE;
@@ -1571,13 +1575,13 @@ static int CmdEndPrint(void)
 
 static int CmdEndPrintBold(void)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame)
         {
-            P_SetYellowMessage(&players[i], PrintBuffer, false);
+            P_SetYellowMessage(&players[i], 0, PrintBuffer);
         }
     }
 

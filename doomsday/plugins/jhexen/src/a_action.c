@@ -227,7 +227,7 @@ void C_DECL A_LeafSpawn(mobj_t* actor)
         pos[VY] += FIX2FLT((P_Random() - P_Random()) << 14);
         pos[VZ] += FIX2FLT(P_Random() << 14);
 
-        /// @fixme  We should not be using the original indices to determine
+        /// @todo  We should not be using the original indices to determine
         ///         the mobjtype. Use a local table instead.
         if((mo = P_SpawnMobj(MT_LEAF1 + (P_Random() & 1), pos,
                                 actor->angle, 0)))
@@ -506,7 +506,7 @@ void C_DECL A_FogSpawn(mobj_t* actor)
 void C_DECL A_FogMove(mobj_t* actor)
 {
     coord_t speed = (coord_t) actor->args[0];
-    uint an, weaveindex;
+    uint an;
 
     if(!(actor->args[4]))
         return;
@@ -517,10 +517,14 @@ void C_DECL A_FogMove(mobj_t* actor)
         return;
     }
 
+    // Move the fog slightly/slowly up and down. Some fog patches are supposed
+    // to move higher and some are supposed to stay close to the ground.
+    // Unlike in the original Hexen, the move is done by applying momentum
+    // to the cloud so that the movement is smooth.
     if((actor->args[3] % 4) == 0)
     {
-        weaveindex = actor->special2;
-        actor->origin[VZ] += FLOATBOBOFFSET(weaveindex) * 2;
+        uint weaveindex = actor->special2;
+        actor->mom[VZ] = FLOATBOBOFFSET(weaveindex) / TICSPERSEC;
         actor->special2 = (weaveindex + 1) & 63;
     }
 

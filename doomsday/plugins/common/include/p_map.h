@@ -72,6 +72,8 @@ boolean P_TryMoveXY(mobj_t* thing, coord_t x, coord_t y);
 
 boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp);
 
+void P_TelefragMobjsTouchingPlayers(void);
+
 void P_SlideMove(mobj_t* mo);
 
 void P_UseLines(player_t* player);

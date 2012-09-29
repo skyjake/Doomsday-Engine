@@ -28,7 +28,6 @@
 D_CMD(Cheat);
 D_CMD(CheatGod);
 D_CMD(CheatNoClip);
-D_CMD(CheatWarp);
 D_CMD(CheatReveal);
 D_CMD(CheatGive);
 D_CMD(CheatMassacre);
@@ -150,6 +149,7 @@ cvartemplate_t gameCVars[] = {
 
 // Compatibility options
     {"game-raiseghosts", 0, CVT_BYTE, &cfg.raiseGhosts, 0, 1},
+    {"game-vilechase-usevileradius", 0, CVT_BYTE, &cfg.vileChaseUseVileRadius, 0, 1},
     {"game-maxskulls", 0, CVT_BYTE, &cfg.maxSkulls, 0, 1},
     {"game-skullsinwalls", 0, CVT_BYTE, &cfg.allowSkullsInWalls, 0, 1},
     {"game-anybossdeath666", 0, CVT_BYTE, &cfg.anyBossDeath, 0, 1},
@@ -213,10 +213,6 @@ void G_ConsoleRegistration(void)
         Con_AddVariable(&gameCVars[i]);
     for(i = 0; gameCCmds[i].name; ++i)
         Con_AddCommand(&gameCCmds[i]);
-
-    C_CMD("warp", "i", CheatWarp);
-    if(gameModeBits & GM_ANY_DOOM)
-        C_CMD("warp", "ii", CheatWarp);
 }
 
 /**

@@ -96,7 +96,7 @@ void ColorOutlinesIdx(uint8_t* pixels, int width, int height);
 void Desaturate(uint8_t* pixels, int width, int height, int pixelSize);
 
 /**
- * @important Does not conform to any standard technique and adjustments
+ * @note Does not conform to any standard technique and adjustments
  * are applied symmetrically for all color components.
  *
  * @param pixels  RGB(a) image to be enhanced.
@@ -110,7 +110,8 @@ void EnhanceContrast(uint8_t* pixels, int width, int height, int pixelSize);
  * Equalize the specified luminance map such that the minimum and maximum
  * brightness covers the whole [0...255] range.
  *
- * @algorithm Calculates shift deltas for bright and dark-side pixels by
+ * @par Algorithm
+ * Calculates shift deltas for bright and dark-side pixels by
  * averaging the luminosity of all pixels in the original image.
  *
  * @param pixels  Luminance image to equalize.
@@ -183,7 +184,9 @@ void FindAverageAlphaIdx(const uint8_t* pixels, int width, int height,
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.
- * @algorithm: Cross spread from bottom > top, right > left (inside out).
+ *
+ * @par Algorithm
+ * Cross spread from bottom > top, right > left (inside out).
  *
  * @param pixels  Image data to be processed.
  * @param width  Width of the image in pixels.

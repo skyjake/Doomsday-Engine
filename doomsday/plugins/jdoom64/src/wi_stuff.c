@@ -120,16 +120,16 @@ static void drawBackground(void)
 static void drawFinishedTitle(void)
 {
     int x = SCREENWIDTH/2, y = WI_TITLEY;
-    int mapNum = wbs->currentMap;
+    uint mapNum = wbs->currentMap;
     char* mapName = (char*) DD_GetVariable(DD_MAP_NAME);
     patchid_t patchId;
     patchinfo_t info;
 
     // Skip the Map #.
-    if(NULL != mapName)
+    if(mapName)
     {
         char* ptr = strchr(mapName, ':');
-        if(NULL != ptr)
+        if(ptr)
         {
             mapName = M_SkipWhite(ptr + 1);
         }
@@ -141,10 +141,11 @@ static void drawFinishedTitle(void)
     FR_LoadDefaultAttrib();
 
     // Draw <MapName>
-    patchId = pMapNames[mapNum];
-    WI_DrawPatchXY2(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP);
+    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
+    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.geometry.size.height) / 4;
+
     // Draw "Finished!"
     WI_DrawPatchXY2(pFinished, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFinished), x, y, ALIGN_TOP);
 
@@ -155,10 +156,11 @@ static void drawEnteringTitle(void)
 {
     int x = SCREENWIDTH/2, y = WI_TITLEY;
     char* mapName = NULL;
+    uint mapNum;
     ddmapinfo_t minfo;
     patchid_t patchId;
     patchinfo_t info;
-    ddstring_t* mapPath;
+    AutoStr* mapPath;
     Uri* mapUri;
 
     // See if there is a map name.
@@ -169,7 +171,6 @@ static void drawEnteringTitle(void)
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
             mapName = minfo.name;
     }
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
 
     // Skip the E#M# or Map #.
@@ -189,11 +190,12 @@ static void drawEnteringTitle(void)
 
     // Draw "Entering"
     WI_DrawPatchXY2(pEntering, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pEntering), x, y, ALIGN_TOP);
-
-    // Draw map.
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.geometry.size.height) / 4;
-    patchId = pMapNames[(wbs->episode * 8) + wbs->nextMap];
+
+    // Draw map.
+    mapNum = (wbs->episode * 8) + wbs->nextMap;
+    patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
     WI_DrawPatchXY2(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);

@@ -44,6 +44,8 @@
 
 #pragma warning (disable: 4035 4244)
 
+#include <de/c_wrapper.h>
+
 #include "doomsday.h"
 #include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
@@ -59,8 +61,6 @@
 #define MAX_FAILED_PROPS    (10)
 
 // TYPES -------------------------------------------------------------------
-
-enum { VX, VY, VZ };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -216,14 +216,14 @@ int DS_Init(void)
         return true; // Already initialized?
 
     // Are we in verbose mode?
-    verbose = ArgExists("-verbose");
+    verbose = CommandLine_Exists("-verbose");
 
     if(verbose)
         Con_Message("dsDirectSound::DS_Init: Initializing Direct Sound...\n");
 
     // Can we set the Primary Sound Format?
-    canSetPSF = !ArgExists("-nopsf");
-    useEAX = !ArgExists("-noeax");
+    canSetPSF = !CommandLine_Exists("-nopsf");
+    useEAX = !CommandLine_Exists("-noeax");
 
     if(!(hWnd = (HWND) DD_GetVariable(DD_WINDOW_HANDLE)))
     {
@@ -358,7 +358,7 @@ int DS_Init(void)
         memset(failedProps, ~0, sizeof(failedProps));
 
         propertySet = NULL;
-        if(ArgExists("-eaxignore"))
+        if(CommandLine_Exists("-eaxignore"))
             ignoreEAXErrors = true;
 
         // Configure the temporary buffer.

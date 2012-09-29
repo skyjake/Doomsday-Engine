@@ -1,33 +1,25 @@
-/**\file p_oldsvg.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Original Heretic saved game loader.
+ * @file p_oldsvg.c
+ * Heretic ver 1.3 save game reader.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 1999 Activision
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
@@ -47,223 +39,224 @@
 #include "p_inventory.h"
 #include "hu_inventory.h"
 
-// MACROS ------------------------------------------------------------------
-
 // Do NOT change this:
-#define SAVE_VERSION            130
-#define VERSIONSIZE             16
-#define SAVE_GAME_TERMINATOR    0x1d
+#define V13_SAVE_VERSION                130 ///< Version number associated with a recognised heretic.exe game save state.
+#define V13_SAVESTRINGSIZE              24
+#define VERSIONSIZE                     16
+#define SAVE_GAME_TERMINATOR            0x1d
 
-#define V13_SAVESTRINGSIZE      24
+#define FF_FRAMEMASK                    0x7fff
 
-#define FF_FRAMEMASK            0x7fff
+#define SIZEOF_V13_THINKER_T            12
+#define V13_THINKER_T_FUNC_OFFSET       8
 
-#define SIZEOF_V13_THINKER_T    12
-#define V13_THINKER_T_FUNC_OFFSET 8
+static byte* savePtr;
+static byte* saveBuffer;
+static Reader* svReader;
 
-// TYPES -------------------------------------------------------------------
+static boolean SV_OpenFile_Hr_v13(const char* filePath);
+static void    SV_CloseFile_Hr_v13(void);
+static Reader* SV_NewReader_Hr_v13(void);
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+static void    SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader);
 
-extern void SV_UpdateReadMobjFlags(mobj_t *mo, int ver);
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-byte *savebuffer;
-byte *save_p;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-static long SV_v13_ReadLong(void)
+static char sri8(Reader* r)
 {
-    save_p += 4;
-    return *(int *) (save_p - 4);
+    if(!r) return 0;
+    savePtr++;
+    return *(char*) (savePtr - 1);
 }
 
-static short SV_v13_ReadShort(void)
+static short sri16(Reader* r)
 {
-    save_p += 2;
-    return *(short *) (save_p - 2);
+    if(!r) return 0;
+    savePtr += 2;
+    return *(int16_t*) (savePtr - 2);
 }
 
-static void SV_v13_Read(void* data, int len)
+static int sri32(Reader* r)
 {
+    if(!r) return 0;
+    savePtr += 4;
+    return *(int32_t*) (savePtr - 4);
+}
+
+static void srd(Reader* r, char* data, int len)
+{
+    if(!r) return;
     if(data)
-        memcpy(data, save_p, len);
-    save_p += len;
+    {
+        memcpy(data, savePtr, len);
+    }
+    savePtr += len;
 }
 
 static void SV_v13_ReadPlayer(player_t* pl)
 {
-    int             i, plrnum = pl - players;
-    byte            temp[12];
-    ddplayer_t*     ddpl = pl->plr;
+    int i, plrnum = pl - players;
+    ddplayer_t* ddpl = pl->plr;
+    byte temp[12];
 
-    SV_v13_ReadLong(); // mo
-    pl->playerState = SV_v13_ReadLong();
-    SV_v13_Read(temp, 10); // ticcmd_t
-    pl->viewZ = FIX2FLT(SV_v13_ReadLong());
-    pl->viewHeight = FIX2FLT(SV_v13_ReadLong());
-    pl->viewHeightDelta = FIX2FLT(SV_v13_ReadLong());
-    pl->bob = FIX2FLT(SV_v13_ReadLong());
-    pl->flyHeight = SV_v13_ReadLong();
-    ddpl->lookDir = SV_v13_ReadLong();
-    pl->centering = SV_v13_ReadLong();
-    pl->health = SV_v13_ReadLong();
-    pl->armorPoints = SV_v13_ReadLong();
-    pl->armorType = SV_v13_ReadLong();
+    Reader_ReadInt32(svReader); // mo
+    pl->playerState = Reader_ReadInt32(svReader);
+    Reader_Read(svReader, temp, 10); // ticcmd_t
+    pl->viewZ       = FIX2FLT(Reader_ReadInt32(svReader));
+    pl->viewHeight  = FIX2FLT(Reader_ReadInt32(svReader));
+    pl->viewHeightDelta = FIX2FLT(Reader_ReadInt32(svReader));
+    pl->bob         = FIX2FLT(Reader_ReadInt32(svReader));
+    pl->flyHeight   = Reader_ReadInt32(svReader);
+    ddpl->lookDir   = Reader_ReadInt32(svReader);
+    pl->centering   = Reader_ReadInt32(svReader);
+    pl->health      = Reader_ReadInt32(svReader);
+    pl->armorPoints = Reader_ReadInt32(svReader);
+    pl->armorType   = Reader_ReadInt32(svReader);
 
     P_InventoryEmpty(plrnum);
     for(i = 0; i < 14; ++i)
     {
-        inventoryitemtype_t type = SV_v13_ReadLong();
-        int             j, count = SV_v13_ReadLong();
+        inventoryitemtype_t type = Reader_ReadInt32(svReader);
+        int j, count = Reader_ReadInt32(svReader);
 
         for(j = 0; j < count; ++j)
             P_InventoryGive(plrnum, type, true);
     }
 
-    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_v13_ReadLong());
+    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) Reader_ReadInt32(svReader));
     Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
-    SV_v13_ReadLong(); // current inventory item count?
-    /*pl->inventorySlotNum =*/ SV_v13_ReadLong();
+    Reader_ReadInt32(svReader); // current inventory item count?
+    /*pl->inventorySlotNum =*/ Reader_ReadInt32(svReader);
 
     memset(pl->powers, 0, sizeof(pl->powers));
-    pl->powers[PT_INVULNERABILITY] = (SV_v13_ReadLong()? true : false);
-    pl->powers[PT_INVISIBILITY] = (SV_v13_ReadLong()? true : false);
-    pl->powers[PT_ALLMAP] = (SV_v13_ReadLong()? true : false);
+    pl->powers[PT_INVULNERABILITY] = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_INVISIBILITY]    = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_ALLMAP]          = !!Reader_ReadInt32(svReader);
     if(pl->powers[PT_ALLMAP])
+    {
         ST_RevealAutomap(pl - players, true);
-    pl->powers[PT_INFRARED] = (SV_v13_ReadLong()? true : false);
-    pl->powers[PT_WEAPONLEVEL2] = (SV_v13_ReadLong()? true : false);
-    pl->powers[PT_FLIGHT] = (SV_v13_ReadLong()? true : false);
-    pl->powers[PT_SHIELD] = (SV_v13_ReadLong()? true : false);
-    pl->powers[PT_HEALTH2] = (SV_v13_ReadLong()? true : false);
+    }
+    pl->powers[PT_INFRARED]     = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_WEAPONLEVEL2] = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_FLIGHT]       = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_SHIELD]       = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_HEALTH2]      = !!Reader_ReadInt32(svReader);
 
     memset(pl->keys, 0, sizeof(pl->keys));
-    pl->keys[KT_YELLOW] = (SV_v13_ReadLong()? true : false);
-    pl->keys[KT_GREEN] = (SV_v13_ReadLong()? true : false);
-    pl->keys[KT_BLUE] = (SV_v13_ReadLong()? true : false);
+    pl->keys[KT_YELLOW] = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_GREEN]  = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_BLUE]   = !!Reader_ReadInt32(svReader);
 
-    pl->backpack = SV_v13_ReadLong();
+    pl->backpack = Reader_ReadInt32(svReader);
 
     memset(pl->frags, 0, sizeof(pl->frags));
-    pl->frags[0] = SV_v13_ReadLong();
-    pl->frags[1] = SV_v13_ReadLong();
-    pl->frags[2] = SV_v13_ReadLong();
-    pl->frags[3] = SV_v13_ReadLong();
+    pl->frags[0] = Reader_ReadInt32(svReader);
+    pl->frags[1] = Reader_ReadInt32(svReader);
+    pl->frags[2] = Reader_ReadInt32(svReader);
+    pl->frags[3] = Reader_ReadInt32(svReader);
 
-    pl->readyWeapon = SV_v13_ReadLong();
-    pl->pendingWeapon = SV_v13_ReadLong();
+    pl->readyWeapon   = Reader_ReadInt32(svReader);
+    pl->pendingWeapon = Reader_ReadInt32(svReader);
 
     // Owned weapons.
     memset(pl->weapons, 0, sizeof(pl->weapons));
-    pl->weapons[WT_FIRST].owned = (SV_v13_ReadLong()? true : false);
-    pl->weapons[WT_SECOND].owned = (SV_v13_ReadLong()? true : false);
-    pl->weapons[WT_THIRD].owned = (SV_v13_ReadLong()? true : false);
-    pl->weapons[WT_FOURTH].owned = (SV_v13_ReadLong()? true : false);
-    pl->weapons[WT_FIFTH].owned = (SV_v13_ReadLong()? true : false);
-    pl->weapons[WT_SIXTH].owned = (SV_v13_ReadLong()? true : false);
-    pl->weapons[WT_SEVENTH].owned = (SV_v13_ReadLong()? true : false);
-    pl->weapons[WT_EIGHTH].owned = (SV_v13_ReadLong()? true : false);
+    pl->weapons[WT_FIRST  ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SECOND ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_THIRD  ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_FOURTH ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_FIFTH  ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SIXTH  ].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SEVENTH].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_EIGHTH ].owned = !!Reader_ReadInt32(svReader);
 
     memset(pl->ammo, 0, sizeof(pl->ammo));
-    pl->ammo[AT_CRYSTAL].owned = SV_v13_ReadLong();
-    pl->ammo[AT_ARROW].owned = SV_v13_ReadLong();
-    pl->ammo[AT_ORB].owned = SV_v13_ReadLong();
-    pl->ammo[AT_RUNE].owned = SV_v13_ReadLong();
-    pl->ammo[AT_FIREORB].owned = SV_v13_ReadLong();
-    pl->ammo[AT_MSPHERE].owned = SV_v13_ReadLong();
-    pl->ammo[AT_CRYSTAL].max = SV_v13_ReadLong();
-    pl->ammo[AT_ARROW].max = SV_v13_ReadLong();
-    pl->ammo[AT_ORB].max = SV_v13_ReadLong();
-    pl->ammo[AT_RUNE].max = SV_v13_ReadLong();
-    pl->ammo[AT_FIREORB].max = SV_v13_ReadLong();
-    pl->ammo[AT_MSPHERE].max = SV_v13_ReadLong();
+    pl->ammo[AT_CRYSTAL].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_ARROW  ].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_ORB    ].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_RUNE   ].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_FIREORB].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_MSPHERE].owned = Reader_ReadInt32(svReader);
+    pl->ammo[AT_CRYSTAL].max = Reader_ReadInt32(svReader);
+    pl->ammo[AT_ARROW  ].max = Reader_ReadInt32(svReader);
+    pl->ammo[AT_ORB    ].max = Reader_ReadInt32(svReader);
+    pl->ammo[AT_RUNE   ].max = Reader_ReadInt32(svReader);
+    pl->ammo[AT_FIREORB].max = Reader_ReadInt32(svReader);
+    pl->ammo[AT_MSPHERE].max = Reader_ReadInt32(svReader);
 
-    pl->attackDown = SV_v13_ReadLong();
-    pl->useDown = SV_v13_ReadLong();
-    pl->cheats = SV_v13_ReadLong();
-    pl->refire = SV_v13_ReadLong();
-    pl->killCount = SV_v13_ReadLong();
-    pl->itemCount = SV_v13_ReadLong();
-    pl->secretCount = SV_v13_ReadLong();
-    SV_v13_ReadLong(); // message, char*
-    pl->damageCount = SV_v13_ReadLong();
-    pl->bonusCount = SV_v13_ReadLong();
-    pl->flameCount = SV_v13_ReadLong();
-    SV_v13_ReadLong(); // attacker
-    ddpl->extraLight = SV_v13_ReadLong();
-    ddpl->fixedColorMap = SV_v13_ReadLong();
-    pl->colorMap = SV_v13_ReadLong();
+    pl->attackDown = Reader_ReadInt32(svReader);
+    pl->useDown    = Reader_ReadInt32(svReader);
+    pl->cheats     = Reader_ReadInt32(svReader);
+    pl->refire     = Reader_ReadInt32(svReader);
+    pl->killCount  = Reader_ReadInt32(svReader);
+    pl->itemCount  = Reader_ReadInt32(svReader);
+    pl->secretCount = Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader); // message, char*
+    pl->damageCount = Reader_ReadInt32(svReader);
+    pl->bonusCount = Reader_ReadInt32(svReader);
+    pl->flameCount = Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader); // attacker
+    ddpl->extraLight = Reader_ReadInt32(svReader);
+    ddpl->fixedColorMap = Reader_ReadInt32(svReader);
+    pl->colorMap = Reader_ReadInt32(svReader);
     for(i = 0; i < 2; ++i)
     {
-        pspdef_t       *psp = &pl->pSprites[i];
+        pspdef_t* psp = &pl->pSprites[i];
 
-        psp->state = (state_t*) SV_v13_ReadLong();
-        psp->pos[VX] = SV_v13_ReadLong();
-        psp->pos[VY] = SV_v13_ReadLong();
-        psp->tics = SV_v13_ReadLong();
+        psp->state = INT2PTR(state_t, Reader_ReadInt32(svReader));
+        psp->pos[VX] = Reader_ReadInt32(svReader);
+        psp->pos[VY] = Reader_ReadInt32(svReader);
+        psp->tics = Reader_ReadInt32(svReader);
     }
 
-    pl->didSecret = SV_v13_ReadLong();
-    pl->morphTics = SV_v13_ReadLong();
-    pl->chickenPeck = SV_v13_ReadLong();
-    SV_v13_ReadLong(); // rain1
-    SV_v13_ReadLong(); // rain2
+    pl->didSecret = Reader_ReadInt32(svReader);
+    pl->morphTics = Reader_ReadInt32(svReader);
+    pl->chickenPeck = Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader); // rain1
+    Reader_ReadInt32(svReader); // rain2
 }
 
 static void SV_v13_ReadMobj(void)
 {
-    angle_t angle;
-    spritenum_t sprite;
-    int frame, valid, type, ddflags = 0;
     coord_t pos[3], mom[3], floorz, ceilingz, radius, height;
-    mobj_t* mo;
+    int frame, valid, type, ddflags = 0;
+    spritenum_t sprite;
     mobjinfo_t* info;
+    angle_t angle;
+    mobj_t* mo;
 
     // The thinker was 3 ints long.
-    SV_v13_ReadLong();
-    SV_v13_ReadLong();
-    SV_v13_ReadLong();
+    Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader);
 
-    pos[VX] = FIX2FLT(SV_v13_ReadLong());
-    pos[VY] = FIX2FLT(SV_v13_ReadLong());
-    pos[VZ] = FIX2FLT(SV_v13_ReadLong());
+    pos[VX] = FIX2FLT(Reader_ReadInt32(svReader));
+    pos[VY] = FIX2FLT(Reader_ReadInt32(svReader));
+    pos[VZ] = FIX2FLT(Reader_ReadInt32(svReader));
 
     // Sector links.
-    SV_v13_ReadLong();
-    SV_v13_ReadLong();
+    Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader);
 
-    angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
-    sprite = SV_v13_ReadLong();
-    frame = SV_v13_ReadLong();
+    angle = (angle_t) (ANG45 * (Reader_ReadInt32(svReader) / 45));
+    sprite = Reader_ReadInt32(svReader);
+    frame = Reader_ReadInt32(svReader);
     frame &= ~FF_FRAMEMASK; // not used anymore.
 
     // Block links.
-    SV_v13_ReadLong();
-    SV_v13_ReadLong();
+    Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader);
 
     // BspLeaf.
-    SV_v13_ReadLong();
+    Reader_ReadInt32(svReader);
 
-    floorz = FIX2FLT(SV_v13_ReadLong());
-    ceilingz = FIX2FLT(SV_v13_ReadLong());
-    radius = FIX2FLT(SV_v13_ReadLong());
-    height = FIX2FLT(SV_v13_ReadLong());
-    mom[MX] = FIX2FLT(SV_v13_ReadLong());
-    mom[MY] = FIX2FLT(SV_v13_ReadLong());
-    mom[MZ] = FIX2FLT(SV_v13_ReadLong());
-    valid = SV_v13_ReadLong();
-    type = SV_v13_ReadLong();
+    floorz   = FIX2FLT(Reader_ReadInt32(svReader));
+    ceilingz = FIX2FLT(Reader_ReadInt32(svReader));
+    radius   = FIX2FLT(Reader_ReadInt32(svReader));
+    height   = FIX2FLT(Reader_ReadInt32(svReader));
+    mom[MX]  = FIX2FLT(Reader_ReadInt32(svReader));
+    mom[MY]  = FIX2FLT(Reader_ReadInt32(svReader));
+    mom[MZ]  = FIX2FLT(Reader_ReadInt32(svReader));
+    valid    = Reader_ReadInt32(svReader);
+    type     = Reader_ReadInt32(svReader);
+
     info = &MOBJINFO[type];
 
     if(info->flags & MF_SOLID)
@@ -275,33 +268,33 @@ static void SV_v13_ReadMobj(void)
      * We now have all the information we need to create the mobj.
      */
     mo = P_MobjCreateXYZ(P_MobjThinker, pos[VX], pos[VY], pos[VZ], angle,
-                      radius, height, ddflags);
+                         radius, height, ddflags);
 
-    mo->sprite = sprite;
-    mo->frame = frame;
-    mo->floorZ = floorz;
+    mo->sprite  = sprite;
+    mo->frame   = frame;
+    mo->floorZ  = floorz;
     mo->ceilingZ = ceilingz;
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
     mo->mom[MZ] = mom[MZ];
-    mo->valid = valid;
-    mo->type = type;
+    mo->valid   = valid;
+    mo->type    = type;
     mo->moveDir = DI_NODIR;
 
     /**
      * Continue reading the mobj data.
      */
 
-    SV_v13_ReadLong();          // info
+    Reader_ReadInt32(svReader); // info
 
-    mo->tics = SV_v13_ReadLong();
-    mo->state = (state_t *) SV_v13_ReadLong();
-    mo->damage = SV_v13_ReadLong();
-    mo->flags = SV_v13_ReadLong();
-    mo->flags2 = SV_v13_ReadLong();
-    mo->special1 = SV_v13_ReadLong();
-    mo->special2 = SV_v13_ReadLong();
-    mo->health = SV_v13_ReadLong();
+    mo->tics     = Reader_ReadInt32(svReader);
+    mo->state    = INT2PTR(state_t, Reader_ReadInt32(svReader));
+    mo->damage   = Reader_ReadInt32(svReader);
+    mo->flags    = Reader_ReadInt32(svReader);
+    mo->flags2   = Reader_ReadInt32(svReader);
+    mo->special1 = Reader_ReadInt32(svReader);
+    mo->special2 = Reader_ReadInt32(svReader);
+    mo->health   = Reader_ReadInt32(svReader);
 
     // Fix a bunch of kludges in the original Heretic.
     switch(mo->type)
@@ -318,33 +311,32 @@ static void SV_v13_ReadMobj(void)
         mo->health = info->spawnHealth;
         break;
 
-    default:
-        break;
+    default: break;
     }
 
-    mo->moveDir = SV_v13_ReadLong();
-    mo->moveCount = SV_v13_ReadLong();
-    SV_v13_ReadLong();          // target
-    mo->reactionTime = SV_v13_ReadLong();
-    mo->threshold = SV_v13_ReadLong();
-    mo->player = (player_t *) SV_v13_ReadLong();
-    mo->lastLook = SV_v13_ReadLong();
+    mo->moveDir      = Reader_ReadInt32(svReader);
+    mo->moveCount    = Reader_ReadInt32(svReader);
+    Reader_ReadInt32(svReader); // target
+    mo->reactionTime = Reader_ReadInt32(svReader);
+    mo->threshold    = Reader_ReadInt32(svReader);
+    mo->player       = INT2PTR(player_t, Reader_ReadInt32(svReader));
+    mo->lastLook     = Reader_ReadInt32(svReader);
 
-    mo->spawnSpot.origin[VX] = (coord_t) SV_v13_ReadLong();
-    mo->spawnSpot.origin[VY] = (coord_t) SV_v13_ReadLong();
+    mo->spawnSpot.origin[VX] = (coord_t) Reader_ReadInt32(svReader);
+    mo->spawnSpot.origin[VY] = (coord_t) Reader_ReadInt32(svReader);
     mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
-    mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
-    /*mo->spawnSpot.type = (int)*/ SV_v13_ReadLong();
+    mo->spawnSpot.angle = (angle_t) (ANG45 * (Reader_ReadInt32(svReader) / 45));
+    /*mo->spawnSpot.type = (int)*/ Reader_ReadInt32(svReader);
 
     {
-    int spawnFlags = ((int) SV_v13_ReadLong()) & ~MASK_UNKNOWN_MSF_FLAGS;
+    int spawnFlags = ((int) Reader_ReadInt32(svReader)) & ~MASK_UNKNOWN_MSF_FLAGS;
     // Spawn on the floor by default unless the mobjtype flags override.
     spawnFlags |= MSF_Z_FLOOR;
     mo->spawnSpot.flags = spawnFlags;
     }
 
     mo->info = info;
-    SV_UpdateReadMobjFlags(mo, 0);
+    SV_TranslateLegacyMobjFlags(mo, 0);
 
     mo->state = &STATES[PTR2INT(mo->state)];
     mo->target = NULL;
@@ -359,14 +351,13 @@ static void SV_v13_ReadMobj(void)
     mo->ceilingZ = P_GetDoublep(mo->bspLeaf, DMU_CEILING_HEIGHT);
 }
 
-void P_v13_UnArchivePlayers(void)
+static void P_v13_UnArchivePlayers(void)
 {
     int i, j;
 
     for(i = 0; i < 4; ++i)
     {
-        if(!players[i].plr->inGame)
-            continue;
+        if(!players[i].plr->inGame) continue;
 
         SV_v13_ReadPlayer(players + i);
         players[i].plr->mo = NULL; // Will be set when unarc thinker.
@@ -377,24 +368,20 @@ void P_v13_UnArchivePlayers(void)
 
             if(plr->pSprites[j].state)
             {
-                plr->pSprites[j].state =
-                    &STATES[PTR2INT(plr->pSprites[j].state)];
+                plr->pSprites[j].state = &STATES[PTR2INT(plr->pSprites[j].state)];
             }
         }
     }
 }
 
-void P_v13_UnArchiveWorld(void)
+static void P_v13_UnArchiveWorld(void)
 {
-    uint                i, j;
-    fixed_t             offx, offy;
-    short*              get;
-    Sector*             sec;
-    xsector_t*          xsec;
-    LineDef*            line;
-    xline_t*            xline;
-
-    get = (short *) save_p;
+    uint i, j;
+    fixed_t offx, offy;
+    Sector* sec;
+    xsector_t* xsec;
+    LineDef* line;
+    xline_t* xline;
 
     // Do sectors.
     for(i = 0; i < numsectors; ++i)
@@ -402,13 +389,13 @@ void P_v13_UnArchiveWorld(void)
         sec = P_ToPtr(DMU_SECTOR, i);
         xsec = P_ToXSector(sec);
 
-        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,   (coord_t)*get++);
-        P_SetDoublep(sec, DMU_CEILING_HEIGHT, (coord_t)*get++);
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
-        P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
-        xsec->special = *get++; // needed?
-        /*xsec->tag = **/get++; // needed?
+        P_SetDoublep(sec, DMU_FLOOR_HEIGHT,     (coord_t)Reader_ReadInt16(svReader));
+        P_SetDoublep(sec, DMU_CEILING_HEIGHT,   (coord_t)Reader_ReadInt16(svReader));
+        P_SetPtrp   (sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
+        P_SetPtrp   (sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader))));
+        P_SetFloatp (sec, DMU_LIGHT_LEVEL,      (float) (Reader_ReadInt16(svReader)) / 255.0f);
+        xsec->special = Reader_ReadInt16(svReader); // needed?
+        /*xsec->tag = **/Reader_ReadInt16(svReader); // needed?
         xsec->specialData = 0;
         xsec->soundTarget = 0;
     }
@@ -419,36 +406,28 @@ void P_v13_UnArchiveWorld(void)
         line = P_ToPtr(DMU_LINEDEF, i);
         xline = P_ToXLine(line);
 
-        xline->flags = *get++;
-        xline->special = *get++;
-        /*xline->tag = **/get++;
+        xline->flags   = Reader_ReadInt16(svReader);
+        xline->special = Reader_ReadInt16(svReader);
+        /*xline->tag    =*/Reader_ReadInt16(svReader);
 
         for(j = 0; j < 2; j++)
         {
-            SideDef* sdef;
+            SideDef* sdef = P_GetPtrp(line, j == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+            if(!sdef) continue;
 
-            if(j == 0)
-                sdef = P_GetPtrp(line, DMU_SIDEDEF0);
-            else
-                sdef = P_GetPtrp(line, DMU_SIDEDEF1);
-
-            if(!sdef)
-                continue;
-
-            offx = *get++ << FRACBITS;
-            offy = *get++ << FRACBITS;
-            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X, offx);
-            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y, offy);
+            offx = Reader_ReadInt16(svReader) << FRACBITS;
+            offy = Reader_ReadInt16(svReader) << FRACBITS;
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_X,    offx);
+            P_SetFixedp(sdef, DMU_TOP_MATERIAL_OFFSET_Y,    offy);
             P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_X, offx);
             P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
+            P_SetPtrp  (sdef, DMU_TOP_MATERIAL,             P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
+            P_SetPtrp  (sdef, DMU_BOTTOM_MATERIAL,          P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
+            P_SetPtrp  (sdef, DMU_MIDDLE_MATERIAL,          P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, Reader_ReadInt16(svReader))));
         }
     }
-    save_p = (byte*) get;
 }
 
 static int removeThinker(thinker_t* th, void* context)
@@ -461,7 +440,7 @@ static int removeThinker(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-void P_v13_UnArchiveThinkers(void)
+static void P_v13_UnArchiveThinkers(void)
 {
 typedef enum
 {
@@ -469,7 +448,7 @@ typedef enum
     TC_MOBJ
 } thinkerclass_t;
 
-    byte                tclass;
+    byte tclass;
 
     // Remove all the current thinkers.
     DD_IterateThinkers(NULL, removeThinker, NULL);
@@ -478,11 +457,10 @@ typedef enum
     // read in saved thinkers
     for(;;)
     {
-        tclass = *save_p++;
+        tclass = Reader_ReadByte(svReader);
         switch(tclass)
         {
-        case TC_END:
-            return; // End of list.
+        case TC_END: return; // End of list.
 
         case TC_MOBJ:
             SV_v13_ReadMobj();
@@ -498,37 +476,37 @@ static int SV_ReadCeiling(ceiling_t *ceiling)
 {
 /* Original Heretic format:
 typedef struct {
-    thinker_t   thinker;        // was 12 bytes
-    ceilingtype_e   type;           // was 32bit int
-    Sector     *sector;
-    fixed_t     bottomheight, topheight;
-    fixed_t     speed;
-    boolean     crush;
-    int         direction;      // 1 = up, 0 = waiting, -1 = down
-    int         tag;            // ID
-    int         olddirection;
+    thinker_t thinker; ///< 12 bytes
+    ceilingtype_e type; ///< 32bit int
+    Sector* sector;
+    fixed_t bottomheight, topheight;
+    fixed_t speed;
+    boolean crush;
+    int direction; /// 1= up, 0= waiting, -1= down
+    int tag'
+    int olddirection;
 } v13_ceiling_t;
 */
     byte temp[SIZEOF_V13_THINKER_T];
 
     // Padding at the start (an old thinker_t struct)
-    SV_v13_Read(&temp, SIZEOF_V13_THINKER_T);
+    Reader_Read(svReader, &temp, SIZEOF_V13_THINKER_T);
 
     // Start of used data members.
-    ceiling->type = SV_v13_ReadLong();
+    ceiling->type = Reader_ReadInt32(svReader);
 
     // A 32bit pointer to sector, serialized.
-    ceiling->sector = P_ToPtr(DMU_SECTOR, SV_v13_ReadLong());
+    ceiling->sector = P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!ceiling->sector)
         Con_Error("tc_ceiling: bad sector number\n");
 
-    ceiling->bottomHeight = FIX2FLT(SV_v13_ReadLong());
-    ceiling->topHeight = FIX2FLT(SV_v13_ReadLong());
-    ceiling->speed = FIX2FLT(SV_v13_ReadLong());
-    ceiling->crush = SV_v13_ReadLong();
-    ceiling->state = (SV_v13_ReadLong() == -1? CS_DOWN : CS_UP);
-    ceiling->tag = SV_v13_ReadLong();
-    ceiling->oldState = (SV_v13_ReadLong() == -1? CS_DOWN : CS_UP);
+    ceiling->bottomHeight = FIX2FLT(Reader_ReadInt32(svReader));
+    ceiling->topHeight    = FIX2FLT(Reader_ReadInt32(svReader));
+    ceiling->speed        = FIX2FLT(Reader_ReadInt32(svReader));
+    ceiling->crush        = Reader_ReadInt32(svReader);
+    ceiling->state        = (Reader_ReadInt32(svReader) == -1? CS_DOWN : CS_UP);
+    ceiling->tag          = Reader_ReadInt32(svReader);
+    ceiling->oldState     = (Reader_ReadInt32(svReader) == -1? CS_DOWN : CS_UP);
 
     ceiling->thinker.function = T_MoveCeiling;
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
@@ -554,21 +532,21 @@ typedef struct {
 } v13_vldoor_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_v13_Read(NULL, SIZEOF_V13_THINKER_T);
+    Reader_Read(svReader, NULL, SIZEOF_V13_THINKER_T);
 
     // Start of used data members.
-    door->type = SV_v13_ReadLong();
+    door->type = Reader_ReadInt32(svReader);
 
     // A 32bit pointer to sector, serialized.
-    door->sector = P_ToPtr(DMU_SECTOR, SV_v13_ReadLong());
+    door->sector = P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!door->sector)
         Con_Error("tc_door: bad sector number\n");
 
-    door->topHeight = FIX2FLT(SV_v13_ReadLong());
-    door->speed = FIX2FLT(SV_v13_ReadLong());
-    door->state = SV_v13_ReadLong();
-    door->topWait = SV_v13_ReadLong();
-    door->topCountDown = SV_v13_ReadLong();
+    door->topHeight = FIX2FLT(Reader_ReadInt32(svReader));
+    door->speed = FIX2FLT(Reader_ReadInt32(svReader));
+    door->state = Reader_ReadInt32(svReader);
+    door->topWait = Reader_ReadInt32(svReader);
+    door->topCountDown = Reader_ReadInt32(svReader);
 
     door->thinker.function = T_Door;
 
@@ -592,22 +570,22 @@ typedef struct {
 } v13_floormove_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_v13_Read(NULL, SIZEOF_V13_THINKER_T);
+    Reader_Read(svReader, NULL, SIZEOF_V13_THINKER_T);
 
     // Start of used data members.
-    floor->type = SV_v13_ReadLong();
-    floor->crush = SV_v13_ReadLong();
+    floor->type = Reader_ReadInt32(svReader);
+    floor->crush = Reader_ReadInt32(svReader);
 
     // A 32bit pointer to sector, serialized.
-    floor->sector = P_ToPtr(DMU_SECTOR, SV_v13_ReadLong());
+    floor->sector = P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!floor->sector)
         Con_Error("tc_floor: bad sector number\n");
 
-    floor->state = (int) SV_v13_ReadLong();
-    floor->newSpecial = SV_v13_ReadLong();
-    floor->material = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, SV_v13_ReadShort()));
-    floor->floorDestHeight = FIX2FLT(SV_v13_ReadLong());
-    floor->speed = FIX2FLT(SV_v13_ReadLong());
+    floor->state = (int) Reader_ReadInt32(svReader);
+    floor->newSpecial = Reader_ReadInt32(svReader);
+    floor->material = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, Reader_ReadInt16(svReader)));
+    floor->floorDestHeight = FIX2FLT(Reader_ReadInt32(svReader));
+    floor->speed = FIX2FLT(Reader_ReadInt32(svReader));
 
     floor->thinker.function = T_MoveFloor;
 
@@ -635,24 +613,24 @@ typedef struct {
 */
     byte temp[SIZEOF_V13_THINKER_T];
     // Padding at the start (an old thinker_t struct)
-    SV_v13_Read(&temp, SIZEOF_V13_THINKER_T);
+    Reader_Read(svReader, &temp, SIZEOF_V13_THINKER_T);
 
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
-    plat->sector = P_ToPtr(DMU_SECTOR, SV_v13_ReadLong());
+    plat->sector = P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!plat->sector)
         Con_Error("tc_plat: bad sector number\n");
 
-    plat->speed = FIX2FLT(SV_v13_ReadLong());
-    plat->low = FIX2FLT(SV_v13_ReadLong());
-    plat->high = FIX2FLT(SV_v13_ReadLong());
-    plat->wait = SV_v13_ReadLong();
-    plat->count = SV_v13_ReadLong();
-    plat->state = SV_v13_ReadLong();
-    plat->oldState = SV_v13_ReadLong();
-    plat->crush = SV_v13_ReadLong();
-    plat->tag = SV_v13_ReadLong();
-    plat->type = SV_v13_ReadLong();
+    plat->speed = FIX2FLT(Reader_ReadInt32(svReader));
+    plat->low = FIX2FLT(Reader_ReadInt32(svReader));
+    plat->high = FIX2FLT(Reader_ReadInt32(svReader));
+    plat->wait = Reader_ReadInt32(svReader);
+    plat->count = Reader_ReadInt32(svReader);
+    plat->state = Reader_ReadInt32(svReader);
+    plat->oldState = Reader_ReadInt32(svReader);
+    plat->crush = Reader_ReadInt32(svReader);
+    plat->tag = Reader_ReadInt32(svReader);
+    plat->type = Reader_ReadInt32(svReader);
 
     plat->thinker.function = T_PlatRaise;
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
@@ -676,19 +654,19 @@ typedef struct {
 } v13_lightflash_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_v13_Read(NULL, SIZEOF_V13_THINKER_T);
+    Reader_Read(svReader, NULL, SIZEOF_V13_THINKER_T);
 
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
-    flash->sector = P_ToPtr(DMU_SECTOR, SV_v13_ReadLong());
+    flash->sector = P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!flash->sector)
         Con_Error("tc_flash: bad sector number\n");
 
-    flash->count = SV_v13_ReadLong();
-    flash->maxLight = (float) SV_v13_ReadLong() / 255.0f;
-    flash->minLight = (float) SV_v13_ReadLong() / 255.0f;
-    flash->maxTime = SV_v13_ReadLong();
-    flash->minTime = SV_v13_ReadLong();
+    flash->count = Reader_ReadInt32(svReader);
+    flash->maxLight = (float) Reader_ReadInt32(svReader) / 255.0f;
+    flash->minLight = (float) Reader_ReadInt32(svReader) / 255.0f;
+    flash->maxTime = Reader_ReadInt32(svReader);
+    flash->minTime = Reader_ReadInt32(svReader);
 
     flash->thinker.function = T_LightFlash;
     return true; // Add this thinker.
@@ -708,19 +686,19 @@ typedef struct {
 } v13_strobe_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_v13_Read(NULL, SIZEOF_V13_THINKER_T);
+    Reader_Read(svReader, NULL, SIZEOF_V13_THINKER_T);
 
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
-    strobe->sector = P_ToPtr(DMU_SECTOR, SV_v13_ReadLong());
+    strobe->sector = P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!strobe->sector)
         Con_Error("tc_strobe: bad sector number\n");
 
-    strobe->count = SV_v13_ReadLong();
-    strobe->minLight = (float) SV_v13_ReadLong() / 255.0f;
-    strobe->maxLight = (float) SV_v13_ReadLong() / 255.0f;
-    strobe->darkTime = SV_v13_ReadLong();
-    strobe->brightTime = SV_v13_ReadLong();
+    strobe->count = Reader_ReadInt32(svReader);
+    strobe->minLight = (float) Reader_ReadInt32(svReader) / 255.0f;
+    strobe->maxLight = (float) Reader_ReadInt32(svReader) / 255.0f;
+    strobe->darkTime = Reader_ReadInt32(svReader);
+    strobe->brightTime = Reader_ReadInt32(svReader);
 
     strobe->thinker.function = T_StrobeFlash;
     return true; // Add this thinker.
@@ -738,17 +716,17 @@ typedef struct {
 } v13_glow_t;
 */
     // Padding at the start (an old thinker_t struct)
-    SV_v13_Read(NULL, SIZEOF_V13_THINKER_T);
+    Reader_Read(svReader, NULL, SIZEOF_V13_THINKER_T);
 
     // Start of used data members.
     // A 32bit pointer to sector, serialized.
-    glow->sector = P_ToPtr(DMU_SECTOR, SV_v13_ReadLong());
+    glow->sector = P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!glow->sector)
         Con_Error("tc_glow: bad sector number\n");
 
-    glow->minLight = (float) SV_v13_ReadLong() / 255.0f;
-    glow->maxLight = (float) SV_v13_ReadLong() / 255.0f;
-    glow->direction = SV_v13_ReadLong();
+    glow->minLight = (float) Reader_ReadInt32(svReader) / 255.0f;
+    glow->maxLight = (float) Reader_ReadInt32(svReader) / 255.0f;
+    glow->direction = Reader_ReadInt32(svReader);
 
     glow->thinker.function = T_Glow;
     return true; // Add this thinker.
@@ -765,36 +743,35 @@ typedef struct {
  * T_Glow, (glow_t: Sector *),
  * T_PlatRaise, (plat_t: Sector *), - active list
  */
-void P_v13_UnArchiveSpecials(void)
+static void P_v13_UnArchiveSpecials(void)
 {
-enum {
-    tc_ceiling,
-    tc_door,
-    tc_floor,
-    tc_plat,
-    tc_flash,
-    tc_strobe,
-    tc_glow,
-    tc_endspecials
-};
+    enum {
+        tc_ceiling,
+        tc_door,
+        tc_floor,
+        tc_plat,
+        tc_flash,
+        tc_strobe,
+        tc_glow,
+        tc_endspecials
+    };
 
-    byte        tclass;
-    ceiling_t  *ceiling;
-    door_t   *door;
-    floor_t *floor;
-    plat_t     *plat;
-    lightflash_t *flash;
-    strobe_t   *strobe;
-    glow_t     *glow;
+    byte tclass;
+    ceiling_t* ceiling;
+    door_t* door;
+    floor_t* floor;
+    plat_t* plat;
+    lightflash_t* flash;
+    strobe_t* strobe;
+    glow_t* glow;
 
-    // read in saved thinkers
+    // Read in saved thinkers.
     for(;;)
     {
-        tclass = *save_p++;
+        tclass = Reader_ReadByte(svReader);
         switch(tclass)
         {
-        case tc_endspecials:
-            return;             // end of list
+        case tc_endspecials: return; // End of list.
 
         case tc_ceiling:
             ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, NULL);
@@ -859,57 +836,160 @@ enum {
     }
 }
 
-boolean SV_v13_LoadGame(const char* savename)
+int SV_LoadState_Hr_v13(const char* path, SaveInfo* info)
 {
-    size_t              length;
-    int                 i, a, b, c;
-    char                vcheck[VERSIONSIZE];
+    const saveheader_t* hdr;
 
-    if(!(length = M_ReadFile(savename, (char**)&savebuffer)))
-        return false;
+    DENG_ASSERT(path);
+    DENG_ASSERT(info);
 
-    save_p = savebuffer + V13_SAVESTRINGSIZE;
+    if(!SV_OpenFile_Hr_v13(path)) return 1;
 
-    // Skip the description field
-    memset(vcheck, 0, sizeof(vcheck));
-    sprintf(vcheck, "version %i", SAVE_VERSION);
-    if(strcmp((const char*)save_p, vcheck))
+    svReader = SV_NewReader_Hr_v13();
+
+    // Read the header again.
+    /// @todo Seek past the header straight to the game state.
     {
-        // Bad version!
-        Con_Message("Savegame ID '%s': incompatible?\n", save_p);
+    SaveInfo* tmp = SaveInfo_New();
+    SaveInfo_Read_Hr_v13(tmp, svReader);
+    SaveInfo_Delete(tmp);
     }
-    save_p += VERSIONSIZE;
-    gameSkill = *save_p++;
-    gameEpisode = (*save_p++) - 1;
-    gameMap = (*save_p++) - 1;
+    hdr = SaveInfo_Header(info);
 
-    for(i = 0; i < 4; ++i)
-    {
-        players[i].plr->inGame = *save_p++;
-    }
+    gameSkill = hdr->skill;
+    gameEpisode = hdr->episode;
+    gameMap = hdr->map;
+    gameMapEntryPoint = 0;
+
+    // We don't want to see a briefing if we're loading a save game.
+    briefDisabled = true;
 
     // Load a base map.
-    G_InitNew(gameSkill, gameEpisode, gameMap);
+    G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
 
-    // Create map time.
-    a = *save_p++;
-    b = *save_p++;
-    c = *save_p++;
-    mapTime = (a << 16) + (b << 8) + c;
-
-    // De-archive all the modifications.
+    // Recreate map state.
+    mapTime = hdr->mapTime;
     P_v13_UnArchivePlayers();
     P_v13_UnArchiveWorld();
     P_v13_UnArchiveThinkers();
     P_v13_UnArchiveSpecials();
 
-    if(*save_p != SAVE_GAME_TERMINATOR)
+    if(Reader_ReadByte(svReader) != SAVE_GAME_TERMINATOR)
+    {
+        Reader_Delete(svReader);
+        svReader = NULL;
+        SV_CloseFile_Hr_v13();
+
         Con_Error("Bad savegame"); // Missing savegame termination marker.
+        exit(1); // Unreachable.
+    }
 
-    Z_Free(savebuffer);
+    Reader_Delete(svReader);
+    svReader = NULL;
+    SV_CloseFile_Hr_v13();
 
-    // Spawn particle generators.
-    R_SetupMap(DDSMM_AFTER_LOADING, 0);
+    return 0; // Success!
+}
 
+static void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
+{
+    saveheader_t* hdr = &info->header;
+    char nameBuffer[V13_SAVESTRINGSIZE];
+    char vcheck[VERSIONSIZE];
+    int i;
+    assert(info);
+
+    Reader_Read(reader, nameBuffer, V13_SAVESTRINGSIZE);
+    nameBuffer[V13_SAVESTRINGSIZE - 1] = 0;
+    Str_Set(&info->name, nameBuffer);
+
+    Reader_Read(reader, vcheck, VERSIONSIZE);
+    //assert(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
+    hdr->version = atoi(&vcheck[8]);
+
+    hdr->skill = Reader_ReadByte(reader);
+    hdr->episode = Reader_ReadByte(reader)-1;
+    hdr->map = Reader_ReadByte(reader)-1;
+    for(i = 0; i < 4; ++i)
+    {
+        hdr->players[i] = Reader_ReadByte(reader);
+    }
+    memset(&hdr->players[4], 0, sizeof(*hdr->players) * (MAXPLAYERS-4));
+
+    // Get the map time.
+    { int a = Reader_ReadByte(reader);
+    int b = Reader_ReadByte(reader);
+    int c = Reader_ReadByte(reader);
+    hdr->mapTime = (a << 16) + (b << 8) + c;
+    }
+
+    hdr->magic = 0; // Initialize with *something*.
+
+    /// @note Older formats do not contain all needed values:
+    hdr->gameMode = gameMode; // Assume the current mode.
+    hdr->deathmatch = 0;
+    hdr->noMonsters = 0;
+    hdr->respawnMonsters = 0;
+
+    info->gameId  = 0; // None.
+}
+
+static boolean SV_OpenFile_Hr_v13(const char* filePath)
+{
+    boolean fileOpened;
+#if _DEBUG
+    if(saveBuffer)
+        Con_Error("SV_OpenFile_Hr_v13: A save state file has already been opened!");
+#endif
+    fileOpened = 0 != M_ReadFile(filePath, (char**)&saveBuffer);
+    if(!fileOpened) return false;
+    savePtr = saveBuffer;
     return true;
+}
+
+static void SV_CloseFile_Hr_v13(void)
+{
+    if(!saveBuffer) return;
+    Z_Free(saveBuffer);
+    saveBuffer = savePtr = NULL;
+}
+
+static Reader* SV_NewReader_Hr_v13(void)
+{
+    if(!saveBuffer) return NULL;
+    return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
+}
+
+boolean SV_RecogniseState_Hr_v13(const char* path, SaveInfo* info)
+{
+    DENG_ASSERT(path);
+    DENG_ASSERT(info);
+
+    if(!SV_ExistingFile(path)) return false;
+
+    if(SV_OpenFile_Hr_v13(path))
+    {
+        Reader* svReader = SV_NewReader_Hr_v13();
+        boolean result = false;
+
+        /// @todo Use the 'version' string as the "magic" identifier.
+        /*char vcheck[VERSIONSIZE];
+        memset(vcheck, 0, sizeof(vcheck));
+        Reader_Read(svReader, vcheck, sizeof(vcheck));
+
+        if(strncmp(vcheck, "version ", 8))*/
+        {
+            SaveInfo_Read_Hr_v13(info, svReader);
+            result = (SaveInfo_Header(info)->version == V13_SAVE_VERSION);
+        }
+
+        Reader_Delete(svReader);
+        svReader = NULL;
+        SV_CloseFile_Hr_v13();
+
+        return result;
+    }
+    return false;
 }

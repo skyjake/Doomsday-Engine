@@ -26,8 +26,6 @@
  * Helper routines for accessing the DMU API.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <string.h>
 
@@ -35,36 +33,16 @@
 #include "dmu_lib.h"
 #include "p_terraintype.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct taglist_s {
     iterlist_t* list;
     int tag;
 } taglist_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-iterlist_t* linespecials = 0; /// For surfaces that tick eg wall scrollers.
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static taglist_t* lineTagLists = 0;
 static uint numLineTagLists = 0;
 
 static taglist_t* sectorTagLists = 0;
 static uint numSectorTagLists = 0;
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 LineDef* P_AllocDummyLine(void)
 {
@@ -244,6 +222,40 @@ void P_CopySector(Sector* dest, Sector* src)
 #endif
 }
 
+void P_BuildLineTagLists(void)
+{
+    uint i;
+
+    P_DestroyLineTagLists();
+
+    for(i = 0; i < numlines; ++i)
+    {
+        LineDef* line  = P_ToPtr(DMU_LINEDEF, i);
+        xline_t* xline = P_ToXLine(line);
+
+#if !__JHEXEN__
+        if(xline->tag)
+        {
+           iterlist_t* list = P_GetLineIterListForTag(xline->tag, true);
+           IterList_PushBack(list, line);
+        }
+#else
+        switch(xline->special)
+        {
+        default: break;
+        case 121: ///< Line_SetIdentification.
+            if(xline->arg1)
+            {
+                iterlist_t* list = P_GetLineIterListForTag((int) xline->arg1, true);
+                IterList_PushBack(list, line);
+            }
+            xline->special = 0;
+            break;
+        }
+#endif
+    }
+}
+
 void P_DestroyLineTagLists(void)
 {
     if(numLineTagLists == 0)
@@ -252,8 +264,8 @@ void P_DestroyLineTagLists(void)
     { uint i;
     for(i = 0; i < numLineTagLists; ++i)
     {
-        IterList_Empty(lineTagLists[i].list);
-        IterList_Destruct(lineTagLists[i].list);
+        IterList_Clear(lineTagLists[i].list);
+        IterList_Delete(lineTagLists[i].list);
     }}
 
     free(lineTagLists);
@@ -280,7 +292,26 @@ iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList)
     tagList = &lineTagLists[numLineTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = IterList_ConstructDefault());
+    return (tagList->list = IterList_New());
+}
+
+void P_BuildSectorTagLists(void)
+{
+    uint i;
+
+    P_DestroySectorTagLists();
+
+    for(i = 0; i < numsectors; ++i)
+    {
+        Sector* sec     = P_ToPtr(DMU_SECTOR, i);
+        xsector_t* xsec = P_ToXSector(sec);
+
+        if(xsec->tag)
+        {
+            iterlist_t* list = P_GetSectorIterListForTag(xsec->tag, true);
+            IterList_PushBack(list, sec);
+        }
+    }
 }
 
 void P_DestroySectorTagLists(void)
@@ -291,8 +322,8 @@ void P_DestroySectorTagLists(void)
     { uint i;
     for(i = 0; i < numSectorTagLists; ++i)
     {
-        IterList_Empty(sectorTagLists[i].list);
-        IterList_Destruct(sectorTagLists[i].list);
+        IterList_Clear(sectorTagLists[i].list);
+        IterList_Delete(sectorTagLists[i].list);
     }}
 
     free(sectorTagLists);
@@ -319,7 +350,19 @@ iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList)
     tagList = &sectorTagLists[numSectorTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = IterList_ConstructDefault());
+    return (tagList->list = IterList_New());
+}
+
+void P_BuildAllTagLists(void)
+{
+    P_BuildSectorTagLists();
+    P_BuildLineTagLists();
+}
+
+void P_DestroyAllTagLists(void)
+{
+    P_DestroyLineTagLists();
+    P_DestroySectorTagLists();
 }
 
 Sector* P_GetNextSector(LineDef* line, Sector* sec)
@@ -644,4 +687,63 @@ void* P_SectorOrigin(Sector* sec)
 const terraintype_t* P_PlaneMaterialTerrainType(Sector* sec, int plane)
 {
     return P_TerrainTypeForMaterial(P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
+}
+
+void P_TranslateSideMaterialOrigin(SideDef* side, SideDefSection section, float deltaXY[2])
+{
+    DENG_ASSERT(side);
+    DENG_ASSERT(VALID_SIDEDEFSECTION(section));
+{
+    const uint dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDEDEFSECTION(section);
+    float origin[2];
+
+    if(FEQUAL(deltaXY[0], 0) && FEQUAL(deltaXY[1], 0)) return;
+
+    P_GetFloatpv(side, dmuSurfaceOriginFlags, origin);
+    if(!FEQUAL(deltaXY[0], 0))
+    {
+        origin[0] += deltaXY[0];
+    }
+    if(!FEQUAL(deltaXY[1], 0))
+    {
+        origin[1] += deltaXY[1];
+    }
+    P_SetFloatpv(side, dmuSurfaceOriginFlags, origin);
+}}
+
+void P_TranslateSideMaterialOriginXY(SideDef* side, SideDefSection section,
+    float deltaX, float deltaY)
+{
+    float delta[2];
+    delta[0] = deltaX;
+    delta[1] = deltaY;
+    P_TranslateSideMaterialOrigin(side, section, delta);
+}
+
+void P_TranslatePlaneMaterialOrigin(Plane* plane, float deltaXY[2])
+{
+    float origin[2];
+
+    DENG_ASSERT(plane);
+
+    if(FEQUAL(deltaXY[0], 0) && FEQUAL(deltaXY[1], 0)) return;
+
+    P_GetFloatpv(plane, DMU_OFFSET_XY, origin);
+    if(!FEQUAL(deltaXY[0], 0))
+    {
+        origin[0] += deltaXY[0];
+    }
+    if(!FEQUAL(deltaXY[1], 0))
+    {
+        origin[1] += deltaXY[1];
+    }
+    P_SetFloatpv(plane, DMU_OFFSET_XY, origin);
+}
+
+void P_TranslatePlaneMaterialOriginXY(Plane* plane, float deltaX, float deltaY)
+{
+    float delta[2];
+    delta[0] = deltaX;
+    delta[1] = deltaY;
+    P_TranslatePlaneMaterialOrigin(plane, delta);
 }

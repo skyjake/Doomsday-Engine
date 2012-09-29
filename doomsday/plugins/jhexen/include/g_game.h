@@ -33,22 +33,32 @@
 #endif
 
 #include "p_mobj.h"
+#include "x_player.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern int debugSound; // debug flag for displaying sound info
 
 extern int gaSaveGameSaveSlot;
 extern int gaLoadGameSaveSlot;
 
+extern player_t players[MAXPLAYERS];
+
 extern uint gameEpisode;
 extern uint gameMap;
+extern uint gameMapEntryPoint;
 extern skillmode_t gameSkill;
+
 extern boolean deathmatch;
+extern boolean paused;
+extern boolean precache;
 extern boolean userGame;
 extern boolean customPal;
 
 extern skillmode_t dSkill;
 
-extern uint rebornPosition;
 extern uint nextMap;
 extern uint nextMapEntryPoint;
 extern boolean briefDisabled;
@@ -59,30 +69,12 @@ void            G_CommonShutdown(void);
 
 void            R_InitRefresh(void);
 void            R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap);
-void            R_SetTranslation(mobj_t* mo);
+void            Mobj_UpdateTranslationClassAndMap(mobj_t* mo);
 
 void            G_PrintMapList(void);
-void            G_PlayerReborn(int player);
-
-uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 
 int             G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
-
-/**
- * Compose a Uri for the identified @a episode and @a map combination.
- *
- * @param episode  Logical episode number.
- * @param map  Logical map number.
- * @return  Resultant Uri. Caller should destroy with Uri_Delete.
- */
-Uri* G_ComposeMapUri(uint episode, uint map);
-
-/**
- * Compose the name of the map identifier.
- * \note Deprecated. Prefer to use G_ComposeMapUri
- */
-void G_MapId(uint episode, uint map, lumpname_t mapId);
 
 void            G_QuitGame(void);
 
@@ -98,9 +90,6 @@ boolean G_LoadGame(int slot);
 
 /// @return  @c true = saving is presently possible.
 boolean G_IsSaveGamePossible(void);
-
-/// @return  Generated name. Must be released with Str_Delete()
-ddstring_t* G_GenerateSaveGameName(void);
 
 /**
  * To be called to schedule a save game-save action.
@@ -119,19 +108,13 @@ void            G_CommonPostInit(void);
 int             G_GetInteger(int id);
 void*           G_GetVariable(int id);
 
+void            G_PlayerReborn(int player);
 void            G_DeathMatchSpawnPlayer(int playernum);
-uint            G_GetMapNumber(uint episode, uint map);
-void            G_InitNew(skillmode_t skill, uint episode, uint map);
-void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
-void            G_DeferredNewGame(skillmode_t skill);
-void            G_DeferedPlayDemo(char* demo);
+void            G_DeferredPlayDemo(char* demo);
 void            G_DoPlayDemo(void);
 
 void            G_PlayDemo(char* name);
 void            G_TimeDemo(char* name);
-void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
-void            G_StartNewGame(skillmode_t skill);
-void            G_StartNewInit(void);
 void            G_WorldDone(void);
 void            G_ScreenShot(void);
 void            G_DoReborn(int playernum);
@@ -144,5 +127,9 @@ int G_PrivilegedResponder(event_t* ev);
 
 /// @return  @c true if the input event @a ev was eaten.
 int G_Responder(event_t* ev);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJHEXEN_G_GAME_H */

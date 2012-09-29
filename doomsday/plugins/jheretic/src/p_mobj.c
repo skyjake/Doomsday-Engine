@@ -836,12 +836,6 @@ void P_MobjThinker(mobj_t* mobj)
         return;
     }
 
-#if __JDOOM__
-    // Spectres get selector = 1.
-    if(mobj->type == MT_SHADOWS)
-        mobj->selector = (mobj->selector & ~DDMOBJ_SELECTOR_MASK) | 1;
-#endif
-
     // The first three bits of the selector special byte contain a relative
     // health level.
     P_UpdateHealthBits(mobj);
@@ -1068,9 +1062,10 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->flags2 = info->flags2;
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
-    mo->health =
-        info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
+    mo->selector = 0;
+    P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
     if(gameSkill != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;

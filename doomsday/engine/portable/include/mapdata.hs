@@ -1,5 +1,5 @@
 # $Id$
-# Runtime map data defitions. Processed by the makedmt.py script.
+# Runtime map data definitions. Processed by the makedmt.py script.
 
 public
 #define DMT_VERTEX_ORIGIN  DDVT_DOUBLE
@@ -20,6 +20,18 @@ typedef struct lineowner_s {
     binangle_t      angle;          // between this and next clockwise.
     shadowvert_t    shadowOffsets;
 } lineowner_t;
+
+/// Maximum number of walldivnode_ts in a walldivs_t dataset.
+#define WALLDIVS_MAX_NODES          64
+
+typedef struct walldivnode_s {
+    coord_t height;
+} walldivnode_t;
+
+typedef struct walldivs_s {
+    uint num;
+    walldivnode_t nodes[WALLDIVS_MAX_NODES];
+} walldivs_t;
 
 typedef struct mvertex_s {
     // Vertex index. Always valid after loading and pruning of unused
@@ -58,15 +70,12 @@ internal
 #define HE_v2origin               HE_v(1)->origin
 
 #define HEDGE_BACK_SECTOR(h)      ((h)->twin ? (h)->twin->sector : NULL)
-#define HEDGE_SIDEDEF(h)          ((h)->lineDef->sideDefs[(h)->side])
+
+#define HEDGE_SIDE(h)             ((h)->lineDef ? &(h)->lineDef->L_side((h)->side) : NULL)
+#define HEDGE_SIDEDEF(h)          ((h)->lineDef ? (h)->lineDef->L_sidedef((h)->side) : NULL)
 
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
-
-/// @todo Refactor me away.
-typedef struct mhedge_s {
-    uint                index;
-} mhedge_t;
 end
 
 public
@@ -74,7 +83,7 @@ public
 end
 
 struct HEdge
-    PTR     vertex_s*[2] v          // [Start, End] of the segment.
+    PTR     vertex_s*[2] v /// [Start, End] of the segment.
     PTR     hedge_s*    next
     PTR     hedge_s*    prev
 
@@ -87,30 +96,40 @@ struct HEdge
     PTR     linedef_s*  lineDef
     PTR     sector_s*   sector
     ANGLE   angle_t     angle
-    BYTE    byte        side        // 0=front, 1=back
-    DOUBLE  coord_t     length      // Accurate length of the segment (v1 -> v2).
+    BYTE    byte        side /// On which side of the LineDef (0=front, 1=back)?
+    DOUBLE  coord_t     length /// Accurate length of the segment (v1 -> v2).
     DOUBLE  coord_t     offset
-    -       biassurface_t*[3] bsuf // 0=middle, 1=top, 2=bottom
+    -       biassurface_t*[3] bsuf /// For each @ref SideDefSection.
     -       short       frameFlags
     -       uint        index /// Unique. Set when saving the BSP.
-    -       mhedge_t    buildData
+end
+
+internal
+/**
+ * @defgroup bspLeafFlags  Bsp Leaf Flags
+ * @addtogroup map
+ */
+///@{
+#define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.
+///@}
 end
 
 struct BspLeaf
-    UINT    uint        hedgeCount
-    PTR     hedge_s*    hedge
-    PTR     polyobj_s*  polyObj // NULL, if there is no polyobj.
-    PTR     sector_s*   sector
-    -       int         addSpriteCount // frame number of last R_AddSprites
+    PTR     hedge_s*    hedge /// First HEdge in this leaf.
+    -       int         flags /// @ref bspLeafFlags.
+    -       uint        index /// Unique. Set when saving the BSP.
+    -       int         addSpriteCount /// Frame number of last R_AddSprites.
     -       int         validCount
-    -       uint[NUM_REVERB_DATA] reverb
-    -       AABoxd      aaBox // Min and max points.
-    -       coord_t[2]  worldGridOffset // Offset to align the top left of the bBox to the world grid.
-    -       coord_t[2]  midPoint /// Center of vertices.
+    UINT    uint        hedgeCount /// Number of HEdge's in this leaf.
+    PTR     sector_s*   sector
+    PTR     polyobj_s*  polyObj /// First polyobj in this leaf. Can be @c NULL.
     -       hedge_s*    fanBase /// HEdge whose vertex to use as the base for a trifan. If @c NULL then midPoint is used instead.
     -       shadowlink_s* shadows
-    -       biassurface_s** bsuf // [sector->planeCount] size.
-    -       uint        index /// Unique. Set when saving the BSP.
+    -       AABoxd      aaBox /// HEdge Vertex bounding box in the map coordinate space.
+    -       coord_t[2]  midPoint /// Center of vertices.
+    -       coord_t[2]  worldGridOffset /// Offset to align the top left of materials in the built geometry to the map coordinate space grid.
+    -       biassurface_t** bsuf /// [sector->planeCount] size.
+    -       uint[NUM_REVERB_DATA] reverb
 end
 
 internal
@@ -157,11 +176,9 @@ end
 
 internal
 // Internal surface flags:
-#define SUIF_PVIS             0x0001
-#define SUIF_FIX_MISSING_MATERIAL 0x0002 // Current Material is a fix replacement
-                                     // (not sent to clients, returned via DMU etc).
-#define SUIF_BLEND            0x0004 // Surface possibly has a blended texture.
-#define SUIF_NO_RADIO         0x0008 // No fakeradio for this surface.
+#define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
+                                           /// (not sent to clients, returned via DMU etc).
+#define SUIF_NO_RADIO               0x0002 ///< No fakeradio for this surface.
 
 #define SUIF_UPDATE_FLAG_MASK 0xff00
 #define SUIF_UPDATE_DECORATIONS 0x8000
@@ -216,15 +233,15 @@ internal
 end
 
 struct Plane
-    PTR     sector_s*   sector // Owner of the plane (temp)
+    PTR     sector_s*   sector /// Owner of the plane.
     -       Surface     surface
-    DOUBLE  coord_t     height // Current height
+    DOUBLE  coord_t     height /// Current height.
     -       coord_t[2]  oldHeight
-    DOUBLE  coord_t     target // Target height
-    FLOAT   float       speed // Move speed
-    -       coord_t     visHeight // Visible plane height (smoothed)
+    DOUBLE  coord_t     target /// Target height.
+    FLOAT   float       speed /// Move speed.
+    -       coord_t     visHeight /// Visible plane height (smoothed).
     -       coord_t     visHeightDelta
-    -       planetype_t type // PLN_* type.
+    -       planetype_t type /// PLN_* type.
     -       int         planeID
 end
 
@@ -380,12 +397,13 @@ typedef struct msidedef_s {
 } msidedef_t;
 end
 
+public
+#define DMT_SIDEDEF_SECTOR DDVT_PTR
+end
+
 struct SideDef
     -       Surface[3]  sections
-    -       hedge_s*    hedgeLeft  /// Left-most HEdge on this SideDef's side of the owning LineDef
-    -       hedge_s*    hedgeRight /// Right-most HEdge on this SideDef's side of the owning LineDef
     PTR     linedef_s*  line
-    PTR     sector_s*   sector
     SHORT   short       flags
     -       msidedef_t  buildData
 
@@ -412,37 +430,50 @@ internal
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)               sideDefs[(n)? 1:0]
-#define L_frontside             L_side(FRONT)
-#define L_backside              L_side(BACK)
-#define L_sector(n)             sideDefs[(n)? 1:0]->sector
+#define L_frontside             sides[0]
+#define L_backside              sides[1]
+#define L_side(n)               sides[(n)? 1:0]
+
+#define L_sidedef(n)            L_side(n).sideDef
+#define L_frontsidedef          L_sidedef(FRONT)
+#define L_backsidedef           L_sidedef(BACK)
+
+#define L_sector(n)             L_side(n).sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
 // Is this line self-referencing (front sec == back sec)? 
-#define LINE_SELFREF(l)         ((l)->L_frontside && (l)->L_backside && \
+#define LINE_SELFREF(l)         ((l)->L_frontsidedef && (l)->L_backsidedef && \
                                  (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_POLYOBJ              0x1 // Line is part of a polyobject.
+#define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
+#define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
 end
 
 internal
-typedef struct mlinedef_s {
-    // Linedef index. Always valid after loading & pruning of zero
-    // length lines has occurred.
-    int index;
-    
-    // One-sided linedef used for a special effect (windows).
-    // The value refers to the opposite sector on the back side.
-    /// @todo Refactor so this information is represented using the
-    ///       BSP data objects.
-    struct sector_s* windowEffect;
-} mlinedef_t;
+/**
+ * @defgroup sideSectionFlags  Side Section Flags
+ * @ingroup map
+ */
+///@{
+#define SSF_MIDDLE          0x1
+#define SSF_BOTTOM          0x2
+#define SSF_TOP             0x4
+///@}
+
+typedef struct lineside_s {
+    struct sector_s* sector; /// Sector on this side.
+    struct sidedef_s* sideDef; /// SideDef on this side.
+    struct hedge_s* hedgeLeft;  /// Left-most HEdge on this side.
+    struct hedge_s* hedgeRight; /// Right-most HEdge on this side.
+    unsigned short shadowVisFrame; /// Framecount of last time shadows were drawn for this side.
+} lineside_t;
 end
 
 public
-#define DMT_LINEDEF_SEC    DDVT_PTR
+#define DMT_LINEDEF_SECTOR DDVT_PTR
+#define DMT_LINEDEF_SIDEDEF DDVT_PTR
 #define DMT_LINEDEF_DX     DDVT_DOUBLE
 #define DMT_LINEDEF_DY     DDVT_DOUBLE
 #define DMT_LINEDEF_AABOX  DDVT_DOUBLE
@@ -450,19 +481,17 @@ end
 
 struct LineDef
     PTR     vertex_s*[2] v
-    -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
-    PTR     sidedef_s*[2] sideDefs
-    INT     int         flags       // Public DDLF_* flags.
-    -       byte        inFlags	    // Internal LF_* flags
+    -       lineowner_s*[2] vo /// Links to vertex line owner nodes [left, right].
+    INT     int         flags /// Public DDLF_* flags.
+    -       byte        inFlags /// Internal LF_* flags.
     INT     slopetype_t slopeType
     INT     int         validCount
-    -       binangle_t  angle       // Calculated from front side's normal
+    -       binangle_t  angle /// Calculated from front side's normal.
     -       coord_t[2]  direction
-    -       coord_t     length      // Accurate length
+    DOUBLE  coord_t     length /// Accurate length.
     -       AABoxd      aaBox
-    -       boolean[DDMAXPLAYERS] mapped // Whether the line has been mapped by each player yet.
-    -       mlinedef_t  buildData
-    -       ushort[2]   shadowVisFrame // Framecount of last time shadows were drawn for this line, for each side [right, left].
+    -       boolean[DDMAXPLAYERS] mapped /// Whether the line has been mapped by each player yet.
+    -       int         origIndex; /// Original index in the archived map.
 end
 
 internal
@@ -484,7 +513,7 @@ end
 
 struct BspNode
     -       partition_t partition
-    -       AABoxd[2]   aaBox    // Bounding box for each child.
+    -       AABoxd[2]   aaBox    /// Bounding box for each child.
     PTR     runtime_mapdata_header_t*[2] children
     -       uint        index /// Unique. Set when saving the BSP.
 end

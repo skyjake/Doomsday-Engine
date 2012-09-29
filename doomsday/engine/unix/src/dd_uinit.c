@@ -210,6 +210,9 @@ static boolean unloadAllPlugins(application_t* app)
     int i;
     assert(app);
 
+    // Remove all entries; some may have been created by the plugins.
+    LogBuffer_Clear();
+
     for(i = 0; i < MAX_PLUGS && app->hInstPlug[i]; ++i)
     {
         unloadPlugin(&app->hInstPlug[i]);
@@ -262,12 +265,12 @@ static void determineGlobalPaths(application_t* app)
 #endif
 
     // The -userdir option sets the working directory.
-    if(ArgCheckWith("-userdir", 1))
+    if(CommandLine_CheckWith("-userdir", 1))
     {
         filename_t runtimePath;
         directory_t* temp;
 
-        strncpy(runtimePath, ArgNext(), FILENAME_T_MAXLEN);
+        strncpy(runtimePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
         Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
         // Ensure the path is closed with a directory separator.
         F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
@@ -301,9 +304,9 @@ static void determineGlobalPaths(application_t* app)
      * determined according to the the build configuration.
      * Usually this is something like "/usr/share/deng/".
      */
-    if(ArgCheckWith("-basedir", 1))
+    if(CommandLine_CheckWith("-basedir", 1))
     {
-        strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
+        strncpy(ddBasePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
     }
     else
     {
@@ -321,6 +324,7 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
+#if 0
 static char* buildCommandLineString(int argc, char** argv)
 {
     char* cmdLine;
@@ -345,6 +349,7 @@ static char* buildCommandLineString(int argc, char** argv)
     }
     return cmdLine;
 }
+#endif
 
 /*
 static int createMainWindow(void)
@@ -362,7 +367,6 @@ static int createMainWindow(void)
 boolean DD_Unix_Init(int argc, char** argv)
 {
     boolean failed = true;
-    //int exitCode = 0;
 
     memset(&app, 0, sizeof(app));
 
@@ -374,15 +378,17 @@ boolean DD_Unix_Init(int argc, char** argv)
     setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
 #endif
 
-    {       
+#if 0
     // Prepare the command line arguments.
     char* cmdLine = buildCommandLineString(argc, argv);
-    DD_InitCommandLine(cmdLine);
     M_Free(cmdLine);
+#endif
+
+    DD_InitCommandLine();
 
     // First order of business: are we running in dedicated mode?
-    isDedicated = ArgCheck("-dedicated");
-    novideo = ArgCheck("-novideo") || isDedicated;
+    isDedicated = CommandLine_Check("-dedicated");
+    novideo = CommandLine_Check("-novideo") || isDedicated;
 
     Library_Init();
 
@@ -413,7 +419,7 @@ boolean DD_Unix_Init(int argc, char** argv)
     {
         // Everything okay so far.
         failed = false;
-    }}
+    }
 
     return !failed;
 }

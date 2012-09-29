@@ -386,7 +386,7 @@ void Sfx_GetListenerXYZ(float* origin)
 {
     if(!listener) return;
 
-    /// @fixme Make it exactly eye-level! (viewheight).
+    /// @todo Make it exactly eye-level! (viewheight).
     origin[VX] = listener->origin[VX];
     origin[VY] = listener->origin[VY];
     origin[VZ] = listener->origin[VZ] + listener->height - 5;
@@ -565,11 +565,16 @@ void Sfx_ListenerUpdate(void)
         {
             listenerSector = listener->bspLeaf->sector;
 
+            // It may be necessary to recalculate the reverb properties.
+            S_UpdateReverbForSector(listenerSector);
+
             for(i = 0; i < NUM_REVERB_DATA; ++i)
             {
                 vec[i] = listenerSector->reverb[i];
                 if(i == SRD_VOLUME)
+                {
                     vec[i] *= sfxReverbStrength;
+                }
             }
 
             AudioDriver_SFX()->Listenerv(SFXLP_REVERB, vec);
@@ -964,7 +969,7 @@ void Sfx_EndFrame(void)
     if(!sfxAvail)
         return;
 
-    if(!Con_IsBusy())
+    if(!BusyMode_Active())
     {
         Sfx_Update();
     }
@@ -1026,9 +1031,9 @@ void Sfx_InitChannels(void)
     numChannels = sfxMaxChannels;
 
     // The -sfxchan option can be used to change the number of channels.
-    if(ArgCheckWith("-sfxchan", 1))
+    if(CommandLine_CheckWith("-sfxchan", 1))
     {
-        numChannels = strtol(ArgNext(), 0, 0);
+        numChannels = strtol(CommandLine_Next(), 0, 0);
         if(numChannels < 1)
             numChannels = 1;
         if(numChannels > SFX_MAX_CHANNELS)
@@ -1097,7 +1102,7 @@ boolean Sfx_Init(void)
         return true; // Already initialized.
 
     // Check if sound has been disabled with a command line option.
-    if(ArgExists("-nosfx"))
+    if(CommandLine_Exists("-nosfx"))
     {
         Con_Message("Sound Effects disabled.\n");
         return true;

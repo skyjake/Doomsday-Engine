@@ -123,7 +123,7 @@ static boolean initGLOk = false;
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
 static int fogModeDefault = 0;
-static byte fsaaEnabled = true;
+static byte fsaaEnabled = true; // default value also specified in CanvasWindow
 static byte vsyncEnabled = true;
 
 static viewport_t currentView;
@@ -368,7 +368,7 @@ boolean GL_EarlyInit(void)
 
     Con_Message("Initializing Render subsystem...\n");
 
-    gamma_support = !ArgCheck("-noramp");
+    gamma_support = !CommandLine_Check("-noramp");
 
     // We are simple people; two texture units is enough.
     numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
@@ -387,22 +387,22 @@ boolean GL_EarlyInit(void)
         ratioLimit = 8;
     }
     // Set a custom maximum size?
-    if(ArgCheckWith("-maxtex", 1))
+    if(CommandLine_CheckWith("-maxtex", 1))
     {
-        int customSize = M_CeilPow2(strtol(ArgNext(), 0, 0));
+        int customSize = M_CeilPow2(strtol(CommandLine_Next(), 0, 0));
 
         if(GL_state.maxTexSize < customSize)
             customSize = GL_state.maxTexSize;
         GL_state.maxTexSize = customSize;
         Con_Message("Using maximum texture size of %i x %i.\n", GL_state.maxTexSize, GL_state.maxTexSize);
     }
-    if(ArgCheck("-outlines"))
+    if(CommandLine_Check("-outlines"))
     {
         fillOutlines = false;
         Con_Message("Textures have outlines.\n");
     }
 
-    renderTextures = !ArgExists("-notex");
+    renderTextures = !CommandLine_Exists("-notex");
 
     VERBOSE( printConfiguration() );
 
@@ -495,7 +495,7 @@ void GL_Shutdown(void)
 
     /*
     // Restore original gamma.
-    if(!ArgExists("-leaveramp"))
+    if(!CommandLine_Exists("-leaveramp"))
     {
         GL_SetGammaRamp(original_gamma_ramp);
     }
@@ -1056,69 +1056,86 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
     }
 }
 
-void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize,
-    colorpalette_t* palette, float* brightX, float* brightY, ColorRawf* color, float* lumSize)
+void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize, colorpalette_t* palette,
+    float* retBrightX, float* retBrightY, ColorRawf* retColor, float* retLumSize)
 {
-    const int limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
-    int i, k, x, y, c, cnt = 0, posCnt = 0;
-    const uint8_t* src, *alphaSrc = NULL;
+    const uint8_t sizeLimit = 192, brightLimit = 224, colLimit = 192;
+    const uint8_t* src, *alphaSrc;
     int avgCnt = 0, lowCnt = 0;
-    float average[3], lowAvg[3];
+    int cnt = 0, posCnt = 0;
+    int i, x, y, c;
+    long average[3], lowAvg[3];
+    long bright[2];
     uint8_t rgb[3];
     int region[4];
-    assert(buffer && brightX && brightY && color && lumSize);
+    boolean zeroAreaRegion;
 
-    if(pixelSize == 1 && palette == NULL)
+    DENG_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
+
+    if(pixelSize == 1 && !palette)
     {
         Con_Error("GL_CalcLuminance: Cannot process image of pixelsize==1 without palette.");
         exit(1); // Unreachable.
     }
 
+    // Apply the defaults.
+    // Default to the center of the texture.
+    *retBrightX = *retBrightY = .5f;
+
+    // Default to black (i.e., no light).
+    for(c = 0; c < 3; ++c)
+        retColor->rgb[c] = 0;
+    retColor->alpha = 1;
+
+    // Default to a zero-size light.
+    *retLumSize = 0;
+
+    FindClipRegionNonAlpha(buffer, width, height, pixelSize, region);
+    zeroAreaRegion = (region[0] > region[1] || region[2] > region[3]);
+    if(zeroAreaRegion) return;
+
+    /*
+     * Image contains at least one non-transparent pixel.
+     */
+
+    for(i = 0; i < 2; ++i)
+    {
+        bright[i] = 0;
+    }
     for(i = 0; i < 3; ++i)
     {
         average[i] = 0;
-        lowAvg[i] = 0;
+        lowAvg[i]  = 0;
     }
+
     src = buffer;
+    // In paletted mode, the alpha channel follows the actual image.
+    alphaSrc = buffer + width * height;
 
-    if(pixelSize == 1)
-    {
-        // In paletted mode, the alpha channel follows the actual image.
-        alphaSrc = buffer + width * height;
-    }
-
-    FindClipRegionNonAlpha(buffer, width, height, pixelSize, region);
+    // Skip to the start of the first column.
     if(region[2] > 0)
     {
-        src += pixelSize * width * region[2];
+        src      += pixelSize * width * region[2];
         alphaSrc += width * region[2];
     }
-    (*brightX) = (*brightY) = 0;
 
-    for(k = region[2], y = 0; k < region[3] + 1; ++k, ++y)
+    for(y = region[2]; y <= region[3]; ++y)
     {
+        // Skip to the beginning of the row.
         if(region[0] > 0)
         {
-            src += pixelSize * region[0];
+            src      += pixelSize * region[0];
             alphaSrc += region[0];
         }
 
-        for(i = region[0], x = 0; i < region[1] + 1;
-            ++i, ++x, src += pixelSize, alphaSrc++)
+        for(x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
         {
-            // Alpha pixels don't count.
-            if(pixelSize == 1)
-            {
-                if(*alphaSrc < 255)
-                    continue;
-            }
-            else if(pixelSize == 4)
-            {
-                if(src[3] < 255)
-                    continue;
-            }
+            // Alpha pixels don't count. Why? -ds
+            const boolean pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
+                                                pixelSize == 4?    src[3] < 255 : false);
 
-            // Bright enough?
+            if(pixelIsTransparent) continue;
+
             if(pixelSize == 1)
             {
                 ColorPalette_Color(palette, *src, rgb);
@@ -1128,17 +1145,17 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
                 memcpy(rgb, src, 3);
             }
 
-            if(rgb[0] > posLimit || rgb[1] > posLimit || rgb[2] > posLimit)
+            // Bright enough?
+            if(rgb[0] > brightLimit || rgb[1] > brightLimit || rgb[2] > brightLimit)
             {
-                // This pixel will participate in calculating the average
-                // center point.
-                (*brightX) += x;
-                (*brightY) += y;
+                // This pixel will participate in calculating the average center point.
                 posCnt++;
+                bright[0] += x;
+                bright[1] += y;
             }
 
             // Bright enough to affect size?
-            if(rgb[0] > limit || rgb[1] > limit || rgb[2] > limit)
+            if(rgb[0] > sizeLimit || rgb[1] > sizeLimit || rgb[2] > sizeLimit)
                 cnt++;
 
             // How about the color of the light?
@@ -1146,83 +1163,83 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
             {
                 avgCnt++;
                 for(c = 0; c < 3; ++c)
-                    average[c] += rgb[c] / 255.f;
+                    average[c] += rgb[c];
             }
             else
             {
                 lowCnt++;
                 for(c = 0; c < 3; ++c)
-                    lowAvg[c] += rgb[c] / 255.f;
+                    lowAvg[c] += rgb[c];
             }
         }
 
+        // Skip to the end of this row.
         if(region[1] < width - 1)
         {
-            src += pixelSize * (width - 1 - region[1]);
+            src      += pixelSize * (width - 1 - region[1]);
             alphaSrc += (width - 1 - region[1]);
         }
     }
 
-    if(!posCnt)
+    if(posCnt)
     {
-        (*brightX) = region[0] + ((region[1] - region[0]) / 2.0f);
-        (*brightY) = region[2] + ((region[3] - region[2]) / 2.0f);
+        // Calculate the average of the bright pixels.
+        *retBrightX = (long double) bright[0] / posCnt;
+        *retBrightY = (long double) bright[1] / posCnt;
     }
     else
     {
-        // Get the average.
-        (*brightX) /= posCnt;
-        (*brightY) /= posCnt;
-        // Add the origin offset.
-        (*brightX) += region[0];
-        (*brightY) += region[2];
+        // No bright pixels - Place the origin at the center of the non-alpha region.
+        *retBrightX = region[0] + (region[1] - region[0]) / 2.0f;
+        *retBrightY = region[2] + (region[3] - region[2]) / 2.0f;
     }
 
-    // Center on the middle of the brightest pixel.
-    (*brightX) = (*brightX + .5f) / width;
-    (*brightY) = (*brightY + .5f) / height;
-
-    // The color.
-    if(!avgCnt)
+    // Determine rounding (to the nearest pixel center).
     {
-        if(!lowCnt)
-        {
-            // Doesn't the thing have any pixels??? Use white light.
-            for(c = 0; c < 3; ++c)
-                color->rgb[c] = 1;
-        }
-        else
+    int roundXDir = (int) (*retBrightX + .5f) == (int) *retBrightX ? 1 : -1;
+    int roundYDir = (int) (*retBrightY + .5f) == (int) *retBrightY ? 1 : -1;
+
+    // Apply all rounding and output as decimal.
+    *retBrightX = (ROUND(*retBrightX) + .5f * roundXDir) / (float) width;
+    *retBrightY = (ROUND(*retBrightY) + .5f * roundYDir) / (float) height;
+    }
+
+    if(avgCnt || lowCnt)
+    {
+        // The color.
+        if(!avgCnt)
         {
             // Low-intensity color average.
             for(c = 0; c < 3; ++c)
-                color->rgb[c] = lowAvg[c] / lowCnt;
+                retColor->rgb[c] = lowAvg[c] / lowCnt / 255.f;
         }
+        else
+        {
+            // High-intensity color average.
+            for(c = 0; c < 3; ++c)
+                retColor->rgb[c] = average[c] / avgCnt / 255.f;
+        }
+
+        R_AmplifyColor(retColor->rgb);
+
+        // How about the size of the light source?
+        /// @todo These factors should be cvars.
+        *retLumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
     }
-    else
-    {
-        // High-intensity color average.
-        for(c = 0; c < 3; ++c)
-            color->rgb[c] = average[c] / avgCnt;
-    }
 
-/*#ifdef _DEBUG
-    Con_Message("GL_CalcLuminance: width %dpx, height %dpx, bits %d\n"
-                "  cell region X[%d, %d] Y[%d, %d]\n"
-                "  flare X= %g Y=%g %s\n"
-                "  flare RGB[%g, %g, %g] %s\n",
-                width, height, pixelSize,
-                region[0], region[1], region[2], region[3],
-                (*brightX), (*brightY),
-                (posCnt? "(average)" : "(center)"),
-                color->red, color->green, color->blue,
-                (avgCnt? "(hi-intensity avg)" :
-                 lowCnt? "(low-intensity avg)" : "(white light)"));
-#endif*/
-
-    R_AmplifyColor(color->rgb);
-
-    // How about the size of the light source?
-    *lumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
+    /*
+    DEBUG_Message(("GL_CalcLuminance: width %dpx, height %dpx, bits %d\n"
+                   "  cell region X[%d, %d] Y[%d, %d]\n"
+                   "  flare X= %g Y=%g %s\n"
+                   "  flare RGB[%g, %g, %g] %s\n",
+                   width, height, pixelSize,
+                   region[0], region[1], region[2], region[3],
+                   *retBrightX, *retBrightY,
+                   (posCnt? "(average)" : "(center)"),
+                   retColor->red, retColor->green, retColor->blue,
+                   (avgCnt? "(hi-intensity avg)" :
+                    lowCnt? "(low-intensity avg)" : "(white light)")));
+    */
 }
 
 /**
@@ -1300,6 +1317,9 @@ D_CMD(DisplayModeInfo)
                 Window_IsFullscreen(wnd)? "yes" : "no",
                 Window_IsCentered(wnd)? "yes" : "no",
                 Window_IsMaximized(wnd)? "yes" : "no");
+    Con_Message("Normal geometry: (%i,%i) %ix%i\n",
+                Window_NormalX(wnd), Window_NormalY(wnd),
+                Window_NormalWidth(wnd), Window_NormalHeight(wnd));
     return true;
 }
 

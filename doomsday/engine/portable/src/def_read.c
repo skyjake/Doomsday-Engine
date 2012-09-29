@@ -504,12 +504,23 @@ static int ReadFloat(float* dest)
 
 static int ReadFlags(int* dest, const char* prefix)
 {
-    char                flag[1024];
+    char flag[1024];
 
     // By default, no flags are set.
     *dest = 0;
 
     ReadToken();
+    if(ISTOKEN(";"))
+    {
+        SetError("Missing flags value.");
+        return false;
+    }
+    if(ISTOKEN("0"))
+    {
+        // No flags defined.
+        return true;
+    }
+
     UnreadToken(token);
     if(ISTOKEN("\""))
     {
@@ -517,7 +528,16 @@ static int ReadFlags(int* dest, const char* prefix)
         if(!ReadString(flag, sizeof(flag)))
             return false;
 
-        *dest = Def_EvalFlags(flag);
+        M_Strip(flag, sizeof(flag));
+
+        if(strlen(flag))
+        {
+            *dest = Def_EvalFlags(flag);
+        }
+        else
+        {
+            *dest = 0;
+        }
         return true;
     }
 
@@ -535,7 +555,12 @@ static int ReadFlags(int* dest, const char* prefix)
             strcpy(flag, token);
         }
 
-        *dest |= Def_EvalFlags(flag);
+        M_Strip(flag, sizeof(flag));
+
+        if(strlen(flag))
+        {
+            *dest |= Def_EvalFlags(flag);
+        }
 
         if(!ReadToken())
             break;
@@ -552,36 +577,38 @@ static int ReadFlags(int* dest, const char* prefix)
 
 static int ReadBlendmode(blendmode_t* dest)
 {
-    char                flag[1024];
-    blendmode_t         bm;
-
-    // By default, the blendmode is "normal".
-    *dest = BM_NORMAL;
+    char flag[1024];
+    blendmode_t bm;
 
     ReadToken();
     UnreadToken(token);
     if(ISTOKEN("\""))
     {
         // The old format.
-        if(!ReadString(flag, sizeof(flag)))
-            return false;
+        if(!ReadString(flag, sizeof(flag))) return false;
 
         bm = (blendmode_t) Def_EvalFlags(flag);
-        if(bm != BM_NORMAL)
-            *dest = bm;
+    }
+    else
+    {
+        // Read the blendmode.
+        ReadToken();
 
-        return true;
+        strcpy(flag, "bm_");
+        strcat(flag, token);
+
+        bm = (blendmode_t) Def_EvalFlags(flag);
     }
 
-    // Read the blendmode.
-    ReadToken();
-
-    strcpy(flag, "bm_");
-    strcat(flag, token);
-
-    bm = (blendmode_t) Def_EvalFlags(flag);
     if(bm != BM_NORMAL)
+    {
         *dest = bm;
+    }
+    else
+    {
+        Con_Message("Warning: Unknown BlendMode %s in %s on line #%i, ignored (blendmode not changed).\n",
+                    flag, source ? source->fileName : "?", source ? source->lineNumber : 0);
+    }
 
     return true;
 }
@@ -693,7 +720,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
 
     if(cond[0] == '-')
     {   // A command line option.
-        value = (ArgCheck(token) != 0);
+        value = (CommandLine_Check(token) != 0);
     }
     else if(isalnum(cond[0]))
     {   // A game mode.
@@ -1033,9 +1060,24 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     READSTR(st->id);
                 }
+                else if(ISLABEL("Frame"))
+                {
+// Legacy state frame flags:
+#define FF_FULLBRIGHT               0x8000
+#define FF_FRAMEMASK                0x7fff
+
+                    READINT(st->frame);
+                    if(st->frame & FF_FULLBRIGHT)
+                    {
+                        st->frame &= FF_FRAMEMASK;
+                        st->flags |= STF_FULLBRIGHT;
+                    }
+
+#undef FF_FRAMEMASK
+#undef FF_FULLBRIGHT
+                }
                 else RV_FLAGS("Flags", st->flags, "statef_")
                 RV_STR("Sprite", st->sprite.id)
-                RV_INT("Frame", st->frame)
                 RV_INT("Tics", st->tics)
                 RV_STR("Action", st->action)
                 RV_STR("Next state", st->nextState)
@@ -1148,21 +1190,19 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             else if(!bCopyNext)
             {
                 Uri* otherMat = NULL;
-                ddstring_t* otherMatPath;
+                AutoStr* otherMatPath;
 
                 READURI(&otherMat, NULL);
                 ReadToken();
 
                 otherMatPath = Uri_Compose(otherMat);
                 mat = Def_GetMaterial(Str_Text(otherMatPath));
-                Str_Delete(otherMatPath);
                 if(!mat)
                 {
                     VERBOSE(
-                        ddstring_t* path = Uri_ToString(otherMat);
+                        AutoStr* path = Uri_ToString(otherMat);
                         Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.\n",
-                            Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
-                        Str_Delete(path)
+                                    Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
                         )
 
                     // We'll read into a dummy definition.
@@ -2648,14 +2688,14 @@ ded_end_read:
 
 int DED_Read(ded_t* ded, const char* path)
 {
-    ddstring_t transPath;
+    Str transPath;
     size_t bufferedDefSize;
     char* bufferedDef;
     DFile* file;
     int result;
 
     // Compose the (possibly-translated) path.
-    Str_Init(&transPath);
+    Str_InitStd(&transPath);
     Str_Set(&transPath, path);
     F_FixSlashes(&transPath, &transPath);
     F_ExpandBasePath(&transPath, &transPath);

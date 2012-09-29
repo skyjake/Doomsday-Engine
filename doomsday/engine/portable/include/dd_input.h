@@ -31,8 +31,9 @@
 
 #define NUMKKEYS            256
 
-#include "smoother.h"
-#include "dd_string.h"
+#include <de/smoother.h>
+#include <de/ddstring.h>
+
 #if _DEBUG
 #  include "point.h" // For the debug visual.
 #endif

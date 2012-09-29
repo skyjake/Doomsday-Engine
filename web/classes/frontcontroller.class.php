@@ -259,7 +259,7 @@ class FrontController
     {
         require_once(DIR_CLASSES.'/feed.class.php');
 
-        $feed = new Feed('http://code.iki.fi/builds/events.rss', 3);
+        $feed = new Feed('http://dl.dropbox.com/u/11948701/builds/events.rss', 3);
         $feed->setTitle('Build News', 'projectnews-label');
         $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
                                               array('titleTemplate'=>'{title} complete',
@@ -422,7 +422,7 @@ class FrontController
 
                 $result .= '<li>';
 
-                if(!is_null($page) && !strcasecmp($page, $tab['page']))
+                if(!is_null($page) && !strcasecmp($page, substr($tab['page'], 1)))
                 {
                     $result .= '<span ';
                     if(isset($selectClassName))
@@ -555,13 +555,14 @@ class FrontController
             $siteTitle = "$mainHeading &bull; $siteTitle";
 
         header('Content-type: text/html; charset=utf-8');
+        header('X-Frame-Options: SAMEORIGIN');
 
 ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <link rel="icon" href="http://code.iki.fi/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="shortcut icon" href="http://code.iki.fi/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="icon" href="http://dl.dropbox.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
+    <link rel="shortcut icon" href="http://dl.dropbox.com/u/11948701/dengine.net/images/favicon.png" type="image/png" />
     <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
     <meta http-equiv="expires" content="0" />
     <meta name="resource-type" content="DOCUMENT" />
@@ -689,7 +690,7 @@ class FrontController
         if(ini_get('log_errors'))
         {
             error_log(sprintf("PHP %s:  %s in %s on line %d",
-                              $errortype[$errno], $errmsg, $filename, $linenum));
+                              isset($errortype[$errno])? $errortype[$errno] : "$errno", $errmsg, $filename, $linenum));
         }
 
         // Display it?

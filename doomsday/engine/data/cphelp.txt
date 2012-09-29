@@ -374,6 +374,9 @@ inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.
 desc = Kick client out of the game (server only).
 inf = Params: kick (playernum)\nFor example, 'kick 1'.
 
+[lastupdated]
+desc = Show when the latest check for updates was made.
+
 [listcontrols]
 desc = List the names of all player controls.
 
@@ -390,7 +393,10 @@ desc = List all event binding classes.
 desc = List all console commands.
 
 [listfiles]
-desc = List all loaded resource data files.
+desc = List all loaded resource files.
+
+[listlumps]
+desc = List all loaded virtual resource files from container archives.
 
 [listfonts]
 desc = List all known fonts.
@@ -535,6 +541,15 @@ inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 
 [unload]
 desc = Unload the current game or one or more data files.
 inf = Params: unload (name) ...\nFor example, 'unload mylevel.wad'.
+
+[update]
+desc = Check for new available releases.
+
+[updateandnotify]
+desc = Check for new available releases and open the update notification dialog.
+
+[updatesettings]
+desc = Show the settings dialog for configuring automatic updates.
 
 [varstats]
 desc = Show detailed statistics for console variables.
@@ -1196,3 +1211,6 @@ desc = Pause the game when game window loses focus.
 
 [game-monsters-floatoverblocking]
 desc = 1=Allow floating monsters to attempt floating over blocking things (avoids getting stuck).
+
+[game-unpause-focusgained]
+desc = Unpause the game when game window regains focus.

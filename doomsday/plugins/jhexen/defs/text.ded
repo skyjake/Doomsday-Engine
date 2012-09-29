@@ -801,3 +801,13 @@ Text {
   ID = "SKILLM5";
   Text = "Archimage";
 }
+
+Text {
+  ID = "DELETESAVEGAME_CONFIRM";
+  Text = "Really delete save game\n\n'%s'?";
+}
+
+Text {
+  ID = "REBORNLOAD_CONFIRM";
+  Text = "Load save game\n\n'%s'?\n\n(No to re-enter last portal)";
+}

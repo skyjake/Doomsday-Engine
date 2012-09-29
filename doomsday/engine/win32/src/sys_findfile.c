@@ -34,8 +34,6 @@
 #include "de_base.h"
 #include "de_filesys.h"
 
-#include "dd_string.h"
-
 typedef struct winfinddata_s {
     struct _finddata_t data;
     intptr_t handle;

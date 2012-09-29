@@ -29,27 +29,49 @@
 #ifndef LIBCOMMON_PLAYSETUP_H
 #define LIBCOMMON_PLAYSETUP_H
 
-#define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
-#define numhedges   (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
-#define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
-#define numbspleafs (*(uint*) DD_GetVariable(DD_BSPLEAF_COUNT))
-#define numbspnodes (*(uint*) DD_GetVariable(DD_BSPNODE_COUNT))
-#define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
-#define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
+#include "common.h"
 
-#if __JHEXEN__
-#define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 // If true we are in the process of setting up a map.
 extern boolean mapSetup;
 
+/**
+ * Doomsday calls this (before any data is read) for each type of map object
+ * at the start of the map load process. This is to allow us (the game) to
+ * do any initialization we need. For example if we maintain our own data
+ * for lines (the xlines) we'll do all allocation and init here.
+ *
+ * @param type    (DMU object type) The id of the data type being setup.
+ * @param num     The number of elements of "type" Doomsday is creating.
+ */
 void P_SetupForMapData(int type, uint num);
 
-void P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
+/**
+ * Load the specified map.
+ *
+ * @param uri      URI e.g., "E1M1".
+ * @param episode  Logical episode number.
+ * @param map      Logical map number.
+ */
+void P_SetupMap(Uri* uri, uint episode, uint map);
 
 const char* P_GetMapNiceName(void);
 patchid_t P_FindMapTitlePatch(uint episode, uint map);
 const char* P_GetMapAuthor(boolean supressGameAuthor);
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+void P_FindSecrets(void);
+#endif
+
+void P_SpawnSectorMaterialOriginScrollers(void);
+void P_SpawnSideMaterialOriginScrollers(void);
+void P_SpawnAllMaterialOriginScrollers(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_PLAYSETUP_H */

@@ -39,6 +39,10 @@
 #include "hu_lib.h"
 #include "d_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Palette indices.
 // For damage/bonus red-/gold-shifts
 #define STARTREDPALS                (1)
@@ -116,7 +120,7 @@ float ST_AutomapOpacity(int player);
 
 /**
  * Does the player's automap obscure this region completely?
- * \assume: Window dimensions use the fixed coordinate space {x} 0 - 320, {y} 0 - 200.
+ * @pre Window dimensions use the fixed coordinate space {x} 0 - 320, {y} 0 - 200.
  *
  * @param player  Local player number whose automap to check.
  * @param region  Window region.
@@ -152,5 +156,9 @@ void ST_RebuildAutomap(int player);
 D_CMD(ChatOpen);
 D_CMD(ChatAction);
 D_CMD(ChatSendMacro);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDOOM64_STUFF_H */

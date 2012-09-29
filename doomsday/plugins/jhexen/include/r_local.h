@@ -61,16 +61,6 @@
 #define NUMCOLORMAPS            32 // Number of diminishing.
 #define INVERSECOLORMAP         32
 
-// Player colors.
-#define AM_PLR1_COLOR           157 // Blue
-#define AM_PLR2_COLOR           177 // Red
-#define AM_PLR3_COLOR           137 // Yellow
-#define AM_PLR4_COLOR           198 // Green
-#define AM_PLR5_COLOR           215 // Jade
-#define AM_PLR6_COLOR           32 // White
-#define AM_PLR7_COLOR           106 // Hazel
-#define AM_PLR8_COLOR           234 // Purple
-
 // Map data is in the main engine, so these are helpers...
 extern angle_t  clipangle;
 

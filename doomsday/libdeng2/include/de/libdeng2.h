@@ -24,7 +24,41 @@
  * @file libdeng2.h  Common definitions for libdeng2.
  */
 
-#ifdef __cplusplus
+/**
+ * @defgroup core     Core
+ * @defgroup data     Data Types and Structures
+ * @defgroup input    Input Subsystem
+ *
+ * @defgroup net      Network
+ * Classes responsible for network communications.
+ *
+ * @defgroup resource Resources
+ * @defgroup render   Renderer
+ * @defgroup GL       Graphics Library
+ * @defgroup math     Math Utilities
+ *
+ * @defgroup types    Basic Types
+ * Basic data types.
+ */
+
+/**
+ * @mainpage libdeng2 API
+ *
+ * This documentation covers all the functions and data that Doomsday 2 makes
+ * available for games and other plugins.
+ *
+ * @section Overview
+ * The documentation has been organized into <a href="modules.html">modules</a>.
+ * The primary ones are listed below:
+ * - @ref core
+ * - @ref data
+ * - @ref input
+ * - @ref net
+ * - @ref resource
+ * - @ref render
+ */
+
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
 #endif
 
@@ -41,6 +75,14 @@
 #endif
 
 #include <assert.h>
+
+/*
+ * When using the C API, the Qt string functions are not available, so we
+ * must use the platform-specific functions.
+ */
+#if defined(UNIX) && defined(DENG2_C_API_ONLY)
+#  include <strings.h> // strcasecmp etc. 
+#endif
 
 /*
  * The DENG2_PUBLIC macro is used for declaring exported symbols. It must be
@@ -74,6 +116,11 @@
 #endif
 
 /**
+ * Macro for hiding the warning about an unused parameter.
+ */
+#define DENG2_UNUSED(x)     (void)x
+
+/**
  * Macro for defining an opaque type in the C wrapper API.
  */
 #define DENG2_OPAQUE(Name) \
@@ -98,13 +145,8 @@
 #define DENG2_FOR_EACH(Iter, ContainerRef, IterClass) \
     for(IterClass Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {
-
-/**
- * @defgroup types Basic Types
- * Basic numeric data types.
- */
 
 //@{
 /// @ingroup types
@@ -124,7 +166,7 @@ typedef duint32 duint;      ///< 32-bit unsigned integer.
 typedef qint64  dint64;     ///< 64-bit signed integer.
 typedef quint64 duint64;    ///< 64-bit unsigned integer.
 typedef float   dfloat;     ///< 32-bit floating point number.
-typedef qreal   ddouble;    ///< 64-bit floating point number.
+typedef double  ddouble;    ///< 64-bit floating point number.
 typedef quint64 dsize;
 
 // Pointer-integer conversion (used for legacy code).
@@ -144,8 +186,26 @@ typedef duint32 dintptr;
 /*
  * Data types for C APIs.
  */
+#ifdef _MSC_VER
+typedef short           dint16;
+typedef unsigned short  duint16;
+typedef int             dint32;
+typedef unsigned int    duint32;
+typedef long long       dint64;
+typedef unsigned long long duint64;
+#else
+#  include <stdint.h>
+typedef int16_t         dint16;
+typedef uint16_t        duint16;
+typedef int32_t         dint32;
+typedef uint32_t        duint32;
+typedef int64_t         dint64;
+typedef uint64_t        duint64;
+#endif
 typedef unsigned char   dbyte;
 typedef unsigned int    duint;  // 32-bit
+typedef float           dfloat;
+typedef double          ddouble;
 
 #ifdef DENG2_64BIT
 typedef uint64_t        dsize;  // 64-bit size
@@ -153,6 +213,6 @@ typedef uint64_t        dsize;  // 64-bit size
 typedef unsigned int    dsize;  // 32-bit size
 #endif
 
-#endif
+#endif // !__cplusplus
 
 #endif // LIBDENG2_H

@@ -224,6 +224,12 @@ def mac_release():
         if not 'jDoom64' in f:
             duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
 
+    print 'Signing Doomsday.app...'
+    os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app/Contents/Doomsday.app"')
+
+    print 'Signing Doomsday Engine.app...'
+    os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app"')
+
     print 'Creating disk image:', target
 
     masterDmg = target
@@ -305,7 +311,7 @@ def linux_release():
     # Build dsFMOD separately.
     os.chdir('dsfmod')
     logSuffix = "%s-%s.txt" % (sys.platform, platform.architecture()[0])
-    if os.system('dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
+    if os.system('LD_LIBRARY_PATH=`pwd`/../builddir/libdeng2:`pwd`/../builddir/libdeng dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
         raise Exception("Failure to build dsFMOD from source.")
     shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
     shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    

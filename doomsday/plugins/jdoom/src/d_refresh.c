@@ -22,17 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh - DOOM specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 #include <assert.h>
 
 #include "jdoom.h"
 
+#include "dmu_lib.h"
 #include "hu_menu.h"
 #include "hu_stuff.h"
 #include "hu_pspr.h"
@@ -46,25 +41,7 @@
 #include "p_tick.h"
 #include "hu_automap.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 float quitDarkenOpacity = 0;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Draws a special filter over the screen (e.g. the inversing filter used
@@ -378,6 +355,19 @@ void D_EndFrame(void)
     }
 }
 
+void Mobj_UpdateColorMap(mobj_t* mo)
+{
+    if(mo->flags & MF_TRANSLATION)
+    {
+        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+        //Con_Message("Mobj %i color tmap:%i\n", mo->thinker.id, mo->tmap);
+    }
+    else
+    {
+        mo->tmap = 0;
+    }
+}
+
 /**
  * Updates the mobj flags used by Doomsday with the state of our local flags
  * for the given mobj.
@@ -386,7 +376,11 @@ void P_SetDoomsdayFlags(mobj_t *mo)
 {
     // Client mobjs can't be set here.
     if(IS_CLIENT && (mo->ddFlags & DDMF_REMOTE))
+    {
+        // Color translation can be applied for remote mobjs, too.
+        Mobj_UpdateColorMap(mo);
         return;
+    }
 
     // Reset the flags for a new frame.
     mo->ddFlags &= DDMF_CLEAR_MASK;
@@ -433,7 +427,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
      * The torches often go into the ceiling. This'll prevent them from
      * 'jumping' when they do.
      *
-     * \todo Add a thing def flag for this.
+     * @todo Add a thing def flag for this.
      */
     if(mo->type == MT_MISC41 || mo->type == MT_MISC42 || mo->type == MT_MISC43 || // tall torches
        mo->type == MT_MISC44 || mo->type == MT_MISC45 || mo->type == MT_MISC46)  // short torches
@@ -449,23 +443,18 @@ void P_SetDoomsdayFlags(mobj_t *mo)
        (mo->flags & MF_FLOAT))
         mo->ddFlags |= DDMF_VIEWALIGN;
 
-    if(mo->flags & MF_TRANSLATION)
-        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+    Mobj_UpdateColorMap(mo);
 }
 
-/**
- * Updates the status flags for all visible things.
- */
 void R_SetAllDoomsdayFlags(void)
 {
-    uint                i;
-    mobj_t             *iter;
+    mobj_t* iter;
+    uint i;
 
     // Only visible things are in the sector thinglists, so this is good.
     for(i = 0; i < numsectors; ++i)
     {
-        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter;
-            iter = iter->sNext)
+        for(iter = P_GetPtr(DMU_SECTOR, i, DMT_MOBJS); iter; iter = iter->sNext)
         {
             P_SetDoomsdayFlags(iter);
         }

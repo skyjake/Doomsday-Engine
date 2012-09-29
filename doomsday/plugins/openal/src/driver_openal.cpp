@@ -59,12 +59,16 @@
 #define SRC(buf) ((ALuint)buf->ptr3D)
 #define BUF(buf) ((ALuint)buf->ptr)
 
-enum { VX, VY, VZ };
+//enum { VX, VY, VZ };
 
 #ifdef WIN32
 ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, ALvoid* value, ALuint size);
 ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, ALvoid* value, ALuint size);
 #endif
+
+// Doomsday expects symbols to be exported without mangling.
+
+extern "C" {
 
 int DS_Init(void);
 void DS_Shutdown(void);
@@ -84,6 +88,8 @@ void DS_SFX_Listener(int prop, float value);
 void DS_SFX_Listenerv(int prop, float* values);
 int DS_SFX_Getv(int prop, void* values);
 
+} // extern "C"
+
 #ifdef WIN32
 // EAX 2.0 GUIDs
 struct _GUID DSPROPSETID_EAX20_ListenerProperties = {
@@ -94,11 +100,12 @@ struct _GUID DSPROPSETID_EAX20_BufferProperties = {
 };
 #endif
 
-boolean initOk = false, hasEAX = false;
-float unitsPerMeter = 1;
-float headYaw, headPitch; // In radians.
-ALCdevice* device = 0;
-ALCcontext* context = 0;
+static boolean initOk = false;
+static boolean hasEAX = false;
+static float unitsPerMeter = 1;
+static float headYaw, headPitch; // In radians.
+static ALCdevice* device = 0;
+static ALCcontext* context = 0;
 
 #ifdef DENG_DSOPENAL_DEBUG
 #  define DSOPENAL_TRACE(args)  std::cerr << "[dsOpenAL] " << args << std::endl;
@@ -269,7 +276,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     if(DSOPENAL_ERRCHECK(alGetError()))
     {
-        /// @fixme What to do?
+        /// @todo What to do?
     }
     buf->sample = sample;
 }

@@ -21,7 +21,13 @@
 #define LIBDENG2_APP_H
 
 #include "../libdeng2.h"
+#include "../CommandLine"
 #include <QApplication>
+
+/**
+ * Macro for conveniently accessing the de::App singleton instance.
+ */
+#define DENG2_APP   (static_cast<de::App*>(qApp))
 
 namespace de
 {
@@ -35,10 +41,39 @@ namespace de
 
     public:
         App(int& argc, char** argv, bool useGUI);
+
         bool notify(QObject* receiver, QEvent* event);
+
+        /**
+         * Returns the command line used to start the application.
+         */
+        CommandLine& commandLine();
+
+        /**
+         * Returns the absolute path of the application executable.
+         */
+        de::String executablePath() const;
+
+        /**
+         * Emits the displayModeChanged() signal.
+         *
+         * @todo In the future when de::App (or a sub-object owned by it) is
+         * responsible for display modes, this should be handled internally and
+         * not via this public interface where anybody can call it.
+         */
+        void notifyDisplayModeChanged();
 
     signals:
         void uncaughtException(QString message);
+
+        /// Emitted when the display mode has changed.
+        void displayModeChanged();
+
+    private:
+        CommandLine _cmdLine;
+
+        /// Path of the application executable.
+        de::String _appPath;
     };
 }
 

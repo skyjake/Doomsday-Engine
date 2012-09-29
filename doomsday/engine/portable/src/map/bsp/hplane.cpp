@@ -28,22 +28,20 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "map/bsp/hedgeintercept.h"
 #include "map/bsp/hplane.h"
 
 using namespace de::bsp;
 
 void HPlane::clear()
 {
-    intercepts.clear();
+    intercepts_.clear();
 }
 
 HPlane* HPlane::setOrigin(coord_t const newOrigin[2])
 {
     if(newOrigin)
     {
-        partition.origin[0] = newOrigin[0];
-        partition.origin[1] = newOrigin[1];
+        partition.setOrigin(newOrigin);
         clear();
     }
     return this;
@@ -73,7 +71,7 @@ HPlane* HPlane::setDirection(coord_t const newDirection[2])
 {
     if(newDirection)
     {
-        V2d_Copy(partition.direction, newDirection);
+        partition.setDirection(newDirection);
         clear();
     }
     return this;
@@ -99,34 +97,61 @@ HPlane* HPlane::setDY(coord_t newDY)
     return this;
 }
 
-HPlaneIntercept* HPlane::newIntercept(coord_t distance, void* userData)
+HPlaneIntercept& HPlane::newIntercept(coord_t distance, void* userData)
 {
     Intercepts::reverse_iterator after;
-    HPlaneIntercept* inter;
 
-    for(after = intercepts.rbegin();
-        after != intercepts.rend() && distance < (*after).distance(); after++)
+    for(after = intercepts_.rbegin();
+        after != intercepts_.rend() && distance < (*after).distance(); after++)
     {}
 
-    inter = &*intercepts.insert(after.base(), HPlaneIntercept(distance, userData));
-    return inter;
+    return *intercepts_.insert(after.base(), HPlaneIntercept(distance, userData));
 }
 
-HPlane::Intercepts::const_iterator HPlane::deleteIntercept(Intercepts::iterator at)
+void HPlane::mergeIntercepts(mergepredicate_t predicate, void* userData)
 {
-    //if(at < intercepts.begin() || at >= intercepts.end()) return at;
-    return intercepts.erase(at);
+    Intercepts::iterator node = intercepts_.begin();
+    while(node != intercepts_.end())
+    {
+        Intercepts::iterator np = node; np++;
+        if(np == intercepts_.end()) break;
+
+        // Sanity check.
+        coord_t distance = *np - *node;
+        if(distance < -0.1)
+        {
+            throw de::Error("HPlane::mergeIntercepts",
+                            QString("Invalid intercept order - %1 > %2")
+                                .arg(node->distance(), 0, 'f', 3)
+                                .arg(  np->distance(), 0, 'f', 3));
+        }
+
+        // Are we merging this pair?
+        if(predicate(*node, *np, userData))
+        {
+            // Yes - Unlink this intercept.
+            intercepts_.erase(np);
+        }
+        else
+        {
+            // No.
+            node++;
+        }
+    }
+}
+
+const HPlane::Intercepts& HPlane::intercepts() const
+{
+    return intercepts_;
 }
 
 #if _DEBUG
 void HPlane::DebugPrint(const HPlane& inst)
 {
-    uint n = 0;
-    for(HPlane::Intercepts::const_iterator it = inst.begin(); it != inst.end(); it++, n++)
+    uint index = 0;
+    DENG2_FOR_EACH(i, inst.intercepts(), HPlane::Intercepts::const_iterator)
     {
-        const HPlaneIntercept* inter = &*it;
-        Con_Printf(" %u: >%1.2f ", n, inter->distance());
-        HEdgeIntercept::DebugPrint(*static_cast<HEdgeIntercept*>(inter->userData()));
+        Con_Printf(" %u: >%1.2f ", index++, i->distance());
     }
 }
 #endif

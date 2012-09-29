@@ -24,9 +24,9 @@
 #include "directinput.h"
 #include "sys_input.h"
 #include "sys_system.h"
-#include "m_args.h"
 #include "con_main.h"
 #include "window.h"
+#include <de/c_wrapper.h>
 
 static LPDIRECTINPUTDEVICE8 didMouse;
 static boolean mouseTrapped;
@@ -34,7 +34,7 @@ static DIMOUSESTATE2 mstate; ///< Polled state.
 
 static int Mouse_Win32_Init(void)
 {
-    if(ArgCheck("-nomouse") || novideo) return false;
+    if(CommandLine_Check("-nomouse") || novideo) return false;
 
     // We'll need a window handle for this.
     HWND hWnd = (HWND) Window_NativeHandle(Window_Main());

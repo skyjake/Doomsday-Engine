@@ -1,77 +1,36 @@
-/**\file hu_msg.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
+ * @file hu_msg.c
  * Important state change messages.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
 #include "hu_msg.h"
 #include "hu_menu.h"
 #include "hu_stuff.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(MsgResponse);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-ccmdtemplate_t msgCCmds[] = {
-    {"messageyes",      "",     CCmdMsgResponse},
-    {"messageno",       "",     CCmdMsgResponse},
-    {"messagecancel",   "",     CCmdMsgResponse},
-    {NULL}
-};
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean awaitingResponse;
 static int messageToPrint; // 1 = message to be printed.
@@ -80,27 +39,18 @@ static msgresponse_t messageResponse;
 static msgtype_t msgType;
 static msgfunc_t msgCallback;
 static char* msgText;
-static void* msgContext;
+static int msgUserValue;
+static void* msgUserPointer;
 
 static char yesNoMessage[160];
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Called during the PreInit of each game during start up.
- * Register Cvars and CCmds for the important messages.
- */
 void Hu_MsgRegister(void)
 {
-    int                 i;
-
-    for(i = 0; msgCCmds[i].name; ++i)
-        Con_AddCommand(msgCCmds + i);
+    C_CMD("messageyes",      "",     MsgResponse)
+    C_CMD("messageno",       "",     MsgResponse)
+    C_CMD("messagecancel",   "",     MsgResponse)
 }
 
-/**
- * Called during init.
- */
 void Hu_MsgInit(void)
 {
     awaitingResponse = false;
@@ -109,17 +59,17 @@ void Hu_MsgInit(void)
 
     msgCallback = NULL;
     msgText = NULL;
-    msgContext = NULL;
+    msgUserValue = 0;
+    msgUserPointer = NULL;
 }
 
-/**
- * Called during engine shutdown.
- */
 void Hu_MsgShutdown(void)
 {
     if(msgText)
+    {
         free(msgText);
-    msgText = NULL;
+        msgText = NULL;
+    }
 }
 
 static void stopMessage(void)
@@ -136,8 +86,10 @@ static void stopMessage(void)
     awaitingResponse = false;
 
     if(msgText)
+    {
         free(msgText);
-    msgText = NULL;
+        msgText = NULL;
+    }
 
     S_LocalSound(SFX_ENDMESSAGE, NULL);
 
@@ -148,12 +100,12 @@ static void stopMessage(void)
 }
 
 /**
- * \todo: Query the bindings to determine the actual controls bound to the
+ * @todo: Query the bindings to determine the actual controls bound to the
  * message response commands.
  */
 static void composeYesNoMessage(void)
 {
-    char*               buf = yesNoMessage, *in, tmp[2];
+    char* buf = yesNoMessage, *in, tmp[2];
 
     buf[0] = 0;
     tmp[1] = 0;
@@ -222,9 +174,6 @@ static void drawMessage(void)
 #undef LEADING
 }
 
-/**
- * Draw any active message.
- */
 void Hu_MsgDrawer(void)
 {
     borderedprojectionstate_t bp;
@@ -249,9 +198,6 @@ void Hu_MsgDrawer(void)
     GL_EndBorderedProjection(&bp);
 }
 
-/**
- * Updates on Game Tick.
- */
 void Hu_MsgTicker(void)
 {
     // Check if there has been a response to a message.
@@ -262,12 +208,11 @@ void Hu_MsgTicker(void)
     stopMessage();
 
     if(msgType != MSG_ANYKEY && msgCallback)
-        msgCallback(messageResponse, msgContext);
+    {
+        msgCallback(messageResponse, msgUserValue, msgUserPointer);
+    }
 }
 
-/**
- * If an "any key" message is active, respond to the event.
- */
 int Hu_MsgResponder(event_t* ev)
 {
     if(!messageToPrint || msgType != MSG_ANYKEY)
@@ -295,12 +240,11 @@ boolean Hu_IsMessageActiveWithCallback(msgfunc_t callback)
     return messageToPrint && msgCallback == callback;
 }
 
-/**
- * Begin a new message.
- */
-void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* context)
+void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
+    int userValue, void* userPointer)
 {
-    assert(msg);
+    DENG_ASSERT(msg);
+    DENG_ASSERT(!awaitingResponse);
 
     awaitingResponse = true;
     messageResponse = 0;
@@ -308,7 +252,8 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* cont
 
     msgType = type;
     msgCallback = callback;
-    msgContext = context;
+    msgUserValue = userValue;
+    msgUserPointer = userPointer;
 
     // Take a copy of the message string.
     msgText = calloc(1, strlen(msg)+1);
@@ -336,26 +281,29 @@ D_CMD(MsgResponse)
 {
     if(messageToPrint)
     {
+        const char* cmd;
+
         // Handle "Press any key to continue" messages.
-        if(messageToPrint && msgType == MSG_ANYKEY)
+        if(msgType == MSG_ANYKEY)
         {
             stopMessage();
             return true;
         }
 
-        if(!stricmp(argv[0], "messageyes"))
+        cmd = argv[0] + 7;
+        if(!stricmp(cmd, "yes"))
         {
             awaitingResponse = false;
             messageResponse = MSG_YES;
             return true;
         }
-        else if(!stricmp(argv[0], "messageno"))
+        if(!stricmp(cmd, "no"))
         {
             awaitingResponse = false;
             messageResponse = MSG_NO;
             return true;
         }
-        else if(!stricmp(argv[0], "messagecancel"))
+        if(!stricmp(cmd, "cancel"))
         {
             awaitingResponse = false;
             messageResponse = MSG_CANCEL;

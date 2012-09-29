@@ -527,7 +527,7 @@ void Net_InitGame(void)
     clients[0].lastTransmit = -1;
 
     // Are we timing a demo here?
-    if(ArgCheck("-timedemo"))
+    if(CommandLine_Check("-timedemo"))
         netTicSync = false;
 }
 
@@ -1207,7 +1207,7 @@ int Net_StartConnection(const char* address, int port)
         Con_Message("TCP/IP not available.\n");
     }
 
-    Con_BusyWorkerEnd();
+    BusyMode_WorkerEnd();
     return returnValue;*/
 }
 

@@ -22,13 +22,24 @@
 
 #include "libdeng2.h"
 
+#if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
+using de::dint16;
+using de::dint32;
+using de::dint64;
+using de::duint16;
+using de::duint32;
+using de::duint64;
+using de::dfloat;
+using de::ddouble;
+#endif
+
 /**
  * @file c_wrapper.h
  * libdeng2 C wrapper.
  *
  * Defines a C wrapper API for (some of the) libdeng2 classes. Legacy code
  * can use this wrapper API to access libdeng2 functionality. Note that the
- * identifiers in this file are not in the de namespace.
+ * identifiers in this file are _not_ in the de namespace.
  *
  * @note The basic de data types (e.g., dint32) are not available for the C
  * API; instead, only the standard C data types should be used.
@@ -57,26 +68,44 @@ typedef enum legacycore_loglevel_e {
 
 DENG2_PUBLIC LegacyCore* LegacyCore_New(void* dengApp);
 DENG2_PUBLIC void LegacyCore_Delete(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_SetLoopRate(LegacyCore* lc, int freqHz);
-DENG2_PUBLIC void LegacyCore_SetLoopFunc(LegacyCore* lc, void (*callback)(void));
-DENG2_PUBLIC void LegacyCore_PushLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_PopLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_PauseLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_ResumeLoop(LegacyCore* lc);
-DENG2_PUBLIC int LegacyCore_RunEventLoop(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_Stop(LegacyCore* lc, int exitCode);
-DENG2_PUBLIC void LegacyCore_Timer(LegacyCore* lc, unsigned int milliseconds, void (*callback)(void));
-DENG2_PUBLIC int LegacyCore_SetLogFile(LegacyCore* lc, const char* filePath);
-DENG2_PUBLIC const char* LegacyCore_LogFile(LegacyCore* lc);
-DENG2_PUBLIC void LegacyCore_PrintLogFragment(LegacyCore* lc, const char* text);
-DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(LegacyCore* lc, legacycore_loglevel_t level, const char* format, ...);
-DENG2_PUBLIC void LegacyCore_SetTerminateFunc(LegacyCore* lc, void (*func)(const char*));
+DENG2_PUBLIC LegacyCore* LegacyCore_Instance();
+DENG2_PUBLIC void LegacyCore_SetLoopRate(int freqHz);
+DENG2_PUBLIC void LegacyCore_SetLoopFunc(void (*callback)(void));
+DENG2_PUBLIC void LegacyCore_PushLoop();
+DENG2_PUBLIC void LegacyCore_PopLoop();
+DENG2_PUBLIC void LegacyCore_PauseLoop();
+DENG2_PUBLIC void LegacyCore_ResumeLoop();
+DENG2_PUBLIC int LegacyCore_RunEventLoop();
+DENG2_PUBLIC void LegacyCore_Stop(int exitCode);
+DENG2_PUBLIC void LegacyCore_Timer(unsigned int milliseconds, void (*callback)(void));
+DENG2_PUBLIC int LegacyCore_SetLogFile(const char* filePath);
+DENG2_PUBLIC const char* LegacyCore_LogFile();
+DENG2_PUBLIC void LegacyCore_PrintLogFragment(const char* text);
+DENG2_PUBLIC void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char* format, ...);
+DENG2_PUBLIC void LegacyCore_SetTerminateFunc(void (*func)(const char*));
+DENG2_PUBLIC void LegacyCore_FatalError(const char* msg);
+
+/*
+ * CommandLine
+ */
+DENG2_PUBLIC void CommandLine_Alias(const char* longname, const char* shortname);
+DENG2_PUBLIC int CommandLine_Count(void);
+DENG2_PUBLIC const char* CommandLine_At(int i);
+DENG2_PUBLIC const char* CommandLine_PathAt(int i);
+DENG2_PUBLIC const char* CommandLine_Next(void);
+DENG2_PUBLIC const char* CommandLine_NextAsPath(void);
+DENG2_PUBLIC int CommandLine_Check(const char* check);
+DENG2_PUBLIC int CommandLine_CheckWith(const char* check, int num);
+DENG2_PUBLIC int CommandLine_Exists(const char* check);
+DENG2_PUBLIC int CommandLine_IsOption(int i);
+DENG2_PUBLIC int CommandLine_IsMatchingAlias(const char* original, const char* originalOrAlias);
 
 /*
  * LogBuffer
  */
 DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
 DENG2_PUBLIC void LogBuffer_Flush(void);
+DENG2_PUBLIC void LogBuffer_Clear(void);
 
 /*
  * LegacyNetwork
@@ -110,6 +139,26 @@ DENG2_PUBLIC Info* Info_NewFromString(const char* utf8text);
 DENG2_PUBLIC Info* Info_NewFromFile(const char* nativePath);
 DENG2_PUBLIC void Info_Delete(Info* info);
 DENG2_PUBLIC int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize);
+
+/*
+ * ByteOrder
+ */
+DENG2_PUBLIC dint16 LittleEndianByteOrder_ToForeignInt16(dint16 value);
+DENG2_PUBLIC dint32 LittleEndianByteOrder_ToForeignInt32(dint32 value);
+DENG2_PUBLIC dint64 LittleEndianByteOrder_ToForeignInt64(dint64 value);
+DENG2_PUBLIC duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value);
+DENG2_PUBLIC duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value);
+DENG2_PUBLIC duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value);
+DENG2_PUBLIC dfloat LittleEndianByteOrder_ToForeignFloat(dfloat value);
+DENG2_PUBLIC ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value);
+DENG2_PUBLIC dint16 LittleEndianByteOrder_ToNativeInt16(dint16 value);
+DENG2_PUBLIC dint32 LittleEndianByteOrder_ToNativeInt32(dint32 value);
+DENG2_PUBLIC dint64 LittleEndianByteOrder_ToNativeInt64(dint64 value);
+DENG2_PUBLIC duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value);
+DENG2_PUBLIC duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value);
+DENG2_PUBLIC duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value);
+DENG2_PUBLIC dfloat LittleEndianByteOrder_ToNativeFloat(dfloat value);
+DENG2_PUBLIC ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value);
 
 #ifdef __cplusplus
 } // extern "C"

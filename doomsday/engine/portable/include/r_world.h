@@ -31,6 +31,10 @@
 
 #include "r_data.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Used for vertex sector owners, side line owners and reverb BSP leafs.
 typedef struct ownernode_s {
     void*           data;
@@ -56,8 +60,8 @@ extern boolean ddMapSetup;
  */
 void R_SetupMap(int mode, int flags);
 
-void            R_SetupFog(float start, float end, float density, float* rgb);
-void            R_SetupFogDefaults(void);
+void R_SetupFogDefaults(void);
+void R_SetupFog(float start, float end, float density, float* rgb);
 
 /**
  * Sector light color may be affected by the sky light color.
@@ -85,15 +89,73 @@ void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
 void R_MapInitSurfaceLists(void);
 
-void            R_OrderVertices(const LineDef* line, const Sector* sector,
-                                Vertex* verts[2]);
-boolean         R_FindBottomTop(LineDef* lineDef, int side, SideDefSection section,
-                                coord_t matOffsetX, coord_t matOffsetY,
-                                const Plane* ffloor, const Plane* fceil,
-                                const Plane* bfloor, const Plane* bceil,
-                                boolean unpegBottom, boolean unpegTop,
-                                boolean stretchMiddle, boolean isSelfRef,
-                                coord_t* bottom, coord_t* top, float texOffset[2]);
+void R_OrderVertices(const LineDef* line, const Sector* sector, Vertex* verts[2]);
+
+/**
+ * Determine the map space Z coordinates of a wall section.
+ *
+ * @param section       Identifier of the section to determine coordinates for.
+ * @param lineFlags     @ref ldefFlags.
+ * @param frontSec      Sector in front of the wall.
+ * @param backSec       Sector behind the wall. Can be @c NULL
+ * @param frontDef      Definition for the front side. Can be @c NULL
+ * @param backDef       Definition for the back side. Can be @c NULL
+ *
+ * Return values:
+ * @param low           Z map space coordinate at the bottom of the wall section.
+ * @param hi            Z map space coordinate at the top of the wall section.
+ * @param matOffset     Surface space material coordinate offset. Can be @c NULL
+ *
+ * @return  @c true iff the determined wall section height is @c >0
+ */
+boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
+    coord_t* low, coord_t* hi, float matOffset[2]);
+boolean R_FindBottomTop(SideDefSection section, int lineFlags,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
+    coord_t* low, coord_t* hi) /* matOffset = 0 */;
+
+/**
+ * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
+ * and @a backSec. The open range is defined as the gap between foor and ceiling on
+ * the front side clipped by the floor and ceiling planes on the back side (if present).
+ *
+ * @param frontSec  Sector on the front side.
+ * @param backSec   Sector on the back side. Can be @c NULL.
+ * @param bottom    Bottom Z height is written here. Can be @c NULL.
+ * @param top       Top Z height is written here. Can be @c NULL.
+ *
+ * @return Height of the open range.
+ */
+coord_t R_OpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
+
+/// Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
+/// height coordinates rather than the "sharp" coordinates.
+coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
+
+/**
+ * @param lineFlags     @ref ldefFlags.
+ * @param frontSec      Sector in front of the wall.
+ * @param backSec       Sector behind the wall. Can be @c NULL
+ * @param frontDef      Definition for the front side. Can be @c NULL
+ * @param backDef       Definition for the back side. Can be @c NULL
+ * @param ignoreOpacity @c true= material opacity should be ignored.
+ *
+ * @return  @c true iff SideDef @a frontDef has a "middle" Material which completely
+ *     covers the open range defined by sectors @a frontSec and @a backSec.
+ */
+boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector* frontSec, Sector* backSec,
+    SideDef* frontDef, SideDef* backDef, boolean ignoreOpacity);
+
+/**
+ * Same as @ref R_MiddleMaterialCoversOpening except all arguments are derived from
+ * the specified linedef @a line.
+ *
+ * @note Anything calling this is likely working at the wrong level (should work with
+ *       hedges instead).
+ */
+boolean R_MiddleMaterialCoversLineOpening(LineDef* line, int side, boolean ignoreOpacity);
+
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);
 
@@ -141,19 +203,46 @@ boolean R_IsGlowingPlane(const Plane* plane);
 
 float R_GlowStrength(const Plane* pln);
 
-lineowner_t*    R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
-LineDef*        R_FindLineNeighbor(const Sector* sector,
-                                   const LineDef* line,
-                                   const lineowner_t* own,
-                                   boolean antiClockwise, binangle_t* diff);
-LineDef*        R_FindSolidLineNeighbor(const Sector* sector,
-                                        const LineDef* line,
-                                        const lineowner_t* own,
-                                        boolean antiClockwise,
-                                        binangle_t* diff);
-LineDef*        R_FindLineBackNeighbor(const Sector* sector,
-                                       const LineDef* line,
-                                       const lineowner_t* own,
-                                       boolean antiClockwise,
-                                       binangle_t* diff);
+lineowner_t* R_GetVtxLineOwner(const Vertex* vtx, const LineDef* line);
+
+/**
+ * A neighbour is a line that shares a vertex with 'line', and faces the
+ * specified sector.
+ */
+LineDef* R_FindLineNeighbor(const Sector* sector, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+
+LineDef* R_FindSolidLineNeighbor(const Sector* sector, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+
+/**
+ * A line's align neighbor is a line that shares a vertex with 'line' and
+ * whos orientation is aligned with it (thus, making it unnecessary to have
+ * a shadow between them. In practice, they would be considered a single,
+ * long sidedef by the shadow generator).
+ */
+LineDef* R_FindLineAlignNeighbor(const Sector* sec, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, int alignment);
+
+/**
+ * Find a backneighbour for the given line. They are the neighbouring line
+ * in the backsector of the imediate line neighbor.
+ */
+LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
+    const lineowner_t* own, boolean antiClockwise, binangle_t* diff);
+
+/**
+ * @defgroup skyCapFlags  Sky Cap Flags
+ */
+///@{
+#define SKYCAP_LOWER                0x1
+#define SKYCAP_UPPER                0x2
+///@}
+
+coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* LIBDENG_REFRESH_WORLD_H */

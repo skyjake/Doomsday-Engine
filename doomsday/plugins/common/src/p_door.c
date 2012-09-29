@@ -61,25 +61,29 @@
 // Sounds played by the doors when changing state.
 // jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
 #if __JDOOM64__
-# define SFX_DOORCLOSE         (SFX_DORCLS)
+# define SFX_DOORCLOSING       (SFX_DORCLS)
+# define SFX_DOORCLOSED        (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_BDCLS)
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
 # define SFX_DOORLOCKED        (SFX_OOF)
 #elif __JDOOM__
-# define SFX_DOORCLOSE         (SFX_DORCLS)
+# define SFX_DOORCLOSING       (SFX_DORCLS)
+# define SFX_DOORCLOSED        (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_BDCLS)
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_BDOPN)
 # define SFX_DOORLOCKED        (SFX_OOF)
 #elif __JHERETIC__
-# define SFX_DOORCLOSE         (SFX_DORCLS)
+# define SFX_DOORCLOSING       (SFX_DOROPN)
+# define SFX_DOORCLOSED        (SFX_DORCLS)
 # define SFX_DOORBLAZECLOSE    (SFX_NONE)
 # define SFX_DOOROPEN          (SFX_DOROPN)
 # define SFX_DOORBLAZEOPEN     (SFX_DOROPN)
 # define SFX_DOORLOCKED        (SFX_PLROOF)
 #elif __JHEXEN__
-# define SFX_DOORCLOSE         (SFX_NONE)
+# define SFX_DOORCLOSING       (SFX_NONE)
+# define SFX_DOORCLOSED        (SFX_NONE)
 # define SFX_DOORBLAZECLOSE    (SFX_NONE)
 # define SFX_DOOROPEN          (SFX_NONE)
 # define SFX_DOORBLAZEOPEN     (SFX_NONE)
@@ -137,7 +141,7 @@ void T_Door(door_t* door)
                 SN_StartSequence(P_SectorOrigin(door->sector),
                                  SEQ_DOOR_STONE + xsec->seqType);
 #else
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSE);
+                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSING);
 #endif
                 break;
 
@@ -218,7 +222,7 @@ void T_Door(door_t* door)
 #endif
                 DD_ThinkerRemove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSE);
+                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSED);
 #endif
                 break;
 
@@ -369,7 +373,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             door->topHeight -= 4;
             door->state = DS_DOWN;
 #if !__JHEXEN__
-            sound = SFX_DOORCLOSE;
+            sound = SFX_DOORCLOSING;
 #endif
             break;
 
@@ -377,7 +381,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             door->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
             door->state = DS_DOWN;
 #if !__JHEXEN__
-            sound = SFX_DOORCLOSE;
+            sound = SFX_DOORCLOSING;
 #endif
             break;
 
@@ -442,7 +446,7 @@ int EV_DoDoor(LineDef *line, doortype_e type)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
 {
-    char                buf[160], *in, tmp[2];
+    char buf[160], *in, tmp[2];
 
     buf[0] = 0;
     tmp[1] = 0;
@@ -468,7 +472,7 @@ static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
         strcat(buf, tmp);
     }
 
-    P_SetMessage(p, buf, false);
+    P_SetMessage(p, 0, buf);
 }
 #endif
 
@@ -523,7 +527,7 @@ static boolean tryLockedDoor(LineDef *line, player_t *p)
     case 343:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY1))
         {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
+            P_SetMessage(p, 0, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -532,7 +536,7 @@ static boolean tryLockedDoor(LineDef *line, player_t *p)
     case 344:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY2))
         {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
+            P_SetMessage(p, 0, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -541,7 +545,7 @@ static boolean tryLockedDoor(LineDef *line, player_t *p)
     case 345:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY3))
         {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
+            P_SetMessage(p, 0, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }

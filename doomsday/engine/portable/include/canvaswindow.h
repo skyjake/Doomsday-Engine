@@ -52,6 +52,13 @@ public:
      */
     void setMoveFunc(void (*func)(CanvasWindow&));
 
+    /**
+     * Sets a callback function for notifying about window closing.
+     * The window closing is cancelled if the callback is defined
+     * and returned false.
+     */
+    void setCloseFunc(bool (*func)(CanvasWindow&));
+
     // Events.
     bool event(QEvent* ev);
     void closeEvent(QCloseEvent* ev);
@@ -61,8 +68,11 @@ public:
     /**
      * Must be called before any canvas windows are created. Defines the
      * default OpenGL format settings for the contained canvases.
+     *
+     * @return @c true, if the new format was applied. @c false, if the new
+     * format remains the same because none of the settings have changed.
      */
-    static void setDefaultGLFormat();
+    static bool setDefaultGLFormat();
 
 signals:
     

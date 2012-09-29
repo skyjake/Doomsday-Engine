@@ -44,13 +44,6 @@ struct aaboxd_s;
 #define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
                      (c) == '\r')
 
-// Memory.
-void*           M_Malloc(size_t size);
-void*           M_Calloc(size_t size);
-void*           M_Realloc(void* ptr, size_t size);
-void*           M_MemDup(const void* ptr, size_t size);
-void            M_Free(void* ptr);
-
 // File system utility routines.
 size_t M_ReadFile(char const* path, char** buffer);
 boolean M_WriteFile(char const* path, const char* source, size_t length);
@@ -145,6 +138,9 @@ angle_t M_PointXYToAngle(double x, double y);
  */
 double M_DirectionToAngle(double const direction[2]);
 double M_DirectionToAngleXY(double directionX, double directionY);
+
+/// @param angle  Normalised angle in the range [0..360].
+double M_InverseAngle(double angle);
 
 angle_t M_PointToAngle2(double const a[], double const b[]);
 angle_t M_PointXYToAngle2(double aX, double aY, double bX, double bY);

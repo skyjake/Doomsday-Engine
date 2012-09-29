@@ -599,7 +599,7 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
 void LG_SectorChanged(Sector* sector)
 {
     if(!lgInited) return;
-    if(!sector || 0 == sector->changedBlockCount && 0 == sector->blockCount) return;
+    if(!sector || (!sector->changedBlockCount && !sector->blockCount)) return;
 
     // Mark changed blocks and contributors.
     { uint i;

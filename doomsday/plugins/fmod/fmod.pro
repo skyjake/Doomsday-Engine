@@ -10,7 +10,7 @@ win32|macx: TARGET = dsFMOD
 
 VERSION = $$FMOD_VERSION
 
-#DEFINES += DENG_DSFMOD_DEBUG
+deng_debug: DEFINES += DENG_DSFMOD_DEBUG
 
 INCLUDEPATH += include
 
@@ -48,3 +48,9 @@ else {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
+
+macx {
+    linkToBundledLibdeng2(dsFMOD)
+    linkToBundledLibdeng(dsFMOD)
+}
+

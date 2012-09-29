@@ -605,7 +605,8 @@ static int rendSeg(void* hedge_, void* data)
 
     // We only want to draw twosided lines once.
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR)) return false;
+    if(frontSector // $degenleaf
+       && frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR)) return false;
 
     info = NULL;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
@@ -613,24 +614,28 @@ static int rendSeg(void* hedge_, void* data)
         backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
 
         // Perhaps this is a specially colored line?
-        info = AM_GetInfoForSpecialLine(UIAutomap_Config(obj), xLine->special, frontSector, backSector, UIAutomap_Flags(obj));
+        info = AM_GetInfoForSpecialLine(UIAutomap_Config(obj), xLine->special, xLine->flags,
+                                        frontSector, backSector, UIAutomap_Flags(obj));
         if(rs.objType != -1 && !info)
         {
             // Perhaps a default colored line?
-            if(!(frontSector && backSector) || (xLine->flags & ML_SECRET))
+            /// @todo Implement an option which changes the vanilla behavior of always
+            ///       coloring non-secret lines with the solid-wall color to instead
+            ///       use whichever color it would be if not flagged secret.
+            if(!backSector || !P_GetPtrp(line, DMU_SIDEDEF1) || (xLine->flags & ML_SECRET))
             {
                 // solid wall (well probably anyway...)
                 info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_SINGLESIDEDLINE);
             }
             else
             {
-                if(!FEQUAL(P_GetDoublep(backSector, DMU_FLOOR_HEIGHT),
+                if(!FEQUAL(P_GetDoublep(backSector,  DMU_FLOOR_HEIGHT),
                            P_GetDoublep(frontSector, DMU_FLOOR_HEIGHT)))
                 {
                     // Floor level change.
                     info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_FLOORCHANGELINE);
                 }
-                else if(!FEQUAL(P_GetDoublep(backSector, DMU_CEILING_HEIGHT),
+                else if(!FEQUAL(P_GetDoublep(backSector,  DMU_CEILING_HEIGHT),
                                 P_GetDoublep(frontSector, DMU_CEILING_HEIGHT)))
                 {
                     // Ceiling level change.
@@ -778,15 +783,16 @@ static void rendLinedef(LineDef* line, float r, float g, float b, float a,
  * Rather than draw the instead this will draw the linedef of which
  * the hedge is a part.
  */
-int rendPolyobjLine(void* linePtr, void* context)
+int rendPolyobjLine(LineDef* line, void* context)
 {
-    LineDef* line = (LineDef*)linePtr;
-    uiwidget_t* obj = (uiwidget_t*)context;
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    uiwidget_t* ob = (uiwidget_t*)context;
+    guidata_automap_t* am = (guidata_automap_t*)ob->typedata;
     const float alpha = uiRendState->pageAlpha;
     const automapcfg_lineinfo_t* info;
     automapcfg_objectname_t amo;
+    player_t* plr = rs.plr;
     xline_t* xLine;
+    assert(ob && ob->type == GUI_AUTOMAP);
 
     if(!(xLine = P_ToXLine(line))) return false;
 
@@ -796,16 +802,20 @@ int rendPolyobjLine(void* linePtr, void* context)
     if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES)) return false;
 
     amo = AMO_NONE;
-    if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[rs.plr - players])
+    if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
     {
         amo = AMO_SINGLESIDEDLINE;
     }
-    else if(am->flags && !(xLine->flags & ML_DONTDRAW))
-    {   // An as yet, unseen line.
-        amo = AMO_UNSEENLINE;
+    else if(rs.objType != -1 && UIAutomap_Reveal(ob))
+    {
+        if(!(xLine->flags & ML_DONTDRAW))
+        {
+            // An as yet, unseen line.
+            amo = AMO_UNSEENLINE;
+        }
     }
 
-    info = AM_GetInfoForLine(UIAutomap_Config(obj), amo);
+    info = AM_GetInfoForLine(UIAutomap_Config(ob), amo);
     if(info)
     {
         rendLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
@@ -816,15 +826,6 @@ int rendPolyobjLine(void* linePtr, void* context)
     xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
 
     return false; // Continue iteration.
-}
-
-int rendLinesOfPolyobj(Polyobj* po, void* context)
-{
-    int result = false; // Continue iteration.
-    LineDef** lineIter = po->lines;
-    while(*lineIter && !(result = rendPolyobjLine(*lineIter, context)))
-        lineIter++;
-    return result;
 }
 
 static void rendPolyobjs(uiwidget_t* ob)
@@ -841,7 +842,7 @@ static void rendPolyobjs(uiwidget_t* ob)
 
     // Draw any polyobjects in view.
     UIAutomap_PVisibleAABounds(ob, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-    P_PolyobjsBoxIterator(&aaBox, rendLinesOfPolyobj, ob);
+    P_PolyobjLinesBoxIterator(&aaBox, rendPolyobjLine, ob);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -1442,21 +1443,22 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_SetFloat(DGL_LINE_WIDTH, MINMAX_OF(.5f, cfg.automapLineWidth * aspectScale, 3.f));
 
 /*#if _DEBUG
-{ // Draw the rectangle described by the visible bounds.
-float topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
-UIAutomap_VisibleBounds(obj, topLeft, bottomRight, topRight, bottomLeft);
-DGL_Color4f(1, 1, 1, alpha);
-DGL_Begin(DGL_LINES);
-    DGL_Vertex2f(topLeft[0], topLeft[1]);
-    DGL_Vertex2f(topRight[0], topRight[1]);
-    DGL_Vertex2f(topRight[0], topRight[1]);
-    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
-    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
-    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
-    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
-    DGL_Vertex2f(topLeft[0], topLeft[1]);
-DGL_End();
-}
+    // Draw the rectangle described by the visible bounds.
+    {
+    coord_t topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
+    UIAutomap_VisibleBounds(obj, topLeft, bottomRight, topRight, bottomLeft);
+    DGL_Color4f(1, 1, 1, alpha);
+    DGL_Begin(DGL_LINES);
+        DGL_Vertex2f(    topLeft[0],     topLeft[1]);
+        DGL_Vertex2f(   topRight[0],    topRight[1]);
+        DGL_Vertex2f(   topRight[0],    topRight[1]);
+        DGL_Vertex2f(bottomRight[0], bottomRight[1]);
+        DGL_Vertex2f(bottomRight[0], bottomRight[1]);
+        DGL_Vertex2f( bottomLeft[0],  bottomLeft[1]);
+        DGL_Vertex2f( bottomLeft[0],  bottomLeft[1]);
+        DGL_Vertex2f(    topLeft[0],     topLeft[1]);
+    DGL_End();
+    }
 #endif*/
 
     if(amMaskTexture)

@@ -41,6 +41,7 @@
 #  define strupr _strupr
 #endif
 
+#include <de/c_wrapper.h>
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
@@ -53,8 +54,8 @@
 #define VERBOSE(code)       { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
-extern game_import_t gi;
-extern game_export_t gx;
+DENG_EXTERN_C game_import_t gi;
+DENG_EXTERN_C game_export_t gx;
 
 //
 // Global parameters/defines.
@@ -266,7 +267,7 @@ typedef enum {
 
 #define BLINKTHRESHOLD      (4*TICRATE)
 
-enum { VX, VY, VZ }; // Vertex indices.
+//enum { VX, VY, VZ }; // Vertex indices.
 
 enum { CR, CG, CB, CA }; // Color indices.
 

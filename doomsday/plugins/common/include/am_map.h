@@ -28,101 +28,101 @@
 #define AUTOMAP_OPEN_SECONDS    (.3f)
 
 #if __JDOOM__ || __JDOOM64__
-#define BLACK           (0)
-#define WHITE           (256-47)
-#define REDS            (256-5*16)
-#define GREENS          (7*16)
-#define YELLOWS         (256-32+7)
-#define GRAYS           (6*16)
-#define BROWNS          (4*16)
+#define BLACK                   (0)
+#define WHITE                   (256-47)
+#define REDS                    (256-5*16)
+#define GREENS                  (7*16)
+#define YELLOWS                 (256-32+7)
+#define GRAYS                   (6*16)
+#define BROWNS                  (4*16)
 
-#define WALLCOLORS      REDS
-#define TSWALLCOLORS    GRAYS
-#define CDWALLCOLORS    YELLOWS
-#define FDWALLCOLORS    BROWNS
-#define THINGCOLORS     GREENS
-#define BACKGROUND      BLACK
+#define WALLCOLORS              REDS
+#define TSWALLCOLORS            GRAYS
+#define CDWALLCOLORS            YELLOWS
+#define FDWALLCOLORS            BROWNS
+#define THINGCOLORS             GREENS
+#define BACKGROUND              BLACK
 
 // Keys for Baby Mode
-#define KEY1_COLOR      (197)        // Blue Key
-#define KEY2_COLOR      (256-5*16)   // Red Key
-#define KEY3_COLOR      (256-32+7)   // Yellow Key
-#define KEY4_COLOR      (256-32+7)   // Yellow Skull
-#define KEY5_COLOR      (256-5*16)   // Red Skull
-#define KEY6_COLOR      (197)        // Blue Skull
+#define KEY1_COLOR              (197) // Blue Key
+#define KEY2_COLOR              (256-5*16) // Red Key
+#define KEY3_COLOR              (256-32+7) // Yellow Key
+#define KEY4_COLOR              (256-32+7) // Yellow Skull
+#define KEY5_COLOR              (256-5*16) // Red Skull
+#define KEY6_COLOR              (197) // Blue Skull
 
-#define AM_PLR1_COLOR   GREENS
-#define AM_PLR2_COLOR   GRAYS
-#define AM_PLR3_COLOR   BROWNS
-#define AM_PLR4_COLOR   REDS
+#define AM_PLR1_COLOR           GREENS
+#define AM_PLR2_COLOR           GRAYS
+#define AM_PLR3_COLOR           BROWNS
+#define AM_PLR4_COLOR           REDS
 #endif
 
 #ifdef __JHERETIC__
-#define BLACK           (0)
-#define WHITE           (4*8)
-#define REDS            (12*8)
-#define GREENS          (33*8)
-#define YELLOWS         (10*8)
-#define GRAYS           (5*8)
-#define BROWNS          (14*8-2)
-#define PARCH           (13*8-1)
+#define BLACK                   (0)
+#define WHITE                   (4*8)
+#define REDS                    (12*8)
+#define GREENS                  (33*8)
+#define YELLOWS                 (10*8)
+#define GRAYS                   (5*8)
+#define BROWNS                  (14*8-2)
+#define PARCH                   (13*8-1)
 
-#define WALLCOLORS      REDS
-#define TSWALLCOLORS    GRAYS
-#define CDWALLCOLORS    YELLOWS
-#define FDWALLCOLORS    BROWNS
-#define THINGCOLORS     4
-#define BACKGROUND      PARCH
+#define WALLCOLORS              REDS
+#define TSWALLCOLORS            GRAYS
+#define CDWALLCOLORS            YELLOWS
+#define FDWALLCOLORS            BROWNS
+#define THINGCOLORS             (4)
+#define BACKGROUND              PARCH
 
 // Keys for Baby Mode
-#define KEY1_COLOR      (144) // Green Key
-#define KEY2_COLOR      (197) // Yellow Key
-#define KEY3_COLOR      (220) // Blue Key
+#define KEY1_COLOR              (144) // Green Key
+#define KEY2_COLOR              (197) // Yellow Key
+#define KEY3_COLOR              (220) // Blue Key
 
-#define AM_PLR1_COLOR   (220)
-#define AM_PLR2_COLOR   (197)
-#define AM_PLR3_COLOR   (150)
-#define AM_PLR4_COLOR   (144)
+#define AM_PLR1_COLOR           (220)
+#define AM_PLR2_COLOR           (197)
+#define AM_PLR3_COLOR           (150)
+#define AM_PLR4_COLOR           (144)
 #endif
 
 
 #ifdef __JHEXEN__
 // For use if I do walls with outsides/insides
-#define REDS        12*8
-#define BLUES       (256-4*16+8)
-#define GREENS      (33*8)
-#define GRAYS       (5*8)
-#define BROWNS      (14*8)
-#define YELLOWS     10*8
-#define BLACK       0
-#define WHITE       4*8
-#define PARCH       13*8-1
-#define BLOODRED    177
+#define REDS                    (12*8)
+#define BLUES                   (256-4*16+8)
+#define GREENS                  (33*8)
+#define GRAYS                   (5*8)
+#define BROWNS                  (14*8)
+#define YELLOWS                 (10*8)
+#define BLACK                   (0)
+#define WHITE                   (4*8)
+#define PARCH                   (13*8-1)
+#define BLOODRED                (177)
 
 // Automap colors
-#define BACKGROUND  PARCH
-#define WALLCOLORS  83      // REDS
-#define TSWALLCOLORS    GRAYS
-#define FDWALLCOLORS    96      // BROWNS
-#define CDWALLCOLORS    107     // YELLOWS
-#define THINGCOLORS GREENS
-#define SECRETWALLCOLORS WALLCOLORS
+#define BACKGROUND              PARCH
+#define WALLCOLORS              (83) // REDS
+#define TSWALLCOLORS            GRAYS
+#define FDWALLCOLORS            (96) // BROWNS
+#define CDWALLCOLORS            (107) // YELLOWS
+#define THINGCOLORS             (255)
+#define SECRETWALLCOLORS        WALLCOLORS
 
-#define BORDEROFFSET 4
+#define BORDEROFFSET            (4)
 
 // Automap colors
-#define AM_PLR1_COLOR 157       // Blue
-#define AM_PLR2_COLOR 177       // Red
-#define AM_PLR3_COLOR 137       // Yellow
-#define AM_PLR4_COLOR 198       // Green
-#define AM_PLR5_COLOR 215       // Jade
-#define AM_PLR6_COLOR 32        // White
-#define AM_PLR7_COLOR 106       // Hazel
-#define AM_PLR8_COLOR 234       // Purple
+#define AM_PLR1_COLOR           (157) // Blue
+#define AM_PLR2_COLOR           (177) // Red
+#define AM_PLR3_COLOR           (137) // Yellow
+#define AM_PLR4_COLOR           (198) // Green
+#define AM_PLR5_COLOR           (215) // Jade
+#define AM_PLR6_COLOR           (32)  // White
+#define AM_PLR7_COLOR           (106) // Hazel
+#define AM_PLR8_COLOR           (234) // Purple
 
-#define KEY1   197  // HEXEN -
-#define KEY2   144  // HEXEN -
-#define KEY3   220  // HEXEN -
+#define KEY1                    (197) // HEXEN -
+#define KEY2                    (144) // HEXEN -
+#define KEY3                    (220) // HEXEN -
 
 #endif
 
@@ -159,6 +159,7 @@ enum {
 typedef struct {
     int reqSpecial;
     int reqSided;
+    int reqNotFlagged;
     int reqAutomapFlags;
     float rgba[4];
     blendmode_t blendMode;
@@ -183,7 +184,9 @@ automapcfg_t* ST_AutomapConfig(void);
 void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customPal);
 
 const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_objectname_t name);
-const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special, const Sector* frontsector, const Sector* backsector, int automapFlags);
+
+const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int special,
+    int flags, const Sector* frontsector, const Sector* backsector, int automapFlags);
 
 void AM_GetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float* r, float* g, float* b, float* a);
 void AM_SetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float r, float g, float b, float a);

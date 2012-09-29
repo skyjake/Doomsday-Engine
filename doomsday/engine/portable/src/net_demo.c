@@ -127,6 +127,11 @@ void Demo_Init(void)
  */
 boolean Demo_BeginRecording(const char* fileName, int plrNum)
 {
+    DENG_UNUSED(fileName);
+    DENG_UNUSED(plrNum);
+    return false;
+
+#if 0
     client_t* cl = &clients[plrNum];
     player_t* plr = &ddPlayers[plrNum];
     ddstring_t buf;
@@ -136,7 +141,7 @@ boolean Demo_BeginRecording(const char* fileName, int plrNum)
         return false;
 
     // Compose the real file name.
-    Str_Init(&buf);
+    Str_InitStd(&buf);
     Str_Appendf(&buf, "%s%s", demoPath, fileName);
     F_ExpandBasePath(&buf, &buf);
     F_ToNativeSlashes(&buf, &buf);
@@ -177,11 +182,12 @@ boolean Demo_BeginRecording(const char* fileName, int plrNum)
 
     // The operation is a success.
     return true;
+#endif
 }
 
 void Demo_PauseRecording(int playerNum)
 {
-    client_t       *cl = clients + playerNum;
+    client_t *cl = clients + playerNum;
 
     // A demo is not being recorded?
     if(!cl->recording || cl->recordPaused)
@@ -325,7 +331,7 @@ boolean Demo_BeginPlayback(const char* fileName)
     }}
 
     // Compose the real file name.
-    Str_Init(&buf);
+    Str_InitStd(&buf);
     Str_Set(&buf, fileName);
     if(!F_IsAbsolute(&buf))
     {
@@ -393,7 +399,7 @@ void Demo_StopPlayback(void)
     */
 
     // "Play demo once" mode?
-    if(ArgCheck("-playdemo"))
+    if(CommandLine_Check("-playdemo"))
         Sys_Quit();
 }
 

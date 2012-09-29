@@ -321,7 +321,7 @@ boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    IterList_Empty(spechit);
+    IterList_Clear(spechit);
 
     tmBoxExpanded.minX = tmBox.minX - MAXRADIUS;
     tmBoxExpanded.minY = tmBox.minY - MAXRADIUS;
@@ -348,6 +348,19 @@ boolean P_TeleportMove(mobj_t* thing, coord_t x, coord_t y, boolean alwaysStomp)
     P_MobjClearSRVO(thing);
 
     return true;
+}
+
+void P_TelefragMobjsTouchingPlayers(void)
+{
+    uint i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        P_TeleportMove(ddplr->mo, ddplr->mo->origin[VX], ddplr->mo->origin[VY], true);
+    }
 }
 
 /**
@@ -608,7 +621,11 @@ int PIT_CheckThing(mobj_t* thing, void* data)
         }
 #endif
 #if __JDOOM__
-        if(tmThing->damage == DDMAXINT) //// \kludge to support old save games.
+        /// @attention Kludge:
+        /// Older save versions did not serialize the damage property,
+        /// so here we take the damage from the current Thing definition.
+        /// @fixme Do this during map state deserialization.
+        if(tmThing->damage == DDMAXINT)
             damage = tmThing->info->damage;
         else
 #endif
@@ -843,7 +860,11 @@ int PIT_CheckThing(mobj_t* thing, void* data)
             S_StartSound(SFX_RIPSLOP, tmThing);
 #endif
 #if __JDOOM__
-            if(tmThing->damage == DDMAXINT) //// \kludge to support old save games.
+            /// @attention Kludge:
+            /// Older save versions did not serialize the damage property,
+            /// so here we take the damage from the current Thing definition.
+            /// @fixme Do this during map state deserialization.
+            if(tmThing->damage == DDMAXINT)
                 damage = tmThing->info->damage;
             else
 #endif
@@ -860,13 +881,17 @@ int PIT_CheckThing(mobj_t* thing, void* data)
                 thing->mom[MY] += tmThing->mom[MY] / 4;
                 NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
             }
-            IterList_Empty(spechit);
+            IterList_Clear(spechit);
             return false;
         }
 
         // Do damage
 #if __JDOOM__
-        if(tmThing->damage == DDMAXINT) //// \kludge to support old save games.
+        /// @attention Kludge:
+        /// Older save versions did not serialize the damage property,
+        /// so here we take the damage from the current Thing definition.
+        /// @fixme Do this during map state deserialization.
+        if(tmThing->damage == DDMAXINT)
             damage = tmThing->info->damage;
         else
 #endif
@@ -906,13 +931,13 @@ int PIT_CheckThing(mobj_t* thing, void* data)
         NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
     }
 
-    // \kludge: Always treat blood as a solid.
+    // @fixme Kludge: Always treat blood as a solid.
     if(tmThing->type == MT_BLOOD)
         solid = true;
     else
         solid = (thing->flags & MF_SOLID) && !(thing->flags & MF_NOCLIP) &&
                 (tmThing->flags & MF_SOLID);
-    // \kludge: end.
+    // Kludge end.
 
 #if __JHEXEN__
     if(tmThing->player && tmThing->onMobj && solid)
@@ -1041,7 +1066,7 @@ int PIT_CheckLine(LineDef* ld, void* data)
         {
             // Missiles can trigger impact specials
             if(xline->special)
-                IterList_Push(spechit, ld);
+                IterList_PushBack(spechit, ld);
         }
         return true;
     }
@@ -1118,7 +1143,7 @@ int PIT_CheckLine(LineDef* ld, void* data)
 
     // If contacted a special line, add it to the list.
     if(P_ToXLine(ld)->special)
-        IterList_Push(spechit, ld);
+        IterList_PushBack(spechit, ld);
 
 #if !__JHEXEN__
     tmThing->wallHit = false;
@@ -1189,7 +1214,7 @@ boolean P_CheckPositionXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
     tmFloorMaterial = P_GetPtrp(newSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    IterList_Empty(spechit);
+    IterList_Clear(spechit);
 
 #if __JHEXEN__
     if((tmThing->flags & MF_NOCLIP) && !(tmThing->flags & MF_SKULLFLY))
@@ -1456,7 +1481,7 @@ static boolean P_TryMove2(mobj_t* thing, coord_t x, coord_t y, boolean dropoff)
 #endif
 
 #if __JDOOM64__
-        /// @fixme D64 Mother demon fire attack.
+        /// @todo D64 Mother demon fire attack.
         if(!(thing->flags & MF_TELEPORT) /*&& thing->type != MT_SPAWNFIRE*/
             && !isRemotePlayer
             && tmFloorZ - thing->origin[VZ] > 24)
@@ -1650,7 +1675,7 @@ boolean P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
 }
 
 /**
- * @fixme This routine has gotten way too big, split if(in->isaline)
+ * @todo This routine has gotten way too big, split if(in->isaline)
  *        to a seperate routine?
  */
 int PTR_ShootTraverse(const intercept_t* in, void* parameters)
@@ -2862,21 +2887,20 @@ boolean P_TestMobjLocation(mobj_t* mo)
 #endif
 
 #if __JDOOM64__ || __JHERETIC__
-static void CheckMissileImpact(mobj_t* mobj)
+static void CheckMissileImpact(mobj_t* mo)
 {
-    int                 size;
-    LineDef*            ld;
+    LineDef* ld;
 
-    if(IS_CLIENT || !mobj->target || !mobj->target->player || !(mobj->flags & MF_MISSILE))
-        return;
-
-    if(!(size = IterList_Size(spechit)))
-        return;
+    if(IS_CLIENT) return;
+    if(!mo || !mo->target || !mo->target->player || !(mo->flags & MF_MISSILE)) return;
+    if(IterList_Empty(spechit)) return;
 
     IterList_SetIteratorDirection(spechit, ITERLIST_BACKWARD);
     IterList_RewindIterator(spechit);
     while((ld = IterList_MoveIterator(spechit)) != NULL)
-        P_ActivateLine(ld, mobj->target, 0, SPAC_IMPACT);
+    {
+        P_ActivateLine(ld, mo->target, 0, SPAC_IMPACT);
+    }
 }
 #endif
 
@@ -2968,7 +2992,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
         return NULL;
     }
 
-    /// @fixme Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
+    /// @todo Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
 
     tmThing = thing;
     oldMo = *thing; // Save the old mobj before the fake z movement.
@@ -2997,7 +3021,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmCeilingZ = P_GetDoublep(newSSec, DMU_CEILING_HEIGHT);
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 
-    IterList_Empty(spechit);
+    IterList_Clear(spechit);
 
     if(tmThing->flags & MF_NOCLIP)
         goto nothingUnderneath;
@@ -3323,7 +3347,7 @@ boolean P_UsePuzzleItem(player_t* player, int itemType)
 
     if(!puzzleActivated)
     {
-        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED, false);
+        P_SetYellowMessage(player, 0, TXT_USEPUZZLEFAILED);
     }
 
     return puzzleActivated;

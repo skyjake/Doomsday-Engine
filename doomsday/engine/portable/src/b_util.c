@@ -264,8 +264,7 @@ boolean B_ParseAnglePosition(const char* desc, float* pos)
  */
 boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
 {
-    boolean successful = false;
-    ddstring_t* str = Str_New();
+    AutoStr* str = AutoStr_NewStd();
     ddeventtype_t type;
 
     // First, we expect to encounter a device name.
@@ -286,14 +285,14 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseModifierId(Str_Text(str), &cond->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // The final part of a modifier is the state.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseToggleState(Str_Text(str), &cond->state))
         {
-            goto parseEnded;
+            return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "key"))
@@ -305,14 +304,14 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseKeyId(Str_Text(str), &cond->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         // The final part of a key event is the state of the key toggle.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseToggleState(Str_Text(str), &cond->state))
         {
-            goto parseEnded;
+            return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
@@ -323,7 +322,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cond->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         desc = Str_CopyDelim(str, desc, '-');
@@ -332,7 +331,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_TOGGLE_STATE;
             if(!B_ParseToggleState(Str_Text(str), &cond->state))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else if(type == E_AXIS)
@@ -340,7 +339,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_AXIS_BEYOND;
             if(!B_ParseAxisPosition(Str_Text(str), &cond->state, &cond->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
@@ -352,7 +351,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseJoystickTypeAndId(cond->device, Str_Text(str), &type, &cond->id))
         {
-            goto parseEnded;
+            return false;
         }
 
         desc = Str_CopyDelim(str, desc, '-');
@@ -361,7 +360,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_TOGGLE_STATE;
             if(!B_ParseToggleState(Str_Text(str), &cond->state))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else if(type == E_AXIS)
@@ -369,7 +368,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_AXIS_BEYOND;
             if(!B_ParseAxisPosition(Str_Text(str), &cond->state, &cond->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
         else // Angle.
@@ -377,14 +376,14 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             cond->type = SCT_ANGLE_AT;
             if(!B_ParseAnglePosition(Str_Text(str), &cond->pos))
             {
-                goto parseEnded;
+                return false;
             }
         }
     }
     else
     {
         Con_Message("B_ParseEvent: Device \"%s\" unknown.\n", Str_Text(str));
-        goto parseEnded;
+        return false;
     }
 
     // Check for valid toggle states.
@@ -393,7 +392,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     {
         Con_Message("B_ParseStateCondition: \"%s\": Toggle condition can only be 'up' or 'down'.\n",
                     desc);
-        goto parseEnded;
+        return false;
     }
 
     // Finally, there may be the negation at the end.
@@ -407,15 +406,11 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     if(desc)
     {
         Con_Message("B_ParseStateCondition: Unrecognized \"%s\".\n", desc);
-        goto parseEnded;
+        return false;
     }
 
     // No errors detected.
-    successful = true;
-
-parseEnded:
-    Str_Delete(str);
-    return successful;
+    return true;
 }
 
 boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
@@ -648,23 +643,26 @@ void B_AppendEventToString(const ddevent_t* ev, ddstring_t* str)
 
     switch(ev->type)
     {
-        case E_TOGGLE:
-            B_AppendToggleStateToString(ev->toggle.state == ETOG_DOWN? EBTOG_DOWN :
-                                        ev->toggle.state == ETOG_UP? EBTOG_UP :
-                                        EBTOG_REPEAT, str);
-            break;
+    case E_TOGGLE:
+        B_AppendToggleStateToString(ev->toggle.state == ETOG_DOWN? EBTOG_DOWN :
+                                    ev->toggle.state == ETOG_UP? EBTOG_UP :
+                                    EBTOG_REPEAT, str);
+        break;
 
-        case E_AXIS:
-            B_AppendAxisPositionToString(ev->axis.pos >= 0? EBAXIS_BEYOND_POSITIVE :
-                                         EBAXIS_BEYOND_NEGATIVE, ev->axis.pos, str);
-            break;
+    case E_AXIS:
+        B_AppendAxisPositionToString(ev->axis.pos >= 0? EBAXIS_BEYOND_POSITIVE :
+                                     EBAXIS_BEYOND_NEGATIVE, ev->axis.pos, str);
+        break;
 
-        case E_ANGLE:
-            B_AppendAnglePositionToString(ev->angle.pos, str);
-            break;
+    case E_ANGLE:
+        B_AppendAnglePositionToString(ev->angle.pos, str);
+        break;
 
-        case E_SYMBOLIC:
-            Str_Appendf(str, "-%s", ev->symbolic.name);
-            break;
+    case E_SYMBOLIC:
+        Str_Appendf(str, "-%s", ev->symbolic.name);
+        break;
+
+    case E_FOCUS:
+        break;
     }
 }

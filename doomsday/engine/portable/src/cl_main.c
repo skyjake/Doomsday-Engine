@@ -75,9 +75,9 @@ void Cl_InitID(void)
     FILE*               file;
     size_t              result;
 
-    if((i = ArgCheckWith("-id", 1)) != 0)
+    if((i = CommandLine_CheckWith("-id", 1)) != 0)
     {
-        clientID = strtoul(Argv(i + 1), 0, 0);
+        clientID = strtoul(CommandLine_At(i + 1), 0, 0);
         Con_Message("Cl_InitID: Using custom id 0x%08x.\n", clientID);
         return;
     }

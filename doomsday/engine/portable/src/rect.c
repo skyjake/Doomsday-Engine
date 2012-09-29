@@ -284,7 +284,7 @@ RectRaw* Rect_Normalized(const Rect* rect, RectRaw* normalized)
     return normalized;
 }
 
-/// \assume  This and @a other have been normalized.
+/// @pre  This and @a other have been normalized.
 static Rect* Rect_UniteRaw2(Rect* r, const RectRaw* other)
 {
     Point2Raw oldOrigin;
@@ -357,8 +357,8 @@ boolean Rect_Equality(const Rect* r, const Rect* other)
 {
     assert(r);
     if(!other) return false;
-    return r == other || Point2_Equality(r->origin, Rect_Origin(other)) &&
-                         Size2_Equality(r->size, Rect_Size(other));
+    return r == other || (Point2_Equality(r->origin, Rect_Origin(other)) &&
+                          Size2_Equality(r->size, Rect_Size(other)));
 }
 
 Rectf* Rectf_New(void)
@@ -607,7 +607,7 @@ RectRawf* Rectf_Normalized(const Rectf* rect, RectRawf* normalized)
     return normalized;
 }
 
-/// \assume  This and @a other have been normalized.
+/// @pre  This and @a other have been normalized.
 static Rectf* Rectf_UniteRaw2(Rectf* r, const RectRawf* other)
 {
     Point2Rawf oldOrigin;
@@ -680,6 +680,6 @@ boolean Rectf_Equality(const Rectf* r, const Rectf* other)
 {
     assert(r);
     if(!other) return false;
-    return r == other || Point2f_Equality(r->origin, Rectf_Origin(other)) &&
-                         Size2f_Equality(r->size, Rectf_Size(other));
+    return r == other || (Point2f_Equality(r->origin, Rectf_Origin(other)) &&
+                          Size2f_Equality(r->size, Rectf_Size(other)));
 }

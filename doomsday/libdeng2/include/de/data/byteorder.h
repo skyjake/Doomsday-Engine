@@ -89,6 +89,27 @@ public:
     void foreignToNative(const dint16& foreignValue, dint16& nativeValue) const;
     void foreignToNative(const dint32& foreignValue, dint32& nativeValue) const;
     void foreignToNative(const dint64& foreignValue, dint64& nativeValue) const;
+
+    // Floating point.
+    void nativeToForeign(const dfloat&  nativeValue,  dfloat&  foreignValue) const;
+    void nativeToForeign(const ddouble& nativeValue,  ddouble& foreignValue) const;
+    void foreignToNative(const dfloat&  foreignValue, dfloat&  nativeValue) const;
+    void foreignToNative(const ddouble& foreignValue, ddouble& nativeValue) const;
+
+    // Convenience.
+    template <typename T>
+    T toForeign(const T& nativeValue) const {
+        T foreignValue;
+        nativeToForeign(nativeValue, foreignValue);
+        return foreignValue;
+    }
+
+    template <typename T>
+    T toNative(const T& foreignValue) const {
+        T nativeValue;
+        foreignToNative(foreignValue, nativeValue);
+        return nativeValue;
+    }
 };
 
 /**
@@ -139,8 +160,8 @@ inline duint16 swap16(const duint16& n) {
 
 /// Swaps the bytes of a 32-bit unsigned integer.
 inline duint32 swap32(const duint32& n) {
-    return (((n & 0xff) << 24) | ((n & 0xff00) << 8) |
-        ((n & 0xff0000) >> 8) | ((n & 0xff000000) >> 24));
+    return ( ((n & 0xff)     << 24) | ((n & 0xff00)     << 8)
+           | ((n & 0xff0000) >> 8)  | ((n & 0xff000000) >> 24));
 }
 
 /// Swaps the bytes in a 64-bit unsigned integer.

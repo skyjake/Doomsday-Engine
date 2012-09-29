@@ -105,7 +105,7 @@ Finale
   Script {
     NoSkip # This is the end, no more levels after this.
     Music "victor"
-    Flat FLOOR4_8
+    Flat Values:BGFLATE1
     Wait 0.5
     TextDef msg 10 10 "E1TEXT"
     WaitText msg
@@ -128,20 +128,20 @@ Finale
 {
   After = "E2M8";
   Script {
-    noskip; # This is the end, no more levels after this.
-    music "victor";
-    flat SFLR6_1;
-    wait 0.5;
-    textdef msg 10 10 "E2TEXT";
-    waittext msg;
-    wait 7; # The original TEXTWAIT is 250 tics.
+    noskip # This is the end, no more levels after this.
+    music "victor"
+    flat Values:BGFLATE2
+    wait 0.5
+    textdef msg 10 10 "E2TEXT"
+    waittext msg
+    wait 7 # The original TEXTWAIT is 250 tics.
     # Fade to the Deimos picture.
-    patch back 0 0 VICTORY2;
-    alpha back 0;
-    in 2 alpha back 1; textalpha msg 0;
-    wait 2;
-    deltext msg;
-    noflat;
+    patch back 0 0 VICTORY2
+    alpha back 0
+    in 2 alpha back 1; textalpha msg 0
+    wait 2
+    deltext msg
+    noflat
   };
 }
 
@@ -152,7 +152,7 @@ Finale
   Script {
     noskip # This is the end, no more levels after this.
     music "victor"
-    flat MFLR8_4
+    flat Values:BGFLATE3
     wait 0.5
     textdef msg 10 10 "E3TEXT"
     waittext msg
@@ -190,7 +190,7 @@ Finale
   Script {
     noskip # This is the end, no more levels after this.
     music "victor"
-    flat MFLR8_3
+    flat Values:BGFLATE4
     wait 0.5
     textdef msg 10 10 "E4TEXT"
     waittext msg

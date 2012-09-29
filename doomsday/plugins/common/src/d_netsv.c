@@ -630,15 +630,10 @@ void NetSv_NewPlayerEnters(int plrNum)
     }
     else
     {
-#if __JHEXEN__
-        uint nextMapEntryPoint = rebornPosition;
-#else
-        uint nextMapEntryPoint = 0;
-#endif
         playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
         const playerstart_t* start;
 
-        if((start = P_GetPlayerStart(nextMapEntryPoint, plrNum, false)))
+        if((start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false)))
         {
             const mapspot_t* spot = &mapSpots[start->spot];
             P_SpawnPlayer(plrNum, pClass, spot->origin[VX], spot->origin[VY],
@@ -650,7 +645,7 @@ void NetSv_NewPlayerEnters(int plrNum)
             P_SpawnPlayer(plrNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, true, true);
         }
 
-        /// @fixme Spawn a telefog in front of the player.
+        /// @todo Spawn a telefog in front of the player.
     }
 
     // Get rid of anybody at the starting spot.
@@ -1159,25 +1154,16 @@ void NetSv_ChangePlayerInfo(int from, Reader* msg)
                 from, cfg.playerColor[from], newClass);
 #endif
 
-#if __JHEXEN__
-    // The 'colormap' variable controls the setting of the color
-    // translation flags when the player is (re)spawned (which will
-    // be done in P_PlayerChangeClass).
+    // The 'colorMap' variable controls the setting of the color
+    // translation flags when the player is (re)spawned.
     pl->colorMap = cfg.playerColor[from];
-#else
+
     if(pl->plr->mo)
     {
         // Change the player's mobj's color translation flags.
         pl->plr->mo->flags &= ~MF_TRANSLATION;
-        pl->plr->mo->flags |= col << MF_TRANSSHIFT;
+        pl->plr->mo->flags |= cfg.playerColor[from] << MF_TRANSSHIFT;
     }
-#endif
-
-    /*
-#if __JHEXEN__
-    P_PlayerChangeClass(pl, cfg.playerClass[from]);
-#endif
-    */
 
 #ifdef _DEBUG
     if(pl->plr->mo)
@@ -1299,18 +1285,25 @@ void NetSv_SendJumpPower(int target, float power)
 void NetSv_ExecuteCheat(int player, const char* command)
 {
     // Killing self is always allowed.
+    /// @todo fixme: really? Even in deathmatch??
     if(!strnicmp(command, "suicide", 7))
     {
         DD_Executef(false, "suicide %i", player);
     }
-    else if(netSvAllowCheats) // If cheating is not allowed, we ain't doing nuthin'.
+
+    // If cheating is not allowed, we ain't doing nuthin'.
+    if(!netSvAllowCheats)
     {
-        if(!strnicmp(command, "god", 3) ||
-           !strnicmp(command, "noclip", 6) ||
-           !strnicmp(command, "give", 4))
-        {
-            DD_Executef(false, "%s %i", command, player);
-        }
+        NetSv_SendMessage(player, "--- CHEATS DISABLED ON THIS SERVER ---");
+        return;
+    }
+
+    /// @todo Can't we use the multipurpose cheat command here?
+    if(!strnicmp(command, "god",    3) ||
+       !strnicmp(command, "noclip", 6) ||
+       !strnicmp(command, "give",   4))
+    {
+        DD_Executef(false, "%s %i", command, player);
     }
 }
 

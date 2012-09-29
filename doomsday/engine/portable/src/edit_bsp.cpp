@@ -46,8 +46,9 @@ void BspBuilder_Register(void)
 
 BspBuilder_c* BspBuilder_New(GameMap* map, uint* numEditableVertexes, Vertex*** editableVertexes)
 {
+    DENG2_ASSERT(map);
     BspBuilder_c* builder = static_cast<BspBuilder_c*>(malloc(sizeof *builder));
-    builder->inst = new BspBuilder(map, numEditableVertexes, editableVertexes);
+    builder->inst = new BspBuilder(*map, numEditableVertexes, editableVertexes);
     return builder;
 }
 
@@ -87,9 +88,9 @@ static int hedgeCollector(BspTreeNode& tree, void* parameters)
         do
         {
             // Take ownership of this HEdge.
-            runtime_mapdata_header_t const* hdr = reinterpret_cast<runtime_mapdata_header_t const*>(hedge);
+            runtime_mapdata_header_t* hdr = reinterpret_cast<runtime_mapdata_header_t*>(hedge);
             Q_ASSERT(hdr);
-            p->builder->releaseOwnership(*hdr);
+            p->builder->take(hdr);
 
             // Add this HEdge to the LUT.
             hedge->index = p->curIdx++;
@@ -133,12 +134,9 @@ static void finishHEdges(GameMap* map)
 
         if(hedge->lineDef)
         {
-            LineDef* ldef = hedge->lineDef;
             Vertex* vtx = hedge->lineDef->L_v(hedge->side);
 
-            if(ldef->L_side(hedge->side))
-                hedge->sector = ldef->L_side(hedge->side)->sector;
-
+            hedge->sector = hedge->lineDef->L_sector(hedge->side);
             hedge->offset = V2d_Distance(hedge->HE_v1origin, vtx->origin);
         }
 
@@ -171,7 +169,7 @@ static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
     // Take ownership of this BspNode.
     Q_ASSERT(tree.userData());
     BspNode* node = reinterpret_cast<BspNode*>(tree.userData());
-    p->builder->releaseOwnership(*tree.userData());
+    p->builder->take(tree.userData());
 
     // Add this BspNode to the LUT.
     node->index = p->nodeCurIndex++;
@@ -184,7 +182,7 @@ static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
             // Take ownership of this BspLeaf.
             Q_ASSERT(right->userData());
             BspLeaf* leaf = reinterpret_cast<BspLeaf*>(right->userData());
-            p->builder->releaseOwnership(*right->userData());
+            p->builder->take(right->userData());
 
             // Add this BspLeaf to the LUT.
             leaf->index = p->leafCurIndex++;
@@ -199,7 +197,7 @@ static int populateBspObjectLuts(BspTreeNode& tree, void* parameters)
             // Take ownership of this BspLeaf.
             Q_ASSERT(left->userData());
             BspLeaf* leaf = reinterpret_cast<BspLeaf*>(left->userData());
-            p->builder->releaseOwnership(*left->userData());
+            p->builder->take(left->userData());
 
             // Add this BspLeaf to the LUT.
             leaf->index = p->leafCurIndex++;
@@ -222,20 +220,21 @@ static void hardenBSP(BspBuilder& builder, GameMap* dest)
     dest->bspLeafs = static_cast<BspLeaf**>(Z_Calloc(dest->numBspLeafs * sizeof(BspLeaf*), PU_MAPSTATIC, 0));
 
     BspTreeNode* rootNode = builder.root();
-    if(rootNode && rootNode->isLeaf())
+    dest->bsp = rootNode->userData();
+
+    if(rootNode->isLeaf())
     {
         // Take ownership of this leaf.
         Q_ASSERT(rootNode->userData());
         BspLeaf* leaf = reinterpret_cast<BspLeaf*>(rootNode->userData());
-        builder.releaseOwnership(*rootNode->userData());
+        builder.take(rootNode->userData());
 
         // Add this BspLeaf to the LUT.
         leaf->index = 0;
         dest->bspLeafs[0] = leaf;
+
         return;
     }
-
-    dest->bsp = rootNode->userData();
 
     populatebspobjectluts_params_t p;
     p.builder = &builder;
@@ -277,9 +276,9 @@ static void hardenVertexes(BspBuilder& builder, GameMap* map,
     for(uint i = 0; i < bspVertexCount; ++i, ++n)
     {
         Vertex& dest = map->vertexes[n];
-        Vertex const& src = builder.vertex(i);
+        Vertex& src  = builder.vertex(i);
 
-        builder.releaseOwnership(*reinterpret_cast<runtime_mapdata_header_t const*>(&src));
+        builder.take(reinterpret_cast<runtime_mapdata_header_t*>(&src));
 
         dest.header.type = DMU_VERTEX;
         copyVertex(dest, src);
@@ -323,7 +322,7 @@ void MPE_SaveBsp(BspBuilder_c* builder_c, GameMap* map, uint* numEditableVertexe
         rHeight = lHeight = 0;
     }
 
-    LOG_INFO("BSP built: (%d:%d) #%d Nodes, #%d Leafs, #%d HEdges, #%d Vertexes.")
+    LOG_INFO("BSP built: (%d:%d) %d Nodes, %d Leafs, %d HEdges, %d Vertexes.")
             << rHeight << lHeight << builder.numNodes() << builder.numLeafs()
             << builder.numHEdges() << builder.numVertexes();
 

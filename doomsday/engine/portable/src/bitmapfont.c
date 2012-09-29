@@ -177,10 +177,9 @@ static void* readFormat0(font_t* font, DFile* file)
     {
         char buf[256];
         Uri* uri = Fonts_ComposeUri(Fonts_Id(font));
-        ddstring_t* uriStr = Uri_ToString(uri);
+        AutoStr* uriStr = Uri_ToString(uri);
         Uri_Delete(uri);
         dd_snprintf(buf, 256, "%s", Str_Text(uriStr));
-        Str_Delete(uriStr);
         Con_Error("readFormat: Font \"%s\" uses unknown bitmap bitmapFormat %i.\n", buf, bitmapFormat);
     }
 
@@ -379,9 +378,8 @@ void BitmapFont_Prepare(font_t* font)
         {
             VERBOSE2(
                 Uri* uri = Fonts_ComposeUri(Fonts_Id(font));
-                ddstring_t* path = Uri_ToString(uri);
+                AutoStr* path = Uri_ToString(uri);
                 Con_Printf("Uploading GL texture for font \"%s\"...\n", Str_Text(path));
-                Str_Delete(path);
                 Uri_Delete(uri)
             )
 
@@ -403,7 +401,7 @@ void BitmapFont_DeleteGLTexture(font_t* font)
     if(novideo || isDedicated) return;
 
     font->_isDirty = true;
-    if(Con_IsBusy()) return;
+    if(BusyMode_Active()) return;
     if(bf->_tex)
     {
         glDeleteTextures(1, (const GLuint*) &bf->_tex);
@@ -537,7 +535,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
     if(!font->_isDirty) return;
-    if(novideo || isDedicated || Con_IsBusy()) return;
+    if(novideo || isDedicated || BusyMode_Active()) return;
 
     BitmapCompositeFont_ReleaseTextures(font);
 
@@ -591,7 +589,7 @@ void BitmapCompositeFont_ReleaseTextures(font_t* font)
     if(novideo || isDedicated) return;
 
     font->_isDirty = true;
-    if(Con_IsBusy()) return;
+    if(BusyMode_Active()) return;
 
     for(i = 0; i < 256; ++i)
     {

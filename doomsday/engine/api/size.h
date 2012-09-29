@@ -38,6 +38,9 @@ typedef struct Size2Raw_s {
         };
         int widthHeight[2];
     };
+#ifdef __cplusplus
+    Size2Raw_s(int w = 0, int h = 0) : width(w), height(h) {}
+#endif
 } Size2Raw;
 
 /**

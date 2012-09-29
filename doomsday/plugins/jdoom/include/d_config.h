@@ -37,6 +37,10 @@
 #include "doomdef.h"
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     HUD_HEALTH,
     HUD_ARMOR,
@@ -112,6 +116,9 @@ typedef struct jdoom_config_s {
     int             inludePatchReplaceMode;
 
     byte            confirmQuickGameSave;
+    byte            confirmRebornLoad;
+    byte            loadAutoSaveOnReborn;
+    byte            loadLastSaveOnReborn;
 
     int             hudPatchReplaceMode;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
@@ -146,11 +153,13 @@ typedef struct jdoom_config_s {
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
-    /** Compatibility options.
-    * \todo Put these into an array so we can use a bit array to change
-    * multiple options based on a compatibility mode (ala PrBoom).
-    */
+    /**
+     * Compatibility options:
+     * @todo Put these into an array so we can use a bit array to change
+     * multiple options based on a compatibility mode (ala PrBoom).
+     */
     byte            raiseGhosts;
+    byte            vileChaseUseVileRadius;
     byte            maxSkulls;
     byte            allowSkullsInWalls;
     byte            anyBossDeath;
@@ -235,5 +244,9 @@ typedef struct jdoom_config_s {
 } game_config_t;
 
 extern game_config_t cfg;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -31,6 +31,10 @@
 
 #include "cl_mobj.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Information about a client player.
  */
@@ -77,5 +81,9 @@ clplayerstate_t *ClPlayer_State(int plrNum);
 mobj_t         *ClPlayer_LocalGameMobj(int plrNum);
 struct mobj_s  *ClPlayer_ClMobj(int plrNum);
 boolean         ClPlayer_IsFreeToMove(int plrnum);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_CLIENT_PLAYER_H
