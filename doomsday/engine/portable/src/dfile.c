@@ -32,7 +32,7 @@
 #include "de_system.h"
 
 #include "blockset.h"
-#include "filelist.h"
+//#include "filelist.h"
 #include "abstractfile.h"
 #include "dfile.h"
 
@@ -250,10 +250,11 @@ FileList* DFile_List(DFile* file)
     return (FileList*)file->_list;
 }
 
-void DFile_SetList(DFile* file, FileList* list)
+DFile* DFile_SetList(DFile* file, FileList* list)
 {
     assert(file);
     file->_list = list;
+    return file;
 }
 
 AbstractFile* DFile_File(DFile* file)

@@ -209,7 +209,6 @@ DENG_HEADERS += \
     portable/include/edit_map.h \
     portable/include/fi_main.h \
     portable/include/filedirectory.h \
-    portable/include/filelist.h \
     portable/include/finaleinterpreter.h \
     portable/include/font.h \
     portable/include/fonts.h \
@@ -500,7 +499,6 @@ SOURCES += \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
     portable/src/filedirectory.cpp \
-    portable/src/filelist.c \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \
     portable/src/fs_main.cpp \

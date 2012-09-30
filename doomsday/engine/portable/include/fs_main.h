@@ -45,13 +45,18 @@
 #ifndef LIBDENG_FILESYS_MAIN_H
 #define LIBDENG_FILESYS_MAIN_H
 
-#include <stdio.h>
-
 #include "zipfile.h"
 #include "wadfile.h"
 #include "lumpfile.h"
-#include "filelist.h"
 #include "pathdirectory.h"
+
+#ifdef __cplusplus
+#include <QList>
+typedef QList<DFile*> FileList;
+#else // __cplusplus
+struct filelist_s;
+typedef struct filelist_s FileList;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

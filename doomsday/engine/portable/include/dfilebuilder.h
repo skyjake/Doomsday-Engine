@@ -23,9 +23,9 @@
 #ifndef LIBDENG_FILESYS_DFILEBUILDER_H
 #define LIBDENG_FILESYS_DFILEBUILDER_H
 
-#include "abstractfile.h"
-#include "dfile.h"
-#include "filelist.h"
+#include "fs_main.h"
+//#include "abstractfile.h"
+//#include "dfile.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,7 +73,7 @@ struct abstractfile_s* DFile_File(DFile* file);
 /// @return  FileList object which owns this handle.
 FileList* DFile_List(DFile* file);
 
-void DFile_SetList(DFile* file, FileList* list);
+DFile* DFile_SetList(DFile* file, FileList* list);
 
 /// @return  File object represented by this handle.
 struct abstractfile_s* DFile_File_Const(const DFile* file);

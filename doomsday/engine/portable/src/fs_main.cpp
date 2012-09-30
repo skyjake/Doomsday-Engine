@@ -38,7 +38,7 @@
 #include "m_misc.h" // for M_FindWhite()
 #include "wadfile.h"
 #include "zipfile.h"
-#include "filelist.h"
+//#include "filelist.h"
 
 D_CMD(Dir);
 D_CMD(DumpLump);
@@ -128,6 +128,13 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
+static inline AbstractFile* findAbstractFileInList(FileList* list, int idx)
+{
+    DFile* hndl = list? list->at(idx) : 0;
+    if(hndl) return DFile_File(hndl);
+    return NULL;
+}
+
 static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
 {
     fileidentifier_t* found = NULL;
@@ -143,29 +150,28 @@ static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
     return found;
 }
 
-static int findFileNodeIndexForPath(FileList* list, const char* path_)
+static int findFileNodeIndexForPath(FileList* list, char const* path_)
 {
     int found = -1;
-    if(path_ && path_[0] && !FileList_Empty(list))
+    if(path_ && path_[0] && !list->empty())
     {
-        AbstractFile* file;
-        ddstring_t path;
-        int i;
-
         // Transform the path into one we can process.
+        ddstring_t path;
         Str_Init(&path); Str_Set(&path, path_);
         F_FixSlashes(&path, &path);
 
         // Perform the search.
-        i = 0;
+        int i = 0;
+        AbstractFile* file;
         do
         {
-            file = FileList_GetFile(list, i);
+            file = findAbstractFileInList(list, i);
             if(!Str_CompareIgnoreCase(AbstractFile_Path(file), Str_Text(&path)))
             {
                 found = i;
             }
-        } while(found == -1 && ++i < FileList_Size(list));
+        } while(found == -1 && ++i < list->size());
+
         Str_Free(&path);
     }
     return found;
@@ -200,9 +206,10 @@ static int pruneLumpsFromDirectorysByFile(AbstractFile* af)
     return pruned;
 }
 
-static boolean removeLoadedFile(int loadedFilesNodeIndex)
+static bool removeLoadedFile(int loadedFilesNodeIndex)
 {
-    DFile* file = FileList_Get(loadedFiles, loadedFilesNodeIndex);
+    DENG_ASSERT(loadedFiles);
+    DFile* file = loadedFiles->at(loadedFilesNodeIndex);
     AbstractFile* af = DFile_File(file);
 
     switch(AbstractFile_Type(af))
@@ -215,17 +222,19 @@ static boolean removeLoadedFile(int loadedFilesNodeIndex)
     F_ReleaseFileId(Str_Text(AbstractFile_Path(af)));
     pruneLumpsFromDirectorysByFile(af);
 
-    F_Delete(FileList_RemoveAt(loadedFiles, loadedFilesNodeIndex));
+    loadedFiles->removeAt(loadedFilesNodeIndex);
+    F_Delete(file);
     return true;
 }
 
-static void clearLoadedFiles(LumpDirectory* directory)
+static void clearLoadedFiles(LumpDirectory* directory = 0)
 {
+    if(!loadedFiles || loadedFiles->empty()) return;
+
     AbstractFile* file;
-    int i;
-    for(i = FileList_Size(loadedFiles) - 1; i >= 0; i--)
+    for(int i = loadedFiles->size() - 1; i >= 0; i--)
     {
-        file = FileList_GetFile(loadedFiles, i);
+        file = findAbstractFileInList(loadedFiles, i);
         if(!directory || LumpDirectory_Catalogues(directory, file))
         {
             removeLoadedFile(i);
@@ -266,12 +275,8 @@ static void clearLumpDirectorys()
 
 static void clearOpenFiles()
 {
-    int i;
-    for(i = FileList_Size(openFiles) - 1; i >= 0; i--)
-    {
-        F_Delete(FileList_Get(openFiles, i));
-    }
-    FileList_Clear(openFiles);
+    while(!openFiles->empty())
+    { F_Delete(openFiles->back()); }
 }
 
 /**
@@ -293,7 +298,7 @@ static lumpnum_t chooseWadLumpDirectory(lumpnum_t lumpNum)
     return lumpNum;
 }
 
-static boolean unloadFile2(const char* path, boolean permitRequired, boolean quiet)
+static bool unloadFile2(const char* path, bool permitRequired, bool quiet)
 {
     int idx;
     errorIfNotInited("unloadFile2");
@@ -321,7 +326,7 @@ static boolean unloadFile2(const char* path, boolean permitRequired, boolean qui
     return false; // No such file loaded.
 }
 
-static boolean unloadFile(const char* path, boolean permitRequired)
+static bool unloadFile(const char* path, bool permitRequired)
 {
     return unloadFile2(path, permitRequired, false/*do log issues*/);
 }
@@ -481,8 +486,8 @@ void F_Init(void)
 
     DFileBuilder_Init();
 
-    openFiles     = FileList_New();
-    loadedFiles   = FileList_New();
+    openFiles     = new FileList();
+    loadedFiles   = new FileList();
 
     zipLumpDirectory          = LumpDirectory_NewWithFlags(LDF_UNIQUE_PATHS);
     primaryWadLumpDirectory   = LumpDirectory_New();
@@ -503,10 +508,10 @@ void F_Shutdown(void)
     clearVDMappings();
     clearLDMappings();
 
-    clearLoadedFiles(0);
-    FileList_Delete(loadedFiles), loadedFiles = NULL;
+    clearLoadedFiles();
+    delete loadedFiles; loadedFiles = 0;
     clearOpenFiles();
-    FileList_Delete(openFiles), openFiles = NULL;
+    delete openFiles; openFiles = 0;
 
     clearFileIds(); // Should be null-op if bookkeeping is correct.
     clearLumpDirectorys();
@@ -523,21 +528,22 @@ void F_EndStartup(void)
     usePrimaryWadLumpDirectory();
 }
 
-static int unloadListFiles(FileList* list, boolean nonStartup)
+static int unloadListFiles(FileList* list, bool nonStartup)
 {
-    AbstractFile* file;
-    int i, unloaded = 0;
-    assert(list);
-
-    for(i = FileList_Size(list) - 1; i >= 0; i--)
+    int unloaded = 0;
+    if(list && !list->empty())
     {
-        file = FileList_GetFile(list, i);
-        if(!nonStartup || !AbstractFile_HasStartup(file))
+        AbstractFile* file;
+        for(int i = list->size() - 1; i >= 0; i--)
         {
-            if(unloadFile2(Str_Text(AbstractFile_Path(file)),
-                           true/*allow unloading game resources*/, true/*quiet please*/))
+            file = findAbstractFileInList(list, i);
+            if(!nonStartup || !AbstractFile_HasStartup(file))
             {
-                ++unloaded;
+                if(unloadFile2(Str_Text(AbstractFile_Path(file)),
+                               true/*allow unloading game resources*/, true/*quiet please*/))
+                {
+                    ++unloaded;
+                }
             }
         }
     }
@@ -571,6 +577,19 @@ static void logOrphanedFileIdentifiers()
 }
 #endif
 
+#if _DEBUG
+static void printFileList(FileList* list)
+{
+    if(!list) return;
+    for(int i = 0; i < list->size(); ++i)
+    {
+        DFile* dfile = (*list)[i];
+        Con_Printf(" %c%u: ", AbstractFile_HasStartup(DFile_File_Const(dfile))? '*':' ', i);
+        DFile_Print(dfile);
+    }
+}
+#endif
+
 int F_Reset(void)
 {
     int unloaded = 0;
@@ -580,7 +599,7 @@ int F_Reset(void)
     // List all open files with their identifiers.
     VERBOSE(
         Con_Printf("Open files at reset:\n");
-        FileList_Print(openFiles);
+        printFileList(openFiles);
         Con_Printf("End\n")
     )
 #endif
@@ -888,8 +907,10 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
         info.lastModified = F_LastModified(Str_Text(foundPath));
 
         dfile = DFileBuilder_NewFromAbstractFile(newWadFile(dfile, Str_Text(foundPath), &info));
-        FileList_AddBack(openFiles, dfile);
-        FileList_AddBack(loadedFiles, DFileBuilder_NewCopy(dfile));
+        openFiles->push_back(dfile); DFile_SetList(dfile, openFiles);
+
+        DFile* loadedFilesHndl = DFileBuilder_NewCopy(dfile);
+        loadedFiles->push_back(loadedFilesHndl); DFile_SetList(loadedFilesHndl, loadedFiles);
         WadFile_PublishLumpsToDirectory((WadFile*)DFile_File(dfile), ActiveWadLumpDirectory);
 
         Str_Delete(foundPath);
@@ -935,15 +956,16 @@ void F_CloseAuxiliary(void)
 
 void F_ReleaseFile(AbstractFile* fsObject)
 {
-    DFile* file;
-    int i;
     if(!fsObject) return;
-    for(i = FileList_Size(openFiles) - 1; i >= 0; i--)
+    if(!openFiles || openFiles->empty()) return;
+
+    DFile* file;
+    for(int i = openFiles->size() - 1; i >= 0; i--)
     {
-        file = FileList_Get(openFiles, i);
+        file = (*openFiles)[i];
         if(DFile_File(file) == fsObject)
         {
-            FileList_RemoveAt(openFiles, i);
+            openFiles->removeAt(i);
         }
     }
 }
@@ -1129,18 +1151,19 @@ uint F_CRCNumber(void)
     /**
      * We define the CRC as that of the lump directory of the first loaded IWAD.
      */
-    if(!FileList_Empty(loadedFiles))
+    if(loadedFiles && !loadedFiles->empty())
     {
-        AbstractFile* file, *found = NULL;
+        AbstractFile* file, *found = 0;
         int i = 0;
         do
         {
-            file = FileList_GetFile(loadedFiles, i);
+            file = findAbstractFileInList(loadedFiles, i);
             if(FT_WADFILE == AbstractFile_Type(file) && !AbstractFile_HasCustom(file))
             {
                 found = file;
             }
-        } while(!found && ++i < FileList_Size(loadedFiles));
+        } while(!found && ++i < loadedFiles->size());
+
         if(found)
         {
             return WadFile_CalculateCRC((WadFile*)found);
@@ -1149,22 +1172,190 @@ uint F_CRCNumber(void)
     return 0;
 }
 
+/**
+ * @defgroup pathToStringFlags  Path To String Flags.
+ */
+///@{
+#define PTSF_QUOTED                 0x1 ///< Add double quotes around the path.
+#define PTSF_TRANSFORM_EXCLUDE_DIR  0x2 ///< Exclude the directory; e.g., c:/doom/myaddon.wad -> myaddon.wad
+#define PTSF_TRANSFORM_EXCLUDE_EXT  0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad -> c:/doom/myaddon
+///@}
+
+#define DEFAULT_PATHTOSTRINGFLAGS (PTSF_QUOTED)
+
+/**
+ * @param flags         @ref pathToStringFlags
+ * @param delimiter     If not @c NULL, path fragments in the resultant string
+ *                      will be delimited by this.
+ * @param predicate     If not @c NULL, this predicate evaluator callback must
+ *                      return @c true for a given path to be included in the
+ *                      resultant string.
+ * @param parameters    Passed to the predicate evaluator callback.
+ *
+ * @return  New string containing a concatenated, possibly delimited set of all
+ *      file paths in the list. Ownership of the string passes to the caller who
+ *      should ensure to release it with Str_Delete() when no longer needed.
+ *      Always returns a valid (but perhaps zero-length) string object.
+ */
+static ddstring_t* composeFileList(FileList* fl, int flags = DEFAULT_PATHTOSTRINGFLAGS,
+    char const* delimiter = " ", bool (*predicate)(DFile* hndl, void* parameters) = 0, void* parameters = 0)
+{
+    DENG_ASSERT(fl);
+
+    int maxLength, delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
+    int n, pLength, pathCount = 0;
+    ddstring_t const* path;
+    ddstring_t* str, buf;
+    char const* p, *ext;
+
+    // Do we need a working buffer to process this request?
+    /// @todo We can do this without the buffer; implement cleverer algorithm.
+    if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
+        Str_Init(&buf);
+
+    // Determine the maximum number of characters we'll need.
+    maxLength = 0;
+    DENG2_FOR_EACH(i, *fl, FileList::const_iterator)
+    {
+        if(predicate && !predicate(*i, parameters))
+            continue; // Caller isn't interested in this...
+
+        // One more path will be composited.
+        ++pathCount;
+        path = AbstractFile_Path(DFile_File_Const(*i));
+
+        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
+        {
+            // Caller wants the whole path plus name and extension (if present).
+            maxLength += Str_Length(path);
+        }
+        else
+        {
+            if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
+            {
+                // Caller does not want the directory hierarchy.
+                F_FileNameAndExtension(&buf, Str_Text(path));
+                p = Str_Text(&buf);
+                pLength = Str_Length(&buf);
+            }
+            else
+            {
+                p = Str_Text(path);
+                pLength = Str_Length(path);
+            }
+
+            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+            {
+                // Caller does not want the file extension.
+                ext = F_FindFileExtension(p);
+                if(ext) ext -= 1/*dot separator*/;
+            }
+            else
+            {
+                ext = NULL;
+            }
+
+            if(ext)
+            {
+                maxLength += pLength - (pLength - (ext - p));
+            }
+            else
+            {
+                maxLength += pLength;
+            }
+        }
+
+        if(flags & PTSF_QUOTED)
+            maxLength += sizeof(char);
+    }
+    maxLength += pathCount * delimiterLength;
+
+    // Composite final string.
+    str = Str_New();
+    Str_Reserve(str, maxLength);
+    n = 0;
+    DENG2_FOR_EACH(i, *fl, FileList::const_iterator)
+    {
+        if(predicate && !predicate(*i, parameters))
+            continue; // Caller isn't interested in this...
+
+        path = AbstractFile_Path(DFile_File_Const(*i));
+
+        if(flags & PTSF_QUOTED)
+            Str_AppendChar(str, '"');
+
+        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
+        {
+            // Caller wants the whole path plus name and extension (if present).
+            Str_Append(str, Str_Text(path));
+        }
+        else
+        {
+            if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
+            {
+                // Caller does not want the directory hierarchy.
+                F_FileNameAndExtension(&buf, Str_Text(path));
+                p = Str_Text(&buf);
+                pLength = Str_Length(&buf);
+            }
+            else
+            {
+                p = Str_Text(path);
+                pLength = Str_Length(path);
+            }
+
+            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+            {
+                // Caller does not want the file extension.
+                ext = F_FindFileExtension(p);
+                if(ext) ext -= 1/*dot separator*/;
+            }
+            else
+            {
+                ext = NULL;
+            }
+
+            if(ext)
+            {
+                Str_PartAppend(str, p, 0, pLength - (pLength - (ext - p)));
+                maxLength += pLength - (pLength - (ext - p));
+            }
+            else
+            {
+                Str_Append(str, p);
+            }
+        }
+
+        if(flags & PTSF_QUOTED)
+            Str_AppendChar(str, '"');
+
+        ++n;
+        if(n != pathCount)
+            Str_Append(str, delimiter);
+    }
+
+    if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
+        Str_Free(&buf);
+
+    return str;
+}
+
 typedef struct {
     filetype_t type; // Only
-    boolean includeOriginal;
-    boolean includeCustom;
+    bool includeOriginal;
+    bool includeCustom;
 } compositepathpredicateparamaters_t;
 
-boolean C_DECL compositePathPredicate(DFile* hndl, void* paramaters)
+bool compositePathPredicate(DFile* hndl, void* parameters)
 {
-    compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)paramaters;
+    DENG_ASSERT(parameters);
+    compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)parameters;
     AbstractFile* file = DFile_File(hndl);
-    assert(p);
     if((!VALID_FILETYPE(p->type) || p->type == AbstractFile_Type(file)) &&
        ((p->includeOriginal && !AbstractFile_HasCustom(file)) ||
         (p->includeCustom   &&  AbstractFile_HasCustom(file))))
     {
-        const ddstring_t* path = AbstractFile_Path(file);
+        ddstring_t const* path = AbstractFile_Path(file);
         if(stricmp(Str_Text(path) + Str_Length(path) - 3, "lmp"))
             return true; // Include this.
     }
@@ -1178,8 +1369,8 @@ void F_GetPWADFileNames(char* outBuf, size_t outBufSize, const char* delimiter)
     if(inited)
     {
         compositepathpredicateparamaters_t p = { FT_WADFILE, false, true };
-        ddstring_t* str = FileList_ToString4(loadedFiles, PTSF_TRANSFORM_EXCLUDE_DIR,
-            delimiter, compositePathPredicate, (void*)&p);
+        ddstring_t* str = composeFileList(loadedFiles, PTSF_TRANSFORM_EXCLUDE_DIR,
+                                          delimiter, compositePathPredicate, (void*)&p);
         strncpy(outBuf, Str_Text(str), outBufSize);
         Str_Delete(str);
     }
@@ -1774,7 +1965,11 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
 static DFile* tryOpenFile(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
 {
     DFile* file = tryOpenFile2(path, mode, baseOffset, allowDuplicate);
-    if(file) return FileList_AddBack(openFiles, file);
+    if(file)
+    {
+        openFiles->push_back(file);
+        return DFile_SetList(file, openFiles);
+    }
     return NULL;
 }
 
@@ -1849,7 +2044,9 @@ DFile* F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
 
     if(loadingForStartup)
         AbstractFile_SetStartup(fsObject, true);
-    FileList_AddBack(loadedFiles, DFileBuilder_NewCopy(file));
+
+    DFile* loadedFilesHndl = DFileBuilder_NewCopy(file);
+    loadedFiles->push_back(loadedFilesHndl); DFile_SetList(loadedFilesHndl, loadedFiles);
 
     // Publish lumps to one or more LumpDirectorys.
     switch(AbstractFile_Type(fsObject))
@@ -1877,7 +2074,7 @@ DFile* F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
 
 boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate)
 {
-    boolean succeeded = false;
+    bool succeeded = false;
     size_t i;
 
     for(i = 0; i < num; ++i)
@@ -1903,7 +2100,7 @@ boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate)
 
 boolean F_RemoveFile(const char* path, boolean permitRequired)
 {
-    boolean unloadedResources = unloadFile(path, permitRequired);
+    bool unloadedResources = unloadFile(path, CPP_BOOL(permitRequired));
     if(unloadedResources)
         DD_UpdateEngineState();
     return unloadedResources;
@@ -1911,12 +2108,12 @@ boolean F_RemoveFile(const char* path, boolean permitRequired)
 
 boolean F_RemoveFiles(const char* const* filenames, size_t num, boolean permitRequired)
 {
-    boolean succeeded = false;
+    bool succeeded = false;
     size_t i;
 
     for(i = 0; i < num; ++i)
     {
-        if(unloadFile(filenames[i], permitRequired))
+        if(unloadFile(filenames[i], CPP_BOOL(permitRequired)))
         {
             VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(filenames[i])) )
             succeeded = true; // At least one has been unloaded.
@@ -1944,7 +2141,9 @@ DFile* F_OpenLump(lumpnum_t absoluteLumpNum)
 
         if(fsObject)
         {
-            return FileList_AddBack(openFiles, DFileBuilder_NewFromAbstractFile(fsObject));
+            DFile* openFileHndl = DFileBuilder_NewFromAbstractFile(fsObject);
+            openFiles->push_back(openFileHndl); DFile_SetList(openFileHndl, openFiles);
+            return openFileHndl;
         }
     }
     return NULL;
@@ -2390,6 +2589,34 @@ D_CMD(ListLumps)
     return false;
 }
 
+/**
+ * @param size  If not @c NULL the number of elements in the resultant
+ *              array is written back here (for convenience).
+ *
+ * @return  Array of ptrs to files in this list or @c NULL if empty.
+ *      Ownership of the array passes to the caller who should ensure to
+ *      release it with free() when no longer needed.
+ */
+static AbstractFile** collectFiles(FileList* list, int* count)
+{
+    if(list && !list->empty())
+    {
+        AbstractFile** arr = (AbstractFile**) M_Malloc(list->size() * sizeof *arr);
+        if(!arr) Con_Error("collectFiles: Failed on allocation of %lu bytes for file list.", (unsigned long) (list->size() * sizeof *arr));
+
+        for(int i = 0; i < list->size(); ++i)
+        {
+            DFile const* dfile = (*list)[i];
+            arr[i] = DFile_File_Const(dfile);
+        }
+        if(count) *count = list->size();
+        return arr;
+    }
+
+    if(count) *count = 0;
+    return NULL;
+}
+
 /// List the "real" files presently loaded in original load order.
 D_CMD(ListFiles)
 {
@@ -2401,7 +2628,7 @@ D_CMD(ListFiles)
     if(inited)
     {
         int fileCount, i;
-        AbstractFile** ptr, **arr = FileList_ToArray(loadedFiles, &fileCount);
+        AbstractFile** ptr, **arr = collectFiles(loadedFiles, &fileCount);
         if(!arr) return true;
 
         // Sort files so we get a nice alpha-numerical list.
@@ -2449,7 +2676,7 @@ D_CMD(ListFiles)
             ++totalPackages;
         }
 
-        free(arr);
+        M_Free(arr);
     }
     Con_Printf("Total: %lu files in %lu packages.\n", (unsigned long) totalFiles, (unsigned long)totalPackages);
     return true;
