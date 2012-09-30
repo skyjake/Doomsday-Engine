@@ -492,7 +492,7 @@ SOURCES += \
     portable/src/def_data.c \
     portable/src/def_main.c \
     portable/src/def_read.c \
-    portable/src/dfile.c \
+    portable/src/dfile.cpp \
     portable/src/dgl_common.c \
     portable/src/dgl_draw.c \
     portable/src/displaymode.cpp \
