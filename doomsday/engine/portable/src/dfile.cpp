@@ -1,74 +1,75 @@
-/**\file dfile.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dfile.cpp
  *
- *\author Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @ingroup fs
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <ctype.h>
-#include <time.h>
+#include <cctype>
+#include <ctime>
 #include <sys/stat.h>
 
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-#include "de_system.h"
 
 #include "blockset.h"
-//#include "filelist.h"
-#include "abstractfile.h"
 #include "dfile.h"
+
+#include <de/memory.h>
 
 struct dfile_s
 {
     /// The referenced abstract file (if any).
-    AbstractFile* _file;
+    AbstractFile* file;
 
     /// Either the FileList which owns this or the next DFile in the used object pool.
-    void* _list;
+    void* list;
 
     struct dfile_flags_s {
         uint open:1; /// Presently open.
         uint eof:1; /// Reader has reached the end of the stream.
         uint reference; /// This handle is a reference to another dfile instance.
-    } _flags;
+    } flags;
 
     /// Offset from start of owning package.
-    size_t _baseOffset;
+    size_t baseOffset;
 
-    FILE* _hndl;
-    size_t _size;
-    uint8_t* _data;
-    uint8_t* _pos;
+    FILE* hndl;
+    size_t size;
+    uint8_t* data;
+    uint8_t* pos;
 };
 
 // Has the handle builder been initialized yet?
-static boolean inited = false;
+static bool inited;
+
 // A mutex is used to protect access to the shared handle block allocator and object pool.
 static mutex_t mutex;
+
 // File handles are allocated by this block allocator.
 static blockset_t* handleBlockSet;
+
 // Head of the llist of used file handles, for recycling.
 static DFile* usedHandles;
 
-static void errorIfNotValid(const DFile* file, const char* callerName)
+static void errorIfNotValid(DFile const* file, const char* callerName)
 {
     if(DFile_IsValid(file)) return;
     Con_Error("%s: Instance %p has not yet been initialized.", callerName, (void*)file);
@@ -79,11 +80,11 @@ void DFileBuilder_Init(void)
 {
     if(!inited)
     {
-        mutex = Sys_CreateMutex("DFileBuilder_MUTEX");
+        mutex = Sys_CreateMutex(0);
         inited = true;
         return;
     }
-    Con_Error("DFileBuilder::Init: Already initialized.");
+    Con_Error("DFileBuilder_Init: Already initialized.");
 }
 
 void DFileBuilder_Shutdown(void)
@@ -91,34 +92,34 @@ void DFileBuilder_Shutdown(void)
     if(inited)
     {
         Sys_Lock(mutex);
-        BlockSet_Delete(handleBlockSet), handleBlockSet = NULL;
-        usedHandles = NULL;
+        BlockSet_Delete(handleBlockSet); handleBlockSet = 0;
+        usedHandles = 0;
         Sys_Unlock(mutex);
-        Sys_DestroyMutex(mutex), mutex = 0;
+        Sys_DestroyMutex(mutex); mutex = 0;
         inited = false;
         return;
     }
 #if _DEBUG
-    Con_Error("DFileBuilder::Shutdown: Not presently initialized.");
+    Con_Error("DFileBuilder_Shutdown: Not presently initialized.");
 #endif
 }
 
 DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* container, int lumpIdx, boolean dontBuffer)
 {
-    const LumpInfo* info = F_LumpInfo(container, lumpIdx);
+    LumpInfo const* info = F_LumpInfo(container, lumpIdx);
     DFile* file;
     if(!info) return NULL;
 
     file = DFile_New();
     // Init and load in the lump data.
-    file->_flags.open = true;
+    file->flags.open = true;
     if(!dontBuffer)
     {
-        file->_size = info->size;
-        file->_pos = file->_data = (uint8_t*)malloc(file->_size);
-        if(!file->_data)
-            Con_Error("DFileBuilder::NewFromAbstractFileLump: Failed on allocation of %lu bytes for data buffer.",
-                (unsigned long) file->_size);
+        file->size = info->size;
+        file->pos = file->data = (uint8_t*) M_Malloc(file->size);
+        if(!file->data)
+            Con_Error("DFileBuilder_NewFromAbstractFileLump: Failed on allocation of %lu bytes for data buffer.",
+                (unsigned long) file->size);
 #if _DEBUG
         VERBOSE2(
             AutoStr* path = F_ComposeLumpPath(container, lumpIdx);
@@ -127,7 +128,7 @@ DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* container, int lumpIdx
                        F_PrettyPath(Str_Text(path)));
         )
 #endif
-        F_ReadLumpSection(container, lumpIdx, (uint8_t*)file->_data, 0, info->size);
+        F_ReadLumpSection(container, lumpIdx, (uint8_t*)file->data, 0, info->size);
     }
     return file;
 }
@@ -135,44 +136,42 @@ DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* container, int lumpIdx
 DFile* DFileBuilder_NewFromAbstractFile(AbstractFile* af)
 {
     DFile* file = DFile_New();
-    assert(af);
-    file->_file = af;
-    file->_flags.open = true;
-    file->_flags.reference = true;
+    DENG_ASSERT(af);
+    file->file = af;
+    file->flags.open = true;
+    file->flags.reference = true;
     return file;
 }
 
 DFile* DFileBuilder_NewFromFile(FILE* hndl, size_t baseOffset)
 {
     DFile* file = DFile_New();
-    assert(hndl);
-    file->_flags.open = true;
-    file->_hndl = hndl;
-    file->_baseOffset = baseOffset;
+    DENG_ASSERT(hndl);
+    file->flags.open = true;
+    file->hndl = hndl;
+    file->baseOffset = baseOffset;
     return file;
 }
 
 DFile* DFileBuilder_NewCopy(const DFile* file)
 {
-    assert(inited && file);
-    {
+    DENG_ASSERT(inited && file);
+
     DFile* clone = DFile_New();
-    clone->_flags.open = true;
-    clone->_flags.reference = true;
-    clone->_file = DFile_File_const(file);
+    clone->flags.open = true;
+    clone->flags.reference = true;
+    clone->file = DFile_File_const(file);
     return clone;
-    }
 }
 
 DFile* DFile_New(void)
 {
-    DFile* file;
-
     Sys_Lock(mutex);
+    DFile* file;
     if(usedHandles)
     {
         file = usedHandles;
-        usedHandles = file->_list;
+        usedHandles = (DFile*) file->list;
     }
     else
     {
@@ -180,30 +179,30 @@ DFile* DFile_New(void)
         {
             handleBlockSet = BlockSet_New(sizeof(DFile), 64);
         }
-        file = BlockSet_Allocate(handleBlockSet);
+        file = (DFile*) BlockSet_Allocate(handleBlockSet);
     }
     Sys_Unlock(mutex);
 
-    file->_list = NULL;
-    file->_file = NULL;
-    file->_flags.eof  = false;
-    file->_flags.open = false;
-    file->_flags.reference = false;
-    file->_baseOffset = 0;
-    file->_size = 0;
-    file->_hndl = NULL;
-    file->_data = NULL;
-    file->_pos  = 0;
+    file->list = NULL;
+    file->file = NULL;
+    file->flags.eof  = false;
+    file->flags.open = false;
+    file->flags.reference = false;
+    file->baseOffset = 0;
+    file->size = 0;
+    file->hndl = NULL;
+    file->data = NULL;
+    file->pos  = 0;
     return file;
 }
 
 void DFile_Delete(DFile* file, boolean recycle)
 {
-    assert(inited && file);
+    DENG_ASSERT(inited && file);
 
     DFile_Close(file);
-    file->_file = NULL;
-    file->_list = NULL;
+    file->file = NULL;
+    file->list = NULL;
 
     if(!recycle)
     {
@@ -212,34 +211,34 @@ void DFile_Delete(DFile* file, boolean recycle)
     }
     // Copy this file to the used object pool for recycling.
     Sys_Lock(mutex);
-    file->_list = usedHandles;
+    file->list = usedHandles;
     usedHandles = file;
     Sys_Unlock(mutex);
 }
 
 void DFile_Close(DFile* file)
 {
-    assert(file);
-    if(!file->_flags.open) return;
-    if(file->_hndl)
+    DENG_ASSERT(file);
+    if(!file->flags.open) return;
+    if(file->hndl)
     {
-        fclose(file->_hndl);
-        file->_hndl = NULL;
+        fclose(file->hndl);
+        file->hndl = NULL;
     }
     else
     {   // Free the stored data.
-        if(file->_data)
+        if(file->data)
         {
-            free(file->_data), file->_data = NULL;
+            M_Free(file->data); file->data = NULL;
         }
     }
-    file->_pos = NULL;
-    file->_flags.open = false;
+    file->pos = NULL;
+    file->flags.open = false;
 }
 
 boolean DFile_IsValid(DFile const* file)
 {
-    assert(file);
+    DENG_ASSERT(file);
     /// @todo write me.
     return true;
 }
@@ -247,44 +246,44 @@ boolean DFile_IsValid(DFile const* file)
 FileList* DFile_List(DFile* file)
 {
     errorIfNotValid(file, "DFile_List");
-    return (FileList*)file->_list;
+    return (FileList*)file->list;
 }
 
 DFile* DFile_SetList(DFile* file, FileList* list)
 {
-    assert(file);
-    file->_list = list;
+    DENG_ASSERT(file);
+    file->list = list;
     return file;
 }
 
 AbstractFile* DFile_File(DFile* file)
 {
     errorIfNotValid(file, "DFile_File");
-    return file->_file;
+    return file->file;
 }
 
 AbstractFile* DFile_File_const(DFile const* file)
 {
     errorIfNotValid(file, "DFile_File_const");
-    return file->_file;
+    return file->file;
 }
 
 size_t DFile_BaseOffset(DFile const* file)
 {
-    assert(file);
-    if(file->_flags.reference)
+    DENG_ASSERT(file);
+    if(file->flags.reference)
     {
-        return DFile_BaseOffset(AbstractFile_Handle(file->_file));
+        return DFile_BaseOffset(AbstractFile_Handle(file->file));
     }
-    return file->_baseOffset;
+    return file->baseOffset;
 }
 
 size_t DFile_Length(DFile* file)
 {
     errorIfNotValid(file, "DFile_Length");
-    if(file->_flags.reference)
+    if(file->flags.reference)
     {
-        return DFile_Length(AbstractFile_Handle(file->_file));
+        return DFile_Length(AbstractFile_Handle(file->file));
     }
     else
     {
@@ -298,34 +297,32 @@ size_t DFile_Length(DFile* file)
 size_t DFile_Read(DFile* file, uint8_t* buffer, size_t count)
 {
     errorIfNotValid(file, "DFile_Read");
-    if(file->_flags.reference)
+    if(file->flags.reference)
     {
-        return DFile_Read(AbstractFile_Handle(file->_file), buffer, count);
+        return DFile_Read(AbstractFile_Handle(file->file), buffer, count);
     }
     else
     {
-        size_t bytesleft;
-
-        if(file->_hndl)
+        if(file->hndl)
         {
             // Normal file.
-            count = fread(buffer, 1, count, file->_hndl);
-            if(feof(file->_hndl))
-                file->_flags.eof = true;
+            count = fread(buffer, 1, count, file->hndl);
+            if(feof(file->hndl))
+                file->flags.eof = true;
             return count;
         }
 
         // Is there enough room in the file?
-        bytesleft = file->_size - (file->_pos - file->_data);
+        size_t bytesleft = file->size - (file->pos - file->data);
         if(count > bytesleft)
         {
             count = bytesleft;
-            file->_flags.eof = true;
+            file->flags.eof = true;
         }
         if(count)
         {
-            memcpy(buffer, file->_pos, count);
-            file->_pos += count;
+            memcpy(buffer, file->pos, count);
+            file->pos += count;
         }
         return count;
     }
@@ -334,61 +331,60 @@ size_t DFile_Read(DFile* file, uint8_t* buffer, size_t count)
 boolean DFile_AtEnd(DFile* file)
 {
     errorIfNotValid(file, "DFile_AtEnd");
-    if(file->_flags.reference)
+    if(file->flags.reference)
     {
-        return DFile_AtEnd(AbstractFile_Handle(file->_file));
+        return DFile_AtEnd(AbstractFile_Handle(file->file));
     }
-    return (file->_flags.eof != 0);
+    return (file->flags.eof != 0);
 }
 
 unsigned char DFile_GetC(DFile* file)
 {
     errorIfNotValid(file, "DFile_GetC");
-    {
+
     unsigned char ch = 0;
     DFile_Read(file, (uint8_t*)&ch, 1);
     return ch;
-    }
 }
 
 size_t DFile_Tell(DFile* file)
 {
     errorIfNotValid(file, "DFile_Tell");
-    if(file->_flags.reference)
+    if(file->flags.reference)
     {
-        return DFile_Tell(AbstractFile_Handle(file->_file));
+        return DFile_Tell(AbstractFile_Handle(file->file));
     }
     else
     {
-        if(file->_hndl)
-            return (size_t) ftell(file->_hndl);
-        return file->_pos - file->_data;
+        if(file->hndl)
+            return (size_t) ftell(file->hndl);
+        return file->pos - file->data;
     }
 }
 
 size_t DFile_Seek(DFile* file, size_t offset, int whence)
 {
-    if(file->_flags.reference)
+    if(file->flags.reference)
     {
-        return DFile_Seek(AbstractFile_Handle(file->_file), offset, whence);
+        return DFile_Seek(AbstractFile_Handle(file->file), offset, whence);
     }
     else
     {
         size_t oldpos = DFile_Tell(file);
 
-        file->_flags.eof = false;
-        if(file->_hndl)
+        file->flags.eof = false;
+        if(file->hndl)
         {
-            fseek(file->_hndl, (long) (file->_baseOffset + offset), whence);
+            fseek(file->hndl, (long) (file->baseOffset + offset), whence);
         }
         else
         {
             if(whence == SEEK_SET)
-                file->_pos = file->_data + offset;
+                file->pos = file->data + offset;
             else if(whence == SEEK_END)
-                file->_pos = file->_data + (file->_size + offset);
+                file->pos = file->data + (file->size + offset);
             else if(whence == SEEK_CUR)
-                file->_pos += offset;
+                file->pos += offset;
         }
 
         return oldpos;
@@ -404,11 +400,10 @@ void DFile_Rewind(DFile* file)
 void DFile_Print(const DFile* file)
 {
     errorIfNotValid(file, "DFile_Print");
-    {
+
     byte id[16];
     F_GenerateFileId(Str_Text(AbstractFile_Path(DFile_File_const(file))), id);
     F_PrintFileId(id);
     Con_Printf(" - \"%s\" [%p]\n", F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_const(file)))), (void*)file);
-    }
 }
 #endif
