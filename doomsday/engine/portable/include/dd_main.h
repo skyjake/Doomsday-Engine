@@ -31,8 +31,7 @@
 
 #include "dd_types.h"
 #include "dd_plugin.h"
-#ifndef __cplusplus // Kludge: these aren't yet C++ compatible
-#  include "game.h"
+#ifndef __cplusplus // Kludge: this isn't yet C++ compatible
 #  include "textures.h"
 #endif
 #include "sys_direc.h"
@@ -72,15 +71,15 @@ extern finaleid_t titleFinale;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-/// Currently active game.
-extern struct Game_s* theGame;
-
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);
 boolean DD_Init(void);
 
 /// @return  @c true if shutdown is in progress.
 boolean DD_IsShuttingDown(void);
+
+/// @return  @c true iff there is presently a game loaded.
+boolean DD_GameLoaded(void);
 
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
@@ -121,47 +120,6 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 
 const char* value_Str(int val);
 
-/// @return  @c true iff there is presently a game loaded.
-boolean DD_GameLoaded(void);
-
-/// @return  Current number of Game records.
-int DD_GameCount(void);
-
-/**
- * @return  Game associated with unique index @a idx else @c NULL.
- */
-struct Game_s* DD_GameByIndex(int idx);
-
-/**
- * @return  Game associated with @a identityKey else @c NULL.
- */
-struct Game_s* DD_GameByIdentityKey(const char* identityKey);
-
-/**
- * Is this the special "null-game" object (not a real playable game).
- * \todo Implement a proper null-game object for this.
- */
-boolean DD_IsNullGame(const struct Game_s* game);
-
-/**
- * @defgroup printGameFlags  Print Game Flags.
- * @{
- */
-#define PGF_BANNER                 0x1
-#define PGF_STATUS                 0x2
-#define PGF_LIST_STARTUP_RESOURCES 0x4
-#define PGF_LIST_OTHER_RESOURCES   0x8
-
-#define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
-/**@}*/
-
-/**
- * Print extended information about game @a info.
- * @param info  Game record to be printed.
- * @param flags  &see printGameFlags
- */
-void DD_PrintGame(struct Game_s* game, int flags);
-
 /**
  * Frees the info structures for all registered games.
  */
@@ -171,7 +129,6 @@ D_CMD(Load);
 D_CMD(Unload);
 D_CMD(Reset);
 D_CMD(ReloadGame);
-D_CMD(ListGames);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -175,6 +175,7 @@ DENG_HEADERS += \
     portable/include/dam_file.h \
     portable/include/dam_main.h \
     portable/include/dd_def.h \
+    portable/include/dd_games.h \
     portable/include/dd_help.h \
     portable/include/dd_input.h \
     portable/include/dd_loop.h \
@@ -479,6 +480,7 @@ SOURCES += \
     portable/src/con_main.c \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
+    portable/src/dd_games.cpp \
     portable/src/dd_help.c \
     portable/src/dd_init.cpp \
     portable/src/dd_input.c \

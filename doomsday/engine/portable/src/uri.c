@@ -137,7 +137,7 @@ static boolean resolveUri(const Uri* uri, ddstring_t* dest)
             {
                 /// \note DataPath already has ending '/'.
                 Game* game = theGame;
-                if(DD_IsNullGame(game))
+                if(Games_IsNullObject(game))
                     goto parseEnded;
                 Str_PartAppend(dest, Str_Text(Game_DataPath(game)), 0, Str_Length(Game_DataPath(game))-1);
             }
@@ -145,14 +145,14 @@ static boolean resolveUri(const Uri* uri, ddstring_t* dest)
             {
                 /// \note DefsPath already has ending '/'.
                 Game* game = theGame;
-                if(DD_IsNullGame(game))
+                if(Games_IsNullObject(game))
                     goto parseEnded;
                 Str_PartAppend(dest, Str_Text(Game_DefsPath(game)), 0, Str_Length(Game_DefsPath(game))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "Game.IdentityKey"))
             {
                 Game* game = theGame;
-                if(DD_IsNullGame(game))
+                if(Games_IsNullObject(game))
                     goto parseEnded;
                 Str_Append(dest, Str_Text(Game_IdentityKey(game)));
             }
