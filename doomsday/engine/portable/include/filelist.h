@@ -171,53 +171,6 @@ struct ddstring_s* FileList_ToString(FileList* fl); /* flags = DEFAULT_PATHTOSTR
 void FileList_Print(FileList* fl);
 #endif
 
-/**
- * Non-public methods of DFile. Placed here temporarily.
- */
-
-void DFileBuilder_Init(void);
-void DFileBuilder_Shutdown(void);
-
-/**
- * Open a new read-only stream on the specified file.
- *
- * @param af  File system object representing the file being opened.
- */
-DFile* DFileBuilder_NewFromAbstractFile(AbstractFile* af);
-
-/**
- * Open a new read-only stream on the specified lump-file.
- *
- * @param af  File system object representing the container of the lump to be opened.
- * @param lumpIdx  Logical index of the lump within @a container to be opened.
- * @param dontBuffer  @c true= do not buffer a copy of the lump.
- */
-DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* af, int lumpIdx, boolean dontBuffer);
-
-/**
- * Open a new read-only stream on the specified system file.
- * @param file  File system handle to the file being opened.
- * @param baseOffset  Offset from the start of the file in bytes to begin.
- */
-DFile* DFileBuilder_NewFromFile(FILE* hndl, size_t baseOffset);
-
-DFile* DFileBuilder_NewCopy(const DFile* file);
-
-DFile* DFile_New(void);
-
-void DFile_Delete(DFile* file, boolean recycle);
-
-/// @return  File object represented by this handle.
-struct abstractfile_s* DFile_File(DFile* file);
-
-/// @return  FileList object which owns this handle.
-FileList* DFile_List(DFile* file);
-
-void DFile_SetList(DFile* file, FileList* list);
-
-/// @return  File object represented by this handle.
-struct abstractfile_s* DFile_File_Const(const DFile* file);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

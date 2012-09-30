@@ -203,6 +203,7 @@ DENG_HEADERS += \
     portable/include/def_main.h \
     portable/include/displaymode.h \
     portable/include/displaymode_native.h \
+    portable/include/dfilebuilder.h \
     portable/include/edit_bias.h \
     portable/include/edit_bsp.h \
     portable/include/edit_map.h \
