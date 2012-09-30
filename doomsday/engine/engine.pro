@@ -502,7 +502,7 @@ SOURCES += \
     portable/src/filelist.c \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \
-    portable/src/fs_main.c \
+    portable/src/fs_main.cpp \
     portable/src/fs_util.c \
     portable/src/game.c \
     portable/src/gamemap.c \

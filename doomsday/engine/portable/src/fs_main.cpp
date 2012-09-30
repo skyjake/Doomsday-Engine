@@ -1,41 +1,41 @@
-/**\file fs_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file fs_main.cpp
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @ingroup fs
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @author Copyright &copy; 1993-1996 by id Software, Inc.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <ctype.h>
+#include <cstdlib>
+#include <cctype>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-#include "de_misc.h" // For M_LimitedStrCat
 
-#include "m_md5.h"
+#include "game.h"
 #include "lumpinfo.h"
 #include "lumpdirectory.h"
 #include "lumpfile.h"
+#include "m_md5.h"
+#include "m_misc.h" // for M_FindWhite()
 #include "wadfile.h"
 #include "zipfile.h"
 #include "filelist.h"
@@ -64,8 +64,8 @@ typedef struct {
 /**
  * FileIdentifier
  */
-#define FILEIDENTIFIERID_T_MAXLEN 16
-#define FILEIDENTIFIERID_T_LASTINDEX 15
+#define FILEIDENTIFIERID_T_MAXLEN       16
+#define FILEIDENTIFIERID_T_LASTINDEX    15
 typedef byte fileidentifierid_t[FILEIDENTIFIERID_T_MAXLEN];
 
 typedef struct fileidentifier_s {
@@ -78,9 +78,9 @@ static boolean loadingForStartup;
 static FileList* openFiles;
 static FileList* loadedFiles;
 
-static uint fileIdentifiersCount = 0;
-static uint fileIdentifiersMax = 0;
-static fileidentifier_t* fileIdentifiers = NULL;
+static uint fileIdentifiersCount;
+static uint fileIdentifiersMax;
+static fileidentifier_t* fileIdentifiers;
 
 static LumpDirectory* zipLumpDirectory;
 
@@ -93,17 +93,17 @@ static boolean auxiliaryWadLumpDirectoryInUse;
 static LumpDirectory* ActiveWadLumpDirectory;
 
 // Lump directory mappings.
-static uint ldMappingsCount = 0;
-static uint ldMappingsMax = 0;
-static ldmapping_t* ldMappings = NULL;
+static uint ldMappingsCount;
+static uint ldMappingsMax;
+static ldmapping_t* ldMappings;
 
 // Virtual(-File) directory mappings.
-static uint vdMappingsCount = 0;
-static uint vdMappingsMax = 0;
-static vdmapping_t* vdMappings = NULL;
+static uint vdMappingsCount;
+static uint vdMappingsMax;
+static vdmapping_t* vdMappings;
 
-static void clearLDMappings(void);
-static void clearVDMappings(void);
+static void clearLDMappings();
+static void clearVDMappings();
 static boolean applyVDMapping(ddstring_t* path, vdmapping_t* vdm);
 
 static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** foundPath);
@@ -242,12 +242,12 @@ static __inline lumpnum_t logicalLumpNum(lumpnum_t lumpNum)
             ActiveWadLumpDirectory == auxiliaryWadLumpDirectory? lumpNum += AUXILIARY_BASE : lumpNum);
 }
 
-static void usePrimaryWadLumpDirectory(void)
+static void usePrimaryWadLumpDirectory()
 {
     ActiveWadLumpDirectory = primaryWadLumpDirectory;
 }
 
-static boolean useAuxiliaryWadLumpDirectory(void)
+static boolean useAuxiliaryWadLumpDirectory()
 {
     if(!auxiliaryWadLumpDirectoryInUse)
         return false;
@@ -255,7 +255,7 @@ static boolean useAuxiliaryWadLumpDirectory(void)
     return true;
 }
 
-static void clearLumpDirectorys(void)
+static void clearLumpDirectorys()
 {
     LumpDirectory_Delete(primaryWadLumpDirectory), primaryWadLumpDirectory = NULL;
     LumpDirectory_Delete(auxiliaryWadLumpDirectory), auxiliaryWadLumpDirectory = NULL;
@@ -264,7 +264,7 @@ static void clearLumpDirectorys(void)
     LumpDirectory_Delete(zipLumpDirectory), zipLumpDirectory = NULL;
 }
 
-static void clearOpenFiles(void)
+static void clearOpenFiles()
 {
     int i;
     for(i = FileList_Size(openFiles) - 1; i >= 0; i--)
@@ -326,7 +326,7 @@ static boolean unloadFile(const char* path, boolean permitRequired)
     return unloadFile2(path, permitRequired, false/*do log issues*/);
 }
 
-static void clearFileIds(void)
+static void clearFileIds()
 {
     if(fileIdentifiers)
     {
@@ -467,7 +467,7 @@ void F_CopyLumpInfo(LumpInfo* dst, const LumpInfo* src)
     dst->container = src->container;
 }
 
-void F_DestroyLumpInfo(LumpInfo* info)
+void F_DestroyLumpInfo(LumpInfo* /*info*/)
 {
     // Nothing to do.
 }
@@ -545,7 +545,7 @@ static int unloadListFiles(FileList* list, boolean nonStartup)
 }
 
 #if _DEBUG
-static void logOrphanedFileIdentifiers(void)
+static void logOrphanedFileIdentifiers()
 {
     fileidentifierid_t nullId;
     uint i, orphanCount = 0;
@@ -1564,7 +1564,7 @@ AbstractFile* F_FindLumpFile(const char* path, int* lumpIdx)
 static DFile* tryOpenFile3(DFile* file, const char* path, const LumpInfo* info);
 
 static DFile* openAsLumpFile(AbstractFile* container, int lumpIdx,
-    const char* _absPath, boolean isDehackedPatch, boolean dontBuffer)
+    const char* _absPath, boolean isDehackedPatch, boolean /*dontBuffer*/)
 {
     DFile* file, *hndl;
     ddstring_t absPath;
@@ -1575,7 +1575,7 @@ static DFile* openAsLumpFile(AbstractFile* container, int lumpIdx,
     if(isDehackedPatch)
     {
         // Copy the path up to and including the last directory separator if present.
-        char* slash = strrchr(_absPath, '/');
+        char const* slash = strrchr(_absPath, '/');
         if(slash)
         {
             Str_PartAppend(&absPath, _absPath, 0, (slash - _absPath) + 1);
@@ -1950,7 +1950,7 @@ DFile* F_OpenLump(lumpnum_t absoluteLumpNum)
     return NULL;
 }
 
-static void clearLDMappings(void)
+static void clearLDMappings()
 {
     if(ldMappings)
     {
@@ -2166,7 +2166,7 @@ void F_InitLumpDirectoryMappings(void)
     inited = true;
 }
 
-static void clearVDMappings(void)
+static void clearVDMappings()
 {
     if(vdMappings)
     {
@@ -2286,7 +2286,7 @@ void F_InitVirtualDirectoryMappings(void)
     }
 }
 
-static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
+static int C_DECL compareFileByFilePath(void const* a_, void const* b_)
 {
     AbstractFile* a = *((AbstractFile* const*)a_);
     AbstractFile* b = *((AbstractFile* const*)b_);
@@ -2297,17 +2297,17 @@ static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
  * Prints the resource path to the console.
  * This is a f_allresourcepaths_callback_t.
  */
-int printResourcePath(const ddstring_t* fileNameStr, PathDirectoryNodeType type,
-    void* paramaters)
+int printResourcePath(ddstring_t const* fileNameStr, PathDirectoryNodeType /*type*/,
+    void* /*parameters*/)
 {
     //assert(fileNameStr && VALID_PATHDIRECTORYNODE_TYPE(type));
-    const char* fileName = Str_Text(fileNameStr);
-    boolean makePretty = F_IsRelativeToBase(fileName, ddBasePath);
+    char const* fileName = Str_Text(fileNameStr);
+    bool makePretty = CPP_BOOL( F_IsRelativeToBase(fileName, ddBasePath) );
     Con_Printf("  %s\n", makePretty? F_PrettyPath(fileName) : fileName);
     return 0; // Continue the listing.
 }
 
-static void printVFDirectory(const ddstring_t* path)
+static void printVFDirectory(ddstring_t const* path)
 {
     ddstring_t dir;
 
@@ -2331,6 +2331,8 @@ static void printVFDirectory(const ddstring_t* path)
 /// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
+    DENG_UNUSED(src);
+
     ddstring_t path;
     Str_Init(&path);
     if(argc > 1)
@@ -2354,6 +2356,9 @@ D_CMD(Dir)
 /// Dump a copy of a virtual file to the runtime directory.
 D_CMD(DumpLump)
 {
+    DENG_UNUSED(src);
+    DENG_UNUSED(argc);
+
     if(inited)
     {
         lumpnum_t absoluteLumpNum = F_CheckLumpNumForName2(argv[1], true);
@@ -2371,6 +2376,10 @@ D_CMD(DumpLump)
 /// List virtual files inside containers.
 D_CMD(ListLumps)
 {
+    DENG_UNUSED(src);
+    DENG_UNUSED(argc);
+    DENG_UNUSED(argv);
+
     if(inited)
     {
         // Always the primary directory.
@@ -2384,6 +2393,10 @@ D_CMD(ListLumps)
 /// List the "real" files presently loaded in original load order.
 D_CMD(ListFiles)
 {
+    DENG_UNUSED(src);
+    DENG_UNUSED(argc);
+    DENG_UNUSED(argv);
+
     size_t totalFiles = 0, totalPackages = 0;
     if(inited)
     {
