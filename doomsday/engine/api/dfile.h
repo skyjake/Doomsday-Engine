@@ -4,7 +4,7 @@
  *
  * @ingroup fs
  *
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
 #ifndef LIBDENG_FILESYS_FILEHANDLE_H
 #define LIBDENG_FILESYS_FILEHANDLE_H
 
-#include "dd_types.h"
+#include <de/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,13 +46,13 @@ typedef struct dfile_s DFile;
 void DFile_Close(DFile* file);
 
 /// @return  @c true iff this handle's internal state is valid.
-boolean DFile_IsValid(const DFile* file);
+boolean DFile_IsValid(DFile const* file);
 
 /// @return  The length of the file, in bytes.
 size_t DFile_Length(DFile* file);
 
 /// @return  Offset in bytes from the start of the file to begin read.
-size_t DFile_BaseOffset(const DFile* file);
+size_t DFile_BaseOffset(DFile const* file);
 
 /**
  * @return  Number of bytes read (at most @a count bytes will be read).
@@ -86,7 +86,7 @@ size_t DFile_Seek(DFile* file, size_t offset, int whence);
 void DFile_Rewind(DFile* file);
 
 #if _DEBUG
-void DFile_Print(const DFile* file);
+void DFile_Print(DFile const* file);
 #endif
 
 #ifdef __cplusplus

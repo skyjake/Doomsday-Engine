@@ -584,7 +584,7 @@ static void printFileList(FileList* list)
     for(int i = 0; i < list->size(); ++i)
     {
         DFile* dfile = (*list)[i];
-        Con_Printf(" %c%u: ", AbstractFile_HasStartup(DFile_File_Const(dfile))? '*':' ', i);
+        Con_Printf(" %c%u: ", AbstractFile_HasStartup(DFile_File_const(dfile))? '*':' ', i);
         DFile_Print(dfile);
     }
 }
@@ -1222,7 +1222,7 @@ static ddstring_t* composeFileList(FileList* fl, int flags = DEFAULT_PATHTOSTRIN
 
         // One more path will be composited.
         ++pathCount;
-        path = AbstractFile_Path(DFile_File_Const(*i));
+        path = AbstractFile_Path(DFile_File_const(*i));
 
         if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
@@ -1279,7 +1279,7 @@ static ddstring_t* composeFileList(FileList* fl, int flags = DEFAULT_PATHTOSTRIN
         if(predicate && !predicate(*i, parameters))
             continue; // Caller isn't interested in this...
 
-        path = AbstractFile_Path(DFile_File_Const(*i));
+        path = AbstractFile_Path(DFile_File_const(*i));
 
         if(flags & PTSF_QUOTED)
             Str_AppendChar(str, '"');
@@ -2607,7 +2607,7 @@ static AbstractFile** collectFiles(FileList* list, int* count)
         for(int i = 0; i < list->size(); ++i)
         {
             DFile const* dfile = (*list)[i];
-            arr[i] = DFile_File_Const(dfile);
+            arr[i] = DFile_File_const(dfile);
         }
         if(count) *count = list->size();
         return arr;

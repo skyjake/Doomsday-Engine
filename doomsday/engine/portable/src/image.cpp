@@ -161,7 +161,7 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* fi
         return false;
     }
 
-    //Con_Message("Loading %s\n", Str_Text(AbstractFile_Path(DFile_File_Const(file))));
+    //Con_Message("Loading %s\n", Str_Text(AbstractFile_Path(DFile_File_const(file))));
 
     // Convert paletted images to RGB.
     if(image.colorCount())

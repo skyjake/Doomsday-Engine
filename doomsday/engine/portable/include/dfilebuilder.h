@@ -24,8 +24,6 @@
 #define LIBDENG_FILESYS_DFILEBUILDER_H
 
 #include "fs_main.h"
-//#include "abstractfile.h"
-//#include "dfile.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +55,7 @@ DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* af, int lumpIdx, boole
  */
 DFile* DFileBuilder_NewFromFile(FILE* hndl, size_t baseOffset);
 
-DFile* DFileBuilder_NewCopy(const DFile* file);
+DFile* DFileBuilder_NewCopy(DFile const* file);
 
 /**
  * Non-public methods of DFile. Placed here temporarily.
@@ -68,7 +66,7 @@ DFile* DFile_New(void);
 void DFile_Delete(DFile* file, boolean recycle);
 
 /// @return  File object represented by this handle.
-struct abstractfile_s* DFile_File(DFile* file);
+AbstractFile* DFile_File(DFile* file);
 
 /// @return  FileList object which owns this handle.
 FileList* DFile_List(DFile* file);
@@ -76,7 +74,7 @@ FileList* DFile_List(DFile* file);
 DFile* DFile_SetList(DFile* file, FileList* list);
 
 /// @return  File object represented by this handle.
-struct abstractfile_s* DFile_File_Const(const DFile* file);
+AbstractFile* DFile_File_const(DFile const* file);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -1501,7 +1501,7 @@ uint8_t* Image_LoadFromFile(image_t* img, DFile* file)
 
     GL_InitImage(img);
 
-    fileName = Str_Text(AbstractFile_Path(DFile_File_Const(file)));
+    fileName = Str_Text(AbstractFile_Path(DFile_File_const(file)));
 
     // Firstly try the expected format given the file name.
     hdlr = findHandlerFromFileName(fileName);

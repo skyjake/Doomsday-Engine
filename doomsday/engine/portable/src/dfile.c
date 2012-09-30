@@ -159,7 +159,7 @@ DFile* DFileBuilder_NewCopy(const DFile* file)
     DFile* clone = DFile_New();
     clone->_flags.open = true;
     clone->_flags.reference = true;
-    clone->_file = DFile_File_Const(file);
+    clone->_file = DFile_File_const(file);
     return clone;
     }
 }
@@ -237,16 +237,16 @@ void DFile_Close(DFile* file)
     file->_flags.open = false;
 }
 
-boolean DFile_IsValid(const DFile* file)
+boolean DFile_IsValid(DFile const* file)
 {
     assert(file);
-    /// \todo write me.
+    /// @todo write me.
     return true;
 }
 
 FileList* DFile_List(DFile* file)
 {
-    errorIfNotValid(file, "DFile::List");
+    errorIfNotValid(file, "DFile_List");
     return (FileList*)file->_list;
 }
 
@@ -259,17 +259,17 @@ DFile* DFile_SetList(DFile* file, FileList* list)
 
 AbstractFile* DFile_File(DFile* file)
 {
-    errorIfNotValid(file, "DFile::File");
+    errorIfNotValid(file, "DFile_File");
     return file->_file;
 }
 
-AbstractFile* DFile_File_Const(const DFile* file)
+AbstractFile* DFile_File_const(DFile const* file)
 {
-    errorIfNotValid(file, "DFile::File const");
+    errorIfNotValid(file, "DFile_File_const");
     return file->_file;
 }
 
-size_t DFile_BaseOffset(const DFile* file)
+size_t DFile_BaseOffset(DFile const* file)
 {
     assert(file);
     if(file->_flags.reference)
@@ -281,7 +281,7 @@ size_t DFile_BaseOffset(const DFile* file)
 
 size_t DFile_Length(DFile* file)
 {
-    errorIfNotValid(file, "DFile::Length");
+    errorIfNotValid(file, "DFile_Length");
     if(file->_flags.reference)
     {
         return DFile_Length(AbstractFile_Handle(file->_file));
@@ -297,7 +297,7 @@ size_t DFile_Length(DFile* file)
 
 size_t DFile_Read(DFile* file, uint8_t* buffer, size_t count)
 {
-    errorIfNotValid(file, "DFile::Read");
+    errorIfNotValid(file, "DFile_Read");
     if(file->_flags.reference)
     {
         return DFile_Read(AbstractFile_Handle(file->_file), buffer, count);
@@ -333,7 +333,7 @@ size_t DFile_Read(DFile* file, uint8_t* buffer, size_t count)
 
 boolean DFile_AtEnd(DFile* file)
 {
-    errorIfNotValid(file, "DFile::AtEnd");
+    errorIfNotValid(file, "DFile_AtEnd");
     if(file->_flags.reference)
     {
         return DFile_AtEnd(AbstractFile_Handle(file->_file));
@@ -343,7 +343,7 @@ boolean DFile_AtEnd(DFile* file)
 
 unsigned char DFile_GetC(DFile* file)
 {
-    errorIfNotValid(file, "DFile::GetC");
+    errorIfNotValid(file, "DFile_GetC");
     {
     unsigned char ch = 0;
     DFile_Read(file, (uint8_t*)&ch, 1);
@@ -353,7 +353,7 @@ unsigned char DFile_GetC(DFile* file)
 
 size_t DFile_Tell(DFile* file)
 {
-    errorIfNotValid(file, "DFile::Tell");
+    errorIfNotValid(file, "DFile_Tell");
     if(file->_flags.reference)
     {
         return DFile_Tell(AbstractFile_Handle(file->_file));
@@ -403,12 +403,12 @@ void DFile_Rewind(DFile* file)
 #if _DEBUG
 void DFile_Print(const DFile* file)
 {
-    errorIfNotValid(file, "DFile::Print");
+    errorIfNotValid(file, "DFile_Print");
     {
     byte id[16];
-    F_GenerateFileId(Str_Text(AbstractFile_Path(DFile_File_Const(file))), id);
+    F_GenerateFileId(Str_Text(AbstractFile_Path(DFile_File_const(file))), id);
     F_PrintFileId(id);
-    Con_Printf(" - \"%s\" [%p]\n", F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))), (void*)file);
+    Con_Printf(" - \"%s\" [%p]\n", F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_const(file)))), (void*)file);
     }
 }
 #endif
