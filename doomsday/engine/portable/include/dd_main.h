@@ -62,7 +62,7 @@ extern int verbose;
 extern filename_t ddBasePath;
 extern filename_t ddRuntimePath, ddBinPath;
 
-extern char* gameStartupFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
+extern char* startupFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
 
 extern int isDedicated;
 

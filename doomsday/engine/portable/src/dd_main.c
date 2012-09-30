@@ -1,33 +1,28 @@
-/**\file dd_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Engine Core
+ * @file dd_main.c
+ *
+ * Engine core.
+ *
+ * @ingroup core
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #ifdef WIN32
 #  define _WIN32_DCOM
@@ -52,17 +47,14 @@
 #include "de_bsp.h"
 #include "de_edit.h"
 
-#include "filedirectory.h"
 #include "abstractresource.h"
-#include "resourcenamespace.h"
-#include "m_misc.h"
-#include "texture.h"
 #include "displaymode.h"
+#include "filedirectory.h"
+#include "game.h"
+#include "m_misc.h"
+#include "resourcenamespace.h"
+#include "texture.h"
 #include "updater.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct ddvalue_s {
     int*            readPtr;
@@ -70,21 +62,13 @@ typedef struct ddvalue_s {
 } ddvalue_t;
 
 typedef struct autoload_s {
-    boolean         loadFiles; // Should files be loaded right away.
-    int             count; // Number of files loaded successfully.
+    boolean         loadFiles; /// Should files be loaded right-away?
+    int             count; /// Number of files loaded successfully.
 } autoload_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static int DD_StartupWorker(void* paramaters);
-static int DD_DummyWorker(void* paramaters);
+static int DD_StartupWorker(void* parameters);
+static int DD_DummyWorker(void* parameters);
 static void DD_AutoLoad(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int renderTextures;
 extern int gotFrame;
@@ -93,42 +77,35 @@ extern int gameDataFormat;
 extern int gameDrawHUD;
 extern int symbolicEchoMode;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
 filename_t ddRuntimePath, ddBinPath;
 
-int isDedicated = false;
+int isDedicated;
 
-int verbose = 0; // For debug messages (-verbose).
-//FILE* outFile; // Output file for console messages.
+int verbose; // For debug messages (-verbose).
 
 // List of file names, whitespace seperating (written to .cfg).
-char* gameStartupFiles = "";
+char* startupFiles = "";
 
 // Id of the currently running title finale if playing, else zero.
-finaleid_t titleFinale = 0;
+finaleid_t titleFinale;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// List of game data files (specified via the command line or in a cfg, or
+// List of session data files (specified via the command line or in a cfg, or
 // found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
-static ddstring_t** gameResourceFileList = 0;
-static size_t numGameResourceFileList = 0;
+static ddstring_t** sessionResourceFileList;
+static size_t numSessionResourceFileList;
 
-Game* theGame = NULL; // Currently active game.
+Game* theGame; // Currently active game.
 
 // Game collection.
-static Game** games = 0;
-static int gamesCount = 0;
+static Game** games;
+static int gamesCount;
 static Game* nullGame; // Special "null-game" object.
-
-// CODE --------------------------------------------------------------------
 
 D_CMD(CheckForUpdates)
 {
     Con_Message("Checking for available updates...\n");
-    Updater_CheckNow(false);
+    Updater_CheckNow(false/* don't notify */);
     return true;
 }
 
@@ -136,7 +113,7 @@ D_CMD(CheckForUpdatesAndNotify)
 {
     /// @todo Combine into the same command with CheckForUpdates?
     Con_Message("Checking for available updates...\n");
-    Updater_CheckNow(true);
+    Updater_CheckNow(true/* do notify */);
     return true;
 }
 
@@ -208,7 +185,7 @@ static Game* findGameForId(gameid_t gameId)
 static Game* findGameForIdentityKey(const char* identityKey)
 {
     int i;
-    assert(identityKey && identityKey[0]);
+    DENG_ASSERT(identityKey && identityKey[0]);
     for(i = 0; i < gamesCount; ++i)
     {
         Game* game = games[i];
@@ -221,7 +198,7 @@ static Game* findGameForIdentityKey(const char* identityKey)
 static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawPath)
 {
     ddstring_t* newPath = Str_New();
-    assert(list && listSize && rawPath && rawPath[0]);
+    DENG_ASSERT(list && listSize && rawPath && rawPath[0]);
 
     Str_Set(newPath, rawPath);
     F_FixSlashes(newPath, newPath);
@@ -258,7 +235,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
 
 static void destroyPathList(ddstring_t*** list, size_t* listSize)
 {
-    assert(list && listSize);
+    DENG_ASSERT(list && listSize);
     if(*list)
     {
         size_t i;
@@ -455,7 +432,7 @@ gameid_t DD_GameIdForKey(const char* identityKey)
 
 void DD_DestroyGames(void)
 {
-    destroyPathList(&gameResourceFileList, &numGameResourceFileList);
+    destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
 
     if(games)
     {
@@ -557,7 +534,7 @@ static boolean recognizeZIP(const char* filePath, void* data)
 }
 
 /// @todo This logic should be encapsulated by AbstractResource.
-static int validateResource(AbstractResource* rec, void* paramaters)
+static int validateResource(AbstractResource* rec, void* parameters)
 {
     int validated = false;
 
@@ -666,7 +643,7 @@ static boolean allGameStartupResourcesFound(Game* game)
  */
 static void printGameBanner(Game* game)
 {
-    assert(game);
+    DENG_ASSERT(game);
     Con_PrintRuler();
     Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(Game_Title(game)));
     Con_PrintRuler();
@@ -744,13 +721,13 @@ void DD_PrintGame(Game* game, int flags)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDataAdder(const ddstring_t* fileName, PathDirectoryNodeType type, void* paramaters)
+static int autoDataAdder(const ddstring_t* fileName, PathDirectoryNodeType type, void* parameters)
 {
-    assert(fileName && paramaters);
+    DENG_ASSERT(fileName && parameters);
     // We are only interested in files.
     if(type == PT_LEAF)
     {
-        autoload_t* data = (autoload_t*)paramaters;
+        autoload_t* data = (autoload_t*)parameters;
         if(data->loadFiles)
         {
             if(F_AddFile(Str_Text(fileName), 0, false))
@@ -758,7 +735,7 @@ static int autoDataAdder(const ddstring_t* fileName, PathDirectoryNodeType type,
         }
         else
         {
-            addToPathList(&gameResourceFileList, &numGameResourceFileList, Str_Text(fileName));
+            addToPathList(&sessionResourceFileList, &numSessionResourceFileList, Str_Text(fileName));
         }
     }
     return 0; // Continue searching.
@@ -853,10 +830,10 @@ typedef struct {
     boolean initiatedBusyMode;
 } ddgamechange_paramaters_t;
 
-static int DD_BeginGameChangeWorker(void* paramaters)
+static int DD_BeginGameChangeWorker(void* parameters)
 {
-    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)paramaters;
-    assert(p);
+    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
+    DENG_ASSERT(p);
 
     P_InitMapUpdate();
     P_InitMapEntityDefs();
@@ -874,10 +851,10 @@ static int DD_BeginGameChangeWorker(void* paramaters)
     return 0;
 }
 
-static int DD_LoadGameStartupResourcesWorker(void* paramaters)
+static int DD_LoadGameStartupResourcesWorker(void* parameters)
 {
-    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)paramaters;
-    assert(p);
+    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
+    DENG_ASSERT(p);
 
     // Reset file Ids so previously seen files can be processed again.
     F_ResetFileIds();
@@ -937,17 +914,17 @@ static int DD_LoadGameStartupResourcesWorker(void* paramaters)
     return 0;
 }
 
-static int DD_LoadAddonResourcesWorker(void* paramaters)
+static int DD_LoadAddonResourcesWorker(void* parameters)
 {
-    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)paramaters;
-    assert(p);
+    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
+    DENG_ASSERT(p);
 
     /**
      * Add additional game-startup files.
-     * \note These must take precedence over Auto but not game-resource files.
+     * @note These must take precedence over Auto but not game-resource files.
      */
-    if(gameStartupFiles && gameStartupFiles[0])
-        parseStartupFilePathsAndAddFiles(gameStartupFiles);
+    if(startupFiles && startupFiles[0])
+        parseStartupFilePathsAndAddFiles(startupFiles);
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -959,16 +936,16 @@ static int DD_LoadAddonResourcesWorker(void* paramaters)
          * First ZIPs then WADs (they may contain WAD files).
          */
         addFilesFromAutoData(false);
-        if(numGameResourceFileList > 0)
+        if(numSessionResourceFileList > 0)
         {
             size_t i, pass;
             for(pass = 0; pass < 2; ++pass)
-            for(i = 0; i < numGameResourceFileList; ++i)
+            for(i = 0; i < numSessionResourceFileList; ++i)
             {
-                resourcetype_t resType = F_GuessResourceTypeByName(Str_Text(gameResourceFileList[i]));
+                resourcetype_t resType = F_GuessResourceTypeByName(Str_Text(sessionResourceFileList[i]));
                 if((pass == 0 && resType == RT_ZIP) ||
                    (pass == 1 && resType == RT_WAD))
-                    F_AddFile(Str_Text(gameResourceFileList[i]), 0, false);
+                    F_AddFile(Str_Text(sessionResourceFileList[i]), 0, false);
             }
         }
 
@@ -992,11 +969,11 @@ static int DD_LoadAddonResourcesWorker(void* paramaters)
     return 0;
 }
 
-static int DD_ActivateGameWorker(void* paramaters)
+static int DD_ActivateGameWorker(void* parameters)
 {
-    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)paramaters;
+    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
     uint i;
-    assert(p);
+    DENG_ASSERT(p);
 
     // Texture resources are located now, prior to initializing the game.
     R_InitPatchComposites();
@@ -1100,7 +1077,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 {
     boolean isReload = false;
     char buf[256];
-    assert(game);
+    DENG_ASSERT(game);
 
     // Ignore attempts to re-load the current game?
     if(theGame == game)
@@ -1449,7 +1426,7 @@ int DD_EarlyInit(void)
     return true;
 }
 
-static int DD_LocateAllGameResourcesWorker(void* paramaters)
+static int DD_LocateAllGameResourcesWorker(void* parameters)
 {
     int i;
     for(i = 0; i < gamesCount; ++i)
@@ -1543,7 +1520,7 @@ boolean DD_Init(void)
     }
 
     /*
-    assert(!Sys_GLCheckError());
+    DENG_ASSERT(!Sys_GLCheckError());
     if(!novideo)
     {
         // Render a few black frames before we continue. This will help to
@@ -1556,7 +1533,7 @@ boolean DD_Init(void)
             GL_DoUpdate();
         }
     }
-    assert(!Sys_GLCheckError());
+    DENG_ASSERT(!Sys_GLCheckError());
 */
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
@@ -1643,7 +1620,7 @@ boolean DD_Init(void)
 
                 while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
-                    addToPathList(&gameResourceFileList, &numGameResourceFileList, CommandLine_PathAt(p));
+                    addToPathList(&sessionResourceFileList, &numSessionResourceFileList, CommandLine_PathAt(p));
                 }
 
                 p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
@@ -1653,7 +1630,7 @@ boolean DD_Init(void)
             DD_ChangeGame(game);
 
             // We do not want to load these resources again on next game change.
-            destroyPathList(&gameResourceFileList, &numGameResourceFileList);
+            destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
         }
     }
 
@@ -1940,11 +1917,11 @@ typedef struct {
     boolean initiatedBusyMode;
 } ddupdateenginestateworker_paramaters_t;
 
-static int DD_UpdateEngineStateWorker(void* paramaters)
+static int DD_UpdateEngineStateWorker(void* parameters)
 {
-    assert(paramaters);
+    DENG_ASSERT(parameters);
     {
-    ddupdateenginestateworker_paramaters_t* p = (ddupdateenginestateworker_paramaters_t*) paramaters;
+    ddupdateenginestateworker_paramaters_t* p = (ddupdateenginestateworker_paramaters_t*) parameters;
 
     if(!novideo)
     {
@@ -2354,19 +2331,19 @@ void DD_SetVariable(int ddvalue, void *parm)
     }
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str)
 {
     return Materials_ParseNamespace(str);
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
 {
     return Textures_ParseNamespace(str);
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 fontnamespaceid_t DD_ParseFontNamespace(const char* str)
 {
     return Fonts_ParseNamespace(str);
