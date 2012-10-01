@@ -361,12 +361,11 @@ int de::WadFile::publishLumpsToDirectory(LumpDirectory* directory)
     if(directory)
     {
         d->readLumpDirectory();
-        const int numLumps = lumpCount();
-        if(numLumps)
+        if(!empty())
         {
             // Insert the lumps into their rightful places in the directory.
-            LumpDirectory_CatalogLumps(directory, reinterpret_cast<abstractfile_s*>(this), 0, numLumps);
-            numPublished += numLumps;
+            numPublished = lumpCount();
+            directory->catalogLumps(*this, 0, numPublished);
         }
     }
     return numPublished;
@@ -579,10 +578,10 @@ void WadFile_Delete(WadFile* wad)
     }
 }
 
-int WadFile_PublishLumpsToDirectory(WadFile* wad, LumpDirectory* directory)
+int WadFile_PublishLumpsToDirectory(WadFile* wad, struct lumpdirectory_s* directory)
 {
     SELF(wad);
-    return self->publishLumpsToDirectory(directory);
+    return self->publishLumpsToDirectory(reinterpret_cast<de::LumpDirectory*>(directory));
 }
 
 PathDirectoryNode* WadFile_LumpDirectoryNode(WadFile* wad, int lumpIdx)
@@ -597,7 +596,7 @@ AutoStr* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter)
     return self->composeLumpPath(lumpIdx, delimiter);
 }
 
-const LumpInfo* WadFile_LumpInfo(WadFile* wad, int lumpIdx)
+LumpInfo const* WadFile_LumpInfo(WadFile* wad, int lumpIdx)
 {
     SELF(wad);
     return self->lumpInfo(lumpIdx);
@@ -641,7 +640,7 @@ size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer)
     return self->readLump(lumpIdx, buffer);
 }
 
-const uint8_t* WadFile_CacheLump(WadFile* wad, int lumpIdx)
+uint8_t const* WadFile_CacheLump(WadFile* wad, int lumpIdx)
 {
     SELF(wad);
     return self->cacheLump(lumpIdx);

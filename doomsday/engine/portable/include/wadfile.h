@@ -45,6 +45,7 @@ struct pathdirectorynode_s;
 
 namespace de {
 
+class LumpDirectory;
 class PathDirectoryNode;
 
 /**
@@ -187,7 +188,7 @@ public:
      * @return Number of lumps published to the directory. Note that this is not
      *         necessarily equal to the the number of lumps in the file.
      */
-    int publishLumpsToDirectory(struct lumpdirectory_s* directory);
+    int publishLumpsToDirectory(LumpDirectory* directory);
 
     /**
      * @attention Uses an extremely simple formula which does not conform to any CRC

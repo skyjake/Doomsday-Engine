@@ -34,6 +34,8 @@
 #ifdef __cplusplus
 namespace de {
 
+class LumpDirectory;
+
 /**
  * LumpFile. Runtime representation of a lump-file for use with LumpDirectory
  */
@@ -62,7 +64,7 @@ public:
      *
      * @return Number of lumps published to the directory. Always @c =1
      */
-    int publishLumpsToDirectory(struct lumpdirectory_s* directory);
+    int publishLumpsToDirectory(LumpDirectory* directory);
 
 private:
     struct Instance;

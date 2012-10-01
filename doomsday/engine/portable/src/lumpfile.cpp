@@ -56,7 +56,11 @@ int de::LumpFile::publishLumpsToDirectory(LumpDirectory* directory)
     if(directory)
     {
         // This *is* the lump, so insert ourself in the directory.
-        LumpDirectory_CatalogLumps(directory, reinterpret_cast<abstractfile_s*>(info()->container), info()->lumpIdx, 1);
+        AbstractFile* container = reinterpret_cast<de::AbstractFile*>(info()->container);
+        if(container)
+        {
+            directory->catalogLumps(*container, info()->lumpIdx, 1);
+        }
     }
     return 1;
 }
@@ -115,8 +119,8 @@ int LumpFile_LumpCount(LumpFile* lump)
     return self->lumpCount();
 }
 
-int LumpFile_PublishLumpsToDirectory(LumpFile* lump, LumpDirectory* directory)
+int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory)
 {
     SELF(lump);
-    return self->publishLumpsToDirectory(directory);
+    return self->publishLumpsToDirectory(reinterpret_cast<de::LumpDirectory*>(directory));
 }

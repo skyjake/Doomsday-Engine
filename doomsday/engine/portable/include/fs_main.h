@@ -127,7 +127,7 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
 /**
  * Given a logical @a lumpnum retrieve the associated file object.
  *
- * \post The active LumpDirectory may have changed!
+ * @post The active LumpDirectory may have changed!
  *
  * @param absoluteLumpNum  Logical lumpnum associated to the file being looked up.
  * @param lumpIdx  If not @c NULL the translated lumpnum within the owning file object is written here.

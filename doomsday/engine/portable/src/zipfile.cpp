@@ -545,12 +545,11 @@ int de::ZipFile::publishLumpsToDirectory(LumpDirectory* directory)
     if(directory)
     {
         d->readLumpDirectory();
-        const int numLumps = lumpCount();
-        if(numLumps)
+        if(!empty())
         {
             // Insert the lumps into their rightful places in the directory.
-            LumpDirectory_CatalogLumps(directory, reinterpret_cast<abstractfile_s*>(this), 0, numLumps);
-            numPublished += numLumps;
+            numPublished = lumpCount();
+            directory->catalogLumps(*this, 0, numPublished);
         }
     }
     return numPublished;
@@ -1066,10 +1065,10 @@ void ZipFile_Delete(ZipFile* zip)
     }
 }
 
-int ZipFile_PublishLumpsToDirectory(ZipFile* zip, LumpDirectory* directory)
+int ZipFile_PublishLumpsToDirectory(ZipFile* zip, struct lumpdirectory_s* directory)
 {
     SELF(zip);
-    return self->publishLumpsToDirectory(directory);
+    return self->publishLumpsToDirectory(reinterpret_cast<de::LumpDirectory*>(directory));
 }
 
 PathDirectoryNode* ZipFile_LumpDirectoryNode(ZipFile* zip, int lumpIdx)

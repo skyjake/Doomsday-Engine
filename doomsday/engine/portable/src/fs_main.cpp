@@ -45,6 +45,7 @@ D_CMD(ListFiles);
 D_CMD(ListLumps);
 
 using de::DFileBuilder;
+using de::LumpDirectory;
 
 /**
  * Lump Directory Mapping.  Maps lump to resource path.
@@ -198,13 +199,12 @@ static de::AbstractFile* newLumpFile(de::DFile* file, char const* path, LumpInfo
     return new de::LumpFile(*file, path, *info);
 }
 
-static int pruneLumpsFromDirectorysByFile(de::AbstractFile* _af)
+static int pruneLumpsFromDirectorysByFile(de::AbstractFile& file)
 {
-    AbstractFile* af = reinterpret_cast<AbstractFile*>(_af);
-    int pruned = LumpDirectory_PruneByFile(zipLumpDirectory, af);
-    pruned += LumpDirectory_PruneByFile(primaryWadLumpDirectory, af);
+    int pruned = zipLumpDirectory->pruneByFile(file)
+               + primaryWadLumpDirectory->pruneByFile(file);
     if(auxiliaryWadLumpDirectoryInUse)
-        pruned += LumpDirectory_PruneByFile(auxiliaryWadLumpDirectory, af);
+        pruned += auxiliaryWadLumpDirectory->pruneByFile(file);
     return pruned;
 }
 
@@ -213,6 +213,7 @@ static bool removeLoadedFile(int loadedFilesNodeIndex)
     DENG_ASSERT(loadedFiles);
     de::DFile* hndl = loadedFiles->at(loadedFilesNodeIndex);
     de::AbstractFile* af = hndl->file();
+    DENG_ASSERT(af);
 
     switch(af->type())
     {
@@ -222,7 +223,7 @@ static bool removeLoadedFile(int loadedFilesNodeIndex)
     }
 
     F_ReleaseFileId(Str_Text(af->path()));
-    pruneLumpsFromDirectorysByFile(af);
+    pruneLumpsFromDirectorysByFile(*af);
 
     loadedFiles->removeAt(loadedFilesNodeIndex);
     F_Delete(reinterpret_cast<DFile*>(hndl));
@@ -237,7 +238,7 @@ static void clearLoadedFiles(LumpDirectory* directory = 0)
     for(int i = loadedFiles->size() - 1; i >= 0; i--)
     {
         file = findAbstractFileInList(loadedFiles, i);
-        if(!directory || LumpDirectory_Catalogues(directory, reinterpret_cast<AbstractFile*>(file)))
+        if(!directory || directory->catalogues(*file))
         {
             removeLoadedFile(i);
         }
@@ -247,9 +248,9 @@ static void clearLoadedFiles(LumpDirectory* directory = 0)
 /**
  * Handles conversion to a logical index that is independent of the lump directory currently in use.
  */
-static __inline lumpnum_t logicalLumpNum(lumpnum_t lumpNum)
+static inline lumpnum_t logicalLumpNum(lumpnum_t lumpNum)
 {
-    return (lumpNum < 0? -1 :
+    return (lumpNum < 0 ? -1 :
             ActiveWadLumpDirectory == auxiliaryWadLumpDirectory? lumpNum += AUXILIARY_BASE : lumpNum);
 }
 
@@ -268,11 +269,11 @@ static boolean useAuxiliaryWadLumpDirectory()
 
 static void clearLumpDirectorys()
 {
-    LumpDirectory_Delete(primaryWadLumpDirectory), primaryWadLumpDirectory = NULL;
-    LumpDirectory_Delete(auxiliaryWadLumpDirectory), auxiliaryWadLumpDirectory = NULL;
-    ActiveWadLumpDirectory = NULL;
+    delete primaryWadLumpDirectory; primaryWadLumpDirectory = 0;
+    delete auxiliaryWadLumpDirectory; auxiliaryWadLumpDirectory = 0;
+    delete zipLumpDirectory; zipLumpDirectory = 0;
 
-    LumpDirectory_Delete(zipLumpDirectory), zipLumpDirectory = NULL;
+    ActiveWadLumpDirectory = 0;
 }
 
 static void clearOpenFiles()
@@ -491,9 +492,9 @@ void F_Init(void)
     openFiles     = new FileList();
     loadedFiles   = new FileList();
 
-    zipLumpDirectory          = LumpDirectory_NewWithFlags(LDF_UNIQUE_PATHS);
-    primaryWadLumpDirectory   = LumpDirectory_New();
-    auxiliaryWadLumpDirectory = LumpDirectory_New();
+    zipLumpDirectory          = new LumpDirectory(LDF_UNIQUE_PATHS);
+    primaryWadLumpDirectory   = new LumpDirectory();
+    auxiliaryWadLumpDirectory = new LumpDirectory();
     auxiliaryWadLumpDirectoryInUse = false;
 
     ActiveWadLumpDirectory = primaryWadLumpDirectory;
@@ -632,7 +633,7 @@ boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
     lumpnum_t lumpNum;
     errorIfNotInited("F_IsValidLumpNum");
     lumpNum = chooseWadLumpDirectory(absoluteLumpNum);
-    return LumpDirectory_IsValidIndex(ActiveWadLumpDirectory, lumpNum);
+    return ActiveWadLumpDirectory->isValidIndex(lumpNum);
 }
 
 typedef enum lumpsizecondition_e {
@@ -717,12 +718,12 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
         // the auxiliary lumps because they take precedence.
         if(useAuxiliaryWadLumpDirectory())
         {
-            lumpNum = LumpDirectory_IndexForPath(ActiveWadLumpDirectory, Str_Text(&searchPath));
+            lumpNum = ActiveWadLumpDirectory->indexForPath(Str_Text(&searchPath));
 
             if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
             {
                 // Get the size as well for the condition check.
-                lumpSize = LumpDirectory_LumpInfo(ActiveWadLumpDirectory, lumpNum)->size;
+                lumpSize = ActiveWadLumpDirectory->lumpInfo(lumpNum)->size;
             }
         }
 
@@ -730,12 +731,12 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
         if(lumpNum < 0)
         {
             usePrimaryWadLumpDirectory();
-            lumpNum = LumpDirectory_IndexForPath(ActiveWadLumpDirectory, Str_Text(&searchPath));
+            lumpNum = ActiveWadLumpDirectory->indexForPath(Str_Text(&searchPath));
 
             if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
             {
                 // Get the size as well for the condition check.
-                lumpSize = LumpDirectory_LumpInfo(ActiveWadLumpDirectory, lumpNum)->size;
+                lumpSize = ActiveWadLumpDirectory->lumpInfo(lumpNum)->size;
             }
         }
 
@@ -790,7 +791,7 @@ lumpnum_t F_CheckLumpNumForName(const char* name)
 LumpInfo const* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
     lumpnum_t translated = chooseWadLumpDirectory(absoluteLumpNum);
-    LumpInfo const* lumpInfo = LumpDirectory_LumpInfo(ActiveWadLumpDirectory, translated);
+    LumpInfo const* lumpInfo = ActiveWadLumpDirectory->lumpInfo(translated);
     if(lumpIdx) *lumpIdx = (lumpInfo? lumpInfo->lumpIdx : -1);
     return lumpInfo;
 }
@@ -853,8 +854,7 @@ boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 
 int F_LumpCount(void)
 {
-    if(inited)
-        return LumpDirectory_Size(ActiveWadLumpDirectory);
+    if(inited) return ActiveWadLumpDirectory->size();
     return 0;
 }
 
@@ -1469,8 +1469,8 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
 }
 
 static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t* pattern,
-    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters),
-    void* paramaters)
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* parameters),
+    void* parameters)
 {
     int result = 0, count;
     foundentry_t* foundPaths;
@@ -1500,7 +1500,7 @@ static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t
                 if(F_MatchFileName(Str_Text(&found->path), Str_Text(&localPattern)))
                 {
                     // Pass this path to the caller.
-                    result = callback(&found->path, (foundPaths[i].attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, paramaters);
+                    result = callback(&found->path, (foundPaths[i].attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, parameters);
                 }
             }
 
@@ -1515,56 +1515,9 @@ static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t
     return result;
 }
 
-typedef struct {
-    /// Callback to make for each processed file.
-    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters);
-
-    /// Data passed to the callback.
-    void* paramaters;
-
-    int flags; /// @see searchPathFlags
-
-    /// Current search pattern.
-    ddstring_t pattern;
-    PathMap patternMap;
-} findlumpworker_paramaters_t;
-
-static int findLumpWorker(const LumpInfo* lumpInfo, void* paramaters)
-{
-    findlumpworker_paramaters_t* p = (findlumpworker_paramaters_t*)paramaters;
-    PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx);
-    AutoStr* filePath = NULL;
-    boolean patternMatched;
-    int result = 0; // Continue iteration.
-    assert(lumpInfo && p);
-
-    if(!node) return 0; // Most irregular...
-
-    if(!(p->flags & SPF_NO_DESCEND))
-    {
-        filePath = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
-        patternMatched = F_MatchFileName(Str_Text(filePath), Str_Text(&p->pattern));
-    }
-    else
-    {
-        patternMatched = PathDirectoryNode_MatchDirectory(node, PCF_MATCH_FULL, &p->patternMap, NULL);
-        if(patternMatched)
-        {
-            filePath = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
-        }
-    }
-
-    if(patternMatched)
-    {
-        result = p->callback(filePath, PT_LEAF, p->paramaters);
-    }
-
-    return result;
-}
-
-int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
-    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters),
-    void* paramaters)
+int F_AllResourcePaths2(char const* rawSearchPattern, int flags,
+    int (*callback) (ddstring_t const* path, PathDirectoryNodeType type, void* parameters),
+    void* parameters)
 {
     ddstring_t searchPattern, searchName, searchDirectory;
     int result = 0;
@@ -1580,30 +1533,53 @@ int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
     F_PrependBasePath(&searchPattern, &searchPattern);
 
     // Check the Zip directory.
-    { findlumpworker_paramaters_t p;
-    p.callback = callback;
-    p.paramaters = paramaters;
-    p.flags = flags;
-    Str_Init(&p.pattern); Str_Set(&p.pattern, Str_Text(&searchPattern));
-    PathMap_Initialize(&p.patternMap, PathDirectory_HashPathFragment2, Str_Text(&searchPattern));
+    ddstring_t pattern;
+    PathMap patternMap;
+    Str_Set(Str_Init(&pattern), Str_Text(&searchPattern));
+    PathMap_Initialize(&patternMap, de::PathDirectory::hashPathFragment, Str_Text(&searchPattern));
 
-    result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findLumpWorker, (void*)&p);
-    PathMap_Destroy(&p.patternMap);
-    Str_Free(&p.pattern);
+    DENG2_FOR_EACH(i, zipLumpDirectory->lumps(), LumpDirectory::LumpInfos::const_iterator)
+    {
+        LumpInfo const* lumpInfo = *i;
+        PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx);
+        DENG_ASSERT(node);
+
+        AutoStr* filePath = 0;
+        bool patternMatched;
+        if(!(flags & SPF_NO_DESCEND))
+        {
+            filePath       = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
+            patternMatched = F_MatchFileName(Str_Text(filePath), Str_Text(&pattern));
+        }
+        else
+        {
+            patternMatched = PathDirectoryNode_MatchDirectory(node, PCF_MATCH_FULL, &patternMap, NULL);
+            if(patternMatched)
+            {
+                filePath   = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
+            }
+        }
+
+        if(!patternMatched) continue;
+
+        result = callback(filePath, PT_LEAF, parameters);
+        if(result) break;
+    }
+
+    PathMap_Destroy(&patternMap);
+    Str_Free(&pattern);
 
     if(result) goto searchEnded;
-    }
 
     // Check the dir/WAD direcs.
     if(ldMappingsCount)
     {
-        uint i;
-        for(i = 0; i < ldMappingsCount; ++i)
+        for(uint i = 0; i < ldMappingsCount; ++i)
         {
             ldmapping_t* rec = &ldMappings[i];
             if(!F_MatchFileName(Str_Text(&rec->path), Str_Text(&searchPattern))) continue;
 
-            result = callback(&rec->path, PT_LEAF, paramaters);
+            result = callback(&rec->path, PT_LEAF, parameters);
             if(result) goto searchEnded;
         }
     }
@@ -1623,7 +1599,7 @@ int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
     Str_Init(&searchName);
     F_FileNameAndExtension(&searchName, Str_Text(&searchPattern));
 
-    result = iterateLocalPaths(&searchDirectory, &searchName, callback, paramaters);
+    result = iterateLocalPaths(&searchDirectory, &searchName, callback, parameters);
 
     Str_Free(&searchName);
     Str_Free(&searchDirectory);
@@ -1634,7 +1610,7 @@ searchEnded:
 }
 
 int F_AllResourcePaths(const char* searchPath, int flags,
-    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters))
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* parameters))
 {
     return F_AllResourcePaths2(searchPath, flags, callback, 0);
 }
@@ -1699,30 +1675,28 @@ static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** fou
     return NULL;
 }
 
-AbstractFile* F_FindLumpFile(const char* path, int* lumpIdx)
+AbstractFile* F_FindLumpFile(char const* path, int* lumpIdx)
 {
-    ddstring_t absSearchPath;
-    lumpnum_t lumpNum;
-
-    if(!inited || !path || !path[0])
-        return NULL;
+    if(!inited || !path || !path[0]) return 0;
 
     /**
      * First check the Zip directory.
      */
 
     // Convert to an absolute path.
+    ddstring_t absSearchPath;
     Str_Init(&absSearchPath); Str_Set(&absSearchPath, path);
     F_PrependBasePath(&absSearchPath, &absSearchPath);
 
     // Perform the search.
-    lumpNum = LumpDirectory_IndexForPath(zipLumpDirectory, Str_Text(&absSearchPath));
+    lumpnum_t lumpNum = zipLumpDirectory->indexForPath(Str_Text(&absSearchPath));
     if(lumpNum >= 0)
     {
-        const LumpInfo* lumpInfo = LumpDirectory_LumpInfo(zipLumpDirectory, lumpNum);
-        assert(lumpInfo);
-        if(lumpIdx) *lumpIdx = lumpInfo->lumpIdx;
         Str_Free(&absSearchPath);
+
+        LumpInfo const* lumpInfo = zipLumpDirectory->lumpInfo(lumpNum);
+        DENG_ASSERT(lumpInfo);
+        if(lumpIdx) *lumpIdx = lumpInfo->lumpIdx;
         return lumpInfo->container;
     }
 
@@ -1731,13 +1705,11 @@ AbstractFile* F_FindLumpFile(const char* path, int* lumpIdx)
      */
     if(ldMappingsCount)
     {
-        uint i = 0;
-
         // We must have an absolute path, so prepend the current working directory if necessary.
         Str_Set(&absSearchPath, path);
         F_PrependWorkPath(&absSearchPath, &absSearchPath);
 
-        for(i = 0; i < ldMappingsCount; ++i)
+        for(uint i = 0; i < ldMappingsCount; ++i)
         {
             ldmapping_t* rec = &ldMappings[i];
             lumpnum_t absoluteLumpNum;
@@ -2563,6 +2535,30 @@ D_CMD(DumpLump)
     return false;
 }
 
+/**
+ * Print a content listing of lumps in this directory to stdout (for debug).
+ */
+static void printLumpDirectory(LumpDirectory& ld)
+{
+    const int numRecords = ld.size();
+    const int numIndexDigits = MAX_OF(3, M_NumDigits(numRecords));
+
+    Con_Printf("LumpDirectory %p (%i records):\n", &ld, numRecords);
+
+    int idx = 0;
+    DENG2_FOR_EACH(i, ld.lumps(), LumpDirectory::LumpInfos::const_iterator)
+    {
+        LumpInfo const* lumpInfo = *i;
+        AutoStr* path = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
+        Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
+                   F_PrettyPath(Str_Text(AbstractFile_Path(lumpInfo->container))),
+                   F_PrettyPath(Str_Text(path)),
+                   (unsigned long) lumpInfo->size,
+                   (lumpInfo->compressedSize != lumpInfo->size? " compressed" : ""));
+    }
+    Con_Printf("---End of lumps---\n");
+}
+
 /// List virtual files inside containers.
 D_CMD(ListLumps)
 {
@@ -2573,7 +2569,7 @@ D_CMD(ListLumps)
     if(inited)
     {
         // Always the primary directory.
-        LumpDirectory_Print(primaryWadLumpDirectory);
+        printLumpDirectory(*primaryWadLumpDirectory);
         return true;
     }
     Con_Printf("WAD module is not presently initialized.\n");

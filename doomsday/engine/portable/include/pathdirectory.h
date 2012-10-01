@@ -113,6 +113,10 @@ public:
      * @param flags  @see pathComparisonFlags
      * @param searchPattern  Fragment mapped search pattern (path).
      * @return  Non-zero iff the directory matched this.
+     *
+     * @todo We need an alternative version of this whose candidate path is specified using
+     *       another PathDirectoryNode (possibly from another PathDirectory instance). This
+     *       would allow for further optimizations in the file system (among others) -ds
      */
     int matchDirectory(int flags, PathMap* candidatePath);
 

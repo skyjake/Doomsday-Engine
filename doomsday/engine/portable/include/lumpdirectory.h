@@ -1,13 +1,16 @@
 /**
  * @file lumpdirectory.h
- * Indexed directory of lumps. @ingroup fs
+ *
+ * Indexed directory of lumps.
+ *
+ * @ingroup fs
  *
  * Virtual file system component used to model an indexable collection of
  * lumps. A single directory may include lumps originating from many different
  * file containers.
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,16 +33,9 @@
 #include "abstractfile.h"
 #include "lumpinfo.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <QList>
 
-struct lumpdirectory_s;
-
-/**
- * LumpDirectory instance.
- */
-typedef struct lumpdirectory_s LumpDirectory;
+namespace de {
 
 /**
  * @defgroup lumpDirectoryFlags Lump Directory Flags
@@ -51,94 +47,83 @@ typedef struct lumpdirectory_s LumpDirectory;
                                             /// being pruned.
 ///}
 
-/**
- * Construct a new (empty) instance of LumpDirectory.
- *
- * @param flags  @ref lumpDirectoryFlags
- */
-LumpDirectory* LumpDirectory_NewWithFlags(int flags);
-LumpDirectory* LumpDirectory_New(void); /*flags=0*/
+class LumpDirectory
+{
+public:
+    typedef QList<LumpInfo const*> LumpInfos;
 
-void LumpDirectory_Delete(LumpDirectory* dir);
+public:
+    /**
+     * @param flags  @ref lumpDirectoryFlags
+     */
+    LumpDirectory(int flags = 0);
+    ~LumpDirectory();
 
-/// Number of lumps in the directory.
-int LumpDirectory_Size(LumpDirectory* dir);
+    /// Number of lumps in the directory.
+    int size();
 
-/// Clear the directory back to its default (i.e., empty state).
-void LumpDirectory_Clear(LumpDirectory* dir);
+    /// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
+    bool isValidIndex(lumpnum_t lumpNum);
 
-/**
- * Are any lumps from @a file published in this directory?
- *
- * @param dir  LumpDirectory instance.
- * @param file  File containing the lumps to look for.
- * @return  @c true if one or more lumps are included.
- */
-boolean LumpDirectory_Catalogues(LumpDirectory* dir, AbstractFile* file);
+    /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
+    lumpnum_t indexForPath(char const* path);
 
-/// @return  Index associated with the last lump with variable-length @a path if found else @c -1
-lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* dir, const char* path);
+    /// @return  LumpInfo for the lump with index @a lumpNum.
+    LumpInfo const* lumpInfo(lumpnum_t lumpNum);
 
-/// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
-boolean LumpDirectory_IsValidIndex(LumpDirectory* dir, lumpnum_t lumpNum);
+    /**
+     * Provides access to the list of lumps for efficient traversals.
+     */
+    LumpInfos const& lumps();
 
-/// @return  LumpInfo for the lump with index @a lumpNum.
-const LumpInfo* LumpDirectory_LumpInfo(LumpDirectory* dir, lumpnum_t lumpNum);
+    /**
+     * Clear the directory back to its default (i.e., empty state).
+     */
+    void clear();
 
-/**
- * Append a new set of lumps to the directory.
- *
- * \post Lump name hashes may be invalidated (will be rebuilt upon next search).
- *
- * @param dir  LumpDirectory instance.
- * @param file  File from which lumps are to be being added.
- * @param lumpIdxBase  Base index for the range of lumps being added.
- * @param lumpIdxCount  Number of lumps in the range being added.
- */
-void LumpDirectory_CatalogLumps(LumpDirectory* dir, AbstractFile* file,
-    int lumpIdxBase, int lumpIdxCount);
+    /**
+     * Are any lumps from @a file published in this directory?
+     *
+     * @param file      File containing the lumps to look for.
+     *
+     * @return  @c true= One or more lumps are included.
+     */
+    bool catalogues(AbstractFile& file);
 
-/**
- * Prune all lumps catalogued from @a file.
- *
- * @param dir  LumpDirectory instance.
- * @param file  File containing the lumps to prune
- * @return  Number of lumps pruned.
- */
-int LumpDirectory_PruneByFile(LumpDirectory* dir, AbstractFile* file);
+    /**
+     * Append a new set of lumps to the directory.
+     *
+     * @post Lump name hashes may be invalidated (will be rebuilt upon next search).
+     *
+     * @param file          File from which lumps are to be being added.
+     * @param lumpIdxBase   Base index for the range of lumps being added.
+     * @param lumpIdxCount  Number of lumps in the range being added.
+     */
+    void catalogLumps(AbstractFile& file, int lumpIdxBase, int lumpIdxCount);
 
-/**
- * Prune the lump referenced by @a lumpInfo.
- *
- * @param dir  LumpDirectory instance.
- * @param lumpInfo  Unique info descriptor for the lump to prune.
- * @return  @c true if found and pruned.
- */
-boolean LumpDirectory_PruneLump(LumpDirectory* dir, LumpInfo* lumpInfo);
+    /**
+     * Prune all lumps catalogued from @a file.
+     *
+     * @param file      File containing the lumps to prune
+     *
+     * @return  Number of lumps pruned.
+     */
+    int pruneByFile(AbstractFile& file);
 
-/**
- * Iterate over lumps in the directory making a callback for each.
- * Iteration ends when all LumpInfos have been processed or a callback returns non-zero.
- *
- * @param dir  LumpDirectory instance.
- * @param file  If not @c NULL only consider lumps from this file.
- * @param callback  Callback to make for each iteration.
- * @param paramaters  User data to be passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int LumpDirectory_Iterate2(LumpDirectory* dir, AbstractFile* file,
-    int (*callback) (const LumpInfo*, void*), void* paramaters);
-int LumpDirectory_Iterate(LumpDirectory* dir, AbstractFile* file,
-    int (*callback) (const LumpInfo*, void*));
+    /**
+     * Prune the lump referenced by @a lumpInfo.
+     *
+     * @param lumpInfo  Unique info descriptor for the lump to prune.
+     *
+     * @return  @c true if found and pruned.
+     */
+    bool pruneLump(LumpInfo* lumpInfo);
 
-/**
- * Print a content listing of lumps in this directory to stdout (for debug).
- */
-void LumpDirectory_Print(LumpDirectory* dir);
+private:
+    struct Instance;
+    Instance* d;
+};
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+} // namespace de
 
 #endif // LIBDENG_FILESYS_LUMPDIRECTORY_H
