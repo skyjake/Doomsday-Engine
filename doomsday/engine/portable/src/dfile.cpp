@@ -82,7 +82,7 @@ static DFile* usedHandles;
 
 using de::DFileBuilder;
 
-static void errorIfNotValid(de:: DFile const& file, char const* callerName)
+static void errorIfNotValid(de::DFile const& file, char const* callerName)
 {
     if(file.isValid()) return;
     Con_Error("%s: Instance %p has not yet been initialized.", callerName, (void*)&file);
@@ -121,12 +121,12 @@ void DFileBuilder::shutdown(void)
 #endif
 }
 
-de::DFile* DFileBuilder::fromAbstractFileLump(de::AbstractFile& container, int lumpIdx, bool dontBuffer)
+de::DFile* DFileBuilder::fromFileLump(de::AbstractFile& container, int lumpIdx, bool dontBuffer)
 {
     LumpInfo const* info = F_LumpInfo(&reinterpret_cast<struct abstractfile_s&>(container), lumpIdx);
     if(!info) return NULL;
 
-    de::DFile* file = new de::DFile();
+    DFile* file = new DFile();
     // Init and load in the lump data.
     file->d->flags.open = true;
     if(!dontBuffer)
@@ -134,7 +134,7 @@ de::DFile* DFileBuilder::fromAbstractFileLump(de::AbstractFile& container, int l
         file->d->size = info->size;
         file->d->pos = file->d->data = (uint8_t*) M_Malloc(file->d->size);
         if(!file->d->data)
-            Con_Error("DFileBuilder::newFromAbstractFileLump: Failed on allocation of %lu bytes for data buffer.",
+            Con_Error("DFileBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
                 (unsigned long) file->d->size);
 #if _DEBUG
         VERBOSE2(
@@ -149,18 +149,18 @@ de::DFile* DFileBuilder::fromAbstractFileLump(de::AbstractFile& container, int l
     return file;
 }
 
-de::DFile* DFileBuilder::fromAbstractFile(de::AbstractFile& af)
+de::DFile* DFileBuilder::fromFile(de::AbstractFile& af)
 {
-    de::DFile* file = new de::DFile();
+    DFile* file = new DFile();
     file->d->file = &af;
     file->d->flags.open = true;
     file->d->flags.reference = true;
     return file;
 }
 
-de::DFile* DFileBuilder::fromFile(FILE& hndl, size_t baseOffset)
+de::DFile* DFileBuilder::fromNativeFile(FILE& hndl, size_t baseOffset)
 {
-    de::DFile* file = new de::DFile();
+    DFile* file = new DFile();
     file->d->flags.open = true;
     file->d->hndl = &hndl;
     file->d->baseOffset = baseOffset;
@@ -169,10 +169,10 @@ de::DFile* DFileBuilder::fromFile(FILE& hndl, size_t baseOffset)
 
 de::DFile* DFileBuilder::dup(de::DFile const& hndl)
 {
-    de::DFile* clone = new de::DFile();
+    DFile* clone = new DFile();
     clone->d->flags.open = true;
     clone->d->flags.reference = true;
-    clone->d->file = reinterpret_cast<de::AbstractFile*>(DFile_File_const(&reinterpret_cast<struct dfile_s const&>(hndl)));
+    clone->d->file = hndl.file();
     return clone;
 }
 

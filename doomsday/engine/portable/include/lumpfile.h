@@ -47,13 +47,22 @@ public:
     int lumpCount();
 
     /**
-     * Lookup a lump info descriptor for this lump.
+     * Lookup the lump info descriptor for this lump.
      *
      * @param lumpIdx       Ignored. Required argument.
      *
      * @return Found lump info.
      */
     LumpInfo const* lumpInfo(int lumpIdx);
+
+    /**
+     * Publish this lump to the end of the specified @a directory.
+     *
+     * @param directory Directory to publish to.
+     *
+     * @return Number of lumps published to the directory. Always @c =1
+     */
+    int publishLumpsToDirectory(struct lumpdirectory_s* directory);
 
 private:
     struct Instance;
@@ -90,6 +99,8 @@ void LumpFile_Delete(LumpFile* lump);
 LumpInfo const* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx);
 
 int LumpFile_LumpCount(LumpFile* lump);
+
+int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory);
 
 #ifdef __cplusplus
 } // extern "C"

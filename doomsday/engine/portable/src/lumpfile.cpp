@@ -24,6 +24,7 @@
 #include "de_filesys.h"
 
 #include "lumpfile.h"
+#include "lumpdirectory.h"
 
 #include <de/Error>
 #include <de/Log>
@@ -41,12 +42,23 @@ de::LumpFile::~LumpFile()
 LumpInfo const* de::LumpFile::lumpInfo(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
-    return this->info();
+    return info();
 }
 
 int de::LumpFile::lumpCount()
 {
     return 1; // Always.
+}
+
+int de::LumpFile::publishLumpsToDirectory(LumpDirectory* directory)
+{
+    LOG_AS("LumpFile");
+    if(directory)
+    {
+        // This *is* the lump, so insert ourself in the directory.
+        LumpDirectory_CatalogLumps(directory, reinterpret_cast<abstractfile_s*>(info()->container), info()->lumpIdx, 1);
+    }
+    return 1;
 }
 
 /**
@@ -101,4 +113,10 @@ int LumpFile_LumpCount(LumpFile* lump)
 {
     SELF(lump);
     return self->lumpCount();
+}
+
+int LumpFile_PublishLumpsToDirectory(LumpFile* lump, LumpDirectory* directory)
+{
+    SELF(lump);
+    return self->publishLumpsToDirectory(directory);
 }

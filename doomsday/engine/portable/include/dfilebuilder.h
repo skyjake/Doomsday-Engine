@@ -40,7 +40,7 @@ public:
      *
      * @param af            VFS object representing the file being opened.
      */
-    static DFile* fromAbstractFile(AbstractFile& file);
+    static DFile* fromFile(AbstractFile& file);
 
     /**
      * Create a new handle on a lump of AbstractFile @a file.
@@ -49,7 +49,7 @@ public:
      * @param lumpIdx       Logical index of the lump within @a file to be opened.
      * @param dontBuffer    @c true= do not buffer a copy of the lump.
      */
-    static DFile* fromAbstractFileLump(AbstractFile& file, int lumpIdx, bool dontBuffer);
+    static DFile* fromFileLump(AbstractFile& file, int lumpIdx, bool dontBuffer);
 
     /**
      * Open a new handle on the specified native file.
@@ -57,7 +57,7 @@ public:
      * @param nativeFile    Native file system handle to the file being opened.
      * @param baseOffset    Offset from the start of the file in bytes to begin.
      */
-    static DFile* fromFile(FILE& nativeFile, size_t baseOffset);
+    static DFile* fromNativeFile(FILE& nativeFile, size_t baseOffset);
 
     /**
      * Create a duplicate of handle @a hndl. Note that the duplicate is in

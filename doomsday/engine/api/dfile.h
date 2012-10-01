@@ -48,6 +48,7 @@ struct filelist_s;
 
 namespace de {
 
+/// @todo Should not be visible outside the engine.
 class AbstractFile;
 class DFileBuilder;
 
@@ -64,10 +65,13 @@ public:
      */
     DFile& close();
 
+    /// @todo Should not be visible outside the engine.
     struct filelist_s* list();
 
+    /// @todo Should not be visible outside the engine.
     DFile& setList(struct filelist_s* list);
 
+    /// @todo Should not be visible outside the engine.
     AbstractFile* file();
     AbstractFile* file() const;
 
