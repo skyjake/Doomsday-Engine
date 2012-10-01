@@ -1,29 +1,30 @@
-/**\file dd_wad.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dd_wad.cpp
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * Wrapper API for accessing data stored in DOOM WAD files.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @ingroup resource
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 1993-1996 by id Software, Inc.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <time.h>
+#include <ctime>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -37,7 +38,7 @@
 
 size_t W_LumpLength(lumpnum_t absoluteLumpNum)
 {
-    const LumpInfo* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    LumpInfo const* info = F_FindInfoForLumpNum(absoluteLumpNum);
     if(!info)
     {
         W_Error("W_LumpLength: Invalid lumpnum %i.", absoluteLumpNum);
@@ -46,9 +47,9 @@ size_t W_LumpLength(lumpnum_t absoluteLumpNum)
     return info->size;
 }
 
-const char* W_LumpName(lumpnum_t absoluteLumpNum)
+char const* W_LumpName(lumpnum_t absoluteLumpNum)
 {
-    const char* lumpName = F_LumpName(absoluteLumpNum);
+    char const* lumpName = F_LumpName(absoluteLumpNum);
     if(!lumpName[0])
     {
         W_Error("W_LumpName: Invalid lumpnum %i.", absoluteLumpNum);
@@ -59,24 +60,24 @@ const char* W_LumpName(lumpnum_t absoluteLumpNum)
 
 uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
 {
-    const LumpInfo* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    LumpInfo const* info = F_FindInfoForLumpNum(absoluteLumpNum);
     if(!info)
     {
         W_Error("W_LumpLastModified: Invalid lumpnum %i.", absoluteLumpNum);
-        return (uint)time(NULL);
+        return (uint)time(0);
     }
     return info->lastModified;
 }
 
-const char* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
+char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
-    AbstractFile* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
-    if(!fsObject)
+    AbstractFile* file = F_FindFileForLumpNum(absoluteLumpNum);
+    if(!file)
     {
         W_Error("W_LumpSourceFile: Invalid lumpnum %i.", absoluteLumpNum);
         return "";
     }
-    return Str_Text(AbstractFile_Path(fsObject));
+    return Str_Text(AbstractFile_Path(file));
 }
 
 boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
@@ -89,27 +90,27 @@ boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
     return F_LumpIsCustom(absoluteLumpNum);
 }
 
-lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent)
+lumpnum_t W_CheckLumpNumForName2(char const* name, boolean silent)
 {
     lumpnum_t lumpNum;
     if(!name || !name[0])
     {
         if(!silent)
-            VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n") )
+            VERBOSE2( Con_Message("Warning: W_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n") )
         return -1;
     }
     lumpNum = F_CheckLumpNumForName2(name, true);
     if(!silent && lumpNum < 0)
-        VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Lump \"%s\" not found.\n", name) )
+        VERBOSE2( Con_Message("Warning: W_CheckLumpNumForName: Lump \"%s\" not found.\n", name) )
     return lumpNum;
 }
 
-lumpnum_t W_CheckLumpNumForName(const char* name)
+lumpnum_t W_CheckLumpNumForName(char const* name)
 {
     return W_CheckLumpNumForName2(name, (verbose < 2));
 }
 
-lumpnum_t W_GetLumpNumForName(const char* name)
+lumpnum_t W_GetLumpNumForName(char const* name)
 {
     lumpnum_t lumpNum = W_CheckLumpNumForName(name);
     if(lumpNum < 0)
@@ -122,47 +123,47 @@ lumpnum_t W_GetLumpNumForName(const char* name)
 size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t startOffset, size_t length)
 {
     int lumpIdx;
-    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-    if(!fsObject)
+    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(!file)
     {
         W_Error("W_ReadLumpSection: Invalid lumpnum %i.", absoluteLumpNum);
         return 0;
     }
-    return F_ReadLumpSection(fsObject, lumpIdx, buffer, startOffset, length);
+    return F_ReadLumpSection(file, lumpIdx, buffer, startOffset, length);
 }
 
 size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 {
     int lumpIdx;
-    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-    if(!fsObject)
+    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(!file)
     {
         W_Error("W_ReadLump: Invalid lumpnum %i.", absoluteLumpNum);
         return 0;
     }
-    return F_ReadLumpSection(fsObject, lumpIdx, buffer, 0, F_LumpLength(absoluteLumpNum));
+    return F_ReadLumpSection(file, lumpIdx, buffer, 0, F_LumpLength(absoluteLumpNum));
 }
 
-const uint8_t* W_CacheLump(lumpnum_t absoluteLumpNum)
+uint8_t const* W_CacheLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-    if(!fsObject)
+    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(!file)
     {
         W_Error("W_CacheLump: Invalid lumpnum %i.", absoluteLumpNum);
         return NULL;
     }
-    return F_CacheLump(fsObject, lumpIdx);
+    return F_CacheLump(file, lumpIdx);
 }
 
 void W_UnlockLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-    if(!fsObject)
+    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(!file)
     {
         W_Error("W_UnlockLump: Invalid lumpnum %i.", absoluteLumpNum);
         return;
     }
-    F_UnlockLump(fsObject, lumpIdx);
+    F_UnlockLump(file, lumpIdx);
 }
