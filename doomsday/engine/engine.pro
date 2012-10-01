@@ -526,7 +526,7 @@ SOURCES += \
     portable/src/keycode.cpp \
     portable/src/library.c \
     portable/src/linedef.c \
-    portable/src/lumpdirectory.c \
+    portable/src/lumpdirectory.cpp \
     portable/src/lumpfile.cpp \
     portable/src/m_bams.c \
     portable/src/m_decomp64.c \
