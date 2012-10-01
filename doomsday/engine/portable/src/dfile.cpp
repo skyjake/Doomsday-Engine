@@ -76,7 +76,7 @@ static void errorIfNotValid(DFile const* file, const char* callerName)
     exit(1); // Unreachable.
 }
 
-void DFileBuilder_Init(void)
+void DFileBuilder::init(void)
 {
     if(!inited)
     {
@@ -84,10 +84,10 @@ void DFileBuilder_Init(void)
         inited = true;
         return;
     }
-    Con_Error("DFileBuilder_Init: Already initialized.");
+    Con_Error("DFileBuilder::init: Already initialized.");
 }
 
-void DFileBuilder_Shutdown(void)
+void DFileBuilder::shutdown(void)
 {
     if(inited)
     {
@@ -100,13 +100,13 @@ void DFileBuilder_Shutdown(void)
         return;
     }
 #if _DEBUG
-    Con_Error("DFileBuilder_Shutdown: Not presently initialized.");
+    Con_Error("DFileBuilder::shutdown: Not presently initialized.");
 #endif
 }
 
-DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* container, int lumpIdx, boolean dontBuffer)
+DFile* DFileBuilder::fromAbstractFileLump(AbstractFile& container, int lumpIdx, bool dontBuffer)
 {
-    LumpInfo const* info = F_LumpInfo(container, lumpIdx);
+    LumpInfo const* info = F_LumpInfo(&container, lumpIdx);
     DFile* file;
     if(!info) return NULL;
 
@@ -118,49 +118,45 @@ DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* container, int lumpIdx
         file->size = info->size;
         file->pos = file->data = (uint8_t*) M_Malloc(file->size);
         if(!file->data)
-            Con_Error("DFileBuilder_NewFromAbstractFileLump: Failed on allocation of %lu bytes for data buffer.",
+            Con_Error("DFileBuilder::newFromAbstractFileLump: Failed on allocation of %lu bytes for data buffer.",
                 (unsigned long) file->size);
 #if _DEBUG
         VERBOSE2(
-            AutoStr* path = F_ComposeLumpPath(container, lumpIdx);
+            AutoStr* path = F_ComposeLumpPath(&container, lumpIdx);
             Con_Printf("DFile [%p] buffering \"%s:%s\"...\n", (void*)file,
-                       F_PrettyPath(Str_Text(AbstractFile_Path(container))),
+                       F_PrettyPath(Str_Text(AbstractFile_Path(&container))),
                        F_PrettyPath(Str_Text(path)));
         )
 #endif
-        F_ReadLumpSection(container, lumpIdx, (uint8_t*)file->data, 0, info->size);
+        F_ReadLumpSection(&container, lumpIdx, (uint8_t*)file->data, 0, info->size);
     }
     return file;
 }
 
-DFile* DFileBuilder_NewFromAbstractFile(AbstractFile* af)
+DFile* DFileBuilder::fromAbstractFile(AbstractFile& af)
 {
     DFile* file = DFile_New();
-    DENG_ASSERT(af);
-    file->file = af;
+    file->file = &af;
     file->flags.open = true;
     file->flags.reference = true;
     return file;
 }
 
-DFile* DFileBuilder_NewFromFile(FILE* hndl, size_t baseOffset)
+DFile* DFileBuilder::fromFile(FILE& hndl, size_t baseOffset)
 {
     DFile* file = DFile_New();
-    DENG_ASSERT(hndl);
     file->flags.open = true;
-    file->hndl = hndl;
+    file->hndl = &hndl;
     file->baseOffset = baseOffset;
     return file;
 }
 
-DFile* DFileBuilder_NewCopy(const DFile* file)
+DFile* DFileBuilder::dup(DFile const& file)
 {
-    DENG_ASSERT(inited && file);
-
     DFile* clone = DFile_New();
     clone->flags.open = true;
     clone->flags.reference = true;
-    clone->file = DFile_File_const(file);
+    clone->file = DFile_File_const(&file);
     return clone;
 }
 

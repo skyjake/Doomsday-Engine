@@ -26,36 +26,49 @@
 #include "fs_main.h"
 
 #ifdef __cplusplus
+
+class DFileBuilder
+{
+public:
+    static void init();
+    static void shutdown();
+
+    /**
+     * Create a new handle on the AbstractFile @a af.
+     *
+     * @param af            VFS object representing the file being opened.
+     */
+    static DFile* fromAbstractFile(AbstractFile& af);
+
+    /**
+     * Create a new handle on a lump of AbstractFile @a af.
+     *
+     * @param af            VFS object representing the container of the lump to be opened.
+     * @param lumpIdx       Logical index of the lump within @a af to be opened.
+     * @param dontBuffer    @c true= do not buffer a copy of the lump.
+     */
+    static DFile* fromAbstractFileLump(AbstractFile& af, int lumpIdx, bool dontBuffer);
+
+    /**
+     * Open a new handle on the specified system file.
+     *
+     * @param file          File system handle to the file being opened.
+     * @param baseOffset    Offset from the start of the file in bytes to begin.
+     */
+    static DFile* fromFile(FILE& file, size_t baseOffset);
+
+    /**
+     * Create a duplicate of handle @a hndl. Note that the duplicate is in
+     * fact a "reference" to the original, so all changes to the file which they
+     * represent are implicitly shared.
+     *
+     * @param hndl          DFile handle to be duplicated.
+     */
+    static DFile* dup(DFile const& hndl);
+};
+
 extern "C" {
 #endif
-
-void DFileBuilder_Init(void);
-void DFileBuilder_Shutdown(void);
-
-/**
- * Open a new read-only stream on the specified file.
- *
- * @param af  File system object representing the file being opened.
- */
-DFile* DFileBuilder_NewFromAbstractFile(AbstractFile* af);
-
-/**
- * Open a new read-only stream on the specified lump-file.
- *
- * @param af  File system object representing the container of the lump to be opened.
- * @param lumpIdx  Logical index of the lump within @a container to be opened.
- * @param dontBuffer  @c true= do not buffer a copy of the lump.
- */
-DFile* DFileBuilder_NewFromAbstractFileLump(AbstractFile* af, int lumpIdx, boolean dontBuffer);
-
-/**
- * Open a new read-only stream on the specified system file.
- * @param file  File system handle to the file being opened.
- * @param baseOffset  Offset from the start of the file in bytes to begin.
- */
-DFile* DFileBuilder_NewFromFile(FILE* hndl, size_t baseOffset);
-
-DFile* DFileBuilder_NewCopy(DFile const* file);
 
 /**
  * Non-public methods of DFile. Placed here temporarily.

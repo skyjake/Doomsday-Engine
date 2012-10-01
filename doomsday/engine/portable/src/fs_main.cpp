@@ -484,7 +484,7 @@ void F_Init(void)
     // This'll force the loader NOT to flag new files as "runtime".
     loadingForStartup = true;
 
-    DFileBuilder_Init();
+    DFileBuilder::init();
 
     openFiles     = new FileList();
     loadedFiles   = new FileList();
@@ -516,7 +516,7 @@ void F_Shutdown(void)
     clearFileIds(); // Should be null-op if bookkeeping is correct.
     clearLumpDirectorys();
 
-    DFileBuilder_Shutdown();
+    DFileBuilder::shutdown();
 
     inited = false;
 }
@@ -889,7 +889,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
         return -1;
     }
 
-    dfile = DFileBuilder_NewFromFile(file, baseOffset);
+    dfile = DFileBuilder::fromFile(*file, baseOffset);
 
     if(WadFile_Recognise(dfile))
     {
@@ -906,10 +906,10 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
         F_InitLumpInfo(&info);
         info.lastModified = F_LastModified(Str_Text(foundPath));
 
-        dfile = DFileBuilder_NewFromAbstractFile(newWadFile(dfile, Str_Text(foundPath), &info));
+        dfile = DFileBuilder::fromAbstractFile(*newWadFile(dfile, Str_Text(foundPath), &info));
         openFiles->push_back(dfile); DFile_SetList(dfile, openFiles);
 
-        DFile* loadedFilesHndl = DFileBuilder_NewCopy(dfile);
+        DFile* loadedFilesHndl = DFileBuilder::dup(*dfile);
         loadedFiles->push_back(loadedFilesHndl); DFile_SetList(loadedFilesHndl, loadedFiles);
         WadFile_PublishLumpsToDirectory((WadFile*)DFile_File(dfile), ActiveWadLumpDirectory);
 
@@ -1781,7 +1781,7 @@ static DFile* openAsLumpFile(AbstractFile* container, int lumpIdx,
     // Get a handle to the lump we intend to open.
     /// @todo The way this buffering works is nonsensical it should not be done here
     ///        but should instead be deferred until the content of the lump is read.
-    hndl = DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, false/*dontBuffer*/);
+    hndl = DFileBuilder::fromAbstractFileLump(*container, lumpIdx, false/*dontBuffer*/);
 
     // Prepare the temporary info descriptor.
     F_InitLumpInfo(&info);
@@ -1793,7 +1793,7 @@ static DFile* openAsLumpFile(AbstractFile* container, int lumpIdx,
     // If not opened; assume its a generic LumpFile.
     if(!file)
     {
-        file = DFileBuilder_NewFromAbstractFile(newLumpFile(hndl, Str_Text(&absPath), &info));
+        file = DFileBuilder::fromAbstractFile(*newLumpFile(hndl, Str_Text(&absPath), &info));
     }
     assert(file);
 
@@ -1809,7 +1809,7 @@ static DFile* tryOpenAsZipFile(DFile* file, const char* path, const LumpInfo* in
 {
     if(inited && ZipFile_Recognise(file))
     {
-        return DFileBuilder_NewFromAbstractFile(newZipFile(file, path, info));
+        return DFileBuilder::fromAbstractFile(*newZipFile(file, path, info));
     }
     return NULL;
 }
@@ -1818,7 +1818,7 @@ static DFile* tryOpenAsWadFile(DFile* file, const char* path, const LumpInfo* in
 {
     if(inited && WadFile_Recognise(file))
     {
-        return DFileBuilder_NewFromAbstractFile(newWadFile(file, path, info));
+        return DFileBuilder::fromAbstractFile(*newWadFile(file, path, info));
     }
     return NULL;
 }
@@ -1935,7 +1935,7 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     }
 
     // Acquire a handle on the file we intend to open.
-    hndl = DFileBuilder_NewFromFile(file, baseOffset);
+    hndl = DFileBuilder::fromFile(*file, baseOffset);
 
     // Prepare the temporary info descriptor.
     F_InitLumpInfo(&info);
@@ -1949,7 +1949,7 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     // If still not loaded; this an unknown format.
     if(!dfile)
     {
-        dfile = DFileBuilder_NewFromAbstractFile(newUnknownFile(hndl, Str_Text(&searchPath), &info));
+        dfile = DFileBuilder::fromAbstractFile(*newUnknownFile(hndl, Str_Text(&searchPath), &info));
     }
     assert(dfile);
 
@@ -2045,7 +2045,7 @@ DFile* F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
     if(loadingForStartup)
         AbstractFile_SetStartup(fsObject, true);
 
-    DFile* loadedFilesHndl = DFileBuilder_NewCopy(file);
+    DFile* loadedFilesHndl = DFileBuilder::dup(*file);
     loadedFiles->push_back(loadedFilesHndl); DFile_SetList(loadedFilesHndl, loadedFiles);
 
     // Publish lumps to one or more LumpDirectorys.
@@ -2136,12 +2136,12 @@ DFile* F_OpenLump(lumpnum_t absoluteLumpNum)
     {
         AutoStr* path = F_ComposeLumpPath(container, lumpIdx);
         AbstractFile* fsObject = newLumpFile(
-            DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, false),
+            DFileBuilder::fromAbstractFileLump(*container, lumpIdx, false),
             Str_Text(path), F_LumpInfo(container, lumpIdx));
 
         if(fsObject)
         {
-            DFile* openFileHndl = DFileBuilder_NewFromAbstractFile(fsObject);
+            DFile* openFileHndl = DFileBuilder::fromAbstractFile(*fsObject);
             openFiles->push_back(openFileHndl); DFile_SetList(openFileHndl, openFiles);
             return openFileHndl;
         }
