@@ -488,7 +488,7 @@ SOURCES += \
     portable/src/dd_main.c \
     portable/src/dd_pinit.c \
     portable/src/dd_plugin.c \
-    portable/src/dd_wad.c \
+    portable/src/dd_wad.cpp \
     portable/src/def_data.c \
     portable/src/def_main.c \
     portable/src/def_read.c \
