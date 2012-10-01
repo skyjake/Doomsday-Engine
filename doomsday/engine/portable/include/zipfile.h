@@ -52,7 +52,7 @@ class PathDirectoryNode;
 /**
  * ZipFile. Runtime representation of an opened ZIP file.
  */
-class ZipFile : AbstractFile
+class ZipFile : public AbstractFile
 {
 public:
     ZipFile(DFile& file, char const* path, LumpInfo const& info);

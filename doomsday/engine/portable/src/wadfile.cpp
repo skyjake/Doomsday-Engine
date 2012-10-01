@@ -98,7 +98,7 @@ struct de::WadFile::Instance
           lumpCache(0)
     {
         // Seek to the start of the header.
-        DFile_Seek(&file, 0, SEEK_SET);
+        file.seek(0, SeekSet);
 
         wadheader_t hdr;
         if(!readArchiveHeader(file, hdr))
@@ -144,7 +144,7 @@ struct de::WadFile::Instance
     /// @pre @a file is positioned at the start of the header.
     static bool readArchiveHeader(DFile& file, wadheader_t& hdr)
     {
-        size_t readBytes = DFile_Read(&file, (uint8_t*)&hdr, sizeof(wadheader_t));
+        size_t readBytes = file.read((uint8_t*)&hdr, sizeof(wadheader_t));
         if(!(readBytes < sizeof(wadheader_t)))
         {
             hdr.lumpRecordsCount  = de::littleEndianByteOrder.toNative(hdr.lumpRecordsCount);
@@ -209,8 +209,8 @@ struct de::WadFile::Instance
         // We'll load the lump directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
         wadlumprecord_t* arcRecords = new wadlumprecord_t[arcRecordsCount];
-        DFile_Seek(self->file, arcRecordsOffset, SEEK_SET);
-        DFile_Read(self->file, (uint8_t*)arcRecords, arcRecordsCount * sizeof(*arcRecords));
+        self->file->seek(arcRecordsOffset, SeekSet);
+        self->file->read((uint8_t*)arcRecords, arcRecordsCount * sizeof(*arcRecords));
 
         // Reserve a small work buffer for processing archived lump names.
         ddstring_t absPath;
@@ -489,8 +489,8 @@ size_t de::WadFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
         }
     }
 
-    DFile_Seek(file, lrec->baseOffset + startOffset, SEEK_SET);
-    size_t readBytes = DFile_Read(file, buffer, length);
+    file->seek(lrec->baseOffset + startOffset, SeekSet);
+    size_t readBytes = file->read(buffer, length);
 
     /// @todo Do not check the read length here.
     if(readBytes < length)
@@ -524,13 +524,13 @@ bool de::WadFile::recognise(DFile& file)
     wadheader_t hdr;
 
     // Seek to the start of the header.
-    size_t initPos = DFile_Tell(&file);
-    DFile_Seek(&file, 0, SEEK_SET);
+    size_t initPos = file.tell();
+    file.seek(0, SeekSet);
 
     bool readHeaderOk = de::WadFile::Instance::readArchiveHeader(file, hdr);
 
     // Return the stream to its original position.
-    DFile_Seek(&file, initPos, SEEK_SET);
+    file.seek(initPos, SeekSet);
 
     if(!readHeaderOk) return false;
     if(memcmp(hdr.identification, "IWAD", 4) && memcmp(hdr.identification, "PWAD", 4)) return false;
@@ -560,7 +560,7 @@ WadFile* WadFile_New(DFile* file, char const* path, LumpInfo const* info)
     if(!info) LegacyCore_FatalError("WadFile_New: Received invalid LumpInfo (=NULL).");
     try
     {
-        return reinterpret_cast<WadFile*>(new de::WadFile(*file, path, *info));
+        return reinterpret_cast<WadFile*>(new de::WadFile(*reinterpret_cast<de::DFile*>(file), path, *info));
     }
     catch(de::Error& er)
     {
@@ -680,5 +680,5 @@ boolean WadFile_Empty(WadFile* wad)
 boolean WadFile_Recognise(DFile* file)
 {
     if(!file) return false;
-    return de::WadFile::recognise(*file);
+    return de::WadFile::recognise(*reinterpret_cast<de::DFile*>(file));
 }

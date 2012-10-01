@@ -204,12 +204,12 @@ struct de::ZipFile::Instance
     /// @todo Do not position the stream here.
     static bool readArchiveHeader(DFile& file, localfileheader_t& hdr)
     {
-        size_t readBytes, initPos = DFile_Tell(&file);
+        size_t readBytes, initPos = file.tell();
         // Seek to the start of the header.
-        DFile_Seek(&file, 0, SEEK_SET);
-        readBytes = DFile_Read(&file, (uint8_t*)&hdr, sizeof(localfileheader_t));
+        file.seek(0, SeekSet);
+        readBytes = file.read((uint8_t*)&hdr, sizeof(localfileheader_t));
         // Return the stream to its original position.
-        DFile_Seek(&file, initPos, SEEK_SET);
+        file.seek(initPos, SeekSet);
         if(!(readBytes < sizeof(localfileheader_t)))
         {
             hdr.signature       = de::littleEndianByteOrder.toNative(hdr.signature);
@@ -230,7 +230,7 @@ struct de::ZipFile::Instance
 
     static bool readCentralEnd(DFile& file, centralend_t& end)
     {
-        size_t readBytes = DFile_Read(&file, (uint8_t*)&end, sizeof(centralend_t));
+        size_t readBytes = file.read((uint8_t*)&end, sizeof(centralend_t));
         if(!(readBytes < sizeof(centralend_t)))
         {
             end.disk            = de::littleEndianByteOrder.toNative(end.disk);
@@ -259,10 +259,10 @@ struct de::ZipFile::Instance
         int pos = CENTRAL_END_SIZE; // Offset from the end.
         while(pos < MAXIMUM_COMMENT_SIZE)
         {
-            DFile_Seek(self->file, -pos, SEEK_END);
+            self->file->seek(-pos, SeekEnd);
 
             // Is this the signature?
-            DFile_Read(self->file, (uint8_t*)&signature, sizeof(signature));
+            self->file->read((uint8_t*)&signature, sizeof(signature));
             if(de::littleEndianByteOrder.toNative(signature) == SIG_END_OF_CENTRAL_DIR)
                 return true; // Yes, this is it.
 
@@ -296,8 +296,8 @@ struct de::ZipFile::Instance
         void* centralDirectory = M_Malloc(summary.size);
         if(!centralDirectory) throw de::Error("ZipFile::readLumpDirectory", QString("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
 
-        DFile_Seek(self->file, summary.offset, SEEK_SET);
-        DFile_Read(self->file, (uint8_t*)centralDirectory, summary.size);
+        self->file->seek(summary.offset, SeekSet);
+        self->file->read((uint8_t*)centralDirectory, summary.size);
 
         /**
          * Pass 1: Validate support and count the number of lump records we need.
@@ -395,8 +395,8 @@ struct de::ZipFile::Instance
                 record->info.container = reinterpret_cast<abstractfile_s*>(self);
 
                 // Read the local file header, which contains the extra field size (Info-ZIP!).
-                DFile_Seek(self->file, ULONG(header->relOffset), SEEK_SET);
-                DFile_Read(self->file, (uint8_t*)&localHeader, sizeof(localHeader));
+                self->file->seek(ULONG(header->relOffset), SeekSet);
+                self->file->read((uint8_t*)&localHeader, sizeof(localHeader));
 
                 record->baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t)
                                    + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
@@ -437,7 +437,7 @@ struct de::ZipFile::Instance
         DENG2_ASSERT(lumpRecord && buffer);
         LOG_AS("ZipFile");
 
-        DFile_Seek(self->file, lumpRecord->baseOffset, SEEK_SET);
+        self->file->seek(lumpRecord->baseOffset, SeekSet);
 
         if(lumpRecord->info.compressedSize != lumpRecord->info.size)
         {
@@ -446,7 +446,7 @@ struct de::ZipFile::Instance
             if(!compressedData) throw de::Error("ZipFile::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpRecord->info.compressedSize));
 
             // Read the compressed data into a temporary buffer for decompression.
-            DFile_Read(self->file, compressedData, lumpRecord->info.compressedSize);
+            self->file->read(compressedData, lumpRecord->info.compressedSize);
 
             // Uncompress into the buffer provided by the caller.
             result = uncompressRaw(compressedData, lumpRecord->info.compressedSize,
@@ -458,7 +458,7 @@ struct de::ZipFile::Instance
         else
         {
             // Read the uncompressed data directly to the buffer provided by the caller.
-            DFile_Read(self->file, buffer, lumpRecord->info.size);
+            self->file->read(buffer, lumpRecord->info.size);
         }
         return lumpRecord->info.size;
     }
@@ -1047,7 +1047,7 @@ ZipFile* ZipFile_New(DFile* file, const char* path, const LumpInfo* info)
     if(!info) LegacyCore_FatalError("ZipFile_New: Received invalid LumpInfo (=NULL).");
     try
     {
-        return reinterpret_cast<ZipFile*>(new de::ZipFile(*file, path, *info));
+        return reinterpret_cast<ZipFile*>(new de::ZipFile(*reinterpret_cast<de::DFile*>(file), path, *info));
     }
     catch(de::Error& er)
     {
@@ -1161,7 +1161,7 @@ boolean ZipFile_Empty(ZipFile* zip)
 boolean ZipFile_Recognise(DFile* file)
 {
     if(!file) return false;
-    return de::ZipFile::recognise(*file);
+    return de::ZipFile::recognise(*reinterpret_cast<de::DFile*>(file));
 }
 
 uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize)

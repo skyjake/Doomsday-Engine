@@ -2710,7 +2710,7 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // We will buffer a local copy of the file. How large a buffer do we need?
-    DFile_Seek(file, 0, SEEK_END);
+    DFile_Seek(file, 0, SeekEnd);
     bufferedDefSize = DFile_Tell(file);
     DFile_Rewind(file);
     bufferedDef = (char*) calloc(1, bufferedDefSize + 1);

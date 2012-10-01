@@ -157,7 +157,7 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* fi
     if(image.isNull())
     {
         // Back to the original file position.
-        DFile_Seek(file, initPos, SEEK_SET);
+        DFile_Seek(file, initPos, SeekSet);
         return false;
     }
 
@@ -185,7 +185,7 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* fi
     img->pixels = reinterpret_cast<uint8_t*>(M_MemDup(image.constBits(), image.byteCount()));
 
     // Back to the original file position.
-    DFile_Seek(file, initPos, SEEK_SET);
+    DFile_Seek(file, initPos, SeekSet);
     return true;
 }
 

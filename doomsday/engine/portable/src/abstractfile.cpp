@@ -46,7 +46,7 @@ de::AbstractFile::~AbstractFile()
 {
     Str_Free(&path_);
     F_DestroyLumpInfo(&info_);
-    if(file) DFile_Delete(file, true);
+    if(file) delete file;
 }
 
 filetype_t de::AbstractFile::type() const
@@ -66,10 +66,10 @@ de::AbstractFile* de::AbstractFile::container() const
 
 size_t de::AbstractFile::baseOffset() const
 {
-    return (file? DFile_BaseOffset(file) : 0);
+    return (file? file->baseOffset() : 0);
 }
 
-DFile* de::AbstractFile::handle()
+de::DFile* de::AbstractFile::handle()
 {
     return file;
 }
@@ -154,7 +154,7 @@ size_t AbstractFile_BaseOffset(AbstractFile const* af)
 DFile* AbstractFile_Handle(AbstractFile* af)
 {
     SELF(af);
-    return self->handle();
+    return reinterpret_cast<DFile*>(self->handle());
 }
 
 ddstring_t const* AbstractFile_Path(AbstractFile const* af)
@@ -202,7 +202,7 @@ void AbstractFile_SetCustom(AbstractFile* af, boolean yes)
 AbstractFile* UnknownFile_New(DFile* file, char const* path, LumpInfo const* info)
 {
     DENG2_ASSERT(file && info);
-    de::AbstractFile* af = new de::AbstractFile(FT_UNKNOWNFILE, path, *file, *info);
+    de::AbstractFile* af = new de::AbstractFile(FT_UNKNOWNFILE, path, *reinterpret_cast<de::DFile*>(file), *info);
     if(!af) LegacyCore_FatalError("UnknownFile_New: Failed to instantiate new AbstractFile.");
     return reinterpret_cast<AbstractFile*>(af);
 }

@@ -52,7 +52,7 @@
 
 #ifdef __cplusplus
 #include <QList>
-typedef QList<DFile*> FileList;
+typedef QList<de::DFile*> FileList;
 #else // __cplusplus
 struct filelist_s;
 typedef struct filelist_s FileList;

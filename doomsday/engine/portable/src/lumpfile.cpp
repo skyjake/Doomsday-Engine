@@ -72,7 +72,7 @@ LumpFile* LumpFile_New(DFile* file, char const* path, LumpInfo const* info)
     if(!info) LegacyCore_FatalError("LumpFile_New: Received invalid LumpInfo (=NULL).");
     try
     {
-        return reinterpret_cast<LumpFile*>(new de::LumpFile(*file, path, *info));
+        return reinterpret_cast<LumpFile*>(new de::LumpFile(*reinterpret_cast<de::DFile*>(file), path, *info));
     }
     catch(de::Error& er)
     {
