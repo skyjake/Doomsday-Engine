@@ -48,17 +48,9 @@
 //#define maketic             Get(DD_MAKETIC)
 //#define ticdup              1
 
-// Status flags for refresh.
-extern boolean paused;
-// If true, load all graphics at level load.
-extern boolean precache;
-
 // wipegamestate can be set to -1 to force a wipe on the next draw
 extern gamestate_t wipeGameState;
 
 extern int bodyQueueSlot;
-// This one is related to the 3-screen display mode.
-// ANG90 = left side, ANG270 = right
-extern int viewAngleOffset;
 
 #endif

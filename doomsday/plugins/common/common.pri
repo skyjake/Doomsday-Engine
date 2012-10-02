@@ -65,6 +65,7 @@ HEADERS += \
 
 SOURCES += \
     $$common_src/am_map.c \
+    $$common_src/common.c \
     $$common_src/d_net.c \
     $$common_src/d_netcl.c \
     $$common_src/d_netsv.c \
@@ -72,7 +73,7 @@ SOURCES += \
     $$common_src/fi_lib.c \
     $$common_src/g_controls.c \
     $$common_src/g_defs.c \
-    $$common_src/g_eventsequence.c \
+    $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.c \
     $$common_src/g_update.c \
     $$common_src/gl_drawpatch.c \
@@ -84,7 +85,7 @@ SOURCES += \
     $$common_src/hu_menu.c \
     $$common_src/hu_msg.c \
     $$common_src/hu_pspr.c \
-    $$common_src/hu_stuff.c \
+    $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.c \
     $$common_src/m_fixed.c \
     $$common_src/mobj.c \

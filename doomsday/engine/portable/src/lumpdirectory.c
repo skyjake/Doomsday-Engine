@@ -354,7 +354,7 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
     LumpDirectory_BuildHash(ld);
 
     // Perform the search.
-    hash = PathDirectory_HashPath(path, strlen(path), '/') % ld->numRecords;
+    hash = PathDirectory_HashPathFragment2(path, strlen(path), '/') % ld->numRecords;
     for(idx = ld->records[hash].hashRoot; idx != -1; idx = ld->records[idx].hashNext)
     {
         const LumpInfo* lumpInfo = ld->records[idx].lumpInfo;
@@ -363,7 +363,7 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
         // Time to build the pattern?
         if(!builtSearchPattern)
         {
-            PathMap_Initialize(&searchPattern, path);
+            PathMap_Initialize(&searchPattern, PathDirectory_HashPathFragment2, path);
             builtSearchPattern = true;
         }
 
@@ -381,7 +381,7 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
 
 typedef struct {
     lumpdirectory_lumprecord_t* record;
-    ddstring_t* path;
+    AutoStr* path;
     int origIndex;
 } lumpsortinfo_t;
 
@@ -437,9 +437,6 @@ static void LumpDirectory_Prune(LumpDirectory* ld)
     }
 
     // Free temporary storage.
-    sortInfo = sortInfoSet;
-    for(i = 0; i < ld->numRecords; ++i, sortInfo++)
-        Str_Delete(sortInfo->path);
     free(sortInfoSet);
 
     // Peform the prune. Do this one lump at a time, respecting the possibly-sorted order.
@@ -473,13 +470,12 @@ void LumpDirectory_Print(LumpDirectory* ld)
     for(i = 0; i < ld->numRecords; ++i)
     {
         const LumpInfo* lumpInfo = ld->records[i].lumpInfo;
-        ddstring_t* path = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
+        AutoStr* path = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
         Con_Printf("%04i - \"%s:%s\" (size: %lu bytes%s)\n", i,
-               F_PrettyPath(Str_Text(AbstractFile_Path(lumpInfo->container))),
-               F_PrettyPath(Str_Text(path)),
-               (unsigned long) lumpInfo->size,
-               (lumpInfo->compressedSize != lumpInfo->size? " compressed" : ""));
-        Str_Delete(path);
+                   F_PrettyPath(Str_Text(AbstractFile_Path(lumpInfo->container))),
+                   F_PrettyPath(Str_Text(path)),
+                   (unsigned long) lumpInfo->size,
+                   (lumpInfo->compressedSize != lumpInfo->size? " compressed" : ""));
     }
     Con_Printf("---End of lumps---\n");
 }

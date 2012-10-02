@@ -74,7 +74,6 @@ void Cht_GiveAmmoFunc(player_t* plr);
 void Cht_GiveKeysFunc(player_t* plr);
 void Cht_NoClipFunc(player_t* plr);
 void Cht_GiveArmorFunc(player_t* plr);
-boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat);
 boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -105,8 +104,7 @@ void Cht_GodFunc(player_t* plr)
         plr->update |= PSF_HEALTH;
     }
 
-    P_SetMessage(plr,
-                 ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), false);
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
 }
 
 void Cht_SuicideFunc(player_t* plr)
@@ -152,41 +150,7 @@ void Cht_NoClipFunc(player_t* plr)
 {
     plr->cheats ^= CF_NOCLIP;
     plr->update |= PSF_STATE;
-    P_SetMessage(plr,
-                 ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), false);
-}
-
-boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
-{
-    uint i, epsd, map;
-
-    epsd = 0;
-    map = (cheat->args[0] - '0') * 10 + cheat->args[1] - '0';
-    if(map != 0) map -= 1;
-
-    // Catch invalid maps.
-    if(!G_ValidateMap(&epsd, &map))
-        return false;
-
-    P_SetMessage(plr, STSTR_CLEV, false);
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
-        if(!ddplr->inGame) continue;
-
-        ST_AutomapOpen(i, false, true);
-    }
-
-    // Close the menu if open.
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // So be it.
-    briefDisabled = true;
-    G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
-
-    return true;
+    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
 }
 
 boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
@@ -196,22 +160,19 @@ boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
 
     for(i = 0; i < numArgs; ++i)
     {
-        powertype_t type;
+        powertype_t type = (powertype_t) i;
 
-        if(cheat->args[0] != args[i])
-            continue;
-        type = (powertype_t) i;
+        if(cheat->args[0] != args[i]) continue;
 
         if(!plr->powers[type])
         {
             P_GivePower(plr, type);
-            P_SetMessage(plr, STSTR_BEHOLDX, false);
+            P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
         }
-        else if(type == PT_STRENGTH || type == PT_FLIGHT ||
-                type == PT_ALLMAP)
+        else if(type == PT_STRENGTH || type == PT_FLIGHT || type == PT_ALLMAP)
         {
             P_TakePower(plr, type);
-            P_SetMessage(plr, STSTR_BEHOLDX, false);
+            P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
         }
 
         return true;
@@ -224,7 +185,7 @@ void printDebugInfo(player_t* plr)
 {
     char textBuffer[256];
     BspLeaf* sub;
-    ddstring_t* path, *mapPath;
+    AutoStr* path, *mapPath;
     Uri* uri, *mapUri;
 
     if(!plr->plr->mo || !userGame)
@@ -235,8 +196,7 @@ void printDebugInfo(player_t* plr)
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
             plr->plr->mo->origin[VZ]);
-    P_SetMessage(plr, textBuffer, false);
-    Str_Delete(mapPath);
+    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
     Uri_Delete(mapUri);
 
     // Also print some information to the console.
@@ -247,13 +207,11 @@ void printDebugInfo(player_t* plr)
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
     Con_Message("  FloorZ:%g Material:%s\n", P_GetDoublep(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
-    Str_Delete(path);
     Uri_Delete(uri);
 
     uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
     Con_Message("  CeilingZ:%g Material:%s\n", P_GetDoublep(sub, DMU_CEILING_HEIGHT), Str_Text(path));
-    Str_Delete(path);
     Uri_Delete(uri);
 
     Con_Message("Player height:%g   Player radius:%g\n", plr->plr->mo->height, plr->plr->mo->radius);
@@ -268,18 +226,18 @@ void Cht_LaserFunc(player_t* p)
 {
     if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
     {
-        P_SetMessage(p, STSTR_BEHOLDX, false);
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
         return;
     }
 
     if(P_InventoryGive(p - players, IIT_DEMONKEY2, true))
     {
-        P_SetMessage(p, STSTR_BEHOLDX, false);
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
         return;
     }
 
     if(P_InventoryGive(p - players, IIT_DEMONKEY3, true))
-        P_SetMessage(p, STSTR_BEHOLDX, false);
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
 }
 
 D_CMD(CheatGod)
@@ -401,25 +359,6 @@ D_CMD(CheatSuicide)
         Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, NULL, 0, NULL);
     }
 
-    return true;
-}
-
-D_CMD(CheatWarp)
-{
-    cheatseq_t cheat;
-    int num;
-
-    if(!cheatsEnabled())
-        return false;
-
-    if(argc != 2)
-        return false;
-
-    num = atoi(argv[1]);
-    cheat.args[0] = num / 10 + '0';
-    cheat.args[1] = num % 10 + '0';
-
-    Cht_WarpFunc(&players[CONSOLEPLAYER], &cheat);
     return true;
 }
 

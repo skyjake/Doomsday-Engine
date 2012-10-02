@@ -72,7 +72,7 @@ static boolean backClosedForBlendNeighbor(LineDef* lineDef, int side, boolean ig
         if(backSec->SP_floorvisheight >= frontSec->SP_ceilvisheight)  return true;
     }
 
-    return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
+    return R_MiddleMaterialCoversLineOpening(lineDef, side, ignoreOpacity);
 }
 
 static LineDef* findBlendNeighbor(LineDef* l, byte side, byte right,
@@ -133,10 +133,24 @@ void LineDef_SetDivline(const LineDef* line, divline_t* dl)
     dl->direction[VY] = FLT2FIX(line->direction[VY]);
 }
 
+coord_t LineDef_OpenRange(const LineDef* line, int side, coord_t* retBottom, coord_t* retTop)
+{
+    DENG_ASSERT(line);
+    return R_OpenRange(line->L_sector(side), line->L_sector(side^1), retBottom, retTop);
+}
+
+coord_t LineDef_VisOpenRange(const LineDef* line, int side, coord_t* retBottom, coord_t* retTop)
+{
+    DENG_ASSERT(line);
+    return R_VisOpenRange(line->L_sector(side), line->L_sector(side^1), retBottom, retTop);
+}
+
 void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
 {
+    DENG_ASSERT(line);
+{
     Sector* front, *back;
-    assert(line);
+    coord_t bottom, top;
 
     if(!opening) return;
 
@@ -146,27 +160,23 @@ void LineDef_SetTraceOpening(const LineDef* line, TraceOpening* opening)
         return;
     }
 
+    opening->range  = (float)LineDef_OpenRange(line, FRONT, &bottom, &top);
+    opening->bottom = (float)bottom;
+    opening->top    = (float)top;
+
+    // Determine the "low floor".
     front = line->L_frontsector;
     back  = line->L_backsector;
 
-    if(front->SP_ceilheight < back->SP_ceilheight)
-        opening->top = front->SP_ceilheight;
-    else
-        opening->top = back->SP_ceilheight;
-
     if(front->SP_floorheight > back->SP_floorheight)
     {
-        opening->bottom   = front->SP_floorheight;
-        opening->lowFloor = back->SP_floorheight;
+        opening->lowFloor = (float)back->SP_floorheight;
     }
     else
     {
-        opening->bottom   = back->SP_floorheight;
-        opening->lowFloor = front->SP_floorheight;
+        opening->lowFloor = (float)front->SP_floorheight;
     }
-
-    opening->range = opening->top - opening->bottom;
-}
+}}
 
 void LineDef_UpdateSlope(LineDef* line)
 {
@@ -275,187 +285,6 @@ void LineDef_LightLevelDelta(LineDef* l, int side, float* deltaL, float* deltaR)
     {
         *deltaR = delta;
     }
-}
-
-int LineDef_MiddleMaterialCoords(LineDef* lineDef, int side,
-    coord_t* bottomLeft, coord_t* bottomRight, coord_t* topLeft, coord_t* topRight,
-    float* texOffY, boolean lowerUnpeg, boolean clipBottom, boolean clipTop)
-{
-    coord_t* top[2], *bottom[2], openingTop[2], openingBottom[2]; // {left, right}
-    coord_t tcYOff;
-    SideDef* sideDef;
-    int i, texHeight;
-    assert(lineDef && bottomLeft && bottomRight && topLeft && topRight);
-
-    if(texOffY) *texOffY  = 0;
-
-    sideDef = lineDef->L_sidedef(side);
-    if(!sideDef || !sideDef->SW_middlematerial) return false;
-
-    texHeight = Material_Height(sideDef->SW_middlematerial);
-    tcYOff = sideDef->SW_middlevisoffset[VY];
-
-    top[0] = topLeft;
-    top[1] = topRight;
-    bottom[0] = bottomLeft;
-    bottom[1] = bottomRight;
-
-    openingTop[0] = *top[0];
-    openingTop[1] = *top[1];
-    openingBottom[0] = *bottom[0];
-    openingBottom[1] = *bottom[1];
-
-    if(openingTop[0] <= openingBottom[0] &&
-       openingTop[1] <= openingBottom[1]) return false;
-
-    // For each edge (left then right).
-    for(i = 0; i < 2; ++i)
-    {
-        if(lowerUnpeg)
-        {
-            *bottom[i] += tcYOff;
-            *top[i] = *bottom[i] + texHeight;
-        }
-        else
-        {
-            *top[i] += tcYOff;
-            *bottom[i] = *top[i] - texHeight;
-        }
-    }
-
-    if(texOffY)
-    {
-        if(*top[0] > openingTop[0] || *top[1] > openingTop[1])
-        {
-            if(*top[1] > *top[0])
-                *texOffY += *top[1] - openingTop[1];
-            else
-                *texOffY += *top[0] - openingTop[0];
-        }
-        else
-        {
-            *texOffY = 0;
-        }
-    }
-
-    // Clip it.
-    if(clipTop || clipBottom)
-    {
-        // For each edge (left then right).
-        for(i = 0; i < 2; ++i)
-        {
-            if(clipBottom && *bottom[i] < openingBottom[i])
-                *bottom[i] = openingBottom[i];
-
-            if(clipTop && *top[i] > openingTop[i])
-                *top[i] = openingTop[i];
-        }
-    }
-
-    return true;
-}
-
-/**
- * @todo No need to do this each frame. Set a flag in SideDef->flags to
- * denote this. Is sensitive to plane heights, surface properties
- * (e.g. alpha) and surface texture properties.
- */
-boolean LineDef_MiddleMaterialCoversOpening(LineDef *line, int side,
-    boolean ignoreOpacity)
-{
-    assert(line);
-    if(line->L_backsidedef)
-    {
-        SideDef* sideDef = line->L_sidedef(side);
-        Sector* frontSec = line->L_sector(side);
-        Sector*  backSec = line->L_sector(side^1);
-
-        if(sideDef->SW_middlematerial)
-        {
-            // Ensure we have up to date info.
-            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-                MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-            material_t* mat = sideDef->SW_middlematerial;
-            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
-
-            if(ignoreOpacity || (ms->isOpaque && !sideDef->SW_middleblendmode && sideDef->SW_middlergba[3] >= 1))
-            {
-                coord_t openTop[2], matTop[2];
-                coord_t openBottom[2], matBottom[2];
-
-                if(sideDef->flags & SDF_MIDDLE_STRETCH)
-                    return true;
-
-                openTop[0] = openTop[1] =
-                    matTop[0] = matTop[1] = LineDef_CeilingMin(line)->visHeight;
-                openBottom[0] = openBottom[1] =
-                    matBottom[0] = matBottom[1] = LineDef_FloorMax(line)->visHeight;
-
-                // Might the middle material cover the whole gap?
-                if(ms->size.height >= (openTop[0] - openBottom[0]) &&
-                   ms->size.height >= (openTop[1] - openBottom[1]))
-                {
-                    // Possibly; check the placement.
-                    const boolean unpegBottom = !!(line->flags & DDLF_DONTPEGBOTTOM);
-                    const boolean clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&frontSec->SP_floorsurface) && Surface_IsSkyMasked(&backSec->SP_floorsurface));
-                    const boolean clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && Surface_IsSkyMasked(&frontSec->SP_ceilsurface)  && Surface_IsSkyMasked(&backSec->SP_ceilsurface));
-
-                    if(LineDef_MiddleMaterialCoords(line, side, &matBottom[0], &matBottom[1],
-                                                    &matTop[0], &matTop[1], NULL, unpegBottom,
-                                                    clipBottom, clipTop))
-                    {
-                        if(matTop[0] >= openTop[0] &&
-                           matTop[1] >= openTop[1] &&
-                           matBottom[0] <= openBottom[0] &&
-                           matBottom[1] <= openBottom[1])
-                            return true;
-                    }
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
-Plane* LineDef_FloorMin(const LineDef* lineDef)
-{
-    assert(lineDef);
-    if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backsidedef || lineDef->L_backsector == lineDef->L_frontsector)
-        return lineDef->L_frontsector->SP_plane(PLN_FLOOR);
-    return lineDef->L_backsector->SP_floorvisheight < lineDef->L_frontsector->SP_floorvisheight?
-               lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
-}
-
-Plane* LineDef_FloorMax(const LineDef* lineDef)
-{
-    assert(lineDef);
-    if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backsidedef || lineDef->L_backsector == lineDef->L_frontsector)
-        return lineDef->L_frontsector->SP_plane(PLN_FLOOR);
-    return lineDef->L_backsector->SP_floorvisheight > lineDef->L_frontsector->SP_floorvisheight?
-               lineDef->L_backsector->SP_plane(PLN_FLOOR) : lineDef->L_frontsector->SP_plane(PLN_FLOOR);
-}
-
-Plane* LineDef_CeilingMin(const LineDef* lineDef)
-{
-    assert(lineDef);
-    if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backsidedef || lineDef->L_backsector == lineDef->L_frontsector)
-        return lineDef->L_frontsector->SP_plane(PLN_CEILING);
-    return lineDef->L_backsector->SP_ceilvisheight < lineDef->L_frontsector->SP_ceilvisheight?
-               lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
-}
-
-Plane* LineDef_CeilingMax(const LineDef* lineDef)
-{
-    assert(lineDef);
-    if(!lineDef->L_frontsector) return NULL; // No interfaces.
-    if(!lineDef->L_backsidedef || lineDef->L_backsector == lineDef->L_frontsector)
-        return lineDef->L_frontsector->SP_plane(PLN_CEILING);
-    return lineDef->L_backsector->SP_ceilvisheight > lineDef->L_frontsector->SP_ceilvisheight?
-               lineDef->L_backsector->SP_plane(PLN_CEILING) : lineDef->L_frontsector->SP_plane(PLN_CEILING);
 }
 
 int LineDef_SetProperty(LineDef* lin, const setargs_t* args)

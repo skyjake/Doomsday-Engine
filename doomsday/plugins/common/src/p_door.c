@@ -446,7 +446,7 @@ int EV_DoDoor(LineDef *line, doortype_e type)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
 {
-    char                buf[160], *in, tmp[2];
+    char buf[160], *in, tmp[2];
 
     buf[0] = 0;
     tmp[1] = 0;
@@ -472,7 +472,7 @@ static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
         strcat(buf, tmp);
     }
 
-    P_SetMessage(p, buf, false);
+    P_SetMessage(p, 0, buf);
 }
 #endif
 
@@ -527,7 +527,7 @@ static boolean tryLockedDoor(LineDef *line, player_t *p)
     case 343:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY1))
         {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
+            P_SetMessage(p, 0, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -536,7 +536,7 @@ static boolean tryLockedDoor(LineDef *line, player_t *p)
     case 344:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY2))
         {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
+            P_SetMessage(p, 0, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -545,7 +545,7 @@ static boolean tryLockedDoor(LineDef *line, player_t *p)
     case 345:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY3))
         {
-            P_SetMessage(p, PD_OPNPOWERUP, false);
+            P_SetMessage(p, 0, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }

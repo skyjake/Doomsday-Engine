@@ -25,6 +25,7 @@
 #include "dd_main.h"
 #include "de_console.h"
 #include "de_filesys.h"
+#include "updater/downloaddialog.h"
 
 #include "game.h"
 #include "abstractresource.h"
@@ -303,4 +304,20 @@ Game* Game_FromDef(const GameDef* def)
     Str_Free(&dataPath);
 
     return game;
+}
+
+void Game_Notify(int notification, void* param)
+{
+    DENG_UNUSED(param);
+
+    switch(notification)
+    {
+    case DD_NOTIFY_GAME_SAVED:
+        // If an update has been downloaded and is ready to go, we should
+        // re-show the dialog now that the user has saved the game as
+        // prompted.
+        DEBUG_Message(("Game_Notify: Game saved.\n"));
+        Updater_RaiseCompletedDownloadDialog();
+        break;
+    }
 }

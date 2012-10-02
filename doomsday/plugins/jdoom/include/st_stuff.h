@@ -40,6 +40,10 @@
 #include "hu_lib.h"
 #include "d_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ST_HEIGHT                   (32 * SCREEN_MUL)
 #define ST_WIDTH                    (SCREENWIDTH)
 #define ST_Y                        (SCREENHEIGHT - ST_HEIGHT)
@@ -144,5 +148,9 @@ void ST_HUDUnHide(int player, hueevent_t event);
 D_CMD(ChatOpen);
 D_CMD(ChatAction);
 D_CMD(ChatSendMacro);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDOOM_STUFF_H */

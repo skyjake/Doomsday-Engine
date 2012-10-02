@@ -43,6 +43,7 @@
 D_CMD(Dir);
 D_CMD(DumpLump);
 D_CMD(ListFiles);
+D_CMD(ListLumps);
 
 /**
  * Lump Directory Mapping.  Maps lump to resource path.
@@ -116,6 +117,7 @@ void F_Register(void)
 
     C_CMD("dump", "s", DumpLump);
     C_CMD("listfiles", "", ListFiles);
+    C_CMD("listlumps", "", ListLumps);
 }
 
 static void errorIfNotInited(const char* callerName)
@@ -786,7 +788,7 @@ const char* F_LumpName(lumpnum_t absoluteLumpNum)
     if(info)
     {
         PathDirectoryNode* node = F_LumpDirectoryNode(info->container, info->lumpIdx);
-        return Str_Text(PathDirectory_GetFragment(PathDirectoryNode_Directory(node), node));
+        return Str_Text(PathDirectoryNode_PathFragment(node));
     }
     return "";
 }
@@ -1003,7 +1005,7 @@ PathDirectoryNode* F_LumpDirectoryNode(abstractfile_t* fsObject, int lumpIdx)
     }
 }
 
-ddstring_t* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delimiter)
+AutoStr* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delimiter)
 {
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
@@ -1018,7 +1020,7 @@ ddstring_t* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delim
     }
 }
 
-ddstring_t* F_ComposeLumpPath(abstractfile_t* fsObject, int lumpIdx)
+AutoStr* F_ComposeLumpPath(abstractfile_t* fsObject, int lumpIdx)
 {
     return F_ComposeLumpPath2(fsObject, lumpIdx, '/');
 }
@@ -1073,7 +1075,7 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
 boolean F_Dump(const void* data, size_t size, const char* path)
 {
     FILE* outFile;
-    AutoStr* nativePath = AutoStr_New();
+    AutoStr* nativePath = AutoStr_NewStd();
 
     if(!size) return false;
 
@@ -1191,13 +1193,6 @@ void F_GetPWADFileNames(char* outBuf, size_t outBufSize, const char* delimiter)
     }
 }
 
-void F_PrintLumpDirectory(void)
-{
-    if(!inited) return;
-    // Always the primary directory.
-    LumpDirectory_Print(primaryWadLumpDirectory);
-}
-
 typedef struct foundentry_s {
     ddstring_t path;
     int attrib;
@@ -1287,7 +1282,7 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
 }
 
 static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t* pattern,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters),
     void* paramaters)
 {
     int result = 0, count;
@@ -1335,7 +1330,7 @@ static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t
 
 typedef struct {
     /// Callback to make for each processed file.
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters);
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters);
 
     /// Data passed to the callback.
     void* paramaters;
@@ -1351,7 +1346,7 @@ static int findLumpWorker(const LumpInfo* lumpInfo, void* paramaters)
 {
     findlumpworker_paramaters_t* p = (findlumpworker_paramaters_t*)paramaters;
     PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx);
-    ddstring_t* filePath = NULL;
+    AutoStr* filePath = NULL;
     boolean patternMatched;
     int result = 0; // Continue iteration.
     assert(lumpInfo && p);
@@ -1377,12 +1372,11 @@ static int findLumpWorker(const LumpInfo* lumpInfo, void* paramaters)
         result = p->callback(filePath, PT_LEAF, p->paramaters);
     }
 
-    if(filePath) Str_Delete(filePath);
     return result;
 }
 
 int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters),
     void* paramaters)
 {
     ddstring_t searchPattern, searchName, searchDirectory;
@@ -1404,7 +1398,7 @@ int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
     p.paramaters = paramaters;
     p.flags = flags;
     Str_Init(&p.pattern); Str_Set(&p.pattern, Str_Text(&searchPattern));
-    PathMap_Initialize(&p.patternMap, Str_Text(&searchPattern));
+    PathMap_Initialize(&p.patternMap, PathDirectory_HashPathFragment2, Str_Text(&searchPattern));
 
     result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findLumpWorker, (void*)&p);
     PathMap_Destroy(&p.patternMap);
@@ -1453,7 +1447,7 @@ searchEnded:
 }
 
 int F_AllResourcePaths(const char* searchPath, int flags,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters))
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters))
 {
     return F_AllResourcePaths2(searchPath, flags, callback, 0);
 }
@@ -1951,12 +1945,11 @@ DFile* F_OpenLump(lumpnum_t absoluteLumpNum)
     abstractfile_t* container = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(container)
     {
-        ddstring_t* path = F_ComposeLumpPath(container, lumpIdx);
+        AutoStr* path = F_ComposeLumpPath(container, lumpIdx);
         abstractfile_t* fsObject = newLumpFile(
             DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, false),
             Str_Text(path), F_LumpInfo(container, lumpIdx));
 
-        Str_Delete(path);
         if(fsObject)
         {
             return FileList_AddBack(openFiles, DFileBuilder_NewFromAbstractFile(fsObject));
@@ -2312,7 +2305,7 @@ static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
  * Prints the resource path to the console.
  * This is a f_allresourcepaths_callback_t.
  */
-int printResourcePath(const ddstring_t* fileNameStr, pathdirectorynode_type_t type,
+int printResourcePath(const ddstring_t* fileNameStr, PathDirectoryNodeType type,
     void* paramaters)
 {
     //assert(fileNameStr && VALID_PATHDIRECTORYNODE_TYPE(type));
@@ -2343,9 +2336,7 @@ static void printVFDirectory(const ddstring_t* path)
     Str_Free(&dir);
 }
 
-/**
- * Print contents of directories as Doomsday sees them.
- */
+/// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
     ddstring_t path;
@@ -2368,6 +2359,7 @@ D_CMD(Dir)
     return true;
 }
 
+/// Dump a copy of a virtual file to the runtime directory.
 D_CMD(DumpLump)
 {
     if(inited)
@@ -2384,6 +2376,20 @@ D_CMD(DumpLump)
     return false;
 }
 
+/// List virtual files inside containers.
+D_CMD(ListLumps)
+{
+    if(inited)
+    {
+        // Always the primary directory.
+        LumpDirectory_Print(primaryWadLumpDirectory);
+        return true;
+    }
+    Con_Printf("WAD module is not presently initialized.\n");
+    return false;
+}
+
+/// List the "real" files presently loaded in original load order.
 D_CMD(ListFiles)
 {
     size_t totalFiles = 0, totalPackages = 0;

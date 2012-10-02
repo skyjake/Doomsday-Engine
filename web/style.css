@@ -1,12 +1,11 @@
 body {
-    font-family: georgia, serif; /* Use a serif font for the main content as its easier to read in blocks */
+    font-family: Georgia, serif; /* Use a serif font for the main content as its easier to read in blocks */
     font-size: 100%;
     margin-top: 0;
     margin-bottom: 0;
     margin-left: 10px;
     margin-right: 10px;
     color: #807970;
-    text-align: center;
     background: #EDEFEF;
     background: #EDEFEF url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2JiYmZiYyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNlZGVmZWYiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+) repeat-x;
     background: #EDEFEF -moz-linear-gradient(top, #C7CCC9 0%, #EDEFEF 100%) repeat-x;
@@ -38,6 +37,11 @@ a {
     text-decoration: none;
     color: #495f5f;
     outline: 0 none;
+}
+
+a:focus {
+    outline: dotted 2px;
+    outline-offset: 2px;
 }
 
 a:hover {
@@ -111,7 +115,7 @@ hr {
     background-color: rgb(210,210,210);
     height: 1px;
     border: none;
-    width: 80%;
+    /*width: 80%;*/
     margin-top: 2em;
     margin-bottom: 2em;
 }
@@ -159,6 +163,11 @@ img {
 
 fieldset {
     border: 2px solid #EEE;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -o-border-radius: 3px;
+    -ms-border-radius: 3px;
+    -khtml-border-radius: 3px;
     border-radius: 3px;
 }
 
@@ -304,7 +313,15 @@ ol.jumplist li {
 
 #main {
     border: 2px solid #A6B9AA;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -o-border-radius: 10px;
+    -ms-border-radius: 10px;
+    -khtml-border-radius: 10px;
     border-radius: 10px;
+    -moz-box-shadow: 0 0 20px 10px rgba(0, 0, 0, .1);
+    -webkit-box-shadow: 0 0 20px 10px rgba(0, 0, 0, .1);
+    -o-box-shadow: 0 0 20px 10px rgba(0, 0, 0, .1);
     box-shadow: 0 0 20px 10px rgba(0, 0, 0, .1);
 }
 
@@ -331,8 +348,24 @@ ol.jumplist li {
 #menu {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: bold;
+
+    -moz-box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
+    -webkit-box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
+    -o-box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
     box-shadow: 0 16px 8px 0 rgb(199, 220, 215) inset;
+
+    -moz-border-top-left-radius: 8px;
+    -webkit-border-top-left-radius: 8px;
+    -o-border-top-left-radius: 8px;
+    -ms-border-top-left-radius: 8px;
+    -khtml-border-top-left-radius: 8px;
     border-top-left-radius: 8px;
+
+    -moz-border-top-right-radius: 8px;
+    -webkit-border-top-right-radius: 8px;
+    -o-border-top-right-radius: 8px;
+    -ms-border-top-right-radius: 8px;
+    -khtml-border-top-right-radius: 8px;
     border-top-right-radius: 8px;
 }
 
@@ -367,12 +400,14 @@ ol.jumplist li {
     padding-top: 83px;
     padding-bottom: 83px;
     padding-left: 202px;
+    outline: 0 none;
 }
 
 #menu a, span.paddle_left_select, span.paddle_right_select {
     position:inherit;
     font-size: 11pt;
     text-decoration: none;
+    text-shadow: #A7B6AC 0px -1px 0px;
     padding-top: 8px;
     padding-bottom: 8px;
     padding-left: 5px;
@@ -399,11 +434,10 @@ ol.jumplist li {
       a[class = "paddle_right"]:hover,
       navigation a[class = "paddle_right"]:visited:hover {
     margin-left: 0px;
+    -moz-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
+    -webkit-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
+    -o-box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
     box-shadow: 0 5px 10px 5px rgba(0, 0, 0, .2) inset;
-}
-
-#menu span.paddle_left_select, span.paddle_right_select {
-    color: #495f5f;
 }
 
 #divider {
@@ -412,14 +446,32 @@ ol.jumplist li {
     margin: 0;
     padding: 0;
     border: 0;
+    -moz-border-top-left-radius: 10px;
+    -webkit-border-top-left-radius: 10px;
+    -o-border-top-left-radius: 10px;
+    -ms-border-top-left-radius: 10px;
+    -khtml-border-top-left-radius: 10px;
     border-top-left-radius: 10px;
+
+    -moz-border-top-right-radius: 10px;
+    -webkit-border-top-right-radius: 10px;
+    -o-border-top-right-radius: 10px;
+    -ms-border-top-right-radius: 10px;
+    -khtml-border-top-right-radius: 10px;
     border-top-right-radius: 10px;
+
+    -moz-box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
+    -webkit-box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
+    -o-box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
     box-shadow: 0 4px 6px 0 rgba(186, 196, 189, 260) inset;
 }
 
 #divider2 {
     width: 100%;
     height: 8px;
+    -moz-box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
+    -webkit-box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
+    -o-box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
     box-shadow: 0 -6px 8px -4px rgb(205, 220, 213) inset;
 }
 
@@ -432,22 +484,49 @@ ol.jumplist li {
     height: 300px;
     padding: 0;
     margin: 0;
+    -moz-border-top-left-radius: 10px;
+    -webkit-border-top-left-radius: 10px;
+    -o-border-top-left-radius: 10px;
+    -ms-border-top-left-radius: 10px;
+    -khtml-border-top-left-radius: 10px;
     border-top-left-radius: 10px;
+
+    -moz-border-top-right-radius: 10px;
+    -webkit-border-top-right-radius: 10px;
+    -o-border-top-right-radius: 10px;
+    -ms-border-top-right-radius: 10px;
+    -khtml-border-top-right-radius: 10px;
     border-top-right-radius: 10px;
 }
 
 #panorama {
     position: relative;
     left:50%;
+    margin-top: 10px;
     margin-left:-650px;
     top: 0;
     height: 300px;
     width: 1300px;
     background: #282D2B url(panoramarotator) no-repeat;
+
+    -moz-box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
+    -webkit-box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
+    -o-box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
     box-shadow: 0 -20px 10px 0 rgba(250, 250, 250, 1) inset;
+
+    -moz-border-top-left-radius: 10px;
+    -webkit-border-top-left-radius: 10px;
+    -o-border-top-left-radius: 10px;
+    -ms-border-top-left-radius: 10px;
+    -khtml-border-top-left-radius: 10px;
     border-top-left-radius: 10px;
+
+    -moz-border-top-right-radius: 10px;
+    -webkit-border-top-right-radius: 10px;
+    -o-border-top-right-radius: 10px;
+    -ms-border-top-right-radius: 10px;
+    -khtml-border-top-right-radius: 10px;
     border-top-right-radius: 10px;
-    margin-top: 10px;
 }
 
 /*------------------- Bottom Panel -----------------*/
@@ -461,7 +540,18 @@ ol.jumplist li {
     margin-bottom: 0;
     width: 100%;
     background: #FAFAFA;
+    -moz-border-bottom-left-radius: 10px;
+    -webkit-border-bottom-left-radius: 10px;
+    -o-border-bottom-left-radius: 10px;
+    -ms-border-bottom-left-radius: 10px;
+    -khtml-border-bottom-left-radius: 10px;
     border-bottom-left-radius: 10px;
+
+    -moz-border-bottom-right-radius: 10px;
+    -webkit-border-bottom-right-radius: 10px;
+    -o-border-bottom-right-radius: 10px;
+    -ms-border-bottom-right-radius: 10px;
+    -khtml-border-bottom-right-radius: 10px;
     border-bottom-right-radius: 10px;
 }
 
@@ -501,8 +591,21 @@ ol.jumplist li {
     padding-right: .4em;
     padding-top: .2em;
     padding-bottom: .6em;
+    -moz-border-bottom-left-radius: 10px;
+    -webkit-border-bottom-left-radius: 10px;
+    -o-border-bottom-left-radius: 10px;
+    -ms-border-bottom-left-radius: 10px;
+    -khtml-border-bottom-left-radius: 10px;
     border-bottom-left-radius: 10px;
+
+    -moz-border-bottom-right-radius: 10px;
+    -webkit-border-bottom-right-radius: 10px;
+    -o-border-bottom-right-radius: 10px;
+    -ms-border-bottom-right-radius: 10px;
+    -khtml-border-bottom-right-radius: 10px;
     border-bottom-right-radius: 10px;
+
+    line-height: 160%;
 }
 
 /*----------------------- Footer ----------------------*/
@@ -514,6 +617,7 @@ ol.jumplist li {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: center;
     margin-top: 1em;
+    margin-bottom: 1em;
 }
 
 p.disclaimer a {
@@ -593,7 +697,7 @@ p.legal a {
     color: white;
 }
 
-#servers {
+#servers, #search-box {
     position: relative;
     top: -275px; /* minus (image height - divider height) */
     min-width: 201px;
@@ -623,11 +727,12 @@ p.legal a {
     font-weight: bold;
 }
 
-#servers a {
+#servers a, #search-box a {
     color: #FFCB0F;
 }
 
-#servers a:hover, #servers a:visited:hover {
+#servers a:hover, #servers a:visited:hover,
+#search-box a:hover, #search-box a:visited:hover {
     color: white;
 }
 
@@ -652,9 +757,19 @@ p.legal a {
     display: block;
     font-family: Verdana, Arial, Helvetica, sans-serif;
     margin:.8em;
-    border-radius: 10px;
-    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
     border: 2px solid #E0EBE7;
+
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -o-border-radius: 10px;
+    -ms-border-radius: 10px;
+    -khtml-border-radius: 10px;
+    border-radius: 10px;
+
+    -moz-box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
+    -webkit-box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
+    -o-box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
+    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, .1);
 }
 
 #downloadbox, #socialbookmarkbox {
@@ -962,14 +1077,19 @@ span.metadata {
 .tag_list .tag {
     display:inline-block;
     font-size: xx-small;
-    border: 1px solid;
-    border-radius: 3px;
-    -moz-border-radius: 3px;
     padding: .25em .4em;
     margin-left: 1em;
     margin-right: 0;
     background-color: #F9FFF9;
+
+    border: 1px solid;
     border-color: #BBDDBB;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -o-border-radius: 3px;
+    -ms-border-radius: 3px;
+    -khtml-border-radius: 3px;
+    border-radius: 3px;
 }
 
 /*----------*/
@@ -1046,19 +1166,43 @@ span.metadata {
 }
 
 .buildevent_badge {
+    font-family: Helvetica;
+    font-weight: bolder;
     width:2.5em;
     margin-left:auto;
     margin-right:auto;
     padding:.3em .2em;
-    border:3px solid;
     margin-top:.25em;
     margin-bottom:1em;
-    border-top-left-radius:40px 10px;
-    border-top-right-radius:40px 10px;
-    border-bottom-left-radius:40px 10px;
-    border-bottom-right-radius:40px 10px;
-    font-family: Helvetica;
-    font-weight: bolder;
+
+    border:3px solid;
+    -moz-border-top-left-radius: 40px 10px;
+    -webkit-border-top-left-radius: 40px 10px;
+    -o-border-top-left-radius: 40px 10px;
+    -ms-border-top-left-radius: 40px 10px;
+    -khtml-border-top-left-radius: 40px 10px;
+    border-top-left-radius: 40px 10px;
+
+    -moz-border-top-right-radius: 40px 10px;
+    -webkit-border-top-right-radius: 40px 10px;
+    -o-border-top-right-radius: 40px 10px;
+    -ms-border-top-right-radius: 40px 10px;
+    -khtml-border-top-right-radius: 40px 10px;
+    border-top-right-radius: 40px 10px;
+
+    -moz-border-bottom-left-radius: 40px 10px;
+    -webkit-border-bottom-left-radius: 40px 10px;
+    -o-border-bottom-left-radius: 40px 10px;
+    -ms-border-bottom-left-radius: 40px 10px;
+    -khtml-border-bottom-left-radius: 40px 10px;
+    border-bottom-left-radius: 40px 10px;
+
+    -moz-border-bottom-right-radius: 40px 10px;
+    -webkit-border-bottom-right-radius: 40px 10px;
+    -o-border-bottom-right-radius: 40px 10px;
+    -ms-border-bottom-right-radius: 40px 10px;
+    -khtml-border-bottom-right-radius: 40px 10px;
+    border-bottom-right-radius: 40px 10px;
 }
 
 .buildevent_badge .startdate {
@@ -1082,7 +1226,10 @@ span.metadata {
     color:#EEE;
     background-color:#78E;
     border-color:#56D;
-    box-shadow:0px -10px 5px 0px rgba(30,100,230,.5) inset;
+    -moz-box-shadow: 0px -10px 5px 0px rgba(30,100,230,.5) inset;
+    -webkit-box-shadow: 0px -10px 5px 0px rgba(30,100,230,.5) inset;
+    -o-box-shadow: 0px -10px 5px 0px rgba(30,100,230,.5) inset;
+    box-shadow: 0px -10px 5px 0px rgba(30,100,230,.5) inset;
 }
 
 .stable:hover,
@@ -1097,7 +1244,10 @@ span.metadata {
     color:#555;
     background-color:#FBA000;
     border-color:#D71;
-    box-shadow:0px -10px 5px 0px rgba(200,80,0,.5) inset;
+    -moz-box-shadow: 0px -10px 5px 0px rgba(200,80,0,.5) inset;
+    -webkit-box-shadow: 0px -10px 5px 0px rgba(200,80,0,.5) inset;
+    -o-box-shadow: 0px -10px 5px 0px rgba(200,80,0,.5) inset;
+    box-shadow: 0px -10px 5px 0px rgba(200,80,0,.5) inset;
 }
 
 .candidate:hover,
@@ -1112,7 +1262,10 @@ span.metadata {
     color:#860;
     background-color:#FFE400;
     border-color:#FC6;
-    box-shadow:0px -10px 5px 0px rgba(250,140,10,.5) inset;
+    -moz-box-shadow: 0px -10px 5px 0px rgba(250,140,10,.5) inset;
+    -webkit-box-shadow: 0px -10px 5px 0px rgba(250,140,10,.5) inset;
+    -o-box-shadow: 0px -10px 5px 0px rgba(250,140,10,.5) inset;
+    box-shadow: 0px -10px 5px 0px rgba(250,140,10,.5) inset;
 }
 
 .unstable:hover,
@@ -1156,11 +1309,35 @@ span.metadata {
     width:1em;
     height:.6em;
     padding:0;
-    border-top-left-radius:10px 2px;
-    border-top-right-radius:10px 2px;
-    border-bottom-left-radius:10px 2px;
-    border-bottom-right-radius:10px 2px;
+
     border-width:2px;
+    -moz-border-top-left-radius: 10px 2px;
+    -webkit-border-top-left-radius: 10px 2px;
+    -o-border-top-left-radius: 10px 2px;
+    -ms-border-top-left-radius: 10px 2px;
+    -khtml-border-top-left-radius: 10px 2px;
+    border-top-left-radius: 10px 2px;
+
+    -moz-border-top-right-radius: 10px 2px;
+    -webkit-border-top-right-radius: 10px 2px;
+    -o-border-top-right-radius: 10px 2px;
+    -ms-border-top-right-radius: 10px 2px;
+    -khtml-border-top-right-radius: 10px 2px;
+    border-top-right-radius: 10px 2px;
+
+    -moz-border-bottom-left-radius: 10px 2px;
+    -webkit-border-bottom-left-radius: 10px 2px;
+    -o-border-bottom-left-radius: 10px 2px;
+    -ms-border-bottom-left-radius: 10px 2px;
+    -khtml-border-bottom-left-radius: 10px 2px;
+    border-bottom-left-radius: 10px 2px;
+
+    -moz-border-bottom-right-radius: 10px 2px;
+    -webkit-border-bottom-right-radius: 10px 2px;
+    -o-border-bottom-right-radius: 10px 2px;
+    -ms-border-bottom-right-radius: 10px 2px;
+    -khtml-border-bottom-right-radius: 10px 2px;
+    border-bottom-right-radius: 10px 2px;
 }
 
 .buildsoverview {
@@ -1219,6 +1396,11 @@ span.port {
 .server_badge .wrapper {
     padding: .2em .4em;
     border: 2px solid #eee;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -o-border-radius: 3px;
+    -ms-border-radius: 3px;
+    -khtml-border-radius: 3px;
     border-radius: 3px;
 }
 

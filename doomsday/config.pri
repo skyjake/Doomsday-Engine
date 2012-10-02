@@ -11,24 +11,25 @@
 #                   generated scripts (python on path used for building)
 #
 # CONFIG options for Doomsday:
-# - deng_aptstable          Include the stable apt repository .list
-# - deng_aptunstable        Include the unstable apt repository .list
-# - deng_fluidsynth         Build the FluidSynth sound driver
-# - deng_fmod               Build the FMOD Ex sound driver
-# - deng_nativesdk          (Mac) Use current OS's SDK for non-distrib use
-# - deng_nodisplaymode      Disable native display mode changes
-# - deng_nofixedasm         Disable assembler fixed-point math
-# - deng_noopenal           Disable building of the OpenAL sound driver
-# - deng_nosdlmixer         Disable SDL_mixer; use dummy driver as default
-# - deng_nosnowberry        (Unix) Exclude Snowberry from installation
-# - deng_openal             Build the OpenAL sound driver
-# - deng_nopackres          Do not package the Doomsday resources
-# - deng_rangecheck         Parameter range checking/value assertions
-# - deng_snowberry          (Unix) Include Snowberry in installation
-# - deng_writertypecheck    Enable type checking in Writer/Reader
+# - deng_aptstable              Include the stable apt repository .list
+# - deng_aptunstable            Include the unstable apt repository .list
+# - deng_fluidsynth             Build the FluidSynth sound driver
+# - deng_fmod                   Build the FMOD Ex sound driver
+# - deng_nativesdk              (Mac) Use current OS's SDK for non-distrib use
+# - deng_nodisplaymode          Disable native display mode changes
+# - deng_nofixedasm             Disable assembler fixed-point math
+# - deng_noopenal               Disable building of the OpenAL sound driver
+# - deng_nosdlmixer             Disable SDL_mixer; use dummy driver as default
+# - deng_nosnowberry            (Unix) Exclude Snowberry from installation
+# - deng_openal                 Build the OpenAL sound driver
+# - deng_nopackres              Do not package the Doomsday resources
+# - deng_rangecheck             Parameter range checking/value assertions
+# - deng_snowberry              (Unix) Include Snowberry in installation
+# - deng_stringpoolzoneallocs   Use the memory Zone for allocs in StringPool
+# - deng_writertypecheck        Enable type checking in Writer/Reader
 #
 # Read-only options (set automatically):
-# - deng_debug              Debug build.
+# - deng_debug                  Debug build.
 
 QT -= core gui
 CONFIG *= thread

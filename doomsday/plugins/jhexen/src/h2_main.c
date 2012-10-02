@@ -108,16 +108,7 @@ static skillmode_t startSkill = SM_MEDIUM;
  */
 int X_GetInteger(int id)
 {
-    switch(id)
-    {
-    case DD_DMU_VERSION:
-        return DMUAPI_VER;
-
-    default:
-        break;
-    }
-    // ID not recognized, return NULL.
-    return 0;
+    return Common_GetInteger(id);
 }
 
 /**
@@ -246,6 +237,7 @@ void X_PreInit(void)
     cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
     cfg.confirmQuickGameSave = true;
+    cfg.confirmRebornLoad = true;
     cfg.loadLastSaveOnReborn = false;
 
     cfg.hudFog = 5;
@@ -350,7 +342,7 @@ void X_PreInit(void)
  */
 void X_PostInit(void)
 {
-    ddstring_t* path;
+    AutoStr* path;
     int p, warpMap;
     Uri* uri;
 
@@ -414,7 +406,8 @@ void X_PostInit(void)
     p = CommandLine_CheckWith("-loadgame", 1);
     if(p != 0)
     {
-        if(G_LoadGame(atoi(CommandLine_At(p + 1))))
+        const int saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
+        if(SV_IsUserWritableSlot(saveSlot) && G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.
             return;
@@ -478,7 +471,6 @@ void X_PostInit(void)
     {
         startMap = 0;
     }
-    Str_Delete(path);
     Uri_Delete(uri);
 
     if(autoStart || IS_NETGAME)

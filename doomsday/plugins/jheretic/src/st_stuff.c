@@ -2949,7 +2949,7 @@ void ST_LogPostVisibilityChangeNotification(void)
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        ST_LogPost(i, LMF_NOHIDE, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON);
+        ST_LogPost(i, LMF_NO_HIDE, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON);
     }
 }
 
@@ -3034,7 +3034,7 @@ void ST_AutomapClearPoints(int player)
     if(!ob) return;
 
     UIAutomap_ClearPoints(ob);
-    P_SetMessage(&players[player], AMSTR_MARKSCLEARED, false);
+    P_SetMessage(&players[player], LMF_NO_HIDE, AMSTR_MARKSCLEARED);
 }
 
 /**
@@ -3052,7 +3052,7 @@ int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
 
     newPoint = UIAutomap_AddPoint(obj, x, y, z);
     sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, newPoint);
-    P_SetMessage(&players[player], buffer, false);
+    P_SetMessage(&players[player], LMF_NO_HIDE, buffer);
 
     return newPoint;
 }
@@ -3094,7 +3094,7 @@ void ST_ToggleAutomapPanMode(int player)
     if(!ob) return;
     if(UIAutomap_SetPanMode(ob, !UIAutomap_PanMode(ob)))
     {
-        P_SetMessage(&players[player], (UIAutomap_PanMode(ob)? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON), true);
+        P_SetMessage(&players[player], LMF_NO_HIDE, (UIAutomap_PanMode(ob)? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON));
     }
 }
 

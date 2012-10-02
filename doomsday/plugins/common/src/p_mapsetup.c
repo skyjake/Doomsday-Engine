@@ -28,18 +28,11 @@
 #include <ctype.h>  // has isspace
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 #include "am_map.h"
 #include "dmu_lib.h"
+#include "g_common.h"
 #include "r_common.h"
 #include "p_actor.h"
 #include "p_mapsetup.h"
@@ -663,7 +656,7 @@ static void spawnMapObjects(void)
 
 void P_SetupMap(Uri* mapUri, uint episode, uint map)
 {
-    ddstring_t* mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
+    AutoStr* mapUriStr = mapUri? Uri_Compose(mapUri) : 0;
 
     if(!mapUriStr) return;
 
@@ -687,11 +680,10 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
 
     if(!P_LoadMap(Str_Text(mapUriStr)))
     {
-        ddstring_t* path = Uri_ToString(mapUri);
+        AutoStr* path = Uri_ToString(mapUri);
         Con_Error("P_SetupMap: Failed loading map \"%s\".\n", Str_Text(path));
         exit(1); // Unreachable.
     }
-    Str_Delete(mapUriStr);
 
     DD_InitThinkers();
 #if __JHERETIC__
@@ -710,12 +702,8 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
 #if __JHEXEN__
     PO_InitForMap();
 
-    { lumpname_t mapId;
-    G_MapId(episode, map, mapId);
-    Con_Message("Load ACS scripts\n");
     // @todo Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetLumpNumForName(mapId) + 11 /*ML_BEHAVIOR*/); // ACS object code
-    }
+    P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(mapUri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
 
     HU_UpdatePsprites();

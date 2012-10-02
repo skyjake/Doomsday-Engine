@@ -68,8 +68,25 @@ coord_t LineDef_PointXYOnSide(const LineDef* lineDef, coord_t x, coord_t y);
 void LineDef_SetDivline(const LineDef* lineDef, divline_t* divline);
 
 /**
+ * Find the "sharp" Z coordinate range of the opening on @a side. The open range is
+ * defined as the gap between foor and ceiling on @a side clipped by the floor and
+ * ceiling planes on the back side (if present).
+ *
+ * @param line      LineDef instance.
+ * @param bottom    Bottom Z height is written here. Can be @c NULL.
+ * @param top       Top Z height is written here. Can be @c NULL.
+ *
+ * @return Height of the open range.
+ */
+coord_t LineDef_OpenRange(const LineDef* line, int side, coord_t* bottom, coord_t* top);
+
+/// Same as @ref LineDef_OpenRange() but works with the "visual" (i.e., smoothed)
+/// plane height coordinates rather than the "sharp" coordinates.
+coord_t LineDef_VisOpenRange(const LineDef* line, int side, coord_t* bottom, coord_t* top);
+
+/**
  * Configure the specified TraceOpening according to the opening defined by the
- * inner-minimal planes heights which intercept this LineDef.
+ * inner-minimal plane heights which intercept this LineDef
  *
  * @param lineDef  LineDef instance.
  * @param opening  TraceOpening instance to be configured.
@@ -103,38 +120,6 @@ void LineDef_UpdateSlope(LineDef* lineDef);
 void LineDef_UpdateAABox(LineDef* lineDef);
 
 /**
- * @param lineDef  LineDef instance.
- * @return  Minimal floor Plane which interfaces with this LineDef.
- *     If both front and back floor Plane interfaces exist and are equal,
- *     the front plane is returned. May return @c NULL if no interfaces.
- */
-Plane* LineDef_FloorMin(const LineDef* lineDef);
-
-/**
- * @param lineDef  LineDef instance.
- * @return  Maximal floor Plane which interfaces with this LineDef.
- *     If both front and back floor Plane interfaces exist and are equal,
- *     the front plane is returned. May return @c NULL if no interfaces.
- */
-Plane* LineDef_FloorMax(const LineDef* lineDef);
-
-/**
- * @param lineDef  LineDef instance.
- * @return  Minimal ceiling Plane which interfaces with this LineDef.
- *     If both front and back ceiling Plane interfaces exist and are equal,
- *     the front plane is returned. May return @c NULL if no interfaces.
- */
-Plane* LineDef_CeilingMin(const LineDef* lineDef);
-
-/**
- * @param lineDef  LineDef instance.
- * @return  Maximal ceiling Plane which interfaces with this LineDef.
- *     If both front and back ceiling Plane interfaces exist and are equal,
- *     the front plane is returned. May return @c NULL if no interfaces.
- */
-Plane* LineDef_CeilingMax(const LineDef* lineDef);
-
-/**
  * The DOOM lighting model applies a sector light level delta when drawing
  * line segments based on their 2D world angle.
  *
@@ -144,33 +129,6 @@ Plane* LineDef_CeilingMax(const LineDef* lineDef);
  * @param deltaR  Light delta for the right edge written here.
  */
 void LineDef_LightLevelDelta(LineDef* lineDef, int side, float* deltaL, float* deltaR);
-
-/**
- * @param lineDef  LineDef instance.
- * @param side  Side of LineDef to test. Non-zero value signifies the BACK side.
-  *
- * @return  @c true iff the SideDef on the referenced @a lineDef @a side has
- *     a "middle" Material which completely covers any opening (gap between
- *     floor and ceiling planes) on that side of the line.
- */
-boolean LineDef_MiddleMaterialCoversOpening(LineDef* lineDef, int side, boolean ignoreAlpha);
-
-/**
- * Calculate coordinates for a "middle" Material if present.
- *
- * @param lineDef  LineDef instance.
- * @param side  Side of the LineDef we are interested in.
- * @param bottomLeft  Z map space coordinate of the bottom left of the Material written here.
- * @param bottomRight  Z map space coordinate of the bottom right of the Material written here.
- * @param topLeft  Z map space coordinate of the top left of the Material written here.
- * @param topRight Z map space coordinate of the top right of the Material written here.
- * @param texOffY  Offset to the top of the Material written here.
- *
- * @return  @c true iff the middle Material is visible (in the opening).
- */
-int LineDef_MiddleMaterialCoords(LineDef* lineDef, int side,
-    coord_t* bottomLeft, coord_t* bottomRight, coord_t* topLeft, coord_t* topRight, float* texOffY,
-    boolean lowerUnpeg, boolean clipBottom, boolean clipTop);
 
 /**
  * Get a property value, selected by DMU_* name.

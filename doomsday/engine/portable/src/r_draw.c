@@ -171,7 +171,7 @@ void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
     GL_BindTexture(GL_PreparePatchTexture(tex));
     if(useOffsets)
     {
-        patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
+        patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
         assert(pTex);
 
         x += pTex->offX;

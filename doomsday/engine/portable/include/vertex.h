@@ -31,10 +31,23 @@ extern "C" {
 #endif
 
 /**
+ * Count the total number of linedef "owners" of this vertex. An owner in
+ * this context is any linedef whose start or end vertex is this.
+ *
+ * @pre Vertex linedef owner rings must have already been calculated.
+ * @pre @a oneSided and/or @a twoSided must have already been initialized.
+ *
+ * @param vtx       Vertex instance.
+ * @param oneSided  Total number of one-sided lines is written here. Can be @a NULL.
+ * @param twoSided  Total number of two-sided lines is written here. Can be @a NULL.
+ */
+void Vertex_CountLineOwners(Vertex* vtx, uint* oneSided, uint* twoSided);
+
+/**
  * Get a property value, selected by DMU_* name.
  *
- * @param vertex  Vertex instance.
- * @param args  Property arguments.
+ * @param vertex    Vertex instance.
+ * @param args      Property arguments.
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Vertex_GetProperty(const Vertex* vertex, setargs_t* args);
@@ -42,8 +55,8 @@ int Vertex_GetProperty(const Vertex* vertex, setargs_t* args);
 /**
  * Update a property value, selected by DMU_* name.
  *
- * @param vertex  Vertex instance.
- * @param args  Property arguments.
+ * @param vertex    Vertex instance.
+ * @param args      Property arguments.
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Vertex_SetProperty(Vertex* vertex, const setargs_t* args);

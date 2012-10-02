@@ -71,14 +71,16 @@ public:
      * this then @a bounds will be initialized to the "cleared" state
      * (i.e., min[x,y] > max[x,y]).
      *
-     * @param bounds  Determined bounds are written here.
+     * @return bounds  Determined bounds are written here.
      */
-    void findHEdgeBounds(AABoxd& bounds);
+    AABoxd findHEdgeBounds();
 
     /**
      * Empty this SuperBlockmap clearing all HEdges and sub-blocks.
      */
     void clear();
+
+    operator SuperBlock&() { return root(); }
 
 private:
     struct Instance;
@@ -112,6 +114,9 @@ public:
     {
         Q_ASSERT(childId == RIGHT || childId == LEFT);
     }
+
+public:
+    SuperBlock& clear();
 
     /**
      * Retrieve the SuperBlockmap which owns this block.
@@ -232,21 +237,19 @@ public:
      */
     HEdge* pop();
 
-    HEdges::const_iterator hedgesBegin() const;
-    HEdges::const_iterator hedgesEnd() const;
+    const HEdges& hedges() const;
 
     DENG_DEBUG_ONLY(
     static void DebugPrint(SuperBlock const& inst)
     {
-        for(SuperBlock::HEdges::const_iterator it = inst.hedgesBegin();
-            it != inst.hedgesEnd(); ++it)
+        DENG2_FOR_EACH(it, inst.hedges(), SuperBlock::HEdges::const_iterator)
         {
             HEdge* hedge = *it;
             LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")
-                    << (hedge->lineDef? "NORM" : "MINI")
-                    << hedge << hedge->sector->buildData.index
-                    << hedge->v[0]->origin[VX] << hedge->v[0]->origin[VY]
-                    << hedge->v[1]->origin[VX] << hedge->v[1]->origin[VY];
+                << (hedge->lineDef? "NORM" : "MINI")
+                << hedge << hedge->sector->buildData.index
+                << hedge->v[0]->origin[VX] << hedge->v[0]->origin[VY]
+                << hedge->v[1]->origin[VX] << hedge->v[1]->origin[VY];
         }
     })
 
@@ -254,7 +257,7 @@ private:
     /**
      * SuperBlock objects must be constructed within the context of an
      * owning SuperBlockmap. Instantiation outside of this context is not
-     * permitted. @see SuperBlockmap
+     * permitted. @ref SuperBlockmap
      */
     SuperBlock(SuperBlockmap& blockmap);
     SuperBlock(SuperBlock& parent, ChildId childId, bool splitVertical);

@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 856 <--
-; Other free ordinals: 57
+; Highest ordinal is currently: --> 859 <--
+; Other free ordinals: None
 
 NAME                            "DOOMSDAY"
 
@@ -284,16 +284,16 @@ EXPORTS
 ;    AutoStr_FromStr             @847 NONAME
 
     ; StringPool.
-    StringPool_New              @537 NONAME
-    StringPool_NewWithStrings   @538 NONAME
-    StringPool_Delete           @539 NONAME
-    StringPool_Clear            @540 NONAME
-    StringPool_Empty            @541 NONAME
-    StringPool_Size             @542 NONAME
-    StringPool_Intern           @543 NONAME
-    StringPool_InternAndRetrieve @544 NONAME
-    StringPool_IsInterned       @545 NONAME
-    StringPool_String           @546 NONAME
+;    StringPool_New              @537 NONAME
+;    StringPool_NewWithStrings   @538 NONAME
+;    StringPool_Delete           @539 NONAME
+;    StringPool_Clear            @540 NONAME
+;    StringPool_Empty            @541 NONAME
+;    StringPool_Size             @542 NONAME
+;    StringPool_Intern           @543 NONAME
+;    StringPool_InternAndRetrieve @544 NONAME
+;    StringPool_IsInterned       @545 NONAME
+;    StringPool_String           @546 NONAME
 
     ; Uri.
     Uri_New                     @238 NONAME
@@ -480,6 +480,7 @@ EXPORTS
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
+    Game_Notify                 @859 NONAME
 
 ; Play: Controls.
     P_NewPlayerControl          @251 NONAME
@@ -670,6 +671,7 @@ EXPORTS
     R_DeclarePatch              @335 NONAME
     R_GetPatchInfo              @237 NONAME
     R_ComposePatchUri           @247 NONAME
+    R_ComposePatchPath          @858 NONAME
 
     R_TextureUniqueId           @438 NONAME
     R_TextureUniqueId2          @501 NONAME
@@ -890,12 +892,14 @@ EXPORTS
 
     ; Vectors.
     V2d_Sum                     @54 NONAME
+    V2d_Scale                   @57 NONAME
     V2d_Subtract                @341 NONAME
     V2d_Rotate                  @344 NONAME
     V2d_PointOnLineSide         @376 NONAME
     V2d_PointLineDistance       @442 NONAME
     V2d_ProjectOnLine           @443 NONAME
     V2d_Intersection            @349 NONAME
+    V2d_Copy                    @857 NONAME
 
     ; Utilities.
     M_ApproxDistance            @58 NONAME

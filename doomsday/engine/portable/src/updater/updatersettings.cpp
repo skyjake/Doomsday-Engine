@@ -147,3 +147,30 @@ de::String UpdaterSettings::defaultDownloadPath()
 {
     return QDesktopServices::storageLocation(QDesktopServices::TempLocation);
 }
+
+de::String UpdaterSettings::lastCheckAgo() const
+{
+    de::Time when = lastCheckTime();
+    de::Time::Delta delta = when.since();
+
+    int t;
+    if(delta < 60.0)
+    {
+        t = delta.asMilliSeconds() / 1000;
+        return de::String("%1 second%2 ago").arg(t).arg(t != 1? "s" : "");
+    }
+
+    t = delta.asMinutes();
+    if(t <= 60)
+    {
+        return de::String("%1 minute%2 ago").arg(t).arg(t != 1? "s" : "");
+    }
+
+    t = delta.asHours();
+    if(t <= 24)
+    {
+        return de::String("%1 hour%2 ago").arg(t).arg(t != 1? "s" : "");
+    }
+
+    return de::String("on " + when.asText(de::Time::FriendlyFormat));
+}

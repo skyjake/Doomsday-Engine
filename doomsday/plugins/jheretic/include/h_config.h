@@ -38,6 +38,10 @@
 #include "doomdef.h"
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     HUD_AMMO,
     HUD_ARMOR,
@@ -113,6 +117,7 @@ typedef struct jheretic_config_s {
     int             inludePatchReplaceMode;
 
     byte            confirmQuickGameSave;
+    byte            confirmRebornLoad;
     byte            loadAutoSaveOnReborn;
     byte            loadLastSaveOnReborn;
 
@@ -244,5 +249,9 @@ typedef struct jheretic_config_s {
 extern game_config_t cfg;      // in g_game.c
 
 int             GetDefInt(char *def, int *returned_value);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

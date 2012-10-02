@@ -243,17 +243,14 @@ void R_CycleGammaLevel(void)
 {
     char buf[50];
 
-    if(G_QuitInProgress())
-    {
-        return;
-    }
+    if(G_QuitInProgress()) return;
 
     gammaLevel++;
     if(gammaLevel > 4)
         gammaLevel = 0;
 
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(players + CONSOLEPLAYER, gammamsg[gammaLevel], true);
+    P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, gammamsg[gammaLevel]);
 #endif
 
     sprintf(buf, "rend-tex-gamma %f", ((float) gammaLevel / 8.0f) * 1.5f);

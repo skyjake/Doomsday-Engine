@@ -53,6 +53,10 @@
 #include "filelist.h"
 #include "pathdirectory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define AUXILIARY_BASE      100000000
 
 /// Register the console commands, variables, etc..., of this module.
@@ -265,11 +269,6 @@ void F_GetPWADFileNames(char* buf, size_t bufSize, const char* delimiter);
  */
 uint F_CRCNumber(void);
 
-/**
- * Print the contents of the primary lump directory to stdout.
- */
-void F_PrintLumpDirectory(void);
-
 /// Clear all references to this file.
 void F_ReleaseFile(abstractfile_t* file);
 
@@ -279,9 +278,8 @@ void F_Close(DFile* file);
 /// Completely destroy this file; close if open, clear references and any acquired identifiers.
 void F_Delete(DFile* file);
 
-/// @return  Must be free'd with Str_Delete
-ddstring_t* F_ComposeLumpPath2(abstractfile_t* file, int lumpIdx, char delimiter);
-ddstring_t* F_ComposeLumpPath(abstractfile_t* file, int lumpIdx); /*delimiter='/'*/
+AutoStr* F_ComposeLumpPath2(abstractfile_t* file, int lumpIdx, char delimiter);
+AutoStr* F_ComposeLumpPath(abstractfile_t* file, int lumpIdx); /*delimiter='/'*/
 
 struct pathdirectorynode_s* F_LumpDirectoryNode(abstractfile_t* file, int lumpIdx);
 
@@ -302,9 +300,13 @@ void F_CacheChangeTag(abstractfile_t* file, int lumpIdx, int tag);
  * @param flags  @see searchPathFlags
  */
 int F_AllResourcePaths2(const char* searchPath, int flags,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters),
     void* paramaters);
 int F_AllResourcePaths(const char* searchPath, int flags,
-    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters));
+    int (*callback) (const ddstring_t* path, PathDirectoryNodeType type, void* paramaters));
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_MAIN_H */

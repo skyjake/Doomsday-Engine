@@ -160,7 +160,7 @@ static void drawEnteringTitle(void)
     ddmapinfo_t minfo;
     patchid_t patchId;
     patchinfo_t info;
-    ddstring_t* mapPath;
+    AutoStr* mapPath;
     Uri* mapUri;
 
     // See if there is a map name.
@@ -171,7 +171,6 @@ static void drawEnteringTitle(void)
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
             mapName = minfo.name;
     }
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
 
     // Skip the E#M# or Map #.

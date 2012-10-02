@@ -85,6 +85,14 @@
 #include <assert.h>
 
 /*
+ * When using the C API, the Qt string functions are not available, so we
+ * must use the platform-specific functions.
+ */
+#if defined(UNIX) && defined(DENG2_C_API_ONLY)
+#  include <strings.h> // strcasecmp etc. 
+#endif
+
+/*
  * The DENG2_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
  * exporting symbols out of libdeng2.
@@ -119,6 +127,11 @@
  * Macro for determining the name of a type (using RTTI).
  */
 #define DENG2_TYPE_NAME(x) (typeid(x).name())
+    
+/**
+ * Macro for hiding the warning about an unused parameter.
+ */
+#define DENG2_UNUSED(x)     (void)x
 
 /**
  * Macro for defining an opaque type in the C wrapper API.

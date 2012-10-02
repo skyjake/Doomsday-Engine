@@ -59,17 +59,15 @@ const char* SV_SavePath(void);
 const char* SV_ClientSavePath(void);
 #endif
 
-boolean SV_RecogniseState(SaveInfo* info);
-
 /*
  * File management
  */
-LZFILE* SV_OpenFile(const char* fileName, const char* mode);
+LZFILE* SV_OpenFile(const char* filePath, const char* mode);
 void SV_CloseFile(void);
 LZFILE* SV_File(void);
-boolean SV_ExistingFile(char* name);
-int SV_RemoveFile(const ddstring_t* path);
-void SV_CopyFile(const ddstring_t* srcPath, const ddstring_t* destPath);
+boolean SV_ExistingFile(const char* filePath);
+int SV_RemoveFile(const Str* filePath);
+void SV_CopyFile(const Str* srcPath, const Str* destPath);
 
 #if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);

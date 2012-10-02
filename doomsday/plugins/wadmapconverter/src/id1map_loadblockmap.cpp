@@ -23,7 +23,6 @@
 
 #include "wadmapconverter.h"
 #include "maplumpinfo.h"
-#include <de/LegacyCore>
 #include <de/Log>
 
 /**

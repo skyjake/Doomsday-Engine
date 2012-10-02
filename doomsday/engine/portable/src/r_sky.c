@@ -134,7 +134,7 @@ static void calculateSkyAmbientColor(void)
         if(MSU_texture(ms, MTU_PRIMARY))
         {
             const averagecolor_analysis_t* avgColor = (const averagecolor_analysis_t*)
-                Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_COLOR);
+                Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY), TA_COLOR);
             if(!avgColor)
                 Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
@@ -142,13 +142,13 @@ static void calculateSkyAmbientColor(void)
             {
                 const Texture* tex = MSU_texture(ms, MTU_PRIMARY);
                 const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
-                    Texture_Analysis(tex, TA_LINE_TOP_COLOR);
+                    Texture_AnalysisDataPointer(tex, TA_LINE_TOP_COLOR);
                 if(!avgLineColor)
                     Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_TOP_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
                 V3f_Copy(topCapColor.rgb, avgLineColor->color.rgb);
 
                 avgLineColor = (const averagecolor_analysis_t*)
-                    Texture_Analysis(tex, TA_LINE_BOTTOM_COLOR);
+                    Texture_AnalysisDataPointer(tex, TA_LINE_BOTTOM_COLOR);
                 if(!avgLineColor)
                     Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_BOTTOM_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
                 V3f_Copy(bottomCapColor.rgb, avgLineColor->color.rgb);
@@ -211,9 +211,8 @@ void R_SetupSky(ded_sky_t* def)
             }
             else
             {
-                ddstring_t* path = Uri_ToString(sl->material);
+                AutoStr* path = Uri_ToString(sl->material);
                 Con_Message("Warning: Unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
-                Str_Delete(path);
             }
         }
         R_SkyLayerSetOffset(i, sl->offset);

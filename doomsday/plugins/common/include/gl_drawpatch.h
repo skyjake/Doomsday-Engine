@@ -31,6 +31,10 @@
 
 #include "doomsday.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup drawPatchFlags Draw Patch Flags.
  */
@@ -56,5 +60,9 @@ void GL_DrawPatch(patchid_t id, const Point2Raw* origin);
 void GL_DrawPatchXY3(patchid_t id, int x, int y, int alignFlags, int patchFlags);
 void GL_DrawPatchXY2(patchid_t id, int x, int y, int alignFlags);
 void GL_DrawPatchXY(patchid_t id, int x, int y);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_GRAPHICS_DRAW_PATCH_H */

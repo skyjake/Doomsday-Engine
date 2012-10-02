@@ -166,7 +166,7 @@ const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
 
 static fontid_t loadSystemFont(const char* name)
 {
-    ddstring_t resourcePath;
+    Str resourcePath;
     font_t* font;
     Uri* uri;
     assert(name && name[0]);
@@ -176,8 +176,7 @@ static fontid_t loadSystemFont(const char* name)
     Uri_SetPath(uri, name);
 
     // Compose the resource data path.
-    // \todo This is currently rather awkward due
-    Str_Init(&resourcePath);
+    Str_InitStd(&resourcePath);
     Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
 #if defined(UNIX) && !defined(MACOSX)
     // Case-sensitive file system.
@@ -185,7 +184,6 @@ static fontid_t loadSystemFont(const char* name)
     strlwr(resourcePath.str);
 #endif
     F_ExpandBasePath(&resourcePath, &resourcePath);
-
 
     font = R_CreateFontFromFile(uri, Str_Text(&resourcePath));
     Str_Free(&resourcePath);

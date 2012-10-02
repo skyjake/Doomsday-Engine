@@ -563,8 +563,8 @@ static void updatePlaneDecorations(Plane* pln)
 
 static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSection section)
 {
-    Surface* surface;
     float matOffset[2];
+    Surface* surface;
     vec3d_t v1, v2;
     boolean visible = false;
 
@@ -573,10 +573,13 @@ static void updateSideSectionDecorations(LineDef* line, byte side, SideDefSectio
     surface = &line->L_sidedef(side)->SW_surface(section);
     if(surface->material)
     {
+        Sector* frontSec  = line->L_sector(side);
+        Sector* backSec   = line->L_sector(side^1);
+        SideDef* frontDef = line->L_sidedef(side);
+        SideDef* backDef  = line->L_sidedef(side^1);
         coord_t low, hi;
-        visible = R_FindBottomTop(line, side, section,
-                                  line->L_sector(side), line->L_sector(side^1), line->L_sidedef(side),
-                                  &low, &hi, matOffset);
+        visible = R_FindBottomTop2(section, line->flags, frontSec, backSec, frontDef, backDef,
+                                   &low, &hi, matOffset);
         if(visible)
         {
             V3d_Set(v1, line->L_vorigin(side  )[VX], line->L_vorigin(side  )[VY], hi);

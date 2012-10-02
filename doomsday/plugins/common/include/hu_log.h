@@ -54,10 +54,10 @@ void UILog_Register(void);
 
 /**
  * @defgroup logMessageFlags  Log Message Flags.
- * @{
  */
-#define LMF_NOHIDE          0x1 /// Always displayed (cannot be hidden by the user).
-/**@}*/
+///@{
+#define LMF_NO_HIDE             0x1 ///< Always displayed (cannot be hidden by the user).
+///@}
 
 typedef struct {
     uint ticsRemain, tics;

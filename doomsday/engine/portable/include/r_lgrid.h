@@ -32,6 +32,10 @@
 #include "dd_types.h"
 #include "p_mapdata.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void LG_Register(void);
 void LG_InitForMap(void);
 void LG_Update(void);
@@ -60,5 +64,9 @@ void LG_Evaluate(coord_t const point[3], float destColor[3]);
 float LG_EvaluateLightLevel(coord_t const point[3]);
 
 void LG_Debug(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_REFRESH_LIGHT_GRID_H

@@ -160,8 +160,8 @@ inline duint16 swap16(const duint16& n) {
 
 /// Swaps the bytes of a 32-bit unsigned integer.
 inline duint32 swap32(const duint32& n) {
-    return (((n & 0xff) << 24) | ((n & 0xff00) << 8) |
-        ((n & 0xff0000) >> 8) | ((n & 0xff000000) >> 24));
+    return ( ((n & 0xff)     << 24) | ((n & 0xff00)     << 8)
+           | ((n & 0xff0000) >> 8)  | ((n & 0xff000000) >> 24));
 }
 
 /// Swaps the bytes in a 64-bit unsigned integer.

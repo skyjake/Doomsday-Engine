@@ -230,10 +230,23 @@ function json_encode_clean(&$array, $flags=0, $indent_level=0)
     return $result;
 }
 
-function generateHyperlinkHTML($uri, $maxLength=40, $cssClass=NULL)
+function generateHyperlinkHTML($uri, $attributes = array(), $maxLength = 40)
 {
+    $shortUri = NULL;
+
     if($uri instanceof Url)
     {
+        if(!strcmp($uri->host(), 'sourceforge.net') &&
+           !substr_compare($uri->path(), '/p/deng/bugs/', 0, 13))
+        {
+            $bugStr = substr($uri->path(), 13);
+            $bugNum = intval(substr($bugStr, 0, strpos($bugStr, '/')));
+
+            $shortUri = "Bug#$bugNum";
+            if(is_null($attributes))
+                $attributes = array();
+            $attributes['title'] = "View bug report #$bugNum in the tracker";
+        }
         $uri = $uri->toString();
     }
     else
@@ -241,27 +254,25 @@ function generateHyperlinkHTML($uri, $maxLength=40, $cssClass=NULL)
         $uri = strval($uri);
     }
 
-    $maxLength = (integer)$maxLength;
-    if($maxLength < 0) $maxLength = 0;
-    if(!is_null($cssClass))
+    $attribs = '';
+    if(is_array($attributes))
     {
-        $cssClass = strval($cssClass);
-    }
-    else
-    {
-        $cssClass = '';
+        foreach($attributes as $attribute => $value)
+        {
+            $attribs .= " {$attribute}=\"{$value}\"";
+        }
     }
 
-    if($maxLength > 0 && strlen($uri) > $maxLength)
-        $shortUri = substr($uri, 0, $maxLength).'...';
-    else
-        $shortUri = $uri;
-
-    $html = '<a';
-    if(strlen($cssClass) > 0)
+    if(!isset($shortUri))
     {
-        $html .= " class={$cssClass}";
+        $maxLength = (integer)$maxLength;
+        if($maxLength < 0) $maxLength = 0;
+        if($maxLength > 0 && strlen($uri) > $maxLength)
+            $shortUri = substr($uri, 0, $maxLength).'...';
+        else
+            $shortUri = $uri;
     }
-    $html .= " href=\"{$uri}\">". htmlspecialchars($shortUri) .'</a>';
+
+    $html = "<a href=\"{$uri}\"{$attribs}>". htmlspecialchars($shortUri) .'</a>';
     return $html;
 }

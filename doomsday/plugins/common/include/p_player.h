@@ -29,15 +29,8 @@
 #ifndef LIBCOMMON_PLAYER_H
 #define LIBCOMMON_PLAYER_H
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-# include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
+#include "hu_log.h" /// for @ref logMessageFlags
 
 #if __JDOOM64__
 #define NUM_WEAPON_SLOTS        (8)
@@ -87,9 +80,24 @@ void            P_ShotAmmo(player_t* plr);
 void            P_PlayerChangeClass(player_t* plr, playerclass_t newClass);
 #endif
 
-void            P_SetMessage(player_t* plr, const char* msg, boolean noHide);
+/**
+ * Send a message to the given player and maybe echos it to the console.
+ *
+ * @param player        The player to send the message to.
+ * @param flags         @ref logMessageFlags
+ * @param msg           The message to be sent.
+ */
+void            P_SetMessage(player_t* plr, int flags, const char* msg);
+
+/**
+ * Send a yellow message to the given player and maybe echos it to the console.
+ *
+ * @param player        The player to send the message to.
+ * @param flags         @ref logMessageFlags
+ * @param msg           The message to be sent.
+ */
 #if __JHEXEN__
-void            P_SetYellowMessage(player_t* plr, const char* msg, boolean noHide);
+void            P_SetYellowMessage(player_t* plr, int flags, const char* msg);
 #endif
 
 void            P_PlayerThinkCamera(player_t* plr);
@@ -100,5 +108,9 @@ int             P_PlayerGiveArmorBonus(player_t* plr, int points);
 #else // __JHEXEN__
 int             P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points);
 #endif
+
+int             P_CameraXYMovement(mobj_t* mo);
+int             P_CameraZMovement(mobj_t* mo);
+void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
 
 #endif /* LIBCOMMON_PLAYER_H */

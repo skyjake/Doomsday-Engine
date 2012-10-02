@@ -31,6 +31,7 @@ extern "C" {
 typedef enum {
     MBT_GENERIC,        ///< No icon.
     MBT_INFORMATION,
+    MBT_QUESTION,
     MBT_WARNING,
     MBT_ERROR
 } messageboxtype_t;
@@ -47,7 +48,13 @@ void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, c
 
 void Sys_MessageBox2(messageboxtype_t type, const char* title, const char* msg, const char* informativeMsg, const char* detailedMsg);
 
+int Sys_MessageBox3(messageboxtype_t type, const char* title, const char* msg, const char* informativeMsg, const char* detailedMsg,
+                    const char** buttons);
+
 void Sys_MessageBoxf(messageboxtype_t type, const char* title, const char* format, ...);
+
+int Sys_MessageBoxWithButtons(messageboxtype_t type, const char* title, const char* msg,
+                              const char* informativeMsg, const char** buttons);
 
 /**
  * Shows a native modal message dialog. The "more detail" content is read from a file.

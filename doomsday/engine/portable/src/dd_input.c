@@ -1598,7 +1598,7 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
     origin.x = _origin? _origin->x : 0;
     origin.y = _origin? _origin->y : 0;
 
-    Str_Init(&label);
+    Str_InitStd(&label);
 
     // Compose the key label.
     if(key->name)

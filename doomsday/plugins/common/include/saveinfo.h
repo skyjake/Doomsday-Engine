@@ -48,34 +48,29 @@ typedef struct saveheader_s {
  * SaveInfo instance.
  */
 typedef struct saveinfo_s {
-    ddstring_t filePath;
     ddstring_t name;
     uint gameId;
     saveheader_t header;
 } SaveInfo;
 
 SaveInfo* SaveInfo_New(void);
-SaveInfo* SaveInfo_NewWithFilePath(const ddstring_t* filePath);
+SaveInfo* SaveInfo_NewCopy(const SaveInfo* other);
 
 void SaveInfo_Delete(SaveInfo* info);
 
-const ddstring_t* SaveInfo_FilePath(SaveInfo* info);
+SaveInfo* SaveInfo_Copy(SaveInfo* self, const SaveInfo* other);
 
-uint SaveInfo_GameId(SaveInfo* info);
+uint SaveInfo_GameId(const SaveInfo* info);
 
-const saveheader_t* SaveInfo_Header(SaveInfo* info);
+const saveheader_t* SaveInfo_Header(const SaveInfo* info);
 
-const ddstring_t* SaveInfo_Name(SaveInfo* info);
-
-void SaveInfo_SetFilePath(SaveInfo* info, ddstring_t* newFilePath);
+const ddstring_t* SaveInfo_Name(const SaveInfo* info);
 
 void SaveInfo_SetGameId(SaveInfo* info, uint newGameId);
 
 void SaveInfo_SetName(SaveInfo* info, const ddstring_t* newName);
 
 void SaveInfo_Configure(SaveInfo* info);
-
-void SaveInfo_Update(SaveInfo* info);
 
 /**
  * @return  Is this state loadable for the current game session.

@@ -289,9 +289,9 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     guidata_log_message_t* msg;
     assert(obj->type == GUI_LOG);
 
-    /// \kludge Do not draw message logs while the map title is being displayed.
+    // Do not draw message logs while the map title is being displayed.
+    // Rather a kludge...
     if(cfg.mapTitle && actualMapTime < 6 * 35) return;
-    /// kludge end.
 
     if(!pvisMsgCount) return;
 
@@ -305,7 +305,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     {
         // Advance to the first non-hidden message.
         i = 0;
-        while(0 == (log->_msgs[firstMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        while(0 == (log->_msgs[firstMsg].flags & LMF_NO_HIDE) && ++i < pvisMsgCount)
         {
             firstMsg = UILog_NextMessageIdx(obj, firstMsg);
         }
@@ -325,7 +325,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     {
         // Rewind to the last non-hidden message.
         i = 0;
-        while(0 == (log->_msgs[lastMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        while(0 == (log->_msgs[lastMsg].flags & LMF_NO_HIDE) && ++i < pvisMsgCount)
         {
             lastMsg = UILog_PrevMessageIdx(obj, lastMsg);
         }
@@ -359,7 +359,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
         msg = &log->_msgs[n];
-        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE))
+        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NO_HIDE))
             continue;
 
         // Default color and alpha.
@@ -434,7 +434,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     {
         // Advance to the first non-hidden message.
         i = 0;
-        while(0 == (log->_msgs[firstMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        while(0 == (log->_msgs[firstMsg].flags & LMF_NO_HIDE) && ++i < pvisMsgCount)
         {
             firstMsg = UILog_NextMessageIdx(obj, firstMsg);
         }
@@ -454,7 +454,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     {
         // Rewind to the last non-hidden message.
         i = 0;
-        while(0 == (log->_msgs[lastMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        while(0 == (log->_msgs[lastMsg].flags & LMF_NO_HIDE) && ++i < pvisMsgCount)
         {
             lastMsg = UILog_PrevMessageIdx(obj, lastMsg);
         }
@@ -483,7 +483,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
         msg = &log->_msgs[n];
-        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE)) continue;
+        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NO_HIDE)) continue;
 
         ++drawnMsgCount;
 

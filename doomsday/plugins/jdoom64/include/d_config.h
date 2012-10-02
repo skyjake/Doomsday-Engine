@@ -38,6 +38,10 @@
 #include "doomdef.h"
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     HUD_HEALTH,
     HUD_ARMOR,
@@ -114,6 +118,7 @@ typedef struct jdoom64_config_s {
     int             inludePatchReplaceMode;
 
     byte            confirmQuickGameSave;
+    byte            confirmRebornLoad;
     byte            loadAutoSaveOnReborn;
     byte            loadLastSaveOnReborn;
 
@@ -231,5 +236,9 @@ typedef struct jdoom64_config_s {
 } game_config_t;
 
 extern game_config_t cfg;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

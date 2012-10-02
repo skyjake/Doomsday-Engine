@@ -56,6 +56,8 @@ struct UpdaterSettingsDialog::Instance
 
     Instance(UpdaterSettingsDialog* dlg) : self(dlg)
     {
+        // As a modal dialog it is implicitly clear that this belongs to
+        // Doomsday, so we don't need to have the name in the window title.
         self->setWindowTitle(tr("Updater Settings"));
 
         QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -113,8 +115,8 @@ struct UpdaterSettingsDialog::Instance
     {
         UpdaterSettings st;
 
-        lastChecked->setText(tr("<small>Last checked on %1.</small>")
-                             .arg(st.lastCheckTime().asText(de::Time::FriendlyFormat)));
+        lastChecked->setText(tr("<small>Last checked %1.</small>")
+                             .arg(st.lastCheckAgo()));
 
         autoCheck->setChecked(!st.onlyCheckManually());
         freqList->setEnabled(!st.onlyCheckManually());

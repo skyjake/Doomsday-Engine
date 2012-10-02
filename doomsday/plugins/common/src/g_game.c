@@ -38,15 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 #include "dmu_lib.h"
 #include "fi_lib.h"
@@ -143,6 +135,7 @@ D_CMD(QuickLoadGame);
 D_CMD(QuickSaveGame);
 D_CMD(SaveGame);
 D_CMD(OpenSaveMenu);
+D_CMD(WarpMap);
 
 void    G_PlayerReborn(int player);
 void    G_DoReborn(int playernum);
@@ -164,8 +157,6 @@ void    G_DoRestartMap(void);
 void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
 void    G_DoQuitGame(void);
-
-boolean G_ValidateMap(uint* episode, uint* map);
 
 void    G_StopDemo(void);
 
@@ -472,6 +463,16 @@ void G_Register(void)
 
     for(i = 0; gameCmds[i].name; ++i)
         Con_AddCommand(gameCmds + i);
+
+    C_CMD("warp", "i", WarpMap);
+#if __JDOOM__ || __JHERETIC__
+# if __JDOOM__
+    if(!(gameModeBits & GM_ANY_DOOM2))
+# endif
+    {
+        C_CMD("warp", "ii", WarpMap);
+    }
+#endif
 }
 
 boolean G_QuitInProgress(void)
@@ -968,7 +969,7 @@ void G_CommonPostInit(void)
 
     G_InitEventSequences();
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-    Cht_Init();
+    G_RegisterCheats();
 #endif
 
     // From this point on, the shortcuts are always active.
@@ -994,11 +995,10 @@ void G_CommonShutdown(void)
     P_Shutdown();
     G_ShutdownEventSequences();
 
+    FI_StackShutdown();
     Hu_MenuShutdown();
     ST_Shutdown();
     GUI_Shutdown();
-
-    FI_StackShutdown();
 }
 
 /**
@@ -1151,7 +1151,13 @@ void G_StartTitle(void)
 void G_StartHelp(void)
 {
     ddfinale_t fin;
+
     if(G_QuitInProgress()) return;
+    if(IS_CLIENT)
+    {
+        /// @todo Fix this properly: http://sf.net/p/deng/bugs/1082/
+        return;
+    }
 
     if(Def_Get(DD_DEF_FINALE, "help", &fin))
     {
@@ -1186,7 +1192,7 @@ static void printMapBanner(void)
     {
     static const char* unknownAuthorStr = "Unknown";
     Uri* uri = G_ComposeMapUri(gameEpisode, gameMap);
-    ddstring_t* path = Uri_Compose(uri);
+    AutoStr* path = Uri_Compose(uri);
     const char* lauthor;
 
     lauthor = P_GetMapAuthor(P_MapIsCustom(Str_Text(path)));
@@ -1195,7 +1201,6 @@ static void printMapBanner(void)
 
     Con_FPrintf(CPF_LIGHT|CPF_BLUE, "Author: %s\n", lauthor);
 
-    Str_Delete(path);
     Uri_Delete(uri);
     }
 #endif
@@ -1302,11 +1307,10 @@ int G_DoLoadMap(loadmap_params_t* p)
     DENG_ASSERT(p);
 
     // Is MapInfo data available for this map?
-    { ddstring_t* mapUriStr = Uri_Compose(p->mapUri);
+    { AutoStr* mapUriStr = Uri_Compose(p->mapUri);
     if(mapUriStr)
     {
         hasMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
-        Str_Delete(mapUriStr);
     }}
 
     P_SetupMap(p->mapUri, p->episode, p->map);
@@ -1675,6 +1679,45 @@ static void runGameAction(void)
 }
 
 /**
+ * Do needed reborns for any fallen players.
+ */
+static void rebornPlayers(void)
+{
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = &players[i];
+        ddplayer_t* ddplr = plr->plr;
+        mobj_t* mo = ddplr->mo;
+
+        if(ddplr->inGame && plr->playerState == PST_REBORN && !P_MobjIsCamera(mo))
+        {
+            G_DoReborn(i);
+        }
+
+        // Player has left?
+        if(plr->playerState == PST_GONE)
+        {
+            plr->playerState = PST_REBORN;
+            if(mo)
+            {
+                if(!IS_CLIENT)
+                {
+                    P_SpawnTeleFog(mo->origin[VX], mo->origin[VY], mo->angle + ANG180);
+                }
+
+                // Let's get rid of the mobj.
+#ifdef _DEBUG
+                Con_Message("rebornPlayers: Removing player %i's mobj.\n", i);
+#endif
+                P_MobjRemove(mo, true);
+                ddplr->mo = NULL;
+            }
+        }
+    }
+}
+
+/**
  * The core of the timing loop. Game state, game actions etc occur here.
  *
  * @param ticLength     How long this tick is, in seconds.
@@ -1682,52 +1725,21 @@ static void runGameAction(void)
 void G_Ticker(timespan_t ticLength)
 {
     static gamestate_t oldGameState = -1;
-    int i;
 
     // Always tic:
     Hu_FogEffectTicker(ticLength);
     Hu_MenuTicker(ticLength);
     Hu_MsgTicker();
 
-    if(IS_CLIENT && !Get(DD_GAME_READY))
-        return;
-
-    // Do player reborns if needed.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t* plr = &players[i];
-
-        if(plr->plr->inGame && plr->playerState == PST_REBORN &&
-           !P_MobjIsCamera(plr->plr->mo))
-            G_DoReborn(i);
-
-        // Player has left?
-        if(plr->playerState == PST_GONE)
-        {
-            plr->playerState = PST_REBORN;
-            if(plr->plr->mo)
-            {
-                if(!IS_CLIENT)
-                {
-                    P_SpawnTeleFog(plr->plr->mo->origin[VX],
-                                   plr->plr->mo->origin[VY],
-                                   plr->plr->mo->angle + ANG180);
-                }
-
-                // Let's get rid of the mobj.
-#ifdef _DEBUG
-                Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
-#endif
-                P_MobjRemove(plr->plr->mo, true);
-                plr->plr->mo = NULL;
-            }
-        }
-    }
+    if(IS_CLIENT && !Get(DD_GAME_READY)) return;
 
     runGameAction();
 
     if(!G_QuitInProgress())
     {
+        // Do player reborns if needed.
+        rebornPlayers();
+
         // Update the viewer's look angle
         //G_LookAround(CONSOLEPLAYER);
 
@@ -2111,19 +2123,40 @@ void G_QueueBody(mobj_t* mo)
 }
 #endif
 
+int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+{
+    DENG_UNUSED(userPointer);
+    if(response == MSG_YES)
+    {
+        gaLoadGameSlot = userValue;
+        G_SetGameAction(GA_LOADGAME);
+    }
+    else
+    {
+#if __JHEXEN__
+        // Load the last autosave? (Not optional in Hexen).
+        if(SV_IsSlotUsed(AUTO_SLOT))
+        {
+            gaLoadGameSlot = AUTO_SLOT;
+            G_SetGameAction(GA_LOADGAME);
+        }
+        else
+#endif
+        {
+            // Restart the current map, discarding all items obtained by players.
+            G_SetGameAction(GA_RESTARTMAP);
+        }
+    }
+    return true;
+}
+
 void G_DoReborn(int plrNum)
 {
+    // Are we still awaiting a response to a previous reborn confirmation?
+    if(Hu_IsMessageActiveWithCallback(rebornLoadConfirmResponse)) return;
+
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
-
-    if(plrNum == CONSOLEPLAYER)
-    {
-#ifdef _DEBUG
-        Con_Message("G_DoReborn: Console player reborn, reseting InFine.\n");
-#endif
-        // Clear the currently playing script, if any.
-        FI_StackClear();
-    }
 
     if(IS_NETGAME)
     {
@@ -2131,18 +2164,70 @@ void G_DoReborn(int plrNum)
         return;
     }
 
-    // Use the latest save?
-    if(cfg.loadLastSaveOnReborn)
+    if(G_IsLoadGamePossible())
     {
-        if(G_LoadGame(Con_GetInteger("game-save-last-slot"))) return;
-    }
-
-    // Use the latest autosave?
 #if !__JHEXEN__
-    if(cfg.loadAutoSaveOnReborn) // Cannot be disabled in Hexen.
+        int autoSlot = -1;
 #endif
-    {
-        if(G_LoadGame(AUTO_SLOT)) return;
+        int lastSlot = -1;
+
+        // First ensure we have up-to-date info.
+        SV_UpdateAllSaveInfo();
+
+        // Use the latest save?
+        if(cfg.loadLastSaveOnReborn)
+        {
+            lastSlot = Con_GetInteger("game-save-last-slot");
+            if(!SV_IsSlotUsed(lastSlot)) lastSlot = -1;
+        }
+
+        // Use the latest autosave? (Not optional in Hexen).
+#if !__JHEXEN__
+        if(cfg.loadAutoSaveOnReborn)
+        {
+            autoSlot = AUTO_SLOT;
+            if(!SV_IsSlotUsed(autoSlot)) autoSlot = -1;
+        }
+#endif
+
+        // Have we chosen a save state to load?
+        if(lastSlot >= 0
+#if !__JHEXEN__
+           || autoSlot >= 0
+#endif
+           )
+        {
+            // Everything appears to be in order - schedule the game-save load!
+#if !__JHEXEN__
+            const int chosenSlot = (lastSlot >= 0? lastSlot : autoSlot);
+#else
+            const int chosenSlot = lastSlot;
+#endif
+            if(!cfg.confirmRebornLoad)
+            {
+                gaLoadGameSlot = chosenSlot;
+                G_SetGameAction(GA_LOADGAME);
+            }
+            else
+            {
+                // Compose the confirmation message.
+                SaveInfo* info = SV_SaveInfoForSlot(chosenSlot);
+                AutoStr* msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Name(info)));
+                S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
+            }
+            return;
+        }
+
+        // Autosave loading cannot be disabled in Hexen.
+#if __JHEXEN__
+        if(SV_IsSlotUsed(AUTO_SLOT))
+        {
+            gaLoadGameSlot = AUTO_SLOT;
+            G_SetGameAction(GA_LOADGAME);
+            return;
+        }
+#endif
     }
 
     // Restart the current map, discarding all items obtained by players.
@@ -2165,12 +2250,49 @@ static void G_InitNewGame(void)
 #endif
 }
 
-static void G_ApplyGameRules(skillmode_t skill)
+#if __JDOOM__ || __JDOOM64__
+static void G_ApplyGameRuleFastMonsters(boolean fast)
 {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    int i, speed;
+    static boolean oldFast = false;
+    int i;
+
+    // Only modify when the rule changes state.
+    if(fast == oldFast) return;
+    oldFast = fast;
+
+    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+    for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+        STATES[i].tics = fast? 1 : 2;
+    for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+        STATES[i].tics = fast? 4 : 8;
+    for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+        STATES[i].tics = fast? 1 : 2;
+    // Kludge end.
+}
 #endif
 
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+static void G_ApplyGameRuleFastMissiles(boolean fast)
+{
+    static boolean oldFast = false;
+    int i;
+
+    // Only modify when the rule changes state.
+    if(fast == oldFast) return;
+    oldFast = fast;
+
+    /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+    for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
+    {
+        MOBJINFO[MonsterMissileInfo[i].type].speed =
+            MonsterMissileInfo[i].speed[fast? 1 : 0];
+    }
+    // Kludge end.
+}
+#endif
+
+static void G_ApplyGameRules(skillmode_t skill)
+{
     if(skill < SM_BABY)
         skill = SM_BABY;
     if(skill > NUM_SKILL_MODES - 1)
@@ -2196,56 +2318,27 @@ static void G_ApplyGameRules(skillmode_t skill)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
-#if __JDOOM__
-    // Disabled in Chex and HacX because this messes with the original games' values.
-    if(gameMode != doom2_hacx && gameMode != doom_chex)
-#endif
-    {
-        /// @kludge Doom/Heretic Fast Monters/Missiles
+    // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
-        // Fast monsters?
-        if(fastParm
+    {
+        boolean fastMonsters = fastParm;
 # if __JDOOM__
-           || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
+        if(gameSkill == SM_NIGHTMARE) fastMonsters = true;
 # endif
-           )
-        {
-            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-                STATES[i].tics = 1;
-            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-                STATES[i].tics = 4;
-            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-                STATES[i].tics = 1;
-        }
-        else
-        {
-            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-                STATES[i].tics = 2;
-            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-                STATES[i].tics = 8;
-            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-                STATES[i].tics = 2;
-        }
-#endif
-
-        // Fast missiles?
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-# if __JDOOM64__
-        speed = fastParm;
-# elif __JDOOM__
-        speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
-# else
-        speed = skill == SM_NIGHTMARE;
-# endif
-
-        for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
-        {
-            MOBJINFO[MonsterMissileInfo[i].type].speed =
-                    MonsterMissileInfo[i].speed[speed];
-        }
-#endif
-        // <-- KLUDGE
+        G_ApplyGameRuleFastMonsters(fastMonsters);
     }
+#endif
+
+    // Fast missiles?
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    {
+        boolean fastMissiles = fastParm;
+# if !__JDOOM64__
+        if(gameSkill == SM_NIGHTMARE) fastMissiles = true;
+# endif
+        G_ApplyGameRuleFastMissiles(fastMissiles);
+    }
+#endif
 }
 
 void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
@@ -2255,7 +2348,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 #if __JHEXEN__
     if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
     {   // Not possible in the 4-map demo.
-        P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO", false);
+        P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
         return;
     }
 #endif
@@ -2270,10 +2363,9 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
     if(secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
         Uri* mapUri = G_ComposeMapUri(0, 30);
-        ddstring_t* mapPath = Uri_Compose(mapUri);
+        AutoStr* mapPath = Uri_Compose(mapUri);
         if(!P_MapExists(Str_Text(mapPath)))
             secretExit = false;
-        Str_Delete(mapPath);
         Uri_Delete(mapUri);
     }
 # endif
@@ -2380,15 +2472,13 @@ void G_DoMapCompleted(void)
     {
     ddmapinfo_t minfo;
     Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    ddstring_t* mapPath = Uri_Compose(mapUri);
+    AutoStr* mapPath = Uri_Compose(mapUri);
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
-        Str_Delete(mapPath);
         Uri_Delete(mapUri);
         G_WorldDone();
         return;
     }
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
     }
 
@@ -2453,7 +2543,7 @@ void G_DoMapCompleted(void)
 void G_PrepareWIData(void)
 {
     Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    ddstring_t* mapPath = Uri_Compose(mapUri);
+    AutoStr* mapPath = Uri_Compose(mapUri);
     wbstartstruct_t* info = &wmInfo;
     ddmapinfo_t minfo;
     int i;
@@ -2480,7 +2570,6 @@ void G_PrepareWIData(void)
         memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
     }
 
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
 }
 #endif
@@ -2794,7 +2883,6 @@ void G_DoLoadGame(void)
     if(IS_NETGAME) return;
 
     // Copy the base slot to the autosave slot.
-    SV_ClearSlot(AUTO_SLOT);
     SV_CopySlot(BASE_SLOT, AUTO_SLOT);
 #endif
 }
@@ -2847,7 +2935,7 @@ AutoStr* G_GenerateSaveGameName(void)
     int time = mapTime / TICRATE, hours, seconds, minutes;
     const char* baseName, *mapName;
     char baseNameBuf[256];
-    ddstring_t* mapPath;
+    AutoStr* mapPath;
     Uri* mapUri;
 
     hours   = time / 3600; time -= hours * 3600;
@@ -2883,7 +2971,6 @@ AutoStr* G_GenerateSaveGameName(void)
     Str_Appendf(str, "%s%s%s %02i:%02i:%02i", (baseName? baseName : ""),
         (baseName? ":" : ""), mapName, hours, minutes, seconds);
 
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
     return str;
 }
@@ -2922,12 +3009,17 @@ void G_DoSaveGame(void)
     p.name = name;
     p.slot = gaSaveGameSlot;
     /// @todo Use progress bar mode and update progress during the setup.
-    didSave = 0 == BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                               G_SaveStateWorker, &p, "Saving game...");
+    didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                           G_SaveStateWorker, &p, "Saving game...") != 0);
     if(didSave)
     {
         //Hu_MenuUpdateGameSaveWidgets();
-        P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
+        P_SetMessage(&players[CONSOLEPLAYER], 0, TXT_GAMESAVED);
+
+        // Notify the engine that the game was saved.
+        /// @todo After the engine has the primary responsibility of
+        /// saving the game, this notification is unnecessary.
+        Game_Notify(DD_NOTIFY_GAME_SAVED, NULL);
     }
     G_SetGameAction(GA_NONE);
 }
@@ -3055,8 +3147,8 @@ void G_QuitGame(void)
 
     if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
     {
-        // User has re-tried to quit with "quit" when the question is one the
-        // screen. Apparently we should quit...
+        // User has re-tried to quit with "quit" when the question is already on
+        // the screen. Apparently we should quit...
         DD_Execute(true, "quit!");
         return;
     }
@@ -3079,9 +3171,19 @@ void G_QuitGame(void)
     Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
-/**
- * Return the index of this map.
- */
+const char* P_GetGameModeName(void)
+{
+    static const char* dm   = "deathmatch";
+    static const char* coop = "cooperative";
+    static const char* sp   = "singleplayer";
+    if(IS_NETGAME)
+    {
+        if(deathmatch) return dm;
+        return coop;
+    }
+    return sp;
+}
+
 uint G_GetMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__
@@ -3103,12 +3205,6 @@ uint G_GetMapNumber(uint episode, uint map)
 Uri* G_ComposeMapUri(uint episode, uint map)
 {
     lumpname_t mapId;
-    G_MapId(episode, map, mapId);
-    return Uri_NewWithPath2(mapId, RC_NULL);
-}
-
-void G_MapId(uint episode, uint map, lumpname_t mapId)
-{
 #if __JDOOM64__
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #elif __JDOOM__
@@ -3121,16 +3217,13 @@ void G_MapId(uint episode, uint map, lumpname_t mapId)
 #else
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #endif
+    return Uri_NewWithPath2(mapId, RC_NULL);
 }
 
-/**
- * Returns true if the specified (episode, map) pair can be used.
- * Otherwise the values are adjusted so they are valid.
- */
 boolean G_ValidateMap(uint* episode, uint* map)
 {
     boolean ok = true;
-    ddstring_t* path;
+    AutoStr* path;
     Uri* uri;
 
 #if __JDOOM64__
@@ -3246,20 +3339,11 @@ boolean G_ValidateMap(uint* episode, uint* map)
         *map = 0;
         ok = false;
     }
-    Str_Delete(path);
     Uri_Delete(uri);
 
     return ok;
 }
 
-/**
- * Return the next map according to the default map progression.
- *
- * @param episode       Current episode.
- * @param map           Current map.
- * @param secretExit
- * @return              The next map.
- */
 uint G_GetNextMap(uint episode, uint map, boolean secretExit)
 {
 #if __JHEXEN__
@@ -3387,7 +3471,7 @@ const char* P_GetShortMapName(uint episode, uint map)
 const char* P_GetMapName(uint episode, uint map)
 {
     Uri* mapUri = G_ComposeMapUri(episode, map);
-    ddstring_t* mapPath = Uri_Compose(mapUri);
+    AutoStr* mapPath = Uri_Compose(mapUri);
     ddmapinfo_t info;
     void* ptr;
 
@@ -3395,11 +3479,9 @@ const char* P_GetMapName(uint episode, uint map)
     if(!Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &info))
     {
         // There is no map information for this map...
-        Str_Delete(mapPath);
         Uri_Delete(mapUri);
         return "";
     }
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
 
     if(Def_Get(DD_DEF_TEXT, info.name, &ptr) != -1)
@@ -3434,25 +3516,22 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
                 for(k = rangeStart; k < i; ++k)
                 {
                     Uri* mapUri = G_ComposeMapUri(episode, k);
-                    ddstring_t* path = Uri_ToString(mapUri);
+                    AutoStr* path = Uri_ToString(mapUri);
                     Con_Printf("%s%s", Str_Text(path), (k != i-1) ? "," : "");
-                    Str_Delete(path);
                     Uri_Delete(mapUri);
                 }
             }
             else
             {
                 Uri* mapUri = G_ComposeMapUri(episode, rangeStart);
-                ddstring_t* path = Uri_ToString(mapUri);
+                AutoStr* path = Uri_ToString(mapUri);
 
                 Con_Printf("%s-", Str_Text(path));
-                Str_Delete(path);
                 Uri_Delete(mapUri);
 
                 mapUri = G_ComposeMapUri(episode, i-1);
                 path = Uri_ToString(mapUri);
                 Con_Printf("%s", Str_Text(path));
-                Str_Delete(path);
                 Uri_Delete(mapUri);
             }
             Con_Printf(": %s\n", F_PrettyPath(current));
@@ -3510,9 +3589,8 @@ void G_PrintMapList(void)
         for(map = 0; map < maxMapsPerEpisode; ++map)
         {
             Uri* uri = G_ComposeMapUri(episode, map);
-            ddstring_t* path = Uri_Compose(uri);
+            AutoStr* path = Uri_Compose(uri);
             sourceList[map] = P_MapSourceFile(Str_Text(path));
-            Str_Delete(path);
             Uri_Delete(uri);
         }
         G_PrintFormattedMapList(episode, sourceList, 99);
@@ -3525,7 +3603,7 @@ void G_PrintMapList(void)
  */
 int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 {
-    ddstring_t* mapPath;
+    AutoStr* mapPath;
     Uri* mapUri;
     int result;
 
@@ -3537,7 +3615,6 @@ int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
     mapUri = G_ComposeMapUri(episode, map);
     mapPath = Uri_Compose(mapUri);
     result = Def_Get(DD_DEF_FINALE_BEFORE, Str_Text(mapPath), fin);
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
     return result;
 }
@@ -3548,7 +3625,7 @@ int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
  */
 int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 {
-    ddstring_t* mapPath;
+    AutoStr* mapPath;
     Uri* mapUri;
     int result;
 
@@ -3568,7 +3645,6 @@ int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
     mapUri = G_ComposeMapUri(episode, map);
     mapPath = Uri_Compose(mapUri);
     result = Def_Get(DD_DEF_FINALE_AFTER, Str_Text(mapPath), fin);
-    Str_Delete(mapPath);
     Uri_Delete(mapUri);
     return result;
 }
@@ -3628,28 +3704,27 @@ void G_ScreenShot(void)
 /**
  * Find an unused screenshot file name. Uses the game's identity key as the
  * file name base.
- * @return  Composed file name. Must be released with Str_Delete().
+ * @return  Composed file name.
  */
-static ddstring_t* composeScreenshotFileName(void)
+static AutoStr* composeScreenshotFileName(void)
 {
     GameInfo gameInfo;
-    ddstring_t* name;
+    AutoStr* name;
     int numPos;
 
     if(!DD_GameInfo(&gameInfo))
     {
-        Con_Error("composeScreenshotFileName: Failed retrieving Game.");
-        return NULL; // Unreachable.
+        Con_Error("composeScreenshotFileName: Failed retrieving GameInfo.");
+        return 0; // Unreachable.
     }
 
-    name = Str_Appendf(Str_New(), "%s-", gameInfo.identityKey);
+    name = Str_Appendf(AutoStr_NewStd(), "%s-", gameInfo.identityKey);
     numPos = Str_Length(name);
     { int i;
     for(i = 0; i < 1e6; ++i) // Stop eventually...
     {
         Str_Appendf(name, "%03i.png", i);
-        if(!F_FileExists(Str_Text(name)))
-            break;
+        if(!F_FileExists(Str_Text(name))) break;
         Str_Truncate(name, numPos);
     }}
     return name;
@@ -3657,22 +3732,18 @@ static ddstring_t* composeScreenshotFileName(void)
 
 void G_DoScreenShot(void)
 {
-    ddstring_t* name = composeScreenshotFileName();
-    if(!name)
+    AutoStr* fileName = composeScreenshotFileName();
+    if(fileName && M_ScreenShot(Str_Text(fileName), 24))
     {
-        Con_Message("G_DoScreenShot: Failed composing file name, screenshot not saved.\n");
+        /// @todo Do not use the console player's message log for this notification.
+        ///       The engine should implement it's own notification UI system for
+        ///       this sort of thing.
+        AutoStr* msg = Str_Appendf(AutoStr_NewStd(), "Saved screenshot: %s", F_PrettyPath(Str_Text(fileName)));
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return;
     }
 
-    if(M_ScreenShot(Str_Text(name), 24))
-    {
-        Con_Message("Wrote screenshot: %s\n", F_PrettyPath(Str_Text(name)));
-    }
-    else
-    {
-        Con_Message("Failed to write screenshot \"%s\".\n", F_PrettyPath(Str_Text(name)));
-    }
-    Str_Delete(name);
+    Con_Message("Failed to write screenshot \"%s\".\n", fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
 }
 
 static void openLoadMenu(void)
@@ -3983,5 +4054,122 @@ D_CMD(ListMaps)
 {
     Con_Message("Available maps:\n");
     G_PrintMapList();
+    return true;
+}
+
+D_CMD(WarpMap)
+{
+    uint epsd, map, i;
+
+    // Only server operators can warp maps in network games.
+    /// @todo Implement vote or similar mechanics.
+    if(IS_NETGAME && !IS_NETWORK_SERVER) return false;
+
+#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
+# if __JDOOM__
+    if(gameModeBits & GM_ANY_DOOM2)
+# endif
+    {
+        // "warp M":
+        epsd = 0;
+        map = MAX_OF(0, atoi(argv[1]));
+    }
+#endif
+#if __JDOOM__
+    else
+#endif
+#if __JDOOM__ || __JHERETIC__
+        if(argc == 2)
+    {
+        // "warp EM" or "warp M":
+        int num = atoi(argv[1]);
+        epsd = MAX_OF(0, num / 10);
+        map  = MAX_OF(0, num % 10);
+    }
+    else // (argc == 3)
+    {
+        // "warp E M":
+        epsd = MAX_OF(0, atoi(argv[1]));
+        map  = MAX_OF(0, atoi(argv[2]));
+    }
+#endif
+
+    // Internally epsiode and map numbers are zero-based.
+    if(epsd != 0) epsd -= 1;
+    if(map != 0)  map  -= 1;
+
+    // Catch invalid maps.
+#if __JHEXEN__
+    // Hexen map numbers require translation.
+    map = P_TranslateMapIfExists(map);
+#endif
+    if(!G_ValidateMap(&epsd, &map))
+    {
+        const char* fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
+        AutoStr* msg = Str_Appendf(AutoStr_NewStd(), fmtString, argv[1], argc == 3? argv[2] : "");
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
+        return false;
+    }
+
+#if __JHEXEN__
+    // Hexen does not allow warping to the current map.
+    if(userGame && map == gameMap)
+    {
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
+        return false;
+    }
+#endif
+
+    // Close any left open UIs.
+    /// @todo Still necessary here?
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+        ddplayer_t* ddplr = plr->plr;
+        if(!ddplr->inGame) continue;
+
+        ST_AutomapOpen(i, false, true);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(i, false);
+#endif
+    }
+    Hu_MenuCommand(MCMD_CLOSEFAST);
+
+    // So be it.
+#if __JHEXEN__
+    if(userGame)
+    {
+        nextMap = map;
+        nextMapEntryPoint = 0;
+        briefDisabled = true;
+        G_SetGameAction(GA_LEAVEMAP);
+    }
+    else
+    {
+        G_DeferredNewGame(dSkill, epsd, map, 0/*default*/);
+    }
+#else
+    briefDisabled = true;
+    G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
+#endif
+
+    // If the command src was "us" the game library then it was probably in response to
+    // the local player entering a cheat event sequence, so set the "CHANGING MAP" message.
+    // Somewhat of a kludge...
+    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
+    {
+#if __JHEXEN__
+        const char* msg = TXT_CHEATWARP;
+        int soundId     = SFX_PLATFORM_STOP;
+#elif __JHERETIC__
+        const char* msg = TXT_CHEATWARP;
+        int soundId     = SFX_DORCLS;
+#else //__JDOOM__ || __JDOOM64__
+        const char* msg = STSTR_CLEV;
+        int soundId     = SFX_NONE;
+#endif
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
+        S_LocalSound(soundId, NULL);
+    }
     return true;
 }

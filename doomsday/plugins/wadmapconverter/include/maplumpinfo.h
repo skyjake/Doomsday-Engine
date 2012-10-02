@@ -53,6 +53,12 @@ typedef enum maplumptype_e {
     NUM_MAPLUMP_TYPES
 } MapLumpType;
 
+/**
+ * Helper macro for determining whether a value can be interpreted as a logical
+ * map lump type identifier (@see MapLumpType).
+ */
+#define VALID_MAPLUMPTYPE(v)    ((v) >= FIRST_MAPLUMP_TYPE && (v) < NUM_MAPLUMP_TYPES)
+
 /// POD structure for defining extended metadata for map data lumps.
 typedef struct maplumpinfo_s {
     lumpnum_t lump; ///< Absolute lump number for the associated data.
@@ -67,5 +73,8 @@ typedef struct maplumpinfo_s {
         return this;
     }
 } MapLumpInfo;
+
+#include <map>
+typedef std::map<MapLumpType, MapLumpInfo*> MapLumpInfos;
 
 #endif /* __WADMAPCONVERTER_MAPLUMPINFO_H__ */

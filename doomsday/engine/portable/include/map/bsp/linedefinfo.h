@@ -29,6 +29,7 @@
 #define LIBDENG_BSP_LINEDEFINFO
 
 #include "p_mapdata.h"
+#include "map/bsp/partitioner.h"
 
 #include <QGlobalStatic>
 
@@ -41,26 +42,46 @@ namespace bsp {
  */
 struct LineDefInfo
 {
+    /// @todo Refactor me away.
     enum Flag
     {
-        TWOSIDED   =        0x1, ///< Line is marked two-sided.
-        ZEROLENGTH =        0x2, ///< Zero length (line should be totally ignored).
-        SELFREF    =        0x4, ///< Sector is the same on both sides.
-        POLYOBJ    =        0x8  ///< Line is part of a polyobj.
+        Twosided   =        0x1, ///< Line is marked two-sided.
+        ZeroLength =        0x2, ///< Zero length (line should be totally ignored).
+        SelfRef    =        0x4  ///< Sector is the same on both sides.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
-    Flags flags;
 
-    /// Normally NULL, except when this linedef directly overlaps an earlier
-    /// one (a rarely-used trick to create higher mid-masked textures).
-    /// No hedges should be created for these overlapping linedefs.
-    LineDef* overlap;
+    /// The map's definition of this line segment.
+    LineDef* lineDef;
+
+    Flags flags;
 
     /// @todo Refactor me away.
     int validCount;
 
-    LineDefInfo() : flags(0), overlap(0), validCount(0)
-    {}
+    /// If the line is used for a window effect, this is the sector on the back side.
+    Sector* windowEffect;
+
+    explicit LineDefInfo(LineDef* _lineDef, coord_t distEpsilon = 0.0001)
+        : lineDef(_lineDef), flags(0), validCount(0), windowEffect(0)
+    {
+        DENG2_ASSERT(_lineDef);
+        const Vertex* start = lineDef->L_v1;
+        const Vertex* end   = lineDef->L_v2;
+
+        // Check for zero-length line.
+        if((fabs(start->origin[VX] - end->origin[VX]) < distEpsilon) &&
+           (fabs(start->origin[VY] - end->origin[VY]) < distEpsilon))
+            flags |= ZeroLength;
+
+        if(lineDef->L_backsidedef && lineDef->L_frontsidedef)
+        {
+            flags |= Twosided;
+
+            if(lineDef->L_backsector == lineDef->L_frontsector)
+                flags |= SelfRef;
+        }
+    }
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(LineDefInfo::Flags)

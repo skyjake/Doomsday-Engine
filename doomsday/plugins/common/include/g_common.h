@@ -30,6 +30,10 @@
 #include "mobj.h"
 #include "common.h"
 
+#if __cplusplus
+extern "C" {
+#endif
+
 enum {
     JOYAXIS_NONE,
     JOYAXIS_MOVE,
@@ -40,46 +44,49 @@ enum {
 
 extern boolean singledemo;
 
-void            G_Register(void);
+void G_Register(void);
+
+gamestate_t G_GameState(void);
+void G_ChangeGameState(gamestate_t state);
+
+gameaction_t G_GameAction(void);
+void G_SetGameAction(gameaction_t action);
+
+const char* P_GetGameModeName(void);
 
 /**
  * Begin the titlescreen animation sequence.
  */
-void            G_StartTitle(void);
+void G_StartTitle(void);
 
 /**
  * Begin the helpscreen animation sequence.
  */
-void            G_StartHelp(void);
+void G_StartHelp(void);
 
-/**
- * Signal that play on the current map may now begin.
- */
-void            G_BeginMap(void);
-void            G_EndGame(void);
+void G_EndGame(void);
 
-gamestate_t     G_GameState(void);
-void            G_ChangeGameState(gamestate_t state);
-
-gameaction_t    G_GameAction(void);
-void            G_SetGameAction(gameaction_t action);
-
-boolean         G_QuitInProgress(void);
+boolean G_QuitInProgress(void);
 
 /**
  * @param map           Logical map number (i.e., not a warp/translated number).
  * @param mapEntryPoint Logical map entry point number.
  */
-void            G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
-void            G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 
 #if __JHEXEN__
 /**
  * Same as @ref G_DeferredNewGame() except a GA_SETMAP action is queued
  * instead of GA_NEWGAME.
  */
-void            G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
 #endif
+
+/**
+ * Signal that play on the current map may now begin.
+ */
+void G_BeginMap(void);
 
 /**
  * Leave the current map and start intermission routine.
@@ -90,18 +97,53 @@ void            G_DeferredSetMap(skillmode_t skill, uint episode, uint map, uint
  * @param mapEntryPoint Logical map entry point on the new map.
  * @param secretExit    @c true if the exit taken was marked as 'secret'.
  */
-void            G_LeaveMap(uint newMap, uint mapEntryPoint, boolean secretExit);
+void G_LeaveMap(uint newMap, uint mapEntryPoint, boolean secretExit);
 
-/// @return  Generated name. Must be released with Str_Delete()
-AutoStr*        G_GenerateSaveGameName(void);
+/**
+ * Compose a Uri for the identified @a episode and @a map combination.
+ *
+ * @param episode       Logical episode number.
+ * @param map           Logical map number.
+ *
+ * @return  Resultant Uri. Must be destroyed with Uri_Delete() when no longer needed.
+ */
+Uri* G_ComposeMapUri(uint episode, uint map);
 
-int             P_CameraXYMovement(mobj_t* mo);
-int             P_CameraZMovement(mobj_t* mo);
-void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
+/**
+ * Determine if the specified @a episode and @a map value pair are valid and if not,
+ * adjust their are values within the ranges defined by the current game type and mode.
+ *
+ * @param episode       Logical episode number to be validated.
+ * @param map           Logical map number to be validated.
+ *
+ * @return  @c true= The original @a episode and @a map value pair were already valid.
+ */
+boolean G_ValidateMap(uint* episode, uint* map);
+
+/**
+ * Return the next map according to the default map progression.
+ *
+ * @param episode       Current episode.
+ * @param map           Current map.
+ * @param secretExit
+ *
+ * @return  The next map.
+ */
+uint G_GetNextMap(uint episode, uint map, boolean secretExit);
+
+/// @return  Logical map number.
+uint G_GetMapNumber(uint episode, uint map);
+
+AutoStr* G_GenerateSaveGameName(void);
 
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );
 D_CMD( CCmdSetViewLock );
 D_CMD( CCmdLocalMessage );
 D_CMD( CCmdExitLevel );
+
+#if __cplusplus
+} // extern "C"
+#endif
+
 #endif /* LIBCOMMON_GAME_H */

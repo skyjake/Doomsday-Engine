@@ -23,6 +23,10 @@
 #ifndef LIBDENG_BLOCKSET_H
 #define LIBDENG_BLOCKSET_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct blockset_block_s;
 
 /**
@@ -85,5 +89,9 @@ void* BlockSet_Allocate(blockset_t* set);
 
 /// @return  Total number of elements from the set that are currently in use.
 size_t BlockSet_Count(blockset_t* set);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_BLOCKSET_H */

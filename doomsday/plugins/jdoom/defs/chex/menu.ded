@@ -1,0 +1,29 @@
+# Chex Quest - Menu Patch Replacements
+#
+# The "Patch Replacement" values are used to replace patches with 
+# strings of text. For further information on syntax see values.ded
+
+Header { Version = 5; }
+
+SkipIf -nodefaultfx;
+
+Values {
+  Patch Replacement {
+    M_NGAME  = "{tracking=-1}NEW GAME";
+    M_OPTION = "{tracking=-1}OPTIONS";
+    M_LOADG  = "{tracking=-1}LOAD GAME";
+    M_SAVEG  = "{tracking=-1}SAVE GAME";
+    M_RDTHIS = "{tracking=-1}READ THIS!";
+    M_QUITG  = "{tracking=-1}QUIT GAME";
+
+    M_NEWG   = "NEW GAME";
+    M_OPTTTL = "OPTIONS";
+
+    M_SKILL  = "{tracking=-1}CHOOSE DIFFICULTY:";
+    M_JKILL  = "{tracking=-1}EASY DOES IT";
+    M_ROUGH  = "{tracking=-1}NOT SO STICKY";
+    M_HURT   = "{tracking=-1}GOBS OF GOO";
+    M_ULTRA  = "{tracking=-1}EXTREME OOZE";
+    # M_NMARE  = "{tracking=-1}SUPER SLIMEY!";
+  };
+}

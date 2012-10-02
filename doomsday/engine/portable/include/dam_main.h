@@ -22,6 +22,10 @@
 #ifndef LIBDENG_ARCHIVED_MAP_MAIN_H
 #define LIBDENG_ARCHIVED_MAP_MAIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct archivedmap_s {
     Uri* uri;
     ddstring_t cachedMapPath;
@@ -45,10 +49,14 @@ void DAM_Shutdown(void);
  * within the archived map cache where maps from the specified source will reside.
  *
  * @param sourcePath  Path to the primary resource file for the original map data.
- * @return  The composed path. Must be destroyed with Str_Delete().
+ * @return  The composed path.
  */
-ddstring_t* DAM_ComposeCacheDir(const char* sourcePath);
+AutoStr* DAM_ComposeCacheDir(const char* sourcePath);
 
 boolean DAM_AttemptMapLoad(const Uri* uri);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_ARCHIVED_MAP_MAIN_H */

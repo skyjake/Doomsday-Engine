@@ -38,7 +38,7 @@
 #include "de_misc.h"
 
 #include "def_main.h"
-#include "stringpool.h"
+#include <de/stringpool.h>
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
@@ -533,7 +533,7 @@ static int R_LoadModel(const Uri* uri)
     {
         // Lastly try a skin named similarly to the model in the same directory.
         directory_t* mydir = Dir_ConstructFromPathDir(mdl->fileName);
-        AutoStr* skinSearchPath = AutoStr_New();
+        AutoStr* skinSearchPath = AutoStr_NewStd();
 
         F_FileName(skinSearchPath, mdl->fileName);
         Str_Prepend(skinSearchPath, mydir->path);
@@ -860,7 +860,7 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
         Con_Error("R_ScaleModelToSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
 
     off = -pTex->offY - ms->size.height;

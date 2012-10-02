@@ -49,8 +49,8 @@ typedef struct editmap_s {
     uint numPolyObjs;
     Polyobj** polyObjs;
 
-    // The following is for game-specific map object data.
-    gameobjdata_t gameObjData;
+    // Game-specific map entity property values.
+    EntityDatabase* entityDatabase;
 } editmap_t;
 
 //extern editmap_t editMap;

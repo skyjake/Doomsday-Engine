@@ -169,7 +169,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
         if(numFrames < 2)
         {
-            Con_Message("Warning:loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i, ignoring.\n", animDefs[i].startname, animDefs[i].endname, i);
+            Con_Message("Warning:loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i, ignoring.\n",
+                        animDefs[i].startname, animDefs[i].endname, i);
             continue;
         }
 
@@ -186,12 +187,9 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 
         if(verbose > (isCustom? 1 : 2))
         {
-            ddstring_t* from = Uri_ToString(startUri);
-            ddstring_t* to = Uri_ToString(endUri);
-            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n",
-                        i, Str_Text(from), Str_Text(to), ticsPerFrame);
-            Str_Delete(to);
-            Str_Delete(from);
+            AutoStr* from = Uri_ToString(startUri);
+            AutoStr* to = Uri_ToString(endUri);
+            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, Str_Text(from), Str_Text(to), ticsPerFrame);
         }
 
         // Find an animation group for this.
@@ -489,16 +487,16 @@ static void P_CrossSpecialLine(LineDef* line, int side, mobj_t* thing)
         break;
 
     case 994: // jd64
-        // FIXME: DJS - Might as well do this in XG.
-        // Also, export this text string to DED.
-        P_SetMessage(thing->player, "You've found a secret area!", false);
+        /// @todo Might as well do this with XG.
+        /// Also, export this text string to DED.
+        P_SetMessage(thing->player, 0, "You've found a secret area!");
         thing->player->secretCount++;
         xline->special = 0;
         break;
 
     case 995: // jd64
-        // FIXME: DJS - Might as well do this in XG.
-        P_SetMessage(thing->player, "You've found a shrine!", false);
+        /// @todo Might as well do this with XG.
+        P_SetMessage(thing->player, 0, "You've found a shrine!");
         xline->special = 0;
         break;
 
@@ -911,7 +909,7 @@ void P_PlayerInSpecialSector(player_t* player)
         P_ToXSector(sector)->special = 0;
         if(cfg.secretMsg)
         {
-            P_SetMessage(player, "You've found a secret area!", false);
+            P_SetMessage(player, 0, "You've found a secret area!");
             // S_ConsoleSound(SFX_SECRET, 0, player - players); // jd64
         }
         break;

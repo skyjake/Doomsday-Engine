@@ -30,11 +30,11 @@
 
 #include "saveinfo.h"
 
-boolean SV_RecogniseState_Hr_v13(SaveInfo* info);
+boolean SV_RecogniseState_Hr_v13(const char* path, SaveInfo* info);
 
 /**
  * @return  @c 0 on success else error code.
  */
-int SV_LoadState_Hr_v13(SaveInfo* saveInfo);
+int SV_LoadState_Hr_v13(const char* path, SaveInfo* saveInfo);
 
 #endif /// LIBHERETIC_OLD_SAVESTATE

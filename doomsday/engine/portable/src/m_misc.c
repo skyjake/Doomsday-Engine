@@ -466,6 +466,15 @@ double M_DirectionToAngle(double const direction[])
     return M_DirectionToAngleXY(direction[VX], direction[VY]);
 }
 
+double M_InverseAngle(double angle)
+{
+    if(angle < 180.0)
+    {
+        return (180.0 - -angle);
+    }
+    return angle - 180.0;
+}
+
 slopetype_t M_SlopeTypeXY(double dx, double dy)
 {
     if(FEQUAL(dx, 0))
@@ -777,6 +786,12 @@ static size_t FileReader(const char* name, char** buffer)
     }
 
     length = fileinfo.st_size;
+    if(!length)
+    {
+        *buffer = 0;
+        return 0;
+    }
+
     buf = Z_Malloc(length, PU_APPSTATIC, 0);
     if(buf == NULL)
     {
@@ -999,7 +1014,7 @@ int M_ScreenShot(const char* name, int bits)
 
     /*
     byte* screen = (byte*) GL_GrabScreen();
-    ddstring_t fullName;
+    Str fullName;
     FILE* file;
 
     if(!screen)
@@ -1009,7 +1024,7 @@ int M_ScreenShot(const char* name, int bits)
     }
 
     // Compose the final file name.
-    Str_Init(&fullName); Str_Set(&fullName, name);
+    Str_InitStd(&fullName); Str_Set(&fullName, name);
     if(!F_FindFileExtension(Str_Text(&fullName)))
         Str_Append(&fullName, ".tga");
     F_ToNativeSlashes(&fullName, &fullName);

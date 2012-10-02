@@ -37,4 +37,6 @@
 #  include "jhexen.h"
 #endif
 
+int Common_GetInteger(int id);
+
 #endif /// LIBCOMMON_GAME_INCLUDES

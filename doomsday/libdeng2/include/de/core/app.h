@@ -120,8 +120,20 @@ namespace de
          */
         static Record& importModule(const String& name, const String& fromPath = "");
 
+        /**
+         * Emits the displayModeChanged() signal.
+         *
+         * @todo In the future when de::App (or a sub-object owned by it) is
+         * responsible for display modes, this should be handled internally and
+         * not via this public interface where anybody can call it.
+         */
+        void notifyDisplayModeChanged();
+
     signals:
         void uncaughtException(QString message);
+
+        /// Emitted when the display mode has changed.
+        void displayModeChanged();
 
     private:
         CommandLine _cmdLine;

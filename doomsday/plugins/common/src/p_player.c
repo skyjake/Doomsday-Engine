@@ -796,19 +796,9 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
 }
 #endif
 
-/**
- * Send a message to the given player and maybe echos it to the console.
- *
- * @param player        The player to send the message to.
- * @param msg           The message to be sent.
- * @param noHide        @c true = show message even if messages have been
- *                      disabled by the player.
- */
-void P_SetMessage(player_t* pl, const char* msg, boolean noHide)
+void P_SetMessage(player_t* pl, int flags, const char* msg)
 {
-    byte flags = (noHide? LMF_NOHIDE : 0);
-
-    if(NULL == msg || !msg[0]) return;
+    if(!msg || !msg[0]) return;
 
     ST_LogPost(pl - players, flags, msg);
 
@@ -820,31 +810,23 @@ void P_SetMessage(player_t* pl, const char* msg, boolean noHide)
 }
 
 #if __JHEXEN__
-/**
- * Send a yellow message to the given player and maybe echos it to the console.
- *
- * @param player        The player to send the message to.
- * @param msg           The message to be sent.
- * @param noHide        @c true = show message even if messages have been
- *                      disabled by the player.
- */
-void P_SetYellowMessage(player_t* pl, const char* msg, boolean noHide)
+void P_SetYellowMessage(player_t* pl, int flags, const char* msg)
 {
 #define YELLOW_FMT      "{r=1;g=0.7;b=0.3;}"
 #define YELLOW_FMT_LEN  18
 
-    byte flags = (noHide? LMF_NOHIDE : 0);
     size_t len;
-    ddstring_t buf;
+    AutoStr* buf;
 
-    if(NULL == msg || !msg[0]) return;
+    if(!msg || !msg[0]) return;
     len = strlen(msg);
 
-    Str_Init(&buf); Str_Reserve(&buf, YELLOW_FMT_LEN + len+1);
-    Str_Set(&buf, YELLOW_FMT);
-    Str_Appendf(&buf, "%s", msg);
+    buf = AutoStr_NewStd();
+    Str_Reserve(buf, YELLOW_FMT_LEN + len+1);
+    Str_Set(buf, YELLOW_FMT);
+    Str_Appendf(buf, "%s", msg);
 
-    ST_LogPost(pl - players, flags, Str_Text(&buf));
+    ST_LogPost(pl - players, flags, Str_Text(buf));
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CPF_CYAN, "%s\n", msg);
@@ -853,9 +835,7 @@ void P_SetYellowMessage(player_t* pl, const char* msg, boolean noHide)
     /// @todo We shouldn't need to send the format string along with every
     /// important game message. Instead flag a bit in the packet and then
     /// reconstruct on the other end.
-    NetSv_SendMessage(pl - players, Str_Text(&buf));
-
-    Str_Free(&buf);
+    NetSv_SendMessage(pl - players, Str_Text(buf));
 
 #undef YELLOW_FMT
 }

@@ -264,7 +264,7 @@ boolean B_ParseAnglePosition(const char* desc, float* pos)
  */
 boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
 {
-    AutoStr* str = AutoStr_New();
+    AutoStr* str = AutoStr_NewStd();
     ddeventtype_t type;
 
     // First, we expect to encounter a device name.

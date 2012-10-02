@@ -472,11 +472,10 @@ void DED_RemoveFlag(ded_t *ded, int index)
                  sizeof(ded_flag_t));
 }
 
-int DED_AddModel(ded_t *ded, char *spr)
+int DED_AddModel(ded_t* ded, char* spr)
 {
-    int     i;
-    ded_model_t *md = DED_NewEntry((void **) &ded->models,
-                                   &ded->count.models, sizeof(ded_model_t));
+    int i;
+    ded_model_t* md = DED_NewEntry((void**) &ded->models, &ded->count.models, sizeof(ded_model_t));
 
     strcpy(md->sprite.id, spr);
     md->interRange[1] = 1;
@@ -484,6 +483,7 @@ int DED_AddModel(ded_t *ded, char *spr)
     // Init submodels.
     for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
     {
+        md->sub[i].blendMode = BM_NORMAL;
         md->sub[i].shinyColor[CR] = md->sub[i].shinyColor[CG] =
             md->sub[i].shinyColor[CB] = 1;
         md->sub[i].shinyReact = 1.0f;
@@ -843,10 +843,9 @@ void DED_RemoveDecoration(ded_t *ded, int index)
                  sizeof(ded_decor_t));
 }
 
-int DED_AddReflection(ded_t *ded)
+int DED_AddReflection(ded_t* ded)
 {
-    ded_reflection_t *ref = DED_NewEntry((void **) &ded->reflections,
-                                         &ded->count.reflections,
+    ded_reflection_t* ref = DED_NewEntry((void**) &ded->reflections, &ded->count.reflections,
                                          sizeof(ded_reflection_t));
     // Init to defaults.
     ref->shininess = 1.0f;

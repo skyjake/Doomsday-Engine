@@ -603,7 +603,7 @@ static void locateGameStartupResources(Game* game)
 
     if(theGame != game)
     {
-        /// \kludge Temporarily switch Game.
+        /// @attention Kludge: Temporarily switch Game.
         theGame = game;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
@@ -628,7 +628,7 @@ static void locateGameStartupResources(Game* game)
 
     if(theGame != oldGame)
     {
-        /// \kludge Restore the old Game.
+        // Kludge end - Restore the old Game.
         theGame = oldGame;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
@@ -744,7 +744,7 @@ void DD_PrintGame(Game* game, int flags)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDataAdder(const ddstring_t* fileName, pathdirectorynode_type_t type, void* paramaters)
+static int autoDataAdder(const ddstring_t* fileName, PathDirectoryNodeType type, void* paramaters)
 {
     assert(fileName && paramaters);
     // We are only interested in files.
@@ -859,7 +859,7 @@ static int DD_BeginGameChangeWorker(void* paramaters)
     assert(p);
 
     P_InitMapUpdate();
-    P_InitGameMapObjDefs();
+    P_InitMapEntityDefs();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(100);
@@ -1172,7 +1172,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         P_SetCurrentMap(0);
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
-        P_ShutdownGameMapObjDefs();
+        P_ShutdownMapEntityDefs();
 
         R_ShutdownSvgs();
         R_DestroyColorPalettes();
@@ -1678,7 +1678,7 @@ boolean DD_Init(void)
 
     if(CommandLine_Check("-dumpwaddir"))
     {
-        F_PrintLumpDirectory();
+        Con_Executef(CMDS_CMDLINE, false, "listlumps");
     }
 
     // Try to load the autoexec file. This is done here to make sure everything is

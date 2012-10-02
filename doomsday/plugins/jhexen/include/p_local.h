@@ -135,8 +135,10 @@ boolean     P_HitFloor(mobj_t* mo);
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 int         P_Massacre(void);
 boolean     P_LookForMonsters(mobj_t* mo);
+
 void        P_InitCorpseQueue(void);
-void        P_AddCorpsesToQueue(void);
+void        P_AddCorpseToQueue(mobj_t* mo);
+void        P_RemoveCorpseInQueue(mobj_t* mo);
 
 mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
 
@@ -164,6 +166,5 @@ void C_DECL A_BridgeRemove(mobj_t* actor);
 boolean     A_RaiseMobj(mobj_t* mo);
 boolean     A_SinkMobj(mobj_t* mo);
 void C_DECL A_NoBlocking(mobj_t* mo);
-void C_DECL A_DeQueueCorpse(mobj_t* mo);
 
 #endif

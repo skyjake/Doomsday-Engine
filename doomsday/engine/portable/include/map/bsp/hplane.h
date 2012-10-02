@@ -40,7 +40,7 @@ struct HPlanePartition
     coord_t origin[2];
     coord_t direction[2];
 
-    HPlanePartition(coord_t x=0, coord_t y=0, coord_t dX=0, coord_t dY=0)
+    explicit HPlanePartition(coord_t x=0, coord_t y=0, coord_t dX=0, coord_t dY=0)
     {
         V2d_Set(origin, x, y);
         V2d_Set(direction, dX, dY);
@@ -50,6 +50,28 @@ struct HPlanePartition
     {
         V2d_Copy(origin, _origin);
         V2d_Copy(direction, _direction);
+    }
+
+    HPlanePartition& setOrigin(coord_t x, coord_t y)
+    {
+        V2d_Set(origin, x, y);
+        return *this;
+    }
+
+    HPlanePartition& setOrigin(coord_t const newOrigin[2])
+    {
+        return setOrigin(newOrigin[0], newOrigin[1]);
+    }
+
+    HPlanePartition& setDirection(coord_t dx, coord_t dy)
+    {
+        V2d_Set(direction, dx, dy);
+        return *this;
+    }
+
+    HPlanePartition& setDirection(coord_t const newDirection[2])
+    {
+        return setDirection(newDirection[0], newDirection[1]);
     }
 };
 
@@ -90,13 +112,17 @@ private:
     void* _userData;
 };
 
-class HPlane {
+class HPlane
+{
 public:
     typedef std::list<HPlaneIntercept> Intercepts;
 
-    HPlane() : partition(), intercepts(0){}
+    typedef bool (*mergepredicate_t)(HPlaneIntercept& a, HPlaneIntercept& b, void* userData);
+
+public:
+    HPlane() : partition(), intercepts_(0){}
     HPlane(coord_t const origin[2], coord_t const direction[2]) :
-        partition(origin, direction), intercepts(0) {}
+        partition(origin, direction), intercepts_(0) {}
 
     ~HPlane() { clear(); }
 
@@ -126,33 +152,24 @@ public:
     /**
      * Insert a point at the given intersection into the intersection list.
      *
-     * @todo Ownership of the user data should NOT be passed to this object.
-     *
-     * @param userData  Ownership passes to HPlane.
+     * @param distance  Distance along the partition for the new intercept,
+     *                  in map units.
+     * @param userData  User data object to link with the new intercept.
+     *                  Ownership remains unchanged.
      */
-    HPlaneIntercept* newIntercept(coord_t distance, void* userData=NULL);
+    HPlaneIntercept& newIntercept(coord_t distance, void* userData = NULL);
 
-    Intercepts::const_iterator deleteIntercept(Intercepts::iterator at);
+    void mergeIntercepts(mergepredicate_t predicate, void* userData);
 
-    inline bool empty() const { return intercepts.empty(); }
-
-    inline Intercepts::iterator begin() { return intercepts.begin(); }
-
-    inline Intercepts::const_iterator begin() const { return intercepts.begin(); }
-
-    inline Intercepts::iterator end() { return intercepts.end(); }
-
-    inline Intercepts::const_iterator end() const { return intercepts.end(); }
-
-    inline Intercepts::size_type size() const { return intercepts.size(); }
+    const Intercepts& intercepts() const;
 
     static void DebugPrint(const HPlane& inst);
 
 private:
     HPlanePartition partition;
 
-    /// The intercept list. Kept sorted by along_dist, in ascending order.
-    Intercepts intercepts;
+    /// The intercept list. Kept sorted by distance, in ascending order.
+    Intercepts intercepts_;
 };
 
 } // namespace bsp

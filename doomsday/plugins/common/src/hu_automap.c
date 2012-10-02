@@ -605,7 +605,8 @@ static int rendSeg(void* hedge_, void* data)
 
     // We only want to draw twosided lines once.
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR)) return false;
+    if(frontSector // $degenleaf
+       && frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR)) return false;
 
     info = NULL;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
@@ -613,24 +614,28 @@ static int rendSeg(void* hedge_, void* data)
         backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
 
         // Perhaps this is a specially colored line?
-        info = AM_GetInfoForSpecialLine(UIAutomap_Config(obj), xLine->special, frontSector, backSector, UIAutomap_Flags(obj));
+        info = AM_GetInfoForSpecialLine(UIAutomap_Config(obj), xLine->special, xLine->flags,
+                                        frontSector, backSector, UIAutomap_Flags(obj));
         if(rs.objType != -1 && !info)
         {
             // Perhaps a default colored line?
-            if(!(frontSector && backSector) || (xLine->flags & ML_SECRET))
+            /// @todo Implement an option which changes the vanilla behavior of always
+            ///       coloring non-secret lines with the solid-wall color to instead
+            ///       use whichever color it would be if not flagged secret.
+            if(!backSector || !P_GetPtrp(line, DMU_SIDEDEF1) || (xLine->flags & ML_SECRET))
             {
                 // solid wall (well probably anyway...)
                 info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_SINGLESIDEDLINE);
             }
             else
             {
-                if(!FEQUAL(P_GetDoublep(backSector, DMU_FLOOR_HEIGHT),
+                if(!FEQUAL(P_GetDoublep(backSector,  DMU_FLOOR_HEIGHT),
                            P_GetDoublep(frontSector, DMU_FLOOR_HEIGHT)))
                 {
                     // Floor level change.
                     info = AM_GetInfoForLine(UIAutomap_Config(obj), AMO_FLOORCHANGELINE);
                 }
-                else if(!FEQUAL(P_GetDoublep(backSector, DMU_CEILING_HEIGHT),
+                else if(!FEQUAL(P_GetDoublep(backSector,  DMU_CEILING_HEIGHT),
                                 P_GetDoublep(frontSector, DMU_CEILING_HEIGHT)))
                 {
                     // Ceiling level change.

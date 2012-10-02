@@ -38,6 +38,25 @@ HEdge* HEdge_NewCopy(const HEdge* other);
 
 void HEdge_Delete(HEdge* hedge);
 
+/**
+ * @param offset  Returns the position of the nearest point along the line [0..1].
+ */
+coord_t HEdge_PointDistance(HEdge* hedge, coord_t const point[2], coord_t* offset);
+coord_t HEdge_PointXYDistance(HEdge* hedge, coord_t x, coord_t y, coord_t* offset);
+
+/**
+ * On which side of this HEdge does the specified point lie?
+ *
+ * @param hedge     HEdge instance.
+ * @param point     Map space point to test.
+ *
+ * @return @c <0 Point is to the left/back of the hedge.
+ *         @c =0 Point lies directly on the hedge.
+ *         @c >0 Point is to the right/front of the hedge.
+ */
+coord_t HEdge_PointOnSide(const HEdge* hedge, coord_t const point[2]);
+coord_t HEdge_PointXYOnSide(const HEdge* hedge, coord_t x, coord_t y);
+
 boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
     Sector* frontSector, Sector* backSector,
     walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2]);

@@ -311,3 +311,8 @@ Record& App::importModule(const String& name, const String& fromPath)
 
     throw NotFoundError("App::importModule", "Cannot find module '" + name + "'");
 }
+
+void App::notifyDisplayModeChanged()
+{
+    emit displayModeChanged();
+}

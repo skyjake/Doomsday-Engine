@@ -717,9 +717,8 @@ int EV_DoFloor(LineDef* line, floortype_e floortype)
             floor->speed = FLOORSPEED * 16;
             floor->floorDestHeight = P_GetDoublep(floor->sector, DMU_FLOOR_HEIGHT);
 
-            //// \kludge fake the engine into accepting this special
+            /// @fixme Should not clear the special like this!
             P_ToXSector(sec)->special = bitmipR;
-            // < KLUDGE
             break;
 #endif
         case FT_RAISEFLOORCRUSH:
@@ -1436,7 +1435,8 @@ int EV_DoFloorAndCeiling(LineDef* line, int ftype, int ctype)
     if(!list)
         return 0;
 
-    /** \kludge
+    /**
+     * @attention Kludge:
      * Due to the fact that sectors can only have one special thinker
      * linked at a time, this routine manually removes the link before
      * then creating a second thinker for the sector.
@@ -1445,7 +1445,7 @@ int EV_DoFloorAndCeiling(LineDef* line, int ftype, int ctype)
      *
      *   floor, ceiling, lightlevel
      *
-     * Note: floor and ceiling are capable of moving at different speeds
+     * @note: Floor and ceiling are capable of moving at different speeds
      * and with different target heights, we must remain compatible.
      */
 

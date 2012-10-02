@@ -27,6 +27,10 @@
 #include "dd_plugin.h"
 #include <de/ddstring.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct AbstractResource_s;
 struct gamedef_s;
 
@@ -58,8 +62,8 @@ void Game_Delete(Game* game);
 /**
  * Add a new resource to the list of resources.
  *
- * \note Resource registration order defines the order in which resources of
- * each type are loaded.
+ * @note Resource registration order defines the order in which resources of each
+ *       type are loaded.
  *
  * @param rclass  Class of resource being added.
  * @param record  Resource record being added.
@@ -109,7 +113,7 @@ const ddstring_t* Game_BindingConfig(Game* game);
 struct AbstractResource_s* const* Game_Resources(Game* game, resourceclass_t rclass, int* count);
 
 /**
- * \note Unless caller is the resource locator then you probably shouldn't be calling.
+ * @note Unless caller is the resource locator then you probably shouldn't be calling.
  * This is the absolute data path and shouldn't be used directly for resource location.
  *
  * @return  String containing the base data-class resource directory.
@@ -117,7 +121,7 @@ struct AbstractResource_s* const* Game_Resources(Game* game, resourceclass_t rcl
 const ddstring_t* Game_DataPath(Game* game);
 
 /**
- * \note Unless caller is the resource locator then you probably shouldn't be calling.
+ * @note Unless caller is the resource locator then you probably shouldn't be calling.
  * This is the absolute defs path and shouldn't be used directly for resource location.
  *
  * @return  String containing the base defs-class resource directory.
@@ -128,5 +132,9 @@ const ddstring_t* Game_DefsPath(Game* game);
  * Static non-members:
  */
 Game* Game_FromDef(const GameDef* def);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_GAME_H */

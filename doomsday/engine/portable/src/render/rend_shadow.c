@@ -35,8 +35,8 @@ typedef struct {
     rtexcoord_t texCoords[4];
 } shadowprim_t;
 
-/// @optimize This global shadow primitive is used to avoid repeated local
-///           instantiation in drawShadowPrimitive()
+/// This global shadow primitive is used to avoid repeated local
+/// instantiation in drawShadowPrimitive()
 static shadowprim_t rshadow, *rs = &rshadow;
 
 boolean Rend_MobjShadowsEnabled(void)

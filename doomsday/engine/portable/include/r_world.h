@@ -89,15 +89,72 @@ void R_UpdatePlanes(void);
 void R_ClearSectorFlags(void);
 void R_MapInitSurfaceLists(void);
 
-void            R_OrderVertices(const LineDef* line, const Sector* sector,
-                                Vertex* verts[2]);
+void R_OrderVertices(const LineDef* line, const Sector* sector, Vertex* verts[2]);
 
 /**
- * @param matOffset  Can be @c NULL.
+ * Determine the map space Z coordinates of a wall section.
+ *
+ * @param section       Identifier of the section to determine coordinates for.
+ * @param lineFlags     @ref ldefFlags.
+ * @param frontSec      Sector in front of the wall.
+ * @param backSec       Sector behind the wall. Can be @c NULL
+ * @param frontDef      Definition for the front side. Can be @c NULL
+ * @param backDef       Definition for the back side. Can be @c NULL
+ *
+ * Return values:
+ * @param low           Z map space coordinate at the bottom of the wall section.
+ * @param hi            Z map space coordinate at the top of the wall section.
+ * @param matOffset     Surface space material coordinate offset. Can be @c NULL
+ *
+ * @return  @c true iff the determined wall section height is @c >0
  */
-boolean R_FindBottomTop(LineDef* line, int side, SideDefSection section,
-    Sector* frontSec, Sector* backSec, SideDef* frontSideDef,
+boolean R_FindBottomTop2(SideDefSection section, int lineFlags,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
     coord_t* low, coord_t* hi, float matOffset[2]);
+boolean R_FindBottomTop(SideDefSection section, int lineFlags,
+    Sector* frontSec, Sector* backSec, SideDef* frontDef, SideDef* backDef,
+    coord_t* low, coord_t* hi) /* matOffset = 0 */;
+
+/**
+ * Find the "sharp" Z coordinate range of the opening between sectors @a frontSec
+ * and @a backSec. The open range is defined as the gap between foor and ceiling on
+ * the front side clipped by the floor and ceiling planes on the back side (if present).
+ *
+ * @param frontSec  Sector on the front side.
+ * @param backSec   Sector on the back side. Can be @c NULL.
+ * @param bottom    Bottom Z height is written here. Can be @c NULL.
+ * @param top       Top Z height is written here. Can be @c NULL.
+ *
+ * @return Height of the open range.
+ */
+coord_t R_OpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
+
+/// Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
+/// height coordinates rather than the "sharp" coordinates.
+coord_t R_VisOpenRange(Sector const* frontSec, Sector const* backSec, coord_t* retBottom, coord_t* retTop);
+
+/**
+ * @param lineFlags     @ref ldefFlags.
+ * @param frontSec      Sector in front of the wall.
+ * @param backSec       Sector behind the wall. Can be @c NULL
+ * @param frontDef      Definition for the front side. Can be @c NULL
+ * @param backDef       Definition for the back side. Can be @c NULL
+ * @param ignoreOpacity @c true= material opacity should be ignored.
+ *
+ * @return  @c true iff SideDef @a frontDef has a "middle" Material which completely
+ *     covers the open range defined by sectors @a frontSec and @a backSec.
+ */
+boolean R_MiddleMaterialCoversOpening(int lineFlags, Sector* frontSec, Sector* backSec,
+    SideDef* frontDef, SideDef* backDef, boolean ignoreOpacity);
+
+/**
+ * Same as @ref R_MiddleMaterialCoversOpening except all arguments are derived from
+ * the specified linedef @a line.
+ *
+ * @note Anything calling this is likely working at the wrong level (should work with
+ *       hedges instead).
+ */
+boolean R_MiddleMaterialCoversLineOpening(LineDef* line, int side, boolean ignoreOpacity);
 
 Plane*          R_NewPlaneForSector(Sector* sec);
 void            R_DestroyPlaneOfSector(uint id, Sector* sec);

@@ -289,7 +289,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         if(setupCap != HC_NONE)
         {
             const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
-                    Texture_Analysis(MSU_texture(ms, MTU_PRIMARY),
+                    Texture_AnalysisDataPointer(MSU_texture(ms, MTU_PRIMARY),
                         (setupCap == HC_TOP? TA_LINE_TOP_COLOR : TA_LINE_BOTTOM_COLOR));
             const float fadeoutLimit = R_SkyLayerFadeoutLimit(layer);
             if(!avgLineColor)

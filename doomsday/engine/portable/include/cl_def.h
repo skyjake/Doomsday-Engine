@@ -31,6 +31,10 @@
 
 #include "p_object.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SHORTP(x)       (*(short*) (x))
 #define USHORTP(x)      (*(unsigned short*) (x))
 
@@ -47,5 +51,9 @@ void            Cl_GetPackets(void);
 void            Cl_Ticker(timespan_t ticLength);
 int             Cl_GameReady(void);
 void            Cl_SendHello(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

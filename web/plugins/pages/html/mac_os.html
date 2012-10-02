@@ -63,6 +63,13 @@ function genPackageBadgeHTML(json, downloadUri)
         }
     }
 
+    if(json.hasOwnProperty('release_date'))
+    {
+        var releaseDate = new Date(Date.parse(json.release_date));
+        var shortDate = (releaseDate.getDate()) + '/' + (1 + releaseDate.getMonth()) + '/' + releaseDate.getFullYear();
+        metaData += '<span title="Release Date">' + shortDate + '</span> &middot; ';
+    }
+
     if(json.platform_name == 'mac10_6-x86-x86_64')
     {
         metaData += 'Mac OS 10.6+';

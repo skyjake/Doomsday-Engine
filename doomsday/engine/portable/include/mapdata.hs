@@ -76,11 +76,6 @@ internal
 
 // HEdge frame flags
 #define HEDGEINF_FACINGFRONT      0x0001
-
-/// @todo Refactor me away.
-typedef struct mhedge_s {
-    uint                index;
-} mhedge_t;
 end
 
 public
@@ -107,7 +102,6 @@ struct HEdge
     -       biassurface_t*[3] bsuf /// For each @ref SideDefSection.
     -       short       frameFlags
     -       uint        index /// Unique. Set when saving the BSP.
-    -       mhedge_t    buildData
 end
 
 internal
@@ -122,7 +116,7 @@ end
 
 struct BspLeaf
     PTR     hedge_s*    hedge /// First HEdge in this leaf.
-    -       int         flags /// @ref BspLeafFlags.
+    -       int         flags /// @ref bspLeafFlags.
     -       uint        index /// Unique. Set when saving the BSP.
     -       int         addSpriteCount /// Frame number of last R_AddSprites.
     -       int         validCount
@@ -182,11 +176,9 @@ end
 
 internal
 // Internal surface flags:
-#define SUIF_PVIS             0x0001
-#define SUIF_FIX_MISSING_MATERIAL 0x0002 // Current Material is a fix replacement
-                                     // (not sent to clients, returned via DMU etc).
-#define SUIF_BLEND            0x0004 // Surface possibly has a blended texture.
-#define SUIF_NO_RADIO         0x0008 // No fakeradio for this surface.
+#define SUIF_FIX_MISSING_MATERIAL   0x0001 ///< Current material is a fix replacement
+                                           /// (not sent to clients, returned via DMU etc).
+#define SUIF_NO_RADIO               0x0002 ///< No fakeradio for this surface.
 
 #define SUIF_UPDATE_FLAG_MASK 0xff00
 #define SUIF_UPDATE_DECORATIONS 0x8000
@@ -455,21 +447,20 @@ internal
                                  (l)->L_frontsector == (l)->L_backsector)
 
 // Internal flags:
-#define LF_POLYOBJ              0x1 // Line is part of a polyobject.
+#define LF_POLYOBJ              0x1 ///< Line is part of a polyobject.
+#define LF_BSPWINDOW            0x2 ///< Line produced a BSP window. @todo Refactor away.
 end
 
 internal
-typedef struct mlinedef_s {
-    // Linedef index. Always valid after loading & pruning of zero
-    // length lines has occurred.
-    int index;
-    
-    // One-sided linedef used for a special effect (windows).
-    // The value refers to the opposite sector on the back side.
-    /// @todo Refactor so this information is represented using the
-    ///       BSP data objects.
-    struct sector_s* windowEffect;
-} mlinedef_t;
+/**
+ * @defgroup sideSectionFlags  Side Section Flags
+ * @ingroup map
+ */
+///@{
+#define SSF_MIDDLE          0x1
+#define SSF_BOTTOM          0x2
+#define SSF_TOP             0x4
+///@}
 
 typedef struct lineside_s {
     struct sector_s* sector; /// Sector on this side.
@@ -500,7 +491,7 @@ struct LineDef
     DOUBLE  coord_t     length /// Accurate length.
     -       AABoxd      aaBox
     -       boolean[DDMAXPLAYERS] mapped /// Whether the line has been mapped by each player yet.
-    -       mlinedef_t  buildData
+    -       int         origIndex; /// Original index in the archived map.
 end
 
 internal

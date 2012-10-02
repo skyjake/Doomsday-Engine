@@ -22,6 +22,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 //#include "abstractfile.h"
 //#include "filelist.h"
 #include "m_misc.h"
@@ -186,4 +187,27 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* fi
     // Back to the original file position.
     DFile_Seek(file, initPos, SEEK_SET);
     return true;
+}
+
+boolean Image_Save(const image_t* img, const char* filePath)
+{
+    DENG_ASSERT(img);
+
+    // Compose the full path.
+    AutoStr* fullPath = Str_Set(AutoStr_NewStd(), filePath);
+    if(Str_IsEmpty(fullPath))
+    {
+        static int n = 0;
+        Str_Appendf(fullPath, "image%ix%i-%3i.png", img->size.width, img->size.height, n++);
+    }
+    else if(!F_FindFileExtension(Str_Text(fullPath)))
+    {
+        Str_Append(fullPath, ".png");
+    }
+    F_ToNativeSlashes(fullPath, fullPath);
+
+    // Swap red and blue channels then save.
+    QImage image = QImage(img->pixels, img->size.width, img->size.height, QImage::Format_ARGB32);
+    image = image.rgbSwapped();
+    return CPP_BOOL(image.save(Str_Text(fullPath)));
 }

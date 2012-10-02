@@ -22,32 +22,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
 #include "hu_msg.h"
 #include "hu_menu.h"
 #include "hu_stuff.h"
 
 D_CMD(MsgResponse);
-
-ccmdtemplate_t msgCCmds[] = {
-    {"messageyes",      "",     CCmdMsgResponse},
-    {"messageno",       "",     CCmdMsgResponse},
-    {"messagecancel",   "",     CCmdMsgResponse},
-    {NULL}
-};
 
 static boolean awaitingResponse;
 static int messageToPrint; // 1 = message to be printed.
@@ -63,10 +46,9 @@ static char yesNoMessage[160];
 
 void Hu_MsgRegister(void)
 {
-    int                 i;
-
-    for(i = 0; msgCCmds[i].name; ++i)
-        Con_AddCommand(msgCCmds + i);
+    C_CMD("messageyes",      "",     MsgResponse)
+    C_CMD("messageno",       "",     MsgResponse)
+    C_CMD("messagecancel",   "",     MsgResponse)
 }
 
 void Hu_MsgInit(void)
@@ -84,8 +66,10 @@ void Hu_MsgInit(void)
 void Hu_MsgShutdown(void)
 {
     if(msgText)
+    {
         free(msgText);
-    msgText = NULL;
+        msgText = NULL;
+    }
 }
 
 static void stopMessage(void)
@@ -102,8 +86,10 @@ static void stopMessage(void)
     awaitingResponse = false;
 
     if(msgText)
+    {
         free(msgText);
-    msgText = NULL;
+        msgText = NULL;
+    }
 
     S_LocalSound(SFX_ENDMESSAGE, NULL);
 
@@ -114,12 +100,12 @@ static void stopMessage(void)
 }
 
 /**
- * \todo: Query the bindings to determine the actual controls bound to the
+ * @todo: Query the bindings to determine the actual controls bound to the
  * message response commands.
  */
 static void composeYesNoMessage(void)
 {
-    char*               buf = yesNoMessage, *in, tmp[2];
+    char* buf = yesNoMessage, *in, tmp[2];
 
     buf[0] = 0;
     tmp[1] = 0;
@@ -222,7 +208,9 @@ void Hu_MsgTicker(void)
     stopMessage();
 
     if(msgType != MSG_ANYKEY && msgCallback)
+    {
         msgCallback(messageResponse, msgUserValue, msgUserPointer);
+    }
 }
 
 int Hu_MsgResponder(event_t* ev)
@@ -252,9 +240,11 @@ boolean Hu_IsMessageActiveWithCallback(msgfunc_t callback)
     return messageToPrint && msgCallback == callback;
 }
 
-void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, int userValue, void* userPointer)
+void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
+    int userValue, void* userPointer)
 {
-    assert(msg);
+    DENG_ASSERT(msg);
+    DENG_ASSERT(!awaitingResponse);
 
     awaitingResponse = true;
     messageResponse = 0;
@@ -291,26 +281,29 @@ D_CMD(MsgResponse)
 {
     if(messageToPrint)
     {
+        const char* cmd;
+
         // Handle "Press any key to continue" messages.
-        if(messageToPrint && msgType == MSG_ANYKEY)
+        if(msgType == MSG_ANYKEY)
         {
             stopMessage();
             return true;
         }
 
-        if(!stricmp(argv[0], "messageyes"))
+        cmd = argv[0] + 7;
+        if(!stricmp(cmd, "yes"))
         {
             awaitingResponse = false;
             messageResponse = MSG_YES;
             return true;
         }
-        else if(!stricmp(argv[0], "messageno"))
+        if(!stricmp(cmd, "no"))
         {
             awaitingResponse = false;
             messageResponse = MSG_NO;
             return true;
         }
-        else if(!stricmp(argv[0], "messagecancel"))
+        if(!stricmp(cmd, "cancel"))
         {
             awaitingResponse = false;
             messageResponse = MSG_CANCEL;

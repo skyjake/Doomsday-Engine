@@ -203,4 +203,18 @@ Values {
       Static = "0";
     };
   };
+
+  # Finale backgrounds:
+
+  BGFLATE1 = "FLOOR4_8"; # DOOM end of episode 1
+  BGFLATE2 = "SFLR6_1";  # DOOM end of episode 2
+  BGFLATE3 = "MFLR8_4";  # DOOM end of episode 3
+  BGFLATE4 = "MFLR8_3";  # DOOM end of episode 4
+  BGFLAT06 = "SLIME16";  # DOOM2 before MAP06
+  BGFLAT11 = "RROCK14";  # DOOM2 before MAP11
+  BGFLAT20 = "RROCK07";  # DOOM2 before MAP20
+  BGFLAT30 = "RROCK17";  # DOOM2 before MAP30
+  BGFLAT15 = "RROCK13";  # DOOM2 from MAP15 to MAP31
+  BGFLAT31 = "RROCK19";  # DOOM2 from MAP31 to MAP32
+  BGCASTCALL = "BOSSBACK";  # End of game cast call
 }

@@ -1,29 +1,23 @@
-/**\file p_saveg.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Common save game handling.
+ * @file p_saveg.h
+ * Common game-save state management.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBCOMMON_SAVESTATE_H
@@ -69,9 +63,9 @@ int SV_SlotForSaveName(const char* name);
  *                 Search is in ascending logical slot order 0..N (where N
  *                 is the number of available save slots).
  *             Pass 2: Check for keyword identifiers.
+ *                 <auto>  = The "auto save" slot.
  *                 <last>  = The last used slot.
  *                 <quick> = The currently nominated "quick save" slot.
- *                 <auto>  = The "auto save" slot.
  *             Pass 3: Check for a logical save slot number.
  *
  * @return  Save slot identifier of the slot else @c -1
@@ -102,30 +96,10 @@ boolean SV_HxHaveMapSaveForSlot(int slot, uint map);
 SaveInfo* SV_SaveInfoForSlot(int slot);
 
 /**
- * @return  File path to the reachable save directory. If the game-save path
- *          is unreachable then a zero-length string is returned instead.
+ * Compose the textual identifier/name for save @a slot.
+ * @return  Name/identifier associated with slot @a slot.
  */
-AutoStr* SV_ComposeSavePathForSlot(int slot);
-
-#if __JHEXEN__
-/**
- * @return  File path to the reachable save directory. If the game-save path
- *          is unreachable then a zero-length string is returned instead.
- */
-AutoStr* SV_ComposeSavePathForMapSlot(uint map, int slot);
-#endif
-
-#if !__JHEXEN__
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with @a gameId.
- *
- * @param gameId  Unique game identifier.
- * @return  File path to the reachable save directory. If the game-save path
- *          is unreachable then a zero-length string is returned instead.
- */
-AutoStr* SV_ComposeSavePathForClientGameId(uint gameId);
-#endif
+AutoStr* SV_ComposeSlotIdentifier(int slot);
 
 /**
  * Deletes all save game files associated with a slot number.

@@ -20,21 +20,13 @@
  */
 
 #include "wadmapconverter.h"
-#include "maplumpinfo.h"
+#include "id1map_load.h"
+#include "id1map_util.h"
+#include <de/Error>
 #include <de/Log>
 
-map_t DENG_PLUGIN_GLOBAL(theMap);
-map_t* DENG_PLUGIN_GLOBAL(map) = &DENG_PLUGIN_GLOBAL(theMap);
-mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
-
-/**
- * Allocate and initialize a new MapLumpInfo record.
- */
-static MapLumpInfo* newMapLumpInfo(lumpnum_t lumpNum, MapLumpType lumpType)
-{
-    MapLumpInfo* info = static_cast<MapLumpInfo*>(malloc(sizeof(*info)));
-    return info->init(lumpNum, lumpType, W_LumpLength(lumpNum));
-}
+#define map                     DENG_PLUGIN_GLOBAL(map)
+Id1Map* map;
 
 /**
  * Given a map @a uri, attempt to locate the associated marker lump for the
@@ -46,26 +38,31 @@ static MapLumpInfo* newMapLumpInfo(lumpnum_t lumpNum, MapLumpType lumpType)
  */
 static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
 {
-    DENG_ASSERT(uri);
+    DENG2_ASSERT(uri);
     const char* mapId = Str_Text(Uri_Path(uri));
     return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
 }
 
 /**
- * Given a @a lumpNumber, attempt to recognize the data as a known map format
- * data lump.
+ * Add a @a newLumpInfo record to the @a lumpInfos record collection. If an
+ * existing MapLumpInfo record of the same type is present in the collection
+ * it will be replaced.
  *
- * @note Presently this recognition logic is rather primitive and relies soley
- *       on matching the lump name to a known name set. This should be expanded
- *       to actually qualify the data itself (expected size checks, etc...).
- *
- * @param lumpNumber    Lump number to recognize the format of.
- * @return MapLumpType identifier for the recognized lump, else @c ML_INVALID.
+ * @param lumpInfos     MapLumpInfo record set to be updated.
+ * @param newLumpInfo   New MapLumpInfo to be added to @a lumpInfos.
+ * @return  Same as @a newLumpInfo for caller convenience.
  */
-static MapLumpType recognizeMapLump(lumpnum_t lumpNumber)
+static MapLumpInfo& addMapLumpInfoToCollection(MapLumpInfos& lumpInfos,
+    MapLumpInfo& newLumpInfo)
 {
-    /// @todo Relocate recognition logic from recognizeMapFormat() here.
-    return MapLumpTypeForName(W_LumpName(lumpNumber));
+    MapLumpType lumpType = newLumpInfo.type;
+    MapLumpInfos::iterator i = lumpInfos.find(lumpType);
+    if(i != lumpInfos.end())
+    {
+        delete i->second;
+    }
+    lumpInfos[lumpType] = &newLumpInfo;
+    return newLumpInfo;
 }
 
 /**
@@ -75,10 +72,8 @@ static MapLumpType recognizeMapLump(lumpnum_t lumpNumber)
  * @param lumpInfos     MapLumpInfo record set to populate.
  * @param startLump     Lump number at which to begin searching.
  */
-static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t startLump)
+static void collectMapLumps(MapLumpInfos& lumpInfos, lumpnum_t startLump)
 {
-    DENG_ASSERT(lumpInfos);
-
     LOG_AS("WadMapConverter");
     LOG_TRACE("Locating data lumps...");
 
@@ -88,118 +83,114 @@ static void collectMapLumps(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES], lumpnum_t
     const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
     for(lumpnum_t i = startLump; i < numLumps; ++i)
     {
-        MapLumpType lumpType = recognizeMapLump(i);
+        // Lump name determines whether this lump should be included.
+        MapLumpType lumpType = MapLumpTypeForName(W_LumpName(i));
 
         // If this lump is of an invalid type then we *should* have found all
         // the required map data lumps.
-        if(lumpType == ML_INVALID)
-        {
-            break; // Stop looking.
-        }
+        if(lumpType == ML_INVALID) break; // Stop looking.
 
         // A recognized map data lump; record it in the collection.
-        if(lumpInfos[lumpType])
-        {
-            free(lumpInfos[lumpType]);
-        }
-        lumpInfos[lumpType] = newMapLumpInfo(i, lumpType);
+        MapLumpInfo* info = new MapLumpInfo();
+        info->init(i, lumpType, W_LumpLength(i));
+        addMapLumpInfoToCollection(lumpInfos, *info);
     }
 }
 
-static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
+static MapFormatId recognizeMapFormat(MapLumpInfos& lumpInfos)
 {
-    DENG_ASSERT(lumpInfos);
-
     LOG_AS("WadMapConverter");
 
     // Assume DOOM format by default.
-    DENG_PLUGIN_GLOBAL(mapFormat) = MF_DOOM;
+    MapFormatId mapFormat = MF_DOOM;
 
-    // Check for format specific lumps.
-    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
+    // Some data lumps are specific to a particular map format and thus
+    // their presence unambiguously signifies which format we have.
+    DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::const_iterator)
     {
-        const MapLumpInfo* info = lumpInfos[i];
+        MapLumpInfo* info = i->second;
         if(!info) continue;
 
         switch(info->type)
         {
-        case ML_BEHAVIOR:   DENG_PLUGIN_GLOBAL(mapFormat) = MF_HEXEN; break;
+        default: break;
+
+        case ML_BEHAVIOR:   mapFormat = MF_HEXEN; break;
 
         case ML_MACROS:
         case ML_LIGHTS:
-        case ML_LEAFS:      DENG_PLUGIN_GLOBAL(mapFormat) = MF_DOOM64; break;
-
-        default: break;
+        case ML_LEAFS:      mapFormat = MF_DOOM64; break;
         }
     }
 
+    // Determine whether each data lump is of the expected size.
     uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
+    DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::const_iterator)
     {
-        const MapLumpInfo* info = lumpInfos[i];
+        MapLumpInfo* info = i->second;
         if(!info) continue;
 
         // Determine the number of map data objects of each data type.
         uint* elmCountAddr = NULL;
-        size_t elmSize = 0; // Num of bytes.
+        size_t elementSize = ElementSizeForMapLumpType(mapFormat, info->type);
         switch(info->type)
         {
-        case ML_VERTEXES:
-            elmCountAddr = &numVertexes;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
-            break;
-
-        case ML_THINGS:
-            elmCountAddr = &numThings;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64THING :
-                       DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
-            break;
-
-        case ML_LINEDEFS:
-            elmCountAddr = &numLines;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64LINEDEF :
-                       DENG_PLUGIN_GLOBAL(mapFormat) == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
-            break;
-
-        case ML_SIDEDEFS:
-            elmCountAddr = &numSides;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
-            break;
-
-        case ML_SECTORS:
-            elmCountAddr = &numSectors;
-            elmSize = (DENG_PLUGIN_GLOBAL(mapFormat) == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
-            break;
-
-        case ML_LIGHTS:
-            elmCountAddr = &numLights;
-            elmSize = SIZEOF_LIGHT;
-            break;
-
         default: break;
+
+        case ML_VERTEXES:   elmCountAddr = &numVertexes;    break;
+        case ML_THINGS:     elmCountAddr = &numThings;      break;
+        case ML_LINEDEFS:   elmCountAddr = &numLines;       break;
+        case ML_SIDEDEFS:   elmCountAddr = &numSides;       break;
+        case ML_SECTORS:    elmCountAddr = &numSectors;     break;
+        case ML_LIGHTS:     elmCountAddr = &numLights;      break;
         }
 
         if(elmCountAddr)
         {
-            if(0 != info->length % elmSize)
+            if(0 != info->length % elementSize)
             {
                 // What is this??
-                DENG_PLUGIN_GLOBAL(mapFormat) = MF_UNKNOWN;
-                return;
+                return MF_UNKNOWN;
             }
 
-            *elmCountAddr += info->length / elmSize;
+            *elmCountAddr += info->length / elementSize;
         }
     }
 
     // A valid map has at least one of each of these elements.
     if(!numVertexes || !numLines || !numSides || !numSectors)
     {
-        DENG_PLUGIN_GLOBAL(mapFormat) = MF_UNKNOWN;
-        return;
+        return MF_UNKNOWN;
     }
 
-    LOG_INFO("Recognized a %s format map.") << Str_Text(MapFormatNameForId(DENG_PLUGIN_GLOBAL(mapFormat)));
+    LOG_INFO("Recognized a %s format map.") << Str_Text(MapFormatNameForId(mapFormat));
+    return mapFormat;
+}
+
+static void loadAndTransferMap(MapFormatId mapFormat, MapLumpInfos& lumpInfos)
+{
+    DENG2_ASSERT(VALID_MAPFORMATID(mapFormat));
+
+    // Load the archived map.
+    map = new Id1Map(mapFormat);
+    map->load(lumpInfos);
+
+    // Perform post read analyses.
+    {
+        LOG_AS("WadMapConverter");
+        map->analyze();
+    }
+
+    // Rebuild the map in Doomsday's native format.
+    MPE_Begin("");
+    {
+        LOG_AS("WadMapConverter");
+        map->transfer();
+
+        // We have now finished with our local for-conversion map representation.
+        delete map; map = 0;
+    }
+    MPE_End();
 }
 
 /**
@@ -211,11 +202,12 @@ static void recognizeMapFormat(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES])
  */
 int ConvertMapHook(int hookType, int parm, void* context)
 {
-    int loadError;
+    MapLumpInfos lumpInfos;
+    MapFormatId mapFormat;
 
-    DENG_UNUSED(hookType);
-    DENG_UNUSED(parm);
-    DENG_ASSERT(context);
+    DENG2_UNUSED(hookType);
+    DENG2_UNUSED(parm);
+    DENG2_ASSERT(context);
 
     // Begin the conversion attempt.
     int ret_val = true; // Assume success.
@@ -230,46 +222,43 @@ int ConvertMapHook(int hookType, int parm, void* context)
     }
 
     // Collect all of the map data lumps associated with this map.
-    MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES];
-    memset(lumpInfos, 0, sizeof(lumpInfos));
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
     // Do we recognize this format?
-    recognizeMapFormat(lumpInfos);
-    if(DENG_PLUGIN_GLOBAL(mapFormat) == MF_UNKNOWN)
+    mapFormat = recognizeMapFormat(lumpInfos);
+    if(!VALID_MAPFORMATID(mapFormat))
     {
         ret_val = false;
         goto FAIL_UNKNOWN_FORMAT;
     }
 
-    // Read the archived map.
-    loadError = LoadMap(lumpInfos);
-    if(loadError)
+    // Convert this map.
+    try
+    {
+        loadAndTransferMap(mapFormat, lumpInfos);
+    }
+    catch(Id1Map::LumpBufferError& er)
     {
         LOG_AS("WadMapConverter");
-        LOG_INFO("Internal load error %i, aborting conversion...") << loadError;
+        LOG_WARNING("Load error: %s\nAborting conversion...") << er.asText();
         ret_val = false;
-        goto FAIL_LOAD_ERROR;
     }
 
-    // Perform post read analyses.
-    AnalyzeMap();
-
-    // Rebuild the map in Doomsday's native format.
-    MPE_Begin("");
-    {
-        TransferMap();
-    }
-    MPE_End();
+FAIL_UNKNOWN_FORMAT:
 
     // Cleanup.
-FAIL_LOAD_ERROR:
-FAIL_UNKNOWN_FORMAT:
-    for(uint i = 0; i < (uint)NUM_MAPLUMP_TYPES; ++i)
+    if(map)
     {
-        MapLumpInfo* info = lumpInfos[i];
+        // If the Id1Map instance still exists it can only mean an error occured
+        // during map data load.
+        delete map; map = 0;
+    }
+
+    DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::iterator)
+    {
+        MapLumpInfo* info = i->second;
         if(!info) continue;
-        free(info);
+        delete info;
     }
 
 FAIL_LOCATE_MAP:

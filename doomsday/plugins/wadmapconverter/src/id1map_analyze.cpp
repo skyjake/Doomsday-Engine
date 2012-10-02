@@ -24,52 +24,85 @@
 #include "wadmapconverter.h"
 #include <de/Log>
 
-#define mapFormat               DENG_PLUGIN_GLOBAL(mapFormat)
-#define map                     DENG_PLUGIN_GLOBAL(map)
-
-static uint PolyLineCount;
 static uint validCount = 0; // Used for Polyobj LineDef collection.
 
-/**
- * Create a temporary polyobj (read from the original map data).
- */
-static bool createPolyobj(mline_t** lineList, uint num, uint* poIdx,
-    int tag, int sequenceType, int16_t anchorX, int16_t anchorY)
+void Id1Map::collectPolyobjLinesWorker(LineList& lineList, coord_t x, coord_t y)
 {
-    if(!lineList || num == 0)
-        return false;
-
-    // Allocate the new polyobj.
-    mpolyobj_t* po = (mpolyobj_t*)calloc(1, sizeof(*po));
-
-    /**
-     * Link the new polyobj into the global list.
-     */
-    mpolyobj_t** newList = (mpolyobj_t**)malloc(((++map->numPolyobjs) + 1) * sizeof(mpolyobj_t*));
-    // Copy the existing list.
-    uint n = 0;
-    for(uint i = 0; i < map->numPolyobjs - 1; ++i, n++)
+    DENG2_FOR_EACH(i, lines, Lines::iterator)
     {
-        newList[i] = map->polyobjs[i];
+        // Already belongs to another polyobj?
+        if((i)->aFlags & LAF_POLYOBJ) continue;
+
+        // Have we already encounterd this?
+        if((i)->validCount == validCount) continue;
+
+        coord_t v1[2];
+        v1[VX] = vertexes[( (i)->v[0] - 1 ) * 2];
+        v1[VY] = vertexes[( (i)->v[0] - 1 ) * 2 + 1];
+
+        coord_t v2[2];
+        v2[VX] = vertexes[( (i)->v[1] - 1 ) * 2];
+        v2[VY] = vertexes[( (i)->v[1] - 1 ) * 2 + 1];
+
+        if(FEQUAL(v1[VX], x) && FEQUAL(v1[VY], y))
+        {
+            (i)->validCount = validCount;
+            lineList.push_back( i - lines.begin() );
+            collectPolyobjLinesWorker(lineList, v2[VX], v2[VY]);
+        }
     }
-    newList[n++] = po; // Add the new polyobj.
-    newList[n] = NULL; // Terminate.
+}
 
-    if(map->numPolyobjs-1 > 0)
-        free(map->polyobjs);
-    map->polyobjs = newList;
+/**
+ * @todo This terribly inefficent (naive) algorithm may need replacing
+ *       (it is far outside an acceptable polynomial range!).
+ */
+void Id1Map::collectPolyobjLines(LineList& lineList, Lines::iterator lineIt)
+{
+    mline_t* line = &*lineIt;
+    line->xType = 0;
+    line->xArgs[0] = 0;
 
-    po->idx = map->numPolyobjs-1;
+    coord_t v1[2];
+    v1[VX] = vertexes[(line->v[0]-1) * 2];
+    v1[VY] = vertexes[(line->v[0]-1) * 2 + 1];
+
+    coord_t v2[2];
+    v2[VX] = vertexes[(line->v[1]-1) * 2];
+    v2[VY] = vertexes[(line->v[1]-1) * 2 + 1];
+
+    validCount++;
+    // Insert the first line.
+    lineList.push_back(lineIt - lines.begin());
+    line->validCount = validCount;
+    collectPolyobjLinesWorker(lineList, v2[VX], v2[VY]);
+}
+
+mpolyobj_t* Id1Map::createPolyobj(LineList& lineList, int tag,
+    int sequenceType, int16_t anchorX, int16_t anchorY)
+{
+    // Allocate the new polyobj.
+    polyobjs.push_back(mpolyobj_t());
+    mpolyobj_t* po = &polyobjs.back();
+
+    po->idx = polyobjs.size()-1;
     po->tag = tag;
     po->seqType = sequenceType;
     po->anchor[VX] = anchorX;
     po->anchor[VY] = anchorY;
-    po->lineCount = num;
-    po->lineIndices = (uint*)malloc(sizeof(uint) * num);
-    for(uint i = 0; i < num; ++i)
+
+    // Construct the line indices array we'll pass to the MPE interface.
+    po->lineCount = lineList.size();
+    po->lineIndices = (uint*)malloc(sizeof(uint) * po->lineCount);
+    uint n = 0;
+    for(LineList::iterator i = lineList.begin(); i != lineList.end(); ++i, ++n)
     {
-        mline_t* line = lineList[i];
+        uint lineIdx = *i;
+        mline_t* line = &lines[lineIdx];
+
+        // This line now belongs to a polyobj.
         line->aFlags |= LAF_POLYOBJ;
+
         /**
          * Due a logic error in hexen.exe, when the column drawer is
          * presented with polyobj segs built from two-sided linedefs;
@@ -81,250 +114,128 @@ static bool createPolyobj(mline_t** lineList, uint num, uint* poIdx,
          */
         if(line->sides[LEFT] != 0)
             line->ddFlags |= DDLF_DONTPEGBOTTOM;
-        po->lineIndices[i] = (line - map->lines) + 1; // 1-based indices.
+
+        po->lineIndices[n] = lineIdx + 1; // 1-based indices.
     }
 
-    if(poIdx)
-        *poIdx = po->idx;
-
-    return true; // Success!
+    return po;
 }
 
-/**
- * @param lineList      @c NULL, will cause IterFindPolyLines to count
- *                      the number of lines in the polyobj.
- */
-static void iterFindPolyLines(coord_t x, coord_t y, mline_t** lineList)
+bool Id1Map::findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 {
-    for(uint i = 0; i < map->numLines; ++i)
+    LineList polyLines;
+
+    // First look for a PO_LINE_START linedef set with this tag.
+    DENG2_FOR_EACH(i, lines, Lines::iterator)
     {
-        mline_t* line = &map->lines[i];
+        // Already belongs to another polyobj?
+        if((i)->aFlags & LAF_POLYOBJ) continue;
 
-        if(line->aFlags & LAF_POLYOBJ) continue;
-        if(line->validCount == validCount) continue;
+        if(!((i)->xType == PO_LINE_START && (i)->xArgs[0] == tag)) continue;
 
-        coord_t v1[2];
-        v1[VX] = map->vertexes[(line->v[0] - 1) * 2];
-        v1[VY] = map->vertexes[(line->v[0] - 1) * 2 + 1];
-
-        coord_t v2[2];
-        v2[VX] = map->vertexes[(line->v[1] - 1) * 2];
-        v2[VY] = map->vertexes[(line->v[1] - 1) * 2 + 1];
-
-        if(FEQUAL(v1[VX], x) && FEQUAL(v1[VY], y))
+        collectPolyobjLines(polyLines, i);
+        if(!polyLines.empty())
         {
-            line->validCount = validCount;
+            int8_t sequenceType = (i)->xArgs[2];
+            if(sequenceType >= SEQTYPE_NUMSEQ) sequenceType = 0;
 
-            if(!lineList)
-            {
-                PolyLineCount++;
-            }
-            else
-            {
-                *lineList++ = line;
-            }
-
-            iterFindPolyLines(v2[VX], v2[VY], lineList);
+            createPolyobj(polyLines, tag, sequenceType, anchorX, anchorY);
+            return true;
         }
+        return false;
     }
-}
 
-/**
- * @todo This terribly inefficent (naive) algorithm may need replacing
- *       (it is far outside an acceptable polynomial range!).
- */
-static mline_t** collectPolyobjLines(mline_t* line, uint* num)
-{
-    DENG_ASSERT(line);
-
-    line->xType = 0;
-    line->xArgs[0] = 0;
-
-    coord_t v1[2];
-    v1[VX] = map->vertexes[(line->v[0]-1) * 2];
-    v1[VY] = map->vertexes[(line->v[0]-1) * 2 + 1];
-
-    coord_t v2[2];
-    v2[VX] = map->vertexes[(line->v[1]-1) * 2];
-    v2[VY] = map->vertexes[(line->v[1]-1) * 2 + 1];
-
-    PolyLineCount = 1;
-    validCount++;
-    line->validCount = validCount;
-    iterFindPolyLines(v2[VX], v2[VY], NULL);
-
-    mline_t** lineList = (mline_t**)malloc((PolyLineCount+1) * sizeof(mline_t*));
-
-    lineList[0] = line; // Insert the first line.
-    validCount++;
-    line->validCount = validCount;
-    iterFindPolyLines(v2[VX], v2[VY], lineList + 1);
-    lineList[PolyLineCount] = 0; // Terminate.
-
-    if(num)
+    // Perhaps a PO_LINE_EXPLICIT linedef set with this tag?
+    for(uint n = 0; ; ++n)
     {
-        *num = PolyLineCount;
-    }
-    return lineList;
-}
+        bool foundAnotherLine = false;
 
-/**
- * Find all linedefs marked as belonging to a polyobject with the given tag
- * and attempt to create a polyobject from them.
- *
- * @param tag           Line tag of linedefs to search for.
- *
- * @return @c true = successfully created polyobj.
- */
-static bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
-{
-#define MAXPOLYLINES         32
-
-    for(uint i = 0; i < map->numLines; ++i)
-    {
-        mline_t* line = &map->lines[i];
-
-        if(line->aFlags & LAF_POLYOBJ) continue;
-        if(!(line->xType == PO_LINE_START && line->xArgs[0] == tag)) continue;
-
-        uint num;
-        mline_t** lineList = collectPolyobjLines(line, &num);
-        if(lineList)
+        DENG2_FOR_EACH(i, lines, Lines::iterator)
         {
-            byte seqType = line->xArgs[2];
-            if(seqType >= SEQTYPE_NUMSEQ) seqType = 0;
+            // Already belongs to another polyobj?
+            if((i)->aFlags & LAF_POLYOBJ) continue;
 
-            uint poIdx;
-            bool result = createPolyobj(lineList, num, &poIdx, tag, seqType, anchorX, anchorY);
-            free(lineList);
-
-            if(result) return true;
-        }
-    }
-
-    /**
-     * Didn't find a polyobj through PO_LINE_START.
-     * We'll try another approach...
-     */
-    mline_t* polyLineList[MAXPOLYLINES];
-    uint lineCount = 0;
-    uint psIndex = 0;
-
-    for(uint j = 1; j < MAXPOLYLINES; ++j)
-    {
-        uint psIndexOld = psIndex;
-
-        for(uint i = 0; i < map->numLines; ++i)
-        {
-            mline_t* line = &map->lines[i];
-
-            if(line->aFlags & LAF_POLYOBJ) continue;
-
-            if(line->xType == PO_LINE_EXPLICIT &&
-               line->xArgs[0] == tag)
+            if((i)->xType == PO_LINE_EXPLICIT && (i)->xArgs[0] == tag)
             {
-                if(!line->xArgs[1])
+                if((i)->xArgs[1] <= 0)
                 {
-                    LOG_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d).") << j + 1 << tag;
-                    for(uint k = 0; k < psIndex; ++k)
-                    {
-                        mline_t* line = polyLineList[k];
-                        line->aFlags &= ~LAF_POLYOBJ;
-                    }
+                    LOG_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d).") << n + 1 << tag;
                     return false;
                 }
 
-                if(line->xArgs[1] == j)
+                if(uint((i)->xArgs[1]) == n+1)
                 {
                     // Add this line to the list.
-                    polyLineList[psIndex] = line;
-                    lineCount++;
-                    psIndex++;
-                    if(psIndex > MAXPOLYLINES)
-                    {
-                        LOG_WARNING("Too many linedefs (%d > %d) in explicit polyobj (tag:%d).") << psIndex << MAXPOLYLINES << tag;
-                        for(uint k = 0; k < psIndex; ++k)
-                        {
-                            mline_t* line = polyLineList[k];
-                            line->aFlags &= ~LAF_POLYOBJ;
-                        }
-                        return false;
-                    }
+                    polyLines.push_back( i - lines.begin() );
+                    foundAnotherLine = true;
 
-                    // Clear out any special.
-                    line->xType = 0;
-                    line->xArgs[0] = 0;
-                    line->aFlags |= LAF_POLYOBJ;
+                    // Clear any special.
+                    (i)->xType = 0;
+                    (i)->xArgs[0] = 0;
                 }
             }
         }
 
-        if(psIndex == psIndexOld)
+        if(foundAnotherLine)
         {
             // Check if an explicit line order has been skipped.
             // A line has been skipped if there are any more explicit lines with
             // the current tag value.
-            for(uint i = 0; i < map->numLines; ++i)
+            DENG2_FOR_EACH(i, lines, Lines::iterator)
             {
-                mline_t* line = &map->lines[i];
-
-                if(line->xType == PO_LINE_EXPLICIT && line->xArgs[0] == tag)
+                if((i)->xType == PO_LINE_EXPLICIT && (i)->xArgs[0] == tag)
                 {
-                    LOG_WARNING("Linedef missing (#%d) in explicit polyobj (tag:%d).") << j << tag;
-                    for(uint k = 0; k < psIndex; ++k)
-                    {
-                        mline_t* line = polyLineList[k];
-                        line->aFlags &= ~LAF_POLYOBJ;
-                    }
+                    LOG_WARNING("Linedef missing (#%d) in explicit polyobj (tag:%d).") << n << tag;
                     return false;
                 }
             }
         }
-    }
-
-    if(lineCount)
-    {
-        const int seqType = polyLineList[0]->xArgs[3];
-        uint poIdx;
-
-        if(createPolyobj(polyLineList, lineCount, &poIdx, tag, seqType, anchorX, anchorY))
+        else
         {
-            mline_t* line = polyLineList[0];
-
-            // Next, change the polyobjs first line to point to a mirror
-            // if it exists.
-            line->xArgs[1] = line->xArgs[2];
-
-            return true;
+            // All lines have now been found.
+            break;
         }
     }
 
-    return false;
+    if(polyLines.empty())
+    {
+        LOG_WARNING("Failed to locate a single line for polyobj (tag:%d).") << tag;
+        return false;
+    }
 
-#undef MAXPOLYLINES
+    mline_t* line = &lines[ polyLines.front() ];
+    const int8_t sequenceType = line->xArgs[3];
+
+    // Setup the mirror if it exists.
+    line->xArgs[1] = line->xArgs[2];
+
+    createPolyobj(polyLines, tag, sequenceType, anchorX, anchorY);
+    return true;
 }
 
-static void findPolyobjs(void)
+void Id1Map::findPolyobjs(void)
 {
-    LOG_AS("WadMapConverter");
     LOG_TRACE("Locating polyobjs...");
-
-    for(uint i = 0; i < map->numThings; ++i)
+    DENG2_FOR_EACH(i, things, Things::iterator)
     {
-        mthing_t* thing = &map->things[i];
-        if(thing->doomEdNum == PO_ANCHOR_DOOMEDNUM)
+        // A polyobj anchor?
+        if((i)->doomEdNum == PO_ANCHOR_DOOMEDNUM)
         {
-            // A polyobj anchor.
-            const int tag = thing->angle;
-            findAndCreatePolyobj(tag, thing->origin[VX], thing->origin[VY]);
+            const int tag = (i)->angle;
+            findAndCreatePolyobj(tag, (i)->origin[VX], (i)->origin[VY]);
         }
     }
 }
 
-void AnalyzeMap(void)
+void Id1Map::analyze(void)
 {
+    uint startTime = Sys_GetRealTime();
+
+    LOG_AS("Id1Map");
     if(mapFormat == MF_HEXEN)
     {
         findPolyobjs();
     }
+
+    LOG_VERBOSE("Analyses completed in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
 }

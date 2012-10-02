@@ -350,7 +350,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
         Con_Error("setupPSpriteParams: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    pTex = (patchtex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    pTex = (patchtex_t*)Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);
     texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(spec);
@@ -818,14 +818,16 @@ static boolean generateHaloForVisSprite(const vissprite_t* spr, boolean primary)
     if(spr->data.flare.isDecoration)
     {
         /**
-         * \kludge surface decorations do not yet persist over frames,
-         * thus we do not smoothly occlude their flares. Instead, we will
-         * have to put up with them instantly appearing/disappearing.
+         * Surface decorations do not yet persist over frames, so we do
+         * not smoothly occlude their flares. Instead, we will have to
+         * put up with them instantly appearing/disappearing.
          */
         occlussionFactor = (LO_IsClipped(spr->data.flare.lumIdx, viewPlayer - ddPlayers)? 0 : 1);
     }
     else
+    {
         occlussionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
+    }
 
     return H_RenderHalo(spr->origin[VX], spr->origin[VY], spr->origin[VZ],
                         spr->data.flare.size,
@@ -916,7 +918,7 @@ void Rend_DrawMasked(void)
     }
 }
 
-static materialvariant_t* chooseSpriteMaterial(const rendspriteparams_t* p)
+static MaterialVariant* chooseSpriteMaterial(const rendspriteparams_t* p)
 {
     assert(p);
 
@@ -946,7 +948,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     boolean restoreZ = false;
     coord_t spriteCenter[3];
     coord_t surfaceNormal[3];
-    materialvariant_t* mat = NULL;
+    MaterialVariant* mat = NULL;
     const materialsnapshot_t* ms = NULL;
     float s = 1, t = 1; ///< Bottom right coords.
     int i;
@@ -970,7 +972,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 
         if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) == TN_SPRITES)
         {
-            pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+            pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
             assert(pTex);
             viewOffset.x += (float) -pTex->offX;
         }

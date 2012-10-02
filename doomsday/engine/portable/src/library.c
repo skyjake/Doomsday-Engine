@@ -22,6 +22,7 @@
 
 #ifdef UNIX
 #  include <sys/types.h>
+#  include <sys/stat.h>
 #  include <unistd.h>
 #  include <dirent.h>
 #  include <dlfcn.h>
@@ -305,6 +306,32 @@ void Library_AddSearchDir(const char *dir)
     /// @todo  Implement this (and use it in the lookup)
 }
 
+#ifdef UNIX
+static boolean isPossiblyLibraryFile(const char* path, const struct dirent* entry)
+{
+    if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) return false;
+
+#ifdef MACOSX
+    // Mac plugins are bundled in a subdir.
+    if(entry->d_type != DT_REG &&
+       entry->d_type != DT_DIR &&
+       entry->d_type != DT_LNK) return false;
+#else
+    {
+        struct stat st;
+        AutoStr* fn = AutoStr_FromText(path);
+        Str_Appendf(fn, "/%s", entry->d_name);
+        if(lstat(Str_Text(fn), &st)) return false; // stat failed...
+        // Only regular files and symlinks are considered.
+        if(!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode)) return false;
+    }
+#endif
+
+    // Could be a shared library...
+    return true;
+}
+#endif
+
 int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *data)
 {
 #ifdef UNIX
@@ -326,22 +353,14 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
 
     while((entry = readdir(dir)))
     {
-        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
-#ifdef MACOSX
-        // Mac plugins are bundled in a subdir.
-        if(entry->d_type != DT_REG && entry->d_type != DT_DIR &&
-           entry->d_type != DT_LNK) continue;
-#else
-        // Also include symlinks.
-        if(entry->d_type != DT_REG && entry->d_type != DT_LNK) continue;
-#endif
+        if(!isPossiblyLibraryFile(bundlePath, entry)) continue;
         if(func(entry->d_name, data)) break;
     }
     closedir(dir);
 #endif
 
 #ifdef WIN32
-    printf("TODO: a similar routine should be in dd_winit.c; move the code here\n");
+    printf("TODO: a similar routine exists in dd_winit.c; move the code here\n");
 #endif
 
     return 0;

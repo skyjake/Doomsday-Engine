@@ -28,19 +28,51 @@
 #ifndef LIBDENG_BSP_VERTEXINFO
 #define LIBDENG_BSP_VERTEXINFO
 
-struct HEdgeTip;
+#include <list>
+#include "map/bsp/partitioner.h"
+#include "map/bsp/hedgetip.h"
 
 namespace de {
 namespace bsp {
 
 /**
- * Plain old data (POD) structure used to record additional information and
- * precalculated values for a Vertex in the current map.
+ * Data type used to record additional information and precalculated
+ * values for a Vertex in the current map.
  */
-struct VertexInfo
+class VertexInfo
 {
-    struct HEdgeTip* tipSet;
-    VertexInfo() : tipSet(0) {}
+public:
+    typedef std::list<HEdgeTip> HEdgeTips;
+
+    VertexInfo() : oneSidedOwnerCount(0), twoSidedOwnerCount(0), tips(0) {}
+
+    // Total number of one and two-sided line owners.
+    uint oneSidedOwnerCount;
+    uint twoSidedOwnerCount;
+
+    /**
+     * Add a new HEdgeTip to the set in it's rightful place according to an
+     * anti-clockwise (increasing angle) order.
+     */
+    HEdgeTip& addHEdgeTip(coord_t angle, HEdge* front = 0, HEdge* back = 0,
+                          coord_t angleEpsilon = ANG_EPSILON)
+    {
+        HEdgeTips::reverse_iterator after;
+
+        for(after = tips.rbegin();
+            after != tips.rend() && angle + angleEpsilon < (*after).angle(); after++)
+        {}
+
+        return *tips.insert(after.base(), HEdgeTip(angle, front, back));
+    }
+
+    /// Clear all HEdgeTips in the set.
+    void clearHEdgeTips() { tips.clear(); }
+
+    const HEdgeTips& hedgeTips() const { return tips; }
+
+private:
+    HEdgeTips tips;
 };
 
 } // namespace bsp

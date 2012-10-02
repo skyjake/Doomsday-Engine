@@ -25,8 +25,10 @@
 #include "updatersettingsdialog.h"
 #include "versioninfo.h"
 #include "window.h"
+#include <de/App>
 #include <de/Log>
 #include <QUrl>
+#include <QDesktopWidget>
 #include <QDesktopServices>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
@@ -81,7 +83,7 @@ struct UpdateAvailableDialog::Instance
     void init()
     {
 #ifndef MACOSX
-        self->setWindowTitle(tr("Doomsday %1").arg(VersionInfo().asText()));
+        self->setWindowTitle(tr(DOOMSDAY_NICENAME" %1").arg(VersionInfo().asText()));
 #endif
 
         emptyResultPage = true;
@@ -137,11 +139,12 @@ struct UpdateAvailableDialog::Instance
         info->setTextFormat(Qt::RichText);
 
         VersionInfo currentVersion;
-        int bigFontSize = self->font().pointSize() * 1.2;
-        de::String channel = (UpdaterSettings().channel() == UpdaterSettings::Stable?
-                                  "stable" : "unstable");
-        bool askUpgrade = false;
-        bool askDowngrade = false;
+
+        int bigFontSize        = self->font().pointSize() * 1.2;
+        de::String channel     = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
+        de::String builtInType = (de::String(DOOMSDAY_RELEASE_TYPE) == "Stable"? "stable" : "unstable");
+        bool askUpgrade        = false;
+        bool askDowngrade      = false;
 
         if(latestVersion > currentVersion)
         {
@@ -154,7 +157,7 @@ struct UpdateAvailableDialog::Instance
                           .arg(latestVersion.asText())
                           .arg(currentVersion.asText()));
         }
-        else if(!channel.compareWithoutCase(DOOMSDAY_RELEASE_TYPE)) // same release type
+        else if(channel == builtInType) // same release type
         {
             info->setText(("<span style=\"font-weight:bold; font-size:%1pt;\">" +
                            tr("You are up to date.") + "</span><p>" +
@@ -234,6 +237,8 @@ UpdateAvailableDialog::UpdateAvailableDialog(const VersionInfo& latestVersion, d
 {
     d = new Instance(this, latestVersion);
     d->changeLog = changeLogUri;
+
+    connect(DENG2_APP, SIGNAL(displayModeChanged()), this, SLOT(recenterDialog()));
 }
 
 UpdateAvailableDialog::~UpdateAvailableDialog()
@@ -270,4 +275,12 @@ void UpdateAvailableDialog::editSettings()
         // Rerun the check.
         emit checkAgain();
     }
+}
+
+void UpdateAvailableDialog::recenterDialog()
+{
+    LOG_DEBUG("Recentering the updater notification dialog.");
+
+    QRect screen = QApplication::desktop()->screenGeometry(0);
+    move(screen.center() - rect().center());
 }

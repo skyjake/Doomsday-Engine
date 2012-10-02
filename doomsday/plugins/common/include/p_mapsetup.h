@@ -31,6 +31,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // If true we are in the process of setting up a map.
 extern boolean mapSetup;
 
@@ -65,5 +69,9 @@ void P_FindSecrets(void);
 void P_SpawnSectorMaterialOriginScrollers(void);
 void P_SpawnSideMaterialOriginScrollers(void);
 void P_SpawnAllMaterialOriginScrollers(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_PLAYSETUP_H */

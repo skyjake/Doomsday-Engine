@@ -77,7 +77,7 @@ Finale
   Script {
     NoSkip
     Music "victor"
-    Flat FLOOR4_8
+    Flat Values:BGFLATE1
     Wait 0.5
     TextDef msg 10 10 "E1TEXT"
     WaitText msg

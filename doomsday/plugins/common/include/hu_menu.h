@@ -33,6 +33,10 @@
 #include "dd_types.h"
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
 #define SFX_MENU_CLOSE      (SFX_SWTCHX)
@@ -47,6 +51,7 @@
 #define SFX_QUICKSAVE_PROMPT (SFX_SWTCHN)
 #define SFX_QUICKLOAD_PROMPT (SFX_SWTCHN)
 #define SFX_DELETESAVEGAME_CONFIRM (SFX_SWTCHN)
+#define SFX_REBORNLOAD_CONFIRM (SFX_SWTCHN)
 #elif __JHERETIC__
 #define SFX_MENU_CLOSE      (SFX_DORCLS)
 #define SFX_MENU_OPEN       (SFX_SWITCH)
@@ -60,6 +65,7 @@
 #define SFX_QUICKSAVE_PROMPT (SFX_CHAT)
 #define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
 #define SFX_DELETESAVEGAME_CONFIRM (SFX_CHAT)
+#define SFX_REBORNLOAD_CONFIRM (SFX_CHAT)
 #elif __JHEXEN__
 #define SFX_MENU_CLOSE      (SFX_DOOR_LIGHT_CLOSE)
 #define SFX_MENU_OPEN       (SFX_DOOR_LIGHT_CLOSE)
@@ -73,6 +79,7 @@
 #define SFX_QUICKSAVE_PROMPT (SFX_CHAT)
 #define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
 #define SFX_DELETESAVEGAME_CONFIRM (SFX_CHAT)
+#define SFX_REBORNLOAD_CONFIRM (SFX_CHAT)
 #endif
 
 #define MENU_CURSOR_REWIND_SPEED    20
@@ -207,5 +214,9 @@ int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* 
 
 D_CMD(MenuOpen);
 D_CMD(MenuCommand);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_HU_MENU_H */

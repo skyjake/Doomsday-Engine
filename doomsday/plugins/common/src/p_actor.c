@@ -1,93 +1,56 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * p_actor.c: Common code relating to mobjs.
+ * @file p_actor.c
+ * Common code relating to mobj management. @ingroup libcommon
  *
- * Mobj management, movement smoothing etc.
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
 #include "p_tick.h"
 #include "p_actor.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define MIN_STEP        ((10 * ANGLE_1) >> 16)  // degrees per tic
-#define MAX_STEP        (ANG90 >> 16)
+#define MIN_STEP                ((10 * ANGLE_1) >> 16) ///< Degrees per tic
+#define MAX_STEP                (ANG90 >> 16)
 
 #if __JDOOM64__
-# define RESPAWNTICS    (4 * TICSPERSEC)
+# define RESPAWNTICS            (4 * TICSPERSEC)
 #else
-# define RESPAWNTICS    (30 * TICSPERSEC)
+# define RESPAWNTICS            (30 * TICSPERSEC)
 #endif
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct spawnqueuenode_s {
-    int             startTime;
-    int             minTics; // Minimum number of tics before respawn.
-    void          (*callback) (mobj_t* mo, void* context);
-    void*           context;
+    int startTime;
+    int minTics; ///< Minimum number of tics before respawn.
+    void (*callback) (mobj_t* mo, void* context);
+    void* context;
 
-    coord_t         pos[3];
-    angle_t         angle;
-    mobjtype_t      type;
-    int             spawnFlags; // MSF_* flags
+    coord_t pos[3];
+    angle_t angle;
+    mobjtype_t type;
+    int spawnFlags; ///< MSF_* flags
 
     struct spawnqueuenode_s* next;
 } spawnqueuenode_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static spawnqueuenode_t* spawnQueueHead = NULL, *unusedNodes = NULL;
-
-// CODE --------------------------------------------------------------------
 
 void P_SpawnTelefog(mobj_t* mo, void* context)
 {
@@ -138,7 +101,7 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 #if __JHEXEN__
     if((mo->flags & MF_COUNTKILL) && (mo->flags & MF_CORPSE))
     {
-        A_DeQueueCorpse(mo);
+        P_RemoveCorpseInQueue(mo);
     }
 
     P_MobjRemoveFromTIDList(mo);
@@ -161,12 +124,9 @@ void P_RemoveAllPlayerMobjs(void)
     }
 }
 
-/**
- * Called after a move to link the mobj back into the world.
- */
 void P_MobjSetOrigin(mobj_t* mo)
 {
-    int flags = DDLINK_BLOCKMAP;
+    int flags = DDLINK_BLOCKMAP; // Always.
 
     if(!(mo->flags & MF_NOSECTOR))
         flags |= DDLINK_SECTOR;
@@ -174,43 +134,26 @@ void P_MobjSetOrigin(mobj_t* mo)
     P_MobjLink(mo, flags);
 }
 
-/**
- * Unlinks a mobj from the world so that it can be moved.
- */
 void P_MobjUnsetOrigin(mobj_t* mo)
 {
     P_MobjUnlink(mo);
 }
 
-/**
- * The actor has taken a step, set the corresponding short-range visual
- * offset.
- */
 void P_MobjSetSRVO(mobj_t* mo, coord_t stepx, coord_t stepy)
 {
     mo->srvo[VX] = -stepx;
     mo->srvo[VY] = -stepy;
 }
 
-/**
- * The actor has taken a step, set the corresponding short-range visual
- * offset.
- */
 void P_MobjSetSRVOZ(mobj_t* mo, coord_t stepz)
 {
     mo->srvo[VZ] = -stepz;
 }
 
-/**
- * Turn visual angle towards real angle. An engine cvar controls whether
- * the visangle or the real angle is used in rendering.
- * Real-life analogy: angular momentum (you can't suddenly just take a
- * 90 degree turn in zero time).
- */
 void P_MobjAngleSRVOTicker(mobj_t* mo)
 {
-    short               target, step, diff;
-    int                 lstep, hgt;
+    short target, step, diff;
+    int lstep, hgt;
 
     // Check requirements.
     if(mo->flags & MF_MISSILE || !(mo->flags & MF_COUNTKILL))
@@ -224,44 +167,33 @@ void P_MobjAngleSRVOTicker(mobj_t* mo)
 
     if(mo->turnTime)
     {
-        if(mo->tics)
-            step = abs(diff) / mo->tics;
-        else
-            step = abs(diff);
-        if(!step)
-            step = 1;
+        if(mo->tics) step = abs(diff) / mo->tics;
+        else         step = abs(diff);
+
+        if(!step) step = 1;
     }
     else
     {
         // Calculate a good step size.
         // Thing height and diff taken into account.
         hgt = (int) mo->height;
-        if(hgt < 30)
-            hgt = 30;
-        if(hgt > 60)
-            hgt = 60;
+        hgt = MINMAX_OF(30, hgt, 60);
 
         lstep = abs(diff) * 8 / hgt;
-        if(lstep < MIN_STEP)
-            lstep = MIN_STEP;
-        if(lstep > MAX_STEP)
-            lstep = MAX_STEP;
+        lstep = MINMAX_OF(MIN_STEP, lstep, MAX_STEP);
+
         step = lstep;
     }
 
     // Do the step.
     if(abs(diff) <= step)
-        mo->visAngle = target;
+        mo->visAngle  = target;
     else if(diff > 0)
         mo->visAngle += step;
     else if(diff < 0)
         mo->visAngle -= step;
 }
 
-/**
- * The thing's timer has run out, which means the thing has completed its
- * step. Or there has been a teleport.
- */
 void P_MobjClearSRVO(mobj_t* mo)
 {
     memset(mo->srvo, 0, sizeof(mo->srvo));
@@ -290,20 +222,10 @@ void P_UpdateHealthBits(mobj_t* mo)
     }
 }
 
-/**
- * Given a mobjtype, lookup the statenum associated to the named state.
- *
- * @param mobjType      Type of mobj.
- * @param name          State name identifier.
- *
- * @return              Statenum of the associated state ELSE @c, S_NULL.
- */
 statenum_t P_GetState(mobjtype_t type, statename_t name)
 {
-    if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES))
-        return S_NULL;
-    if(name < 0 || name >= STATENAMES_COUNT)
-        return S_NULL;
+    if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES)) return S_NULL;
+    if(name < 0 || name >= STATENAMES_COUNT) return S_NULL;
 
     return MOBJINFO[type].states[name];
 }
@@ -336,19 +258,20 @@ static spawnqueuenode_t* allocateNode(void)
 {
 #define SPAWNQUEUENODE_BATCHSIZE 32
 
-    spawnqueuenode_t*   n;
+    spawnqueuenode_t* n;
 
     if(unusedNodes)
-    {   // There are existing nodes we can re-use.
+    {
+        // There are existing nodes we can re-use.
         n = unusedNodes;
         unusedNodes = unusedNodes->next;
         n->next = NULL;
     }
     else
-    {   // We need to allocate more.
-        size_t              i;
-        spawnqueuenode_t*   storage =
-            Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_GAMESTATIC, 0);
+    {
+        // We need to allocate more.
+        size_t i;
+        spawnqueuenode_t* storage = Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_GAMESTATIC, 0);
 
         // Add all but one to the unused node list.
         for(i = 0; i < SPAWNQUEUENODE_BATCHSIZE-1; ++i)
@@ -377,8 +300,7 @@ static void freeNode(spawnqueuenode_t* node, boolean recycle)
         }
         else
         {
-            spawnqueuenode_t*       n;
-
+            spawnqueuenode_t* n;
             for(n = spawnQueueHead; n->next; n = n->next)
             {
                 if(n->next == node)
@@ -388,7 +310,8 @@ static void freeNode(spawnqueuenode_t* node, boolean recycle)
     }
 
     if(recycle)
-    {   // Recycle this node for later use.
+    {
+        // Recycle this node for later use.
         node->next = unusedNodes;
         unusedNodes = node;
         return;
@@ -399,11 +322,9 @@ static void freeNode(spawnqueuenode_t* node, boolean recycle)
 
 static spawnqueuenode_t* dequeueSpawn(void)
 {
-    spawnqueuenode_t*   n = spawnQueueHead;
-
+    spawnqueuenode_t* n = spawnQueueHead;
     if(spawnQueueHead)
         spawnQueueHead = spawnQueueHead->next;
-
     return n;
 }
 
@@ -411,21 +332,20 @@ static void emptySpawnQueue(boolean recycle)
 {
     if(spawnQueueHead)
     {
-        spawnqueuenode_t*   n;
-
+        spawnqueuenode_t* n;
         while((n = dequeueSpawn()))
+        {
             freeNode(n, recycle);
+        }
     }
-
     spawnQueueHead = NULL;
 }
 
 static void enqueueSpawn(int minTics, mobjtype_t type, coord_t x, coord_t y,
-                         coord_t z, angle_t angle, int spawnFlags,
-                         void (*callback) (mobj_t* mo, void* context),
-                         void* context)
+    coord_t z, angle_t angle, int spawnFlags,
+    void (*callback) (mobj_t* mo, void* context), void* context)
 {
-    spawnqueuenode_t*   n = allocateNode();
+    spawnqueuenode_t* n = allocateNode();
 
     n->type = type;
     n->pos[VX] = x;
@@ -441,22 +361,24 @@ static void enqueueSpawn(int minTics, mobjtype_t type, coord_t x, coord_t y,
     n->context = context;
 
     if(spawnQueueHead)
-    {   // Find the correct insertion point.
+    {
+        // Find the correct insertion point.
         if(spawnQueueHead->next)
         {
-            spawnqueuenode_t*   l = spawnQueueHead;
+            spawnqueuenode_t* l = spawnQueueHead;
 
-            while(l->next &&
-                  l->next->minTics - (mapTime - l->next->startTime) <= minTics)
+            while(l->next && l->next->minTics - (mapTime - l->next->startTime) <= minTics)
+            {
                 l = l->next;
+            }
 
             n->next = (l->next? l->next : NULL);
             l->next = n;
         }
         else
-        {   // After or before the head?
-            if(spawnQueueHead->minTics -
-               (mapTime - spawnQueueHead->startTime) <= minTics)
+        {
+            // After or before the head?
+            if(spawnQueueHead->minTics - (mapTime - spawnQueueHead->startTime) <= minTics)
             {
                 n->next = NULL;
                 spawnQueueHead->next = n;
@@ -537,12 +459,11 @@ void P_DeferSpawnMobj3fv(int minTics, mobjtype_t type, coord_t const pos[3], ang
     }
 }
 
-/**
- * Called 35 times per second by P_DoTick.
- */
+/// @note Called 35 times per second by P_DoTick.
 void P_ProcessDeferredSpawns(void)
 {
-    while(doDeferredSpawn());
+    while(doDeferredSpawn())
+    {}
 }
 
 void P_PurgeDeferredSpawns(void)

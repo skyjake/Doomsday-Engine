@@ -192,11 +192,11 @@ int FR_TextHeight(const char* text);
  * @param alignFlags  @ref alignmentFlags
  * @param flags  @ref drawTextFlags
  */
-void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short flags);
+void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short textFlags);
 void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags);
 void FR_DrawChar(unsigned char ch, const Point2Raw* origin);
 
-void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short flags);
+void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short textFlags);
 void FR_DrawCharXY2(unsigned char ch, int x, int y, int alignFlags);
 void FR_DrawCharXY(unsigned char ch, int x, int y);
 

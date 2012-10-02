@@ -54,8 +54,6 @@ struct kdtreenode_s {
 static KdTreeNode* KdTreeNode_New(KdTree* kdTree, const AABox* bounds);
 static KdTreeNode* KdTreeNode_NewWithUserData(KdTree* kdTree, const AABox* bounds, void* userData);
 
-static void KdTreeNode_Delete(KdTreeNode* kdTreeNode);
-
 static int KdTreeNode_PostTraverse2(KdTreeNode* kdn, int(*callback)(KdTreeNode*, void*), void* parameters);
 static int KdTreeNode_PostTraverse(KdTreeNode* kdn, int(*callback)(KdTreeNode*, void*)/*, parameters=NULL*/);
 
@@ -116,9 +114,20 @@ static KdTreeNode* KdTreeNode_New(KdTree* kdTree, const AABox* bounds)
     return KdTreeNode_NewWithUserData(kdTree, bounds, NULL/*no user data*/);
 }
 
-static void KdTreeNode_Delete(KdTreeNode* kdn)
+void KdTreeNode_Delete(KdTreeNode* kdn)
 {
     assert(kdn);
+    if(kdn->parent)
+    {
+        if(kdn->parent->subs[0] == kdn)
+        {
+            kdn->parent->subs[0] = 0;
+        }
+        else if(kdn->parent->subs[1] == kdn)
+        {
+            kdn->parent->subs[1] = 0;
+        }
+    }
     free(kdn);
 }
 

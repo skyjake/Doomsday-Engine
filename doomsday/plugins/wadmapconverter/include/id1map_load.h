@@ -1,6 +1,8 @@
 /**
  * @file id1map_load.h @ingroup wadmapconverter
  *
+ * id tech 1 map data definition loaders.
+ *
  * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -21,18 +23,74 @@
 #ifndef __WADMAPCONVERTER_ID1MAP_LOAD_H__
 #define __WADMAPCONVERTER_ID1MAP_LOAD_H__
 
-#include "doomsday.h"
-#include "dd_types.h"
-#include "maplumpinfo.h"
-#include "id1map_datatypes.h"
+#include "id1map.h"
 
-extern mapformatid_t DENG_PLUGIN_GLOBAL(mapFormat);
-extern map_t* DENG_PLUGIN_GLOBAL(map);
+/**
+ * Determine the size (in bytes) of an element of the specified map data
+ * lump @a type for the current map format.
+ *
+ * @param mapFormat     Map format identifier.
+ * @param type          Map lump data type.
+ * @return Size of an element of the specified type.
+ */
+size_t ElementSizeForMapLumpType(MapFormatId mapFormat, MapLumpType type);
 
-int LoadMap(MapLumpInfo* lumpInfos[NUM_MAPLUMP_TYPES]);
+/**
+ * Read a line definition from the archived map.
+ *
+ * @param line  Line definition to be populated.
+ * @param reader  Reader instance.
+ */
+void MLine_Read(mline_t* line, Reader* reader);
 
-void AnalyzeMap(void);
+/// Doom64 format variant of @ref MLine_Read()
+void MLine64_Read(mline_t* line, Reader* reader);
 
-int TransferMap(void);
+/// Hexen format variant of @ref MLine_Read()
+void MLineHx_Read(mline_t* line, Reader* reader);
+
+/**
+ * Read a side definition from the archived map.
+ *
+ * @param side  Side definition to be populated.
+ * @param reader  Reader instance.
+ */
+void MSide_Read(mside_t* side, Reader* reader);
+
+/// Doom64 format variant of @ref MSide_Read()
+void MSide64_Read(mside_t* side, Reader* reader);
+
+/**
+ * Read a sector definition from the archived map.
+ *
+ * @param sector  Sector definition to be populated.
+ * @param reader  Reader instance.
+ */
+void MSector_Read(msector_t* sector, Reader* reader);
+
+/// Doom64 format variant of @ref MSector_Read()
+void MSector64_Read(msector_t* sector, Reader* reader);
+
+/**
+ * Read a thing definition from the archived map.
+ *
+ * @param thing  Thing definition to be populated.
+ * @param reader  Reader instance.
+ */
+void MThing_Read(mthing_t* thing, Reader* reader);
+
+/// Doom64 format variant of @ref MThing_Read()
+void MThing64_Read(mthing_t* thing, Reader* reader);
+
+/// Hexen format variant of @ref MThing_Read()
+void MThingHx_Read(mthing_t* thing, Reader* reader);
+
+/**
+ * Read a surface tint definition from the archived map.
+ *
+ * @param tint  Surface tint definition to be populated.
+ * @param reader  Reader instance.
+ */
+void SurfaceTint_Read(surfacetint_t* tint, Reader* reader);
 
 #endif /* __WADMAPCONVERTER_ID1MAP_LOAD_H__ */

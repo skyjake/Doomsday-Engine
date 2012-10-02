@@ -84,11 +84,11 @@ struct font_s;
 #include "point.h"
 #include "rect.h"
 #include "size.h"
-#include "stringpool.h"
 #include <de/reader.h>
 #include <de/writer.h>
 #include <de/memoryzone.h>
 #include <de/smoother.h>
+#include <de/stringpool.h>
 
 //------------------------------------------------------------------------
 //
@@ -633,6 +633,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 patchid_t R_DeclarePatch(const char* name);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 Uri* R_ComposePatchUri(patchid_t id);
+AutoStr* R_ComposePatchPath(patchid_t id);
 
 int R_TextureUniqueId2(const Uri* uri, boolean quiet);
 int R_TextureUniqueId(const Uri* uri); /*quiet=false*/
@@ -749,6 +750,8 @@ angle_t M_PointXYToAngle(double x, double y);
 angle_t M_PointToAngle2(double const a[2], double const b[2]);
 angle_t M_PointXYToAngle2(double x1, double y1, double x2, double y2);
 
+void V2d_Copy(double dest[2], double const src[2]);
+void V2d_Scale(double vector[2], double scalar);
 void V2d_Sum(double dest[2], double const a[2], double const b[2]);
 void V2d_Subtract(double dest[2], double const a[2], double const b[2]);
 void V2d_Rotate(double vec[2], double radians);

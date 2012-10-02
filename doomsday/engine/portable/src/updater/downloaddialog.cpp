@@ -22,6 +22,8 @@
 
 #include "downloaddialog.h"
 #include "updatersettings.h"
+#include "dd_version.h"
+#include "window.h"
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDialogButtonBox>
@@ -35,7 +37,7 @@
 #include <de/Log>
 #include <QDebug>
 
-static bool downloadInProgress;
+static DownloadDialog* downloadInProgress;
 
 struct DownloadDialog::Instance
 {
@@ -108,7 +110,7 @@ struct DownloadDialog::Instance
         LOG_INFO("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
 
         // Global state flag.
-        downloadInProgress = true;
+        downloadInProgress = self;
     }
 
     void setProgressText(de::String text)
@@ -121,11 +123,16 @@ DownloadDialog::DownloadDialog(de::String downloadUri, de::String fallbackUri, Q
     : UpdaterDialog(parent)
 {
     d = new Instance(this, downloadUri, fallbackUri);
+
+#ifndef MACOSX
+    setWindowTitle(DOOMSDAY_NICENAME" Update");
+    setWindowIcon(Window_Widget(Window_Main())->windowIcon());
+#endif
 }
 
 DownloadDialog::~DownloadDialog()
 {
-    downloadInProgress = false;
+    downloadInProgress = 0;
     delete d;
 }
 
@@ -135,11 +142,15 @@ de::String DownloadDialog::downloadedFilePath() const
     return d->savedFilePath;
 }
 
+bool DownloadDialog::isReadyToInstall() const
+{
+    return d->fileReady;
+}
+
 void DownloadDialog::finished(QNetworkReply* reply)
 {
     LOG_AS("Download");
 
-    downloadInProgress = false;
     reply->deleteLater();
     d->reply = 0;
 
@@ -147,6 +158,7 @@ void DownloadDialog::finished(QNetworkReply* reply)
     {
         LOG_WARNING("Failure: ") << reply->errorString();
         d->setProgressText(reply->errorString());
+        downloadInProgress = 0;
         return;
     }
 
@@ -262,5 +274,15 @@ void DownloadDialog::replyMetaDataChanged()
 
 int Updater_IsDownloadInProgress(void)
 {
-    return downloadInProgress;
+    return downloadInProgress != 0;
+}
+
+void Updater_RaiseCompletedDownloadDialog(void)
+{
+    if(downloadInProgress && downloadInProgress->isReadyToInstall())
+    {
+        downloadInProgress->show();
+        downloadInProgress->raise();
+        downloadInProgress->activateWindow();
+    }
 }

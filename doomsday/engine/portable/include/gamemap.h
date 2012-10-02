@@ -24,6 +24,7 @@
 #define LIBDENG_GAMEMAP_H
 
 #include "p_particle.h"
+#include <EntityDatabase>
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,7 +111,7 @@ typedef struct gamemap_s {
     uint numBspNodes;
     BspNode** bspNodes;
 
-    gameobjdata_t gameObjData;
+    EntityDatabase* entityDatabase;
 
     planelist_t trackedPlanes;
     surfacelist_t scrollingSurfaces;

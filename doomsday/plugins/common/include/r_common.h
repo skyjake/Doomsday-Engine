@@ -43,8 +43,12 @@
 
 /// Globally visible view scale factors which translate between the dimensions
 /// of viewports and the legacy 320x200 fixed coordinate space.
-extern Size2Rawf viewScale;
-extern float aspectScale;
+DENG_EXTERN_C Size2Rawf viewScale;
+DENG_EXTERN_C float aspectScale;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void R_LoadColorPalettes(void);
 
@@ -65,5 +69,9 @@ void R_PrecachePSprites(void);
 void R_GetGammaMessageStrings(void);
 
 void R_CycleGammaLevel(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBCOMMON_REFRESH_H */

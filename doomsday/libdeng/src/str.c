@@ -28,6 +28,8 @@
 
 #if WIN32
 # define strcasecmp _stricmp
+#else
+# include <strings.h>
 #endif
 
 #include "de/str.h"
@@ -189,13 +191,27 @@ ddstring_t* Str_NewFromReader(Reader* reader)
     return str;
 }
 
-void Str_Delete(ddstring_t* str)
+static void deleteString(Str* str)
 {
     DENG_ASSERT(str);
     if(!str) return;
 
     Str_Free(str);
     M_Free(str);
+}
+
+void Str_Delete(Str* str)
+{
+    DENG_ASSERT(!Garbage_IsTrashed(str));
+
+#if 0 // use this is release builds if encountering Str/AutoStr errors
+    if(Garbage_IsTrashed(str))
+    {
+        LegacyCore_FatalError("Str_Delete: Trying to manually delete an AutoStr!");
+    }
+#endif
+
+    deleteString(str);
 }
 
 ddstring_t* Str_Clear(ddstring_t* str)
@@ -273,24 +289,23 @@ ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch)
 
 ddstring_t* Str_Append(ddstring_t* str, const char* append)
 {
-    size_t incoming;
-    char* copied;
-
     DENG_ASSERT(str);
     if(!str) return 0;
 
-    incoming = strlen(append);
+    if(append && append[0])
+    {
+        size_t incoming = strlen(append);
+        // Take a copy in case append_text points to (a part of) ds->str, which may
+        // be invalidated by allocateString.
+        char* copied = M_Malloc(incoming + 1);
 
-    // Take a copy in case append_text points to (a part of) ds->str, which may
-    // be invalidated by allocateString.
-    copied = M_Malloc(incoming + 1);
+        strcpy(copied, append);
+        allocateString(str, str->length + incoming, true);
+        strcpy(str->str + str->length, copied);
+        str->length += incoming;
 
-    strcpy(copied, append);
-    allocateString(str, str->length + incoming, true);
-    strcpy(str->str + str->length, copied);
-    str->length += incoming;
-
-    M_Free(copied);
+        M_Free(copied);
+    }
     return str;
 }
 
@@ -389,6 +404,11 @@ char* Str_Text(const ddstring_t* str)
 
 int Str_Length(const ddstring_t* str)
 {
+    return (int) Str_Size(str);
+}
+
+size_t Str_Size(const Str* str)
+{
     DENG_ASSERT(str);
 
     if(!str) return 0;
@@ -396,7 +416,7 @@ int Str_Length(const ddstring_t* str)
     {
         return str->length;
     }
-    return (int)strlen(Str_Text(str));
+    return strlen(Str_Text(str));
 }
 
 boolean Str_IsEmpty(const ddstring_t* str)
@@ -800,10 +820,15 @@ AutoStr* AutoStr_NewStd(void)
     return AutoStr_FromStr(Str_NewStd());
 }
 
-AutoStr* AutoStr_FromStr(ddstring_t* str)
+void AutoStr_Delete(AutoStr* as)
+{
+    deleteString(as);
+}
+
+AutoStr* AutoStr_FromStr(Str* str)
 {
     DENG_ASSERT(str);
-    Garbage_TrashInstance(str, (GarbageDestructor) Str_Delete);
+    Garbage_TrashInstance(str, (GarbageDestructor) AutoStr_Delete);
     return str;
 }
 

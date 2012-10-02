@@ -19,12 +19,15 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/Error>
+#include <de/Log>
 #include <BspBuilder>
+
 #include "map/bsp/partitioner.h"
 
 using namespace de;
 
-BspBuilder::BspBuilder(GameMap* map, uint* numEditableVertexes, Vertex*** editableVertexes, int splitCostFactor)
+BspBuilder::BspBuilder(GameMap& map, uint* numEditableVertexes, Vertex*** editableVertexes, int splitCostFactor)
 {
     partitioner = new bsp::Partitioner(map, numEditableVertexes, editableVertexes, splitCostFactor);
 }
@@ -42,7 +45,16 @@ BspBuilder& BspBuilder::setSplitCostFactor(int factor)
 
 bool BspBuilder::build()
 {
-    return partitioner->build();
+    try
+    {
+        return partitioner->build();
+    }
+    catch(de::Error& er)
+    {
+        LOG_AS("BspBuilder");
+        LOG_WARNING("%s.") << er.asText();
+    }
+    return false;
 }
 
 BspTreeNode* BspBuilder::root() const
@@ -70,13 +82,13 @@ uint BspBuilder::numVertexes()
     return partitioner->numVertexes();
 }
 
-Vertex const& BspBuilder::vertex(uint idx)
+Vertex& BspBuilder::vertex(uint idx)
 {
     return partitioner->vertex(idx);
 }
 
-BspBuilder& BspBuilder::releaseOwnership(runtime_mapdata_header_t const& ob)
+BspBuilder& BspBuilder::take(runtime_mapdata_header_t* ob)
 {
-    partitioner->releaseOwnership(ob);
+    partitioner->release(ob);
     return *this;
 }

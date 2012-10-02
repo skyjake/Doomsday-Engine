@@ -38,6 +38,10 @@
 #include "d_event.h"
 #include "d_player.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int gaSaveGameSlot;
 extern int gaLoadGameSlot;
 
@@ -72,8 +76,6 @@ void            G_CommonShutdown(void);
 void            R_InitRefresh(void);
 
 void            G_PrintMapList(void);
-boolean         G_ValidateMap(uint* episode, uint* map);
-uint            G_GetMapNumber(uint episode, uint map);
 
 void            G_DeferredPlayDemo(char* demo);
 
@@ -111,23 +113,6 @@ int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 void            G_DoReborn(int playernum);
 void            G_PlayerReborn(int player);
 
-uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
-
-/**
- * Compose a Uri for the identified @a episode and @a map combination.
- *
- * @param episode  Logical episode number.
- * @param map  Logical map number.
- * @return  Resultant Uri. Caller should destroy with Uri_Delete.
- */
-Uri* G_ComposeMapUri(uint episode, uint map);
-
-/**
- * Compose the name of the map identifier.
- * \note Deprecated. Prefer to use G_ComposeMapUri
- */
-void G_MapId(uint episode, uint map, lumpname_t mapId);
-
 void            G_WorldDone(void);
 
 void            G_Ticker(timespan_t ticLength);
@@ -143,5 +128,9 @@ void            G_ScreenShot(void);
 void            G_PrepareWIData(void);
 
 void            G_QueueBody(mobj_t* body);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJDOOM_G_GAME_H */

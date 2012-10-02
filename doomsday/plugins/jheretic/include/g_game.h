@@ -38,13 +38,20 @@
 #include "h_event.h"
 #include "h_player.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int gaSaveGameSaveSlot;
 extern int gaLoadGameSaveSlot;
+
+extern player_t players[MAXPLAYERS];
 
 extern boolean deathmatch;
 extern boolean respawnMonsters;
 extern boolean userGame;
-extern player_t players[MAXPLAYERS];
+extern boolean paused;
+extern boolean precache;
 
 extern skillmode_t gameSkill;
 extern uint gameEpisode;
@@ -70,8 +77,6 @@ void            R_InitRefresh(void);
 void            G_DeathMatchSpawnPlayer(int playernum);
 
 void            G_PrintMapList(void);
-boolean         G_ValidateMap(uint* episode, uint* map);
-uint            G_GetMapNumber(uint episode, uint map);
 
 void            G_DeferredPlayDemo(char* demo);
 
@@ -109,23 +114,6 @@ int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 void            G_DoReborn(int playernum);
 void            G_PlayerReborn(int player);
 
-uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
-
-/**
- * Compose a Uri for the identified @a episode and @a map combination.
- *
- * @param episode  Logical episode number.
- * @param map  Logical map number.
- * @return  Resultant Uri. Caller should destroy with Uri_Delete.
- */
-Uri* G_ComposeMapUri(uint episode, uint map);
-
-/**
- * Compose the name of the map identifier.
- * \note Deprecated. Prefer to use G_ComposeMapUri
- */
-void G_MapId(uint episode, uint map, lumpname_t mapId);
-
 void            G_WorldDone(void);
 
 void            G_Ticker(timespan_t ticLength);
@@ -137,5 +125,9 @@ int G_PrivilegedResponder(event_t* ev);
 int G_Responder(event_t* ev);
 
 void            G_ScreenShot(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJHERETIC_G_GAME_H */

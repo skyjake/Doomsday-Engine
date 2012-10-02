@@ -1151,5 +1151,10 @@ Text {
 
 Text {
   ID = "DELETESAVEGAME_CONFIRM";
-  Text = "Really delete save game \n\n'%s'?";
+  Text = "Really delete save game\n\n'%s'?";
+}
+
+Text {
+  ID = "REBORNLOAD_CONFIRM";
+  Text = "Load save game\n\n'%s'?\n\n(No to restart map)";
 }

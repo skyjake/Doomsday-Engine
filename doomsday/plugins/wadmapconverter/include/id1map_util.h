@@ -25,24 +25,8 @@
 
 #include "doomsday.h"
 #include "dd_types.h"
+#include "id1map.h"
 #include "maplumpinfo.h"
-
-/**
- * Logical map format identifier (unique).
- */
-typedef enum {
-    MF_UNKNOWN              = -1,
-    MF_DOOM                 = 0,
-    MF_HEXEN,
-    MF_DOOM64,
-    NUM_MAPFORMATS
-} mapformatid_t;
-
-/**
- * Helper macro for determining whether a value can be interpreted as a logical
- * map format identifier (@see mapformatid_t).
- */
-#define VALID_MAPFORMATID(v)        ((v) >= MF_DOOM && (v) < NUM_MAPFORMATS)
 
 /**
  * Retrieve the textual name for the identified map format @a id.
@@ -50,7 +34,7 @@ typedef enum {
  * @return Textual name for this format. Always returns a valid ddstring_t that
  *         should NOT be free'd.
  */
-const ddstring_t* MapFormatNameForId(mapformatid_t id);
+const Str* MapFormatNameForId(MapFormatId id);
 
 /**
  * Determine type of a named map data lump.

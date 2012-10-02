@@ -128,10 +128,10 @@ static boolean loadAudioDriver(driver_t* driver, const char* name)
 
     if(name && name[0])
     {
-        ddstring_t libPath;
+        Str libPath;
 
         // Compose the name using the prefix "ds".
-        Str_Init(&libPath);
+        Str_InitStd(&libPath);
 #ifdef WIN32
         Str_Appendf(&libPath, "%sds%s.dll", ddBinPath, name);
 #elif defined(MACOSX)
@@ -601,7 +601,7 @@ AutoStr* AudioDriver_InterfaceName(void* anyAudioInterface)
             audiointerface_music_generic_t* gen = anyAudioInterface;
             if(gen->Get(MUSIP_ID, buf))
             {
-                return Str_Set(AutoStr_New(), buf);
+                return Str_Set(AutoStr_NewStd(), buf);
             }
             else
             {

@@ -1528,7 +1528,11 @@ static int getProperty(void* ob, void* context)
     {
         if(args->modifiers & DMU_SIDEDEF0_OF_LINE)
         {
-            ob = ((LineDef*)ob)->L_frontsidedef;
+            LineDef* li = ((LineDef*)ob);
+            if(!li->L_frontsidedef) // $degenleaf
+                Con_Error("DMU_setProperty: Linedef %i has no front side.\n", P_ToIndex(li));
+
+            ob = li->L_frontsidedef;
             args->type = DMU_SIDEDEF;
         }
         else if(args->modifiers & DMU_SIDEDEF1_OF_LINE)

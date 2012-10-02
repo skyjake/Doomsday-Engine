@@ -35,7 +35,6 @@ D_CMD(Cheat);
 D_CMD(CheatGod);
 D_CMD(CheatNoClip);
 D_CMD(CheatGive);
-D_CMD(CheatWarp);
 D_CMD(CheatPig);
 D_CMD(CheatMassacre);
 D_CMD(CheatShadowcaster);
@@ -155,7 +154,6 @@ ccmdtemplate_t  gameCCmds[] = {
     {"cheat",       "s",    CCmdCheat},
     {"god",         NULL,   CCmdCheatGod},
     {"noclip",      NULL,   CCmdCheatNoClip},
-    {"warp",        "i",    CCmdCheatWarp},
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},

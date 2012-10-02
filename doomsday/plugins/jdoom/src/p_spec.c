@@ -198,11 +198,9 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 
         if(verbose > (isCustom? 1 : 2))
         {
-            ddstring_t* from = Uri_ToString(startUri);
-            ddstring_t* to = Uri_ToString(endUri);
+            AutoStr* from = Uri_ToString(startUri);
+            AutoStr* to = Uri_ToString(endUri);
             Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, Str_Text(from), Str_Text(to), ticsPerFrame);
-            Str_Delete(to);
-            Str_Delete(from);
         }
 
         // Find an animation group for this.
@@ -827,7 +825,7 @@ void P_PlayerInSpecialSector(player_t* player)
         P_ToXSector(sector)->special = 0;
         if(cfg.secretMsg)
         {
-            P_SetMessage(player, "You've found a secret area!", false);
+            P_SetMessage(player, 0, "You've found a secret area!");
             S_ConsoleSound(SFX_SECRET, 0, player - players);
         }
         break;

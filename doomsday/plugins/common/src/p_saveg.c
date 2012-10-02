@@ -1,25 +1,23 @@
-/**\file p_saveg.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file p_saveg.c
+ * Common game-save state management.
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <lzss.h>
@@ -56,7 +54,7 @@
 
 #define MAX_HUB_MAPS        99
 
-#define FF_FULLBRIGHT       0x8000 // used to be flag in thing->frame
+#define FF_FULLBRIGHT       0x8000 ///< Used to be a flag in thing->frame.
 #define FF_FRAMEMASK        0x7fff
 
 typedef struct playerheader_s {
@@ -75,7 +73,7 @@ typedef struct playerheader_s {
 } playerheader_t;
 
 // Thinker Save flags
-#define TSF_SERVERONLY      0x01    // Only saved by servers.
+#define TSF_SERVERONLY      0x01 ///< Only saved by servers.
 
 typedef struct thinkerinfo_s {
     thinkerclass_t  thinkclass;
@@ -88,18 +86,22 @@ typedef struct thinkerinfo_s {
 
 typedef enum sectorclass_e {
     sc_normal,
-    sc_ploff,                   // plane offset
+    sc_ploff,                   ///< plane offset
 #if !__JHEXEN__
-    sc_xg1
+    sc_xg1,
 #endif
+    NUM_SECTORCLASSES
 } sectorclass_t;
 
 typedef enum lineclass_e {
     lc_normal,
 #if !__JHEXEN__
-    lc_xg1
+    lc_xg1,
 #endif
+    NUM_LINECLASSES
 } lineclass_t;
+
+static boolean SV_RecogniseState(const char* path, SaveInfo* info);
 
 static void SV_WriteMobj(const mobj_t* mobj);
 static int SV_ReadMobj(thinker_t* th);
@@ -151,7 +153,11 @@ static int SV_ReadBlink(lightblink_t* flicker);
 static void SV_WriteScroll(const scroll_t* scroll);
 static int SV_ReadScroll(scroll_t* scroll);
 
+#if __JHEXEN__
+static void unarchiveMap(const Str* path);
+#else
 static void unarchiveMap(void);
+#endif
 
 static boolean inited = false;
 
@@ -366,20 +372,6 @@ static thinkerinfo_t thinkerInfo[] = {
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };
 
-cvartemplate_t cvars[] = {
-#if !__JHEXEN__
-    { "game-save-auto-loadonreborn", 0, CVT_BYTE, &cfg.loadAutoSaveOnReborn, 0, 1 },
-#endif
-    { "game-save-confirm", 0, CVT_BYTE, &cfg.confirmQuickGameSave, 0, 1 },
-    { "game-save-last-loadonreborn", 0, CVT_BYTE, &cfg.loadLastSaveOnReborn, 0, 1 },
-    { "game-save-last-slot", CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, CVT_INT, &cvarLastSlot },
-    { "game-save-quick-slot", CVF_NO_MAX|CVF_NO_ARCHIVE, CVT_INT, &cvarQuickSlot, -1, 0 },
-
-    // Aliases for obsolete cvars:
-    { "menu-quick-ask", 0,  CVT_BYTE, &cfg.confirmQuickGameSave, 0, 1 },
-    {NULL}
-};
-
 static void errorIfNotInited(const char* callerName)
 {
     if(inited) return;
@@ -426,6 +418,14 @@ static AutoStr* composeGameSavePathForSlot(int slot)
 }
 
 #if !__JHEXEN__
+/**
+ * Compose the (possibly relative) path to the game-save associated
+ * with @a gameId.
+ *
+ * @param gameId  Unique game identifier.
+ * @return  File path to the reachable save directory. If the game-save path
+ *          is unreachable then a zero-length string is returned instead.
+ */
 static AutoStr* composeGameSavePathForClientGameId(uint gameId)
 {
     AutoStr* path = AutoStr_NewStd();
@@ -467,6 +467,35 @@ static void clearSaveInfo(void)
     }
 }
 
+static void updateSaveInfo(const Str* path, SaveInfo* info)
+{
+    if(!info) return;
+
+    if(!path || Str_IsEmpty(path))
+    {
+        // The save path cannot be accessed for some reason. Perhaps its a
+        // network path? Clear the info for this slot.
+        SaveInfo_SetName(info, 0);
+        SaveInfo_SetGameId(info, 0);
+        return;
+    }
+
+    // Is this a recognisable save state?
+    if(!SV_RecogniseState(Str_Text(path), info))
+    {
+        // Clear the info for this slot.
+        SaveInfo_SetName(info, 0);
+        SaveInfo_SetGameId(info, 0);
+        return;
+    }
+
+    // Ensure we have a valid name.
+    if(Str_IsEmpty(SaveInfo_Name(info)))
+    {
+        SaveInfo_SetName(info, AutoStr_FromText("UNNAMED"));
+    }
+}
+
 /// Re-build game-save info by re-scanning the save paths and populating the list.
 static void buildSaveInfo(void)
 {
@@ -484,26 +513,26 @@ static void buildSaveInfo(void)
         // Initialize.
         for(i = 0; i < NUMSAVESLOTS; ++i)
         {
-            saveInfo[i] = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(i));
+            saveInfo[i] = SaveInfo_New();
         }
-        autoSaveInfo = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(AUTO_SLOT));
+        autoSaveInfo = SaveInfo_New();
 #if __JHEXEN__
-        baseSaveInfo = SaveInfo_NewWithFilePath(composeGameSavePathForSlot(BASE_SLOT));
+        baseSaveInfo = SaveInfo_New();
 #endif
         nullSaveInfo = SaveInfo_New();
     }
 
     /// Scan the save paths and populate the list.
-    /// \todo We should look at all files on the save path and not just those
+    /// @todo We should look at all files on the save path and not just those
     /// which match the default game-save file naming convention.
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         SaveInfo* info = saveInfo[i];
-        SaveInfo_Update(info);
+        updateSaveInfo(composeGameSavePathForSlot(i), info);
     }
-    SaveInfo_Update(autoSaveInfo);
+    updateSaveInfo(composeGameSavePathForSlot(AUTO_SLOT), autoSaveInfo);
 #if __JHEXEN__
-    SaveInfo_Update(baseSaveInfo);
+    updateSaveInfo(composeGameSavePathForSlot(BASE_SLOT), baseSaveInfo);
 #endif
 }
 
@@ -552,9 +581,28 @@ static void replaceSaveInfo(int slot, SaveInfo* newInfo)
 
 void SV_Register(void)
 {
-    int i;
-    for(i = 0; cvars[i].path; ++i)
-        Con_AddVariable(cvars + i);
+#if !__JHEXEN__
+    C_VAR_BYTE("game-save-auto-loadonreborn",   &cfg.loadAutoSaveOnReborn,  0, 0, 1);
+#endif
+    C_VAR_BYTE("game-save-confirm",             &cfg.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn",&cfg.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",   &cfg.loadLastSaveOnReborn,  0, 0, 1);
+    C_VAR_INT ("game-save-last-slot",           &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
+    C_VAR_INT ("game-save-quick-slot",          &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
+
+    // Aliases for obsolete cvars:
+    C_VAR_BYTE("menu-quick-ask",                &cfg.confirmQuickGameSave, 0, 0, 1);
+}
+
+AutoStr* SV_ComposeSlotIdentifier(int slot)
+{
+    AutoStr* str = AutoStr_NewStd();
+    if(slot < 0) return Str_Set(str, "(invalid slot)");
+    if(slot == AUTO_SLOT) return Str_Set(str, "<auto>");
+#if __JHEXEN__
+    if(slot == BASE_SLOT) return Str_Set(str, "<base>");
+#endif
+    return Str_Appendf(str, "%i", slot);
 }
 
 void SV_ClearSlot(int slot)
@@ -563,6 +611,19 @@ void SV_ClearSlot(int slot)
 
     errorIfNotInited("SV_ClearSlot");
     if(!SV_IsValidSlot(slot)) return;
+
+    // Announce when clearing save slots (for auto and base slots too if _DEBUG).
+#if !_DEBUG
+# if __JHEXEN__
+    if(slot != AUTO_SLOT && slot != BASE_SLOT)
+# else
+    if(slot != AUTO_SLOT)
+# endif
+#endif
+    {
+        AutoStr* ident = SV_ComposeSlotIdentifier(slot);
+        Con_Message("Clearing save slot %s\n", Str_Text(ident));
+    }
 
     { int i;
     for(i = 0; i < MAX_HUB_MAPS; ++i)
@@ -573,6 +634,9 @@ void SV_ClearSlot(int slot)
 
     path = composeGameSavePathForSlot(slot);
     SV_RemoveFile(path);
+
+    // Update save info for this slot.
+    updateSaveInfo(path, findSaveInfoForSlot(slot));
 }
 
 boolean SV_IsValidSlot(int slot)
@@ -615,20 +679,22 @@ static void SV_SaveInfo_Read(SaveInfo* info)
     Reader_Delete(svReader);
 }
 
-static boolean recogniseState(SaveInfo* info)
+static boolean recogniseState(const char* path, SaveInfo* info)
 {
 #if __JHEXEN__
     byte* saveBuffer;
 #endif
 
-    if(!info) return false;
-    if(!SV_ExistingFile(Str_Text(SaveInfo_FilePath(info)))) return false;
+    DENG_ASSERT(path);
+    DENG_ASSERT(info);
+
+    if(!SV_ExistingFile(path)) return false;
 
 #if __JHEXEN__
     /// @todo Do not buffer the whole file.
-    if(M_ReadFile(Str_Text(SaveInfo_FilePath(info)), (char**)&saveBuffer))
+    if(M_ReadFile(path, (char**)&saveBuffer))
 #else
-    if(SV_OpenFile(Str_Text(SaveInfo_FilePath(info)), "rp"))
+    if(SV_OpenFile(path, "rp"))
 #endif
     {
 #if __JHEXEN__
@@ -664,16 +730,19 @@ static boolean recogniseState(SaveInfo* info)
     return false;
 }
 
-boolean SV_RecogniseState(SaveInfo* info)
+static boolean SV_RecogniseState(const char* path, SaveInfo* info)
 {
-    if(recogniseState(info)) return true;
-    // Perhaps an original game save?
+    if(path && info)
+    {
+        if(recogniseState(path, info)) return true;
+        // Perhaps an original game save?
 #if __JDOOM__
-    if(SV_RecogniseState_Dm_v19(info)) return true;
+        if(SV_RecogniseState_Dm_v19(path, info)) return true;
 #endif
 #if __JHERETIC__
-    if(SV_RecogniseState_Hr_v13(info)) return true;
+        if(SV_RecogniseState_Hr_v13(path, info)) return true;
 #endif
+    }
     return false;
 }
 
@@ -752,32 +821,15 @@ int SV_SlotForSaveName(const char* name)
     return saveSlot;
 }
 
-AutoStr* SV_ComposeSavePathForSlot(int slot)
-{
-    errorIfNotInited("SV_ComposeSavePathForSlot");
-    return composeGameSavePathForSlot(slot);
-}
-
-#if __JHEXEN__
-AutoStr* SV_ComposeSavePathForMapSlot(uint map, int slot)
-{
-    errorIfNotInited("SV_ComposeSavePathForMapSlot");
-    return composeGameSavePathForSlot2(slot, (int)map);
-}
-#else
-AutoStr* SV_ComposeSavePathForClientGameId(uint gameId)
-{
-    errorIfNotInited("SV_ComposeSavePathForClientGameId");
-    return composeGameSavePathForClientGameId(gameId);
-}
-#endif
-
 boolean SV_IsSlotUsed(int slot)
 {
-    SaveInfo* info;
     errorIfNotInited("SV_IsSlotUsed");
-    info = SV_SaveInfoForSlot(slot);
-    return info && SaveInfo_IsLoadable(info);
+    if(SV_ExistingFile(Str_Text(composeGameSavePathForSlot(slot))))
+    {
+        SaveInfo* info = SV_SaveInfoForSlot(slot);
+        return SaveInfo_IsLoadable(info);
+    }
+    return false;
 }
 
 #if __JHEXEN__
@@ -811,6 +863,9 @@ void SV_CopySlot(int sourceSlot, int destSlot)
         return;
     }
 
+    // Clear all save files at destination slot.
+    SV_ClearSlot(destSlot);
+
     { int i;
     for(i = 0; i < MAX_HUB_MAPS; ++i)
     {
@@ -823,7 +878,8 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     dst = composeGameSavePathForSlot(destSlot);
     SV_CopyFile(src, dst);
 
-    SV_UpdateAllSaveInfo();
+    // Copy saveinfo too.
+    replaceSaveInfo(destSlot, SaveInfo_NewCopy(findSaveInfoForSlot(sourceSlot)));
 }
 
 #if __JHEXEN__
@@ -2232,16 +2288,33 @@ static void P_ArchivePlayers(void)
     }
 }
 
-static void P_UnArchivePlayers(boolean *infile, boolean *loaded)
+static void P_UnArchivePlayers(boolean* infile, boolean* loaded)
 {
-    int                 i, j;
-    unsigned int        pid;
-    player_t            dummyPlayer;
-    ddplayer_t          dummyDDPlayer;
-    player_t           *player;
+    ddplayer_t dummyDDPlayer;
+    player_t dummyPlayer;
+    player_t* player;
+    int i, j, pid;
+
+    DENG_ASSERT(infile && loaded);
 
     // Setup the dummy.
     dummyPlayer.plr = &dummyDDPlayer;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        loaded[i] = 0;
+#if !__JHEXEN__
+        infile[i] = hdr->players[i];
+#endif
+    }
+
+    SV_AssertSegment(ASEG_PLAYERS);
+#if __JHEXEN__
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        infile[i] = SV_ReadByte();
+    }
+#endif
 
     // Load the players.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -2249,26 +2322,27 @@ static void P_UnArchivePlayers(boolean *infile, boolean *loaded)
         // By default a saved player translates to nothing.
         saveToRealPlayerNum[i] = -1;
 
-        if(!infile[i])
-            continue;
+        if(!infile[i]) continue;
 
         // The ID number will determine which player this actually is.
         pid = SV_ReadLong();
-        for(player = 0, j = 0; j < MAXPLAYERS; ++j)
+        player = 0;
+        for(j = 0; j < MAXPLAYERS; ++j)
+        {
             if((IS_NETGAME && Net_GetPlayerID(j) == pid) ||
                (!IS_NETGAME && j == 0))
             {
                 // This is our guy.
                 player = players + j;
                 loaded[j] = true;
-                // Later references to the player number 'i' must be
-                // translated!
+                // Later references to the player number 'i' must be translated!
                 saveToRealPlayerNum[i] = j;
 #if _DEBUG
-Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
+                Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
 #endif
                 break;
             }
+        }
 
         if(!player)
         {
@@ -2279,6 +2353,8 @@ Con_Printf("P_UnArchivePlayers: Saved %i is now %i.\n", i, j);
         // Read the data.
         SV_ReadPlayer(player);
     }
+
+    SV_AssertSegment(ASEG_END);
 }
 
 static void SV_WriteSector(Sector *sec)
@@ -4237,7 +4313,7 @@ assert(thInfo->Write);
  * Clients do not save all data for all thinkers (the server will send
  * it to us anyway so saving it would just bloat client save games).
  *
- * \note Some thinker classes are NEVER saved by clients.
+ * @note Some thinker classes are NEVER saved by clients.
  */
 static void P_ArchiveThinkers(boolean savePlayers)
 {
@@ -4319,6 +4395,68 @@ static int restoreMobjLinks(thinker_t* th, void* context)
 
     return false; // Continue iteration.
 }
+
+#if __JHEXEN__
+static boolean mobjtypeHasCorpse(mobjtype_t type)
+{
+    // Only corpses that call A_QueueCorpse from death routine.
+    /// @todo fixme: What about mods? Look for this action in the death state sequence?
+    switch(type)
+    {
+    case MT_CENTAUR:
+    case MT_CENTAURLEADER:
+    case MT_DEMON:
+    case MT_DEMON2:
+    case MT_WRAITH:
+    case MT_WRAITHB:
+    case MT_BISHOP:
+    case MT_ETTIN:
+    case MT_PIG:
+    case MT_CENTAUR_SHIELD:
+    case MT_CENTAUR_SWORD:
+    case MT_DEMONCHUNK1:
+    case MT_DEMONCHUNK2:
+    case MT_DEMONCHUNK3:
+    case MT_DEMONCHUNK4:
+    case MT_DEMONCHUNK5:
+    case MT_DEMON2CHUNK1:
+    case MT_DEMON2CHUNK2:
+    case MT_DEMON2CHUNK3:
+    case MT_DEMON2CHUNK4:
+    case MT_DEMON2CHUNK5:
+    case MT_FIREDEMON_SPLOTCH1:
+    case MT_FIREDEMON_SPLOTCH2:
+        return true;
+
+    default: return false;
+    }
+}
+
+static int rebuildCorpseQueueWorker(thinker_t* th, void* parameters)
+{
+    DENG_UNUSED(parameters);
+{
+    mobj_t* mo = (mobj_t*) th;
+
+    // Must be a non-iced corpse.
+    if((mo->flags & MF_CORPSE) && !(mo->flags & MF_ICECORPSE) && mobjtypeHasCorpse(mo->type))
+    {
+        A_QueueCorpse(mo); // Add a corpse to the queue.
+    }
+
+    return false; // Continue iteration.
+}}
+
+/**
+ * @todo fixme: the corpse queue should be serialized (original order unknown).
+ */
+static void rebuildCorpseQueue(void)
+{
+    P_InitCorpseQueue();
+    // Search the thinker list for corpses and place them in the queue.
+    DD_IterateThinkers(P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
+}
+#endif
 
 /**
  * Un-Archives thinkers for both client and server.
@@ -4489,8 +4627,7 @@ static void P_UnArchiveThinkers(void)
 
 #if __JHEXEN__
     P_CreateTIDList();
-    P_InitCorpseQueue();
-    P_AddCorpsesToQueue();
+    rebuildCorpseQueue();
 #endif
 }
 
@@ -4991,18 +5128,17 @@ static boolean openGameSaveFile(const char* fileName, boolean write)
     return true;
 }
 
-static int SV_LoadState(SaveInfo* saveInfo)
+static int SV_LoadState(const char* path, SaveInfo* saveInfo)
 {
-    int i;
-    char buf[80];
     boolean loaded[MAXPLAYERS], infile[MAXPLAYERS];
-#if __JHEXEN__
-    int k;
-#endif
+    int i;
+
+    DENG_ASSERT(path);
+    DENG_ASSERT(saveInfo);
 
     playerHeaderOK = false; // Uninitialized.
 
-    if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), false))
+    if(!openGameSaveFile(path, false))
         return 1; // Failed?
 
     // Read the header again.
@@ -5052,6 +5188,20 @@ static int SV_LoadState(SaveInfo* saveInfo)
     SV_InitThingArchive(true, true);
 #endif
 
+    P_UnArchivePlayerHeader();
+
+    // Read the player structures
+    // We don't have the right to say which players are in the game. The
+    // players that already are will continue to be. If the data for a given
+    // player is not in the savegame file, he will be notified. The data for
+    // players who were saved but are not currently in the game will be
+    // discarded.
+    P_UnArchivePlayers(infile, loaded);
+
+#if __JHEXEN__
+    Z_Free(saveBuffer);
+#endif
+
     // Create and populate the MaterialArchive.
 #ifdef __JHEXEN__
     materialArchive = MaterialArchive_NewEmpty(true /* segment checks */);
@@ -5059,33 +5209,12 @@ static int SV_LoadState(SaveInfo* saveInfo)
     materialArchive = MaterialArchive_NewEmpty(false);
 #endif
 
-    P_UnArchivePlayerHeader();
-    // Read the player structures
-    SV_AssertSegment(ASEG_PLAYERS);
-
-    // We don't have the right to say which players are in the game. The
-    // players that already are will continue to be. If the data for a given
-    // player is not in the savegame file, he will be notified. The data for
-    // players who were saved but are not currently in the game will be
-    // discarded.
-#if !__JHEXEN__
-    for(i = 0; i < MAXPLAYERS; ++i)
-        infile[i] = hdr->players[i];
-#else
-    for(i = 0; i < MAXPLAYERS; ++i)
-        infile[i] = SV_ReadByte();
-#endif
-
-    memset(loaded, 0, sizeof(loaded));
-    P_UnArchivePlayers(infile, loaded);
-    SV_AssertSegment(ASEG_END);
-
-#if __JHEXEN__
-    Z_Free(saveBuffer);
-#endif
-
     // Load the current map state.
+#if __JHEXEN__
+    unarchiveMap(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
+#else
     unarchiveMap();
+#endif
 
 #if !__JHEXEN__
     // Check consistency.
@@ -5093,9 +5222,6 @@ static int SV_LoadState(SaveInfo* saveInfo)
     {
         Con_Error("SV_LoadGame: Bad savegame (consistency test failed!)\n");
     }
-#endif
-
-#if !__JHEXEN__
     SV_CloseFile();
 #endif
 
@@ -5122,9 +5248,13 @@ static int SV_LoadState(SaveInfo* saveInfo)
         if(players[i].plr->inGame)
         {
             // Try to find a saved player that corresponds this one.
+            uint k;
             for(k = 0; k < MAXPLAYERS; ++k)
+            {
                 if(saveToRealPlayerNum[k] == i)
                     break;
+            }
+
             if(k < MAXPLAYERS)
                 continue; // Found; don't bother this player.
 
@@ -5134,7 +5264,7 @@ static int SV_LoadState(SaveInfo* saveInfo)
             {
                 // If the CONSOLEPLAYER isn't in the save, it must be some
                 // other player's file?
-                P_SetMessage(players, GET_TXT(TXT_LOADMISSING), false);
+                P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
             }
             else
             {
@@ -5147,7 +5277,7 @@ static int SV_LoadState(SaveInfo* saveInfo)
         {
             if(!i)
             {
-                P_SetMessage(players, GET_TXT(TXT_LOADMISSING), false);
+                P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
             }
             else
             {
@@ -5160,8 +5290,7 @@ static int SV_LoadState(SaveInfo* saveInfo)
         if(notLoaded)
         {
             // Kick this player out, he doesn't belong here.
-            sprintf(buf, "kick %i", i);
-            DD_Execute(false, buf);
+            DD_Executef(false, "kick %i", i);
         }
     }
 
@@ -5187,26 +5316,31 @@ static void onLoadStateSuccess(void)
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
 }
 
-static int loadStateWorker(SaveInfo* saveInfo)
+static int loadStateWorker(const char* path, SaveInfo* saveInfo)
 {
     int loadError = true; // Failed.
-    if(recogniseState(saveInfo))
+
+    if(path && saveInfo)
     {
-        loadError = SV_LoadState(saveInfo);
-    }
-    // Perhaps an original game save?
+        if(recogniseState(path, saveInfo))
+        {
+            loadError = SV_LoadState(path, saveInfo);
+        }
+        // Perhaps an original game save?
 #if __JDOOM__
-    else if(SV_RecogniseState_Dm_v19(saveInfo))
-    {
-        loadError = SV_LoadState_Dm_v19(saveInfo);
-    }
+        else if(SV_RecogniseState_Dm_v19(path, saveInfo))
+        {
+            loadError = SV_LoadState_Dm_v19(path, saveInfo);
+        }
 #endif
 #if __JHERETIC__
-    else if(SV_RecogniseState_Hr_v13(saveInfo))
-    {
-        loadError = SV_LoadState_Hr_v13(saveInfo);
-    }
+        else if(SV_RecogniseState_Hr_v13(path, saveInfo))
+        {
+            loadError = SV_LoadState_Hr_v13(path, saveInfo);
+        }
 #endif
+    }
+
     if(!loadError)
     {
         // Material origin scrollers must be re-spawned for older save state versions.
@@ -5220,6 +5354,7 @@ static int loadStateWorker(SaveInfo* saveInfo)
 
         onLoadStateSuccess();
     }
+
     return loadError;
 }
 
@@ -5231,26 +5366,34 @@ boolean SV_LoadGame(int slot)
     const int logicalSlot = slot;
 #endif
     SaveInfo* saveInfo;
+    AutoStr* path;
     int loadError;
 
     errorIfNotInited("SV_LoadGame");
 
     if(!SV_IsValidSlot(slot)) return false;
 
+    path = composeGameSavePathForSlot(slot);
+    if(Str_IsEmpty(path))
+    {
+        Con_Message("Warning: Path \"%s\" is unreachable, game not loaded.\n", SV_SavePath());
+        return false;
+    }
+
     VERBOSE( Con_Message("Attempting load of game-save slot #%i...\n", slot) )
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot.
-    /// @todo Why do this BEFORE loading??
+    /// @todo Why do this BEFORE loading?? (G_NewGame() does not load the serialized map state)
+    /// @todo Does any caller ever attempt to load the base slot?? (Doesn't seem logical)
     if(slot != BASE_SLOT)
     {
-        SV_ClearSlot(BASE_SLOT);
         SV_CopySlot(slot, BASE_SLOT);
     }
 #endif
 
     saveInfo = SV_SaveInfoForSlot(logicalSlot);
-    loadError = loadStateWorker(saveInfo);
+    loadError = loadStateWorker(Str_Text(path), saveInfo);
 
     if(!loadError)
     {
@@ -5279,7 +5422,7 @@ void SV_SaveGameClient(uint gameId)
 
     playerHeaderOK = false; // Uninitialized.
 
-    gameSavePath = SV_ComposeSavePathForClientGameId(gameId);
+    gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(Str_Text(gameSavePath), "wp"))
     {
         Con_Message("Warning:SV_SaveGameClient: Failed opening \"%s\" for writing.\n", Str_Text(gameSavePath));
@@ -5337,7 +5480,7 @@ void SV_LoadGameClient(uint gameId)
 
     playerHeaderOK = false; // Uninitialized.
 
-    gameSavePath = SV_ComposeSavePathForClientGameId(gameId);
+    gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(Str_Text(gameSavePath), "rp"))
     {
         Con_Message("Warning:SV_LoadGameClient: Failed opening \"%s\" for reading.\n", Str_Text(gameSavePath));
@@ -5404,12 +5547,16 @@ void SV_LoadGameClient(uint gameId)
 #endif
 }
 
+#if __JHEXEN__
+static void unarchiveMap(const Str* path)
+#else
 static void unarchiveMap(void)
+#endif
 {
 #if __JHEXEN__
-    // Compose the full path to the saved map.
-    AutoStr* path = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
     size_t bufferSize;
+
+    DENG_ASSERT(path);
 
 #ifdef _DEBUG
     Con_Printf("unarchiveMap: Reading %s\n", Str_Text(path));
@@ -5435,15 +5582,13 @@ static void unarchiveMap(void)
 #endif
 }
 
-static int saveStateWorker(void* parameters)
+static int saveStateWorker(const char* path, SaveInfo* saveInfo)
 {
-    SaveInfo* saveInfo = parameters;
-
 #if _DEBUG
-    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(SaveInfo_FilePath(saveInfo))) )
+    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", path) )
 #endif
 
-    if(!openGameSaveFile(Str_Text(SaveInfo_FilePath(saveInfo)), true))
+    if(!openGameSaveFile(path, true))
     {
         return SV_INVALIDFILENAME; // No success.
     }
@@ -5494,7 +5639,7 @@ static int saveStateWorker(void* parameters)
 #if __JHEXEN__
     {
     // Compose the full name to the saved map file.
-    AutoStr* mapPath = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
+    AutoStr* mapPath = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
 
     SV_OpenFile(Str_Text(mapPath), "wp");
     P_ArchiveMap(true); // true = save player info
@@ -5522,10 +5667,10 @@ static int saveStateWorker(void* parameters)
 /**
  * Construct a new SaveInfo configured for the current game session.
  */
-static SaveInfo* constructNewSaveInfo(const ddstring_t* path, const char* name)
+static SaveInfo* constructNewSaveInfo(const char* name)
 {
     ddstring_t nameStr;
-    SaveInfo* info = SaveInfo_NewWithFilePath(path);
+    SaveInfo* info = SaveInfo_New();
     SaveInfo_SetName(info, Str_InitStatic(&nameStr, name));
     SaveInfo_SetGameId(info, SV_GenerateGameId());
     SaveInfo_Configure(info);
@@ -5557,27 +5702,25 @@ boolean SV_SaveGame(int slot, const char* name)
         return false;
     }
 
-    path = SV_ComposeSavePathForSlot(logicalSlot);
+    path = composeGameSavePathForSlot(logicalSlot);
     if(Str_IsEmpty(path))
     {
         Con_Message("Warning: Path \"%s\" is unreachable, game not saved.\n", SV_SavePath());
         return false;
     }
 
-    info = constructNewSaveInfo(path, name);
-    saveError = saveStateWorker(info);
+    info = constructNewSaveInfo(name);
+    saveError = saveStateWorker(Str_Text(path), info);
 
     if(!saveError)
     {
-#if __JHEXEN__
-        // Clear all save files at destination slot.
-        SV_ClearSlot(slot);
-
-        // Copy base slot to destination slot.
-        SV_CopySlot(BASE_SLOT, slot);
-#endif
         // Swap the save info.
-        replaceSaveInfo(slot, info);
+        replaceSaveInfo(logicalSlot, info);
+
+#if __JHEXEN__
+        // Copy base slot to destination slot.
+        SV_CopySlot(logicalSlot, slot);
+#endif
 
         // The "last" save slot is now this.
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
@@ -5612,7 +5755,7 @@ void SV_HxSaveClusterMap(void)
     materialArchive = MaterialArchive_New(true);
 
     // Compose the full path name to the saved map file.
-    mapFilePath = SV_ComposeSavePathForMapSlot(gameMap+1, BASE_SLOT);
+    mapFilePath = composeGameSavePathForSlot2(BASE_SLOT, gameMap+1);
     SV_OpenFile(Str_Text(mapFilePath), "wp");
     P_ArchiveMap(false);
 
@@ -5632,11 +5775,11 @@ void SV_HxLoadClusterMap(void)
 
     playerHeaderOK = false; // Uninitialized.
 
-    // Been here before, load the previous map state.
     // Create the MaterialArchive.
     materialArchive = MaterialArchive_NewEmpty(true);
 
-    unarchiveMap();
+    // Been here before, load the previous map state.
+    unarchiveMap(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
 
     // We are done with the MaterialArchive.
     MaterialArchive_Delete(materialArchive);

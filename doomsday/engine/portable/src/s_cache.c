@@ -539,6 +539,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
 {
     void* data = NULL;
     int numSamples = 0, bytesPer = 0, rate = 0;
+    size_t lumpLength = 0;
 
     VERBOSE2( Con_Message("Caching sound '%s' (#%i)...\n", info->id, id) )
 
@@ -550,7 +551,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
      */
 
     /// Has an external sound file been defined?
-    /// \note Path is relative to the base path.
+    /// @note Path is relative to the base path.
     if(!Str_IsEmpty(&info->external))
     {
         ddstring_t buf;
@@ -593,7 +594,6 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
     if(!data)
     {
         abstractfile_t* fsObject;
-        size_t lumpLength;
         int lumpIdx;
         char hdr[12];
 
@@ -606,8 +606,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
         }
 
         lumpLength = F_LumpLength(info->lumpNum);
-        if(lumpLength <= 8)
-            return NULL;
+        if(lumpLength <= 8) return 0;
 
         fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
         F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)hdr, 0, 12);
@@ -620,11 +619,11 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
             data = WAV_MemoryLoad((const byte*) sp, lumpLength, &bytesPer, &rate, &numSamples);
             F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
-            if(NULL == data)
+            if(!data)
             {
                 // Abort...
-                Con_Message("Warning:Sfx_Cache: Unknown WAV format in lump '%s', aborting.\n", info->lumpName);
-                return NULL;
+                Con_Message("Warning: Sfx_Cache: Unknown WAV format in lump '%s', aborting.\n", info->lumpName);
+                return 0;
             }
 
             bytesPer /= 8;
@@ -633,40 +632,46 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
 
     if(data) // Loaded!
     {
-        sfxcache_t*         node;
-
         // Insert a copy of this into the cache.
-        node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
-                               bytesPer, rate, info->group);
+        sfxcache_t* node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
+                                           bytesPer, rate, info->group);
         Z_Free(data);
         return &node->sample;
     }
-    else // Must be an old-fashioned DOOM sample.
+
+    // Probably an old-fashioned DOOM sample.
+    lumpLength = F_LumpLength(info->lumpNum);
+    if(lumpLength > 8)
     {
-        /**
-         * We can use the sample data as-is, so make use of the lump cache
-         * by loading from it directly.
-         */
         int lumpIdx;
         abstractfile_t* fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
-        const uint8_t* sp = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-        const void* data;
-        sfxcache_t* node;
+        uint8_t hdr[8];
+        int head;
 
-        data = sp + 8; // Eight byte header.
+        F_ReadLumpSection(fsObject, lumpIdx, hdr, 0, 8);
+        head = SHORT(*(const short*) (hdr));
+        rate = SHORT(*(const short*) (hdr + 2));
+        numSamples = LONG(*(const int*) (hdr + 4));
+        if(numSamples < 0) numSamples = 0;
         bytesPer = 1; // 8-bit.
-        rate = SHORT(*(const short*) (sp + 2));
-        numSamples = LONG(*(const int*) (sp + 4));
 
-        // Insert a copy of this into the cache.
-        node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
-            bytesPer, rate, info->group);
+        if(head == 3 && numSamples > 0 && (unsigned)numSamples <= lumpLength - 8)
+        {
+            // The sample data can be used as-is - load directly from the lump cache.
+            const uint8_t* data = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC) + 8; // Skip the header.
 
-        // We don't need the temporary sample any more, clean up.
-        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+            // Insert a copy of this into the cache.
+            sfxcache_t* node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
+                                               bytesPer, rate, info->group);
 
-        return &node->sample;
+            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+
+            return &node->sample;
+        }
     }
+
+    Con_Message("Warning: Sfx_Cache: Unknown lump '%s' sound format, aborting.\n", info->lumpName);
+    return NULL;
 }
 
 /**

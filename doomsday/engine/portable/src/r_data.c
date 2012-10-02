@@ -1052,7 +1052,7 @@ void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
 #undef COPYVCOLOR
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_TextureUniqueId2(const Uri* uri, boolean quiet)
 {
     textureid_t texId = Textures_ResolveUri2(uri, quiet);
@@ -1062,14 +1062,13 @@ int R_TextureUniqueId2(const Uri* uri, boolean quiet)
     }
     if(!quiet)
     {
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning: Unknown Texture \"%s\"\n", Str_Text(path));
-        Str_Delete(path);
     }
     return -1;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 int R_TextureUniqueId(const Uri* uri)
 {
     return R_TextureUniqueId2(uri, false);
@@ -1105,11 +1104,10 @@ void R_InitSystemTextures(void)
 
         // Have we defined this yet?
         tex = Textures_ToTexture(texId);
-        if(!tex && !Textures_Create(texId, TXF_CUSTOM, NULL))
+        if(!tex && !Textures_Create(texId, true/*is-custom*/, NULL))
         {
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Warning: Failed defining Texture for System texture \"%s\"\n", Str_Text(path));
-            Str_Delete(path);
         }
     }
     Uri_Delete(resourcePath);
@@ -1129,13 +1127,13 @@ static textureid_t findPatchTextureIdByName(const char* encodedName)
     return texId;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 patchid_t R_DeclarePatch(const char* name)
 {
     const doompatch_header_t* patch;
     abstractfile_t* fsObject;
     Uri* uri, *resourcePath;
-    int lumpIdx, flags;
+    int lumpIdx;
     ddstring_t encodedName;
     lumpnum_t lumpNum;
     textureid_t texId;
@@ -1206,16 +1204,13 @@ patchid_t R_DeclarePatch(const char* name)
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
 
-    flags = 0;
-    if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
-
     tex = Textures_ToTexture(texId);
     if(!tex)
     {
         Size2Raw size;
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
-        tex = Textures_CreateWithSize(texId, flags, &size, (void*)p);
+        tex = Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, (void*)p);
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
         if(!tex)
@@ -1227,15 +1222,15 @@ patchid_t R_DeclarePatch(const char* name)
     }
     else
     {
-        patchtex_t* oldPatch = Texture_DetachUserData(tex);
+        patchtex_t* oldPatch = Texture_UserDataPointer(tex);
         Size2Raw size;
 
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
 
-        Texture_SetFlags(tex, flags);
+        Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
         Texture_SetSize(tex, &size);
-        Texture_AttachUserData(tex, (void*)p);
+        Texture_SetUserDataPointer(tex, (void*)p);
 
         free(oldPatch);
 
@@ -1255,7 +1250,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
     if(tex)
     {
-        const patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
+        const patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
         assert(tex);
 
         // Ensure we have up to date information about this patch.
@@ -1264,7 +1259,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         info->id = id;
         info->flags.isCustom = Texture_IsCustom(tex);
 
-        { averagealpha_analysis_t* aa = (averagealpha_analysis_t*)Texture_Analysis(tex, TA_ALPHA);
+        { averagealpha_analysis_t* aa = (averagealpha_analysis_t*)Texture_AnalysisDataPointer(tex, TA_ALPHA);
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
         }
 
@@ -1286,10 +1281,18 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     return false;
 }
 
-/// \note Part of the Doomsday public API.
+/// @note Part of the Doomsday public API.
 Uri* R_ComposePatchUri(patchid_t id)
 {
     return Textures_ComposeUri(Textures_TextureForUniqueId(TN_PATCHES, id));
+}
+
+/// @note Part of the Doomsday public API.
+AutoStr* R_ComposePatchPath(patchid_t id)
+{
+    textureid_t texId = Textures_TextureForUniqueId(TN_PATCHES, id);
+    if(texId == NOTEXTUREID) return AutoStr_NewStd();
+    return Textures_ComposePath(texId);
 }
 
 rawtex_t** R_CollectRawTexs(int* count)
@@ -1406,10 +1409,9 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 
     if(lumpSize < 4)
     {
-        ddstring_t* path = F_ComposeLumpPath(file, lumpIdx);
+        AutoStr* path = F_ComposeLumpPath(file, lumpIdx);
         Con_Message("Warning:loadPatchNames: \"%s\"(#%i) is not valid PNAMES data.\n",
                     F_PrettyPath(Str_Text(path)), lumpNum);
-        Str_Delete(path);
 
         if(num) *num = 0;
         return NULL;
@@ -1427,12 +1429,11 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 
     if((unsigned)numNames > (lumpSize - 4) / 8)
     {
-        // Lump is truncated.
-        ddstring_t* path = F_ComposeLumpPath(file, lumpIdx);
+        // Lump appears to be truncated.
+        AutoStr* path = F_ComposeLumpPath(file, lumpIdx);
         Con_Message("Warning:loadPatchNames: Patch '%s'(#%i) is truncated (%lu bytes, expected %lu).\n",
                     F_PrettyPath(Str_Text(path)), lumpNum, (unsigned long) lumpSize,
                     (unsigned long) (numNames * 8 + 4));
-        Str_Delete(path);
 
         numNames = (int) ((lumpSize - 4) / 8);
     }
@@ -1533,9 +1534,8 @@ typedef struct {
     numTexDefs = LONG(*maptex1);
 
     VERBOSE(
-        ddstring_t* path = F_ComposeLumpPath(fsObject, lumpIdx);
+        AutoStr* path = F_ComposeLumpPath(fsObject, lumpIdx);
         Con_Message("  Processing \"%s\"...\n", F_PrettyPath(Str_Text(path)));
-        Str_Delete(path);
     )
 
     validTexDefs = (byte*) calloc(1, sizeof(*validTexDefs) * numTexDefs);
@@ -1559,9 +1559,8 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            ddstring_t* path = F_ComposeLumpPath(fsObject, lumpIdx);
+            AutoStr* path = F_ComposeLumpPath(fsObject, lumpIdx);
             Con_Message("Warning: Invalid offset %lu for definition %i in \"%s\", ignoring.\n", (unsigned long) offset, i, F_PrettyPath(Str_Text(path)));
-            Str_Delete(path);
             continue;
         }
 
@@ -1972,13 +1971,18 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
                     {
                         hasReplacement = true; // Uses a non-IWAD patch.
                     }
-                    else if(custom->size.height == orig->size.height &&
-                            custom->size.width  == orig->size.width  &&
-                            custom->patchCount  == orig->patchCount)
+                    // Do the definitions differ?
+                    else if(custom->size.height != orig->size.height ||
+                            custom->size.width  != orig->size.width  ||
+                            custom->patchCount  != orig->patchCount)
+                    {
+                        custom->flags |= TXDF_CUSTOM;
+                        hasReplacement = true;
+                    }
+                    else
                     {
                         // Check the patches.
                         short k = 0;
-
                         while(k < orig->patchCount && !(custom->flags & TXDF_CUSTOM))
                         {
                             texpatch_t* origP   = orig->patches  + k;
@@ -1989,14 +1993,13 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
                                origP->offY != customP->offY)
                             {
                                 custom->flags |= TXDF_CUSTOM;
+                                hasReplacement = true;
                             }
                             else
                             {
                                 k++;
                             }
                         }
-
-                        hasReplacement = true;
                     }
 
                     // The non-drawable flag must pass to the replacement.
@@ -2067,29 +2070,26 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
     for(i = 0; i < count; ++i)
     {
         patchcompositetex_t* pcTex = defs[i];
-        int flags = 0;
 
         Uri_SetPath(uri, Str_Text(&pcTex->name));
 
         texId = Textures_Declare(uri, pcTex->origIndex, NULL);
         if(texId == NOTEXTUREID) continue; // Invalid uri?
 
-        if(pcTex->flags & TXDF_CUSTOM) flags |= TXF_CUSTOM;
-
         tex = Textures_ToTexture(texId);
         if(tex)
         {
-            patchcompositetex_t* oldPcTex = Texture_DetachUserData(tex);
+            patchcompositetex_t* oldPcTex = Texture_UserDataPointer(tex);
 
-            Texture_SetFlags(tex, flags);
+            Texture_FlagCustom(tex, !!(pcTex->flags & TXDF_CUSTOM));
             Texture_SetSize(tex, &pcTex->size);
-            Texture_AttachUserData(tex, (void*)pcTex);
+            Texture_SetUserDataPointer(tex, (void*)pcTex);
 
             Str_Free(&oldPcTex->name);
             if(oldPcTex->patches) free(oldPcTex->patches);
             free(oldPcTex);
         }
-        else if(!Textures_CreateWithSize(texId, flags, &pcTex->size, (void*)pcTex))
+        else if(!Textures_CreateWithSize(texId, !!(pcTex->flags & TXDF_CUSTOM), &pcTex->size, (void*)pcTex))
         {
             Con_Message("Warning: Failed defining Texture for new patch composite '%s', ignoring.\n", Str_Text(&pcTex->name));
             Str_Free(&pcTex->name);
@@ -2120,140 +2120,113 @@ void R_InitPatchComposites(void)
     VERBOSE2( Con_Message("R_InitPatchComposites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
+/// @todo Do this in the lump directory where we can make use of the hash!
+static lumpnum_t firstLumpWithName(const char* lumpName)
 {
-    Uri* uri, *resourcePath;
-    ddstring_t flatName;
-    textureid_t texId;
-    Texture* tex;
-    Size2Raw size;
-    char name[9];
-    int flags;
-
-    // We can only perform some basic filtering of lumps at this time.
-    if(F_LumpLength(lumpNum) == 0) return NULL;
-
-    // Compose the resource name.
-    Str_Init(&flatName);
-    F_FileName(&flatName, F_LumpName(lumpNum));
-
-    uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
-    Uri_SetPath(uri, Str_Text(&flatName));
-    Str_Free(&flatName);
-
-    // Compose the path to the data resource.
-    // Note that we do not use the lump name and instead use the logical lump index
-    // in the global LumpDirectory. This is necessary because of the way id tech 1
-    // manages flat references in animations (intermediate frames are chosen by their
-    // 'original indices' rather than by name).
-    dd_snprintf(name, 9, "%i", lumpNum);
-    resourcePath = Uri_NewWithPath2("LumpDir:", RC_NULL);
-    Uri_SetPath(resourcePath, name);
-
-    texId = Textures_Declare(uri, uniqueId, resourcePath);
-    Uri_Delete(resourcePath);
-    if(texId == NOTEXTUREID)
+    if(lumpName && lumpName[0])
     {
-        Uri_Delete(uri);
-        return NULL; // Invalid uri?
-    }
-
-    // Have we already encountered this name?
-    tex = Textures_ToTexture(texId);
-    if(tex)
-    {
-        flags = 0;
-        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
-        Texture_SetFlags(tex, flags);
-    }
-    else
-    {
-        // A new flat.
-        flags = 0;
-        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
-
-        /**
-         * \kludge Assume 64x64 else when the flat is loaded it will inherit the
-         * dimensions of the texture, which, if it has been replaced with a hires
-         * version - will be much larger than it should be.
-         *
-         * \todo Always determine size from the lowres original.
-         */
-        size.width = size.height = 64;
-        tex = Textures_CreateWithSize(texId, flags, &size, NULL);
-        if(!tex)
+        lumpnum_t lumpNum, numLumps = F_LumpCount();
+        for(lumpNum = 0; lumpNum < numLumps; ++lumpNum)
         {
-            ddstring_t* path = Uri_ToString(uri);
-            Con_Message("Warning: Failed defining Texture for new flat '%s', ignoring.\n", Str_Text(path));
-            Str_Delete(path);
-            Uri_Delete(uri);
-            return NULL;
+            if(!stricmp(F_LumpName(lumpNum), lumpName))
+                return lumpNum;
         }
     }
-    Uri_Delete(uri);
+    return -1;
+}
 
-    return tex;
+static Uri* composeFlatUri(const char* lumpName)
+{
+    Uri* uri;
+    AutoStr* flatName = AutoStr_NewStd();
+    F_FileName(flatName, lumpName);
+    uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(flatName));
+    return uri;
+}
+
+/**
+ * Compose the path to the data resource.
+ * @note We do not use the lump name, instead we use the logical lump index
+ * in the global LumpDirectory. This is necessary because of the way id tech 1
+ * manages flat references in animations (intermediate frames are chosen by their
+ * 'original indices' rather than by name).
+ */
+static Uri* composeFlatResourceUrn(lumpnum_t lumpNum)
+{
+    Uri* uri;
+    char name[9];
+    dd_snprintf(name, 9, "%i", lumpNum);
+    uri = Uri_NewWithPath2("LumpDir:", RC_NULL);
+    Uri_SetPath(uri, name);
+    return uri;
 }
 
 void R_InitFlatTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
-    lumpnum_t origRangeFrom, origRangeTo;
+    lumpnum_t firstFlatMarkerLumpNum;
 
     VERBOSE( Con_Message("Initializing Flat textures...\n") )
 
-    origRangeFrom = W_CheckLumpNumForName2("F_START", true/*quiet please*/);
-    origRangeTo   = W_CheckLumpNumForName2("F_END", true/*quiet please*/);
-
-    if(origRangeFrom >= 0 && origRangeTo >= 0)
+    firstFlatMarkerLumpNum = firstLumpWithName("F_START.lmp");
+    if(firstFlatMarkerLumpNum >= 0)
     {
-        int i, numLumps, origIndexBase = 0;
-        ddstack_t* stack;
-        Texture* tex;
-        lumpnum_t n;
-
-        // First add all flats between all flat marker lumps exclusive of the
-        // range defined by the last marker lumps.
-        origIndexBase = (int)origRangeTo;
-        stack = Stack_New();
-        numLumps = F_LumpCount();
-        for(i = 0; i < numLumps; ++i)
+        lumpnum_t lumpNum, numLumps = F_LumpCount();
+        abstractfile_t* blockFile = 0;
+        for(lumpNum = numLumps; lumpNum --> firstFlatMarkerLumpNum + 1;)
         {
-            const char* lumpName = F_LumpName(i);
+            const char* lumpName = F_LumpName(lumpNum);
+            abstractfile_t* lumpFile = F_FindFileForLumpNum(lumpNum);
 
-            if(lumpName[0] == 'F' && strlen(lumpName) >= 5)
+            if(blockFile && blockFile != lumpFile)
             {
-                if(!strnicmp(lumpName + 1, "_START", 6) ||
-                   !strnicmp(lumpName + 2, "_START", 6))
-                {
-                    // We've arrived at *a* sprite block.
-                    Stack_Push(stack, NULL);
-                    continue;
-                }
-                else if(!strnicmp(lumpName + 1, "_END", 4) ||
-                        !strnicmp(lumpName + 2, "_END", 4))
-                {
-                    // The sprite block ends.
-                    Stack_Pop(stack);
-                    continue;
-                }
+                blockFile = 0;
             }
 
-            if(!Stack_Height(stack)) continue;
-            if(i >= origRangeFrom && i <= origRangeTo) continue;
+            if(!blockFile)
+            {
+                if(!stricmp(lumpName, "F_END.lmp") || !stricmp(lumpName, "FF_END.lmp"))
+                {
+                    blockFile = lumpFile;
+                }
+                continue;
+            }
 
-            tex = createFlatForLump(i, origIndexBase);
-            if(tex) origIndexBase++;
-        }
+            if(!stricmp(lumpName, "F_START.lmp"))
+            {
+                blockFile = 0;
+                continue;
+            }
 
-        while(Stack_Height(stack)) { Stack_Pop(stack); }
-        Stack_Delete(stack);
+            // Ignore extra marker lumps.
+            if(!stricmp(lumpName, "FF_START.lmp") ||
+               !stricmp(lumpName, "F_END.lmp") || !stricmp(lumpName, "FF_END.lmp")) continue;
 
-        // Now add all lumps in the primary (overridding) range.
-        origRangeFrom += 1; // Skip over marker lump.
-        for(n = origRangeFrom; n < origRangeTo; ++n)
-        {
-            createFlatForLump(n, (int)(n - origRangeFrom));
+            {
+            Uri* uri = composeFlatUri(F_LumpName(lumpNum));
+            if(Textures_ResolveUri2(uri, true/*quiet please*/) == NOTEXTUREID) // A new flat?
+            {
+                /**
+                 * Kludge Assume 64x64 else when the flat is loaded it will inherit the
+                 * dimensions of the texture, which, if it has been replaced with a hires
+                 * version - will be much larger than it should be.
+                 *
+                 * @todo Always determine size from the lowres original.
+                 */
+                const Size2Raw size = { 64, 64 };
+                const int uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
+                Uri* resourcePath = composeFlatResourceUrn(lumpNum);
+                textureid_t texId = Textures_Declare(uri, uniqueId, resourcePath);
+                if(!Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, NULL))
+                {
+                    AutoStr* path = Uri_ToString(uri);
+                    Con_Message("Warning: Failed defining Texture for new flat '%s', ignoring.\n", Str_Text(path));
+                }
+                Uri_Delete(resourcePath);
+            }
+            Uri_Delete(uri);
+            }
         }
     }
 
@@ -2289,9 +2262,8 @@ void R_DefineSpriteTexture(textureid_t texId)
         if(!tex)
         {
             Uri* uri = Textures_ComposeUri(texId);
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Warning: Failed defining Texture for \"%s\", ignoring.\n", Str_Text(path));
-            Str_Delete(path);
             Uri_Delete(uri);
             free(pTex);
         }
@@ -2305,15 +2277,12 @@ void R_DefineSpriteTexture(textureid_t texId)
         abstractfile_t* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx, PU_APPSTATIC);
         Size2Raw size;
-        int flags;
 
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
         Texture_SetSize(tex, &size);
 
-        flags = 0;
-        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
-        Texture_SetFlags(tex, flags);
+        Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
 
         F_CacheChangeTag(file, lumpIdx, PU_CACHE);
         Str_Delete(resourcePath);
@@ -2450,7 +2419,7 @@ Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, TXF_CUSTOM, NULL);
+        tex = Textures_Create(texId, true/*is-custom*/, NULL);
         if(!tex)
         {
             Con_Message("Warning: Failed defining Texture for ModelSkin '%s', ignoring.\n", name);
@@ -2606,13 +2575,13 @@ static boolean isInList(void** list, size_t len, void* elm)
 
 int findSpriteOwner(thinker_t* th, void* context)
 {
-    int                 i;
-    mobj_t*             mo = (mobj_t*) th;
-    spritedef_t*        sprDef = (spritedef_t*) context;
+    mobj_t* mo = (mobj_t*) th;
+    spritedef_t* sprDef = (spritedef_t*) context;
 
     if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
     {
-        //// \optimize Traverses the entire state list!
+        //// @todo Optimize: traverses the entire state list!
+        int i;
         for(i = 0; i < defs.count.states.num; ++i)
         {
             if(stateOwners[i] != &mobjInfo[mo->type])
@@ -2626,53 +2595,61 @@ int findSpriteOwner(thinker_t* th, void* context)
     return false; // Keep looking...
 }
 
-/// \note Part of the Doomsday public API.
+void R_CacheSpritesForState(int stateIndex, const materialvariantspecification_t* spec)
+{
+    spritedef_t* sprDef;
+    state_t* state;
+    int j;
+
+    if(stateIndex < 0 || stateIndex >= defs.count.states.num) return;
+    if(!spec) return;
+
+    state = &states[stateIndex];
+    sprDef = &sprites[state->sprite];
+
+    for(j = 0; j < sprDef->numFrames; ++j)
+    {
+        spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
+        int k;
+        for(k = 0; k < 8; ++k)
+        {
+            Materials_Precache(sprFrame->mats[k], spec, true);
+        }
+    }
+}
+
+/// @note Part of the Doomsday public API.
 void R_PrecacheMobjNum(int num)
 {
     const materialvariantspecification_t* spec;
+    int i;
 
-    if(novideo || !((useModels && precacheSkins) || precacheSprites))
-        return;
-
-    if(num < 0 || num >= defs.count.mobjs.num)
-        return;
+    if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
+    if(num < 0 || num >= defs.count.mobjs.num) return;
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    assert(spec);
+                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                    1, -2, -1, true, true, true, false);
 
-    /// \optimize Traverses the entire state list!
-    { int i;
+    /// @todo Optimize: Traverses the entire state list!
     for(i = 0; i < defs.count.states.num; ++i)
     {
-        state_t* state;
-
-        if(stateOwners[i] != &mobjInfo[num])
-            continue;
-        state = &states[i];
+        if(stateOwners[i] != &mobjInfo[num]) continue;
 
         R_PrecacheModelsForState(i);
 
         if(precacheSprites)
         {
-            spritedef_t* sprDef = &sprites[state->sprite];
-            int j;
-            for(j = 0; j < sprDef->numFrames; ++j)
-            {
-                spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
-                int k;
-                for(k = 0; k < 8; ++k)
-                    Materials_Precache(sprFrame->mats[k], spec, true);
-            }
+            R_CacheSpritesForState(i, spec);
         }
-    }}
+        /// @todo What about sounds?
+    }
 }
 
 void R_PrecacheForMap(void)
 {
     // Don't precache when playing demo.
-    if(isDedicated || playback)
-        return;
+    if(isDedicated || playback) return;
 
     // Precaching from 100 to 200.
     Con_SetProgress(100);
@@ -2775,7 +2752,7 @@ Texture* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     if(texId == NOTEXTUREID) return NULL; // Invalid uri?
 
     tex = Textures_ToTexture(texId);
-    if(!tex && !Textures_Create(texId, TXF_CUSTOM, NULL))
+    if(!tex && !Textures_Create(texId, true/*is-custom*/, NULL))
     {
         Con_Message("Warning: Failed defining Texture for DetailTexture '%s', ignoring.\n", name);
         return NULL;
@@ -2837,7 +2814,7 @@ Texture* R_CreateLightMap(const Uri* resourcePath)
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, TXF_CUSTOM, NULL);
+        tex = Textures_Create(texId, true/*is-custom*/, NULL);
         if(!tex)
         {
             Con_Message("Warning: Failed defining Texture for LightMap '%s', ignoring.\n", name);
@@ -2906,7 +2883,7 @@ Texture* R_CreateFlareTexture(const Uri* resourcePath)
     tex = Textures_ToTexture(texId);
     if(!tex)
     {
-        tex = Textures_Create(texId, TXF_CUSTOM, NULL);
+        tex = Textures_Create(texId, true/*is-custom*/, NULL);
         if(!tex)
         {
             Con_Message("Warning: Failed defining Texture for flare texture '%s', ignoring.\n", name);
@@ -2967,7 +2944,7 @@ Texture* R_CreateReflectionTexture(const Uri* resourcePath)
     if(!tex)
     {
         // Create a texture for it.
-        tex = Textures_Create(texId, TXF_CUSTOM, NULL);
+        tex = Textures_Create(texId, true/*is-custom*/, NULL);
         if(!tex)
         {
             Con_Message("Warning: Failed defining Texture for shiny texture '%s', ignoring.\n", name);
@@ -3033,12 +3010,11 @@ Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
     else
     {
         // Create a texture for it.
-        tex = Textures_CreateWithSize(texId, TXF_CUSTOM, size, NULL);
+        tex = Textures_CreateWithSize(texId, true/*is-custom*/, size, NULL);
         if(!tex)
         {
-            ddstring_t* path = Uri_ToString(resourcePath);
+            AutoStr* path = Uri_ToString(resourcePath);
             Con_Message("Warning: Failed defining Texture for mask texture \"%s\"\n", F_PrettyPath(Str_Text(path)));
-            Str_Delete(path);
             return NULL;
         }
     }
@@ -3155,9 +3131,8 @@ void R_AddAnimGroupFrame(int groupNum, const Uri* texture, int tics, int randomT
     if(texId == NOTEXTUREID)
     {
 #if _DEBUG
-        ddstring_t* path = Uri_ToString(texture);
+        AutoStr* path = Uri_ToString(texture);
         Con_Message("Warning::R_AddAnimGroupFrame: Invalid texture uri \"%s\", ignoring.\n", Str_Text(path));
-        Str_Delete(path);
 #endif
         return;
     }
@@ -3200,9 +3175,8 @@ font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
     namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
     if(!VALID_FONTNAMESPACEID(namespaceId))
     {
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Message("Warning: Invalid font namespace in Font Uri \"%s\", ignoring.\n", Str_Text(path));
-        Str_Delete(path);
         return NULL;
     }
 
@@ -3222,9 +3196,8 @@ font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
         font = Fonts_CreateFromFile(fontId, resourcePath);
         if(!font)
         {
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Warning: Failed defining new Font for \"%s\", ignoring.\n", Str_Text(path));
-            Str_Delete(path);
         }
     }
     return font;
@@ -3248,9 +3221,8 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
     namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(def->uri)));
     if(!VALID_FONTNAMESPACEID(namespaceId))
     {
-        ddstring_t* path = Uri_ToString(def->uri);
+        AutoStr* path = Uri_ToString(def->uri);
         Con_Message("Warning: Invalid font namespace in Font Definition Uri \"%s\", ignoring.\n", Str_Text(path));
-        Str_Delete(path);
         return NULL;
     }
 
@@ -3270,9 +3242,8 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
         font = Fonts_CreateFromDef(fontId, def);
         if(!font)
         {
-            ddstring_t* path = Uri_ToString(def->uri);
+            AutoStr* path = Uri_ToString(def->uri);
             Con_Message("Warning: Failed defining new Font for \"%s\", ignoring.\n", Str_Text(path));
-            Str_Delete(path);
         }
     }
     return font;

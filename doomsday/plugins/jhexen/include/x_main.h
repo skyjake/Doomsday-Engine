@@ -29,6 +29,10 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int verbose;
 
 extern boolean noMonstersParm; // checkparm of -nomonsters
@@ -55,5 +59,9 @@ void X_PostInit(void);
 void X_Shutdown(void);
 int X_GetInteger(int id);
 void* X_GetVariable(int id);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBJHEXEN_MAIN_H */

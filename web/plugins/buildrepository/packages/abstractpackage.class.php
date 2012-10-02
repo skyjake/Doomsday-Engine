@@ -34,6 +34,7 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     protected $directDownloadFallbackUri = NULL;
     protected $releaseNotesUri = NULL;
     protected $releaseChangeLogUri = NULL;
+    protected $releaseDate = 0;
 
     protected $compileLogUri = NULL;
     protected $compileWarnCount = NULL;
@@ -41,7 +42,8 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
 
     public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL,
                                 $directDownloadUri=NULL,
-                                $directDownloadFallbackUri=NULL)
+                                $directDownloadFallbackUri=NULL,
+                                $releaseDate = 0)
     {
         parent::__construct($platformId, $title, $version);
 
@@ -50,6 +52,8 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
 
         if(!is_null($directDownloadFallbackUri) && strlen($directDownloadFallbackUri) > 0)
             $this->directDownloadFallbackUri = "$directDownloadFallbackUri";
+
+        $this->releaseDate = (integer)$releaseDate;
     }
 
     // Extends implementation in AbstractPackage.
@@ -73,6 +77,9 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
 
         if($this->hasReleaseNotesUri())
             $tpl['release_notesuri'] = $this->releaseNotesUri;
+
+        if($this->hasReleaseDate())
+            $tpl['release_date'] = date(DATE_RFC1123, $this->releaseDate);
 
         if($this->hasCompileLogUri())
             $tpl['compile_loguri'] = $this->compileLogUri;
@@ -191,6 +198,23 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
     public function hasDirectDownloadFallbackUri()
     {
         return !is_null($this->directDownloadFallbackUri);
+    }
+
+    // Implements iDownloadable
+    public function &releaseDate()
+    {
+        return $this->releaseDate;
+    }
+
+    // Implements iDownloadable
+    public function hasReleaseDate()
+    {
+        return $this->releaseDate > 0;
+    }
+
+    public function setReleaseDate($releaseDate)
+    {
+        $this->releaseDate = (integer)$releaseDate;
     }
 
     // Implements iDownloadable

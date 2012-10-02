@@ -33,6 +33,8 @@
 #include "rend_list.h"
 #include "r_things.h"
 
+struct materialvariantspecification_s;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -78,6 +80,8 @@ void            Rend_RenderMap(void);
 void            Rend_ModelViewMatrix(boolean use_angles);
 
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-c[VY])*viewsidex - (vOrigin[VX]-c[VX])*viewsidey))
+
+const struct materialvariantspecification_s* Rend_MapSurfaceDiffuseMaterialSpec(void);
 
 coord_t         Rend_PointDist3D(coord_t const point[3]);
 void            Rend_ApplyTorchLight(float* color, float distance);

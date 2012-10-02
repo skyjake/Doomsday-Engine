@@ -33,5 +33,8 @@ interface iDownloadable
      public function &directDownloadFallbackUri();
      public function hasDirectDownloadFallbackUri();
 
+     public function &releaseDate();
+     public function hasReleaseDate();
+
      public function genDownloadBadge();
 }

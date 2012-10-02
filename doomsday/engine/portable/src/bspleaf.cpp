@@ -60,15 +60,18 @@ void BspLeaf_Delete(BspLeaf* leaf)
         }
         else
         {
-            HEdge* next;
-
-            // Break the ring.
-            hedge->prev->next = NULL;
-            do
+            // Break the ring, if linked.
+            if(hedge->prev)
             {
-                next = hedge->next;
+                hedge->prev->next = NULL;
+            }
+
+            while(hedge)
+            {
+                HEdge* next = hedge->next;
                 HEdge_Delete(hedge);
-            } while((hedge = next));
+                hedge = next;
+            }
         }
     }
 

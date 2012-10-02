@@ -232,8 +232,8 @@ int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
     // All external music files are specified relative to the base path.
     if(def->path && !Str_IsEmpty(Uri_Path(def->path)))
     {
-        ddstring_t* path;
-        AutoStr* fullPath = AutoStr_New();
+        AutoStr* path;
+        AutoStr* fullPath = AutoStr_NewStd();
         F_PrependBasePath(fullPath, Uri_Path(def->path));
         if(F_Access(Str_Text(fullPath)))
         {
@@ -243,7 +243,6 @@ int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
 
         path = Uri_ToString(def->path);
         Con_Message("Warning \"%s\" for id '%s' not found.\n", Str_Text(path), def->id);
-        Str_Delete(path);
     }
 
     // Try the resource locator.

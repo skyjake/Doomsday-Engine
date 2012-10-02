@@ -52,6 +52,7 @@ struct HEdgeInfo
     coord_t pAngle;
     coord_t pPara;
     coord_t pPerp;
+    slopetype_t pSlopeType;
 
     HEdge* nextOnSide;
     HEdge* prevOnSide;
@@ -60,13 +61,16 @@ struct HEdgeInfo
     // is no longer in any superblock (e.g. now in a leaf).
     class SuperBlock* bmapBlock;
 
+    /// Linedef this half-edge initially comes from else @c NULL if a "mini-edge".
+    LineDef* lineDef;
+
     // Linedef that this half-edge initially comes from.
     // For "real" half-edges, this is just the same as the 'linedef' field
     // above. For "miniedges", this is the linedef of the partition line.
     LineDef* sourceLineDef;
 
     HEdgeInfo()
-        : pLength(0), pAngle(0), pPara(0), pPerp(0),
+        : pLength(0), pAngle(0), pPara(0), pPerp(0), pSlopeType(ST_VERTICAL),
           nextOnSide(0), prevOnSide(0), bmapBlock(0), sourceLineDef(0)
     {
         V2d_Set(start, 0, 0);
@@ -74,19 +78,20 @@ struct HEdgeInfo
         V2d_Set(direction, 0, 0);
     }
 
-    HEdgeInfo& initFromHEdge(const HEdge& hedge)
+    HEdgeInfo& initFromHEdge(HEdge const& hedge)
     {
         V2d_Copy(start, hedge.v[0]->origin);
         V2d_Copy(end,   hedge.v[1]->origin);
         V2d_Subtract(direction, end, start);
 
-        pLength = V2d_Length(direction);
-        pAngle  = M_DirectionToAngle(direction);
+        pLength    = V2d_Length(direction);
+        DENG2_ASSERT(pLength > 0);
+        pAngle     = M_DirectionToAngle(direction);
+        pSlopeType = M_SlopeType(direction);
 
         pPerp =  start[VY] * direction[VX] - start[VX] * direction[VY];
         pPara = -start[VX] * direction[VX] - start[VY] * direction[VY];
 
-        Q_ASSERT(pLength > 0);
         return *this;
     }
 };

@@ -237,6 +237,7 @@ enum {
     DD_DEF_MAP_INFO,
     DD_DEF_TEXT,
     DD_DEF_VALUE,
+    DD_DEF_VALUE_BY_INDEX,
     DD_DEF_LINE_TYPE,
     DD_DEF_SECTOR_TYPE,
     DD_PSPRITE_BOB_X,
@@ -259,6 +260,7 @@ enum {
     DD_PLUGIN_HOMEURL,
     DD_PLUGIN_DOCSURL,
     DD_DMU_VERSION, ///< Used in the exchange of DMU API versions.
+    DD_DEF_ACTION,
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
@@ -301,9 +303,11 @@ enum {
     DD_TORCH_GREEN,
     DD_TORCH_BLUE,
     DD_TORCH_ADDITIVE,
-    DD_TM_FLOOR_Z,      ///< output from P_CheckPosition
-    DD_TM_CEILING_Z,    ///< output from P_CheckPosition
-    DD_SHIFT_DOWN
+    DD_TM_FLOOR_Z,              ///< output from P_CheckPosition
+    DD_TM_CEILING_Z,            ///< output from P_CheckPosition
+    DD_SHIFT_DOWN,
+    DD_GAME_RECOMMENDS_SAVING,  ///< engine asks whether game should be saved (e.g., when upgrading) (game's GetInteger)
+    DD_NOTIFY_GAME_SAVED        ///< savegame was written
 };
 
 /// Bounding box coordinates.
@@ -365,6 +369,16 @@ typedef struct gameinfo_s {
     const char* author;
     const char* identityKey;
 } GameInfo;
+
+/**
+ * Provides a way for games (or other plugins) to notify the engine of game-related
+ * important events.
+ *
+ * @param notification  One of the DD_NOTIFY_* enums.
+ * @param param         Additional arguments about the notification, dependin
+ *                      on the notification type.
+ */
+void Game_Notify(int notification, void* param);
 
 /**
  * @defgroup resourceFlags Resource Flags
@@ -756,7 +770,7 @@ typedef struct ddmobj_base_s {
 enum {
     DDSMM_AFTER_LOADING,    ///< After loading a savegame...
     DDSMM_FINALIZE,         ///< After everything else is done.
-    DDSMM_INITIALIZE,       ///< Before anything else if done.
+    DDSMM_INITIALIZE        ///< Before anything else if done.
 };
 
 /// Sector reverb data indices. @ingroup map
@@ -953,6 +967,26 @@ typedef struct aabox_s {
             int maxY;
         };
     };
+#ifdef __cplusplus
+    aabox_s() : minX(DDMAXINT), minY(DDMAXINT), maxX(DDMININT), maxY(DDMININT) {}
+    aabox_s(int _minX, int _minY, int _maxX, int _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aabox_s& operator = (aabox_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aabox_s& clear()
+    {
+        minX = minY = DDMAXINT;
+        maxX = maxY = DDMININT;
+        return *this;
+    }
+#endif
 } AABox;
 
 /**
@@ -978,6 +1012,26 @@ typedef struct aaboxf_s {
             float maxY;
         };
     };
+#ifdef __cplusplus
+    aaboxf_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
+    aaboxf_s(float _minX, float _minY, float _maxX, float _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aaboxf_s& operator = (aaboxf_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aaboxf_s& clear()
+    {
+        minX = minY = DDMAXFLOAT;
+        maxX = maxY = DDMINFLOAT;
+        return *this;
+    }
+#endif
 } AABoxf;
 
 /**
@@ -1003,6 +1057,27 @@ typedef struct aaboxd_s {
             double maxY;
         };
     };
+#ifdef __cplusplus
+    aaboxd_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
+    aaboxd_s(double _minX, double _minY, double _maxX, double _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
+
+    aaboxd_s& operator = (aaboxd_s const& other)
+    {
+        minX = other.minX;
+        minY = other.minY;
+        maxX = other.maxX;
+        maxY = other.maxY;
+        return *this;
+    }
+
+    aaboxd_s& clear()
+    {
+        minX = minY = DDMAXFLOAT;
+        maxX = maxY = DDMINFLOAT;
+        return *this;
+    }
+
+#endif
 } AABoxd;
 
 /// Base mobj_t elements. Games MUST use this as the basis for mobj_t. @ingroup mobj

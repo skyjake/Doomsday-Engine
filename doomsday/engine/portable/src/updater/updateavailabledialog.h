@@ -44,6 +44,7 @@ public slots:
     void neverCheckToggled(bool);
     void showWhatsNew();
     void editSettings();
+    void recenterDialog();
 
 signals:
     void checkAgain();

@@ -26,6 +26,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     MSG_CANCEL = -1,
     MSG_NO,
@@ -79,5 +83,9 @@ boolean         Hu_IsMessageActiveWithCallback(msgfunc_t callback);
  * Begin a new game state message/question.
  */
 void            Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, int userValue, void* userPointer);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBCOMMON_HUD_MESSAGE_H

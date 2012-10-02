@@ -32,6 +32,10 @@
 #include "h2def.h"
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     HUD_MANA,
     HUD_HEALTH,
@@ -87,6 +91,7 @@ typedef struct {
     float           bobView, bobWeapon;
 
     byte            confirmQuickGameSave;
+    byte            confirmRebornLoad;
     byte            loadLastSaveOnReborn;
 
     int             jumpEnabled;
@@ -201,5 +206,9 @@ typedef struct {
 } game_config_t;
 
 extern game_config_t cfg;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -21,12 +21,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdio.h>
 #include "wadmapconverter.h"
 #include "maplumpinfo.h"
 #include <de/libdeng2.h>
 
-const Str* MapFormatNameForId(mapformatid_t id)
+const Str* MapFormatNameForId(MapFormatId id)
 {
     static const de::Str names[1 + NUM_MAPFORMATS] = {
         /* MF_UNKNOWN */ "Unknown",

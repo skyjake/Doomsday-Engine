@@ -33,6 +33,10 @@
 #include "m_vector.h"
 #include "p_mapdata.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Lumobject types.
 typedef enum {
     LT_OMNI, ///< Omni (spherical) light.
@@ -233,5 +237,9 @@ int LO_IterateProjections2(uint listIdx, int (*callback) (const dynlight_t*, voi
 int LO_IterateProjections(uint listIdx, int (*callback) (const dynlight_t*, void*)/* paramaters=NULL*/);
 
 void LO_DrawLumobjs(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_REFRESH_LUMINOUS_H

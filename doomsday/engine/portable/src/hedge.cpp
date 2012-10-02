@@ -293,12 +293,15 @@ boolean HEdge_PrepareWallDivs(HEdge* hedge, SideDefSection section,
     Sector* frontSec, Sector* backSec,
     walldivs_t* leftWallDivs, walldivs_t* rightWallDivs, float matOffset[2])
 {
-    Q_ASSERT(hedge);
+    DENG_ASSERT(hedge);
+
+    int lineFlags = hedge->lineDef? hedge->lineDef->flags : 0;
+    SideDef* frontDef = HEDGE_SIDEDEF(hedge);
+    SideDef* backDef  = hedge->twin? HEDGE_SIDEDEF(hedge->twin) : 0;
     coord_t low, hi;
-    boolean visible = R_FindBottomTop(hedge->lineDef, hedge->side, section,
-                                      frontSec, backSec, HEDGE_SIDEDEF(hedge),
-                                      &low, &hi, matOffset);
-    matOffset[0] += (float)(hedge->offset);
+    boolean visible = R_FindBottomTop2(section, lineFlags, frontSec, backSec, frontDef, backDef,
+                                       &low, &hi, matOffset);
+    matOffset[0] += float(hedge->offset);
     if(!visible) return false;
 
     buildWallDiv(leftWallDivs,  hedge, section, low, hi, false/*is-left-edge*/);
@@ -333,6 +336,39 @@ void HEdge_Delete(HEdge* hedge)
         }
     }
     Z_Free(hedge);
+}
+
+coord_t HEdge_PointDistance(HEdge* hedge, coord_t const point[2], coord_t* offset)
+{
+    coord_t direction[2];
+    DENG_ASSERT(hedge);
+    V2d_Subtract(direction, hedge->HE_v2origin, hedge->HE_v1origin);
+    return V2d_PointLineDistance(point, hedge->HE_v1origin, direction, offset);
+}
+
+coord_t HEdge_PointXYDistance(HEdge* hedge, coord_t x, coord_t y, coord_t* offset)
+{
+    coord_t point[2] = { x, y };
+    return HEdge_PointDistance(hedge, point, offset);
+}
+
+coord_t HEdge_PointOnSide(const HEdge* hedge, coord_t const point[2])
+{
+    coord_t direction[2];
+    DENG_ASSERT(hedge);
+    if(!point)
+    {
+        DEBUG_Message(("HEdge_PointOnSide: Invalid arguments, returning >0.\n"));
+        return 1;
+    }
+    V2d_Subtract(direction, hedge->HE_v2origin, hedge->HE_v1origin);
+    return V2d_PointOnLineSide(point, hedge->HE_v1origin, direction);
+}
+
+coord_t HEdge_PointXYOnSide(const HEdge* hedge, coord_t x, coord_t y)
+{
+    coord_t point[2] = { x, y };
+    return HEdge_PointOnSide(hedge, point);
 }
 
 int HEdge_SetProperty(HEdge* hedge, const setargs_t* args)

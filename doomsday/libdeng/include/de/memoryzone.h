@@ -113,7 +113,7 @@ DENG_PUBLIC void Z_ChangeTag2(void* ptr, int tag);
  */
 DENG_PUBLIC void Z_ChangeUser(void* ptr, void* newUser);
 
-DENG_PUBLIC uint Z_GetId(void* ptr);
+DENG_PUBLIC uint32_t Z_GetId(void* ptr);
 
 /**
  * Get the user of a memory block.
@@ -154,7 +154,7 @@ typedef struct zblockset_s zblockset_t;
  *
  * @return  Ptr to the newly created blockset.
  */
-DENG_PUBLIC zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint batchSize, int tag);
+DENG_PUBLIC zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint32_t batchSize, int tag);
 
 /**
  * Destroy the entire blockset.

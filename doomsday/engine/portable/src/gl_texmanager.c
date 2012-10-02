@@ -705,21 +705,17 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
-            const ddstring_t suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
-            ddstring_t searchPath;
-
+            const Str suffix = { "-ck" };
+            AutoStr* path = Textures_ComposePath(Textures_Id(tex));
             // First try the flats namespace then the old-fashioned "flat-name"
             // in the textures namespace.
-            Str_Init(&searchPath);
-            Str_Appendf(&searchPath,
-                FLATS_RESOURCE_NAMESPACE_NAME":%s;"
-                TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(path), Str_Text(path));
+            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(),
+                                              FLATS_RESOURCE_NAMESPACE_NAME":%s;"
+                                              TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(path), Str_Text(path));
 
-            source = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
-            Str_Free(&searchPath);
-            Str_Delete(path);
+            source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
+
         if(source == TEXS_NONE)
         {
             const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
@@ -754,17 +750,12 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         // Attempt to load an external replacement for this patch?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
-            const ddstring_t suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
-            ddstring_t searchPath;
-
-            Str_Init(&searchPath);
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(path));
-
-            source = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
-            Str_Free(&searchPath);
-            Str_Delete(path);
+            const Str suffix = { "-ck" };
+            AutoStr* path = Textures_ComposePath(Textures_Id(tex));
+            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(), PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(path));
+            source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
+
         if(source == TEXS_NONE)
         {
             const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
@@ -779,8 +770,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
                 }
             }
         }
-        break;
-      }
+        break; }
+
     case TN_SPRITES: {
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
@@ -793,26 +784,25 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         // Attempt to load an external replacement for this sprite?
         if(!noHighResPatches)
         {
-            ddstring_t searchPath, suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
+            const Str suffix = { "-ck" };
+            AutoStr* path = Textures_ComposePath(Textures_Id(tex));
 
             // Prefer psprite or translated versions if available.
-            Str_Init(&searchPath);
+            AutoStr* searchPath = AutoStr_NewStd();
             if(TC_PSPRITE_DIFFUSE == spec->context)
             {
-                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", Str_Text(path));
+                Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", Str_Text(path));
             }
             else if(tclass || tmap)
             {
-                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
-                    Str_Text(path), tclass, tmap);
+                Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
+                                        Str_Text(path), tclass, tmap);
             }
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(path));
+            Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(path));
 
-            source = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
-            Str_Free(&searchPath);
-            Str_Delete(path);
+            source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
+
         if(source == TEXS_NONE)
         {
             const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
@@ -827,15 +817,14 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
                 }
             }
         }
-        break;
-      }
+        break; }
+
     case TN_DETAILS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         if(Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
         {
-            ddstring_t* searchPath = Uri_Compose(resourcePath);
+            AutoStr* searchPath = Uri_Compose(resourcePath);
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), NULL, true/*quiet please*/);
-            Str_Delete(searchPath);
         }
         else
         {
@@ -847,8 +836,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
                 F_Delete(file);
             }
         }
-        break;
-      }
+        break; }
+
     case TN_SYSTEM:
     case TN_REFLECTIONS:
     case TN_MASKS:
@@ -857,11 +846,10 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
     case TN_MODELSKINS:
     case TN_MODELREFLECTIONSKINS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
-        ddstring_t* path = Uri_Compose(resourcePath);
+        AutoStr* path = Uri_Compose(resourcePath);
         source = GL_LoadExtTextureEX(image, Str_Text(path), NULL, true/*quiet please*/);
-        Str_Delete(path);
-        break;
-      }
+        break; }
+
     default:
         Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.", (int) Textures_Namespace(Textures_Id(tex)));
         exit(1); // Unreachable.
@@ -1080,10 +1068,9 @@ static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant* tex, 
         // Announce the normalization.
         VERBOSE(
             Uri* uri = Textures_ComposeUri(Textures_Id(TextureVariant_GeneralCase(tex)));
-            ddstring_t* path = Uri_ToString(uri);
+            AutoStr* path = Uri_ToString(uri);
             Con_Message("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
                         Str_Text(path), baMul, hiMul, loMul);
-            Str_Delete(path);
             Uri_Delete(uri);
         )
     }
@@ -2512,7 +2499,7 @@ TexSource GL_LoadPatchLumpAsPatch(image_t* image, DFile* file, int tclass, int t
     if(source == TEXS_ORIGINAL && tex)
     {
         // Loaded from a lump assumed to be in DOOM's Patch format.
-        patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
+        patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
         if(pTex)
         {
             // Load the extended metadata from the lump.
@@ -2562,7 +2549,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
         Con_Error("GL_LoadPatchComposite: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
-    texDef = (patchcompositetex_t*)Texture_UserData(tex);
+    texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
     assert(texDef);
 
     GL_InitImage(image);
@@ -2594,6 +2581,9 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
         image->flags |= IMGF_IS_MASKED;
 
+    // For debug:
+    // GL_DumpImage(image, Str_Text(GL_ComposeCacheNameForTexture(tex)));
+
     return TEXS_ORIGINAL;
 }
 
@@ -2607,7 +2597,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
         Con_Error("GL_LoadPatchCompositeAsSky: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
-    texDef = (patchcompositetex_t*)Texture_UserData(tex);
+    texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
     assert(texDef);
 
     /**
@@ -2832,7 +2822,7 @@ TextureVariant* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT)
 #endif
         return 0;
     }
-    pTex = (patchtex_t*)Texture_UserData(tex);
+    pTex = (patchtex_t*)Texture_UserDataPointer(tex);
     assert(pTex);
 
     texSpec = GL_TextureVariantSpecificationForContext(TC_UI,
@@ -3071,7 +3061,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
     // Do we need color palette info?
     if(TST_GENERAL == spec->type && image->paletteId != 0)
     {
-        colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_Analysis(tex, TA_COLORPALETTE);
+        colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_AnalysisDataPointer(tex, TA_COLORPALETTE);
         boolean firstInit = (!cp);
 
         if(firstInit)
@@ -3079,7 +3069,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
             cp = (colorpalette_analysis_t*) malloc(sizeof *cp);
             if(!cp)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new ColorPaletteAnalysis.", (unsigned long) sizeof *cp);
-            Texture_AttachAnalysis(tex, TA_COLORPALETTE, cp);
+            Texture_SetAnalysisDataPointer(tex, TA_COLORPALETTE, cp);
         }
 
         if(firstInit || forceUpdate)
@@ -3089,7 +3079,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
     // Calculate a point light source for Dynlight and/or Halo?
     if(TST_GENERAL == spec->type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        pointlight_analysis_t* pl = (pointlight_analysis_t*) Texture_Analysis(tex, TA_SPRITE_AUTOLIGHT);
+        pointlight_analysis_t* pl = (pointlight_analysis_t*) Texture_AnalysisDataPointer(tex, TA_SPRITE_AUTOLIGHT);
         boolean firstInit = (!pl);
 
         if(firstInit)
@@ -3097,7 +3087,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
             pl = (pointlight_analysis_t*) malloc(sizeof *pl);
             if(!pl)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new PointLightAnalysis.", (unsigned long) sizeof *pl);
-            Texture_AttachAnalysis(tex, TA_SPRITE_AUTOLIGHT, pl);
+            Texture_SetAnalysisDataPointer(tex, TA_SPRITE_AUTOLIGHT, pl);
         }
 
         if(firstInit || forceUpdate)
@@ -3110,7 +3100,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
        (TS_GENERAL(spec)->context == TC_SPRITE_DIFFUSE ||
         TS_GENERAL(spec)->context == TC_UI))
     {
-        averagealpha_analysis_t* aa = (averagealpha_analysis_t*) Texture_Analysis(tex, TA_ALPHA);
+        averagealpha_analysis_t* aa = (averagealpha_analysis_t*) Texture_AnalysisDataPointer(tex, TA_ALPHA);
         boolean firstInit = (!aa);
 
         if(firstInit)
@@ -3118,7 +3108,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
             aa = (averagealpha_analysis_t*) malloc(sizeof *aa);
             if(!aa)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageAlphaAnalysis.", (unsigned long) sizeof *aa);
-            Texture_AttachAnalysis(tex, TA_ALPHA, aa);
+            Texture_SetAnalysisDataPointer(tex, TA_ALPHA, aa);
         }
 
         if(firstInit || forceUpdate)
@@ -3148,7 +3138,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
     // Average color for sky ambient color?
     if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_COLOR);
+        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_AnalysisDataPointer(tex, TA_COLOR);
         boolean firstInit = (!ac);
 
         if(firstInit)
@@ -3156,7 +3146,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
             ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
             if(!ac)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
-            Texture_AttachAnalysis(tex, TA_COLOR, ac);
+            Texture_SetAnalysisDataPointer(tex, TA_COLOR, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -3177,7 +3167,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
     // Amplified average color for plane glow?
     if(TST_GENERAL == spec->type && TC_MAPSURFACE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_COLOR_AMPLIFIED);
+        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_AnalysisDataPointer(tex, TA_COLOR_AMPLIFIED);
         boolean firstInit = (!ac);
 
         if(firstInit)
@@ -3185,7 +3175,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
             ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
             if(!ac)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
-            Texture_AttachAnalysis(tex, TA_COLOR_AMPLIFIED, ac);
+            Texture_SetAnalysisDataPointer(tex, TA_COLOR_AMPLIFIED, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -3207,7 +3197,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
     // Average top line color for sky sphere fadeout?
     if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_LINE_TOP_COLOR);
+        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_AnalysisDataPointer(tex, TA_LINE_TOP_COLOR);
         boolean firstInit = (!ac);
 
         if(firstInit)
@@ -3215,7 +3205,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
             ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
             if(!ac)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
-            Texture_AttachAnalysis(tex, TA_LINE_TOP_COLOR, ac);
+            Texture_SetAnalysisDataPointer(tex, TA_LINE_TOP_COLOR, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -3236,7 +3226,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
     // Average bottom line color for sky sphere fadeout?
     if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_LINE_BOTTOM_COLOR);
+        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_AnalysisDataPointer(tex, TA_LINE_BOTTOM_COLOR);
         boolean firstInit = (!ac);
 
         if(firstInit)
@@ -3244,7 +3234,7 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
             ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
             if(!ac)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
-            Texture_AttachAnalysis(tex, TA_LINE_BOTTOM_COLOR, ac);
+            Texture_SetAnalysisDataPointer(tex, TA_LINE_BOTTOM_COLOR, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -3277,7 +3267,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
         // Try to load a replacement version of this texture?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
-            patchcompositetex_t* texDef = (patchcompositetex_t*)Texture_UserData(tex);
+            patchcompositetex_t* texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
             assert(texDef);
@@ -3319,10 +3309,9 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     {
 #if _DEBUG
         Uri* uri = Textures_ComposeUri(Textures_Id(tex));
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         VERBOSE2( Con_Message("Logical dimensions for \"%s\" taken from image pixels [%ix%i].\n",
-            Str_Text(path), image.size.width, image.size.height) );
-        Str_Delete(path);
+                              Str_Text(path), image.size.width, image.size.height) )
         Uri_Delete(uri);
 #endif
         Texture_SetSize(tex, &image.size);
@@ -3334,7 +3323,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     if(!*variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        *variant = TextureVariant_New(tex, source, spec);
+        *variant = TextureVariant_New(tex, spec, source);
         TextureVariant_SetGLName(*variant, newGLName);
         Texture_AddVariant(tex, *variant);
     }
@@ -3362,11 +3351,10 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
 #ifdef _DEBUG
     VERBOSE(
         Uri* uri = Textures_ComposeUri(Textures_Id(tex));
-        ddstring_t* path = Uri_ToString(uri);
+        AutoStr* path = Uri_ToString(uri);
         Con_Printf("Prepared TextureVariant (name:\"%s\" glName:%u)%s\n",
-            Str_Text(path), (unsigned int) TextureVariant_GLName(*variant),
-            (METHOD_IMMEDIATE == uploadMethod)? " while not busy!" : "");
-        Str_Delete(path);
+                   Str_Text(path), (unsigned int) TextureVariant_GLName(*variant),
+                   (METHOD_IMMEDIATE == uploadMethod)? " while not busy!" : "");
         Uri_Delete(uri);
         )
     VERBOSE2(
@@ -3503,17 +3491,12 @@ void GL_BindTexture(TextureVariant* tex)
     }
 }
 
-int GL_ReleaseGLTexturesByTexture2(Texture* tex, void* paramaters)
+int GL_ReleaseGLTexturesByTexture2(Texture* tex, void* parameters)
 {
+    DENG_UNUSED(parameters);
     if(tex)
     {
-        int i;
         Texture_IterateVariants(tex, releaseVariantGLTexture, NULL/*no paramaters*/);
-        for(i = (int) TEXTURE_ANALYSIS_FIRST; i < (int) TEXTURE_ANALYSIS_COUNT; ++i)
-        {
-            void* data = Texture_DetachAnalysis(tex, (texture_analysisid_t) i);
-            if(data) free(data);
-        }
     }
     return 0; // Continue iteration.
 }
@@ -3542,7 +3525,7 @@ void GL_ReleaseVariantTexture(TextureVariant* tex)
 
 static int releaseGLTexturesByColorPaletteWorker(Texture* tex, void* paramaters)
 {
-    colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_Analysis(tex, TA_COLORPALETTE);
+    colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_AnalysisDataPointer(tex, TA_COLORPALETTE);
     colorpaletteid_t paletteId = *(colorpaletteid_t*)paramaters;
     assert(tex && paramaters);
 
@@ -3646,6 +3629,45 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     uploadContentUnmanaged(chooseContentUploadMethod(&c), &c);
     return c.name;
 }
+
+AutoStr* GL_ComposeCacheNameForTexture(Texture* tex)
+{
+    textureid_t texId = Textures_Id(tex);
+    AutoStr* path = Textures_ComposePath(texId);
+    AutoStr* cacheName = Str_Appendf(AutoStr_NewStd(), "texcache/%s/%s.png",
+                                     Str_Text(Textures_NamespaceName(Textures_Namespace(texId))), Str_Text(path));
+    return cacheName;
+}
+
+boolean GL_DumpImage(const image_t* origImg, const char* filePath)
+{
+    DENG_ASSERT(origImg);
+{
+    boolean savedOK;
+
+    // Do we need to convert to ABGR32 first?
+    image_t imgABGR32;
+    const image_t* img = origImg;
+    if(img->pixelSize != 4 || img->paletteId)
+    {
+        GL_InitImage(&imgABGR32);
+        imgABGR32.pixels = GL_ConvertBuffer(img->pixels, img->size.width, img->size.height,
+                                            ((img->flags & IMGF_IS_MASKED)? 2 : 1),
+                                            R_ToColorPalette(img->paletteId), 4);
+        imgABGR32.pixelSize = 4;
+        imgABGR32.size.width  = img->size.width;
+        imgABGR32.size.height = img->size.height;
+        img = &imgABGR32;
+    }
+
+    savedOK = Image_Save(img, filePath);
+
+    if(img == &imgABGR32)
+    {
+        GL_DestroyImage(&imgABGR32);
+    }
+    return savedOK;
+}}
 
 D_CMD(LowRes)
 {

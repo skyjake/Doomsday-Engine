@@ -102,15 +102,7 @@ static boolean autoStart;
  */
 int D_GetInteger(int id)
 {
-    switch(id)
-    {
-    case DD_DMU_VERSION:
-        return DMUAPI_VER;
-
-    default:
-        break;
-    }
-    return 0;
+    return Common_GetInteger(id);
 }
 
 /**
@@ -329,6 +321,7 @@ void D_PreInit(void)
     cfg.hideIWADAuthor = true;
 
     cfg.confirmQuickGameSave = true;
+    cfg.confirmRebornLoad = true;
     cfg.loadAutoSaveOnReborn = false;
     cfg.loadLastSaveOnReborn = false;
 
@@ -443,7 +436,7 @@ void D_PreInit(void)
  */
 void D_PostInit(void)
 {
-    ddstring_t* path;
+    AutoStr* path;
     Uri* uri;
     int p;
 
@@ -516,8 +509,8 @@ void D_PostInit(void)
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        const int saveSlot = CommandLine_At(p + 1)[0] - '0';
-        if(G_LoadGame(saveSlot))
+        const int saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
+        if(SV_IsUserWritableSlot(saveSlot) && G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.
             return;
@@ -572,7 +565,6 @@ void D_PostInit(void)
         startEpisode = 0;
         startMap = 0;
     }
-    Str_Delete(path);
     Uri_Delete(uri);
 
     if(autoStart || IS_NETGAME)
