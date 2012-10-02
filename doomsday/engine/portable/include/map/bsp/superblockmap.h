@@ -242,7 +242,7 @@ public:
     DENG_DEBUG_ONLY(
     static void DebugPrint(SuperBlock const& inst)
     {
-        DENG2_FOR_EACH(it, inst.hedges(), SuperBlock::HEdges::const_iterator)
+        DENG2_FOR_EACH_CONST(SuperBlock::HEdges, it, inst.hedges())
         {
             HEdge* hedge = *it;
             LOG_DEBUG("Build: %s %p sector: %d [%1.1f, %1.1f] -> [%1.1f, %1.1f]")

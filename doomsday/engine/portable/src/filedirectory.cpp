@@ -71,7 +71,7 @@ void de::FileDirectory::clearNodeInfo()
 {
     const PathNodes* nodes = pathNodes(PT_LEAF);
     if(nodes)
-    DENG2_FOR_EACH(i, *nodes, PathNodes::const_iterator)
+    DENG2_FOR_EACH_CONST(PathNodes, i, *nodes)
     {
         FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->userData());
         if(info)
@@ -84,7 +84,7 @@ void de::FileDirectory::clearNodeInfo()
 
     nodes = pathNodes(PT_BRANCH);
     if(nodes)
-    DENG2_FOR_EACH(i, *nodes, PathNodes::const_iterator)
+    DENG2_FOR_EACH_CONST(PathNodes, i, *nodes)
     {
         FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->userData());
         if(info)
@@ -266,7 +266,7 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
                     {
                         const PathNodes* nodes = pathNodes(PT_LEAF);
                         if(nodes)
-                        DENG2_FOR_EACH(i, *nodes, PathNodes::const_iterator)
+                        DENG2_FOR_EACH_CONST(PathNodes, i, *nodes)
                         {
                             if(node == (*i)->parent())
                             {
@@ -279,7 +279,7 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
                         {
                             nodes = pathNodes(PT_BRANCH);
                             if(nodes)
-                            DENG2_FOR_EACH(i, *nodes, PathNodes::const_iterator)
+                            DENG2_FOR_EACH_CONST(PathNodes, i, *nodes)
                             {
                                 if(node == (*i)->parent())
                                 {

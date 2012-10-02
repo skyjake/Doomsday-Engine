@@ -41,7 +41,7 @@ Id1Map::~Id1Map()
         vertexes = 0;
     }
 
-    DENG2_FOR_EACH(i, polyobjs, Polyobjs::iterator)
+    DENG2_FOR_EACH(Polyobjs, i, polyobjs)
     {
         free((i)->lineIndices);
     }
@@ -281,7 +281,7 @@ void Id1Map::load(MapLumpInfos& lumpInfos)
     numVertexes = numElements;
     vertexes = (coord_t*)malloc(numVertexes * 2 * sizeof(*vertexes));
 
-    DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::const_iterator)
+    DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
     {
         MapLumpInfo* info = i->second;
 
@@ -321,7 +321,7 @@ void Id1Map::transferSectors(void)
 {
     LOG_TRACE("Transfering sectors...");
 
-    DENG2_FOR_EACH(i, sectors, Sectors::iterator)
+    DENG2_FOR_EACH(Sectors, i, sectors)
     {
         uint idx = MPE_SectorCreate(float((i)->lightLevel) / 255.0f, 1, 1, 1);
 
@@ -348,7 +348,7 @@ void Id1Map::transferSectors(void)
 void Id1Map::transferLinesAndSides(void)
 {
     LOG_TRACE("Transfering lines and sides...");
-    DENG2_FOR_EACH(i, lines, Lines::iterator)
+    DENG2_FOR_EACH(Lines, i, lines)
     {
         uint frontIdx = 0;
         mside_t* front = ((i)->sides[RIGHT] != 0? &sides[(i)->sides[RIGHT]-1] : NULL);
@@ -416,7 +416,7 @@ void Id1Map::transferSurfaceTints(void)
     if(surfaceTints.empty()) return;
 
     LOG_TRACE("Transfering surface tints...");
-    DENG2_FOR_EACH(i, surfaceTints, SurfaceTints::iterator)
+    DENG2_FOR_EACH(SurfaceTints, i, surfaceTints)
     {
         uint idx = i - surfaceTints.begin();
 
@@ -434,7 +434,7 @@ void Id1Map::transferPolyobjs(void)
     if(polyobjs.empty()) return;
 
     LOG_TRACE("Transfering polyobjs...");
-    DENG2_FOR_EACH(i, polyobjs, Polyobjs::iterator)
+    DENG2_FOR_EACH(Polyobjs, i, polyobjs)
     {
         MPE_PolyobjCreate((i)->lineIndices, (i)->lineCount, (i)->tag, (i)->seqType,
                           coord_t((i)->anchor[VX]), coord_t((i)->anchor[VY]));
@@ -446,7 +446,7 @@ void Id1Map::transferThings(void)
     if(things.empty()) return;
 
     LOG_TRACE("Transfering things...");
-    DENG2_FOR_EACH(i, things, Things::iterator)
+    DENG2_FOR_EACH(Things, i, things)
     {
         uint idx = i - things.begin();
 

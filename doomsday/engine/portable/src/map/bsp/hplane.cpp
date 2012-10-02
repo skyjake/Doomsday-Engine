@@ -149,7 +149,7 @@ const HPlane::Intercepts& HPlane::intercepts() const
 void HPlane::DebugPrint(const HPlane& inst)
 {
     uint index = 0;
-    DENG2_FOR_EACH(i, inst.intercepts(), HPlane::Intercepts::const_iterator)
+    DENG2_FOR_EACH_CONST(HPlane::Intercepts, i, inst.intercepts())
     {
         Con_Printf(" %u: >%1.2f ", index++, i->distance());
     }

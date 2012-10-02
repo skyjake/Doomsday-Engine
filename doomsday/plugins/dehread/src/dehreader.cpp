@@ -719,7 +719,7 @@ public:
         // Split the argument into discreet tokens and process each individually.
         /// @todo Re-implement with a left-to-right algorithm.
         QStringList tokens = arg.split(QRegExp("[,+| ]|\t|\f|\r"), QString::SkipEmptyParts);
-        DENG2_FOR_EACH(i, tokens, QStringList::const_iterator)
+        DENG2_FOR_EACH_CONST(QStringList, i, tokens)
         {
             const String& token = *i;
             bool tokenIsNumber;

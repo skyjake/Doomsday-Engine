@@ -41,9 +41,9 @@ private:
 public:
     ~entitydatabase_s()
     {
-        DENG2_FOR_EACH(setIt, entitySets, EntitySet::iterator)
-        DENG2_FOR_EACH(entityIt, setIt->second, Entities::iterator)
-        DENG2_FOR_EACH(propIt, entityIt->second, Entity::iterator)
+        DENG2_FOR_EACH(EntitySet, setIt, entitySets)
+        DENG2_FOR_EACH(Entities, entityIt, setIt->second)
+        DENG2_FOR_EACH(Entity, propIt, entityIt->second)
         {
             delete propIt->second;
         }

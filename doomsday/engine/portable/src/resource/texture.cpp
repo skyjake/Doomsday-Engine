@@ -54,7 +54,7 @@ de::Texture::~Texture()
 
 void de::Texture::clearVariants()
 {
-    DENG2_FOR_EACH(i, variants, Variants::iterator)
+    DENG2_FOR_EACH(Variants, i, variants)
     {
 #if _DEBUG
         unsigned int glName = (*i)->glName();
@@ -324,7 +324,7 @@ int Texture_IterateVariants(struct texture_s* tex,
     int result = 0;
     if(callback)
     {
-        DENG2_FOR_EACH(i, self->variantList(), de::Texture::Variants::const_iterator)
+        DENG2_FOR_EACH_CONST(de::Texture::Variants, i, self->variantList())
         {
             de::TextureVariant* variant = const_cast<de::TextureVariant*>(*i);
             result = callback(reinterpret_cast<TextureVariant*>(variant), parameters);

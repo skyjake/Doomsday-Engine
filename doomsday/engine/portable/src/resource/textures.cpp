@@ -451,7 +451,7 @@ void Textures_Shutdown(void)
         const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
         if(nodes)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+            DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
             {
                 destroyRecord(reinterpret_cast<TextureDirectoryNode*>(*nodeIt));
             }
@@ -621,7 +621,7 @@ void Textures_ClearNamespace(texturenamespaceid_t namespaceId)
         const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
         if(nodes)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+            DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
             {
                 destroyBoundTexture(*nodeIt);
                 destroyRecord(*nodeIt);
@@ -673,7 +673,7 @@ static void findUniqueIdBounds(TextureNamespace* tn, int* minId, int* maxId)
 
     const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
     if(nodes)
-    DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+    DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
     {
         const TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
         if(!record) continue;
@@ -722,7 +722,7 @@ static void rebuildUniqueIdMap(texturenamespaceid_t namespaceId)
 
         const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
         if(nodes)
-        DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+        DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
         {
             const TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
             if(!record) continue;
@@ -1119,7 +1119,7 @@ int Textures_Iterate2(texturenamespaceid_t namespaceId,
         const TextureDirectory::PathNodes* nodes = directory->pathNodes(PT_LEAF);
         if(nodes)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+            DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
             {
                 TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
                 if(!record || !record->texture) continue;
@@ -1161,7 +1161,7 @@ int Textures_IterateDeclared2(texturenamespaceid_t namespaceId,
         const TextureDirectory::PathNodes* nodes = directory->pathNodes(PT_LEAF);
         if(nodes)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+            DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
             {
                 TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
                 if(!record) continue;
@@ -1280,7 +1280,7 @@ static TextureDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespa
         const TextureDirectory::PathNodes* nodes = directory->pathNodes(PT_LEAF);
         if(nodes)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+            DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
             {
                 if(like && like[0])
                 {

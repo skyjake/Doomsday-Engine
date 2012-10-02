@@ -185,7 +185,7 @@ void SuperBlock::findHEdgeBounds(AABoxd& bounds)
     bool initialized = false;
     AABoxd hedgeAABox;
 
-    DENG2_FOR_EACH(it, d->hedges, HEdges::iterator)
+    DENG2_FOR_EACH(HEdges, it, d->hedges)
     {
         HEdge* hedge = *it;
         initAABoxFromHEdgeVertexes(&hedgeAABox, hedge);

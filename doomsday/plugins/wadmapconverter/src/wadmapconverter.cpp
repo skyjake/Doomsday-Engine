@@ -106,7 +106,7 @@ static MapFormatId recognizeMapFormat(MapLumpInfos& lumpInfos)
 
     // Some data lumps are specific to a particular map format and thus
     // their presence unambiguously signifies which format we have.
-    DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::const_iterator)
+    DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
     {
         MapLumpInfo* info = i->second;
         if(!info) continue;
@@ -125,7 +125,7 @@ static MapFormatId recognizeMapFormat(MapLumpInfos& lumpInfos)
 
     // Determine whether each data lump is of the expected size.
     uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-    DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::const_iterator)
+    DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
     {
         MapLumpInfo* info = i->second;
         if(!info) continue;
@@ -254,7 +254,7 @@ FAIL_UNKNOWN_FORMAT:
         delete map; map = 0;
     }
 
-    DENG2_FOR_EACH(i, lumpInfos, MapLumpInfos::iterator)
+    DENG2_FOR_EACH(MapLumpInfos, i, lumpInfos)
     {
         MapLumpInfo* info = i->second;
         if(!info) continue;
