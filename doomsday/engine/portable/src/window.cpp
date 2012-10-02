@@ -49,9 +49,11 @@
 #include <QPaintEvent>
 #include <QDesktopWidget>
 #include <QSettings>
+#include <QDebug>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <de/App>
 
 #ifdef MACOSX
 #  include "displaymode_native.h"
@@ -73,9 +75,7 @@
 #include "fs_util.h"
 
 #include <de/c_wrapper.h>
-#include <de/App>
 #include <de/Log>
-#include <QDebug>
 
 #ifdef MACOSX
 static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 100; // ms
