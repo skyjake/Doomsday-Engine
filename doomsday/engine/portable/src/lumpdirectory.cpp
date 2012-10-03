@@ -36,7 +36,6 @@
 #include <QVector>
 
 #include <de/Log>
-#include <de/memory.h>
 
 using namespace de;
 
@@ -49,11 +48,11 @@ using namespace de;
 #define LDF_NEED_PRUNE                  0x40000000 ///< Path duplicate records must be pruned.
 ///@}
 
+/// Stores indexes into LumpDirectory::Instance::records forming a chain of
+/// PathDirectoryNode fragment hashes. For ultra-fast name lookups.
 struct LumpDirectoryHashRecord
 {
-    /// Indexes into LumpDirectory::Instance::records forming a chain of PathDirectoryNode
-    /// fragment hashes. For ultra-fast lookup.
-    lumpnum_t hashRoot, hashNext;
+    lumpnum_t head, next;
 };
 
 struct LumpDirectory::Instance
@@ -85,20 +84,19 @@ struct LumpDirectory::Instance
         // Clear the chains.
         DENG2_FOR_EACH(i, *hashMap, HashMap::iterator)
         {
-            i->hashRoot = -1;
+            i->head = -1;
         }
 
-        // Insert nodes to the beginning of each chain, in first-to-last lump order,
-        // so that the last lump of a given name appears first in any chain,
-        // observing pwad ordering rules.
+        // Prepend nodes to each chain, in first-to-last load order, so that
+        // the last lump with a given name appears first in the chain.
         for(int i = 0; i < numRecords; ++i)
         {
             LumpInfo const* lumpInfo = lumpInfos[i];
             PathDirectoryNode const* node = reinterpret_cast<de::PathDirectoryNode*>(F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx));
             ushort j = node->hash() % (unsigned)numRecords;
 
-            (*hashMap)[i].hashNext = (*hashMap)[j].hashRoot; // Prepend to the chain.
-            (*hashMap)[j].hashRoot = i;
+            (*hashMap)[i].next = (*hashMap)[j].head; // Prepend to the chain.
+            (*hashMap)[j].head = i;
         }
 
         flags &= ~LDF_NEED_REBUILD_HASH;
@@ -330,7 +328,7 @@ lumpnum_t LumpDirectory::indexForPath(char const* path)
 
     int hash = PathDirectory::hashPathFragment(path, strlen(path)) % d->hashMap->size();
     int idx;
-    for(idx = (*d->hashMap)[hash].hashRoot; idx != -1; idx = (*d->hashMap)[idx].hashNext)
+    for(idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
         LumpInfo const* lumpInfo = d->lumpInfos[idx];
         PathDirectoryNode* node = reinterpret_cast<de::PathDirectoryNode*>(F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx));
