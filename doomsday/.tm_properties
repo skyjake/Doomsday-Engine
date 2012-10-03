@@ -1,2 +1,2 @@
 excludeDirectories    = "{apidoc,build,BUILD.*}"
-excludeInFolderSearch = "{apidoc,build,BUILD.*}"
+excludeInFolderSearch = "{apidoc,BUILD.*}"

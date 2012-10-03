@@ -156,20 +156,44 @@ struct ddwindow_s
      */
     void modifyAccordingToOptions()
     {
+        if(CommandLine_Exists("-nofullscreen") || CommandLine_Exists("-window"))
+        {
+            setFlag(DDWF_FULLSCREEN, false);
+        }
+
+        if(CommandLine_Exists("-fullscreen") || CommandLine_Exists("-nowindow"))
+        {
+            setFlag(DDWF_FULLSCREEN);
+        }
+
         if(CommandLine_CheckWith("-width", 1))
         {
-            normalGeometry.size.width = geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(CommandLine_Next()));
+            geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(CommandLine_Next()));
+            if(!(flags & DDWF_FULLSCREEN))
+            {
+                normalGeometry.size.width = geometry.size.width;
+            }
         }
 
         if(CommandLine_CheckWith("-height", 1))
         {
-            normalGeometry.size.height = geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
+            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
+            if(!(flags & DDWF_FULLSCREEN))
+            {
+                normalGeometry.size.height = geometry.size.height;
+            }
         }
 
         if(CommandLine_CheckWith("-winsize", 2))
         {
-            normalGeometry.size.width = geometry.size.width = qMax(WINDOW_MIN_WIDTH, atoi(CommandLine_Next()));
-            normalGeometry.size.height = geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
+            geometry.size.width  = qMax(WINDOW_MIN_WIDTH,  atoi(CommandLine_Next()));
+            geometry.size.height = qMax(WINDOW_MIN_HEIGHT, atoi(CommandLine_Next()));
+
+            if(!(flags & DDWF_FULLSCREEN))
+            {
+                normalGeometry.size.width  = geometry.size.width;
+                normalGeometry.size.height = geometry.size.height;
+            }
         }
 
         if(CommandLine_CheckWith("-colordepth", 1) || CommandLine_CheckWith("-bpp", 1))
@@ -207,16 +231,6 @@ struct ddwindow_s
         if(CommandLine_Check("-nomaximize"))
         {
             setFlag(DDWF_MAXIMIZE, false);
-        }
-
-        if(CommandLine_Exists("-nofullscreen") || CommandLine_Exists("-window"))
-        {
-            setFlag(DDWF_FULLSCREEN, false);
-        }
-
-        if(CommandLine_Exists("-fullscreen") || CommandLine_Exists("-nowindow"))
-        {
-            setFlag(DDWF_FULLSCREEN);
         }
     }
 
