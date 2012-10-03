@@ -122,14 +122,16 @@ struct LumpDirectory::Instance
             else
             {
                 // Do this one lump at a time, respecting the possibly-sorted order.
-                for(int i = 0, origIdx = 0; i < numRecords; ++i, origIdx++)
+                for(int i = 0, newIdx = 0; i < numRecords; ++i)
                 {
-                    if(!flaggedLumps.testBit(origIdx)) continue;
+                    if(!flaggedLumps.testBit(i))
+                    {
+                        ++newIdx;
+                        continue;
+                    }
 
                     // Move the info for the lump to be pruned to the end.
-                    lumpInfos.move(i, lumpInfos.size() - 1);
-                    --i;
-                    --numRecords;
+                    lumpInfos.move(newIdx, lumpInfos.size() - 1);
                 }
 
                 // Erase the pruned lumps from the end of the list.
