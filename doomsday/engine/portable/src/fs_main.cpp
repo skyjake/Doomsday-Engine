@@ -31,6 +31,7 @@
 #include "de_filesys.h"
 
 #include "game.h"
+#include "genericfile.h"
 #include "lumpinfo.h"
 #include "lumpdirectory.h"
 #include "lumpfile.h"
@@ -183,9 +184,9 @@ static int findFileNodeIndexForPath(FileList* list, char const* path_)
     return found;
 }
 
-static de::AbstractFile* newUnknownFile(de::DFile* file, char const* path, LumpInfo const* info)
+static de::AbstractFile* newGenericFile(de::DFile* file, char const* path, LumpInfo const* info)
 {
-    return new de::AbstractFile(FT_UNKNOWNFILE, path, *file, *info);
+    return new de::GenericFile(*file, path, *info);
 }
 
 static de::AbstractFile* newZipFile(de::DFile* file, char const* path, LumpInfo const* info)
@@ -966,10 +967,10 @@ void F_Delete(DFile* hndl)
     DFile_Close(hndl);
     switch(AbstractFile_Type(af))
     {
-    case FT_UNKNOWNFILE:    UnknownFile_Delete(        af); break;
-    case FT_ZIPFILE:        ZipFile_Delete( ( ZipFile*)af); break;
-    case FT_WADFILE:        WadFile_Delete( ( WadFile*)af); break;
-    case FT_LUMPFILE:       LumpFile_Delete((LumpFile*)af); break;
+    case FT_GENERICFILE:    GenericFile_Delete((GenericFile*)af); break;
+    case FT_ZIPFILE:        ZipFile_Delete(        (ZipFile*)af); break;
+    case FT_WADFILE:        WadFile_Delete(        (WadFile*)af); break;
+    case FT_LUMPFILE:       LumpFile_Delete(      (LumpFile*)af); break;
     default:
         Con_Error("F_Delete: Invalid file type %i.", AbstractFile_Type(af));
         exit(1); // Unreachable.
@@ -1882,7 +1883,7 @@ static de::DFile* tryOpenFile2(char const* path, char const* mode, size_t baseOf
     // If still not loaded; this an unknown format.
     if(!dfile)
     {
-        dfile = DFileBuilder::fromFile(*newUnknownFile(hndl, Str_Text(&searchPath), &info));
+        dfile = DFileBuilder::fromFile(*newGenericFile(hndl, Str_Text(&searchPath), &info));
     }
     DENG_ASSERT(dfile);
 
@@ -2564,8 +2565,8 @@ D_CMD(ListFiles)
 
             switch(file->type())
             {
-            case FT_UNKNOWNFILE:
-                fileCount = 1;
+            case FT_GENERICFILE:
+                fileCount = reinterpret_cast<de::GenericFile*>(file)->lumpCount();
                 crc = 0;
                 break;
             case FT_ZIPFILE:

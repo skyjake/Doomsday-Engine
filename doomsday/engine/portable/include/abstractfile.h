@@ -36,14 +36,14 @@ extern "C" {
 // File types.
 /// @todo Refactor away.
 typedef enum {
-    FT_UNKNOWNFILE,
+    FT_GENERICFILE,
     FT_ZIPFILE,
     FT_WADFILE,
     FT_LUMPFILE,
     FILETYPE_COUNT
 } filetype_t;
 
-#define VALID_FILETYPE(v)       ((v) >= FT_UNKNOWNFILE && (v) < FILETYPE_COUNT)
+#define VALID_FILETYPE(v)       ((v) >= FT_GENERICFILE && (v) < FILETYPE_COUNT)
 
 #ifdef __cplusplus
 } // extern "C"
@@ -204,11 +204,6 @@ DFile* AbstractFile_Handle(AbstractFile* af);
 size_t AbstractFile_ReadLump(AbstractFile* af, int lumpIdx, uint8_t* buffer);
 
 int AbstractFile_LumpCount(AbstractFile* af);
-
-/// @todo Refactor away:
-AbstractFile* UnknownFile_New(DFile* file, char const* path, LumpInfo const* info);
-
-void UnknownFile_Delete(AbstractFile* af);
 
 #ifdef __cplusplus
 } // extern "C"

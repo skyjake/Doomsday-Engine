@@ -198,21 +198,3 @@ void AbstractFile_SetCustom(AbstractFile* af, boolean yes)
     SELF(af);
     self->setCustom(CPP_BOOL(yes));
 }
-
-AbstractFile* UnknownFile_New(DFile* file, char const* path, LumpInfo const* info)
-{
-    DENG2_ASSERT(file && info);
-    de::AbstractFile* af = new de::AbstractFile(FT_UNKNOWNFILE, path, *reinterpret_cast<de::DFile*>(file), *info);
-    if(!af) LegacyCore_FatalError("UnknownFile_New: Failed to instantiate new AbstractFile.");
-    return reinterpret_cast<AbstractFile*>(af);
-}
-
-void UnknownFile_Delete(AbstractFile* af)
-{
-    if(af)
-    {
-        SELF(af);
-        F_ReleaseFile(reinterpret_cast<AbstractFile*>(self));
-        delete self;
-    }
-}

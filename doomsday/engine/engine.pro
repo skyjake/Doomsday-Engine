@@ -218,6 +218,7 @@ DENG_HEADERS += \
     portable/include/game.h \
     portable/include/gamemap.h \
     portable/include/generators.h \
+    portable/include/genericfile.h \
     portable/include/gl_defer.h \
     portable/include/gl_deferredapi.h \
     portable/include/gl_draw.h \
@@ -508,6 +509,7 @@ SOURCES += \
     portable/src/game.c \
     portable/src/gamemap.c \
     portable/src/generators.c \
+    portable/src/genericfile.cpp \
     portable/src/gl_defer.c \
     portable/src/gl_deferredapi.c \
     portable/src/gl_draw.c \
