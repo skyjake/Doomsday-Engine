@@ -104,9 +104,96 @@ struct LumpDirectory::Instance
         LOG_DEBUG("Rebuilt hashMap for LumpDirectory %p.") << self;
     }
 
+    /**
+     * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
+     * @return Number of lumps flagged during this op.
+     */
+    int flagFileLumps(QBitArray& pruneFlags, AbstractFile& file)
+    {
+        DENG_ASSERT(pruneFlags.size() == lumpInfos.size());
+
+        int const numRecords = lumpInfos.size();
+        int numFlagged = 0;
+        for(int i = 0; i < numRecords; ++i)
+        {
+            if(reinterpret_cast<de::AbstractFile*>(lumpInfos[i]->container) != &file) continue;
+            pruneFlags.setBit(i, true);
+            numFlagged += 1;
+        }
+        return numFlagged;
+    }
+
+    struct LumpSortInfo
+    {
+        LumpInfo const* lumpInfo;
+        AutoStr* path;
+        int origIndex;
+    };
+    static int lumpSorter(void const* a, void const* b)
+    {
+        LumpSortInfo const* infoA = (LumpSortInfo const*)a;
+        LumpSortInfo const* infoB = (LumpSortInfo const*)b;
+        int result = Str_CompareIgnoreCase(infoA->path, Str_Text(infoB->path));
+        if(0 != result) return result;
+
+        // Still matched; try the file load order indexes.
+        result = (reinterpret_cast<de::AbstractFile*>(infoA->lumpInfo->container)->loadOrderIndex() -
+                  reinterpret_cast<de::AbstractFile*>(infoB->lumpInfo->container)->loadOrderIndex());
+        if(0 != result) return result;
+
+        // Still matched (i.e., present in the same package); use the original indexes.
+        return (infoB->origIndex - infoA->origIndex);
+    }
+
+    /**
+     * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
+     * @return Number of lumps flagged during this op.
+     */
+    int flagDuplicateLumps(QBitArray& pruneFlags)
+    {
+        DENG_ASSERT(pruneFlags.size() == lumpInfos.size());
+
+        // Any work to do?
+        if(!(flags & LDF_UNIQUE_PATHS)) return 0;
+        if(!(flags & LDF_NEED_PRUNE_DUPLICATES)) return 0;
+
+        int const numRecords = lumpInfos.size();
+        if(numRecords <= 1) return 0;
+
+        // Sort in descending load order for pruning.
+        LumpSortInfo* sortInfos = new LumpSortInfo[numRecords];
+        for(int i = 0; i < numRecords; ++i)
+        {
+            LumpSortInfo& sortInfo   = sortInfos[i];
+            LumpInfo const* lumpInfo = lumpInfos[i];
+
+            sortInfo.lumpInfo = lumpInfo;
+            sortInfo.origIndex = i;
+            sortInfo.path = F_ComposeLumpPath2(lumpInfo->container, lumpInfo->lumpIdx,
+                                               '/' /*delimiter is irrelevant*/);
+        }
+        qsort(sortInfos, numRecords, sizeof(*sortInfos), lumpSorter);
+
+        // Flag the lumps we'll be pruning.
+        int numFlagged = 0;
+        for(int i = 1; i < numRecords; ++i)
+        {
+            if(Str_CompareIgnoreCase(sortInfos[i - 1].path, Str_Text(sortInfos[i].path))) continue;
+            pruneFlags.setBit(sortInfos[i].origIndex, true);
+            numFlagged += 1;
+        }
+
+        // Free temporary sort data.
+        delete[] sortInfos;
+
+        return numFlagged;
+    }
+
     /// @return Number of pruned lumps.
     int pruneFlaggedLumps(QBitArray flaggedLumps)
     {
+        DENG_ASSERT(flaggedLumps.size() == lumpInfos.size());
+
         // Have we lumps to prune?
         int const numFlaggedForPrune = flaggedLumps.count(true);
         if(numFlaggedForPrune)
@@ -142,62 +229,13 @@ struct LumpDirectory::Instance
         return numFlaggedForPrune;
     }
 
-    struct LumpSortInfo
-    {
-        LumpInfo const* lumpInfo;
-        AutoStr* path;
-        int origIndex;
-    };
-    static int lumpSorter(void const* a, void const* b)
-    {
-        LumpSortInfo const* infoA = (LumpSortInfo const*)a;
-        LumpSortInfo const* infoB = (LumpSortInfo const*)b;
-        int result = Str_CompareIgnoreCase(infoA->path, Str_Text(infoB->path));
-        if(0 != result) return result;
-
-        // Still matched; try the file load order indexes.
-        result = (reinterpret_cast<de::AbstractFile*>(infoA->lumpInfo->container)->loadOrderIndex() -
-                  reinterpret_cast<de::AbstractFile*>(infoB->lumpInfo->container)->loadOrderIndex());
-        if(0 != result) return result;
-
-        // Still matched (i.e., present in the same package); use the original indexes.
-        return (infoB->origIndex - infoA->origIndex);
-    }
-
     void pruneDuplicates()
     {
-        // Any work to do?
-        if(!(flags & LDF_UNIQUE_PATHS)) return;
-        if(!(flags & LDF_NEED_PRUNE_DUPLICATES)) return;
-        if(lumpInfos.size() <= 1) return;
-
-        // Sort in descending load order for pruning.
         int const numRecords = lumpInfos.size();
-        LumpSortInfo* sortInfos = new LumpSortInfo[numRecords];
-        for(int i = 0; i < numRecords; ++i)
-        {
-            LumpSortInfo& sortInfo   = sortInfos[i];
-            LumpInfo const* lumpInfo = lumpInfos[i];
+        if(numRecords <= 1) return;
 
-            sortInfo.lumpInfo = lumpInfo;
-            sortInfo.origIndex = i;
-            sortInfo.path = F_ComposeLumpPath2(lumpInfo->container, lumpInfo->lumpIdx,
-                                               '/' /*delimiter is irrelevant*/);
-        }
-        qsort(sortInfos, numRecords, sizeof(*sortInfos), lumpSorter);
-
-        // Flag the lumps we'll be pruning.
         QBitArray pruneFlags(numRecords);
-        for(int i = 1; i < numRecords; ++i)
-        {
-            if(Str_CompareIgnoreCase(sortInfos[i - 1].path, Str_Text(sortInfos[i].path))) continue;
-            pruneFlags.setBit(sortInfos[i].origIndex, true);
-        }
-
-        // Free temporary sort data.
-        delete[] sortInfos;
-
-        // Perform the prune.
+        flagDuplicateLumps(pruneFlags);
         pruneFlaggedLumps(pruneFlags);
 
         flags &= ~LDF_NEED_PRUNE_DUPLICATES;
@@ -249,20 +287,22 @@ int LumpDirectory::pruneByFile(de::AbstractFile& file)
 {
     if(d->lumpInfos.empty()) return 0;
 
-    // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
-
-    // Flag the lumps we'll be pruning.
     int const numRecords = d->lumpInfos.size();
     QBitArray pruneFlags(numRecords);
-    for(int i = 0; i < numRecords; ++i)
-    {
-        if(reinterpret_cast<de::AbstractFile*>(d->lumpInfos[i]->container) != &file) continue;
-        pruneFlags.setBit(i, true);
-    }
+
+    // We may need to prune path-duplicate lumps. We'll fold those into this
+    // op as pruning may result in reallocations.
+    d->flagDuplicateLumps(pruneFlags);
+
+    // Flag the lumps we'll be pruning.
+    int numFlaggedForFile = d->flagFileLumps(pruneFlags, file);
 
     // Perform the prune.
-    return d->pruneFlaggedLumps(pruneFlags);
+    d->pruneFlaggedLumps(pruneFlags);
+
+    d->flags &= ~LDF_NEED_PRUNE_DUPLICATES;
+
+    return numFlaggedForFile;
 }
 
 bool LumpDirectory::pruneLump(LumpInfo* lumpInfo)
