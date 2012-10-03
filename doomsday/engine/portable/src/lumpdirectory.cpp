@@ -106,7 +106,7 @@ struct LumpDirectory::Instance
 
     /**
      * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
-     * @return Number of lumps flagged during this op.
+     * @return Number of lumps newly flagged during this op.
      */
     int flagFileLumps(QBitArray& pruneFlags, AbstractFile& file)
     {
@@ -116,6 +116,7 @@ struct LumpDirectory::Instance
         int numFlagged = 0;
         for(int i = 0; i < numRecords; ++i)
         {
+            if(pruneFlags.testBit(i)) continue;
             if(reinterpret_cast<de::AbstractFile*>(lumpInfos[i]->container) != &file) continue;
             pruneFlags.setBit(i, true);
             numFlagged += 1;
@@ -147,7 +148,7 @@ struct LumpDirectory::Instance
 
     /**
      * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
-     * @return Number of lumps flagged during this op.
+     * @return Number of lumps newly flagged during this op.
      */
     int flagDuplicateLumps(QBitArray& pruneFlags)
     {
@@ -178,6 +179,7 @@ struct LumpDirectory::Instance
         int numFlagged = 0;
         for(int i = 1; i < numRecords; ++i)
         {
+            if(pruneFlags.testBit(i)) continue;
             if(Str_CompareIgnoreCase(sortInfos[i - 1].path, Str_Text(sortInfos[i].path))) continue;
             pruneFlags.setBit(sortInfos[i].origIndex, true);
             numFlagged += 1;
