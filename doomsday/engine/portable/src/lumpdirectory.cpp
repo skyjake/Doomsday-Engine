@@ -247,6 +247,9 @@ int LumpDirectory::pruneByFile(de::AbstractFile& file)
 {
     if(d->lumpInfos.empty()) return 0;
 
+    // We may need to prune path-duplicate lumps.
+    d->pruneDuplicates();
+
     // Flag the lumps we'll be pruning.
     int const numRecords = d->lumpInfos.size();
     QBitArray pruneFlags(numRecords);
@@ -267,14 +270,12 @@ bool LumpDirectory::pruneLump(LumpInfo* lumpInfo)
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
-    if(d->lumpInfos.removeOne(lumpInfo))
-    {
-        // We'll need to rebuild the path hash chains.
-        d->flags |= LDF_NEED_REBUILD_HASH;
-        return true;
-    }
+    // Prune this lump.
+    if(!d->lumpInfos.removeOne(lumpInfo)) return false;
 
-    return false;
+    // We'll need to rebuild the path hash chains.
+    d->flags |= LDF_NEED_REBUILD_HASH;
+    return true;
 }
 
 void LumpDirectory::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int numLumps)
