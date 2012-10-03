@@ -45,7 +45,7 @@ using namespace de;
 ///@{
 #define LDF_INTERNAL_MASK               0xff000000
 #define LDF_NEED_REBUILD_HASH           0x80000000 ///< Path hash map must be rebuilt.
-#define LDF_NEED_PRUNE                  0x40000000 ///< Path duplicate records must be pruned.
+#define LDF_NEED_PRUNE_DUPLICATES       0x40000000 ///< Path duplicate records must be pruned.
 ///@}
 
 /// Stores indexes into LumpDirectory::Instance::records forming a chain of
@@ -104,6 +104,42 @@ struct LumpDirectory::Instance
         LOG_DEBUG("Rebuilt hashMap for LumpDirectory %p.") << self;
     }
 
+    /// @return Number of pruned lumps.
+    int pruneFlaggedLumps(QBitArray flaggedLumps)
+    {
+        // Have we lumps to prune?
+        int const numFlaggedForPrune = flaggedLumps.count(true);
+        if(numFlaggedForPrune)
+        {
+            // We'll need to rebuild the hash after this.
+            flags |= LDF_NEED_REBUILD_HASH;
+
+            int numRecords = lumpInfos.size();
+            if(numRecords == numFlaggedForPrune)
+            {
+                lumpInfos.clear();
+            }
+            else
+            {
+                // Do this one lump at a time, respecting the possibly-sorted order.
+                for(int i = 0, origIdx = 0; i < numRecords; ++i, origIdx++)
+                {
+                    if(!flaggedLumps.testBit(origIdx)) continue;
+
+                    // Move the info for the lump to be pruned to the end.
+                    lumpInfos.move(i, lumpInfos.size() - 1);
+                    --i;
+                    --numRecords;
+                }
+
+                // Erase the pruned lumps from the end of the list.
+                int firstPruned = lumpInfos.size() - numFlaggedForPrune;
+                lumpInfos.erase(lumpInfos.begin() + firstPruned, lumpInfos.end());
+            }
+        }
+        return numFlaggedForPrune;
+    }
+
     struct LumpSortInfo
     {
         LumpInfo const* lumpInfo;
@@ -130,11 +166,11 @@ struct LumpDirectory::Instance
     {
         // Any work to do?
         if(!(flags & LDF_UNIQUE_PATHS)) return;
-        if(!(flags & LDF_NEED_PRUNE)) return;
+        if(!(flags & LDF_NEED_PRUNE_DUPLICATES)) return;
         if(lumpInfos.size() <= 1) return;
 
         // Sort in descending load order for pruning.
-        int numRecords = lumpInfos.size();
+        int const numRecords = lumpInfos.size();
         LumpSortInfo* sortInfos = new LumpSortInfo[numRecords];
         for(int i = 0; i < numRecords; ++i)
         {
@@ -159,25 +195,10 @@ struct LumpDirectory::Instance
         // Free temporary sort data.
         delete[] sortInfos;
 
-        // Peform the prune. Do this one lump at a time, respecting the possibly-sorted order.
-        for(int i = 1; i < numRecords + 1; ++i)
-        {
-            if(!pruneFlags.testBit(i - 1)) continue;
+        // Perform the prune.
+        pruneFlaggedLumps(pruneFlags);
 
-            // Move the info for the lump to be pruned to the end.
-            lumpInfos.move(i, lumpInfos.size() - 1);
-
-            // We'll need to rebuild the hash.
-            flags |= LDF_NEED_REBUILD_HASH;
-
-            --numRecords;
-            --i;
-        }
-
-        // Erase the pruned lumps from the end of the list.
-        lumpInfos.erase(lumpInfos.begin() + numRecords, lumpInfos.end());
-
-        flags &= ~LDF_NEED_PRUNE;
+        flags &= ~LDF_NEED_PRUNE_DUPLICATES;
     }
 };
 
@@ -226,29 +247,17 @@ int LumpDirectory::pruneByFile(de::AbstractFile& file)
 {
     if(d->lumpInfos.empty()) return 0;
 
-    // We may need to prune path-duplicate lumps.
-    d->pruneDuplicates();
-
-    // Do this one lump at a time, respecting the possibly-sorted order.
-    int const origNumLumps = d->lumpInfos.size();
-    int numRecords = origNumLumps;
-    for(int i = 1; i < numRecords + 1; ++i)
+    // Flag the lumps we'll be pruning.
+    int const numRecords = d->lumpInfos.size();
+    QBitArray pruneFlags(numRecords);
+    for(int i = 0; i < numRecords; ++i)
     {
-        if(reinterpret_cast<de::AbstractFile*>(d->lumpInfos[i - 1]->container) != &file) continue;
-
-        // Move the data in the lump storage.
-        d->lumpInfos.move(i, d->lumpInfos.size() - 1);
-        --numRecords;
-        --i;
-
-        // We'll need to rebuild the path hash chains.
-        d->flags |= LDF_NEED_REBUILD_HASH;
+        if(reinterpret_cast<de::AbstractFile*>(d->lumpInfos[i]->container) != &file) continue;
+        pruneFlags.setBit(i, true);
     }
 
-    // Erase the pruned lumps from the end of the list.
-    d->lumpInfos.erase(d->lumpInfos.begin() + numRecords, d->lumpInfos.end());
-
-    return origNumLumps - numRecords;
+    // Perform the prune.
+    return d->pruneFlaggedLumps(pruneFlags);
 }
 
 bool LumpDirectory::pruneLump(LumpInfo* lumpInfo)
@@ -288,14 +297,14 @@ void LumpDirectory::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int nu
     if(d->flags & LDF_UNIQUE_PATHS)
     {
         // We may need to prune duplicate paths.
-        d->flags |= LDF_NEED_PRUNE;
+        d->flags |= LDF_NEED_PRUNE_DUPLICATES;
     }
 }
 
 void LumpDirectory::clear()
 {
     d->lumpInfos.clear();
-    d->flags &= ~(LDF_NEED_REBUILD_HASH | LDF_NEED_PRUNE);
+    d->flags &= ~(LDF_NEED_REBUILD_HASH | LDF_NEED_PRUNE_DUPLICATES);
 }
 
 bool LumpDirectory::catalogues(de::AbstractFile& file)
