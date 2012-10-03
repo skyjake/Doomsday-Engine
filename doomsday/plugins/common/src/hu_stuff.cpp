@@ -218,13 +218,13 @@ static void prepareFogTexture()
     if(fogEffectData.texture) return;
 
     lumpnum_t lumpNum     = W_GetLumpNumForName("menufog");
-    const uint8_t* pixels = W_CacheLump(lumpNum, PU_GAMESTATIC);
+    const uint8_t* pixels = W_CacheLump(lumpNum);
     const int width = 64, height = 64; /// @todo fixme: Do not assume dimensions.
 
     fogEffectData.texture = DGL_NewTextureWithParams(DGL_LUMINANCE, width, height,
         pixels, 0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
 
-    W_CacheChangeTag(lumpNum, PU_CACHE);
+    W_UnlockLump(lumpNum);
 }
 
 static void releaseFogTexture()

@@ -593,7 +593,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
     // No sample loaded yet?
     if(!data)
     {
-        abstractfile_t* fsObject;
+        AbstractFile* fsObject;
         int lumpIdx;
         char hdr[12];
 
@@ -615,9 +615,9 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
         if(WAV_CheckFormat(hdr))
         {
             // Load as WAV, then.
-            const uint8_t* sp = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+            const uint8_t* sp = F_CacheLump(fsObject, lumpIdx);
             data = WAV_MemoryLoad((const byte*) sp, lumpLength, &bytesPer, &rate, &numSamples);
-            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+            F_UnlockLump(fsObject, lumpIdx);
 
             if(!data)
             {
@@ -644,7 +644,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
     if(lumpLength > 8)
     {
         int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
         uint8_t hdr[8];
         int head;
 
@@ -658,13 +658,13 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
         if(head == 3 && numSamples > 0 && (unsigned)numSamples <= lumpLength - 8)
         {
             // The sample data can be used as-is - load directly from the lump cache.
-            const uint8_t* data = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC) + 8; // Skip the header.
+            const uint8_t* data = F_CacheLump(fsObject, lumpIdx) + 8; // Skip the header.
 
             // Insert a copy of this into the cache.
             sfxcache_t* node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
                                                bytesPer, rate, info->group);
 
-            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+            F_UnlockLump(fsObject, lumpIdx);
 
             return &node->sample;
         }

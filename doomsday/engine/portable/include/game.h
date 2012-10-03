@@ -76,6 +76,8 @@ struct AbstractResource_s* Game_AddResource(Game* game, resourceclass_t rclass,
  */
 boolean Game_IsRequiredResource(Game* game, const char* absolutePath);
 
+boolean Game_AllStartupResourcesFound(Game* game);
+
 /**
  * Change the identfier of the plugin associated with this.
  * @param pluginId  New identifier.

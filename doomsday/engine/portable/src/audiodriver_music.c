@@ -57,13 +57,6 @@ static int musicPlayNativeFile(audiointerface_music_t* iMusic, const char* fileN
 
 static int musicPlayLump(audiointerface_music_t* iMusic, lumpnum_t lump, boolean looped)
 {
-    abstractfile_t* fsObject;
-    size_t lumpLength;
-    int lumpIdx;
-
-    fsObject = F_FindFileForLumpNum2(lump, &lumpIdx);
-    lumpLength = F_LumpLength(lump);
-
     if(!iMusic->Play || !iMusic->SongBuffer)
     {
         // Music interface does not offer buffer playback.
@@ -76,13 +69,19 @@ static int musicPlayLump(audiointerface_music_t* iMusic, lumpnum_t lump, boolean
         }
         return musicPlayNativeFile(iMusic, Str_Text(musicFile), looped);
     }
+    else
+    {
+        // Buffer the data using the driver's facilities.
+        DFile* hndl   = F_OpenLump(lump);
+        size_t length = DFile_Length(hndl);
 
-    // Buffer the data using the driver's facilities.
-    F_ReadLumpSection(fsObject, lumpIdx,
-                      (uint8_t*) iMusic->SongBuffer(lumpLength),
-                      0, lumpLength);
+        if(!hndl) return 0;
 
-    return iMusic->Play(looped);
+        DFile_Read(hndl, (uint8_t*) iMusic->SongBuffer(length), length);
+        F_Delete(hndl);
+
+        return iMusic->Play(looped);
+    }
 }
 
 static int musicPlayFile(audiointerface_music_t* iMusic, const char* virtualOrNativePath, boolean looped)
@@ -119,7 +118,6 @@ static int musicPlayFile(audiointerface_music_t* iMusic, const char* virtualOrNa
     {
         // Music interface offers buffered playback. Use it.
         DFile_Read(file, (uint8_t*) iMusic->SongBuffer(len), len);
-
         F_Delete(file);
 
         return iMusic->Play(looped);

@@ -356,7 +356,7 @@ EXPORTS
     W_ReadLump                  @18 NONAME
     W_ReadLumpSection           @253 NONAME
     W_CacheLump                 @19 NONAME
-    W_CacheChangeTag            @21 NONAME
+    W_UnlockLump                @21 NONAME
 
     W_LumpLength                @16 NONAME
     W_LumpName                  @17 NONAME

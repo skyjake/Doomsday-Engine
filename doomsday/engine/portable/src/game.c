@@ -187,7 +187,7 @@ boolean Game_IsRequiredResource(Game* game, const char* absolutePath)
     {
         AbstractResource* const* recordIt;
         // Is this resource from a container?
-        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
+        AbstractFile* file = F_FindLumpFile(absolutePath, NULL);
         if(file)
         {
             // Yes; use the container's path instead.
@@ -209,6 +209,27 @@ boolean Game_IsRequiredResource(Game* game, const char* absolutePath)
     }
     // Not found, so no.
     return false;
+}
+
+boolean Game_AllStartupResourcesFound(Game* game)
+{
+    uint i;
+    for(i = 0; i < RESOURCECLASS_COUNT; ++i)
+    {
+        AbstractResource* const* records = Game_Resources(game, (resourceclass_t)i, 0);
+        AbstractResource* const* recordIt;
+
+        if(records)
+        for(recordIt = records; *recordIt; recordIt++)
+        {
+            AbstractResource* rec = *recordIt;
+            const int flags = AbstractResource_ResourceFlags(rec);
+
+            if((flags & RF_STARTUP) && !(flags & RF_FOUND))
+                return false;
+        }
+    }
+    return true;
 }
 
 pluginid_t Game_SetPluginId(Game* g, pluginid_t pluginId)

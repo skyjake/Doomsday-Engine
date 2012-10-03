@@ -20,8 +20,8 @@
  * rover attempts to place all the longer-lifespan allocation near the start of
  * the volume.
  *
- * You should not explicitly call Z_Free() on PU_CACHE blocks because they
- * will get automatically freed if necessary.
+ * It is not necessary to explicitly call Z_Free() on >= PU_PURGELEVEL blocks
+ * because they will be automatically freed when the rover encounters them.
  *
  * @par Block Sequences
  * The PU_MAPSTATIC purge tag has a special purpose. It works like PU_MAP so
@@ -31,10 +31,10 @@
  * all of them efficiently. This is possible because no block inside the
  * sequence could be purged by Z_Malloc() anyway.
  *
- * @authors Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright © 1993-1996 by id Software, Inc.
+ * @author Copyright &copy; 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @author Copyright &copy; 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -438,14 +438,12 @@ static void splitFreeBlock(memblock_t* block, size_t size)
     block->size = size;
 }
 
-void *Z_Malloc(size_t size, int tag, void *user)
+void* Z_Malloc(size_t size, int tag, void *user)
 {
     memblock_t* start, *iter;
     memvolume_t* volume;
 
-    DENG_ASSERT(tag >= PU_APPSTATIC && tag <= PU_CACHE);
-
-    if(tag < PU_APPSTATIC || tag > PU_CACHE)
+    if(tag < PU_APPSTATIC || tag > PU_PURGELEVEL)
     {
         LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING, "Z_Malloc: Invalid purgelevel %i, cannot allocate memory.\n", tag);
         return NULL;

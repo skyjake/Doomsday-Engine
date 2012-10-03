@@ -87,15 +87,21 @@ static void checkOpen(void)
 
 static void openScriptLump(lumpnum_t lumpNum)
 {
+    void* region;
+
     SC_Close();
 
-    ScriptBuffer = (const char*)W_CacheLump(lumpNum, PU_GAMESTATIC);
-    if(NULL == ScriptBuffer)
+    if(lumpNum < 0 || lumpNum >= Get(DD_NUMLUMPS))
     {
-        Con_Message("Warning:SC_OpenLump: Failed caching lump index #%i, ignoring.\n", lumpNum);
+        Con_Message("Warning: SC_OpenLump: Invalid lump #%i, ignoring.\n", lumpNum);
         return;
     }
+
     ScriptSize = W_LumpLength(lumpNum);
+    { region = Z_Malloc(ScriptSize, PU_GAMESTATIC, 0);
+    W_ReadLump(lumpNum, (uint8_t*) region);
+    ScriptBuffer = (const char*) region; }
+
     memset(ScriptName, 0, sizeof(*ScriptName));
     strncpy(ScriptName, W_LumpName(lumpNum), sizeof(*ScriptName)-1);
 

@@ -175,6 +175,7 @@ DENG_HEADERS += \
     portable/include/dam_file.h \
     portable/include/dam_main.h \
     portable/include/dd_def.h \
+    portable/include/dd_games.h \
     portable/include/dd_help.h \
     portable/include/dd_input.h \
     portable/include/dd_loop.h \
@@ -203,12 +204,12 @@ DENG_HEADERS += \
     portable/include/def_main.h \
     portable/include/displaymode.h \
     portable/include/displaymode_native.h \
+    portable/include/dfilebuilder.h \
     portable/include/edit_bias.h \
     portable/include/edit_bsp.h \
     portable/include/edit_map.h \
     portable/include/fi_main.h \
     portable/include/filedirectory.h \
-    portable/include/filelist.h \
     portable/include/finaleinterpreter.h \
     portable/include/font.h \
     portable/include/fonts.h \
@@ -217,6 +218,7 @@ DENG_HEADERS += \
     portable/include/game.h \
     portable/include/gamemap.h \
     portable/include/generators.h \
+    portable/include/genericfile.h \
     portable/include/gl_defer.h \
     portable/include/gl_deferredapi.h \
     portable/include/gl_draw.h \
@@ -236,6 +238,7 @@ DENG_HEADERS += \
     portable/include/keycode.h \
     portable/include/library.h \
     portable/include/linedef.h \
+    portable/include/lumpcache.h \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
@@ -438,7 +441,7 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
-    portable/src/abstractfile.c \
+    portable/src/abstractfile.cpp \
     portable/src/abstractresource.c \
     portable/src/animator.c \
     portable/src/audiodriver.c \
@@ -478,6 +481,7 @@ SOURCES += \
     portable/src/con_main.c \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
+    portable/src/dd_games.cpp \
     portable/src/dd_help.c \
     portable/src/dd_init.cpp \
     portable/src/dd_input.c \
@@ -485,11 +489,11 @@ SOURCES += \
     portable/src/dd_main.c \
     portable/src/dd_pinit.c \
     portable/src/dd_plugin.c \
-    portable/src/dd_wad.c \
+    portable/src/dd_wad.cpp \
     portable/src/def_data.c \
     portable/src/def_main.c \
     portable/src/def_read.c \
-    portable/src/dfile.c \
+    portable/src/dfile.cpp \
     portable/src/dgl_common.c \
     portable/src/dgl_draw.c \
     portable/src/displaymode.cpp \
@@ -498,14 +502,14 @@ SOURCES += \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
     portable/src/filedirectory.cpp \
-    portable/src/filelist.c \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \
-    portable/src/fs_main.c \
+    portable/src/fs_main.cpp \
     portable/src/fs_util.c \
     portable/src/game.c \
     portable/src/gamemap.c \
     portable/src/generators.c \
+    portable/src/genericfile.cpp \
     portable/src/gl_defer.c \
     portable/src/gl_deferredapi.c \
     portable/src/gl_draw.c \
@@ -524,8 +528,8 @@ SOURCES += \
     portable/src/keycode.cpp \
     portable/src/library.c \
     portable/src/linedef.c \
-    portable/src/lumpdirectory.c \
-    portable/src/lumpfile.c \
+    portable/src/lumpdirectory.cpp \
+    portable/src/lumpfile.cpp \
     portable/src/m_bams.c \
     portable/src/m_decomp64.c \
     portable/src/m_linkedlist.c \

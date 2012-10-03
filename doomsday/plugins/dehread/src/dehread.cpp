@@ -73,13 +73,13 @@ static void readLump(lumpnum_t lumpNum)
     }
 
     size_t len = W_LumpLength(lumpNum);
-    Block deh = Block::fromRawData((const char*)W_CacheLump(lumpNum, PU_APPSTATIC), len);
+    Block deh = Block::fromRawData((const char*)W_CacheLump(lumpNum), len);
     /// @attention Results in a deep-copy of the lump data into the Block
     ///            thus the cached lump can be released after this call.
     ///
     /// @todo Do not use a local buffer - read using QTextStream.
     deh.append(QChar(0));
-    W_CacheChangeTag(lumpNum, PU_CACHE);
+    W_UnlockLump(lumpNum);
 
     Con_Message("Applying DeHackEd patch lump #%i \"%s:%s\"...\n", lumpNum,
                 F_PrettyPath(W_LumpSourceFile(lumpNum)), W_LumpName(lumpNum));
