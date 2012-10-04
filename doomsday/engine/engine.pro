@@ -506,7 +506,7 @@ SOURCES += \
     portable/src/fonts.c \
     portable/src/fs_main.cpp \
     portable/src/fs_util.c \
-    portable/src/game.c \
+    portable/src/game.cpp \
     portable/src/gamemap.c \
     portable/src/generators.c \
     portable/src/genericfile.cpp \
