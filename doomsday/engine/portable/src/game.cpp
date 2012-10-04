@@ -1,41 +1,47 @@
-/**\file game.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file game.cpp
  *
- *\author Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @ingroup core
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
-#include "dd_main.h"
 #include "de_console.h"
 #include "de_filesys.h"
 #include "updater/downloaddialog.h"
+#include "abstractresource.h"
+
+#include <de/Error>
+#include <de/Log>
+#include <de/memory.h>
 
 #include "game.h"
-#include "abstractresource.h"
+
+using de::Game;
 
 typedef struct {
     struct AbstractResource_s** records;
     size_t numRecords;
 } resourcerecordset_t;
 
-struct Game_s {
+struct Game::Instance
+{
     /// Unique identifier of the plugin which registered this game.
     pluginid_t pluginId;
 
@@ -62,144 +68,108 @@ struct Game_s {
 
     /// Vector of records for required game resources (e.g., doomu.wad).
     resourcerecordset_t requiredResources[RESOURCECLASS_COUNT];
+
+    Instance(char const* _identityKey, ddstring_t const* _dataPath,
+             ddstring_t const* _defsPath, char const* configDir)
+        : pluginId(0)
+    {
+        Str_Set(Str_InitStd(&identityKey), _identityKey);
+        DENG_ASSERT(!Str_IsEmpty(&identityKey));
+
+        Str_InitStd(&title);
+        Str_InitStd(&author);
+
+        Str_Set(Str_InitStd(&dataPath), Str_Text(_dataPath));
+        Str_Set(Str_InitStd(&defsPath), Str_Text(_defsPath));
+
+        Str_Appendf(Str_InitStd(&mainConfig), "configs/%s", configDir);
+        Str_Strip(&mainConfig);
+        F_FixSlashes(&mainConfig, &mainConfig);
+        F_AppendMissingSlash(&mainConfig);
+        Str_Append(&mainConfig, "game.cfg");
+
+        Str_Appendf(Str_InitStd(&bindingConfig), "configs/%s", configDir);
+        Str_Strip(&bindingConfig);
+        F_FixSlashes(&bindingConfig, &bindingConfig);
+        F_AppendMissingSlash(&bindingConfig);
+        Str_Append(&bindingConfig, "player/bindings.cfg");
+
+        memset(requiredResources, 0, sizeof requiredResources);
+    }
+
+    ~Instance()
+    {
+        Str_Free(&identityKey);
+        Str_Free(&dataPath);
+        Str_Free(&defsPath);
+        Str_Free(&mainConfig);
+        Str_Free(&bindingConfig);
+        Str_Free(&title);
+        Str_Free(&author);
+
+        for(int i = 0; i < RESOURCECLASS_COUNT; ++i)
+        {
+            resourcerecordset_t* rset = &requiredResources[i];
+            AbstractResource** rec;
+
+            if(!rset || rset->numRecords == 0) continue;
+
+            for(rec = rset->records; *rec; rec++)
+            {
+                AbstractResource_Delete(*rec);
+            }
+            M_Free(rset->records); rset->records = 0;
+            rset->numRecords = 0;
+        }
+    }
 };
 
-Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
-    const ddstring_t* defsPath, const char* configDir, const char* title,
-    const char* author)
+Game::Game(char const* identityKey, ddstring_t const* dataPath,
+    ddstring_t const* defsPath, char const* configDir, char const* title,
+    char const* author)
 {
-    int i;
-    Game* g = (Game*)malloc(sizeof(*g));
-
-    if(!g) Con_Error("Game::New: Failed on allocation of %lu bytes for new Game.", (unsigned long) sizeof(*g));
-
-    Str_Init(&g->identityKey);
-    if(identityKey)
-        Str_Set(&g->identityKey, identityKey);
-
-    Str_Init(&g->dataPath);
-    if(dataPath && !Str_IsEmpty(dataPath))
-        Str_Set(&g->dataPath, Str_Text(dataPath));
-
-    Str_Init(&g->defsPath);
-    if(defsPath && !Str_IsEmpty(defsPath))
-        Str_Set(&g->defsPath, Str_Text(defsPath));
-
-    Str_Init(&g->mainConfig);
-    Str_Appendf(&g->mainConfig, "configs/%s", configDir);
-    Str_Strip(&g->mainConfig);
-    F_FixSlashes(&g->mainConfig, &g->mainConfig);
-    F_AppendMissingSlash(&g->mainConfig);
-    Str_Append(&g->mainConfig, "game.cfg");
-
-    Str_Init(&g->bindingConfig);
-    Str_Appendf(&g->bindingConfig, "configs/%s", configDir);
-    Str_Strip(&g->bindingConfig);
-    F_FixSlashes(&g->bindingConfig, &g->bindingConfig);
-    F_AppendMissingSlash(&g->bindingConfig);
-    Str_Append(&g->bindingConfig, "player/bindings.cfg");
-
-    Str_Init(&g->title);
-    if(title)
-        Str_Set(&g->title, title);
-
-    Str_Init(&g->author);
-    if(author)
-        Str_Set(&g->author, author);
-
-    for(i = 0; i < RESOURCECLASS_COUNT; ++i)
-    {
-        resourcerecordset_t* rset = &g->requiredResources[i];
-        rset->numRecords = 0;
-        rset->records = 0;
-    }
-
-    g->pluginId = 0;
-
-    return g;
+    d = new Instance(identityKey, dataPath, defsPath, configDir);
+    if(title)  Str_Set(&d->title, title);
+    if(author) Str_Set(&d->author, author);
 }
 
-void Game_Delete(Game* g)
+Game::~Game()
 {
-    int i;
-    assert(g);
-
-    Str_Free(&g->identityKey);
-    Str_Free(&g->dataPath);
-    Str_Free(&g->defsPath);
-    Str_Free(&g->mainConfig);
-    Str_Free(&g->bindingConfig);
-    Str_Free(&g->title);
-    Str_Free(&g->author);
-
-    for(i = 0; i < RESOURCECLASS_COUNT; ++i)
-    {
-        resourcerecordset_t* rset = &g->requiredResources[i];
-        AbstractResource** rec;
-
-        if(!rset || rset->numRecords == 0) continue;
-
-        for(rec = rset->records; *rec; rec++)
-        {
-            AbstractResource_Delete(*rec);
-        }
-        free(rset->records);
-        rset->records = 0;
-        rset->numRecords = 0;
-    }
-
-    free(g);
+    delete d;
 }
 
-AbstractResource* Game_AddResource(Game* g, resourceclass_t rclass,
-    AbstractResource* record)
+Game& Game::addResource(resourceclass_t rclass, AbstractResource& record)
 {
-    resourcerecordset_t* rset;
-    assert(g && record);
-
     if(!VALID_RESOURCE_CLASS(rclass))
-    {
-#if _DEBUG
-        Con_Message("Game::AddResource: Invalid resource class %i specified, ignoring.\n", (int)rclass);
-#endif
-        return NULL;
-    }
-    if(!record)
-    {
-#if _DEBUG
-        Con_Message("Game::AddResource: Received invalid ResourceRecord %p, ignoring.\n", (void*)record);
-#endif
-        return NULL;
-    }
+        throw de::Error("Game::addResource", QString("Invalid resource class %1").arg(rclass));
 
-    rset = &g->requiredResources[rclass];
-    rset->records = realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
-    rset->records[rset->numRecords] = record;
+    resourcerecordset_t* rset = &d->requiredResources[rclass];
+    rset->records = (AbstractResource**) M_Realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
+    rset->records[rset->numRecords] = &record;
     rset->records[rset->numRecords+1] = 0; // Terminate.
     rset->numRecords++;
-    return record;
+    return *this;
 }
 
-boolean Game_IsRequiredResource(Game* game, const char* absolutePath)
+bool Game::isRequiredResource(char const* absolutePath)
 {
-    AbstractResource* const* records = Game_Resources(game, RC_PACKAGE, 0);
+    AbstractResource* const* records = resources(RC_PACKAGE, 0);
     if(records)
     {
-        AbstractResource* const* recordIt;
         // Is this resource from a container?
-        AbstractFile* file = F_FindLumpFile(absolutePath, NULL);
+        AbstractFile* file = reinterpret_cast<de::AbstractFile*>(F_FindLumpFile(absolutePath, NULL));
         if(file)
         {
             // Yes; use the container's path instead.
-            absolutePath = Str_Text(AbstractFile_Path(file));
+            absolutePath = Str_Text(file->path());
         }
 
-        for(recordIt = records; *recordIt; recordIt++)
+        for(AbstractResource* const* i = records; *i; i++)
         {
-            AbstractResource* rec = *recordIt;
-            if(AbstractResource_ResourceFlags(rec) & RF_STARTUP)
+            AbstractResource* record = *i;
+            if(AbstractResource_ResourceFlags(record) & RF_STARTUP)
             {
-                const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
+                ddstring_t const* resolvedPath = AbstractResource_ResolvedPath(record, true);
                 if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
                 {
                     return true;
@@ -211,19 +181,17 @@ boolean Game_IsRequiredResource(Game* game, const char* absolutePath)
     return false;
 }
 
-boolean Game_AllStartupResourcesFound(Game* game)
+bool Game::allStartupResourcesFound()
 {
-    uint i;
-    for(i = 0; i < RESOURCECLASS_COUNT; ++i)
+    for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        AbstractResource* const* records = Game_Resources(game, (resourceclass_t)i, 0);
-        AbstractResource* const* recordIt;
+        AbstractResource* const* records = resources(resourceclass_t(i), 0);
+        if(!records) continue;
 
-        if(records)
-        for(recordIt = records; *recordIt; recordIt++)
+        for(AbstractResource* const* i = records; *i; i++)
         {
-            AbstractResource* rec = *recordIt;
-            const int flags = AbstractResource_ResourceFlags(rec);
+            AbstractResource* record = *i;
+            int const flags = AbstractResource_ResourceFlags(record);
 
             if((flags & RF_STARTUP) && !(flags & RF_FOUND))
                 return false;
@@ -232,101 +200,204 @@ boolean Game_AllStartupResourcesFound(Game* game)
     return true;
 }
 
-pluginid_t Game_SetPluginId(Game* g, pluginid_t pluginId)
+Game& Game::setPluginId(pluginid_t newId)
 {
-    assert(g);
-    return g->pluginId = pluginId;
+    d->pluginId = newId;
+    return *this;
 }
 
-pluginid_t Game_PluginId(Game* g)
+pluginid_t Game::pluginId()
 {
-    assert(g);
-    return g->pluginId;
+    return d->pluginId;
 }
 
-const ddstring_t* Game_IdentityKey(Game* g)
+ddstring_t const& Game::identityKey()
 {
-    assert(g);
-    return &g->identityKey;
+    return d->identityKey;
 }
 
-const ddstring_t* Game_DataPath(Game* g)
+ddstring_t const& Game::dataPath()
 {
-    assert(g);
-    return &g->dataPath;
+    return d->dataPath;
 }
 
-const ddstring_t* Game_DefsPath(Game* g)
+ddstring_t const& Game::defsPath()
 {
-    assert(g);
-    return &g->defsPath;
+    return d->defsPath;
 }
 
-const ddstring_t* Game_MainConfig(Game* g)
+ddstring_t const& Game::mainConfig()
 {
-    assert(g);
-    return &g->mainConfig;
+    return d->mainConfig;
 }
 
-const ddstring_t* Game_BindingConfig(Game* g)
+ddstring_t const& Game::bindingConfig()
 {
-    assert(g);
-    return &g->bindingConfig;
+    return d->bindingConfig;
 }
 
-const ddstring_t* Game_Title(Game* g)
+ddstring_t const& Game::title()
 {
-    assert(g);
-    return &g->title;
+    return d->title;
 }
 
-const ddstring_t* Game_Author(Game* g)
+ddstring_t const& Game::author()
 {
-    assert(g);
-    return &g->author;
+    return d->author;
 }
 
-AbstractResource* const* Game_Resources(Game* g, resourceclass_t rclass, int* count)
+AbstractResource* const* Game::resources(resourceclass_t rclass, int* count)
 {
-    assert(g);
     if(!VALID_RESOURCE_CLASS(rclass))
     {
         if(count) *count = 0;
-        return NULL;
+        return 0;
     }
 
-    if(count) *count = (int)g->requiredResources[rclass].numRecords;
-    return g->requiredResources[rclass].records? g->requiredResources[rclass].records : 0;
+    if(count) *count = (int)d->requiredResources[rclass].numRecords;
+    return d->requiredResources[rclass].records? d->requiredResources[rclass].records : 0;
 }
 
-Game* Game_FromDef(const GameDef* def)
+Game* Game::fromDef(GameDef const& def)
 {
-    Game* game;
-    ddstring_t dataPath, defsPath;
+    AutoStr* dataPath = AutoStr_NewStd();
+    Str_Set(dataPath, def.dataPath);
+    Str_Strip(dataPath);
+    F_FixSlashes(dataPath, dataPath);
+    F_ExpandBasePath(dataPath, dataPath);
+    F_AppendMissingSlash(dataPath);
 
-    if(!def) return NULL;
+    AutoStr* defsPath = AutoStr_NewStd();
+    Str_Set(defsPath, def.defsPath);
+    Str_Strip(defsPath);
+    F_FixSlashes(defsPath, defsPath);
+    F_ExpandBasePath(defsPath, defsPath);
+    F_AppendMissingSlash(defsPath);
 
-    Str_Init(&dataPath); Str_Set(&dataPath, def->dataPath);
-    Str_Strip(&dataPath);
-    F_FixSlashes(&dataPath, &dataPath);
-    F_ExpandBasePath(&dataPath, &dataPath);
-    F_AppendMissingSlash(&dataPath);
+    return new Game(def.identityKey, dataPath, defsPath, def.configDir,
+                    def.defaultTitle, def.defaultAuthor);
+}
 
-    Str_Init(&defsPath); Str_Set(&defsPath, def->defsPath);
-    Str_Strip(&defsPath);
-    F_FixSlashes(&defsPath, &defsPath);
-    F_ExpandBasePath(&defsPath, &defsPath);
-    F_AppendMissingSlash(&defsPath);
+/**
+ * C Wrapper API:
+ */
 
-    game = Game_New(def->identityKey, &dataPath, &defsPath, def->configDir,
-                    def->defaultTitle, def->defaultAuthor);
+#define TOINTERNAL(inst) \
+    (inst) != 0? reinterpret_cast<Game*>(inst) : NULL
 
-    Str_Free(&defsPath);
-    Str_Free(&dataPath);
+#define TOINTERNAL_CONST(inst) \
+    (inst) != 0? reinterpret_cast<Game const*>(inst) : NULL
 
+#define SELF(inst) \
+    DENG2_ASSERT(inst); \
+    Game* self = TOINTERNAL(inst)
+
+#define SELF_CONST(inst) \
+    DENG2_ASSERT(inst); \
+    Game const* self = TOINTERNAL_CONST(inst)
+
+struct game_s* Game_New(char const* identityKey, ddstring_t const* dataPath, ddstring_t const* defsPath,
+                        char const* configDir, char const* title, char const* author)
+{
+    return reinterpret_cast<struct game_s*>(new Game(identityKey, dataPath, defsPath, configDir, title, author));
+}
+
+void Game_Delete(struct game_s* game)
+{
+    if(game)
+    {
+        SELF(game);
+        delete self;
+    }
+}
+
+struct game_s* Game_AddResource(struct game_s* game, resourceclass_t rclass, struct AbstractResource_s* record)
+{
+    SELF(game);
+    DENG_ASSERT(record);
+    self->addResource(rclass, *record);
     return game;
 }
 
+boolean Game_IsRequiredResource(struct game_s* game, char const* absolutePath)
+{
+    SELF(game);
+    return self->isRequiredResource(absolutePath);
+}
+
+boolean Game_AllStartupResourcesFound(struct game_s* game)
+{
+    SELF(game);
+    return self->allStartupResourcesFound();
+}
+
+struct game_s* Game_SetPluginId(struct game_s* game, pluginid_t pluginId)
+{
+    SELF(game);
+    return reinterpret_cast<struct game_s*>(&self->setPluginId(pluginId));
+}
+
+pluginid_t Game_PluginId(struct game_s* game)
+{
+    SELF(game);
+    return self->pluginId();
+}
+
+ddstring_t const* Game_IdentityKey(struct game_s* game)
+{
+    SELF(game);
+    return &self->identityKey();
+}
+
+ddstring_t const* Game_Title(struct game_s* game)
+{
+    SELF(game);
+    return &self->title();
+}
+
+ddstring_t const* Game_Author(struct game_s* game)
+{
+    SELF(game);
+    return &self->author();
+}
+
+ddstring_t const* Game_MainConfig(struct game_s* game)
+{
+    SELF(game);
+    return &self->mainConfig();
+}
+
+ddstring_t const* Game_BindingConfig(struct game_s* game)
+{
+    SELF(game);
+    return &self->bindingConfig();
+}
+
+struct AbstractResource_s* const* Game_Resources(struct game_s* game, resourceclass_t rclass, int* count)
+{
+    SELF(game);
+    return self->resources(rclass, count);
+}
+
+ddstring_t const* Game_DataPath(struct game_s* game)
+{
+    SELF(game);
+    return &self->dataPath();
+}
+
+ddstring_t const* Game_DefsPath(struct game_s* game)
+{
+    SELF(game);
+    return &self->defsPath();
+}
+
+struct game_s* Game_FromDef(GameDef const* def)
+{
+    if(!def) return 0;
+    return reinterpret_cast<struct game_s*>(Game::fromDef(*def));
+}
+
+/// @todo Do this really belong here? Semantically, this appears misplaced. -ds
 void Game_Notify(int notification, void* param)
 {
     DENG_UNUSED(param);
