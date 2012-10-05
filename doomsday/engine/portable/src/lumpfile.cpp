@@ -45,12 +45,12 @@ LumpFile::~LumpFile()
 
 PathDirectoryNode* LumpFile::lumpDirectoryNode(int lumpIdx)
 {
-    return container()->lumpDirectoryNode(lumpInfo(lumpIdx)->lumpIdx);
+    return container().lumpDirectoryNode(lumpInfo(lumpIdx)->lumpIdx);
 }
 
 AutoStr* LumpFile::composeLumpPath(int lumpIdx, char delimiter)
 {
-    return container()->composeLumpPath(lumpInfo(lumpIdx)->lumpIdx, delimiter);
+    return container().composeLumpPath(lumpInfo(lumpIdx)->lumpIdx, delimiter);
 }
 
 LumpInfo const* LumpFile::lumpInfo(int /*lumpIdx*/)
@@ -67,24 +67,24 @@ size_t LumpFile::lumpSize(int lumpIdx)
 
 size_t LumpFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
-    return container()->readLump(lumpInfo(lumpIdx)->lumpIdx, buffer, tryCache);
+    return container().readLump(lumpInfo(lumpIdx)->lumpIdx, buffer, tryCache);
 }
 
 size_t LumpFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
-    return container()->readLump(lumpInfo(lumpIdx)->lumpIdx, buffer,
-                                 startOffset, length, tryCache);
+    return container().readLump(lumpInfo(lumpIdx)->lumpIdx, buffer,
+                                startOffset, length, tryCache);
 }
 
 uint8_t const* LumpFile::cacheLump(int lumpIdx)
 {
-    return container()->cacheLump(lumpInfo(lumpIdx)->lumpIdx);
+    return container().cacheLump(lumpInfo(lumpIdx)->lumpIdx);
 }
 
 LumpFile& LumpFile::unlockLump(int lumpIdx)
 {
-    container()->unlockLump(lumpInfo(lumpIdx)->lumpIdx);
+    container().unlockLump(lumpInfo(lumpIdx)->lumpIdx);
     return *this;
 }
 
@@ -94,9 +94,7 @@ int LumpFile::publishLumpsToDirectory(LumpDirectory* directory)
     if(directory)
     {
         // This *is* the lump, so insert ourself as a lump of our container in the directory.
-        AbstractFile* container = reinterpret_cast<AbstractFile*>(info()->container);
-        DENG_ASSERT(container);
-        directory->catalogLumps(*container, info()->lumpIdx, 1);
+        directory->catalogLumps(container(), info()->lumpIdx, 1);
     }
     return 1;
 }

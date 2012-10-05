@@ -90,14 +90,11 @@ public:
      */
     LumpInfo const* info() const;
 
-    /**
-     * @return  Owning package else @c NULL if not contained.
-     */
-    AbstractFile* container() const;
+    /// @return @c true= this file is contained within another.
+    bool isContained() const;
 
-    /**
-     * Accessors:
-     */
+    /// @return The file instance which contains this.
+    AbstractFile& container() const;
 
     /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this resource.
     ddstring_t const* path() const;
@@ -112,13 +109,13 @@ public:
     bool hasStartup() const;
 
     /// Mark this resource as "startup".
-    void setStartup(bool yes);
+    AbstractFile& setStartup(bool yes);
 
     /// @return  @c true if the resource is marked "custom".
     bool hasCustom() const;
 
     /// Mark this resource as "custom".
-    void setCustom(bool yes);
+    AbstractFile& setCustom(bool yes);
 
     size_t baseOffset() const;
 
@@ -255,6 +252,10 @@ public:
      */
     //virtual AbstractFile& clearLumpCache() = 0;
 
+protected:
+    /// File stream handle/wrapper.
+    DFile* file;
+
 private:
     /// @see filetype_t
     filetype_t type_;
@@ -265,11 +266,6 @@ private:
         uint custom:1; /// < Not an original game resource.
     } flags;
 
-protected:
-    /// File stream handle/wrapper.
-    DFile* file;
-
-private:
     /// Absolute variable-length path in the vfs.
     ddstring_t path_;
 
@@ -295,6 +291,8 @@ typedef struct abstractfile_s AbstractFile;
 filetype_t AbstractFile_Type(AbstractFile const* af);
 
 LumpInfo const* AbstractFile_Info(AbstractFile const* af);
+
+boolean AbstractFile_IsContained(AbstractFile const* af);
 
 AbstractFile* AbstractFile_Container(AbstractFile const* af);
 

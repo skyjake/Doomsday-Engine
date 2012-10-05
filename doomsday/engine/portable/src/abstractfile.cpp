@@ -28,8 +28,11 @@
 
 #include "abstractfile.h"
 
-de::AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
-    : type_(_type), file(&file)
+using de::DFile;
+using de::AbstractFile;
+
+AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
+    : file(&file), type_(_type)
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
@@ -42,7 +45,7 @@ de::AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file,
     F_CopyLumpInfo(&info_, &_info);
 }
 
-de::AbstractFile::~AbstractFile()
+AbstractFile::~AbstractFile()
 {
     FS::releaseFile(this);
     Str_Free(&path_);
@@ -50,64 +53,73 @@ de::AbstractFile::~AbstractFile()
     if(file) delete file;
 }
 
-filetype_t de::AbstractFile::type() const
+filetype_t AbstractFile::type() const
 {
     return type_;
 }
 
-LumpInfo const* de::AbstractFile::info() const
+LumpInfo const* AbstractFile::info() const
 {
     return &info_;
 }
 
-de::AbstractFile* de::AbstractFile::container() const
+bool AbstractFile::isContained() const
 {
-    return reinterpret_cast<de::AbstractFile*>(info_.container);
+    return !!info_.container;
 }
 
-size_t de::AbstractFile::baseOffset() const
+AbstractFile& AbstractFile::container() const
+{
+    AbstractFile* cont = reinterpret_cast<AbstractFile*>(info_.container);
+    if(!cont) throw de::Error("AbstractFile::container", QString("%s is not contained").arg(Str_Text(path())));
+    return *cont;
+}
+
+size_t AbstractFile::baseOffset() const
 {
     return (file? file->baseOffset() : 0);
 }
 
-de::DFile* de::AbstractFile::handle()
+DFile* AbstractFile::handle()
 {
     return file;
 }
 
-ddstring_t const* de::AbstractFile::path() const
+ddstring_t const* AbstractFile::path() const
 {
     return &path_;
 }
 
-uint de::AbstractFile::loadOrderIndex() const
+uint AbstractFile::loadOrderIndex() const
 {
     return order;
 }
 
-uint de::AbstractFile::lastModified() const
+uint AbstractFile::lastModified() const
 {
     return info_.lastModified;
 }
 
-bool de::AbstractFile::hasStartup() const
+bool AbstractFile::hasStartup() const
 {
     return !!flags.startup;
 }
 
-void de::AbstractFile::setStartup(bool yes)
+AbstractFile& AbstractFile::setStartup(bool yes)
 {
     flags.startup = yes;
+    return *this;
 }
 
-bool de::AbstractFile::hasCustom() const
+bool AbstractFile::hasCustom() const
 {
     return !!flags.custom;
 }
 
-void de::AbstractFile::setCustom(bool yes)
+AbstractFile& AbstractFile::setCustom(bool yes)
 {
     flags.custom = yes;
+    return *this;
 }
 
 /**
@@ -115,86 +127,92 @@ void de::AbstractFile::setCustom(bool yes)
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::AbstractFile*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<AbstractFile*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::AbstractFile const*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<AbstractFile const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::AbstractFile* self = TOINTERNAL(inst)
+    AbstractFile* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    de::AbstractFile const* self = TOINTERNAL_CONST(inst)
+    AbstractFile const* self = TOINTERNAL_CONST(inst)
 
-filetype_t AbstractFile_Type(AbstractFile const* af)
+filetype_t AbstractFile_Type(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
     return self->type();
 }
 
-LumpInfo const* AbstractFile_Info(AbstractFile const* af)
+LumpInfo const* AbstractFile_Info(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
     return self->info();
 }
 
-AbstractFile* AbstractFile_Container(AbstractFile const* af)
+boolean AbstractFile_IsContained(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
-    return reinterpret_cast<AbstractFile*>(self->container());
+    return self->isContained();
 }
 
-size_t AbstractFile_BaseOffset(AbstractFile const* af)
+struct abstractfile_s* AbstractFile_Container(struct abstractfile_s const* af)
+{
+    SELF_CONST(af);
+    return reinterpret_cast<struct abstractfile_s*>(&self->container());
+}
+
+size_t AbstractFile_BaseOffset(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
     return self->baseOffset();
 }
 
-DFile* AbstractFile_Handle(AbstractFile* af)
+struct dfile_s* AbstractFile_Handle(struct abstractfile_s* af)
 {
     SELF(af);
-    return reinterpret_cast<DFile*>(self->handle());
+    return reinterpret_cast<struct dfile_s*>(self->handle());
 }
 
-ddstring_t const* AbstractFile_Path(AbstractFile const* af)
+ddstring_t const* AbstractFile_Path(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
     return self->path();
 }
 
-uint AbstractFile_LoadOrderIndex(AbstractFile const* af)
+uint AbstractFile_LoadOrderIndex(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
     return self->loadOrderIndex();
 }
 
-uint AbstractFile_LastModified(AbstractFile const* af)
+uint AbstractFile_LastModified(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
     return self->lastModified();
 }
 
-boolean AbstractFile_HasStartup(AbstractFile const* af)
+boolean AbstractFile_HasStartup(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
     return self->hasStartup();
 }
 
-void AbstractFile_SetStartup(AbstractFile* af, boolean yes)
+void AbstractFile_SetStartup(struct abstractfile_s* af, boolean yes)
 {
     SELF(af);
     self->setStartup(CPP_BOOL(yes));
 }
 
-boolean AbstractFile_HasCustom(AbstractFile const* af)
+boolean AbstractFile_HasCustom(struct abstractfile_s const* af)
 {
     SELF_CONST(af);
     return self->hasCustom();
 }
 
-void AbstractFile_SetCustom(AbstractFile* af, boolean yes)
+void AbstractFile_SetCustom(struct abstractfile_s* af, boolean yes)
 {
     SELF(af);
     self->setCustom(CPP_BOOL(yes));
