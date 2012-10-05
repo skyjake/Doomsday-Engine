@@ -288,7 +288,6 @@ de::WadFile::WadFile(DFile& file, char const* path, LumpInfo const& info)
 
 de::WadFile::~WadFile()
 {
-    F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
     clearLumpCache();
     delete d;
 }
@@ -460,10 +459,18 @@ de::WadFile& de::WadFile::unlockLump(int lumpIdx)
     return *this;
 }
 
-size_t de::WadFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOffset,
+size_t de::WadFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+{
+    LOG_AS("WadFile::readLump");
+    LumpInfo const* info = lumpInfo(lumpIdx);
+    if(!info) return 0;
+    return readLump(lumpIdx, buffer, 0, info->size, tryCache);
+}
+
+size_t de::WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
-    LOG_AS("WadFile::readLumpSection");
+    LOG_AS("WadFile::readLump");
     WadLumpRecord const* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) return 0;
 
@@ -496,14 +503,6 @@ size_t de::WadFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
         throw de::Error("WadFile::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
 
     return readBytes;
-}
-
-size_t de::WadFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
-{
-    LOG_AS("WadFile::readLump");
-    LumpInfo const* info = lumpInfo(lumpIdx);
-    if(!info) return 0;
-    return readLumpSection(lumpIdx, buffer, 0, info->size, tryCache);
 }
 
 uint de::WadFile::calculateCRC()
@@ -554,12 +553,12 @@ bool de::WadFile::recognise(DFile& file)
     DENG2_ASSERT(inst); \
     de::WadFile const* self = TOINTERNAL_CONST(inst)
 
-WadFile* WadFile_New(DFile* file, char const* path, LumpInfo const* info)
+WadFile* WadFile_New(DFile* hndl, char const* path, LumpInfo const* info)
 {
     if(!info) LegacyCore_FatalError("WadFile_New: Received invalid LumpInfo (=NULL).");
     try
     {
-        return reinterpret_cast<WadFile*>(new de::WadFile(*reinterpret_cast<de::DFile*>(file), path, *info));
+        return reinterpret_cast<WadFile*>(new de::WadFile(*reinterpret_cast<de::DFile*>(hndl), path, *info));
     }
     catch(de::Error& er)
     {
@@ -614,20 +613,6 @@ uint WadFile_CalculateCRC(WadFile* wad)
     return self->calculateCRC();
 }
 
-size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length, boolean tryCache)
-{
-    SELF(wad);
-    return self->readLumpSection(lumpIdx, buffer, startOffset, length, tryCache);
-}
-
-size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length)
-{
-    SELF(wad);
-    return self->readLumpSection(lumpIdx, buffer, startOffset, length);
-}
-
 size_t WadFile_ReadLump2(WadFile* wad, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
     SELF(wad);
@@ -638,6 +623,20 @@ size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer)
 {
     SELF(wad);
     return self->readLump(lumpIdx, buffer);
+}
+
+size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx, uint8_t* buffer,
+    size_t startOffset, size_t length, boolean tryCache)
+{
+    SELF(wad);
+    return self->readLump(lumpIdx, buffer, startOffset, length, tryCache);
+}
+
+size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx, uint8_t* buffer,
+    size_t startOffset, size_t length)
+{
+    SELF(wad);
+    return self->readLump(lumpIdx, buffer, startOffset, length);
 }
 
 uint8_t const* WadFile_CacheLump(WadFile* wad, int lumpIdx)

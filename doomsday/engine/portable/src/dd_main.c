@@ -378,7 +378,7 @@ static void locateGameStartupResources(Game* game)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDataAdder(const ddstring_t* fileName, PathDirectoryNodeType type, void* parameters)
+static int autoDataAdder(char const* fileName, PathDirectoryNodeType type, void* parameters)
 {
     DENG_ASSERT(fileName && parameters);
     // We are only interested in files.
@@ -387,12 +387,12 @@ static int autoDataAdder(const ddstring_t* fileName, PathDirectoryNodeType type,
         autoload_t* data = (autoload_t*)parameters;
         if(data->loadFiles)
         {
-            if(F_AddFile(Str_Text(fileName), 0, false))
+            if(F_AddFile(fileName, 0, false))
                 ++data->count;
         }
         else
         {
-            addToPathList(&sessionResourceFileList, &numSessionResourceFileList, Str_Text(fileName));
+            addToPathList(&sessionResourceFileList, &numSessionResourceFileList, fileName);
         }
     }
     return 0; // Continue searching.

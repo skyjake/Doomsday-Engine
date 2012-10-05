@@ -472,7 +472,6 @@ de::ZipFile::ZipFile(DFile& file, char const* path, LumpInfo const& info)
 
 de::ZipFile::~ZipFile()
 {
-    F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
     clearLumpCache();
     delete d;
 }
@@ -644,10 +643,18 @@ de::ZipFile& de::ZipFile::unlockLump(int lumpIdx)
     return *this;
 }
 
-size_t de::ZipFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOffset,
+size_t de::ZipFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+{
+    LOG_AS("ZipFile::readLump");
+    LumpInfo const* info = lumpInfo(lumpIdx);
+    if(!info) return 0;
+    return readLump(lumpIdx, buffer, 0, info->size, tryCache);
+}
+
+size_t de::ZipFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
-    LOG_AS("ZipFile::readLumpSection");
+    LOG_AS("ZipFile::readLump");
     ZipLumpRecord const* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) return 0;
 
@@ -701,14 +708,6 @@ size_t de::ZipFile::readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOf
         throw de::Error("ZipFile::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
 
     return readBytes;
-}
-
-size_t de::ZipFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
-{
-    LOG_AS("ZipFile::readLump");
-    LumpInfo const* info = lumpInfo(lumpIdx);
-    if(!info) return 0;
-    return readLumpSection(lumpIdx, buffer, 0, info->size, tryCache);
 }
 
 bool de::ZipFile::recognise(DFile& file)
@@ -1041,12 +1040,12 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
     DENG2_ASSERT(inst); \
     de::ZipFile const* self = TOINTERNAL_CONST(inst)
 
-ZipFile* ZipFile_New(DFile* file, const char* path, const LumpInfo* info)
+ZipFile* ZipFile_New(DFile* hndl, const char* path, const LumpInfo* info)
 {
     if(!info) LegacyCore_FatalError("ZipFile_New: Received invalid LumpInfo (=NULL).");
     try
     {
-        return reinterpret_cast<ZipFile*>(new de::ZipFile(*reinterpret_cast<de::DFile*>(file), path, *info));
+        return reinterpret_cast<ZipFile*>(new de::ZipFile(*reinterpret_cast<de::DFile*>(hndl), path, *info));
     }
     catch(de::Error& er)
     {
@@ -1095,20 +1094,6 @@ void ZipFile_ClearLumpCache(ZipFile* zip)
     self->clearLumpCache();
 }
 
-size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length, boolean tryCache)
-{
-    SELF(zip);
-    return self->readLumpSection(lumpIdx, buffer, startOffset, length, tryCache);
-}
-
-size_t ZipFile_ReadLumpSection(ZipFile* zip, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length)
-{
-    SELF(zip);
-    return self->readLumpSection(lumpIdx, buffer, startOffset, length);
-}
-
 size_t ZipFile_ReadLump2(ZipFile* zip, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
     SELF(zip);
@@ -1119,6 +1104,20 @@ size_t ZipFile_ReadLump(ZipFile* zip, int lumpIdx, uint8_t* buffer)
 {
     SELF(zip);
     return self->readLump(lumpIdx, buffer);
+}
+
+size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer,
+    size_t startOffset, size_t length, boolean tryCache)
+{
+    SELF(zip);
+    return self->readLump(lumpIdx, buffer, startOffset, length, tryCache);
+}
+
+size_t ZipFile_ReadLumpSection(ZipFile* zip, int lumpIdx, uint8_t* buffer,
+    size_t startOffset, size_t length)
+{
+    SELF(zip);
+    return self->readLump(lumpIdx, buffer, startOffset, length);
 }
 
 uint8_t const* ZipFile_CacheLump(ZipFile* zip, int lumpIdx)

@@ -1,7 +1,12 @@
 /**
  * @file lumpfile.h
- * Specialization of AbstractFile for working with the lumps of containers
- * objects such as WadFile and ZipFile.
+ *
+ * Specialization of AbstractFile for working with the lumps of container
+ * file instances (such as WadFile and ZipFile).
+ *
+ * Design wise a LumpFile is somewhat like an Adapter or Bridge, in that it
+ * provides an AbstractFile-derived object instance through which a lump of
+ * a contained file may be manipulated.
  *
  * @ingroup fs
  *
@@ -32,9 +37,21 @@
 #include "abstractfile.h"
 
 #ifdef __cplusplus
+extern "C" {
+#endif
+
+struct lumpdirectory_s;
+struct pathdirectorynode_s;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#ifdef __cplusplus
 namespace de {
 
 class LumpDirectory;
+class PathDirectoryNode;
 
 /**
  * LumpFile. Runtime representation of a lump-file for use with LumpDirectory
@@ -45,8 +62,27 @@ public:
     LumpFile(DFile& file, char const* path, LumpInfo const& info);
     ~LumpFile();
 
-    /// @return Number of lumps (always @c =1).
-    int lumpCount();
+    /**
+     * Lookup a directory node for a lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return  Found directory node else @c NULL if @a lumpIdx is not valid.
+     */
+    PathDirectoryNode* lumpDirectoryNode(int lumpIdx);
+
+    /**
+     * Compose the absolute VFS path to a lump contained by this file.
+     *
+     * @note Always returns a valid string object. If @a lumpIdx is not valid a
+     *       zero-length string is returned.
+     *
+     * @param lumpIdx       Logical index for the lump.
+     * @param delimiter     Delimit directory separators using this character.
+     *
+     * @return String containing the absolute path.
+     */
+    AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
      * Lookup the lump info descriptor for this lump.
@@ -56,6 +92,64 @@ public:
      * @return Found lump info.
      */
     LumpInfo const* lumpInfo(int lumpIdx);
+
+    /**
+     * Lookup the uncompressed size of lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return Size of the lump in bytes.
+     *
+     * @note This method is intended mainly for convenience. @see lumpInfo() for
+     *       a better method of looking up multiple @ref LumpInfo properties.
+     */
+    size_t lumpSize(int lumpIdx);
+
+    /**
+     * Read the data associated with lump @a lumpIdx into @a buffer.
+     *
+     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param buffer        Buffer to read into. Must be at least large enough to
+     *                      contain the whole lump.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     *
+     * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
+     */
+    size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true);
+
+    /**
+     * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
+     *
+     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param buffer        Buffer to read into. Must be at least @a length bytes.
+     * @param startOffset   Offset from the beginning of the lump to start reading.
+     * @param length        Number of bytes to read.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     */
+    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+                    bool tryCache = true);
+
+    /**
+     * Read the data associated with lump @a lumpIdx into the cache.
+     *
+     * @param lumpIdx   Lump index associated with the data to be cached.
+     *
+     * @return Pointer to the cached copy of the associated data.
+     */
+    uint8_t const* cacheLump(int lumpIdx);
+
+    /**
+     * Remove a lock on a cached data lump.
+     *
+     * @param lumpIdx   Lump index associated with the cached data to be changed.
+     *
+     * @return This instance.
+     */
+    LumpFile& unlockLump(int lumpIdx);
 
     /**
      * Publish this lump to the end of the specified @a directory.
@@ -98,9 +192,23 @@ LumpFile* LumpFile_New(DFile* file, char const* path, LumpInfo const* info);
  */
 void LumpFile_Delete(LumpFile* lump);
 
+struct pathdirectorynode_s* LumpFile_LumpDirectoryNode(LumpFile* lump, int lumpIdx);
+
+AutoStr* LumpFile_ComposeLumpPath(LumpFile* lump, int lumpIdx, char delimiter);
+
 LumpInfo const* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx);
 
 int LumpFile_LumpCount(LumpFile* lump);
+
+size_t LumpFile_ReadLump2(LumpFile* lump, int lumpIdx, uint8_t* buffer, boolean tryCache);
+size_t LumpFile_ReadLump(LumpFile* lump, int lumpIdx, uint8_t* buffer/*, tryCache = true*/);
+
+size_t LumpFile_ReadLumpSection2(LumpFile* lump, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
+size_t LumpFile_ReadLumpSection(LumpFile* lump, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length/*, tryCache = true*/);
+
+uint8_t const* LumpFile_CacheLump(LumpFile* lump, int lumpIdx);
+
+void LumpFile_UnlockLump(LumpFile* lump, int lumpIdx);
 
 int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory);
 

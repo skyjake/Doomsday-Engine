@@ -200,11 +200,12 @@ typedef struct {
     void* parameters;
 } addpathworker_paramaters_t;
 
-static int addPathWorker(const ddstring_t* filePath, PathDirectoryNodeType nodeType,
+static int addPathWorker(char const* _filePath, PathDirectoryNodeType nodeType,
     void* parameters)
 {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)parameters;
-    return addPathNodesAndMaybeDescendBranch(p->flags, filePath, nodeType, parameters);
+    Str filePath; Str_InitStatic(&filePath, _filePath);
+    return addPathNodesAndMaybeDescendBranch(p->flags, &filePath, nodeType, parameters);
 }
 
 int de::FileDirectory::addChildNodes(de::PathDirectoryNode* node, int flags,

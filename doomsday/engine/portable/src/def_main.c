@@ -860,11 +860,12 @@ static __inline void readDefinitionFile(const char* fileName)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDefsReader(const ddstring_t* fileName, PathDirectoryNodeType type, void* paramaters)
+static int autoDefsReader(char const* fileName, PathDirectoryNodeType type, void* parameters)
 {
+    DENG_UNUSED(parameters);
     // Ignore directories.
     if(type != PT_BRANCH)
-        readDefinitionFile(Str_Text(fileName));
+        readDefinitionFile(fileName);
     return 0; // Continue searching.
 }
 

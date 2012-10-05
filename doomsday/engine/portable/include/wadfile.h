@@ -141,8 +141,8 @@ public:
      *
      * @return Number of bytes read.
      */
-    size_t readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
-                           bool tryCache = true);
+    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+                    bool tryCache = true);
 
     /**
      * Read the data associated with lump @a lumpIdx into the cache.

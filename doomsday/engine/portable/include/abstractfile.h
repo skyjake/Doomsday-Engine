@@ -52,6 +52,9 @@ typedef enum {
 #ifdef __cplusplus
 namespace de {
 
+class PathDirectoryNode;
+class LumpDirectory;
+
 /**
  * Abstract File.  Abstract File is a core component of the filesystem
  * intended for use as the base for all types of (pseudo-)file resources.
@@ -60,6 +63,9 @@ namespace de {
  */
 class AbstractFile
 {
+private:
+    AbstractFile();
+
 public:
     /**
      * @param type  File type identifier.
@@ -72,7 +78,7 @@ public:
     /**
      * Release all memory acquired for objects linked with this resource.
      */
-    ~AbstractFile();
+    virtual ~AbstractFile();
 
     /**
      * @return  Type of this resource @see filetype_t
@@ -119,26 +125,135 @@ public:
     DFile* handle();
 
     /**
-     * Abstract interface (minimal, data caching interface not expected):
-     */
-
-    /**
-     * Read the data associated with the specified lump index into @a buffer.
+     * Access interfaces:
      *
-     * @param lumpIdx  Lump index associated with the data being read.
-     * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
-     * @return  Number of bytes read.
-     *
-     * @todo Should be virtual
+     * @todo Extract these into one or more interface classes/subcomponents.
      */
-    size_t readLump(int lumpIdx, uint8_t* buffer);
 
     /**
      * @return  Number of "lumps" contained within this resource.
-     *
-     * @todo Should be virtual
      */
-    int lumpCount();
+    virtual int lumpCount() { return 1; }
+
+    /**
+     * Lookup a directory node for a lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return  Found directory node else @c NULL if @a lumpIdx is not valid.
+     */
+    virtual PathDirectoryNode* lumpDirectoryNode(int lumpIdx) = 0;
+
+    /**
+     * Compose the absolute VFS path to a lump contained by this file.
+     *
+     * @note Always returns a valid string object. If @a lumpIdx is not valid a
+     *       zero-length string is returned.
+     *
+     * @param lumpIdx       Logical index for the lump.
+     * @param delimiter     Delimit directory separators using this character.
+     *
+     * @return String containing the absolute path.
+     */
+    virtual AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/') = 0;
+
+    /**
+     * Lookup a lump info descriptor for a lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return Found lump info.
+     */
+    virtual LumpInfo const* lumpInfo(int /*lumpIdx*/) { return info(); }
+
+    /**
+     * Lookup the uncompressed size of lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return Size of the lump in bytes.
+     *
+     * @note This method is intended mainly for convenience. @see lumpInfo() for
+     *       a better method of looking up multiple @ref LumpInfo properties.
+     */
+    virtual size_t lumpSize(int lumpIdx) = 0;
+
+    /**
+     * Read the data associated with lump @a lumpIdx into @a buffer.
+     *
+     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param buffer        Buffer to read into. Must be at least large enough to
+     *                      contain the whole lump.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     *
+     * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
+     */
+    virtual size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true) = 0;
+
+    /**
+     * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
+     *
+     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param buffer        Buffer to read into. Must be at least @a length bytes.
+     * @param startOffset   Offset from the beginning of the lump to start reading.
+     * @param length        Number of bytes to read.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     */
+    virtual size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+                            bool tryCache = true) = 0;
+
+    /**
+     * Publish this lump to the end of the specified @a directory.
+     *
+     * @param directory Directory to publish to.
+     *
+     * @return Number of lumps published to the directory. Always @c =1
+     */
+    virtual int publishLumpsToDirectory(LumpDirectory* directory) = 0;
+
+    /**
+     * Lump caching interface:
+     */
+
+    /**
+     * Read the data associated with lump @a lumpIdx into the cache.
+     *
+     * @param lumpIdx   Lump index associated with the data to be cached.
+     *
+     * @return Pointer to the cached copy of the associated data.
+     */
+    virtual uint8_t const* cacheLump(int lumpIdx) = 0;
+
+    /**
+     * Remove a lock on a cached data lump.
+     *
+     * @param lumpIdx   Lump index associated with the cached data to be changed.
+     *
+     * @return This instance.
+     */
+    virtual AbstractFile& unlockLump(int lumpIdx) = 0;
+
+    /**
+     * Clear any cached data for lump @a lumpIdx from the lump cache.
+     *
+     * @param lumpIdx       Lump index associated with the cached data to be cleared.
+     * @param retCleared    If not @c NULL write @c true to this address if data was
+     *                      present and subsequently cleared from the cache.
+     *
+     * @return This instance.
+     */
+    //virtual AbstractFile& clearCachedLump(int lumpIdx, bool* retCleared = 0) = 0;
+
+    /**
+     * Purge the lump cache, clearing all cached data lumps.
+     *
+     * @return This instance.
+     */
+    //virtual AbstractFile& clearLumpCache() = 0;
 
 private:
     /// @see filetype_t

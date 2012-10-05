@@ -92,7 +92,8 @@ struct LumpDirectory::Instance
         for(int i = 0; i < numRecords; ++i)
         {
             LumpInfo const* lumpInfo = lumpInfos[i];
-            PathDirectoryNode const* node = reinterpret_cast<de::PathDirectoryNode*>(F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx));
+            AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
+            PathDirectoryNode const* node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
             ushort j = node->hash() % (unsigned)numRecords;
 
             (*hashMap)[i].next = (*hashMap)[j].head; // Prepend to the chain.
@@ -117,7 +118,7 @@ struct LumpDirectory::Instance
         for(int i = 0; i < numRecords; ++i)
         {
             if(pruneFlags.testBit(i)) continue;
-            if(reinterpret_cast<de::AbstractFile*>(lumpInfos[i]->container) != &file) continue;
+            if(reinterpret_cast<AbstractFile*>(lumpInfos[i]->container) != &file) continue;
             pruneFlags.setBit(i, true);
             numFlagged += 1;
         }
@@ -138,8 +139,8 @@ struct LumpDirectory::Instance
         if(0 != result) return result;
 
         // Still matched; try the file load order indexes.
-        result = (reinterpret_cast<de::AbstractFile*>(infoA->lumpInfo->container)->loadOrderIndex() -
-                  reinterpret_cast<de::AbstractFile*>(infoB->lumpInfo->container)->loadOrderIndex());
+        result = (reinterpret_cast<AbstractFile*>(infoA->lumpInfo->container)->loadOrderIndex() -
+                  reinterpret_cast<AbstractFile*>(infoB->lumpInfo->container)->loadOrderIndex());
         if(0 != result) return result;
 
         // Still matched (i.e., present in the same package); use the original indexes.
@@ -170,8 +171,7 @@ struct LumpDirectory::Instance
 
             sortInfo.lumpInfo = lumpInfo;
             sortInfo.origIndex = i;
-            sortInfo.path = F_ComposeLumpPath2(lumpInfo->container, lumpInfo->lumpIdx,
-                                               '/' /*delimiter is irrelevant*/);
+            sortInfo.path = reinterpret_cast<AbstractFile*>(lumpInfo->container)->composeLumpPath(lumpInfo->lumpIdx, '/' /*delimiter is irrelevant*/);
         }
         qsort(sortInfos, numRecords, sizeof(*sortInfos), lumpSorter);
 
@@ -331,7 +331,7 @@ void LumpDirectory::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int nu
 
     for(int i = 0; i < numLumps; ++i)
     {
-        LumpInfo const* lumpInfo = F_LumpInfo(reinterpret_cast<struct abstractfile_s*>(&file), lumpIdxBase + i);
+        LumpInfo const* lumpInfo = file.lumpInfo(lumpIdxBase + i);
         DENG_ASSERT(lumpInfo);
         d->lumpInfos.push_back(lumpInfo);
     }
@@ -360,7 +360,7 @@ bool LumpDirectory::catalogues(de::AbstractFile& file)
     DENG2_FOR_EACH(i, d->lumpInfos, LumpInfos::iterator)
     {
         LumpInfo const* lumpInfo = *i;
-        if(reinterpret_cast<de::AbstractFile*>(lumpInfo->container) == &file) return true;
+        if(reinterpret_cast<AbstractFile*>(lumpInfo->container) == &file) return true;
     }
     return false;
 }
@@ -385,7 +385,8 @@ lumpnum_t LumpDirectory::indexForPath(char const* path)
     for(idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
         LumpInfo const* lumpInfo = d->lumpInfos[idx];
-        PathDirectoryNode* node = reinterpret_cast<de::PathDirectoryNode*>(F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx));
+        AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
+        PathDirectoryNode* node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
 
         // Time to build the pattern?
         if(!builtSearchPattern)

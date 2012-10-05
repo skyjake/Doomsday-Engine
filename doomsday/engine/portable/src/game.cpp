@@ -33,6 +33,7 @@
 
 #include "game.h"
 
+using namespace de;
 using de::Game;
 
 typedef struct {
@@ -157,7 +158,7 @@ bool Game::isRequiredResource(char const* absolutePath)
     if(records)
     {
         // Is this resource from a container?
-        AbstractFile* file = reinterpret_cast<de::AbstractFile*>(F_FindLumpFile(absolutePath, NULL));
+        AbstractFile* file = FS::findLumpFile(absolutePath);
         if(file)
         {
             // Yes; use the container's path instead.

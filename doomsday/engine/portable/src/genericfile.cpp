@@ -33,37 +33,74 @@
 #include <de/Log>
 #include <de/memory.h>
 
-de::GenericFile::GenericFile(DFile& file, char const* path, LumpInfo const& info)
+using namespace de;
+using de::AbstractFile;
+using de::DFile;
+using de::GenericFile;
+using de::PathDirectoryNode;
+
+GenericFile::GenericFile(DFile& file, char const* path, LumpInfo const& info)
     : AbstractFile(FT_GENERICFILE, path, file, info)
 {}
 
-de::GenericFile::~GenericFile()
+GenericFile::~GenericFile()
+{}
+
+PathDirectoryNode* GenericFile::lumpDirectoryNode(int /*lumpIdx*/)
 {
-    F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
+    /// @todo writeme
+    return 0;
 }
 
-LumpInfo const* de::GenericFile::lumpInfo(int /*lumpIdx*/)
+AutoStr* GenericFile::composeLumpPath(int /*lumpIdx*/, char /*delimiter*/)
+{
+    return AutoStr_NewStd();
+}
+
+LumpInfo const* GenericFile::lumpInfo(int /*lumpIdx*/)
 {
     // Generic files are special cases for this *is* the lump.
     return info();
 }
 
-int de::GenericFile::lumpCount()
+size_t GenericFile::lumpSize(int lumpIdx)
 {
-    return 1; // Always.
+    // Generic files are special cases for this *is* the lump.
+    return lumpInfo(lumpIdx)->size;
 }
 
-int de::GenericFile::publishLumpsToDirectory(LumpDirectory* directory)
+size_t GenericFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+{
+    /// @todo writeme
+    return 0;
+}
+
+size_t GenericFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
+    size_t length, bool tryCache)
+{
+    /// @todo writeme
+    return 0;
+}
+
+uint8_t const* GenericFile::cacheLump(int /*lumpIdx*/)
+{
+    /// @todo writeme
+    return 0;
+}
+
+GenericFile& GenericFile::unlockLump(int /*lumpIdx*/)
+{
+    /// @todo writeme
+    return *this;
+}
+
+int GenericFile::publishLumpsToDirectory(LumpDirectory* directory)
 {
     LOG_AS("GenericFile");
     if(directory)
     {
         // This *is* the lump, so insert ourself in the directory.
-        AbstractFile* container = reinterpret_cast<de::AbstractFile*>(info()->container);
-        if(container)
-        {
-            directory->catalogLumps(*container, info()->lumpIdx, 1);
-        }
+        directory->catalogLumps(*this, 0, 1);
     }
     return 1;
 }
@@ -73,25 +110,25 @@ int de::GenericFile::publishLumpsToDirectory(LumpDirectory* directory)
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::GenericFile*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<GenericFile*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::GenericFile const*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<GenericFile const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::GenericFile* self = TOINTERNAL(inst)
+    GenericFile* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    de::GenericFile const* self = TOINTERNAL_CONST(inst)
+    GenericFile const* self = TOINTERNAL_CONST(inst)
 
-GenericFile* GenericFile_New(DFile* file, char const* path, LumpInfo const* info)
+struct genericfile_s* GenericFile_New(struct dfile_s* hndl, char const* path, LumpInfo const* info)
 {
     if(!info) LegacyCore_FatalError("GenericFile_New: Received invalid LumpInfo (=NULL).");
     try
     {
-        return reinterpret_cast<GenericFile*>(new de::GenericFile(*reinterpret_cast<de::DFile*>(file), path, *info));
+        return reinterpret_cast<struct genericfile_s*>(new GenericFile(*reinterpret_cast<DFile*>(hndl), path, *info));
     }
     catch(de::Error& er)
     {
@@ -101,29 +138,29 @@ GenericFile* GenericFile_New(DFile* file, char const* path, LumpInfo const* info
     }
 }
 
-void GenericFile_Delete(GenericFile* lump)
+void GenericFile_Delete(struct genericfile_s* file)
 {
-    if(lump)
+    if(file)
     {
-        SELF(lump);
+        SELF(file);
         delete self;
     }
 }
 
-LumpInfo const* GenericFile_LumpInfo(GenericFile* lump, int lumpIdx)
+LumpInfo const* GenericFile_LumpInfo(struct genericfile_s* file, int lumpIdx)
 {
-    SELF(lump);
+    SELF(file);
     return self->lumpInfo(lumpIdx);
 }
 
-int GenericFile_LumpCount(GenericFile* lump)
+int GenericFile_LumpCount(struct genericfile_s* file)
 {
-    SELF(lump);
+    SELF(file);
     return self->lumpCount();
 }
 
-int GenericFile_PublishLumpsToDirectory(GenericFile* lump, struct lumpdirectory_s* directory)
+int GenericFile_PublishLumpsToDirectory(struct genericfile_s* file, struct lumpdirectory_s* directory)
 {
-    SELF(lump);
-    return self->publishLumpsToDirectory(reinterpret_cast<de::LumpDirectory*>(directory));
+    SELF(file);
+    return self->publishLumpsToDirectory(reinterpret_cast<LumpDirectory*>(directory));
 }

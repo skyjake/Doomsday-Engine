@@ -102,40 +102,8 @@ void F_PrintFileId(byte identifier[16]);
  */
 boolean F_CheckFileId(char const* path);
 
-/// @return  @c true if the FileId associated with @a path was released.
-boolean F_ReleaseFileId(char const* path);
-
 /// @return  Number of files in the currently active primary LumpDirectory.
 int F_LumpCount(void);
-
-boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
-
-boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
-
-char const* F_LumpName(lumpnum_t absoluteLumpNum);
-
-size_t F_LumpLength(lumpnum_t absoluteLumpNum);
-
-char const* F_LumpSourceFile(lumpnum_t absoluteLumpNum);
-
-uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
-
-/**
- * Given a logical @a lumpnum retrieve the associated file object.
- *
- * @post The active LumpDirectory may have changed!
- *
- * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
- * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
- *                          file object is written here.
- *
- * @return  Found file object else @c NULL
- */
-AbstractFile* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-AbstractFile* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
-
-LumpInfo const* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-LumpInfo const* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
 
 lumpnum_t F_CheckLumpNumForName2(char const* name, boolean silent);
 lumpnum_t F_CheckLumpNumForName(char const* name);
@@ -149,15 +117,6 @@ lumpnum_t F_OpenAuxiliary2(char const* fileName, size_t baseOffset); /* silent =
 lumpnum_t F_OpenAuxiliary(char const* fileName); /* baseOffset = 0 */
 
 void F_CloseAuxiliary(void);
-
-/**
- * Find a lump in the Zip LumpDirectory.
- *
- * @param path      Path to search for. Relative paths are made absolute if necessary.
- * @param lumpIdx   If not @c NULL the translated lumpnum within the owning file object is written here.
- * @return  File system object representing the file which contains the found lump else @c NULL.
- */
-AbstractFile* F_FindLumpFile(char const* path, int* lumpIdx);
 
 /**
  * Files with a .wad extension are archived data files with multiple 'lumps',
@@ -273,29 +232,6 @@ void F_GetPWADFileNames(char* buf, size_t bufSize, char const* delimiter);
  */
 uint F_CRCNumber(void);
 
-/// Clear all references to this file.
-void F_ReleaseFile(AbstractFile* file);
-
-/// Close this file.
-void F_Close(DFile* file);
-
-/// Completely destroy this file; close if open, clear references and any acquired identifiers.
-void F_Delete(DFile* file);
-
-AutoStr* F_ComposeLumpPath2(AbstractFile* file, int lumpIdx, char delimiter);
-AutoStr* F_ComposeLumpPath(AbstractFile* file, int lumpIdx); /*delimiter='/'*/
-
-struct pathdirectorynode_s* F_LumpDirectoryNode(AbstractFile* file, int lumpIdx);
-
-LumpInfo const* F_LumpInfo(AbstractFile* file, int lumpIdx);
-
-size_t F_ReadLumpSection(AbstractFile* file, int lumpIdx, uint8_t* buffer,
-                         size_t startOffset, size_t length);
-
-uint8_t const* F_CacheLump(AbstractFile* file, int lumpIdx);
-
-void F_UnlockLump(AbstractFile* file, int lumpIdx);
-
 /**
  * Parm is passed on to the callback, which is called for each file
  * matching the filespec. Absolute path names are given to the callback.
@@ -303,8 +239,96 @@ void F_UnlockLump(AbstractFile* file, int lumpIdx);
  *
  * @param flags  @see searchPathFlags
  */
-int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (ddstring_t const* path, PathDirectoryNodeType type, void* parameters), void* parameters);
-int F_AllResourcePaths(char const* searchPath, int flags, int (*callback) (ddstring_t const* path, PathDirectoryNodeType type, void* parameters)/*, parameters = 0 */);
+int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters);
+int F_AllResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters)/*, parameters = 0 */);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#ifdef __cplusplus
+
+namespace de {
+
+class FS
+{
+public:
+    /**
+     * Find a lump in the Zip LumpDirectory.
+     *
+     * @param path      Path to search for. Relative paths are made absolute if necessary.
+     * @param lumpIdx   If not @c NULL the translated lumpnum within the owning file object is written here.
+     * @return  File system object representing the file which contains the found lump else @c NULL.
+     */
+    static AbstractFile* findLumpFile(char const* path, int* lumpIdx = 0);
+
+    /**
+     * Given a logical @a lumpnum retrieve the associated file object.
+     *
+     * @post The active LumpDirectory may have changed!
+     *
+     * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
+     * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
+     *                          file object is written here.
+     *
+     * @return  Found file object else @c NULL
+     */
+    static AbstractFile* findFileForLumpNum(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
+
+    /// Clear all references to this file.
+    static void releaseFile(AbstractFile* file);
+
+    /// Close this file handle.
+    static void closeFile(DFile* hndl);
+
+    /// Completely destroy this file; close if open, clear references and any acquired identifiers.
+    static void deleteFile(DFile* hndl);
+};
+
+} // namespace de
+
+extern "C" {
+#endif // __cplusplus
+
+/**
+ * C wrapper API:
+ */
+
+boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
+
+boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
+
+char const* F_LumpName(lumpnum_t absoluteLumpNum);
+
+size_t F_LumpLength(lumpnum_t absoluteLumpNum);
+
+char const* F_LumpSourceFile(lumpnum_t absoluteLumpNum);
+
+uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
+
+LumpInfo const* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
+LumpInfo const* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
+
+struct abstractfile_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
+struct abstractfile_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0 */);
+
+void F_Close(struct dfile_s* file);
+
+void F_Delete(struct dfile_s* file);
+
+AutoStr* F_ComposeLumpPath2(struct abstractfile_s* file, int lumpIdx, char delimiter);
+AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx); /*delimiter='/'*/
+
+LumpInfo const* F_LumpInfo(struct abstractfile_s* file, int lumpIdx);
+
+size_t F_ReadLump(struct abstractfile_s* file, int lumpIdx, uint8_t* buffer);
+
+size_t F_ReadLumpSection(struct abstractfile_s* file, int lumpIdx, uint8_t* buffer,
+                         size_t startOffset, size_t length);
+
+uint8_t const* F_CacheLump(struct abstractfile_s* file, int lumpIdx);
+
+void F_UnlockLump(struct abstractfile_s* file, int lumpIdx);
 
 #ifdef __cplusplus
 } // extern "C"

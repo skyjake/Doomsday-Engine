@@ -30,37 +30,73 @@
 #include <de/Log>
 #include <de/memory.h>
 
-de::LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
+using namespace de;
+using de::AbstractFile;
+using de::DFile;
+using de::LumpFile;
+using de::PathDirectoryNode;
+
+LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
     : AbstractFile(FT_LUMPFILE, path, file, info)
 {}
 
-de::LumpFile::~LumpFile()
+LumpFile::~LumpFile()
+{}
+
+PathDirectoryNode* LumpFile::lumpDirectoryNode(int lumpIdx)
 {
-    F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
+    return container()->lumpDirectoryNode(lumpInfo(lumpIdx)->lumpIdx);
 }
 
-LumpInfo const* de::LumpFile::lumpInfo(int /*lumpIdx*/)
+AutoStr* LumpFile::composeLumpPath(int lumpIdx, char delimiter)
+{
+    return container()->composeLumpPath(lumpInfo(lumpIdx)->lumpIdx, delimiter);
+}
+
+LumpInfo const* LumpFile::lumpInfo(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
     return info();
 }
 
-int de::LumpFile::lumpCount()
+size_t LumpFile::lumpSize(int lumpIdx)
 {
-    return 1; // Always.
+    // Lump files are special cases for this *is* the lump.
+    return lumpInfo(lumpIdx)->size;
 }
 
-int de::LumpFile::publishLumpsToDirectory(LumpDirectory* directory)
+size_t LumpFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+{
+    return container()->readLump(lumpInfo(lumpIdx)->lumpIdx, buffer, tryCache);
+}
+
+size_t LumpFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
+    size_t length, bool tryCache)
+{
+    return container()->readLump(lumpInfo(lumpIdx)->lumpIdx, buffer,
+                                 startOffset, length, tryCache);
+}
+
+uint8_t const* LumpFile::cacheLump(int lumpIdx)
+{
+    return container()->cacheLump(lumpInfo(lumpIdx)->lumpIdx);
+}
+
+LumpFile& LumpFile::unlockLump(int lumpIdx)
+{
+    container()->unlockLump(lumpInfo(lumpIdx)->lumpIdx);
+    return *this;
+}
+
+int LumpFile::publishLumpsToDirectory(LumpDirectory* directory)
 {
     LOG_AS("LumpFile");
     if(directory)
     {
-        // This *is* the lump, so insert ourself in the directory.
-        AbstractFile* container = reinterpret_cast<de::AbstractFile*>(info()->container);
-        if(container)
-        {
-            directory->catalogLumps(*container, info()->lumpIdx, 1);
-        }
+        // This *is* the lump, so insert ourself as a lump of our container in the directory.
+        AbstractFile* container = reinterpret_cast<AbstractFile*>(info()->container);
+        DENG_ASSERT(container);
+        directory->catalogLumps(*container, info()->lumpIdx, 1);
     }
     return 1;
 }
@@ -70,27 +106,27 @@ int de::LumpFile::publishLumpsToDirectory(LumpDirectory* directory)
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::LumpFile*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<LumpFile*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::LumpFile const*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<LumpFile const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::LumpFile* self = TOINTERNAL(inst)
+    LumpFile* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    de::LumpFile const* self = TOINTERNAL_CONST(inst)
+    LumpFile const* self = TOINTERNAL_CONST(inst)
 
-LumpFile* LumpFile_New(DFile* file, char const* path, LumpInfo const* info)
+struct lumpfile_s* LumpFile_New(struct dfile_s* hndl, char const* path, LumpInfo const* info)
 {
     if(!info) LegacyCore_FatalError("LumpFile_New: Received invalid LumpInfo (=NULL).");
     try
     {
-        return reinterpret_cast<LumpFile*>(new de::LumpFile(*reinterpret_cast<de::DFile*>(file), path, *info));
+        return reinterpret_cast<struct lumpfile_s*>(new LumpFile(*reinterpret_cast<DFile*>(hndl), path, *info));
     }
-    catch(de::Error& er)
+    catch(Error& er)
     {
         QString msg = QString("LumpFile_New: Failed to instantiate new LumpFile. ") + er.asText();
         LegacyCore_FatalError(msg.toUtf8().constData());
@@ -98,7 +134,7 @@ LumpFile* LumpFile_New(DFile* file, char const* path, LumpInfo const* info)
     }
 }
 
-void LumpFile_Delete(LumpFile* lump)
+void LumpFile_Delete(struct lumpfile_s* lump)
 {
     if(lump)
     {
@@ -107,20 +143,70 @@ void LumpFile_Delete(LumpFile* lump)
     }
 }
 
-LumpInfo const* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx)
+struct pathdirectorynode_s* LumpFile_LumpDirectoryNode(struct lumpfile_s* lump, int lumpIdx)
+{
+    SELF(lump);
+    return reinterpret_cast<struct pathdirectorynode_s*>( self->lumpDirectoryNode(lumpIdx) );
+}
+
+AutoStr* LumpFile_ComposeLumpPath(struct lumpfile_s* lump, int lumpIdx, char delimiter)
+{
+    SELF(lump);
+    return self->composeLumpPath(lumpIdx, delimiter);
+}
+
+LumpInfo const* LumpFile_LumpInfo(struct lumpfile_s* lump, int lumpIdx)
 {
     SELF(lump);
     return self->lumpInfo(lumpIdx);
 }
 
-int LumpFile_LumpCount(LumpFile* lump)
+int LumpFile_LumpCount(struct lumpfile_s* lump)
 {
     SELF(lump);
     return self->lumpCount();
 }
 
-int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory)
+size_t LumpFile_ReadLumpSection2(struct lumpfile_s* lump, int lumpIdx, uint8_t* buffer,
+    size_t startOffset, size_t length, boolean tryCache)
 {
     SELF(lump);
-    return self->publishLumpsToDirectory(reinterpret_cast<de::LumpDirectory*>(directory));
+    return self->readLump(lumpIdx, buffer, startOffset, length, CPP_BOOL(tryCache));
+}
+
+size_t LumpFile_ReadLumpSection(struct lumpfile_s* lump, int lumpIdx, uint8_t* buffer,
+    size_t startOffset, size_t length)
+{
+    SELF(lump);
+    return self->readLump(lumpIdx, buffer, startOffset, length);
+}
+
+size_t LumpFile_ReadLump2(struct lumpfile_s* lump, int lumpIdx, uint8_t* buffer, boolean tryCache)
+{
+    SELF(lump);
+    return self->readLump(lumpIdx, buffer, CPP_BOOL(tryCache));
+}
+
+size_t LumpFile_ReadLump(struct lumpfile_s* lump, int lumpIdx, uint8_t* buffer)
+{
+    SELF(lump);
+    return self->readLump(lumpIdx, buffer);
+}
+
+uint8_t const* LumpFile_CacheLump(struct lumpfile_s* lump, int lumpIdx)
+{
+    SELF(lump);
+    return self->cacheLump(lumpIdx);
+}
+
+void LumpFile_UnlockLump(struct lumpfile_s* lump, int lumpIdx)
+{
+    SELF(lump);
+    self->unlockLump(lumpIdx);
+}
+
+int LumpFile_PublishLumpsToDirectory(struct lumpfile_s* lump, struct lumpdirectory_s* directory)
+{
+    SELF(lump);
+    return self->publishLumpsToDirectory(reinterpret_cast<LumpDirectory*>(directory));
 }

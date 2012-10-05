@@ -45,8 +45,27 @@ public:
     GenericFile(DFile& file, char const* path, LumpInfo const& info);
     ~GenericFile();
 
-    /// @return Number of lumps (always @c =1).
-    int lumpCount();
+    /**
+     * Lookup a directory node for a lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return  Found directory node else @c NULL if @a lumpIdx is not valid.
+     */
+    PathDirectoryNode* lumpDirectoryNode(int lumpIdx);
+
+    /**
+     * Compose the absolute VFS path to a lump contained by this file.
+     *
+     * @note Always returns a valid string object. If @a lumpIdx is not valid a
+     *       zero-length string is returned.
+     *
+     * @param lumpIdx       Logical index for the lump.
+     * @param delimiter     Delimit directory separators using this character.
+     *
+     * @return String containing the absolute path.
+     */
+    AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
      * Lookup the lump info descriptor for this lump.
@@ -56,6 +75,64 @@ public:
      * @return Found lump info.
      */
     LumpInfo const* lumpInfo(int lumpIdx);
+
+    /**
+     * Lookup the uncompressed size of lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return Size of the lump in bytes.
+     *
+     * @note This method is intended mainly for convenience. @see lumpInfo() for
+     *       a better method of looking up multiple @ref LumpInfo properties.
+     */
+    size_t lumpSize(int lumpIdx);
+
+    /**
+     * Read the data associated with lump @a lumpIdx into @a buffer.
+     *
+     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param buffer        Buffer to read into. Must be at least large enough to
+     *                      contain the whole lump.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     *
+     * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
+     */
+    size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true);
+
+    /**
+     * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
+     *
+     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param buffer        Buffer to read into. Must be at least @a length bytes.
+     * @param startOffset   Offset from the beginning of the lump to start reading.
+     * @param length        Number of bytes to read.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     */
+    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+                    bool tryCache = true);
+
+    /**
+     * Read the data associated with lump @a lumpIdx into the cache.
+     *
+     * @param lumpIdx   Lump index associated with the data to be cached.
+     *
+     * @return Pointer to the cached copy of the associated data.
+     */
+    uint8_t const* cacheLump(int lumpIdx);
+
+    /**
+     * Remove a lock on a cached data lump.
+     *
+     * @param lumpIdx   Lump index associated with the cached data to be changed.
+     *
+     * @return This instance.
+     */
+    GenericFile& unlockLump(int lumpIdx);
 
     /**
      * Publish this lump to the end of the specified @a directory.
@@ -97,6 +174,8 @@ GenericFile* GenericFile_New(DFile* hndl, char const* path, LumpInfo const* info
  * Destroy GenericFile instance @a file.
  */
 void GenericFile_Delete(GenericFile* file);
+
+int GenericFile_LumpCount(GenericFile* file);
 
 #ifdef __cplusplus
 } // extern "C"

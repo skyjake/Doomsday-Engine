@@ -44,6 +44,7 @@ de::AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file,
 
 de::AbstractFile::~AbstractFile()
 {
+    FS::releaseFile(this);
     Str_Free(&path_);
     F_DestroyLumpInfo(&info_);
     if(file) delete file;

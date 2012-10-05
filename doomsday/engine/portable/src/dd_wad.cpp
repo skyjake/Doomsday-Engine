@@ -30,6 +30,9 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
+using namespace de;
+using de::AbstractFile;
+
 #if _DEBUG
 #  define  W_Error              Con_Error
 #else
@@ -71,13 +74,13 @@ uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
 
 char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
-    AbstractFile* file = F_FindFileForLumpNum(absoluteLumpNum);
+    AbstractFile* file = FS::findFileForLumpNum(absoluteLumpNum);
     if(!file)
     {
         W_Error("W_LumpSourceFile: Invalid lumpnum %i.", absoluteLumpNum);
         return "";
     }
-    return Str_Text(AbstractFile_Path(file));
+    return Str_Text(file->path());
 }
 
 boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
@@ -120,50 +123,50 @@ lumpnum_t W_GetLumpNumForName(char const* name)
     return lumpNum;
 }
 
-size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t startOffset, size_t length)
-{
-    int lumpIdx;
-    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-    if(!file)
-    {
-        W_Error("W_ReadLumpSection: Invalid lumpnum %i.", absoluteLumpNum);
-        return 0;
-    }
-    return F_ReadLumpSection(file, lumpIdx, buffer, startOffset, length);
-}
-
 size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 {
     int lumpIdx;
-    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* file = FS::findFileForLumpNum(absoluteLumpNum, &lumpIdx);
     if(!file)
     {
         W_Error("W_ReadLump: Invalid lumpnum %i.", absoluteLumpNum);
         return 0;
     }
-    return F_ReadLumpSection(file, lumpIdx, buffer, 0, F_LumpLength(absoluteLumpNum));
+    return file->readLump(lumpIdx, buffer, 0, F_LumpLength(absoluteLumpNum));
+}
+
+size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t startOffset, size_t length)
+{
+    int lumpIdx;
+    AbstractFile* file = FS::findFileForLumpNum(absoluteLumpNum, &lumpIdx);
+    if(!file)
+    {
+        W_Error("W_ReadLumpSection: Invalid lumpnum %i.", absoluteLumpNum);
+        return 0;
+    }
+    return file->readLump(lumpIdx, buffer, startOffset, length);
 }
 
 uint8_t const* W_CacheLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* file = FS::findFileForLumpNum(absoluteLumpNum, &lumpIdx);
     if(!file)
     {
         W_Error("W_CacheLump: Invalid lumpnum %i.", absoluteLumpNum);
         return NULL;
     }
-    return F_CacheLump(file, lumpIdx);
+    return file->cacheLump(lumpIdx);
 }
 
 void W_UnlockLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* file = FS::findFileForLumpNum(absoluteLumpNum, &lumpIdx);
     if(!file)
     {
         W_Error("W_UnlockLump: Invalid lumpnum %i.", absoluteLumpNum);
         return;
     }
-    F_UnlockLump(file, lumpIdx);
+    file->unlockLump(lumpIdx);
 }
