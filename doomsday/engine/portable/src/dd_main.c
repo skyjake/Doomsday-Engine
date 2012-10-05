@@ -1066,7 +1066,7 @@ static int DD_LocateAllGameResourcesWorker(void* parameters)
     DENG_UNUSED(parameters);
     for(i = 0; i < Games_Count(); ++i)
     {
-        Game* game = Games_ByIndex(i);
+        Game* game = Games_ByIndex(i+1);
 
         VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) )
 
