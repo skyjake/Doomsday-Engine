@@ -1161,7 +1161,7 @@ patchid_t R_DeclarePatch(const char* name)
         return (patchid_t)Textures_UniqueId(texId);
     }
 
-    lumpNum = F_CheckLumpNumForName2(name, true);
+    lumpNum = F_LumpNumForName(name);
     if(lumpNum < 0)
     {
 #if _DEBUG
@@ -1588,7 +1588,7 @@ typedef struct {
 
                     if(!pinfo->flags.processed)
                     {
-                        pinfo->lumpNum = F_CheckLumpNumForName2(*(patchNames + patchNum), true);
+                        pinfo->lumpNum = F_LumpNumForName(*(patchNames + patchNum));
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
@@ -1635,7 +1635,7 @@ typedef struct {
 
                     if(!pinfo->flags.processed)
                     {
-                        pinfo->lumpNum = F_CheckLumpNumForName2(*(patchNames + patchNum), true);
+                        pinfo->lumpNum = F_LumpNumForName(*(patchNames + patchNum));
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
@@ -1829,7 +1829,7 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
     int defLumpsSize;
     lumpnum_t* defLumps;
 
-    pnames = F_CheckLumpNumForName2("PNAMES", true);
+    pnames = F_LumpNumForName("PNAMES");
     if(-1 == pnames)
     {
         if(numDefs) *numDefs = 0;
@@ -2272,7 +2272,7 @@ void R_DefineSpriteTexture(textureid_t texId)
     if(tex && resourceUri)
     {
         ddstring_t* resourcePath = Uri_Resolved(resourceUri);
-        lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(resourcePath), true/*quiet please*/);
+        lumpnum_t lumpNum = F_LumpNumForName(Str_Text(resourcePath));
         int lumpIdx;
         AbstractFile* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx);

@@ -1189,10 +1189,14 @@ boolean DD_Init(void)
     if(CommandLine_CheckWith("-dumplump", 1))
     {
         const char* name = CommandLine_Next();
-        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name);
+        lumpnum_t absoluteLumpNum = F_LumpNumForName(name);
         if(absoluteLumpNum >= 0)
         {
-            F_DumpLump(absoluteLumpNum, NULL);
+            F_DumpLump(absoluteLumpNum);
+        }
+        else
+        {
+            Con_Message("Warning: Cannot dump unknown lump \"%s\", ignoring.\n", name);
         }
     }
 
@@ -2096,7 +2100,7 @@ D_CMD(Unload)
     for(i = 1; i < argc; ++i)
     {
         if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath) ||
-           !F_RemoveFile(Str_Text(&searchPath), false/*not required game resources*/))
+           !F_RemoveFile2(Str_Text(&searchPath), false/*not required game resources*/))
         {
             continue;
         }

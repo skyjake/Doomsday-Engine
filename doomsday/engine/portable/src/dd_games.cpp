@@ -163,7 +163,7 @@ boolean Games_IsNullObject(Game const* game)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static bool recognizeWAD(char const* filePath, void* parameters)
 {
-    lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, 0, true);
+    lumpnum_t auxLumpBase = F_OpenAuxiliary(filePath);
     bool result = false;
 
     if(auxLumpBase >= 0)
@@ -175,7 +175,7 @@ static bool recognizeWAD(char const* filePath, void* parameters)
             result = true;
             for(; result && *lumpNames; lumpNames++)
             {
-                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
+                lumpnum_t lumpNum = FS::lumpNumForName(Str_Text(*lumpNames));
                 if(lumpNum < 0)
                 {
                     result = false;

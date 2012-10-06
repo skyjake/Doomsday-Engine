@@ -405,7 +405,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
             if(AudioDriver_Music_Available())
             {
                 lumpnum_t lump;
-                if(def->lumpName && (lump = F_CheckLumpNumForName2(def->lumpName, true)) >= 0)
+                if(def->lumpName && (lump = F_LumpNumForName(def->lumpName)) >= 0)
                 {
                     int result = Mus_StartLump(lump, looped, canPlayMUS);
                     if(result < 0) break;
@@ -463,7 +463,7 @@ D_CMD(PlayMusic)
     case 3:
         if(!stricmp(argv[1], "lump"))
         {
-            lumpnum_t lump = F_CheckLumpNumForName2(argv[2], true);
+            lumpnum_t lump = F_LumpNumForName(argv[2]);
             if(lump < 0) return false; // No such lump.
 
             Mus_Stop();

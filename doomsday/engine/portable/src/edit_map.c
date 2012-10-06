@@ -1723,7 +1723,7 @@ boolean MPE_End(void)
     if(gamemap->uri && !Str_IsEmpty(Uri_Path(gamemap->uri)))
     {
         // Yes, write the cached map data file.
-        lumpnum_t markerLumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(gamemap->uri)), true);
+        lumpnum_t markerLumpNum = F_LumpNumForName(Str_Text(Uri_Path(gamemap->uri)));
         AutoStr* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
         Str cachedMapPath;
 

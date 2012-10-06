@@ -109,7 +109,7 @@ static archivedmap_t* createArchivedMap(const Uri* uri, const ddstring_t* cached
     Str_Init(&dam->cachedMapPath);
     Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
 
-    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), F_CheckLumpNumForName2(mapId, true)))
+    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), F_LumpNumForName(mapId)))
         dam->cachedMapFound = true;
 
     return dam;
@@ -252,7 +252,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         AutoStr* cachedMapDir;
         Str cachedMapPath;
 
-        markerLump = F_CheckLumpNumForName2(mapId, true /*quiet please*/);
+        markerLump = F_LumpNumForName(mapId);
         if(0 > markerLump) return false;
 
         // Compose the cache directory path and ensure it exists.

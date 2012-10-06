@@ -2738,14 +2738,14 @@ int DED_Read(ded_t* ded, const char* path)
 int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-    if(fsObject)
+    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(file)
     {
         if(F_LumpLength(absoluteLumpNum) != 0)
         {
-            const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx);
-            DED_ReadData(ded, (const char*)lumpPtr, Str_Text(AbstractFile_Path(fsObject)));
-            F_UnlockLump(fsObject, lumpIdx);
+            uint8_t const* lumpPtr = F_CacheLump(file, lumpIdx);
+            DED_ReadData(ded, (char const*)lumpPtr, Str_Text(AbstractFile_Path(file)));
+            F_UnlockLump(file, lumpIdx);
         }
         return true;
     }

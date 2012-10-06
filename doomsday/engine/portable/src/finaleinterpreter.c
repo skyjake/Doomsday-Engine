@@ -1518,7 +1518,7 @@ DEFFC(Image)
 {
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
-    lumpnum_t lumpNum = F_CheckLumpNumForName2(name, true);
+    lumpnum_t lumpNum = F_LumpNumForName(name);
     rawtex_t* rawTex;
 
     FIData_PicClearAnimation(obj);
@@ -1538,7 +1538,7 @@ DEFFC(ImageAt)
     float x = OP_FLOAT(1);
     float y = OP_FLOAT(2);
     const char* name = OP_CSTRING(3);
-    lumpnum_t lumpNum = F_CheckLumpNumForName2(name, true);
+    lumpnum_t lumpNum = F_LumpNumForName(name);
     rawtex_t* rawTex;
 
     AnimatorVector3_Init(obj->pos, x, y, 0);
@@ -1658,7 +1658,7 @@ DEFFC(AnimImage)
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    lumpnum_t lumpNum = F_CheckLumpNumForName2(name, true);
+    lumpnum_t lumpNum = F_LumpNumForName(name);
     rawtex_t* rawTex = R_GetRawTex(lumpNum);
     if(NULL != rawTex)
     {
@@ -2013,7 +2013,7 @@ DEFFC(TextFromLump)
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
 
-    absoluteLumpNum = F_CheckLumpNumForName2(OP_CSTRING(3), true);
+    absoluteLumpNum = F_LumpNumForName(OP_CSTRING(3));
     if(absoluteLumpNum >= 0)
     {
         int lumpIdx;

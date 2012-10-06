@@ -1266,7 +1266,7 @@ void Def_Read(void)
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
-        si->lumpNum = (strlen(snd->lumpName) > 0? F_CheckLumpNumForName2(snd->lumpName, true) : -1);
+        si->lumpNum = (strlen(snd->lumpName) > 0? F_LumpNumForName(snd->lumpName) : -1);
         strcpy(si->name, snd->name);
         k = Def_GetSoundNum(snd->link);
         si->link = (k >= 0 ? sounds + k : 0);
@@ -1955,7 +1955,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
             if(sprite < 0 || sprite >= defs.count.sprites.num)
             {
-                Con_Message("Def_Set: Warning, invalid sprite index %i.\n", sprite);
+                Con_Message("Warning: Def_Set: Unknown sprite index %i.\n", sprite);
                 break;
             }
 
@@ -1972,14 +1972,26 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
     case DD_DEF_SOUND:
         if(index < 0 || index >= countSounds.num)
-            Con_Error("Def_Set: Sound index %i is invalid.\n", index);
+            Con_Error("Warning: Def_Set: Sound index %i is invalid.\n", index);
 
         switch(value)
         {
         case DD_LUMP:
             S_StopSound(index, 0);
             strcpy(sounds[index].lumpName, ptr);
-            sounds[index].lumpNum = F_CheckLumpNumForName(sounds[index].lumpName);
+            if(strlen(sounds[index].lumpName))
+            {
+                sounds[index].lumpNum = F_LumpNumForName(sounds[index].lumpName);
+                if(sounds[index].lumpNum < 0)
+                {
+                    Con_Message("Warning: Def_Set: Unknown sound lump name \"%s\", sound (#%i) will be inaudible.\n",
+                                sounds[index].lumpName, index);
+                }
+            }
+            else
+            {
+                sounds[index].lumpNum = 0;
+            }
             break;
 
         default:

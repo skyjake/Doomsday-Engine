@@ -722,7 +722,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
             lumpnum_t lumpNum = -1;
             if(!Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
             {
-                lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(resourcePath)), true/*quiet please*/);
+                lumpNum = F_LumpNumForName(Str_Text(Uri_Path(resourcePath)));
             }
             else if(!Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "LumpDir"))
             {
@@ -761,7 +761,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
             const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
             if(!Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
             {
-                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(resourcePath)), true/*quiet please*/);
+                lumpnum_t lumpNum = F_LumpNumForName(Str_Text(Uri_Path(resourcePath)));
                 if(F_IsValidLumpNum(lumpNum))
                 {
                     DFile* file = F_OpenLump(lumpNum);
@@ -808,7 +808,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
             const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
             if(!Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
             {
-                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(resourcePath)), true/*quiet please*/);
+                lumpnum_t lumpNum = F_LumpNumForName(Str_Text(Uri_Path(resourcePath)));
                 if(F_IsValidLumpNum(lumpNum))
                 {
                     DFile* file = F_OpenLump(lumpNum);
@@ -828,7 +828,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         else
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(resourcePath)), true/*quiet please*/);
+            lumpnum_t lumpNum = F_LumpNumForName(Str_Text(Uri_Path(resourcePath)));
             if(lumpNum >= 0)
             {
                 DFile* file = F_OpenLump(lumpNum);

@@ -62,7 +62,7 @@ static int musicPlayLump(audiointerface_music_t* iMusic, lumpnum_t lump, boolean
         // Music interface does not offer buffer playback.
         // Write this lump to disk and play from there.
         AutoStr* musicFile = AudioDriver_Music_ComposeTempBufferFilename(0);
-        if(!F_DumpLump(lump, Str_Text(musicFile)))
+        if(!F_DumpLump2(lump, Str_Text(musicFile)))
         {
             // Failed to write the lump...
             return 0;
