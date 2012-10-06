@@ -49,7 +49,7 @@
  * the large format (see below). Message structure:
  * - 1 byte: 0x80 | (payload size & 0x7f)
  * - 1 byte: (payload size >> 7) | (0x40 for deflated, otherwise Huffman)
- * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
+ * - @em n bytes: payload contents (as produced by ZipFile::compressAtLevel()).
  *
  * @par >= 4096 bytes (up to 4MB)
  * Large messages are compressed using the best zlib deflate level.
@@ -57,7 +57,7 @@
  * - 1 byte: 0x80 | (payload size & 0x7f)
  * - 1 byte: 0x80 | (payload size >> 7) & 0x7f
  * - 1 byte: payload size >> 14
- * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
+ * - @em n bytes: payload contents (as produced by ZipFile::compressAtLevel()).
  *
  * Messages larger than or equal to 2^22 bytes (about 4MB) must be broken into
  * smaller pieces before sending.
