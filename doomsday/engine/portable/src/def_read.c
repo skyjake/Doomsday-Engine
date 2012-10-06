@@ -2738,13 +2738,13 @@ int DED_Read(ded_t* ded, const char* path)
 int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    AbstractFile* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    struct abstractfile_s* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(file)
     {
         if(F_LumpLength(absoluteLumpNum) != 0)
         {
             uint8_t const* lumpPtr = F_CacheLump(file, lumpIdx);
-            DED_ReadData(ded, (char const*)lumpPtr, Str_Text(AbstractFile_Path(file)));
+            DED_ReadData(ded, (char const*)lumpPtr, Str_Text(F_Path(file)));
             F_UnlockLump(file, lumpIdx);
         }
         return true;

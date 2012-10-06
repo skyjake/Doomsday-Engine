@@ -1501,7 +1501,7 @@ uint8_t* Image_LoadFromFile(image_t* img, DFile* file)
 
     GL_InitImage(img);
 
-    fileName = Str_Text(AbstractFile_Path(DFile_File_const(file)));
+    fileName = Str_Text(F_Path(DFile_File_const(file)));
 
     // Firstly try the expected format given the file name.
     hdlr = findHandlerFromFileName(fileName);
@@ -2485,7 +2485,7 @@ static TexSource loadPatchLump(image_t* image, DFile* file, int tclass, int tmap
 
         if(source == TEXS_NONE)
         {
-            Con_Message("Warning: Lump \"%s\" does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File(file)))));
+            Con_Message("Warning: Lump \"%s\" does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(F_Path(DFile_File(file)))));
             return source;
         }
     }
@@ -2566,16 +2566,16 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
         int lumpIdx;
-        AbstractFile* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
-        const uint8_t* patch = F_CacheLump(fsObject, lumpIdx);
+        struct abstractfile_s* file = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        const uint8_t* patch = F_CacheLump(file, lumpIdx);
 
-        if(validPatch(patch, F_LumpInfo(fsObject, lumpIdx)->size))
+        if(validPatch(patch, F_LumpInfo(file, lumpIdx)->size))
         {
             // Draw the patch in the buffer.
             loadDoomPatch(image->pixels, image->size.width, image->size.height,
                 (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
         }
-        F_UnlockLump(fsObject, lumpIdx);
+        F_UnlockLump(file, lumpIdx);
     }
 
     if(palettedIsMasked(image->pixels, image->size.width, image->size.height))

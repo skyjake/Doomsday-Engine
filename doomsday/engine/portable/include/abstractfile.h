@@ -26,9 +26,6 @@
 #ifndef LIBDENG_FILESYS_ABSTRACTFILE_H
 #define LIBDENG_FILESYS_ABSTRACTFILE_H
 
-#include "dfile.h"
-#include "lumpinfo.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,6 +47,10 @@ typedef enum {
 #endif
 
 #ifdef __cplusplus
+
+#include "dfile.h"
+#include "lumpinfo.h"
+
 namespace de {
 
 class PathDirectoryNode;
@@ -281,42 +282,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-/**
- * C wrapper API:
- */
-
 struct abstractfile_s; // The abstractfile instance (opaque)
 typedef struct abstractfile_s AbstractFile;
-
-filetype_t AbstractFile_Type(AbstractFile const* af);
-
-LumpInfo const* AbstractFile_Info(AbstractFile const* af);
-
-boolean AbstractFile_IsContained(AbstractFile const* af);
-
-AbstractFile* AbstractFile_Container(AbstractFile const* af);
-
-ddstring_t const* AbstractFile_Path(AbstractFile const* af);
-
-uint AbstractFile_LoadOrderIndex(AbstractFile const* af);
-
-uint AbstractFile_LastModified(AbstractFile const* af);
-
-boolean AbstractFile_HasStartup(AbstractFile const* af);
-
-void AbstractFile_SetStartup(AbstractFile* af, boolean yes);
-
-boolean AbstractFile_HasCustom(AbstractFile const* af);
-
-void AbstractFile_SetCustom(AbstractFile* af, boolean yes);
-
-size_t AbstractFile_BaseOffset(AbstractFile const* af);
-
-DFile* AbstractFile_Handle(AbstractFile* af);
-
-size_t AbstractFile_ReadLump(AbstractFile* af, int lumpIdx, uint8_t* buffer);
-
-int AbstractFile_LumpCount(AbstractFile* af);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -1,7 +1,7 @@
 /**
  * @file abstractfile.cpp
  *
- * Abstract base for all classes which represent opened files.
+ * Abstract base for all classes which represent loaded files.
  *
  * @ingroup fs
  *
@@ -28,13 +28,16 @@
 
 #include "abstractfile.h"
 
-using de::DFile;
+using namespace de;
 using de::AbstractFile;
+using de::DFile;
 
 AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
     : file(&file), type_(_type)
 {
     // Used to favor newer files when duplicates are pruned.
+    /// @todo Does not belong at this level. Load order should be determined
+    ///       at file system level. -ds
     static uint fileCounter = 0;
     DENG2_ASSERT(VALID_FILETYPE(_type));
     order = fileCounter++;
@@ -120,100 +123,4 @@ AbstractFile& AbstractFile::setCustom(bool yes)
 {
     flags.custom = yes;
     return *this;
-}
-
-/**
- * C Wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<AbstractFile*>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<AbstractFile const*>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    AbstractFile* self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    AbstractFile const* self = TOINTERNAL_CONST(inst)
-
-filetype_t AbstractFile_Type(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->type();
-}
-
-LumpInfo const* AbstractFile_Info(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->info();
-}
-
-boolean AbstractFile_IsContained(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->isContained();
-}
-
-struct abstractfile_s* AbstractFile_Container(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return reinterpret_cast<struct abstractfile_s*>(&self->container());
-}
-
-size_t AbstractFile_BaseOffset(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->baseOffset();
-}
-
-struct dfile_s* AbstractFile_Handle(struct abstractfile_s* af)
-{
-    SELF(af);
-    return reinterpret_cast<struct dfile_s*>(self->handle());
-}
-
-ddstring_t const* AbstractFile_Path(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->path();
-}
-
-uint AbstractFile_LoadOrderIndex(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->loadOrderIndex();
-}
-
-uint AbstractFile_LastModified(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->lastModified();
-}
-
-boolean AbstractFile_HasStartup(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->hasStartup();
-}
-
-void AbstractFile_SetStartup(struct abstractfile_s* af, boolean yes)
-{
-    SELF(af);
-    self->setStartup(CPP_BOOL(yes));
-}
-
-boolean AbstractFile_HasCustom(struct abstractfile_s const* af)
-{
-    SELF_CONST(af);
-    return self->hasCustom();
-}
-
-void AbstractFile_SetCustom(struct abstractfile_s* af, boolean yes)
-{
-    SELF(af);
-    self->setCustom(CPP_BOOL(yes));
 }

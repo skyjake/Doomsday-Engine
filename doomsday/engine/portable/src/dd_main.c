@@ -383,11 +383,11 @@ static void loadResource(AbstractResource* res)
         ddstring_t const* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
         if(path)
         {
-            AbstractFile* file = F_AddFile(Str_Text(path));
+            struct abstractfile_s* file = F_AddFile(Str_Text(path));
             if(file)
             {
                 // Mark this as an original game resource.
-                AbstractFile_SetCustom(file, false);
+                F_SetCustom(file, false);
 
                 // Print the 'CRC' number of IWADs, so they can be identified.
                 /// @todo fixme

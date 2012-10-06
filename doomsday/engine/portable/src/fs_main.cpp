@@ -2504,6 +2504,19 @@ void F_Delete(struct dfile_s* hndl)
     FS::deleteFile(reinterpret_cast<DFile*>(hndl));
 }
 
+Str const* F_Path(struct abstractfile_s const* file)
+{
+    if(file) return reinterpret_cast<AbstractFile const*>(file)->path();
+    static de::Str zeroLengthString;
+    return zeroLengthString;
+}
+
+void F_SetCustom(struct abstractfile_s* file, boolean yes)
+{
+    if(!file) return;
+    reinterpret_cast<AbstractFile*>(file)->setCustom(CPP_BOOL(yes));
+}
+
 LumpInfo const* F_LumpInfo(struct abstractfile_s* _file, int lumpIdx)
 {
     if(!_file) return 0;

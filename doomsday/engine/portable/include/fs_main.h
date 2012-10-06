@@ -385,10 +385,14 @@ void F_Close(struct dfile_s* file);
 
 void F_Delete(struct dfile_s* file);
 
-AutoStr* F_ComposeLumpPath2(struct abstractfile_s* file, int lumpIdx, char delimiter);
-AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx); /*delimiter='/'*/
+Str const* F_Path(struct abstractfile_s const* file);
+
+void F_SetCustom(struct abstractfile_s* file, boolean yes);
 
 LumpInfo const* F_LumpInfo(struct abstractfile_s* file, int lumpIdx);
+
+AutoStr* F_ComposeLumpPath2(struct abstractfile_s* file, int lumpIdx, char delimiter);
+AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx); /*delimiter='/'*/
 
 size_t F_ReadLump(struct abstractfile_s* file, int lumpIdx, uint8_t* buffer);
 
