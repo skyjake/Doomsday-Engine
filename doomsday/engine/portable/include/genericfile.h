@@ -28,10 +28,11 @@
 #ifndef LIBDENG_FILESYS_GENERICFILE_H
 #define LIBDENG_FILESYS_GENERICFILE_H
 
+#ifdef __cplusplus
+
 #include "lumpinfo.h"
 #include "abstractfile.h"
 
-#ifdef __cplusplus
 namespace de {
 
 class LumpDirectory;
@@ -153,29 +154,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-/**
- * C wrapper API:
- */
-
 struct genericfile_s; // The genericfile instance (opaque)
-typedef struct genericfile_s GenericFile;
-
-/**
- * Constructs a new GenericFile instance which must be destroyed with GenericFile_Delete()
- * once it is no longer needed.
- *
- * @param hndl      Virtual file handle to the underlying file resource.
- * @param path      Virtual file system path to associate with the resultant GenericFile.
- * @param info      File info descriptor for the resultant GenericFile. A copy is made.
- */
-GenericFile* GenericFile_New(DFile* hndl, char const* path, LumpInfo const* info);
-
-/**
- * Destroy GenericFile instance @a file.
- */
-void GenericFile_Delete(GenericFile* file);
-
-int GenericFile_LumpCount(GenericFile* file);
+//typedef struct genericfile_s GenericFile;
 
 #ifdef __cplusplus
 } // extern "C"

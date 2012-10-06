@@ -34,9 +34,7 @@
 #include <de/memory.h>
 
 using namespace de;
-using de::AbstractFile;
 using de::DFile;
-using de::GenericFile;
 using de::PathDirectoryNode;
 
 GenericFile::GenericFile(DFile& file, char const* path, LumpInfo const& info)
@@ -103,64 +101,4 @@ int GenericFile::publishLumpsToDirectory(LumpDirectory* directory)
         directory->catalogLumps(*this, 0, 1);
     }
     return 1;
-}
-
-/**
- * C Wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<GenericFile*>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<GenericFile const*>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    GenericFile* self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    GenericFile const* self = TOINTERNAL_CONST(inst)
-
-struct genericfile_s* GenericFile_New(struct dfile_s* hndl, char const* path, LumpInfo const* info)
-{
-    if(!info) LegacyCore_FatalError("GenericFile_New: Received invalid LumpInfo (=NULL).");
-    try
-    {
-        return reinterpret_cast<struct genericfile_s*>(new GenericFile(*reinterpret_cast<DFile*>(hndl), path, *info));
-    }
-    catch(de::Error& er)
-    {
-        QString msg = QString("GenericFile_New: Failed to instantiate new GenericFile. ") + er.asText();
-        LegacyCore_FatalError(msg.toUtf8().constData());
-        exit(1); // Unreachable.
-    }
-}
-
-void GenericFile_Delete(struct genericfile_s* file)
-{
-    if(file)
-    {
-        SELF(file);
-        delete self;
-    }
-}
-
-LumpInfo const* GenericFile_LumpInfo(struct genericfile_s* file, int lumpIdx)
-{
-    SELF(file);
-    return self->lumpInfo(lumpIdx);
-}
-
-int GenericFile_LumpCount(struct genericfile_s* file)
-{
-    SELF(file);
-    return self->lumpCount();
-}
-
-int GenericFile_PublishLumpsToDirectory(struct genericfile_s* file, struct lumpdirectory_s* directory)
-{
-    SELF(file);
-    return self->publishLumpsToDirectory(reinterpret_cast<LumpDirectory*>(directory));
 }
