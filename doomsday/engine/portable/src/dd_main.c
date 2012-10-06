@@ -60,11 +60,6 @@ typedef struct ddvalue_s {
     int*            writePtr;
 } ddvalue_t;
 
-typedef struct autoload_s {
-    boolean         loadFiles; /// Should files be loaded right-away?
-    int             count; /// Number of files loaded successfully.
-} autoload_t;
-
 static int DD_StartupWorker(void* parameters);
 static int DD_DummyWorker(void* parameters);
 static void DD_AutoLoad(void);
@@ -249,132 +244,6 @@ void DD_StartTitle(void)
     Str_Free(&setupCmds);
 }
 
-/// @return  @c true, iff the resource appears to be what we think it is.
-static boolean recognizeWAD(const char* filePath, void* data)
-{
-    lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, 0, true);
-    boolean result = false;
-
-    if(auxLumpBase >= 0)
-    {
-        // Ensure all identity lumps are present.
-        if(data)
-        {
-            const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
-            result = true;
-            for(; result && *lumpNames; lumpNames++)
-            {
-                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
-                if(lumpNum < 0)
-                {
-                    result = false;
-                }
-            }
-        }
-        else
-        {
-            // Matched.
-            result = true;
-        }
-
-        F_CloseAuxiliary();
-    }
-    return result;
-}
-
-/// @return  @c true, iff the resource appears to be what we think it is.
-static boolean recognizeZIP(const char* filePath, void* data)
-{
-    DFile* dfile = F_Open(filePath, "bf");
-    boolean result = false;
-    if(dfile)
-    {
-        result = ZipFile_Recognise(dfile);
-        /// @todo Check files. We should implement an auxiliary zip lumpdirectory...
-        F_Close(dfile);
-    }
-    return result;
-}
-
-/// @todo This logic should be encapsulated by AbstractResource.
-static int validateResource(AbstractResource* rec, void* parameters)
-{
-    int validated = false;
-
-    if(AbstractResource_ResourceClass(rec) == RC_PACKAGE)
-    {
-        Uri* const* uriList = AbstractResource_SearchPaths(rec);
-        Uri* const* ptr;
-        int i = 0;
-        for(ptr = uriList; *ptr; ptr++, i++)
-        {
-            const ddstring_t* path;
-            path = AbstractResource_ResolvedPathWithIndex(rec, i, true/*locate resources*/);
-            if(!path) continue;
-
-            if(recognizeWAD(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
-            {
-                validated = true;
-                break;
-            }
-            else if(recognizeZIP(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
-            {
-                validated = true;
-                break;
-            }
-        }
-    }
-    else
-    {
-        // Other resource types are not validated.
-        validated = true;
-    }
-
-    AbstractResource_MarkAsFound(rec, validated);
-    return validated;
-}
-
-static void locateGameStartupResources(Game* game)
-{
-    Game* oldGame = theGame;
-    uint i;
-
-    if(!game) return;
-
-    if(theGame != game)
-    {
-        /// @attention Kludge: Temporarily switch Game.
-        theGame = game;
-        // Re-init the resource locator using the search paths of this Game.
-        F_ResetAllResourceNamespaces();
-    }
-
-    for(i = RESOURCECLASS_FIRST; i < RESOURCECLASS_COUNT; ++i)
-    {
-        AbstractResource* const* records = Game_Resources(game, (resourceclass_t)i, 0);
-        AbstractResource* const* recordIt;
-
-        if(records)
-        for(recordIt = records; *recordIt; recordIt++)
-        {
-            AbstractResource* rec = *recordIt;
-
-            // We are only interested in startup resources at this time.
-            if(!(AbstractResource_ResourceFlags(rec) & RF_STARTUP)) continue;
-
-            validateResource(rec, 0);
-        }
-    }
-
-    if(theGame != oldGame)
-    {
-        // Kludge end - Restore the old Game.
-        theGame = oldGame;
-        // Re-init the resource locator using the search paths of this Game.
-        F_ResetAllResourceNamespaces();
-    }
-}
-
 /**
  * (f_allresourcepaths_callback_t)
  */
@@ -384,27 +253,22 @@ static int autoDataAdder(char const* fileName, PathDirectoryNodeType type, void*
     // We are only interested in files.
     if(type == PT_LEAF)
     {
-        autoload_t* data = (autoload_t*)parameters;
-        if(data->loadFiles)
+        int* count = (int*)parameters;
+        if(F_AddFile(fileName, 0, false))
         {
-            if(F_AddFile(fileName, 0, false))
-                ++data->count;
-        }
-        else
-        {
-            addToPathList(&sessionResourceFileList, &numSessionResourceFileList, fileName);
+            if(count) *count += 1;
         }
     }
     return 0; // Continue searching.
 }
 
 /**
- * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data
- * directory are added to gameResourceFileList.
+ * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data directory
+ * are loaded to the file system.
  *
- * @return              Number of new files that were loaded.
+ * @return Number of new files that were loaded.
  */
-static int addFilesFromAutoData(boolean loadFiles)
+static int addFilesFromAutoData(void)
 {
     static const char* extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
@@ -415,10 +279,66 @@ static int addFilesFromAutoData(boolean loadFiles)
     };
 
     ddstring_t pattern;
-    autoload_t data;
+    int count = 0;
     uint i;
 
-    data.loadFiles = loadFiles;
+    Str_Init(&pattern);
+    for(i = 0; extensions[i]; ++i)
+    {
+        Str_Clear(&pattern);
+        Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(Game_DataPath(theGame)), extensions[i]);
+        F_AllResourcePaths2(Str_Text(&pattern), 0, autoDataAdder, (void*)&count);
+    }
+    Str_Free(&pattern);
+    return count;
+}
+
+typedef struct {
+    ddstring_t*** list;
+    size_t* listSize;
+    int count; /// Number of files loaded successfully.
+} listfilesfromautodata_params_t;
+
+/**
+ * (f_allresourcepaths_callback_t)
+ */
+static int listFilesWorker(char const* fileName, PathDirectoryNodeType type, void* parameters)
+{
+    DENG_ASSERT(fileName && parameters);
+    // We are only interested in files.
+    if(type == PT_LEAF)
+    {
+        listfilesfromautodata_params_t* data = (listfilesfromautodata_params_t*)parameters;
+        addToPathList(data->list, data->listSize, fileName);
+        data->count += 1;
+    }
+    return 0; // Continue searching.
+}
+
+/**
+ * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data
+ * directory are added to the specified file list.
+ *
+ * @return Number of new files that were added to the list.
+ */
+static int listFilesFromAutoData(ddstring_t*** list, size_t* listSize)
+{
+    static const char* extensions[] = {
+        "wad", "lmp", "pk3", "zip", "deh",
+#ifdef UNIX
+        "WAD", "LMP", "PK3", "ZIP", "DEH", // upper case alternatives
+#endif
+        0
+    };
+
+    listfilesfromautodata_params_t data;
+    ddstring_t pattern;
+    uint i;
+
+    if(!list || !listSize) return 0;
+
+    data.list = list;
+    data.listSize = listSize;
     data.count = 0;
 
     Str_Init(&pattern);
@@ -426,7 +346,7 @@ static int addFilesFromAutoData(boolean loadFiles)
     {
         Str_Clear(&pattern);
         Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(Game_DataPath(theGame)), extensions[i]);
-        F_AllResourcePaths2(Str_Text(&pattern), 0, autoDataAdder, (void*)&data);
+        F_AllResourcePaths2(Str_Text(&pattern), 0, listFilesWorker, (void*)&data);
     }
     Str_Free(&pattern);
     return data.count;
@@ -470,8 +390,9 @@ static void loadResource(AbstractResource* res)
                 AbstractFile_SetCustom(DFile_File(file), false);
 
                 // Print the 'CRC' number of IWADs, so they can be identified.
-                if(FT_WADFILE == AbstractFile_Type(DFile_File(file)))
-                    Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC((WadFile*)DFile_File(file)));
+                /// @todo fixme
+                //if(FT_WADFILE == AbstractFile_Type(DFile_File(file)))
+                //    Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC((WadFile*)DFile_File(file)));
 
             }
         }
@@ -571,6 +492,22 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     return 0;
 }
 
+static int addListFiles(ddstring_t*** list, size_t* listSize, resourcetype_t resType)
+{
+    size_t i;
+    int count = 0;
+    if(!list || !listSize) return 0;
+    for(i = 0; i < *listSize; ++i)
+    {
+        if(resType != F_GuessResourceTypeByName(Str_Text((*list)[i]))) continue;
+        if(F_AddFile(Str_Text((*list)[i]), 0, false))
+        {
+            count += 1;
+        }
+    }
+    return count;
+}
+
 static int DD_LoadAddonResourcesWorker(void* parameters)
 {
     ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
@@ -592,18 +529,12 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
          * Phase 3: Add real files from the Auto directory.
          * First ZIPs then WADs (they may contain WAD files).
          */
-        addFilesFromAutoData(false);
+        listFilesFromAutoData(&sessionResourceFileList, &numSessionResourceFileList);
         if(numSessionResourceFileList > 0)
         {
-            size_t i, pass;
-            for(pass = 0; pass < 2; ++pass)
-            for(i = 0; i < numSessionResourceFileList; ++i)
-            {
-                resourcetype_t resType = F_GuessResourceTypeByName(Str_Text(sessionResourceFileList[i]));
-                if((pass == 0 && resType == RT_ZIP) ||
-                   (pass == 1 && resType == RT_WAD))
-                    F_AddFile(Str_Text(sessionResourceFileList[i]), 0, false);
-            }
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, RT_ZIP);
+
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, RT_WAD);
         }
 
         // Final autoload round.
@@ -980,7 +911,7 @@ static void DD_AutoLoad(void)
      * exist in the auto-load directory.
      */
     int numNewFiles;
-    while((numNewFiles = addFilesFromAutoData(true)) > 0)
+    while((numNewFiles = addFilesFromAutoData()) > 0)
     {
         VERBOSE( Con_Message("Autoload round completed with %i new files.\n", numNewFiles) );
     }
@@ -1058,25 +989,6 @@ int DD_EarlyInit(void)
     Str_Free(&defsPath);
     Str_Free(&dataPath);
     return true;
-}
-
-static int DD_LocateAllGameResourcesWorker(void* parameters)
-{
-    int i;
-    DENG_UNUSED(parameters);
-    for(i = 0; i < Games_Count(); ++i)
-    {
-        Game* game = Games_ByIndex(i+1);
-
-        VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) )
-
-        locateGameStartupResources(game);
-        Con_SetProgress((i+1) * 200/Games_Count() -1);
-
-        VERBOSE( Games_Print(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
-    }
-    BusyMode_WorkerEnd();
-    return 0;
 }
 
 /**
@@ -1224,8 +1136,7 @@ boolean DD_Init(void)
 
     // Try to locate all required data files for all registered games.
     Con_InitProgress2(200, .25f, 1); // Second half.
-    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                DD_LocateAllGameResourcesWorker, 0, "Locating game resources...");
+    Games_LocateAllResources();
 
     /*
     // Unless we reenter busy-mode due to automatic game selection, we won't be

@@ -80,6 +80,11 @@ boolean Games_IsNullObject(Game const* game);
 Game* Games_FirstPlayable(void);
 
 /**
+ * Try to locate all startup resources for all registered games.
+ */
+void Games_LocateAllResources(void);
+
+/**
  * Print a game mode banner with rulers.
  */
 void Games_PrintBanner(Game* game);

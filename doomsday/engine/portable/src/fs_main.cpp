@@ -118,8 +118,17 @@ static void clearVDMappings();
 static bool applyVDMapping(ddstring_t* path, vdmapping_t* vdm);
 
 static FILE* findRealFile(char const* path, char const* mymode, ddstring_t** foundPath);
+
 /// @return  @c true if the FileId associated with @a path was released.
 static bool releaseFileId(char const* path);
+
+/**
+ * Calculate an identifier for the file based on its full path name.
+ * The identifier is the MD5 hash of the path.
+ */
+static void generateFileId(char const* str, byte identifier[16]);
+
+static void printFileId(byte identifier[16]);
 
 void F_Register(void)
 {
@@ -313,7 +322,7 @@ static void clearFileIds()
     }
 }
 
-void F_PrintFileId(byte identifier[16])
+static void printFileId(byte identifier[16])
 {
     if(!identifier) return;
     for(uint i = 0; i < 16; ++i)
@@ -322,7 +331,7 @@ void F_PrintFileId(byte identifier[16])
     }
 }
 
-void F_GenerateFileId(char const* str, byte identifier[16])
+static void generateFileId(char const* str, byte identifier[16])
 {
     // First normalize the name.
     ddstring_t absPath; Str_Init(&absPath);
@@ -350,7 +359,7 @@ boolean F_CheckFileId(char const* path)
 
     // Calculate the identifier.
     fileidentifierid_t id;
-    F_GenerateFileId(path, id);
+    generateFileId(path, id);
 
     if(findFileIdentifierForId(id)) return false;
 
@@ -372,7 +381,7 @@ boolean F_CheckFileId(char const* path)
 #if _DEBUG
     VERBOSE(
         Con_Printf("Added file identifier ");
-        F_PrintFileId(id);
+        printFileId(id);
         Con_Printf(" - \"%s\"\n", F_PrettyPath(path)) )
 #endif
 
@@ -385,7 +394,7 @@ static bool releaseFileId(char const* path)
     if(path && path[0])
     {
         fileidentifierid_t id;
-        F_GenerateFileId(path, id);
+        generateFileId(path, id);
 
         fileidentifier_t* fileIdentifier = findFileIdentifierForId(id);
         if(fileIdentifier)
@@ -401,7 +410,7 @@ static bool releaseFileId(char const* path)
 #if _DEBUG
             VERBOSE(
                 Con_Printf("Released file identifier ");
-                F_PrintFileId(id);
+                printFileId(id);
                 Con_Printf(" - \"%s\"\n", F_PrettyPath(path)) )
 #endif
             return true;
@@ -532,7 +541,7 @@ static void logOrphanedFileIdentifiers()
         }
 
         Con_Printf("  %u - ", orphanCount);
-        F_PrintFileId(id->hash);
+        printFileId(id->hash);
         Con_Printf("\n");
 
         orphanCount++;
@@ -551,8 +560,8 @@ static void printFileList(FileList* list)
         AbstractFile* file = hndl->file();
 
         Con_Printf(" %c%u: ", file->hasStartup()? '*':' ', i);
-        F_GenerateFileId(Str_Text(file->path()), id);
-        F_PrintFileId(id);
+        generateFileId(Str_Text(file->path()), id);
+        printFileId(id);
         Con_Printf(" - \"%s\" [handle: %p]\n", F_PrettyPath(Str_Text(file->path())), (void*)&hndl);
     }
 }
@@ -1715,27 +1724,17 @@ static DFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset,
     return NULL;
 }
 
-struct dfile_s* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate)
+DFile* FS::openFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
 {
 #if _DEBUG
     DENG_ASSERT(path && mode);
     for(uint i = 0; mode[i]; ++i)
     {
         if(mode[i] != 'r' && mode[i] != 't' && mode[i] != 'b' && mode[i] != 'f')
-            Con_Error("F_Open: Unsupported file open-op in mode string %s for path \"%s\"\n", mode, path);
+            Con_Error("FS::openFile: Unsupported file open-op in mode string %s for path \"%s\"\n", mode, path);
     }
 #endif
-    return reinterpret_cast<struct dfile_s*>(tryOpenFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
-}
-
-struct dfile_s* F_Open2(char const* path, char const* mode, size_t baseOffset)
-{
-    return F_Open3(path, mode, baseOffset, true);
-}
-
-struct dfile_s* F_Open(char const* path, char const* mode)
-{
-    return F_Open2(path, mode, 0);
+    return tryOpenFile(path, mode, baseOffset, allowDuplicate);
 }
 
 int F_Access(char const* path)
@@ -1775,7 +1774,7 @@ static LumpDirectory* lumpDirectoryForFileType(filetype_t fileType)
 
 struct dfile_s* F_AddFile(char const* path, size_t baseOffset, boolean allowDuplicate)
 {
-    DFile* hndl = reinterpret_cast<DFile*>(F_Open3(path, "rb", baseOffset, allowDuplicate));
+    DFile* hndl = FS::openFile(path, "rb", baseOffset, CPP_BOOL(allowDuplicate));
     if(!hndl)
     {
         if(allowDuplicate)
@@ -2416,6 +2415,21 @@ D_CMD(ListFiles)
 void F_ReleaseFile(struct abstractfile_s* file)
 {
     FS::releaseFile(reinterpret_cast<AbstractFile*>(file));
+}
+
+struct dfile_s* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate)
+{
+    return reinterpret_cast<struct dfile_s*>(FS::openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
+}
+
+struct dfile_s* F_Open2(char const* path, char const* mode, size_t baseOffset)
+{
+    return reinterpret_cast<struct dfile_s*>(FS::openFile(path, mode, baseOffset));
+}
+
+struct dfile_s* F_Open(char const* path, char const* mode)
+{
+    return reinterpret_cast<struct dfile_s*>(FS::openFile(path, mode));
 }
 
 void F_Close(struct dfile_s* hndl)

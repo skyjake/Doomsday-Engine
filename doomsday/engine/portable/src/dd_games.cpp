@@ -22,10 +22,14 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "dd_games.h"
 
 #include "abstractresource.h"
-#include "fs_util.h"
+
+using de::FS;
+using de::DFile;
+using de::ZipFile;
 
 extern "C" {
 
@@ -153,6 +157,155 @@ boolean Games_IsNullObject(Game const* game)
 {
     if(!game) return false;
     return game == nullGame;
+}
+
+/// @return  @c true, iff the resource appears to be what we think it is.
+static bool recognizeWAD(char const* filePath, void* parameters)
+{
+    lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, 0, true);
+    bool result = false;
+
+    if(auxLumpBase >= 0)
+    {
+        // Ensure all identity lumps are present.
+        if(parameters)
+        {
+            ddstring_t const* const* lumpNames = (ddstring_t const* const*) parameters;
+            result = true;
+            for(; result && *lumpNames; lumpNames++)
+            {
+                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
+                if(lumpNum < 0)
+                {
+                    result = false;
+                }
+            }
+        }
+        else
+        {
+            // Matched.
+            result = true;
+        }
+
+        F_CloseAuxiliary();
+    }
+    return result;
+}
+
+/// @return  @c true, iff the resource appears to be what we think it is.
+static bool recognizeZIP(char const* filePath, void* parameters)
+{
+    DENG_UNUSED(parameters);
+
+    DFile* dfile = FS::openFile(filePath, "bf");
+    bool result = false;
+    if(dfile)
+    {
+        result = ZipFile::recognise(*dfile);
+        /// @todo Check files. We should implement an auxiliary zip lumpdirectory...
+        FS::closeFile(dfile);
+    }
+    return result;
+}
+
+/// @todo This logic should be encapsulated by AbstractResource.
+static bool validateResource(AbstractResource* rec)
+{
+    DENG_ASSERT(rec);
+    bool validated = false;
+
+    if(AbstractResource_ResourceClass(rec) == RC_PACKAGE)
+    {
+        Uri* const* uriList = AbstractResource_SearchPaths(rec);
+        Uri* const* ptr;
+        int idx = 0;
+        for(ptr = uriList; *ptr; ptr++, idx++)
+        {
+            Str const* path = AbstractResource_ResolvedPathWithIndex(rec, idx, true/*locate resources*/);
+            if(!path) continue;
+
+            if(recognizeWAD(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
+            {
+                validated = true;
+                break;
+            }
+            else if(recognizeZIP(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
+            {
+                validated = true;
+                break;
+            }
+        }
+    }
+    else
+    {
+        // Other resource types are not validated.
+        validated = true;
+    }
+
+    AbstractResource_MarkAsFound(rec, validated);
+    return validated;
+}
+
+static void locateGameStartupResources(Game* game)
+{
+    if(!game) return;
+
+    Game* oldGame = theGame;
+    if(theGame != game)
+    {
+        /// @attention Kludge: Temporarily switch Game.
+        theGame = game;
+        // Re-init the resource locator using the search paths of this Game.
+        F_ResetAllResourceNamespaces();
+    }
+
+    for(uint rclass = RESOURCECLASS_FIRST; rclass < RESOURCECLASS_COUNT; ++rclass)
+    {
+        AbstractResource* const* records = Game_Resources(game, resourceclass_t(rclass), 0);
+        if(!records) continue;
+
+        for(AbstractResource* const* i = records; *i; i++)
+        {
+            AbstractResource* rec = *i;
+
+            // We are only interested in startup resources at this time.
+            if(!(AbstractResource_ResourceFlags(rec) & RF_STARTUP)) continue;
+
+            validateResource(rec);
+        }
+    }
+
+    if(theGame != oldGame)
+    {
+        // Kludge end - Restore the old Game.
+        theGame = oldGame;
+        // Re-init the resource locator using the search paths of this Game.
+        F_ResetAllResourceNamespaces();
+    }
+}
+
+static int locateAllResourcesWorker(void* parameters)
+{
+    DENG_UNUSED(parameters);
+    for(int i = 0; i < gamesCount; ++i)
+    {
+        Game* game = games[i];
+
+        VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) )
+
+        locateGameStartupResources(game);
+        Con_SetProgress((i+1) * 200/Games_Count() -1);
+
+        VERBOSE( Games_Print(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
+    }
+    BusyMode_WorkerEnd();
+    return 0;
+}
+
+void Games_LocateAllResources(void)
+{
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                locateAllResourcesWorker, 0, "Locating game resources...");
 }
 
 /**

@@ -87,14 +87,6 @@ int F_Reset(void);
 void F_ResetFileIds(void);
 
 /**
- * Calculate an identifier for the file based on its full path name.
- * The identifier is the MD5 hash of the path.
- */
-void F_GenerateFileId(char const* str, byte identifier[16]);
-
-void F_PrintFileId(byte identifier[16]);
-
-/**
  * Maintains a list of identifiers already seen.
  *
  * @return @c true if the given file can be opened, or
@@ -146,26 +138,6 @@ boolean F_RemoveFiles(char const* const* paths, int num, boolean permitRequired)
  * @return  @c true if the file can be opened for reading.
  */
 int F_Access(char const* path);
-
-/**
- * Opens the given file (will be translated) for reading.
- *
- * @post If @a allowDuplicate = @c false a new file ID for this will have been
- * added to the list of known file identifiers if this file hasn't yet been
- * opened. It is the responsibility of the caller to release this identifier when done.
- *
- * @param path      Possibly relative or mapped path to the resource being opened.
- * @param mode      't' = text mode (with real files, lumps are always binary)
- *                  'b' = binary
- *                  'f' = must be a real file in the local file system
- * @param baseOffset  Offset from the start of the file in bytes to begin.
- * @param allowDuplicate  @c false = open only if not already opened.
- *
- * @return  Opened file reference/handle else @c NULL.
- */
-DFile* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
-DFile* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
-DFile* F_Open(char const* path, char const* mode/*, baseOffset = 0 */);
 
 /**
  * Try to locate the specified lump for reading.
@@ -254,6 +226,25 @@ class FS
 {
 public:
     /**
+     * Opens the given file (will be translated) for reading.
+     *
+     * @post If @a allowDuplicate = @c false a new file ID for this will have been
+     * added to the list of known file identifiers if this file hasn't yet been
+     * opened. It is the responsibility of the caller to release this identifier when done.
+     *
+     * @param path      Possibly relative or mapped path to the resource being opened.
+     * @param mode      't' = text mode (with real files, lumps are always binary)
+     *                  'b' = binary
+     *                  'f' = must be a real file in the local file system
+     * @param baseOffset  Offset from the start of the file in bytes to begin.
+     * @param allowDuplicate  @c false = open only if not already opened.
+     *
+     * @return  Opened file reference/handle else @c NULL.
+     */
+    static DFile* openFile(char const* path, char const* mode, size_t baseOffset = 0,
+                           bool allowDuplicate = true);
+
+    /**
      * Find a lump in the Zip LumpDirectory.
      *
      * @param path      Path to search for. Relative paths are made absolute if necessary.
@@ -293,6 +284,10 @@ extern "C" {
 /**
  * C wrapper API:
  */
+
+DFile* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
+DFile* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
+DFile* F_Open(char const* path, char const* mode/*, baseOffset = 0 */);
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
