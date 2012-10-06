@@ -37,6 +37,10 @@
 #include <de/Log>
 #include <de/memoryzone.h>
 
+using namespace de;
+using de::DFile;
+using de::PathDirectoryNode;
+
 /// The following structures are used to read data directly from WAD files.
 #pragma pack(1)
 typedef struct {
@@ -69,9 +73,9 @@ struct WadLumpRecord
     }
 };
 
-struct de::WadFile::Instance
+struct WadFile::Instance
 {
-    de::WadFile* self;
+    WadFile* self;
 
     /// Number of lump records in the archived wad.
     int arcRecordsCount;
@@ -89,7 +93,7 @@ struct de::WadFile::Instance
     /// Lump data cache.
     LumpCache* lumpCache;
 
-    Instance(de::WadFile* d, DFile& file, const char* path)
+    Instance(WadFile* d, DFile& file, const char* path)
         : self(d),
           arcRecordsCount(0),
           arcRecordsOffset(0),
@@ -102,7 +106,7 @@ struct de::WadFile::Instance
 
         wadheader_t hdr;
         if(!readArchiveHeader(file, hdr))
-            throw de::Error("WadFile::WadFile", QString("File %1 does not appear to be a known WAD format").arg(path));
+            throw Error("WadFile::WadFile", QString("File %1 does not appear to be a known WAD format").arg(path));
 
         arcRecordsCount  = hdr.lumpRecordsCount;
         arcRecordsOffset = hdr.lumpRecordsOffset;
@@ -147,8 +151,8 @@ struct de::WadFile::Instance
         size_t readBytes = file.read((uint8_t*)&hdr, sizeof(wadheader_t));
         if(!(readBytes < sizeof(wadheader_t)))
         {
-            hdr.lumpRecordsCount  = de::littleEndianByteOrder.toNative(hdr.lumpRecordsCount);
-            hdr.lumpRecordsOffset = de::littleEndianByteOrder.toNative(hdr.lumpRecordsOffset);
+            hdr.lumpRecordsCount  = littleEndianByteOrder.toNative(hdr.lumpRecordsCount);
+            hdr.lumpRecordsOffset = littleEndianByteOrder.toNative(hdr.lumpRecordsOffset);
             return true;
         }
         return false;
@@ -225,8 +229,8 @@ struct de::WadFile::Instance
         {
             WadLumpRecord* record = new WadLumpRecord();
 
-            record->baseOffset     = de::littleEndianByteOrder.toNative(arcRecord->filePos);
-            record->info.size      = de::littleEndianByteOrder.toNative(arcRecord->size);
+            record->baseOffset     = littleEndianByteOrder.toNative(arcRecord->filePos);
+            record->info.size      = littleEndianByteOrder.toNative(arcRecord->size);
             record->info.compressedSize = record->info.size;
             record->info.container = reinterpret_cast<abstractfile_s*>(self);
             // The modification date is inherited from the file (note recursion).
@@ -280,39 +284,39 @@ struct de::WadFile::Instance
     }
 };
 
-de::WadFile::WadFile(DFile& file, char const* path, LumpInfo const& info)
+WadFile::WadFile(DFile& file, char const* path, LumpInfo const& info)
     : AbstractFile(FT_WADFILE, path, file, info)
 {
     d = new Instance(this, file, path);
 }
 
-de::WadFile::~WadFile()
+WadFile::~WadFile()
 {
     clearLumpCache();
     delete d;
 }
 
-bool de::WadFile::isValidIndex(int lumpIdx)
+bool WadFile::isValidIndex(int lumpIdx)
 {
     return lumpIdx >= 0 && lumpIdx < lumpCount();
 }
 
-int de::WadFile::lastIndex()
+int WadFile::lastIndex()
 {
     return lumpCount() - 1;
 }
 
-int de::WadFile::lumpCount()
+int WadFile::lumpCount()
 {
     return d->lumpDirectory? d->lumpDirectory->size() : 0;
 }
 
-bool de::WadFile::empty()
+bool WadFile::empty()
 {
     return !lumpCount();
 }
 
-de::PathDirectoryNode* de::WadFile::lumpDirectoryNode(int lumpIdx)
+PathDirectoryNode* WadFile::lumpDirectoryNode(int lumpIdx)
 {
     if(!isValidIndex(lumpIdx)) return NULL;
     d->buildLumpNodeLut();
@@ -327,25 +331,25 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-LumpInfo const* de::WadFile::lumpInfo(int lumpIdx)
+LumpInfo const* WadFile::lumpInfo(int lumpIdx)
 {
     LOG_AS("WadFile");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw de::Error("WadFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!lrec) throw Error("WadFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
     return &lrec->info;
 }
 
-size_t de::WadFile::lumpSize(int lumpIdx)
+size_t WadFile::lumpSize(int lumpIdx)
 {
     LOG_AS("WadFile");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw de::Error("WadFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!lrec) throw Error("WadFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info.size;
 }
 
-AutoStr* de::WadFile::composeLumpPath(int lumpIdx, char delimiter)
+AutoStr* WadFile::composeLumpPath(int lumpIdx, char delimiter)
 {
-    de::PathDirectoryNode* node = lumpDirectoryNode(lumpIdx);
+    PathDirectoryNode* node = lumpDirectoryNode(lumpIdx);
     if(node)
     {
         return node->composePath(AutoStr_NewStd(), NULL, delimiter);
@@ -353,7 +357,7 @@ AutoStr* de::WadFile::composeLumpPath(int lumpIdx, char delimiter)
     return AutoStr_NewStd();
 }
 
-int de::WadFile::publishLumpsToDirectory(LumpDirectory* directory)
+int WadFile::publishLumpsToDirectory(LumpDirectory* directory)
 {
     LOG_AS("WadFile");
     int numPublished = 0;
@@ -370,7 +374,7 @@ int de::WadFile::publishLumpsToDirectory(LumpDirectory* directory)
     return numPublished;
 }
 
-de::WadFile& de::WadFile::clearCachedLump(int lumpIdx, bool* retCleared)
+WadFile& WadFile::clearCachedLump(int lumpIdx, bool* retCleared)
 {
     LOG_AS("WadFile::clearCachedLump");
 
@@ -395,19 +399,19 @@ de::WadFile& de::WadFile::clearCachedLump(int lumpIdx, bool* retCleared)
     return *this;
 }
 
-de::WadFile& de::WadFile::clearLumpCache()
+WadFile& WadFile::clearLumpCache()
 {
     LOG_AS("WadFile::clearLumpCache");
     if(d->lumpCache) d->lumpCache->clear();
     return *this;
 }
 
-uint8_t const* de::WadFile::cacheLump(int lumpIdx)
+uint8_t const* WadFile::cacheLump(int lumpIdx)
 {
     LOG_AS("WadFile::cacheLump");
 
     if(!isValidIndex(lumpIdx))
-        throw de::Error("WadFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
+        throw Error("WadFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     const LumpInfo* info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
@@ -426,7 +430,7 @@ uint8_t const* de::WadFile::cacheLump(int lumpIdx)
     if(data) return data;
 
     uint8_t* region = (uint8_t*) Z_Malloc(info->size, PU_APPSTATIC, 0);
-    if(!region) throw de::Error("WadFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
+    if(!region) throw Error("WadFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
 
     readLump(lumpIdx, region, false);
     d->lumpCache->insert(lumpIdx, region);
@@ -434,7 +438,7 @@ uint8_t const* de::WadFile::cacheLump(int lumpIdx)
     return region;
 }
 
-de::WadFile& de::WadFile::unlockLump(int lumpIdx)
+WadFile& WadFile::unlockLump(int lumpIdx)
 {
     LOG_AS("WadFile::unlockLump");
     LOG_TRACE("\"%s:%s\"")
@@ -459,7 +463,7 @@ de::WadFile& de::WadFile::unlockLump(int lumpIdx)
     return *this;
 }
 
-size_t de::WadFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
     LOG_AS("WadFile::readLump");
     LumpInfo const* info = lumpInfo(lumpIdx);
@@ -467,7 +471,7 @@ size_t de::WadFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
     return readLump(lumpIdx, buffer, 0, info->size, tryCache);
 }
 
-size_t de::WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
+size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     LOG_AS("WadFile::readLump");
@@ -500,12 +504,12 @@ size_t de::WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
 
     /// @todo Do not check the read length here.
     if(readBytes < length)
-        throw de::Error("WadFile::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
+        throw Error("WadFile::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
 
     return readBytes;
 }
 
-uint de::WadFile::calculateCRC()
+uint WadFile::calculateCRC()
 {
     uint crc = 0;
     const int numLumps = lumpCount();
@@ -517,7 +521,7 @@ uint de::WadFile::calculateCRC()
     return crc;
 }
 
-bool de::WadFile::recognise(DFile& file)
+bool WadFile::recognise(DFile& file)
 {
     wadheader_t hdr;
 
@@ -525,7 +529,7 @@ bool de::WadFile::recognise(DFile& file)
     size_t initPos = file.tell();
     file.seek(0, SeekSet);
 
-    bool readHeaderOk = de::WadFile::Instance::readArchiveHeader(file, hdr);
+    bool readHeaderOk = WadFile::Instance::readArchiveHeader(file, hdr);
 
     // Return the stream to its original position.
     file.seek(initPos, SeekSet);
@@ -533,150 +537,4 @@ bool de::WadFile::recognise(DFile& file)
     if(!readHeaderOk) return false;
     if(memcmp(hdr.identification, "IWAD", 4) && memcmp(hdr.identification, "PWAD", 4)) return false;
     return true;
-}
-
-/**
- * C Wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::WadFile*>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::WadFile const*>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    de::WadFile* self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    de::WadFile const* self = TOINTERNAL_CONST(inst)
-
-WadFile* WadFile_New(DFile* hndl, char const* path, LumpInfo const* info)
-{
-    if(!info) LegacyCore_FatalError("WadFile_New: Received invalid LumpInfo (=NULL).");
-    try
-    {
-        return reinterpret_cast<WadFile*>(new de::WadFile(*reinterpret_cast<de::DFile*>(hndl), path, *info));
-    }
-    catch(de::Error& er)
-    {
-        QString msg = QString("WadFile_New: Failed to instantiate new WadFile. ") + er.asText();
-        LegacyCore_FatalError(msg.toUtf8().constData());
-        exit(1); // Unreachable.
-    }
-}
-
-void WadFile_Delete(WadFile* wad)
-{
-    if(wad)
-    {
-        SELF(wad);
-        delete self;
-    }
-}
-
-int WadFile_PublishLumpsToDirectory(WadFile* wad, struct lumpdirectory_s* directory)
-{
-    SELF(wad);
-    return self->publishLumpsToDirectory(reinterpret_cast<de::LumpDirectory*>(directory));
-}
-
-PathDirectoryNode* WadFile_LumpDirectoryNode(WadFile* wad, int lumpIdx)
-{
-    SELF(wad);
-    return reinterpret_cast<PathDirectoryNode*>( self->lumpDirectoryNode(lumpIdx) );
-}
-
-AutoStr* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter)
-{
-    SELF(wad);
-    return self->composeLumpPath(lumpIdx, delimiter);
-}
-
-LumpInfo const* WadFile_LumpInfo(WadFile* wad, int lumpIdx)
-{
-    SELF(wad);
-    return self->lumpInfo(lumpIdx);
-}
-
-void WadFile_ClearLumpCache(WadFile* wad)
-{
-    SELF(wad);
-    self->clearLumpCache();
-}
-
-uint WadFile_CalculateCRC(WadFile* wad)
-{
-    SELF(wad);
-    return self->calculateCRC();
-}
-
-size_t WadFile_ReadLump2(WadFile* wad, int lumpIdx, uint8_t* buffer, boolean tryCache)
-{
-    SELF(wad);
-    return self->readLump(lumpIdx, buffer, tryCache);
-}
-
-size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer)
-{
-    SELF(wad);
-    return self->readLump(lumpIdx, buffer);
-}
-
-size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length, boolean tryCache)
-{
-    SELF(wad);
-    return self->readLump(lumpIdx, buffer, startOffset, length, tryCache);
-}
-
-size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length)
-{
-    SELF(wad);
-    return self->readLump(lumpIdx, buffer, startOffset, length);
-}
-
-uint8_t const* WadFile_CacheLump(WadFile* wad, int lumpIdx)
-{
-    SELF(wad);
-    return self->cacheLump(lumpIdx);
-}
-
-void WadFile_UnlockLump(WadFile* wad, int lumpIdx)
-{
-    SELF(wad);
-    self->unlockLump(lumpIdx);
-}
-
-boolean WadFile_IsValidIndex(WadFile* wad, int lumpIdx)
-{
-    SELF(wad);
-    return self->isValidIndex(lumpIdx);
-}
-
-int WadFile_LastIndex(WadFile* wad)
-{
-    SELF(wad);
-    return self->lastIndex();
-}
-
-int WadFile_LumpCount(WadFile* wad)
-{
-    SELF(wad);
-    return self->lumpCount();
-}
-
-boolean WadFile_Empty(WadFile* wad)
-{
-    SELF(wad);
-    return self->empty();
-}
-
-boolean WadFile_Recognise(DFile* file)
-{
-    if(!file) return false;
-    return de::WadFile::recognise(*reinterpret_cast<de::DFile*>(file));
 }
