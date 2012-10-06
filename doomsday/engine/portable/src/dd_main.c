@@ -178,7 +178,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        F_AddFile(token, 0, false);
+        F_AddFile(token);
         token = strtok(NULL, ATWSEPS);
     }
     free(buffer);
@@ -254,7 +254,7 @@ static int autoDataAdder(char const* fileName, PathDirectoryNodeType type, void*
     if(type == PT_LEAF)
     {
         int* count = (int*)parameters;
-        if(F_AddFile(fileName, 0, false))
+        if(F_AddFile(fileName))
         {
             if(count) *count += 1;
         }
@@ -380,19 +380,19 @@ static void loadResource(AbstractResource* res)
     switch(AbstractResource_ResourceClass(res))
     {
     case RC_PACKAGE: {
-        const ddstring_t* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
+        ddstring_t const* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
         if(path)
         {
-            DFile* file = F_AddFile(Str_Text(path), 0, false);
+            AbstractFile* file = F_AddFile(Str_Text(path));
             if(file)
             {
                 // Mark this as an original game resource.
-                AbstractFile_SetCustom(DFile_File(file), false);
+                AbstractFile_SetCustom(file, false);
 
                 // Print the 'CRC' number of IWADs, so they can be identified.
                 /// @todo fixme
-                //if(FT_WADFILE == AbstractFile_Type(DFile_File(file)))
-                //    Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC((WadFile*)DFile_File(file)));
+                //if(FT_WADFILE == AbstractFile_Type(file))
+                //    Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC((WadFile*)file));
 
             }
         }
@@ -500,7 +500,7 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, resourcetype_t res
     for(i = 0; i < *listSize; ++i)
     {
         if(resType != F_GuessResourceTypeByName(Str_Text((*list)[i]))) continue;
-        if(F_AddFile(Str_Text((*list)[i]), 0, false))
+        if(F_AddFile(Str_Text((*list)[i])))
         {
             count += 1;
         }
@@ -1362,7 +1362,7 @@ static int DD_StartupWorker(void* parm)
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
     if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) ||
-       !F_AddFile(Str_Text(&foundPath), 0, false))
+       !F_AddFile(Str_Text(&foundPath)))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
     }
@@ -2031,7 +2031,7 @@ D_CMD(Load)
         Str_Strip(&searchPath);
 
         if(F_FindResource3(RC_PACKAGE, Str_Text(&searchPath), &foundPath, RLF_MATCH_EXTENSION) != 0 &&
-           F_AddFile(Str_Text(&foundPath), 0, false))
+           F_AddFile(Str_Text(&foundPath)))
             didLoadResource = true;
     }
     Str_Free(&foundPath);

@@ -1772,24 +1772,19 @@ static LumpDirectory* lumpDirectoryForFileType(filetype_t fileType)
     }
 }
 
-struct dfile_s* F_AddFile(char const* path, size_t baseOffset, boolean allowDuplicate)
+AbstractFile* FS::addFile(char const* path, size_t baseOffset)
 {
-    DFile* hndl = FS::openFile(path, "rb", baseOffset, CPP_BOOL(allowDuplicate));
+    DFile* hndl = FS::openFile(path, "rb", baseOffset, false);
     if(!hndl)
     {
-        if(allowDuplicate)
-        {
-            Con_Message("Warning: F_AddFile: Resource \"%s\" not found, aborting.\n", path);
-        }
-        else if(F_Access(path))
+        if(F_Access(path))
         {
             Con_Message("\"%s\" already loaded.\n", F_PrettyPath(path));
         }
-        return NULL;
+        return 0;
     }
 
     AbstractFile* file = hndl->file();
-
     VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(file->path()))) )
 
     if(loadingForStartup)
@@ -1806,19 +1801,20 @@ struct dfile_s* F_AddFile(char const* path, size_t baseOffset, boolean allowDupl
     {
         file->publishLumpsToDirectory(lumpDir);
     }
-    return reinterpret_cast<struct dfile_s*>(hndl);
+    return file;
 }
 
-boolean F_AddFiles(char const* const* paths, int num, boolean allowDuplicate)
+int FS::addFiles(char const* const* paths, int num)
 {
-    bool succeeded = false;
+    if(!paths) return 0;
 
+    int addedFileCount = 0;
     for(int i = 0; i < num; ++i)
     {
-        if(F_AddFile(paths[i], 0, allowDuplicate))
+        if(FS::addFile(paths[i]))
         {
             VERBOSE2( Con_Message("Done loading %s\n", F_PrettyPath(paths[i])) )
-            succeeded = true; // At least one has been loaded.
+            addedFileCount += 1;
         }
         else
         {
@@ -1827,16 +1823,17 @@ boolean F_AddFiles(char const* const* paths, int num, boolean allowDuplicate)
     }
 
     // A changed file list may alter the main lump directory.
-    if(succeeded)
+    if(addedFileCount)
     {
         DD_UpdateEngineState();
     }
-    return succeeded;
+
+    return addedFileCount;
 }
 
-boolean F_RemoveFile(char const* path, boolean permitRequired)
+bool FS::removeFile(char const* path, bool permitRequired)
 {
-    bool unloadedResources = unloadFile(path, CPP_BOOL(permitRequired));
+    bool unloadedResources = unloadFile(path, permitRequired);
     if(unloadedResources)
     {
         DD_UpdateEngineState();
@@ -1844,44 +1841,42 @@ boolean F_RemoveFile(char const* path, boolean permitRequired)
     return unloadedResources;
 }
 
-boolean F_RemoveFiles(char const* const* filenames, int num, boolean permitRequired)
+int FS::removeFiles(char const* const* filenames, int num, bool permitRequired)
 {
-    bool succeeded = false;
+    if(!filenames) return 0;
 
+    int removedFileCount = 0;
     for(int i = 0; i < num; ++i)
     {
-        if(unloadFile(filenames[i], CPP_BOOL(permitRequired)))
+        if(unloadFile(filenames[i], permitRequired))
         {
             VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(filenames[i])) )
-            succeeded = true; // At least one has been unloaded.
+            removedFileCount += 1;
         }
     }
 
     // A changed file list may alter the main lump directory.
-    if(succeeded)
+    if(removedFileCount)
     {
         DD_UpdateEngineState();
     }
-    return succeeded;
+    return removedFileCount;
 }
 
-struct dfile_s* F_OpenLump(lumpnum_t absoluteLumpNum)
+DFile* FS::openLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
     AbstractFile* container = FS::findFileForLumpNum(absoluteLumpNum, &lumpIdx);
-    if(container)
-    {
-        LumpFile* lump = new LumpFile(*DFileBuilder::fromFileLump(*container, lumpIdx, false),
-                                      Str_Text(container->composeLumpPath(lumpIdx)),
-                                      *container->lumpInfo(lumpIdx));
-        if(lump)
-        {
-            DFile* openFileHndl = DFileBuilder::fromFile(*lump);
-            openFiles->push_back(openFileHndl); openFileHndl->setList(reinterpret_cast<struct filelist_s*>(openFiles));
-            return reinterpret_cast<struct dfile_s*>(openFileHndl);
-        }
-    }
-    return NULL;
+    if(!container) return 0;
+
+    LumpFile* lump = new LumpFile(*DFileBuilder::fromFileLump(*container, lumpIdx, false),
+                                  Str_Text(container->composeLumpPath(lumpIdx)),
+                                  *container->lumpInfo(lumpIdx));
+    if(!lump) return 0;
+
+    DFile* openFileHndl = DFileBuilder::fromFile(*lump);
+    openFiles->push_back(openFileHndl); openFileHndl->setList(reinterpret_cast<struct filelist_s*>(openFiles));
+    return openFileHndl;
 }
 
 static void clearLDMappings()
@@ -2412,6 +2407,41 @@ D_CMD(ListFiles)
  * C Wrapper API
  */
 
+struct abstractfile_s* F_AddFile2(char const* path, size_t baseOffset)
+{
+    return reinterpret_cast<struct abstractfile_s*>(FS::addFile(path, baseOffset));
+}
+
+struct abstractfile_s* F_AddFile(char const* path)
+{
+    return reinterpret_cast<struct abstractfile_s*>(FS::addFile(path));
+}
+
+boolean F_RemoveFile2(char const* path, boolean permitRequired)
+{
+    return FS::removeFile(path, CPP_BOOL(permitRequired));
+}
+
+boolean F_RemoveFile(char const* path)
+{
+    return FS::removeFile(path);
+}
+
+int F_AddFiles(char const* const* paths, int num)
+{
+    return FS::addFiles(paths, num);
+}
+
+int F_RemoveFiles2(char const* const* filenames, int num, boolean permitRequired)
+{
+    return FS::removeFiles(filenames, num, CPP_BOOL(permitRequired));
+}
+
+int F_RemoveFiles(char const* const* filenames, int num)
+{
+    return FS::removeFiles(filenames, num);
+}
+
 void F_ReleaseFile(struct abstractfile_s* file)
 {
     FS::releaseFile(reinterpret_cast<AbstractFile*>(file));
@@ -2430,6 +2460,11 @@ struct dfile_s* F_Open2(char const* path, char const* mode, size_t baseOffset)
 struct dfile_s* F_Open(char const* path, char const* mode)
 {
     return reinterpret_cast<struct dfile_s*>(FS::openFile(path, mode));
+}
+
+struct dfile_s* F_OpenLump(lumpnum_t absoluteLumpNum)
+{
+    return reinterpret_cast<struct dfile_s*>(FS::openLump(absoluteLumpNum));
 }
 
 void F_Close(struct dfile_s* hndl)

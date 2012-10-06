@@ -111,42 +111,9 @@ lumpnum_t F_OpenAuxiliary(char const* fileName); /* baseOffset = 0 */
 void F_CloseAuxiliary(void);
 
 /**
- * Files with a .wad extension are archived data files with multiple 'lumps',
- * other files are single lumps whose base filename will become the lump name.
- *
- * @param path          Path to the file to be opened. Either a "real" file in the local
- *                      file system, or a "virtual" file in the virtual file system.
- * @param baseOffset    Offset from the start of the file in bytes to begin.
- * @param allowDuplicate  @c true = allow opening multiple copies of the same file.
- * @return  Handle to the opened file if the operation is successful, else @c NULL.
- */
-DFile* F_AddFile(char const* path, size_t baseOffset, boolean allowDuplicate);
-
-/**
- * Attempt to remove a file from the virtual file system.
- *
- * @param permitRequired  @c true= allow removal of resources marked as "required"
- *                        by the currently loaded Game.
- * @return @c true if the operation is successful.
- */
-boolean F_RemoveFile(char const* path, boolean permitRequired);
-
-boolean F_AddFiles(char const* const* paths, int num, boolean allowDuplicate);
-boolean F_RemoveFiles(char const* const* paths, int num, boolean permitRequired);
-
-/**
  * @return  @c true if the file can be opened for reading.
  */
 int F_Access(char const* path);
-
-/**
- * Try to locate the specified lump for reading.
- *
- * @param lumpNum  Absolute index of the lump to open.
- *
- * @return  Handle to the opened file if found.
- */
-DFile* F_OpenLump(lumpnum_t lumpNum);
 
 /**
  * Write the data associated with the specified lump index to @a fileName.
@@ -226,6 +193,32 @@ class FS
 {
 public:
     /**
+     * Files with a .wad extension are archived data files with multiple 'lumps',
+     * other files are single lumps whose base filename will become the lump name.
+     *
+     * @param path          Path to the file to be opened. Either a "real" file in the local
+     *                      file system, or a "virtual" file in the virtual file system.
+     * @param baseOffset    Offset from the start of the file in bytes to begin.
+     *
+     * @return  Newly added file instance if the operation is successful, else @c NULL.
+     */
+    static AbstractFile* addFile(char const* path, size_t baseOffset = 0);
+
+    /// @note All files are added with baseOffset = @c 0.
+    static int addFiles(char const* const* paths, int num);
+
+    /**
+     * Attempt to remove a file from the virtual file system.
+     *
+     * @param permitRequired  @c true= allow removal of resources marked as "required"
+     *                        by the currently loaded Game.
+     * @return @c true if the operation is successful.
+     */
+    static bool removeFile(char const* path, bool permitRequired = false);
+
+    static int removeFiles(char const* const* paths, int num, bool permitRequired = false);
+
+    /**
      * Opens the given file (will be translated) for reading.
      *
      * @post If @a allowDuplicate = @c false a new file ID for this will have been
@@ -243,6 +236,15 @@ public:
      */
     static DFile* openFile(char const* path, char const* mode, size_t baseOffset = 0,
                            bool allowDuplicate = true);
+
+    /**
+     * Try to locate the specified lump for reading.
+     *
+     * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
+     *
+     * @return  Handle to the opened file if found.
+     */
+    static DFile* openLump(lumpnum_t absoluteLumpNum);
 
     /**
      * Find a lump in the Zip LumpDirectory.
@@ -285,9 +287,22 @@ extern "C" {
  * C wrapper API:
  */
 
+struct abstractfile_s* F_AddFile2(char const* path, size_t baseOffset);
+struct abstractfile_s* F_AddFile(char const* path/*, baseOffset = 0*/);
+
+boolean F_RemoveFile2(char const* path, boolean permitRequired);
+boolean F_RemoveFile(char const* path/*, permitRequired = false */);
+
+int F_AddFiles(char const* const* paths, int num);
+
+int F_RemoveFiles3(char const* const* paths, int num, boolean permitRequired);
+int F_RemoveFiles(char const* const* paths, int num/*, permitRequired = false */);
+
 DFile* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
 DFile* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
 DFile* F_Open(char const* path, char const* mode/*, baseOffset = 0 */);
+
+DFile* F_OpenLump(lumpnum_t absoluteLumpNum);
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
