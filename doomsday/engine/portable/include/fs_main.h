@@ -41,9 +41,9 @@
 #ifndef LIBDENG_FILESYS_MAIN_H
 #define LIBDENG_FILESYS_MAIN_H
 
-#include "zipfile.h"
-#include "wadfile.h"
-#include "lumpfile.h"
+#include "abstractfile.h"
+#include "dfile.h"
+#include "lumpinfo.h"
 #include "pathdirectory.h"
 
 #ifdef __cplusplus

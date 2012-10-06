@@ -26,6 +26,7 @@
 #include "dd_games.h"
 
 #include "abstractresource.h"
+#include "zipfile.h"
 
 using de::FS;
 using de::DFile;

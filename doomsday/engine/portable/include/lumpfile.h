@@ -33,21 +33,11 @@
 #ifndef LIBDENG_FILESYS_LUMPFILE_H
 #define LIBDENG_FILESYS_LUMPFILE_H
 
-#include "lumpinfo.h"
+#ifdef __cplusplus
+
 #include "abstractfile.h"
+#include "lumpinfo.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct lumpdirectory_s;
-struct pathdirectorynode_s;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
 namespace de {
 
 class LumpDirectory;
@@ -170,47 +160,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-/**
- * C wrapper API:
- */
-
 struct lumpfile_s; // The lumpfile instance (opaque)
-typedef struct lumpfile_s LumpFile;
-
-/**
- * Constructs a new LumpFile instance which must be destroyed with LumpFile_Delete()
- * once it is no longer needed.
- *
- * @param file      Virtual file handle to the underlying file resource.
- * @param path      Virtual file system path to associate with the resultant LumpFile.
- * @param info      File info descriptor for the resultant LumpFile. A copy is made.
- */
-LumpFile* LumpFile_New(DFile* file, char const* path, LumpInfo const* info);
-
-/**
- * Destroy LumpFile instance @a lump.
- */
-void LumpFile_Delete(LumpFile* lump);
-
-struct pathdirectorynode_s* LumpFile_LumpDirectoryNode(LumpFile* lump, int lumpIdx);
-
-AutoStr* LumpFile_ComposeLumpPath(LumpFile* lump, int lumpIdx, char delimiter);
-
-LumpInfo const* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx);
-
-int LumpFile_LumpCount(LumpFile* lump);
-
-size_t LumpFile_ReadLump2(LumpFile* lump, int lumpIdx, uint8_t* buffer, boolean tryCache);
-size_t LumpFile_ReadLump(LumpFile* lump, int lumpIdx, uint8_t* buffer/*, tryCache = true*/);
-
-size_t LumpFile_ReadLumpSection2(LumpFile* lump, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
-size_t LumpFile_ReadLumpSection(LumpFile* lump, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length/*, tryCache = true*/);
-
-uint8_t const* LumpFile_CacheLump(LumpFile* lump, int lumpIdx);
-
-void LumpFile_UnlockLump(LumpFile* lump, int lumpIdx);
-
-int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory);
+//typedef struct lumpfile_s LumpFile;
 
 #ifdef __cplusplus
 } // extern "C"
