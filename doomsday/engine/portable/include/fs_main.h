@@ -60,12 +60,12 @@ namespace de {
 typedef QList<DFile*> FileList;
 
 /**
- * Internally, there lump directory has two parts: the Primary directory (which is
- * populated with lumps from loaded data files) and the Auxiliary directory (which
- * is used to tempoarily open a file that is not considered part of the filesystem).
+ * Internally the lump index has two parts: the Primary index (which is populated
+ * with lumps from loaded data files) and the Auxiliary index (used to temporarily
+ * open a file that is not considered part of the filesystem).
  *
- * Functions that don't know the lumpnum of file will have to check both the primary
- * and the auxiliary caches (e.g., FS::lumpNumForName()).
+ * Functions that don't know the absolute/logical lumpnum of file will have to check
+ * both indexes (e.g., FS::lumpNumForName()).
  */
 class FS
 {

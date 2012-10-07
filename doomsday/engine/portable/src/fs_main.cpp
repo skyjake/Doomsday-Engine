@@ -55,7 +55,7 @@ using de::LumpFile;         using de::LumpIndex;
 using de::PathDirectory;    using de::PathDirectoryNode;
 using de::WadFile;          using de::ZipFile;
 
-/// Base for indicies in the auxiliary lump cache.
+/// Base for indicies in the auxiliary lump index.
 int const AUXILIARY_BASE = 100000000;
 
 /**
@@ -820,7 +820,7 @@ lumpnum_t FS::openAuxiliary(char const* path, size_t baseOffset)
     {
         if(auxiliaryWadLumpIndexInUse)
         {
-            FS::closeAuxiliary();
+            closeAuxiliary();
         }
         ActiveWadLumpIndex = auxiliaryWadLumpIndex;
         auxiliaryWadLumpIndexInUse = true;
@@ -1983,7 +1983,7 @@ void FS::initLumpDirectoryMappings(void)
     if(DD_IsShuttingDown()) return;
 
     // Add the contents of all DD_DIREC lumps.
-    int numLumps = FS::lumpCount();
+    int numLumps = lumpCount();
     for(lumpnum_t i = 0; i < numLumps; ++i)
     {
         if(strnicmp(lumpName(i), "DD_DIREC", 8)) continue;

@@ -52,7 +52,7 @@ size_t W_LumpLength(lumpnum_t absoluteLumpNum)
 
 char const* W_LumpName(lumpnum_t absoluteLumpNum)
 {
-    char const* lumpName = F_LumpName(absoluteLumpNum);
+    char const* lumpName = FS::lumpName(absoluteLumpNum);
     if(!lumpName[0])
     {
         W_Error("W_LumpName: Invalid lumpnum %i.", absoluteLumpNum);
@@ -90,7 +90,7 @@ boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
         W_Error("W_LumpIsCustom: Invalid lumpnum %i.", absoluteLumpNum);
         return false;
     }
-    return F_LumpIsCustom(absoluteLumpNum);
+    return FS::lumpFileHasCustom(absoluteLumpNum);
 }
 
 lumpnum_t W_CheckLumpNumForName2(char const* name, boolean silent)
