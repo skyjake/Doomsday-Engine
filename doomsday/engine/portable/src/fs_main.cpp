@@ -685,9 +685,9 @@ lumpnum_t FS::lumpNumForName(char const* name, bool silent)
             Str_Append(&searchPath, ".lmp");
         }
 
-        // We have to check both the primary and auxiliary caches because
-        // we've only got a name and don't know where it is located. Start with
-        // the auxiliary lumps because they take precedence.
+        // We have to check both the primary and auxiliary lump indexes
+        // because we've only got a name and don't know where it is located.
+        // Start with the auxiliary lumps because they have precedence.
         if(useAuxiliaryWadLumpIndex())
         {
             lumpNum = ActiveWadLumpIndex->indexForPath(Str_Text(&searchPath));
@@ -695,7 +695,7 @@ lumpnum_t FS::lumpNumForName(char const* name, bool silent)
             if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
             {
                 // Get the size as well for the condition check.
-                lumpSize = ActiveWadLumpIndex->lumpInfo(lumpNum)->size;
+                lumpSize = ActiveWadLumpIndex->lumpInfo(lumpNum).size;
             }
         }
 
@@ -708,7 +708,7 @@ lumpnum_t FS::lumpNumForName(char const* name, bool silent)
             if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
             {
                 // Get the size as well for the condition check.
-                lumpSize = ActiveWadLumpIndex->lumpInfo(lumpNum)->size;
+                lumpSize = ActiveWadLumpIndex->lumpInfo(lumpNum).size;
             }
         }
 
@@ -758,9 +758,12 @@ lumpnum_t FS::lumpNumForName(char const* name, bool silent)
 LumpInfo const* FS::lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
     lumpnum_t translated = chooseWadLumpIndex(absoluteLumpNum);
-    LumpInfo const* lumpInfo = ActiveWadLumpIndex->lumpInfo(translated);
-    if(lumpIdx) *lumpIdx = (lumpInfo? lumpInfo->lumpIdx : -1);
-    return lumpInfo;
+    if(!ActiveWadLumpIndex->isValidIndex(translated))
+    {
+        if(lumpIdx) *lumpIdx = -1;
+        return 0;
+    }
+    return &ActiveWadLumpIndex->lumpInfo(translated);
 }
 
 char const* FS::lumpName(lumpnum_t absoluteLumpNum)
@@ -1409,10 +1412,9 @@ AbstractFile* FS::findLumpFile(char const* path, int* lumpIdx)
     {
         Str_Free(&absSearchPath);
 
-        LumpInfo const* lumpInfo = zipLumpIndex->lumpInfo(lumpNum);
-        DENG_ASSERT(lumpInfo);
-        if(lumpIdx) *lumpIdx = lumpInfo->lumpIdx;
-        return reinterpret_cast<AbstractFile*>(lumpInfo->container);
+        LumpInfo const& lumpInfo = zipLumpIndex->lumpInfo(lumpNum);
+        if(lumpIdx) *lumpIdx = lumpInfo.lumpIdx;
+        return reinterpret_cast<AbstractFile*>(lumpInfo.container);
     }
 
     /**

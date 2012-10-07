@@ -70,8 +70,12 @@ public:
     /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
     lumpnum_t indexForPath(char const* path);
 
-    /// @return  LumpInfo for the lump with index @a lumpNum.
-    LumpInfo const* lumpInfo(lumpnum_t lumpNum);
+    /**
+     * @return  LumpInfo for the lump with index @a lumpNum.
+     *
+     * @throws de::Error    If @a lumpNum is not valid.
+     */
+    LumpInfo const& lumpInfo(lumpnum_t lumpNum);
 
     /**
      * Provides access to the list of lumps for efficient traversals.
@@ -119,7 +123,7 @@ public:
      *
      * @return  @c true if found and pruned.
      */
-    bool pruneLump(LumpInfo* lumpInfo);
+    bool pruneLump(LumpInfo& lumpInfo);
 
 private:
     struct Instance;

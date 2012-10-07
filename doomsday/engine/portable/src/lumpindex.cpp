@@ -38,6 +38,7 @@
 #include <de/Log>
 
 using namespace de;
+using de::AbstractFile;
 
 /**
  * @ingroup lumpIndexFlags
@@ -259,14 +260,21 @@ bool LumpIndex::isValidIndex(lumpnum_t lumpNum)
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
-
     return (lumpNum >= 0 && lumpNum < d->lumpInfos.size());
 }
 
-LumpInfo const* LumpIndex::lumpInfo(lumpnum_t lumpNum)
+static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
-    if(!isValidIndex(lumpNum)) return 0;
-    return d->lumpInfos[lumpNum];
+    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
+    if(lastValidIdx < 0) msg += "(file is empty)";
+    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
+    return msg;
+}
+
+LumpInfo const& LumpIndex::lumpInfo(lumpnum_t lumpNum)
+{
+    if(!isValidIndex(lumpNum)) throw de::Error("LumpIndex::lumpInfo", invalidIndexMessage(lumpNum, size() - 1));
+    return *d->lumpInfos[lumpNum];
 }
 
 LumpIndex::LumpInfos const& LumpIndex::lumps()
@@ -285,7 +293,7 @@ int LumpIndex::size()
     return d->lumpInfos.size();
 }
 
-int LumpIndex::pruneByFile(de::AbstractFile& file)
+int LumpIndex::pruneByFile(AbstractFile& file)
 {
     if(d->lumpInfos.empty()) return 0;
 
@@ -307,22 +315,22 @@ int LumpIndex::pruneByFile(de::AbstractFile& file)
     return numFlaggedForFile;
 }
 
-bool LumpIndex::pruneLump(LumpInfo* lumpInfo)
+bool LumpIndex::pruneLump(LumpInfo& lumpInfo)
 {
-    if(!lumpInfo || d->lumpInfos.empty()) return 0;
+    if(d->lumpInfos.empty()) return 0;
 
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
     // Prune this lump.
-    if(!d->lumpInfos.removeOne(lumpInfo)) return false;
+    if(!d->lumpInfos.removeOne(&lumpInfo)) return false;
 
     // We'll need to rebuild the path hash chains.
     d->flags |= LIF_NEED_REBUILD_HASH;
     return true;
 }
 
-void LumpIndex::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int numLumps)
+void LumpIndex::catalogLumps(AbstractFile& file, int lumpIdxBase, int numLumps)
 {
     if(numLumps <= 0) return;
 
@@ -351,7 +359,7 @@ void LumpIndex::clear()
     d->flags &= ~(LIF_NEED_REBUILD_HASH | LIF_NEED_PRUNE_DUPLICATES);
 }
 
-bool LumpIndex::catalogues(de::AbstractFile& file)
+bool LumpIndex::catalogues(AbstractFile& file)
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
