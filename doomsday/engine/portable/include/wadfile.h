@@ -43,6 +43,13 @@ class PathDirectoryNode;
 class WadFile : public AbstractFile
 {
 public:
+    /// Base class for format-related errors. @ingroup errors
+    DENG2_ERROR(FormatError);
+
+    /// The requested entry does not exist in the wad. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+public:
     WadFile(DFile& file, char const* path, LumpInfo const& info);
     ~WadFile();
 

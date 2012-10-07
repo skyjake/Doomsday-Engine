@@ -106,7 +106,7 @@ struct WadFile::Instance
 
         wadheader_t hdr;
         if(!readArchiveHeader(file, hdr))
-            throw Error("WadFile::WadFile", QString("File %1 does not appear to be a known WAD format").arg(path));
+            throw WadFile::FormatError("WadFile::WadFile", QString("File %1 does not appear to be a known WAD format").arg(path));
 
         arcRecordsCount  = hdr.lumpRecordsCount;
         arcRecordsOffset = hdr.lumpRecordsOffset;
@@ -326,7 +326,7 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
 
 PathDirectoryNode& WadFile::lumpDirectoryNode(int lumpIdx)
 {
-    if(!isValidIndex(lumpIdx)) throw Error("WadFile::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!isValidIndex(lumpIdx)) throw NotFoundError("WadFile::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
@@ -335,7 +335,7 @@ LumpInfo const& WadFile::lumpInfo(int lumpIdx)
 {
     LOG_AS("WadFile");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw Error("WadFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!lrec) throw NotFoundError("WadFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info;
 }
 
@@ -343,7 +343,7 @@ size_t WadFile::lumpSize(int lumpIdx)
 {
     LOG_AS("WadFile");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw Error("WadFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!lrec) throw NotFoundError("WadFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info.size;
 }
 
@@ -403,7 +403,7 @@ uint8_t const* WadFile::cacheLump(int lumpIdx)
 {
     LOG_AS("WadFile::cacheLump");
 
-    if(!isValidIndex(lumpIdx)) throw Error("WadFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!isValidIndex(lumpIdx)) throw NotFoundError("WadFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     LumpInfo const& info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
