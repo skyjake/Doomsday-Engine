@@ -53,8 +53,8 @@ typedef enum {
 
 namespace de {
 
+class LumpIndex;
 class PathDirectoryNode;
-class LumpDirectory;
 
 /**
  * Abstract File.  Abstract File is a core component of the filesystem
@@ -205,13 +205,13 @@ public:
                             bool tryCache = true) = 0;
 
     /**
-     * Publish this lump to the end of the specified @a directory.
+     * Publish this lump to the end of the specified @a index.
      *
-     * @param directory Directory to publish to.
+     * @param index  Index to publish to.
      *
-     * @return Number of lumps published to the directory. Always @c =1
+     * @return Number of lumps published to the index.
      */
-    virtual int publishLumpsToDirectory(LumpDirectory* directory) = 0;
+    virtual int publishLumpsToIndex(LumpIndex& index) = 0;
 
     /**
      * Lump caching interface:

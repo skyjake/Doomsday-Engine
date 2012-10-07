@@ -35,10 +35,10 @@
 
 namespace de {
 
-class LumpDirectory;
+class LumpIndex;
 
 /**
- * GenericFile. Runtime representation of a generic/unknown file for use with LumpDirectory
+ * GenericFile. Runtime representation of a generic/unknown file.
  */
 class GenericFile : public AbstractFile
 {
@@ -136,13 +136,13 @@ public:
     GenericFile& unlockLump(int lumpIdx);
 
     /**
-     * Publish this lump to the end of the specified @a directory.
+     * Publish this lump to the end of the specified @a index.
      *
-     * @param directory Directory to publish to.
+     * @param index  Index to publish to.
      *
-     * @return Number of lumps published to the directory. Always @c =1
+     * @return Number of lumps published to the index. Always @c =1
      */
-    int publishLumpsToDirectory(LumpDirectory* directory);
+    int publishLumpsToIndex(LumpIndex& index);
 
 private:
     struct Instance;

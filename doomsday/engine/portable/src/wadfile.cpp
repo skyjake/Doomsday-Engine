@@ -24,10 +24,10 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
-
 #include "lumpcache.h"
-#include "lumpdirectory.h"
+#include "lumpindex.h"
 #include "pathdirectory.h"
+
 #include "wadfile.h"
 
 #include <vector>
@@ -357,20 +357,15 @@ AutoStr* WadFile::composeLumpPath(int lumpIdx, char delimiter)
     return AutoStr_NewStd();
 }
 
-int WadFile::publishLumpsToDirectory(LumpDirectory* directory)
+int WadFile::publishLumpsToIndex(LumpIndex& index)
 {
     LOG_AS("WadFile");
-    int numPublished = 0;
-    if(directory)
-    {
-        d->readLumpDirectory();
-        if(!empty())
-        {
-            // Insert the lumps into their rightful places in the directory.
-            numPublished = lumpCount();
-            directory->catalogLumps(*this, 0, numPublished);
-        }
-    }
+    d->readLumpDirectory();
+    if(empty()) return 0;
+
+    // Insert the lumps into their rightful places in the index.
+    int numPublished = lumpCount();
+    index.catalogLumps(*this, 0, numPublished);
     return numPublished;
 }
 

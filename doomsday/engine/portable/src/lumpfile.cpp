@@ -22,9 +22,9 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
+#include "lumpindex.h"
 
 #include "lumpfile.h"
-#include "lumpdirectory.h"
 
 #include <de/Error>
 #include <de/Log>
@@ -86,13 +86,10 @@ LumpFile& LumpFile::unlockLump(int lumpIdx)
     return *this;
 }
 
-int LumpFile::publishLumpsToDirectory(LumpDirectory* directory)
+int LumpFile::publishLumpsToIndex(LumpIndex& index)
 {
     LOG_AS("LumpFile");
-    if(directory)
-    {
-        // This *is* the lump, so insert ourself as a lump of our container in the directory.
-        directory->catalogLumps(container(), info()->lumpIdx, 1);
-    }
+    // This *is* the lump, so insert ourself as a lump of our container in the index.
+    index.catalogLumps(container(), info()->lumpIdx, 1);
     return 1;
 }

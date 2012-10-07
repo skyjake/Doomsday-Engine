@@ -25,11 +25,11 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
-
 #include "game.h"
 #include "lumpcache.h"
-#include "lumpdirectory.h"
+#include "lumpindex.h"
 #include "pathdirectory.h"
+
 #include "zipfile.h"
 
 #include <vector>
@@ -541,20 +541,15 @@ AutoStr* ZipFile::composeLumpPath(int lumpIdx, char delimiter)
     return AutoStr_NewStd();
 }
 
-int ZipFile::publishLumpsToDirectory(LumpDirectory* directory)
+int ZipFile::publishLumpsToIndex(LumpIndex& index)
 {
     LOG_AS("ZipFile");
-    int numPublished = 0;
-    if(directory)
-    {
-        d->readLumpDirectory();
-        if(!empty())
-        {
-            // Insert the lumps into their rightful places in the directory.
-            numPublished = lumpCount();
-            directory->catalogLumps(*this, 0, numPublished);
-        }
-    }
+    d->readLumpDirectory();
+    if(empty()) return 0;
+
+    // Insert the lumps into their rightful places in the index.
+    int numPublished = lumpCount();
+    index.catalogLumps(*this, 0, numPublished);
     return numPublished;
 }
 

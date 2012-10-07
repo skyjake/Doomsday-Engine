@@ -1,12 +1,12 @@
 /**
- * @file lumpdirectory.h
+ * @file lumpindex.h
  *
- * Indexed directory of lumps.
+ * Index of lumps.
  *
  * @ingroup fs
  *
  * Virtual file system component used to model an indexable collection of
- * lumps. A single directory may include lumps originating from many different
+ * lumps. A single index may include lumps originating from many different
  * file containers.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -27,8 +27,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_LUMPDIRECTORY_H
-#define LIBDENG_FILESYS_LUMPDIRECTORY_H
+#ifndef LIBDENG_FILESYS_LUMPINDEX_H
+#define LIBDENG_FILESYS_LUMPINDEX_H
 
 #include "abstractfile.h"
 #include "lumpinfo.h"
@@ -38,26 +38,27 @@
 namespace de {
 
 /**
- * @defgroup lumpDirectoryFlags Lump Directory Flags
+ * @defgroup lumpIndexFlags Lump Index Flags
  */
 ///{
-#define LDF_UNIQUE_PATHS                0x1 ///< Lumps in the directory must have unique paths.
-                                            /// Inserting a lump with the same path as one which
-                                            /// already exists will result in the earlier lump
-                                            /// being pruned.
+
+/// Lumps in the index must have unique paths. Inserting a lump with the same
+/// path as one which already exists will result in the earlier lump being pruned.
+#define LIF_UNIQUE_PATHS                0x1
+
 ///}
 
-class LumpDirectory
+class LumpIndex
 {
 public:
     typedef QList<LumpInfo const*> LumpInfos;
 
 public:
     /**
-     * @param flags  @ref lumpDirectoryFlags
+     * @param flags  @ref lumpIndexFlags
      */
-    LumpDirectory(int flags = 0);
-    ~LumpDirectory();
+    LumpIndex(int flags = 0);
+    ~LumpIndex();
 
     /// Number of lumps in the directory.
     int size();
@@ -77,12 +78,12 @@ public:
     LumpInfos const& lumps();
 
     /**
-     * Clear the directory back to its default (i.e., empty state).
+     * Clear the index back to its default (i.e., empty state).
      */
     void clear();
 
     /**
-     * Are any lumps from @a file published in this directory?
+     * Are any lumps from @a file published in this index?
      *
      * @param file      File containing the lumps to look for.
      *
@@ -91,7 +92,7 @@ public:
     bool catalogues(AbstractFile& file);
 
     /**
-     * Append a new set of lumps to the directory.
+     * Append a new set of lumps to the index.
      *
      * @post Lump name hashes may be invalidated (will be rebuilt upon next search).
      *
@@ -126,4 +127,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG_FILESYS_LUMPDIRECTORY_H
+#endif // LIBDENG_FILESYS_LUMPINDEX_H

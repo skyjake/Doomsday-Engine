@@ -203,7 +203,7 @@ static bool recognizeZIP(char const* filePath, void* parameters)
     if(dfile)
     {
         result = ZipFile::recognise(*dfile);
-        /// @todo Check files. We should implement an auxiliary zip lumpdirectory...
+        /// @todo Check files. We should implement an auxiliary zip lump index...
         FS::closeFile(dfile);
     }
     return result;

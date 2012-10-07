@@ -2148,7 +2148,7 @@ static Uri* composeFlatUri(const char* lumpName)
 /**
  * Compose the path to the data resource.
  * @note We do not use the lump name, instead we use the logical lump index
- * in the global LumpDirectory. This is necessary because of the way id tech 1
+ * in the global LumpIndex. This is necessary because of the way id tech 1
  * manages flat references in animations (intermediate frames are chosen by their
  * 'original indices' rather than by name).
  */

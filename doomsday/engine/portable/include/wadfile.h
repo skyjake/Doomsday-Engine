@@ -34,7 +34,7 @@
 
 namespace de {
 
-class LumpDirectory;
+class LumpIndex;
 class PathDirectoryNode;
 
 /**
@@ -170,14 +170,14 @@ public:
     WadFile& clearLumpCache();
 
     /**
-     * Publish lumps to the end of the specified @a directory.
+     * Publish lumps to the end of the specified @a index.
      *
-     * @param directory Directory to publish to.
+     * @param index  Index to publish to.
      *
-     * @return Number of lumps published to the directory. Note that this is not
+     * @return Number of lumps published to the index. Note that this is not
      *         necessarily equal to the the number of lumps in the file.
      */
-    int publishLumpsToDirectory(LumpDirectory* directory);
+    int publishLumpsToIndex(LumpIndex& index);
 
     /**
      * @attention Uses an extremely simple formula which does not conform to any CRC

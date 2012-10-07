@@ -116,7 +116,7 @@ public:
      */
     static bool checkFileId(char const* path);
 
-    /// @return  Number of files in the currently active primary LumpDirectory.
+    /// @return  Number of files in the currently active primary LumpIndex.
     static int lumpCount();
 
     /**
@@ -187,7 +187,7 @@ public:
     static bool isValidLumpNum(lumpnum_t absoluteLumpNum);
 
     /**
-     * Find a lump in the Zip LumpDirectory.
+     * Find a lump in the Zip LumpIndex.
      *
      * @param path      Path to search for. Relative paths are made absolute if necessary.
      * @param lumpIdx   If not @c NULL the translated lumpnum within the owning file object is written here.
@@ -202,7 +202,7 @@ public:
     /**
      * Given a logical @a lumpnum retrieve the associated file object.
      *
-     * @post The active LumpDirectory may have changed!
+     * @post The active LumpIndex may have changed!
      *
      * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
      * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
@@ -227,7 +227,7 @@ public:
     /**
      * Retrieve the LumpInfo metadata structure for a lump.
      *
-     * @post The active LumpDirectory may have changed!
+     * @post The active LumpIndex may have changed!
      *
      * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
      * @param lumpIdx           If not @c NULL the translated lumpnum within the owning

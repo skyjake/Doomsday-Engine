@@ -1,5 +1,5 @@
 /**
- * @file lumpdirectory.cpp
+ * @file lumpindex.cpp
  *
  * @ingroup fs
  *
@@ -29,7 +29,7 @@
 #include "de_base.h"
 #include "de_filesys.h"
 
-#include "lumpdirectory.h"
+#include "lumpindex.h"
 
 #include <QBitArray>
 #include <QList>
@@ -40,32 +40,32 @@
 using namespace de;
 
 /**
- * @ingroup lumpDirectoryFlags
+ * @ingroup lumpIndexFlags
  */
 ///@{
-#define LDF_INTERNAL_MASK               0xff000000
-#define LDF_NEED_REBUILD_HASH           0x80000000 ///< Path hash map must be rebuilt.
-#define LDF_NEED_PRUNE_DUPLICATES       0x40000000 ///< Path duplicate records must be pruned.
+#define LIF_INTERNAL_MASK               0xff000000
+#define LIF_NEED_REBUILD_HASH           0x80000000 ///< Path hash map must be rebuilt.
+#define LIF_NEED_PRUNE_DUPLICATES       0x40000000 ///< Path duplicate records must be pruned.
 ///@}
 
-/// Stores indexes into LumpDirectory::Instance::records forming a chain of
+/// Stores indexes into LumpIndex::Instance::records forming a chain of
 /// PathDirectoryNode fragment hashes. For ultra-fast name lookups.
-struct LumpDirectoryHashRecord
+struct LumpIndexHashRecord
 {
     lumpnum_t head, next;
 };
 
-struct LumpDirectory::Instance
+struct LumpIndex::Instance
 {
-    typedef QVector<LumpDirectoryHashRecord> HashMap;
+    typedef QVector<LumpIndexHashRecord> HashMap;
 
-    LumpDirectory* self;
-    int flags; /// @see lumpDirectoryFlags
-    LumpDirectory::LumpInfos lumpInfos;
+    LumpIndex* self;
+    int flags; /// @see lumpIndexFlags
+    LumpIndex::LumpInfos lumpInfos;
     HashMap* hashMap;
 
-    Instance(LumpDirectory* d, int _flags)
-        : self(d), flags(_flags & ~LDF_INTERNAL_MASK), lumpInfos(), hashMap(0)
+    Instance(LumpIndex* d, int _flags)
+        : self(d), flags(_flags & ~LIF_INTERNAL_MASK), lumpInfos(), hashMap(0)
     {}
 
     ~Instance()
@@ -75,7 +75,7 @@ struct LumpDirectory::Instance
 
     void buildHashMap()
     {
-        if(!(flags & LDF_NEED_REBUILD_HASH)) return;
+        if(!(flags & LIF_NEED_REBUILD_HASH)) return;
 
         int numRecords = lumpInfos.size();
         if(!hashMap)    hashMap = new HashMap(numRecords);
@@ -100,9 +100,9 @@ struct LumpDirectory::Instance
             (*hashMap)[j].head = i;
         }
 
-        flags &= ~LDF_NEED_REBUILD_HASH;
+        flags &= ~LIF_NEED_REBUILD_HASH;
 
-        LOG_DEBUG("Rebuilt hashMap for LumpDirectory %p.") << self;
+        LOG_DEBUG("Rebuilt hashMap for LumpIndex %p.") << self;
     }
 
     /**
@@ -156,8 +156,8 @@ struct LumpDirectory::Instance
         DENG_ASSERT(pruneFlags.size() == lumpInfos.size());
 
         // Any work to do?
-        if(!(flags & LDF_UNIQUE_PATHS)) return 0;
-        if(!(flags & LDF_NEED_PRUNE_DUPLICATES)) return 0;
+        if(!(flags & LIF_UNIQUE_PATHS)) return 0;
+        if(!(flags & LIF_NEED_PRUNE_DUPLICATES)) return 0;
 
         int const numRecords = lumpInfos.size();
         if(numRecords <= 1) return 0;
@@ -201,7 +201,7 @@ struct LumpDirectory::Instance
         if(numFlaggedForPrune)
         {
             // We'll need to rebuild the hash after this.
-            flags |= LDF_NEED_REBUILD_HASH;
+            flags |= LIF_NEED_REBUILD_HASH;
 
             int numRecords = lumpInfos.size();
             if(numRecords == numFlaggedForPrune)
@@ -240,22 +240,22 @@ struct LumpDirectory::Instance
         flagDuplicateLumps(pruneFlags);
         pruneFlaggedLumps(pruneFlags);
 
-        flags &= ~LDF_NEED_PRUNE_DUPLICATES;
+        flags &= ~LIF_NEED_PRUNE_DUPLICATES;
     }
 };
 
-LumpDirectory::LumpDirectory(int flags)
+LumpIndex::LumpIndex(int flags)
 {
     d = new Instance(this, flags);
 }
 
-LumpDirectory::~LumpDirectory()
+LumpIndex::~LumpIndex()
 {
     clear();
     delete d;
 }
 
-bool LumpDirectory::isValidIndex(lumpnum_t lumpNum)
+bool LumpIndex::isValidIndex(lumpnum_t lumpNum)
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -263,13 +263,13 @@ bool LumpDirectory::isValidIndex(lumpnum_t lumpNum)
     return (lumpNum >= 0 && lumpNum < d->lumpInfos.size());
 }
 
-LumpInfo const* LumpDirectory::lumpInfo(lumpnum_t lumpNum)
+LumpInfo const* LumpIndex::lumpInfo(lumpnum_t lumpNum)
 {
     if(!isValidIndex(lumpNum)) return 0;
     return d->lumpInfos[lumpNum];
 }
 
-LumpDirectory::LumpInfos const& LumpDirectory::lumps()
+LumpIndex::LumpInfos const& LumpIndex::lumps()
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -277,7 +277,7 @@ LumpDirectory::LumpInfos const& LumpDirectory::lumps()
     return d->lumpInfos;
 }
 
-int LumpDirectory::size()
+int LumpIndex::size()
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -285,7 +285,7 @@ int LumpDirectory::size()
     return d->lumpInfos.size();
 }
 
-int LumpDirectory::pruneByFile(de::AbstractFile& file)
+int LumpIndex::pruneByFile(de::AbstractFile& file)
 {
     if(d->lumpInfos.empty()) return 0;
 
@@ -302,12 +302,12 @@ int LumpDirectory::pruneByFile(de::AbstractFile& file)
     // Perform the prune.
     d->pruneFlaggedLumps(pruneFlags);
 
-    d->flags &= ~LDF_NEED_PRUNE_DUPLICATES;
+    d->flags &= ~LIF_NEED_PRUNE_DUPLICATES;
 
     return numFlaggedForFile;
 }
 
-bool LumpDirectory::pruneLump(LumpInfo* lumpInfo)
+bool LumpIndex::pruneLump(LumpInfo* lumpInfo)
 {
     if(!lumpInfo || d->lumpInfos.empty()) return 0;
 
@@ -318,11 +318,11 @@ bool LumpDirectory::pruneLump(LumpInfo* lumpInfo)
     if(!d->lumpInfos.removeOne(lumpInfo)) return false;
 
     // We'll need to rebuild the path hash chains.
-    d->flags |= LDF_NEED_REBUILD_HASH;
+    d->flags |= LIF_NEED_REBUILD_HASH;
     return true;
 }
 
-void LumpDirectory::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int numLumps)
+void LumpIndex::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int numLumps)
 {
     if(numLumps <= 0) return;
 
@@ -337,22 +337,22 @@ void LumpDirectory::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int nu
     }
 
     // We'll need to rebuild the name hash chains.
-    d->flags |= LDF_NEED_REBUILD_HASH;
+    d->flags |= LIF_NEED_REBUILD_HASH;
 
-    if(d->flags & LDF_UNIQUE_PATHS)
+    if(d->flags & LIF_UNIQUE_PATHS)
     {
         // We may need to prune duplicate paths.
-        d->flags |= LDF_NEED_PRUNE_DUPLICATES;
+        d->flags |= LIF_NEED_PRUNE_DUPLICATES;
     }
 }
 
-void LumpDirectory::clear()
+void LumpIndex::clear()
 {
     d->lumpInfos.clear();
-    d->flags &= ~(LDF_NEED_REBUILD_HASH | LDF_NEED_PRUNE_DUPLICATES);
+    d->flags &= ~(LIF_NEED_REBUILD_HASH | LIF_NEED_PRUNE_DUPLICATES);
 }
 
-bool LumpDirectory::catalogues(de::AbstractFile& file)
+bool LumpIndex::catalogues(de::AbstractFile& file)
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -365,7 +365,7 @@ bool LumpDirectory::catalogues(de::AbstractFile& file)
     return false;
 }
 
-lumpnum_t LumpDirectory::indexForPath(char const* path)
+lumpnum_t LumpIndex::indexForPath(char const* path)
 {
     if(!path || !path[0] || d->lumpInfos.empty()) return -1;
 

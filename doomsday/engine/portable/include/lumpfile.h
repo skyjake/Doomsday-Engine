@@ -40,11 +40,11 @@
 
 namespace de {
 
-class LumpDirectory;
+class LumpIndex;
 class PathDirectoryNode;
 
 /**
- * LumpFile. Runtime representation of a lump-file for use with LumpDirectory
+ * LumpFile. Runtime representation of a lump-file.
  */
 class LumpFile : public AbstractFile
 {
@@ -142,13 +142,13 @@ public:
     LumpFile& unlockLump(int lumpIdx);
 
     /**
-     * Publish this lump to the end of the specified @a directory.
+     * Publish this lump to the end of the specified @a index.
      *
-     * @param directory Directory to publish to.
+     * @param index  Index to publish to.
      *
-     * @return Number of lumps published to the directory. Always @c =1
+     * @return Number of lumps published to the index. Always @c =1
      */
-    int publishLumpsToDirectory(LumpDirectory* directory);
+    int publishLumpsToIndex(LumpIndex& index);
 
 private:
     struct Instance;

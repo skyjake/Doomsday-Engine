@@ -25,9 +25,9 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
+#include "lumpindex.h"
 
 #include "genericfile.h"
-#include "lumpdirectory.h"
 
 #include <de/Error>
 #include <de/Log>
@@ -92,13 +92,10 @@ GenericFile& GenericFile::unlockLump(int /*lumpIdx*/)
     return *this;
 }
 
-int GenericFile::publishLumpsToDirectory(LumpDirectory* directory)
+int GenericFile::publishLumpsToIndex(LumpIndex& index)
 {
     LOG_AS("GenericFile");
-    if(directory)
-    {
-        // This *is* the lump, so insert ourself in the directory.
-        directory->catalogLumps(*this, 0, 1);
-    }
+    // This *is* the lump, so insert ourself in the index.
+    index.catalogLumps(*this, 0, 1);
     return 1;
 }
