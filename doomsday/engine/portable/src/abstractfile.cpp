@@ -61,9 +61,9 @@ filetype_t AbstractFile::type() const
     return type_;
 }
 
-LumpInfo const* AbstractFile::info() const
+LumpInfo const& AbstractFile::info() const
 {
-    return &info_;
+    return info_;
 }
 
 bool AbstractFile::isContained() const

@@ -500,13 +500,6 @@ bool ZipFile::empty()
     return !lumpCount();
 }
 
-PathDirectoryNode* ZipFile::lumpDirectoryNode(int lumpIdx)
-{
-    if(!isValidIndex(lumpIdx)) return NULL;
-    d->buildLumpNodeLut();
-    return (*d->lumpNodeLut)[lumpIdx];
-}
-
 static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
     QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
@@ -515,12 +508,19 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-LumpInfo const* ZipFile::lumpInfo(int lumpIdx)
+PathDirectoryNode& ZipFile::lumpDirectoryNode(int lumpIdx)
+{
+    if(!isValidIndex(lumpIdx)) throw Error("ZipFile::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
+    d->buildLumpNodeLut();
+    return *((*d->lumpNodeLut)[lumpIdx]);
+}
+
+LumpInfo const& ZipFile::lumpInfo(int lumpIdx)
 {
     LOG_AS("ZipFile");
     ZipLumpRecord* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) throw Error("ZipFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
-    return &lrec->info;
+    return lrec->info;
 }
 
 size_t ZipFile::lumpSize(int lumpIdx)
@@ -533,12 +533,9 @@ size_t ZipFile::lumpSize(int lumpIdx)
 
 AutoStr* ZipFile::composeLumpPath(int lumpIdx, char delimiter)
 {
-    PathDirectoryNode* node = lumpDirectoryNode(lumpIdx);
-    if(node)
-    {
-        return node->composePath(AutoStr_NewStd(), NULL, delimiter);
-    }
-    return AutoStr_NewStd();
+    if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
+    PathDirectoryNode& node = lumpDirectoryNode(lumpIdx);
+    return node.composePath(AutoStr_NewStd(), NULL, delimiter);
 }
 
 int ZipFile::publishLumpsToIndex(LumpIndex& index)
@@ -589,15 +586,14 @@ uint8_t const* ZipFile::cacheLump(int lumpIdx)
 {
     LOG_AS("ZipFile::cacheLump");
 
-    if(!isValidIndex(lumpIdx))
-        throw Error("ZipFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!isValidIndex(lumpIdx)) throw Error("ZipFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
-    const LumpInfo* info = lumpInfo(lumpIdx);
+    LumpInfo const& info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << (unsigned long) info->size
-        << (info->compressedSize != info->size? ", compressed" : "");
+        << (unsigned long) info.size
+        << (info.compressedSize != info.size? ", compressed" : "");
 
     // Time to create the cache?
     if(!d->lumpCache)
@@ -608,8 +604,8 @@ uint8_t const* ZipFile::cacheLump(int lumpIdx)
     uint8_t const* data = d->lumpCache->data(lumpIdx);
     if(data) return data;
 
-    uint8_t* region = (uint8_t*) Z_Malloc(info->size, PU_APPSTATIC, 0);
-    if(!region) throw Error("ZipFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info->size).arg(lumpIdx));
+    uint8_t* region = (uint8_t*) Z_Malloc(info.size, PU_APPSTATIC, 0);
+    if(!region) throw Error("ZipFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info.size).arg(lumpIdx));
 
     readLump(lumpIdx, region, false);
     d->lumpCache->insert(lumpIdx, region);
@@ -645,9 +641,8 @@ ZipFile& ZipFile::unlockLump(int lumpIdx)
 size_t ZipFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
     LOG_AS("ZipFile::readLump");
-    LumpInfo const* info = lumpInfo(lumpIdx);
-    if(!info) return 0;
-    return readLump(lumpIdx, buffer, 0, info->size, tryCache);
+    if(!isValidIndex(lumpIdx)) return 0;
+    return readLump(lumpIdx, buffer, 0, lumpInfo(lumpIdx).size, tryCache);
 }
 
 size_t ZipFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,

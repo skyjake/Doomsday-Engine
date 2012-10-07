@@ -44,10 +44,10 @@ GenericFile::GenericFile(DFile& file, char const* path, LumpInfo const& info)
 GenericFile::~GenericFile()
 {}
 
-PathDirectoryNode* GenericFile::lumpDirectoryNode(int /*lumpIdx*/)
+PathDirectoryNode const& GenericFile::lumpDirectoryNode(int /*lumpIdx*/)
 {
     /// @todo writeme
-    return 0;
+    throw de::Error("GenericFile::lumpDirectoryNode", "Not yet implemented");
 }
 
 AutoStr* GenericFile::composeLumpPath(int /*lumpIdx*/, char /*delimiter*/)
@@ -55,41 +55,35 @@ AutoStr* GenericFile::composeLumpPath(int /*lumpIdx*/, char /*delimiter*/)
     return AutoStr_NewStd();
 }
 
-LumpInfo const* GenericFile::lumpInfo(int /*lumpIdx*/)
-{
-    // Generic files are special cases for this *is* the lump.
-    return info();
-}
-
 size_t GenericFile::lumpSize(int lumpIdx)
 {
     // Generic files are special cases for this *is* the lump.
-    return lumpInfo(lumpIdx)->size;
+    return lumpInfo(lumpIdx).size;
 }
 
 size_t GenericFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
     /// @todo writeme
-    return 0;
+    throw de::Error("GenericFile::readLump", "Not yet implemented");
 }
 
 size_t GenericFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     /// @todo writeme
-    return 0;
+    throw de::Error("GenericFile::readLump", "Not yet implemented");
 }
 
 uint8_t const* GenericFile::cacheLump(int /*lumpIdx*/)
 {
     /// @todo writeme
-    return 0;
+    throw de::Error("GenericFile::cacheLump", "Not yet implemented");
 }
 
 GenericFile& GenericFile::unlockLump(int /*lumpIdx*/)
 {
     /// @todo writeme
-    return *this;
+    throw de::Error("GenericFile::unlockLump", "Not yet implemented");
 }
 
 int GenericFile::publishLumpsToIndex(LumpIndex& index)

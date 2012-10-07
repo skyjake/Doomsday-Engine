@@ -93,8 +93,8 @@ struct LumpIndex::Instance
         {
             LumpInfo const* lumpInfo = lumpInfos[i];
             AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
-            PathDirectoryNode const* node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
-            ushort j = node->hash() % (unsigned)numRecords;
+            PathDirectoryNode const& node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
+            ushort j = node.hash() % (unsigned)numRecords;
 
             (*hashMap)[i].next = (*hashMap)[j].head; // Prepend to the chain.
             (*hashMap)[j].head = i;
@@ -331,9 +331,8 @@ void LumpIndex::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int numLum
 
     for(int i = 0; i < numLumps; ++i)
     {
-        LumpInfo const* lumpInfo = file.lumpInfo(lumpIdxBase + i);
-        DENG_ASSERT(lumpInfo);
-        d->lumpInfos.push_back(lumpInfo);
+        LumpInfo const* info = &file.lumpInfo(lumpIdxBase + i);
+        d->lumpInfos.push_back(info);
     }
 
     // We'll need to rebuild the name hash chains.
@@ -386,7 +385,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
     {
         LumpInfo const* lumpInfo = d->lumpInfos[idx];
         AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
-        PathDirectoryNode* node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
+        PathDirectoryNode const& node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
 
         // Time to build the pattern?
         if(!builtSearchPattern)
@@ -395,7 +394,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
             builtSearchPattern = true;
         }
 
-        if(node->matchDirectory(0, &searchPattern))
+        if(node.matchDirectory(0, &searchPattern))
         {
             // This is the lump we are looking for.
             break;

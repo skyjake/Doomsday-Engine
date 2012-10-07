@@ -769,8 +769,8 @@ char const* FS::lumpName(lumpnum_t absoluteLumpNum)
     if(info)
     {
         AbstractFile* container = reinterpret_cast<AbstractFile*>(info->container);
-        PathDirectoryNode* node = container->lumpDirectoryNode(info->lumpIdx);
-        return Str_Text(node->pathFragment());
+        PathDirectoryNode const& node = container->lumpDirectoryNode(info->lumpIdx);
+        return Str_Text(node.pathFragment());
     }
     return "";
 }
@@ -915,10 +915,7 @@ bool FS::dumpLump(lumpnum_t absoluteLumpNum, char const* path)
 {
     int lumpIdx;
     AbstractFile* file = lumpFile(absoluteLumpNum, &lumpIdx);
-    if(!file) return false;
-
-    LumpInfo const* info = file->lumpInfo(lumpIdx);
-    if(!info) return false;
+    if(!file || !file->isValidIndex(lumpIdx)) return false;
 
     char const* lumpName = FS::lumpName(absoluteLumpNum);
     char const* fname;
@@ -931,7 +928,7 @@ bool FS::dumpLump(lumpnum_t absoluteLumpNum, char const* path)
         fname = lumpName;
     }
 
-    bool dumpedOk = dump(file->cacheLump(lumpIdx), info->size, fname);
+    bool dumpedOk = dump(file->cacheLump(lumpIdx), file->lumpInfo(lumpIdx).size, fname);
     file->unlockLump(lumpIdx);
     if(!dumpedOk) return false;
 
@@ -1261,8 +1258,7 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
         LumpInfo const* lumpInfo = *i;
         AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
         DENG_ASSERT(container);
-        PathDirectoryNode* node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
-        DENG_ASSERT(node);
+        PathDirectoryNode const& node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
 
         AutoStr* filePath = 0;
         bool patternMatched;
@@ -1273,7 +1269,7 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
         }
         else
         {
-            patternMatched = node->matchDirectory(PCF_MATCH_FULL, &patternMap);
+            patternMatched = node.matchDirectory(PCF_MATCH_FULL, &patternMap);
             if(patternMatched)
             {
                 filePath   = container->composeLumpPath(lumpInfo->lumpIdx);
@@ -1477,7 +1473,7 @@ static DFile* openAsLumpFile(AbstractFile* container, int lumpIdx,
 
     // Prepare the temporary info descriptor.
     LumpInfo info; F_InitLumpInfo(&info);
-    F_CopyLumpInfo(&info, container->lumpInfo(lumpIdx));
+    F_CopyLumpInfo(&info, &container->lumpInfo(lumpIdx));
 
     // Try to open the referenced file as a specialised file type.
     DFile* file = tryOpenFile3(hndl, Str_Text(&absPath), &info);
@@ -1803,7 +1799,7 @@ DFile* FS::openLump(lumpnum_t absoluteLumpNum)
 
     LumpFile* lump = new LumpFile(*DFileBuilder::fromFileLump(*container, lumpIdx, false),
                                   Str_Text(container->composeLumpPath(lumpIdx)),
-                                  *container->lumpInfo(lumpIdx));
+                                  container->lumpInfo(lumpIdx));
     if(!lump) return 0;
 
     DFile* openFileHndl = DFileBuilder::fromFile(*lump);
@@ -2521,7 +2517,8 @@ LumpInfo const* F_LumpInfo(struct abstractfile_s* _file, int lumpIdx)
 {
     if(!_file) return 0;
     AbstractFile* file = reinterpret_cast<AbstractFile*>(_file);
-    return file->lumpInfo(lumpIdx);
+    if(!file->isValidIndex(lumpIdx)) return 0;
+    return &file->lumpInfo(lumpIdx);
 }
 
 size_t F_ReadLump(struct abstractfile_s* _file, int lumpIdx, uint8_t* buffer)

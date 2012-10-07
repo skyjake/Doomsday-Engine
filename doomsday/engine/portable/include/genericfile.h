@@ -47,13 +47,15 @@ public:
     ~GenericFile();
 
     /**
-     * Lookup a directory node for a lump contained by this file.
+     * Retrieve the directory node for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return  Found directory node else @c NULL if @a lumpIdx is not valid.
+     * @return  Directory node for this lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
      */
-    PathDirectoryNode* lumpDirectoryNode(int lumpIdx);
+    PathDirectoryNode const& lumpDirectoryNode(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.
@@ -67,15 +69,6 @@ public:
      * @return String containing the absolute path.
      */
     AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
-
-    /**
-     * Lookup the lump info descriptor for this lump.
-     *
-     * @param lumpIdx       Ignored. Required argument.
-     *
-     * @return Found lump info.
-     */
-    LumpInfo const* lumpInfo(int lumpIdx);
 
     /**
      * Lookup the uncompressed size of lump contained by this file.

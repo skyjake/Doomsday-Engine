@@ -59,13 +59,15 @@ public:
     bool empty();
 
     /**
-     * Lookup a directory node for a lump contained by this file.
+     * Retrieve the directory node for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return  Found directory node else @c NULL if @a lumpIdx is not valid.
+     * @return  Directory node for this lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
      */
-    PathDirectoryNode* lumpDirectoryNode(int lumpIdx);
+    PathDirectoryNode& lumpDirectoryNode(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.
@@ -81,15 +83,15 @@ public:
     AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
-     * Lookup a lump info descriptor for a lump contained by this file.
+     * Retrieve the LumpInfo descriptor for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return Found lump info.
+     * @return Lump info descriptor for the lump.
      *
      * @throws de::Error    If @a lumpIdx is not valid.
      */
-    LumpInfo const* lumpInfo(int lumpIdx);
+    LumpInfo const& lumpInfo(int lumpIdx);
 
     /**
      * Lookup the uncompressed size of lump contained by this file.

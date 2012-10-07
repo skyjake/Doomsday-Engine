@@ -41,48 +41,47 @@ LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
 LumpFile::~LumpFile()
 {}
 
-PathDirectoryNode* LumpFile::lumpDirectoryNode(int lumpIdx)
-{
-    return container().lumpDirectoryNode(lumpInfo(lumpIdx)->lumpIdx);
-}
-
-AutoStr* LumpFile::composeLumpPath(int lumpIdx, char delimiter)
-{
-    return container().composeLumpPath(lumpInfo(lumpIdx)->lumpIdx, delimiter);
-}
-
-LumpInfo const* LumpFile::lumpInfo(int /*lumpIdx*/)
+PathDirectoryNode const& LumpFile::lumpDirectoryNode(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
-    return info();
+    return container().lumpDirectoryNode(info().lumpIdx);
 }
 
-size_t LumpFile::lumpSize(int lumpIdx)
+AutoStr* LumpFile::composeLumpPath(int /*lumpIdx*/, char delimiter)
 {
     // Lump files are special cases for this *is* the lump.
-    return lumpInfo(lumpIdx)->size;
+    return container().composeLumpPath(info().lumpIdx, delimiter);
 }
 
-size_t LumpFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+size_t LumpFile::lumpSize(int /*lumpIdx*/)
 {
-    return container().readLump(lumpInfo(lumpIdx)->lumpIdx, buffer, tryCache);
+    // Lump files are special cases for this *is* the lump.
+    return info().size;
 }
 
-size_t LumpFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
+size_t LumpFile::readLump(int /*lumpIdx*/, uint8_t* buffer, bool tryCache)
+{
+    // Lump files are special cases for this *is* the lump.
+    return container().readLump(info().lumpIdx, buffer, tryCache);
+}
+
+size_t LumpFile::readLump(int /*lumpIdx*/, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
-    return container().readLump(lumpInfo(lumpIdx)->lumpIdx, buffer,
-                                startOffset, length, tryCache);
+    // Lump files are special cases for this *is* the lump.
+    return container().readLump(info().lumpIdx, buffer, startOffset, length, tryCache);
 }
 
-uint8_t const* LumpFile::cacheLump(int lumpIdx)
+uint8_t const* LumpFile::cacheLump(int /*lumpIdx*/)
 {
-    return container().cacheLump(lumpInfo(lumpIdx)->lumpIdx);
+    // Lump files are special cases for this *is* the lump.
+    return container().cacheLump(info().lumpIdx);
 }
 
-LumpFile& LumpFile::unlockLump(int lumpIdx)
+LumpFile& LumpFile::unlockLump(int /*lumpIdx*/)
 {
-    container().unlockLump(lumpInfo(lumpIdx)->lumpIdx);
+    // Lump files are special cases for this *is* the lump.
+    container().unlockLump(info().lumpIdx);
     return *this;
 }
 
@@ -90,6 +89,6 @@ int LumpFile::publishLumpsToIndex(LumpIndex& index)
 {
     LOG_AS("LumpFile");
     // This *is* the lump, so insert ourself as a lump of our container in the index.
-    index.catalogLumps(container(), info()->lumpIdx, 1);
+    index.catalogLumps(container(), info().lumpIdx, 1);
     return 1;
 }

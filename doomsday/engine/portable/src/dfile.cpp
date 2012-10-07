@@ -126,15 +126,15 @@ void DFileBuilder::shutdown(void)
 
 DFile* DFileBuilder::fromFileLump(AbstractFile& container, int lumpIdx, bool dontBuffer)
 {
-    LumpInfo const* info = container.lumpInfo(lumpIdx);
-    if(!info) return NULL;
+    if(!container.isValidIndex(lumpIdx)) return 0;
 
+    LumpInfo const& info = container.lumpInfo(lumpIdx);
     DFile* file = new DFile();
     // Init and load in the lump data.
     file->d->flags.open = true;
     if(!dontBuffer)
     {
-        file->d->size = info->size;
+        file->d->size = info.size;
         file->d->pos = file->d->data = (uint8_t*) M_Malloc(file->d->size);
         if(!file->d->data)
             Con_Error("DFileBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
@@ -147,7 +147,7 @@ DFile* DFileBuilder::fromFileLump(AbstractFile& container, int lumpIdx, bool don
                        F_PrettyPath(Str_Text(path)));
         )
 #endif
-        container.readLump(lumpIdx, (uint8_t*)file->d->data, 0, info->size);
+        container.readLump(lumpIdx, (uint8_t*)file->d->data, 0, info.size);
     }
     return file;
 }

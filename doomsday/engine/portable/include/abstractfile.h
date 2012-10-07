@@ -89,7 +89,7 @@ public:
     /**
      * @return  Immutable copy of the info descriptor for this resource.
      */
-    LumpInfo const* info() const;
+    LumpInfo const& info() const;
 
     /// @return @c true= this file is contained within another.
     bool isContained() const;
@@ -129,18 +129,42 @@ public:
      */
 
     /**
+     * @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
+     *
+     * @attention This default implementation assumes there is only one lump in
+     * the file. Subclasses with multiple lumps should override this function
+     * accordingly.
+     */
+    virtual bool isValidIndex(int lumpIdx) { return lumpIdx == 0; }
+
+    /**
+     * @return Logical index of the last lump in this file's directory or @c -1 if empty.
+     *
+     * @attention This default implementation assumes there is only one lump in
+     * the file. Subclasses with multiple lumps should override this function
+     * accordingly.
+     */
+    virtual int lastIndex() { return 0; }
+
+    /**
      * @return  Number of "lumps" contained within this resource.
+     *
+     * @attention This default implementation assumes there is only one lump in
+     * the file. Subclasses with multiple lumps should override this function
+     * accordingly.
      */
     virtual int lumpCount() { return 1; }
 
     /**
-     * Lookup a directory node for a lump contained by this file.
+     * Retrieve the directory node for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return  Found directory node else @c NULL if @a lumpIdx is not valid.
+     * @return  Directory node for this lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
      */
-    virtual PathDirectoryNode* lumpDirectoryNode(int lumpIdx) = 0;
+    virtual PathDirectoryNode const& lumpDirectoryNode(int lumpIdx) = 0;
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.
@@ -156,13 +180,19 @@ public:
     virtual AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/') = 0;
 
     /**
-     * Lookup a lump info descriptor for a lump contained by this file.
+     * Retrieve the LumpInfo descriptor for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return Found lump info.
+     * @return Lump info descriptor for the lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
+     *
+     * @attention This default implementation assumes there is only one lump in
+     * the file and therefore its decriptor is that of the file itself. Subclasses
+     * with multiple lumps should override this function accordingly.
      */
-    virtual LumpInfo const* lumpInfo(int /*lumpIdx*/) { return info(); }
+    virtual LumpInfo const& lumpInfo(int /*lumpIdx*/) { return info(); }
 
     /**
      * Lookup the uncompressed size of lump contained by this file.
@@ -173,6 +203,11 @@ public:
      *
      * @note This method is intended mainly for convenience. @see lumpInfo() for
      *       a better method of looking up multiple @ref LumpInfo properties.
+     *
+     * @attention This default implementation assumes there is only one lump in
+     * the file and therefore its decriptor is that of the file itself. Subclasses
+     * with multiple lumps should override this function accordingly.
+     *
      */
     virtual size_t lumpSize(int lumpIdx) = 0;
 
