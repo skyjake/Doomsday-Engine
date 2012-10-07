@@ -69,7 +69,14 @@ public:
 
     uint crc() const { return crc_; }
 
-    /// @attention Calls back into the owning container instance in order to obtain the name.
+    /**
+     * Calculate a simple CRC for the lump.
+     *
+     * @note This algorithm should be replaced if the CRC is needed for anything
+     *       critical/meaningful.
+     *
+     * @attention Calls back into the owning container instance to obtain the name.
+     */
     WadLumpRecord& updateCRC()
     {
         crc_ = uint(info_.size);
@@ -258,11 +265,6 @@ struct WadFile::Instance
                                            reinterpret_cast<abstractfile_s*>(self)));
             PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&absPath));
             node->setUserData(record);
-
-            // Calcuate a simple CRC checksum for the lump.
-            /// @note If we intend to use the CRC for anything meaningful this algorithm
-            ///       should be replaced and execution deferred until the CRC is needed.
-            record->updateCRC();
         }
 
         Str_Free(&absPath);
@@ -512,10 +514,11 @@ size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
 uint WadFile::calculateCRC()
 {
     uint crc = 0;
-    const int numLumps = lumpCount();
+    int const numLumps = lumpCount();
     for(int i = 0; i < numLumps; ++i)
     {
-        WadLumpRecord const* lrec = d->lumpRecord(i);
+        WadLumpRecord* lrec = d->lumpRecord(i);
+        lrec->updateCRC();
         crc += lrec->crc();
     }
     return crc;
