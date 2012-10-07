@@ -112,7 +112,7 @@ Time& Time::operator += (const Delta& delta)
 
 Time::Delta Time::operator - (const Time& earlierTime) const
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(4, 7, 0))
+#ifdef DENG2_QT_4_7_OR_NEWER
     return earlierTime._time.msecsTo(_time) / 1000.0;
 #else
     return earlierTime._time.time().msecsTo(_time.time()) / 1000.0;

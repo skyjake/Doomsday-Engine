@@ -51,7 +51,7 @@
 #  include <ApplicationServices/ApplicationServices.h>
 #endif
 
-#if (QT_VERSION < QT_VERSION_CHECK(4, 7, 0))
+#ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
 #endif
 
@@ -430,7 +430,7 @@ void Canvas::keyReleaseEvent(QKeyEvent* ev)
 static int translateButton(Qt::MouseButton btn)
 {
     if(btn == Qt::LeftButton) return IMB_LEFT;
-#if (QT_VERSION >= QT_VERSION_CHECK(4, 7, 0))
+#ifdef DENG2_QT_4_7_OR_NEWER
     if(btn == Qt::MiddleButton) return IMB_MIDDLE;
 #else
     if(btn == Qt::MidButton) return IMB_MIDDLE;
