@@ -30,6 +30,7 @@
 #ifndef LIBDENG_FILESYS_LUMPINDEX_H
 #define LIBDENG_FILESYS_LUMPINDEX_H
 
+#include "de_base.h" /// For lumpnum_t (@todo which should be moved here)
 #include "abstractfile.h"
 #include "lumpinfo.h"
 

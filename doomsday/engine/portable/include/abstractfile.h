@@ -48,6 +48,7 @@ typedef enum {
 
 #ifdef __cplusplus
 
+#include <de/str.h>
 #include "dfile.h"
 #include "lumpinfo.h"
 

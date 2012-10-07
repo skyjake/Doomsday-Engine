@@ -20,15 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_filesys.h"
 #include "lumpindex.h"
-
 #include "lumpfile.h"
-
-#include <de/Error>
-#include <de/Log>
-#include <de/memory.h>
 
 using namespace de;
 using de::DFile;
@@ -87,7 +80,6 @@ LumpFile& LumpFile::unlockLump(int /*lumpIdx*/)
 
 int LumpFile::publishLumpsToIndex(LumpIndex& index)
 {
-    LOG_AS("LumpFile");
     // This *is* the lump, so insert ourself as a lump of our container in the index.
     index.catalogLumps(container(), info().lumpIdx, 1);
     return 1;
