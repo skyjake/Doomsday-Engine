@@ -62,7 +62,7 @@ struct LumpIndex::Instance
 
     LumpIndex* self;
     int flags; /// @see lumpIndexFlags
-    LumpIndex::LumpInfos lumpInfos;
+    LumpIndex::Lumps lumpInfos;
     HashMap* hashMap;
 
     Instance(LumpIndex* d, int _flags)
@@ -277,7 +277,7 @@ LumpInfo const& LumpIndex::lumpInfo(lumpnum_t lumpNum)
     return *d->lumpInfos[lumpNum];
 }
 
-LumpIndex::LumpInfos const& LumpIndex::lumps()
+LumpIndex::Lumps const& LumpIndex::lumps()
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -364,7 +364,7 @@ bool LumpIndex::catalogues(AbstractFile& file)
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
-    DENG2_FOR_EACH(i, d->lumpInfos, LumpInfos::iterator)
+    DENG2_FOR_EACH(i, d->lumpInfos, Lumps::iterator)
     {
         LumpInfo const* lumpInfo = *i;
         if(reinterpret_cast<AbstractFile*>(lumpInfo->container) == &file) return true;

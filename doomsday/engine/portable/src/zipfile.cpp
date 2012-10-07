@@ -140,22 +140,16 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src);
 
 struct ZipLumpRecord
 {
-    LumpInfo info_;
+public:
+    explicit ZipLumpRecord(LumpInfo const& _info) : info_(_info)
+    {}
 
-    explicit ZipLumpRecord(LumpInfo const& _info)
-    {
-        F_CopyLumpInfo(&info_, &_info);
-    }
-
-    ~ZipLumpRecord()
-    {
-        F_DestroyLumpInfo(&info_);
-    }
-
-    LumpInfo const& info() const
-    {
+    LumpInfo const& info() const {
         return info_;
     }
+
+private:
+    LumpInfo info_;
 };
 
 struct ZipFile::Instance
@@ -376,26 +370,19 @@ struct ZipFile::Instance
                 self->file->seek(ULONG(header->relOffset), SeekSet);
                 self->file->read((uint8_t*)&localHeader, sizeof(localHeader));
 
-                LumpInfo info;
-                F_InitLumpInfo(&info);
-                info.lumpIdx = lumpIdx++;
-                info.size = ULONG(header->size);
+                size_t baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t)
+                                  + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
+
+                size_t compressedSize;
                 if(USHORT(header->compression) == ZFC_DEFLATED)
                 {
                     // Compressed using the deflate algorithm.
-                    info.compressedSize = ULONG(header->compressedSize);
+                    compressedSize = ULONG(header->compressedSize);
                 }
                 else // No compression.
                 {
-                    info.compressedSize = info.size;
+                    compressedSize = ULONG(header->size);
                 }
-
-                // The modification date is inherited from the real file (note recursion).
-                info.lastModified = self->lastModified();
-                info.container = reinterpret_cast<abstractfile_s*>(self);
-
-                info.baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t)
-                                + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
 
                 // Convert all slashes to our internal separator.
                 F_FixSlashes(&entryPath, &entryPath);
@@ -406,11 +393,12 @@ struct ZipFile::Instance
                 // Make it absolute.
                 F_PrependBasePath(&entryPath, &entryPath);
 
-                ZipLumpRecord* record = new ZipLumpRecord(info);
+                ZipLumpRecord* record =
+                    new ZipLumpRecord(LumpInfo(self->lastModified(), // Inherited from the file (note recursion).
+                                               lumpIdx++, baseOffset, ULONG(header->size),
+                                               compressedSize, reinterpret_cast<abstractfile_s*>(self)));
                 PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&entryPath));
                 node->setUserData(record);
-
-                F_DestroyLumpInfo(&info);
             }
         }
 
@@ -450,7 +438,7 @@ struct ZipFile::Instance
 
         self->file->seek(lumpRecord->info().baseOffset, SeekSet);
 
-        if(lumpRecord->info().compressedSize != lumpRecord->info().size)
+        if(lumpRecord->info().isCompressed())
         {
             bool result;
             uint8_t* compressedData = (uint8_t*) M_Malloc(lumpRecord->info().compressedSize);
@@ -600,7 +588,7 @@ uint8_t const* ZipFile::cacheLump(int lumpIdx)
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) info.size
-        << (info.compressedSize != info.size? ", compressed" : "");
+        << (info.isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
     if(!d->lumpCache)
@@ -663,7 +651,7 @@ size_t ZipFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) lrec->info().size
-        << (lrec->info().compressedSize != lrec->info().size? ", compressed" : "")
+        << (lrec->info().isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
         << (unsigned long) length;
 

@@ -116,6 +116,12 @@ public:
         return info().size;
     }
 
+    // Convenient lookup method for when only the is-compressed property is needed from info().
+    /// @return  Size of the uncompressed resource.
+    inline bool isCompressed() const {
+        return info().isCompressed();
+    }
+
     /// @return  @c true if the resource is marked "startup".
     bool hasStartup() const;
 

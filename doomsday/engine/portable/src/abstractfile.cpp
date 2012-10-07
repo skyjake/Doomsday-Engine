@@ -45,14 +45,13 @@ AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, Lum
     flags.startup = false;
     flags.custom = true;
     Str_Init(&path_); Str_Set(&path_, _path);
-    F_CopyLumpInfo(&info_, &_info);
+    info_ = _info;
 }
 
 AbstractFile::~AbstractFile()
 {
     FS::releaseFile(this);
     Str_Free(&path_);
-    F_DestroyLumpInfo(&info_);
     if(file) delete file;
 }
 

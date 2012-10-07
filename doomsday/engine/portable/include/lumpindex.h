@@ -52,7 +52,7 @@ namespace de {
 class LumpIndex
 {
 public:
-    typedef QList<LumpInfo const*> LumpInfos;
+    typedef QList<LumpInfo const*> Lumps;
 
 public:
     /**
@@ -80,7 +80,7 @@ public:
     /**
      * Provides access to the list of lumps for efficient traversals.
      */
-    LumpInfos const& lumps();
+    Lumps const& lumps();
 
     /**
      * Clear the index back to its default (i.e., empty state).

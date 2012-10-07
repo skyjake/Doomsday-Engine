@@ -38,6 +38,7 @@
 #include <de/memoryzone.h>
 
 using namespace de;
+using de::AbstractFile;
 using de::DFile;
 using de::PathDirectoryNode;
 
@@ -58,23 +59,36 @@ typedef struct {
 
 struct WadLumpRecord
 {
-    uint crc;
-    LumpInfo info_;
+public:
+    explicit WadLumpRecord(LumpInfo const& _info) : crc_(0), info_(_info)
+    {}
 
-    explicit WadLumpRecord(LumpInfo const& _info) : crc(0)
-    {
-        F_CopyLumpInfo(&info_, &_info);
-    }
-
-    ~WadLumpRecord()
-    {
-        F_DestroyLumpInfo(&info_);
-    }
-
-    LumpInfo const& info() const
-    {
+    LumpInfo const& info() const {
         return info_;
     }
+
+    uint crc() const { return crc_; }
+
+    /// @attention Calls back into the owning container instance in order to obtain the name.
+    WadLumpRecord& updateCRC()
+    {
+        crc_ = uint(info_.size);
+
+        AbstractFile* container = reinterpret_cast<AbstractFile*>(info_.container);
+        DENG_ASSERT(container);
+        PathDirectoryNode const& node = container->lumpDirectoryNode(info_.lumpIdx);
+        ddstring_t const* name = node.pathFragment();
+        int const nameLen = Str_Length(name);
+        for(int k = 0; k < nameLen; ++k)
+        {
+            crc_ += Str_At(name, k);
+        }
+        return *this;
+    }
+
+private:
+    uint crc_;
+    LumpInfo info_;
 };
 
 struct WadFile::Instance
@@ -231,34 +245,24 @@ struct WadFile::Instance
         wadlumprecord_t const* arcRecord = arcRecords;
         for(int i = 0; i < arcRecordsCount; ++i, arcRecord++)
         {
-            LumpInfo info; F_InitLumpInfo(&info);
-            info.baseOffset     = littleEndianByteOrder.toNative(arcRecord->filePos);
-            info.size           = littleEndianByteOrder.toNative(arcRecord->size);
-            info.compressedSize = info.size;
-            info.container      = reinterpret_cast<abstractfile_s*>(self);
-            // The modification date is inherited from the file (note recursion).
-            info.lastModified   = self->lastModified();
-            info.lumpIdx        = i;
-
             // Determine the name for this lump in the VFS.
             normalizeName(*arcRecord, &absPath);
             F_PrependBasePath(&absPath, &absPath); // Make it absolute.
 
-            WadLumpRecord* record = new WadLumpRecord(info);
+            WadLumpRecord* record =
+                new WadLumpRecord(LumpInfo(self->lastModified(), // Inherited from the file (note recursion).
+                                           i,
+                                           littleEndianByteOrder.toNative(arcRecord->filePos),
+                                           littleEndianByteOrder.toNative(arcRecord->size),
+                                           littleEndianByteOrder.toNative(arcRecord->size),
+                                           reinterpret_cast<abstractfile_s*>(self)));
             PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&absPath));
             node->setUserData(record);
-
-            F_DestroyLumpInfo(&info);
 
             // Calcuate a simple CRC checksum for the lump.
             /// @note If we intend to use the CRC for anything meaningful this algorithm
             ///       should be replaced and execution deferred until the CRC is needed.
-            record->crc = uint(record->info().size);
-            int nameLen = nameLength(*arcRecord);
-            for(int k = 0; k < nameLen; ++k)
-            {
-                record->crc += arcRecord->name[k];
-            }
+            record->updateCRC();
         }
 
         Str_Free(&absPath);
@@ -415,7 +419,7 @@ uint8_t const* WadFile::cacheLump(int lumpIdx)
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) info.size
-        << (info.compressedSize != info.size? ", compressed" : "");
+        << (info.isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
     if(!d->lumpCache)
@@ -478,7 +482,7 @@ size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
         << (unsigned long) lrec->info().size
-        << (lrec->info().compressedSize != lrec->info().size? ", compressed" : "")
+        << (lrec->info().isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
         << (unsigned long)length;
 
@@ -512,7 +516,7 @@ uint WadFile::calculateCRC()
     for(int i = 0; i < numLumps; ++i)
     {
         WadLumpRecord const* lrec = d->lumpRecord(i);
-        crc += lrec->crc;
+        crc += lrec->crc();
     }
     return crc;
 }

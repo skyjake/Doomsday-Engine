@@ -441,17 +441,7 @@ void F_InitLumpInfo(LumpInfo* info)
 void F_CopyLumpInfo(LumpInfo* dst, LumpInfo const* src)
 {
     DENG_ASSERT(dst && src);
-    dst->lumpIdx = src->lumpIdx;
-    dst->baseOffset = src->baseOffset;
-    dst->size = src->size;
-    dst->compressedSize = src->compressedSize;
-    dst->lastModified = src->lastModified;
-    dst->container = src->container;
-}
-
-void F_DestroyLumpInfo(LumpInfo* /*info*/)
-{
-    // Nothing to do.
+    *dst = *src;
 }
 
 void F_Init(void)
@@ -830,8 +820,7 @@ lumpnum_t FS::openAuxiliary(char const* path, size_t baseOffset)
         auxiliaryWadLumpIndexInUse = true;
 
         // Prepare the temporary info descriptor.
-        LumpInfo info; F_InitLumpInfo(&info);
-        info.lastModified = lastModified(Str_Text(foundPath));
+        LumpInfo info = LumpInfo(lastModified(Str_Text(foundPath)));
 
         WadFile* wad = new WadFile(*hndl, Str_Text(foundPath), info);
         hndl = DFileBuilder::fromFile(*wad);
@@ -843,8 +832,6 @@ lumpnum_t FS::openAuxiliary(char const* path, size_t baseOffset)
 
         Str_Delete(foundPath);
 
-        // We're done with the descriptor.
-        F_DestroyLumpInfo(&info);
         return AUXILIARY_BASE;
     }
 
@@ -1257,7 +1244,7 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
     // Check the Zip directory.
     {
     int result = 0;
-    DENG2_FOR_EACH(i, zipLumpIndex->lumps(), LumpIndex::LumpInfos::const_iterator)
+    DENG2_FOR_EACH(i, zipLumpIndex->lumps(), LumpIndex::Lumps::const_iterator)
     {
         LumpInfo const* lumpInfo = *i;
         AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
@@ -1475,9 +1462,8 @@ static DFile* openAsLumpFile(AbstractFile* container, int lumpIdx,
     ///        but should instead be deferred until the content of the lump is read.
     DFile* hndl = DFileBuilder::fromFileLump(*container, lumpIdx, false/*dontBuffer*/);
 
-    // Prepare the temporary info descriptor.
-    LumpInfo info; F_InitLumpInfo(&info);
-    F_CopyLumpInfo(&info, &container->lumpInfo(lumpIdx));
+    // Prepare a the temporary info descriptor.
+    LumpInfo info = container->lumpInfo(lumpIdx);
 
     // Try to open the referenced file as a specialised file type.
     DFile* file = tryOpenFile3(hndl, Str_Text(&absPath), &info);
@@ -1490,11 +1476,7 @@ static DFile* openAsLumpFile(AbstractFile* container, int lumpIdx,
     }
     DENG_ASSERT(file);
 
-    // We're done with the descriptor.
-    F_DestroyLumpInfo(&info);
-
     Str_Free(&absPath);
-
     return file;
 }
 
@@ -1623,8 +1605,7 @@ static DFile* tryOpenFile2(char const* path, char const* mode, size_t baseOffset
     DFile* hndl = DFileBuilder::fromNativeFile(*nativeFile, baseOffset);
 
     // Prepare the temporary info descriptor.
-    LumpInfo info; F_InitLumpInfo(&info);
-    info.lastModified = FS::lastModified(Str_Text(foundPath));
+    LumpInfo info = LumpInfo(FS::lastModified(Str_Text(foundPath)));
 
     // Search path is used here rather than found path as the latter may have
     // been mapped to another location. We want the file to be attributed with
@@ -1639,12 +1620,8 @@ static DFile* tryOpenFile2(char const* path, char const* mode, size_t baseOffset
     }
     DENG_ASSERT(dfile);
 
-    // We're done with the descriptor.
-    F_DestroyLumpInfo(&info);
-
     Str_Delete(foundPath);
     Str_Free(&searchPath);
-
     return dfile;
 }
 
@@ -2208,24 +2185,23 @@ D_CMD(DumpLump)
 /**
  * Print a content listing of lumps in this directory to stdout (for debug).
  */
-static void printLumpIndex(LumpIndex& ld)
+static void printLumpIndex(LumpIndex& index)
 {
-    const int numRecords = ld.size();
+    const int numRecords = index.size();
     const int numIndexDigits = MAX_OF(3, M_NumDigits(numRecords));
 
-    Con_Printf("LumpIndex %p (%i records):\n", &ld, numRecords);
+    Con_Printf("LumpIndex %p (%i records):\n", &index, numRecords);
 
     int idx = 0;
-    DENG2_FOR_EACH(i, ld.lumps(), LumpIndex::LumpInfos::const_iterator)
+    DENG2_FOR_EACH(i, index.lumps(), LumpIndex::Lumps::const_iterator)
     {
         LumpInfo const* lumpInfo = *i;
         AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
-        AutoStr* lumpPath = container->composeLumpPath(lumpInfo->lumpIdx);
         Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
                    F_PrettyPath(Str_Text(container->path())),
-                   F_PrettyPath(Str_Text(lumpPath)),
+                   F_PrettyPath(Str_Text(container->composeLumpPath(lumpInfo->lumpIdx))),
                    (unsigned long) lumpInfo->size,
-                   (lumpInfo->compressedSize != lumpInfo->size? " compressed" : ""));
+                   (lumpInfo->isCompressed()? " compressed" : ""));
     }
     Con_Printf("---End of lumps---\n");
 }

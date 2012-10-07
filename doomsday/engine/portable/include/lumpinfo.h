@@ -28,6 +28,8 @@
 #include <de/types.h>
 
 #ifdef __cplusplus
+#include <algorithm>
+
 extern "C" {
 #endif
 
@@ -37,18 +39,53 @@ struct abstractfile_s;
  * LumpInfo record. POD.
  * @ingroup fs
  */
-typedef struct {
+typedef struct lumpinfo_s {
     uint lastModified; /// Unix timestamp.
     int lumpIdx; /// Relative index of this lump in the owning package else zero.
     size_t baseOffset; /// Offset from the start of the owning package.
     size_t size; /// Size of the uncompressed file.
     size_t compressedSize; /// Size of the original file compressed.
+
+    /// @todo Move this property up to file level.
     struct abstractfile_s* container; /// Owning package else @c NULL.
+
+#ifdef __cplusplus
+    lumpinfo_s(uint _lastModified = 0, int _lumpIdx = 0, size_t _baseOffset = 0,
+               size_t _size = 0, size_t _compressedSize = 0, struct abstractfile_s* _container = 0)
+        : lastModified(_lastModified), lumpIdx(_lumpIdx), baseOffset(_baseOffset),
+          size(_size), compressedSize(_compressedSize), container(_container)
+    {}
+
+    lumpinfo_s(lumpinfo_s const& other)
+        : lastModified(other.lastModified), lumpIdx(other.lumpIdx), baseOffset(other.baseOffset),
+          size(other.size), compressedSize(other.compressedSize), container(other.container)
+    {}
+
+    ~lumpinfo_s() {}
+
+    lumpinfo_s& operator = (lumpinfo_s other)
+    {
+        swap(*this, other);
+        return *this;
+    }
+
+    friend void swap(lumpinfo_s& first, lumpinfo_s& second) // nothrow
+    {
+        using std::swap;
+        swap(first.lastModified,    second.lastModified);
+        swap(first.lumpIdx,         second.lumpIdx);
+        swap(first.baseOffset,      second.baseOffset);
+        swap(first.size,            second.size);
+        swap(first.compressedSize,  second.compressedSize);
+        swap(first.container,       second.container);
+    }
+
+    inline bool isCompressed() const { return size != compressedSize; }
+#endif
 } LumpInfo;
 
 void F_InitLumpInfo(LumpInfo* info);
 void F_CopyLumpInfo(LumpInfo* dst, const LumpInfo* src);
-void F_DestroyLumpInfo(LumpInfo* info);
 
 #ifdef __cplusplus
 } // extern "C"
