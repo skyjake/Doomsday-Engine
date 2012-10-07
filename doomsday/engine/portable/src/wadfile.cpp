@@ -58,18 +58,22 @@ typedef struct {
 
 struct WadLumpRecord
 {
-    size_t baseOffset;
     uint crc;
-    LumpInfo info;
+    LumpInfo info_;
 
-    WadLumpRecord() : baseOffset(0), crc(0)
+    explicit WadLumpRecord(LumpInfo const& _info) : crc(0)
     {
-        F_InitLumpInfo(&info);
+        F_CopyLumpInfo(&info_, &_info);
     }
 
     ~WadLumpRecord()
     {
-        F_DestroyLumpInfo(&info);
+        F_DestroyLumpInfo(&info_);
+    }
+
+    LumpInfo const& info() const
+    {
+        return info_;
     }
 };
 
@@ -227,28 +231,29 @@ struct WadFile::Instance
         wadlumprecord_t const* arcRecord = arcRecords;
         for(int i = 0; i < arcRecordsCount; ++i, arcRecord++)
         {
-            WadLumpRecord* record = new WadLumpRecord();
-
-            record->baseOffset     = littleEndianByteOrder.toNative(arcRecord->filePos);
-            record->info.size      = littleEndianByteOrder.toNative(arcRecord->size);
-            record->info.compressedSize = record->info.size;
-            record->info.container = reinterpret_cast<abstractfile_s*>(self);
+            LumpInfo info; F_InitLumpInfo(&info);
+            info.baseOffset     = littleEndianByteOrder.toNative(arcRecord->filePos);
+            info.size           = littleEndianByteOrder.toNative(arcRecord->size);
+            info.compressedSize = info.size;
+            info.container      = reinterpret_cast<abstractfile_s*>(self);
             // The modification date is inherited from the file (note recursion).
-            record->info.lastModified = self->lastModified();
-            record->info.lumpIdx   = i;
+            info.lastModified   = self->lastModified();
+            info.lumpIdx        = i;
 
             // Determine the name for this lump in the VFS.
             normalizeName(*arcRecord, &absPath);
             F_PrependBasePath(&absPath, &absPath); // Make it absolute.
 
-            // Insert this lump record into the directory.
+            WadLumpRecord* record = new WadLumpRecord(info);
             PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&absPath));
             node->setUserData(record);
+
+            F_DestroyLumpInfo(&info);
 
             // Calcuate a simple CRC checksum for the lump.
             /// @note If we intend to use the CRC for anything meaningful this algorithm
             ///       should be replaced and execution deferred until the CRC is needed.
-            record->crc = uint(record->info.size);
+            record->crc = uint(record->info().size);
             int nameLen = nameLength(*arcRecord);
             for(int k = 0; k < nameLen; ++k)
             {
@@ -267,8 +272,8 @@ struct WadFile::Instance
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
         Instance* wadInst = (Instance*)parameters;
         WadLumpRecord* lumpRecord = reinterpret_cast<WadLumpRecord*>(node->userData());
-        DENG2_ASSERT(lumpRecord && wadInst->self->isValidIndex(lumpRecord->info.lumpIdx)); // Sanity check.
-        (*wadInst->lumpNodeLut)[lumpRecord->info.lumpIdx] = node;
+        DENG2_ASSERT(lumpRecord && wadInst->self->isValidIndex(lumpRecord->info().lumpIdx)); // Sanity check.
+        (*wadInst->lumpNodeLut)[lumpRecord->info().lumpIdx] = node;
         return 0; // Continue iteration.
     }
 
@@ -336,7 +341,7 @@ LumpInfo const& WadFile::lumpInfo(int lumpIdx)
     LOG_AS("WadFile");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) throw NotFoundError("WadFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
-    return lrec->info;
+    return lrec->info();
 }
 
 size_t WadFile::lumpSize(int lumpIdx)
@@ -344,7 +349,7 @@ size_t WadFile::lumpSize(int lumpIdx)
     LOG_AS("WadFile");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) throw NotFoundError("WadFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
-    return lrec->info.size;
+    return lrec->info().size;
 }
 
 AutoStr* WadFile::composeLumpPath(int lumpIdx, char delimiter)
@@ -472,8 +477,8 @@ size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << (unsigned long) lrec->info.size
-        << (lrec->info.compressedSize != lrec->info.size? ", compressed" : "")
+        << (unsigned long) lrec->info().size
+        << (lrec->info().compressedSize != lrec->info().size? ", compressed" : "")
         << (unsigned long) startOffset
         << (unsigned long)length;
 
@@ -484,13 +489,13 @@ size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
-            size_t readBytes = MIN_OF(lrec->info.size, length);
+            size_t readBytes = MIN_OF(lrec->info().size, length);
             memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
     }
 
-    file->seek(lrec->baseOffset + startOffset, SeekSet);
+    file->seek(lrec->info().baseOffset + startOffset, SeekSet);
     size_t readBytes = file->read(buffer, length);
 
     /// @todo Do not check the read length here.

@@ -87,10 +87,8 @@ public:
      */
     filetype_t type() const;
 
-    /**
-     * @return  Immutable copy of the info descriptor for this resource.
-     */
-    LumpInfo const& info() const;
+    /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this resource.
+    ddstring_t const* path() const;
 
     /// @return @c true= this file is contained within another.
     bool isContained() const;
@@ -98,14 +96,25 @@ public:
     /// @return The file instance which contains this.
     AbstractFile& container() const;
 
-    /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this resource.
-    ddstring_t const* path() const;
-
     /// @return  Load order index for this resource.
     uint loadOrderIndex() const;
 
+    /**
+     * @return  Immutable copy of the info descriptor for this resource.
+     */
+    LumpInfo const& info() const;
+
+    // Convenient lookup method for when only the last-modified property is needed from info().
     /// @return  "Last modified" timestamp of the resource.
-    uint lastModified() const;
+    inline uint lastModified() const {
+        return info().lastModified;
+    }
+
+    // Convenient lookup method for when only the size property is needed from info().
+    /// @return  Size of the uncompressed resource.
+    inline uint size() const {
+        return info().size;
+    }
 
     /// @return  @c true if the resource is marked "startup".
     bool hasStartup() const;
@@ -118,8 +127,6 @@ public:
 
     /// Mark this resource as "custom".
     AbstractFile& setCustom(bool yes);
-
-    size_t baseOffset() const;
 
     DFile* handle();
 

@@ -431,16 +431,18 @@ void F_InitLumpInfo(LumpInfo* info)
 {
     DENG_ASSERT(info);
     info->lumpIdx = 0;
+    info->baseOffset = 0;
     info->size = 0;
     info->compressedSize = 0;
     info->lastModified = 0;
-    info->container = NULL;
+    info->container = 0;
 }
 
 void F_CopyLumpInfo(LumpInfo* dst, LumpInfo const* src)
 {
     DENG_ASSERT(dst && src);
     dst->lumpIdx = src->lumpIdx;
+    dst->baseOffset = src->baseOffset;
     dst->size = src->size;
     dst->compressedSize = src->compressedSize;
     dst->lastModified = src->lastModified;
@@ -763,19 +765,9 @@ LumpInfo const* FS::lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx)
         if(lumpIdx) *lumpIdx = -1;
         return 0;
     }
-    return &ActiveWadLumpIndex->lumpInfo(translated);
-}
-
-char const* FS::lumpName(lumpnum_t absoluteLumpNum)
-{
-    LumpInfo const* info = lumpInfo(absoluteLumpNum);
-    if(info)
-    {
-        AbstractFile* container = reinterpret_cast<AbstractFile*>(info->container);
-        PathDirectoryNode const& node = container->lumpDirectoryNode(info->lumpIdx);
-        return Str_Text(node.pathFragment());
-    }
-    return "";
+    LumpInfo const& info = ActiveWadLumpIndex->lumpInfo(translated);
+    if(lumpIdx) *lumpIdx = info.lumpIdx;
+    return &info;
 }
 
 AbstractFile* FS::lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx)
@@ -783,6 +775,15 @@ AbstractFile* FS::lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx)
     LumpInfo const* info = lumpInfo(absoluteLumpNum, lumpIdx);
     if(!info) return 0;
     return reinterpret_cast<AbstractFile*>(info->container);
+}
+
+char const* FS::lumpName(lumpnum_t absoluteLumpNum)
+{
+    int lumpIdx;
+    AbstractFile* file = lumpFile(absoluteLumpNum, &lumpIdx);
+    if(!file) return "";
+    PathDirectoryNode const& node = file->lumpDirectoryNode(lumpIdx);
+    return Str_Text(node.pathFragment());
 }
 
 int FS::lumpCount()
@@ -1395,6 +1396,7 @@ static FILE* findRealFile(char const* path, char const* mymode, ddstring_t** fou
 
 AbstractFile* FS::findLumpFile(char const* path, int* lumpIdx)
 {
+    if(lumpIdx) *lumpIdx = -1;
     if(!inited || !path || !path[0]) return 0;
 
     /**

@@ -78,11 +78,6 @@ AbstractFile& AbstractFile::container() const
     return *cont;
 }
 
-size_t AbstractFile::baseOffset() const
-{
-    return (file? file->baseOffset() : 0);
-}
-
 DFile* AbstractFile::handle()
 {
     return file;
@@ -96,11 +91,6 @@ ddstring_t const* AbstractFile::path() const
 uint AbstractFile::loadOrderIndex() const
 {
     return order;
-}
-
-uint AbstractFile::lastModified() const
-{
-    return info_.lastModified;
 }
 
 bool AbstractFile::hasStartup() const

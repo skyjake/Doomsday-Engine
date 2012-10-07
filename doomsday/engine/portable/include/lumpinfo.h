@@ -40,6 +40,7 @@ struct abstractfile_s;
 typedef struct {
     uint lastModified; /// Unix timestamp.
     int lumpIdx; /// Relative index of this lump in the owning package else zero.
+    size_t baseOffset; /// Offset from the start of the owning package.
     size_t size; /// Size of the uncompressed file.
     size_t compressedSize; /// Size of the original file compressed.
     struct abstractfile_s* container; /// Owning package else @c NULL.
