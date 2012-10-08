@@ -295,7 +295,7 @@ struct ddwindow_s
          * to play out. Thus some of the operations have to be performed in a
          * deferred way, after a short wait. The ideal would be to listen to
          * the native events and trigger the necessary updates after they
-         * occur; however, now we just use a naive time-based delays.
+         * occur; however, now we just use naive time-based delays.
          */
 
         if(flags & DDWF_FULLSCREEN)
