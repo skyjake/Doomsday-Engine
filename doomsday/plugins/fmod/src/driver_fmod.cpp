@@ -28,6 +28,7 @@
 #include <fmod.hpp>
 
 #include "doomsday.h"
+#include <de/c_wrapper.h>
 
 FMOD::System* fmodSystem = 0;
 
@@ -48,6 +49,30 @@ int DS_Init(void)
         Con_Message("FMOD::System_Create failed: (%d) %s\n", result, FMOD_ErrorString(result));
         fmodSystem = 0;
         return false;
+    }
+
+#ifdef WIN32
+    // Figure out the system's configured speaker mode.
+    FMOD_SPEAKERMODE speakerMode;
+    result = fmodSystem->getDriverCaps(0, 0, 0, &speakerMode);
+    if(result == FMOD_OK)
+    {
+        fmodSystem->setSpeakerMode(speakerMode);
+    }
+#endif
+
+    // Manual overrides.
+    if(CommandLine_Exists("-speaker51"))
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_5POINT1);
+    }
+    if(CommandLine_Exists("-speaker71"))
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_7POINT1);
+    }
+    if(CommandLine_Exists("-speakerprologic"))
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
     }
 
     // Initialize FMOD.
