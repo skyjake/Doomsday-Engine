@@ -93,7 +93,7 @@ namespace de
         /**
          * Returns the root folder of the file system.
          */
-        static Folder& fileRoot();
+        static Folder& rootFolder();
 
         /**
          * Returns the /home folder.

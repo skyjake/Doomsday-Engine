@@ -134,7 +134,7 @@ void LogBuffer::setOutputFile(const String& path)
 
     if(!path.isEmpty())
     {
-        _outputFile = &App::fileRoot().replaceFile(path);
+        _outputFile = &App::rootFolder().replaceFile(path);
         _outputFile->setMode(File::Write);
         _outputFile->audienceForDeletion += this;
     }

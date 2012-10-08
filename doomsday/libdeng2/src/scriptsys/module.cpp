@@ -29,7 +29,7 @@ using namespace de;
 Module::Module(const String& sourcePath) : _sourcePath(sourcePath), _process(0)
 {
     // Load the script.
-    initialize(Script(App::fileRoot().locate<File>(sourcePath)));
+    initialize(Script(App::rootFolder().locate<File>(sourcePath)));
 }
 
 Module::Module(const File& sourceFile) : _sourcePath(sourceFile.path()), _process(0)

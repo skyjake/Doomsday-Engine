@@ -204,14 +204,14 @@ FS& App::fileSystem()
     return DENG2_APP->_fs;
 }
 
-Folder& App::fileRoot()
+Folder& App::rootFolder()
 {
     return fileSystem().root();
 }
 
 Folder& App::homeFolder()
 {
-    return fileRoot().locate<Folder>("/home");
+    return rootFolder().locate<Folder>("/home");
 }
 
 Config& App::config()
@@ -291,7 +291,7 @@ Record& App::importModule(const String& name, const String& fromPath)
             }
             matching.sort(sortFilesByModifiedAt);
             found = matching.back();
-            LOG_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size()) << " candidates.";
+            LOG_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size()) << " candidates (latest modified).";
         }
         else
         {
@@ -299,7 +299,7 @@ Record& App::importModule(const String& name, const String& fromPath)
         }
         if(!found)
         {
-            found = fileRoot().tryLocateFile(p + ".de");
+            found = rootFolder().tryLocateFile(p + ".de");
         }
         if(found)
         {

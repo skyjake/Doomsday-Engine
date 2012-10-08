@@ -59,7 +59,7 @@ void Config::read()
     try
     {
         // If we already have a saved copy of the config, read it.
-        File& file = App::fileRoot().locate<File>(_writtenConfigPath);
+        File& file = App::rootFolder().locate<File>(_writtenConfigPath);
         Reader(file) >> names();
         
         // If the saved config is from a different version, rerun the script.
@@ -90,14 +90,14 @@ void Config::read()
                                        Variable::AllowArray | Variable::ReadOnly));
 
     // Read the main configuration. 
-    Script script(App::fileRoot().locate<File>(_configPath));
+    Script script(App::rootFolder().locate<File>(_configPath));
     _config.run(script);
     _config.execute();
 }
 
 void Config::write()
 {
-    File& file = App::fileRoot().replaceFile(_writtenConfigPath);
+    File& file = App::rootFolder().replaceFile(_writtenConfigPath);
     Writer(file) << names();    
 }
 
