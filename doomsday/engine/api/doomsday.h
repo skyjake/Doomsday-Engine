@@ -134,7 +134,7 @@ struct font_s;
  * @note Game registration order defines the order of the automatic game
  * identification/selection logic.
  */
-gameid_t DD_DefineGame(const GameDef* definition);
+gameid_t DD_DefineGame(GameDef const* definition);
 
 /**
  * Retrieves the game identifier for a previously defined game.
@@ -143,7 +143,7 @@ gameid_t DD_DefineGame(const GameDef* definition);
  * @param identityKey  Identity key of the game.
  * @return Game identifier.
  */
-gameid_t DD_GameIdForKey(const char* identityKey);
+gameid_t DD_GameIdForKey(char const* identityKey);
 
 /**
  * Registers a new resource for the specified game.

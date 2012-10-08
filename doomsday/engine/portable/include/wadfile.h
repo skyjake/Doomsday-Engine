@@ -45,18 +45,14 @@ struct pathdirectorynode_s;
 
 namespace de {
 
+class LumpDirectory;
 class PathDirectoryNode;
 
 /**
  * WadFile. Runtime representation of an opened WAD file.
  */
-class WadFile
+class WadFile : public AbstractFile
 {
-public:
-    /// Base file instance.
-    /// @todo Inherit from this instead.
-    abstractfile_t base;
-
 public:
     WadFile(DFile& file, char const* path, LumpInfo const& info);
     ~WadFile();
@@ -152,19 +148,19 @@ public:
      * Read the data associated with lump @a lumpIdx into the cache.
      *
      * @param lumpIdx   Lump index associated with the data to be cached.
-     * @param tag       Zone purge level/cache tag to use.
      *
      * @return Pointer to the cached copy of the associated data.
      */
-    uint8_t const* cacheLump(int lumpIdx, int tag);
+    uint8_t const* cacheLump(int lumpIdx);
 
     /**
-     * Change the Zone purge level/cache tag for a cached data lump.
+     * Remove a lock on a cached data lump.
      *
      * @param lumpIdx   Lump index associated with the cached data to be changed.
-     * @param tag       New Zone purge level/cache tag to assign.
+     *
+     * @return This instance.
      */
-    WadFile& changeLumpCacheTag(int lumpIdx, int tag);
+    WadFile& unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -192,7 +188,7 @@ public:
      * @return Number of lumps published to the directory. Note that this is not
      *         necessarily equal to the the number of lumps in the file.
      */
-    int publishLumpsToDirectory(struct lumpdirectory_s* directory);
+    int publishLumpsToDirectory(LumpDirectory* directory);
 
     /**
      * @attention Uses an extremely simple formula which does not conform to any CRC
@@ -257,9 +253,9 @@ size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer/*, tryCache =
 size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
 size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length/*, tryCache = true*/);
 
-uint8_t const* WadFile_CacheLump(WadFile* wad, int lumpIdx, int tag);
+uint8_t const* WadFile_CacheLump(WadFile* wad, int lumpIdx);
 
-void WadFile_ChangeLumpCacheTag(WadFile* wad, int lumpIdx, int tag);
+void WadFile_UnlockLump(WadFile* wad, int lumpIdx);
 
 void WadFile_ClearLumpCache(WadFile* wad);
 

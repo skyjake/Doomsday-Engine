@@ -26,6 +26,7 @@
 #define LIBDENG_FILESYS_H
 
 #include "dd_types.h"
+#include "dfilebuilder.h"
 #include "fs_main.h"
 #include "fs_util.h"
 #include "sys_reslocator.h" /// \todo Does not belong here (higher level abstraction).
@@ -33,8 +34,6 @@
 #include "sys_findfile.h"
 
 #ifdef UNIX
-// We use SDL for window management under *nix
-#  define USING_SDL_WINDOW
 #  include "../../unix/include/sys_path.h"
 #endif
 

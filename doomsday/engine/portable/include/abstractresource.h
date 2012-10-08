@@ -26,6 +26,10 @@
 
 #include "uri.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * AbstractResource. (Record) Stores high-level metadata for a known resource.
  *
@@ -103,5 +107,9 @@ int AbstractResource_ResourceFlags(AbstractResource* resource);
 ddstring_t* const* AbstractResource_IdentityKeys(AbstractResource* resource);
 
 Uri* const* AbstractResource_SearchPaths(AbstractResource* resource);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_ABSTRACTRESOURCE_H */

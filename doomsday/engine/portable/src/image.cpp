@@ -32,7 +32,7 @@
 #include <QByteArray>
 #include <QImage>
 
-#if (QT_VERSION < QT_VERSION_CHECK(4, 7, 0))
+#ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
 #endif
 
@@ -135,33 +135,34 @@ boolean Image_HasAlpha(const image_t* image)
     return false;
 }
 
-boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* file)
+boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* _hndl)
 {
     /// @todo There are too many copies made here. It would be best if image_t
     /// contained an instance of QImage. -jk
 
     assert(img);
-    assert(file);
+    assert(_hndl);
+    de::DFile& hndl = *reinterpret_cast<de::DFile*>(_hndl);
 
     // It is assumed that file's position stays the same (could be trying multiple loaders).
-    size_t initPos = DFile_Tell(file);
+    size_t initPos = hndl.tell();
 
     GL_InitImage(img);
 
     // Load the file contents to a memory buffer.
     QByteArray data;
-    data.resize(DFile_Length(file) - initPos);
-    DFile_Read(file, reinterpret_cast<uint8_t*>(data.data()), data.size());
+    data.resize(hndl.length() - initPos);
+    hndl.read(reinterpret_cast<uint8_t*>(data.data()), data.size());
 
     QImage image = QImage::fromData(data, format);
     if(image.isNull())
     {
         // Back to the original file position.
-        DFile_Seek(file, initPos, SEEK_SET);
+        hndl.seek(initPos, SeekSet);
         return false;
     }
 
-    //Con_Message("Loading %s\n", Str_Text(AbstractFile_Path(DFile_File_Const(file))));
+    //Con_Message("Loading %s\n", Str_Text(file->file()->Path());
 
     // Convert paletted images to RGB.
     if(image.colorCount())
@@ -185,7 +186,7 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* fi
     img->pixels = reinterpret_cast<uint8_t*>(M_MemDup(image.constBits(), image.byteCount()));
 
     // Back to the original file position.
-    DFile_Seek(file, initPos, SEEK_SET);
+    hndl.seek(initPos, SeekSet);
     return true;
 }
 

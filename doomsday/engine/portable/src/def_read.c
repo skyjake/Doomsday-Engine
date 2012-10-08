@@ -2710,7 +2710,7 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // We will buffer a local copy of the file. How large a buffer do we need?
-    DFile_Seek(file, 0, SEEK_END);
+    DFile_Seek(file, 0, SeekEnd);
     bufferedDefSize = DFile_Tell(file);
     DFile_Rewind(file);
     bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
@@ -2738,14 +2738,14 @@ int DED_Read(ded_t* ded, const char* path)
 int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    AbstractFile* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(fsObject)
     {
         if(F_LumpLength(absoluteLumpNum) != 0)
         {
-            const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-            int result = DED_ReadData(ded, (const char*)lumpPtr, Str_Text(AbstractFile_Path(fsObject)));
-            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+            const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx);
+            DED_ReadData(ded, (const char*)lumpPtr, Str_Text(AbstractFile_Path(fsObject)));
+            F_UnlockLump(fsObject, lumpIdx);
         }
         return true;
     }

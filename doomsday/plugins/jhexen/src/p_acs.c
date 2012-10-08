@@ -262,7 +262,9 @@ void P_LoadACScripts(int lump)
 
     if(lumpLength >= sizeof(acsheader_t))
     {
-        header = (const acsheader_t*) W_CacheLump(lump, PU_MAP);
+        void* region = Z_Malloc(lumpLength, PU_MAP, 0);
+        W_ReadLump(lump, (uint8_t*)region);
+        header = (const acsheader_t*) region;
         ActionCodeBase = (const byte*) header;
 
         if(LONG(header->infoOffset) < (int)lumpLength)

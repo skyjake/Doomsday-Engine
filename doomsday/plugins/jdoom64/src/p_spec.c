@@ -228,8 +228,8 @@ void P_InitPicAnims(void)
          * All new features should be added, accessed via DED.
          */
         VERBOSE( Con_Message("Processing lump %s::ANIMATED...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))));
-        loadAnimDefs((animdef_t*)W_CacheLump(lumpNum, PU_GAMESTATIC), true);
-        W_CacheChangeTag(lumpNum, PU_CACHE);
+        loadAnimDefs((animdef_t*)W_CacheLump(lumpNum), true);
+        W_UnlockLump(lumpNum);
         return;
     }}
 

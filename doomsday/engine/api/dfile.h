@@ -1,10 +1,11 @@
 /**
  * @file dfile.h
- * Unique file reference in the engine's virtual file system.
+ * Reference/handle to a unique file in the engine's virtual file system.
  *
  * @ingroup fs
  *
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,75 +25,147 @@
 #ifndef LIBDENG_FILESYS_FILEHANDLE_H
 #define LIBDENG_FILESYS_FILEHANDLE_H
 
-#include "dd_types.h"
+#include <de/types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/// @addtogroup fs
-///@{
-
-struct dfile_s; // The file handle instance (opaque).
-
-/**
- * DFile instance.
- */
-typedef struct dfile_s DFile;
-
-/**
- * Close the file if open. Note that this clears any previously buffered data.
- */
-void DFile_Close(DFile* file);
-
-/// @return  @c true iff this handle's internal state is valid.
-boolean DFile_IsValid(const DFile* file);
-
-/// @return  The length of the file, in bytes.
-size_t DFile_Length(DFile* file);
-
-/// @return  Offset in bytes from the start of the file to begin read.
-size_t DFile_BaseOffset(const DFile* file);
-
-/**
- * @return  Number of bytes read (at most @a count bytes will be read).
- */
-size_t DFile_Read(DFile* file, uint8_t* buffer, size_t count);
-
-/**
- * Read a character from the stream, advancing the read position in the process.
- */
-unsigned char DFile_GetC(DFile* file);
-
-/**
- * @return  @c true iff the stream has reached the end of the file.
- */
-boolean DFile_AtEnd(DFile* file);
-
-/**
- * @return  Current position in the stream as an offset from the beginning of the file.
- */
-size_t DFile_Tell(DFile* file);
-
-/**
- * @return  The current position in the file, before the move, as an
- *      offset from the beginning of the file.
- */
-size_t DFile_Seek(DFile* file, size_t offset, int whence);
-
-/**
- * Rewind the stream to the start of the file.
- */
-void DFile_Rewind(DFile* file);
-
-#if _DEBUG
-void DFile_Print(const DFile* file);
-#endif
+/// Seek methods
+typedef enum {
+    SeekSet = 0,
+    SeekCur = 1,
+    SeekEnd = 2
+} SeekMethod;
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-///@}
+#ifdef __cplusplus
+
+struct filelist_s;
+
+namespace de {
+
+/// @todo Should not be visible outside the engine.
+class AbstractFile;
+class DFileBuilder;
+
+/**
+ * Reference/handle to a unique file in the engine's virtual file system.
+ */
+class DFile
+{
+public:
+    ~DFile();
+
+    /**
+     * Close the file if open. Note that this clears any previously buffered data.
+     */
+    DFile& close();
+
+    /// @todo Should not be visible outside the engine.
+    struct filelist_s* list();
+
+    /// @todo Should not be visible outside the engine.
+    DFile& setList(struct filelist_s* list);
+
+    /// @todo Should not be visible outside the engine.
+    AbstractFile* file();
+    AbstractFile* file() const;
+
+    /// @return  @c true iff this handle's internal state is valid.
+    bool isValid() const;
+
+    /// @return  The length of the file, in bytes.
+    size_t length();
+
+    /// @return  Offset in bytes from the start of the file to begin read.
+    size_t baseOffset() const;
+
+    /**
+     * @return  Number of bytes read (at most @a count bytes will be read).
+     */
+    size_t read(uint8_t* buffer, size_t count);
+
+    /**
+     * Read a character from the stream, advancing the read position in the process.
+     */
+    unsigned char getC();
+
+    /**
+     * @return  @c true iff the stream has reached the end of the file.
+     */
+    bool atEnd();
+
+    /**
+     * @return  Current position in the stream as an offset from the beginning of the file.
+     */
+    size_t tell();
+
+    /**
+     * @return  The current position in the file, before the move, as an
+     *      offset from the beginning of the file.
+     */
+    size_t seek(size_t offset, SeekMethod whence);
+
+    /**
+     * Rewind the stream to the start of the file.
+     */
+    DFile& rewind();
+
+#if _DEBUG
+    static void debugPrint(DFile const& hndl);
+#endif
+
+    friend class DFileBuilder;
+
+private:
+    DFile();
+
+    struct Instance;
+    Instance* d;
+};
+
+} // namespace de
+
+extern "C" {
+#endif // __cplusplus
+
+/**
+ * C wrapper API:
+ */
+
+struct dfile_s; // The texture instance (opaque).
+typedef struct dfile_s DFile;
+
+void DFile_Close(DFile* hndl);
+
+boolean DFile_IsValid(DFile const* hndl);
+
+size_t DFile_Length(DFile* hndl);
+
+size_t DFile_BaseOffset(DFile const* hndl);
+
+size_t DFile_Read(DFile* hndl, uint8_t* buffer, size_t count);
+
+unsigned char DFile_GetC(DFile* hndl);
+
+boolean DFile_AtEnd(DFile* hndl);
+
+size_t DFile_Tell(DFile* hndl);
+
+size_t DFile_Seek(DFile* hndl, size_t offset, SeekMethod whence);
+
+void DFile_Rewind(DFile* hndl);
+
+#if _DEBUG
+void DFile_DebugPrint(DFile const* file);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FILESYS_FILEHANDLE_H */

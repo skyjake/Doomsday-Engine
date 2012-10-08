@@ -143,7 +143,7 @@ uint8_t* PCX_Load(DFile* file, int* width, int* height, int* pixelSize)
            hdr.encoding != 1 || hdr.bits_per_pixel != 8)
         {
             setLastError("Unsupported format.");
-            DFile_Seek(file, initPos, SEEK_SET);
+            DFile_Seek(file, initPos, SeekSet);
             return 0;
         }
 
@@ -162,7 +162,7 @@ uint8_t* PCX_Load(DFile* file, int* width, int* height, int* pixelSize)
             dstBuf = 0;
         }
     }
-    DFile_Seek(file, initPos, SEEK_SET);
+    DFile_Seek(file, initPos, SeekSet);
     return dstBuf;
     }
 }

@@ -29,11 +29,19 @@
 #ifndef LIBDENG_FILESYS_PATH_H
 #define LIBDENG_FILESYS_PATH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Convert the given path to an absolute path.
  */
 char* _fullpath(char* full, const char* original, int len);
 
 void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBDENG_FILESYS_PATH_H */

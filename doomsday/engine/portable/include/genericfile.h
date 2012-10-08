@@ -1,7 +1,7 @@
 /**
- * @file lumpfile.h
- * Specialization of AbstractFile for working with the lumps of containers
- * objects such as WadFile and ZipFile.
+ * @file genericfile.h
+ *
+ * Generic implementation of AbstractFile, for generic/unknown files.
  *
  * @ingroup fs
  *
@@ -25,8 +25,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_LUMPFILE_H
-#define LIBDENG_FILESYS_LUMPFILE_H
+#ifndef LIBDENG_FILESYS_GENERICFILE_H
+#define LIBDENG_FILESYS_GENERICFILE_H
 
 #include "lumpinfo.h"
 #include "abstractfile.h"
@@ -37,13 +37,13 @@ namespace de {
 class LumpDirectory;
 
 /**
- * LumpFile. Runtime representation of a lump-file for use with LumpDirectory
+ * GenericFile. Runtime representation of a generic/unknown file for use with LumpDirectory
  */
-class LumpFile : public AbstractFile
+class GenericFile : public AbstractFile
 {
 public:
-    LumpFile(DFile& file, char const* path, LumpInfo const& info);
-    ~LumpFile();
+    GenericFile(DFile& file, char const* path, LumpInfo const& info);
+    ~GenericFile();
 
     /// @return Number of lumps (always @c =1).
     int lumpCount();
@@ -80,32 +80,26 @@ extern "C" {
  * C wrapper API:
  */
 
-struct lumpfile_s; // The lumpfile instance (opaque)
-typedef struct lumpfile_s LumpFile;
+struct genericfile_s; // The genericfile instance (opaque)
+typedef struct genericfile_s GenericFile;
 
 /**
- * Constructs a new LumpFile instance which must be destroyed with LumpFile_Delete()
+ * Constructs a new GenericFile instance which must be destroyed with GenericFile_Delete()
  * once it is no longer needed.
  *
- * @param file      Virtual file handle to the underlying file resource.
- * @param path      Virtual file system path to associate with the resultant LumpFile.
- * @param info      File info descriptor for the resultant LumpFile. A copy is made.
+ * @param hndl      Virtual file handle to the underlying file resource.
+ * @param path      Virtual file system path to associate with the resultant GenericFile.
+ * @param info      File info descriptor for the resultant GenericFile. A copy is made.
  */
-LumpFile* LumpFile_New(DFile* file, char const* path, LumpInfo const* info);
+GenericFile* GenericFile_New(DFile* hndl, char const* path, LumpInfo const* info);
 
 /**
- * Destroy LumpFile instance @a lump.
+ * Destroy GenericFile instance @a file.
  */
-void LumpFile_Delete(LumpFile* lump);
-
-LumpInfo const* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx);
-
-int LumpFile_LumpCount(LumpFile* lump);
-
-int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory);
+void GenericFile_Delete(GenericFile* file);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FILESYS_LUMPFILE_H */
+#endif /* LIBDENG_FILESYS_GENERICFILE_H */

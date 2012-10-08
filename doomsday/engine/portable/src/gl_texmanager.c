@@ -1501,7 +1501,7 @@ uint8_t* Image_LoadFromFile(image_t* img, DFile* file)
 
     GL_InitImage(img);
 
-    fileName = Str_Text(AbstractFile_Path(DFile_File_Const(file)));
+    fileName = Str_Text(AbstractFile_Path(DFile_File_const(file)));
 
     // Firstly try the expected format given the file name.
     hdlr = findHandlerFromFileName(fileName);
@@ -2461,7 +2461,7 @@ static TexSource loadPatchLump(image_t* image, DFile* file, int tclass, int tmap
         if(fileLength > sizeof(doompatch_header_t))
         {
             const doompatch_header_t* patch =
-                (const doompatch_header_t*) F_CacheLump(DFile_File(file), 0, PU_APPSTATIC);
+                (const doompatch_header_t*) F_CacheLump(DFile_File(file), 0);
 
             if(validPatch((const uint8_t*)patch, fileLength))
             {
@@ -2480,7 +2480,7 @@ static TexSource loadPatchLump(image_t* image, DFile* file, int tclass, int tmap
                     image->flags |= IMGF_IS_MASKED;
                 source = TEXS_ORIGINAL;
             }
-            F_CacheChangeTag(DFile_File(file), 0, PU_CACHE);
+            F_UnlockLump(DFile_File(file), 0);
         }
 
         if(source == TEXS_NONE)
@@ -2566,8 +2566,8 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
         int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
-        const uint8_t* patch = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        const uint8_t* patch = F_CacheLump(fsObject, lumpIdx);
 
         if(validPatch(patch, F_LumpInfo(fsObject, lumpIdx)->size))
         {
@@ -2575,7 +2575,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
             loadDoomPatch(image->pixels, image->size.width, image->size.height,
                 (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
         }
-        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+        F_UnlockLump(fsObject, lumpIdx);
     }
 
     if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
@@ -2610,8 +2610,8 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     if(texDef->patchCount == 1)
     {
         int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(texDef->patches[0].lumpNum, &lumpIdx);
-        const doompatch_header_t* hdr = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(texDef->patches[0].lumpNum, &lumpIdx);
+        const doompatch_header_t* hdr = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx);
         int bufHeight = SHORT(hdr->height) > height ? SHORT(hdr->height) : height;
         if(bufHeight > height)
         {
@@ -2619,7 +2619,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
             if(height > 200)
                 height = 200;
         }
-        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+        F_UnlockLump(fsObject, lumpIdx);
     }
 
     GL_InitImage(image);
@@ -2636,8 +2636,8 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     {
         const texpatch_t* patchDef = &texDef->patches[i];
         int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
-        const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+        AbstractFile* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx);
 
         if(validPatch((const uint8_t*)patch, F_LumpInfo(fsObject, lumpIdx)->size))
         {
@@ -2652,7 +2652,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
             }
             loadDoomPatch(image->pixels, image->size.width, image->size.height, patch, offX, offY, 0, 0, zeroMask);
         }
-        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+        F_UnlockLump(fsObject, lumpIdx);
     }
 
     if(zeroMask)

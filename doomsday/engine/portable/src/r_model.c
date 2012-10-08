@@ -193,7 +193,7 @@ static void* AllocAndLoad(DFile* file, int offset, int len)
     uint8_t* ptr = (uint8_t*)malloc(len);
     if(!ptr)
         Con_Error("AllocAndLoad: Failed on allocation of %lu bytes for load buffer.", (unsigned long)len);
-    DFile_Seek(file, offset, SEEK_SET);
+    DFile_Seek(file, offset, SeekSet);
     DFile_Read(file, ptr, len);
     return ptr;
 }
@@ -291,7 +291,7 @@ static void R_LoadModelMD2(DFile* file, model_t* mdl)
         Con_Error("R_LoadModelMD2: Failed on allocation of %lu bytes for skin list.",
             (unsigned long) (sizeof(*mdl->skins) * inf->numSkins));
 
-    DFile_Seek(file, inf->offsetSkins, SEEK_SET);
+    DFile_Seek(file, inf->offsetSkins, SeekSet);
     for(i = 0; i < inf->numSkins; ++i)
         DFile_Read(file, (uint8_t*)mdl->skins[i].name, 64);
 }
@@ -332,7 +332,7 @@ static void R_LoadModelDMD(DFile* file, model_t* mo)
 
         default:
             // Just skip all unknown chunks.
-            DFile_Seek(file, LONG(chunk.length), SEEK_CUR);
+            DFile_Seek(file, LONG(chunk.length), SeekCur);
             break;
         }
         // Read the next chunk header.
@@ -341,7 +341,7 @@ static void R_LoadModelDMD(DFile* file, model_t* mo)
 
     // Allocate and load in the data.
     mo->skins = M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
-    DFile_Seek(file, inf->offsetSkins, SEEK_SET);
+    DFile_Seek(file, inf->offsetSkins, SeekSet);
     for(i = 0; i < inf->numSkins; ++i)
         DFile_Read(file, (uint8_t*)mo->skins[i].name, 64);
 
@@ -382,7 +382,7 @@ static void R_LoadModelDMD(DFile* file, model_t* mo)
     }
     M_Free(temp);
 
-    DFile_Seek(file, inf->offsetLODs, SEEK_SET);
+    DFile_Seek(file, inf->offsetLODs, SeekSet);
     DFile_Read(file, (uint8_t*)mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
 
     for(i = 0; i < inf->numLODs; ++i)

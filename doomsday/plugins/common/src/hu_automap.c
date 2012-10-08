@@ -207,13 +207,13 @@ void UIAutomap_LoadResources(void)
         lumpnum_t lumpNum = W_GetLumpNumForName("mapmask");
         if(lumpNum >= 0)
         {
-            const uint8_t* pixels = (const uint8_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
+            const uint8_t* pixels = (const uint8_t*) W_CacheLump(lumpNum);
             int width = 256, height = 256;
 
             amMaskTexture = DGL_NewTextureWithParams(DGL_LUMINANCE, width, height, pixels,
                 0x8, DGL_NEAREST, DGL_LINEAR, 0 /*no anisotropy*/, DGL_REPEAT, DGL_REPEAT);
 
-            W_CacheChangeTag(lumpNum, PU_CACHE);
+            W_UnlockLump(lumpNum);
         }
     }
 }

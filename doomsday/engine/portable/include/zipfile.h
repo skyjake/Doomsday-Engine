@@ -47,18 +47,14 @@ struct pathdirectorynode_s;
 
 namespace de {
 
+class LumpDirectory;
 class PathDirectoryNode;
 
 /**
  * ZipFile. Runtime representation of an opened ZIP file.
  */
-class ZipFile
+class ZipFile : public AbstractFile
 {
-public:
-    /// Base file instance.
-    /// @todo Inherit from this instead.
-    abstractfile_t base;
-
 public:
     ZipFile(DFile& file, char const* path, LumpInfo const& info);
     ~ZipFile();
@@ -154,21 +150,19 @@ public:
      * Read the data associated with lump @a lumpIdx into the cache.
      *
      * @param lumpIdx   Lump index associated with the data to be cached.
-     * @param tag       Zone purge level/cache tag to use.
      *
      * @return Pointer to the cached copy of the associated data.
      */
-    uint8_t const* cacheLump(int lumpIdx, int tag);
+    uint8_t const* cacheLump(int lumpIdx);
 
     /**
-     * Change the Zone purge level/cache tag for a cached data lump.
+     * Remove a lock on a cached data lump.
      *
      * @param lumpIdx   Lump index associated with the cached data to be changed.
-     * @param tag       New Zone purge level/cache tag to assign.
      *
      * @return This instance.
      */
-    ZipFile& changeLumpCacheTag(int lumpIdx, int tag);
+    ZipFile& unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -196,7 +190,7 @@ public:
      * @return Number of lumps published to the directory. Note that this is not
      *         necessarily equal to the the number of lumps in the file.
      */
-    int publishLumpsToDirectory(struct lumpdirectory_s* directory);
+    int publishLumpsToDirectory(LumpDirectory* directory);
 
 // Static members ------------------------------------------------------------------
 
@@ -318,9 +312,9 @@ size_t ZipFile_ReadLump(ZipFile* zip, int lumpIdx, uint8_t* buffer/*, tryCache =
 size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
 size_t ZipFile_ReadLumpSection(ZipFile* zip, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length/*, tryCache = true*/);
 
-uint8_t const* ZipFile_CacheLump(ZipFile* zip, int lumpIdx, int tag);
+uint8_t const* ZipFile_CacheLump(ZipFile* zip, int lumpIdx);
 
-void ZipFile_ChangeLumpCacheTag(ZipFile* zip, int lumpIdx, int tag);
+void ZipFile_UnlockLump(ZipFile* zip, int lumpIdx);
 
 void ZipFile_ClearLumpCache(ZipFile* zip);
 

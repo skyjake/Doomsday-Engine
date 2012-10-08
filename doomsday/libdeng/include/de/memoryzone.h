@@ -53,7 +53,6 @@ extern "C" {
 #define PU_MAPSTATIC        52 ///< Not freed until map exited.
 
 #define PU_PURGELEVEL       100 ///< Tags >= 100 are purgable whenever needed.
-#define PU_CACHE            101
 ///@}
 
 #define LIBDENG_ZONEID      0x1d4a11

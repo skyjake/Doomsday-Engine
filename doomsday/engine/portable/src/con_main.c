@@ -232,7 +232,7 @@ void Con_Register(void)
     C_CMD("listgames",      "",     ListGames);
 
     // File
-    C_VAR_CHARPTR("file-startup", &gameStartupFiles, 0, 0, 0);
+    C_VAR_CHARPTR("file-startup", &startupFiles, 0, 0, 0);
 
     Con_DataRegister();
 

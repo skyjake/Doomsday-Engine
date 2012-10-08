@@ -448,15 +448,18 @@ void Textures_Shutdown(void)
     {
         TextureNamespace* tn = &namespaces[i];
 
-        const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
-        if(nodes)
+        if(tn->directory)
         {
-            DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
+            const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
+            if(nodes)
             {
-                destroyRecord(reinterpret_cast<TextureDirectoryNode*>(*nodeIt));
+                DENG2_FOR_EACH_CONST(TextureDirectory::PathNodes, nodeIt, *nodes)
+                {
+                    destroyRecord(reinterpret_cast<TextureDirectoryNode*>(*nodeIt));
+                }
             }
+            delete tn->directory; tn->directory = NULL;
         }
-        delete tn->directory; tn->directory = NULL;
 
         if(!tn->uniqueIdMap) continue;
         M_Free(tn->uniqueIdMap);

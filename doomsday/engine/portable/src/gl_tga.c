@@ -396,7 +396,7 @@ uint8_t* TGA_Load(DFile* file, int* w, int* h, int* pixelSize)
         (imageSpec.flags & ISF_SCREEN_ORIGIN_UPPER))
     {
         setLastError("Unsupported format.");
-        DFile_Seek(file, initPos, SEEK_SET);
+        DFile_Seek(file, initPos, SeekSet);
         return 0;
     }
 
@@ -441,7 +441,7 @@ uint8_t* TGA_Load(DFile* file, int* w, int* h, int* pixelSize)
     free(srcBuf);
 
     setLastError(0); // Success.
-    DFile_Seek(file, initPos, SEEK_SET);
+    DFile_Seek(file, initPos, SeekSet);
     return dstBuf;
     }
 }
