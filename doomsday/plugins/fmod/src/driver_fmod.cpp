@@ -28,6 +28,7 @@
 #include <fmod.hpp>
 
 #include "doomsday.h"
+#include <de/c_wrapper.h>
 
 FMOD::System* fmodSystem = 0;
 
@@ -59,6 +60,20 @@ int DS_Init(void)
         fmodSystem->setSpeakerMode(speakerMode);
     }
 #endif
+
+    // Manual overrides.
+    if(CommandLine_Exists("-speaker51"))
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_5POINT1);
+    }
+    if(CommandLine_Exists("-speaker71"))
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_7POINT1);
+    }
+    if(CommandLine_Exists("-speakerprologic"))
+    {
+        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
+    }
 
     // Initialize FMOD.
     if((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
