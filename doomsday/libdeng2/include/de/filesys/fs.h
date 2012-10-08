@@ -107,7 +107,9 @@ namespace de
         Folder& makeFolder(const String& path);
 
         /**
-         * Finds all files matching a full or partial path.
+         * Finds all files matching a full or partial path. The search is done
+         * using the file system's index; no recursive descent into folders is
+         * done.
          *
          * @param path   Path or file name to look for.
          * @param found  Set of files that match the result.
@@ -117,7 +119,9 @@ namespace de
         int findAll(const String& path, FoundFiles& found) const;
         
         /**
-         * Finds a single file matching a full or partial path.
+         * Finds a single file matching a full or partial path. The search is
+         * done using the file system's index; no recursive descent into
+         * folders is done.
          *
          * @param path   Path or file name to look for.
          * 
@@ -126,9 +130,15 @@ namespace de
         File& find(const String& path) const;
         
         /**
-         * Finds a file of a specific type.
+         * Finds a file of a specific type. The search is done using the file
+         * system's index; no recursive descent into folders is done. Only
+         * files that can be represented as @a Type are included in the
+         * results.
          *
          * @param path  Full/partial path or file name to look for.
+         *
+         * @see indexFor() returns the full index for a particular type of file
+         * for manual searches.
          */
         template <typename Type>
         Type& find(const String& path) const {
