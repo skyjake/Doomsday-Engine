@@ -185,7 +185,7 @@ public:
     {
         if(dataCache)
         {
-            DENG2_FOR_EACH(i, *dataCache, DataCache::iterator)
+            DENG2_FOR_EACH(DataCache, i, *dataCache)
             {
                 i->clearData();
             }

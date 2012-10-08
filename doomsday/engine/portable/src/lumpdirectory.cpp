@@ -82,7 +82,7 @@ struct LumpDirectory::Instance
         else            hashMap->resize(numRecords);
 
         // Clear the chains.
-        DENG2_FOR_EACH(i, *hashMap, HashMap::iterator)
+        DENG2_FOR_EACH(HashMap, i, *hashMap)
         {
             i->head = -1;
         }
@@ -359,7 +359,7 @@ bool LumpDirectory::catalogues(de::AbstractFile& file)
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
-    DENG2_FOR_EACH(i, d->lumpInfos, LumpInfos::iterator)
+    DENG2_FOR_EACH(LumpInfos, i, d->lumpInfos)
     {
         LumpInfo const* lumpInfo = *i;
         if(reinterpret_cast<de::AbstractFile*>(lumpInfo->container) == &file) return true;

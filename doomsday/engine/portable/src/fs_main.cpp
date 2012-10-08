@@ -1194,7 +1194,7 @@ static ddstring_t* composeFileList(FileList* fl, int flags = DEFAULT_PATHTOSTRIN
 
     // Determine the maximum number of characters we'll need.
     maxLength = 0;
-    DENG2_FOR_EACH(i, *fl, FileList::const_iterator)
+    DENG2_FOR_EACH_CONST(FileList, i, *fl)
     {
         if(predicate && !predicate(*i, parameters))
             continue; // Caller isn't interested in this...
@@ -1253,7 +1253,7 @@ static ddstring_t* composeFileList(FileList* fl, int flags = DEFAULT_PATHTOSTRIN
     str = Str_New();
     Str_Reserve(str, maxLength);
     n = 0;
-    DENG2_FOR_EACH(i, *fl, FileList::const_iterator)
+    DENG2_FOR_EACH_CONST(FileList, i, *fl)
     {
         if(predicate && !predicate(*i, parameters))
             continue; // Caller isn't interested in this...
@@ -1508,7 +1508,7 @@ int F_AllResourcePaths2(char const* rawSearchPattern, int flags,
     PathMap patternMap;
     PathMap_Initialize(&patternMap, de::PathDirectory::hashPathFragment, Str_Text(&searchPattern));
 
-    DENG2_FOR_EACH(i, zipLumpDirectory->lumps(), LumpDirectory::LumpInfos::const_iterator)
+    DENG2_FOR_EACH_CONST(LumpDirectory::LumpInfos, i, zipLumpDirectory->lumps())
     {
         LumpInfo const* lumpInfo = *i;
         de::PathDirectoryNode* node = reinterpret_cast<de::PathDirectoryNode*>(F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx));
@@ -2481,7 +2481,7 @@ static void printLumpDirectory(LumpDirectory& ld)
     Con_Printf("LumpDirectory %p (%i records):\n", &ld, numRecords);
 
     int idx = 0;
-    DENG2_FOR_EACH(i, ld.lumps(), LumpDirectory::LumpInfos::const_iterator)
+    DENG2_FOR_EACH_CONST(LumpDirectory::LumpInfos, i, ld.lumps())
     {
         LumpInfo const* lumpInfo = *i;
         AutoStr* path = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
