@@ -1556,7 +1556,7 @@ jQuery(document).ready(function() {
         $this->populateReleases($releases);
 
         // Sort by key to achieve the version-number-ascending order.
-        ksort($releases);
+        uksort($releases, 'version_compare');
         //print_r($releases);
 
         $this->outputEventMatrix($releases);

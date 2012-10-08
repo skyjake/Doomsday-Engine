@@ -32,7 +32,7 @@
 #include <QByteArray>
 #include <QImage>
 
-#if (QT_VERSION < QT_VERSION_CHECK(4, 7, 0))
+#ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
 #endif
 

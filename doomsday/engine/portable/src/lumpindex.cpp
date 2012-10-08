@@ -334,8 +334,10 @@ void LumpIndex::catalogLumps(AbstractFile& file, int lumpIdxBase, int numLumps)
 {
     if(numLumps <= 0) return;
 
+#ifdef DENG2_QT_4_7_OR_NEWER
     // Allocate more memory for the new records.
     d->lumpInfos.reserve(d->lumpInfos.size() + numLumps);
+#endif
 
     for(int i = 0; i < numLumps; ++i)
     {
