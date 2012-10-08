@@ -78,9 +78,9 @@
 #include <de/Log>
 
 #ifdef MACOSX
-static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 100; // ms
+static const int WAIT_MILLISECS_AFTER_MODE_CHANGE = 100; // ms
 #else
-static const int POST_MODE_CHANGE_WAIT_BEFORE_UPDATE = 10; // ms
+static const int WAIT_MILLISECS_AFTER_MODE_CHANGE = 10; // ms
 #endif
 
 /// Used to determine the valid region for windows on the desktop.
@@ -277,14 +277,14 @@ struct ddwindow_s
         // While we're adjusting the window, the window move/resizing callbacks
         // should've mess with the geometry values.
         needWait = true;
-        LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE * 2, endWindowWait);
+        LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE * 2, endWindowWait);
 
         bool modeChanged = applyDisplayMode();
 
         if(modeChanged)
         {
             // Others might be interested to hear about the mode change.
-            LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, notifyAboutModeChange);
+            LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, notifyAboutModeChange);
         }
 
         /*
@@ -327,7 +327,7 @@ struct ddwindow_s
 
                 // The window is already visible, so let's allow a mode change to resolve itself
                 // before we go changing the window.
-                LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
+                LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, updateMainWindowLayout);
             }
             else
             {
@@ -376,7 +376,7 @@ struct ddwindow_s
                     {
                         // We'll wait before the mode change takes full effect.
                         needShowNormal = true;
-                        LegacyCore_Timer(POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, updateMainWindowLayout);
+                        LegacyCore_Timer(WAIT_MILLISECS_AFTER_MODE_CHANGE, updateMainWindowLayout);
                     }
                     else
                     {
@@ -393,7 +393,7 @@ struct ddwindow_s
                     // The native window may not be ready to receive the updated geometry
                     // (e.g., window decoration not made visible yet). We'll apply the
                     // geometry after a delay.
-                    LegacyCore_Timer(50 + POST_MODE_CHANGE_WAIT_BEFORE_UPDATE, useAppliedGeometryForWindows);
+                    LegacyCore_Timer(50 + WAIT_MILLISECS_AFTER_MODE_CHANGE, useAppliedGeometryForWindows);
                 }
                 else
                 {
