@@ -50,6 +50,16 @@ int DS_Init(void)
         return false;
     }
 
+#ifdef WIN32
+    // Figure out the system's configured speaker mode.
+    FMOD_SPEAKERMODE speakerMode;
+    result = fmodSystem->getDriverCaps(0, 0, 0, 0, &speakerMode);
+    if(result == FMOD_OK)
+    {
+        fmodSystem->setSpeakerMode(speakerMode);
+    }
+#endif
+
     // Initialize FMOD.
     if((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
     {
