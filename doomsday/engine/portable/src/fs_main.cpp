@@ -30,15 +30,19 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
+#include "fileid.h"
 #include "game.h"
 #include "genericfile.h"
 #include "lumpindex.h"
 #include "lumpinfo.h"
 #include "lumpfile.h"
-#include "m_md5.h"
+//#include "m_md5.h"
 #include "m_misc.h" // for M_FindWhite()
 #include "wadfile.h"
 #include "zipfile.h"
+
+#include <QList>
+#include <QtAlgorithms>
 
 #include <de/Log>
 #include <de/memory.h>
@@ -49,11 +53,12 @@ D_CMD(ListFiles);
 D_CMD(ListLumps);
 
 using de::FS;
-using de::AbstractFile;     using de::DFile;
-using de::DFileBuilder;     using de::GenericFile;
-using de::LumpFile;         using de::LumpIndex;
-using de::PathDirectory;    using de::PathDirectoryNode;
-using de::WadFile;          using de::ZipFile;
+using de::AbstractFile;         using de::DFile;
+using de::DFileBuilder;         using de::FileId;
+using de::GenericFile;          using de::LumpFile;
+using de::LumpIndex;            using de::PathDirectory;
+using de::PathDirectoryNode;    using de::WadFile;
+using de::ZipFile;
 
 /// Base for indicies in the auxiliary lump index.
 int const AUXILIARY_BASE = 100000000;
@@ -74,27 +79,14 @@ typedef struct {
     ddstring_t destination; // Absolute path.
 } vdmapping_t;
 
-/**
- * FileIdentifier
- */
-#define FILEIDENTIFIERID_T_MAXLEN       16
-#define FILEIDENTIFIERID_T_LASTINDEX    15
-typedef byte fileidentifierid_t[FILEIDENTIFIERID_T_MAXLEN];
-
-typedef struct fileidentifier_s
-{
-    fileidentifierid_t hash;
-} fileidentifier_t;
-
 static bool inited = false;
 static bool loadingForStartup;
 
 static de::FileList* openFiles;
 static de::FileList* loadedFiles;
 
-static uint fileIdentifiersCount;
-static uint fileIdentifiersMax;
-static fileidentifier_t* fileIdentifiers;
+typedef QList<FileId> FileIds;
+static FileIds fileIds;
 
 static LumpIndex* zipLumpIndex;
 
@@ -125,14 +117,6 @@ static FILE* findRealFile(char const* path, char const* mymode, ddstring_t** fou
 /// @return  @c true if the FileId associated with @a path was released.
 static bool releaseFileId(char const* path);
 
-/**
- * Calculate an identifier for the file based on its full path name.
- * The identifier is the MD5 hash of the path.
- */
-static void generateFileId(char const* str, byte identifier[16]);
-
-static void printFileId(byte identifier[16]);
-
 void FS::consoleRegister()
 {
     C_CMD("dir", "", Dir);
@@ -151,21 +135,6 @@ static void errorIfNotInited(const char* callerName)
     Con_Error("%s: VFS module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
-}
-
-static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
-{
-    fileidentifier_t* found = 0;
-    if(fileIdentifiersCount)
-    {
-        uint i = 0;
-        do
-        {
-            if(!memcmp(fileIdentifiers[i].hash, id, FILEIDENTIFIERID_T_LASTINDEX))
-                found = &fileIdentifiers[i];
-        } while(!found && ++i < fileIdentifiersCount);
-    }
-    return found;
 }
 
 /**
@@ -313,82 +282,21 @@ static bool unloadFile(char const* path, bool permitRequired = false, bool quiet
     return true;
 }
 
-static void clearFileIds()
-{
-    if(fileIdentifiers)
-    {
-        M_Free(fileIdentifiers); fileIdentifiers = 0;
-    }
-    if(fileIdentifiersCount)
-    {
-        fileIdentifiersCount = fileIdentifiersMax = 0;
-    }
-}
-
-static void printFileId(byte identifier[16])
-{
-    if(!identifier) return;
-    for(uint i = 0; i < 16; ++i)
-    {
-        Con_Printf("%02x", identifier[i]);
-    }
-}
-
-static void generateFileId(char const* str, byte identifier[16])
-{
-    // First normalize the name.
-    ddstring_t absPath; Str_Init(&absPath);
-    Str_Set(&absPath, str);
-    F_MakeAbsolute(&absPath, &absPath);
-    F_FixSlashes(&absPath, &absPath);
-
-#if defined(WIN32) || defined(MACOSX)
-    // This is a case insensitive operation.
-    strupr(Str_Text(&absPath));
-#endif
-
-    md5_ctx_t context; md5_init(&context);
-    md5_update(&context, (byte*) Str_Text(&absPath), (unsigned int) Str_Length(&absPath));
-    md5_final(&context, identifier);
-
-    Str_Free(&absPath);
-}
-
 bool FS::checkFileId(char const* path)
 {
     DENG_ASSERT(path);
-
-    if(!access(path)) return false;
+    if(!accessFile(path)) return false;
 
     // Calculate the identifier.
-    fileidentifierid_t id;
-    generateFileId(path, id);
-
-    if(findFileIdentifierForId(id)) return false;
-
-    // Allocate a new entry.
-    fileIdentifiersCount++;
-    if(fileIdentifiersCount > fileIdentifiersMax)
-    {
-        if(!fileIdentifiersMax)
-            fileIdentifiersMax = 16;
-        else
-            fileIdentifiersMax *= 2;
-
-        fileIdentifiers = (fileidentifier_t*) M_Realloc(fileIdentifiers, fileIdentifiersMax * sizeof *fileIdentifiers);
-        if(!fileIdentifiers) Con_Error("FS::checkFileId: Failed on (re)allocation of %lu bytes while enlarging fileIdentifiers.", (unsigned long) (fileIdentifiersMax * sizeof *fileIdentifiers));
-
-        memset(fileIdentifiers + fileIdentifiersCount, 0, (fileIdentifiersMax - fileIdentifiersCount) * sizeof *fileIdentifiers);
-    }
+    FileId fileId = FileId::fromPath(path);
+    FileIds::iterator place = qLowerBound(fileIds.begin(), fileIds.end(), fileId);
+    if(place != fileIds.end() && *place == fileId) return false;
 
 #if _DEBUG
-    VERBOSE(
-        Con_Printf("Added file identifier ");
-        printFileId(id);
-        Con_Printf(" - \"%s\"\n", F_PrettyPath(path)) )
+    LOG_VERBOSE("Added FileId %s - \"%s\"") << fileId << F_PrettyPath(path);
 #endif
 
-    memcpy(fileIdentifiers[fileIdentifiersCount - 1].hash, id, sizeof(id));
+    fileIds.insert(place, fileId);
     return true;
 }
 
@@ -396,26 +304,14 @@ static bool releaseFileId(char const* path)
 {
     if(path && path[0])
     {
-        fileidentifierid_t id;
-        generateFileId(path, id);
-
-        fileidentifier_t* fileIdentifier = findFileIdentifierForId(id);
-        if(fileIdentifier)
+        FileId fileId = FileId::fromPath(path);
+        FileIds::iterator place = qLowerBound(fileIds.begin(), fileIds.end(), fileId);
+        if(place != fileIds.end() && *place == fileId)
         {
-            size_t index = fileIdentifier - fileIdentifiers;
-            if(index < fileIdentifiersCount-1)
-            {
-                memmove(fileIdentifiers + index, fileIdentifiers + index + 1, fileIdentifiersCount - index - 1);
-            }
-            memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof *fileIdentifiers);
-            --fileIdentifiersCount;
-
 #if _DEBUG
-            VERBOSE(
-                Con_Printf("Released file identifier ");
-                printFileId(id);
-                Con_Printf(" - \"%s\"\n", F_PrettyPath(path)) )
+            LOG_VERBOSE("Released FileId %s - \"%s\"") << *place << F_PrettyPath(path);
 #endif
+            fileIds.erase(place);
             return true;
         }
     }
@@ -424,7 +320,7 @@ static bool releaseFileId(char const* path)
 
 void FS::resetFileIds()
 {
-    fileIdentifiersCount = 0;
+    fileIds.clear();
 }
 
 void F_InitLumpInfo(LumpInfo* info)
@@ -480,7 +376,7 @@ void F_Shutdown(void)
     clearOpenFiles();
     delete openFiles; openFiles = 0;
 
-    clearFileIds(); // Should be null-op if bookkeeping is correct.
+    fileIds.clear(); // Should be null-op if bookkeeping is correct.
     clearLumpIndexes();
 
     DFileBuilder::shutdown();
@@ -521,25 +417,15 @@ static int unloadListFiles(de::FileList* list, bool nonStartup)
 #if _DEBUG
 static void logOrphanedFileIdentifiers()
 {
-    fileidentifierid_t nullId;
-    memset(nullId, 0, sizeof nullId);
-
     uint orphanCount = 0;
-    for(uint i = 0; i < fileIdentifiersCount; ++i)
+    DENG2_FOR_EACH(i, fileIds, FileIds::const_iterator)
     {
-        fileidentifier_t* id = fileIdentifiers + i;
-        if(!memcmp(id->hash, &nullId, FILEIDENTIFIERID_T_LASTINDEX)) continue;
-
         if(!orphanCount)
         {
-            Con_Printf("Warning: Orphan file identifiers:\n");
+            LOG_MSG("Warning: Orphan FileIds:");
         }
-
-        Con_Printf("  %u - ", orphanCount);
-        printFileId(id->hash);
-        Con_Printf("\n");
-
-        orphanCount++;
+        LOG_MSG("  %u - %s") << orphanCount << *i;
+        ++orphanCount;
     }
 }
 #endif
@@ -547,17 +433,15 @@ static void logOrphanedFileIdentifiers()
 #if _DEBUG
 static void printFileList(de::FileList* list)
 {
-    byte id[16];
     if(!list) return;
     for(int i = 0; i < list->size(); ++i)
     {
         DFile* hndl = (*list)[i];
         AbstractFile* file = hndl->file();
-
-        Con_Printf(" %c%u: ", file->hasStartup()? '*':' ', i);
-        generateFileId(Str_Text(file->path()), id);
-        printFileId(id);
-        Con_Printf(" - \"%s\" [handle: %p]\n", F_PrettyPath(Str_Text(file->path())), (void*)&hndl);
+        FileId fileId = FileId::fromPath(Str_Text(file->path()));
+        LOG_MSG(" %c%d: %s - \"%s\" [handle: %p]")
+            << (file->hasStartup()? '*' : ' ') << i
+            << fileId << F_PrettyPath(Str_Text(file->path())) << (void*)&hndl;
     }
 }
 #endif
@@ -1649,7 +1533,7 @@ DFile* FS::openFile(char const* path, char const* mode, size_t baseOffset, bool 
     return tryOpenFile(path, mode, baseOffset, allowDuplicate);
 }
 
-bool FS::access(char const* path)
+bool FS::accessFile(char const* path)
 {
     DFile* hndl = tryOpenFile(path, "rx", 0, true);
     if(!hndl) return false;
@@ -1686,7 +1570,7 @@ AbstractFile* FS::addFile(char const* path, size_t baseOffset)
     DFile* hndl = openFile(path, "rb", baseOffset, false);
     if(!hndl)
     {
-        if(access(path))
+        if(accessFile(path))
         {
             Con_Message("\"%s\" already loaded.\n", F_PrettyPath(path));
         }
@@ -2367,7 +2251,7 @@ int F_LumpCount(void)
 
 int F_Access(char const* path)
 {
-    return FS::access(path)? 1 : 0;
+    return FS::accessFile(path)? 1 : 0;
 }
 
 uint F_GetLastModified(char const* path)
