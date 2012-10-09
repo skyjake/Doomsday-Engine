@@ -64,15 +64,7 @@ using de::ZipFile;
 int const AUXILIARY_BASE = 100000000;
 
 /**
- * Lump Directory Mapping.  Maps lump to resource path.
- */
-typedef struct {
-    lumpname_t lumpName;
-    ddstring_t path; // Absolute path.
-} ldmapping_t;
-
-/**
- * Virtual Directory Mapping.  Maps a resource path to another resource.
+ * Virtual Path Mapping. Maps one path in the virtual file system to another.
  */
 typedef struct {
     ddstring_t source; // Absolute path.
@@ -98,17 +90,22 @@ static bool auxiliaryWadLumpIndexInUse;
 // Currently selected lump index.
 static LumpIndex* ActiveWadLumpIndex;
 
-// Lump index => virtual-file mappings.
-static uint ldMappingsCount;
-static uint ldMappingsMax;
-static ldmapping_t* ldMappings;
+/**
+ * Virtual file path => Lump name mapping.
+ *
+ * @todo We can't presently use a Map or Hash for these. Although the paths are
+ *       unique, several of the existing algorithms which match using patterns
+ *       presently assume they are sorted in a quasi load ordering.
+ */
+typedef QPair<QString, QString> LumpMapping;
+typedef QList<LumpMapping> LumpMappings;
+static LumpMappings lumpMappings;
 
-// Virtual(-File) directory mappings.
+// Virtual directory mappings.
 static uint vdMappingsCount;
 static uint vdMappingsMax;
 static vdmapping_t* vdMappings;
 
-static void clearLDMappings();
 static void clearVDMappings();
 static bool applyVDMapping(ddstring_t* path, vdmapping_t* vdm);
 
@@ -369,7 +366,7 @@ void F_Shutdown(void)
     FS::closeAuxiliary();
 
     clearVDMappings();
-    clearLDMappings();
+    lumpMappings.clear();
 
     clearLoadedFiles();
     delete loadedFiles; loadedFiles = 0;
@@ -1162,16 +1159,17 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
     }
 
     // Check the dir/WAD direcs.
-    if(ldMappingsCount)
+    if(!lumpMappings.empty())
     {
-        for(uint i = 0; i < ldMappingsCount; ++i)
+        DENG2_FOR_EACH(i, lumpMappings, LumpMappings::const_iterator)
         {
-            ldmapping_t* rec = &ldMappings[i];
-            bool patternMatched = F_MatchFileName(Str_Text(&rec->path), Str_Text(searchPattern));
+            LumpMapping const& found = *i;
+            QByteArray foundPathAscii = found.first.toAscii();
+            bool patternMatched = F_MatchFileName(foundPathAscii.constData(), Str_Text(searchPattern));
 
             if(!patternMatched) continue;
 
-            int result = callback(Str_Text(&rec->path), PT_LEAF, parameters);
+            int result = callback(foundPathAscii.constData(), PT_LEAF, parameters);
             if(result) return result;
         }
     }
@@ -1293,20 +1291,20 @@ AbstractFile* FS::findLumpFile(char const* path, int* lumpIdx)
     /**
      * Next try the dir/WAD redirects.
      */
-    if(ldMappingsCount)
+    if(!lumpMappings.empty())
     {
-        // We must have an absolute path, so prepend the current working directory if necessary.
+        // We must have an absolute path - prepend the CWD if necessary.
         Str_Set(&absSearchPath, path);
         F_PrependWorkPath(&absSearchPath, &absSearchPath);
 
-        for(uint i = 0; i < ldMappingsCount; ++i)
+        DENG2_FOR_EACH(i, lumpMappings, LumpMappings::const_iterator)
         {
-            ldmapping_t* rec = &ldMappings[i];
-            lumpnum_t absoluteLumpNum;
+            LumpMapping const& found = *i;
+            QByteArray foundPathAscii = found.first.toAscii();
+            if(qstricmp(foundPathAscii.constData(), Str_Text(&absSearchPath))) continue;
 
-            if(Str_CompareIgnoreCase(&rec->path, Str_Text(&absSearchPath))) continue;
-
-            absoluteLumpNum = lumpNumForName(rec->lumpName);
+            QByteArray foundLumpNameAscii = found.second.toAscii();
+            lumpnum_t absoluteLumpNum = lumpNumForName(foundLumpNameAscii.constData());
             if(absoluteLumpNum < 0) continue;
 
             Str_Free(&absSearchPath);
@@ -1672,79 +1670,44 @@ DFile* FS::openLump(lumpnum_t absoluteLumpNum)
     return openFileHndl;
 }
 
-static void clearLDMappings()
-{
-    if(ldMappings)
-    {
-        for(uint i = 0; i < ldMappingsCount; ++i)
-        {
-            Str_Free(&ldMappings[i].path);
-        }
-        M_Free(ldMappings); ldMappings = 0;
-    }
-    ldMappingsCount = ldMappingsMax = 0;
-}
-
-static ldmapping_t* findLDMappingForPath(char const* path)
-{
-    ldmapping_t* ldm = 0;
-    if(ldMappings)
-    {
-        uint i = 0;
-        do
-        {
-            if(!Str_CompareIgnoreCase(&ldMappings[i].path, path))
-                ldm = &ldMappings[i];
-        } while(!ldm && ++i < ldMappingsCount);
-    }
-    return ldm;
-}
-
 void FS::addLumpDirectoryMapping(char const* lumpName, char const* symbolicPath)
 {
     if(!lumpName || !lumpName[0] || !symbolicPath || !symbolicPath[0]) return;
 
     // Convert the symbolic path into a real path.
-    ddstring_t path; Str_Init(&path);
-    Str_Set(&path, symbolicPath);
-    F_ResolveSymbolicPath(&path, &path);
+    AutoStr* path = Str_Set(AutoStr_NewStd(), symbolicPath);
+    F_ResolveSymbolicPath(path, path);
 
     // Since the path might be relative, let's explicitly make the path absolute.
-    ddstring_t fullPath;
-    {
-        char* full = _fullpath(0, Str_Text(&path), 0);
-        Str_Set(Str_Init(&fullPath), full);
-        F_FixSlashes(&fullPath, &fullPath);
-        free(full);
-    }
-    Str_Free(&path);
+    char* full = _fullpath(0, Str_Text(path), 0);
+    de::String fullPath = de::String::fromNativePath(full);
+    free(full);
 
     // Have already mapped this path?
-    ldmapping_t* ldm = findLDMappingForPath(Str_Text(&fullPath));
-    if(!ldm)
+    LumpMappings::iterator found = lumpMappings.begin();
+    for(; found != lumpMappings.end(); ++found)
     {
-        // No. Acquire another mapping.
-        if(++ldMappingsCount > ldMappingsMax)
-        {
-            ldMappingsMax *= 2;
-            if(ldMappingsMax < ldMappingsCount)
-                ldMappingsMax = 2*ldMappingsCount;
-
-            ldMappings = (ldmapping_t*) M_Realloc(ldMappings, ldMappingsMax * sizeof *ldMappings);
-            if(!ldMappings) Con_Error("FS::addLumpDirectoryMapping: Failed on allocation of %lu bytes for mapping list.", (unsigned long) (ldMappingsMax * sizeof *ldMappings));
-        }
-        ldm = &ldMappings[ldMappingsCount - 1];
-
-        Str_Set(Str_Init(&ldm->path), Str_Text(&fullPath));
+        LumpMapping const& ldm = *found;
+        if(!ldm.first.compare(fullPath, Qt::CaseInsensitive))
+            break;
     }
 
-    Str_Free(&fullPath);
+    LumpMapping* ldm;
+    if(found == lumpMappings.end())
+    {
+        // No. Acquire another mapping.
+        lumpMappings.push_back(LumpMapping(fullPath, lumpName));
+        ldm = &lumpMappings.back();
+    }
+    else
+    {
+        // Remap to another lump.
+        ldm = &*found;
+        ldm->second = lumpName;
+    }
 
-    // Set the lumpname.
-    memcpy(ldm->lumpName, lumpName, sizeof ldm->lumpName);
-    ldm->lumpName[LUMPNAME_T_LASTINDEX] = '\0';
-
-    VERBOSE( Con_Message("FS::addLumpDirectoryMapping: \"%s\" -> %s\n", ldm->lumpName, F_PrettyPath(Str_Text(&ldm->path))) )
+    QByteArray pathUtf8 = ldm->first.toUtf8();
+    LOG_VERBOSE("Path \"%s\" now mapped to lump \"%s\"") << F_PrettyPath(pathUtf8.constData()) << ldm->second;
 }
 
 /// Skip all whitespace except newlines.
@@ -1838,7 +1801,7 @@ void FS::initLumpDirectoryMappings(void)
     if(inited)
     {
         // Free old paths, if any.
-        clearLDMappings();
+        lumpMappings.clear();
     }
 
     if(DD_IsShuttingDown()) return;
