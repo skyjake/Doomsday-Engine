@@ -63,14 +63,6 @@ using de::ZipFile;
 /// Base for indicies in the auxiliary lump index.
 int const AUXILIARY_BASE = 100000000;
 
-/**
- * Virtual Path Mapping. Maps one path in the virtual file system to another.
- */
-typedef struct {
-    ddstring_t source; // Absolute path.
-    ddstring_t destination; // Absolute path.
-} vdmapping_t;
-
 static bool inited = false;
 static bool loadingForStartup;
 
@@ -91,23 +83,30 @@ static bool auxiliaryWadLumpIndexInUse;
 static LumpIndex* ActiveWadLumpIndex;
 
 /**
- * Virtual file path => Lump name mapping.
+ * Virtual (file) path => Lump name mapping.
  *
  * @todo We can't presently use a Map or Hash for these. Although the paths are
  *       unique, several of the existing algorithms which match using patterns
- *       presently assume they are sorted in a quasi load ordering.
+ *       assume they are sorted in a quasi load ordering.
  */
 typedef QPair<QString, QString> LumpMapping;
 typedef QList<LumpMapping> LumpMappings;
 static LumpMappings lumpMappings;
 
-// Virtual directory mappings.
-static uint vdMappingsCount;
-static uint vdMappingsMax;
-static vdmapping_t* vdMappings;
+/**
+ * Virtual file-directory mapping.
+ *
+ * Maps one (absolute) path in the virtual file system to another.
+ *
+ * @todo We can't presently use a Map or Hash for these. Although the paths are
+ *       unique, several of the existing algorithms which match using patterns
+ *       assume they are sorted in a quasi load ordering.
+ */
+typedef QPair<QString, QString> PathMapping;
+typedef QList<PathMapping> PathMappings;
+static PathMappings pathMappings;
 
-static void clearVDMappings();
-static bool applyVDMapping(ddstring_t* path, vdmapping_t* vdm);
+static bool applyPathMapping(ddstring_t* path, PathMapping const& vdm);
 
 static FILE* findRealFile(char const* path, char const* mymode, ddstring_t** foundPath);
 
@@ -365,7 +364,7 @@ void F_Shutdown(void)
 
     FS::closeAuxiliary();
 
-    clearVDMappings();
+    pathMappings.clear();
     lumpMappings.clear();
 
     clearLoadedFiles();
@@ -472,7 +471,7 @@ int FS::reset()
 
     // Update the dir/WAD translations.
     initLumpDirectoryMappings();
-    initVirtualDirectoryMappings();
+    initPathMap();
 
     return unloaded;
 }
@@ -1064,7 +1063,7 @@ static PathList collectLocalPaths(Str const* searchPath, bool includeSearchPath)
     Str_Appendf(&origWildPath, "%s*", Str_Text(searchPath));
 
     ddstring_t wildPath; Str_Init(&wildPath);
-    for(int i = -1; i < (int)vdMappingsCount; ++i)
+    for(int i = -1; i < (int)pathMappings.count(); ++i)
     {
         if(i == -1)
         {
@@ -1074,7 +1073,7 @@ static PathList collectLocalPaths(Str const* searchPath, bool includeSearchPath)
         {
             // Possible mapping?
             Str_Copy(&wildPath, searchPath);
-            if(!applyVDMapping(&wildPath, &vdMappings[i])) continue;
+            if(!applyPathMapping(&wildPath, pathMappings[i])) continue;
 
             Str_AppendChar(&wildPath, '*');
         }
@@ -1230,37 +1229,36 @@ static FILE* findRealFile(char const* path, char const* mymode, ddstring_t** fou
     }
 
     // Any applicable virtual directory mappings?
-    if(vdMappingsCount == 0)
+    if(pathMappings.empty())
     {
         Str_Free(&nativePath);
         return 0;
     }
 
-    ddstring_t* mapped = Str_New();
-    for(uint i = 0; i < vdMappingsCount; ++i)
+    ddstring_t* mapped = Str_NewStd();
+    DENG2_FOR_EACH(i, pathMappings, PathMappings::const_iterator)
     {
         Str_Set(mapped, path);
-        if(!applyVDMapping(mapped, &vdMappings[i])) continue;
+        if(!applyPathMapping(mapped, *i)) continue;
         // The mapping was successful.
 
         F_ToNativeSlashes(&nativePath, mapped);
         file = fopen(Str_Text(&nativePath), mode);
-        if(file)
-        {
-            VERBOSE( Con_Message("findRealFile: \"%s\" opened as %s.\n", F_PrettyPath(Str_Text(mapped)), path) )
-            if(foundPath)
-                *foundPath = mapped;
-            else
-                Str_Delete(mapped);
-            Str_Free(&nativePath);
-            return file;
-        }
+        if(file) break;
     }
 
-    Str_Delete(mapped);
     Str_Free(&nativePath);
 
-    return 0;
+    if(file)
+    {
+        VERBOSE( Con_Message("findRealFile: \"%s\" opened as %s.\n", F_PrettyPath(Str_Text(mapped)), path) )
+        if(foundPath) *foundPath = mapped;
+    }
+    else
+    {
+        Str_Free(mapped);
+    }
+    return file;
 }
 
 AbstractFile* FS::findLumpFile(char const* path, int* lumpIdx)
@@ -1834,101 +1832,72 @@ void FS::initLumpDirectoryMappings(void)
     inited = true;
 }
 
-static void clearVDMappings()
-{
-    if(vdMappings)
-    {
-        // Free the allocated memory.
-        for(uint i = 0; i < vdMappingsCount; ++i)
-        {
-            Str_Free(&vdMappings[i].source);
-            Str_Free(&vdMappings[i].destination);
-        }
-        M_Free(vdMappings); vdMappings = 0;
-    }
-    vdMappingsCount = vdMappingsMax = 0;
-}
-
 /// @return  @c true iff the mapping matched the path.
-static bool applyVDMapping(ddstring_t* path, vdmapping_t* vdm)
+static bool applyPathMapping(ddstring_t* path, PathMapping const& pm)
 {
-    if(path && vdm && !strnicmp(Str_Text(path), Str_Text(&vdm->destination), Str_Length(&vdm->destination)))
-    {
-        // Replace the beginning with the source path.
-        ddstring_t temp; Str_InitStd(&temp);
-        Str_Set(&temp, Str_Text(&vdm->source));
-        Str_PartAppend(&temp, Str_Text(path), Str_Length(&vdm->destination), Str_Length(path) - Str_Length(&vdm->destination));
-        Str_Copy(path, &temp);
-        Str_Free(&temp);
-        return true;
-    }
-    return false;
+    if(!path) return false;
+    QByteArray destAscii = pm.first.toAscii();
+    AutoStr* dest = Str_Set(AutoStr_NewStd(), destAscii.constData());
+    if(qstrnicmp(Str_Text(path), Str_Text(dest), Str_Length(dest))) return false;
+
+    // Replace the beginning with the source path.
+    QByteArray sourceAscii = pm.second.toAscii();
+    AutoStr* temp = Str_Set(AutoStr_NewStd(), sourceAscii.constData());
+    Str_PartAppend(temp, Str_Text(path), pm.first.length(), Str_Length(path) - pm.first.length());
+    Str_Copy(path, temp);
+    return true;
 }
 
-static vdmapping_t* findVDMappingForSourcePath(char const* source)
-{
-    vdmapping_t* vdm = 0;
-    if(vdMappings)
-    {
-        uint i = 0;
-        do
-        {
-            if(!Str_CompareIgnoreCase(&vdMappings[i].source, source))
-                vdm = &vdMappings[i];
-        } while(!vdm && ++i < vdMappingsCount);
-    }
-    return vdm;
-}
-
-void FS::addVirtualDirectoryMapping(char const* source, char const* destination)
+void FS::mapPath(char const* source, char const* destination)
 {
     if(!source || !source[0] || !destination || !destination[0]) return;
 
-    // Make this an absolute path.
-    ddstring_t src; Str_InitStd(&src);
-    Str_Set(&src, source);
-    Str_Strip(&src);
-    F_FixSlashes(&src, &src);
-    F_ExpandBasePath(&src, &src);
-    F_PrependWorkPath(&src, &src);
-    F_AppendMissingSlash(&src);
+    AutoStr* dest = Str_Set(AutoStr_NewStd(), destination);
+    Str_Strip(dest);
+    F_FixSlashes(dest, dest);
+    F_ExpandBasePath(dest, dest);
+    F_PrependWorkPath(dest, dest);
+    F_AppendMissingSlash(dest);
+
+    AutoStr* src = Str_Set(AutoStr_NewStd(), source);
+    Str_Strip(src);
+    F_FixSlashes(src, src);
+    F_ExpandBasePath(src, src);
+    F_PrependWorkPath(src, src);
+    F_AppendMissingSlash(src);
 
     // Have already mapped this source path?
-    vdmapping_t* vdm = findVDMappingForSourcePath(Str_Text(&src));
-    if(!vdm)
+    PathMappings::iterator found = pathMappings.begin();
+    for(; found != pathMappings.end(); ++found)
     {
-        // No. Acquire another mapping.
-        if(++vdMappingsCount > vdMappingsMax)
-        {
-            vdMappingsMax *= 2;
-            if(vdMappingsMax < vdMappingsCount)
-                vdMappingsMax = 2*vdMappingsCount;
-
-            vdMappings = (vdmapping_t*) M_Realloc(vdMappings, vdMappingsMax * sizeof *vdMappings);
-            if(!vdMappings) Con_Error("FS::addVirtualDirectoryMapping: Failed on allocation of %lu bytes for mapping list.", (unsigned long) (vdMappingsMax * sizeof *vdMappings));
-        }
-        vdm = &vdMappings[vdMappingsCount - 1];
-
-        Str_Set(Str_Init(&vdm->source), Str_Text(&src));
-        Str_Init(&vdm->destination);
+        PathMapping const& pm = *found;
+        if(!pm.second.compare(Str_Text(src), Qt::CaseInsensitive))
+            break;
     }
 
-    Str_Free(&src);
+    PathMapping* pm;
+    if(found == pathMappings.end())
+    {
+        // No. Acquire another mapping.
+        pathMappings.push_back(PathMapping(Str_Text(dest), Str_Text(src)));
+        pm = &pathMappings.back();
+    }
+    else
+    {
+        // Remap to another destination.
+        pm = &*found;
+        pm->first = Str_Text(dest);
+    }
 
-    // Set the destination.
-    Str_Set(&vdm->destination, destination);
-    Str_Strip(&vdm->destination);
-    F_FixSlashes(&vdm->destination, &vdm->destination);
-    F_ExpandBasePath(&vdm->destination, &vdm->destination);
-    F_PrependWorkPath(&vdm->destination, &vdm->destination);
-    F_AppendMissingSlash(&vdm->destination);
-
-    VERBOSE( Con_Message("Resources in \"%s\" now mapped to \"%s\"\n", F_PrettyPath(Str_Text(&vdm->source)), F_PrettyPath(Str_Text(&vdm->destination))) )
+    QByteArray sourceUtf8 = pm->second.toUtf8();
+    QByteArray destUtf8   = pm->first.toUtf8();
+    LOG_VERBOSE("Path \"%s\" now mapped to \"%s\"")
+            << F_PrettyPath(sourceUtf8.constData()) << F_PrettyPath(destUtf8.constData());
 }
 
-void FS::initVirtualDirectoryMappings()
+void FS::initPathMap()
 {
-    clearVDMappings();
+    pathMappings.clear();
 
     if(DD_IsShuttingDown()) return;
 
@@ -1940,7 +1909,7 @@ void FS::initVirtualDirectoryMappings()
 
         if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
         {
-            addVirtualDirectoryMapping(CommandLine_PathAt(i + 1), CommandLine_At(i + 2));
+            mapPath(CommandLine_PathAt(i + 1), CommandLine_At(i + 2));
             i += 2;
         }
     }
@@ -1965,7 +1934,7 @@ static int printResourcePath(char const* fileName, PathDirectoryNodeType /*type*
     return 0; // Continue the listing.
 }
 
-static void printVFDirectory(ddstring_t const* path)
+static void printDirectory(ddstring_t const* path)
 {
     ddstring_t dir; Str_InitStd(&dir);
 
@@ -1997,13 +1966,13 @@ D_CMD(Dir)
         for(int i = 1; i < argc; ++i)
         {
             Str_Set(&path, argv[i]);
-            printVFDirectory(&path);
+            printDirectory(&path);
         }
     }
     else
     {
         Str_Set(&path, "/");
-        printVFDirectory(&path);
+        printDirectory(&path);
     }
     Str_Free(&path);
     return true;
@@ -2179,12 +2148,12 @@ int F_Reset(void)
 
 void F_InitVirtualDirectoryMappings(void)
 {
-    FS::initVirtualDirectoryMappings();
+    FS::initPathMap();
 }
 
 void F_AddVirtualDirectoryMapping(char const* source, char const* destination)
 {
-    FS::addVirtualDirectoryMapping(source, destination);
+    FS::mapPath(source, destination);
 }
 
 void F_InitLumpDirectoryMappings(void)

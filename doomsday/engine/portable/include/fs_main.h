@@ -84,13 +84,16 @@ public:
      */
     static int reset();
 
-    static void initVirtualDirectoryMappings();
+    /**
+     * (Re-)Initialize the path mappings.
+     */
+    static void initPathMap();
 
     /**
-     * Add a new virtual directory mapping from source to destination in the vfs.
+     * Add a new path mapping from source to destination in the vfs.
      * @note Paths will be transformed into absolute paths if needed.
      */
-    static void addVirtualDirectoryMapping(char const* source, char const* destination);
+    static void mapPath(char const* source, char const* destination);
 
     /// @note Should be called after WADs have been processed.
     static void initLumpDirectoryMappings();
