@@ -30,12 +30,14 @@
 
 #ifdef __cplusplus
 
-#include "lumpinfo.h"
 #include "abstractfile.h"
+#include "lumpinfo.h"
 
 namespace de {
 
+class DFile;
 class LumpIndex;
+class PathDirectoryNode;
 
 /**
  * GenericFile. Runtime representation of a generic/unknown file.

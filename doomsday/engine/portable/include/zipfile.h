@@ -36,6 +36,7 @@
 
 namespace de {
 
+class DFile;
 class LumpIndex;
 class PathDirectoryNode;
 
