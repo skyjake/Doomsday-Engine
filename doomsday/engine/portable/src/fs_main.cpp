@@ -106,10 +106,10 @@ struct FS::Instance
     /// Database of unique identifiers for all loaded/opened files.
     FileIds fileIds;
 
-    LumpIndex* zipLumpIndex;
+    LumpIndex zipLumpIndex;
 
-    LumpIndex* primaryWadLumpIndex;
-    LumpIndex* auxiliaryWadLumpIndex;
+    LumpIndex primaryWadLumpIndex;
+    LumpIndex auxiliaryWadLumpIndex;
     // @c true = one or more files have been opened using the auxiliary index.
     bool auxiliaryWadLumpIndexInUse;
 
@@ -124,17 +124,10 @@ struct FS::Instance
 
     Instance(FS* d) : self(d), loadingForStartup(true),
         openFiles(), loadedFiles(), fileIds(),
-        zipLumpIndex(0), primaryWadLumpIndex(0),
-        auxiliaryWadLumpIndex(0), auxiliaryWadLumpIndexInUse(false),
-        ActiveWadLumpIndex(0)
-    {
-        zipLumpIndex          = new LumpIndex(LIF_UNIQUE_PATHS);
-        primaryWadLumpIndex   = new LumpIndex();
-        auxiliaryWadLumpIndex = new LumpIndex();
-        auxiliaryWadLumpIndexInUse = false;
-
-        ActiveWadLumpIndex = primaryWadLumpIndex;
-    }
+        zipLumpIndex(LIF_UNIQUE_PATHS), primaryWadLumpIndex(),
+        auxiliaryWadLumpIndex(), auxiliaryWadLumpIndexInUse(false),
+        ActiveWadLumpIndex(&primaryWadLumpIndex)
+    {}
 
     ~Instance()
     {
@@ -190,10 +183,10 @@ struct FS::Instance
 
     int pruneLumpsFromIndexesByFile(AbstractFile& file)
     {
-        int pruned = zipLumpIndex->pruneByFile(file)
-                   + primaryWadLumpIndex->pruneByFile(file);
+        int pruned = zipLumpIndex.pruneByFile(file)
+                   + primaryWadLumpIndex.pruneByFile(file);
         if(auxiliaryWadLumpIndexInUse)
-            pruned += auxiliaryWadLumpIndex->pruneByFile(file);
+            pruned += auxiliaryWadLumpIndex.pruneByFile(file);
         return pruned;
     }
 
@@ -203,57 +196,57 @@ struct FS::Instance
     inline lumpnum_t logicalLumpNum(lumpnum_t lumpNum)
     {
         return (lumpNum < 0 ? -1 :
-                ActiveWadLumpIndex == auxiliaryWadLumpIndex? lumpNum += AUXILIARY_BASE : lumpNum);
+                ActiveWadLumpIndex == &auxiliaryWadLumpIndex? lumpNum += AUXILIARY_BASE : lumpNum);
     }
 
     void clearLumpIndexes()
     {
-        delete primaryWadLumpIndex; primaryWadLumpIndex = 0;
-        delete auxiliaryWadLumpIndex; auxiliaryWadLumpIndex = 0;
-        delete zipLumpIndex; zipLumpIndex = 0;
+        primaryWadLumpIndex.clear();
+        auxiliaryWadLumpIndex.clear();
+        zipLumpIndex.clear();
 
         ActiveWadLumpIndex = 0;
-    }
-
-    void usePrimaryWadLumpIndex()
-    {
-        ActiveWadLumpIndex = primaryWadLumpIndex;
-    }
-
-    bool useAuxiliaryWadLumpIndex()
-    {
-        if(!auxiliaryWadLumpIndexInUse) return false;
-        ActiveWadLumpIndex = auxiliaryWadLumpIndex;
-        return true;
     }
 
     de::LumpIndex* lumpIndexForFileType(filetype_t fileType)
     {
         switch(fileType)
         {
-        case FT_ZIPFILE:    return zipLumpIndex;
+        case FT_ZIPFILE:    return &zipLumpIndex;
         case FT_LUMPFILE:
         case FT_WADFILE:    return ActiveWadLumpIndex;
         default: return NULL;
         }
     }
 
+    void usePrimaryWadLumpIndex()
+    {
+        ActiveWadLumpIndex = &primaryWadLumpIndex;
+    }
+
+    bool useAuxiliaryWadLumpIndex()
+    {
+        if(!auxiliaryWadLumpIndexInUse) return false;
+        ActiveWadLumpIndex = &auxiliaryWadLumpIndex;
+        return true;
+    }
+
     /**
-     * Selects which lump index to use, given a logical lump index.
+     * Selects which lump index to use, given a logical lump number.
+     * The lump number is then translated into range for the selected index.
      * This should be called in all functions that access lumps by logical lump number.
      */
-    lumpnum_t selectWadLumpIndex(lumpnum_t lumpNum)
+    void selectWadLumpIndex(lumpnum_t& lumpNum)
     {
-        if(lumpNum >= Instance::AUXILIARY_BASE)
+        if(lumpNum >= AUXILIARY_BASE)
         {
             useAuxiliaryWadLumpIndex();
-            lumpNum -= Instance::AUXILIARY_BASE;
+            lumpNum -= AUXILIARY_BASE;
         }
         else
         {
             usePrimaryWadLumpIndex();
         }
-        return lumpNum;
     }
 };
 
@@ -475,8 +468,8 @@ int FS::reset()
 
 bool FS::isValidLumpNum(lumpnum_t absoluteLumpNum)
 {
-    lumpnum_t lumpNum = d->selectWadLumpIndex(absoluteLumpNum);
-    return d->ActiveWadLumpIndex->isValidIndex(lumpNum);
+    d->selectWadLumpIndex(absoluteLumpNum); // No longer absolute after this call.
+    return d->ActiveWadLumpIndex->isValidIndex(absoluteLumpNum);
 }
 
 typedef enum lumpsizecondition_e {
@@ -623,13 +616,13 @@ lumpnum_t FS::lumpNumForName(char const* name, bool silent)
 
 LumpInfo const* FS::lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
-    lumpnum_t translated = d->selectWadLumpIndex(absoluteLumpNum);
-    if(!d->ActiveWadLumpIndex->isValidIndex(translated))
+    d->selectWadLumpIndex(absoluteLumpNum); // No longer absolute after this call.
+    if(!d->ActiveWadLumpIndex->isValidIndex(absoluteLumpNum))
     {
         if(lumpIdx) *lumpIdx = -1;
         return 0;
     }
-    LumpInfo const& info = d->ActiveWadLumpIndex->lumpInfo(translated);
+    LumpInfo const& info = d->ActiveWadLumpIndex->lumpInfo(absoluteLumpNum);
     if(lumpIdx) *lumpIdx = info.lumpIdx;
     return &info;
 }
@@ -687,7 +680,7 @@ lumpnum_t FS::openAuxiliary(char const* path, size_t baseOffset)
         {
             closeAuxiliary();
         }
-        d->ActiveWadLumpIndex = d->auxiliaryWadLumpIndex;
+        d->ActiveWadLumpIndex = &d->auxiliaryWadLumpIndex;
         d->auxiliaryWadLumpIndexInUse = true;
 
         // Prepare the temporary info descriptor.
@@ -715,7 +708,7 @@ void FS::closeAuxiliary()
 {
     if(d->useAuxiliaryWadLumpIndex())
     {
-        d->clearLoadedFiles(d->auxiliaryWadLumpIndex);
+        d->clearLoadedFiles(&d->auxiliaryWadLumpIndex);
         d->auxiliaryWadLumpIndexInUse = false;
     }
     d->usePrimaryWadLumpIndex();
@@ -1092,7 +1085,7 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
     // Check the Zip directory.
     {
     int result = 0;
-    DENG2_FOR_EACH(i, d->zipLumpIndex->lumps(), LumpIndex::Lumps::const_iterator)
+    DENG2_FOR_EACH(i, d->zipLumpIndex.lumps(), LumpIndex::Lumps::const_iterator)
     {
         LumpInfo const* lumpInfo = *i;
         AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
@@ -1244,12 +1237,12 @@ AbstractFile* FS::findLumpFile(char const* path, int* lumpIdx)
     F_PrependBasePath(&absSearchPath, &absSearchPath);
 
     // Perform the search.
-    lumpnum_t lumpNum = d->zipLumpIndex->indexForPath(Str_Text(&absSearchPath));
+    lumpnum_t lumpNum = d->zipLumpIndex.indexForPath(Str_Text(&absSearchPath));
     if(lumpNum >= 0)
     {
         Str_Free(&absSearchPath);
 
-        LumpInfo const& lumpInfo = d->zipLumpIndex->lumpInfo(lumpNum);
+        LumpInfo const& lumpInfo = d->zipLumpIndex.lumpInfo(lumpNum);
         if(lumpIdx) *lumpIdx = lumpInfo.lumpIdx;
         return reinterpret_cast<AbstractFile*>(lumpInfo.container);
     }
@@ -1929,7 +1922,7 @@ static void printLumpIndex(de::LumpIndex const& index)
 void FS::printIndex()
 {
     // Always the primary index.
-    printLumpIndex(*d->primaryWadLumpIndex);
+    printLumpIndex(d->primaryWadLumpIndex);
 }
 
 /// Print contents of directories as Doomsday sees them.
