@@ -81,9 +81,7 @@ public:
     {
         crc_ = uint(info_.size);
 
-        AbstractFile* container = reinterpret_cast<AbstractFile*>(info_.container);
-        DENG_ASSERT(container);
-        PathDirectoryNode const& node = container->lumpDirectoryNode(info_.lumpIdx);
+        PathDirectoryNode const& node = info().container->lumpDirectoryNode(info_.lumpIdx);
         ddstring_t const* name = node.pathFragment();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
@@ -262,7 +260,7 @@ struct WadFile::Instance
                                            littleEndianByteOrder.toNative(arcRecord->filePos),
                                            littleEndianByteOrder.toNative(arcRecord->size),
                                            littleEndianByteOrder.toNative(arcRecord->size),
-                                           reinterpret_cast<abstractfile_s*>(self)));
+                                           self));
             PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&absPath));
             node->setUserData(record);
         }

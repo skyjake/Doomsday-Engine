@@ -34,7 +34,6 @@
 
 #include "abstractfile.h"
 #include "dfile.h"
-#include "lumpinfo.h"
 #include "pathdirectory.h"
 
 #ifdef __cplusplus
@@ -43,6 +42,7 @@
 
 #include "fileid.h"
 #include "lumpindex.h"
+#include "lumpinfo.h"
 
 namespace de {
 
@@ -415,9 +415,6 @@ char const* F_LumpSourceFile(lumpnum_t absoluteLumpNum);
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
 
-LumpInfo const* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-LumpInfo const* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0*/);
-
 char const* F_LumpName(lumpnum_t absoluteLumpNum);
 
 size_t F_LumpLength(lumpnum_t absoluteLumpNum);
@@ -434,8 +431,6 @@ void F_Delete(struct dfile_s* file);
 Str const* F_Path(struct abstractfile_s const* file);
 
 void F_SetCustom(struct abstractfile_s* file, boolean yes);
-
-LumpInfo const* F_LumpInfo(struct abstractfile_s* file, int lumpIdx);
 
 AutoStr* F_ComposeLumpPath2(struct abstractfile_s* file, int lumpIdx, char delimiter);
 AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx); /*delimiter='/'*/

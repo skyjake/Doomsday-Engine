@@ -784,7 +784,7 @@ void Def_CountMsg(int count, const char* label)
 }
 
 /**
- * Reads all DD_DEFNS lumps found in the lumpInfo.
+ * Read all DD_DEFNS lumps in the primary lump index.
  */
 void Def_ReadLumpDefs(void)
 {

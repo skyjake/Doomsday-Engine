@@ -29,10 +29,8 @@
 #include "abstractfile.h"
 
 using namespace de;
-using de::AbstractFile;
-using de::DFile;
 
-AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
+de::AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
     : file(&file), type_(_type)
 {
     // Used to favor newer files when duplicates are pruned.
@@ -48,67 +46,66 @@ AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, Lum
     info_ = _info;
 }
 
-AbstractFile::~AbstractFile()
+de::AbstractFile::~AbstractFile()
 {
     App_FileSystem()->releaseFile(this);
     Str_Free(&path_);
     if(file) delete file;
 }
 
-filetype_t AbstractFile::type() const
+filetype_t de::AbstractFile::type() const
 {
     return type_;
 }
 
-LumpInfo const& AbstractFile::info() const
+LumpInfo const& de::AbstractFile::info() const
 {
     return info_;
 }
 
-bool AbstractFile::isContained() const
+bool de::AbstractFile::isContained() const
 {
     return !!info_.container;
 }
 
-AbstractFile& AbstractFile::container() const
+de::AbstractFile& de::AbstractFile::container() const
 {
-    AbstractFile* cont = reinterpret_cast<AbstractFile*>(info_.container);
-    if(!cont) throw de::Error("AbstractFile::container", QString("%s is not contained").arg(Str_Text(path())));
-    return *cont;
+    if(!info_.container) throw de::Error("AbstractFile::container", QString("%s is not contained").arg(Str_Text(path())));
+    return *info_.container;
 }
 
-DFile* AbstractFile::handle()
+de::DFile* de::AbstractFile::handle()
 {
     return file;
 }
 
-ddstring_t const* AbstractFile::path() const
+ddstring_t const* de::AbstractFile::path() const
 {
     return &path_;
 }
 
-uint AbstractFile::loadOrderIndex() const
+uint de::AbstractFile::loadOrderIndex() const
 {
     return order;
 }
 
-bool AbstractFile::hasStartup() const
+bool de::AbstractFile::hasStartup() const
 {
     return !!flags.startup;
 }
 
-AbstractFile& AbstractFile::setStartup(bool yes)
+de::AbstractFile& de::AbstractFile::setStartup(bool yes)
 {
     flags.startup = yes;
     return *this;
 }
 
-bool AbstractFile::hasCustom() const
+bool de::AbstractFile::hasCustom() const
 {
     return !!flags.custom;
 }
 
-AbstractFile& AbstractFile::setCustom(bool yes)
+de::AbstractFile& de::AbstractFile::setCustom(bool yes)
 {
     flags.custom = yes;
     return *this;

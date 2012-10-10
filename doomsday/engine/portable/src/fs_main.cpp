@@ -56,7 +56,7 @@ using de::FS;
 using de::AbstractFile;         using de::DFile;
 using de::DFileBuilder;         using de::FileId;
 using de::GenericFile;          using de::LumpFile;
-using de::PathDirectory;
+using de::LumpInfo;             using de::PathDirectory;
 using de::PathDirectoryNode;    using de::WadFile;
 using de::ZipFile;
 
@@ -358,23 +358,6 @@ bool FS::checkFileId(char const* path)
 void FS::resetFileIds()
 {
     d->fileIds.clear();
-}
-
-void F_InitLumpInfo(LumpInfo* info)
-{
-    DENG_ASSERT(info);
-    info->lumpIdx = 0;
-    info->baseOffset = 0;
-    info->size = 0;
-    info->compressedSize = 0;
-    info->lastModified = 0;
-    info->container = 0;
-}
-
-void F_CopyLumpInfo(LumpInfo* dst, LumpInfo const* src)
-{
-    DENG_ASSERT(dst && src);
-    *dst = *src;
 }
 
 void FS::endStartup()
@@ -1991,16 +1974,6 @@ lumpnum_t F_LumpNumForName(char const* name)
     return App_FileSystem()->lumpNumForName(name);
 }
 
-LumpInfo const* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
-{
-    return App_FileSystem()->lumpInfo(absoluteLumpNum, lumpIdx);
-}
-
-LumpInfo const* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum)
-{
-    return App_FileSystem()->lumpInfo(absoluteLumpNum);
-}
-
 char const* F_LumpName(lumpnum_t absoluteLumpNum)
 {
     return App_FileSystem()->lumpName(absoluteLumpNum);
@@ -2037,14 +2010,6 @@ void F_SetCustom(struct abstractfile_s* file, boolean yes)
 {
     if(!file) return;
     reinterpret_cast<AbstractFile*>(file)->setCustom(CPP_BOOL(yes));
-}
-
-LumpInfo const* F_LumpInfo(struct abstractfile_s* _file, int lumpIdx)
-{
-    if(!_file) return 0;
-    AbstractFile* file = reinterpret_cast<AbstractFile*>(_file);
-    if(!file->isValidIndex(lumpIdx)) return 0;
-    return &file->lumpInfo(lumpIdx);
 }
 
 size_t F_ReadLump(struct abstractfile_s* _file, int lumpIdx, uint8_t* buffer)

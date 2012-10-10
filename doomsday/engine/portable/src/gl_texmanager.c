@@ -2569,7 +2569,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
         struct abstractfile_s* file = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
         const uint8_t* patch = F_CacheLump(file, lumpIdx);
 
-        if(validPatch(patch, F_LumpInfo(file, lumpIdx)->size))
+        if(validPatch(patch, F_LumpLength(patchDef->lumpNum)))
         {
             // Draw the patch in the buffer.
             loadDoomPatch(image->pixels, image->size.width, image->size.height,
@@ -2639,7 +2639,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
         AbstractFile* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx);
 
-        if(validPatch((const uint8_t*)patch, F_LumpInfo(fsObject, lumpIdx)->size))
+        if(validPatch((const uint8_t*)patch, F_LumpLength(patchDef->lumpNum)))
         {
             if(texDef->patchCount != 1)
             {
