@@ -93,11 +93,17 @@ struct FS::Instance
     static int const AUXILIARY_BASE = 100000000;
 
     FS* self;
+
+    /// @c true= Flag newly opened files as "startup".
     bool loadingForStartup;
 
-    FileList* openFiles;
-    FileList* loadedFiles;
+    /// List of currently opened files.
+    FileList openFiles;
 
+    /// List of all loaded files present in the file system.
+    FileList loadedFiles;
+
+    /// Database of unique identifiers for all loaded/opened files.
     FileIds fileIds;
 
     LumpIndex* zipLumpIndex;
@@ -117,14 +123,11 @@ struct FS::Instance
     PathMappings pathMappings;
 
     Instance(FS* d) : self(d), loadingForStartup(true),
-        openFiles(0), loadedFiles(0), fileIds(),
+        openFiles(), loadedFiles(), fileIds(),
         zipLumpIndex(0), primaryWadLumpIndex(0),
         auxiliaryWadLumpIndex(0), auxiliaryWadLumpIndexInUse(false),
         ActiveWadLumpIndex(0)
     {
-        openFiles     = new de::FileList();
-        loadedFiles   = new de::FileList();
-
         zipLumpIndex          = new LumpIndex(LIF_UNIQUE_PATHS);
         primaryWadLumpIndex   = new LumpIndex();
         auxiliaryWadLumpIndex = new LumpIndex();
@@ -138,9 +141,6 @@ struct FS::Instance
         clearLoadedFiles();
         clearOpenFiles();
         clearLumpIndexes();
-
-        delete loadedFiles; loadedFiles = 0;
-        delete openFiles; openFiles = 0;
 
         fileIds.clear(); // Should be null-op if bookkeeping is correct.
 
@@ -169,16 +169,14 @@ struct FS::Instance
 
     void clearLoadedFiles(de::LumpIndex* index = 0)
     {
-        if(!loadedFiles) return;
-
         // Unload in reverse load order.
-        for(int i = loadedFiles->size() - 1; i >= 0; i--)
+        for(int i = loadedFiles.size() - 1; i >= 0; i--)
         {
-            DFile* hndl = (*loadedFiles)[i];
+            DFile* hndl = loadedFiles[i];
             if(!index || index->catalogues(*hndl->file()))
             {
                 self->unlinkFile(hndl->file());
-                loadedFiles->removeAt(i);
+                loadedFiles.removeAt(i);
                 self->deleteFile(hndl);
             }
         }
@@ -186,8 +184,8 @@ struct FS::Instance
 
     void clearOpenFiles()
     {
-        while(!openFiles->empty())
-        { self->deleteFile(openFiles->back()); }
+        while(!openFiles.empty())
+        { self->deleteFile(openFiles.back()); }
     }
 
     int pruneLumpsFromIndexesByFile(AbstractFile& file)
@@ -289,10 +287,10 @@ void FS::consoleRegister()
  * @note Performance is O(n).
  * @return @c iterator pointing to list->end() if not found.
  */
-static de::FileList::iterator findListFileByPath(de::FileList* list, char const* path_)
+static de::FileList::iterator findListFileByPath(de::FileList& list, char const* path_)
 {
-    if(!list || list->empty()) return list->end();
-    if(!path_ || !path_[0]) return list->end();
+    if(list.empty()) return list.end();
+    if(!path_ || !path_[0]) return list.end();
 
     // Transform the path into one we can process.
     AutoStr* path = Str_Set(AutoStr_NewStd(), path_);
@@ -300,7 +298,7 @@ static de::FileList::iterator findListFileByPath(de::FileList* list, char const*
 
     // Perform the search.
     de::FileList::iterator i;
-    for(i = list->begin(); i != list->end(); ++i)
+    for(i = list.begin(); i != list.end(); ++i)
     {
         AbstractFile* file = (*i)->file();
         if(!Str_CompareIgnoreCase(file->path(), Str_Text(path)))
@@ -320,9 +318,8 @@ void FS::unlinkFile(AbstractFile* file)
 
 bool FS::unloadFile(char const* path, bool permitRequired, bool quiet)
 {
-    if(!d->loadedFiles) return false;
     de::FileList::iterator found = findListFileByPath(d->loadedFiles, path);
-    if(found == d->loadedFiles->end()) return false;
+    if(found == d->loadedFiles.end()) return false;
 
     // Do not attempt to unload a resource required by the current game.
     if(!permitRequired && Game_IsRequiredResource(theGame, path))
@@ -342,7 +339,7 @@ bool FS::unloadFile(char const* path, bool permitRequired, bool quiet)
 
     DFile* hndl = *found;
     unlinkFile(hndl->file());
-    d->loadedFiles->erase(found);
+    d->loadedFiles.erase(found);
     deleteFile(hndl);
     return true;
 }
@@ -393,23 +390,20 @@ void FS::endStartup()
     d->usePrimaryWadLumpIndex();
 }
 
-int FS::unloadListFiles(de::FileList* list, bool nonStartup)
+int FS::unloadListFiles(de::FileList& list, bool nonStartup)
 {
     int unloaded = 0;
-    if(list)
+    // Unload in reverse load order.
+    for(int i = list.size() - 1; i >= 0; i--)
     {
-        // Unload in reverse load order.
-        for(int i = list->size() - 1; i >= 0; i--)
+        DFile* hndl = list[i];
+        AbstractFile* file = hndl->file();
+        if(!nonStartup || !file->hasStartup())
         {
-            DFile* hndl = (*list)[i];
-            AbstractFile* file = hndl->file();
-            if(!nonStartup || !file->hasStartup())
+            if(unloadFile(Str_Text(file->path()),
+                          true/*allow unloading game resources*/, true/*quiet please*/))
             {
-                if(unloadFile(Str_Text(file->path()),
-                              true/*allow unloading game resources*/, true/*quiet please*/))
-                {
-                    ++unloaded;
-                }
+                ++unloaded;
             }
         }
     }
@@ -429,12 +423,11 @@ static void printFileIds(FileIds const& fileIds)
 #endif
 
 #if _DEBUG
-static void printFileList(de::FileList* list)
+static void printFileList(de::FileList& list)
 {
-    if(!list) return;
-    for(int i = 0; i < list->size(); ++i)
+    for(int i = 0; i < list.size(); ++i)
     {
-        DFile* hndl = (*list)[i];
+        DFile* hndl = list[i];
         AbstractFile* file = hndl->file();
         FileId fileId = FileId::fromPath(Str_Text(file->path()));
         LOG_MSG(" %c%d: %s - \"%s\" [handle: %p]")
@@ -702,10 +695,10 @@ lumpnum_t FS::openAuxiliary(char const* path, size_t baseOffset)
 
         WadFile* wad = new WadFile(*hndl, Str_Text(foundPath), info);
         hndl = DFileBuilder::fromFile(*wad);
-        d->openFiles->push_back(hndl); hndl->setList(reinterpret_cast<struct filelist_s*>(d->openFiles));
+        d->openFiles.push_back(hndl); hndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
 
         DFile* loadedFilesHndl = DFileBuilder::dup(*hndl);
-        d->loadedFiles->push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(d->loadedFiles));
+        d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
         wad->publishLumpsToIndex(*d->ActiveWadLumpIndex);
 
         Str_Delete(foundPath);
@@ -730,13 +723,13 @@ void FS::closeAuxiliary()
 
 void FS::releaseFile(AbstractFile* file)
 {
-    if(!file || !d->openFiles) return;
-    for(int i = d->openFiles->size() - 1; i >= 0; i--)
+    if(!file) return;
+    for(int i = d->openFiles.size() - 1; i >= 0; i--)
     {
-        DFile* hndl = (*d->openFiles)[i];
+        DFile* hndl = d->openFiles[i];
         if(hndl->file() == file)
         {
-            d->openFiles->removeAt(i);
+            d->openFiles.removeAt(i);
         }
     }
 }
@@ -805,10 +798,10 @@ bool FS::dumpLump(lumpnum_t absoluteLumpNum, char const* path)
 }
 
 /// @return @c NULL= Not found.
-static WadFile* findFirstWadFile(de::FileList* list, bool custom)
+static WadFile* findFirstWadFile(de::FileList& list, bool custom)
 {
-    if(!list || list->empty()) return 0;
-    DENG2_FOR_EACH(i, *list, de::FileList::iterator)
+    if(list.empty()) return 0;
+    DENG2_FOR_EACH(i, list, de::FileList::iterator)
     {
         AbstractFile* file = (*i)->file();
         if(custom != file->hasCustom()) continue;
@@ -821,8 +814,6 @@ static WadFile* findFirstWadFile(de::FileList* list, bool custom)
 
 uint FS::loadedFilesCRC()
 {
-    if(!d->loadedFiles) return 0;
-
     /**
      * We define the CRC as that of the lump directory of the first loaded IWAD.
      * @todo Really kludgy...
@@ -857,11 +848,9 @@ uint FS::loadedFilesCRC()
  *      should ensure to release it with Str_Delete() when no longer needed.
  *      Always returns a valid (but perhaps zero-length) string object.
  */
-static Str* composeFileList(de::FileList* fl, int flags = DEFAULT_PATHTOSTRINGFLAGS,
+static Str* composeFileList(de::FileList& fl, int flags = DEFAULT_PATHTOSTRINGFLAGS,
     char const* delimiter = " ", bool (*predicate)(DFile* hndl, void* parameters) = 0, void* parameters = 0)
 {
-    DENG_ASSERT(fl);
-
     int maxLength, delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
     int n, pLength, pathCount = 0;
     Str const* path;
@@ -875,7 +864,7 @@ static Str* composeFileList(de::FileList* fl, int flags = DEFAULT_PATHTOSTRINGFL
 
     // Determine the maximum number of characters we'll need.
     maxLength = 0;
-    DENG2_FOR_EACH(i, *fl, de::FileList::const_iterator)
+    DENG2_FOR_EACH(i, fl, de::FileList::const_iterator)
     {
         if(predicate && !predicate(*i, parameters))
             continue; // Caller isn't interested in this...
@@ -934,7 +923,7 @@ static Str* composeFileList(de::FileList* fl, int flags = DEFAULT_PATHTOSTRINGFL
     str = Str_New();
     Str_Reserve(str, maxLength);
     n = 0;
-    DENG2_FOR_EACH(i, *fl, de::FileList::const_iterator)
+    DENG2_FOR_EACH(i, fl, de::FileList::const_iterator)
     {
         if(predicate && !predicate(*i, parameters))
             continue; // Caller isn't interested in this...
@@ -1482,8 +1471,8 @@ DFile* FS::tryOpenFile(char const* path, char const* mode, size_t baseOffset, bo
     DFile* file = tryOpenFile2(path, mode, baseOffset, allowDuplicate);
     if(file)
     {
-        d->openFiles->push_back(file);
-        return &file->setList(reinterpret_cast<struct filelist_s*>(d->openFiles));
+        d->openFiles.push_back(file);
+        return &file->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
     }
     return NULL;
 }
@@ -1543,7 +1532,7 @@ AbstractFile* FS::addFile(char const* path, size_t baseOffset)
     }
 
     DFile* loadedFilesHndl = DFileBuilder::dup(*hndl);
-    d->loadedFiles->push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(d->loadedFiles));
+    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
 
     // Publish lumps to an index?
     LumpIndex* lumpIndex = d->lumpIndexForFileType(file->type());
@@ -1625,7 +1614,7 @@ DFile* FS::openLump(lumpnum_t absoluteLumpNum)
     if(!lump) return 0;
 
     DFile* openFileHndl = DFileBuilder::fromFile(*lump);
-    d->openFiles->push_back(openFileHndl); openFileHndl->setList(reinterpret_cast<struct filelist_s*>(d->openFiles));
+    d->openFiles.push_back(openFileHndl); openFileHndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
     return openFileHndl;
 }
 
@@ -2012,18 +2001,18 @@ D_CMD(ListLumps)
  */
 AbstractFile** FS::collectFiles(int* count)
 {
-    FileList* list = d->loadedFiles;
-    if(list && !list->empty())
+    FileList& list = d->loadedFiles;
+    if(!list.empty())
     {
-        AbstractFile** arr = (AbstractFile**) M_Malloc(list->size() * sizeof *arr);
-        if(!arr) Con_Error("collectFiles: Failed on allocation of %lu bytes for file list.", (unsigned long) (list->size() * sizeof *arr));
+        AbstractFile** arr = (AbstractFile**) M_Malloc(list.size() * sizeof *arr);
+        if(!arr) Con_Error("collectFiles: Failed on allocation of %lu bytes for file list.", (unsigned long) (list.size() * sizeof *arr));
 
-        for(int i = 0; i < list->size(); ++i)
+        for(int i = 0; i < list.size(); ++i)
         {
-            DFile const* hndl = (*list)[i];
+            DFile const* hndl = list[i];
             arr[i] = hndl->file();
         }
-        if(count) *count = list->size();
+        if(count) *count = list.size();
         return arr;
     }
 

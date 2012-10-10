@@ -338,7 +338,7 @@ private:
 
     bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
 
-    int unloadListFiles(FileList* list, bool nonStartup);
+    int unloadListFiles(FileList& list, bool nonStartup);
 
     struct PathListItem
     {
