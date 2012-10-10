@@ -56,13 +56,12 @@ public:
     /// @return @c true= this FileId is not equal @a other (differing hashes).
     bool operator != (FileId const& other) const;
 
-    friend void FileId::swap(FileId& first, FileId& second) // nothrow
+    friend void swap(FileId& first, FileId& second) // nothrow
     {
 #ifdef DENG2_QT_4_8_OR_NEWER
         first.md5_.swap(second.md5_);
 #else
-        using std::swap;
-        swap(first.md5_, second.md5_);
+        std::swap(first.md5_, second.md5_);
 #endif
     }
 
