@@ -28,10 +28,6 @@
 #include "abstractresource.h"
 #include "zipfile.h"
 
-using de::FS;
-using de::DFile;
-using de::ZipFile;
-
 extern "C" {
 
 Game* theGame; // Currently active game.
@@ -198,11 +194,11 @@ static bool recognizeZIP(char const* filePath, void* parameters)
 {
     DENG_UNUSED(parameters);
 
-    DFile* dfile = App_FileSystem()->openFile(filePath, "bf");
+    de::DFile* dfile = App_FileSystem()->openFile(filePath, "bf");
     bool result = false;
     if(dfile)
     {
-        result = ZipFile::recognise(*dfile);
+        result = de::ZipFile::recognise(*dfile);
         /// @todo Check files. We should implement an auxiliary zip lump index...
         App_FileSystem()->closeFile(dfile);
     }

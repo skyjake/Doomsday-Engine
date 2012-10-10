@@ -31,7 +31,6 @@
 #include "de_filesys.h"
 
 using namespace de;
-using de::AbstractFile;
 
 #if _DEBUG
 #  define  W_Error              Con_Error
@@ -74,7 +73,7 @@ uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
 
 char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
-    AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum);
+    de::AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum);
     if(!file)
     {
         W_Error("W_LumpSourceFile: Invalid lumpnum %i.", absoluteLumpNum);
@@ -126,7 +125,7 @@ lumpnum_t W_GetLumpNumForName(char const* name)
 size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 {
     int lumpIdx;
-    AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
+    de::AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
     if(!file)
     {
         W_Error("W_ReadLump: Invalid lumpnum %i.", absoluteLumpNum);
@@ -138,7 +137,7 @@ size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t startOffset, size_t length)
 {
     int lumpIdx;
-    AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
+    de::AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
     if(!file)
     {
         W_Error("W_ReadLumpSection: Invalid lumpnum %i.", absoluteLumpNum);
@@ -150,7 +149,7 @@ size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t star
 uint8_t const* W_CacheLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
+    de::AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
     if(!file)
     {
         W_Error("W_CacheLump: Invalid lumpnum %i.", absoluteLumpNum);
@@ -162,7 +161,7 @@ uint8_t const* W_CacheLump(lumpnum_t absoluteLumpNum)
 void W_UnlockLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
+    de::AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
     if(!file)
     {
         W_Error("W_UnlockLump: Invalid lumpnum %i.", absoluteLumpNum);
