@@ -39,6 +39,13 @@
  * changes. For instance, when new files are written to a folder on the hard
  * drive, one must call de::FS::refresh() for the changes to be reflected
  * in the de::FS index and tree.
+ *
+ * ZIP (PK3) archives are visible in the libdeng2 file system as Folder and
+ * File instances just like regular native files are. This allows one to deploy
+ * a large collection of resources as an archive and treat it at runtime just
+ * like a tree of native files. Files within archives can be read and written
+ * just like native files, and the containing archives will be updated as
+ * needed. @see de::ArchiveFile, de::ArchiveFeed, and de::FS::interpret()
  */
 
 namespace de

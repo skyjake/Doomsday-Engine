@@ -12,6 +12,7 @@ PREDEFINED              = __DENG2__ \
                           "DENG2_SUB_ERROR(B,N)=class N : public B {};" 
 
 INCLUDED_BY_GRAPH       = YES
+COLLABORATION_GRAPH     = NO
 REFERENCED_BY_RELATION  = NO
 OPTIMIZE_OUTPUT_FOR_C   = NO
 MACRO_EXPANSION         = YES
