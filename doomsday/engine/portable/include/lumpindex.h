@@ -62,7 +62,7 @@ public:
     ~LumpIndex();
 
     /// Number of lumps in the directory.
-    int size();
+    int size() const;
 
     /// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
     bool isValidIndex(lumpnum_t lumpNum);
@@ -80,7 +80,7 @@ public:
     /**
      * Provides access to the list of lumps for efficient traversals.
      */
-    Lumps const& lumps();
+    Lumps const& lumps() const;
 
     /**
      * Clear the index back to its default (i.e., empty state).

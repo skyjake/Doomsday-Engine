@@ -277,7 +277,7 @@ LumpInfo const& LumpIndex::lumpInfo(lumpnum_t lumpNum)
     return *d->lumpInfos[lumpNum];
 }
 
-LumpIndex::Lumps const& LumpIndex::lumps()
+LumpIndex::Lumps const& LumpIndex::lumps() const
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -285,7 +285,7 @@ LumpIndex::Lumps const& LumpIndex::lumps()
     return d->lumpInfos;
 }
 
-int LumpIndex::size()
+int LumpIndex::size() const
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();

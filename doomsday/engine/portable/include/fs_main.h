@@ -331,95 +331,14 @@ public:
     AbstractFile** collectFiles(int* count);
 
 private:
-    bool loadingForStartup;
-
-    FileList* openFiles;
-    FileList* loadedFiles;
-
-    typedef QList<FileId> FileIds;
-    FileIds fileIds;
-
-    LumpIndex* zipLumpIndex;
-
-    LumpIndex* primaryWadLumpIndex;
-    LumpIndex* auxiliaryWadLumpIndex;
-    // @c true = one or more files have been opened using the auxiliary index.
-    bool auxiliaryWadLumpIndexInUse;
-
-    // Currently selected lump index.
-    LumpIndex* ActiveWadLumpIndex;
-
-    /**
-     * Virtual (file) path => Lump name mapping.
-     *
-     * @todo We can't presently use a Map or Hash for these. Although the paths are
-     *       unique, several of the existing algorithms which match using patterns
-     *       assume they are sorted in a quasi load ordering.
-     */
-    typedef QPair<QString, QString> LumpMapping;
-    typedef QList<LumpMapping> LumpMappings;
-    LumpMappings lumpMappings;
-
-    /**
-     * Virtual file-directory mapping.
-     *
-     * Maps one (absolute) path in the virtual file system to another.
-     *
-     * @todo We can't presently use a Map or Hash for these. Although the paths are
-     *       unique, several of the existing algorithms which match using patterns
-     *       assume they are sorted in a quasi load ordering.
-     */
-    typedef QPair<QString, QString> PathMapping;
-    typedef QList<PathMapping> PathMappings;
-    PathMappings pathMappings;
-
-
-    /// Base for indicies in the auxiliary lump index.
-    static int const AUXILIARY_BASE = 100000000;
-
-
-
-    bool applyPathMapping(ddstring_t* path, PathMapping const& vdm);
-
-    int pruneLumpsFromIndexesByFile(AbstractFile& file);
+    struct Instance;
+    Instance* d;
 
     void unlinkFile(AbstractFile* file);
 
-    void clearLoadedFiles(LumpIndex* index = 0);
-
-    /**
-     * Handles conversion to a logical index that is independent of the lump index currently in use.
-     */
-    inline lumpnum_t logicalLumpNum(lumpnum_t lumpNum)
-    {
-        return (lumpNum < 0 ? -1 :
-                ActiveWadLumpIndex == auxiliaryWadLumpIndex? lumpNum += AUXILIARY_BASE : lumpNum);
-    }
-
-    void usePrimaryWadLumpIndex();
-
-    bool useAuxiliaryWadLumpIndex();
-
-    void clearLumpIndexes();
-
-    void clearOpenFiles();
-
-    /**
-     * Selects which lump index to use, given a logical lump index.
-     * This should be called in all functions that access lumps by logical lump number.
-     */
-    lumpnum_t chooseWadLumpIndex(lumpnum_t lumpNum);
-
     bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
 
-    /// @return  @c true if the FileId associated with @a path was released.
-    bool releaseFileId(char const* path);
-
     int unloadListFiles(FileList* list, bool nonStartup);
-
-#if _DEBUG
-    void logOrphanedFileIdentifiers();
-#endif
 
     struct PathListItem
     {
@@ -449,10 +368,6 @@ private:
      */
     DFile* tryOpenFile2(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
     DFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
-
-    LumpIndex* lumpIndexForFileType(filetype_t fileType);
-
-    void printLumpIndex(LumpIndex& index);
 };
 
 } // namespace de
