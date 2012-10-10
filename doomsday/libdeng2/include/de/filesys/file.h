@@ -108,7 +108,9 @@ namespace de
         };
         
         /**
-         * Accesses the properties of a File.
+         * Accesses the properties of a File. Allows using properties of a file
+         * (like its name, path or size) as a Value, for instance in script
+         * expressions.
          *
          * @ingroup fs
          */
@@ -203,11 +205,12 @@ namespace de
         Feed* originFeed() const { return _originFeed; }
         
         /**
-         * Sets the source file of this file. The source is where this file is getting
-         * its data from. File interpreters use this to access their uninterpreted data.
-         * By default all files use themselves as the source, so there is always a
-         * valid source for every file. If another file is being used as the source,
-         * the source is not typically indexed to the file system.
+         * Sets the source file of this file. The source is where this file is
+         * getting its data from. File interpreters use this to access their
+         * uninterpreted data. By default all files use themselves as the
+         * source, so there is always a valid source for every file. If another
+         * file is being used as the source, the source is not typically
+         * indexed to the file system.
          *
          * @param source  Source file. The file takes ownership of @a source.
          */ 
@@ -253,8 +256,9 @@ namespace de
         const Flags& mode() const;
         
         /**
-         * Changes the mode of the file. For example, using <code>WRITE|TRUNCATE</code> as the
-         * mode would empty the contents of the file and open it in writing mode.
+         * Changes the mode of the file. For example, using
+         * <code>WRITE|TRUNCATE</code> as the mode would empty the contents of
+         * the file and open it in writing mode.
          *
          * @param newMode  Mode.
          */

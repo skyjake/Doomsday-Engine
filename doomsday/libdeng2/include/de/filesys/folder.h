@@ -51,7 +51,9 @@ namespace de
         DENG2_ERROR(NewFileError)
         
         /**
-         * Accesses the properties of a Folder.
+         * Accesses the properties of a Folder. Allows using properties of a
+         * folder (like how many items it contains) as a Value, for instance in
+         * script expressions.
          *
          * @ingroup fs
          */

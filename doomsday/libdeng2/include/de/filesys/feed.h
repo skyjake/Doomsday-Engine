@@ -33,13 +33,15 @@ namespace de
     /**
      * Base class for feeds that generate File and Folder instances.
      *
-     * While File and Folder instances are responsible for the organization of the
-     * data, and provide access to the content bytes, it is up to the Feed instances to
-     * interpret the contents of files and folders and generate the appropriate 
-     * File/Folder instances. When it comes time to repopulate the file system, feeds
-     * are responsible for determining whether a given File or Folder needs to be 
-     * destroyed (pruned). For instance, pruning a NativeFile is necessary if the 
-     * corresponding native file has been deleted from the hard drive since the 
+     * While File and Folder instances are responsible for the organization of
+     * the data, and provide access to the content bytes, it is up to the Feed
+     * instances to interpret the contents of files and folders and generate
+     * the appropriate File/Folder instances.
+     *
+     * When it comes time to repopulate the file system, feeds are responsible
+     * for determining whether a given File or Folder needs to be destroyed
+     * (pruned). For instance, pruning a NativeFile is necessary if the
+     * corresponding native file has been deleted from the hard drive since the
      * latest population was done.
      *
      * @ingroup fs
