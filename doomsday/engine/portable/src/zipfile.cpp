@@ -396,7 +396,7 @@ struct ZipFile::Instance
                 ZipLumpRecord* record =
                     new ZipLumpRecord(LumpInfo(self->lastModified(), // Inherited from the file (note recursion).
                                                lumpIdx++, baseOffset, ULONG(header->size),
-                                               compressedSize, reinterpret_cast<abstractfile_s*>(self)));
+                                               compressedSize, self));
                 PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&entryPath));
                 node->setUserData(record);
             }
