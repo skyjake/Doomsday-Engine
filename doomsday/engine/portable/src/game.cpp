@@ -158,7 +158,7 @@ bool Game::isRequiredResource(char const* absolutePath)
     if(records)
     {
         // Is this resource from a container?
-        AbstractFile* file = FS::findLumpFile(absolutePath);
+        AbstractFile* file = App_FileSystem()->findLumpFile(absolutePath);
         if(file)
         {
             // Yes; use the container's path instead.

@@ -175,7 +175,7 @@ static bool recognizeWAD(char const* filePath, void* parameters)
             result = true;
             for(; result && *lumpNames; lumpNames++)
             {
-                lumpnum_t lumpNum = FS::lumpNumForName(Str_Text(*lumpNames));
+                lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(Str_Text(*lumpNames));
                 if(lumpNum < 0)
                 {
                     result = false;
@@ -198,13 +198,13 @@ static bool recognizeZIP(char const* filePath, void* parameters)
 {
     DENG_UNUSED(parameters);
 
-    DFile* dfile = FS::openFile(filePath, "bf");
+    DFile* dfile = App_FileSystem()->openFile(filePath, "bf");
     bool result = false;
     if(dfile)
     {
         result = ZipFile::recognise(*dfile);
         /// @todo Check files. We should implement an auxiliary zip lump index...
-        FS::closeFile(dfile);
+        App_FileSystem()->closeFile(dfile);
     }
     return result;
 }

@@ -74,7 +74,7 @@ GameMap* theMap;
 const char* P_GenerateUniqueMapId(const char* mapID)
 {
     static char uid[255];
-    lumpnum_t lumpNum = FS::lumpNumForName(mapID);
+    lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(mapID);
     ddstring_t fileName;
 
     Str_Init(&fileName);
