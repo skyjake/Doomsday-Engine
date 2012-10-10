@@ -26,13 +26,9 @@
 #ifndef LIBDENG_FILEID_H
 #define LIBDENG_FILEID_H
 
-#include "fs_util.h"
-#include <de/Log>
-#include <de/str.h>
-
 #include <QByteArray>
-#include <QCryptographicHash>
-#include <QString>
+#include <de/Log>
+#include <de/String>
 
 namespace de {
 
@@ -45,29 +41,22 @@ public:
     typedef QByteArray Md5Hash;
 
 public:
-    explicit FileId(Md5Hash _md5) : md5_(_md5.left(16))
-    {}
+    explicit FileId(Md5Hash _md5);
 
-    FileId(FileId const& other)
-        : md5_(other.md5())
-    {}
+    FileId(FileId const& other);
 
-    FileId& operator = (FileId other)
-    {
-        swap(*this, other);
-        return *this;
-    }
+    FileId& operator = (FileId other);
 
     /// @return @c true= this FileId is lexically less than @a other.
-    bool operator < (FileId const& other) const { return md5_ < other.md5_; }
+    bool operator < (FileId const& other) const;
 
     /// @return @c true= this FileId is equal to @a other (identical hashes).
-    bool operator == (FileId const& other) const { return md5_ == other.md5_; }
+    bool operator == (FileId const& other) const;
 
     /// @return @c true= this FileId is not equal @a other (differing hashes).
-    bool operator != (FileId const& other) const { return md5_ != other.md5_; }
+    bool operator != (FileId const& other) const;
 
-    friend void swap(FileId& first, FileId& second) // nothrow
+    friend void FileId::swap(FileId& first, FileId& second) // nothrow
     {
 #ifdef DENG2_QT_4_8_OR_NEWER
         first.md5_.swap(second.md5_);
@@ -81,16 +70,7 @@ public:
     operator String () const { return asText(); }
 
     /// Converts this FileId to a text string.
-    String asText() const
-    {
-        String txt;
-        txt.reserve(32);
-        for(int i = 0; i < 16; ++i)
-        {
-            txt += String("%1").arg(String::number((byte)md5_.at(i), 16), 2, '0');
-        }
-        return txt;
-    }
+    String asText() const;
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
@@ -103,27 +83,13 @@ public:
      * @param path  Path to be hashed.
      * @return Newly construced FileId.
      */
-    static FileId fromPath(char const* path)
-    {
-        return FileId(hash(path));
-    }
+    static FileId fromPath(char const* path);
 
     /**
      * Calculate an MD5 identifier for the absolute @a path.
      * @return MD5 hash of the path.
      */
-    static Md5Hash hash(char const* path)
-    {
-        // First normalize the name.
-        AutoStr* absPath = Str_Set(AutoStr_NewStd(), path);
-        F_MakeAbsolute(absPath, absPath);
-        F_FixSlashes(absPath, absPath);
-#if defined(WIN32) || defined(MACOSX)
-        // This is a case insensitive operation.
-        strupr(Str_Text(absPath));
-#endif
-        return QCryptographicHash::hash(QByteArray(Str_Text(absPath)), QCryptographicHash::Md5);
-    }
+    static Md5Hash hash(char const* path);
 
 private:
     Md5Hash md5_;

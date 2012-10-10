@@ -502,6 +502,7 @@ SOURCES += \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
     portable/src/filedirectory.cpp \
+    portable/src/fileid.cpp \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \
     portable/src/fs_main.cpp \
