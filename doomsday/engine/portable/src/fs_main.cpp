@@ -890,12 +890,12 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
         DENG2_FOR_EACH(i, d->lumpMappings, LumpMappings::const_iterator)
         {
             LumpMapping const& found = *i;
-            QByteArray foundPathAscii = found.first.toAscii();
-            bool patternMatched = F_MatchFileName(foundPathAscii.constData(), Str_Text(searchPattern));
+            QByteArray foundPathUtf8 = found.first.toUtf8();
+            bool patternMatched = F_MatchFileName(foundPathUtf8.constData(), Str_Text(searchPattern));
 
             if(!patternMatched) continue;
 
-            int result = callback(foundPathAscii.constData(), PT_LEAF, parameters);
+            int result = callback(foundPathUtf8.constData(), PT_LEAF, parameters);
             if(result) return result;
         }
     }
@@ -917,12 +917,12 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
         DENG2_FOR_EACH(i, foundPaths, PathList::const_iterator)
         {
             PathListItem const& found = *i;
-            QByteArray foundPathAscii = found.path.toAscii();
-            bool patternMatched = F_MatchFileName(foundPathAscii.constData(), Str_Text(searchPattern));
+            QByteArray foundPathUtf8 = found.path.toUtf8();
+            bool patternMatched = F_MatchFileName(foundPathUtf8.constData(), Str_Text(searchPattern));
 
             if(!patternMatched) continue;
 
-            int result = callback(foundPathAscii.constData(), (found.attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, parameters);
+            int result = callback(foundPathUtf8.constData(), (found.attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, parameters);
             if(result) return result;
         }
     }
@@ -1025,11 +1025,11 @@ AbstractFile* FS::findLumpFile(char const* path, int* lumpIdx)
         DENG2_FOR_EACH(i, d->lumpMappings, LumpMappings::const_iterator)
         {
             LumpMapping const& found = *i;
-            QByteArray foundPathAscii = found.first.toAscii();
-            if(qstricmp(foundPathAscii.constData(), Str_Text(&absSearchPath))) continue;
+            QByteArray foundPathUtf8 = found.first.toUtf8();
+            if(qstricmp(foundPathUtf8.constData(), Str_Text(&absSearchPath))) continue;
 
-            QByteArray foundLumpNameAscii = found.second.toAscii();
-            lumpnum_t absoluteLumpNum = lumpNumForName(foundLumpNameAscii.constData());
+            QByteArray foundLumpNameUtf8 = found.second.toUtf8();
+            lumpnum_t absoluteLumpNum = lumpNumForName(foundLumpNameUtf8.constData());
             if(absoluteLumpNum < 0) continue;
 
             Str_Free(&absSearchPath);
@@ -1545,13 +1545,13 @@ void FS::initLumpDirectoryMappings(void)
 static bool applyPathMapping(ddstring_t* path, PathMapping const& pm)
 {
     if(!path) return false;
-    QByteArray destAscii = pm.first.toAscii();
-    AutoStr* dest = Str_Set(AutoStr_NewStd(), destAscii.constData());
+    QByteArray destUtf8 = pm.first.toUtf8();
+    AutoStr* dest = Str_Set(AutoStr_NewStd(), destUtf8.constData());
     if(qstrnicmp(Str_Text(path), Str_Text(dest), Str_Length(dest))) return false;
 
     // Replace the beginning with the source path.
-    QByteArray sourceAscii = pm.second.toAscii();
-    AutoStr* temp = Str_Set(AutoStr_NewStd(), sourceAscii.constData());
+    QByteArray sourceUtf8 = pm.second.toUtf8();
+    AutoStr* temp = Str_Set(AutoStr_NewStd(), sourceUtf8.constData());
     Str_PartAppend(temp, Str_Text(path), pm.first.length(), Str_Length(path) - pm.first.length());
     Str_Copy(path, temp);
     return true;
@@ -2150,19 +2150,19 @@ static Str* composePathListString(de::FS::PathList& paths, int flags = DEFAULT_P
         }
         else
         {
-            QByteArray pathAscii = i->path.toAscii();
+            QByteArray pathUtf8 = i->path.toUtf8();
 
             if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
             {
                 // Caller does not want the directory hierarchy.
-                F_FileNameAndExtension(&buf, pathAscii.constData());
+                F_FileNameAndExtension(&buf, pathUtf8.constData());
                 p = Str_Text(&buf);
                 pLength = Str_Length(&buf);
             }
             else
             {
-                p = pathAscii.constData();
-                pLength = pathAscii.length();
+                p = pathUtf8.constData();
+                pLength = pathUtf8.length();
             }
 
             if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
@@ -2197,8 +2197,8 @@ static Str* composePathListString(de::FS::PathList& paths, int flags = DEFAULT_P
     n = 0;
     DENG2_FOR_EACH(i, paths, de::FS::PathList::const_iterator)
     {
-        QByteArray pathAscii = i->path.toAscii();
-        char const* path = pathAscii.constData();
+        QByteArray pathUtf8 = i->path.toUtf8();
+        char const* path = pathUtf8.constData();
 
         if(flags & PTSF_QUOTED)
             Str_AppendChar(str, '"');
@@ -2220,7 +2220,7 @@ static Str* composePathListString(de::FS::PathList& paths, int flags = DEFAULT_P
             else
             {
                 p = path;
-                pLength = pathAscii.length();
+                pLength = pathUtf8.length();
             }
 
             if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
