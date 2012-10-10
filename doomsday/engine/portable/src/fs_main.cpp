@@ -816,205 +816,6 @@ uint FS::loadedFilesCRC()
     return iwad->calculateCRC();
 }
 
-/**
- * @defgroup pathToStringFlags  Path To String Flags.
- */
-///@{
-#define PTSF_QUOTED                 0x1 ///< Add double quotes around the path.
-#define PTSF_TRANSFORM_EXCLUDE_DIR  0x2 ///< Exclude the directory; e.g., c:/doom/myaddon.wad -> myaddon.wad
-#define PTSF_TRANSFORM_EXCLUDE_EXT  0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad -> c:/doom/myaddon
-///@}
-
-#define DEFAULT_PATHTOSTRINGFLAGS (PTSF_QUOTED)
-
-/**
- * @param flags         @ref pathToStringFlags
- * @param delimiter     If not @c NULL, path fragments in the resultant string
- *                      will be delimited by this.
- * @param predicate     If not @c NULL, this predicate evaluator callback must
- *                      return @c true for a given path to be included in the
- *                      resultant string.
- * @param parameters    Passed to the predicate evaluator callback.
- *
- * @return  New string containing a concatenated, possibly delimited set of all
- *      file paths in the list. Ownership of the string passes to the caller who
- *      should ensure to release it with Str_Delete() when no longer needed.
- *      Always returns a valid (but perhaps zero-length) string object.
- */
-static Str* composeFileList(de::FileList& fl, int flags = DEFAULT_PATHTOSTRINGFLAGS,
-    char const* delimiter = " ", bool (*predicate)(DFile* hndl, void* parameters) = 0, void* parameters = 0)
-{
-    int maxLength, delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
-    int n, pLength, pathCount = 0;
-    Str const* path;
-    Str* str, buf;
-    char const* p, *ext;
-
-    // Do we need a working buffer to process this request?
-    /// @todo We can do this without the buffer; implement cleverer algorithm.
-    if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
-        Str_Init(&buf);
-
-    // Determine the maximum number of characters we'll need.
-    maxLength = 0;
-    DENG2_FOR_EACH(i, fl, de::FileList::const_iterator)
-    {
-        if(predicate && !predicate(*i, parameters))
-            continue; // Caller isn't interested in this...
-
-        // One more path will be composited.
-        ++pathCount;
-        path = (*i)->file()->path();
-
-        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
-        {
-            // Caller wants the whole path plus name and extension (if present).
-            maxLength += Str_Length(path);
-        }
-        else
-        {
-            if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
-            {
-                // Caller does not want the directory hierarchy.
-                F_FileNameAndExtension(&buf, Str_Text(path));
-                p = Str_Text(&buf);
-                pLength = Str_Length(&buf);
-            }
-            else
-            {
-                p = Str_Text(path);
-                pLength = Str_Length(path);
-            }
-
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-            {
-                // Caller does not want the file extension.
-                ext = F_FindFileExtension(p);
-                if(ext) ext -= 1/*dot separator*/;
-            }
-            else
-            {
-                ext = NULL;
-            }
-
-            if(ext)
-            {
-                maxLength += pLength - (pLength - (ext - p));
-            }
-            else
-            {
-                maxLength += pLength;
-            }
-        }
-
-        if(flags & PTSF_QUOTED)
-            maxLength += sizeof(char);
-    }
-    maxLength += pathCount * delimiterLength;
-
-    // Composite final string.
-    str = Str_New();
-    Str_Reserve(str, maxLength);
-    n = 0;
-    DENG2_FOR_EACH(i, fl, de::FileList::const_iterator)
-    {
-        if(predicate && !predicate(*i, parameters))
-            continue; // Caller isn't interested in this...
-
-        path = (*i)->file()->path();
-
-        if(flags & PTSF_QUOTED)
-            Str_AppendChar(str, '"');
-
-        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
-        {
-            // Caller wants the whole path plus name and extension (if present).
-            Str_Append(str, Str_Text(path));
-        }
-        else
-        {
-            if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
-            {
-                // Caller does not want the directory hierarchy.
-                F_FileNameAndExtension(&buf, Str_Text(path));
-                p = Str_Text(&buf);
-                pLength = Str_Length(&buf);
-            }
-            else
-            {
-                p = Str_Text(path);
-                pLength = Str_Length(path);
-            }
-
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-            {
-                // Caller does not want the file extension.
-                ext = F_FindFileExtension(p);
-                if(ext) ext -= 1/*dot separator*/;
-            }
-            else
-            {
-                ext = NULL;
-            }
-
-            if(ext)
-            {
-                Str_PartAppend(str, p, 0, pLength - (pLength - (ext - p)));
-                maxLength += pLength - (pLength - (ext - p));
-            }
-            else
-            {
-                Str_Append(str, p);
-            }
-        }
-
-        if(flags & PTSF_QUOTED)
-            Str_AppendChar(str, '"');
-
-        ++n;
-        if(n != pathCount)
-            Str_Append(str, delimiter);
-    }
-
-    if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
-        Str_Free(&buf);
-
-    return str;
-}
-
-typedef struct {
-    filetype_t type; // Only
-    bool markedCustom;
-} compositepathpredicateparamaters_t;
-
-static bool compositePathPredicate(DFile* hndl, void* parameters)
-{
-    DENG_ASSERT(parameters);
-    compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)parameters;
-    AbstractFile* file = hndl->file();
-    if((!VALID_FILETYPE(p->type) || p->type == file->type()) &&
-       ((p->markedCustom == file->hasCustom())))
-    {
-        Str const* path = file->path();
-        if(stricmp(Str_Text(path) + Str_Length(path) - 3, "lmp"))
-            return true; // Include this.
-    }
-    return false; // Not this.
-}
-
-void FS::listFiles(filetype_t type, bool markedCustom, char* outBuf, size_t outBufSize, const char* delimiter)
-{
-    if(!outBuf || 0 == outBufSize) return;
-    memset(outBuf, 0, outBufSize);
-
-    compositepathpredicateparamaters_t p = { type, markedCustom };
-    ddstring_t* str = composeFileList(d->loadedFiles, PTSF_TRANSFORM_EXCLUDE_DIR, delimiter,
-                                      compositePathPredicate, (void*)&p);
-    strncpy(outBuf, Str_Text(str), outBufSize);
-    Str_Delete(str);
-}
-
-/// Collect a list of paths including those which have been mapped.
 FS::PathList FS::collectLocalPaths(ddstring_t const* searchPath, bool includeSearchPath)
 {
     PathList foundEntries;
@@ -1062,6 +863,20 @@ FS::PathList FS::collectLocalPaths(ddstring_t const* searchPath, bool includeSea
     Str_Free(&wildPath);
 
     return foundEntries;
+}
+
+FS::PathList FS::collectPaths(bool (*predicate)(de::DFile* hndl, void* parameters), void* parameters)
+{
+    PathList paths;
+    DENG2_FOR_EACH(i, d->loadedFiles, de::FileList::const_iterator)
+    {
+        // Interested in this file?
+        if(predicate && !predicate(*i, parameters)) continue; // Nope.
+
+        AbstractFile* file = (*i)->file();
+        paths.push_back(PathListItem(QString(Str_Text(file->path()))));
+    }
+    return paths;
 }
 
 int FS::allResourcePaths(char const* rawSearchPattern, int flags,
@@ -2342,9 +2157,190 @@ AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx)
     return F_ComposeLumpPath2(file, lumpIdx, '/');
 }
 
-void F_GetPWADFileNames(char* outBuf, size_t outBufSize, const char* delimiter)
+/**
+ * @defgroup pathToStringFlags  Path To String Flags.
+ */
+///@{
+#define PTSF_QUOTED                 0x1 ///< Add double quotes around the path.
+#define PTSF_TRANSFORM_EXCLUDE_DIR  0x2 ///< Exclude the directory; e.g., c:/doom/myaddon.wad -> myaddon.wad
+#define PTSF_TRANSFORM_EXCLUDE_EXT  0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad -> c:/doom/myaddon
+///@}
+
+#define DEFAULT_PATHTOSTRINGFLAGS (PTSF_QUOTED)
+
+/**
+ * @param flags         @ref pathToStringFlags
+ * @param delimiter     If not @c NULL, path fragments in the resultant string
+ *                      will be delimited by this.
+ *
+ * @return  New string containing a concatenated, possibly delimited set of all
+ *      file paths in the list. Ownership of the string passes to the caller who
+ *      should ensure to release it with Str_Delete() when no longer needed.
+ *      Always returns a valid (but perhaps zero-length) string object.
+ */
+static Str* composePathListString(de::FS::PathList& paths, int flags = DEFAULT_PATHTOSTRINGFLAGS,
+                                  char const* delimiter = " ")
 {
-    App_FileSystem()->listFiles(FT_WADFILE, true, outBuf, outBufSize, delimiter);
+    int maxLength, delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
+    int n, pLength;
+    Str* str, buf;
+    char const* p, *ext;
+
+    Str_Init(&buf);
+
+    // Determine the maximum number of characters we'll need.
+    maxLength = 0;
+    DENG2_FOR_EACH(i, paths, de::FS::PathList::const_iterator)
+    {
+        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
+        {
+            // Caller wants the whole path plus name and extension (if present).
+            maxLength += i->path.length();
+        }
+        else
+        {
+            QByteArray pathAscii = i->path.toAscii();
+
+            if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
+            {
+                // Caller does not want the directory hierarchy.
+                F_FileNameAndExtension(&buf, pathAscii.constData());
+                p = Str_Text(&buf);
+                pLength = Str_Length(&buf);
+            }
+            else
+            {
+                p = pathAscii.constData();
+                pLength = pathAscii.length();
+            }
+
+            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+            {
+                // Caller does not want the file extension.
+                ext = F_FindFileExtension(p);
+                if(ext) ext -= 1/*dot separator*/;
+            }
+            else
+            {
+                ext = NULL;
+            }
+
+            if(ext)
+            {
+                maxLength += pLength - (pLength - (ext - p));
+            }
+            else
+            {
+                maxLength += pLength;
+            }
+        }
+
+        if(flags & PTSF_QUOTED)
+            maxLength += 1;
+    }
+    maxLength += paths.count() * delimiterLength;
+
+    // Composite final string.
+    str = Str_New();
+    Str_Reserve(str, maxLength);
+    n = 0;
+    DENG2_FOR_EACH(i, paths, de::FS::PathList::const_iterator)
+    {
+        QByteArray pathAscii = i->path.toAscii();
+        char const* path = pathAscii.constData();
+
+        if(flags & PTSF_QUOTED)
+            Str_AppendChar(str, '"');
+
+        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
+        {
+            // Caller wants the whole path plus name and extension (if present).
+            Str_Append(str, path);
+        }
+        else
+        {
+            if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
+            {
+                // Caller does not want the directory hierarchy.
+                F_FileNameAndExtension(&buf, path);
+                p = Str_Text(&buf);
+                pLength = Str_Length(&buf);
+            }
+            else
+            {
+                p = path;
+                pLength = pathAscii.length();
+            }
+
+            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+            {
+                // Caller does not want the file extension.
+                ext = F_FindFileExtension(p);
+                if(ext) ext -= 1/*dot separator*/;
+            }
+            else
+            {
+                ext = NULL;
+            }
+
+            if(ext)
+            {
+                Str_PartAppend(str, p, 0, pLength - (pLength - (ext - p)));
+                maxLength += pLength - (pLength - (ext - p));
+            }
+            else
+            {
+                Str_Append(str, p);
+            }
+        }
+
+        if(flags & PTSF_QUOTED)
+            Str_AppendChar(str, '"');
+
+        ++n;
+        if(n != paths.count())
+            Str_Append(str, delimiter);
+    }
+
+    Str_Free(&buf);
+
+    return str;
+}
+
+typedef struct {
+    filetype_t type; // Only
+    bool markedCustom;
+} compositepathpredicateparamaters_t;
+
+static bool collectPathsPredicate(DFile* hndl, void* parameters)
+{
+    DENG_ASSERT(parameters);
+    compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)parameters;
+    AbstractFile* file = hndl->file();
+    if((!VALID_FILETYPE(p->type) || p->type == file->type()) &&
+       ((p->markedCustom == file->hasCustom())))
+    {
+        Str const* path = file->path();
+        if(stricmp(Str_Text(path) + Str_Length(path) - 3, "lmp"))
+            return true; // Include this.
+    }
+    return false; // Not this.
+}
+
+/**
+ * Compiles a list of file names, separated by @a delimiter.
+ */
+void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size_t outBufSize, const char* delimiter)
+{
+    if(!outBuf || 0 == outBufSize) return;
+    memset(outBuf, 0, outBufSize);
+
+    compositepathpredicateparamaters_t p = { type, CPP_BOOL(markedCustom) };
+    de::FS::PathList paths = App_FileSystem()->collectPaths(collectPathsPredicate, (void*)&p);
+
+    ddstring_t* str = composePathListString(paths, PTSF_TRANSFORM_EXCLUDE_DIR, delimiter);
+    strncpy(outBuf, Str_Text(str), outBufSize);
+    Str_Delete(str);
 }
 
 int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters)

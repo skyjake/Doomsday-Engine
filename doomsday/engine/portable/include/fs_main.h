@@ -268,11 +268,6 @@ public:
     void deleteFile(DFile* hndl);
 
     /**
-     * Compiles a list of file names, separated by @a delimiter.
-     */
-    void listFiles(filetype_t type, bool markedCustom, char* buf, size_t bufSize, char const* delimiter);
-
-    /**
      * Parm is passed on to the callback, which is called for each file
      * matching the filespec. Absolute path names are given to the callback.
      * Zip directory, DD_DIREC and the real files are scanned.
@@ -330,16 +325,6 @@ public:
      */
     AbstractFile** collectFiles(int* count);
 
-private:
-    struct Instance;
-    Instance* d;
-
-    void unlinkFile(AbstractFile* file);
-
-    bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
-
-    int unloadListFiles(FileList& list, bool nonStartup);
-
     struct PathListItem
     {
         String path;
@@ -357,6 +342,26 @@ private:
 
     /// Collect a list of paths including those which have been mapped.
     PathList collectLocalPaths(ddstring_t const* searchPath, bool includeSearchPath);
+
+    /**
+     * Collect a list of loaded file paths.
+     *
+     * @param predicate     If not @c NULL, this predicate evaluator callback must
+     *                      return @c true for a given path to be included in the
+     *                      resultant list.
+     * @param parameters    Passed to the predicate evaluator callback.
+     */
+    PathList collectPaths(bool (*predicate)(DFile* hndl, void* parameters) = 0, void* parameters = 0);
+
+private:
+    struct Instance;
+    Instance* d;
+
+    void unlinkFile(AbstractFile* file);
+
+    bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
+
+    int unloadListFiles(FileList& list, bool nonStartup);
 
     FILE* findRealFile(char const* path, char const* mymode, ddstring_t** foundPath);
 
@@ -467,7 +472,10 @@ uint8_t const* F_CacheLump(struct abstractfile_s* file, int lumpIdx);
 
 void F_UnlockLump(struct abstractfile_s* file, int lumpIdx);
 
-void F_GetPWADFileNames(char* buf, size_t bufSize, char const* delimiter);
+/**
+ * Compiles a list of file names, separated by @a delimiter.
+ */
+void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size_t outBufSize, const char* delimiter);
 
 int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters);
 int F_AllResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters)/*, parameters = 0 */);
