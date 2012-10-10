@@ -173,6 +173,29 @@ const char* F_PrettyPath(const char* path);
  */
 int F_MatchFileName(const char* filePath, const char* pattern);
 
+/**
+ * Write the data associated with the specified lump index to @a fileName.
+ *
+ * @param absolutelumpNum   Absolute index of the lump to open.
+ * @param fileName          If not @c NULL write the associated data to this path.
+ *                          Can be @c NULL in which case the fileName will be chosen automatically.
+ *
+ * @return  @c true iff successful.
+ */
+boolean F_DumpLump2(lumpnum_t lumpNum, char const* fileName);
+boolean F_DumpLump(lumpnum_t lumpNum/*, fileName = 0*/);
+
+/**
+ * Write data into a file.
+ *
+ * @param data  Data to write.
+ * @param size  Size of the data in bytes.
+ * @param path  Path of the file to create (existing file replaced).
+ *
+ * @return @c true if successful, otherwise @c false.
+ */
+boolean F_Dump(void const* data, size_t size, char const* path);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

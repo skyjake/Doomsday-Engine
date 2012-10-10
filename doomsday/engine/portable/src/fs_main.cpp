@@ -741,55 +741,6 @@ void FS::deleteFile(DFile* hndl)
     delete hndl;
 }
 
-bool FS::dump(void const* data, size_t size, char const* path)
-{
-    DENG_ASSERT(data);
-    DENG_ASSERT(path);
-
-    if(!size) return false;
-
-    AutoStr* nativePath = AutoStr_NewStd();
-    Str_Set(nativePath, path);
-    F_ToNativeSlashes(nativePath, nativePath);
-
-    FILE* outFile = fopen(Str_Text(nativePath), "wb");
-    if(!outFile)
-    {
-        Con_Message("Warning: Failed to open \"%s\" for writing (error: %s), aborting.\n",
-                    F_PrettyPath(Str_Text(nativePath)), strerror(errno));
-        return false;
-    }
-
-    fwrite(data, 1, size, outFile);
-    fclose(outFile);
-    return true;
-}
-
-bool FS::dumpLump(lumpnum_t absoluteLumpNum, char const* path)
-{
-    int lumpIdx;
-    AbstractFile* file = lumpFile(absoluteLumpNum, &lumpIdx);
-    if(!file || !file->isValidIndex(lumpIdx)) return false;
-
-    char const* lumpName = FS::lumpName(absoluteLumpNum);
-    char const* fname;
-    if(path && path[0])
-    {
-        fname = path;
-    }
-    else
-    {
-        fname = lumpName;
-    }
-
-    bool dumpedOk = dump(file->cacheLump(lumpIdx), file->lumpInfo(lumpIdx).size, fname);
-    file->unlockLump(lumpIdx);
-    if(!dumpedOk) return false;
-
-    LOG_VERBOSE("%s dumped to \"%s\"") << lumpName << F_PrettyPath(fname);
-    return true;
-}
-
 /// @return @c NULL= Not found.
 static WadFile* findFirstWadFile(de::FileList& list, bool custom)
 {
@@ -1774,7 +1725,7 @@ D_CMD(DumpLump)
         lumpnum_t absoluteLumpNum = App_FileSystem()->lumpNumForName(argv[1]);
         if(absoluteLumpNum >= 0)
         {
-            return App_FileSystem()->dumpLump(absoluteLumpNum);
+            return F_DumpLump(absoluteLumpNum);
         }
         Con_Printf("No such lump.\n");
         return false;
@@ -2371,19 +2322,4 @@ lumpnum_t F_OpenAuxiliary(char const* path)
 void F_CloseAuxiliary(void)
 {
     App_FileSystem()->closeAuxiliary();
-}
-
-boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* fileName)
-{
-    return App_FileSystem()->dumpLump(absoluteLumpNum, fileName);
-}
-
-boolean F_DumpLump(lumpnum_t absoluteLumpNum)
-{
-    return App_FileSystem()->dumpLump(absoluteLumpNum);
-}
-
-boolean F_Dump(void const* data, size_t size, char const* path)
-{
-    return App_FileSystem()->dump(data, size, path);
 }

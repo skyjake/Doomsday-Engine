@@ -38,20 +38,6 @@
 #include "pathdirectory.h"
 
 #ifdef __cplusplus
-extern "C" {
-#endif
-
-/// Initialize this module. Cannot be re-initialized, must shutdown first.
-void F_Init(void);
-
-/// Shutdown this module.
-void F_Shutdown(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
 
 #include <QList>
 
@@ -72,6 +58,21 @@ typedef QList<DFile*> FileList;
  */
 class FS
 {
+public:
+    struct PathListItem
+    {
+        String path;
+        int attrib;
+        PathListItem(QString const& _path, int _attrib = 0)
+            : path(_path), attrib(_attrib)
+        {}
+        bool operator < (PathListItem const& other) const
+        {
+            return path.compareWithoutCase(other.path) < 0;
+        }
+    };
+    typedef QList<PathListItem> PathList;
+
 public:
     FS();
 
@@ -183,7 +184,7 @@ public:
      * @return  Opened file reference/handle else @c NULL.
      */
     DFile* openFile(char const* path, char const* mode, size_t baseOffset = 0,
-                           bool allowDuplicate = true);
+                    bool allowDuplicate = true);
 
     /**
      * Try to locate the specified lump for reading.
@@ -291,31 +292,6 @@ public:
     void closeAuxiliary();
 
     /**
-     * Write the data associated with the specified lump index to @a fileName.
-     *
-     * @param absolutelumpNum   Absolute index of the lump to open.
-     * @param fileName          If not @c NULL write the associated data to this path.
-     *                          Can be @c NULL in which case the fileName will be chosen automatically.
-     *
-     * @return  @c true iff successful.
-     */
-    bool dumpLump(lumpnum_t absoluteLumpNum, char const* fileName = 0);
-
-    /**
-     * Write data into a file.
-     *
-     * @param data  Data to write.
-     * @param size  Size of the data in bytes.
-     * @param path  Path of the file to create (existing file replaced).
-     *
-     * @return @c true if successful, otherwise @c false.
-     */
-    bool dump(void const* data, size_t size, char const* path);
-
-    void printIndex();
-    void printDirectory(ddstring_t const* path);
-
-    /**
      * @param count  If not @c NULL the number of elements in the resultant
      *               array is written back here (for convenience).
      *
@@ -324,21 +300,6 @@ public:
      *      release it with free() when no longer needed.
      */
     AbstractFile** collectFiles(int* count);
-
-    struct PathListItem
-    {
-        String path;
-        int attrib;
-        PathListItem(QString const& _path, int _attrib = 0)
-            : path(_path), attrib(_attrib)
-        {}
-        bool operator < (PathListItem const& other) const
-        {
-            return path.compareWithoutCase(other.path) < 0;
-        }
-    };
-
-    typedef QList<PathListItem> PathList;
 
     /// Collect a list of paths including those which have been mapped.
     PathList collectLocalPaths(ddstring_t const* searchPath, bool includeSearchPath);
@@ -352,6 +313,16 @@ public:
      * @param parameters    Passed to the predicate evaluator callback.
      */
     PathList collectPaths(bool (*predicate)(DFile* hndl, void* parameters) = 0, void* parameters = 0);
+
+    /**
+     * Print contents of the specified directory of the virtual file system.
+     */
+    void printDirectory(ddstring_t const* path);
+
+    /**
+     * Print contents of the primary lump index.
+     */
+    void printIndex();
 
 private:
     struct Instance;
@@ -390,6 +361,12 @@ struct filelist_s;
 typedef struct filelist_s FileList;
 
 void F_Register(void);
+
+/// Initialize this module. Cannot be re-initialized, must shutdown first.
+void F_Init(void);
+
+/// Shutdown this module.
+void F_Shutdown(void);
 
 void F_EndStartup(void);
 
@@ -486,11 +463,6 @@ lumpnum_t F_OpenAuxiliary2(char const* fileName, size_t baseOffset);
 lumpnum_t F_OpenAuxiliary(char const* fileName/*, baseOffset = 0 */);
 
 void F_CloseAuxiliary(void);
-
-boolean F_DumpLump2(lumpnum_t lumpNum, char const* fileName);
-boolean F_DumpLump(lumpnum_t lumpNum/*, fileName = 0*/);
-
-boolean F_Dump(void const* data, size_t size, char const* path);
 
 #ifdef __cplusplus
 } // extern "C"

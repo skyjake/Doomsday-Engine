@@ -38,8 +38,11 @@
 #include <sys/stat.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_filesys.h"
 #include "de_misc.h"
+
+using namespace de;
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* src)
 {
@@ -648,4 +651,58 @@ int F_MatchFileName(const char* string, const char* pattern)
         st++; // Skip remaining asterisks.
 
     return *st == 0;
+}
+
+boolean F_Dump(void const* data, size_t size, char const* path)
+{
+    DENG_ASSERT(data);
+    DENG_ASSERT(path);
+
+    if(!size) return false;
+
+    AutoStr* nativePath = AutoStr_NewStd();
+    Str_Set(nativePath, path);
+    F_ToNativeSlashes(nativePath, nativePath);
+
+    FILE* outFile = fopen(Str_Text(nativePath), "wb");
+    if(!outFile)
+    {
+        Con_Message("Warning: Failed to open \"%s\" for writing (error: %s), aborting.\n",
+                    F_PrettyPath(Str_Text(nativePath)), strerror(errno));
+        return false;
+    }
+
+    fwrite(data, 1, size, outFile);
+    fclose(outFile);
+    return true;
+}
+
+boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
+{
+    int lumpIdx;
+    de::AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
+    if(!file || !file->isValidIndex(lumpIdx)) return false;
+
+    char const* lumpName = App_FileSystem()->lumpName(absoluteLumpNum);
+    char const* fname;
+    if(path && path[0])
+    {
+        fname = path;
+    }
+    else
+    {
+        fname = lumpName;
+    }
+
+    bool dumpedOk = F_Dump(file->cacheLump(lumpIdx), file->lumpInfo(lumpIdx).size, fname);
+    file->unlockLump(lumpIdx);
+    if(!dumpedOk) return false;
+
+    LOG_VERBOSE("%s dumped to \"%s\"") << lumpName << F_PrettyPath(fname);
+    return true;
+}
+
+boolean F_DumpLump(lumpnum_t absoluteLumpNum)
+{
+    return F_DumpLump2(absoluteLumpNum, 0);
 }
