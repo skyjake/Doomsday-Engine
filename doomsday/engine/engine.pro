@@ -505,7 +505,7 @@ SOURCES += \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \
     portable/src/fs_main.cpp \
-    portable/src/fs_util.c \
+    portable/src/fs_util.cpp \
     portable/src/game.cpp \
     portable/src/gamemap.c \
     portable/src/generators.c \
