@@ -33,9 +33,7 @@
 #include <de/Log>
 #include <de/memory.h>
 
-using namespace de;
-using de::DFile;
-using de::PathDirectoryNode;
+namespace de {
 
 GenericFile::GenericFile(DFile& file, char const* path, LumpInfo const& info)
     : AbstractFile(FT_GENERICFILE, path, file, info)
@@ -93,3 +91,5 @@ int GenericFile::publishLumpsToIndex(LumpIndex& index)
     index.catalogLumps(*this, 0, 1);
     return 1;
 }
+
+} // namespace de

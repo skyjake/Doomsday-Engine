@@ -1,5 +1,5 @@
 /**
- * @file dfile.cpp
+ * @file de::DFile.cpp
  * Reference/handle to a unique file in the engine's virtual file system.
  *
  * @ingroup fs
@@ -36,23 +36,20 @@
 
 #include <de/memory.h>
 
-using namespace de;
-using de::AbstractFile;
-using de::DFile;
-using de::DFileBuilder;
+namespace de {
 
 struct DFile::Instance
 {
     /// The referenced file (if any).
     AbstractFile* file;
 
-    /// Either the FileList which owns this or the next DFile in the used object pool.
+    /// Either the FileList which owns this or the next de::DFile in the used object pool.
     void* list;
 
     struct dfile_flags_s {
         uint open:1; /// Presently open.
         uint eof:1; /// Reader has reached the end of the stream.
-        uint reference:1; /// This handle is a reference to another dfile instance.
+        uint reference:1; /// This handle is a reference to another de::DFile instance.
     } flags;
 
     /// Offset from start of owning package.
@@ -82,10 +79,10 @@ static mutex_t mutex;
 static blockset_t* handleBlockSet;
 
 // Head of the llist of used file handles, for recycling.
-static DFile* usedHandles;
+static de::DFile* usedHandles;
 #endif
 
-static void errorIfNotValid(DFile const& file, char const* callerName)
+static void errorIfNotValid(de::DFile const& file, char const* callerName)
 {
     if(file.isValid()) return;
     Con_Error("%s: Instance %p has not yet been initialized.", callerName, (void*)&file);
@@ -101,7 +98,7 @@ void DFileBuilder::init(void)
         inited = true;
         return;
     }
-    Con_Error("DFileBuilder::init: Already initialized.");
+    Con_Error("de::DFileBuilder::init: Already initialized.");
 #endif
 }
 
@@ -119,7 +116,7 @@ void DFileBuilder::shutdown(void)
         return;
     }
 #if _DEBUG
-    Con_Error("DFileBuilder::shutdown: Not presently initialized.");
+    Con_Error("de::DFileBuilder::shutdown: Not presently initialized.");
 #endif
 #endif
 }
@@ -129,7 +126,7 @@ DFile* DFileBuilder::fromFileLump(AbstractFile& container, int lumpIdx, bool don
     if(!container.isValidIndex(lumpIdx)) return 0;
 
     LumpInfo const& info = container.lumpInfo(lumpIdx);
-    DFile* file = new DFile();
+    de::DFile* file = new de::DFile();
     // Init and load in the lump data.
     file->d->flags.open = true;
     if(!dontBuffer)
@@ -137,12 +134,12 @@ DFile* DFileBuilder::fromFileLump(AbstractFile& container, int lumpIdx, bool don
         file->d->size = info.size;
         file->d->pos = file->d->data = (uint8_t*) M_Malloc(file->d->size);
         if(!file->d->data)
-            Con_Error("DFileBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
+            Con_Error("de::DFileBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
                 (unsigned long) file->d->size);
 #if _DEBUG
         VERBOSE2(
             AutoStr* path = container.composeLumpPath(lumpIdx);
-            Con_Printf("DFile [%p] buffering \"%s:%s\"...\n", (void*)file,
+            Con_Printf("de::DFile [%p] buffering \"%s:%s\"...\n", (void*)file,
                        F_PrettyPath(Str_Text(container.path())),
                        F_PrettyPath(Str_Text(path)));
         )
@@ -154,7 +151,7 @@ DFile* DFileBuilder::fromFileLump(AbstractFile& container, int lumpIdx, bool don
 
 DFile* DFileBuilder::fromFile(AbstractFile& af)
 {
-    DFile* file = new DFile();
+    de::DFile* file = new de::DFile();
     file->d->file = &af;
     file->d->flags.open = true;
     file->d->flags.reference = true;
@@ -163,16 +160,16 @@ DFile* DFileBuilder::fromFile(AbstractFile& af)
 
 DFile* DFileBuilder::fromNativeFile(FILE& hndl, size_t baseOffset)
 {
-    DFile* file = new DFile();
+    de::DFile* file = new de::DFile();
     file->d->flags.open = true;
     file->d->hndl = &hndl;
     file->d->baseOffset = baseOffset;
     return file;
 }
 
-DFile* DFileBuilder::dup(DFile const& hndl)
+DFile* DFileBuilder::dup(de::DFile const& hndl)
 {
-    DFile* clone = new DFile();
+    de::DFile* clone = new de::DFile();
     clone->d->flags.open = true;
     clone->d->flags.reference = true;
     clone->d->file = hndl.file();
@@ -183,19 +180,19 @@ DFile::DFile(void)
 {
 #if 0
     Sys_Lock(mutex);
-    DFile* file;
+    de::DFile* file;
     if(usedHandles)
     {
         file = usedHandles;
-        usedHandles = (DFile*) file->list;
+        usedHandles = (de::DFile*) file->list;
     }
     else
     {
         if(!handleBlockSet)
         {
-            handleBlockSet = BlockSet_New(sizeof(DFile), 64);
+            handleBlockSet = BlockSet_New(sizeof(de::DFile), 64);
         }
-        file = (DFile*) BlockSet_Allocate(handleBlockSet);
+        file = (de::DFile*) BlockSet_Allocate(handleBlockSet);
     }
     Sys_Unlock(mutex);
 #endif
@@ -394,29 +391,31 @@ size_t DFile::seek(size_t offset, SeekMethod whence)
     }
 }
 
-DFile& DFile::rewind()
+de::DFile& DFile::rewind()
 {
     seek(0, SeekSet);
     return *this;
 }
+
+} // namespace de
 
 /**
  * C Wrapper API:
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<DFile*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::DFile*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<DFile const*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::DFile const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    DFile* self = TOINTERNAL(inst)
+    de::DFile* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    DFile const* self = TOINTERNAL_CONST(inst)
+    de::DFile const* self = TOINTERNAL_CONST(inst)
 
 void DFile_Close(struct dfile_s* hndl)
 {

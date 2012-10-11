@@ -198,7 +198,7 @@ static bool recognizeZIP(char const* filePath, void* parameters)
 {
     DENG_UNUSED(parameters);
 
-    DFile* dfile = FS::openFile(filePath, "bf");
+    de::DFile* dfile = FS::openFile(filePath, "bf");
     bool result = false;
     if(dfile)
     {

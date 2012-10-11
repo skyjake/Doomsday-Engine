@@ -28,11 +28,9 @@
 
 #include "abstractfile.h"
 
-using namespace de;
-using de::AbstractFile;
-using de::DFile;
+namespace de {
 
-AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
+AbstractFile::AbstractFile(filetype_t _type, char const* _path, de::DFile& file, LumpInfo const& _info)
     : file(&file), type_(_type)
 {
     // Used to favor newer files when duplicates are pruned.
@@ -77,7 +75,7 @@ AbstractFile& AbstractFile::container() const
     return *cont;
 }
 
-DFile* AbstractFile::handle()
+de::DFile* AbstractFile::handle()
 {
     return file;
 }
@@ -113,3 +111,5 @@ AbstractFile& AbstractFile::setCustom(bool yes)
     flags.custom = yes;
     return *this;
 }
+
+} // namespace de

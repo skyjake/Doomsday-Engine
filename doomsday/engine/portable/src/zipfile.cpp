@@ -503,7 +503,7 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-PathDirectoryNode& ZipFile::lumpDirectoryNode(int lumpIdx)
+de::PathDirectoryNode& ZipFile::lumpDirectoryNode(int lumpIdx)
 {
     if(!isValidIndex(lumpIdx)) throw Error("ZipFile::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();

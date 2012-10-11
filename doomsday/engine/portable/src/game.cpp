@@ -33,8 +33,7 @@
 
 #include "game.h"
 
-using namespace de;
-using de::Game;
+namespace de {
 
 typedef struct {
     struct AbstractResource_s** records;
@@ -279,28 +278,30 @@ Game* Game::fromDef(GameDef const& def)
                     def.defaultTitle, def.defaultAuthor);
 }
 
+} // namespace de
+
 /**
  * C Wrapper API:
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<Game*>(inst) : NULL
+    reinterpret_cast<de::Game*>(inst)
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<Game const*>(inst) : NULL
+    reinterpret_cast<const de::Game*>(inst)
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    Game* self = TOINTERNAL(inst)
+    de::Game* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    Game const* self = TOINTERNAL_CONST(inst)
+    de::Game const* self = TOINTERNAL_CONST(inst)
 
 struct game_s* Game_New(char const* identityKey, ddstring_t const* dataPath, ddstring_t const* defsPath,
                         char const* configDir, char const* title, char const* author)
 {
-    return reinterpret_cast<struct game_s*>(new Game(identityKey, dataPath, defsPath, configDir, title, author));
+    return reinterpret_cast<struct game_s*>(new de::Game(identityKey, dataPath, defsPath, configDir, title, author));
 }
 
 void Game_Delete(struct game_s* game)
@@ -395,7 +396,7 @@ ddstring_t const* Game_DefsPath(struct game_s* game)
 struct game_s* Game_FromDef(GameDef const* def)
 {
     if(!def) return 0;
-    return reinterpret_cast<struct game_s*>(Game::fromDef(*def));
+    return reinterpret_cast<struct game_s*>(de::Game::fromDef(*def));
 }
 
 /// @todo Do this really belong here? Semantically, this appears misplaced. -ds
