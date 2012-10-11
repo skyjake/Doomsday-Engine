@@ -1000,8 +1000,6 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         return;
     }
 
-} // namespace de
-
     // There is at least one level of directory structure.
 
     if(dest != src)
@@ -1010,3 +1008,5 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
     // Key-named directories in the root might be mapped to another location.
     F_ApplyPathMapping(dest);
 }
+
+} // namespace de
