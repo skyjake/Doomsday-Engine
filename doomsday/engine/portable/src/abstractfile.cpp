@@ -28,9 +28,9 @@
 
 #include "abstractfile.h"
 
-using namespace de;
+namespace de {
 
-de::AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
+AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
     : file(&file), type_(_type)
 {
     // Used to favor newer files when duplicates are pruned.
@@ -46,29 +46,29 @@ de::AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file,
     info_ = _info;
 }
 
-de::AbstractFile::~AbstractFile()
+AbstractFile::~AbstractFile()
 {
     App_FileSystem()->releaseFile(this);
     Str_Free(&path_);
     if(file) delete file;
 }
 
-filetype_t de::AbstractFile::type() const
+filetype_t AbstractFile::type() const
 {
     return type_;
 }
 
-LumpInfo const& de::AbstractFile::info() const
+LumpInfo const& AbstractFile::info() const
 {
     return info_;
 }
 
-bool de::AbstractFile::isContained() const
+bool AbstractFile::isContained() const
 {
     return !!info_.container;
 }
 
-de::AbstractFile& de::AbstractFile::container() const
+AbstractFile& AbstractFile::container() const
 {
     if(!info_.container) throw de::Error("AbstractFile::container", QString("%s is not contained").arg(Str_Text(path())));
     return *info_.container;
@@ -79,34 +79,36 @@ de::DFile* de::AbstractFile::handle()
     return file;
 }
 
-ddstring_t const* de::AbstractFile::path() const
+ddstring_t const* AbstractFile::path() const
 {
     return &path_;
 }
 
-uint de::AbstractFile::loadOrderIndex() const
+uint AbstractFile::loadOrderIndex() const
 {
     return order;
 }
 
-bool de::AbstractFile::hasStartup() const
+bool AbstractFile::hasStartup() const
 {
     return !!flags.startup;
 }
 
-de::AbstractFile& de::AbstractFile::setStartup(bool yes)
+AbstractFile& AbstractFile::setStartup(bool yes)
 {
     flags.startup = yes;
     return *this;
 }
 
-bool de::AbstractFile::hasCustom() const
+bool AbstractFile::hasCustom() const
 {
     return !!flags.custom;
 }
 
-de::AbstractFile& de::AbstractFile::setCustom(bool yes)
+AbstractFile& AbstractFile::setCustom(bool yes)
 {
     flags.custom = yes;
     return *this;
 }
+
+} // namespace de

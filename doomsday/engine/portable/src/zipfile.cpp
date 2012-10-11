@@ -40,9 +40,7 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
-using namespace de;
-using de::DFile;
-using de::PathDirectoryNode;
+namespace de {
 
 #define SIG_LOCAL_FILE_HEADER   0x04034b50
 #define SIG_CENTRAL_FILE_HEADER 0x02014b50
@@ -503,7 +501,7 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-PathDirectoryNode& ZipFile::lumpDirectoryNode(int lumpIdx)
+de::PathDirectoryNode& ZipFile::lumpDirectoryNode(int lumpIdx)
 {
     if(!isValidIndex(lumpIdx)) throw Error("ZipFile::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
@@ -1001,6 +999,8 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         Str_Free(&mapped);
         return;
     }
+
+} // namespace de
 
     // There is at least one level of directory structure.
 

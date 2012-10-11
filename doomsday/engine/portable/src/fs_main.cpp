@@ -36,7 +36,6 @@
 #include "lumpindex.h"
 #include "lumpinfo.h"
 #include "lumpfile.h"
-//#include "m_md5.h"
 #include "m_misc.h" // for M_FindWhite()
 #include "wadfile.h"
 #include "zipfile.h"
@@ -47,12 +46,12 @@
 #include <de/Log>
 #include <de/memory.h>
 
+using namespace de;
+
 D_CMD(Dir);
 D_CMD(DumpLump);
 D_CMD(ListFiles);
 D_CMD(ListLumps);
-
-using namespace de;
 
 static FS* fileSystem;
 

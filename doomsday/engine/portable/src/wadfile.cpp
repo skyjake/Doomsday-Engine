@@ -37,10 +37,7 @@
 #include <de/Log>
 #include <de/memoryzone.h>
 
-using namespace de;
-using de::AbstractFile;
-using de::DFile;
-using de::PathDirectoryNode;
+namespace de {
 
 /// The following structures are used to read data directly from WAD files.
 #pragma pack(1)
@@ -81,7 +78,7 @@ public:
     {
         crc_ = uint(info_.size);
 
-        PathDirectoryNode const& node = info().container->lumpDirectoryNode(info_.lumpIdx);
+        de::PathDirectoryNode const& node = info().container->lumpDirectoryNode(info_.lumpIdx);
         ddstring_t const* name = node.pathFragment();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
@@ -333,7 +330,7 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-PathDirectoryNode& WadFile::lumpDirectoryNode(int lumpIdx)
+de::PathDirectoryNode& WadFile::lumpDirectoryNode(int lumpIdx)
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("WadFile::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
@@ -539,3 +536,5 @@ bool WadFile::recognise(DFile& file)
     if(memcmp(hdr.identification, "IWAD", 4) && memcmp(hdr.identification, "PWAD", 4)) return false;
     return true;
 }
+
+} // namespace de
