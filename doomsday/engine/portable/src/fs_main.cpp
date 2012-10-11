@@ -1181,7 +1181,7 @@ de::DFile* FS::tryOpenFile2(char const* path, char const* mode, size_t baseOffse
     DFile* hndl = DFileBuilder::fromNativeFile(*nativeFile, baseOffset);
 
     // Prepare the temporary info descriptor.
-    LumpInfo info = LumpInfo(lastModified(Str_Text(foundPath)));
+    LumpInfo info = LumpInfo(F_LastModified(Str_Text(foundPath)));
 
     // Search path is used here rather than found path as the latter may have
     // been mapped to another location. We want the file to be attributed with
