@@ -1661,6 +1661,7 @@ bool FS::access(char const* path)
 
 uint FS::lastModified(char const* fileName)
 {
+#if 0 // -=- INFINITE RECURSION -=- (tryOpenFile2 -> FS::lastModified -> tryOpenFile2)
     // Try to open the file, but don't buffer any contents.
     de::DFile* hndl = tryOpenFile(fileName, "rx", 0, true);
     uint modified = 0;
@@ -1670,6 +1671,10 @@ uint FS::lastModified(char const* fileName)
         deleteFile(hndl);
     }
     return modified;
+#else
+    DENG_UNUSED(fileName);
+    return 0;
+#endif
 }
 
 static LumpIndex* lumpIndexForFileType(filetype_t fileType)
