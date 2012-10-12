@@ -270,7 +270,7 @@ size_t DFile::baseOffset() const
 {
     if(d->flags.reference)
     {
-        return d->file->handle()->baseOffset();
+        return d->file->handle().baseOffset();
     }
     return d->baseOffset;
 }
@@ -280,7 +280,7 @@ size_t DFile::length()
     errorIfNotValid(*this, "DFile::Length");
     if(d->flags.reference)
     {
-        return d->file->handle()->length();
+        return d->file->handle().length();
     }
     else
     {
@@ -296,7 +296,7 @@ size_t DFile::read(uint8_t* buffer, size_t count)
     errorIfNotValid(*this, "DFile::read");
     if(d->flags.reference)
     {
-        return d->file->handle()->read(buffer, count);
+        return d->file->handle().read(buffer, count);
     }
     else
     {
@@ -330,7 +330,7 @@ bool DFile::atEnd()
     errorIfNotValid(*this, "DFile::atEnd");
     if(d->flags.reference)
     {
-        return d->file->handle()->atEnd();
+        return d->file->handle().atEnd();
     }
     return (d->flags.eof != 0);
 }
@@ -349,7 +349,7 @@ size_t DFile::tell()
     errorIfNotValid(*this, "DFile::tell");
     if(d->flags.reference)
     {
-        return d->file->handle()->tell();
+        return d->file->handle().tell();
     }
     else
     {
@@ -363,7 +363,7 @@ size_t DFile::seek(size_t offset, SeekMethod whence)
 {
     if(d->flags.reference)
     {
-        return d->file->handle()->seek(offset, whence);
+        return d->file->handle().seek(offset, whence);
     }
     else
     {
@@ -487,16 +487,4 @@ struct abstractfile_s* DFile_File_const(struct dfile_s const* hndl)
 {
     SELF_CONST(hndl);
     return reinterpret_cast<struct abstractfile_s*>(&self->file());
-}
-
-struct filelist_s* DFile_List(struct dfile_s* hndl)
-{
-    SELF(hndl);
-    return self->list();
-}
-
-struct dfile_s* DFile_SetList(struct dfile_s* hndl, struct filelist_s* list)
-{
-    SELF(hndl);
-    return reinterpret_cast<struct dfile_s*>(&self->setList(list));
 }

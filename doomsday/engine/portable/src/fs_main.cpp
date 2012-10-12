@@ -274,7 +274,7 @@ void FS::consoleRegister()
  * @note Performance is O(n).
  * @return @c iterator pointing to list->end() if not found.
  */
-static de::FileList::iterator findListFileByPath(de::FileList& list, char const* path_)
+static FS::FileList::iterator findListFileByPath(FS::FileList& list, char const* path_)
 {
     if(list.empty()) return list.end();
     if(!path_ || !path_[0]) return list.end();
@@ -284,7 +284,7 @@ static de::FileList::iterator findListFileByPath(de::FileList& list, char const*
     F_FixSlashes(path, path);
 
     // Perform the search.
-    de::FileList::iterator i;
+    FS::FileList::iterator i;
     for(i = list.begin(); i != list.end(); ++i)
     {
         de::AbstractFile& file = (*i)->file();
@@ -372,7 +372,7 @@ static void printFileIds(FileIds const& fileIds)
 #endif
 
 #if _DEBUG
-static void printFileList(de::FileList& list)
+static void printFileList(FS::FileList& list)
 {
     for(int i = 0; i < list.size(); ++i)
     {
@@ -707,10 +707,10 @@ void FS::deleteFile(de::DFile& hndl)
 }
 
 /// @return @c NULL= Not found.
-static WadFile* findFirstWadFile(de::FileList& list, bool custom)
+static WadFile* findFirstWadFile(FS::FileList& list, bool custom)
 {
     if(list.empty()) return 0;
-    DENG2_FOR_EACH(i, list, de::FileList::iterator)
+    DENG2_FOR_EACH(i, list, FS::FileList::iterator)
     {
         de::AbstractFile& file = (*i)->file();
         if(custom != file.hasCustom()) continue;
@@ -732,10 +732,10 @@ uint FS::loadedFilesCRC()
     return iwad->calculateCRC();
 }
 
-int FS::findAll(de::FileList& found)
+int FS::findAll(FS::FileList& found)
 {
     int numFound = 0;
-    DENG2_FOR_EACH(i, d->loadedFiles, de::FileList::const_iterator)
+    DENG2_FOR_EACH(i, d->loadedFiles, FS::FileList::const_iterator)
     {
         found.push_back(*i);
         numFound += 1;
@@ -744,10 +744,10 @@ int FS::findAll(de::FileList& found)
 }
 
 int FS::findAll(bool (*predicate)(de::DFile* hndl, void* parameters), void* parameters,
-                de::FileList& found)
+                FS::FileList& found)
 {
     int numFound = 0;
-    DENG2_FOR_EACH(i, d->loadedFiles, de::FileList::const_iterator)
+    DENG2_FOR_EACH(i, d->loadedFiles, FS::FileList::const_iterator)
     {
         // Interested in this file?
         if(predicate && !predicate(*i, parameters)) continue; // Nope.
@@ -1732,11 +1732,11 @@ D_CMD(ListFiles)
     size_t totalFiles = 0, totalPackages = 0;
     if(fileSystem)
     {
-        de::FileList foundFiles;
+        FS::FileList foundFiles;
         int fileCount = App_FileSystem()->findAll(foundFiles);
         if(!fileCount) return true;
 
-        DENG2_FOR_EACH(i, foundFiles, de::FileList::const_iterator)
+        DENG2_FOR_EACH(i, foundFiles, FS::FileList::const_iterator)
         {
             de::AbstractFile& file = (*i)->file();
             uint crc;
@@ -2051,7 +2051,7 @@ AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx)
  *      should ensure to release it with Str_Delete() when no longer needed.
  *      Always returns a valid (but perhaps zero-length) string object.
  */
-static ddstring_t* composeFilePathString(de::FileList& files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
+static ddstring_t* composeFilePathString(FS::FileList& files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
                                          char const* delimiter = " ")
 {
     int maxLength, delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
@@ -2063,7 +2063,7 @@ static ddstring_t* composeFilePathString(de::FileList& files, int flags = DEFAUL
 
     // Determine the maximum number of characters we'll need.
     maxLength = 0;
-    DENG2_FOR_EACH(i, files, de::FileList::const_iterator)
+    DENG2_FOR_EACH(i, files, FS::FileList::const_iterator)
     {
         ddstring_t const* path = (*i)->file().path();
 
@@ -2117,7 +2117,7 @@ static ddstring_t* composeFilePathString(de::FileList& files, int flags = DEFAUL
     str = Str_New();
     Str_Reserve(str, maxLength);
     n = 0;
-    DENG2_FOR_EACH(i, files, de::FileList::const_iterator)
+    DENG2_FOR_EACH(i, files, FS::FileList::const_iterator)
     {
         ddstring_t const* path = (*i)->file().path();
 
@@ -2208,7 +2208,7 @@ void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size
     memset(outBuf, 0, outBufSize);
 
     findfilespredicate_params_t p = { type, CPP_BOOL(markedCustom) };
-    de::FileList foundFiles;
+    FS::FileList foundFiles;
     if(!App_FileSystem()->findAll(findFilesPredicate, (void*)&p, foundFiles)) return;
 
     ddstring_t* str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_DIR, delimiter);

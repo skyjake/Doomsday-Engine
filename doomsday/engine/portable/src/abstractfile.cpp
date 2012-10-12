@@ -31,7 +31,7 @@
 namespace de {
 
 AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
-    : file(&file), type_(_type)
+    : file(&file), type_(_type), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.
     /// @todo Does not belong at this level. Load order should be determined
@@ -40,8 +40,6 @@ AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, Lum
     DENG2_ASSERT(VALID_FILETYPE(_type));
     order = fileCounter++;
 
-    flags.startup = false;
-    flags.custom = true;
     Str_Init(&path_); Str_Set(&path_, _path);
     info_ = _info;
 }
@@ -74,9 +72,9 @@ AbstractFile& AbstractFile::container() const
     return *info_.container;
 }
 
-de::DFile* de::AbstractFile::handle()
+de::DFile& de::AbstractFile::handle()
 {
-    return file;
+    return *file;
 }
 
 ddstring_t const* AbstractFile::path() const
@@ -91,23 +89,25 @@ uint AbstractFile::loadOrderIndex() const
 
 bool AbstractFile::hasStartup() const
 {
-    return !!flags.startup;
+    return flags.testFlag(Startup);
 }
 
 AbstractFile& AbstractFile::setStartup(bool yes)
 {
-    flags.startup = yes;
+    if(yes) flags |= Startup;
+    else    flags &= ~Startup;
     return *this;
 }
 
 bool AbstractFile::hasCustom() const
 {
-    return !!flags.custom;
+    return flags.testFlag(Custom);
 }
 
 AbstractFile& AbstractFile::setCustom(bool yes)
 {
-    flags.custom = yes;
+    if(yes) flags |= Custom;
+    else    flags &= ~Custom;
     return *this;
 }
 

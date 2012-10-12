@@ -42,6 +42,8 @@
 #include "de_filesys.h"
 #include "de_misc.h"
 
+#include <de/Log>
+
 using namespace de;
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* src)

@@ -65,6 +65,21 @@ class PathDirectoryNode;
  */
 class AbstractFile
 {
+public:
+    /// Categorization flags.
+    enum Flag
+    {
+        /// Flagged as having been loaded during the game startup process.
+        Startup     = 0x1,
+
+        /// Flagged as a non-original game resource.
+        Custom      = 0x2,
+
+        /// All resources are by default flagged as "custom".
+        DefaultFlags = Custom
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
 private:
     AbstractFile();
 
@@ -134,7 +149,7 @@ public:
     /// Mark this resource as "custom".
     AbstractFile& setCustom(bool yes);
 
-    DFile* handle();
+    DFile& handle();
 
     /**
      * Access interfaces:
@@ -310,11 +325,8 @@ private:
     /// @see filetype_t
     filetype_t type_;
 
-    struct abstractfile_flags_s
-    {
-        uint startup:1; ///< Loaded during the startup process.
-        uint custom:1; /// < Not an original game resource.
-    } flags;
+    /// Categorization flags.
+    Flags flags;
 
     /// Absolute variable-length path in the vfs.
     ddstring_t path_;
@@ -325,6 +337,8 @@ private:
     /// Load order depth index.
     uint order;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractFile::Flags)
 
 } // namespace de
 

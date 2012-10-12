@@ -81,11 +81,6 @@ extern "C" {
 /// @return  File object represented by this handle.
 struct abstractfile_s* DFile_File(DFile* hndl);
 
-/// @return  FileList object which owns this handle.
-struct filelist_s* DFile_List(DFile* hndl);
-
-DFile* DFile_SetList(DFile* hndl, struct filelist_s* list);
-
 /// @return  File object represented by this handle.
 struct abstractfile_s* DFile_File_const(DFile const* hndl);
 
