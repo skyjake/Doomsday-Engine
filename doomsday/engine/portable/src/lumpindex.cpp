@@ -38,7 +38,6 @@
 #include <de/Log>
 
 using namespace de;
-using de::AbstractFile;
 
 /**
  * @ingroup lumpIndexFlags
