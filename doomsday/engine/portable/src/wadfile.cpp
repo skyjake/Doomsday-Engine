@@ -219,10 +219,12 @@ struct WadFile::Instance
             Str_Set(normName, "________");
         }
 
-        // All lumps are ordained with the .lmp extension if they don't have one.
+        // All lumps are ordained with an extension if they don't have one.
         char const* ext = F_FindFileExtension(Str_Text(normName));
         if(!(ext && Str_Length(normName) > ext - Str_Text(normName) + 1))
-            Str_Append(normName, ".lmp");
+        {
+            Str_Append(normName, !Str_CompareIgnoreCase(normName, "DEHACKED")? ".deh" : ".lmp");
+        }
     }
 
     void readLumpDirectory()

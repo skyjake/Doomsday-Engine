@@ -47,20 +47,8 @@ static bool recognisePatchLumpByName(lumpnum_t lumpNum)
     const char* lumpName = W_LumpName(lumpNum);
     if(!lumpName) return false;
 
-    // Perhaps an in-WAD patch?
-    if(!qstrnicmp(lumpName, "DEHACKED", 8))
-    {
-        return true;
-    }
-
-    // Maybe a patch from some other virtual file?
     const char* ext = F_FindFileExtension(lumpName);
-    if(ext && !qstricmp(ext, "deh"))
-    {
-        return true;
-    }
-
-    return false;
+    return (ext && !qstricmp(ext, "deh"));
 }
 
 static void readLump(lumpnum_t lumpNum)

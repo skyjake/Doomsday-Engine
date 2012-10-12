@@ -80,6 +80,8 @@ typedef QList<PathMapping> PathMappings;
 
 static bool applyPathMapping(ddstring_t* path, PathMapping const& vdm);
 
+static de::DFile* tryOpenFile3(de::DFile& file, const char* path, LumpInfo const& info);
+
 struct FS::Instance
 {
     /// Base for indicies in the auxiliary lump index.
@@ -1020,83 +1022,37 @@ de::AbstractFile* FS::findLumpFile(char const* path, int* lumpIdx)
     return NULL;
 }
 
-static de::DFile* tryOpenFile3(de::DFile* file, const char* path, const LumpInfo* info);
-
-static de::DFile* openAsLumpFile(de::AbstractFile* container, int lumpIdx,
-    const char* _absPath, bool isDehackedPatch, bool /*dontBuffer*/)
+static de::DFile* tryOpenAsZipFile(de::DFile& hndl, char const* path, LumpInfo const& info)
 {
-    ddstring_t absPath; Str_Init(&absPath);
-
-    // Prepare the name of this single-lump file.
-    if(isDehackedPatch)
+    if(ZipFile::recognise(hndl))
     {
-        // Copy the path up to and including the last directory separator if present.
-        char const* slash = strrchr(_absPath, '/');
-        if(slash)
-        {
-            Str_PartAppend(&absPath, _absPath, 0, (slash - _absPath) + 1);
-        }
-        Str_Append(&absPath, "DEHACKED.lmp");
-    }
-    else
-    {
-        Str_Append(&absPath, _absPath);
-    }
-
-    // Get a handle to the lump we intend to open.
-    /// @todo The way this buffering works is nonsensical it should not be done here
-    ///        but should instead be deferred until the content of the lump is read.
-    de::DFile* hndl = DFileBuilder::fromFileLump(*container, lumpIdx, false/*dontBuffer*/);
-
-    // Prepare a the temporary info descriptor.
-    LumpInfo info = container->lumpInfo(lumpIdx);
-
-    // Try to open the referenced file as a specialised file type.
-    de::DFile* file = tryOpenFile3(hndl, Str_Text(&absPath), &info);
-
-    // If not opened; assume its a generic LumpFile.
-    if(!file)
-    {
-        LumpFile* lump = new LumpFile(*hndl, Str_Text(&absPath), info);
-        file = DFileBuilder::fromFile(*lump);
-    }
-    DENG_ASSERT(file);
-
-    Str_Free(&absPath);
-    return file;
-}
-
-static de::DFile* tryOpenAsZipFile(de::DFile* hndl, char const* path, LumpInfo const* info)
-{
-    if(ZipFile::recognise(*hndl))
-    {
-        ZipFile* zip = new ZipFile(*hndl, path, *info);
+        ZipFile* zip = new ZipFile(hndl, path, info);
         return DFileBuilder::fromFile(*zip);
     }
     return NULL;
 }
 
-static de::DFile* tryOpenAsWadFile(de::DFile* hndl, char const* path, LumpInfo const* info)
+static de::DFile* tryOpenAsWadFile(de::DFile& hndl, char const* path, LumpInfo const& info)
 {
-    if(WadFile::recognise(*hndl))
+    if(WadFile::recognise(hndl))
     {
-        WadFile* wad = new WadFile(*hndl, path, *info);
+        WadFile* wad = new WadFile(hndl, path, info);
         return DFileBuilder::fromFile(*wad);
     }
     return NULL;
 }
 
-static de::DFile* tryOpenFile3(de::DFile* file, char const* path, LumpInfo const* info)
+static de::DFile* tryOpenFile3(de::DFile& file, char const* path, LumpInfo const& info)
 {
     static const struct filehandler_s {
         resourcetype_t resourceType;
-        de::DFile* (*tryOpenFile)(de::DFile* file, char const* path, LumpInfo const* info);
+        de::DFile* (*tryOpenFile)(de::DFile& file, char const* path, LumpInfo const& info);
     } handlers[] = {
         { RT_ZIP,  tryOpenAsZipFile },
         { RT_WAD,  tryOpenAsWadFile },
         { RT_NONE, NULL }
     }, *hdlr = NULL;
-    DENG_ASSERT(file && path && path[0] && info);
+    DENG_ASSERT(path && path[0]);
 
     resourcetype_t resourceType = F_GuessResourceTypeByName(path);
 
@@ -1130,53 +1086,62 @@ de::DFile* FS::tryOpenFile2(char const* path, char const* mode, size_t baseOffse
     if(!path || !path[0]) return 0;
 
     if(!mode) mode = "";
-    bool dontBuffer  = !!strchr(mode, 'x');
+    //bool dontBuffer  = !!strchr(mode, 'x');
     bool reqRealFile = !!strchr(mode, 'f');
 
     // Make it a full path.
-    ddstring_t searchPath; Str_Init(&searchPath);
-    Str_Set(&searchPath, path);
-    F_FixSlashes(&searchPath, &searchPath);
-    F_ExpandBasePath(&searchPath, &searchPath);
+    AutoStr* searchPath = AutoStr_NewStd();
+    Str_Set(searchPath, path);
+    F_FixSlashes(searchPath, searchPath);
+    F_ExpandBasePath(searchPath, searchPath);
 
-    DEBUG_VERBOSE2_Message(("tryOpenFile2: trying to open %s\n", Str_Text(&searchPath)));
+    DEBUG_VERBOSE2_Message(("tryOpenFile2: trying to open %s\n", Str_Text(searchPath)));
 
     // First check for lumps?
     if(!reqRealFile)
     {
         int lumpIdx;
-        AbstractFile* container = findLumpFile(Str_Text(&searchPath), &lumpIdx);
+        AbstractFile* container = findLumpFile(Str_Text(searchPath), &lumpIdx);
         if(container)
         {
             // Do not read files twice.
-            if(!allowDuplicate && !checkFileId(Str_Text(&searchPath))) return 0;
+            if(!allowDuplicate && !checkFileId(Str_Text(searchPath))) return 0;
 
-            // DeHackEd patch files require special handling...
-            resourcetype_t type = F_GuessResourceTypeByName(path);
+            // Get a handle to the lump we intend to open.
+            /// @todo The way this buffering works is nonsensical it should not be done here
+            ///        but should instead be deferred until the content of the lump is read.
+            de::DFile* hndl = DFileBuilder::fromFileLump(*container, lumpIdx, false/*dontBuffer*/);
 
-            DFile* dfile = openAsLumpFile(container, lumpIdx, Str_Text(&searchPath), (type == RT_DEH), dontBuffer);
-            Str_Free(&searchPath);
-            return dfile;
+            // Prepare a temporary info descriptor.
+            LumpInfo info = container->lumpInfo(lumpIdx);
+
+            // Try to open the referenced file as a specialised file type.
+            de::DFile* file = tryOpenFile3(*hndl, Str_Text(searchPath), info);
+
+            // If not opened; assume its a generic LumpFile.
+            if(!file)
+            {
+                LumpFile* lump = new LumpFile(*hndl, Str_Text(searchPath), info);
+                file = DFileBuilder::fromFile(*lump);
+            }
+            DENG_ASSERT(file);
+
+            return file;
         }
     }
 
     // Try to open as a real file then. We must have an absolute path, so
     // prepend the current working directory if necessary.
-    F_PrependWorkPath(&searchPath, &searchPath);
+    F_PrependWorkPath(searchPath, searchPath);
     ddstring_t* foundPath = 0;
-    FILE* nativeFile = findRealFile(Str_Text(&searchPath), mode, &foundPath);
-    if(!nativeFile)
-    {
-        Str_Free(&searchPath);
-        return 0;
-    }
+    FILE* nativeFile = findRealFile(Str_Text(searchPath), mode, &foundPath);
+    if(!nativeFile) return 0;
 
     // Do not read files twice.
     if(!allowDuplicate && !checkFileId(Str_Text(foundPath)))
     {
         fclose(nativeFile);
         Str_Delete(foundPath);
-        Str_Free(&searchPath);
         return NULL;
     }
 
@@ -1190,17 +1155,16 @@ de::DFile* FS::tryOpenFile2(char const* path, char const* mode, size_t baseOffse
     // been mapped to another location. We want the file to be attributed with
     // the path it is to be known by throughout the virtual file system.
 
-    DFile* dfile = tryOpenFile3(hndl, Str_Text(&searchPath), &info);
+    DFile* dfile = tryOpenFile3(*hndl, Str_Text(searchPath), info);
     // If still not loaded; this an unknown format.
     if(!dfile)
     {
-        GenericFile* file = new GenericFile(*hndl, Str_Text(&searchPath), info);
+        GenericFile* file = new GenericFile(*hndl, Str_Text(searchPath), info);
         dfile = DFileBuilder::fromFile(*file);
     }
     DENG_ASSERT(dfile);
 
     Str_Delete(foundPath);
-    Str_Free(&searchPath);
     return dfile;
 }
 
