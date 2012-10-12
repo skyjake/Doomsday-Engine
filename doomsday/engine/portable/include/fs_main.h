@@ -59,21 +59,6 @@ typedef QList<DFile*> FileList;
 class FS
 {
 public:
-    struct PathListItem
-    {
-        String path;
-        int attrib;
-        PathListItem(QString const& _path, int _attrib = 0)
-            : path(_path), attrib(_attrib)
-        {}
-        bool operator < (PathListItem const& other) const
-        {
-            return path.compareWithoutCase(other.path) < 0;
-        }
-    };
-    typedef QList<PathListItem> PathList;
-
-public:
     FS();
 
     ~FS();
@@ -104,14 +89,14 @@ public:
     void mapPath(char const* source, char const* destination);
 
     /// @note Should be called after WADs have been processed.
-    void initLumpDirectoryMappings();
+    void initLumpPathMap();
 
     /**
      * Add a new lump mapping so that @a lumpName becomes visible as @a symbolicPath
      * throughout the vfs.
      * @note @a symbolicPath will be transformed into an absolute path if needed.
      */
-    void addLumpDirectoryMapping(char const* lumpName, char const* symbolicPath);
+    void mapPathToLump(char const* symbolicPath, char const* lumpName);
 
     /**
      * Reset known fileId records so that the next time F_CheckFileId() is
@@ -292,27 +277,27 @@ public:
     void closeAuxiliary();
 
     /**
-     * @param count  If not @c NULL the number of elements in the resultant
-     *               array is written back here (for convenience).
+     * Finds all files.
      *
-     * @return  Array of ptrs to files in this system or @c NULL if empty.
-     *      Ownership of the array passes to the caller who should ensure to
-     *      release it with free() when no longer needed.
+     * @param found         Set of files that match the result.
+     *
+     * @return  Number of files found.
      */
-    AbstractFile** collectFiles(int* count);
-
-    /// Collect a list of paths including those which have been mapped.
-    PathList collectLocalPaths(ddstring_t const* searchPath, bool includeSearchPath);
+    int findAll(FileList& found);
 
     /**
-     * Collect a list of loaded file paths.
+     * Finds all files which meet the supplied @a predicate.
      *
      * @param predicate     If not @c NULL, this predicate evaluator callback must
-     *                      return @c true for a given path to be included in the
-     *                      resultant list.
+     *                      return @c true for a given file to be included in the
+     *                      @a found FileList.
      * @param parameters    Passed to the predicate evaluator callback.
+     * @param found         Set of files that match the result.
+     *
+     * @return  Number of files found.
      */
-    PathList collectPaths(bool (*predicate)(DFile* hndl, void* parameters) = 0, void* parameters = 0);
+    int findAll(bool (*predicate)(DFile* hndl, void* parameters), void* parameters,
+                FileList& found);
 
     /**
      * Print contents of the specified directory of the virtual file system.

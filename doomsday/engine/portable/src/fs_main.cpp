@@ -436,7 +436,7 @@ int FS::reset()
     resetFileIds();
 
     // Update the dir/WAD translations.
-    initLumpDirectoryMappings();
+    initLumpPathMap();
     initPathMap();
 
     return unloaded;
@@ -743,67 +743,30 @@ uint FS::loadedFilesCRC()
     return iwad->calculateCRC();
 }
 
-FS::PathList FS::collectLocalPaths(ddstring_t const* searchPath, bool includeSearchPath)
+int FS::findAll(de::FileList& found)
 {
-    PathList foundEntries;
-    finddata_t fd;
-
-    ddstring_t origWildPath; Str_InitStd(&origWildPath);
-    Str_Appendf(&origWildPath, "%s*", Str_Text(searchPath));
-
-    ddstring_t wildPath; Str_Init(&wildPath);
-    for(int i = -1; i < (int)d->pathMappings.count(); ++i)
+    int numFound = 0;
+    DENG2_FOR_EACH(i, d->loadedFiles, de::FileList::const_iterator)
     {
-        if(i == -1)
-        {
-            Str_Copy(&wildPath, &origWildPath);
-        }
-        else
-        {
-            // Possible mapping?
-            Str_Copy(&wildPath, searchPath);
-            if(!applyPathMapping(&wildPath, d->pathMappings[i])) continue;
-
-            Str_AppendChar(&wildPath, '*');
-        }
-
-        if(!myfindfirst(Str_Text(&wildPath), &fd))
-        {
-            // First path found.
-            do
-            {
-                // Ignore relative directory symbolics.
-                if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
-                {
-                    QString foundPath = QString("%1%2").arg((includeSearchPath ? Str_Text(searchPath) : "")).arg(Str_Text(&fd.name));
-                    foundEntries.push_back(PathListItem(foundPath, fd.attrib));
-                }
-            } while(!myfindnext(&fd));
-        }
-        myfindend(&fd);
+        found.push_back(*i);
+        numFound += 1;
     }
-
-    // Sort all the foundPaths entries.
-    qSort(foundEntries.begin(), foundEntries.end());
-
-    Str_Free(&origWildPath);
-    Str_Free(&wildPath);
-
-    return foundEntries;
+    return numFound;
 }
 
-FS::PathList FS::collectPaths(bool (*predicate)(de::DFile* hndl, void* parameters), void* parameters)
+int FS::findAll(bool (*predicate)(de::DFile* hndl, void* parameters), void* parameters,
+                de::FileList& found)
 {
-    PathList paths;
+    int numFound = 0;
     DENG2_FOR_EACH(i, d->loadedFiles, de::FileList::const_iterator)
     {
         // Interested in this file?
         if(predicate && !predicate(*i, parameters)) continue; // Nope.
 
-        AbstractFile* file = (*i)->file();
-        paths.push_back(PathListItem(QString(Str_Text(file->path()))));
+        found.push_back(*i);
+        numFound += 1;
     }
-    return paths;
+    return numFound;
 }
 
 int FS::allResourcePaths(char const* rawSearchPattern, int flags,
@@ -889,7 +852,58 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
 
     if(!Str_IsEmpty(searchDirectory))
     {
-        PathList foundPaths = collectLocalPaths(searchDirectory, true/*include the searchDirectory in paths*/);
+        struct PathListItem
+        {
+            String path;
+            int attrib;
+            PathListItem(QString const& _path, int _attrib = 0)
+                : path(_path), attrib(_attrib)
+            {}
+            bool operator < (PathListItem const& other) const
+            {
+                return path.compareWithoutCase(other.path) < 0;
+            }
+        };
+        typedef QList<PathListItem> PathList;
+
+        PathList foundPaths;
+        AutoStr* wildPath = AutoStr_NewStd();
+        finddata_t fd;
+        for(int i = -1; i < (int)d->pathMappings.count(); ++i)
+        {
+            if(i == -1)
+            {
+                Str_Clear(wildPath);
+                Str_Appendf(wildPath, "%s*", Str_Text(searchDirectory));
+            }
+            else
+            {
+                // Possible mapping?
+                Str_Copy(wildPath, searchDirectory);
+                if(!applyPathMapping(wildPath, d->pathMappings[i])) continue;
+
+                Str_AppendChar(wildPath, '*');
+            }
+
+            if(!myfindfirst(Str_Text(wildPath), &fd))
+            {
+                // First path found.
+                do
+                {
+                    // Ignore relative directory symbolics.
+                    if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
+                    {
+                        QString foundPath = QString("%1%2").arg(Str_Text(searchDirectory)).arg(Str_Text(&fd.name));
+                        foundPaths.push_back(PathListItem(foundPath, fd.attrib));
+                    }
+                } while(!myfindnext(&fd));
+            }
+            myfindend(&fd);
+        }
+
+        // Sort all the found paths.
+        qSort(foundPaths.begin(), foundPaths.end());
+
         DENG2_FOR_EACH(i, foundPaths, PathList::const_iterator)
         {
             PathListItem const& found = *i;
@@ -1353,9 +1367,9 @@ de::DFile* FS::openLump(lumpnum_t absoluteLumpNum)
     return openFileHndl;
 }
 
-void FS::addLumpDirectoryMapping(char const* lumpName, char const* symbolicPath)
+void FS::mapPathToLump(char const* symbolicPath, char const* lumpName)
 {
-    if(!lumpName || !lumpName[0] || !symbolicPath || !symbolicPath[0]) return;
+    if(!symbolicPath || !symbolicPath[0] || !lumpName || !lumpName[0]) return;
 
     // Convert the symbolic path into a real path.
     AutoStr* path = Str_Set(AutoStr_NewStd(), symbolicPath);
@@ -1402,7 +1416,7 @@ static inline char const* skipSpace(char const* ptr)
     return ptr;
 }
 
-static bool parseLDMapping(lumpname_t lumpName, ddstring_t* path, char const* buffer)
+static bool parseLumpPathMapping(lumpname_t lumpName, ddstring_t* path, char const* buffer)
 {
     DENG_ASSERT(lumpName && path);
 
@@ -1441,7 +1455,7 @@ static bool parseLDMapping(lumpname_t lumpName, ddstring_t* path, char const* bu
  * LUMPNAM1 Path\In\The\RuntimeDir.ext
  *  :</pre>
  */
-static bool parseLDMappingList(de::FS& fileSystem, char const* buffer)
+static bool parseLumpPathMappings(de::FS& fileSystem, char const* buffer)
 {
     DENG_ASSERT(buffer);
 
@@ -1454,7 +1468,7 @@ static bool parseLDMappingList(de::FS& fileSystem, char const* buffer)
     do
     {
         ch = Str_GetLine(&line, ch);
-        if(!parseLDMapping(lumpName, &path, Str_Text(&line)))
+        if(!parseLumpPathMapping(lumpName, &path, Str_Text(&line)))
         {
             // Failure parsing the mapping.
             // Ignore errors in individual mappings and continue parsing.
@@ -1462,7 +1476,7 @@ static bool parseLDMappingList(de::FS& fileSystem, char const* buffer)
         }
         else
         {
-            fileSystem.addLumpDirectoryMapping(lumpName, Str_Text(&path));
+            fileSystem.mapPathToLump(Str_Text(&path), lumpName);
         }
     } while(*ch);
 
@@ -1475,7 +1489,7 @@ static bool parseLDMappingList(de::FS& fileSystem, char const* buffer)
     return successful;
 }
 
-void FS::initLumpDirectoryMappings(void)
+void FS::initLumpPathMap(void)
 {
     static bool inited = false;
     size_t bufSize = 0;
@@ -1502,7 +1516,7 @@ void FS::initLumpDirectoryMappings(void)
         {
             bufSize = lumpLength + 1;
             buf = (uint8_t*) M_Realloc(buf, bufSize);
-            if(!buf) Con_Error("FS::initLumpDirectoryMappings: Failed on (re)allocation of %lu bytes for temporary read buffer.", (unsigned long) bufSize);
+            if(!buf) Con_Error("FS::initLumpPathMap: Failed on (re)allocation of %lu bytes for temporary read buffer.", (unsigned long) bufSize);
         }
 
         int lumpIdx;
@@ -1510,7 +1524,7 @@ void FS::initLumpDirectoryMappings(void)
         DENG_ASSERT(file);
         file->readLump(lumpIdx, buf, 0, lumpLength);
         buf[lumpLength] = 0;
-        parseLDMappingList(*this, reinterpret_cast<char const*>(buf));
+        parseLumpPathMappings(*this, reinterpret_cast<char const*>(buf));
     }
 
     if(buf) M_Free(buf);
@@ -1598,13 +1612,6 @@ void FS::initPathMap()
             i += 2;
         }
     }
-}
-
-static int compareFileByFilePath(void const* a_, void const* b_)
-{
-    de::AbstractFile* a = *((de::AbstractFile* const*)a_);
-    de::AbstractFile* b = *((de::AbstractFile* const*)b_);
-    return Str_CompareIgnoreCase(a->path(), Str_Text(b->path()));
 }
 
 /**
@@ -1726,35 +1733,6 @@ D_CMD(ListLumps)
     return false;
 }
 
-/**
- * @param size  If not @c NULL the number of elements in the resultant
- *              array is written back here (for convenience).
- *
- * @return  Array of ptrs to files in this list or @c NULL if empty.
- *      Ownership of the array passes to the caller who should ensure to
- *      release it with free() when no longer needed.
- */
-de::AbstractFile** FS::collectFiles(int* count)
-{
-    FileList& list = d->loadedFiles;
-    if(!list.empty())
-    {
-        AbstractFile** arr = (AbstractFile**) M_Malloc(list.size() * sizeof *arr);
-        if(!arr) Con_Error("collectFiles: Failed on allocation of %lu bytes for file list.", (unsigned long) (list.size() * sizeof *arr));
-
-        for(int i = 0; i < list.size(); ++i)
-        {
-            DFile const* hndl = list[i];
-            arr[i] = hndl->file();
-        }
-        if(count) *count = list.size();
-        return arr;
-    }
-
-    if(count) *count = 0;
-    return NULL;
-}
-
 /// List the "real" files presently loaded in original load order.
 D_CMD(ListFiles)
 {
@@ -1765,17 +1743,13 @@ D_CMD(ListFiles)
     size_t totalFiles = 0, totalPackages = 0;
     if(fileSystem)
     {
-        int fileCount;
-        de::AbstractFile** arr = App_FileSystem()->collectFiles(&fileCount);
-        if(!arr) return true;
+        de::FileList foundFiles;
+        int fileCount = App_FileSystem()->findAll(foundFiles);
+        if(!fileCount) return true;
 
-        // Sort files so we get a nice alpha-numerical list.
-        qsort(arr, fileCount, sizeof *arr, compareFileByFilePath);
-
-        de::AbstractFile** ptr = arr;
-        for(int i = 0; i < fileCount; ++i, ptr++)
+        DENG2_FOR_EACH(i, foundFiles, de::FileList::const_iterator)
         {
-            de::AbstractFile* file = *ptr;
+            de::AbstractFile* file = (*i)->file();
             uint crc;
 
             int fileCount = file->lumpCount();
@@ -1808,8 +1782,6 @@ D_CMD(ListFiles)
             totalFiles += size_t(fileCount);
             ++totalPackages;
         }
-
-        M_Free(arr);
     }
     Con_Printf("Total: %lu files in %lu packages.\n", (unsigned long) totalFiles, (unsigned long)totalPackages);
     return true;
@@ -1864,12 +1836,12 @@ void F_AddVirtualDirectoryMapping(char const* source, char const* destination)
 
 void F_InitLumpDirectoryMappings(void)
 {
-    App_FileSystem()->initLumpDirectoryMappings();
+    App_FileSystem()->initLumpPathMap();
 }
 
-void F_AddLumpDirectoryMapping(char const* lumpName, char const* symbolicPath)
+void F_AddLumpDirectoryMapping(char const* symbolicPath, char const* lumpName)
 {
-    App_FileSystem()->addLumpDirectoryMapping(lumpName, symbolicPath);
+    App_FileSystem()->mapPathToLump(symbolicPath, lumpName);
 }
 
 void F_ResetFileIds(void)
@@ -2087,7 +2059,7 @@ AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx)
  *      should ensure to release it with Str_Delete() when no longer needed.
  *      Always returns a valid (but perhaps zero-length) string object.
  */
-static ddstring_t* composePathListString(de::FS::PathList& paths, int flags = DEFAULT_PATHTOSTRINGFLAGS,
+static ddstring_t* composeFilePathString(de::FileList& files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
                                          char const* delimiter = " ")
 {
     int maxLength, delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
@@ -2099,28 +2071,28 @@ static ddstring_t* composePathListString(de::FS::PathList& paths, int flags = DE
 
     // Determine the maximum number of characters we'll need.
     maxLength = 0;
-    DENG2_FOR_EACH(i, paths, de::FS::PathList::const_iterator)
+    DENG2_FOR_EACH(i, files, de::FileList::const_iterator)
     {
+        ddstring_t const* path = (*i)->file()->path();
+
         if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
             // Caller wants the whole path plus name and extension (if present).
-            maxLength += i->path.length();
+            maxLength += Str_Length(path);
         }
         else
         {
-            QByteArray pathUtf8 = i->path.toUtf8();
-
             if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
             {
                 // Caller does not want the directory hierarchy.
-                F_FileNameAndExtension(&buf, pathUtf8.constData());
+                F_FileNameAndExtension(&buf, Str_Text(path));
                 p = Str_Text(&buf);
                 pLength = Str_Length(&buf);
             }
             else
             {
-                p = pathUtf8.constData();
-                pLength = pathUtf8.length();
+                p = Str_Text(path);
+                pLength = Str_Length(path);
             }
 
             if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
@@ -2147,16 +2119,15 @@ static ddstring_t* composePathListString(de::FS::PathList& paths, int flags = DE
         if(flags & PTSF_QUOTED)
             maxLength += 1;
     }
-    maxLength += paths.count() * delimiterLength;
+    maxLength += files.count() * delimiterLength;
 
     // Composite final string.
     str = Str_New();
     Str_Reserve(str, maxLength);
     n = 0;
-    DENG2_FOR_EACH(i, paths, de::FS::PathList::const_iterator)
+    DENG2_FOR_EACH(i, files, de::FileList::const_iterator)
     {
-        QByteArray pathUtf8 = i->path.toUtf8();
-        char const* path = pathUtf8.constData();
+        ddstring_t const* path = (*i)->file()->path();
 
         if(flags & PTSF_QUOTED)
             Str_AppendChar(str, '"');
@@ -2164,21 +2135,21 @@ static ddstring_t* composePathListString(de::FS::PathList& paths, int flags = DE
         if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
             // Caller wants the whole path plus name and extension (if present).
-            Str_Append(str, path);
+            Str_Append(str, Str_Text(path));
         }
         else
         {
             if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
             {
                 // Caller does not want the directory hierarchy.
-                F_FileNameAndExtension(&buf, path);
+                F_FileNameAndExtension(&buf, Str_Text(path));
                 p = Str_Text(&buf);
                 pLength = Str_Length(&buf);
             }
             else
             {
-                p = path;
-                pLength = pathUtf8.length();
+                p = Str_Text(path);
+                pLength = Str_Length(path);
             }
 
             if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
@@ -2207,7 +2178,7 @@ static ddstring_t* composePathListString(de::FS::PathList& paths, int flags = DE
             Str_AppendChar(str, '"');
 
         ++n;
-        if(n != paths.count())
+        if(n != files.count())
             Str_Append(str, delimiter);
     }
 
@@ -2219,12 +2190,12 @@ static ddstring_t* composePathListString(de::FS::PathList& paths, int flags = DE
 typedef struct {
     filetype_t type; // Only
     bool markedCustom;
-} compositepathpredicateparamaters_t;
+} findfilespredicate_params_t;
 
-static bool collectPathsPredicate(de::DFile* hndl, void* parameters)
+static bool findFilesPredicate(de::DFile* hndl, void* parameters)
 {
     DENG_ASSERT(parameters);
-    compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)parameters;
+    findfilespredicate_params_t* p = (findfilespredicate_params_t*)parameters;
     de::AbstractFile* file = hndl->file();
     if((!VALID_FILETYPE(p->type) || p->type == file->type()) &&
        ((p->markedCustom == file->hasCustom())))
@@ -2244,10 +2215,11 @@ void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size
     if(!outBuf || 0 == outBufSize) return;
     memset(outBuf, 0, outBufSize);
 
-    compositepathpredicateparamaters_t p = { type, CPP_BOOL(markedCustom) };
-    de::FS::PathList paths = App_FileSystem()->collectPaths(collectPathsPredicate, (void*)&p);
+    findfilespredicate_params_t p = { type, CPP_BOOL(markedCustom) };
+    de::FileList foundFiles;
+    if(!App_FileSystem()->findAll(findFilesPredicate, (void*)&p, foundFiles)) return;
 
-    ddstring_t* str = composePathListString(paths, PTSF_TRANSFORM_EXCLUDE_DIR, delimiter);
+    ddstring_t* str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_DIR, delimiter);
     strncpy(outBuf, Str_Text(str), outBufSize);
     Str_Delete(str);
 }
