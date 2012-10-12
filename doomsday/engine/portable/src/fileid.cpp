@@ -36,7 +36,7 @@ using namespace de;
 FileId::FileId(Md5Hash _md5) : md5_(_md5.left(16))
 {}
 
-FileId::FileId(FileId const& other) : md5_(other.md5())
+FileId::FileId(FileId const& other) : LogEntry::Arg::Base(), md5_(other.md5())
 {}
 
 FileId& FileId::operator = (FileId other)
