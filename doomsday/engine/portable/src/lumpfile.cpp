@@ -23,9 +23,7 @@
 #include "lumpindex.h"
 #include "lumpfile.h"
 
-using namespace de;
-using de::DFile;
-using de::PathDirectoryNode;
+namespace de {
 
 LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
     : AbstractFile(FT_LUMPFILE, path, file, info)
@@ -34,7 +32,7 @@ LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
 LumpFile::~LumpFile()
 {}
 
-PathDirectoryNode const& LumpFile::lumpDirectoryNode(int /*lumpIdx*/)
+de::PathDirectoryNode const& LumpFile::lumpDirectoryNode(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
     return container().lumpDirectoryNode(info().lumpIdx);
@@ -84,3 +82,5 @@ int LumpFile::publishLumpsToIndex(LumpIndex& index)
     index.catalogLumps(container(), info().lumpIdx, 1);
     return 1;
 }
+
+} // namespace de
