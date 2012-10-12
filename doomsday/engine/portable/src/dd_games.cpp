@@ -200,7 +200,7 @@ static bool recognizeZIP(char const* filePath, void* parameters)
     {
         result = de::ZipFile::recognise(*dfile);
         /// @todo Check files. We should implement an auxiliary zip lump index...
-        App_FileSystem()->closeFile(dfile);
+        App_FileSystem()->closeFile(*dfile);
     }
     return result;
 }

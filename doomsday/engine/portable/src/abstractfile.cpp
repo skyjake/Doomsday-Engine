@@ -48,7 +48,7 @@ AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, Lum
 
 AbstractFile::~AbstractFile()
 {
-    App_FileSystem()->releaseFile(this);
+    App_FileSystem()->releaseFile(*this);
     Str_Free(&path_);
     if(file) delete file;
 }

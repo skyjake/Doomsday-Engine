@@ -72,8 +72,8 @@ public:
     DFile& setList(struct filelist_s* list);
 
     /// @todo Should not be visible outside the engine.
-    AbstractFile* file();
-    AbstractFile* file() const;
+    AbstractFile& file();
+    AbstractFile& file() const;
 
     /// @return  @c true iff this handle's internal state is valid.
     bool isValid() const;

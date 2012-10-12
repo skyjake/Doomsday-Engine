@@ -158,10 +158,11 @@ struct FS::Instance
         // Unload in reverse load order.
         for(int i = loadedFiles.size() - 1; i >= 0; i--)
         {
-            DFile* hndl = loadedFiles[i];
-            if(!index || index->catalogues(*hndl->file()))
+            DFile& hndl = *(loadedFiles[i]);
+            if(!index || index->catalogues(hndl.file()))
             {
-                self->unlinkFile(hndl->file());
+                releaseFileId(Str_Text(hndl.file().path()));
+                self->deindex(hndl.file());
                 loadedFiles.removeAt(i);
                 self->deleteFile(hndl);
             }
@@ -171,7 +172,7 @@ struct FS::Instance
     void clearOpenFiles()
     {
         while(!openFiles.empty())
-        { self->deleteFile(openFiles.back()); }
+        { self->deleteFile(*openFiles.back()); }
     }
 
     int pruneLumpsFromIndexesByFile(AbstractFile& file)
@@ -286,8 +287,8 @@ static de::FileList::iterator findListFileByPath(de::FileList& list, char const*
     de::FileList::iterator i;
     for(i = list.begin(); i != list.end(); ++i)
     {
-        de::AbstractFile* file = (*i)->file();
-        if(!Str_CompareIgnoreCase(file->path(), Str_Text(path)))
+        de::AbstractFile& file = (*i)->file();
+        if(!Str_CompareIgnoreCase(file.path(), Str_Text(path)))
         {
             break; // This is the node we are looking for.
         }
@@ -295,11 +296,9 @@ static de::FileList::iterator findListFileByPath(de::FileList& list, char const*
     return i;
 }
 
-void FS::unlinkFile(de::AbstractFile* file)
+void FS::deindex(de::AbstractFile& file)
 {
-    if(!file) return;
-    d->releaseFileId(Str_Text(file->path()));
-    d->pruneLumpsFromIndexesByFile(*file);
+    d->pruneLumpsFromIndexesByFile(file);
 }
 
 bool FS::unloadFile(char const* path, bool permitRequired, bool quiet)
@@ -323,8 +322,9 @@ bool FS::unloadFile(char const* path, bool permitRequired, bool quiet)
         Con_Message("Unloading \"%s\"...\n", F_PrettyPath(path));
     }
 
-    DFile* hndl = *found;
-    unlinkFile(hndl->file());
+    DFile& hndl = *(*found);
+    d->releaseFileId(Str_Text(hndl.file().path()));
+    deindex(hndl.file());
     d->loadedFiles.erase(found);
     deleteFile(hndl);
     return true;
@@ -359,26 +359,6 @@ void FS::endStartup()
     d->usePrimaryWadLumpIndex();
 }
 
-int FS::unloadListFiles(de::FileList& list, bool nonStartup)
-{
-    int unloaded = 0;
-    // Unload in reverse load order.
-    for(int i = list.size() - 1; i >= 0; i--)
-    {
-        DFile* hndl = list[i];
-        AbstractFile* file = hndl->file();
-        if(!nonStartup || !file->hasStartup())
-        {
-            if(unloadFile(Str_Text(file->path()),
-                          true/*allow unloading game resources*/, true/*quiet please*/))
-            {
-                ++unloaded;
-            }
-        }
-    }
-    return unloaded;
-}
-
 #if _DEBUG
 static void printFileIds(FileIds const& fileIds)
 {
@@ -397,11 +377,11 @@ static void printFileList(de::FileList& list)
     for(int i = 0; i < list.size(); ++i)
     {
         de::DFile* hndl = list[i];
-        de::AbstractFile* file = hndl->file();
-        FileId fileId = FileId::fromPath(Str_Text(file->path()));
+        de::AbstractFile& file = hndl->file();
+        FileId fileId = FileId::fromPath(Str_Text(file.path()));
         LOG_MSG(" %c%d: %s - \"%s\" [handle: %p]")
-            << (file->hasStartup()? '*' : ' ') << i
-            << fileId << F_PrettyPath(Str_Text(file->path())) << (void*)&hndl;
+            << (file.hasStartup()? '*' : ' ') << i
+            << fileId << F_PrettyPath(Str_Text(file.path())) << (void*)&hndl;
     }
 }
 #endif
@@ -410,15 +390,27 @@ int FS::reset()
 {
 #if _DEBUG
     // List all open files with their identifiers.
-    VERBOSE(
-        Con_Printf("Open files at reset:\n");
+    if(verbose)
+    {
+        LOG_MSG("Open files at reset:");
         printFileList(d->openFiles);
-        Con_Printf("End\n")
-    )
+        LOG_MSG("End\n");
+    }
 #endif
 
-    // Perform non-startup file unloading...
-    int unloaded = unloadListFiles(d->loadedFiles, true/*non-startup*/);
+    // Perform non-startup file unloading (in reverse load order).
+    int unloaded = 0;
+    for(int i = d->loadedFiles.size() - 1; i >= 0; i--)
+    {
+        DFile& hndl = *(d->loadedFiles[i]);
+        AbstractFile& file = hndl.file();
+        if(file.hasStartup()) continue;
+
+        if(unloadFile(Str_Text(file.path()), true/*allow unloading game resources*/, true/*quiet please*/))
+        {
+            unloaded += 1;
+        }
+    }
 
 #if _DEBUG
     // Sanity check: look for orphaned identifiers.
@@ -690,31 +682,28 @@ void FS::closeAuxiliary()
     d->usePrimaryWadLumpIndex();
 }
 
-void FS::releaseFile(de::AbstractFile* file)
+void FS::releaseFile(de::AbstractFile& file)
 {
-    if(!file) return;
     for(int i = d->openFiles.size() - 1; i >= 0; i--)
     {
-        DFile* hndl = d->openFiles[i];
-        if(hndl->file() == file)
+        DFile& hndl = *(d->openFiles[i]);
+        if(&hndl.file() == &file)
         {
             d->openFiles.removeAt(i);
         }
     }
 }
 
-void FS::closeFile(de::DFile* hndl)
+void FS::closeFile(de::DFile& hndl)
 {
-    if(!hndl) return;
-    hndl->close();
+    hndl.close();
 }
 
-void FS::deleteFile(de::DFile* hndl)
+void FS::deleteFile(de::DFile& hndl)
 {
-    if(!hndl) return;
-    hndl->close();
-    delete hndl->file();
-    delete hndl;
+    closeFile(hndl);
+    delete &hndl.file();
+    delete &hndl;
 }
 
 /// @return @c NULL= Not found.
@@ -723,10 +712,10 @@ static WadFile* findFirstWadFile(de::FileList& list, bool custom)
     if(list.empty()) return 0;
     DENG2_FOR_EACH(i, list, de::FileList::iterator)
     {
-        de::AbstractFile* file = (*i)->file();
-        if(custom != file->hasCustom()) continue;
+        de::AbstractFile& file = (*i)->file();
+        if(custom != file.hasCustom()) continue;
 
-        WadFile* wad = dynamic_cast<WadFile*>(file);
+        WadFile* wad = dynamic_cast<WadFile*>(&file);
         if(wad) return wad;
     }
     return 0;
@@ -1243,7 +1232,7 @@ bool FS::accessFile(char const* path)
 {
     DFile* hndl = tryOpenFile(path, "rx", 0, true);
     if(!hndl) return false;
-    deleteFile(hndl);
+    deleteFile(*hndl);
     return true;
 }
 
@@ -1254,8 +1243,8 @@ uint FS::lastModified(char const* fileName)
     uint modified = 0;
     if(hndl)
     {
-        modified = hndl->file()->lastModified();
-        deleteFile(hndl);
+        modified = hndl->file().lastModified();
+        deleteFile(*hndl);
     }
     return modified;
 }
@@ -1272,24 +1261,24 @@ de::AbstractFile* FS::addFile(char const* path, size_t baseOffset)
         return 0;
     }
 
-    AbstractFile* file = hndl->file();
-    VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(file->path()))) )
+    AbstractFile& file = hndl->file();
+    VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(file.path()))) )
 
     if(d->loadingForStartup)
     {
-        file->setStartup(true);
+        file.setStartup(true);
     }
 
     DFile* loadedFilesHndl = DFileBuilder::dup(*hndl);
     d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
 
     // Publish lumps to an index?
-    LumpIndex* lumpIndex = d->lumpIndexForFileType(file->type());
+    LumpIndex* lumpIndex = d->lumpIndexForFileType(file.type());
     if(lumpIndex)
     {
-        file->publishLumpsToIndex(*lumpIndex);
+        file.publishLumpsToIndex(*lumpIndex);
     }
-    return file;
+    return &file;
 }
 
 int FS::addFiles(char const* const* paths, int num)
@@ -1749,11 +1738,11 @@ D_CMD(ListFiles)
 
         DENG2_FOR_EACH(i, foundFiles, de::FileList::const_iterator)
         {
-            de::AbstractFile* file = (*i)->file();
+            de::AbstractFile& file = (*i)->file();
             uint crc;
 
-            int fileCount = file->lumpCount();
-            switch(file->type())
+            int fileCount = file.lumpCount();
+            switch(file.type())
             {
             case FT_GENERICFILE:
                 crc = 0;
@@ -1762,19 +1751,19 @@ D_CMD(ListFiles)
                 crc = 0;
                 break;
             case FT_WADFILE:
-                crc = (!file->hasCustom()? reinterpret_cast<WadFile*>(file)->calculateCRC() : 0);
+                crc = (!file.hasCustom()? reinterpret_cast<WadFile&>(file).calculateCRC() : 0);
                 break;
             case FT_LUMPFILE:
                 crc = 0;
                 break;
             default:
-                Con_Error("CCmdListLumps: Invalid file type %i.", file->type());
+                Con_Error("CCmdListLumps: Invalid file type %i.", file.type());
                 exit(1); // Unreachable.
             }
 
-            Con_Printf("\"%s\" (%i %s%s)", F_PrettyPath(Str_Text(file->path())),
+            Con_Printf("\"%s\" (%i %s%s)", F_PrettyPath(Str_Text(file.path())),
                        fileCount, fileCount != 1 ? "files" : "file",
-                       (file->hasStartup()? ", startup" : ""));
+                       (file.hasStartup()? ", startup" : ""));
             if(0 != crc)
                 Con_Printf(" [%08x]", crc);
             Con_Printf("\n");
@@ -1906,7 +1895,8 @@ int F_RemoveFiles(char const* const* filenames, int num)
 
 void F_ReleaseFile(struct abstractfile_s* file)
 {
-    App_FileSystem()->releaseFile(reinterpret_cast<de::AbstractFile*>(file));
+    if(!file) return;
+    App_FileSystem()->releaseFile(*reinterpret_cast<de::AbstractFile*>(file));
 }
 
 struct dfile_s* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate)
@@ -1956,12 +1946,14 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
 
 void F_Close(struct dfile_s* hndl)
 {
-    App_FileSystem()->closeFile(reinterpret_cast<de::DFile*>(hndl));
+    if(!hndl) return;
+    App_FileSystem()->closeFile(*reinterpret_cast<de::DFile*>(hndl));
 }
 
 void F_Delete(struct dfile_s* hndl)
 {
-    App_FileSystem()->deleteFile(reinterpret_cast<de::DFile*>(hndl));
+    if(!hndl) return;
+    App_FileSystem()->deleteFile(*reinterpret_cast<de::DFile*>(hndl));
 }
 
 ddstring_t const* F_Path(struct abstractfile_s const* file)
@@ -2073,7 +2065,7 @@ static ddstring_t* composeFilePathString(de::FileList& files, int flags = DEFAUL
     maxLength = 0;
     DENG2_FOR_EACH(i, files, de::FileList::const_iterator)
     {
-        ddstring_t const* path = (*i)->file()->path();
+        ddstring_t const* path = (*i)->file().path();
 
         if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
@@ -2127,7 +2119,7 @@ static ddstring_t* composeFilePathString(de::FileList& files, int flags = DEFAUL
     n = 0;
     DENG2_FOR_EACH(i, files, de::FileList::const_iterator)
     {
-        ddstring_t const* path = (*i)->file()->path();
+        ddstring_t const* path = (*i)->file().path();
 
         if(flags & PTSF_QUOTED)
             Str_AppendChar(str, '"');
@@ -2196,11 +2188,11 @@ static bool findFilesPredicate(de::DFile* hndl, void* parameters)
 {
     DENG_ASSERT(parameters);
     findfilespredicate_params_t* p = (findfilespredicate_params_t*)parameters;
-    de::AbstractFile* file = hndl->file();
-    if((!VALID_FILETYPE(p->type) || p->type == file->type()) &&
-       ((p->markedCustom == file->hasCustom())))
+    de::AbstractFile& file = hndl->file();
+    if((!VALID_FILETYPE(p->type) || p->type == file.type()) &&
+       ((p->markedCustom == file.hasCustom())))
     {
-        ddstring_t const* path = file->path();
+        ddstring_t const* path = file.path();
         if(stricmp(Str_Text(path) + Str_Length(path) - 3, "lmp"))
             return true; // Include this.
     }

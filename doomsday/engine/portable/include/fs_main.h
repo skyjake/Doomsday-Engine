@@ -88,7 +88,10 @@ public:
      */
     void mapPath(char const* source, char const* destination);
 
-    /// @note Should be called after WADs have been processed.
+    /**
+     * (Re-)Initialize the path => lump mappings.
+     * @note Should be called after WADs have been processed.
+     */
     void initLumpPathMap();
 
     /**
@@ -111,9 +114,6 @@ public:
      *         @c false, if it has already been opened.
      */
     bool checkFileId(char const* path);
-
-    /// @return  Number of files in the currently active primary LumpIndex.
-    int lumpCount();
 
     /**
      * @return  @c true if a file exists at @a path which can be opened for reading.
@@ -153,36 +153,6 @@ public:
     int removeFiles(char const* const* paths, int num, bool permitRequired = false);
 
     /**
-     * Opens the given file (will be translated) for reading.
-     *
-     * @post If @a allowDuplicate = @c false a new file ID for this will have been
-     * added to the list of known file identifiers if this file hasn't yet been
-     * opened. It is the responsibility of the caller to release this identifier when done.
-     *
-     * @param path      Possibly relative or mapped path to the resource being opened.
-     * @param mode      't' = text mode (with real files, lumps are always binary)
-     *                  'b' = binary
-     *                  'f' = must be a real file in the local file system
-     * @param baseOffset  Offset from the start of the file in bytes to begin.
-     * @param allowDuplicate  @c false = open only if not already opened.
-     *
-     * @return  Opened file reference/handle else @c NULL.
-     */
-    DFile* openFile(char const* path, char const* mode, size_t baseOffset = 0,
-                    bool allowDuplicate = true);
-
-    /**
-     * Try to locate the specified lump for reading.
-     *
-     * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
-     *
-     * @return  Handle to the opened file if found.
-     */
-    DFile* openLump(lumpnum_t absoluteLumpNum);
-
-    bool isValidLumpNum(lumpnum_t absoluteLumpNum);
-
-    /**
      * Find a lump in the Zip LumpIndex.
      *
      * @param path      Path to search for. Relative paths are made absolute if necessary.
@@ -190,6 +160,11 @@ public:
      * @return  File system object representing the file which contains the found lump else @c NULL.
      */
     AbstractFile* findLumpFile(char const* path, int* lumpIdx = 0);
+
+    /// @return  Number of lumps in the currently active LumpIndex.
+    int lumpCount();
+
+    bool isValidLumpNum(lumpnum_t absoluteLumpNum);
 
     lumpnum_t lumpNumForName(char const* name, bool silent = true);
 
@@ -244,14 +219,42 @@ public:
         return 0;
     }
 
+    /**
+     * Opens the given file (will be translated) for reading.
+     *
+     * @post If @a allowDuplicate = @c false a new file ID for this will have been
+     * added to the list of known file identifiers if this file hasn't yet been
+     * opened. It is the responsibility of the caller to release this identifier when done.
+     *
+     * @param path      Possibly relative or mapped path to the resource being opened.
+     * @param mode      't' = text mode (with real files, lumps are always binary)
+     *                  'b' = binary
+     *                  'f' = must be a real file in the local file system
+     * @param baseOffset  Offset from the start of the file in bytes to begin.
+     * @param allowDuplicate  @c false = open only if not already opened.
+     *
+     * @return  Opened file reference/handle else @c NULL.
+     */
+    DFile* openFile(char const* path, char const* mode, size_t baseOffset = 0,
+                    bool allowDuplicate = true);
+
+    /**
+     * Try to locate the specified lump for reading.
+     *
+     * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
+     *
+     * @return  Handle to the opened file if found.
+     */
+    DFile* openLump(lumpnum_t absoluteLumpNum);
+
     /// Clear all references to this file.
-    void releaseFile(AbstractFile* file);
+    void releaseFile(AbstractFile& file);
 
     /// Close this file handle.
-    void closeFile(DFile* hndl);
+    void closeFile(DFile& hndl);
 
     /// Completely destroy this file; close if open, clear references and any acquired identifiers.
-    void deleteFile(DFile* hndl);
+    void deleteFile(DFile& hndl);
 
     /**
      * Parm is passed on to the callback, which is called for each file
@@ -261,20 +264,6 @@ public:
      * @param flags  @see searchPathFlags
      */
     int allResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters = 0);
-
-    /**
-     * Calculate a CRC for the loaded file list.
-     */
-    uint loadedFilesCRC();
-
-    /**
-     * Try to open the specified WAD archive into the auxiliary lump cache.
-     *
-     * @return  Base index for lumps in this archive.
-     */
-    lumpnum_t openAuxiliary(char const* fileName, size_t baseOffset = 0);
-
-    void closeAuxiliary();
 
     /**
      * Finds all files.
@@ -309,15 +298,35 @@ public:
      */
     void printIndex();
 
+    /**
+     * Calculate a CRC for the loaded file list.
+     */
+    uint loadedFilesCRC();
+
+    /**
+     * Try to open the specified WAD archive into the auxiliary lump index.
+     *
+     * @return  Base index for lumps in this archive.
+     */
+    lumpnum_t openAuxiliary(char const* fileName, size_t baseOffset = 0);
+
+    /**
+     * Close the auxiliary lump index if open.
+     */
+    void closeAuxiliary();
+
 private:
     struct Instance;
     Instance* d;
 
-    void unlinkFile(AbstractFile* file);
+    /**
+     * Removes a file from any lump indexes.
+     *
+     * @param file  File to remove from the index.
+     */
+    void deindex(AbstractFile& file);
 
     bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
-
-    int unloadListFiles(FileList& list, bool nonStartup);
 
     FILE* findRealFile(char const* path, char const* mymode, ddstring_t** foundPath);
 

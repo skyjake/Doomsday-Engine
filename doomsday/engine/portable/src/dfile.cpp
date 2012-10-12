@@ -172,7 +172,7 @@ DFile* DFileBuilder::dup(de::DFile const& hndl)
     de::DFile* clone = new de::DFile();
     clone->d->flags.open = true;
     clone->d->flags.reference = true;
-    clone->d->file = hndl.file();
+    clone->d->file = &hndl.file();
     return clone;
 }
 
@@ -254,16 +254,16 @@ DFile& DFile::setList(struct filelist_s* list)
     return *this;
 }
 
-AbstractFile* DFile::file()
+AbstractFile& DFile::file()
 {
     errorIfNotValid(*this, "DFile::file");
-    return d->file;
+    return *d->file;
 }
 
-AbstractFile* DFile::file() const
+AbstractFile& DFile::file() const
 {
     errorIfNotValid(*this, "DFile::file const");
-    return d->file;
+    return *d->file;
 }
 
 size_t DFile::baseOffset() const
@@ -480,13 +480,13 @@ void DFile_Rewind(struct dfile_s* hndl)
 struct abstractfile_s* DFile_File(struct dfile_s* hndl)
 {
     SELF(hndl);
-    return reinterpret_cast<struct abstractfile_s*>(self->file());
+    return reinterpret_cast<struct abstractfile_s*>(&self->file());
 }
 
 struct abstractfile_s* DFile_File_const(struct dfile_s const* hndl)
 {
     SELF_CONST(hndl);
-    return reinterpret_cast<struct abstractfile_s*>(self->file());
+    return reinterpret_cast<struct abstractfile_s*>(&self->file());
 }
 
 struct filelist_s* DFile_List(struct dfile_s* hndl)
