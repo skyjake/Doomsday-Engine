@@ -760,6 +760,23 @@ int FS::findAll(bool (*predicate)(de::DFile* hndl, void* parameters), void* para
     return numFound;
 }
 
+struct PathListItem
+{
+    String path;
+    int attrib;
+
+    PathListItem(QString const& _path, int _attrib = 0)
+        : path(_path), attrib(_attrib)
+    {}
+
+    bool operator < (PathListItem const& other) const
+    {
+        return path.compareWithoutCase(other.path) < 0;
+    }
+};
+
+typedef QList<PathListItem> PathList;
+
 int FS::allResourcePaths(char const* rawSearchPattern, int flags,
     int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters),
     void* parameters)
@@ -843,20 +860,6 @@ int FS::allResourcePaths(char const* rawSearchPattern, int flags,
 
     if(!Str_IsEmpty(searchDirectory))
     {
-        struct PathListItem
-        {
-            String path;
-            int attrib;
-            PathListItem(QString const& _path, int _attrib = 0)
-                : path(_path), attrib(_attrib)
-            {}
-            bool operator < (PathListItem const& other) const
-            {
-                return path.compareWithoutCase(other.path) < 0;
-            }
-        };
-        typedef QList<PathListItem> PathList;
-
         PathList foundPaths;
         AutoStr* wildPath = AutoStr_NewStd();
         finddata_t fd;
