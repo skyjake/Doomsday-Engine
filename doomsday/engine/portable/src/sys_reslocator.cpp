@@ -211,26 +211,24 @@ static void resetAllNamespaces(void)
     }
 }
 
-static void addResourceToNamespace(ResourceNamespaceInfo* rnInfo, de::PathDirectoryNode* node)
+static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathDirectoryNode& node)
 {
-    DENG_ASSERT(rnInfo && node);
-
-    AutoStr* name = rnInfo->composeName(node->pathFragment());
-    if(ResourceNamespace_Add(rnInfo->rnamespace, name, reinterpret_cast<struct pathdirectorynode_s*>(node), NULL))
+    AutoStr* name = rnInfo.composeName(node.pathFragment());
+    if(ResourceNamespace_Add(rnInfo.rnamespace, name, reinterpret_cast<struct pathdirectorynode_s*>(&node), NULL))
     {
         // We will need to rebuild this namespace (if we aren't already doing so,
         // in the case of auto-populated namespaces built from FileDirectorys).
-        rnInfo->flags |= RNF_IS_DIRTY;
+        rnInfo.flags |= RNF_IS_DIRTY;
     }
 }
 
-static int addFileResourceWorker(de::PathDirectoryNode* node, void* parameters)
+static int addFileResourceWorker(de::PathDirectoryNode& node, void* parameters)
 {
     ResourceNamespaceInfo* rnInfo = (ResourceNamespaceInfo*) parameters;
     // We are only interested in leafs (i.e., files and not directories).
-    if(node->type() == PT_LEAF)
+    if(node.type() == PT_LEAF)
     {
-        addResourceToNamespace(rnInfo, node);
+        addResourceToNamespace(*rnInfo, node);
     }
     return 0; // Continue adding.
 }

@@ -48,7 +48,7 @@ public:
      *                  paths will be added to the directory (attempts to add
      *                  relative paths will fail silently).
      */
-    explicit FileDirectory(const char* basePath=NULL);
+    explicit FileDirectory(char const* basePath = 0);
     ~FileDirectory();
 
     /**
@@ -68,8 +68,8 @@ public:
      *
      * @return  @c true iff successful.
      */
-    bool find(PathDirectoryNodeType type, const char* searchPath, char searchDelimiter = '/',
-              ddstring_t* foundPath = NULL, char foundDelimiter = '/');
+    bool find(PathDirectoryNodeType type, char const* searchPath, char searchDelimiter = '/',
+              ddstring_t* foundPath = 0, char foundDelimiter = '/');
 
     /**
      * Add a new set of paths. Duplicates are automatically pruned.
@@ -81,7 +81,7 @@ public:
      * @param parameters    Passed to the callback.
      */
     void addPaths(int flags, Uri const* const* searchPaths, uint searchPathsCount,
-                  int (*callback) (PathDirectoryNode* node, void* parameters) = 0,
+                  int (*callback) (PathDirectoryNode& node, void* parameters) = 0,
                   void* parameters = 0);
 
     /**
@@ -93,7 +93,7 @@ public:
      * @param parameters    Passed to the callback.
      */
     void addPathList(int flags, char const* pathList,
-                     int (*callback) (PathDirectoryNode*, void*) = 0, void* parameters = 0);
+                     int (*callback) (PathDirectoryNode& node, void* parameters) = 0, void* parameters = 0);
 
     /**
      * Collate all paths in the directory into a list.
@@ -108,17 +108,17 @@ public:
     ddstring_t* collectPaths(size_t* count, int flags, char delimiter='/');
 
 #if _DEBUG
-    static void debugPrint(FileDirectory* inst);
-    static void debugPrintHashDistribution(FileDirectory* inst);
+    static void debugPrint(FileDirectory& inst);
+    static void debugPrintHashDistribution(FileDirectory& inst);
 #endif
 
 private:
     void clearNodeInfo();
 
-    PathDirectoryNode* addPathNodes(const ddstring_t* rawPath);
+    PathDirectoryNode* addPathNodes(ddstring_t const* rawPath);
 
-    int addChildNodes(PathDirectoryNode* node, int flags,
-                      int (*callback) (PathDirectoryNode* node, void* parameters),
+    int addChildNodes(PathDirectoryNode& node, int flags,
+                      int (*callback) (PathDirectoryNode& node, void* parameters),
                       void* parameters);
 
 public: /// @todo Should be private.
@@ -131,10 +131,10 @@ public: /// @todo Should be private.
      *
      * @return  Non-zero if the current iteration should stop else @c 0.
      */
-    int addPathNodesAndMaybeDescendBranch(bool descendBranches, const ddstring_t* filePath,
+    int addPathNodesAndMaybeDescendBranch(bool descendBranches, ddstring_t const* filePath,
                                           PathDirectoryNodeType nodeType,
                                           int flags,
-                                          int (*callback) (PathDirectoryNode* node, void* parameters),
+                                          int (*callback) (PathDirectoryNode& node, void* parameters),
                                           void* parameters);
 
 private:

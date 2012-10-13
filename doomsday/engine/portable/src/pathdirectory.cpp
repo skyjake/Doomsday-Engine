@@ -68,11 +68,11 @@ typedef struct pathconstructorparams_s {
  * path (when descending), then allocates memory for the string, and finally
  * copies each fragment with the delimiters (on the way out).
  */
-static void pathConstructor(pathconstructorparams_t* parm, const de::PathDirectoryNode* trav)
+static void pathConstructor(pathconstructorparams_t* parm, de::PathDirectoryNode const& trav)
 {
     DENG2_ASSERT(parm);
 
-    const Str* fragment = trav->pathFragment();
+    Str const* fragment = trav.pathFragment();
 
 #ifdef LIBDENG_STACK_MONITOR
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
@@ -80,7 +80,7 @@ static void pathConstructor(pathconstructorparams_t* parm, const de::PathDirecto
 
     parm->length += Str_Length(fragment);
 
-    if(trav->parent())
+    if(trav.parent())
     {
         if(parm->delimiter)
         {
@@ -89,7 +89,7 @@ static void pathConstructor(pathconstructorparams_t* parm, const de::PathDirecto
         }
 
         // Descend to parent level.
-        pathConstructor(parm, trav->parent());
+        pathConstructor(parm, *trav.parent());
 
         // Append the separator.
         if(parm->delimiter)
@@ -109,20 +109,21 @@ static void pathConstructor(pathconstructorparams_t* parm, const de::PathDirecto
 struct de::PathDirectory::Instance
 {
     de::PathDirectory* self;
+
     /// Path name fragment intern pool.
-    StringPool* stringPool;
+    StringPool* fragments;
 
     int flags; /// @see pathDirectoryFlags
 
     /// Path node hashes.
-    de::PathDirectory::PathNodes* pathLeafHash;
-    de::PathDirectory::PathNodes* pathBranchHash;
+    de::PathDirectory::Nodes leafHash;
+    de::PathDirectory::Nodes branchHash;
 
     /// Total number of unique paths in the directory.
     uint size;
 
     Instance(de::PathDirectory* d, int flags_)
-        : self(d), stringPool(0), flags(flags_), pathLeafHash(0), pathBranchHash(0), size(0)
+        : self(d), fragments(0), flags(flags_), leafHash(), branchHash(), size(0)
     {
 #if 0
         // We'll block-allocate nodes and maintain a list of unused ones
@@ -143,15 +144,6 @@ struct de::PathDirectory::Instance
 
     ~Instance()
     {
-        if(pathLeafHash)
-        {
-            delete pathLeafHash;
-        }
-        if(pathBranchHash)
-        {
-            delete pathBranchHash;
-        }
-
 #if 0
         if(--pathDirectoryInstanceCount == 0)
         {
@@ -165,44 +157,41 @@ struct de::PathDirectory::Instance
 #endif
     }
 
-    void clearInternPool()
+    void clearFragments()
     {
-        if(stringPool)
+        if(fragments)
         {
-            StringPool_Delete(stringPool);
-            stringPool = NULL;
+            StringPool_Delete(fragments);
+            fragments = NULL;
         }
     }
 
     de::PathDirectoryNode* findNode(de::PathDirectoryNode* parent,
         PathDirectoryNodeType nodeType, StringPoolId internId)
     {
-        de::PathDirectory::PathNodes* ph = (nodeType == PT_LEAF? pathLeafHash : pathBranchHash);
-        if(ph)
+        de::PathDirectory::Nodes& ph = (nodeType == PT_LEAF? leafHash : branchHash);
+        ushort hash = StringPool_UserValue(fragments, internId);
+        de::PathDirectory::Nodes::const_iterator i = ph.find(hash);
+        while(i != ph.end() && i.key() == hash)
         {
-            ushort hash = StringPool_UserValue(stringPool, internId);
-            de::PathDirectory::PathNodes::const_iterator i = ph->find(hash);
-            while(i != ph->end() && i.key() == hash)
+            if(parent == (*i)->parent() && internId == (*i)->internId())
             {
-                if(parent == (*i)->parent() && internId == (*i)->internId())
-                {
-                    return *i;
-                }
-                ++i;
+                return *i;
             }
+            ++i;
         }
         return 0; // Not found.
     }
 
-    StringPoolId internNameAndUpdateIdHashMap(const ddstring_t* name, ushort hash)
+    StringPoolId internNameAndUpdateIdHashMap(ddstring_t const* name, ushort hash)
     {
-        if(!stringPool)
+        if(!fragments)
         {
-            stringPool = StringPool_New();
+            fragments = StringPool_New();
         }
 
-        StringPoolId internId = StringPool_Intern(stringPool, name);
-        StringPool_SetUserValue(stringPool, internId, hash);
+        StringPoolId internId = StringPool_Intern(fragments, name);
+        StringPool_SetUserValue(fragments, internId, hash);
         return internId;
     }
 
@@ -211,16 +200,16 @@ struct de::PathDirectory::Instance
      * which has the specified parent node.
      */
     de::PathDirectoryNode* direcNode(de::PathDirectoryNode* parent,
-        PathDirectoryNodeType nodeType, const ddstring_t* name, char delimiter,
+        PathDirectoryNodeType nodeType, ddstring_t const* name, char delimiter,
         void* userData)
     {
         DENG2_ASSERT(name);
 
         // Have we already encountered this?
         StringPoolId internId = 0;
-        if(stringPool)
+        if(fragments)
         {
-            internId = StringPool_IsInterned(stringPool, name);
+            internId = StringPool_IsInterned(fragments, name);
             if(internId)
             {
                 // The name is known. Perhaps we have.
@@ -257,21 +246,11 @@ struct de::PathDirectory::Instance
         // Insert the new node into the path hash.
         if(nodeType == PT_LEAF)
         {
-            // Do we need to init the path hash?
-            if(!pathLeafHash)
-            {
-                pathLeafHash = new PathNodes;
-            }
-            pathLeafHash->insert(hash, node);
+            leafHash.insert(hash, node);
         }
         else // PT_BRANCH
         {
-            // Do we need to init the path hash?
-            if(!pathBranchHash)
-            {
-                pathBranchHash = new PathNodes;
-            }
-            pathBranchHash->insert(hash, node);
+            branchHash.insert(hash, node);
         }
 
         return node;
@@ -282,7 +261,7 @@ struct de::PathDirectory::Instance
      *
      * @return  The node that identifies the given path.
      */
-    de::PathDirectoryNode* buildDirecNodes(const char* path, char delimiter)
+    de::PathDirectoryNode* buildDirecNodes(char const* path, char delimiter)
     {
         DENG2_ASSERT(path);
 
@@ -290,7 +269,7 @@ struct de::PathDirectory::Instance
 
         // Continue splitting as long as there are parts.
         AutoStr* part = AutoStr_NewStd();
-        const char* p = path;
+        char const* p = path;
         while((p = Str_CopyDelim2(part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
         {
             node = direcNode(parent, PT_BRANCH, part, delimiter, NULL);
@@ -334,12 +313,12 @@ struct de::PathDirectory::Instance
      * or when the directory itself is rebuilt (in which case the nodes themselves
      * will be free'd). Note that any caching mechanism should not counteract one
      * of the primary goals of this class, i.e., optimal memory usage for the whole
-     * directory. Caching constructed paths for every root node in the directory
+     * directory. Caching constructed paths for every leaf node in the directory
      * would completely negate the benefits of the design of this class.
      *
      * Perhaps a fixed size MRU cache? -ds
      */
-    ddstring_t* constructPath(const de::PathDirectoryNode* node,
+    ddstring_t* constructPath(de::PathDirectoryNode const& node,
                               ddstring_t* constructedPath, char delimiter)
     {
         pathconstructorparams_t parm;
@@ -348,14 +327,14 @@ struct de::PathDirectory::Instance
         stackStart = &parm;
 #endif
 
-        DENG2_ASSERT(node && constructedPath);
+        DENG2_ASSERT(constructedPath);
 
         parm.dest = constructedPath;
         parm.length = 0;
         parm.delimiter = delimiter;
 
         // Include a terminating path delimiter for branches.
-        if(delimiter && node->type() == PT_BRANCH)
+        if(delimiter && node.type() == PT_BRANCH)
             parm.length += 1; // A single character.
 
         // Recursively construct the path from fragments and delimiters.
@@ -363,7 +342,7 @@ struct de::PathDirectory::Instance
         pathConstructor(&parm, node);
 
         // Terminating delimiter for branches.
-        if(delimiter && node->type() == PT_BRANCH)
+        if(delimiter && node.type() == PT_BRANCH)
             Str_AppendCharWithoutAllocs(constructedPath, delimiter);
 
         DENG2_ASSERT(Str_Size(constructedPath) == parm.length);
@@ -427,10 +406,10 @@ struct de::PathDirectory::Instance
 #endif
     }
 
-    static void collectPathsInHash(de::PathDirectory::PathNodes& ph, char delimiter,
+    static void collectPathsInHash(de::PathDirectory::Nodes& ph, char delimiter,
         ddstring_t** pathListAdr)
     {
-        DENG2_FOR_EACH(i, ph, de::PathDirectory::PathNodes::const_iterator)
+        DENG2_FOR_EACH(i, ph, de::PathDirectory::Nodes::const_iterator)
         {
             Str_Init(*pathListAdr);
             (*i)->composePath((*pathListAdr), NULL, delimiter);
@@ -438,9 +417,9 @@ struct de::PathDirectory::Instance
         }
     }
 
-    static void clearPathHash(de::PathDirectory::PathNodes& ph)
+    static void clearPathHash(de::PathDirectory::Nodes& ph)
     {
-        DENG2_FOR_EACH(i, ph, de::PathDirectory::PathNodes::iterator)
+        DENG2_FOR_EACH(i, ph, de::PathDirectory::Nodes::iterator)
         {
 #if _DEBUG
             if((*i)->userData())
@@ -482,7 +461,7 @@ ushort de::PathDirectory::hashPathFragment(const char* fragment, size_t len, cha
 ushort de::PathDirectory::hashForInternId(StringPoolId internId)
 {
     DENG2_ASSERT(internId > 0);
-    return StringPool_UserValue(d->stringPool, internId);
+    return StringPool_UserValue(d->fragments, internId);
 }
 
 de::PathDirectoryNode*
@@ -520,15 +499,9 @@ uint de::PathDirectory::size() const
 
 void de::PathDirectory::clear()
 {
-    if(d->pathLeafHash)
-    {
-        d->clearPathHash(*d->pathLeafHash);
-    }
-    if(d->pathBranchHash)
-    {
-        d->clearPathHash(*d->pathBranchHash);
-    }
-    d->clearInternPool();
+    d->clearPathHash(d->leafHash);
+    d->clearPathHash(d->branchHash);
+    d->clearFragments();
     d->size = 0;
 }
 
@@ -542,11 +515,11 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
         PathMap_Initialize2(&mappedSearchPath, PathDirectory_HashPathFragment2, searchPath, delimiter);
 
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
-        if(!(flags & PCF_NO_LEAF) && d->pathLeafHash)
+        if(!(flags & PCF_NO_LEAF))
         {
-            de::PathDirectory::PathNodes* nodes = d->pathLeafHash;
-            de::PathDirectory::PathNodes::iterator i = nodes->find(hash);
-            for(; i != nodes->end() && i.key() == hash; ++i)
+            de::PathDirectory::Nodes& nodes = d->leafHash;
+            de::PathDirectory::Nodes::iterator i = nodes.find(hash);
+            for(; i != nodes.end() && i.key() == hash; ++i)
             {
                 if((*i)->matchDirectory(flags, &mappedSearchPath))
                 {
@@ -558,11 +531,11 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
         }
 
         if(!foundNode)
-        if(!(flags & PCF_NO_BRANCH) && d->pathBranchHash)
+        if(!(flags & PCF_NO_BRANCH))
         {
-            de::PathDirectory::PathNodes* nodes = d->pathBranchHash;
-            de::PathDirectory::PathNodes::iterator i = nodes->find(hash);
-            for(; i != nodes->end() && i.key() == hash; ++i)
+            de::PathDirectory::Nodes& nodes = d->branchHash;
+            de::PathDirectory::Nodes::iterator i = nodes.find(hash);
+            for(; i != nodes.end() && i.key() == hash; ++i)
             {
                 if((*i)->matchDirectory(flags, &mappedSearchPath))
                 {
@@ -578,13 +551,12 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
     return foundNode;
 }
 
-const ddstring_t* de::PathDirectory::pathFragment(const de::PathDirectoryNode* node)
+ddstring_t const* de::PathDirectory::pathFragment(de::PathDirectoryNode const& node)
 {
-    DENG2_ASSERT(node);
-    return StringPool_String(d->stringPool, node->internId());
+    return StringPool_String(d->fragments, node.internId());
 }
 
-ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,
+ddstring_t* de::PathDirectory::composePath(de::PathDirectoryNode const& node,
     ddstring_t* foundPath, int* length, char delimiter)
 {
     if(!foundPath)
@@ -595,9 +567,9 @@ ddstring_t* de::PathDirectory::composePath(const de::PathDirectoryNode* node,
     return d->constructPath(node, foundPath, delimiter);
 }
 
-const de::PathDirectory::PathNodes* de::PathDirectory::pathNodes(PathDirectoryNodeType type) const
+de::PathDirectory::Nodes const& de::PathDirectory::nodes(PathDirectoryNodeType type) const
 {
-    return (type == PT_LEAF? d->pathLeafHash : d->pathBranchHash);
+    return (type == PT_LEAF? d->leafHash : d->branchHash);
 }
 
 ddstring_t* de::PathDirectory::collectPaths(size_t* retCount, int flags, char delimiter)
@@ -606,9 +578,9 @@ ddstring_t* de::PathDirectory::collectPaths(size_t* retCount, int flags, char de
     size_t count = 0;
 
     if(!(flags & PCF_NO_LEAF))
-        count += (d->pathLeafHash  ? d->pathLeafHash->size()   : 0);
+        count += d->leafHash.count();
     if(!(flags & PCF_NO_BRANCH))
-        count += (d->pathBranchHash? d->pathBranchHash->size() : 0);
+        count += d->branchHash.count();
 
     if(count)
     {
@@ -622,11 +594,11 @@ ddstring_t* de::PathDirectory::collectPaths(size_t* retCount, int flags, char de
         }
 
         ddstring_t* pathPtr = paths;
-        if(!(flags & PCF_NO_BRANCH) && d->pathBranchHash)
-            Instance::collectPathsInHash(*d->pathBranchHash, delimiter, &pathPtr);
+        if(!(flags & PCF_NO_BRANCH))
+            Instance::collectPathsInHash(d->branchHash, delimiter, &pathPtr);
 
-        if(!(flags & PCF_NO_LEAF) && d->pathLeafHash)
-            Instance::collectPathsInHash(*d->pathLeafHash, delimiter, &pathPtr);
+        if(!(flags & PCF_NO_LEAF))
+            Instance::collectPathsInHash(d->leafHash, delimiter, &pathPtr);
     }
 
     if(retCount) *retCount = count;
@@ -639,14 +611,12 @@ static int comparePaths(const void* a, const void* b)
     return qstricmp(Str_Text((Str*)a), Str_Text((Str*)b));
 }
 
-void de::PathDirectory::debugPrint(de::PathDirectory* pd, char delimiter)
+void de::PathDirectory::debugPrint(de::PathDirectory& pd, char delimiter)
 {
-    if(!pd) return;
-
     LOG_AS("PathDirectory");
-    LOG_INFO("Directory [%p]:") << (void*)pd;
+    LOG_INFO("Directory [%p]:") << (void*)&pd;
     size_t numLeafs;
-    ddstring_t* pathList = pd->collectPaths(&numLeafs, PT_LEAF, delimiter);
+    ddstring_t* pathList = pd.collectPaths(&numLeafs, PT_LEAF, delimiter);
     if(pathList)
     {
         size_t n = 0;
@@ -952,10 +922,8 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
 }
 #endif
 
-void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory* pd)
+void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory& /*pd*/)
 {
-    if(!pd) return;
-
 #if 0
     size_t nodeCountSum[PATHDIRECTORYNODE_TYPE_COUNT],
            nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketHeight = 0,
@@ -1066,7 +1034,7 @@ void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory* pd)
     (inst) != 0? reinterpret_cast<de::PathDirectory*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<const de::PathDirectory*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::PathDirectory const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
@@ -1074,7 +1042,7 @@ void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory* pd)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    const de::PathDirectory* self = TOINTERNAL_CONST(inst)
+    de::PathDirectory const* self = TOINTERNAL_CONST(inst)
 
 PathDirectory* PathDirectory_NewWithFlags(int flags)
 {
@@ -1107,19 +1075,19 @@ void PathDirectory_Clear(PathDirectory* pd)
     self->clear();
 }
 
-PathDirectoryNode* PathDirectory_Insert3(PathDirectory* pd, const char* path, char delimiter, void* userData)
+PathDirectoryNode* PathDirectory_Insert3(PathDirectory* pd, char const* path, char delimiter, void* userData)
 {
     SELF(pd);
     return reinterpret_cast<PathDirectoryNode*>(self->insert(path, delimiter, userData));
 }
 
-PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter)
+PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, char const* path, char delimiter)
 {
     SELF(pd);
     return reinterpret_cast<PathDirectoryNode*>(self->insert(path, delimiter));
 }
 
-PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path)
+PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, char const* path)
 {
     SELF(pd);
     return reinterpret_cast<PathDirectoryNode*>(self->insert(path));
@@ -1140,44 +1108,41 @@ static int iteratePathsInHash(PathDirectory* pd,
                             .arg(hash).arg(PATHDIRECTORY_PATHHASH_SIZE-1));
     }
 
-    const de::PathDirectory::PathNodes* nodes = self->pathNodes(type);
-    if(nodes)
-    {
-        de::PathDirectoryNode* parent = reinterpret_cast<de::PathDirectoryNode*>(parent_);
+    de::PathDirectory::Nodes const& nodes = self->nodes(type);
+    de::PathDirectoryNode* parent = reinterpret_cast<de::PathDirectoryNode*>(parent_);
 
-        // Are we iterating nodes with a known hash?
-        if(hash != PATHDIRECTORY_NOHASH)
+    // Are we iterating nodes with a known hash?
+    if(hash != PATHDIRECTORY_NOHASH)
+    {
+        // Yes.
+        de::PathDirectory::Nodes::const_iterator i = nodes.constFind(hash);
+        for(; i != nodes.end() && i.key() == hash; ++i)
         {
-            // Yes.
-            de::PathDirectory::PathNodes::const_iterator i = nodes->constFind(hash);
-            for(; i != nodes->end() && i.key() == hash; ++i)
+            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
-                if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
-                {
-                    result = callback(reinterpret_cast<PathDirectoryNode*>(*i), parameters);
-                    if(result) break;
-                }
+                result = callback(reinterpret_cast<PathDirectoryNode*>(*i), parameters);
+                if(result) break;
             }
         }
-        else
+    }
+    else
+    {
+        // No - iterate all nodes.
+        DENG2_FOR_EACH(i, nodes, de::PathDirectory::Nodes::const_iterator)
         {
-            // No - iterate all nodes.
-            DENG2_FOR_EACH(i, *nodes, de::PathDirectory::PathNodes::const_iterator)
+            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
-                if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
-                {
-                    result = callback(reinterpret_cast<PathDirectoryNode*>(*i), parameters);
-                    if(result) break;
-                }
+                result = callback(reinterpret_cast<PathDirectoryNode*>(*i), parameters);
+                if(result) break;
             }
         }
     }
     return result;
 }
 
-static int iteratePathsInHash_Const(const PathDirectory* pd,
-    ushort hash, PathDirectoryNodeType type, int flags, const PathDirectoryNode* parent_,
-    int (*callback) (const PathDirectoryNode* node, void* parameters), void* parameters)
+static int iteratePathsInHash_Const(PathDirectory const* pd,
+    ushort hash, PathDirectoryNodeType type, int flags, PathDirectoryNode const* parent_,
+    int (*callback) (PathDirectoryNode const* node, void* parameters), void* parameters)
 {
     int result = 0;
 
@@ -1190,35 +1155,32 @@ static int iteratePathsInHash_Const(const PathDirectory* pd,
                             .arg(hash).arg(PATHDIRECTORY_PATHHASH_SIZE-1));
     }
 
-    const de::PathDirectory::PathNodes* nodes = self->pathNodes(type);
-    if(nodes)
-    {
-        const de::PathDirectoryNode* parent = reinterpret_cast<const de::PathDirectoryNode*>(parent_);
+    de::PathDirectory::Nodes const& nodes = self->nodes(type);
+    de::PathDirectoryNode const* parent = reinterpret_cast<de::PathDirectoryNode const*>(parent_);
 
-        // Are we iterating nodes with a known hash?
-        if(hash != PATHDIRECTORY_NOHASH)
+    // Are we iterating nodes with a known hash?
+    if(hash != PATHDIRECTORY_NOHASH)
+    {
+        // Yes.
+        de::PathDirectory::Nodes::const_iterator i = nodes.find(hash);
+        for(; i != nodes.end() && i.key() == hash; ++i)
         {
-            // Yes.
-            de::PathDirectory::PathNodes::const_iterator i = nodes->find(hash);
-            for(; i != nodes->end() && i.key() == hash; ++i)
+            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
-                if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
-                {
-                    result = callback(reinterpret_cast<const PathDirectoryNode*>(*i), parameters);
-                    if(result) break;
-                }
+                result = callback(reinterpret_cast<PathDirectoryNode const*>(*i), parameters);
+                if(result) break;
             }
         }
-        else
+    }
+    else
+    {
+        // No - iterate all nodes.
+        DENG2_FOR_EACH(i, nodes, de::PathDirectory::Nodes::const_iterator)
         {
-            // No - iterate all nodes.
-            DENG2_FOR_EACH(i, *nodes, de::PathDirectory::PathNodes::const_iterator)
+            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
-                if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
-                {
-                    result = callback(reinterpret_cast<const PathDirectoryNode*>(*i), parameters);
-                    if(result) break;
-                }
+                result = callback(reinterpret_cast<PathDirectoryNode const*>(*i), parameters);
+                if(result) break;
             }
         }
     }
@@ -1248,7 +1210,7 @@ int PathDirectory_Iterate(PathDirectory* pd, int flags, PathDirectoryNode* paren
     return PathDirectory_Iterate2(pd, flags, parent, hash, callback, NULL);
 }
 
-int PathDirectory_Iterate2_Const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent,
+int PathDirectory_Iterate2_Const(PathDirectory const* pd, int flags, PathDirectoryNode const* parent,
     ushort hash, pathdirectory_iterateconstcallback_t callback, void* parameters)
 {
     int result = 0;
@@ -1265,30 +1227,33 @@ int PathDirectory_Iterate2_Const(const PathDirectory* pd, int flags, const PathD
     return result;
 }
 
-int PathDirectory_Iterate_Const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent,
+int PathDirectory_Iterate_Const(const PathDirectory* pd, int flags, PathDirectoryNode const* parent,
     ushort hash, pathdirectory_iterateconstcallback_t callback)
 {
     return PathDirectory_Iterate2_Const(pd, flags, parent, hash, callback, NULL);
 }
 
-ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, const PathDirectoryNode* node,
+ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, PathDirectoryNode const* node,
     ddstring_t* path, int* length, char delimiter)
 {
+    DENG_ASSERT(node);
     SELF(pd);
-    return self->composePath(reinterpret_cast<const de::PathDirectoryNode*>(node), path, length, delimiter);
+    return self->composePath(*reinterpret_cast<de::PathDirectoryNode const*>(node), path, length, delimiter);
 }
 
-ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node,
+ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, PathDirectoryNode const* node,
     ddstring_t* path, int* length)
 {
+    DENG_ASSERT(node);
     SELF(pd);
-    return self->composePath(reinterpret_cast<const de::PathDirectoryNode*>(node), path, length);
+    return self->composePath(*reinterpret_cast<de::PathDirectoryNode const*>(node), path, length);
 }
 
-const ddstring_t* PathDirectory_PathFragment(PathDirectory* pd, const PathDirectoryNode* node)
+ddstring_t const* PathDirectory_PathFragment(PathDirectory* pd, PathDirectoryNode const* node)
 {
+    DENG_ASSERT(node);
     SELF(pd);
-    return self->pathFragment(reinterpret_cast<const de::PathDirectoryNode*>(node));
+    return self->pathFragment(*reinterpret_cast<de::PathDirectoryNode const*>(node));
 }
 
 ddstring_t* PathDirectory_CollectPaths2(PathDirectory* pd, size_t* count, int flags, char delimiter)
@@ -1390,12 +1355,12 @@ ushort PathDirectory_HashPathFragment(const char* path, size_t len)
 void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter)
 {
     if(!pd) return;
-    de::PathDirectory::debugPrint(TOINTERNAL(pd), delimiter);
+    de::PathDirectory::debugPrint(*(TOINTERNAL(pd)), delimiter);
 }
 
 void PathDirectory_DebugPrintHashDistribution(PathDirectory* pd)
 {
     if(!pd) return;
-    de::PathDirectory::debugPrintHashDistribution(TOINTERNAL(pd));
+    de::PathDirectory::debugPrintHashDistribution(*(TOINTERNAL(pd)));
 }
 #endif

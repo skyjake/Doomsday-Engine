@@ -450,13 +450,9 @@ void Textures_Shutdown(void)
 
         if(tn->directory)
         {
-            const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
-            if(nodes)
+            DENG2_FOR_EACH(nodeIt, tn->directory->leafNodes(), TextureDirectory::Nodes::const_iterator)
             {
-                DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
-                {
-                    destroyRecord(reinterpret_cast<TextureDirectoryNode*>(*nodeIt));
-                }
+                destroyRecord(reinterpret_cast<TextureDirectoryNode*>(*nodeIt));
             }
             delete tn->directory; tn->directory = NULL;
         }
@@ -621,14 +617,10 @@ void Textures_ClearNamespace(texturenamespaceid_t namespaceId)
         texturenamespaceid_t iter = texturenamespaceid_t(i);
         TextureNamespace* tn = &namespaces[iter - TEXTURENAMESPACE_FIRST];
 
-        const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
-        if(nodes)
+        DENG2_FOR_EACH(nodeIt, tn->directory->leafNodes(), TextureDirectory::Nodes::const_iterator)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
-            {
-                destroyBoundTexture(*nodeIt);
-                destroyRecord(*nodeIt);
-            }
+            destroyBoundTexture(*nodeIt);
+            destroyRecord(*nodeIt);
         }
         tn->directory->clear();
         tn->uniqueIdMapDirty = true;
@@ -674,11 +666,9 @@ static void findUniqueIdBounds(TextureNamespace* tn, int* minId, int* maxId)
     if(minId) *minId = DDMAXINT;
     if(maxId) *maxId = DDMININT;
 
-    const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
-    if(nodes)
-    DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+    DENG2_FOR_EACH(i, tn->directory->leafNodes(), TextureDirectory::Nodes::const_iterator)
     {
-        const TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
+        TextureRecord const* record = reinterpret_cast<TextureRecord*>((*i)->userData());
         if(!record) continue;
 
         if(minId && record->uniqueId < *minId) *minId = record->uniqueId;
@@ -723,13 +713,11 @@ static void rebuildUniqueIdMap(texturenamespaceid_t namespaceId)
     {
         memset(tn->uniqueIdMap, NOTEXTUREID, sizeof(*tn->uniqueIdMap) * tn->uniqueIdMapSize);
 
-        const TextureDirectory::PathNodes* nodes = tn->directory->pathNodes(PT_LEAF);
-        if(nodes)
-        DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
+        DENG2_FOR_EACH(i, tn->directory->leafNodes(), TextureDirectory::Nodes::const_iterator)
         {
-            const TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
+            TextureRecord const* record = reinterpret_cast<TextureRecord*>((*i)->userData());
             if(!record) continue;
-            linkRecordInUniqueIdMap(record, tn, findBindIdForDirectoryNode(*nodeIt));
+            linkRecordInUniqueIdMap(record, tn, findBindIdForDirectoryNode(*i));
         }
     }
 
@@ -1117,19 +1105,15 @@ int Textures_Iterate2(texturenamespaceid_t namespaceId,
 
     for(uint i = uint(from); i <= uint(to); ++i)
     {
-        texturenamespaceid_t iter = texturenamespaceid_t(i);
-        TextureDirectory* directory = getDirectoryForNamespaceId(iter);
-        const TextureDirectory::PathNodes* nodes = directory->pathNodes(PT_LEAF);
-        if(nodes)
-        {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
-            {
-                TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
-                if(!record || !record->texture) continue;
+        TextureDirectory* directory = getDirectoryForNamespaceId(texturenamespaceid_t(i));
 
-                int result = callback(record->texture, parameters);
-                if(result) return result;
-            }
+        DENG2_FOR_EACH(nodeIt, directory->leafNodes(), TextureDirectory::Nodes::const_iterator)
+        {
+            TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
+            if(!record || !record->texture) continue;
+
+            int result = callback(record->texture, parameters);
+            if(result) return result;
         }
     }
     return 0;
@@ -1159,31 +1143,27 @@ int Textures_IterateDeclared2(texturenamespaceid_t namespaceId,
 
     for(uint i = uint(from); i <= uint(to); ++i)
     {
-        texturenamespaceid_t iter = texturenamespaceid_t(i);
-        TextureDirectory* directory = getDirectoryForNamespaceId(iter);
-        const TextureDirectory::PathNodes* nodes = directory->pathNodes(PT_LEAF);
-        if(nodes)
+        TextureDirectory* directory = getDirectoryForNamespaceId(texturenamespaceid_t(i));
+
+        DENG2_FOR_EACH(nodeIt, directory->leafNodes(), TextureDirectory::Nodes::const_iterator)
         {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
-            {
-                TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
-                if(!record) continue;
+            TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
+            if(!record) continue;
 
-                // If we have bound a texture it can provide the id.
-                textureid_t textureId = NOTEXTUREID;
-                if(record->texture)
-                    textureId = Texture_PrimaryBind(record->texture);
+            // If we have bound a texture it can provide the id.
+            textureid_t textureId = NOTEXTUREID;
+            if(record->texture)
+                textureId = Texture_PrimaryBind(record->texture);
 
-                // Otherwise look it up.
-                if(!validTextureId(textureId))
-                    textureId = findBindIdForDirectoryNode(*nodeIt);
+            // Otherwise look it up.
+            if(!validTextureId(textureId))
+                textureId = findBindIdForDirectoryNode(*nodeIt);
 
-                // Sanity check.
-                DENG2_ASSERT(validTextureId(textureId));
+            // Sanity check.
+            DENG2_ASSERT(validTextureId(textureId));
 
-                int result = callback(textureId, parameters);
-                if(result) return result;
-            }
+            int result = callback(textureId, parameters);
+            if(result) return result;
         }
     }
     return 0;
@@ -1278,30 +1258,26 @@ static TextureDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespa
     int idx = 0;
     for(uint i = uint(fromId); i <= uint(toId); ++i)
     {
-        texturenamespaceid_t iterId = texturenamespaceid_t(i);
-        TextureDirectory* directory = getDirectoryForNamespaceId(iterId);
-        const TextureDirectory::PathNodes* nodes = directory->pathNodes(PT_LEAF);
-        if(nodes)
-        {
-            DENG2_FOR_EACH(nodeIt, *nodes, TextureDirectory::PathNodes::const_iterator)
-            {
-                if(like && like[0])
-                {
-                    AutoStr* path = composePathForDirectoryNode(*nodeIt, delimiter);
-                    int delta = qstrnicmp(Str_Text(path), like, strlen(like));
-                    if(delta) continue; // Continue iteration.
-                }
+        TextureDirectory* directory = getDirectoryForNamespaceId(texturenamespaceid_t(i));
 
-                if(storage)
-                {
-                    // Store mode.
-                    storage[idx++] = *nodeIt;
-                }
-                else
-                {
-                    // Count mode.
-                    ++idx;
-                }
+        DENG2_FOR_EACH(nodeIt, directory->leafNodes(), TextureDirectory::Nodes::const_iterator)
+        {
+            if(like && like[0])
+            {
+                AutoStr* path = composePathForDirectoryNode(*nodeIt, delimiter);
+                int delta = qstrnicmp(Str_Text(path), like, strlen(like));
+                if(delta) continue; // Continue iteration.
+            }
+
+            if(storage)
+            {
+                // Store mode.
+                storage[idx++] = *nodeIt;
+            }
+            else
+            {
+                // Count mode.
+                ++idx;
             }
         }
     }
@@ -1551,8 +1527,8 @@ D_CMD(PrintTextureStats)
 
         uint size = directory->size();
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Textures_NamespaceName(namespaceId)), size, size==1? "texture":"textures");
-        TextureDirectory::debugPrintHashDistribution(directory);
-        TextureDirectory::debugPrint(directory, TEXTURES_PATH_DELIMITER);
+        TextureDirectory::debugPrintHashDistribution(*directory);
+        TextureDirectory::debugPrint(*directory, TEXTURES_PATH_DELIMITER);
     }
     return true;
 }
