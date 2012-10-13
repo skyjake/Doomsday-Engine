@@ -634,7 +634,7 @@ SOURCES += \
     portable/src/sys_input.c \
     portable/src/sys_network.c \
     portable/src/sys_opengl.c \
-    portable/src/sys_reslocator.c \
+    portable/src/sys_reslocator.cpp \
     portable/src/sys_system.c \
     portable/src/tab_tables.c \
     portable/src/timer.cpp \
