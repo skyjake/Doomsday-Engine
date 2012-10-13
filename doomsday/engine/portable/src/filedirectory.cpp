@@ -34,9 +34,6 @@ struct FileDirectoryNodeInfo
     FileDirectoryNodeInfo() : processed(false) {}
 };
 
-static int addPathNodesAndMaybeDescendBranch(int flags, const ddstring_t* filePath,
-    PathDirectoryNodeType nodeType, void* parameters);
-
 static de::PathDirectoryNode* attachMissingNodeInfo(de::PathDirectoryNode* node)
 {
     if(!node) return NULL;
@@ -184,26 +181,6 @@ de::PathDirectoryNode* de::FileDirectory::addPathNodes(ddstring_t const* rawPath
     return node;
 }
 
-typedef struct {
-    de::FileDirectory* fileDirectory;
-
-    int flags; ///< @ref searchPathFlags
-
-    /// If not @c NULL the callback's logic dictates whether iteration continues.
-    int (*callback) (de::PathDirectoryNode& node, void* parameters);
-
-    /// Passed to the callback.
-    void* parameters;
-} addpathworker_paramaters_t;
-
-static int addPathWorker(char const* _filePath, PathDirectoryNodeType nodeType,
-    void* parameters)
-{
-    addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)parameters;
-    Str filePath; Str_InitStatic(&filePath, _filePath);
-    return addPathNodesAndMaybeDescendBranch(p->flags, &filePath, nodeType, parameters);
-}
-
 int de::FileDirectory::addChildNodes(de::PathDirectoryNode& node, int flags,
     int (*callback) (de::PathDirectoryNode& node, void* parameters), void* parameters)
 {
@@ -211,23 +188,27 @@ int de::FileDirectory::addChildNodes(de::PathDirectoryNode& node, int flags,
 
     if(PT_BRANCH == node.type())
     {
-        addpathworker_paramaters_t p;
-        ddstring_t searchPattern;
-
         // Compose the search pattern.
-        Str_InitStd(&searchPattern);
+        ddstring_t searchPattern; Str_InitStd(&searchPattern);
         node.composePath(&searchPattern, NULL, '/');
         // We're interested in *everything*.
         Str_AppendChar(&searchPattern, '*');
 
-        // Take a copy of the caller's iteration parameters.
-        p.fileDirectory = this;
-        p.callback = callback;
-        p.flags = flags;
-        p.parameters = parameters;
-
         // Process this search.
-        result = F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
+        FS::PathList found;
+        if(App_FileSystem()->findAllPaths(Str_Text(&searchPattern), flags, found))
+        {
+            DENG2_FOR_EACH(i, found, FS::PathList::const_iterator)
+            {
+                QByteArray foundPathUtf8 = i->path.toUtf8();
+                ddstring_t foundPath; Str_InitStatic(&foundPath, foundPathUtf8.constData());
+                PathDirectoryNodeType nodeType = (i->attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF;
+
+                result = addPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND), &foundPath, nodeType,
+                                                           flags, callback, parameters);
+                if(result) break;
+            }
+        }
 
         Str_Free(&searchPattern);
     }
@@ -303,22 +284,6 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
     }
 
     return result;
-}
-
-/**
- * @param filePath  Possibly-relative path to an element in the virtual file system.
- * @param nodeType  Type of element, either a branch (directory) or a leaf (file).
- * @param parameters  Caller's iteration parameters.
- * @return  Non-zero if iteration should stop else @c 0.
- */
-static int addPathNodesAndMaybeDescendBranch(int flags, ddstring_t const* filePath,
-    PathDirectoryNodeType nodeType, void* parameters)
-{
-    addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)parameters;
-    DENG2_ASSERT(p);
-    return p->fileDirectory->addPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND),
-                                                               filePath, nodeType,
-                                                               p->flags, p->callback, p->parameters);
 }
 
 DENG_DEBUG_ONLY(

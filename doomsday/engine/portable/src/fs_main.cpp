@@ -760,22 +760,19 @@ int FS::findAll(bool (*predicate)(de::DFile* hndl, void* parameters), void* para
     return numFound;
 }
 
-struct PathListItem
+static int findPathsWorker(char const* path, PathDirectoryNodeType type, void* parameters)
 {
-    String path;
-    int attrib;
+    FS::PathList* found = (FS::PathList*)parameters;
+    found->push_back(FS::PathListItem(path, type == PT_BRANCH? A_SUBDIR : 0));
+    return 0; // Continue iteration.
+}
 
-    PathListItem(QString const& _path, int _attrib = 0)
-        : path(_path), attrib(_attrib)
-    {}
-
-    bool operator < (PathListItem const& other) const
-    {
-        return path.compareWithoutCase(other.path) < 0;
-    }
-};
-
-typedef QList<PathListItem> PathList;
+int FS::findAllPaths(char const* searchPattern, int flags, FS::PathList& found)
+{
+    int numFoundSoFar = found.count();
+    allResourcePaths(searchPattern, flags, findPathsWorker, (void*)&found);
+    return found.count() - numFoundSoFar;
+}
 
 int FS::allResourcePaths(char const* rawSearchPattern, int flags,
     int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters),

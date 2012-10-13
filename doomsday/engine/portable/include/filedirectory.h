@@ -121,7 +121,6 @@ private:
                       int (*callback) (PathDirectoryNode& node, void* parameters),
                       void* parameters);
 
-public: /// @todo Should be private.
     /**
      * @param filePath      Possibly-relative path to an element in the virtual file system.
      * @param flags         @ref searchPathFlags
@@ -132,8 +131,7 @@ public: /// @todo Should be private.
      * @return  Non-zero if the current iteration should stop else @c 0.
      */
     int addPathNodesAndMaybeDescendBranch(bool descendBranches, ddstring_t const* filePath,
-                                          PathDirectoryNodeType nodeType,
-                                          int flags,
+                                          PathDirectoryNodeType nodeType, int flags,
                                           int (*callback) (PathDirectoryNode& node, void* parameters),
                                           void* parameters);
 
