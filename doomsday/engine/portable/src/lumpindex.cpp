@@ -291,7 +291,7 @@ int LumpIndex::size() const
     return d->lumpInfos.size();
 }
 
-int LumpIndex::pruneByFile(AbstractFile& file)
+int LumpIndex::pruneByFile(de::AbstractFile& file)
 {
     if(d->lumpInfos.empty()) return 0;
 
@@ -328,7 +328,7 @@ bool LumpIndex::pruneLump(LumpInfo& lumpInfo)
     return true;
 }
 
-void LumpIndex::catalogLumps(AbstractFile& file, int lumpIdxBase, int numLumps)
+void LumpIndex::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int numLumps)
 {
     if(numLumps <= 0) return;
 
@@ -359,7 +359,7 @@ void LumpIndex::clear()
     d->flags &= ~(LIF_NEED_REBUILD_HASH | LIF_NEED_PRUNE_DUPLICATES);
 }
 
-bool LumpIndex::catalogues(AbstractFile& file)
+bool LumpIndex::catalogues(de::AbstractFile& file)
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
