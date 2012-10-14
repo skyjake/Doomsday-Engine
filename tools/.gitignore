@@ -1,0 +1,6 @@
+*/*.o
+*/Makefile
+texc/texc
+md2tool/md2tool
+wadtool/wadtool
+

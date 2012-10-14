@@ -1,5 +1,5 @@
 /* $Id$
- * Copyright (c) 2004 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *
  * This program is distributed under the GNU General Public License
  * version 2.  Visit http://www.opensource.org/ for details.
@@ -188,7 +188,7 @@ const char *SkipWhite(const char *str)
 //===========================================================================
 void PrintBanner(void)
 {
-    printf("\n### md2tool v"MD2TOOL_VERSION" by Jaakko Ker‰nen "
+    printf("\n### md2tool v"MD2TOOL_VERSION" by Jaakko Ker√§nen "
            "<jaakko.keranen@iki.fi> ###\n\n");
 }
 
@@ -1219,6 +1219,8 @@ int GroupTriangles(model_t *mo, optriangle_t *tris, int numtris)
     int start, i, j;
     char spreadto[MAX_TRIANGLES], didspread;
 
+    (void) mo; // unused
+
     memset(spreadto, 0, sizeof(spreadto));
 
     // 1. Find an ungrouped triangle (stop if not found).
@@ -1382,8 +1384,8 @@ beginpass:
                 for(found = 0, m = 0; m < 3; m++)
                 {
                     // Is this the edge we're looking for?
-                    if(tris[j].tri.index_st[m] == tc1 && tris[j].tri.index_st[(m+1)%3] == tc2
-                        || tris[j].tri.index_st[m] == tc2 && tris[j].tri.index_st[(m+1)%3] == tc1)
+                    if((tris[j].tri.index_st[m] == tc1 && tris[j].tri.index_st[(m+1)%3] == tc2)
+                        || (tris[j].tri.index_st[m] == tc2 && tris[j].tri.index_st[(m+1)%3] == tc1))
                     {
                         // Try the third vertex.
                         if(!PointOnLineSide(mo->texCoords[tc1].s,
