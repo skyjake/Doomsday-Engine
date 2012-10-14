@@ -857,8 +857,7 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        de::Game* game = reinterpret_cast<de::Game*>(theGame);
-        AbstractResource* const* records = game->resources(RC_DEFINITION, 0);
+        AbstractResource* const* records = reinterpret_cast<de::Games*>(App_Games())->currentGame().resources(RC_DEFINITION, 0);
         AbstractResource* const* recordIt;
 
         if(records)
@@ -886,7 +885,7 @@ static void readAllDefinitions(void)
     if(!CommandLine_Exists("-noauto"))
     {
         AutoStr* pattern = AutoStr_NewStd();
-        Str_Appendf(pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
+        Str_Appendf(pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(Games_CurrentGame(App_Games()))));
 
         de::FS1::PathList found;
         if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))

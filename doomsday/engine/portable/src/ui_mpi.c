@@ -485,11 +485,11 @@ void MPIUpdateServerList(void)
             N_MasterGet(i, &info);
 
             // Is this suitable?
-            if(info.version != DOOMSDAY_VERSION || stricmp(info.gameIdentityKey, Str_Text(Game_IdentityKey(theGame))) || !info.canJoin)
+            if(info.version != DOOMSDAY_VERSION || stricmp(info.gameIdentityKey, Str_Text(Game_IdentityKey(Games_CurrentGame(App_Games())))) || !info.canJoin)
             {
                 Con_Message("Server %s filtered out:\n", info.name);
                 Con_Message("  remote = %i, local = %i\n", info.version, DOOMSDAY_VERSION);
-                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(Game_IdentityKey(theGame)));
+                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(Game_IdentityKey(Games_CurrentGame(App_Games()))));
                 Con_Message("  can join = %i\n", info.canJoin);
                 continue;
             }

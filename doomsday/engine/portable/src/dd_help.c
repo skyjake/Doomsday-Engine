@@ -326,7 +326,7 @@ void DD_ReadGameHelp(void)
         return; // Nothing to do.
 
     Str_Init(&helpFileName);
-    Str_Appendf(&helpFileName, "%sconhelp.txt", Str_Text(Game_DataPath(theGame)));
+    Str_Appendf(&helpFileName, "%sconhelp.txt", Str_Text(Game_DataPath(Games_CurrentGame(App_Games()))));
     F_ExpandBasePath(&helpFileName, &helpFileName);
     DH_ReadStrings(Str_Text(&helpFileName));
     Str_Free(&helpFileName);

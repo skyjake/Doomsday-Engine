@@ -390,7 +390,7 @@ static void updateKnownWords(void)
     PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &countCVarParams);
 
     // Build the known words table.
-    numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + Games_Count();
+    numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + Games_Count(App_Games());
     len = sizeof(knownword_t) * numKnownWords;
     knownWords = realloc(knownWords, len);
     memset(knownWords, 0, len);
@@ -430,10 +430,10 @@ static void updateKnownWords(void)
     }
 
     // Add games?
-    gameCount = Games_Count();
+    gameCount = Games_Count(App_Games());
     for(i = 0; i < gameCount; ++i)
     {
-        Game* game = Games_ByIndex(i+1);
+        Game* game = Games_ByIndex(App_Games(), i+1);
 
         knownWords[c].type = WT_GAME;
         knownWords[c].data = game;
@@ -1593,10 +1593,10 @@ static void printHelpAbout(const char* query)
 
     if(found == 0) // Perhaps a game?
     {
-        Game* game = Games_ByIdentityKey(query);
+        Game* game = Games_ByIdentityKey(App_Games(), query);
         if(game)
         {
-            Games_Print(game, PGF_EVERYTHING);
+            Games_Print(App_Games(), game, PGF_EVERYTHING);
             found = true;
         }
     }

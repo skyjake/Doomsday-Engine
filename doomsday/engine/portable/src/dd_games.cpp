@@ -28,132 +28,193 @@
 #include "abstractresource.h"
 #include "zipfile.h"
 
-extern "C" {
+namespace de {
 
-Game* theGame; // Currently active game.
-Game* nullGame; // Special "null-game" object.
+static bool validateResource(AbstractResource* rec);
 
-}
-
-// Game collection.
-static Game** games;
-static int gamesCount;
-
-static int gameIndex(Game const* game)
+struct Games::Instance
 {
-    if(game && !Games_IsNullObject(game))
+    Games& self;
+
+    /// Game collection.
+    Game** games;
+    int gamesCount;
+
+    /// Currently active game (in this collection).
+    Game* theGame;
+
+    /// Special "null-game" object for this collection.
+    Game* nullGame;
+
+    Instance(Games& d)
+        : self(d), games(0), gamesCount(0), theGame(0), nullGame(0)
+    {}
+
+    ~Instance()
     {
+        if(games)
+        {
+            for(int i = 0; i < gamesCount; ++i)
+            {
+                delete games[i];
+            }
+            M_Free(games); games = 0;
+            gamesCount = 0;
+        }
+
+        if(nullGame)
+        {
+            delete nullGame;
+            nullGame = NULL;
+        }
+        theGame = NULL;
+    }
+
+    int index(Game const& game)
+    {
+        if(&game != nullGame)
+        {
+            for(int i = 0; i < gamesCount; ++i)
+            {
+                if(&game == games[i])
+                    return i+1;
+            }
+        }
+        return 0;
+    }
+
+    Game* findByIdentityKey(char const* identityKey)
+    {
+        DENG_ASSERT(identityKey && identityKey[0]);
         for(int i = 0; i < gamesCount; ++i)
         {
-            if(game == games[i])
-                return i+1;
+            Game* game = games[i];
+            if(!stricmp(Str_Text(&game->identityKey()), identityKey))
+                return game;
         }
+        return NULL; // Not found.
     }
-    return 0;
-}
+};
 
-static Game* findGameForId(gameid_t gameId)
+Games::Games()
 {
-    if(gameId > 0 && gameId <= gamesCount)
-        return games[gameId-1];
-    return NULL; // Not found.
+    d = new Instance(*this);
+
+    /**
+     * One-time creation and initialization of the special "null-game"
+     * object (activated once created).
+     */
+    ddstring_t dataPath; Str_InitStd(&dataPath);
+    Str_Set(&dataPath, DD_BASEPATH_DATA);
+    Str_Strip(&dataPath);
+    F_FixSlashes(&dataPath, &dataPath);
+    F_ExpandBasePath(&dataPath, &dataPath);
+    F_AppendMissingSlash(&dataPath);
+
+    ddstring_t defsPath; Str_InitStd(&defsPath);
+    Str_Set(&defsPath, DD_BASEPATH_DEFS);
+    Str_Strip(&defsPath);
+    F_FixSlashes(&defsPath, &defsPath);
+    F_ExpandBasePath(&defsPath, &defsPath);
+    F_AppendMissingSlash(&defsPath);
+
+    d->theGame = d->nullGame = new Game("null-game", &dataPath, &defsPath, "doomsday", 0, 0);
+
+    Str_Free(&defsPath);
+    Str_Free(&dataPath);
 }
 
-static Game* findGameForIdentityKey(char const* identityKey)
+Games::~Games()
+{   
+    delete d;
+}
+
+Game& Games::currentGame() const
 {
-    DENG_ASSERT(identityKey && identityKey[0]);
-    for(int i = 0; i < gamesCount; ++i)
-    {
-        Game* game = games[i];
-        if(!stricmp(Str_Text(Game_IdentityKey(game)), identityKey))
-            return game;
-    }
-    return NULL; // Not found.
+    return *d->theGame;
 }
 
-void Games_Shutdown(void)
+Game& Games::nullGame() const
 {
-    if(games)
-    {
-        int i;
-        for(i = 0; i < gamesCount; ++i)
-        {
-            Game_Delete(games[i]);
-        }
-        free(games); games = 0;
-        gamesCount = 0;
-    }
-
-    if(nullGame)
-    {
-        Game_Delete(nullGame);
-        nullGame = NULL;
-    }
-    theGame = NULL;
+    return *d->nullGame;
 }
 
-int Games_NumPlayable(void)
+Games& Games::setCurrentGame(Game& game)
+{
+    d->theGame = &game;
+    return *this;
+}
+
+int Games::numPlayable() const
 {
     int count = 0;
-    for(int i = 0; i < gamesCount; ++i)
+    for(int i = 0; i < d->gamesCount; ++i)
     {
-        Game* game = games[i];
-        if(!Game_AllStartupResourcesFound(game)) continue;
+        de::Game* game = d->games[i];
+        if(!game->allStartupResourcesFound()) continue;
         ++count;
     }
     return count;
 }
 
-Game* Games_FirstPlayable(void)
+Game* Games::firstPlayable() const
 {
-    for(int i = 0; i < gamesCount; ++i)
+    for(int i = 0; i < d->gamesCount; ++i)
     {
-        Game* game = games[i];
-        if(Game_AllStartupResourcesFound(game)) return game;
+        Game* game = d->games[i];
+        if(game->allStartupResourcesFound()) return game;
     }
     return NULL;
 }
 
-static Game* addGame(Game* game)
+int Games::count() const
 {
-    if(game)
-    {
-        games = (Game**) M_Realloc(games, sizeof(*games) * ++gamesCount);
-        if(!games) Con_Error("addGame: Failed on allocation of %lu bytes enlarging Game list.", (unsigned long) (sizeof(*games) * gamesCount));
-        games[gamesCount-1] = game;
-    }
-    return game;
+    return d->gamesCount;
 }
 
-int Games_Count(void)
+Game* Games::byIndex(int idx) const
 {
-    return gamesCount;
-}
-
-Game* Games_ByIndex(int idx)
-{
-    if(idx > 0 && idx <= gamesCount)
-        return games[idx-1];
+    if(idx > 0 && idx <= d->gamesCount)
+        return d->games[idx-1];
     return NULL;
 }
 
-Game* Games_ByIdentityKey(char const* identityKey)
+Game* Games::byIdentityKey(char const* identityKey) const
 {
     if(identityKey && identityKey[0])
-        return findGameForIdentityKey(identityKey);
+        return d->findByIdentityKey(identityKey);
     return NULL;
 }
 
-gameid_t Games_Id(Game* game)
+Game* Games::byId(gameid_t gameId) const
 {
-    if(!game || game == nullGame) return 0; // Invalid id.
-    return (gameid_t)gameIndex(game);
+    if(gameId > 0 && gameId <= d->gamesCount)
+        return d->games[gameId-1];
+    return NULL; // Not found.
 }
 
-boolean Games_IsNullObject(Game const* game)
+gameid_t Games::id(Game& game) const
 {
-    if(!game) return false;
-    return game == nullGame;
+    if(&game == d->nullGame) return 0; // Invalid id.
+    return (gameid_t) d->index(game);
+}
+
+int Games::findAll(GameList& found)
+{
+    int numFoundSoFar = found.count();
+    for(int i = 0; i < d->gamesCount; ++i)
+    {
+        found.push_back(GameListItem(d->games[i]));
+    }
+    return found.count() - numFoundSoFar;
+}
+
+Games& Games::add(Game& game)
+{
+    d->games = (Game**) M_Realloc(d->games, sizeof(*d->games) * ++d->gamesCount);
+    if(!d->games) Con_Error("Games::add: Failed on allocation of %lu bytes enlarging Game list.", (unsigned long) (sizeof(*d->games) * d->gamesCount));
+    d->games[d->gamesCount-1] = &game;
+    return *this;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
@@ -194,11 +255,11 @@ static bool recognizeZIP(char const* filePath, void* parameters)
 {
     DENG_UNUSED(parameters);
 
-    de::DFile* dfile = App_FileSystem()->openFile(filePath, "bf");
+    DFile* dfile = App_FileSystem()->openFile(filePath, "bf");
     bool result = false;
     if(dfile)
     {
-        result = de::ZipFile::recognise(*dfile);
+        result = ZipFile::recognise(*dfile);
         /// @todo Check files. We should implement an auxiliary zip lump index...
         App_FileSystem()->closeFile(*dfile);
     }
@@ -218,7 +279,7 @@ static bool validateResource(AbstractResource* rec)
         int idx = 0;
         for(ptr = uriList; *ptr; ptr++, idx++)
         {
-            Str const* path = AbstractResource_ResolvedPathWithIndex(rec, idx, true/*locate resources*/);
+            ddstring_t const* path = AbstractResource_ResolvedPathWithIndex(rec, idx, true/*locate resources*/);
             if(!path) continue;
 
             if(recognizeWAD(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
@@ -243,22 +304,20 @@ static bool validateResource(AbstractResource* rec)
     return validated;
 }
 
-static void locateGameStartupResources(Game* game)
+Games& Games::locateStartupResources(Game& game)
 {
-    if(!game) return;
-
-    Game* oldGame = theGame;
-    if(theGame != game)
+    Game* oldGame = d->theGame;
+    if(d->theGame != &game)
     {
         /// @attention Kludge: Temporarily switch Game.
-        theGame = game;
+        d->theGame = &game;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
     }
 
     for(uint rclass = RESOURCECLASS_FIRST; rclass < RESOURCECLASS_COUNT; ++rclass)
     {
-        AbstractResource* const* records = Game_Resources(game, resourceclass_t(rclass), 0);
+        AbstractResource* const* records = game.resources(resourceclass_t(rclass), 0);
         if(!records) continue;
 
         for(AbstractResource* const* i = records; *i; i++)
@@ -272,59 +331,58 @@ static void locateGameStartupResources(Game* game)
         }
     }
 
-    if(theGame != oldGame)
+    if(d->theGame != oldGame)
     {
         // Kludge end - Restore the old Game.
-        theGame = oldGame;
+        d->theGame = oldGame;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
     }
+    return *this;
 }
 
 static int locateAllResourcesWorker(void* parameters)
 {
-    DENG_UNUSED(parameters);
-    for(int i = 0; i < gamesCount; ++i)
+    Games* games = (Games*) parameters;
+    for(int i = 0; i < games->count(); ++i)
     {
-        Game* game = games[i];
+        Game* game = games->byIndex(i+1);
 
-        VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) )
+        VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(&game->title())) )
 
-        locateGameStartupResources(game);
-        Con_SetProgress((i+1) * 200/Games_Count() -1);
+        games->locateStartupResources(*game);
+        Con_SetProgress((i + 1) * 200 / games->count() - 1);
 
-        VERBOSE( Games_Print(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
+        VERBOSE( games->print(*game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
     }
     BusyMode_WorkerEnd();
     return 0;
 }
 
-void Games_LocateAllResources(void)
+Games& Games::locateAllResources()
 {
     BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                locateAllResourcesWorker, 0, "Locating game resources...");
+                                locateAllResourcesWorker, (void*)this, "Locating game resources...");
+    return *this;
 }
 
 /**
  * @todo This has been moved here so that strings like the game title and author can
  *       be overridden (e.g., via DEHACKED). Make it so!
  */
-void Games_PrintBanner(Game* game)
+void Games::printBanner(Game& game)
 {
-    DENG_ASSERT(game);
     Con_PrintRuler();
-    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(Game_Title(game)));
+    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(&game.title()));
     Con_PrintRuler();
 }
 
-void Games_PrintResources(Game* game, boolean printStatus, int rflags)
+void Games::printResources(Game& game, bool printStatus, int rflags)
 {
-    if(!game) return;
-
     size_t count = 0;
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        AbstractResource* const* records = Game_Resources(game, (resourceclass_t)i, 0);
+        AbstractResource* const* records = game.resources((resourceclass_t)i, 0);
         if(!records) continue;
 
         for(AbstractResource* const* recordIt = records; *recordIt; recordIt++)
@@ -343,236 +401,184 @@ void Games_PrintResources(Game* game, boolean printStatus, int rflags)
         Con_Printf(" None\n");
 }
 
-void Games_Print(Game* game, int flags)
+void Games::print(Game& game, int flags) const
 {
-    if(!game) return;
-
-    if(Games_IsNullObject(game))
+    if(isNullGame(game))
         flags &= ~PGF_BANNER;
 
 #if _DEBUG
-    Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", (int)Game_PluginId(game),
-               F_PrettyPath(Str_Text(Game_DataPath(game))),
-               F_PrettyPath(Str_Text(Game_DefsPath(game))));
+    Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", int(game.pluginId()),
+               F_PrettyPath(Str_Text(&game.dataPath())),
+               F_PrettyPath(Str_Text(&game.defsPath())));
 #endif
 
     if(flags & PGF_BANNER)
-        Games_PrintBanner(game);
+        printBanner(game);
 
     if(!(flags & PGF_BANNER))
-        Con_Printf("Game: %s - ", Str_Text(Game_Title(game)));
+        Con_Printf("Game: %s - ", Str_Text(&game.title()));
     else
         Con_Printf("Author: ");
-    Con_Printf("%s\n", Str_Text(Game_Author(game)));
-    Con_Printf("IdentityKey: %s\n", Str_Text(Game_IdentityKey(game)));
+    Con_Printf("%s\n", Str_Text(&game.author()));
+    Con_Printf("IdentityKey: %s\n", Str_Text(&game.identityKey()));
 
     if(flags & PGF_LIST_STARTUP_RESOURCES)
     {
         Con_Printf("Startup resources:\n");
-        Games_PrintResources(game, (flags & PGF_STATUS) != 0, RF_STARTUP);
+        printResources(game, (flags & PGF_STATUS) != 0, RF_STARTUP);
     }
 
     if(flags & PGF_LIST_OTHER_RESOURCES)
     {
         Con_Printf("Other resources:\n");
         Con_Printf("   ");
-        Games_PrintResources(game, /*(flags & PGF_STATUS) != 0*/false, 0);
+        printResources(game, /*(flags & PGF_STATUS) != 0*/false, 0);
     }
 
     if(flags & PGF_STATUS)
-        Con_Printf("Status: %s\n",       theGame == game? "Loaded" :
-                                   Game_AllStartupResourcesFound(game)? "Complete/Playable" :
-                                                                        "Incomplete/Not playable");
+        Con_Printf("Status: %s\n",         isCurrentGame(game)? "Loaded" :
+                               game.allStartupResourcesFound()? "Complete/Playable" :
+                                                                "Incomplete/Not playable");
 }
 
-static void populateGameInfo(GameInfo* info, Game* game)
-{
-    info->identityKey = Str_Text(Game_IdentityKey(game));
-    info->title = Str_Text(Game_Title(game));
-    info->author = Str_Text(Game_Author(game));
-}
-
-/// @note Part of the Doomsday public API.
-boolean DD_GameInfo(GameInfo* info)
-{
-    if(!info)
-    {
-#if _DEBUG
-        Con_Message("Warning: DD_GameInfo: Received invalid info (=NULL), ignoring.");
-#endif
-        return false;
-    }
-
-    memset(info, 0, sizeof(*info));
-
-    if(DD_GameLoaded())
-    {
-        populateGameInfo(info, theGame);
-        return true;
-    }
-
-#if _DEBUG
-    Con_Message("DD_GameInfo: Warning, no game currently loaded - returning false.\n");
-#endif
-    return false;
-}
-
-/// @note Part of the Doomsday public API.
-void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
-    char const* _names, void* params)
-{
-    Game* game = findGameForId(gameId);
-    AbstractResource* rec;
-    ddstring_t name;
-    ddstring_t str;
-    char const* p;
-
-    if(!game)
-        Con_Error("DD_AddGameResource: Error, unknown game id %i.", gameId);
-    if(!VALID_RESOURCE_CLASS(rclass))
-        Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
-    if(!_names || !_names[0] || !strcmp(_names, ";"))
-        Con_Error("DD_AddGameResource: Invalid name argument.");
-    if(0 == (rec = AbstractResource_New(rclass, rflags)))
-        Con_Error("DD_AddGameResource: Unknown error occured during AbstractResource::Construct.");
-
-    // Add a name list to the game record.
-    Str_Init(&str);
-    Str_Set(&str, _names);
-    // Ensure the name list has the required terminating semicolon.
-    if(Str_RAt(&str, 0) != ';')
-        Str_Append(&str, ";");
-
-    p = Str_Text(&str);
-    Str_Init(&name);
-    while((p = Str_CopyDelim2(&name, p, ';', CDF_OMIT_DELIMITER)))
-    {
-        AbstractResource_AddName(rec, &name);
-    }
-    Str_Free(&name);
-
-    if(params)
-    switch(rclass)
-    {
-    case RC_PACKAGE: {
-        // Add an auto-identification file identityKey list to the game record.
-        ddstring_t identityKey;
-        const char* p;
-
-        // Ensure the identityKey list has the required terminating semicolon.
-        Str_Set(&str, (const char*) params);
-        if(Str_RAt(&str, 0) != ';')
-            Str_Append(&str, ";");
-
-        Str_Init(&identityKey);
-        p = Str_Text(&str);
-        while((p = Str_CopyDelim2(&identityKey, p, ';', CDF_OMIT_DELIMITER)))
-        {
-            AbstractResource_AddIdentityKey(rec, &identityKey);
-        }
-
-        Str_Free(&identityKey);
-        break;
-      }
-    default: break;
-    }
-
-    Game_AddResource(game, rclass, rec);
-
-    Str_Free(&str);
-}
-
-/// @note Part of the Doomsday public API.
-gameid_t DD_DefineGame(GameDef const* def)
-{
-    if(!def)
-    {
-#if _DEBUG
-        Con_Message("Warning:DD_DefineGame: Received invalid GameDef (=NULL), ignoring.");
-#endif
-        return 0; // Invalid id.
-    }
-
-    // Game mode identity keys must be unique. Ensure that is the case.
-    if(findGameForIdentityKey(def->identityKey))
-    {
-#if _DEBUG
-        Con_Message("Warning:DD_DefineGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.\n", def->defaultTitle, def->identityKey);
-#endif
-        return 0; // Invalid id.
-    }
-
-    // Add this game to our records.
-    Game* game = addGame(Game_FromDef(def));
-    if(game)
-    {
-        Game_SetPluginId(game, DD_PluginIdForActiveHook());
-        return Games_Id(game);
-    }
-    return 0; // Invalid id.
-}
-
-/// @note Part of the Doomsday public API.
-gameid_t DD_GameIdForKey(const char* identityKey)
-{
-    Game* game = findGameForIdentityKey(identityKey);
-    if(game) return Games_Id(game);
-
-    DEBUG_Message(("Warning:DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
-    return 0; // Invalid id.
-}
-
-static int C_DECL compareGameByName(const void* a, const void* b)
-{
-    return stricmp(Str_Text(Game_Title(*(Game**)a)), Str_Text(Game_Title(*(Game**)b)));
-}
+} // namespace de
 
 D_CMD(ListGames)
 {
-    DENG_UNUSED(src);
-    DENG_UNUSED(argc);
-    DENG_UNUSED(argv);
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    const int numAvailableGames = gamesCount;
-    if(numAvailableGames)
-    {
-        int i, numCompleteGames = 0;
-        Game** gamePtrs;
-
-        Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
-        Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
-        Con_PrintRuler();
-
-        // Sort a copy of games so we get a nice alphabetical list.
-        gamePtrs = (Game**) M_Malloc(gamesCount * sizeof *gamePtrs);
-        if(!gamePtrs) Con_Error("CCmdListGames: Failed on allocation of %lu bytes for sorted Game list.", (unsigned long) (gamesCount * sizeof *gamePtrs));
-
-        memcpy(gamePtrs, games, gamesCount * sizeof *gamePtrs);
-        qsort(gamePtrs, gamesCount, sizeof *gamePtrs, compareGameByName);
-
-        for(i = 0; i < gamesCount; ++i)
-        {
-            Game* game = gamePtrs[i];
-
-            Con_Printf(" %s %-16s %s (%s)\n", theGame == game? "*" :
-                                          !Game_AllStartupResourcesFound(game)? "!" : " ",
-                       Str_Text(Game_IdentityKey(game)), Str_Text(Game_Title(game)),
-                       Str_Text(Game_Author(game)));
-
-            if(Game_AllStartupResourcesFound(game))
-                numCompleteGames++;
-        }
-
-        Con_PrintRuler();
-        Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
-        Con_Printf("Use the 'load' command to load a game. For example: \"load gamename\".\n");
-
-        M_Free(gamePtrs);
-    }
-    else
+    de::Games* games = reinterpret_cast<de::Games*>(App_Games());
+    if(!games || !games->count())
     {
         Con_Printf("No Registered Games.\n");
+        return true;
     }
 
+    Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
+    Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
+    Con_PrintRuler();
+
+    de::Games::GameList found;
+    games->findAll(found);
+    // Sort so we get a nice alphabetical list.
+    qSort(found.begin(), found.end());
+
+    int numCompleteGames = 0;
+    DENG2_FOR_EACH(i, found, de::Games::GameList::const_iterator)
+    {
+        de::Game* game = i->game;
+
+        Con_Printf(" %s %-16s %s (%s)\n", games->isCurrentGame(*game)? "*" :
+                                   !game->allStartupResourcesFound()? "!" : " ",
+                   Str_Text(&game->identityKey()), Str_Text(&game->title()),
+                   Str_Text(&game->author()));
+
+        if(game->allStartupResourcesFound())
+            numCompleteGames++;
+    }
+
+    Con_PrintRuler();
+    Con_Printf("%i of %i games playable.\n", numCompleteGames, games->count());
+    Con_Printf("Use the 'load' command to load a game. For example: \"load gamename\".\n");
+
     return true;
+}
+
+/**
+ * C Wrapper API:
+ */
+
+#define TOINTERNAL(inst) \
+    (inst) != 0? reinterpret_cast<de::Games*>(inst) : NULL
+
+#define TOINTERNAL_CONST(inst) \
+    (inst) != 0? reinterpret_cast<de::Games const*>(inst) : NULL
+
+#define SELF(inst) \
+    DENG2_ASSERT(inst); \
+    de::Games* self = TOINTERNAL(inst)
+
+#define SELF_CONST(inst) \
+    DENG2_ASSERT(inst); \
+    de::Games const* self = TOINTERNAL_CONST(inst)
+
+Game* Games_CurrentGame(Games* games)
+{
+    SELF(games);
+    return reinterpret_cast<Game*>(&self->currentGame());
+}
+
+Game* Games_NullGame(Games* games)
+{
+    SELF(games);
+    return reinterpret_cast<Game*>(&self->nullGame());
+}
+
+int Games_NumPlayable(Games* games)
+{
+    SELF(games);
+    return self->numPlayable();
+}
+
+Game* Games_FirstPlayable(Games* games)
+{
+    SELF(games);
+    return reinterpret_cast<Game*>(self->firstPlayable());
+}
+
+int Games_Count(Games* games)
+{
+    SELF(games);
+    return self->count();
+}
+
+Game* Games_ByIndex(Games* games, int idx)
+{
+    SELF(games);
+    return reinterpret_cast<Game*>(self->byIndex(idx));
+}
+
+Game* Games_ByIdentityKey(Games* games, char const* identityKey)
+{
+    SELF(games);
+    return reinterpret_cast<Game*>(self->byIdentityKey(identityKey));
+}
+
+gameid_t Games_Id(Games* games, Game* game)
+{
+    SELF(games);
+    if(!game) return 0; // Invalid id.
+    return self->id(*reinterpret_cast<de::Game*>(game));
+}
+
+boolean Games_IsNullObject(Games* games, Game const* game)
+{
+    SELF(games);
+    if(!game) return false;
+    return self->isNullGame(*reinterpret_cast<de::Game const*>(game));
+}
+
+void Games_LocateAllResources(Games* games)
+{
+    SELF(games);
+    self->locateAllResources();
+}
+
+void Games_Print(Games* games, Game* game, int flags)
+{
+    if(!game) return;
+    SELF(games);
+    self->print(*reinterpret_cast<de::Game*>(game), flags);
+}
+
+void Games_PrintBanner(Game* game)
+{
+    if(!game) return;
+    de::Games::printBanner(*reinterpret_cast<de::Game*>(game));
+}
+
+void Games_PrintResources(Game* game, boolean printStatus, int rflags)
+{
+    if(!game) return;
+    de::Games::printResources(*reinterpret_cast<de::Game*>(game), CPP_BOOL(printStatus), rflags);
 }

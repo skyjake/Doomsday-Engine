@@ -173,7 +173,7 @@ AutoStr* DAM_ComposeCacheDir(const char* sourcePath)
 
     if(!sourcePath || !sourcePath[0]) return NULL;
 
-    gameIdentityKey = Game_IdentityKey(theGame);
+    gameIdentityKey = Game_IdentityKey(Games_CurrentGame(App_Games()));
     mapPathIdentifier = calculateIdentifierForMapPath(sourcePath);
     Str_InitStd(&mapFileName);
     F_FileName(&mapFileName, sourcePath);

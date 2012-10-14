@@ -309,7 +309,7 @@ bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
     if(found == d->loadedFiles.end()) return false;
 
     // Do not attempt to unload a resource required by the current game.
-    if(!permitRequired && Game_IsRequiredResource(theGame, path))
+    if(!permitRequired && Game_IsRequiredResource(Games_CurrentGame(App_Games()), path))
     {
         if(!quiet)
         {

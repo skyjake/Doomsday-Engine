@@ -55,6 +55,8 @@ extern "C" {
 #  define DEBUG_VERBOSE2_Message(code)
 #endif
 
+struct games_s;
+
 extern int verbose;
 //extern FILE* outFile; // Output file for console messages.
 
@@ -70,6 +72,9 @@ extern finaleid_t titleFinale;
 #ifndef WIN32
 extern GETGAMEAPI GetGameAPI;
 #endif
+
+/// @return  The main Games collection.
+struct games_s* App_Games();
 
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);
@@ -124,6 +129,14 @@ const char* value_Str(int val);
  * Frees the info structures for all registered games.
  */
 void DD_DestroyGames(void);
+
+boolean DD_GameInfo(struct gameinfo_s* info);
+
+void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, char const* _names, void* params);
+
+gameid_t DD_DefineGame(struct gamedef_s const* def);
+
+gameid_t DD_GameIdForKey(char const* identityKey);
 
 D_CMD(Load);
 D_CMD(Unload);
