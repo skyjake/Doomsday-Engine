@@ -60,11 +60,6 @@ void Library_Shutdown(void);
 void Library_ReleaseGames(void);
 
 /**
- * Defines an additional library @a dir where to look for dynamic libraries.
- */
-void Library_AddSearchDir(const char* dir);
-
-/**
  * Looks for dynamic libraries and calls @a func for each one.
  */
 int Library_IterateAvailableLibraries(int (*func)(const char* fileName, void* data), void* data);

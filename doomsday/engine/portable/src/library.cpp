@@ -1,6 +1,6 @@
 /**
- * @file library.c
- * Dynamic libraries implementation. @ingroup base
+ * @file library.cpp
+ * Dynamic libraries. @ingroup base
  *
  * @authors Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
@@ -33,6 +33,8 @@
 #include "de_base.h"
 #include "de_filesys.h"
 #include "m_misc.h"
+
+#include <de/App>
 
 #ifdef WIN32
 #  include "de_platform.h"
@@ -233,7 +235,7 @@ Library* Library_New(const char *fileName)
 #endif
 
     // Create the Library instance.
-    lib = calloc(1, sizeof(*lib));
+    lib = (Library*) calloc(1, sizeof(*lib));
     lib->handle = handle;
     lib->path = Str_NewStd();
 #ifdef UNIX
@@ -301,17 +303,14 @@ const char* Library_LastError(void)
     return Str_Text(lastError);
 }
 
-void Library_AddSearchDir(const char *dir)
-{
-    /// @todo  Implement this (and use it in the lookup)
-}
-
 #ifdef UNIX
 static boolean isPossiblyLibraryFile(const char* path, const struct dirent* entry)
 {
     if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) return false;
 
 #ifdef MACOSX
+    DENG_UNUSED(path);
+
     // Mac plugins are bundled in a subdir.
     if(entry->d_type != DT_REG &&
        entry->d_type != DT_DIR &&

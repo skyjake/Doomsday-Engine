@@ -92,8 +92,8 @@ bool LibraryFile::recognize(const File& file)
     const NativeFile* native = dynamic_cast<const NativeFile*>(&file);
     if(native)
     {
-        String parentFolderName = native->nativePath().fileNamePath().fileName();
-        if(QLibrary::isLibrary(parentFolderName))
+        // Check if the parent folder is a bundle.
+        if(QLibrary::isLibrary(native->nativePath().fileNamePath().fileName()))
         {
             return true;
         }

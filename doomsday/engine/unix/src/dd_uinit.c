@@ -233,7 +233,7 @@ static int initPluginSystem(void)
 {
 #ifdef DENG_LIBRARY_DIR
     // The default directory is defined in the Makefile. For instance, "/usr/local/lib".
-    Library_AddSearchDir(DENG_LIBRARY_DIR);
+    //Library_AddSearchDir(DENG_LIBRARY_DIR);
 #endif
     return true;
 }

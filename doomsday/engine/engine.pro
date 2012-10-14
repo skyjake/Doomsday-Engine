@@ -524,7 +524,7 @@ SOURCES += \
     portable/src/json.cpp \
     portable/src/kdtree.c \
     portable/src/keycode.cpp \
-    portable/src/library.c \
+    portable/src/library.cpp \
     portable/src/linedef.c \
     portable/src/lumpfile.cpp \
     portable/src/lumpindex.cpp \
