@@ -33,6 +33,7 @@ Name: "Engine\jDoom"; Description: "jDoom (for DOOM/Ultimate DOOM/DOOM II/Final 
 Name: "Engine\jHeretic"; Description: "jHeretic (for Heretic/Heretic: Shadow of the Serpent Riders)"; Types: full compact
 Name: "Engine\jHexen"; Description: "jHexen (for Hexen/Hexen: Death Kings of the Dark Citadel)"; Types: full compact
 Name: "Launcher"; Description: "Doomsday Engine Launcher"; Types: full
+Name: "Tools"; Description: "Command line tools for data files"; Types: full
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -64,9 +65,9 @@ Source: "bin\jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Componen
 Source: "bin\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
 
 ; Tools
-Source: "bin\md2tool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
-Source: "bin\texc.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
-Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
+Source: "bin\md2tool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
+Source: "bin\texc.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
+Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
 
 ; Libraries
 Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
