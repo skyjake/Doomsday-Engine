@@ -3,6 +3,7 @@
  * String pool (case insensitive). @ingroup base
  *
  * Container data structure for a set of unique case-insensitive strings.
+ * Comparable to a @c std::set with unique IDs assigned to each contained string.
  *
  * The term "intern" is used here to refer to the act of inserting a string to
  * the pool. As a result of interning a string, a new internal copy of the
@@ -21,8 +22,9 @@
  * The implementation has, at worst, O(log n) complexity for addition, removal,
  * string lookup, and user value set/get.
  *
- * @note StringPool is comparable to a std::set with unique IDs assigned to each
- * contained string.
+ * @par Build Options
+ * Define the macro @c DENG_STRINGPOOL_ZONE_ALLOCS to make StringPool allocate
+ * memory from the memory zone instead of with system malloc().
  *
  * @todo Add case-sensitive mode.
  *
@@ -47,11 +49,6 @@
 #ifndef LIBDENG_STRINGPOOL_H
 #define LIBDENG_STRINGPOOL_H
 
-/**
- * @def DENG_STRINGPOOL_ZONE_ALLOCS
- * Define this to make StringPool allocate memory from the memory zone instead
- * of with system malloc().
- */
 //#define DENG_STRINGPOOL_ZONE_ALLOCS
 
 #ifdef __cplusplus
