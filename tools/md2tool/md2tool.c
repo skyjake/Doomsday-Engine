@@ -30,6 +30,7 @@
 #endif
 
 #ifdef __GNUC__
+#include <strings.h>
 #define stricmp     strcasecmp
 #define cprintf     printf
 #endif
