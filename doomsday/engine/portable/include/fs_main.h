@@ -54,11 +54,11 @@ namespace de
      * open a file that is not considered part of the filesystem).
      *
      * Functions that don't know the absolute/logical lumpnum of file will have to check
-     * both indexes (e.g., FS::lumpNumForName()).
+     * both indexes (e.g., FS1::lumpNumForName()).
      *
      * @ingroup fs
      */
-    class FS
+    class FS1
     {
     public:
         struct PathListItem
@@ -83,9 +83,9 @@ namespace de
         /**
          * Constructs a new file system.
          */
-        FS();
+        FS1();
 
-        virtual ~FS();
+        virtual ~FS1();
 
         /// Register the console commands, variables, etc..., of this module.
         static void consoleRegister();
@@ -378,7 +378,7 @@ namespace de
 
 } // namespace de
 
-de::FS* App_FileSystem();
+de::FS1* App_FileSystem();
 
 extern "C" {
 #endif // __cplusplus

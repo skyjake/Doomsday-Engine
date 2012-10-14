@@ -45,7 +45,7 @@
 #include <de/stringpool.h>
 #include <de/memory.h>
 
-using de::FS;
+using de::FS1;
 
 // Map entity definitions.
 static StringPool* entityDefs;

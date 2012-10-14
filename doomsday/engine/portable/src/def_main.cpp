@@ -888,10 +888,10 @@ static void readAllDefinitions(void)
         AutoStr* pattern = AutoStr_NewStd();
         Str_Appendf(pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
 
-        de::FS::PathList found;
+        de::FS1::PathList found;
         if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))
         {
-            DENG2_FOR_EACH(i, found, de::FS::PathList::const_iterator)
+            DENG2_FOR_EACH(i, found, de::FS1::PathList::const_iterator)
             {
                 // Ignore directories.
                 if(i->attrib & A_SUBDIR) continue;

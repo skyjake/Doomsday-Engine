@@ -195,10 +195,10 @@ int de::FileDirectory::addChildNodes(de::PathDirectoryNode& node, int flags,
         Str_AppendChar(&searchPattern, '*');
 
         // Process this search.
-        FS::PathList found;
+        FS1::PathList found;
         if(App_FileSystem()->findAllPaths(Str_Text(&searchPattern), flags, found))
         {
-            DENG2_FOR_EACH(i, found, FS::PathList::const_iterator)
+            DENG2_FOR_EACH(i, found, FS1::PathList::const_iterator)
             {
                 QByteArray foundPathUtf8 = i->path.toUtf8();
                 ddstring_t foundPath; Str_InitStatic(&foundPath, foundPathUtf8.constData());
