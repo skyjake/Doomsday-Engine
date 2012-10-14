@@ -1,33 +1,26 @@
-/**\file def_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Definitions Subsystem
+ * @file def_main.cpp
+ *
+ * Definitions Subsystem.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 #include <ctype.h>
@@ -54,29 +47,15 @@
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define LOOPi(n)    for(i = 0; i < (n); ++i)
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct {
-    char*           name; // Name of the routine.
-    void            (C_DECL * func) (); // Pointer to the function.
+    char* name; // Name of the routine.
+    void (*func)(); // Pointer to the function.
 } actionlink_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 void Def_ReadProcessDED(const char* filename);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ded_t defs; // The main definitions database.
 boolean firstDED;
@@ -105,15 +84,11 @@ ded_count_t countStateLights;
 ded_ptcgen_t** statePtcGens; // A pointer for each State.
 ded_count_t countStatePtcGens;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean defsInited = false;
 static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
 xgclass_t* xgClassLinks;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Retrieves the XG Class list from the Game.
@@ -860,18 +835,6 @@ static __inline void readDefinitionFile(const char* fileName)
     Def_ReadProcessDED(fileName);
 }
 
-/**
- * (f_allresourcepaths_callback_t)
- */
-static int autoDefsReader(char const* fileName, PathDirectoryNodeType type, void* parameters)
-{
-    DENG_UNUSED(parameters);
-    // Ignore directories.
-    if(type != PT_BRANCH)
-        readDefinitionFile(fileName);
-    return 0; // Continue searching.
-}
-
 static void readAllDefinitions(void)
 {
     uint startTime = Sys_GetRealTime();
@@ -894,8 +857,8 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        Game* game = theGame;
-        AbstractResource* const* records = Game_Resources(game, RC_DEFINITION, 0);
+        de::Game* game = reinterpret_cast<de::Game*>(theGame);
+        AbstractResource* const* records = game->resources(RC_DEFINITION, 0);
         AbstractResource* const* recordIt;
 
         if(records)
@@ -903,7 +866,7 @@ static void readAllDefinitions(void)
         {
             AbstractResource* rec = *recordIt;
             /// Try to locate this resource now.
-            const ddstring_t* path = AbstractResource_ResolvedPath(rec, true);
+            ddstring_t const* path = AbstractResource_ResolvedPath(rec, true);
 
             if(!path)//!(AbstractResource_ResourceFlags(rec) & RF_FOUND))
             {
@@ -922,11 +885,21 @@ static void readAllDefinitions(void)
     // Next up are definition files in the /auto directory.
     if(!CommandLine_Exists("-noauto"))
     {
-        ddstring_t pattern;
-        Str_Init(&pattern);
-        Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
-        F_AllResourcePaths(Str_Text(&pattern), 0, autoDefsReader);
-        Str_Free(&pattern);
+        AutoStr* pattern = AutoStr_NewStd();
+        Str_Appendf(pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
+
+        de::FS::PathList found;
+        if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))
+        {
+            DENG2_FOR_EACH(i, found, de::FS::PathList::const_iterator)
+            {
+                // Ignore directories.
+                if(i->attrib & A_SUBDIR) continue;
+
+                QByteArray foundPathUtf8 = i->path.toUtf8();
+                readDefinitionFile(foundPathUtf8.constData());
+            }
+        }
     }
 
     // Any definition files on the command line?
