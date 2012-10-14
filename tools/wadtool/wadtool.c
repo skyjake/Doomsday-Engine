@@ -1,6 +1,7 @@
 /**
  * @file wadtool.c
- * WAD creation tool.
+ * WAD creation tool. This is ANSI C but unfortunately only compiles on
+ * Windows (uses Win32 file finding).
  *
  * @author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -24,8 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <io.h>
 #include <string.h>
+#include <io.h> 
 #include "wadtool.h"
 
 // MACROS ------------------------------------------------------------------
@@ -93,7 +94,7 @@ void DestroyList(void)
 void CollectFiles(const char *basepath)
 {
 	long hFile;
-	struct _finddata_t fd;
+    struct _finddata_t fd;
 	char findspec[256], path[256];
 
 	sprintf(findspec, "%s*.*", basepath);
@@ -189,7 +190,7 @@ int main(int argc, char **argv)
 	wadfile = argv[1];
 	if(argc > 2) prefix = argv[2];
 
-	srand(time(0));
+    srand((unsigned int)time(0));
 	rand();
 	rand();
 

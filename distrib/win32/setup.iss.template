@@ -33,6 +33,7 @@ Name: "Engine\jDoom"; Description: "jDoom (for DOOM/Ultimate DOOM/DOOM II/Final 
 Name: "Engine\jHeretic"; Description: "jHeretic (for Heretic/Heretic: Shadow of the Serpent Riders)"; Types: full compact
 Name: "Engine\jHexen"; Description: "jHexen (for Hexen/Hexen: Death Kings of the Dark Citadel)"; Types: full compact
 Name: "Launcher"; Description: "Doomsday Engine Launcher"; Types: full
+Name: "Tools"; Description: "Command line tools for data files"; Types: full
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -62,6 +63,11 @@ Source: "bin\dp*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: E
 Source: "bin\jDoom.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jDoom
 Source: "bin\jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHeretic
 Source: "bin\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
+
+; Tools
+Source: "bin\md2tool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
+Source: "bin\texc.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
+Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
 
 ; Libraries
 Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
@@ -132,7 +138,7 @@ Name: "{group}\{cm:UninstallProgram,Doomsday Engine}"; Filename: "{uninstallexe}
 Name: "{userdesktop}\Doomsday Engine"; Filename: "{app}\snowberry\snowberry.exe"; WorkingDir: "{app}\snowberry"; Tasks: desktopicon; Flags: createonlyiffileexists
 
 [Run]
-Filename: "{app}\bin\vcredist_x86.exe"; Parameters: "/passive"; Flags: runascurrentuser
+Filename: "{app}\bin\vcredist_x86.exe"; Parameters: "/q"; Flags: runascurrentuser
 Filename: "{app}\snowberry\snowberry.exe"; Description: "{cm:LaunchProgram,Doomsday Engine}"; WorkingDir: "{app}\snowberry"; Flags: nowait postinstall skipifdoesntexist skipifsilent
 
 [UninstallDelete]

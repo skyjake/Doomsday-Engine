@@ -2,7 +2,7 @@
 //**************************************************************************
 //**
 //** Doomsday Texture Compiler 
-//** by Jaakko Ker‰nen 
+//** by Jaakko Ker√§nen 
 //**
 //**************************************************************************
 
@@ -47,12 +47,19 @@ patch_t			plist;
 
 // CODE --------------------------------------------------------------------
 
+#ifdef UNIX
+void strupr(char* str)
+{
+    for(char* c = str; *c; c++) *c = toupper(*c);
+}
+#endif
+
 //===========================================================================
 // CheckOption
 //	Checks the command line for the given option, and returns its index
 //	number if it exists. Zero is returned if the option is not found.
 //===========================================================================
-int CheckOption(char *opt)
+int CheckOption(const char *opt)
 {
 	for(int i = 1; i < myargc; i++)
 		if(!stricmp(myargv[i], opt))
@@ -99,7 +106,7 @@ void SkipComment()
 	if(ch == '\n') return; // Comment ends right away.
 	if(ch != '>') // Single-line comment?
 	{
-		while(FGetC() != '\n' && !endOfSource);
+		while(FGetC() != '\n' && !endOfSource) {}
 	}
 	else // Multiline comment?
 	{
@@ -159,7 +166,7 @@ int ReadToken()
 //===========================================================================
 void PrintBanner(void)
 {
-	printf("## Doomsday Texture Compiler "VERSION_STR" by Jaakko Ker\x084nen\n\n");
+	printf("## Doomsday Texture Compiler "VERSION_STR" by Jaakko Keranen <jaakko.keranen@iki.fi>\n\n");
 }
 
 //===========================================================================
@@ -269,7 +276,7 @@ void CloseData(void)
 //===========================================================================
 // Message
 //===========================================================================
-void Message(char *format, ...)
+void Message(const char *format, ...)
 {
 	va_list args;
 
@@ -601,7 +608,7 @@ void WriteTextureGroup(int idx)
 	sprintf(fn, "TEXTURE%i.LMP", idx + 1);
 	// Count the number of texture definitions in the group.
 	for(count = 0, it = root[idx].next; it != &root[idx]; 
-		it = it->next, count++);
+		it = it->next, count++) {}
 	if(!count) return; // Nothing to write!
 	if((file = fopen(fn, "wb")) == NULL)
 	{

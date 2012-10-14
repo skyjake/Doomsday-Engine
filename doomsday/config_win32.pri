@@ -18,6 +18,7 @@ DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
 
 # Install locations:
 DENG_BASE_DIR = $$DENG_WIN_PRODUCTS_DIR
+DENG_BIN_DIR  = $$DENG_BASE_DIR/bin
 DENG_LIB_DIR  = $$DENG_BASE_DIR/bin
 DENG_DATA_DIR = $$DENG_BASE_DIR/data
 DENG_DOCS_DIR = $$DENG_BASE_DIR/doc

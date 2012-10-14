@@ -70,7 +70,7 @@ struct patchdir_t
 //===========================================================================
 // FindLump
 //===========================================================================
-int FindLump(char *name, lumpinfo_t *lumps, int numLumps)
+int FindLump(const char *name, lumpinfo_t *lumps, int numLumps)
 {
 	for(int i = 0; i < numLumps; i++)
 		if(!strnicmp(name, lumps[i].name, 8))

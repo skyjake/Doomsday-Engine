@@ -6,5 +6,13 @@ CONFIG += ordered
 SUBDIRS = \
     build \
     libdeng2 libdeng \
-    engine plugins host \
-    postbuild
+    engine plugins host
+
+!deng_notools {
+    SUBDIRS += \
+        ../tools/md2tool \
+        ../tools/texc
+    win32: SUBDIRS += ../tools/wadtool
+}
+
+SUBDIRS += postbuild

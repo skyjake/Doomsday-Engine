@@ -26,6 +26,8 @@ $CP plugins/jheretic/jHeretic.bundle $BUILDDIR/jHeretic.bundle
 $CP plugins/jhexen/jHexen.bundle $BUILDDIR/jHexen.bundle
 $CP plugins/jdoom64/jDoom64.bundle $BUILDDIR/jDoom64.bundle
 $CP plugins/fmod/dsFMOD.bundle $BUILDDIR/dsFMOD.bundle
+$CP $SRCDIR/../tools/texc/texc $APPDIR/Resources
+$CP $SRCDIR/../tools/md2tool/md2tool $APPDIR/Resources
 
 if [ -e plugins/fluidsynth/dsFluidSynth.bundle ]; then
     $CP plugins/fluidsynth/dsFluidSynth.bundle $BUILDDIR/dsFluidSynth.bundle
