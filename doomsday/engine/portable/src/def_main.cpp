@@ -560,9 +560,10 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
 
 ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean isCustom)
 {
-    ded_ptcgen_t* def;
-    int i;
-    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+    DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
+
+    ded_ptcgen_t* def = defs.ptcGens;
+    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         materialid_t defMatId;
 
@@ -716,7 +717,7 @@ static void Def_InitTextDef(ddtext_t* txt, char* str)
     // Handle null pointers with "".
     if(!str) str = "";
 
-    txt->text = M_Calloc(strlen(str) + 1);
+    txt->text = (char*) M_Calloc(strlen(str) + 1);
     for(out = txt->text, in = str; *in; out++, in++)
     {
         if(*in == '\\')
@@ -740,7 +741,7 @@ static void Def_InitTextDef(ddtext_t* txt, char* str)
     }
 
     // Adjust buffer to fix exactly.
-    txt->text = M_Realloc(txt->text, strlen(txt->text) + 1);
+    txt->text = (char*) M_Realloc(txt->text, strlen(txt->text) + 1);
 }
 
 /**
@@ -748,6 +749,8 @@ static void Def_InitTextDef(ddtext_t* txt, char* str)
  */
 int Def_ReadDEDFile(const char* fn, PathDirectoryNodeType type, void* parm)
 {
+    DENG_UNUSED(parm);
+
     // Skip directories.
     if(type == PT_BRANCH)
         return true;
@@ -991,8 +994,10 @@ void Def_GenerateGroupsFromAnims(void)
     }
 }
 
-static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* paramaters)
+static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* parameters)
 {
+    DENG_UNUSED(parameters);
+
     Uri* texUri = Textures_ComposeUri(texId);
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
@@ -1029,8 +1034,10 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
     return 0; // Continue iteration.
 }
 
-static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters)
+static int generateMaterialDefForFlatTexture(textureid_t texId, void* parameters)
 {
+    DENG_UNUSED(parameters);
+
     Uri* texUri = Textures_ComposeUri(texId);
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
@@ -1065,8 +1072,10 @@ static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters
     return 0; // Continue iteration.
 }
 
-static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramaters)
+static int generateMaterialDefForSpriteTexture(textureid_t texId, void* parameters)
 {
+    DENG_UNUSED(parameters);
+
     Uri* texUri = Textures_ComposeUri(texId);
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
@@ -1324,8 +1333,7 @@ void Def_Read(void)
             if(!stricmp(defs.text[i].id, defs.text[k].id) && texts[k].text)
             {
                 // Update the earlier string.
-                texts[i].text =
-                    M_Realloc(texts[i].text, strlen(texts[k].text) + 1);
+                texts[i].text = (char*) M_Realloc(texts[i].text, strlen(texts[k].text) + 1);
                 strcpy(texts[i].text, texts[k].text);
 
                 // Free the later string, it isn't used (>NUMTEXT).
@@ -1778,7 +1786,7 @@ int Def_Get(int type, const char* id, void* out)
         i = *((long*) id);
         if(i < 0 || i >= countSounds.num)
             return false;
-        strcpy(out, sounds[i].lumpName);
+        strcpy((char*)out, sounds[i].lumpName);
         return true;
 
     case DD_DEF_MUSIC:
@@ -1902,7 +1910,7 @@ int Def_Get(int type, const char* id, void* out)
         for(i = defs.count.lineTypes.num - 1; i >= 0; i--)
         {
             if(defs.lineTypes[i].id != typeId) continue;
-            if(out) Def_CopyLineType(out, &defs.lineTypes[i]);
+            if(out) Def_CopyLineType((linetype_t*)out, &defs.lineTypes[i]);
             return true;
         }
         return false;
@@ -1912,7 +1920,7 @@ int Def_Get(int type, const char* id, void* out)
         for(i = defs.count.sectorTypes.num - 1; i >= 0; i--)
         {
             if(defs.sectorTypes[i].id != typeId) continue;
-            if(out) Def_CopySectorType(out, &defs.sectorTypes[i]);
+            if(out) Def_CopySectorType((sectortype_t*)out, &defs.sectorTypes[i]);
             return true;
         }
         return false;
@@ -1922,10 +1930,6 @@ int Def_Get(int type, const char* id, void* out)
     }
 }
 
-/**
- * This is supposed to be the main interface for outside parties to
- * modify definitions (unless they want to do it manually with dedfile.h).
- */
 int Def_Set(int type, int index, int value, const void* ptr)
 {
     ded_music_t* musdef = 0;
@@ -1937,8 +1941,8 @@ int Def_Set(int type, int index, int value, const void* ptr)
         if(index < 0 || index >= defs.count.text.num)
             Con_Error("Def_Set: Text index %i is invalid.\n", index);
 
-        defs.text[index].text = M_Realloc(defs.text[index].text, strlen((char*)ptr) + 1);
-        strcpy(defs.text[index].text, ptr);
+        defs.text[index].text = (char*) M_Realloc(defs.text[index].text, strlen((char*)ptr) + 1);
+        strcpy(defs.text[index].text, (char const*) ptr);
         break;
 
     case DD_DEF_STATE: {
@@ -1978,7 +1982,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
         {
         case DD_LUMP:
             S_StopSound(index, 0);
-            strcpy(sounds[index].lumpName, ptr);
+            strcpy(sounds[index].lumpName, (char const*) ptr);
             if(strlen(sounds[index].lumpName))
             {
                 sounds[index].lumpNum = F_LumpNumForName(sounds[index].lumpName);
@@ -2018,12 +2022,12 @@ int Def_Set(int type, int index, int value, const void* ptr)
         {
         case DD_ID:
             if(ptr)
-                strcpy(musdef->id, ptr);
+                strcpy(musdef->id, (char const*) ptr);
             break;
 
         case DD_LUMP:
             if(ptr)
-                strcpy(musdef->lumpName, ptr);
+                strcpy(musdef->lumpName, (char const*) ptr);
             break;
 
         case DD_CD_TRACK:
@@ -2073,7 +2077,7 @@ StringArray* Def_ListStateIDs(void)
  */
 D_CMD(ListMobjs)
 {
-    int i;
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
     if(defs.count.mobjs.num <= 0)
     {
@@ -2082,7 +2086,7 @@ D_CMD(ListMobjs)
     }
 
     Con_Printf("Registered Mobjs (ID | Name):\n");
-    for(i = 0; i < defs.count.mobjs.num; ++i)
+    for(int i = 0; i < defs.count.mobjs.num; ++i)
     {
         if(defs.mobjs[i].name[0])
             Con_Printf(" %s | %s\n", defs.mobjs[i].id, defs.mobjs[i].name);

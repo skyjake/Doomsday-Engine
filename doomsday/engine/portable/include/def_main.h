@@ -30,6 +30,9 @@
 extern "C" {
 #endif
 
+// the actual classes are game-side
+struct xgclass_s;
+
 typedef struct sfxinfo_s {
     void* data; /// Pointer to sound data.
     lumpnum_t lumpNum;
@@ -58,6 +61,7 @@ extern ded_light_t** stateLights;
 extern ded_ptcgen_t** statePtcGens;
 extern ded_count_t countSprNames;
 extern ded_count_t countStates;
+extern struct xgclass_s* xgClassLinks;
 
 void            Def_Init(void);
 int             Def_GetGameClasses(void);
@@ -110,6 +114,12 @@ int             Def_EvalFlags(char* string);
  * @return  @c true= the definition was found.
  */
 int Def_Get(int type, const char* id, void* out);
+
+/**
+ * This is supposed to be the main interface for outside parties to
+ * modify definitions (unless they want to do it manually with dedfile.h).
+ */
+int Def_Set(int type, int index, int value, const void* ptr);
 
 boolean Def_SameStateSequence(state_t* snew, state_t* sold);
 

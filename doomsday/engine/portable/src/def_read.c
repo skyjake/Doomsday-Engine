@@ -151,9 +151,6 @@ typedef struct dedsource_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-// the actual classes are game-side
-extern xgclass_t* xgClassLinks;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 char dedReadError[512];
