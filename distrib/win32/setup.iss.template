@@ -63,6 +63,11 @@ Source: "bin\jDoom.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components:
 Source: "bin\jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHeretic
 Source: "bin\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
 
+; Tools
+Source: "bin\md2tool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
+Source: "bin\texc.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
+Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion;
+
 ; Libraries
 Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
 Source: "bin\deng1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
@@ -132,7 +137,7 @@ Name: "{group}\{cm:UninstallProgram,Doomsday Engine}"; Filename: "{uninstallexe}
 Name: "{userdesktop}\Doomsday Engine"; Filename: "{app}\snowberry\snowberry.exe"; WorkingDir: "{app}\snowberry"; Tasks: desktopicon; Flags: createonlyiffileexists
 
 [Run]
-Filename: "{app}\bin\vcredist_x86.exe"; Parameters: "/passive"; Flags: runascurrentuser
+Filename: "{app}\bin\vcredist_x86.exe"; Parameters: "/q"; Flags: runascurrentuser
 Filename: "{app}\snowberry\snowberry.exe"; Description: "{cm:LaunchProgram,Doomsday Engine}"; WorkingDir: "{app}\snowberry"; Flags: nowait postinstall skipifdoesntexist skipifsilent
 
 [UninstallDelete]

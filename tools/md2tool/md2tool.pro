@@ -8,6 +8,7 @@ TEMPLATE = app
 TARGET = md2tool
 
 CONFIG -= app_bundle
+win32: CONFIG += console
 QT -= core gui
 
 SOURCES += md2tool.c
@@ -17,6 +18,5 @@ HEADERS += md2tool.h anorms.h
 # Installation.
 !macx {
     INSTALLS += target
-    win32: target.path = $$DENG_WIN_PRODUCTS_DIR
-     else: target.path = $$DENG_BIN_DIR
+    target.path = $$DENG_BIN_DIR
 }

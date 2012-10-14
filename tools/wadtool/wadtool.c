@@ -94,7 +94,7 @@ void DestroyList(void)
 void CollectFiles(const char *basepath)
 {
 	long hFile;
-	struct finddata_s fd;
+    struct _finddata_t fd;
 	char findspec[256], path[256];
 
 	sprintf(findspec, "%s*.*", basepath);
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 	wadfile = argv[1];
 	if(argc > 2) prefix = argv[2];
 
-	srand(time(0));
+    srand((unsigned int)time(0));
 	rand();
 	rand();
 

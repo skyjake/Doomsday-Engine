@@ -745,7 +745,7 @@ win32 {
     # Windows installation.
     INSTALLS += target data startupdata startupgfx startupfonts license icon
 
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_BIN_DIR
 
     data.path = $$DENG_DATA_DIR
     startupdata.path = $$DENG_DATA_DIR
