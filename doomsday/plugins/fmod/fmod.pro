@@ -5,10 +5,8 @@ include(../config_plugin.pri)
 include(../../dep_fmod.pri)
 
 TEMPLATE = lib
-win32|macx: TARGET = dsFMOD
-      else: TARGET = dsfmod
-
-VERSION = $$FMOD_VERSION
+TARGET   = fmod
+VERSION  = $$FMOD_VERSION
 
 deng_debug: DEFINES += DENG_DSFMOD_DEBUG
 
@@ -50,7 +48,7 @@ else {
 }
 
 macx {
-    linkToBundledLibdeng2(dsFMOD)
-    linkToBundledLibdeng(dsFMOD)
+    linkToBundledLibdeng2(fmod)
+    linkToBundledLibdeng(fmod)
 }
 

@@ -19,13 +19,19 @@ echo "Clearing existing bundles..."
 rm -rf $BUILDDIR/*.bundle
 
 echo "Copying bundles from plugins..."
-$CP plugins/dehread/dpDehRead.bundle $BUILDDIR/dpDehRead.bundle
-$CP plugins/wadmapconverter/dpWadMapConverter.bundle $BUILDDIR/dpWadMapConverter.bundle
-$CP plugins/jdoom/jDoom.bundle $BUILDDIR/jDoom.bundle
-$CP plugins/jheretic/jHeretic.bundle $BUILDDIR/jHeretic.bundle
-$CP plugins/jhexen/jHexen.bundle $BUILDDIR/jHexen.bundle
-$CP plugins/jdoom64/jDoom64.bundle $BUILDDIR/jDoom64.bundle
-$CP plugins/fmod/dsFMOD.bundle $BUILDDIR/dsFMOD.bundle
+PLUGDIR=$APPDIR/DengPlugins
+rm -rf $PLUGDIR
+mkdir -p $PLUGDIR
+$CP plugins/dehread/dehread.bundle                 $PLUGDIR/
+$CP plugins/wadmapconverter/wadmapconverter.bundle $PLUGDIR/
+$CP plugins/jdoom/doom.bundle                      $PLUGDIR/
+$CP plugins/jheretic/heretic.bundle                $PLUGDIR/
+$CP plugins/jhexen/hexen.bundle                    $PLUGDIR/
+$CP plugins/jdoom64/doom64.bundle                  $PLUGDIR/
+$CP plugins/fmod/fmod.bundle                       $PLUGDIR/
+
+# Tools
+#$CP $SRCDIR/../tools/wadtool/wadtool $APPDIR/Resources
 $CP $SRCDIR/../tools/texc/texc $APPDIR/Resources
 $CP $SRCDIR/../tools/md2tool/md2tool $APPDIR/Resources
 

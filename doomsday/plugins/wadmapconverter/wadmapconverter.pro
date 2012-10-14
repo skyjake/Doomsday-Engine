@@ -8,10 +8,8 @@ CONFIG += dengplugin_libdeng2_full
 include(../config_plugin.pri)
 
 TEMPLATE = lib
-win32|macx: TARGET = dpWadMapConverter
-      else: TARGET = dpwadmapconverter
-
-VERSION = $$WADMAPCONVERTER_VERSION
+TARGET   = wadmapconverter
+VERSION  = $$WADMAPCONVERTER_VERSION
 
 deng_debug: DEFINES += DENG_WADMAPCONVERTER_DEBUG
 
@@ -47,6 +45,6 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(dpWadMapConverter)
-    linkToBundledLibdeng(dpWadMapConverter)
+    linkToBundledLibdeng2(wadmapconverter)
+    linkToBundledLibdeng(wadmapconverter)
 }
