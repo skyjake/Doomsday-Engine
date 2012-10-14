@@ -79,25 +79,24 @@ bool LibraryFile::hasUnderscoreName(const String& nameAfterUnderscore) const
 bool LibraryFile::recognize(const File& file)
 {
     // Check the extension first.
-    if(!QLibrary::isLibrary(file.name()))
+    if(QLibrary::isLibrary(file.name()))
     {
-        return false;
+        // Looks like a library.
+        return true;
     }
 
-#if defined(Q_OS_MAC)
-    if(file.name().beginsWith("libdengplugin_"))
+#ifdef MACOSX
+    // On Mac OS X, shared libraries are in the folder bundle format.
+    // The LibraryFile will point to the actual binary inside the bundle.
+    // Libraries must be loaded from native files.
+    const NativeFile* native = dynamic_cast<const NativeFile*>(&file);
+    if(native)
     {
-        return true;
-    }
-#elif defined(Q_OS_UNIX)
-    if(file.name().beginsWith("libdengplugin_"))
-    {
-        return true;
-    }
-#elif defined(Q_OS_WIN32)
-    if(file.name().beginsWith("dengplugin_"))
-    {
-        return true;
+        String parentFolderName = native->nativePath().fileNamePath().fileName();
+        if(QLibrary::isLibrary(parentFolderName))
+        {
+            return true;
+        }
     }
 #endif
     return false;

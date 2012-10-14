@@ -103,7 +103,9 @@ void App::initSubsystems()
     // All of these are in read-only mode.
 #ifdef MACOSX
     String appDir = _appPath.fileNameNativePath();
-    _fs.makeFolder("/bin").attach(new DirectoryFeed(appDir));
+    Folder& binFolder = _fs.makeFolder("/bin");
+    binFolder.attach(new DirectoryFeed(appDir));
+    binFolder.attach(new DirectoryFeed(appDir / "../DengPlugins"));
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
     _fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
