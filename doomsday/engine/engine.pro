@@ -236,8 +236,8 @@ DENG_HEADERS += \
     portable/include/library.h \
     portable/include/linedef.h \
     portable/include/lumpcache.h \
-    portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
+    portable/include/lumpindex.h \
     portable/include/lumpinfo.h \
     portable/include/m_bams.h \
     portable/include/m_decomp64.h \
@@ -499,11 +499,12 @@ SOURCES += \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
     portable/src/filedirectory.cpp \
+    portable/src/fileid.cpp \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \
     portable/src/fs_main.cpp \
-    portable/src/fs_util.c \
-    portable/src/game.c \
+    portable/src/fs_util.cpp \
+    portable/src/game.cpp \
     portable/src/gamemap.c \
     portable/src/generators.c \
     portable/src/genericfile.cpp \
@@ -525,8 +526,8 @@ SOURCES += \
     portable/src/keycode.cpp \
     portable/src/library.c \
     portable/src/linedef.c \
-    portable/src/lumpdirectory.cpp \
     portable/src/lumpfile.cpp \
+    portable/src/lumpindex.cpp \
     portable/src/m_bams.c \
     portable/src/m_decomp64.c \
     portable/src/m_linkedlist.c \
@@ -744,7 +745,7 @@ win32 {
     # Windows installation.
     INSTALLS += target data startupdata startupgfx startupfonts cfg license icon
 
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_BIN_DIR
 
     data.path = $$DENG_DATA_DIR
     startupdata.path = $$DENG_DATA_DIR

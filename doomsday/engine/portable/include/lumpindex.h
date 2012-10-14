@@ -1,12 +1,12 @@
 /**
- * @file lumpdirectory.h
+ * @file lumpindex.h
  *
- * Indexed directory of lumps.
+ * Index of lumps.
  *
  * @ingroup fs
  *
  * Virtual file system component used to model an indexable collection of
- * lumps. A single directory may include lumps originating from many different
+ * lumps. A single index may include lumps originating from many different
  * file containers.
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -27,9 +27,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_LUMPDIRECTORY_H
-#define LIBDENG_FILESYS_LUMPDIRECTORY_H
+#ifndef LIBDENG_FILESYS_LUMPINDEX_H
+#define LIBDENG_FILESYS_LUMPINDEX_H
 
+#include "de_base.h" /// For lumpnum_t (@todo which should be moved here)
 #include "abstractfile.h"
 #include "lumpinfo.h"
 
@@ -38,29 +39,30 @@
 namespace de {
 
 /**
- * @defgroup lumpDirectoryFlags Lump Directory Flags
+ * @defgroup lumpIndexFlags Lump Index Flags
  */
 ///{
-#define LDF_UNIQUE_PATHS                0x1 ///< Lumps in the directory must have unique paths.
-                                            /// Inserting a lump with the same path as one which
-                                            /// already exists will result in the earlier lump
-                                            /// being pruned.
+
+/// Lumps in the index must have unique paths. Inserting a lump with the same
+/// path as one which already exists will result in the earlier lump being pruned.
+#define LIF_UNIQUE_PATHS                0x1
+
 ///}
 
-class LumpDirectory
+class LumpIndex
 {
 public:
-    typedef QList<LumpInfo const*> LumpInfos;
+    typedef QList<LumpInfo const*> Lumps;
 
 public:
     /**
-     * @param flags  @ref lumpDirectoryFlags
+     * @param flags  @ref lumpIndexFlags
      */
-    LumpDirectory(int flags = 0);
-    ~LumpDirectory();
+    LumpIndex(int flags = 0);
+    ~LumpIndex();
 
     /// Number of lumps in the directory.
-    int size();
+    int size() const;
 
     /// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
     bool isValidIndex(lumpnum_t lumpNum);
@@ -68,21 +70,25 @@ public:
     /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
     lumpnum_t indexForPath(char const* path);
 
-    /// @return  LumpInfo for the lump with index @a lumpNum.
-    LumpInfo const* lumpInfo(lumpnum_t lumpNum);
+    /**
+     * @return  LumpInfo for the lump with index @a lumpNum.
+     *
+     * @throws de::Error    If @a lumpNum is not valid.
+     */
+    LumpInfo const& lumpInfo(lumpnum_t lumpNum);
 
     /**
      * Provides access to the list of lumps for efficient traversals.
      */
-    LumpInfos const& lumps();
+    Lumps const& lumps() const;
 
     /**
-     * Clear the directory back to its default (i.e., empty state).
+     * Clear the index back to its default (i.e., empty state).
      */
     void clear();
 
     /**
-     * Are any lumps from @a file published in this directory?
+     * Are any lumps from @a file published in this index?
      *
      * @param file      File containing the lumps to look for.
      *
@@ -91,7 +97,7 @@ public:
     bool catalogues(AbstractFile& file);
 
     /**
-     * Append a new set of lumps to the directory.
+     * Append a new set of lumps to the index.
      *
      * @post Lump name hashes may be invalidated (will be rebuilt upon next search).
      *
@@ -117,7 +123,7 @@ public:
      *
      * @return  @c true if found and pruned.
      */
-    bool pruneLump(LumpInfo* lumpInfo);
+    bool pruneLump(LumpInfo& lumpInfo);
 
 private:
     struct Instance;
@@ -126,4 +132,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG_FILESYS_LUMPDIRECTORY_H
+#endif // LIBDENG_FILESYS_LUMPINDEX_H

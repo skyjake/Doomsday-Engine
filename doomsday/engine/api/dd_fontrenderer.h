@@ -180,7 +180,7 @@ int FR_TextWidth(const char* text);
 /// @return  Visible height of the text.
 int FR_TextHeight(const char* text);
 
-/**
+/*
  * Single characters:
  */
 
@@ -190,7 +190,7 @@ int FR_TextHeight(const char* text);
  * @param ch  Character to be drawn.
  * @param origin  Origin/offset at which to begin drawing.
  * @param alignFlags  @ref alignmentFlags
- * @param flags  @ref drawTextFlags
+ * @param textFlags  @ref drawTextFlags
  */
 void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short textFlags);
 void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags);

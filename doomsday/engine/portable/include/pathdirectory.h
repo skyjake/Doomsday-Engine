@@ -118,10 +118,10 @@ public:
      *       another PathDirectoryNode (possibly from another PathDirectory instance). This
      *       would allow for further optimizations in the file system (among others) -ds
      */
-    int matchDirectory(int flags, PathMap* candidatePath);
+    int matchDirectory(int flags, PathMap* candidatePath) const;
 
     /// @return  The path fragment which this node represents.
-    const ddstring_t* pathFragment() const;
+    ddstring_t const* pathFragment() const;
 
     /**
      * Composes and/or calculates the composed-length of the path for this node.

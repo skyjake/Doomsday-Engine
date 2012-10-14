@@ -20,107 +20,67 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_filesys.h"
-
+#include "lumpindex.h"
 #include "lumpfile.h"
-#include "lumpdirectory.h"
 
-#include <de/Error>
-#include <de/Log>
-#include <de/memory.h>
+namespace de {
 
-de::LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
+LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
     : AbstractFile(FT_LUMPFILE, path, file, info)
 {}
 
-de::LumpFile::~LumpFile()
-{
-    F_ReleaseFile(reinterpret_cast<abstractfile_s*>(this));
-}
+LumpFile::~LumpFile()
+{}
 
-LumpInfo const* de::LumpFile::lumpInfo(int /*lumpIdx*/)
+de::PathDirectoryNode const& LumpFile::lumpDirectoryNode(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
-    return info();
+    return container().lumpDirectoryNode(info().lumpIdx);
 }
 
-int de::LumpFile::lumpCount()
+AutoStr* LumpFile::composeLumpPath(int /*lumpIdx*/, char delimiter)
 {
-    return 1; // Always.
+    // Lump files are special cases for this *is* the lump.
+    return container().composeLumpPath(info().lumpIdx, delimiter);
 }
 
-int de::LumpFile::publishLumpsToDirectory(LumpDirectory* directory)
+size_t LumpFile::lumpSize(int /*lumpIdx*/)
 {
-    LOG_AS("LumpFile");
-    if(directory)
-    {
-        // This *is* the lump, so insert ourself in the directory.
-        AbstractFile* container = reinterpret_cast<de::AbstractFile*>(info()->container);
-        if(container)
-        {
-            directory->catalogLumps(*container, info()->lumpIdx, 1);
-        }
-    }
+    // Lump files are special cases for this *is* the lump.
+    return info().size;
+}
+
+size_t LumpFile::readLump(int /*lumpIdx*/, uint8_t* buffer, bool tryCache)
+{
+    // Lump files are special cases for this *is* the lump.
+    return container().readLump(info().lumpIdx, buffer, tryCache);
+}
+
+size_t LumpFile::readLump(int /*lumpIdx*/, uint8_t* buffer, size_t startOffset,
+    size_t length, bool tryCache)
+{
+    // Lump files are special cases for this *is* the lump.
+    return container().readLump(info().lumpIdx, buffer, startOffset, length, tryCache);
+}
+
+uint8_t const* LumpFile::cacheLump(int /*lumpIdx*/)
+{
+    // Lump files are special cases for this *is* the lump.
+    return container().cacheLump(info().lumpIdx);
+}
+
+LumpFile& LumpFile::unlockLump(int /*lumpIdx*/)
+{
+    // Lump files are special cases for this *is* the lump.
+    container().unlockLump(info().lumpIdx);
+    return *this;
+}
+
+int LumpFile::publishLumpsToIndex(LumpIndex& index)
+{
+    // This *is* the lump, so insert ourself as a lump of our container in the index.
+    index.catalogLumps(container(), info().lumpIdx, 1);
     return 1;
 }
 
-/**
- * C Wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::LumpFile*>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::LumpFile const*>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    de::LumpFile* self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    de::LumpFile const* self = TOINTERNAL_CONST(inst)
-
-LumpFile* LumpFile_New(DFile* file, char const* path, LumpInfo const* info)
-{
-    if(!info) LegacyCore_FatalError("LumpFile_New: Received invalid LumpInfo (=NULL).");
-    try
-    {
-        return reinterpret_cast<LumpFile*>(new de::LumpFile(*reinterpret_cast<de::DFile*>(file), path, *info));
-    }
-    catch(de::Error& er)
-    {
-        QString msg = QString("LumpFile_New: Failed to instantiate new LumpFile. ") + er.asText();
-        LegacyCore_FatalError(msg.toUtf8().constData());
-        exit(1); // Unreachable.
-    }
-}
-
-void LumpFile_Delete(LumpFile* lump)
-{
-    if(lump)
-    {
-        SELF(lump);
-        delete self;
-    }
-}
-
-LumpInfo const* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx)
-{
-    SELF(lump);
-    return self->lumpInfo(lumpIdx);
-}
-
-int LumpFile_LumpCount(LumpFile* lump)
-{
-    SELF(lump);
-    return self->lumpCount();
-}
-
-int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory)
-{
-    SELF(lump);
-    return self->publishLumpsToDirectory(reinterpret_cast<de::LumpDirectory*>(directory));
-}
+} // namespace de

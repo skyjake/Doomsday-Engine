@@ -72,8 +72,8 @@ public:
     DFile& setList(struct filelist_s* list);
 
     /// @todo Should not be visible outside the engine.
-    AbstractFile* file();
-    AbstractFile* file() const;
+    AbstractFile& file();
+    AbstractFile& file() const;
 
     /// @return  @c true iff this handle's internal state is valid.
     bool isValid() const;
@@ -115,10 +115,6 @@ public:
      */
     DFile& rewind();
 
-#if _DEBUG
-    static void debugPrint(DFile const& hndl);
-#endif
-
     friend class DFileBuilder;
 
 private:
@@ -159,10 +155,6 @@ size_t DFile_Tell(DFile* hndl);
 size_t DFile_Seek(DFile* hndl, size_t offset, SeekMethod whence);
 
 void DFile_Rewind(DFile* hndl);
-
-#if _DEBUG
-void DFile_DebugPrint(DFile const* file);
-#endif
 
 #ifdef __cplusplus
 } // extern "C"

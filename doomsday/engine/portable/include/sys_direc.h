@@ -31,6 +31,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct directory_s {
     int drive;
     filename_t path;
@@ -122,5 +126,9 @@ boolean Dir_mkpath(const char* path);
  * @return  @c true if the change was successful.
  */
 boolean Dir_SetCurrent(const char* path);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_DIREC_H */

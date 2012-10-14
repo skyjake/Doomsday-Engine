@@ -79,15 +79,10 @@ extern "C" {
  */
 
 /// @return  File object represented by this handle.
-AbstractFile* DFile_File(DFile* hndl);
-
-/// @return  FileList object which owns this handle.
-struct filelist_s* DFile_List(DFile* hndl);
-
-DFile* DFile_SetList(DFile* hndl, struct filelist_s* list);
+struct abstractfile_s* DFile_File(DFile* hndl);
 
 /// @return  File object represented by this handle.
-AbstractFile* DFile_File_const(DFile const* hndl);
+struct abstractfile_s* DFile_File_const(DFile const* hndl);
 
 #ifdef __cplusplus
 } // extern "C"

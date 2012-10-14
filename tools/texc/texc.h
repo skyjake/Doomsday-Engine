@@ -1,6 +1,13 @@
 #ifndef __DDTEXCOMPILER_H__
 #define __DDTEXCOMPILER_H__
 
+#ifdef UNIX
+#  include <strings.h>
+#  define strnicmp strncasecmp
+#  define stricmp strcasecmp
+void strupr(char* str);
+#endif
+
 #define VERSION_STR	"1.0"
 #define MAX_TOKEN	256
 #define NUM_GROUPS	2

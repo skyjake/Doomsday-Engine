@@ -1,29 +1,26 @@
-/**\file fs_util.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * File System Utility Routines.
+ * @file fs_util.cpp
+ *
+ * Miscellaneous file system utility routines.
+ *
+ * @ingroup fs
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifdef WIN32
@@ -36,13 +33,18 @@
 #  include <unistd.h>
 #endif
 
-#include <ctype.h>
+#include <cctype>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_filesys.h"
 #include "de_misc.h"
+
+#include <de/Log>
+
+using namespace de;
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* src)
 {
@@ -651,4 +653,58 @@ int F_MatchFileName(const char* string, const char* pattern)
         st++; // Skip remaining asterisks.
 
     return *st == 0;
+}
+
+boolean F_Dump(void const* data, size_t size, char const* path)
+{
+    DENG_ASSERT(data);
+    DENG_ASSERT(path);
+
+    if(!size) return false;
+
+    AutoStr* nativePath = AutoStr_NewStd();
+    Str_Set(nativePath, path);
+    F_ToNativeSlashes(nativePath, nativePath);
+
+    FILE* outFile = fopen(Str_Text(nativePath), "wb");
+    if(!outFile)
+    {
+        Con_Message("Warning: Failed to open \"%s\" for writing (error: %s), aborting.\n",
+                    F_PrettyPath(Str_Text(nativePath)), strerror(errno));
+        return false;
+    }
+
+    fwrite(data, 1, size, outFile);
+    fclose(outFile);
+    return true;
+}
+
+boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
+{
+    int lumpIdx;
+    de::AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
+    if(!file || !file->isValidIndex(lumpIdx)) return false;
+
+    char const* lumpName = App_FileSystem()->lumpName(absoluteLumpNum);
+    char const* fname;
+    if(path && path[0])
+    {
+        fname = path;
+    }
+    else
+    {
+        fname = lumpName;
+    }
+
+    bool dumpedOk = F_Dump(file->cacheLump(lumpIdx), file->lumpInfo(lumpIdx).size, fname);
+    file->unlockLump(lumpIdx);
+    if(!dumpedOk) return false;
+
+    LOG_VERBOSE("%s dumped to \"%s\"") << lumpName << F_PrettyPath(fname);
+    return true;
+}
+
+boolean F_DumpLump(lumpnum_t absoluteLumpNum)
+{
+    return F_DumpLump2(absoluteLumpNum, 0);
 }

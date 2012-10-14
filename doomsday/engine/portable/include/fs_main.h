@@ -9,15 +9,6 @@
  * WAD lumps means that a copy is taken of the lump when the corresponding
  * 'file' is opened. With big files this uses considerable memory and time.
  *
- * Internally, the cache has two parts: the Primary cache, which is loaded from
- * data files, and the Auxiliary cache, which is generated at runtime. To
- * outsiders, there is no difference between these two caches. The only visible
- * difference is that lumps in the auxiliary cache use indices starting from
- * AUXILIARY_BASE.
- *
- * Functions that don't know the lumpnum of file will have to check both
- * the primary and the auxiliary caches (e.g., F_CheckLumpNumForName()).
- *
  * @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -41,26 +32,335 @@
 #ifndef LIBDENG_FILESYS_MAIN_H
 #define LIBDENG_FILESYS_MAIN_H
 
-#include "zipfile.h"
-#include "wadfile.h"
-#include "lumpfile.h"
+#include "abstractfile.h"
+#include "dfile.h"
 #include "pathdirectory.h"
 
 #ifdef __cplusplus
+
 #include <QList>
-typedef QList<de::DFile*> FileList;
-#else // __cplusplus
+#include "lumpinfo.h"
+
+/**
+ * @defgroup fs File System
+ */
+
+namespace de
+{
+    /**
+     * Internally the lump index has two parts: the Primary index (which is populated
+     * with lumps from loaded data files) and the Auxiliary index (used to temporarily
+     * open a file that is not considered part of the filesystem).
+     *
+     * Functions that don't know the absolute/logical lumpnum of file will have to check
+     * both indexes (e.g., FS1::lumpNumForName()).
+     *
+     * @ingroup fs
+     */
+    class FS1
+    {
+    public:
+        typedef QList<DFile*> FileList;
+
+    public:
+        /**
+         * Constructs a new file system.
+         */
+        FS1();
+
+        virtual ~FS1();
+
+        /// Register the console commands, variables, etc..., of this module.
+        static void consoleRegister();
+
+        /**
+         * @post No more WADs will be loaded in startup mode.
+         */
+        void endStartup();
+
+        /**
+         * Remove all file records flagged Runtime.
+         * @return  Number of records removed.
+         */
+        int reset();
+
+        /**
+         * (Re-)Initialize the path mappings.
+         */
+        void initPathMap();
+
+        /**
+         * Add a new path mapping from source to destination in the vfs.
+         * @note Paths will be transformed into absolute paths if needed.
+         */
+        void mapPath(char const* source, char const* destination);
+
+        /**
+         * (Re-)Initialize the path => lump mappings.
+         * @note Should be called after WADs have been processed.
+         */
+        void initLumpPathMap();
+
+        /**
+         * Add a new lump mapping so that @a lumpName becomes visible as @a symbolicPath
+         * throughout the vfs.
+         * @note @a symbolicPath will be transformed into an absolute path if needed.
+         */
+        void mapPathToLump(char const* symbolicPath, char const* lumpName);
+
+        /**
+         * Reset known fileId records so that the next time F_CheckFileId() is
+         * called on a file, it will pass.
+         */
+        void resetFileIds();
+
+        /**
+         * Maintains a list of identifiers already seen.
+         *
+         * @return @c true if the given file can be opened, or
+         *         @c false, if it has already been opened.
+         */
+        bool checkFileId(char const* path);
+
+        /**
+         * @return  @c true if a file exists at @a path which can be opened for reading.
+         */
+        bool accessFile(char const* path);
+
+        /**
+         * @return  The time when the file was last modified, as seconds since
+         * the Epoch else zero if the file is not found.
+         */
+        uint lastModified(char const* fileName);
+
+        /**
+         * Files with a .wad extension are archived data files with multiple 'lumps',
+         * other files are single lumps whose base filename will become the lump name.
+         *
+         * @param path          Path to the file to be opened. Either a "real" file in the local
+         *                      file system, or a "virtual" file in the virtual file system.
+         * @param baseOffset    Offset from the start of the file in bytes to begin.
+         *
+         * @return  Newly added file instance if the operation is successful, else @c NULL.
+         */
+        AbstractFile* addFile(char const* path, size_t baseOffset = 0);
+
+        /// @note All files are added with baseOffset = @c 0.
+        int addFiles(char const* const* paths, int num);
+
+        /**
+         * Attempt to remove a file from the virtual file system.
+         *
+         * @param permitRequired  @c true= allow removal of resources marked as "required"
+         *                        by the currently loaded Game.
+         * @return @c true if the operation is successful.
+         */
+        bool removeFile(char const* path, bool permitRequired = false);
+
+        int removeFiles(char const* const* paths, int num, bool permitRequired = false);
+
+        /**
+         * Find a lump in the Zip LumpIndex.
+         *
+         * @param path      Path to search for. Relative paths are made absolute if necessary.
+         * @param lumpIdx   If not @c NULL the translated lumpnum within the owning file object is written here.
+         * @return  File system object representing the file which contains the found lump else @c NULL.
+         */
+        AbstractFile* findLumpFile(char const* path, int* lumpIdx = 0);
+
+        /// @return  Number of lumps in the currently active LumpIndex.
+        int lumpCount();
+
+        bool isValidLumpNum(lumpnum_t absoluteLumpNum);
+
+        lumpnum_t lumpNumForName(char const* name, bool silent = true);
+
+        char const* lumpName(lumpnum_t absoluteLumpNum);
+
+        /**
+         * Given a logical @a lumpnum retrieve the associated file object.
+         *
+         * @post The active LumpIndex may have changed!
+         *
+         * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
+         * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
+         *                          file object is written here.
+         *
+         * @return  Found file object else @c NULL
+         */
+        AbstractFile* lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
+
+        // Convenient lookup method for when only the path is needed from the source file.
+        inline char const* lumpFilePath(lumpnum_t absoluteLumpNum) {
+            if(AbstractFile* file = lumpFile(absoluteLumpNum)) return Str_Text(file->path());
+            return "";
+        }
+
+        // Convenient lookup method for when only the custom property is needed from the source file.
+        bool lumpFileHasCustom(lumpnum_t absoluteLumpNum) {
+            if(AbstractFile* file = lumpFile(absoluteLumpNum)) return file->hasCustom();
+            return false;
+        }
+
+        /**
+         * Retrieve the LumpInfo metadata structure for a lump.
+         *
+         * @post The active LumpIndex may have changed!
+         *
+         * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
+         * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
+         *                          file object is written here.
+         * @return
+         */
+        LumpInfo const* lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
+
+        // Convenient lookup method for when only the length property is needed from a LumpInfo.
+        inline size_t lumpLength(lumpnum_t absoluteLumpNum) {
+            if(LumpInfo const* info = lumpInfo(absoluteLumpNum)) return info->size;
+            return 0;
+        }
+
+        // Convenient lookup method for when only the last-modified property is needed from a LumpInfo.
+        inline uint lumpLastModified(lumpnum_t absoluteLumpNum) {
+            if(LumpInfo const* info = lumpInfo(absoluteLumpNum)) return info->lastModified;
+            return 0;
+        }
+
+        /**
+         * Opens the given file (will be translated) for reading.
+         *
+         * @post If @a allowDuplicate = @c false a new file ID for this will have been
+         * added to the list of known file identifiers if this file hasn't yet been
+         * opened. It is the responsibility of the caller to release this identifier when done.
+         *
+         * @param path      Possibly relative or mapped path to the resource being opened.
+         * @param mode      't' = text mode (with real files, lumps are always binary)
+         *                  'b' = binary
+         *                  'f' = must be a real file in the local file system
+         * @param baseOffset  Offset from the start of the file in bytes to begin.
+         * @param allowDuplicate  @c false = open only if not already opened.
+         *
+         * @return  Opened file reference/handle else @c NULL.
+         */
+        DFile* openFile(char const* path, char const* mode, size_t baseOffset = 0,
+                        bool allowDuplicate = true);
+
+        /**
+         * Try to locate the specified lump for reading.
+         *
+         * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
+         *
+         * @return  Handle to the opened file if found.
+         */
+        DFile* openLump(lumpnum_t absoluteLumpNum);
+
+        /// Clear all references to this file.
+        void releaseFile(AbstractFile& file);
+
+        /// Close this file handle.
+        void closeFile(DFile& hndl);
+
+        /// Completely destroy this file; close if open, clear references and any acquired identifiers.
+        void deleteFile(DFile& hndl);
+
+        /**
+         * Parm is passed on to the callback, which is called for each file
+         * matching the filespec. Absolute path names are given to the callback.
+         * Zip directory, DD_DIREC and the real files are scanned.
+         *
+         * @param flags  @see searchPathFlags
+         */
+        int allResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters = 0);
+
+        /**
+         * Finds all files.
+         *
+         * @param found         Set of files that match the result.
+         *
+         * @return  Number of files found.
+         */
+        int findAll(FileList& found);
+
+        /**
+         * Finds all files which meet the supplied @a predicate.
+         *
+         * @param predicate     If not @c NULL, this predicate evaluator callback must
+         *                      return @c true for a given file to be included in the
+         *                      @a found FileList.
+         * @param parameters    Passed to the predicate evaluator callback.
+         * @param found         Set of files that match the result.
+         *
+         * @return  Number of files found.
+         */
+        int findAll(bool (*predicate)(DFile* hndl, void* parameters), void* parameters,
+                    FileList& found);
+
+        /**
+         * Print contents of the specified directory of the virtual file system.
+         */
+        void printDirectory(ddstring_t const* path);
+
+        /**
+         * Print contents of the primary lump index.
+         */
+        void printIndex();
+
+        /**
+         * Calculate a CRC for the loaded file list.
+         */
+        uint loadedFilesCRC();
+
+        /**
+         * Try to open the specified WAD archive into the auxiliary lump index.
+         *
+         * @return  Base index for lumps in this archive.
+         */
+        lumpnum_t openAuxiliary(char const* fileName, size_t baseOffset = 0);
+
+        /**
+         * Close the auxiliary lump index if open.
+         */
+        void closeAuxiliary();
+
+    private:
+        struct Instance;
+        Instance* d;
+
+        /**
+         * Removes a file from any lump indexes.
+         *
+         * @param file  File to remove from the index.
+         */
+        void deindex(AbstractFile& file);
+
+        bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
+
+        FILE* findRealFile(char const* path, char const* mymode, ddstring_t** foundPath);
+
+        /**
+         * @param mode 'b' = binary mode
+         *             't' = text mode
+         *             'f' = must be a real file in the local file system.
+         *             'x' = skip buffering (used with file-access and metadata-acquire processes).
+         */
+        DFile* tryOpenFile2(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
+        DFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
+    };
+
+} // namespace de
+
+de::FS1* App_FileSystem();
+
+extern "C" {
+#endif // __cplusplus
+
+/**
+ * C wrapper API:
+ */
+
 struct filelist_s;
 typedef struct filelist_s FileList;
-#endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define AUXILIARY_BASE      100000000
-
-/// Register the console commands, variables, etc..., of this module.
 void F_Register(void);
 
 /// Initialize this module. Cannot be re-initialized, must shutdown first.
@@ -69,46 +369,50 @@ void F_Init(void);
 /// Shutdown this module.
 void F_Shutdown(void);
 
-/**
- * @post No more WADs will be loaded in startup mode.
- */
 void F_EndStartup(void);
 
-/**
- * Remove all file records flagged Runtime.
- * @return  Number of records removed.
- */
 int F_Reset(void);
 
-/**
- * Reset known fileId records so that the next time F_CheckFileId() is
- * called on a file, it will pass.
- */
+void F_InitVirtualDirectoryMappings(void);
+
+void F_AddVirtualDirectoryMapping(char const* source, char const* destination);
+
+void F_InitLumpDirectoryMappings(void);
+
+void F_AddLumpDirectoryMapping(char const* lumpName, char const* symbolicPath);
+
 void F_ResetFileIds(void);
 
-/**
- * Calculate an identifier for the file based on its full path name.
- * The identifier is the MD5 hash of the path.
- */
-void F_GenerateFileId(char const* str, byte identifier[16]);
-
-void F_PrintFileId(byte identifier[16]);
-
-/**
- * Maintains a list of identifiers already seen.
- *
- * @return @c true if the given file can be opened, or
- *         @c false, if it has already been opened.
- */
 boolean F_CheckFileId(char const* path);
 
-/// @return  @c true if the FileId associated with @a path was released.
-boolean F_ReleaseFileId(char const* path);
-
-/// @return  Number of files in the currently active primary LumpDirectory.
 int F_LumpCount(void);
 
+int F_Access(char const* path);
+
+uint F_GetLastModified(char const* fileName);
+
+struct abstractfile_s* F_AddFile2(char const* path, size_t baseOffset);
+struct abstractfile_s* F_AddFile(char const* path/*, baseOffset = 0*/);
+
+boolean F_RemoveFile2(char const* path, boolean permitRequired);
+boolean F_RemoveFile(char const* path/*, permitRequired = false */);
+
+int F_AddFiles(char const* const* paths, int num);
+
+int F_RemoveFiles3(char const* const* paths, int num, boolean permitRequired);
+int F_RemoveFiles(char const* const* paths, int num/*, permitRequired = false */);
+
+DFile* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
+DFile* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
+DFile* F_Open(char const* path, char const* mode/*, baseOffset = 0 */);
+
+DFile* F_OpenLump(lumpnum_t absoluteLumpNum);
+
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
+
+lumpnum_t F_LumpNumForName(char const* name);
+
+char const* F_LumpSourceFile(lumpnum_t absoluteLumpNum);
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
 
@@ -116,195 +420,45 @@ char const* F_LumpName(lumpnum_t absoluteLumpNum);
 
 size_t F_LumpLength(lumpnum_t absoluteLumpNum);
 
-char const* F_LumpSourceFile(lumpnum_t absoluteLumpNum);
-
 uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
 
-/**
- * Given a logical @a lumpnum retrieve the associated file object.
- *
- * @post The active LumpDirectory may have changed!
- *
- * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
- * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
- *                          file object is written here.
- *
- * @return  Found file object else @c NULL
- */
-AbstractFile* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-AbstractFile* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
+struct abstractfile_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
+struct abstractfile_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0 */);
 
-LumpInfo const* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-LumpInfo const* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
+void F_Close(struct dfile_s* file);
 
-lumpnum_t F_CheckLumpNumForName2(char const* name, boolean silent);
-lumpnum_t F_CheckLumpNumForName(char const* name);
+void F_Delete(struct dfile_s* file);
 
-/**
- * Try to open the specified WAD archive into the auxiliary lump cache.
- * @return  Base index for lumps in this archive.
- */
-lumpnum_t F_OpenAuxiliary3(char const* fileName, size_t baseOffset, boolean silent);
-lumpnum_t F_OpenAuxiliary2(char const* fileName, size_t baseOffset); /* silent = false */
-lumpnum_t F_OpenAuxiliary(char const* fileName); /* baseOffset = 0 */
+Str const* F_Path(struct abstractfile_s const* file);
 
-void F_CloseAuxiliary(void);
+void F_SetCustom(struct abstractfile_s* file, boolean yes);
 
-/**
- * Find a lump in the Zip LumpDirectory.
- *
- * @param path      Path to search for. Relative paths are made absolute if necessary.
- * @param lumpIdx   If not @c NULL the translated lumpnum within the owning file object is written here.
- * @return  File system object representing the file which contains the found lump else @c NULL.
- */
-AbstractFile* F_FindLumpFile(char const* path, int* lumpIdx);
+AutoStr* F_ComposeLumpPath2(struct abstractfile_s* file, int lumpIdx, char delimiter);
+AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx); /*delimiter='/'*/
 
-/**
- * Files with a .wad extension are archived data files with multiple 'lumps',
- * other files are single lumps whose base filename will become the lump name.
- *
- * @param path          Path to the file to be opened. Either a "real" file in the local
- *                      file system, or a "virtual" file in the virtual file system.
- * @param baseOffset    Offset from the start of the file in bytes to begin.
- * @param allowDuplicate  @c true = allow opening multiple copies of the same file.
- * @return  Handle to the opened file if the operation is successful, else @c NULL.
- */
-DFile* F_AddFile(char const* path, size_t baseOffset, boolean allowDuplicate);
+size_t F_ReadLump(struct abstractfile_s* file, int lumpIdx, uint8_t* buffer);
 
-/**
- * Attempt to remove a file from the virtual file system.
- *
- * @param permitRequired  @c true= allow removal of resources marked as "required"
- *                        by the currently loaded Game.
- * @return @c true if the operation is successful.
- */
-boolean F_RemoveFile(char const* path, boolean permitRequired);
-
-boolean F_AddFiles(char const* const* paths, int num, boolean allowDuplicate);
-boolean F_RemoveFiles(char const* const* paths, int num, boolean permitRequired);
-
-/**
- * @return  @c true if the file can be opened for reading.
- */
-int F_Access(char const* path);
-
-/**
- * Opens the given file (will be translated) for reading.
- *
- * @post If @a allowDuplicate = @c false a new file ID for this will have been
- * added to the list of known file identifiers if this file hasn't yet been
- * opened. It is the responsibility of the caller to release this identifier when done.
- *
- * @param path      Possibly relative or mapped path to the resource being opened.
- * @param mode      't' = text mode (with real files, lumps are always binary)
- *                  'b' = binary
- *                  'f' = must be a real file in the local file system
- * @param baseOffset  Offset from the start of the file in bytes to begin.
- * @param allowDuplicate  @c false = open only if not already opened.
- *
- * @return  Opened file reference/handle else @c NULL.
- */
-DFile* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
-DFile* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
-DFile* F_Open(char const* path, char const* mode/*, baseOffset = 0 */);
-
-/**
- * Try to locate the specified lump for reading.
- *
- * @param lumpNum  Absolute index of the lump to open.
- *
- * @return  Handle to the opened file if found.
- */
-DFile* F_OpenLump(lumpnum_t lumpNum);
-
-/**
- * Write the data associated with the specified lump index to @a fileName.
- *
- * @param lumpNum   Absolute index of the lump to open.
- * @param fileName  If not @c NULL write the associated data to this path.
- *                  Can be @c NULL in which case the fileName will be chosen automatically.
- *
- * @return  @c true iff successful.
- */
-boolean F_DumpLump(lumpnum_t lumpNum, char const* fileName);
-
-/**
- * Write data into a file.
- *
- * @param data  Data to write.
- * @param size  Size of the data in bytes.
- * @param path  Path of the file to create (existing file replaced).
- *
- * @return @c true if successful, otherwise @c false.
- */
-boolean F_Dump(void const* data, size_t size, char const* path);
-
-/**
- * @return  The time when the file was last modified, as seconds since
- * the Epoch else zero if the file is not found.
- */
-uint F_GetLastModified(char const* fileName);
-
-void F_InitVirtualDirectoryMappings(void);
-
-/**
- * Add a new virtual directory mapping from source to destination in the vfs.
- * @note Paths will be transformed into absolute paths if needed.
- */
-void F_AddVirtualDirectoryMapping(char const* source, char const* destination);
-
-/// @note Should be called after WADs have been processed.
-void F_InitLumpDirectoryMappings(void);
-
-/**
- * Add a new lump mapping so that @a lumpName becomes visible as @a symbolicPath
- * throughout the vfs.
- * @note @a symbolicPath will be transformed into an absolute path if needed.
- */
-void F_AddLumpDirectoryMapping(char const* lumpName, char const* symbolicPath);
-
-/**
- * Compiles a list of PWAD file names, separated by @a delimiter.
- */
-void F_GetPWADFileNames(char* buf, size_t bufSize, char const* delimiter);
-
-/**
- * Calculate a CRC for the loaded file list.
- */
-uint F_CRCNumber(void);
-
-/// Clear all references to this file.
-void F_ReleaseFile(AbstractFile* file);
-
-/// Close this file.
-void F_Close(DFile* file);
-
-/// Completely destroy this file; close if open, clear references and any acquired identifiers.
-void F_Delete(DFile* file);
-
-AutoStr* F_ComposeLumpPath2(AbstractFile* file, int lumpIdx, char delimiter);
-AutoStr* F_ComposeLumpPath(AbstractFile* file, int lumpIdx); /*delimiter='/'*/
-
-struct pathdirectorynode_s* F_LumpDirectoryNode(AbstractFile* file, int lumpIdx);
-
-LumpInfo const* F_LumpInfo(AbstractFile* file, int lumpIdx);
-
-size_t F_ReadLumpSection(AbstractFile* file, int lumpIdx, uint8_t* buffer,
+size_t F_ReadLumpSection(struct abstractfile_s* file, int lumpIdx, uint8_t* buffer,
                          size_t startOffset, size_t length);
 
-uint8_t const* F_CacheLump(AbstractFile* file, int lumpIdx);
+uint8_t const* F_CacheLump(struct abstractfile_s* file, int lumpIdx);
 
-void F_UnlockLump(AbstractFile* file, int lumpIdx);
+void F_UnlockLump(struct abstractfile_s* file, int lumpIdx);
 
 /**
- * Parm is passed on to the callback, which is called for each file
- * matching the filespec. Absolute path names are given to the callback.
- * Zip directory, DD_DIREC and the real files are scanned.
- *
- * @param flags  @see searchPathFlags
+ * Compiles a list of file names, separated by @a delimiter.
  */
-int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (ddstring_t const* path, PathDirectoryNodeType type, void* parameters), void* parameters);
-int F_AllResourcePaths(char const* searchPath, int flags, int (*callback) (ddstring_t const* path, PathDirectoryNodeType type, void* parameters)/*, parameters = 0 */);
+void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size_t outBufSize, const char* delimiter);
+
+int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters);
+int F_AllResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters)/*, parameters = 0 */);
+
+uint F_CRCNumber(void);
+
+lumpnum_t F_OpenAuxiliary2(char const* fileName, size_t baseOffset);
+lumpnum_t F_OpenAuxiliary(char const* fileName/*, baseOffset = 0 */);
+
+void F_CloseAuxiliary(void);
 
 #ifdef __cplusplus
 } // extern "C"

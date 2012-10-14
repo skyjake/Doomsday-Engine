@@ -56,7 +56,7 @@ typedef enum slopetype_e {
     ST_NEGATIVE
 } slopetype_t;
 
-/// @todo Should be a public typedef of a type defined by de::LumpDirectory.
+/// @todo Should be a public typedef of a type defined by de::LumpIndex.
 typedef int32_t         lumpnum_t;
 #define LUMPNAME_T_MAXLEN 9
 #define LUMPNAME_T_LASTINDEX 8

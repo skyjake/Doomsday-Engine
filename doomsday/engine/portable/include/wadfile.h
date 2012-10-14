@@ -27,25 +27,15 @@
 #ifndef LIBDENG_FILESYS_WADFILE_H
 #define LIBDENG_FILESYS_WADFILE_H
 
+#ifdef __cplusplus
+
 #include "lumpinfo.h"
 #include "abstractfile.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct lumpdirectory_s;
-struct pathdirectorynode_s;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
-
 namespace de {
 
-class LumpDirectory;
+class DFile;
+class LumpIndex;
 class PathDirectoryNode;
 
 /**
@@ -53,6 +43,13 @@ class PathDirectoryNode;
  */
 class WadFile : public AbstractFile
 {
+public:
+    /// Base class for format-related errors. @ingroup errors
+    DENG2_ERROR(FormatError);
+
+    /// The requested entry does not exist in the wad. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
 public:
     WadFile(DFile& file, char const* path, LumpInfo const& info);
     ~WadFile();
@@ -70,13 +67,15 @@ public:
     bool empty();
 
     /**
-     * Lookup a directory node for a lump contained by this file.
+     * Retrieve the directory node for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return  Found directory node else @c NULL if @a lumpIdx is not valid.
+     * @return  Directory node for this lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
      */
-    PathDirectoryNode* lumpDirectoryNode(int lumpIdx);
+    PathDirectoryNode& lumpDirectoryNode(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.
@@ -92,15 +91,15 @@ public:
     AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
-     * Lookup a lump info descriptor for a lump contained by this file.
+     * Retrieve the LumpInfo descriptor for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return Found lump info.
+     * @return Lump info descriptor for the lump.
      *
      * @throws de::Error    If @a lumpIdx is not valid.
      */
-    LumpInfo const* lumpInfo(int lumpIdx);
+    LumpInfo const& lumpInfo(int lumpIdx);
 
     /**
      * Lookup the uncompressed size of lump contained by this file.
@@ -141,8 +140,8 @@ public:
      *
      * @return Number of bytes read.
      */
-    size_t readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
-                           bool tryCache = true);
+    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+                    bool tryCache = true);
 
     /**
      * Read the data associated with lump @a lumpIdx into the cache.
@@ -181,14 +180,14 @@ public:
     WadFile& clearLumpCache();
 
     /**
-     * Publish lumps to the end of the specified @a directory.
+     * Publish lumps to the end of the specified @a index.
      *
-     * @param directory Directory to publish to.
+     * @param index  Index to publish to.
      *
-     * @return Number of lumps published to the directory. Note that this is not
+     * @return Number of lumps published to the index. Note that this is not
      *         necessarily equal to the the number of lumps in the file.
      */
-    int publishLumpsToDirectory(LumpDirectory* directory);
+    int publishLumpsToIndex(LumpIndex& index);
 
     /**
      * @attention Uses an extremely simple formula which does not conform to any CRC
@@ -217,59 +216,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-/**
- * C wrapper API:
- */
-
 struct wadfile_s; // The wadfile instance (opaque)
-typedef struct wadfile_s WadFile;
-
-/**
- * Constructs a new WadFile instance which must be destroyed with WadFile_Delete()
- * once it is no longer needed.
- *
- * @param file      Virtual file handle to the underlying file resource.
- * @param path      Virtual file system path to associate with the resultant WadFile.
- * @param info      File info descriptor for the resultant WadFile. A copy is made.
- */
-WadFile* WadFile_New(DFile* file, char const* path, LumpInfo const* info);
-
-/**
- * Destroy WadFile instance @a wad.
- */
-void WadFile_Delete(WadFile* wad);
-
-int WadFile_PublishLumpsToDirectory(WadFile* wad, struct lumpdirectory_s* directory);
-
-struct pathdirectorynode_s* WadFile_LumpDirectoryNode(WadFile* wad, int lumpIdx);
-
-AutoStr* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter);
-
-LumpInfo const* WadFile_LumpInfo(WadFile* wad, int lumpIdx);
-
-size_t WadFile_ReadLump2(WadFile* wad, int lumpIdx, uint8_t* buffer, boolean tryCache);
-size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer/*, tryCache = true*/);
-
-size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
-size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length/*, tryCache = true*/);
-
-uint8_t const* WadFile_CacheLump(WadFile* wad, int lumpIdx);
-
-void WadFile_UnlockLump(WadFile* wad, int lumpIdx);
-
-void WadFile_ClearLumpCache(WadFile* wad);
-
-uint WadFile_CalculateCRC(WadFile* wad);
-
-boolean WadFile_IsValidIndex(WadFile* wad, int lumpIdx);
-
-int WadFile_LastIndex(WadFile* wad);
-
-int WadFile_LumpCount(WadFile* wad);
-
-boolean WadFile_Empty(WadFile* wad);
-
-boolean WadFile_Recognise(DFile* file);
+//typedef struct wadfile_s WadFile;
 
 #ifdef __cplusplus
 } // extern "C"

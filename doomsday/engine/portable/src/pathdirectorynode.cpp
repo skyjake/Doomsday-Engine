@@ -139,7 +139,7 @@ static int matchPathFragment(const char* string, const char* pattern)
 
 /// @note This routine is also used as an iteration callback, so only return
 ///       a non-zero value when the node is a match for the search term.
-int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
+int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern) const
 {
     if(((flags & PCF_NO_LEAF)   && PT_LEAF   == type()) ||
        ((flags & PCF_NO_BRANCH) && PT_BRANCH == type()))
@@ -158,7 +158,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
     PathDirectory& pd = directory();
     uint fragmentCount = PathMap_Size(searchPattern);
 
-    de::PathDirectoryNode* node = this;
+    de::PathDirectoryNode const* node = this;
     for(uint i = 0; i < fragmentCount; ++i)
     {
         if(i == 0 && node->type() == PT_LEAF)
@@ -166,7 +166,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
             char buf[256];
             qsnprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
 
-            const ddstring_t* fragment = pd.pathFragment(node);
+            ddstring_t const* fragment = pd.pathFragment(node);
             DENG2_ASSERT(fragment);
 
             if(!matchPathFragment(Str_Text(fragment), buf))
@@ -195,7 +195,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern)
                     sfraglen = (sfragment->to - sfragment->from) + 1;
 
                 // Compare the path fragment to that of the search term.
-                const ddstring_t* fragment = pd.pathFragment(node);
+                ddstring_t const* fragment = pd.pathFragment(node);
                 if(Str_Length(fragment) < sfraglen ||
                    qstrnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
                 {

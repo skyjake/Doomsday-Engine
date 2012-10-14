@@ -1,7 +1,7 @@
 /**
  * @file abstractfile.cpp
  *
- * Abstract base for all classes which represent opened files.
+ * Abstract base for all classes which represent loaded files.
  *
  * @ingroup fs
  *
@@ -28,173 +28,87 @@
 
 #include "abstractfile.h"
 
-de::AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
-    : type_(_type), file(&file)
+namespace de {
+
+AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
+    : file(&file), type_(_type), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.
+    /// @todo Does not belong at this level. Load order should be determined
+    ///       at file system level. -ds
     static uint fileCounter = 0;
     DENG2_ASSERT(VALID_FILETYPE(_type));
     order = fileCounter++;
 
-    flags.startup = false;
-    flags.custom = true;
     Str_Init(&path_); Str_Set(&path_, _path);
-    F_CopyLumpInfo(&info_, &_info);
+    info_ = _info;
 }
 
-de::AbstractFile::~AbstractFile()
+AbstractFile::~AbstractFile()
 {
+    App_FileSystem()->releaseFile(*this);
     Str_Free(&path_);
-    F_DestroyLumpInfo(&info_);
     if(file) delete file;
 }
 
-filetype_t de::AbstractFile::type() const
+filetype_t AbstractFile::type() const
 {
     return type_;
 }
 
-LumpInfo const* de::AbstractFile::info() const
+LumpInfo const& AbstractFile::info() const
 {
-    return &info_;
+    return info_;
 }
 
-de::AbstractFile* de::AbstractFile::container() const
+bool AbstractFile::isContained() const
 {
-    return reinterpret_cast<de::AbstractFile*>(info_.container);
+    return !!info_.container;
 }
 
-size_t de::AbstractFile::baseOffset() const
+AbstractFile& AbstractFile::container() const
 {
-    return (file? file->baseOffset() : 0);
+    if(!info_.container) throw de::Error("AbstractFile::container", QString("%s is not contained").arg(Str_Text(path())));
+    return *info_.container;
 }
 
-de::DFile* de::AbstractFile::handle()
+de::DFile& de::AbstractFile::handle()
 {
-    return file;
+    return *file;
 }
 
-ddstring_t const* de::AbstractFile::path() const
+ddstring_t const* AbstractFile::path() const
 {
     return &path_;
 }
 
-uint de::AbstractFile::loadOrderIndex() const
+uint AbstractFile::loadOrderIndex() const
 {
     return order;
 }
 
-uint de::AbstractFile::lastModified() const
+bool AbstractFile::hasStartup() const
 {
-    return info_.lastModified;
+    return flags.testFlag(Startup);
 }
 
-bool de::AbstractFile::hasStartup() const
+AbstractFile& AbstractFile::setStartup(bool yes)
 {
-    return !!flags.startup;
+    if(yes) flags |= Startup;
+    else    flags &= ~Startup;
+    return *this;
 }
 
-void de::AbstractFile::setStartup(bool yes)
+bool AbstractFile::hasCustom() const
 {
-    flags.startup = yes;
+    return flags.testFlag(Custom);
 }
 
-bool de::AbstractFile::hasCustom() const
+AbstractFile& AbstractFile::setCustom(bool yes)
 {
-    return !!flags.custom;
+    if(yes) flags |= Custom;
+    else    flags &= ~Custom;
+    return *this;
 }
 
-void de::AbstractFile::setCustom(bool yes)
-{
-    flags.custom = yes;
-}
-
-/**
- * C Wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::AbstractFile*>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::AbstractFile const*>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    de::AbstractFile* self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    de::AbstractFile const* self = TOINTERNAL_CONST(inst)
-
-filetype_t AbstractFile_Type(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return self->type();
-}
-
-LumpInfo const* AbstractFile_Info(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return self->info();
-}
-
-AbstractFile* AbstractFile_Container(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return reinterpret_cast<AbstractFile*>(self->container());
-}
-
-size_t AbstractFile_BaseOffset(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return self->baseOffset();
-}
-
-DFile* AbstractFile_Handle(AbstractFile* af)
-{
-    SELF(af);
-    return reinterpret_cast<DFile*>(self->handle());
-}
-
-ddstring_t const* AbstractFile_Path(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return self->path();
-}
-
-uint AbstractFile_LoadOrderIndex(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return self->loadOrderIndex();
-}
-
-uint AbstractFile_LastModified(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return self->lastModified();
-}
-
-boolean AbstractFile_HasStartup(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return self->hasStartup();
-}
-
-void AbstractFile_SetStartup(AbstractFile* af, boolean yes)
-{
-    SELF(af);
-    self->setStartup(CPP_BOOL(yes));
-}
-
-boolean AbstractFile_HasCustom(AbstractFile const* af)
-{
-    SELF_CONST(af);
-    return self->hasCustom();
-}
-
-void AbstractFile_SetCustom(AbstractFile* af, boolean yes)
-{
-    SELF(af);
-    self->setCustom(CPP_BOOL(yes));
-}
+} // namespace de

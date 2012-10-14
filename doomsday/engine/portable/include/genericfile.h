@@ -28,16 +28,19 @@
 #ifndef LIBDENG_FILESYS_GENERICFILE_H
 #define LIBDENG_FILESYS_GENERICFILE_H
 
-#include "lumpinfo.h"
-#include "abstractfile.h"
-
 #ifdef __cplusplus
+
+#include "abstractfile.h"
+#include "lumpinfo.h"
+
 namespace de {
 
-class LumpDirectory;
+class DFile;
+class LumpIndex;
+class PathDirectoryNode;
 
 /**
- * GenericFile. Runtime representation of a generic/unknown file for use with LumpDirectory
+ * GenericFile. Runtime representation of a generic/unknown file.
  */
 class GenericFile : public AbstractFile
 {
@@ -45,26 +48,96 @@ public:
     GenericFile(DFile& file, char const* path, LumpInfo const& info);
     ~GenericFile();
 
-    /// @return Number of lumps (always @c =1).
-    int lumpCount();
+    /**
+     * Retrieve the directory node for a lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return  Directory node for this lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
+     */
+    PathDirectoryNode const& lumpDirectoryNode(int lumpIdx);
 
     /**
-     * Lookup the lump info descriptor for this lump.
+     * Compose the absolute VFS path to a lump contained by this file.
      *
-     * @param lumpIdx       Ignored. Required argument.
+     * @note Always returns a valid string object. If @a lumpIdx is not valid a
+     *       zero-length string is returned.
      *
-     * @return Found lump info.
+     * @param lumpIdx       Logical index for the lump.
+     * @param delimiter     Delimit directory separators using this character.
+     *
+     * @return String containing the absolute path.
      */
-    LumpInfo const* lumpInfo(int lumpIdx);
+    AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
-     * Publish this lump to the end of the specified @a directory.
+     * Lookup the uncompressed size of lump contained by this file.
      *
-     * @param directory Directory to publish to.
+     * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return Number of lumps published to the directory. Always @c =1
+     * @return Size of the lump in bytes.
+     *
+     * @note This method is intended mainly for convenience. @see lumpInfo() for
+     *       a better method of looking up multiple @ref LumpInfo properties.
      */
-    int publishLumpsToDirectory(LumpDirectory* directory);
+    size_t lumpSize(int lumpIdx);
+
+    /**
+     * Read the data associated with lump @a lumpIdx into @a buffer.
+     *
+     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param buffer        Buffer to read into. Must be at least large enough to
+     *                      contain the whole lump.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     *
+     * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
+     */
+    size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true);
+
+    /**
+     * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
+     *
+     * @param lumpIdx       Lump index associated with the data to be read.
+     * @param buffer        Buffer to read into. Must be at least @a length bytes.
+     * @param startOffset   Offset from the beginning of the lump to start reading.
+     * @param length        Number of bytes to read.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     */
+    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+                    bool tryCache = true);
+
+    /**
+     * Read the data associated with lump @a lumpIdx into the cache.
+     *
+     * @param lumpIdx   Lump index associated with the data to be cached.
+     *
+     * @return Pointer to the cached copy of the associated data.
+     */
+    uint8_t const* cacheLump(int lumpIdx);
+
+    /**
+     * Remove a lock on a cached data lump.
+     *
+     * @param lumpIdx   Lump index associated with the cached data to be changed.
+     *
+     * @return This instance.
+     */
+    GenericFile& unlockLump(int lumpIdx);
+
+    /**
+     * Publish this lump to the end of the specified @a index.
+     *
+     * @param index  Index to publish to.
+     *
+     * @return Number of lumps published to the index. Always @c =1
+     */
+    int publishLumpsToIndex(LumpIndex& index);
 
 private:
     struct Instance;
@@ -76,27 +149,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-/**
- * C wrapper API:
- */
-
 struct genericfile_s; // The genericfile instance (opaque)
-typedef struct genericfile_s GenericFile;
-
-/**
- * Constructs a new GenericFile instance which must be destroyed with GenericFile_Delete()
- * once it is no longer needed.
- *
- * @param hndl      Virtual file handle to the underlying file resource.
- * @param path      Virtual file system path to associate with the resultant GenericFile.
- * @param info      File info descriptor for the resultant GenericFile. A copy is made.
- */
-GenericFile* GenericFile_New(DFile* hndl, char const* path, LumpInfo const* info);
-
-/**
- * Destroy GenericFile instance @a file.
- */
-void GenericFile_Delete(GenericFile* file);
+//typedef struct genericfile_s GenericFile;
 
 #ifdef __cplusplus
 } // extern "C"

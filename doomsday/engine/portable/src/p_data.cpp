@@ -45,6 +45,8 @@
 #include <de/stringpool.h>
 #include <de/memory.h>
 
+using de::FS;
+
 // Map entity definitions.
 static StringPool* entityDefs;
 typedef std::map<int, StringPoolId> EntityDefIdMap;
@@ -72,7 +74,7 @@ GameMap* theMap;
 const char* P_GenerateUniqueMapId(const char* mapID)
 {
     static char uid[255];
-    lumpnum_t lumpNum = F_CheckLumpNumForName2(mapID, true);
+    lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(mapID);
     ddstring_t fileName;
 
     Str_Init(&fileName);

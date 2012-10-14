@@ -29,25 +29,15 @@
 #ifndef LIBDENG_FILESYS_ZIPFILE_H
 #define LIBDENG_FILESYS_ZIPFILE_H
 
+#ifdef __cplusplus
+
 #include "abstractfile.h"
 #include "lumpinfo.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct lumpdirectory_s;
-struct pathdirectorynode_s;
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
-
 namespace de {
 
-class LumpDirectory;
+class DFile;
+class LumpIndex;
 class PathDirectoryNode;
 
 /**
@@ -72,13 +62,15 @@ public:
     bool empty();
 
     /**
-     * Lookup a directory node for a lump contained by this file.
+     * Retrieve the directory node for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return  Found directory node else @c NULL if @a lumpIdx is not valid.
+     * @return  Directory node for this lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
      */
-    PathDirectoryNode* lumpDirectoryNode(int lumpIdx);
+    PathDirectoryNode& lumpDirectoryNode(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.
@@ -94,15 +86,15 @@ public:
     AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
-     * Lookup a lump info descriptor for a lump contained by this file.
+     * Retrieve the LumpInfo descriptor for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
-     * @return Found lump info.
+     * @return Lump info descriptor for the lump.
      *
      * @throws de::Error    If @a lumpIdx is not valid.
      */
-    LumpInfo const* lumpInfo(int lumpIdx);
+    LumpInfo const& lumpInfo(int lumpIdx);
 
     /**
      * Lookup the uncompressed size of lump contained by this file.
@@ -143,8 +135,8 @@ public:
      *
      * @return Number of bytes read.
      */
-    size_t readLumpSection(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
-                           bool tryCache = true);
+    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
+                    bool tryCache = true);
 
     /**
      * Read the data associated with lump @a lumpIdx into the cache.
@@ -183,14 +175,14 @@ public:
     ZipFile& clearLumpCache();
 
     /**
-     * Publish lumps to the end of the specified @a directory.
+     * Publish lumps to the end of the specified @a index.
      *
-     * @param directory Directory to publish to.
+     * @param index  Index to publish to.
      *
-     * @return Number of lumps published to the directory. Note that this is not
+     * @return Number of lumps published to the index. Note that this is not
      *         necessarily equal to the the number of lumps in the file.
      */
-    int publishLumpsToDirectory(LumpDirectory* directory);
+    int publishLumpsToIndex(LumpIndex& index);
 
 // Static members ------------------------------------------------------------------
 
@@ -276,65 +268,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-/**
- * C wrapper API:
- */
-
 struct zipfile_s; // The  zipfile instance (opaque)
-typedef struct zipfile_s ZipFile;
-
-/**
- * Constructs a new ZipFile instance which must be destroyed with ZipFile_Delete()
- * once it is no longer needed.
- *
- * @param file      Virtual file handle to the underlying file resource.
- * @param path      Virtual file system path to associate with the resultant ZipFile.
- * @param info      File info descriptor for the resultant ZipFile. A copy is made.
- */
-ZipFile* ZipFile_New(DFile* file, const char* path, const LumpInfo* info);
-
-/**
- * Destroy ZipFile instance @a zip.
- */
-void ZipFile_Delete(ZipFile* zip);
-
-int ZipFile_PublishLumpsToDirectory(ZipFile* zip, struct lumpdirectory_s* directory);
-
-struct pathdirectorynode_s* ZipFile_LumpDirectoryNode(ZipFile* zip, int lumpIdx);
-
-AutoStr* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter);
-
-LumpInfo const* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx);
-
-size_t ZipFile_ReadLump2(ZipFile* zip, int lumpIdx, uint8_t* buffer, boolean tryCache);
-size_t ZipFile_ReadLump(ZipFile* zip, int lumpIdx, uint8_t* buffer/*, tryCache = true*/);
-
-size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
-size_t ZipFile_ReadLumpSection(ZipFile* zip, int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length/*, tryCache = true*/);
-
-uint8_t const* ZipFile_CacheLump(ZipFile* zip, int lumpIdx);
-
-void ZipFile_UnlockLump(ZipFile* zip, int lumpIdx);
-
-void ZipFile_ClearLumpCache(ZipFile* zip);
-
-boolean ZipFile_IsValidIndex(ZipFile* zip, int lumpIdx);
-
-int ZipFile_LastIndex(ZipFile* zip);
-
-int ZipFile_LumpCount(ZipFile* zip);
-
-boolean ZipFile_Empty(ZipFile* zip);
-
-boolean ZipFile_Recognise(DFile* file);
-
-uint8_t* ZipFile_Uncompress(uint8_t* in, size_t inSize, size_t* outSize);
-
-boolean ZipFile_UncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize);
-
-uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize);
-
-uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level);
+//typedef struct zipfile_s ZipFile;
 
 #ifdef __cplusplus
 } // extern "C"
