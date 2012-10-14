@@ -34,6 +34,10 @@
 #include "sys_audiod_sfx.h"
 #include "de_play.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Begin and end macros for Critical Operations. They are operations
 // that can't be done while a refresh is being made. No refreshing
 // will be done between BEGIN_COP and END_COP.
@@ -82,5 +86,9 @@ void            Sfx_UnloadSoundID(int id);
 void            Sfx_UpdateReverb(void);
 
 void            Sfx_DebugInfo(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

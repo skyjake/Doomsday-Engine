@@ -29,6 +29,10 @@
 #ifndef LIBDENG_HELP_H
 #define LIBDENG_HELP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Help string types.
 enum {
     HST_DESCRIPTION,
@@ -46,5 +50,9 @@ void DD_ShutdownHelp(void);
 
 void* DH_Find(const char* id);
 char* DH_GetString(void* found, int type);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_HELP_H */

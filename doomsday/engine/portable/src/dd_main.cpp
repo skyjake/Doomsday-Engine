@@ -1,5 +1,5 @@
 /**
- * @file dd_main.c
+ * @file dd_main.cpp
  *
  * Engine core.
  *
@@ -65,11 +65,7 @@ static int DD_DummyWorker(void* parameters);
 static void DD_AutoLoad(void);
 
 extern int renderTextures;
-extern int gotFrame;
 extern int monochrome;
-extern int gameDataFormat;
-extern int gameDrawHUD;
-extern int symbolicEchoMode;
 
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
 filename_t ddRuntimePath, ddBinPath;
@@ -91,6 +87,8 @@ static size_t numSessionResourceFileList;
 
 D_CMD(CheckForUpdates)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     Con_Message("Checking for available updates...\n");
     Updater_CheckNow(false/* don't notify */);
     return true;
@@ -98,6 +96,8 @@ D_CMD(CheckForUpdates)
 
 D_CMD(CheckForUpdatesAndNotify)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     /// @todo Combine into the same command with CheckForUpdates?
     Con_Message("Checking for available updates...\n");
     Updater_CheckNow(true/* do notify */);
@@ -106,12 +106,16 @@ D_CMD(CheckForUpdatesAndNotify)
 
 D_CMD(LastUpdated)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     Updater_PrintLastUpdated();
     return true;
 }
 
 D_CMD(ShowUpdateSettings)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     Updater_ShowSettings();
     return true;
 }
@@ -157,7 +161,7 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     F_FixSlashes(newPath, newPath);
     F_ExpandBasePath(newPath, newPath);
 
-    *list = M_Realloc(*list, sizeof(**list) * ++(*listSize));
+    *list = (ddstring_t**) M_Realloc(*list, sizeof(**list) * ++(*listSize));
     (*list)[(*listSize)-1] = newPath;
 }
 
@@ -1320,6 +1324,8 @@ static void DD_InitResourceSystem(void)
 
 static int DD_StartupWorker(void* parm)
 {
+    DENG_UNUSED(parm);
+
 #ifdef WIN32
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(NULL);
@@ -1439,6 +1445,7 @@ static int DD_StartupWorker(void* parm)
  */
 static int DD_DummyWorker(void *parm)
 {
+    DENG_UNUSED(parm);
     Con_SetProgress(200);
     BusyMode_WorkerEnd();
     return 0;
@@ -1983,6 +1990,8 @@ const char* value_Str(int val)
 
 D_CMD(Load)
 {
+    DENG_UNUSED(src);
+
     boolean didLoadGame = false, didLoadResource = false;
     ddstring_t foundPath, searchPath;
     Game* game;
@@ -2049,6 +2058,8 @@ D_CMD(Load)
 
 D_CMD(Unload)
 {
+    DENG_UNUSED(src);
+
     boolean didUnloadFiles = false;
     ddstring_t searchPath;
     Game* game;
@@ -2115,12 +2126,16 @@ D_CMD(Unload)
 
 D_CMD(Reset)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     DD_UpdateEngineState();
     return true;
 }
 
 D_CMD(ReloadGame)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     if(!DD_GameLoaded())
     {
         Con_Message("No game is presently loaded.\n");

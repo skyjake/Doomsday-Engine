@@ -288,6 +288,8 @@ extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 
 extern byte* translationTables;
 
+extern int gameDataFormat;
+
 void            R_UpdateData(void);
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);

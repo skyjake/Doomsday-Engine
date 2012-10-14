@@ -29,6 +29,10 @@
 #ifndef LIBDENG_FONT_RENDERER
 #define LIBDENG_FONT_RENDERER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DEFAULT_INITIALCOUNT        (0) ///< Used for animating type-in effects.
 
 #define DEFAULT_ALIGNFLAGS          (ALIGN_TOPLEFT)
@@ -64,5 +68,9 @@ void FR_SetNoFont(void);
 // Utility routines:
 int FR_SingleLineHeight(const char* text);
 int FR_GlyphTopToAscent(const char* text);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FONT_RENDERER */

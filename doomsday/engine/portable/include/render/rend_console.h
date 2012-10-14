@@ -31,6 +31,10 @@
 
 #include "point.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern byte consoleShowFPS;
 
 void Rend_ConsoleRegister(void);
@@ -61,5 +65,9 @@ void Rend_Console(void);
 
 /// @param origin  Origin of the display (top right) in screen-space coordinates.
 void Rend_ConsoleFPS(const Point2Raw* origin);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_CONSOLE_RENDER_H */

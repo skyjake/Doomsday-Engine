@@ -28,10 +28,18 @@
 #ifndef __DOOMSDAY_SOUND_LOGICAL_H__
 #define __DOOMSDAY_SOUND_LOGICAL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            Sfx_InitLogical(void);
 void            Sfx_PurgeLogical(void);
 void            Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating);
 int             Sfx_StopLogical(int id, mobj_t *origin);
 boolean         Sfx_IsPlaying(int id, mobj_t *origin);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

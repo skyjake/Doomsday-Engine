@@ -29,6 +29,10 @@
 #ifndef LIBDENG_RENDER_HALO_H
 #define LIBDENG_RENDER_HALO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int      haloOccludeSpeed;
 extern int      haloMode, haloRealistic, haloBright, haloSize;
 extern float    haloFadeMax, haloFadeMin, minHaloSize;
@@ -43,5 +47,9 @@ boolean         H_RenderHalo(coord_t x, coord_t y, coord_t z, float size,
 
 // Console commands.
 D_CMD(FlareConfig);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_RENDER_HALO_H */

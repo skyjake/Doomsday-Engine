@@ -486,7 +486,7 @@ SOURCES += \
     portable/src/dd_init.cpp \
     portable/src/dd_input.c \
     portable/src/dd_loop.c \
-    portable/src/dd_main.c \
+    portable/src/dd_main.cpp \
     portable/src/dd_pinit.c \
     portable/src/dd_plugin.c \
     portable/src/dd_wad.cpp \

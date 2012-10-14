@@ -80,7 +80,6 @@ static void strCpyLen(char* dest, const char* src, int maxWidth);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int glMaxTexSize;
-extern int gameDrawHUD;
 extern boolean stopTime;
 extern boolean tickUI;
 extern boolean drawGame;

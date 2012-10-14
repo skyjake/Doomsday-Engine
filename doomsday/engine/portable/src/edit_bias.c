@@ -39,7 +39,6 @@ D_CMD(BLEditor);
 
 void SBE_MenuSave(ui_object_t* ob);
 
-extern int gameDrawHUD;
 extern int numSources;
 extern byte freezeRLs;
 
