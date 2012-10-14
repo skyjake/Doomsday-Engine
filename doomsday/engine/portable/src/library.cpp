@@ -35,6 +35,8 @@
 #include "m_misc.h"
 
 #include <de/App>
+#include <de/NativeFile>
+#include <de/LibraryFile>
 
 #ifdef WIN32
 #  include "de_platform.h"
@@ -303,6 +305,7 @@ const char* Library_LastError(void)
     return Str_Text(lastError);
 }
 
+/*
 #ifdef UNIX
 static boolean isPossiblyLibraryFile(const char* path, const struct dirent* entry)
 {
@@ -330,9 +333,24 @@ static boolean isPossiblyLibraryFile(const char* path, const struct dirent* entr
     return true;
 }
 #endif
+*/
 
 int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *data)
 {
+    const de::FS::Index& libs = DENG2_APP->fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
+
+    DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
+    {
+        const de::NativeFile* native = dynamic_cast<const de::NativeFile*>(i->second);
+        if(native)
+        {
+            QByteArray nativePath = native->nativePath().toUtf8();
+            int result = func(nativePath.constData(), data);
+            if(result) return result;
+        }
+    }
+
+    /*
 #ifdef UNIX
     struct dirent* entry = NULL;
     filename_t bundlePath;
@@ -361,6 +379,6 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
 #ifdef WIN32
     printf("TODO: a similar routine exists in dd_winit.c; move the code here\n");
 #endif
-
+*/
     return 0;
 }

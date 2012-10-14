@@ -61,6 +61,10 @@ void Library_ReleaseGames(void);
 
 /**
  * Looks for dynamic libraries and calls @a func for each one.
+ *
+ * @return If all available libraries were iterated, returns 0. If @a func
+ * returns a non-zero value to indicate aborting the iteration at some point,
+ * that value is returned instead.
  */
 int Library_IterateAvailableLibraries(int (*func)(const char* fileName, void* data), void* data);
 
