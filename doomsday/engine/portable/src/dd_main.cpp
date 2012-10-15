@@ -289,8 +289,8 @@ static int addFilesFromAutoData(void)
                 // Ignore directories.
                 if(i->attrib & A_SUBDIR) continue;
 
-                QByteArray foundPathUtf8 = i->path.toUtf8();
-                if(F_AddFile(foundPathUtf8.constData()))
+                QByteArray foundPath = i->path.toUtf8();
+                if(F_AddFile(foundPath.constData()))
                 {
                     count += 1;
                 }
@@ -298,28 +298,6 @@ static int addFilesFromAutoData(void)
         }
     }
     return count;
-}
-
-typedef struct {
-    ddstring_t*** list;
-    size_t* listSize;
-    int count; /// Number of files loaded successfully.
-} listfilesfromautodata_params_t;
-
-/**
- * (f_allresourcepaths_callback_t)
- */
-static int listFilesWorker(char const* fileName, PathDirectoryNodeType type, void* parameters)
-{
-    DENG_ASSERT(fileName && parameters);
-    // We are only interested in files.
-    if(type == PT_LEAF)
-    {
-        listfilesfromautodata_params_t* data = (listfilesfromautodata_params_t*)parameters;
-        addToPathList(data->list, data->listSize, fileName);
-        data->count += 1;
-    }
-    return 0; // Continue searching.
 }
 
 /**
@@ -338,25 +316,33 @@ static int listFilesFromAutoData(ddstring_t*** list, size_t* listSize)
         0
     };
 
-    listfilesfromautodata_params_t data;
-    ddstring_t pattern;
-    uint i;
-
     if(!list || !listSize) return 0;
 
-    data.list = list;
-    data.listSize = listSize;
-    data.count = 0;
+    ddstring_t pattern; Str_InitStd(&pattern);
 
-    Str_Init(&pattern);
-    for(i = 0; extensions[i]; ++i)
+    uint numFilesAdded = 0;
+    for(uint i = 0; extensions[i]; ++i)
     {
         Str_Clear(&pattern);
         Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(&games->currentGame().dataPath()), extensions[i]);
-        F_AllResourcePaths2(Str_Text(&pattern), 0, listFilesWorker, (void*)&data);
+
+        FS1::PathList found;
+        if(App_FileSystem()->findAllPaths(Str_Text(&pattern), 0, found))
+        {
+            DENG2_FOR_EACH(i, found, FS1::PathList::const_iterator)
+            {
+                // Ignore directories.
+                if(i->attrib & A_SUBDIR) continue;
+
+                QByteArray foundPath = i->path.toUtf8();
+                addToPathList(list, listSize, foundPath.constData());
+                numFilesAdded += 1;
+            }
+        }
     }
     Str_Free(&pattern);
-    return data.count;
+
+    return numFilesAdded;
 }
 
 static boolean exchangeEntryPoints(pluginid_t pluginId)

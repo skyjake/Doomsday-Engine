@@ -316,15 +316,6 @@ namespace de
         int findAllPaths(char const* searchPattern, int flags, PathList& found);
 
         /**
-         * Parm is passed on to the callback, which is called for each file
-         * matching the filespec. Absolute path names are given to the callback.
-         * Zip directory, DD_DIREC and the real files are scanned.
-         *
-         * @param flags  @see searchPathFlags
-         */
-        int allResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters = 0);
-
-        /**
          * Print contents of the specified directory of the virtual file system.
          */
         void printDirectory(ddstring_t const* path);
@@ -478,9 +469,6 @@ void F_UnlockLump(struct abstractfile_s* file, int lumpIdx);
  * Compiles a list of file names, separated by @a delimiter.
  */
 void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size_t outBufSize, const char* delimiter);
-
-int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters);
-int F_AllResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters)/*, parameters = 0 */);
 
 uint F_CRCNumber(void);
 

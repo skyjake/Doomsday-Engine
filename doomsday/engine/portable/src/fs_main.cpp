@@ -760,24 +760,10 @@ int FS1::findAll(bool (*predicate)(de::DFile* hndl, void* parameters), void* par
     return numFound;
 }
 
-static int findPathsWorker(char const* path, PathDirectoryNodeType type, void* parameters)
+int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& found)
 {
-    FS1::PathList* found = (FS1::PathList*)parameters;
-    found->push_back(FS1::PathListItem(path, type == PT_BRANCH? A_SUBDIR : 0));
-    return 0; // Continue iteration.
-}
+    int const numFoundSoFar = found.count();
 
-int FS1::findAllPaths(char const* searchPattern, int flags, FS1::PathList& found)
-{
-    int numFoundSoFar = found.count();
-    allResourcePaths(searchPattern, flags, findPathsWorker, (void*)&found);
-    return found.count() - numFoundSoFar;
-}
-
-int FS1::allResourcePaths(char const* rawSearchPattern, int flags,
-    int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters),
-    void* parameters)
-{
     // First normalize the raw search pattern into one we can process.
     AutoStr* searchPattern = AutoStr_NewStd();
     Str_Set(searchPattern, rawSearchPattern);
@@ -792,9 +778,9 @@ int FS1::allResourcePaths(char const* rawSearchPattern, int flags,
     PathMap patternMap;
     PathMap_Initialize(&patternMap, PathDirectory::hashPathFragment, Str_Text(searchPattern));
 
-    // Check the Zip directory.
-    {
-    int result = 0;
+    /*
+     * Check the Zip directory.
+     */
     DENG2_FOR_EACH(i, d->zipLumpIndex.lumps(), LumpIndex::Lumps::const_iterator)
     {
         LumpInfo const* lumpInfo = *i;
@@ -820,46 +806,39 @@ int FS1::allResourcePaths(char const* rawSearchPattern, int flags,
 
         if(!patternMatched) continue;
 
-        result = callback(Str_Text(filePath), PT_LEAF, parameters);
-        if(result) break;
+        found.push_back(PathListItem(Str_Text(filePath), node.type() == PT_BRANCH? A_SUBDIR : 0));
     }
 
     PathMap_Destroy(&patternMap);
-    if(result) return result;
-    }
 
-    // Check the dir/WAD direcs.
+    /*
+     * Check the dir/WAD direcs.
+     */
     if(!d->lumpMappings.empty())
     {
         DENG2_FOR_EACH(i, d->lumpMappings, LumpMappings::const_iterator)
         {
-            LumpMapping const& found = *i;
-            QByteArray foundPathUtf8 = found.first.toUtf8();
-            bool patternMatched = F_MatchFileName(foundPathUtf8.constData(), Str_Text(searchPattern));
+            if(!F_MatchFileName(i->first.toUtf8().constData(), Str_Text(searchPattern))) continue;
 
-            if(!patternMatched) continue;
-
-            int result = callback(foundPathUtf8.constData(), PT_LEAF, parameters);
-            if(result) return result;
+            found.push_back(PathListItem(i->first, 0 /*only filepaths (i.e., leaves) can be mapped to lumps*/));
         }
+
+        /// @todo Shouldn't these be sorted? -ds
     }
 
-    /**
-     * Check real files on the search path.
-     * Our existing normalized search pattern cannot be used as-is due to the
-     * interface of the search algorithm requiring that the name and directory of
-     * the pattern be specified separately.
+    /*
+     * Check native paths.
      */
-
     // Extract the directory path.
     AutoStr* searchDirectory = AutoStr_NewStd();
     F_FileDir(searchDirectory, searchPattern);
 
     if(!Str_IsEmpty(searchDirectory))
     {
-        PathList foundPaths;
+        PathList nativePaths;
         AutoStr* wildPath = AutoStr_NewStd();
         finddata_t fd;
+
         for(int i = -1; i < (int)d->pathMappings.count(); ++i)
         {
             if(i == -1)
@@ -885,30 +864,23 @@ int FS1::allResourcePaths(char const* rawSearchPattern, int flags,
                     if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                     {
                         QString foundPath = QString("%1%2").arg(Str_Text(searchDirectory)).arg(Str_Text(&fd.name));
-                        foundPaths.push_back(PathListItem(foundPath, fd.attrib));
+                        if(!F_MatchFileName(foundPath.toUtf8().constData(), Str_Text(searchPattern))) continue;
+
+                        nativePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }
                 } while(!myfindnext(&fd));
             }
             myfindend(&fd);
         }
 
-        // Sort all the found paths.
-        qSort(foundPaths.begin(), foundPaths.end());
+        // Sort the native paths.
+        qSort(nativePaths.begin(), nativePaths.end());
 
-        DENG2_FOR_EACH(i, foundPaths, PathList::const_iterator)
-        {
-            PathListItem const& found = *i;
-            QByteArray foundPathUtf8 = found.path.toUtf8();
-            bool patternMatched = F_MatchFileName(foundPathUtf8.constData(), Str_Text(searchPattern));
-
-            if(!patternMatched) continue;
-
-            int result = callback(foundPathUtf8.constData(), (found.attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, parameters);
-            if(result) return result;
-        }
+        // Add the native paths to the found results.
+        found.append(nativePaths);
     }
 
-    return 0; // Not found.
+    return found.count() - numFoundSoFar;
 }
 
 FILE* FS1::findRealFile(char const* path, char const* mymode, ddstring_t** foundPath)
@@ -1567,37 +1539,34 @@ void FS1::initPathMap()
     }
 }
 
-/**
- * Prints the resource path to the console.
- * This is a f_allresourcepaths_callback_t.
- */
-static int printResourcePath(char const* fileName, PathDirectoryNodeType /*type*/,
-                             void* /*parameters*/)
-{
-    bool makePretty = CPP_BOOL( F_IsRelativeToBase(fileName, ddBasePath) );
-    Con_Printf("  %s\n", makePretty? F_PrettyPath(fileName) : fileName);
-    return 0; // Continue the listing.
-}
 
 void FS1::printDirectory(ddstring_t const* path)
 {
-    ddstring_t dir; Str_InitStd(&dir);
+    AutoStr* searchPattern = Str_Set(AutoStr_NewStd(), Str_Text(path));
 
-    Str_Set(&dir, Str_Text(path));
-    Str_Strip(&dir);
-    F_FixSlashes(&dir, &dir);
-    // Make sure it ends in a directory separator character.
-    F_AppendMissingSlash(&dir);
-    if(!F_ExpandBasePath(&dir, &dir))
-        F_PrependBasePath(&dir, &dir);
+    Str_Strip(searchPattern);
+    F_FixSlashes(searchPattern, searchPattern);
+    // Ensure it ends in a directory separator character.
+    F_AppendMissingSlash(searchPattern);
+    if(!F_ExpandBasePath(searchPattern, searchPattern))
+        F_PrependBasePath(searchPattern, searchPattern);
 
-    Con_Printf("Directory: %s\n", F_PrettyPath(Str_Text(&dir)));
+    Con_Printf("Directory: %s\n", F_PrettyPath(Str_Text(searchPattern)));
 
     // Make the pattern.
-    Str_AppendChar(&dir, '*');
-    allResourcePaths(Str_Text(&dir), 0, printResourcePath);
+    Str_AppendChar(searchPattern, '*');
 
-    Str_Free(&dir);
+    PathList found;
+    if(findAllPaths(Str_Text(searchPattern), 0, found))
+    {
+        DENG2_FOR_EACH(i, found, PathList::const_iterator)
+        {
+            QByteArray foundPath = i->path.toUtf8();
+            bool const makePretty = CPP_BOOL( F_IsRelativeToBase(foundPath, ddBasePath) );
+
+            Con_Printf("  %s\n", makePretty? F_PrettyPath(foundPath.constData()) : foundPath.constData());
+        }
+    }
 }
 
 static void printLumpIndex(de::LumpIndex const& index)
@@ -2178,16 +2147,6 @@ void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size
     ddstring_t* str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_DIR, delimiter);
     strncpy(outBuf, Str_Text(str), outBufSize);
     Str_Delete(str);
-}
-
-int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters)
-{
-    return App_FileSystem()->allResourcePaths(searchPath, flags, callback, parameters);
-}
-
-int F_AllResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters)/*, parameters = 0 */)
-{
-    return App_FileSystem()->allResourcePaths(searchPath, flags, callback);
 }
 
 uint F_CRCNumber(void)
