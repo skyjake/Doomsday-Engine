@@ -41,7 +41,7 @@ win32 {
 
 !macx {
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
 macx {

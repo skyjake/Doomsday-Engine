@@ -81,6 +81,13 @@ bool LibraryFile::recognize(const File& file)
     // Check the extension first.
     if(QLibrary::isLibrary(file.name()))
     {
+#if defined(UNIX) && !defined(MACOSX)
+        // Only actual .so files should be considered.
+        if(!file.name().endsWith(".so")) // just checks the file name
+        {
+            return false;
+        }
+#endif
         // Looks like a library.
         return true;
     }
@@ -99,5 +106,6 @@ bool LibraryFile::recognize(const File& file)
         }
     }
 #endif
+
     return false;
 }

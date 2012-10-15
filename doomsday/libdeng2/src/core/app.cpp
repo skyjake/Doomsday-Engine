@@ -62,7 +62,7 @@ String App::nativeBinaryPath()
     path = _appPath.fileNameNativePath();
 #else
 # ifdef MACOSX
-    path = "."; /// @todo Where are the plugins supposed to go?
+    path = _appPath.fileNameNativePath() / "../DengPlugins";
 # else
     path = DENG_LIBRARY_DIR;
 # endif
@@ -105,7 +105,7 @@ void App::initSubsystems()
     String appDir = _appPath.fileNameNativePath();
     Folder& binFolder = _fs.makeFolder("/bin");
     binFolder.attach(new DirectoryFeed(appDir));
-    binFolder.attach(new DirectoryFeed(appDir / "../DengPlugins"));
+    binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
     _fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
@@ -119,7 +119,6 @@ void App::initSubsystems()
 
 #else // UNIX
     _fs.makeFolder("/bin").attach(new DirectoryFeed(nativeBinaryPath()));
-    // libdir from UnixInfo
     String dataDir = nativeBasePath() / "data";
     _fs.makeFolder("/data").attach(new DirectoryFeed(dataDir));
     _fs.makeFolder("/config").attach(new DirectoryFeed(dataDir / "config"));

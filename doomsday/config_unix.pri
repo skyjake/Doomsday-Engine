@@ -40,6 +40,9 @@ contains(QMAKE_HOST.arch, x86_64) {
     }
 }
 
+# Target location for plugin libraries.
+DENG_PLUGIN_LIB_DIR = $$DENG_LIB_DIR/doomsday-plugins
+
 # When installing libraries to a non-standard location, instruct
 # the linker where to find them.
 !contains(DENG_LIB_DIR, ^/usr/.*) {
@@ -50,8 +53,9 @@ DENG_BASE_DIR = $$PREFIX/share/doomsday
 DENG_DATA_DIR = $$DENG_BASE_DIR/data
 
 DEFINES += DENG_BASE_DIR=\"\\\"$${DENG_BASE_DIR}/\\\"\"
-DEFINES += DENG_LIBRARY_DIR=\"\\\"$${DENG_LIB_DIR}/\\\"\"
+DEFINES += DENG_LIBRARY_DIR=\"\\\"$${DENG_PLUGIN_LIB_DIR}/\\\"\"
 
 echo(Binary directory: $$DENG_BIN_DIR)
 echo(Library directory: $$DENG_LIB_DIR)
+echo(Plugin directory: $$DENG_PLUGIN_LIB_DIR)
 echo(Doomsday base directory: $$DENG_BASE_DIR)

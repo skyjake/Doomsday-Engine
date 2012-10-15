@@ -34,7 +34,7 @@ win32 {
     OTHER_FILES += api/dsfmod.def
 
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 else:macx {
     # Bundle the FMOD shared library in dsFMOD.bundle.
@@ -44,7 +44,7 @@ else:macx {
 }
 else {
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
 macx {

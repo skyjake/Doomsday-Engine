@@ -22,7 +22,7 @@ macx {
 else {
     INSTALLS += target gamedata
 
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
     gamedata.path = $$DENG_DATA_DIR/jhexen
 }
 

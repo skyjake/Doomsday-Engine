@@ -23,7 +23,7 @@ win32 {
     OTHER_FILES += api/dsfluidsynth.def
 
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 macx {
     linkToBundledLibdeng2(audio_fluidsynth)
@@ -31,7 +31,7 @@ macx {
 }
 unix:!macx {
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
 # libfluidsynth config ------------------------------------------------------
