@@ -5,7 +5,7 @@ include(../config_plugin.pri)
 include(../../dep_fmod.pri)
 
 TEMPLATE = lib
-TARGET   = fmod
+TARGET   = audio_fmod
 VERSION  = $$FMOD_VERSION
 
 deng_debug: DEFINES += DENG_DSFMOD_DEBUG
@@ -38,9 +38,9 @@ win32 {
 }
 else:macx {
     # Bundle the FMOD shared library in dsFMOD.bundle.
-    doPostLink("cp -f \"$$FMOD_DIR/api/lib/libfmodex.dylib\" dsFMOD.bundle/")
-    doPostLink("install_name_tool -id @executable_path/../../../dsFMOD.bundle/libfmodex.dylib dsFMOD.bundle/libfmodex.dylib")
-    doPostLink("install_name_tool -change ./libfmodex.dylib @executable_path/../../../dsFMOD.bundle/libfmodex.dylib dsFMOD.bundle/dsfmod")
+    doPostLink("cp -f \"$$FMOD_DIR/api/lib/libfmodex.dylib\" audio_fmod.bundle/")
+    doPostLink("install_name_tool -id @executable_path/../../../audio_fmod.bundle/libfmodex.dylib audio_fmod.bundle/libfmodex.dylib")
+    doPostLink("install_name_tool -change ./libfmodex.dylib @executable_path/../../../audio_fmod.bundle/libfmodex.dylib audio_fmod.bundle/audio_fmod")
 }
 else {
     INSTALLS += target
@@ -48,7 +48,7 @@ else {
 }
 
 macx {
-    linkToBundledLibdeng2(fmod)
-    linkToBundledLibdeng(fmod)
+    linkToBundledLibdeng2(audio_fmod)
+    linkToBundledLibdeng(audio_fmod)
 }
 

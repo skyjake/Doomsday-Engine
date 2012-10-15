@@ -66,14 +66,14 @@ void Library_ReleaseGames(void);
  * returns a non-zero value to indicate aborting the iteration at some point,
  * that value is returned instead.
  */
-int Library_IterateAvailableLibraries(int (*func)(const char* fileName, void* data), void* data);
+int Library_IterateAvailableLibraries(int (*func)(const char* fileName, const char* absPath, void* data), void* data);
 
 /**
  * Loads a dynamic library.
  *
- * @param fileName  Name of the library to open.
+ * @param filePath  Absolute native path of the library to open.
  */
-Library* Library_New(const char* fileName);
+Library* Library_New(const char* filePath);
 
 void Library_Delete(Library* lib);
 

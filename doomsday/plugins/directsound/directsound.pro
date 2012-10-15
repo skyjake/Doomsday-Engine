@@ -11,7 +11,7 @@ include(../../dep_eax.pri)
 }
 
 TEMPLATE = lib
-TARGET   = directsound
+TARGET   = audio_directsound
 VERSION  = $$DIRECTSOUND_VERSION
 
 HEADERS += include/version.h

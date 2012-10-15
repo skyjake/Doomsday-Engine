@@ -28,17 +28,17 @@ $CP plugins/jdoom/doom.bundle                      $PLUGDIR/
 $CP plugins/jheretic/heretic.bundle                $PLUGDIR/
 $CP plugins/jhexen/hexen.bundle                    $PLUGDIR/
 $CP plugins/jdoom64/doom64.bundle                  $PLUGDIR/
-$CP plugins/fmod/fmod.bundle                       $PLUGDIR/
+$CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
 
 # Tools
 #$CP $SRCDIR/../tools/wadtool/wadtool $APPDIR/Resources
 $CP $SRCDIR/../tools/texc/texc $APPDIR/Resources
 $CP $SRCDIR/../tools/md2tool/md2tool $APPDIR/Resources
 
-if [ -e plugins/fluidsynth/dsFluidSynth.bundle ]; then
-    $CP plugins/fluidsynth/dsFluidSynth.bundle $BUILDDIR/dsFluidSynth.bundle
+if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
+    $CP plugins/fluidsynth/audio_fluidsynth.bundle $PLUGDIR/
 
-    echo "Installing deps for dsFluidSynth..."
+    echo "Installing deps for audio_fluidsynth..."
     FWDIR=$BUILDDIR/Doomsday.app/Contents/Frameworks
     cp /usr/local/lib/libglib-2.0.0.dylib $FWDIR
     cp /usr/local/lib/libgthread-2.0.0.dylib $FWDIR
@@ -60,8 +60,8 @@ if [ -e plugins/fluidsynth/dsFluidSynth.bundle ]; then
     install_name_tool -change /usr/local/Cellar/gettext/0.18.1.1/lib/libintl.8.dylib \
     	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libgthread-2.0.0.dylib
 
-    # dsFluidSynth
-    DSFS=$BUILDDIR/dsFluidSynth.bundle/dsFluidSynth
+    # audio_fluidsynth
+    DSFS=$PLUGDIR/audio_fluidsynth.bundle/audio_fluidsynth
     install_name_tool -change /usr/local/lib/libglib-2.0.0.dylib \
     	@executable_path/../Frameworks/libglib-2.0.0.dylib $DSFS
     install_name_tool -change /usr/local/lib/libgthread-2.0.0.dylib \

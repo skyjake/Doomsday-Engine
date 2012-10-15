@@ -9,7 +9,7 @@ include(../config_plugin.pri)
 }
 
 TEMPLATE = lib
-TARGET   = winmm
+TARGET   = audio_winmm
 VERSION  = $$WINMM_VERSION
 
 INCLUDEPATH += include

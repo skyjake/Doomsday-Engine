@@ -6,7 +6,7 @@ include(../config_plugin.pri)
 include(../../dep_openal.pri)
 
 TEMPLATE = lib
-TARGET   = openal
+TARGET   = audio_openal
 VERSION  = $$OPENAL_VERSION
 
 #DEFINES += DENG_DSOPENAL_DEBUG
@@ -30,7 +30,7 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(openal)
-    linkToBundledLibdeng(openal)
+    linkToBundledLibdeng2(audio_openal)
+    linkToBundledLibdeng(audio_openal)
 }
 

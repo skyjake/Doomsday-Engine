@@ -5,7 +5,7 @@ include(../config_plugin.pri)
 include(../../dep_glib.pri)
 
 TEMPLATE = lib
-TARGET   = fluidsynth
+TARGET   = audio_fluidsynth
 
 CONFIG -= qt
 
@@ -26,8 +26,8 @@ win32 {
     target.path = $$DENG_LIB_DIR
 }
 macx {
-    linkToBundledLibdeng2(fluidsynth)
-    linkToBundledLibdeng(fluidsynth)
+    linkToBundledLibdeng2(audio_fluidsynth)
+    linkToBundledLibdeng(audio_fluidsynth)
 }
 unix:!macx {
     INSTALLS += target

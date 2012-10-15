@@ -57,13 +57,16 @@ struct library_s {
     boolean isGamePlugin;
 };
 
+/*
 #ifdef UNIX
 static filename_t appDir; /// @todo  Use ddstring_t
 #endif
+*/
 
 static ddstring_t* lastError;
 static Library* loadedLibs[MAX_LIBRARIES];
 
+/*
 #ifdef UNIX
 static void getBundlePath(char* path, size_t len)
 {
@@ -79,13 +82,6 @@ static void getBundlePath(char* path, size_t len)
         return;
     }
 
-    /*
-#ifdef MACOSX
-    // This is the default location where bundles are.
-    dd_snprintf(path, len, "%s/Bundles", appDir);
-#endif
-    */
-
 #ifdef UNIX
 # ifdef DENG_LIBRARY_DIR
     strncpy(path, DENG_LIBRARY_DIR, len);
@@ -99,6 +95,7 @@ static void getBundlePath(char* path, size_t len)
 #endif
 }
 #endif
+*/
 
 static void addToLoaded(Library* lib)
 {
@@ -131,12 +128,14 @@ static void removeFromLoaded(Library* lib)
 void Library_Init(void)
 {
     lastError = Str_NewStd();
+    /*
 #ifdef UNIX
     if(!getcwd(appDir, sizeof(appDir)))
     {
         strcpy(appDir, "");
     }
 #endif
+    */
 }
 
 void Library_Shutdown(void)
@@ -182,10 +181,11 @@ static void reopenLibraryIfNeeded(Library* lib)
 }
 #endif
 
-Library* Library_New(const char *fileName)
+Library* Library_New(const char *filePath)
 {
     Library* lib = 0;
     handle_t handle = 0;
+    /*
 #ifdef UNIX
     filename_t bundlePath; /// @todo Use ddstring_t
 #ifdef MACOSX
@@ -214,24 +214,27 @@ Library* Library_New(const char *fileName)
     if(NULL != (ptr = strrchr(bundlePath, '.')))
         *ptr = '\0';
 #endif
+    */
+
     Str_Clear(lastError);
 
-    handle = dlopen(bundlePath, RTLD_NOW);
+#ifdef UNIX
+    LOG_INFO("Trying to dlopen: ") << filePath;
+    handle = dlopen(filePath, RTLD_NOW);
     if(!handle)
     {
         Str_Set(lastError, dlerror());
-        printf("Library_New: Error opening \"%s\" (%s).\n", bundlePath, Library_LastError());
+        printf("Library_New: Error opening \"%s\" (%s).\n", filePath, Library_LastError());
         return 0;
     }
 #endif
 
 #ifdef WIN32
-    Str_Clear(lastError);
-    handle = LoadLibrary(WIN_STRING(fileName));
+    handle = LoadLibrary(WIN_STRING(filePath));
     if(!handle)
     {
         Str_Set(lastError, DD_Win32_GetLastErrorMessage());
-        printf("Library_New: Error opening \"%s\" (%s).\n", fileName, Library_LastError());
+        printf("Library_New: Error opening \"%s\" (%s).\n", filePath, Library_LastError());
         return 0;
     }
 #endif
@@ -241,17 +244,18 @@ Library* Library_New(const char *fileName)
     lib->handle = handle;
     lib->path = Str_NewStd();
 #ifdef UNIX
-    Str_Set(lib->path, bundlePath);
+    Str_Set(lib->path, filePath);
 #endif
 #ifdef WIN32
-    Str_Set(lib->path, fileName);
+    Str_Set(lib->path, filePath);
 #endif
 
     addToLoaded(lib);
 
     // Symbols from game plugins conflict with each other, so we have to
     // keep track of them.
-    /// @todo  Needs a more generic way to detect the type of plugin.
+    /// @todo  Needs a more generic way to detect the type of plugin
+    ///        (see de::Library in libdeng2).
     if(Library_Symbol(lib, "G_RegisterGames"))
     {
         lib->isGamePlugin = true;
@@ -335,17 +339,19 @@ static boolean isPossiblyLibraryFile(const char* path, const struct dirent* entr
 #endif
 */
 
-int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *data)
+int Library_IterateAvailableLibraries(int (*func)(const char*, const char *, void *), void *data)
 {
     const de::FS::Index& libs = DENG2_APP->fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
 
     DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
     {
-        const de::NativeFile* native = dynamic_cast<const de::NativeFile*>(i->second);
-        if(native)
+        // For now we are not using libdeng2 to actually load the library.
+        de::LibraryFile* lib = static_cast<de::LibraryFile*>(i->second);
+        const de::NativeFile* src = dynamic_cast<const de::NativeFile*>(lib->source());
+        if(src)
         {
-            QByteArray nativePath = native->nativePath().toUtf8();
-            int result = func(nativePath.constData(), data);
+            int result = func(src->name().toUtf8().constData(),
+                              src->nativePath().toUtf8().constData(), data);
             if(result) return result;
         }
     }

@@ -81,6 +81,7 @@ application_t app;
 
 // CODE --------------------------------------------------------------------
 
+/// @todo Assigning IDs to the libs should be handled in the plugin module.
 static PluginHandle* findFirstUnusedPluginHandle(application_t* app)
 {
     int i;
@@ -93,13 +94,21 @@ static PluginHandle* findFirstUnusedPluginHandle(application_t* app)
     return 0;
 }
 
-static int loadPlugin(application_t* app, const char* pluginPath, void* paramaters)
+static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
 {
+    application_t* app = (application_t*) param;
     Library* plugin;
     PluginHandle* handle;
     void (*initializer)(void);
     filename_t name;
+
     assert(app && pluginPath && pluginPath[0]);
+
+    if(!strncmp(fileName, "audio_", 6))
+    {
+        // The audio plugins are loaded later on demand by AudioDriver.
+        return false;
+    }
 
     plugin = Library_New(pluginPath);
     if(!plugin)
@@ -139,8 +148,9 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     return 0; // Continue iteration.
 }
 
+#if 0
 typedef struct {
-    boolean loadingGames;
+    //boolean loadingGames;
     application_t* app;
 } loadpluginparamaters_t;
 
@@ -168,6 +178,7 @@ static int loadPluginWorker(const char* pluginPath, void* data)
     }
     return 0; // Continue search.
 }
+#endif
 
 static boolean unloadPlugin(PluginHandle* handle)
 {
@@ -189,6 +200,9 @@ static boolean loadAllPlugins(application_t* app)
 
     Con_Message("Initializing plugins...\n");
 
+    Library_IterateAvailableLibraries(loadPlugin, app);
+
+    /*
     // Try to load all libraries that begin with libj.
     { loadpluginparamaters_t params;
     params.app = app;
@@ -202,6 +216,8 @@ static boolean loadAllPlugins(application_t* app)
     params.loadingGames = false;
     Library_IterateAvailableLibraries(loadPluginWorker, &params);
     }
+    */
+
     return true;
 }
 
