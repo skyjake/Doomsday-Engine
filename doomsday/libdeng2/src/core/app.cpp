@@ -59,7 +59,7 @@ String App::nativeBinaryPath()
 {
     String path;
 #ifdef WIN32
-    path = _appPath.fileNameNativePath();
+    path = _appPath.fileNameNativePath() / "plugins";
 #else
 # ifdef MACOSX
     path = _appPath.fileNameNativePath() / "../DengPlugins";
@@ -111,8 +111,8 @@ void App::initSubsystems()
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 
 #elif WIN32
+    _fs.makeFolder("/bin").attach(new DirectoryFeed(nativeBinaryPath()));
     String appDir = _appPath.fileNameNativePath();
-    _fs.makeFolder("/bin").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\bin")));
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data")));
     _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data\\config")));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
