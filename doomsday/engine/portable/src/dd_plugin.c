@@ -1,32 +1,26 @@
-/**\file dd_plugin.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Plugin Subsystem.
+ * @file dd_plugin.c
+ * Plugin subsystem. @ingroup base
+ *
+ * @todo Convert to C++, rename.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #ifdef UNIX
 #  include "library.h"
@@ -35,6 +29,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_defs.h"
+#include "dd_pinit.h"
 
 #define HOOKMASK(x)         ((x) & 0xffffff)
 
@@ -43,11 +38,114 @@ typedef struct {
     struct {
         hookfunc_t func;
         pluginid_t pluginId;
-    } list[MAX_HOOKS];
+    } list[MAX_HOOKS]; /// @todo Remove arbitrary MAX_HOOKS.
 } hookreg_t;
 
+typedef Library* PluginHandle;
+
+static Library* hInstPlug[MAX_PLUGS]; /// @todo Remove arbitrary MAX_PLUGS.
 static hookreg_t hooks[NUM_HOOK_TYPES];
 static pluginid_t currentPlugin = 0; // none
+
+static PluginHandle* findFirstUnusedPluginHandle(void)
+{
+    int i;
+    for(i = 0; i < MAX_PLUGS; ++i)
+    {
+        if(!hInstPlug[i]) return &hInstPlug[i];
+    }
+    return 0; // none available
+}
+
+static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
+{
+    Library* plugin;
+    PluginHandle* handle;
+    void (*initializer)(void);
+    filename_t name;
+    pluginid_t plugId;
+
+    DENG_UNUSED(param);
+    DENG_ASSERT(fileName && fileName[0]);
+    DENG_ASSERT(pluginPath && pluginPath[0]);
+
+    if(!strncmp(fileName, "audio_", 6))
+    {
+        // The audio plugins are loaded later on demand by AudioDriver.
+        return false;
+    }
+
+    plugin = Library_New(pluginPath);
+    if(!plugin)
+    {
+        Con_Message("  loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, Library_LastError());
+        return 0; // Continue iteration.
+    }
+
+    initializer = Library_Symbol(plugin, "DP_Initialize");
+    if(!initializer)
+    {
+        DEBUG_Message(("  loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath));
+
+        // Clearly not a Doomsday plugin.
+        Library_Delete(plugin);
+        return 0; // Continue iteration.
+    }
+
+    // Assign a handle and ID to the plugin.
+    handle = findFirstUnusedPluginHandle();
+    plugId = handle - hInstPlug + 1;
+    if(!handle)
+    {
+        DEBUG_Message(("  loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath));
+
+        Library_Delete(plugin);
+        return 0; // Continue iteration.
+    }
+
+    // This seems to be a Doomsday plugin.
+    _splitpath(pluginPath, NULL, NULL, name, NULL);
+    Con_Message("  %s (id:%i)\n", name, plugId);
+
+    *handle = plugin;
+
+    DD_SetActivePluginId(plugId);
+    initializer();
+    DD_SetActivePluginId(0);
+
+    return 0; // Continue iteration.
+}
+
+static boolean unloadPlugin(PluginHandle* handle)
+{
+    int result;
+    assert(handle);
+    if(!*handle) return true;
+
+    Library_Delete(*handle);
+    *handle = 0;
+    return result;
+}
+
+void Plug_LoadAll(void)
+{
+    Con_Message("Initializing plugins...\n");
+
+    Library_IterateAvailableLibraries(loadPlugin, 0);
+}
+
+void Plug_UnloadAll(void)
+{
+    int i;
+
+    // Remove all entries; some may have been created by the plugins.
+    LogBuffer_Clear();
+
+    for(i = 0; i < MAX_PLUGS && hInstPlug[i]; ++i)
+    {
+        unloadPlugin(&hInstPlug[i]);
+    }
+}
 
 int Plug_AddHook(int hookType, hookfunc_t hook)
 {
@@ -170,8 +268,9 @@ pluginid_t DD_ActivePluginId(void)
 
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
 {
+    /*
 #if WIN32
-    HINSTANCE* handle = &app.hInstPlug[pluginId-1];
+    HINSTANCE* handle = &hInstPlug[pluginId-1];
     void* adr = (void*)GetProcAddress(*handle, fn);
     if(!adr)
     {
@@ -188,15 +287,17 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
     return adr;
 
 #elif UNIX
+*/
     void* addr = 0;
     int plugIndex = pluginId - 1;
     assert(plugIndex >= 0 && plugIndex < MAX_PLUGS);
-    addr = Library_Symbol(app.hInstPlug[plugIndex], fn);
+    addr = Library_Symbol(hInstPlug[plugIndex], fn);
     if(!addr)
     {
         Con_Message("DD_FindEntryPoint: Error locating address of \"%s\" (%s).\n", fn,
                     Library_LastError());
     }
     return addr;
-#endif
+
+//#endif
 }

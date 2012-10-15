@@ -85,6 +85,17 @@ void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
 
 /**
+ * Loads all the plugins from the library directory. Note that audio plugins
+ * are not loaded here, they are managed by AudioDriver.
+ */
+void Plug_LoadAll(void);
+
+/**
+ * Unloads all plugins.
+ */
+void Plug_UnloadAll(void);
+
+/**
  * Executes all the hooks of the given type. Bit zero of the return value
  * is set if a hook was executed successfully (returned true). Bit one is
  * set if all the hooks that were executed returned true.

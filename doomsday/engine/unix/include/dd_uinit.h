@@ -37,7 +37,6 @@ extern "C" {
 #endif
 
 typedef struct {
-    Library* hInstPlug[MAX_PLUGS];
     GETGAMEAPI GetGameAPI;
 
     /// @c true = We are using a custom user dir specified on the command line.

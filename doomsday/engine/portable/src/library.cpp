@@ -219,7 +219,6 @@ Library* Library_New(const char *filePath)
     Str_Clear(lastError);
 
 #ifdef UNIX
-    LOG_INFO("Trying to dlopen: ") << filePath;
     handle = dlopen(filePath, RTLD_NOW);
     if(!handle)
     {
