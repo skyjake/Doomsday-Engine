@@ -119,6 +119,7 @@ void App::initSubsystems()
 
 #else // UNIX
     _fs.makeFolder("/bin").attach(new DirectoryFeed(nativeBinaryPath()));
+    // libdir from UnixInfo
     String dataDir = nativeBasePath() / "data";
     _fs.makeFolder("/data").attach(new DirectoryFeed(dataDir));
     _fs.makeFolder("/config").attach(new DirectoryFeed(dataDir / "config"));
@@ -128,14 +129,14 @@ void App::initSubsystems()
     // User's home folder.
 #ifdef MACOSX
     String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
-    nativeHome = nativeHome.concatenateNativePath("Library/Application Support/Doomsday Engine/runtime");
+    nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
 #elif WIN32
-    /// @todo We still have Snowberry, so use its runtime folder.
+    /// @todo We still have Snowberry, so use its runtime folder. Really should use local AppData.
     String nativeHome = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
     nativeHome = nativeHome.concatenateNativePath("Doomsday Frontend\\runtime");
 #else // UNIX
     String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
-    nativeHome = nativeHome.concatenateNativePath(".doomsday/runtime");
+    nativeHome = nativeHome / ".doomsday/runtime";
 #endif
     _fs.makeFolder("/home").attach(new DirectoryFeed(nativeHome,
         DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
@@ -149,7 +150,7 @@ void App::initSubsystems()
 
     LogBuffer& logBuf = LogBuffer::appBuffer();
 
-    // Update the log buffer max entry count.
+    // Update the log buffer max entry count: number of items to hold in memory.
     logBuf.setMaxEntryCount(conf->getui("log.bufferSize"));
 
     // Set the log output file.
@@ -253,7 +254,7 @@ Record& App::importModule(const String& name, const String& fromPath)
 
     /// @todo  Move this path searching logic to FS.
 
-    // Fall back on the default if the libdeng2 module hasn't been imported yet.
+    // Fall back on the default if the config hasn't been imported yet.
     std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
     defaultImportPath->add("");
     defaultImportPath->add("*"); // Newest module with a matching name.
