@@ -91,8 +91,20 @@ void DD_UpdateEngineState(void);
  */
 int DD_CallHooks(int hook_type, int parm, void* data);
 
-/// @return  Unique identified of the plugin responding to active hook callback.
-pluginid_t DD_PluginIdForActiveHook(void);
+/**
+ * Sets the ID of the currently active plugin. Note that plugin hooks are
+ * executed in a single-threaded manner; only one can be active at a time.
+ *
+ * @param id  Plugin id.
+ */
+void DD_SetActivePluginId(pluginid_t id);
+
+/**
+ * @return Unique identifier of the currently active plugin. Note that plugin
+ * hooks are executed in a single-threaded manner; only one is active at a
+ * time.
+ */
+pluginid_t DD_ActivePluginId(void);
 
 /**
  * Locate the address of the named, exported procedure in the plugin.

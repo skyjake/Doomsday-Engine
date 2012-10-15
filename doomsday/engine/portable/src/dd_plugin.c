@@ -40,15 +40,25 @@
 
 typedef struct {
     int exclude;
-    hookfunc_t list[MAX_HOOKS];
+    struct {
+        hookfunc_t func;
+        pluginid_t pluginId;
+    } list[MAX_HOOKS];
 } hookreg_t;
 
 static hookreg_t hooks[NUM_HOOK_TYPES];
-static pluginid_t currentPlugin = 0;
+static pluginid_t currentPlugin = 0; // none
 
 int Plug_AddHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
+
+    /**
+     * The current plugin must be set before calling this. The engine has the
+     * responsibility to call DD_SetActivePluginId() whenever it passes control
+     * to a plugin, and then set it back to zero after it gets control back.
+     */
+    DENG_ASSERT(DD_ActivePluginId() != 0);
 
     // The type must be good.
     if(type < 0 || type >= NUM_HOOK_TYPES)
@@ -66,12 +76,13 @@ int Plug_AddHook(int hookType, hookfunc_t hook)
         return false;
     }
 
-    for(i = 0; i < MAX_HOOKS && hooks[type].list[i]; ++i) {};
+    for(i = 0; i < MAX_HOOKS && hooks[type].list[i].func; ++i) {};
     if(i == MAX_HOOKS)
         return false; // No more hooks allowed!
 
-    // Add the hook.
-    hooks[type].list[i] = hook;
+    // Add the hook. If the plugin is unidentified the ID will be zero.
+    hooks[type].list[i].func     = hook;
+    hooks[type].list[i].pluginId = DD_ActivePluginId();
     return true;
 }
 
@@ -79,6 +90,7 @@ int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
 
+    /*
     if(currentPlugin)
     {
         LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_WARNING,
@@ -86,15 +98,17 @@ int Plug_RemoveHook(int hookType, hookfunc_t hook)
             hook, hookType);
         return false;
     }
+    */
 
     // The type must be good.
     if(type < 0 || type >= NUM_HOOK_TYPES)
         return false;
     for(i = 0; i < MAX_HOOKS; ++i)
     {
-        if(hooks[type].list[i] != hook)
+        if(hooks[type].list[i].func != hook)
             continue;
-        hooks[type].list[i] = 0;
+        hooks[type].list[i].func = 0;
+        hooks[type].list[i].pluginId = 0;
         if(hookType & HOOKF_EXCLUSIVE)
         {   // Exclusive hook removed; allow normal hooks.
             hooks[type].exclude = false;
@@ -108,25 +122,32 @@ int Plug_CheckForHook(int hookType)
 {
     size_t i;
     for(i = 0; i < MAX_HOOKS; ++i)
-        if(hooks[hookType].list[i])
+        if(hooks[hookType].list[i].func)
             return true;
     return false;
+}
+
+void DD_SetActivePluginId(pluginid_t id)
+{
+    currentPlugin = id;
 }
 
 int DD_CallHooks(int hookType, int parm, void *data)
 {
     int ret = 0;
     boolean allGood = true;
+    pluginid_t oldPlugin = DD_ActivePluginId();
 
     // Try all the hooks.
     { int i;
     for(i = 0; i < MAX_HOOKS; ++i)
     {
-        if(!hooks[hookType].list[i])
+        if(!hooks[hookType].list[i].func)
             continue;
 
-        currentPlugin = i+1;
-        if(hooks[hookType].list[i] (hookType, parm, data))
+        DD_SetActivePluginId(hooks[hookType].list[i].pluginId);
+
+        if(hooks[hookType].list[i].func(hookType, parm, data))
         {   // One hook executed; return nonzero from this routine.
             ret = 1;
         }
@@ -134,7 +155,7 @@ int DD_CallHooks(int hookType, int parm, void *data)
             allGood = false;
     }}
 
-    currentPlugin = 0;
+    DD_SetActivePluginId(oldPlugin);
 
     if(ret && allGood)
         ret |= 2;
@@ -142,9 +163,9 @@ int DD_CallHooks(int hookType, int parm, void *data)
     return ret;
 }
 
-pluginid_t DD_PluginIdForActiveHook(void)
+pluginid_t DD_ActivePluginId(void)
 {
-    return (pluginid_t)currentPlugin;
+    return currentPlugin;
 }
 
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
@@ -165,6 +186,7 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
         }
     }
     return adr;
+
 #elif UNIX
     void* addr = 0;
     int plugIndex = pluginId - 1;

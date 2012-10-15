@@ -506,7 +506,7 @@ gameid_t DD_DefineGame(GameDef const* def)
     Game* game = addGame(Game_FromDef(def));
     if(game)
     {
-        Game_SetPluginId(game, DD_PluginIdForActiveHook());
+        Game_SetPluginId(game, DD_ActivePluginId());
         return Games_Id(game);
     }
     return 0; // Invalid id.

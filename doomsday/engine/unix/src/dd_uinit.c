@@ -91,7 +91,7 @@ static PluginHandle* findFirstUnusedPluginHandle(application_t* app)
         if(!app->hInstPlug[i])
             return &app->hInstPlug[i];
     }
-    return 0;
+    return 0; // failed
 }
 
 static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
@@ -101,6 +101,7 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
     PluginHandle* handle;
     void (*initializer)(void);
     filename_t name;
+    pluginid_t plugId;
 
     assert(app && pluginPath && pluginPath[0]);
 
@@ -128,7 +129,9 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
         return 0; // Continue iteration.
     }
 
+    // Assign a handle and ID to the plugin.
     handle = findFirstUnusedPluginHandle(app);
+    plugId = handle - app->hInstPlug + 1;
     if(!handle)
     {
 #if _DEBUG
@@ -140,10 +143,13 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
 
     // This seems to be a Doomsday plugin.
     _splitpath(pluginPath, NULL, NULL, name, NULL);
-    Con_Message("  %s\n", name);
+    Con_Message("  %s (id:%i)\n", name, plugId);
 
     *handle = plugin;
+
+    DD_SetActivePluginId(plugId);
     initializer();
+    DD_SetActivePluginId(0);
 
     return 0; // Continue iteration.
 }

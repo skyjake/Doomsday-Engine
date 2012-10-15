@@ -573,7 +573,13 @@ static int DD_ActivateGameWorker(void* parameters)
 
     // Now that resources have been located we can begin to initialize the game.
     if(!Games_IsNullObject(theGame) && gx.PreInit)
+    {
+        DENG_ASSERT(Game_PluginId(theGame) != 0);
+
+        DD_SetActivePluginId(Game_PluginId(theGame));
         gx.PreInit(Games_Id(theGame));
+        DD_SetActivePluginId(0);
+    }
 
     if(p->initiatedBusyMode)
         Con_SetProgress(100);
@@ -647,7 +653,9 @@ static int DD_ActivateGameWorker(void* parameters)
 
     if(gx.PostInit)
     {
+        DD_SetActivePluginId(Game_PluginId(theGame));
         gx.PostInit();
+        DD_SetActivePluginId(0);
     }
 
     if(p->initiatedBusyMode)
@@ -655,6 +663,7 @@ static int DD_ActivateGameWorker(void* parameters)
         Con_SetProgress(200);
         BusyMode_WorkerEnd();
     }
+
     return 0;
 }
 
@@ -758,7 +767,9 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         { // Tell the plugin it is being unloaded.
             void* unloader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Unload");
             DEBUG_Message(("DD_ChangeGame2: Calling DP_Unload (%p)\n", unloader));
+            DD_SetActivePluginId(Game_PluginId(theGame));
             if(unloader) ((pluginfunc_t)unloader)();
+            DD_SetActivePluginId(0);
         }
 
         // The current game is now the special "null-game".
@@ -855,7 +866,9 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             /// @todo Must this be done in the main thread?
             void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
             DEBUG_Message(("DD_ChangeGame2: Calling DP_Load (%p)\n", loader));
+            DD_SetActivePluginId(Game_PluginId(theGame));
             if(loader) ((pluginfunc_t)loader)();
+            DD_SetActivePluginId(0);
         }
 
         /// @kludge Use more appropriate task names when unloading a game.
@@ -881,6 +894,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             DD_StartTitle();
         }
     }
+
+    DENG_ASSERT(DD_ActivePluginId() == 0);
 
     /**
      * Clear any input events we may have accumulated during this process.

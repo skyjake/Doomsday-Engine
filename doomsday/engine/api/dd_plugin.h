@@ -62,7 +62,8 @@ enum {
     NUM_HOOK_TYPES
 };
 
-/// Unique identifier attributed to each plugin during initial startup.
+/// Unique identifier assigned to each plugin during initial startup.
+/// Zero is not a valid ID.
 typedef int pluginid_t;
 
 /// Paramaters for HOOK_FINALE_EVAL_IF
@@ -84,9 +85,8 @@ typedef struct {
 } ddhook_viewport_reshape_t;
 
 /**
- * Registers a new hook function.
- * A plugin should call this to add a hook function to be executed at the time
- * specified by @a hook_type.
+ * Registers a new hook function. A plugin can call this to add a hook
+ * function to be executed at the time specified by @a hook_type.
  *
  * @param hook_type  Hook type.
  * @param hook       Pointer to hook function.
