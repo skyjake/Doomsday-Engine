@@ -992,16 +992,16 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         ddgamechange_paramaters_t p;
         BusyTask gameChangeTasks[] = {
             // Phase 1: Initialization.
-            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
+            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f, 0 },
 
             // Phase 2: Loading "startup" resources.
-            { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f },
+            { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f, 0 },
 
             // Phase 3: Loading "addon" resources.
-            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading addons...", 200, 0.3f, 0.7f },
+            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading addons...", 200, 0.3f, 0.7f, 0 },
 
             // Phase 4: Game activation.
-            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
+            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f, 0 }
         };
 
         p.initiatedBusyMode = !BusyMode_Active();

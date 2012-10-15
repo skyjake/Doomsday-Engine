@@ -613,23 +613,23 @@ int DED_Read(ded_t* ded, const char* path);
 
 int             DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum);
 
-int             DED_AddFlag(ded_t* ded, char* name, char* text, int value);
-int             DED_AddMobj(ded_t* ded, char* idStr);
-int             DED_AddState(ded_t* ded, char* id);
-int             DED_AddSprite(ded_t* ded, const char* name);
-int             DED_AddLight(ded_t* ded, const char* stateID);
-int             DED_AddMaterial(ded_t* ded, const char* uri);
+int             DED_AddFlag(ded_t* ded, char const* name, char const* text, int value);
+int             DED_AddMobj(ded_t* ded, char const* idStr);
+int             DED_AddState(ded_t* ded, char const* id);
+int             DED_AddSprite(ded_t* ded, char const* name);
+int             DED_AddLight(ded_t* ded, char const* stateID);
+int             DED_AddMaterial(ded_t* ded, char const* uri);
 int             DED_AddMaterialLayerStage(ded_material_layer_t* ml);
-int             DED_AddModel(ded_t* ded, char* spr);
-int             DED_AddSky(ded_t* ded, char* id);
-int             DED_AddSound(ded_t* ded, char* id);
-int             DED_AddMusic(ded_t* ded, char* id);
-int             DED_AddMapInfo(ded_t* ded, char* uri);
-int             DED_AddText(ded_t* ded, char* id);
-int             DED_AddTextureEnv(ded_t* ded, char* id);
-int             DED_AddValue(ded_t *ded, const char* id);
-int             DED_AddDetail(ded_t* ded, const char* lumpname);
-int             DED_AddPtcGen(ded_t* ded, const char* state);
+int             DED_AddModel(ded_t* ded, char const* spr);
+int             DED_AddSky(ded_t* ded, char const* id);
+int             DED_AddSound(ded_t* ded, char const* id);
+int             DED_AddMusic(ded_t* ded, char const* id);
+int             DED_AddMapInfo(ded_t* ded, char const* uri);
+int             DED_AddText(ded_t* ded, char const* id);
+int             DED_AddTextureEnv(ded_t* ded, char const* id);
+int             DED_AddValue(ded_t *ded, char const* id);
+int             DED_AddDetail(ded_t* ded, char const* lumpname);
+int             DED_AddPtcGen(ded_t* ded, char const* state);
 int             DED_AddPtcGenStage(ded_ptcgen_t* gen);
 int             DED_AddFinale(ded_t* ded);
 int             DED_AddDecoration(ded_t* ded);
@@ -638,7 +638,7 @@ int             DED_AddGroup(ded_t* ded);
 int             DED_AddGroupMember(ded_group_t* grp);
 int             DED_AddSectorType(ded_t* ded, int id);
 int             DED_AddLineType(ded_t* ded, int id);
-int             DED_AddCompositeFont(ded_t* ded, const char* uri);
+int             DED_AddCompositeFont(ded_t* ded, char const* uri);
 int             DED_AddCompositeFontMapCharacter(ded_compositefont_t* font);
 
 void            DED_RemoveFlag(ded_t* ded, int index);
@@ -665,11 +665,17 @@ void            DED_RemoveSectorType(ded_t* ded, int index);
 void            DED_RemoveLineType(ded_t* ded, int index);
 void            DED_RemoveCompositeFont(ded_t* ded, int index);
 
-void*           DED_NewEntries(void** ptr, ded_count_t* cnt,
-                               size_t elemSize, int count);
+/**
+ * @return  Pointer to the new block of memory.
+ */
+void*           DED_NewEntries(void** ptr, ded_count_t* cnt, size_t elemSize, int count);
+
+/**
+ * @return  Pointer to the new block of memory.
+ */
 void*           DED_NewEntry(void** ptr, ded_count_t* cnt, size_t elemSize);
-void            DED_DelEntry(int index, void** ptr, ded_count_t* cnt,
-                             size_t elemSize);
+
+void            DED_DelEntry(int index, void** ptr, ded_count_t* cnt, size_t elemSize);
 void            DED_DelArray(void** ptr, ded_count_t* cnt);
 void            DED_ZCount(ded_count_t* c);
 

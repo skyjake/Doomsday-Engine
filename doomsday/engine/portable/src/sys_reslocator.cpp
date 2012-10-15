@@ -57,7 +57,7 @@ using namespace de;
 typedef struct {
     /// Default class attributed to resources of this type.
     resourceclass_t defaultClass;
-    char* knownFileNameExtensions[MAX_EXTENSIONS];
+    char const* knownFileNameExtensions[MAX_EXTENSIONS];
 } resourcetypeinfo_t;
 
 /**
@@ -426,7 +426,7 @@ static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const*
         resourcetypeinfo_t const* typeInfo = getInfoForResourceType(*typeIter);
         if(typeInfo->knownFileNameExtensions[0])
         {
-            char* const* ext = typeInfo->knownFileNameExtensions;
+            char const* const* ext = typeInfo->knownFileNameExtensions;
             do
             {
                 Str_Clear(&tmp);
@@ -749,7 +749,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
         { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/fonts/", "$(Game.DataPath)/fonts/", "$(Game.DataPath)/fonts/$(Game.IdentityKey)/" }
         },
-        { 0, 0, 0, 0, 0, 0 }
+    { 0, 0, 0, 0, 0, { 0 } }
     };
     Uri* uri = Uri_New();
 
@@ -916,7 +916,7 @@ ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni)
     return &(getNamespaceInfoForId(rni))->name;
 }
 
-Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, size_t* count)
+Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count)
 {
     if(!searchPaths || !searchPaths[0])
     {
@@ -928,12 +928,13 @@ Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, size_t* 
     Uri** list = 0, *localFixedList[FIXEDSIZE];
 
     ddstring_t buf; Str_Init(&buf);
-    size_t numPaths = 0, n = 0;
+    int numPaths = 0, n = 0;
     char const* p = searchPaths;
     do
     {
-        if(0 != numPaths)
-        {   // Prepare for another round.
+        if(numPaths)
+        {
+            // Prepare for another round.
             Str_Clear(&buf);
         }
 
@@ -946,7 +947,8 @@ Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, size_t* 
         if(*p) ++p;
 
         if(0 != Str_Length(&buf))
-        {   // A new path was parsed; add it to the list.
+        {
+            // A new path was parsed; add it to the list.
             if(n == FIXEDSIZE)
             {
                 list = (Uri**) M_Realloc(list, sizeof(*list) * (numPaths + 1));
@@ -985,7 +987,7 @@ Uri** F_CreateUriList(resourceclass_t rclass, char const* searchPaths)
     return F_CreateUriList2(rclass, searchPaths, 0);
 }
 
-Uri** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, size_t* count)
+Uri** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count)
 {
     if(!searchPaths)
     {
@@ -1210,7 +1212,7 @@ resourcetype_t F_GuessResourceTypeByName(char const* path)
             // Check the extension.
             if(info->knownFileNameExtensions[0])
             {
-                char* const* cand = info->knownFileNameExtensions;
+                char const* const* cand = info->knownFileNameExtensions;
                 do
                 {
                     if(!stricmp(*cand, ext))
@@ -1250,7 +1252,8 @@ boolean F_ApplyPathMapping(ddstring_t* path)
 
     uint i = 1;
     boolean result = false;
-    while(i < numNamespaces+1 && !(result = F_MapResourcePath(i++, path)));
+    while(i < numNamespaces + 1 && !(result = F_MapResourcePath(i++, path)))
+    {}
     return result;
 }
 

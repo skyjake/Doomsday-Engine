@@ -278,10 +278,10 @@ char const* F_ResourceClassStr(resourceclass_t rclass);
 /**
  * Construct a new NULL terminated Uri list from the specified search path list.
  */
-Uri** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, size_t* count);
+Uri** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count);
 Uri** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* searchPaths);
 
-Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, size_t* count);
+Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count);
 Uri** F_CreateUriList(resourceclass_t rclass, char const* searchPaths);
 
 void F_DestroyUriList(Uri** list);

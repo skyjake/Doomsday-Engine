@@ -685,15 +685,16 @@ int Def_GetTextNumForName(const char* name)
  *     \s   Space
  * </pre>
  */
-static void Def_InitTextDef(ddtext_t* txt, char* str)
+static void Def_InitTextDef(ddtext_t* txt, char const* str)
 {
-    char* out, *in;
-
     // Handle null pointers with "".
     if(!str) str = "";
 
     txt->text = (char*) M_Calloc(strlen(str) + 1);
-    for(out = txt->text, in = str; *in; out++, in++)
+
+    char const* in = str;
+    char* out = txt->text;
+    for(; *in; out++, in++)
     {
         if(*in == '\\')
         {

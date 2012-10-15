@@ -332,7 +332,7 @@ void de::FileDirectory::addPathList(int flags, char const* pathList,
     int (*callback) (de::PathDirectoryNode& node, void* parameters), void* parameters)
 {
     Uri** paths = NULL;
-    size_t pathsCount = 0;
+    int pathsCount = 0;
 
     if(pathList && pathList[0])
         paths = F_CreateUriList2(RC_UNKNOWN, pathList, &pathsCount);

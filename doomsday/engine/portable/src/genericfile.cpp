@@ -59,14 +59,14 @@ size_t GenericFile::lumpSize(int lumpIdx)
     return lumpInfo(lumpIdx).size;
 }
 
-size_t GenericFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+size_t GenericFile::readLump(int /*lumpIdx*/, uint8_t* /*buffer*/, bool /*tryCache*/)
 {
     /// @todo writeme
     throw de::Error("GenericFile::readLump", "Not yet implemented");
 }
 
-size_t GenericFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
-    size_t length, bool tryCache)
+size_t GenericFile::readLump(int /*lumpIdx*/, uint8_t* /*buffer*/, size_t /*startOffset*/,
+    size_t /*length*/, bool /*tryCache*/)
 {
     /// @todo writeme
     throw de::Error("GenericFile::readLump", "Not yet implemented");
