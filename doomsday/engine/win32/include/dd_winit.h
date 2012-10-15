@@ -52,7 +52,6 @@ typedef struct {
     /// @c true = We are using a custom user dir specified on the command line.
     BOOL usingUserDir;
 
-    HINSTANCE hInstPlug[MAX_PLUGS];
     GETGAMEAPI GetGameAPI;
 } application_t;
 
