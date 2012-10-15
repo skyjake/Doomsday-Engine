@@ -50,7 +50,7 @@ typedef struct {
 
 extern application_t app;
 
-boolean DD_Unix_Init(int argc, char** argv);
+boolean DD_Unix_Init(void);
 void DD_Shutdown(void);
 
 #ifdef __cplusplus

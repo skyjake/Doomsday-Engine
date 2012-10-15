@@ -36,9 +36,6 @@
 #include <string.h>
 #include <limits.h>
 #include <locale.h>
-#ifndef DENG_NO_SDL
-#  include <SDL.h>
-#endif
 
 #include <de/c_wrapper.h>
 
@@ -242,24 +239,6 @@ static boolean unloadAllPlugins(application_t* app)
     return true;
 }
 
-static int initTimingSystem(void)
-{
-    /*
-    // For timing, we use SDL under *nix, so get it initialized. SDL_Init() returns zero on success.
-    return !SDL_Init(SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE);
-    */
-    return true;
-}
-
-static int initPluginSystem(void)
-{
-#ifdef DENG_LIBRARY_DIR
-    // The default directory is defined in the Makefile. For instance, "/usr/local/lib".
-    //Library_AddSearchDir(DENG_LIBRARY_DIR);
-#endif
-    return true;
-}
-
 static int initDGL(void)
 {
     return (int) Sys_GLPreInit();
@@ -386,7 +365,7 @@ static int createMainWindow(void)
 }
 */
 
-boolean DD_Unix_Init(int argc, char** argv)
+boolean DD_Unix_Init(void)
 {
     boolean failed = true;
 
@@ -394,17 +373,6 @@ boolean DD_Unix_Init(int argc, char** argv)
 
     // We wish to use U.S. English formatting for time and numbers.
     setlocale(LC_ALL, "en_US.UTF-8");
-
-#if 0
-    // SDL lock key behavior: send up event when key released.
-    setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
-#endif
-
-#if 0
-    // Prepare the command line arguments.
-    char* cmdLine = buildCommandLineString(argc, argv);
-    M_Free(cmdLine);
-#endif
 
     DD_InitCommandLine();
 
@@ -420,14 +388,6 @@ boolean DD_Unix_Init(int argc, char** argv)
     if(!DD_EarlyInit())
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
-    }
-    else if(!initTimingSystem())
-    {
-        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initalizing timing system.", 0);
-    }
-    else if(!initPluginSystem())
-    {
-        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing plugin system.", 0);
     }
     else if(!initDGL())
     {
@@ -453,10 +413,6 @@ void DD_Shutdown(void)
 {
     // Shutdown all subsystems.
     DD_ShutdownAll();
-
-#ifndef DENG_NO_SDL
-    SDL_Quit();
-#endif
     
     unloadAllPlugins(&app);
     Library_Shutdown();

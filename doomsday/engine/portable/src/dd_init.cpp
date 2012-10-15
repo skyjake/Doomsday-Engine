@@ -181,7 +181,7 @@ int main(int argc, char** argv)
 #if WIN32
         if(!DD_Win32_Init()) return 1;
 #elif UNIX
-        if(!DD_Unix_Init(argc, argv)) return 1;
+        if(!DD_Unix_Init()) return 1;
 #endif
 
         // Create the main window.

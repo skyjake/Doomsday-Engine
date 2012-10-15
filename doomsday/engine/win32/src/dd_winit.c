@@ -284,18 +284,6 @@ static BOOL unloadAllPlugins(application_t* app)
     return TRUE;
 }
 
-static BOOL initTimingSystem(void)
-{
-    // Nothing to do.
-    return TRUE;
-}
-
-static BOOL initPluginSystem(void)
-{
-    // Nothing to do.
-    return TRUE;
-}
-
 static BOOL initDGL(void)
 {
     return (BOOL) Sys_GLPreInit();
@@ -427,7 +415,6 @@ static BOOL createMainWindow(int lnCmdShow)
 boolean DD_Win32_Init(void)
 {
     BOOL failed = TRUE;
-    //int lnCmdShow = SW_SHOWNORMAL; // nCmdShow;
 
     memset(&app, 0, sizeof(app));
     app.hInstance = GetModuleHandle(NULL);
@@ -440,7 +427,7 @@ boolean DD_Win32_Init(void)
         CoInitialize(NULL);
 
         // Prepare the command line arguments.
-        DD_InitCommandLine(/*UTF_STRING(GetCommandLine())*/);
+        DD_InitCommandLine();
 
         // First order of business: are we running in dedicated mode?
         isDedicated = CommandLine_Check("-dedicated");
@@ -454,14 +441,6 @@ boolean DD_Win32_Init(void)
         if(!DD_EarlyInit())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
-        }
-        else if(!initTimingSystem())
-        {
-            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initalizing timing system.", 0);
-        }
-        else if(!initPluginSystem())
-        {
-            Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing plugin system.", 0);
         }
         else if(!initDGL())
         {
