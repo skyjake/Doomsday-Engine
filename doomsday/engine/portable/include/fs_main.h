@@ -170,15 +170,6 @@ namespace de
 
         int removeFiles(char const* const* paths, int num, bool permitRequired = false);
 
-        /**
-         * Find a lump in the Zip LumpIndex.
-         *
-         * @param path      Path to search for. Relative paths are made absolute if necessary.
-         * @param lumpIdx   If not @c NULL the translated lumpnum within the owning file object is written here.
-         * @return  File system object representing the file which contains the found lump else @c NULL.
-         */
-        AbstractFile* findLumpFile(char const* path, int* lumpIdx = 0);
-
         /// @return  Number of lumps in the currently active LumpIndex.
         int lumpCount();
 
@@ -342,13 +333,14 @@ namespace de
         Instance* d;
 
         /**
-         * @param file  Handle to the file to be interpreted.
+         * @param hndl  Handle to the file to be interpreted. Ownership is passed to
+         *              the interpreted file instance.
          * @param path  Absolute VFS path by which the interpreted file will be known.
          * @param info  Prepared info metadata for the file.
          *
          * @return  The interpreted AbstractFile file instance.
          */
-        AbstractFile& interpret(DFile& file, char const* path, LumpInfo const& info);
+        AbstractFile& interpret(DFile& hndl, char const* path, LumpInfo const& info);
 
         /**
          * Adds a file to any relevant indexes.
@@ -366,10 +358,25 @@ namespace de
 
         bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
 
-        FILE* findRealFile(char const* path, char const* mymode, ddstring_t** foundPath);
+        DFile* tryOpenLump(char const* path, char const* mode, size_t baseOffset,
+                           bool allowDuplicate, LumpInfo& info);
 
-        DFile* tryOpenFile2(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
-        DFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
+        DFile* tryOpenNativeFile(char const* path, char const* mode, size_t baseOffset,
+                                 bool allowDuplicate, LumpInfo& info);
+
+        AbstractFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
+
+        FILE* findRealFile(char const* path, char const* mymode, AutoStr** foundPath = 0);
+
+    public:
+        /**
+         * Find a lump in the Zip LumpIndex.
+         *
+         * @param path      Path to search for. Relative paths are made absolute if necessary.
+         * @param lumpIdx   If not @c NULL the translated lumpnum within the owning file object is written here.
+         * @return  File system object representing the file which contains the found lump else @c NULL.
+         */
+        AbstractFile* findLumpFile(char const* path, int* lumpIdx = 0);
     };
 
 } // namespace de

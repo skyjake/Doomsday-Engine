@@ -64,14 +64,14 @@ struct FileInterpreter
 static de::AbstractFile* interpretAsZipFile(de::DFile& hndl, char const* path, LumpInfo const& info)
 {
     if(!ZipFile::recognise(hndl)) return 0;
-    LOG_VERBOSE("Interpreted ") << path << " as a Zip (archive)";
+    LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Zip (archive)";
     return new ZipFile(hndl, path, info);
 }
 
 static de::AbstractFile* interpretAsWadFile(de::DFile& hndl, char const* path, LumpInfo const& info)
 {
     if(!WadFile::recognise(hndl)) return 0;
-    LOG_VERBOSE("Interpreted ") << path << " as a Wad (archive)";
+    LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Wad (archive)";
     return new WadFile(hndl, path, info);
 }
 
@@ -665,17 +665,10 @@ lumpnum_t FS1::openAuxiliary(char const* path, size_t baseOffset)
     F_PrependWorkPath(&searchPath, &searchPath);
 
     /// @todo Allow opening WAD/ZIP files from lumps in other containers.
-    ddstring_t* foundPath = 0;
+    AutoStr* foundPath = 0;
     FILE* file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
     Str_Free(&searchPath);
-    if(!file)
-    {
-        if(foundPath)
-        {
-            Str_Delete(foundPath);
-        }
-        return -1;
-    }
+    if(!file) return -1;
 
     DFile* hndl = DFileBuilder::fromNativeFile(*file, baseOffset);
 
@@ -699,12 +692,9 @@ lumpnum_t FS1::openAuxiliary(char const* path, size_t baseOffset)
         d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
         wad->publishLumpsToIndex(*d->ActiveWadLumpIndex);
 
-        Str_Delete(foundPath);
-
         return Instance::AUXILIARY_BASE;
     }
 
-    if(foundPath) Str_Delete(foundPath);
     if(hndl) delete hndl;
     return -1;
 }
@@ -918,7 +908,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     return found.count() - numFoundSoFar;
 }
 
-FILE* FS1::findRealFile(char const* path, char const* mymode, ddstring_t** foundPath)
+FILE* FS1::findRealFile(char const* path, char const* mymode, AutoStr** foundPath)
 {
     char mode[8];
     strcpy(mode, "r"); // Open for reading.
@@ -927,52 +917,39 @@ FILE* FS1::findRealFile(char const* path, char const* mymode, ddstring_t** found
     if(strchr(mymode, 'b'))
         strcat(mode, "b");
 
-    ddstring_t nativePath;
-    Str_Init(&nativePath); Str_Set(&nativePath, path);
-    F_ToNativeSlashes(&nativePath, &nativePath);
+    AutoStr* nativePath = AutoStr_NewStd();
+    Str_Set(nativePath, path);
+    F_ToNativeSlashes(nativePath, nativePath);
 
     // Try opening as a real file.
-    FILE* file = fopen(Str_Text(&nativePath), mode);
+    FILE* file = fopen(Str_Text(nativePath), mode);
     if(file)
     {
-        if(foundPath)
-        {
-            *foundPath = Str_Set(Str_New(), path);
-        }
-        Str_Free(&nativePath);
+        if(foundPath) *foundPath = Str_Set(AutoStr_NewStd(), path);
         return file;
     }
 
     // Any applicable virtual directory mappings?
-    if(d->pathMappings.empty())
-    {
-        Str_Free(&nativePath);
-        return 0;
-    }
+    if(d->pathMappings.empty()) return 0;
 
-    ddstring_t* mapped = Str_NewStd();
+    AutoStr* mapped = AutoStr_NewStd();
     DENG2_FOR_EACH(i, d->pathMappings, PathMappings::const_iterator)
     {
         Str_Set(mapped, path);
         if(!applyPathMapping(mapped, *i)) continue;
         // The mapping was successful.
 
-        F_ToNativeSlashes(&nativePath, mapped);
-        file = fopen(Str_Text(&nativePath), mode);
+        F_ToNativeSlashes(nativePath, mapped);
+        file = fopen(Str_Text(nativePath), mode);
         if(file) break;
     }
-
-    Str_Free(&nativePath);
 
     if(file)
     {
         VERBOSE( Con_Message("findRealFile: \"%s\" opened as %s.\n", F_PrettyPath(Str_Text(mapped)), path) )
         if(foundPath) *foundPath = mapped;
     }
-    else
-    {
-        Str_Free(mapped);
-    }
+
     return file;
 }
 
@@ -1029,7 +1006,7 @@ de::AbstractFile* FS1::findLumpFile(char const* path, int* lumpIdx)
     return NULL;
 }
 
-de::AbstractFile& FS1::interpret(de::DFile& file, char const* path, LumpInfo const& info)
+de::AbstractFile& FS1::interpret(de::DFile& hndl, char const* path, LumpInfo const& info)
 {
     DENG_ASSERT(path && path[0]);
 
@@ -1044,8 +1021,8 @@ de::AbstractFile& FS1::interpret(de::DFile& file, char const* path, LumpInfo con
             // Not applicable for this resource type?
             if(intper->resourceType != resTypeGuess) continue;
 
-            interpretedFile = intper->interpret(file, path, info);
-            break;
+            interpretedFile = intper->interpret(hndl, path, info);
+            if(interpretedFile) break;
         }
     }
 
@@ -1057,8 +1034,8 @@ de::AbstractFile& FS1::interpret(de::DFile& file, char const* path, LumpInfo con
             // Already tried this?
             if(resTypeGuess && intper->resourceType == resTypeGuess) continue;
 
-            interpretedFile = intper->interpret(file, path, info);
-            break;
+            interpretedFile = intper->interpret(hndl, path, info);
+            if(interpretedFile) break;
         }
     }
 
@@ -1066,13 +1043,13 @@ de::AbstractFile& FS1::interpret(de::DFile& file, char const* path, LumpInfo con
     if(!interpretedFile)
     {
         // Use a generic file - LumpFile for contained lumps else GenericFile.
-        if(file.hasFile() && file.file().isContained())
+        if(info.container)
         {
-            interpretedFile = new LumpFile(file, path, info);
+            interpretedFile = new LumpFile(hndl, path, info);
         }
         else
         {
-            interpretedFile = new GenericFile(file, path, info);
+            interpretedFile = new GenericFile(hndl, path, info);
         }
     }
 
@@ -1080,12 +1057,60 @@ de::AbstractFile& FS1::interpret(de::DFile& file, char const* path, LumpInfo con
     return *interpretedFile;
 }
 
-de::DFile* FS1::tryOpenFile2(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
+de::DFile* FS1::tryOpenLump(char const* path, char const* /*mode*/, size_t /*baseOffset*/,
+                            bool allowDuplicate, LumpInfo& info)
+{
+    DENG_ASSERT(path && path[0]);
+
+    int lumpIdx;
+    AbstractFile* container = findLumpFile(path, &lumpIdx);
+    if(!container) return 0;
+
+    // Do not read files twice.
+    if(!allowDuplicate && !checkFileId(path)) return 0;
+
+    // Get a handle to the lump we intend to open.
+    /// @todo The way this buffering works is nonsensical it should not be done here
+    ///        but should instead be deferred until the content of the lump is read.
+    DFile* hndl = DFileBuilder::fromFileLump(*container, lumpIdx, false/*dontBuffer*/);
+
+    // Prepare a temporary info descriptor.
+    info = container->lumpInfo(lumpIdx);
+
+    return hndl;
+}
+
+de::DFile* FS1::tryOpenNativeFile(char const* path, char const* mode, size_t baseOffset,
+                                  bool allowDuplicate, LumpInfo& info)
+{
+    DENG_ASSERT(path && path[0]);
+
+    AutoStr* foundPath = 0;
+    FILE* nativeFile = findRealFile(path, mode, &foundPath);
+    if(!nativeFile) return 0;
+
+    // Do not read files twice.
+    if(!allowDuplicate && !checkFileId(Str_Text(foundPath)))
+    {
+        fclose(nativeFile);
+        return 0;
+    }
+
+    // Acquire a handle on the file we intend to open.
+    DFile* hndl = DFileBuilder::fromNativeFile(*nativeFile, baseOffset);
+
+    // Prepare the temporary info descriptor.
+    info = LumpInfo(F_GetLastModified(Str_Text(foundPath)));
+
+    return hndl;
+}
+
+de::AbstractFile* FS1::tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
 {
     if(!path || !path[0]) return 0;
-
     if(!mode) mode = "";
-    bool reqRealFile = !!strchr(mode, 'f');
+
+    bool const reqNativeFile = !!strchr(mode, 'f');
 
     // Make it a full path.
     AutoStr* searchPath = AutoStr_NewStd();
@@ -1093,69 +1118,41 @@ de::DFile* FS1::tryOpenFile2(char const* path, char const* mode, size_t baseOffs
     F_FixSlashes(searchPath, searchPath);
     F_ExpandBasePath(searchPath, searchPath);
 
-    DEBUG_VERBOSE2_Message(("tryOpenFile2: trying to open %s\n", Str_Text(searchPath)));
+    DEBUG_VERBOSE2_Message(("tryOpenFile: trying to open %s\n", Str_Text(searchPath)));
+
+    DFile* hndl = 0;
+    LumpInfo info; // The temporary info descriptor.
 
     // First check for lumps?
-    if(!reqRealFile)
+    if(!reqNativeFile)
     {
-        int lumpIdx;
-        AbstractFile* container = findLumpFile(Str_Text(searchPath), &lumpIdx);
-        if(container)
-        {
-            // Do not read files twice.
-            if(!allowDuplicate && !checkFileId(Str_Text(searchPath))) return 0;
-
-            // Get a handle to the lump we intend to open.
-            /// @todo The way this buffering works is nonsensical it should not be done here
-            ///        but should instead be deferred until the content of the lump is read.
-            de::DFile* hndl = DFileBuilder::fromFileLump(*container, lumpIdx, false/*dontBuffer*/);
-
-            // Prepare a temporary info descriptor.
-            LumpInfo info = container->lumpInfo(lumpIdx);
-
-            return DFileBuilder::fromFile(interpret(*hndl, Str_Text(searchPath), info));
-        }
+        hndl = tryOpenLump(Str_Text(searchPath), mode, baseOffset, allowDuplicate, info);
     }
 
-    // Try to open as a real file then. We must have an absolute path, so
-    // prepend the current working directory if necessary.
-    F_PrependWorkPath(searchPath, searchPath);
-    ddstring_t* foundPath = 0;
-    FILE* nativeFile = findRealFile(Str_Text(searchPath), mode, &foundPath);
-    if(!nativeFile) return 0;
-
-    // Do not read files twice.
-    if(!allowDuplicate && !checkFileId(Str_Text(foundPath)))
+    // Not found? - try a native file.
+    if(!hndl)
     {
-        fclose(nativeFile);
-        Str_Delete(foundPath);
-        return NULL;
+        // We must have an absolute path - prepend the CWD if necessary.
+        F_PrependWorkPath(searchPath, searchPath);
+
+        hndl = tryOpenNativeFile(Str_Text(searchPath), mode, baseOffset, allowDuplicate, info);
     }
 
-    // Acquire a handle on the file we intend to open.
-    DFile* hndl = DFileBuilder::fromNativeFile(*nativeFile, baseOffset);
-
-    // Prepare the temporary info descriptor.
-    LumpInfo info = LumpInfo(F_GetLastModified(Str_Text(foundPath)));
-
-    Str_Delete(foundPath);
+    // Nothing?
+    if(!hndl) return 0;
 
     // Search path is used here rather than found path as the latter may have
     // been mapped to another location. We want the file to be attributed with
     // the path it is to be known by throughout the virtual file system.
 
-    return DFileBuilder::fromFile(interpret(*hndl, Str_Text(searchPath), info));
-}
+    AbstractFile& file = interpret(*hndl, Str_Text(searchPath), info);
 
-de::DFile* FS1::tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
-{
-    DFile* file = tryOpenFile2(path, mode, baseOffset, allowDuplicate);
-    if(file)
+    if(d->loadingForStartup)
     {
-        d->openFiles.push_back(file);
-        return &file->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
+        file.setStartup(true);
     }
-    return NULL;
+
+    return &file;
 }
 
 de::DFile* FS1::openFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
@@ -1168,14 +1165,21 @@ de::DFile* FS1::openFile(char const* path, char const* mode, size_t baseOffset, 
             Con_Error("FS1::openFile: Unsupported file open-op in mode string %s for path \"%s\"\n", mode, path);
     }
 #endif
-    return tryOpenFile(path, mode, baseOffset, allowDuplicate);
+
+    AbstractFile* file = tryOpenFile(path, mode, baseOffset, allowDuplicate);
+    if(!file) return 0;
+
+    // Add a handle to the opened files list.
+    DFile* openHndl = DFileBuilder::fromFile(*file);
+    d->openFiles.push_back(openHndl); &openHndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
+    return openHndl;
 }
 
 bool FS1::accessFile(char const* path)
 {
-    DFile* hndl = tryOpenFile(path, "rb", 0, true /* allow duplicates */);
-    if(!hndl) return false;
-    deleteFile(*hndl);
+    AbstractFile* file = tryOpenFile(path, "rb", 0, true /* allow duplicates */);
+    if(!file) return false;
+    delete file;
     return true;
 }
 
@@ -1191,18 +1195,15 @@ de::AbstractFile* FS1::addFile(char const* path, size_t baseOffset)
         return 0;
     }
 
+    // Load the file (a.k.a., index it).
     AbstractFile& file = hndl->file();
     VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(file.path()))) )
 
-    if(d->loadingForStartup)
-    {
-        file.setStartup(true);
-    }
+    index(file);
 
+    // Add a handle to the loaded files list.
     DFile* loadedFilesHndl = DFileBuilder::dup(*hndl);
     d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
-
-    index(file);
 
     return &file;
 }

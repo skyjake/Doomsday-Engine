@@ -335,7 +335,7 @@ static int locateAllResourcesWorker(void* parameters)
     {
         Game* game = *i;
 
-        VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(&game->title())) )
+        Con_Message("Locating resources for \"%s\"...\n", Str_Text(&game->title()));
 
         gameCollection->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / gameCollection->count() - 1);
