@@ -1,4 +1,4 @@
-LIBRARY			DSDIRECTSOUND
+LIBRARY			AUDIO_DIRECTSOUND
 
 ; All exports should be prefixed DS_.
 

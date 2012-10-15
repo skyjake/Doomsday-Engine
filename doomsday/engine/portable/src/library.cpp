@@ -30,13 +30,13 @@
 #  include <stdbool.h>
 #endif
 
-#include "de_base.h"
-#include "de_filesys.h"
-#include "m_misc.h"
-
 #include <de/App>
 #include <de/NativeFile>
 #include <de/LibraryFile>
+
+#include "de_base.h"
+#include "de_filesys.h"
+#include "m_misc.h"
 
 #ifdef WIN32
 #  include "de_platform.h"

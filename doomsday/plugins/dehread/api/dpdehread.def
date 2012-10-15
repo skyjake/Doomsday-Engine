@@ -1,4 +1,4 @@
-LIBRARY			DPDEHREAD
+LIBRARY			DEHREAD
 
 EXPORTS
     DP_Initialize   @1

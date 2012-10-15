@@ -1,4 +1,4 @@
-LIBRARY			JDOOM
+LIBRARY			DOOM
 
 EXPORTS
     DP_Initialize   @1

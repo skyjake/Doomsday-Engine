@@ -119,13 +119,12 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
 
 static boolean unloadPlugin(PluginHandle* handle)
 {
-    int result;
     assert(handle);
-    if(!*handle) return true;
+    if(!*handle) return false;
 
     Library_Delete(*handle);
     *handle = 0;
-    return result;
+    return true;
 }
 
 void Plug_LoadAll(void)

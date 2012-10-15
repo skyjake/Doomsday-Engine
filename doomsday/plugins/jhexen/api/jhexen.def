@@ -1,4 +1,4 @@
-LIBRARY			JHEXEN
+LIBRARY			HEXEN
 
 EXPORTS
     DP_Initialize   @1

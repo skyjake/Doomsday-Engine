@@ -8,6 +8,12 @@
 void strupr(char* str);
 #endif
 
+#ifdef WIN32
+#  define stricmp  _stricmp
+#  define strnicmp _strnicmp
+#  define strupr   _strupr
+#endif
+
 #define VERSION_STR	"1.0"
 #define MAX_TOKEN	256
 #define NUM_GROUPS	2

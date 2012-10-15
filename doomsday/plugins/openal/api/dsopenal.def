@@ -1,4 +1,4 @@
-LIBRARY			DSOPENAL
+LIBRARY			AUDIO_OPENAL
 
 ; All exports should be prefixed DS_.
 

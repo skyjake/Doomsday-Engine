@@ -1,4 +1,4 @@
-LIBRARY			DSWINMM
+LIBRARY			AUDIO_WINMM
 
 ; All exports should be prefixed DS_.
 

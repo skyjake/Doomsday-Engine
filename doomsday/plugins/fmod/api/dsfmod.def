@@ -1,4 +1,4 @@
-LIBRARY			DSFMOD
+LIBRARY			AUDIO_FMOD
 
 ; All exports should be prefixed DS_.
 

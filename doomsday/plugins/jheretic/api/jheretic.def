@@ -1,4 +1,4 @@
-LIBRARY			JHERETIC
+LIBRARY			HERETIC
 
 EXPORTS
     DP_Initialize   @1
