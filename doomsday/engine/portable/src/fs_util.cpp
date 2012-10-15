@@ -100,7 +100,7 @@ int F_FileExists(const char* path)
     return result;
 }
 
-uint F_LastModified(const char* path)
+uint F_GetLastModified(const char* path)
 {
 #ifdef UNIX
     struct stat s;

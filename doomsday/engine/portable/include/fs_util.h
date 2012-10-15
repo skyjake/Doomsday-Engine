@@ -53,8 +53,13 @@ void F_ExtractFileBase(char* dest, const char* path, size_t len);
  */
 int F_FileExists(const char* path);
 
-/// @note This only works on real files.
-uint F_LastModified(const char* path);
+/**
+ * @return  The time when the file/directory was last modified, as seconds since
+ *          the Epoch else zero if @a path is not found.
+ *
+ * @attention This only works on native paths.
+ */
+uint F_GetLastModified(const char* path);
 
 /**
  * Check that the given directory exists. If it doesn't, create it.

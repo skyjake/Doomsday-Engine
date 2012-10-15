@@ -1158,12 +1158,12 @@ boolean DAM_MapRead(GameMap* map, const char* path)
     return doArchiveMap(map, path, false);
 }
 
-boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum)
+boolean DAM_MapIsValid(char const* cachedMapPath, lumpnum_t markerLumpNum)
 {
-    if(NULL != cachedMapPath && !cachedMapPath[0] && markerLumpNum >= 0)
+    if(cachedMapPath && !cachedMapPath[0] && markerLumpNum >= 0)
     {
-        uint sourceTime = F_GetLastModified(F_LumpSourceFile(markerLumpNum));
-        uint buildTime = F_GetLastModified(cachedMapPath);
+        uint const sourceTime = F_LumpLastModified(markerLumpNum);
+        uint const buildTime  = F_GetLastModified(cachedMapPath);
 
         if(F_Access(cachedMapPath) && !(buildTime < sourceTime))
         {
@@ -1172,6 +1172,7 @@ boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum)
             {
                 archiveHeader(false);
                 closeMapFile();
+
                 if(mapFileVersion == DAM_VERSION)
                     return true; // Its good.
             }

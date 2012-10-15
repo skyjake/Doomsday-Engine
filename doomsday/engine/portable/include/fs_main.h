@@ -126,8 +126,8 @@ namespace de
         void mapPathToLump(char const* symbolicPath, char const* lumpName);
 
         /**
-         * Reset known fileId records so that the next time F_CheckFileId() is
-         * called on a file, it will pass.
+         * Reset known fileId records so that the next time checkFileId() is called for
+         * a filepath, it will pass.
          */
         void resetFileIds();
 
@@ -143,12 +143,6 @@ namespace de
          * @return  @c true if a file exists at @a path which can be opened for reading.
          */
         bool accessFile(char const* path);
-
-        /**
-         * @return  The time when the file was last modified, as seconds since
-         * the Epoch else zero if the file is not found.
-         */
-        uint lastModified(char const* fileName);
 
         /**
          * Files with a .wad extension are archived data files with multiple 'lumps',

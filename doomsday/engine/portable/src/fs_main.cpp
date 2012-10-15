@@ -654,7 +654,7 @@ lumpnum_t FS1::openAuxiliary(char const* path, size_t baseOffset)
         d->auxiliaryWadLumpIndexInUse = true;
 
         // Prepare the temporary info descriptor.
-        LumpInfo info = LumpInfo(lastModified(Str_Text(foundPath)));
+        LumpInfo info = LumpInfo(F_GetLastModified(Str_Text(foundPath)));
 
         WadFile* wad = new WadFile(*hndl, Str_Text(foundPath), info);
         hndl = DFileBuilder::fromFile(*wad);
@@ -1121,7 +1121,7 @@ de::DFile* FS1::tryOpenFile2(char const* path, char const* mode, size_t baseOffs
     DFile* hndl = DFileBuilder::fromNativeFile(*nativeFile, baseOffset);
 
     // Prepare the temporary info descriptor.
-    LumpInfo info = LumpInfo(F_LastModified(Str_Text(foundPath)));
+    LumpInfo info = LumpInfo(F_GetLastModified(Str_Text(foundPath)));
 
     // Search path is used here rather than found path as the latter may have
     // been mapped to another location. We want the file to be attributed with
@@ -1170,19 +1170,6 @@ bool FS1::accessFile(char const* path)
     if(!hndl) return false;
     deleteFile(*hndl);
     return true;
-}
-
-uint FS1::lastModified(char const* fileName)
-{
-    // Try to open the file, but don't buffer any contents.
-    DFile* hndl = tryOpenFile(fileName, "rx", 0, true);
-    uint modified = 0;
-    if(hndl)
-    {
-        modified = hndl->file().lastModified();
-        deleteFile(*hndl);
-    }
-    return modified;
 }
 
 de::AbstractFile* FS1::addFile(char const* path, size_t baseOffset)
@@ -1784,11 +1771,6 @@ int F_LumpCount(void)
 int F_Access(char const* path)
 {
     return App_FileSystem()->accessFile(path)? 1 : 0;
-}
-
-uint F_GetLastModified(char const* path)
-{
-    return App_FileSystem()->lastModified(path);
 }
 
 struct abstractfile_s* F_AddFile2(char const* path, size_t baseOffset)
