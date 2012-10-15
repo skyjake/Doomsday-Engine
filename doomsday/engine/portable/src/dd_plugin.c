@@ -105,7 +105,7 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
 
     // This seems to be a Doomsday plugin.
     _splitpath(pluginPath, NULL, NULL, name, NULL);
-    Con_Message("  %s (id:%i)\n", name, plugId);
+    Con_Message("  (id:%i) %s\n", plugId, name);
 
     *handle = plugin;
 

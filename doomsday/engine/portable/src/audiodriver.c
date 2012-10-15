@@ -122,35 +122,48 @@ static void importInterfaces(driver_t* d)
 #undef Imp
 }
 
+static int audioPluginFinder(const char* fileName, const char* absPath, void* ptr)
+{
+    Str* path = (Str*) ptr;
+    if(!strncmp(fileName, Str_Text(path), Str_Length(path)) /* matching name? */ &&
+       (strlen(fileName) == Str_Length(path) /* no extension? */
+        || fileName[Str_Length(path)] == '.' /* extension follows right away? */))
+    {
+        Str_Set(path, absPath);
+        return true; // Found it!
+    }
+    return false; // Keep looking...
+}
+
+static AutoStr* findAudioPluginPath(const char* name)
+{
+    AutoStr* path = Str_Appendf(AutoStr_New(), "audio_%s", name);
+    if(Library_IterateAvailableLibraries(audioPluginFinder, path))
+    {
+        // The full path of the library was returned in @a path.
+        return path;
+    }
+    return 0;
+}
+
 static boolean loadAudioDriver(driver_t* driver, const char* name)
 {
     boolean ok = false;
 
     if(name && name[0])
     {
-        Str libPath;
-
-        // Compose the name using the prefix "ds".
-        Str_InitStd(&libPath);
-#ifdef WIN32
-        Str_Appendf(&libPath, "%sds%s.dll", ddBinPath, name);
-#elif defined(MACOSX)
-        Str_Appendf(&libPath, "ds%s.bundle", name);
-#else
-        Str_Appendf(&libPath, "libds%s.so", name);
-#endif
+        AutoStr* libPath = findAudioPluginPath(name);
 
         // Load the audio driver library and import symbols.
-        if((driver->library = Library_New(Str_Text(&libPath))) != 0)
+        if(libPath && (driver->library = Library_New(Str_Text(libPath))) != 0)
         {
             importInterfaces(driver);
             ok = true;
         }
         else
         {
-            Con_Message("Warning: loadAudioDriver: Loading of \"%s\" failed.\n", Str_Text(&libPath));
+            Con_Message("Warning: loadAudioDriver: Loading of \"%s\" failed.\n", name);
         }
-        Str_Free(&libPath);
     }
     return ok;
 }
@@ -222,22 +235,6 @@ static boolean initDriver(audiodriverid_t id)
         break;
 #endif
 
-#ifdef MACOSX
-    case AUDIOD_OPENAL:
-        if(!loadAudioDriver(d, "OpenAL"))
-            return false;
-        break;
-
-    case AUDIOD_FMOD:
-        if(!loadAudioDriver(d, "FMOD"))
-            return false;
-        break;
-
-    case AUDIOD_FLUIDSYNTH:
-        if(!loadAudioDriver(d, "FluidSynth"))
-            return false;
-        break;
-#else
     case AUDIOD_OPENAL:
         if(!loadAudioDriver(d, "openal"))
             return false;
@@ -252,7 +249,6 @@ static boolean initDriver(audiodriverid_t id)
         if(!loadAudioDriver(d, "fluidsynth"))
             return false;
         break;
-#endif
 
 #ifdef WIN32
     case AUDIOD_DSOUND:

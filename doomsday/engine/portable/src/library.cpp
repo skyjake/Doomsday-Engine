@@ -223,7 +223,7 @@ Library* Library_New(const char *filePath)
     if(!handle)
     {
         Str_Set(lastError, dlerror());
-        printf("Library_New: Error opening \"%s\" (%s).\n", filePath, Library_LastError());
+        LOG_WARNING("Library_New: Error opening \"%s\" (%s).") << filePath << Library_LastError();
         return 0;
     }
 #endif
@@ -233,7 +233,7 @@ Library* Library_New(const char *filePath)
     if(!handle)
     {
         Str_Set(lastError, DD_Win32_GetLastErrorMessage());
-        printf("Library_New: Error opening \"%s\" (%s).\n", filePath, Library_LastError());
+        LOG_WARNING("Library_New: Error opening \"%s\" (%s).") << filePath << Library_LastError();
         return 0;
     }
 #endif
