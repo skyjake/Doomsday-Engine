@@ -37,28 +37,20 @@ struct gamedef_s;
 #include <QList>
 #include <de/str.h>
 
-/**
- * @defgroup printGameFlags  Print Game Flags.
- */
-///@{
-#define PGF_BANNER                 0x1
-#define PGF_STATUS                 0x2
-#define PGF_LIST_STARTUP_RESOURCES 0x4
-#define PGF_LIST_OTHER_RESOURCES   0x8
-
-#define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
-///@}
-
 namespace de
 {
     /**
-     * Games encapsulates a collection of de::Game instances and the logical
-     * operations which are performed upon it (such as searches and various
-     * index printing algorithms).
+     * Encapsulates a collection of de::Game instances and the logical operations
+     * which are performed upon it (such as searches and various index printing
+     * algorithms).
      */
-    class Games
+    class GameCollection
     {
     public:
+        /// The requested game does not exist in the collection. @ingroup errors
+        DENG2_ERROR(NotFoundError);
+
+        /// Used for returning the result of game searches. @see findAll()
         struct GameListItem
         {
             Game* game;
@@ -74,10 +66,13 @@ namespace de
         };
         typedef QList<GameListItem> GameList;
 
-    public:
-        Games();
-        ~Games();
+        typedef QList<Game*> Games;
 
+    public:
+        GameCollection();
+        ~GameCollection();
+
+        /// Register the console commands, variables, etc..., of this module.
         static void consoleRegister();
 
         /// @return  The currently active Game instance.
@@ -87,17 +82,11 @@ namespace de
         Game& nullGame() const;
 
         /// Change the currently active game.
-        Games& setCurrentGame(Game& game);
+        GameCollection& setCurrentGame(Game& game);
 
         /// @return  @c true= @a game is the currently active game.
         inline bool isCurrentGame(Game const& game) const {
             return &game == &currentGame();
-        }
-
-        /// @todo Implement a proper null-game object for this.
-        /// @return  @c true= @a game is the special "null-game" object (not a real playable game).
-        inline bool isNullGame(Game const& game) const {
-            return &game == &nullGame();
         }
 
         /// @return  Total number of registered games.
@@ -112,68 +101,68 @@ namespace de
          */
         gameid_t id(Game& game) const;
 
-        gameid_t gameIdForKey(char const* identityKey) const;
+        /**
+         * @return  Game associated with @a identityKey.
+         *
+         * @throws NotFoundError if no game is associated with @a identityKey.
+         */
+        Game& byIdentityKey(char const* identityKey) const;
 
-        /// @return  Game associated with unique index @a idx else @c NULL.
-        Game* byIndex(int idx) const;
+        /**
+         * @return  Game associated with @a gameId.
+         *
+         * @throws NotFoundError if no game is associated with @a gameId.
+         */
+        Game& byId(gameid_t gameId) const;
 
-        /// @return  Game associated with @a identityKey else @c NULL.
-        Game* byIdentityKey(char const* identityKey) const;
-
-        /// @return  Game associated with @a gameId else @c NULL.
-        Game* byId(gameid_t gameId) const;
+        /**
+         * Provides access to the games for efficient traversals.
+         */
+        Games const& games() const;
 
         /**
          * Finds all games.
          *
-         * @param found         Set of games that match the result.
-         *
+         * @param found  List of found games.
          * @return  Number of games found.
          */
         int findAll(GameList& found);
 
         /**
-         * Add a new Game to this collection.
-         *
-         * @attention Assumes @a game is not already in the collection.
+         * Find the first playable game in this collection (in registration order).
+         * @return  The found game else @c NULL.
          */
-        Games& add(Game& game);
-
-        /// @return The first playable game in the collection according to registration order.
         Game* firstPlayable() const;
 
         /**
-         * Try to locate all startup resources for @a game.
+         * Add a new Game to this collection. If @a game is already present in the
+         * collection this is no-op.
+         *
+         * @param game  Game to be added.
+         * @return  This collection.
          */
-        Games& locateStartupResources(Game& game);
+        GameCollection& add(Game& game);
+
+        /**
+         * Try to locate all startup resources for @a game.
+         * @return  This collection.
+         */
+        GameCollection& locateStartupResources(Game& game);
 
         /**
          * Try to locate all startup resources for all registered games.
+         * @return  This collection.
          */
-        Games& locateAllResources();
+        GameCollection& locateAllResources();
 
         /**
-         * Print extended information about game @a info.
-         * @param info  Game record to be printed.
-         * @param flags  &ref printGameFlags
-         */
-        void print(Game& game, int flags) const;
-
-        /**
-         * Print a game mode banner with rulers.
-         */
-        static void printBanner(Game& game);
-
-        /**
-         * Print the list of resources for @a Game.
+         * @return  Game associated with unique index @a idx.
          *
-         * @param game          Game to list resources of.
-         * @param printStatus   @c true= Include the current availability/load status
-         *                      of each resource.
-         * @param rflags        Only consider resources whose @ref resourceFlags match
-         *                      this value. If @c <0 the flags are ignored.
+         * @deprecated Iterate games() instead.
+         *
+         * @throws NotFoundError if no game is associated with index @a idx.
          */
-        static void printResources(Game& game, bool printStatus, int rflags);
+        Game& byIndex(int idx) const;
 
     private:
         struct Instance;
@@ -189,90 +178,46 @@ extern "C" {
  * C wrapper API:
  */
 
-struct games_s;
-typedef struct games_s Games;
+struct gamecollection_s;
+typedef struct gamecollection_s GameCollection;
 
 /// @return  The currently active Game instance.
-Game* Games_CurrentGame(Games* games);
-
-/// @return  The special "null" Game instance.
-Game* Games_NullGame(Games* games);
+Game* GameCollection_CurrentGame(GameCollection* games);
 
 /// @return  Total number of registered games.
-int Games_Count(Games* games);
+int GameCollection_Count(GameCollection* games);
 
 /// @return  Number of games marked as currently playable.
-int Games_NumPlayable(Games* games);
+int GameCollection_NumPlayable(GameCollection* games);
 
 /**
  * @param game  Game instance.
  * @return Unique identifier associated with @a game.
  */
-gameid_t Games_Id(Games* games, Game* game);
-
-/**
- * @return  Game associated with unique index @a idx else @c NULL.
- */
-Game* Games_ByIndex(Games* games, int idx);
-
-/**
- * @return  Game associated with @a identityKey else @c NULL.
- */
-Game* Games_ByIdentityKey(Games* games, char const* identityKey);
+gameid_t GameCollection_Id(GameCollection* games, Game* game);
 
 /**
  * @return  Game associated with @a gameId else @c NULL.
  */
-Game* Games_ById(Games* games, gameid_t gameId);
+Game* GameCollection_ById(GameCollection* games, gameid_t gameId);
 
 /**
- * Is this the special "null-game" object (not a real playable game).
- * @todo Implement a proper null-game object for this.
+ * @return  Game associated with @a identityKey else @c NULL.
  */
-boolean Games_IsNullObject(Games* games, Game const* game);
+Game* GameCollection_ByIdentityKey(GameCollection* games, char const* identityKey);
+
+/**
+ * @return  Game associated with unique index @a idx else @c NULL.
+ */
+Game* GameCollection_ByIndex(GameCollection* games, int idx);
 
 /// @return The first playable game in the collection according to registration order.
-Game* Games_FirstPlayable(Games* games);
+Game* GameCollection_FirstPlayable(GameCollection* games);
 
 /**
  * Try to locate all startup resources for all registered games.
  */
-void Games_LocateAllResources(Games* games);
-
-/**
- * @defgroup printGameFlags  Print Game Flags.
- */
-///@{
-#define PGF_BANNER                 0x1
-#define PGF_STATUS                 0x2
-#define PGF_LIST_STARTUP_RESOURCES 0x4
-#define PGF_LIST_OTHER_RESOURCES   0x8
-
-#define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
-///@}
-
-/**
- * Print extended information about game @a info.
- * @param info  Game record to be printed.
- * @param flags  &see printGameFlags
- */
-void Games_Print(Games* games, Game* game, int flags);
-
-/**
- * Print a game mode banner with rulers.
- */
-void Games_PrintBanner(Game* game);
-
-/**
- * Print the list of resources for @a Game.
- *
- * @param game          Game to list resources of.
- * @param printStatus   @c true= Include the current availability/load status
- *                      of each resource.
- * @param rflags        Only consider resources whose @ref resourceFlags match
- *                      this value. If @c <0 the flags are ignored.
- */
-void Games_PrintResources(Game* game, boolean printStatus, int rflags);
+void GameCollection_LocateAllResources(GameCollection* games);
 
 D_CMD(ListGames);
 

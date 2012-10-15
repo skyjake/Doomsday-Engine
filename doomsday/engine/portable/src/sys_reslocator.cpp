@@ -1235,7 +1235,7 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
             if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
                !strnicmp(Str_Text(&info->name), Str_Text(path), nameLen))
             {
-                Str_Prepend(path, Str_Text(&reinterpret_cast<de::Games*>(App_Games())->currentGame().dataPath()));
+                Str_Prepend(path, Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->dataPath()));
                 return true;
             }
         }

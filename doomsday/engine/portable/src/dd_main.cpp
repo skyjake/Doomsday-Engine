@@ -91,8 +91,8 @@ static size_t numSessionResourceFileList;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-// The Games collection.
-static de::Games* games;
+// The Game collection.
+static de::GameCollection* games;
 
 D_CMD(CheckForUpdates)
 {
@@ -215,7 +215,7 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
 boolean DD_GameLoaded(void)
 {
     DENG_ASSERT(games);
-    return !games->isNullGame(games->currentGame());
+    return !isNullGame(games->currentGame());
 }
 
 void DD_DestroyGames(void)
@@ -450,7 +450,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
 
-    if(!games->isNullGame(games->currentGame()))
+    if(DD_GameLoaded())
     {
         ddstring_t temp;
 
@@ -530,7 +530,7 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
 
-    if(!games->isNullGame(games->currentGame()))
+    if(DD_GameLoaded())
     {
         /**
          * Phase 3: Add real files from the Auto directory.
@@ -579,7 +579,7 @@ static int DD_ActivateGameWorker(void* parameters)
         Con_SetProgress(50);
 
     // Now that resources have been located we can begin to initialize the game.
-    if(!games->isNullGame(games->currentGame()) && gx.PreInit)
+    if(!DD_GameLoaded() && gx.PreInit)
         gx.PreInit(games->id(games->currentGame()));
 
     if(p->initiatedBusyMode)
@@ -608,7 +608,7 @@ static int DD_ActivateGameWorker(void* parameters)
         Str_Free(&tmp);
     }
 
-    if(!isDedicated && !games->isNullGame(games->currentGame()))
+    if(!isDedicated && DD_GameLoaded())
     {
         // Apply default control bindings for this game.
         B_BindGameDefaults();
@@ -665,9 +665,14 @@ static int DD_ActivateGameWorker(void* parameters)
     return 0;
 }
 
-struct games_s* App_Games()
+struct gamecollection_s* App_GameCollection()
 {
-    return reinterpret_cast<struct games_s*>(games);
+    return reinterpret_cast<struct gamecollection_s*>(games);
+}
+
+struct game_s* App_CurrentGame()
+{
+    return reinterpret_cast<struct game_s*>(&games->currentGame());
 }
 
 static void populateGameInfo(GameInfo& info, de::Game& game)
@@ -707,30 +712,27 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     char const* _names, void* params)
 {
     DENG_ASSERT(games);
-    de::Game* game = games->byId(gameId);
-    AbstractResource* rec;
-    ddstring_t name;
-    ddstring_t str;
-    char const* p;
 
-    if(!game)
-        Con_Error("DD_AddGameResource: Error, unknown game id %i.", gameId);
+    de::Game& game = games->byId(gameId);
+
     if(!VALID_RESOURCE_CLASS(rclass))
         Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Invalid name argument.");
+
+    AbstractResource* rec;
     if(0 == (rec = AbstractResource_New(rclass, rflags)))
         Con_Error("DD_AddGameResource: Unknown error occured during AbstractResource::Construct.");
 
     // Add a name list to the game record.
-    Str_Init(&str);
+    ddstring_t str; Str_InitStd(&str);
     Str_Set(&str, _names);
     // Ensure the name list has the required terminating semicolon.
     if(Str_RAt(&str, 0) != ';')
         Str_Append(&str, ";");
 
-    p = Str_Text(&str);
-    Str_Init(&name);
+    char const* p = Str_Text(&str);
+    ddstring_t name; Str_Init(&name);
     while((p = Str_CopyDelim2(&name, p, ';', CDF_OMIT_DELIMITER)))
     {
         AbstractResource_AddName(rec, &name);
@@ -763,7 +765,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     default: break;
     }
 
-    game->addResource(rclass, *rec);
+    game.addResource(rclass, *rec);
 
     Str_Free(&str);
 }
@@ -780,35 +782,39 @@ gameid_t DD_DefineGame(GameDef const* def)
     }
 
     // Game mode identity keys must be unique. Ensure that is the case.
-    if(Games_ByIdentityKey(App_Games(), def->identityKey))
+    DENG_ASSERT(games);
+    try
     {
+        /*de::Game& game =*/ games->byIdentityKey(def->identityKey);
 #if _DEBUG
         Con_Message("Warning: DD_DefineGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.\n", def->defaultTitle, def->identityKey);
 #endif
         return 0; // Invalid id.
     }
+    catch(de::GameCollection::NotFoundError)
+    {} // Ignore the error.
+
+    de::Game* game = de::Game::fromDef(*def);
+    if(!game) return 0; // Invalid def.
 
     // Add this game to our records.
-    de::Game* game = de::Game::fromDef(*def);
-    if(game)
-    {
-        game->setPluginId(DD_PluginIdForActiveHook());
-
-        DENG_ASSERT(games);
-        games->add(*game);
-        return games->id(*game);
-    }
-    return 0; // Invalid id.
+    game->setPluginId(DD_PluginIdForActiveHook());
+    games->add(*game);
+    return games->id(*game);
 }
 
 /// @note Part of the Doomsday public API.
 gameid_t DD_GameIdForKey(const char* identityKey)
 {
     DENG_ASSERT(games);
-    de::Game* game = games->byIdentityKey(identityKey);
-    if(game) return games->id(*game);
-
-    DEBUG_Message(("Warning:DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
+    try
+    {
+        return games->id(games->byIdentityKey(identityKey));
+    }
+    catch(de::GameCollection::NotFoundError)
+    {
+        DEBUG_Message(("Warning: DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
+    }
     return 0; // Invalid id.
 }
 
@@ -932,7 +938,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     Materials_Shutdown();
 
     VERBOSE(
-        if(!games->isNullGame(game))
+        if(!isNullGame(game))
         {
             Con_Message("Selecting game '%s'...\n", Str_Text(&game.identityKey()));
         }
@@ -1000,7 +1006,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 
         p.initiatedBusyMode = !BusyMode_Active();
 
-        if(!games->isNullGame(games->currentGame()))
+        if(DD_GameLoaded())
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
@@ -1010,7 +1016,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         }
 
         /// @kludge Use more appropriate task names when unloading a game.
-        if(games->isNullGame(game))
+        if(isNullGame(game))
         {
             gameChangeTasks[0].name = "Unloading game...";
             gameChangeTasks[3].name = "Switching to ringzero...";
@@ -1022,9 +1028,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         // Process any GL-related tasks we couldn't while Busy.
         Rend_ParticleLoadExtraTextures();
 
-        if(!games->isNullGame(games->currentGame()))
+        if(DD_GameLoaded())
         {
-            de::Games::printBanner(games->currentGame());
+            de::Game::printBanner(games->currentGame());
         }
         else
         {
@@ -1073,12 +1079,16 @@ de::Game* DD_AutoselectGame(void)
     if(CommandLine_CheckWith("-game", 1))
     {
         char const* identityKey = CommandLine_Next();
-        de::Game* game = games->byIdentityKey(identityKey);
-
-        if(game && game->allStartupResourcesFound())
+        try
         {
-            return game;
+            de::Game& game = games->byIdentityKey(identityKey);
+            if(game.allStartupResourcesFound())
+            {
+                return &game;
+            }
         }
+        catch(de::GameCollection::NotFoundError)
+        {} // Ignore the error.
     }
 
     // If but one lonely game; select it.
@@ -1108,7 +1118,7 @@ int DD_EarlyInit(void)
     Sys_InitWindowManager();
 
     // Instantiate the Games collection.
-    games = new de::Games();
+    games = new de::GameCollection();
 
     return true;
 }
@@ -2112,7 +2122,6 @@ D_CMD(Load)
 
     boolean didLoadGame = false, didLoadResource = false;
     ddstring_t foundPath, searchPath;
-    de::Game* game;
     int arg = 1;
 
     Str_Init(&searchPath);
@@ -2134,18 +2143,18 @@ D_CMD(Load)
     }
 
     // Are we loading a game?
-    game = games->byIdentityKey(Str_Text(&searchPath));
-    if(game)
+    try
     {
-        if(!game->allStartupResourcesFound())
+        de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
+        if(!game.allStartupResourcesFound())
         {
             Con_Message("Failed to locate all required startup resources:\n");
-            de::Games::printResources(*game, true, RF_STARTUP);
-            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(&game->title()), Str_Text(&game->identityKey()));
+            de::Game::printResources(game, true, RF_STARTUP);
+            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
             Str_Free(&searchPath);
             return true;
         }
-        if(!DD_ChangeGame(*game))
+        if(!DD_ChangeGame(game))
         {
             Str_Free(&searchPath);
             return false;
@@ -2153,6 +2162,8 @@ D_CMD(Load)
         didLoadGame = true;
         ++arg;
     }
+    catch(de::GameCollection::NotFoundError)
+    {} // Ignore the error.
 
     // Try the resource locator.
     Str_Init(&foundPath);
@@ -2180,7 +2191,6 @@ D_CMD(Unload)
 
     boolean didUnloadFiles = false;
     ddstring_t searchPath;
-    de::Game* game;
     int i;
 
     // No arguments; unload the current game if loaded.
@@ -2213,16 +2223,22 @@ D_CMD(Unload)
     }
 
     // Unload the current game if specified.
-    if(argc == 2 && (game = games->byIdentityKey(Str_Text(&searchPath))) != 0)
+    if(argc == 2)
     {
-        Str_Free(&searchPath);
-        if(DD_GameLoaded())
+        try
         {
-            return DD_ChangeGame(games->nullGame());
-        }
+            de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
+            Str_Free(&searchPath);
+            if(DD_GameLoaded())
+            {
+                return DD_ChangeGame(games->nullGame());
+            }
 
-        Con_Message("%s is not currently loaded.\n", Str_Text(&game->identityKey()));
-        return true;
+            Con_Message("%s is not currently loaded.\n", Str_Text(&game.identityKey()));
+            return true;
+        }
+        catch(de::GameCollection::NotFoundError)
+        {} // Ignore the error.
     }
 
     // Try the resource locator.

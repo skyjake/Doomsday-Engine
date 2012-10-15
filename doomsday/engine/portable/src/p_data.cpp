@@ -80,7 +80,7 @@ const char* P_GenerateUniqueMapId(const char* mapID)
     Str_Init(&fileName);
     F_FileName(&fileName, F_LumpSourceFile(lumpNum));
     qsnprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(&fileName),
-              (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(&reinterpret_cast<de::Games*>(App_Games())->currentGame().identityKey()));
+              (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()));
     strlwr(uid);
 
     Str_Free(&fileName);

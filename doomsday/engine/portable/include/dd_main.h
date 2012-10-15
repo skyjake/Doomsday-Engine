@@ -55,7 +55,8 @@ extern "C" {
 #  define DEBUG_VERBOSE2_Message(code)
 #endif
 
-struct games_s;
+struct gamecollection_s;
+struct game_s;
 
 extern int verbose;
 //extern FILE* outFile; // Output file for console messages.
@@ -73,8 +74,11 @@ extern finaleid_t titleFinale;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-/// @return  The main Games collection.
-struct games_s* App_Games();
+/// @return  The Game collection.
+struct gamecollection_s* App_GameCollection();
+
+/// @return  The current Game in the collection.
+struct game_s* App_CurrentGame();
 
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);

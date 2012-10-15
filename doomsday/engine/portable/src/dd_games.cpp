@@ -32,34 +32,28 @@ namespace de {
 
 static bool validateResource(AbstractResource* rec);
 
-struct Games::Instance
+struct GameCollection::Instance
 {
-    Games& self;
+    GameCollection& self;
 
-    /// Game collection.
-    Game** games;
-    int gamesCount;
+    /// The actual collection.
+    GameCollection::Games games;
 
     /// Currently active game (in this collection).
-    Game* theGame;
+    Game* currentGame;
 
     /// Special "null-game" object for this collection.
-    Game* nullGame;
+    NullGame* nullGame;
 
-    Instance(Games& d)
-        : self(d), games(0), gamesCount(0), theGame(0), nullGame(0)
+    Instance(GameCollection& d)
+        : self(d), games(), currentGame(0), nullGame(0)
     {}
 
     ~Instance()
     {
-        if(games)
+        DENG2_FOR_EACH(i, games, GameCollection::Games::const_iterator)
         {
-            for(int i = 0; i < gamesCount; ++i)
-            {
-                delete games[i];
-            }
-            M_Free(games); games = 0;
-            gamesCount = 0;
+            delete *i;
         }
 
         if(nullGame)
@@ -67,36 +61,11 @@ struct Games::Instance
             delete nullGame;
             nullGame = NULL;
         }
-        theGame = NULL;
-    }
-
-    int index(Game const& game)
-    {
-        if(&game != nullGame)
-        {
-            for(int i = 0; i < gamesCount; ++i)
-            {
-                if(&game == games[i])
-                    return i+1;
-            }
-        }
-        return 0;
-    }
-
-    Game* findByIdentityKey(char const* identityKey)
-    {
-        DENG_ASSERT(identityKey && identityKey[0]);
-        for(int i = 0; i < gamesCount; ++i)
-        {
-            Game* game = games[i];
-            if(!stricmp(Str_Text(&game->identityKey()), identityKey))
-                return game;
-        }
-        return NULL; // Not found.
+        currentGame = NULL;
     }
 };
 
-Games::Games()
+GameCollection::GameCollection()
 {
     d = new Instance(*this);
 
@@ -118,102 +87,119 @@ Games::Games()
     F_ExpandBasePath(&defsPath, &defsPath);
     F_AppendMissingSlash(&defsPath);
 
-    d->theGame = d->nullGame = new Game("null-game", &dataPath, &defsPath, "doomsday", 0, 0);
+    d->currentGame = d->nullGame = new NullGame(&dataPath, &defsPath);
 
     Str_Free(&defsPath);
     Str_Free(&dataPath);
 }
 
-Games::~Games()
+GameCollection::~GameCollection()
 {   
     delete d;
 }
 
-Game& Games::currentGame() const
+Game& GameCollection::currentGame() const
 {
-    return *d->theGame;
+    return *d->currentGame;
 }
 
-Game& Games::nullGame() const
+Game& GameCollection::nullGame() const
 {
     return *d->nullGame;
 }
 
-Games& Games::setCurrentGame(Game& game)
+GameCollection& GameCollection::setCurrentGame(Game& game)
 {
-    d->theGame = &game;
+    // Ensure the specified game is actually in this collection (NullGame is implicitly).
+    DENG_ASSERT(isNullGame(game) || id(game) > 0);
+    d->currentGame = &game;
     return *this;
 }
 
-int Games::numPlayable() const
+int GameCollection::numPlayable() const
 {
     int count = 0;
-    for(int i = 0; i < d->gamesCount; ++i)
+    DENG2_FOR_EACH(i, d->games, Games::const_iterator)
     {
-        de::Game* game = d->games[i];
+        Game* game = *i;
         if(!game->allStartupResourcesFound()) continue;
         ++count;
     }
     return count;
 }
 
-Game* Games::firstPlayable() const
+Game* GameCollection::firstPlayable() const
 {
-    for(int i = 0; i < d->gamesCount; ++i)
+    DENG2_FOR_EACH(i, d->games, Games::const_iterator)
     {
-        Game* game = d->games[i];
+        Game* game = *i;
         if(game->allStartupResourcesFound()) return game;
     }
     return NULL;
 }
 
-int Games::count() const
+int GameCollection::count() const
 {
-    return d->gamesCount;
+    return d->games.count();
 }
 
-Game* Games::byIndex(int idx) const
-{
-    if(idx > 0 && idx <= d->gamesCount)
-        return d->games[idx-1];
-    return NULL;
-}
-
-Game* Games::byIdentityKey(char const* identityKey) const
-{
-    if(identityKey && identityKey[0])
-        return d->findByIdentityKey(identityKey);
-    return NULL;
-}
-
-Game* Games::byId(gameid_t gameId) const
-{
-    if(gameId > 0 && gameId <= d->gamesCount)
-        return d->games[gameId-1];
-    return NULL; // Not found.
-}
-
-gameid_t Games::id(Game& game) const
+gameid_t GameCollection::id(Game& game) const
 {
     if(&game == d->nullGame) return 0; // Invalid id.
-    return (gameid_t) d->index(game);
+    int idx = d->games.indexOf(&game);
+    if(idx < 0) throw NotFoundError("GameCollection::id", QString("Game %p is not part of this collection").arg(de::dintptr(&game)));
+    return gameid_t(idx+1);
 }
 
-int Games::findAll(GameList& found)
+Game& GameCollection::byId(gameid_t gameId) const
+{
+    if(gameId <= 0 || gameId > d->games.count())
+        throw NotFoundError("GameCollection::byId", QString("There is no Game with id %i").arg(gameId));
+    return *d->games[gameId-1];
+}
+
+Game& GameCollection::byIdentityKey(char const* identityKey) const
+{
+    if(identityKey && identityKey[0])
+    {
+        DENG2_FOR_EACH(i, d->games, GameCollection::Games::const_iterator)
+        {
+            Game* game = *i;
+            if(!Str_CompareIgnoreCase(&game->identityKey(), identityKey))
+                return *game;
+        }
+    }
+    throw NotFoundError("GameCollection::byIdentityKey", QString("There is no Game with identity key \"%s\"").arg(identityKey));
+}
+
+Game& GameCollection::byIndex(int idx) const
+{
+    if(idx < 0 || idx > d->games.count())
+        throw NotFoundError("GameCollection::byIndex", QString("There is no Game at index %i").arg(idx));
+    return *d->games[idx];
+}
+
+GameCollection::Games const& GameCollection::games() const
+{
+    return d->games;
+}
+
+int GameCollection::findAll(GameList& found)
 {
     int numFoundSoFar = found.count();
-    for(int i = 0; i < d->gamesCount; ++i)
+    DENG2_FOR_EACH(i, d->games, Games::const_iterator)
     {
-        found.push_back(GameListItem(d->games[i]));
+        found.push_back(GameListItem(*i));
     }
     return found.count() - numFoundSoFar;
 }
 
-Games& Games::add(Game& game)
+GameCollection& GameCollection::add(Game& game)
 {
-    d->games = (Game**) M_Realloc(d->games, sizeof(*d->games) * ++d->gamesCount);
-    if(!d->games) Con_Error("Games::add: Failed on allocation of %lu bytes enlarging Game list.", (unsigned long) (sizeof(*d->games) * d->gamesCount));
-    d->games[d->gamesCount-1] = &game;
+    if(d->games.indexOf(&game) < 0)
+    {
+        d->games.push_back(&game);
+    }
     return *this;
 }
 
@@ -287,7 +273,7 @@ static bool validateResource(AbstractResource* rec)
                 validated = true;
                 break;
             }
-            else if(recognizeZIP(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
+            if(recognizeZIP(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
             {
                 validated = true;
                 break;
@@ -304,13 +290,13 @@ static bool validateResource(AbstractResource* rec)
     return validated;
 }
 
-Games& Games::locateStartupResources(Game& game)
+GameCollection& GameCollection::locateStartupResources(Game& game)
 {
-    Game* oldGame = d->theGame;
-    if(d->theGame != &game)
+    Game* oldGame = d->currentGame;
+    if(d->currentGame != &game)
     {
         /// @attention Kludge: Temporarily switch Game.
-        d->theGame = &game;
+        d->currentGame = &game;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
     }
@@ -331,10 +317,10 @@ Games& Games::locateStartupResources(Game& game)
         }
     }
 
-    if(d->theGame != oldGame)
+    if(d->currentGame != oldGame)
     {
         // Kludge end - Restore the old Game.
-        d->theGame = oldGame;
+        d->currentGame = oldGame;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
     }
@@ -343,102 +329,29 @@ Games& Games::locateStartupResources(Game& game)
 
 static int locateAllResourcesWorker(void* parameters)
 {
-    Games* games = (Games*) parameters;
-    for(int i = 0; i < games->count(); ++i)
+    GameCollection* gameCollection = (GameCollection*) parameters;
+    int n = 0;
+    DENG2_FOR_EACH(i, gameCollection->games(), GameCollection::Games::const_iterator)
     {
-        Game* game = games->byIndex(i+1);
+        Game* game = *i;
 
         VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(&game->title())) )
 
-        games->locateStartupResources(*game);
-        Con_SetProgress((i + 1) * 200 / games->count() - 1);
+        gameCollection->locateStartupResources(*game);
+        Con_SetProgress((n + 1) * 200 / gameCollection->count() - 1);
 
-        VERBOSE( games->print(*game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
+        VERBOSE( Game::print(*game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
+        ++n;
     }
     BusyMode_WorkerEnd();
     return 0;
 }
 
-Games& Games::locateAllResources()
+GameCollection& GameCollection::locateAllResources()
 {
     BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 locateAllResourcesWorker, (void*)this, "Locating game resources...");
     return *this;
-}
-
-/**
- * @todo This has been moved here so that strings like the game title and author can
- *       be overridden (e.g., via DEHACKED). Make it so!
- */
-void Games::printBanner(Game& game)
-{
-    Con_PrintRuler();
-    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(&game.title()));
-    Con_PrintRuler();
-}
-
-void Games::printResources(Game& game, bool printStatus, int rflags)
-{
-    size_t count = 0;
-    for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
-    {
-        AbstractResource* const* records = game.resources((resourceclass_t)i, 0);
-        if(!records) continue;
-
-        for(AbstractResource* const* recordIt = records; *recordIt; recordIt++)
-        {
-            AbstractResource* rec = *recordIt;
-
-            if(rflags >= 0 && (rflags & AbstractResource_ResourceFlags(rec)))
-            {
-                AbstractResource_Print(rec, printStatus);
-                count += 1;
-            }
-        }
-    }
-
-    if(count == 0)
-        Con_Printf(" None\n");
-}
-
-void Games::print(Game& game, int flags) const
-{
-    if(isNullGame(game))
-        flags &= ~PGF_BANNER;
-
-#if _DEBUG
-    Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", int(game.pluginId()),
-               F_PrettyPath(Str_Text(&game.dataPath())),
-               F_PrettyPath(Str_Text(&game.defsPath())));
-#endif
-
-    if(flags & PGF_BANNER)
-        printBanner(game);
-
-    if(!(flags & PGF_BANNER))
-        Con_Printf("Game: %s - ", Str_Text(&game.title()));
-    else
-        Con_Printf("Author: ");
-    Con_Printf("%s\n", Str_Text(&game.author()));
-    Con_Printf("IdentityKey: %s\n", Str_Text(&game.identityKey()));
-
-    if(flags & PGF_LIST_STARTUP_RESOURCES)
-    {
-        Con_Printf("Startup resources:\n");
-        printResources(game, (flags & PGF_STATUS) != 0, RF_STARTUP);
-    }
-
-    if(flags & PGF_LIST_OTHER_RESOURCES)
-    {
-        Con_Printf("Other resources:\n");
-        Con_Printf("   ");
-        printResources(game, /*(flags & PGF_STATUS) != 0*/false, 0);
-    }
-
-    if(flags & PGF_STATUS)
-        Con_Printf("Status: %s\n",         isCurrentGame(game)? "Loaded" :
-                               game.allStartupResourcesFound()? "Complete/Playable" :
-                                                                "Incomplete/Not playable");
 }
 
 } // namespace de
@@ -447,7 +360,7 @@ D_CMD(ListGames)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    de::Games* games = reinterpret_cast<de::Games*>(App_Games());
+    de::GameCollection* games = reinterpret_cast<de::GameCollection*>(App_GameCollection());
     if(!games || !games->count())
     {
         Con_Printf("No Registered Games.\n");
@@ -458,13 +371,13 @@ D_CMD(ListGames)
     Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
     Con_PrintRuler();
 
-    de::Games::GameList found;
+    de::GameCollection::GameList found;
     games->findAll(found);
     // Sort so we get a nice alphabetical list.
     qSort(found.begin(), found.end());
 
     int numCompleteGames = 0;
-    DENG2_FOR_EACH(i, found, de::Games::GameList::const_iterator)
+    DENG2_FOR_EACH(i, found, de::GameCollection::GameList::const_iterator)
     {
         de::Game* game = i->game;
 
@@ -489,96 +402,81 @@ D_CMD(ListGames)
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::Games*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::GameCollection*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::Games const*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::GameCollection const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::Games* self = TOINTERNAL(inst)
+    de::GameCollection* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    de::Games const* self = TOINTERNAL_CONST(inst)
+    de::GameCollection const* self = TOINTERNAL_CONST(inst)
 
-Game* Games_CurrentGame(Games* games)
+Game* GameCollection_CurrentGame(GameCollection* games)
 {
     SELF(games);
     return reinterpret_cast<Game*>(&self->currentGame());
 }
 
-Game* Games_NullGame(Games* games)
-{
-    SELF(games);
-    return reinterpret_cast<Game*>(&self->nullGame());
-}
-
-int Games_NumPlayable(Games* games)
+int GameCollection_NumPlayable(GameCollection* games)
 {
     SELF(games);
     return self->numPlayable();
 }
 
-Game* Games_FirstPlayable(Games* games)
+Game* GameCollection_FirstPlayable(GameCollection* games)
 {
     SELF(games);
     return reinterpret_cast<Game*>(self->firstPlayable());
 }
 
-int Games_Count(Games* games)
+int GameCollection_Count(GameCollection* games)
 {
     SELF(games);
     return self->count();
 }
 
-Game* Games_ByIndex(Games* games, int idx)
+Game* GameCollection_ByIndex(GameCollection* games, int idx)
 {
     SELF(games);
-    return reinterpret_cast<Game*>(self->byIndex(idx));
+    try
+    {
+        return reinterpret_cast<Game*>(&self->byIndex(idx));
+    }
+    catch(de::GameCollection::NotFoundError)
+    {} // Ignore error.
+    return 0; // Not found.
 }
 
-Game* Games_ByIdentityKey(Games* games, char const* identityKey)
+Game* GameCollection_ByIdentityKey(GameCollection* games, char const* identityKey)
 {
     SELF(games);
-    return reinterpret_cast<Game*>(self->byIdentityKey(identityKey));
+    try
+    {
+        return reinterpret_cast<Game*>(&self->byIdentityKey(identityKey));
+    }
+    catch(de::GameCollection::NotFoundError)
+    {} // Ignore error.
+    return 0; // Not found.
 }
 
-gameid_t Games_Id(Games* games, Game* game)
+gameid_t GameCollection_Id(GameCollection* games, Game* game)
 {
     SELF(games);
-    if(!game) return 0; // Invalid id.
-    return self->id(*reinterpret_cast<de::Game*>(game));
+    try
+    {
+        return self->id(*reinterpret_cast<de::Game*>(game));
+    }
+    catch(de::GameCollection::NotFoundError)
+    {} // Ignore error.
+    return 0; // Invalid id.
 }
 
-boolean Games_IsNullObject(Games* games, Game const* game)
-{
-    SELF(games);
-    if(!game) return false;
-    return self->isNullGame(*reinterpret_cast<de::Game const*>(game));
-}
-
-void Games_LocateAllResources(Games* games)
+void GameCollection_LocateAllResources(GameCollection* games)
 {
     SELF(games);
     self->locateAllResources();
-}
-
-void Games_Print(Games* games, Game* game, int flags)
-{
-    if(!game) return;
-    SELF(games);
-    self->print(*reinterpret_cast<de::Game*>(game), flags);
-}
-
-void Games_PrintBanner(Game* game)
-{
-    if(!game) return;
-    de::Games::printBanner(*reinterpret_cast<de::Game*>(game));
-}
-
-void Games_PrintResources(Game* game, boolean printStatus, int rflags)
-{
-    if(!game) return;
-    de::Games::printResources(*reinterpret_cast<de::Game*>(game), CPP_BOOL(printStatus), rflags);
 }

@@ -136,8 +136,8 @@ static boolean resolveUri(const Uri* uri, ddstring_t* dest)
             else if(!Str_CompareIgnoreCase(&part, "Game.DataPath"))
             {
                 /// @note DataPath already has ending '/'.
-                Game* game = Games_CurrentGame(App_Games());
-                if(Games_IsNullObject(App_Games(), game))
+                Game* game = App_CurrentGame();
+                if(Game_IsNullObject(game))
                     goto parseEnded;
 
                 Str_PartAppend(dest, Str_Text(Game_DataPath(game)), 0, Str_Length(Game_DataPath(game))-1);
@@ -145,16 +145,16 @@ static boolean resolveUri(const Uri* uri, ddstring_t* dest)
             else if(!Str_CompareIgnoreCase(&part, "Game.DefsPath"))
             {
                 /// @note DefsPath already has ending '/'.
-                Game* game = Games_CurrentGame(App_Games());
-                if(Games_IsNullObject(App_Games(), game))
+                Game* game = App_CurrentGame();
+                if(Game_IsNullObject(game))
                     goto parseEnded;
 
                 Str_PartAppend(dest, Str_Text(Game_DefsPath(game)), 0, Str_Length(Game_DefsPath(game))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "Game.IdentityKey"))
             {
-                Game* game = Games_CurrentGame(App_Games());
-                if(Games_IsNullObject(App_Games(), game))
+                Game* game = App_CurrentGame();
+                if(Game_IsNullObject(game))
                     goto parseEnded;
 
                 Str_Append(dest, Str_Text(Game_IdentityKey(game)));
@@ -320,7 +320,7 @@ const ddstring_t* Uri_ResolvedConst(const Uri* uri)
     }
 
 #ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
-    if(uri->resolvedForGame && uri->resolvedForGame == (void*) Games_CurrentGame(App_Games()))
+    if(uri->resolvedForGame && uri->resolvedForGame == (void*) App_CurrentGame())
     {
         // We can just return the previously prepared resolved URI.
         return &uri->resolved;
@@ -332,7 +332,7 @@ const ddstring_t* Uri_ResolvedConst(const Uri* uri)
     // Keep a copy of this, we'll likely need it many, many times.
     if(resolveUri(uri, &modifiable->resolved))
     {
-        modifiable->resolvedForGame = (void*) Games_CurrentGame(App_Games());
+        modifiable->resolvedForGame = (void*) App_CurrentGame();
         return &uri->resolved;
     }
     else
