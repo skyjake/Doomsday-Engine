@@ -579,7 +579,7 @@ static int DD_ActivateGameWorker(void* parameters)
         Con_SetProgress(50);
 
     // Now that resources have been located we can begin to initialize the game.
-    if(!DD_GameLoaded() && gx.PreInit)
+    if(DD_GameLoaded() && gx.PreInit)
         gx.PreInit(games->id(games->currentGame()));
 
     if(p->initiatedBusyMode)
