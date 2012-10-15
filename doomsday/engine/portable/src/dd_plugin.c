@@ -69,7 +69,8 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
     DENG_ASSERT(fileName && fileName[0]);
     DENG_ASSERT(pluginPath && pluginPath[0]);
 
-    if(!strncmp(fileName, "audio_", 6))
+    if(!strncmp(fileName, DENG_AUDIO_PLUGIN_NAME_PREFIX,
+                strlen(DENG_AUDIO_PLUGIN_NAME_PREFIX)))
     {
         // The audio plugins are loaded later on demand by AudioDriver.
         return false;

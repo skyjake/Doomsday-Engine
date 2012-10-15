@@ -40,6 +40,12 @@
  */
 #define DENG_PLUGIN_GLOBAL(name)    __DengPlugin_##name
 
+#if defined(UNIX) && !defined(MACOSX)
+#  define DENG_AUDIO_PLUGIN_NAME_PREFIX "libaudio_"
+#else
+#  define DENG_AUDIO_PLUGIN_NAME_PREFIX "audio_"
+#endif
+
 #define MAX_HOOKS           16
 #define HOOKF_EXCLUSIVE     0x01000000
 

@@ -137,7 +137,7 @@ static int audioPluginFinder(const char* fileName, const char* absPath, void* pt
 
 static AutoStr* findAudioPluginPath(const char* name)
 {
-    AutoStr* path = Str_Appendf(AutoStr_New(), "audio_%s", name);
+    AutoStr* path = Str_Appendf(AutoStr_New(), "%s%s", DENG_AUDIO_PLUGIN_NAME_PREFIX, name);
     if(Library_IterateAvailableLibraries(audioPluginFinder, path))
     {
         // The full path of the library was returned in @a path.
