@@ -254,6 +254,12 @@ DFile& DFile::setList(struct filelist_s* list)
     return *this;
 }
 
+bool DFile::hasFile() const
+{
+    errorIfNotValid(*this, "DFile::file");
+    return !!d->file;
+}
+
 AbstractFile& DFile::file()
 {
     errorIfNotValid(*this, "DFile::file");

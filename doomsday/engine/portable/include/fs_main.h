@@ -245,8 +245,9 @@ namespace de
          * opened. It is the responsibility of the caller to release this identifier when done.
          *
          * @param path      Possibly relative or mapped path to the resource being opened.
-         * @param mode      't' = text mode (with real files, lumps are always binary)
-         *                  'b' = binary
+         * @param mode      'b' = binary
+         *                  't' = text mode (with real files, lumps are always binary)
+         *
          *                  'f' = must be a real file in the local file system
          * @param baseOffset  Offset from the start of the file in bytes to begin.
          * @param allowDuplicate  @c false = open only if not already opened.
@@ -341,6 +342,22 @@ namespace de
         Instance* d;
 
         /**
+         * @param file  Handle to the file to be interpreted.
+         * @param path  Absolute VFS path by which the interpreted file will be known.
+         * @param info  Prepared info metadata for the file.
+         *
+         * @return  The interpreted AbstractFile file instance.
+         */
+        AbstractFile& interpret(DFile& file, char const* path, LumpInfo const& info);
+
+        /**
+         * Adds a file to any relevant indexes.
+         *
+         * @param file  File to index.
+         */
+        void index(AbstractFile& file);
+
+        /**
          * Removes a file from any lump indexes.
          *
          * @param file  File to remove from the index.
@@ -351,12 +368,6 @@ namespace de
 
         FILE* findRealFile(char const* path, char const* mymode, ddstring_t** foundPath);
 
-        /**
-         * @param mode 'b' = binary mode
-         *             't' = text mode
-         *             'f' = must be a real file in the local file system.
-         *             'x' = skip buffering (used with file-access and metadata-acquire processes).
-         */
         DFile* tryOpenFile2(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
         DFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
     };

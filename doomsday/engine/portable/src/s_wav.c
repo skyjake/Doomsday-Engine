@@ -185,7 +185,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
 
 void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
 {
-    DFile* file = F_Open(filename, "b");
+    DFile* file = F_Open(filename, "rb");
     void* sampledata;
     uint8_t* data;
     size_t size;

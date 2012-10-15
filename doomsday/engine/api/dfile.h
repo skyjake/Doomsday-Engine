@@ -72,6 +72,9 @@ public:
     DFile& setList(struct filelist_s* list);
 
     /// @todo Should not be visible outside the engine.
+    bool hasFile() const;
+
+    /// @todo Should not be visible outside the engine.
     AbstractFile& file();
     AbstractFile& file() const;
 

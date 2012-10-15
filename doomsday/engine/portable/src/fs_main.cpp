@@ -55,6 +55,33 @@ D_CMD(ListLumps);
 
 static FS1* fileSystem;
 
+struct FileInterpreter
+{
+    resourcetype_t resourceType;
+    de::AbstractFile* (*interpret)(de::DFile& file, char const* path, LumpInfo const& info);
+};
+
+static de::AbstractFile* interpretAsZipFile(de::DFile& hndl, char const* path, LumpInfo const& info)
+{
+    if(!ZipFile::recognise(hndl)) return 0;
+    LOG_VERBOSE("Interpreted ") << path << " as a Zip (archive)";
+    return new ZipFile(hndl, path, info);
+}
+
+static de::AbstractFile* interpretAsWadFile(de::DFile& hndl, char const* path, LumpInfo const& info)
+{
+    if(!WadFile::recognise(hndl)) return 0;
+    LOG_VERBOSE("Interpreted ") << path << " as a Wad (archive)";
+    return new WadFile(hndl, path, info);
+}
+
+/// @todo Order here should be determined by the resource locator.
+static FileInterpreter interpreters[] = {
+    { RT_ZIP,  interpretAsZipFile },
+    { RT_WAD,  interpretAsWadFile },
+    { RT_NONE, NULL }
+};
+
 typedef QList<FileId> FileIds;
 
 /**
@@ -79,8 +106,6 @@ typedef QPair<QString, QString> PathMapping;
 typedef QList<PathMapping> PathMappings;
 
 static bool applyPathMapping(ddstring_t* path, PathMapping const& vdm);
-
-static de::DFile* tryOpenFile3(de::DFile& file, const char* path, LumpInfo const& info);
 
 struct FS1::Instance
 {
@@ -296,6 +321,16 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char cons
         }
     }
     return i;
+}
+
+void FS1::index(de::AbstractFile& file)
+{
+    // Publish lumps to an index?
+    LumpIndex* lumpIndex = d->lumpIndexForFileType(file.type());
+    if(lumpIndex)
+    {
+        file.publishLumpsToIndex(*lumpIndex);
+    }
 }
 
 void FS1::deindex(de::AbstractFile& file)
@@ -994,63 +1029,55 @@ de::AbstractFile* FS1::findLumpFile(char const* path, int* lumpIdx)
     return NULL;
 }
 
-static de::DFile* tryOpenAsZipFile(de::DFile& hndl, char const* path, LumpInfo const& info)
+de::AbstractFile& FS1::interpret(de::DFile& file, char const* path, LumpInfo const& info)
 {
-    if(ZipFile::recognise(hndl))
-    {
-        ZipFile* zip = new ZipFile(hndl, path, info);
-        return DFileBuilder::fromFile(*zip);
-    }
-    return NULL;
-}
-
-static de::DFile* tryOpenAsWadFile(de::DFile& hndl, char const* path, LumpInfo const& info)
-{
-    if(WadFile::recognise(hndl))
-    {
-        WadFile* wad = new WadFile(hndl, path, info);
-        return DFileBuilder::fromFile(*wad);
-    }
-    return NULL;
-}
-
-static de::DFile* tryOpenFile3(de::DFile& file, char const* path, LumpInfo const& info)
-{
-    static const struct filehandler_s {
-        resourcetype_t resourceType;
-        de::DFile* (*tryOpenFile)(de::DFile& file, char const* path, LumpInfo const& info);
-    } handlers[] = {
-        { RT_ZIP,  tryOpenAsZipFile },
-        { RT_WAD,  tryOpenAsWadFile },
-        { RT_NONE, NULL }
-    }, *hdlr = NULL;
     DENG_ASSERT(path && path[0]);
 
-    resourcetype_t resourceType = F_GuessResourceTypeByName(path);
+    de::AbstractFile* interpretedFile = 0;
 
-    // Firstly try the expected format given the file name.
-    de::DFile* hndl = 0;
-    for(hdlr = handlers; hdlr->tryOpenFile; hdlr++)
+    // Firstly try interpreter(s) for guessed resource types.
+    resourcetype_t resTypeGuess = F_GuessResourceTypeByName(path);
+    if(resTypeGuess != RT_NONE)
     {
-        if(hdlr->resourceType != resourceType) continue;
-
-        hndl = hdlr->tryOpenFile(file, path, info);
-        break;
-    }
-
-    // If not yet loaded; try each recognisable format.
-    /// @todo Order here should be determined by the resource locator.
-    int n = 0;
-    while(!hndl && handlers[n].tryOpenFile)
-    {
-        if(hdlr != &handlers[n]) // We already know its not in this format.
+        for(FileInterpreter* intper = interpreters; intper->interpret; ++intper)
         {
-            hndl = handlers[n].tryOpenFile(file, path, info);
+            // Not applicable for this resource type?
+            if(intper->resourceType != resTypeGuess) continue;
+
+            interpretedFile = intper->interpret(file, path, info);
+            break;
         }
-        ++n;
     }
 
-    return hndl;
+    // If not yet interpreted - try each recognisable format in order.
+    if(!interpretedFile)
+    {
+        for(FileInterpreter* intper = interpreters; intper->interpret; ++intper)
+        {
+            // Already tried this?
+            if(resTypeGuess && intper->resourceType == resTypeGuess) continue;
+
+            interpretedFile = intper->interpret(file, path, info);
+            break;
+        }
+    }
+
+    // Still not interpreted?
+    if(!interpretedFile)
+    {
+        // Use a generic file - LumpFile for contained lumps else GenericFile.
+        if(file.hasFile() && file.file().isContained())
+        {
+            interpretedFile = new LumpFile(file, path, info);
+        }
+        else
+        {
+            interpretedFile = new GenericFile(file, path, info);
+        }
+    }
+
+    DENG_ASSERT(interpretedFile);
+    return *interpretedFile;
 }
 
 de::DFile* FS1::tryOpenFile2(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
@@ -1058,7 +1085,6 @@ de::DFile* FS1::tryOpenFile2(char const* path, char const* mode, size_t baseOffs
     if(!path || !path[0]) return 0;
 
     if(!mode) mode = "";
-    //bool dontBuffer  = !!strchr(mode, 'x');
     bool reqRealFile = !!strchr(mode, 'f');
 
     // Make it a full path.
@@ -1087,18 +1113,7 @@ de::DFile* FS1::tryOpenFile2(char const* path, char const* mode, size_t baseOffs
             // Prepare a temporary info descriptor.
             LumpInfo info = container->lumpInfo(lumpIdx);
 
-            // Try to open the referenced file as a specialised file type.
-            de::DFile* file = tryOpenFile3(*hndl, Str_Text(searchPath), info);
-
-            // If not opened; assume its a generic LumpFile.
-            if(!file)
-            {
-                LumpFile* lump = new LumpFile(*hndl, Str_Text(searchPath), info);
-                file = DFileBuilder::fromFile(*lump);
-            }
-            DENG_ASSERT(file);
-
-            return file;
+            return DFileBuilder::fromFile(interpret(*hndl, Str_Text(searchPath), info));
         }
     }
 
@@ -1123,21 +1138,13 @@ de::DFile* FS1::tryOpenFile2(char const* path, char const* mode, size_t baseOffs
     // Prepare the temporary info descriptor.
     LumpInfo info = LumpInfo(F_GetLastModified(Str_Text(foundPath)));
 
+    Str_Delete(foundPath);
+
     // Search path is used here rather than found path as the latter may have
     // been mapped to another location. We want the file to be attributed with
     // the path it is to be known by throughout the virtual file system.
 
-    DFile* dfile = tryOpenFile3(*hndl, Str_Text(searchPath), info);
-    // If still not loaded; this an unknown format.
-    if(!dfile)
-    {
-        GenericFile* file = new GenericFile(*hndl, Str_Text(searchPath), info);
-        dfile = DFileBuilder::fromFile(*file);
-    }
-    DENG_ASSERT(dfile);
-
-    Str_Delete(foundPath);
-    return dfile;
+    return DFileBuilder::fromFile(interpret(*hndl, Str_Text(searchPath), info));
 }
 
 de::DFile* FS1::tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
@@ -1166,7 +1173,7 @@ de::DFile* FS1::openFile(char const* path, char const* mode, size_t baseOffset, 
 
 bool FS1::accessFile(char const* path)
 {
-    DFile* hndl = tryOpenFile(path, "rx", 0, true);
+    DFile* hndl = tryOpenFile(path, "rb", 0, true /* allow duplicates */);
     if(!hndl) return false;
     deleteFile(*hndl);
     return true;
@@ -1174,7 +1181,7 @@ bool FS1::accessFile(char const* path)
 
 de::AbstractFile* FS1::addFile(char const* path, size_t baseOffset)
 {
-    DFile* hndl = openFile(path, "rb", baseOffset, false);
+    DFile* hndl = openFile(path, "rb", baseOffset, false /* no duplicates */);
     if(!hndl)
     {
         if(accessFile(path))
@@ -1195,12 +1202,8 @@ de::AbstractFile* FS1::addFile(char const* path, size_t baseOffset)
     DFile* loadedFilesHndl = DFileBuilder::dup(*hndl);
     d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
 
-    // Publish lumps to an index?
-    LumpIndex* lumpIndex = d->lumpIndexForFileType(file.type());
-    if(lumpIndex)
-    {
-        file.publishLumpsToIndex(*lumpIndex);
-    }
+    index(file);
+
     return &file;
 }
 
@@ -1233,12 +1236,12 @@ int FS1::addFiles(char const* const* paths, int num)
 
 bool FS1::removeFile(char const* path, bool permitRequired)
 {
-    bool unloadedResources = unloadFile(path, permitRequired);
-    if(unloadedResources)
+    bool didUnload = unloadFile(path, permitRequired);
+    if(didUnload)
     {
         DD_UpdateEngineState();
     }
-    return unloadedResources;
+    return didUnload;
 }
 
 int FS1::removeFiles(char const* const* filenames, int num, bool permitRequired)
