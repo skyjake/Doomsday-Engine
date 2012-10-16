@@ -298,6 +298,10 @@ void CommandLine::makeAbsolutePath(duint pos)
             d->arguments[pos] += '/';
         }
 
+        // Replace the pointer string.
+        free(d->pointers[pos]);
+        d->pointers[pos] = duplicateStringAsUtf8(d->arguments[pos]);
+
         LOG_DEBUG("Argument %i converted to absolute path: \"%s\"") << pos << d->pointers[pos];
     }
 }
