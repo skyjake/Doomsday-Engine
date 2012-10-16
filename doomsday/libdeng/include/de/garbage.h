@@ -49,7 +49,7 @@ typedef void (*GarbageDestructor)(void*);
 
 /**
  * Puts an object up for garbage collection in the current thread. The object
- * will be available for use until Garbage_Recycle() is called.
+ * will be available for use until Garbage_Recycle() is called in the thread.
  *
  * @param ptr  Pointer to the object.
  * @param destructor  Function that destroys the object.
