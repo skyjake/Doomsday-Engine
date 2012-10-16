@@ -106,7 +106,7 @@ int LegacyCore_SetLogFile(const char* filePath)
         DENG2_LEGACYCORE().setLogFileName(filePath);
         return true;
     }
-    catch(de::LogBuffer::FileError& er)
+    catch(const de::LogBuffer::FileError& er)
     {
         LOG_AS("LegacyCore_SetLogFile");
         LOG_WARNING(er.asText());
@@ -354,7 +354,7 @@ Info* Info_NewFromString(const char* utf8text)
         self->parse(QString::fromUtf8(utf8text));
         return reinterpret_cast<Info*>(self.take());
     }
-    catch(de::Error& er)
+    catch(const de::Error& er)
     {
         LOG_WARNING(er.asText());
     }

@@ -15,3 +15,9 @@ Zcustom.conf
 .web.manifest
 doxyissues-*.txt
 doomsday/apidoc/api2
+/distrib/win32/vcredist_x86.exe
+Makefile.Debug
+Makefile.Release
+tools/*/debug
+tools/*/release
+vc100.pdb
