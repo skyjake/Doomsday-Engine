@@ -237,7 +237,7 @@ int ConvertMapHook(int hookType, int parm, void* context)
     {
         loadAndTransferMap(mapFormat, lumpInfos);
     }
-    catch(Id1Map::LumpBufferError& er)
+    catch(Id1Map::LumpBufferError const& er)
     {
         LOG_AS("WadMapConverter");
         LOG_WARNING("Load error: %s\nAborting conversion...") << er.asText();
