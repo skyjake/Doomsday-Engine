@@ -1220,7 +1220,7 @@ static void printTextureOverview(TextureDirectoryNode* node, boolean printNamesp
     textureid_t texId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
     Uri* uri = record->texture? Textures_ComposeUri(texId) : Uri_New();
-    AutoStr* path = printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(AutoStr_NewStd(), Str_Text(Uri_Path(uri))));
+    AutoStr* path = printNamespace? Uri_ToString(uri) : Str_PercentDecode(AutoStr_FromTextStd(Str_Text(Uri_Path(uri))));
     AutoStr* resourcePath = Uri_ToString(Textures_ResourcePath(texId));
 
     Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,

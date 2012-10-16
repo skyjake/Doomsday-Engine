@@ -282,7 +282,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char cons
     if(!path_ || !path_[0]) return list.end();
 
     // Transform the path into one we can process.
-    AutoStr* path = Str_Set(AutoStr_NewStd(), path_);
+    AutoStr* path = AutoStr_FromTextStd(path_);
     F_FixSlashes(path, path);
 
     // Perform the search.
@@ -1297,7 +1297,7 @@ void FS1::mapPathToLump(char const* symbolicPath, char const* lumpName)
     if(!symbolicPath || !symbolicPath[0] || !lumpName || !lumpName[0]) return;
 
     // Convert the symbolic path into a real path.
-    AutoStr* path = Str_Set(AutoStr_NewStd(), symbolicPath);
+    AutoStr* path = AutoStr_FromTextStd(symbolicPath);
     F_ResolveSymbolicPath(path, path);
 
     // Since the path might be relative, let's explicitly make the path absolute.
@@ -1461,12 +1461,12 @@ static bool applyPathMapping(ddstring_t* path, PathMapping const& pm)
 {
     if(!path) return false;
     QByteArray destUtf8 = pm.first.toUtf8();
-    AutoStr* dest = Str_Set(AutoStr_NewStd(), destUtf8.constData());
+    AutoStr* dest = AutoStr_FromTextStd(destUtf8.constData());
     if(qstrnicmp(Str_Text(path), Str_Text(dest), Str_Length(dest))) return false;
 
     // Replace the beginning with the source path.
     QByteArray sourceUtf8 = pm.second.toUtf8();
-    AutoStr* temp = Str_Set(AutoStr_NewStd(), sourceUtf8.constData());
+    AutoStr* temp = AutoStr_FromTextStd(sourceUtf8.constData());
     Str_PartAppend(temp, Str_Text(path), pm.first.length(), Str_Length(path) - pm.first.length());
     Str_Copy(path, temp);
     return true;
@@ -1476,14 +1476,14 @@ void FS1::mapPath(char const* source, char const* destination)
 {
     if(!source || !source[0] || !destination || !destination[0]) return;
 
-    AutoStr* dest = Str_Set(AutoStr_NewStd(), destination);
+    AutoStr* dest = AutoStr_FromTextStd(destination);
     Str_Strip(dest);
     F_FixSlashes(dest, dest);
     F_ExpandBasePath(dest, dest);
     F_PrependWorkPath(dest, dest);
     F_AppendMissingSlash(dest);
 
-    AutoStr* src = Str_Set(AutoStr_NewStd(), source);
+    AutoStr* src = AutoStr_FromTextStd(source);
     Str_Strip(src);
     F_FixSlashes(src, src);
     F_ExpandBasePath(src, src);
@@ -1542,7 +1542,7 @@ void FS1::initPathMap()
 
 void FS1::printDirectory(ddstring_t const* path)
 {
-    AutoStr* searchPattern = Str_Set(AutoStr_NewStd(), Str_Text(path));
+    AutoStr* searchPattern = AutoStr_FromTextStd(Str_Text(path));
 
     Str_Strip(searchPattern);
     F_FixSlashes(searchPattern, searchPattern);

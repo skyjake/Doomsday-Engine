@@ -1511,7 +1511,7 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    AutoStr* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(AutoStr_NewStd(), Str_Text(Uri_Path(uri)))));
+    AutoStr* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(AutoStr_FromTextStd(Str_Text(Uri_Path(uri)))));
 
     Con_Printf("%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
                numUidDigits, Materials_Id(mat),

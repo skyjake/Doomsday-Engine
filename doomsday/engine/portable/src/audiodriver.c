@@ -601,7 +601,7 @@ AutoStr* AudioDriver_InterfaceName(void* anyAudioInterface)
             audiointerface_music_generic_t* gen = anyAudioInterface;
             if(gen->Get(MUSIP_ID, buf))
             {
-                return Str_Set(AutoStr_NewStd(), buf);
+                return AutoStr_FromTextStd(buf);
             }
             else
             {
