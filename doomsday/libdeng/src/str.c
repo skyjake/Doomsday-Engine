@@ -837,6 +837,11 @@ AutoStr* AutoStr_FromText(const char* text)
     return Str_Set(AutoStr_New(), text);
 }
 
+AutoStr* AutoStr_FromTextStd(const char *text)
+{
+    return Str_Set(AutoStr_NewStd(), text);
+}
+
 ddstring_t* Str_FromAutoStr(AutoStr* as)
 {
     DENG_ASSERT(as);

@@ -31,6 +31,10 @@
 
 #include "texture.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void R_InitViewWindow(void);
 void R_ShutdownViewWindow(void);
 
@@ -42,5 +46,9 @@ void R_DrawPatch2(Texture* texture, int x, int y, int w, int h);
 void R_DrawPatch3(Texture* texture, int x, int y, int w, int h, boolean useOffsets);
 
 void R_DrawPatchTiled(Texture* texture, int x, int y, int w, int h, int wrapS, int wrapT);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_DRAW_H */

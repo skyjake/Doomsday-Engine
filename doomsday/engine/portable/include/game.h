@@ -31,6 +31,18 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup printGameFlags  Print Game Flags.
+ */
+///@{
+#define PGF_BANNER                 0x1
+#define PGF_STATUS                 0x2
+#define PGF_LIST_STARTUP_RESOURCES 0x4
+#define PGF_LIST_OTHER_RESOURCES   0x8
+
+#define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
+///@}
+
 struct AbstractResource_s;
 struct gamedef_s;
 
@@ -41,6 +53,8 @@ struct gamedef_s;
 #ifdef __cplusplus
 
 namespace de {
+
+class GameCollection;
 
 /**
  * Game.  Used to record top-level game configurations registered by
@@ -61,25 +75,28 @@ public:
      */
     Game(char const* identityKey, ddstring_t const* dataPath, ddstring_t const* defsPath,
          char const* configDir, char const* title = "Unnamed", char const* author = "Unknown");
-    ~Game();
+    virtual ~Game();
+
+    /// @return  Collection in which this game exists.
+    GameCollection& collection() const;
 
     /// @return  Unique plugin identifier attributed to that which registered this.
-    pluginid_t pluginId();
+    pluginid_t pluginId() const;
 
     /// @return  String containing the identity key.
-    ddstring_t const& identityKey();
+    ddstring_t const& identityKey() const;
 
     /// @return  String containing the default title.
-    ddstring_t const& title();
+    ddstring_t const& title() const;
 
     /// @return  String containing the default author.
-    ddstring_t const& author();
+    ddstring_t const& author() const;
 
     /// @return  String containing the name of the main config file.
-    ddstring_t const& mainConfig();
+    ddstring_t const& mainConfig() const;
 
     /// @return  String containing the name of the binding config file.
-    ddstring_t const& bindingConfig();
+    ddstring_t const& bindingConfig() const;
 
     /**
      * @note Unless caller is the resource locator then you probably shouldn't be calling.
@@ -87,7 +104,7 @@ public:
      *
      * @return  String containing the base data-class resource directory.
      */
-    ddstring_t const& dataPath();
+    ddstring_t const& dataPath() const;
 
     /**
      * @note Unless caller is the resource locator then you probably shouldn't be calling.
@@ -95,7 +112,7 @@ public:
      *
      * @return  String containing the base defs-class resource directory.
      */
-    ddstring_t const& defsPath();
+    ddstring_t const& defsPath() const;
 
     /**
      * Change the identfier of the plugin associated with this.
@@ -118,7 +135,7 @@ public:
      */
     bool isRequiredResource(char const* absolutePath);
 
-    bool allStartupResourcesFound();
+    bool allStartupResourcesFound() const;
 
     /**
      * Retrieve a subset of the resource collection associated with this.
@@ -126,7 +143,7 @@ public:
      * @param rclass  Class of resource to collect.
      * @return  Vector of selected resource records.
      */
-    struct AbstractResource_s* const* resources(resourceclass_t rclass, int* count);
+    struct AbstractResource_s* const* resources(resourceclass_t rclass, int* count) const;
 
 // Static members ------------------------------------------------------------------
 
@@ -137,10 +154,75 @@ public:
      */
     static Game* fromDef(GameDef const& def);
 
+    /**
+     * Print a game mode banner with rulers.
+     *
+     * @todo This has been moved here so that strings like the game title and author
+     *       can be overridden (e.g., via DEHACKED). Make it so!
+     */
+    static void printBanner(Game const& game);
+
+    /**
+     * Print the list of resources for @a Game.
+     *
+     * @param game          Game to list resources of.
+     * @param printStatus   @c true= Include the current availability/load status
+     *                      of each resource.
+     * @param rflags        Only consider resources whose @ref resourceFlags match
+     *                      this value. If @c <0 the flags are ignored.
+     */
+    static void printResources(Game const& game, bool printStatus, int rflags);
+
+    /**
+     * Print extended information about game @a info.
+     *
+     * @param info  Game record to be printed.
+     * @param flags  &ref printGameFlags
+     */
+    static void print(Game const& game, int flags);
+
 private:
     struct Instance;
     Instance* d;
 };
+
+/**
+ * The special "null" Game object.
+ */
+class NullGame : public Game
+{
+public:
+    /// General exception for invalid action on a NULL object. @ingroup errors
+    DENG2_ERROR(NullObjectError);
+
+public:
+    NullGame(ddstring_t const* dataPath, ddstring_t const* defsPath);
+
+    Game& addResource(resourceclass_t /*rclass*/, struct AbstractResource_s& /*record*/) {
+        throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
+    }
+
+    bool isRequiredResource(char const* /*absolutePath*/) {
+        return false; // Never.
+    }
+
+    bool allStartupResourcesFound() const {
+        return true; // Always.
+    }
+
+    struct AbstractResource_s* const* resources(resourceclass_t /*rclass*/, int* /*count*/) const {
+        return 0;
+    }
+
+    static Game* fromDef(GameDef const& /*def*/) {
+        throw NullObjectError("NullGame::fromDef", "Not valid for null-object");
+    }
+};
+
+/// @return  @c true= @a game is a "null-game" object (not a real playable game).
+inline bool isNullGame(Game const& game) {
+    return !!dynamic_cast<NullGame const*>(&game);
+}
 
 } // namespace de
 
@@ -158,33 +240,41 @@ Game* Game_New(char const* identityKey, ddstring_t const* dataPath, ddstring_t c
 
 void Game_Delete(Game* game);
 
+boolean Game_IsNullObject(Game const* game);
+
 struct game_s* Game_AddResource(Game* game, resourceclass_t rclass, struct AbstractResource_s* record);
 
 boolean Game_IsRequiredResource(Game* game, char const* absolutePath);
 
-boolean Game_AllStartupResourcesFound(Game* game);
+boolean Game_AllStartupResourcesFound(Game const* game);
 
 Game* Game_SetPluginId(Game* game, pluginid_t pluginId);
 
-pluginid_t Game_PluginId(Game* game);
+pluginid_t Game_PluginId(Game const* game);
 
-ddstring_t const* Game_IdentityKey(Game* game);
+ddstring_t const* Game_IdentityKey(Game const* game);
 
-ddstring_t const* Game_Title(Game* game);
+ddstring_t const* Game_Title(Game const* game);
 
-ddstring_t const* Game_Author(Game* game);
+ddstring_t const* Game_Author(Game const* game);
 
-ddstring_t const* Game_MainConfig(Game* game);
+ddstring_t const* Game_MainConfig(Game const* game);
 
-ddstring_t const* Game_BindingConfig(Game* game);
+ddstring_t const* Game_BindingConfig(Game const* game);
 
-struct AbstractResource_s* const* Game_Resources(Game* game, resourceclass_t rclass, int* count);
+struct AbstractResource_s* const* Game_Resources(Game const* game, resourceclass_t rclass, int* count);
 
-ddstring_t const* Game_DataPath(Game* game);
+ddstring_t const* Game_DataPath(Game const* game);
 
-ddstring_t const* Game_DefsPath(Game* game);
+ddstring_t const* Game_DefsPath(Game const* game);
 
-struct game_s* Game_FromDef(GameDef const* def);
+Game* Game_FromDef(GameDef const* def);
+
+void Game_PrintBanner(Game const* game);
+
+void Game_PrintResources(Game const* game, boolean printStatus, int rflags);
+
+void Game_Print(Game const* game, int flags);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -55,6 +55,7 @@ extern int rAmbient;
 extern float rendLightDistanceAttentuation;
 extern float lightModRange[255];
 extern int devRendSkyMode;
+extern int gameDrawHUD;
 
 extern int useDynLights;
 extern float dynlightFactor, dynlightFogBright;

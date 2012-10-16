@@ -79,7 +79,7 @@ FileId FileId::fromPath(char const* path)
 FileId::Md5Hash FileId::hash(char const* path)
 {
     // First normalize the name.
-    AutoStr* absPath = Str_Set(AutoStr_NewStd(), path);
+    AutoStr* absPath = AutoStr_FromTextStd(path);
     F_MakeAbsolute(absPath, absPath);
     F_FixSlashes(absPath, absPath);
 #if defined(WIN32) || defined(MACOSX)

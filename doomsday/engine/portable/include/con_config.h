@@ -29,6 +29,10 @@
 #ifndef LIBDENG_CONSOLE_CONFIG_H
 #define LIBDENG_CONSOLE_CONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Flags for Con_ParseCommands2.
 #define CPCF_SET_DEFAULT            0x1
 #define CPCF_ALLOW_SAVE_STATE       0x2
@@ -43,5 +47,9 @@ void Con_SaveDefaults(void);
 boolean Con_WriteState(const char* fileName, const char* bindingsFileName);
 
 D_CMD(WriteConsole);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_CONSOLE_CONFIG_H */

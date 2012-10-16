@@ -30,6 +30,10 @@
 
 #include <de/reader.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 finaleid_t Cl_CurrentFinale(void);
 
 /**
@@ -41,5 +45,9 @@ void Cl_Finale(Reader* msg);
  * Client sends a request to skip the finale.
  */
 void Cl_RequestFinaleSkip(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_CLIENT_INFINE */

@@ -39,7 +39,6 @@ D_CMD(BLEditor);
 
 void SBE_MenuSave(ui_object_t* ob);
 
-extern int gameDrawHUD;
 extern int numSources;
 extern byte freezeRLs;
 
@@ -380,7 +379,7 @@ static boolean SBE_Save(const char* name)
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", Str_Text(Game_IdentityKey(theGame)));
+    fprintf(file, "SkipIf Not %s\n", Str_Text(Game_IdentityKey(App_CurrentGame())));
 
     s = SB_GetSource(0);
     { int i;

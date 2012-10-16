@@ -49,7 +49,7 @@ bool BspBuilder::build()
     {
         return partitioner->build();
     }
-    catch(de::Error& er)
+    catch(de::Error const& er)
     {
         LOG_AS("BspBuilder");
         LOG_WARNING("%s.") << er.asText();

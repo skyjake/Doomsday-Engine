@@ -39,6 +39,7 @@
 #ifdef __cplusplus
 
 #include <QList>
+#include <de/String>
 #include "lumpinfo.h"
 
 /**
@@ -60,6 +61,22 @@ namespace de
     class FS1
     {
     public:
+        struct PathListItem
+        {
+            String path;
+            int attrib;
+
+            PathListItem(QString const& _path, int _attrib = 0)
+                : path(_path), attrib(_attrib)
+            {}
+
+            bool operator < (PathListItem const& other) const
+            {
+                return path.compareWithoutCase(other.path) < 0;
+            }
+        };
+        typedef QList<PathListItem> PathList;
+
         typedef QList<DFile*> FileList;
 
     public:
@@ -264,15 +281,6 @@ namespace de
         void deleteFile(DFile& hndl);
 
         /**
-         * Parm is passed on to the callback, which is called for each file
-         * matching the filespec. Absolute path names are given to the callback.
-         * Zip directory, DD_DIREC and the real files are scanned.
-         *
-         * @param flags  @see searchPathFlags
-         */
-        int allResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters = 0);
-
-        /**
          * Finds all files.
          *
          * @param found         Set of files that match the result.
@@ -294,6 +302,18 @@ namespace de
          */
         int findAll(bool (*predicate)(DFile* hndl, void* parameters), void* parameters,
                     FileList& found);
+
+        /**
+         * Finds all paths which match the search criteria. Will search the Zip lump index,
+         * lump => path mappings and native files in the local file system.
+         *
+         * @param searchPattern Pattern which defines the scope of the search.
+         * @param flags         @ref searchPathFlags
+         * @param found         Set of (absolute) paths that match the result.
+         *
+         * @return  Number of paths found.
+         */
+        int findAllPaths(char const* searchPattern, int flags, PathList& found);
 
         /**
          * Print contents of the specified directory of the virtual file system.
@@ -449,9 +469,6 @@ void F_UnlockLump(struct abstractfile_s* file, int lumpIdx);
  * Compiles a list of file names, separated by @a delimiter.
  */
 void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size_t outBufSize, const char* delimiter);
-
-int F_AllResourcePaths2(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters), void* parameters);
-int F_AllResourcePaths(char const* searchPath, int flags, int (*callback) (char const* path, PathDirectoryNodeType type, void* parameters)/*, parameters = 0 */);
 
 uint F_CRCNumber(void);
 

@@ -416,6 +416,16 @@ DENG_PUBLIC AutoStr* AutoStr_FromStr(Str* str);
 DENG_PUBLIC AutoStr* AutoStr_FromText(const char* text);
 
 /**
+ * Constructs an AutoStr instance (standard malloc) and initializes its
+ * contents with @a text.
+ *
+ * @param text  Text for the new string.
+ *
+ * @return  AutoStr instance.
+ */
+DENG_PUBLIC AutoStr* AutoStr_FromTextStd(const char* text);
+
+/**
  * Converts an AutoStr to a normal ddstring. You must call Str_Delete()
  * on the returned string manually to destroy it.
  *

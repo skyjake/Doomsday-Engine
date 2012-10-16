@@ -27,6 +27,10 @@
 
 #include "rect.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 
 void GL_DrawRect(const RectRaw* rect);
@@ -67,5 +71,9 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
 
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
 void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_GRAPHICS_DRAW_H

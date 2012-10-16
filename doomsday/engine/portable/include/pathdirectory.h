@@ -80,13 +80,13 @@ class PathDirectoryNode
 {
 public:
     /// @return  Print-ready name for node @a type.
-    static const ddstring_t* typeName(PathDirectoryNodeType type);
+    static ddstring_t const* typeName(PathDirectoryNodeType type);
 
 public:
     /// @todo ctor/dtor should be private or made callable only by de::PathDirectory
     PathDirectoryNode(PathDirectory& directory, PathDirectoryNodeType type,
-                      StringPoolId internId, PathDirectoryNode* parent=NULL,
-                      void* userData=NULL);
+                      StringPoolId internId, PathDirectoryNode* parent = NULL,
+                      void* userData = NULL);
     ~PathDirectoryNode();
 
     /// @return  PathDirectory which owns this node.
@@ -132,7 +132,7 @@ public:
      *
      * @return  The composed path pointer specified with @a path, for caller's convenience.
      */
-    ddstring_t* composePath(ddstring_t* path, int* length, char delimiter='/') const;
+    ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
 
     /// @fixme should be private:
     StringPoolId internId() const;
@@ -190,10 +190,10 @@ namespace de {
 class PathDirectory
 {
 public:
-    typedef QMultiHash<ushort, PathDirectoryNode*> PathNodes;
+    typedef QMultiHash<ushort, PathDirectoryNode*> Nodes;
 
 public:
-    explicit PathDirectory(int flags=0);
+    explicit PathDirectory(int flags = 0);
     virtual ~PathDirectory();
 
     /// @return  Number of unique paths in the directory.
@@ -216,7 +216,7 @@ public:
      *         "c:/somewhere/something" where @a delimiter @c= '/' the resultant node
      *         is that for the path fragment "something".
      */
-    PathDirectoryNode* insert(const char* path, char delimiter='/', void* userData=NULL);
+    PathDirectoryNode* insert(char const* path, char delimiter = '/', void* userData = NULL);
 
     /**
      * Find a node in the directory.
@@ -238,7 +238,7 @@ public:
      *
      * @return  Found node else @c NULL.
      */
-    PathDirectoryNode* find(int flags, const char* path, char delimiter='/');
+    PathDirectoryNode* find(int flags, char const* path, char delimiter = '/');
 
     /**
      * Composes and/or calculates the composed-length of the path for a node.
@@ -249,11 +249,11 @@ public:
      *
      * @return  The composed path pointer specified with @a path, for caller's convenience.
      */
-    ddstring_t* composePath(const PathDirectoryNode* node, ddstring_t* path,
-                            int* length, char delimiter='/');
+    ddstring_t* composePath(PathDirectoryNode const& node, ddstring_t* path,
+                            int* length, char delimiter = '/');
 
     /// @return  The path fragment which @a node represents.
-    const ddstring_t* pathFragment(const PathDirectoryNode* node);
+    ddstring_t const* pathFragment(PathDirectoryNode const& node);
 
     /**
      * Collate all paths in the directory into a list.
@@ -265,12 +265,20 @@ public:
      * @return  The allocated list; it is the responsibility of the caller to Str_Free()
      *          each string in the list and free() the list itself.
      */
-    ddstring_t* collectPaths(size_t* count, int flags, char delimiter='/');
+    ddstring_t* collectPaths(size_t* count, int flags, char delimiter = '/');
 
     /**
      * Provides access to the PathDirectoryNodes for efficent traversals.
      */
-    const PathNodes* pathNodes(PathDirectoryNodeType type) const;
+    Nodes const& nodes(PathDirectoryNodeType type) const;
+
+    inline Nodes const& leafNodes() const {
+        return nodes(PT_LEAF);
+    }
+
+    inline Nodes const& branchNodes() const {
+        return nodes(PT_BRANCH);
+    }
 
 public:
     /**
@@ -279,11 +287,11 @@ public:
      *
      * @return  The generated hash key.
      */
-    static ushort hashPathFragment(const char* fragment, size_t len, char delimiter='/');
+    static ushort hashPathFragment(char const* fragment, size_t len, char delimiter = '/');
 
 #if _DEBUG
-    static void debugPrint(PathDirectory* pd, char delimiter='/');
-    static void debugPrintHashDistribution(PathDirectory* pd);
+    static void debugPrint(PathDirectory& pd, char delimiter = '/');
+    static void debugPrintHashDistribution(PathDirectory& pd);
 #endif
 
     /// @fixme Should be private:
@@ -312,9 +320,9 @@ void PathDirectory_Delete(PathDirectory* pd);
 uint PathDirectory_Size(PathDirectory* pd);
 void PathDirectory_Clear(PathDirectory* pd);
 
-PathDirectoryNode* PathDirectory_Insert3(PathDirectory* pd, const char* path, char delimiter, void* userData);
-PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter); /*userData=NULL*/
-PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path); /*delimiter='/'*/
+PathDirectoryNode* PathDirectory_Insert3(PathDirectory* pd, char const* path, char delimiter, void* userData);
+PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, char const* path, char delimiter); /*userData=NULL*/
+PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, char const* path); /*delimiter='/'*/
 
 /**
  * Callback function type for PathDirectory::Iterate
@@ -327,15 +335,15 @@ PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path); /*
 typedef int (*pathdirectory_iteratecallback_t) (PathDirectoryNode* node, void* parameters);
 
 /// Const variant.
-typedef int (*pathdirectory_iterateconstcallback_t) (const PathDirectoryNode* node, void* parameters);
+typedef int (*pathdirectory_iterateconstcallback_t) (PathDirectoryNode const* node, void* parameters);
 
 /**
  * Callback function type for PathDirectory::Search
  *
- * @param node          Right-most node in path.
- * @param flags         @ref pathComparisonFlags
+ * @param node              Right-most node in path.
+ * @param flags             @ref pathComparisonFlags
  * @param mappedSearchPath  Fragment mapped search path.
- * @param parameters    User data passed to this when used as a search callback.
+ * @param parameters        User data passed to this when used as a search callback.
  *
  * @return  @c true iff the directory matched this.
  */
@@ -350,19 +358,19 @@ typedef int (*pathdirectory_searchcallback_t) (PathDirectoryNode* node, int flag
  * directory can be performed using nodes pre-selected by the caller or using
  * PathDirectory_Iterate().
  *
- * @param flags         @ref pathComparisonFlags
+ * @param flags             @ref pathComparisonFlags
  * @param mappedSearchPath  Fragment mapped search path.
- * @param callback      Callback function ptr. The callback should only return
- *                      a non-zero value when the desired node has been found.
- * @param parameters  Passed to the callback.
+ * @param callback          Callback function ptr. The callback should only return
+ *                          a non-zero value when the desired node has been found.
+ * @param parameters        Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
 PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, int flags, PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback, void* parameters);
 PathDirectoryNode* PathDirectory_Search (PathDirectory* pd, int flags, PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback); /*parameters=NULL*/
 
-PathDirectoryNode* PathDirectory_Find2(PathDirectory* pd, int flags, const char* path, char delimiter);
-PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags, const char* path); /* delimiter='/' */
+PathDirectoryNode* PathDirectory_Find2(PathDirectory* pd, int flags, char const* path, char delimiter);
+PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags, char const* path); /* delimiter='/' */
 
 /**
  * Iterate over nodes in the directory making a callback for each.
@@ -380,37 +388,37 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags, const char* 
 int PathDirectory_Iterate2(PathDirectory* pd, int flags, PathDirectoryNode* parent, ushort hash, pathdirectory_iteratecallback_t callback, void* parameters);
 int PathDirectory_Iterate (PathDirectory* pd, int flags, PathDirectoryNode* parent, ushort hash, pathdirectory_iteratecallback_t callback); /*parameters=NULL*/
 
-int PathDirectory_Iterate2_Const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent, ushort hash, pathdirectory_iterateconstcallback_t callback, void* parameters);
-int PathDirectory_Iterate_Const (const PathDirectory* pd, int flags, const PathDirectoryNode* parent, ushort hash, pathdirectory_iterateconstcallback_t callback); /*parameters=NULL*/
+int PathDirectory_Iterate2_Const(PathDirectory const* pd, int flags, PathDirectoryNode const* parent, ushort hash, pathdirectory_iterateconstcallback_t callback, void* parameters);
+int PathDirectory_Iterate_Const (PathDirectory const* pd, int flags, PathDirectoryNode const* parent, ushort hash, pathdirectory_iterateconstcallback_t callback); /*parameters=NULL*/
 
-ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, const PathDirectoryNode* node, ddstring_t* path, int* length, char delimiter);
-ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node, ddstring_t* path, int* length); /*delimiter='/'*/
+ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, PathDirectoryNode const* node, ddstring_t* path, int* length, char delimiter);
+ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, PathDirectoryNode const* node, ddstring_t* path, int* length); /*delimiter='/'*/
 
-const ddstring_t* PathDirectory_PathFragment(PathDirectory* pd, const PathDirectoryNode* node);
+ddstring_t const* PathDirectory_PathFragment(PathDirectory* pd, const PathDirectoryNode* node);
 
 ddstring_t* PathDirectory_CollectPaths2(PathDirectory* pd, size_t* count, int flags, char delimiter);
 ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, size_t* count, int flags); /*delimiter='/'*/
 
-ushort PathDirectory_HashPathFragment2(const char* path, size_t len, char delimiter);
-ushort PathDirectory_HashPathFragment(const char* path, size_t len);/*delimiter='/'*/
+ushort PathDirectory_HashPathFragment2(char const* path, size_t len, char delimiter);
+ushort PathDirectory_HashPathFragment(char const* path, size_t len);/*delimiter='/'*/
 
 #if _DEBUG
 void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter);
 void PathDirectory_DebugPrintHashDistribution(PathDirectory* pd);
 #endif
 
-PathDirectory* PathDirectoryNode_Directory(const PathDirectoryNode* node);
-PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node);
-PathDirectoryNodeType PathDirectoryNode_Type(const PathDirectoryNode* node);
-ushort PathDirectoryNode_Hash(const PathDirectoryNode* node);
+PathDirectory* PathDirectoryNode_Directory(PathDirectoryNode const* node);
+PathDirectoryNode* PathDirectoryNode_Parent(PathDirectoryNode const* node);
+PathDirectoryNodeType PathDirectoryNode_Type(PathDirectoryNode const* node);
+ushort PathDirectoryNode_Hash(PathDirectoryNode const* node);
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags, PathMap* candidatePath, void* parameters);
-ddstring_t* PathDirectoryNode_ComposePath2(const PathDirectoryNode* node, ddstring_t* path, int* length, char delimiter);
-ddstring_t* PathDirectoryNode_ComposePath(const PathDirectoryNode* node, ddstring_t* path, int* length); /*delimiter='/'*/
-const ddstring_t* PathDirectoryNode_PathFragment(const PathDirectoryNode* node);
-void* PathDirectoryNode_UserData(const PathDirectoryNode* node);
+ddstring_t* PathDirectoryNode_ComposePath2(PathDirectoryNode const* node, ddstring_t* path, int* length, char delimiter);
+ddstring_t* PathDirectoryNode_ComposePath(PathDirectoryNode const* node, ddstring_t* path, int* length); /*delimiter='/'*/
+ddstring_t const* PathDirectoryNode_PathFragment(PathDirectoryNode const* node);
+void* PathDirectoryNode_UserData(PathDirectoryNode const* node);
 void PathDirectoryNode_SetUserData(PathDirectoryNode* node, void* data);
 
-const ddstring_t* PathDirectoryNodeType_Name(PathDirectoryNodeType type);
+ddstring_t const* PathDirectoryNodeType_Name(PathDirectoryNodeType type);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -64,9 +64,9 @@ de::PathDirectoryNode::~PathDirectoryNode()
     delete d;
 }
 
-const Str* de::PathDirectoryNode::typeName(PathDirectoryNodeType type)
+Str const* de::PathDirectoryNode::typeName(PathDirectoryNodeType type)
 {
-    static const de::Str nodeNames[1+PATHDIRECTORYNODE_TYPE_COUNT] = {
+    static de::Str const nodeNames[1+PATHDIRECTORYNODE_TYPE_COUNT] = {
         "(invalidtype)",
         "branch",
         "leaf"
@@ -103,9 +103,9 @@ ushort de::PathDirectoryNode::hash() const
     return d->directory.hashForInternId(d->internId);
 }
 
-static int matchPathFragment(const char* string, const char* pattern)
+static int matchPathFragment(char const* string, char const* pattern)
 {
-    const char* in = string, *st = pattern;
+    char const* in = string, *st = pattern;
 
     while(*in)
     {
@@ -145,7 +145,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern) con
        ((flags & PCF_NO_BRANCH) && PT_BRANCH == type()))
         return false;
 
-    const PathMapFragment* sfragment = PathMap_Fragment(searchPattern, 0);
+    PathMapFragment const* sfragment = PathMap_Fragment(searchPattern, 0);
     if(!sfragment) return false; // Hmm...
 
 //#ifdef _DEBUG
@@ -166,7 +166,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern) con
             char buf[256];
             qsnprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
 
-            ddstring_t const* fragment = pd.pathFragment(node);
+            ddstring_t const* fragment = pd.pathFragment(*node);
             DENG2_ASSERT(fragment);
 
             if(!matchPathFragment(Str_Text(fragment), buf))
@@ -177,7 +177,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern) con
         }
         else
         {
-            const bool isWild = (sfragment->to == sfragment->from && *sfragment->from == '*');
+            bool const isWild = (sfragment->to == sfragment->from && *sfragment->from == '*');
             if(!isWild)
             {
                 // If the hashes don't match it can't possibly be this.
@@ -195,7 +195,7 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern) con
                     sfraglen = (sfragment->to - sfragment->from) + 1;
 
                 // Compare the path fragment to that of the search term.
-                ddstring_t const* fragment = pd.pathFragment(node);
+                ddstring_t const* fragment = pd.pathFragment(*node);
                 if(Str_Length(fragment) < sfraglen ||
                    qstrnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
                 {
@@ -229,15 +229,15 @@ int de::PathDirectoryNode::matchDirectory(int flags, PathMap* searchPattern) con
 #undef EXIT_POINT
 }
 
-const ddstring_t* de::PathDirectoryNode::pathFragment() const
+ddstring_t const* de::PathDirectoryNode::pathFragment() const
 {
-    return d->directory.pathFragment(this);
+    return d->directory.pathFragment(*this);
 }
 
 ddstring_t* de::PathDirectoryNode::composePath(ddstring_t* path, int* length,
     char delimiter) const
 {
-    return d->directory.composePath(this, path, length, delimiter);
+    return d->directory.composePath(*this, path, length, delimiter);
 }
 
 void* de::PathDirectoryNode::userData() const
@@ -259,7 +259,7 @@ de::PathDirectoryNode& de::PathDirectoryNode::setUserData(void* userData)
     (inst) != 0? reinterpret_cast<de::PathDirectoryNode*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<const de::PathDirectoryNode*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::PathDirectoryNode const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
@@ -267,33 +267,33 @@ de::PathDirectoryNode& de::PathDirectoryNode::setUserData(void* userData)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    const de::PathDirectoryNode* self = TOINTERNAL_CONST(inst)
+    de::PathDirectoryNode const* self = TOINTERNAL_CONST(inst)
 
-PathDirectory* PathDirectoryNode_Directory(const PathDirectoryNode* node)
+PathDirectory* PathDirectoryNode_Directory(PathDirectoryNode const* node)
 {
     SELF_CONST(node);
     return reinterpret_cast<PathDirectory*>(&self->directory());
 }
 
-PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node)
+PathDirectoryNode* PathDirectoryNode_Parent(PathDirectoryNode const* node)
 {
     SELF_CONST(node);
     return reinterpret_cast<PathDirectoryNode*>(self->parent());
 }
 
-PathDirectoryNodeType PathDirectoryNode_Type(const PathDirectoryNode* node)
+PathDirectoryNodeType PathDirectoryNode_Type(PathDirectoryNode const* node)
 {
     SELF_CONST(node);
     return self->type();
 }
 
-StringPoolId PathDirectoryNode_InternId(const PathDirectoryNode* node)
+StringPoolId PathDirectoryNode_InternId(PathDirectoryNode const* node)
 {
     SELF_CONST(node);
     return self->internId();
 }
 
-ushort PathDirectoryNode_Hash(const PathDirectoryNode* node)
+ushort PathDirectoryNode_Hash(PathDirectoryNode const* node)
 {
     SELF_CONST(node);
     return self->hash();
@@ -306,27 +306,27 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     return self->matchDirectory(flags, searchPattern);
 }
 
-ddstring_t* PathDirectoryNode_ComposePath2(const PathDirectoryNode* node,
+ddstring_t* PathDirectoryNode_ComposePath2(PathDirectoryNode const* node,
     ddstring_t* path, int* length, char delimiter)
 {
     SELF_CONST(node);
     return self->composePath(path, length, delimiter);
 }
 
-ddstring_t* PathDirectoryNode_ComposePath(const PathDirectoryNode* node,
+ddstring_t* PathDirectoryNode_ComposePath(PathDirectoryNode const* node,
     ddstring_t* path, int* length)
 {
     SELF_CONST(node);
     return self->composePath(path, length);
 }
 
-const ddstring_t* PathDirectoryNode_PathFragment(const PathDirectoryNode* node)
+ddstring_t const* PathDirectoryNode_PathFragment(PathDirectoryNode const* node)
 {
     SELF_CONST(node);
     return self->pathFragment();
 }
 
-void* PathDirectoryNode_UserData(const PathDirectoryNode* node)
+void* PathDirectoryNode_UserData(PathDirectoryNode const* node)
 {
     SELF_CONST(node);
     return self->userData();
@@ -338,7 +338,7 @@ void PathDirectoryNode_SetUserData(PathDirectoryNode* node, void* userData)
     self->setUserData(userData);
 }
 
-const Str* PathDirectoryNodeType_Name(PathDirectoryNodeType type)
+Str const* PathDirectoryNodeType_Name(PathDirectoryNodeType type)
 {
     return de::PathDirectoryNode::typeName(type);
 }

@@ -97,24 +97,25 @@ typedef uint resourcenamespaceid_t;
  *
  * Flags used with the F_FindResource family of functions which dictate the
  * logic used during resource location.
- * @{
  */
+///@{
 #define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have it too.
 
 /// Default flags.
 #define RLF_DEFAULT             0
-/**@}*/
+///@}
 
 /**
- * \post Initial/default search paths registered, namespaces initialized and
- * queries may begin.
- * \note May be called to re-initialize the locator back to default state.
+ * @post Initial/default search paths registered, namespaces initialized and
+ *       queries may begin.
+ *
+ * @note May be called to re-initialize the locator back to default state.
  */
 void F_InitResourceLocator(void);
 
 /**
- * \post All resource namespaces are emptied, search paths are cleared and
- * queries are no longer possible.
+ * @post All resource namespaces are emptied, search paths are cleared and
+ *       queries are no longer possible.
  */
 void F_ShutdownResourceLocator(void);
 
@@ -128,7 +129,7 @@ void F_CreateNamespacesForFileResourcePaths(void);
  * @return  Newly created hash name. Ownership passes to the caller who should
  * ensure to release it with Str_Delete when done.
  */
-AutoStr* F_ComposeHashNameForFilePath(const Str* filePath);
+AutoStr* F_ComposeHashNameForFilePath(Str const* filePath);
 
 /**
  * This is a hash function. It uses the resource name to generate a
@@ -136,13 +137,13 @@ AutoStr* F_ComposeHashNameForFilePath(const Str* filePath);
  *
  * @return  The generated hash key.
  */
-resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const ddstring_t* name);
+resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(ddstring_t const* name);
 
 #define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
 
-resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    FileDirectory* directory, AutoStr* (*composeHashNameFunc) (const Str* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const Str* name), byte flags);
+resourcenamespace_t* F_CreateResourceNamespace(char const* name,
+    FileDirectory* directory, AutoStr* (*composeHashNameFunc) (Str const* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (Str const* name), byte flags);
 
 /**
  * @param rni  Unique identifier of the namespace to add to.
@@ -151,9 +152,9 @@ resourcenamespace_t* F_CreateResourceNamespace(const char* name,
  * @param group  Group to add the new search path to.
  */
 boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
-    const Uri* searchPath, resourcenamespace_searchpathgroup_t group);
+    Uri const* searchPath, resourcenamespace_searchpathgroup_t group);
 
-const ddstring_t* F_ResourceNamespaceName(resourcenamespaceid_t rni);
+ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni);
 
 /// @return  Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
@@ -180,7 +181,7 @@ resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni);
  */
 uint F_FindResourceForRecord(struct AbstractResource_s* rec, ddstring_t* foundPath);
 
-uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, const Uri* const* searchPaths);
+uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, Uri const* const* searchPaths);
 
 /**
  * Attempt to locate a named resource.
@@ -205,15 +206,15 @@ uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, cons
  *
  * @return  The index+1 of the path in @a searchPaths if found, else @c 0
  */
-uint F_FindResourceStr4(resourceclass_t rclass, const ddstring_t* searchPaths, ddstring_t* foundPath, int flags, const ddstring_t* optionalSuffix);
-uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths, ddstring_t* foundPath, int flags); /*optionalSuffix=NULL*/
-uint F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPaths, ddstring_t* foundPath); /*flags=RLF_DEFAULT*/
-uint F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPaths); /*foundPath=NULL*/
+uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
+uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath, int flags); /*optionalSuffix=NULL*/
+uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath); /*flags=RLF_DEFAULT*/
+uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* searchPaths); /*foundPath=NULL*/
 
-uint F_FindResource4(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath, int flags, const char* optionalSuffix);
-uint F_FindResource3(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath, int flags); /*optionalSuffix=NULL*/
-uint F_FindResource2(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath); /*flags=RLF_DEFAULT*/
-uint F_FindResource(resourceclass_t rclass, const char* searchPaths); /*foundPath=NULL*/
+uint F_FindResource4(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
+uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags); /*optionalSuffix=NULL*/
+uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath); /*flags=RLF_DEFAULT*/
+uint F_FindResource(resourceclass_t rclass, char const* searchPaths); /*foundPath=NULL*/
 
 /**
  * @return  Default class associated with resources of type @a type.
@@ -229,13 +230,13 @@ resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
  * @return  Unique identifier of the resource namespace associated with @a name,
  *      else @c 0 (not found).
  */
-resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
+resourcenamespaceid_t F_SafeResourceNamespaceForName(char const* name);
 
 /**
  * Same as F_SafeResourceNamespaceForName except will throw a fatal error if not
  * found and won't return.
  */
-resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
+resourcenamespaceid_t F_ResourceNamespaceForName(char const* name);
 
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
@@ -243,7 +244,7 @@ resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
  *
  * @return  Type determined for this resource else @c RT_NONE.
  */
-resourcetype_t F_GuessResourceTypeByName(const char* name);
+resourcetype_t F_GuessResourceTypeByName(char const* name);
 
 /**
  * Apply mapping for this namespace to the specified path (if enabled).
@@ -266,35 +267,32 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path);
  */
 boolean F_ApplyPathMapping(ddstring_t* path);
 
-const char* F_ParseSearchPath2(struct uri_s* dst, const char* src, char delim,
-    resourceclass_t defaultResourceClass);
-const char* F_ParseSearchPath(struct uri_s* dst, const char* src, char delim);
+char const* F_ParseSearchPath2(struct uri_s* dst, char const* src, char delim, resourceclass_t defaultResourceClass);
+char const* F_ParseSearchPath(struct uri_s* dst, char const* src, char delim);
 
 /**
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
-const char* F_ResourceClassStr(resourceclass_t rclass);
+char const* F_ResourceClassStr(resourceclass_t rclass);
 
 /**
  * Construct a new NULL terminated Uri list from the specified search path list.
  */
-Uri** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* searchPaths, size_t* count);
-Uri** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths);
+Uri** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count);
+Uri** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* searchPaths);
 
-Uri** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths, size_t* count);
-Uri** F_CreateUriList(resourceclass_t rclass, const char* searchPaths);
+Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count);
+Uri** F_CreateUriList(resourceclass_t rclass, char const* searchPaths);
 
 void F_DestroyUriList(Uri** list);
 
-ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
-    const ddstring_t* pathList, size_t* count, char delimiter);
-ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass,
-    const ddstring_t* pathList, size_t* count);
+ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass, ddstring_t const* pathList, size_t* count, char delimiter);
+ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass, ddstring_t const* pathList, size_t* count);
 
 void F_DestroyStringList(ddstring_t** list);
 
 #if _DEBUG
-void F_PrintStringList(const ddstring_t** strings, size_t stringsCount);
+void F_PrintStringList(ddstring_t const** strings, size_t stringsCount);
 #endif
 
 #ifdef __cplusplus

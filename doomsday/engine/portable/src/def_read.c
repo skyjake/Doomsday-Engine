@@ -151,9 +151,6 @@ typedef struct dedsource_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-// the actual classes are game-side
-extern xgclass_t* xgClassLinks;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 char dedReadError[512];
@@ -724,7 +721,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
     }
     else if(isalnum(cond[0]))
     {   // A game mode.
-        value = !stricmp(cond, Str_Text(Game_IdentityKey(theGame)));
+        value = !stricmp(cond, Str_Text(Game_IdentityKey(App_CurrentGame())));
     }
 
     return value == expected;

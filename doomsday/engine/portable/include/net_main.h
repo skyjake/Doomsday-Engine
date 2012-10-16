@@ -264,6 +264,7 @@ extern boolean  allowNetTraffic; // Should net traffic be allowed?
 extern byte     netDontSleep, netTicSync;
 extern float    netSimulatedLatencySeconds;
 extern client_t clients[DDMAXPLAYERS];
+extern int      gotFrame;
 
 void            Net_Register(void);
 void            Net_Init(void);

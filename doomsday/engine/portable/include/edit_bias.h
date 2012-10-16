@@ -25,6 +25,10 @@
 
 #include "edit_bias.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Register all console commands and variables for this module.
  */
@@ -40,5 +44,9 @@ void SBE_DrawHUD(void);
  * @return  @c true iff the console player is currently using the HueCircle.
  */
 boolean SBE_UsingHueCircle(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_BIAS_EDITOR

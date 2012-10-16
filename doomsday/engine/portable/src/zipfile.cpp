@@ -902,7 +902,7 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         ddstring_t* out = (dest == src? Str_New() : dest);
         int dist;
 
-        Str_Appendf(out, "%sauto/", Str_Text(Game_DefsPath(theGame)));
+        Str_Appendf(out, "%sauto/", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->defsPath()));
         dist = (Str_At(src, 1) == '/'? 2 : 1);
         Str_PartAppend(out, Str_Text(src), dist, Str_Length(src)-dist);
 
@@ -921,7 +921,7 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         int dist = 0;
         char* slash;
 
-        Str_Appendf(out, "%sauto/", Str_Text(Game_DataPath(theGame)));
+        Str_Appendf(out, "%sauto/", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->dataPath()));
         slash = strrchr(Str_Text(src), '/');
         dist = slash - Str_Text(src);
         // Copy the path up to and including the last directory separator if present.
@@ -986,10 +986,10 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         switch(rclass)
         {
         case RC_PACKAGE: // Mapped to the Data directory.
-            Str_Appendf(&mapped, "%sauto/", Str_Text(Game_DataPath(theGame)));
+            Str_Appendf(&mapped, "%sauto/", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->dataPath()));
             break;
         case RC_DEFINITION: // Mapped to the Defs directory.
-            Str_Appendf(&mapped, "%sauto/", Str_Text(Game_DefsPath(theGame)));
+            Str_Appendf(&mapped, "%sauto/", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->defsPath()));
             break;
         default: /* Not mapped */ break;
         }

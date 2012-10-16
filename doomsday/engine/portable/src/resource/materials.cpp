@@ -600,18 +600,14 @@ static void destroyBindings(void)
     {
         if(!namespaces[i]) continue;
 
-        const MaterialDirectory::PathNodes* nodes = namespaces[i]->pathNodes(PT_LEAF);
-        if(nodes)
+        DENG2_FOR_EACH_CONST(MaterialDirectory::Nodes, nodeIt, namespaces[i]->leafNodes())
         {
-            DENG2_FOR_EACH_CONST(MaterialDirectory::PathNodes, nodeIt, *nodes)
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
+            if(mb)
             {
-                MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
-                if(mb)
-                {
-                    // Detach our user data from this node.
-                    (*nodeIt)->setUserData(0);
-                    delete mb;
-                }
+                // Detach our user data from this node.
+                (*nodeIt)->setUserData(0);
+                delete mb;
             }
         }
         delete namespaces[i]; namespaces[i] = NULL;
@@ -705,16 +701,12 @@ void Materials_ClearDefinitionLinks(void)
         MaterialDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
         if(!matDirectory) continue;
 
-        const MaterialDirectory::PathNodes* nodes = matDirectory->pathNodes(PT_LEAF);
-        if(nodes)
+        DENG2_FOR_EACH_CONST(MaterialDirectory::Nodes, nodeIt, matDirectory->leafNodes())
         {
-            DENG2_FOR_EACH_CONST(MaterialDirectory::PathNodes, nodeIt, *nodes)
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
+            if(mb)
             {
-                MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
-                if(mb)
-                {
-                    clearBindingDefinitionLinks(mb);
-                }
+                clearBindingDefinitionLinks(mb);
             }
         }
     }
@@ -1519,7 +1511,7 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    AutoStr* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(AutoStr_NewStd(), Str_Text(Uri_Path(uri)))));
+    AutoStr* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(AutoStr_FromTextStd(Str_Text(Uri_Path(uri)))));
 
     Con_Printf("%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
                numUidDigits, Materials_Id(mat),
@@ -1559,28 +1551,24 @@ static MaterialDirectoryNode** collectDirectoryNodes(materialnamespaceid_t names
         MaterialDirectory* matDirectory = getDirectoryForNamespaceId(iterId);
         if(!matDirectory) continue;
 
-        const MaterialDirectory::PathNodes* nodes = matDirectory->pathNodes(PT_LEAF);
-        if(nodes)
+        DENG2_FOR_EACH_CONST(MaterialDirectory::Nodes, nodeIt, matDirectory->leafNodes())
         {
-            DENG2_FOR_EACH_CONST(MaterialDirectory::PathNodes, nodeIt, *nodes)
+            if(like && like[0])
             {
-                if(like && like[0])
-                {
-                    AutoStr* path = composePathForDirectoryNode((*nodeIt), delimiter);
-                    int delta = qstrnicmp(Str_Text(path), like, strlen(like));
-                    if(delta) continue; // Continue iteration.
-                }
+                AutoStr* path = composePathForDirectoryNode((*nodeIt), delimiter);
+                int delta = qstrnicmp(Str_Text(path), like, strlen(like));
+                if(delta) continue; // Continue iteration.
+            }
 
-                if(storage)
-                {
-                    // Store mode.
-                    storage[idx++] = *nodeIt;
-                }
-                else
-                {
-                    // Count mode.
-                    ++idx;
-                }
+            if(storage)
+            {
+                // Store mode.
+                storage[idx++] = *nodeIt;
+            }
+            else
+            {
+                // Count mode.
+                ++idx;
             }
         }
     }
@@ -2134,8 +2122,8 @@ D_CMD(PrintMaterialStats)
 
         size = matDirectory->size();
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Materials_NamespaceName(namespaceId)), size, size==1? "material":"materials");
-        MaterialDirectory::debugPrintHashDistribution(matDirectory);
-        MaterialDirectory::debugPrint(matDirectory, MATERIALS_PATH_DELIMITER);
+        MaterialDirectory::debugPrintHashDistribution(*matDirectory);
+        MaterialDirectory::debugPrint(*matDirectory, MATERIALS_PATH_DELIMITER);
     }
     return true;
 }

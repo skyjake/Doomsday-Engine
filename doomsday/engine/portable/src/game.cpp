@@ -138,6 +138,11 @@ Game::~Game()
     delete d;
 }
 
+GameCollection& Game::collection() const
+{
+    return *reinterpret_cast<de::GameCollection*>(App_GameCollection());
+}
+
 Game& Game::addResource(resourceclass_t rclass, AbstractResource& record)
 {
     if(!VALID_RESOURCE_CLASS(rclass))
@@ -181,7 +186,7 @@ bool Game::isRequiredResource(char const* absolutePath)
     return false;
 }
 
-bool Game::allStartupResourcesFound()
+bool Game::allStartupResourcesFound() const
 {
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
@@ -206,47 +211,47 @@ Game& Game::setPluginId(pluginid_t newId)
     return *this;
 }
 
-pluginid_t Game::pluginId()
+pluginid_t Game::pluginId() const
 {
     return d->pluginId;
 }
 
-ddstring_t const& Game::identityKey()
+ddstring_t const& Game::identityKey() const
 {
     return d->identityKey;
 }
 
-ddstring_t const& Game::dataPath()
+ddstring_t const& Game::dataPath() const
 {
     return d->dataPath;
 }
 
-ddstring_t const& Game::defsPath()
+ddstring_t const& Game::defsPath() const
 {
     return d->defsPath;
 }
 
-ddstring_t const& Game::mainConfig()
+ddstring_t const& Game::mainConfig() const
 {
     return d->mainConfig;
 }
 
-ddstring_t const& Game::bindingConfig()
+ddstring_t const& Game::bindingConfig() const
 {
     return d->bindingConfig;
 }
 
-ddstring_t const& Game::title()
+ddstring_t const& Game::title() const
 {
     return d->title;
 }
 
-ddstring_t const& Game::author()
+ddstring_t const& Game::author() const
 {
     return d->author;
 }
 
-AbstractResource* const* Game::resources(resourceclass_t rclass, int* count)
+AbstractResource* const* Game::resources(resourceclass_t rclass, int* count) const
 {
     if(!VALID_RESOURCE_CLASS(rclass))
     {
@@ -277,6 +282,82 @@ Game* Game::fromDef(GameDef const& def)
     return new Game(def.identityKey, dataPath, defsPath, def.configDir,
                     def.defaultTitle, def.defaultAuthor);
 }
+
+void Game::printBanner(Game const& game)
+{
+    Con_PrintRuler();
+    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(&game.title()));
+    Con_PrintRuler();
+}
+
+void Game::printResources(Game const& game, bool printStatus, int rflags)
+{
+    size_t count = 0;
+    for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
+    {
+        AbstractResource* const* records = game.resources((resourceclass_t)i, 0);
+        if(!records) continue;
+
+        for(AbstractResource* const* recordIt = records; *recordIt; recordIt++)
+        {
+            AbstractResource* rec = *recordIt;
+
+            if(rflags >= 0 && (rflags & AbstractResource_ResourceFlags(rec)))
+            {
+                AbstractResource_Print(rec, printStatus);
+                count += 1;
+            }
+        }
+    }
+
+    if(count == 0)
+        Con_Printf(" None\n");
+}
+
+void Game::print(Game const& game, int flags)
+{
+    if(isNullGame(game))
+        flags &= ~PGF_BANNER;
+
+#if _DEBUG
+    Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", int(game.pluginId()),
+               F_PrettyPath(Str_Text(&game.dataPath())),
+               F_PrettyPath(Str_Text(&game.defsPath())));
+#endif
+
+    if(flags & PGF_BANNER)
+        printBanner(game);
+
+    if(!(flags & PGF_BANNER))
+        Con_Printf("Game: %s - ", Str_Text(&game.title()));
+    else
+        Con_Printf("Author: ");
+    Con_Printf("%s\n", Str_Text(&game.author()));
+    Con_Printf("IdentityKey: %s\n", Str_Text(&game.identityKey()));
+
+    if(flags & PGF_LIST_STARTUP_RESOURCES)
+    {
+        Con_Printf("Startup resources:\n");
+        printResources(game, (flags & PGF_STATUS) != 0, RF_STARTUP);
+    }
+
+    if(flags & PGF_LIST_OTHER_RESOURCES)
+    {
+        Con_Printf("Other resources:\n");
+        Con_Printf("   ");
+        printResources(game, /*(flags & PGF_STATUS) != 0*/false, 0);
+    }
+
+    if(flags & PGF_STATUS)
+        Con_Printf("Status: %s\n",
+                   game.collection().isCurrentGame(game)? "Loaded" :
+                         game.allStartupResourcesFound()? "Complete/Playable" :
+                                                          "Incomplete/Not playable");
+}
+
+NullGame::NullGame(ddstring_t const* dataPath, ddstring_t const* defsPath)
+    : Game("null-game", dataPath, defsPath, "doomsday", "null-game", "null-game")
+{}
 
 } // namespace de
 
@@ -313,6 +394,12 @@ void Game_Delete(struct game_s* game)
     }
 }
 
+boolean Game_IsNullObject(Game const* game)
+{
+    if(!game) return false;
+    return de::isNullGame(*reinterpret_cast<de::Game const*>(game));
+}
+
 struct game_s* Game_AddResource(struct game_s* game, resourceclass_t rclass, struct AbstractResource_s* record)
 {
     SELF(game);
@@ -327,9 +414,9 @@ boolean Game_IsRequiredResource(struct game_s* game, char const* absolutePath)
     return self->isRequiredResource(absolutePath);
 }
 
-boolean Game_AllStartupResourcesFound(struct game_s* game)
+boolean Game_AllStartupResourcesFound(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return self->allStartupResourcesFound();
 }
 
@@ -339,57 +426,57 @@ struct game_s* Game_SetPluginId(struct game_s* game, pluginid_t pluginId)
     return reinterpret_cast<struct game_s*>(&self->setPluginId(pluginId));
 }
 
-pluginid_t Game_PluginId(struct game_s* game)
+pluginid_t Game_PluginId(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return self->pluginId();
 }
 
-ddstring_t const* Game_IdentityKey(struct game_s* game)
+ddstring_t const* Game_IdentityKey(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return &self->identityKey();
 }
 
-ddstring_t const* Game_Title(struct game_s* game)
+ddstring_t const* Game_Title(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return &self->title();
 }
 
-ddstring_t const* Game_Author(struct game_s* game)
+ddstring_t const* Game_Author(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return &self->author();
 }
 
-ddstring_t const* Game_MainConfig(struct game_s* game)
+ddstring_t const* Game_MainConfig(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return &self->mainConfig();
 }
 
-ddstring_t const* Game_BindingConfig(struct game_s* game)
+ddstring_t const* Game_BindingConfig(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return &self->bindingConfig();
 }
 
-struct AbstractResource_s* const* Game_Resources(struct game_s* game, resourceclass_t rclass, int* count)
+struct AbstractResource_s* const* Game_Resources(struct game_s const* game, resourceclass_t rclass, int* count)
 {
-    SELF(game);
+    SELF_CONST(game);
     return self->resources(rclass, count);
 }
 
-ddstring_t const* Game_DataPath(struct game_s* game)
+ddstring_t const* Game_DataPath(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return &self->dataPath();
 }
 
-ddstring_t const* Game_DefsPath(struct game_s* game)
+ddstring_t const* Game_DefsPath(struct game_s const* game)
 {
-    SELF(game);
+    SELF_CONST(game);
     return &self->defsPath();
 }
 
@@ -397,6 +484,24 @@ struct game_s* Game_FromDef(GameDef const* def)
 {
     if(!def) return 0;
     return reinterpret_cast<struct game_s*>(de::Game::fromDef(*def));
+}
+
+void Game_PrintBanner(Game const* game)
+{
+    if(!game) return;
+    de::Game::printBanner(*reinterpret_cast<de::Game const*>(game));
+}
+
+void Game_PrintResources(Game const* game, boolean printStatus, int rflags)
+{
+    if(!game) return;
+    de::Game::printResources(*reinterpret_cast<de::Game const*>(game), CPP_BOOL(printStatus), rflags);
+}
+
+void Game_Print(Game const* game, int flags)
+{
+    if(!game) return;
+    de::Game::print(*reinterpret_cast<de::Game const*>(game), flags);
 }
 
 /// @todo Do this really belong here? Semantically, this appears misplaced. -ds

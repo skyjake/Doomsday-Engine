@@ -1,33 +1,26 @@
-/**\file def_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Definitions Subsystem
+ * @file def_main.cpp
+ *
+ * Definitions Subsystem.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 #include <ctype.h>
@@ -54,29 +47,15 @@
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define LOOPi(n)    for(i = 0; i < (n); ++i)
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct {
-    char*           name; // Name of the routine.
-    void            (C_DECL * func) (); // Pointer to the function.
+    char* name; // Name of the routine.
+    void (*func)(); // Pointer to the function.
 } actionlink_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 void Def_ReadProcessDED(const char* filename);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ded_t defs; // The main definitions database.
 boolean firstDED;
@@ -105,15 +84,11 @@ ded_count_t countStateLights;
 ded_ptcgen_t** statePtcGens; // A pointer for each State.
 ded_count_t countStatePtcGens;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean defsInited = false;
 static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
 xgclass_t* xgClassLinks;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Retrieves the XG Class list from the Game.
@@ -560,9 +535,10 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
 
 ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean isCustom)
 {
-    ded_ptcgen_t* def;
-    int i;
-    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+    DENG_UNUSED(hasExternal); DENG_UNUSED(isCustom);
+
+    ded_ptcgen_t* def = defs.ptcGens;
+    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
     {
         materialid_t defMatId;
 
@@ -709,15 +685,16 @@ int Def_GetTextNumForName(const char* name)
  *     \s   Space
  * </pre>
  */
-static void Def_InitTextDef(ddtext_t* txt, char* str)
+static void Def_InitTextDef(ddtext_t* txt, char const* str)
 {
-    char* out, *in;
-
     // Handle null pointers with "".
     if(!str) str = "";
 
-    txt->text = M_Calloc(strlen(str) + 1);
-    for(out = txt->text, in = str; *in; out++, in++)
+    txt->text = (char*) M_Calloc(strlen(str) + 1);
+
+    char const* in = str;
+    char* out = txt->text;
+    for(; *in; out++, in++)
     {
         if(*in == '\\')
         {
@@ -740,7 +717,7 @@ static void Def_InitTextDef(ddtext_t* txt, char* str)
     }
 
     // Adjust buffer to fix exactly.
-    txt->text = M_Realloc(txt->text, strlen(txt->text) + 1);
+    txt->text = (char*) M_Realloc(txt->text, strlen(txt->text) + 1);
 }
 
 /**
@@ -748,6 +725,8 @@ static void Def_InitTextDef(ddtext_t* txt, char* str)
  */
 int Def_ReadDEDFile(const char* fn, PathDirectoryNodeType type, void* parm)
 {
+    DENG_UNUSED(parm);
+
     // Skip directories.
     if(type == PT_BRANCH)
         return true;
@@ -857,18 +836,6 @@ static __inline void readDefinitionFile(const char* fileName)
     Def_ReadProcessDED(fileName);
 }
 
-/**
- * (f_allresourcepaths_callback_t)
- */
-static int autoDefsReader(char const* fileName, PathDirectoryNodeType type, void* parameters)
-{
-    DENG_UNUSED(parameters);
-    // Ignore directories.
-    if(type != PT_BRANCH)
-        readDefinitionFile(fileName);
-    return 0; // Continue searching.
-}
-
 static void readAllDefinitions(void)
 {
     uint startTime = Sys_GetRealTime();
@@ -891,8 +858,7 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        Game* game = theGame;
-        AbstractResource* const* records = Game_Resources(game, RC_DEFINITION, 0);
+        AbstractResource* const* records = reinterpret_cast<de::Game*>(App_CurrentGame())->resources(RC_DEFINITION, 0);
         AbstractResource* const* recordIt;
 
         if(records)
@@ -900,7 +866,7 @@ static void readAllDefinitions(void)
         {
             AbstractResource* rec = *recordIt;
             /// Try to locate this resource now.
-            const ddstring_t* path = AbstractResource_ResolvedPath(rec, true);
+            ddstring_t const* path = AbstractResource_ResolvedPath(rec, true);
 
             if(!path)//!(AbstractResource_ResourceFlags(rec) & RF_FOUND))
             {
@@ -919,11 +885,21 @@ static void readAllDefinitions(void)
     // Next up are definition files in the /auto directory.
     if(!CommandLine_Exists("-noauto"))
     {
-        ddstring_t pattern;
-        Str_Init(&pattern);
-        Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
-        F_AllResourcePaths(Str_Text(&pattern), 0, autoDefsReader);
-        Str_Free(&pattern);
+        AutoStr* pattern = AutoStr_NewStd();
+        Str_Appendf(pattern, "%sauto/*.ded", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->defsPath()));
+
+        de::FS1::PathList found;
+        if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))
+        {
+            DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
+            {
+                // Ignore directories.
+                if(i->attrib & A_SUBDIR) continue;
+
+                QByteArray foundPathUtf8 = i->path.toUtf8();
+                readDefinitionFile(foundPathUtf8.constData());
+            }
+        }
     }
 
     // Any definition files on the command line?
@@ -991,8 +967,10 @@ void Def_GenerateGroupsFromAnims(void)
     }
 }
 
-static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* paramaters)
+static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* parameters)
 {
+    DENG_UNUSED(parameters);
+
     Uri* texUri = Textures_ComposeUri(texId);
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
@@ -1029,8 +1007,10 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
     return 0; // Continue iteration.
 }
 
-static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters)
+static int generateMaterialDefForFlatTexture(textureid_t texId, void* parameters)
 {
+    DENG_UNUSED(parameters);
+
     Uri* texUri = Textures_ComposeUri(texId);
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
@@ -1065,8 +1045,10 @@ static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters
     return 0; // Continue iteration.
 }
 
-static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramaters)
+static int generateMaterialDefForSpriteTexture(textureid_t texId, void* parameters)
 {
+    DENG_UNUSED(parameters);
+
     Uri* texUri = Textures_ComposeUri(texId);
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
@@ -1324,8 +1306,7 @@ void Def_Read(void)
             if(!stricmp(defs.text[i].id, defs.text[k].id) && texts[k].text)
             {
                 // Update the earlier string.
-                texts[i].text =
-                    M_Realloc(texts[i].text, strlen(texts[k].text) + 1);
+                texts[i].text = (char*) M_Realloc(texts[i].text, strlen(texts[k].text) + 1);
                 strcpy(texts[i].text, texts[k].text);
 
                 // Free the later string, it isn't used (>NUMTEXT).
@@ -1778,7 +1759,7 @@ int Def_Get(int type, const char* id, void* out)
         i = *((long*) id);
         if(i < 0 || i >= countSounds.num)
             return false;
-        strcpy(out, sounds[i].lumpName);
+        strcpy((char*)out, sounds[i].lumpName);
         return true;
 
     case DD_DEF_MUSIC:
@@ -1902,7 +1883,7 @@ int Def_Get(int type, const char* id, void* out)
         for(i = defs.count.lineTypes.num - 1; i >= 0; i--)
         {
             if(defs.lineTypes[i].id != typeId) continue;
-            if(out) Def_CopyLineType(out, &defs.lineTypes[i]);
+            if(out) Def_CopyLineType((linetype_t*)out, &defs.lineTypes[i]);
             return true;
         }
         return false;
@@ -1912,7 +1893,7 @@ int Def_Get(int type, const char* id, void* out)
         for(i = defs.count.sectorTypes.num - 1; i >= 0; i--)
         {
             if(defs.sectorTypes[i].id != typeId) continue;
-            if(out) Def_CopySectorType(out, &defs.sectorTypes[i]);
+            if(out) Def_CopySectorType((sectortype_t*)out, &defs.sectorTypes[i]);
             return true;
         }
         return false;
@@ -1922,10 +1903,6 @@ int Def_Get(int type, const char* id, void* out)
     }
 }
 
-/**
- * This is supposed to be the main interface for outside parties to
- * modify definitions (unless they want to do it manually with dedfile.h).
- */
 int Def_Set(int type, int index, int value, const void* ptr)
 {
     ded_music_t* musdef = 0;
@@ -1937,8 +1914,8 @@ int Def_Set(int type, int index, int value, const void* ptr)
         if(index < 0 || index >= defs.count.text.num)
             Con_Error("Def_Set: Text index %i is invalid.\n", index);
 
-        defs.text[index].text = M_Realloc(defs.text[index].text, strlen((char*)ptr) + 1);
-        strcpy(defs.text[index].text, ptr);
+        defs.text[index].text = (char*) M_Realloc(defs.text[index].text, strlen((char*)ptr) + 1);
+        strcpy(defs.text[index].text, (char const*) ptr);
         break;
 
     case DD_DEF_STATE: {
@@ -1978,7 +1955,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
         {
         case DD_LUMP:
             S_StopSound(index, 0);
-            strcpy(sounds[index].lumpName, ptr);
+            strcpy(sounds[index].lumpName, (char const*) ptr);
             if(strlen(sounds[index].lumpName))
             {
                 sounds[index].lumpNum = F_LumpNumForName(sounds[index].lumpName);
@@ -2018,12 +1995,12 @@ int Def_Set(int type, int index, int value, const void* ptr)
         {
         case DD_ID:
             if(ptr)
-                strcpy(musdef->id, ptr);
+                strcpy(musdef->id, (char const*) ptr);
             break;
 
         case DD_LUMP:
             if(ptr)
-                strcpy(musdef->lumpName, ptr);
+                strcpy(musdef->lumpName, (char const*) ptr);
             break;
 
         case DD_CD_TRACK:
@@ -2073,7 +2050,7 @@ StringArray* Def_ListStateIDs(void)
  */
 D_CMD(ListMobjs)
 {
-    int i;
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
     if(defs.count.mobjs.num <= 0)
     {
@@ -2082,7 +2059,7 @@ D_CMD(ListMobjs)
     }
 
     Con_Printf("Registered Mobjs (ID | Name):\n");
-    for(i = 0; i < defs.count.mobjs.num; ++i)
+    for(int i = 0; i < defs.count.mobjs.num; ++i)
     {
         if(defs.mobjs[i].name[0])
             Con_Printf(" %s | %s\n", defs.mobjs[i].id, defs.mobjs[i].name);

@@ -31,7 +31,7 @@ using namespace de;
 
 App::App(int& argc, char** argv, GUIMode guiMode)
     : QApplication(argc, argv, guiMode == GUIEnabled),
-      _cmdLine(argc, argv),
+      _cmdLine(arguments()),
       _config(0)
 {
     // This instance of LogBuffer is used globally.

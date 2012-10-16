@@ -27,6 +27,10 @@
 
 #include "finaleinterpreter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Called during pre-init to register cvars and ccmds for the finale system.
  */
@@ -36,5 +40,9 @@ void FI_Init(void);
 void FI_Shutdown(void);
 
 void FI_Ticker(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_INFINE_MAIN_H */

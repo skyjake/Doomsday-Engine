@@ -1,5 +1,5 @@
 /**
- * @file dd_main.c
+ * @file dd_main.cpp
  *
  * Engine core.
  *
@@ -55,6 +55,8 @@
 #include "texture.h"
 #include "updater.h"
 
+using namespace de;
+
 typedef struct ddvalue_s {
     int*            readPtr;
     int*            writePtr;
@@ -65,11 +67,7 @@ static int DD_DummyWorker(void* parameters);
 static void DD_AutoLoad(void);
 
 extern int renderTextures;
-extern int gotFrame;
 extern int monochrome;
-extern int gameDataFormat;
-extern int gameDrawHUD;
-extern int symbolicEchoMode;
 
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
 filename_t ddRuntimePath, ddBinPath;
@@ -89,8 +87,17 @@ finaleid_t titleFinale;
 static ddstring_t** sessionResourceFileList;
 static size_t numSessionResourceFileList;
 
+#ifndef WIN32
+extern GETGAMEAPI GetGameAPI;
+#endif
+
+// The Game collection.
+static de::GameCollection* games;
+
 D_CMD(CheckForUpdates)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     Con_Message("Checking for available updates...\n");
     Updater_CheckNow(false/* don't notify */);
     return true;
@@ -98,6 +105,8 @@ D_CMD(CheckForUpdates)
 
 D_CMD(CheckForUpdatesAndNotify)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     /// @todo Combine into the same command with CheckForUpdates?
     Con_Message("Checking for available updates...\n");
     Updater_CheckNow(true/* do notify */);
@@ -106,12 +115,16 @@ D_CMD(CheckForUpdatesAndNotify)
 
 D_CMD(LastUpdated)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     Updater_PrintLastUpdated();
     return true;
 }
 
 D_CMD(ShowUpdateSettings)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     Updater_ShowSettings();
     return true;
 }
@@ -157,7 +170,7 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     F_FixSlashes(newPath, newPath);
     F_ExpandBasePath(newPath, newPath);
 
-    *list = M_Realloc(*list, sizeof(**list) * ++(*listSize));
+    *list = (ddstring_t**) M_Realloc(*list, sizeof(**list) * ++(*listSize));
     (*list)[(*listSize)-1] = newPath;
 }
 
@@ -201,14 +214,15 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
 
 boolean DD_GameLoaded(void)
 {
-    return !Games_IsNullObject(theGame);
+    DENG_ASSERT(games);
+    return !isNullGame(games->currentGame());
 }
 
 void DD_DestroyGames(void)
 {
     destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
 
-    Games_Shutdown();
+    delete games;
 }
 
 /**
@@ -245,24 +259,6 @@ void DD_StartTitle(void)
 }
 
 /**
- * (f_allresourcepaths_callback_t)
- */
-static int autoDataAdder(char const* fileName, PathDirectoryNodeType type, void* parameters)
-{
-    DENG_ASSERT(fileName && parameters);
-    // We are only interested in files.
-    if(type == PT_LEAF)
-    {
-        int* count = (int*)parameters;
-        if(F_AddFile(fileName))
-        {
-            if(count) *count += 1;
-        }
-    }
-    return 0; // Continue searching.
-}
-
-/**
  * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data directory
  * are loaded to the file system.
  *
@@ -278,41 +274,30 @@ static int addFilesFromAutoData(void)
         0
     };
 
-    ddstring_t pattern;
     int count = 0;
-    uint i;
-
-    Str_Init(&pattern);
-    for(i = 0; extensions[i]; ++i)
+    AutoStr* pattern = AutoStr_NewStd();
+    for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
     {
-        Str_Clear(&pattern);
-        Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(Game_DataPath(theGame)), extensions[i]);
-        F_AllResourcePaths2(Str_Text(&pattern), 0, autoDataAdder, (void*)&count);
+        Str_Clear(pattern);
+        Str_Appendf(pattern, "%sauto/*.%s", Str_Text(&games->currentGame().dataPath()), extensions[extIdx]);
+
+        FS1::PathList found;
+        if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))
+        {
+            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+            {
+                // Ignore directories.
+                if(i->attrib & A_SUBDIR) continue;
+
+                QByteArray foundPath = i->path.toUtf8();
+                if(F_AddFile(foundPath.constData()))
+                {
+                    count += 1;
+                }
+            }
+        }
     }
-    Str_Free(&pattern);
     return count;
-}
-
-typedef struct {
-    ddstring_t*** list;
-    size_t* listSize;
-    int count; /// Number of files loaded successfully.
-} listfilesfromautodata_params_t;
-
-/**
- * (f_allresourcepaths_callback_t)
- */
-static int listFilesWorker(char const* fileName, PathDirectoryNodeType type, void* parameters)
-{
-    DENG_ASSERT(fileName && parameters);
-    // We are only interested in files.
-    if(type == PT_LEAF)
-    {
-        listfilesfromautodata_params_t* data = (listfilesfromautodata_params_t*)parameters;
-        addToPathList(data->list, data->listSize, fileName);
-        data->count += 1;
-    }
-    return 0; // Continue searching.
 }
 
 /**
@@ -331,25 +316,33 @@ static int listFilesFromAutoData(ddstring_t*** list, size_t* listSize)
         0
     };
 
-    listfilesfromautodata_params_t data;
-    ddstring_t pattern;
-    uint i;
-
     if(!list || !listSize) return 0;
 
-    data.list = list;
-    data.listSize = listSize;
-    data.count = 0;
+    ddstring_t pattern; Str_InitStd(&pattern);
 
-    Str_Init(&pattern);
-    for(i = 0; extensions[i]; ++i)
+    uint numFilesAdded = 0;
+    for(uint i = 0; extensions[i]; ++i)
     {
         Str_Clear(&pattern);
-        Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(Game_DataPath(theGame)), extensions[i]);
-        F_AllResourcePaths2(Str_Text(&pattern), 0, listFilesWorker, (void*)&data);
+        Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(&games->currentGame().dataPath()), extensions[i]);
+
+        FS1::PathList found;
+        if(App_FileSystem()->findAllPaths(Str_Text(&pattern), 0, found))
+        {
+            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+            {
+                // Ignore directories.
+                if(i->attrib & A_SUBDIR) continue;
+
+                QByteArray foundPath = i->path.toUtf8();
+                addToPathList(list, listSize, foundPath.constData());
+                numFilesAdded += 1;
+            }
+        }
     }
     Str_Free(&pattern);
-    return data.count;
+
+    return numFilesAdded;
 }
 
 static boolean exchangeEntryPoints(pluginid_t pluginId)
@@ -443,19 +436,19 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
 
-    if(!Games_IsNullObject(theGame))
+    if(DD_GameLoaded())
     {
         ddstring_t temp;
 
         // Create default Auto mappings in the runtime directory.
         // Data class resources.
         Str_Init(&temp);
-        Str_Appendf(&temp, "%sauto", Str_Text(Game_DataPath(theGame)));
+        Str_Appendf(&temp, "%sauto", Str_Text(&games->currentGame().dataPath()));
         F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
 
         // Definition class resources.
         Str_Clear(&temp);
-        Str_Appendf(&temp, "%sauto", Str_Text(Game_DefsPath(theGame)));
+        Str_Appendf(&temp, "%sauto", Str_Text(&games->currentGame().defsPath()));
         F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
         Str_Free(&temp);
     }
@@ -469,7 +462,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
 
     { int numResources;
     AbstractResource* const* resources;
-    if((resources = Game_Resources(theGame, RC_PACKAGE, &numResources)))
+    if((resources = games->currentGame().resources(RC_PACKAGE, &numResources)))
     {
         AbstractResource* const* resIt;
         for(resIt = resources; *resIt; resIt++)
@@ -523,7 +516,7 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
 
-    if(!Games_IsNullObject(theGame))
+    if(DD_GameLoaded())
     {
         /**
          * Phase 3: Add real files from the Auto directory.
@@ -572,12 +565,12 @@ static int DD_ActivateGameWorker(void* parameters)
         Con_SetProgress(50);
 
     // Now that resources have been located we can begin to initialize the game.
-    if(!Games_IsNullObject(theGame) && gx.PreInit)
+    if(DD_GameLoaded() && gx.PreInit)
     {
-        DENG_ASSERT(Game_PluginId(theGame) != 0);
+        DENG_ASSERT(games->currentGame().pluginId() != 0);
 
-        DD_SetActivePluginId(Game_PluginId(theGame));
-        gx.PreInit(Games_Id(theGame));
+        DD_SetActivePluginId(games->currentGame().pluginId());
+        gx.PreInit(games->id(games->currentGame()));
         DD_SetActivePluginId(0);
     }
 
@@ -588,7 +581,7 @@ static int DD_ActivateGameWorker(void* parameters)
      * Parse the game's main config file.
      * If a custom top-level config is specified; let it override.
      */
-    { const ddstring_t* configFileName = 0;
+    { ddstring_t const* configFileName = 0;
     ddstring_t tmp;
     if(CommandLine_CheckWith("-config", 1))
     {
@@ -598,7 +591,7 @@ static int DD_ActivateGameWorker(void* parameters)
     }
     else
     {
-        configFileName = Game_MainConfig(theGame);
+        configFileName = &games->currentGame().mainConfig();
     }
 
     Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
@@ -607,13 +600,13 @@ static int DD_ActivateGameWorker(void* parameters)
         Str_Free(&tmp);
     }
 
-    if(!isDedicated && !Games_IsNullObject(theGame))
+    if(!isDedicated && DD_GameLoaded())
     {
         // Apply default control bindings for this game.
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(Game_BindingConfig(theGame)), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands2(Str_Text(&games->currentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
     }
 
     if(p->initiatedBusyMode)
@@ -653,7 +646,7 @@ static int DD_ActivateGameWorker(void* parameters)
 
     if(gx.PostInit)
     {
-        DD_SetActivePluginId(Game_PluginId(theGame));
+        DD_SetActivePluginId(games->currentGame().pluginId());
         gx.PostInit();
         DD_SetActivePluginId(0);
     }
@@ -667,22 +660,173 @@ static int DD_ActivateGameWorker(void* parameters)
     return 0;
 }
 
+struct gamecollection_s* App_GameCollection()
+{
+    return reinterpret_cast<struct gamecollection_s*>(games);
+}
+
+struct game_s* App_CurrentGame()
+{
+    return reinterpret_cast<struct game_s*>(&games->currentGame());
+}
+
+static void populateGameInfo(GameInfo& info, de::Game& game)
+{
+    info.identityKey = Str_Text(&game.identityKey());
+    info.title       = Str_Text(&game.title());
+    info.author      = Str_Text(&game.author());
+}
+
+/// @note Part of the Doomsday public API.
+boolean DD_GameInfo(GameInfo* info)
+{
+    if(!info)
+    {
+#if _DEBUG
+        Con_Message("Warning: DD_GameInfo: Received invalid info (=NULL), ignoring.");
+#endif
+        return false;
+    }
+
+    memset(info, 0, sizeof(*info));
+
+    if(DD_GameLoaded())
+    {
+        populateGameInfo(*info, games->currentGame());
+        return true;
+    }
+
+#if _DEBUG
+    Con_Message("DD_GameInfo: Warning, no game currently loaded - returning false.\n");
+#endif
+    return false;
+}
+
+/// @note Part of the Doomsday public API.
+void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
+    char const* _names, void* params)
+{
+    DENG_ASSERT(games);
+
+    de::Game& game = games->byId(gameId);
+
+    if(!VALID_RESOURCE_CLASS(rclass))
+        Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
+    if(!_names || !_names[0] || !strcmp(_names, ";"))
+        Con_Error("DD_AddGameResource: Invalid name argument.");
+
+    AbstractResource* rec;
+    if(0 == (rec = AbstractResource_New(rclass, rflags)))
+        Con_Error("DD_AddGameResource: Unknown error occured during AbstractResource::Construct.");
+
+    // Add a name list to the game record.
+    ddstring_t str; Str_InitStd(&str);
+    Str_Set(&str, _names);
+    // Ensure the name list has the required terminating semicolon.
+    if(Str_RAt(&str, 0) != ';')
+        Str_Append(&str, ";");
+
+    char const* p = Str_Text(&str);
+    ddstring_t name; Str_Init(&name);
+    while((p = Str_CopyDelim2(&name, p, ';', CDF_OMIT_DELIMITER)))
+    {
+        AbstractResource_AddName(rec, &name);
+    }
+    Str_Free(&name);
+
+    if(params)
+    switch(rclass)
+    {
+    case RC_PACKAGE: {
+        // Add an auto-identification file identityKey list to the game record.
+        ddstring_t identityKey;
+        const char* p;
+
+        // Ensure the identityKey list has the required terminating semicolon.
+        Str_Set(&str, (const char*) params);
+        if(Str_RAt(&str, 0) != ';')
+            Str_Append(&str, ";");
+
+        Str_Init(&identityKey);
+        p = Str_Text(&str);
+        while((p = Str_CopyDelim2(&identityKey, p, ';', CDF_OMIT_DELIMITER)))
+        {
+            AbstractResource_AddIdentityKey(rec, &identityKey);
+        }
+
+        Str_Free(&identityKey);
+        break;
+      }
+    default: break;
+    }
+
+    game.addResource(rclass, *rec);
+
+    Str_Free(&str);
+}
+
+/// @note Part of the Doomsday public API.
+gameid_t DD_DefineGame(GameDef const* def)
+{
+    if(!def)
+    {
+#if _DEBUG
+        Con_Message("Warning: DD_DefineGame: Received invalid GameDef (=NULL), ignoring.");
+#endif
+        return 0; // Invalid id.
+    }
+
+    // Game mode identity keys must be unique. Ensure that is the case.
+    DENG_ASSERT(games);
+    try
+    {
+        /*de::Game& game =*/ games->byIdentityKey(def->identityKey);
+#if _DEBUG
+        Con_Message("Warning: DD_DefineGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.\n", def->defaultTitle, def->identityKey);
+#endif
+        return 0; // Invalid id.
+    }
+    catch(const de::GameCollection::NotFoundError&)
+    {} // Ignore the error.
+
+    de::Game* game = de::Game::fromDef(*def);
+    if(!game) return 0; // Invalid def.
+
+    // Add this game to our records.
+    game->setPluginId(DD_ActivePluginId());
+    games->add(*game);
+    return games->id(*game);
+}
+
+/// @note Part of the Doomsday public API.
+gameid_t DD_GameIdForKey(const char* identityKey)
+{
+    DENG_ASSERT(games);
+    try
+    {
+        return games->id(games->byIdentityKey(identityKey));
+    }
+    catch(const de::GameCollection::NotFoundError&)
+    {
+        DEBUG_Message(("Warning: DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
+    }
+    return 0; // Invalid id.
+}
+
 /**
  * Switch to/activate the specified game.
  */
-boolean DD_ChangeGame2(Game* game, boolean allowReload)
+bool DD_ChangeGame(de::Game& game, bool allowReload = false)
 {
-    boolean isReload = false;
-    char buf[256];
-    DENG_ASSERT(game);
+    bool isReload = false;
 
     // Ignore attempts to re-load the current game?
-    if(theGame == game)
+    if(games->isCurrentGame(game))
     {
         if(!allowReload)
         {
             if(DD_GameLoaded())
-                Con_Message("%s (%s) - already loaded.\n", Str_Text(Game_Title(game)), Str_Text(Game_IdentityKey(game)));
+                Con_Message("%s (%s) - already loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
             return true;
         }
         // We are re-loading.
@@ -703,8 +847,6 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     // If a game is presently loaded; unload it.
     if(DD_GameLoaded())
     {
-        uint i;
-
         if(gx.Shutdown)
             gx.Shutdown();
         Con_SaveDefaults();
@@ -718,7 +860,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         B_BindDefaults();
         B_InitialContextActivations();
 
-        for(i = 0; i < DDMAXPLAYERS; ++i)
+        for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t* plr = &ddPlayers[i];
             ddplayer_t* ddpl = &plr->shared;
@@ -765,15 +907,15 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         Con_ClearDatabases();
 
         { // Tell the plugin it is being unloaded.
-            void* unloader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Unload");
-            DEBUG_Message(("DD_ChangeGame2: Calling DP_Unload (%p)\n", unloader));
-            DD_SetActivePluginId(Game_PluginId(theGame));
+            void* unloader = DD_FindEntryPoint(games->currentGame().pluginId(), "DP_Unload");
+            DEBUG_Message(("DD_ChangeGame: Calling DP_Unload (%p)\n", unloader));
+            DD_SetActivePluginId(games->currentGame().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
         }
 
         // The current game is now the special "null-game".
-        theGame = nullGame;
+        games->setCurrentGame(games->nullGame());
 
         Con_InitDatabases();
         DD_Register();
@@ -793,9 +935,9 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     Materials_Shutdown();
 
     VERBOSE(
-        if(!Games_IsNullObject(game))
+        if(!isNullGame(game))
         {
-            Con_Message("Selecting game '%s'...\n", Str_Text(Game_IdentityKey(game)));
+            Con_Message("Selecting game '%s'...\n", Str_Text(&game.identityKey()));
         }
         else if(!isReload)
         {
@@ -808,15 +950,16 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
     Library_ReleaseGames();
 
+    char buf[256];
     DD_ComposeMainWindowTitle(buf);
     Window_SetTitle(theWindow, buf);
 
     if(!DD_IsShuttingDown())
     {
         // Re-initialize subsystems needed even when in ringzero.
-        if(!exchangeEntryPoints(Game_PluginId(game)))
+        if(!exchangeEntryPoints(game.pluginId()))
         {
-            Con_Message("Warning:DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)Game_PluginId(game));
+            Con_Message("Warning: DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)game.pluginId());
             return false;
         }
 
@@ -825,7 +968,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     }
 
     // This is now the current game.
-    theGame = game;
+    games->setCurrentGame(game);
 
     DD_ComposeMainWindowTitle(buf);
     Window_SetTitle(theWindow, buf);
@@ -846,33 +989,33 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         ddgamechange_paramaters_t p;
         BusyTask gameChangeTasks[] = {
             // Phase 1: Initialization.
-            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
+            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f, 0 },
 
             // Phase 2: Loading "startup" resources.
-            { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f },
+            { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f, 0 },
 
             // Phase 3: Loading "addon" resources.
-            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading addons...", 200, 0.3f, 0.7f },
+            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading addons...", 200, 0.3f, 0.7f, 0 },
 
             // Phase 4: Game activation.
-            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
+            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f, 0 }
         };
 
         p.initiatedBusyMode = !BusyMode_Active();
 
-        if(!Games_IsNullObject(theGame))
+        if(DD_GameLoaded())
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
-            void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
-            DEBUG_Message(("DD_ChangeGame2: Calling DP_Load (%p)\n", loader));
-            DD_SetActivePluginId(Game_PluginId(theGame));
+            void* loader = DD_FindEntryPoint(games->currentGame().pluginId(), "DP_Load");
+            DEBUG_Message(("DD_ChangeGame: Calling DP_Load (%p)\n", loader));
+            DD_SetActivePluginId(games->currentGame().pluginId());
             if(loader) ((pluginfunc_t)loader)();
             DD_SetActivePluginId(0);
         }
 
         /// @kludge Use more appropriate task names when unloading a game.
-        if(Games_IsNullObject(game))
+        if(isNullGame(game))
         {
             gameChangeTasks[0].name = "Unloading game...";
             gameChangeTasks[3].name = "Switching to ringzero...";
@@ -884,9 +1027,9 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         // Process any GL-related tasks we couldn't while Busy.
         Rend_ParticleLoadExtraTextures();
 
-        if(!Games_IsNullObject(theGame))
+        if(DD_GameLoaded())
         {
-            Games_PrintBanner(theGame);
+            de::Game::printBanner(games->currentGame());
         }
         else
         {
@@ -904,11 +1047,6 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
      */
     DD_ClearEvents();
     return true;
-}
-
-boolean DD_ChangeGame(Game* game)
-{
-    return DD_ChangeGame2(game, false);
 }
 
 boolean DD_IsShuttingDown(void)
@@ -937,23 +1075,27 @@ static void DD_AutoLoad(void)
  *
  * @todo Logic here could be much more elaborate but is it necessary?
  */
-Game* DD_AutoselectGame(void)
+de::Game* DD_AutoselectGame(void)
 {
     if(CommandLine_CheckWith("-game", 1))
     {
-        const char* identityKey = CommandLine_Next();
-        Game* game = Games_ByIdentityKey(identityKey);
-
-        if(game && Game_AllStartupResourcesFound(game))
+        char const* identityKey = CommandLine_Next();
+        try
         {
-            return game;
+            de::Game& game = games->byIdentityKey(identityKey);
+            if(game.allStartupResourcesFound())
+            {
+                return &game;
+            }
         }
+        catch(const de::GameCollection::NotFoundError&)
+        {} // Ignore the error.
     }
 
     // If but one lonely game; select it.
-    if(Games_NumPlayable() == 1)
+    if(games->numPlayable() == 1)
     {
-        return Games_FirstPlayable();
+        return games->firstPlayable();
     }
 
     // We don't know what to do.
@@ -962,8 +1104,6 @@ Game* DD_AutoselectGame(void)
 
 int DD_EarlyInit(void)
 {
-    ddstring_t dataPath, defsPath;
-
     // Determine the requested degree of verbosity.
     verbose = CommandLine_Exists("-verbose");
 
@@ -978,31 +1118,9 @@ int DD_EarlyInit(void)
     // Bring the window manager online.
     Sys_InitWindowManager();
 
-    /**
-     * One-time creation and initialization of the special "null-game"
-     * object (activated once created).
-     *
-     * \note Ideally this would call DD_ChangeGame but not all required
-     * subsystems are online at this time.
-     */
-    Str_Init(&dataPath);
-    Str_Set(&dataPath, DD_BASEPATH_DATA);
-    Str_Strip(&dataPath);
-    F_FixSlashes(&dataPath, &dataPath);
-    F_ExpandBasePath(&dataPath, &dataPath);
-    F_AppendMissingSlash(&dataPath);
+    // Instantiate the Games collection.
+    games = new de::GameCollection();
 
-    Str_Init(&defsPath);
-    Str_Set(&defsPath, DD_BASEPATH_DEFS);
-    Str_Strip(&defsPath);
-    F_FixSlashes(&defsPath, &defsPath);
-    F_ExpandBasePath(&defsPath, &defsPath);
-    F_AppendMissingSlash(&defsPath);
-
-    theGame = nullGame = Game_New("null-game", &dataPath, &defsPath, "doomsday", 0, 0);
-
-    Str_Free(&defsPath);
-    Str_Free(&dataPath);
     return true;
 }
 
@@ -1151,7 +1269,7 @@ boolean DD_Init(void)
 
     // Try to locate all required data files for all registered games.
     Con_InitProgress2(200, .25f, 1); // Second half.
-    Games_LocateAllResources();
+    games->locateAllResources();
 
     /*
     // Unless we reenter busy-mode due to automatic game selection, we won't be
@@ -1166,7 +1284,7 @@ boolean DD_Init(void)
     // Attempt automatic game selection.
     if(!CommandLine_Exists("-noautoselect"))
     {
-        Game* game = DD_AutoselectGame();
+        de::Game* game = DD_AutoselectGame();
 
         if(game)
         {
@@ -1188,7 +1306,7 @@ boolean DD_Init(void)
             }
 
             // Begin the game session.
-            DD_ChangeGame(game);
+            DD_ChangeGame(*game);
 
             // We do not want to load these resources again on next game change.
             destroyPathList(&sessionResourceFileList, &numSessionResourceFileList);
@@ -1335,6 +1453,8 @@ static void DD_InitResourceSystem(void)
 
 static int DD_StartupWorker(void* parm)
 {
+    DENG_UNUSED(parm);
+
 #ifdef WIN32
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(NULL);
@@ -1454,6 +1574,7 @@ static int DD_StartupWorker(void* parm)
  */
 static int DD_DummyWorker(void *parm)
 {
+    DENG_UNUSED(parm);
     Con_SetProgress(200);
     BusyMode_WorkerEnd();
     return 0;
@@ -1998,9 +2119,10 @@ const char* value_Str(int val)
 
 D_CMD(Load)
 {
+    DENG_UNUSED(src);
+
     boolean didLoadGame = false, didLoadResource = false;
     ddstring_t foundPath, searchPath;
-    Game* game;
     int arg = 1;
 
     Str_Init(&searchPath);
@@ -2022,14 +2144,14 @@ D_CMD(Load)
     }
 
     // Are we loading a game?
-    game = Games_ByIdentityKey(Str_Text(&searchPath));
-    if(game)
+    try
     {
-        if(!Game_AllStartupResourcesFound(game))
+        de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
+        if(!game.allStartupResourcesFound())
         {
             Con_Message("Failed to locate all required startup resources:\n");
-            Games_PrintResources(game, true, RF_STARTUP);
-            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(Game_Title(game)), Str_Text(Game_IdentityKey(game)));
+            de::Game::printResources(game, true, RF_STARTUP);
+            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
             Str_Free(&searchPath);
             return true;
         }
@@ -2041,6 +2163,8 @@ D_CMD(Load)
         didLoadGame = true;
         ++arg;
     }
+    catch(const de::GameCollection::NotFoundError&)
+    {} // Ignore the error.
 
     // Try the resource locator.
     Str_Init(&foundPath);
@@ -2064,9 +2188,10 @@ D_CMD(Load)
 
 D_CMD(Unload)
 {
+    DENG_UNUSED(src);
+
     boolean didUnloadFiles = false;
     ddstring_t searchPath;
-    Game* game;
     int i;
 
     // No arguments; unload the current game if loaded.
@@ -2077,7 +2202,7 @@ D_CMD(Unload)
             Con_Message("There is no game currently loaded.\n");
             return true;
         }
-        return DD_ChangeGame(nullGame);
+        return DD_ChangeGame(games->nullGame());
     }
 
     Str_Init(&searchPath);
@@ -2099,16 +2224,22 @@ D_CMD(Unload)
     }
 
     // Unload the current game if specified.
-    if(argc == 2 && (game = Games_ByIdentityKey(Str_Text(&searchPath))) != 0)
+    if(argc == 2)
     {
-        Str_Free(&searchPath);
-        if(DD_GameLoaded())
+        try
         {
-            return DD_ChangeGame(nullGame);
-        }
+            de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
+            Str_Free(&searchPath);
+            if(DD_GameLoaded())
+            {
+                return DD_ChangeGame(games->nullGame());
+            }
 
-        Con_Message("%s is not currently loaded.\n", Str_Text(Game_IdentityKey(game)));
-        return true;
+            Con_Message("%s is not currently loaded.\n", Str_Text(&game.identityKey()));
+            return true;
+        }
+        catch(const de::GameCollection::NotFoundError&)
+        {} // Ignore the error.
     }
 
     // Try the resource locator.
@@ -2130,18 +2261,22 @@ D_CMD(Unload)
 
 D_CMD(Reset)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     DD_UpdateEngineState();
     return true;
 }
 
 D_CMD(ReloadGame)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     if(!DD_GameLoaded())
     {
         Con_Message("No game is presently loaded.\n");
         return true;
     }
-    DD_ChangeGame2(theGame, true);
+    DD_ChangeGame(games->currentGame(), true/* allow reload */);
     return true;
 }
 

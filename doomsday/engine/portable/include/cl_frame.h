@@ -29,9 +29,17 @@
 #ifndef __DOOMSDAY_CLIENT_FRAME_H__
 #define __DOOMSDAY_CLIENT_FRAME_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            Cl_InitFrame(void);
 void            Cl_ResetFrame(void);
 void            Cl_Frame2Received(int packetType);
 float           Cl_FrameGameTime(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

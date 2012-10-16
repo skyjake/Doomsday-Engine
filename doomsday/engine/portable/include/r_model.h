@@ -31,6 +31,10 @@
 
 #include "gl_model.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_FRAME_MODELS        DED_MAX_SUB_MODELS
 
 // Model frame flags.
@@ -129,5 +133,9 @@ void R_PrecacheModelsForState(int stateIndex);
 int R_PrecacheModelsForMobj(thinker_t* th, void* context);
 
 void R_PrecacheModel(modeldef_t* modef);
+
+#ifdef __cplusplus
+} extern "C"
+#endif
 
 #endif

@@ -483,12 +483,12 @@ SOURCES += \
     portable/src/dd_init.cpp \
     portable/src/dd_input.c \
     portable/src/dd_loop.c \
-    portable/src/dd_main.c \
+    portable/src/dd_main.cpp \
     portable/src/dd_pinit.c \
     portable/src/dd_plugin.c \
     portable/src/dd_wad.cpp \
     portable/src/def_data.c \
-    portable/src/def_main.c \
+    portable/src/def_main.cpp \
     portable/src/def_read.c \
     portable/src/dfile.cpp \
     portable/src/dgl_common.c \
@@ -631,7 +631,7 @@ SOURCES += \
     portable/src/sys_input.c \
     portable/src/sys_network.c \
     portable/src/sys_opengl.c \
-    portable/src/sys_reslocator.c \
+    portable/src/sys_reslocator.cpp \
     portable/src/sys_system.c \
     portable/src/tab_tables.c \
     portable/src/timer.cpp \

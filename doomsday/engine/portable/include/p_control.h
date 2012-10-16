@@ -29,6 +29,10 @@
 #ifndef __DOOMSDAY_PLAYER_CONTROL_H__
 #define __DOOMSDAY_PLAYER_CONTROL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Public:
 void        P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext);
 void        P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
@@ -51,5 +55,9 @@ playercontrol_t* P_PlayerControlById(int id);
 playercontrol_t* P_PlayerControlByName(const char* name);
 void        P_Impulse(int playerNum, int control);
 void        P_ImpulseByName(int playerNum, const char* control);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

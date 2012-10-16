@@ -48,7 +48,7 @@ public:
      *                  paths will be added to the directory (attempts to add
      *                  relative paths will fail silently).
      */
-    explicit FileDirectory(const char* basePath=NULL);
+    explicit FileDirectory(char const* basePath = 0);
     ~FileDirectory();
 
     /**
@@ -68,8 +68,8 @@ public:
      *
      * @return  @c true iff successful.
      */
-    bool find(PathDirectoryNodeType type, const char* searchPath, char searchDelimiter='/',
-              ddstring_t* foundPath=NULL, char foundDelimiter='/');
+    bool find(PathDirectoryNodeType type, char const* searchPath, char searchDelimiter = '/',
+              ddstring_t* foundPath = 0, char foundDelimiter = '/');
 
     /**
      * Add a new set of paths. Duplicates are automatically pruned.
@@ -80,9 +80,9 @@ public:
      * @param callback      Callback to make for each path added to this directory.
      * @param parameters    Passed to the callback.
      */
-    void addPaths(int flags, const Uri* const* searchPaths, uint searchPathsCount,
-                  int (*callback) (struct pathdirectorynode_s* node, void* parameters)=NULL,
-                  void* parameters=NULL);
+    void addPaths(int flags, Uri const* const* searchPaths, uint searchPathsCount,
+                  int (*callback) (PathDirectoryNode& node, void* parameters) = 0,
+                  void* parameters = 0);
 
     /**
      * Add a new set of paths from a path list. Duplicates are automatically pruned.
@@ -92,9 +92,8 @@ public:
      * @param callback      Callback to make for each path added to this directory.
      * @param parameters    Passed to the callback.
      */
-    void addPathList(int flags, const char* pathList,
-                     int (*callback) (struct pathdirectorynode_s*, void*)=NULL,
-                     void* parameters=NULL);
+    void addPathList(int flags, char const* pathList,
+                     int (*callback) (PathDirectoryNode& node, void* parameters) = 0, void* parameters = 0);
 
     /**
      * Collate all paths in the directory into a list.
@@ -109,20 +108,19 @@ public:
     ddstring_t* collectPaths(size_t* count, int flags, char delimiter='/');
 
 #if _DEBUG
-    static void debugPrint(FileDirectory* inst);
-    static void debugPrintHashDistribution(FileDirectory* inst);
+    static void debugPrint(FileDirectory& inst);
+    static void debugPrintHashDistribution(FileDirectory& inst);
 #endif
 
 private:
     void clearNodeInfo();
 
-    PathDirectoryNode* addPathNodes(const ddstring_t* rawPath);
+    PathDirectoryNode* addPathNodes(ddstring_t const* rawPath);
 
-    int addChildNodes(PathDirectoryNode* node, int flags,
-                      int (*callback) (struct pathdirectorynode_s* node, void* parameters),
+    int addChildNodes(PathDirectoryNode& node, int flags,
+                      int (*callback) (PathDirectoryNode& node, void* parameters),
                       void* parameters);
 
-public: /// @todo Should be private.
     /**
      * @param filePath      Possibly-relative path to an element in the virtual file system.
      * @param flags         @ref searchPathFlags
@@ -132,10 +130,9 @@ public: /// @todo Should be private.
      *
      * @return  Non-zero if the current iteration should stop else @c 0.
      */
-    int addPathNodesAndMaybeDescendBranch(bool descendBranches, const ddstring_t* filePath,
-                                          PathDirectoryNodeType nodeType,
-                                          int flags,
-                                          int (*callback) (struct pathdirectorynode_s* node, void* parameters),
+    int addPathNodesAndMaybeDescendBranch(bool descendBranches, ddstring_t const* filePath,
+                                          PathDirectoryNodeType nodeType, int flags,
+                                          int (*callback) (PathDirectoryNode& node, void* parameters),
                                           void* parameters);
 
 private:
@@ -143,7 +140,7 @@ private:
     ddstring_t* basePath;
 
     /// Used with relative path directories.
-    de::PathDirectoryNode* baseNode;
+    PathDirectoryNode* baseNode;
 };
 
 } // namespace de
@@ -151,71 +148,8 @@ private:
 extern "C" {
 #endif
 
-/**
- * C wrapper API:
- */
-
 struct filedirectory_s; // The filedirectory instance (opaque).
 typedef struct filedirectory_s FileDirectory;
-
-FileDirectory* FileDirectory_New(const char* basePath);
-void FileDirectory_Delete(FileDirectory* fd);
-
-void FileDirectory_Clear(FileDirectory* fd);
-
-void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* paths, uint pathsCount,
-    int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters);
-void FileDirectory_AddPaths2(FileDirectory* fd, int flags, const Uri* const* paths, uint pathsCount,
-    int (*callback) (PathDirectoryNode* node, void* parameters)); /*parameters=NULL*/
-void FileDirectory_AddPaths(FileDirectory* fd,  int flags, const Uri* const* paths, uint pathsCount); /*callback=NULL*/
-
-void FileDirectory_AddPathList3(FileDirectory* fd, int flags, const char* pathList,
-    int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters);
-void FileDirectory_AddPathList2(FileDirectory* fd, int flags, const char* pathList,
-    int (*callback) (PathDirectoryNode* node, void* parameters)); /*parameters=NULL*/
-void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathList); /*callback=NULL*/
-
-boolean FileDirectory_Find(FileDirectory* fd, PathDirectoryNodeType type,
-    const char* searchPath, char searchDelimiter, ddstring_t* foundPath, char foundDelimiter);
-
-/**
- * Callback function type for FileDirectory::Iterate
- *
- * @param node          PathDirectoryNode being processed.
- * @param parameters    User data passed to this.
- * @return  Non-zero if iteration should stop.
- */
-typedef pathdirectory_iteratecallback_t filedirectory_iteratecallback_t;
-
-/// Const variant.
-typedef pathdirectory_iterateconstcallback_t filedirectory_iterateconstcallback_t;
-
-/**
- * Iterate over nodes in the directory making a callback for each.
- * Iteration ends when all nodes have been visited or a callback returns non-zero.
- *
- * @param fd            FileDirectory instance.
- * @param type          If a valid path type only process nodes of this type.
- * @param parent        If not @c NULL, only process child nodes of this node.
- * @param callback      Callback function ptr.
- * @param parameters    Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int FileDirectory_Iterate2(FileDirectory* fd, PathDirectoryNodeType type, PathDirectoryNode* parent, ushort hash,
-    filedirectory_iteratecallback_t callback, void* parameters);
-int FileDirectory_Iterate(FileDirectory* fd, PathDirectoryNodeType type, PathDirectoryNode* parent, ushort hash,
-    filedirectory_iteratecallback_t callback); /*parameters=NULL*/
-
-int FileDirectory_Iterate2_Const(const FileDirectory* fd, PathDirectoryNodeType type, const PathDirectoryNode* parent, ushort hash,
-    filedirectory_iterateconstcallback_t callback, void* parameters);
-int FileDirectory_Iterate_Const(const FileDirectory* fd, PathDirectoryNodeType type, const PathDirectoryNode* parent, ushort hash,
-    filedirectory_iterateconstcallback_t callback); /*parameters=NULL*/
-
-#if _DEBUG
-void FileDirectory_DebugPrint(FileDirectory* fd);
-void FileDirectory_DebugPrintHashDistribution(FileDirectory* fd);
-#endif
 
 #ifdef __cplusplus
 } // extern "C"

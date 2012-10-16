@@ -25,6 +25,10 @@
 
 #include "p_particle.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern byte useParticles;
 extern int maxParticles;
 extern float particleSpawnRate;
@@ -69,5 +73,9 @@ void Rend_RenderParticles(void);
  * Debugging aid; Draw all active generators.
  */
 void Rend_RenderGenerators(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_REND_PARTICLE_H

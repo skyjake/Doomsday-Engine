@@ -24,6 +24,10 @@
 #ifndef LIBDENG_UI2_MAIN_H
 #define LIBDENG_UI2_MAIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// We'll use the base template directly as our object.
 typedef struct fi_object_s {
     FIOBJECT_BASE_ELEMENTS()
@@ -34,5 +38,9 @@ void UI_Shutdown(void);
 
 void UI2_Ticker(timespan_t ticLength);
 void UI2_Drawer(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_UI2_MAIN_H */

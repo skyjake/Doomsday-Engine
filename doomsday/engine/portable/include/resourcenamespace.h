@@ -27,6 +27,10 @@
 
 #include "uri.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     SPG_OVERRIDE = 0, // Override paths
     SPG_EXTRA, // Extra/runtime paths
@@ -142,6 +146,10 @@ int ResourceNamespace_Iterate(resourcenamespace_t* rn, const ddstring_t* name,
 
 #if _DEBUG
 void ResourceNamespace_Print(resourcenamespace_t* rn);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_SYSTEM_RESOURCENAMESPACE_H */

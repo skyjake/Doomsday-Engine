@@ -29,10 +29,16 @@
 #ifndef LIBDENG_BIND_MAIN_H
 #define LIBDENG_BIND_MAIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
 #define UI_BINDING_CONTEXT_NAME         "deui"
 #define GLOBAL_BINDING_CONTEXT_NAME     "global"
+
+extern int symbolicEchoMode;
 
 void            B_Register(void);
 void            B_Init(void);
@@ -63,4 +69,9 @@ const char* B_ShortNameForKey(int ddkey);
 int B_KeyForShortName(const char* key);
 
 int DD_GetKeyCode(const char* key);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif /// LIBDENG_BIND_MAIN_H
