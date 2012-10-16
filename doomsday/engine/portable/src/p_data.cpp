@@ -487,7 +487,7 @@ boolean P_RegisterMapObjProperty(int entityId, int propertyId,
         MapEntityDef_AddProperty(def, propertyId, propertyName, type);
         return true; // Success!
     }
-    catch(de::Error& er)
+    catch(de::Error const& er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
@@ -520,7 +520,7 @@ boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propert
     {
         return EntityDatabase_SetProperty(db, propertyDef, elementIndex, valueType, valueAdr);
     }
-    catch(de::Error& er)
+    catch(de::Error const& er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
@@ -571,7 +571,7 @@ byte P_GetGMOByte(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_BYTE, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error& er)
+        catch(de::Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -592,7 +592,7 @@ short P_GetGMOShort(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_SHORT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error& er)
+        catch(de::Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -613,7 +613,7 @@ int P_GetGMOInt(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_INT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error& er)
+        catch(de::Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -634,7 +634,7 @@ fixed_t P_GetGMOFixed(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_FIXED, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error& er)
+        catch(de::Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -655,7 +655,7 @@ angle_t P_GetGMOAngle(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_ANGLE, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error& er)
+        catch(de::Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
@@ -676,7 +676,7 @@ float P_GetGMOFloat(int entityId, uint elementIndex, int propertyId)
 
             setValue(&returnVal, DDVT_FLOAT, EntityDatabase_Property(db, propDef, elementIndex));
         }
-        catch(de::Error& er)
+        catch(de::Error const& er)
         {
             LOG_WARNING("%s. Returning 0.") << er.asText();
         }
