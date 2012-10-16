@@ -171,7 +171,7 @@ struct FS1::Instance
             if(place != fileIds.end() && *place == fileId)
             {
 #if _DEBUG
-                LOG_VERBOSE("Released FileId %s - \"%s\"") << *place << F_PrettyPath(path);
+                LOG_VERBOSE("Released FileId %s - \"%s\"") << *place << fileId.path();
 #endif
                 fileIds.erase(place);
                 return true;
@@ -378,7 +378,7 @@ bool FS1::checkFileId(char const* path)
     if(place != d->fileIds.end() && *place == fileId) return false;
 
 #if _DEBUG
-    LOG_VERBOSE("Added FileId %s - \"%s\"") << fileId << F_PrettyPath(path);
+    LOG_VERBOSE("Added FileId %s - \"%s\"") << fileId << fileId.path();
 #endif
 
     d->fileIds.insert(place, fileId);
@@ -402,7 +402,7 @@ static void printFileIds(FileIds const& fileIds)
     uint idx = 0;
     DENG2_FOR_EACH(i, fileIds, FileIds::const_iterator)
     {
-        LOG_MSG("  %u - %s") << idx << *i;
+        LOG_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
         ++idx;
     }
 }
@@ -416,9 +416,9 @@ static void printFileList(FS1::FileList& list)
         de::DFile* hndl = list[i];
         de::AbstractFile& file = hndl->file();
         FileId fileId = FileId::fromPath(Str_Text(file.path()));
-        LOG_MSG(" %c%d: %s - \"%s\" [handle: %p]")
+        LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
             << (file.hasStartup()? '*' : ' ') << i
-            << fileId << F_PrettyPath(Str_Text(file.path())) << (void*)&hndl;
+            << fileId << fileId.path() << (void*)&hndl;
     }
 }
 #endif
@@ -1031,7 +1031,7 @@ de::DFile* FS1::tryOpenNativeFile(char const* path, char const* mymode, size_t b
     if(strchr(mymode, 'b'))      strcat(mode, "b");
     else if(strchr(mymode, 't')) strcat(mode, "t");
 
-    AutoStr* nativePath = Str_Set(AutoStr_NewStd(), path);
+    AutoStr* nativePath = AutoStr_FromTextStd(path);
     F_ExpandBasePath(nativePath, nativePath);
     // We must have an absolute path - prepend the CWD if necessary.
     F_PrependWorkPath(nativePath, nativePath);
@@ -1093,7 +1093,7 @@ de::AbstractFile* FS1::tryOpenFile(char const* path, char const* mode, size_t ba
     bool const reqNativeFile = !!strchr(mode, 'f');
 
     // Make it a full path.
-    AutoStr* searchPath = Str_Set(AutoStr_NewStd(), path);
+    AutoStr* searchPath = AutoStr_FromTextStd(path);
     F_FixSlashes(searchPath, searchPath);
     F_ExpandBasePath(searchPath, searchPath);
 

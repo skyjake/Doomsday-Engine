@@ -34,9 +34,15 @@
 using namespace de;
 
 FileId::FileId(Md5Hash _md5) : md5_(_md5.left(16))
+#ifdef DENG_DEBUG
+  , path_("unknown-path")
+#endif
 {}
 
 FileId::FileId(FileId const& other) : LogEntry::Arg::Base(), md5_(other.md5())
+#ifdef DENG_DEBUG
+  , path_(other.path())
+#endif
 {}
 
 FileId& FileId::operator = (FileId other)
@@ -73,7 +79,11 @@ String FileId::asText() const
 
 FileId FileId::fromPath(char const* path)
 {
-    return FileId(hash(path));
+    FileId fileId = FileId(hash(path));
+#ifdef DENG_DEBUG
+    fileId.setPath(path);
+#endif
+    return fileId;
 }
 
 FileId::Md5Hash FileId::hash(char const* path)

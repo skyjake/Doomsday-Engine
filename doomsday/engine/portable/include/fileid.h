@@ -60,8 +60,14 @@ public:
     {
 #ifdef DENG2_QT_4_8_OR_NEWER
         first.md5_.swap(second.md5_);
+#  ifdef DENG_DEBUG
+        first.path_.swap(second.path_);
+#  endif
 #else
         std::swap(first.md5_, second.md5_);
+#  ifdef DENG_DEBUG
+        std::swap(first.path_, second.path_);
+#  endif
 #endif
     }
 
@@ -76,6 +82,18 @@ public:
 
     /// @return Md5hash for this FileId.
     Md5Hash const& md5() const { return md5_; }
+
+#ifdef DENG_DEBUG
+    /// @return Path attributed to this FileId.
+    String const& path() const { return path_; }
+
+    /// Set the path attributed to this FileId.
+    FileId& FileId::setPath(String path)
+    {
+        path_ = path;
+        return *this;
+    }
+#endif
 
     /**
      * Constructs a new FileId instance by hashing the absolute @a path.
@@ -92,6 +110,10 @@ public:
 
 private:
     Md5Hash md5_;
+
+#ifdef DENG_DEBUG
+    String path_;
+#endif
 };
 
 } // namespace de
