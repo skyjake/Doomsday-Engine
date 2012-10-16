@@ -366,8 +366,6 @@ namespace de
 
         AbstractFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
 
-        FILE* findRealFile(char const* path, char const* mymode, AutoStr** foundPath = 0);
-
     public:
         /**
          * Find a lump in the Zip LumpIndex.

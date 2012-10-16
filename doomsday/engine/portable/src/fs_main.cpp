@@ -892,51 +892,6 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     return found.count() - numFoundSoFar;
 }
 
-FILE* FS1::findRealFile(char const* path, char const* mymode, AutoStr** foundPath)
-{
-    char mode[8];
-    strcpy(mode, "r"); // Open for reading.
-    if(strchr(mymode, 't'))
-        strcat(mode, "t");
-    if(strchr(mymode, 'b'))
-        strcat(mode, "b");
-
-    AutoStr* nativePath = AutoStr_NewStd();
-    Str_Set(nativePath, path);
-    F_ToNativeSlashes(nativePath, nativePath);
-
-    // Try opening as a real file.
-    FILE* file = fopen(Str_Text(nativePath), mode);
-    if(file)
-    {
-        if(foundPath) *foundPath = Str_Set(AutoStr_NewStd(), path);
-        return file;
-    }
-
-    // Any applicable virtual directory mappings?
-    if(d->pathMappings.empty()) return 0;
-
-    AutoStr* mapped = AutoStr_NewStd();
-    DENG2_FOR_EACH(i, d->pathMappings, PathMappings::const_iterator)
-    {
-        Str_Set(mapped, path);
-        if(!applyPathMapping(mapped, *i)) continue;
-        // The mapping was successful.
-
-        F_ToNativeSlashes(nativePath, mapped);
-        file = fopen(Str_Text(nativePath), mode);
-        if(file) break;
-    }
-
-    if(file)
-    {
-        VERBOSE( Con_Message("findRealFile: \"%s\" opened as %s.\n", F_PrettyPath(Str_Text(mapped)), path) )
-        if(foundPath) *foundPath = mapped;
-    }
-
-    return file;
-}
-
 de::AbstractFile* FS1::findLumpFile(char const* path, int* lumpIdx)
 {
     if(lumpIdx) *lumpIdx = -1;
@@ -1064,13 +1019,54 @@ de::DFile* FS1::tryOpenLump(char const* path, char const* /*mode*/, size_t /*bas
     return hndl;
 }
 
-de::DFile* FS1::tryOpenNativeFile(char const* path, char const* mode, size_t baseOffset,
+de::DFile* FS1::tryOpenNativeFile(char const* path, char const* mymode, size_t baseOffset,
                                   bool allowDuplicate, LumpInfo& info)
 {
     DENG_ASSERT(path && path[0]);
 
+    // Translate mymode to the C-lib's fopen() mode specifiers.
+    char mode[8] = "";
+    if(strchr(mymode, 'r'))      strcat(mode, "r");
+    else if(strchr(mymode, 'w')) strcat(mode, "w");
+    if(strchr(mymode, 'b'))      strcat(mode, "b");
+    else if(strchr(mymode, 't')) strcat(mode, "t");
+
+    AutoStr* nativePath = Str_Set(AutoStr_NewStd(), path);
+    F_ExpandBasePath(nativePath, nativePath);
+    // We must have an absolute path - prepend the CWD if necessary.
+    F_PrependWorkPath(nativePath, nativePath);
+    F_ToNativeSlashes(nativePath, nativePath);
+
+    // First try a real native file at this absolute path.
     AutoStr* foundPath = 0;
-    FILE* nativeFile = findRealFile(path, mode, &foundPath);
+    FILE* nativeFile = fopen(Str_Text(nativePath), mode);
+    if(nativeFile)
+    {
+        foundPath = nativePath;
+    }
+    // Nope. Any applicable virtual directory mappings?
+    else if(!d->pathMappings.empty())
+    {
+        AutoStr* mapped = AutoStr_NewStd();
+        DENG2_FOR_EACH(i, d->pathMappings, PathMappings::const_iterator)
+        {
+            Str_Set(mapped, path);
+            if(!applyPathMapping(mapped, *i)) continue;
+            // The mapping was successful.
+
+            F_ToNativeSlashes(nativePath, mapped);
+            nativeFile = fopen(Str_Text(nativePath), mode);
+            if(nativeFile)
+            {
+                LOG_DEBUG("FS::tryOpenNativeFile: \"%s\" opened as %s.")
+                    << F_PrettyPath(Str_Text(mapped)) << path;
+                foundPath = mapped;
+                break;
+            }
+        }
+    }
+
+    // Nothing?
     if(!nativeFile) return 0;
 
     // Do not read files twice.
@@ -1097,8 +1093,7 @@ de::AbstractFile* FS1::tryOpenFile(char const* path, char const* mode, size_t ba
     bool const reqNativeFile = !!strchr(mode, 'f');
 
     // Make it a full path.
-    AutoStr* searchPath = AutoStr_NewStd();
-    Str_Set(searchPath, path);
+    AutoStr* searchPath = Str_Set(AutoStr_NewStd(), path);
     F_FixSlashes(searchPath, searchPath);
     F_ExpandBasePath(searchPath, searchPath);
 
@@ -1116,9 +1111,6 @@ de::AbstractFile* FS1::tryOpenFile(char const* path, char const* mode, size_t ba
     // Not found? - try a native file.
     if(!hndl)
     {
-        // We must have an absolute path - prepend the CWD if necessary.
-        F_PrependWorkPath(searchPath, searchPath);
-
         hndl = tryOpenNativeFile(Str_Text(searchPath), mode, baseOffset, allowDuplicate, info);
     }
 
@@ -1534,6 +1526,8 @@ void FS1::printDirectory(ddstring_t const* path)
     PathList found;
     if(findAllPaths(Str_Text(searchPattern), 0, found))
     {
+        qSort(found.begin(), found.end());
+
         DENG2_FOR_EACH(i, found, PathList::const_iterator)
         {
             QByteArray foundPath = i->path.toUtf8();
@@ -1630,12 +1624,14 @@ D_CMD(ListLumps)
     return false;
 }
 
-/// List the "real" files presently loaded in original load order.
+/// List presently loaded files in original load order.
 D_CMD(ListFiles)
 {
     DENG_UNUSED(src);
     DENG_UNUSED(argc);
     DENG_UNUSED(argv);
+
+    Con_Printf("Loaded Files (in load order):\n");
 
     size_t totalFiles = 0, totalPackages = 0;
     if(fileSystem)
