@@ -78,7 +78,7 @@ public:
     virtual ~Game();
 
     /// @return  Collection in which this game exists.
-    GameCollection& Game::collection() const;
+    GameCollection& collection() const;
 
     /// @return  Unique plugin identifier attributed to that which registered this.
     pluginid_t pluginId() const;

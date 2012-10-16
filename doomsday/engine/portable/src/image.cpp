@@ -195,7 +195,7 @@ boolean Image_Save(const image_t* img, const char* filePath)
     DENG_ASSERT(img);
 
     // Compose the full path.
-    AutoStr* fullPath = Str_Set(AutoStr_NewStd(), filePath);
+    AutoStr* fullPath = AutoStr_FromTextStd(filePath);
     if(Str_IsEmpty(fullPath))
     {
         static int n = 0;
