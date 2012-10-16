@@ -777,7 +777,7 @@ gameid_t DD_DefineGame(GameDef const* def)
 #endif
         return 0; // Invalid id.
     }
-    catch(de::GameCollection::NotFoundError)
+    catch(const de::GameCollection::NotFoundError&)
     {} // Ignore the error.
 
     de::Game* game = de::Game::fromDef(*def);
@@ -797,7 +797,7 @@ gameid_t DD_GameIdForKey(const char* identityKey)
     {
         return games->id(games->byIdentityKey(identityKey));
     }
-    catch(de::GameCollection::NotFoundError)
+    catch(const de::GameCollection::NotFoundError&)
     {
         DEBUG_Message(("Warning: DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
     }
@@ -1073,7 +1073,7 @@ de::Game* DD_AutoselectGame(void)
                 return &game;
             }
         }
-        catch(de::GameCollection::NotFoundError)
+        catch(const de::GameCollection::NotFoundError&)
         {} // Ignore the error.
     }
 
@@ -2148,7 +2148,7 @@ D_CMD(Load)
         didLoadGame = true;
         ++arg;
     }
-    catch(de::GameCollection::NotFoundError)
+    catch(const de::GameCollection::NotFoundError&)
     {} // Ignore the error.
 
     // Try the resource locator.
@@ -2223,7 +2223,7 @@ D_CMD(Unload)
             Con_Message("%s is not currently loaded.\n", Str_Text(&game.identityKey()));
             return true;
         }
-        catch(de::GameCollection::NotFoundError)
+        catch(const de::GameCollection::NotFoundError&)
         {} // Ignore the error.
     }
 

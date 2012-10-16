@@ -169,7 +169,8 @@ Game& GameCollection::byIdentityKey(char const* identityKey) const
                 return *game;
         }
     }
-    throw NotFoundError("GameCollection::byIdentityKey", QString("There is no Game with identity key \"%s\"").arg(identityKey));
+    throw NotFoundError("GameCollection::byIdentityKey",
+                        QString("There is no Game with identity key \"%1\"").arg(identityKey));
 }
 
 Game& GameCollection::byIndex(int idx) const
@@ -446,7 +447,7 @@ Game* GameCollection_ByIndex(GameCollection* games, int idx)
     {
         return reinterpret_cast<Game*>(&self->byIndex(idx));
     }
-    catch(de::GameCollection::NotFoundError)
+    catch(const de::GameCollection::NotFoundError&)
     {} // Ignore error.
     return 0; // Not found.
 }
@@ -458,7 +459,7 @@ Game* GameCollection_ByIdentityKey(GameCollection* games, char const* identityKe
     {
         return reinterpret_cast<Game*>(&self->byIdentityKey(identityKey));
     }
-    catch(de::GameCollection::NotFoundError)
+    catch(const de::GameCollection::NotFoundError&)
     {} // Ignore error.
     return 0; // Not found.
 }
@@ -470,7 +471,7 @@ gameid_t GameCollection_Id(GameCollection* games, Game* game)
     {
         return self->id(*reinterpret_cast<de::Game*>(game));
     }
-    catch(de::GameCollection::NotFoundError)
+    catch(const de::GameCollection::NotFoundError&)
     {} // Ignore error.
     return 0; // Invalid id.
 }
