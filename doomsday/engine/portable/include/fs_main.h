@@ -321,7 +321,7 @@ namespace de
          *
          * @return  Base index for lumps in this archive.
          */
-        lumpnum_t openAuxiliary(char const* fileName, size_t baseOffset = 0);
+        lumpnum_t openAuxiliary(char const* filePath, size_t baseOffset = 0);
 
         /**
          * Close the auxiliary lump index if open.

@@ -653,26 +653,11 @@ int FS1::lumpCount()
     return d->ActiveWadLumpIndex->size();
 }
 
-lumpnum_t FS1::openAuxiliary(char const* path, size_t baseOffset)
+lumpnum_t FS1::openAuxiliary(char const* filePath, size_t baseOffset)
 {
-    if(!path || !path[0]) return -1;
-
-    // Make it a full path.
-    ddstring_t searchPath;
-    Str_Init(&searchPath); Str_Set(&searchPath, path);
-    F_ExpandBasePath(&searchPath, &searchPath);
-    // We must have an absolute path, so prepend the current working directory if necessary.
-    F_PrependWorkPath(&searchPath, &searchPath);
-
-    /// @todo Allow opening WAD/ZIP files from lumps in other containers.
-    AutoStr* foundPath = 0;
-    FILE* file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
-    Str_Free(&searchPath);
-    if(!file) return -1;
-
-    DFile* hndl = DFileBuilder::fromNativeFile(*file, baseOffset);
-
-    if(hndl && WadFile::recognise(*hndl))
+    /// @todo Allow opening Zip files too.
+    AbstractFile* file = tryOpenFile(filePath, "rb", baseOffset, true /*allow duplicates*/);
+    if(WadFile* wad = dynamic_cast<WadFile*>(file))
     {
         if(d->auxiliaryWadLumpIndexInUse)
         {
@@ -681,21 +666,20 @@ lumpnum_t FS1::openAuxiliary(char const* path, size_t baseOffset)
         d->ActiveWadLumpIndex = &d->auxiliaryWadLumpIndex;
         d->auxiliaryWadLumpIndexInUse = true;
 
-        // Prepare the temporary info descriptor.
-        LumpInfo info = LumpInfo(F_GetLastModified(Str_Text(foundPath)));
+        index(*wad);
 
-        WadFile* wad = new WadFile(*hndl, Str_Text(foundPath), info);
-        hndl = DFileBuilder::fromFile(*wad);
-        d->openFiles.push_back(hndl); hndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
+        // Add a handle to the open files list.
+        DFile* openFilesHndl = DFileBuilder::fromFile(*wad);
+        d->openFiles.push_back(openFilesHndl); openFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
 
-        DFile* loadedFilesHndl = DFileBuilder::dup(*hndl);
+        // Add a handle to the loaded files list.
+        DFile* loadedFilesHndl = DFileBuilder::dup(*openFilesHndl);
         d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
-        wad->publishLumpsToIndex(*d->ActiveWadLumpIndex);
 
         return Instance::AUXILIARY_BASE;
     }
 
-    if(hndl) delete hndl;
+    delete file;
     return -1;
 }
 
