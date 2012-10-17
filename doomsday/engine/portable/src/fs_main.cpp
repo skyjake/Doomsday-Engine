@@ -202,15 +202,6 @@ struct FS1::Instance
         { self->deleteFile(*openFiles.back()); }
     }
 
-    int pruneLumpsFromIndexesByFile(AbstractFile& file)
-    {
-        int pruned = zipLumpIndex.pruneByFile(file)
-                   + primaryWadLumpIndex.pruneByFile(file);
-        if(auxiliaryWadLumpIndexInUse)
-            pruned += auxiliaryWadLumpIndex.pruneByFile(file);
-        return pruned;
-    }
-
     /**
      * Handles conversion to a logical index that is independent of the lump index currently in use.
      */
@@ -472,7 +463,10 @@ void FS1::index(de::AbstractFile& file)
 
 void FS1::deindex(de::AbstractFile& file)
 {
-    d->pruneLumpsFromIndexesByFile(file);
+    d->zipLumpIndex.pruneByFile(file);
+    d->primaryWadLumpIndex.pruneByFile(file);
+    if(d->auxiliaryWadLumpIndexInUse)
+        d->auxiliaryWadLumpIndex.pruneByFile(file);
 }
 
 bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)

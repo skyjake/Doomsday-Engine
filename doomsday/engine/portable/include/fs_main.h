@@ -61,6 +61,9 @@ namespace de
     class FS1
     {
     public:
+        /// No files found. @ingroup errors
+        DENG2_ERROR(NotFoundError);
+
         struct PathListItem
         {
             String path;
