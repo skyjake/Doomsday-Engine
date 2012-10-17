@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 #include <cctype>
+#include <ctime>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -821,17 +822,11 @@ de::AbstractFile& FS1::lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx)
     return *reinterpret_cast<AbstractFile*>(lumpInfo(absoluteLumpNum, lumpIdx).container);
 }
 
-char const* FS1::lumpName(lumpnum_t absoluteLumpNum)
+ddstring_t const* FS1::lumpName(lumpnum_t absoluteLumpNum)
 {
-    try
-    {
-        int lumpIdx;
-        de::AbstractFile& file = lumpFile(absoluteLumpNum, &lumpIdx);
-        return Str_Text(file.lumpDirectoryNode(lumpIdx).pathFragment());
-    }
-    catch(NotFoundError const&)
-    {} // Ignore error.
-    return "";
+    int lumpIdx;
+    de::AbstractFile& file = lumpFile(absoluteLumpNum, &lumpIdx);
+    return file.lumpDirectoryNode(lumpIdx).pathFragment();
 }
 
 int FS1::lumpCount()
@@ -1400,7 +1395,7 @@ void FS1::initLumpPathMap(void)
     int numLumps = lumpCount();
     for(lumpnum_t i = 0; i < numLumps; ++i)
     {
-        if(strnicmp(lumpName(i), "DD_DIREC", 8)) continue;
+        if(strnicmp(Str_Text(lumpName(i)), "DD_DIREC", 8)) continue;
 
         // Make a copy of it so we can ensure it ends in a null.
         size_t lumpLength = lumpInfo(i).size;
@@ -1851,19 +1846,38 @@ lumpnum_t F_LumpNumForName(char const* name)
     return App_FileSystem()->lumpNumForName(name);
 }
 
-char const* F_LumpName(lumpnum_t absoluteLumpNum)
+ddstring_t const* F_LumpName(lumpnum_t absoluteLumpNum)
 {
-    return App_FileSystem()->lumpName(absoluteLumpNum);
+    try
+    {
+        return App_FileSystem()->lumpName(absoluteLumpNum);
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+    static de::Str zeroLengthString;
+    return zeroLengthString;
 }
 
 size_t F_LumpLength(lumpnum_t absoluteLumpNum)
 {
-    return App_FileSystem()->lumpLength(absoluteLumpNum);
+    try
+    {
+        return App_FileSystem()->lumpInfo(absoluteLumpNum).size;
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+    return 0;
 }
 
 uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
 {
-    return App_FileSystem()->lumpLastModified(absoluteLumpNum);
+    try
+    {
+        return App_FileSystem()->lumpInfo(absoluteLumpNum).lastModified;
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+    return (uint)time(0);
 }
 
 void F_Close(struct dfile_s* hndl)
@@ -1942,14 +1956,27 @@ struct abstractfile_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
-char const* F_LumpSourceFile(lumpnum_t absoluteLumpNum)
+ddstring_t const* F_LumpFilePath(lumpnum_t absoluteLumpNum)
 {
-    return App_FileSystem()->lumpFilePath(absoluteLumpNum);
+    try
+    {
+        return App_FileSystem()->lumpFile(absoluteLumpNum).path();
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+    static de::Str const zeroLengthString;
+    return zeroLengthString;
 }
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 {
-    return App_FileSystem()->lumpFileHasCustom(absoluteLumpNum);
+    try
+    {
+        return App_FileSystem()->lumpFile(absoluteLumpNum).hasCustom();
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+    return false;
 }
 
 AutoStr* F_ComposeLumpPath2(struct abstractfile_s* _file, int lumpIdx, char delimiter)
@@ -1959,9 +1986,11 @@ AutoStr* F_ComposeLumpPath2(struct abstractfile_s* _file, int lumpIdx, char deli
     return file->composeLumpPath(lumpIdx, delimiter);
 }
 
-AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx)
+AutoStr* F_ComposeLumpPath(struct abstractfile_s* _file, int lumpIdx)
 {
-    return F_ComposeLumpPath2(file, lumpIdx, '/');
+    if(!_file) return AutoStr_NewStd();
+    de::AbstractFile* file = reinterpret_cast<de::AbstractFile*>(_file);
+    return file->composeLumpPath(lumpIdx);
 }
 
 /**

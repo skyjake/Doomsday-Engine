@@ -1177,7 +1177,7 @@ patchid_t R_DeclarePatch(const char* name)
 
     // Compose the path to the data resource.
     resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
-    Uri_SetPath(resourcePath, F_LumpName(lumpNum));
+    Uri_SetPath(resourcePath, Str_Text(F_LumpName(lumpNum)));
 
     uniqueId = Textures_Count(TN_PATCHES)+1; // 1-based index.
     texId = Textures_Declare(uri, uniqueId, resourcePath);
@@ -1367,8 +1367,7 @@ rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
 
     // Hmm, this is an entirely new rawtex.
     r = Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
-    Str_Init(&r->name);
-    Str_Set(&r->name, F_LumpName(lumpNum));
+    Str_Copy(Str_Init(&r->name), F_LumpName(lumpNum));
     r->lumpNum = lumpNum;
 
     // Link to the hash.
@@ -1845,7 +1844,7 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
         return NULL;
     }
 
-    /**
+    /*
      * Precedence order of definitions is defined by id tech1 which processes
      * the TEXTURE1/2 lumps in the following order:
      *
@@ -1856,24 +1855,23 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
     firstTexLump = W_CheckLumpNumForName2("TEXTURE1", true/*quiet please*/);
     secondTexLump = W_CheckLumpNumForName2("TEXTURE2", true/*quiet please*/);
 
-    /**
-     * In Doomsday we also process all other lumps named TEXTURE1/2 which
-     * will not processed according to the predefined order.
+    /*
+     * Also process all other lumps named TEXTURE1/2.
      */
     numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
-        const char* lumpName;
+        ddstring_t const* lumpName;
 
         // Will this be processed anyway?
         if(i == firstTexLump || i == secondTexLump) continue;
 
         lumpName = F_LumpName(i);
-        if(strnicmp(lumpName, "TEXTURE1", 8) && strnicmp(lumpName, "TEXTURE2", 8)) continue;
+        if(strnicmp(Str_Text(lumpName), "TEXTURE1", 8) &&
+           strnicmp(Str_Text(lumpName), "TEXTURE2", 8)) continue;
 
-        defLumps = (lumpnum_t*)realloc(defLumps, sizeof *defLumps * ++defLumpsSize);
-        if(!defLumps)
-            Con_Error("loadPatchCompositeDefs: Failed on (re)allocation of %lu bytes enlarging definition lump list.", (unsigned long) sizeof *defLumps * defLumpsSize);
+        defLumps = (lumpnum_t*) realloc(defLumps, sizeof *defLumps * ++defLumpsSize);
+        if(!defLumps) Con_Error("loadPatchCompositeDefs: Failed on (re)allocation of %lu bytes enlarging definition lump list.", (unsigned long) sizeof *defLumps * defLumpsSize);
         defLumps[defLumpsSize-1] = i;
     }
 
@@ -1893,7 +1891,7 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
         defLumps[defLumpsSize-1] = secondTexLump;
     }
 
-    /**
+    /*
      * Many PWADs include new TEXTURE1/2 lumps including the IWAD doomtexture
      * definitions, with new definitions appended. In order to correctly
      * determine whether a defined texture originates from an IWAD we must
@@ -2121,21 +2119,21 @@ void R_InitPatchComposites(void)
 }
 
 /// @todo Do this in the lump directory where we can make use of the hash!
-static lumpnum_t firstLumpWithName(const char* lumpName)
+static lumpnum_t firstLumpWithName(char const* lumpName)
 {
     if(lumpName && lumpName[0])
     {
         lumpnum_t lumpNum, numLumps = F_LumpCount();
         for(lumpNum = 0; lumpNum < numLumps; ++lumpNum)
         {
-            if(!stricmp(F_LumpName(lumpNum), lumpName))
+            if(!Str_CompareIgnoreCase(F_LumpName(lumpNum), lumpName))
                 return lumpNum;
         }
     }
     return -1;
 }
 
-static Uri* composeFlatUri(const char* lumpName)
+static Uri* composeFlatUri(char const* lumpName)
 {
     Uri* uri;
     AutoStr* flatName = AutoStr_NewStd();
@@ -2176,7 +2174,7 @@ void R_InitFlatTextures(void)
         AbstractFile* blockFile = 0;
         for(lumpNum = numLumps; lumpNum --> firstFlatMarkerLumpNum + 1;)
         {
-            const char* lumpName = F_LumpName(lumpNum);
+            ddstring_t const* lumpName = F_LumpName(lumpNum);
             AbstractFile* lumpFile = F_FindFileForLumpNum(lumpNum);
 
             if(blockFile && blockFile != lumpFile)
@@ -2186,25 +2184,26 @@ void R_InitFlatTextures(void)
 
             if(!blockFile)
             {
-                if(!stricmp(lumpName, "F_END.lmp") || !stricmp(lumpName, "FF_END.lmp"))
+                if(!Str_CompareIgnoreCase(lumpName, "F_END.lmp") ||
+                   !Str_CompareIgnoreCase(lumpName, "FF_END.lmp"))
                 {
                     blockFile = lumpFile;
                 }
                 continue;
             }
 
-            if(!stricmp(lumpName, "F_START.lmp"))
+            if(!Str_CompareIgnoreCase(lumpName, "F_START.lmp"))
             {
                 blockFile = 0;
                 continue;
             }
 
             // Ignore extra marker lumps.
-            if(!stricmp(lumpName, "FF_START.lmp") ||
-               !stricmp(lumpName, "F_END.lmp") || !stricmp(lumpName, "FF_END.lmp")) continue;
+            if(!Str_CompareIgnoreCase(lumpName, "FF_START.lmp") ||
+               !Str_CompareIgnoreCase(lumpName, "F_END.lmp")    || !Str_CompareIgnoreCase(lumpName, "FF_END.lmp")) continue;
 
             {
-            Uri* uri = composeFlatUri(F_LumpName(lumpNum));
+            Uri* uri = composeFlatUri(Str_Text(lumpName));
             if(Textures_ResolveUri2(uri, true/*quiet please*/) == NOTEXTUREID) // A new flat?
             {
                 /**
@@ -2214,8 +2213,8 @@ void R_InitFlatTextures(void)
                  *
                  * @todo Always determine size from the lowres original.
                  */
-                const Size2Raw size = { 64, 64 };
-                const int uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
+                Size2Raw const size = { 64, 64 };
+                int const uniqueId = lumpNum - (firstFlatMarkerLumpNum + 1);
                 Uri* resourcePath = composeFlatResourceUrn(lumpNum);
                 textureid_t texId = Textures_Declare(uri, uniqueId, resourcePath);
                 if(!Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, NULL))
@@ -2323,20 +2322,20 @@ void R_InitSpriteTextures(void)
     /// @todo Order here does not respect id tech1 logic.
     for(i = 0; i < numLumps; ++i)
     {
-        const char* lumpName = F_LumpName((lumpnum_t)i);
+        ddstring_t const* lumpName = F_LumpName((lumpnum_t)i);
         textureid_t texId;
 
-        if(lumpName[0] == 'S' && strlen(lumpName) >= 5)
+        if(Str_At(lumpName, 0) == 'S' && Str_Length(lumpName) >= 5)
         {
-            if(!strnicmp(lumpName + 1, "_START", 6) ||
-               !strnicmp(lumpName + 2, "_START", 6))
+            if(!strnicmp(Str_Text(lumpName) + 1, "_START", 6) ||
+               !strnicmp(Str_Text(lumpName) + 2, "_START", 6))
             {
                 // We've arrived at *a* sprite block.
                 Stack_Push(stack, NULL);
                 continue;
             }
-            else if(!strnicmp(lumpName + 1, "_END", 4) ||
-                    !strnicmp(lumpName + 2, "_END", 4))
+            else if(!strnicmp(Str_Text(lumpName) + 1, "_END", 4) ||
+                    !strnicmp(Str_Text(lumpName) + 2, "_END", 4))
             {
                 // The sprite block ends.
                 Stack_Pop(stack);
@@ -2346,7 +2345,7 @@ void R_InitSpriteTextures(void)
 
         if(!Stack_Height(stack)) continue;
 
-        F_FileName(&spriteName, lumpName);
+        F_FileName(&spriteName, Str_Text(lumpName));
 
         Str_Set(&decodedSpriteName, Str_Text(&spriteName));
         Str_PercentDecode(&decodedSpriteName);
@@ -2356,7 +2355,7 @@ void R_InitSpriteTextures(void)
         Uri_SetPath(uri, Str_Text(&spriteName));
 
         // Compose the data resource path.
-        Uri_SetPath(resourcePath, lumpName);
+        Uri_SetPath(resourcePath, Str_Text(lumpName));
 
         texId = Textures_Declare(uri, uniqueId, resourcePath);
         if(texId == NOTEXTUREID) continue; // Invalid uri?

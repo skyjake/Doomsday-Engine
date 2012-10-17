@@ -180,7 +180,17 @@ namespace de
 
         lumpnum_t lumpNumForName(char const* name, bool silent = true);
 
-        char const* lumpName(lumpnum_t absoluteLumpNum);
+        /**
+         * Given a logical @a lumpnum retrieve the associated file object.
+         *
+         * @post The active LumpIndex may have changed!
+         *
+         * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
+         * @return  Name of the specified lump.
+         *
+         * @throws NotFoundError If the requested file could not be found.
+         */
+        ddstring_t const* lumpName(lumpnum_t absoluteLumpNum);
 
         /**
          * Given a logical @a lumpnum retrieve the associated file object.
@@ -196,36 +206,6 @@ namespace de
          * @throws NotFoundError If the requested file could not be found.
          */
         AbstractFile& lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
-
-        /**
-         * Convenient lookup method for when only the path is needed from the source file.
-         * If @a absoluteLumpNum is NOT known then a zero length string is returned.
-         */
-        inline char const* lumpFilePath(lumpnum_t absoluteLumpNum)
-        {
-            try
-            {
-                return Str_Text(lumpFile(absoluteLumpNum).path());
-            }
-            catch(NotFoundError const&)
-            {} // Ignore this error.
-            return "";
-        }
-
-        /**
-         * Convenient lookup method for when only the custom property is needed from the source file.
-         * If @a absoluteLumpNum is NOT known then @c false is returned.
-         */
-        bool lumpFileHasCustom(lumpnum_t absoluteLumpNum)
-        {
-            try
-            {
-                return lumpFile(absoluteLumpNum).hasCustom();
-            }
-            catch(NotFoundError const&)
-            {} // Ignore this error.
-            return false;
-        }
 
         /**
          * Retrieve the LumpInfo metadata record for a lump in the Wad lump index.
@@ -254,36 +234,6 @@ namespace de
          * @throws NotFoundError If the requested file could not be found.
          */
         LumpInfo const& zipLumpInfo(char const* path, int* lumpIdx = 0);
-
-        /**
-         * Convenient lookup method for when only the length property is needed from a LumpInfo.
-         * If @a absoluteLumpNum is NOT known then @c 0 is returned.
-         */
-        inline size_t lumpLength(lumpnum_t absoluteLumpNum)
-        {
-            try
-            {
-                return lumpInfo(absoluteLumpNum).size;
-            }
-            catch(NotFoundError const&)
-            {} // Ignore this error.
-            return 0;
-        }
-
-        /**
-         * Convenient lookup method for when only the last-modified property is needed from a LumpInfo.
-         * If @a absoluteLumpNum is NOT known then @c 0 is returned.
-         */
-        inline uint lumpLastModified(lumpnum_t absoluteLumpNum)
-        {
-            try
-            {
-                return lumpInfo(absoluteLumpNum).lastModified;
-            }
-            catch(NotFoundError const&)
-            {} // Ignore this error.
-            return 0;
-        }
 
         /**
          * Opens the given file (will be translated) for reading.
@@ -462,8 +412,6 @@ int F_LumpCount(void);
 
 int F_Access(char const* path);
 
-uint F_GetLastModified(char const* fileName);
-
 struct abstractfile_s* F_AddFile2(char const* path, size_t baseOffset);
 struct abstractfile_s* F_AddFile(char const* path/*, baseOffset = 0*/);
 
@@ -485,11 +433,11 @@ boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
 lumpnum_t F_LumpNumForName(char const* name);
 
-char const* F_LumpSourceFile(lumpnum_t absoluteLumpNum);
+ddstring_t const* F_LumpFilePath(lumpnum_t absoluteLumpNum);
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
 
-char const* F_LumpName(lumpnum_t absoluteLumpNum);
+ddstring_t const* F_LumpName(lumpnum_t absoluteLumpNum);
 
 size_t F_LumpLength(lumpnum_t absoluteLumpNum);
 

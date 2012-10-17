@@ -731,7 +731,7 @@ int Def_ReadDEDFile(const char* fn, PathDirectoryNodeType type, void* parm)
     if(type == PT_BRANCH)
         return true;
 
-    if(F_CheckFileId(fn))
+    if(App_FileSystem()->checkFileId(fn))
     {
         if(!DED_Read(&defs, fn))
             Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
@@ -768,15 +768,15 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    int i, numLumps = F_LumpCount();
-    for(i = 0; i < numLumps; ++i)
+    int const numLumps = App_FileSystem()->lumpCount();
+    for(int i = 0; i < numLumps; ++i)
     {
-        if(strnicmp(F_LumpName(i), "DD_DEFNS", 8))
-            continue;
+        if(strnicmp(Str_Text(App_FileSystem()->lumpName(i)), "DD_DEFNS", 8)) continue;
+
         numProcessedLumps++;
         if(!DED_ReadLump(&defs, i))
         {
-            Con_Error("DD_ReadLumpDefs: Parse error when reading %s::DD_DEFNS.\n", F_LumpSourceFile(i));
+            Con_Error("DD_ReadLumpDefs: Parse error when reading \"%s:DD_DEFNS\".\n", Str_Text(App_FileSystem()->lumpFile(i).path()));
         }
     }
 
@@ -1248,7 +1248,7 @@ void Def_Read(void)
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
-        si->lumpNum = (strlen(snd->lumpName) > 0? F_LumpNumForName(snd->lumpName) : -1);
+        si->lumpNum = (strlen(snd->lumpName) > 0? App_FileSystem()->lumpNumForName(snd->lumpName) : -1);
         strcpy(si->name, snd->name);
         k = Def_GetSoundNum(snd->link);
         si->link = (k >= 0 ? sounds + k : 0);
@@ -1958,7 +1958,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
             strcpy(sounds[index].lumpName, (char const*) ptr);
             if(strlen(sounds[index].lumpName))
             {
-                sounds[index].lumpNum = F_LumpNumForName(sounds[index].lumpName);
+                sounds[index].lumpNum = App_FileSystem()->lumpNumForName(sounds[index].lumpName);
                 if(sounds[index].lumpNum < 0)
                 {
                     Con_Message("Warning: Def_Set: Unknown sound lump name \"%s\", sound (#%i) will be inaudible.\n",

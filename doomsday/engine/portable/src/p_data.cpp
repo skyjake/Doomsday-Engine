@@ -71,19 +71,26 @@ BspNode** bspNodes;
 
 GameMap* theMap;
 
-const char* P_GenerateUniqueMapId(const char* mapID)
+char const* P_GenerateUniqueMapId(char const* mapID)
 {
     static char uid[255];
-    lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(mapID);
-    ddstring_t fileName;
+    try
+    {
+        lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(mapID);
+        de::AbstractFile const& file = App_FileSystem()->lumpFile(lumpNum);
 
-    Str_Init(&fileName);
-    F_FileName(&fileName, F_LumpSourceFile(lumpNum));
-    qsnprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(&fileName),
-              (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()));
-    strlwr(uid);
+        AutoStr* fileName = AutoStr_NewStd();
+        F_FileName(fileName, Str_Text(file.path()));
 
-    Str_Free(&fileName);
+        qsnprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(fileName), (!file.hasCustom()? "iwad" : "pwad"),
+                  Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()));
+        strlwr(uid);
+    }
+    catch(FS1::NotFoundError const&)
+    {
+        QString msg = QString("P_GenerateUniqueMapId: Failed finding lump for '%1'.").arg(mapID);
+        LegacyCore_FatalError(msg.toUtf8().constData());
+    }
     return uid;
 }
 

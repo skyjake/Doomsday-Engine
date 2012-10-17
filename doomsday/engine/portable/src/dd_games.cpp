@@ -207,7 +207,7 @@ GameCollection& GameCollection::add(Game& game)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static bool recognizeWAD(char const* filePath, void* parameters)
 {
-    lumpnum_t auxLumpBase = F_OpenAuxiliary(filePath);
+    lumpnum_t auxLumpBase = App_FileSystem()->openAuxiliary(filePath);
     bool result = false;
 
     if(auxLumpBase >= 0)

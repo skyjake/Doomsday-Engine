@@ -686,7 +686,7 @@ boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
         int lumpIdx;
         de::AbstractFile& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
 
-        char const* lumpName = App_FileSystem()->lumpName(absoluteLumpNum);
+        ddstring_t const* lumpName = App_FileSystem()->lumpName(absoluteLumpNum);
         char const* fname;
         if(path && path[0])
         {
@@ -694,14 +694,14 @@ boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
         }
         else
         {
-            fname = lumpName;
+            fname = Str_Text(lumpName);
         }
 
         bool dumpedOk = F_Dump(file.cacheLump(lumpIdx), file.lumpInfo(lumpIdx).size, fname);
         file.unlockLump(lumpIdx);
         if(!dumpedOk) return false;
 
-        LOG_VERBOSE("%s dumped to \"%s\"") << lumpName << F_PrettyPath(fname);
+        LOG_VERBOSE("%s dumped to \"%s\"") << Str_Text(lumpName) << F_PrettyPath(fname);
         return true;
     }
     catch(FS1::NotFoundError const&)

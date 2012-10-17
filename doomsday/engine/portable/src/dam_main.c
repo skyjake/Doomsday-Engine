@@ -256,12 +256,12 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         if(0 > markerLump) return false;
 
         // Compose the cache directory path and ensure it exists.
-        cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLump));
+        cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_LumpFilePath(markerLump)));
         F_MakePath(Str_Text(cachedMapDir));
 
         // Compose the full path to the cached map data file.
         Str_InitStd(&cachedMapPath);
-        F_FileName(&cachedMapPath, F_LumpName(markerLump));
+        F_FileName(&cachedMapPath, Str_Text(F_LumpName(markerLump)));
         Str_Append(&cachedMapPath, ".dcm");
         Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
 

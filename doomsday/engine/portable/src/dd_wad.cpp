@@ -53,13 +53,15 @@ size_t W_LumpLength(lumpnum_t absoluteLumpNum)
 
 char const* W_LumpName(lumpnum_t absoluteLumpNum)
 {
-    char const* lumpName = App_FileSystem()->lumpName(absoluteLumpNum);
-    if(!lumpName[0])
+    try
+    {
+        return Str_Text(App_FileSystem()->lumpName(absoluteLumpNum));
+    }
+    catch(FS1::NotFoundError const&)
     {
         W_Error("W_LumpName: Invalid lumpnum %i.", absoluteLumpNum);
-        return NULL;
     }
-    return lumpName;
+    return "";
 }
 
 uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
@@ -91,12 +93,15 @@ char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
 
 boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
 {
-    if(!App_FileSystem()->isValidLumpNum(absoluteLumpNum))
+    try
+    {
+        return App_FileSystem()->lumpFile(absoluteLumpNum).hasCustom();
+    }
+    catch(FS1::NotFoundError const&)
     {
         W_Error("W_LumpIsCustom: Invalid lumpnum %i.", absoluteLumpNum);
-        return false;
     }
-    return App_FileSystem()->lumpFileHasCustom(absoluteLumpNum);
+    return false;
 }
 
 lumpnum_t W_CheckLumpNumForName2(char const* name, boolean silent)
@@ -135,7 +140,7 @@ size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
     {
         int lumpIdx;
         de::AbstractFile& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
-        return file.readLump(lumpIdx, buffer, 0, F_LumpLength(absoluteLumpNum));
+        return file.readLump(lumpIdx, buffer, 0, App_FileSystem()->lumpInfo(absoluteLumpNum).size);
     }
     catch(FS1::NotFoundError const&)
     {

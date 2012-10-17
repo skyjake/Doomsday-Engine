@@ -54,6 +54,7 @@
 #include "resourcenamespace.h"
 #include "texture.h"
 #include "updater.h"
+#include "wadfile.h"
 
 using namespace de;
 
@@ -191,7 +192,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        F_AddFile(token);
+        App_FileSystem()->addFile(token);
         token = strtok(NULL, ATWSEPS);
     }
     free(buffer);
@@ -290,7 +291,7 @@ static int addFilesFromAutoData(void)
                 if(i->attrib & A_SUBDIR) continue;
 
                 QByteArray foundPath = i->path.toUtf8();
-                if(F_AddFile(foundPath.constData()))
+                if(App_FileSystem()->addFile(foundPath.constData()))
                 {
                     count += 1;
                 }
@@ -376,16 +377,17 @@ static void loadResource(AbstractResource* res)
         ddstring_t const* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
         if(path)
         {
-            struct abstractfile_s* file = F_AddFile(Str_Text(path));
+            de::AbstractFile* file = App_FileSystem()->addFile(Str_Text(path));
             if(file)
             {
                 // Mark this as an original game resource.
-                F_SetCustom(file, false);
+                file->setCustom(false);
 
                 // Print the 'CRC' number of IWADs, so they can be identified.
-                /// @todo fixme
-                //if(FT_WADFILE == AbstractFile_Type(file))
-                //    Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC((WadFile*)file));
+                if(WadFile* wad = dynamic_cast<WadFile*>(file))
+                {
+                    Con_Message("  IWAD identification: %08x\n", wad->calculateCRC());
+                }
 
             }
         }
@@ -493,7 +495,7 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, resourcetype_t res
     for(i = 0; i < *listSize; ++i)
     {
         if(resType != F_GuessResourceTypeByName(Str_Text((*list)[i]))) continue;
-        if(F_AddFile(Str_Text((*list)[i])))
+        if(App_FileSystem()->addFile(Str_Text((*list)[i])))
         {
             count += 1;
         }
@@ -1307,7 +1309,7 @@ boolean DD_Init(void)
     if(CommandLine_CheckWith("-dumplump", 1))
     {
         const char* name = CommandLine_Next();
-        lumpnum_t absoluteLumpNum = F_LumpNumForName(name);
+        lumpnum_t absoluteLumpNum = App_FileSystem()->lumpNumForName(name);
         if(absoluteLumpNum >= 0)
         {
             F_DumpLump(absoluteLumpNum);
@@ -1486,7 +1488,7 @@ static int DD_StartupWorker(void* parm)
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
     if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) ||
-       !F_AddFile(Str_Text(&foundPath)))
+       !App_FileSystem()->addFile(Str_Text(&foundPath)))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
     }
@@ -2159,7 +2161,7 @@ D_CMD(Load)
         Str_Strip(&searchPath);
 
         if(F_FindResource3(RC_PACKAGE, Str_Text(&searchPath), &foundPath, RLF_MATCH_EXTENSION) != 0 &&
-           F_AddFile(Str_Text(&foundPath)))
+           App_FileSystem()->addFile(Str_Text(&foundPath)))
             didLoadResource = true;
     }
     Str_Free(&foundPath);
@@ -2231,7 +2233,7 @@ D_CMD(Unload)
     for(i = 1; i < argc; ++i)
     {
         if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath) ||
-           !F_RemoveFile2(Str_Text(&searchPath), false/*not required game resources*/))
+           !App_FileSystem()->removeFile(Str_Text(&searchPath), false/*not required game resources*/))
         {
             continue;
         }
