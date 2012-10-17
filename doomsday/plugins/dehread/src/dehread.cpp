@@ -173,3 +173,12 @@ void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
+
+/**
+ * Declares the type of the plugin so the engine knows how to treat it. Called
+ * automatically when the plugin is loaded.
+ */
+extern "C" const char* deng_LibraryType(void)
+{
+    return "deng-plugin/generic";
+}

@@ -5,3 +5,4 @@ EXPORTS
     GetGameAPI      @2
     DP_Load         @3
     DP_Unload       @4
+    deng_LibraryType @5

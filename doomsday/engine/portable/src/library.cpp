@@ -96,12 +96,11 @@ Library* Library_New(const char* filePath)
         Str_Clear(lastError);
 
         de::LibraryFile& libFile = DENG2_APP->rootFolder().locate<de::LibraryFile>(filePath);
-        if(libFile.library().type() == "library/generic")
+        if(libFile.library().type() == de::Library::DEFAULT_TYPE)
         {
+            // This is just a shared library, not a plugin.
             // We don't have to keep it loaded.
             libFile.clear();
-
-            // This is just a shared library, not a plugin.
             Str_Set(lastError, "not a Doomsday plugin");
             return 0;
         }
@@ -132,10 +131,7 @@ Library* Library_New(const char* filePath)
 void Library_Delete(Library *lib)
 {
     DENG_ASSERT(lib);
-    if(lib->libFile->loaded())
-    {
-        lib->libFile->clear();
-    }
+    lib->libFile->clear();
     Str_Delete(lib->path);
     loadedLibs.removeOne(lib);
     delete lib;

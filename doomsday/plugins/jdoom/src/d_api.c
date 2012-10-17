@@ -271,3 +271,12 @@ void DP_Initialize()
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }
+
+/**
+ * Declares the type of the plugin so the engine knows how to treat it. Called
+ * automatically when the plugin is loaded.
+ */
+const char* deng_LibraryType(void)
+{
+    return "deng-plugin/game";
+}

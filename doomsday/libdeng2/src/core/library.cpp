@@ -62,9 +62,9 @@ Library::Library(const String& nativePath)
         _type = DENG2_SYMBOL(deng_LibraryType)();
     }
     
-    if(_type.beginsWith("deng-plugin/") && address("deng_InitializePlugin"))
+    // Automatically call the initialization function, if one exists.
+    if(_type.beginsWith("deng-plugin/") && hasSymbol("deng_InitializePlugin"))
     {
-        // Automatically call the initialization function, if one exists.
         DENG2_SYMBOL(deng_InitializePlugin)();
     }
 }
@@ -73,9 +73,9 @@ Library::~Library()
 {
     if(_library)
     {
-        if(_type.beginsWith("deng-plugin/") && address("deng_ShutdownPlugin")) 
+        // Automatically call the shutdown function, if one exists.
+        if(_type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
         {
-            // Automatically call the shutdown function, if one exists.
             DENG2_SYMBOL(deng_ShutdownPlugin)();
         }
 
@@ -87,7 +87,8 @@ void* Library::address(const String& name)
 {
     if(!_library)
     {
-        return 0;
+        /// @throw SymbolMissingError There is no library loaded at the moment.
+        throw SymbolMissingError("Library::symbol", "Library not loaded");
     }
     
     // Already looked up?

@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009, 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,8 +41,8 @@ namespace de
     class World;
     
     /**
-     * The Library class allows loading shared library files (DLL/so/dylib) and
-     * looks up exported symbols in the library.
+     * The Library class allows loading shared library files
+     * (DLL/so/bundle/dylib) and looks up exported symbols in the libraries.
      *
      * Library type identifiers;
      * - <code>library/generic</code>: A shared library with no special function.
