@@ -28,19 +28,35 @@ Library::Library(const String& nativePath)
     : _library(0), _type(DEFAULT_TYPE)
 {
     LOG_AS("Library::Library");
-    LOG_VERBOSE("%s") << nativePath;
-    
+
+#ifdef MACOSX
+    // If the library happens to be in a bundle, just use the bundle path.
+    String path = nativePath;
+    if(path.fileNamePath().fileNameExtension() == ".bundle")
+    {
+        path = path.fileNamePath();
+    }
+    LOG_TRACE("%s") << path;
+    _library = new QLibrary(path);
+#else
+    LOG_TRACE("%s") << nativePath;
     _library = new QLibrary(nativePath);
+#endif
+    _library->setLoadHints(QLibrary::ResolveAllSymbolsHint);
+    _library->load();
+
     if(!_library->isLoaded())
     {
+        QString msg = _library->errorString();
+
         delete _library;
         _library = 0;
 
         /// @throw LoadError Opening of the dynamic library failed.
-        throw LoadError("Library::Library", _library->errorString());
+        throw LoadError("Library::Library", msg);
     }
 
-    if(address("deng_LibraryType")) 
+    if(hasSymbol("deng_LibraryType"))
     {
         // Query the type identifier.
         _type = DENG2_SYMBOL(deng_LibraryType)();
@@ -91,4 +107,11 @@ void* Library::address(const String& name)
 
     _symbols[name] = ptr;
     return ptr;
+}
+
+bool Library::hasSymbol(const String &name) const
+{
+    // First check the symbols cache.
+    if(_symbols.find(name) != _symbols.end()) return true;
+    return _library->resolve(name.toAscii().constData()) != 0;
 }

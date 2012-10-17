@@ -62,6 +62,11 @@ void Library_ReleaseGames(void);
 /**
  * Looks for dynamic libraries and calls @a func for each one.
  *
+ * Arguments passed to the callback function @a func:
+ * - @a fileName is the name of the library file, including extension.
+ * - @a absPath is the absolute (non-native) path of the file.
+ * - @a data is the @a data from the caller.
+ *
  * @return If all available libraries were iterated, returns 0. If @a func
  * returns a non-zero value to indicate aborting the iteration at some point,
  * that value is returned instead.
@@ -71,7 +76,7 @@ int Library_IterateAvailableLibraries(int (*func)(const char* fileName, const ch
 /**
  * Loads a dynamic library.
  *
- * @param filePath  Absolute native path of the library to open.
+ * @param filePath  Absolute path of the library to open.
  */
 Library* Library_New(const char* filePath);
 

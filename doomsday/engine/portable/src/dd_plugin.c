@@ -79,7 +79,7 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
     plugin = Library_New(pluginPath);
     if(!plugin)
     {
-        Con_Message("  loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, Library_LastError());
+        Con_Message("  loadPlugin: Did not load \"%s\" (%s).\n", pluginPath, Library_LastError());
         return 0; // Continue iteration.
     }
 

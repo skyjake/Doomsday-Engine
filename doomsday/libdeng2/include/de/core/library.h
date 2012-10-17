@@ -48,7 +48,8 @@ namespace de
      * - <code>library/generic</code>: A shared library with no special function.
      * - <code>deng-plugin/generic</code>: Generic libdeng2 plugin. Loaded always.
      * - <code>deng-plugin/game</code>: The game plugin. Only one of these can be loaded.
-     * - <code>deng-plugin/audio</code>: Audio subsystem. Optional. One of these can be loaded.
+     * - <code>deng-plugin/audio</code>: Audio driver. Optional. Loaded on demand by
+     *   the audio subsystem.
      *
      * @ingroup core
      */
@@ -147,6 +148,13 @@ namespace de
          */
         void* address(const String& name);
 
+        /**
+         * Checks if the library exports a specific symbol.
+         * @param name  Name of the exported symbol.
+         * @return @c true if the symbol is exported, @c false if not.
+         */
+        bool hasSymbol(const String& name) const;
+
         template <typename Type>
         Type symbol(const String& name) {
             /**
@@ -169,7 +177,7 @@ namespace de
         Symbols _symbols;
         
         /// Type identifier for the library (e.g., "deng-plugin/generic").
-        /// Queried by calling deng_Identifier(), if one is exported in the library.
+        /// Queried by calling deng_LibraryType(), if one is exported in the library.
         String _type;
     };
 }
