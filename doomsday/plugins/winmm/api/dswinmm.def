@@ -4,6 +4,8 @@ LIBRARY			AUDIO_WINMM
 
 EXPORTS
 
+deng_LibraryType
+
 DS_Init
 DS_Shutdown
 DS_Event

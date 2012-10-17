@@ -1181,6 +1181,12 @@ boolean DD_Init(void)
         int32_t int32 = 0;
         int16_t int16 = 0;
         float float32 = 0;
+
+        DENG_UNUSED(ptr);
+        DENG_UNUSED(int32);
+        DENG_UNUSED(int16);
+        DENG_UNUSED(float32);
+
         ASSERT_32BIT(int32);
         ASSERT_16BIT(int16);
         ASSERT_32BIT(float32);

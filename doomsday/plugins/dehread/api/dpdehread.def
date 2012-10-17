@@ -1,4 +1,5 @@
 LIBRARY			DEHREAD
 
 EXPORTS
-    DP_Initialize   @1
+    DP_Initialize       @1
+    deng_LibraryType    @2

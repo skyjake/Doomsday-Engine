@@ -272,7 +272,7 @@ void CommandLine::makeAbsolutePath(duint pos)
 
     QString arg = d->arguments[pos];
 
-    if(!isOption(pos) && !QDir::isAbsolutePath(arg) && !arg.startsWith("}"))
+    if(!isOption(pos) && !arg.startsWith("}"))
     {
         QDir dir(arg); // note: strips trailing slash
 
@@ -284,6 +284,7 @@ void CommandLine::makeAbsolutePath(duint pos)
         }
         else
 #endif
+        if(!QDir::isAbsolutePath(arg))
         {
             dir.setPath(d->initialDir.filePath(dir.path()));
         }
