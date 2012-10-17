@@ -369,14 +369,6 @@ namespace de
         void deindex(AbstractFile& file);
 
         bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
-
-        DFile* tryOpenLump(char const* path, char const* mode, size_t baseOffset,
-                           bool allowDuplicate, LumpInfo& info);
-
-        DFile* tryOpenNativeFile(char const* path, char const* mode, size_t baseOffset,
-                                 bool allowDuplicate, LumpInfo& info);
-
-        AbstractFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
     };
 
 } // namespace de
