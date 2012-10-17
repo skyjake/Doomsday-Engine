@@ -25,7 +25,7 @@ using namespace de;
 
 App::App(int& argc, char** argv, bool useGUI)
     : QApplication(argc, argv, useGUI),
-      _cmdLine(argc, argv)
+      _cmdLine(arguments())
 {
     _appPath = applicationFilePath();
 }

@@ -24,6 +24,8 @@
 #include <vector>
 #include <map>
 
+#include <QStringList>
+
 #include "../libdeng2.h"
 #include "../String"
 
@@ -48,15 +50,13 @@ namespace de
         CommandLine();
 
         /**
-         * Constructs a CommandLine out of the provided strings. It is assumed
-         * that @a argc and @a args are the ones passed from the system to the main() 
-         * function. The strings that begin with a @@ character are parsed, the
-         * rest are used without modification.
+         * Constructs a CommandLine out of a list of strings. The argument
+         * strings that begin with a @@ character are parsed as response files
+         * the rest are used without modification.
          *
-         * @param argc  Number of argument strings.
-         * @param args  The argument strings.
+         * @param args  Arguments to use.
          */
-        CommandLine(int argc, char** args);
+        CommandLine(const QStringList& args);
 
         CommandLine(const CommandLine& other);
 
