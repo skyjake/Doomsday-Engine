@@ -681,27 +681,32 @@ boolean F_Dump(void const* data, size_t size, char const* path)
 
 boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
 {
-    int lumpIdx;
-    de::AbstractFile* file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
-    if(!file || !file->isValidIndex(lumpIdx)) return false;
-
-    char const* lumpName = App_FileSystem()->lumpName(absoluteLumpNum);
-    char const* fname;
-    if(path && path[0])
+    try
     {
-        fname = path;
-    }
-    else
-    {
-        fname = lumpName;
-    }
+        int lumpIdx;
+        de::AbstractFile& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
 
-    bool dumpedOk = F_Dump(file->cacheLump(lumpIdx), file->lumpInfo(lumpIdx).size, fname);
-    file->unlockLump(lumpIdx);
-    if(!dumpedOk) return false;
+        char const* lumpName = App_FileSystem()->lumpName(absoluteLumpNum);
+        char const* fname;
+        if(path && path[0])
+        {
+            fname = path;
+        }
+        else
+        {
+            fname = lumpName;
+        }
 
-    LOG_VERBOSE("%s dumped to \"%s\"") << lumpName << F_PrettyPath(fname);
-    return true;
+        bool dumpedOk = F_Dump(file.cacheLump(lumpIdx), file.lumpInfo(lumpIdx).size, fname);
+        file.unlockLump(lumpIdx);
+        if(!dumpedOk) return false;
+
+        LOG_VERBOSE("%s dumped to \"%s\"") << lumpName << F_PrettyPath(fname);
+        return true;
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore error.
+    return false;
 }
 
 boolean F_DumpLump(lumpnum_t absoluteLumpNum)

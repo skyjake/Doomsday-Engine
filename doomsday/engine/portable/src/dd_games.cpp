@@ -241,16 +241,17 @@ static bool recognizeWAD(char const* filePath, void* parameters)
 static bool recognizeZIP(char const* filePath, void* parameters)
 {
     DENG_UNUSED(parameters);
-
-    DFile* dfile = App_FileSystem()->openFile(filePath, "rbf");
-    bool result = false;
-    if(dfile)
+    try
     {
-        result = ZipFile::recognise(*dfile);
+        DFile& hndl = App_FileSystem()->openFile(filePath, "rbf");
+        bool result = ZipFile::recognise(hndl);
         /// @todo Check files. We should implement an auxiliary zip lump index...
-        App_FileSystem()->closeFile(*dfile);
+        App_FileSystem()->closeFile(hndl);
+        return result;
     }
-    return result;
+    catch(FS1::NotFoundError const&)
+    {} // Ignore error.
+    return false;
 }
 
 /// @todo This logic should be encapsulated by AbstractResource.
