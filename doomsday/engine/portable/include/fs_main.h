@@ -205,16 +205,28 @@ namespace de
         }
 
         /**
-         * Retrieve the LumpInfo metadata structure for a lump.
+         * Retrieve the LumpInfo metadata record for a lump in the Wad lump index.
          *
          * @post The active LumpIndex may have changed!
          *
          * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
          * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
          *                          file object is written here.
-         * @return
+         *
+         * @return  Metadata record for the lump else @c NULL.
          */
         LumpInfo const* lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
+
+        /**
+         * Retrieve the LumpInfo metadata record for a lump in the Zip lump index.
+         *
+         * @param path              Path to search for (made absolute if necessary).
+         * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
+         *                          file object is written here.
+         *
+         * @return  Metadata record for the lump else @c NULL.
+         */
+        LumpInfo const* zipLumpInfo(char const* path, int* lumpIdx = 0);
 
         // Convenient lookup method for when only the length property is needed from a LumpInfo.
         inline size_t lumpLength(lumpnum_t absoluteLumpNum) {
@@ -365,16 +377,6 @@ namespace de
                                  bool allowDuplicate, LumpInfo& info);
 
         AbstractFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate);
-
-    public:
-        /**
-         * Find a lump in the Zip LumpIndex.
-         *
-         * @param path      Path to search for. Relative paths are made absolute if necessary.
-         * @param lumpIdx   If not @c NULL the translated lumpnum within the owning file object is written here.
-         * @return  File system object representing the file which contains the found lump else @c NULL.
-         */
-        AbstractFile* findLumpFile(char const* path, int* lumpIdx = 0);
     };
 
 } // namespace de

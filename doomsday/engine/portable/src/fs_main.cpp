@@ -621,15 +621,62 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
 
 LumpInfo const* FS1::lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
+    if(lumpIdx) *lumpIdx = -1;
+
     d->selectWadLumpIndex(absoluteLumpNum); // No longer absolute after this call.
-    if(!d->ActiveWadLumpIndex->isValidIndex(absoluteLumpNum))
-    {
-        if(lumpIdx) *lumpIdx = -1;
-        return 0;
-    }
+    if(!d->ActiveWadLumpIndex->isValidIndex(absoluteLumpNum)) return 0;
+
     LumpInfo const& info = d->ActiveWadLumpIndex->lumpInfo(absoluteLumpNum);
     if(lumpIdx) *lumpIdx = info.lumpIdx;
     return &info;
+}
+
+LumpInfo const* FS1::zipLumpInfo(char const* path, int* lumpIdx)
+{
+    if(lumpIdx) *lumpIdx = -1;
+    if(!path || !path[0]) return 0;
+
+    /*
+     * First check the Zip directory.
+     */
+
+    // Convert to an absolute path.
+    AutoStr* absSearchPath = AutoStr_FromTextStd(path);
+    F_PrependBasePath(absSearchPath, absSearchPath);
+
+    // Perform the search.
+    lumpnum_t lumpNum = d->zipLumpIndex.indexForPath(Str_Text(absSearchPath));
+    if(lumpNum >= 0)
+    {
+        LumpInfo const& info = d->zipLumpIndex.lumpInfo(lumpNum);
+        if(lumpIdx) *lumpIdx = info.lumpIdx;
+        return &info;
+    }
+
+    /*
+     * Next try the dir/WAD redirects.
+     */
+    if(!d->lumpMappings.empty())
+    {
+        // We must have an absolute path - prepend the CWD if necessary.
+        Str_Set(absSearchPath, path);
+        F_PrependWorkPath(absSearchPath, absSearchPath);
+
+        DENG2_FOR_EACH(i, d->lumpMappings, LumpMappings::const_iterator)
+        {
+            LumpMapping const& found = *i;
+            QByteArray foundPathUtf8 = found.first.toUtf8();
+            if(qstricmp(foundPathUtf8.constData(), Str_Text(absSearchPath))) continue;
+
+            QByteArray foundLumpNameUtf8 = found.second.toUtf8();
+            lumpnum_t absoluteLumpNum = lumpNumForName(foundLumpNameUtf8.constData());
+            if(absoluteLumpNum < 0) continue;
+
+            return lumpInfo(absoluteLumpNum, lumpIdx);
+        }
+    }
+
+    return 0; // Not found.
 }
 
 de::AbstractFile* FS1::lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx)
@@ -892,59 +939,6 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     return found.count() - numFoundSoFar;
 }
 
-de::AbstractFile* FS1::findLumpFile(char const* path, int* lumpIdx)
-{
-    if(lumpIdx) *lumpIdx = -1;
-    if(!path || !path[0]) return 0;
-
-    /**
-     * First check the Zip directory.
-     */
-
-    // Convert to an absolute path.
-    ddstring_t absSearchPath;
-    Str_Init(&absSearchPath); Str_Set(&absSearchPath, path);
-    F_PrependBasePath(&absSearchPath, &absSearchPath);
-
-    // Perform the search.
-    lumpnum_t lumpNum = d->zipLumpIndex.indexForPath(Str_Text(&absSearchPath));
-    if(lumpNum >= 0)
-    {
-        Str_Free(&absSearchPath);
-
-        LumpInfo const& lumpInfo = d->zipLumpIndex.lumpInfo(lumpNum);
-        if(lumpIdx) *lumpIdx = lumpInfo.lumpIdx;
-        return reinterpret_cast<AbstractFile*>(lumpInfo.container);
-    }
-
-    /**
-     * Next try the dir/WAD redirects.
-     */
-    if(!d->lumpMappings.empty())
-    {
-        // We must have an absolute path - prepend the CWD if necessary.
-        Str_Set(&absSearchPath, path);
-        F_PrependWorkPath(&absSearchPath, &absSearchPath);
-
-        DENG2_FOR_EACH(i, d->lumpMappings, LumpMappings::const_iterator)
-        {
-            LumpMapping const& found = *i;
-            QByteArray foundPathUtf8 = found.first.toUtf8();
-            if(qstricmp(foundPathUtf8.constData(), Str_Text(&absSearchPath))) continue;
-
-            QByteArray foundLumpNameUtf8 = found.second.toUtf8();
-            lumpnum_t absoluteLumpNum = lumpNumForName(foundLumpNameUtf8.constData());
-            if(absoluteLumpNum < 0) continue;
-
-            Str_Free(&absSearchPath);
-            return lumpFile(absoluteLumpNum, lumpIdx);
-        }
-    }
-
-    Str_Free(&absSearchPath);
-    return NULL;
-}
-
 de::AbstractFile& FS1::interpret(de::DFile& hndl, char const* path, LumpInfo const& info)
 {
     DENG_ASSERT(path && path[0]);
@@ -1002,7 +996,8 @@ de::DFile* FS1::tryOpenLump(char const* path, char const* /*mode*/, size_t /*bas
     DENG_ASSERT(path && path[0]);
 
     int lumpIdx;
-    AbstractFile* container = findLumpFile(path, &lumpIdx);
+    LumpInfo const* lumpInfo = zipLumpInfo(path, &lumpIdx);
+    AbstractFile* container = lumpInfo->container;
     if(!container) return 0;
 
     // Do not read files twice.
