@@ -1,5 +1,5 @@
 /**
- * @file zipfile.h
+ * @file zip.h
  * Specialization of AbstractFile for working with Zip archives.
  *
  * @note Presently only the zlib method (Deflate) of compression is supported.
@@ -26,8 +26,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_ZIPFILE_H
-#define LIBDENG_FILESYS_ZIPFILE_H
+#ifndef LIBDENG_FILESYS_ZIP_H
+#define LIBDENG_FILESYS_ZIP_H
 
 #ifdef __cplusplus
 
@@ -41,13 +41,13 @@ class LumpIndex;
 class PathDirectoryNode;
 
 /**
- * ZipFile. Runtime representation of an opened ZIP file.
+ * Zip. Runtime representation of an opened ZIP file.
  */
-class ZipFile : public AbstractFile
+class Zip : public AbstractFile
 {
 public:
-    ZipFile(DFile& file, char const* path, FileInfo const& info);
-    ~ZipFile();
+    Zip(DFile& file, char const* path, FileInfo const& info);
+    ~Zip();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
     bool isValidIndex(int lumpIdx);
@@ -154,7 +154,7 @@ public:
      *
      * @return This instance.
      */
-    ZipFile& unlockLump(int lumpIdx);
+    Zip& unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -165,24 +165,24 @@ public:
      *
      * @return This instance.
      */
-    ZipFile& clearCachedLump(int lumpIdx, bool* retCleared = 0);
+    Zip& clearCachedLump(int lumpIdx, bool* retCleared = 0);
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
      *
      * @return This instance.
      */
-    ZipFile& clearLumpCache();
+    Zip& clearLumpCache();
 
 // Static members ------------------------------------------------------------------
 
     /**
      * Determines whether the specified file appears to be in a format recognised by
-     * ZipFile.
+     * Zip.
      *
      * @param file      Stream file handle/wrapper to the file being interpreted.
      *
-     * @return  @c true= this is a file that can be represented using ZipFile.
+     * @return  @c true= this is a file that can be represented using Zip.
      */
     static bool recognise(DFile& file);
 
@@ -259,10 +259,10 @@ extern "C" {
 #endif // __cplusplus
 
 struct zipfile_s; // The  zipfile instance (opaque)
-//typedef struct zipfile_s ZipFile;
+//typedef struct zipfile_s Zip;
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FILESYS_ZIPFILE_H */
+#endif /* LIBDENG_FILESYS_ZIP_H */

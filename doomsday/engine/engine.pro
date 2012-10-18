@@ -357,7 +357,7 @@ DENG_HEADERS += \
     portable/include/vertex.h \
     portable/include/wadfile.h \
     portable/include/window.h \
-    portable/include/zipfile.h \
+    portable/include/zip.h \
     portable/include/zonedebug.h \
     portable/src/updater/downloaddialog.h \
     portable/src/updater/processcheckdialog.h \
@@ -653,7 +653,7 @@ SOURCES += \
     portable/src/vertex.cpp \
     portable/src/wadfile.cpp \
     portable/src/window.cpp \
-    portable/src/zipfile.cpp \
+    portable/src/zip.cpp \
     portable/src/zonedebug.c
 
 !deng_nosdlmixer:!deng_nosdl {

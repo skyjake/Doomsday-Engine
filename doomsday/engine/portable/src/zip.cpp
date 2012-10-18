@@ -1,6 +1,7 @@
 /**
- * @file zipfile.cpp
- * ZIP archives. @ingroup fs
+ * @file zip.cpp
+ *
+ * Zip archives. @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -30,7 +31,7 @@
 #include "lumpindex.h"
 #include "pathdirectory.h"
 
-#include "zipfile.h"
+#include "zip.h"
 
 #include <vector>
 
@@ -47,7 +48,7 @@ namespace de {
 #define SIG_END_OF_CENTRAL_DIR  0x06054b50
 
 // Maximum tolerated size of the comment.
-/// @todo Define this at ZipFile level.
+/// @todo Define this at Zip-class level.
 #define MAXIMUM_COMMENT_SIZE    2048
 
 // This is the length of the central directory end record (without the
@@ -61,7 +62,7 @@ namespace de {
 #define ZFH_COMPRESS_PATCHED    0x20 ///< Not supported.
 
 // Compression methods.
-/// @todo Define these at ZipFile level.
+/// @todo Define these at Zip level.
 enum {
     ZFC_NO_COMPRESSION = 0,     ///< Supported format.
     ZFC_SHRUNK,
@@ -150,9 +151,9 @@ private:
     FileInfo info_;
 };
 
-struct ZipFile::Instance
+struct Zip::Instance
 {
-    ZipFile* self;
+    Zip* self;
 
     /// Directory containing structure and info records for all lumps.
     PathDirectory* lumpDirectory;
@@ -164,7 +165,7 @@ struct ZipFile::Instance
     /// Lump data cache.
     LumpCache* lumpCache;
 
-    Instance(ZipFile* d)
+    Instance(Zip* d)
         : self(d), lumpDirectory(0), lumpNodeLut(0), lumpCache(0)
     {}
 
@@ -274,13 +275,13 @@ struct ZipFile::Instance
 
     void readLumpDirectory()
     {
-        LOG_AS("ZipFile");
+        LOG_AS("Zip");
         // Already been here?
         if(lumpDirectory) return;
 
         // Scan the end of the file for the central directory end record.
         if(!locateCentralDirectory())
-            throw Error("ZipFile::readLumpDirectory", QString("Central directory in %1 not found").arg(Str_Text(self->path())));
+            throw Error("Zip::readLumpDirectory", QString("Central directory in %1 not found").arg(Str_Text(self->path())));
 
         // Read the central directory end record.
         centralend_t summary;
@@ -288,13 +289,13 @@ struct ZipFile::Instance
 
         // Does the summary say something we don't like?
         if(summary.diskEntryCount != summary.totalEntryCount)
-            throw Error("ZipFile::readLumpDirectory", QString("Multipart zip file \"%1\" not supported").arg(Str_Text(self->path())));
+            throw Error("Zip::readLumpDirectory", QString("Multipart zip file \"%1\" not supported").arg(Str_Text(self->path())));
 
         // We'll load the file directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
         // Read the entire central directory into memory.
         void* centralDirectory = M_Malloc(summary.size);
-        if(!centralDirectory) throw Error("ZipFile::readLumpDirectory", QString("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
+        if(!centralDirectory) throw Error("Zip::readLumpDirectory", QString("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
 
         self->file->seek(summary.offset, SeekSet);
         self->file->read((uint8_t*)centralDirectory, summary.size);
@@ -417,7 +418,7 @@ struct ZipFile::Instance
 
     void buildLumpNodeLut()
     {
-        LOG_AS("ZipFile");
+        LOG_AS("Zip");
         // Been here already?
         if(lumpNodeLut) return;
 
@@ -432,7 +433,7 @@ struct ZipFile::Instance
     size_t bufferLump(ZipLumpRecord const* lumpRecord, uint8_t* buffer)
     {
         DENG2_ASSERT(lumpRecord && buffer);
-        LOG_AS("ZipFile");
+        LOG_AS("Zip");
 
         self->file->seek(lumpRecord->info().baseOffset, SeekSet);
 
@@ -440,7 +441,7 @@ struct ZipFile::Instance
         {
             bool result;
             uint8_t* compressedData = (uint8_t*) M_Malloc(lumpRecord->info().compressedSize);
-            if(!compressedData) throw Error("ZipFile::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpRecord->info().compressedSize));
+            if(!compressedData) throw Error("Zip::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpRecord->info().compressedSize));
 
             // Read the compressed data into a temporary buffer for decompression.
             self->file->read(compressedData, lumpRecord->info().compressedSize);
@@ -461,35 +462,35 @@ struct ZipFile::Instance
     }
 };
 
-ZipFile::ZipFile(DFile& file, char const* path, FileInfo const& info)
+Zip::Zip(DFile& file, char const* path, FileInfo const& info)
     : AbstractFile(FT_ZIPFILE, path, file, info)
 {
     d = new Instance(this);
 }
 
-ZipFile::~ZipFile()
+Zip::~Zip()
 {
     clearLumpCache();
     delete d;
 }
 
-bool ZipFile::isValidIndex(int lumpIdx)
+bool Zip::isValidIndex(int lumpIdx)
 {
     return lumpIdx >= 0 && lumpIdx < lumpCount();
 }
 
-int ZipFile::lastIndex()
+int Zip::lastIndex()
 {
     return lumpCount() - 1;
 }
 
-int ZipFile::lumpCount()
+int Zip::lumpCount()
 {
     d->readLumpDirectory();
     return d->lumpDirectory? d->lumpDirectory->size() : 0;
 }
 
-bool ZipFile::empty()
+bool Zip::empty()
 {
     return !lumpCount();
 }
@@ -502,39 +503,39 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-de::PathDirectoryNode& ZipFile::lumpDirectoryNode(int lumpIdx)
+de::PathDirectoryNode& Zip::lumpDirectoryNode(int lumpIdx)
 {
-    if(!isValidIndex(lumpIdx)) throw Error("ZipFile::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!isValidIndex(lumpIdx)) throw Error("Zip::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
-FileInfo const& ZipFile::lumpInfo(int lumpIdx)
+FileInfo const& Zip::lumpInfo(int lumpIdx)
 {
-    LOG_AS("ZipFile");
+    LOG_AS("Zip");
     ZipLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw Error("ZipFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!lrec) throw Error("Zip::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info();
 }
 
-size_t ZipFile::lumpSize(int lumpIdx)
+size_t Zip::lumpSize(int lumpIdx)
 {
-    LOG_AS("ZipFile");
+    LOG_AS("Zip");
     ZipLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw Error("ZipFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!lrec) throw Error("Zip::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info().size;
 }
 
-AutoStr* ZipFile::composeLumpPath(int lumpIdx, char delimiter)
+AutoStr* Zip::composeLumpPath(int lumpIdx, char delimiter)
 {
     if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
     PathDirectoryNode& node = lumpDirectoryNode(lumpIdx);
     return node.composePath(AutoStr_NewStd(), NULL, delimiter);
 }
 
-ZipFile& ZipFile::clearCachedLump(int lumpIdx, bool* retCleared)
+Zip& Zip::clearCachedLump(int lumpIdx, bool* retCleared)
 {
-    LOG_AS("ZipFile::clearCachedLump");
+    LOG_AS("Zip::clearCachedLump");
 
     if(retCleared) *retCleared = false;
 
@@ -557,18 +558,18 @@ ZipFile& ZipFile::clearCachedLump(int lumpIdx, bool* retCleared)
     return *this;
 }
 
-ZipFile& ZipFile::clearLumpCache()
+Zip& Zip::clearLumpCache()
 {
-    LOG_AS("ZipFile::clearLumpCache");
+    LOG_AS("Zip::clearLumpCache");
     if(d->lumpCache) d->lumpCache->clear();
     return *this;
 }
 
-uint8_t const* ZipFile::cacheLump(int lumpIdx)
+uint8_t const* Zip::cacheLump(int lumpIdx)
 {
-    LOG_AS("ZipFile::cacheLump");
+    LOG_AS("Zip::cacheLump");
 
-    if(!isValidIndex(lumpIdx)) throw Error("ZipFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!isValidIndex(lumpIdx)) throw Error("Zip::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     FileInfo const& info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
@@ -587,7 +588,7 @@ uint8_t const* ZipFile::cacheLump(int lumpIdx)
     if(data) return data;
 
     uint8_t* region = (uint8_t*) Z_Malloc(info.size, PU_APPSTATIC, 0);
-    if(!region) throw Error("ZipFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info.size).arg(lumpIdx));
+    if(!region) throw Error("Zip::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info.size).arg(lumpIdx));
 
     readLump(lumpIdx, region, false);
     d->lumpCache->insert(lumpIdx, region);
@@ -595,9 +596,9 @@ uint8_t const* ZipFile::cacheLump(int lumpIdx)
     return region;
 }
 
-ZipFile& ZipFile::unlockLump(int lumpIdx)
+Zip& Zip::unlockLump(int lumpIdx)
 {
-    LOG_AS("ZipFile::unlockLump");
+    LOG_AS("Zip::unlockLump");
     LOG_TRACE("\"%s:%s\"")
         << F_PrettyPath(Str_Text(path())) << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
 
@@ -620,17 +621,17 @@ ZipFile& ZipFile::unlockLump(int lumpIdx)
     return *this;
 }
 
-size_t ZipFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+size_t Zip::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
-    LOG_AS("ZipFile::readLump");
+    LOG_AS("Zip::readLump");
     if(!isValidIndex(lumpIdx)) return 0;
     return readLump(lumpIdx, buffer, 0, lumpInfo(lumpIdx).size, tryCache);
 }
 
-size_t ZipFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
+size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
-    LOG_AS("ZipFile::readLump");
+    LOG_AS("Zip::readLump");
     ZipLumpRecord const* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) return 0;
 
@@ -665,7 +666,7 @@ size_t ZipFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     {
         // Allocate a temporary buffer and read the whole lump into it(!).
         uint8_t* lumpData = (uint8_t*) M_Malloc(lrec->info().size);
-        if(!lumpData) throw Error("ZipFile::readLumpSection", QString("Failed on allocation of %1 bytes for work buffer").arg(lrec->info().size));
+        if(!lumpData) throw Error("Zip::readLumpSection", QString("Failed on allocation of %1 bytes for work buffer").arg(lrec->info().size));
 
         if(d->bufferLump(lrec, lumpData))
         {
@@ -681,28 +682,28 @@ size_t ZipFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
 
     /// @todo Do not check the read length here.
     if(readBytes < MIN_OF(lrec->info().size, length))
-        throw Error("ZipFile::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
+        throw Error("Zip::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
 
     return readBytes;
 }
 
-bool ZipFile::recognise(DFile& file)
+bool Zip::recognise(DFile& file)
 {
     localfileheader_t hdr;
-    if(!ZipFile::Instance::readArchiveHeader(file, hdr)) return false;
+    if(!Zip::Instance::readArchiveHeader(file, hdr)) return false;
     return hdr.signature == SIG_LOCAL_FILE_HEADER;
 }
 
-uint8_t* ZipFile::compress(uint8_t* in, size_t inSize, size_t* outSize)
+uint8_t* Zip::compress(uint8_t* in, size_t inSize, size_t* outSize)
 {
     return compressAtLevel(in, inSize, outSize, Z_DEFAULT_COMPRESSION);
 }
 
-uint8_t* ZipFile::compressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level)
+uint8_t* Zip::compressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level)
 {
 #define CHUNK_SIZE 32768
 
-    LOG_AS("ZipFile::compressAtLevel");
+    LOG_AS("Zip::compressAtLevel");
 
     z_stream stream;
     uint8_t chunk[CHUNK_SIZE];
@@ -773,11 +774,11 @@ uint8_t* ZipFile::compressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, i
 #undef CHUNK_SIZE
 }
 
-uint8_t* ZipFile::uncompress(uint8_t* in, size_t inSize, size_t* outSize)
+uint8_t* Zip::uncompress(uint8_t* in, size_t inSize, size_t* outSize)
 {
 #define INF_CHUNK_SIZE 4096 // Uncompress in 4KB chunks.
 
-    LOG_AS("ZipFile::uncompress");
+    LOG_AS("Zip::uncompress");
 
     z_stream stream;
     uint8_t chunk[INF_CHUNK_SIZE];
@@ -837,9 +838,9 @@ uint8_t* ZipFile::uncompress(uint8_t* in, size_t inSize, size_t* outSize)
 #undef INF_CHUNK_SIZE
 }
 
-bool ZipFile::uncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
+bool Zip::uncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
 {
-    LOG_AS("ZipFile::uncompressRaw");
+    LOG_AS("Zip::uncompressRaw");
     z_stream stream;
     int result;
 

@@ -2,7 +2,7 @@
  * @file lumpfile.h
  *
  * Specialization of AbstractFile for working with the lumps of container
- * file instances (such as WadFile and ZipFile).
+ * file instances (such as WadFile and Zip).
  *
  * Design wise a LumpFile is somewhat like an Adapter or Bridge, in that it
  * provides an AbstractFile-derived object instance through which a lump of

@@ -39,7 +39,7 @@
 #include "lumpfile.h"
 #include "m_misc.h" // for M_FindWhite()
 #include "wadfile.h"
-#include "zipfile.h"
+#include "zip.h"
 
 #include <QList>
 #include <QtAlgorithms>
@@ -64,9 +64,9 @@ struct FileInterpreter
 
 static de::AbstractFile* interpretAsZipFile(de::DFile& hndl, char const* path, FileInfo const& info)
 {
-    if(!ZipFile::recognise(hndl)) return 0;
+    if(!Zip::recognise(hndl)) return 0;
     LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Zip (archive)";
-    return new ZipFile(hndl, path, info);
+    return new Zip(hndl, path, info);
 }
 
 static de::AbstractFile* interpretAsWadFile(de::DFile& hndl, char const* path, FileInfo const& info)
@@ -449,7 +449,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char cons
 void FS1::index(de::AbstractFile& file)
 {
     // Publish lumps to an index?
-    if(ZipFile* zip = dynamic_cast<ZipFile*>(&file))
+    if(Zip* zip = dynamic_cast<Zip*>(&file))
     {
         if(zip->empty()) return;
 

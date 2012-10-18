@@ -26,7 +26,7 @@
 #include "dd_games.h"
 
 #include "abstractresource.h"
-#include "zipfile.h"
+#include "zip.h"
 
 namespace de {
 
@@ -244,7 +244,7 @@ static bool recognizeZIP(char const* filePath, void* parameters)
     try
     {
         DFile& hndl = App_FileSystem()->openFile(filePath, "rbf");
-        bool result = ZipFile::recognise(hndl);
+        bool result = Zip::recognise(hndl);
         /// @todo Check files. We should implement an auxiliary zip lump index...
         App_FileSystem()->closeFile(hndl);
         return result;
