@@ -723,7 +723,7 @@ static void Def_InitTextDef(ddtext_t* txt, char const* str)
 /**
  * Callback for DD_ReadProcessDED.
  */
-int Def_ReadDEDFile(const char* fn, PathDirectoryNodeType type, void* parm)
+int Def_ReadDEFileHandle(const char* fn, PathDirectoryNodeType type, void* parm)
 {
     DENG_UNUSED(parm);
 
@@ -734,11 +734,11 @@ int Def_ReadDEDFile(const char* fn, PathDirectoryNodeType type, void* parm)
     if(App_FileSystem()->checkFileId(fn))
     {
         if(!DED_Read(&defs, fn))
-            Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
+            Con_Error("Def_ReadDEFileHandle: %s\n", dedReadError);
     }
     else
     {
-        Con_Message("Warning:Def_ReadDEDFile \"%s\" not found!\n", fn);
+        Con_Message("Warning:Def_ReadDEFileHandle \"%s\" not found!\n", fn);
     }
 
     // Continue processing files.
@@ -748,7 +748,7 @@ int Def_ReadDEDFile(const char* fn, PathDirectoryNodeType type, void* parm)
 void Def_ReadProcessDED(const char* fileName)
 {
     assert(fileName && fileName[0]);
-    Def_ReadDEDFile(fileName, PT_LEAF, 0);
+    Def_ReadDEFileHandle(fileName, PT_LEAF, 0);
 }
 
 /**

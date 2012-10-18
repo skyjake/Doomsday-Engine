@@ -49,7 +49,7 @@ typedef enum {
 #ifdef __cplusplus
 
 #include <de/str.h>
-#include "dfile.h"
+#include "filehandle.h"
 #include "fileinfo.h"
 
 namespace de {
@@ -90,7 +90,7 @@ public:
      * @param hndl  Handle to the file. Ownership of the handle is given to this instance.
      * @param info  Info descriptor for the file. A copy is made.
      */
-    File1(filetype_t _type, char const* _path, DFile& hndl, FileInfo const& _info);
+    File1(filetype_t _type, char const* _path, FileHandle& hndl, FileInfo const& _info);
 
     /**
      * Release all memory acquired for objects linked with this resource.
@@ -149,7 +149,7 @@ public:
     /// Mark this resource as "custom".
     File1& setCustom(bool yes);
 
-    DFile& handle();
+    FileHandle& handle();
 
     /*
      * Access interfaces:
@@ -309,8 +309,8 @@ public:
     //virtual File1& clearLumpCache() = 0;
 
 protected:
-    /// File stream handle/wrapper.
-    DFile* file;
+    /// File stream handle.
+    FileHandle* handle_;
 
 private:
     /// @see filetype_t

@@ -110,8 +110,8 @@ DENG_API_HEADERS = \
     api/dd_world.h \
     api/def_share.h \
     api/dengproject.h \
-    api/dfile.h \
     api/doomsday.h \
+    api/filehandle.h \
     api/materialarchive.h \
     api/point.h \
     api/rect.h \
@@ -203,13 +203,13 @@ DENG_HEADERS += \
     portable/include/def_main.h \
     portable/include/displaymode.h \
     portable/include/displaymode_native.h \
-    portable/include/dfilebuilder.h \
     portable/include/edit_bias.h \
     portable/include/edit_bsp.h \
     portable/include/edit_map.h \
     portable/include/fi_main.h \
     portable/include/file.h \
     portable/include/filedirectory.h \
+    portable/include/filehandlebuilder.h \
     portable/include/fileinfo.h \
     portable/include/finaleinterpreter.h \
     portable/include/font.h \
@@ -491,7 +491,6 @@ SOURCES += \
     portable/src/def_data.c \
     portable/src/def_main.cpp \
     portable/src/def_read.c \
-    portable/src/dfile.cpp \
     portable/src/dgl_common.c \
     portable/src/dgl_draw.c \
     portable/src/displaymode.cpp \
@@ -501,6 +500,7 @@ SOURCES += \
     portable/src/fi_main.c \
     portable/src/file.cpp \
     portable/src/filedirectory.cpp \
+    portable/src/filehandle.cpp \
     portable/src/fileid.cpp \
     portable/src/finaleinterpreter.c \
     portable/src/fonts.c \

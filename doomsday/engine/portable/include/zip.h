@@ -36,7 +36,7 @@
 
 namespace de {
 
-class DFile;
+class FileHandle;
 class LumpIndex;
 class PathDirectoryNode;
 
@@ -46,7 +46,7 @@ class PathDirectoryNode;
 class Zip : public File1
 {
 public:
-    Zip(DFile& file, char const* path, FileInfo const& info);
+    Zip(FileHandle& hndl, char const* path, FileInfo const& info);
     ~Zip();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
@@ -184,7 +184,7 @@ public:
      *
      * @return  @c true= this is a file that can be represented using Zip.
      */
-    static bool recognise(DFile& file);
+    static bool recognise(FileHandle& file);
 
     /**
      * Inflates a block of data compressed using ZipFile_Compress() (i.e., zlib

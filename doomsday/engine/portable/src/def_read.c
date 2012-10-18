@@ -2688,7 +2688,7 @@ int DED_Read(ded_t* ded, const char* path)
     Str transPath;
     size_t bufferedDefSize;
     char* bufferedDef;
-    DFile* file;
+    FileHandle* file;
     int result;
 
     // Compose the (possibly-translated) path.
@@ -2707,9 +2707,9 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // We will buffer a local copy of the file. How large a buffer do we need?
-    DFile_Seek(file, 0, SeekEnd);
-    bufferedDefSize = DFile_Tell(file);
-    DFile_Rewind(file);
+    FileHandle_Seek(file, 0, SeekEnd);
+    bufferedDefSize = FileHandle_Tell(file);
+    FileHandle_Rewind(file);
     bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
     if(NULL == bufferedDef)
     {
@@ -2719,7 +2719,7 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // Copy the file into the local buffer and parse definitions.
-    DFile_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
+    FileHandle_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
     F_Delete(file);
     result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 

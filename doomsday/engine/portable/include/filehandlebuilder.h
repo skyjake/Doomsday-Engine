@@ -1,5 +1,5 @@
 /**
- * @file dfilebuilder.h
+ * @file filehandlebuilder.h
  *
  * @ingroup fs
  *
@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_DFILEBUILDER_H
-#define LIBDENG_FILESYS_DFILEBUILDER_H
+#ifndef LIBDENG_FILESYS_FILEHANDLEBUILDER_H
+#define LIBDENG_FILESYS_FILEHANDLEBUILDER_H
 
 #include "fs_main.h"
 
@@ -29,7 +29,7 @@
 
 namespace de {
 
-class DFileBuilder
+class FileHandleBuilder
 {
 public:
     static void init();
@@ -40,7 +40,7 @@ public:
      *
      * @param af            VFS object representing the file being opened.
      */
-    static DFile* fromFile(File1& file);
+    static FileHandle* fromFile(File1& file);
 
     /**
      * Create a new handle on a lump of File @a file.
@@ -49,15 +49,15 @@ public:
      * @param lumpIdx       Logical index of the lump within @a file to be opened.
      * @param dontBuffer    @c true= do not buffer a copy of the lump.
      */
-    static DFile* fromFileLump(File1& file, int lumpIdx, bool dontBuffer);
+    static FileHandle* fromFileLump(File1& file, int lumpIdx, bool dontBuffer);
 
     /**
-     * Open a new handle on the specified native file.
+     * Create a new handle on the specified native file.
      *
      * @param nativeFile    Native file system handle to the file being opened.
      * @param baseOffset    Offset from the start of the file in bytes to begin.
      */
-    static DFile* fromNativeFile(FILE& nativeFile, size_t baseOffset);
+    static FileHandle* fromNativeFile(FILE& nativeFile, size_t baseOffset);
 
     /**
      * Create a duplicate of handle @a hndl. Note that the duplicate is in
@@ -66,7 +66,7 @@ public:
      *
      * @param hndl          Handle to be duplicated.
      */
-    static DFile* dup(DFile const& hndl);
+    static FileHandle* dup(FileHandle const& hndl);
 };
 
 } // namespace de
@@ -75,17 +75,17 @@ extern "C" {
 #endif
 
 /**
- * Non-public methods of DFile. Placed here temporarily.
+ * Non-public methods of FileHandle. Placed here temporarily.
  */
 
 /// @return  File object represented by this handle.
-struct file1_s* DFile_File(DFile* hndl);
+struct file1_s* FileHandle_File(FileHandle* hndl);
 
 /// @return  File object represented by this handle.
-struct file1_s* DFile_File_const(DFile const* hndl);
+struct file1_s* FileHandle_File_const(FileHandle const* hndl);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FILESYS_DFILEBUILDER_H */
+#endif /* LIBDENG_FILESYS_FILEHANDLEBUILDER_H */

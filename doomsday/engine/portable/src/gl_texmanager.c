@@ -63,7 +63,7 @@ typedef enum {
 typedef struct {
     const char* name; // Format/handler name.
     const char* ext; // Expected file extension.
-    boolean (*loadFunc)(image_t* img, DFile* file);
+    boolean (*loadFunc)(image_t* img, FileHandle* file);
     const char* (*getLastErrorFunc) (void); // Can be NULL.
 } imagehandler_t;
 
@@ -87,10 +87,10 @@ static int hashDetailVariantSpecification(const detailvariantspecification_t* sp
 
 static void calcGammaTable(void);
 
-static boolean tryLoadPCX(image_t* img, DFile* file);
-static boolean tryLoadPNG(image_t* img, DFile* file);
-static boolean tryLoadJPG(image_t* img, DFile* file);
-static boolean tryLoadTGA(image_t* img, DFile* file);
+static boolean tryLoadPCX(image_t* img, FileHandle* file);
+static boolean tryLoadPNG(image_t* img, FileHandle* file);
+static boolean tryLoadJPG(image_t* img, FileHandle* file);
+static boolean tryLoadTGA(image_t* img, FileHandle* file);
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
@@ -731,7 +731,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
 
             if(F_IsValidLumpNum(lumpNum))
             {
-                DFile* file = F_OpenLump(lumpNum);
+                FileHandle* file = F_OpenLump(lumpNum);
                 source = GL_LoadFlatLump(image, file);
                 F_Delete(file);
             }
@@ -764,7 +764,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
                 lumpnum_t lumpNum = F_LumpNumForName(Str_Text(Uri_Path(resourcePath)));
                 if(F_IsValidLumpNum(lumpNum))
                 {
-                    DFile* file = F_OpenLump(lumpNum);
+                    FileHandle* file = F_OpenLump(lumpNum);
                     source = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, tex);
                     F_Delete(file);
                 }
@@ -811,7 +811,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
                 lumpnum_t lumpNum = F_LumpNumForName(Str_Text(Uri_Path(resourcePath)));
                 if(F_IsValidLumpNum(lumpNum))
                 {
-                    DFile* file = F_OpenLump(lumpNum);
+                    FileHandle* file = F_OpenLump(lumpNum);
                     source = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, tex);
                     F_Delete(file);
                 }
@@ -831,7 +831,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
             lumpnum_t lumpNum = F_LumpNumForName(Str_Text(Uri_Path(resourcePath)));
             if(lumpNum >= 0)
             {
-                DFile* file = F_OpenLump(lumpNum);
+                FileHandle* file = F_OpenLump(lumpNum);
                 source = GL_LoadDetailTextureLump(image, file);
                 F_Delete(file);
             }
@@ -1426,7 +1426,7 @@ void GL_PrintImageMetadata(const image_t* image)
         0 != image->paletteId? image->paletteId : image->pixelSize);
 }
 
-static boolean tryLoadPCX(image_t* img, DFile* file)
+static boolean tryLoadPCX(image_t* img, FileHandle* file)
 {
     assert(img && file);
     GL_InitImage(img);
@@ -1434,13 +1434,13 @@ static boolean tryLoadPCX(image_t* img, DFile* file)
     return (0 != img->pixels);
 }
 
-static boolean tryLoadJPG(image_t* img, DFile* file)
+static boolean tryLoadJPG(image_t* img, FileHandle* file)
 {
     assert(img && file);
     return Image_LoadFromFileWithFormat(img, "JPG", file);
 }
 
-static boolean tryLoadPNG(image_t* img, DFile* file)
+static boolean tryLoadPNG(image_t* img, FileHandle* file)
 {
     assert(img && file);
     /*
@@ -1451,7 +1451,7 @@ static boolean tryLoadPNG(image_t* img, DFile* file)
     return Image_LoadFromFileWithFormat(img, "PNG", file);
 }
 
-static boolean tryLoadTGA(image_t* img, DFile* file)
+static boolean tryLoadTGA(image_t* img, FileHandle* file)
 {
     assert(img && file);
     GL_InitImage(img);
@@ -1493,7 +1493,7 @@ static boolean isColorKeyed(const char* path)
     return result;
 }
 
-uint8_t* Image_LoadFromFile(image_t* img, DFile* file)
+uint8_t* Image_LoadFromFile(image_t* img, FileHandle* file)
 {
     const imagehandler_t* hdlr;
     const char* fileName;
@@ -1501,7 +1501,7 @@ uint8_t* Image_LoadFromFile(image_t* img, DFile* file)
 
     GL_InitImage(img);
 
-    fileName = Str_Text(F_Path(DFile_File_const(file)));
+    fileName = Str_Text(F_Path(FileHandle_File_const(file)));
 
     // Firstly try the expected format given the file name.
     hdlr = findHandlerFromFileName(fileName);
@@ -1555,7 +1555,7 @@ uint8_t* Image_LoadFromFile(image_t* img, DFile* file)
 
 uint8_t* GL_LoadImage(image_t* img, const char* filePath)
 {
-    DFile* file = F_Open(filePath, "rb");
+    FileHandle* file = F_Open(filePath, "rb");
     uint8_t* pixels = NULL;
     assert(img);
 
@@ -2356,7 +2356,7 @@ static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
     return false;
 }
 
-TexSource GL_LoadDetailTextureLump(image_t* image, DFile* file)
+TexSource GL_LoadDetailTextureLump(image_t* image, FileHandle* file)
 {
     TexSource source = TEXS_NONE;
     assert(image && file);
@@ -2367,7 +2367,7 @@ TexSource GL_LoadDetailTextureLump(image_t* image, DFile* file)
     }
     else
     {   // It must be an old-fashioned "raw" image.
-        size_t bufSize, fileLength = DFile_Length(file);
+        size_t bufSize, fileLength = FileHandle_Length(file);
 
         GL_InitImage(image);
 
@@ -2397,13 +2397,13 @@ TexSource GL_LoadDetailTextureLump(image_t* image, DFile* file)
             memset(image->pixels, 0, bufSize);
 
         // Load the raw image data.
-        DFile_Read(file, image->pixels, fileLength);
+        FileHandle_Read(file, image->pixels, fileLength);
         source = TEXS_ORIGINAL;
     }
     return source;
 }
 
-TexSource GL_LoadFlatLump(image_t* image, DFile* file)
+TexSource GL_LoadFlatLump(image_t* image, FileHandle* file)
 {
     TexSource source = TEXS_NONE;
     assert(image && file);
@@ -2418,7 +2418,7 @@ TexSource GL_LoadFlatLump(image_t* image, DFile* file)
 #define FLAT_WIDTH          64
 #define FLAT_HEIGHT         64
 
-        size_t bufSize, fileLength = DFile_Length(file);
+        size_t bufSize, fileLength = FileHandle_Length(file);
 
         GL_InitImage(image);
 
@@ -2436,7 +2436,7 @@ TexSource GL_LoadFlatLump(image_t* image, DFile* file)
             memset(image->pixels, 0, bufSize);
 
         // Load the raw image data.
-        DFile_Read(file, image->pixels, fileLength);
+        FileHandle_Read(file, image->pixels, fileLength);
         source = TEXS_ORIGINAL;
 
 #undef FLAT_HEIGHT
@@ -2445,7 +2445,7 @@ TexSource GL_LoadFlatLump(image_t* image, DFile* file)
     return source;
 }
 
-static TexSource loadPatchLump(image_t* image, DFile* file, int tclass, int tmap, int border)
+static TexSource loadPatchLump(image_t* image, FileHandle* file, int tclass, int tmap, int border)
 {
     TexSource source = TEXS_NONE;
     assert(image && file);
@@ -2457,11 +2457,11 @@ static TexSource loadPatchLump(image_t* image, DFile* file, int tclass, int tmap
     else
     {
         // A DOOM patch.
-        size_t fileLength = DFile_Length(file);
+        size_t fileLength = FileHandle_Length(file);
         if(fileLength > sizeof(doompatch_header_t))
         {
             const doompatch_header_t* patch =
-                (const doompatch_header_t*) F_CacheLump(DFile_File(file), 0);
+                (const doompatch_header_t*) F_CacheLump(FileHandle_File(file), 0);
 
             if(validPatch((const uint8_t*)patch, fileLength))
             {
@@ -2480,19 +2480,19 @@ static TexSource loadPatchLump(image_t* image, DFile* file, int tclass, int tmap
                     image->flags |= IMGF_IS_MASKED;
                 source = TEXS_ORIGINAL;
             }
-            F_UnlockLump(DFile_File(file), 0);
+            F_UnlockLump(FileHandle_File(file), 0);
         }
 
         if(source == TEXS_NONE)
         {
-            Con_Message("Warning: Lump \"%s\" does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(F_Path(DFile_File(file)))));
+            Con_Message("Warning: Lump \"%s\" does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(F_Path(FileHandle_File(file)))));
             return source;
         }
     }
     return source;
 }
 
-TexSource GL_LoadPatchLumpAsPatch(image_t* image, DFile* file, int tclass, int tmap, int border,
+TexSource GL_LoadPatchLumpAsPatch(image_t* image, FileHandle* file, int tclass, int tmap, int border,
     Texture* tex)
 {
     TexSource source = loadPatchLump(image, file, tclass, tmap, border);
@@ -2504,7 +2504,7 @@ TexSource GL_LoadPatchLumpAsPatch(image_t* image, DFile* file, int tclass, int t
         {
             // Load the extended metadata from the lump.
             doompatch_header_t hdr;
-            F_ReadLumpSection(DFile_File(file), 0, (uint8_t*)&hdr, 0, sizeof(hdr));
+            F_ReadLumpSection(FileHandle_File(file), 0, (uint8_t*)&hdr, 0, sizeof(hdr));
             pTex->offX = -SHORT(hdr.leftOffset);
             pTex->offY = -SHORT(hdr.topOffset);
         }
@@ -2680,7 +2680,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
     }
     else if(r->lumpNum >= 0)
     {
-        DFile* file = F_OpenLump(r->lumpNum);
+        FileHandle* file = F_OpenLump(r->lumpNum);
         if(file)
         {
             if(Image_LoadFromFile(image, file))
@@ -2692,7 +2692,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
 #define RAW_WIDTH           320
 #define RAW_HEIGHT          200
 
-                size_t fileLength = DFile_Length(file);
+                size_t fileLength = FileHandle_Length(file);
                 size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
 
                 GL_InitImage(image);
@@ -2701,7 +2701,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
                     memset(image->pixels, 0, bufSize);
 
                 // Load the raw image data.
-                DFile_Read(file, image->pixels, fileLength);
+                FileHandle_Read(file, image->pixels, fileLength);
                 image->size.width = RAW_WIDTH;
                 image->size.height = (int) (fileLength / image->size.width);
                 image->pixelSize = 1;

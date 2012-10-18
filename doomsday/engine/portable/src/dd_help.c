@@ -124,7 +124,7 @@ static void DH_DeleteNode(helpnode_t* node)
  */
 static int DH_ReadStrings(const char* fileName)
 {
-    DFile* file = F_Open(fileName, "rt");
+    FileHandle* file = F_Open(fileName, "rt");
     char line[2048], *ptr, *eol, *end;
     helpnode_t* node = 0;
     int count = 0, length;
@@ -135,7 +135,7 @@ static int DH_ReadStrings(const char* fileName)
         return false;
     }
 
-    while(!DFile_AtEnd(file))
+    while(!FileHandle_AtEnd(file))
     {
         M_ReadLine(line, sizeof(line), file);
         if(M_IsComment(line))

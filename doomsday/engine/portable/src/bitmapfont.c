@@ -102,21 +102,21 @@ int Font_Leading(font_t* font)
     return font->_leading;
 }
 
-static byte inByte(DFile* file)
+static byte inByte(FileHandle* file)
 {
     byte b;
-    DFile_Read(file, (uint8_t*)&b, sizeof(b));
+    FileHandle_Read(file, (uint8_t*)&b, sizeof(b));
     return b;
 }
 
-static unsigned short inShort(DFile* file)
+static unsigned short inShort(FileHandle* file)
 {
     unsigned short s;
-    DFile_Read(file, (uint8_t*)&s, sizeof(s));
+    FileHandle_Read(file, (uint8_t*)&s, sizeof(s));
     return USHORT(s);
 }
 
-static void* readFormat0(font_t* font, DFile* file)
+static void* readFormat0(font_t* font, FileHandle* file)
 {
     int i, c, bitmapFormat, numPels, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
@@ -202,7 +202,7 @@ static void* readFormat0(font_t* font, DFile* file)
     return image;
 }
 
-static void* readFormat2(font_t* font, DFile* file)
+static void* readFormat2(font_t* font, FileHandle* file)
 {
     int i, numPels, dataHeight, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
@@ -349,7 +349,7 @@ int BitmapFont_CharHeight(font_t* font, unsigned char ch)
 void BitmapFont_Prepare(font_t* font)
 {
     bitmapfont_t* bf = (bitmapfont_t*)font;
-    DFile* file;
+    FileHandle* file;
     void* image = 0;
     int version;
     assert(font && font->_type == FT_BITMAP);

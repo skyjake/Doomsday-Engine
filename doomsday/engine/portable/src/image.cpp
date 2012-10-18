@@ -133,14 +133,14 @@ boolean Image_HasAlpha(const image_t* image)
     return false;
 }
 
-boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* _hndl)
+boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandle* _hndl)
 {
     /// @todo There are too many copies made here. It would be best if image_t
     /// contained an instance of QImage. -jk
 
     DENG_ASSERT(img);
     DENG_ASSERT(_hndl);
-    de::DFile& hndl = *reinterpret_cast<de::DFile*>(_hndl);
+    de::FileHandle& hndl = *reinterpret_cast<de::FileHandle*>(_hndl);
 
     // It is assumed that file's position stays the same (could be trying multiple loaders).
     size_t initPos = hndl.tell();

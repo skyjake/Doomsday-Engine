@@ -1,5 +1,5 @@
 /**
- * @file dfile.h
+ * @file filehandle.h
  * Reference/handle to a unique file in the engine's virtual file system.
  *
  * @ingroup fs
@@ -50,26 +50,26 @@ namespace de {
 
 /// @todo Should not be visible outside the engine.
 class File1;
-class DFileBuilder;
+class FileHandleBuilder;
 
 /**
  * Reference/handle to a unique file in the engine's virtual file system.
  */
-class DFile
+class FileHandle
 {
 public:
-    ~DFile();
+    ~FileHandle();
 
     /**
      * Close the file if open. Note that this clears any previously buffered data.
      */
-    DFile& close();
+    FileHandle& close();
 
     /// @todo Should not be visible outside the engine.
     struct filelist_s* list();
 
     /// @todo Should not be visible outside the engine.
-    DFile& setList(struct filelist_s* list);
+    FileHandle& setList(struct filelist_s* list);
 
     /// @todo Should not be visible outside the engine.
     bool hasFile() const;
@@ -116,12 +116,12 @@ public:
     /**
      * Rewind the stream to the start of the file.
      */
-    DFile& rewind();
+    FileHandle& rewind();
 
-    friend class DFileBuilder;
+    friend class FileHandleBuilder;
 
 private:
-    DFile();
+    FileHandle();
 
     struct Instance;
     Instance* d;
@@ -136,28 +136,28 @@ extern "C" {
  * C wrapper API:
  */
 
-struct dfile_s; // The texture instance (opaque).
-typedef struct dfile_s DFile;
+struct filehandle_s; // The filehandle instance (opaque).
+typedef struct filehandle_s FileHandle;
 
-void DFile_Close(DFile* hndl);
+void FileHandle_Close(FileHandle* hndl);
 
-boolean DFile_IsValid(DFile const* hndl);
+boolean FileHandle_IsValid(FileHandle const* hndl);
 
-size_t DFile_Length(DFile* hndl);
+size_t FileHandle_Length(FileHandle* hndl);
 
-size_t DFile_BaseOffset(DFile const* hndl);
+size_t FileHandle_BaseOffset(FileHandle const* hndl);
 
-size_t DFile_Read(DFile* hndl, uint8_t* buffer, size_t count);
+size_t FileHandle_Read(FileHandle* hndl, uint8_t* buffer, size_t count);
 
-unsigned char DFile_GetC(DFile* hndl);
+unsigned char FileHandle_GetC(FileHandle* hndl);
 
-boolean DFile_AtEnd(DFile* hndl);
+boolean FileHandle_AtEnd(FileHandle* hndl);
 
-size_t DFile_Tell(DFile* hndl);
+size_t FileHandle_Tell(FileHandle* hndl);
 
-size_t DFile_Seek(DFile* hndl, size_t offset, SeekMethod whence);
+size_t FileHandle_Seek(FileHandle* hndl, size_t offset, SeekMethod whence);
 
-void DFile_Rewind(DFile* hndl);
+void FileHandle_Rewind(FileHandle* hndl);
 
 #ifdef __cplusplus
 } // extern "C"

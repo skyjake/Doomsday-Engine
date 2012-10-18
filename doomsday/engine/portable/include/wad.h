@@ -34,7 +34,7 @@
 
 namespace de {
 
-class DFile;
+class FileHandle;
 class LumpIndex;
 class PathDirectoryNode;
 
@@ -51,7 +51,7 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    Wad(DFile& file, char const* path, FileInfo const& info);
+    Wad(FileHandle& hndl, char const* path, FileInfo const& info);
     ~Wad();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
@@ -194,7 +194,7 @@ public:
      *
      * @return @c true= @a file can be represented with Wad.
      */
-    static bool recognise(DFile& file);
+    static bool recognise(FileHandle& file);
 
 private:
     struct Instance;
@@ -206,8 +206,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-struct wadfile_s; // The wadfile instance (opaque)
-//typedef struct wadfile_s Wad;
+struct wafilehandle_s; // The wadfile instance (opaque)
+//typedef struct wafilehandle_s Wad;
 
 #ifdef __cplusplus
 } // extern "C"

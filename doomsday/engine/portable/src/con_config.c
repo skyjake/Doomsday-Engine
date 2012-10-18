@@ -227,7 +227,7 @@ boolean Con_ParseCommands(const char* fileName)
 
 boolean Con_ParseCommands2(const char* fileName, int flags)
 {
-    DFile* file;
+    FileHandle* file;
     char buff[512];
     boolean setdefault = (flags & CPCF_SET_DEFAULT) != 0;
 
@@ -259,7 +259,7 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
             if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
                 Con_Message("%s(%d): error executing command\n \"%s\"\n", F_PrettyPath(fileName), line, buff);
         }
-        if(DFile_AtEnd(file))
+        if(FileHandle_AtEnd(file))
             break;
         line++;
     }}

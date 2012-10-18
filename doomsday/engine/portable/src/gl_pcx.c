@@ -65,7 +65,7 @@ static void setLastError(const char* msg)
     strcpy(lastErrorMsg, msg);
 }
 
-static int load(DFile* file, int width, int height, uint8_t* dstBuf)
+static int load(FileHandle* file, int width, int height, uint8_t* dstBuf)
 {
     assert(file && dstBuf);
     {
@@ -75,10 +75,10 @@ static int load(DFile* file, int width, int height, uint8_t* dstBuf)
     uint8_t* raw;
     size_t len;
 
-    len = DFile_Length(file);
+    len = FileHandle_Length(file);
     if(0 == (raw = malloc(len)))
         Con_Error("PCX_Load: Failed on allocation of %lu bytes for read buffer.", (unsigned long) len);
-    DFile_Read(file, raw, len);
+    FileHandle_Read(file, raw, len);
     srcPos = raw;
     // Palette is at the end.
     palette = srcPos + len - 768;
@@ -127,13 +127,13 @@ const char* PCX_LastError(void)
     return 0;
 }
 
-uint8_t* PCX_Load(DFile* file, int* width, int* height, int* pixelSize)
+uint8_t* PCX_Load(FileHandle* file, int* width, int* height, int* pixelSize)
 {
     assert(file && width && height && pixelSize);
     {
     header_t hdr;
-    size_t initPos = DFile_Tell(file);
-    size_t readBytes = DFile_Read(file, (uint8_t*)&hdr, sizeof(hdr));
+    size_t initPos = FileHandle_Tell(file);
+    size_t readBytes = FileHandle_Read(file, (uint8_t*)&hdr, sizeof(hdr));
     uint8_t* dstBuf = 0;
     if(!(readBytes < sizeof(hdr)))
     {
@@ -143,7 +143,7 @@ uint8_t* PCX_Load(DFile* file, int* width, int* height, int* pixelSize)
            hdr.encoding != 1 || hdr.bits_per_pixel != 8)
         {
             setLastError("Unsupported format.");
-            DFile_Seek(file, initPos, SeekSet);
+            FileHandle_Seek(file, initPos, SeekSet);
             return 0;
         }
 
@@ -155,14 +155,14 @@ uint8_t* PCX_Load(DFile* file, int* width, int* height, int* pixelSize)
         if(0 == (dstBuf = malloc(dstBufSize)))
             Con_Error("PCX_Load: Failed on allocation of %lu bytes for output buffer.", (unsigned long) dstBufSize);
 
-        DFile_Rewind(file);
+        FileHandle_Rewind(file);
         if(!load(file, *width, *height, dstBuf))
         {
             free(dstBuf);
             dstBuf = 0;
         }
     }
-    DFile_Seek(file, initPos, SeekSet);
+    FileHandle_Seek(file, initPos, SeekSet);
     return dstBuf;
     }
 }

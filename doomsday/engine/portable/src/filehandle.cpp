@@ -1,5 +1,5 @@
 /**
- * @file dfile.cpp
+ * @file filehandle.cpp
  * Reference/handle to a unique file in the engine's virtual file system.
  *
  * @ingroup fs
@@ -32,18 +32,18 @@
 #include "de_filesys.h"
 
 #include "blockset.h"
-#include "dfile.h"
+#include "filehandle.h"
 
 #include <de/memory.h>
 
 namespace de {
 
-struct DFile::Instance
+struct FileHandle::Instance
 {
     /// The referenced file (if any).
     File1* file;
 
-    /// Either the FileList which owns this or the next DFile in the used object pool.
+    /// Either the FileList which owns this or the next FileHandle in the used object pool.
     void* list;
 
     struct dfile_flags_s {
@@ -79,17 +79,17 @@ static mutex_t mutex;
 static blockset_t* handleBlockSet;
 
 // Head of the llist of used file handles, for recycling.
-static de::DFile* usedHandles;
+static de::FileHandle* usedHandles;
 #endif
 
-static void errorIfNotValid(de::DFile const& file, char const* callerName)
+static void errorIfNotValid(de::FileHandle const& file, char const* callerName)
 {
     if(file.isValid()) return;
     Con_Error("%s: Instance %p has not yet been initialized.", callerName, (void*)&file);
     exit(1); // Unreachable.
 }
 
-void DFileBuilder::init(void)
+void FileHandleBuilder::init(void)
 {
 #if 0
     if(!inited)
@@ -98,11 +98,11 @@ void DFileBuilder::init(void)
         inited = true;
         return;
     }
-    Con_Error("DFileBuilder::init: Already initialized.");
+    Con_Error("FileHandleBuilder::init: Already initialized.");
 #endif
 }
 
-void DFileBuilder::shutdown(void)
+void FileHandleBuilder::shutdown(void)
 {
 #if 0
     if(inited)
@@ -116,17 +116,17 @@ void DFileBuilder::shutdown(void)
         return;
     }
 #if _DEBUG
-    Con_Error("DFileBuilder::shutdown: Not presently initialized.");
+    Con_Error("FileHandleBuilder::shutdown: Not presently initialized.");
 #endif
 #endif
 }
 
-DFile* DFileBuilder::fromFileLump(File1& container, int lumpIdx, bool dontBuffer)
+FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool dontBuffer)
 {
     if(!container.isValidIndex(lumpIdx)) return 0;
 
     FileInfo const& info = container.lumpInfo(lumpIdx);
-    de::DFile* file = new de::DFile();
+    de::FileHandle* file = new de::FileHandle();
     // Init and load in the lump data.
     file->d->flags.open = true;
     if(!dontBuffer)
@@ -134,12 +134,12 @@ DFile* DFileBuilder::fromFileLump(File1& container, int lumpIdx, bool dontBuffer
         file->d->size = info.size;
         file->d->pos = file->d->data = (uint8_t*) M_Malloc(file->d->size);
         if(!file->d->data)
-            Con_Error("DFileBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
+            Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
                 (unsigned long) file->d->size);
 #if _DEBUG
         VERBOSE2(
             AutoStr* path = container.composeLumpPath(lumpIdx);
-            Con_Printf("DFile [%p] buffering \"%s:%s\"...\n", (void*)file,
+            Con_Printf("FileHandle [%p] buffering \"%s:%s\"...\n", (void*)file,
                        F_PrettyPath(Str_Text(container.path())),
                        F_PrettyPath(Str_Text(path)));
         )
@@ -149,50 +149,50 @@ DFile* DFileBuilder::fromFileLump(File1& container, int lumpIdx, bool dontBuffer
     return file;
 }
 
-DFile* DFileBuilder::fromFile(File1& af)
+FileHandle* FileHandleBuilder::fromFile(File1& af)
 {
-    de::DFile* file = new de::DFile();
+    de::FileHandle* file = new de::FileHandle();
     file->d->file = &af;
     file->d->flags.open = true;
     file->d->flags.reference = true;
     return file;
 }
 
-DFile* DFileBuilder::fromNativeFile(FILE& hndl, size_t baseOffset)
+FileHandle* FileHandleBuilder::fromNativeFile(FILE& hndl, size_t baseOffset)
 {
-    de::DFile* file = new de::DFile();
+    de::FileHandle* file = new de::FileHandle();
     file->d->flags.open = true;
     file->d->hndl = &hndl;
     file->d->baseOffset = baseOffset;
     return file;
 }
 
-DFile* DFileBuilder::dup(de::DFile const& hndl)
+FileHandle* FileHandleBuilder::dup(de::FileHandle const& hndl)
 {
-    de::DFile* clone = new de::DFile();
+    de::FileHandle* clone = new de::FileHandle();
     clone->d->flags.open = true;
     clone->d->flags.reference = true;
     clone->d->file = &hndl.file();
     return clone;
 }
 
-DFile::DFile(void)
+FileHandle::FileHandle(void)
 {
 #if 0
     Sys_Lock(mutex);
-    de::DFile* file;
+    de::FileHandle* file;
     if(usedHandles)
     {
         file = usedHandles;
-        usedHandles = (de::DFile*) file->list;
+        usedHandles = (de::FileHandle*) file->list;
     }
     else
     {
         if(!handleBlockSet)
         {
-            handleBlockSet = BlockSet_New(sizeof(de::DFile), 64);
+            handleBlockSet = BlockSet_New(sizeof(de::FileHandle), 64);
         }
-        file = (de::DFile*) BlockSet_Allocate(handleBlockSet);
+        file = (de::FileHandle*) BlockSet_Allocate(handleBlockSet);
     }
     Sys_Unlock(mutex);
 #endif
@@ -200,7 +200,7 @@ DFile::DFile(void)
     d = new Instance();
 }
 
-DFile::~DFile()
+FileHandle::~FileHandle()
 {
     close();
 
@@ -216,7 +216,7 @@ DFile::~DFile()
     delete d;
 }
 
-DFile& DFile::close()
+FileHandle& FileHandle::close()
 {
     if(!d->flags.open) return *this;
     if(d->hndl)
@@ -236,43 +236,43 @@ DFile& DFile::close()
     return *this;
 }
 
-bool DFile::isValid() const
+bool FileHandle::isValid() const
 {
     /// @todo write me.
     return true;
 }
 
-struct filelist_s* DFile::list()
+struct filelist_s* FileHandle::list()
 {
-    errorIfNotValid(*this, "DFile::list");
+    errorIfNotValid(*this, "FileHandle::list");
     return (struct filelist_s*)d->list;
 }
 
-DFile& DFile::setList(struct filelist_s* list)
+FileHandle& FileHandle::setList(struct filelist_s* list)
 {
     d->list = list;
     return *this;
 }
 
-bool DFile::hasFile() const
+bool FileHandle::hasFile() const
 {
-    errorIfNotValid(*this, "DFile::file");
+    errorIfNotValid(*this, "FileHandle::file");
     return !!d->file;
 }
 
-File1& DFile::file()
+File1& FileHandle::file()
 {
-    errorIfNotValid(*this, "DFile::file");
+    errorIfNotValid(*this, "FileHandle::file");
     return *d->file;
 }
 
-File1& DFile::file() const
+File1& FileHandle::file() const
 {
-    errorIfNotValid(*this, "DFile::file const");
+    errorIfNotValid(*this, "FileHandle::file const");
     return *d->file;
 }
 
-size_t DFile::baseOffset() const
+size_t FileHandle::baseOffset() const
 {
     if(d->flags.reference)
     {
@@ -281,9 +281,9 @@ size_t DFile::baseOffset() const
     return d->baseOffset;
 }
 
-size_t DFile::length()
+size_t FileHandle::length()
 {
-    errorIfNotValid(*this, "DFile::Length");
+    errorIfNotValid(*this, "FileHandle::Length");
     if(d->flags.reference)
     {
         return d->file->handle().length();
@@ -297,9 +297,9 @@ size_t DFile::length()
     }
 }
 
-size_t DFile::read(uint8_t* buffer, size_t count)
+size_t FileHandle::read(uint8_t* buffer, size_t count)
 {
-    errorIfNotValid(*this, "DFile::read");
+    errorIfNotValid(*this, "FileHandle::read");
     if(d->flags.reference)
     {
         return d->file->handle().read(buffer, count);
@@ -331,9 +331,9 @@ size_t DFile::read(uint8_t* buffer, size_t count)
     }
 }
 
-bool DFile::atEnd()
+bool FileHandle::atEnd()
 {
-    errorIfNotValid(*this, "DFile::atEnd");
+    errorIfNotValid(*this, "FileHandle::atEnd");
     if(d->flags.reference)
     {
         return d->file->handle().atEnd();
@@ -341,18 +341,18 @@ bool DFile::atEnd()
     return (d->flags.eof != 0);
 }
 
-unsigned char DFile::getC()
+unsigned char FileHandle::getC()
 {
-    errorIfNotValid(*this, "DFile::getC");
+    errorIfNotValid(*this, "FileHandle::getC");
 
     unsigned char ch = 0;
     read((uint8_t*)&ch, 1);
     return ch;
 }
 
-size_t DFile::tell()
+size_t FileHandle::tell()
 {
-    errorIfNotValid(*this, "DFile::tell");
+    errorIfNotValid(*this, "FileHandle::tell");
     if(d->flags.reference)
     {
         return d->file->handle().tell();
@@ -365,7 +365,7 @@ size_t DFile::tell()
     }
 }
 
-size_t DFile::seek(size_t offset, SeekMethod whence)
+size_t FileHandle::seek(size_t offset, SeekMethod whence)
 {
     if(d->flags.reference)
     {
@@ -397,7 +397,7 @@ size_t DFile::seek(size_t offset, SeekMethod whence)
     }
 }
 
-de::DFile& DFile::rewind()
+de::FileHandle& FileHandle::rewind()
 {
     seek(0, SeekSet);
     return *this;
@@ -410,86 +410,86 @@ de::DFile& DFile::rewind()
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::DFile*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::FileHandle*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::DFile const*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::FileHandle const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::DFile* self = TOINTERNAL(inst)
+    de::FileHandle* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    de::DFile const* self = TOINTERNAL_CONST(inst)
+    de::FileHandle const* self = TOINTERNAL_CONST(inst)
 
-void DFile_Close(struct dfile_s* hndl)
+void FileHandle_Close(struct filehandle_s* hndl)
 {
     SELF(hndl);
     self->close();
 }
 
-boolean DFile_IsValid(struct dfile_s const* hndl)
+boolean FileHandle_IsValid(struct filehandle_s const* hndl)
 {
     SELF_CONST(hndl);
     return self->isValid();
 }
 
-size_t DFile_Length(struct dfile_s* hndl)
+size_t FileHandle_Length(struct filehandle_s* hndl)
 {
     SELF(hndl);
     return self->length();
 }
 
-size_t DFile_BaseOffset(struct dfile_s const* hndl)
+size_t FileHandle_BaseOffset(struct filehandle_s const* hndl)
 {
     SELF_CONST(hndl);
     return self->baseOffset();
 }
 
-size_t DFile_Read(struct dfile_s* hndl, uint8_t* buffer, size_t count)
+size_t FileHandle_Read(struct filehandle_s* hndl, uint8_t* buffer, size_t count)
 {
     SELF(hndl);
     return self->read(buffer, count);
 }
 
-unsigned char DFile_GetC(struct dfile_s* hndl)
+unsigned char FileHandle_GetC(struct filehandle_s* hndl)
 {
     SELF(hndl);
     return self->getC();
 }
 
-boolean DFile_AtEnd(struct dfile_s* hndl)
+boolean FileHandle_AtEnd(struct filehandle_s* hndl)
 {
     SELF(hndl);
     return self->atEnd();
 }
 
-size_t DFile_Tell(struct dfile_s* hndl)
+size_t FileHandle_Tell(struct filehandle_s* hndl)
 {
     SELF(hndl);
     return self->tell();
 }
 
-size_t DFile_Seek(struct dfile_s* hndl, size_t offset, SeekMethod whence)
+size_t FileHandle_Seek(struct filehandle_s* hndl, size_t offset, SeekMethod whence)
 {
     SELF(hndl);
     return self->seek(offset, whence);
 }
 
-void DFile_Rewind(struct dfile_s* hndl)
+void FileHandle_Rewind(struct filehandle_s* hndl)
 {
     SELF(hndl);
     self->rewind();
 }
 
-struct file1_s* DFile_File(struct dfile_s* hndl)
+struct file1_s* FileHandle_File(struct filehandle_s* hndl)
 {
     SELF(hndl);
     return reinterpret_cast<struct file1_s*>(&self->file());
 }
 
-struct file1_s* DFile_File_const(struct dfile_s const* hndl)
+struct file1_s* FileHandle_File_const(struct filehandle_s const* hndl)
 {
     SELF_CONST(hndl);
     return reinterpret_cast<struct file1_s*>(&self->file());

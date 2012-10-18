@@ -33,7 +33,7 @@
 #define LIBDENG_FILESYS_MAIN_H
 
 #include "file.h"
-#include "dfile.h"
+#include "filehandle.h"
 #include "pathdirectory.h"
 
 #ifdef __cplusplus
@@ -80,7 +80,7 @@ namespace de
         };
         typedef QList<PathListItem> PathList;
 
-        typedef QList<DFile*> FileList;
+        typedef QList<FileHandle*> FileList;
 
     public:
         /**
@@ -254,8 +254,8 @@ namespace de
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        DFile& openFile(char const* path, char const* mode, size_t baseOffset = 0,
-                        bool allowDuplicate = true);
+        FileHandle& openFile(char const* path, char const* mode, size_t baseOffset = 0,
+                             bool allowDuplicate = true);
 
         /**
          * Try to locate the specified lump for reading.
@@ -266,16 +266,16 @@ namespace de
          *
          * @throws NotFoundError If the requested lump could not be found.
          */
-        DFile& openLump(lumpnum_t absoluteLumpNum);
+        FileHandle& openLump(lumpnum_t absoluteLumpNum);
 
         /// Clear all references to this file.
         void releaseFile(File1& file);
 
         /// Close this file handle.
-        void closeFile(DFile& hndl);
+        void closeFile(FileHandle& hndl);
 
         /// Completely destroy this file; close if open, clear references and any acquired identifiers.
-        void deleteFile(DFile& hndl);
+        void deleteFile(FileHandle& hndl);
 
         /**
          * Finds all files.
@@ -297,7 +297,7 @@ namespace de
          *
          * @return  Number of files found.
          */
-        int findAll(bool (*predicate)(DFile* hndl, void* parameters), void* parameters,
+        int findAll(bool (*predicate)(FileHandle* hndl, void* parameters), void* parameters,
                     FileList& found);
 
         /**
@@ -351,7 +351,7 @@ namespace de
          *
          * @return  The interpreted File file instance.
          */
-        File1& interpret(DFile& hndl, char const* path, FileInfo const& info);
+        File1& interpret(FileHandle& hndl, char const* path, FileInfo const& info);
 
         /**
          * Adds a file to any relevant indexes.
@@ -423,11 +423,11 @@ int F_AddFiles(char const* const* paths, int num);
 int F_RemoveFiles3(char const* const* paths, int num, boolean permitRequired);
 int F_RemoveFiles(char const* const* paths, int num/*, permitRequired = false */);
 
-DFile* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
-DFile* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
-DFile* F_Open(char const* path, char const* mode/*, baseOffset = 0 */);
+FileHandle* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
+FileHandle* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
+FileHandle* F_Open(char const* path, char const* mode/*, baseOffset = 0 */);
 
-DFile* F_OpenLump(lumpnum_t absoluteLumpNum);
+FileHandle* F_OpenLump(lumpnum_t absoluteLumpNum);
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
@@ -446,9 +446,9 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
 struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0 */);
 
-void F_Close(struct dfile_s* file);
+void F_Close(struct filehandle_s* file);
 
-void F_Delete(struct dfile_s* file);
+void F_Delete(struct filehandle_s* file);
 
 Str const* F_Path(struct file1_s const* file);
 

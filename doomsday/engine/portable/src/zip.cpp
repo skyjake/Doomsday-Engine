@@ -203,7 +203,7 @@ struct Zip::Instance
     }
 
     /// @todo Do not position the stream here.
-    static bool readArchiveHeader(DFile& file, localfileheader_t& hdr)
+    static bool readArchiveHeader(FileHandle& file, localfileheader_t& hdr)
     {
         size_t readBytes, initPos = file.tell();
         // Seek to the start of the header.
@@ -229,7 +229,7 @@ struct Zip::Instance
         return false;
     }
 
-    static bool readCentralEnd(DFile& file, centralend_t& end)
+    static bool readCentralEnd(FileHandle& file, centralend_t& end)
     {
         size_t readBytes = file.read((uint8_t*)&end, sizeof(centralend_t));
         if(!(readBytes < sizeof(centralend_t)))
@@ -260,10 +260,10 @@ struct Zip::Instance
         int pos = CENTRAL_END_SIZE; // Offset from the end.
         while(pos < MAXIMUM_COMMENT_SIZE)
         {
-            self->file->seek(-pos, SeekEnd);
+            self->handle_->seek(-pos, SeekEnd);
 
             // Is this the signature?
-            self->file->read((uint8_t*)&signature, sizeof(signature));
+            self->handle_->read((uint8_t*)&signature, sizeof(signature));
             if(littleEndianByteOrder.toNative(signature) == SIG_END_OF_CENTRAL_DIR)
                 return true; // Yes, this is it.
 
@@ -285,7 +285,7 @@ struct Zip::Instance
 
         // Read the central directory end record.
         centralend_t summary;
-        readCentralEnd(*self->file, summary);
+        readCentralEnd(*self->handle_, summary);
 
         // Does the summary say something we don't like?
         if(summary.diskEntryCount != summary.totalEntryCount)
@@ -297,8 +297,8 @@ struct Zip::Instance
         void* centralDirectory = M_Malloc(summary.size);
         if(!centralDirectory) throw Error("Zip::readLumpDirectory", QString("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
 
-        self->file->seek(summary.offset, SeekSet);
-        self->file->read((uint8_t*)centralDirectory, summary.size);
+        self->handle_->seek(summary.offset, SeekSet);
+        self->handle_->read((uint8_t*)centralDirectory, summary.size);
 
         /**
          * Pass 1: Validate support and count the number of lump records we need.
@@ -366,8 +366,8 @@ struct Zip::Instance
                 }
 
                 // Read the local file header, which contains the extra field size (Info-ZIP!).
-                self->file->seek(ULONG(header->relOffset), SeekSet);
-                self->file->read((uint8_t*)&localHeader, sizeof(localHeader));
+                self->handle_->seek(ULONG(header->relOffset), SeekSet);
+                self->handle_->read((uint8_t*)&localHeader, sizeof(localHeader));
 
                 size_t baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t)
                                   + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
@@ -435,7 +435,7 @@ struct Zip::Instance
         DENG2_ASSERT(lumpRecord && buffer);
         LOG_AS("Zip");
 
-        self->file->seek(lumpRecord->info().baseOffset, SeekSet);
+        self->handle_->seek(lumpRecord->info().baseOffset, SeekSet);
 
         if(lumpRecord->info().isCompressed())
         {
@@ -444,7 +444,7 @@ struct Zip::Instance
             if(!compressedData) throw Error("Zip::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpRecord->info().compressedSize));
 
             // Read the compressed data into a temporary buffer for decompression.
-            self->file->read(compressedData, lumpRecord->info().compressedSize);
+            self->handle_->read(compressedData, lumpRecord->info().compressedSize);
 
             // Uncompress into the buffer provided by the caller.
             result = uncompressRaw(compressedData, lumpRecord->info().compressedSize,
@@ -456,14 +456,14 @@ struct Zip::Instance
         else
         {
             // Read the uncompressed data directly to the buffer provided by the caller.
-            self->file->read(buffer, lumpRecord->info().size);
+            self->handle_->read(buffer, lumpRecord->info().size);
         }
         return lumpRecord->info().size;
     }
 };
 
-Zip::Zip(DFile& file, char const* path, FileInfo const& info)
-    : File1(FT_ZIP, path, file, info)
+Zip::Zip(FileHandle& hndl, char const* path, FileInfo const& info)
+    : File1(FT_ZIP, path, hndl, info)
 {
     d = new Instance(this);
 }
@@ -687,7 +687,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     return readBytes;
 }
 
-bool Zip::recognise(DFile& file)
+bool Zip::recognise(FileHandle& file)
 {
     localfileheader_t hdr;
     if(!Zip::Instance::readArchiveHeader(file, hdr)) return false;

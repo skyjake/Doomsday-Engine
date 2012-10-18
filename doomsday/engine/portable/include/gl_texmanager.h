@@ -35,7 +35,7 @@
 #ifndef LIBDENG_GLTEXTURE_MANAGER_H
 #define LIBDENG_GLTEXTURE_MANAGER_H
 
-#include "dfile.h"
+#include "filehandle.h"
 #include "r_data.h" /// @todo should not be included here.
 
 #include "texture.h"
@@ -203,12 +203,12 @@ TexSource GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t m
 TexSource GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
     const char* optionalSuffix, boolean quiet);
 
-TexSource GL_LoadFlatLump(struct image_s* image, DFile* file);
+TexSource GL_LoadFlatLump(struct image_s* image, FileHandle* file);
 
-TexSource GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass,
+TexSource GL_LoadPatchLumpAsPatch(struct image_s* image, FileHandle* file, int tclass,
     int tmap, int border, Texture* tex);
 
-TexSource GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
+TexSource GL_LoadDetailTextureLump(struct image_s* image, FileHandle* file);
 
 TexSource GL_LoadPatchComposite(struct image_s* image, Texture* tex);
 

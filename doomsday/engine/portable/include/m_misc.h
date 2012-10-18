@@ -33,7 +33,7 @@
 
 #include "dd_types.h"
 #include "m_vector.h"
-#include "dfile.h"
+#include "filehandle.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,7 +76,7 @@ void            M_Strip(char* str, size_t len);
 char*           M_SkipLine(char* str);
 void            M_WriteCommented(FILE* file, const char* text);
 void            M_WriteTextEsc(FILE* file, const char* text);
-void            M_ReadLine(char* buffer, size_t len, DFile* file);
+void            M_ReadLine(char* buffer, size_t len, FileHandle* file);
 
 boolean         M_IsComment(const char* text);
 

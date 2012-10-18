@@ -80,7 +80,7 @@ struct font_s;
 
 #include "dd_share.h"
 #include "dd_plugin.h"
-#include "dfile.h"
+#include "filehandle.h"
 #include "point.h"
 #include "rect.h"
 #include "size.h"

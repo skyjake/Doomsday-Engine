@@ -113,17 +113,17 @@ static void writeShort(FILE* f, int16_t s)
     fwrite(&v, sizeof(v), 1, f);
 }
 
-static uint8_t readByte(DFile* f)
+static uint8_t readByte(FileHandle* f)
 {
     uint8_t v;
-    DFile_Read(f, &v, 1);
+    FileHandle_Read(f, &v, 1);
     return v;
 }
 
-static int16_t readShort(DFile* f)
+static int16_t readShort(FileHandle* f)
 {
     int16_t v;
-    DFile_Read(f, (uint8_t*)&v, sizeof(v));
+    FileHandle_Read(f, (uint8_t*)&v, sizeof(v));
     return SHORT(v);
 }
 
@@ -151,7 +151,7 @@ static void writeHeader(uint8_t idLength, uint8_t colorMapType,
     writeByte(file, imageType);
 }
 
-static void readHeader(tga_header_t* dst, DFile* file)
+static void readHeader(tga_header_t* dst, FileHandle* file)
 {
     dst->idLength = readByte(file);
     dst->colorMapType = readByte(file);
@@ -172,7 +172,7 @@ static void writeColorMapSpec(int16_t index, int16_t length,
     writeByte(file, entrySize);
 }
 
-static void readColorMapSpec(tga_colormapspec_t* dst, DFile* file)
+static void readColorMapSpec(tga_colormapspec_t* dst, FileHandle* file)
 {
     dst->index = readShort(file);
     dst->length = readShort(file);
@@ -206,7 +206,7 @@ static void writeImageSpec(int16_t xOrigin, int16_t yOrigin,
     writeByte(file, 0);
 }
 
-static void readImageSpec(tga_imagespec_t* dst, DFile* file)
+static void readImageSpec(tga_imagespec_t* dst, FileHandle* file)
 {
     uint8_t bits;
 
@@ -368,11 +368,11 @@ int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf)
     return 1; // Success.
 }
 
-uint8_t* TGA_Load(DFile* file, int* w, int* h, int* pixelSize)
+uint8_t* TGA_Load(FileHandle* file, int* w, int* h, int* pixelSize)
 {
     assert(file && w && h && pixelSize);
     {
-    size_t initPos = DFile_Tell(file);
+    size_t initPos = FileHandle_Tell(file);
     int x, y, pixbytes, format;
     tga_header_t header;
     tga_colormapspec_t colorMapSpec;
@@ -396,7 +396,7 @@ uint8_t* TGA_Load(DFile* file, int* w, int* h, int* pixelSize)
         (imageSpec.flags & ISF_SCREEN_ORIGIN_UPPER))
     {
         setLastError("Unsupported format.");
-        DFile_Seek(file, initPos, SeekSet);
+        FileHandle_Seek(file, initPos, SeekSet);
         return 0;
     }
 
@@ -421,7 +421,7 @@ uint8_t* TGA_Load(DFile* file, int* w, int* h, int* pixelSize)
 
     // Read the pixel data.
     srcBuf = malloc((*w) * (*h) * pixbytes);
-    DFile_Read(file, srcBuf, (*w) * (*h) * pixbytes);
+    FileHandle_Read(file, srcBuf, (*w) * (*h) * pixbytes);
 
     // "Unpack" the pixels (origin in the lower left corner).
     // TGA pixels are in BGRA format.
@@ -441,7 +441,7 @@ uint8_t* TGA_Load(DFile* file, int* w, int* h, int* pixelSize)
     free(srcBuf);
 
     setLastError(0); // Success.
-    DFile_Seek(file, initPos, SeekSet);
+    FileHandle_Seek(file, initPos, SeekSet);
     return dstBuf;
     }
 }

@@ -113,7 +113,7 @@ struct Wad::Instance
     /// Lump data cache.
     LumpCache* lumpCache;
 
-    Instance(Wad* d, DFile& file, const char* path)
+    Instance(Wad* d, FileHandle& file, const char* path)
         : self(d),
           arcRecordsCount(0),
           arcRecordsOffset(0),
@@ -166,7 +166,7 @@ struct Wad::Instance
     }
 
     /// @pre @a file is positioned at the start of the header.
-    static bool readArchiveHeader(DFile& file, wadheader_t& hdr)
+    static bool readArchiveHeader(FileHandle& file, wadheader_t& hdr)
     {
         size_t readBytes = file.read((uint8_t*)&hdr, sizeof(wadheader_t));
         if(!(readBytes < sizeof(wadheader_t)))
@@ -237,8 +237,8 @@ struct Wad::Instance
         // We'll load the lump directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
         wadlumprecord_t* arcRecords = new wadlumprecord_t[arcRecordsCount];
-        self->file->seek(arcRecordsOffset, SeekSet);
-        self->file->read((uint8_t*)arcRecords, arcRecordsCount * sizeof(*arcRecords));
+        self->handle_->seek(arcRecordsOffset, SeekSet);
+        self->handle_->read((uint8_t*)arcRecords, arcRecordsCount * sizeof(*arcRecords));
 
         // Reserve a small work buffer for processing archived lump names.
         ddstring_t absPath;
@@ -294,10 +294,10 @@ struct Wad::Instance
     }
 };
 
-Wad::Wad(DFile& file, char const* path, FileInfo const& info)
-    : File1(FT_WAD, path, file, info)
+Wad::Wad(FileHandle& hndl, char const* path, FileInfo const& info)
+    : File1(FT_WAD, path, hndl, info)
 {
-    d = new Instance(this, file, path);
+    d = new Instance(this, hndl, path);
 }
 
 Wad::~Wad()
@@ -489,8 +489,8 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         }
     }
 
-    file->seek(lrec->info().baseOffset + startOffset, SeekSet);
-    size_t readBytes = file->read(buffer, length);
+    handle_->seek(lrec->info().baseOffset + startOffset, SeekSet);
+    size_t readBytes = handle_->read(buffer, length);
 
     /// @todo Do not check the read length here.
     if(readBytes < length)
@@ -512,7 +512,7 @@ uint Wad::calculateCRC()
     return crc;
 }
 
-bool Wad::recognise(DFile& file)
+bool Wad::recognise(FileHandle& file)
 {
     wadheader_t hdr;
 

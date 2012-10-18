@@ -243,7 +243,7 @@ static bool recognizeZIP(char const* filePath, void* parameters)
     DENG_UNUSED(parameters);
     try
     {
-        DFile& hndl = App_FileSystem()->openFile(filePath, "rbf");
+        FileHandle& hndl = App_FileSystem()->openFile(filePath, "rbf");
         bool result = Zip::recognise(hndl);
         /// @todo Check files. We should implement an auxiliary zip lump index...
         App_FileSystem()->closeFile(hndl);

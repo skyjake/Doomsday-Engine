@@ -59,17 +59,17 @@ static FS1* fileSystem;
 struct FileInterpreter
 {
     resourcetype_t resourceType;
-    de::File1* (*interpret)(de::DFile& file, char const* path, FileInfo const& info);
+    de::File1* (*interpret)(de::FileHandle& hndl, char const* path, FileInfo const& info);
 };
 
-static de::File1* interpretAsZipFile(de::DFile& hndl, char const* path, FileInfo const& info)
+static de::File1* interpretAsZipFile(de::FileHandle& hndl, char const* path, FileInfo const& info)
 {
     if(!Zip::recognise(hndl)) return 0;
     LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Zip (archive)";
     return new Zip(hndl, path, info);
 }
 
-static de::File1* interpretAsWadFile(de::DFile& hndl, char const* path, FileInfo const& info)
+static de::File1* interpretAsWadFile(de::FileHandle& hndl, char const* path, FileInfo const& info)
 {
     if(!Wad::recognise(hndl)) return 0;
     LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Wad (archive)";
@@ -186,7 +186,7 @@ struct FS1::Instance
         // Unload in reverse load order.
         for(int i = loadedFiles.size() - 1; i >= 0; i--)
         {
-            DFile& hndl = *(loadedFiles[i]);
+            FileHandle& hndl = *(loadedFiles[i]);
             if(!index || index->catalogues(hndl.file()))
             {
                 releaseFileId(Str_Text(hndl.file().path()));
@@ -251,8 +251,8 @@ struct FS1::Instance
         }
     }
 
-    de::DFile* tryOpenLump(char const* path, char const* /*mode*/, size_t /*baseOffset*/,
-                           bool allowDuplicate, FileInfo& info)
+    de::FileHandle* tryOpenLump(char const* path, char const* /*mode*/, size_t /*baseOffset*/,
+                                bool allowDuplicate, FileInfo& info)
     {
         DENG_ASSERT(path && path[0]);
 
@@ -272,7 +272,7 @@ struct FS1::Instance
         // Get a handle to the lump we intend to open.
         /// @todo The way this buffering works is nonsensical it should not be done here
         ///        but should instead be deferred until the content of the lump is read.
-        DFile* hndl = DFileBuilder::fromFileLump(*container, lumpIdx, false/*dontBuffer*/);
+        FileHandle* hndl = FileHandleBuilder::fromFileLump(*container, lumpIdx, false/*dontBuffer*/);
 
         // Prepare a temporary info descriptor.
         info = container->lumpInfo(lumpIdx);
@@ -280,7 +280,7 @@ struct FS1::Instance
         return hndl;
     }
 
-    de::DFile* tryOpenNativeFile(char const* path, char const* mymode, size_t baseOffset,
+    de::FileHandle* tryOpenNativeFile(char const* path, char const* mymode, size_t baseOffset,
                                  bool allowDuplicate, FileInfo& info)
     {
         DENG_ASSERT(path && path[0]);
@@ -338,7 +338,7 @@ struct FS1::Instance
         }
 
         // Acquire a handle on the file we intend to open.
-        DFile* hndl = DFileBuilder::fromNativeFile(*nativeFile, baseOffset);
+        FileHandle* hndl = FileHandleBuilder::fromNativeFile(*nativeFile, baseOffset);
 
         // Prepare the temporary info descriptor.
         info = FileInfo(F_GetLastModified(Str_Text(foundPath)));
@@ -361,7 +361,7 @@ struct FS1::Instance
 
         DEBUG_VERBOSE2_Message(("FS1::tryOpenFile: trying to open %s\n", Str_Text(searchPath)));
 
-        DFile* hndl = 0;
+        FileHandle* hndl = 0;
         FileInfo info; // The temporary info descriptor.
 
         // First check for lumps?
@@ -397,7 +397,7 @@ struct FS1::Instance
 FS1::FS1()
 {
     d = new Instance(this);
-    DFileBuilder::init();
+    FileHandleBuilder::init();
 }
 
 FS1::~FS1()
@@ -405,7 +405,7 @@ FS1::~FS1()
     closeAuxiliary();
     delete d;
 
-    DFileBuilder::shutdown();
+    FileHandleBuilder::shutdown();
 }
 
 void FS1::consoleRegister()
@@ -505,7 +505,7 @@ bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
         Con_Message("Unloading \"%s\"...\n", F_PrettyPath(path));
     }
 
-    DFile& hndl = *(*found);
+    FileHandle& hndl = *(*found);
     d->releaseFileId(Str_Text(hndl.file().path()));
     deindex(hndl.file());
     d->loadedFiles.erase(found);
@@ -559,7 +559,7 @@ static void printFileList(FS1::FileList& list)
 {
     for(int i = 0; i < list.size(); ++i)
     {
-        de::DFile* hndl = list[i];
+        de::FileHandle* hndl = list[i];
         de::File1& file = hndl->file();
         FileId fileId = FileId::fromPath(Str_Text(file.path()));
         LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
@@ -585,7 +585,7 @@ int FS1::reset()
     int unloaded = 0;
     for(int i = d->loadedFiles.size() - 1; i >= 0; i--)
     {
-        DFile& hndl = *(d->loadedFiles[i]);
+        FileHandle& hndl = *(d->loadedFiles[i]);
         File1& file = hndl.file();
         if(file.hasStartup()) continue;
 
@@ -859,11 +859,11 @@ lumpnum_t FS1::openAuxiliary(char const* filePath, size_t baseOffset)
         index(*wad);
 
         // Add a handle to the open files list.
-        DFile* openFilesHndl = DFileBuilder::fromFile(*wad);
+        FileHandle* openFilesHndl = FileHandleBuilder::fromFile(*wad);
         d->openFiles.push_back(openFilesHndl); openFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
 
         // Add a handle to the loaded files list.
-        DFile* loadedFilesHndl = DFileBuilder::dup(*openFilesHndl);
+        FileHandle* loadedFilesHndl = FileHandleBuilder::dup(*openFilesHndl);
         d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
 
         return Instance::AUXILIARY_BASE;
@@ -887,7 +887,7 @@ void FS1::releaseFile(de::File1& file)
 {
     for(int i = d->openFiles.size() - 1; i >= 0; i--)
     {
-        DFile& hndl = *(d->openFiles[i]);
+        FileHandle& hndl = *(d->openFiles[i]);
         if(&hndl.file() == &file)
         {
             d->openFiles.removeAt(i);
@@ -895,12 +895,12 @@ void FS1::releaseFile(de::File1& file)
     }
 }
 
-void FS1::closeFile(de::DFile& hndl)
+void FS1::closeFile(de::FileHandle& hndl)
 {
     hndl.close();
 }
 
-void FS1::deleteFile(de::DFile& hndl)
+void FS1::deleteFile(de::FileHandle& hndl)
 {
     closeFile(hndl);
     delete &hndl.file();
@@ -944,8 +944,8 @@ int FS1::findAll(FS1::FileList& found)
     return numFound;
 }
 
-int FS1::findAll(bool (*predicate)(de::DFile* hndl, void* parameters), void* parameters,
-                FS1::FileList& found)
+int FS1::findAll(bool (*predicate)(de::FileHandle* hndl, void* parameters), void* parameters,
+                 FS1::FileList& found)
 {
     int numFound = 0;
     DENG2_FOR_EACH(i, d->loadedFiles, FS1::FileList::const_iterator)
@@ -1082,7 +1082,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     return found.count() - numFoundSoFar;
 }
 
-de::File1& FS1::interpret(de::DFile& hndl, char const* path, FileInfo const& info)
+de::File1& FS1::interpret(de::FileHandle& hndl, char const* path, FileInfo const& info)
 {
     DENG_ASSERT(path && path[0]);
 
@@ -1133,7 +1133,7 @@ de::File1& FS1::interpret(de::DFile& hndl, char const* path, FileInfo const& inf
     return *interpretedFile;
 }
 
-de::DFile& FS1::openFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
+de::FileHandle& FS1::openFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
 {
 #if _DEBUG
     DENG_ASSERT(path && mode);
@@ -1148,22 +1148,22 @@ de::DFile& FS1::openFile(char const* path, char const* mode, size_t baseOffset, 
     if(!file) throw NotFoundError("FS1::openFile", "No files found matching '" + QString(path) + "'");
 
     // Add a handle to the opened files list.
-    DFile& openFilesHndl = *DFileBuilder::fromFile(*file);
+    FileHandle& openFilesHndl = *FileHandleBuilder::fromFile(*file);
     d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
     return openFilesHndl;
 }
 
-de::DFile& FS1::openLump(lumpnum_t absoluteLumpNum)
+de::FileHandle& FS1::openLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
     de::File1& container = lumpFile(absoluteLumpNum, &lumpIdx);
-    LumpFileAdaptor* lump = new LumpFileAdaptor(*DFileBuilder::fromFileLump(container, lumpIdx, false),
+    LumpFileAdaptor* lump = new LumpFileAdaptor(*FileHandleBuilder::fromFileLump(container, lumpIdx, false),
                                                 Str_Text(container.composeLumpPath(lumpIdx)),
                                                 container.lumpInfo(lumpIdx));
     DENG_ASSERT(lump);
 
     // Add a handle to the opened files list.
-    DFile& openFilesHndl = *DFileBuilder::fromFile(*lump);
+    FileHandle& openFilesHndl = *FileHandleBuilder::fromFile(*lump);
     d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
     return openFilesHndl;
 }
@@ -1180,7 +1180,7 @@ de::File1* FS1::addFile(char const* path, size_t baseOffset)
 {
     try
     {
-        DFile& hndl = openFile(path, "rb", baseOffset, false /* no duplicates */);
+        FileHandle& hndl = openFile(path, "rb", baseOffset, false /* no duplicates */);
 
         // Load the file (a.k.a., index it).
         File1& file = hndl.file();
@@ -1189,7 +1189,7 @@ de::File1* FS1::addFile(char const* path, size_t baseOffset)
         index(file);
 
         // Add a handle to the loaded files list.
-        DFile* loadedFilesHndl = DFileBuilder::dup(hndl);
+        FileHandle* loadedFilesHndl = FileHandleBuilder::dup(hndl);
         d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
 
         return &file;
@@ -1801,44 +1801,44 @@ void F_ReleaseFile(struct file1_s* file)
     App_FileSystem()->releaseFile(*reinterpret_cast<de::File1*>(file));
 }
 
-struct dfile_s* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate)
+struct filehandle_s* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate)
 {
     try
     {
-        return reinterpret_cast<struct dfile_s*>(&App_FileSystem()->openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
+        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
     return 0;
 }
 
-struct dfile_s* F_Open2(char const* path, char const* mode, size_t baseOffset)
+struct filehandle_s* F_Open2(char const* path, char const* mode, size_t baseOffset)
 {
     try
     {
-        return reinterpret_cast<struct dfile_s*>(&App_FileSystem()->openFile(path, mode, baseOffset));
+        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset));
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
     return 0;
 }
 
-struct dfile_s* F_Open(char const* path, char const* mode)
+struct filehandle_s* F_Open(char const* path, char const* mode)
 {
     try
     {
-        return reinterpret_cast<struct dfile_s*>(&App_FileSystem()->openFile(path, mode));
+        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode));
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
     return 0;
 }
 
-struct dfile_s* F_OpenLump(lumpnum_t absoluteLumpNum)
+struct filehandle_s* F_OpenLump(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        return reinterpret_cast<struct dfile_s*>(&App_FileSystem()->openLump(absoluteLumpNum));
+        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openLump(absoluteLumpNum));
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
@@ -1889,16 +1889,16 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
     return (uint)time(0);
 }
 
-void F_Close(struct dfile_s* hndl)
+void F_Close(struct filehandle_s* hndl)
 {
     if(!hndl) return;
-    App_FileSystem()->closeFile(*reinterpret_cast<de::DFile*>(hndl));
+    App_FileSystem()->closeFile(*reinterpret_cast<de::FileHandle*>(hndl));
 }
 
-void F_Delete(struct dfile_s* hndl)
+void F_Delete(struct filehandle_s* hndl)
 {
     if(!hndl) return;
-    App_FileSystem()->deleteFile(*reinterpret_cast<de::DFile*>(hndl));
+    App_FileSystem()->deleteFile(*reinterpret_cast<de::FileHandle*>(hndl));
 }
 
 ddstring_t const* F_Path(struct file1_s const* file)
@@ -2156,7 +2156,7 @@ typedef struct {
     bool markedCustom;
 } findfilespredicate_params_t;
 
-static bool findFilesPredicate(de::DFile* hndl, void* parameters)
+static bool findFilesPredicate(de::FileHandle* hndl, void* parameters)
 {
     DENG_ASSERT(parameters);
     findfilespredicate_params_t* p = (findfilespredicate_params_t*)parameters;

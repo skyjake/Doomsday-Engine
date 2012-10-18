@@ -26,7 +26,7 @@
 #define LIBDENG_FILESYS_H
 
 #include "dd_types.h"
-#include "dfilebuilder.h"
+#include "filehandlebuilder.h"
 #include "fs_main.h"
 #include "fs_util.h"
 #include "sys_reslocator.h" /// \todo Does not belong here (higher level abstraction).

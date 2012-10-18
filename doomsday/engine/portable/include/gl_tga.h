@@ -29,7 +29,7 @@
 #ifndef LIBDENG_GRAPHICS_TGA_H
 #define LIBDENG_GRAPHICS_TGA_H
 
-#include "dfile.h"
+#include "filehandle.h"
 
 /**
  * Saves the buffer (which is formatted rgb565) to a Targa 24 image file.
@@ -87,7 +87,7 @@ int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf);
  *
  * @return  Non-zero iff the image is loaded successfully.
  */
-uint8_t* TGA_Load(DFile* file, int* width, int* height, int* pixelSize);
+uint8_t* TGA_Load(FileHandle* file, int* width, int* height, int* pixelSize);
 
 /**
  * @return  Textual message detailing the last error encountered else @c 0.

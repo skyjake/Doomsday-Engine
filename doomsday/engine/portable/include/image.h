@@ -23,7 +23,7 @@
 #ifndef LIBDENG_IMAGE_H
 #define LIBDENG_IMAGE_H
 
-#include "dfile.h"
+#include "filehandle.h"
 #include "size.h"
 
 #ifdef __cplusplus
@@ -73,9 +73,9 @@ void GL_PrintImageMetadata(const image_t* image);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-uint8_t* Image_LoadFromFile(image_t* image, DFile* file);
+uint8_t* Image_LoadFromFile(image_t* image, FileHandle* file);
 
-boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, DFile* file);
+boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandle* file);
 
 boolean Image_Save(const image_t *image, const char* filePath);
 

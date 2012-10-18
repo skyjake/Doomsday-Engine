@@ -72,12 +72,12 @@ static int musicPlayLump(audiointerface_music_t* iMusic, lumpnum_t lump, boolean
     else
     {
         // Buffer the data using the driver's facilities.
-        DFile* hndl   = F_OpenLump(lump);
-        size_t length = DFile_Length(hndl);
+        FileHandle* hndl   = F_OpenLump(lump);
+        size_t length = FileHandle_Length(hndl);
 
         if(!hndl) return 0;
 
-        DFile_Read(hndl, (uint8_t*) iMusic->SongBuffer(length), length);
+        FileHandle_Read(hndl, (uint8_t*) iMusic->SongBuffer(length), length);
         F_Delete(hndl);
 
         return iMusic->Play(looped);
@@ -87,11 +87,11 @@ static int musicPlayLump(audiointerface_music_t* iMusic, lumpnum_t lump, boolean
 static int musicPlayFile(audiointerface_music_t* iMusic, const char* virtualOrNativePath, boolean looped)
 {
     size_t len;
-    DFile* file = F_Open(virtualOrNativePath, "rb");
+    FileHandle* file = F_Open(virtualOrNativePath, "rb");
 
     if(!file) return 0;
 
-    len = DFile_Length(file);
+    len = FileHandle_Length(file);
 
     if(!iMusic->Play || !iMusic->SongBuffer)
     {
@@ -105,7 +105,7 @@ static int musicPlayFile(audiointerface_music_t* iMusic, const char* virtualOrNa
             Con_Message("Warning: Failed on allocation of %lu bytes for temporary song write buffer.\n", (unsigned long) len);
             return false;
         }
-        DFile_Read(file, buf, len);
+        FileHandle_Read(file, buf, len);
         F_Dump(buf, len, Str_Text(fileName));
         free(buf);
 
@@ -117,7 +117,7 @@ static int musicPlayFile(audiointerface_music_t* iMusic, const char* virtualOrNa
     else
     {
         // Music interface offers buffered playback. Use it.
-        DFile_Read(file, (uint8_t*) iMusic->SongBuffer(len), len);
+        FileHandle_Read(file, (uint8_t*) iMusic->SongBuffer(len), len);
         F_Delete(file);
 
         return iMusic->Play(looped);

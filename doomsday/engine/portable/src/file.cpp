@@ -30,8 +30,8 @@
 
 namespace de {
 
-File1::File1(filetype_t _type, char const* _path, DFile& hndl, FileInfo const& _info)
-    : file(&hndl), type_(_type), flags(DefaultFlags)
+File1::File1(filetype_t _type, char const* _path, FileHandle& hndl, FileInfo const& _info)
+    : handle_(&hndl), type_(_type), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.
     /// @todo Does not belong at this level. Load order should be determined
@@ -48,7 +48,7 @@ File1::~File1()
 {
     App_FileSystem()->releaseFile(*this);
     Str_Free(&path_);
-    if(file) delete file;
+    if(handle_) delete handle_;
 }
 
 filetype_t File1::type() const
@@ -72,9 +72,9 @@ File1& File1::container() const
     return *info_.container;
 }
 
-de::DFile& File1::handle()
+de::FileHandle& File1::handle()
 {
-    return *file;
+    return *handle_;
 }
 
 ddstring_t const* File1::path() const

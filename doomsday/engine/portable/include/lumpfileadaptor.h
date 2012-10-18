@@ -36,7 +36,7 @@
 
 namespace de {
 
-class DFile;
+class FileHandle;
 class LumpIndex;
 class PathDirectoryNode;
 
@@ -47,7 +47,7 @@ class PathDirectoryNode;
 class LumpFileAdaptor : public File1
 {
 public:
-    LumpFileAdaptor(DFile& file, char const* path, FileInfo const& info);
+    LumpFileAdaptor(FileHandle& hndl, char const* path, FileInfo const& info);
     ~LumpFileAdaptor();
 
     /**
