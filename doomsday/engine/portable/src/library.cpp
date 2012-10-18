@@ -32,6 +32,7 @@ struct library_s { // typedef Library
     Str* path;
     de::LibraryFile* libFile;
     bool isGamePlugin;
+    std::string typeId;
 
     library_s() : path(0), libFile(0), isGamePlugin(false) {}
 };
@@ -109,6 +110,7 @@ Library* Library_New(const char* filePath)
         Library* lib = new Library;
         lib->libFile = &libFile;
         lib->path = Str_Set(Str_NewStd(), filePath);
+        lib->typeId = libFile.library().type().toStdString();
         loadedLibs.append(lib);
 
         // Symbols from game plugins conflict with each other, so we have to
@@ -131,10 +133,19 @@ Library* Library_New(const char* filePath)
 void Library_Delete(Library *lib)
 {
     DENG_ASSERT(lib);
+
+    // Unload the library from memory.
     lib->libFile->clear();
+
     Str_Delete(lib->path);
     loadedLibs.removeOne(lib);
     delete lib;
+}
+
+const char* Library_Type(const Library* lib)
+{
+    DENG_ASSERT(lib);
+    return &lib->typeId[0];
 }
 
 void* Library_Symbol(Library* lib, const char* symbolName)

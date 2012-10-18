@@ -69,18 +69,18 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
     DENG_ASSERT(fileName && fileName[0]);
     DENG_ASSERT(pluginPath && pluginPath[0]);
 
-    if(!strncmp(fileName, DENG_AUDIO_PLUGIN_NAME_PREFIX,
-                strlen(DENG_AUDIO_PLUGIN_NAME_PREFIX)))
-    {
-        // The audio plugins are loaded later on demand by AudioDriver.
-        return false;
-    }
-
     plugin = Library_New(pluginPath);
     if(!plugin)
     {
         Con_Message("  loadPlugin: Did not load \"%s\" (%s).\n", pluginPath, Library_LastError());
         return 0; // Continue iteration.
+    }
+
+    if(!strcmp(Library_Type(plugin), "deng-plugin/audio"))
+    {
+        // Audio plugins will be loaded later, on demand.
+        Library_Delete(plugin);
+        return 0;
     }
 
     initializer = Library_Symbol(plugin, "DP_Initialize");

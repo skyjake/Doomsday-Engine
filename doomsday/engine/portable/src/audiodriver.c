@@ -124,20 +124,29 @@ static void importInterfaces(driver_t* d)
 
 static int audioPluginFinder(const char* fileName, const char* absPath, void* ptr)
 {
+    int i;
     Str* path = (Str*) ptr;
-    if(!strncmp(fileName, Str_Text(path), Str_Length(path)) /* matching name? */ &&
-       (strlen(fileName) == Str_Length(path) /* no extension? */
-        || fileName[Str_Length(path)] == '.' /* extension follows right away? */))
+
+    // Check if the filename matches: [*]audio_name[.ext]
+    // (a regex or pattern match routine wouldn't hurt...)
+
+    for(i = 0; i <= strlen(fileName) - Str_Size(path); ++i)
     {
-        Str_Set(path, absPath);
-        return true; // Found it!
+        const char* fn = fileName + i;
+        if(!strncmp(fn, Str_Text(path), Str_Length(path)) /* matching name? */ &&
+           (strlen(fn) == Str_Length(path) /* no extension? */
+            || fn[Str_Length(path)] == '.' /* extension follows right away? */))
+        {
+            Str_Set(path, absPath);
+            return true; // Found it!
+        }
     }
     return false; // Keep looking...
 }
 
 static AutoStr* findAudioPluginPath(const char* name)
 {
-    AutoStr* path = Str_Appendf(AutoStr_New(), "%s%s", DENG_AUDIO_PLUGIN_NAME_PREFIX, name);
+    AutoStr* path = Str_Appendf(AutoStr_New(), "audio_%s", name);
     if(Library_IterateAvailableLibraries(audioPluginFinder, path))
     {
         // The full path of the library was returned in @a path.

@@ -133,8 +133,10 @@ namespace de
         virtual ~Library();
 
         /**
-         * Returns the type identifier of the library. This affects how libdeng2
-         * will treat the library.
+         * Returns the type identifier of the library. This affects how
+         * libdeng2 will treat the library. The type is determined
+         * automatically when the library is first loaded, and can then be
+         * queried at any time even after the library has been unloaded.
          */
         const String& type() const { return _type; }
 

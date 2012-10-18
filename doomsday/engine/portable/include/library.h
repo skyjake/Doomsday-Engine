@@ -83,6 +83,16 @@ Library* Library_New(const char* filePath);
 void Library_Delete(Library* lib);
 
 /**
+ * Returns the type identifier of the library.
+ * @see de::Library
+ *
+ * @param lib  Library instance.
+ *
+ * @return Type identifier string, e.g., "deng-plugin/game".
+ */
+const char* Library_Type(const Library* lib);
+
+/**
  * Looks up a symbol from the library.
  *
  * @param symbolName  Name of the symbol.
