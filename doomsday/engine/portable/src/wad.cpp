@@ -295,7 +295,7 @@ struct Wad::Instance
 };
 
 Wad::Wad(DFile& file, char const* path, FileInfo const& info)
-    : File1(FT_WADFILE, path, file, info)
+    : File1(FT_WAD, path, file, info)
 {
     d = new Instance(this, file, path);
 }

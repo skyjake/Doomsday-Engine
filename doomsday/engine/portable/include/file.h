@@ -34,9 +34,9 @@ extern "C" {
 /// @todo Refactor away.
 typedef enum {
     FT_FILE,        ///< Generic file
-    FT_ZIPFILE,
-    FT_WADFILE,
-    FT_LUMPFILE,
+    FT_ZIP,
+    FT_WAD,
+    FT_LUMPFILEADAPTOR,
     FILETYPE_COUNT
 } filetype_t;
 

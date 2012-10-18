@@ -1654,13 +1654,13 @@ D_CMD(ListFiles)
             case FT_FILE:
                 crc = 0;
                 break;
-            case FT_ZIPFILE:
+            case FT_ZIP:
                 crc = 0;
                 break;
-            case FT_WADFILE:
+            case FT_WAD:
                 crc = (!file.hasCustom()? reinterpret_cast<Wad&>(file).calculateCRC() : 0);
                 break;
-            case FT_LUMPFILE:
+            case FT_LUMPFILEADAPTOR:
                 crc = 0;
                 break;
             default:
