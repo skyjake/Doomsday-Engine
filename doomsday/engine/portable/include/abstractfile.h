@@ -50,7 +50,7 @@ typedef enum {
 
 #include <de/str.h>
 #include "dfile.h"
-#include "lumpinfo.h"
+#include "fileinfo.h"
 
 namespace de {
 
@@ -88,9 +88,9 @@ public:
      * @param type  File type identifier.
      * @param path  Path to this file in the virtual file system.
      * @param file  Handle to the file. Ownership of the handle is given to this instance.
-     * @param info  Lump info descriptor for the file. A copy is made.
+     * @param info  Info descriptor for the file. A copy is made.
      */
-    AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info);
+    AbstractFile(filetype_t _type, char const* _path, DFile& file, FileInfo const& _info);
 
     /**
      * Release all memory acquired for objects linked with this resource.
@@ -117,7 +117,7 @@ public:
     /**
      * @return  Immutable copy of the info descriptor for this resource.
      */
-    LumpInfo const& info() const;
+    FileInfo const& info() const;
 
     // Convenient lookup method for when only the last-modified property is needed from info().
     /// @return  "Last modified" timestamp of the resource.
@@ -209,7 +209,7 @@ public:
     virtual AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/') = 0;
 
     /**
-     * Retrieve the LumpInfo descriptor for a lump contained by this file.
+     * Retrieve the FileInfo descriptor for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
@@ -221,7 +221,7 @@ public:
      * the file and therefore its decriptor is that of the file itself. Subclasses
      * with multiple lumps should override this function accordingly.
      */
-    virtual LumpInfo const& lumpInfo(int /*lumpIdx*/) { return info(); }
+    virtual FileInfo const& lumpInfo(int /*lumpIdx*/) { return info(); }
 
     /**
      * Lookup the uncompressed size of lump contained by this file.
@@ -231,7 +231,7 @@ public:
      * @return Size of the lump in bytes.
      *
      * @note This method is intended mainly for convenience. @see lumpInfo() for
-     *       a better method of looking up multiple @ref LumpInfo properties.
+     *       a better method of looking up multiple @ref FileInfo properties.
      *
      * @attention This default implementation assumes there is only one lump in
      * the file and therefore its decriptor is that of the file itself. Subclasses
@@ -323,7 +323,7 @@ private:
     ddstring_t path_;
 
     /// Info descriptor (file metadata).
-    LumpInfo info_;
+    FileInfo info_;
 
     /// Load order depth index.
     uint order;

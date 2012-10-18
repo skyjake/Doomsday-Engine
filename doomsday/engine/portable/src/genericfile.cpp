@@ -35,7 +35,7 @@
 
 namespace de {
 
-GenericFile::GenericFile(DFile& file, char const* path, LumpInfo const& info)
+GenericFile::GenericFile(DFile& file, char const* path, FileInfo const& info)
     : AbstractFile(FT_GENERICFILE, path, file, info)
 {}
 

@@ -139,15 +139,15 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src);
 struct ZipLumpRecord
 {
 public:
-    explicit ZipLumpRecord(LumpInfo const& _info) : info_(_info)
+    explicit ZipLumpRecord(FileInfo const& _info) : info_(_info)
     {}
 
-    LumpInfo const& info() const {
+    FileInfo const& info() const {
         return info_;
     }
 
 private:
-    LumpInfo info_;
+    FileInfo info_;
 };
 
 struct ZipFile::Instance
@@ -392,7 +392,7 @@ struct ZipFile::Instance
                 F_PrependBasePath(&entryPath, &entryPath);
 
                 ZipLumpRecord* record =
-                    new ZipLumpRecord(LumpInfo(self->lastModified(), // Inherited from the file (note recursion).
+                    new ZipLumpRecord(FileInfo(self->lastModified(), // Inherited from the file (note recursion).
                                                lumpIdx++, baseOffset, ULONG(header->size),
                                                compressedSize, self));
                 PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&entryPath));
@@ -461,7 +461,7 @@ struct ZipFile::Instance
     }
 };
 
-ZipFile::ZipFile(DFile& file, char const* path, LumpInfo const& info)
+ZipFile::ZipFile(DFile& file, char const* path, FileInfo const& info)
     : AbstractFile(FT_ZIPFILE, path, file, info)
 {
     d = new Instance(this);
@@ -509,7 +509,7 @@ de::PathDirectoryNode& ZipFile::lumpDirectoryNode(int lumpIdx)
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
-LumpInfo const& ZipFile::lumpInfo(int lumpIdx)
+FileInfo const& ZipFile::lumpInfo(int lumpIdx)
 {
     LOG_AS("ZipFile");
     ZipLumpRecord* lrec = d->lumpRecord(lumpIdx);
@@ -570,7 +570,7 @@ uint8_t const* ZipFile::cacheLump(int lumpIdx)
 
     if(!isValidIndex(lumpIdx)) throw Error("ZipFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
-    LumpInfo const& info = lumpInfo(lumpIdx);
+    FileInfo const& info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))

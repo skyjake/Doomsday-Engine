@@ -210,6 +210,7 @@ DENG_HEADERS += \
     portable/include/edit_map.h \
     portable/include/fi_main.h \
     portable/include/filedirectory.h \
+    portable/include/fileinfo.h \
     portable/include/finaleinterpreter.h \
     portable/include/font.h \
     portable/include/fonts.h \
@@ -241,7 +242,6 @@ DENG_HEADERS += \
     portable/include/lumpcache.h \
     portable/include/lumpfile.h \
     portable/include/lumpindex.h \
-    portable/include/lumpinfo.h \
     portable/include/m_bams.h \
     portable/include/m_decomp64.h \
     portable/include/m_linkedlist.h \

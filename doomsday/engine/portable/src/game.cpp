@@ -164,7 +164,7 @@ bool Game::isRequiredResource(char const* absolutePath)
         // Is this resource from a container?
         try
         {
-            LumpInfo const& info = App_FileSystem()->zipLumpInfo(absolutePath);
+            FileInfo const& info = App_FileSystem()->zipFileInfo(absolutePath);
             // Yes; use the container's path instead.
             absolutePath = Str_Text(info.container->path());
         }

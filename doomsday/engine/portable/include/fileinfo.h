@@ -1,5 +1,5 @@
 /**
- * @file lumpinfo.h
+ * @file fileinfo.h
  *
  * Metadata (record) for a file in the engine's virtual file system.
  *
@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_LUMPINFO_H
-#define LIBDENG_FILESYS_LUMPINFO_H
+#ifndef LIBDENG_FILESYS_FILEINFO_H
+#define LIBDENG_FILESYS_FILEINFO_H
 
 #include <algorithm>
 
@@ -34,10 +34,10 @@
 namespace de {
 
 /**
- * LumpInfo record.
+ * FileInfo record.
  * @ingroup fs
  */
-struct LumpInfo
+struct FileInfo
 {
     uint lastModified; /// Unix timestamp.
     int lumpIdx; /// Relative index of this lump in the owning package else zero.
@@ -48,26 +48,26 @@ struct LumpInfo
     /// @todo Move this property up to file level.
     AbstractFile* container; /// Owning package else @c NULL.
 
-    LumpInfo(uint _lastModified = 0, int _lumpIdx = 0, size_t _baseOffset = 0,
+    FileInfo(uint _lastModified = 0, int _lumpIdx = 0, size_t _baseOffset = 0,
                size_t _size = 0, size_t _compressedSize = 0, AbstractFile* _container = 0)
         : lastModified(_lastModified), lumpIdx(_lumpIdx), baseOffset(_baseOffset),
           size(_size), compressedSize(_compressedSize), container(_container)
     {}
 
-    LumpInfo(LumpInfo const& other)
+    FileInfo(FileInfo const& other)
         : lastModified(other.lastModified), lumpIdx(other.lumpIdx), baseOffset(other.baseOffset),
           size(other.size), compressedSize(other.compressedSize), container(other.container)
     {}
 
-    ~LumpInfo() {}
+    ~FileInfo() {}
 
-    LumpInfo& operator = (LumpInfo other)
+    FileInfo& operator = (FileInfo other)
     {
         swap(*this, other);
         return *this;
     }
 
-    friend void swap(LumpInfo& first, LumpInfo& second) // nothrow
+    friend void swap(FileInfo& first, FileInfo& second) // nothrow
     {
         using std::swap;
         swap(first.lastModified,    second.lastModified);
@@ -83,4 +83,4 @@ struct LumpInfo
 
 } // namespace de
 
-#endif /* LIBDENG_FILESYS_LUMPINFO_H */
+#endif /* LIBDENG_FILESYS_FILEINFO_H */

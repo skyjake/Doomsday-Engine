@@ -25,7 +25,7 @@
 
 namespace de {
 
-LumpFile::LumpFile(DFile& file, char const* path, LumpInfo const& info)
+LumpFile::LumpFile(DFile& file, char const* path, FileInfo const& info)
     : AbstractFile(FT_LUMPFILE, path, file, info)
 {}
 

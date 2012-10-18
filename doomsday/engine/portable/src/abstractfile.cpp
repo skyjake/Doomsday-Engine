@@ -30,7 +30,7 @@
 
 namespace de {
 
-AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, LumpInfo const& _info)
+AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, FileInfo const& _info)
     : file(&file), type_(_type), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.
@@ -56,7 +56,7 @@ filetype_t AbstractFile::type() const
     return type_;
 }
 
-LumpInfo const& AbstractFile::info() const
+FileInfo const& AbstractFile::info() const
 {
     return info_;
 }

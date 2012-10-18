@@ -36,7 +36,7 @@
 #ifdef __cplusplus
 
 #include "abstractfile.h"
-#include "lumpinfo.h"
+#include "fileinfo.h"
 
 namespace de {
 
@@ -50,7 +50,7 @@ class PathDirectoryNode;
 class LumpFile : public AbstractFile
 {
 public:
-    LumpFile(DFile& file, char const* path, LumpInfo const& info);
+    LumpFile(DFile& file, char const* path, FileInfo const& info);
     ~LumpFile();
 
     /**
@@ -83,7 +83,7 @@ public:
      * @return Size of the lump in bytes.
      *
      * @note This method is intended mainly for convenience. @see lumpInfo() for
-     *       a better method of looking up multiple @ref LumpInfo properties.
+     *       a better method of looking up multiple @ref FileInfo properties.
      */
     size_t lumpSize(int lumpIdx);
 

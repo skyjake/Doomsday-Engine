@@ -57,10 +57,10 @@ typedef struct {
 struct WadLumpRecord
 {
 public:
-    explicit WadLumpRecord(LumpInfo const& _info) : crc_(0), info_(_info)
+    explicit WadLumpRecord(FileInfo const& _info) : crc_(0), info_(_info)
     {}
 
-    LumpInfo const& info() const {
+    FileInfo const& info() const {
         return info_;
     }
 
@@ -90,7 +90,7 @@ public:
 
 private:
     uint crc_;
-    LumpInfo info_;
+    FileInfo info_;
 };
 
 struct WadFile::Instance
@@ -256,7 +256,7 @@ struct WadFile::Instance
             F_PrependBasePath(&absPath, &absPath); // Make it absolute.
 
             WadLumpRecord* record =
-                new WadLumpRecord(LumpInfo(self->lastModified(), // Inherited from the file (note recursion).
+                new WadLumpRecord(FileInfo(self->lastModified(), // Inherited from the file (note recursion).
                                            i,
                                            littleEndianByteOrder.toNative(arcRecord->filePos),
                                            littleEndianByteOrder.toNative(arcRecord->size),
@@ -294,7 +294,7 @@ struct WadFile::Instance
     }
 };
 
-WadFile::WadFile(DFile& file, char const* path, LumpInfo const& info)
+WadFile::WadFile(DFile& file, char const* path, FileInfo const& info)
     : AbstractFile(FT_WADFILE, path, file, info)
 {
     d = new Instance(this, file, path);
@@ -342,7 +342,7 @@ de::PathDirectoryNode& WadFile::lumpDirectoryNode(int lumpIdx)
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
-LumpInfo const& WadFile::lumpInfo(int lumpIdx)
+FileInfo const& WadFile::lumpInfo(int lumpIdx)
 {
     LOG_AS("WadFile");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
@@ -404,7 +404,7 @@ uint8_t const* WadFile::cacheLump(int lumpIdx)
 
     if(!isValidIndex(lumpIdx)) throw NotFoundError("WadFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
-    LumpInfo const& info = lumpInfo(lumpIdx);
+    FileInfo const& info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))

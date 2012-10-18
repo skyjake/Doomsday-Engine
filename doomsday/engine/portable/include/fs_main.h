@@ -40,7 +40,7 @@
 
 #include <QList>
 #include <de/String>
-#include "lumpinfo.h"
+#include "fileinfo.h"
 
 /**
  * @defgroup fs File System
@@ -208,7 +208,7 @@ namespace de
         AbstractFile& lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
 
         /**
-         * Retrieve the LumpInfo metadata record for a lump in the Wad lump index.
+         * Retrieve the FileInfo metadata record for a lump in the Wad lump index.
          *
          * @post The active LumpIndex may have changed!
          *
@@ -220,10 +220,10 @@ namespace de
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        LumpInfo const& lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
+        FileInfo const& lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
 
         /**
-         * Retrieve the LumpInfo metadata record for a lump in the Zip lump index.
+         * Retrieve the FileInfo metadata record for a lump in the Zip lump index.
          *
          * @param path              Path to search for (made absolute if necessary).
          * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
@@ -233,7 +233,7 @@ namespace de
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        LumpInfo const& zipLumpInfo(char const* path, int* lumpIdx = 0);
+        FileInfo const& zipFileInfo(char const* path, int* lumpIdx = 0);
 
         /**
          * Opens the given file (will be translated) for reading.
@@ -351,7 +351,7 @@ namespace de
          *
          * @return  The interpreted AbstractFile file instance.
          */
-        AbstractFile& interpret(DFile& hndl, char const* path, LumpInfo const& info);
+        AbstractFile& interpret(DFile& hndl, char const* path, FileInfo const& info);
 
         /**
          * Adds a file to any relevant indexes.

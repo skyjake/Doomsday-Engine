@@ -125,7 +125,7 @@ DFile* DFileBuilder::fromFileLump(AbstractFile& container, int lumpIdx, bool don
 {
     if(!container.isValidIndex(lumpIdx)) return 0;
 
-    LumpInfo const& info = container.lumpInfo(lumpIdx);
+    FileInfo const& info = container.lumpInfo(lumpIdx);
     de::DFile* file = new de::DFile();
     // Init and load in the lump data.
     file->d->flags.open = true;

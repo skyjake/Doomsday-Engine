@@ -32,7 +32,7 @@
 
 #include "de_base.h" /// For lumpnum_t (@todo which should be moved here)
 #include "abstractfile.h"
-#include "lumpinfo.h"
+#include "fileinfo.h"
 
 #include <QList>
 
@@ -52,7 +52,7 @@ namespace de {
 class LumpIndex
 {
 public:
-    typedef QList<LumpInfo const*> Lumps;
+    typedef QList<FileInfo const*> Lumps;
 
 public:
     /**
@@ -71,11 +71,11 @@ public:
     lumpnum_t indexForPath(char const* path);
 
     /**
-     * @return  LumpInfo for the lump with index @a lumpNum.
+     * @return  FileInfo for the lump with index @a lumpNum.
      *
      * @throws de::Error    If @a lumpNum is not valid.
      */
-    LumpInfo const& lumpInfo(lumpnum_t lumpNum);
+    FileInfo const& lumpInfo(lumpnum_t lumpNum);
 
     /**
      * Provides access to the list of lumps for efficient traversals.
@@ -123,7 +123,7 @@ public:
      *
      * @return  @c true if found and pruned.
      */
-    bool pruneLump(LumpInfo& lumpInfo);
+    bool pruneLump(FileInfo& lumpInfo);
 
 private:
     struct Instance;

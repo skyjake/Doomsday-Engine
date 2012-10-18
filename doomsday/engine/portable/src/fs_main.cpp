@@ -35,7 +35,7 @@
 #include "game.h"
 #include "genericfile.h"
 #include "lumpindex.h"
-#include "lumpinfo.h"
+#include "fileinfo.h"
 #include "lumpfile.h"
 #include "m_misc.h" // for M_FindWhite()
 #include "wadfile.h"
@@ -59,17 +59,17 @@ static FS1* fileSystem;
 struct FileInterpreter
 {
     resourcetype_t resourceType;
-    de::AbstractFile* (*interpret)(de::DFile& file, char const* path, LumpInfo const& info);
+    de::AbstractFile* (*interpret)(de::DFile& file, char const* path, FileInfo const& info);
 };
 
-static de::AbstractFile* interpretAsZipFile(de::DFile& hndl, char const* path, LumpInfo const& info)
+static de::AbstractFile* interpretAsZipFile(de::DFile& hndl, char const* path, FileInfo const& info)
 {
     if(!ZipFile::recognise(hndl)) return 0;
     LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Zip (archive)";
     return new ZipFile(hndl, path, info);
 }
 
-static de::AbstractFile* interpretAsWadFile(de::DFile& hndl, char const* path, LumpInfo const& info)
+static de::AbstractFile* interpretAsWadFile(de::DFile& hndl, char const* path, FileInfo const& info)
 {
     if(!WadFile::recognise(hndl)) return 0;
     LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Wad (archive)";
@@ -252,7 +252,7 @@ struct FS1::Instance
     }
 
     de::DFile* tryOpenLump(char const* path, char const* /*mode*/, size_t /*baseOffset*/,
-                           bool allowDuplicate, LumpInfo& info)
+                           bool allowDuplicate, FileInfo& info)
     {
         DENG_ASSERT(path && path[0]);
 
@@ -260,7 +260,7 @@ struct FS1::Instance
         AbstractFile* container = 0;
         try
         {
-            container = self->zipLumpInfo(path, &lumpIdx).container;
+            container = self->zipFileInfo(path, &lumpIdx).container;
         }
         catch(NotFoundError)
         {} // Ignore this error.
@@ -281,7 +281,7 @@ struct FS1::Instance
     }
 
     de::DFile* tryOpenNativeFile(char const* path, char const* mymode, size_t baseOffset,
-                                 bool allowDuplicate, LumpInfo& info)
+                                 bool allowDuplicate, FileInfo& info)
     {
         DENG_ASSERT(path && path[0]);
 
@@ -341,7 +341,7 @@ struct FS1::Instance
         DFile* hndl = DFileBuilder::fromNativeFile(*nativeFile, baseOffset);
 
         // Prepare the temporary info descriptor.
-        info = LumpInfo(F_GetLastModified(Str_Text(foundPath)));
+        info = FileInfo(F_GetLastModified(Str_Text(foundPath)));
 
         return hndl;
     }
@@ -362,7 +362,7 @@ struct FS1::Instance
         DEBUG_VERBOSE2_Message(("FS1::tryOpenFile: trying to open %s\n", Str_Text(searchPath)));
 
         DFile* hndl = 0;
-        LumpInfo info; // The temporary info descriptor.
+        FileInfo info; // The temporary info descriptor.
 
         // First check for lumps?
         if(!reqNativeFile)
@@ -765,7 +765,7 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
     return d->logicalLumpNum(lumpNum);
 }
 
-LumpInfo const& FS1::lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx)
+FileInfo const& FS1::lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
     if(lumpIdx) *lumpIdx = -1;
 
@@ -773,15 +773,15 @@ LumpInfo const& FS1::lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx)
     if(!d->ActiveWadLumpIndex->isValidIndex(absoluteLumpNum))
         throw NotFoundError("FS1::lumpInfo", QString("No files found matching lumpNum %1").arg(absoluteLumpNum));
 
-    LumpInfo const& info = d->ActiveWadLumpIndex->lumpInfo(absoluteLumpNum);
+    FileInfo const& info = d->ActiveWadLumpIndex->lumpInfo(absoluteLumpNum);
     if(lumpIdx) *lumpIdx = info.lumpIdx;
     return info;
 }
 
-LumpInfo const& FS1::zipLumpInfo(char const* path, int* lumpIdx)
+FileInfo const& FS1::zipFileInfo(char const* path, int* lumpIdx)
 {
     if(lumpIdx) *lumpIdx = -1;
-    if(!path || !path[0]) throw NotFoundError("FS1::zipLumpInfo", "No files found matching '" + QString(path) + "'");
+    if(!path || !path[0]) throw NotFoundError("FS1::zipFileInfo", "No files found matching '" + QString(path) + "'");
 
     /*
      * First check the Zip directory.
@@ -795,7 +795,7 @@ LumpInfo const& FS1::zipLumpInfo(char const* path, int* lumpIdx)
     lumpnum_t lumpNum = d->zipLumpIndex.indexForPath(Str_Text(absSearchPath));
     if(lumpNum >= 0)
     {
-        LumpInfo const& info = d->zipLumpIndex.lumpInfo(lumpNum);
+        FileInfo const& info = d->zipLumpIndex.lumpInfo(lumpNum);
         if(lumpIdx) *lumpIdx = info.lumpIdx;
         return info;
     }
@@ -823,7 +823,7 @@ LumpInfo const& FS1::zipLumpInfo(char const* path, int* lumpIdx)
         }
     }
 
-    throw NotFoundError("FS1::zipLumpInfo", "No files found matching '" + QString(path) + "'");
+    throw NotFoundError("FS1::zipFileInfo", "No files found matching '" + QString(path) + "'");
 }
 
 de::AbstractFile& FS1::lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx)
@@ -982,7 +982,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
      */
     DENG2_FOR_EACH(i, d->zipLumpIndex.lumps(), LumpIndex::Lumps::const_iterator)
     {
-        LumpInfo const* lumpInfo = *i;
+        FileInfo const* lumpInfo = *i;
         AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
         DENG_ASSERT(container);
         PathDirectoryNode const& node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
@@ -1082,7 +1082,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     return found.count() - numFoundSoFar;
 }
 
-de::AbstractFile& FS1::interpret(de::DFile& hndl, char const* path, LumpInfo const& info)
+de::AbstractFile& FS1::interpret(de::DFile& hndl, char const* path, FileInfo const& info)
 {
     DENG_ASSERT(path && path[0]);
 
@@ -1551,7 +1551,7 @@ static void printLumpIndex(de::LumpIndex const& index)
     int idx = 0;
     DENG2_FOR_EACH(i, index.lumps(), de::LumpIndex::Lumps::const_iterator)
     {
-        LumpInfo const* lumpInfo = *i;
+        FileInfo const* lumpInfo = *i;
         de::AbstractFile* container = lumpInfo->container;
         Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
                    F_PrettyPath(Str_Text(container->path())),

@@ -29,7 +29,7 @@
 
 #ifdef __cplusplus
 
-#include "lumpinfo.h"
+#include "fileinfo.h"
 #include "abstractfile.h"
 
 namespace de {
@@ -51,7 +51,7 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    WadFile(DFile& file, char const* path, LumpInfo const& info);
+    WadFile(DFile& file, char const* path, FileInfo const& info);
     ~WadFile();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
@@ -91,7 +91,7 @@ public:
     AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
-     * Retrieve the LumpInfo descriptor for a lump contained by this file.
+     * Retrieve the FileInfo descriptor for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.
      *
@@ -99,7 +99,7 @@ public:
      *
      * @throws de::Error    If @a lumpIdx is not valid.
      */
-    LumpInfo const& lumpInfo(int lumpIdx);
+    FileInfo const& lumpInfo(int lumpIdx);
 
     /**
      * Lookup the uncompressed size of lump contained by this file.
@@ -111,7 +111,7 @@ public:
      * @throws de::Error    If @a lumpIdx is not valid.
      *
      * @note This method is intended mainly for convenience. @see lumpInfo() for
-     *       a better method of looking up multiple @ref LumpInfo properties.
+     *       a better method of looking up multiple @ref FileInfo properties.
      */
     size_t lumpSize(int lumpIdx);
 

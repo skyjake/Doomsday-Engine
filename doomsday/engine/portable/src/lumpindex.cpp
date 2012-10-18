@@ -91,7 +91,7 @@ struct LumpIndex::Instance
         // the last lump with a given name appears first in the chain.
         for(int i = 0; i < numRecords; ++i)
         {
-            LumpInfo const* lumpInfo = lumpInfos[i];
+            FileInfo const* lumpInfo = lumpInfos[i];
             PathDirectoryNode const& node = lumpInfo->container->lumpDirectoryNode(lumpInfo->lumpIdx);
             ushort j = node.hash() % (unsigned)numRecords;
 
@@ -126,7 +126,7 @@ struct LumpIndex::Instance
 
     struct LumpSortInfo
     {
-        LumpInfo const* lumpInfo;
+        FileInfo const* lumpInfo;
         AutoStr* path;
         int origIndex;
     };
@@ -166,7 +166,7 @@ struct LumpIndex::Instance
         for(int i = 0; i < numRecords; ++i)
         {
             LumpSortInfo& sortInfo   = sortInfos[i];
-            LumpInfo const* lumpInfo = lumpInfos[i];
+            FileInfo const* lumpInfo = lumpInfos[i];
 
             sortInfo.lumpInfo = lumpInfo;
             sortInfo.origIndex = i;
@@ -269,7 +269,7 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-LumpInfo const& LumpIndex::lumpInfo(lumpnum_t lumpNum)
+FileInfo const& LumpIndex::lumpInfo(lumpnum_t lumpNum)
 {
     if(!isValidIndex(lumpNum)) throw de::Error("LumpIndex::lumpInfo", invalidIndexMessage(lumpNum, size() - 1));
     return *d->lumpInfos[lumpNum];
@@ -313,7 +313,7 @@ int LumpIndex::pruneByFile(de::AbstractFile& file)
     return numFlaggedForFile;
 }
 
-bool LumpIndex::pruneLump(LumpInfo& lumpInfo)
+bool LumpIndex::pruneLump(FileInfo& lumpInfo)
 {
     if(d->lumpInfos.empty()) return 0;
 
@@ -339,7 +339,7 @@ void LumpIndex::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int numLum
 
     for(int i = 0; i < numLumps; ++i)
     {
-        LumpInfo const* info = &file.lumpInfo(lumpIdxBase + i);
+        FileInfo const* info = &file.lumpInfo(lumpIdxBase + i);
         d->lumpInfos.push_back(info);
     }
 
@@ -366,7 +366,7 @@ bool LumpIndex::catalogues(de::AbstractFile& file)
 
     DENG2_FOR_EACH(i, d->lumpInfos, Lumps::iterator)
     {
-        LumpInfo const* lumpInfo = *i;
+        FileInfo const* lumpInfo = *i;
         if(lumpInfo->container == &file) return true;
     }
     return false;
@@ -391,7 +391,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
     int idx;
     for(idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
-        LumpInfo const* lumpInfo = d->lumpInfos[idx];
+        FileInfo const* lumpInfo = d->lumpInfos[idx];
         PathDirectoryNode const& node = lumpInfo->container->lumpDirectoryNode(lumpInfo->lumpIdx);
 
         // Time to build the pattern?
