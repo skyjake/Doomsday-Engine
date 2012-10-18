@@ -37,6 +37,8 @@
 #include <de/Log>
 #include <de/memoryzone.h>
 
+static QString invalidIndexMessage(int invalidIdx, int lastValidIdx);
+
 namespace de {
 
 /// The following structures are used to read data directly from WAD files.
@@ -54,10 +56,10 @@ typedef struct {
 } wadlumprecord_t;
 #pragma pack()
 
-struct WadLumpRecord
+class WadFile
 {
 public:
-    explicit WadLumpRecord(FileInfo const& _info) : crc_(0), info_(_info)
+    explicit WadFile(FileInfo const& _info) : crc_(0), info_(_info)
     {}
 
     FileInfo const& info() const {
@@ -74,7 +76,7 @@ public:
      *
      * @attention Calls back into the owning container instance to obtain the name.
      */
-    WadLumpRecord& updateCRC()
+    WadFile& updateCRC()
     {
         crc_ = uint(info_.size);
 
@@ -137,7 +139,7 @@ struct Wad::Instance
         if(lumpDirectory)
         {
             PathDirectory_Iterate(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
-                                  NULL, PATHDIRECTORY_NOHASH, clearLumpRecordWorker);
+                                  NULL, PATHDIRECTORY_NOHASH, clearWadFileWorker);
             delete lumpDirectory;
         }
 
@@ -145,22 +147,23 @@ struct Wad::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    WadLumpRecord* lumpRecord(int lumpIdx)
+    WadFile& lump(int lumpIdx)
     {
-        if(!self->isValidIndex(lumpIdx)) return NULL;
+        LOG_AS("Wad");
+        if(!self->isValidIndex(lumpIdx)) throw NotFoundError("Wad::lump", invalidIndexMessage(lumpIdx, self->lastIndex()));
         buildLumpNodeLut();
-        return reinterpret_cast<WadLumpRecord*>((*lumpNodeLut)[lumpIdx]->userData());
+        return *reinterpret_cast<WadFile*>((*lumpNodeLut)[lumpIdx]->userData());
     }
 
-    static int clearLumpRecordWorker(pathdirectorynode_s* _node, void* /*parameters*/)
+    static int clearWadFileWorker(pathdirectorynode_s* _node, void* /*parameters*/)
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
-        WadLumpRecord* rec = reinterpret_cast<WadLumpRecord*>(node->userData());
-        if(rec)
+        WadFile* lump = reinterpret_cast<WadFile*>(node->userData());
+        if(lump)
         {
             // Detach our user data from this node.
             node->setUserData(0);
-            delete rec;
+            delete lump;
         }
         return 0; // Continue iteration.
     }
@@ -255,15 +258,15 @@ struct Wad::Instance
             normalizeName(*arcRecord, &absPath);
             F_PrependBasePath(&absPath, &absPath); // Make it absolute.
 
-            WadLumpRecord* record =
-                new WadLumpRecord(FileInfo(self->lastModified(), // Inherited from the file (note recursion).
-                                           i,
-                                           littleEndianByteOrder.toNative(arcRecord->filePos),
-                                           littleEndianByteOrder.toNative(arcRecord->size),
-                                           littleEndianByteOrder.toNative(arcRecord->size),
-                                           self));
+            WadFile* lump =
+                new WadFile(FileInfo(self->lastModified(), // Inherited from the container (note recursion).
+                                     i,
+                                     littleEndianByteOrder.toNative(arcRecord->filePos),
+                                     littleEndianByteOrder.toNative(arcRecord->size),
+                                     littleEndianByteOrder.toNative(arcRecord->size),
+                                     self));
             PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&absPath));
-            node->setUserData(record);
+            node->setUserData(lump);
         }
 
         Str_Free(&absPath);
@@ -276,9 +279,9 @@ struct Wad::Instance
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
         Instance* wadInst = (Instance*)parameters;
-        WadLumpRecord* lumpRecord = reinterpret_cast<WadLumpRecord*>(node->userData());
-        DENG2_ASSERT(lumpRecord && wadInst->self->isValidIndex(lumpRecord->info().lumpIdx)); // Sanity check.
-        (*wadInst->lumpNodeLut)[lumpRecord->info().lumpIdx] = node;
+        WadFile* lump = reinterpret_cast<WadFile*>(node->userData());
+        DENG2_ASSERT(lump && wadInst->self->isValidIndex(lump->info().lumpIdx)); // Sanity check.
+        (*wadInst->lumpNodeLut)[lump->info().lumpIdx] = node;
         return 0; // Continue iteration.
     }
 
@@ -327,14 +330,6 @@ bool Wad::empty()
     return !lumpCount();
 }
 
-static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
-{
-    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
-    if(lastValidIdx < 0) msg += "(file is empty)";
-    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
-    return msg;
-}
-
 de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx)
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
@@ -345,17 +340,13 @@ de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx)
 FileInfo const& Wad::lumpInfo(int lumpIdx)
 {
     LOG_AS("Wad");
-    WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw NotFoundError("Wad::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
-    return lrec->info();
+    return d->lump(lumpIdx).info();
 }
 
 size_t Wad::lumpSize(int lumpIdx)
 {
     LOG_AS("Wad");
-    WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw NotFoundError("Wad::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
-    return lrec->info().size;
+    return d->lump(lumpIdx).info().size;
 }
 
 AutoStr* Wad::composeLumpPath(int lumpIdx, char delimiter)
@@ -465,14 +456,13 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     LOG_AS("Wad::readLump");
-    WadLumpRecord const* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) return 0;
+    WadFile const& lump = d->lump(lumpIdx);
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << (unsigned long) lrec->info().size
-        << (lrec->info().isCompressed()? ", compressed" : "")
+        << (unsigned long) lump.info().size
+        << (lump.info().isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
         << (unsigned long)length;
 
@@ -483,13 +473,13 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
-            size_t readBytes = MIN_OF(lrec->info().size, length);
+            size_t readBytes = MIN_OF(lump.info().size, length);
             memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
     }
 
-    handle_->seek(lrec->info().baseOffset + startOffset, SeekSet);
+    handle_->seek(lump.info().baseOffset + startOffset, SeekSet);
     size_t readBytes = handle_->read(buffer, length);
 
     /// @todo Do not check the read length here.
@@ -505,9 +495,9 @@ uint Wad::calculateCRC()
     int const numLumps = lumpCount();
     for(int i = 0; i < numLumps; ++i)
     {
-        WadLumpRecord* lrec = d->lumpRecord(i);
-        lrec->updateCRC();
-        crc += lrec->crc();
+        WadFile& lump = d->lump(i);
+        lump.updateCRC();
+        crc += lump.crc();
     }
     return crc;
 }
@@ -531,3 +521,11 @@ bool Wad::recognise(FileHandle& file)
 }
 
 } // namespace de
+
+static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
+{
+    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
+    if(lastValidIdx < 0) msg += "(file is empty)";
+    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
+    return msg;
+}
