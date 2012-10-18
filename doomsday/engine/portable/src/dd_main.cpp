@@ -54,7 +54,7 @@
 #include "resourcenamespace.h"
 #include "texture.h"
 #include "updater.h"
-#include "wadfile.h"
+#include "wad.h"
 
 using namespace de;
 
@@ -384,7 +384,7 @@ static void loadResource(AbstractResource* res)
                 file->setCustom(false);
 
                 // Print the 'CRC' number of IWADs, so they can be identified.
-                if(WadFile* wad = dynamic_cast<WadFile*>(file))
+                if(Wad* wad = dynamic_cast<Wad*>(file))
                 {
                     Con_Message("  IWAD identification: %08x\n", wad->calculateCRC());
                 }

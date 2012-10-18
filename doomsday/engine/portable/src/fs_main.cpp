@@ -38,7 +38,7 @@
 #include "fileinfo.h"
 #include "lumpfile.h"
 #include "m_misc.h" // for M_FindWhite()
-#include "wadfile.h"
+#include "wad.h"
 #include "zip.h"
 
 #include <QList>
@@ -71,9 +71,9 @@ static de::AbstractFile* interpretAsZipFile(de::DFile& hndl, char const* path, F
 
 static de::AbstractFile* interpretAsWadFile(de::DFile& hndl, char const* path, FileInfo const& info)
 {
-    if(!WadFile::recognise(hndl)) return 0;
+    if(!Wad::recognise(hndl)) return 0;
     LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Wad (archive)";
-    return new WadFile(hndl, path, info);
+    return new Wad(hndl, path, info);
 }
 
 /// @todo Order here should be determined by the resource locator.
@@ -458,7 +458,7 @@ void FS1::index(de::AbstractFile& file)
         index.catalogLumps(*zip, 0, zip->lumpCount());
         return;
     }
-    if(WadFile* wad = dynamic_cast<WadFile*>(&file))
+    if(Wad* wad = dynamic_cast<Wad*>(&file))
     {
         if(wad->empty()) return;
 
@@ -847,7 +847,7 @@ lumpnum_t FS1::openAuxiliary(char const* filePath, size_t baseOffset)
 {
     /// @todo Allow opening Zip files too.
     AbstractFile* file = d->tryOpenFile(filePath, "rb", baseOffset, true /*allow duplicates*/);
-    if(WadFile* wad = dynamic_cast<WadFile*>(file))
+    if(Wad* wad = dynamic_cast<Wad*>(file))
     {
         if(d->auxiliaryWadLumpIndexInUse)
         {
@@ -908,7 +908,7 @@ void FS1::deleteFile(de::DFile& hndl)
 }
 
 /// @return @c NULL= Not found.
-static WadFile* findFirstWadFile(FS1::FileList& list, bool custom)
+static Wad* findFirstWadFile(FS1::FileList& list, bool custom)
 {
     if(list.empty()) return 0;
     DENG2_FOR_EACH(i, list, FS1::FileList::iterator)
@@ -916,7 +916,7 @@ static WadFile* findFirstWadFile(FS1::FileList& list, bool custom)
         de::AbstractFile& file = (*i)->file();
         if(custom != file.hasCustom()) continue;
 
-        WadFile* wad = dynamic_cast<WadFile*>(&file);
+        Wad* wad = dynamic_cast<Wad*>(&file);
         if(wad) return wad;
     }
     return 0;
@@ -928,7 +928,7 @@ uint FS1::loadedFilesCRC()
      * We define the CRC as that of the lump directory of the first loaded IWAD.
      * @todo Really kludgy...
      */
-    WadFile* iwad = findFirstWadFile(d->loadedFiles, false/*not-custom*/);
+    Wad* iwad = findFirstWadFile(d->loadedFiles, false/*not-custom*/);
     if(!iwad) return 0;
     return iwad->calculateCRC();
 }
@@ -1658,7 +1658,7 @@ D_CMD(ListFiles)
                 crc = 0;
                 break;
             case FT_WADFILE:
-                crc = (!file.hasCustom()? reinterpret_cast<WadFile&>(file).calculateCRC() : 0);
+                crc = (!file.hasCustom()? reinterpret_cast<Wad&>(file).calculateCRC() : 0);
                 break;
             case FT_LUMPFILE:
                 crc = 0;

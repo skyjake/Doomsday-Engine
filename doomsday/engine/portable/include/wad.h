@@ -1,5 +1,5 @@
 /**
- * @file wadfile.h
+ * @file wad.h
  * Specialization of AbstractFile for working with Wad archives.
  *
  * @ingroup fs
@@ -24,8 +24,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_WADFILE_H
-#define LIBDENG_FILESYS_WADFILE_H
+#ifndef LIBDENG_FILESYS_WAD_H
+#define LIBDENG_FILESYS_WAD_H
 
 #ifdef __cplusplus
 
@@ -39,9 +39,9 @@ class LumpIndex;
 class PathDirectoryNode;
 
 /**
- * WadFile. Runtime representation of an opened WAD file.
+ * Wad. Runtime representation of an opened WAD file.
  */
-class WadFile : public AbstractFile
+class Wad : public AbstractFile
 {
 public:
     /// Base class for format-related errors. @ingroup errors
@@ -51,8 +51,8 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    WadFile(DFile& file, char const* path, FileInfo const& info);
-    ~WadFile();
+    Wad(DFile& file, char const* path, FileInfo const& info);
+    ~Wad();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
     bool isValidIndex(int lumpIdx);
@@ -159,7 +159,7 @@ public:
      *
      * @return This instance.
      */
-    WadFile& unlockLump(int lumpIdx);
+    Wad& unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -170,14 +170,14 @@ public:
      *
      * @return This instance.
      */
-    WadFile& clearCachedLump(int lumpIdx, bool* retCleared = 0);
+    Wad& clearCachedLump(int lumpIdx, bool* retCleared = 0);
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
      *
      * @return This instance.
      */
-    WadFile& clearLumpCache();
+    Wad& clearLumpCache();
 
     /**
      * @attention Uses an extremely simple formula which does not conform to any CRC
@@ -188,11 +188,11 @@ public:
 // Static members ------------------------------------------------------------------
 
     /**
-     * Does @a file appear to be in a format which can be represented with WadFile?
+     * Does @a file appear to be in a format which can be represented with Wad?
      *
      * @param file      Stream file handle/wrapper to be recognised.
      *
-     * @return @c true= @a file can be represented with WadFile.
+     * @return @c true= @a file can be represented with Wad.
      */
     static bool recognise(DFile& file);
 
@@ -207,10 +207,10 @@ extern "C" {
 #endif // __cplusplus
 
 struct wadfile_s; // The wadfile instance (opaque)
-//typedef struct wadfile_s WadFile;
+//typedef struct wadfile_s Wad;
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FILESYS_WADFILE_H */
+#endif /* LIBDENG_FILESYS_WAD_H */

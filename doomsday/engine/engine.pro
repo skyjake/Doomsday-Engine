@@ -355,7 +355,7 @@ DENG_HEADERS += \
     portable/include/ui_panel.h \
     portable/include/updater.h \
     portable/include/vertex.h \
-    portable/include/wadfile.h \
+    portable/include/wad.h \
     portable/include/window.h \
     portable/include/zip.h \
     portable/include/zonedebug.h \
@@ -651,7 +651,7 @@ SOURCES += \
     portable/src/updater/updatersettingsdialog.cpp \
     portable/src/uri.c \
     portable/src/vertex.cpp \
-    portable/src/wadfile.cpp \
+    portable/src/wad.cpp \
     portable/src/window.cpp \
     portable/src/zip.cpp \
     portable/src/zonedebug.c

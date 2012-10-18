@@ -28,7 +28,7 @@
 #include "lumpindex.h"
 #include "pathdirectory.h"
 
-#include "wadfile.h"
+#include "wad.h"
 
 #include <vector>
 
@@ -93,9 +93,9 @@ private:
     FileInfo info_;
 };
 
-struct WadFile::Instance
+struct Wad::Instance
 {
-    WadFile* self;
+    Wad* self;
 
     /// Number of lump records in the archived wad.
     int arcRecordsCount;
@@ -113,7 +113,7 @@ struct WadFile::Instance
     /// Lump data cache.
     LumpCache* lumpCache;
 
-    Instance(WadFile* d, DFile& file, const char* path)
+    Instance(Wad* d, DFile& file, const char* path)
         : self(d),
           arcRecordsCount(0),
           arcRecordsOffset(0),
@@ -126,7 +126,7 @@ struct WadFile::Instance
 
         wadheader_t hdr;
         if(!readArchiveHeader(file, hdr))
-            throw WadFile::FormatError("WadFile::WadFile", QString("File %1 does not appear to be a known WAD format").arg(path));
+            throw Wad::FormatError("Wad::Wad", QString("File %1 does not appear to be a known WAD format").arg(path));
 
         arcRecordsCount  = hdr.lumpRecordsCount;
         arcRecordsOffset = hdr.lumpRecordsOffset;
@@ -191,7 +191,7 @@ struct WadFile::Instance
     /// the result to @a normName.
     static void normalizeName(wadlumprecord_t const& lrec, ddstring_t* normName)
     {
-        LOG_AS("WadFile");
+        LOG_AS("Wad");
         if(!normName) return;
 
         Str_Clear(normName);
@@ -229,7 +229,7 @@ struct WadFile::Instance
 
     void readLumpDirectory()
     {
-        LOG_AS("WadFile");
+        LOG_AS("Wad");
         if(arcRecordsCount <= 0) return;
         // Already been here?
         if(lumpDirectory) return;
@@ -284,7 +284,7 @@ struct WadFile::Instance
 
     void buildLumpNodeLut()
     {
-        LOG_AS("WadFile");
+        LOG_AS("Wad");
         // Been here already?
         if(lumpNodeLut) return;
 
@@ -294,35 +294,35 @@ struct WadFile::Instance
     }
 };
 
-WadFile::WadFile(DFile& file, char const* path, FileInfo const& info)
+Wad::Wad(DFile& file, char const* path, FileInfo const& info)
     : AbstractFile(FT_WADFILE, path, file, info)
 {
     d = new Instance(this, file, path);
 }
 
-WadFile::~WadFile()
+Wad::~Wad()
 {
     clearLumpCache();
     delete d;
 }
 
-bool WadFile::isValidIndex(int lumpIdx)
+bool Wad::isValidIndex(int lumpIdx)
 {
     return lumpIdx >= 0 && lumpIdx < lumpCount();
 }
 
-int WadFile::lastIndex()
+int Wad::lastIndex()
 {
     return lumpCount() - 1;
 }
 
-int WadFile::lumpCount()
+int Wad::lumpCount()
 {
     d->readLumpDirectory();
     return d->lumpDirectory? d->lumpDirectory->size() : 0;
 }
 
-bool WadFile::empty()
+bool Wad::empty()
 {
     return !lumpCount();
 }
@@ -335,30 +335,30 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-de::PathDirectoryNode& WadFile::lumpDirectoryNode(int lumpIdx)
+de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx)
 {
-    if(!isValidIndex(lumpIdx)) throw NotFoundError("WadFile::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
-FileInfo const& WadFile::lumpInfo(int lumpIdx)
+FileInfo const& Wad::lumpInfo(int lumpIdx)
 {
-    LOG_AS("WadFile");
+    LOG_AS("Wad");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw NotFoundError("WadFile::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!lrec) throw NotFoundError("Wad::lumpInfo", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info();
 }
 
-size_t WadFile::lumpSize(int lumpIdx)
+size_t Wad::lumpSize(int lumpIdx)
 {
-    LOG_AS("WadFile");
+    LOG_AS("Wad");
     WadLumpRecord* lrec = d->lumpRecord(lumpIdx);
-    if(!lrec) throw NotFoundError("WadFile::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!lrec) throw NotFoundError("Wad::lumpSize", invalidIndexMessage(lumpIdx, lastIndex()));
     return lrec->info().size;
 }
 
-AutoStr* WadFile::composeLumpPath(int lumpIdx, char delimiter)
+AutoStr* Wad::composeLumpPath(int lumpIdx, char delimiter)
 {
     if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
 
@@ -366,9 +366,9 @@ AutoStr* WadFile::composeLumpPath(int lumpIdx, char delimiter)
     return node.composePath(AutoStr_NewStd(), NULL, delimiter);
 }
 
-WadFile& WadFile::clearCachedLump(int lumpIdx, bool* retCleared)
+Wad& Wad::clearCachedLump(int lumpIdx, bool* retCleared)
 {
-    LOG_AS("WadFile::clearCachedLump");
+    LOG_AS("Wad::clearCachedLump");
 
     if(retCleared) *retCleared = false;
 
@@ -391,18 +391,18 @@ WadFile& WadFile::clearCachedLump(int lumpIdx, bool* retCleared)
     return *this;
 }
 
-WadFile& WadFile::clearLumpCache()
+Wad& Wad::clearLumpCache()
 {
-    LOG_AS("WadFile::clearLumpCache");
+    LOG_AS("Wad::clearLumpCache");
     if(d->lumpCache) d->lumpCache->clear();
     return *this;
 }
 
-uint8_t const* WadFile::cacheLump(int lumpIdx)
+uint8_t const* Wad::cacheLump(int lumpIdx)
 {
-    LOG_AS("WadFile::cacheLump");
+    LOG_AS("Wad::cacheLump");
 
-    if(!isValidIndex(lumpIdx)) throw NotFoundError("WadFile::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
+    if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     FileInfo const& info = lumpInfo(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
@@ -421,7 +421,7 @@ uint8_t const* WadFile::cacheLump(int lumpIdx)
     if(data) return data;
 
     uint8_t* region = (uint8_t*) Z_Malloc(info.size, PU_APPSTATIC, 0);
-    if(!region) throw Error("WadFile::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info.size).arg(lumpIdx));
+    if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info.size).arg(lumpIdx));
 
     readLump(lumpIdx, region, false);
     d->lumpCache->insert(lumpIdx, region);
@@ -429,9 +429,9 @@ uint8_t const* WadFile::cacheLump(int lumpIdx)
     return region;
 }
 
-WadFile& WadFile::unlockLump(int lumpIdx)
+Wad& Wad::unlockLump(int lumpIdx)
 {
-    LOG_AS("WadFile::unlockLump");
+    LOG_AS("Wad::unlockLump");
     LOG_TRACE("\"%s:%s\"")
         << F_PrettyPath(Str_Text(path())) << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
 
@@ -454,17 +454,17 @@ WadFile& WadFile::unlockLump(int lumpIdx)
     return *this;
 }
 
-size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
+size_t Wad::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
-    LOG_AS("WadFile::readLump");
+    LOG_AS("Wad::readLump");
     if(!isValidIndex(lumpIdx)) return 0;
     return readLump(lumpIdx, buffer, 0, lumpInfo(lumpIdx).size, tryCache);
 }
 
-size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
+size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
-    LOG_AS("WadFile::readLump");
+    LOG_AS("Wad::readLump");
     WadLumpRecord const* lrec = d->lumpRecord(lumpIdx);
     if(!lrec) return 0;
 
@@ -494,12 +494,12 @@ size_t WadFile::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
 
     /// @todo Do not check the read length here.
     if(readBytes < length)
-        throw Error("WadFile::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
+        throw Error("Wad::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
 
     return readBytes;
 }
 
-uint WadFile::calculateCRC()
+uint Wad::calculateCRC()
 {
     uint crc = 0;
     int const numLumps = lumpCount();
@@ -512,7 +512,7 @@ uint WadFile::calculateCRC()
     return crc;
 }
 
-bool WadFile::recognise(DFile& file)
+bool Wad::recognise(DFile& file)
 {
     wadheader_t hdr;
 
@@ -520,7 +520,7 @@ bool WadFile::recognise(DFile& file)
     size_t initPos = file.tell();
     file.seek(0, SeekSet);
 
-    bool readHeaderOk = WadFile::Instance::readArchiveHeader(file, hdr);
+    bool readHeaderOk = Wad::Instance::readArchiveHeader(file, hdr);
 
     // Return the stream to its original position.
     file.seek(initPos, SeekSet);
