@@ -1,16 +1,12 @@
 /**
  * @file lumpfileadaptor.h
  *
- * Specialization of AbstractFile for working with the lumps of container
- * file instances (such as Wad and Zip).
- *
- * Design wise a LumpFileAdaptorAdaptor is an Adapter, in that it provides an
- * AbstractFile-derived object instance through which a lump of a contained
- * file may be manipulated.
+ * Adaptor of File for working with the lumps of containers (such as Wad and
+ * Zip) as if they were "real" files.
  *
  * @ingroup fs
  *
- * @see abstractfile.h, AbstractFile
+ * @see file.h, File
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -35,7 +31,7 @@
 
 #ifdef __cplusplus
 
-#include "abstractfile.h"
+#include "file.h"
 #include "fileinfo.h"
 
 namespace de {
@@ -45,10 +41,10 @@ class LumpIndex;
 class PathDirectoryNode;
 
 /**
- * LumpFileAdaptor. AbstractFile adaptor class allowing lumps to be interfaced with as
+ * LumpFileAdaptor. File adaptor class allowing lumps to be interfaced with as
  * if they were "real" files.
  */
-class LumpFileAdaptor : public AbstractFile
+class LumpFileAdaptor : public File1
 {
 public:
     LumpFileAdaptor(DFile& file, char const* path, FileInfo const& info);

@@ -49,7 +49,7 @@ struct filelist_s;
 namespace de {
 
 /// @todo Should not be visible outside the engine.
-class AbstractFile;
+class File1;
 class DFileBuilder;
 
 /**
@@ -75,8 +75,8 @@ public:
     bool hasFile() const;
 
     /// @todo Should not be visible outside the engine.
-    AbstractFile& file();
-    AbstractFile& file() const;
+    File1& file();
+    File1& file() const;
 
     /// @return  @c true iff this handle's internal state is valid.
     bool isValid() const;

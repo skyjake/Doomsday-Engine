@@ -684,7 +684,7 @@ boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
     try
     {
         int lumpIdx;
-        de::AbstractFile& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
+        de::File1& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
 
         ddstring_t const* lumpName = App_FileSystem()->lumpName(absoluteLumpNum);
         char const* fname;

@@ -23,7 +23,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-//#include "abstractfile.h"
+//#include "file.h"
 //#include "filelist.h"
 #include "m_misc.h"
 #include "image.h"

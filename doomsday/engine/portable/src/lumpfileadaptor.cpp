@@ -26,7 +26,7 @@
 namespace de {
 
 LumpFileAdaptor::LumpFileAdaptor(DFile& file, char const* path, FileInfo const& info)
-    : AbstractFile(FT_LUMPFILE, path, file, info)
+    : File1(FT_LUMPFILE, path, file, info)
 {}
 
 LumpFileAdaptor::~LumpFileAdaptor()

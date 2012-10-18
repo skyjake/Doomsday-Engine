@@ -1,12 +1,12 @@
 /**
  * @file zip.h
- * Specialization of AbstractFile for working with Zip archives.
+ * Specialization of File for working with Zip archives.
  *
  * @note Presently only the zlib method (Deflate) of compression is supported.
  *
  * @ingroup fs
  *
- * @see abstractfile.h, AbstractFile
+ * @see file.h, File
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -31,7 +31,7 @@
 
 #ifdef __cplusplus
 
-#include "abstractfile.h"
+#include "file.h"
 #include "fileinfo.h"
 
 namespace de {
@@ -43,7 +43,7 @@ class PathDirectoryNode;
 /**
  * Zip. Runtime representation of an opened ZIP file.
  */
-class Zip : public AbstractFile
+class Zip : public File1
 {
 public:
     Zip(DFile& file, char const* path, FileInfo const& info);

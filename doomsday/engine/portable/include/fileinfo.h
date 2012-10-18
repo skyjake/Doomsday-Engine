@@ -29,9 +29,10 @@
 #include <algorithm>
 
 #include <de/types.h>
-#include "abstractfile.h"
 
 namespace de {
+
+class File1;
 
 /**
  * FileInfo record.
@@ -46,10 +47,10 @@ struct FileInfo
     size_t compressedSize; /// Size of the original file compressed.
 
     /// @todo Move this property up to file level.
-    AbstractFile* container; /// Owning package else @c NULL.
+    File1* container; /// Owning package else @c NULL.
 
     FileInfo(uint _lastModified = 0, int _lumpIdx = 0, size_t _baseOffset = 0,
-               size_t _size = 0, size_t _compressedSize = 0, AbstractFile* _container = 0)
+               size_t _size = 0, size_t _compressedSize = 0, File1* _container = 0)
         : lastModified(_lastModified), lumpIdx(_lumpIdx), baseOffset(_baseOffset),
           size(_size), compressedSize(_compressedSize), container(_container)
     {}

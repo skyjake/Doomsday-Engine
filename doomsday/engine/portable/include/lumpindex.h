@@ -31,7 +31,7 @@
 #define LIBDENG_FILESYS_LUMPINDEX_H
 
 #include "de_base.h" /// For lumpnum_t (@todo which should be moved here)
-#include "abstractfile.h"
+#include "file.h"
 #include "fileinfo.h"
 
 #include <QList>
@@ -94,7 +94,7 @@ public:
      *
      * @return  @c true= One or more lumps are included.
      */
-    bool catalogues(AbstractFile& file);
+    bool catalogues(File1& file);
 
     /**
      * Append a new set of lumps to the index.
@@ -105,7 +105,7 @@ public:
      * @param lumpIdxBase   Base index for the range of lumps being added.
      * @param lumpIdxCount  Number of lumps in the range being added.
      */
-    void catalogLumps(AbstractFile& file, int lumpIdxBase, int lumpIdxCount);
+    void catalogLumps(File1& file, int lumpIdxBase, int lumpIdxCount);
 
     /**
      * Prune all lumps catalogued from @a file.
@@ -114,7 +114,7 @@ public:
      *
      * @return  Number of lumps pruned.
      */
-    int pruneByFile(AbstractFile& file);
+    int pruneByFile(File1& file);
 
     /**
      * Prune the lump referenced by @a lumpInfo.

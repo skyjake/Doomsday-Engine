@@ -77,7 +77,7 @@ char const* P_GenerateUniqueMapId(char const* mapID)
     try
     {
         lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(mapID);
-        de::AbstractFile const& file = App_FileSystem()->lumpFile(lumpNum);
+        de::File1 const& file = App_FileSystem()->lumpFile(lumpNum);
 
         AutoStr* fileName = AutoStr_NewStd();
         F_FileName(fileName, Str_Text(file.path()));

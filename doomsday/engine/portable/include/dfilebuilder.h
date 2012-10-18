@@ -36,20 +36,20 @@ public:
     static void shutdown();
 
     /**
-     * Create a new handle on the AbstractFile @a file.
+     * Create a new handle on the File @a file.
      *
      * @param af            VFS object representing the file being opened.
      */
-    static DFile* fromFile(AbstractFile& file);
+    static DFile* fromFile(File1& file);
 
     /**
-     * Create a new handle on a lump of AbstractFile @a file.
+     * Create a new handle on a lump of File @a file.
      *
      * @param af            VFS object representing the container of the lump to be opened.
      * @param lumpIdx       Logical index of the lump within @a file to be opened.
      * @param dontBuffer    @c true= do not buffer a copy of the lump.
      */
-    static DFile* fromFileLump(AbstractFile& file, int lumpIdx, bool dontBuffer);
+    static DFile* fromFileLump(File1& file, int lumpIdx, bool dontBuffer);
 
     /**
      * Open a new handle on the specified native file.
@@ -79,10 +79,10 @@ extern "C" {
  */
 
 /// @return  File object represented by this handle.
-struct abstractfile_s* DFile_File(DFile* hndl);
+struct file1_s* DFile_File(DFile* hndl);
 
 /// @return  File object represented by this handle.
-struct abstractfile_s* DFile_File_const(DFile const* hndl);
+struct file1_s* DFile_File_const(DFile const* hndl);
 
 #ifdef __cplusplus
 } // extern "C"

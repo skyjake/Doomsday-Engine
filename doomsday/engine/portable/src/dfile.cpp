@@ -41,7 +41,7 @@ namespace de {
 struct DFile::Instance
 {
     /// The referenced file (if any).
-    AbstractFile* file;
+    File1* file;
 
     /// Either the FileList which owns this or the next DFile in the used object pool.
     void* list;
@@ -121,7 +121,7 @@ void DFileBuilder::shutdown(void)
 #endif
 }
 
-DFile* DFileBuilder::fromFileLump(AbstractFile& container, int lumpIdx, bool dontBuffer)
+DFile* DFileBuilder::fromFileLump(File1& container, int lumpIdx, bool dontBuffer)
 {
     if(!container.isValidIndex(lumpIdx)) return 0;
 
@@ -149,7 +149,7 @@ DFile* DFileBuilder::fromFileLump(AbstractFile& container, int lumpIdx, bool don
     return file;
 }
 
-DFile* DFileBuilder::fromFile(AbstractFile& af)
+DFile* DFileBuilder::fromFile(File1& af)
 {
     de::DFile* file = new de::DFile();
     file->d->file = &af;
@@ -260,13 +260,13 @@ bool DFile::hasFile() const
     return !!d->file;
 }
 
-AbstractFile& DFile::file()
+File1& DFile::file()
 {
     errorIfNotValid(*this, "DFile::file");
     return *d->file;
 }
 
-AbstractFile& DFile::file() const
+File1& DFile::file() const
 {
     errorIfNotValid(*this, "DFile::file const");
     return *d->file;
@@ -483,14 +483,14 @@ void DFile_Rewind(struct dfile_s* hndl)
     self->rewind();
 }
 
-struct abstractfile_s* DFile_File(struct dfile_s* hndl)
+struct file1_s* DFile_File(struct dfile_s* hndl)
 {
     SELF(hndl);
-    return reinterpret_cast<struct abstractfile_s*>(&self->file());
+    return reinterpret_cast<struct file1_s*>(&self->file());
 }
 
-struct abstractfile_s* DFile_File_const(struct dfile_s const* hndl)
+struct file1_s* DFile_File_const(struct dfile_s const* hndl)
 {
     SELF_CONST(hndl);
-    return reinterpret_cast<struct abstractfile_s*>(&self->file());
+    return reinterpret_cast<struct file1_s*>(&self->file());
 }

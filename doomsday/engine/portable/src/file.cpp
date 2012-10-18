@@ -26,12 +26,12 @@
 #include "de_base.h"
 #include "de_filesys.h"
 
-#include "abstractfile.h"
+#include "file.h"
 
 namespace de {
 
-AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, FileInfo const& _info)
-    : file(&file), type_(_type), flags(DefaultFlags)
+File1::File1(filetype_t _type, char const* _path, DFile& hndl, FileInfo const& _info)
+    : file(&hndl), type_(_type), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.
     /// @todo Does not belong at this level. Load order should be determined
@@ -44,71 +44,107 @@ AbstractFile::AbstractFile(filetype_t _type, char const* _path, DFile& file, Fil
     info_ = _info;
 }
 
-AbstractFile::~AbstractFile()
+File1::~File1()
 {
     App_FileSystem()->releaseFile(*this);
     Str_Free(&path_);
     if(file) delete file;
 }
 
-filetype_t AbstractFile::type() const
+filetype_t File1::type() const
 {
     return type_;
 }
 
-FileInfo const& AbstractFile::info() const
+FileInfo const& File1::info() const
 {
     return info_;
 }
 
-bool AbstractFile::isContained() const
+bool File1::isContained() const
 {
     return !!info_.container;
 }
 
-AbstractFile& AbstractFile::container() const
+File1& File1::container() const
 {
-    if(!info_.container) throw de::Error("AbstractFile::container", QString("%s is not contained").arg(Str_Text(path())));
+    if(!info_.container) throw de::Error("File1::container", QString("%s is not contained").arg(Str_Text(path())));
     return *info_.container;
 }
 
-de::DFile& de::AbstractFile::handle()
+de::DFile& File1::handle()
 {
     return *file;
 }
 
-ddstring_t const* AbstractFile::path() const
+ddstring_t const* File1::path() const
 {
     return &path_;
 }
 
-uint AbstractFile::loadOrderIndex() const
+uint File1::loadOrderIndex() const
 {
     return order;
 }
 
-bool AbstractFile::hasStartup() const
+bool File1::hasStartup() const
 {
     return flags.testFlag(Startup);
 }
 
-AbstractFile& AbstractFile::setStartup(bool yes)
+File1& File1::setStartup(bool yes)
 {
     if(yes) flags |= Startup;
     else    flags &= ~Startup;
     return *this;
 }
 
-bool AbstractFile::hasCustom() const
+bool File1::hasCustom() const
 {
     return flags.testFlag(Custom);
 }
 
-AbstractFile& AbstractFile::setCustom(bool yes)
+File1& File1::setCustom(bool yes)
 {
     if(yes) flags |= Custom;
     else    flags &= ~Custom;
     return *this;
+}
+
+PathDirectoryNode const& File1::lumpDirectoryNode(int /*lumpIdx*/)
+{
+    /// @todo writeme
+    throw de::Error("File1::lumpDirectoryNode", "Not yet implemented");
+}
+
+AutoStr* File1::composeLumpPath(int /*lumpIdx*/, char /*delimiter*/)
+{
+    return AutoStr_NewStd();
+}
+
+size_t File1::readLump(int /*lumpIdx*/, uint8_t* /*buffer*/, bool /*tryCache*/)
+{
+    /// @todo writeme
+    throw de::Error("File1::readLump", "Not yet implemented");
+}
+
+size_t File1::readLump(int /*lumpIdx*/, uint8_t* /*buffer*/, size_t /*startOffset*/,
+    size_t /*length*/, bool /*tryCache*/)
+{
+    /// @todo writeme
+    throw de::Error("File1::readLump", "Not yet implemented");
+}
+
+uint8_t const* File1::cacheLump(int /*lumpIdx*/)
+{
+    /// @todo writeme
+    throw de::Error("File1::cacheLump", "Not yet implemented");
+}
+
+File1& File1::unlockLump(int /*lumpIdx*/)
+{
+    /// @todo writeme
+    throw de::Error("File1::unlockLump", "Not yet implemented");
 }
 
 } // namespace de

@@ -1,7 +1,7 @@
 /**
- * @file abstractfile.h
+ * @file file.h
  *
- * Abstract base for all classes which represent opened files.
+ * Base for all classes which represent opened files.
  *
  * @ingroup fs
  *
@@ -23,8 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_ABSTRACTFILE_H
-#define LIBDENG_FILESYS_ABSTRACTFILE_H
+#ifndef LIBDENG_FILESYS_FILE_H
+#define LIBDENG_FILESYS_FILE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,14 +33,14 @@ extern "C" {
 // File types.
 /// @todo Refactor away.
 typedef enum {
-    FT_GENERICFILE,
+    FT_FILE,        ///< Generic file
     FT_ZIPFILE,
     FT_WADFILE,
     FT_LUMPFILE,
     FILETYPE_COUNT
 } filetype_t;
 
-#define VALID_FILETYPE(v)       ((v) >= FT_GENERICFILE && (v) < FILETYPE_COUNT)
+#define VALID_FILETYPE(v)       ((v) >= FT_FILE && (v) < FILETYPE_COUNT)
 
 #ifdef __cplusplus
 } // extern "C"
@@ -58,12 +58,12 @@ class LumpIndex;
 class PathDirectoryNode;
 
 /**
- * Abstract File.  Abstract File is a core component of the filesystem
- * intended for use as the base for all types of (pseudo-)file resources.
+ * File.  File is a core component of the filesystem intended for use as the base
+ * for all types of (pseudo-)file resources.
  *
  * @ingroup fs
  */
-class AbstractFile
+class File1
 {
 public:
     /// Categorization flags.
@@ -81,21 +81,21 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
 private:
-    AbstractFile();
+    File1();
 
 public:
     /**
      * @param type  File type identifier.
      * @param path  Path to this file in the virtual file system.
-     * @param file  Handle to the file. Ownership of the handle is given to this instance.
+     * @param hndl  Handle to the file. Ownership of the handle is given to this instance.
      * @param info  Info descriptor for the file. A copy is made.
      */
-    AbstractFile(filetype_t _type, char const* _path, DFile& file, FileInfo const& _info);
+    File1(filetype_t _type, char const* _path, DFile& hndl, FileInfo const& _info);
 
     /**
      * Release all memory acquired for objects linked with this resource.
      */
-    virtual ~AbstractFile();
+    virtual ~File1();
 
     /**
      * @return  Type of this resource @see filetype_t
@@ -109,7 +109,7 @@ public:
     bool isContained() const;
 
     /// @return The file instance which contains this.
-    AbstractFile& container() const;
+    File1& container() const;
 
     /// @return  Load order index for this resource.
     uint loadOrderIndex() const;
@@ -141,13 +141,13 @@ public:
     bool hasStartup() const;
 
     /// Mark this resource as "startup".
-    AbstractFile& setStartup(bool yes);
+    File1& setStartup(bool yes);
 
     /// @return  @c true if the resource is marked "custom".
     bool hasCustom() const;
 
     /// Mark this resource as "custom".
-    AbstractFile& setCustom(bool yes);
+    File1& setCustom(bool yes);
 
     DFile& handle();
 
@@ -193,7 +193,7 @@ public:
      *
      * @throws de::Error    If @a lumpIdx is not valid.
      */
-    virtual PathDirectoryNode const& lumpDirectoryNode(int lumpIdx) = 0;
+    virtual PathDirectoryNode const& lumpDirectoryNode(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.
@@ -206,7 +206,7 @@ public:
      *
      * @return String containing the absolute path.
      */
-    virtual AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/') = 0;
+    virtual AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
      * Retrieve the FileInfo descriptor for a lump contained by this file.
@@ -234,11 +234,11 @@ public:
      *       a better method of looking up multiple @ref FileInfo properties.
      *
      * @attention This default implementation assumes there is only one lump in
-     * the file and therefore its decriptor is that of the file itself. Subclasses
+     * the file and therefore its size is that of the file itself. Subclasses
      * with multiple lumps should override this function accordingly.
      *
      */
-    virtual size_t lumpSize(int lumpIdx) = 0;
+    virtual size_t lumpSize(int /*lumpIdx*/) { return size(); }
 
     /**
      * Read the data associated with lump @a lumpIdx into @a buffer.
@@ -252,7 +252,7 @@ public:
      *
      * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
      */
-    virtual size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true) = 0;
+    virtual size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true);
 
     /**
      * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
@@ -266,7 +266,7 @@ public:
      * @return Number of bytes read.
      */
     virtual size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
-                            bool tryCache = true) = 0;
+                            bool tryCache = true);
 
     /*
      * Lump caching interface:
@@ -279,7 +279,7 @@ public:
      *
      * @return Pointer to the cached copy of the associated data.
      */
-    virtual uint8_t const* cacheLump(int lumpIdx) = 0;
+    virtual uint8_t const* cacheLump(int lumpIdx);
 
     /**
      * Remove a lock on a cached data lump.
@@ -288,7 +288,7 @@ public:
      *
      * @return This instance.
      */
-    virtual AbstractFile& unlockLump(int lumpIdx) = 0;
+    virtual File1& unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -299,14 +299,14 @@ public:
      *
      * @return This instance.
      */
-    //virtual AbstractFile& clearCachedLump(int lumpIdx, bool* retCleared = 0) = 0;
+    //virtual File1& clearCachedLump(int lumpIdx, bool* retCleared = 0) = 0;
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
      *
      * @return This instance.
      */
-    //virtual AbstractFile& clearLumpCache() = 0;
+    //virtual File1& clearLumpCache() = 0;
 
 protected:
     /// File stream handle/wrapper.
@@ -329,18 +329,18 @@ private:
     uint order;
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractFile::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(File1::Flags)
 
 } // namespace de
 
 extern "C" {
 #endif // __cplusplus
 
-struct abstractfile_s; // The abstractfile instance (opaque)
-typedef struct abstractfile_s AbstractFile;
+struct file1_s; // The file instance (opaque)
+typedef struct file1_s File1;
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FILESYS_ABSTRACTFILE_H */
+#endif /* LIBDENG_FILESYS_FILE_H */

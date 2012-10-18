@@ -1131,7 +1131,7 @@ static textureid_t findPatchTextureIdByName(const char* encodedName)
 patchid_t R_DeclarePatch(const char* name)
 {
     const doompatch_header_t* patch;
-    AbstractFile* fsObject;
+    File1* fsObject;
     Uri* uri, *resourcePath;
     int lumpIdx;
     ddstring_t encodedName;
@@ -1400,7 +1400,7 @@ void R_UpdateRawTexs(void)
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
     int lumpIdx;
-    AbstractFile* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    File1* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
     size_t lumpSize = F_LumpLength(lumpNum);
     patchname_t* names, *name;
     const uint8_t* lump;
@@ -1510,7 +1510,7 @@ typedef struct {
     patchcompositetex_t** texDefs = NULL;
     size_t lumpSize, offset, n, numValidPatchRefs;
     int numTexDefs, numValidTexDefs;
-    AbstractFile* fsObject;
+    File1* fsObject;
     int* directory, *maptex1;
     short* texDefNumPatches;
     patchinfo_t* patchInfo;
@@ -2171,11 +2171,11 @@ void R_InitFlatTextures(void)
     if(firstFlatMarkerLumpNum >= 0)
     {
         lumpnum_t lumpNum, numLumps = F_LumpCount();
-        AbstractFile* blockFile = 0;
+        File1* blockFile = 0;
         for(lumpNum = numLumps; lumpNum --> firstFlatMarkerLumpNum + 1;)
         {
             ddstring_t const* lumpName = F_LumpName(lumpNum);
-            AbstractFile* lumpFile = F_FindFileForLumpNum(lumpNum);
+            File1* lumpFile = F_FindFileForLumpNum(lumpNum);
 
             if(blockFile && blockFile != lumpFile)
             {
@@ -2273,7 +2273,7 @@ void R_DefineSpriteTexture(textureid_t texId)
         ddstring_t* resourcePath = Uri_Resolved(resourceUri);
         lumpnum_t lumpNum = F_LumpNumForName(Str_Text(resourcePath));
         int lumpIdx;
-        AbstractFile* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        File1* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx);
         Size2Raw size;
 

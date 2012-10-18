@@ -32,7 +32,7 @@
 #ifndef LIBDENG_FILESYS_MAIN_H
 #define LIBDENG_FILESYS_MAIN_H
 
-#include "abstractfile.h"
+#include "file.h"
 #include "dfile.h"
 #include "pathdirectory.h"
 
@@ -157,7 +157,7 @@ namespace de
          *
          * @return  Newly added file instance if the operation is successful, else @c NULL.
          */
-        AbstractFile* addFile(char const* path, size_t baseOffset = 0);
+        File1* addFile(char const* path, size_t baseOffset = 0);
 
         /// @note All files are added with baseOffset = @c 0.
         int addFiles(char const* const* paths, int num);
@@ -205,7 +205,7 @@ namespace de
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        AbstractFile& lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
+        File1& lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
 
         /**
          * Retrieve the FileInfo metadata record for a lump in the Wad lump index.
@@ -269,7 +269,7 @@ namespace de
         DFile& openLump(lumpnum_t absoluteLumpNum);
 
         /// Clear all references to this file.
-        void releaseFile(AbstractFile& file);
+        void releaseFile(File1& file);
 
         /// Close this file handle.
         void closeFile(DFile& hndl);
@@ -349,23 +349,23 @@ namespace de
          * @param path  Absolute VFS path by which the interpreted file will be known.
          * @param info  Prepared info metadata for the file.
          *
-         * @return  The interpreted AbstractFile file instance.
+         * @return  The interpreted File file instance.
          */
-        AbstractFile& interpret(DFile& hndl, char const* path, FileInfo const& info);
+        File1& interpret(DFile& hndl, char const* path, FileInfo const& info);
 
         /**
          * Adds a file to any relevant indexes.
          *
          * @param file  File to index.
          */
-        void index(AbstractFile& file);
+        void index(File1& file);
 
         /**
          * Removes a file from any lump indexes.
          *
          * @param file  File to remove from the index.
          */
-        void deindex(AbstractFile& file);
+        void deindex(File1& file);
 
         bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
     };
@@ -412,8 +412,8 @@ int F_LumpCount(void);
 
 int F_Access(char const* path);
 
-struct abstractfile_s* F_AddFile2(char const* path, size_t baseOffset);
-struct abstractfile_s* F_AddFile(char const* path/*, baseOffset = 0*/);
+struct file1_s* F_AddFile2(char const* path, size_t baseOffset);
+struct file1_s* F_AddFile(char const* path/*, baseOffset = 0*/);
 
 boolean F_RemoveFile2(char const* path, boolean permitRequired);
 boolean F_RemoveFile(char const* path/*, permitRequired = false */);
@@ -443,28 +443,28 @@ size_t F_LumpLength(lumpnum_t absoluteLumpNum);
 
 uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
 
-struct abstractfile_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-struct abstractfile_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0 */);
+struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
+struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0 */);
 
 void F_Close(struct dfile_s* file);
 
 void F_Delete(struct dfile_s* file);
 
-Str const* F_Path(struct abstractfile_s const* file);
+Str const* F_Path(struct file1_s const* file);
 
-void F_SetCustom(struct abstractfile_s* file, boolean yes);
+void F_SetCustom(struct file1_s* file, boolean yes);
 
-AutoStr* F_ComposeLumpPath2(struct abstractfile_s* file, int lumpIdx, char delimiter);
-AutoStr* F_ComposeLumpPath(struct abstractfile_s* file, int lumpIdx); /*delimiter='/'*/
+AutoStr* F_ComposeLumpPath2(struct file1_s* file, int lumpIdx, char delimiter);
+AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx); /*delimiter='/'*/
 
-size_t F_ReadLump(struct abstractfile_s* file, int lumpIdx, uint8_t* buffer);
+size_t F_ReadLump(struct file1_s* file, int lumpIdx, uint8_t* buffer);
 
-size_t F_ReadLumpSection(struct abstractfile_s* file, int lumpIdx, uint8_t* buffer,
+size_t F_ReadLumpSection(struct file1_s* file, int lumpIdx, uint8_t* buffer,
                          size_t startOffset, size_t length);
 
-uint8_t const* F_CacheLump(struct abstractfile_s* file, int lumpIdx);
+uint8_t const* F_CacheLump(struct file1_s* file, int lumpIdx);
 
-void F_UnlockLump(struct abstractfile_s* file, int lumpIdx);
+void F_UnlockLump(struct file1_s* file, int lumpIdx);
 
 /**
  * Compiles a list of file names, separated by @a delimiter.

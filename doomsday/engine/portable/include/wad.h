@@ -1,10 +1,10 @@
 /**
  * @file wad.h
- * Specialization of AbstractFile for working with Wad archives.
+ * Specialization of File for working with Wad archives.
  *
  * @ingroup fs
  *
- * @see abstractfile.h, AbstractFile
+ * @see file.h, File
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -30,7 +30,7 @@
 #ifdef __cplusplus
 
 #include "fileinfo.h"
-#include "abstractfile.h"
+#include "file.h"
 
 namespace de {
 
@@ -41,7 +41,7 @@ class PathDirectoryNode;
 /**
  * Wad. Runtime representation of an opened WAD file.
  */
-class Wad : public AbstractFile
+class Wad : public File1
 {
 public:
     /// Base class for format-related errors. @ingroup errors

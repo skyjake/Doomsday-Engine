@@ -129,7 +129,6 @@ DENG_HEADERS += \
 
 # Private headers.
 DENG_HEADERS += \
-    portable/include/abstractfile.h \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
     portable/include/audiodriver_music.h \
@@ -209,6 +208,7 @@ DENG_HEADERS += \
     portable/include/edit_bsp.h \
     portable/include/edit_map.h \
     portable/include/fi_main.h \
+    portable/include/file.h \
     portable/include/filedirectory.h \
     portable/include/fileinfo.h \
     portable/include/finaleinterpreter.h \
@@ -219,7 +219,6 @@ DENG_HEADERS += \
     portable/include/game.h \
     portable/include/gamemap.h \
     portable/include/generators.h \
-    portable/include/genericfile.h \
     portable/include/gl_defer.h \
     portable/include/gl_deferredapi.h \
     portable/include/gl_draw.h \
@@ -441,7 +440,6 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
-    portable/src/abstractfile.cpp \
     portable/src/abstractresource.c \
     portable/src/animator.c \
     portable/src/audiodriver.c \
@@ -501,6 +499,7 @@ SOURCES += \
     portable/src/edit_bsp.cpp \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
+    portable/src/file.cpp \
     portable/src/filedirectory.cpp \
     portable/src/fileid.cpp \
     portable/src/finaleinterpreter.c \
@@ -510,7 +509,6 @@ SOURCES += \
     portable/src/game.cpp \
     portable/src/gamemap.c \
     portable/src/generators.c \
-    portable/src/genericfile.cpp \
     portable/src/gl_defer.c \
     portable/src/gl_deferredapi.c \
     portable/src/gl_draw.c \

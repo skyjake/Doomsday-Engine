@@ -377,7 +377,7 @@ static void loadResource(AbstractResource* res)
         ddstring_t const* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
         if(path)
         {
-            de::AbstractFile* file = App_FileSystem()->addFile(Str_Text(path));
+            de::File1* file = App_FileSystem()->addFile(Str_Text(path));
             if(file)
             {
                 // Mark this as an original game resource.

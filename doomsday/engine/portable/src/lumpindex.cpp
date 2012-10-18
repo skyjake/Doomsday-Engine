@@ -108,7 +108,7 @@ struct LumpIndex::Instance
      * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
      * @return Number of lumps newly flagged during this op.
      */
-    int flagFileLumps(QBitArray& pruneFlags, AbstractFile& file)
+    int flagFileLumps(QBitArray& pruneFlags, File1& file)
     {
         DENG_ASSERT(pruneFlags.size() == lumpInfos.size());
 
@@ -117,7 +117,7 @@ struct LumpIndex::Instance
         for(int i = 0; i < numRecords; ++i)
         {
             if(pruneFlags.testBit(i)) continue;
-            if(reinterpret_cast<AbstractFile*>(lumpInfos[i]->container) != &file) continue;
+            if(reinterpret_cast<File1*>(lumpInfos[i]->container) != &file) continue;
             pruneFlags.setBit(i, true);
             numFlagged += 1;
         }
@@ -291,7 +291,7 @@ int LumpIndex::size() const
     return d->lumpInfos.size();
 }
 
-int LumpIndex::pruneByFile(de::AbstractFile& file)
+int LumpIndex::pruneByFile(de::File1& file)
 {
     if(d->lumpInfos.empty()) return 0;
 
@@ -328,7 +328,7 @@ bool LumpIndex::pruneLump(FileInfo& lumpInfo)
     return true;
 }
 
-void LumpIndex::catalogLumps(de::AbstractFile& file, int lumpIdxBase, int numLumps)
+void LumpIndex::catalogLumps(de::File1& file, int lumpIdxBase, int numLumps)
 {
     if(numLumps <= 0) return;
 
@@ -359,7 +359,7 @@ void LumpIndex::clear()
     d->flags &= ~(LIF_NEED_REBUILD_HASH | LIF_NEED_PRUNE_DUPLICATES);
 }
 
-bool LumpIndex::catalogues(de::AbstractFile& file)
+bool LumpIndex::catalogues(de::File1& file)
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();

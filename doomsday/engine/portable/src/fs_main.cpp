@@ -33,7 +33,7 @@
 
 #include "fileid.h"
 #include "game.h"
-#include "genericfile.h"
+#include "file.h"
 #include "lumpindex.h"
 #include "fileinfo.h"
 #include "lumpfileadaptor.h"
@@ -59,17 +59,17 @@ static FS1* fileSystem;
 struct FileInterpreter
 {
     resourcetype_t resourceType;
-    de::AbstractFile* (*interpret)(de::DFile& file, char const* path, FileInfo const& info);
+    de::File1* (*interpret)(de::DFile& file, char const* path, FileInfo const& info);
 };
 
-static de::AbstractFile* interpretAsZipFile(de::DFile& hndl, char const* path, FileInfo const& info)
+static de::File1* interpretAsZipFile(de::DFile& hndl, char const* path, FileInfo const& info)
 {
     if(!Zip::recognise(hndl)) return 0;
     LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Zip (archive)";
     return new Zip(hndl, path, info);
 }
 
-static de::AbstractFile* interpretAsWadFile(de::DFile& hndl, char const* path, FileInfo const& info)
+static de::File1* interpretAsWadFile(de::DFile& hndl, char const* path, FileInfo const& info)
 {
     if(!Wad::recognise(hndl)) return 0;
     LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Wad (archive)";
@@ -257,7 +257,7 @@ struct FS1::Instance
         DENG_ASSERT(path && path[0]);
 
         int lumpIdx;
-        AbstractFile* container = 0;
+        File1* container = 0;
         try
         {
             container = self->zipFileInfo(path, &lumpIdx).container;
@@ -346,8 +346,8 @@ struct FS1::Instance
         return hndl;
     }
 
-    de::AbstractFile* tryOpenFile(char const* path, char const* mode, size_t baseOffset,
-                                  bool allowDuplicate)
+    de::File1* tryOpenFile(char const* path, char const* mode, size_t baseOffset,
+                           bool allowDuplicate)
     {
         if(!path || !path[0]) return 0;
         if(!mode) mode = "";
@@ -383,7 +383,7 @@ struct FS1::Instance
         // been mapped to another location. We want the file to be attributed with
         // the path it is to be known by throughout the virtual file system.
 
-        AbstractFile& file = self->interpret(*hndl, Str_Text(searchPath), info);
+        File1& file = self->interpret(*hndl, Str_Text(searchPath), info);
 
         if(loadingForStartup)
         {
@@ -437,7 +437,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char cons
     FS1::FileList::iterator i;
     for(i = list.begin(); i != list.end(); ++i)
     {
-        de::AbstractFile& file = (*i)->file();
+        de::File1& file = (*i)->file();
         if(!Str_CompareIgnoreCase(file.path(), Str_Text(path)))
         {
             break; // This is the node we are looking for.
@@ -446,7 +446,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char cons
     return i;
 }
 
-void FS1::index(de::AbstractFile& file)
+void FS1::index(de::File1& file)
 {
     // Publish lumps to an index?
     if(Zip* zip = dynamic_cast<Zip*>(&file))
@@ -476,7 +476,7 @@ void FS1::index(de::AbstractFile& file)
     }
 }
 
-void FS1::deindex(de::AbstractFile& file)
+void FS1::deindex(de::File1& file)
 {
     d->zipLumpIndex.pruneByFile(file);
     d->primaryWadLumpIndex.pruneByFile(file);
@@ -560,7 +560,7 @@ static void printFileList(FS1::FileList& list)
     for(int i = 0; i < list.size(); ++i)
     {
         de::DFile* hndl = list[i];
-        de::AbstractFile& file = hndl->file();
+        de::File1& file = hndl->file();
         FileId fileId = FileId::fromPath(Str_Text(file.path()));
         LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
             << (file.hasStartup()? '*' : ' ') << i
@@ -586,7 +586,7 @@ int FS1::reset()
     for(int i = d->loadedFiles.size() - 1; i >= 0; i--)
     {
         DFile& hndl = *(d->loadedFiles[i]);
-        AbstractFile& file = hndl.file();
+        File1& file = hndl.file();
         if(file.hasStartup()) continue;
 
         if(unloadFile(Str_Text(file.path()), true/*allow unloading game resources*/, true/*quiet please*/))
@@ -826,15 +826,15 @@ FileInfo const& FS1::zipFileInfo(char const* path, int* lumpIdx)
     throw NotFoundError("FS1::zipFileInfo", "No files found matching '" + QString(path) + "'");
 }
 
-de::AbstractFile& FS1::lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx)
+de::File1& FS1::lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
-    return *reinterpret_cast<AbstractFile*>(lumpInfo(absoluteLumpNum, lumpIdx).container);
+    return *reinterpret_cast<File1*>(lumpInfo(absoluteLumpNum, lumpIdx).container);
 }
 
 ddstring_t const* FS1::lumpName(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    de::AbstractFile& file = lumpFile(absoluteLumpNum, &lumpIdx);
+    de::File1& file = lumpFile(absoluteLumpNum, &lumpIdx);
     return file.lumpDirectoryNode(lumpIdx).pathFragment();
 }
 
@@ -846,7 +846,7 @@ int FS1::lumpCount()
 lumpnum_t FS1::openAuxiliary(char const* filePath, size_t baseOffset)
 {
     /// @todo Allow opening Zip files too.
-    AbstractFile* file = d->tryOpenFile(filePath, "rb", baseOffset, true /*allow duplicates*/);
+    File1* file = d->tryOpenFile(filePath, "rb", baseOffset, true /*allow duplicates*/);
     if(Wad* wad = dynamic_cast<Wad*>(file))
     {
         if(d->auxiliaryWadLumpIndexInUse)
@@ -883,7 +883,7 @@ void FS1::closeAuxiliary()
     d->usePrimaryWadLumpIndex();
 }
 
-void FS1::releaseFile(de::AbstractFile& file)
+void FS1::releaseFile(de::File1& file)
 {
     for(int i = d->openFiles.size() - 1; i >= 0; i--)
     {
@@ -913,7 +913,7 @@ static Wad* findFirstWadFile(FS1::FileList& list, bool custom)
     if(list.empty()) return 0;
     DENG2_FOR_EACH(i, list, FS1::FileList::iterator)
     {
-        de::AbstractFile& file = (*i)->file();
+        de::File1& file = (*i)->file();
         if(custom != file.hasCustom()) continue;
 
         Wad* wad = dynamic_cast<Wad*>(&file);
@@ -983,7 +983,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     DENG2_FOR_EACH(i, d->zipLumpIndex.lumps(), LumpIndex::Lumps::const_iterator)
     {
         FileInfo const* lumpInfo = *i;
-        AbstractFile* container = reinterpret_cast<AbstractFile*>(lumpInfo->container);
+        File1* container = reinterpret_cast<File1*>(lumpInfo->container);
         DENG_ASSERT(container);
         PathDirectoryNode const& node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
 
@@ -1082,11 +1082,11 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     return found.count() - numFoundSoFar;
 }
 
-de::AbstractFile& FS1::interpret(de::DFile& hndl, char const* path, FileInfo const& info)
+de::File1& FS1::interpret(de::DFile& hndl, char const* path, FileInfo const& info)
 {
     DENG_ASSERT(path && path[0]);
 
-    de::AbstractFile* interpretedFile = 0;
+    de::File1* interpretedFile = 0;
 
     // Firstly try interpreter(s) for guessed resource types.
     resourcetype_t resTypeGuess = F_GuessResourceTypeByName(path);
@@ -1118,14 +1118,14 @@ de::AbstractFile& FS1::interpret(de::DFile& hndl, char const* path, FileInfo con
     // Still not interpreted?
     if(!interpretedFile)
     {
-        // Use a generic file - LumpFileAdaptor for contained lumps else GenericFile.
+        // Use a generic file - LumpFileAdaptor for contained lumps else File.
         if(info.container)
         {
             interpretedFile = new LumpFileAdaptor(hndl, path, info);
         }
         else
         {
-            interpretedFile = new GenericFile(hndl, path, info);
+            interpretedFile = new File1(FT_FILE, path, hndl, info);
         }
     }
 
@@ -1144,7 +1144,7 @@ de::DFile& FS1::openFile(char const* path, char const* mode, size_t baseOffset, 
     }
 #endif
 
-    AbstractFile* file = d->tryOpenFile(path, mode, baseOffset, allowDuplicate);
+    File1* file = d->tryOpenFile(path, mode, baseOffset, allowDuplicate);
     if(!file) throw NotFoundError("FS1::openFile", "No files found matching '" + QString(path) + "'");
 
     // Add a handle to the opened files list.
@@ -1156,10 +1156,10 @@ de::DFile& FS1::openFile(char const* path, char const* mode, size_t baseOffset, 
 de::DFile& FS1::openLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
-    de::AbstractFile& container = lumpFile(absoluteLumpNum, &lumpIdx);
+    de::File1& container = lumpFile(absoluteLumpNum, &lumpIdx);
     LumpFileAdaptor* lump = new LumpFileAdaptor(*DFileBuilder::fromFileLump(container, lumpIdx, false),
-                                  Str_Text(container.composeLumpPath(lumpIdx)),
-                                  container.lumpInfo(lumpIdx));
+                                                Str_Text(container.composeLumpPath(lumpIdx)),
+                                                container.lumpInfo(lumpIdx));
     DENG_ASSERT(lump);
 
     // Add a handle to the opened files list.
@@ -1170,20 +1170,20 @@ de::DFile& FS1::openLump(lumpnum_t absoluteLumpNum)
 
 bool FS1::accessFile(char const* path)
 {
-    de::AbstractFile* file = d->tryOpenFile(path, "rb", 0, true /* allow duplicates */);
+    de::File1* file = d->tryOpenFile(path, "rb", 0, true /* allow duplicates */);
     if(!file) return false;
     delete file;
     return true;
 }
 
-de::AbstractFile* FS1::addFile(char const* path, size_t baseOffset)
+de::File1* FS1::addFile(char const* path, size_t baseOffset)
 {
     try
     {
         DFile& hndl = openFile(path, "rb", baseOffset, false /* no duplicates */);
 
         // Load the file (a.k.a., index it).
-        AbstractFile& file = hndl.file();
+        File1& file = hndl.file();
         VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(file.path()))) )
 
         index(file);
@@ -1416,7 +1416,7 @@ void FS1::initLumpPathMap(void)
         }
 
         int lumpIdx;
-        de::AbstractFile& file = lumpFile(i, &lumpIdx);
+        de::File1& file = lumpFile(i, &lumpIdx);
         file.readLump(lumpIdx, buf, 0, lumpLength);
         buf[lumpLength] = 0;
         parseLumpPathMappings(*this, reinterpret_cast<char const*>(buf));
@@ -1552,7 +1552,7 @@ static void printLumpIndex(de::LumpIndex const& index)
     DENG2_FOR_EACH(i, index.lumps(), de::LumpIndex::Lumps::const_iterator)
     {
         FileInfo const* lumpInfo = *i;
-        de::AbstractFile* container = lumpInfo->container;
+        de::File1* container = lumpInfo->container;
         Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
                    F_PrettyPath(Str_Text(container->path())),
                    F_PrettyPath(Str_Text(container->composeLumpPath(lumpInfo->lumpIdx))),
@@ -1645,13 +1645,13 @@ D_CMD(ListFiles)
 
         DENG2_FOR_EACH(i, foundFiles, FS1::FileList::const_iterator)
         {
-            de::AbstractFile& file = (*i)->file();
+            de::File1& file = (*i)->file();
             uint crc;
 
             int fileCount = file.lumpCount();
             switch(file.type())
             {
-            case FT_GENERICFILE:
+            case FT_FILE:
                 crc = 0;
                 break;
             case FT_ZIPFILE:
@@ -1760,14 +1760,14 @@ int F_Access(char const* path)
     return App_FileSystem()->accessFile(path)? 1 : 0;
 }
 
-struct abstractfile_s* F_AddFile2(char const* path, size_t baseOffset)
+struct file1_s* F_AddFile2(char const* path, size_t baseOffset)
 {
-    return reinterpret_cast<struct abstractfile_s*>(App_FileSystem()->addFile(path, baseOffset));
+    return reinterpret_cast<struct file1_s*>(App_FileSystem()->addFile(path, baseOffset));
 }
 
-struct abstractfile_s* F_AddFile(char const* path)
+struct file1_s* F_AddFile(char const* path)
 {
-    return reinterpret_cast<struct abstractfile_s*>(App_FileSystem()->addFile(path));
+    return reinterpret_cast<struct file1_s*>(App_FileSystem()->addFile(path));
 }
 
 boolean F_RemoveFile2(char const* path, boolean permitRequired)
@@ -1795,10 +1795,10 @@ int F_RemoveFiles(char const* const* filenames, int num)
     return App_FileSystem()->removeFiles(filenames, num);
 }
 
-void F_ReleaseFile(struct abstractfile_s* file)
+void F_ReleaseFile(struct file1_s* file)
 {
     if(!file) return;
-    App_FileSystem()->releaseFile(*reinterpret_cast<de::AbstractFile*>(file));
+    App_FileSystem()->releaseFile(*reinterpret_cast<de::File1*>(file));
 }
 
 struct dfile_s* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate)
@@ -1901,64 +1901,64 @@ void F_Delete(struct dfile_s* hndl)
     App_FileSystem()->deleteFile(*reinterpret_cast<de::DFile*>(hndl));
 }
 
-ddstring_t const* F_Path(struct abstractfile_s const* file)
+ddstring_t const* F_Path(struct file1_s const* file)
 {
-    if(file) return reinterpret_cast<de::AbstractFile const*>(file)->path();
+    if(file) return reinterpret_cast<de::File1 const*>(file)->path();
     static de::Str zeroLengthString;
     return zeroLengthString;
 }
 
-void F_SetCustom(struct abstractfile_s* file, boolean yes)
+void F_SetCustom(struct file1_s* file, boolean yes)
 {
     if(!file) return;
-    reinterpret_cast<de::AbstractFile*>(file)->setCustom(CPP_BOOL(yes));
+    reinterpret_cast<de::File1*>(file)->setCustom(CPP_BOOL(yes));
 }
 
-size_t F_ReadLump(struct abstractfile_s* _file, int lumpIdx, uint8_t* buffer)
+size_t F_ReadLump(struct file1_s* _file, int lumpIdx, uint8_t* buffer)
 {
     if(!_file) return 0;
-    de::AbstractFile* file = reinterpret_cast<de::AbstractFile*>(_file);
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
     return file->readLump(lumpIdx, buffer);
 }
 
-size_t F_ReadLumpSection(struct abstractfile_s* _file, int lumpIdx, uint8_t* buffer,
+size_t F_ReadLumpSection(struct file1_s* _file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
     if(!_file) return 0;
-    de::AbstractFile* file = reinterpret_cast<de::AbstractFile*>(_file);
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
     return file->readLump(lumpIdx, buffer, startOffset, length);
 }
 
-uint8_t const* F_CacheLump(struct abstractfile_s* _file, int lumpIdx)
+uint8_t const* F_CacheLump(struct file1_s* _file, int lumpIdx)
 {
     if(!_file) return 0;
-    de::AbstractFile* file = reinterpret_cast<de::AbstractFile*>(_file);
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
     return file->cacheLump(lumpIdx);
 }
 
-void F_UnlockLump(struct abstractfile_s* _file, int lumpIdx)
+void F_UnlockLump(struct file1_s* _file, int lumpIdx)
 {
     if(!_file) return;
-    de::AbstractFile* file = reinterpret_cast<de::AbstractFile*>(_file);
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
     file->unlockLump(lumpIdx);
 }
 
-struct abstractfile_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
+struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
     try
     {
-        return reinterpret_cast<struct abstractfile_s*>(&App_FileSystem()->lumpFile(absoluteLumpNum, lumpIdx));
+        return reinterpret_cast<struct file1_s*>(&App_FileSystem()->lumpFile(absoluteLumpNum, lumpIdx));
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
     return 0;
 }
 
-struct abstractfile_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
+struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        return reinterpret_cast<struct abstractfile_s*>(&App_FileSystem()->lumpFile(absoluteLumpNum, 0));
+        return reinterpret_cast<struct file1_s*>(&App_FileSystem()->lumpFile(absoluteLumpNum, 0));
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
@@ -1988,17 +1988,17 @@ boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
     return false;
 }
 
-AutoStr* F_ComposeLumpPath2(struct abstractfile_s* _file, int lumpIdx, char delimiter)
+AutoStr* F_ComposeLumpPath2(struct file1_s* _file, int lumpIdx, char delimiter)
 {
     if(!_file) return AutoStr_NewStd();
-    de::AbstractFile* file = reinterpret_cast<de::AbstractFile*>(_file);
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
     return file->composeLumpPath(lumpIdx, delimiter);
 }
 
-AutoStr* F_ComposeLumpPath(struct abstractfile_s* _file, int lumpIdx)
+AutoStr* F_ComposeLumpPath(struct file1_s* _file, int lumpIdx)
 {
     if(!_file) return AutoStr_NewStd();
-    de::AbstractFile* file = reinterpret_cast<de::AbstractFile*>(_file);
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
     return file->composeLumpPath(lumpIdx);
 }
 
@@ -2160,7 +2160,7 @@ static bool findFilesPredicate(de::DFile* hndl, void* parameters)
 {
     DENG_ASSERT(parameters);
     findfilespredicate_params_t* p = (findfilespredicate_params_t*)parameters;
-    de::AbstractFile& file = hndl->file();
+    de::File1& file = hndl->file();
     if((!VALID_FILETYPE(p->type) || p->type == file.type()) &&
        ((p->markedCustom == file.hasCustom())))
     {

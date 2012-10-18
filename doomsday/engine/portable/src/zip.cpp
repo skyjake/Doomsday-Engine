@@ -463,7 +463,7 @@ struct Zip::Instance
 };
 
 Zip::Zip(DFile& file, char const* path, FileInfo const& info)
-    : AbstractFile(FT_ZIPFILE, path, file, info)
+    : File1(FT_ZIPFILE, path, file, info)
 {
     d = new Instance(this);
 }
