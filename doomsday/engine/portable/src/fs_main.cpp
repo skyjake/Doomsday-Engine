@@ -221,17 +221,6 @@ struct FS1::Instance
         ActiveWadLumpIndex = 0;
     }
 
-    de::LumpIndex* lumpIndexForFileType(filetype_t fileType)
-    {
-        switch(fileType)
-        {
-        case FT_ZIPFILE:    return &zipLumpIndex;
-        case FT_LUMPFILE:
-        case FT_WADFILE:    return ActiveWadLumpIndex;
-        default: return NULL;
-        }
-    }
-
     void usePrimaryWadLumpIndex()
     {
         ActiveWadLumpIndex = &primaryWadLumpIndex;
@@ -460,10 +449,30 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char cons
 void FS1::index(de::AbstractFile& file)
 {
     // Publish lumps to an index?
-    LumpIndex* lumpIndex = d->lumpIndexForFileType(file.type());
-    if(lumpIndex)
+    if(ZipFile* zip = dynamic_cast<ZipFile*>(&file))
     {
-        file.publishLumpsToIndex(*lumpIndex);
+        if(zip->empty()) return;
+
+        LumpIndex& index = d->zipLumpIndex;
+        // Insert the lumps into their rightful places in the index.
+        index.catalogLumps(*zip, 0, zip->lumpCount());
+        return;
+    }
+    if(WadFile* wad = dynamic_cast<WadFile*>(&file))
+    {
+        if(wad->empty()) return;
+
+        LumpIndex& index = *d->ActiveWadLumpIndex;
+        // Insert the lumps into their rightful places in the index.
+        index.catalogLumps(*wad, 0, wad->lumpCount());
+        return;
+    }
+    if(LumpFile* lump = dynamic_cast<LumpFile*>(&file))
+    {
+        LumpIndex& index = *d->ActiveWadLumpIndex;
+        // This *is* the lump, so insert ourself as a lump of our container in the index.
+        index.catalogLumps(lump->container(), lump->info().lumpIdx, lump->lumpCount());
+        return;
     }
 }
 

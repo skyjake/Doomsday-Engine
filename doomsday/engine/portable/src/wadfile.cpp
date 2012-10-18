@@ -231,6 +231,8 @@ struct WadFile::Instance
     {
         LOG_AS("WadFile");
         if(arcRecordsCount <= 0) return;
+        // Already been here?
+        if(lumpDirectory) return;
 
         // We'll load the lump directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
@@ -316,6 +318,7 @@ int WadFile::lastIndex()
 
 int WadFile::lumpCount()
 {
+    d->readLumpDirectory();
     return d->lumpDirectory? d->lumpDirectory->size() : 0;
 }
 
@@ -361,18 +364,6 @@ AutoStr* WadFile::composeLumpPath(int lumpIdx, char delimiter)
 
     PathDirectoryNode& node = lumpDirectoryNode(lumpIdx);
     return node.composePath(AutoStr_NewStd(), NULL, delimiter);
-}
-
-int WadFile::publishLumpsToIndex(LumpIndex& index)
-{
-    LOG_AS("WadFile");
-    d->readLumpDirectory();
-    if(empty()) return 0;
-
-    // Insert the lumps into their rightful places in the index.
-    int numPublished = lumpCount();
-    index.catalogLumps(*this, 0, numPublished);
-    return numPublished;
 }
 
 WadFile& WadFile::clearCachedLump(int lumpIdx, bool* retCleared)

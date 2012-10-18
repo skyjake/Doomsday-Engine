@@ -130,15 +130,6 @@ public:
      */
     GenericFile& unlockLump(int lumpIdx);
 
-    /**
-     * Publish this lump to the end of the specified @a index.
-     *
-     * @param index  Index to publish to.
-     *
-     * @return Number of lumps published to the index. Always @c =1
-     */
-    int publishLumpsToIndex(LumpIndex& index);
-
 private:
     struct Instance;
     Instance* d;

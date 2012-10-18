@@ -485,6 +485,7 @@ int ZipFile::lastIndex()
 
 int ZipFile::lumpCount()
 {
+    d->readLumpDirectory();
     return d->lumpDirectory? d->lumpDirectory->size() : 0;
 }
 
@@ -529,18 +530,6 @@ AutoStr* ZipFile::composeLumpPath(int lumpIdx, char delimiter)
     if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
     PathDirectoryNode& node = lumpDirectoryNode(lumpIdx);
     return node.composePath(AutoStr_NewStd(), NULL, delimiter);
-}
-
-int ZipFile::publishLumpsToIndex(LumpIndex& index)
-{
-    LOG_AS("ZipFile");
-    d->readLumpDirectory();
-    if(empty()) return 0;
-
-    // Insert the lumps into their rightful places in the index.
-    int numPublished = lumpCount();
-    index.catalogLumps(*this, 0, numPublished);
-    return numPublished;
 }
 
 ZipFile& ZipFile::clearCachedLump(int lumpIdx, bool* retCleared)

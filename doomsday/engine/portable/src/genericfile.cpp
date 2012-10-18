@@ -84,12 +84,4 @@ GenericFile& GenericFile::unlockLump(int /*lumpIdx*/)
     throw de::Error("GenericFile::unlockLump", "Not yet implemented");
 }
 
-int GenericFile::publishLumpsToIndex(LumpIndex& index)
-{
-    LOG_AS("GenericFile");
-    // This *is* the lump, so insert ourself in the index.
-    index.catalogLumps(*this, 0, 1);
-    return 1;
-}
-
 } // namespace de

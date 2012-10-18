@@ -76,11 +76,4 @@ LumpFile& LumpFile::unlockLump(int /*lumpIdx*/)
     return *this;
 }
 
-int LumpFile::publishLumpsToIndex(LumpIndex& index)
-{
-    // This *is* the lump, so insert ourself as a lump of our container in the index.
-    index.catalogLumps(container(), info().lumpIdx, 1);
-    return 1;
-}
-
 } // namespace de

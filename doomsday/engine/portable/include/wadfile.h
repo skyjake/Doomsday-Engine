@@ -180,16 +180,6 @@ public:
     WadFile& clearLumpCache();
 
     /**
-     * Publish lumps to the end of the specified @a index.
-     *
-     * @param index  Index to publish to.
-     *
-     * @return Number of lumps published to the index. Note that this is not
-     *         necessarily equal to the the number of lumps in the file.
-     */
-    int publishLumpsToIndex(LumpIndex& index);
-
-    /**
      * @attention Uses an extremely simple formula which does not conform to any CRC
      *            standard. Should not be used for anything critical.
      */

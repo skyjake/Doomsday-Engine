@@ -151,7 +151,7 @@ public:
 
     DFile& handle();
 
-    /**
+    /*
      * Access interfaces:
      *
      * @todo Extract these into one or more interface classes/subcomponents.
@@ -268,16 +268,7 @@ public:
     virtual size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
                             bool tryCache = true) = 0;
 
-    /**
-     * Publish this lump to the end of the specified @a index.
-     *
-     * @param index  Index to publish to.
-     *
-     * @return Number of lumps published to the index.
-     */
-    virtual int publishLumpsToIndex(LumpIndex& index) = 0;
-
-    /**
+    /*
      * Lump caching interface:
      */
 
