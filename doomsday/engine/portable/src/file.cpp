@@ -117,6 +117,12 @@ PathDirectoryNode const& File1::lumpDirectoryNode(int /*lumpIdx*/)
     throw de::Error("File1::lumpDirectoryNode", "Not yet implemented");
 }
 
+ddstring_t const* File1::lumpName(int /*lumpIdx*/)
+{
+    /// @todo writeme
+    throw de::Error("File1::lumpName", "Not yet implemented");
+}
+
 AutoStr* File1::composeLumpPath(int /*lumpIdx*/, char /*delimiter*/)
 {
     return AutoStr_NewStd();

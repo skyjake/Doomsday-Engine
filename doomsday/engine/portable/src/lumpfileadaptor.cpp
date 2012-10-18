@@ -20,7 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "lumpindex.h"
+#include "pathdirectory.h"
 #include "lumpfileadaptor.h"
 
 namespace de {
@@ -36,6 +36,11 @@ de::PathDirectoryNode const& LumpFileAdaptor::lumpDirectoryNode(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
     return container().lumpDirectoryNode(info().lumpIdx);
+}
+
+ddstring_t const* LumpFileAdaptor::lumpName(int /*lumpIdx*/)
+{
+    return container().lumpDirectoryNode(info().lumpIdx).pathFragment();
 }
 
 AutoStr* LumpFileAdaptor::composeLumpPath(int /*lumpIdx*/, char delimiter)

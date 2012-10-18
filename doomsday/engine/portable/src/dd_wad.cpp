@@ -55,7 +55,10 @@ char const* W_LumpName(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        return Str_Text(App_FileSystem()->lumpName(absoluteLumpNum));
+        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        DENG_ASSERT(info.container);
+        de::File1& file = *info.container;
+        return Str_Text(file.lumpName(info.lumpIdx));
     }
     catch(FS1::NotFoundError const&)
     {
@@ -81,7 +84,9 @@ char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        de::File1& file = App_FileSystem()->lumpFile(absoluteLumpNum);
+        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        DENG_ASSERT(info.container);
+        de::File1& file = *info.container;
         return Str_Text(file.path());
     }
     catch(FS1::NotFoundError const&)
@@ -95,7 +100,10 @@ boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        return App_FileSystem()->lumpFile(absoluteLumpNum).hasCustom();
+        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        DENG_ASSERT(info.container);
+        de::File1& file = *info.container;
+        return file.hasCustom();
     }
     catch(FS1::NotFoundError const&)
     {
@@ -138,9 +146,10 @@ size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 {
     try
     {
-        int lumpIdx;
-        de::File1& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
-        return file.readLump(lumpIdx, buffer, 0, App_FileSystem()->lumpInfo(absoluteLumpNum).size);
+        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        DENG_ASSERT(info.container);
+        de::File1& file = *info.container;
+        return file.readLump(info.lumpIdx, buffer, 0, info.size);
     }
     catch(FS1::NotFoundError const&)
     {
@@ -153,9 +162,10 @@ size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t star
 {
     try
     {
-        int lumpIdx;
-        de::File1& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
-        return file.readLump(lumpIdx, buffer, startOffset, length);
+        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        DENG_ASSERT(info.container);
+        de::File1& file = *info.container;
+        return file.readLump(info.lumpIdx, buffer, startOffset, length);
     }
     catch(FS1::NotFoundError const&)
     {
@@ -168,9 +178,10 @@ uint8_t const* W_CacheLump(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        int lumpIdx;
-        de::File1& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
-        return file.cacheLump(lumpIdx);
+        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        DENG_ASSERT(info.container);
+        de::File1& file = *info.container;
+        return file.cacheLump(info.lumpIdx);
     }
     catch(FS1::NotFoundError const&)
     {
@@ -183,9 +194,10 @@ void W_UnlockLump(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        int lumpIdx;
-        de::File1& file = App_FileSystem()->lumpFile(absoluteLumpNum, &lumpIdx);
-        file.unlockLump(lumpIdx);
+        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        DENG_ASSERT(info.container);
+        de::File1& file = *info.container;
+        file.unlockLump(info.lumpIdx);
     }
     catch(FS1::NotFoundError const&)
     {

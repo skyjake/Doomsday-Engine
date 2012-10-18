@@ -28,7 +28,6 @@
 #include "de_filesys.h"
 #include "game.h"
 #include "lumpcache.h"
-#include "lumpindex.h"
 #include "pathdirectory.h"
 
 #include "zip.h"
@@ -503,6 +502,11 @@ de::PathDirectoryNode& Zip::lumpDirectoryNode(int lumpIdx)
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
     return *((*d->lumpNodeLut)[lumpIdx]);
+}
+
+ddstring_t const* Zip::lumpName(int lumpIdx)
+{
+    return lumpDirectoryNode(lumpIdx).pathFragment();
 }
 
 FileInfo const& Zip::lumpInfo(int lumpIdx)

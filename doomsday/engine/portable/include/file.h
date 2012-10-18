@@ -48,6 +48,7 @@ typedef enum {
 
 #ifdef __cplusplus
 
+#include <de/Error>
 #include <de/str.h>
 #include "filehandle.h"
 #include "fileinfo.h"
@@ -186,6 +187,17 @@ public:
      * accordingly.
      */
     virtual int lumpCount() { return 1; }
+
+    /**
+     * Retrieve the name of a lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return  Name for this lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
+     */
+    virtual ddstring_t const* lumpName(int lumpIdx);
 
     /**
      * Retrieve the directory node for a lump contained by this file.

@@ -25,7 +25,6 @@
 #include "de_base.h"
 #include "de_filesys.h"
 #include "lumpcache.h"
-#include "lumpindex.h"
 #include "pathdirectory.h"
 
 #include "wad.h"
@@ -337,15 +336,21 @@ de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx)
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
+ddstring_t const* Wad::lumpName(int lumpIdx)
+{
+    LOG_AS("Wad::lumpName");
+    return lumpDirectoryNode(lumpIdx).pathFragment();
+}
+
 FileInfo const& Wad::lumpInfo(int lumpIdx)
 {
-    LOG_AS("Wad");
+    LOG_AS("Wad::lumpInfo");
     return d->lump(lumpIdx).info();
 }
 
 size_t Wad::lumpSize(int lumpIdx)
 {
-    LOG_AS("Wad");
+    LOG_AS("Wad::lumpSize");
     return d->lump(lumpIdx).info().size;
 }
 

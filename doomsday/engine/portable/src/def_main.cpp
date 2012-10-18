@@ -771,12 +771,16 @@ void Def_ReadLumpDefs(void)
     int const numLumps = App_FileSystem()->lumpCount();
     for(int i = 0; i < numLumps; ++i)
     {
-        if(strnicmp(Str_Text(App_FileSystem()->lumpName(i)), "DD_DEFNS", 8)) continue;
+        de::FileInfo const& info = App_FileSystem()->lumpInfo(i);
+        DENG_ASSERT(info.container);
+        de::File1& container = *info.container;
+
+        if(strnicmp(Str_Text(container.lumpName(info.lumpIdx)), "DD_DEFNS", 8)) continue;
 
         numProcessedLumps++;
         if(!DED_ReadLump(&defs, i))
         {
-            Con_Error("DD_ReadLumpDefs: Parse error when reading \"%s:DD_DEFNS\".\n", Str_Text(App_FileSystem()->lumpFile(i).path()));
+            Con_Error("DD_ReadLumpDefs: Parse error when reading \"%s:DD_DEFNS\".\n", Str_Text(container.path()));
         }
     }
 

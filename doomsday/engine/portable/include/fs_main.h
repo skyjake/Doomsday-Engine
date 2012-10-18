@@ -181,59 +181,28 @@ namespace de
         lumpnum_t lumpNumForName(char const* name, bool silent = true);
 
         /**
-         * Given a logical @a lumpnum retrieve the associated file object.
-         *
-         * @post The active LumpIndex may have changed!
-         *
-         * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
-         * @return  Name of the specified lump.
-         *
-         * @throws NotFoundError If the requested file could not be found.
-         */
-        ddstring_t const* lumpName(lumpnum_t absoluteLumpNum);
-
-        /**
-         * Given a logical @a lumpnum retrieve the associated file object.
-         *
-         * @post The active LumpIndex may have changed!
-         *
-         * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
-         * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
-         *                          file object is written here.
-         *
-         * @return  Found file object.
-         *
-         * @throws NotFoundError If the requested file could not be found.
-         */
-        File1& lumpFile(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
-
-        /**
          * Retrieve the FileInfo metadata record for a lump in the Wad lump index.
          *
          * @post The active LumpIndex may have changed!
          *
          * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
-         * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
-         *                          file object is written here.
          *
          * @return  Metadata record for the lump.
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        FileInfo const& lumpInfo(lumpnum_t absoluteLumpNum, int* lumpIdx = 0);
+        FileInfo const& lumpInfo(lumpnum_t absoluteLumpNum);
 
         /**
          * Retrieve the FileInfo metadata record for a lump in the Zip lump index.
          *
          * @param path              Path to search for (made absolute if necessary).
-         * @param lumpIdx           If not @c NULL the translated lumpnum within the owning
-         *                          file object is written here.
          *
          * @return  Metadata record for the lump.
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        FileInfo const& zipFileInfo(char const* path, int* lumpIdx = 0);
+        FileInfo const& zipFileInfo(char const* path);
 
         /**
          * Opens the given file (will be translated) for reading.
@@ -433,7 +402,7 @@ boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
 lumpnum_t F_LumpNumForName(char const* name);
 
-ddstring_t const* F_LumpFileAdaptorPath(lumpnum_t absoluteLumpNum);
+ddstring_t const* F_LumpFilePath(lumpnum_t absoluteLumpNum);
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
 

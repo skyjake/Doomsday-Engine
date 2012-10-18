@@ -51,13 +51,22 @@ public:
     ~LumpFileAdaptor();
 
     /**
-     * Retrieve the directory node for a lump contained by this file.
+     * Retrieve the directory node for this lump in the container file.
      *
      * @param lumpIdx       Ignored. Required argument.
      *
      * @return  Directory node for this lump.
      */
     PathDirectoryNode const& lumpDirectoryNode(int lumpIdx);
+
+    /**
+     * Retrieve the name of this lump.
+     *
+     * @param lumpIdx       Ignored. Required argument.
+     *
+     * @return  Name for this lump.
+     */
+    ddstring_t const* lumpName(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.
