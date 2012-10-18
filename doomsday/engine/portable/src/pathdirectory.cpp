@@ -1097,8 +1097,9 @@ static int iteratePathsInHash(PathDirectory* pd,
     ushort hash, PathDirectoryNodeType type, int flags, PathDirectoryNode* parent_,
     int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters)
 {
-    int result = 0;
+    if(!pd) return 0;
 
+    int result = 0;
     SELF(pd);
 
     if(hash != PATHDIRECTORY_NOHASH && hash >= PATHDIRECTORY_PATHHASH_SIZE)
