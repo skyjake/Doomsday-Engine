@@ -80,6 +80,9 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
+    /// This file is not contained. @ingroup errors
+    DENG2_ERROR(NotContainedError);
+
 private:
     File1();
 

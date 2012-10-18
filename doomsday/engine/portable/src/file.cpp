@@ -68,7 +68,7 @@ bool File1::isContained() const
 
 File1& File1::container() const
 {
-    if(!info_.container) throw de::Error("File1::container", QString("%s is not contained").arg(Str_Text(path())));
+    if(!info_.container) throw NotContainedError("File1::container", QString("%s is not contained").arg(Str_Text(path())));
     return *info_.container;
 }
 
