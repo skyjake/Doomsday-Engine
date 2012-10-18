@@ -433,7 +433,7 @@ boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
 lumpnum_t F_LumpNumForName(char const* name);
 
-ddstring_t const* F_LumpFilePath(lumpnum_t absoluteLumpNum);
+ddstring_t const* F_LumpFileAdaptorPath(lumpnum_t absoluteLumpNum);
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
 

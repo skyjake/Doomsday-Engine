@@ -21,55 +21,55 @@
  */
 
 #include "lumpindex.h"
-#include "lumpfile.h"
+#include "lumpfileadaptor.h"
 
 namespace de {
 
-LumpFile::LumpFile(DFile& file, char const* path, FileInfo const& info)
+LumpFileAdaptor::LumpFileAdaptor(DFile& file, char const* path, FileInfo const& info)
     : AbstractFile(FT_LUMPFILE, path, file, info)
 {}
 
-LumpFile::~LumpFile()
+LumpFileAdaptor::~LumpFileAdaptor()
 {}
 
-de::PathDirectoryNode const& LumpFile::lumpDirectoryNode(int /*lumpIdx*/)
+de::PathDirectoryNode const& LumpFileAdaptor::lumpDirectoryNode(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
     return container().lumpDirectoryNode(info().lumpIdx);
 }
 
-AutoStr* LumpFile::composeLumpPath(int /*lumpIdx*/, char delimiter)
+AutoStr* LumpFileAdaptor::composeLumpPath(int /*lumpIdx*/, char delimiter)
 {
     // Lump files are special cases for this *is* the lump.
     return container().composeLumpPath(info().lumpIdx, delimiter);
 }
 
-size_t LumpFile::lumpSize(int /*lumpIdx*/)
+size_t LumpFileAdaptor::lumpSize(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
     return info().size;
 }
 
-size_t LumpFile::readLump(int /*lumpIdx*/, uint8_t* buffer, bool tryCache)
+size_t LumpFileAdaptor::readLump(int /*lumpIdx*/, uint8_t* buffer, bool tryCache)
 {
     // Lump files are special cases for this *is* the lump.
     return container().readLump(info().lumpIdx, buffer, tryCache);
 }
 
-size_t LumpFile::readLump(int /*lumpIdx*/, uint8_t* buffer, size_t startOffset,
+size_t LumpFileAdaptor::readLump(int /*lumpIdx*/, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     // Lump files are special cases for this *is* the lump.
     return container().readLump(info().lumpIdx, buffer, startOffset, length, tryCache);
 }
 
-uint8_t const* LumpFile::cacheLump(int /*lumpIdx*/)
+uint8_t const* LumpFileAdaptor::cacheLump(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
     return container().cacheLump(info().lumpIdx);
 }
 
-LumpFile& LumpFile::unlockLump(int /*lumpIdx*/)
+LumpFileAdaptor& LumpFileAdaptor::unlockLump(int /*lumpIdx*/)
 {
     // Lump files are special cases for this *is* the lump.
     container().unlockLump(info().lumpIdx);

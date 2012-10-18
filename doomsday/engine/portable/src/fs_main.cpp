@@ -36,7 +36,7 @@
 #include "genericfile.h"
 #include "lumpindex.h"
 #include "fileinfo.h"
-#include "lumpfile.h"
+#include "lumpfileadaptor.h"
 #include "m_misc.h" // for M_FindWhite()
 #include "wad.h"
 #include "zip.h"
@@ -467,7 +467,7 @@ void FS1::index(de::AbstractFile& file)
         index.catalogLumps(*wad, 0, wad->lumpCount());
         return;
     }
-    if(LumpFile* lump = dynamic_cast<LumpFile*>(&file))
+    if(LumpFileAdaptor* lump = dynamic_cast<LumpFileAdaptor*>(&file))
     {
         LumpIndex& index = *d->ActiveWadLumpIndex;
         // This *is* the lump, so insert ourself as a lump of our container in the index.
@@ -1118,10 +1118,10 @@ de::AbstractFile& FS1::interpret(de::DFile& hndl, char const* path, FileInfo con
     // Still not interpreted?
     if(!interpretedFile)
     {
-        // Use a generic file - LumpFile for contained lumps else GenericFile.
+        // Use a generic file - LumpFileAdaptor for contained lumps else GenericFile.
         if(info.container)
         {
-            interpretedFile = new LumpFile(hndl, path, info);
+            interpretedFile = new LumpFileAdaptor(hndl, path, info);
         }
         else
         {
@@ -1157,7 +1157,7 @@ de::DFile& FS1::openLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
     de::AbstractFile& container = lumpFile(absoluteLumpNum, &lumpIdx);
-    LumpFile* lump = new LumpFile(*DFileBuilder::fromFileLump(container, lumpIdx, false),
+    LumpFileAdaptor* lump = new LumpFileAdaptor(*DFileBuilder::fromFileLump(container, lumpIdx, false),
                                   Str_Text(container.composeLumpPath(lumpIdx)),
                                   container.lumpInfo(lumpIdx));
     DENG_ASSERT(lump);
@@ -1965,7 +1965,7 @@ struct abstractfile_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
-ddstring_t const* F_LumpFilePath(lumpnum_t absoluteLumpNum)
+ddstring_t const* F_LumpFileAdaptorPath(lumpnum_t absoluteLumpNum)
 {
     try
     {

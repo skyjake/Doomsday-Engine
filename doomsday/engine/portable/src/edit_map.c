@@ -1724,7 +1724,7 @@ boolean MPE_End(void)
     {
         // Yes, write the cached map data file.
         lumpnum_t markerLumpNum = F_LumpNumForName(Str_Text(Uri_Path(gamemap->uri)));
-        AutoStr* cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_LumpFilePath(markerLumpNum)));
+        AutoStr* cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_LumpFileAdaptorPath(markerLumpNum)));
         Str cachedMapPath;
 
         Str_InitStd(&cachedMapPath);

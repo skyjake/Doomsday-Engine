@@ -1,12 +1,12 @@
 /**
- * @file lumpfile.h
+ * @file lumpfileadaptor.h
  *
  * Specialization of AbstractFile for working with the lumps of container
  * file instances (such as Wad and Zip).
  *
- * Design wise a LumpFile is somewhat like an Adapter or Bridge, in that it
- * provides an AbstractFile-derived object instance through which a lump of
- * a contained file may be manipulated.
+ * Design wise a LumpFileAdaptorAdaptor is an Adapter, in that it provides an
+ * AbstractFile-derived object instance through which a lump of a contained
+ * file may be manipulated.
  *
  * @ingroup fs
  *
@@ -30,8 +30,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_LUMPFILE_H
-#define LIBDENG_FILESYS_LUMPFILE_H
+#ifndef LIBDENG_FILESYS_LUMPFILEADAPTOR_H
+#define LIBDENG_FILESYS_LUMPFILEADAPTOR_H
 
 #ifdef __cplusplus
 
@@ -45,13 +45,14 @@ class LumpIndex;
 class PathDirectoryNode;
 
 /**
- * LumpFile. Runtime representation of a lump-file.
+ * LumpFileAdaptor. AbstractFile adaptor class allowing lumps to be interfaced with as
+ * if they were "real" files.
  */
-class LumpFile : public AbstractFile
+class LumpFileAdaptor : public AbstractFile
 {
 public:
-    LumpFile(DFile& file, char const* path, FileInfo const& info);
-    ~LumpFile();
+    LumpFileAdaptor(DFile& file, char const* path, FileInfo const& info);
+    ~LumpFileAdaptor();
 
     /**
      * Retrieve the directory node for a lump contained by this file.
@@ -131,7 +132,7 @@ public:
      *
      * @return This instance.
      */
-    LumpFile& unlockLump(int lumpIdx);
+    LumpFileAdaptor& unlockLump(int lumpIdx);
 
 private:
     struct Instance;
@@ -143,11 +144,11 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-struct lumpfile_s; // The lumpfile instance (opaque)
-//typedef struct lumpfile_s LumpFile;
+struct lumpfileadaptor_s; // The lumpfileadaptor instance (opaque)
+//typedef struct lumpfileadaptor_s LumpFileAdaptor;
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FILESYS_LUMPFILE_H */
+#endif /* LIBDENG_FILESYS_LUMPFILEADAPTOR_H */
