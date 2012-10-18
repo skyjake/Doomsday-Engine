@@ -258,8 +258,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-struct zipfile_s; // The  zipfile instance (opaque)
-//typedef struct zipfile_s Zip;
+struct zip_s; // The  zip instance (opaque)
+//typedef struct zip_s Zip;
 
 #ifdef __cplusplus
 } // extern "C"

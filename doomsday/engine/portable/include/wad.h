@@ -206,8 +206,8 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-struct wafilehandle_s; // The wadfile instance (opaque)
-//typedef struct wafilehandle_s Wad;
+struct wad_s; // The wad instance (opaque)
+//typedef struct wad_s Wad;
 
 #ifdef __cplusplus
 } // extern "C"
