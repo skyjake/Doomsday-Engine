@@ -57,7 +57,7 @@ static PluginHandle* findFirstUnusedPluginHandle(void)
     return 0; // none available
 }
 
-static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
+static int loadPlugin(void* libraryFile, const char* fileName, const char* pluginPath, void* param)
 {
     Library* plugin;
     PluginHandle* handle;
@@ -65,7 +65,9 @@ static int loadPlugin(const char* fileName, const char* pluginPath, void* param)
     filename_t name;
     pluginid_t plugId;
 
+    DENG_UNUSED(libraryFile); // this is not C++...
     DENG_UNUSED(param);
+
     DENG_ASSERT(fileName && fileName[0]);
     DENG_ASSERT(pluginPath && pluginPath[0]);
 

@@ -148,6 +148,12 @@ const char* Library_Type(const Library* lib)
     return &lib->typeId[0];
 }
 
+de::LibraryFile& Library_File(Library* lib)
+{
+    DENG_ASSERT(lib);
+    return *lib->libFile;
+}
+
 void* Library_Symbol(Library* lib, const char* symbolName)
 {
     try
@@ -170,7 +176,7 @@ const char* Library_LastError(void)
     return Str_Text(lastError);
 }
 
-int Library_IterateAvailableLibraries(int (*func)(const char*, const char *, void *), void *data)
+int Library_IterateAvailableLibraries(int (*func)(void *, const char *, const char *, void *), void *data)
 {
     const de::FS::Index& libs = DENG2_APP->fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
 
@@ -181,7 +187,7 @@ int Library_IterateAvailableLibraries(int (*func)(const char*, const char *, voi
         const de::NativeFile* src = dynamic_cast<const de::NativeFile*>(lib->source());
         if(src)
         {
-            int result = func(src->name().toUtf8().constData(),
+            int result = func(lib, src->name().toUtf8().constData(),
                               lib->path().toUtf8().constData(), data);
             if(result) return result;
         }

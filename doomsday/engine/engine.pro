@@ -441,7 +441,7 @@ SOURCES += \
     portable/src/abstractfile.cpp \
     portable/src/abstractresource.c \
     portable/src/animator.c \
-    portable/src/audiodriver.c \
+    portable/src/audiodriver.cpp \
     portable/src/audiodriver_music.c \
     portable/src/b_command.c \
     portable/src/b_context.c \

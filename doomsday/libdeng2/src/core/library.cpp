@@ -83,7 +83,7 @@ Library::~Library()
     }
 }
 
-void* Library::address(const String& name)
+void* Library::address(const String& name, SymbolLookupMode lookup)
 {
     if(!_library)
     {
@@ -102,8 +102,12 @@ void* Library::address(const String& name)
 
     if(!ptr)
     {
-        /// @throw SymbolMissingError There is no symbol @a name in the library.
-        throw SymbolMissingError("Library::symbol", "Symbol '" + name + "' was not found");
+        if(lookup == RequiredSymbol)
+        {
+            /// @throw SymbolMissingError There is no symbol @a name in the library.
+            throw SymbolMissingError("Library::symbol", "Symbol '" + name + "' was not found");
+        }
+        return 0;
     }
 
     _symbols[name] = ptr;

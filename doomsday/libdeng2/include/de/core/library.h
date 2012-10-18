@@ -140,15 +140,21 @@ namespace de
          */
         const String& type() const { return _type; }
 
+        enum SymbolLookupMode {
+            RequiredSymbol, ///< Symbol must be exported.
+            OptionalSymbol  ///< Symbol can be missing.
+        };
+
         /**
-         * Gets the address of an exported symbol. This will always return a valid
-         * pointer to the symbol.
+         * Gets the address of an exported symbol. This will always return a
+         * valid pointer to the symbol.
          *
-         * @param name  Name of the exported symbol.
+         * @param name    Name of the exported symbol.
+         * @param lookup  Lookup mode (required or optional).
          *
          * @return  A pointer to the symbol.
          */
-        void* address(const String& name);
+        void* address(const String& name, SymbolLookupMode lookup = RequiredSymbol);
 
         /**
          * Checks if the library exports a specific symbol.
@@ -158,7 +164,7 @@ namespace de
         bool hasSymbol(const String& name) const;
 
         template <typename Type>
-        Type symbol(const String& name) {
+        Type symbol(const String& name, SymbolLookupMode lookup = RequiredSymbol) {
             /**
              * @note Casting to a pointer-to-function type: see
              * http://www.trilithium.com/johan/2004/12/problem-with-dlsym/
@@ -167,7 +173,7 @@ namespace de
             DENG2_ASSERT(sizeof(void*) == sizeof(Type));
 
             union { void* original; Type target; } forcedCast;
-            forcedCast.original = address(name);
+            forcedCast.original = address(name, lookup);
             return forcedCast.target;
         }
 

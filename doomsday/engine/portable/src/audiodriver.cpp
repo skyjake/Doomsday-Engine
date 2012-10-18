@@ -1,5 +1,5 @@
 /**
- * @file audiodriver.c
+ * @file audiodriver.cpp
  * Audio driver loading and interface management. @ingroup audio
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -26,6 +26,9 @@
 #include "de_audio.h"
 #include "sys_audio.h"
 #include "audiodriver.h"
+
+#include <de/Library>
+#include <de/LibraryFile>
 
 typedef struct driver_s {
     Library* library;
@@ -71,82 +74,74 @@ extern audiointerface_music_t audiodQuickTimeMusic;
 
 static void importInterfaces(driver_t* d)
 {
-#define Imp(name) Library_Symbol(d->library, name)
+    de::Library& lib = Library_File(d->library).library();
 
-    d->interface.Init     = Imp("DS_Init");
-    d->interface.Shutdown = Imp("DS_Shutdown");
-    d->interface.Event    = Imp("DS_Event");
-    d->interface.Set      = Imp("DS_Set");
+    d->interface.Init     = lib.symbol<int (*)()> ("DS_Init");
+    d->interface.Shutdown = lib.symbol<void (*)()> ("DS_Shutdown");
+    d->interface.Event    = lib.symbol<void (*)(int)> ("DS_Event");
+    d->interface.Set      = lib.symbol<int (*)(int, const void*)> ("DS_Set", de::Library::OptionalSymbol);
 
-    if(Imp("DS_SFX_Init"))
+    if(lib.hasSymbol("DS_SFX_Init"))
     {
-        d->sfx.gen.Init      = Imp("DS_SFX_Init");
-        d->sfx.gen.Create    = Imp("DS_SFX_CreateBuffer");
-        d->sfx.gen.Destroy   = Imp("DS_SFX_DestroyBuffer");
-        d->sfx.gen.Load      = Imp("DS_SFX_Load");
-        d->sfx.gen.Reset     = Imp("DS_SFX_Reset");
-        d->sfx.gen.Play      = Imp("DS_SFX_Play");
-        d->sfx.gen.Stop      = Imp("DS_SFX_Stop");
-        d->sfx.gen.Refresh   = Imp("DS_SFX_Refresh");
-        d->sfx.gen.Set       = Imp("DS_SFX_Set");
-        d->sfx.gen.Setv      = Imp("DS_SFX_Setv");
-        d->sfx.gen.Listener  = Imp("DS_SFX_Listener");
-        d->sfx.gen.Listenerv = Imp("DS_SFX_Listenerv");
-        d->sfx.gen.Getv      = Imp("DS_SFX_Getv");
+        d->sfx.gen.Init      = lib.symbol<int (*)()> ("DS_SFX_Init");
+        d->sfx.gen.Create    = lib.symbol<sfxbuffer_t* (*)(int, int, int)> ("DS_SFX_CreateBuffer");
+        d->sfx.gen.Destroy   = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_DestroyBuffer");
+        d->sfx.gen.Load      = lib.symbol<void (*)(sfxbuffer_t*, sfxsample_s*)> ("DS_SFX_Load");
+        d->sfx.gen.Reset     = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_Reset");
+        d->sfx.gen.Play      = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_Play");
+        d->sfx.gen.Stop      = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_Stop");
+        d->sfx.gen.Refresh   = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_Refresh");
+        d->sfx.gen.Set       = lib.symbol<void (*)(sfxbuffer_t*, int, float)> ("DS_SFX_Set");
+        d->sfx.gen.Setv      = lib.symbol<void (*)(sfxbuffer_t*, int, float*)> ("DS_SFX_Setv");
+        d->sfx.gen.Listener  = lib.symbol<void (*)(int, float)> ("DS_SFX_Listener");
+        d->sfx.gen.Listenerv = lib.symbol<void (*)(int, float*)> ("DS_SFX_Listenerv");
+        d->sfx.gen.Getv      = lib.symbol<int (*)(int, void*)> ("DS_SFX_Getv");
     }
 
-    if(Imp("DM_Music_Init"))
+    if(lib.hasSymbol("DM_Music_Init"))
     {
-        d->music.gen.Init   = Imp("DM_Music_Init");
-        d->music.gen.Update = Imp("DM_Music_Update");
-        d->music.gen.Get    = Imp("DM_Music_Get");
-        d->music.gen.Set    = Imp("DM_Music_Set");
-        d->music.gen.Pause  = Imp("DM_Music_Pause");
-        d->music.gen.Stop   = Imp("DM_Music_Stop");
-        d->music.SongBuffer = Imp("DM_Music_SongBuffer");
-        d->music.Play       = Imp("DM_Music_Play");
-        d->music.PlayFile   = Imp("DM_Music_PlayFile");
+        d->music.gen.Init   = lib.symbol<int (*)()> ("DM_Music_Init");
+        d->music.gen.Update = lib.symbol<void (*)()> ("DM_Music_Update");
+        d->music.gen.Get    = lib.symbol<int (*)(int, void*)> ("DM_Music_Get");
+        d->music.gen.Set    = lib.symbol<void (*)(int, float)> ("DM_Music_Set");
+        d->music.gen.Pause  = lib.symbol<void (*)(int)> ("DM_Music_Pause");
+        d->music.gen.Stop   = lib.symbol<void (*)()> ("DM_Music_Stop");
+        d->music.SongBuffer = lib.symbol<void* (*)(unsigned int)> ("DM_Music_SongBuffer", de::Library::OptionalSymbol);
+        d->music.Play       = lib.symbol<int (*)(int)> ("DM_Music_Play", de::Library::OptionalSymbol);
+        d->music.PlayFile   = lib.symbol<int (*)(const char*, int)> ("DM_Music_PlayFile", de::Library::OptionalSymbol);
     }
 
-    if(Imp("DM_CDAudio_Init"))
+    if(lib.hasSymbol("DM_CDAudio_Init"))
     {
-        d->cd.gen.Init   = Imp("DM_CDAudio_Init");
-        d->cd.gen.Update = Imp("DM_CDAudio_Update");
-        d->cd.gen.Set    = Imp("DM_CDAudio_Set");
-        d->cd.gen.Get    = Imp("DM_CDAudio_Get");
-        d->cd.gen.Pause  = Imp("DM_CDAudio_Pause");
-        d->cd.gen.Stop   = Imp("DM_CDAudio_Stop");
-        d->cd.Play       = Imp("DM_CDAudio_Play");
+        d->cd.gen.Init   = lib.symbol<int (*)()> ("DM_CDAudio_Init");
+        d->cd.gen.Update = lib.symbol<void (*)()> ("DM_CDAudio_Update");
+        d->cd.gen.Set    = lib.symbol<void (*)(int, float)> ("DM_CDAudio_Set");
+        d->cd.gen.Get    = lib.symbol<int (*)(int, void*)> ("DM_CDAudio_Get");
+        d->cd.gen.Pause  = lib.symbol<void (*)(int)> ("DM_CDAudio_Pause");
+        d->cd.gen.Stop   = lib.symbol<void (*)()> ("DM_CDAudio_Stop");
+        d->cd.Play       = lib.symbol<int (*)(int, int)> ("DM_CDAudio_Play");
     }
-
-#undef Imp
 }
 
-static int audioPluginFinder(const char* fileName, const char* absPath, void* ptr)
+static int audioPluginFinder(void* libFile, const char* fileName, const char* absPath, void* ptr)
 {
-    int i;
+    de::LibraryFile* lib = reinterpret_cast<de::LibraryFile*>(libFile);
     Str* path = (Str*) ptr;
 
-    // Check if the filename matches: [*]audio_name[.ext]
-    // (a regex or pattern match routine wouldn't hurt...)
+    DENG2_UNUSED(fileName);
 
-    for(i = 0; i <= strlen(fileName) - Str_Size(path); ++i)
+    if(lib->hasUnderscoreName(Str_Text(path)))
     {
-        const char* fn = fileName + i;
-        if(!strncmp(fn, Str_Text(path), Str_Length(path)) /* matching name? */ &&
-           (strlen(fn) == Str_Length(path) /* no extension? */
-            || fn[Str_Length(path)] == '.' /* extension follows right away? */))
-        {
-            Str_Set(path, absPath);
-            return true; // Found it!
-        }
+        Str_Set(path, absPath);
+        return true;
     }
+
     return false; // Keep looking...
 }
 
 static AutoStr* findAudioPluginPath(const char* name)
 {
-    AutoStr* path = Str_Appendf(AutoStr_New(), "audio_%s", name);
+    AutoStr* path = AutoStr_FromText(name);
     if(Library_IterateAvailableLibraries(audioPluginFinder, path))
     {
         // The full path of the library was returned in @a path.
@@ -194,15 +189,14 @@ static const char* getDriverName(audiodriverid_t id)
     return 0; // Unreachable.
 }
 
-static int identifierToDriverId(const char* name)
+static audiodriverid_t identifierToDriverId(const char* name)
 {
-    int i;
-    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
+    for(int i = 0; i < AUDIODRIVER_COUNT; ++i)
     {
-        if(!stricmp(name, driverIdentifier[i])) return i;
+        if(!stricmp(name, driverIdentifier[i])) return (audiodriverid_t) i;
     }
     Con_Message("'%s' is not a valid audio driver name.\n", name);
-    return -1;
+    return AUDIOD_INVALID;
 }
 
 static boolean isDriverInited(audiodriverid_t id)
@@ -597,13 +591,13 @@ AutoStr* AudioDriver_InterfaceName(void* anyAudioInterface)
         if((void*)&d->sfx == anyAudioInterface)
         {
             /// @todo  SFX interfaces can't be named yet.
-            return AutoStr_FromText(getDriverName(i));
+            return AutoStr_FromText(getDriverName(audiodriverid_t(i)));
         }
 
         if((void*)&d->music == anyAudioInterface || (void*)&d->cd == anyAudioInterface)
         {
             char buf[256];  /// @todo  This could easily overflow...
-            audiointerface_music_generic_t* gen = anyAudioInterface;
+            audiointerface_music_generic_t* gen = (audiointerface_music_generic_t*) anyAudioInterface;
             if(gen->Get(MUSIP_ID, buf))
             {
                 return AutoStr_FromTextStd(buf);

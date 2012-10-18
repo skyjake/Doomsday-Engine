@@ -29,7 +29,8 @@
 ///@{
 
 typedef enum audiodriverid_e {
-    AUDIOD_DUMMY,
+    AUDIOD_INVALID = -1,
+    AUDIOD_DUMMY = 0,
     AUDIOD_SDL_MIXER,
     AUDIOD_OPENAL,
     AUDIOD_FMOD,

@@ -73,7 +73,8 @@ void LibraryFile::clear()
 
 bool LibraryFile::hasUnderscoreName(const String& nameAfterUnderscore) const
 {
-    return name().contains("_" + nameAfterUnderscore + ".");
+    return name().contains("_" + nameAfterUnderscore + ".") ||
+           name().endsWith("_" + nameAfterUnderscore);
 }
 
 bool LibraryFile::recognize(const File& file)
