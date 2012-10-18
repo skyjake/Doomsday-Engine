@@ -46,6 +46,13 @@ class PathDirectoryNode;
 class Zip : public File1
 {
 public:
+    /// Base class for format-related errors. @ingroup errors
+    DENG2_ERROR(FormatError);
+
+    /// The requested entry does not exist in the zip. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+public:
     Zip(FileHandle& hndl, char const* path, FileInfo const& info);
     ~Zip();
 
@@ -68,7 +75,7 @@ public:
      *
      * @return  Directory node for this lump.
      *
-     * @throws de::Error    If @a lumpIdx is not valid.
+     * @throws NotFoundError  If @a lumpIdx is not valid.
      */
     PathDirectoryNode& lumpDirectoryNode(int lumpIdx);
 
@@ -92,7 +99,7 @@ public:
      *
      * @return Lump info descriptor for the lump.
      *
-     * @throws de::Error    If @a lumpIdx is not valid.
+     * @throws NotFoundError  If @a lumpIdx is not valid.
      */
     FileInfo const& lumpInfo(int lumpIdx);
 
@@ -103,7 +110,7 @@ public:
      *
      * @return Size of the lump in bytes.
      *
-     * @throws de::Error    If @a lumpIdx is not valid.
+     * @throws NotFoundError  If @a lumpIdx is not valid.
      *
      * @note This method is intended mainly for convenience. @see lumpInfo() for
      *       a better method of looking up multiple @ref FileInfo properties.
@@ -120,6 +127,8 @@ public:
      *
      * @return Number of bytes read.
      *
+     * @throws NotFoundError  If @a lumpIdx is not valid.
+     *
      * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
      */
     size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true);
@@ -134,6 +143,8 @@ public:
      * @param tryCache      @c true= try the lump cache first.
      *
      * @return Number of bytes read.
+     *
+     * @throws NotFoundError  If @a lumpIdx is not valid.
      */
     size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
                     bool tryCache = true);
