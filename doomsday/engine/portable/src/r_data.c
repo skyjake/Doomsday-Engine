@@ -1131,7 +1131,7 @@ static textureid_t findPatchTextureIdByName(const char* encodedName)
 patchid_t R_DeclarePatch(const char* name)
 {
     const doompatch_header_t* patch;
-    File1* fsObject;
+    struct file1_s* file;
     Uri* uri, *resourcePath;
     int lumpIdx;
     ddstring_t encodedName;
@@ -1199,8 +1199,8 @@ patchid_t R_DeclarePatch(const char* name)
      * @todo: Cannot be sure this is in Patch format until a load attempt
      * is made. We should not read this info here!
      */
-    fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-    patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx);
+    file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx);
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
 
@@ -1211,7 +1211,7 @@ patchid_t R_DeclarePatch(const char* name)
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
         tex = Textures_CreateWithSize(texId, F_LumpIsCustom(lumpNum), &size, (void*)p);
-        F_UnlockLump(fsObject, lumpIdx);
+        F_UnlockLump(file, lumpIdx);
 
         if(!tex)
         {
@@ -1234,7 +1234,7 @@ patchid_t R_DeclarePatch(const char* name)
 
         free(oldPatch);
 
-        F_UnlockLump(fsObject, lumpIdx);
+        F_UnlockLump(file, lumpIdx);
     }
 
     return uniqueId;
@@ -1400,7 +1400,7 @@ void R_UpdateRawTexs(void)
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
     int lumpIdx;
-    File1* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
     size_t lumpSize = F_LumpLength(lumpNum);
     patchname_t* names, *name;
     const uint8_t* lump;
@@ -1510,7 +1510,7 @@ typedef struct {
     patchcompositetex_t** texDefs = NULL;
     size_t lumpSize, offset, n, numValidPatchRefs;
     int numTexDefs, numValidTexDefs;
-    File1* fsObject;
+    struct file1_s* file;
     int* directory, *maptex1;
     short* texDefNumPatches;
     patchinfo_t* patchInfo;
@@ -1527,13 +1527,13 @@ typedef struct {
     if(!maptex1)
         Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for temporary copy of archived DOOM texture definitions.", (unsigned long) lumpSize);
 
-    fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-    F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)maptex1, 0, lumpSize);
+    file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    F_ReadLumpSection(file, lumpIdx, (uint8_t*)maptex1, 0, lumpSize);
 
     numTexDefs = LONG(*maptex1);
 
     VERBOSE(
-        AutoStr* path = F_ComposeLumpPath(fsObject, lumpIdx);
+        AutoStr* path = F_ComposeLumpPath(file, lumpIdx);
         Con_Message("  Processing \"%s\"...\n", F_PrettyPath(Str_Text(path)));
     )
 
@@ -1558,7 +1558,7 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            AutoStr* path = F_ComposeLumpPath(fsObject, lumpIdx);
+            AutoStr* path = F_ComposeLumpPath(file, lumpIdx);
             Con_Message("Warning: Invalid offset %lu for definition %i in \"%s\", ignoring.\n", (unsigned long) offset, i, F_PrettyPath(Str_Text(path)));
             continue;
         }
@@ -2171,11 +2171,11 @@ void R_InitFlatTextures(void)
     if(firstFlatMarkerLumpNum >= 0)
     {
         lumpnum_t lumpNum, numLumps = F_LumpCount();
-        File1* blockFile = 0;
+        struct file1_s* blockFile = 0;
         for(lumpNum = numLumps; lumpNum --> firstFlatMarkerLumpNum + 1;)
         {
             ddstring_t const* lumpName = F_LumpName(lumpNum);
-            File1* lumpFile = F_FindFileForLumpNum(lumpNum);
+            struct file1_s* lumpFile = F_FindFileForLumpNum(lumpNum);
 
             if(blockFile && blockFile != lumpFile)
             {
@@ -2273,7 +2273,7 @@ void R_DefineSpriteTexture(textureid_t texId)
         ddstring_t* resourcePath = Uri_Resolved(resourceUri);
         lumpnum_t lumpNum = F_LumpNumForName(Str_Text(resourcePath));
         int lumpIdx;
-        File1* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx);
         Size2Raw size;
 

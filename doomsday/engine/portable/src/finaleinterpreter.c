@@ -2018,8 +2018,8 @@ DEFFC(TextFromLump)
     {
         int lumpIdx;
         size_t lumpSize = F_LumpLength(absoluteLumpNum);
-        struct file1_s* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-        const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx);
+        struct file1_s* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+        const uint8_t* lumpPtr = F_CacheLump(file, lumpIdx);
         size_t bufSize = 2 * lumpSize + 1, i;
         char* str, *out;
 
@@ -2041,7 +2041,7 @@ DEFFC(TextFromLump)
                 *out++ = ch;
             }
         }
-        F_UnlockLump(fsObject, lumpIdx);
+        F_UnlockLump(file, lumpIdx);
 
         FIData_TextCopy(obj, str);
         free(str);

@@ -593,7 +593,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
     // No sample loaded yet?
     if(!data)
     {
-        File1* fsObject;
+        struct file1_s* file;
         int lumpIdx;
         char hdr[12];
 
@@ -608,16 +608,16 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
         lumpLength = F_LumpLength(info->lumpNum);
         if(lumpLength <= 8) return 0;
 
-        fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
-        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)hdr, 0, 12);
+        file = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        F_ReadLumpSection(file, lumpIdx, (uint8_t*)hdr, 0, 12);
 
         // Is this perhaps a WAV sound?
         if(WAV_CheckFormat(hdr))
         {
             // Load as WAV, then.
-            const uint8_t* sp = F_CacheLump(fsObject, lumpIdx);
+            const uint8_t* sp = F_CacheLump(file, lumpIdx);
             data = WAV_MemoryLoad((const byte*) sp, lumpLength, &bytesPer, &rate, &numSamples);
-            F_UnlockLump(fsObject, lumpIdx);
+            F_UnlockLump(file, lumpIdx);
 
             if(!data)
             {
@@ -644,11 +644,11 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
     if(lumpLength > 8)
     {
         int lumpIdx;
-        File1* fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        struct file1_s* file = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
         uint8_t hdr[8];
         int head;
 
-        F_ReadLumpSection(fsObject, lumpIdx, hdr, 0, 8);
+        F_ReadLumpSection(file, lumpIdx, hdr, 0, 8);
         head = SHORT(*(const short*) (hdr));
         rate = SHORT(*(const short*) (hdr + 2));
         numSamples = LONG(*(const int*) (hdr + 4));
@@ -658,13 +658,13 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
         if(head == 3 && numSamples > 0 && (unsigned)numSamples <= lumpLength - 8)
         {
             // The sample data can be used as-is - load directly from the lump cache.
-            const uint8_t* data = F_CacheLump(fsObject, lumpIdx) + 8; // Skip the header.
+            const uint8_t* data = F_CacheLump(file, lumpIdx) + 8; // Skip the header.
 
             // Insert a copy of this into the cache.
             sfxcache_t* node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,
                                                bytesPer, rate, info->group);
 
-            F_UnlockLump(fsObject, lumpIdx);
+            F_UnlockLump(file, lumpIdx);
 
             return &node->sample;
         }

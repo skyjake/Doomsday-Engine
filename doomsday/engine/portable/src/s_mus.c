@@ -210,10 +210,10 @@ boolean Mus_IsMUSLump(lumpnum_t lumpNum)
 {
     char buf[4];
     int lumpIdx;
-    File1* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-    if(!fsObject) return false;
+    struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    if(!file) return false;
 
-    F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)buf, 0, 4);
+    F_ReadLumpSection(file, lumpIdx, (uint8_t*)buf, 0, 4);
 
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
     return !strncmp(buf, "MUS\x01a", 4);
@@ -281,7 +281,7 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
     {    
         // Lump is in DOOM's MUS format. We must first convert it to MIDI.
         AutoStr* srcFile = 0;
-        File1* fsObject;
+        struct file1_s* file;
         size_t lumpLength;
         int lumpIdx;
         uint8_t* buf;
@@ -305,8 +305,8 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
             return 0;
         }
 
-        fsObject = F_FindFileForLumpNum2(lump, &lumpIdx);
-        F_ReadLumpSection(fsObject, lumpIdx, buf, 0, lumpLength);
+        file = F_FindFileForLumpNum2(lump, &lumpIdx);
+        F_ReadLumpSection(file, lumpIdx, buf, 0, lumpLength);
         M_Mus2Midi((void*)buf, lumpLength, Str_Text(srcFile));
         free(buf);
 
