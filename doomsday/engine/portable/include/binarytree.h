@@ -388,7 +388,7 @@ void* BinaryTree_UserData(BinaryTree* tree);
  * @param tree  BinaryTree instance.
  * @param left  @c true= set the left child.
  *              @c false= set the right child.
- * @param subTree  Ptr to the (child) tree to be linked or @c NULL.
+ * @param subtree  Ptr to the (child) tree to be linked or @c NULL.
  */
 BinaryTree* BinaryTree_SetChild(BinaryTree* tree, boolean left, BinaryTree* subtree);
 

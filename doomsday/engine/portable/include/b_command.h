@@ -54,6 +54,20 @@ void         B_DestroyCommandBindingList(evbinding_t* listRoot);
 evbinding_t* B_NewCommandBinding(evbinding_t* listRoot, const char* desc, const char* command);
 void         B_DestroyCommandBinding(evbinding_t* eb);
 void         B_EventBindingToString(const evbinding_t* eb, ddstring_t* str);
-boolean      B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s* eventClass);
+
+/**
+ * Checks if the event matches the binding's conditions, and if so, executes the
+ * bound command.
+ *
+ * @param eb          Event binding.
+ * @param event       Event to match against.
+ * @param eventClass  The event has been bound in this binding class. If the
+ *                    bound state is associated with a higher-priority active
+ *                    class, the binding cannot be executed.
+ *
+ * @return  @c true, if the bound command was executed. @c false otherwise, as the
+ *          event didn't match all the conditions.
+ */
+boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s* eventClass);
 
 #endif // __DOOMSDAY_BIND_COMMAND_H__

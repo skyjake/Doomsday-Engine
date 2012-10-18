@@ -62,14 +62,16 @@ void            Cl_InitPlayers(void);
  * Used in DEMOS. (Not in regular netgames.)
  * Applies the given dx and dy to the local player's coordinates.
  *
- * @param z             Absolute viewpoint height.
+ * @param dx            Viewpoint X delta.
+ * @param dy            Viewpoint Y delta.
+ * @param z             Viewpoint absolute Z coordinate.
  * @param onground      If @c true the mobj's Z will be set to floorz, and
  *                      the player's viewheight is set so that the viewpoint
  *                      height is param 'z'.
  *                      If @c false the mobj's Z will be param 'z' and
  *                      viewheight is zero.
  */
-void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t dz, boolean onground);
+void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground);
 
 void ClPlayer_UpdateOrigin(int plrnum);
 
