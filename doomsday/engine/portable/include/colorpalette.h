@@ -48,10 +48,12 @@ typedef struct colorpalette_s {
 colorpalette_t* ColorPalette_New(void);
 
 /**
+ * Constructs a new color palette.
+ *
  * @param compOrder  Component order. Examples:
- *      [0,1,2] == RGB
- *      [2,1,0] == BGR
- * @param compSize  Number of bits per component [R,G,B].
+ * <pre> [0,1,2] == RGB
+ * [2,1,0] == BGR</pre>
+ * @param compBits  Number of bits per component [R,G,B].
  * @param colorData  Color triplets (at least @a numColors * 3).
  * @param colorCount  Number of color triplets.
  */
@@ -66,9 +68,10 @@ ushort ColorPalette_Size(colorpalette_t* pal);
 /**
  * Replace the entire color table.
  *
+ * @param pal  Color palette.
  * @param compOrder  Component order. Examples:
- *      [0,1,2] == RGB
- *      [2,1,0] == BGR
+ * <pre> [0,1,2] == RGB
+ * [2,1,0] == BGR</pre>
  * @param compSize  Number of bits per component [R,G,B].
  * @param colorData  Color triplets (at least @a numColors * 3).
  * @param colorCount  Number of color triplets.
@@ -79,9 +82,10 @@ void ColorPalette_ReplaceColorTable(colorpalette_t* pal, const int compOrder[3],
 /**
  * Lookup a color in the palette.
  *
- * \note If the specified color index is out of range it will be clamped to
+ * @note If the specified color index is out of range it will be clamped to
  * a valid value before use.
  *
+ * @param pal  Color palette.
  * @param colorIdx  Index of the color to lookup.
  * @param rgb  Associated R8G8B8 color triplet is written here.
  */

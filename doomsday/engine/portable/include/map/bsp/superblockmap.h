@@ -239,7 +239,7 @@ public:
 
     const HEdges& hedges() const;
 
-    DENG_DEBUG_ONLY(
+#ifdef DENG_DEBUG
     static void DebugPrint(SuperBlock const& inst)
     {
         DENG2_FOR_EACH(it, inst.hedges(), SuperBlock::HEdges::const_iterator)
@@ -251,7 +251,8 @@ public:
                 << hedge->v[0]->origin[VX] << hedge->v[0]->origin[VY]
                 << hedge->v[1]->origin[VX] << hedge->v[1]->origin[VY];
         }
-    })
+    }
+#endif
 
 private:
     /**

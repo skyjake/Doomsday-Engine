@@ -78,6 +78,7 @@ void CBuffer_Delete(CBuffer* cb);
 /**
  * Write the given text string (plus optional flags) to the buffer.
  *
+ * @param cb   Console buffer.
  * @param flags  @see consoleBufferLineFlags
  * @param txt  Ptr to the text string to be written.
  */
@@ -93,8 +94,10 @@ void CBuffer_Clear(CBuffer* cb);
 uint CBuffer_MaxLineLength(CBuffer* cb);
 
 /**
- * Change the maximum line length.
- * \note Existing lines are unaffected, the change only impacts new lines.
+ * Change the maximum line length. @note The existing lines are unaffected, the
+ * change only impacts new lines.
+ *
+ * @param cb      Console buffer.
  * @param length  New max line length, in characters.
  */
 void CBuffer_SetMaxLineLength(CBuffer* cb, uint length);
@@ -105,7 +108,9 @@ uint CBuffer_NumLines(CBuffer* cb);
 /**
  * Retrieve an immutable ptr to the text line at index @a idx.
  *
+ * @param cb   Console buffer.
  * @param idx  Index of the line to retrieve.
+ *
  * @return  Text line at index @a idx, or @c NULL if invalid index.
  */
 const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx);

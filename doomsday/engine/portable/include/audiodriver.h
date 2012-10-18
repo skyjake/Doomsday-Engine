@@ -46,7 +46,7 @@ void AudioDriver_PrintInterfaces(void);
  * Retrieves the main interface of the audio driver to which @a audioInterface
  * belongs.
  *
- * @param audioInterface  Pointer to a SFX, Music, or CD interface. See
+ * @param anyAudioInterface  Pointer to a SFX, Music, or CD interface. See
  * AudioDriver_SFX(), AudioDriver_Music() and AudioDriver_CD().
  *
  * @return Audio driver interface, or @c NULL if the none of the loaded drivers
