@@ -1,5 +1,5 @@
 /**
- * @file texture.c
+ * @file texture.cpp
  * Logical texture. @ingroup resource
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>

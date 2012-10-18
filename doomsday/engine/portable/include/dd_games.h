@@ -174,7 +174,7 @@ namespace de
 extern "C" {
 #endif
 
-/**
+/*
  * C wrapper API:
  */
 
@@ -191,12 +191,21 @@ int GameCollection_Count(GameCollection* games);
 int GameCollection_NumPlayable(GameCollection* games);
 
 /**
- * @param game  Game instance.
- * @return Unique identifier associated with @a game.
+ * Returns the unique identifier associated with @a game.
+ *
+ * @param games  Game collection.
+ * @param game   Game instance.
+ *
+ * @return Game identifier.
  */
 gameid_t GameCollection_Id(GameCollection* games, Game* game);
 
 /**
+ * Finds a game with a particular identifier in the game collection.
+ *
+ * @param games   Game collection.
+ * @param gameId  Game identifier (see GameCollection_Id()).
+ *
  * @return  Game associated with @a gameId else @c NULL.
  */
 Game* GameCollection_ById(GameCollection* games, gameid_t gameId);
@@ -207,15 +216,30 @@ Game* GameCollection_ById(GameCollection* games, gameid_t gameId);
 Game* GameCollection_ByIdentityKey(GameCollection* games, char const* identityKey);
 
 /**
+ * Locates a game in the collection.
+ *
+ * @param games  Game collection.
+ * @param idx    Index of the game in the collection. Valid indices
+ *               are in the range 0 ... GameCollection_Count() - 1.
+ *
  * @return  Game associated with unique index @a idx else @c NULL.
  */
 Game* GameCollection_ByIndex(GameCollection* games, int idx);
 
-/// @return The first playable game in the collection according to registration order.
+/**
+ * Finds the first playable game in the collection according to registration
+ * order.
+ *
+ * @param games  Game collection.
+ *
+ * @return Game instance.
+ */
 Game* GameCollection_FirstPlayable(GameCollection* games);
 
 /**
  * Try to locate all startup resources for all registered games.
+ *
+ * @param games  Game collection.
  */
 void GameCollection_LocateAllResources(GameCollection* games);
 

@@ -384,17 +384,6 @@ void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* e
     }
 }
 
-/**
- * Checks if the event matches the binding's conditions, and if so, executes the
- * bound command.
- *
- * @param eventClass  The event has been bound in this binding class. If the
- *                    bound state is associated with a higher-priority active
- *                    class, the binding cannot be executed.
- *
- * @return  @c true, if the bound command was executed. @c false otherwise, as the
- *          event didn't match all the conditions.
- */
 boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s* eventClass)
 {
     int         i;

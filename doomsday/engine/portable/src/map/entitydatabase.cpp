@@ -1,5 +1,5 @@
 /**
- * @file mapentitydatabase.cpp
+ * @file entitydatabase.cpp
  * Database of map entity property values. @ingroup map
  *
  * @author Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>

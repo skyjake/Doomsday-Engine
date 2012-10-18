@@ -79,7 +79,15 @@ void        B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, 
 void        B_AppendToggleStateToString(ebstate_t state, ddstring_t* str);
 void        B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str);
 void        B_AppendAnglePositionToString(float pos, ddstring_t* str);
+
+/**
+ * Converts a state condition to text string format and appends it to a string.
+ *
+ * @param cond  State condition.
+ * @param str  The condition in textual format is appended here.
+ */
 void        B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str);
+
 void        B_AppendEventToString(const ddevent_t* ev, ddstring_t* str);
 
 #endif // __DOOMSDAY_BIND_UTIL_H__

@@ -60,11 +60,13 @@ void AbstractResource_AddIdentityKey(AbstractResource* resource, const ddstring_
 
 /**
  * Attempt to resolve a path to this resource.
- * @param resource  AbstractResource instance.
+ *
+ * @param r  AbstractResource instance.
+ * @param canLocate  Allow searching for the resource using the relevant search paths.
  *
  * @return  Found path.
  */
-const ddstring_t* AbstractResource_ResolvedPath(AbstractResource* resource, boolean canLocate);
+const ddstring_t* AbstractResource_ResolvedPath(AbstractResource* r, boolean canLocate);
 
 /**
  * Attempt to resolve a path to this resource.
@@ -87,8 +89,9 @@ ddstring_t* AbstractResource_NameStringList(AbstractResource* resource);
 /**
  * Update the "found" status for this resource.
  *
- * @param resource  AbstractResource instance.
+ * @param r  AbstractResource instance.
  * @param yes  @c true = mark as found, else mark not-found.
+ *
  * @return  Same as @a resource for caller convenience.
  */
 AbstractResource* AbstractResource_MarkAsFound(AbstractResource* r, boolean yes);

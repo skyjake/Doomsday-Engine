@@ -60,7 +60,7 @@ const AABoxd* Blockmap_Bounds(Blockmap* blockmap);
 BlockmapCoord Blockmap_Width(Blockmap* blockmap);
 
 /**
- * @param blockmap      Blockmap instance.
+ * @param blockmap  Blockmap instance.
  * @return  Height of the Blockmap in cells.
  */
 BlockmapCoord Blockmap_Height(Blockmap* blockmap);
@@ -68,6 +68,7 @@ BlockmapCoord Blockmap_Height(Blockmap* blockmap);
 /**
  * Retrieve the size of the Blockmap in cells.
  *
+ * @param blockmap     Blockmap instance.
  * @param widthHeight  Size of the Blockmap [width,height] written here.
  */
 void Blockmap_Size(Blockmap* blockmap, BlockmapCoord widthHeight[2]);

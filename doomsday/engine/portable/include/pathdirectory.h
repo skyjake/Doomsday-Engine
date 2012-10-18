@@ -134,7 +134,7 @@ public:
      */
     ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
 
-    /// @fixme should be private:
+    /// @todo FIXME: should be private:
     StringPoolId internId() const;
 
 private:
@@ -294,7 +294,7 @@ public:
     static void debugPrintHashDistribution(PathDirectory& pd);
 #endif
 
-    /// @fixme Should be private:
+    /// @todo FIXME: Should be private:
     ushort hashForInternId(StringPoolId internId);
 
 private:

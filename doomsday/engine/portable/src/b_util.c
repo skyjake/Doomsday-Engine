@@ -585,9 +585,6 @@ void B_AppendAnglePositionToString(float pos, ddstring_t* str)
         Str_Appendf(str, "-angle%g", pos);
 }
 
-/**
- * @param str  The condition in textual format is appended here.
- */
 void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
 {
     if(cond->type == SCT_STATE)
@@ -630,6 +627,7 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
 }
 
 /**
+ * @param ev  Event.
  * @param str  The event in textual format is appended here.
  */
 void B_AppendEventToString(const ddevent_t* ev, ddstring_t* str)

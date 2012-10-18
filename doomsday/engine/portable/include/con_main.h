@@ -338,12 +338,16 @@ const knownword_t** Con_CollectKnownWordsMatchingWord(const char* word,
 
 /**
  * Print a 'global' message (to stdout and the console).
+ *
+ * @param message  Message with printf() formatting syntax for arguments.
  */
 void Con_Message(const char* message, ...) PRINTF_F(1,2);
 
 /**
  * Print into the console.
- * @param flags  @see consolePrintFlags
+ *
+ * @param flags   @see consolePrintFlags
+ * @param format  Format for the output using printf() formatting syntax.
  */
 void Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
 void Con_Printf(const char* format, ...) PRINTF_F(1,2);
@@ -365,10 +369,12 @@ void Con_PrintRuler(void);
 /**
  * Prints the passed path list to the console.
  *
- * \todo treat paths as URIs (i.e., resolve symbols).
+ * @todo treat paths as URIs (i.e., resolve symbols).
  *
- * @param pathList  A series of file/resource names/paths separated by @a delimiter.
- * @param flags @see printPathFlags.
+ * @param pathList   A series of file/resource names/paths separated by @a delimiter.
+ * @param delimiter  Path delimiter character.
+ * @param separator  Text printed between list entries.
+ * @param flags      @see printPathFlags.
  */
 void Con_PrintPathList4(const char* pathList, char delimiter, const char* separator, int flags);
 void Con_PrintPathList3(const char* pathList, char delimiter, const char* separator); /* flags = DEFAULT_PRINTPATHFLAGS */
