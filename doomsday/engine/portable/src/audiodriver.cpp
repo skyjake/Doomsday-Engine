@@ -69,57 +69,57 @@ static audiointerface_t activeInterfaces[MAX_AUDIO_INTERFACES];
 
 #ifdef MACOSX
 /// Built-in QuickTime audio interface implemented by MusicPlayer.m
-extern audiointerface_music_t audiodQuickTimeMusic;
+DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #endif
 
 static void importInterfaces(driver_t* d)
 {
     de::Library& lib = Library_File(d->library).library();
 
-    d->interface.Init     = lib.symbol<int (*)()> ("DS_Init");
-    d->interface.Shutdown = lib.symbol<void (*)()> ("DS_Shutdown");
-    d->interface.Event    = lib.symbol<void (*)(int)> ("DS_Event");
-    d->interface.Set      = lib.symbol<int (*)(int, const void*)> ("DS_Set", de::Library::OptionalSymbol);
+    lib.setSymbolPtr( d->interface.Init,        "DS_Init");
+    lib.setSymbolPtr( d->interface.Shutdown,    "DS_Shutdown");
+    lib.setSymbolPtr( d->interface.Event,       "DS_Event");
+    lib.setSymbolPtr( d->interface.Set,         "DS_Set", de::Library::OptionalSymbol);
 
     if(lib.hasSymbol("DS_SFX_Init"))
     {
-        d->sfx.gen.Init      = lib.symbol<int (*)()> ("DS_SFX_Init");
-        d->sfx.gen.Create    = lib.symbol<sfxbuffer_t* (*)(int, int, int)> ("DS_SFX_CreateBuffer");
-        d->sfx.gen.Destroy   = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_DestroyBuffer");
-        d->sfx.gen.Load      = lib.symbol<void (*)(sfxbuffer_t*, sfxsample_s*)> ("DS_SFX_Load");
-        d->sfx.gen.Reset     = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_Reset");
-        d->sfx.gen.Play      = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_Play");
-        d->sfx.gen.Stop      = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_Stop");
-        d->sfx.gen.Refresh   = lib.symbol<void (*)(sfxbuffer_t*)> ("DS_SFX_Refresh");
-        d->sfx.gen.Set       = lib.symbol<void (*)(sfxbuffer_t*, int, float)> ("DS_SFX_Set");
-        d->sfx.gen.Setv      = lib.symbol<void (*)(sfxbuffer_t*, int, float*)> ("DS_SFX_Setv");
-        d->sfx.gen.Listener  = lib.symbol<void (*)(int, float)> ("DS_SFX_Listener");
-        d->sfx.gen.Listenerv = lib.symbol<void (*)(int, float*)> ("DS_SFX_Listenerv");
-        d->sfx.gen.Getv      = lib.symbol<int (*)(int, void*)> ("DS_SFX_Getv");
+        lib.setSymbolPtr( d->sfx.gen.Init,      "DS_SFX_Init");
+        lib.setSymbolPtr( d->sfx.gen.Create,    "DS_SFX_CreateBuffer");
+        lib.setSymbolPtr( d->sfx.gen.Destroy,   "DS_SFX_DestroyBuffer");
+        lib.setSymbolPtr( d->sfx.gen.Load,      "DS_SFX_Load");
+        lib.setSymbolPtr( d->sfx.gen.Reset,     "DS_SFX_Reset");
+        lib.setSymbolPtr( d->sfx.gen.Play,      "DS_SFX_Play");
+        lib.setSymbolPtr( d->sfx.gen.Stop,      "DS_SFX_Stop");
+        lib.setSymbolPtr( d->sfx.gen.Refresh,   "DS_SFX_Refresh");
+        lib.setSymbolPtr( d->sfx.gen.Set,       "DS_SFX_Set");
+        lib.setSymbolPtr( d->sfx.gen.Setv,      "DS_SFX_Setv");
+        lib.setSymbolPtr( d->sfx.gen.Listener,  "DS_SFX_Listener");
+        lib.setSymbolPtr( d->sfx.gen.Listenerv, "DS_SFX_Listenerv");
+        lib.setSymbolPtr( d->sfx.gen.Getv,      "DS_SFX_Getv", de::Library::OptionalSymbol);
     }
 
     if(lib.hasSymbol("DM_Music_Init"))
     {
-        d->music.gen.Init   = lib.symbol<int (*)()> ("DM_Music_Init");
-        d->music.gen.Update = lib.symbol<void (*)()> ("DM_Music_Update");
-        d->music.gen.Get    = lib.symbol<int (*)(int, void*)> ("DM_Music_Get");
-        d->music.gen.Set    = lib.symbol<void (*)(int, float)> ("DM_Music_Set");
-        d->music.gen.Pause  = lib.symbol<void (*)(int)> ("DM_Music_Pause");
-        d->music.gen.Stop   = lib.symbol<void (*)()> ("DM_Music_Stop");
-        d->music.SongBuffer = lib.symbol<void* (*)(unsigned int)> ("DM_Music_SongBuffer", de::Library::OptionalSymbol);
-        d->music.Play       = lib.symbol<int (*)(int)> ("DM_Music_Play", de::Library::OptionalSymbol);
-        d->music.PlayFile   = lib.symbol<int (*)(const char*, int)> ("DM_Music_PlayFile", de::Library::OptionalSymbol);
+        lib.setSymbolPtr( d->music.gen.Init,    "DM_Music_Init");
+        lib.setSymbolPtr( d->music.gen.Update,  "DM_Music_Update");
+        lib.setSymbolPtr( d->music.gen.Get,     "DM_Music_Get");
+        lib.setSymbolPtr( d->music.gen.Set,     "DM_Music_Set");
+        lib.setSymbolPtr( d->music.gen.Pause,   "DM_Music_Pause");
+        lib.setSymbolPtr( d->music.gen.Stop,    "DM_Music_Stop");
+        lib.setSymbolPtr( d->music.SongBuffer,  "DM_Music_SongBuffer", de::Library::OptionalSymbol);
+        lib.setSymbolPtr( d->music.Play,        "DM_Music_Play", de::Library::OptionalSymbol);
+        lib.setSymbolPtr( d->music.PlayFile,    "DM_Music_PlayFile", de::Library::OptionalSymbol);
     }
 
     if(lib.hasSymbol("DM_CDAudio_Init"))
     {
-        d->cd.gen.Init   = lib.symbol<int (*)()> ("DM_CDAudio_Init");
-        d->cd.gen.Update = lib.symbol<void (*)()> ("DM_CDAudio_Update");
-        d->cd.gen.Set    = lib.symbol<void (*)(int, float)> ("DM_CDAudio_Set");
-        d->cd.gen.Get    = lib.symbol<int (*)(int, void*)> ("DM_CDAudio_Get");
-        d->cd.gen.Pause  = lib.symbol<void (*)(int)> ("DM_CDAudio_Pause");
-        d->cd.gen.Stop   = lib.symbol<void (*)()> ("DM_CDAudio_Stop");
-        d->cd.Play       = lib.symbol<int (*)(int, int)> ("DM_CDAudio_Play");
+        lib.setSymbolPtr( d->cd.gen.Init,       "DM_CDAudio_Init");
+        lib.setSymbolPtr( d->cd.gen.Update,     "DM_CDAudio_Update");
+        lib.setSymbolPtr( d->cd.gen.Set,        "DM_CDAudio_Set");
+        lib.setSymbolPtr( d->cd.gen.Get,        "DM_CDAudio_Get");
+        lib.setSymbolPtr( d->cd.gen.Pause,      "DM_CDAudio_Pause");
+        lib.setSymbolPtr( d->cd.gen.Stop,       "DM_CDAudio_Stop");
+        lib.setSymbolPtr( d->cd.Play,           "DM_CDAudio_Play");
     }
 }
 

@@ -146,13 +146,14 @@ namespace de
         };
 
         /**
-         * Gets the address of an exported symbol. This will always return a
-         * valid pointer to the symbol.
+         * Gets the address of an exported symbol. Throws an exception if a required
+         * symbol is not found.
          *
          * @param name    Name of the exported symbol.
          * @param lookup  Lookup mode (required or optional).
          *
-         * @return  A pointer to the symbol.
+         * @return  A pointer to the symbol. Returns @c NULL if an optional symbol is
+         * not found.
          */
         void* address(const String& name, SymbolLookupMode lookup = RequiredSymbol);
 
@@ -163,6 +164,15 @@ namespace de
          */
         bool hasSymbol(const String& name) const;
 
+        /**
+         * Gets the address of a symbol. Throws an exception if a required symbol
+         * is not found.
+         *
+         * @param name    Name of the symbol.
+         * @param lookup  Symbol lookup mode (required or optional).
+         *
+         * @return Pointer to the symbol as type @a Type.
+         */
         template <typename Type>
         Type symbol(const String& name, SymbolLookupMode lookup = RequiredSymbol) {
             /**
@@ -175,6 +185,22 @@ namespace de
             union { void* original; Type target; } forcedCast;
             forcedCast.original = address(name, lookup);
             return forcedCast.target;
+        }
+
+        /**
+         * Utility template for acquiring pointers to symbols. Throws an exception
+         * if a required symbol is not found.
+         *
+         * @param ptr     Pointer that will be set to point to the symbol's address.
+         * @param name    Name of the symbol whose address to get.
+         * @param lookup  Symbol lookup mode (required or optional).
+         *
+         * @return @c true, if the symbol was found. Otherwise @c false.
+         */
+        template <typename Type>
+        bool setSymbolPtr(Type& ptr, const String& name, SymbolLookupMode lookup = RequiredSymbol) {
+            ptr = symbol<Type>(name, lookup);
+            return ptr != 0;
         }
 
     private:  
