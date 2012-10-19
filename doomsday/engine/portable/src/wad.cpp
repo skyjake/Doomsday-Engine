@@ -291,6 +291,8 @@ struct Wad::Instance
         if(lumpNodeLut) return;
 
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
+        if(!lumpDirectory) return;
+
         PathDirectory_Iterate2(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
                                NULL, PATHDIRECTORY_NOHASH, buildLumpNodeLutWorker, (void*)this);
     }

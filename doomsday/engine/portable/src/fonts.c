@@ -410,13 +410,16 @@ void Fonts_Shutdown(void)
     {
         fontnamespace_t* fn = &namespaces[i];
 
-        PathDirectory_Iterate(fn->directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyRecord);
-        PathDirectory_Delete(fn->directory);
-        namespaces[i].directory = NULL;
+        if(fn->directory)
+        {
+            PathDirectory_Iterate(fn->directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyRecord);
+            PathDirectory_Delete(fn->directory);
+            fn->directory = 0;
+        }
 
         if(!fn->uniqueIdMap) continue;
-        free(fn->uniqueIdMap);
-        fn->uniqueIdMap = NULL;
+        free(fn->uniqueIdMap); fn->uniqueIdMap = 0;
+
         fn->uniqueIdBase = 0;
         fn->uniqueIdMapSize = 0;
         fn->uniqueIdMapDirty = false;
@@ -542,8 +545,13 @@ void Fonts_ClearNamespace(fontnamespaceid_t namespaceId)
     for(iter = from; iter <= to; ++iter)
     {
         fontnamespace_t* fn = &namespaces[iter - FONTNAMESPACE_FIRST];
-        PathDirectory_Iterate(fn->directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyFontAndRecord);
-        PathDirectory_Clear(fn->directory);
+
+        if(fn->directory)
+        {
+            PathDirectory_Iterate(fn->directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyFontAndRecord);
+            PathDirectory_Clear(fn->directory);
+        }
+
         fn->uniqueIdMapDirty = true;
     }
 }
@@ -1223,6 +1231,8 @@ static int iterateDirectory(fontnamespaceid_t namespaceId,
     for(iter = from; iter <= to; ++iter)
     {
         PathDirectory* directory = getDirectoryForNamespaceId(iter);
+        if(!directory) continue;
+
         result = PathDirectory_Iterate2(directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, callback, parameters);
         if(result) break;
     }
@@ -1354,6 +1364,8 @@ static PathDirectoryNode** collectDirectoryNodes(fontnamespaceid_t namespaceId,
     for(iterId  = fromId; iterId <= toId; ++iterId)
     {
         PathDirectory* fontDirectory = getDirectoryForNamespaceId(iterId);
+        if(!fontDirectory) continue;
+
         PathDirectory_Iterate2(fontDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
             PATHDIRECTORY_NOHASH, collectDirectoryNodeWorker, (void*)&p);
     }

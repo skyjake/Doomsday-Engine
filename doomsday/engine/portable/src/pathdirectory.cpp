@@ -1098,7 +1098,6 @@ static int iteratePathsInHash(PathDirectory* pd,
     int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters)
 {
     int result = 0;
-
     SELF(pd);
 
     if(hash != PATHDIRECTORY_NOHASH && hash >= PATHDIRECTORY_PATHHASH_SIZE)
@@ -1190,6 +1189,7 @@ static int iteratePathsInHash_Const(PathDirectory const* pd,
 int PathDirectory_Iterate2(PathDirectory* pd, int flags, PathDirectoryNode* parent,
     ushort hash, pathdirectory_iteratecallback_t callback, void* parameters)
 {
+    DENG_ASSERT(pd);
     int result = 0;
     if(callback)
     {
@@ -1213,6 +1213,7 @@ int PathDirectory_Iterate(PathDirectory* pd, int flags, PathDirectoryNode* paren
 int PathDirectory_Iterate2_Const(PathDirectory const* pd, int flags, PathDirectoryNode const* parent,
     ushort hash, pathdirectory_iterateconstcallback_t callback, void* parameters)
 {
+    DENG_ASSERT(pd);
     int result = 0;
     if(callback)
     {
