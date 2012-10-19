@@ -173,25 +173,24 @@ namespace de
 
         int removeFiles(char const* const* paths, int num, bool permitRequired = false);
 
-        /// @return  Number of lumps in the currently active LumpIndex.
-        int lumpCount();
-
-        bool isValidLumpNum(lumpnum_t absoluteLumpNum);
-
         lumpnum_t lumpNumForName(char const* name, bool silent = true);
 
         /**
-         * Retrieve the FileInfo metadata record for a lump in the Wad lump index.
-         *
-         * @post The active LumpIndex may have changed!
-         *
-         * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
-         *
-         * @return  Metadata record for the lump.
-         *
-         * @throws NotFoundError If the requested file could not be found.
+         * Provides access to the currently active Wad lump name index. This can
+         * be used for efficiently looking up files based on name.
          */
-        FileInfo const& lumpInfo(lumpnum_t absoluteLumpNum);
+        LumpIndex const& nameIndex() const;
+
+        /**
+         * Provides access to the Wad lump name index which is applicable to the
+         * specified @a absoluteLumpNum. This can be used for efficiently looking
+         * up files based on name.
+         *
+         * @param absoluteLumpNum   Determines which lump index to return. This
+         *                          number is then translated into the range for
+         *                          the selected index.
+         */
+        LumpIndex const& nameIndexForLump(lumpnum_t& absoluteLumpNum) const;
 
         /**
          * Retrieve the FileInfo metadata record for a lump in the Zip lump index.
@@ -229,13 +228,15 @@ namespace de
         /**
          * Try to locate the specified lump for reading.
          *
-         * @param absoluteLumpNum   Logical lumpnum associated to the file being looked up.
+         * @param info          Meta data descriptior for the file to be opened.
          *
          * @return  Handle to the opened file.
          *
-         * @throws NotFoundError If the requested lump could not be found.
+         * @todo This method is no longer necessary at this level. Opening a file which
+         * is already present in the file system should not require calling back to a
+         * method of the file system itself (bad OO design).
          */
-        FileHandle& openLump(lumpnum_t absoluteLumpNum);
+        FileHandle& openLump(FileInfo const& info);
 
         /// Clear all references to this file.
         void releaseFile(File1& file);

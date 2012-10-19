@@ -254,7 +254,7 @@ LumpIndex::~LumpIndex()
     delete d;
 }
 
-bool LumpIndex::isValidIndex(lumpnum_t lumpNum)
+bool LumpIndex::isValidIndex(lumpnum_t lumpNum) const
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -269,9 +269,9 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-FileInfo const& LumpIndex::lumpInfo(lumpnum_t lumpNum)
+FileInfo const& LumpIndex::lumpInfo(lumpnum_t lumpNum) const
 {
-    if(!isValidIndex(lumpNum)) throw de::Error("LumpIndex::lumpInfo", invalidIndexMessage(lumpNum, size() - 1));
+    if(!isValidIndex(lumpNum)) throw NotFoundError("LumpIndex::lumpInfo", invalidIndexMessage(lumpNum, size() - 1));
     return *d->lumpInfos[lumpNum];
 }
 

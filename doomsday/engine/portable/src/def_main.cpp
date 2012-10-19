@@ -38,11 +38,12 @@
 
 #include "r_data.h"
 
-#include "font.h"
-#include "bitmapfont.h"
-#include "texture.h"
-#include "resourcenamespace.h"
 #include "abstractresource.h"
+#include "bitmapfont.h"
+#include "font.h"
+#include "lumpindex.h"
+#include "resourcenamespace.h"
+#include "texture.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
@@ -768,10 +769,10 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    int const numLumps = App_FileSystem()->lumpCount();
+    int const numLumps = App_FileSystem()->nameIndex().size();
     for(int i = 0; i < numLumps; ++i)
     {
-        de::FileInfo const& info = App_FileSystem()->lumpInfo(i);
+        de::FileInfo const& info = App_FileSystem()->nameIndex().lumpInfo(i);
         DENG_ASSERT(info.container);
         de::File1& container = *info.container;
 

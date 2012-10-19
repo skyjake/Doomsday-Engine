@@ -42,6 +42,7 @@
 #include "de_filesys.h"
 #include "de_misc.h"
 
+#include "lumpindex.h"
 #include <de/Log>
 
 using namespace de;
@@ -683,7 +684,8 @@ boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
 {
     try
     {
-        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        lumpnum_t lumpNum = absoluteLumpNum;
+        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1& file = *info.container;
 
@@ -705,7 +707,7 @@ boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
         LOG_VERBOSE("%s dumped to \"%s\"") << Str_Text(lumpName) << F_PrettyPath(fname);
         return true;
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
     return false;
 }

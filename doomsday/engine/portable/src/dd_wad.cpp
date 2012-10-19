@@ -29,6 +29,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
+#include "lumpindex.h"
 
 using namespace de;
 
@@ -42,9 +43,10 @@ size_t W_LumpLength(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        return App_FileSystem()->lumpInfo(absoluteLumpNum).size;
+        lumpnum_t lumpNum = absoluteLumpNum;
+        return App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum).size;
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_LumpLength: Invalid lumpnum %i.", absoluteLumpNum);
     }
@@ -55,7 +57,8 @@ char const* W_LumpName(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        lumpnum_t lumpNum = absoluteLumpNum;
+        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1& file = *info.container;
         return Str_Text(file.lumpName(info.lumpIdx));
@@ -71,9 +74,10 @@ uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        return App_FileSystem()->lumpInfo(absoluteLumpNum).lastModified;
+        lumpnum_t lumpNum = absoluteLumpNum;
+        return App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum).lastModified;
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_LumpLastModified: Invalid lumpnum %i.", absoluteLumpNum);
     }
@@ -84,12 +88,13 @@ char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        lumpnum_t lumpNum = absoluteLumpNum;
+        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1& file = *info.container;
         return Str_Text(file.path());
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_LumpSourceFile: Invalid lumpnum %i.", absoluteLumpNum);
     }
@@ -100,12 +105,13 @@ boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        lumpnum_t lumpNum = absoluteLumpNum;
+        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1& file = *info.container;
         return file.hasCustom();
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_LumpIsCustom: Invalid lumpnum %i.", absoluteLumpNum);
     }
@@ -146,12 +152,13 @@ size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 {
     try
     {
-        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        lumpnum_t lumpNum = absoluteLumpNum;
+        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1& file = *info.container;
         return file.readLump(info.lumpIdx, buffer, 0, info.size);
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_ReadLump: Invalid lumpnum %i.", absoluteLumpNum);
     }
@@ -162,12 +169,13 @@ size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t star
 {
     try
     {
-        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        lumpnum_t lumpNum = absoluteLumpNum;
+        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1& file = *info.container;
         return file.readLump(info.lumpIdx, buffer, startOffset, length);
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_ReadLumpSection: Invalid lumpnum %i.", absoluteLumpNum);
     }
@@ -178,12 +186,13 @@ uint8_t const* W_CacheLump(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        lumpnum_t lumpNum = absoluteLumpNum;
+        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1& file = *info.container;
         return file.cacheLump(info.lumpIdx);
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_CacheLump: Invalid lumpnum %i.", absoluteLumpNum);
     }
@@ -194,12 +203,13 @@ void W_UnlockLump(lumpnum_t absoluteLumpNum)
 {
     try
     {
-        FileInfo const& info = App_FileSystem()->lumpInfo(absoluteLumpNum);
+        lumpnum_t lumpNum = absoluteLumpNum;
+        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1& file = *info.container;
         file.unlockLump(info.lumpIdx);
     }
-    catch(FS1::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_UnlockLump: Invalid lumpnum %i.", absoluteLumpNum);
     }

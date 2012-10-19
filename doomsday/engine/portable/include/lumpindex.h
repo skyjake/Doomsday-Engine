@@ -35,6 +35,7 @@
 #include "fileinfo.h"
 
 #include <QList>
+#include <de/Error>
 
 namespace de {
 
@@ -52,6 +53,9 @@ namespace de {
 class LumpIndex
 {
 public:
+    /// No file(s) found. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
     typedef QList<FileInfo const*> Lumps;
 
 public:
@@ -65,17 +69,21 @@ public:
     int size() const;
 
     /// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
-    bool isValidIndex(lumpnum_t lumpNum);
+    bool isValidIndex(lumpnum_t lumpNum) const;
 
     /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
     lumpnum_t indexForPath(char const* path);
 
     /**
-     * @return  FileInfo for the lump with index @a lumpNum.
+     * Retrieve the FileInfo metadata record for a lump in the Wad lump index.
      *
-     * @throws de::Error    If @a lumpNum is not valid.
+     * @param lumpNum   Logical lumpnum associated to the file being looked up.
+     *
+     * @return  Metadata record for the lump.
+     *
+     * @throws NotFoundError If the requested file could not be found.
      */
-    FileInfo const& lumpInfo(lumpnum_t lumpNum);
+    FileInfo const& lumpInfo(lumpnum_t lumpNum) const;
 
     /**
      * Provides access to the list of lumps for efficient traversals.

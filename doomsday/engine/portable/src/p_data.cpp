@@ -31,9 +31,10 @@
 #include "de_filesys.h"
 
 #include "game.h"
-#include "rend_bias.h"
+#include "lumpindex.h"
 #include "m_bams.h"
 #include "propertyvalue.h"
+#include "rend_bias.h"
 
 #include <map>
 #include <EntityDatabase>
@@ -77,7 +78,7 @@ char const* P_GenerateUniqueMapId(char const* mapID)
     try
     {
         lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(mapID);
-        de::FileInfo const& info = App_FileSystem()->lumpInfo(lumpNum);
+        de::FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
         DENG_ASSERT(info.container);
         de::File1 const& file = *info.container;
 
