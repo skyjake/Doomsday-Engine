@@ -98,7 +98,9 @@ namespace de
          *
          * @param arg  Argument to look for. Don't use aliases here.
          * @param count  Number of parameters (non-option arguments) that follow 
-         *      the located argument.* @see isOption()
+         *      the located argument.
+         *
+         * @see isOption()
          *
          * @return  Index of the argument, if found. Otherwise zero.
          */
