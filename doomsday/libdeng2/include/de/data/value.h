@@ -38,16 +38,16 @@ namespace de
     public:
         /// An illegal operation (i.e., one that is not defined by the Value) was attempted. 
         /// @ingroup errors
-        DENG2_ERROR(IllegalError)
+        DENG2_ERROR(IllegalError);
         
         /// An illegal conversion was attempted. @ingroup errors
-        DENG2_SUB_ERROR(IllegalError, ConversionError)
+        DENG2_SUB_ERROR(IllegalError, ConversionError);
         
         /// An illegal arithmetic operation is attempted (e.g., division by text). @ingroup errors
-        DENG2_SUB_ERROR(IllegalError, ArithmeticError)
+        DENG2_SUB_ERROR(IllegalError, ArithmeticError);
 
         /// Value cannot be serialized. @ingroup errors
-        DENG2_SUB_ERROR(IllegalError, CannotSerializeError)
+        DENG2_SUB_ERROR(IllegalError, CannotSerializeError);
 
         // Types used by all values:
         typedef ddouble Number;     /**< Numbers are in double-precision. */

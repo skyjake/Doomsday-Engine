@@ -44,13 +44,13 @@ namespace de
     public:
         /// The process is running while an operation is attempted that requires the 
         /// process to be stopped. @ingroup errors
-        DENG2_ERROR(NotStoppedError)
+        DENG2_ERROR(NotStoppedError);
         
         /// Suspending or resuming fails. @ingroup errors
-        DENG2_ERROR(SuspendError)
+        DENG2_ERROR(SuspendError);
         
         /// Execution is taking too long to complete. @ingroup errors
-        DENG2_ERROR(HangError)
+        DENG2_ERROR(HangError);
         
         /// A process is always in one of these states.
         enum State {

@@ -87,14 +87,14 @@ namespace de
     {
     public:
         /// No index is found for the specified type. @ingroup errors
-        DENG2_ERROR(UnknownTypeError)
+        DENG2_ERROR(UnknownTypeError);
         
         /// No files found. @ingroup errors
-        DENG2_ERROR(NotFoundError)
+        DENG2_ERROR(NotFoundError);
         
         /// More than one file found and there is not enough information to choose 
         /// between them. @ingroup errors
-        DENG2_ERROR(AmbiguousError)
+        DENG2_ERROR(AmbiguousError);
         
         typedef std::multimap<String, File*> Index;
         typedef std::pair<Index::iterator, Index::iterator> IndexRange;

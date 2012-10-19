@@ -236,7 +236,7 @@ public:
     {
     public:
         /// The wrong type is used in accessing the value. @ingroup errors
-        DENG2_ERROR(TypeError)
+        DENG2_ERROR(TypeError);
 
         enum Type {
             INTEGER,
@@ -250,7 +250,7 @@ public:
         class Base {
         public:
             /// Attempted conversion from unsupported type.
-            DENG2_ERROR(TypeError)
+            DENG2_ERROR(TypeError);
 
         public:
             virtual ~Base() {}
@@ -361,7 +361,7 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
     /// The format string has incorrect syntax. @ingroup errors
-    DENG2_ERROR(IllegalFormatError)
+    DENG2_ERROR(IllegalFormatError);
 
 public:
     LogEntry();

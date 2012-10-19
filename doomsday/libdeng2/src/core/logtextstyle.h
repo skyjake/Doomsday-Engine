@@ -21,7 +21,8 @@
 #define LIBDENG2_LOGTEXTSTYLE_H
 
 /**
- * @internal @file Predefined text styles for log message text.
+ * @file logtextstyle.h
+ * @internal Predefined text styles for log message text.
  */
 
 namespace de {

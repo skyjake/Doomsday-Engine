@@ -46,7 +46,7 @@ namespace de
 
     public:
         /// The object or resource that was being looked for was not found. @ingroup errors
-        DENG2_ERROR(NotFoundError)
+        DENG2_ERROR(NotFoundError);
 
         enum GUIMode {
             GUIDisabled = 0,

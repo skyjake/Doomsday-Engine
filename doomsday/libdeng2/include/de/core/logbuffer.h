@@ -45,7 +45,7 @@ class LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(File, Deletion
 
 public:
     /// There was a problem opening the output file. @ingroup errors
-    DENG2_ERROR(FileError)
+    DENG2_ERROR(FileError);
 
     typedef QList<const LogEntry*> Entries;
 

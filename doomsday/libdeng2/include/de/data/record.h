@@ -46,10 +46,10 @@ namespace de
     {
     public:
         /// Unknown variable name was given. @ingroup errors
-        DENG2_ERROR(NotFoundError)
+        DENG2_ERROR(NotFoundError);
 
         /// All variables and subrecords in the record must have a name. @ingroup errors
-        DENG2_ERROR(UnnamedError)
+        DENG2_ERROR(UnnamedError);
         
         typedef std::map<String, Variable*> Members;
         typedef std::map<String, Record*> Subrecords;

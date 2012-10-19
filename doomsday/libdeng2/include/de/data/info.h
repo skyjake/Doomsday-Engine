@@ -111,7 +111,7 @@ public:
      */
     class BlockElement : public Element {
     public:
-        DENG2_ERROR(ValuesError)
+        DENG2_ERROR(ValuesError);
 
         typedef QHash<String, Element*> Contents;
         typedef QList<Element*> ContentsInOrder;
@@ -189,7 +189,7 @@ public:
 
 public:
     /// The parser encountered a syntax error in the source file. @ingroup errors
-    DENG2_ERROR(SyntaxError)
+    DENG2_ERROR(SyntaxError);
 
 public:
     Info();

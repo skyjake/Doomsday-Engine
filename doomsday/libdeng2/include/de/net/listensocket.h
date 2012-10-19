@@ -43,7 +43,7 @@ class DENG2_PUBLIC ListenSocket : public QObject
 
 public:
     /// Opening the socket failed. @ingroup errors
-    DENG2_ERROR(OpenError)
+    DENG2_ERROR(OpenError);
 
 public:
     /// Open a listen socket on the specified port.

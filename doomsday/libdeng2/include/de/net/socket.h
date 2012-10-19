@@ -49,19 +49,19 @@ class DENG2_PUBLIC Socket : public QObject, public Transmitter
 
 public:
     /// Creating the TCP/IP connection failed. @ingroup errors
-    DENG2_ERROR(ConnectionError)
+    DENG2_ERROR(ConnectionError);
 
     /// Error subclass for all situations where the socket is left unusable. @ingroup errors
-    DENG2_ERROR(BrokenError)
+    DENG2_ERROR(BrokenError);
 
     /// The TCP/IP connection was disconnected. @ingroup errors
-    DENG2_SUB_ERROR(BrokenError, DisconnectedError)
+    DENG2_SUB_ERROR(BrokenError, DisconnectedError);
 
     /// Encountered a problem related to the messaging protocol. @ingroup errors
-    DENG2_SUB_ERROR(BrokenError, ProtocolError)
+    DENG2_SUB_ERROR(BrokenError, ProtocolError);
 
     /// There is no peer connected. @ingroup errors
-    DENG2_SUB_ERROR(BrokenError, PeerError)
+    DENG2_SUB_ERROR(BrokenError, PeerError);
 
     /// These flags are written to the sent headers.
     enum HeaderFlag {

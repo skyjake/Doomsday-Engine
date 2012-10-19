@@ -36,10 +36,10 @@ namespace de
     {
     public:
         /// wait() failed due to timing out before the resource is secured. @ingroup errors
-        DENG2_ERROR(TimeOutError)
+        DENG2_ERROR(TimeOutError);
         
         /// wait() or waitTime() failed to secure the resource. @ingroup errors
-        DENG2_ERROR(WaitError)
+        DENG2_ERROR(WaitError);
     
     public:
         Waitable(duint initialValue = 0);

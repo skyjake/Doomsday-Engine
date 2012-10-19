@@ -42,7 +42,7 @@ class DENG2_PUBLIC ISerializable : public IWritable, public IReadable
 {
 public:
     /// Deserialization of the provided data failed. @ingroup errors
-    DENG2_ERROR(DeserializationError)
+    DENG2_ERROR(DeserializationError);
 
 public:
     virtual ~ISerializable() {}

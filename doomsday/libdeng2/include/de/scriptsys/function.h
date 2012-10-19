@@ -49,7 +49,7 @@ namespace de
     {
     public:
         /// An incorrect number of arguments is given in a function call. @ingroup errors
-        DENG2_ERROR(WrongArgumentsError)
+        DENG2_ERROR(WrongArgumentsError);
 
         typedef std::list<String> Arguments;
         typedef std::map<String, Value*> Defaults;

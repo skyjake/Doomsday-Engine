@@ -37,7 +37,7 @@ namespace de
     {
     public:
         /// Attempting a jump when there is no suitable target (continue or break). @ingroup errors
-        DENG2_ERROR(JumpError)
+        DENG2_ERROR(JumpError);
         
         enum Type {
             PROCESS,

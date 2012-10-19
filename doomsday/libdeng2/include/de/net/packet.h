@@ -38,7 +38,7 @@ class DENG2_PUBLIC Packet : public ISerializable
 {
 public:
     /// While deserializing, an invalid type identifier was encountered. @ingroup errors
-    DENG2_SUB_ERROR(DeserializationError, InvalidTypeError)
+    DENG2_SUB_ERROR(DeserializationError, InvalidTypeError);
 
     /// Length of a type identifier.
     static const dint TYPE_SIZE = 4;

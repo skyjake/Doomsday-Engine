@@ -39,13 +39,13 @@ namespace de
     {
     public:
         /// The token range is unexpectedly empty. @ingroup errors
-        DENG2_ERROR(EmptyRangeError)
+        DENG2_ERROR(EmptyRangeError);
         
         /// A position outside the range is accessed. @ingroup errors
-        DENG2_ERROR(OutOfBoundsError)
+        DENG2_ERROR(OutOfBoundsError);
         
         /// A matching bracket cannot be located within the range. @ingroup errors
-        DENG2_ERROR(MismatchedBracketError)
+        DENG2_ERROR(MismatchedBracketError);
         
     public:    
         TokenRange();

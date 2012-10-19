@@ -33,7 +33,7 @@ class DENG2_PUBLIC IByteArray
 {
 public:
     /// Invalid offset was used in set() or get(). @ingroup errors
-    DENG2_ERROR(OffsetError)
+    DENG2_ERROR(OffsetError);
 
     /// Size of the array is indicated with this type.
     typedef dsize Size;

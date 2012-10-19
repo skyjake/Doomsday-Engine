@@ -75,10 +75,11 @@ private:
         Name(const QString& where, const QString& message) \
             : Parent(where, message) { Parent::setName(#Name); } \
         virtual void raise() const { throw *this; } \
-    };    
+    } /**< @note One must put a semicolon after the macro invocation. */
 
 /**
  * Define a top-level exception class.
+ * @note One must put a semicolon after the macro invocation.
  */
 #define DENG2_ERROR(Name) DENG2_SUB_ERROR(de::Error, Name)
 

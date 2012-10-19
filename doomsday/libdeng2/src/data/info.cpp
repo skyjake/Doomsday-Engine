@@ -28,15 +28,15 @@ const static QString TOKEN_BREAKING_CHARS = "#:=(){}<>,\"" + WHITESPACE;
 
 struct Info::Instance
 {
-    DENG2_ERROR(OutOfElements)
-    DENG2_ERROR(EndOfFile)
+    DENG2_ERROR(OutOfElements);
+    DENG2_ERROR(EndOfFile);
 
     Instance() : currentLine(0), cursor(0), tokenStartOffset(0), rootBlock("", "")
     {}
 
     /**
      * Initialize the parser for reading a block of source content.
-     * @param content  Text to be parsed.
+     * @param source  Text to be parsed.
      */
     void init(const String& source)
     {

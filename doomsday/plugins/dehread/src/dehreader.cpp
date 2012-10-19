@@ -77,11 +77,11 @@ static const DehReaderFlag DehReaderFlagsIncludeMask = IgnoreEOF;
 class DehReader
 {
     /// The parser encountered a syntax error in the source file. @ingroup errors
-    DENG2_ERROR(SyntaxError)
+    DENG2_ERROR(SyntaxError);
     /// The parser encountered an unknown section in the source file. @ingroup errors
-    DENG2_ERROR(UnknownSection)
+    DENG2_ERROR(UnknownSection);
     /// The parser reached the end of the source file. @ingroup errors
-    DENG2_ERROR(EndOfFile)
+    DENG2_ERROR(EndOfFile);
 
     const Block& patch;
     int pos;

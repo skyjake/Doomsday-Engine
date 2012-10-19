@@ -33,7 +33,7 @@ class ByteRefArray : public IByteArray
 {
 public:
     /// set() is attempted on a nonmodifiable array. @ingroup errors
-    DENG2_ERROR(NonModifiableError)
+    DENG2_ERROR(NonModifiableError);
 
 public:
     /**

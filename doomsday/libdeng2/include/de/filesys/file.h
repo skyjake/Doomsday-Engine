@@ -51,10 +51,10 @@ namespace de
     {
     public:
         /// I/O to the native file failed. @ingroup errors
-        DENG2_ERROR(IOError)
+        DENG2_ERROR(IOError);
 
         /// Only reading is allowed from the file. @ingroup errors
-        DENG2_SUB_ERROR(IOError, ReadOnlyError)
+        DENG2_SUB_ERROR(IOError, ReadOnlyError);
         
         // Mode flags.
         enum Flag

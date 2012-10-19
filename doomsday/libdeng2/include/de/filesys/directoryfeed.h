@@ -37,19 +37,19 @@ namespace de
     {
     public:
         /// The native directory was not found. @ingroup errors
-        DENG2_ERROR(NotFoundError)
+        DENG2_ERROR(NotFoundError);
         
         /// Failed attempt to find out the status of a file. @ingroup errors
-        DENG2_ERROR(StatusError)
+        DENG2_ERROR(StatusError);
         
         /// An error occurred changing the working directory. @ingroup errors
-        DENG2_ERROR(WorkingDirError)
+        DENG2_ERROR(WorkingDirError);
         
         /// Creating a directory failed. @ingroup errors
-        DENG2_ERROR(CreateDirError)
+        DENG2_ERROR(CreateDirError);
         
         /// Failed to remove a file. @ingroup errors
-        DENG2_ERROR(RemoveError)
+        DENG2_ERROR(RemoveError);
         
         enum Flag
         {

@@ -41,20 +41,20 @@ namespace de
     public:
         /// A unary operation is attempted even though the selected operation cannot
         /// be unary. @ingroup errors
-        DENG2_ERROR(NonUnaryError)
+        DENG2_ERROR(NonUnaryError);
         
         /// A binary operation is attempted even though the selected operation cannot be binary.
         /// @ingroup errors
-        DENG2_ERROR(NonBinaryError)
+        DENG2_ERROR(NonBinaryError);
         
         /// Attempt to assign to a value that cannot be assigned to. @ingroup errors
-        DENG2_ERROR(NotAssignableError)
+        DENG2_ERROR(NotAssignableError);
         
         /// The MEMBER operator receives a non-Record scope on the left side. @ingroup errors
-        DENG2_ERROR(ScopeError)
+        DENG2_ERROR(ScopeError);
         
         /// The SLICE operator has invalid arguments. @ingroup errors
-        DENG2_ERROR(SliceError)
+        DENG2_ERROR(SliceError);
         
     public:
         OperatorExpression();

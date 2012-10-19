@@ -37,16 +37,16 @@ class DENG2_PUBLIC String : public QString
 {
 public:
     /// Error related to String operations (note: shadows de::Error). @ingroup errors
-    DENG2_ERROR(Error)
+    DENG2_ERROR(Error);
 
     /// Encoding conversion failed. @ingroup errors
-    DENG2_SUB_ERROR(Error, ConversionError)
+    DENG2_SUB_ERROR(Error, ConversionError);
 
     /// An error was encountered in string pattern replacement. @ingroup errors
-    DENG2_SUB_ERROR(Error, IllegalPatternError)
+    DENG2_SUB_ERROR(Error, IllegalPatternError);
 
     /// Invalid record member name. @ingroup errors
-    DENG2_SUB_ERROR(Error, InvalidMemberError)
+    DENG2_SUB_ERROR(Error, InvalidMemberError);
 
     /**
      * Data argument for the pattern formatter.
@@ -56,7 +56,7 @@ public:
     {
     public:
         /// An incompatible type is requested in asText() or asNumber(). @ingroup errors
-        DENG2_ERROR(TypeError)
+        DENG2_ERROR(TypeError);
 
     public:
         virtual ~IPatternArg() {}
@@ -81,7 +81,7 @@ public:
     String(const char* cStr, size_type length);
     String(const QChar* str, size_type length);
     String(size_type length, QChar ch);
-    String(const QString& str, int index, size_type length);
+    String(const QString& str, size_type index, size_type length);
     String(const_iterator start, const_iterator end);
     String(iterator start, iterator end);
 

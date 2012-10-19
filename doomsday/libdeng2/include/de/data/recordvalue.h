@@ -37,13 +37,13 @@ namespace de
     {
     public:
         /// Attempt to access the record after it has been deleted. @ingroup errors
-        DENG2_ERROR(NullError)
+        DENG2_ERROR(NullError);
         
         /// An identifier that does not exist in the record was accessed. @ingroup errors
-        DENG2_ERROR(NotFoundError)
+        DENG2_ERROR(NotFoundError);
         
         /// The index used for accessing the record is of the wrong type. @ingroup errors
-        DENG2_ERROR(IllegalIndexError)
+        DENG2_ERROR(IllegalIndexError);
         
         enum OwnershipFlag
         {

@@ -57,10 +57,10 @@ namespace de
     {
     public:
         /// Loading the shared library failed. @ingroup errors
-        DENG2_ERROR(LoadError)
+        DENG2_ERROR(LoadError);
         
         /// A symbol was not found. @ingroup errors
-        DENG2_ERROR(SymbolMissingError)
+        DENG2_ERROR(SymbolMissingError);
         
         /// Default type identifier.
         static const char* DEFAULT_TYPE;

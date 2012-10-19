@@ -42,7 +42,7 @@ namespace de
     {
     public:
         /// Deserialization of an expression failed. @ingroup errors
-        DENG2_ERROR(DeserializationError)
+        DENG2_ERROR(DeserializationError);
 
         // Flags for evaluating expressions.
         // Note: these are serialized as is, so don't change the existing values.

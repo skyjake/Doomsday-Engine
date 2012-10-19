@@ -37,7 +37,7 @@ namespace de
     {
     public:
         /// Attempt to read characters when there are non left. @ingroup errors
-        DENG2_ERROR(OutOfInputError)
+        DENG2_ERROR(OutOfInputError);
 
         enum ModeFlag
         {

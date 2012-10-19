@@ -41,10 +41,10 @@ namespace de
     {
     public:
         /// Tried to access an argument that does not exist. @ingroup errors
-        DENG2_ERROR(OutOfRangeError)
+        DENG2_ERROR(OutOfRangeError);
 
         /// Execution of the command line failed. @ingroup errors
-        DENG2_ERROR(ExecuteError)
+        DENG2_ERROR(ExecuteError);
         
     public:
         CommandLine();
