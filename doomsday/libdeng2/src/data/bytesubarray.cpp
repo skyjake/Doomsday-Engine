@@ -19,7 +19,7 @@
 
 #include "de/ByteSubArray"
 
-using namespace de;
+namespace de {
 
 ByteSubArray::ByteSubArray(IByteArray& mainArray, Offset at, Size size)
     : _mainArray(&mainArray), _constMainArray(&mainArray), _at(at), _size(size)
@@ -49,3 +49,5 @@ void ByteSubArray::set(Offset at, const Byte* values, Size count)
     _mainArray->set(_at + at, values, count);
     _size = qMax(_size, at + count);
 }
+
+} // namespace de
