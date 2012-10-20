@@ -50,6 +50,7 @@
 #include "abstractresource.h"
 #include "displaymode.h"
 #include "filedirectory.h"
+#include "lumpindex.h"
 #include "m_misc.h"
 #include "resourcenamespace.h"
 #include "texture.h"
@@ -503,6 +504,127 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, resourcetype_t res
     return count;
 }
 
+/// Skip all whitespace except newlines.
+static inline char const* skipSpace(char const* ptr)
+{
+    DENG_ASSERT(ptr);
+    while(*ptr && *ptr != '\n' && isspace(*ptr))
+    { ptr++; }
+    return ptr;
+}
+
+static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t* path, char const* buffer)
+{
+    DENG_ASSERT(lumpName && path);
+
+    // Find the start of the lump name.
+    char const* ptr = skipSpace(buffer);
+
+    // Just whitespace?
+    if(!*ptr || *ptr == '\n') return false;
+
+    // Find the end of the lump name.
+    char const* end = (char const*)M_FindWhite((char*)ptr);
+    if(!*end || *end == '\n') return false;
+
+    size_t len = end - ptr;
+    // Invalid lump name?
+    if(len > 8) return false;
+
+    memset(lumpName, 0, LUMPNAME_T_MAXLEN);
+    strncpy(lumpName, ptr, len);
+    strupr(lumpName);
+
+    // Find the start of the file path.
+    ptr = skipSpace(end);
+    if(!*ptr || *ptr == '\n') return false; // Missing file path.
+
+    // We're at the file path.
+    Str_Set(path, ptr);
+    // Get rid of any extra whitespace on the end.
+    Str_StripRight(path);
+    F_FixSlashes(path, path);
+    return true;
+}
+
+/**
+ * <pre>LUMPNAM0 \Path\In\The\Base.ext
+ * LUMPNAM1 Path\In\The\RuntimeDir.ext
+ *  :</pre>
+ */
+static bool parsePathLumpMappings(char const* buffer)
+{
+    DENG_ASSERT(buffer);
+
+    bool successful = false;
+    ddstring_t path; Str_Init(&path);
+    ddstring_t line; Str_Init(&line);
+
+    char const* ch = buffer;
+    lumpname_t lumpName;
+    do
+    {
+        ch = Str_GetLine(&line, ch);
+        if(!parsePathLumpMapping(lumpName, &path, Str_Text(&line)))
+        {
+            // Failure parsing the mapping.
+            // Ignore errors in individual mappings and continue parsing.
+            //goto parseEnded;
+        }
+        else
+        {
+            App_FileSystem()->mapPathToLump(Str_Text(&path), lumpName);
+        }
+    } while(*ch);
+
+    // Success.
+    successful = true;
+
+//parseEnded:
+    Str_Free(&line);
+    Str_Free(&path);
+    return successful;
+}
+
+/**
+ * (Re-)Initialize the path => lump mappings.
+ * @note Should be called after WADs have been processed.
+ */
+static void initPathLumpMappings()
+{
+    // Free old paths, if any.
+    App_FileSystem()->clearPathLumpMappings();
+
+    if(DD_IsShuttingDown()) return;
+
+    size_t bufSize = 0;
+    uint8_t* buf = NULL;
+
+    // Add the contents of all DD_DIREC lumps.
+    DENG2_FOR_EACH(i, App_FileSystem()->nameIndex().lumps(), LumpIndex::Lumps::const_iterator)
+    {
+        FileInfo const& info = **i;
+        DENG_ASSERT(info.container);
+        de::File1& file = *info.container;
+
+        if(strnicmp(Str_Text(file.lumpName(info.lumpIdx)), "DD_DIREC", 8)) continue;
+
+        // Make a copy of it so we can ensure it ends in a null.
+        if(bufSize < info.size + 1)
+        {
+            bufSize = info.size + 1;
+            buf = (uint8_t*) M_Realloc(buf, bufSize);
+            if(!buf) Con_Error("initPathLumpMappings: Failed on (re)allocation of %lu bytes for temporary read buffer.", (unsigned long) bufSize);
+        }
+
+        file.readLump(info.lumpIdx, buf, 0, info.size);
+        buf[info.size] = 0;
+        parsePathLumpMappings(reinterpret_cast<char const*>(buf));
+    }
+
+    if(buf) M_Free(buf);
+}
+
 static int DD_LoadAddonResourcesWorker(void* parameters)
 {
     ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
@@ -539,9 +661,10 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(180);
 
+    initPathLumpMappings();
+
     // Re-initialize the resource locator as there are now new resources to be found
     // on existing search paths (probably that is).
-    F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
     if(p->initiatedBusyMode)
@@ -915,7 +1038,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         R_InitSvgs();
         R_InitViewWindow();
 
-        F_Reset();
+        // Update the dir/WAD translations.
+        initPathLumpMappings();
+
         F_ResetAllResourceNamespaces();
     }
 
@@ -1300,9 +1425,10 @@ boolean DD_Init(void)
         }
     }
 
+    initPathLumpMappings();
+
     // Re-initialize the resource locator as there are now new resources to be found
     // on existing search paths (probably that is).
-    F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
     // One-time execution of various command line features available during startup.
@@ -1397,8 +1523,10 @@ boolean DD_Init(void)
         // Lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
-        F_InitLumpDirectoryMappings();
+
+        initPathLumpMappings();
         F_InitVirtualDirectoryMappings();
+
         F_ResetAllResourceNamespaces();
 
         R_InitPatchComposites();
@@ -1629,9 +1757,10 @@ void DD_UpdateEngineState(void)
     //F_ResetFileIds();
 
     // Update the dir/WAD translations.
-    F_InitLumpDirectoryMappings();
+    initPathLumpMappings();
     F_InitVirtualDirectoryMappings();
-    /// Re-initialize the resource locator as there may now be new resources to be found.
+
+    // Re-initialize the resource locator as there may now be new resources to be found.
     F_ResetAllResourceNamespaces();
 
     R_InitPatchComposites();

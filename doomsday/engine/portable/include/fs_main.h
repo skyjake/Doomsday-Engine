@@ -116,17 +116,18 @@ namespace de
         void mapPath(char const* source, char const* destination);
 
         /**
-         * (Re-)Initialize the path => lump mappings.
-         * @note Should be called after WADs have been processed.
-         */
-        void initLumpPathMap();
-
-        /**
          * Add a new lump mapping so that @a lumpName becomes visible as @a symbolicPath
          * throughout the vfs.
          * @note @a symbolicPath will be transformed into an absolute path if needed.
          */
         void mapPathToLump(char const* symbolicPath, char const* lumpName);
+
+        /**
+         * Clears all path => lump mappings.
+         *
+         * @return  This instance.
+         */
+        FS1& clearPathLumpMappings();
 
         /**
          * Reset known fileId records so that the next time checkFileId() is called for
@@ -353,8 +354,6 @@ int F_Reset(void);
 void F_InitVirtualDirectoryMappings(void);
 
 void F_AddVirtualDirectoryMapping(char const* source, char const* destination);
-
-void F_InitLumpDirectoryMappings(void);
 
 void F_AddLumpDirectoryMapping(char const* lumpName, char const* symbolicPath);
 

@@ -673,8 +673,6 @@ int FS1::reset()
     /// again post engine startup, this isn't an immediate problem.
     resetFileIds();
 
-    // Update the dir/WAD translations.
-    initLumpPathMap();
     initPathMap();
 
     return unloaded;
@@ -1299,127 +1297,10 @@ void FS1::mapPathToLump(char const* symbolicPath, char const* lumpName)
     LOG_VERBOSE("Path \"%s\" now mapped to lump \"%s\"") << F_PrettyPath(pathUtf8.constData()) << ldm->second;
 }
 
-/// Skip all whitespace except newlines.
-static inline char const* skipSpace(char const* ptr)
+FS1& FS1::clearPathLumpMappings()
 {
-    DENG_ASSERT(ptr);
-    while(*ptr && *ptr != '\n' && isspace(*ptr))
-    { ptr++; }
-    return ptr;
-}
-
-static bool parseLumpPathMapping(lumpname_t lumpName, ddstring_t* path, char const* buffer)
-{
-    DENG_ASSERT(lumpName && path);
-
-    // Find the start of the lump name.
-    char const* ptr = skipSpace(buffer);
-
-    // Just whitespace?
-    if(!*ptr || *ptr == '\n') return false;
-
-    // Find the end of the lump name.
-    char const* end = (char const*)M_FindWhite((char*)ptr);
-    if(!*end || *end == '\n') return false;
-
-    size_t len = end - ptr;
-    // Invalid lump name?
-    if(len > 8) return false;
-
-    memset(lumpName, 0, LUMPNAME_T_MAXLEN);
-    strncpy(lumpName, ptr, len);
-    strupr(lumpName);
-
-    // Find the start of the file path.
-    ptr = skipSpace(end);
-    if(!*ptr || *ptr == '\n') return false; // Missing file path.
-
-    // We're at the file path.
-    Str_Set(path, ptr);
-    // Get rid of any extra whitespace on the end.
-    Str_StripRight(path);
-    F_FixSlashes(path, path);
-    return true;
-}
-
-/**
- * <pre>LUMPNAM0 \Path\In\The\Base.ext
- * LUMPNAM1 Path\In\The\RuntimeDir.ext
- *  :</pre>
- */
-static bool parseLumpPathMappings(de::FS1& fileSystem, char const* buffer)
-{
-    DENG_ASSERT(buffer);
-
-    bool successful = false;
-    ddstring_t path; Str_Init(&path);
-    ddstring_t line; Str_Init(&line);
-
-    char const* ch = buffer;
-    lumpname_t lumpName;
-    do
-    {
-        ch = Str_GetLine(&line, ch);
-        if(!parseLumpPathMapping(lumpName, &path, Str_Text(&line)))
-        {
-            // Failure parsing the mapping.
-            // Ignore errors in individual mappings and continue parsing.
-            //goto parseEnded;
-        }
-        else
-        {
-            fileSystem.mapPathToLump(Str_Text(&path), lumpName);
-        }
-    } while(*ch);
-
-    // Success.
-    successful = true;
-
-//parseEnded:
-    Str_Free(&line);
-    Str_Free(&path);
-    return successful;
-}
-
-void FS1::initLumpPathMap(void)
-{
-    static bool inited = false;
-    size_t bufSize = 0;
-    uint8_t* buf = NULL;
-
-    if(inited)
-    {
-        // Free old paths, if any.
-        d->lumpMappings.clear();
-    }
-
-    if(DD_IsShuttingDown()) return;
-
-    // Add the contents of all DD_DIREC lumps.
-    int const numLumps = nameIndex().size();
-    for(lumpnum_t i = 0; i < numLumps; ++i)
-    {
-        FileInfo const& info = nameIndex().lumpInfo(i);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-
-        if(strnicmp(Str_Text(file.lumpName(info.lumpIdx)), "DD_DIREC", 8)) continue;
-
-        // Make a copy of it so we can ensure it ends in a null.
-        if(bufSize < info.size + 1)
-        {
-            bufSize = info.size + 1;
-            buf = (uint8_t*) M_Realloc(buf, bufSize);
-            if(!buf) Con_Error("FS1::initLumpPathMap: Failed on (re)allocation of %lu bytes for temporary read buffer.", (unsigned long) bufSize);
-        }
-
-        file.readLump(info.lumpIdx, buf, 0, info.size);
-        buf[info.size] = 0;
-        parseLumpPathMappings(*this, reinterpret_cast<char const*>(buf));
-    }
-
-    if(buf) M_Free(buf);
-    inited = true;
+    d->lumpMappings.clear();
+    return *this;
 }
 
 /// @return  @c true iff the mapping matched the path.
@@ -1504,7 +1385,6 @@ void FS1::initPathMap()
         }
     }
 }
-
 
 void FS1::printDirectory(ddstring_t const* path)
 {
@@ -1693,11 +1573,6 @@ void F_InitVirtualDirectoryMappings(void)
 void F_AddVirtualDirectoryMapping(char const* source, char const* destination)
 {
     App_FileSystem()->mapPath(source, destination);
-}
-
-void F_InitLumpDirectoryMappings(void)
-{
-    App_FileSystem()->initLumpPathMap();
 }
 
 void F_AddLumpDirectoryMapping(char const* symbolicPath, char const* lumpName)
