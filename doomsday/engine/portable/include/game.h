@@ -130,11 +130,6 @@ public:
      */
     Game& addResource(resourceclass_t rclass, struct AbstractResource_s& record);
 
-    /**
-     * @return  @c true iff @a absolutePath points to a required resource.
-     */
-    bool isRequiredResource(char const* absolutePath);
-
     bool allStartupResourcesFound() const;
 
     /**
@@ -243,8 +238,6 @@ void Game_Delete(Game* game);
 boolean Game_IsNullObject(Game const* game);
 
 struct game_s* Game_AddResource(Game* game, resourceclass_t rclass, struct AbstractResource_s* record);
-
-boolean Game_IsRequiredResource(Game* game, char const* absolutePath);
 
 boolean Game_AllStartupResourcesFound(Game const* game);
 

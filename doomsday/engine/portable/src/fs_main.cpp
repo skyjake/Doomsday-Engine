@@ -255,29 +255,59 @@ struct FS1::Instance
                                 bool allowDuplicate, FileInfo& retInfo)
     {
         DENG_ASSERT(path && path[0]);
-        try
+
+        // Convert to an absolute path.
+        AutoStr* absSearchPath = AutoStr_FromTextStd(path);
+        F_PrependBasePath(absSearchPath, absSearchPath);
+
+        FileInfo const* found = 0;
+
+        // First check the Zip lump index.
+        lumpnum_t lumpNum = zipLumpIndex.indexForPath(Str_Text(absSearchPath));
+        if(lumpNum >= 0)
         {
-            FileInfo const& info = self->zipFileInfo(path);
-            // Do not read files twice.
-            if(!allowDuplicate && !self->checkFileId(path)) return 0;
-
-            // Get a handle to the lump we intend to open.
-            /// @todo The way this buffering works is nonsensical it should not be done here
-            ///        but should instead be deferred until the content of the lump is read.
-            FileHandle* hndl = FileHandleBuilder::fromFileLump(*info.container, info.lumpIdx, false/*dontBuffer*/);
-
-            // Prepare a temporary info descriptor.
-            retInfo = info;
-
-            return hndl;
+             found = &zipLumpIndex.lumpInfo(lumpNum);
         }
-        catch(NotFoundError)
-        {} // Ignore this error.
-        return 0;
+        // Nope. Any applicable dir/WAD redirects?
+        else if(!lumpMappings.empty())
+        {
+            // We must have an absolute path - prepend the CWD if necessary.
+            Str_Set(absSearchPath, path);
+            F_PrependWorkPath(absSearchPath, absSearchPath);
+
+            DENG2_FOR_EACH(i, lumpMappings, LumpMappings::const_iterator)
+            {
+                LumpMapping const& mapping = *i;
+                QByteArray foundPathUtf8 = mapping.first.toUtf8();
+                if(qstricmp(foundPathUtf8.constData(), Str_Text(absSearchPath))) continue;
+
+                QByteArray foundLumpNameUtf8 = mapping.second.toUtf8();
+                lumpnum_t absoluteLumpNum = self->lumpNumForName(foundLumpNameUtf8.constData());
+                if(absoluteLumpNum < 0) continue;
+
+                found = &self->nameIndexForLump(absoluteLumpNum).lumpInfo(absoluteLumpNum);
+            }
+        }
+
+        // Nothing?
+        if(!found) return 0;
+
+        // Do not read files twice.
+        if(!allowDuplicate && !self->checkFileId(path)) return 0;
+
+        // Get a handle to the lump we intend to open.
+        /// @todo The way this buffering works is nonsensical it should not be done here
+        ///        but should instead be deferred until the content of the lump is read.
+        FileHandle* hndl = FileHandleBuilder::fromFileLump(*found->container, found->lumpIdx, false/*dontBuffer*/);
+
+        // Prepare a temporary info descriptor.
+        retInfo = *found;
+
+        return hndl;
     }
 
     de::FileHandle* tryOpenNativeFile(char const* path, char const* mymode, size_t baseOffset,
-                                 bool allowDuplicate, FileInfo& info)
+                                      bool allowDuplicate, FileInfo& info)
     {
         DENG_ASSERT(path && path[0]);
 
@@ -294,8 +324,9 @@ struct FS1::Instance
         F_PrependWorkPath(nativePath, nativePath);
         F_ToNativeSlashes(nativePath, nativePath);
 
-        // First try a real native file at this absolute path.
         AutoStr* foundPath = 0;
+
+        // First try a real native file at this absolute path.
         FILE* nativeFile = fopen(Str_Text(nativePath), mode);
         if(nativeFile)
         {
@@ -482,23 +513,59 @@ void FS1::deindex(de::File1& file)
 
 bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
 {
-    FileList::iterator found = findListFileByPath(d->loadedFiles, path);
+    // Convert to an absolute path.
+    AutoStr* absolutePath = AutoStr_FromTextStd(path);
+    F_PrependBasePath(absolutePath, absolutePath);
+
+    FileList::iterator found = findListFileByPath(d->loadedFiles, Str_Text(absolutePath));
     if(found == d->loadedFiles.end()) return false;
 
     // Do not attempt to unload a resource required by the current game.
-    if(!permitRequired && reinterpret_cast<de::Game*>(App_CurrentGame())->isRequiredResource(path))
+    if(!permitRequired)
     {
-        if(!quiet)
+        bool isRequired = false;
+
+        if(AbstractResource* const* records = reinterpret_cast<de::Game*>(App_CurrentGame())->resources(RC_PACKAGE, 0))
         {
-            Con_Message("\"%s\" is required by the current game.\n"
-                        "Required game files cannot be unloaded in isolation.\n", F_PrettyPath(path));
+            // Is this resource from a container?
+            lumpnum_t lumpNum = d->zipLumpIndex.indexForPath(Str_Text(absolutePath));
+            if(lumpNum >= 0)
+            {
+                // Yes; use the container's path instead.
+                FileInfo const& info = d->zipLumpIndex.lumpInfo(lumpNum);
+                Str_Copy(absolutePath, info.container->path());
+            }
+
+            for(AbstractResource* const* i = records; *i; i++)
+            {
+                AbstractResource* record = *i;
+                if(AbstractResource_ResourceFlags(record) & RF_STARTUP)
+                {
+                    ddstring_t const* resolvedPath = AbstractResource_ResolvedPath(record, true);
+                    if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, Str_Text(absolutePath)))
+                    {
+                        isRequired = true;
+                        break;
+                    }
+                }
+            }
         }
-        return false;
+
+        if(isRequired)
+        {
+            if(!quiet)
+            {
+                Con_Message("\"%s\" is required by the current game.\n"
+                            "Required game files cannot be unloaded in isolation.\n",
+                            F_PrettyPath(Str_Text(absolutePath)));
+            }
+            return false;
+        }
     }
 
     if(!quiet && verbose >= 1)
     {
-        Con_Message("Unloading \"%s\"...\n", F_PrettyPath(path));
+        Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(absolutePath)));
     }
 
     FileHandle& hndl = *(*found);
@@ -769,51 +836,6 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
         Con_Message("Warning: FS1::lumpNumForName: Empty name, returning invalid lumpnum.\n");
     }
     return d->logicalLumpNum(lumpNum);
-}
-
-FileInfo const& FS1::zipFileInfo(char const* path)
-{
-    if(!path || !path[0]) throw NotFoundError("FS1::zipFileInfo", "No files found matching '" + QString(path) + "'");
-
-    /*
-     * First check the Zip directory.
-     */
-
-    // Convert to an absolute path.
-    AutoStr* absSearchPath = AutoStr_FromTextStd(path);
-    F_PrependBasePath(absSearchPath, absSearchPath);
-
-    // Perform the search.
-    lumpnum_t lumpNum = d->zipLumpIndex.indexForPath(Str_Text(absSearchPath));
-    if(lumpNum >= 0)
-    {
-        return d->zipLumpIndex.lumpInfo(lumpNum);
-    }
-
-    /*
-     * Next try the dir/WAD redirects.
-     */
-    if(!d->lumpMappings.empty())
-    {
-        // We must have an absolute path - prepend the CWD if necessary.
-        Str_Set(absSearchPath, path);
-        F_PrependWorkPath(absSearchPath, absSearchPath);
-
-        DENG2_FOR_EACH(i, d->lumpMappings, LumpMappings::const_iterator)
-        {
-            LumpMapping const& found = *i;
-            QByteArray foundPathUtf8 = found.first.toUtf8();
-            if(qstricmp(foundPathUtf8.constData(), Str_Text(absSearchPath))) continue;
-
-            QByteArray foundLumpNameUtf8 = found.second.toUtf8();
-            lumpnum_t absoluteLumpNum = lumpNumForName(foundLumpNameUtf8.constData());
-            if(absoluteLumpNum < 0) continue;
-
-            return nameIndexForLump(absoluteLumpNum).lumpInfo(absoluteLumpNum);
-        }
-    }
-
-    throw NotFoundError("FS1::zipFileInfo", "No files found matching '" + QString(path) + "'");
 }
 
 lumpnum_t FS1::openAuxiliary(char const* filePath, size_t baseOffset)

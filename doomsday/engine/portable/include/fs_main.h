@@ -193,17 +193,6 @@ namespace de
         LumpIndex const& nameIndexForLump(lumpnum_t& absoluteLumpNum) const;
 
         /**
-         * Retrieve the FileInfo metadata record for a lump in the Zip lump index.
-         *
-         * @param path              Path to search for (made absolute if necessary).
-         *
-         * @return  Metadata record for the lump.
-         *
-         * @throws NotFoundError If the requested file could not be found.
-         */
-        FileInfo const& zipFileInfo(char const* path);
-
-        /**
          * Opens the given file (will be translated) for reading.
          *
          * @post If @a allowDuplicate = @c false a new file ID for this will have been

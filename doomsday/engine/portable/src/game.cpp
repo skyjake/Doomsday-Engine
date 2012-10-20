@@ -156,38 +156,6 @@ Game& Game::addResource(resourceclass_t rclass, AbstractResource& record)
     return *this;
 }
 
-bool Game::isRequiredResource(char const* absolutePath)
-{
-    AbstractResource* const* records = resources(RC_PACKAGE, 0);
-    if(records)
-    {
-        // Is this resource from a container?
-        try
-        {
-            FileInfo const& info = App_FileSystem()->zipFileInfo(absolutePath);
-            // Yes; use the container's path instead.
-            absolutePath = Str_Text(info.container->path());
-        }
-        catch(FS1::NotFoundError const&)
-        {} // Ignore this error.
-
-        for(AbstractResource* const* i = records; *i; i++)
-        {
-            AbstractResource* record = *i;
-            if(AbstractResource_ResourceFlags(record) & RF_STARTUP)
-            {
-                ddstring_t const* resolvedPath = AbstractResource_ResolvedPath(record, true);
-                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    // Not found, so no.
-    return false;
-}
-
 bool Game::allStartupResourcesFound() const
 {
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
@@ -408,12 +376,6 @@ struct game_s* Game_AddResource(struct game_s* game, resourceclass_t rclass, str
     DENG_ASSERT(record);
     self->addResource(rclass, *record);
     return game;
-}
-
-boolean Game_IsRequiredResource(struct game_s* game, char const* absolutePath)
-{
-    SELF(game);
-    return self->isRequiredResource(absolutePath);
 }
 
 boolean Game_AllStartupResourcesFound(struct game_s const* game)
