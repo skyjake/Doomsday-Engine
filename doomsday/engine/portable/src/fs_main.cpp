@@ -673,8 +673,6 @@ int FS1::reset()
     /// again post engine startup, this isn't an immediate problem.
     resetFileIds();
 
-    initPathMap();
-
     return unloaded;
 }
 
@@ -1366,24 +1364,10 @@ void FS1::mapPath(char const* source, char const* destination)
             << F_PrettyPath(sourceUtf8.constData()) << F_PrettyPath(destUtf8.constData());
 }
 
-void FS1::initPathMap()
+FS1& FS1::clearPathMappings()
 {
     d->pathMappings.clear();
-
-    if(DD_IsShuttingDown()) return;
-
-    // Create virtual directory mappings by processing all -vdmap options.
-    int argC = CommandLine_Count();
-    for(int i = 0; i < argC; ++i)
-    {
-        if(strnicmp("-vdmap", CommandLine_At(i), 6)) continue;
-
-        if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
-        {
-            mapPath(CommandLine_PathAt(i + 1), CommandLine_At(i + 2));
-            i += 2;
-        }
-    }
+    return *this;
 }
 
 void FS1::printDirectory(ddstring_t const* path)
@@ -1563,11 +1547,6 @@ void F_EndStartup(void)
 int F_Reset(void)
 {
     return App_FileSystem()->reset();
-}
-
-void F_InitVirtualDirectoryMappings(void)
-{
-    App_FileSystem()->initPathMap();
 }
 
 void F_AddVirtualDirectoryMapping(char const* source, char const* destination)

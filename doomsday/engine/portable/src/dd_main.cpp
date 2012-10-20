@@ -66,7 +66,8 @@ typedef struct ddvalue_s {
 
 static int DD_StartupWorker(void* parameters);
 static int DD_DummyWorker(void* parameters);
-static void DD_AutoLoad(void);
+static void DD_AutoLoad();
+static void initPathMappings();
 
 extern int renderTextures;
 extern int monochrome;
@@ -434,7 +435,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     F_ResetFileIds();
     F_ResetAllResourceNamespaces();
 
-    F_InitVirtualDirectoryMappings();
+    initPathMappings();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -502,6 +503,29 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, resourcetype_t res
         }
     }
     return count;
+}
+
+/**
+ * (Re-)Initialize the VFS path mappings.
+ */
+static void initPathMappings()
+{
+    App_FileSystem()->clearPathMappings();
+
+    if(DD_IsShuttingDown()) return;
+
+    // Create virtual directory mappings by processing all -vdmap options.
+    int argC = CommandLine_Count();
+    for(int i = 0; i < argC; ++i)
+    {
+        if(strnicmp("-vdmap", CommandLine_At(i), 6)) continue;
+
+        if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
+        {
+            App_FileSystem()->mapPath(CommandLine_PathAt(i + 1), CommandLine_At(i + 2));
+            i += 2;
+        }
+    }
 }
 
 /// Skip all whitespace except newlines.
@@ -1038,8 +1062,11 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         R_InitSvgs();
         R_InitViewWindow();
 
+        F_Reset();
+
         // Update the dir/WAD translations.
         initPathLumpMappings();
+        initPathMappings();
 
         F_ResetAllResourceNamespaces();
     }
@@ -1525,7 +1552,7 @@ boolean DD_Init(void)
         F_ResetFileIds();
 
         initPathLumpMappings();
-        F_InitVirtualDirectoryMappings();
+        initPathMappings();
 
         F_ResetAllResourceNamespaces();
 
@@ -1559,7 +1586,9 @@ static void DD_InitResourceSystem(void)
 
     F_InitResourceLocator();
     F_CreateNamespacesForFileResourcePaths();
-    F_InitVirtualDirectoryMappings();
+
+    initPathMappings();
+
     F_ResetAllResourceNamespaces();
 
     // Initialize the definition databases.
@@ -1721,7 +1750,6 @@ typedef struct {
 static int DD_UpdateEngineStateWorker(void* parameters)
 {
     DENG_ASSERT(parameters);
-    {
     ddupdateenginestateworker_paramaters_t* p = (ddupdateenginestateworker_paramaters_t*) parameters;
 
     if(!novideo)
@@ -1740,7 +1768,6 @@ static int DD_UpdateEngineStateWorker(void* parameters)
         BusyMode_WorkerEnd();
     }
     return 0;
-    }
 }
 
 void DD_UpdateEngineState(void)
@@ -1758,7 +1785,7 @@ void DD_UpdateEngineState(void)
 
     // Update the dir/WAD translations.
     initPathLumpMappings();
-    F_InitVirtualDirectoryMappings();
+    initPathMappings();
 
     // Re-initialize the resource locator as there may now be new resources to be found.
     F_ResetAllResourceNamespaces();

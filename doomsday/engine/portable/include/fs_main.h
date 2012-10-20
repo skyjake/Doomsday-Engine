@@ -105,15 +105,17 @@ namespace de
         int reset();
 
         /**
-         * (Re-)Initialize the path mappings.
-         */
-        void initPathMap();
-
-        /**
          * Add a new path mapping from source to destination in the vfs.
          * @note Paths will be transformed into absolute paths if needed.
          */
         void mapPath(char const* source, char const* destination);
+
+        /**
+         * Clears all virtual path mappings.
+         *
+         * @return  This instance.
+         */
+        FS1& clearPathMappings();
 
         /**
          * Add a new lump mapping so that @a lumpName becomes visible as @a symbolicPath
@@ -350,8 +352,6 @@ void F_Shutdown(void);
 void F_EndStartup(void);
 
 int F_Reset(void);
-
-void F_InitVirtualDirectoryMappings(void);
 
 void F_AddVirtualDirectoryMapping(char const* source, char const* destination);
 
