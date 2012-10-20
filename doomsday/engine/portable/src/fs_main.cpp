@@ -1537,33 +1537,6 @@ void FS1::printDirectory(ddstring_t const* path)
     }
 }
 
-static void printLumpIndex(de::LumpIndex const& index)
-{
-    const int numRecords = index.size();
-    const int numIndexDigits = MAX_OF(3, M_NumDigits(numRecords));
-
-    Con_Printf("LumpIndex %p (%i records):\n", &index, numRecords);
-
-    int idx = 0;
-    DENG2_FOR_EACH(i, index.lumps(), de::LumpIndex::Lumps::const_iterator)
-    {
-        FileInfo const* lumpInfo = *i;
-        de::File1* container = lumpInfo->container;
-        Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
-                   F_PrettyPath(Str_Text(container->path())),
-                   F_PrettyPath(Str_Text(container->composeLumpPath(lumpInfo->lumpIdx))),
-                   (unsigned long) lumpInfo->size,
-                   (lumpInfo->isCompressed()? " compressed" : ""));
-    }
-    Con_Printf("---End of lumps---\n");
-}
-
-void FS1::printIndex()
-{
-    // Always the primary index.
-    printLumpIndex(d->primaryWadLumpIndex);
-}
-
 /// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
@@ -1610,13 +1583,11 @@ D_CMD(DumpLump)
 /// List virtual files inside containers.
 D_CMD(ListLumps)
 {
-    DENG_UNUSED(src);
-    DENG_UNUSED(argc);
-    DENG_UNUSED(argv);
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
     if(fileSystem)
     {
-        App_FileSystem()->printIndex();
+        LumpIndex::print(App_FileSystem()->nameIndex());
         return true;
     }
     Con_Printf("WAD module is not presently initialized.\n");
@@ -1626,9 +1597,7 @@ D_CMD(ListLumps)
 /// List presently loaded files in original load order.
 D_CMD(ListFiles)
 {
-    DENG_UNUSED(src);
-    DENG_UNUSED(argc);
-    DENG_UNUSED(argv);
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
     Con_Printf("Loaded Files (in load order):\n");
 

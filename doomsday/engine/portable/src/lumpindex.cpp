@@ -27,8 +27,10 @@
  */
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_filesys.h"
 
+#include "m_misc.h" // for M_NumDigits()
 #include "lumpindex.h"
 
 #include <QBitArray>
@@ -37,7 +39,7 @@
 
 #include <de/Log>
 
-using namespace de;
+namespace de {
 
 /**
  * @ingroup lumpIndexFlags
@@ -291,7 +293,7 @@ int LumpIndex::size() const
     return d->lumpInfos.size();
 }
 
-int LumpIndex::pruneByFile(de::File1& file)
+int LumpIndex::pruneByFile(File1& file)
 {
     if(d->lumpInfos.empty()) return 0;
 
@@ -328,7 +330,7 @@ bool LumpIndex::pruneLump(FileInfo& lumpInfo)
     return true;
 }
 
-void LumpIndex::catalogLumps(de::File1& file, int lumpIdxBase, int numLumps)
+void LumpIndex::catalogLumps(File1& file, int lumpIdxBase, int numLumps)
 {
     if(numLumps <= 0) return;
 
@@ -359,7 +361,7 @@ void LumpIndex::clear()
     d->flags &= ~(LIF_NEED_REBUILD_HASH | LIF_NEED_PRUNE_DUPLICATES);
 }
 
-bool LumpIndex::catalogues(de::File1& file)
+bool LumpIndex::catalogues(File1& file)
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -413,3 +415,28 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
 
     return idx;
 }
+
+void LumpIndex::print(LumpIndex const& index)
+{
+    int const numRecords = index.size();
+    int const numIndexDigits = MAX_OF(3, M_NumDigits(numRecords));
+
+    Con_Printf("LumpIndex %p (%i records):\n", &index, numRecords);
+
+    int idx = 0;
+    DENG2_FOR_EACH(i, index.lumps(), Lumps::const_iterator)
+    {
+        FileInfo const& info = **i;
+        DENG_ASSERT(info.container);
+        File1& container = *info.container;
+
+        Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
+                   F_PrettyPath(Str_Text(container.path())),
+                   F_PrettyPath(Str_Text(container.composeLumpPath(info.lumpIdx))),
+                   (unsigned long) info.size,
+                   (info.isCompressed()? " compressed" : ""));
+    }
+    Con_Printf("---End of lumps---\n");
+}
+
+} // namespace de

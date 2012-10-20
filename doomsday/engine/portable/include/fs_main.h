@@ -277,11 +277,6 @@ namespace de
         void printDirectory(ddstring_t const* path);
 
         /**
-         * Print contents of the primary lump index.
-         */
-        void printIndex();
-
-        /**
          * Calculate a CRC for the loaded file list.
          */
         uint loadedFilesCRC();

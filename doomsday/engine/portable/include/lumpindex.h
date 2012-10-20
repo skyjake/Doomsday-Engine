@@ -133,6 +133,11 @@ public:
      */
     bool pruneLump(FileInfo& lumpInfo);
 
+    /**
+     * Print contents of index @a index.
+     */
+    static void print(LumpIndex const& index);
+
 private:
     struct Instance;
     Instance* d;
