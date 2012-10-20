@@ -138,18 +138,12 @@ typedef struct centralend_s {
 
 static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src);
 
-class ZipFile
+class ZipFile : public File1
 {
 public:
-    explicit ZipFile(FileInfo const& _info) : info_(_info)
+    ZipFile::ZipFile(FileHandle& hndl, char const* path, FileInfo const& info)
+        : File1(FT_ZIPFILE, path, hndl, info)
     {}
-
-    FileInfo const& info() const {
-        return info_;
-    }
-
-private:
-    FileInfo info_;
 };
 
 struct Zip::Instance
@@ -395,11 +389,15 @@ struct Zip::Instance
                 F_PrependBasePath(&entryPath, &entryPath);
 
                 ZipFile* record =
-                    new ZipFile(FileInfo(self->lastModified(), // Inherited from the file (note recursion).
-                                               lumpIdx++, baseOffset, ULONG(header->size),
-                                               compressedSize, self));
+                    new ZipFile(*FileHandleBuilder::fromFileLump(*self, lumpIdx, true/*don't buffer*/),
+                                Str_Text(&entryPath),
+                                FileInfo(self->lastModified(), // Inherited from the file (note recursion).
+                                         lumpIdx, baseOffset, ULONG(header->size),
+                                         compressedSize, self));
                 PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&entryPath));
                 node->setUserData(record);
+
+                lumpIdx++;
             }
         }
 
