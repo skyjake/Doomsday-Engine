@@ -113,31 +113,6 @@ public:
     File1& lump(int lumpIdx);
 
     /**
-     * Retrieve the FileInfo descriptor for a lump contained by this file.
-     *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return Lump info descriptor for the lump.
-     *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
-     */
-    FileInfo const& lumpInfo(int lumpIdx);
-
-    /**
-     * Lookup the uncompressed size of lump contained by this file.
-     *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return Size of the lump in bytes.
-     *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
-     *
-     * @note This method is intended mainly for convenience. @see lumpInfo() for
-     *       a better method of looking up multiple @ref FileInfo properties.
-     */
-    size_t lumpSize(int lumpIdx);
-
-    /**
      * Read the data associated with lump @a lumpIdx into @a buffer.
      *
      * @param lumpIdx       Lump index associated with the data to be read.

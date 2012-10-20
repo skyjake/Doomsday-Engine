@@ -130,7 +130,7 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
     file->d->flags.open = true;
     if(!dontBuffer)
     {
-        FileInfo const& info = container.lumpInfo(lumpIdx);
+        FileInfo const& info = container.lump(lumpIdx).info();
         file->d->size = info.size;
         file->d->pos = file->d->data = (uint8_t*) M_Malloc(file->d->size);
         if(!file->d->data)

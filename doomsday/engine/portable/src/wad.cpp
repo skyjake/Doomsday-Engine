@@ -334,18 +334,6 @@ ddstring_t const* Wad::lumpName(int lumpIdx)
     return lumpDirectoryNode(lumpIdx).pathFragment();
 }
 
-FileInfo const& Wad::lumpInfo(int lumpIdx)
-{
-    LOG_AS("Wad::lumpInfo");
-    return lump(lumpIdx).info();
-}
-
-size_t Wad::lumpSize(int lumpIdx)
-{
-    LOG_AS("Wad::lumpSize");
-    return lump(lumpIdx).info().size;
-}
-
 AutoStr* Wad::composeLumpPath(int lumpIdx, char delimiter)
 {
     if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
@@ -400,12 +388,12 @@ uint8_t const* Wad::cacheLump(int lumpIdx)
 
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
-    FileInfo const& info = lumpInfo(lumpIdx);
+    File1 const& file = lump(lumpIdx);
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << (unsigned long) info.size
-        << (info.isCompressed()? ", compressed" : "");
+        << (unsigned long) file.info().size
+        << (file.info().isCompressed()? ", compressed" : "");
 
     // Time to create the cache?
     if(!d->lumpCache)
@@ -416,8 +404,8 @@ uint8_t const* Wad::cacheLump(int lumpIdx)
     uint8_t const* data = d->lumpCache->data(lumpIdx);
     if(data) return data;
 
-    uint8_t* region = (uint8_t*) Z_Malloc(info.size, PU_APPSTATIC, 0);
-    if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(info.size).arg(lumpIdx));
+    uint8_t* region = (uint8_t*) Z_Malloc(file.info().size, PU_APPSTATIC, 0);
+    if(!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(file.info().size).arg(lumpIdx));
 
     readLump(lumpIdx, region, false);
     d->lumpCache->insert(lumpIdx, region);
@@ -454,7 +442,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
     LOG_AS("Wad::readLump");
     if(!isValidIndex(lumpIdx)) return 0;
-    return readLump(lumpIdx, buffer, 0, lumpInfo(lumpIdx).size, tryCache);
+    return readLump(lumpIdx, buffer, 0, lump(lumpIdx).info().size, tryCache);
 }
 
 size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
