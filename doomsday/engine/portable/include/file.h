@@ -35,7 +35,9 @@ extern "C" {
 typedef enum {
     FT_FILE,        ///< Generic file
     FT_ZIP,
+    FT_ZIPFILE,
     FT_WAD,
+    FT_WADFILE,
     FT_LUMPFILEADAPTOR,
     FILETYPE_COUNT
 } filetype_t;

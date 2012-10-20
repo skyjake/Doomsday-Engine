@@ -125,12 +125,12 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
 {
     if(!container.isValidIndex(lumpIdx)) return 0;
 
-    FileInfo const& info = container.lumpInfo(lumpIdx);
     de::FileHandle* file = new de::FileHandle();
     // Init and load in the lump data.
     file->d->flags.open = true;
     if(!dontBuffer)
     {
+        FileInfo const& info = container.lumpInfo(lumpIdx);
         file->d->size = info.size;
         file->d->pos = file->d->data = (uint8_t*) M_Malloc(file->d->size);
         if(!file->d->data)

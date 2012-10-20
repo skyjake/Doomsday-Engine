@@ -55,15 +55,12 @@ typedef struct {
 } wadlumprecord_t;
 #pragma pack()
 
-class WadFile
+class WadFile : public File1
 {
 public:
-    explicit WadFile(FileInfo const& _info) : crc_(0), info_(_info)
+    WadFile::WadFile(FileHandle& hndl, char const* path, FileInfo const& info)
+        : File1(FT_WADFILE, path, hndl, info), crc_(0)
     {}
-
-    FileInfo const& info() const {
-        return info_;
-    }
 
     uint crc() const { return crc_; }
 
@@ -77,9 +74,9 @@ public:
      */
     WadFile& updateCRC()
     {
-        crc_ = uint(info_.size);
+        crc_ = uint(info().size);
 
-        de::PathDirectoryNode const& node = info().container->lumpDirectoryNode(info_.lumpIdx);
+        de::PathDirectoryNode const& node = container().lumpDirectoryNode(info().lumpIdx);
         ddstring_t const* name = node.pathFragment();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
@@ -91,7 +88,6 @@ public:
 
 private:
     uint crc_;
-    FileInfo info_;
 };
 
 struct Wad::Instance
@@ -258,7 +254,9 @@ struct Wad::Instance
             F_PrependBasePath(&absPath, &absPath); // Make it absolute.
 
             WadFile* lump =
-                new WadFile(FileInfo(self->lastModified(), // Inherited from the container (note recursion).
+                new WadFile(*FileHandleBuilder::fromFileLump(*self, i, true/*don't buffer*/),
+                            Str_Text(&absPath),
+                            FileInfo(self->lastModified(), // Inherited from the container (note recursion).
                                      i,
                                      littleEndianByteOrder.toNative(arcRecord->filePos),
                                      littleEndianByteOrder.toNative(arcRecord->size),
