@@ -686,7 +686,8 @@ boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
     {
         lumpnum_t lumpNum = absoluteLumpNum;
         de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        ddstring_t const* lumpName = lump.container().lumpName(lump.info().lumpIdx);
+        FileInfo const& lumpInfo = lump.info();
+        ddstring_t const* lumpName = lump.container().lumpName(lumpInfo.lumpIdx);
 
         char const* fname;
         if(path && path[0])
@@ -698,8 +699,8 @@ boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* path)
             fname = Str_Text(lumpName);
         }
 
-        bool dumpedOk = F_Dump(lump.container().cacheLump(lump.info().lumpIdx), lump.info().size, fname);
-        lump.container().unlockLump(lump.info().lumpIdx);
+        bool dumpedOk = F_Dump(lump.container().cacheLump(lumpInfo.lumpIdx), lumpInfo.size, fname);
+        lump.container().unlockLump(lumpInfo.lumpIdx);
         if(!dumpedOk) return false;
 
         LOG_VERBOSE("%s dumped to \"%s\"") << Str_Text(lumpName) << F_PrettyPath(fname);

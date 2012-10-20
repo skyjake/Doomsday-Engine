@@ -429,20 +429,20 @@ struct Zip::Instance
         DENG2_ASSERT(buffer);
         LOG_AS("Zip");
 
-        self->handle_->seek(lump.info().baseOffset, SeekSet);
+        FileInfo const& lumpInfo = lump.info();
+        self->handle_->seek(lumpInfo.baseOffset, SeekSet);
 
-        if(lump.info().isCompressed())
+        if(lumpInfo.isCompressed())
         {
             bool result;
-            uint8_t* compressedData = (uint8_t*) M_Malloc(lump.info().compressedSize);
-            if(!compressedData) throw Error("Zip::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lump.info().compressedSize));
+            uint8_t* compressedData = (uint8_t*) M_Malloc(lumpInfo.compressedSize);
+            if(!compressedData) throw Error("Zip::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpInfo.compressedSize));
 
             // Read the compressed data into a temporary buffer for decompression.
-            self->handle_->read(compressedData, lump.info().compressedSize);
+            self->handle_->read(compressedData, lumpInfo.compressedSize);
 
             // Uncompress into the buffer provided by the caller.
-            result = uncompressRaw(compressedData, lump.info().compressedSize,
-                                   buffer, lump.info().size);
+            result = uncompressRaw(compressedData, lumpInfo.compressedSize, buffer, lumpInfo.size);
 
             M_Free(compressedData);
             if(!result) return 0; // Inflate failed.
@@ -450,9 +450,9 @@ struct Zip::Instance
         else
         {
             // Read the uncompressed data directly to the buffer provided by the caller.
-            self->handle_->read(buffer, lump.info().size);
+            self->handle_->read(buffer, lumpInfo.size);
         }
-        return lump.info().size;
+        return lumpInfo.size;
     }
 };
 
@@ -608,7 +608,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
     LOG_AS("Zip::readLump");
     if(!isValidIndex(lumpIdx)) return 0;
-    return readLump(lumpIdx, buffer, 0, lump(lumpIdx).info().size, tryCache);
+    return readLump(lumpIdx, buffer, 0, lump(lumpIdx).size(), tryCache);
 }
 
 size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
@@ -620,8 +620,8 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << (unsigned long) file.info().size
-        << (file.info().isCompressed()? ", compressed" : "")
+        << (unsigned long) file.size()
+        << (file.isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
         << (unsigned long) length;
 
@@ -632,14 +632,14 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
-            size_t readBytes = MIN_OF(file.info().size, length);
+            size_t readBytes = MIN_OF(file.size(), length);
             memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
     }
 
     size_t readBytes;
-    if(!startOffset && length == file.info().size)
+    if(!startOffset && length == file.size())
     {
         // Read it straight to the caller's data buffer.
         readBytes = d->bufferLump(file, buffer);
@@ -647,12 +647,12 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     else
     {
         // Allocate a temporary buffer and read the whole lump into it(!).
-        uint8_t* lumpData = (uint8_t*) M_Malloc(file.info().size);
-        if(!lumpData) throw Error("Zip::readLumpSection", QString("Failed on allocation of %1 bytes for work buffer").arg(file.info().size));
+        uint8_t* lumpData = (uint8_t*) M_Malloc(file.size());
+        if(!lumpData) throw Error("Zip::readLumpSection", QString("Failed on allocation of %1 bytes for work buffer").arg(file.size()));
 
         if(d->bufferLump(file, lumpData))
         {
-            readBytes = MIN_OF(file.info().size, length);
+            readBytes = MIN_OF(file.size(), length);
             memcpy(buffer, lumpData + startOffset, readBytes);
         }
         else
@@ -663,7 +663,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     }
 
     /// @todo Do not check the read length here.
-    if(readBytes < MIN_OF(file.info().size, length))
+    if(readBytes < MIN_OF(file.size(), length))
         throw Error("Zip::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
 
     return readBytes;

@@ -312,6 +312,9 @@ protected:
     /// File stream handle.
     FileHandle* handle_;
 
+    /// Info descriptor (file metadata).
+    FileInfo info_;
+
 private:
     /// @see filetype_t
     filetype_t type_;
@@ -321,9 +324,6 @@ private:
 
     /// Absolute variable-length path in the vfs.
     ddstring_t path_;
-
-    /// Info descriptor (file metadata).
-    FileInfo info_;
 
     /// Load order depth index.
     uint order;

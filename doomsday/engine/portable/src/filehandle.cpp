@@ -130,8 +130,8 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
     file->d->flags.open = true;
     if(!dontBuffer)
     {
-        FileInfo const& info = container.lump(lumpIdx).info();
-        file->d->size = info.size;
+        FileInfo const& lumpInfo = container.lump(lumpIdx).info();
+        file->d->size = lumpInfo.size;
         file->d->pos = file->d->data = (uint8_t*) M_Malloc(file->d->size);
         if(!file->d->data)
             Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
@@ -144,7 +144,7 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
                        F_PrettyPath(Str_Text(path)));
         )
 #endif
-        container.readLump(lumpIdx, (uint8_t*)file->d->data, 0, info.size);
+        container.readLump(lumpIdx, (uint8_t*)file->d->data, 0, lumpInfo.size);
     }
     return file;
 }

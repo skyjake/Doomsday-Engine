@@ -74,9 +74,9 @@ public:
      */
     WadFile& updateCRC()
     {
-        crc_ = uint(info().size);
+        crc_ = uint(info_.size);
 
-        de::PathDirectoryNode const& node = container().lumpDirectoryNode(info().lumpIdx);
+        de::PathDirectoryNode const& node = container().lumpDirectoryNode(info_.lumpIdx);
         ddstring_t const* name = node.pathFragment();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
@@ -442,7 +442,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, bool tryCache)
 {
     LOG_AS("Wad::readLump");
     if(!isValidIndex(lumpIdx)) return 0;
-    return readLump(lumpIdx, buffer, 0, lump(lumpIdx).info().size, tryCache);
+    return readLump(lumpIdx, buffer, 0, lump(lumpIdx).size(), tryCache);
 }
 
 size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
@@ -454,10 +454,10 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << (unsigned long) file.info().size
-        << (file.info().isCompressed()? ", compressed" : "")
+        << (unsigned long) file.size()
+        << (file.isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
-        << (unsigned long)length;
+        << (unsigned long) length;
 
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache)
@@ -466,7 +466,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
-            size_t readBytes = MIN_OF(file.info().size, length);
+            size_t readBytes = MIN_OF(file.size(), length);
             memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }

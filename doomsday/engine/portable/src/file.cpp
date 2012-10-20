@@ -31,7 +31,7 @@
 namespace de {
 
 File1::File1(filetype_t _type, char const* _path, FileHandle& hndl, FileInfo const& _info)
-    : handle_(&hndl), type_(_type), flags(DefaultFlags)
+    : handle_(&hndl), info_(_info), type_(_type), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.
     /// @todo Does not belong at this level. Load order should be determined
@@ -41,7 +41,6 @@ File1::File1(filetype_t _type, char const* _path, FileHandle& hndl, FileInfo con
     order = fileCounter++;
 
     Str_Init(&path_); Str_Set(&path_, _path);
-    info_ = _info;
 }
 
 File1::~File1()

@@ -628,19 +628,20 @@ static void initPathLumpMappings()
     DENG2_FOR_EACH(i, App_FileSystem()->nameIndex().lumps(), LumpIndex::Lumps::const_iterator)
     {
         de::File1 const& lump = **i;
+        FileInfo const& lumpInfo = lump.info();
 
-        if(strnicmp(Str_Text(lump.container().lumpName(lump.info().lumpIdx)), "DD_DIREC", 8)) continue;
+        if(strnicmp(Str_Text(lump.container().lumpName(lumpInfo.lumpIdx)), "DD_DIREC", 8)) continue;
 
         // Make a copy of it so we can ensure it ends in a null.
-        if(bufSize < lump.info().size + 1)
+        if(bufSize < lumpInfo.size + 1)
         {
-            bufSize = lump.info().size + 1;
+            bufSize = lumpInfo.size + 1;
             buf = (uint8_t*) M_Realloc(buf, bufSize);
             if(!buf) Con_Error("initPathLumpMappings: Failed on (re)allocation of %lu bytes for temporary read buffer.", (unsigned long) bufSize);
         }
 
-        lump.container().readLump(lump.info().lumpIdx, buf, 0, lump.info().size);
-        buf[lump.info().size] = 0;
+        lump.container().readLump(lumpInfo.lumpIdx, buf, 0, lumpInfo.size);
+        buf[lumpInfo.size] = 0;
         parsePathLumpMappings(reinterpret_cast<char const*>(buf));
     }
 
