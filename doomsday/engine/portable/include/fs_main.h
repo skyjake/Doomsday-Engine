@@ -99,12 +99,6 @@ namespace de
         void endStartup();
 
         /**
-         * Remove all file records flagged Runtime.
-         * @return  Number of records removed.
-         */
-        int reset();
-
-        /**
          * Add a new path mapping from source to destination in the vfs.
          * @note Paths will be transformed into absolute paths if needed.
          */
@@ -325,6 +319,13 @@ namespace de
         void deindex(File1& file);
 
         bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
+
+    public:
+        /**
+         * Unload all files loaded after startup.
+         * @return  Number of files unloaded.
+         */
+        FS1& unloadAllNonStartupFiles(int* numUnloaded = 0);
     };
 
 } // namespace de
@@ -351,7 +352,7 @@ void F_Shutdown(void);
 
 void F_EndStartup(void);
 
-int F_Reset(void);
+void F_UnloadAllNonStartupFiles(int* numUnloaded);
 
 void F_AddVirtualDirectoryMapping(char const* source, char const* destination);
 

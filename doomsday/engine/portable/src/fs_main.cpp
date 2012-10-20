@@ -576,6 +576,74 @@ bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
     return true;
 }
 
+#if _DEBUG
+static void printFileIds(FileIds const& fileIds)
+{
+    uint idx = 0;
+    DENG2_FOR_EACH(i, fileIds, FileIds::const_iterator)
+    {
+        LOG_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
+        ++idx;
+    }
+}
+#endif
+
+#if _DEBUG
+static void printFileList(FS1::FileList& list)
+{
+    uint idx = 0;
+    DENG2_FOR_EACH(i, list, FS1::FileList::const_iterator)
+    {
+        de::FileHandle* hndl = *i;
+        de::File1& file = hndl->file();
+        FileId fileId = FileId::fromPath(Str_Text(file.path()));
+        LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
+            << (file.hasStartup()? '*' : ' ') << idx
+            << fileId << fileId.path() << (void*)&hndl;
+        ++idx;
+    }
+}
+#endif
+
+FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
+{
+#if _DEBUG
+    // List all open files with their identifiers.
+    if(verbose)
+    {
+        LOG_MSG("Open files at reset:");
+        printFileList(d->openFiles);
+        LOG_MSG("End\n");
+    }
+#endif
+
+    // Perform non-startup file unloading (in reverse load order).
+    int numUnloaded = 0;
+    for(int i = d->loadedFiles.size() - 1; i >= 0; i--)
+    {
+        FileHandle& hndl = *(d->loadedFiles[i]);
+        File1& file = hndl.file();
+        if(file.hasStartup()) continue;
+
+        if(unloadFile(Str_Text(file.path()), true/*allow unloading game resources*/, true/*quiet please*/))
+        {
+            numUnloaded += 1;
+        }
+    }
+
+#if _DEBUG
+    // Sanity check: look for orphaned identifiers.
+    if(!d->fileIds.empty())
+    {
+        LOG_MSG("Warning: Orphan FileIds:");
+        printFileIds(d->fileIds);
+    }
+#endif
+
+    if(retNumUnloaded) *retNumUnloaded = numUnloaded;
+    return *this;
+}
+
 bool FS1::checkFileId(char const* path)
 {
     DENG_ASSERT(path);
@@ -603,77 +671,6 @@ void FS1::endStartup()
 {
     d->loadingForStartup = false;
     d->usePrimaryWadLumpIndex();
-}
-
-#if _DEBUG
-static void printFileIds(FileIds const& fileIds)
-{
-    uint idx = 0;
-    DENG2_FOR_EACH(i, fileIds, FileIds::const_iterator)
-    {
-        LOG_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
-        ++idx;
-    }
-}
-#endif
-
-#if _DEBUG
-static void printFileList(FS1::FileList& list)
-{
-    for(int i = 0; i < list.size(); ++i)
-    {
-        de::FileHandle* hndl = list[i];
-        de::File1& file = hndl->file();
-        FileId fileId = FileId::fromPath(Str_Text(file.path()));
-        LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
-            << (file.hasStartup()? '*' : ' ') << i
-            << fileId << fileId.path() << (void*)&hndl;
-    }
-}
-#endif
-
-int FS1::reset()
-{
-#if _DEBUG
-    // List all open files with their identifiers.
-    if(verbose)
-    {
-        LOG_MSG("Open files at reset:");
-        printFileList(d->openFiles);
-        LOG_MSG("End\n");
-    }
-#endif
-
-    // Perform non-startup file unloading (in reverse load order).
-    int unloaded = 0;
-    for(int i = d->loadedFiles.size() - 1; i >= 0; i--)
-    {
-        FileHandle& hndl = *(d->loadedFiles[i]);
-        File1& file = hndl.file();
-        if(file.hasStartup()) continue;
-
-        if(unloadFile(Str_Text(file.path()), true/*allow unloading game resources*/, true/*quiet please*/))
-        {
-            unloaded += 1;
-        }
-    }
-
-#if _DEBUG
-    // Sanity check: look for orphaned identifiers.
-    if(!d->fileIds.empty())
-    {
-        LOG_MSG("Warning: Orphan FileIds:");
-        printFileIds(d->fileIds);
-    }
-#endif
-
-    // Reset file IDs so previously seen files can be processed again.
-    /// @todo this releases the ID of startup files too but given the
-    /// only startup file is doomsday.pk3 which we never attempt to load
-    /// again post engine startup, this isn't an immediate problem.
-    resetFileIds();
-
-    return unloaded;
 }
 
 LumpIndex const& FS1::nameIndex() const
@@ -1544,9 +1541,9 @@ void F_EndStartup(void)
     App_FileSystem()->endStartup();
 }
 
-int F_Reset(void)
+void F_UnloadAllNonStartupFiles(int* numUnloaded)
 {
-    return App_FileSystem()->reset();
+    App_FileSystem()->unloadAllNonStartupFiles(numUnloaded);
 }
 
 void F_AddVirtualDirectoryMapping(char const* source, char const* destination)

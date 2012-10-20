@@ -432,10 +432,10 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     DENG_ASSERT(p);
 
     // Reset file Ids so previously seen files can be processed again.
-    F_ResetFileIds();
-    F_ResetAllResourceNamespaces();
-
+    App_FileSystem()->resetFileIds();
     initPathMappings();
+
+    F_ResetAllResourceNamespaces();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -1062,7 +1062,13 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         R_InitSvgs();
         R_InitViewWindow();
 
-        F_Reset();
+        App_FileSystem()->unloadAllNonStartupFiles();
+
+        // Reset file IDs so previously seen files can be processed again.
+        /// @todo this releases the IDs of startup files too but given the
+        /// only startup file is doomsday.pk3 which we never attempt to load
+        /// again post engine startup, this isn't an immediate problem.
+        App_FileSystem()->resetFileIds();
 
         // Update the dir/WAD translations.
         initPathLumpMappings();
@@ -1549,7 +1555,7 @@ boolean DD_Init(void)
         // No game loaded.
         // Lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
-        F_ResetFileIds();
+        App_FileSystem()->resetFileIds();
 
         initPathLumpMappings();
         initPathMappings();
@@ -1781,7 +1787,7 @@ void DD_UpdateEngineState(void)
     Demo_StopPlayback();
     S_Reset();
 
-    //F_ResetFileIds();
+    //App_FileSystem()->resetFileIds();
 
     // Update the dir/WAD translations.
     initPathLumpMappings();
