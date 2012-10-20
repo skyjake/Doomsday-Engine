@@ -63,11 +63,11 @@ struct LumpIndex::Instance
 
     LumpIndex* self;
     int flags; /// @see lumpIndexFlags
-    LumpIndex::Lumps lumpInfos;
+    LumpIndex::Lumps lumps;
     HashMap* hashMap;
 
     Instance(LumpIndex* d, int _flags)
-        : self(d), flags(_flags & ~LIF_INTERNAL_MASK), lumpInfos(), hashMap(0)
+        : self(d), flags(_flags & ~LIF_INTERNAL_MASK), lumps(), hashMap(0)
     {}
 
     ~Instance()
@@ -79,9 +79,9 @@ struct LumpIndex::Instance
     {
         if(!(flags & LIF_NEED_REBUILD_HASH)) return;
 
-        int numRecords = lumpInfos.size();
-        if(!hashMap)    hashMap = new HashMap(numRecords);
-        else            hashMap->resize(numRecords);
+        int const numElements = lumps.size();
+        if(!hashMap)    hashMap = new HashMap(numElements);
+        else            hashMap->resize(numElements);
 
         // Clear the chains.
         DENG2_FOR_EACH(i, *hashMap, HashMap::iterator)
@@ -91,11 +91,11 @@ struct LumpIndex::Instance
 
         // Prepend nodes to each chain, in first-to-last load order, so that
         // the last lump with a given name appears first in the chain.
-        for(int i = 0; i < numRecords; ++i)
+        for(int i = 0; i < numElements; ++i)
         {
-            FileInfo const* lumpInfo = lumpInfos[i];
-            PathDirectoryNode const& node = lumpInfo->container->lumpDirectoryNode(lumpInfo->lumpIdx);
-            ushort j = node.hash() % (unsigned)numRecords;
+            File1 const& lump = *(lumps[i]);
+            PathDirectoryNode const& node = lump.container().lumpDirectoryNode(lump.info().lumpIdx);
+            ushort j = node.hash() % (unsigned)numElements;
 
             (*hashMap)[i].next = (*hashMap)[j].head; // Prepend to the chain.
             (*hashMap)[j].head = i;
@@ -110,16 +110,16 @@ struct LumpIndex::Instance
      * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
      * @return Number of lumps newly flagged during this op.
      */
-    int flagFileLumps(QBitArray& pruneFlags, File1& file)
+    int flagContainedLumps(QBitArray& pruneFlags, File1& file)
     {
-        DENG_ASSERT(pruneFlags.size() == lumpInfos.size());
+        DENG_ASSERT(pruneFlags.size() == lumps.size());
 
-        int const numRecords = lumpInfos.size();
+        int const numRecords = lumps.size();
         int numFlagged = 0;
         for(int i = 0; i < numRecords; ++i)
         {
             if(pruneFlags.testBit(i)) continue;
-            if(reinterpret_cast<File1*>(lumpInfos[i]->container) != &file) continue;
+            if(reinterpret_cast<File1*>(&lumps[i]->container()) != &file) continue;
             pruneFlags.setBit(i, true);
             numFlagged += 1;
         }
@@ -128,7 +128,7 @@ struct LumpIndex::Instance
 
     struct LumpSortInfo
     {
-        FileInfo const* lumpInfo;
+        File1 const* lump;
         AutoStr* path;
         int origIndex;
     };
@@ -140,8 +140,8 @@ struct LumpIndex::Instance
         if(0 != result) return result;
 
         // Still matched; try the file load order indexes.
-        result = (infoA->lumpInfo->container->loadOrderIndex() -
-                  infoB->lumpInfo->container->loadOrderIndex());
+        result = (infoA->lump->container().loadOrderIndex() -
+                  infoB->lump->container().loadOrderIndex());
         if(0 != result) return result;
 
         // Still matched (i.e., present in the same package); use the original indexes.
@@ -154,13 +154,13 @@ struct LumpIndex::Instance
      */
     int flagDuplicateLumps(QBitArray& pruneFlags)
     {
-        DENG_ASSERT(pruneFlags.size() == lumpInfos.size());
+        DENG_ASSERT(pruneFlags.size() == lumps.size());
 
         // Any work to do?
         if(!(flags & LIF_UNIQUE_PATHS)) return 0;
         if(!(flags & LIF_NEED_PRUNE_DUPLICATES)) return 0;
 
-        int const numRecords = lumpInfos.size();
+        int const numRecords = lumps.size();
         if(numRecords <= 1) return 0;
 
         // Sort in descending load order for pruning.
@@ -168,11 +168,11 @@ struct LumpIndex::Instance
         for(int i = 0; i < numRecords; ++i)
         {
             LumpSortInfo& sortInfo   = sortInfos[i];
-            FileInfo const* lumpInfo = lumpInfos[i];
+            File1 const* lump = lumps[i];
 
-            sortInfo.lumpInfo = lumpInfo;
+            sortInfo.lump = lump;
             sortInfo.origIndex = i;
-            sortInfo.path = lumpInfo->container->composeLumpPath(lumpInfo->lumpIdx, '/' /*delimiter is irrelevant*/);
+            sortInfo.path = lump->container().composeLumpPath(lump->info().lumpIdx, '/' /*delimiter is irrelevant*/);
         }
         qsort(sortInfos, numRecords, sizeof(*sortInfos), lumpSorter);
 
@@ -195,7 +195,7 @@ struct LumpIndex::Instance
     /// @return Number of pruned lumps.
     int pruneFlaggedLumps(QBitArray flaggedLumps)
     {
-        DENG_ASSERT(flaggedLumps.size() == lumpInfos.size());
+        DENG_ASSERT(flaggedLumps.size() == lumps.size());
 
         // Have we lumps to prune?
         int const numFlaggedForPrune = flaggedLumps.count(true);
@@ -204,10 +204,10 @@ struct LumpIndex::Instance
             // We'll need to rebuild the hash after this.
             flags |= LIF_NEED_REBUILD_HASH;
 
-            int numRecords = lumpInfos.size();
+            int numRecords = lumps.size();
             if(numRecords == numFlaggedForPrune)
             {
-                lumpInfos.clear();
+                lumps.clear();
             }
             else
             {
@@ -221,12 +221,12 @@ struct LumpIndex::Instance
                     }
 
                     // Move the info for the lump to be pruned to the end.
-                    lumpInfos.move(newIdx, lumpInfos.size() - 1);
+                    lumps.move(newIdx, lumps.size() - 1);
                 }
 
                 // Erase the pruned lumps from the end of the list.
-                int firstPruned = lumpInfos.size() - numFlaggedForPrune;
-                lumpInfos.erase(lumpInfos.begin() + firstPruned, lumpInfos.end());
+                int firstPruned = lumps.size() - numFlaggedForPrune;
+                lumps.erase(lumps.begin() + firstPruned, lumps.end());
             }
         }
         return numFlaggedForPrune;
@@ -234,7 +234,7 @@ struct LumpIndex::Instance
 
     void pruneDuplicates()
     {
-        int const numRecords = lumpInfos.size();
+        int const numRecords = lumps.size();
         if(numRecords <= 1) return;
 
         QBitArray pruneFlags(numRecords);
@@ -260,7 +260,7 @@ bool LumpIndex::isValidIndex(lumpnum_t lumpNum) const
 {
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
-    return (lumpNum >= 0 && lumpNum < d->lumpInfos.size());
+    return (lumpNum >= 0 && lumpNum < d->lumps.size());
 }
 
 static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
@@ -271,10 +271,10 @@ static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
     return msg;
 }
 
-FileInfo const& LumpIndex::lumpInfo(lumpnum_t lumpNum) const
+File1& LumpIndex::lump(lumpnum_t lumpNum) const
 {
-    if(!isValidIndex(lumpNum)) throw NotFoundError("LumpIndex::lumpInfo", invalidIndexMessage(lumpNum, size() - 1));
-    return *d->lumpInfos[lumpNum];
+    if(!isValidIndex(lumpNum)) throw NotFoundError("LumpIndex::lump", invalidIndexMessage(lumpNum, size() - 1));
+    return *d->lumps[lumpNum];
 }
 
 LumpIndex::Lumps const& LumpIndex::lumps() const
@@ -282,7 +282,7 @@ LumpIndex::Lumps const& LumpIndex::lumps() const
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
-    return d->lumpInfos;
+    return d->lumps;
 }
 
 int LumpIndex::size() const
@@ -290,14 +290,14 @@ int LumpIndex::size() const
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
-    return d->lumpInfos.size();
+    return d->lumps.size();
 }
 
 int LumpIndex::pruneByFile(File1& file)
 {
-    if(d->lumpInfos.empty()) return 0;
+    if(d->lumps.empty()) return 0;
 
-    int const numRecords = d->lumpInfos.size();
+    int const numRecords = d->lumps.size();
     QBitArray pruneFlags(numRecords);
 
     // We may need to prune path-duplicate lumps. We'll fold those into this
@@ -305,7 +305,7 @@ int LumpIndex::pruneByFile(File1& file)
     d->flagDuplicateLumps(pruneFlags);
 
     // Flag the lumps we'll be pruning.
-    int numFlaggedForFile = d->flagFileLumps(pruneFlags, file);
+    int numFlaggedForFile = d->flagContainedLumps(pruneFlags, file);
 
     // Perform the prune.
     d->pruneFlaggedLumps(pruneFlags);
@@ -315,15 +315,15 @@ int LumpIndex::pruneByFile(File1& file)
     return numFlaggedForFile;
 }
 
-bool LumpIndex::pruneLump(FileInfo& lumpInfo)
+bool LumpIndex::pruneLump(File1& lump)
 {
-    if(d->lumpInfos.empty()) return 0;
+    if(d->lumps.empty()) return 0;
 
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
     // Prune this lump.
-    if(!d->lumpInfos.removeOne(&lumpInfo)) return false;
+    if(!d->lumps.removeOne(&lump)) return false;
 
     // We'll need to rebuild the path hash chains.
     d->flags |= LIF_NEED_REBUILD_HASH;
@@ -336,13 +336,12 @@ void LumpIndex::catalogLumps(File1& file, int lumpIdxBase, int numLumps)
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     // Allocate more memory for the new records.
-    d->lumpInfos.reserve(d->lumpInfos.size() + numLumps);
+    d->lumps.reserve(d->lumps.size() + numLumps);
 #endif
 
     for(int i = 0; i < numLumps; ++i)
     {
-        FileInfo const* info = &file.lumpInfo(lumpIdxBase + i);
-        d->lumpInfos.push_back(info);
+        d->lumps.push_back(&file.lump(lumpIdxBase + i));
     }
 
     // We'll need to rebuild the name hash chains.
@@ -357,7 +356,7 @@ void LumpIndex::catalogLumps(File1& file, int lumpIdxBase, int numLumps)
 
 void LumpIndex::clear()
 {
-    d->lumpInfos.clear();
+    d->lumps.clear();
     d->flags &= ~(LIF_NEED_REBUILD_HASH | LIF_NEED_PRUNE_DUPLICATES);
 }
 
@@ -366,17 +365,17 @@ bool LumpIndex::catalogues(File1& file)
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
-    DENG2_FOR_EACH(i, d->lumpInfos, Lumps::iterator)
+    DENG2_FOR_EACH(i, d->lumps, Lumps::iterator)
     {
-        FileInfo const* lumpInfo = *i;
-        if(lumpInfo->container == &file) return true;
+        File1 const& lump = **i;
+        if(&lump.container() == &file) return true;
     }
     return false;
 }
 
 lumpnum_t LumpIndex::indexForPath(char const* path)
 {
-    if(!path || !path[0] || d->lumpInfos.empty()) return -1;
+    if(!path || !path[0] || d->lumps.empty()) return -1;
 
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -393,8 +392,8 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
     int idx;
     for(idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
-        FileInfo const* lumpInfo = d->lumpInfos[idx];
-        PathDirectoryNode const& node = lumpInfo->container->lumpDirectoryNode(lumpInfo->lumpIdx);
+        File1 const& lump = *d->lumps[idx];
+        PathDirectoryNode const& node = lump.container().lumpDirectoryNode(lump.info().lumpIdx);
 
         // Time to build the pattern?
         if(!builtSearchPattern)
@@ -426,15 +425,12 @@ void LumpIndex::print(LumpIndex const& index)
     int idx = 0;
     DENG2_FOR_EACH(i, index.lumps(), Lumps::const_iterator)
     {
-        FileInfo const& info = **i;
-        DENG_ASSERT(info.container);
-        File1& container = *info.container;
-
+        File1 const& lump = **i;
         Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
-                   F_PrettyPath(Str_Text(container.path())),
-                   F_PrettyPath(Str_Text(container.composeLumpPath(info.lumpIdx))),
-                   (unsigned long) info.size,
-                   (info.isCompressed()? " compressed" : ""));
+                   F_PrettyPath(Str_Text(lump.container().path())),
+                   F_PrettyPath(Str_Text(lump.container().composeLumpPath(lump.info().lumpIdx))),
+                   (unsigned long) lump.info().size,
+                   (lump.info().isCompressed()? " compressed" : ""));
     }
     Con_Printf("---End of lumps---\n");
 }

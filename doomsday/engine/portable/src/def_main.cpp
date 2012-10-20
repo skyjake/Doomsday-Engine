@@ -769,19 +769,16 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    int const numLumps = App_FileSystem()->nameIndex().size();
-    for(int i = 0; i < numLumps; ++i)
+    DENG2_FOR_EACH(i, App_FileSystem()->nameIndex().lumps(), de::LumpIndex::Lumps::const_iterator)
     {
-        de::FileInfo const& info = App_FileSystem()->nameIndex().lumpInfo(i);
-        DENG_ASSERT(info.container);
-        de::File1& container = *info.container;
+        de::File1 const& lump = **i;
+        if(strnicmp(Str_Text(lump.container().lumpName(lump.info().lumpIdx)), "DD_DEFNS", 8)) continue;
 
-        if(strnicmp(Str_Text(container.lumpName(info.lumpIdx)), "DD_DEFNS", 8)) continue;
+        numProcessedLumps += 1;
 
-        numProcessedLumps++;
-        if(!DED_ReadLump(&defs, i))
+        if(!DED_ReadLump(&defs, lump.info().lumpIdx))
         {
-            Con_Error("DD_ReadLumpDefs: Parse error when reading \"%s:DD_DEFNS\".\n", Str_Text(container.path()));
+            Con_Error("DD_ReadLumpDefs: Parse error when reading \"%s:DD_DEFNS\".\n", Str_Text(lump.container().path()));
         }
     }
 

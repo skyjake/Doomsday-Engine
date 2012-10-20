@@ -226,6 +226,21 @@ public:
     virtual AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
+     * Retrieve a lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return The lump.
+     *
+     * @throws de::Error    If @a lumpIdx is not valid.
+     *
+     * @attention This default implementation assumes there is only one lump in
+     * the file and therefore *this* is that lump. Subclasses with multiple lumps
+     * should override this function accordingly.
+     */
+    virtual File1& lump(int /*lumpIdx*/) { return *this; }
+
+    /**
      * Retrieve the FileInfo descriptor for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.

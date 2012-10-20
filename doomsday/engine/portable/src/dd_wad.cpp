@@ -44,7 +44,7 @@ size_t W_LumpLength(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        return App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum).size;
+        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).info().size;
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -58,10 +58,8 @@ char const* W_LumpName(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-        return Str_Text(file.lumpName(info.lumpIdx));
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return Str_Text(lump.container().lumpName(lump.info().lumpIdx));
     }
     catch(FS1::NotFoundError const&)
     {
@@ -75,7 +73,7 @@ uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        return App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum).lastModified;
+        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).info().lastModified;
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -89,10 +87,8 @@ char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-        return Str_Text(file.path());
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return Str_Text(lump.container().path());
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -106,10 +102,8 @@ boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-        return file.hasCustom();
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.container().hasCustom();
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -153,10 +147,8 @@ size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-        return file.readLump(info.lumpIdx, buffer, 0, info.size);
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.container().readLump(lump.info().lumpIdx, buffer, 0, lump.info().size);
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -170,10 +162,8 @@ size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t star
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-        return file.readLump(info.lumpIdx, buffer, startOffset, length);
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.container().readLump(lump.info().lumpIdx, buffer, startOffset, length);
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -187,10 +177,8 @@ uint8_t const* W_CacheLump(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-        return file.cacheLump(info.lumpIdx);
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.container().cacheLump(lump.info().lumpIdx);
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -204,10 +192,8 @@ void W_UnlockLump(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-        file.unlockLump(info.lumpIdx);
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        lump.container().unlockLump(lump.info().lumpIdx);
     }
     catch(LumpIndex::NotFoundError const&)
     {

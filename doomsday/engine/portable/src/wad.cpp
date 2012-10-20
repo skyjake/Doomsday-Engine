@@ -142,14 +142,6 @@ struct Wad::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    WadFile& lump(int lumpIdx)
-    {
-        LOG_AS("Wad");
-        if(!self->isValidIndex(lumpIdx)) throw NotFoundError("Wad::lump", invalidIndexMessage(lumpIdx, self->lastIndex()));
-        buildLumpNodeLut();
-        return *reinterpret_cast<WadFile*>((*lumpNodeLut)[lumpIdx]->userData());
-    }
-
     static int clearWadFileWorker(pathdirectorynode_s* _node, void* /*parameters*/)
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
@@ -345,13 +337,13 @@ ddstring_t const* Wad::lumpName(int lumpIdx)
 FileInfo const& Wad::lumpInfo(int lumpIdx)
 {
     LOG_AS("Wad::lumpInfo");
-    return d->lump(lumpIdx).info();
+    return lump(lumpIdx).info();
 }
 
 size_t Wad::lumpSize(int lumpIdx)
 {
     LOG_AS("Wad::lumpSize");
-    return d->lump(lumpIdx).info().size;
+    return lump(lumpIdx).info().size;
 }
 
 AutoStr* Wad::composeLumpPath(int lumpIdx, char delimiter)
@@ -360,6 +352,14 @@ AutoStr* Wad::composeLumpPath(int lumpIdx, char delimiter)
 
     PathDirectoryNode& node = lumpDirectoryNode(lumpIdx);
     return node.composePath(AutoStr_NewStd(), NULL, delimiter);
+}
+
+File1& Wad::lump(int lumpIdx)
+{
+    LOG_AS("Wad");
+    if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lump", invalidIndexMessage(lumpIdx, lastIndex()));
+    d->buildLumpNodeLut();
+    return *reinterpret_cast<WadFile*>((*d->lumpNodeLut)[lumpIdx]->userData());
 }
 
 Wad& Wad::clearCachedLump(int lumpIdx, bool* retCleared)
@@ -461,13 +461,13 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     LOG_AS("Wad::readLump");
-    WadFile const& lump = d->lump(lumpIdx);
+    WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << (unsigned long) lump.info().size
-        << (lump.info().isCompressed()? ", compressed" : "")
+        << (unsigned long) file.info().size
+        << (file.info().isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
         << (unsigned long)length;
 
@@ -478,13 +478,13 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
-            size_t readBytes = MIN_OF(lump.info().size, length);
+            size_t readBytes = MIN_OF(file.info().size, length);
             memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
     }
 
-    handle_->seek(lump.info().baseOffset + startOffset, SeekSet);
+    handle_->seek(file.info().baseOffset + startOffset, SeekSet);
     size_t readBytes = handle_->read(buffer, length);
 
     /// @todo Do not check the read length here.
@@ -500,9 +500,9 @@ uint Wad::calculateCRC()
     int const numLumps = lumpCount();
     for(int i = 0; i < numLumps; ++i)
     {
-        WadFile& lump = d->lump(i);
-        lump.updateCRC();
-        crc += lump.crc();
+        WadFile& file = reinterpret_cast<WadFile&>(lump(i));
+        file.updateCRC();
+        crc += file.crc();
     }
     return crc;
 }

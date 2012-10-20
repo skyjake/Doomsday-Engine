@@ -177,14 +177,6 @@ struct Zip::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    ZipFile& lump(int lumpIdx)
-    {
-        LOG_AS("Zip");
-        if(!self->isValidIndex(lumpIdx)) throw NotFoundError("Zip::lump", invalidIndexMessage(lumpIdx, self->lastIndex()));
-        buildLumpNodeLut();
-        return *reinterpret_cast<ZipFile*>((*lumpNodeLut)[lumpIdx]->userData());
-    }
-
     static int clearZipFileWorker(pathdirectorynode_s* _node, void* /*parameters*/)
     {
         PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
@@ -512,13 +504,13 @@ ddstring_t const* Zip::lumpName(int lumpIdx)
 FileInfo const& Zip::lumpInfo(int lumpIdx)
 {
     LOG_AS("Zip");
-    return d->lump(lumpIdx).info();
+    return lump(lumpIdx).info();
 }
 
 size_t Zip::lumpSize(int lumpIdx)
 {
     LOG_AS("Zip");
-    return d->lump(lumpIdx).info().size;
+    return lump(lumpIdx).info().size;
 }
 
 AutoStr* Zip::composeLumpPath(int lumpIdx, char delimiter)
@@ -526,6 +518,14 @@ AutoStr* Zip::composeLumpPath(int lumpIdx, char delimiter)
     if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
     PathDirectoryNode& node = lumpDirectoryNode(lumpIdx);
     return node.composePath(AutoStr_NewStd(), NULL, delimiter);
+}
+
+File1& Zip::lump(int lumpIdx)
+{
+    LOG_AS("Zip");
+    if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::lump", invalidIndexMessage(lumpIdx, lastIndex()));
+    d->buildLumpNodeLut();
+    return *reinterpret_cast<ZipFile*>((*d->lumpNodeLut)[lumpIdx]->userData());
 }
 
 Zip& Zip::clearCachedLump(int lumpIdx, bool* retCleared)
@@ -627,13 +627,13 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     size_t length, bool tryCache)
 {
     LOG_AS("Zip::readLump");
-    ZipFile const& lump = d->lump(lumpIdx);
+    ZipFile const& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(path()))
         << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
-        << (unsigned long) lump.info().size
-        << (lump.info().isCompressed()? ", compressed" : "")
+        << (unsigned long) file.info().size
+        << (file.info().isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
         << (unsigned long) length;
 
@@ -644,27 +644,27 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
         LOG_DEBUG("Cache %s on #%i") << (data? "hit" : "miss") << lumpIdx;
         if(data)
         {
-            size_t readBytes = MIN_OF(lump.info().size, length);
+            size_t readBytes = MIN_OF(file.info().size, length);
             memcpy(buffer, data + startOffset, readBytes);
             return readBytes;
         }
     }
 
     size_t readBytes;
-    if(!startOffset && length == lump.info().size)
+    if(!startOffset && length == file.info().size)
     {
         // Read it straight to the caller's data buffer.
-        readBytes = d->bufferLump(lump, buffer);
+        readBytes = d->bufferLump(file, buffer);
     }
     else
     {
         // Allocate a temporary buffer and read the whole lump into it(!).
-        uint8_t* lumpData = (uint8_t*) M_Malloc(lump.info().size);
-        if(!lumpData) throw Error("Zip::readLumpSection", QString("Failed on allocation of %1 bytes for work buffer").arg(lump.info().size));
+        uint8_t* lumpData = (uint8_t*) M_Malloc(file.info().size);
+        if(!lumpData) throw Error("Zip::readLumpSection", QString("Failed on allocation of %1 bytes for work buffer").arg(file.info().size));
 
-        if(d->bufferLump(lump, lumpData))
+        if(d->bufferLump(file, lumpData))
         {
-            readBytes = MIN_OF(lump.info().size, length);
+            readBytes = MIN_OF(file.info().size, length);
             memcpy(buffer, lumpData + startOffset, readBytes);
         }
         else
@@ -675,7 +675,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     }
 
     /// @todo Do not check the read length here.
-    if(readBytes < MIN_OF(lump.info().size, length))
+    if(readBytes < MIN_OF(file.info().size, length))
         throw Error("Zip::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIdx));
 
     return readBytes;

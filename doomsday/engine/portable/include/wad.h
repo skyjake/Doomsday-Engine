@@ -102,6 +102,17 @@ public:
     AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
+     * Retrieve a lump contained by this file.
+     *
+     * @param lumpIdx       Logical index for the lump in this file's directory.
+     *
+     * @return The lump.
+     *
+     * @throws NotFoundError  If @a lumpIdx is not valid.
+     */
+    File1& lump(int lumpIdx);
+
+    /**
      * Retrieve the FileInfo descriptor for a lump contained by this file.
      *
      * @param lumpIdx       Logical index for the lump in this file's directory.

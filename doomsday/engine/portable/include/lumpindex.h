@@ -56,7 +56,7 @@ public:
     /// No file(s) found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
-    typedef QList<FileInfo const*> Lumps;
+    typedef QList<File1*> Lumps;
 
 public:
     /**
@@ -75,15 +75,15 @@ public:
     lumpnum_t indexForPath(char const* path);
 
     /**
-     * Retrieve the FileInfo metadata record for a lump in the Wad lump index.
+     * Lookup a file at specific offset in the index.
      *
      * @param lumpNum   Logical lumpnum associated to the file being looked up.
      *
-     * @return  Metadata record for the lump.
+     * @return  The requested file.
      *
      * @throws NotFoundError If the requested file could not be found.
      */
-    FileInfo const& lumpInfo(lumpnum_t lumpNum) const;
+    File1& lump(lumpnum_t lumpNum) const;
 
     /**
      * Provides access to the list of lumps for efficient traversals.
@@ -127,11 +127,11 @@ public:
     /**
      * Prune the lump referenced by @a lumpInfo.
      *
-     * @param lumpInfo  Unique info descriptor for the lump to prune.
+     * @param lump      Lump file to prune.
      *
      * @return  @c true if found and pruned.
      */
-    bool pruneLump(FileInfo& lumpInfo);
+    bool pruneLump(File1& lump);
 
     /**
      * Print contents of index @a index.

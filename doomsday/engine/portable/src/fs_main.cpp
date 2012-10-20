@@ -260,13 +260,13 @@ struct FS1::Instance
         AutoStr* absSearchPath = AutoStr_FromTextStd(path);
         F_PrependBasePath(absSearchPath, absSearchPath);
 
-        FileInfo const* found = 0;
+        File1 const* found = 0;
 
         // First check the Zip lump index.
         lumpnum_t lumpNum = zipLumpIndex.indexForPath(Str_Text(absSearchPath));
         if(lumpNum >= 0)
         {
-             found = &zipLumpIndex.lumpInfo(lumpNum);
+            found = &zipLumpIndex.lump(lumpNum);
         }
         // Nope. Any applicable dir/WAD redirects?
         else if(!lumpMappings.empty())
@@ -285,7 +285,7 @@ struct FS1::Instance
                 lumpnum_t absoluteLumpNum = self->lumpNumForName(foundLumpNameUtf8.constData());
                 if(absoluteLumpNum < 0) continue;
 
-                found = &self->nameIndexForLump(absoluteLumpNum).lumpInfo(absoluteLumpNum);
+                found = &self->nameIndexForLump(absoluteLumpNum).lump(absoluteLumpNum);
             }
         }
 
@@ -298,10 +298,10 @@ struct FS1::Instance
         // Get a handle to the lump we intend to open.
         /// @todo The way this buffering works is nonsensical it should not be done here
         ///        but should instead be deferred until the content of the lump is read.
-        FileHandle* hndl = FileHandleBuilder::fromFileLump(*found->container, found->lumpIdx, false/*dontBuffer*/);
+        FileHandle* hndl = FileHandleBuilder::fromFileLump(found->container(), found->info().lumpIdx, false/*dontBuffer*/);
 
         // Prepare a temporary info descriptor.
-        retInfo = *found;
+        retInfo = found->info();
 
         return hndl;
     }
@@ -532,8 +532,7 @@ bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
             if(lumpNum >= 0)
             {
                 // Yes; use the container's path instead.
-                FileInfo const& info = d->zipLumpIndex.lumpInfo(lumpNum);
-                Str_Copy(absolutePath, info.container->path());
+                Str_Copy(absolutePath, d->zipLumpIndex.lump(lumpNum).container().path());
             }
 
             for(AbstractResource* const* i = records; *i; i++)
@@ -771,7 +770,7 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
             if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
             {
                 // Get the size as well for the condition check.
-                lumpSize = d->ActiveWadLumpIndex->lumpInfo(lumpNum).size;
+                lumpSize = d->ActiveWadLumpIndex->lump(lumpNum).info().size;
             }
         }
 
@@ -784,7 +783,7 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
             if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
             {
                 // Get the size as well for the condition check.
-                lumpSize = d->ActiveWadLumpIndex->lumpInfo(lumpNum).size;
+                lumpSize = d->ActiveWadLumpIndex->lump(lumpNum).info().size;
             }
         }
 
@@ -970,16 +969,14 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
      */
     DENG2_FOR_EACH(i, d->zipLumpIndex.lumps(), LumpIndex::Lumps::const_iterator)
     {
-        FileInfo const* lumpInfo = *i;
-        File1* container = reinterpret_cast<File1*>(lumpInfo->container);
-        DENG_ASSERT(container);
-        PathDirectoryNode const& node = container->lumpDirectoryNode(lumpInfo->lumpIdx);
+        File1 const& lump = **i;
+        PathDirectoryNode const& node = lump.container().lumpDirectoryNode(lump.info().lumpIdx);
 
         AutoStr* filePath = 0;
         bool patternMatched;
         if(!(flags & SPF_NO_DESCEND))
         {
-            filePath       = container->composeLumpPath(lumpInfo->lumpIdx);
+            filePath       = lump.container().composeLumpPath(lump.info().lumpIdx);
             patternMatched = F_MatchFileName(Str_Text(filePath), Str_Text(searchPattern));
         }
         else
@@ -987,7 +984,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
             patternMatched = node.matchDirectory(PCF_MATCH_FULL, &patternMap);
             if(patternMatched)
             {
-                filePath   = container->composeLumpPath(lumpInfo->lumpIdx);
+                filePath   = lump.container().composeLumpPath(lump.info().lumpIdx);
             }
         }
 
@@ -1655,8 +1652,8 @@ struct filehandle_s* F_OpenLump(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openLump(info));
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openLump(lump.info()));
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
@@ -1684,10 +1681,8 @@ ddstring_t const* F_LumpName(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& file = *info.container;
-        return file.lumpName(info.lumpIdx);
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.container().lumpName(lump.info().lumpIdx);
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1700,7 +1695,8 @@ size_t F_LumpLength(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        return App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum).size;
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.info().size;
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1712,7 +1708,8 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        return App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum).lastModified;
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.info().lastModified;
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1778,10 +1775,9 @@ struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        if(lumpIdx) *lumpIdx = info.lumpIdx;
-        DENG_ASSERT(info.container);
-        return reinterpret_cast<struct file1_s*>(info.container);
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
+        return reinterpret_cast<struct file1_s*>(&lump.container());
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
@@ -1793,8 +1789,8 @@ struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        return reinterpret_cast<struct file1_s*>(info.container);
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return reinterpret_cast<struct file1_s*>(&lump.container());
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
@@ -1806,10 +1802,8 @@ ddstring_t const* F_LumpFilePath(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& container = *info.container;
-        return container.path();
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.container().path();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1822,10 +1816,8 @@ boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        FileInfo const& info = App_FileSystem()->nameIndexForLump(lumpNum).lumpInfo(lumpNum);
-        DENG_ASSERT(info.container);
-        de::File1& container = *info.container;
-        return container.hasCustom();
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.container().hasCustom();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
