@@ -47,7 +47,8 @@ class PathDirectoryNode;
 class LumpFileAdaptor : public File1
 {
 public:
-    LumpFileAdaptor(FileHandle& hndl, char const* path, FileInfo const& info);
+    LumpFileAdaptor(FileHandle& hndl, char const* path, FileInfo const& info,
+                    File1* container = 0);
     ~LumpFileAdaptor();
 
     /**

@@ -141,8 +141,8 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src);
 class ZipFile : public File1
 {
 public:
-    ZipFile::ZipFile(FileHandle& hndl, char const* path, FileInfo const& info)
-        : File1(FT_ZIPFILE, path, hndl, info)
+    ZipFile::ZipFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+        : File1(FT_ZIPFILE, path, hndl, info, container)
     {}
 };
 
@@ -385,7 +385,8 @@ struct Zip::Instance
                                 Str_Text(&entryPath),
                                 FileInfo(self->lastModified(), // Inherited from the file (note recursion).
                                          lumpIdx, baseOffset, ULONG(header->size),
-                                         compressedSize, self));
+                                         compressedSize),
+                                self);
                 PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&entryPath));
                 node->setUserData(record);
 
@@ -456,8 +457,8 @@ struct Zip::Instance
     }
 };
 
-Zip::Zip(FileHandle& hndl, char const* path, FileInfo const& info)
-    : File1(FT_ZIP, path, hndl, info)
+Zip::Zip(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+    : File1(FT_ZIP, path, hndl, info, container)
 {
     d = new Instance(this);
 }

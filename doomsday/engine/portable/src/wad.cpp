@@ -58,8 +58,8 @@ typedef struct {
 class WadFile : public File1
 {
 public:
-    WadFile::WadFile(FileHandle& hndl, char const* path, FileInfo const& info)
-        : File1(FT_WADFILE, path, hndl, info), crc_(0)
+    WadFile::WadFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+        : File1(FT_WADFILE, path, hndl, info, container), crc_(0)
     {}
 
     uint crc() const { return crc_; }
@@ -252,8 +252,8 @@ struct Wad::Instance
                                      i,
                                      littleEndianByteOrder.toNative(arcRecord->filePos),
                                      littleEndianByteOrder.toNative(arcRecord->size),
-                                     littleEndianByteOrder.toNative(arcRecord->size),
-                                     self));
+                                     littleEndianByteOrder.toNative(arcRecord->size)),
+                            self);
             PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&absPath));
             node->setUserData(lump);
         }
@@ -288,8 +288,8 @@ struct Wad::Instance
     }
 };
 
-Wad::Wad(FileHandle& hndl, char const* path, FileInfo const& info)
-    : File1(FT_WAD, path, hndl, info)
+Wad::Wad(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+    : File1(FT_WAD, path, hndl, info, container)
 {
     d = new Instance(this, hndl, path);
 }

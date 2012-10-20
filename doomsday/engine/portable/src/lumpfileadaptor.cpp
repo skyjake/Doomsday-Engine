@@ -25,8 +25,9 @@
 
 namespace de {
 
-LumpFileAdaptor::LumpFileAdaptor(FileHandle& hndl, char const* path, FileInfo const& info)
-    : File1(FT_LUMPFILEADAPTOR, path, hndl, info)
+LumpFileAdaptor::LumpFileAdaptor(FileHandle& hndl, char const* path,
+    FileInfo const& info, File1* container)
+    : File1(FT_LUMPFILEADAPTOR, path, hndl, info, container)
 {}
 
 LumpFileAdaptor::~LumpFileAdaptor()

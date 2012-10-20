@@ -212,9 +212,9 @@ namespace de
                              bool allowDuplicate = true);
 
         /**
-         * Try to locate the specified lump for reading.
+         * Try to open the specified lump for reading.
          *
-         * @param info          Meta data descriptior for the file to be opened.
+         * @param lump       The file to be opened.
          *
          * @return  Handle to the opened file.
          *
@@ -222,7 +222,7 @@ namespace de
          * is already present in the file system should not require calling back to a
          * method of the file system itself (bad OO design).
          */
-        FileHandle& openLump(FileInfo const& info);
+        FileHandle& openLump(File1& lump);
 
         /// Clear all references to this file.
         void releaseFile(File1& file);

@@ -51,7 +51,8 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    Wad(FileHandle& hndl, char const* path, FileInfo const& info);
+    Wad(FileHandle& hndl, char const* path, FileInfo const& info,
+        File1* container = 0);
     ~Wad();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.

@@ -1104,9 +1104,9 @@ de::File1& FS1::interpret(de::FileHandle& hndl, char const* path, FileInfo const
     if(!interpretedFile)
     {
         // Use a generic file - LumpFileAdaptor for contained lumps else File.
-        if(info.container)
+        if(hndl.hasFile() && hndl.file().isContained())
         {
-            interpretedFile = new LumpFileAdaptor(hndl, path, info);
+            interpretedFile = new LumpFileAdaptor(hndl, path, info, &hndl.file().container());
         }
         else
         {
@@ -1138,17 +1138,15 @@ de::FileHandle& FS1::openFile(char const* path, char const* mode, size_t baseOff
     return openFilesHndl;
 }
 
-de::FileHandle& FS1::openLump(FileInfo const& info)
+de::FileHandle& FS1::openLump(de::File1& lump)
 {
-    DENG_ASSERT(info.container);
-    de::File1& container = *info.container;
-    LumpFileAdaptor* lump = new LumpFileAdaptor(*FileHandleBuilder::fromFileLump(container, info.lumpIdx, false),
-                                                Str_Text(container.composeLumpPath(info.lumpIdx)),
-                                                info);
-    DENG_ASSERT(lump);
+    LumpFileAdaptor* adapt = new LumpFileAdaptor(*FileHandleBuilder::fromFileLump(lump.container(), lump.info().lumpIdx, false),
+                                                 Str_Text(lump.container().composeLumpPath(lump.info().lumpIdx)),
+                                                 lump.info(), &lump.container());
+    DENG_ASSERT(adapt);
 
     // Add a handle to the opened files list.
-    FileHandle& openFilesHndl = *FileHandleBuilder::fromFile(*lump);
+    FileHandle& openFilesHndl = *FileHandleBuilder::fromFile(*adapt);
     d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
     return openFilesHndl;
 }
@@ -1652,8 +1650,8 @@ struct filehandle_s* F_OpenLump(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openLump(lump.info()));
+        de::File1& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openLump(lump));
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.

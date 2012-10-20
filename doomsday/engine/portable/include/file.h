@@ -91,12 +91,14 @@ private:
 
 public:
     /**
-     * @param type  File type identifier.
-     * @param path  Path to this file in the virtual file system.
-     * @param hndl  Handle to the file. Ownership of the handle is given to this instance.
-     * @param info  Info descriptor for the file. A copy is made.
+     * @param type          File type identifier.
+     * @param path          Path to this file in the virtual file system.
+     * @param hndl          Handle to the file. Ownership of the handle is given to this instance.
+     * @param info          Info descriptor for the file. A copy is made.
+     * @param container     Container of this file. Can be @c NULL.
      */
-    File1(filetype_t _type, char const* _path, FileHandle& hndl, FileInfo const& _info);
+    File1(filetype_t _type, char const* _path, FileHandle& hndl, FileInfo const& _info,
+          File1* container = 0);
 
     /**
      * Release all memory acquired for objects linked with this resource.
@@ -314,6 +316,9 @@ protected:
 
     /// Info descriptor (file metadata).
     FileInfo info_;
+
+    /// The container file (if any).
+    File1* container_;
 
 private:
     /// @see filetype_t

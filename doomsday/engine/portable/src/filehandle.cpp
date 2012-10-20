@@ -127,6 +127,7 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
 
     de::FileHandle* file = new de::FileHandle();
     // Init and load in the lump data.
+    file->d->file = &container.lump(lumpIdx);
     file->d->flags.open = true;
     if(!dontBuffer)
     {

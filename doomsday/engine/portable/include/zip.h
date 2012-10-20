@@ -53,7 +53,8 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    Zip(FileHandle& hndl, char const* path, FileInfo const& info);
+    Zip(FileHandle& hndl, char const* path, FileInfo const& info,
+        File1* container = 0);
     ~Zip();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.

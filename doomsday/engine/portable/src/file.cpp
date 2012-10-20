@@ -30,8 +30,10 @@
 
 namespace de {
 
-File1::File1(filetype_t _type, char const* _path, FileHandle& hndl, FileInfo const& _info)
-    : handle_(&hndl), info_(_info), type_(_type), flags(DefaultFlags)
+File1::File1(filetype_t _type, char const* _path, FileHandle& hndl,
+    FileInfo const& _info, File1* _container)
+    : handle_(&hndl), info_(_info), container_(_container),
+      type_(_type), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.
     /// @todo Does not belong at this level. Load order should be determined
@@ -62,13 +64,13 @@ FileInfo const& File1::info() const
 
 bool File1::isContained() const
 {
-    return !!info_.container;
+    return !!container_;
 }
 
 File1& File1::container() const
 {
-    if(!info_.container) throw NotContainedError("File1::container", QString("%s is not contained").arg(Str_Text(path())));
-    return *info_.container;
+    if(!container_) throw NotContainedError("File1::container", QString("%s is not contained").arg(Str_Text(path())));
+    return *container_;
 }
 
 de::FileHandle& File1::handle()
