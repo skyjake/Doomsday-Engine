@@ -142,7 +142,7 @@ class ZipFile : public File1
 {
 public:
     ZipFile::ZipFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
-        : File1(path, hndl, info, container)
+        : File1(hndl, path, info, container)
     {}
 };
 
@@ -458,7 +458,7 @@ struct Zip::Instance
 };
 
 Zip::Zip(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
-    : File1(path, hndl, info, container)
+    : File1(hndl, path, info, container)
 {
     d = new Instance(this);
 }

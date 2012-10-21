@@ -30,7 +30,7 @@
 
 namespace de {
 
-File1::File1(char const* _path, FileHandle& hndl, FileInfo const& _info, File1* _container)
+File1::File1(FileHandle& hndl, char const* _path, FileInfo const& _info, File1* _container)
     : handle_(&hndl), info_(_info), container_(_container), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.

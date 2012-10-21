@@ -260,7 +260,7 @@ namespace de
          *
          * @return  Number of files found.
          */
-        int findAll(bool (*predicate)(FileHandle* hndl, void* parameters), void* parameters,
+        int findAll(bool (*predicate)(File1& file, void* parameters), void* parameters,
                     FileList& found) const;
 
         /**
@@ -276,7 +276,7 @@ namespace de
          * @return  Number of files found.
          */
         template <typename Type>
-        int findAll(bool (*predicate)(FileHandle* hndl, void* parameters), void* parameters,
+        int findAll(bool (*predicate)(File1& file, void* parameters), void* parameters,
                     FileList& found) const
         {
             findAll(predicate, parameters, found);

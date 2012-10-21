@@ -931,14 +931,14 @@ int FS1::findAll(FS1::FileList& found) const
     return numFound;
 }
 
-int FS1::findAll(bool (*predicate)(de::FileHandle* hndl, void* parameters), void* parameters,
+int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* parameters,
                  FS1::FileList& found) const
 {
     int numFound = 0;
     DENG2_FOR_EACH(i, d->loadedFiles, FS1::FileList::const_iterator)
     {
         // Interested in this file?
-        if(predicate && !predicate(*i, parameters)) continue; // Nope.
+        if(predicate && !predicate((*i)->file(), parameters)) continue; // Nope.
 
         found.push_back(*i);
         numFound += 1;
@@ -1110,7 +1110,7 @@ de::File1& FS1::interpret(de::FileHandle& hndl, char const* path, FileInfo const
         }
         else
         {
-            interpretedFile = new File1(path, hndl, info);
+            interpretedFile = new File1(hndl, path, info);
         }
     }
 
@@ -1971,9 +1971,8 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
     return str;
 }
 
-static bool findCustomFilesPredicate(de::FileHandle* hndl, void* /*parameters*/)
+static bool findCustomFilesPredicate(de::File1& file, void* /*parameters*/)
 {
-    de::File1& file = hndl->file();
     if(file.hasCustom())
     {
         ddstring_t const* path = file.path();

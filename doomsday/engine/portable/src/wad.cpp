@@ -59,7 +59,7 @@ class WadFile : public File1
 {
 public:
     WadFile::WadFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
-        : File1(path, hndl, info, container), crc_(0)
+        : File1(hndl, path, info, container), crc_(0)
     {}
 
     uint crc() const { return crc_; }
@@ -289,7 +289,7 @@ struct Wad::Instance
 };
 
 Wad::Wad(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
-    : File1(path, hndl, info, container)
+    : File1(hndl, path, info, container)
 {
     d = new Instance(this, hndl, path);
 }

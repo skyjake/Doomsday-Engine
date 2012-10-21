@@ -69,12 +69,12 @@ private:
 
 public:
     /**
-     * @param path          Path to this file in the virtual file system.
      * @param hndl          Handle to the file. Ownership of the handle is given to this instance.
+     * @param path          Path to this file in the virtual file system.
      * @param info          Info descriptor for the file. A copy is made.
      * @param container     Container of this file. Can be @c NULL.
      */
-    File1(char const* _path, FileHandle& hndl, FileInfo const& _info, File1* container = 0);
+    File1(FileHandle& hndl, char const* _path, FileInfo const& _info, File1* container = 0);
 
     /**
      * Release all memory acquired for objects linked with this resource.
