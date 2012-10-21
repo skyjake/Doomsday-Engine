@@ -392,7 +392,7 @@ int Gridmap_BlockIterate2(Gridmap* gm, const GridmapCellBlock* block_,
     Gridmap_ClipBlock(gm, &block);
 
     // Traverse cells in the block.
-    /// @optimize: We could avoid repeatedly descending the tree...
+    /// @todo Optimize: We could avoid repeatedly descending the tree...
     for(y = block.minY; y <= block.maxY; ++y)
     for(x = block.minX; x <= block.maxX; ++x)
     {

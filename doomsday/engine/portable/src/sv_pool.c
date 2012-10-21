@@ -2430,15 +2430,16 @@ boolean Sv_IsFrameTarget(uint plrNum)
  * to its pool (done when a new client enters the game). No deltas will be
  * generated for predictable changes (state changes, linear movement...).
  *
- * Updating the register means that the current state of the world is stored
- * in the register after the deltas have been generated.
- *
- * @param clientNumber  < 0 = All ingame clients should get the deltas.
+ * @param reg           World state register.
+ * @param clientNumber  Client for whom to generate deltas. < 0 = all ingame
+ *                      clients should get the deltas.
+ * @param doUpdate      Updating the register means that the current state
+ *                      of the world is stored in the register after the
+ *                      deltas have been generated.
  */
-void Sv_GenerateNewDeltas(cregister_t* reg, int clientNumber,
-                          boolean doUpdate)
+void Sv_GenerateNewDeltas(cregister_t* reg, int clientNumber, boolean doUpdate)
 {
-    pool_t*             targets[DDMAXPLAYERS + 1], **pool;
+    pool_t* targets[DDMAXPLAYERS + 1], **pool;
 
     // Determine the target pools.
     Sv_GetTargetPools(targets, (clientNumber < 0 ? 0xff : (1 << clientNumber)));
@@ -2839,6 +2840,11 @@ void Sv_AckDelta(pool_t* pool, delta_t* delta)
  * Acknowledged deltas are removed from the pool, never to be seen again.
  * Clients ack deltas to tell the server they've received them.
  *
+ * @note This is obsolete: deltas no longer need to be acknowledged as
+ * they are sent over TCP.
+ *
+ * @param clientNumber  Client whose deltas to ack.
+ * @param set           Delta set number.
  * @param resent        If nonzero, ignore 'set' and ack by resend ID.
  */
 void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)

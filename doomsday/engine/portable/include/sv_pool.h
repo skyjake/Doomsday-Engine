@@ -414,8 +414,15 @@ uint            Sv_CountUnackedDeltas(uint clientNumber);
  * @note Assumes no two sounds with the same ID play at the same time
  *       from the same origin at once.
  *
- * @param volume  Volume at which to play the sound, or zero for stop-sound.
- * @param clientsMask  -1= all clients.
+ * @param soundId        Sound ID (from defs).
+ * @param emitter        Mobj that is emitting the sound, or @c NULL.
+ * @param sourceSector   For sector-emitted sounds, the source sector.
+ * @param sourcePoly     For polyobj-emitted sounds, the source object.
+ * @param sourceSurface  For surface-emitted sounds, the source surface.
+ * @param volume         Volume at which to play the sound, or zero for stop-sound.
+ * @param isRepeating    Is the sound repeating?
+ * @param clientsMask    Each bit corresponds a client number;
+ *                       -1 if all clients should receive the delta.
  */
 void Sv_NewSoundDelta(int soundId, mobj_t* emitter, Sector* sourceSector,
     Polyobj* sourcePoly, Surface* sourceSurface, float volume, boolean isRepeating,

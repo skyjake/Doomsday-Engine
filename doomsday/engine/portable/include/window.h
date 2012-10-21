@@ -202,6 +202,12 @@ const Size2Raw* Window_Size(const Window* wnd);
 
 int Window_ColorDepthBits(const Window* wnd);
 
+/**
+ * Sets the title of a window.
+ *
+ * @param win           Window instance.
+ * @param title         New title for the window.
+ */
 void Window_SetTitle(const Window *win, const char* title);
 
 void Window_Show(Window* wnd, boolean show);
@@ -209,6 +215,7 @@ void Window_Show(Window* wnd, boolean show);
 /**
  * Sets or changes one or more window attributes.
  *
+ * @param wnd      Window instance.
  * @param attribs  Array of values:
  *      <pre>[ attribId, value, attribId, value, ..., 0 ]</pre>
  *      The array must be zero-terminated, as that indicates where the array
@@ -283,13 +290,15 @@ void Window_Grab2(const Window* win, image_t* image, boolean halfSized);
  * Saves the window's state into a persistent storage so that it can be later
  * on restored. Used at shutdown time to save window geometry.
  *
- * @param win  Window instance.
+ * @param wnd  Window instance.
  */
 void Window_SaveState(Window *wnd);
 
 /**
  * Restores the window's state from persistent storage. Used at engine startup
  * to determine the default window geometry.
+ *
+ * @param wnd  Window instance.
  */
 void Window_RestoreState(Window* wnd);
 
