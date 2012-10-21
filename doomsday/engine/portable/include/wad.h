@@ -79,17 +79,6 @@ public:
     PathDirectoryNode& lumpDirectoryNode(int lumpIdx) const;
 
     /**
-     * Retrieve the name of a lump contained by this file.
-     *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return  Name for this lump.
-     *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
-     */
-    ddstring_t const* lumpName(int lumpIdx);
-
-    /**
      * Compose the absolute VFS path to a lump contained by this file.
      *
      * @note Always returns a valid string object. If @a lumpIdx is not valid a

@@ -630,7 +630,7 @@ static void initPathLumpMappings()
         de::File1 const& lump = **i;
         FileInfo const& lumpInfo = lump.info();
 
-        if(strnicmp(Str_Text(lump.container().lumpName(lumpInfo.lumpIdx)), "DD_DIREC", 8)) continue;
+        if(strnicmp(Str_Text(lump.name()), "DD_DIREC", 8)) continue;
 
         // Make a copy of it so we can ensure it ends in a null.
         if(bufSize < lumpInfo.size + 1)

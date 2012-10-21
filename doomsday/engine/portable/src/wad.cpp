@@ -62,6 +62,12 @@ public:
         : File1(hndl, path, info, container), crc_(0)
     {}
 
+    /// @return  Name of this file.
+    ddstring_t const* name() const
+    {
+        return directoryNode().pathFragment();
+    }
+
     /**
      * Retrieve the directory node for this file.
      *
@@ -336,11 +342,6 @@ de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx) const
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
     return *((*d->lumpNodeLut)[lumpIdx]);
-}
-
-ddstring_t const* Wad::lumpName(int lumpIdx)
-{
-    return lump(lumpIdx).directoryNode().pathFragment();
 }
 
 AutoStr* Wad::composeLumpPath(int lumpIdx, char delimiter)

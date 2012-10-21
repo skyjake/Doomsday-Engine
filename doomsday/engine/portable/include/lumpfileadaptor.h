@@ -53,6 +53,20 @@ public:
                     File1* container = 0);
     ~LumpFileAdaptor();
 
+    /// @return  Name of this file.
+    ddstring_t const* name() const
+    {
+        if(Wad* wad = dynamic_cast<Wad*>(&container()))
+        {
+            return wad->lump(info().lumpIdx).name();
+        }
+        if(Zip* zip = dynamic_cast<Zip*>(&container()))
+        {
+            return zip->lump(info().lumpIdx).name();
+        }
+        throw de::Error("LumpFileAdaptor::name", "Unknown de::File1 type");
+    }
+
     /**
      * Retrieve the directory node for this file.
      *
@@ -62,23 +76,14 @@ public:
     {
         if(Wad* wad = dynamic_cast<Wad*>(&container()))
         {
-            return wad->lumpDirectoryNode(info().lumpIdx);
+            return wad->lump(info().lumpIdx).directoryNode();
         }
         if(Zip* zip = dynamic_cast<Zip*>(&container()))
         {
-            return zip->lumpDirectoryNode(info().lumpIdx);
+            return zip->lump(info().lumpIdx).directoryNode();
         }
         throw de::Error("LumpFileAdaptor::directoryNode", "Unknown de::File1 type");
     }
-
-    /**
-     * Retrieve the name of this lump.
-     *
-     * @param lumpIdx       Ignored. Required argument.
-     *
-     * @return  Name for this lump.
-     */
-    ddstring_t const* lumpName(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.

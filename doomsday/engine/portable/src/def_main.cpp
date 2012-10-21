@@ -772,7 +772,7 @@ void Def_ReadLumpDefs(void)
     DENG2_FOR_EACH(i, App_FileSystem()->nameIndex().lumps(), de::LumpIndex::Lumps::const_iterator)
     {
         de::File1 const& lump = **i;
-        if(strnicmp(Str_Text(lump.container().lumpName(lump.info().lumpIdx)), "DD_DEFNS", 8)) continue;
+        if(strnicmp(Str_Text(lump.name()), "DD_DEFNS", 8)) continue;
 
         numProcessedLumps += 1;
 

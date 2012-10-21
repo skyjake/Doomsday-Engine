@@ -1665,8 +1665,7 @@ ddstring_t const* F_LumpName(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return lump.container().lumpName(lump.info().lumpIdx);
+        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1679,8 +1678,7 @@ size_t F_LumpLength(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return lump.size();
+        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).size();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1692,8 +1690,7 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return lump.info().lastModified;
+        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).lastModified();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.

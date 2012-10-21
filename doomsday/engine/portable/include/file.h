@@ -81,13 +81,16 @@ public:
      */
     virtual ~File1();
 
-    /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this resource.
+    /// @return  Name of this file.
+    virtual ddstring_t const* name() const;
+
+    /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this file.
     ddstring_t const* path() const;
 
-    /// @return @c true= this file is contained within another.
+    /// @return  @c true iff this file is contained by another.
     bool isContained() const;
 
-    /// @return The file instance which contains this.
+    /// @return  The file instance which contains this.
     File1& container() const;
 
     /// @return  Load order index for this resource.
@@ -172,17 +175,6 @@ public:
      * accordingly.
      */
     virtual int lumpCount() const { return 1; }
-
-    /**
-     * Retrieve the name of a lump contained by this file.
-     *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return  Name for this lump.
-     *
-     * @throws de::Error    If @a lumpIdx is not valid.
-     */
-    virtual ddstring_t const* lumpName(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.

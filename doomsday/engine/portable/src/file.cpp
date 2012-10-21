@@ -104,10 +104,13 @@ File1& File1::setCustom(bool yes)
     return *this;
 }
 
-ddstring_t const* File1::lumpName(int /*lumpIdx*/)
+ddstring_t const* File1::name() const
 {
-    /// @todo writeme
-    throw de::Error("File1::lumpName", "Not yet implemented");
+    /// @todo Contained files will be able to provide the name without needing to
+    ///       extract it from the virtual path.
+    AutoStr* name_ = AutoStr_NewStd();
+    F_FileNameAndExtension(name_, Str_Text(&path_));
+    return name_;
 }
 
 AutoStr* File1::composeLumpPath(int /*lumpIdx*/, char /*delimiter*/)

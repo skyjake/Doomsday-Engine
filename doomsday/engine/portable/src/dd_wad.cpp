@@ -58,8 +58,7 @@ char const* W_LumpName(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return Str_Text(lump.container().lumpName(lump.info().lumpIdx));
+        return Str_Text(App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name());
     }
     catch(FS1::NotFoundError const&)
     {

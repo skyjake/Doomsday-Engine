@@ -33,11 +33,6 @@ LumpFileAdaptor::LumpFileAdaptor(FileHandle& hndl, char const* path,
 LumpFileAdaptor::~LumpFileAdaptor()
 {}
 
-ddstring_t const* LumpFileAdaptor::lumpName(int /*lumpIdx*/)
-{
-    return directoryNode().pathFragment();
-}
-
 AutoStr* LumpFileAdaptor::composeLumpPath(int /*lumpIdx*/, char delimiter)
 {
     // Lump files are special cases for this *is* the lump.

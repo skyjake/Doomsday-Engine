@@ -145,6 +145,12 @@ public:
         : File1(hndl, path, info, container)
     {}
 
+    /// @return  Name of this file.
+    ddstring_t const* name() const
+    {
+        return directoryNode().pathFragment();
+    }
+
     /**
      * Retrieve the directory node for this file.
      *
@@ -505,11 +511,6 @@ de::PathDirectoryNode& Zip::lumpDirectoryNode(int lumpIdx) const
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
     return *((*d->lumpNodeLut)[lumpIdx]);
-}
-
-ddstring_t const* Zip::lumpName(int lumpIdx)
-{
-    return lump(lumpIdx).directoryNode().pathFragment();
 }
 
 AutoStr* Zip::composeLumpPath(int lumpIdx, char delimiter)
