@@ -48,6 +48,13 @@
 
 namespace de
 {
+    namespace internal {
+        template <typename Type>
+        inline bool cannotCastFileTo(File1* file) {
+            return dynamic_cast<Type*>(file) == NULL;
+        }
+    }
+
     /**
      * Internally the lump index has two parts: the Primary index (which is populated
      * with lumps from loaded data files) and the Auxiliary index (used to temporarily
@@ -240,7 +247,7 @@ namespace de
          *
          * @return  Number of files found.
          */
-        int findAll(FileList& found);
+        int findAll(FileList& found) const;
 
         /**
          * Finds all files which meet the supplied @a predicate.
@@ -254,11 +261,37 @@ namespace de
          * @return  Number of files found.
          */
         int findAll(bool (*predicate)(FileHandle* hndl, void* parameters), void* parameters,
-                    FileList& found);
+                    FileList& found) const;
 
         /**
-         * Finds all paths which match the search criteria. Will search the Zip lump index,
-         * lump => path mappings and native files in the local file system.
+         * Finds all files of a specific type which meet the supplied @a predicate.
+         * Only files that can be represented as @a Type are included in the results.
+         *
+         * @param predicate     If not @c NULL, this predicate evaluator callback must
+         *                      return @c true for a given file to be included in the
+         *                      @a found FileList.
+         * @param parameters    Passed to the predicate evaluator callback.
+         * @param found         Set of files that match the result.
+         *
+         * @return  Number of files found.
+         */
+        template <typename Type>
+        int findAll(bool (*predicate)(FileHandle* hndl, void* parameters), void* parameters,
+                    FileList& found) const
+        {
+            findAll(predicate, parameters, found);
+            // Filter out the wrong types.
+            for(QMutableListIterator<FileHandle*> i(found); i.hasNext(); )
+            {
+                if(internal::cannotCastFileTo<Type>(&i.value()->file()))
+                    i.remove();
+            }
+            return found.count();
+        }
+
+        /**
+         * Finds all paths which match the search criteria. Will search the Zip
+         * lump index, lump => path mappings and native files in the local system.
          *
          * @param searchPattern Pattern which defines the scope of the search.
          * @param flags         @ref searchPathFlags
@@ -423,7 +456,7 @@ void F_UnlockLump(struct file1_s* file, int lumpIdx);
 /**
  * Compiles a list of file names, separated by @a delimiter.
  */
-void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size_t outBufSize, const char* delimiter);
+void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimiter);
 
 uint F_CRCNumber(void);
 

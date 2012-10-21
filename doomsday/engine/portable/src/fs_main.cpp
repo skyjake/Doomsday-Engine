@@ -920,7 +920,7 @@ uint FS1::loadedFilesCRC()
     return iwad->calculateCRC();
 }
 
-int FS1::findAll(FS1::FileList& found)
+int FS1::findAll(FS1::FileList& found) const
 {
     int numFound = 0;
     DENG2_FOR_EACH(i, d->loadedFiles, FS1::FileList::const_iterator)
@@ -932,7 +932,7 @@ int FS1::findAll(FS1::FileList& found)
 }
 
 int FS1::findAll(bool (*predicate)(de::FileHandle* hndl, void* parameters), void* parameters,
-                 FS1::FileList& found)
+                 FS1::FileList& found) const
 {
     int numFound = 0;
     DENG2_FOR_EACH(i, d->loadedFiles, FS1::FileList::const_iterator)
@@ -1110,7 +1110,7 @@ de::File1& FS1::interpret(de::FileHandle& hndl, char const* path, FileInfo const
         }
         else
         {
-            interpretedFile = new File1(FT_FILE, path, hndl, info);
+            interpretedFile = new File1(path, hndl, info);
         }
     }
 
@@ -1467,26 +1467,12 @@ D_CMD(ListFiles)
         DENG2_FOR_EACH(i, foundFiles, FS1::FileList::const_iterator)
         {
             de::File1& file = (*i)->file();
-            uint crc;
+            uint crc = 0;
 
             int fileCount = file.lumpCount();
-            switch(file.type())
+            if(de::Wad* wad = dynamic_cast<de::Wad*>(&file))
             {
-            case FT_FILE:
-                crc = 0;
-                break;
-            case FT_ZIP:
-                crc = 0;
-                break;
-            case FT_WAD:
-                crc = (!file.hasCustom()? reinterpret_cast<Wad&>(file).calculateCRC() : 0);
-                break;
-            case FT_LUMPFILEADAPTOR:
-                crc = 0;
-                break;
-            default:
-                Con_Error("CCmdListLumps: Invalid file type %i.", file.type());
-                exit(1); // Unreachable.
+                crc = (!file.hasCustom()? wad->calculateCRC() : 0);
             }
 
             Con_Printf("\"%s\" (%i %s%s)", F_PrettyPath(Str_Text(file.path())),
@@ -1985,18 +1971,10 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
     return str;
 }
 
-typedef struct {
-    filetype_t type; // Only
-    bool markedCustom;
-} findfilespredicate_params_t;
-
-static bool findFilesPredicate(de::FileHandle* hndl, void* parameters)
+static bool findCustomFilesPredicate(de::FileHandle* hndl, void* /*parameters*/)
 {
-    DENG_ASSERT(parameters);
-    findfilespredicate_params_t* p = (findfilespredicate_params_t*)parameters;
     de::File1& file = hndl->file();
-    if((!VALID_FILETYPE(p->type) || p->type == file.type()) &&
-       ((p->markedCustom == file.hasCustom())))
+    if(file.hasCustom())
     {
         ddstring_t const* path = file.path();
         if(stricmp(Str_Text(path) + Str_Length(path) - 3, "lmp"))
@@ -2008,14 +1986,13 @@ static bool findFilesPredicate(de::FileHandle* hndl, void* parameters)
 /**
  * Compiles a list of file names, separated by @a delimiter.
  */
-void F_ComposeFileList(filetype_t type, boolean markedCustom, char* outBuf, size_t outBufSize, const char* delimiter)
+void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimiter)
 {
     if(!outBuf || 0 == outBufSize) return;
     memset(outBuf, 0, outBufSize);
 
-    findfilespredicate_params_t p = { type, CPP_BOOL(markedCustom) };
     FS1::FileList foundFiles;
-    if(!App_FileSystem()->findAll(findFilesPredicate, (void*)&p, foundFiles)) return;
+    if(!App_FileSystem()->findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
 
     ddstring_t* str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_DIR, delimiter);
     strncpy(outBuf, Str_Text(str), outBufSize);

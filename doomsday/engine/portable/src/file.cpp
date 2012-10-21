@@ -30,16 +30,13 @@
 
 namespace de {
 
-File1::File1(filetype_t _type, char const* _path, FileHandle& hndl,
-    FileInfo const& _info, File1* _container)
-    : handle_(&hndl), info_(_info), container_(_container),
-      type_(_type), flags(DefaultFlags)
+File1::File1(char const* _path, FileHandle& hndl, FileInfo const& _info, File1* _container)
+    : handle_(&hndl), info_(_info), container_(_container), flags(DefaultFlags)
 {
     // Used to favor newer files when duplicates are pruned.
     /// @todo Does not belong at this level. Load order should be determined
     ///       at file system level. -ds
     static uint fileCounter = 0;
-    DENG2_ASSERT(VALID_FILETYPE(_type));
     order = fileCounter++;
 
     Str_Init(&path_); Str_Set(&path_, _path);
@@ -50,11 +47,6 @@ File1::~File1()
     App_FileSystem()->releaseFile(*this);
     Str_Free(&path_);
     if(handle_) delete handle_;
-}
-
-filetype_t File1::type() const
-{
-    return type_;
 }
 
 FileInfo const& File1::info() const

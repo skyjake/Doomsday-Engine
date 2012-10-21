@@ -116,7 +116,7 @@ void Sv_GetInfo(serverinfo_t* info)
     }
 
     // Some WAD names.
-    F_ComposeFileList(FT_WAD, true/*only "custom" files*/, info->pwads, sizeof info->pwads, ";");
+    F_ComposePWADFileList(info->pwads, sizeof(info->pwads), ";");
 
     // This should be a CRC number that describes all the loaded data.
     info->wadNumber = F_CRCNumber();

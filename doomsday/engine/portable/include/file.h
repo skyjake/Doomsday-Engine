@@ -27,28 +27,6 @@
 #define LIBDENG_FILESYS_FILE_H
 
 #ifdef __cplusplus
-extern "C" {
-#endif
-
-// File types.
-/// @todo Refactor away.
-typedef enum {
-    FT_FILE,        ///< Generic file
-    FT_ZIP,
-    FT_ZIPFILE,
-    FT_WAD,
-    FT_WADFILE,
-    FT_LUMPFILEADAPTOR,
-    FILETYPE_COUNT
-} filetype_t;
-
-#define VALID_FILETYPE(v)       ((v) >= FT_FILE && (v) < FILETYPE_COUNT)
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
 
 #include <de/Error>
 #include <de/str.h>
@@ -91,24 +69,17 @@ private:
 
 public:
     /**
-     * @param type          File type identifier.
      * @param path          Path to this file in the virtual file system.
      * @param hndl          Handle to the file. Ownership of the handle is given to this instance.
      * @param info          Info descriptor for the file. A copy is made.
      * @param container     Container of this file. Can be @c NULL.
      */
-    File1(filetype_t _type, char const* _path, FileHandle& hndl, FileInfo const& _info,
-          File1* container = 0);
+    File1(char const* _path, FileHandle& hndl, FileInfo const& _info, File1* container = 0);
 
     /**
      * Release all memory acquired for objects linked with this resource.
      */
     virtual ~File1();
-
-    /**
-     * @return  Type of this resource @see filetype_t
-     */
-    filetype_t type() const;
 
     /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this resource.
     ddstring_t const* path() const;
@@ -321,9 +292,6 @@ protected:
     File1* container_;
 
 private:
-    /// @see filetype_t
-    filetype_t type_;
-
     /// Categorization flags.
     Flags flags;
 
