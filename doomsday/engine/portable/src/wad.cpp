@@ -78,6 +78,27 @@ public:
         return dynamic_cast<Wad&>(container()).lumpDirectoryNode(info_.lumpIdx);
     }
 
+    /**
+     * Read this lump into the local cache.
+
+     * @return Pointer to the cached copy of the associated data.
+     */
+    uint8_t const* cache()
+    {
+        return dynamic_cast<Wad&>(container()).cacheLump(info_.lumpIdx);
+    }
+
+    /**
+     * Remove a lock on the locally cached data.
+     *
+     * @return This instance.
+     */
+    WadFile& unlock()
+    {
+        dynamic_cast<Wad&>(container()).unlockLump(info_.lumpIdx);
+        return *this;
+    }
+
     uint crc() const { return crc_; }
 
     /**

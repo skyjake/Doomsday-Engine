@@ -131,16 +131,22 @@ size_t File1::readLump(int /*lumpIdx*/, uint8_t* /*buffer*/, size_t /*startOffse
     throw de::Error("File1::readLump", "Not yet implemented");
 }
 
-uint8_t const* File1::cacheLump(int /*lumpIdx*/)
+uint8_t const* File1::cache()
 {
     /// @todo writeme
-    throw de::Error("File1::cacheLump", "Not yet implemented");
+    throw de::Error("File1::cache", "Not yet implemented");
 }
 
-File1& File1::unlockLump(int /*lumpIdx*/)
+File1& File1::unlock()
 {
     /// @todo writeme
-    throw de::Error("File1::unlockLump", "Not yet implemented");
+    throw de::Error("File1::unlock", "Not yet implemented");
+}
+
+File1& File1::clearCache(bool* /*retCleared*/)
+{
+    /// @todo writeme
+    throw de::Error("File1::clearCache", "Not yet implemented");
 }
 
 } // namespace de

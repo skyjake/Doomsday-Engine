@@ -176,8 +176,7 @@ uint8_t const* W_CacheLump(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return lump.container().cacheLump(lump.info().lumpIdx);
+        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).cache();
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -191,8 +190,7 @@ void W_UnlockLump(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        lump.container().unlockLump(lump.info().lumpIdx);
+        App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).unlock();
     }
     catch(LumpIndex::NotFoundError const&)
     {

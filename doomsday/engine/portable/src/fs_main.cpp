@@ -498,7 +498,7 @@ void FS1::index(de::File1& file)
     {
         LumpIndex& index = *d->ActiveWadLumpIndex;
         // This *is* the lump, so insert ourself as a lump of our container in the index.
-        index.catalogLumps(lump->container(), lump->info().lumpIdx, lump->lumpCount());
+        index.catalogLumps(lump->container(), lump->info().lumpIdx, 1);
         return;
     }
 }
@@ -1740,15 +1740,13 @@ size_t F_ReadLumpSection(struct file1_s* _file, int lumpIdx, uint8_t* buffer,
 uint8_t const* F_CacheLump(struct file1_s* _file, int lumpIdx)
 {
     if(!_file) return 0;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    return file->cacheLump(lumpIdx);
+    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).cache();
 }
 
 void F_UnlockLump(struct file1_s* _file, int lumpIdx)
 {
     if(!_file) return;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    file->unlockLump(lumpIdx);
+    reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).unlock();
 }
 
 struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)

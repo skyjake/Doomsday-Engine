@@ -52,17 +52,4 @@ size_t LumpFileAdaptor::readLump(int /*lumpIdx*/, uint8_t* buffer, size_t startO
     return container().readLump(info().lumpIdx, buffer, startOffset, length, tryCache);
 }
 
-uint8_t const* LumpFileAdaptor::cacheLump(int /*lumpIdx*/)
-{
-    // Lump files are special cases for this *is* the lump.
-    return container().cacheLump(info().lumpIdx);
-}
-
-LumpFileAdaptor& LumpFileAdaptor::unlockLump(int /*lumpIdx*/)
-{
-    // Lump files are special cases for this *is* the lump.
-    container().unlockLump(info().lumpIdx);
-    return *this;
-}
-
 } // namespace de

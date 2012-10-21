@@ -233,44 +233,32 @@ public:
                             bool tryCache = true);
 
     /*
-     * Lump caching interface:
+     * Caching interface:
      */
 
     /**
-     * Read the data associated with lump @a lumpIdx into the cache.
-     *
-     * @param lumpIdx   Lump index associated with the data to be cached.
+     * Read this file into the local cache.
      *
      * @return Pointer to the cached copy of the associated data.
      */
-    virtual uint8_t const* cacheLump(int lumpIdx);
+    virtual uint8_t const* cache();
 
     /**
-     * Remove a lock on a cached data lump.
-     *
-     * @param lumpIdx   Lump index associated with the cached data to be changed.
+     * Remove a lock on the locally cached data.
      *
      * @return This instance.
      */
-    virtual File1& unlockLump(int lumpIdx);
+    virtual File1& unlock();
 
     /**
-     * Clear any cached data for lump @a lumpIdx from the lump cache.
+     * Clear any data in the local cache.
      *
-     * @param lumpIdx       Lump index associated with the cached data to be cleared.
      * @param retCleared    If not @c NULL write @c true to this address if data was
      *                      present and subsequently cleared from the cache.
      *
      * @return This instance.
      */
-    //virtual File1& clearCachedLump(int lumpIdx, bool* retCleared = 0) = 0;
-
-    /**
-     * Purge the lump cache, clearing all cached data lumps.
-     *
-     * @return This instance.
-     */
-    //virtual File1& clearLumpCache() = 0;
+    virtual File1& clearCache(bool* retCleared = 0);
 
 protected:
     /// File stream handle.

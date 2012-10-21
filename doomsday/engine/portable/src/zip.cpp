@@ -160,6 +160,27 @@ public:
     {
         return dynamic_cast<Zip&>(container()).lumpDirectoryNode(info_.lumpIdx);
     }
+
+    /**
+     * Read this lump into the local cache.
+
+     * @return Pointer to the cached copy of the associated data.
+     */
+    uint8_t const* cache()
+    {
+        return dynamic_cast<Zip&>(container()).cacheLump(info_.lumpIdx);
+    }
+
+    /**
+     * Remove a lock on the locally cached data.
+     *
+     * @return This instance.
+     */
+    ZipFile& unlock()
+    {
+        dynamic_cast<Zip&>(container()).unlockLump(info_.lumpIdx);
+        return *this;
+    }
 };
 
 struct Zip::Instance

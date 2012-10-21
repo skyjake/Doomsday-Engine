@@ -133,16 +133,38 @@ public:
      *
      * @return Pointer to the cached copy of the associated data.
      */
-    uint8_t const* cacheLump(int lumpIdx);
+    uint8_t const* cache()
+    {
+        if(Wad* wad = dynamic_cast<Wad*>(&container()))
+        {
+            return wad->lump(info().lumpIdx).cache();
+        }
+        if(Zip* zip = dynamic_cast<Zip*>(&container()))
+        {
+            return zip->lump(info().lumpIdx).cache();
+        }
+        throw de::Error("LumpFileAdaptor::cache", "Unknown de::File1 type");
+    }
 
     /**
-     * Remove a lock on a cached data lump.
-     *
-     * @param lumpIdx   Lump index associated with the cached data to be changed.
+     * Remove a lock on the locally cached data.
      *
      * @return This instance.
      */
-    LumpFileAdaptor& unlockLump(int lumpIdx);
+    LumpFileAdaptor& unlock()
+    {
+        if(Wad* wad = dynamic_cast<Wad*>(&container()))
+        {
+            wad->lump(info().lumpIdx).unlock();
+            return *this;
+        }
+        if(Zip* zip = dynamic_cast<Zip*>(&container()))
+        {
+            zip->lump(info().lumpIdx).unlock();
+            return *this;
+        }
+        throw de::Error("LumpFileAdaptor::unlock", "Unknown de::File1 type");
+    }
 
 private:
     struct Instance;
