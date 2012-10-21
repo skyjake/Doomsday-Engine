@@ -62,6 +62,16 @@ public:
         : File1(hndl, path, info, container), crc_(0)
     {}
 
+    /**
+     * Retrieve the directory node for this file.
+     *
+     * @return  Directory node for this file.
+     */
+    PathDirectoryNode const& directoryNode() const
+    {
+        return dynamic_cast<Wad&>(container()).lumpDirectoryNode(info_.lumpIdx);
+    }
+
     uint crc() const { return crc_; }
 
     /**
@@ -76,7 +86,7 @@ public:
     {
         crc_ = uint(info_.size);
 
-        de::PathDirectoryNode const& node = container().lumpDirectoryNode(info_.lumpIdx);
+        de::PathDirectoryNode const& node = directoryNode();
         ddstring_t const* name = node.pathFragment();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
@@ -300,17 +310,17 @@ Wad::~Wad()
     delete d;
 }
 
-bool Wad::isValidIndex(int lumpIdx)
+bool Wad::isValidIndex(int lumpIdx) const
 {
     return lumpIdx >= 0 && lumpIdx < lumpCount();
 }
 
-int Wad::lastIndex()
+int Wad::lastIndex() const
 {
     return lumpCount() - 1;
 }
 
-int Wad::lumpCount()
+int Wad::lumpCount() const
 {
     d->readLumpDirectory();
     return d->lumpDirectory? d->lumpDirectory->size() : 0;
@@ -321,7 +331,7 @@ bool Wad::empty()
     return !lumpCount();
 }
 
-de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx)
+de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx) const
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
@@ -330,16 +340,13 @@ de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx)
 
 ddstring_t const* Wad::lumpName(int lumpIdx)
 {
-    LOG_AS("Wad::lumpName");
-    return lumpDirectoryNode(lumpIdx).pathFragment();
+    return lump(lumpIdx).directoryNode().pathFragment();
 }
 
 AutoStr* Wad::composeLumpPath(int lumpIdx, char delimiter)
 {
     if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
-
-    PathDirectoryNode& node = lumpDirectoryNode(lumpIdx);
-    return node.composePath(AutoStr_NewStd(), NULL, delimiter);
+    return lump(lumpIdx).directoryNode().composePath(AutoStr_NewStd(), NULL, delimiter);
 }
 
 File1& Wad::lump(int lumpIdx)

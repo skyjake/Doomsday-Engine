@@ -104,12 +104,6 @@ File1& File1::setCustom(bool yes)
     return *this;
 }
 
-PathDirectoryNode const& File1::lumpDirectoryNode(int /*lumpIdx*/)
-{
-    /// @todo writeme
-    throw de::Error("File1::lumpDirectoryNode", "Not yet implemented");
-}
-
 ddstring_t const* File1::lumpName(int /*lumpIdx*/)
 {
     /// @todo writeme

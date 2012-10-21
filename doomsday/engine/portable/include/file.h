@@ -130,6 +130,16 @@ public:
 
     FileHandle& handle();
 
+    /**
+     * Retrieve the directory node for this file.
+     *
+     * @return  Directory node for this file.
+     */
+    virtual PathDirectoryNode const& directoryNode() const
+    {
+        throw de::Error("File1::directoryNode", "No owner directory");
+    }
+
     /*
      * Access interfaces:
      *
@@ -143,7 +153,7 @@ public:
      * the file. Subclasses with multiple lumps should override this function
      * accordingly.
      */
-    virtual bool isValidIndex(int lumpIdx) { return lumpIdx == 0; }
+    virtual bool isValidIndex(int lumpIdx) const { return lumpIdx == 0; }
 
     /**
      * @return Logical index of the last lump in this file's directory or @c -1 if empty.
@@ -152,7 +162,7 @@ public:
      * the file. Subclasses with multiple lumps should override this function
      * accordingly.
      */
-    virtual int lastIndex() { return 0; }
+    virtual int lastIndex() const { return 0; }
 
     /**
      * @return  Number of "lumps" contained within this resource.
@@ -161,7 +171,7 @@ public:
      * the file. Subclasses with multiple lumps should override this function
      * accordingly.
      */
-    virtual int lumpCount() { return 1; }
+    virtual int lumpCount() const { return 1; }
 
     /**
      * Retrieve the name of a lump contained by this file.
@@ -173,17 +183,6 @@ public:
      * @throws de::Error    If @a lumpIdx is not valid.
      */
     virtual ddstring_t const* lumpName(int lumpIdx);
-
-    /**
-     * Retrieve the directory node for a lump contained by this file.
-     *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return  Directory node for this lump.
-     *
-     * @throws de::Error    If @a lumpIdx is not valid.
-     */
-    virtual PathDirectoryNode const& lumpDirectoryNode(int lumpIdx);
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.

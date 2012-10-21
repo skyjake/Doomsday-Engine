@@ -144,6 +144,16 @@ public:
     ZipFile::ZipFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
         : File1(hndl, path, info, container)
     {}
+
+    /**
+     * Retrieve the directory node for this file.
+     *
+     * @return  Directory node for this file.
+     */
+    PathDirectoryNode const& directoryNode() const
+    {
+        return dynamic_cast<Zip&>(container()).lumpDirectoryNode(info_.lumpIdx);
+    }
 };
 
 struct Zip::Instance
@@ -469,17 +479,17 @@ Zip::~Zip()
     delete d;
 }
 
-bool Zip::isValidIndex(int lumpIdx)
+bool Zip::isValidIndex(int lumpIdx) const
 {
     return lumpIdx >= 0 && lumpIdx < lumpCount();
 }
 
-int Zip::lastIndex()
+int Zip::lastIndex() const
 {
     return lumpCount() - 1;
 }
 
-int Zip::lumpCount()
+int Zip::lumpCount() const
 {
     d->readLumpDirectory();
     return d->lumpDirectory? d->lumpDirectory->size() : 0;
@@ -490,7 +500,7 @@ bool Zip::empty()
     return !lumpCount();
 }
 
-de::PathDirectoryNode& Zip::lumpDirectoryNode(int lumpIdx)
+de::PathDirectoryNode& Zip::lumpDirectoryNode(int lumpIdx) const
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
@@ -499,14 +509,13 @@ de::PathDirectoryNode& Zip::lumpDirectoryNode(int lumpIdx)
 
 ddstring_t const* Zip::lumpName(int lumpIdx)
 {
-    return lumpDirectoryNode(lumpIdx).pathFragment();
+    return lump(lumpIdx).directoryNode().pathFragment();
 }
 
 AutoStr* Zip::composeLumpPath(int lumpIdx, char delimiter)
 {
     if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
-    PathDirectoryNode& node = lumpDirectoryNode(lumpIdx);
-    return node.composePath(AutoStr_NewStd(), NULL, delimiter);
+    return lump(lumpIdx).directoryNode().composePath(AutoStr_NewStd(), NULL, delimiter);
 }
 
 File1& Zip::lump(int lumpIdx)

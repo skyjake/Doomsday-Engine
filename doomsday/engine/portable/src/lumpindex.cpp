@@ -94,7 +94,7 @@ struct LumpIndex::Instance
         for(int i = 0; i < numElements; ++i)
         {
             File1 const& lump = *(lumps[i]);
-            PathDirectoryNode const& node = lump.container().lumpDirectoryNode(lump.info().lumpIdx);
+            PathDirectoryNode const& node = lump.directoryNode();
             ushort j = node.hash() % (unsigned)numElements;
 
             (*hashMap)[i].next = (*hashMap)[j].head; // Prepend to the chain.
@@ -393,7 +393,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
     for(idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
         File1 const& lump = *d->lumps[idx];
-        PathDirectoryNode const& node = lump.container().lumpDirectoryNode(lump.info().lumpIdx);
+        PathDirectoryNode const& node = lump.directoryNode();
 
         // Time to build the pattern?
         if(!builtSearchPattern)

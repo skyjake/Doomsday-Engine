@@ -56,13 +56,13 @@ public:
     ~Wad();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
-    bool isValidIndex(int lumpIdx);
+    bool isValidIndex(int lumpIdx) const;
 
     /// @return Logical index of the last lump in this file's directory or @c -1 if empty.
-    int lastIndex();
+    int lastIndex() const;
 
     /// @return Number of lumps contained by this file or @c 0 if empty.
-    int lumpCount();
+    int lumpCount() const;
 
     /// @return @c true= There are no lumps in this file's directory.
     bool empty();
@@ -76,7 +76,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    PathDirectoryNode& lumpDirectoryNode(int lumpIdx);
+    PathDirectoryNode& lumpDirectoryNode(int lumpIdx) const;
 
     /**
      * Retrieve the name of a lump contained by this file.

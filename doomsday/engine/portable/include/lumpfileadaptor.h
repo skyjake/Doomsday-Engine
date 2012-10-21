@@ -33,6 +33,8 @@
 
 #include "file.h"
 #include "fileinfo.h"
+#include "wad.h"
+#include "zip.h"
 
 namespace de {
 
@@ -52,13 +54,22 @@ public:
     ~LumpFileAdaptor();
 
     /**
-     * Retrieve the directory node for this lump in the container file.
+     * Retrieve the directory node for this file.
      *
-     * @param lumpIdx       Ignored. Required argument.
-     *
-     * @return  Directory node for this lump.
+     * @return  Directory node for this file.
      */
-    PathDirectoryNode const& lumpDirectoryNode(int lumpIdx);
+    PathDirectoryNode const& directoryNode() const
+    {
+        if(Wad* wad = dynamic_cast<Wad*>(&container()))
+        {
+            return wad->lumpDirectoryNode(info().lumpIdx);
+        }
+        if(Zip* zip = dynamic_cast<Zip*>(&container()))
+        {
+            return zip->lumpDirectoryNode(info().lumpIdx);
+        }
+        throw de::Error("LumpFileAdaptor::directoryNode", "Unknown de::File1 type");
+    }
 
     /**
      * Retrieve the name of this lump.
