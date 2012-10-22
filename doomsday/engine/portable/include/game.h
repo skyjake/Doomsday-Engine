@@ -166,7 +166,7 @@ public:
      * Print the list of resources for @a Game.
      *
      * @param game          Game to list resources of.
-     * @param printStatus   @c true= Include the current availability/load status
+     * @param printStatus   @c true to  include the current availability/load status
      *                      of each resource.
      * @param rflags        Only consider resources whose @ref resourceFlags match
      *                      this value. If @c <0 the flags are ignored.
@@ -176,8 +176,8 @@ public:
     /**
      * Print extended information about game @a info.
      *
-     * @param info  Game record to be printed.
-     * @param flags  &ref printGameFlags
+     * @param game   Game record to be printed.
+     * @param flags  @ref printGameFlags
      */
     static void print(Game const& game, int flags);
 

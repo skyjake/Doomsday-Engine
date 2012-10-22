@@ -102,7 +102,7 @@ ptcgenid_t Generators_NextAvailableId(Generators* gens)
 {
     ptcgenid_t i;
     assert(gens);
-    /// @optimize Cache this result.
+    /// @todo Optimize: Cache this result.
     for(i = 0; i < GENERATORS_MAX; ++i)
     {
         if(!gens->activeGens[i])

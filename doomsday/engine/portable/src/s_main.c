@@ -276,12 +276,13 @@ boolean S_IsRepeating(int idFlags)
 /**
  * Play a sound on the local system. A public interface.
  *
- * \note: Flags can be included in the sound ID number (DDSF_*).
- * Origin and fixedpos can be both NULL, in which case the sound is played
- * in 2D and centered.
+ * If @a origin and @a point are both @c NULL, the sound is played in 2D and
+ * centered.
  *
- * @param origin        May be @c NULL.
- * @param fixedPos      May be @c NULL.
+ * @param soundIdAndFlags ID of the sound to play. Flags can be included (DDSF_*).
+ * @param origin        Mobj where the sound originates. May be @c NULL.
+ * @param point         World coordinates where the sound originate. May be @c NULL.
+ * @param volume        Volume for the sound (0...1).
  *
  * @return              Non-zero if a sound was started.
  */
@@ -425,7 +426,7 @@ int S_StartSound(int soundID, mobj_t* origin)
  * owns the origin mobj. The server assumes that the owner of the origin plays
  * the sound locally, which is done here, in the end of S_StartSoundEx().
  *
- * @param soundId       Id of the sound.
+ * @param soundID       Id of the sound.
  * @param origin        Origin mobj for the sound.
  *
  * @return              Non-zero if a sound was successfully started.

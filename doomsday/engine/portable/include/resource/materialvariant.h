@@ -104,7 +104,7 @@ public:
 
     /**
      * Process a system tick event.
-     * @param ticLength  Length of the tick in seconds.
+     * @param time  Length of the tick in seconds.
      */
     void ticker(timespan_t time);
 

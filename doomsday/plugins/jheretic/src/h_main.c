@@ -374,7 +374,7 @@ void H_PostInit(void)
     Uri* uri;
     int p;
 
-    /// \kludge Shareware WAD has different border background.
+    /// @todo Kludge: Shareware WAD has different border background.
     /// @todo Do this properly!
     if(gameMode == heretic_shareware)
         borderGraphics[0] = "Flats:FLOOR04";

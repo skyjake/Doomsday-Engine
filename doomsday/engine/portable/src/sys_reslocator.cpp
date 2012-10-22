@@ -62,9 +62,9 @@ typedef struct {
 
 /**
  * @defgroup ResourceNamespaceFlags Resource Namespace Flags
- * @ingroup core.
+ * @ingroup core
+ * @{
  */
-///@{
 #define RNF_USE_VMAP            0x01 // Map resources in packages.
 #define RNF_IS_DIRTY            0x80 // Filehash needs to be (re)built (avoid allocating an empty name hash).
 ///@}

@@ -134,7 +134,7 @@ static TextureDirectoryNode* directoryNodeForBindId(textureid_t id)
 
 static textureid_t findBindIdForDirectoryNode(const TextureDirectoryNode* node)
 {
-    /// @optimize (Low priority) do not use a linear search.
+    /// @todo Optimize: (Low priority) do not use a linear search.
     for(uint i = 0; i < textureIdMapSize; ++i)
     {
         if(textureIdMap[i] == node)

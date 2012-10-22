@@ -469,8 +469,8 @@ static void C_AddOcclusionRange(binangle_t start, binangle_t end, float const no
         return;
     }
 
-    /// @optimize: remove existing oranges that are fully contained by the new orange.
-    ///            But how to do the check efficiently?
+    /// @todo Optimize: Remove existing oranges that are fully contained by the
+    /// new orange. But how to do the check efficiently?
 
     // Add the new occlusion range to the appropriate position.
     OccNode* orange = occHead;
@@ -838,7 +838,7 @@ static void C_SafeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
 
 void C_AddViewRelOcclusion(coord_t const* v1, coord_t const* v2, coord_t height, boolean topHalf)
 {
-    /// @optimize: Check if the given line is already occluded?
+    /// @todo Optimize:: Check if the given line is already occluded?
 
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).

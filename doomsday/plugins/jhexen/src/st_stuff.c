@@ -778,14 +778,14 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         DGL_Disable(DGL_TEXTURE_2D);
 
         /**
-         * \kludge The Hexen statusbar graphic has a chain already in the
+         * @todo Kludge: The Hexen statusbar graphic has a chain already in the
          * image, which shows through the modified chain patches.
          * Mask out the chain on the statusbar by drawing a solid black
          * rectangle over it.
          */
         DGL_SetNoMaterial();
         DGL_DrawRectf2Color(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, 1);
-        //// \kludge end
+        //// @todo Kludge: end
 
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -879,7 +879,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         DGL_End();
 
         /**
-         * \kludge The Hexen statusbar graphic has a chain already in the
+         * @todo Kludge: The Hexen statusbar graphic has a chain already in the
          * image, which shows through the modified chain patches.
          * Mask out the chain on the statusbar by cutting a window out and
          * drawing a solid near-black rectangle to fill the hole.
@@ -889,7 +889,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         DGL_SetNoMaterial();
         DGL_DrawRectf2Color(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, iconAlpha);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        //// \kludge end
+        //// @todo Kludge: end
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
@@ -3550,7 +3550,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
     if(hud->statusbarActive || (displayMode < 3 || hud->alpha > 0))
     {
-        float opacity = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
+        float opacity = /**@todo Kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
         Size2Raw drawnSize = { 0, 0 };
         RectRaw displayRegion;
         int posX, posY, availWidth, availHeight;

@@ -186,6 +186,8 @@ static void clearVariables(void)
 #else
     int flags = PCF_NO_BRANCH;
 #endif
+    if(!cvarDirectory) return;
+
     PathDirectory_Iterate(cvarDirectory, flags, NULL, PATHDIRECTORY_NOHASH, clearVariable);
     PathDirectory_Clear(cvarDirectory);
 }
@@ -387,7 +389,10 @@ static void updateKnownWords(void)
     countCVarParams.type = -1;
     countCVarParams.hidden = false;
     countCVarParams.ignoreHidden = true;
-    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &countCVarParams);
+    if(cvarDirectory)
+    {
+        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &countCVarParams);
+    }
 
     // Build the known words table.
     numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + GameCollection_Count(App_GameCollection());
@@ -1787,25 +1792,36 @@ D_CMD(ListVars)
 #if _DEBUG
 D_CMD(PrintVarStats)
 {
-    cvartype_t type;
-    countvariableparams_t p;
+    uint numCVars = 0, numCVarsHidden = 0;
+
     Con_FPrintf(CPF_YELLOW, "Console Variable Statistics:\n");
-    p.hidden = false;
-    p.ignoreHidden = false;
-    for(type = CVT_BYTE; type < CVARTYPE_COUNT; ++type)
+    if(cvarDirectory)
     {
+        cvartype_t type;
+        countvariableparams_t p;
+        p.hidden = false;
+        p.ignoreHidden = false;
+        for(type = CVT_BYTE; type < CVARTYPE_COUNT; ++type)
+        {
+            p.count = 0;
+            p.type = type;
+            PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
+            Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(type)), p.count);
+        }
         p.count = 0;
-        p.type = type;
+        p.type = -1;
+        p.hidden = true;
         PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
-        Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(type)), p.count);
+        numCVars = PathDirectory_Size(cvarDirectory);
+        numCVarsHidden = p.count;
     }
-    p.count = 0;
-    p.type = -1;
-    p.hidden = true;
-    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
-    Con_Printf("       Total: %u\n      Hidden: %u\n\n", PathDirectory_Size(cvarDirectory), p.count);
-    PathDirectory_DebugPrintHashDistribution(cvarDirectory);
-    PathDirectory_DebugPrint(cvarDirectory, CVARDIRECTORY_DELIMITER);
+    Con_Printf("       Total: %u\n      Hidden: %u\n\n", numCVars, numCVarsHidden);
+
+    if(cvarDirectory)
+    {
+        PathDirectory_DebugPrintHashDistribution(cvarDirectory);
+        PathDirectory_DebugPrint(cvarDirectory, CVARDIRECTORY_DELIMITER);
+    }
     return true;
 }
 #endif

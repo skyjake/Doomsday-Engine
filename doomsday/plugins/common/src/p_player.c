@@ -630,7 +630,7 @@ boolean P_CheckAmmo(player_t* plr)
 #endif
 
 #if __JHEXEN__
-    //// \kludge Work around the multiple firing modes problems.
+    //// @todo Kludge: Work around the multiple firing modes problems.
     //// We need to split the weapon firing routines and implement them as
     //// new fire modes.
     if(plr->class_ == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)

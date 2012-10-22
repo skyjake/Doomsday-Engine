@@ -2547,7 +2547,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
     if(hud->statusbarActive || (displayMode < 3 || hud->alpha > 0))
     {
-        float opacity = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
+        float opacity = /**@todo Kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
         Size2Raw drawnSize = { 0, 0 };
         RectRaw displayRegion;
         int availHeight;

@@ -8,4 +8,5 @@ OUTPUT_DIRECTORY    = ../apidoc/mac/
 
 INPUT               = api mac portable unix
 
-PREDEFINED          = __DOOMSDAY__ UNIX MACOSX __cplusplus
+MACRO_EXPANSION     = YES
+PREDEFINED          = __DOOMSDAY__ UNIX MACOSX __cplusplus "C_DECL=" "GL_CALL="
