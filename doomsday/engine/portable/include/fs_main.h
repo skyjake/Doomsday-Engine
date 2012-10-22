@@ -171,11 +171,13 @@ namespace de
          *
          * @param permitRequired  @c true= allow removal of resources marked as "required"
          *                        by the currently loaded Game.
+         *
          * @return @c true if the operation is successful.
+         *
          */
-        bool removeFile(char const* path, bool permitRequired = false);
+        bool removeFile(File1& file, bool permitRequired = false);
 
-        int removeFiles(char const* const* paths, int num, bool permitRequired = false);
+        int removeFiles(FileList& files, bool permitRequired = false);
 
         lumpnum_t lumpNumForName(char const* name, bool silent = true);
 
@@ -239,6 +241,13 @@ namespace de
 
         /// Completely destroy this file; close if open, clear references and any acquired identifiers.
         void deleteFile(FileHandle& hndl);
+
+        /**
+         * Find a single file.
+         *
+         * @throws NotFoundError If the requested file could not be found.
+         */
+        File1& find(char const* path);
 
         /**
          * Finds all files.
@@ -351,7 +360,7 @@ namespace de
          */
         void deindex(File1& file);
 
-        bool unloadFile(char const* path, bool permitRequired = false, bool quiet = false);
+        bool unloadFile(File1& file, bool permitRequired = false, bool quiet = false);
 
     public:
         /**
@@ -404,11 +413,6 @@ struct file1_s* F_AddFile(char const* path/*, baseOffset = 0*/);
 
 boolean F_RemoveFile2(char const* path, boolean permitRequired);
 boolean F_RemoveFile(char const* path/*, permitRequired = false */);
-
-int F_AddFiles(char const* const* paths, int num);
-
-int F_RemoveFiles3(char const* const* paths, int num, boolean permitRequired);
-int F_RemoveFiles(char const* const* paths, int num/*, permitRequired = false */);
 
 FileHandle* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
 FileHandle* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);

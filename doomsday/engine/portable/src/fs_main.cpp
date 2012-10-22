@@ -451,6 +451,25 @@ void FS1::consoleRegister()
  * @note Performance is O(n).
  * @return @c iterator pointing to list->end() if not found.
  */
+static FS1::FileList::iterator findListFile(FS1::FileList& list, de::File1& file)
+{
+    if(list.empty()) return list.end();
+    // Perform the search.
+    FS1::FileList::iterator i;
+    for(i = list.begin(); i != list.end(); ++i)
+    {
+        if(&file == &(*i)->file())
+        {
+            break; // This is the node we are looking for.
+        }
+    }
+    return i;
+}
+
+/**
+ * @note Performance is O(n).
+ * @return @c iterator pointing to list->end() if not found.
+ */
 static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char const* path_)
 {
     if(list.empty()) return list.end();
@@ -511,13 +530,21 @@ void FS1::deindex(de::File1& file)
         d->auxiliaryWadLumpIndex.pruneByFile(file);
 }
 
-bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
+de::File1& FS1::find(char const* path)
 {
     // Convert to an absolute path.
     AutoStr* absolutePath = AutoStr_FromTextStd(path);
     F_PrependBasePath(absolutePath, absolutePath);
 
     FileList::iterator found = findListFileByPath(d->loadedFiles, Str_Text(absolutePath));
+    if(found == d->loadedFiles.end()) throw NotFoundError("FS1::findFile", "No files found matching '" + QString(path) + "'");
+    DENG_ASSERT((*found)->hasFile());
+    return (*found)->file();
+}
+
+bool FS1::unloadFile(de::File1& file, bool permitRequired, bool quiet)
+{
+    FileList::iterator found = findListFile(d->loadedFiles, file);
     if(found == d->loadedFiles.end()) return false;
 
     // Do not attempt to unload a resource required by the current game.
@@ -527,25 +554,24 @@ bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
 
         if(AbstractResource* const* records = reinterpret_cast<de::Game*>(App_CurrentGame())->resources(RC_PACKAGE, 0))
         {
-            // Is this resource from a container?
-            lumpnum_t lumpNum = d->zipLumpIndex.indexForPath(Str_Text(absolutePath));
-            if(lumpNum >= 0)
-            {
-                // Yes; use the container's path instead.
-                Str_Copy(absolutePath, d->zipLumpIndex.lump(lumpNum).container().composePath());
-            }
+            // If this resource is from a container we must use the path of the
+            // root file container instead.
+            de::File1& rootFile = file;
+            while(rootFile.isContained())
+            { rootFile = rootFile.container(); }
+
+            AutoStr* absolutePath = rootFile.composePath();
 
             for(AbstractResource* const* i = records; *i; i++)
             {
                 AbstractResource* record = *i;
-                if(AbstractResource_ResourceFlags(record) & RF_STARTUP)
+                if(!(AbstractResource_ResourceFlags(record) & RF_STARTUP)) continue;
+
+                ddstring_t const* resolvedPath = AbstractResource_ResolvedPath(record, true);
+                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, Str_Text(absolutePath)))
                 {
-                    ddstring_t const* resolvedPath = AbstractResource_ResolvedPath(record, true);
-                    if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, Str_Text(absolutePath)))
-                    {
-                        isRequired = true;
-                        break;
-                    }
+                    isRequired = true;
+                    break;
                 }
             }
         }
@@ -556,19 +582,20 @@ bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
             {
                 Con_Message("\"%s\" is required by the current game.\n"
                             "Required game files cannot be unloaded in isolation.\n",
-                            F_PrettyPath(Str_Text(absolutePath)));
+                            F_PrettyPath(Str_Text(file.composePath())));
             }
             return false;
         }
     }
 
+    AutoStr* absolutePath = file.composePath();
     if(!quiet && verbose >= 1)
     {
         Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(absolutePath)));
     }
 
     FileHandle& hndl = *(*found);
-    d->releaseFileId(Str_Text(hndl.file().composePath()));
+    d->releaseFileId(Str_Text(absolutePath));
     deindex(hndl.file());
     d->loadedFiles.erase(found);
     deleteFile(hndl);
@@ -624,7 +651,7 @@ FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
         File1& file = hndl.file();
         if(file.hasStartup()) continue;
 
-        if(unloadFile(Str_Text(file.composePath()), true/*allow unloading game resources*/, true/*quiet please*/))
+        if(unloadFile(file, true/*allow unloading game resources*/, true/*quiet please*/))
         {
             numUnloaded += 1;
         }
@@ -1217,9 +1244,9 @@ int FS1::addFiles(char const* const* paths, int num)
     return addedFileCount;
 }
 
-bool FS1::removeFile(char const* path, bool permitRequired)
+bool FS1::removeFile(de::File1& file, bool permitRequired)
 {
-    bool didUnload = unloadFile(path, permitRequired);
+    bool didUnload = unloadFile(file, permitRequired);
     if(didUnload)
     {
         DD_UpdateEngineState();
@@ -1227,16 +1254,15 @@ bool FS1::removeFile(char const* path, bool permitRequired)
     return didUnload;
 }
 
-int FS1::removeFiles(char const* const* filenames, int num, bool permitRequired)
+int FS1::removeFiles(FileList& files, bool permitRequired)
 {
-    if(!filenames) return 0;
-
     int removedFileCount = 0;
-    for(int i = 0; i < num; ++i)
+    DENG2_FOR_EACH(i, files, FileList::const_iterator)
     {
-        if(unloadFile(filenames[i], permitRequired))
+        File1& file = (*i)->file();
+        if(unloadFile(file, permitRequired))
         {
-            VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(filenames[i])) )
+            VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(Str_Text(file.composePath()))) )
             removedFileCount += 1;
         }
     }
@@ -1566,32 +1592,24 @@ struct file1_s* F_AddFile2(char const* path, size_t baseOffset)
 
 struct file1_s* F_AddFile(char const* path)
 {
-    return reinterpret_cast<struct file1_s*>(App_FileSystem()->addFile(path));
+    return F_AddFile2(path, 0);
 }
 
 boolean F_RemoveFile2(char const* path, boolean permitRequired)
 {
-    return App_FileSystem()->removeFile(path, CPP_BOOL(permitRequired));
+    try
+    {
+        de::File1& file = App_FileSystem()->find(path);
+        return App_FileSystem()->removeFile(file, CPP_BOOL(permitRequired));
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore.
+    return false;
 }
 
 boolean F_RemoveFile(char const* path)
 {
-    return App_FileSystem()->removeFile(path);
-}
-
-int F_AddFiles(char const* const* paths, int num)
-{
-    return App_FileSystem()->addFiles(paths, num);
-}
-
-int F_RemoveFiles2(char const* const* filenames, int num, boolean permitRequired)
-{
-    return App_FileSystem()->removeFiles(filenames, num, CPP_BOOL(permitRequired));
-}
-
-int F_RemoveFiles(char const* const* filenames, int num)
-{
-    return App_FileSystem()->removeFiles(filenames, num);
+    return F_RemoveFile2(path, false);
 }
 
 void F_ReleaseFile(struct file1_s* file)

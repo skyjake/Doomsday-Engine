@@ -2386,21 +2386,26 @@ D_CMD(Unload)
             Con_Message("%s is not currently loaded.\n", Str_Text(&game.identityKey()));
             return true;
         }
-        catch(const de::GameCollection::NotFoundError&)
+        catch(de::GameCollection::NotFoundError const&)
         {} // Ignore the error.
     }
 
     // Try the resource locator.
     for(i = 1; i < argc; ++i)
     {
-        if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath) ||
-           !App_FileSystem()->removeFile(Str_Text(&searchPath), false/*not required game resources*/))
-        {
-            continue;
-        }
+        if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath)) continue;
 
-        // Success!
-        didUnloadFiles = true;
+        try
+        {
+            de::File1& file = App_FileSystem()->find(Str_Text(&searchPath));
+            if(App_FileSystem()->removeFile(file, false/*not required game resources*/))
+            {
+                // Success!
+                didUnloadFiles = true;
+            }
+        }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore.
     }
 
     Str_Free(&searchPath);
