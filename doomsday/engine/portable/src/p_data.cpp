@@ -81,7 +81,7 @@ char const* P_GenerateUniqueMapId(char const* mapID)
         de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
 
         AutoStr* fileName = AutoStr_NewStd();
-        F_FileName(fileName, Str_Text(lump.container().path()));
+        F_FileName(fileName, Str_Text(lump.container().name()));
 
         qsnprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(fileName), (!lump.container().hasCustom()? "iwad" : "pwad"),
                   Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()));

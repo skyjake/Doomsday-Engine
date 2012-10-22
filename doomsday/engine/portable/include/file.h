@@ -84,8 +84,14 @@ public:
     /// @return  Name of this file.
     virtual ddstring_t const* name() const;
 
-    /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this file.
-    ddstring_t const* path() const;
+    /**
+     * Compose the absolute VFS path to this file.
+     *
+     * @param delimiter     Delimit directory using this character.
+     *
+     * @return String containing the absolute path.
+     */
+    virtual AutoStr* composePath(char delimiter = '/') const;
 
     /// @return  @c true iff this file is contained by another.
     bool isContained() const;
@@ -175,19 +181,6 @@ public:
      * accordingly.
      */
     virtual int lumpCount() const { return 1; }
-
-    /**
-     * Compose the absolute VFS path to a lump contained by this file.
-     *
-     * @note Always returns a valid string object. If @a lumpIdx is not valid a
-     *       zero-length string is returned.
-     *
-     * @param lumpIdx       Logical index for the lump.
-     * @param delimiter     Delimit directory separators using this character.
-     *
-     * @return String containing the absolute path.
-     */
-    virtual AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
      * Retrieve a lump contained by this file.

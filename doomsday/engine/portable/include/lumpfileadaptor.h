@@ -68,6 +68,26 @@ public:
     }
 
     /**
+     * Compose the absolute VFS path for this file.
+     *
+     * @param delimiter     Delimit directory using this character.
+     *
+     * @return String containing the absolute path.
+     */
+    AutoStr* composePath(char delimiter = '/')
+    {
+        if(Wad* wad = dynamic_cast<Wad*>(&container()))
+        {
+            return wad->lump(info().lumpIdx).composePath(delimiter);
+        }
+        if(Zip* zip = dynamic_cast<Zip*>(&container()))
+        {
+            return zip->lump(info().lumpIdx).composePath(delimiter);
+        }
+        throw de::Error("LumpFileAdaptor::composePath", "Unknown de::File1 type");
+    }
+
+    /**
      * Retrieve the directory node for this file.
      *
      * @return  Directory node for this file.
@@ -84,19 +104,6 @@ public:
         }
         throw de::Error("LumpFileAdaptor::directoryNode", "Unknown de::File1 type");
     }
-
-    /**
-     * Compose the absolute VFS path to a lump contained by this file.
-     *
-     * @note Always returns a valid string object. If @a lumpIdx is not valid a
-     *       zero-length string is returned.
-     *
-     * @param lumpIdx       Logical index for the lump.
-     * @param delimiter     Delimit directory separators using this character.
-     *
-     * @return String containing the absolute path.
-     */
-    AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
      * Read the data associated with lump @a lumpIdx into @a buffer.

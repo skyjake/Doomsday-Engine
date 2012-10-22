@@ -61,7 +61,7 @@ bool File1::isContained() const
 
 File1& File1::container() const
 {
-    if(!container_) throw NotContainedError("File1::container", QString("%s is not contained").arg(Str_Text(path())));
+    if(!container_) throw NotContainedError("File1::container", QString("%s is not contained").arg(Str_Text(composePath())));
     return *container_;
 }
 
@@ -70,9 +70,12 @@ de::FileHandle& File1::handle()
     return *handle_;
 }
 
-ddstring_t const* File1::path() const
+AutoStr* File1::composePath(char delimiter) const
 {
-    return &path_;
+    AutoStr* path = Str_Copy(AutoStr_NewStd(), &path_);
+    if(delimiter != '/')
+        throw de::Error("File1::composePath", "Non '/' delimiter not yet implemented");
+    return path;
 }
 
 uint File1::loadOrderIndex() const
@@ -111,11 +114,6 @@ ddstring_t const* File1::name() const
     AutoStr* name_ = AutoStr_NewStd();
     F_FileNameAndExtension(name_, Str_Text(&path_));
     return name_;
-}
-
-AutoStr* File1::composeLumpPath(int /*lumpIdx*/, char /*delimiter*/)
-{
-    return AutoStr_NewStd();
 }
 
 size_t File1::readLump(int /*lumpIdx*/, uint8_t* /*buffer*/, bool /*tryCache*/)

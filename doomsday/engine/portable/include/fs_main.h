@@ -420,7 +420,7 @@ boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
 lumpnum_t F_LumpNumForName(char const* name);
 
-ddstring_t const* F_LumpFilePath(lumpnum_t absoluteLumpNum);
+AutoStr* F_ComposeLumpFilePath(lumpnum_t absoluteLumpNum);
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
 
@@ -437,7 +437,7 @@ void F_Close(struct filehandle_s* file);
 
 void F_Delete(struct filehandle_s* file);
 
-Str const* F_Path(struct file1_s const* file);
+AutoStr* F_ComposePath(struct file1_s const* file);
 
 void F_SetCustom(struct file1_s* file, boolean yes);
 

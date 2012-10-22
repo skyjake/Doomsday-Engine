@@ -152,6 +152,18 @@ public:
     }
 
     /**
+     * Compose the absolute VFS path to this file.
+     *
+     * @param delimiter     Delimit directory using this character.
+     *
+     * @return String containing the absolute path.
+     */
+    AutoStr* composePath(char delimiter = '/') const
+    {
+        return dynamic_cast<Zip&>(container()).composeLumpPath(info_.lumpIdx, delimiter);
+    }
+
+    /**
      * Retrieve the directory node for this file.
      *
      * @return  Directory node for this file.
@@ -306,7 +318,7 @@ struct Zip::Instance
 
         // Scan the end of the file for the central directory end record.
         if(!locateCentralDirectory())
-            throw FormatError("Zip::readLumpDirectory", QString("Central directory in %1 not found").arg(Str_Text(self->path())));
+            throw FormatError("Zip::readLumpDirectory", QString("Central directory in %1 not found").arg(Str_Text(self->composePath())));
 
         // Read the central directory end record.
         centralend_t summary;
@@ -314,7 +326,7 @@ struct Zip::Instance
 
         // Does the summary say something we don't like?
         if(summary.diskEntryCount != summary.totalEntryCount)
-            throw FormatError("Zip::readLumpDirectory", QString("Multipart zip file \"%1\" not supported").arg(Str_Text(self->path())));
+            throw FormatError("Zip::readLumpDirectory", QString("Multipart zip file \"%1\" not supported").arg(Str_Text(self->composePath())));
 
         // We'll load the file directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
@@ -373,14 +385,14 @@ struct Zip::Instance
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' uses an unsupported compression algorithm, ignoring.")
-                        << Str_Text(self->path()) << Str_Text(&entryPath);
+                        << Str_Text(self->composePath()) << Str_Text(&entryPath);
                 }
 
                 if(USHORT(header->flags) & ZFH_ENCRYPTED)
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' is encrypted.\n  Encryption is not supported, ignoring.")
-                        << Str_Text(self->path()) << Str_Text(&entryPath);
+                        << Str_Text(self->composePath()) << Str_Text(&entryPath);
                 }
 
                 if(pass == 0)
@@ -586,10 +598,10 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
 
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
-    File1& file = lump(lumpIdx);
+    ZipFile& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
-        << F_PrettyPath(Str_Text(path()))
-        << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
+        << F_PrettyPath(Str_Text(composePath()))
+        << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.info().size
         << (file.info().isCompressed()? ", compressed" : "");
 
@@ -615,7 +627,7 @@ Zip& Zip::unlockLump(int lumpIdx)
 {
     LOG_AS("Zip::unlockLump");
     LOG_TRACE("\"%s:%s\"")
-        << F_PrettyPath(Str_Text(path())) << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
+        << F_PrettyPath(Str_Text(composePath())) << F_PrettyPath(Str_Text(lump(lumpIdx).composePath()));
 
     if(isValidIndex(lumpIdx))
     {
@@ -650,8 +662,8 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     ZipFile const& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
-        << F_PrettyPath(Str_Text(path()))
-        << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
+        << F_PrettyPath(Str_Text(composePath()))
+        << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.size()
         << (file.isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset

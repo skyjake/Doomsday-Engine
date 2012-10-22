@@ -33,12 +33,6 @@ LumpFileAdaptor::LumpFileAdaptor(FileHandle& hndl, char const* path,
 LumpFileAdaptor::~LumpFileAdaptor()
 {}
 
-AutoStr* LumpFileAdaptor::composeLumpPath(int /*lumpIdx*/, char delimiter)
-{
-    // Lump files are special cases for this *is* the lump.
-    return container().composeLumpPath(info().lumpIdx, delimiter);
-}
-
 size_t LumpFileAdaptor::readLump(int /*lumpIdx*/, uint8_t* buffer, bool tryCache)
 {
     // Lump files are special cases for this *is* the lump.

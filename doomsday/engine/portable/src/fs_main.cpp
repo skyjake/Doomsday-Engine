@@ -189,7 +189,7 @@ struct FS1::Instance
             FileHandle& hndl = *(loadedFiles[i]);
             if(!index || index->catalogues(hndl.file()))
             {
-                releaseFileId(Str_Text(hndl.file().path()));
+                releaseFileId(Str_Text(hndl.file().composePath()));
                 self->deindex(hndl.file());
                 loadedFiles.removeAt(i);
                 self->deleteFile(hndl);
@@ -465,7 +465,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char cons
     for(i = list.begin(); i != list.end(); ++i)
     {
         de::File1& file = (*i)->file();
-        if(!Str_CompareIgnoreCase(file.path(), Str_Text(path)))
+        if(!Str_CompareIgnoreCase(file.composePath(), Str_Text(path)))
         {
             break; // This is the node we are looking for.
         }
@@ -532,7 +532,7 @@ bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
             if(lumpNum >= 0)
             {
                 // Yes; use the container's path instead.
-                Str_Copy(absolutePath, d->zipLumpIndex.lump(lumpNum).container().path());
+                Str_Copy(absolutePath, d->zipLumpIndex.lump(lumpNum).container().composePath());
             }
 
             for(AbstractResource* const* i = records; *i; i++)
@@ -568,7 +568,7 @@ bool FS1::unloadFile(char const* path, bool permitRequired, bool quiet)
     }
 
     FileHandle& hndl = *(*found);
-    d->releaseFileId(Str_Text(hndl.file().path()));
+    d->releaseFileId(Str_Text(hndl.file().composePath()));
     deindex(hndl.file());
     d->loadedFiles.erase(found);
     deleteFile(hndl);
@@ -595,7 +595,7 @@ static void printFileList(FS1::FileList& list)
     {
         de::FileHandle* hndl = *i;
         de::File1& file = hndl->file();
-        FileId fileId = FileId::fromPath(Str_Text(file.path()));
+        FileId fileId = FileId::fromPath(Str_Text(file.composePath()));
         LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
             << (file.hasStartup()? '*' : ' ') << idx
             << fileId << fileId.path() << (void*)&hndl;
@@ -624,7 +624,7 @@ FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
         File1& file = hndl.file();
         if(file.hasStartup()) continue;
 
-        if(unloadFile(Str_Text(file.path()), true/*allow unloading game resources*/, true/*quiet please*/))
+        if(unloadFile(Str_Text(file.composePath()), true/*allow unloading game resources*/, true/*quiet please*/))
         {
             numUnloaded += 1;
         }
@@ -976,19 +976,21 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         bool patternMatched;
         if(!(flags & SPF_NO_DESCEND))
         {
-            filePath       = lump.container().composeLumpPath(lump.info().lumpIdx);
+            filePath       = lump.composePath();
             patternMatched = F_MatchFileName(Str_Text(filePath), Str_Text(searchPattern));
         }
         else
         {
             patternMatched = node.matchDirectory(PCF_MATCH_FULL, &patternMap);
-            if(patternMatched)
-            {
-                filePath   = lump.container().composeLumpPath(lump.info().lumpIdx);
-            }
         }
 
         if(!patternMatched) continue;
+
+        // Not yet composed the path?
+        if(!filePath)
+        {
+            filePath = lump.composePath();
+        }
 
         found.push_back(PathListItem(Str_Text(filePath), node.type() == PT_BRANCH? A_SUBDIR : 0));
     }
@@ -1141,7 +1143,7 @@ de::FileHandle& FS1::openFile(char const* path, char const* mode, size_t baseOff
 de::FileHandle& FS1::openLump(de::File1& lump)
 {
     LumpFileAdaptor* adapt = new LumpFileAdaptor(*FileHandleBuilder::fromFileLump(lump.container(), lump.info().lumpIdx, false),
-                                                 Str_Text(lump.container().composeLumpPath(lump.info().lumpIdx)),
+                                                 Str_Text(lump.composePath()),
                                                  lump.info(), &lump.container());
     DENG_ASSERT(adapt);
 
@@ -1167,7 +1169,7 @@ de::File1* FS1::addFile(char const* path, size_t baseOffset)
 
         // Load the file (a.k.a., index it).
         File1& file = hndl.file();
-        VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(file.path()))) )
+        VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) )
 
         index(file);
 
@@ -1475,7 +1477,7 @@ D_CMD(ListFiles)
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
             }
 
-            Con_Printf("\"%s\" (%i %s%s)", F_PrettyPath(Str_Text(file.path())),
+            Con_Printf("\"%s\" (%i %s%s)", F_PrettyPath(Str_Text(file.composePath())),
                        fileCount, fileCount != 1 ? "files" : "file",
                        (file.hasStartup()? ", startup" : ""));
             if(0 != crc)
@@ -1709,11 +1711,10 @@ void F_Delete(struct filehandle_s* hndl)
     App_FileSystem()->deleteFile(*reinterpret_cast<de::FileHandle*>(hndl));
 }
 
-ddstring_t const* F_Path(struct file1_s const* file)
+AutoStr* F_ComposePath(struct file1_s const* file)
 {
-    if(file) return reinterpret_cast<de::File1 const*>(file)->path();
-    static de::Str zeroLengthString;
-    return zeroLengthString;
+    if(file) return reinterpret_cast<de::File1 const*>(file)->composePath();
+    return AutoStr_NewStd();
 }
 
 void F_SetCustom(struct file1_s* file, boolean yes)
@@ -1776,18 +1777,16 @@ struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
-ddstring_t const* F_LumpFilePath(lumpnum_t absoluteLumpNum)
+AutoStr* F_ComposeLumpFilePath(lumpnum_t absoluteLumpNum)
 {
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return lump.container().path();
+        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).container().composePath();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
-    static de::Str const zeroLengthString;
-    return zeroLengthString;
+    return AutoStr_NewStd();
 }
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
@@ -1806,15 +1805,13 @@ boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 AutoStr* F_ComposeLumpPath2(struct file1_s* _file, int lumpIdx, char delimiter)
 {
     if(!_file) return AutoStr_NewStd();
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    return file->composeLumpPath(lumpIdx, delimiter);
+    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).composePath(delimiter);
 }
 
 AutoStr* F_ComposeLumpPath(struct file1_s* _file, int lumpIdx)
 {
     if(!_file) return AutoStr_NewStd();
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    return file->composeLumpPath(lumpIdx);
+    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).composePath();
 }
 
 /**
@@ -1841,35 +1838,33 @@ AutoStr* F_ComposeLumpPath(struct file1_s* _file, int lumpIdx)
 static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
                                          char const* delimiter = " ")
 {
-    int maxLength, delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
-    int n, pLength;
-    ddstring_t* str, buf;
+    int delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
+    int pLength;
     char const* p, *ext;
 
-    Str_Init(&buf);
-
     // Determine the maximum number of characters we'll need.
-    maxLength = 0;
+    int maxLength = 0;
     DENG2_FOR_EACH(i, files, FS1::FileList::const_iterator)
     {
-        ddstring_t const* path = (*i)->file().path();
+        de::File1& file = (*i)->file();
 
         if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
             // Caller wants the whole path plus name and extension (if present).
-            maxLength += Str_Length(path);
+            maxLength += Str_Length(file.composePath());
         }
         else
         {
             if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
             {
                 // Caller does not want the directory hierarchy.
-                F_FileNameAndExtension(&buf, Str_Text(path));
-                p = Str_Text(&buf);
-                pLength = Str_Length(&buf);
+                ddstring_t const* name = file.name();
+                p = Str_Text(name);
+                pLength = Str_Length(name);
             }
             else
             {
+                AutoStr* path = file.composePath();
                 p = Str_Text(path);
                 pLength = Str_Length(path);
             }
@@ -1901,12 +1896,11 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
     maxLength += files.count() * delimiterLength;
 
     // Composite final string.
-    str = Str_New();
-    Str_Reserve(str, maxLength);
-    n = 0;
+    ddstring_t* str = Str_Reserve(Str_NewStd(), maxLength);
+    int n = 0;
     DENG2_FOR_EACH(i, files, FS1::FileList::const_iterator)
     {
-        ddstring_t const* path = (*i)->file().path();
+        de::File1& file = (*i)->file();
 
         if(flags & PTSF_QUOTED)
             Str_AppendChar(str, '"');
@@ -1914,19 +1908,20 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
         if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
             // Caller wants the whole path plus name and extension (if present).
-            Str_Append(str, Str_Text(path));
+            Str_Append(str, Str_Text(file.composePath()));
         }
         else
         {
             if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
             {
                 // Caller does not want the directory hierarchy.
-                F_FileNameAndExtension(&buf, Str_Text(path));
-                p = Str_Text(&buf);
-                pLength = Str_Length(&buf);
+                ddstring_t const* name = file.name();
+                p = Str_Text(name);
+                pLength = Str_Length(name);
             }
             else
             {
+                AutoStr* path = file.composePath();
                 p = Str_Text(path);
                 pLength = Str_Length(path);
             }
@@ -1961,20 +1956,12 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
             Str_Append(str, delimiter);
     }
 
-    Str_Free(&buf);
-
     return str;
 }
 
 static bool findCustomFilesPredicate(de::File1& file, void* /*parameters*/)
 {
-    if(file.hasCustom())
-    {
-        ddstring_t const* path = file.path();
-        if(stricmp(Str_Text(path) + Str_Length(path) - 3, "lmp"))
-            return true; // Include this.
-    }
-    return false; // Not this.
+    return file.hasCustom();
 }
 
 /**

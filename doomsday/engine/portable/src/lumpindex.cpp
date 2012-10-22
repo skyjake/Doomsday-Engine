@@ -172,7 +172,7 @@ struct LumpIndex::Instance
 
             sortInfo.lump = lump;
             sortInfo.origIndex = i;
-            sortInfo.path = lump->container().composeLumpPath(lump->info().lumpIdx, '/' /*delimiter is irrelevant*/);
+            sortInfo.path = lump->composePath();
         }
         qsort(sortInfos, numRecords, sizeof(*sortInfos), lumpSorter);
 
@@ -427,8 +427,8 @@ void LumpIndex::print(LumpIndex const& index)
     {
         File1 const& lump = **i;
         Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
-                   F_PrettyPath(Str_Text(lump.container().path())),
-                   F_PrettyPath(Str_Text(lump.container().composeLumpPath(lump.info().lumpIdx))),
+                   F_PrettyPath(Str_Text(lump.container().composePath())),
+                   F_PrettyPath(Str_Text(lump.composePath())),
                    (unsigned long) lump.info().size,
                    (lump.info().isCompressed()? " compressed" : ""));
     }

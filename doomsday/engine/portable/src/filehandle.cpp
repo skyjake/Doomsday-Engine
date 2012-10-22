@@ -125,47 +125,46 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
 {
     if(!container.isValidIndex(lumpIdx)) return 0;
 
-    de::FileHandle* file = new de::FileHandle();
+    de::FileHandle* hndl = new de::FileHandle();
     // Init and load in the lump data.
-    file->d->file = &container.lump(lumpIdx);
-    file->d->flags.open = true;
+    File1& file = container.lump(lumpIdx);
+    hndl->d->file = &file;
+    hndl->d->flags.open = true;
     if(!dontBuffer)
     {
-        FileInfo const& lumpInfo = container.lump(lumpIdx).info();
-        file->d->size = lumpInfo.size;
-        file->d->pos = file->d->data = (uint8_t*) M_Malloc(file->d->size);
-        if(!file->d->data)
+        hndl->d->size = file.size();
+        hndl->d->pos = hndl->d->data = (uint8_t*) M_Malloc(hndl->d->size);
+        if(!hndl->d->data)
             Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
-                (unsigned long) file->d->size);
+                (unsigned long) hndl->d->size);
 #if _DEBUG
         VERBOSE2(
-            AutoStr* path = container.composeLumpPath(lumpIdx);
-            Con_Printf("FileHandle [%p] buffering \"%s:%s\"...\n", (void*)file,
-                       F_PrettyPath(Str_Text(container.path())),
-                       F_PrettyPath(Str_Text(path)));
+            Con_Printf("FileHandle [%p] buffering \"%s:%s\"...\n", (void*)hndl,
+                       F_PrettyPath(Str_Text(container.composePath())),
+                       F_PrettyPath(Str_Text(file.composePath())));
         )
 #endif
-        container.readLump(lumpIdx, (uint8_t*)file->d->data, 0, lumpInfo.size);
+        container.readLump(lumpIdx, (uint8_t*)hndl->d->data, 0, file.size());
     }
-    return file;
+    return hndl;
 }
 
-FileHandle* FileHandleBuilder::fromFile(File1& af)
+FileHandle* FileHandleBuilder::fromFile(File1& file)
 {
-    de::FileHandle* file = new de::FileHandle();
-    file->d->file = &af;
-    file->d->flags.open = true;
-    file->d->flags.reference = true;
-    return file;
+    de::FileHandle* hndl = new de::FileHandle();
+    hndl->d->file = &file;
+    hndl->d->flags.open = true;
+    hndl->d->flags.reference = true;
+    return hndl;
 }
 
-FileHandle* FileHandleBuilder::fromNativeFile(FILE& hndl, size_t baseOffset)
+FileHandle* FileHandleBuilder::fromNativeFile(FILE& file, size_t baseOffset)
 {
-    de::FileHandle* file = new de::FileHandle();
-    file->d->flags.open = true;
-    file->d->hndl = &hndl;
-    file->d->baseOffset = baseOffset;
-    return file;
+    de::FileHandle* hndl = new de::FileHandle();
+    hndl->d->flags.open = true;
+    hndl->d->hndl = &file;
+    hndl->d->baseOffset = baseOffset;
+    return hndl;
 }
 
 FileHandle* FileHandleBuilder::dup(de::FileHandle const& hndl)

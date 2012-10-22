@@ -1501,7 +1501,7 @@ uint8_t* Image_LoadFromFile(image_t* img, FileHandle* file)
 
     GL_InitImage(img);
 
-    fileName = Str_Text(F_Path(FileHandle_File_const(file)));
+    fileName = Str_Text(F_ComposePath(FileHandle_File_const(file)));
 
     // Firstly try the expected format given the file name.
     hdlr = findHandlerFromFileName(fileName);
@@ -2485,7 +2485,7 @@ static TexSource loadPatchLump(image_t* image, FileHandle* file, int tclass, int
 
         if(source == TEXS_NONE)
         {
-            Con_Message("Warning: Lump \"%s\" does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(F_Path(FileHandle_File(file)))));
+            Con_Message("Warning: Lump \"%s\" does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File(file)))));
             return source;
         }
     }

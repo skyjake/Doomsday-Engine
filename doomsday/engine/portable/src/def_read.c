@@ -2741,7 +2741,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
         if(F_LumpLength(absoluteLumpNum) != 0)
         {
             uint8_t const* lumpPtr = F_CacheLump(file, lumpIdx);
-            DED_ReadData(ded, (char const*)lumpPtr, Str_Text(F_Path(file)));
+            DED_ReadData(ded, (char const*)lumpPtr, Str_Text(F_ComposePath(file)));
             F_UnlockLump(file, lumpIdx);
         }
         return true;

@@ -87,7 +87,7 @@ char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
     {
         lumpnum_t lumpNum = absoluteLumpNum;
         de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return Str_Text(lump.container().path());
+        return Str_Text(lump.container().composePath());
     }
     catch(LumpIndex::NotFoundError const&)
     {

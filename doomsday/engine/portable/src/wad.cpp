@@ -69,6 +69,18 @@ public:
     }
 
     /**
+     * Compose the absolute VFS path to this file.
+     *
+     * @param delimiter     Delimit directory using this character.
+     *
+     * @return String containing the absolute path.
+     */
+    AutoStr* composePath(char delimiter = '/') const
+    {
+        return dynamic_cast<Wad&>(container()).composeLumpPath(info_.lumpIdx, delimiter);
+    }
+
+    /**
      * Retrieve the directory node for this file.
      *
      * @return  Directory node for this file.
@@ -417,10 +429,10 @@ uint8_t const* Wad::cacheLump(int lumpIdx)
 
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
-    File1 const& file = lump(lumpIdx);
+    WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
     LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
-        << F_PrettyPath(Str_Text(path()))
-        << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
+        << F_PrettyPath(Str_Text(composePath()))
+        << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.info().size
         << (file.info().isCompressed()? ", compressed" : "");
 
@@ -446,7 +458,7 @@ Wad& Wad::unlockLump(int lumpIdx)
 {
     LOG_AS("Wad::unlockLump");
     LOG_TRACE("\"%s:%s\"")
-        << F_PrettyPath(Str_Text(path())) << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')));
+        << F_PrettyPath(Str_Text(composePath())) << F_PrettyPath(Str_Text(lump(lumpIdx).composePath()));
 
     if(isValidIndex(lumpIdx))
     {
@@ -481,8 +493,8 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
 
     LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
-        << F_PrettyPath(Str_Text(path()))
-        << F_PrettyPath(Str_Text(composeLumpPath(lumpIdx, '/')))
+        << F_PrettyPath(Str_Text(composePath()))
+        << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.size()
         << (file.isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
