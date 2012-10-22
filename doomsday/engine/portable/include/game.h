@@ -54,6 +54,7 @@ struct gamedef_s;
 
 namespace de {
 
+class File1;
 class GameCollection;
 
 /**
@@ -139,6 +140,20 @@ public:
      * @return  Vector of selected resource records.
      */
     struct AbstractResource_s* const* resources(resourceclass_t rclass, int* count) const;
+
+    /**
+     * Is @a file required by this game? This decision is made by comparing the
+     * absolute path of the specified file to those in the list of located, startup
+     * resources for the game. If the file's path matches one of these it is therefore
+     * "required" by this game.
+     *
+     * @param file      File to be tested for required-status. Can be a contained file
+     *                  (such as a lump from a Wad file), in which case the path of the
+     *                  root (i.e., outermost file) file is used for testing this status.
+     *
+     * @return  @c true iff @a file is required by this game.
+     */
+    bool isRequiredFile(File1& file);
 
 // Static members ------------------------------------------------------------------
 

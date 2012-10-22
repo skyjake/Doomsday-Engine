@@ -169,15 +169,12 @@ namespace de
         /**
          * Attempt to remove a file from the virtual file system.
          *
-         * @param permitRequired  @c true= allow removal of resources marked as "required"
-         *                        by the currently loaded Game.
-         *
          * @return @c true if the operation is successful.
          *
          */
-        bool removeFile(File1& file, bool permitRequired = false);
+        bool removeFile(File1& file);
 
-        int removeFiles(FileList& files, bool permitRequired = false);
+        int removeFiles(FileList& files);
 
         lumpnum_t lumpNumForName(char const* name, bool silent = true);
 
@@ -360,7 +357,7 @@ namespace de
          */
         void deindex(File1& file);
 
-        bool unloadFile(File1& file, bool permitRequired = false, bool quiet = false);
+        bool unloadFile(File1& file, bool quiet = false);
 
     public:
         /**
@@ -411,8 +408,7 @@ int F_Access(char const* path);
 struct file1_s* F_AddFile2(char const* path, size_t baseOffset);
 struct file1_s* F_AddFile(char const* path/*, baseOffset = 0*/);
 
-boolean F_RemoveFile2(char const* path, boolean permitRequired);
-boolean F_RemoveFile(char const* path/*, permitRequired = false */);
+boolean F_RemoveFile(char const* path);
 
 FileHandle* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
 FileHandle* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);

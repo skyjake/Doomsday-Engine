@@ -542,51 +542,10 @@ de::File1& FS1::find(char const* path)
     return (*found)->file();
 }
 
-bool FS1::unloadFile(de::File1& file, bool permitRequired, bool quiet)
+bool FS1::unloadFile(de::File1& file, bool quiet)
 {
     FileList::iterator found = findListFile(d->loadedFiles, file);
     if(found == d->loadedFiles.end()) return false;
-
-    // Do not attempt to unload a resource required by the current game.
-    if(!permitRequired)
-    {
-        bool isRequired = false;
-
-        if(AbstractResource* const* records = reinterpret_cast<de::Game*>(App_CurrentGame())->resources(RC_PACKAGE, 0))
-        {
-            // If this resource is from a container we must use the path of the
-            // root file container instead.
-            de::File1& rootFile = file;
-            while(rootFile.isContained())
-            { rootFile = rootFile.container(); }
-
-            AutoStr* absolutePath = rootFile.composePath();
-
-            for(AbstractResource* const* i = records; *i; i++)
-            {
-                AbstractResource* record = *i;
-                if(!(AbstractResource_ResourceFlags(record) & RF_STARTUP)) continue;
-
-                ddstring_t const* resolvedPath = AbstractResource_ResolvedPath(record, true);
-                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, Str_Text(absolutePath)))
-                {
-                    isRequired = true;
-                    break;
-                }
-            }
-        }
-
-        if(isRequired)
-        {
-            if(!quiet)
-            {
-                Con_Message("\"%s\" is required by the current game.\n"
-                            "Required game files cannot be unloaded in isolation.\n",
-                            F_PrettyPath(Str_Text(file.composePath())));
-            }
-            return false;
-        }
-    }
 
     AutoStr* absolutePath = file.composePath();
     if(!quiet && verbose >= 1)
@@ -651,7 +610,7 @@ FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
         File1& file = hndl.file();
         if(file.hasStartup()) continue;
 
-        if(unloadFile(file, true/*allow unloading game resources*/, true/*quiet please*/))
+        if(unloadFile(file, true/*quiet please*/))
         {
             numUnloaded += 1;
         }
@@ -1244,9 +1203,9 @@ int FS1::addFiles(char const* const* paths, int num)
     return addedFileCount;
 }
 
-bool FS1::removeFile(de::File1& file, bool permitRequired)
+bool FS1::removeFile(de::File1& file)
 {
-    bool didUnload = unloadFile(file, permitRequired);
+    bool didUnload = unloadFile(file);
     if(didUnload)
     {
         DD_UpdateEngineState();
@@ -1254,13 +1213,13 @@ bool FS1::removeFile(de::File1& file, bool permitRequired)
     return didUnload;
 }
 
-int FS1::removeFiles(FileList& files, bool permitRequired)
+int FS1::removeFiles(FileList& files)
 {
     int removedFileCount = 0;
     DENG2_FOR_EACH(i, files, FileList::const_iterator)
     {
         File1& file = (*i)->file();
-        if(unloadFile(file, permitRequired))
+        if(unloadFile(file))
         {
             VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(Str_Text(file.composePath()))) )
             removedFileCount += 1;
@@ -1595,21 +1554,16 @@ struct file1_s* F_AddFile(char const* path)
     return F_AddFile2(path, 0);
 }
 
-boolean F_RemoveFile2(char const* path, boolean permitRequired)
+boolean F_RemoveFile(char const* path)
 {
     try
     {
         de::File1& file = App_FileSystem()->find(path);
-        return App_FileSystem()->removeFile(file, CPP_BOOL(permitRequired));
+        return App_FileSystem()->removeFile(file);
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore.
     return false;
-}
-
-boolean F_RemoveFile(char const* path)
-{
-    return F_RemoveFile2(path, false);
 }
 
 void F_ReleaseFile(struct file1_s* file)

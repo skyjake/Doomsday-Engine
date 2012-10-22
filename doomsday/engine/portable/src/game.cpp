@@ -233,6 +233,37 @@ AbstractResource* const* Game::resources(resourceclass_t rclass, int* count) con
     return d->requiredResources[rclass].records? d->requiredResources[rclass].records : 0;
 }
 
+bool Game::isRequiredFile(File1& file)
+{
+    bool isRequired = false;
+
+    if(AbstractResource* const* records = resources(RC_PACKAGE, 0))
+    {
+        // If this resource is from a container we must use the path of the
+        // root file container instead.
+        File1& rootFile = file;
+        while(rootFile.isContained())
+        { rootFile = rootFile.container(); }
+
+        AutoStr* absolutePath = rootFile.composePath();
+
+        for(AbstractResource* const* i = records; *i; i++)
+        {
+            AbstractResource* record = *i;
+            if(!(AbstractResource_ResourceFlags(record) & RF_STARTUP)) continue;
+
+            ddstring_t const* resolvedPath = AbstractResource_ResolvedPath(record, true);
+            if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, Str_Text(absolutePath)))
+            {
+                isRequired = true;
+                break;
+            }
+        }
+    }
+
+    return isRequired;
+}
+
 Game* Game::fromDef(GameDef const& def)
 {
     AutoStr* dataPath = AutoStr_NewStd();

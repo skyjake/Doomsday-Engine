@@ -2334,11 +2334,34 @@ D_CMD(Load)
     return (didLoadGame || didLoadResource);
 }
 
+static void tryUnloadFile(char const* path, bool* didUnloadFiles = 0)
+{
+    try
+    {
+        de::File1& file = App_FileSystem()->find(path);
+
+        // Do not attempt to unload a resource required by the current game.
+        if(games->currentGame().isRequiredFile(file))
+        {
+            Con_Message("\"%s\" is required by the current game.\n"
+                        "Required game files cannot be unloaded in isolation.\n",
+                        F_PrettyPath(Str_Text(file.composePath())));
+            return;
+        }
+
+        if(App_FileSystem()->removeFile(file))
+        {
+            if(didUnloadFiles) *didUnloadFiles = true;
+        }
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore.
+}
+
 D_CMD(Unload)
 {
     DENG_UNUSED(src);
 
-    boolean didUnloadFiles = false;
     ddstring_t searchPath;
     int i;
 
@@ -2391,21 +2414,12 @@ D_CMD(Unload)
     }
 
     // Try the resource locator.
+    bool didUnloadFiles = false;
     for(i = 1; i < argc; ++i)
     {
         if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath)) continue;
 
-        try
-        {
-            de::File1& file = App_FileSystem()->find(Str_Text(&searchPath));
-            if(App_FileSystem()->removeFile(file, false/*not required game resources*/))
-            {
-                // Success!
-                didUnloadFiles = true;
-            }
-        }
-        catch(FS1::NotFoundError const&)
-        {} // Ignore.
+        tryUnloadFile(Str_Text(&searchPath), &didUnloadFiles);
     }
 
     Str_Free(&searchPath);
