@@ -130,9 +130,8 @@ void App::initSubsystems()
     String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
     nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
 #elif WIN32
-    /// @todo We still have Snowberry, so use its runtime folder. Really should use local AppData.
-    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
-    nativeHome = nativeHome.concatenateNativePath("Doomsday Frontend\\runtime");
+    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    nativeHome = nativeHome.concatenateNativePath("runtime");
 #else // UNIX
     String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
     nativeHome = nativeHome / ".doomsday/runtime";

@@ -107,7 +107,11 @@ String String::concatenatePath(const String& other, QChar dirChar) const
 
 String String::concatenateNativePath(const String& nativePath) const
 {
-    return QDir(*this).filePath(nativePath);
+#ifdef WIN32
+    return concatenatePath(nativePath, '\\');
+#else
+    return concatenatePath(nativePath, '/');
+#endif
 }
 
 String String::concatenateMember(const String& member) const
