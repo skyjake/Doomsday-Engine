@@ -542,19 +542,6 @@ de::File1& FS1::find(char const* path)
     return (*found)->file();
 }
 
-bool FS1::unloadFile(de::File1& file)
-{
-    FileList::iterator found = findListFile(d->loadedFiles, file);
-    if(found == d->loadedFiles.end()) return false; // Most peculiar..
-
-    FileHandle& hndl = *(*found);
-    d->releaseFileId(Str_Text(file.composePath()));
-    deindex(hndl.file());
-    d->loadedFiles.erase(found);
-    deleteFile(hndl);
-    return true;
-}
-
 #if _DEBUG
 static void printFileIds(FileIds const& fileIds)
 {
@@ -603,7 +590,7 @@ FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
         File1& file = d->loadedFiles[i]->file();
         if(file.hasStartup()) continue;
 
-        if(unloadFile(file))
+        if(removeFile(file))
         {
             numUnloadedFiles += 1;
         }
@@ -1187,8 +1174,15 @@ int FS1::addFiles(char const* const* paths, int num)
 
 bool FS1::removeFile(de::File1& file)
 {
-    VERBOSE2( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) );
-    return unloadFile(file);
+    FileList::iterator found = findListFile(d->loadedFiles, file);
+    if(found == d->loadedFiles.end()) return false; // Most peculiar..
+
+    FileHandle& hndl = *(*found);
+    d->releaseFileId(Str_Text(file.composePath()));
+    deindex(hndl.file());
+    d->loadedFiles.erase(found);
+    deleteFile(hndl);
+    return true;
 }
 
 int FS1::removeFiles(FileList& files)
@@ -1197,10 +1191,8 @@ int FS1::removeFiles(FileList& files)
     DENG2_FOR_EACH(i, files, FileList::const_iterator)
     {
         File1& file = (*i)->file();
-        VERBOSE2( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) );
-        if(unloadFile(file))
+        if(removeFile(file))
         {
-            VERBOSE2( Con_Message("Done unloading \"%s\".\n", F_PrettyPath(Str_Text(file.composePath()))) )
             removedFileCount += 1;
         }
     }

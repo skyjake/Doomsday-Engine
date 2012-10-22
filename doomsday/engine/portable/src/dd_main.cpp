@@ -2349,8 +2349,10 @@ static void tryUnloadFile(char const* path, bool* didUnloadFiles = 0)
             return;
         }
 
+        VERBOSE2( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) )
         if(App_FileSystem()->removeFile(file))
         {
+            VERBOSE2( Con_Message("Done unloading \"%s\".\n", F_PrettyPath(Str_Text(file.composePath()))) )
             if(didUnloadFiles) *didUnloadFiles = true;
         }
     }

@@ -357,8 +357,6 @@ namespace de
          */
         void deindex(File1& file);
 
-        bool unloadFile(File1& file);
-
     public:
         /**
          * Unload all files loaded after startup.
