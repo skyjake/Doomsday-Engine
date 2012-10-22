@@ -59,7 +59,7 @@
 #define strnicmp _strnicmp
 #define open _open
 #define close _close
-#define read _read
+//#define read _read
 #define write _write
 #define access _access
 #define mkdir _mkdir

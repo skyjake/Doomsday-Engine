@@ -65,6 +65,10 @@
 #define SLOPEBITS       11
 #define DBITS           (FRACBITS-SLOPEBITS)
 
+#if defined(WIN32)
+#define read _read
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

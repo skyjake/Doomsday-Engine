@@ -627,7 +627,7 @@ static void initPathLumpMappings()
     // Add the contents of all DD_DIREC lumps.
     DENG2_FOR_EACH(i, App_FileSystem()->nameIndex().lumps(), LumpIndex::Lumps::const_iterator)
     {
-        de::File1 const& lump = **i;
+        de::File1& lump = **i;
         FileInfo const& lumpInfo = lump.info();
 
         if(strnicmp(Str_Text(lump.name()), "DD_DIREC", 8)) continue;
@@ -640,7 +640,7 @@ static void initPathLumpMappings()
             if(!buf) Con_Error("initPathLumpMappings: Failed on (re)allocation of %lu bytes for temporary read buffer.", (unsigned long) bufSize);
         }
 
-        lump.container().readLump(lumpInfo.lumpIdx, buf, 0, lumpInfo.size);
+        lump.read(buf, 0, lumpInfo.size);
         buf[lumpInfo.size] = 0;
         parsePathLumpMappings(reinterpret_cast<char const*>(buf));
     }

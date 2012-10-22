@@ -33,17 +33,4 @@ LumpFileAdaptor::LumpFileAdaptor(FileHandle& hndl, char const* path,
 LumpFileAdaptor::~LumpFileAdaptor()
 {}
 
-size_t LumpFileAdaptor::readLump(int /*lumpIdx*/, uint8_t* buffer, bool tryCache)
-{
-    // Lump files are special cases for this *is* the lump.
-    return container().readLump(info().lumpIdx, buffer, tryCache);
-}
-
-size_t LumpFileAdaptor::readLump(int /*lumpIdx*/, uint8_t* buffer, size_t startOffset,
-    size_t length, bool tryCache)
-{
-    // Lump files are special cases for this *is* the lump.
-    return container().readLump(info().lumpIdx, buffer, startOffset, length, tryCache);
-}
-
 } // namespace de

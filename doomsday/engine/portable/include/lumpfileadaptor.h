@@ -106,23 +106,32 @@ public:
     }
 
     /**
-     * Read the data associated with lump @a lumpIdx into @a buffer.
+     * Read the file data into @a buffer.
      *
-     * @param lumpIdx       Lump index associated with the data to be read.
      * @param buffer        Buffer to read into. Must be at least large enough to
      *                      contain the whole lump.
      * @param tryCache      @c true= try the lump cache first.
      *
      * @return Number of bytes read.
      *
-     * @see lumpSize() or lumpInfo() to determine the size of buffer needed.
+     * @see size() or info() to determine the size of buffer needed.
      */
-    size_t readLump(int lumpIdx, uint8_t* buffer, bool tryCache = true);
+    size_t read(uint8_t* buffer, bool tryCache = true)
+    {
+        if(Wad* wad = dynamic_cast<Wad*>(&container()))
+        {
+            return wad->lump(info().lumpIdx).read(buffer, tryCache);
+        }
+        if(Zip* zip = dynamic_cast<Zip*>(&container()))
+        {
+            return zip->lump(info().lumpIdx).read(buffer, tryCache);
+        }
+        throw de::Error("LumpFileAdaptor::read", "Unknown de::File1 type");
+    }
 
     /**
-     * Read a subsection of the data associated with lump @a lumpIdx into @a buffer.
+     * Read a subsection of the file data into @a buffer.
      *
-     * @param lumpIdx       Lump index associated with the data to be read.
      * @param buffer        Buffer to read into. Must be at least @a length bytes.
      * @param startOffset   Offset from the beginning of the lump to start reading.
      * @param length        Number of bytes to read.
@@ -130,8 +139,18 @@ public:
      *
      * @return Number of bytes read.
      */
-    size_t readLump(int lumpIdx, uint8_t* buffer, size_t startOffset, size_t length,
-                    bool tryCache = true);
+    size_t read(uint8_t* buffer, size_t startOffset, size_t length, bool tryCache = true)
+    {
+        if(Wad* wad = dynamic_cast<Wad*>(&container()))
+        {
+            return wad->lump(info().lumpIdx).read(buffer, startOffset, length, tryCache);
+        }
+        if(Zip* zip = dynamic_cast<Zip*>(&container()))
+        {
+            return zip->lump(info().lumpIdx).read(buffer, startOffset, length, tryCache);
+        }
+        throw de::Error("LumpFileAdaptor::read", "Unknown de::File1 type");
+    }
 
     /**
      * Read the data associated with lump @a lumpIdx into the cache.

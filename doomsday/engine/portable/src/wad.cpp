@@ -91,8 +91,39 @@ public:
     }
 
     /**
-     * Read this lump into the local cache.
+     * Read the file data into @a buffer.
+     *
+     * @param buffer        Buffer to read into. Must be at least large enough to
+     *                      contain the whole file.
+     * @param tryCache      @c true= try the lump cache first.
+     *
+     * @return Number of bytes read.
+     *
+     * @see size() or info() to determine the size of buffer needed.
+     */
+    size_t read(uint8_t* buffer, bool tryCache = true)
+    {
+        return dynamic_cast<Wad&>(container()).readLump(info_.lumpIdx, buffer, tryCache);
+    }
 
+    /**
+     * Read a subsection of the file data into @a buffer.
+     *
+     * @param buffer        Buffer to read into. Must be at least @a length bytes.
+     * @param startOffset   Offset from the beginning of the file to start reading.
+     * @param length        Number of bytes to read.
+     * @param tryCache      If @c true try the local data cache first.
+     *
+     * @return Number of bytes read.
+     */
+    size_t read(uint8_t* buffer, size_t startOffset, size_t length, bool tryCache = true)
+    {
+        return dynamic_cast<Wad&>(container()).readLump(info_.lumpIdx, buffer, startOffset, length, tryCache);
+    }
+
+    /**
+     * Read this lump into the local cache.
+     *
      * @return Pointer to the cached copy of the associated data.
      */
     uint8_t const* cache()

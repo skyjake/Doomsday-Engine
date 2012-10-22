@@ -144,7 +144,7 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
                        F_PrettyPath(Str_Text(file.composePath())));
         )
 #endif
-        container.readLump(lumpIdx, (uint8_t*)hndl->d->data, 0, file.size());
+        file.read((uint8_t*)hndl->d->data, 0, file.size());
     }
     return hndl;
 }

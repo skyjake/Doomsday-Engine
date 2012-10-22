@@ -116,17 +116,17 @@ ddstring_t const* File1::name() const
     return name_;
 }
 
-size_t File1::readLump(int /*lumpIdx*/, uint8_t* /*buffer*/, bool /*tryCache*/)
+size_t File1::read(uint8_t* /*buffer*/, bool /*tryCache*/)
 {
     /// @todo writeme
-    throw de::Error("File1::readLump", "Not yet implemented");
+    throw de::Error("File1::read", "Not yet implemented");
 }
 
-size_t File1::readLump(int /*lumpIdx*/, uint8_t* /*buffer*/, size_t /*startOffset*/,
-    size_t /*length*/, bool /*tryCache*/)
+size_t File1::read(uint8_t* /*buffer*/, size_t /*startOffset*/, size_t /*length*/,
+                   bool /*tryCache*/)
 {
     /// @todo writeme
-    throw de::Error("File1::readLump", "Not yet implemented");
+    throw de::Error("File1::read", "Not yet implemented");
 }
 
 uint8_t const* File1::cache()

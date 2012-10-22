@@ -146,8 +146,8 @@ size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return lump.container().readLump(lump.info().lumpIdx, buffer, 0, lump.info().size);
+        de::File1& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.read(buffer, 0, lump.size());
     }
     catch(LumpIndex::NotFoundError const&)
     {
@@ -161,8 +161,8 @@ size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t star
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return lump.container().readLump(lump.info().lumpIdx, buffer, startOffset, length);
+        de::File1& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        return lump.read(buffer, startOffset, length);
     }
     catch(LumpIndex::NotFoundError const&)
     {

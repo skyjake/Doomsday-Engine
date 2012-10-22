@@ -1726,16 +1726,14 @@ void F_SetCustom(struct file1_s* file, boolean yes)
 size_t F_ReadLump(struct file1_s* _file, int lumpIdx, uint8_t* buffer)
 {
     if(!_file) return 0;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    return file->readLump(lumpIdx, buffer);
+    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).read(buffer);
 }
 
 size_t F_ReadLumpSection(struct file1_s* _file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
     if(!_file) return 0;
-    de::File1* file = reinterpret_cast<de::File1*>(_file);
-    return file->readLump(lumpIdx, buffer, startOffset, length);
+    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).read(buffer, startOffset, length);
 }
 
 uint8_t const* F_CacheLump(struct file1_s* _file, int lumpIdx)
