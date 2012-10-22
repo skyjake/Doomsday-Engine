@@ -145,8 +145,9 @@ public:
     /**
      * Set the specified node as a child of this node.
      *
-     * @param child  Identifier of the child to return.
-     * @param subTree  Child subtree to be linked (can be @c NULL).
+     * @param child    Identifier of the child to return.
+     * @param subtree  Child subtree to be linked (can be @c NULL).
+     *
      * @return  Reference to this BinaryTree.
      */
     BinaryTree& setChild(ChildId child, BinaryTree* subtree)

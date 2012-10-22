@@ -110,7 +110,7 @@ static ptcgenid_t findIdForNewGenerator(Generators* gens)
     if(id >= 0) return id+1;
 
     // See if there is an existing generator we can supplant.
-    /// @optimize Generators could maintain an age-sorted list.
+    /// @todo Optimize: Generators could maintain an age-sorted list.
     oldest = NULL;
     Generators_Iterate(gens, findOldestGenerator, (void*)&oldest);
     if(oldest) return Generators_GeneratorId(gens, oldest)+1;

@@ -1276,14 +1276,6 @@ void Window_Grab2(const Window* win, image_t* image, boolean halfSized)
     win->widget->canvas().grab(image, halfSized? QSize(win->width()/2, win->height()/2) : QSize());
 }
 
-/**
- * Attempt to set the title of the given window.
- *
- * @param idx           Index identifier (1-based) to the window.
- * @param title         New title for the window.
- *
- * @return              @c true, if successful.
- */
 void Window_SetTitle(const Window* win, const char *title)
 {
     assert(win);

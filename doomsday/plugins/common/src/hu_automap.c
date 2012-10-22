@@ -1539,7 +1539,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     // Draw glows?
     if(cfg.automapShowDoors)
     {
-        /// @optimize Hugely inefficent. Need a new approach.
+        /// @todo Optimize: Hugely inefficent. Need a new approach.
         DGL_Enable(DGL_TEXTURE_2D);
         renderWalls(obj, -1, false);
         DGL_Disable(DGL_TEXTURE_2D);

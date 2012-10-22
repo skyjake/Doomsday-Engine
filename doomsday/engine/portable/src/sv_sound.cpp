@@ -48,7 +48,7 @@ static void Sv_IdentifySoundBase(mobj_t** base, Sector** sector, Polyobj** poly,
 
     if(!*base || isRealMobj(*base)) return;
 
-    /// @optimize Performance here could be a LOT better...
+    /// @todo Optimize: Performance here could be a LOT better...
 
     // No mobj ID => it's not a real mobj.
     *poly = GameMap_PolyobjByBase(theMap, *base);

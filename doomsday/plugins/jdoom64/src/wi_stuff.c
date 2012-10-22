@@ -987,7 +987,7 @@ void WI_Drawer(void)
 {
     borderedprojectionstate_t bp;
 
-    /// \kludge dj: Clearly a kludge but why?
+    /// @todo Clearly a kludge but why? -dj
     if(ILS_NONE == inState)
     {
         drawYouAreHere = true;

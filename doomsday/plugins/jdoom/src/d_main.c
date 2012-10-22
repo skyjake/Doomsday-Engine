@@ -440,7 +440,7 @@ void D_PostInit(void)
     Uri* uri;
     int p;
 
-    /// \kludge Border background is different in DOOM2.
+    /// @todo Kludge: Border background is different in DOOM2.
     /// @todo Do this properly!
     if(gameModeBits & GM_ANY_DOOM2)
         borderGraphics[0] = "Flats:GRNROCK";

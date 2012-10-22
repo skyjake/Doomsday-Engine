@@ -79,12 +79,19 @@ public:
      * @param bindId  Unique identifier of the primary binding in the owning
      *    collection. Can be @c NOTEXTUREID in which case there is no binding
      *    for the resultant texture.
+     * @param userData  User data to associate with the resultant texture.
+     */
+    Texture(textureid_t bindId, void* userData=NULL);
+
+    /**
+     * @param bindId  Unique identifier of the primary binding in the owning
+     *    collection. Can be @c NOTEXTUREID in which case there is no binding
+     *    for the resultant texture.
      * @param size Logical size of the texture. Components can be zero in which
      *    case their value will be inherited from the actual pixel size of the
      *    image at load time.
      * @param userData  User data to associate with the resultant texture.
      */
-    Texture(textureid_t bindId, void* userData=NULL);
     Texture(textureid_t bindId, const Size2Raw& size, void* userData=NULL);
 
     ~Texture();

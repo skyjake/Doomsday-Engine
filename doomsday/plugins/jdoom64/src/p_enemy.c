@@ -2074,7 +2074,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
 void C_DECL A_Hoof(mobj_t *mo)
 {
     /**
-     * \kludge Only play very loud sounds in map 8.
+     * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_HOOF | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
@@ -2084,7 +2084,7 @@ void C_DECL A_Hoof(mobj_t *mo)
 void C_DECL A_Metal(mobj_t *mo)
 {
     /**
-     * \kludge Only play very loud sounds in map 8.
+     * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_MEAL | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);

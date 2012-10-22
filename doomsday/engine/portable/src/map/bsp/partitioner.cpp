@@ -1069,6 +1069,7 @@ struct Partitioner::Instance
     }
 
     /**
+     * @param block
      * @param best      Best half-edge found thus far.
      * @param bestCost  Running cost total result for the best half-edge thus far.
      * @param hedge     The candidate half-edge to be evaluated.
@@ -1314,8 +1315,9 @@ struct Partitioner::Instance
      * Attempt to construct a new BspLeaf and from the supplied list of
      * half-edges.
      *
-     * @param hedgeList  SuperBlock containing the list of half-edges with which
-     *                   to build the leaf using.
+     * @param hedges  SuperBlock containing the list of half-edges with which
+     *                to build the leaf using.
+     *
      * @return  Newly created BspLeaf else @c NULL if degenerate.
      */
     BspLeaf* buildBspLeaf(HEdgeList const& hedges)
@@ -1407,10 +1409,12 @@ struct Partitioner::Instance
     /**
      * Allocate another BspNode.
      *
-     * @param origin  Origin of the half-plane in the map coordinate space.
-     * @param angle  Angle of the half-plane in the map coordinate space.
+     * @param origin       Origin of the half-plane in the map coordinate space.
+     * @param angle        Angle of the half-plane in the map coordinate space.
      * @param rightBounds  Boundary of the right child map coordinate subspace. Can be @c NULL.
-     * @param leftBoubds   Boundary of the left child map coordinate subspace. Can be @a NULL.
+     * @param leftBounds   Boundary of the left child map coordinate subspace. Can be @a NULL.
+     * @param rightChild   ?
+     * @param leftChild    ?
      *
      * @return  Newly created BspNode.
      */
@@ -1780,7 +1784,7 @@ struct Partitioner::Instance
             HEdge* hedge = leaf->hedge;
             forever
             {
-                /// @kludge This should not be done here!
+                /// @todo Kludge: This should not be done here!
                 if(hedge->lineDef)
                 {
                     lineside_t* side = HEDGE_SIDE(hedge);
@@ -1876,8 +1880,7 @@ struct Partitioner::Instance
     /**
      * Search the given list for an intercept, if found; return it.
      *
-     * @param list  The list to be searched.
-     * @param vert  Ptr to the vertex to look for.
+     * @param vertex  Ptr to the vertex to look for.
      *
      * @return  Ptr to the found intercept, else @c NULL;
      */
@@ -1978,7 +1981,8 @@ struct Partitioner::Instance
     /**
      * Allocate another Vertex.
      *
-     * @param point  Origin of the vertex in the map coordinate space.
+     * @param origin  Origin of the vertex in the map coordinate space.
+     *
      * @return  Newly created Vertex.
      */
     Vertex* newVertex(const_pvec2d_t origin)
