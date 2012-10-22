@@ -357,7 +357,7 @@ namespace de
          */
         void deindex(File1& file);
 
-        bool unloadFile(File1& file, bool quiet = false);
+        bool unloadFile(File1& file);
 
     public:
         /**

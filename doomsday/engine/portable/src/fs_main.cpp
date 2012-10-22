@@ -542,19 +542,13 @@ de::File1& FS1::find(char const* path)
     return (*found)->file();
 }
 
-bool FS1::unloadFile(de::File1& file, bool quiet)
+bool FS1::unloadFile(de::File1& file)
 {
     FileList::iterator found = findListFile(d->loadedFiles, file);
-    if(found == d->loadedFiles.end()) return false;
-
-    AutoStr* absolutePath = file.composePath();
-    if(!quiet && verbose >= 1)
-    {
-        Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(absolutePath)));
-    }
+    if(found == d->loadedFiles.end()) return false; // Most peculiar..
 
     FileHandle& hndl = *(*found);
-    d->releaseFileId(Str_Text(absolutePath));
+    d->releaseFileId(Str_Text(file.composePath()));
     deindex(hndl.file());
     d->loadedFiles.erase(found);
     deleteFile(hndl);
@@ -603,16 +597,15 @@ FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
 #endif
 
     // Perform non-startup file unloading (in reverse load order).
-    int numUnloaded = 0;
+    int numUnloadedFiles = 0;
     for(int i = d->loadedFiles.size() - 1; i >= 0; i--)
     {
-        FileHandle& hndl = *(d->loadedFiles[i]);
-        File1& file = hndl.file();
+        File1& file = d->loadedFiles[i]->file();
         if(file.hasStartup()) continue;
 
-        if(unloadFile(file, true/*quiet please*/))
+        if(unloadFile(file))
         {
-            numUnloaded += 1;
+            numUnloadedFiles += 1;
         }
     }
 
@@ -625,7 +618,7 @@ FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
     }
 #endif
 
-    if(retNumUnloaded) *retNumUnloaded = numUnloaded;
+    if(retNumUnloaded) *retNumUnloaded = numUnloadedFiles;
     return *this;
 }
 
@@ -1178,26 +1171,15 @@ de::File1* FS1::addFile(char const* path, size_t baseOffset)
 
 int FS1::addFiles(char const* const* paths, int num)
 {
-    if(!paths) return 0;
+    if(!paths || !num) return 0;
 
     int addedFileCount = 0;
     for(int i = 0; i < num; ++i)
     {
         if(addFile(paths[i]))
         {
-            VERBOSE2( Con_Message("Done loading %s\n", F_PrettyPath(paths[i])) )
             addedFileCount += 1;
         }
-        else
-        {
-            Con_Message("Warning: Errors occured while loading %s\n", paths[i]);
-        }
-    }
-
-    // A changed file list may alter the main lump directory.
-    if(addedFileCount)
-    {
-        DD_UpdateEngineState();
     }
 
     return addedFileCount;
@@ -1205,12 +1187,8 @@ int FS1::addFiles(char const* const* paths, int num)
 
 bool FS1::removeFile(de::File1& file)
 {
-    bool didUnload = unloadFile(file);
-    if(didUnload)
-    {
-        DD_UpdateEngineState();
-    }
-    return didUnload;
+    VERBOSE2( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) );
+    return unloadFile(file);
 }
 
 int FS1::removeFiles(FileList& files)
@@ -1219,17 +1197,12 @@ int FS1::removeFiles(FileList& files)
     DENG2_FOR_EACH(i, files, FileList::const_iterator)
     {
         File1& file = (*i)->file();
+        VERBOSE2( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) );
         if(unloadFile(file))
         {
-            VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(Str_Text(file.composePath()))) )
+            VERBOSE2( Con_Message("Done unloading \"%s\".\n", F_PrettyPath(Str_Text(file.composePath()))) )
             removedFileCount += 1;
         }
-    }
-
-    // A changed file list may alter the main lump directory.
-    if(removedFileCount)
-    {
-        DD_UpdateEngineState();
     }
     return removedFileCount;
 }

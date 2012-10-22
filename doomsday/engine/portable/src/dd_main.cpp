@@ -2422,6 +2422,12 @@ D_CMD(Unload)
         tryUnloadFile(Str_Text(&searchPath), &didUnloadFiles);
     }
 
+    if(didUnloadFiles)
+    {
+        // A changed file list may alter the main lump directory.
+        DD_UpdateEngineState();
+    }
+
     Str_Free(&searchPath);
     return didUnloadFiles;
 }
