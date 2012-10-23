@@ -35,7 +35,7 @@
 namespace de {
 
 /**
- * Base class for error exceptions thrown by libdeng2. @ingroup core
+ * Base class for error exceptions thrown by libdeng2. @ingroup errors
  */
 class DENG2_PUBLIC Error : public std::runtime_error
 {

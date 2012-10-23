@@ -1,6 +1,6 @@
 /**
  * @file error.cpp
- * Exceptions. @ingroup core
+ * Exceptions. @ingroup errors
  *
  * @authors Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
