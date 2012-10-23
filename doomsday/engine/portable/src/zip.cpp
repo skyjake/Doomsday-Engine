@@ -141,7 +141,7 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src);
 class ZipFile : public File1
 {
 public:
-    ZipFile::ZipFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+    ZipFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
         : File1(hndl, path, info, container)
     {}
 

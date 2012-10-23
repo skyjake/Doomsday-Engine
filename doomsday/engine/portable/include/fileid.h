@@ -88,7 +88,7 @@ public:
     String const& path() const { return path_; }
 
     /// Set the path attributed to this FileId.
-    FileId& FileId::setPath(String path)
+    FileId& setPath(String path)
     {
         path_ = path;
         return *this;
