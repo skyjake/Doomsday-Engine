@@ -242,7 +242,7 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
                 "Operator " + operatorToText(_op) + " not implemented");
         }
     }
-    catch(const Error& err)
+    catch(const Error&)
     {
         delete rightValue;
         delete leftValue;

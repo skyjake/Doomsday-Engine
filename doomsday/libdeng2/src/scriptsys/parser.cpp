@@ -501,7 +501,7 @@ AssignStatement* Parser::parseAssignStatement()
         
         return st;
     }
-    catch(const Error& err)
+    catch(const Error&)
     {
         // Cleanup.
         for(AssignStatement::Indices::iterator i = indices.begin(); i != indices.end(); ++i)
