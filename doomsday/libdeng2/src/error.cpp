@@ -2,10 +2,7 @@
  * @file error.cpp
  * Exceptions. @ingroup core
  *
- * @todo Update the fields above as appropriate.
- *
- * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
