@@ -165,7 +165,7 @@ void Variable::operator << (Reader& from)
     {
         _value = Value::constructFrom(from);
     }
-    catch(const Error& err)
+    catch(const Error&)
     {
         // Always need to have a value.
         _value = new NoneValue();
