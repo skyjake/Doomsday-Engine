@@ -31,15 +31,15 @@ int main(int argc, char** argv)
     try
     {
         App app(argc, argv, App::GUIEnabled);
-        app.initSubsystems();
+        app.initSubsystems(App::DisablePlugins);
 
         Script testScript(app.fileSystem().find("kitchen_sink.de"));
-        Process proc(testScript);        
+        Process proc(testScript);
         LOG_MSG("Script parsing is complete! Executing...");
         LOG_MSG("------------------------------------------------------------------------------");
 
         proc.execute();
-        
+
         LOG_MSG("------------------------------------------------------------------------------");
         LOG_MSG("Final result value is: ") << proc.context().evaluator().result().asText();
     }

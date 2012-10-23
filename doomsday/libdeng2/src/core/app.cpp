@@ -96,29 +96,41 @@ String App::nativeBasePath()
     return path;
 }
 
-void App::initSubsystems()
+void App::initSubsystems(SubsystemInitFlags flags)
 {
+    bool allowPlugins = !flags.testFlag(DisablePlugins);
+
+    Folder& binFolder = _fs.makeFolder("/bin");
+
     // Initialize the built-in folders. This hooks up the default native
     // directories into the appropriate places in the file system.
     // All of these are in read-only mode.
 #ifdef MACOSX
     String appDir = _appPath.fileNameNativePath();
-    Folder& binFolder = _fs.makeFolder("/bin");
     binFolder.attach(new DirectoryFeed(appDir));
-    binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
+    if(allowPlugins)
+    {
+        binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
+    }
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "../Resources"));
     _fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "../Resources/config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 
 #elif WIN32
-    _fs.makeFolder("/bin").attach(new DirectoryFeed(nativeBinaryPath()));
+    if(allowPlugins)
+    {
+        binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
+    }
     String appDir = _appPath.fileNameNativePath();
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data")));
     _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data\\config")));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 
 #else // UNIX
-    _fs.makeFolder("/bin").attach(new DirectoryFeed(nativeBinaryPath()));
+    if(allowPlugins)
+    {
+        binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
+    }
     String dataDir = nativeBasePath() / "data";
     _fs.makeFolder("/data").attach(new DirectoryFeed(dataDir));
     _fs.makeFolder("/config").attach(new DirectoryFeed(dataDir / "config"));
@@ -157,10 +169,13 @@ void App::initSubsystems()
     // The level of enabled messages.
     logBuf.enable(Log::LogLevel(conf->getui("log.level")));
 
+    if(allowPlugins)
+    {
 #if 0 // not yet handled by libdeng2
-    // Load the basic plugins.
-    loadPlugins();
+        // Load the basic plugins.
+        loadPlugins();
 #endif
+    }
 
     // Successful construction without errors, so drop our guard.
     _config = conf.take();

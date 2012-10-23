@@ -53,13 +53,23 @@ namespace de
             GUIEnabled = 1
         };
 
+        enum SubsystemInitFlag {
+            DefaultSubsystems   = 0x0,
+            DisablePlugins      = 0x1
+        };
+        Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
+
     public:
         App(int& argc, char** argv, GUIMode guiMode);
 
         /**
-         * Initializes all the application's subsystems. This includes Config and FS.
+         * Initializes all the application's subsystems. This includes Config
+         * and FS. Has to be called manually in the application's
+         * initialization routine.
+         *
+         * @param flags  How to/which subsystems to initialize.
          */
-        void initSubsystems();
+        void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
         bool notify(QObject* receiver, QEvent* event);
 
@@ -155,6 +165,8 @@ namespace de
         typedef std::map<String, Module*> Modules;
         Modules _modules;
     };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)
 }
 
 #endif // LIBDENG2_APP_H
