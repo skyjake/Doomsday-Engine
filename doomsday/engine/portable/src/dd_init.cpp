@@ -65,6 +65,7 @@
 #include <stdlib.h>
 #include <de/App>
 #include <de/Log>
+#include <de/Error>
 #include <de/c_wrapper.h>
 #include <de/garbage.h>
 #include "de_platform.h"
@@ -132,59 +133,68 @@ int main(int argc, char** argv)
         }
     }
 
-    // Application core.
-    de::App dengApp(argc, argv, useGUI);
-
-    // Override the system locale (affects number/time formatting).
-    QLocale::setDefault(QLocale("en_US.UTF-8"));
-
-    // Use the host system's proxy configuration.
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
-
-    // Metadata.
-    QApplication::setOrganizationDomain("dengine.net");
-    QApplication::setOrganizationName("Deng Team");
-    QApplication::setApplicationName("Doomsday Engine");
-    QApplication::setApplicationVersion(DOOMSDAY_VERSION_BASE);
-
-    // C interface to the app.
-    de2LegacyCore = LegacyCore_New(&dengApp);
-    LegacyCore_SetTerminateFunc(handleLegacyCoreTerminate);
-
-    Libdeng_Init();
-
     QMenuBar* menuBar = 0;
-    if(useGUI)
-    {
-        DisplayMode_Init();
 
-        // Check for updates automatically.
-        Updater_Init();
+    // Application core.
+    de::App dengApp(argc, argv, useGUI? de::App::GUIEnabled : de::App::GUIDisabled);
+
+    try
+    {
+        // Override the system locale (affects number/time formatting).
+        QLocale::setDefault(QLocale("en_US.UTF-8"));
+
+        // Use the host system's proxy configuration.
+        QNetworkProxyFactory::setUseSystemConfiguration(true);
+
+        // Metadata.
+        QApplication::setOrganizationDomain("dengine.net");
+        QApplication::setOrganizationName("Deng Team");
+        QApplication::setApplicationName("Doomsday Engine");
+        QApplication::setApplicationVersion(DOOMSDAY_VERSION_BASE);
+
+        // C interface to the app.
+        de2LegacyCore = LegacyCore_New(&dengApp);
+        LegacyCore_SetTerminateFunc(handleLegacyCoreTerminate);
+
+        dengApp.initSubsystems();
+
+        Libdeng_Init();
+
+        if(useGUI)
+        {
+            DisplayMode_Init();
+
+            // Check for updates automatically.
+            Updater_Init();
 
 #ifdef MACOSX
-        // Set up the application-wide menu.
-        menuBar = new QMenuBar;
-        QMenu* gameMenu = menuBar->addMenu("&Game");
-        QAction* checkForUpdates =
-                gameMenu->addAction("Check For &Updates...",
-                                    Updater_Instance(), SLOT(checkNowShowingProgress()));
-        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
+            // Set up the application-wide menu.
+            menuBar = new QMenuBar;
+            QMenu* gameMenu = menuBar->addMenu("&Game");
+            QAction* checkForUpdates = gameMenu->addAction("Check For &Updates...", Updater_Instance(),
+                                                           SLOT(checkNowShowingProgress()));
+            checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 #endif
-    }
+        }
 
-    // Initialize.
+        // Initialize.
 #if WIN32
-    if(!DD_Win32_Init()) return 1;
+        if(!DD_Win32_Init()) return 1;
 #elif UNIX
-    if(!DD_Unix_Init(argc, argv)) return 1;
+        if(!DD_Unix_Init()) return 1;
 #endif
 
-    // Create the main window.
-    char title[256];
-    DD_ComposeMainWindowTitle(title);
-    Window_New(novideo? WT_CONSOLE : WT_NORMAL, title);
+        // Create the main window.
+        char title[256];
+        DD_ComposeMainWindowTitle(title);
+        Window_New(novideo? WT_CONSOLE : WT_NORMAL, title);
 
-    LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
+        LegacyCore_SetLoopFunc(continueInitWithEventLoopRunning);
+    }
+    catch(const de::Error& er)
+    {
+        qFatal("App init failed: %s", er.asText().toLatin1().constData());
+    }
 
     // Run the main loop.
     int result = DD_GameLoop();

@@ -769,7 +769,7 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    DENG2_FOR_EACH(i, App_FileSystem()->nameIndex().lumps(), de::LumpIndex::Lumps::const_iterator)
+    DENG2_FOR_EACH_CONST(de::LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
     {
         de::File1 const& lump = **i;
         if(strnicmp(Str_Text(lump.name()), "DD_DEFNS", 8)) continue;
@@ -893,7 +893,7 @@ static void readAllDefinitions(void)
         de::FS1::PathList found;
         if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))
         {
-            DENG2_FOR_EACH(i, found, de::FS1::PathList::const_iterator)
+            DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
             {
                 // Ignore directories.
                 if(i->attrib & A_SUBDIR) continue;

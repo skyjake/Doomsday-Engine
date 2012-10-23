@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009, 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "libdeng2.h"
 
 #include <QString>
+#include <string>
 #include <stdexcept>
 
 /**
@@ -34,29 +35,22 @@
 namespace de {
 
 /**
- * Base class for error exceptions thrown by libdeng2.
+ * Base class for error exceptions thrown by libdeng2. @ingroup errors
  */
 class DENG2_PUBLIC Error : public std::runtime_error
 {
 public:
-    Error(const QString& where, const QString& message)
-        : std::runtime_error(("(" + where + ") " + message).toStdString()), _name("") {}
-    ~Error() throw() {}
-    virtual void raise() const { throw *this; }
-    QString name() const {
-        if(!_name.size()) return "Error";
-        return _name;
-    }
-    virtual QString asText() const {
-        return "[" + name() + "] " + std::runtime_error::what();
-    }
+    Error(const QString& where, const QString& message);
+    ~Error() throw();
+
+    QString name() const;
+    virtual QString asText() const;
+
 protected:
-    void setName(const QString& name) {
-        if(_name.size()) _name += "_";
-        _name += name;
-    }
+    void setName(const QString& name);
+
 private:
-    QString _name;
+    std::string _name;
 };
 
 } // namespace de
@@ -75,10 +69,11 @@ private:
         Name(const QString& where, const QString& message) \
             : Parent(where, message) { Parent::setName(#Name); } \
         virtual void raise() const { throw *this; } \
-    };    
+    } /**< @note One must put a semicolon after the macro invocation. */
 
 /**
  * Define a top-level exception class.
+ * @note One must put a semicolon after the macro invocation.
  */
 #define DENG2_ERROR(Name) DENG2_SUB_ERROR(de::Error, Name)
 

@@ -84,7 +84,7 @@ struct LumpIndex::Instance
         else            hashMap->resize(numElements);
 
         // Clear the chains.
-        DENG2_FOR_EACH(i, *hashMap, HashMap::iterator)
+        DENG2_FOR_EACH(HashMap, i, *hashMap)
         {
             i->head = -1;
         }
@@ -365,7 +365,7 @@ bool LumpIndex::catalogues(File1& file)
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
 
-    DENG2_FOR_EACH(i, d->lumps, Lumps::iterator)
+    DENG2_FOR_EACH(Lumps, i, d->lumps)
     {
         File1 const& lump = **i;
         if(&lump.container() == &file) return true;
@@ -423,7 +423,7 @@ void LumpIndex::print(LumpIndex const& index)
     Con_Printf("LumpIndex %p (%i records):\n", &index, numRecords);
 
     int idx = 0;
-    DENG2_FOR_EACH(i, index.lumps(), Lumps::const_iterator)
+    DENG2_FOR_EACH_CONST(Lumps, i, index.lumps())
     {
         File1 const& lump = **i;
         Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,

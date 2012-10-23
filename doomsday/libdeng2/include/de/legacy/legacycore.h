@@ -29,7 +29,7 @@ namespace de {
 class LegacyNetwork;
 
 /**
- * Transitional kernel for supporting legacy Dooomsday C code in accessing
+ * Transitional kernel for supporting legacy Doomsday C code in accessing
  * libdeng2 functionality. The legacy engine needs to construct one of these
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
@@ -111,9 +111,10 @@ public:
     /**
      * Sets the file where log output is to be written.
      *
-     * @param nativeFilePath  Path of a native file for writing output.
+     * @param filePath  Path of a native file for writing output. "/home/" will
+     *                  be automatically prepended to the path.
      */
-    void setLogFileName(const char* nativeFilePath);
+    void setLogFileName(const char* filePath);
 
     /**
      * Returns name of the the current log output file.

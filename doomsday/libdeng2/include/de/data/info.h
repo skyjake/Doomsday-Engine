@@ -111,7 +111,7 @@ public:
      */
     class BlockElement : public Element {
     public:
-        DENG2_ERROR(ValuesError)
+        DENG2_ERROR(ValuesError);
 
         typedef QHash<String, Element*> Contents;
         typedef QList<Element*> ContentsInOrder;
@@ -189,10 +189,18 @@ public:
 
 public:
     /// The parser encountered a syntax error in the source file. @ingroup errors
-    DENG2_ERROR(SyntaxError)
+    DENG2_ERROR(SyntaxError);
 
 public:
     Info();
+
+    /**
+     * Parses a string of text as Info source.
+     *
+     * @param source  Info source text.
+     */
+    Info(const String& source);
+
     ~Info();
 
     /**
@@ -202,9 +210,27 @@ public:
      */
     void parse(const String& infoSource);
 
+    /**
+     * Parses the Info contents from a native text file.
+     *
+     * @param nativePath  Path of a native file containing the Info source.
+     */
+    void parseNativeFile(const String& nativePath);
+
     const BlockElement& root() const;
 
     const Element* findByPath(const String& path) const;
+
+    /**
+     * Finds the value of a key.
+     *
+     * @param key    Key to find.
+     * @param value  The value is returned here.
+     *
+     * @return @c true, if the key was found and @a value is valid. If @c
+     * false, the key was not found and @a value is not changed.
+     */
+    bool findValueForKey(const String& key, String& value) const;
 
 private:
     struct Instance;

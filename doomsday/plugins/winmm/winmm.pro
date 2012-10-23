@@ -9,9 +9,8 @@ include(../config_plugin.pri)
 }
 
 TEMPLATE = lib
-TARGET = dsWinMM
-
-VERSION = $$WINMM_VERSION
+TARGET   = audio_winmm
+VERSION  = $$WINMM_VERSION
 
 INCLUDEPATH += include
 
@@ -34,4 +33,4 @@ QMAKE_LFLAGS += /DEF:\"$$PWD/api/dswinmm.def\"
 OTHER_FILES += api/dswinmm.def
 
 INSTALLS += target
-target.path = $$DENG_LIB_DIR
+target.path = $$DENG_PLUGIN_LIB_DIR

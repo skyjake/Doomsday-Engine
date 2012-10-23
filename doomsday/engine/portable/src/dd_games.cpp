@@ -51,7 +51,7 @@ struct GameCollection::Instance
 
     ~Instance()
     {
-        DENG2_FOR_EACH(i, games, GameCollection::Games::const_iterator)
+        DENG2_FOR_EACH_CONST(GameCollection::Games, i, games)
         {
             delete *i;
         }
@@ -119,7 +119,7 @@ GameCollection& GameCollection::setCurrentGame(Game& game)
 int GameCollection::numPlayable() const
 {
     int count = 0;
-    DENG2_FOR_EACH(i, d->games, Games::const_iterator)
+    DENG2_FOR_EACH_CONST(Games, i, d->games)
     {
         Game* game = *i;
         if(!game->allStartupResourcesFound()) continue;
@@ -130,7 +130,7 @@ int GameCollection::numPlayable() const
 
 Game* GameCollection::firstPlayable() const
 {
-    DENG2_FOR_EACH(i, d->games, Games::const_iterator)
+    DENG2_FOR_EACH_CONST(Games, i, d->games)
     {
         Game* game = *i;
         if(game->allStartupResourcesFound()) return game;
@@ -162,7 +162,7 @@ Game& GameCollection::byIdentityKey(char const* identityKey) const
 {
     if(identityKey && identityKey[0])
     {
-        DENG2_FOR_EACH(i, d->games, GameCollection::Games::const_iterator)
+        DENG2_FOR_EACH_CONST(GameCollection::Games, i, d->games)
         {
             Game* game = *i;
             if(!Str_CompareIgnoreCase(&game->identityKey(), identityKey))
@@ -188,7 +188,7 @@ GameCollection::Games const& GameCollection::games() const
 int GameCollection::findAll(GameList& found)
 {
     int numFoundSoFar = found.count();
-    DENG2_FOR_EACH(i, d->games, Games::const_iterator)
+    DENG2_FOR_EACH_CONST(Games, i, d->games)
     {
         found.push_back(GameListItem(*i));
     }
@@ -334,7 +334,7 @@ static int locateAllResourcesWorker(void* parameters)
 {
     GameCollection* gameCollection = (GameCollection*) parameters;
     int n = 0;
-    DENG2_FOR_EACH(i, gameCollection->games(), GameCollection::Games::const_iterator)
+    DENG2_FOR_EACH_CONST(GameCollection::Games, i, gameCollection->games())
     {
         Game* game = *i;
 
@@ -380,7 +380,7 @@ D_CMD(ListGames)
     qSort(found.begin(), found.end());
 
     int numCompleteGames = 0;
-    DENG2_FOR_EACH(i, found, de::GameCollection::GameList::const_iterator)
+    DENG2_FOR_EACH_CONST(de::GameCollection::GameList, i, found)
     {
         de::Game* game = i->game;
 

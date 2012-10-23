@@ -19,20 +19,26 @@ echo "Clearing existing bundles..."
 rm -rf $BUILDDIR/*.bundle
 
 echo "Copying bundles from plugins..."
-$CP plugins/dehread/dpDehRead.bundle $BUILDDIR/dpDehRead.bundle
-$CP plugins/wadmapconverter/dpWadMapConverter.bundle $BUILDDIR/dpWadMapConverter.bundle
-$CP plugins/jdoom/jDoom.bundle $BUILDDIR/jDoom.bundle
-$CP plugins/jheretic/jHeretic.bundle $BUILDDIR/jHeretic.bundle
-$CP plugins/jhexen/jHexen.bundle $BUILDDIR/jHexen.bundle
-$CP plugins/jdoom64/jDoom64.bundle $BUILDDIR/jDoom64.bundle
-$CP plugins/fmod/dsFMOD.bundle $BUILDDIR/dsFMOD.bundle
+PLUGDIR=$APPDIR/DengPlugins
+rm -rf $PLUGDIR
+mkdir -p $PLUGDIR
+$CP plugins/dehread/dehread.bundle                 $PLUGDIR/
+$CP plugins/wadmapconverter/wadmapconverter.bundle $PLUGDIR/
+$CP plugins/jdoom/doom.bundle                      $PLUGDIR/
+$CP plugins/jheretic/heretic.bundle                $PLUGDIR/
+$CP plugins/jhexen/hexen.bundle                    $PLUGDIR/
+$CP plugins/jdoom64/doom64.bundle                  $PLUGDIR/
+$CP plugins/fmod/audio_fmod.bundle                 $PLUGDIR/
+
+# Tools
+#$CP $SRCDIR/../tools/wadtool/wadtool $APPDIR/Resources
 $CP $SRCDIR/../tools/texc/texc $APPDIR/Resources
 $CP $SRCDIR/../tools/md2tool/md2tool $APPDIR/Resources
 
-if [ -e plugins/fluidsynth/dsFluidSynth.bundle ]; then
-    $CP plugins/fluidsynth/dsFluidSynth.bundle $BUILDDIR/dsFluidSynth.bundle
+if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
+    $CP plugins/fluidsynth/audio_fluidsynth.bundle $PLUGDIR/
 
-    echo "Installing deps for dsFluidSynth..."
+    echo "Installing deps for audio_fluidsynth..."
     FWDIR=$BUILDDIR/Doomsday.app/Contents/Frameworks
     cp /usr/local/lib/libglib-2.0.0.dylib $FWDIR
     cp /usr/local/lib/libgthread-2.0.0.dylib $FWDIR
@@ -54,8 +60,8 @@ if [ -e plugins/fluidsynth/dsFluidSynth.bundle ]; then
     install_name_tool -change /usr/local/Cellar/gettext/0.18.1.1/lib/libintl.8.dylib \
     	@executable_path/../Frameworks/libintl.8.dylib $FWDIR/libgthread-2.0.0.dylib
 
-    # dsFluidSynth
-    DSFS=$BUILDDIR/dsFluidSynth.bundle/dsFluidSynth
+    # audio_fluidsynth
+    DSFS=$PLUGDIR/audio_fluidsynth.bundle/audio_fluidsynth
     install_name_tool -change /usr/local/lib/libglib-2.0.0.dylib \
     	@executable_path/../Frameworks/libglib-2.0.0.dylib $DSFS
     install_name_tool -change /usr/local/lib/libgthread-2.0.0.dylib \

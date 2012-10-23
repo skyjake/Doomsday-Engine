@@ -600,7 +600,7 @@ static void destroyBindings(void)
     {
         if(!namespaces[i]) continue;
 
-        DENG2_FOR_EACH(nodeIt, namespaces[i]->leafNodes(), MaterialDirectory::Nodes::const_iterator)
+        DENG2_FOR_EACH_CONST(MaterialDirectory::Nodes, nodeIt, namespaces[i]->leafNodes())
         {
             MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
             if(mb)
@@ -701,7 +701,7 @@ void Materials_ClearDefinitionLinks(void)
         MaterialDirectory* matDirectory = getDirectoryForNamespaceId(namespaceId);
         if(!matDirectory) continue;
 
-        DENG2_FOR_EACH(nodeIt, matDirectory->leafNodes(), MaterialDirectory::Nodes::const_iterator)
+        DENG2_FOR_EACH_CONST(MaterialDirectory::Nodes, nodeIt, matDirectory->leafNodes())
         {
             MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
             if(mb)
@@ -1551,7 +1551,7 @@ static MaterialDirectoryNode** collectDirectoryNodes(materialnamespaceid_t names
         MaterialDirectory* matDirectory = getDirectoryForNamespaceId(iterId);
         if(!matDirectory) continue;
 
-        DENG2_FOR_EACH(nodeIt, matDirectory->leafNodes(), MaterialDirectory::Nodes::const_iterator)
+        DENG2_FOR_EACH_CONST(MaterialDirectory::Nodes, nodeIt, matDirectory->leafNodes())
         {
             if(like && like[0])
             {

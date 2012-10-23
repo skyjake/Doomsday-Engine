@@ -77,11 +77,11 @@ static const DehReaderFlag DehReaderFlagsIncludeMask = IgnoreEOF;
 class DehReader
 {
     /// The parser encountered a syntax error in the source file. @ingroup errors
-    DENG2_ERROR(SyntaxError)
+    DENG2_ERROR(SyntaxError);
     /// The parser encountered an unknown section in the source file. @ingroup errors
-    DENG2_ERROR(UnknownSection)
+    DENG2_ERROR(UnknownSection);
     /// The parser reached the end of the source file. @ingroup errors
-    DENG2_ERROR(EndOfFile)
+    DENG2_ERROR(EndOfFile);
 
     const Block& patch;
     int pos;
@@ -719,7 +719,7 @@ public:
         // Split the argument into discreet tokens and process each individually.
         /// @todo Re-implement with a left-to-right algorithm.
         QStringList tokens = arg.split(QRegExp("[,+| ]|\t|\f|\r"), QString::SkipEmptyParts);
-        DENG2_FOR_EACH(i, tokens, QStringList::const_iterator)
+        DENG2_FOR_EACH_CONST(QStringList, i, tokens)
         {
             const String& token = *i;
             bool tokenIsNumber;

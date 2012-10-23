@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 #include "de/ByteSubArray"
 
-using namespace de;
+namespace de {
 
 ByteSubArray::ByteSubArray(IByteArray& mainArray, Offset at, Size size)
     : _mainArray(&mainArray), _constMainArray(&mainArray), _at(at), _size(size)
@@ -49,3 +49,5 @@ void ByteSubArray::set(Offset at, const Byte* values, Size count)
     _mainArray->set(_at + at, values, count);
     _size = qMax(_size, at + count);
 }
+
+} // namespace de

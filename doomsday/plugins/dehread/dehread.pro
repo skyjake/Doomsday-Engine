@@ -8,11 +8,8 @@ CONFIG += dengplugin_libdeng2_full
 include(../config_plugin.pri)
 
 TEMPLATE = lib
-
-win32|macx: TARGET = dpDehRead
-      else: TARGET = dpdehread
-
-VERSION = $$DEHREAD_VERSION
+TARGET   = dehread
+VERSION  = $$DEHREAD_VERSION
 
 # TODO: the dependencies to internal headers should be removed
 # (see comment in dehread.cpp)
@@ -40,10 +37,10 @@ win32 {
 
 !macx {
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
 macx {
-    linkToBundledLibdeng2(dpDehRead)
-    linkToBundledLibdeng(dpDehRead)
+    linkToBundledLibdeng2(dehread)
+    linkToBundledLibdeng(dehread)
 }

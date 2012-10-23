@@ -7,12 +7,10 @@ include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-win32|macx: TARGET = jHexen
-      else: TARGET = jhexen
+TARGET   = hexen
+VERSION  = $$JHEXEN_VERSION
 
 DEFINES += __JHEXEN__
-
-VERSION = $$JHEXEN_VERSION
 
 gamedata.files = $$OUT_PWD/../../jhexen.pk3
 
@@ -24,7 +22,7 @@ macx {
 else {
     INSTALLS += target gamedata
 
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
     gamedata.path = $$DENG_DATA_DIR/jhexen
 }
 
@@ -118,6 +116,6 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(jHexen)
-    linkToBundledLibdeng(jHexen)
+    linkToBundledLibdeng2(hexen)
+    linkToBundledLibdeng(hexen)
 }

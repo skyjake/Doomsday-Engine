@@ -6,7 +6,7 @@ CONFIG += ordered
 SUBDIRS = \
     build \
     libdeng2 libdeng \
-    engine plugins host
+    engine plugins host tests
 
 !deng_notools {
     SUBDIRS += \

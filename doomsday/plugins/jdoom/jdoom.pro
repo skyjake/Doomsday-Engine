@@ -7,12 +7,10 @@ include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-win32|macx: TARGET = jDoom
-      else: TARGET = jdoom
+TARGET   = doom
+VERSION  = $$JDOOM_VERSION
 
 DEFINES += __JDOOM__
-
-VERSION = $$JDOOM_VERSION
 
 gamedata.files = $$OUT_PWD/../../jdoom.pk3
 
@@ -24,7 +22,7 @@ macx {
 else {
     INSTALLS += target gamedata
 
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
     gamedata.path = $$DENG_DATA_DIR/jdoom
 }
 
@@ -140,6 +138,6 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(jDoom)
-    linkToBundledLibdeng(jDoom)
+    linkToBundledLibdeng2(doom)
+    linkToBundledLibdeng(doom)
 }

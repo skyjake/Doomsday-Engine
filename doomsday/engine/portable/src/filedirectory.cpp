@@ -66,7 +66,7 @@ de::FileDirectory::~FileDirectory()
 
 void de::FileDirectory::clearNodeInfo()
 {
-    DENG2_FOR_EACH(i, leafNodes(), Nodes::const_iterator)
+    DENG2_FOR_EACH_CONST(Nodes, i, leafNodes())
     {
         FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->userData());
         if(info)
@@ -77,7 +77,7 @@ void de::FileDirectory::clearNodeInfo()
         }
     }
 
-    DENG2_FOR_EACH(i, branchNodes(), Nodes::const_iterator)
+    DENG2_FOR_EACH_CONST(Nodes, i, branchNodes())
     {
         FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>((*i)->userData());
         if(info)
@@ -198,7 +198,7 @@ int de::FileDirectory::addChildNodes(de::PathDirectoryNode& node, int flags,
         FS1::PathList found;
         if(App_FileSystem()->findAllPaths(Str_Text(&searchPattern), flags, found))
         {
-            DENG2_FOR_EACH(i, found, FS1::PathList::const_iterator)
+            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
             {
                 QByteArray foundPathUtf8 = i->path.toUtf8();
                 ddstring_t foundPath; Str_InitStatic(&foundPath, foundPathUtf8.constData());
@@ -242,7 +242,7 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
                     // Does caller want to process it again?
                     if(callback)
                     {
-                        DENG2_FOR_EACH(i, leafNodes(), Nodes::const_iterator)
+                        DENG2_FOR_EACH_CONST(Nodes, i, leafNodes())
                         {
                             if(node == (*i)->parent())
                             {
@@ -253,7 +253,7 @@ int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
 
                         if(!result)
                         {
-                            DENG2_FOR_EACH(i, branchNodes(), Nodes::const_iterator)
+                            DENG2_FOR_EACH_CONST(Nodes, i, branchNodes())
                             {
                                 if(node == (*i)->parent())
                                 {

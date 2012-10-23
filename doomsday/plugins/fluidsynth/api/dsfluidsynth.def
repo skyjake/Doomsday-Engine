@@ -1,8 +1,10 @@
-LIBRARY			DSFLUIDSYNTH
+LIBRARY			AUDIO_FLUIDSYNTH
 
 ; All exports should be prefixed DS_.
 
 EXPORTS
+
+deng_LibraryType
 
 DS_Init
 DS_Shutdown

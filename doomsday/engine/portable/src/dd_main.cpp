@@ -299,7 +299,7 @@ static int addFilesFromAutoData(void)
         FS1::PathList found;
         if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))
         {
-            DENG2_FOR_EACH(i, found, FS1::PathList::const_iterator)
+            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
             {
                 // Ignore directories.
                 if(i->attrib & A_SUBDIR) continue;
@@ -344,7 +344,7 @@ static int listFilesFromAutoData(ddstring_t*** list, size_t* listSize)
         FS1::PathList found;
         if(App_FileSystem()->findAllPaths(Str_Text(&pattern), 0, found))
         {
-            DENG2_FOR_EACH(i, found, FS1::PathList::const_iterator)
+            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
             {
                 // Ignore directories.
                 if(i->attrib & A_SUBDIR) continue;
@@ -637,7 +637,7 @@ static void initPathLumpMappings()
     uint8_t* buf = NULL;
 
     // Add the contents of all DD_DIREC lumps.
-    DENG2_FOR_EACH(i, App_FileSystem()->nameIndex().lumps(), LumpIndex::Lumps::const_iterator)
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
     {
         de::File1& lump = **i;
         FileInfo const& lumpInfo = lump.info();
@@ -726,7 +726,13 @@ static int DD_ActivateGameWorker(void* parameters)
 
     // Now that resources have been located we can begin to initialize the game.
     if(DD_GameLoaded() && gx.PreInit)
+    {
+        DENG_ASSERT(games->currentGame().pluginId() != 0);
+
+        DD_SetActivePluginId(games->currentGame().pluginId());
         gx.PreInit(games->id(games->currentGame()));
+        DD_SetActivePluginId(0);
+    }
 
     if(p->initiatedBusyMode)
         Con_SetProgress(100);
@@ -800,7 +806,9 @@ static int DD_ActivateGameWorker(void* parameters)
 
     if(gx.PostInit)
     {
+        DD_SetActivePluginId(games->currentGame().pluginId());
         gx.PostInit();
+        DD_SetActivePluginId(0);
     }
 
     if(p->initiatedBusyMode)
@@ -808,6 +816,7 @@ static int DD_ActivateGameWorker(void* parameters)
         Con_SetProgress(200);
         BusyMode_WorkerEnd();
     }
+
     return 0;
 }
 
@@ -944,7 +953,7 @@ gameid_t DD_DefineGame(GameDef const* def)
     if(!game) return 0; // Invalid def.
 
     // Add this game to our records.
-    game->setPluginId(DD_PluginIdForActiveHook());
+    game->setPluginId(DD_ActivePluginId());
     games->add(*game);
     return games->id(*game);
 }
@@ -1060,7 +1069,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         { // Tell the plugin it is being unloaded.
             void* unloader = DD_FindEntryPoint(games->currentGame().pluginId(), "DP_Unload");
             DEBUG_Message(("DD_ChangeGame: Calling DP_Unload (%p)\n", unloader));
+            DD_SetActivePluginId(games->currentGame().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
+            DD_SetActivePluginId(0);
         }
 
         // The current game is now the special "null-game".
@@ -1169,7 +1180,9 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             /// @todo Must this be done in the main thread?
             void* loader = DD_FindEntryPoint(games->currentGame().pluginId(), "DP_Load");
             DEBUG_Message(("DD_ChangeGame: Calling DP_Load (%p)\n", loader));
+            DD_SetActivePluginId(games->currentGame().pluginId());
             if(loader) ((pluginfunc_t)loader)();
+            DD_SetActivePluginId(0);
         }
 
         /// @kludge Use more appropriate task names when unloading a game.
@@ -1195,6 +1208,8 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             DD_StartTitle();
         }
     }
+
+    DENG_ASSERT(DD_ActivePluginId() == 0);
 
     /**
      * Clear any input events we may have accumulated during this process.
@@ -1337,6 +1352,12 @@ boolean DD_Init(void)
         int32_t int32 = 0;
         int16_t int16 = 0;
         float float32 = 0;
+
+        DENG_UNUSED(ptr);
+        DENG_UNUSED(int32);
+        DENG_UNUSED(int16);
+        DENG_UNUSED(float32);
+
         ASSERT_32BIT(int32);
         ASSERT_16BIT(int16);
         ASSERT_32BIT(float32);

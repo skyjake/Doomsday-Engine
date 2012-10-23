@@ -1,5 +1,5 @@
 /**
- * @file audiodriver.c
+ * @file audiodriver.cpp
  * Audio driver loading and interface management. @ingroup audio
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -26,6 +26,9 @@
 #include "de_audio.h"
 #include "sys_audio.h"
 #include "audiodriver.h"
+
+#include <de/Library>
+#include <de/LibraryFile>
 
 typedef struct driver_s {
     Library* library;
@@ -66,60 +69,85 @@ static audiointerface_t activeInterfaces[MAX_AUDIO_INTERFACES];
 
 #ifdef MACOSX
 /// Built-in QuickTime audio interface implemented by MusicPlayer.m
-extern audiointerface_music_t audiodQuickTimeMusic;
+DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #endif
 
 static void importInterfaces(driver_t* d)
 {
-#define Imp(name) Library_Symbol(d->library, name)
+    de::Library& lib = Library_File(d->library).library();
 
-    d->interface.Init     = Imp("DS_Init");
-    d->interface.Shutdown = Imp("DS_Shutdown");
-    d->interface.Event    = Imp("DS_Event");
-    d->interface.Set      = Imp("DS_Set");
+    lib.setSymbolPtr( d->interface.Init,        "DS_Init");
+    lib.setSymbolPtr( d->interface.Shutdown,    "DS_Shutdown");
+    lib.setSymbolPtr( d->interface.Event,       "DS_Event");
+    lib.setSymbolPtr( d->interface.Set,         "DS_Set", de::Library::OptionalSymbol);
 
-    if(Imp("DS_SFX_Init"))
+    if(lib.hasSymbol("DS_SFX_Init"))
     {
-        d->sfx.gen.Init      = Imp("DS_SFX_Init");
-        d->sfx.gen.Create    = Imp("DS_SFX_CreateBuffer");
-        d->sfx.gen.Destroy   = Imp("DS_SFX_DestroyBuffer");
-        d->sfx.gen.Load      = Imp("DS_SFX_Load");
-        d->sfx.gen.Reset     = Imp("DS_SFX_Reset");
-        d->sfx.gen.Play      = Imp("DS_SFX_Play");
-        d->sfx.gen.Stop      = Imp("DS_SFX_Stop");
-        d->sfx.gen.Refresh   = Imp("DS_SFX_Refresh");
-        d->sfx.gen.Set       = Imp("DS_SFX_Set");
-        d->sfx.gen.Setv      = Imp("DS_SFX_Setv");
-        d->sfx.gen.Listener  = Imp("DS_SFX_Listener");
-        d->sfx.gen.Listenerv = Imp("DS_SFX_Listenerv");
-        d->sfx.gen.Getv      = Imp("DS_SFX_Getv");
+        lib.setSymbolPtr( d->sfx.gen.Init,      "DS_SFX_Init");
+        lib.setSymbolPtr( d->sfx.gen.Create,    "DS_SFX_CreateBuffer");
+        lib.setSymbolPtr( d->sfx.gen.Destroy,   "DS_SFX_DestroyBuffer");
+        lib.setSymbolPtr( d->sfx.gen.Load,      "DS_SFX_Load");
+        lib.setSymbolPtr( d->sfx.gen.Reset,     "DS_SFX_Reset");
+        lib.setSymbolPtr( d->sfx.gen.Play,      "DS_SFX_Play");
+        lib.setSymbolPtr( d->sfx.gen.Stop,      "DS_SFX_Stop");
+        lib.setSymbolPtr( d->sfx.gen.Refresh,   "DS_SFX_Refresh");
+        lib.setSymbolPtr( d->sfx.gen.Set,       "DS_SFX_Set");
+        lib.setSymbolPtr( d->sfx.gen.Setv,      "DS_SFX_Setv");
+        lib.setSymbolPtr( d->sfx.gen.Listener,  "DS_SFX_Listener");
+        lib.setSymbolPtr( d->sfx.gen.Listenerv, "DS_SFX_Listenerv");
+        lib.setSymbolPtr( d->sfx.gen.Getv,      "DS_SFX_Getv", de::Library::OptionalSymbol);
     }
 
-    if(Imp("DM_Music_Init"))
+    if(lib.hasSymbol("DM_Music_Init"))
     {
-        d->music.gen.Init   = Imp("DM_Music_Init");
-        d->music.gen.Update = Imp("DM_Music_Update");
-        d->music.gen.Get    = Imp("DM_Music_Get");
-        d->music.gen.Set    = Imp("DM_Music_Set");
-        d->music.gen.Pause  = Imp("DM_Music_Pause");
-        d->music.gen.Stop   = Imp("DM_Music_Stop");
-        d->music.SongBuffer = Imp("DM_Music_SongBuffer");
-        d->music.Play       = Imp("DM_Music_Play");
-        d->music.PlayFile   = Imp("DM_Music_PlayFile");
+        lib.setSymbolPtr( d->music.gen.Init,    "DM_Music_Init");
+        lib.setSymbolPtr( d->music.gen.Update,  "DM_Music_Update");
+        lib.setSymbolPtr( d->music.gen.Get,     "DM_Music_Get");
+        lib.setSymbolPtr( d->music.gen.Set,     "DM_Music_Set");
+        lib.setSymbolPtr( d->music.gen.Pause,   "DM_Music_Pause");
+        lib.setSymbolPtr( d->music.gen.Stop,    "DM_Music_Stop");
+        lib.setSymbolPtr( d->music.SongBuffer,  "DM_Music_SongBuffer", de::Library::OptionalSymbol);
+        lib.setSymbolPtr( d->music.Play,        "DM_Music_Play", de::Library::OptionalSymbol);
+        lib.setSymbolPtr( d->music.PlayFile,    "DM_Music_PlayFile", de::Library::OptionalSymbol);
     }
 
-    if(Imp("DM_CDAudio_Init"))
+    if(lib.hasSymbol("DM_CDAudio_Init"))
     {
-        d->cd.gen.Init   = Imp("DM_CDAudio_Init");
-        d->cd.gen.Update = Imp("DM_CDAudio_Update");
-        d->cd.gen.Set    = Imp("DM_CDAudio_Set");
-        d->cd.gen.Get    = Imp("DM_CDAudio_Get");
-        d->cd.gen.Pause  = Imp("DM_CDAudio_Pause");
-        d->cd.gen.Stop   = Imp("DM_CDAudio_Stop");
-        d->cd.Play       = Imp("DM_CDAudio_Play");
+        lib.setSymbolPtr( d->cd.gen.Init,       "DM_CDAudio_Init");
+        lib.setSymbolPtr( d->cd.gen.Update,     "DM_CDAudio_Update");
+        lib.setSymbolPtr( d->cd.gen.Set,        "DM_CDAudio_Set");
+        lib.setSymbolPtr( d->cd.gen.Get,        "DM_CDAudio_Get");
+        lib.setSymbolPtr( d->cd.gen.Pause,      "DM_CDAudio_Pause");
+        lib.setSymbolPtr( d->cd.gen.Stop,       "DM_CDAudio_Stop");
+        lib.setSymbolPtr( d->cd.Play,           "DM_CDAudio_Play");
+    }
+}
+
+static int audioPluginFinder(void* libFile, const char* fileName, const char* absPath, void* ptr)
+{
+    de::LibraryFile* lib = reinterpret_cast<de::LibraryFile*>(libFile);
+    Str* path = (Str*) ptr;
+
+    DENG2_UNUSED(fileName);
+
+    if(lib->hasUnderscoreName(Str_Text(path)))
+    {
+        Str_Set(path, absPath);
+        return true;
     }
 
-#undef Imp
+    return false; // Keep looking...
+}
+
+static AutoStr* findAudioPluginPath(const char* name)
+{
+    AutoStr* path = AutoStr_FromText(name);
+    if(Library_IterateAvailableLibraries(audioPluginFinder, path))
+    {
+        // The full path of the library was returned in @a path.
+        return path;
+    }
+    return 0;
 }
 
 static boolean loadAudioDriver(driver_t* driver, const char* name)
@@ -128,29 +156,18 @@ static boolean loadAudioDriver(driver_t* driver, const char* name)
 
     if(name && name[0])
     {
-        Str libPath;
-
-        // Compose the name using the prefix "ds".
-        Str_InitStd(&libPath);
-#ifdef WIN32
-        Str_Appendf(&libPath, "%sds%s.dll", ddBinPath, name);
-#elif defined(MACOSX)
-        Str_Appendf(&libPath, "ds%s.bundle", name);
-#else
-        Str_Appendf(&libPath, "libds%s.so", name);
-#endif
+        AutoStr* libPath = findAudioPluginPath(name);
 
         // Load the audio driver library and import symbols.
-        if((driver->library = Library_New(Str_Text(&libPath))) != 0)
+        if(libPath && (driver->library = Library_New(Str_Text(libPath))) != 0)
         {
             importInterfaces(driver);
             ok = true;
         }
         else
         {
-            Con_Message("Warning: loadAudioDriver: Loading of \"%s\" failed.\n", Str_Text(&libPath));
+            Con_Message("Warning: loadAudioDriver: Loading of \"%s\" failed.\n", name);
         }
-        Str_Free(&libPath);
     }
     return ok;
 }
@@ -172,15 +189,14 @@ static const char* getDriverName(audiodriverid_t id)
     return 0; // Unreachable.
 }
 
-static int identifierToDriverId(const char* name)
+static audiodriverid_t identifierToDriverId(const char* name)
 {
-    int i;
-    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
+    for(int i = 0; i < AUDIODRIVER_COUNT; ++i)
     {
-        if(!stricmp(name, driverIdentifier[i])) return i;
+        if(!stricmp(name, driverIdentifier[i])) return (audiodriverid_t) i;
     }
     Con_Message("'%s' is not a valid audio driver name.\n", name);
-    return -1;
+    return AUDIOD_INVALID;
 }
 
 static boolean isDriverInited(audiodriverid_t id)
@@ -222,22 +238,6 @@ static boolean initDriver(audiodriverid_t id)
         break;
 #endif
 
-#ifdef MACOSX
-    case AUDIOD_OPENAL:
-        if(!loadAudioDriver(d, "OpenAL"))
-            return false;
-        break;
-
-    case AUDIOD_FMOD:
-        if(!loadAudioDriver(d, "FMOD"))
-            return false;
-        break;
-
-    case AUDIOD_FLUIDSYNTH:
-        if(!loadAudioDriver(d, "FluidSynth"))
-            return false;
-        break;
-#else
     case AUDIOD_OPENAL:
         if(!loadAudioDriver(d, "openal"))
             return false;
@@ -252,7 +252,6 @@ static boolean initDriver(audiodriverid_t id)
         if(!loadAudioDriver(d, "fluidsynth"))
             return false;
         break;
-#endif
 
 #ifdef WIN32
     case AUDIOD_DSOUND:
@@ -592,13 +591,13 @@ AutoStr* AudioDriver_InterfaceName(void* anyAudioInterface)
         if((void*)&d->sfx == anyAudioInterface)
         {
             /// @todo  SFX interfaces can't be named yet.
-            return AutoStr_FromText(getDriverName(i));
+            return AutoStr_FromText(getDriverName(audiodriverid_t(i)));
         }
 
         if((void*)&d->music == anyAudioInterface || (void*)&d->cd == anyAudioInterface)
         {
             char buf[256];  /// @todo  This could easily overflow...
-            audiointerface_music_generic_t* gen = anyAudioInterface;
+            audiointerface_music_generic_t* gen = (audiointerface_music_generic_t*) anyAudioInterface;
             if(gen->Get(MUSIP_ID, buf))
             {
                 return AutoStr_FromTextStd(buf);

@@ -409,7 +409,7 @@ struct de::PathDirectory::Instance
     static void collectPathsInHash(de::PathDirectory::Nodes& ph, char delimiter,
         ddstring_t** pathListAdr)
     {
-        DENG2_FOR_EACH(i, ph, de::PathDirectory::Nodes::const_iterator)
+        DENG2_FOR_EACH_CONST(de::PathDirectory::Nodes, i, ph)
         {
             Str_Init(*pathListAdr);
             (*i)->composePath((*pathListAdr), NULL, delimiter);
@@ -419,7 +419,7 @@ struct de::PathDirectory::Instance
 
     static void clearPathHash(de::PathDirectory::Nodes& ph)
     {
-        DENG2_FOR_EACH(i, ph, de::PathDirectory::Nodes::iterator)
+        DENG2_FOR_EACH(de::PathDirectory::Nodes, i, ph)
         {
 #if _DEBUG
             if((*i)->userData())
@@ -1127,7 +1127,7 @@ static int iteratePathsInHash(PathDirectory* pd,
     else
     {
         // No - iterate all nodes.
-        DENG2_FOR_EACH(i, nodes, de::PathDirectory::Nodes::const_iterator)
+        DENG2_FOR_EACH_CONST(de::PathDirectory::Nodes, i, nodes)
         {
             if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
@@ -1174,7 +1174,7 @@ static int iteratePathsInHash_Const(PathDirectory const* pd,
     else
     {
         // No - iterate all nodes.
-        DENG2_FOR_EACH(i, nodes, de::PathDirectory::Nodes::const_iterator)
+        DENG2_FOR_EACH_CONST(de::PathDirectory::Nodes, i, nodes)
         {
             if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {

@@ -445,7 +445,7 @@ struct Partitioner::Instance
      */
     void createInitialHEdges(SuperBlock& hedgeList)
     {
-        DENG2_FOR_EACH(i, lineDefInfos, LineDefInfos::iterator)
+        DENG2_FOR_EACH(LineDefInfos, i, lineDefInfos)
         {
             LineDefInfo const& lineInfo = *i;
             LineDef* line = lineInfo.lineDef;
@@ -1118,7 +1118,7 @@ struct Partitioner::Instance
         }
 
         // Check partition against all half-edges.
-        DENG2_FOR_EACH(it, block.hedges(), SuperBlock::HEdges::const_iterator)
+        DENG2_FOR_EACH_CONST(SuperBlock::HEdges, it, block.hedges())
         {
             // Do we already have a better choice?
             if(best && !(cost < bestCost)) return false; // Stop iteration.
@@ -1209,7 +1209,7 @@ struct Partitioner::Instance
         DENG2_ASSERT(best);
 
         // Test each half-edge as a potential partition.
-        DENG2_FOR_EACH(it, partList.hedges(), SuperBlock::HEdges::const_iterator)
+        DENG2_FOR_EACH_CONST(SuperBlock::HEdges, it, partList.hedges())
         {
             HEdge* hedge = *it;
 
@@ -1328,7 +1328,7 @@ struct Partitioner::Instance
 #if 0
         const bool isDegenerate = hedges.size() < 3;
         bool isOrphan = true;
-        DENG2_FOR_EACH(it, hedges, HEdgeList::const_iterator)
+        DENG2_FOR_EACH_CONST(HEdgeList, it, hedges)
         {
             const HEdge* hedge = *it;
             if(hedge->lineDef && hedge->lineDef->L_sector(hedge->side))
@@ -1340,7 +1340,7 @@ struct Partitioner::Instance
 #endif
 
         BspLeaf* leaf = 0;
-        DENG2_FOR_EACH(it, hedges, HEdgeList::const_iterator)
+        DENG2_FOR_EACH_CONST(HEdgeList, it, hedges)
         {
             HEdge* hedge = *it;
 #if 0
@@ -1598,7 +1598,7 @@ struct Partitioner::Instance
 
     void clearPartitionIntercepts()
     {
-        DENG2_FOR_EACH(it, partition.intercepts(), HPlane::Intercepts::const_iterator)
+        DENG2_FOR_EACH_CONST(HPlane::Intercepts, it, partition.intercepts())
         {
             HEdgeIntercept* intercept = static_cast<HEdgeIntercept*>((*it).userData());
             if(intercept) delete intercept;
@@ -1848,7 +1848,7 @@ struct Partitioner::Instance
     void windLeafs()
     {
         HEdgeSortBuffer sortBuffer;
-        DENG2_FOR_EACH(it, treeNodeMap, BspTreeNodeMap::iterator)
+        DENG2_FOR_EACH(BspTreeNodeMap, it, treeNodeMap)
         {
             BspTreeNode* node = it->second;
             if(!node->isLeaf()) continue;
@@ -1888,7 +1888,7 @@ struct Partitioner::Instance
     {
         if(!vertex) return NULL; // Hmm...
 
-        DENG2_FOR_EACH(it, partition.intercepts(), HPlane::Intercepts::const_iterator)
+        DENG2_FOR_EACH_CONST(HPlane::Intercepts, it, partition.intercepts())
         {
             HPlaneIntercept const* inter = &*it;
             HEdgeIntercept* hedgeInter = reinterpret_cast<HEdgeIntercept*>(inter->userData());
@@ -1947,7 +1947,7 @@ struct Partitioner::Instance
 
     void clearAllBspObjects()
     {
-        DENG2_FOR_EACH(it, vertexes, Vertexes::iterator)
+        DENG2_FOR_EACH(Vertexes, it, vertexes)
         {
             Vertex* vtx = *it;
             // Has ownership of this vertex been claimed?
@@ -1957,7 +1957,7 @@ struct Partitioner::Instance
             M_Free(vtx);
         }
 
-        DENG2_FOR_EACH(it, treeNodeMap, BspTreeNodeMap::iterator)
+        DENG2_FOR_EACH(BspTreeNodeMap, it, treeNodeMap)
         {
             clearBspObject(*it->second);
         }
@@ -2136,7 +2136,7 @@ struct Partitioner::Instance
 
         // First check whether there's a wall_tip that lies in the exact direction of
         // the given direction (which is relative to the vtxex).
-        DENG2_FOR_EACH(it, hedgeTips, VertexInfo::HEdgeTips::const_iterator)
+        DENG2_FOR_EACH_CONST(VertexInfo::HEdgeTips, it, hedgeTips)
         {
             const HEdgeTip& tip = *it;
             coord_t diff = fabs(tip.angle() - angle);
@@ -2148,7 +2148,7 @@ struct Partitioner::Instance
 
         // OK, now just find the first wall_tip whose angle is greater than the angle
         // we're interested in. Therefore we'll be on the FRONT side of that tip edge.
-        DENG2_FOR_EACH(it, hedgeTips, VertexInfo::HEdgeTips::const_iterator)
+        DENG2_FOR_EACH_CONST(VertexInfo::HEdgeTips, it, hedgeTips)
         {
             const HEdgeTip& tip = *it;
             if(angle + ANG_EPSILON < tip.angle())
@@ -2537,7 +2537,7 @@ DENG_DEBUG_ONLY(
 static void printPartitionIntercepts(HPlane const& partition)
 {
     uint index = 0;
-    DENG2_FOR_EACH(i, partition.intercepts(), HPlane::Intercepts::const_iterator)
+    DENG2_FOR_EACH_CONST(HPlane::Intercepts, i, partition.intercepts())
     {
         Con_Printf(" %u: >%1.2f ", index++, i->distance());
         HEdgeIntercept::DebugPrint(*reinterpret_cast<HEdgeIntercept*>(i->userData()));

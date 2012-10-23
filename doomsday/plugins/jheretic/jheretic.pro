@@ -7,12 +7,10 @@ include(../common/common.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = lib
-win32|macx: TARGET = jHeretic
-      else: TARGET = jheretic
+TARGET   = heretic
+VERSION  = $$JHERETIC_VERSION
 
 DEFINES += __JHERETIC__
-
-VERSION = $$JHERETIC_VERSION
 
 gamedata.files = $$OUT_PWD/../../jheretic.pk3
 
@@ -24,7 +22,7 @@ macx {
 else {
     INSTALLS += target gamedata
 
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
     gamedata.path = $$DENG_DATA_DIR/jheretic
 }
 
@@ -103,6 +101,6 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(jHeretic)
-    linkToBundledLibdeng(jHeretic)
+    linkToBundledLibdeng2(heretic)
+    linkToBundledLibdeng(heretic)
 }

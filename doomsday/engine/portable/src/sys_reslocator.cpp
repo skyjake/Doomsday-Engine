@@ -581,7 +581,7 @@ static void createPackagesResourceNamespace(void)
     {
         // Check the system-level config files.
         filename_t fn;
-        if(DD_Unix_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+        if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
         {
             doomWadDir = Str_Set(Str_New(), fn);
         }

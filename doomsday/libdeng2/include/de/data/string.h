@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,16 +37,16 @@ class DENG2_PUBLIC String : public QString
 {
 public:
     /// Error related to String operations (note: shadows de::Error). @ingroup errors
-    DENG2_ERROR(Error)
+    DENG2_ERROR(Error);
 
     /// Encoding conversion failed. @ingroup errors
-    DENG2_SUB_ERROR(Error, ConversionError)
+    DENG2_SUB_ERROR(Error, ConversionError);
 
     /// An error was encountered in string pattern replacement. @ingroup errors
-    DENG2_SUB_ERROR(Error, IllegalPatternError)
+    DENG2_SUB_ERROR(Error, IllegalPatternError);
 
     /// Invalid record member name. @ingroup errors
-    DENG2_SUB_ERROR(Error, InvalidMemberError)
+    DENG2_SUB_ERROR(Error, InvalidMemberError);
 
     /**
      * Data argument for the pattern formatter.
@@ -56,7 +56,7 @@ public:
     {
     public:
         /// An incompatible type is requested in asText() or asNumber(). @ingroup errors
-        DENG2_ERROR(TypeError)
+        DENG2_ERROR(TypeError);
 
     public:
         virtual ~IPatternArg() {}
@@ -81,7 +81,7 @@ public:
     String(const char* cStr, size_type length);
     String(const QChar* str, size_type length);
     String(size_type length, QChar ch);
-    String(const QString& str, int index, size_type length);
+    String(const QString& str, size_type index, size_type length);
     String(const_iterator start, const_iterator end);
     String(iterator start, iterator end);
 
@@ -112,6 +112,9 @@ public:
 
     /// Does a path concatenation on this string and the argument.
     String operator / (const String& path) const;
+
+    /// Converts path separators to native separators.
+    String toNativePath() const;
 
     /// Does a path concatenation on a native path. The directory separator
     /// character depends on the platform.
@@ -189,10 +192,11 @@ public:
     Block toLatin1() const;
 
     /**
-     * Emulates the behavior of the standard C library's atoi(). Builds a number
+     * Emulates the behavior of the standard C library's atoi(). Parses a number
      * by reading characters from @a src until the first non-digit, non-sign
      * character is encountered. The read substring is then decoded, making use
-     * of @see QString::toInt() into an integer.
+     * of @see QString::toInt() into an integer. Whitespace at the beginning of
+     * the string is ignored.
      *
      * @return Returns the string converted to an int using base @a base, else
      *         @c 0 if the conversion fails. If @c 0 is expected in the input

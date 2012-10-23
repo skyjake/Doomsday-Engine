@@ -65,7 +65,7 @@ class Id1Map
 {
 public:
     /// There was a problem opening the lump data buffer. @ingroup errors
-    DENG2_ERROR(LumpBufferError)
+    DENG2_ERROR(LumpBufferError);
 
 public:
     Id1Map(MapFormatId format);

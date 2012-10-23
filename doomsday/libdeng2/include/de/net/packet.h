@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009, 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ class DENG2_PUBLIC Packet : public ISerializable
 {
 public:
     /// While deserializing, an invalid type identifier was encountered. @ingroup errors
-    DENG2_SUB_ERROR(DeserializationError, InvalidTypeError)
+    DENG2_SUB_ERROR(DeserializationError, InvalidTypeError);
 
     /// Length of a type identifier.
     static const dint TYPE_SIZE = 4;

@@ -48,9 +48,6 @@ else:macx {
 }
 else {
     # Generic Unix.
-    DEFINES += DENG_BASE_DIR=\"\\\"$${DENG_BASE_DIR}/\\\"\"
-    DEFINES += DENG_LIBRARY_DIR=\"\\\"$${DENG_LIB_DIR}/\\\"\"
-
     QMAKE_LFLAGS += -rdynamic
 
     !freebsd-*: LIBS += -ldl
@@ -441,7 +438,7 @@ deng_nodisplaymode {
 SOURCES += \
     portable/src/abstractresource.c \
     portable/src/animator.c \
-    portable/src/audiodriver.c \
+    portable/src/audiodriver.cpp \
     portable/src/audiodriver_music.c \
     portable/src/b_command.c \
     portable/src/b_context.c \
@@ -524,7 +521,7 @@ SOURCES += \
     portable/src/json.cpp \
     portable/src/kdtree.c \
     portable/src/keycode.cpp \
-    portable/src/library.c \
+    portable/src/library.cpp \
     portable/src/linedef.c \
     portable/src/lumpindex.cpp \
     portable/src/m_bams.c \
@@ -671,6 +668,8 @@ OTHER_FILES += \
 
 data.files = $$OUT_PWD/../doomsday.pk3
 
+cfg.files = $$DENG_CONFIG_DIR/deng.de
+
 startupdata.files = \
     data/cphelp.txt
 
@@ -701,12 +700,13 @@ macx {
         mac/res/English.lproj \
         mac/res/deng.icns
 
+    cfg.path          = $${res.path}/config
     data.path         = $${res.path}
     startupdata.path  = $${res.path}/data
     startupfonts.path = $${res.path}/data/fonts
     startupgfx.path   = $${res.path}/data/graphics
 
-    QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
+    QMAKE_BUNDLE_DATA += cfg res data startupfonts startupdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
@@ -739,7 +739,7 @@ macx {
 
 win32 {
     # Windows installation.
-    INSTALLS += target data startupdata startupgfx startupfonts license icon
+    INSTALLS += target data startupdata startupgfx startupfonts cfg license icon
 
     target.path = $$DENG_BIN_DIR
 
@@ -747,6 +747,7 @@ win32 {
     startupdata.path = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
+    cfg.path = $$DENG_DATA_DIR/config
 
     license.files = doc/LICENSE
     license.path = $$DENG_DOCS_DIR
@@ -756,7 +757,7 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupdata startupgfx startupfonts readme
+    INSTALLS += target data startupdata startupgfx startupfonts cfg readme
 
     target.path = $$DENG_BIN_DIR
 
@@ -764,6 +765,7 @@ else:unix:!macx {
     startupdata.path = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
+    cfg.path = $$DENG_DATA_DIR/config
 
     readme.files = ../doc/output/doomsday.6
     readme.path = $$PREFIX/share/man/man6

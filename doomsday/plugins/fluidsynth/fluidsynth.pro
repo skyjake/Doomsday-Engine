@@ -5,9 +5,7 @@ include(../config_plugin.pri)
 include(../../dep_glib.pri)
 
 TEMPLATE = lib
-
-win32|macx: TARGET = dsFluidSynth
-      else: TARGET = dsfluidsynth
+TARGET   = audio_fluidsynth
 
 CONFIG -= qt
 
@@ -25,15 +23,15 @@ win32 {
     OTHER_FILES += api/dsfluidsynth.def
 
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 macx {
-    linkToBundledLibdeng2(dsFluidSynth)
-    linkToBundledLibdeng(dsFluidSynth)
+    linkToBundledLibdeng2(audio_fluidsynth)
+    linkToBundledLibdeng(audio_fluidsynth)
 }
 unix:!macx {
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
 # libfluidsynth config ------------------------------------------------------

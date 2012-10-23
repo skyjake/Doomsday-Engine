@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -236,7 +236,7 @@ public:
     {
     public:
         /// The wrong type is used in accessing the value. @ingroup errors
-        DENG2_ERROR(TypeError)
+        DENG2_ERROR(TypeError);
 
         enum Type {
             INTEGER,
@@ -250,7 +250,7 @@ public:
         class Base {
         public:
             /// Attempted conversion from unsupported type.
-            DENG2_ERROR(TypeError)
+            DENG2_ERROR(TypeError);
 
         public:
             virtual ~Base() {}
@@ -361,7 +361,7 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
     /// The format string has incorrect syntax. @ingroup errors
-    DENG2_ERROR(IllegalFormatError)
+    DENG2_ERROR(IllegalFormatError);
 
 public:
     LogEntry();

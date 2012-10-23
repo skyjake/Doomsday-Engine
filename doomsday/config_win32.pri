@@ -17,11 +17,12 @@ QMAKE_CXXFLAGS += -w14505
 DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
 
 # Install locations:
-DENG_BASE_DIR = $$DENG_WIN_PRODUCTS_DIR
-DENG_BIN_DIR  = $$DENG_BASE_DIR/bin
-DENG_LIB_DIR  = $$DENG_BASE_DIR/bin
-DENG_DATA_DIR = $$DENG_BASE_DIR/data
-DENG_DOCS_DIR = $$DENG_BASE_DIR/doc
+DENG_BASE_DIR       = $$DENG_WIN_PRODUCTS_DIR
+DENG_BIN_DIR        = $$DENG_BASE_DIR/bin
+DENG_LIB_DIR        = $$DENG_BIN_DIR
+DENG_PLUGIN_LIB_DIR = $$DENG_LIB_DIR/plugins
+DENG_DATA_DIR       = $$DENG_BASE_DIR/data
+DENG_DOCS_DIR       = $$DENG_BASE_DIR/doc
 
 # Tell rc where to get the API headers.
 QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"

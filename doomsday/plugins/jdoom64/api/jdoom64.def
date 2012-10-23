@@ -1,7 +1,8 @@
-LIBRARY			JDOOM64
+LIBRARY			DOOM64
 
 EXPORTS
-    DP_Initialize   @1
-    GetGameAPI      @2
-    DP_Load         @3
-    DP_Unload       @4
+    DP_Initialize       @1
+    GetGameAPI          @2
+    DP_Load             @3
+    DP_Unload           @4
+    deng_LibraryType    @5

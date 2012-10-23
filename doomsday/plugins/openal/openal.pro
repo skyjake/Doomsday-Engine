@@ -6,10 +6,8 @@ include(../config_plugin.pri)
 include(../../dep_openal.pri)
 
 TEMPLATE = lib
-win32|macx: TARGET = dsOpenAL
-      else: TARGET = dsopenal
-
-VERSION = $$OPENAL_VERSION
+TARGET   = audio_openal
+VERSION  = $$OPENAL_VERSION
 
 #DEFINES += DENG_DSOPENAL_DEBUG
 
@@ -28,11 +26,11 @@ win32 {
 
 !macx {
     INSTALLS += target
-    target.path = $$DENG_LIB_DIR
+    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
 macx {
-    linkToBundledLibdeng2(dsOpenAL)
-    linkToBundledLibdeng(dsOpenAL)
+    linkToBundledLibdeng2(audio_openal)
+    linkToBundledLibdeng(audio_openal)
 }
 

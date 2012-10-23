@@ -69,7 +69,7 @@ struct CommandLine::Instance
     void clear()
     {
         arguments.clear();
-        DENG2_FOR_EACH(i, pointers, ArgumentPointers::iterator) free(*i);
+        DENG2_FOR_EACH(ArgumentPointers, i, pointers) free(*i);
         pointers.clear();
         pointers.push_back(0);
     }
@@ -148,7 +148,7 @@ CommandLine::CommandLine(const CommandLine& other)
 {
     d = new Instance;
 
-    DENG2_FOR_EACH(i, other.d->arguments, Instance::Arguments::const_iterator)
+    DENG2_FOR_EACH_CONST(Instance::Arguments, i, other.d->arguments)
     {
         d->appendArg(*i);
     }
@@ -225,7 +225,7 @@ dint CommandLine::has(const String& arg) const
 {
     dint howMany = 0;
     
-    DENG2_FOR_EACH(i, d->arguments, Instance::Arguments::const_iterator)
+    DENG2_FOR_EACH_CONST(Instance::Arguments, i, d->arguments)
     {
         if(matches(arg, *i))
         {
@@ -272,7 +272,7 @@ void CommandLine::makeAbsolutePath(duint pos)
 
     QString arg = d->arguments[pos];
 
-    if(!isOption(pos) && !QDir::isAbsolutePath(arg) && !arg.startsWith("}"))
+    if(!isOption(pos) && !arg.startsWith("}"))
     {
         QDir dir(arg); // note: strips trailing slash
 
@@ -284,6 +284,7 @@ void CommandLine::makeAbsolutePath(duint pos)
         }
         else
 #endif
+        if(!QDir::isAbsolutePath(arg))
         {
             dir.setPath(d->initialDir.filePath(dir.path()));
         }
@@ -416,7 +417,7 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
     Instance::Aliases::const_iterator found = d->aliases.find(full.toStdString());
     if(found != d->aliases.end())
     {
-        DENG2_FOR_EACH(i, found->second, Instance::ArgumentStrings::const_iterator)
+        DENG2_FOR_EACH_CONST(Instance::ArgumentStrings, i, found->second)
         {
             if(!i->compareWithoutCase(fullOrAlias))
             {

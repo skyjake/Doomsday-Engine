@@ -94,14 +94,37 @@ void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
 
 /**
+ * Loads all the plugins from the library directory. Note that audio plugins
+ * are not loaded here, they are managed by AudioDriver.
+ */
+void Plug_LoadAll(void);
+
+/**
+ * Unloads all plugins.
+ */
+void Plug_UnloadAll(void);
+
+/**
  * Executes all the hooks of the given type. Bit zero of the return value
  * is set if a hook was executed successfully (returned true). Bit one is
  * set if all the hooks that were executed returned true.
  */
 int DD_CallHooks(int hook_type, int parm, void* data);
 
-/// @return  Unique identified of the plugin responding to active hook callback.
-pluginid_t DD_PluginIdForActiveHook(void);
+/**
+ * Sets the ID of the currently active plugin. Note that plugin hooks are
+ * executed in a single-threaded manner; only one can be active at a time.
+ *
+ * @param id  Plugin id.
+ */
+void DD_SetActivePluginId(pluginid_t id);
+
+/**
+ * @return Unique identifier of the currently active plugin. Note that plugin
+ * hooks are executed in a single-threaded manner; only one is active at a
+ * time.
+ */
+pluginid_t DD_ActivePluginId(void);
 
 /**
  * Locate the address of the named, exported procedure in the plugin.

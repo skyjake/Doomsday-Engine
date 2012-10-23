@@ -28,7 +28,7 @@ static uint validCount = 0; // Used for Polyobj LineDef collection.
 
 void Id1Map::collectPolyobjLinesWorker(LineList& lineList, coord_t x, coord_t y)
 {
-    DENG2_FOR_EACH(i, lines, Lines::iterator)
+    DENG2_FOR_EACH(Lines, i, lines)
     {
         // Already belongs to another polyobj?
         if((i)->aFlags & LAF_POLYOBJ) continue;
@@ -126,7 +126,7 @@ bool Id1Map::findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
     LineList polyLines;
 
     // First look for a PO_LINE_START linedef set with this tag.
-    DENG2_FOR_EACH(i, lines, Lines::iterator)
+    DENG2_FOR_EACH(Lines, i, lines)
     {
         // Already belongs to another polyobj?
         if((i)->aFlags & LAF_POLYOBJ) continue;
@@ -150,7 +150,7 @@ bool Id1Map::findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
     {
         bool foundAnotherLine = false;
 
-        DENG2_FOR_EACH(i, lines, Lines::iterator)
+        DENG2_FOR_EACH(Lines, i, lines)
         {
             // Already belongs to another polyobj?
             if((i)->aFlags & LAF_POLYOBJ) continue;
@@ -181,7 +181,7 @@ bool Id1Map::findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
             // Check if an explicit line order has been skipped.
             // A line has been skipped if there are any more explicit lines with
             // the current tag value.
-            DENG2_FOR_EACH(i, lines, Lines::iterator)
+            DENG2_FOR_EACH(Lines, i, lines)
             {
                 if((i)->xType == PO_LINE_EXPLICIT && (i)->xArgs[0] == tag)
                 {
@@ -216,7 +216,7 @@ bool Id1Map::findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
 void Id1Map::findPolyobjs(void)
 {
     LOG_TRACE("Locating polyobjs...");
-    DENG2_FOR_EACH(i, things, Things::iterator)
+    DENG2_FOR_EACH(Things, i, things)
     {
         // A polyobj anchor?
         if((i)->doomEdNum == PO_ANCHOR_DOOMEDNUM)

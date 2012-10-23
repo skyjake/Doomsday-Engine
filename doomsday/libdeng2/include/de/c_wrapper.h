@@ -141,6 +141,11 @@ DENG2_PUBLIC void Info_Delete(Info* info);
 DENG2_PUBLIC int Info_FindValue(Info* info, const char* path, char* buffer, size_t bufSize);
 
 /*
+ * UnixInfo
+ */
+DENG2_PUBLIC int UnixInfo_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen);
+
+/*
  * ByteOrder
  */
 DENG2_PUBLIC dint16 LittleEndianByteOrder_ToForeignInt16(dint16 value);

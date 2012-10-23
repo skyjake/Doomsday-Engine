@@ -11,9 +11,8 @@ include(../../dep_eax.pri)
 }
 
 TEMPLATE = lib
-TARGET = dsDirectSound
-
-VERSION = $$DIRECTSOUND_VERSION
+TARGET   = audio_directsound
+VERSION  = $$DIRECTSOUND_VERSION
 
 HEADERS += include/version.h
 
@@ -24,4 +23,4 @@ QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsdirectsound.def\"
 OTHER_FILES += api/dsdirectsound.def
 
 INSTALLS += target
-target.path = $$DENG_LIB_DIR
+target.path = $$DENG_PLUGIN_LIB_DIR

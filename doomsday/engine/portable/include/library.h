@@ -54,29 +54,50 @@ void Library_Init(void);
 void Library_Shutdown(void);
 
 /**
+ * Returns the latest error message.
+ */
+const char* Library_LastError(void);
+
+/**
  * Closes the library handles of all game plugins. The library will be
  * reopened automatically when needed.
  */
 void Library_ReleaseGames(void);
 
 /**
- * Defines an additional library @a dir where to look for dynamic libraries.
- */
-void Library_AddSearchDir(const char* dir);
-
-/**
  * Looks for dynamic libraries and calls @a func for each one.
+ *
+ * Arguments passed to the callback function @a func:
+ * - @a libraryFile is a pointer to a de::LibraryFile instance.
+ * - @a fileName is the name of the library file, including extension.
+ * - @a absPath is the absolute (non-native) path of the file.
+ * - @a data is the @a data from the caller.
+ *
+ * @return If all available libraries were iterated, returns 0. If @a func
+ * returns a non-zero value to indicate aborting the iteration at some point,
+ * that value is returned instead.
  */
-int Library_IterateAvailableLibraries(int (*func)(const char* fileName, void* data), void* data);
+int Library_IterateAvailableLibraries(int (*func)(void *libraryFile, const char* fileName,
+                                                  const char* absPath, void* data), void* data);
 
 /**
  * Loads a dynamic library.
  *
- * @param fileName  Name of the library to open.
+ * @param filePath  Absolute path of the library to open.
  */
-Library* Library_New(const char* fileName);
+Library* Library_New(const char* filePath);
 
 void Library_Delete(Library* lib);
+
+/**
+ * Returns the type identifier of the library.
+ * @see de::Library
+ *
+ * @param lib  Library instance.
+ *
+ * @return Type identifier string, e.g., "deng-plugin/game".
+ */
+const char* Library_Type(const Library* lib);
 
 /**
  * Looks up a symbol from the library.
@@ -88,13 +109,13 @@ void Library_Delete(Library* lib);
  */
 void* Library_Symbol(Library* lib, const char* symbolName);
 
-/**
- * Returns the latest error message.
- */
-const char* Library_LastError(void);
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #ifdef __cplusplus
-}
+#include <de/LibraryFile>
+de::LibraryFile& Library_File(Library* lib);
 #endif
 
 #endif /* LIBDENG_SYSTEM_UTILS_DYNAMIC_LIBRARY_H */

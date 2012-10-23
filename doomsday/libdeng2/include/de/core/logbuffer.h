@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,11 @@
 #define LIBDENG2_LOGBUFFER_H
 
 #include "../Log"
-#ifdef DENG2_FS_AVAILABLE
 #include "../File"
-#endif
 
 #include <QObject>
 #include <QTimer>
 #include <QList>
-#include <QFile>
 
 namespace de {
 
@@ -42,13 +39,13 @@ class LogEntry;
  *
  * @ingroup core
  */
-class LogBuffer : public QObject, public Lockable
+class LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(File, Deletion)
 {
     Q_OBJECT
 
 public:
     /// There was a problem opening the output file. @ingroup errors
-    DENG2_ERROR(FileError)
+    DENG2_ERROR(FileError);
 
     typedef QList<const LogEntry*> Entries;
 
@@ -125,6 +122,8 @@ public:
      */
     void setOutputFile(const String& path);
 
+    void fileBeingDeleted(const File& file);
+
 public:
     /**
      * Sets the application's global log buffer. This is available to all.
@@ -149,7 +148,7 @@ private:
     dint _enabledOverLevel;
     dint _maxEntryCount;
     bool _standardOutput;
-    QFile* _outputFile;
+    File* _outputFile;
     EntryList _entries;
     EntryList _toBeFlushed;
     Time _lastFlushedAt;

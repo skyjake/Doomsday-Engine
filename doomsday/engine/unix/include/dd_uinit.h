@@ -37,7 +37,6 @@ extern "C" {
 #endif
 
 typedef struct {
-    Library* hInstPlug[MAX_PLUGS];
     GETGAMEAPI GetGameAPI;
 
     /// @c true = We are using a custom user dir specified on the command line.
@@ -50,17 +49,8 @@ typedef struct {
 
 extern application_t app;
 
-boolean DD_Unix_Init(int argc, char** argv);
+boolean DD_Unix_Init(void);
 void DD_Shutdown(void);
-
-/**
- * @note This implementation re-parses the entire config file on each call, so
- * it is not useful for performance-critical or high volume usage.
- *
- * @return @c true, if the found config value was written to @a dest, otherwise
- * @c false.
- */
-boolean DD_Unix_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen);
 
 #ifdef __cplusplus
 }

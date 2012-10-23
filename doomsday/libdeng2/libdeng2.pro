@@ -8,7 +8,22 @@ TARGET = deng2
 # Build Configuration --------------------------------------------------------
 
 include(../config.pri)
-VERSION = $$DENG2_VERSION
+include(../dep_zlib.pri)
+
+# Version numbers.
+LIBDENG2_RELEASE_LABEL  = Dev
+LIBDENG2_MAJOR_VERSION  = 2
+LIBDENG2_MINOR_VERSION  = 0
+LIBDENG2_PATCHLEVEL     = 0
+
+VERSION = $${LIBDENG2_MAJOR_VERSION}.$${LIBDENG2_MINOR_VERSION}.$${LIBDENG2_PATCHLEVEL}
+
+DEFINES += LIBDENG2_RELEASE_LABEL=\\\"$$LIBDENG2_RELEASE_LABEL\\\"
+DEFINES += LIBDENG2_MAJOR_VERSION=$$LIBDENG2_MAJOR_VERSION
+DEFINES += LIBDENG2_MINOR_VERSION=$$LIBDENG2_MINOR_VERSION
+DEFINES += LIBDENG2_PATCHLEVEL=$$LIBDENG2_PATCHLEVEL
+DEFINES += LIBDENG2_VERSION=\\\"$${LIBDENG2_MAJOR_VERSION}.$${LIBDENG2_MINOR_VERSION}.$${LIBDENG2_PATCHLEVEL}\\\"
+
 DEFINES += __DENG2__
 
 # Using Qt.
@@ -32,26 +47,37 @@ INCLUDEPATH += include
 # Source Files ---------------------------------------------------------------
 
 include(data.pri)
+include(filesys.pri)
 include(legacy.pri)
 include(network.pri)
+include(scriptsys.pri)
 
 # Convenience headers.
 HEADERS += \
     include/de/App \
     include/de/CommandLine \
+    include/de/Config \
     include/de/Error \
+    include/de/Library \
     include/de/Log \
     include/de/LogBuffer \
+    include/de/UnixInfo \
+    include/de/Vector
 
 HEADERS += \
     include/de/c_wrapper.h \
     include/de/error.h \
     include/de/libdeng2.h \
+    include/de/math.h \
+    include/de/vector.h \
     include/de/version.h \
     include/de/core/app.h \
+    include/de/core/config.h \
     include/de/core/commandline.h \
+    include/de/core/library.h \
     include/de/core/log.h \
-    include/de/core/logbuffer.h
+    include/de/core/logbuffer.h \
+    include/de/core/unixinfo.h
 
 # Private headers.
 HEADERS += \
@@ -60,11 +86,18 @@ HEADERS += \
 
 SOURCES += \
     src/c_wrapper.cpp \
+    src/error.cpp \
     src/core/app.cpp \
     src/core/commandline.cpp \
+    src/core/config.cpp \
     src/core/callbacktimer.cpp \
+    src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
+    src/core/unixinfo.cpp
+
+OTHER_FILES += \
+    config/deng.de
 
 # Installation ---------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -85,6 +85,17 @@ String String::operator / (const String& path) const
     return concatenatePath(path);
 }
 
+String String::toNativePath() const
+{
+    String native = *this;
+#ifdef WIN32
+    native.replace('/', '\\');
+#else
+    native.replace('\\', '/');
+#endif
+    return native;
+}
+
 String String::concatenatePath(const String& other, QChar dirChar) const
 {
     if(other.first() == dirChar)
@@ -107,7 +118,11 @@ String String::concatenatePath(const String& other, QChar dirChar) const
 
 String String::concatenateNativePath(const String& nativePath) const
 {
-    return QDir(*this).filePath(nativePath);
+#ifdef WIN32
+    return concatenatePath(nativePath, '\\');
+#else
+    return concatenatePath(nativePath, '/');
+#endif
 }
 
 String String::concatenateMember(const String& member) const

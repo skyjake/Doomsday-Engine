@@ -25,19 +25,25 @@
  */
 
 /**
- * @defgroup core     Core
- * @defgroup data     Data Types and Structures
- * @defgroup input    Input Subsystem
+ * @defgroup core  Core
  *
- * @defgroup net      Network
+ * @defgroup data  Data Types and Structures
+ * Classes related to accessing, storing, and processing of data.
+ *
+ * @defgroup input  Input Subsystem
+ *
+ * @defgroup net  Network
  * Classes responsible for network communications.
  *
- * @defgroup resource Resources
- * @defgroup render   Renderer
- * @defgroup GL       Graphics Library
- * @defgroup math     Math Utilities
+ * @defgroup resource  Resources
  *
- * @defgroup types    Basic Types
+ * @defgroup render  Renderer
+ *
+ * @defgroup GL  Graphics Library
+ *
+ * @defgroup math  Math Utilities
+ *
+ * @defgroup types  Basic Types
  * Basic data types.
  */
 
@@ -60,6 +66,8 @@
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
+#  include <typeinfo>
+#  include <memory> // auto_ptr
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
@@ -130,6 +138,11 @@
 #endif
 
 /**
+ * Macro for determining the name of a type (using RTTI).
+ */
+#define DENG2_TYPE_NAME(x) (typeid(x).name())
+    
+/**
  * Macro for hiding the warning about an unused parameter.
  */
 #define DENG2_UNUSED(x)     (void)x
@@ -152,12 +165,28 @@
 /**
  * Macro for iterating through an STL container.
  *
- * @param Iter          Name of the iterator variable. Scope is limited to the for loop.
+ * @param IterClass     Class being iterated.
+ * @param Iter          Name/declaration of the iterator variable.
  * @param ContainerRef  Container.
- * @param IterClass     Iterator type.
  */
-#define DENG2_FOR_EACH(Iter, ContainerRef, IterClass) \
-    for(IterClass Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+#define DENG2_FOR_EACH(IterClass, Iter, ContainerRef) \
+    for(IterClass::iterator Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+
+#define DENG2_FOR_EACH_CONST(IterClass, Iter, ContainerRef) \
+    for(IterClass::const_iterator Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+
+/**
+ * Macro for iterating through an STL container in reverse.
+ *
+ * @param IterClass     Class being iterated.
+ * @param Var           Name/declaration of the iterator variable.
+ * @param ContainerRef  Container.
+ */
+#define DENG2_FOR_EACH_REVERSE(IterClass, Var, ContainerRef) \
+    for(IterClass::reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
+
+#define DENG2_FOR_EACH_CONST_REVERSE(IterClass, Var, ContainerRef) \
+    for(IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 namespace de {

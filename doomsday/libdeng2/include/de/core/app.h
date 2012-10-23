@@ -22,6 +22,11 @@
 
 #include "../libdeng2.h"
 #include "../CommandLine"
+#include "../LogBuffer"
+#include "../FS"
+#include "../Module"
+#include "../Config"
+#include "../UnixInfo"
 #include <QApplication>
 
 /**
@@ -40,19 +45,90 @@ namespace de
         Q_OBJECT
 
     public:
-        App(int& argc, char** argv, bool useGUI);
+        /// The object or resource that was being looked for was not found. @ingroup errors
+        DENG2_ERROR(NotFoundError);
+
+        enum GUIMode {
+            GUIDisabled = 0,
+            GUIEnabled = 1
+        };
+
+        enum SubsystemInitFlag {
+            DefaultSubsystems   = 0x0,
+            DisablePlugins      = 0x1
+        };
+        Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
+
+    public:
+        App(int& argc, char** argv, GUIMode guiMode);
+
+        /**
+         * Initializes all the application's subsystems. This includes Config
+         * and FS. Has to be called manually in the application's
+         * initialization routine.
+         *
+         * @param flags  How to/which subsystems to initialize.
+         */
+        void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
         bool notify(QObject* receiver, QEvent* event);
+
+        static App& app();
 
         /**
          * Returns the command line used to start the application.
          */
-        CommandLine& commandLine();
+        static CommandLine& commandLine();
 
         /**
-         * Returns the absolute path of the application executable.
+         * Returns the absolute native path of the application executable.
          */
-        de::String executablePath() const;
+        static String executablePath();
+
+        /**
+         * Returns the native path of the data base directory.
+         */
+        String nativeBasePath();
+
+        /**
+         * Returns the native path of where to load binaries (plugins).
+         */
+        String nativeBinaryPath();
+
+        /**
+         * Returns the application's file system.
+         */
+        static FS& fileSystem();
+
+        /**
+         * Returns the root folder of the file system.
+         */
+        static Folder& rootFolder();
+
+        /**
+         * Returns the /home folder.
+         */
+        static Folder& homeFolder();
+
+        /**
+         * Returns the configuration.
+         */
+        static Config& config();
+
+        /**
+         * Returns the Unix system-level configuration preferences.
+         */
+        static UnixInfo& unixInfo();
+
+        /**
+         * Imports a script module that is located on the import path.
+         *
+         * @param name      Name of the module.
+         * @param fromPath  Absolute path of the script doing the importing.
+         *
+         * @return  The imported module.
+         */
+        static Record& importModule(const String& name, const String& fromPath = "");
 
         /**
          * Emits the displayModeChanged() signal.
@@ -72,9 +148,25 @@ namespace de
     private:
         CommandLine _cmdLine;
 
+        LogBuffer _logBuffer;
+
         /// Path of the application executable.
-        de::String _appPath;
+        String _appPath;
+
+        /// The file system.
+        FS _fs;
+
+        UnixInfo _unixInfo;
+
+        /// The configuration.
+        Config* _config;
+
+        /// Resident modules.
+        typedef std::map<String, Module*> Modules;
+        Modules _modules;
     };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(App::SubsystemInitFlags)
 }
 
 #endif // LIBDENG2_APP_H

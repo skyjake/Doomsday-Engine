@@ -271,7 +271,7 @@ struct FS1::Instance
             Str_Set(absSearchPath, path);
             F_PrependWorkPath(absSearchPath, absSearchPath);
 
-            DENG2_FOR_EACH(i, lumpMappings, LumpMappings::const_iterator)
+            DENG2_FOR_EACH_CONST(LumpMappings, i, lumpMappings)
             {
                 LumpMapping const& mapping = *i;
                 QByteArray foundPathUtf8 = mapping.first.toUtf8();
@@ -332,7 +332,7 @@ struct FS1::Instance
         else if(!pathMappings.empty())
         {
             AutoStr* mapped = AutoStr_NewStd();
-            DENG2_FOR_EACH(i, pathMappings, PathMappings::const_iterator)
+            DENG2_FOR_EACH_CONST(PathMappings, i, pathMappings)
             {
                 Str_Set(mapped, path);
                 if(!applyPathMapping(mapped, *i)) continue;
@@ -559,7 +559,7 @@ de::File1& FS1::find(char const* path)
 static void printFileIds(FileIds const& fileIds)
 {
     uint idx = 0;
-    DENG2_FOR_EACH(i, fileIds, FileIds::const_iterator)
+    DENG2_FOR_EACH_CONST(FileIds, i, fileIds)
     {
         LOG_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
         ++idx;
@@ -571,7 +571,7 @@ static void printFileIds(FileIds const& fileIds)
 static void printFileList(FS1::FileList& list)
 {
     uint idx = 0;
-    DENG2_FOR_EACH(i, list, FS1::FileList::const_iterator)
+    DENG2_FOR_EACH_CONST(FS1::FileList, i, list)
     {
         de::FileHandle* hndl = *i;
         de::File1& file = hndl->file();
@@ -862,7 +862,7 @@ void FS1::releaseFile(de::File1& file)
 static Wad* findFirstWadFile(FS1::FileList& list, bool custom)
 {
     if(list.empty()) return 0;
-    DENG2_FOR_EACH(i, list, FS1::FileList::iterator)
+    DENG2_FOR_EACH(FS1::FileList, i, list)
     {
         de::File1& file = (*i)->file();
         if(custom != file.hasCustom()) continue;
@@ -887,7 +887,7 @@ uint FS1::loadedFilesCRC()
 int FS1::findAll(FS1::FileList& found) const
 {
     int numFound = 0;
-    DENG2_FOR_EACH(i, d->loadedFiles, FS1::FileList::const_iterator)
+    DENG2_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
     {
         found.push_back(*i);
         numFound += 1;
@@ -899,7 +899,7 @@ int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* par
                  FS1::FileList& found) const
 {
     int numFound = 0;
-    DENG2_FOR_EACH(i, d->loadedFiles, FS1::FileList::const_iterator)
+    DENG2_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
     {
         // Interested in this file?
         if(predicate && !predicate((*i)->file(), parameters)) continue; // Nope.
@@ -931,7 +931,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     /*
      * Check the Zip directory.
      */
-    DENG2_FOR_EACH(i, d->zipFileIndex.lumps(), LumpIndex::Lumps::const_iterator)
+    DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.lumps())
     {
         File1 const& lump = **i;
         PathDirectoryNode const& node = lump.directoryNode();
@@ -966,7 +966,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
      */
     if(!d->lumpMappings.empty())
     {
-        DENG2_FOR_EACH(i, d->lumpMappings, LumpMappings::const_iterator)
+        DENG2_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
         {
             if(!F_MatchFileName(i->first.toUtf8().constData(), Str_Text(searchPattern))) continue;
 
@@ -1250,7 +1250,7 @@ void FS1::printDirectory(ddstring_t const* path)
     {
         qSort(found.begin(), found.end());
 
-        DENG2_FOR_EACH(i, found, PathList::const_iterator)
+        DENG2_FOR_EACH_CONST(PathList, i, found)
         {
             QByteArray foundPath = i->path.toUtf8();
             bool const makePretty = CPP_BOOL( F_IsRelativeToBase(foundPath, ddBasePath) );
@@ -1331,7 +1331,7 @@ D_CMD(ListFiles)
         int fileCount = App_FileSystem()->findAll(foundFiles);
         if(!fileCount) return true;
 
-        DENG2_FOR_EACH(i, foundFiles, FS1::FileList::const_iterator)
+        DENG2_FOR_EACH_CONST(FS1::FileList, i, foundFiles)
         {
             de::File1& file = (*i)->file();
             uint crc = 0;
@@ -1680,7 +1680,7 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
 
     // Determine the maximum number of characters we'll need.
     int maxLength = 0;
-    DENG2_FOR_EACH(i, files, FS1::FileList::const_iterator)
+    DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
     {
         de::File1& file = (*i)->file();
 
@@ -1734,7 +1734,7 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
     // Composite final string.
     ddstring_t* str = Str_Reserve(Str_NewStd(), maxLength);
     int n = 0;
-    DENG2_FOR_EACH(i, files, FS1::FileList::const_iterator)
+    DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
     {
         de::File1& file = (*i)->file();
 

@@ -36,9 +36,6 @@
 #include <string.h>
 #include <limits.h>
 #include <locale.h>
-#ifndef DENG_NO_SDL
-#  include <SDL.h>
-#endif
 
 #include <de/c_wrapper.h>
 
@@ -63,8 +60,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef Library* PluginHandle;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -80,163 +75,6 @@ typedef Library* PluginHandle;
 application_t app;
 
 // CODE --------------------------------------------------------------------
-
-static PluginHandle* findFirstUnusedPluginHandle(application_t* app)
-{
-    int i;
-    assert(app);
-    for(i = 0; i < MAX_PLUGS; ++i)
-    {
-        if(!app->hInstPlug[i])
-            return &app->hInstPlug[i];
-    }
-    return 0;
-}
-
-static int loadPlugin(application_t* app, const char* pluginPath, void* paramaters)
-{
-    Library* plugin;
-    PluginHandle* handle;
-    void (*initializer)(void);
-    filename_t name;
-    assert(app && pluginPath && pluginPath[0]);
-
-    plugin = Library_New(pluginPath);
-    if(!plugin)
-    {
-        Con_Message("  loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, Library_LastError());
-        return 0; // Continue iteration.
-    }
-
-    initializer = Library_Symbol(plugin, "DP_Initialize");
-    if(!initializer)
-    {
-        // Clearly not a Doomsday plugin.
-#if _DEBUG
-        Con_Message("  loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath);
-#endif
-        Library_Delete(plugin);
-        return 0; // Continue iteration.
-    }
-
-    handle = findFirstUnusedPluginHandle(app);
-    if(!handle)
-    {
-#if _DEBUG
-        Con_Message("  loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath);
-#endif
-        Library_Delete(plugin);
-        return 0; // Continue iteration.
-    }
-
-    // This seems to be a Doomsday plugin.
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-    Con_Message("  %s\n", name);
-
-    *handle = plugin;
-    initializer();
-
-    return 0; // Continue iteration.
-}
-
-typedef struct {
-    boolean loadingGames;
-    application_t* app;
-} loadpluginparamaters_t;
-
-static int loadPluginWorker(const char* pluginPath, void* data)
-{
-    loadpluginparamaters_t* params = (loadpluginparamaters_t*) data;
-    filename_t name;
-    filename_t ext;
-
-    // What is the actual file name?
-#ifndef MACOSX
-    _splitpath(pluginPath, NULL, NULL, name, ext);
-    if(((params->loadingGames  && !strncmp(name, "libj", 4)) ||
-        (!params->loadingGames && !strncmp(name, "libdp", 5)))
-            && !stricmp(ext, ".so")) // Only .so files
-#endif
-#ifdef MACOSX
-    _splitpath(pluginPath, NULL, NULL, name, ext);
-    if(((params->loadingGames  && !strncmp(name, "j", 1)) ||
-       (!params->loadingGames && !strncmp(name, "dp", 2)))
-            && (!stricmp(ext, ".dylib") || !stricmp(ext, ".bundle")))
-#endif
-    {
-        loadPlugin(params->app, pluginPath, NULL/*no paramaters*/);
-    }
-    return 0; // Continue search.
-}
-
-static boolean unloadPlugin(PluginHandle* handle)
-{
-    int result;
-    assert(handle);
-    if(!*handle) return true;
-
-    Library_Delete(*handle);
-    *handle = 0;
-    return result;
-}
-
-/**
- * Loads all the plugins from the library directory.
- */
-static boolean loadAllPlugins(application_t* app)
-{
-    assert(app);
-
-    Con_Message("Initializing plugins...\n");
-
-    // Try to load all libraries that begin with libj.
-    { loadpluginparamaters_t params;
-    params.app = app;
-    params.loadingGames = true;
-    Library_IterateAvailableLibraries(loadPluginWorker, &params);
-    }
-
-    // Try to load all libraries that begin with libdp.
-    { loadpluginparamaters_t params;
-    params.app = app;
-    params.loadingGames = false;
-    Library_IterateAvailableLibraries(loadPluginWorker, &params);
-    }
-    return true;
-}
-
-static boolean unloadAllPlugins(application_t* app)
-{
-    int i;
-    assert(app);
-
-    // Remove all entries; some may have been created by the plugins.
-    LogBuffer_Clear();
-
-    for(i = 0; i < MAX_PLUGS && app->hInstPlug[i]; ++i)
-    {
-        unloadPlugin(&app->hInstPlug[i]);
-    }
-    return true;
-}
-
-static int initTimingSystem(void)
-{
-    /*
-    // For timing, we use SDL under *nix, so get it initialized. SDL_Init() returns zero on success.
-    return !SDL_Init(SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE);
-    */
-    return true;
-}
-
-static int initPluginSystem(void)
-{
-#ifdef DENG_LIBRARY_DIR
-    // The default directory is defined in the Makefile. For instance, "/usr/local/lib".
-    Library_AddSearchDir(DENG_LIBRARY_DIR);
-#endif
-    return true;
-}
 
 static int initDGL(void)
 {
@@ -316,7 +154,7 @@ static void determineGlobalPaths(application_t* app)
         strncpy(ddBasePath, DENG_BASE_DIR, FILENAME_T_MAXLEN);
 #endif
         // Also check the system config files.
-        DD_Unix_GetConfigValue("paths", "basedir", ddBasePath, FILENAME_T_MAXLEN);
+        UnixInfo_GetConfigValue("paths", "basedir", ddBasePath, FILENAME_T_MAXLEN);
     }
     Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
@@ -324,47 +162,7 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
-#if 0
-static char* buildCommandLineString(int argc, char** argv)
-{
-    char* cmdLine;
-    int i, length = 0;
-
-    // Assemble a command line string.
-    for(i = 0; i < argc; ++i)
-    {
-        length += strlen(argv[i]) + 1;
-    }
-
-    // Allocate a large enough string.
-    cmdLine = M_Malloc(length);
-
-    length = 0;
-    for(i = 0; i < argc; ++i)
-    {
-        strcpy(cmdLine + length, argv[i]);
-        if(i < argc - 1)
-            strcat(cmdLine, " ");
-        length += strlen(argv[i]) + 1;
-    }
-    return cmdLine;
-}
-#endif
-
-/*
-static int createMainWindow(void)
-{
-    Point2Raw origin = { 0, 0 };
-    Size2Raw size = { 640, 480 };
-    char buf[256];
-    DD_ComposeMainWindowTitle(buf);
-    mainWindowIdx = Window_Create(&app, &origin, &size, 32, 0,
-                                  isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
-    return mainWindowIdx != 0;
-}
-*/
-
-boolean DD_Unix_Init(int argc, char** argv)
+boolean DD_Unix_Init(void)
 {
     boolean failed = true;
 
@@ -372,17 +170,6 @@ boolean DD_Unix_Init(int argc, char** argv)
 
     // We wish to use U.S. English formatting for time and numbers.
     setlocale(LC_ALL, "en_US.UTF-8");
-
-#if 0
-    // SDL lock key behavior: send up event when key released.
-    setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
-#endif
-
-#if 0
-    // Prepare the command line arguments.
-    char* cmdLine = buildCommandLineString(argc, argv);
-    M_Free(cmdLine);
-#endif
 
     DD_InitCommandLine();
 
@@ -399,27 +186,17 @@ boolean DD_Unix_Init(int argc, char** argv)
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error during early init.", 0);
     }
-    else if(!initTimingSystem())
-    {
-        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initalizing timing system.", 0);
-    }
-    else if(!initPluginSystem())
-    {
-        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing plugin system.", 0);
-    }
     else if(!initDGL())
     {
         Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error initializing DGL.", 0);
-    }
-    else if(!loadAllPlugins(&app))
-    {
-        Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, "Error loading plugins.", 0);
     }
     else
     {
         // Everything okay so far.
         failed = false;
     }
+
+    Plug_LoadAll();
 
     return !failed;
 }
@@ -431,54 +208,8 @@ void DD_Shutdown(void)
 {
     // Shutdown all subsystems.
     DD_ShutdownAll();
-
-#ifndef DENG_NO_SDL
-    SDL_Quit();
-#endif
     
-    unloadAllPlugins(&app);
+    Plug_UnloadAll();
     Library_Shutdown();
     DisplayMode_Shutdown();
-}
-
-boolean DD_Unix_GetConfigValue(const char* configFile, const char* key, char* dest, size_t destLen)
-{
-    Info* info;
-    char buf[512];
-    ddstring_t* p;    
-    boolean success = false;
-
-    // Maybe it is in the user's .doomsday dir.
-    p = Str_New();
-    Str_Appendf(p, "~/.doomsday/%s", configFile);
-    F_MakeAbsolute(p, p);
-    info = Info_NewFromFile(Str_Text(p));
-    if(info)
-    {
-        if(Info_FindValue(info, key, buf, sizeof(buf)))
-        {
-            strncpy(dest, buf, destLen);
-            success = true;
-            goto cleanup;
-        }
-    }
-
-    // Check for a config file for the library path.
-    Str_Clear(p);
-    Str_Appendf(p, "/etc/doomsday/%s", configFile);
-    info = Info_NewFromFile(Str_Text(p));
-    if(info)
-    {
-        if(Info_FindValue(info, key, buf, sizeof(buf)))
-        {
-            strncpy(dest, buf, destLen);
-            success = true;
-            goto cleanup;
-        }
-    }
-
-cleanup:
-    Info_Delete(info);
-    Str_Delete(p);
-    return success;
 }
