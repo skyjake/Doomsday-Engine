@@ -246,7 +246,8 @@ static bool recognizeZIP(char const* filePath, void* parameters)
         FileHandle& hndl = App_FileSystem()->openFile(filePath, "rbf");
         bool result = Zip::recognise(hndl);
         /// @todo Check files. We should implement an auxiliary zip lump index...
-        App_FileSystem()->closeFile(hndl);
+        App_FileSystem()->releaseFile(hndl.file());
+        delete &hndl;
         return result;
     }
     catch(FS1::NotFoundError const&)

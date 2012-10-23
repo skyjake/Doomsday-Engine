@@ -165,13 +165,11 @@ namespace de
         FS1& index(File1& file);
 
         /**
-         * Attempt to remove a file from the virtual file system.
+         * Removes a file from any lump indexes.
          *
-         * @return  @c true if the operation is successful.
+         * @param file  File to remove from the index.
          */
-        bool removeFile(File1& file);
-
-        int removeFiles(FileList& files);
+        FS1& deindex(File1& file);
 
         lumpnum_t lumpNumForName(char const* name, bool silent = true);
 
@@ -229,12 +227,6 @@ namespace de
 
         /// Clear all references to this file.
         void releaseFile(File1& file);
-
-        /// Close this file handle.
-        void closeFile(FileHandle& hndl);
-
-        /// Completely destroy this file; close if open, clear references and any acquired identifiers.
-        void deleteFile(FileHandle& hndl);
 
         /**
          * Find a single file.
@@ -324,7 +316,7 @@ namespace de
         /**
          * Close the auxiliary lump index if open.
          */
-        void closeAuxiliary();
+        void closeAuxiliaryPrimaryIndex();
 
     private:
         struct Instance;
@@ -339,13 +331,6 @@ namespace de
          * @return  The interpreted File file instance.
          */
         File1& interpret(FileHandle& hndl, char const* path, FileInfo const& info);
-
-        /**
-         * Removes a file from any lump indexes.
-         *
-         * @param file  File to remove from the index.
-         */
-        void deindex(File1& file);
 
     public:
         /**
@@ -395,7 +380,7 @@ int F_Access(char const* path);
 
 void F_Index(struct file1_s* file);
 
-void F_RemoveFile(struct file1_s* file);
+void F_Deindex(struct file1_s* file);
 
 FileHandle* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
 FileHandle* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
@@ -419,8 +404,6 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
 
 struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0 */);
-
-void F_Close(struct filehandle_s* file);
 
 void F_Delete(struct filehandle_s* file);
 

@@ -48,7 +48,6 @@ struct filelist_s;
 
 namespace de {
 
-/// @todo Should not be visible outside the engine.
 class File1;
 class FileHandleBuilder;
 
@@ -71,10 +70,8 @@ public:
     /// @todo Should not be visible outside the engine.
     FileHandle& setList(struct filelist_s* list);
 
-    /// @todo Should not be visible outside the engine.
     bool hasFile() const;
 
-    /// @todo Should not be visible outside the engine.
     File1& file();
     File1& file() const;
 
@@ -138,6 +135,8 @@ extern "C" {
 
 struct filehandle_s; // The filehandle instance (opaque).
 typedef struct filehandle_s FileHandle;
+
+void FileHandle_Delete(FileHandle* hndl);
 
 void FileHandle_Close(FileHandle* hndl);
 

@@ -423,6 +423,13 @@ de::FileHandle& FileHandle::rewind()
     DENG2_ASSERT(inst); \
     de::FileHandle const* self = TOINTERNAL_CONST(inst)
 
+void FileHandle_Delete(struct filehandle_s* hndl)
+{
+    if(!hndl) return;
+    SELF(hndl);
+    delete self;
+}
+
 void FileHandle_Close(struct filehandle_s* hndl)
 {
     SELF(hndl);

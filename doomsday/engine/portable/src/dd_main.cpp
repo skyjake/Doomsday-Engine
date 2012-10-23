@@ -2386,11 +2386,10 @@ static bool tryUnloadFile(char const* path)
         }
 
         VERBOSE2( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) )
-        if(App_FileSystem()->removeFile(file))
-        {
-            VERBOSE2( Con_Message("Done unloading \"%s\".\n", F_PrettyPath(Str_Text(file.composePath()))) )
-            return true;
-        }
+        App_FileSystem()->deindex(file);
+        delete &file;
+        VERBOSE2( Con_Message("Done unloading \"%s\".\n", F_PrettyPath(Str_Text(file.composePath()))) )
+        return true;
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore.
