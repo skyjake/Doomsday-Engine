@@ -41,7 +41,7 @@ App::App(int& argc, char** argv, GUIMode guiMode)
 #endif
     //_logBuffer.enable(Log::TRACE);
 
-    _appPath = applicationFilePath();
+    _appPath = String(applicationFilePath()).toNativePath();
 
     LOG_INFO("Application path: ") << _appPath;
 
@@ -59,7 +59,7 @@ String App::nativeBinaryPath()
 {
     String path;
 #ifdef WIN32
-    path = _appPath.fileNameNativePath() / "plugins";
+    path = _appPath.fileNameNativePath().concatenateNativePath("plugins");
 #else
 # ifdef MACOSX
     path = _appPath.fileNameNativePath() / "../DengPlugins";
