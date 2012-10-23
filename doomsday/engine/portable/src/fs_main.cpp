@@ -492,34 +492,47 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char cons
     return i;
 }
 
-void FS1::index(de::File1& file)
+FS1& FS1::index(de::File1& file)
 {
+#ifdef DENG_DEBUG
+    // Ensure this hasn't yet been indexed.
+    DENG2_FOR_EACH(i, d->loadedFiles, FileList::const_iterator)
+    {
+        if(&(*i)->file() == &file) throw de::Error("FS1::index", "File \"" + QString(Str_Text(file.composePath())) + "\" has already been indexed");
+    }
+#endif
+
     // Publish lumps to an index?
     if(Zip* zip = dynamic_cast<Zip*>(&file))
     {
-        if(zip->empty()) return;
-
-        LumpIndex& index = d->zipLumpIndex;
-        // Insert the lumps into their rightful places in the index.
-        index.catalogLumps(*zip, 0, zip->lumpCount());
-        return;
+        if(!zip->empty())
+        {
+            LumpIndex& index = d->zipLumpIndex;
+            // Insert the lumps into their rightful places in the index.
+            index.catalogLumps(*zip, 0, zip->lumpCount());
+        }
     }
-    if(Wad* wad = dynamic_cast<Wad*>(&file))
+    else if(Wad* wad = dynamic_cast<Wad*>(&file))
     {
-        if(wad->empty()) return;
-
-        LumpIndex& index = *d->ActiveWadLumpIndex;
-        // Insert the lumps into their rightful places in the index.
-        index.catalogLumps(*wad, 0, wad->lumpCount());
-        return;
+        if(!wad->empty())
+        {
+            LumpIndex& index = *d->ActiveWadLumpIndex;
+            // Insert the lumps into their rightful places in the index.
+            index.catalogLumps(*wad, 0, wad->lumpCount());
+        }
     }
-    if(LumpFileAdaptor* lump = dynamic_cast<LumpFileAdaptor*>(&file))
+    else if(LumpFileAdaptor* lump = dynamic_cast<LumpFileAdaptor*>(&file))
     {
         LumpIndex& index = *d->ActiveWadLumpIndex;
         // This *is* the lump, so insert ourself as a lump of our container in the index.
         index.catalogLumps(lump->container(), lump->info().lumpIdx, 1);
-        return;
     }
+
+    // Add a handle to the loaded files list.
+    FileHandle* loadedFilesHndl = FileHandleBuilder::fromFile(file);
+    d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
+
+    return *this;
 }
 
 void FS1::deindex(de::File1& file)
@@ -802,6 +815,11 @@ lumpnum_t FS1::openAuxiliary(char const* filePath, size_t baseOffset)
     File1* file = d->tryOpenFile(filePath, "rb", baseOffset, true /*allow duplicates*/);
     if(Wad* wad = dynamic_cast<Wad*>(file))
     {
+        // Add a handle to the open files list.
+        FileHandle* openFilesHndl = FileHandleBuilder::fromFile(*wad);
+        d->openFiles.push_back(openFilesHndl); openFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
+
+        // Select the auxiliary index.
         if(d->auxiliaryWadLumpIndexInUse)
         {
             closeAuxiliary();
@@ -809,15 +827,8 @@ lumpnum_t FS1::openAuxiliary(char const* filePath, size_t baseOffset)
         d->ActiveWadLumpIndex = &d->auxiliaryWadLumpIndex;
         d->auxiliaryWadLumpIndexInUse = true;
 
+        // Index this file into the file system.
         index(*wad);
-
-        // Add a handle to the open files list.
-        FileHandle* openFilesHndl = FileHandleBuilder::fromFile(*wad);
-        d->openFiles.push_back(openFilesHndl); openFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
-
-        // Add a handle to the loaded files list.
-        FileHandle* loadedFilesHndl = FileHandleBuilder::dup(*openFilesHndl);
-        d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
 
         return Instance::AUXILIARY_BASE;
     }
@@ -1125,51 +1136,6 @@ bool FS1::accessFile(char const* path)
     if(!file) return false;
     delete file;
     return true;
-}
-
-de::File1* FS1::addFile(char const* path, size_t baseOffset)
-{
-    try
-    {
-        FileHandle& hndl = openFile(path, "rb", baseOffset, false /* no duplicates */);
-
-        // Load the file (a.k.a., index it).
-        File1& file = hndl.file();
-        VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) )
-
-        index(file);
-
-        // Add a handle to the loaded files list.
-        FileHandle* loadedFilesHndl = FileHandleBuilder::dup(hndl);
-        d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
-
-        return &file;
-    }
-    catch(NotFoundError const&)
-    {
-        if(accessFile(path))
-        {
-            // Must already be loaded.
-            Con_Message("\"%s\" already loaded.\n", F_PrettyPath(path));
-        }
-    }
-    return 0;
-}
-
-int FS1::addFiles(char const* const* paths, int num)
-{
-    if(!paths || !num) return 0;
-
-    int addedFileCount = 0;
-    for(int i = 0; i < num; ++i)
-    {
-        if(addFile(paths[i]))
-        {
-            addedFileCount += 1;
-        }
-    }
-
-    return addedFileCount;
 }
 
 bool FS1::removeFile(de::File1& file)
@@ -1509,26 +1475,16 @@ int F_Access(char const* path)
     return App_FileSystem()->accessFile(path)? 1 : 0;
 }
 
-struct file1_s* F_AddFile2(char const* path, size_t baseOffset)
+void F_Index(struct file1_s* file)
 {
-    return reinterpret_cast<struct file1_s*>(App_FileSystem()->addFile(path, baseOffset));
+    if(!file) return;
+    App_FileSystem()->index(*reinterpret_cast<de::File1*>(file));
 }
 
-struct file1_s* F_AddFile(char const* path)
+void F_RemoveFile(struct file1_s* file)
 {
-    return F_AddFile2(path, 0);
-}
-
-boolean F_RemoveFile(char const* path)
-{
-    try
-    {
-        de::File1& file = App_FileSystem()->find(path);
-        return App_FileSystem()->removeFile(file);
-    }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore.
-    return false;
+    if(!file) return;
+    App_FileSystem()->removeFile(*reinterpret_cast<de::File1*>(file));
 }
 
 void F_ReleaseFile(struct file1_s* file)

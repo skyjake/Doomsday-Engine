@@ -56,6 +56,9 @@ namespace de
     }
 
     /**
+     * Files with a .wad extension are archived data files with multiple 'lumps',
+     * other files are single lumps whose base filename will become the lump name.
+     *
      * Internally the lump index has two parts: the Primary index (which is populated
      * with lumps from loaded data files) and the Auxiliary index (used to temporarily
      * open a file that is not considered part of the filesystem).
@@ -141,8 +144,8 @@ namespace de
         /**
          * Maintains a list of identifiers already seen.
          *
-         * @return @c true if the given file can be opened, or
-         *         @c false, if it has already been opened.
+         * @return  @c true if the given file can be opened, or
+         *          @c false if it has already been opened.
          */
         bool checkFileId(char const* path);
 
@@ -152,25 +155,19 @@ namespace de
         bool accessFile(char const* path);
 
         /**
-         * Files with a .wad extension are archived data files with multiple 'lumps',
-         * other files are single lumps whose base filename will become the lump name.
+         * Indexes @a file (which must have been opened with this file system) into
+         * this file system and adds it to the list of loaded files.
          *
-         * @param path          Path to the file to be opened. Either a "real" file in the local
-         *                      file system, or a "virtual" file in the virtual file system.
-         * @param baseOffset    Offset from the start of the file in bytes to begin.
+         * @param file      The file to index. Assumed to have not yet been indexed!
          *
-         * @return  Newly added file instance if the operation is successful, else @c NULL.
+         * @return  This instance.
          */
-        File1* addFile(char const* path, size_t baseOffset = 0);
-
-        /// @note All files are added with baseOffset = @c 0.
-        int addFiles(char const* const* paths, int num);
+        FS1& index(File1& file);
 
         /**
          * Attempt to remove a file from the virtual file system.
          *
-         * @return @c true if the operation is successful.
-         *
+         * @return  @c true if the operation is successful.
          */
         bool removeFile(File1& file);
 
@@ -344,13 +341,6 @@ namespace de
         File1& interpret(FileHandle& hndl, char const* path, FileInfo const& info);
 
         /**
-         * Adds a file to any relevant indexes.
-         *
-         * @param file  File to index.
-         */
-        void index(File1& file);
-
-        /**
          * Removes a file from any lump indexes.
          *
          * @param file  File to remove from the index.
@@ -403,10 +393,9 @@ int F_LumpCount(void);
 
 int F_Access(char const* path);
 
-struct file1_s* F_AddFile2(char const* path, size_t baseOffset);
-struct file1_s* F_AddFile(char const* path/*, baseOffset = 0*/);
+void F_Index(struct file1_s* file);
 
-boolean F_RemoveFile(char const* path);
+void F_RemoveFile(struct file1_s* file);
 
 FileHandle* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
 FileHandle* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);

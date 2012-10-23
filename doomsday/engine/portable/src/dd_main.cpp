@@ -69,6 +69,18 @@ static int DD_DummyWorker(void* parameters);
 static void DD_AutoLoad();
 static void initPathMappings();
 
+/**
+ * @param path          Path to the file to be loaded. Either a "real" file in
+ *                      the local file system, or a "virtual" file.
+ * @param baseOffset    Offset from the start of the file in bytes to begin.
+ * @param file          Write the address of the loaded file here if not @c NULL.
+ *
+ * @return  @c true iff the referenced file was loaded.
+ */
+static bool tryLoadFile(char const* path, size_t baseOffset = 0, de::File1** file = 0);
+
+static bool tryUnloadFile(char const* path);
+
 extern int renderTextures;
 extern int monochrome;
 
@@ -194,7 +206,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        App_FileSystem()->addFile(token);
+        tryLoadFile(token);
         token = strtok(NULL, ATWSEPS);
     }
     free(buffer);
@@ -293,7 +305,7 @@ static int addFilesFromAutoData(void)
                 if(i->attrib & A_SUBDIR) continue;
 
                 QByteArray foundPath = i->path.toUtf8();
-                if(App_FileSystem()->addFile(foundPath.constData()))
+                if(tryLoadFile(foundPath.constData()))
                 {
                     count += 1;
                 }
@@ -379,8 +391,8 @@ static void loadResource(AbstractResource* res)
         ddstring_t const* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
         if(path)
         {
-            de::File1* file = App_FileSystem()->addFile(Str_Text(path));
-            if(file)
+            de::File1* file;
+            if(tryLoadFile(Str_Text(path), 0/*base offset*/, &file))
             {
                 // Mark this as an original game resource.
                 file->setCustom(false);
@@ -497,7 +509,7 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, resourcetype_t res
     for(i = 0; i < *listSize; ++i)
     {
         if(resType != F_GuessResourceTypeByName(Str_Text((*list)[i]))) continue;
-        if(App_FileSystem()->addFile(Str_Text((*list)[i])))
+        if(tryLoadFile(Str_Text((*list)[i])))
         {
             count += 1;
         }
@@ -1650,7 +1662,7 @@ static int DD_StartupWorker(void* parm)
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
     if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) ||
-       !App_FileSystem()->addFile(Str_Text(&foundPath)))
+       !tryLoadFile(Str_Text(&foundPath)))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
     }
@@ -2322,7 +2334,7 @@ D_CMD(Load)
         Str_Strip(&searchPath);
 
         if(F_FindResource3(RC_PACKAGE, Str_Text(&searchPath), &foundPath, RLF_MATCH_EXTENSION) != 0 &&
-           App_FileSystem()->addFile(Str_Text(&foundPath)))
+           tryLoadFile(Str_Text(&foundPath)))
             didLoadResource = true;
     }
     Str_Free(&foundPath);
@@ -2334,7 +2346,31 @@ D_CMD(Load)
     return (didLoadGame || didLoadResource);
 }
 
-static void tryUnloadFile(char const* path, bool* didUnloadFiles = 0)
+static bool tryLoadFile(char const* path, size_t baseOffset, de::File1** file)
+{
+    try
+    {
+        de::FileHandle& hndl = App_FileSystem()->openFile(path, "rb", baseOffset, false /* no duplicates */);
+
+        VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(hndl.file().composePath()))) )
+        App_FileSystem()->index(hndl.file());
+
+        if(file) *file = &hndl.file();
+        return true;
+    }
+    catch(FS1::NotFoundError const&)
+    {
+        if(App_FileSystem()->accessFile(path))
+        {
+            // Must already be loaded.
+            Con_Message("\"%s\" already loaded.\n", F_PrettyPath(path));
+        }
+    }
+    if(file) *file = 0;
+    return false;
+}
+
+static bool tryUnloadFile(char const* path)
 {
     try
     {
@@ -2346,18 +2382,19 @@ static void tryUnloadFile(char const* path, bool* didUnloadFiles = 0)
             Con_Message("\"%s\" is required by the current game.\n"
                         "Required game files cannot be unloaded in isolation.\n",
                         F_PrettyPath(Str_Text(file.composePath())));
-            return;
+            return false;
         }
 
         VERBOSE2( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) )
         if(App_FileSystem()->removeFile(file))
         {
             VERBOSE2( Con_Message("Done unloading \"%s\".\n", F_PrettyPath(Str_Text(file.composePath()))) )
-            if(didUnloadFiles) *didUnloadFiles = true;
+            return true;
         }
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore.
+    return false;
 }
 
 D_CMD(Unload)
@@ -2421,7 +2458,10 @@ D_CMD(Unload)
     {
         if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath)) continue;
 
-        tryUnloadFile(Str_Text(&searchPath), &didUnloadFiles);
+        if(tryUnloadFile(Str_Text(&searchPath)))
+        {
+            didUnloadFiles = true;
+        }
     }
 
     if(didUnloadFiles)
