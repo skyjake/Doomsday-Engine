@@ -4,7 +4,7 @@
  * FileDirectory. Core system component representing a hierarchical file path
  * structure.
  *
- * A specialization of de::PathDirectory which implements automatic population
+ * A specialization of de::PathTree which implements automatic population
  * of the directory itself from the virtual file system.
  *
  * @note Paths are resolved prior to pushing them into the directory.
@@ -33,13 +33,13 @@
 #define LIBDENG_FILEDIRECTORY_H
 
 #include "uri.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 
 #ifdef __cplusplus
 
 namespace de {
 
-class FileDirectory : private PathDirectory
+class FileDirectory : private PathTree
 {
 public:
     /**
@@ -68,7 +68,7 @@ public:
      *
      * @return  @c true iff successful.
      */
-    bool find(PathDirectoryNodeType type, char const* searchPath, char searchDelimiter = '/',
+    bool find(PathTreeNodeType type, char const* searchPath, char searchDelimiter = '/',
               ddstring_t* foundPath = 0, char foundDelimiter = '/');
 
     /**
@@ -81,7 +81,7 @@ public:
      * @param parameters    Passed to the callback.
      */
     void addPaths(int flags, Uri const* const* searchPaths, uint searchPathsCount,
-                  int (*callback) (PathDirectoryNode& node, void* parameters) = 0,
+                  int (*callback) (PathTreeNode& node, void* parameters) = 0,
                   void* parameters = 0);
 
     /**
@@ -93,7 +93,7 @@ public:
      * @param parameters    Passed to the callback.
      */
     void addPathList(int flags, char const* pathList,
-                     int (*callback) (PathDirectoryNode& node, void* parameters) = 0, void* parameters = 0);
+                     int (*callback) (PathTreeNode& node, void* parameters) = 0, void* parameters = 0);
 
     /**
      * Collate all paths in the directory into a list.
@@ -115,10 +115,10 @@ public:
 private:
     void clearNodeInfo();
 
-    PathDirectoryNode* addPathNodes(ddstring_t const* rawPath);
+    PathTreeNode* addPathNodes(ddstring_t const* rawPath);
 
-    int addChildNodes(PathDirectoryNode& node, int flags,
-                      int (*callback) (PathDirectoryNode& node, void* parameters),
+    int addChildNodes(PathTreeNode& node, int flags,
+                      int (*callback) (PathTreeNode& node, void* parameters),
                       void* parameters);
 
     /**
@@ -131,8 +131,8 @@ private:
      * @return  Non-zero if the current iteration should stop else @c 0.
      */
     int addPathNodesAndMaybeDescendBranch(bool descendBranches, ddstring_t const* filePath,
-                                          PathDirectoryNodeType nodeType, int flags,
-                                          int (*callback) (PathDirectoryNode& node, void* parameters),
+                                          PathTreeNodeType nodeType, int flags,
+                                          int (*callback) (PathTreeNode& node, void* parameters),
                                           void* parameters);
 
 private:
@@ -140,7 +140,7 @@ private:
     ddstring_t* basePath;
 
     /// Used with relative path directories.
-    PathDirectoryNode* baseNode;
+    PathTreeNode* baseNode;
 };
 
 } // namespace de

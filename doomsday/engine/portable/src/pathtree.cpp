@@ -1,5 +1,5 @@
 /**
- * @file pathdirectory.cpp
+ * @file pathtree.cpp
  * @ingroup base
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -37,10 +37,10 @@
 #  include "m_misc.h" // For M_NumDigits()
 #endif
 
-#include "pathdirectory.h"
+#include "pathtree.h"
 
 #if 0
-static volatile uint pathDirectoryInstanceCount;
+static volatile uint pathTreeInstanceCount;
 
 /// A mutex is used to prevent Data races in the node allocator.
 static mutex_t nodeAllocator_Mutex;
@@ -48,8 +48,8 @@ static mutex_t nodeAllocator_Mutex;
 /// Threaded access to the following Data is protected by nodeAllocator_Mutex:
 /// Nodes are block-allocated from this set.
 static blockset_t* NodeBlockSet;
-/// Linked list of used directory nodes for re-use. Linked with de::PathDirectoryNode::next
-static de::PathDirectoryNode* UsedNodes;
+/// Linked list of used directory nodes for re-use. Linked with de::PathTreeNode::next
+static de::PathTreeNode* UsedNodes;
 #endif
 
 #ifdef LIBDENG_STACK_MONITOR
@@ -68,7 +68,7 @@ typedef struct pathconstructorparams_s {
  * path (when descending), then allocates memory for the string, and finally
  * copies each fragment with the delimiters (on the way out).
  */
-static void pathConstructor(pathconstructorparams_t* parm, de::PathDirectoryNode const& trav)
+static void pathConstructor(pathconstructorparams_t* parm, de::PathTreeNode const& trav)
 {
     DENG2_ASSERT(parm);
 
@@ -106,23 +106,23 @@ static void pathConstructor(pathconstructorparams_t* parm, de::PathDirectoryNode
     Str_AppendWithoutAllocs(parm->dest, fragment);
 }
 
-struct de::PathDirectory::Instance
+struct de::PathTree::Instance
 {
-    de::PathDirectory* self;
+    de::PathTree* self;
 
     /// Path name fragment intern pool.
     StringPool* fragments;
 
-    int flags; /// @see pathDirectoryFlags
+    int flags; /// @see pathTreeFlags
 
     /// Path node hashes.
-    de::PathDirectory::Nodes leafHash;
-    de::PathDirectory::Nodes branchHash;
+    de::PathTree::Nodes leafHash;
+    de::PathTree::Nodes branchHash;
 
     /// Total number of unique paths in the directory.
     uint size;
 
-    Instance(de::PathDirectory* d, int flags_)
+    Instance(de::PathTree* d, int flags_)
         : self(d), fragments(0), flags(flags_), leafHash(), branchHash(), size(0)
     {
 #if 0
@@ -130,22 +130,22 @@ struct de::PathDirectory::Instance
         // to accelerate directory construction/population.
         if(!nodeAllocator_Mutex)
         {
-            nodeAllocator_Mutex = Sys_CreateMutex("PathDirectoryNodeAllocator_MUTEX");
+            nodeAllocator_Mutex = Sys_CreateMutex("PathTreeNodeAllocator_MUTEX");
 
             Sys_Lock(nodeAllocator_Mutex);
-            NodeBlockSet = BlockSet_New(sizeof(de::PathDirectoryNode), 128);
+            NodeBlockSet = BlockSet_New(sizeof(de::PathTreeNode), 128);
             UsedNodes = NULL;
             Sys_Unlock(nodeAllocator_Mutex);
         }
 
-        pathDirectoryInstanceCount += 1;
+        pathTreeInstanceCount += 1;
 #endif
     }
 
     ~Instance()
     {
 #if 0
-        if(--pathDirectoryInstanceCount == 0)
+        if(--pathTreeInstanceCount == 0)
         {
             Sys_Lock(nodeAllocator_Mutex);
             BlockSet_Delete(NodeBlockSet);
@@ -166,12 +166,12 @@ struct de::PathDirectory::Instance
         }
     }
 
-    de::PathDirectoryNode* findNode(de::PathDirectoryNode* parent,
-        PathDirectoryNodeType nodeType, StringPoolId internId)
+    de::PathTreeNode* findNode(de::PathTreeNode* parent,
+        PathTreeNodeType nodeType, StringPoolId internId)
     {
-        de::PathDirectory::Nodes& ph = (nodeType == PT_LEAF? leafHash : branchHash);
+        de::PathTree::Nodes& ph = (nodeType == PT_LEAF? leafHash : branchHash);
         ushort hash = StringPool_UserValue(fragments, internId);
-        de::PathDirectory::Nodes::const_iterator i = ph.find(hash);
+        de::PathTree::Nodes::const_iterator i = ph.find(hash);
         while(i != ph.end() && i.key() == hash)
         {
             if(parent == (*i)->parent() && internId == (*i)->internId())
@@ -199,8 +199,8 @@ struct de::PathDirectory::Instance
      * @return  [ a new | the ] directory node that matches the name and type and
      * which has the specified parent node.
      */
-    de::PathDirectoryNode* direcNode(de::PathDirectoryNode* parent,
-        PathDirectoryNodeType nodeType, ddstring_t const* name, char delimiter,
+    de::PathTreeNode* direcNode(de::PathTreeNode* parent,
+        PathTreeNodeType nodeType, ddstring_t const* name, char delimiter,
         void* userData)
     {
         DENG2_ASSERT(name);
@@ -213,7 +213,7 @@ struct de::PathDirectory::Instance
             if(internId)
             {
                 // The name is known. Perhaps we have.
-                de::PathDirectoryNode* node = findNode(parent, nodeType, internId);
+                de::PathTreeNode* node = findNode(parent, nodeType, internId);
                 if(node)
                 {
                     if(nodeType == PT_BRANCH || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
@@ -241,7 +241,7 @@ struct de::PathDirectory::Instance
         // Are we out of name indices?
         if(!internId) return NULL;
 
-        de::PathDirectoryNode* node = newNode(self, nodeType, parent, internId, userData);
+        de::PathTreeNode* node = newNode(self, nodeType, parent, internId, userData);
 
         // Insert the new node into the path hash.
         if(nodeType == PT_LEAF)
@@ -261,11 +261,11 @@ struct de::PathDirectory::Instance
      *
      * @return  The node that identifies the given path.
      */
-    de::PathDirectoryNode* buildDirecNodes(char const* path, char delimiter)
+    de::PathTreeNode* buildDirecNodes(char const* path, char delimiter)
     {
         DENG2_ASSERT(path);
 
-        de::PathDirectoryNode* node = NULL, *parent = NULL;
+        de::PathTreeNode* node = NULL, *parent = NULL;
 
         // Continue splitting as long as there are parts.
         AutoStr* part = AutoStr_NewStd();
@@ -276,7 +276,7 @@ struct de::PathDirectory::Instance
             /// @todo Do not error here. If we're out of storage undo this action and return.
             if(!node)
             {
-                throw de::Error("PathDirectory::buildDirecNodes",
+                throw de::Error("PathTree::buildDirecNodes",
                                 de::String("Exhausted storage while attempting to insert nodes for path \"%1\".")
                                     .arg(path));
             }
@@ -289,7 +289,7 @@ struct de::PathDirectory::Instance
             /// @todo Do not error here. If we're out of storage undo this action and return.
             if(!node)
             {
-                throw de::Error("PathDirectory::buildDirecNodes",
+                throw de::Error("PathTree::buildDirecNodes",
                                 de::String("Exhausted storage while attempting to insert nodes for path \"%1\".")
                                     .arg(path));
             }
@@ -318,7 +318,7 @@ struct de::PathDirectory::Instance
      *
      * Perhaps a fixed size MRU cache? -ds
      */
-    ddstring_t* constructPath(de::PathDirectoryNode const& node,
+    ddstring_t* constructPath(de::PathTreeNode const& node,
                               ddstring_t* constructedPath, char delimiter)
     {
         pathconstructorparams_t parm;
@@ -355,11 +355,11 @@ struct de::PathDirectory::Instance
         return constructedPath;
     }
 
-    static de::PathDirectoryNode*
-    newNode(de::PathDirectory* directory, PathDirectoryNodeType type,
-            de::PathDirectoryNode* parent, StringPoolId internId, void* userData)
+    static de::PathTreeNode*
+    newNode(de::PathTree* directory, PathTreeNodeType type,
+            de::PathTreeNode* parent, StringPoolId internId, void* userData)
     {
-        de::PathDirectoryNode* node;
+        de::PathTreeNode* node;
 
         DENG2_ASSERT(directory);
 
@@ -383,7 +383,7 @@ struct de::PathDirectory::Instance
 #endif
         {
             //void* element = BlockSet_Allocate(NodeBlockSet);
-            node = /*new (element)*/ new de::PathDirectoryNode(*directory, type, internId,
+            node = /*new (element)*/ new de::PathTreeNode(*directory, type, internId,
                                                                parent, userData);
         }
 #if 0
@@ -393,7 +393,7 @@ struct de::PathDirectory::Instance
         return node;
     }
 
-    static void deleteNode(de::PathDirectoryNode* node)
+    static void deleteNode(de::PathTreeNode* node)
     {
         if(!node) return;
         delete node;
@@ -406,10 +406,10 @@ struct de::PathDirectory::Instance
 #endif
     }
 
-    static void collectPathsInHash(de::PathDirectory::Nodes& ph, char delimiter,
+    static void collectPathsInHash(de::PathTree::Nodes& ph, char delimiter,
         ddstring_t** pathListAdr)
     {
-        DENG2_FOR_EACH_CONST(de::PathDirectory::Nodes, i, ph)
+        DENG2_FOR_EACH_CONST(de::PathTree::Nodes, i, ph)
         {
             Str_Init(*pathListAdr);
             (*i)->composePath((*pathListAdr), NULL, delimiter);
@@ -417,14 +417,14 @@ struct de::PathDirectory::Instance
         }
     }
 
-    static void clearPathHash(de::PathDirectory::Nodes& ph)
+    static void clearPathHash(de::PathTree::Nodes& ph)
     {
-        DENG2_FOR_EACH(de::PathDirectory::Nodes, i, ph)
+        DENG2_FOR_EACH(de::PathTree::Nodes, i, ph)
         {
 #if _DEBUG
             if((*i)->userData())
             {
-                LOG_AS("PathDirectory::clearPathHash");
+                LOG_AS("PathTree::clearPathHash");
                 LOG_ERROR("Node %p has non-NULL user data.") << (void*)(*i);
             }
 #endif
@@ -434,7 +434,7 @@ struct de::PathDirectory::Instance
     }
 };
 
-ushort de::PathDirectory::hashPathFragment(const char* fragment, size_t len, char delimiter)
+ushort de::PathTree::hashPathFragment(const char* fragment, size_t len, char delimiter)
 {
     ushort key = 0;
 
@@ -455,19 +455,19 @@ ushort de::PathDirectory::hashPathFragment(const char* fragment, size_t len, cha
         case 2: key -= tolower(*c);   op=0; break;
         }
     }
-    return key % PATHDIRECTORY_PATHHASH_SIZE;
+    return key % PATHTREE_PATHHASH_SIZE;
 }
 
-ushort de::PathDirectory::hashForInternId(StringPoolId internId)
+ushort de::PathTree::hashForInternId(StringPoolId internId)
 {
     DENG2_ASSERT(internId > 0);
     return StringPool_UserValue(d->fragments, internId);
 }
 
-de::PathDirectoryNode*
-de::PathDirectory::insert(const char* path, char delimiter, void* userData)
+de::PathTreeNode*
+de::PathTree::insert(const char* path, char delimiter, void* userData)
 {
-    de::PathDirectoryNode* node = d->buildDirecNodes(path, delimiter);
+    de::PathTreeNode* node = d->buildDirecNodes(path, delimiter);
     if(node)
     {
         // There is now one more unique path in the directory.
@@ -481,23 +481,23 @@ de::PathDirectory::insert(const char* path, char delimiter, void* userData)
     return node;
 }
 
-de::PathDirectory::PathDirectory(int flags)
+de::PathTree::PathTree(int flags)
 {
     d = new Instance(this, flags);
 }
 
-de::PathDirectory::~PathDirectory()
+de::PathTree::~PathTree()
 {
     clear();
     delete d;
 }
 
-uint de::PathDirectory::size() const
+uint de::PathTree::size() const
 {
     return d->size;
 }
 
-void de::PathDirectory::clear()
+void de::PathTree::clear()
 {
     d->clearPathHash(d->leafHash);
     d->clearPathHash(d->branchHash);
@@ -505,23 +505,23 @@ void de::PathDirectory::clear()
     d->size = 0;
 }
 
-de::PathDirectoryNode* de::PathDirectory::find(int flags,
+de::PathTreeNode* de::PathTree::find(int flags,
     const char* searchPath, char delimiter)
 {
-    PathDirectoryNode* foundNode = NULL;
+    PathTreeNode* foundNode = NULL;
     if(searchPath && searchPath[0] && d->size)
     {
         PathMap mappedSearchPath;
-        PathMap_Initialize2(&mappedSearchPath, PathDirectory_HashPathFragment2, searchPath, delimiter);
+        PathMap_Initialize2(&mappedSearchPath, PathTree_HashPathFragment2, searchPath, delimiter);
 
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF))
         {
-            de::PathDirectory::Nodes& nodes = d->leafHash;
-            de::PathDirectory::Nodes::iterator i = nodes.find(hash);
+            de::PathTree::Nodes& nodes = d->leafHash;
+            de::PathTree::Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
-                if((*i)->matchDirectory(flags, &mappedSearchPath))
+                if((*i)->comparePath(flags, &mappedSearchPath))
                 {
                     // This is the node we're looking for - stop iteration.
                     foundNode = *i;
@@ -533,11 +533,11 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
         if(!foundNode)
         if(!(flags & PCF_NO_BRANCH))
         {
-            de::PathDirectory::Nodes& nodes = d->branchHash;
-            de::PathDirectory::Nodes::iterator i = nodes.find(hash);
+            de::PathTree::Nodes& nodes = d->branchHash;
+            de::PathTree::Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
-                if((*i)->matchDirectory(flags, &mappedSearchPath))
+                if((*i)->comparePath(flags, &mappedSearchPath))
                 {
                     // This is the node we're looking for - stop iteration.
                     foundNode = *i;
@@ -551,12 +551,12 @@ de::PathDirectoryNode* de::PathDirectory::find(int flags,
     return foundNode;
 }
 
-ddstring_t const* de::PathDirectory::pathFragment(de::PathDirectoryNode const& node)
+ddstring_t const* de::PathTree::pathFragment(de::PathTreeNode const& node)
 {
     return StringPool_String(d->fragments, node.internId());
 }
 
-ddstring_t* de::PathDirectory::composePath(de::PathDirectoryNode const& node,
+ddstring_t* de::PathTree::composePath(de::PathTreeNode const& node,
     ddstring_t* foundPath, int* length, char delimiter)
 {
     if(!foundPath)
@@ -567,12 +567,12 @@ ddstring_t* de::PathDirectory::composePath(de::PathDirectoryNode const& node,
     return d->constructPath(node, foundPath, delimiter);
 }
 
-de::PathDirectory::Nodes const& de::PathDirectory::nodes(PathDirectoryNodeType type) const
+de::PathTree::Nodes const& de::PathTree::nodes(PathTreeNodeType type) const
 {
     return (type == PT_LEAF? d->leafHash : d->branchHash);
 }
 
-ddstring_t* de::PathDirectory::collectPaths(size_t* retCount, int flags, char delimiter)
+ddstring_t* de::PathTree::collectPaths(size_t* retCount, int flags, char delimiter)
 {
     ddstring_t* paths = NULL;
     size_t count = 0;
@@ -588,7 +588,7 @@ ddstring_t* de::PathDirectory::collectPaths(size_t* retCount, int flags, char de
         paths = static_cast<ddstring_t*>(M_Malloc(sizeof *paths * count));
         if(!paths)
         {
-            throw de::Error("PathDirectory::collectPaths:",
+            throw de::Error("PathTree::collectPaths:",
                             de::String("Failed on allocation of %1 bytes for new path list.")
                                 .arg(sizeof *paths * count));
         }
@@ -611,12 +611,12 @@ static int comparePaths(const void* a, const void* b)
     return qstricmp(Str_Text((Str*)a), Str_Text((Str*)b));
 }
 
-void de::PathDirectory::debugPrint(de::PathDirectory& pd, char delimiter)
+void de::PathTree::debugPrint(de::PathTree& pt, char delimiter)
 {
-    LOG_AS("PathDirectory");
-    LOG_INFO("Directory [%p]:") << (void*)&pd;
+    LOG_AS("PathTree");
+    LOG_INFO("Directory [%p]:") << (void*)&pt;
     size_t numLeafs;
-    ddstring_t* pathList = pd.collectPaths(&numLeafs, PT_LEAF, delimiter);
+    ddstring_t* pathList = pt.collectPaths(&numLeafs, PT_LEAF, delimiter);
     if(pathList)
     {
         size_t n = 0;
@@ -645,7 +645,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
         float mean = (signed)sum / total;
         variance = ((signed)sumSqr - (signed)sum * mean) / (((signed)total)-1);
 
-        coverage  = 100 / (float)PATHDIRECTORY_PATHHASH_SIZE * (PATHDIRECTORY_PATHHASH_SIZE - numEmpty);
+        coverage  = 100 / (float)PATHTREE_PATHHASH_SIZE * (PATHTREE_PATHHASH_SIZE - numEmpty);
         collision = 100 / (float) total * numCollisions;
     }
     else
@@ -656,7 +656,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     const int* col = colWidths;
     Con_Printf("%*s ",    *col++, name);
     Con_Printf("%*lu ",   *col++, (unsigned long)total);
-    Con_Printf("%*lu",    *col++, PATHDIRECTORY_PATHHASH_SIZE - (unsigned long)numEmpty);
+    Con_Printf("%*lu",    *col++, PATHTREE_PATHHASH_SIZE - (unsigned long)numEmpty);
     Con_Printf(":%-*lu ", *col++, (unsigned long)numEmpty);
     Con_Printf("%*lu ",   *col++, (unsigned long)maxCollisions);
     Con_Printf("%*lu ",   *col++, (unsigned long)numCollisions);
@@ -666,20 +666,20 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     Con_Printf("%*lu\n",  *col++, (unsigned long)maxHeight);
 }
 
-static void printDistributionOverview(PathDirectory* pd,
-    size_t nodeCountSum[PATHDIRECTORYNODE_TYPE_COUNT],
-    size_t nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT],
-    size_t nodeBucketCollisions[PATHDIRECTORYNODE_TYPE_COUNT], size_t nodeBucketCollisionsTotal,
-    size_t nodeBucketCollisionsMax[PATHDIRECTORYNODE_TYPE_COUNT], size_t /*nodeBucketCollisionsMaxTotal*/,
-    size_t nodeBucketEmpty[PATHDIRECTORYNODE_TYPE_COUNT], size_t nodeBucketEmptyTotal, size_t nodeBucketHeight,
-    size_t /*nodeCount*/[PATHDIRECTORYNODE_TYPE_COUNT])
+static void printDistributionOverview(PathTree* pt,
+    size_t nodeCountSum[PATHTREENODE_TYPE_COUNT],
+    size_t nodeCountTotal[PATHTREENODE_TYPE_COUNT],
+    size_t nodeBucketCollisions[PATHTREENODE_TYPE_COUNT], size_t nodeBucketCollisionsTotal,
+    size_t nodeBucketCollisionsMax[PATHTREENODE_TYPE_COUNT], size_t /*nodeBucketCollisionsMaxTotal*/,
+    size_t nodeBucketEmpty[PATHTREENODE_TYPE_COUNT], size_t nodeBucketEmptyTotal, size_t nodeBucketHeight,
+    size_t /*nodeCount*/[PATHTREENODE_TYPE_COUNT])
 {
 #define NUMCOLS             10/*type+count+used:+empty+collideMax+collideCount+collidePercent+coverage+variance+maxheight*/
 
-    DENG2_ASSERT(pd);
+    DENG2_ASSERT(pt);
 
     size_t collisionsMax = 0, countSum = 0, countTotal = 0;
-    for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
+    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
         if(nodeBucketCollisionsMax[i] > collisionsMax)
             collisionsMax = nodeBucketCollisionsMax[i];
@@ -693,11 +693,11 @@ static void printDistributionOverview(PathDirectory* pd,
     int colWidths[NUMCOLS];
     int* col = colWidths;
     *col = 0;
-    for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
+    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
-        PathDirectoryNodeType type = PathDirectoryNodeType(i);
-        if(Str_Length(de::PathDirectoryNode::typeName(type)) > *col)
-            *col = Str_Length(de::PathDirectoryNode::typeName(type));
+        PathTreeNodeType type = PathTreeNodeType(i);
+        if(Str_Length(de::PathTreeNode::typeName(type)) > *col)
+            *col = Str_Length(de::PathTreeNode::typeName(type));
     }
     col++;
     *col++ = MAX_OF(nodeCountDigits, 1); /*#*/
@@ -722,7 +722,7 @@ static void printDistributionOverview(PathDirectory* pd,
         spans[i][1] = remainder + (spans[i][0] /= 2);
     }
 
-    Con_FPrintf(CPF_YELLOW, "Directory Distribution (p:%p):\n", pd);
+    Con_FPrintf(CPF_YELLOW, "Directory Distribution (p:%p):\n", pt);
 
     // Level1 headings:
     int* span = &spans[0][0];
@@ -746,10 +746,10 @@ static void printDistributionOverview(PathDirectory* pd,
 
     if(countTotal != 0)
     {
-        for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
+        for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
         {
-            PathDirectoryNodeType type = PathDirectoryNodeType(i);
-            printDistributionOverviewElement(colWidths, Str_Text(de::PathDirectoryNode::typeName(type)),
+            PathTreeNodeType type = PathTreeNodeType(i);
+            printDistributionOverviewElement(colWidths, Str_Text(de::PathTreeNode::typeName(type)),
                 nodeBucketEmpty[i], (i == PT_LEAF? nodeBucketHeight : 0),
                 nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
                 nodeCountSum[i], nodeCountTotal[i]);
@@ -760,33 +760,33 @@ static void printDistributionOverview(PathDirectory* pd,
     printDistributionOverviewElement(colWidths, "total",
         nodeBucketEmptyTotal, nodeBucketHeight,
         nodeBucketCollisionsTotal, collisionsMax,
-        countSum / PATHDIRECTORYNODE_TYPE_COUNT, countTotal);
+        countSum / PATHTREENODE_TYPE_COUNT, countTotal);
 
 #undef NUMCOLS
 }
 #endif
 
 #if 0
-static void printDistributionHistogram(PathDirectory* pd, ushort size,
-    size_t nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT])
+static void printDistributionHistogram(PathTree* pt, ushort size,
+    size_t nodeCountTotal[PATHTREENODE_TYPE_COUNT])
 {
-#define NUMCOLS             4/*range+total+PATHDIRECTORYNODE_TYPE_COUNT*/
+#define NUMCOLS             4/*range+total+PATHTREENODE_TYPE_COUNT*/
 
-    size_t totalForRange, total, nodeCount[PATHDIRECTORYNODE_TYPE_COUNT];
-    int hashIndexDigits, col, colWidths[2+/*range+total*/PATHDIRECTORYNODE_TYPE_COUNT];
-    PathDirectoryNode* node;
+    size_t totalForRange, total, nodeCount[PATHTREENODE_TYPE_COUNT];
+    int hashIndexDigits, col, colWidths[2+/*range+total*/PATHTREENODE_TYPE_COUNT];
+    PathTreeNode* node;
     int j;
-    DENG2_ASSERT(pd);
+    DENG2_ASSERT(pt);
 
     total = 0;
-    for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
+    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
         total += nodeCountTotal[i];
     }
     if(0 == total) return;
 
     // Calculate minimum field widths:
-    hashIndexDigits = M_NumDigits(PATHDIRECTORY_PATHHASH_SIZE);
+    hashIndexDigits = M_NumDigits(PATHTREE_PATHHASH_SIZE);
     col = 0;
     if(size != 0)
         colWidths[col] = 2/*braces*/+hashIndexDigits*2+3/*elipses*/;
@@ -796,7 +796,7 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
     ++col;
 
     { size_t max = 0;
-    for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
+    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
         if(nodeCountTotal[i] > max)
             max = nodeCountTotal[i];
@@ -804,49 +804,49 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
     colWidths[col++] = MAX_OF(M_NumDigits((int)max), 5/*total*/);
     }
 
-    for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i, ++col)
+    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i, ++col)
     {
-        PathDirectoryNodeType type = PathDirectoryNodeType(i);
-        colWidths[col] = Str_Length(de::PathDirectoryNode::typeName(type));
+        PathTreeNodeType type = PathTreeNodeType(i);
+        colWidths[col] = Str_Length(de::PathTreeNode::typeName(type));
     }
 
     // Apply formatting:
     for(int i = 1; i < NUMCOLS; ++i) { colWidths[i] += 1; }
 
-    Con_FPrintf(CPF_YELLOW, "Histogram (p:%p):\n", pd);
+    Con_FPrintf(CPF_YELLOW, "Histogram (p:%p):\n", pt);
     // Print heading:
     col = 0;
     Con_Printf("%*s", colWidths[col++], "range");
     Con_Printf("%*s", colWidths[col++], "total");
-    for(int i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
+    for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
-        PathDirectoryNodeType type = PathDirectoryNodeType(i);
-        Con_Printf("%*s", colWidths[col++], Str_Text(de::PathDirectoryNode::typeName(type)));
+        PathTreeNodeType type = PathTreeNodeType(i);
+        Con_Printf("%*s", colWidths[col++], Str_Text(de::PathTreeNode::typeName(type)));
     }
     Con_Printf("\n");
     Con_PrintRuler();
 
-    { ushort from = 0, n = 0, range = (size != 0? PATHDIRECTORY_PATHHASH_SIZE / size: 0);
+    { ushort from = 0, n = 0, range = (size != 0? PATHTREE_PATHHASH_SIZE / size: 0);
     memset(nodeCount, 0, sizeof(nodeCount));
 
-    for(ushort i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+    for(ushort i = 0; i < PATHTREE_PATHHASH_SIZE; ++i)
     {
-        pathdirectory_pathhash_t** phAdr;
-        phAdr = hashAddressForNodeType(pd, PT_BRANCH);
+        pathtree_pathhash_t** phAdr;
+        phAdr = hashAddressForNodeType(pt, PT_BRANCH);
         if(*phAdr)
         for(node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PT_BRANCH];
 
-        phAdr = hashAddressForNodeType(pd, PT_LEAF);
+        phAdr = hashAddressForNodeType(pt, PT_LEAF);
         if(*phAdr)
         for(node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PT_LEAF];
 
-        if(size != 0 && (++n != range && i != PATHDIRECTORY_PATHHASH_SIZE-1))
+        if(size != 0 && (++n != range && i != PATHTREE_PATHHASH_SIZE-1))
             continue;
 
         totalForRange = 0;
-        for(j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
+        for(j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
             totalForRange += nodeCount[j];
 
         col = 0;
@@ -865,13 +865,13 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
         Con_Printf("%*lu", colWidths[col++], (unsigned long) totalForRange);
         if(0 != totalForRange)
         {
-            for(j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j, ++col)
+            for(j = 0; j < PATHTREENODE_TYPE_COUNT; ++j, ++col)
             {
                 if(0 != nodeCount[j])
                 {
                     Con_Printf("%*lu", colWidths[col], (unsigned long) nodeCount[j]);
                 }
-                else if(j < PATHDIRECTORYNODE_TYPE_COUNT-1 || 0 == size)
+                else if(j < PATHTREENODE_TYPE_COUNT-1 || 0 == size)
                 {
                     Con_Printf("%*s", colWidths[col], "");
                 }
@@ -904,13 +904,13 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
     if(0 != total)
     {
         int i;
-        for(i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i, ++col)
+        for(i = 0; i < PATHTREENODE_TYPE_COUNT; ++i, ++col)
         {
             if(0 != nodeCountTotal[i])
             {
                 Con_Printf("%*lu", colWidths[col], (unsigned long) nodeCountTotal[i]);
             }
-            else if(i < PATHDIRECTORYNODE_TYPE_COUNT-1)
+            else if(i < PATHTREENODE_TYPE_COUNT-1)
             {
                 Con_Printf("%*s", colWidths[col], "");
             }
@@ -922,37 +922,37 @@ static void printDistributionHistogram(PathDirectory* pd, ushort size,
 }
 #endif
 
-void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory& /*pd*/)
+void de::PathTree::debugPrintHashDistribution(de::PathTree& /*pt*/)
 {
 #if 0
-    size_t nodeCountSum[PATHDIRECTORYNODE_TYPE_COUNT],
-           nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketHeight = 0,
-           nodeBucketCollisions[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketCollisionsTotal = 0,
-           nodeBucketCollisionsMax[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketCollisionsMaxTotal = 0,
-           nodeBucketEmpty[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketEmptyTotal = 0,
-           nodeCount[PATHDIRECTORYNODE_TYPE_COUNT];
+    size_t nodeCountSum[PATHTREENODE_TYPE_COUNT],
+           nodeCountTotal[PATHTREENODE_TYPE_COUNT], nodeBucketHeight = 0,
+           nodeBucketCollisions[PATHTREENODE_TYPE_COUNT], nodeBucketCollisionsTotal = 0,
+           nodeBucketCollisionsMax[PATHTREENODE_TYPE_COUNT], nodeBucketCollisionsMaxTotal = 0,
+           nodeBucketEmpty[PATHTREENODE_TYPE_COUNT], nodeBucketEmptyTotal = 0,
+           nodeCount[PATHTREENODE_TYPE_COUNT];
     size_t totalForRange;
-    de::PathDirectoryNode* node;
-    DENG2_ASSERT(pd);
+    de::PathTreeNode* node;
+    DENG2_ASSERT(pt);
 
-    nodeCountTotal[PT_BRANCH] = countNodesInPathHash(*hashAddressForNodeType(pd, PT_BRANCH));
-    nodeCountTotal[PT_LEAF]   = countNodesInPathHash(*hashAddressForNodeType(pd, PT_LEAF));
+    nodeCountTotal[PT_BRANCH] = countNodesInPathHash(*hashAddressForNodeType(pt, PT_BRANCH));
+    nodeCountTotal[PT_LEAF]   = countNodesInPathHash(*hashAddressForNodeType(pt, PT_LEAF));
 
     memset(nodeCountSum, 0, sizeof(nodeCountSum));
     memset(nodeBucketCollisions, 0, sizeof(nodeBucketCollisions));
     memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
     memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
 
-    for(ushort i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+    for(ushort i = 0; i < PATHTREE_PATHHASH_SIZE; ++i)
     {
-        pathdirectory_pathhash_t** phAdr;
-        phAdr = hashAddressForNodeType(pd, PT_BRANCH);
+        pathtree_pathhash_t** phAdr;
+        phAdr = hashAddressForNodeType(pt, PT_BRANCH);
         nodeCount[PT_BRANCH] = 0;
         if(*phAdr)
         for(node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PT_BRANCH];
 
-        phAdr = hashAddressForNodeType(pd, PT_LEAF);
+        phAdr = hashAddressForNodeType(pt, PT_LEAF);
         nodeCount[PT_LEAF] = 0;
         if(*phAdr)
         {
@@ -960,11 +960,11 @@ void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory& /*pd*/)
             for(node = (**phAdr)[i].head; node; node = node->next)
             {
                 size_t height = 0;
-                PathDirectoryNode* other = node;
+                PathTreeNode* other = node;
 
                 ++nodeCount[PT_LEAF];
 
-                while((other = PathDirectoryNode_Parent(other))) { ++height; }
+                while((other = PathTreeNode_Parent(other))) { ++height; }
 
                 if(height > chainHeight)
                     chainHeight = height;
@@ -979,7 +979,7 @@ void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory& /*pd*/)
         nodeCountSum[PT_BRANCH] += nodeCount[PT_BRANCH];
         nodeCountSum[PT_LEAF]   += nodeCount[PT_LEAF];
 
-        for(int j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
+        for(int j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
         {
             if(nodeCount[j] != 0)
             {
@@ -995,7 +995,7 @@ void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory& /*pd*/)
         }
 
         size_t max = 0;
-        for(int j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
+        for(int j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
         {
             max += nodeCount[j];
         }
@@ -1015,13 +1015,13 @@ void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory& /*pd*/)
             nodeBucketCollisionsMaxTotal = totalForRange;
     }
 
-    printDistributionOverview(pd, nodeCountSum, nodeCountTotal,
+    printDistributionOverview(pt, nodeCountSum, nodeCountTotal,
         nodeBucketCollisions,    nodeBucketCollisionsTotal,
         nodeBucketCollisionsMax, nodeBucketCollisionsMaxTotal,
         nodeBucketEmpty, nodeBucketEmptyTotal,
         nodeBucketHeight, nodeCount);
     Con_Printf("\n");
-    printDistributionHistogram(pd, 16, nodeCountTotal);
+    printDistributionHistogram(pt, 16, nodeCountTotal);
 #endif
 }
 #endif
@@ -1031,95 +1031,95 @@ void de::PathDirectory::debugPrintHashDistribution(de::PathDirectory& /*pd*/)
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::PathDirectory*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::PathTree*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::PathDirectory const*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::PathTree const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::PathDirectory* self = TOINTERNAL(inst)
+    de::PathTree* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    de::PathDirectory const* self = TOINTERNAL_CONST(inst)
+    de::PathTree const* self = TOINTERNAL_CONST(inst)
 
-PathDirectory* PathDirectory_NewWithFlags(int flags)
+PathTree* PathTree_NewWithFlags(int flags)
 {
-    return reinterpret_cast<PathDirectory*>(new de::PathDirectory(flags));
+    return reinterpret_cast<PathTree*>(new de::PathTree(flags));
 }
 
-PathDirectory* PathDirectory_New(void)
+PathTree* PathTree_New(void)
 {
-    return reinterpret_cast<PathDirectory*>(new de::PathDirectory());
+    return reinterpret_cast<PathTree*>(new de::PathTree());
 }
 
-void PathDirectory_Delete(PathDirectory* pd)
+void PathTree_Delete(PathTree* pt)
 {
-    if(pd)
+    if(pt)
     {
-        SELF(pd);
+        SELF(pt);
         delete self;
     }
 }
 
-uint PathDirectory_Size(PathDirectory* pd)
+uint PathTree_Size(PathTree* pt)
 {
-    SELF(pd);
+    SELF(pt);
     return self->size();
 }
 
-void PathDirectory_Clear(PathDirectory* pd)
+void PathTree_Clear(PathTree* pt)
 {
-    SELF(pd);
+    SELF(pt);
     self->clear();
 }
 
-PathDirectoryNode* PathDirectory_Insert3(PathDirectory* pd, char const* path, char delimiter, void* userData)
+PathTreeNode* PathTree_Insert3(PathTree* pt, char const* path, char delimiter, void* userData)
 {
-    SELF(pd);
-    return reinterpret_cast<PathDirectoryNode*>(self->insert(path, delimiter, userData));
+    SELF(pt);
+    return reinterpret_cast<PathTreeNode*>(self->insert(path, delimiter, userData));
 }
 
-PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, char const* path, char delimiter)
+PathTreeNode* PathTree_Insert2(PathTree* pt, char const* path, char delimiter)
 {
-    SELF(pd);
-    return reinterpret_cast<PathDirectoryNode*>(self->insert(path, delimiter));
+    SELF(pt);
+    return reinterpret_cast<PathTreeNode*>(self->insert(path, delimiter));
 }
 
-PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, char const* path)
+PathTreeNode* PathTree_Insert(PathTree* pt, char const* path)
 {
-    SELF(pd);
-    return reinterpret_cast<PathDirectoryNode*>(self->insert(path));
+    SELF(pt);
+    return reinterpret_cast<PathTreeNode*>(self->insert(path));
 }
 
-static int iteratePathsInHash(PathDirectory* pd,
-    ushort hash, PathDirectoryNodeType type, int flags, PathDirectoryNode* parent_,
-    int (*callback) (PathDirectoryNode* node, void* parameters), void* parameters)
+static int iteratePathsInHash(PathTree* pt,
+    ushort hash, PathTreeNodeType type, int flags, PathTreeNode* parent_,
+    int (*callback) (PathTreeNode* node, void* parameters), void* parameters)
 {
     int result = 0;
-    SELF(pd);
+    SELF(pt);
 
-    if(hash != PATHDIRECTORY_NOHASH && hash >= PATHDIRECTORY_PATHHASH_SIZE)
+    if(hash != PATHTREE_NOHASH && hash >= PATHTREE_PATHHASH_SIZE)
     {
         throw de::Error("iteratePathsInHash",
                         de::String("Invalid hash %1 (valid range is [0..%2]).")
-                            .arg(hash).arg(PATHDIRECTORY_PATHHASH_SIZE-1));
+                            .arg(hash).arg(PATHTREE_PATHHASH_SIZE-1));
     }
 
-    de::PathDirectory::Nodes const& nodes = self->nodes(type);
-    de::PathDirectoryNode* parent = reinterpret_cast<de::PathDirectoryNode*>(parent_);
+    de::PathTree::Nodes const& nodes = self->nodes(type);
+    de::PathTreeNode* parent = reinterpret_cast<de::PathTreeNode*>(parent_);
 
     // Are we iterating nodes with a known hash?
-    if(hash != PATHDIRECTORY_NOHASH)
+    if(hash != PATHTREE_NOHASH)
     {
         // Yes.
-        de::PathDirectory::Nodes::const_iterator i = nodes.constFind(hash);
+        de::PathTree::Nodes::const_iterator i = nodes.constFind(hash);
         for(; i != nodes.end() && i.key() == hash; ++i)
         {
             if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
-                result = callback(reinterpret_cast<PathDirectoryNode*>(*i), parameters);
+                result = callback(reinterpret_cast<PathTreeNode*>(*i), parameters);
                 if(result) break;
             }
         }
@@ -1127,11 +1127,11 @@ static int iteratePathsInHash(PathDirectory* pd,
     else
     {
         // No - iterate all nodes.
-        DENG2_FOR_EACH_CONST(de::PathDirectory::Nodes, i, nodes)
+        DENG2_FOR_EACH_CONST(de::PathTree::Nodes, i, nodes)
         {
             if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
-                result = callback(reinterpret_cast<PathDirectoryNode*>(*i), parameters);
+                result = callback(reinterpret_cast<PathTreeNode*>(*i), parameters);
                 if(result) break;
             }
         }
@@ -1139,34 +1139,34 @@ static int iteratePathsInHash(PathDirectory* pd,
     return result;
 }
 
-static int iteratePathsInHash_Const(PathDirectory const* pd,
-    ushort hash, PathDirectoryNodeType type, int flags, PathDirectoryNode const* parent_,
-    int (*callback) (PathDirectoryNode const* node, void* parameters), void* parameters)
+static int iteratePathsInHash_Const(PathTree const* pt,
+    ushort hash, PathTreeNodeType type, int flags, PathTreeNode const* parent_,
+    int (*callback) (PathTreeNode const* node, void* parameters), void* parameters)
 {
     int result = 0;
 
-    SELF_CONST(pd);
+    SELF_CONST(pt);
 
-    if(hash != PATHDIRECTORY_NOHASH && hash >= PATHDIRECTORY_PATHHASH_SIZE)
+    if(hash != PATHTREE_NOHASH && hash >= PATHTREE_PATHHASH_SIZE)
     {
         throw de::Error("iteratePathsInHash_Const",
                         de::String("Invalid hash %1 (valid range is [0..%2]).")
-                            .arg(hash).arg(PATHDIRECTORY_PATHHASH_SIZE-1));
+                            .arg(hash).arg(PATHTREE_PATHHASH_SIZE-1));
     }
 
-    de::PathDirectory::Nodes const& nodes = self->nodes(type);
-    de::PathDirectoryNode const* parent = reinterpret_cast<de::PathDirectoryNode const*>(parent_);
+    de::PathTree::Nodes const& nodes = self->nodes(type);
+    de::PathTreeNode const* parent = reinterpret_cast<de::PathTreeNode const*>(parent_);
 
     // Are we iterating nodes with a known hash?
-    if(hash != PATHDIRECTORY_NOHASH)
+    if(hash != PATHTREE_NOHASH)
     {
         // Yes.
-        de::PathDirectory::Nodes::const_iterator i = nodes.find(hash);
+        de::PathTree::Nodes::const_iterator i = nodes.find(hash);
         for(; i != nodes.end() && i.key() == hash; ++i)
         {
             if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
-                result = callback(reinterpret_cast<PathDirectoryNode const*>(*i), parameters);
+                result = callback(reinterpret_cast<PathTreeNode const*>(*i), parameters);
                 if(result) break;
             }
         }
@@ -1174,11 +1174,11 @@ static int iteratePathsInHash_Const(PathDirectory const* pd,
     else
     {
         // No - iterate all nodes.
-        DENG2_FOR_EACH_CONST(de::PathDirectory::Nodes, i, nodes)
+        DENG2_FOR_EACH_CONST(de::PathTree::Nodes, i, nodes)
         {
             if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
-                result = callback(reinterpret_cast<PathDirectoryNode const*>(*i), parameters);
+                result = callback(reinterpret_cast<PathTreeNode const*>(*i), parameters);
                 if(result) break;
             }
         }
@@ -1186,86 +1186,86 @@ static int iteratePathsInHash_Const(PathDirectory const* pd,
     return result;
 }
 
-int PathDirectory_Iterate2(PathDirectory* pd, int flags, PathDirectoryNode* parent,
-    ushort hash, pathdirectory_iteratecallback_t callback, void* parameters)
+int PathTree_Iterate2(PathTree* pt, int flags, PathTreeNode* parent,
+    ushort hash, pathtree_iteratecallback_t callback, void* parameters)
 {
-    DENG_ASSERT(pd);
+    DENG_ASSERT(pt);
     int result = 0;
     if(callback)
     {
         if(!(flags & PCF_NO_LEAF))
-            result = iteratePathsInHash(pd, hash, PT_LEAF, flags, parent,
+            result = iteratePathsInHash(pt, hash, PT_LEAF, flags, parent,
                                         callback, parameters);
 
         if(!result && !(flags & PCF_NO_BRANCH))
-            result = iteratePathsInHash(pd, hash, PT_BRANCH, flags, parent,
+            result = iteratePathsInHash(pt, hash, PT_BRANCH, flags, parent,
                                         callback, parameters);
     }
     return result;
 }
 
-int PathDirectory_Iterate(PathDirectory* pd, int flags, PathDirectoryNode* parent,
-    ushort hash, pathdirectory_iteratecallback_t callback)
+int PathTree_Iterate(PathTree* pt, int flags, PathTreeNode* parent,
+    ushort hash, pathtree_iteratecallback_t callback)
 {
-    return PathDirectory_Iterate2(pd, flags, parent, hash, callback, NULL);
+    return PathTree_Iterate2(pt, flags, parent, hash, callback, NULL);
 }
 
-int PathDirectory_Iterate2_Const(PathDirectory const* pd, int flags, PathDirectoryNode const* parent,
-    ushort hash, pathdirectory_iterateconstcallback_t callback, void* parameters)
+int PathTree_Iterate2_Const(PathTree const* pt, int flags, PathTreeNode const* parent,
+    ushort hash, pathtree_iterateconstcallback_t callback, void* parameters)
 {
-    DENG_ASSERT(pd);
+    DENG_ASSERT(pt);
     int result = 0;
     if(callback)
     {
         if(!(flags & PCF_NO_LEAF))
-            result = iteratePathsInHash_Const(pd, hash, PT_LEAF, flags, parent,
+            result = iteratePathsInHash_Const(pt, hash, PT_LEAF, flags, parent,
                                               callback, parameters);
 
         if(!result && !(flags & PCF_NO_BRANCH))
-            result = iteratePathsInHash_Const(pd, hash, PT_BRANCH, flags, parent,
+            result = iteratePathsInHash_Const(pt, hash, PT_BRANCH, flags, parent,
                                               callback, parameters);
     }
     return result;
 }
 
-int PathDirectory_Iterate_Const(const PathDirectory* pd, int flags, PathDirectoryNode const* parent,
-    ushort hash, pathdirectory_iterateconstcallback_t callback)
+int PathTree_Iterate_Const(const PathTree* pt, int flags, PathTreeNode const* parent,
+    ushort hash, pathtree_iterateconstcallback_t callback)
 {
-    return PathDirectory_Iterate2_Const(pd, flags, parent, hash, callback, NULL);
+    return PathTree_Iterate2_Const(pt, flags, parent, hash, callback, NULL);
 }
 
-ddstring_t* PathDirectory_ComposePath2(PathDirectory* pd, PathDirectoryNode const* node,
+ddstring_t* PathTree_ComposePath2(PathTree* pt, PathTreeNode const* node,
     ddstring_t* path, int* length, char delimiter)
 {
     DENG_ASSERT(node);
-    SELF(pd);
-    return self->composePath(*reinterpret_cast<de::PathDirectoryNode const*>(node), path, length, delimiter);
+    SELF(pt);
+    return self->composePath(*reinterpret_cast<de::PathTreeNode const*>(node), path, length, delimiter);
 }
 
-ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, PathDirectoryNode const* node,
+ddstring_t* PathTree_ComposePath(PathTree* pt, PathTreeNode const* node,
     ddstring_t* path, int* length)
 {
     DENG_ASSERT(node);
-    SELF(pd);
-    return self->composePath(*reinterpret_cast<de::PathDirectoryNode const*>(node), path, length);
+    SELF(pt);
+    return self->composePath(*reinterpret_cast<de::PathTreeNode const*>(node), path, length);
 }
 
-ddstring_t const* PathDirectory_PathFragment(PathDirectory* pd, PathDirectoryNode const* node)
+ddstring_t const* PathTree_PathFragment(PathTree* pt, PathTreeNode const* node)
 {
     DENG_ASSERT(node);
-    SELF(pd);
-    return self->pathFragment(*reinterpret_cast<de::PathDirectoryNode const*>(node));
+    SELF(pt);
+    return self->pathFragment(*reinterpret_cast<de::PathTreeNode const*>(node));
 }
 
-ddstring_t* PathDirectory_CollectPaths2(PathDirectory* pd, size_t* count, int flags, char delimiter)
+ddstring_t* PathTree_CollectPaths2(PathTree* pt, size_t* count, int flags, char delimiter)
 {
-    SELF(pd);
+    SELF(pt);
     return self->collectPaths(count, flags, delimiter);
 }
 
-ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, size_t* count, int flags)
+ddstring_t* PathTree_CollectPaths(PathTree* pt, size_t* count, int flags)
 {
-    SELF(pd);
+    SELF(pt);
     return self->collectPaths(count, flags);
 }
 
@@ -1273,11 +1273,11 @@ typedef struct {
     int flags; /// @see pathComparisonFlags
     PathMap* mappedSearchPath;
     void* parameters;
-    pathdirectory_searchcallback_t callback;
-    PathDirectoryNode* foundNode;
+    pathtree_searchcallback_t callback;
+    PathTreeNode* foundNode;
 } searchworker_params_t;
 
-static int searchWorker(PathDirectoryNode* node, void* parameters)
+static int searchWorker(PathTreeNode* node, void* parameters)
 {
     searchworker_params_t* p = (searchworker_params_t*)parameters;
     DENG2_ASSERT(node && parameters);
@@ -1289,10 +1289,10 @@ static int searchWorker(PathDirectoryNode* node, void* parameters)
     return 0; // Continue iteration.
 }
 
-PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, int flags,
-    PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback, void* parameters)
+PathTreeNode* PathTree_Search2(PathTree* pt, int flags,
+    PathMap* mappedSearchPath, pathtree_searchcallback_t callback, void* parameters)
 {
-    DENG2_ASSERT(pd);
+    DENG2_ASSERT(pt);
     if(callback)
     {
         searchworker_params_t p;
@@ -1305,7 +1305,7 @@ PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, int flags,
         ushort hash = PathMap_Fragment(mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF))
         {
-            if(iteratePathsInHash(pd, hash, PT_LEAF, flags, NULL, searchWorker, (void*)&p))
+            if(iteratePathsInHash(pt, hash, PT_LEAF, flags, NULL, searchWorker, (void*)&p))
             {
                 return p.foundNode;
             }
@@ -1313,7 +1313,7 @@ PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, int flags,
 
         if(!(flags & PCF_NO_BRANCH))
         {
-            if(iteratePathsInHash(pd, hash, PT_BRANCH, flags, NULL, searchWorker, (void*)&p))
+            if(iteratePathsInHash(pt, hash, PT_BRANCH, flags, NULL, searchWorker, (void*)&p))
             {
                 return p.foundNode;
             }
@@ -1322,46 +1322,46 @@ PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, int flags,
     return 0; // Not found.
 }
 
-PathDirectoryNode* PathDirectory_Search(PathDirectory* pd, int flags,
-    PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback)
+PathTreeNode* PathTree_Search(PathTree* pt, int flags,
+    PathMap* mappedSearchPath, pathtree_searchcallback_t callback)
 {
-    return PathDirectory_Search2(pd, flags, mappedSearchPath, callback, NULL);
+    return PathTree_Search2(pt, flags, mappedSearchPath, callback, NULL);
 }
 
-PathDirectoryNode* PathDirectory_Find2(PathDirectory* pd, int flags,
+PathTreeNode* PathTree_Find2(PathTree* pt, int flags,
     const char* searchPath, char delimiter)
 {
-    SELF(pd);
-    return reinterpret_cast<PathDirectoryNode*>(self->find(flags, searchPath, delimiter));
+    SELF(pt);
+    return reinterpret_cast<PathTreeNode*>(self->find(flags, searchPath, delimiter));
 }
 
-PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
+PathTreeNode* PathTree_Find(PathTree* pt, int flags,
     const char* searchPath)
 {
-    SELF(pd);
-    return reinterpret_cast<PathDirectoryNode*>(self->find(flags, searchPath));
+    SELF(pt);
+    return reinterpret_cast<PathTreeNode*>(self->find(flags, searchPath));
 }
 
-ushort PathDirectory_HashPathFragment2(const char* path, size_t len, char delimiter)
+ushort PathTree_HashPathFragment2(const char* path, size_t len, char delimiter)
 {
-    return de::PathDirectory::hashPathFragment(path, len, delimiter);
+    return de::PathTree::hashPathFragment(path, len, delimiter);
 }
 
-ushort PathDirectory_HashPathFragment(const char* path, size_t len)
+ushort PathTree_HashPathFragment(const char* path, size_t len)
 {
-    return de::PathDirectory::hashPathFragment(path, len);
+    return de::PathTree::hashPathFragment(path, len);
 }
 
 #if _DEBUG
-void PathDirectory_DebugPrint(PathDirectory* pd, char delimiter)
+void PathTree_DebugPrint(PathTree* pt, char delimiter)
 {
-    if(!pd) return;
-    de::PathDirectory::debugPrint(*(TOINTERNAL(pd)), delimiter);
+    if(!pt) return;
+    de::PathTree::debugPrint(*(TOINTERNAL(pt)), delimiter);
 }
 
-void PathDirectory_DebugPrintHashDistribution(PathDirectory* pd)
+void PathTree_DebugPrintHashDistribution(PathTree* pt)
 {
-    if(!pd) return;
-    de::PathDirectory::debugPrintHashDistribution(*(TOINTERNAL(pd)));
+    if(!pt) return;
+    de::PathTree::debugPrintHashDistribution(*(TOINTERNAL(pt)));
 }
 #endif

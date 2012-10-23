@@ -35,7 +35,7 @@
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 #include <de/Error>
 #include <de/Log>
 #include <de/memory.h>
@@ -47,8 +47,8 @@
 /// Number of elements to block-allocate in the material index to materialbind map.
 #define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
 
-typedef de::PathDirectory MaterialDirectory;
-typedef de::PathDirectoryNode MaterialDirectoryNode;
+typedef de::PathTree MaterialDirectory;
+typedef de::PathTreeNode MaterialDirectoryNode;
 
 /**
  * POD object. Contains extended info about a material binding (@see MaterialBind).
@@ -247,23 +247,23 @@ static inline MaterialDirectory* getDirectoryForNamespaceId(materialnamespaceid_
     return namespaces[id-MATERIALNAMESPACE_FIRST];
 }
 
-static materialnamespaceid_t namespaceIdForDirectory(MaterialDirectory* pd)
+static materialnamespaceid_t namespaceIdForDirectory(MaterialDirectory* pt)
 {
-    DENG2_ASSERT(pd);
+    DENG2_ASSERT(pt);
     for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)
     {
         uint idx = i - MATERIALNAMESPACE_FIRST;
-        if(namespaces[idx] == pd) return materialnamespaceid_t(i);
+        if(namespaces[idx] == pt) return materialnamespaceid_t(i);
     }
 
     // Should never happen.
     throw de::Error("Materials::namespaceIdForDirectory",
-                    de::String().sprintf("Failed to determine id for directory %p.", (void*)pd));
+                    de::String().sprintf("Failed to determine id for directory %p.", (void*)pt));
 }
 
 static materialnamespaceid_t namespaceIdForDirectoryNode(const MaterialDirectoryNode* node)
 {
-    return namespaceIdForDirectory(&node->directory());
+    return namespaceIdForDirectory(&node->tree());
 }
 
 /// @return  Newly composed path for @a node.

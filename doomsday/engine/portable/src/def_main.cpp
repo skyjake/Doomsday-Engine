@@ -724,7 +724,7 @@ static void Def_InitTextDef(ddtext_t* txt, char const* str)
 /**
  * Callback for DD_ReadProcessDED.
  */
-int Def_ReadDEFileHandle(const char* fn, PathDirectoryNodeType type, void* parm)
+int Def_ReadDEFileHandle(const char* fn, PathTreeNodeType type, void* parm)
 {
     DENG_UNUSED(parm);
 

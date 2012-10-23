@@ -28,12 +28,12 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "pathdirectory.h"
+#include "pathtree.h"
 #include "resourcenamespace.h"
 
 typedef struct {
-    /// Directory node for this resource in the owning PathDirectory
-    PathDirectoryNode* directoryNode;
+    /// Directory node for this resource in the owning PathTree
+    PathTreeNode* directoryNode;
 
 #if _DEBUG
     /// Symbolic name of this resource.
@@ -132,7 +132,7 @@ static ddstring_t* formSearchPathList(resourcenamespace_t* rn, Str* pathList, ch
 }
 
 static resourcenamespace_namehash_node_t* findPathNodeInHash(resourcenamespace_t* rn,
-    resourcenamespace_namehash_key_t key, const PathDirectoryNode* pdNode)
+    resourcenamespace_namehash_key_t key, const PathTreeNode* pdNode)
 {
     resourcenamespace_namehash_node_t* node = NULL;
     assert(rn && pdNode);
@@ -305,7 +305,7 @@ int ResourceNamespace_IterateSearchPaths(resourcenamespace_t* rn,
 }
 
 int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
-    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters)
+    int (*callback) (PathTreeNode* node, void* paramaters), void* paramaters)
 {
     int result = 0;
     assert(rn);
@@ -346,13 +346,13 @@ int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
 }
 
 int ResourceNamespace_Iterate(resourcenamespace_t* rn, const ddstring_t* name,
-    int (*callback) (PathDirectoryNode* node, void* paramaters))
+    int (*callback) (PathTreeNode* node, void* paramaters))
 {
     return ResourceNamespace_Iterate2(rn, name, callback, NULL);
 }
 
 boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
-    PathDirectoryNode* pdNode, void* userData)
+    PathTreeNode* pdNode, void* userData)
 {
     resourcenamespace_namehash_node_t* node;
     resourcenamespace_namehash_key_t key;
@@ -415,7 +415,7 @@ boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
 static void printResourceRecord(resourcenamespace_record_t* res)
 {
     AutoStr* path = AutoStr_NewStd();
-    PathDirectoryNode_ComposePath2(res->directoryNode, path, NULL, DIR_SEP_CHAR);
+    PathTreeNode_ComposePath2(res->directoryNode, path, NULL, DIR_SEP_CHAR);
     Con_Printf("\"%s\" -> %s\n", Str_Text(&res->name), Str_Text(path));
 }
 

@@ -34,7 +34,7 @@
 
 #include "file.h"
 #include "filehandle.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 
 #ifdef __cplusplus
 

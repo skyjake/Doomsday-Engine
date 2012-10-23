@@ -926,7 +926,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     F_PrependBasePath(searchPattern, searchPattern);
 
     PathMap patternMap;
-    PathMap_Initialize(&patternMap, PathDirectory::hashPathFragment, Str_Text(searchPattern));
+    PathMap_Initialize(&patternMap, PathTree::hashPathFragment, Str_Text(searchPattern));
 
     /*
      * Check the Zip directory.
@@ -934,7 +934,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.lumps())
     {
         File1 const& lump = **i;
-        PathDirectoryNode const& node = lump.directoryNode();
+        PathTreeNode const& node = lump.directoryNode();
 
         AutoStr* filePath = 0;
         bool patternMatched;
@@ -945,7 +945,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         }
         else
         {
-            patternMatched = node.matchDirectory(PCF_MATCH_FULL, &patternMap);
+            patternMatched = node.comparePath(PCF_MATCH_FULL, &patternMap);
         }
 
         if(!patternMatched) continue;

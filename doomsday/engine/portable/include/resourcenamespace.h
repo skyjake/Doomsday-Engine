@@ -123,12 +123,12 @@ int ResourceNamespace_IterateSearchPaths(resourcenamespace_t* rn,
  * \post Name hash may have been rebuilt.
  *
  * @param name  Name of the resource being added.
- * @param node  PathDirectoryNode representing the resource in the owning PathDirectory.
+ * @param node  PathTreeNode representing the resource in the owning PathTree.
  * @param userData  User data to be attached to the new resource record.
  * @return  @c true= If the namespace did not already contain this resource.
  */
 boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
-    PathDirectoryNode* node, void* userData);
+    PathTreeNode* node, void* userData);
 
 /**
  * Iterate over resources in this namespace. Iteration ends when all
@@ -140,9 +140,9 @@ boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
  * @return  @c 0 iff iteration completed wholly.
  */
 int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
-    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters);
+    int (*callback) (PathTreeNode* node, void* paramaters), void* paramaters);
 int ResourceNamespace_Iterate(resourcenamespace_t* rn, const ddstring_t* name,
-    int (*callback) (PathDirectoryNode* node, void* paramaters)); /*paramaters=NULL*/
+    int (*callback) (PathTreeNode* node, void* paramaters)); /*paramaters=NULL*/
 
 #if _DEBUG
 void ResourceNamespace_Print(resourcenamespace_t* rn);

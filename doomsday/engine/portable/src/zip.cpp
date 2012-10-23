@@ -28,7 +28,7 @@
 #include "de_filesys.h"
 #include "game.h"
 #include "lumpcache.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 
 #include "zip.h"
 
@@ -168,7 +168,7 @@ public:
      *
      * @return  Directory node for this file.
      */
-    PathDirectoryNode const& directoryNode() const
+    PathTreeNode const& directoryNode() const
     {
         return dynamic_cast<Zip&>(container()).lumpDirectoryNode(info_.lumpIdx);
     }
@@ -231,10 +231,10 @@ struct Zip::Instance
     Zip* self;
 
     /// Directory containing structure and info records for all lumps.
-    PathDirectory* lumpDirectory;
+    PathTree* lumpDirectory;
 
-    /// LUT which maps logical lump indices to PathDirectoryNodes.
-    typedef std::vector<PathDirectoryNode*> LumpNodeLut;
+    /// LUT which maps logical lump indices to PathTreeNodes.
+    typedef std::vector<PathTreeNode*> LumpNodeLut;
     LumpNodeLut* lumpNodeLut;
 
     /// Lump data cache.
@@ -248,8 +248,8 @@ struct Zip::Instance
     {
         if(lumpDirectory)
         {
-            PathDirectory_Iterate(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
-                                  NULL, PATHDIRECTORY_NOHASH, clearZipFileWorker);
+            PathTree_Iterate(reinterpret_cast<pathtree_s*>(lumpDirectory), PCF_NO_BRANCH,
+                                  NULL, PATHTREE_NOHASH, clearZipFileWorker);
             delete lumpDirectory;
         }
 
@@ -257,9 +257,9 @@ struct Zip::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    static int clearZipFileWorker(pathdirectorynode_s* _node, void* /*parameters*/)
+    static int clearZipFileWorker(pathtreenode_s* _node, void* /*parameters*/)
     {
-        PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
+        PathTreeNode* node = reinterpret_cast<PathTreeNode*>(_node);
         ZipFile* rec = reinterpret_cast<ZipFile*>(node->userData());
         if(rec)
         {
@@ -383,7 +383,7 @@ struct Zip::Instance
                 if(entryCount == 0) break;
 
                 // Intialize the directory.
-                lumpDirectory = new PathDirectory(PDF_ALLOW_DUPLICATE_LEAF);
+                lumpDirectory = new PathTree(PDF_ALLOW_DUPLICATE_LEAF);
             }
 
             // Position the read cursor at the start of the buffered central centralDirectory.
@@ -467,7 +467,7 @@ struct Zip::Instance
                                          lumpIdx, baseOffset, ULONG(header->size),
                                          compressedSize),
                                 self);
-                PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&entryPath));
+                PathTreeNode* node = lumpDirectory->insert(Str_Text(&entryPath));
                 node->setUserData(record);
 
                 lumpIdx++;
@@ -479,9 +479,9 @@ struct Zip::Instance
         Str_Free(&entryPath);
     }
 
-    static int buildLumpNodeLutWorker(pathdirectorynode_s* _node, void* parameters)
+    static int buildLumpNodeLutWorker(pathtreenode_s* _node, void* parameters)
     {
-        PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
+        PathTreeNode* node = reinterpret_cast<PathTreeNode*>(_node);
         Instance* zipInst = (Instance*)parameters;
         ZipFile* lumpRecord = reinterpret_cast<ZipFile*>(node->userData());
         DENG2_ASSERT(lumpRecord && zipInst->self->isValidIndex(lumpRecord->info().lumpIdx)); // Sanity check.
@@ -498,8 +498,8 @@ struct Zip::Instance
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         if(!lumpDirectory) return;
 
-        PathDirectory_Iterate2(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
-                               NULL, PATHDIRECTORY_NOHASH, buildLumpNodeLutWorker, (void*)this);
+        PathTree_Iterate2(reinterpret_cast<pathtree_s*>(lumpDirectory), PCF_NO_BRANCH,
+                               NULL, PATHTREE_NOHASH, buildLumpNodeLutWorker, (void*)this);
     }
 
     /**
@@ -570,7 +570,7 @@ bool Zip::empty()
     return !lumpCount();
 }
 
-de::PathDirectoryNode& Zip::lumpDirectoryNode(int lumpIdx) const
+de::PathTreeNode& Zip::lumpDirectoryNode(int lumpIdx) const
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();

@@ -211,10 +211,10 @@ static void resetAllNamespaces(void)
     }
 }
 
-static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathDirectoryNode& node)
+static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathTreeNode& node)
 {
     AutoStr* name = rnInfo.composeName(node.pathFragment());
-    if(ResourceNamespace_Add(rnInfo.rnamespace, name, reinterpret_cast<struct pathdirectorynode_s*>(&node), NULL))
+    if(ResourceNamespace_Add(rnInfo.rnamespace, name, reinterpret_cast<struct pathtreenode_s*>(&node), NULL))
     {
         // We will need to rebuild this namespace (if we aren't already doing so,
         // in the case of auto-populated namespaces built from FileDirectorys).
@@ -222,7 +222,7 @@ static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathDirect
     }
 }
 
-static int addFileResourceWorker(de::PathDirectoryNode& node, void* parameters)
+static int addFileResourceWorker(de::PathTreeNode& node, void* parameters)
 {
     ResourceNamespaceInfo* rnInfo = (ResourceNamespaceInfo*) parameters;
     // We are only interested in leafs (i.e., files and not directories).
@@ -283,22 +283,22 @@ typedef struct {
     char delimiter;
     PathMap searchPattern;
     bool searchInited;
-    de::PathDirectoryNode* foundNode;
+    de::PathTreeNode* foundNode;
 } findresourceinnamespaceworker_params_t;
 
-static int findResourceInNamespaceWorker(struct pathdirectorynode_s* _node, void* parameters)
+static int findResourceInNamespaceWorker(struct pathtreenode_s* _node, void* parameters)
 {
     findresourceinnamespaceworker_params_t* p = (findresourceinnamespaceworker_params_t*)parameters;
     DENG_ASSERT(_node && p);
     // Are we yet to initialize the search?
     if(!p->searchInited)
     {
-        PathMap_Initialize2(&p->searchPattern, de::PathDirectory::hashPathFragment, p->path, p->delimiter);
+        PathMap_Initialize2(&p->searchPattern, de::PathTree::hashPathFragment, p->path, p->delimiter);
         p->searchInited = true;
     }
     // Stop iteration of resources as soon as a match is found.
-    de::PathDirectoryNode* node = reinterpret_cast<de::PathDirectoryNode*>(_node);
-    if(node->matchDirectory(PCF_NO_BRANCH, &p->searchPattern))
+    de::PathTreeNode* node = reinterpret_cast<de::PathTreeNode*>(_node);
+    if(node->comparePath(PCF_NO_BRANCH, &p->searchPattern))
     {
         p->foundNode = node;
         return 1;
@@ -341,7 +341,7 @@ static bool findResourceInNamespace(ResourceNamespaceInfo* rnInfo, ddstring_t co
             // Does the caller want to know the matched path?
             if(foundPath)
             {
-                de::PathDirectoryNode* node = p.foundNode;
+                de::PathTreeNode* node = p.foundNode;
                 node->composePath(foundPath, NULL, foundDelimiter);
             }
         }

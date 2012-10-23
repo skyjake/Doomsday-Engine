@@ -30,7 +30,7 @@
 #include "fs_util.h" // For F_PrettyPath
 #include "r_world.h" // For ddMapSetup
 #include "gl_texmanager.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 #include "texturevariant.h"
 #include "textures.h"
 #include <de/Error>
@@ -38,8 +38,8 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
-typedef de::PathDirectory TextureDirectory;
-typedef de::PathDirectoryNode TextureDirectoryNode;
+typedef de::PathTree TextureDirectory;
+typedef de::PathTreeNode TextureDirectoryNode;
 
 /**
  * POD object. Contains metadata for a unique Texture in the collection.
@@ -106,19 +106,19 @@ static inline TextureDirectory* getDirectoryForNamespaceId(texturenamespaceid_t 
     return namespaces[id-TEXTURENAMESPACE_FIRST].directory;
 }
 
-static texturenamespaceid_t namespaceIdForDirectory(TextureDirectory* pd)
+static texturenamespaceid_t namespaceIdForDirectory(TextureDirectory* pt)
 {
-    DENG2_ASSERT(pd);
+    DENG2_ASSERT(pt);
     for(uint i = uint(TEXTURENAMESPACE_FIRST); i <= uint(TEXTURENAMESPACE_LAST); ++i)
     {
         uint idx = i - TEXTURENAMESPACE_FIRST;
-        if(namespaces[idx].directory == pd) return texturenamespaceid_t(i);
+        if(namespaces[idx].directory == pt) return texturenamespaceid_t(i);
     }
 
     // Only reachable if attempting to find the id for a Texture that is not
     // in the collection, or the collection has not yet been initialized.
     throw de::Error("Textures::namespaceIdForDirectory",
-                    de::String().sprintf("Failed to determine id for directory %p.", (void*)pd));
+                    de::String().sprintf("Failed to determine id for directory %p.", (void*)pt));
 }
 
 static inline bool validTextureId(textureid_t id)
@@ -145,7 +145,7 @@ static textureid_t findBindIdForDirectoryNode(const TextureDirectoryNode* node)
 
 static inline texturenamespaceid_t namespaceIdForDirectoryNode(const TextureDirectoryNode* node)
 {
-    return namespaceIdForDirectory(&node->directory());
+    return namespaceIdForDirectory(&node->tree());
 }
 
 /// @return  Newly composed path for @a node.
@@ -410,7 +410,7 @@ static void destroyRecord(TextureDirectoryNode* node)
 
         unlinkDirectoryNodeFromBindIdMap(node);
 
-        const texturenamespaceid_t namespaceId = namespaceIdForDirectory(&node->directory());
+        const texturenamespaceid_t namespaceId = namespaceIdForDirectory(&node->tree());
         TextureNamespace* tn = &namespaces[namespaceId-TEXTURENAMESPACE_FIRST];
         unlinkRecordInUniqueIdMap(record, tn);
 
@@ -879,7 +879,7 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
     bool releaseTexture = false;
     if(record->uniqueId != uniqueId)
     {
-        texturenamespaceid_t namespaceId = namespaceIdForDirectory(&node->directory());
+        texturenamespaceid_t namespaceId = namespaceIdForDirectory(&node->tree());
         TextureNamespace* tn = &namespaces[namespaceId - TEXTURENAMESPACE_FIRST];
 
         record->uniqueId = uniqueId;
