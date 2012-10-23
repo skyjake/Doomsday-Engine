@@ -85,6 +85,17 @@ String String::operator / (const String& path) const
     return concatenatePath(path);
 }
 
+String String::toNativePath() const
+{
+    String native = *this;
+#ifdef WIN32
+    native.replace('/', '\\');
+#else
+    native.replace('\\', '/');
+#endif
+    return native;
+}
+
 String String::concatenatePath(const String& other, QChar dirChar) const
 {
     if(other.first() == dirChar)
