@@ -113,7 +113,7 @@ public:
     /// Does a path concatenation on this string and the argument.
     String operator / (const String& path) const;
 
-    /// Converts path separates to native separators.
+    /// Converts path separators to native separators.
     String toNativePath() const;
 
     /// Does a path concatenation on a native path. The directory separator
