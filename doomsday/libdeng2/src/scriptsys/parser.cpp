@@ -508,8 +508,7 @@ AssignStatement* Parser::parseAssignStatement()
         {
             delete *i;
         }
-        err.raise();
-        return 0; // not reached
+        throw;
     }
 }
 

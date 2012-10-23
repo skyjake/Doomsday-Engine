@@ -110,7 +110,7 @@ File* FS::interpret(File* sourceData)
 
         // We were given responsibility of the source file.
         delete sourceData;
-        err.raise();
+        throw;
     }
     return sourceData;
 }

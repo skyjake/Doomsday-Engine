@@ -246,7 +246,7 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
     {
         delete rightValue;
         delete leftValue;
-        err.raise();
+        throw;
     }
 
     // Delete the unnecessary values.

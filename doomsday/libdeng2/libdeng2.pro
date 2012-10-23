@@ -86,6 +86,7 @@ HEADERS += \
 
 SOURCES += \
     src/c_wrapper.cpp \
+    src/error.cpp \
     src/core/app.cpp \
     src/core/commandline.cpp \
     src/core/config.cpp \

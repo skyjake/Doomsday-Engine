@@ -175,7 +175,7 @@ void Process::execute()
             {
                 // Pop this context off, it has not caught the exception.
                 delete popContext();
-                err.raise();
+                throw;
             }
             else
             {

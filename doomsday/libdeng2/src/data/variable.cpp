@@ -169,6 +169,6 @@ void Variable::operator << (Reader& from)
     {
         // Always need to have a value.
         _value = new NoneValue();
-        err.raise();
+        throw;
     }    
 }

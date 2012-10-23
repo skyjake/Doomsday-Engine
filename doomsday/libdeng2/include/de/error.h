@@ -23,6 +23,7 @@
 #include "libdeng2.h"
 
 #include <QString>
+#include <string>
 #include <stdexcept>
 
 /**
@@ -34,29 +35,22 @@
 namespace de {
 
 /**
- * Base class for error exceptions thrown by libdeng2.
+ * Base class for error exceptions thrown by libdeng2. @ingroup core
  */
 class DENG2_PUBLIC Error : public std::runtime_error
 {
 public:
-    Error(const QString& where, const QString& message)
-        : std::runtime_error(("(" + where + ") " + message).toStdString()), _name("") {}
-    ~Error() throw() {}
-    virtual void raise() const { throw *this; }
-    QString name() const {
-        if(!_name.size()) return "Error";
-        return _name;
-    }
-    virtual QString asText() const {
-        return "[" + name() + "] " + std::runtime_error::what();
-    }
+    Error(const QString& where, const QString& message);
+    ~Error() throw();
+
+    QString name() const;
+    virtual QString asText() const;
+
 protected:
-    void setName(const QString& name) {
-        if(_name.size()) _name += "_";
-        _name += name;
-    }
+    void setName(const QString& name);
+
 private:
-    QString _name;
+    std::string _name;
 };
 
 } // namespace de
