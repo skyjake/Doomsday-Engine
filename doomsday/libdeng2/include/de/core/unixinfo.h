@@ -34,8 +34,13 @@ namespace de {
  * configuration under <tt>/etc</tt> and user-specific configuration under
  * <tt>~/.doomsday</tt>.
  *
- * On non-Unix platforms, UnixInfo is instantiated normally but no input files
- * are parsed.
+ * UnixInfo exists because hand-edited config files are commonly found on Unix
+ * but not on the other platforms. On non-Unix platforms, UnixInfo is
+ * instantiated normally but no input files are parsed. There are equivalent
+ * mechanisms on these platforms (on Windows, the closest is the registry; on
+ * Mac OS X, ~/Library/Preferences/) but these are not directly used by
+ * libdeng2. Instead of these, one should use QSettings for
+ * platform-independent persistent configuration.
  */
 class UnixInfo
 {
