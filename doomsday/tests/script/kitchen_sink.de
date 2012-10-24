@@ -571,10 +571,10 @@ def testfun()
     def returningFunc()
         print 'I come from another place.', a
     end
-    returningFunc()
+    returningFunc()  # 'a' found in local namespace
     return returningFunc
 end
-testfun()()
+testfun()()  # 'a' found in global namespace! (testfun()'s local scope does not exist here)
 ar = [testfun]
 ar[0]()()
 
