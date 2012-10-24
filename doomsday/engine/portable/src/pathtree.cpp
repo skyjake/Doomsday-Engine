@@ -39,6 +39,8 @@
 
 #include "pathtree.h"
 
+namespace de {
+
 #if 0
 static volatile uint pathTreeInstanceCount;
 
@@ -48,8 +50,8 @@ static mutex_t nodeAllocator_Mutex;
 /// Threaded access to the following Data is protected by nodeAllocator_Mutex:
 /// Nodes are block-allocated from this set.
 static blockset_t* NodeBlockSet;
-/// Linked list of used directory nodes for re-use. Linked with de::PathTreeNode::next
-static de::PathTreeNode* UsedNodes;
+/// Linked list of used directory nodes for re-use. Linked with PathTreeNode::next
+static PathTreeNode* UsedNodes;
 #endif
 
 #ifdef LIBDENG_STACK_MONITOR
@@ -59,7 +61,7 @@ static size_t maxStackDepth;
 
 typedef struct pathconstructorparams_s {
     size_t length;
-    Str* dest;
+    ddstring_t* dest;
     char delimiter;
 } pathconstructorparams_t;
 
@@ -68,11 +70,11 @@ typedef struct pathconstructorparams_s {
  * path (when descending), then allocates memory for the string, and finally
  * copies each fragment with the delimiters (on the way out).
  */
-static void pathConstructor(pathconstructorparams_t* parm, de::PathTreeNode const& trav)
+static void pathConstructor(pathconstructorparams_t* parm, PathTreeNode const& trav)
 {
     DENG2_ASSERT(parm);
 
-    Str const* fragment = trav.pathFragment();
+    ddstring_t const* fragment = trav.pathFragment();
 
 #ifdef LIBDENG_STACK_MONITOR
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
@@ -106,24 +108,25 @@ static void pathConstructor(pathconstructorparams_t* parm, de::PathTreeNode cons
     Str_AppendWithoutAllocs(parm->dest, fragment);
 }
 
-struct de::PathTree::Instance
+struct PathTree::Instance
 {
-    de::PathTree* self;
+    PathTree& self;
 
     /// Path name fragment intern pool.
     StringPool* fragments;
 
-    int flags; /// @see pathTreeFlags
-
-    /// Path node hashes.
-    de::PathTree::Nodes leafHash;
-    de::PathTree::Nodes branchHash;
+    /// @see pathTreeFlags
+    int flags;
 
     /// Total number of unique paths in the directory.
     uint size;
 
-    Instance(de::PathTree* d, int flags_)
-        : self(d), fragments(0), flags(flags_), leafHash(), branchHash(), size(0)
+    /// Path node hashes.
+    PathTree::Nodes leafHash;
+    PathTree::Nodes branchHash;
+
+    Instance(PathTree& d, int flags_)
+        : self(d), fragments(0), flags(flags_), size(0)
     {
 #if 0
         // We'll block-allocate nodes and maintain a list of unused ones
@@ -133,7 +136,7 @@ struct de::PathTree::Instance
             nodeAllocator_Mutex = Sys_CreateMutex("PathTreeNodeAllocator_MUTEX");
 
             Sys_Lock(nodeAllocator_Mutex);
-            NodeBlockSet = BlockSet_New(sizeof(de::PathTreeNode), 128);
+            NodeBlockSet = BlockSet_New(sizeof(PathTreeNode), 128);
             UsedNodes = NULL;
             Sys_Unlock(nodeAllocator_Mutex);
         }
@@ -166,12 +169,12 @@ struct de::PathTree::Instance
         }
     }
 
-    de::PathTreeNode* findNode(de::PathTreeNode* parent,
-        PathTreeNodeType nodeType, StringPoolId internId)
+    PathTreeNode* findNode(PathTreeNode* parent, PathTreeNodeType nodeType,
+                           StringPoolId internId)
     {
-        de::PathTree::Nodes& ph = (nodeType == PT_LEAF? leafHash : branchHash);
+        PathTree::Nodes& ph = (nodeType == PT_LEAF? leafHash : branchHash);
         ushort hash = StringPool_UserValue(fragments, internId);
-        de::PathTree::Nodes::const_iterator i = ph.find(hash);
+        PathTree::Nodes::const_iterator i = ph.find(hash);
         while(i != ph.end() && i.key() == hash)
         {
             if(parent == (*i)->parent() && internId == (*i)->internId())
@@ -199,9 +202,8 @@ struct de::PathTree::Instance
      * @return  [ a new | the ] directory node that matches the name and type and
      * which has the specified parent node.
      */
-    de::PathTreeNode* direcNode(de::PathTreeNode* parent,
-        PathTreeNodeType nodeType, ddstring_t const* name, char delimiter,
-        void* userData)
+    PathTreeNode* direcNode(PathTreeNode* parent, PathTreeNodeType nodeType,
+        ddstring_t const* name, char delimiter, void* userData)
     {
         DENG2_ASSERT(name);
 
@@ -213,7 +215,7 @@ struct de::PathTree::Instance
             if(internId)
             {
                 // The name is known. Perhaps we have.
-                de::PathTreeNode* node = findNode(parent, nodeType, internId);
+                PathTreeNode* node = findNode(parent, nodeType, internId);
                 if(node)
                 {
                     if(nodeType == PT_BRANCH || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
@@ -235,13 +237,13 @@ struct de::PathTree::Instance
         }
         else
         {
-            hash = self->hashForInternId(internId);
+            hash = self.hashForInternId(internId);
         }
 
         // Are we out of name indices?
         if(!internId) return NULL;
 
-        de::PathTreeNode* node = newNode(self, nodeType, parent, internId, userData);
+        PathTreeNode* node = newNode(self, nodeType, parent, internId, userData);
 
         // Insert the new node into the path hash.
         if(nodeType == PT_LEAF)
@@ -261,11 +263,11 @@ struct de::PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    de::PathTreeNode* buildDirecNodes(char const* path, char delimiter)
+    PathTreeNode* buildDirecNodes(char const* path, char delimiter)
     {
         DENG2_ASSERT(path);
 
-        de::PathTreeNode* node = NULL, *parent = NULL;
+        PathTreeNode* node = NULL, *parent = NULL;
 
         // Continue splitting as long as there are parts.
         AutoStr* part = AutoStr_NewStd();
@@ -274,12 +276,8 @@ struct de::PathTree::Instance
         {
             node = direcNode(parent, PT_BRANCH, part, delimiter, NULL);
             /// @todo Do not error here. If we're out of storage undo this action and return.
-            if(!node)
-            {
-                throw de::Error("PathTree::buildDirecNodes",
-                                de::String("Exhausted storage while attempting to insert nodes for path \"%1\".")
-                                    .arg(path));
-            }
+            if(!node) throw Error("PathTree::buildDirecNodes", String("Exhausted storage while attempting to insert nodes for path \"%1\".").arg(path));
+
             parent = node;
         }
 
@@ -287,12 +285,7 @@ struct de::PathTree::Instance
         {
             node = direcNode(parent, PT_LEAF, part, delimiter, NULL);
             /// @todo Do not error here. If we're out of storage undo this action and return.
-            if(!node)
-            {
-                throw de::Error("PathTree::buildDirecNodes",
-                                de::String("Exhausted storage while attempting to insert nodes for path \"%1\".")
-                                    .arg(path));
-            }
+            if(!node) throw Error("PathTree::buildDirecNodes", String("Exhausted storage while attempting to insert nodes for path \"%1\".").arg(path));
         }
 
         return node;
@@ -318,8 +311,8 @@ struct de::PathTree::Instance
      *
      * Perhaps a fixed size MRU cache? -ds
      */
-    ddstring_t* constructPath(de::PathTreeNode const& node,
-                              ddstring_t* constructedPath, char delimiter)
+    ddstring_t* constructPath(PathTreeNode const& node, ddstring_t* constructedPath,
+                              char delimiter)
     {
         pathconstructorparams_t parm;
 
@@ -355,14 +348,10 @@ struct de::PathTree::Instance
         return constructedPath;
     }
 
-    static de::PathTreeNode*
-    newNode(de::PathTree* directory, PathTreeNodeType type,
-            de::PathTreeNode* parent, StringPoolId internId, void* userData)
+    static PathTreeNode* newNode(PathTree& pt, PathTreeNodeType type,
+        PathTreeNode* parent, StringPoolId internId, void* userData)
     {
-        de::PathTreeNode* node;
-
-        DENG2_ASSERT(directory);
-
+        PathTreeNode* node;
 #if 0
         // Acquire a new node, either from the used list or the block allocator.
         Sys_Lock(nodeAllocator_Mutex);
@@ -383,8 +372,7 @@ struct de::PathTree::Instance
 #endif
         {
             //void* element = BlockSet_Allocate(NodeBlockSet);
-            node = /*new (element)*/ new de::PathTreeNode(*directory, type, internId,
-                                                               parent, userData);
+            node = new /*(element)*/ PathTreeNode(pt, type, internId, parent, userData);
         }
 #if 0
         Sys_Unlock(nodeAllocator_Mutex);
@@ -393,10 +381,9 @@ struct de::PathTree::Instance
         return node;
     }
 
-    static void deleteNode(de::PathTreeNode* node)
+    static void deleteNode(PathTreeNode& node)
     {
-        if(!node) return;
-        delete node;
+        delete &node;
 #if 0
         // Add this node to the list of used nodes for re-use.
         Sys_Lock(nodeAllocator_Mutex);
@@ -406,10 +393,10 @@ struct de::PathTree::Instance
 #endif
     }
 
-    static void collectPathsInHash(de::PathTree::Nodes& ph, char delimiter,
+    static void collectPathsInHash(PathTree::Nodes& ph, char delimiter,
         ddstring_t** pathListAdr)
     {
-        DENG2_FOR_EACH_CONST(de::PathTree::Nodes, i, ph)
+        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
         {
             Str_Init(*pathListAdr);
             (*i)->composePath((*pathListAdr), NULL, delimiter);
@@ -417,24 +404,25 @@ struct de::PathTree::Instance
         }
     }
 
-    static void clearPathHash(de::PathTree::Nodes& ph)
+    static void clearPathHash(PathTree::Nodes& ph)
     {
-        DENG2_FOR_EACH(de::PathTree::Nodes, i, ph)
+        DENG2_FOR_EACH(PathTree::Nodes, i, ph)
         {
+            PathTreeNode& node = **i;
 #if _DEBUG
-            if((*i)->userData())
+            if(node.userData())
             {
                 LOG_AS("PathTree::clearPathHash");
-                LOG_ERROR("Node %p has non-NULL user data.") << (void*)(*i);
+                LOG_ERROR("Node %p has non-NULL user data.") << (void*)(&node);
             }
 #endif
-            deleteNode(*i);
+            deleteNode(node);
         }
         ph.clear();
     }
 };
 
-ushort de::PathTree::hashPathFragment(const char* fragment, size_t len, char delimiter)
+ushort PathTree::hashPathFragment(const char* fragment, size_t len, char delimiter)
 {
     ushort key = 0;
 
@@ -458,16 +446,15 @@ ushort de::PathTree::hashPathFragment(const char* fragment, size_t len, char del
     return key % PATHTREE_PATHHASH_SIZE;
 }
 
-ushort de::PathTree::hashForInternId(StringPoolId internId)
+ushort PathTree::hashForInternId(StringPoolId internId)
 {
     DENG2_ASSERT(internId > 0);
     return StringPool_UserValue(d->fragments, internId);
 }
 
-de::PathTreeNode*
-de::PathTree::insert(const char* path, char delimiter, void* userData)
+PathTreeNode* PathTree::insert(const char* path, char delimiter, void* userData)
 {
-    de::PathTreeNode* node = d->buildDirecNodes(path, delimiter);
+    PathTreeNode* node = d->buildDirecNodes(path, delimiter);
     if(node)
     {
         // There is now one more unique path in the directory.
@@ -481,23 +468,23 @@ de::PathTree::insert(const char* path, char delimiter, void* userData)
     return node;
 }
 
-de::PathTree::PathTree(int flags)
+PathTree::PathTree(int flags)
 {
-    d = new Instance(this, flags);
+    d = new Instance(*this, flags);
 }
 
-de::PathTree::~PathTree()
+PathTree::~PathTree()
 {
     clear();
     delete d;
 }
 
-uint de::PathTree::size() const
+uint PathTree::size() const
 {
     return d->size;
 }
 
-void de::PathTree::clear()
+void PathTree::clear()
 {
     d->clearPathHash(d->leafHash);
     d->clearPathHash(d->branchHash);
@@ -505,8 +492,7 @@ void de::PathTree::clear()
     d->size = 0;
 }
 
-de::PathTreeNode* de::PathTree::find(int flags,
-    const char* searchPath, char delimiter)
+PathTreeNode* PathTree::find(int flags, const char* searchPath, char delimiter)
 {
     PathTreeNode* foundNode = NULL;
     if(searchPath && searchPath[0] && d->size)
@@ -517,8 +503,8 @@ de::PathTreeNode* de::PathTree::find(int flags,
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF))
         {
-            de::PathTree::Nodes& nodes = d->leafHash;
-            de::PathTree::Nodes::iterator i = nodes.find(hash);
+            PathTree::Nodes& nodes = d->leafHash;
+            PathTree::Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
                 if((*i)->comparePath(flags, &mappedSearchPath))
@@ -533,8 +519,8 @@ de::PathTreeNode* de::PathTree::find(int flags,
         if(!foundNode)
         if(!(flags & PCF_NO_BRANCH))
         {
-            de::PathTree::Nodes& nodes = d->branchHash;
-            de::PathTree::Nodes::iterator i = nodes.find(hash);
+            PathTree::Nodes& nodes = d->branchHash;
+            PathTree::Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
                 if((*i)->comparePath(flags, &mappedSearchPath))
@@ -551,13 +537,13 @@ de::PathTreeNode* de::PathTree::find(int flags,
     return foundNode;
 }
 
-ddstring_t const* de::PathTree::pathFragment(de::PathTreeNode const& node)
+ddstring_t const* PathTree::pathFragment(PathTreeNode const& node)
 {
     return StringPool_String(d->fragments, node.internId());
 }
 
-ddstring_t* de::PathTree::composePath(de::PathTreeNode const& node,
-    ddstring_t* foundPath, int* length, char delimiter)
+ddstring_t* PathTree::composePath(PathTreeNode const& node, ddstring_t* foundPath,
+    int* length, char delimiter)
 {
     if(!foundPath)
     {
@@ -567,12 +553,12 @@ ddstring_t* de::PathTree::composePath(de::PathTreeNode const& node,
     return d->constructPath(node, foundPath, delimiter);
 }
 
-de::PathTree::Nodes const& de::PathTree::nodes(PathTreeNodeType type) const
+PathTree::Nodes const& PathTree::nodes(PathTreeNodeType type) const
 {
     return (type == PT_LEAF? d->leafHash : d->branchHash);
 }
 
-ddstring_t* de::PathTree::collectPaths(size_t* retCount, int flags, char delimiter)
+ddstring_t* PathTree::collectPaths(size_t* retCount, int flags, char delimiter)
 {
     ddstring_t* paths = NULL;
     size_t count = 0;
@@ -586,12 +572,7 @@ ddstring_t* de::PathTree::collectPaths(size_t* retCount, int flags, char delimit
     {
         // Uses malloc here because this is returned with the C wrapper.
         paths = static_cast<ddstring_t*>(M_Malloc(sizeof *paths * count));
-        if(!paths)
-        {
-            throw de::Error("PathTree::collectPaths:",
-                            de::String("Failed on allocation of %1 bytes for new path list.")
-                                .arg(sizeof *paths * count));
-        }
+        if(!paths) throw Error("PathTree::collectPaths:", String("Failed on allocation of %1 bytes for new path list.").arg(sizeof *paths * count));
 
         ddstring_t* pathPtr = paths;
         if(!(flags & PCF_NO_BRANCH))
@@ -608,10 +589,10 @@ ddstring_t* de::PathTree::collectPaths(size_t* retCount, int flags, char delimit
 #if _DEBUG
 static int comparePaths(const void* a, const void* b)
 {
-    return qstricmp(Str_Text((Str*)a), Str_Text((Str*)b));
+    return qstricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
 }
 
-void de::PathTree::debugPrint(de::PathTree& pt, char delimiter)
+void PathTree::debugPrint(PathTree& pt, char delimiter)
 {
     LOG_AS("PathTree");
     LOG_INFO("Directory [%p]:") << (void*)&pt;
@@ -696,8 +677,8 @@ static void printDistributionOverview(PathTree* pt,
     for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
         PathTreeNodeType type = PathTreeNodeType(i);
-        if(Str_Length(de::PathTreeNode::typeName(type)) > *col)
-            *col = Str_Length(de::PathTreeNode::typeName(type));
+        if(Str_Length(PathTreeNode::typeName(type)) > *col)
+            *col = Str_Length(PathTreeNode::typeName(type));
     }
     col++;
     *col++ = MAX_OF(nodeCountDigits, 1); /*#*/
@@ -749,7 +730,7 @@ static void printDistributionOverview(PathTree* pt,
         for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
         {
             PathTreeNodeType type = PathTreeNodeType(i);
-            printDistributionOverviewElement(colWidths, Str_Text(de::PathTreeNode::typeName(type)),
+            printDistributionOverviewElement(colWidths, Str_Text(PathTreeNode::typeName(type)),
                 nodeBucketEmpty[i], (i == PT_LEAF? nodeBucketHeight : 0),
                 nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
                 nodeCountSum[i], nodeCountTotal[i]);
@@ -807,7 +788,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i, ++col)
     {
         PathTreeNodeType type = PathTreeNodeType(i);
-        colWidths[col] = Str_Length(de::PathTreeNode::typeName(type));
+        colWidths[col] = Str_Length(PathTreeNode::typeName(type));
     }
 
     // Apply formatting:
@@ -821,7 +802,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
         PathTreeNodeType type = PathTreeNodeType(i);
-        Con_Printf("%*s", colWidths[col++], Str_Text(de::PathTreeNode::typeName(type)));
+        Con_Printf("%*s", colWidths[col++], Str_Text(PathTreeNode::typeName(type)));
     }
     Con_Printf("\n");
     Con_PrintRuler();
@@ -922,7 +903,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
 }
 #endif
 
-void de::PathTree::debugPrintHashDistribution(de::PathTree& /*pt*/)
+void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
 {
 #if 0
     size_t nodeCountSum[PATHTREENODE_TYPE_COUNT],
@@ -932,7 +913,7 @@ void de::PathTree::debugPrintHashDistribution(de::PathTree& /*pt*/)
            nodeBucketEmpty[PATHTREENODE_TYPE_COUNT], nodeBucketEmptyTotal = 0,
            nodeCount[PATHTREENODE_TYPE_COUNT];
     size_t totalForRange;
-    de::PathTreeNode* node;
+    PathTreeNode* node;
     DENG2_ASSERT(pt);
 
     nodeCountTotal[PT_BRANCH] = countNodesInPathHash(*hashAddressForNodeType(pt, PT_BRANCH));
@@ -1025,6 +1006,8 @@ void de::PathTree::debugPrintHashDistribution(de::PathTree& /*pt*/)
 #endif
 }
 #endif
+
+} // namespace de
 
 /**
  * C wrapper API:

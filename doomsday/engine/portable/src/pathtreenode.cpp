@@ -23,10 +23,10 @@
 #include <de/Log>
 #include "pathtree.h"
 
-struct de::PathTreeNode::Instance
-{
-    de::PathTreeNode* self;
+namespace de {
 
+struct PathTreeNode::Instance
+{
     /// PathTree which owns this node.
     PathTree& tree;
 
@@ -43,29 +43,28 @@ struct de::PathTreeNode::Instance
     /// User data pointer associated with this node.
     void* userData;
 
-    Instance(de::PathTreeNode* d, de::PathTree& _tree, PathTreeNodeType _type,
-             StringPoolId _internId, de::PathTreeNode* _parent)
-        : self(d), tree(_tree), type(_type), internId(_internId), parent(_parent),
+    Instance(PathTree& _tree, PathTreeNodeType _type, StringPoolId _internId,
+             PathTreeNode* _parent)
+        : tree(_tree), type(_type), internId(_internId), parent(_parent),
           userData(0)
     {}
 };
 
-de::PathTreeNode::PathTreeNode(PathTree& directory,
-    PathTreeNodeType type, StringPoolId internId, de::PathTreeNode* parent,
-    void* userData)
+PathTreeNode::PathTreeNode(PathTree& tree, PathTreeNodeType type,
+    StringPoolId internId, de::PathTreeNode* parent, void* userData)
 {
-    d = new Instance(this, directory, type, internId, parent);
+    d = new Instance(tree, type, internId, parent);
     setUserData(userData);
 }
 
-de::PathTreeNode::~PathTreeNode()
+PathTreeNode::~PathTreeNode()
 {
     delete d;
 }
 
-Str const* de::PathTreeNode::typeName(PathTreeNodeType type)
+ddstring_t const* PathTreeNode::typeName(PathTreeNodeType type)
 {
-    static de::Str const nodeNames[1+PATHTREENODE_TYPE_COUNT] = {
+    static Str const nodeNames[1+PATHTREENODE_TYPE_COUNT] = {
         "(invalidtype)",
         "branch",
         "leaf"
@@ -74,30 +73,27 @@ Str const* de::PathTreeNode::typeName(PathTreeNodeType type)
     return nodeNames[1 + (type - PATHTREENODE_TYPE_FIRST)];
 }
 
-/// @return  PathTree which owns this node.
-de::PathTree& de::PathTreeNode::tree() const
+PathTree& PathTreeNode::tree() const
 {
     return d->tree;
 }
 
-/// @return  Parent of this directory node else @c NULL
-de::PathTreeNode* de::PathTreeNode::parent() const
+PathTreeNode* PathTreeNode::parent() const
 {
     return d->parent;
 }
 
-/// @return  Type of this directory node.
-PathTreeNodeType de::PathTreeNode::type() const
+PathTreeNodeType PathTreeNode::type() const
 {
     return d->type;
 }
 
-StringPoolId de::PathTreeNode::internId() const
+StringPoolId PathTreeNode::internId() const
 {
     return d->internId;
 }
 
-ushort de::PathTreeNode::hash() const
+ushort PathTreeNode::hash() const
 {
     return d->tree.hashForInternId(d->internId);
 }
@@ -138,7 +134,7 @@ static int matchPathFragment(char const* string, char const* pattern)
 
 /// @note This routine is also used as an iteration callback, so only return
 ///       a non-zero value when the node is a match for the search term.
-int de::PathTreeNode::comparePath(int flags, PathMap* searchPattern) const
+int PathTreeNode::comparePath(int flags, PathMap* searchPattern) const
 {
     if(((flags & PCF_NO_LEAF)   && PT_LEAF   == type()) ||
        ((flags & PCF_NO_BRANCH) && PT_BRANCH == type()))
@@ -157,7 +153,7 @@ int de::PathTreeNode::comparePath(int flags, PathMap* searchPattern) const
     PathTree& pt = tree();
     uint fragmentCount = PathMap_Size(searchPattern);
 
-    de::PathTreeNode const* node = this;
+    PathTreeNode const* node = this;
     for(uint i = 0; i < fragmentCount; ++i)
     {
         if(i == 0 && node->type() == PT_LEAF)
@@ -228,27 +224,29 @@ int de::PathTreeNode::comparePath(int flags, PathMap* searchPattern) const
 #undef EXIT_POINT
 }
 
-ddstring_t const* de::PathTreeNode::pathFragment() const
+ddstring_t const* PathTreeNode::pathFragment() const
 {
     return d->tree.pathFragment(*this);
 }
 
-ddstring_t* de::PathTreeNode::composePath(ddstring_t* path, int* length,
+ddstring_t* PathTreeNode::composePath(ddstring_t* path, int* length,
     char delimiter) const
 {
     return d->tree.composePath(*this, path, length, delimiter);
 }
 
-void* de::PathTreeNode::userData() const
+void* PathTreeNode::userData() const
 {
     return d->userData;
 }
 
-de::PathTreeNode& de::PathTreeNode::setUserData(void* userData)
+PathTreeNode& PathTreeNode::setUserData(void* userData)
 {
     d->userData = userData;
     return *this;
 }
+
+} // namespace de
 
 /**
  * C wrapper API
