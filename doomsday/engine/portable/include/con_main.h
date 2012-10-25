@@ -122,11 +122,19 @@ char* CVar_String(const cvar_t* var);
 Uri* CVar_Uri(const cvar_t* var);
 
 /**
- * \note Also used with @c CVT_BYTE.
- * @param svflags           @see setVariableFlags
+ * Changes the value of an integer variable.
+ * @note Also used with @c CVT_BYTE.
+ *
+ * @param var      Variable.
+ * @param value    New integer value for the variable.
+ */
+void CVar_SetInteger(cvar_t* var, int value);
+
+/**
+ * @copydoc CVar_SetInteger()
+ * @param svflags  @ref setVariableFlags
  */
 void CVar_SetInteger2(cvar_t* var, int value, int svflags);
-void CVar_SetInteger(cvar_t* var, int value);
 
 void CVar_SetFloat2(cvar_t* var, float value, int svflags);
 void CVar_SetFloat(cvar_t* var, float value);

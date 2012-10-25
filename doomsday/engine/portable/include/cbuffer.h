@@ -127,6 +127,7 @@ const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx);
  * Collate an array of ptrs to the immutable @c cbline_t objects owned by
  * the cbuffer. Caller retains ownership of @a list.
  *
+ * @param cb            CBuffer instance.
  * @param reqCount      Number of lines requested from the buffer, zero means
  *                      use the current number of lines as the limit.
  * @param firstIdx      Line index of the first line to be retrieved. If

@@ -154,11 +154,17 @@ void Fonts_RebuildFromFile(struct font_s* font, const char* resourcePath);
 /**
  * Search the Fonts collection for a font associated with @a uri.
  *
- * @param uri  Either a path or a URN.
+ * @param uri    Either a path or a URN.
+ *
  * @return  Unique identifier of the found texture else @c NOFONTID.
  */
-fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet);
 fontid_t Fonts_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
+
+/**
+ * @copydoc Fonts_ResolveUri()
+ * @param queit  Suppresses the console message that is printed if the Uri cannot be found.
+ */
+fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet);
 
 /// Same as Fonts::ResolveUri except @a uri is a C-string.
 fontid_t Fonts_ResolveUriCString2(const char* uri, boolean quiet);

@@ -761,7 +761,6 @@ fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet)
     return NOFONTID;
 }
 
-/// @note Part of the Doomsday public API.
 fontid_t Fonts_ResolveUri(const Uri* uri)
 {
     return Fonts_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);

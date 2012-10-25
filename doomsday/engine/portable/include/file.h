@@ -1,8 +1,6 @@
 /**
  * @file file.h
- *
  * Base for all classes which represent opened files.
- *
  * @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -70,8 +68,8 @@ private:
 public:
     /**
      * @param hndl          Handle to the file. Ownership of the handle is given to this instance.
-     * @param path          Path to this file in the virtual file system.
-     * @param info          Info descriptor for the file. A copy is made.
+     * @param _path         Path to this file in the virtual file system.
+     * @param _info         Info descriptor for the file. A copy is made.
      * @param container     Container of this file. Can be @c NULL.
      */
     File1(FileHandle& hndl, char const* _path, FileInfo const& _info, File1* container = 0);

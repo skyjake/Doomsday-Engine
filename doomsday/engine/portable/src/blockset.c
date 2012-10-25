@@ -42,7 +42,7 @@ typedef struct blockset_block_s {
 /**
  * Allocate a new block of memory to be used for linear object allocations.
  *
- * @param blockset_t*  Block set into which the new block is added.
+ * @param set  Block set into which the new block is added.
  */
 static void addBlockToSet(blockset_t* set)
 {

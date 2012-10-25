@@ -746,12 +746,19 @@ int GameMap_PathXYTraverse(GameMap* map, coord_t fromX, coord_t fromY, coord_t t
  *       within it (however it is on the same side of the space partition)!
  *
  * @param map  GameMap instance.
- * @param x  X coordinate of the point to test.
- * @param y  Y coordinate of the point to test.
- * @return  BspLeaf instance for that BSP node's leaf.
+ * @param x    X coordinate of the point to test.
+ * @param y    Y coordinate of the point to test.
+ * @return     BspLeaf instance for that BSP node's leaf.
+ */
+BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, coord_t x, coord_t y);
+
+/**
+ * @copybrief    GameMap_BspLeafAtPointXY()
+ * @param map    GameMap instance.
+ * @param point  XY coordinates of the point to test.
+ * @return       BspLeaf instance for that BSP node's leaf.
  */
 BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, coord_t const point[2]);
-BspLeaf* GameMap_BspLeafAtPointXY(GameMap* map, coord_t x, coord_t y);
 
 /**
  * Private member functions:
