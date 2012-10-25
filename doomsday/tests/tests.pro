@@ -4,6 +4,6 @@ SUBDIRS = \
     #basiclink \
     #record \
     script \
-    #vectors
+    vectors
 
 #OTHER_FILES += testapp.de
