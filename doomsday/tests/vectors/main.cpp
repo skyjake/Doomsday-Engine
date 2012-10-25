@@ -33,6 +33,7 @@ int main(int, char**)
         // buffer) is available.
 
         qDebug() << "Sizeof Vector2f:" << sizeof(a);
+        qDebug() << "Sizeof Vector2f.x:" << sizeof(a.x);
         qDebug() << "Sizeof Vector3f:" << sizeof(b);
 
         qDebug() << "Direct access to members:";
