@@ -2,7 +2,7 @@ TEMPLATE = subdirs
 SUBDIRS = \
     #archive \
     #basiclink \
-    #record \
+    record \
     script \
     vectors
 

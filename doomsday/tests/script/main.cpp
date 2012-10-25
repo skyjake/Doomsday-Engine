@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 {
     try
     {
-        App app(argc, argv, App::GUIEnabled);
+        App app(argc, argv, App::GUIDisabled);
         app.initSubsystems(App::DisablePlugins);
 
         Script testScript(app.fileSystem().find("kitchen_sink.de"));
