@@ -1,9 +1,7 @@
 TEMPLATE = subdirs
 SUBDIRS = \
-    #archive \
-    #basiclink \
+    archive \
     record \
     script \
     vectors
-
-#OTHER_FILES += testapp.de
+    #basiclink \
