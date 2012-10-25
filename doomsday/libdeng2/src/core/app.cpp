@@ -72,6 +72,28 @@ String App::nativeBinaryPath()
     return path;
 }
 
+String App::nativeHomePath()
+{
+    int i;
+    if((i = _cmdLine.check("-userdir", 1)))
+    {
+        _cmdLine.makeAbsolutePath(i + 1);
+        return _cmdLine.at(i + 1);
+    }
+
+#ifdef MACOSX
+    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
+#elif WIN32
+    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    nativeHome = nativeHome.concatenateNativePath("runtime");
+#else // UNIX
+    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    nativeHome = nativeHome / ".doomsday/runtime";
+#endif
+    return nativeHome;
+}
+
 String App::nativeBasePath()
 {
     int i;
@@ -138,17 +160,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 #endif
 
     // User's home folder.
-#ifdef MACOSX
-    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
-    nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
-#elif WIN32
-    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
-    nativeHome = nativeHome.concatenateNativePath("runtime");
-#else // UNIX
-    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
-    nativeHome = nativeHome / ".doomsday/runtime";
-#endif
-    _fs.makeFolder("/home").attach(new DirectoryFeed(nativeHome,
+    _fs.makeFolder("/home").attach(new DirectoryFeed(nativeHomePath(),
         DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
 
     // Populate the file system.

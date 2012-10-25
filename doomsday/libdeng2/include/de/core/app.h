@@ -96,6 +96,13 @@ namespace de
         String nativeBinaryPath();
 
         /**
+         * Returns the native path where user-specific runtime files should be
+         * placed. The user can override the location using the @em -userdir
+         * command line option.
+         */
+        String nativeHomePath();
+
+        /**
          * Returns the application's file system.
          */
         static FS& fileSystem();
