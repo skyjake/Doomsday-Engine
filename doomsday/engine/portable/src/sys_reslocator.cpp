@@ -226,7 +226,7 @@ static int addFileResourceWorker(de::PathTree::Node& node, void* parameters)
 {
     ResourceNamespaceInfo* rnInfo = (ResourceNamespaceInfo*) parameters;
     // We are only interested in leafs (i.e., files and not directories).
-    if(node.type() == PT_LEAF)
+    if(node.type() == de::PathTree::Leaf)
     {
         addResourceToNamespace(*rnInfo, node);
     }

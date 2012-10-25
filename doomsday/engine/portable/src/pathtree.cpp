@@ -169,10 +169,10 @@ struct PathTree::Instance
         }
     }
 
-    PathTree::Node* findNode(PathTree::Node* parent, PathTreeNodeType nodeType,
+    PathTree::Node* findNode(PathTree::Node* parent, PathTree::NodeType nodeType,
                              StringPoolId internId)
     {
-        PathTree::Nodes& ph = (nodeType == PT_LEAF? leafHash : branchHash);
+        PathTree::Nodes& ph = (nodeType == PathTree::Leaf? leafHash : branchHash);
         ushort hash = StringPool_UserValue(fragments, internId);
         PathTree::Nodes::const_iterator i = ph.find(hash);
         while(i != ph.end() && i.key() == hash)
@@ -208,7 +208,7 @@ struct PathTree::Instance
      * @return  [ a new | the ] directory node that matches the name and type and
      * which has the specified parent node.
      */
-    PathTree::Node* direcNode(PathTree::Node* parent, PathTreeNodeType nodeType,
+    PathTree::Node* direcNode(PathTree::Node* parent, PathTree::NodeType nodeType,
         ddstring_t const* name, char delimiter, void* userData)
     {
         DENG2_ASSERT(name);
@@ -224,7 +224,7 @@ struct PathTree::Instance
                 PathTree::Node* node = findNode(parent, nodeType, internId);
                 if(node)
                 {
-                    if(nodeType == PT_BRANCH || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
+                    if(nodeType == PathTree::Branch || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
                         return node;
                 }
             }
@@ -252,11 +252,11 @@ struct PathTree::Instance
         PathTree::Node* node = newNode(self, nodeType, parent, internId, userData);
 
         // Insert the new node into the path hash.
-        if(nodeType == PT_LEAF)
+        if(nodeType == PathTree::Leaf)
         {
             leafHash.insert(hash, node);
         }
-        else // PT_BRANCH
+        else // Branch
         {
             branchHash.insert(hash, node);
         }
@@ -280,7 +280,7 @@ struct PathTree::Instance
         char const* p = path;
         while((p = Str_CopyDelim2(part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
         {
-            node = direcNode(parent, PT_BRANCH, part, delimiter, NULL);
+            node = direcNode(parent, PathTree::Branch, part, delimiter, NULL);
             /// @todo Do not error here. If we're out of storage undo this action and return.
             if(!node) throw Error("PathTree::buildDirecNodes", String("Exhausted storage while attempting to insert nodes for path \"%1\".").arg(path));
 
@@ -289,7 +289,7 @@ struct PathTree::Instance
 
         if(!Str_IsEmpty(part))
         {
-            node = direcNode(parent, PT_LEAF, part, delimiter, NULL);
+            node = direcNode(parent, PathTree::Leaf, part, delimiter, NULL);
             /// @todo Do not error here. If we're out of storage undo this action and return.
             if(!node) throw Error("PathTree::buildDirecNodes", String("Exhausted storage while attempting to insert nodes for path \"%1\".").arg(path));
         }
@@ -333,7 +333,7 @@ struct PathTree::Instance
         parm.delimiter = delimiter;
 
         // Include a terminating path delimiter for branches.
-        if(delimiter && node.type() == PT_BRANCH)
+        if(delimiter && node.type() == PathTree::Branch)
             parm.length += 1; // A single character.
 
         // Recursively construct the path from fragments and delimiters.
@@ -341,7 +341,7 @@ struct PathTree::Instance
         pathConstructor(&parm, node);
 
         // Terminating delimiter for branches.
-        if(delimiter && node.type() == PT_BRANCH)
+        if(delimiter && node.type() == PathTree::Branch)
             Str_AppendCharWithoutAllocs(constructedPath, delimiter);
 
         DENG2_ASSERT(Str_Size(constructedPath) == parm.length);
@@ -354,7 +354,7 @@ struct PathTree::Instance
         return constructedPath;
     }
 
-    static PathTree::Node* newNode(PathTree& pt, PathTreeNodeType type,
+    static PathTree::Node* newNode(PathTree& pt, PathTree::NodeType type,
         PathTree::Node* parent, StringPoolId internId, void* userData)
     {
         PathTree::Node* node;
@@ -397,17 +397,6 @@ struct PathTree::Instance
         UsedNodes = this;
         Sys_Unlock(nodeAllocator_Mutex);
 #endif
-    }
-
-    static void collectPathsInHash(PathTree::Nodes& ph, char delimiter,
-        ddstring_t** pathListAdr)
-    {
-        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
-        {
-            Str_Init(*pathListAdr);
-            (*i)->composePath((*pathListAdr), NULL, delimiter);
-            (*pathListAdr)++;
-        }
     }
 
     static void clearPathHash(PathTree::Nodes& ph)
@@ -482,6 +471,15 @@ PathTree::~PathTree()
 {
     clear();
     delete d;
+}
+
+ddstring_t const* PathTree::nodeTypeName(NodeType type)
+{
+    static Str const nodeNames[] = {
+        "branch",
+        "leaf"
+    };
+    return nodeNames[type == Branch? 0 : 1];
 }
 
 uint PathTree::size() const
@@ -560,9 +558,20 @@ ddstring_t* PathTree::composePath(PathTree::Node const& node, ddstring_t* foundP
     return d->constructPath(node, foundPath, delimiter);
 }
 
-PathTree::Nodes const& PathTree::nodes(PathTreeNodeType type) const
+PathTree::Nodes const& PathTree::nodes(NodeType type) const
 {
-    return (type == PT_LEAF? d->leafHash : d->branchHash);
+    return (type == Leaf? d->leafHash : d->branchHash);
+}
+
+static void collectPathsInHash(PathTree::Nodes const& ph, char delimiter,
+    ddstring_t** pathListAdr)
+{
+    DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
+    {
+        Str_Init(*pathListAdr);
+        (*i)->composePath((*pathListAdr), NULL, delimiter);
+        (*pathListAdr)++;
+    }
 }
 
 ddstring_t* PathTree::collectPaths(size_t* retCount, int flags, char delimiter)
@@ -571,9 +580,9 @@ ddstring_t* PathTree::collectPaths(size_t* retCount, int flags, char delimiter)
     size_t count = 0;
 
     if(!(flags & PCF_NO_LEAF))
-        count += d->leafHash.count();
+        count += leafNodes().count();
     if(!(flags & PCF_NO_BRANCH))
-        count += d->branchHash.count();
+        count += branchNodes().count();
 
     if(count)
     {
@@ -583,10 +592,10 @@ ddstring_t* PathTree::collectPaths(size_t* retCount, int flags, char delimiter)
 
         ddstring_t* pathPtr = paths;
         if(!(flags & PCF_NO_BRANCH))
-            Instance::collectPathsInHash(d->branchHash, delimiter, &pathPtr);
+            collectPathsInHash(branchNodes(), delimiter, &pathPtr);
 
         if(!(flags & PCF_NO_LEAF))
-            Instance::collectPathsInHash(d->leafHash, delimiter, &pathPtr);
+            collectPathsInHash(leafNodes(), delimiter, &pathPtr);
     }
 
     if(retCount) *retCount = count;
@@ -604,7 +613,7 @@ void PathTree::debugPrint(PathTree& pt, char delimiter)
     LOG_AS("PathTree");
     LOG_INFO("Directory [%p]:") << (void*)&pt;
     size_t numLeafs;
-    ddstring_t* pathList = pt.collectPaths(&numLeafs, PT_LEAF, delimiter);
+    ddstring_t* pathList = pt.collectPaths(&numLeafs, PathTree::Leaf, delimiter);
     if(pathList)
     {
         size_t n = 0;
@@ -683,7 +692,7 @@ static void printDistributionOverview(PathTree* pt,
     *col = 0;
     for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
-        PathTreeNodeType type = PathTreeNodeType(i);
+        PathTree::NodeType type = PathTree::NodeType(i);
         if(Str_Length(PathTreeNode::typeName(type)) > *col)
             *col = Str_Length(PathTreeNode::typeName(type));
     }
@@ -736,7 +745,7 @@ static void printDistributionOverview(PathTree* pt,
     {
         for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
         {
-            PathTreeNodeType type = PathTreeNodeType(i);
+            PathTree::NodeType type = PathTree::NodeType(i);
             printDistributionOverviewElement(colWidths, Str_Text(PathTreeNode::typeName(type)),
                 nodeBucketEmpty[i], (i == PT_LEAF? nodeBucketHeight : 0),
                 nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
@@ -794,7 +803,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
 
     for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i, ++col)
     {
-        PathTreeNodeType type = PathTreeNodeType(i);
+        PathTree::NodeType type = PathTree::NodeType(i);
         colWidths[col] = Str_Length(PathTreeNode::typeName(type));
     }
 
@@ -808,7 +817,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     Con_Printf("%*s", colWidths[col++], "total");
     for(int i = 0; i < PATHTREENODE_TYPE_COUNT; ++i)
     {
-        PathTreeNodeType type = PathTreeNodeType(i);
+        PathTree::NodeType type = PathTree::NodeType(i);
         Con_Printf("%*s", colWidths[col++], Str_Text(PathTreeNode::typeName(type)));
     }
     Con_Printf("\n");
@@ -820,10 +829,10 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     for(ushort i = 0; i < PATHTREE_PATHHASH_SIZE; ++i)
     {
         pathtree_pathhash_t** phAdr;
-        phAdr = hashAddressForNodeType(pt, PT_BRANCH);
+        phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
         if(*phAdr)
         for(node = (**phAdr)[i].head; node; node = node->next)
-            ++nodeCount[PT_BRANCH];
+            ++nodeCount[PathTree::Node::Branch];
 
         phAdr = hashAddressForNodeType(pt, PT_LEAF);
         if(*phAdr)
@@ -923,7 +932,7 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
     PathTreeNode* node;
     DENG2_ASSERT(pt);
 
-    nodeCountTotal[PT_BRANCH] = countNodesInPathHash(*hashAddressForNodeType(pt, PT_BRANCH));
+    nodeCountTotal[PathTree::Node::Branch] = countNodesInPathHash(*hashAddressForNodeType(pt, PathTree::Node::Branch));
     nodeCountTotal[PT_LEAF]   = countNodesInPathHash(*hashAddressForNodeType(pt, PT_LEAF));
 
     memset(nodeCountSum, 0, sizeof(nodeCountSum));
@@ -934,11 +943,11 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
     for(ushort i = 0; i < PATHTREE_PATHHASH_SIZE; ++i)
     {
         pathtree_pathhash_t** phAdr;
-        phAdr = hashAddressForNodeType(pt, PT_BRANCH);
-        nodeCount[PT_BRANCH] = 0;
+        phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
+        nodeCount[PathTree::Node::Branch] = 0;
         if(*phAdr)
         for(node = (**phAdr)[i].head; node; node = node->next)
-            ++nodeCount[PT_BRANCH];
+            ++nodeCount[PathTree::Node::Branch];
 
         phAdr = hashAddressForNodeType(pt, PT_LEAF);
         nodeCount[PT_LEAF] = 0;
@@ -962,9 +971,9 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
                 nodeBucketHeight = chainHeight;
         }
 
-        totalForRange = nodeCount[PT_BRANCH] + nodeCount[PT_LEAF];
+        totalForRange = nodeCount[PathTree::Node::Branch] + nodeCount[PT_LEAF];
 
-        nodeCountSum[PT_BRANCH] += nodeCount[PT_BRANCH];
+        nodeCountSum[PT_BRANCH] += nodeCount[PathTree::Node::Branch];
         nodeCountSum[PT_LEAF]   += nodeCount[PT_LEAF];
 
         for(int j = 0; j < PATHTREENODE_TYPE_COUNT; ++j)
@@ -1084,7 +1093,7 @@ PathTreeNode* PathTree_Insert(PathTree* pt, char const* path)
 }
 
 static int iteratePathsInHash(PathTree* pt,
-    ushort hash, PathTreeNodeType type, int flags, PathTreeNode* parent_,
+    ushort hash, de::PathTree::NodeType type, int flags, PathTreeNode* parent_,
     int (*callback) (PathTreeNode* node, void* parameters), void* parameters)
 {
     int result = 0;
@@ -1130,11 +1139,9 @@ static int iteratePathsInHash(PathTree* pt,
 }
 
 static int iteratePathsInHash_Const(PathTree const* pt,
-    ushort hash, PathTreeNodeType type, int flags, PathTreeNode const* parent_,
+    ushort hash, de::PathTree::NodeType type, int flags, PathTreeNode const* parent_,
     int (*callback) (PathTreeNode const* node, void* parameters), void* parameters)
 {
-    int result = 0;
-
     SELF_CONST(pt);
 
     if(hash != PATHTREE_NOHASH && hash >= PATHTREE_PATHHASH_SIZE)
@@ -1144,6 +1151,7 @@ static int iteratePathsInHash_Const(PathTree const* pt,
                             .arg(hash).arg(PATHTREE_PATHHASH_SIZE-1));
     }
 
+    int result = 0;
     de::PathTree::Nodes const& nodes = self->nodes(type);
     de::PathTree::Node const* parent = reinterpret_cast<de::PathTree::Node const*>(parent_);
 
@@ -1184,11 +1192,11 @@ int PathTree_Iterate2(PathTree* pt, int flags, PathTreeNode* parent,
     if(callback)
     {
         if(!(flags & PCF_NO_LEAF))
-            result = iteratePathsInHash(pt, hash, PT_LEAF, flags, parent,
+            result = iteratePathsInHash(pt, hash, de::PathTree::Leaf, flags, parent,
                                         callback, parameters);
 
         if(!result && !(flags & PCF_NO_BRANCH))
-            result = iteratePathsInHash(pt, hash, PT_BRANCH, flags, parent,
+            result = iteratePathsInHash(pt, hash, de::PathTree::Branch, flags, parent,
                                         callback, parameters);
     }
     return result;
@@ -1208,11 +1216,11 @@ int PathTree_Iterate2_Const(PathTree const* pt, int flags, PathTreeNode const* p
     if(callback)
     {
         if(!(flags & PCF_NO_LEAF))
-            result = iteratePathsInHash_Const(pt, hash, PT_LEAF, flags, parent,
+            result = iteratePathsInHash_Const(pt, hash, de::PathTree::Leaf, flags, parent,
                                               callback, parameters);
 
         if(!result && !(flags & PCF_NO_BRANCH))
-            result = iteratePathsInHash_Const(pt, hash, PT_BRANCH, flags, parent,
+            result = iteratePathsInHash_Const(pt, hash, de::PathTree::Branch, flags, parent,
                                               callback, parameters);
     }
     return result;
@@ -1295,7 +1303,7 @@ PathTreeNode* PathTree_Search2(PathTree* pt, int flags,
         ushort hash = PathMap_Fragment(mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF))
         {
-            if(iteratePathsInHash(pt, hash, PT_LEAF, flags, NULL, searchWorker, (void*)&p))
+            if(iteratePathsInHash(pt, hash, de::PathTree::Leaf, flags, NULL, searchWorker, (void*)&p))
             {
                 return p.foundNode;
             }
@@ -1303,7 +1311,7 @@ PathTreeNode* PathTree_Search2(PathTree* pt, int flags,
 
         if(!(flags & PCF_NO_BRANCH))
         {
-            if(iteratePathsInHash(pt, hash, PT_BRANCH, flags, NULL, searchWorker, (void*)&p))
+            if(iteratePathsInHash(pt, hash, de::PathTree::Branch, flags, NULL, searchWorker, (void*)&p))
             {
                 return p.foundNode;
             }

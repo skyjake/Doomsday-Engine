@@ -50,19 +50,6 @@ extern "C" {
                                      (i.e., relative) matches. */
 ///@}
 
-typedef enum {
-    PT_ANY = -1,
-    PATHTREENODE_TYPE_FIRST = 0,
-    PT_BRANCH = PATHTREENODE_TYPE_FIRST,
-    PT_LEAF,
-    PATHTREENODE_TYPE_COUNT
-} PathTreeNodeType;
-
-// Helper macro for determining if the value v can be interpreted as a valid node type.
-#define VALID_PATHTREENODE_TYPE(v) (\
-    (v) >= PATHTREENODE_TYPE_FIRST && (v) < PATHTREENODE_TYPE_COUNT)
-
-
 // Number of buckets in the hash table.
 #define PATHTREE_PATHHASH_SIZE          512
 
@@ -105,18 +92,24 @@ namespace de {
 class PathTree
 {
 public:
+    /// Node type identifiers.
+    enum NodeType
+    {
+        Branch,
+        Leaf
+    };
+
+    /// @return  Print-ready name for node @a type.
+    static ddstring_t const* nodeTypeName(NodeType type);
+
     /**
      * Node is the base class for all nodes of a PathTree.
      */
     class Node
     {
-    public:
-        /// @return  Print-ready name for node @a type.
-        static ddstring_t const* typeName(PathTreeNodeType type);
-
     private:
         Node();
-        Node(PathTree& tree, PathTreeNodeType type, StringPoolId internId,
+        Node(PathTree& tree, NodeType type, StringPoolId internId,
              Node* parent = NULL, void* userData = NULL);
         virtual ~Node();
 
@@ -128,7 +121,7 @@ public:
         Node* parent() const;
 
         /// @return  Type of this node.
-        PathTreeNodeType type() const;
+        NodeType type() const;
 
         /// @return  Hash for this node path fragment.
         ushort hash() const;
@@ -266,14 +259,14 @@ public:
     /**
      * Provides access to the PathTreeNodes for efficent traversals.
      */
-    Nodes const& nodes(PathTreeNodeType type) const;
+    Nodes const& nodes(NodeType type) const;
 
     inline Nodes const& leafNodes() const {
-        return nodes(PT_LEAF);
+        return nodes(Leaf);
     }
 
     inline Nodes const& branchNodes() const {
-        return nodes(PT_BRANCH);
+        return nodes(Branch);
     }
 
 public:
@@ -406,7 +399,6 @@ void PathTree_DebugPrintHashDistribution(PathTree* pt);
 
 PathTree* PathTreeNode_Tree(PathTreeNode const* node);
 PathTreeNode* PathTreeNode_Parent(PathTreeNode const* node);
-PathTreeNodeType PathTreeNode_Type(PathTreeNode const* node);
 ushort PathTreeNode_Hash(PathTreeNode const* node);
 int PathTreeNode_ComparePath(PathTreeNode* node, int flags, PathMap* candidatePath, void* parameters);
 ddstring_t* PathTreeNode_ComposePath2(PathTreeNode const* node, ddstring_t* path, int* length, char delimiter);
@@ -414,8 +406,6 @@ ddstring_t* PathTreeNode_ComposePath(PathTreeNode const* node, ddstring_t* path,
 ddstring_t const* PathTreeNode_PathFragment(PathTreeNode const* node);
 void* PathTreeNode_UserData(PathTreeNode const* node);
 void PathTreeNode_SetUserData(PathTreeNode* node, void* data);
-
-ddstring_t const* PathTreeNodeType_Name(PathTreeNodeType type);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -136,8 +136,6 @@ static int clearVariable(PathTreeNode* node, void* parameters)
 
     if(var)
     {
-        assert(PT_LEAF == PathTreeNode_Type(node));
-
         // Detach our user data from this node.
         PathTreeNode_SetUserData(node, 0);
 

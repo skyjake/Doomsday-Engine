@@ -35,6 +35,16 @@ typedef struct pathmapfragment_s {
     ushort hash;
     const char* from, *to;
     struct pathmapfragment_s* next;
+
+#ifdef __cplusplus
+    // Determine length of fragment in characters.
+    int length() const
+    {
+        if(!qstrcmp(to, "") && !qstrcmp(from, ""))
+            return 0;
+        return (to - from) + 1;
+    }
+#endif
 } PathMapFragment;
 
 /// Size of the fixed-length "short" fragment buffer allocated with the map.

@@ -956,7 +956,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
             filePath = lump.composePath();
         }
 
-        found.push_back(PathListItem(Str_Text(filePath), node.type() == PT_BRANCH? A_SUBDIR : 0));
+        found.push_back(PathListItem(Str_Text(filePath), node.type() == PathTree::Branch? A_SUBDIR : 0));
     }
 
     PathMap_Destroy(&patternMap);

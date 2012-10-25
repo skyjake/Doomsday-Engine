@@ -31,7 +31,7 @@ struct PathTree::Node::Instance
     PathTree& tree;
 
     /// Symbolic node type.
-    PathTreeNodeType type;
+    PathTree::NodeType type;
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
@@ -43,14 +43,14 @@ struct PathTree::Node::Instance
     /// User data pointer associated with this node.
     void* userData;
 
-    Instance(PathTree& _tree, PathTreeNodeType _type, StringPoolId _internId,
+    Instance(PathTree& _tree, PathTree::NodeType _type, StringPoolId _internId,
              PathTree::Node* _parent)
         : tree(_tree), type(_type), internId(_internId), parent(_parent),
           userData(0)
     {}
 };
 
-PathTree::Node::Node(PathTree& tree, PathTreeNodeType type, StringPoolId internId,
+PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, StringPoolId internId,
     PathTree::Node* parent, void* userData)
 {
     d = new Instance(tree, type, internId, parent);
@@ -60,17 +60,6 @@ PathTree::Node::Node(PathTree& tree, PathTreeNodeType type, StringPoolId internI
 PathTree::Node::~Node()
 {
     delete d;
-}
-
-ddstring_t const* PathTree::Node::typeName(PathTreeNodeType type)
-{
-    static Str const nodeNames[1+PATHTREENODE_TYPE_COUNT] = {
-        "(invalidtype)",
-        "branch",
-        "leaf"
-    };
-    if(!VALID_PATHTREENODE_TYPE(type)) return nodeNames[0];
-    return nodeNames[1 + (type - PATHTREENODE_TYPE_FIRST)];
 }
 
 PathTree& PathTree::Node::tree() const
@@ -83,7 +72,7 @@ PathTree::Node* PathTree::Node::parent() const
     return d->parent;
 }
 
-PathTreeNodeType PathTree::Node::type() const
+PathTree::NodeType PathTree::Node::type() const
 {
     return d->type;
 }
@@ -95,7 +84,7 @@ StringPoolId PathTree::Node::internId() const
 
 ushort PathTree::Node::hash() const
 {
-    return d->tree.hashForNode(*this);
+    return tree().hashForNode(*this);
 }
 
 static int matchPathFragment(char const* string, char const* pattern)
@@ -114,9 +103,11 @@ static int matchPathFragment(char const* string, char const* pattern)
         {
             // A mismatch. Hmm. Go back to a previous '*'.
             while(st >= pattern && *st != '*')
-                st--;
-            if(st < pattern)
-                return false; // No match!
+            { st--; }
+
+            // No match?
+            if(st < pattern) return false;
+
             // The asterisk lets us continue.
         }
 
@@ -125,10 +116,11 @@ static int matchPathFragment(char const* string, char const* pattern)
         in++;
     }
 
-    // Match is good if the end of the pattern was reached.
+    // Skip remaining asterisks.
     while(*st == '*')
-        st++; // Skip remaining asterisks.
+    { st++; }
 
+    // Match is good if the end of the pattern was reached.
     return *st == 0;
 }
 
@@ -136,8 +128,8 @@ static int matchPathFragment(char const* string, char const* pattern)
 ///       a non-zero value when the node is a match for the search term.
 int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
 {
-    if(((flags & PCF_NO_LEAF)   && PT_LEAF   == type()) ||
-       ((flags & PCF_NO_BRANCH) && PT_BRANCH == type()))
+    if(((flags & PCF_NO_LEAF)   && type() == PathTree::Leaf) ||
+       ((flags & PCF_NO_BRANCH) && type() == PathTree::Branch))
         return false;
 
     PathMapFragment const* sfragment = PathMap_Fragment(searchPattern, 0);
@@ -150,18 +142,17 @@ int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
 //#endif
 
     // In reverse order, compare path fragments in the search term.
-    PathTree& pt = tree();
     uint fragmentCount = PathMap_Size(searchPattern);
 
     PathTree::Node const* node = this;
     for(uint i = 0; i < fragmentCount; ++i)
     {
-        if(i == 0 && node->type() == PT_LEAF)
+        if(i == 0 && node->type() == PathTree::Leaf)
         {
             char buf[256];
             qsnprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
 
-            ddstring_t const* fragment = pt.pathFragment(*node);
+            ddstring_t const* fragment = node->pathFragment();
             DENG2_ASSERT(fragment);
 
             if(!matchPathFragment(Str_Text(fragment), buf))
@@ -176,22 +167,15 @@ int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
             if(!isWild)
             {
                 // If the hashes don't match it can't possibly be this.
-                if(sfragment->hash != pt.hashForNode(*node))
+                if(sfragment->hash != node->hash())
                 {
                     EXIT_POINT(2);
                     return false;
                 }
 
-                // Determine length of the sfragment.
-                int sfraglen;
-                if(!strcmp(sfragment->to, "") && !strcmp(sfragment->from, ""))
-                    sfraglen = 0;
-                else
-                    sfraglen = (sfragment->to - sfragment->from) + 1;
-
                 // Compare the path fragment to that of the search term.
-                ddstring_t const* fragment = pt.pathFragment(*node);
-                if(Str_Length(fragment) < sfraglen ||
+                ddstring_t const* fragment = node->pathFragment();
+                if(Str_Length(fragment) < sfragment->length() ||
                    qstrnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
                 {
                     EXIT_POINT(3);
@@ -226,12 +210,12 @@ int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
 
 ddstring_t const* PathTree::Node::pathFragment() const
 {
-    return d->tree.pathFragment(*this);
+    return tree().pathFragment(*this);
 }
 
 ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char delimiter) const
 {
-    return d->tree.composePath(*this, path, length, delimiter);
+    return tree().composePath(*this, path, length, delimiter);
 }
 
 void* PathTree::Node::userData() const
@@ -277,12 +261,6 @@ PathTreeNode* PathTreeNode_Parent(PathTreeNode const* node)
     return reinterpret_cast<PathTreeNode*>(self->parent());
 }
 
-PathTreeNodeType PathTreeNode_Type(PathTreeNode const* node)
-{
-    SELF_CONST(node);
-    return self->type();
-}
-
 ushort PathTreeNode_Hash(PathTreeNode const* node)
 {
     SELF_CONST(node);
@@ -326,9 +304,4 @@ void PathTreeNode_SetUserData(PathTreeNode* node, void* userData)
 {
     SELF(node);
     self->setUserData(userData);
-}
-
-Str const* PathTreeNodeType_Name(PathTreeNodeType type)
-{
-    return de::PathTree::Node::typeName(type);
 }

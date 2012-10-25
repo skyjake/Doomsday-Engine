@@ -28,13 +28,15 @@
 #include "filedirectory.h"
 #include <de/memory.h>
 
+namespace de {
+
 struct FileDirectoryNodeInfo
 {
     bool processed;
     FileDirectoryNodeInfo() : processed(false) {}
 };
 
-static de::PathTree::Node* attachMissingNodeInfo(de::PathTree::Node* node)
+static PathTree::Node* attachMissingNodeInfo(PathTree::Node* node)
 {
     if(!node) return NULL;
     // Has this already been processed?
@@ -47,7 +49,7 @@ static de::PathTree::Node* attachMissingNodeInfo(de::PathTree::Node* node)
     return node;
 }
 
-de::FileDirectory::FileDirectory(const char* _basePath)
+FileDirectory::FileDirectory(const char* _basePath)
     : PathTree(), basePath(0), baseNode(0)
 {
     if(_basePath && _basePath[0])
@@ -58,13 +60,13 @@ de::FileDirectory::FileDirectory(const char* _basePath)
     }
 }
 
-de::FileDirectory::~FileDirectory()
+FileDirectory::~FileDirectory()
 {
     clearNodeInfo();
     if(basePath) Str_Delete(basePath);
 }
 
-void de::FileDirectory::clearNodeInfo()
+void FileDirectory::clearNodeInfo()
 {
     DENG2_FOR_EACH_CONST(Nodes, i, leafNodes())
     {
@@ -89,16 +91,15 @@ void de::FileDirectory::clearNodeInfo()
     }
 }
 
-void de::FileDirectory::clear()
+void FileDirectory::clear()
 {
     clearNodeInfo();
     PathTree::clear();
     baseNode = NULL;
 }
 
-bool de::FileDirectory::find(PathTreeNodeType nodeType,
-    const char* _searchPath, char searchDelimiter, ddstring_t* foundPath,
-    char foundDelimiter)
+bool FileDirectory::find(NodeType nodeType, char const* _searchPath, char searchDelimiter,
+    ddstring_t* foundPath, char foundDelimiter)
 {
     if(foundPath)
     {
@@ -120,8 +121,8 @@ bool de::FileDirectory::find(PathTreeNodeType nodeType,
     // Perform the search.
     try
     {
-        int const findFlags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF) | PCF_MATCH_FULL;
-        de::PathTree::Node const& foundNode = PathTree::find(findFlags, Str_Text(searchPath), searchDelimiter);
+        int const compareFlags = (nodeType == Leaf? PCF_NO_BRANCH : PCF_NO_LEAF) | PCF_MATCH_FULL;
+        Node const& foundNode = PathTree::find(compareFlags, Str_Text(searchPath), searchDelimiter);
         // Does caller want to know the full path?
         if(foundPath)
         {
@@ -134,7 +135,7 @@ bool de::FileDirectory::find(PathTreeNodeType nodeType,
     return false;
 }
 
-de::PathTree::Node* de::FileDirectory::addPathNodes(ddstring_t const* rawPath)
+PathTree::Node* FileDirectory::addPathNodes(ddstring_t const* rawPath)
 {
     if(!rawPath || Str_IsEmpty(rawPath)) return NULL;
 
@@ -175,7 +176,7 @@ de::PathTree::Node* de::FileDirectory::addPathNodes(ddstring_t const* rawPath)
         if(!F_IsAbsolute(path)) return NULL;
     }
 
-    de::PathTree::Node* node = insert(Str_Text(path), '/');
+    Node* node = insert(Str_Text(path), '/');
     attachMissingNodeInfo(node);
 
     if(path == &buf) Str_Free(&buf);
@@ -183,12 +184,12 @@ de::PathTree::Node* de::FileDirectory::addPathNodes(ddstring_t const* rawPath)
     return node;
 }
 
-int de::FileDirectory::addChildNodes(de::PathTree::Node& node, int flags,
-    int (*callback) (de::PathTree::Node& node, void* parameters), void* parameters)
+int FileDirectory::addChildNodes(Node& node, int flags,
+    int (*callback) (Node& node, void* parameters), void* parameters)
 {
     int result = 0; // Continue iteration.
 
-    if(PT_BRANCH == node.type())
+    if(Branch == node.type())
     {
         // Compose the search pattern.
         ddstring_t searchPattern; Str_InitStd(&searchPattern);
@@ -204,9 +205,9 @@ int de::FileDirectory::addChildNodes(de::PathTree::Node& node, int flags,
             {
                 QByteArray foundPathUtf8 = i->path.toUtf8();
                 ddstring_t foundPath; Str_InitStatic(&foundPath, foundPathUtf8.constData());
-                PathTreeNodeType nodeType = (i->attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF;
+                bool isDirectory = !!(i->attrib & A_SUBDIR);
 
-                result = addPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND), &foundPath, nodeType,
+                result = addPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND), &foundPath, isDirectory,
                                                            flags, callback, parameters);
                 if(result) break;
             }
@@ -218,23 +219,20 @@ int de::FileDirectory::addChildNodes(de::PathTree::Node& node, int flags,
     return result;
 }
 
-int de::FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
-    ddstring_t const* filePath, PathTreeNodeType nodeType,
-    int flags, int (*callback) (de::PathTree::Node& node, void* parameters),
+int FileDirectory::addPathNodesAndMaybeDescendBranch(bool descendBranches,
+    ddstring_t const* filePath, bool /*isDirectory*/,
+    int flags, int (*callback) (Node& node, void* parameters),
     void* parameters)
 {
-    DENG2_ASSERT(VALID_PATHTREENODE_TYPE(nodeType));
-    DENG2_UNUSED(nodeType);
-
     int result = 0; // Continue iteration.
 
     // Add this path to the directory.
-    de::PathTree::Node* node = addPathNodes(filePath);
+    Node* node = addPathNodes(filePath);
     if(node)
     {
         FileDirectoryNodeInfo* info = reinterpret_cast<FileDirectoryNodeInfo*>(node->userData());
 
-        if(PT_BRANCH == node->type())
+        if(Branch == node->type())
         {
             // Descend into this subdirectory?
             if(descendBranches)
@@ -300,9 +298,9 @@ static void printUriList(Uri const* const* pathList, size_t pathCount, int inden
     }
 })
 
-void de::FileDirectory::addPaths(int flags,
+void FileDirectory::addPaths(int flags,
     Uri const* const* searchPaths, uint searchPathsCount,
-    int (*callback) (de::PathTree::Node& node, void* parameters), void* parameters)
+    int (*callback) (Node& node, void* parameters), void* parameters)
 {
     if(!searchPaths || searchPathsCount == 0)
     {
@@ -321,7 +319,7 @@ void de::FileDirectory::addPaths(int flags,
         if(!searchPath) continue;
 
         // Add new nodes on this path and/or re-process previously seen nodes.
-        addPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath, PT_BRANCH,
+        addPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath, true/*is-directory*/,
                                           flags, callback, parameters);
     }
 
@@ -330,8 +328,8 @@ void de::FileDirectory::addPaths(int flags,
 #endif*/
 }
 
-void de::FileDirectory::addPathList(int flags, char const* pathList,
-    int (*callback) (de::PathTree::Node& node, void* parameters), void* parameters)
+void FileDirectory::addPathList(int flags, char const* pathList,
+    int (*callback) (Node& node, void* parameters), void* parameters)
 {
     Uri** paths = NULL;
     int pathsCount = 0;
@@ -343,7 +341,7 @@ void de::FileDirectory::addPathList(int flags, char const* pathList,
     if(paths) F_DestroyUriList(paths);
 }
 
-ddstring_t* de::FileDirectory::collectPaths(size_t* count, int flags, char delimiter)
+ddstring_t* FileDirectory::collectPaths(size_t* count, int flags, char delimiter)
 {
     return PathTree::collectPaths(count, flags, delimiter);
 }
@@ -376,7 +374,7 @@ static void deletePathList(ddstring_t* pathList, size_t numPaths)
     M_Free(pathList);
 }
 
-void de::FileDirectory::debugPrint(FileDirectory& inst)
+void FileDirectory::debugPrint(FileDirectory& inst)
 {
     Con_Printf("FileDirectory [%p]:\n", (void*)&inst);
 
@@ -393,8 +391,11 @@ void de::FileDirectory::debugPrint(FileDirectory& inst)
     Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "path":"paths"));
 }
 
-void de::FileDirectory::debugPrintHashDistribution(FileDirectory& inst)
+void FileDirectory::debugPrintHashDistribution(FileDirectory& inst)
 {
     PathTree::debugPrintHashDistribution(inst);
 }
+
+} // namespace de
+
 #endif
