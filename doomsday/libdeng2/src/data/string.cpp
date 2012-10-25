@@ -560,7 +560,7 @@ String String::fromNativePath(const String& nativePath)
     return s;
 }
 
-size_t qchar_strlen(const QChar* str)
+size_t de::qchar_strlen(const QChar* str)
 {
     if(!str) return 0;
 
