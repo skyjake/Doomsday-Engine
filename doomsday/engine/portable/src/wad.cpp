@@ -1,5 +1,5 @@
 /**
- * @file wadfile.cpp
+ * @file wad.cpp
  * WAD archives. @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -58,7 +58,7 @@ typedef struct {
 class WadFile : public File1
 {
 public:
-    WadFile::WadFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+    WadFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
         : File1(hndl, path, info, container), crc_(0)
     {}
 

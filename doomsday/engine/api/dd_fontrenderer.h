@@ -159,15 +159,29 @@ void FR_SetCaseScale(boolean value);
 
 /**
  * Draw a text block.
+ * @note Member of the Doomsday public API.
  *
- * @param text  Block of text to be drawn.
+ * @param text    Block of text to be drawn.
  * @param origin  Orient drawing about this offset (topleft:[0,0]).
- * @param alignFlags  @ref alignmentFlags
- * @param flags  @ref drawTextFlags
  */
-void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, short flags);
-void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags);
 void FR_DrawText(const char* text, const Point2Raw* origin);
+
+/**
+ * @copydoc FR_DrawText()
+ * @param alignFlags  @ref alignmentFlags
+ */
+void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags);
+
+/**
+ * Draw a text block.
+ * @note Member of the Doomsday public API.
+ *
+ * @param text        Block of text to be drawn.
+ * @param _origin     Orient drawing about this offset (topleft:[0,0]).
+ * @param alignFlags  @ref alignmentFlags
+ * @param _textFlags  @ref drawTextFlags
+ */
+void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short _textFlags);
 
 void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags);
 void FR_DrawTextXY2(const char* text, int x, int y, int alignFlags);

@@ -123,6 +123,8 @@ void DS_DummyShutdown(void)
 /**
  * The Event function is called to tell the driver about certain critical
  * events like the beginning and end of an update cycle.
+ *
+ * @param type  Type of event.
  */
 void DS_DummyEvent(int type)
 {
@@ -162,6 +164,9 @@ void DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t* buf)
  * Prepare the buffer for playing a sample by filling the buffer with as
  * much sample data as fits. The pointer to sample is saved, so the caller
  * mustn't free it while the sample is loaded.
+ *
+ * @param buf     Sound buffer.
+ * @param sample  Sample data.
  */
 void DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
@@ -176,6 +181,8 @@ void DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
 /**
  * Stops the buffer and makes it forget about its sample.
+ *
+ * @param buf  Sound buffer.
  */
 void DS_Dummy_SFX_Reset(sfxbuffer_t* buf)
 {
@@ -188,7 +195,8 @@ void DS_Dummy_SFX_Reset(sfxbuffer_t* buf)
 }
 
 /**
- * @return              The length of the buffer in milliseconds.
+ * @param buf  Sound buffer.
+ * @return The length of the buffer in milliseconds.
  */
 unsigned int DS_DummyBufferLength(sfxbuffer_t* buf)
 {
@@ -233,6 +241,7 @@ void DS_Dummy_SFX_Stop(sfxbuffer_t* buf)
 
 /**
  * Buffer streamer. Called by the Sfx refresh thread.
+ * @param buf  Sound buffer.
  */
 void DS_Dummy_SFX_Refresh(sfxbuffer_t* buf)
 {
@@ -249,12 +258,15 @@ void DS_Dummy_SFX_Refresh(sfxbuffer_t* buf)
 }
 
 /**
- * @param prop          SFXBP_VOLUME (if negative, interpreted as attenuation)
- *                      SFXBP_FREQUENCY
- *                      SFXBP_PAN (-1..1)
- *                      SFXBP_MIN_DISTANCE
- *                      SFXBP_MAX_DISTANCE
- *                      SFXBP_RELATIVE_MODE
+ * @param buf   Sound buffer.
+ * @param prop  Buffer property:
+ *              - SFXBP_VOLUME (if negative, interpreted as attenuation)
+ *              - SFXBP_FREQUENCY
+ *              - SFXBP_PAN (-1..1)
+ *              - SFXBP_MIN_DISTANCE
+ *              - SFXBP_MAX_DISTANCE
+ *              - SFXBP_RELATIVE_MODE
+ * @param value Value for the property.
  */
 void DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 {

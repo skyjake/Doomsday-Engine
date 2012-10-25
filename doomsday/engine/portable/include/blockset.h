@@ -81,7 +81,7 @@ void BlockSet_Delete(blockset_t* set);
 /**
  * Return a ptr to the next unused element in the blockset.
  *
- * @param blockset  The blockset to return the next element from.
+ * @param set  The blockset to return the next element from.
  *
  * @return  Ptr to the next unused element in the blockset.
  */

@@ -72,7 +72,7 @@ ushort ColorPalette_Size(colorpalette_t* pal);
  * @param compOrder  Component order. Examples:
  * <pre> [0,1,2] == RGB
  * [2,1,0] == BGR</pre>
- * @param compSize  Number of bits per component [R,G,B].
+ * @param compBits  Number of bits per component [R,G,B].
  * @param colorData  Color triplets (at least @a numColors * 3).
  * @param colorCount  Number of color triplets.
  */
@@ -94,10 +94,12 @@ void ColorPalette_Color(const colorpalette_t* pal, int colorIdx, uint8_t rgb[3])
 /**
  * Given an R8G8B8 color triplet return the closet matching color index.
  *
+ * @param pal  Color palette.
  * @param rgb  R8G8B8 color to be matched.
+ *
  * @return  Closet matching color index or @c -1 if no colors in the palette.
  */
-int ColorPalette_NearestIndex(colorpalette_t* pal, uint8_t red, uint8_t green, uint8_t blue);
 int ColorPalette_NearestIndexv(colorpalette_t* pal, const uint8_t rgb[3]);
+int ColorPalette_NearestIndex(colorpalette_t* pal, uint8_t red, uint8_t green, uint8_t blue);
 
 #endif /* LIBDENG_REFRESH_COLORPALETTE_H */

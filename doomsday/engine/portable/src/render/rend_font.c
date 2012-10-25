@@ -1178,8 +1178,7 @@ static void freeTextBuffer(void)
     largeTextBufferSize = 0;
 }
 
-/// @note Member of the Doomsday public API.
-void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short origTextFlags)
+void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short _textFlags)
 {
     fontid_t origFont = FR_Font();
     float cx, cy, extraScale;
@@ -1201,7 +1200,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     origin.x = _origin? _origin->x : 0;
     origin.y = _origin? _origin->y : 0;
 
-    origTextFlags &= ~(DTF_INTERNAL_MASK);
+    _textFlags &= ~(DTF_INTERNAL_MASK);
 
     // If we aren't aligning to top-left we need to know the dimensions.
     if(alignFlags & ALIGN_RIGHT)
@@ -1213,8 +1212,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);
 
-    for(pass = ((origTextFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
-        pass < ((origTextFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
+    for(pass = ((_textFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
+        pass < ((_textFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
     {
         // Configure the next pass.
         cx = (float) origin.x;
@@ -1223,9 +1222,9 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
         charCount = 0;
         switch(pass)
         {
-        case 0: textFlags = origTextFlags | (DTF_NO_GLITTER|DTF_NO_CHARACTER); break;
-        case 1: textFlags = origTextFlags | (DTF_NO_SHADOW |DTF_NO_GLITTER);   break;
-        case 2: textFlags = origTextFlags | (DTF_NO_SHADOW |DTF_NO_CHARACTER); break;
+        case 0: textFlags = _textFlags | (DTF_NO_GLITTER|DTF_NO_CHARACTER); break;
+        case 1: textFlags = _textFlags | (DTF_NO_SHADOW |DTF_NO_GLITTER);   break;
+        case 2: textFlags = _textFlags | (DTF_NO_SHADOW |DTF_NO_CHARACTER); break;
         }
 
         // Apply defaults.
@@ -1402,13 +1401,11 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     glColor4fv(origColor);
 }
 
-/// @note Member of the Doomsday public API.
 void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags)
 {
     FR_DrawText3(text, origin, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
-/// @note Member of the Doomsday public API.
 void FR_DrawText(const char* text, const Point2Raw* origin)
 {
     FR_DrawText2(text, origin, DEFAULT_ALIGNFLAGS);

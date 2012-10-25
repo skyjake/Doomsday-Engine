@@ -30,7 +30,6 @@
 #define LIBDENG_UINIT_H
 
 #include "dd_pinit.h"
-#include "library.h"
 
 #ifdef __cplusplus
 extern "C" {

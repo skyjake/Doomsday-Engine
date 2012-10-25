@@ -63,7 +63,12 @@ void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
 
 /**
- * @param flags  @see consolePrintFlags
+ * Sends a console message to one or more clients.
+ *
+ * @param to     Client number to send text to. Use a negative number to
+ *               broadcast to everybody.
+ * @param flags  @ref consolePrintFlags
+ * @param text   Text to send.
  */
 void            Sv_SendText(int to, int flags, const char* text);
 

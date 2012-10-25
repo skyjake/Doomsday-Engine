@@ -113,7 +113,7 @@ void StringArray_Insert(StringArray* ar, const char* str, int atIndex);
 /**
  * Removes the string at position @a index.
  * @param ar  StringArray instance.
- * @param atIndex  Position to remove. When removing position @em n, strings
+ * @param index  Position to remove. When removing position @em n, strings
  *      at positions <i>n+1..last</i> will be pulled to positions <i>n..last-1</i>.
  */
 void StringArray_Remove(StringArray* ar, int index);

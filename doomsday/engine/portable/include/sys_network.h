@@ -2,8 +2,6 @@
  * @file sys_network.h
  * Low-level network socket routines. @ingroup network
  *
- * @see @ref sysNetwork
- *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
