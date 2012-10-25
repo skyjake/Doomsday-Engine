@@ -1,7 +1,8 @@
 TEMPLATE = subdirs
-SUBDIRS = \
+
+deng_tests: SUBDIRS += \
     archive \
     record \
     script \
     vectors
-    #basiclink \
+    #basiclink
