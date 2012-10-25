@@ -81,7 +81,7 @@ public:
      * @param parameters    Passed to the callback.
      */
     void addPaths(int flags, Uri const* const* searchPaths, uint searchPathsCount,
-                  int (*callback) (PathTreeNode& node, void* parameters) = 0,
+                  int (*callback) (PathTree::Node& node, void* parameters) = 0,
                   void* parameters = 0);
 
     /**
@@ -93,7 +93,7 @@ public:
      * @param parameters    Passed to the callback.
      */
     void addPathList(int flags, char const* pathList,
-                     int (*callback) (PathTreeNode& node, void* parameters) = 0, void* parameters = 0);
+                     int (*callback) (PathTree::Node& node, void* parameters) = 0, void* parameters = 0);
 
     /**
      * Collate all paths in the directory into a list.
@@ -115,10 +115,10 @@ public:
 private:
     void clearNodeInfo();
 
-    PathTreeNode* addPathNodes(ddstring_t const* rawPath);
+    PathTree::Node* addPathNodes(ddstring_t const* rawPath);
 
-    int addChildNodes(PathTreeNode& node, int flags,
-                      int (*callback) (PathTreeNode& node, void* parameters),
+    int addChildNodes(PathTree::Node& node, int flags,
+                      int (*callback) (PathTree::Node& node, void* parameters),
                       void* parameters);
 
     /**
@@ -132,7 +132,7 @@ private:
      */
     int addPathNodesAndMaybeDescendBranch(bool descendBranches, ddstring_t const* filePath,
                                           PathTreeNodeType nodeType, int flags,
-                                          int (*callback) (PathTreeNode& node, void* parameters),
+                                          int (*callback) (PathTree::Node& node, void* parameters),
                                           void* parameters);
 
 private:
@@ -140,7 +140,7 @@ private:
     ddstring_t* basePath;
 
     /// Used with relative path directories.
-    PathTreeNode* baseNode;
+    PathTree::Node* baseNode;
 };
 
 } // namespace de

@@ -25,7 +25,7 @@
 
 namespace de {
 
-struct PathTreeNode::Instance
+struct PathTree::Node::Instance
 {
     /// PathTree which owns this node.
     PathTree& tree;
@@ -38,31 +38,31 @@ struct PathTreeNode::Instance
     StringPoolId internId;
 
     /// Parent node in the user's logical hierarchy.
-    PathTreeNode* parent;
+    PathTree::Node* parent;
 
     /// User data pointer associated with this node.
     void* userData;
 
     Instance(PathTree& _tree, PathTreeNodeType _type, StringPoolId _internId,
-             PathTreeNode* _parent)
+             PathTree::Node* _parent)
         : tree(_tree), type(_type), internId(_internId), parent(_parent),
           userData(0)
     {}
 };
 
-PathTreeNode::PathTreeNode(PathTree& tree, PathTreeNodeType type,
-    StringPoolId internId, de::PathTreeNode* parent, void* userData)
+PathTree::Node::Node(PathTree& tree, PathTreeNodeType type, StringPoolId internId,
+    PathTree::Node* parent, void* userData)
 {
     d = new Instance(tree, type, internId, parent);
     setUserData(userData);
 }
 
-PathTreeNode::~PathTreeNode()
+PathTree::Node::~Node()
 {
     delete d;
 }
 
-ddstring_t const* PathTreeNode::typeName(PathTreeNodeType type)
+ddstring_t const* PathTree::Node::typeName(PathTreeNodeType type)
 {
     static Str const nodeNames[1+PATHTREENODE_TYPE_COUNT] = {
         "(invalidtype)",
@@ -73,29 +73,29 @@ ddstring_t const* PathTreeNode::typeName(PathTreeNodeType type)
     return nodeNames[1 + (type - PATHTREENODE_TYPE_FIRST)];
 }
 
-PathTree& PathTreeNode::tree() const
+PathTree& PathTree::Node::tree() const
 {
     return d->tree;
 }
 
-PathTreeNode* PathTreeNode::parent() const
+PathTree::Node* PathTree::Node::parent() const
 {
     return d->parent;
 }
 
-PathTreeNodeType PathTreeNode::type() const
+PathTreeNodeType PathTree::Node::type() const
 {
     return d->type;
 }
 
-StringPoolId PathTreeNode::internId() const
+StringPoolId PathTree::Node::internId() const
 {
     return d->internId;
 }
 
-ushort PathTreeNode::hash() const
+ushort PathTree::Node::hash() const
 {
-    return d->tree.hashForInternId(d->internId);
+    return d->tree.hashForNode(*this);
 }
 
 static int matchPathFragment(char const* string, char const* pattern)
@@ -134,7 +134,7 @@ static int matchPathFragment(char const* string, char const* pattern)
 
 /// @note This routine is also used as an iteration callback, so only return
 ///       a non-zero value when the node is a match for the search term.
-int PathTreeNode::comparePath(int flags, PathMap* searchPattern) const
+int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
 {
     if(((flags & PCF_NO_LEAF)   && PT_LEAF   == type()) ||
        ((flags & PCF_NO_BRANCH) && PT_BRANCH == type()))
@@ -153,7 +153,7 @@ int PathTreeNode::comparePath(int flags, PathMap* searchPattern) const
     PathTree& pt = tree();
     uint fragmentCount = PathMap_Size(searchPattern);
 
-    PathTreeNode const* node = this;
+    PathTree::Node const* node = this;
     for(uint i = 0; i < fragmentCount; ++i)
     {
         if(i == 0 && node->type() == PT_LEAF)
@@ -176,7 +176,7 @@ int PathTreeNode::comparePath(int flags, PathMap* searchPattern) const
             if(!isWild)
             {
                 // If the hashes don't match it can't possibly be this.
-                if(sfragment->hash != pt.hashForInternId(node->internId()))
+                if(sfragment->hash != pt.hashForNode(*node))
                 {
                     EXIT_POINT(2);
                     return false;
@@ -224,23 +224,22 @@ int PathTreeNode::comparePath(int flags, PathMap* searchPattern) const
 #undef EXIT_POINT
 }
 
-ddstring_t const* PathTreeNode::pathFragment() const
+ddstring_t const* PathTree::Node::pathFragment() const
 {
     return d->tree.pathFragment(*this);
 }
 
-ddstring_t* PathTreeNode::composePath(ddstring_t* path, int* length,
-    char delimiter) const
+ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char delimiter) const
 {
     return d->tree.composePath(*this, path, length, delimiter);
 }
 
-void* PathTreeNode::userData() const
+void* PathTree::Node::userData() const
 {
     return d->userData;
 }
 
-PathTreeNode& PathTreeNode::setUserData(void* userData)
+PathTree::Node& PathTree::Node::setUserData(void* userData)
 {
     d->userData = userData;
     return *this;
@@ -253,18 +252,18 @@ PathTreeNode& PathTreeNode::setUserData(void* userData)
  */
 
 #define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::PathTreeNode*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::PathTree::Node*>(inst) : NULL
 
 #define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::PathTreeNode const*>(inst) : NULL
+    (inst) != 0? reinterpret_cast<de::PathTree::Node const*>(inst) : NULL
 
 #define SELF(inst) \
     DENG2_ASSERT(inst); \
-    de::PathTreeNode* self = TOINTERNAL(inst)
+    de::PathTree::Node* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DENG2_ASSERT(inst); \
-    de::PathTreeNode const* self = TOINTERNAL_CONST(inst)
+    de::PathTree::Node const* self = TOINTERNAL_CONST(inst)
 
 PathTree* PathTreeNode_Tree(PathTreeNode const* node)
 {
@@ -282,12 +281,6 @@ PathTreeNodeType PathTreeNode_Type(PathTreeNode const* node)
 {
     SELF_CONST(node);
     return self->type();
-}
-
-StringPoolId PathTreeNode_InternId(PathTreeNode const* node)
-{
-    SELF_CONST(node);
-    return self->internId();
 }
 
 ushort PathTreeNode_Hash(PathTreeNode const* node)
@@ -337,5 +330,5 @@ void PathTreeNode_SetUserData(PathTreeNode* node, void* userData)
 
 Str const* PathTreeNodeType_Name(PathTreeNodeType type)
 {
-    return de::PathTreeNode::typeName(type);
+    return de::PathTree::Node::typeName(type);
 }

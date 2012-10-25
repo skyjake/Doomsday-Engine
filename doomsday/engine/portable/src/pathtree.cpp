@@ -70,7 +70,7 @@ typedef struct pathconstructorparams_s {
  * path (when descending), then allocates memory for the string, and finally
  * copies each fragment with the delimiters (on the way out).
  */
-static void pathConstructor(pathconstructorparams_t* parm, PathTreeNode const& trav)
+static void pathConstructor(pathconstructorparams_t* parm, PathTree::Node const& trav)
 {
     DENG2_ASSERT(parm);
 
@@ -169,8 +169,8 @@ struct PathTree::Instance
         }
     }
 
-    PathTreeNode* findNode(PathTreeNode* parent, PathTreeNodeType nodeType,
-                           StringPoolId internId)
+    PathTree::Node* findNode(PathTree::Node* parent, PathTreeNodeType nodeType,
+                             StringPoolId internId)
     {
         PathTree::Nodes& ph = (nodeType == PT_LEAF? leafHash : branchHash);
         ushort hash = StringPool_UserValue(fragments, internId);
@@ -184,6 +184,12 @@ struct PathTree::Instance
             ++i;
         }
         return 0; // Not found.
+    }
+
+    ushort hashForInternId(StringPoolId internId)
+    {
+        DENG2_ASSERT(internId > 0);
+        return StringPool_UserValue(fragments, internId);
     }
 
     StringPoolId internNameAndUpdateIdHashMap(ddstring_t const* name, ushort hash)
@@ -202,7 +208,7 @@ struct PathTree::Instance
      * @return  [ a new | the ] directory node that matches the name and type and
      * which has the specified parent node.
      */
-    PathTreeNode* direcNode(PathTreeNode* parent, PathTreeNodeType nodeType,
+    PathTree::Node* direcNode(PathTree::Node* parent, PathTreeNodeType nodeType,
         ddstring_t const* name, char delimiter, void* userData)
     {
         DENG2_ASSERT(name);
@@ -215,7 +221,7 @@ struct PathTree::Instance
             if(internId)
             {
                 // The name is known. Perhaps we have.
-                PathTreeNode* node = findNode(parent, nodeType, internId);
+                PathTree::Node* node = findNode(parent, nodeType, internId);
                 if(node)
                 {
                     if(nodeType == PT_BRANCH || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
@@ -237,13 +243,13 @@ struct PathTree::Instance
         }
         else
         {
-            hash = self.hashForInternId(internId);
+            hash = hashForInternId(internId);
         }
 
         // Are we out of name indices?
         if(!internId) return NULL;
 
-        PathTreeNode* node = newNode(self, nodeType, parent, internId, userData);
+        PathTree::Node* node = newNode(self, nodeType, parent, internId, userData);
 
         // Insert the new node into the path hash.
         if(nodeType == PT_LEAF)
@@ -263,11 +269,11 @@ struct PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    PathTreeNode* buildDirecNodes(char const* path, char delimiter)
+    PathTree::Node* buildDirecNodes(char const* path, char delimiter)
     {
         DENG2_ASSERT(path);
 
-        PathTreeNode* node = NULL, *parent = NULL;
+        PathTree::Node* node = NULL, *parent = NULL;
 
         // Continue splitting as long as there are parts.
         AutoStr* part = AutoStr_NewStd();
@@ -311,7 +317,7 @@ struct PathTree::Instance
      *
      * Perhaps a fixed size MRU cache? -ds
      */
-    ddstring_t* constructPath(PathTreeNode const& node, ddstring_t* constructedPath,
+    ddstring_t* constructPath(PathTree::Node const& node, ddstring_t* constructedPath,
                               char delimiter)
     {
         pathconstructorparams_t parm;
@@ -348,10 +354,10 @@ struct PathTree::Instance
         return constructedPath;
     }
 
-    static PathTreeNode* newNode(PathTree& pt, PathTreeNodeType type,
-        PathTreeNode* parent, StringPoolId internId, void* userData)
+    static PathTree::Node* newNode(PathTree& pt, PathTreeNodeType type,
+        PathTree::Node* parent, StringPoolId internId, void* userData)
     {
-        PathTreeNode* node;
+        PathTree::Node* node;
 #if 0
         // Acquire a new node, either from the used list or the block allocator.
         Sys_Lock(nodeAllocator_Mutex);
@@ -372,7 +378,7 @@ struct PathTree::Instance
 #endif
         {
             //void* element = BlockSet_Allocate(NodeBlockSet);
-            node = new /*(element)*/ PathTreeNode(pt, type, internId, parent, userData);
+            node = new /*(element)*/ PathTree::Node(pt, type, internId, parent, userData);
         }
 #if 0
         Sys_Unlock(nodeAllocator_Mutex);
@@ -381,7 +387,7 @@ struct PathTree::Instance
         return node;
     }
 
-    static void deleteNode(PathTreeNode& node)
+    static void deleteNode(PathTree::Node& node)
     {
         delete &node;
 #if 0
@@ -408,7 +414,7 @@ struct PathTree::Instance
     {
         DENG2_FOR_EACH(PathTree::Nodes, i, ph)
         {
-            PathTreeNode& node = **i;
+            PathTree::Node& node = **i;
 #if _DEBUG
             if(node.userData())
             {
@@ -446,15 +452,14 @@ ushort PathTree::hashPathFragment(const char* fragment, size_t len, char delimit
     return key % PATHTREE_PATHHASH_SIZE;
 }
 
-ushort PathTree::hashForInternId(StringPoolId internId)
+ushort PathTree::hashForNode(PathTree::Node const& node) const
 {
-    DENG2_ASSERT(internId > 0);
-    return StringPool_UserValue(d->fragments, internId);
+    return d->hashForInternId(node.internId());
 }
 
-PathTreeNode* PathTree::insert(const char* path, char delimiter, void* userData)
+PathTree::Node* PathTree::insert(const char* path, char delimiter, void* userData)
 {
-    PathTreeNode* node = d->buildDirecNodes(path, delimiter);
+    PathTree::Node* node = d->buildDirecNodes(path, delimiter);
     if(node)
     {
         // There is now one more unique path in the directory.
@@ -492,9 +497,9 @@ void PathTree::clear()
     d->size = 0;
 }
 
-PathTreeNode* PathTree::find(int flags, const char* searchPath, char delimiter)
+PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter)
 {
-    PathTreeNode* foundNode = NULL;
+    PathTree::Node* foundNode = NULL;
     if(searchPath && searchPath[0] && d->size)
     {
         PathMap mappedSearchPath;
@@ -534,15 +539,17 @@ PathTreeNode* PathTree::find(int flags, const char* searchPath, char delimiter)
 
         PathMap_Destroy(&mappedSearchPath);
     }
-    return foundNode;
+
+    if(!foundNode) throw NotFoundError("PathTree::find", String("No paths found matching \"") + searchPath + "\"");
+    return *foundNode;
 }
 
-ddstring_t const* PathTree::pathFragment(PathTreeNode const& node)
+ddstring_t const* PathTree::pathFragment(PathTree::Node const& node) const
 {
     return StringPool_String(d->fragments, node.internId());
 }
 
-ddstring_t* PathTree::composePath(PathTreeNode const& node, ddstring_t* foundPath,
+ddstring_t* PathTree::composePath(PathTree::Node const& node, ddstring_t* foundPath,
     int* length, char delimiter)
 {
     if(!foundPath)
@@ -1091,7 +1098,7 @@ static int iteratePathsInHash(PathTree* pt,
     }
 
     de::PathTree::Nodes const& nodes = self->nodes(type);
-    de::PathTreeNode* parent = reinterpret_cast<de::PathTreeNode*>(parent_);
+    de::PathTree::Node* parent = reinterpret_cast<de::PathTree::Node*>(parent_);
 
     // Are we iterating nodes with a known hash?
     if(hash != PATHTREE_NOHASH)
@@ -1138,7 +1145,7 @@ static int iteratePathsInHash_Const(PathTree const* pt,
     }
 
     de::PathTree::Nodes const& nodes = self->nodes(type);
-    de::PathTreeNode const* parent = reinterpret_cast<de::PathTreeNode const*>(parent_);
+    de::PathTree::Node const* parent = reinterpret_cast<de::PathTree::Node const*>(parent_);
 
     // Are we iterating nodes with a known hash?
     if(hash != PATHTREE_NOHASH)
@@ -1222,7 +1229,7 @@ ddstring_t* PathTree_ComposePath2(PathTree* pt, PathTreeNode const* node,
 {
     DENG_ASSERT(node);
     SELF(pt);
-    return self->composePath(*reinterpret_cast<de::PathTreeNode const*>(node), path, length, delimiter);
+    return self->composePath(*reinterpret_cast<de::PathTree::Node const*>(node), path, length, delimiter);
 }
 
 ddstring_t* PathTree_ComposePath(PathTree* pt, PathTreeNode const* node,
@@ -1230,14 +1237,14 @@ ddstring_t* PathTree_ComposePath(PathTree* pt, PathTreeNode const* node,
 {
     DENG_ASSERT(node);
     SELF(pt);
-    return self->composePath(*reinterpret_cast<de::PathTreeNode const*>(node), path, length);
+    return self->composePath(*reinterpret_cast<de::PathTree::Node const*>(node), path, length);
 }
 
 ddstring_t const* PathTree_PathFragment(PathTree* pt, PathTreeNode const* node)
 {
     DENG_ASSERT(node);
     SELF(pt);
-    return self->pathFragment(*reinterpret_cast<de::PathTreeNode const*>(node));
+    return self->pathFragment(*reinterpret_cast<de::PathTree::Node const*>(node));
 }
 
 ddstring_t* PathTree_CollectPaths2(PathTree* pt, size_t* count, int flags, char delimiter)
@@ -1315,14 +1322,19 @@ PathTreeNode* PathTree_Find2(PathTree* pt, int flags,
     const char* searchPath, char delimiter)
 {
     SELF(pt);
-    return reinterpret_cast<PathTreeNode*>(self->find(flags, searchPath, delimiter));
+    try
+    {
+        return reinterpret_cast<PathTreeNode*>(&self->find(flags, searchPath, delimiter));
+    }
+    catch(de::PathTree::NotFoundError const&)
+    {} // Ignore this error.
+    return 0;
 }
 
 PathTreeNode* PathTree_Find(PathTree* pt, int flags,
     const char* searchPath)
 {
-    SELF(pt);
-    return reinterpret_cast<PathTreeNode*>(self->find(flags, searchPath));
+    return PathTree_Find2(pt, flags, searchPath, '/');
 }
 
 ushort PathTree_HashPathFragment2(const char* path, size_t len, char delimiter)

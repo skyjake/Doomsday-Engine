@@ -85,7 +85,7 @@ public:
      *
      * @return  Directory node for this file.
      */
-    PathTreeNode const& directoryNode() const
+    PathTree::Node const& directoryNode() const
     {
         return dynamic_cast<Wad&>(container()).lumpDirectoryNode(info_.lumpIdx);
     }
@@ -156,7 +156,7 @@ public:
     {
         crc_ = uint(info_.size);
 
-        de::PathTreeNode const& node = directoryNode();
+        de::PathTree::Node const& node = directoryNode();
         ddstring_t const* name = node.pathFragment();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
@@ -184,7 +184,7 @@ struct Wad::Instance
     PathTree* lumpDirectory;
 
     /// LUT which maps logical lump indices to PathTreeNodes.
-    typedef std::vector<PathTreeNode*> LumpNodeLut;
+    typedef std::vector<PathTree::Node*> LumpNodeLut;
     LumpNodeLut* lumpNodeLut;
 
     /// Lump data cache.
@@ -224,7 +224,7 @@ struct Wad::Instance
 
     static int clearWadFileWorker(pathtreenode_s* _node, void* /*parameters*/)
     {
-        PathTreeNode* node = reinterpret_cast<PathTreeNode*>(_node);
+        PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
         WadFile* lump = reinterpret_cast<WadFile*>(node->userData());
         if(lump)
         {
@@ -334,7 +334,7 @@ struct Wad::Instance
                                      littleEndianByteOrder.toNative(arcRecord->size),
                                      littleEndianByteOrder.toNative(arcRecord->size)),
                             self);
-            PathTreeNode* node = lumpDirectory->insert(Str_Text(&absPath));
+            PathTree::Node* node = lumpDirectory->insert(Str_Text(&absPath));
             node->setUserData(lump);
         }
 
@@ -346,7 +346,7 @@ struct Wad::Instance
 
     static int buildLumpNodeLutWorker(pathtreenode_s* _node, void* parameters)
     {
-        PathTreeNode* node = reinterpret_cast<PathTreeNode*>(_node);
+        PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
         Instance* wadInst = (Instance*)parameters;
         WadFile* lump = reinterpret_cast<WadFile*>(node->userData());
         DENG2_ASSERT(lump && wadInst->self->isValidIndex(lump->info().lumpIdx)); // Sanity check.
@@ -401,7 +401,7 @@ bool Wad::empty()
     return !lumpCount();
 }
 
-de::PathTreeNode& Wad::lumpDirectoryNode(int lumpIdx) const
+de::PathTree::Node& Wad::lumpDirectoryNode(int lumpIdx) const
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();

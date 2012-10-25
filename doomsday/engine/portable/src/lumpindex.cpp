@@ -51,7 +51,7 @@ namespace de {
 ///@}
 
 /// Stores indexes into LumpIndex::Instance::records forming a chain of
-/// PathTreeNode fragment hashes. For ultra-fast name lookups.
+/// PathTree::Node fragment hashes. For ultra-fast name lookups.
 struct LumpIndexHashRecord
 {
     lumpnum_t head, next;
@@ -94,7 +94,7 @@ struct LumpIndex::Instance
         for(int i = 0; i < numElements; ++i)
         {
             File1 const& lump = *(lumps[i]);
-            PathTreeNode const& node = lump.directoryNode();
+            PathTree::Node const& node = lump.directoryNode();
             ushort j = node.hash() % (unsigned)numElements;
 
             (*hashMap)[i].next = (*hashMap)[j].head; // Prepend to the chain.
@@ -393,7 +393,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
     for(idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
         File1 const& lump = *d->lumps[idx];
-        PathTreeNode const& node = lump.directoryNode();
+        PathTree::Node const& node = lump.directoryNode();
 
         // Time to build the pattern?
         if(!builtSearchPattern)

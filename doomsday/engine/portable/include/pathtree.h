@@ -62,95 +62,6 @@ typedef enum {
 #define VALID_PATHTREENODE_TYPE(v) (\
     (v) >= PATHTREENODE_TYPE_FIRST && (v) < PATHTREENODE_TYPE_COUNT)
 
-struct pathtree_s; // The pathtree instance (opaque).
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
-
-#include <de/stringpool.h>
-
-namespace de {
-
-class PathTree;
-
-class PathTreeNode
-{
-public:
-    /// @return  Print-ready name for node @a type.
-    static ddstring_t const* typeName(PathTreeNodeType type);
-
-public:
-    /// @todo ctor/dtor should be private or made callable only by de::PathTree
-    PathTreeNode(PathTree& tree, PathTreeNodeType type,
-                 StringPoolId internId, PathTreeNode* parent = NULL,
-                 void* userData = NULL);
-    ~PathTreeNode();
-
-    /// @return  PathTree which owns this node.
-    PathTree& tree() const;
-
-    /// @return  Parent of this node else @c NULL
-    PathTreeNode* parent() const;
-
-    /// @return  Type of this node.
-    PathTreeNodeType type() const;
-
-    /// @return  Hash for this node path fragment.
-    ushort hash() const;
-
-    /// @return  User data pointer associated with this.
-    void* userData() const;
-
-    /**
-     * Change the associated user data pointer.
-     */
-    PathTreeNode& setUserData(void* data);
-
-    /**
-     * @param flags          @ref pathComparisonFlags
-     * @param candidatePath  Fragment mapped search pattern (path).
-     *
-     * @return  Non-zero iff the candidatePath matched this.
-     *
-     * @todo We need an alternative version of this whose candidate path is
-     *       specified using another tree node (possibly from another PathTree).
-     *       This would allow for further optimizations in the file system
-     *       (among others) -ds
-     */
-    int comparePath(int flags, PathMap* candidatePath) const;
-
-    /// @return  The path fragment which this node represents.
-    ddstring_t const* pathFragment() const;
-
-    /**
-     * Composes and/or calculates the composed-length of the path for this node.
-     *
-     * @param path          If not @c NULL the composed path is written here.
-     * @param length        If not @c NULL the length of the composed path is written here.
-     * @param delimiter     Path is composed with fragments delimited by this character.
-     *
-     * @return  The composed path pointer specified with @a path, for caller's convenience.
-     */
-    ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
-
-    /// @todo FIXME: should be private:
-    StringPoolId internId() const;
-
-private:
-    struct Instance;
-    Instance* d;
-};
-
-} // namespace de
-
-extern "C" {
-#endif // __cplusplus
-
-struct pathtreenode_s; // The pathtreenode instance (opaque).
-typedef struct pathtreenode_s PathTreeNode;
 
 // Number of buckets in the hash table.
 #define PATHTREE_PATHHASH_SIZE          512
@@ -170,6 +81,8 @@ typedef struct pathtreenode_s PathTreeNode;
 } // extern "C"
 
 #include <QMultiHash>
+#include <de/Error>
+#include <de/stringpool.h>
 
 namespace de {
 
@@ -192,7 +105,84 @@ namespace de {
 class PathTree
 {
 public:
-    typedef QMultiHash<ushort, PathTreeNode*> Nodes;
+    /**
+     * Node is the base class for all nodes of a PathTree.
+     */
+    class Node
+    {
+    public:
+        /// @return  Print-ready name for node @a type.
+        static ddstring_t const* typeName(PathTreeNodeType type);
+
+    private:
+        Node();
+        Node(PathTree& tree, PathTreeNodeType type, StringPoolId internId,
+             Node* parent = NULL, void* userData = NULL);
+        virtual ~Node();
+
+    public:
+        /// @return  PathTree which owns this node.
+        PathTree& tree() const;
+
+        /// @return  Parent of this node else @c NULL
+        Node* parent() const;
+
+        /// @return  Type of this node.
+        PathTreeNodeType type() const;
+
+        /// @return  Hash for this node path fragment.
+        ushort hash() const;
+
+        /// @return  User data pointer associated with this.
+        void* userData() const;
+
+        /**
+         * Change the associated user data pointer.
+         */
+        Node& setUserData(void* data);
+
+        /**
+         * @param flags          @ref pathComparisonFlags
+         * @param candidatePath  Fragment mapped search pattern (path).
+         *
+         * @return  Non-zero iff the candidatePath matched this.
+         *
+         * @todo We need an alternative version of this whose candidate path is
+         *       specified using another tree node (possibly from another PathTree).
+         *       This would allow for further optimizations in the file system
+         *       (among others) -ds
+         */
+        int comparePath(int flags, PathMap* candidatePath) const;
+
+        /// @return  The path fragment which this node represents.
+        ddstring_t const* pathFragment() const;
+
+        /**
+         * Composes and/or calculates the composed-length of the path for this node.
+         *
+         * @param path          If not @c NULL the composed path is written here.
+         * @param length        If not @c NULL the length of the composed path is written here.
+         * @param delimiter     Path is composed with fragments delimited by this character.
+         *
+         * @return  The composed path pointer specified with @a path, for caller's convenience.
+         */
+        ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
+
+        friend class PathTree;
+
+    private:
+        StringPoolId internId() const;
+
+    private:
+        struct Instance;
+        Instance* d;
+    };
+
+public:
+    /// The requested entry could not be found in the hierarchy.
+    DENG2_ERROR(NotFoundError);
+
+    typedef QMultiHash<ushort, Node*> Nodes;
 
 public:
     explicit PathTree(int flags = 0);
@@ -218,7 +208,7 @@ public:
      *         path "c:/somewhere/something" and where @a delimiter @c= '/' this is
      *         the node for the path fragment "something".
      */
-    PathTreeNode* insert(char const* path, char delimiter = '/', void* userData = NULL);
+    Node* insert(char const* path, char delimiter = '/', void* userData = NULL);
 
     /**
      * Find a node in the directory.
@@ -238,9 +228,11 @@ public:
      * @param path          Relative or absolute path to be searched for.
      * @param delimiter     Fragments of @a path are delimited by this character.
      *
-     * @return  Found node else @c NULL.
+     * @return  Found node.
+     *
+     * @throws NotFoundError if the referenced node could not be found.
      */
-    PathTreeNode* find(int flags, char const* path, char delimiter = '/');
+    Node& find(int flags, char const* path, char delimiter = '/');
 
     /**
      * Composes and/or calculates the composed-length of the path for a node.
@@ -251,11 +243,13 @@ public:
      *
      * @return  The composed path pointer specified with @a path, for caller's convenience.
      */
-    ddstring_t* composePath(PathTreeNode const& node, ddstring_t* path,
-                            int* length, char delimiter = '/');
+    ddstring_t* composePath(Node const& node, ddstring_t* path, int* length, char delimiter = '/');
 
     /// @return  The path fragment which @a node represents.
-    ddstring_t const* pathFragment(PathTreeNode const& node);
+    ddstring_t const* pathFragment(Node const& node) const;
+
+    /// @return  Hash associated with @a node's path fragment.
+    ushort hashForNode(Node const& node) const;
 
     /**
      * Collate all paths in the tree into a list.
@@ -296,9 +290,6 @@ public:
     static void debugPrintHashDistribution(PathTree& pt);
 #endif
 
-    /// @todo FIXME: Should be private:
-    ushort hashForInternId(StringPoolId internId);
-
 private:
     struct Instance;
     Instance* d;
@@ -313,7 +304,11 @@ extern "C" {
  * C wrapper API:
  */
 
+struct pathtree_s; // The pathtree instance (opaque).
 typedef struct pathtree_s PathTree;
+
+struct pathtreenode_s; // The pathtreenode instance (opaque).
+typedef struct pathtreenode_s PathTreeNode;
 
 PathTree* PathTree_New(void);
 PathTree* PathTree_NewWithFlags(int flags);

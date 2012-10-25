@@ -32,11 +32,11 @@
 #include <de/str.h>
 #include "filehandle.h"
 #include "fileinfo.h"
+#include "pathtree.h"
 
 namespace de {
 
 class LumpIndex;
-class PathTreeNode;
 
 /**
  * File.  File is a core component of the filesystem intended for use as the base
@@ -144,7 +144,7 @@ public:
      *
      * @return  Directory node for this file.
      */
-    virtual PathTreeNode const& directoryNode() const
+    virtual PathTree::Node const& directoryNode() const
     {
         throw de::Error("File1::directoryNode", "No owner directory");
     }

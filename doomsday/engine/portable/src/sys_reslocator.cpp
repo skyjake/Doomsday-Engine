@@ -211,7 +211,7 @@ static void resetAllNamespaces(void)
     }
 }
 
-static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathTreeNode& node)
+static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathTree::Node& node)
 {
     AutoStr* name = rnInfo.composeName(node.pathFragment());
     if(ResourceNamespace_Add(rnInfo.rnamespace, name, reinterpret_cast<struct pathtreenode_s*>(&node), NULL))
@@ -222,7 +222,7 @@ static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathTreeNo
     }
 }
 
-static int addFileResourceWorker(de::PathTreeNode& node, void* parameters)
+static int addFileResourceWorker(de::PathTree::Node& node, void* parameters)
 {
     ResourceNamespaceInfo* rnInfo = (ResourceNamespaceInfo*) parameters;
     // We are only interested in leafs (i.e., files and not directories).
@@ -283,7 +283,7 @@ typedef struct {
     char delimiter;
     PathMap searchPattern;
     bool searchInited;
-    de::PathTreeNode* foundNode;
+    de::PathTree::Node* foundNode;
 } findresourceinnamespaceworker_params_t;
 
 static int findResourceInNamespaceWorker(struct pathtreenode_s* _node, void* parameters)
@@ -297,7 +297,7 @@ static int findResourceInNamespaceWorker(struct pathtreenode_s* _node, void* par
         p->searchInited = true;
     }
     // Stop iteration of resources as soon as a match is found.
-    de::PathTreeNode* node = reinterpret_cast<de::PathTreeNode*>(_node);
+    de::PathTree::Node* node = reinterpret_cast<de::PathTree::Node*>(_node);
     if(node->comparePath(PCF_NO_BRANCH, &p->searchPattern))
     {
         p->foundNode = node;
@@ -341,7 +341,7 @@ static bool findResourceInNamespace(ResourceNamespaceInfo* rnInfo, ddstring_t co
             // Does the caller want to know the matched path?
             if(foundPath)
             {
-                de::PathTreeNode* node = p.foundNode;
+                de::PathTree::Node* node = p.foundNode;
                 node->composePath(foundPath, NULL, foundDelimiter);
             }
         }

@@ -38,7 +38,7 @@ namespace de {
 
 class FileHandle;
 class LumpIndex;
-class PathTreeNode;
+class PathTree::Node;
 
 /**
  * Zip. Runtime representation of an opened ZIP file.
@@ -78,7 +78,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIdx is not valid.
      */
-    PathTreeNode& lumpDirectoryNode(int lumpIdx) const;
+    PathTree::Node& lumpDirectoryNode(int lumpIdx) const;
 
     /**
      * Compose the absolute VFS path to a lump contained by this file.

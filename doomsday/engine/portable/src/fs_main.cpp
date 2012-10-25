@@ -934,7 +934,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.lumps())
     {
         File1 const& lump = **i;
-        PathTreeNode const& node = lump.directoryNode();
+        PathTree::Node const& node = lump.directoryNode();
 
         AutoStr* filePath = 0;
         bool patternMatched;
