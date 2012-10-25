@@ -256,7 +256,7 @@ void LogBuffer::flush()
                 String message = (*i)->asText(LogEntry::Simple);
 #endif
 
-                // The wrap indentatin will be determined dynamically based on the content
+                // The wrap indentation will be determined dynamically based on the content
                 // of the line.
                 int wrapIndent = -1;
                 int nextWrapIndent = -1;
@@ -271,6 +271,7 @@ void LogBuffer::flush()
                     const int minimumIndent = 0;
 #endif
 
+                    // Find the length of the current line.
                     String::size_type next = message.indexOf('\n', pos);
                     duint lineLen = (next == String::npos? message.size() - pos : next - pos);
                     const duint maxLen = (pos > 0? MAX_LENGTH - wrapIndent : MAX_LENGTH);
@@ -308,8 +309,8 @@ void LogBuffer::flush()
                         }
                     }
 
+                    // Crop this line's text out of the entire message.
                     String lineText = message.substr(pos, lineLen);
-                    if(pos > 0 && lineText.isEmpty()) break; // Skip empty remainder.
 
                     // For lines other than the first one, print an indentation.
                     if(pos > 0)
@@ -347,6 +348,7 @@ void LogBuffer::flush()
                     pos = next;
                     if(pos != String::npos && message[pos].isSpace())
                     {
+                        // At a forced newline, reset the wrap indentation.
                         if(message[pos] == '\n')
                         {
                             nextWrapIndent = -1;
