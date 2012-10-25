@@ -40,7 +40,7 @@ const String Token::SEMICOLON(";");
 
 bool Token::equals(const QChar* str) const
 {
-    if(size() < QString(str).size())
+    if(size() < (int) qchar_strlen(str))
     {
         // No possibility of a match.
         return false;
@@ -50,7 +50,7 @@ bool Token::equals(const QChar* str) const
 
 bool Token::beginsWith(const QChar* str) const
 {
-    int length = QString(str).size();
+    int length = qchar_strlen(str);
     if(length > size())
     {
         // No way.
