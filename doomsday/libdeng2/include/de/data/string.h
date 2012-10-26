@@ -77,8 +77,9 @@ public:
     String();
     String(const String& other);
     String(const QString& text);
-    String(const char* cStr);
+    String(const char* nullTerminatedCStr);
     String(const char* cStr, size_type length);
+    String(const QChar* nullTerminatedStr);
     String(const QChar* str, size_type length);
     String(size_type length, QChar ch);
     String(const QString& str, size_type index, size_type length);
@@ -251,6 +252,13 @@ public:
     static void advanceFormat(String::const_iterator& i,
         const String::const_iterator& end);
 };
+
+/**
+ * Support routine for determining the length of a null-terminated QChar*
+ * string. Later versions have a QString constructor that needs no length
+ * when constructing a string from QChar*.
+ */
+size_t qchar_strlen(const QChar* str);
 
 } // namespace de
 

@@ -256,7 +256,7 @@ duint TokenRange::closingBracket(duint openBracketPos) const
     }
     /// @throw MismatchedBracketError  Cannot find a closing bracket.
     throw MismatchedBracketError("TokenRange::closingBracket",
-        "Could not find closing bracket for '" + QString(openingToken) +
+        "Could not find closing bracket for '" + String(openingToken) +
         "' within '" + asText() + "'");
 }
 

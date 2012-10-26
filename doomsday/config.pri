@@ -21,11 +21,13 @@
 # - deng_noopenal               Disable building of the OpenAL sound driver
 # - deng_nosdlmixer             Disable SDL_mixer; use dummy driver as default
 # - deng_nosnowberry            (Unix) Exclude Snowberry from installation
+# - deng_notools                Do not build and deploy the tools
 # - deng_openal                 Build the OpenAL sound driver
 # - deng_nopackres              Do not package the Doomsday resources
 # - deng_rangecheck             Parameter range checking/value assertions
 # - deng_snowberry              (Unix) Include Snowberry in installation
 # - deng_stringpoolzoneallocs   Use the memory Zone for allocs in StringPool
+# - deng_tests                  Build and deploy the test suite
 # - deng_writertypecheck        Enable type checking in Writer/Reader
 #
 # Read-only options (set automatically):

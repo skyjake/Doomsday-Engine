@@ -55,9 +55,6 @@ namespace de
         operator Vector2<ddouble> () const {
             return Vector2<ddouble>(ddouble(x), ddouble(y));
         }
-        operator String () const {
-            return asText();
-        }
         Vector2 operator + (const Vector2& other) const {
             return Vector2(x + other.x, y + other.y);
         }
@@ -157,9 +154,6 @@ namespace de
         /// Conversion operator to a double vector.
         operator Vector3<ddouble> () const {
             return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
-        }
-        operator String () const {
-            return asText();
         }
         Vector3 operator + (const Vector3& other) const {
             return Vector3(Vector2<Type>::x + other.x, Vector2<Type>::y + other.y, z + other.z);
@@ -265,9 +259,6 @@ namespace de
         /// Conversion operator to a double vector.
         operator Vector4<ddouble> () const {
             return Vector4<ddouble>(Vector3<Type>::x, Vector3<Type>::y, Vector3<Type>::z, w);
-        }
-        operator String () const {
-            return asText();
         }
         Vector4 operator + (const Vector4& other) const {
             return Vector4(Vector3<Type>::x + other.x, Vector3<Type>::y + other.y, 

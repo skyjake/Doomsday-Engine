@@ -9,14 +9,15 @@ SCRIPTS = kitchen_sink.de sections.de
 
 OTHER_FILES += $$SCRIPTS
 
+deployTest($$TARGET)
+
+scripts.files = $$SCRIPTS
+scripts.path  = $$DENG_DATA_DIR
+
 macx {
-    scripts.files = $$SCRIPTS
     scripts.path = Contents/Resources
-
-    cfg.files = $$DENG_CONFIG_DIR/deng.de
-    cfg.path = Contents/Resources/config
-
-    QMAKE_BUNDLE_DATA += scripts cfg
-
-    macDeployTest($$TARGET)
+    QMAKE_BUNDLE_DATA += scripts
+}
+else {
+    INSTALLS += scripts
 }

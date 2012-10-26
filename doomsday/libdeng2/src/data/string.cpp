@@ -36,13 +36,25 @@ String::String(const String& other) : QString(other)
 String::String(const QString& text) : QString(text)
 {}
 
+#ifdef DENG2_QT_4_7_OR_NEWER
+String::String(const QChar* nullTerminatedStr)
+    : QString(nullTerminatedStr)
+{}
+#else
+String::String(const QChar* nullTerminatedStr)
+    : QString(nullTerminatedStr, qchar_strlen(nullTerminatedStr))
+{}
+#endif
+
 String::String(const QChar* str, size_type length) : QString(str, length)
 {}
 
-String::String(const char* cStr) : QString(QString::fromUtf8(cStr))
+String::String(const char* nullTerminatedCStr)
+    : QString(QString::fromUtf8(nullTerminatedCStr))
 {}
 
-String::String(const char* cStr, size_type length) : QString(QString::fromUtf8(cStr, length))
+String::String(const char* cStr, size_type length)
+    : QString(QString::fromUtf8(cStr, length))
 {}
 
 String::String(size_type length, QChar ch) : QString(length, ch)
@@ -546,4 +558,13 @@ String String::fromNativePath(const String& nativePath)
     s.replace("\\", "/");
 #endif
     return s;
+}
+
+size_t de::qchar_strlen(const QChar* str)
+{
+    if(!str) return 0;
+
+    size_t len = 0;
+    while(str->unicode() != 0) { ++str; ++len; }
+    return len;
 }

@@ -18,11 +18,15 @@
  */
 
 #include <de/App>
-#include <de/LogBuffer>
-#include <de/Script>
-#include <de/FS>
-#include <de/Process>
+#include <de/Record>
+#include <de/Reader>
+#include <de/Writer>
+#include <de/TextValue>
+#include <de/NumberValue>
+#include <de/Variable>
+
 #include <QDebug>
+#include <QTextStream>
 
 using namespace de;
 
@@ -32,22 +36,38 @@ int main(int argc, char** argv)
     {
         App app(argc, argv, App::GUIDisabled);
         app.initSubsystems(App::DisablePlugins);
-
-        Script testScript(app.fileSystem().find("kitchen_sink.de"));
-        Process proc(testScript);
-        LOG_MSG("Script parsing is complete! Executing...");
-        LOG_MSG("------------------------------------------------------------------------------");
-
-        proc.execute();
-
-        LOG_MSG("------------------------------------------------------------------------------");
-        LOG_MSG("Final result value is: ") << proc.context().evaluator().result().asText();
+        
+        Record rec;
+        
+        LOG_MSG("Empty record:\n") << rec;
+        
+        rec.add(new Variable("hello", new TextValue("World!")));
+        LOG_MSG("With one variable:\n") << rec;
+        
+        rec.add(new Variable("size", new NumberValue(1024)));
+        LOG_MSG("With two variables:\n") << rec;
+        
+        Record rec2;
+        Block b;
+        Writer(b) << rec;
+        LOG_MSG("Serialized record to ") << b.size() << " bytes.";
+        
+        String str;
+        QTextStream os(&str);
+        for(duint i = 0; i < b.size(); ++i)
+        {
+            os << dint(b.data()[i]) << " ";
+        }
+        LOG_MSG(str);
+        
+        Reader(b) >> rec2;        
+        LOG_MSG("After being deserialized:\n") << rec2;
     }
     catch(const Error& err)
     {
         qWarning() << err.asText();
     }
 
-    qDebug("Exiting main()...");
+    qDebug() << "Exiting main()...";
     return 0;        
 }
