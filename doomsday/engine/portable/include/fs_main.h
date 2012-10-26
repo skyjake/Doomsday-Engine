@@ -276,8 +276,10 @@ namespace de
         {
             findAll(predicate, parameters, found);
             // Filter out the wrong types.
-            for(QMutableListIterator<FileHandle*> i(found); i.hasNext(); )
+            QMutableListIterator<FileHandle*> i(found);
+            while(i.hasNext())
             {
+                i.next();
                 if(internal::cannotCastFileTo<Type>(&i.value()->file()))
                     i.remove();
             }
