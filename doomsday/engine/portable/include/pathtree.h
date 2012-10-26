@@ -102,6 +102,9 @@ public:
     /// @return  Print-ready name for node @a type.
     static ddstring_t const* nodeTypeName(NodeType type);
 
+    /// Identifier associated with each unique path fragment.
+    typedef StringPoolId FragmentId;
+
     /**
      * Node is the base class for all nodes of a PathTree.
      */
@@ -109,7 +112,7 @@ public:
     {
     private:
         Node();
-        Node(PathTree& tree, NodeType type, StringPoolId internId,
+        Node(PathTree& tree, NodeType type, FragmentId fragmentId,
              Node* parent = NULL, void* userData = NULL);
         virtual ~Node();
 
@@ -134,6 +137,9 @@ public:
          */
         Node& setUserData(void* data);
 
+        /// @return  The path fragment which this node represents.
+        ddstring_t const* pathFragment() const;
+
         /**
          * @param flags          @ref pathComparisonFlags
          * @param candidatePath  Fragment mapped search pattern (path).
@@ -146,9 +152,6 @@ public:
          *       (among others) -ds
          */
         int comparePath(int flags, PathMap* candidatePath) const;
-
-        /// @return  The path fragment which this node represents.
-        ddstring_t const* pathFragment() const;
 
         /**
          * Composes and/or calculates the composed-length of the path for this node.
@@ -164,7 +167,7 @@ public:
         friend class PathTree;
 
     private:
-        StringPoolId internId() const;
+        FragmentId fragmentId() const;
 
     private:
         struct Instance;
@@ -228,23 +231,6 @@ public:
     Node& find(int flags, char const* path, char delimiter = '/');
 
     /**
-     * Composes and/or calculates the composed-length of the path for a node.
-     *
-     * @param path          If not @c NULL the composed path is written here.
-     * @param length        If not @c NULL the length of the composed path is written here.
-     * @param delimiter     Path is composed with fragments delimited by this character.
-     *
-     * @return  The composed path pointer specified with @a path, for caller's convenience.
-     */
-    ddstring_t* composePath(Node const& node, ddstring_t* path, int* length, char delimiter = '/');
-
-    /// @return  The path fragment which @a node represents.
-    ddstring_t const* pathFragment(Node const& node) const;
-
-    /// @return  Hash associated with @a node's path fragment.
-    ushort hashForNode(Node const& node) const;
-
-    /**
      * Collate all paths in the tree into a list.
      *
      * @param count         Number of visited paths is written back here.
@@ -268,6 +254,27 @@ public:
     inline Nodes const& branchNodes() const {
         return nodes(Branch);
     }
+
+    /*
+     * Methods usually only needed by Node (or derivative classes).
+     */
+
+    /**
+     * Composes and/or calculates the composed-length of the path for a node.
+     *
+     * @param path          If not @c NULL the composed path is written here.
+     * @param length        If not @c NULL the length of the composed path is written here.
+     * @param delimiter     Path is composed with fragments delimited by this character.
+     *
+     * @return  The composed path pointer specified with @a path, for caller's convenience.
+     */
+    ddstring_t* composePath(Node const& node, ddstring_t* path, int* length, char delimiter = '/');
+
+    /// @return  The path fragment associated with @a fragmentId.
+    ddstring_t const* pathFragment(FragmentId fragmentId) const;
+
+    /// @return  Hash associated with @a fragmentId.
+    ushort pathFragmentHash(FragmentId fragmentId) const;
 
 public:
     /**
@@ -383,8 +390,6 @@ int PathTree_Iterate_Const (PathTree const* pt, int flags, PathTreeNode const* p
 
 ddstring_t* PathTree_ComposePath2(PathTree* pt, PathTreeNode const* node, ddstring_t* path, int* length, char delimiter);
 ddstring_t* PathTree_ComposePath(PathTree* pt, PathTreeNode const* node, ddstring_t* path, int* length); /*delimiter='/'*/
-
-ddstring_t const* PathTree_PathFragment(PathTree* pt, const PathTreeNode* node);
 
 ddstring_t* PathTree_CollectPaths2(PathTree* pt, size_t* count, int flags, char delimiter);
 ddstring_t* PathTree_CollectPaths(PathTree* pt, size_t* count, int flags); /*delimiter='/'*/

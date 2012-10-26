@@ -35,7 +35,7 @@ struct PathTree::Node::Instance
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
-    StringPoolId internId;
+    PathTree::FragmentId fragmentId;
 
     /// Parent node in the user's logical hierarchy.
     PathTree::Node* parent;
@@ -43,17 +43,17 @@ struct PathTree::Node::Instance
     /// User data pointer associated with this node.
     void* userData;
 
-    Instance(PathTree& _tree, PathTree::NodeType _type, StringPoolId _internId,
+    Instance(PathTree& _tree, PathTree::NodeType _type, PathTree::FragmentId _fragmentId,
              PathTree::Node* _parent)
-        : tree(_tree), type(_type), internId(_internId), parent(_parent),
+        : tree(_tree), type(_type), fragmentId(_fragmentId), parent(_parent),
           userData(0)
     {}
 };
 
-PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, StringPoolId internId,
+PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, PathTree::FragmentId fragmentId,
     PathTree::Node* parent, void* userData)
 {
-    d = new Instance(tree, type, internId, parent);
+    d = new Instance(tree, type, fragmentId, parent);
     setUserData(userData);
 }
 
@@ -77,14 +77,14 @@ PathTree::NodeType PathTree::Node::type() const
     return d->type;
 }
 
-StringPoolId PathTree::Node::internId() const
-{
-    return d->internId;
-}
-
 ushort PathTree::Node::hash() const
 {
-    return tree().hashForNode(*this);
+    return tree().pathFragmentHash(d->fragmentId);
+}
+
+PathTree::FragmentId PathTree::Node::fragmentId() const
+{
+    return d->fragmentId;
 }
 
 static int matchPathFragment(char const* string, char const* pattern)
@@ -210,7 +210,7 @@ int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
 
 ddstring_t const* PathTree::Node::pathFragment() const
 {
-    return tree().pathFragment(*this);
+    return tree().pathFragment(d->fragmentId);
 }
 
 ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char delimiter) const

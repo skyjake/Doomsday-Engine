@@ -170,36 +170,28 @@ struct PathTree::Instance
     }
 
     PathTree::Node* findNode(PathTree::Node* parent, PathTree::NodeType nodeType,
-                             StringPoolId internId)
+                             PathTree::FragmentId fragmentId)
     {
-        PathTree::Nodes& ph = (nodeType == PathTree::Leaf? leafHash : branchHash);
-        ushort hash = StringPool_UserValue(fragments, internId);
-        PathTree::Nodes::const_iterator i = ph.find(hash);
-        while(i != ph.end() && i.key() == hash)
+        PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
+        ushort hashKey = StringPool_UserValue(fragments, fragmentId);
+        for(PathTree::Nodes::const_iterator i = hash.find(hashKey); i != hash.end() && i.key() == hashKey; ++i)
         {
-            if(parent == (*i)->parent() && internId == (*i)->internId())
-            {
-                return *i;
-            }
-            ++i;
+            if(parent     != (*i)->parent()) continue;
+            if(fragmentId != (*i)->fragmentId()) continue;
+
+            return *i;
         }
         return 0; // Not found.
     }
 
-    ushort hashForInternId(StringPoolId internId)
-    {
-        DENG2_ASSERT(internId > 0);
-        return StringPool_UserValue(fragments, internId);
-    }
-
-    StringPoolId internNameAndUpdateIdHashMap(ddstring_t const* name, ushort hash)
+    PathTree::FragmentId internNameAndUpdateIdHashMap(ddstring_t const* name, ushort hash)
     {
         if(!fragments)
         {
             fragments = StringPool_New();
         }
 
-        StringPoolId internId = StringPool_Intern(fragments, name);
+        PathTree::FragmentId internId = StringPool_Intern(fragments, name);
         StringPool_SetUserValue(fragments, internId, hash);
         return internId;
     }
@@ -214,14 +206,14 @@ struct PathTree::Instance
         DENG2_ASSERT(name);
 
         // Have we already encountered this?
-        StringPoolId internId = 0;
+        PathTree::FragmentId fragmentId = 0;
         if(fragments)
         {
-            internId = StringPool_IsInterned(fragments, name);
-            if(internId)
+            fragmentId = StringPool_IsInterned(fragments, name);
+            if(fragmentId)
             {
                 // The name is known. Perhaps we have.
-                PathTree::Node* node = findNode(parent, nodeType, internId);
+                PathTree::Node* node = findNode(parent, nodeType, fragmentId);
                 if(node)
                 {
                     if(nodeType == PathTree::Branch || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
@@ -234,22 +226,22 @@ struct PathTree::Instance
          * A new node is needed.
          */
 
-        // Do we need a new name identifier (and hash)?
+        // Do we need a new identifier (and hash)?
         ushort hash;
-        if(!internId)
+        if(!fragmentId)
         {
             hash = hashPathFragment(Str_Text(name), Str_Length(name), delimiter);
-            internId = internNameAndUpdateIdHashMap(name, hash);
+            fragmentId = internNameAndUpdateIdHashMap(name, hash);
         }
         else
         {
-            hash = hashForInternId(internId);
+            hash = self.pathFragmentHash(fragmentId);
         }
 
-        // Are we out of name indices?
-        if(!internId) return NULL;
+        // Are we out of indices?
+        if(!fragmentId) return NULL;
 
-        PathTree::Node* node = newNode(self, nodeType, parent, internId, userData);
+        PathTree::Node* node = newNode(self, nodeType, parent, fragmentId, userData);
 
         // Insert the new node into the path hash.
         if(nodeType == PathTree::Leaf)
@@ -355,7 +347,7 @@ struct PathTree::Instance
     }
 
     static PathTree::Node* newNode(PathTree& pt, PathTree::NodeType type,
-        PathTree::Node* parent, StringPoolId internId, void* userData)
+        PathTree::Node* parent, PathTree::FragmentId internId, void* userData)
     {
         PathTree::Node* node;
 #if 0
@@ -441,9 +433,10 @@ ushort PathTree::hashPathFragment(const char* fragment, size_t len, char delimit
     return key % PATHTREE_PATHHASH_SIZE;
 }
 
-ushort PathTree::hashForNode(PathTree::Node const& node) const
+ushort PathTree::pathFragmentHash(FragmentId fragmentId) const
 {
-    return d->hashForInternId(node.internId());
+    DENG2_ASSERT(fragmentId > 0);
+    return StringPool_UserValue(d->fragments, fragmentId);
 }
 
 PathTree::Node* PathTree::insert(const char* path, char delimiter, void* userData)
@@ -542,9 +535,9 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
     return *foundNode;
 }
 
-ddstring_t const* PathTree::pathFragment(PathTree::Node const& node) const
+ddstring_t const* PathTree::pathFragment(FragmentId fragmentId) const
 {
-    return StringPool_String(d->fragments, node.internId());
+    return StringPool_String(d->fragments, fragmentId);
 }
 
 ddstring_t* PathTree::composePath(PathTree::Node const& node, ddstring_t* foundPath,
@@ -1246,13 +1239,6 @@ ddstring_t* PathTree_ComposePath(PathTree* pt, PathTreeNode const* node,
     DENG_ASSERT(node);
     SELF(pt);
     return self->composePath(*reinterpret_cast<de::PathTree::Node const*>(node), path, length);
-}
-
-ddstring_t const* PathTree_PathFragment(PathTree* pt, PathTreeNode const* node)
-{
-    DENG_ASSERT(node);
-    SELF(pt);
-    return self->pathFragment(*reinterpret_cast<de::PathTree::Node const*>(node));
 }
 
 ddstring_t* PathTree_CollectPaths2(PathTree* pt, size_t* count, int flags, char delimiter)
