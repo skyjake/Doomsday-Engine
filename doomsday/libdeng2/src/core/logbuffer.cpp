@@ -394,6 +394,7 @@ void LogBuffer::flush()
 void LogBuffer::fileBeingDeleted(const File& file)
 {
     DENG2_ASSERT(_outputFile == &file);
+    DENG2_UNUSED(file);
     flush();
     _outputFile = 0;
 }
