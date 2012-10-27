@@ -30,7 +30,6 @@
 #ifndef LIBDENG_PATHTREE_H
 #define LIBDENG_PATHTREE_H
 
-#include <de/str.h>
 #include "pathmap.h"
 
 #ifdef __cplusplus
@@ -67,9 +66,10 @@ extern "C" {
 #ifdef __cplusplus
 } // extern "C"
 
+#include <QList>
 #include <QMultiHash>
 #include <de/Error>
-#include <de/stringpool.h>
+#include <de/str.h>
 
 namespace de {
 
@@ -77,21 +77,31 @@ namespace de {
  * PathTree. Data structure for modelling a hierarchical relationship tree of
  * string + data value pairs.
  *
- * Path fragment delimiters are automatically extracted from any paths inserted
- * into the tree. Removing the delimiters both reduces the memory overhead for
- * the whole data set while also allowing their optimal dynamic replacement when
- * reconstructing the original paths. One potential use of this feature when
- * representing file path hierarchies is for "ambidextrously" recomposing paths
- * using either forward or backward slashes, irrespective of which delimiter is
- * used at path insertion time.
+ * 'fragment' is the term given to a name in a hierarchical path. For example,
+ * the path <pre>"c:/somewhere/something"</pre> contains three path fragments:
+ * <pre>[ 0: "c:", 1: "somewhere", 2: "something" ]</pre>
  *
- * Path fragment strings are "pooled" such that only one instance of a fragment
- * is included in the tree. Potentially, significantly reducing memory overhead
- * for the representing the complete hierarchy.
+ * 'delimiter' is the term given to the separators between fragments. (Such as
+ * forward slashes in a file path).
+ *
+ * Internally, fragments are "pooled" such that only one instance of a fragment
+ * is included in the model of the whole tree. Potentially, this significantly
+ * reduces the memory overhead which would otherwise be necessary to represent
+ * the complete hierarchy as a set of fully composed paths.
+ *
+ * Delimiters are not included in the hierarchy model. Not including the delimiters
+ * allows for optimal dynamic replacement when recomposing the original paths
+ * (also reducing the memory overhead for the whole data set). One potential use
+ * for this feature when representing file path hierarchies is "ambidextrously"
+ * recomposing paths with either forward or backward slashes, irrespective of
+ * the delimiter used at path insertion time.
  */
 class PathTree
 {
 public:
+    /// Identifier associated with each unique path fragment.
+    typedef unsigned int FragmentId;
+
     /// Node type identifiers.
     enum NodeType
     {
@@ -102,8 +112,18 @@ public:
     /// @return  Print-ready name for node @a type.
     static ddstring_t const* nodeTypeName(NodeType type);
 
-    /// Identifier associated with each unique path fragment.
-    typedef StringPoolId FragmentId;
+    /**
+     * This is a hash function. It uses the path fragment string to generate a
+     * somewhat-random number between @c 0 and @c PATHTREE_PATHHASH_SIZE
+     *
+     * @return  The generated hash key.
+     */
+    static ushort hashPathFragment(char const* fragment, size_t len, char delimiter = '/');
+
+#if _DEBUG
+    static void debugPrint(PathTree& pt, char delimiter = '/');
+    static void debugPrintHashDistribution(PathTree& pt);
+#endif
 
     /**
      * Node is the base class for all nodes of a PathTree.
@@ -112,24 +132,27 @@ public:
     {
     private:
         Node();
-        Node(PathTree& tree, NodeType type, FragmentId fragmentId,
-             Node* parent = NULL, void* userData = NULL);
+        Node(PathTree& tree, NodeType type, FragmentId fragmentId, Node* parent = 0,
+             void* userData = 0);
         virtual ~Node();
 
     public:
-        /// @return  PathTree which owns this node.
+        /// @return PathTree which owns this node.
         PathTree& tree() const;
 
-        /// @return  Parent of this node else @c NULL
+        /// @return Parent of this node else @c NULL
         Node* parent() const;
 
-        /// @return  Type of this node.
+        /// @return Type of this node.
         NodeType type() const;
 
-        /// @return  Hash for this node path fragment.
+        /// @return Name for this node's path fragment.
+        ddstring_t const* name() const;
+
+        /// @return Hash for this node's path fragment.
         ushort hash() const;
 
-        /// @return  User data pointer associated with this.
+        /// @return User data pointer associated with this.
         void* userData() const;
 
         /**
@@ -137,30 +160,33 @@ public:
          */
         Node& setUserData(void* data);
 
-        /// @return  The path fragment which this node represents.
-        ddstring_t const* pathFragment() const;
-
         /**
          * @param flags          @ref pathComparisonFlags
-         * @param candidatePath  Fragment mapped search pattern (path).
+         * @param candidatePath  Mapped search pattern (path).
          *
-         * @return  Non-zero iff the candidatePath matched this.
+         * @return Non-zero iff the candidate path matched this.
          *
-         * @todo We need an alternative version of this whose candidate path is
-         *       specified using another tree node (possibly from another PathTree).
-         *       This would allow for further optimizations in the file system
-         *       (among others) -ds
+         * @todo An alternative version of this whose candidate path is specified
+         *       using another tree node (possibly from another PathTree), would
+         *       allow for further optimizations elsewhere (in the file system
+         *       for example) -ds
          */
         int comparePath(int flags, PathMap* candidatePath) const;
 
         /**
-         * Composes and/or calculates the composed-length of the path for this node.
+         * Composes and/or calculates the length of the composed path for this node.
+         * 'Composing' the path of a node is to downwardly reconstruct the whole path
+         * for a given node toward the root of the hierarchy.
          *
          * @param path          If not @c NULL the composed path is written here.
-         * @param length        If not @c NULL the length of the composed path is written here.
-         * @param delimiter     Path is composed with fragments delimited by this character.
+         *                      Previous contents are discarded.
+         * @param length        If not @c NULL the length of the composed path is
+         *                      written here.
+         * @param delimiter     Names in the composed path hierarchy will be delimited
+         *                      with this character. Paths to branches always include
+         *                      a terminating delimiter.
          *
-         * @return  The composed path pointer specified with @a path, for caller's convenience.
+         * @return Same as @a path for caller's convenience.
          */
         ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
 
@@ -179,35 +205,43 @@ public:
     DENG2_ERROR(NotFoundError);
 
     typedef QMultiHash<ushort, Node*> Nodes;
+    typedef QList<QString> FoundPaths;
 
 public:
     explicit PathTree(int flags = 0);
     virtual ~PathTree();
 
+    /// @return  @c true iff there are no paths in the hierarchy. Same as @c size() == 0
+    bool empty() const;
+
     /// @return  Total number of unique paths in the hierarchy.
-    uint size() const;
+    int size() const;
+
+    /// @return  Total number of unique paths in the hierarchy. Same as @ref size().
+    inline int count() const {
+        return size();
+    }
 
     /**
-     * Clear the tree contents, free'ing all nodes.
+     * Add a new path into the hierarchy. Duplicates are automatically pruned.
+     *
+     * @param path          New path to be added to the tree.
+     * @param delimiter     Names in the composed @a path hierarchy are delimited
+     *                      with this character.
+     *
+     * @return Tail node for the inserted path else @c NULL. For example, given
+     *         the path @c "c:/somewhere/something" and @a delimiter @c = '/'
+     *         this is the node for the path fragment "something".
+     */
+    Node* insert(char const* path, char delimiter = '/');
+
+    /**
+     * Destroy the tree's contents, free'ing all nodes.
      */
     void clear();
 
     /**
-     * Add a new path into the hierarchy. Duplicate paths are automatically pruned
-     * however, note that their associated user data value is replaced!
-     *
-     * @param path          New path to be added to the hierarchy.
-     * @param delimiter     Fragments of @a path are delimited by this character.
-     * @param userData      User data to associate with the tail node.
-     *
-     * @return Tail node for the inserted path else @c NULL. For example, given the
-     *         path "c:/somewhere/something" and where @a delimiter @c= '/' this is
-     *         the node for the path fragment "something".
-     */
-    Node* insert(char const* path, char delimiter = '/', void* userData = NULL);
-
-    /**
-     * Find a node in the directory.
+     * Find a single node in the hierarchy.
      *
      * @note This method essentially amounts to "interface sugar". A convenient
      *       shorthand of the call tree:
@@ -222,28 +256,30 @@ public:
      *
      * @param flags         @ref pathComparisonFlags
      * @param path          Relative or absolute path to be searched for.
-     * @param delimiter     Fragments of @a path are delimited by this character.
+     * @param delimiter     Names in the composed @a path hierarchy are delimited
+     *                      with this character.
      *
-     * @return  Found node.
+     * @return Found node.
      *
      * @throws NotFoundError if the referenced node could not be found.
      */
     Node& find(int flags, char const* path, char delimiter = '/');
 
     /**
-     * Collate all paths in the tree into a list.
+     * Collate all referenced paths in the hierarchy into a list.
      *
-     * @param count         Number of visited paths is written back here.
+     * @param found         Set of paths that match the result.
      * @param flags         @ref pathComparisonFlags
-     * @param delimiter     Fragments of the path will be delimited by this character.
+     * @param delimiter     Names in the composed path hierarchy will be delimited
+     *                      with this character. Paths to branches always include
+     *                      a terminating delimiter.
      *
-     * @return  The allocated list; it is the responsibility of the caller to Str_Free()
-     *          each string in the list and free() the list itself.
+     * @return Number of paths found.
      */
-    ddstring_t* collectPaths(size_t* count, int flags, char delimiter = '/');
+    int findAllPaths(FoundPaths& found, int flags = 0, char delimiter = '/');
 
     /**
-     * Provides access to the PathTreeNodes for efficent traversals.
+     * Provides access to the nodes for efficent traversals.
      */
     Nodes const& nodes(NodeType type) const;
 
@@ -259,36 +295,11 @@ public:
      * Methods usually only needed by Node (or derivative classes).
      */
 
-    /**
-     * Composes and/or calculates the composed-length of the path for a node.
-     *
-     * @param path          If not @c NULL the composed path is written here.
-     * @param length        If not @c NULL the length of the composed path is written here.
-     * @param delimiter     Path is composed with fragments delimited by this character.
-     *
-     * @return  The composed path pointer specified with @a path, for caller's convenience.
-     */
-    ddstring_t* composePath(Node const& node, ddstring_t* path, int* length, char delimiter = '/');
+    /// @return The path fragment associated with @a fragmentId.
+    ddstring_t const* fragmentName(FragmentId fragmentId) const;
 
-    /// @return  The path fragment associated with @a fragmentId.
-    ddstring_t const* pathFragment(FragmentId fragmentId) const;
-
-    /// @return  Hash associated with @a fragmentId.
-    ushort pathFragmentHash(FragmentId fragmentId) const;
-
-public:
-    /**
-     * This is a hash function. It uses the path fragment string to generate
-     * a somewhat-random number between @c 0 and @c PATHTREE_PATHHASH_SIZE
-     *
-     * @return  The generated hash key.
-     */
-    static ushort hashPathFragment(char const* fragment, size_t len, char delimiter = '/');
-
-#if _DEBUG
-    static void debugPrint(PathTree& pt, char delimiter = '/');
-    static void debugPrintHashDistribution(PathTree& pt);
-#endif
+    /// @return Hash associated with @a fragmentId.
+    ushort fragmentHash(FragmentId fragmentId) const;
 
 private:
     struct Instance;
@@ -314,12 +325,11 @@ PathTree* PathTree_New(void);
 PathTree* PathTree_NewWithFlags(int flags);
 void PathTree_Delete(PathTree* pt);
 
-uint PathTree_Size(PathTree* pt);
+int PathTree_Size(PathTree* pt);
 void PathTree_Clear(PathTree* pt);
 
-PathTreeNode* PathTree_Insert3(PathTree* pt, char const* path, char delimiter, void* userData);
-PathTreeNode* PathTree_Insert2(PathTree* pt, char const* path, char delimiter); /*userData=NULL*/
-PathTreeNode* PathTree_Insert(PathTree* pt, char const* path); /*delimiter='/'*/
+PathTreeNode* PathTree_Insert2(PathTree* pt, char const* path, char delimiter/*, userData = 0*/);
+PathTreeNode* PathTree_Insert(PathTree* pt, char const* path/*, delimiter = '/'*/);
 
 /**
  * Callback function type for PathTree::Iterate
@@ -364,10 +374,10 @@ typedef int (*pathtree_searchcallback_t) (PathTreeNode* node, int flags, PathMap
  * @return  @c 0 iff iteration completed wholly.
  */
 PathTreeNode* PathTree_Search2(PathTree* pt, int flags, PathMap* mappedSearchPath, pathtree_searchcallback_t callback, void* parameters);
-PathTreeNode* PathTree_Search (PathTree* pt, int flags, PathMap* mappedSearchPath, pathtree_searchcallback_t callback); /*parameters=NULL*/
+PathTreeNode* PathTree_Search (PathTree* pt, int flags, PathMap* mappedSearchPath, pathtree_searchcallback_t callback/*, parameters = 0*/);
 
 PathTreeNode* PathTree_Find2(PathTree* pt, int flags, char const* path, char delimiter);
-PathTreeNode* PathTree_Find(PathTree* pt, int flags, char const* path); /* delimiter='/' */
+PathTreeNode* PathTree_Find(PathTree* pt, int flags, char const* path/*, delimiter = '/'*/);
 
 /**
  * Iterate over nodes in the hierarchy making a callback for each. Iteration ends
@@ -383,19 +393,13 @@ PathTreeNode* PathTree_Find(PathTree* pt, int flags, char const* path); /* delim
  * @return  @c 0 iff iteration completed wholly.
  */
 int PathTree_Iterate2(PathTree* pt, int flags, PathTreeNode* parent, ushort hash, pathtree_iteratecallback_t callback, void* parameters);
-int PathTree_Iterate (PathTree* pt, int flags, PathTreeNode* parent, ushort hash, pathtree_iteratecallback_t callback); /*parameters=NULL*/
+int PathTree_Iterate (PathTree* pt, int flags, PathTreeNode* parent, ushort hash, pathtree_iteratecallback_t callback/*, parameters = 0*/);
 
 int PathTree_Iterate2_Const(PathTree const* pt, int flags, PathTreeNode const* parent, ushort hash, pathtree_iterateconstcallback_t callback, void* parameters);
-int PathTree_Iterate_Const (PathTree const* pt, int flags, PathTreeNode const* parent, ushort hash, pathtree_iterateconstcallback_t callback); /*parameters=NULL*/
+int PathTree_Iterate_Const (PathTree const* pt, int flags, PathTreeNode const* parent, ushort hash, pathtree_iterateconstcallback_t callback/*, parameters = 0*/);
 
-ddstring_t* PathTree_ComposePath2(PathTree* pt, PathTreeNode const* node, ddstring_t* path, int* length, char delimiter);
-ddstring_t* PathTree_ComposePath(PathTree* pt, PathTreeNode const* node, ddstring_t* path, int* length); /*delimiter='/'*/
-
-ddstring_t* PathTree_CollectPaths2(PathTree* pt, size_t* count, int flags, char delimiter);
-ddstring_t* PathTree_CollectPaths(PathTree* pt, size_t* count, int flags); /*delimiter='/'*/
-
-ushort PathTree_HashPathFragment2(char const* path, size_t len, char delimiter);
-ushort PathTree_HashPathFragment(char const* path, size_t len);/*delimiter='/'*/
+ushort PathTree_HashPathFragment2(char const* fragment, size_t len, char delimiter);
+ushort PathTree_HashPathFragment(char const* fragment, size_t len/*, delimiter = '/'*/);
 
 #if _DEBUG
 void PathTree_DebugPrint(PathTree* pt, char delimiter);
@@ -404,13 +408,13 @@ void PathTree_DebugPrintHashDistribution(PathTree* pt);
 
 PathTree* PathTreeNode_Tree(PathTreeNode const* node);
 PathTreeNode* PathTreeNode_Parent(PathTreeNode const* node);
+ddstring_t const* PathTreeNode_Name(PathTreeNode const* node);
 ushort PathTreeNode_Hash(PathTreeNode const* node);
-int PathTreeNode_ComparePath(PathTreeNode* node, int flags, PathMap* candidatePath, void* parameters);
-ddstring_t* PathTreeNode_ComposePath2(PathTreeNode const* node, ddstring_t* path, int* length, char delimiter);
-ddstring_t* PathTreeNode_ComposePath(PathTreeNode const* node, ddstring_t* path, int* length); /*delimiter='/'*/
-ddstring_t const* PathTreeNode_PathFragment(PathTreeNode const* node);
 void* PathTreeNode_UserData(PathTreeNode const* node);
 void PathTreeNode_SetUserData(PathTreeNode* node, void* data);
+int PathTreeNode_ComparePath(PathTreeNode* node, int flags, PathMap* candidatePath, void* parameters);
+ddstring_t* PathTreeNode_ComposePath2(PathTreeNode const* node, ddstring_t* path, int* length, char delimiter);
+ddstring_t* PathTreeNode_ComposePath(PathTreeNode const* node, ddstring_t* path, int* length/*, delimiter = '/'*/);
 
 #ifdef __cplusplus
 } // extern "C"

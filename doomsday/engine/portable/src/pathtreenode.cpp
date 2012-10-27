@@ -77,9 +77,14 @@ PathTree::NodeType PathTree::Node::type() const
     return d->type;
 }
 
+ddstring_t const* PathTree::Node::name() const
+{
+    return tree().fragmentName(d->fragmentId);
+}
+
 ushort PathTree::Node::hash() const
 {
-    return tree().pathFragmentHash(d->fragmentId);
+    return tree().fragmentHash(d->fragmentId);
 }
 
 PathTree::FragmentId PathTree::Node::fragmentId() const
@@ -152,9 +157,7 @@ int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
             char buf[256];
             qsnprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
 
-            ddstring_t const* fragment = node->pathFragment();
-            DENG2_ASSERT(fragment);
-
+            ddstring_t const* fragment = node->name();
             if(!matchPathFragment(Str_Text(fragment), buf))
             {
                 EXIT_POINT(1);
@@ -163,8 +166,7 @@ int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
         }
         else
         {
-            bool const isWild = (sfragment->to == sfragment->from && *sfragment->from == '*');
-            if(!isWild)
+            if(!sfragment->isWild())
             {
                 // If the hashes don't match it can't possibly be this.
                 if(sfragment->hash != node->hash())
@@ -174,7 +176,7 @@ int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
                 }
 
                 // Compare the path fragment to that of the search term.
-                ddstring_t const* fragment = node->pathFragment();
+                ddstring_t const* fragment = node->name();
                 if(Str_Length(fragment) < sfragment->length() ||
                    qstrnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
                 {
@@ -208,14 +210,112 @@ int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
 #undef EXIT_POINT
 }
 
-ddstring_t const* PathTree::Node::pathFragment() const
+#ifdef LIBDENG_STACK_MONITOR
+static void* stackStart;
+static size_t maxStackDepth;
+#endif
+
+typedef struct pathconstructorparams_s {
+    size_t length;
+    ddstring_t* composedPath;
+    char delimiter;
+} pathconstructorparams_t;
+
+/**
+ * Recursive path constructor. First finds the root and the full length of the
+ * path (when descending), then allocates memory for the string, and finally
+ * copies each fragment with the delimiters (on the way out).
+ */
+static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const& trav)
 {
-    return tree().pathFragment(d->fragmentId);
+    ddstring_t const* fragment = trav.name();
+
+#ifdef LIBDENG_STACK_MONITOR
+    maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
+#endif
+
+    parm.length += Str_Length(fragment);
+
+    if(trav.parent())
+    {
+        if(parm.delimiter)
+        {
+            // There also needs to be a delimiter (a single character).
+            parm.length += 1;
+        }
+
+        // Descend to parent level.
+        pathConstructor(parm, *trav.parent());
+
+        // Append the separator.
+        if(parm.composedPath && parm.delimiter)
+            Str_AppendCharWithoutAllocs(parm.composedPath, parm.delimiter);
+    }
+    // We've arrived at the deepest level. The full length is now known.
+    // Ensure there's enough memory for the string.
+    else if(parm.composedPath)
+    {
+        Str_ReserveNotPreserving(parm.composedPath, parm.length);
+    }
+
+    if(parm.composedPath)
+    {
+        // Assemble the path by appending the fragment.
+        Str_AppendWithoutAllocs(parm.composedPath, fragment);
+    }
 }
 
+/**
+ * @todo This is a good candidate for result caching: the constructed path
+ * could be saved and returned on subsequent calls. Are there any circumstances
+ * in which the cached result becomes obsolete? -jk
+ *
+ * The only times the result becomes obsolete is when the delimiter is changed
+ * or when the directory itself is rebuilt (in which case the nodes themselves
+ * will be free'd). Note that any caching mechanism should not counteract one
+ * of the primary goals of this class, i.e., optimal memory usage for the whole
+ * directory. Caching constructed paths for every leaf node in the directory
+ * would completely negate the benefits of the design of this class.
+ *
+ * Perhaps a fixed size MRU cache? -ds
+ */
 ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char delimiter) const
 {
-    return tree().composePath(*this, path, length, delimiter);
+    pathconstructorparams_t parm;
+
+#ifdef LIBDENG_STACK_MONITOR
+    stackStart = &parm;
+#endif
+
+    parm.composedPath = path;
+    parm.length = 0;
+    parm.delimiter = delimiter;
+
+    // Include a terminating path delimiter for branches.
+    if(delimiter && type() == PathTree::Branch)
+        parm.length += 1; // A single character.
+
+    if(parm.composedPath)
+    {
+        Str_Clear(parm.composedPath);
+    }
+
+    // Recursively construct the path from fragments and delimiters.
+    pathConstructor(parm, *this);
+
+    // Terminating delimiter for branches.
+    if(parm.composedPath && delimiter && type() == PathTree::Branch)
+        Str_AppendCharWithoutAllocs(parm.composedPath, delimiter);
+
+    DENG2_ASSERT(!parm.composedPath || Str_Size(parm.composedPath) == parm.length);
+
+#ifdef LIBDENG_STACK_MONITOR
+    LOG_AS("pathConstructor");
+    LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
+#endif
+
+    if(length) *length = parm.length;
+    return path;
 }
 
 void* PathTree::Node::userData() const
@@ -261,6 +361,12 @@ PathTreeNode* PathTreeNode_Parent(PathTreeNode const* node)
     return reinterpret_cast<PathTreeNode*>(self->parent());
 }
 
+ddstring_t const* PathTreeNode_Name(PathTreeNode const* node)
+{
+    SELF_CONST(node);
+    return self->name();
+}
+
 ushort PathTreeNode_Hash(PathTreeNode const* node)
 {
     SELF_CONST(node);
@@ -286,12 +392,6 @@ ddstring_t* PathTreeNode_ComposePath(PathTreeNode const* node,
 {
     SELF_CONST(node);
     return self->composePath(path, length);
-}
-
-ddstring_t const* PathTreeNode_PathFragment(PathTreeNode const* node)
-{
-    SELF_CONST(node);
-    return self->pathFragment();
 }
 
 void* PathTreeNode_UserData(PathTreeNode const* node)

@@ -856,7 +856,8 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
         record->resourcePath = NULL;
         record->uniqueId     = uniqueId;
 
-        node = tn->directory->insert(Str_Text(&path), TEXTURES_PATH_DELIMITER, record);
+        node = tn->directory->insert(Str_Text(&path), TEXTURES_PATH_DELIMITER);
+        node->setUserData(record);
 
         // We'll need to rebuild the unique id map too.
         tn->uniqueIdMapDirty = true;

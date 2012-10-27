@@ -57,7 +57,7 @@ public:
     void clear();
 
     /**
-     * Find a path in this directory.
+     * Find a single path in this directory.
      *
      * @param type              Only consider nodes of this type.
      * @param searchPath        Relative or absolute path.
@@ -96,16 +96,15 @@ public:
                      int (*callback) (Node& node, void* parameters) = 0, void* parameters = 0);
 
     /**
-     * Collate all paths in the directory into a list.
+     * Collate all referenced paths in the hierarchy into a list.
      *
-     * @param count         Total number of collated paths is written back here.
+     * @param found         Set of paths that match the result.
      * @param flags         @ref pathComparisonFlags
-     * @param delimiter     Fragments of the path will be delimited by this character.
+     * @param delimiter     Fragments of the composed path will be delimited by this character.
      *
-     * @return  The allocated list; it is the responsibility of the caller to Str_Free()
-     *          each string in the list and free() the list itself.
+     * @return  Number of paths found.
      */
-    ddstring_t* collectPaths(size_t* count, int flags, char delimiter='/');
+    int findAllPaths(FoundPaths& found, int flags = 0, char delimiter = '/');
 
 #if _DEBUG
     static void debugPrint(FileDirectory& inst);

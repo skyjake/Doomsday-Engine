@@ -54,60 +54,6 @@ static blockset_t* NodeBlockSet;
 static PathTreeNode* UsedNodes;
 #endif
 
-#ifdef LIBDENG_STACK_MONITOR
-static void* stackStart;
-static size_t maxStackDepth;
-#endif
-
-typedef struct pathconstructorparams_s {
-    size_t length;
-    ddstring_t* dest;
-    char delimiter;
-} pathconstructorparams_t;
-
-/**
- * Recursive path constructor. First finds the root and the full length of the
- * path (when descending), then allocates memory for the string, and finally
- * copies each fragment with the delimiters (on the way out).
- */
-static void pathConstructor(pathconstructorparams_t* parm, PathTree::Node const& trav)
-{
-    DENG2_ASSERT(parm);
-
-    ddstring_t const* fragment = trav.pathFragment();
-
-#ifdef LIBDENG_STACK_MONITOR
-    maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
-#endif
-
-    parm->length += Str_Length(fragment);
-
-    if(trav.parent())
-    {
-        if(parm->delimiter)
-        {
-            // There also needs to be a delimiter (a single character).
-            parm->length += 1;
-        }
-
-        // Descend to parent level.
-        pathConstructor(parm, *trav.parent());
-
-        // Append the separator.
-        if(parm->delimiter)
-            Str_AppendCharWithoutAllocs(parm->dest, parm->delimiter);
-    }
-    else
-    {
-        // We've arrived at the deepest level. The full length is now known.
-        // Ensure there's enough memory for the string.
-        Str_ReserveNotPreserving(parm->dest, parm->length);
-    }
-
-    // Assemble the path by appending the fragment.
-    Str_AppendWithoutAllocs(parm->dest, fragment);
-}
-
 struct PathTree::Instance
 {
     PathTree& self;
@@ -119,7 +65,7 @@ struct PathTree::Instance
     int flags;
 
     /// Total number of unique paths in the directory.
-    uint size;
+    int size;
 
     /// Path node hashes.
     PathTree::Nodes leafHash;
@@ -184,14 +130,14 @@ struct PathTree::Instance
         return 0; // Not found.
     }
 
-    PathTree::FragmentId internNameAndUpdateIdHashMap(ddstring_t const* name, ushort hash)
+    PathTree::FragmentId internFragmentAndUpdateIdHashMap(ddstring_t const* fragment, ushort hash)
     {
         if(!fragments)
         {
             fragments = StringPool_New();
         }
 
-        PathTree::FragmentId internId = StringPool_Intern(fragments, name);
+        PathTree::FragmentId internId = StringPool_Intern(fragments, fragment);
         StringPool_SetUserValue(fragments, internId, hash);
         return internId;
     }
@@ -201,15 +147,15 @@ struct PathTree::Instance
      * which has the specified parent node.
      */
     PathTree::Node* direcNode(PathTree::Node* parent, PathTree::NodeType nodeType,
-        ddstring_t const* name, char delimiter, void* userData)
+        ddstring_t const* fragment, char delimiter)
     {
-        DENG2_ASSERT(name);
+        DENG2_ASSERT(fragment);
 
         // Have we already encountered this?
         PathTree::FragmentId fragmentId = 0;
         if(fragments)
         {
-            fragmentId = StringPool_IsInterned(fragments, name);
+            fragmentId = StringPool_IsInterned(fragments, fragment);
             if(fragmentId)
             {
                 // The name is known. Perhaps we have.
@@ -222,7 +168,7 @@ struct PathTree::Instance
             }
         }
 
-        /**
+        /*
          * A new node is needed.
          */
 
@@ -230,20 +176,20 @@ struct PathTree::Instance
         ushort hash;
         if(!fragmentId)
         {
-            hash = hashPathFragment(Str_Text(name), Str_Length(name), delimiter);
-            fragmentId = internNameAndUpdateIdHashMap(name, hash);
+            hash = hashPathFragment(Str_Text(fragment), Str_Length(fragment), delimiter);
+            fragmentId = internFragmentAndUpdateIdHashMap(fragment, hash);
         }
         else
         {
-            hash = self.pathFragmentHash(fragmentId);
+            hash = self.fragmentHash(fragmentId);
         }
 
         // Are we out of indices?
         if(!fragmentId) return NULL;
 
-        PathTree::Node* node = newNode(self, nodeType, parent, fragmentId, userData);
+        PathTree::Node* node = newNode(self, nodeType, parent, fragmentId);
 
-        // Insert the new node into the path hash.
+        // Insert the new node into the hash.
         if(nodeType == PathTree::Leaf)
         {
             leafHash.insert(hash, node);
@@ -272,7 +218,7 @@ struct PathTree::Instance
         char const* p = path;
         while((p = Str_CopyDelim2(part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
         {
-            node = direcNode(parent, PathTree::Branch, part, delimiter, NULL);
+            node = direcNode(parent, PathTree::Branch, part, delimiter);
             /// @todo Do not error here. If we're out of storage undo this action and return.
             if(!node) throw Error("PathTree::buildDirecNodes", String("Exhausted storage while attempting to insert nodes for path \"%1\".").arg(path));
 
@@ -281,7 +227,7 @@ struct PathTree::Instance
 
         if(!Str_IsEmpty(part))
         {
-            node = direcNode(parent, PathTree::Leaf, part, delimiter, NULL);
+            node = direcNode(parent, PathTree::Leaf, part, delimiter);
             /// @todo Do not error here. If we're out of storage undo this action and return.
             if(!node) throw Error("PathTree::buildDirecNodes", String("Exhausted storage while attempting to insert nodes for path \"%1\".").arg(path));
         }
@@ -289,65 +235,8 @@ struct PathTree::Instance
         return node;
     }
 
-    /**
-     * @param node              Node whose path to construct.
-     * @param constructedPath   The constructed path is written here. Previous contents discarded.
-     * @param delimiter         Character to use for separating fragments.
-     *
-     * @return @a constructedPath
-     *
-     * @todo This is a good candidate for result caching: the constructed path
-     * could be saved and returned on subsequent calls. Are there any circumstances
-     * in which the cached result becomes obsolete? -jk
-     *
-     * The only times the result becomes obsolete is when the delimiter is changed
-     * or when the directory itself is rebuilt (in which case the nodes themselves
-     * will be free'd). Note that any caching mechanism should not counteract one
-     * of the primary goals of this class, i.e., optimal memory usage for the whole
-     * directory. Caching constructed paths for every leaf node in the directory
-     * would completely negate the benefits of the design of this class.
-     *
-     * Perhaps a fixed size MRU cache? -ds
-     */
-    ddstring_t* constructPath(PathTree::Node const& node, ddstring_t* constructedPath,
-                              char delimiter)
-    {
-        pathconstructorparams_t parm;
-
-#ifdef LIBDENG_STACK_MONITOR
-        stackStart = &parm;
-#endif
-
-        DENG2_ASSERT(constructedPath);
-
-        parm.dest = constructedPath;
-        parm.length = 0;
-        parm.delimiter = delimiter;
-
-        // Include a terminating path delimiter for branches.
-        if(delimiter && node.type() == PathTree::Branch)
-            parm.length += 1; // A single character.
-
-        // Recursively construct the path from fragments and delimiters.
-        Str_Clear(constructedPath);
-        pathConstructor(&parm, node);
-
-        // Terminating delimiter for branches.
-        if(delimiter && node.type() == PathTree::Branch)
-            Str_AppendCharWithoutAllocs(constructedPath, delimiter);
-
-        DENG2_ASSERT(Str_Size(constructedPath) == parm.length);
-
-#ifdef LIBDENG_STACK_MONITOR
-        LOG_AS("pathConstructor");
-        LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
-#endif
-
-        return constructedPath;
-    }
-
     static PathTree::Node* newNode(PathTree& pt, PathTree::NodeType type,
-        PathTree::Node* parent, PathTree::FragmentId internId, void* userData)
+        PathTree::Node* parent, PathTree::FragmentId fragmentId)
     {
         PathTree::Node* node;
 #if 0
@@ -370,7 +259,7 @@ struct PathTree::Instance
 #endif
         {
             //void* element = BlockSet_Allocate(NodeBlockSet);
-            node = new /*(element)*/ PathTree::Node(pt, type, internId, parent, userData);
+            node = new /*(element)*/ PathTree::Node(pt, type, fragmentId, parent);
         }
 #if 0
         Sys_Unlock(nodeAllocator_Mutex);
@@ -433,24 +322,13 @@ ushort PathTree::hashPathFragment(const char* fragment, size_t len, char delimit
     return key % PATHTREE_PATHHASH_SIZE;
 }
 
-ushort PathTree::pathFragmentHash(FragmentId fragmentId) const
-{
-    DENG2_ASSERT(fragmentId > 0);
-    return StringPool_UserValue(d->fragments, fragmentId);
-}
-
-PathTree::Node* PathTree::insert(const char* path, char delimiter, void* userData)
+PathTree::Node* PathTree::insert(const char* path, char delimiter)
 {
     PathTree::Node* node = d->buildDirecNodes(path, delimiter);
     if(node)
     {
         // There is now one more unique path in the directory.
         d->size += 1;
-
-        if(userData)
-        {
-            node->setUserData(userData);
-        }
     }
     return node;
 }
@@ -475,9 +353,14 @@ ddstring_t const* PathTree::nodeTypeName(NodeType type)
     return nodeNames[type == Branch? 0 : 1];
 }
 
-uint PathTree::size() const
+int PathTree::size() const
 {
     return d->size;
+}
+
+bool PathTree::empty() const
+{
+    return size() == 0;
 }
 
 void PathTree::clear()
@@ -535,20 +418,14 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
     return *foundNode;
 }
 
-ddstring_t const* PathTree::pathFragment(FragmentId fragmentId) const
+ddstring_t const* PathTree::fragmentName(FragmentId fragmentId) const
 {
     return StringPool_String(d->fragments, fragmentId);
 }
 
-ddstring_t* PathTree::composePath(PathTree::Node const& node, ddstring_t* foundPath,
-    int* length, char delimiter)
+ushort PathTree::fragmentHash(FragmentId fragmentId) const
 {
-    if(!foundPath)
-    {
-        if(length) composePath(node, NULL, length, delimiter);
-        return 0;
-    }
-    return d->constructPath(node, foundPath, delimiter);
+    return StringPool_UserValue(d->fragments, fragmentId);
 }
 
 PathTree::Nodes const& PathTree::nodes(NodeType type) const
@@ -556,69 +433,48 @@ PathTree::Nodes const& PathTree::nodes(NodeType type) const
     return (type == Leaf? d->leafHash : d->branchHash);
 }
 
-static void collectPathsInHash(PathTree::Nodes const& ph, char delimiter,
-    ddstring_t** pathListAdr)
+static void collectPathsInHash(PathTree::FoundPaths& found, PathTree::Nodes const& ph, char delimiter)
 {
+    if(ph.empty()) return;
+
+    AutoStr* path = AutoStr_NewStd();
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
-        Str_Init(*pathListAdr);
-        (*i)->composePath((*pathListAdr), NULL, delimiter);
-        (*pathListAdr)++;
+        PathTree::Node& node = **i;
+        found.push_back(QString(Str_Text(node.composePath(path, NULL, delimiter))));
     }
 }
 
-ddstring_t* PathTree::collectPaths(size_t* retCount, int flags, char delimiter)
+int PathTree::findAllPaths(FoundPaths& found, int flags, char delimiter)
 {
-    ddstring_t* paths = NULL;
-    size_t count = 0;
-
-    if(!(flags & PCF_NO_LEAF))
-        count += leafNodes().count();
+    int numFoundSoFar = found.count();
     if(!(flags & PCF_NO_BRANCH))
-        count += branchNodes().count();
-
-    if(count)
     {
-        // Uses malloc here because this is returned with the C wrapper.
-        paths = static_cast<ddstring_t*>(M_Malloc(sizeof *paths * count));
-        if(!paths) throw Error("PathTree::collectPaths:", String("Failed on allocation of %1 bytes for new path list.").arg(sizeof *paths * count));
-
-        ddstring_t* pathPtr = paths;
-        if(!(flags & PCF_NO_BRANCH))
-            collectPathsInHash(branchNodes(), delimiter, &pathPtr);
-
-        if(!(flags & PCF_NO_LEAF))
-            collectPathsInHash(leafNodes(), delimiter, &pathPtr);
+        collectPathsInHash(found, branchNodes(), delimiter);
     }
-
-    if(retCount) *retCount = count;
-    return paths;
+    if(!(flags & PCF_NO_LEAF))
+    {
+        collectPathsInHash(found, leafNodes(), delimiter);
+    }
+    return found.count() - numFoundSoFar;
 }
 
 #if _DEBUG
-static int comparePaths(const void* a, const void* b)
-{
-    return qstricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
-}
-
 void PathTree::debugPrint(PathTree& pt, char delimiter)
 {
     LOG_AS("PathTree");
-    LOG_INFO("Directory [%p]:") << (void*)&pt;
-    size_t numLeafs;
-    ddstring_t* pathList = pt.collectPaths(&numLeafs, PathTree::Leaf, delimiter);
-    if(pathList)
+    LOG_INFO("Directory [%p]:") << de::dintptr(&pt);
+    FoundPaths found;
+    if(pt.findAllPaths(found, 0, delimiter))
     {
-        size_t n = 0;
-        qsort(pathList, numLeafs, sizeof *pathList, comparePaths);
-        do
+        qSort(found.begin(), found.end());
+
+        DENG2_FOR_EACH_CONST(FoundPaths, i, found)
         {
-            LOG_INFO("  %s") << Str_Text(pathList + n);
-            Str_Free(pathList + n);
-        } while(++n < numLeafs);
-        M_Free(pathList);
+            LOG_INFO("  %s") << *i;
+        }
     }
-    LOG_INFO("  %lu %s in directory.") << numLeafs << (numLeafs==1? "path":"paths");
+    LOG_INFO("  %i %s in directory.") << found.count() << (found.count() == 1? "path" : "paths");
 }
 
 #if 0
@@ -1055,7 +911,7 @@ void PathTree_Delete(PathTree* pt)
     }
 }
 
-uint PathTree_Size(PathTree* pt)
+int PathTree_Size(PathTree* pt)
 {
     SELF(pt);
     return self->size();
@@ -1065,12 +921,6 @@ void PathTree_Clear(PathTree* pt)
 {
     SELF(pt);
     self->clear();
-}
-
-PathTreeNode* PathTree_Insert3(PathTree* pt, char const* path, char delimiter, void* userData)
-{
-    SELF(pt);
-    return reinterpret_cast<PathTreeNode*>(self->insert(path, delimiter, userData));
 }
 
 PathTreeNode* PathTree_Insert2(PathTree* pt, char const* path, char delimiter)
@@ -1177,8 +1027,8 @@ static int iteratePathsInHash_Const(PathTree const* pt,
     return result;
 }
 
-int PathTree_Iterate2(PathTree* pt, int flags, PathTreeNode* parent,
-    ushort hash, pathtree_iteratecallback_t callback, void* parameters)
+int PathTree_Iterate2(PathTree* pt, int flags, PathTreeNode* parent, ushort hash,
+    pathtree_iteratecallback_t callback, void* parameters)
 {
     DENG_ASSERT(pt);
     int result = 0;
@@ -1195,14 +1045,14 @@ int PathTree_Iterate2(PathTree* pt, int flags, PathTreeNode* parent,
     return result;
 }
 
-int PathTree_Iterate(PathTree* pt, int flags, PathTreeNode* parent,
-    ushort hash, pathtree_iteratecallback_t callback)
+int PathTree_Iterate(PathTree* pt, int flags, PathTreeNode* parent, ushort hash,
+    pathtree_iteratecallback_t callback)
 {
-    return PathTree_Iterate2(pt, flags, parent, hash, callback, NULL);
+    return PathTree_Iterate2(pt, flags, parent, hash, callback, 0/* no params */);
 }
 
-int PathTree_Iterate2_Const(PathTree const* pt, int flags, PathTreeNode const* parent,
-    ushort hash, pathtree_iterateconstcallback_t callback, void* parameters)
+int PathTree_Iterate2_Const(PathTree const* pt, int flags, PathTreeNode const* parent, ushort hash,
+    pathtree_iterateconstcallback_t callback, void* parameters)
 {
     DENG_ASSERT(pt);
     int result = 0;
@@ -1219,38 +1069,10 @@ int PathTree_Iterate2_Const(PathTree const* pt, int flags, PathTreeNode const* p
     return result;
 }
 
-int PathTree_Iterate_Const(const PathTree* pt, int flags, PathTreeNode const* parent,
-    ushort hash, pathtree_iterateconstcallback_t callback)
+int PathTree_Iterate_Const(const PathTree* pt, int flags, PathTreeNode const* parent, ushort hash,
+    pathtree_iterateconstcallback_t callback)
 {
-    return PathTree_Iterate2_Const(pt, flags, parent, hash, callback, NULL);
-}
-
-ddstring_t* PathTree_ComposePath2(PathTree* pt, PathTreeNode const* node,
-    ddstring_t* path, int* length, char delimiter)
-{
-    DENG_ASSERT(node);
-    SELF(pt);
-    return self->composePath(*reinterpret_cast<de::PathTree::Node const*>(node), path, length, delimiter);
-}
-
-ddstring_t* PathTree_ComposePath(PathTree* pt, PathTreeNode const* node,
-    ddstring_t* path, int* length)
-{
-    DENG_ASSERT(node);
-    SELF(pt);
-    return self->composePath(*reinterpret_cast<de::PathTree::Node const*>(node), path, length);
-}
-
-ddstring_t* PathTree_CollectPaths2(PathTree* pt, size_t* count, int flags, char delimiter)
-{
-    SELF(pt);
-    return self->collectPaths(count, flags, delimiter);
-}
-
-ddstring_t* PathTree_CollectPaths(PathTree* pt, size_t* count, int flags)
-{
-    SELF(pt);
-    return self->collectPaths(count, flags);
+    return PathTree_Iterate2_Const(pt, flags, parent, hash, callback, 0/* no params */);
 }
 
 typedef struct {
@@ -1273,8 +1095,8 @@ static int searchWorker(PathTreeNode* node, void* parameters)
     return 0; // Continue iteration.
 }
 
-PathTreeNode* PathTree_Search2(PathTree* pt, int flags,
-    PathMap* mappedSearchPath, pathtree_searchcallback_t callback, void* parameters)
+PathTreeNode* PathTree_Search2(PathTree* pt, int flags, PathMap* mappedSearchPath,
+    pathtree_searchcallback_t callback, void* parameters)
 {
     DENG2_ASSERT(pt);
     if(callback)
@@ -1312,8 +1134,7 @@ PathTreeNode* PathTree_Search(PathTree* pt, int flags,
     return PathTree_Search2(pt, flags, mappedSearchPath, callback, NULL);
 }
 
-PathTreeNode* PathTree_Find2(PathTree* pt, int flags,
-    const char* searchPath, char delimiter)
+PathTreeNode* PathTree_Find2(PathTree* pt, int flags, char const* searchPath, char delimiter)
 {
     SELF(pt);
     try
@@ -1325,20 +1146,19 @@ PathTreeNode* PathTree_Find2(PathTree* pt, int flags,
     return 0;
 }
 
-PathTreeNode* PathTree_Find(PathTree* pt, int flags,
-    const char* searchPath)
+PathTreeNode* PathTree_Find(PathTree* pt, int flags, char const* searchPath)
 {
     return PathTree_Find2(pt, flags, searchPath, '/');
 }
 
-ushort PathTree_HashPathFragment2(const char* path, size_t len, char delimiter)
+ushort PathTree_HashPathFragment2(char const* fragment, size_t len, char delimiter)
 {
-    return de::PathTree::hashPathFragment(path, len, delimiter);
+    return de::PathTree::hashPathFragment(fragment, len, delimiter);
 }
 
-ushort PathTree_HashPathFragment(const char* path, size_t len)
+ushort PathTree_HashPathFragment(char const* fragment, size_t len)
 {
-    return de::PathTree::hashPathFragment(path, len);
+    return de::PathTree::hashPathFragment(fragment, len);
 }
 
 #if _DEBUG

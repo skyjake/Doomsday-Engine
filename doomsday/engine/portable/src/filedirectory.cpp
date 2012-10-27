@@ -341,54 +341,27 @@ void FileDirectory::addPathList(int flags, char const* pathList,
     if(paths) F_DestroyUriList(paths);
 }
 
-ddstring_t* FileDirectory::collectPaths(size_t* count, int flags, char delimiter)
+int FileDirectory::findAllPaths(FoundPaths& found, int flags, char delimiter)
 {
-    return PathTree::collectPaths(count, flags, delimiter);
+    return PathTree::findAllPaths(found, flags, delimiter);
 }
 
 #if _DEBUG
-/// @return Lexicographical delta between the two ddstring_ts @a and @a b.
-static int comparePaths(void const* a, void const* b)
+void FileDirectory::debugPrint(FileDirectory& fd)
 {
-    return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
-}
-
-static void printPathList(ddstring_t const* pathList, size_t numPaths, int indent)
-{
-    if(!pathList) return;
-    for(size_t n = 0; n < numPaths; ++n)
+    LOG_AS("FileDirectory");
+    LOG_INFO("Directory [%p]:") << de::dintptr(&fd);
+    FoundPaths found;
+    if(fd.findAllPaths(found, 0, DIR_SEP_CHAR))
     {
-        ddstring_t const* path = pathList + n;
-        Con_Printf("%*s\n", indent, Str_Text(path));
+        qSort(found.begin(), found.end());
+
+        DENG2_FOR_EACH_CONST(FoundPaths, i, found)
+        {
+            LOG_INFO("  %s") << *i;
+        }
     }
-}
-
-static void deletePathList(ddstring_t* pathList, size_t numPaths)
-{
-    if(!pathList) return;
-    for(size_t n = 0; n < numPaths; ++n)
-    {
-        ddstring_t* path = pathList + n;
-        Str_Free(path);
-    }
-    M_Free(pathList);
-}
-
-void FileDirectory::debugPrint(FileDirectory& inst)
-{
-    Con_Printf("FileDirectory [%p]:\n", (void*)&inst);
-
-    size_t numFiles;
-    ddstring_t* pathList = inst.collectPaths(&numFiles, 0, DIR_SEP_CHAR);
-    if(pathList)
-    {
-        qsort(pathList, numFiles, sizeof *pathList, comparePaths);
-
-        printPathList(pathList, numFiles, 2/*indent*/);
-
-        deletePathList(pathList, numFiles);
-    }
-    Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "path":"paths"));
+    LOG_INFO("  %i %s in directory.") << found.count() << (found.count() == 1? "path" : "paths");
 }
 
 void FileDirectory::debugPrintHashDistribution(FileDirectory& inst)

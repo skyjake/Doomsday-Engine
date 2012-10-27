@@ -65,7 +65,7 @@ public:
     /// @return  Name of this file.
     ddstring_t const* name() const
     {
-        return directoryNode().pathFragment();
+        return directoryNode().name();
     }
 
     /**
@@ -157,7 +157,7 @@ public:
         crc_ = uint(info_.size);
 
         de::PathTree::Node const& node = directoryNode();
-        ddstring_t const* name = node.pathFragment();
+        ddstring_t const* name = node.name();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
         {

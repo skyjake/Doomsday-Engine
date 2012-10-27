@@ -148,7 +148,7 @@ public:
     /// @return  Name of this file.
     ddstring_t const* name() const
     {
-        return directoryNode().pathFragment();
+        return directoryNode().name();
     }
 
     /**

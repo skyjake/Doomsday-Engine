@@ -37,12 +37,18 @@ typedef struct pathmapfragment_s {
     struct pathmapfragment_s* next;
 
 #ifdef __cplusplus
-    // Determine length of fragment in characters.
+    /// @return  Determined length of this fragment in characters.
     int length() const
     {
         if(!qstrcmp(to, "") && !qstrcmp(from, ""))
             return 0;
         return (to - from) + 1;
+    }
+
+    /// @return  @c true iff this fragment is a wildcard in some pattern.
+    bool isWild() const
+    {
+        return to == from && *from == '*';
     }
 #endif
 } PathMapFragment;

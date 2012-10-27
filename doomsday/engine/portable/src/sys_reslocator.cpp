@@ -213,7 +213,7 @@ static void resetAllNamespaces(void)
 
 static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathTree::Node& node)
 {
-    AutoStr* name = rnInfo.composeName(node.pathFragment());
+    AutoStr* name = rnInfo.composeName(node.name());
     if(ResourceNamespace_Add(rnInfo.rnamespace, name, reinterpret_cast<struct pathtreenode_s*>(&node), NULL))
     {
         // We will need to rebuild this namespace (if we aren't already doing so,
