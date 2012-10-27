@@ -53,16 +53,26 @@ Name: "{app}\doc"
 Type: files; Name: "bin\libcurl.dll"
 Type: files; Name: "bin\libpng15.dll"
 Type: files; Name: "bin\SDL_net.dll"
+Type: files; Name: "bin\jDoom.dll"
+Type: files; Name: "bin\jHeretic.dll"
+Type: files; Name: "bin\jHexen.dll"
+Type: files: Name: "bin\dswinmm.dll"
+Type: files: Name: "bin\dsopenal.dll"
+Type: files: Name: "bin\dsdirectsound.dll"
+Type: files: Name: "bin\dsfmod.dll"
+Type: files; Name: "bin\dpdehread.dll"
+Type: files; Name: "bin\dpwadmapconverter.dll"
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ; Binaries
-Source: "bin\Doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\ds*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\dp*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\jDoom.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jDoom
-Source: "bin\jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHeretic
-Source: "bin\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
+Source: "bin\doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\audio_*.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\dehread.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\wadmapconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\doom.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jDoom
+Source: "bin\plugins\heretic.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jHeretic
+Source: "bin\plugins\hexen.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jHexen
 
 ; Tools
 Source: "bin\md2tool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
