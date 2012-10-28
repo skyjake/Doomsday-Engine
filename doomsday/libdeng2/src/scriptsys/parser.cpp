@@ -386,7 +386,7 @@ void Parser::parseTryCatchSequence(Compound& compound)
             "Expected 'catch', but got " + _statementRange.firstToken().asText());
     }
     CatchStatement* finalCatch = 0;
-    bool expectEnd;
+    bool expectEnd = false;
     while(_statementRange.firstToken().equals(ScriptLex::CATCH))
     {
         dint colon = _statementRange.find(Token::COLON);

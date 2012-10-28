@@ -1,16 +1,12 @@
 -wnd
--file doomsday.pk3
 
--game jdoom
+-game doom
 -iwad \Users\skyjake\Dropbox\IWADs\Doom.wad
--file jdoom.pk3
 
 --
 
--game jheretic
+-game heretic
 -iwad \Users\skyjake\Dropbox\IWADs\Heretic.wad
--file jheretic.pk3
 
--game jhexen
+-game hexen
 -iwad \Users\skyjake\Dropbox\IWADs\Hexen.wad
--file jhexen.pk3
