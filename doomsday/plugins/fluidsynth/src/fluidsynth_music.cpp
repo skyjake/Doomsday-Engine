@@ -431,44 +431,6 @@ void DM_Music_Stop(void)
     stopPlayer();
 }
 
-#if 0
-int DM_Music_Play(int looped)
-{
-    if(!fmodSystem) return false;
-
-    if(songBuffer)
-    {
-        // Get rid of the old song.
-        releaseSong();
-
-        setDefaultStreamBufferSize();
-
-        FMOD_CREATESOUNDEXINFO extra;
-        zeroStruct(extra);
-        extra.length = songBuffer->size;
-        if(endsWith(soundFontFileName, ".dls"))
-        {
-            extra.dlsname = soundFontFileName;
-        }
-
-        // Load a new song.
-        FMOD_RESULT result;
-        result = fmodSystem->createSound(songBuffer->data,
-                                         FMOD_CREATESTREAM | FMOD_OPENMEMORY |
-                                         (looped? FMOD_LOOP_NORMAL : 0),
-                                         &extra, &song);
-        DSFMOD_TRACE("Music_Play: songBuffer has " << songBuffer->size << " bytes, created Sound " << song);
-        DSFMOD_ERRCHECK(result);
-
-        needReleaseSong = true;
-
-        // The song buffer remains in memory, in case FMOD needs to stream from it.
-    }
-    return startSong();
-    return 0;
-}
-#endif
-
 void DM_Music_Pause(int setPause)
 {
     if(!fsPlayer || !sfxBuf) return;

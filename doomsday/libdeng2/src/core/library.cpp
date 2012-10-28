@@ -29,19 +29,20 @@ Library::Library(const String& nativePath)
 {
     LOG_AS("Library::Library");
 
+    /*
 #ifdef MACOSX
     // If the library happens to be in a bundle, just use the bundle path.
     String path = nativePath;
     if(path.fileNamePath().fileNameExtension() == ".bundle")
     {
-        path = path.fileNamePath();
+        path = path; //.fileNamePath().fileNameWithoutExtension();
     }
     LOG_TRACE("%s") << path;
     _library = new QLibrary(path);
-#else
+#else*/
     LOG_TRACE("%s") << nativePath;
     _library = new QLibrary(nativePath);
-#endif
+//#endif
     _library->setLoadHints(QLibrary::ResolveAllSymbolsHint);
     _library->load();
 

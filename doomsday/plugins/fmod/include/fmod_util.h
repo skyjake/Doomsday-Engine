@@ -49,7 +49,8 @@ public:
     }
 };
 
-template <typename T> void zeroStruct(T& t) {
+template <typename T>
+inline void zeroStruct(T& t) {
     std::memset(&t, 0, sizeof(T));
     t.cbsize = sizeof(T);
 }
