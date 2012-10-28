@@ -50,19 +50,29 @@ Name: "{app}\doc"
 
 ; Obsolete files which should be removed if present when upgrading.
 [InstallDelete]
-Type: files; Name: "bin\libcurl.dll"
-Type: files; Name: "bin\libpng15.dll"
-Type: files; Name: "bin\SDL_net.dll"
+Type: files; Name: "{app}\bin\libcurl.dll"
+Type: files; Name: "{app}\bin\libpng15.dll"
+Type: files; Name: "{app}\bin\SDL_net.dll"
+Type: files; Name: "{app}\bin\jDoom.dll"
+Type: files; Name: "{app}\bin\jHeretic.dll"
+Type: files; Name: "{app}\bin\jHexen.dll"
+Type: files; Name: "{app}\bin\dswinmm.dll"
+Type: files; Name: "{app}\bin\dsopenal.dll"
+Type: files; Name: "{app}\bin\dsdirectsound.dll"
+Type: files; Name: "{app}\bin\dsfmod.dll"
+Type: files; Name: "{app}\bin\dpdehread.dll"
+Type: files; Name: "{app}\bin\dpwadmapconverter.dll"
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ; Binaries
-Source: "bin\Doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\ds*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\dp*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\jDoom.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jDoom
-Source: "bin\jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHeretic
-Source: "bin\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
+Source: "bin\doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\audio_*.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\dehread.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\wadmapconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\doom.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jDoom
+Source: "bin\plugins\heretic.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jHeretic
+Source: "bin\plugins\hexen.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jHexen
 
 ; Tools
 Source: "bin\md2tool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
