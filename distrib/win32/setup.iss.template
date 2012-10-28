@@ -50,18 +50,18 @@ Name: "{app}\doc"
 
 ; Obsolete files which should be removed if present when upgrading.
 [InstallDelete]
-Type: files; Name: "bin\libcurl.dll"
-Type: files; Name: "bin\libpng15.dll"
-Type: files; Name: "bin\SDL_net.dll"
-Type: files; Name: "bin\jDoom.dll"
-Type: files; Name: "bin\jHeretic.dll"
-Type: files; Name: "bin\jHexen.dll"
-Type: files; Name: "bin\dswinmm.dll"
-Type: files; Name: "bin\dsopenal.dll"
-Type: files; Name: "bin\dsdirectsound.dll"
-Type: files; Name: "bin\dsfmod.dll"
-Type: files; Name: "bin\dpdehread.dll"
-Type: files; Name: "bin\dpwadmapconverter.dll"
+Type: files; Name: "{app}\bin\libcurl.dll"
+Type: files; Name: "{app}\bin\libpng15.dll"
+Type: files; Name: "{app}\bin\SDL_net.dll"
+Type: files; Name: "{app}\bin\jDoom.dll"
+Type: files; Name: "{app}\bin\jHeretic.dll"
+Type: files; Name: "{app}\bin\jHexen.dll"
+Type: files; Name: "{app}\bin\dswinmm.dll"
+Type: files; Name: "{app}\bin\dsopenal.dll"
+Type: files; Name: "{app}\bin\dsdirectsound.dll"
+Type: files; Name: "{app}\bin\dsfmod.dll"
+Type: files; Name: "{app}\bin\dpdehread.dll"
+Type: files; Name: "{app}\bin\dpwadmapconverter.dll"
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
