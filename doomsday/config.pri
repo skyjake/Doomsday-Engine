@@ -95,6 +95,11 @@ macx {
         # 3: path to Frameworks/
         doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
     }
+    defineTest(fixPluginInstallId) {
+        # 1: target name
+        # 2: version
+        doPostLink("install_name_tool -id @executable_path/../DengPlugins/$${1}.bundle/Versions/$$2/$$1 $${1}.bundle/Versions/$$2/$$1")
+    }
 }
 
 # Build Options --------------------------------------------------------------

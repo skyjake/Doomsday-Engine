@@ -101,6 +101,7 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(heretic)
-    linkToBundledLibdeng(heretic)
+    fixPluginInstallId($$TARGET, 1)
+    linkToBundledLibdeng2($$TARGET)
+    linkToBundledLibdeng($$TARGET)
 }
