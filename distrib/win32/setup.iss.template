@@ -29,11 +29,11 @@ WizardImageFile=..\..\doomsday\build\win32\installerbg.bmp
 
 [Components]
 Name: "Engine"; Description: "Doomsday Engine"; Types: full compact custom; Flags: fixed checkablealone;
-Name: "Engine\jDoom"; Description: "jDoom (for DOOM/Ultimate DOOM/DOOM II/Final DOOM/HacX/Chex Quest)"; Types: full compact
-Name: "Engine\jHeretic"; Description: "jHeretic (for Heretic/Heretic: Shadow of the Serpent Riders)"; Types: full compact
-Name: "Engine\jHexen"; Description: "jHexen (for Hexen/Hexen: Death Kings of the Dark Citadel)"; Types: full compact
+Name: "Engine\Libdoom"; Description: "libdoom (DOOM/Ultimate DOOM/DOOM II/Final DOOM/HacX/Chex Quest)"; Types: full compact
+Name: "Engine\Libheretic"; Description: "libheretic (Heretic/Heretic: Shadow of the Serpent Riders)"; Types: full compact
+Name: "Engine\Libhexen"; Description: "libhexen (Hexen/Hexen: Death Kings of the Dark Citadel)"; Types: full compact
 Name: "Launcher"; Description: "Doomsday Engine Launcher"; Types: full
-Name: "Tools"; Description: "Command line tools for data files"; Types: full
+Name: "Tools"; Description: "Command-Line Tools (for data files)"; Types: full
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -70,9 +70,9 @@ Source: "bin\doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Componen
 Source: "bin\plugins\audio_*.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\dehread.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\wadmapconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
-Source: "bin\plugins\doom.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jDoom
-Source: "bin\plugins\heretic.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jHeretic
-Source: "bin\plugins\hexen.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\jHexen
+Source: "bin\plugins\doom.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\Libdoom
+Source: "bin\plugins\heretic.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\Libheretic
+Source: "bin\plugins\hexen.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\Libhexen
 
 ; Tools
 Source: "bin\md2tool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Tools
@@ -135,9 +135,9 @@ Source: "data\fonts\normalbold24.dfn"; DestDir: "{app}\data\fonts"; Components: 
 Source: "data\fonts\normallight12.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "data\fonts\normallight18.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "data\fonts\normallight24.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
-Source: "data\jdoom\jdoom.pk3"; DestDir: "{app}\data\jdoom"; Components: Engine\jDoom
-Source: "data\jheretic\jheretic.pk3"; DestDir: "{app}\data\jheretic"; Components: Engine\jHeretic
-Source: "data\jhexen\jhexen.pk3"; DestDir: "{app}\data\jhexen"; Components: Engine\jHexen
+Source: "data\jdoom\jdoom.pk3"; DestDir: "{app}\data\jdoom"; Components: Engine\Libdoom
+Source: "data\jheretic\jheretic.pk3"; DestDir: "{app}\data\jheretic"; Components: Engine\Libheretic
+Source: "data\jhexen\jhexen.pk3"; DestDir: "{app}\data\jhexen"; Components: Engine\Libhexen
 
 [INI]
 Filename: "{app}\doomsday.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://sourceforge.net/projects/deng/"
