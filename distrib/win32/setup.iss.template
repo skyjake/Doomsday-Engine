@@ -118,6 +118,7 @@ Source: "doc\readme.txt"; DestDir: "{app}\doc"; Components: Engine
 
 ; Resources
 Source: "data\doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
+Source: "data\config\deng.de"; DestDir: "{app}\data\config"; Components: Engine
 Source: "data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
