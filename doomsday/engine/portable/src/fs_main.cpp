@@ -31,11 +31,12 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "fileid.h"
-#include "game.h"
 #include "file.h"
-#include "lumpindex.h"
+#include "fileid.h"
 #include "fileinfo.h"
+#include "game.h"
+#include "lumpindex.h"
+#include "resourcenamespace.h"
 #include "wad.h"
 #include "zip.h"
 

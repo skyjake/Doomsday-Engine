@@ -1416,10 +1416,8 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
-    int p;
-
-    for(p = 0; p < CommandLine_Count(); ++p)
+    ResourceNamespace* rnamespace = F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_PACKAGE));
+    for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
             continue;
@@ -1435,14 +1433,14 @@ boolean DD_Init(void)
             dir = Dir_ConstructFromPathDir(filePath);
             searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
 
-            F_AddSearchPathToResourceNamespace(rnId, SPF_NO_DESCEND, searchPath, SPG_DEFAULT);
+            rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, searchPath, SPF_NO_DESCEND);
 
             Uri_Delete(searchPath);
             Dir_Delete(dir);
         }
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }}
+    }
 
     // Try to locate all required data files for all registered games.
     Con_InitProgress2(200, .25f, 1); // Second half.

@@ -26,7 +26,7 @@
 #include "de_play.h"
 #include "de_filesys.h"
 
-#include "resourcenamespace.h"
+//#include "resourcenamespace.h"
 #include "uri.h"
 
 struct uri_s

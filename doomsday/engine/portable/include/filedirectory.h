@@ -72,6 +72,17 @@ public:
               ddstring_t* foundPath = 0, char foundDelimiter = '/');
 
     /**
+     * Add a new path. Duplicates are automatically pruned.
+     *
+     * @param flags         @ref searchPathFlags
+     * @param path          Path to be added.
+     * @param callback      Callback to make if the path was added to this directory.
+     * @param parameters    Passed to the callback.
+     */
+    void addPath(int flags, Uri const* searchPath,
+                 int (*callback) (Node& node, void* parameters), void* parameters = 0);
+
+    /**
      * Add a new set of paths. Duplicates are automatically pruned.
      *
      * @param flags         @ref searchPathFlags

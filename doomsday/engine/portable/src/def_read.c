@@ -56,7 +56,7 @@
 #include "de_refresh.h"
 #include "de_defs.h"
 
-#include "resourcenamespace.h"
+//#include "resourcenamespace.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"

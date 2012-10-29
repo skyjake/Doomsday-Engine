@@ -24,9 +24,11 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
+#include "resourcenamespace.h"
 #include "timer.h"
-#include "filedirectory.h"
 #include <de/memory.h>
+
+#include "filedirectory.h"
 
 namespace de {
 
@@ -253,6 +255,28 @@ static void printUriList(Uri const* const* pathList, size_t pathCount, int inden
     }
 }
 #endif
+
+void FileDirectory::addPath(int flags, Uri const* searchPath,
+    int (*callback) (Node& node, void* parameters), void* parameters)
+{
+    if(!searchPath)
+    {
+        DEBUG_Message(("Warning: FileDirectory::AddPath: Attempt to add zero-length path, ignoring.\n"));
+        return;
+    }
+
+#if _DEBUG
+    VERBOSE2( Con_Message("Adding path to FileDirectory...\n");
+              Uri_Print(searchPath, 2/*indent*/) )
+#endif
+
+    ddstring_t const* resolvedSearchPath = Uri_ResolvedConst(searchPath);
+    if(!resolvedSearchPath) return;
+
+    // Add new nodes on this path and/or re-process previously seen nodes.
+    d->addPathNodesAndMaybeDescendBranch(true/*do descend*/, resolvedSearchPath, true/*is-directory*/,
+                                         flags, callback, parameters);
+}
 
 void FileDirectory::addPaths(int flags,
     Uri const* const* searchPaths, uint searchPathsCount,
