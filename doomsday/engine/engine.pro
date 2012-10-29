@@ -602,7 +602,7 @@ SOURCES += \
     portable/src/resource/texture.cpp \
     portable/src/resource/textures.cpp \
     portable/src/resource/texturevariant.cpp \
-    portable/src/resourcenamespace.c \
+    portable/src/resourcenamespace.cpp \
     portable/src/s_cache.c \
     portable/src/s_environ.cpp \
     portable/src/s_logic.c \
