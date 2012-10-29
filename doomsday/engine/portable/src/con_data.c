@@ -111,7 +111,7 @@ static int markVariableUserDataFreed(PathTreeNode* node, void* parameters)
 {
     assert(node && parameters);
     {
-    cvar_t* var = PathTreeNode_UserData(node);
+    cvar_t* var = PathTreeNode_UserPointer(node);
     void** ptr = (void**) parameters;
     if(var)
     switch(CVar_Type(var))
@@ -130,14 +130,14 @@ static int markVariableUserDataFreed(PathTreeNode* node, void* parameters)
 
 static int clearVariable(PathTreeNode* node, void* parameters)
 {
-    cvar_t* var = (cvar_t*)PathTreeNode_UserData(node);
+    cvar_t* var = (cvar_t*)PathTreeNode_UserPointer(node);
 
     DENG_UNUSED(parameters);
 
     if(var)
     {
         // Detach our user data from this node.
-        PathTreeNode_SetUserData(node, 0);
+        PathTreeNode_SetUserPointer(node, 0);
 
         if(CVar_Flags(var) & CVF_CAN_FREE)
         {
@@ -196,7 +196,7 @@ static cvar_t* addVariable(const cvartemplate_t* tpl)
     PathTreeNode* node = PathTree_Insert2(cvarDirectory, tpl->path, CVARDIRECTORY_DELIMITER);
     cvar_t* newVar;
 
-    if(PathTreeNode_UserData(node))
+    if(PathTreeNode_UserPointer(node))
     {
         Con_Error("Con_AddVariable: A variable with path '%s' is already known!", tpl->path);
         return NULL; // Unreachable.
@@ -213,7 +213,7 @@ static cvar_t* addVariable(const cvartemplate_t* tpl)
     newVar->max = tpl->max;
     newVar->notifyChanged = tpl->notifyChanged;
     newVar->directoryNode = node;
-    PathTreeNode_SetUserData(node, newVar);
+    PathTreeNode_SetUserPointer(node, newVar);
 
     knownWordsNeedUpdate = true;
     return newVar;
@@ -334,7 +334,7 @@ static int countVariable(const PathTreeNode* node, void* parameters)
     assert(NULL != node && NULL != parameters);
     {
     countvariableparams_t* p = (countvariableparams_t*) parameters;
-    cvar_t* var = PathTreeNode_UserData(node);
+    cvar_t* var = PathTreeNode_UserPointer(node);
     if(!(p->ignoreHidden && (var->flags & CVF_HIDE)))
     {
         if(!VALID_CVARTYPE(p->type) && !p->hidden)
@@ -356,7 +356,7 @@ static int addVariableToKnownWords(const PathTreeNode* node, void* parameters)
 {
     assert(NULL != node && NULL != parameters);
     {
-    cvar_t* var = PathTreeNode_UserData(node);
+    cvar_t* var = PathTreeNode_UserPointer(node);
     uint* index = (uint*) parameters;
     if(NULL != var && !(var->flags & CVF_HIDE))
     {
@@ -813,7 +813,7 @@ cvar_t* Con_FindVariable(const char* path)
     assert(inited);
     node = PathTree_Find2(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
     if(!node) return NULL;
-    return (cvar_t*) PathTreeNode_UserData(node);
+    return (cvar_t*) PathTreeNode_UserPointer(node);
 }
 
 /// \note Part of the Doomsday public API

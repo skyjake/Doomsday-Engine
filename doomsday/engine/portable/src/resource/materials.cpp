@@ -476,7 +476,7 @@ static bool newMaterialBind(Uri const* uri, material_t* material)
     node = matDirectory.insert(Str_Text(Uri_Path(uri)), MATERIALS_PATH_DELIMITER);
 
     // Is this a new binding?
-    mb = reinterpret_cast<MaterialBind*>(node->userData());
+    mb = reinterpret_cast<MaterialBind*>(node->userPointer());
     if(!mb)
     {
         // Acquire a new unique identifier for this binding.
@@ -489,7 +489,7 @@ static bool newMaterialBind(Uri const* uri, material_t* material)
                             de::String("Failed on allocation of %1 bytes for new MaterialBind.")
                                 .arg((unsigned long) sizeof *mb));
         }
-        node->setUserData(mb);
+        node->setUserPointer(mb);
 
         if(material)
         {
@@ -593,11 +593,11 @@ static void destroyBindings(void)
 
         DENG2_FOR_EACH_CONST(MaterialDirectory::Nodes, nodeIt, namespaces[i]->leafNodes())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userPointer());
             if(mb)
             {
                 // Detach our user data from this node.
-                (*nodeIt)->setUserData(0);
+                (*nodeIt)->setUserPointer(0);
                 delete mb;
             }
         }
@@ -692,7 +692,7 @@ void Materials_ClearDefinitionLinks(void)
 
         DENG2_FOR_EACH_CONST(MaterialDirectory::Nodes, nodeIt, matDirectory.leafNodes())
         {
-            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userData());
+            MaterialBind* mb = reinterpret_cast<MaterialBind*>((*nodeIt)->userPointer());
             if(mb)
             {
                 clearBindingDefinitionLinks(mb);
@@ -814,7 +814,7 @@ static MaterialBind* findMaterialBindForPath(MaterialDirectory& matDirectory, co
     try
     {
         MaterialDirectoryNode& node = matDirectory.find(PCF_NO_BRANCH | PCF_MATCH_FULL, path, MATERIALS_PATH_DELIMITER);
-        return reinterpret_cast<MaterialBind*>(node.userData());
+        return reinterpret_cast<MaterialBind*>(node.userPointer());
     }
     catch(MaterialDirectory::NotFoundError const&)
     {} // Ignore this error.
@@ -1598,7 +1598,7 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, char const* lik
     for(iter = foundMaterials; *iter; ++iter)
     {
         MaterialDirectoryNode const* node = *iter;
-        MaterialBind* mb = reinterpret_cast<MaterialBind*>(node->userData());
+        MaterialBind* mb = reinterpret_cast<MaterialBind*>(node->userPointer());
         material_t* mat = mb->material();
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printMaterialOverview(mat, printNamespace);

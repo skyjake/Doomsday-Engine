@@ -386,7 +386,7 @@ static void destroyTexture(Texture* tex)
 
 static void destroyBoundTexture(TextureDirectoryNode& node)
 {
-    TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userData());
+    TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userPointer());
     if(record && record->texture)
     {
         destroyTexture(record->texture); record->texture = NULL;
@@ -395,7 +395,7 @@ static void destroyBoundTexture(TextureDirectoryNode& node)
 
 static void destroyRecord(TextureDirectoryNode& node)
 {
-    TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userData());
+    TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userPointer());
     if(record)
     {
         if(record->texture)
@@ -421,7 +421,7 @@ static void destroyRecord(TextureDirectoryNode& node)
         unlinkRecordInUniqueIdMap(record, tn);
 
         // Detach our user data from this node.
-        node.setUserData(0);
+        node.setUserPointer(0);
         M_Free(record);
     }
 }
@@ -641,7 +641,7 @@ void Textures_Release(Texture* tex)
 Texture* Textures_ToTexture(textureid_t id)
 {
     TextureDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
+    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userPointer()) : NULL);
     if(record)
     {
         return record->texture;
@@ -672,7 +672,7 @@ static void findUniqueIdBounds(TextureNamespace* tn, int* minId, int* maxId)
 
     DENG2_FOR_EACH_CONST(TextureDirectory::Nodes, i, tn->directory->leafNodes())
     {
-        TextureRecord const* record = reinterpret_cast<TextureRecord*>((*i)->userData());
+        TextureRecord const* record = reinterpret_cast<TextureRecord*>((*i)->userPointer());
         if(!record) continue;
 
         if(minId && record->uniqueId < *minId) *minId = record->uniqueId;
@@ -720,7 +720,7 @@ static void rebuildUniqueIdMap(texturenamespaceid_t namespaceId)
         DENG2_FOR_EACH_CONST(TextureDirectory::Nodes, i, tn->directory->leafNodes())
         {
             TextureDirectoryNode& node = **i;
-            TextureRecord const* record = reinterpret_cast<TextureRecord*>(node.userData());
+            TextureRecord const* record = reinterpret_cast<TextureRecord*>(node.userPointer());
             if(!record) continue;
             linkRecordInUniqueIdMap(record, tn, findBindIdForDirectoryNode(node));
         }
@@ -763,7 +763,7 @@ textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet)
     if(node)
     {
         // If we have bound a texture - it can provide the id.
-        TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userData());
+        TextureRecord* record = reinterpret_cast<TextureRecord*>(node->userPointer());
         DENG2_ASSERT(record);
         if(record->texture)
         {
@@ -823,7 +823,7 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
     textureid_t id;
     if(node)
     {
-        record = reinterpret_cast<TextureRecord*>(node->userData());
+        record = reinterpret_cast<TextureRecord*>(node->userPointer());
         DENG2_ASSERT(record);
         id = findBindIdForDirectoryNode(*node);
     }
@@ -857,7 +857,7 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
         record->uniqueId     = uniqueId;
 
         node = tn->directory->insert(Str_Text(&path), TEXTURES_PATH_DELIMITER);
-        node->setUserData(record);
+        node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
         tn->uniqueIdMapDirty = true;
@@ -942,7 +942,7 @@ Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw*
     }
 
     TextureDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
+    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userPointer()) : NULL);
     if(!record)
     {
         LOG_WARNING("Failed defining Texture #%u (invalid id), ignoring.") << id;
@@ -983,7 +983,7 @@ Texture* Textures_Create(textureid_t id, boolean custom, void* userData)
 int Textures_UniqueId(textureid_t id)
 {
     TextureDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
+    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userPointer()) : NULL);
     if(record)
     {
         return record->uniqueId;
@@ -998,7 +998,7 @@ int Textures_UniqueId(textureid_t id)
 const Uri* Textures_ResourcePath(textureid_t id)
 {
     TextureDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
+    TextureRecord* record = (node? reinterpret_cast<TextureRecord*>(node->userPointer()) : NULL);
     if(record)
     {
         if(record->resourcePath)
@@ -1067,7 +1067,7 @@ Uri* Textures_ComposeUri(textureid_t id)
 Uri* Textures_ComposeUrn(textureid_t id)
 {
     TextureDirectoryNode* node = directoryNodeForBindId(id);
-    TextureRecord const* record = (node? reinterpret_cast<TextureRecord*>(node->userData()) : NULL);
+    TextureRecord const* record = (node? reinterpret_cast<TextureRecord*>(node->userPointer()) : NULL);
     Uri* uri = Uri_New();
 
     if(record)
@@ -1115,7 +1115,7 @@ int Textures_Iterate2(texturenamespaceid_t namespaceId,
 
         DENG2_FOR_EACH_CONST(TextureDirectory::Nodes, nodeIt, directory.leafNodes())
         {
-            TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userData());
+            TextureRecord* record = reinterpret_cast<TextureRecord*>((*nodeIt)->userPointer());
             if(!record || !record->texture) continue;
 
             int result = callback(record->texture, parameters);
@@ -1154,7 +1154,7 @@ int Textures_IterateDeclared2(texturenamespaceid_t namespaceId,
         DENG2_FOR_EACH_CONST(TextureDirectory::Nodes, nodeIt, directory.leafNodes())
         {
             TextureDirectoryNode& node = **nodeIt;
-            TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userData());
+            TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userPointer());
             if(!record) continue;
 
             // If we have bound a texture it can provide the id.
@@ -1223,7 +1223,7 @@ static void printTextureInfo(Texture* tex)
 
 static void printTextureOverview(TextureDirectoryNode& node, bool printNamespace)
 {
-    TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userData());
+    TextureRecord* record = reinterpret_cast<TextureRecord*>(node.userPointer());
     textureid_t texId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
     Uri* uri = record->texture? Textures_ComposeUri(texId) : Uri_New();

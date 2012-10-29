@@ -260,11 +260,11 @@ struct Zip::Instance
     static int clearZipFileWorker(pathtreenode_s* _node, void* /*parameters*/)
     {
         PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
-        ZipFile* rec = reinterpret_cast<ZipFile*>(node->userData());
+        ZipFile* rec = reinterpret_cast<ZipFile*>(node->userPointer());
         if(rec)
         {
             // Detach our user data from this node.
-            node->setUserData(0);
+            node->setUserPointer(0);
             delete rec;
         }
         return 0; // Continue iteration.
@@ -468,7 +468,7 @@ struct Zip::Instance
                                          compressedSize),
                                 self);
                 PathTree::Node* node = lumpDirectory->insert(Str_Text(&entryPath));
-                node->setUserData(record);
+                node->setUserPointer(record);
 
                 lumpIdx++;
             }
@@ -483,7 +483,7 @@ struct Zip::Instance
     {
         PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
         Instance* zipInst = (Instance*)parameters;
-        ZipFile* lumpRecord = reinterpret_cast<ZipFile*>(node->userData());
+        ZipFile* lumpRecord = reinterpret_cast<ZipFile*>(node->userPointer());
         DENG2_ASSERT(lumpRecord && zipInst->self->isValidIndex(lumpRecord->info().lumpIdx)); // Sanity check.
         (*zipInst->lumpNodeLut)[lumpRecord->info().lumpIdx] = node;
         return 0; // Continue iteration.
@@ -588,7 +588,7 @@ File1& Zip::lump(int lumpIdx)
     LOG_AS("Zip");
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::lump", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
-    return *reinterpret_cast<ZipFile*>((*d->lumpNodeLut)[lumpIdx]->userData());
+    return *reinterpret_cast<ZipFile*>((*d->lumpNodeLut)[lumpIdx]->userPointer());
 }
 
 Zip& Zip::clearCachedLump(int lumpIdx, bool* retCleared)

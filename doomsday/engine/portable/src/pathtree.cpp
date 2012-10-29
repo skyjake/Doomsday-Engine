@@ -273,7 +273,7 @@ struct PathTree::Instance
         {
             PathTree::Node& node = **i;
 #if _DEBUG
-            if(node.userData())
+            if(node.userPointer())
             {
                 LOG_ERROR("Node %p has non-NULL user data.") << (void*)(&node);
             }

@@ -225,11 +225,11 @@ struct Wad::Instance
     static int clearWadFileWorker(pathtreenode_s* _node, void* /*parameters*/)
     {
         PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
-        WadFile* lump = reinterpret_cast<WadFile*>(node->userData());
+        WadFile* lump = reinterpret_cast<WadFile*>(node->userPointer());
         if(lump)
         {
             // Detach our user data from this node.
-            node->setUserData(0);
+            node->setUserPointer(0);
             delete lump;
         }
         return 0; // Continue iteration.
@@ -335,7 +335,7 @@ struct Wad::Instance
                                      littleEndianByteOrder.toNative(arcRecord->size)),
                             self);
             PathTree::Node* node = lumpDirectory->insert(Str_Text(&absPath));
-            node->setUserData(lump);
+            node->setUserPointer(lump);
         }
 
         Str_Free(&absPath);
@@ -348,7 +348,7 @@ struct Wad::Instance
     {
         PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
         Instance* wadInst = (Instance*)parameters;
-        WadFile* lump = reinterpret_cast<WadFile*>(node->userData());
+        WadFile* lump = reinterpret_cast<WadFile*>(node->userPointer());
         DENG2_ASSERT(lump && wadInst->self->isValidIndex(lump->info().lumpIdx)); // Sanity check.
         (*wadInst->lumpNodeLut)[lump->info().lumpIdx] = node;
         return 0; // Continue iteration.
@@ -419,7 +419,7 @@ File1& Wad::lump(int lumpIdx)
     LOG_AS("Wad");
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lump", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
-    return *reinterpret_cast<WadFile*>((*d->lumpNodeLut)[lumpIdx]->userData());
+    return *reinterpret_cast<WadFile*>((*d->lumpNodeLut)[lumpIdx]->userPointer());
 }
 
 Wad& Wad::clearCachedLump(int lumpIdx, bool* retCleared)

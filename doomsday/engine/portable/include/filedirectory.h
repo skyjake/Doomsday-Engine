@@ -112,33 +112,8 @@ public:
 #endif
 
 private:
-    void clearNodeInfo();
-
-    Node* addPathNodes(ddstring_t const* rawPath);
-
-    int addChildNodes(Node& node, int flags,
-                      int (*callback) (Node& node, void* parameters),
-                      void* parameters);
-
-    /**
-     * @param filePath      Possibly-relative path to an element in the virtual file system.
-     * @param flags         @ref searchPathFlags
-     * @param callback      If not @c NULL the callback's logic dictates whether iteration continues.
-     * @param parameters    Passed to the callback.
-     * @param nodeType      Type of element, either a branch (directory) or a leaf (file).
-     *
-     * @return  Non-zero if the current iteration should stop else @c 0.
-     */
-    int addPathNodesAndMaybeDescendBranch(bool descendBranches, ddstring_t const* filePath, bool isDirectory,
-                                          int flags, int (*callback) (Node& node, void* parameters),
-                                          void* parameters);
-
-private:
-    /// Used with relative path directories.
-    ddstring_t* basePath;
-
-    /// Used with relative path directories.
-    Node* baseNode;
+    struct Instance;
+    Instance* d;
 };
 
 } // namespace de

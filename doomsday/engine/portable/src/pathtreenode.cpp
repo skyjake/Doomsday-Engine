@@ -40,21 +40,25 @@ struct PathTree::Node::Instance
     /// Parent node in the user's logical hierarchy.
     PathTree::Node* parent;
 
-    /// User data pointer associated with this node.
-    void* userData;
+    /// User-specified data pointer associated with this node.
+    void* userPointer;
+
+    /// User-specified value associated with this node.
+    int userValue;
 
     Instance(PathTree& _tree, PathTree::NodeType _type, PathTree::FragmentId _fragmentId,
              PathTree::Node* _parent)
         : tree(_tree), type(_type), fragmentId(_fragmentId), parent(_parent),
-          userData(0)
+          userPointer(0), userValue(0)
     {}
 };
 
 PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, PathTree::FragmentId fragmentId,
-    PathTree::Node* parent, void* userData)
+    PathTree::Node* parent, void* userData, int userValue)
 {
     d = new Instance(tree, type, fragmentId, parent);
-    setUserData(userData);
+    setUserPointer(userData);
+    setUserValue(userValue);
 }
 
 PathTree::Node::~Node()
@@ -318,14 +322,25 @@ ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char deli
     return path;
 }
 
-void* PathTree::Node::userData() const
+void* PathTree::Node::userPointer() const
 {
-    return d->userData;
+    return d->userPointer;
 }
 
-PathTree::Node& PathTree::Node::setUserData(void* userData)
+int PathTree::Node::userValue() const
 {
-    d->userData = userData;
+    return d->userValue;
+}
+
+PathTree::Node& PathTree::Node::setUserPointer(void* ptr)
+{
+    d->userPointer = ptr;
+    return *this;
+}
+
+PathTree::Node& PathTree::Node::setUserValue(int value)
+{
+    d->userValue = value;
     return *this;
 }
 
@@ -393,14 +408,26 @@ ddstring_t* PathTreeNode_ComposePath(PathTreeNode const* node,
     return self->composePath(path, length);
 }
 
-void* PathTreeNode_UserData(PathTreeNode const* node)
+void* PathTreeNode_UserPointer(PathTreeNode const* node)
 {
     SELF_CONST(node);
-    return self->userData();
+    return self->userPointer();
 }
 
-void PathTreeNode_SetUserData(PathTreeNode* node, void* userData)
+int PathTreeNode_UserValue(PathTreeNode const* node)
+{
+    SELF_CONST(node);
+    return self->userValue();
+}
+
+void PathTreeNode_SetUserPointer(PathTreeNode* node, void* userPointer)
 {
     SELF(node);
-    self->setUserData(userData);
+    self->setUserPointer(userPointer);
+}
+
+void PathTreeNode_SetUserValue(PathTreeNode* node, int userValue)
+{
+    SELF(node);
+    self->setUserValue(userValue);
 }

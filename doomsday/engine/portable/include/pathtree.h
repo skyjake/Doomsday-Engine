@@ -133,7 +133,7 @@ public:
     private:
         Node();
         Node(PathTree& tree, NodeType type, FragmentId fragmentId, Node* parent = 0,
-             void* userData = 0);
+             void* userPointer = 0, int userValue = 0);
         virtual ~Node();
 
     public:
@@ -152,13 +152,21 @@ public:
         /// @return Hash for this node's path fragment.
         ushort hash() const;
 
-        /// @return User data pointer associated with this.
-        void* userData() const;
+        /// @return User-specified custom pointer.
+        void* userPointer() const;
+
+        /// @return User-specified custom value.
+        int userValue() const;
 
         /**
-         * Change the associated user data pointer.
+         * Sets the user-specified custom pointer.
          */
-        Node& setUserData(void* data);
+        Node& setUserPointer(void* ptr);
+
+        /**
+         * Sets the user-specified custom pointer.
+         */
+        Node& setUserValue(int value);
 
         /**
          * @param candidatePath  Mapped search pattern (path).
@@ -410,8 +418,10 @@ PathTree* PathTreeNode_Tree(PathTreeNode const* node);
 PathTreeNode* PathTreeNode_Parent(PathTreeNode const* node);
 ddstring_t const* PathTreeNode_Name(PathTreeNode const* node);
 ushort PathTreeNode_Hash(PathTreeNode const* node);
-void* PathTreeNode_UserData(PathTreeNode const* node);
-void PathTreeNode_SetUserData(PathTreeNode* node, void* data);
+void* PathTreeNode_UserPointer(PathTreeNode const* node);
+int PathTreeNode_UserValue(PathTreeNode const* node);
+void PathTreeNode_SetUserPointer(PathTreeNode* node, void* ptr);
+void PathTreeNode_SetUserValue(PathTreeNode* node, int value);
 int PathTreeNode_ComparePath(PathTreeNode* node, int flags, PathMap* candidatePath);
 ddstring_t* PathTreeNode_ComposePath2(PathTreeNode const* node, ddstring_t* path, int* length, char delimiter);
 ddstring_t* PathTreeNode_ComposePath(PathTreeNode const* node, ddstring_t* path, int* length/*, delimiter = '/'*/);
