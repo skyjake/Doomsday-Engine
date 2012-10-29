@@ -84,6 +84,7 @@ Library::~Library()
             DENG2_SYMBOL(deng_ShutdownPlugin)();
         }
 
+        _library->unload();
         delete _library;
     }
 }
