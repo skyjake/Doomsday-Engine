@@ -28,6 +28,7 @@ Library::Library(const String& nativePath)
     : _library(0), _type(DEFAULT_TYPE)
 {
     LOG_AS("Library::Library");
+    LOG_TRACE("Loading ") << nativePath;
 
     /*
 #ifdef MACOSX
@@ -74,6 +75,9 @@ Library::~Library()
 {
     if(_library)
     {
+        LOG_AS("Library::~Library");
+        LOG_TRACE("Unlading ") << _library->fileName();
+
         // Automatically call the shutdown function, if one exists.
         if(_type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
         {

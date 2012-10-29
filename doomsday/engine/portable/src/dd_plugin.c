@@ -71,6 +71,12 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     DENG_ASSERT(fileName && fileName[0]);
     DENG_ASSERT(pluginPath && pluginPath[0]);
 
+    if(strcasestr("/bin/audio_", pluginPath))
+    {
+        // Do not touch audio plugins at this point.
+        return true;
+    }
+
     plugin = Library_New(pluginPath);
     if(!plugin)
     {
