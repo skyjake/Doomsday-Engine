@@ -131,7 +131,7 @@ static int matchPathFragment(char const* string, char const* pattern)
 
 /// @note This routine is also used as an iteration callback, so only return
 ///       a non-zero value when the node is a match for the search term.
-int PathTree::Node::comparePath(int flags, PathMap* searchPattern) const
+int PathTree::Node::comparePath(PathMap* searchPattern, int flags) const
 {
     if(((flags & PCF_NO_LEAF)   && type() == PathTree::Leaf) ||
        ((flags & PCF_NO_BRANCH) && type() == PathTree::Branch))
@@ -373,11 +373,10 @@ ushort PathTreeNode_Hash(PathTreeNode const* node)
     return self->hash();
 }
 
-int PathTreeNode_ComparePath(PathTreeNode* node, int flags,
-    PathMap* searchPattern, void* /*parameters*/)
+int PathTreeNode_ComparePath(PathTreeNode* node, PathMap* candidatePath, int flags)
 {
     SELF(node);
-    return self->comparePath(flags, searchPattern);
+    return self->comparePath(candidatePath, flags);
 }
 
 ddstring_t* PathTreeNode_ComposePath2(PathTreeNode const* node,

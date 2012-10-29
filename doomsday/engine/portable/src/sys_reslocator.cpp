@@ -298,7 +298,7 @@ static int findResourceInNamespaceWorker(struct pathtreenode_s* _node, void* par
     }
     // Stop iteration of resources as soon as a match is found.
     de::PathTree::Node* node = reinterpret_cast<de::PathTree::Node*>(_node);
-    if(node->comparePath(PCF_NO_BRANCH, &p->searchPattern))
+    if(node->comparePath(&p->searchPattern, PCF_NO_BRANCH))
     {
         p->foundNode = node;
         return 1;

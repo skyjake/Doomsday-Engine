@@ -402,7 +402,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
             builtSearchPattern = true;
         }
 
-        if(node.comparePath(0, &searchPattern))
+        if(node.comparePath(&searchPattern, 0))
         {
             // This is the lump we are looking for.
             break;

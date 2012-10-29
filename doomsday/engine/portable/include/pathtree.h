@@ -161,8 +161,8 @@ public:
         Node& setUserData(void* data);
 
         /**
-         * @param flags          @ref pathComparisonFlags
          * @param candidatePath  Mapped search pattern (path).
+         * @param flags          @ref pathComparisonFlags
          *
          * @return Non-zero iff the candidate path matched this.
          *
@@ -171,7 +171,7 @@ public:
          *       allow for further optimizations elsewhere (in the file system
          *       for example) -ds
          */
-        int comparePath(int flags, PathMap* candidatePath) const;
+        int comparePath(PathMap* candidatePath, int flags) const;
 
         /**
          * Composes and/or calculates the length of the composed path for this node.
@@ -412,7 +412,7 @@ ddstring_t const* PathTreeNode_Name(PathTreeNode const* node);
 ushort PathTreeNode_Hash(PathTreeNode const* node);
 void* PathTreeNode_UserData(PathTreeNode const* node);
 void PathTreeNode_SetUserData(PathTreeNode* node, void* data);
-int PathTreeNode_ComparePath(PathTreeNode* node, int flags, PathMap* candidatePath, void* parameters);
+int PathTreeNode_ComparePath(PathTreeNode* node, int flags, PathMap* candidatePath);
 ddstring_t* PathTreeNode_ComposePath2(PathTreeNode const* node, ddstring_t* path, int* length, char delimiter);
 ddstring_t* PathTreeNode_ComposePath(PathTreeNode const* node, ddstring_t* path, int* length/*, delimiter = '/'*/);
 

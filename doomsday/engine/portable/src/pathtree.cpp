@@ -71,8 +71,8 @@ struct PathTree::Instance
     PathTree::Nodes leafHash;
     PathTree::Nodes branchHash;
 
-    Instance(PathTree& d, int flags_)
-        : self(d), fragments(0), flags(flags_), size(0)
+    Instance(PathTree& d, int _flags)
+        : self(d), fragments(0), flags(_flags), size(0)
     {
 #if 0
         // We'll block-allocate nodes and maintain a list of unused ones
@@ -115,21 +115,6 @@ struct PathTree::Instance
         }
     }
 
-    PathTree::Node* findNode(PathTree::Node* parent, PathTree::NodeType nodeType,
-                             PathTree::FragmentId fragmentId)
-    {
-        PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
-        ushort hashKey = StringPool_UserValue(fragments, fragmentId);
-        for(PathTree::Nodes::const_iterator i = hash.find(hashKey); i != hash.end() && i.key() == hashKey; ++i)
-        {
-            if(parent     != (*i)->parent()) continue;
-            if(fragmentId != (*i)->fragmentId()) continue;
-
-            return *i;
-        }
-        return 0; // Not found.
-    }
-
     PathTree::FragmentId internFragmentAndUpdateIdHashMap(ddstring_t const* fragment, ushort hash)
     {
         if(!fragments)
@@ -159,9 +144,14 @@ struct PathTree::Instance
             if(fragmentId)
             {
                 // The name is known. Perhaps we have.
-                PathTree::Node* node = findNode(parent, nodeType, fragmentId);
-                if(node)
+                PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
+                ushort hashKey = StringPool_UserValue(fragments, fragmentId);
+                for(PathTree::Nodes::const_iterator i = hash.find(hashKey); i != hash.end() && i.key() == hashKey; ++i)
                 {
+                    PathTree::Node* node = *i;
+                    if(parent     != node->parent()) continue;
+                    if(fragmentId != node->fragmentId()) continue;
+
                     if(nodeType == PathTree::Branch || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
                         return node;
                 }
@@ -219,17 +209,12 @@ struct PathTree::Instance
         while((p = Str_CopyDelim2(part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
         {
             node = direcNode(parent, PathTree::Branch, part, delimiter);
-            /// @todo Do not error here. If we're out of storage undo this action and return.
-            if(!node) throw Error("PathTree::buildDirecNodes", String("Exhausted storage while attempting to insert nodes for path \"%1\".").arg(path));
-
             parent = node;
         }
 
         if(!Str_IsEmpty(part))
         {
             node = direcNode(parent, PathTree::Leaf, part, delimiter);
-            /// @todo Do not error here. If we're out of storage undo this action and return.
-            if(!node) throw Error("PathTree::buildDirecNodes", String("Exhausted storage while attempting to insert nodes for path \"%1\".").arg(path));
         }
 
         return node;
@@ -282,13 +267,14 @@ struct PathTree::Instance
 
     static void clearPathHash(PathTree::Nodes& ph)
     {
+        LOG_AS("PathTree::clearPathHash");
+
         DENG2_FOR_EACH(PathTree::Nodes, i, ph)
         {
             PathTree::Node& node = **i;
 #if _DEBUG
             if(node.userData())
             {
-                LOG_AS("PathTree::clearPathHash");
                 LOG_ERROR("Node %p has non-NULL user data.") << (void*)(&node);
             }
 #endif
@@ -386,7 +372,7 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
             PathTree::Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
-                if((*i)->comparePath(flags, &mappedSearchPath))
+                if((*i)->comparePath(&mappedSearchPath, flags))
                 {
                     // This is the node we're looking for - stop iteration.
                     foundNode = *i;
@@ -402,7 +388,7 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
             PathTree::Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
-                if((*i)->comparePath(flags, &mappedSearchPath))
+                if((*i)->comparePath(&mappedSearchPath, flags))
                 {
                     // This is the node we're looking for - stop iteration.
                     foundNode = *i;

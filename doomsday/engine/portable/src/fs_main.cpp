@@ -945,7 +945,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         }
         else
         {
-            patternMatched = node.comparePath(PCF_MATCH_FULL, &patternMap);
+            patternMatched = node.comparePath(&patternMap, PCF_MATCH_FULL);
         }
 
         if(!patternMatched) continue;
