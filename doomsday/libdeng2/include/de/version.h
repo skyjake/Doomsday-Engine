@@ -38,7 +38,7 @@ namespace de {
  * number. libdeng2 versioning starts from 2.0.0. When the project as a whole
  * switches to major version 2, libdeng2 version will be synced with the rest
  * of the project. Also note that unlike libdeng1, there is only ever three
- * components in the version.
+ * components in the version (or four, counting the build number).
  */
 class Version
 {
