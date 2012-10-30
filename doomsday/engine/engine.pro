@@ -737,36 +737,32 @@ macx {
 
 # Installation ---------------------------------------------------------------
 
-win32 {
-    # Windows installation.
-    INSTALLS += target data startupdata startupgfx startupfonts cfg license icon
+!macx {
+    # Common (non-Mac) parts of the installation.
+    INSTALLS += target data startupdata startupgfx startupfonts cfg
 
-    target.path = $$DENG_BIN_DIR
-
-    data.path = $$DENG_DATA_DIR
-    startupdata.path = $$DENG_DATA_DIR
+    target.path       = $$DENG_BIN_DIR
+    data.path         = $$DENG_DATA_DIR
+    startupdata.path  = $$DENG_DATA_DIR
+    startupgfx.path   = $$DENG_DATA_DIR/graphics
     startupfonts.path = $$DENG_DATA_DIR/fonts
-    startupgfx.path = $$DENG_DATA_DIR/graphics
-    cfg.path = $$DENG_DATA_DIR/config
+    cfg.path          = $$DENG_BASE_DIR/config
 
-    license.files = doc/LICENSE
-    license.path = $$DENG_DOCS_DIR
+    win32 {
+        # Windows-specific installation.
+        INSTALLS += license icon
 
-    icon.files = win32/res/doomsday.ico
-    icon.path = $$DENG_DATA_DIR/graphics
-}
-else:unix:!macx {
-    # Generic Unix installation.
-    INSTALLS += target data startupdata startupgfx startupfonts cfg readme
+        license.files = doc/LICENSE
+        license.path = $$DENG_DOCS_DIR
 
-    target.path = $$DENG_BIN_DIR
+        icon.files = win32/res/doomsday.ico
+        icon.path = $$DENG_DATA_DIR/graphics
+    }
+    else {
+        # Generic Unix installation.
+        INSTALLS += readme
 
-    data.path = $$DENG_DATA_DIR
-    startupdata.path = $$DENG_DATA_DIR
-    startupfonts.path = $$DENG_DATA_DIR/fonts
-    startupgfx.path = $$DENG_DATA_DIR/graphics
-    cfg.path = $$DENG_DATA_DIR/config
-
-    readme.files = ../doc/output/doomsday.6
-    readme.path = $$PREFIX/share/man/man6
+        readme.files = ../doc/output/doomsday.6
+        readme.path = $$PREFIX/share/man/man6
+    }
 }

@@ -145,7 +145,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
     String appDir = _appPath.fileNameNativePath();
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data")));
-    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data\\config")));
+    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\config")));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 
 #else // UNIX
@@ -153,9 +153,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
     }
-    String dataDir = nativeBasePath() / "data";
-    _fs.makeFolder("/data").attach(new DirectoryFeed(dataDir));
-    _fs.makeFolder("/config").attach(new DirectoryFeed(dataDir / "config"));
+    _fs.makeFolder("/data").attach(new DirectoryFeed(nativeBasePath() / "data"));
+    _fs.makeFolder("/config").attach(new DirectoryFeed(nativeBasePath() / "config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data/modules"));
 #endif
 
