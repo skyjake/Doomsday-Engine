@@ -125,12 +125,6 @@ void F_ResetResourceNamespace(resourcenamespaceid_t rni);
 
 void F_CreateNamespacesForFileResourcePaths(void);
 
-/**
- * @return  Newly created hash name. Ownership passes to the caller who should
- * ensure to release it with Str_Delete when done.
- */
-AutoStr* F_ComposeHashNameForFilePath(Str const* filePath);
-
 ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni);
 
 /// @return  Number of resource namespaces.
@@ -144,16 +138,15 @@ boolean F_IsValidResourceNamespaceId(int value);
  * Given an id return the associated resource namespace object.
  */
 ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
+#endif
 
 /**
  * @param rni  Unique identifier of the namespace to add to.
  * @param flags  @see searchPathFlags
  * @param searchPath  Uri representing the search path to be added.
- * @param group  Group to add the new search path to.
  */
-boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
-    Uri const* searchPath, de::ResourceNamespace::SearchPathGroup group);
-#endif
+boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
+    Uri const* searchPath);
 
 /**
  * Attempt to locate a known resource.

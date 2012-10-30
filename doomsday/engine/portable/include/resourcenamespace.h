@@ -28,9 +28,6 @@
 #include "pathtree.h"
 #include "uri.h"
 
-// Number of entries in the hash table.
-#define RESOURCENAMESPACE_HASHSIZE      512
-
 /**
  * @defgroup searchPathFlags  Search Path Flags
  * @{
@@ -73,73 +70,104 @@ namespace de
             FallbackPaths
         };
 
-        typedef unsigned short NameHashKey;
-
-        typedef NameHashKey (HashNameFunc) (ddstring_t const* name);
-
         struct SearchPath
         {
-            int flags; /// @see searchPathFlags
-            Uri* uri;
+        public:
+            /**
+             * @param _flags   @ref searchPathFlags
+             * @param _uri     Unresolved search URI (may include symbolic names or
+             *                 other symbol references). SearchPath takes ownership.
+             */
+            SearchPath(int _flags, Uri* _uri);
 
-            SearchPath(int _flags, Uri const* _uri)
-                : flags(_flags), uri(Uri_NewCopy(_uri))
-            {}
+            /**
+             * Construct a copy from @a other. This is a "deep copy".
+             */
+            SearchPath(SearchPath const& other);
 
-            ~SearchPath()
-            {
-                Uri_Delete(uri);
-            }
+            ~SearchPath();
+
+            SearchPath& operator = (SearchPath other);
+
+            friend void swap(SearchPath& first, SearchPath& second); // nothrow
+
+            /// @return  @ref searchPathFlags
+            int flags() const;
+
+            SearchPath& setFlags(int flags);
+
+            /// @return  Unresolved URI.
+            Uri const* uri() const;
+
+        private:
+            /// @see searchPathFlags
+            int flags_;
+
+            /// Unresolved search URI.
+            Uri* uri_;
         };
 
         typedef QMultiMap<PathGroup, SearchPath> SearchPaths;
         typedef QList<PathTree::Node*> ResourceList;
 
     public:
-        ResourceNamespace(HashNameFunc* hashNameFunc);
+        explicit ResourceNamespace(char const* symbolicName = "");
         ~ResourceNamespace();
 
+        /// @return  Symbolic name of this namespace (e.g., "Models").
+        ddstring_t const* name() const;
+
         /**
-         * Reset the namespace back to it's "empty" state (i.e., no known symbols).
+         * Rebuild this namespace by re-scanning for resources on all search
+         * paths and re-populating the internal database.
+         *
+         * @note Any manually added resources will not be present after this.
+         */
+        void rebuild();
+
+        /**
+         * Reset this namespace back to it's "empty" state (i.e., no resources).
+         * The search path groups are unaffected.
          */
         void clear();
 
         /**
-         * Add a new named resource into the namespace. Multiple names for a given
-         * resource may coexist however duplicates are automatically pruned.
+         * Manually add a resource to this namespace. Duplicates are pruned
+         * automatically.
          *
-         * @post Name hash may have been rebuilt.
-         *
-         * @param name          Name of the resource being added.
          * @param node          PathTree node which represents the resource.
          *
-         * @return  @c true iff the namespace did not already contain this resource.
+         * @return  @c true iff this namespace did not already contain the resource.
          */
-        bool add(ddstring_t const* name, PathTree::Node& node);
+        bool add(PathTree::Node& node);
 
         /**
-         * Finds all resources in this namespace..
+         * Finds all resources in this namespace.
          *
-         * @param name          If not @c NULL, only consider resources with this name.
+         * @param searchpath    If not @c NULL, only consider resources whose
+         *                      name matches that which will be extracted from
+         *                      this path.
          * @param found         Set of resources that match the result.
          *
          * @return  Number of found resources.
          */
-        int findAll(ddstring_t const* name, ResourceList& found);
+        int findAll(ddstring_t const* searchPath, ResourceList& found);
 
         /**
-         * Add a new path to this namespace.
+         * Add a new search path to this namespace. Newer paths have priority
+         * over previously added paths.
          *
-         * @param group         Group to add this path to. @see SearchPathGroup
+         * @param group         Group to add this path to. @see PathGroup
          * @param path          New unresolved path to add.
          * @param flags         @see searchPathFlags
          *
-         * @return  @c true if the path is correctly formed and present in the namespace.
+         * @return  @c true if @a path was well-formed and subsequently added.
          */
         bool addSearchPath(PathGroup group, Uri const* path, int flags);
 
         /**
-         * Clear search paths in @a group in this namespace.
+         * Clear search paths in @a group from this namespace.
+         *
          * @param group  Search path group to be cleared.
          */
         void clearSearchPaths(PathGroup group);
@@ -150,8 +178,8 @@ namespace de
         void clearSearchPaths();
 
         /**
-         * Append to @a pathList all resolved search paths in @a group, in descending,
-         * (i.e., most recent order), using @a delimiter to separate each.
+         * Append to @a pathList all resolved search paths in @a group, in
+         * descending (i.e., most recent) order.
          *
          * @param group         Group of paths to append.
          * @param pathList      String to receive the search path list.
@@ -163,9 +191,9 @@ namespace de
                                     char delimiter = ';') const;
 
         /**
-         * Append to @a pathList all resolved search paths from all groups, firstly
-         * in group order (from Override to Fallback) and in descending, (i.e., most
-         * recent order), using @a delimiter to separate each.
+         * Append to @a pathList all resolved search paths from all groups,
+         * firstly in priority group order (from Override to Fallback) and
+         * secondly in descending (i.e., most recent) order.
          *
          * @param pathList      String to receive the search paths.
          * @param delimiter     Discreet paths will be delimited by this character.

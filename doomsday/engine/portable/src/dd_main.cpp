@@ -1331,6 +1331,8 @@ void DD_FinishInitializationAfterWindowReady(void)
     Window_SetDrawFunc(Window_Main(), DD_GameLoopDrawer);
 }
 
+extern ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
+
 /**
  * Engine initialization. After completed, the game loop is ready to be started.
  * Called from the app entrypoint function.
@@ -1424,12 +1426,12 @@ boolean DD_Init(void)
 
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            const char* filePath = CommandLine_PathAt(p);
+            char const* filePath = CommandLine_PathAt(p);
             directory_t* dir;
             Uri* searchPath;
 
-            /// @todo Do not add these as search paths, publish them directly to
-            ///       the FileDirectory owned by the "packages" ResourceNamespace.
+            /// @todo Do not add these as search paths, publish them directly
+            ///       to the "packages" ResourceNamespace.
             dir = Dir_ConstructFromPathDir(filePath);
             searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
 

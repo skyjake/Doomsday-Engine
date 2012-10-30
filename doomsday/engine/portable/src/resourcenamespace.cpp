@@ -21,12 +21,17 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "de_console.h"
+#include <cctype>
+
 #include "de_filesys.h"
 
+#include <de/Log>
+#include "filedirectory.h"
 #include "pathtree.h"
+
 #include "resourcenamespace.h"
+
+extern "C" filename_t ddBasePath;
 
 namespace de {
 
@@ -65,6 +70,13 @@ struct ResourceNode
  */
 struct NameHash
 {
+public:
+    /// Type used to represent hash keys.
+    typedef unsigned short key_type;
+
+    /// Number of buckets in the hash table.
+    static unsigned short const hash_size = 512;
+
     struct Node
     {
         Node* next;
@@ -80,7 +92,15 @@ struct NameHash
         Node* first;
         Node* last;
     };
-    Bucket buckets[RESOURCENAMESPACE_HASHSIZE];
+
+public:
+    Bucket buckets[hash_size];
+
+public:
+    NameHash()
+    {
+        memset(buckets, 0, sizeof(buckets));
+    }
 
     ~NameHash()
     {
@@ -89,7 +109,7 @@ struct NameHash
 
     void clear()
     {
-        for(uint i = 0; i < RESOURCENAMESPACE_HASHSIZE; ++i)
+        for(uint i = 0; i < hash_size; ++i)
         {
             while(buckets[i].first)
             {
@@ -102,10 +122,62 @@ struct NameHash
     }
 };
 
+//unsigned short const NameHash::hash_size;
+
+static AutoStr* composeResourceName(ddstring_t const* filePath)
+{
+    AutoStr* name = AutoStr_NewStd();
+    F_FileName(name, Str_Text(filePath));
+    return name;
+}
+
+/**
+ * This is a hash function. It uses the resource name to generate a
+ * somewhat-random number between 0 and NameHash::hash_size.
+ *
+ * @return  The generated hash key.
+ */
+static NameHash::key_type hashResourceName(ddstring_t const* name)
+{
+    DENG_ASSERT(name);
+
+    NameHash::key_type key = 0;
+    byte op = 0;
+
+    for(char const* c = Str_Text(name); *c; c++)
+    {
+        switch(op)
+        {
+        case 0: key ^= tolower(*c); ++op;   break;
+        case 1: key *= tolower(*c); ++op;   break;
+        case 2: key -= tolower(*c);   op=0; break;
+        }
+    }
+    return key % NameHash::hash_size;
+}
+
+static int addResourceWorker(PathTree::Node& node, void* parameters)
+{
+    // We are only interested in leafs (i.e., files and not directories).
+    if(node.type() == PathTree::Leaf)
+    {
+        ResourceNamespace& rnamespace = *((ResourceNamespace*) parameters);
+        rnamespace.add(node);
+    }
+    return 0; // Continue adding.
+}
+
+#define RNF_IS_DIRTY            0x80 // Filehash needs to be (re)built (avoid allocating an empty name hash).
+
 struct ResourceNamespace::Instance
 {
-    /// Resource name hashing callback.
-    ResourceNamespace::HashNameFunc* hashNameFunc;
+    ResourceNamespace& self;
+
+    /// Associated path directory for this namespace.
+    /// @todo It should not be necessary for a unique directory per namespace.
+    FileDirectory* directory;
+
+    byte flags;
 
     /// Name hash table.
     NameHash nameHash;
@@ -114,11 +186,23 @@ struct ResourceNamespace::Instance
     /// Each set is in order of greatest-importance, right to left.
     ResourceNamespace::SearchPaths searchPaths;
 
-    Instance(ResourceNamespace::HashNameFunc* _hashNameFunc)
-        : hashNameFunc(_hashNameFunc)
-    {}
+    /// Symbolic name of this namespace.
+    ddstring_t name;
 
-    NameHash::Node* findResourceInNameHash(ResourceNamespace::NameHashKey key,
+    Instance(ResourceNamespace& d, char const* _name)
+        : self(d), directory(new FileDirectory(ddBasePath)), flags(RNF_IS_DIRTY)
+    {
+        Str_InitStd(&name);
+        if(_name) Str_Set(&name, _name);
+    }
+
+    ~Instance()
+    {
+        Str_Free(&name);
+        delete directory;
+    }
+
+    NameHash::Node* findResourceInNameHash(NameHash::key_type key,
         PathTree::Node const& ptNode)
     {
         NameHash::Node* node = nameHash.buckets[key].first;
@@ -128,12 +212,21 @@ struct ResourceNamespace::Instance
         }
         return node;
     }
+
+    void addFromSearchPaths(ResourceNamespace::PathGroup group)
+    {
+        for(ResourceNamespace::SearchPaths::const_iterator i = searchPaths.find(group);
+            i != searchPaths.end() && i.key() == group; ++i)
+        {
+            ResourceNamespace::SearchPath const& searchPath = *i;
+            directory->addPath(searchPath.flags(), searchPath.uri(), addResourceWorker, (void*)&self);
+        }
+    }
 };
 
-ResourceNamespace::ResourceNamespace(ResourceNamespace::HashNameFunc* hashNameFunc)
+ResourceNamespace::ResourceNamespace(char const* symbolicName)
 {
-    DENG_ASSERT(hashNameFunc);
-    d = new Instance(hashNameFunc);
+    d = new Instance(*this, symbolicName);
 }
 
 ResourceNamespace::~ResourceNamespace()
@@ -141,21 +234,50 @@ ResourceNamespace::~ResourceNamespace()
     delete d;
 }
 
+ddstring_t const* ResourceNamespace::name() const
+{
+    return &d->name;
+}
+
 void ResourceNamespace::clear()
 {
     d->nameHash.clear();
+    d->directory->clear();
+    d->flags |= RNF_IS_DIRTY;
 }
 
-bool ResourceNamespace::add(ddstring_t const* name, PathTree::Node& resourceNode)
+void ResourceNamespace::rebuild()
 {
-    DENG_ASSERT(name);
+    // Is a rebuild necessary?
+    if(!(d->flags & RNF_IS_DIRTY)) return;
 
-    NameHashKey key = d->hashNameFunc(name);
-    if(key >= RESOURCENAMESPACE_HASHSIZE)
-    {
-        Con_Error("ResourceNamespace::Add: Hashing of name '%s' in [%p] produced invalid key %u.", Str_Text(name), (void*)this, (unsigned short)key);
-        exit(1); // Unreachable.
-    }
+/*#if _DEBUG
+    uint startTime;
+    VERBOSE( Con_Message("Rebuilding ResourceNamespace '%s'...\n", Str_Text(d->name)) )
+    VERBOSE2( startTime = Sys_GetRealTime() )
+    VERBOSE2( Con_PrintPathList(Str_Text(listSearchPaths(AutoStr_NewStd()))) )
+#endif*/
+
+    // (Re)populate the directory and add found resources.
+    clear();
+    d->addFromSearchPaths(ResourceNamespace::OverridePaths);
+    d->addFromSearchPaths(ResourceNamespace::ExtraPaths);
+    d->addFromSearchPaths(ResourceNamespace::DefaultPaths);
+    d->addFromSearchPaths(ResourceNamespace::FallbackPaths);
+
+    d->flags &= ~RNF_IS_DIRTY;
+
+/*#if _DEBUG
+    VERBOSE2( FileDirectory::debugPrint(d->directory) )
+    VERBOSE2( debugPrint() )
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+#endif*/
+}
+
+bool ResourceNamespace::add(PathTree::Node& resourceNode)
+{
+    AutoStr* name = composeResourceName(resourceNode.name());
+    NameHash::key_type key = hashResourceName(name);
 
     // Is this a new resource?
     bool isNewNode = false;
@@ -176,6 +298,10 @@ bool ResourceNamespace::add(ddstring_t const* name, PathTree::Node& resourceNode
         if(bucket.last) bucket.last->next = hashNode;
         bucket.last = hashNode;
         if(!bucket.first) bucket.first = hashNode;
+
+        // We will need to rebuild this namespace (if we aren't already doing so,
+        // in the case of auto-populated namespaces built from FileDirectorys).
+        d->flags |= RNF_IS_DIRTY;
     }
 
     // (Re)configure this record.
@@ -183,11 +309,6 @@ bool ResourceNamespace::add(ddstring_t const* name, PathTree::Node& resourceNode
     res->directoryNode = &resourceNode;
 
     return isNewNode;
-}
-
-ResourceNamespace::SearchPaths const& ResourceNamespace::searchPaths() const
-{
-    return d->searchPaths;
 }
 
 bool ResourceNamespace::addSearchPath(PathGroup group, Uri const* _searchPath, int flags)
@@ -203,12 +324,15 @@ bool ResourceNamespace::addSearchPath(PathGroup group, Uri const* _searchPath, i
 
     Uri* searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
 
+    // The addition of a new search path means the namespace is now dirty.
+    d->flags |= RNF_IS_DIRTY;
+
     // Have we seen this path already (we don't want duplicates)?
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
-        if(Uri_Equality(i->uri, searchPath))
+        if(Uri_Equality(i->uri(), searchPath))
         {
-            i->flags = flags;
+            i->setFlags(flags);
             Uri_Delete(searchPath);
             return true;
         }
@@ -235,73 +359,123 @@ ddstring_t* ResourceNamespace::listSearchPaths(PathGroup group, ddstring_t* path
 {
     if(pathList)
     {
-        ResourceNamespace::SearchPaths::const_iterator i = d->searchPaths.find(group);
-        while(i != d->searchPaths.end() && i.key() == group)
+        for(ResourceNamespace::SearchPaths::const_iterator i = d->searchPaths.find(group);
+            i != d->searchPaths.end() && i.key() == group; ++i)
         {
-            AutoStr* path = Uri_Compose(i.value().uri);
+            AutoStr* path = Uri_Compose(i.value().uri());
             Str_Appendf(pathList, "%s%c", Str_Text(path), delimiter);
         }
     }
     return pathList;
 }
 
+ResourceNamespace::SearchPaths const& ResourceNamespace::searchPaths() const
+{
+    return d->searchPaths;
+}
+
 #if _DEBUG
 void ResourceNamespace::debugPrint() const
 {
-    Con_Printf("ResourceNamespace [%p]:\n", (void*)this);
+    LOG_AS("ResourceNamespace::debugPrint");
+    LOG_DEBUG("[%p]:") << de::dintptr(this);
+
     uint resIdx = 0;
-    for(uint key = 0; key < RESOURCENAMESPACE_HASHSIZE; ++key)
+    for(NameHash::key_type key = 0; key < NameHash::hash_size; ++key)
     {
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* node = bucket.first; node; node = node->next)
         {
-            Con_Printf("  %lu: %lu:", (unsigned long)resIdx, (unsigned long)key);
-
             ResourceNode const& res = node->resource;
-            AutoStr* path = res.directoryNode->composePath(AutoStr_NewStd(), NULL, DIR_SEP_CHAR);
-            Con_Printf("\"%s\" -> %s\n", Str_Text(&res.name), Str_Text(path));
+            AutoStr* path = res.directoryNode->composePath(AutoStr_NewStd(), NULL);
+
+            LOG_DEBUG("  %u - %u:\"%s\" => %s")
+                << resIdx << key << Str_Text(&res.name) << Str_Text(path);
 
             ++resIdx;
         }
     }
-    Con_Printf("  %lu %s in namespace.\n", (unsigned long) resIdx, (resIdx == 1? "resource" : "resources"));
+
+    LOG_DEBUG("  %lu %s in namespace.") << resIdx << (resIdx == 1? "resource" : "resources");
 }
 #endif
 
-int ResourceNamespace::findAll(ddstring_t const* name, ResourceList& found)
+int ResourceNamespace::findAll(ddstring_t const* searchPath, ResourceList& found)
 {
     int numFoundSoFar = found.count();
 
-    NameHashKey from, to;
+    AutoStr* name = 0;
+    if(searchPath && !Str_IsEmpty(searchPath))
+    {
+        name = composeResourceName(searchPath);
+    }
+
+    NameHash::key_type from, to;
     if(name)
     {
-        from = d->hashNameFunc(name);
-        if(from >= RESOURCENAMESPACE_HASHSIZE)
-        {
-            Con_Error("ResourceNamespace::Iterate: Hashing of name '%s' in [%p] produced invalid key %u.", Str_Text(name), (void*)this, (unsigned short)from);
-            exit(1); // Unreachable.
-        }
-        to = from;
+        from = hashResourceName(name);
+        to   = from;
     }
     else
     {
         from = 0;
-        to = RESOURCENAMESPACE_HASHSIZE - 1;
+        to   = NameHash::hash_size - 1;
     }
 
-    for(NameHashKey key = from; key < to + 1; ++key)
+    for(NameHash::key_type key = from; key < to + 1; ++key)
     {
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
             ResourceNode& resource = hashNode->resource;
-            if(Str_CompareIgnoreCase(resource.directoryNode->name(), Str_Text(name))) continue;
+            if(name && qstrnicmp(Str_Text(name), Str_Text(resource.directoryNode->name()), Str_Length(name))) continue;
 
             found.push_back(resource.directoryNode);
         }
     }
 
     return found.count() - numFoundSoFar;
+}
+
+ResourceNamespace::SearchPath::SearchPath(int _flags, Uri* _uri)
+    : flags_(_flags), uri_(_uri)
+{}
+
+ResourceNamespace::SearchPath::SearchPath(SearchPath const& other)
+    : flags_(other.flags_), uri_(Uri_NewCopy(other.uri_))
+{}
+
+ResourceNamespace::SearchPath::~SearchPath()
+{
+    Uri_Delete(uri_);
+}
+
+ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::operator = (SearchPath other)
+{
+    swap(*this, other);
+    return *this;
+}
+
+int ResourceNamespace::SearchPath::flags() const
+{
+    return flags_;
+}
+
+ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::setFlags(int newFlags)
+{
+    flags_ = newFlags;
+    return *this;
+}
+
+Uri const* ResourceNamespace::SearchPath::uri() const
+{
+    return uri_;
+}
+
+void swap(ResourceNamespace::SearchPath& first, ResourceNamespace::SearchPath& second)
+{
+    std::swap(first.flags_,  second.flags_);
+    std::swap(first.uri_,    second.uri_);
 }
 
 } // namespace de

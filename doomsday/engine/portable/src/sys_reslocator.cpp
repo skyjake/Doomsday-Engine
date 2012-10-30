@@ -40,9 +40,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-//#include "m_misc.h"
-
-#include "filedirectory.h"
 #include "abstractresource.h"
 #include "resourcenamespace.h"
 
@@ -66,25 +63,12 @@ typedef struct {
  * @{
  */
 #define RNF_USE_VMAP            0x01 // Map resources in packages.
-#define RNF_IS_DIRTY            0x80 // Filehash needs to be (re)built (avoid allocating an empty name hash).
 ///@}
-
-#define RESOURCENAMESPACE_MINNAMELENGTH    URI_MINSCHEMELENGTH
 
 struct ResourceNamespaceInfo
 {
-    /// Unique symbolic name of this namespace (e.g., "Models").
-    /// Must be at least @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
-    ddstring_t name;
-
     /// ResourceNamespace.
     ResourceNamespace* rnamespace;
-
-    /// Associated path directory for this namespace.
-    de::FileDirectory* directory;
-
-    /// Algorithm used to compose the name of a resource in this namespace.
-    AutoStr* (*composeName) (ddstring_t const* path);
 
     byte flags; // @see resourceNamespaceFlags
 };
@@ -135,19 +119,13 @@ static de::Str const defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
 static ResourceNamespaceInfo* namespaces = 0;
 static uint numNamespaces = 0;
 
+#define RESOURCENAMESPACE_MINNAMELENGTH URI_MINSCHEMELENGTH
+
 /**
- * This is a hash function. It uses the resource name to generate a
- * somewhat-random number between 0 and RESOURCENAMESPACE_HASHSIZE.
- *
- * @return  The generated hash key.
+ * @param name      Unique symbolic name of this namespace. Must be at least
+ *                  @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
  */
-ResourceNamespace::NameHashKey F_HashKeyForAlphaNumericNameIgnoreCase(ddstring_t const* name);
-
-#define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
-
-ResourceNamespace* F_CreateResourceNamespace(char const* name,
-    de::FileDirectory& directory, AutoStr* (*composeHashNameFunc) (ddstring_t const* path),
-    ResourceNamespace::HashNameFunc* hashNameFunc, byte flags);
+ResourceNamespace* F_CreateResourceNamespace(char const* name, byte flags);
 
 static void errorIfNotInited(const char* callerName)
 {
@@ -171,22 +149,6 @@ static inline ResourceNamespaceInfo* getNamespaceInfoForId(resourcenamespaceid_t
     return &namespaces[((uint)rni)-1];
 }
 
-#if 0
-static resourcenamespaceid_t findNamespaceId(ResourceNamespace* rnamespace)
-{
-    if(rnamespace)
-    {
-        for(uint i = 0; i < numNamespaces; ++i)
-        {
-            ResourceNamespaceInfo* info = &namespaces[i];
-            if(info->rnamespace == rnamespace)
-                return (resourcenamespaceid_t)(i+1);
-        }
-    }
-    return 0;
-}
-#endif
-
 static resourcenamespaceid_t findNamespaceForName(char const* name)
 {
     if(name && name[0])
@@ -194,7 +156,7 @@ static resourcenamespaceid_t findNamespaceForName(char const* name)
         for(uint i = 0; i < numNamespaces; ++i)
         {
             ResourceNamespaceInfo* info = &namespaces[i];
-            if(!stricmp(Str_Text(&info->name), name))
+            if(!stricmp(Str_Text(info->rnamespace->name()), name))
                 return (resourcenamespaceid_t)(i+1);
         }
     }
@@ -208,9 +170,7 @@ static void destroyAllNamespaces(void)
     for(uint i = 0; i < numNamespaces; ++i)
     {
         ResourceNamespaceInfo* info = &namespaces[i];
-        if(info->directory) delete info->directory;
         delete info->rnamespace;
-        Str_Free(&info->name);
     }
     M_Free(namespaces);
     namespaces = 0;
@@ -225,136 +185,49 @@ static void resetAllNamespaces(void)
     }
 }
 
-static void addResourceToNamespace(ResourceNamespaceInfo& rnInfo, de::PathTree::Node& node)
-{
-    AutoStr* name = rnInfo.composeName(node.name());
-    if(rnInfo.rnamespace->add(name, node))
-    {
-        // We will need to rebuild this namespace (if we aren't already doing so,
-        // in the case of auto-populated namespaces built from FileDirectorys).
-        rnInfo.flags |= RNF_IS_DIRTY;
-    }
-}
-
-static int addFileResourceWorker(de::PathTree::Node& node, void* parameters)
-{
-    ResourceNamespaceInfo* rnInfo = (ResourceNamespaceInfo*) parameters;
-    // We are only interested in leafs (i.e., files and not directories).
-    if(node.type() == de::PathTree::Leaf)
-    {
-        addResourceToNamespace(*rnInfo, node);
-    }
-    return 0; // Continue adding.
-}
-
-static void addResourcesOnSearchPathsToDirectory(ResourceNamespaceInfo* rnInfo,
-    ResourceNamespace::PathGroup group)
-{
-    ResourceNamespace& rnamespace = *rnInfo->rnamespace;
-    ResourceNamespace::SearchPaths const& searchPaths = rnamespace.searchPaths();
-    ResourceNamespace::SearchPaths::const_iterator i = searchPaths.find(group);
-    while(i != searchPaths.end() && i.key() == group)
-    {
-        ResourceNamespace::SearchPath const& searchPath = *i;
-        rnInfo->directory->addPath(searchPath.flags, searchPath.uri, addFileResourceWorker, (void*)rnInfo);
-    }
-}
-
-static void rebuildResourceNamespace(ResourceNamespaceInfo* rnInfo)
-{
-/*#if _DEBUG
-    uint startTime;
-#endif*/
-
-    DENG_ASSERT(rnInfo);
-    if(!(rnInfo->flags & RNF_IS_DIRTY)) return;
-
-    ResourceNamespace& rnamespace = *rnInfo->rnamespace;
-
-/*#if _DEBUG
-    VERBOSE( Con_Message("Rebuilding rnamespace '%s'...\n", Str_Text(&rnInfo->name)) )
-    VERBOSE2( startTime = Sys_GetRealTime() )
-#endif*/
-
-    // (Re)populate the directory and insert found paths into the resource namespace.
-    /// @todo It should not be necessary for a unique directory per namespace.
-
-    rnamespace.clear();
-    rnInfo->directory->clear();
-
-/*#if _DEBUG
-    VERBOSE2( Con_PrintPathList(Str_Text(rnamespace.listSearchPaths(AutoStr_NewStd()))) )
-#endif*/
-
-    addResourcesOnSearchPathsToDirectory(rnInfo, ResourceNamespace::OverridePaths);
-    addResourcesOnSearchPathsToDirectory(rnInfo, ResourceNamespace::ExtraPaths);
-    addResourcesOnSearchPathsToDirectory(rnInfo, ResourceNamespace::DefaultPaths);
-    addResourcesOnSearchPathsToDirectory(rnInfo, ResourceNamespace::FallbackPaths);
-
-    rnInfo->flags &= ~RNF_IS_DIRTY;
-
-/*#if _DEBUG
-    VERBOSE2( FileDirectory::debugPrint(rnInfo->directory) )
-    VERBOSE2( rnamespace.debugPrint() )
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
-#endif*/
-}
-
 /**
  * Find a named resource in this namespace.
  *
- * @param name              Name of the resource being searched for.
  * @param searchPath        Relative or absolute path to the resource.
  * @param searchDelimiter   Fragments of @a searchPath are delimited by this character.
- * @param foundPath         If not @c NULL and a path is found, it is written back here.
- * @param foundDelimiter    Delimiter to be used when composing @a foundPath.
  *
- * @return  @c true iff a resource was found.
+ * @return  The found PathTree node which represents the resource else @c NULL.
  */
-static bool findResourceInNamespace(ResourceNamespaceInfo* rnInfo, ddstring_t const * name,
-    ddstring_t const* searchPath, char delimiter, ddstring_t* foundPath, char foundDelimiter)
+static de::PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
+    ddstring_t const* searchPath, char delimiter)
 {
-    DENG_ASSERT(rnInfo && name);
-
-    if(!searchPath || Str_IsEmpty(searchPath)) return false;
+    if(!searchPath || Str_IsEmpty(searchPath)) return 0;
 
     // Ensure the namespace is up to date.
-    rebuildResourceNamespace(rnInfo);
-    ResourceNamespace& rnamespace = *rnInfo->rnamespace;
+    rnamespace.rebuild();
 
     // Perform the search.
-    bool foundResource = false;
-    ResourceNamespace::ResourceList found;
-    if(rnamespace.findAll(name, found))
+    de::PathTree::Node* found = 0;
+    ResourceNamespace::ResourceList foundResources;
+    if(rnamespace.findAll(searchPath, foundResources))
     {
-        // There is at least on name-matched resource.
+        // There is at least one name-matched (perhaps partially) resource.
         PathMap searchPattern;
         PathMap_Initialize2(&searchPattern, de::PathTree::hashPathFragment, Str_Text(searchPath), delimiter);
 
-        DENG2_FOR_EACH_CONST(ResourceNamespace::ResourceList, i, found)
+        DENG2_FOR_EACH_CONST(ResourceNamespace::ResourceList, i, foundResources)
         {
-            de::PathTree::Node& node = **i;
-            if(!node.comparePath(&searchPattern, PCF_NO_BRANCH)) continue;
+            de::PathTree::Node* node = *i;
+            if(!node->comparePath(&searchPattern, PCF_NO_BRANCH)) continue;
 
-            /*
-             * This is the resource we are looking for.
-             */
-
-            // Does the caller want to know the matched path?
-            if(foundPath) node.composePath(foundPath, NULL, foundDelimiter);
-
-            foundResource = true;
+            // This is the resource we are looking for.
+            found = node;
             break;
         }
 
         // Cleanup.
         PathMap_Destroy(&searchPattern);
     }
-    return foundResource;
+    return found;
 }
 
 static bool tryFindResource2(resourceclass_t rclass, ddstring_t const* rawSearchPath,
-    ddstring_t* foundPath, ResourceNamespaceInfo* rnamespaceInfo)
+    ddstring_t* foundPath, ResourceNamespaceInfo* rnInfo)
 {
     DENG_ASSERT(inited && rawSearchPath && !Str_IsEmpty(rawSearchPath));
     DENG_UNUSED(rclass);
@@ -363,12 +236,17 @@ static bool tryFindResource2(resourceclass_t rclass, ddstring_t const* rawSearch
     F_FixSlashes(searchPath, rawSearchPath);
 
     // Is there a namespace we should use?
-    if(rnamespaceInfo)
+    if(rnInfo)
     {
-        AutoStr* name = rnamespaceInfo->composeName(searchPath);
-        if(findResourceInNamespace(rnamespaceInfo, name, searchPath, '/', foundPath, '/'))
+        ResourceNamespace& rnamespace = *rnInfo->rnamespace;
+        if(de::PathTree::Node* found = findResourceInNamespace(rnamespace, searchPath, '/'))
         {
-            if(foundPath) F_PrependBasePath(foundPath, foundPath);
+            // Does the caller want to know the matched path?
+            if(foundPath)
+            {
+                found->composePath(foundPath, NULL, '/');
+                F_PrependBasePath(foundPath, foundPath);
+            }
             return true;
         }
     }
@@ -452,7 +330,7 @@ static bool findResource2(resourceclass_t rclass, ddstring_t const* searchPath,
     DENG_ASSERT(inited && searchPath && !Str_IsEmpty(searchPath));
 
 #if _DEBUG
-    VERBOSE2( Con_Message("Using rnamespace '%s'...\n", rnamespaceInfo? Str_Text(&rnamespaceInfo->name) : "None") )
+    VERBOSE2( Con_Message("Using rnamespace '%s'...\n", rnamespaceInfo? Str_Text(rnamespaceInfo->rnamespace->name()) : "None") )
 #endif
 
     bool found = false;
@@ -542,32 +420,6 @@ static int findResource(resourceclass_t rclass, Uri const* const* list,
         if(result) break;
     }
     return result;
-}
-
-AutoStr* F_ComposeHashNameForFilePath(ddstring_t const* filePath)
-{
-    AutoStr* hashName = AutoStr_NewStd();
-    F_FileName(hashName, Str_Text(filePath));
-    return hashName;
-}
-
-ResourceNamespace::NameHashKey F_HashKeyForAlphaNumericNameIgnoreCase(ddstring_t const* name)
-{
-    DENG_ASSERT(name);
-
-    ResourceNamespace::NameHashKey key = 0;
-    byte op = 0;
-
-    for(char const* c = Str_Text(name); *c; c++)
-    {
-        switch(op)
-        {
-        case 0: key ^= tolower(*c); ++op;   break;
-        case 1: key *= tolower(*c); ++op;   break;
-        case 2: key -= tolower(*c);   op=0; break;
-        }
-    }
-    return key % RESOURCENAMESPACE_HASHSIZE;
 }
 
 static void createPackagesResourceNamespace(void)
@@ -688,10 +540,7 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    de::FileDirectory* directory = new de::FileDirectory(ddBasePath);
-    ResourceNamespace* rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, *directory,
-                                                              F_ComposeHashNameForFilePath,
-                                                              F_HashKeyForFilePathHashName, 0);
+    ResourceNamespace* rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, 0);
     if(searchPathsCount != 0)
     {
         for(uint i = 0; i < searchPathsCount; ++i)
@@ -762,10 +611,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
     {
         uint j, searchPathCount;
         struct namespacedef_s* def = &defs[i];
-        de::FileDirectory* directory = new de::FileDirectory(ddBasePath);
-        ResourceNamespace* rnamespace = F_CreateResourceNamespace(def->name, *directory,
-                                                                  F_ComposeHashNameForFilePath,
-                                                                  F_HashKeyForFilePathHashName, def->flags);
+        ResourceNamespace* rnamespace = F_CreateResourceNamespace(def->name, def->flags);
 
         searchPathCount = 0;
         while(def->searchPaths[searchPathCount] && ++searchPathCount < NAMESPACEDEF_MAX_SEARCHPATHS)
@@ -830,13 +676,9 @@ void F_ResetResourceNamespace(resourcenamespaceid_t rni)
     if(!F_IsValidResourceNamespaceId(rni)) return;
 
     ResourceNamespaceInfo* info = getNamespaceInfoForId(rni);
-    info->rnamespace->clearSearchPaths(ResourceNamespace::ExtraPaths);
-    info->rnamespace->clear();
-    if(info->directory)
-    {
-        info->directory->clear();
-    }
-    info->flags |= RNF_IS_DIRTY;
+    ResourceNamespace& rnamespace = *info->rnamespace;
+    rnamespace.clearSearchPaths(ResourceNamespace::ExtraPaths);
+    rnamespace.clear();
 }
 
 ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni)
@@ -870,17 +712,15 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val > 0 && (unsigned)val < (F_NumResourceNamespaces() + 1)? 1 : 0);
 }
 
-ResourceNamespace* F_CreateResourceNamespace(char const* name, de::FileDirectory& directory,
-    AutoStr* (*composeNameFunc) (ddstring_t const* path),
-    ResourceNamespace::HashNameFunc* hashNameFunc, byte flags)
+ResourceNamespace* F_CreateResourceNamespace(char const* name,  byte flags)
 {
-    DENG_ASSERT(name && composeNameFunc);
+    DENG_ASSERT(name);
     errorIfNotInited("F_CreateResourceNamespace");
 
     if(strlen(name) < RESOURCENAMESPACE_MINNAMELENGTH)
         Con_Error("F_CreateResourceNamespace: Invalid name '%s' (min length:%i)", name, (int)RESOURCENAMESPACE_MINNAMELENGTH);
 
-    ResourceNamespace* rn = new ResourceNamespace(hashNameFunc);
+    ResourceNamespace* rn = new ResourceNamespace(name);
 
     // Add this new namespace to the global list.
     namespaces = (ResourceNamespaceInfo*) M_Realloc(namespaces, sizeof *namespaces * ++numNamespaces);
@@ -889,33 +729,25 @@ ResourceNamespace* F_CreateResourceNamespace(char const* name, de::FileDirectory
             (unsigned long) sizeof *namespaces * numNamespaces);
     ResourceNamespaceInfo* info = &namespaces[numNamespaces-1];
 
-    Str_Init(&info->name);
-    Str_Set(&info->name, name);
     info->rnamespace = rn;
-    info->directory = &directory;
-    info->composeName = composeNameFunc;
-    info->flags = flags | RNF_IS_DIRTY;
+    info->flags = flags;
 
     return rn;
 }
 
-boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
-    Uri const* searchPath, ResourceNamespace::PathGroup group)
+boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
+    Uri const* searchPath)
 {
     errorIfNotInited("F_AddSearchPathToResourceNamespace");
 
     ResourceNamespaceInfo* info = getNamespaceInfoForId(rni);
-    if(info->rnamespace->addSearchPath(group, searchPath, flags))
-    {
-        info->flags |= RNF_IS_DIRTY;
-        return true;
-    }
-    return false;
+    ResourceNamespace& rnamespace = *info->rnamespace;
+    return rnamespace.addSearchPath(ResourceNamespace::ExtraPaths, searchPath, flags);
 }
 
 ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni)
 {
-    return &(getNamespaceInfoForId(rni))->name;
+    return (getNamespaceInfoForId(rni))->rnamespace->name();
 }
 
 Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count)
@@ -1233,11 +1065,14 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
     if(path && !Str_IsEmpty(path))
     {
         ResourceNamespaceInfo* info = getNamespaceInfoForId(rni);
+        ResourceNamespace& rnamespace = *info->rnamespace;
         if(info->flags & RNF_USE_VMAP)
         {
-            int nameLen = Str_Length(&info->name), pathLen = Str_Length(path);
+            int const nameLen = Str_Length(rnamespace.name());
+            int const pathLen = Str_Length(path);
+
             if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
-               !strnicmp(Str_Text(&info->name), Str_Text(path), nameLen))
+               !strnicmp(Str_Text(rnamespace.name()), Str_Text(path), nameLen))
             {
                 Str_Prepend(path, Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->dataPath()));
                 return true;
