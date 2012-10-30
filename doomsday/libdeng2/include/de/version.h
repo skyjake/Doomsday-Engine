@@ -1,6 +1,6 @@
 /**
  * @file version.h
- * Version numbering, naming etc for libdeng 2.0
+ * Version numbering and labeling for libdeng2.
  *
  * @authors Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2011-2012 Daniel Swanson <danij@dengine.net>
@@ -23,48 +23,75 @@
 #ifndef LIBDENG2_VERSION_H
 #define LIBDENG2_VERSION_H
 
-// We'll take the values for most of these from deng 1.0 to avoid duplication
-// (and hopefully avoid any oversights which might occur as a consequence).
-#include "../../engine/portable/include/dd_version.h"
+#ifdef __cplusplus
 
-// Presented to the user in dialogs, messages etc.
-#define LIBDENG2_NICENAME       "deng2"
-#define LIBDENG2_NICEAUTHOR     DENGPROJECT_NICEAUTHOR
-#define LIBDENG2_DETAILS        "Doomsday 2.0 core engine library."
+#include <de/String>
+#include <de/Time>
 
-#define LIBDENG2_HOMEURL        DOOMSDAY_HOMEURL
-#define LIBDENG2_MASTERURL      DOOMSDAY_MASTERURL
-#define LIBDENG2_DOCSURL        DOOMSDAY_DOCSURL
-
-#define LIBDENG2_VERSION_BASE   DOOMSDAY_VERSION_BASE
-#define LIBDENG2_VERSION_NUMBER DOOMSDAY_VERSION_NUMBER // For WIN32 version info.
-#ifdef DOOMSDAY_RELEASE_FULL
-#  define LIBDENG2_RELEASE_FULL   DOOMSDAY_RELEASE_FULL
-#endif
-#ifdef DOOMSDAY_RELEASE_NAME
-#  define LIBDENG2_RELEASE_NAME   DOOMSDAY_RELEASE_NAME
-#endif
+namespace de {
 
 /**
- * LIBDENG2_RELEASE_TYPE determines the classification of the release.
- * Possible values are "Unstable", "Candidate" and "Stable".
+ * Version information about libdeng2. The version numbers are defined in
+ * libdeng2.pro.
+ *
+ * @note For the time being, this is separate from the libdeng1/engine version
+ * number. libdeng2 versioning starts from 2.0.0. When the project as a whole
+ * switches to major version 2, libdeng2 version will be synced with the rest
+ * of the project. Also note that unlike libdeng1, there is only ever three
+ * components in the version.
  */
-#define LIBDENG2_RELEASE_TYPE   DOOMSDAY_RELEASE_TYPE
+class Version
+{
+public:
+    int major;
+    int minor;
+    int patch;
+    int build;
+    String label; ///< Informative label, only intended for humans.
 
-#define LIBDENG2_VERSION_TEXT   DOOMSDAY_VERSION_TEXT
-#if defined(WIN32) && defined(UNICODE)
-#  define LIBDENG2_VERSION_TEXT_WSTR DOOMSDAY_VERSION_TEXT_WSTR
-#endif
+    /**
+     * Version information about this build.
+     */
+    Version();
 
-// For WIN32 version info:
-#if defined(WIN32)
-#  define LIBDENG2_FILENAME       "deng2.dll"
-#  define LIBDENG2_COPYRIGHT      DOOMSDAY_COPYRIGHT
-#  if defined(UNICODE)
-#    define LIBDENG2_DESC_WSTR      TEXT(LIBDENG2_DETAILS)
-#  else
-#    define LIBDENG2_DESC           LIBDENG2_DETAILS
-#  endif
-#endif
+    /**
+     * Version information.
+     *
+     * @param version      Version number in the form "x.y.z".
+     * @param buildNumber  Build number.
+     */
+    Version(const String& version, int buildNumber);
+
+    /**
+     * Forms a version string in the form "x.y.z". If a release label is
+     * defined, it will be included, too: "x.y.z (label)".
+     */
+    String base() const;
+
+    /**
+     * Forms a version string that includes the build number (unless it is
+     * zero).
+     */
+    String asText() const;
+
+    /**
+     * Converts a textual version and updates the Version instance with the
+     * values. The version has the following format: (major).(minor).(patch).
+     * The release label is never part of the version string.
+     *
+     * @param version  Version string. Cannot include a label.
+     */
+    void parseVersionString(const String& version);
+
+    bool operator < (const Version& other) const;
+
+    bool operator == (const Version& other) const;
+
+    bool operator > (const Version& other) const;
+};
+
+} // namespace de
+
+#endif // __cplusplus
 
 #endif // LIBDENG2_VERSION_H

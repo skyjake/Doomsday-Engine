@@ -108,7 +108,7 @@ Library::~Library()
 {
     if(d->library)
     {
-        LOG_AS("Library::~Library");
+        LOG_AS("~Library");
         LOG_TRACE("Unloading ") << d->nativePath();
 
         // Automatically call the shutdown function, if one exists.

@@ -66,7 +66,7 @@ void Folder::clear()
 
 void Folder::populate()
 {
-    LOG_AS("Folder::populate");
+    LOG_AS("Folder");
     
     // Prune the existing files first.
     for(Contents::iterator i = _contents.begin(); i != _contents.end(); )

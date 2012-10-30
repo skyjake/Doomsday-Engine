@@ -1,7 +1,6 @@
 /**
  * @file deng2.rc
- * Win32 resource script. Not compatible with "apstudio", just plain RC 
- * invocation via qmake.
+ * Win32 resource script (template).
  *
  * @authors Copyright &copy; 2008-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2012 Jaakko Keranen <jaakko.keranen@iki.fi>
@@ -55,8 +54,8 @@ BEGIN
     "#endif\r\n"
     "\r\n"
     "VS_VERSION_INFO VERSIONINFO\r\n"
-    "FILEVERSION    2,0,0,669\r\n"
-    "PRODUCTVERSION 2,0,0,669\r\n"
+    "FILEVERSION    LIBDENG2_VERSION_NUMBER\r\n"
+    "PRODUCTVERSION LIBDENG2_VERSION_NUMBER\r\n"
     "# if defined(_DEBUG)\r\n"
     "FILEFLAGSMASK  VS_FF_DEBUG | VS_FF_PRERELEASE\r\n"
     "# elif defined(LIBDENG2_RELEASE_FULL)\r\n"
@@ -74,16 +73,16 @@ BEGIN
     "        BEGIN\r\n"
     "            VALUE ""CompanyName"",     ""\0""\r\n"
     "#if defined(UNICODE)\r\n"
-    "            VALUE ""FileDescription"", ""Doomsday 2 core library"" ""\0""\r\n"
+    "            VALUE ""FileDescription"", LIBDENG2_DESC_WSTR ""\0""\r\n"
     "#else\r\n"
-    "            VALUE ""FileDescription"", ""Doomsday 2 core library"" ""\0""\r\n"
+    "            VALUE ""FileDescription"", LIBDENG2_DESC ""\0""\r\n"
     "#endif\r\n"
-    "            VALUE ""FileVersion"",     ""2.0.0"" ""\0""\r\n"
-    "            VALUE ""InternalName"",    ""deng2"" ""\0""\r\n"
-    "            VALUE ""LegalCopyright"",  ""Copyright (c) "" ""2004-2012 Deng Team"" ""\0""\r\n"
-    "            VALUE ""OriginalFilename"", ""deng2.dll"" ""\0""\r\n"
-    "            VALUE ""ProductName"",     ""deng2"" ""\0""\r\n"
-    "            VALUE ""ProductVersion"",  ""2.0.0"" ""\0""\r\n"
+    "            VALUE ""FileVersion"",     LIBDENG2_VERSION_TEXT ""\0""\r\n"
+    "            VALUE ""InternalName"",    LIBDENG2_NICENAME ""\0""\r\n"
+    "            VALUE ""LegalCopyright"",  ""Copyright (c) "" LIBDENG2_COPYRIGHT ""\0""\r\n"
+    "            VALUE ""OriginalFilename"", LIBDENG2_FILENAME ""\0""\r\n"
+    "            VALUE ""ProductName"",     LIBDENG2_NICENAME ""\0""\r\n"
+    "            VALUE ""ProductVersion"",  LIBDENG2_VERSION_TEXT ""\0""\r\n"
     "#if !defined(_DEBUG) && !defined(LIBDENG2_RELEASE_FULL) && defined(LIBDENG2_RELEASE_NAME)\r\n"
     "            VALUE ""SpecialBuild"",   LIBDENG2_RELEASE_NAME ""\0""\r\n"
     "#endif\r\n"
@@ -102,8 +101,8 @@ END
 
 #ifndef APSTUDIO_INVOKED
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     2,0,0,669
-PRODUCTVERSION  2,0,0,669
+FILEVERSION     LIBDENG2_VERSION_NUMBER
+PRODUCTVERSION  LIBDENG2_VERSION_NUMBER
 # if defined(_DEBUG)
 FILEFLAGSMASK   VS_FF_DEBUG | VS_FF_PRERELEASE
 # elif !defined(LIBDENG2_RELEASE_FULL)
@@ -121,16 +120,16 @@ BEGIN
         BEGIN
             VALUE "CompanyName",    "\0"
 #if defined(UNICODE)
-            VALUE "FileDescription", "Doomsday 2 core library" "\0"
+            VALUE "FileDescription", LIBDENG2_DESC_WSTR "\0"
 #else
-            VALUE "FileDescription", "Doomsday 2 core library" "\0"
+            VALUE "FileDescription", LIBDENG2_DESC "\0"
 #endif
-            VALUE "FileVersion",    "2.0.0" "\0"
-            VALUE "InternalName",   "deng2" "\0"
-            VALUE "LegalCopyright", "Copyright (c) " "2004-2012 Deng Team" "\0"
-            VALUE "OriginalFilename", "deng2.dll" "\0"
-            VALUE "ProductName",    "deng2" "\0"
-            VALUE "ProductVersion", "2.0.0" "\0"
+            VALUE "FileVersion",    LIBDENG2_VERSION_TEXT "\0"
+            VALUE "InternalName",   LIBDENG2_NICENAME "\0"
+            VALUE "LegalCopyright", "Copyright (c) " LIBDENG2_COPYRIGHT "\0"
+            VALUE "OriginalFilename", LIBDENG2_FILENAME "\0"
+            VALUE "ProductName",    LIBDENG2_NICENAME "\0"
+            VALUE "ProductVersion", LIBDENG2_VERSION_TEXT "\0"
 #if !defined(_DEBUG) && !defined(LIBDENG2_RELEASE_FULL) && defined(LIBDENG2_RELEASE_NAME)
             VALUE "SpecialBuild",   LIBDENG2_RELEASE_NAME "\0"
 #endif
