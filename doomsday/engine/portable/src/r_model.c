@@ -532,7 +532,7 @@ static int R_LoadModel(const Uri* uri)
     if(!foundSkins)
     {
         // Lastly try a skin named similarly to the model in the same directory.
-        directory_t* mydir = Dir_ConstructFromPathDir(mdl->fileName);
+        directory_t* mydir = Dir_FromText(mdl->fileName);
         AutoStr* skinSearchPath = AutoStr_NewStd();
 
         F_FileName(skinSearchPath, mdl->fileName);

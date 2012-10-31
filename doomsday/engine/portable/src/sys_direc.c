@@ -81,7 +81,7 @@ directory_t* Dir_NewFromCWD(void)
     return dir;
 }
 
-directory_t* Dir_ConstructFromPathDir(const char* path)
+directory_t* Dir_FromText(const char* path)
 {
     directory_t* dir;
     if(!path || !path[0])

@@ -35,33 +35,48 @@ extern "C" filename_t ddBasePath;
 
 namespace de {
 
-struct ResourceNode
+class Resource
 {
+public:
+    Resource(PathTree::Node& _directoryNode) : directoryNode_(&_directoryNode) {
+#if _DEBUG
+        Str_Init(&name_);
+#endif
+    }
+
+    ~Resource() {
+#if _DEBUG
+        Str_Free(&name_);
+#endif
+    }
+
+    PathTree::Node& directoryNode() const {
+        return *directoryNode_;
+    }
+
+    Resource& setDirectoryNode(PathTree::Node& newDirectoryNode) {
+        directoryNode_ = &newDirectoryNode;
+        return *this;
+    }
+
+#if _DEBUG
+    ddstring_t const& name() const {
+        return name_;
+    }
+
+    Resource& setName(char const* newName) {
+        Str_Set(&name_, newName);
+        return *this;
+    }
+#endif
+
+private:
     /// Directory node for this resource in the owning PathTree
-    PathTree::Node* directoryNode;
+    PathTree::Node* directoryNode_;
 
 #if _DEBUG
     /// Symbolic name of this resource.
-    ddstring_t name;
-#endif
-
-    ResourceNode(PathTree::Node& _directoryNode) : directoryNode(&_directoryNode) {
-#if _DEBUG
-        Str_Init(&name);
-#endif
-    }
-
-    ~ResourceNode() {
-#if _DEBUG
-        Str_Free(&name);
-#endif
-    }
-
-#if _DEBUG
-    ResourceNode& setName(char const* newName) {
-        Str_Set(&name, newName);
-        return *this;
-    }
+    ddstring_t name_;
 #endif
 };
 
@@ -80,7 +95,7 @@ public:
     struct Node
     {
         Node* next;
-        ResourceNode resource;
+        Resource resource;
 
         Node(PathTree::Node& resourceNode)
             : next(0), resource(resourceNode)
@@ -206,7 +221,7 @@ struct ResourceNamespace::Instance
         PathTree::Node const& ptNode)
     {
         NameHash::Node* node = nameHash.buckets[key].first;
-        while(node && node->resource.directoryNode != &ptNode)
+        while(node && &node->resource.directoryNode() != &ptNode)
         {
             node = node->next;
         }
@@ -305,24 +320,19 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     }
 
     // (Re)configure this record.
-    ResourceNode* res = &hashNode->resource;
-    res->directoryNode = &resourceNode;
+    Resource* res = &hashNode->resource;
+    res->setDirectoryNode(resourceNode);
 
     return isNewNode;
 }
 
 bool ResourceNamespace::addSearchPath(PathGroup group, Uri const* _searchPath, int flags)
 {
-    // Is this suitable?
+    // Ensure this is a well formed path.
     if(!_searchPath || Str_IsEmpty(Uri_Path(_searchPath)) ||
-       !Str_CompareIgnoreCase(Uri_Path(_searchPath), "/"))
+       !Str_CompareIgnoreCase(Uri_Path(_searchPath), "/") ||
+       Str_RAt(Uri_Path(_searchPath), 0) != '/')
         return false;
-
-    // Ensure this is a well formed path (only directories can be search paths).
-    AutoStr* path = Uri_Compose(_searchPath);
-    F_AppendMissingSlash(path);
-
-    Uri* searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
 
     // The addition of a new search path means the namespace is now dirty.
     d->flags |= RNF_IS_DIRTY;
@@ -330,16 +340,15 @@ bool ResourceNamespace::addSearchPath(PathGroup group, Uri const* _searchPath, i
     // Have we seen this path already (we don't want duplicates)?
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
-        if(Uri_Equality(i->uri(), searchPath))
+        if(Uri_Equality(i->uri(), _searchPath))
         {
             i->setFlags(flags);
-            Uri_Delete(searchPath);
             return true;
         }
     }
 
     // Prepend to the path list - newer paths have priority.
-    d->searchPaths.insert(group, SearchPath(flags, searchPath));
+    d->searchPaths.insert(group, SearchPath(flags, Uri_NewCopy(_searchPath)));
 
     return true;
 }
@@ -386,11 +395,11 @@ void ResourceNamespace::debugPrint() const
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* node = bucket.first; node; node = node->next)
         {
-            ResourceNode const& res = node->resource;
-            AutoStr* path = res.directoryNode->composePath(AutoStr_NewStd(), NULL);
+            Resource const& res = node->resource;
+            AutoStr* path = res.directoryNode().composePath(AutoStr_NewStd(), NULL);
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
-                << resIdx << key << Str_Text(&res.name) << Str_Text(path);
+                    << resIdx << key << Str_Text(&res.name()) << Str_Text(path);
 
             ++resIdx;
         }
@@ -427,10 +436,10 @@ int ResourceNamespace::findAll(ddstring_t const* searchPath, ResourceList& found
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
-            ResourceNode& resource = hashNode->resource;
-            if(name && qstrnicmp(Str_Text(name), Str_Text(resource.directoryNode->name()), Str_Length(name))) continue;
+            Resource& resource = hashNode->resource;
+            if(name && qstrnicmp(Str_Text(name), Str_Text(resource.directoryNode().name()), Str_Length(name))) continue;
 
-            found.push_back(resource.directoryNode);
+            found.push_back(&resource.directoryNode());
         }
     }
 

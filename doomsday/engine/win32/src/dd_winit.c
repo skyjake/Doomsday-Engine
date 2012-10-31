@@ -178,7 +178,7 @@ static void determineGlobalPaths(application_t* app)
     // Ensure it ends with a directory separator.
     F_AppendMissingSlashCString(path, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(path);
-    temp = Dir_ConstructFromPathDir(path);
+    temp = Dir_FromText(path);
     strncpy(ddBinPath, Str_Text(temp), FILENAME_T_MAXLEN);
     Dir_Delete(temp);
     }
@@ -188,11 +188,11 @@ static void determineGlobalPaths(application_t* app)
 #ifdef UNICODE
         wchar_t path[FILENAME_T_MAXLEN];
         GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
-        temp = Dir_ConstructFromPathDir(ToAnsiString(path));
+        temp = Dir_FromText(ToAnsiString(path));
 #else
         filename_t path;
         GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
-        temp = Dir_ConstructFromPathDir(path);
+        temp = Dir_FromText(path);
 #endif
         strncpy(ddBinPath, Dir_Path(temp), FILENAME_T_MAXLEN);
         Dir_Delete(temp);

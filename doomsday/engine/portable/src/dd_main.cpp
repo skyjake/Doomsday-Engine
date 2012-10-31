@@ -1426,14 +1426,11 @@ boolean DD_Init(void)
 
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            char const* filePath = CommandLine_PathAt(p);
-            directory_t* dir;
-            Uri* searchPath;
-
             /// @todo Do not add these as search paths, publish them directly
             ///       to the "packages" ResourceNamespace.
-            dir = Dir_ConstructFromPathDir(filePath);
-            searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
+
+            directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
+            Uri* searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
 
             rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, searchPath, SPF_NO_DESCEND);
 

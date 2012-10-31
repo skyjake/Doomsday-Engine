@@ -2441,7 +2441,7 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
     if(modelfn)
     {
         // The "first choice" directory is that in which the model file resides.
-        directory_t* mydir = Dir_ConstructFromPathDir(modelfn);
+        directory_t* mydir = Dir_FromText(modelfn);
         Str_Appendf(&searchPath, "%s%s", mydir->path, skin);
         found = F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath) != 0;
         Dir_Delete(mydir);

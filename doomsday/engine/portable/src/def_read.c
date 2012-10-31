@@ -840,11 +840,14 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
         if(ISTOKEN("ModelPath"))
         {
             Uri* newSearchPath;
+            AutoStr* path;
 
             READSTR(label);
             CHECKSC;
 
-            newSearchPath = Uri_NewWithPath2(label, RC_NULL);
+            path = AutoStr_FromTextStd(label);
+            F_AppendMissingSlash(path);
+            newSearchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
             F_AddExtraSearchPathToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL),
                                                     0, newSearchPath);
             Uri_Delete(newSearchPath);

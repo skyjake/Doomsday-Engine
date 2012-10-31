@@ -51,7 +51,7 @@ directory_t* Dir_NewFromCWD(void);
  * \note if not absolute then it will be interpeted as relative to the current
  * working directory path.
  */
-directory_t* Dir_ConstructFromPathDir(const char* path);
+directory_t* Dir_FromText(const char* path);
 
 void Dir_Delete(directory_t* dir);
 

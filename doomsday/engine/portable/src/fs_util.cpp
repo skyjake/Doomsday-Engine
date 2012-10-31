@@ -50,7 +50,7 @@ using namespace de;
 void F_FileDir(ddstring_t* dst, const ddstring_t* src)
 {
     /// @todo Potentially truncates @a src to FILENAME_T_MAXLEN
-    directory_t* dir = Dir_ConstructFromPathDir(Str_Text(src));
+    directory_t* dir = Dir_FromText(Str_Text(src));
     Str_Set(dst, Dir_Path(dir));
     Dir_Delete(dir);
 }

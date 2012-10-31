@@ -626,18 +626,13 @@ void F_CreateNamespacesForFileResourcePaths(void)
         if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
         {
             char const* path = CommandLine_NextAsPath();
-            ddstring_t path2;
 
-            // Override paths are added in reverse order.
-            Str_Init(&path2);
-            Str_Appendf(&path2, "%s/$(Game.IdentityKey)", path);
-            Uri_SetUri3(uri, Str_Text(&path2), RC_NULL);
+            QByteArray path2 = String("%1$(Game.IdentityKey)/").arg(path).toUtf8();
+            Uri_SetUri3(uri, path2.constData(), RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
 
             Uri_SetUri3(uri, path, RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
-
-            Str_Free(&path2);
         }
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
