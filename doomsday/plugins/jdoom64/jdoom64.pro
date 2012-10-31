@@ -94,7 +94,8 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(doom64)
-    linkToBundledLibdeng(doom64)
+    fixPluginInstallId($$TARGET, 0)
+    linkToBundledLibdeng2($$TARGET)
+    linkToBundledLibdeng($$TARGET)
 }
 

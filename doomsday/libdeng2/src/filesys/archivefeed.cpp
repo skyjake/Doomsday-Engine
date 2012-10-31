@@ -39,7 +39,7 @@ ArchiveFeed::ArchiveFeed(ArchiveFeed& parentFeed, const String& basePath)
 
 ArchiveFeed::~ArchiveFeed()
 {
-    LOG_AS("ArchiveFeed::~ArchiveFeed");
+    LOG_AS("~ArchiveFeed");
     
     if(_archive)
     {

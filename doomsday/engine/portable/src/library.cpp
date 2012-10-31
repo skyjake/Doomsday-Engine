@@ -30,11 +30,11 @@
 
 struct library_s { // typedef Library
     Str* path;
-    de::LibraryFile* libFile;
+    de::LibraryFile* file;
     bool isGamePlugin;
     std::string typeId;
 
-    library_s() : path(0), libFile(0), isGamePlugin(false) {}
+    library_s() : path(0), file(0), isGamePlugin(false) {}
 };
 
 static ddstring_t* lastError;
@@ -65,8 +65,8 @@ void Library_ReleaseGames(void)
                     "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
 
             // Close the Library.
-            DENG_ASSERT(lib->libFile);
-            lib->libFile->clear();
+            DENG_ASSERT(lib->file);
+            lib->file->clear();
         }
     }
 #endif
@@ -77,15 +77,15 @@ static void reopenLibraryIfNeeded(Library* lib)
 {
     DENG_ASSERT(lib);
 
-    if(!lib->libFile->loaded())
+    if(!lib->file->loaded())
     {
         LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_DEBUG,
                 "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
 
         // Make sure the Library gets opened again now.
-        lib->libFile->library();
+        lib->file->library();
 
-        DENG_ASSERT(lib->libFile->loaded());
+        DENG_ASSERT(lib->file->loaded());
     }
 }
 #endif
@@ -108,7 +108,7 @@ Library* Library_New(const char* filePath)
 
         // Create the Library instance.
         Library* lib = new Library;
-        lib->libFile = &libFile;
+        lib->file = &libFile;
         lib->path = Str_Set(Str_NewStd(), filePath);
         lib->typeId = libFile.library().type().toStdString();
         loadedLibs.append(lib);
@@ -135,7 +135,7 @@ void Library_Delete(Library *lib)
     DENG_ASSERT(lib);
 
     // Unload the library from memory.
-    lib->libFile->clear();
+    lib->file->clear();
 
     Str_Delete(lib->path);
     loadedLibs.removeOne(lib);
@@ -151,7 +151,7 @@ const char* Library_Type(const Library* lib)
 de::LibraryFile& Library_File(Library* lib)
 {
     DENG_ASSERT(lib);
-    return *lib->libFile;
+    return *lib->file;
 }
 
 void* Library_Symbol(Library* lib, const char* symbolName)
@@ -162,7 +162,7 @@ void* Library_Symbol(Library* lib, const char* symbolName)
 #ifdef UNIX
         reopenLibraryIfNeeded(lib);
 #endif
-        return lib->libFile->library().address(symbolName);
+        return lib->file->library().address(symbolName);
     }
     catch(const de::Library::SymbolMissingError& er)
     {

@@ -62,6 +62,8 @@ namespace de
     public:
         App(int& argc, char** argv, GUIMode guiMode);
 
+        ~App();
+
         /**
          * Initializes all the application's subsystems. This includes Config
          * and FS. Has to be called manually in the application's

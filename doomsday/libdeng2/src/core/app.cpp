@@ -24,6 +24,7 @@
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/Module"
+#include "de/Version"
 #include "de/math.h"
 #include <QDesktopServices>
 
@@ -53,6 +54,14 @@ App::App(int& argc, char** argv, GUIMode guiMode)
         DirectoryFeed::changeWorkingDir(_cmdLine.at(0).fileNamePath() + "/..");
     }
 #endif
+}
+
+App::~App()
+{
+    LOG_AS("~App");
+
+    delete _config;
+    _config = 0;
 }
 
 String App::nativeBinaryPath()
@@ -145,7 +154,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
     String appDir = _appPath.fileNameNativePath();
     _fs.makeFolder("/data").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data")));
-    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data\\config")));
+    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\config")));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 
 #else // UNIX
@@ -153,9 +162,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
     }
-    String dataDir = nativeBasePath() / "data";
-    _fs.makeFolder("/data").attach(new DirectoryFeed(dataDir));
-    _fs.makeFolder("/config").attach(new DirectoryFeed(dataDir / "config"));
+    _fs.makeFolder("/data").attach(new DirectoryFeed(nativeBasePath() / "data"));
+    _fs.makeFolder("/config").attach(new DirectoryFeed(nativeBasePath() / "config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data/modules"));
 #endif
 
@@ -192,7 +200,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     // Successful construction without errors, so drop our guard.
     _config = conf.take();
 
-    LOG_VERBOSE("libdeng2::App ") << LIBDENG2_VERSION << " subsystems initialized.";
+    LOG_VERBOSE("libdeng2::App %s subsystems initialized.") << Version().asText();
 }
 
 bool App::notify(QObject* receiver, QEvent* event)

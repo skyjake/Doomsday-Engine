@@ -138,7 +138,7 @@ namespace de
          * automatically when the library is first loaded, and can then be
          * queried at any time even after the library has been unloaded.
          */
-        const String& type() const { return _type; }
+        const String& type() const;
 
         enum SymbolLookupMode {
             RequiredSymbol, ///< Symbol must be exported.
@@ -204,15 +204,8 @@ namespace de
         }
 
     private:  
-        /// Handle to the shared library.
-        QLibrary* _library;
-        
-        typedef QMap<String, void*> Symbols;
-        Symbols _symbols;
-        
-        /// Type identifier for the library (e.g., "deng-plugin/generic").
-        /// Queried by calling deng_LibraryType(), if one is exported in the library.
-        String _type;
+        struct Instance;
+        Instance* d;
     };
 }
 

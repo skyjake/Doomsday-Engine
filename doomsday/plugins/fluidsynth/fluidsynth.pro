@@ -26,8 +26,9 @@ win32 {
     target.path = $$DENG_PLUGIN_LIB_DIR
 }
 macx {
-    linkToBundledLibdeng2(audio_fluidsynth)
-    linkToBundledLibdeng(audio_fluidsynth)
+    fixPluginInstallId($$TARGET, 1)
+    linkToBundledLibdeng2($$TARGET)
+    linkToBundledLibdeng($$TARGET)
 }
 unix:!macx {
     INSTALLS += target

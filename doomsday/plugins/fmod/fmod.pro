@@ -37,10 +37,11 @@ win32 {
     target.path = $$DENG_PLUGIN_LIB_DIR
 }
 else:macx {
-    # Bundle the FMOD shared library in dsFMOD.bundle.
-    doPostLink("cp -f \"$$FMOD_DIR/api/lib/libfmodex.dylib\" audio_fmod.bundle/")
-    doPostLink("install_name_tool -id @executable_path/../DengPlugins/audio_fmod.bundle/libfmodex.dylib audio_fmod.bundle/libfmodex.dylib")
-    doPostLink("install_name_tool -change ./libfmodex.dylib @executable_path/../DengPlugins/audio_fmod.bundle/libfmodex.dylib audio_fmod.bundle/audio_fmod")
+    fixPluginInstallId($$TARGET, 1)
+    # Bundle the FMOD shared library under Frameworks.
+    doPostLink("cp -f \"$$FMOD_DIR/api/lib/libfmodex.dylib\" ../../engine/Doomsday.app/Contents/Frameworks/libfmodex.dylib")
+    doPostLink("install_name_tool -id @executable_path/../Frameworks/libfmodex.dylib ../../engine/Doomsday.app/Contents/Frameworks/libfmodex.dylib")
+    doPostLink("install_name_tool -change ./libfmodex.dylib @executable_path/../Frameworks/libfmodex.dylib audio_fmod.bundle/audio_fmod")
 }
 else {
     INSTALLS += target

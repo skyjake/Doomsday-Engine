@@ -45,6 +45,7 @@ win32 {
 }
 
 macx {
-    linkToBundledLibdeng2(wadmapconverter)
-    linkToBundledLibdeng(wadmapconverter)
+    fixPluginInstallId($$TARGET, 1)
+    linkToBundledLibdeng2($$TARGET)
+    linkToBundledLibdeng($$TARGET)
 }

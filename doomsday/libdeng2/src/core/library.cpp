@@ -17,41 +17,75 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "de/libdeng2.h"
 #include "de/Library"
 #include "de/Log"
+
+#if defined(UNIX) && defined(DENG2_QT_4_7_OR_NEWER) && !defined(DENG2_QT_4_8_OR_NEWER)
+#  define DENG2_USE_DLOPEN
+#  include <dlfcn.h>
+typedef void* Handle;
+#else
+typedef QLibrary* Handle;
+#endif
 
 using namespace de;
 
 const char* Library::DEFAULT_TYPE = "library/generic";
 
-Library::Library(const String& nativePath)
-    : _library(0), _type(DEFAULT_TYPE)
+struct Library::Instance
 {
-    LOG_AS("Library::Library");
+    /// Handle to the shared library.
+    Handle library;
 
-    /*
-#ifdef MACOSX
-    // If the library happens to be in a bundle, just use the bundle path.
-    String path = nativePath;
-    if(path.fileNamePath().fileNameExtension() == ".bundle")
-    {
-        path = path; //.fileNamePath().fileNameWithoutExtension();
+    typedef QMap<String, void*> Symbols;
+    Symbols symbols;
+
+    /// Type identifier for the library (e.g., "deng-plugin/generic").
+    /// Queried by calling deng_LibraryType(), if one is exported in the library.
+    String type;
+
+    Instance() : library(0), type(DEFAULT_TYPE)
+    {}
+
+#ifdef DENG2_USE_DLOPEN
+    String fileName;
+    String nativePath() { return fileName; }
+    bool isLoaded() const { return library != 0; }
+#else
+    String nativePath() {
+        DENG2_ASSERT(library);
+        return library->fileName();
     }
-    LOG_TRACE("%s") << path;
-    _library = new QLibrary(path);
-#else*/
-    LOG_TRACE("%s") << nativePath;
-    _library = new QLibrary(nativePath);
-//#endif
-    _library->setLoadHints(QLibrary::ResolveAllSymbolsHint);
-    _library->load();
+    bool isLoaded() const { return library->isLoaded(); }
+#endif
+};
 
-    if(!_library->isLoaded())
+Library::Library(const String& nativePath) : d(0)
+{
+    d = new Instance;
+
+    LOG_AS("Library::Library");
+    LOG_TRACE("Loading ") << nativePath;
+
+#ifndef DENG2_USE_DLOPEN
+    d->library = new QLibrary(nativePath);
+    d->library->setLoadHints(QLibrary::ResolveAllSymbolsHint);
+    d->library->load();
+#else
+    d->fileName = nativePath;
+    d->library = dlopen(nativePath.toUtf8().constData(), RTLD_NOW);
+#endif
+
+    if(!d->isLoaded())
     {
-        QString msg = _library->errorString();
-
-        delete _library;
-        _library = 0;
+#ifndef DENG2_USE_DLOPEN
+        QString msg = d->library->errorString();
+        delete d->library;
+#else
+        QString msg = dlerror();
+#endif
+        d->library = 0;
 
         /// @throw LoadError Opening of the dynamic library failed.
         throw LoadError("Library::Library", msg);
@@ -60,11 +94,11 @@ Library::Library(const String& nativePath)
     if(hasSymbol("deng_LibraryType"))
     {
         // Query the type identifier.
-        _type = DENG2_SYMBOL(deng_LibraryType)();
+        d->type = DENG2_SYMBOL(deng_LibraryType)();
     }
     
     // Automatically call the initialization function, if one exists.
-    if(_type.beginsWith("deng-plugin/") && hasSymbol("deng_InitializePlugin"))
+    if(d->type.beginsWith("deng-plugin/") && hasSymbol("deng_InitializePlugin"))
     {
         DENG2_SYMBOL(deng_InitializePlugin)();
     }
@@ -72,34 +106,53 @@ Library::Library(const String& nativePath)
 
 Library::~Library()
 {
-    if(_library)
+    if(d->library)
     {
+        LOG_AS("~Library");
+        LOG_TRACE("Unloading ") << d->nativePath();
+
         // Automatically call the shutdown function, if one exists.
-        if(_type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
+        if(d->type.beginsWith("deng-plugin/") && hasSymbol("deng_ShutdownPlugin"))
         {
             DENG2_SYMBOL(deng_ShutdownPlugin)();
         }
 
-        delete _library;
+#ifndef DENG2_USE_DLOPEN
+        d->library->unload();
+        delete d->library;
+#else
+        dlclose(d->library);
+#endif
     }
+
+    delete d;
+}
+
+const String &Library::type() const
+{
+    return d->type;
 }
 
 void* Library::address(const String& name, SymbolLookupMode lookup)
 {
-    if(!_library)
+    if(!d->library)
     {
         /// @throw SymbolMissingError There is no library loaded at the moment.
         throw SymbolMissingError("Library::symbol", "Library not loaded");
     }
     
     // Already looked up?
-    Symbols::iterator found = _symbols.find(name);
-    if(found != _symbols.end())
+    Instance::Symbols::iterator found = d->symbols.find(name);
+    if(found != d->symbols.end())
     {
         return found.value();
     }
     
-    void* ptr = _library->resolve(name.toAscii().constData());
+#ifndef DENG2_USE_DLOPEN
+    void* ptr = d->library->resolve(name.toAscii().constData());
+#else
+    void* ptr = dlsym(d->library, name.toAscii().constData());
+#endif
 
     if(!ptr)
     {
@@ -111,13 +164,18 @@ void* Library::address(const String& name, SymbolLookupMode lookup)
         return 0;
     }
 
-    _symbols[name] = ptr;
+    d->symbols[name] = ptr;
     return ptr;
 }
 
 bool Library::hasSymbol(const String &name) const
 {
     // First check the symbols cache.
-    if(_symbols.find(name) != _symbols.end()) return true;
-    return _library->resolve(name.toAscii().constData()) != 0;
+    if(d->symbols.find(name) != d->symbols.end()) return true;
+
+#ifndef DENG2_USE_DLOPEN
+    return d->library->resolve(name.toAscii().constData()) != 0;
+#else
+    return dlsym(d->library, name.toAscii().constData()) != 0;
+#endif
 }

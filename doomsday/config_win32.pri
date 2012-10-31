@@ -27,5 +27,7 @@ DENG_DOCS_DIR       = $$DENG_BASE_DIR/doc
 # Tell rc where to get the API headers.
 QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"
 
+deng_debug: $$QMAKE_RC = $$QMAKE_RC /d _DEBUG
+
 # Also build the OpenAL plugin.
 CONFIG += deng_openal

@@ -25,6 +25,7 @@
 #include "de/NumberValue"
 #include "de/Reader"
 #include "de/Writer"
+#include "de/Version"
 
 using namespace de;
 
@@ -35,7 +36,7 @@ Config::Config(const String& path) : _configPath(path)
 
 Config::~Config()
 {
-    LOG_AS("Config::~Config");
+    LOG_AS("~Config");
     try
     {
         write();
@@ -51,10 +52,15 @@ void Config::read()
     LOG_AS("Config::read");
     
     // Current version.
+    Version verInfo;
     QScopedPointer<ArrayValue> version(new ArrayValue());
-    version->add(new NumberValue(LIBDENG2_MAJOR_VERSION));
-    version->add(new NumberValue(LIBDENG2_MINOR_VERSION));
-    version->add(new NumberValue(LIBDENG2_PATCHLEVEL));
+    version->add(new NumberValue(verInfo.major));
+    version->add(new NumberValue(verInfo.minor));
+    version->add(new NumberValue(verInfo.patch));
+    version->add(new NumberValue(verInfo.build));
+
+    File& scriptFile = App::rootFolder().locate<File>(_configPath);
+    bool shouldRunScript = false;
 
     try
     {
@@ -63,36 +69,53 @@ void Config::read()
         Reader(file) >> names();
         
         // If the saved config is from a different version, rerun the script.
-        // Otherwise, we're done.
         const Value& oldVersion = names()["__version__"].value();
-        if(!oldVersion.compare(*version))
+        if(oldVersion.compare(*version))
+        {
+            // Version mismatch: store the old version in a separate variable.
+            _config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
+                                               Variable::AllowArray | Variable::ReadOnly));
+            shouldRunScript = true;
+        }
+        else
         {
             // Versions match.
             LOG_MSG("") << _writtenConfigPath << " matches version " << version->asText();
-            return;
         }
 
-        // Version mismatch: store the old version in a separate variable.
-        _config.globals().add(new Variable("__oldversion__", oldVersion.duplicate(),
-                                           Variable::AllowArray | Variable::ReadOnly));
+        // Also check the timestamp of written config vs. they config script.
+        // If script is newer, it should be rerun.
+        if(scriptFile.status().modifiedAt > file.status().modifiedAt)
+        {
+            LOG_MSG("%s is newer than %s, rerunning the script.")
+                    << _configPath << _writtenConfigPath;
+            shouldRunScript = true;
+        }
     }
     catch(const Folder::NotFoundError&)
     {
         // It is missing if the config hasn't been written yet.
+        shouldRunScript = true;
     }
     catch(const Error& error)
     {
         LOG_WARNING(error.what());
+
+        // Something is wrong, maybe rerunning will fix it.
+        shouldRunScript = true;
     }
             
-    // The version of libdeng2 is automatically included.
+    // The version of libdeng2 is automatically included in the namespace.
     _config.globals().add(new Variable("__version__", version.take(),
                                        Variable::AllowArray | Variable::ReadOnly));
 
-    // Read the main configuration. 
-    Script script(App::rootFolder().locate<File>(_configPath));
-    _config.run(script);
-    _config.execute();
+    if(shouldRunScript)
+    {
+        // Read the main configuration.
+        Script script(scriptFile);
+        _config.run(script);
+        _config.execute();
+    }
 }
 
 void Config::write()

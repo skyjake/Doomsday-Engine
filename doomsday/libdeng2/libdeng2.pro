@@ -32,6 +32,12 @@ QT += core network gui opengl
 win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
+
+    # For Windows, an .rc file is generated for embedded version info in the binary.
+    system(python "$$PWD/res/win32/generate_rc.py" "$$PWD/res/win32/deng2.rc" \
+        $$LIBDENG2_MAJOR_VERSION $$LIBDENG2_MINOR_VERSION $$LIBDENG2_PATCHLEVEL \
+        $$LIBDENG2_RELEASE_LABEL $$DENG_BUILD)
+    RC_FILE = res/win32/deng2.rc
 }
 
 # Enable strict warnings for C++ code.
@@ -62,7 +68,8 @@ HEADERS += \
     include/de/Log \
     include/de/LogBuffer \
     include/de/UnixInfo \
-    include/de/Vector
+    include/de/Vector \
+    include/de/Version
 
 HEADERS += \
     include/de/c_wrapper.h \
@@ -87,6 +94,7 @@ HEADERS += \
 SOURCES += \
     src/c_wrapper.cpp \
     src/error.cpp \
+    src/version.cpp \
     src/core/app.cpp \
     src/core/commandline.cpp \
     src/core/config.cpp \
@@ -121,8 +129,4 @@ macx {
 !macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
-}
-
-win32 {
-    RC_FILE = res/win32/deng2.rc
 }
