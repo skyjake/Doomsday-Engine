@@ -29,10 +29,10 @@
 #include "m_misc.h"
 
 struct library_s { // typedef Library
-    Str* path;
-    de::LibraryFile* file;
-    bool isGamePlugin;
-    std::string typeId;
+    Str* path;              ///< de::FS path of the library (e.g., "/bin/doom.dll").
+    de::LibraryFile* file;  ///< File where the plugin has been loaded from.
+    bool isGamePlugin;      ///< Is this a game plugin? (only one should be in use at a time)
+    std::string typeId;     ///< deng2 library type ID e.g., "deng-plugin/game".
 
     library_s() : path(0), file(0), isGamePlugin(false) {}
 };
