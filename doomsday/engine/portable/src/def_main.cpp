@@ -721,35 +721,17 @@ static void Def_InitTextDef(ddtext_t* txt, char const* str)
     txt->text = (char*) M_Realloc(txt->text, strlen(txt->text) + 1);
 }
 
-/**
- * Callback for DD_ReadProcessDED.
- */
-int Def_ReadDEFileHandle(const char* fn, PathDirectoryNodeType type, void* parm)
+void Def_ReadProcessDED(char const* fileName)
 {
-    DENG_UNUSED(parm);
+    if(!fileName || !fileName[0]) return;
 
-    // Skip directories.
-    if(type == PT_BRANCH)
-        return true;
+    if(!App_FileSystem()->checkFileId(fileName))
+        Con_Message("Warning: Def_ReadProcessDED \"%s\" not found!\n", fileName);
 
-    if(App_FileSystem()->checkFileId(fn))
+    if(!DED_Read(&defs, fileName))
     {
-        if(!DED_Read(&defs, fn))
-            Con_Error("Def_ReadDEFileHandle: %s\n", dedReadError);
+        Con_Error("Def_ReadProcessDED: %s\n", dedReadError);
     }
-    else
-    {
-        Con_Message("Warning:Def_ReadDEFileHandle \"%s\" not found!\n", fn);
-    }
-
-    // Continue processing files.
-    return true;
-}
-
-void Def_ReadProcessDED(const char* fileName)
-{
-    assert(fileName && fileName[0]);
-    Def_ReadDEFileHandle(fileName, PT_LEAF, 0);
 }
 
 /**

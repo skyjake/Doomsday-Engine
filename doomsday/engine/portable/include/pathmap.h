@@ -33,8 +33,24 @@ extern "C" {
  */
 typedef struct pathmapfragment_s {
     ushort hash;
-    const char* from, *to;
-    struct pathmapfragment_s* next;
+    char const* from, *to;
+    struct pathmapfragment_s* parent;
+
+#ifdef __cplusplus
+    /// @return  Determined length of this fragment in characters.
+    int length() const
+    {
+        if(!qstrcmp(to, "") && !qstrcmp(from, ""))
+            return 0;
+        return (to - from) + 1;
+    }
+
+    /// @return  @c true iff this fragment is a wildcard in some pattern.
+    bool isWild() const
+    {
+        return to == from && *from == '*';
+    }
+#endif
 } PathMapFragment;
 
 /// Size of the fixed-length "short" fragment buffer allocated with the map.
@@ -49,10 +65,10 @@ typedef struct pathmapfragment_s {
  *
  * @return The resultant hash key.
  */
-typedef ushort (*hashpathfragmentcallback_t)(const char* path, size_t len, char delimiter);
+typedef ushort (*hashpathfragmentcallback_t)(char const* path, size_t len, char delimiter);
 
 typedef struct pathmap_s {
-    const char* path; ///< The mapped path.
+    char const* path; ///< The mapped path.
     char delimiter; ///< Character used to delimit path fragments.
     uint fragmentCount; ///< Total number of fragments in the path.
 
@@ -92,10 +108,8 @@ typedef struct pathmap_s {
  *
  * @return  Pointer to "this" instance for caller convenience.
  */
-PathMap* PathMap_Initialize2(PathMap* pathMap,
-    hashpathfragmentcallback_t hashFragmentCallback, const char* path, char delimiter);
-PathMap* PathMap_Initialize(PathMap* pathMap,
-    hashpathfragmentcallback_t hashFragmentCallback, const char* path); /*delimiter='/'*/
+PathMap* PathMap_Initialize2(PathMap* pathMap, hashpathfragmentcallback_t hashFragmentCallback, char const* path, char delimiter);
+PathMap* PathMap_Initialize(PathMap* pathMap, hashpathfragmentcallback_t hashFragmentCallback, char const* path/*, delimiter = '/'*/);
 
 /**
  * Destroy @a pathMap releasing any resources acquired for it.
@@ -122,7 +136,7 @@ uint PathMap_Size(PathMap* pathMap);
  *
  * @return  Processed fragment info else @c NULL if @a idx is invalid.
  */
-const PathMapFragment* PathMap_Fragment(PathMap* pathMap, uint idx);
+PathMapFragment* PathMap_Fragment(PathMap* pathMap, uint idx);
 
 #if _DEBUG
 /**

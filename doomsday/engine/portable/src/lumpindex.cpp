@@ -51,7 +51,7 @@ namespace de {
 ///@}
 
 /// Stores indexes into LumpIndex::Instance::records forming a chain of
-/// PathDirectoryNode fragment hashes. For ultra-fast name lookups.
+/// PathTree::Node fragment hashes. For ultra-fast name lookups.
 struct LumpIndexHashRecord
 {
     lumpnum_t head, next;
@@ -94,7 +94,7 @@ struct LumpIndex::Instance
         for(int i = 0; i < numElements; ++i)
         {
             File1 const& lump = *(lumps[i]);
-            PathDirectoryNode const& node = lump.directoryNode();
+            PathTree::Node const& node = lump.directoryNode();
             ushort j = node.hash() % (unsigned)numElements;
 
             (*hashMap)[i].next = (*hashMap)[j].head; // Prepend to the chain.
@@ -388,21 +388,21 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
     bool builtSearchPattern = false;
     PathMap searchPattern;
 
-    int hash = PathDirectory::hashPathFragment(path, strlen(path)) % d->hashMap->size();
+    int hash = PathTree::hashPathFragment(path, strlen(path)) % d->hashMap->size();
     int idx;
     for(idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
         File1 const& lump = *d->lumps[idx];
-        PathDirectoryNode const& node = lump.directoryNode();
+        PathTree::Node const& node = lump.directoryNode();
 
         // Time to build the pattern?
         if(!builtSearchPattern)
         {
-            PathMap_Initialize(&searchPattern, PathDirectory::hashPathFragment, path);
+            PathMap_Initialize(&searchPattern, PathTree::hashPathFragment, path);
             builtSearchPattern = true;
         }
 
-        if(node.matchDirectory(0, &searchPattern))
+        if(node.comparePath(&searchPattern, 0))
         {
             // This is the lump we are looking for.
             break;

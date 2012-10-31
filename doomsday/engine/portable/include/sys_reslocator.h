@@ -31,7 +31,7 @@
 
 #include "dd_types.h"
 
-#include "resourcenamespace.h"
+//#include "resourcenamespace.h"
 #include "abstractresource.h"
 #include "filedirectory.h"
 
@@ -125,35 +125,6 @@ void F_ResetResourceNamespace(resourcenamespaceid_t rni);
 
 void F_CreateNamespacesForFileResourcePaths(void);
 
-/**
- * @return  Newly created hash name. Ownership passes to the caller who should
- * ensure to release it with Str_Delete when done.
- */
-AutoStr* F_ComposeHashNameForFilePath(Str const* filePath);
-
-/**
- * This is a hash function. It uses the resource name to generate a
- * somewhat-random number between 0 and RESOURCENAMESPACE_HASHSIZE.
- *
- * @return  The generated hash key.
- */
-resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(ddstring_t const* name);
-
-#define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
-
-resourcenamespace_t* F_CreateResourceNamespace(char const* name,
-    FileDirectory* directory, AutoStr* (*composeHashNameFunc) (Str const* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (Str const* name), byte flags);
-
-/**
- * @param rni  Unique identifier of the namespace to add to.
- * @param flags  @see searchPathFlags
- * @param searchPath  Uri representing the search path to be added.
- * @param group  Group to add the new search path to.
- */
-boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
-    Uri const* searchPath, resourcenamespace_searchpathgroup_t group);
-
 ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni);
 
 /// @return  Number of resource namespaces.
@@ -162,10 +133,20 @@ uint F_NumResourceNamespaces(void);
 /// @return  @c true iff @a value can be interpreted as a valid resource namespace id.
 boolean F_IsValidResourceNamespaceId(int value);
 
+#if 0
 /**
  * Given an id return the associated resource namespace object.
  */
-resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni);
+ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
+#endif
+
+/**
+ * @param rni  Unique identifier of the namespace to add to.
+ * @param flags  @see searchPathFlags
+ * @param searchPath  Uri representing the search path to be added.
+ */
+boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
+    Uri const* searchPath);
 
 /**
  * Attempt to locate a known resource.

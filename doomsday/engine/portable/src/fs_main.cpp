@@ -31,11 +31,12 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "fileid.h"
-#include "game.h"
 #include "file.h"
-#include "lumpindex.h"
+#include "fileid.h"
 #include "fileinfo.h"
+#include "game.h"
+#include "lumpindex.h"
+#include "resourcenamespace.h"
 #include "wad.h"
 #include "zip.h"
 
@@ -926,7 +927,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     F_PrependBasePath(searchPattern, searchPattern);
 
     PathMap patternMap;
-    PathMap_Initialize(&patternMap, PathDirectory::hashPathFragment, Str_Text(searchPattern));
+    PathMap_Initialize(&patternMap, PathTree::hashPathFragment, Str_Text(searchPattern));
 
     /*
      * Check the Zip directory.
@@ -934,7 +935,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.lumps())
     {
         File1 const& lump = **i;
-        PathDirectoryNode const& node = lump.directoryNode();
+        PathTree::Node const& node = lump.directoryNode();
 
         AutoStr* filePath = 0;
         bool patternMatched;
@@ -945,7 +946,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         }
         else
         {
-            patternMatched = node.matchDirectory(PCF_MATCH_FULL, &patternMap);
+            patternMatched = node.comparePath(&patternMap, PCF_MATCH_FULL);
         }
 
         if(!patternMatched) continue;
@@ -956,7 +957,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
             filePath = lump.composePath();
         }
 
-        found.push_back(PathListItem(Str_Text(filePath), node.type() == PT_BRANCH? A_SUBDIR : 0));
+        found.push_back(PathListItem(Str_Text(filePath), node.type() == PathTree::Branch? A_SUBDIR : 0));
     }
 
     PathMap_Destroy(&patternMap);

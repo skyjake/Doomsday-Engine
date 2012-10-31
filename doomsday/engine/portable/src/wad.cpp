@@ -25,7 +25,7 @@
 #include "de_base.h"
 #include "de_filesys.h"
 #include "lumpcache.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 
 #include "wad.h"
 
@@ -65,7 +65,7 @@ public:
     /// @return  Name of this file.
     ddstring_t const* name() const
     {
-        return directoryNode().pathFragment();
+        return directoryNode().name();
     }
 
     /**
@@ -85,7 +85,7 @@ public:
      *
      * @return  Directory node for this file.
      */
-    PathDirectoryNode const& directoryNode() const
+    PathTree::Node const& directoryNode() const
     {
         return dynamic_cast<Wad&>(container()).lumpDirectoryNode(info_.lumpIdx);
     }
@@ -156,8 +156,8 @@ public:
     {
         crc_ = uint(info_.size);
 
-        de::PathDirectoryNode const& node = directoryNode();
-        ddstring_t const* name = node.pathFragment();
+        de::PathTree::Node const& node = directoryNode();
+        ddstring_t const* name = node.name();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
         {
@@ -181,10 +181,10 @@ struct Wad::Instance
     size_t arcRecordsOffset;
 
     /// Directory containing structure and info records for all lumps.
-    PathDirectory* lumpDirectory;
+    PathTree* lumpDirectory;
 
-    /// LUT which maps logical lump indices to PathDirectoryNodes.
-    typedef std::vector<PathDirectoryNode*> LumpNodeLut;
+    /// LUT which maps logical lump indices to PathTreeNodes.
+    typedef std::vector<PathTree::Node*> LumpNodeLut;
     LumpNodeLut* lumpNodeLut;
 
     /// Lump data cache.
@@ -213,8 +213,8 @@ struct Wad::Instance
     {
         if(lumpDirectory)
         {
-            PathDirectory_Iterate(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
-                                  NULL, PATHDIRECTORY_NOHASH, clearWadFileWorker);
+            PathTree_Iterate(reinterpret_cast<pathtree_s*>(lumpDirectory), PCF_NO_BRANCH,
+                                  NULL, PATHTREE_NOHASH, clearWadFileWorker);
             delete lumpDirectory;
         }
 
@@ -222,14 +222,14 @@ struct Wad::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    static int clearWadFileWorker(pathdirectorynode_s* _node, void* /*parameters*/)
+    static int clearWadFileWorker(pathtreenode_s* _node, void* /*parameters*/)
     {
-        PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
-        WadFile* lump = reinterpret_cast<WadFile*>(node->userData());
+        PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
+        WadFile* lump = reinterpret_cast<WadFile*>(node->userPointer());
         if(lump)
         {
             // Detach our user data from this node.
-            node->setUserData(0);
+            node->setUserPointer(0);
             delete lump;
         }
         return 0; // Continue iteration.
@@ -315,7 +315,7 @@ struct Wad::Instance
         Str_Reserve(Str_Init(&absPath), LUMPNAME_T_LASTINDEX + 4/*.lmp*/);
 
         // Intialize the directory.
-        lumpDirectory = new PathDirectory(PDF_ALLOW_DUPLICATE_LEAF);
+        lumpDirectory = new PathTree(PDF_ALLOW_DUPLICATE_LEAF);
 
         // Build our runtime representation from the archived lump directory.
         wadlumprecord_t const* arcRecord = arcRecords;
@@ -334,8 +334,8 @@ struct Wad::Instance
                                      littleEndianByteOrder.toNative(arcRecord->size),
                                      littleEndianByteOrder.toNative(arcRecord->size)),
                             self);
-            PathDirectoryNode* node = lumpDirectory->insert(Str_Text(&absPath));
-            node->setUserData(lump);
+            PathTree::Node* node = lumpDirectory->insert(Str_Text(&absPath));
+            node->setUserPointer(lump);
         }
 
         Str_Free(&absPath);
@@ -344,11 +344,11 @@ struct Wad::Instance
         delete[] arcRecords;
     }
 
-    static int buildLumpNodeLutWorker(pathdirectorynode_s* _node, void* parameters)
+    static int buildLumpNodeLutWorker(pathtreenode_s* _node, void* parameters)
     {
-        PathDirectoryNode* node = reinterpret_cast<PathDirectoryNode*>(_node);
+        PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
         Instance* wadInst = (Instance*)parameters;
-        WadFile* lump = reinterpret_cast<WadFile*>(node->userData());
+        WadFile* lump = reinterpret_cast<WadFile*>(node->userPointer());
         DENG2_ASSERT(lump && wadInst->self->isValidIndex(lump->info().lumpIdx)); // Sanity check.
         (*wadInst->lumpNodeLut)[lump->info().lumpIdx] = node;
         return 0; // Continue iteration.
@@ -363,8 +363,8 @@ struct Wad::Instance
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         if(!lumpDirectory) return;
 
-        PathDirectory_Iterate2(reinterpret_cast<pathdirectory_s*>(lumpDirectory), PCF_NO_BRANCH,
-                               NULL, PATHDIRECTORY_NOHASH, buildLumpNodeLutWorker, (void*)this);
+        PathTree_Iterate2(reinterpret_cast<pathtree_s*>(lumpDirectory), PCF_NO_BRANCH,
+                               NULL, PATHTREE_NOHASH, buildLumpNodeLutWorker, (void*)this);
     }
 };
 
@@ -401,7 +401,7 @@ bool Wad::empty()
     return !lumpCount();
 }
 
-de::PathDirectoryNode& Wad::lumpDirectoryNode(int lumpIdx) const
+de::PathTree::Node& Wad::lumpDirectoryNode(int lumpIdx) const
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
@@ -419,7 +419,7 @@ File1& Wad::lump(int lumpIdx)
     LOG_AS("Wad");
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lump", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
-    return *reinterpret_cast<WadFile*>((*d->lumpNodeLut)[lumpIdx]->userData());
+    return *reinterpret_cast<WadFile*>((*d->lumpNodeLut)[lumpIdx]->userPointer());
 }
 
 Wad& Wad::clearCachedLump(int lumpIdx, bool* retCleared)

@@ -34,7 +34,7 @@
 #include "dd_types.h"
 #include "de_system.h"
 #include "dd_input.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,7 +92,7 @@ typedef struct cvar_s {
     cvartype_t type;
 
     /// Pointer to this variable's node in the directory.
-    PathDirectoryNode* directoryNode;
+    PathTreeNode* directoryNode;
 
     /// Pointer to the user data.
     void* ptr;

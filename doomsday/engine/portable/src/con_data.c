@@ -39,7 +39,7 @@
 #include "cbuffer.h"
 #include "m_misc.h"
 #include "blockset.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ D_CMD(PrintVarStats);
 static boolean inited = false;
 
 /// Console variable directory.
-static PathDirectory* cvarDirectory;
+static PathTree* cvarDirectory;
 
 static ccmd_t* ccmdListHead;
 /// \todo Replace with a data structure that allows for deletion of elements.
@@ -107,11 +107,11 @@ void Con_DataRegister(void)
 #endif
 }
 
-static int markVariableUserDataFreed(PathDirectoryNode* node, void* parameters)
+static int markVariableUserDataFreed(PathTreeNode* node, void* parameters)
 {
     assert(node && parameters);
     {
-    cvar_t* var = PathDirectoryNode_UserData(node);
+    cvar_t* var = PathTreeNode_UserPointer(node);
     void** ptr = (void**) parameters;
     if(var)
     switch(CVar_Type(var))
@@ -128,18 +128,16 @@ static int markVariableUserDataFreed(PathDirectoryNode* node, void* parameters)
     }
 }
 
-static int clearVariable(PathDirectoryNode* node, void* parameters)
+static int clearVariable(PathTreeNode* node, void* parameters)
 {
-    cvar_t* var = (cvar_t*)PathDirectoryNode_UserData(node);
+    cvar_t* var = (cvar_t*)PathTreeNode_UserPointer(node);
 
     DENG_UNUSED(parameters);
 
     if(var)
     {
-        assert(PT_LEAF == PathDirectoryNode_Type(node));
-
         // Detach our user data from this node.
-        PathDirectoryNode_SetUserData(node, 0);
+        PathTreeNode_SetUserPointer(node, 0);
 
         if(CVar_Flags(var) & CVF_CAN_FREE)
         {
@@ -151,7 +149,7 @@ static int clearVariable(PathDirectoryNode* node, void* parameters)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, markVariableUserDataFreed, ptr);
+                PathTree_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, markVariableUserDataFreed, ptr);
                 free(*ptr); *ptr = emptyString;
                 break;
 
@@ -160,7 +158,7 @@ static int clearVariable(PathDirectoryNode* node, void* parameters)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, markVariableUserDataFreed, ptr);
+                PathTree_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, markVariableUserDataFreed, ptr);
                 Uri_Delete((Uri*)*ptr); *ptr = emptyUri;
                 break;
 
@@ -188,17 +186,17 @@ static void clearVariables(void)
 #endif
     if(!cvarDirectory) return;
 
-    PathDirectory_Iterate(cvarDirectory, flags, NULL, PATHDIRECTORY_NOHASH, clearVariable);
-    PathDirectory_Clear(cvarDirectory);
+    PathTree_Iterate(cvarDirectory, flags, NULL, PATHTREE_NOHASH, clearVariable);
+    PathTree_Clear(cvarDirectory);
 }
 
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(const cvartemplate_t* tpl)
 {
-    PathDirectoryNode* node = PathDirectory_Insert2(cvarDirectory, tpl->path, CVARDIRECTORY_DELIMITER);
+    PathTreeNode* node = PathTree_Insert2(cvarDirectory, tpl->path, CVARDIRECTORY_DELIMITER);
     cvar_t* newVar;
 
-    if(PathDirectoryNode_UserData(node))
+    if(PathTreeNode_UserPointer(node))
     {
         Con_Error("Con_AddVariable: A variable with path '%s' is already known!", tpl->path);
         return NULL; // Unreachable.
@@ -215,7 +213,7 @@ static cvar_t* addVariable(const cvartemplate_t* tpl)
     newVar->max = tpl->max;
     newVar->notifyChanged = tpl->notifyChanged;
     newVar->directoryNode = node;
-    PathDirectoryNode_SetUserData(node, newVar);
+    PathTreeNode_SetUserPointer(node, newVar);
 
     knownWordsNeedUpdate = true;
     return newVar;
@@ -331,12 +329,12 @@ typedef struct {
     boolean ignoreHidden;
 } countvariableparams_t;
 
-static int countVariable(const PathDirectoryNode* node, void* parameters)
+static int countVariable(const PathTreeNode* node, void* parameters)
 {
     assert(NULL != node && NULL != parameters);
     {
     countvariableparams_t* p = (countvariableparams_t*) parameters;
-    cvar_t* var = PathDirectoryNode_UserData(node);
+    cvar_t* var = PathTreeNode_UserPointer(node);
     if(!(p->ignoreHidden && (var->flags & CVF_HIDE)))
     {
         if(!VALID_CVARTYPE(p->type) && !p->hidden)
@@ -354,11 +352,11 @@ static int countVariable(const PathDirectoryNode* node, void* parameters)
     }
 }
 
-static int addVariableToKnownWords(const PathDirectoryNode* node, void* parameters)
+static int addVariableToKnownWords(const PathTreeNode* node, void* parameters)
 {
     assert(NULL != node && NULL != parameters);
     {
-    cvar_t* var = PathDirectoryNode_UserData(node);
+    cvar_t* var = PathTreeNode_UserPointer(node);
     uint* index = (uint*) parameters;
     if(NULL != var && !(var->flags & CVF_HIDE))
     {
@@ -391,7 +389,7 @@ static void updateKnownWords(void)
     countCVarParams.ignoreHidden = true;
     if(cvarDirectory)
     {
-        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &countCVarParams);
+        PathTree_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &countCVarParams);
     }
 
     // Build the known words table.
@@ -417,7 +415,7 @@ static void updateKnownWords(void)
     if(0 != countCVarParams.count)
     {
         /// \note cvars are NOT sorted.
-        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, addVariableToKnownWords, &c);
+        PathTree_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, addVariableToKnownWords, &c);
     }
 
     // Add aliases?
@@ -478,7 +476,7 @@ int CVar_Flags(const cvar_t* var)
 AutoStr* CVar_ComposePath(const cvar_t* var)
 {
     assert(var);
-    return PathDirectoryNode_ComposePath2(var->directoryNode, AutoStr_NewStd(), NULL, CVARDIRECTORY_DELIMITER);
+    return PathTreeNode_ComposePath2(var->directoryNode, AutoStr_NewStd(), NULL, CVARDIRECTORY_DELIMITER);
 }
 
 void CVar_SetUri2(cvar_t* var, const Uri* uri, int svFlags)
@@ -811,11 +809,11 @@ void Con_AddVariableList(const cvartemplate_t* tplList)
 
 cvar_t* Con_FindVariable(const char* path)
 {
-    PathDirectoryNode* node;
+    PathTreeNode* node;
     assert(inited);
-    node = PathDirectory_Find2(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
+    node = PathTree_Find2(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
     if(!node) return NULL;
-    return (cvar_t*) PathDirectoryNode_UserData(node);
+    return (cvar_t*) PathTreeNode_UserPointer(node);
 }
 
 /// \note Part of the Doomsday public API
@@ -1434,7 +1432,7 @@ void Con_InitDatabases(void)
     if(inited) return;
 
     // Create the empty variable directory now.
-    cvarDirectory = PathDirectory_New();
+    cvarDirectory = PathTree_New();
 
     ccmdListHead = 0;
     ccmdBlockSet = 0;
@@ -1466,7 +1464,7 @@ void Con_ShutdownDatabases(void)
     if(!inited) return;
 
     Con_ClearDatabases();
-    PathDirectory_Delete(cvarDirectory), cvarDirectory = NULL;
+    PathTree_Delete(cvarDirectory), cvarDirectory = NULL;
     Uri_Delete(emptyUri), emptyUri = NULL;
     inited = false;
 }
@@ -1805,22 +1803,22 @@ D_CMD(PrintVarStats)
         {
             p.count = 0;
             p.type = type;
-            PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
+            PathTree_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &p);
             Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(type)), p.count);
         }
         p.count = 0;
         p.type = -1;
         p.hidden = true;
-        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
-        numCVars = PathDirectory_Size(cvarDirectory);
+        PathTree_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &p);
+        numCVars = PathTree_Size(cvarDirectory);
         numCVarsHidden = p.count;
     }
     Con_Printf("       Total: %u\n      Hidden: %u\n\n", numCVars, numCVarsHidden);
 
     if(cvarDirectory)
     {
-        PathDirectory_DebugPrintHashDistribution(cvarDirectory);
-        PathDirectory_DebugPrint(cvarDirectory, CVARDIRECTORY_DELIMITER);
+        PathTree_DebugPrintHashDistribution(cvarDirectory);
+        PathTree_DebugPrint(cvarDirectory, CVARDIRECTORY_DELIMITER);
     }
     return true;
 }

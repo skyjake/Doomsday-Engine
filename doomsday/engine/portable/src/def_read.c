@@ -56,7 +56,7 @@
 #include "de_refresh.h"
 #include "de_defs.h"
 
-#include "resourcenamespace.h"
+//#include "resourcenamespace.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
@@ -845,8 +845,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             CHECKSC;
 
             newSearchPath = Uri_NewWithPath2(label, RC_NULL);
-            F_AddSearchPathToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL),
-                                               0, newSearchPath, SPG_EXTRA);
+            F_AddExtraSearchPathToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL),
+                                                    0, newSearchPath);
             Uri_Delete(newSearchPath);
         }
 

@@ -4,7 +4,7 @@
  * FileDirectory. Core system component representing a hierarchical file path
  * structure.
  *
- * A specialization of de::PathDirectory which implements automatic population
+ * A specialization of de::PathTree which implements automatic population
  * of the directory itself from the virtual file system.
  *
  * @note Paths are resolved prior to pushing them into the directory.
@@ -33,13 +33,13 @@
 #define LIBDENG_FILEDIRECTORY_H
 
 #include "uri.h"
-#include "pathdirectory.h"
+#include "pathtree.h"
 
 #ifdef __cplusplus
 
 namespace de {
 
-class FileDirectory : private PathDirectory
+class FileDirectory : private PathTree
 {
 public:
     /**
@@ -57,7 +57,7 @@ public:
     void clear();
 
     /**
-     * Find a path in this directory.
+     * Find a single path in this directory.
      *
      * @param type              Only consider nodes of this type.
      * @param searchPath        Relative or absolute path.
@@ -68,8 +68,19 @@ public:
      *
      * @return  @c true iff successful.
      */
-    bool find(PathDirectoryNodeType type, char const* searchPath, char searchDelimiter = '/',
+    bool find(NodeType type, char const* searchPath, char searchDelimiter = '/',
               ddstring_t* foundPath = 0, char foundDelimiter = '/');
+
+    /**
+     * Add a new path. Duplicates are automatically pruned.
+     *
+     * @param flags         @ref searchPathFlags
+     * @param path          Path to be added.
+     * @param callback      Callback to make if the path was added to this directory.
+     * @param parameters    Passed to the callback.
+     */
+    void addPath(int flags, Uri const* searchPath,
+                 int (*callback) (Node& node, void* parameters), void* parameters = 0);
 
     /**
      * Add a new set of paths. Duplicates are automatically pruned.
@@ -81,7 +92,7 @@ public:
      * @param parameters    Passed to the callback.
      */
     void addPaths(int flags, Uri const* const* searchPaths, uint searchPathsCount,
-                  int (*callback) (PathDirectoryNode& node, void* parameters) = 0,
+                  int (*callback) (Node& node, void* parameters) = 0,
                   void* parameters = 0);
 
     /**
@@ -93,19 +104,18 @@ public:
      * @param parameters    Passed to the callback.
      */
     void addPathList(int flags, char const* pathList,
-                     int (*callback) (PathDirectoryNode& node, void* parameters) = 0, void* parameters = 0);
+                     int (*callback) (Node& node, void* parameters) = 0, void* parameters = 0);
 
     /**
-     * Collate all paths in the directory into a list.
+     * Collate all referenced paths in the hierarchy into a list.
      *
-     * @param count         Total number of collated paths is written back here.
+     * @param found         Set of paths that match the result.
      * @param flags         @ref pathComparisonFlags
-     * @param delimiter     Fragments of the path will be delimited by this character.
+     * @param delimiter     Fragments of the composed path will be delimited by this character.
      *
-     * @return  The allocated list; it is the responsibility of the caller to Str_Free()
-     *          each string in the list and free() the list itself.
+     * @return  Number of paths found.
      */
-    ddstring_t* collectPaths(size_t* count, int flags, char delimiter='/');
+    int findAllPaths(FoundPaths& found, int flags = 0, char delimiter = '/');
 
 #if _DEBUG
     static void debugPrint(FileDirectory& inst);
@@ -113,34 +123,8 @@ public:
 #endif
 
 private:
-    void clearNodeInfo();
-
-    PathDirectoryNode* addPathNodes(ddstring_t const* rawPath);
-
-    int addChildNodes(PathDirectoryNode& node, int flags,
-                      int (*callback) (PathDirectoryNode& node, void* parameters),
-                      void* parameters);
-
-    /**
-     * @param filePath      Possibly-relative path to an element in the virtual file system.
-     * @param flags         @ref searchPathFlags
-     * @param callback      If not @c NULL the callback's logic dictates whether iteration continues.
-     * @param parameters    Passed to the callback.
-     * @param nodeType      Type of element, either a branch (directory) or a leaf (file).
-     *
-     * @return  Non-zero if the current iteration should stop else @c 0.
-     */
-    int addPathNodesAndMaybeDescendBranch(bool descendBranches, ddstring_t const* filePath,
-                                          PathDirectoryNodeType nodeType, int flags,
-                                          int (*callback) (PathDirectoryNode& node, void* parameters),
-                                          void* parameters);
-
-private:
-    /// Used with relative path directories.
-    ddstring_t* basePath;
-
-    /// Used with relative path directories.
-    PathDirectoryNode* baseNode;
+    struct Instance;
+    Instance* d;
 };
 
 } // namespace de
