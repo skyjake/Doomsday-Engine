@@ -405,7 +405,7 @@ void ResourceNamespace::debugPrint() const
         }
     }
 
-    LOG_DEBUG("  %lu %s in namespace.") << resIdx << (resIdx == 1? "resource" : "resources");
+    LOG_DEBUG("  %u %s in namespace.") << resIdx << (resIdx == 1? "resource" : "resources");
 }
 #endif
 

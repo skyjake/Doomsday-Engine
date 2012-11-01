@@ -270,6 +270,7 @@ public:
     public:
         Arg(dint i)              : _type(INTEGER)        { _data.intValue   = i; }
         Arg(duint i)             : _type(INTEGER)        { _data.intValue   = i; }
+        Arg(long int i)          : _type(INTEGER)        { _data.intValue   = i; }
         Arg(long unsigned int i) : _type(INTEGER)        { _data.intValue   = i; }
         Arg(duint64 i)           : _type(INTEGER)        { _data.intValue   = dint64(i); }
         Arg(dint64 i)            : _type(INTEGER)        { _data.intValue   = i; }
