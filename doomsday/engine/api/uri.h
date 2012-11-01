@@ -64,6 +64,7 @@
 ///@}
 
 #ifdef __cplusplus
+#ifndef DENG2_C_API_ONLY
 
 #include <de/Log>
 
@@ -236,7 +237,8 @@ namespace de
     };
 
 } // namespace de
-#endif
+#endif // DENG2_C_API_ONLY
+#endif //__cplusplus
 
 #ifdef __cplusplus
 extern "C" {
