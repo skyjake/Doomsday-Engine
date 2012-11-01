@@ -143,7 +143,7 @@ namespace de
         ddstring_t* resolved() const;
 
         /**
-         * Same as Uri_Resolved(), but the returned string is non-modifiable and must
+         * Same as @ref resolved(), but the returned string is non-modifiable and must
          * not be deleted. Always use this when you don't need to keep a copy of the
          * resolved Uri.
          *
@@ -152,7 +152,6 @@ namespace de
         ddstring_t const* resolvedConst() const;
 
         /**
-         * @param uri  Uri instance.
          * @return  Plain-text String representation of the current scheme.
          */
         ddstring_t const* scheme() const;
@@ -173,7 +172,7 @@ namespace de
         Uri& setPath(char const* path);
 
         /**
-         * Update uri by parsing new values from the specified arguments.
+         * Update this uri by parsing new values from the specified arguments.
          *
          * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
          *
@@ -185,9 +184,9 @@ namespace de
         Uri& setUri(ddstring_t const* path);
 
         /**
-         * Transform the uri into a plain-text representation. Any internal encoding
-         * method or symbolic identifiers will be included in their original, unresolved
-         * form in the resultant string.
+         * Compose from this uri a plain-text representation. Any internal encoding
+         * method or symbolic identifiers will be left unchanged in the resultant
+         * string (not decoded, not resolved).
          *
          * @return  Plain-text String representation.
          */
@@ -203,11 +202,10 @@ namespace de
         LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
 
         /**
-         * Serialize @a uri using @a writer.
+         * Serialize this uri using @a writer.
          *
          * @note Scheme should only be omitted when it can be unambiguously deduced from context.
          *
-         * @param uri               Uri instance.
          * @param writer            Writer instance.
          * @param omitComponents    @ref uriComponentFlags
          */
