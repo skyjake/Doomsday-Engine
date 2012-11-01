@@ -382,7 +382,7 @@ String Uri::asText() const
     // Just compose it for now, we can worry about making it 'pretty' later.
     AutoStr* path = compose();
     Str_PercentDecode(path);
-    return String::fromUtf8(path);
+    return QString::fromUtf8(Str_Text(path));
 }
 
 static void writeUri(ddstring_t const* scheme, ddstring_t const* path, struct writer_s& writer)
@@ -391,7 +391,7 @@ static void writeUri(ddstring_t const* scheme, ddstring_t const* path, struct wr
     Str_Write(path,   &writer);
 }
 
-void Uri::write(struct writer_s& writer, int omitComponents) const
+void Uri::write(writer_s& writer, int omitComponents) const
 {
     ddstring_t emptyString;
     ddstring_t const* scheme;
@@ -408,7 +408,7 @@ void Uri::write(struct writer_s& writer, int omitComponents) const
     writeUri(scheme, &d->path, writer);
 }
 
-Uri& Uri::read(struct reader_s& reader, char const* defaultScheme)
+Uri& Uri::read(reader_s& reader, char const* defaultScheme)
 {
     Str_Read(&d->scheme, &reader);
     Str_Read(&d->path,   &reader);
@@ -423,12 +423,12 @@ void Uri::debugPrint(int indent, int flags, char const* unresolvedText) const
 {
     indent = MAX_OF(0, indent);
 
-    AutoStr* raw = asText();
+    String raw = asText();
     char const* resolvedPath = (flags & UPF_OUTPUT_RESOLVED)? Str_Text(resolvedConst()) : "";
     if(!unresolvedText) unresolvedText = "--(!)incomplete";
 
     LOG_DEBUG("%*s\"%s\"%s%s") << indent << ""
-      << ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(raw)) : Str_Text(raw))
+      << ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(raw.toUtf8().constData()) : raw)
       << ((flags & UPF_OUTPUT_RESOLVED)? (resolvedPath? "=> " : unresolvedText) : "")
       << ((flags & UPF_OUTPUT_RESOLVED) && resolvedPath? ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(resolvedPath) : resolvedPath) : "");
 }

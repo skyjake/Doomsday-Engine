@@ -123,7 +123,7 @@ namespace de
         /**
          * Constructs a Uri instance by reading it from @a reader.
          */
-        static Uri* fromReader(Reader& reader);
+        static Uri* fromReader(reader_s& reader);
 
         /**
          * Clears the uri, returning it to an empty state.
@@ -209,7 +209,7 @@ namespace de
          * @param writer            Writer instance.
          * @param omitComponents    @ref uriComponentFlags
          */
-        void write(Writer& writer, int omitComponents = 0) const;
+        void write(writer_s& writer, int omitComponents = 0) const;
 
         /**
          * Deserializes this uri using @a reader. If the deserialized Uri lacks a scheme,
@@ -218,7 +218,7 @@ namespace de
          * @param reader            Reader instance.
          * @param defaultScheme     Default scheme.
          */
-        Uri& read(Reader& reader, char const* defaultScheme = 0);
+        Uri& read(reader_s& reader, char const* defaultScheme = 0);
 
         /**
          * Print debug ouput for this uri.
