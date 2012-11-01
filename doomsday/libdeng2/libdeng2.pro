@@ -41,9 +41,10 @@ win32 {
 }
 
 # Enable strict warnings for C++ code.
-*-g++ {
-    QMAKE_CXXFLAGS_WARN_ON *= -Wall -Wextra -pedantic -Wno-long-long
+*-g++|*-clang* {
+    QMAKE_CXXFLAGS_WARN_ON *= -Wall -Wextra -pedantic
 }
+*-g++: QMAKE_CXXFLAGS_WARN_ON *= -Wno-long-long
 win32-msvc* {
     #QMAKE_CXXFLAGS_WARN_ON ~= s/-W3/-W4/
 }
