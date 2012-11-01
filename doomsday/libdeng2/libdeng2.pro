@@ -38,6 +38,8 @@ win32 {
         $$LIBDENG2_MAJOR_VERSION $$LIBDENG2_MINOR_VERSION $$LIBDENG2_PATCHLEVEL \
         $$LIBDENG2_RELEASE_LABEL $$DENG_BUILD)
     RC_FILE = res/win32/deng2.rc
+
+    OTHER_FILES += res/win32/deng2.rc.in
 }
 
 # Enable strict warnings for C++ code.
