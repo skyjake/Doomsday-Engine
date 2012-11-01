@@ -25,6 +25,10 @@
 #ifndef LIBDENG_API_FONT_RENDERER_H
 #define LIBDENG_API_FONT_RENDERER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Font attributes are managed as a finite stack of attribute sets.
  * This value defines the maximum allowed depth of the attribute stack.
@@ -223,5 +227,9 @@ int FR_CharHeight(unsigned char ch);
 
 /// \deprecated Will be replaced with per-text-object animations.
 void FR_ResetTypeinTimer(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_API_FONT_RENDERER_H */
