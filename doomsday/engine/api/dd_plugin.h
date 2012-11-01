@@ -32,6 +32,10 @@
 
 #include "../portable/include/dd_version.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LIBDENG_PLUGINDESC      "(" DOOMSDAY_NICENAME " Plugin)"
 
 /**
@@ -115,5 +119,9 @@ int Plug_RemoveHook(int hook_type, hookfunc_t hook);
 int Plug_CheckForHook(int hookType);
 
 ///@}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_PLUGIN_H */

@@ -25,6 +25,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// @addtogroup defs
 ///@{
 
@@ -202,5 +206,9 @@ typedef struct {
 } sectortype_t;
 
 ///@}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_SHARED_GAME_DEFINITIONS_H

@@ -26,6 +26,14 @@
 #ifndef LIBDENG_API_GUI_H
 #define LIBDENG_API_GUI_H
 
+#include "dd_animator.h"
+#include "dd_fontrenderer.h"
+#include "dd_vectorgraphic.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup gui GUI
  */
@@ -45,10 +53,6 @@ enum {
     UIC_HELP,
     NUM_UI_COLORS
 };
-
-#include "dd_animator.h"
-#include "dd_fontrenderer.h"
-#include "dd_vectorgraphic.h"
 
 typedef ident_t fi_objectid_t;
 
@@ -299,5 +303,9 @@ void FIData_TextAccelerate(struct fi_object_s* obj);
 size_t FIData_TextLength(struct fi_object_s* text);
 
 ///@}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_API_GUI_H */

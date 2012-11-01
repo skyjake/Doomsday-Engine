@@ -23,8 +23,16 @@
 #ifndef DENGPROJECT_H
 #define DENGPROJECT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DENGPROJECT_HOMEURL     "http://sourceforge.net/projects/deng/"
 #define DENGPROJECT_AUTHOR      "dengteam"
 #define DENGPROJECT_NICEAUTHOR  "Deng Team"
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* DENGPROJECT_H */

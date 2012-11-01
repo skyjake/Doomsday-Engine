@@ -22,12 +22,12 @@
 #ifndef LIBDENG_DATA_RECT_H
 #define LIBDENG_DATA_RECT_H
 
+#include "point.h"
+#include "size.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "point.h"
-#include "size.h"
 
 /**
  * RectRaw. Rectangle Raw (i)integer. Is intended as a handy POD
