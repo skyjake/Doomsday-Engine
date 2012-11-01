@@ -633,7 +633,7 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     ZipFile& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
-    LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
+    LOG_TRACE("\"%s:%s\" (%u bytes%s)")
         << F_PrettyPath(Str_Text(composePath()))
         << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.info().size
@@ -695,7 +695,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     LOG_AS("Zip::readLump");
     ZipFile const& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
 
-    LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
+    LOG_TRACE("\"%s:%s\" (%u bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(composePath()))
         << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.size()

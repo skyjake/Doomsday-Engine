@@ -128,7 +128,7 @@ static bool resolveUri(Uri const* uri, ddstring_t* dest)
 
         if(*p != '(')
         {
-            LOG_WARNING("Invalid character '%c' in \"%s\" at %lu, cannot resolve.")
+            LOG_WARNING("Invalid character '%c' in \"%s\" at %u, cannot resolve.")
                 << *p << Str_Text(&uri->path) << (p - Str_Text(&uri->path));
             goto parseEnded;
         }
@@ -184,7 +184,7 @@ static bool resolveUri(Uri const* uri, ddstring_t* dest)
             Str_Append(dest, Str_Text(&part));
             if(*p != '(')
             {
-                LOG_WARNING("Invalid character '%c' in \"%s\" at %lu, cannot resolve.")
+                LOG_WARNING("Invalid character '%c' in \"%s\" at %u, cannot resolve.")
                     << *p << Str_Text(&uri->path) << (p - Str_Text(&uri->path));
                 goto parseEnded;
             }
