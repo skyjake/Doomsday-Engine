@@ -1426,7 +1426,7 @@ public:
                     float parTime = float(String(args.at(arg++)).toIntLeft(0, 10));
 
                     // Apply.
-                    Uri* uri  = composeMapUri(episode, map);
+                    uri_s* uri    = composeMapUri(episode, map);
                     AutoStr* path = Uri_ToString(uri);
 
                     ded_mapinfo_t* def;

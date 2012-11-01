@@ -503,7 +503,7 @@ void CVar_SetUri2(cvar_t* var, const Uri* uri, int svFlags)
         return;
 
     // Compose the new uri.
-    newUri = Uri_NewCopy(uri);
+    newUri = Uri_Dup(uri);
 
     if(!CV_URIPTR(var) || !Uri_Equality(CV_URIPTR(var), newUri))
         changed = true;

@@ -299,20 +299,20 @@ EXPORTS
     Uri_New                     @238 NONAME
     Uri_NewWithPath2            @497 NONAME
     Uri_NewWithPath             @244 NONAME
-    Uri_NewCopy                 @249 NONAME
-    Uri_NewFromReader           @741 NONAME
+    Uri_Dup                     @249 NONAME
+    Uri_FromReader              @741 NONAME
     Uri_Copy                    @250 NONAME
     Uri_Delete                  @255 NONAME
-    Uri_SetUri                  @326 NONAME
-    Uri_SetUri2                 @328 NONAME
-    Uri_SetUri3                 @332 NONAME
+    Uri_SetUriStr               @326 NONAME
+    Uri_SetUri                  @328 NONAME
+    Uri_SetUri2                 @332 NONAME
     Uri_Resolved                @405 NONAME
+    Uri_ResolvedConst           @760 NONAME
     Uri_Clear                   @406 NONAME
     Uri_Scheme                  @486 NONAME
     Uri_Path                    @487 NONAME
     Uri_Compose                 @488 NONAME
     Uri_ToString                @489 NONAME
-    Uri_ToString2               @760 NONAME
     Uri_Equality                @493 NONAME
     Uri_SetPath                 @437 NONAME
     Uri_SetScheme               @500 NONAME
@@ -320,9 +320,9 @@ EXPORTS
     Uri_Write2                  @736 NONAME
     Uri_Read                    @737 NONAME
     Uri_ReadWithDefaultScheme   @738 NONAME
-    Uri_Print                   @821 NONAME
-    Uri_Print2                  @822 NONAME
-    Uri_Print3                  @823 NONAME
+    Uri_DebugPrint              @821 NONAME
+    Uri_DebugPrint2             @822 NONAME
+    Uri_DebugPrint3             @823 NONAME
 
 ; Base: Definitions.
     Def_Get                     @11 NONAME

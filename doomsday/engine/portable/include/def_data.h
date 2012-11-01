@@ -31,12 +31,12 @@
 #ifndef LIBDENG_DEFINITION_FILE_H
 #define LIBDENG_DEFINITION_FILE_H
 
+#include "def_share.h"
+#include "uri.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "def_share.h"
-#include "uri.h"
 
 // Version 6 does not require semicolons.
 #define DED_VERSION                 6

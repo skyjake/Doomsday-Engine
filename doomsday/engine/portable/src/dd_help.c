@@ -323,11 +323,10 @@ void DD_ReadGameHelp(void)
     if(helpInited && DD_GameLoaded())
     {
         Uri* helpFileUri = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt", RC_NULL);
-        ddstring_t* resolvedPath = Uri_Resolved(helpFileUri);
+        ddstring_t const* resolvedPath = Uri_ResolvedConst(helpFileUri);
         if(resolvedPath)
         {
             DH_ReadStrings(Str_Text(resolvedPath));
-            Str_Delete(resolvedPath);
         }
         Uri_Delete(helpFileUri);
     }

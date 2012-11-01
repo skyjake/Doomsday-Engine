@@ -104,7 +104,7 @@ static archivedmap_t* createArchivedMap(const Uri* uri, const ddstring_t* cached
         Con_Message("createArchivedMap: Add record for map '%s'.\n", Str_Text(path));
         )
 
-    dam->uri = Uri_NewCopy(uri);
+    dam->uri = Uri_Dup(uri);
     dam->lastLoadAttemptFailed = false;
     Str_Init(&dam->cachedMapPath);
     Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
@@ -322,7 +322,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
                 GameMap_LinkBspLeaf(map, GameMap_BspLeaf(map, i));
             }
 
-            map->uri = Uri_NewCopy(dam->uri);
+            map->uri = Uri_Dup(dam->uri);
             strncpy(map->uniqueId, P_GenerateUniqueMapId(Str_Text(Uri_Path(map->uri))), sizeof(map->uniqueId));
 
             // See what mapinfo says about this map.

@@ -78,7 +78,7 @@ namespace de
              * @param _uri     Unresolved search URI (may include symbolic names or
              *                 other symbol references). SearchPath takes ownership.
              */
-            SearchPath(int _flags, Uri* _uri);
+            SearchPath(int _flags, uri_s* _uri);
 
             /**
              * Construct a copy from @a other. This is a "deep copy".
@@ -97,14 +97,14 @@ namespace de
             SearchPath& setFlags(int flags);
 
             /// @return  Unresolved URI.
-            Uri const* uri() const;
+            uri_s const* uri() const;
 
         private:
             /// @see searchPathFlags
             int flags_;
 
             /// Unresolved search URI.
-            Uri* uri_;
+            uri_s* uri_;
         };
 
         typedef QMultiMap<PathGroup, SearchPath> SearchPaths;
@@ -163,7 +163,7 @@ namespace de
          *
          * @return  @c true if @a path was well-formed and subsequently added.
          */
-        bool addSearchPath(PathGroup group, Uri const* path, int flags);
+        bool addSearchPath(PathGroup group, uri_s const* path, int flags);
 
         /**
          * Clear search paths in @a group from this namespace.

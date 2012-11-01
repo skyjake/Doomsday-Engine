@@ -79,7 +79,7 @@ public:
      * @param callback      Callback to make if the path was added to this directory.
      * @param parameters    Passed to the callback.
      */
-    void addPath(int flags, Uri const* searchPath,
+    void addPath(int flags, uri_s const* searchPath,
                  int (*callback) (Node& node, void* parameters), void* parameters = 0);
 
     /**
@@ -91,7 +91,7 @@ public:
      * @param callback      Callback to make for each path added to this directory.
      * @param parameters    Passed to the callback.
      */
-    void addPaths(int flags, Uri const* const* searchPaths, uint searchPathsCount,
+    void addPaths(int flags, uri_s const* const* searchPaths, uint searchPathsCount,
                   int (*callback) (Node& node, void* parameters) = 0,
                   void* parameters = 0);
 

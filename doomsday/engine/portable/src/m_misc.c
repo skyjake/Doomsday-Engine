@@ -67,6 +67,7 @@
 
 #if defined(WIN32)
 #define read _read
+#define write _write
 #endif
 
 // TYPES -------------------------------------------------------------------

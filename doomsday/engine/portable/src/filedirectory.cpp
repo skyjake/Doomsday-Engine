@@ -244,19 +244,19 @@ void FileDirectory::clear()
 }
 
 #if _DEBUG
-static void printUriList(Uri const* const* pathList, size_t pathCount, int indent)
+static void printUriList(uri_s const* const* pathList, size_t pathCount, int indent)
 {
     if(!pathList) return;
 
-    Uri const* const* pathsIt = pathList;
+    uri_s const* const* pathsIt = pathList;
     for(size_t i = 0; i < pathCount && (*pathsIt); ++i, pathsIt++)
     {
-        Uri_Print(*pathsIt, indent);
+        Uri_DebugPrint(*pathsIt, indent);
     }
 }
 #endif
 
-void FileDirectory::addPath(int flags, Uri const* searchPath,
+void FileDirectory::addPath(int flags, uri_s const* searchPath,
     int (*callback) (Node& node, void* parameters), void* parameters)
 {
     if(!searchPath)
@@ -267,7 +267,7 @@ void FileDirectory::addPath(int flags, Uri const* searchPath,
 
 #if _DEBUG
     VERBOSE2( Con_Message("Adding path to FileDirectory...\n");
-              Uri_Print(searchPath, 2/*indent*/) )
+              Uri_DebugPrint(searchPath, 2/*indent*/) )
 #endif
 
     ddstring_t const* resolvedSearchPath = Uri_ResolvedConst(searchPath);
@@ -279,7 +279,7 @@ void FileDirectory::addPath(int flags, Uri const* searchPath,
 }
 
 void FileDirectory::addPaths(int flags,
-    Uri const* const* searchPaths, uint searchPathsCount,
+    uri_s const* const* searchPaths, uint searchPathsCount,
     int (*callback) (Node& node, void* parameters), void* parameters)
 {
     if(!searchPaths || searchPathsCount == 0)

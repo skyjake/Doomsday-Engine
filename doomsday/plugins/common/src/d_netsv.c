@@ -743,7 +743,7 @@ void NetSv_SendGameState(int flags, int to)
     Writer* writer;
     GameInfo gameInfo;
     Uri* mapUri;
-    ddstring_t* str;
+    ddstring_t const* str;
 
     if(IS_CLIENT)
         return;
@@ -752,10 +752,9 @@ void NetSv_SendGameState(int flags, int to)
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);
 
     // Print a short message that describes the game state.
-    str = Uri_Resolved(mapUri);
+    str = Uri_ResolvedConst(mapUri);
     Con_Message("NetSv_SendGameState: Game setup: %s %s %s\n",
                 gameInfo.identityKey, Str_Text(str), gameConfigString);
-    Str_Delete(str);
 
     // Send an update to all the players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)

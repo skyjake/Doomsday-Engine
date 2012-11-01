@@ -294,8 +294,8 @@ static int addFilesFromAutoData(void)
     {
         QByteArray patternUtf8 = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]).toUtf8();
 
-        Uri* pattern = Uri_NewWithPath2(patternUtf8.constData(), RC_NULL);
-        if(ddstring_t* resolvedPattern = Uri_Resolved(pattern))
+        uri_s* pattern = Uri_NewWithPath2(patternUtf8.constData(), RC_NULL);
+        if(ddstring_t const* resolvedPattern = Uri_ResolvedConst(pattern))
         {
             FS1::PathList found;
             if(App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found))
@@ -312,7 +312,6 @@ static int addFilesFromAutoData(void)
                     }
                 }
             }
-            Str_Delete(resolvedPattern);
         }
         Uri_Delete(pattern);
     }
@@ -344,8 +343,8 @@ static int listFilesFromAutoData(ddstring_t*** list, size_t* listSize)
     {
         QByteArray patternUtf8 = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]).toUtf8();
 
-        Uri* pattern = Uri_NewWithPath2(patternUtf8.constData(), RC_NULL);
-        if(ddstring_t* resolvedPattern = Uri_Resolved(pattern))
+        uri_s* pattern = Uri_NewWithPath2(patternUtf8.constData(), RC_NULL);
+        if(ddstring_t const* resolvedPattern = Uri_ResolvedConst(pattern))
         {
             FS1::PathList found;
             if(App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found))
@@ -360,7 +359,6 @@ static int listFilesFromAutoData(ddstring_t*** list, size_t* listSize)
                     numFilesAdded += 1;
                 }
             }
-            Str_Delete(resolvedPattern);
         }
         Uri_Delete(pattern);
     }
@@ -465,20 +463,18 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
         // Create default Auto mappings in the runtime directory.
 
         // Data class resources.
-        Uri* dataPath = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/auto", RC_NULL);
-        if(ddstring_t* resolvedPath = Uri_Resolved(dataPath))
+        uri_s* dataPath = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/auto", RC_NULL);
+        if(ddstring_t const* resolvedPath = Uri_ResolvedConst(dataPath))
         {
             F_AddVirtualDirectoryMapping("auto", Str_Text(resolvedPath));
-            Str_Delete(resolvedPath);
         }
         Uri_Delete(dataPath);
 
         // Definition class resources.
-        Uri* defsPath = Uri_NewWithPath2("$(App.DefsPath)/$(GamePlugin.Name)/auto", RC_NULL);
-        if(ddstring_t* resolvedPath = Uri_Resolved(defsPath))
+        uri_s* defsPath = Uri_NewWithPath2("$(App.DefsPath)/$(GamePlugin.Name)/auto", RC_NULL);
+        if(ddstring_t const* resolvedPath = Uri_ResolvedConst(defsPath))
         {
             F_AddVirtualDirectoryMapping("auto", Str_Text(resolvedPath));
-            Str_Delete(resolvedPath);
         }
         Uri_Delete(defsPath);
     }
@@ -1444,7 +1440,7 @@ boolean DD_Init(void)
             ///       to the "packages" ResourceNamespace.
 
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
-            Uri* searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
+            uri_s* searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
 
             rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, searchPath, SPF_NO_DESCEND);
 
@@ -2254,14 +2250,12 @@ const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid
 materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId)
 {
     textureid_t texId = Textures_TextureForUniqueId(texNamespaceId, uniqueId);
-    materialid_t matId;
-    Uri* uri;
 
     if(texId == NOTEXTUREID) return NOMATERIALID;
 
-    uri = Textures_ComposeUri(texId);
+    uri_s* uri = Textures_ComposeUri(texId);
     Uri_SetScheme(uri, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespaceId)));
-    matId = Materials_ResolveUri2(uri, true/*quiet please*/);
+    materialid_t matId = Materials_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
     return matId;
 }

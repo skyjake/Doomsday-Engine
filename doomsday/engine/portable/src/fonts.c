@@ -869,7 +869,7 @@ fontid_t Fonts_Declare(const Uri* uri, int uniqueId)//, const Uri* resourcePath)
     {
         if(!record->resourcePath)
         {
-            record->resourcePath = Uri_NewCopy(resourcePath);
+            record->resourcePath = Uri_Dup(resourcePath);
             releaseFont = true;
         }
         else if(!Uri_Equality(record->resourcePath, resourcePath))
@@ -916,14 +916,13 @@ static font_t* createFontFromDef(fontid_t bindId, ded_compositefont_t* def)
 
     for(i = 0; i < def->charMapCount.num; ++i)
     {
-        ddstring_t* path;
+        ddstring_t const* path;
         if(!def->charMap[i].path) continue;
 
-        path = Uri_Resolved(def->charMap[i].path);
+        path = Uri_ResolvedConst(def->charMap[i].path);
         if(path)
         {
             BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
-            Str_Delete(path);
         }
     }
 
@@ -958,14 +957,13 @@ void Fonts_RebuildFromDef(font_t* font, ded_compositefont_t* def)
 
     for(i = 0; i < def->charMapCount.num; ++i)
     {
-        ddstring_t* path;
+        ddstring_t const* path;
         if(!def->charMap[i].path) continue;
 
-        path = Uri_Resolved(def->charMap[i].path);
+        path = Uri_ResolvedConst(def->charMap[i].path);
         if(path)
         {
             BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
-            Str_Delete(path);
         }
     }
 }

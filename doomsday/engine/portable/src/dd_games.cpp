@@ -246,8 +246,8 @@ static bool validateResource(AbstractResource* rec)
 
     if(AbstractResource_ResourceClass(rec) == RC_PACKAGE)
     {
-        Uri* const* uriList = AbstractResource_SearchPaths(rec);
-        Uri* const* ptr;
+        uri_s* const* uriList = AbstractResource_SearchPaths(rec);
+        uri_s* const* ptr;
         int idx = 0;
         for(ptr = uriList; *ptr; ptr++, idx++)
         {

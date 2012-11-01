@@ -899,7 +899,7 @@ static textureid_t Textures_Declare2(const Uri* uri, int uniqueId, const Uri* re
     {
         if(!record->resourcePath)
         {
-            record->resourcePath = Uri_NewCopy(resourcePath);
+            record->resourcePath = Uri_Dup(resourcePath);
             releaseTexture = true;
         }
         else if(!Uri_Equality(record->resourcePath, resourcePath))

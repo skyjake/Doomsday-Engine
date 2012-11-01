@@ -326,7 +326,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     return isNewNode;
 }
 
-bool ResourceNamespace::addSearchPath(PathGroup group, Uri const* _searchPath, int flags)
+bool ResourceNamespace::addSearchPath(PathGroup group, uri_s const* _searchPath, int flags)
 {
     // Ensure this is a well formed path.
     if(!_searchPath || Str_IsEmpty(Uri_Path(_searchPath)) ||
@@ -348,7 +348,7 @@ bool ResourceNamespace::addSearchPath(PathGroup group, Uri const* _searchPath, i
     }
 
     // Prepend to the path list - newer paths have priority.
-    d->searchPaths.insert(group, SearchPath(flags, Uri_NewCopy(_searchPath)));
+    d->searchPaths.insert(group, SearchPath(flags, Uri_Dup(_searchPath)));
 
     return true;
 }
@@ -446,12 +446,12 @@ int ResourceNamespace::findAll(ddstring_t const* searchPath, ResourceList& found
     return found.count() - numFoundSoFar;
 }
 
-ResourceNamespace::SearchPath::SearchPath(int _flags, Uri* _uri)
+ResourceNamespace::SearchPath::SearchPath(int _flags, uri_s* _uri)
     : flags_(_flags), uri_(_uri)
 {}
 
 ResourceNamespace::SearchPath::SearchPath(SearchPath const& other)
-    : flags_(other.flags_), uri_(Uri_NewCopy(other.uri_))
+    : flags_(other.flags_), uri_(Uri_Dup(other.uri_))
 {}
 
 ResourceNamespace::SearchPath::~SearchPath()
@@ -476,7 +476,7 @@ ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::setFlags(int newFl
     return *this;
 }
 
-Uri const* ResourceNamespace::SearchPath::uri() const
+uri_s const* ResourceNamespace::SearchPath::uri() const
 {
     return uri_;
 }
