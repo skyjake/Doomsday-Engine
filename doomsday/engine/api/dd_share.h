@@ -340,12 +340,6 @@ typedef struct gamedef_s {
     */
     const char* identityKey;
 
-    /// The base directory for all data-class resources.
-    const char* dataPath;
-
-    /// The base directory for all defs-class resources.
-    const char* defsPath;
-
     /// Name of the config directory.
     const char* configDir;
 

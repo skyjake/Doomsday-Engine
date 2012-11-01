@@ -320,16 +320,17 @@ void DD_InitHelp(void)
  */
 void DD_ReadGameHelp(void)
 {
-    ddstring_t helpFileName;
-
-    if(!helpInited || !DD_GameLoaded())
-        return; // Nothing to do.
-
-    Str_Init(&helpFileName);
-    Str_Appendf(&helpFileName, "%sconhelp.txt", Str_Text(Game_DataPath(App_CurrentGame())));
-    F_ExpandBasePath(&helpFileName, &helpFileName);
-    DH_ReadStrings(Str_Text(&helpFileName));
-    Str_Free(&helpFileName);
+    if(helpInited && DD_GameLoaded())
+    {
+        Uri* helpFileUri = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt", RC_NULL);
+        ddstring_t* resolvedPath = Uri_Resolved(helpFileUri);
+        if(resolvedPath)
+        {
+            DH_ReadStrings(Str_Text(resolvedPath));
+            Str_Delete(resolvedPath);
+        }
+        Uri_Delete(helpFileUri);
+    }
 }
 
 /**

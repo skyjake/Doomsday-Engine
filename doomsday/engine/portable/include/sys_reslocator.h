@@ -233,20 +233,20 @@ resourcetype_t F_GuessResourceTypeByName(char const* name);
  * This mapping will translate directives and symbolic identifiers into their default paths,
  * which themselves are determined using the current Game.
  *
- *  e.g.: "Models:my/cool/model.dmd" -> "}data/<Game::IdentityKey>/models/my/cool/model.dmd"
+ *  e.g.: "Models/my/cool/model.dmd" => "$(App.DataPath)/$(GamePlugin.Name)/models/my/cool/model.dmd"
  *
  * @param rni  Unique identifier of the namespace whose mappings to apply.
  * @param path  The path to be mapped (applied in-place).
  * @return  @c true iff mapping was applied to the path.
  */
-boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path);
+boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path);
 
 /**
  * Apply all resource namespace mappings to the specified path.
  *
  * @return  @c true iff the path was mapped.
  */
-boolean F_ApplyPathMapping(ddstring_t* path);
+boolean F_ApplyGamePathMapping(ddstring_t* path);
 
 char const* F_ParseSearchPath2(struct uri_s* dst, char const* src, char delim, resourceclass_t defaultResourceClass);
 char const* F_ParseSearchPath(struct uri_s* dst, char const* src, char delim);

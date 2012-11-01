@@ -290,27 +290,31 @@ static int addFilesFromAutoData(void)
     };
 
     int count = 0;
-    AutoStr* pattern = AutoStr_NewStd();
     for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
     {
-        Str_Clear(pattern);
-        Str_Appendf(pattern, "%sauto/*.%s", Str_Text(&games->currentGame().dataPath()), extensions[extIdx]);
+        QByteArray patternUtf8 = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]).toUtf8();
 
-        FS1::PathList found;
-        if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))
+        Uri* pattern = Uri_NewWithPath2(patternUtf8.constData(), RC_NULL);
+        if(ddstring_t* resolvedPattern = Uri_Resolved(pattern))
         {
-            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+            FS1::PathList found;
+            if(App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found))
             {
-                // Ignore directories.
-                if(i->attrib & A_SUBDIR) continue;
-
-                QByteArray foundPath = i->path.toUtf8();
-                if(tryLoadFile(foundPath.constData()))
+                DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
                 {
-                    count += 1;
+                    // Ignore directories.
+                    if(i->attrib & A_SUBDIR) continue;
+
+                    QByteArray foundPath = i->path.toUtf8();
+                    if(tryLoadFile(foundPath.constData()))
+                    {
+                        count += 1;
+                    }
                 }
             }
+            Str_Delete(resolvedPattern);
         }
+        Uri_Delete(pattern);
     }
     return count;
 }
@@ -336,31 +340,35 @@ static int listFilesFromAutoData(ddstring_t*** list, size_t* listSize)
     ddstring_t pattern; Str_InitStd(&pattern);
 
     uint numFilesAdded = 0;
-    for(uint i = 0; extensions[i]; ++i)
+    for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
     {
-        Str_Clear(&pattern);
-        Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(&games->currentGame().dataPath()), extensions[i]);
+        QByteArray patternUtf8 = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]).toUtf8();
 
-        FS1::PathList found;
-        if(App_FileSystem()->findAllPaths(Str_Text(&pattern), 0, found))
+        Uri* pattern = Uri_NewWithPath2(patternUtf8.constData(), RC_NULL);
+        if(ddstring_t* resolvedPattern = Uri_Resolved(pattern))
         {
-            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+            FS1::PathList found;
+            if(App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found))
             {
-                // Ignore directories.
-                if(i->attrib & A_SUBDIR) continue;
+                DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+                {
+                    // Ignore directories.
+                    if(i->attrib & A_SUBDIR) continue;
 
-                QByteArray foundPath = i->path.toUtf8();
-                addToPathList(list, listSize, foundPath.constData());
-                numFilesAdded += 1;
+                    QByteArray foundPath = i->path.toUtf8();
+                    addToPathList(list, listSize, foundPath.constData());
+                    numFilesAdded += 1;
+                }
             }
+            Str_Delete(resolvedPattern);
         }
+        Uri_Delete(pattern);
     }
-    Str_Free(&pattern);
 
     return numFilesAdded;
 }
 
-static boolean exchangeEntryPoints(pluginid_t pluginId)
+boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
 {
     if(pluginId != 0)
     {
@@ -454,19 +462,25 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
 
     if(DD_GameLoaded())
     {
-        ddstring_t temp;
-
         // Create default Auto mappings in the runtime directory.
+
         // Data class resources.
-        Str_Init(&temp);
-        Str_Appendf(&temp, "%sauto", Str_Text(&games->currentGame().dataPath()));
-        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
+        Uri* dataPath = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/auto", RC_NULL);
+        if(ddstring_t* resolvedPath = Uri_Resolved(dataPath))
+        {
+            F_AddVirtualDirectoryMapping("auto", Str_Text(resolvedPath));
+            Str_Delete(resolvedPath);
+        }
+        Uri_Delete(dataPath);
 
         // Definition class resources.
-        Str_Clear(&temp);
-        Str_Appendf(&temp, "%sauto", Str_Text(&games->currentGame().defsPath()));
-        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
-        Str_Free(&temp);
+        Uri* defsPath = Uri_NewWithPath2("$(App.DefsPath)/$(GamePlugin.Name)/auto", RC_NULL);
+        if(ddstring_t* resolvedPath = Uri_Resolved(defsPath))
+        {
+            F_AddVirtualDirectoryMapping("auto", Str_Text(resolvedPath));
+            Str_Delete(resolvedPath);
+        }
+        Uri_Delete(defsPath);
     }
 
     /**
@@ -1128,7 +1142,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
     if(!DD_IsShuttingDown())
     {
         // Re-initialize subsystems needed even when in ringzero.
-        if(!exchangeEntryPoints(game.pluginId()))
+        if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
             Con_Message("Warning: DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)game.pluginId());
             return false;

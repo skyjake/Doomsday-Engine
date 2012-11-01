@@ -114,10 +114,11 @@ static boolean resolveUri(const Uri* uri, ddstring_t* dest)
 
         if(*p != '(')
         {
-            Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
-                *p, Str_Text(&uri->path), (unsigned long) (p - Str_Text(&uri->path)));
+            Con_Message("Warning: Uri::resolveUri: Invalid character '%c' in \"%s\" at %lu, cannot resolve.\n",
+                        *p, Str_Text(&uri->path), (unsigned long) (p - Str_Text(&uri->path)));
             goto parseEnded;
         }
+
         // Skip over the opening brace.
         p++;
         depth++;
@@ -133,36 +134,30 @@ static boolean resolveUri(const Uri* uri, ddstring_t* dest)
             {
                 Str_Append(dest, "defs");
             }
-            else if(!Str_CompareIgnoreCase(&part, "Game.DataPath"))
-            {
-                /// @note DataPath already has ending '/'.
-                Game* game = App_CurrentGame();
-                if(Game_IsNullObject(game))
-                    goto parseEnded;
-
-                Str_PartAppend(dest, Str_Text(Game_DataPath(game)), 0, Str_Length(Game_DataPath(game))-1);
-            }
-            else if(!Str_CompareIgnoreCase(&part, "Game.DefsPath"))
-            {
-                /// @note DefsPath already has ending '/'.
-                Game* game = App_CurrentGame();
-                if(Game_IsNullObject(game))
-                    goto parseEnded;
-
-                Str_PartAppend(dest, Str_Text(Game_DefsPath(game)), 0, Str_Length(Game_DefsPath(game))-1);
-            }
             else if(!Str_CompareIgnoreCase(&part, "Game.IdentityKey"))
             {
                 Game* game = App_CurrentGame();
                 if(Game_IsNullObject(game))
+                {
+                    DEBUG_Message(("Debug: Uri::resolveUri: Cannot resolve 'Game' in \"%s\", no game loaded.\n", Str_Text(&uri->path)));
                     goto parseEnded;
+                }
 
                 Str_Append(dest, Str_Text(Game_IdentityKey(game)));
             }
+            else if(!Str_CompareIgnoreCase(&part, "GamePlugin.Name"))
+            {
+                if(!DD_GameLoaded() || !gx.GetVariable)
+                {
+                    DEBUG_Message(("Debug: Uri::resolveUri: Cannot resolve 'GamePlugin' in \"%s\", no game plugin loaded.\n", Str_Text(&uri->path)));
+                    goto parseEnded;
+                }
+
+                Str_Append(dest, (char*)gx.GetVariable(DD_PLUGIN_NAME));
+            }
             else
             {
-                Con_Message("Unknown identifier '%s' in \"%s\" (Uri::resolveUri).\n",
-                            Str_Text(&part), Str_Text(&uri->path));
+                DEBUG_Message(("Debug: Uri::resolveUri: Cannot resolve '%s' in \"%s\", unknown identifier.\n", Str_Text(&part), Str_Text(&uri->path)));
                 goto parseEnded;
             }
             depth--;
@@ -170,14 +165,16 @@ static boolean resolveUri(const Uri* uri, ddstring_t* dest)
             // Is there another '$' present?
             if(!(p = Str_CopyDelim2(&part, p, '$', CDF_OMIT_DELIMITER)))
                 break;
+
             // Copy everything up to the next '$'.
             Str_Append(dest, Str_Text(&part));
             if(*p != '(')
             {
-                Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
-                    *p, Str_Text(&uri->path), (unsigned long) (p - Str_Text(&uri->path)));
+                Con_Message("Warning: Uri::resolveUri: Invalid character '%c' in \"%s\" at %lu, cannot resolve.\n",
+                            *p, Str_Text(&uri->path), (unsigned long) (p - Str_Text(&uri->path)));
                 goto parseEnded;
             }
+
             // Skip over the opening brace.
             p++;
             depth++;

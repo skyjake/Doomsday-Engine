@@ -103,6 +103,9 @@ public:
     bool beginsWith(const QString& s, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
         return startsWith(s, cs);
     }
+    bool beginsWith(const QChar& c, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
+        return startsWith(c, cs);
+    }
 
     String substr(int position, int n = -1) const {
         return mid(position, n);

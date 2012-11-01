@@ -64,23 +64,23 @@ static __inline gameid_t toGameId(int gamemode)
  */
 int G_RegisterGames(int hookType, int param, void* data)
 {
-#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
-#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
 #define CONFIGDIR       "heretic"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
-    const GameDef hereticExtDef = {
-        "heretic-ext", DATAPATH, DEFSPATH, CONFIGDIR,
+    GameDef const hereticExtDef = {
+        "heretic-ext", CONFIGDIR,
         "Heretic: Shadow of the Serpent Riders", "Raven Software"
     };
-    const GameDef hereticDef = {
-        "heretic", DATAPATH, DEFSPATH, CONFIGDIR,
+    GameDef const hereticDef = {
+        "heretic", CONFIGDIR,
         "Heretic Registered", "Raven Software"
     };
-    const GameDef hereticShareDef = {
-        "heretic-share", DATAPATH, DEFSPATH, CONFIGDIR,
+    GameDef const hereticShareDef = {
+        "heretic-share", CONFIGDIR,
         "Heretic Shareware", "Raven Software"
     };
+
+    DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     /* Heretic (Extended) */
     gameIds[heretic_extended] = DD_DefineGame(&hereticExtDef);
@@ -103,8 +103,6 @@ int G_RegisterGames(int hookType, int param, void* data)
 
 #undef STARTUPPK3
 #undef CONFIGDIR
-#undef DEFSPATH
-#undef DATAPATH
 }
 
 /**

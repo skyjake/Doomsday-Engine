@@ -866,24 +866,26 @@ static void readAllDefinitions(void)
         }
     }
 
-    // Next up are definition files in the /auto directory.
-    if(!CommandLine_Exists("-noauto"))
+    // Next up are definition files in the Games' /auto directory.
+    if(!CommandLine_Exists("-noauto") && DD_GameLoaded())
     {
-        AutoStr* pattern = AutoStr_NewStd();
-        Str_Appendf(pattern, "%sauto/*.ded", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->defsPath()));
-
-        de::FS1::PathList found;
-        if(App_FileSystem()->findAllPaths(Str_Text(pattern), 0, found))
+        Uri* pattern = Uri_NewWithPath2("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL);
+        if(ddstring_t* resolvedPath = Uri_Resolved(pattern))
         {
-            DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
+            de::FS1::PathList found;
+            if(App_FileSystem()->findAllPaths(Str_Text(resolvedPath), 0, found))
             {
-                // Ignore directories.
-                if(i->attrib & A_SUBDIR) continue;
+                DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
+                {
+                    // Ignore directories.
+                    if(i->attrib & A_SUBDIR) continue;
 
-                QByteArray foundPathUtf8 = i->path.toUtf8();
-                readDefinitionFile(foundPathUtf8.constData());
+                    QByteArray foundPathUtf8 = i->path.toUtf8();
+                    readDefinitionFile(foundPathUtf8.constData());
+                }
             }
         }
+        Uri_Delete(pattern);
     }
 
     // Any definition files on the command line?

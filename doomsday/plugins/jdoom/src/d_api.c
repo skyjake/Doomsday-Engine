@@ -66,34 +66,34 @@ static __inline gameid_t toGameId(int gamemode)
  */
 int G_RegisterGames(int hookType, int param, void* data)
 {
-#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
-#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
-    const GameDef hacxDef = {
-        "hacx", DATAPATH, DEFSPATH, "hacx", "HACX - Twitch 'n Kill", "Banjo Software"
+    GameDef const hacxDef = {
+        "hacx", "hacx", "HACX - Twitch 'n Kill", "Banjo Software"
     };
-    const GameDef chexDef = {
-        "chex", DATAPATH, DEFSPATH, "chex", "Chex(R) Quest", "Digital Cafe"
+    GameDef const chexDef = {
+        "chex", "chex", "Chex(R) Quest", "Digital Cafe"
     };
-    const GameDef doom2TntDef = {
-        "doom2-tnt", DATAPATH, DEFSPATH, "doom", "Final DOOM: TNT: Evilution", "Team TNT"
+    GameDef const doom2TntDef = {
+        "doom2-tnt", "doom", "Final DOOM: TNT: Evilution", "Team TNT"
     };
-    const GameDef doom2PlutDef = {
-        "doom2-plut", DATAPATH, DEFSPATH, "doom", "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali"
+    GameDef const doom2PlutDef = {
+        "doom2-plut", "doom", "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali"
     };
-    const GameDef doom2Def = {
-        "doom2", DATAPATH, DEFSPATH, "doom", "DOOM 2: Hell on Earth", "id Software"
+    GameDef const doom2Def = {
+        "doom2", "doom", "DOOM 2: Hell on Earth", "id Software"
     };
-    const GameDef doomUltimateDef = {
-        "doom1-ultimate", DATAPATH, DEFSPATH, "doom", "Ultimate DOOM", "id Software"
+    GameDef const doomUltimateDef = {
+        "doom1-ultimate", "doom", "Ultimate DOOM", "id Software"
     };
-    const GameDef doomDef = {
-        "doom1", DATAPATH, DEFSPATH, "doom", "DOOM Registered", "id Software"
+    GameDef const doomDef = {
+        "doom1", "doom", "DOOM Registered", "id Software"
     };
-    const GameDef doomShareDef = {
-        "doom1-share", DATAPATH, DEFSPATH, "doom", "DOOM Shareware", "id Software"
+    GameDef const doomShareDef = {
+        "doom1-share", "doom", "DOOM Shareware", "id Software"
     };
+
+    DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     /* HacX */
     gameIds[doom2_hacx] = DD_DefineGame(&hacxDef);
@@ -145,8 +145,6 @@ int G_RegisterGames(int hookType, int param, void* data)
     return true;
 
 #undef STARTUPPK3
-#undef DEFSPATH
-#undef DATAPATH
 }
 
 /**

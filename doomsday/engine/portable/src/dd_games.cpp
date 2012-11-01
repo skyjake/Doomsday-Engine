@@ -73,24 +73,7 @@ GameCollection::GameCollection()
      * One-time creation and initialization of the special "null-game"
      * object (activated once created).
      */
-    ddstring_t dataPath; Str_InitStd(&dataPath);
-    Str_Set(&dataPath, DD_BASEPATH_DATA);
-    Str_Strip(&dataPath);
-    F_FixSlashes(&dataPath, &dataPath);
-    F_ExpandBasePath(&dataPath, &dataPath);
-    F_AppendMissingSlash(&dataPath);
-
-    ddstring_t defsPath; Str_InitStd(&defsPath);
-    Str_Set(&defsPath, DD_BASEPATH_DEFS);
-    Str_Strip(&defsPath);
-    F_FixSlashes(&defsPath, &defsPath);
-    F_ExpandBasePath(&defsPath, &defsPath);
-    F_AppendMissingSlash(&defsPath);
-
-    d->currentGame = d->nullGame = new NullGame(&dataPath, &defsPath);
-
-    Str_Free(&defsPath);
-    Str_Free(&dataPath);
+    d->currentGame = d->nullGame = new NullGame();
 }
 
 GameCollection::~GameCollection()
@@ -300,6 +283,8 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
     {
         /// @attention Kludge: Temporarily switch Game.
         d->currentGame = &game;
+        DD_ExchangeGamePluginEntryPoints(game.pluginId());
+
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
     }
@@ -324,6 +309,8 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
     {
         // Kludge end - Restore the old Game.
         d->currentGame = oldGame;
+        DD_ExchangeGamePluginEntryPoints(oldGame->pluginId());
+
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
     }

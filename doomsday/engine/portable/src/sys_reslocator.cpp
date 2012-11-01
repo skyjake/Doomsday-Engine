@@ -520,7 +520,7 @@ static void createPackagesResourceNamespace(void)
     idx = 0;
     // Add the default paths.
     searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/", RC_NULL);
-    searchPaths[idx++] = Uri_NewWithPath2("$(Game.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL);
 
     // Add any paths from the DOOMWADPATH environment variable.
     if(doomWadPaths != 0)
@@ -570,34 +570,34 @@ void F_CreateNamespacesForFileResourcePaths(void)
         char const* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
         { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0, 0,
-            { "$(App.DefsPath)/", "$(Game.DefsPath)/", "$(Game.DefsPath)/$(Game.IdentityKey)/" }
+            { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
         },
         { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0, 0,
             { "$(App.DataPath)/graphics/" }
         },
         { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
-            { "$(Game.DataPath)/models/", "$(Game.DataPath)/models/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
         },
         { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/sfx/", "$(Game.DataPath)/sfx/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
         },
         { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/music/", "$(Game.DataPath)/music/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
         },
         { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/textures/", "$(Game.DataPath)/textures/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
         },
         { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/flats/", "$(Game.DataPath)/flats/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
         },
         { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/patches/", "$(Game.DataPath)/patches/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
         },
         { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
-            { "$(Game.DataPath)/lightmaps/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
         },
         { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(App.DataPath)/fonts/", "$(Game.DataPath)/fonts/", "$(Game.DataPath)/fonts/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
         },
     { 0, 0, 0, 0, 0, { 0 } }
     };
@@ -1055,7 +1055,7 @@ resourcetype_t F_GuessResourceTypeByName(char const* path)
     return RT_NONE; // Unrecognizable.
 }
 
-boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
+boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
 {
     if(path && !Str_IsEmpty(path))
     {
@@ -1069,7 +1069,7 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
             if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
                !strnicmp(Str_Text(rnamespace.name()), Str_Text(path), nameLen))
             {
-                Str_Prepend(path, Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->dataPath()));
+                Str_Prepend(path, "$(App.DataPath)/$(GamePlugin.Name)/");
                 return true;
             }
         }
@@ -1077,14 +1077,14 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
     return false;
 }
 
-boolean F_ApplyPathMapping(ddstring_t* path)
+boolean F_ApplyGamePathMapping(ddstring_t* path)
 {
     DENG_ASSERT(path);
-    errorIfNotInited("F_ApplyPathMapping");
+    errorIfNotInited("F_ApplyGamePathMapping");
 
     uint i = 1;
     boolean result = false;
-    while(i < numNamespaces + 1 && !(result = F_MapResourcePath(i++, path)))
+    while(i < numNamespaces + 1 && !(result = F_MapGameResourcePath(i++, path)))
     {}
     return result;
 }
