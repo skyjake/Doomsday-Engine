@@ -64,27 +64,27 @@ static __inline gameid_t toGameId(int gamemode)
  */
 int G_RegisterGames(int hookType, int param, void* data)
 {
-#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
-#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
 #define CONFIGDIR       "hexen"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
-    const GameDef deathkingsDef = {
-        "hexen-dk", DATAPATH, DEFSPATH, CONFIGDIR,
+    GameDef const deathkingsDef = {
+        "hexen-dk", CONFIGDIR,
         "Hexen: Deathkings of the Dark Citadel", "Raven Software"
     };
-    const GameDef hexenDef = {
-        "hexen", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen", "Raven Software"
+    GameDef const hexenDef = {
+        "hexen", CONFIGDIR, "Hexen", "Raven Software"
     };
-    const GameDef hexenDemoDef = {
-        "hexen-demo", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen 4-map Demo", "Raven Software"
+    GameDef const hexenDemoDef = {
+        "hexen-demo", CONFIGDIR, "Hexen 4-map Demo", "Raven Software"
     };
-    const GameDef hexenBetaDemoDef = {
-        "hexen-betademo", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen 4-map Beta Demo", "Raven Software"
+    GameDef const hexenBetaDemoDef = {
+        "hexen-betademo", CONFIGDIR, "Hexen 4-map Beta Demo", "Raven Software"
     };
-    const GameDef hexenV10Def = {
-        "hexen-v10", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen v1.0", "Raven Software"
+    GameDef const hexenV10Def = {
+        "hexen-v10", CONFIGDIR, "Hexen v1.0", "Raven Software"
     };
+
+    DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     /* Hexen (Death Kings) */
     gameIds[hexen_deathkings] = DD_DefineGame(&deathkingsDef);
@@ -121,8 +121,6 @@ int G_RegisterGames(int hookType, int param, void* data)
 
 #undef STARTUPPK3
 #undef CONFIGDIR
-#undef DEFSPATH
-#undef DATAPATH
 }
 
 /**

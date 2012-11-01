@@ -425,7 +425,7 @@ static int ReadUri(Uri** dest, const char* defaultScheme)
         if(!*dest)
             *dest = Uri_NewWithPath2(buf, RC_NULL);
         else
-            Uri_SetUri3(*dest, buf, RC_NULL);
+            Uri_SetUri2(*dest, buf, RC_NULL);
 
         if(defaultScheme && defaultScheme[0] && Str_Length(Uri_Scheme(*dest)) == 0)
             Uri_SetScheme(*dest, defaultScheme);
@@ -1124,10 +1124,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 const ded_light_t* prevLight = ded->lights + prevLightDefIdx;
 
                 memcpy(lig, prevLight, sizeof(*lig));
-                if(lig->up)     lig->up     = Uri_NewCopy(lig->up);
-                if(lig->down)   lig->down   = Uri_NewCopy(lig->down);
-                if(lig->sides)  lig->sides  = Uri_NewCopy(lig->sides);
-                if(lig->flare)  lig->flare  = Uri_NewCopy(lig->flare);
+                if(lig->up)     lig->up     = Uri_Dup(lig->up);
+                if(lig->down)   lig->down   = Uri_Dup(lig->down);
+                if(lig->sides)  lig->sides  = Uri_Dup(lig->sides);
+                if(lig->flare)  lig->flare  = Uri_Dup(lig->flare);
             }
 
             FINDBEGIN;
@@ -1237,7 +1237,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     if(mat->uri)
                         Uri_Copy(mat->uri, prevMaterial->uri);
                     else
-                        mat->uri = Uri_NewCopy(prevMaterial->uri);
+                        mat->uri = Uri_Dup(prevMaterial->uri);
                 }
 
                 // Duplicate the stage arrays.
@@ -1262,7 +1262,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     { int j;
                     for(j = 0; j < l->stageCount.num; ++j)
                         if(NULL != l->stages[j].texture)
-                            mat->layers[i].stages[j].texture = Uri_NewCopy(l->stages[j].texture);
+                            mat->layers[i].stages[j].texture = Uri_Dup(l->stages[j].texture);
                     }
                 }}
             }
@@ -1355,10 +1355,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                     {
                         if(mdl->sub[i].filename)
-                            mdl->sub[i].filename = Uri_NewCopy(mdl->sub[i].filename);
+                            mdl->sub[i].filename = Uri_Dup(mdl->sub[i].filename);
 
                         if(mdl->sub[i].skinFilename)
-                            mdl->sub[i].skinFilename = Uri_NewCopy(mdl->sub[i].skinFilename);
+                            mdl->sub[i].skinFilename = Uri_Dup(mdl->sub[i].skinFilename);
                     }
                 }
             }
@@ -1532,7 +1532,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 for(i = 0; i < NUM_SKY_LAYERS; ++i)
                 {
                     if(sky->layers[i].material)
-                        sky->layers[i].material = Uri_NewCopy(sky->layers[i].material);
+                        sky->layers[i].material = Uri_Dup(sky->layers[i].material);
                 }
                 for(i = 0; i < NUM_SKY_MODELS; ++i)
                 {
@@ -1622,14 +1622,14 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     if(mi->uri)
                         Uri_Copy(mi->uri, prevMapInfo->uri);
                     else
-                        mi->uri = Uri_NewCopy(prevMapInfo->uri);
+                        mi->uri = Uri_Dup(prevMapInfo->uri);
                 }
 
                 mi->execute = sdup(mi->execute);
                 for(i = 0; i < NUM_SKY_LAYERS; ++i)
                 {
                     if(mi->sky.layers[i].material)
-                        mi->sky.layers[i].material = Uri_NewCopy(mi->sky.layers[i].material);
+                        mi->sky.layers[i].material = Uri_Dup(mi->sky.layers[i].material);
                 }
                 for(i = 0; i < NUM_SKY_MODELS; ++i)
                 {
@@ -1953,9 +1953,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(dtl, prevDetail, sizeof(*dtl));
 
-                if(dtl->material1) dtl->material1  = Uri_NewCopy(dtl->material1);
-                if(dtl->material2) dtl->material2  = Uri_NewCopy(dtl->material2);
-                if(dtl->detailTex) dtl->detailTex  = Uri_NewCopy(dtl->detailTex);
+                if(dtl->material1) dtl->material1  = Uri_Dup(dtl->material1);
+                if(dtl->material2) dtl->material2  = Uri_Dup(dtl->material2);
+                if(dtl->detailTex) dtl->detailTex  = Uri_Dup(dtl->detailTex);
             }
 
             FINDBEGIN;
@@ -2007,9 +2007,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(ref, prevRef, sizeof(*ref));
 
-                if(ref->material)   ref->material = Uri_NewCopy(ref->material);
-                if(ref->shinyMap)   ref->shinyMap = Uri_NewCopy(ref->shinyMap);
-                if(ref->maskMap)    ref->maskMap  = Uri_NewCopy(ref->maskMap);
+                if(ref->material)   ref->material = Uri_Dup(ref->material);
+                if(ref->shinyMap)   ref->shinyMap = Uri_Dup(ref->shinyMap);
+                if(ref->maskMap)    ref->maskMap  = Uri_Dup(ref->maskMap);
             }
 
             FINDBEGIN;
@@ -2057,8 +2057,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(gen, prevGen, sizeof(*gen));
 
-                if(gen->map) gen->map = Uri_NewCopy(gen->map);
-                if(gen->material) gen->material = Uri_NewCopy(gen->material);
+                if(gen->map) gen->map = Uri_Dup(gen->map);
+                if(gen->material) gen->material = Uri_Dup(gen->material);
 
                 // Duplicate the stages array.
                 if(gen->stages)
@@ -2221,15 +2221,15 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(decor, prevDecor, sizeof(*decor));
 
-                if(decor->material) decor->material = Uri_NewCopy(decor->material);
+                if(decor->material) decor->material = Uri_Dup(decor->material);
                 { int i;
                 for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
                 {
                     ded_decorlight_t* dl = &decor->lights[i];
-                    if(dl->flare)   dl->flare = Uri_NewCopy(dl->flare);
-                    if(dl->up)      dl->up    = Uri_NewCopy(dl->up);
-                    if(dl->down)    dl->down  = Uri_NewCopy(dl->down);
-                    if(dl->sides)   dl->sides = Uri_NewCopy(dl->sides);
+                    if(dl->flare)   dl->flare = Uri_Dup(dl->flare);
+                    if(dl->up)      dl->up    = Uri_Dup(dl->up);
+                    if(dl->down)    dl->down  = Uri_Dup(dl->down);
+                    if(dl->sides)   dl->sides = Uri_Dup(dl->sides);
                 }}
             }
 
@@ -2406,8 +2406,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(l, prevLineType, sizeof(*l));
 
-                if(l->actMaterial)   l->actMaterial   = Uri_NewCopy(l->actMaterial);
-                if(l->deactMaterial) l->deactMaterial = Uri_NewCopy(l->deactMaterial);
+                if(l->actMaterial)   l->actMaterial   = Uri_Dup(l->actMaterial);
+                if(l->deactMaterial) l->deactMaterial = Uri_Dup(l->deactMaterial);
             }
 
             FINDBEGIN;

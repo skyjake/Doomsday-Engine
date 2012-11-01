@@ -91,7 +91,7 @@ static void insertSerialId(MaterialArchive* mArc, materialarchive_serialid_t ser
     mArc->table = realloc(mArc->table, ++mArc->count * sizeof(materialarchive_record_t));
     rec = &mArc->table[mArc->count-1];
 
-    rec->uri = Uri_NewCopy(uri);
+    rec->uri = Uri_Dup(uri);
     rec->material = material;
 }
 
@@ -186,7 +186,7 @@ static int readRecord(MaterialArchive* mArc, materialarchive_record_t* rec, Read
     else if(mArc->version >= 2)
     {
         ddstring_t* path = Str_NewFromReader(reader);
-        Uri_SetUri3(rec->uri, Str_Text(path), RC_NULL);
+        Uri_SetUri2(rec->uri, Str_Text(path), RC_NULL);
         if(mArc->version == 2)
         {
             // We must encode the path.

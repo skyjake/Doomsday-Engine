@@ -51,13 +51,13 @@
 
 //#define DENG_STRINGPOOL_ZONE_ALLOCS
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "libdeng.h"
 #include "types.h"
 #include "de/ddstring.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct stringpool_s; // The stringpool instance (opaque).
 

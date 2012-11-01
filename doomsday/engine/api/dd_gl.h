@@ -28,6 +28,10 @@
 
 #include "rect.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup gl Graphics Library
  * @ingroup render
@@ -291,5 +295,9 @@ int             DGL_Bind(DGLuint texture);
 void            DGL_DeleteTextures(int num, const DGLuint* names);
 
 ///@}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_DGL_H */

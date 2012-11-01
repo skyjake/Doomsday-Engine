@@ -126,6 +126,8 @@ void DD_SetActivePluginId(pluginid_t id);
  */
 pluginid_t DD_ActivePluginId(void);
 
+boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
+
 /**
  * Locate the address of the named, exported procedure in the plugin.
  */

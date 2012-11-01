@@ -26,6 +26,10 @@
 
 #include "dengproject.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DOOMSDAY_NICENAME       "Doomsday Engine"
 
 #define DOOMSDAY_HOMEURL        "http://dengine.net"
@@ -87,6 +91,10 @@
 #  if defined(WIN32) && defined(UNICODE)
 #    define DOOMSDAY_VERSION_TEXT_WSTR      TEXT(DOOMSDAY_VERSION_BASE)
 #  endif
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_VERSION_H */

@@ -371,20 +371,19 @@ static bool findResource2(resourceclass_t rclass, ddstring_t const* searchPath,
 /**
  * @param flags  @see resourceLocationFlags
  */
-static int findResource(resourceclass_t rclass, Uri const* const* list,
+static int findResource(resourceclass_t rclass, uri_s const* const* list,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
 {
     DENG_ASSERT(inited && list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
 
     uint result = 0, n = 1;
 
-    for(Uri const* const* ptr = list; *ptr; ptr++, n++)
+    for(uri_s const* const* ptr = list; *ptr; ptr++, n++)
     {
-        Uri const* searchPath = *ptr;
-        ddstring_t* resolvedPath;
+        uri_s const* searchPath = *ptr;
 
         // Ignore incomplete paths.
-        resolvedPath = Uri_Resolved(searchPath);
+        ddstring_t const* resolvedPath = Uri_ResolvedConst(searchPath);
         if(!resolvedPath) continue;
 
         // If this is an absolute path, locate using it.
@@ -415,7 +414,6 @@ static int findResource(resourceclass_t rclass, Uri const* const* list,
 #endif
             }
         }
-        Str_Delete(resolvedPath);
 
         if(result) break;
     }
@@ -426,7 +424,7 @@ static void createPackagesResourceNamespace(void)
 {
     ddstring_t** doomWadPaths = 0, *doomWadDir = 0;
     uint doomWadPathsCount = 0, searchPathsCount, idx;
-    Uri** searchPaths;
+    uri_s** searchPaths;
 
 #ifdef UNIX
     {
@@ -514,13 +512,13 @@ static void createPackagesResourceNamespace(void)
 
     // Construct the search path list.
     searchPathsCount = 2 + doomWadPathsCount + (doomWadDir != 0? 1 : 0);
-    searchPaths = (Uri**) M_Malloc(sizeof(*searchPaths) * searchPathsCount);
+    searchPaths = (uri_s**) M_Malloc(sizeof(*searchPaths) * searchPathsCount);
     if(!searchPaths) Con_Error("createPackagesResourceNamespace: Failed on allocation of %lu bytes.", (unsigned long) (sizeof(*searchPaths) * searchPathsCount));
 
     idx = 0;
     // Add the default paths.
     searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/", RC_NULL);
-    searchPaths[idx++] = Uri_NewWithPath2("$(Game.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL);
 
     // Add any paths from the DOOMWADPATH environment variable.
     if(doomWadPaths != 0)
@@ -570,38 +568,38 @@ void F_CreateNamespacesForFileResourcePaths(void)
         char const* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
         { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0, 0,
-            { "$(App.DefsPath)/", "$(Game.DefsPath)/", "$(Game.DefsPath)/$(Game.IdentityKey)/" }
+            { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
         },
         { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0, 0,
             { "$(App.DataPath)/graphics/" }
         },
         { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
-            { "$(Game.DataPath)/models/", "$(Game.DataPath)/models/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
         },
         { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/sfx/", "$(Game.DataPath)/sfx/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
         },
         { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/music/", "$(Game.DataPath)/music/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
         },
         { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/textures/", "$(Game.DataPath)/textures/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
         },
         { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/flats/", "$(Game.DataPath)/flats/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
         },
         { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(Game.DataPath)/patches/", "$(Game.DataPath)/patches/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
         },
         { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
-            { "$(Game.DataPath)/lightmaps/" }
+            { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
         },
         { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
-            { "$(App.DataPath)/fonts/", "$(Game.DataPath)/fonts/", "$(Game.DataPath)/fonts/$(Game.IdentityKey)/" }
+            { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
         },
     { 0, 0, 0, 0, 0, { 0 } }
     };
-    Uri* uri = Uri_New();
+    uri_s* uri = Uri_New();
 
     // Setup of the Packages namespace is somewhat more involved...
     createPackagesResourceNamespace();
@@ -619,7 +617,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         for(j = 0; j < searchPathCount; ++j)
         {
-            Uri_SetUri3(uri, def->searchPaths[j], RC_NULL);
+            Uri_SetUri2(uri, def->searchPaths[j], RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, uri, def->searchPathFlags);
         }
 
@@ -628,16 +626,16 @@ void F_CreateNamespacesForFileResourcePaths(void)
             char const* path = CommandLine_NextAsPath();
 
             QByteArray path2 = String("%1$(Game.IdentityKey)/").arg(path).toUtf8();
-            Uri_SetUri3(uri, path2.constData(), RC_NULL);
+            Uri_SetUri2(uri, path2.constData(), RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
 
-            Uri_SetUri3(uri, path, RC_NULL);
+            Uri_SetUri2(uri, path, RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
         }
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
-            Uri_SetUri3(uri, CommandLine_NextAsPath(), RC_NULL);
+            Uri_SetUri2(uri, CommandLine_NextAsPath(), RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::FallbackPaths, uri, def->searchPathFlags);
         }
     }
@@ -731,7 +729,7 @@ ResourceNamespace* F_CreateResourceNamespace(char const* name,  byte flags)
 }
 
 boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
-    Uri const* searchPath)
+    uri_s const* searchPath)
 {
     errorIfNotInited("F_AddSearchPathToResourceNamespace");
 
@@ -745,7 +743,7 @@ ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni)
     return (getNamespaceInfoForId(rni))->rnamespace->name();
 }
 
-Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count)
+uri_s** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count)
 {
     if(!searchPaths || !searchPaths[0])
     {
@@ -754,7 +752,7 @@ Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* cou
     }
 
     int const FIXEDSIZE = 8;
-    Uri** list = 0, *localFixedList[FIXEDSIZE];
+    uri_s** list = 0, *localFixedList[FIXEDSIZE];
 
     ddstring_t buf; Str_Init(&buf);
     int numPaths = 0, n = 0;
@@ -780,7 +778,7 @@ Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* cou
             // A new path was parsed; add it to the list.
             if(n == FIXEDSIZE)
             {
-                list = (Uri**) M_Realloc(list, sizeof(*list) * (numPaths + 1));
+                list = (uri_s**) M_Realloc(list, sizeof(*list) * (numPaths + 1));
                 memcpy(list + (numPaths - FIXEDSIZE), localFixedList, sizeof(*list) * FIXEDSIZE);
                 n = 0;
             }
@@ -791,12 +789,12 @@ Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* cou
 
     if(numPaths <= FIXEDSIZE)
     {
-        list = (Uri**) M_Malloc(sizeof(*list) * (numPaths + 1));
+        list = (uri_s**) M_Malloc(sizeof(*list) * (numPaths + 1));
         memcpy(list, localFixedList, sizeof(*list) * numPaths);
     }
     else if(n > 1)
     {
-        list = (Uri**) M_Realloc(list, sizeof(*list) * (numPaths + 1));
+        list = (uri_s**) M_Realloc(list, sizeof(*list) * (numPaths + 1));
         memcpy(list + numPaths - n, localFixedList, sizeof(*list) * n);
     }
     else
@@ -811,12 +809,12 @@ Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* cou
     return list;
 }
 
-Uri** F_CreateUriList(resourceclass_t rclass, char const* searchPaths)
+uri_s** F_CreateUriList(resourceclass_t rclass, char const* searchPaths)
 {
     return F_CreateUriList2(rclass, searchPaths, 0);
 }
 
-Uri** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count)
+uri_s** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count)
 {
     if(!searchPaths)
     {
@@ -826,16 +824,16 @@ Uri** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths,
     return F_CreateUriList2(rclass, Str_Text(searchPaths), count);
 }
 
-Uri** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* searchPaths)
+uri_s** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* searchPaths)
 {
     return F_CreateUriListStr2(rclass, searchPaths, 0);
 }
 
-void F_DestroyUriList(Uri** list)
+void F_DestroyUriList(uri_s** list)
 {
     if(!list) return;
 
-    for(Uri** ptr = list; *ptr; ptr++)
+    for(uri_s** ptr = list; *ptr; ptr++)
     {
         Uri_Delete(*ptr);
     }
@@ -845,20 +843,19 @@ void F_DestroyUriList(Uri** list)
 ddstring_t** F_ResolvePathList2(resourceclass_t /*defaultResourceClass*/,
     ddstring_t const* pathList, size_t* count, char /*delimiter*/)
 {
-    Uri** uriList = F_CreateUriListStr(RC_NULL, pathList);
+    uri_s** uriList = F_CreateUriListStr(RC_NULL, pathList);
     size_t resolvedPathCount = 0;
     ddstring_t** paths = NULL;
 
     if(uriList)
     {
-        for(Uri** uriIt = uriList; *uriIt; ++uriIt)
+        for(uri_s** uriIt = uriList; *uriIt; ++uriIt)
         {
             // Ignore incomplete paths.
-            ddstring_t* resolvedPath = Uri_Resolved(*uriIt);
+            ddstring_t const* resolvedPath = Uri_ResolvedConst(*uriIt);
             if(!resolvedPath) continue;
 
             ++resolvedPathCount;
-            Str_Delete(resolvedPath);
         }
 
         if(resolvedPathCount)
@@ -867,7 +864,7 @@ ddstring_t** F_ResolvePathList2(resourceclass_t /*defaultResourceClass*/,
             if(!paths) Con_Error("F_ResolvePathList: Failed on allocation of %lu bytes for new path list.", (unsigned long) sizeof(*paths) * (resolvedPathCount+1));
 
             uint n = 0;
-            for(Uri** uriIt = uriList; *uriIt; ++uriIt)
+            for(uri_s** uriIt = uriList; *uriIt; ++uriIt)
             {
                 // Ignore incomplete paths.
                 ddstring_t* resolvedPath = Uri_Resolved(*uriIt);
@@ -915,7 +912,7 @@ void F_PrintStringList(ddstring_t const** strings, size_t stringsCount)
 }
 #endif
 
-uint F_FindResource5(resourceclass_t rclass, Uri const** searchPaths,
+uint F_FindResource5(resourceclass_t rclass, uri_s const** searchPaths,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
 {
     errorIfNotInited("F_FindResource4");
@@ -940,15 +937,15 @@ uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* searchPaths,
         return 0;
     }
 
-    Uri** list = F_CreateUriListStr(rclass, searchPaths);
+    uri_s** list = F_CreateUriListStr(rclass, searchPaths);
     if(!list) return 0;
 
-    int result = findResource(rclass, (Uri const**)list, foundPath, flags, optionalSuffix);
+    int result = findResource(rclass, (uri_s const**)list, foundPath, flags, optionalSuffix);
     F_DestroyUriList(list);
     return result;
 }
 
-uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, Uri const* const* searchPaths)
+uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, uri_s const* const* searchPaths)
 {
     return findResource(AbstractResource_ResourceClass(rec),
                         searchPaths, foundPath, RLF_DEFAULT, NULL/*no optional suffix*/);
@@ -957,7 +954,7 @@ uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, Uri 
 uint F_FindResourceForRecord(AbstractResource* rec, ddstring_t* foundPath)
 {
     return F_FindResourceForRecord2(rec, foundPath,
-                                    (Uri const* const*) AbstractResource_SearchPaths(rec));
+                                    (uri_s const* const*) AbstractResource_SearchPaths(rec));
 }
 
 uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* searchPaths,
@@ -1055,7 +1052,7 @@ resourcetype_t F_GuessResourceTypeByName(char const* path)
     return RT_NONE; // Unrecognizable.
 }
 
-boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
+boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
 {
     if(path && !Str_IsEmpty(path))
     {
@@ -1069,7 +1066,7 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
             if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
                !strnicmp(Str_Text(rnamespace.name()), Str_Text(path), nameLen))
             {
-                Str_Prepend(path, Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->dataPath()));
+                Str_Prepend(path, "$(App.DataPath)/$(GamePlugin.Name)/");
                 return true;
             }
         }
@@ -1077,14 +1074,14 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
     return false;
 }
 
-boolean F_ApplyPathMapping(ddstring_t* path)
+boolean F_ApplyGamePathMapping(ddstring_t* path)
 {
     DENG_ASSERT(path);
-    errorIfNotInited("F_ApplyPathMapping");
+    errorIfNotInited("F_ApplyGamePathMapping");
 
     uint i = 1;
     boolean result = false;
-    while(i < numNamespaces + 1 && !(result = F_MapResourcePath(i++, path)))
+    while(i < numNamespaces + 1 && !(result = F_MapGameResourcePath(i++, path)))
     {}
     return result;
 }
@@ -1104,7 +1101,7 @@ char const* F_ResourceClassStr(resourceclass_t rclass)
     return Str_Text(resourceClassNames[(int)rclass]);
 }
 
-char const* F_ParseSearchPath2(Uri* dst, char const* src, char delim,
+char const* F_ParseSearchPath2(uri_s* dst, char const* src, char delim,
     resourceclass_t defaultResourceClass)
 {
     Uri_Clear(dst);
@@ -1115,7 +1112,7 @@ char const* F_ParseSearchPath2(Uri* dst, char const* src, char delim,
         {
             Str_PartAppend(&buf, src, 0, 1);
         }
-        Uri_SetUri3(dst, Str_Text(&buf), defaultResourceClass);
+        Uri_SetUri2(dst, Str_Text(&buf), defaultResourceClass);
         Str_Free(&buf);
     }
     if(!*src)
@@ -1124,7 +1121,7 @@ char const* F_ParseSearchPath2(Uri* dst, char const* src, char delim,
     return src + 1;
 }
 
-char const* F_ParseSearchPath(Uri* dst, char const* src, char delim)
+char const* F_ParseSearchPath(uri_s* dst, char const* src, char delim)
 {
     return F_ParseSearchPath2(dst, src, delim, RC_UNKNOWN);
 }

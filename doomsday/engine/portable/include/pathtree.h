@@ -98,6 +98,8 @@ namespace de {
  */
 class PathTree
 {
+    struct Instance; // needs to be friended by Node
+
 public:
     /// Identifier associated with each unique path fragment.
     typedef unsigned int FragmentId;
@@ -199,6 +201,7 @@ public:
         ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
 
         friend class PathTree;
+        friend struct PathTree::Instance;
 
     private:
         FragmentId fragmentId() const;
@@ -310,7 +313,6 @@ public:
     ushort fragmentHash(FragmentId fragmentId) const;
 
 private:
-    struct Instance;
     Instance* d;
 };
 

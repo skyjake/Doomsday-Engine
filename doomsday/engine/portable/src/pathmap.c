@@ -23,6 +23,7 @@
 #include "de_console.h"
 #include "pathmap.h"
 
+#include <ctype.h>
 #include <de/memory.h>
 
 static ushort PathMap_HashFragment(PathMap* pm, PathMapFragment* fragment)

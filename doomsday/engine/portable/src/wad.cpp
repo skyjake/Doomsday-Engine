@@ -461,7 +461,7 @@ uint8_t const* Wad::cacheLump(int lumpIdx)
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
-    LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
+    LOG_TRACE("\"%s:%s\" (%u bytes%s)")
         << F_PrettyPath(Str_Text(composePath()))
         << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.info().size
@@ -523,7 +523,7 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     LOG_AS("Wad::readLump");
     WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
 
-    LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
+    LOG_TRACE("\"%s:%s\" (%u bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(composePath()))
         << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.size()

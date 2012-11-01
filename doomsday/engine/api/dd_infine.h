@@ -25,6 +25,10 @@
 #ifndef LIBDENG_API_INFINE_H
 #define LIBDENG_API_INFINE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup infine Finale Animations
  * @ingroup gui
@@ -110,5 +114,9 @@ boolean FI_ScriptIsMenuTrigger(finaleid_t id);
 int FI_ScriptResponder(finaleid_t id, const void* ev);
 
 ///@}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_API_INFINE_H */

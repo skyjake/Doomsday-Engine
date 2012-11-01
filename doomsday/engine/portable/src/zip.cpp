@@ -136,7 +136,7 @@ typedef struct centralend_s {
 } centralend_t;
 #pragma pack()
 
-static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src);
+static void ApplyGamePathMappings(ddstring_t* dest, const ddstring_t* src);
 
 class ZipFile : public File1
 {
@@ -454,8 +454,11 @@ struct Zip::Instance
                 // Convert all slashes to our internal separator.
                 F_FixSlashes(&entryPath, &entryPath);
 
-                // In some cases the path inside the file is mapped to another virtual location.
-                ApplyPathMappings(&entryPath, &entryPath);
+                if(DD_GameLoaded())
+                {
+                    // In some cases the path inside the file is mapped to another virtual location.
+                    ApplyGamePathMappings(&entryPath, &entryPath);
+                }
 
                 // Make it absolute.
                 F_PrependBasePath(&entryPath, &entryPath);
@@ -630,7 +633,7 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::cacheLump", invalidIndexMessage(lumpIdx, lastIndex()));
 
     ZipFile& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
-    LOG_TRACE("\"%s:%s\" (%lu bytes%s)")
+    LOG_TRACE("\"%s:%s\" (%u bytes%s)")
         << F_PrettyPath(Str_Text(composePath()))
         << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.info().size
@@ -692,7 +695,7 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     LOG_AS("Zip::readLump");
     ZipFile const& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
 
-    LOG_TRACE("\"%s:%s\" (%lu bytes%s) [%lu +%lu]")
+    LOG_TRACE("\"%s:%s\" (%u bytes%s) [%lu +%lu]")
         << F_PrettyPath(Str_Text(composePath()))
         << F_PrettyPath(Str_Text(file.composePath()))
         << (unsigned long) file.size()
@@ -941,68 +944,45 @@ bool Zip::uncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize
  * Paths that begin with a '#' are mapped to Data/Game/Auto.
  * Key-named directories at the root are mapped to another location.
  */
-static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
+static void ApplyGamePathMappings(ddstring_t* dest, const ddstring_t* src)
 {
+    String path = String(Str_Text(src));
+
     // Manually mapped to Defs?
-    if(Str_At(src, 0) == '@')
+    if(path.beginsWith('@'))
     {
-        ddstring_t* out = (dest == src? Str_New() : dest);
-        int dist;
+        path.remove(0, 1);
+        if(path.at(0) == '/') path.remove(0, 1);
 
-        Str_Appendf(out, "%sauto/", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->defsPath()));
-        dist = (Str_At(src, 1) == '/'? 2 : 1);
-        Str_PartAppend(out, Str_Text(src), dist, Str_Length(src)-dist);
-
-        if(dest == src)
-        {
-            Str_Copy(dest, out);
-            Str_Delete(out);
-        }
-        return;
+        path.prepend("$(App.DefsPath)/$(GamePlugin.Name)/auto/");
     }
-
     // Manually mapped to Data?
-    if(Str_At(src, 0) == '#')
+    else if(path.beginsWith('#'))
     {
-        ddstring_t* out = (dest == src? Str_New() : dest);
-        int dist = 0;
-        char* slash;
+        path.remove(0, 1);
+        if(path.at(0) == '/') path.remove(0, 1);
 
-        Str_Appendf(out, "%sauto/", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->dataPath()));
-        slash = strrchr(Str_Text(src), '/');
-        dist = slash - Str_Text(src);
-        // Copy the path up to and including the last directory separator if present.
-        if(slash - Str_Text(src) > 1)
-            Str_PartAppend(out, Str_Text(src), 1, dist);
-
-        if(slash)
+        // Is there a prefix to be omitted in the name?
+        if(int slash = path.lastIndexOf('/'))
         {
-            // Is there a prefix to be omitted in the name?
             // The slash must not be too early in the string.
-            if(slash >= Str_Text(src) + 2)
+            if(slash >= 2)
             {
                 // Good old negative indices.
-                if(slash[-2] == '.' && slash[-1] >= '1' && slash[-1] <= '9')
-                    dist += slash[-1] - '1' + 1;
+                if(path.at(slash - 2) == '.' && path.at(slash - 1) >= '1' && path.at(slash - 1) <= '9')
+                    path.remove(slash - 2, 2);
             }
         }
 
-        Str_PartAppend(out, Str_Text(src), dist+1, Str_Length(src)-(dist+1));
-
-        if(dest == src)
-        {
-            Str_Copy(dest, out);
-            Str_Delete(out);
-        }
-        return;
+        path.prepend("$(App.DataPath)/$(GamePlugin.Name)/auto/");
     }
-
-    if(strchr(Str_Text(src), '/') == NULL)
+    // Implicitly mapped to another location?
+    else if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        resourcetype_t type = F_GuessResourceTypeByName(Str_Text(src));
+        QByteArray fileName = path.fileName().toUtf8();
+        resourcetype_t type = F_GuessResourceTypeByName(fileName.constData());
         resourceclass_t rclass;
-        ddstring_t mapped;
 
         // Certain resource files require special handling.
         // Something of a kludge, at this level.
@@ -1011,9 +991,10 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         case RT_DEH: // Treat DeHackEd patches as packages so they are mapped to Data.
             rclass = RC_PACKAGE;
             break;
+
         case RT_NONE: { // *.lmp files must be mapped to Data.
-            const char* ext = F_FindFileExtension(Str_Text(src));
-            if(ext && !stricmp("lmp", ext))
+            String ext = path.fileNameExtension();
+            if(!ext.empty() && !ext.compareWithoutCase(".lmp"))
             {
                 rclass = RC_PACKAGE;
             }
@@ -1021,39 +1002,45 @@ static void ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
             {
                 rclass = RC_UNKNOWN;
             }
-            break;
-          }
+            break; }
+
         default:
             rclass = F_DefaultResourceClassForType(type);
             break;
         }
         // Kludge end
 
-        Str_Init(&mapped);
         switch(rclass)
         {
         case RC_PACKAGE: // Mapped to the Data directory.
-            Str_Appendf(&mapped, "%sauto/", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->dataPath()));
+            path.prepend("$(App.DataPath)/$(GamePlugin.Name)/auto/");
             break;
+
         case RC_DEFINITION: // Mapped to the Defs directory.
-            Str_Appendf(&mapped, "%sauto/", Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->defsPath()));
+            path.prepend("$(App.DefsPath)/$(GamePlugin.Name)/auto/");
             break;
+
         default: /* Not mapped */ break;
         }
-        Str_Append(&mapped, Str_Text(src));
-        Str_Copy(dest, &mapped);
-
-        Str_Free(&mapped);
-        return;
+    }
+    // Key-named directories in the root might be mapped to another location.
+    else
+    {
+        AutoStr* temp = AutoStr_FromTextStd(Str_Text(src));
+        if(F_ApplyGamePathMapping(temp))
+        {
+            path = String(Str_Text(temp));
+        }
     }
 
-    // There is at least one level of directory structure.
-
-    if(dest != src)
-        Str_Copy(dest, src);
-
-    // Key-named directories in the root might be mapped to another location.
-    F_ApplyPathMapping(dest);
+    // Resolve all symbolic references in the path.
+    QByteArray pathUtf8 = path.toUtf8();
+    uri_s* pathUri = Uri_NewWithPath2(pathUtf8.constData(), RC_NULL);
+    if(ddstring_t const* resolvedPath = Uri_ResolvedConst(pathUri))
+    {
+        Str_Copy(dest, resolvedPath);
+    }
+    Uri_Delete(pathUri);
 }
 
 } // namespace de

@@ -68,14 +68,12 @@ class Game
 public:
     /**
      * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-     * @param dataPath      The base directory for all data-class resources.
-     * @param defsPath      The base directory for all defs-class resources.
      * @param configDir     Name of the config directory.
      * @param title         Default game title.
      * @param author        Default game author.
      */
-    Game(char const* identityKey, ddstring_t const* dataPath, ddstring_t const* defsPath,
-         char const* configDir, char const* title = "Unnamed", char const* author = "Unknown");
+    Game(char const* identityKey, char const* configDir,
+         char const* title = "Unnamed", char const* author = "Unknown");
     virtual ~Game();
 
     /// @return  Collection in which this game exists.
@@ -98,22 +96,6 @@ public:
 
     /// @return  String containing the name of the binding config file.
     ddstring_t const& bindingConfig() const;
-
-    /**
-     * @note Unless caller is the resource locator then you probably shouldn't be calling.
-     * This is the absolute data path and shouldn't be used directly for resource location.
-     *
-     * @return  String containing the base data-class resource directory.
-     */
-    ddstring_t const& dataPath() const;
-
-    /**
-     * @note Unless caller is the resource locator then you probably shouldn't be calling.
-     * This is the absolute defs path and shouldn't be used directly for resource location.
-     *
-     * @return  String containing the base defs-class resource directory.
-     */
-    ddstring_t const& defsPath() const;
 
     /**
      * Change the identfier of the plugin associated with this.
@@ -206,7 +188,7 @@ public:
     DENG2_ERROR(NullObjectError);
 
 public:
-    NullGame(ddstring_t const* dataPath, ddstring_t const* defsPath);
+    NullGame();
 
     Game& addResource(resourceclass_t /*rclass*/, struct AbstractResource_s& /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
@@ -246,7 +228,7 @@ extern "C" {
 struct game_s; // The game instance (opaque).
 typedef struct game_s Game;
 
-Game* Game_New(char const* identityKey, ddstring_t const* dataPath, ddstring_t const* defsPath, char const* configDir, char const* title, char const* author);
+Game* Game_New(char const* identityKey, char const* configDir, char const* title, char const* author);
 
 void Game_Delete(Game* game);
 
@@ -271,10 +253,6 @@ ddstring_t const* Game_MainConfig(Game const* game);
 ddstring_t const* Game_BindingConfig(Game const* game);
 
 struct AbstractResource_s* const* Game_Resources(Game const* game, resourceclass_t rclass, int* count);
-
-ddstring_t const* Game_DataPath(Game const* game);
-
-ddstring_t const* Game_DefsPath(Game const* game);
 
 Game* Game_FromDef(GameDef const* def);
 

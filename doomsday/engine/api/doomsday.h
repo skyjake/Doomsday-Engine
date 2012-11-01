@@ -78,6 +78,10 @@ extern "C" {
 
 struct font_s;
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #include "dd_share.h"
 #include "dd_plugin.h"
 #include "filehandle.h"
@@ -89,6 +93,10 @@ struct font_s;
 #include <de/memoryzone.h>
 #include <de/smoother.h>
 #include <de/stringpool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //------------------------------------------------------------------------
 //

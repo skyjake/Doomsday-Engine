@@ -25,10 +25,6 @@
 #ifndef LIBDENG_SHARED_H
 #define LIBDENG_SHARED_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef C_DECL
 #  if defined(WIN32)
 /// Defines the calling convention for compare functions. Only used on Windows.
@@ -54,6 +50,10 @@ extern "C" {
 #include "def_share.h"
 #include "busytask.h"
 #include "thinker.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** @file
  * @todo dd_version.h is not officially a public header file!
@@ -339,12 +339,6 @@ typedef struct gamedef_s {
     * - Sent out in netgames (a client can't connect unless mode strings match).
     */
     const char* identityKey;
-
-    /// The base directory for all data-class resources.
-    const char* dataPath;
-
-    /// The base directory for all defs-class resources.
-    const char* defsPath;
 
     /// Name of the config directory.
     const char* configDir;

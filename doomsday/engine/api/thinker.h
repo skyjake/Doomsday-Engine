@@ -23,6 +23,10 @@
 #ifndef LIBDENG_THINKER_H
 #define LIBDENG_THINKER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup thinker Thinkers
  * @ingroup playsim
@@ -55,5 +59,9 @@ int DD_IterateThinkers(think_t func, int (*callback) (thinker_t*, void*), void* 
 ///@{
 boolean P_IsMobjThinker(think_t thinker);
 ///@}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_THINKER_H

@@ -105,7 +105,7 @@ void R_SetBorderGfx(const Uri* const* paths)
         if(paths[i])
         {
             if(!borderGraphicsNames[i])
-                borderGraphicsNames[i] = Uri_NewCopy(paths[i]);
+                borderGraphicsNames[i] = Uri_Dup(paths[i]);
             else
                 Uri_Copy(borderGraphicsNames[i], paths[i]);
         }

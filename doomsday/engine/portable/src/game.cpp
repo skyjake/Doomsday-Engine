@@ -54,12 +54,6 @@ struct Game::Instance
     /// Formatted default author suitable for printing (e.g., "id Software").
     ddstring_t author;
 
-    /// The base directory for all data-class resources.
-    ddstring_t dataPath;
-
-    /// The base directory for all defs-class resources.
-    ddstring_t defsPath;
-
     /// Name of the main config file (e.g., "configs/doom/game.cfg").
     ddstring_t mainConfig;
 
@@ -69,8 +63,7 @@ struct Game::Instance
     /// Vector of records for required game resources (e.g., doomu.wad).
     resourcerecordset_t requiredResources[RESOURCECLASS_COUNT];
 
-    Instance(char const* _identityKey, ddstring_t const* _dataPath,
-             ddstring_t const* _defsPath, char const* configDir)
+    Instance(char const* _identityKey, char const* configDir)
         : pluginId(0)
     {
         Str_Set(Str_InitStd(&identityKey), _identityKey);
@@ -78,9 +71,6 @@ struct Game::Instance
 
         Str_InitStd(&title);
         Str_InitStd(&author);
-
-        Str_Set(Str_InitStd(&dataPath), Str_Text(_dataPath));
-        Str_Set(Str_InitStd(&defsPath), Str_Text(_defsPath));
 
         Str_Appendf(Str_InitStd(&mainConfig), "configs/%s", configDir);
         Str_Strip(&mainConfig);
@@ -100,8 +90,6 @@ struct Game::Instance
     ~Instance()
     {
         Str_Free(&identityKey);
-        Str_Free(&dataPath);
-        Str_Free(&defsPath);
         Str_Free(&mainConfig);
         Str_Free(&bindingConfig);
         Str_Free(&title);
@@ -124,11 +112,10 @@ struct Game::Instance
     }
 };
 
-Game::Game(char const* identityKey, ddstring_t const* dataPath,
-    ddstring_t const* defsPath, char const* configDir, char const* title,
+Game::Game(char const* identityKey, char const* configDir, char const* title,
     char const* author)
 {
-    d = new Instance(identityKey, dataPath, defsPath, configDir);
+    d = new Instance(identityKey, configDir);
     if(title)  Str_Set(&d->title, title);
     if(author) Str_Set(&d->author, author);
 }
@@ -189,16 +176,6 @@ pluginid_t Game::pluginId() const
 ddstring_t const& Game::identityKey() const
 {
     return d->identityKey;
-}
-
-ddstring_t const& Game::dataPath() const
-{
-    return d->dataPath;
-}
-
-ddstring_t const& Game::defsPath() const
-{
-    return d->defsPath;
 }
 
 ddstring_t const& Game::mainConfig() const
@@ -266,22 +243,7 @@ bool Game::isRequiredFile(File1& file)
 
 Game* Game::fromDef(GameDef const& def)
 {
-    AutoStr* dataPath = AutoStr_NewStd();
-    Str_Set(dataPath, def.dataPath);
-    Str_Strip(dataPath);
-    F_FixSlashes(dataPath, dataPath);
-    F_ExpandBasePath(dataPath, dataPath);
-    F_AppendMissingSlash(dataPath);
-
-    AutoStr* defsPath = AutoStr_NewStd();
-    Str_Set(defsPath, def.defsPath);
-    Str_Strip(defsPath);
-    F_FixSlashes(defsPath, defsPath);
-    F_ExpandBasePath(defsPath, defsPath);
-    F_AppendMissingSlash(defsPath);
-
-    return new Game(def.identityKey, dataPath, defsPath, def.configDir,
-                    def.defaultTitle, def.defaultAuthor);
+    return new Game(def.identityKey, def.configDir, def.defaultTitle, def.defaultAuthor);
 }
 
 void Game::printBanner(Game const& game)
@@ -321,9 +283,7 @@ void Game::print(Game const& game, int flags)
         flags &= ~PGF_BANNER;
 
 #if _DEBUG
-    Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", int(game.pluginId()),
-               F_PrettyPath(Str_Text(&game.dataPath())),
-               F_PrettyPath(Str_Text(&game.defsPath())));
+    Con_Printf("pluginid:%i\n", int(game.pluginId()));
 #endif
 
     if(flags & PGF_BANNER)
@@ -356,8 +316,8 @@ void Game::print(Game const& game, int flags)
                                                           "Incomplete/Not playable");
 }
 
-NullGame::NullGame(ddstring_t const* dataPath, ddstring_t const* defsPath)
-    : Game("null-game", dataPath, defsPath, "doomsday", "null-game", "null-game")
+NullGame::NullGame()
+    : Game("null-game", "doomsday", "null-game", "null-game")
 {}
 
 } // namespace de
@@ -380,10 +340,10 @@ NullGame::NullGame(ddstring_t const* dataPath, ddstring_t const* defsPath)
     DENG2_ASSERT(inst); \
     de::Game const* self = TOINTERNAL_CONST(inst)
 
-struct game_s* Game_New(char const* identityKey, ddstring_t const* dataPath, ddstring_t const* defsPath,
-                        char const* configDir, char const* title, char const* author)
+struct game_s* Game_New(char const* identityKey, char const* configDir,
+    char const* title, char const* author)
 {
-    return reinterpret_cast<struct game_s*>(new de::Game(identityKey, dataPath, defsPath, configDir, title, author));
+    return reinterpret_cast<struct game_s*>(new de::Game(identityKey, configDir, title, author));
 }
 
 void Game_Delete(struct game_s* game)
@@ -461,18 +421,6 @@ struct AbstractResource_s* const* Game_Resources(struct game_s const* game, reso
 {
     SELF_CONST(game);
     return self->resources(rclass, count);
-}
-
-ddstring_t const* Game_DataPath(struct game_s const* game)
-{
-    SELF_CONST(game);
-    return &self->dataPath();
-}
-
-ddstring_t const* Game_DefsPath(struct game_s const* game)
-{
-    SELF_CONST(game);
-    return &self->defsPath();
 }
 
 struct game_s* Game_FromDef(GameDef const* def)

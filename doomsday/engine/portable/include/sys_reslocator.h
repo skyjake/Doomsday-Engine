@@ -34,12 +34,11 @@
 //#include "resourcenamespace.h"
 #include "abstractresource.h"
 #include "filedirectory.h"
+#include "uri.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct uri_s;
 
 #define PACKAGES_RESOURCE_NAMESPACE_NAME    "Packages"
 #define DEFINITIONS_RESOURCE_NAMESPACE_NAME "Defs"
@@ -146,7 +145,7 @@ ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
  * @param searchPath  Uri representing the search path to be added.
  */
 boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
-    Uri const* searchPath);
+    struct uri_s const* searchPath);
 
 /**
  * Attempt to locate a known resource.
@@ -162,7 +161,7 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
  */
 uint F_FindResourceForRecord(struct AbstractResource_s* rec, ddstring_t* foundPath);
 
-uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, Uri const* const* searchPaths);
+uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, struct uri_s const* const* searchPaths);
 
 /**
  * Attempt to locate a named resource.
@@ -233,20 +232,20 @@ resourcetype_t F_GuessResourceTypeByName(char const* name);
  * This mapping will translate directives and symbolic identifiers into their default paths,
  * which themselves are determined using the current Game.
  *
- *  e.g.: "Models:my/cool/model.dmd" -> "}data/<Game::IdentityKey>/models/my/cool/model.dmd"
+ *  e.g.: "Models/my/cool/model.dmd" => "$(App.DataPath)/$(GamePlugin.Name)/models/my/cool/model.dmd"
  *
  * @param rni  Unique identifier of the namespace whose mappings to apply.
  * @param path  The path to be mapped (applied in-place).
  * @return  @c true iff mapping was applied to the path.
  */
-boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path);
+boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path);
 
 /**
  * Apply all resource namespace mappings to the specified path.
  *
  * @return  @c true iff the path was mapped.
  */
-boolean F_ApplyPathMapping(ddstring_t* path);
+boolean F_ApplyGamePathMapping(ddstring_t* path);
 
 char const* F_ParseSearchPath2(struct uri_s* dst, char const* src, char delim, resourceclass_t defaultResourceClass);
 char const* F_ParseSearchPath(struct uri_s* dst, char const* src, char delim);
@@ -259,13 +258,13 @@ char const* F_ResourceClassStr(resourceclass_t rclass);
 /**
  * Construct a new NULL terminated Uri list from the specified search path list.
  */
-Uri** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count);
-Uri** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* searchPaths);
+struct uri_s** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count);
+struct uri_s** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* searchPaths);
 
-Uri** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count);
-Uri** F_CreateUriList(resourceclass_t rclass, char const* searchPaths);
+struct uri_s** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count);
+struct uri_s** F_CreateUriList(resourceclass_t rclass, char const* searchPaths);
 
-void F_DestroyUriList(Uri** list);
+void F_DestroyUriList(struct uri_s** list);
 
 ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass, ddstring_t const* pathList, size_t* count, char delimiter);
 ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass, ddstring_t const* pathList, size_t* count);

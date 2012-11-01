@@ -477,6 +477,10 @@ String String::patternFormat(String::const_iterator& formatIter,
         output << (int(arg.asNumber())? "true" : "false");
         break;
 
+    case 'c':
+        output << QChar(ushort(arg.asNumber()));
+        break;
+
     case 'i':
     case 'd':
         output << dint64(arg.asNumber());

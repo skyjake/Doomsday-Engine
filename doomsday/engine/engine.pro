@@ -642,7 +642,7 @@ SOURCES += \
     portable/src/updater/updaterdialog.cpp \
     portable/src/updater/updatersettings.cpp \
     portable/src/updater/updatersettingsdialog.cpp \
-    portable/src/uri.c \
+    portable/src/uri.cpp \
     portable/src/vertex.cpp \
     portable/src/wad.cpp \
     portable/src/window.cpp \

@@ -37,11 +37,11 @@
 #ifndef LIBDENG_WRITER_H
 #define LIBDENG_WRITER_H
 
+#include "types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "types.h"
 
 #ifdef DENG_WRITER_TYPECHECK
 // Writer Type Check Codes.

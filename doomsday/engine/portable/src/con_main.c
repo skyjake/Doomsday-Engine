@@ -2569,7 +2569,7 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "name") && argc == 3)
     {
-        Uri* uri = Uri_SetUri3(Uri_New(), argv[2], RC_NULL);
+        Uri* uri = Uri_SetUri2(Uri_New(), argv[2], RC_NULL);
         fontid_t newFont = Fonts_ResolveUri2(uri, true/*quiet please*/);
         Uri_Delete(uri);
         if(newFont)

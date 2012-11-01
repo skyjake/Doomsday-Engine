@@ -1097,7 +1097,7 @@ void R_InitSystemTextures(void)
     for(i = 0; defs[i].texPath; ++i)
     {
         Uri_SetPath(uri, defs[i].texPath);
-        Uri_SetUri2(resourcePath, defs[i].resourcePath);
+        Uri_SetUri(resourcePath, defs[i].resourcePath);
 
         texId = Textures_Declare(uri, i+1/*1-based index*/, resourcePath);
         if(texId == NOTEXTUREID) continue; // Invalid uri?
@@ -2270,7 +2270,7 @@ void R_DefineSpriteTexture(textureid_t texId)
 
     if(tex && resourceUri)
     {
-        ddstring_t* resourcePath = Uri_Resolved(resourceUri);
+        ddstring_t const* resourcePath = Uri_ResolvedConst(resourceUri);
         lumpnum_t lumpNum = F_LumpNumForName(Str_Text(resourcePath));
         int lumpIdx;
         struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
@@ -2284,7 +2284,6 @@ void R_DefineSpriteTexture(textureid_t texId)
         Texture_FlagCustom(tex, F_LumpIsCustom(lumpNum));
 
         F_UnlockLump(file, lumpIdx);
-        Str_Delete(resourcePath);
     }
 }
 
