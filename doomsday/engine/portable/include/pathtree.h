@@ -201,7 +201,7 @@ public:
         ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
 
         friend class PathTree;
-        friend class PathTree::Instance;
+        friend struct PathTree::Instance;
 
     private:
         FragmentId fragmentId() const;
