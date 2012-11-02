@@ -247,9 +247,6 @@ boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path);
  */
 boolean F_ApplyGamePathMapping(ddstring_t* path);
 
-char const* F_ParseSearchPath2(struct uri_s* dst, char const* src, char delim, resourceclass_t defaultResourceClass);
-char const* F_ParseSearchPath(struct uri_s* dst, char const* src, char delim);
-
 /**
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
