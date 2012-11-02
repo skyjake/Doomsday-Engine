@@ -274,12 +274,14 @@ void DD_StartTitle(void)
 }
 
 /**
- * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data directory
- * are loaded to the file system.
+ * Find all game data file paths in the auto directory with the extensions
+ * wad, lmp, pk3, zip and deh.
  *
- * @return Number of new files that were loaded.
+ * @param found         List of paths to be populated.
+ *
+ * @return  Number of paths added to @a found.
  */
-static int addFilesFromAutoData(void)
+static int findAllGameDataPaths(FS1::PathList& found)
 {
     static const char* extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
@@ -288,81 +290,68 @@ static int addFilesFromAutoData(void)
 #endif
         0
     };
-
-    int count = 0;
+    int const numFoundSoFar = found.count();
     for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
     {
-        QByteArray patternUtf8 = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]).toUtf8();
-
-        uri_s* pattern = Uri_NewWithPath2(patternUtf8.constData(), RC_NULL);
-        if(ddstring_t const* resolvedPattern = Uri_ResolvedConst(pattern))
+        QByteArray pattern = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]).toUtf8();
+        ddstring_t* resolvedPattern = de::Uri(pattern.constData(), RC_NULL).resolved();
+        if(resolvedPattern)
         {
-            FS1::PathList found;
-            if(App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found))
-            {
-                DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
-                {
-                    // Ignore directories.
-                    if(i->attrib & A_SUBDIR) continue;
-
-                    QByteArray foundPath = i->path.toUtf8();
-                    if(tryLoadFile(foundPath.constData()))
-                    {
-                        count += 1;
-                    }
-                }
-            }
+            App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found);
+            Str_Delete(resolvedPattern);
         }
-        Uri_Delete(pattern);
     }
-    return count;
+    return found.count() - numFoundSoFar;
 }
 
 /**
- * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data
- * directory are added to the specified file list.
+ * Find and try to load all game data file paths in auto directory.
+ *
+ * @return Number of new files that were loaded.
+ */
+static int loadFilesFromDataGameAuto()
+{
+    FS1::PathList found;
+    findAllGameDataPaths(found);
+
+    int numLoaded = 0;
+    DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+    {
+        // Ignore directories.
+        if(i->attrib & A_SUBDIR) continue;
+
+        QByteArray foundPath = i->path.toUtf8();
+        if(tryLoadFile(foundPath.constData()))
+        {
+            numLoaded += 1;
+        }
+    }
+    return numLoaded;
+}
+
+/**
+ * Find and list all game data file paths in the auto directory.
  *
  * @return Number of new files that were added to the list.
  */
-static int listFilesFromAutoData(ddstring_t*** list, size_t* listSize)
+static int listFilesFromDataGameAuto(ddstring_t*** list, size_t* listSize)
 {
-    static const char* extensions[] = {
-        "wad", "lmp", "pk3", "zip", "deh",
-#ifdef UNIX
-        "WAD", "LMP", "PK3", "ZIP", "DEH", // upper case alternatives
-#endif
-        0
-    };
-
     if(!list || !listSize) return 0;
 
-    ddstring_t pattern; Str_InitStd(&pattern);
+    FS1::PathList found;
+    findAllGameDataPaths(found);
 
-    uint numFilesAdded = 0;
-    for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
+    int numFilesAdded = 0;
+    DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
     {
-        QByteArray patternUtf8 = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]).toUtf8();
+        // Ignore directories.
+        if(i->attrib & A_SUBDIR) continue;
 
-        uri_s* pattern = Uri_NewWithPath2(patternUtf8.constData(), RC_NULL);
-        if(ddstring_t const* resolvedPattern = Uri_ResolvedConst(pattern))
-        {
-            FS1::PathList found;
-            if(App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found))
-            {
-                DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
-                {
-                    // Ignore directories.
-                    if(i->attrib & A_SUBDIR) continue;
+        QByteArray foundPath = i->path.toUtf8();
+        addToPathList(list, listSize, foundPath.constData());
 
-                    QByteArray foundPath = i->path.toUtf8();
-                    addToPathList(list, listSize, foundPath.constData());
-                    numFilesAdded += 1;
-                }
-            }
-        }
-        Uri_Delete(pattern);
+        numFilesAdded += 1;
     }
-
     return numFilesAdded;
 }
 
@@ -463,20 +452,18 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
         // Create default Auto mappings in the runtime directory.
 
         // Data class resources.
-        uri_s* dataPath = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/auto", RC_NULL);
-        if(ddstring_t const* resolvedPath = Uri_ResolvedConst(dataPath))
+        de::Uri dataPath = de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL);
+        if(ddstring_t const* resolvedPath = dataPath.resolvedConst())
         {
-            F_AddVirtualDirectoryMapping("auto", Str_Text(resolvedPath));
+            F_AddVirtualDirectoryMapping("auto/", Str_Text(resolvedPath));
         }
-        Uri_Delete(dataPath);
 
         // Definition class resources.
-        uri_s* defsPath = Uri_NewWithPath2("$(App.DefsPath)/$(GamePlugin.Name)/auto", RC_NULL);
-        if(ddstring_t const* resolvedPath = Uri_ResolvedConst(defsPath))
+        de::Uri defsPath = de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL);
+        if(ddstring_t const* resolvedPath = defsPath.resolvedConst())
         {
-            F_AddVirtualDirectoryMapping("auto", Str_Text(resolvedPath));
+            F_AddVirtualDirectoryMapping("auto/", Str_Text(resolvedPath));
         }
-        Uri_Delete(defsPath);
     }
 
     /**
@@ -691,7 +678,7 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
          * Phase 3: Add real files from the Auto directory.
          * First ZIPs then WADs (they may contain WAD files).
          */
-        listFilesFromAutoData(&sessionResourceFileList, &numSessionResourceFileList);
+        listFilesFromDataGameAuto(&sessionResourceFileList, &numSessionResourceFileList);
         if(numSessionResourceFileList > 0)
         {
             addListFiles(&sessionResourceFileList, &numSessionResourceFileList, RT_ZIP);
@@ -1245,7 +1232,7 @@ static void DD_AutoLoad(void)
      * exist in the auto-load directory.
      */
     int numNewFiles;
-    while((numNewFiles = addFilesFromAutoData()) > 0)
+    while((numNewFiles = loadFilesFromDataGameAuto()) > 0)
     {
         VERBOSE( Con_Message("Autoload round completed with %i new files.\n", numNewFiles) );
     }
@@ -1440,11 +1427,10 @@ boolean DD_Init(void)
             ///       to the "packages" ResourceNamespace.
 
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
-            uri_s* searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
+            de::Uri uri = de::Uri(Dir_Path(dir), RC_PACKAGE);
 
-            rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, searchPath, SPF_NO_DESCEND);
+            rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, uri, SPF_NO_DESCEND);
 
-            Uri_Delete(searchPath);
             Dir_Delete(dir);
         }
 

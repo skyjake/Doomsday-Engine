@@ -243,65 +243,20 @@ void FileDirectory::clear()
     d->baseNode = NULL;
 }
 
-#if _DEBUG
-static void printUriList(uri_s const* const* pathList, size_t pathCount, int indent)
-{
-    if(!pathList) return;
-
-    uri_s const* const* pathsIt = pathList;
-    for(size_t i = 0; i < pathCount && (*pathsIt); ++i, pathsIt++)
-    {
-        Uri_DebugPrint(*pathsIt, indent);
-    }
-}
-#endif
-
-void FileDirectory::addPath(int flags, uri_s const* searchPath,
+void FileDirectory::addPath(int flags, de::Uri const& searchPath,
     int (*callback) (Node& node, void* parameters), void* parameters)
 {
-    if(!searchPath)
-    {
-        DEBUG_Message(("Warning: FileDirectory::AddPath: Attempt to add zero-length path, ignoring.\n"));
-        return;
-    }
-
 #if _DEBUG
     VERBOSE2( Con_Message("Adding path to FileDirectory...\n");
-              Uri_DebugPrint(searchPath, 2/*indent*/) )
+              searchPath.debugPrint(2/*indent*/) )
 #endif
 
-    ddstring_t const* resolvedSearchPath = Uri_ResolvedConst(searchPath);
+    ddstring_t const* resolvedSearchPath = searchPath.resolvedConst();
     if(!resolvedSearchPath) return;
 
     // Add new nodes on this path and/or re-process previously seen nodes.
     d->addPathNodesAndMaybeDescendBranch(true/*do descend*/, resolvedSearchPath, true/*is-directory*/,
                                          flags, callback, parameters);
-}
-
-void FileDirectory::addPaths(int flags,
-    uri_s const* const* searchPaths, uint searchPathsCount,
-    int (*callback) (Node& node, void* parameters), void* parameters)
-{
-    if(!searchPaths || searchPathsCount == 0)
-    {
-        DEBUG_Message(("Warning: FileDirectory::AddPaths: Attempt to add zero-sized path list, ignoring.\n"));
-        return;
-    }
-
-#if _DEBUG
-    VERBOSE2( Con_Message("Adding paths to FileDirectory...\n");
-              printUriList(searchPaths, searchPathsCount, 2/*indent*/) )
-#endif
-
-    for(uint i = 0; i < searchPathsCount; ++i)
-    {
-        ddstring_t const* searchPath = Uri_ResolvedConst(searchPaths[i]);
-        if(!searchPath) continue;
-
-        // Add new nodes on this path and/or re-process previously seen nodes.
-        d->addPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath, true/*is-directory*/,
-                                             flags, callback, parameters);
-    }
 }
 
 } // namespace de

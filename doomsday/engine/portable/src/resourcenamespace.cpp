@@ -326,12 +326,12 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     return isNewNode;
 }
 
-bool ResourceNamespace::addSearchPath(PathGroup group, uri_s const* _searchPath, int flags)
+bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& uri, int flags)
 {
     // Ensure this is a well formed path.
-    if(!_searchPath || Str_IsEmpty(Uri_Path(_searchPath)) ||
-       !Str_CompareIgnoreCase(Uri_Path(_searchPath), "/") ||
-       Str_RAt(Uri_Path(_searchPath), 0) != '/')
+    if(Str_IsEmpty(uri.path()) ||
+       !Str_CompareIgnoreCase(uri.path(), "/") ||
+       Str_RAt(uri.path(), 0) != '/')
         return false;
 
     // The addition of a new search path means the namespace is now dirty.
@@ -340,7 +340,7 @@ bool ResourceNamespace::addSearchPath(PathGroup group, uri_s const* _searchPath,
     // Have we seen this path already (we don't want duplicates)?
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
-        if(Uri_Equality(i->uri(), _searchPath))
+        if(i->uri() == uri)
         {
             i->setFlags(flags);
             return true;
@@ -348,7 +348,8 @@ bool ResourceNamespace::addSearchPath(PathGroup group, uri_s const* _searchPath,
     }
 
     // Prepend to the path list - newer paths have priority.
-    d->searchPaths.insert(group, SearchPath(flags, Uri_Dup(_searchPath)));
+    de::Uri* uriCopy = new de::Uri(uri);
+    d->searchPaths.insert(group, SearchPath(flags, *uriCopy));
 
     return true;
 }
@@ -371,7 +372,7 @@ ddstring_t* ResourceNamespace::listSearchPaths(PathGroup group, ddstring_t* path
         for(ResourceNamespace::SearchPaths::const_iterator i = d->searchPaths.find(group);
             i != d->searchPaths.end() && i.key() == group; ++i)
         {
-            AutoStr* path = Uri_Compose(i.value().uri());
+            AutoStr* path = i.value().uri().compose();
             Str_Appendf(pathList, "%s%c", Str_Text(path), delimiter);
         }
     }
@@ -446,17 +447,17 @@ int ResourceNamespace::findAll(ddstring_t const* searchPath, ResourceList& found
     return found.count() - numFoundSoFar;
 }
 
-ResourceNamespace::SearchPath::SearchPath(int _flags, uri_s* _uri)
-    : flags_(_flags), uri_(_uri)
+ResourceNamespace::SearchPath::SearchPath(int _flags, de::Uri& _uri)
+    : flags_(_flags), uri_(&_uri)
 {}
 
 ResourceNamespace::SearchPath::SearchPath(SearchPath const& other)
-    : flags_(other.flags_), uri_(Uri_Dup(other.uri_))
+    : flags_(other.flags_), uri_(new de::Uri(*other.uri_))
 {}
 
 ResourceNamespace::SearchPath::~SearchPath()
 {
-    Uri_Delete(uri_);
+    delete uri_;
 }
 
 ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::operator = (SearchPath other)
@@ -476,9 +477,9 @@ ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::setFlags(int newFl
     return *this;
 }
 
-uri_s const* ResourceNamespace::SearchPath::uri() const
+de::Uri const& ResourceNamespace::SearchPath::uri() const
 {
-    return uri_;
+    return *uri_;
 }
 
 void swap(ResourceNamespace::SearchPath& first, ResourceNamespace::SearchPath& second)

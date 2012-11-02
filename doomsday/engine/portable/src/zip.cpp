@@ -944,7 +944,7 @@ bool Zip::uncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize
  * Paths that begin with a '#' are mapped to Data/Game/Auto.
  * Key-named directories at the root are mapped to another location.
  */
-static void ApplyGamePathMappings(ddstring_t* dest, const ddstring_t* src)
+static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
 {
     String path = String(Str_Text(src));
 
@@ -1035,12 +1035,11 @@ static void ApplyGamePathMappings(ddstring_t* dest, const ddstring_t* src)
 
     // Resolve all symbolic references in the path.
     QByteArray pathUtf8 = path.toUtf8();
-    uri_s* pathUri = Uri_NewWithPath2(pathUtf8.constData(), RC_NULL);
-    if(ddstring_t const* resolvedPath = Uri_ResolvedConst(pathUri))
+    Uri pathUri = Uri(pathUtf8.constData(), RC_NULL);
+    if(ddstring_t const* resolvedPath = pathUri.resolvedConst())
     {
         Str_Copy(dest, resolvedPath);
     }
-    Uri_Delete(pathUri);
 }
 
 } // namespace de

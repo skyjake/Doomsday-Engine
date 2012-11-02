@@ -423,8 +423,7 @@ static int findResource(resourceclass_t rclass, uri_s const* const* list,
 static void createPackagesResourceNamespace(void)
 {
     ddstring_t** doomWadPaths = 0, *doomWadDir = 0;
-    uint doomWadPathsCount = 0, searchPathsCount, idx;
-    uri_s** searchPaths;
+    uint doomWadPathsCount = 0, idx;
 
 #ifdef UNIX
     {
@@ -511,21 +510,21 @@ static void createPackagesResourceNamespace(void)
     }
 
     // Construct the search path list.
-    searchPathsCount = 2 + doomWadPathsCount + (doomWadDir != 0? 1 : 0);
-    searchPaths = (uri_s**) M_Malloc(sizeof(*searchPaths) * searchPathsCount);
+    uint searchPathsCount = 2 + doomWadPathsCount + (doomWadDir != 0? 1 : 0);
+    de::Uri** searchPaths = (de::Uri**) M_Malloc(sizeof(*searchPaths) * searchPathsCount);
     if(!searchPaths) Con_Error("createPackagesResourceNamespace: Failed on allocation of %lu bytes.", (unsigned long) (sizeof(*searchPaths) * searchPathsCount));
 
     idx = 0;
     // Add the default paths.
-    searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/", RC_NULL);
-    searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL);
+    searchPaths[idx++] = new de::Uri("$(App.DataPath)/", RC_NULL);
+    searchPaths[idx++] = new de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL);
 
     // Add any paths from the DOOMWADPATH environment variable.
     if(doomWadPaths != 0)
     {
         for(uint i = 0; i < doomWadPathsCount; ++i)
         {
-            searchPaths[idx++] = Uri_NewWithPath2(Str_Text(doomWadPaths[i]), RC_NULL);
+            searchPaths[idx++] = new de::Uri(Str_Text(doomWadPaths[i]), RC_NULL);
             Str_Delete(doomWadPaths[i]);
         }
         M_Free(doomWadPaths);
@@ -534,7 +533,7 @@ static void createPackagesResourceNamespace(void)
     // Add the path from the DOOMWADDIR environment variable.
     if(doomWadDir != 0)
     {
-        searchPaths[idx++] = Uri_NewWithPath2(Str_Text(doomWadDir), RC_NULL);
+        searchPaths[idx++] = new de::Uri(Str_Text(doomWadDir), RC_NULL);
         Str_Delete(doomWadDir);
     }
 
@@ -543,13 +542,13 @@ static void createPackagesResourceNamespace(void)
     {
         for(uint i = 0; i < searchPathsCount; ++i)
         {
-            rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, searchPaths[i], SPF_NO_DESCEND);
+            rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, *searchPaths[i], SPF_NO_DESCEND);
         }
     }
 
     for(uint i = 0; i < searchPathsCount; ++i)
     {
-        Uri_Delete(searchPaths[i]);
+        delete searchPaths[i];
     }
     M_Free(searchPaths);
 }
@@ -599,7 +598,6 @@ void F_CreateNamespacesForFileResourcePaths(void)
         },
     { 0, 0, 0, 0, 0, { 0 } }
     };
-    uri_s* uri = Uri_New();
 
     // Setup of the Packages namespace is somewhat more involved...
     createPackagesResourceNamespace();
@@ -617,7 +615,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         for(j = 0; j < searchPathCount; ++j)
         {
-            Uri_SetUri2(uri, def->searchPaths[j], RC_NULL);
+            de::Uri uri = de::Uri(def->searchPaths[j], RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, uri, def->searchPathFlags);
         }
 
@@ -626,21 +624,19 @@ void F_CreateNamespacesForFileResourcePaths(void)
             char const* path = CommandLine_NextAsPath();
 
             QByteArray path2 = String("%1$(Game.IdentityKey)/").arg(path).toUtf8();
-            Uri_SetUri2(uri, path2.constData(), RC_NULL);
-            rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
+            de::Uri uri2 = de::Uri(path2.constData(), RC_NULL);
+            rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri2, def->searchPathFlags);
 
-            Uri_SetUri2(uri, path, RC_NULL);
+            de::Uri uri = de::Uri(path, RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
         }
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
-            Uri_SetUri2(uri, CommandLine_NextAsPath(), RC_NULL);
+            de::Uri uri = de::Uri(CommandLine_NextAsPath(), RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::FallbackPaths, uri, def->searchPathFlags);
         }
     }
-
-    Uri_Delete(uri);
 
 #undef NAMESPACEDEF_MAX_SEARCHPATHS
 }
@@ -731,11 +727,12 @@ ResourceNamespace* F_CreateResourceNamespace(char const* name,  byte flags)
 boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
     uri_s const* searchPath)
 {
+    if(!searchPath) return false;
     errorIfNotInited("F_AddSearchPathToResourceNamespace");
 
     ResourceNamespaceInfo* info = getNamespaceInfoForId(rni);
     ResourceNamespace& rnamespace = *info->rnamespace;
-    return rnamespace.addSearchPath(ResourceNamespace::ExtraPaths, searchPath, flags);
+    return rnamespace.addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(*searchPath), flags);
 }
 
 ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni)

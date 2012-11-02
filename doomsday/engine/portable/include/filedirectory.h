@@ -52,6 +52,17 @@ public:
     ~FileDirectory();
 
     /**
+     * Add a new path. Duplicates are automatically pruned.
+     *
+     * @param flags         @ref searchPathFlags
+     * @param path          Path to be added.
+     * @param callback      Callback to make if the path was added to this directory.
+     * @param parameters    Passed to the callback.
+     */
+    void addPath(int flags, de::Uri const& searchPath,
+                 int (*callback) (Node& node, void* parameters), void* parameters = 0);
+
+    /**
      * Clear this file directory's contents.
      */
     void clear();
@@ -70,41 +81,6 @@ public:
      */
     bool find(NodeType type, char const* searchPath, char searchDelimiter = '/',
               ddstring_t* foundPath = 0, char foundDelimiter = '/');
-
-    /**
-     * Add a new path. Duplicates are automatically pruned.
-     *
-     * @param flags         @ref searchPathFlags
-     * @param path          Path to be added.
-     * @param callback      Callback to make if the path was added to this directory.
-     * @param parameters    Passed to the callback.
-     */
-    void addPath(int flags, uri_s const* searchPath,
-                 int (*callback) (Node& node, void* parameters), void* parameters = 0);
-
-    /**
-     * Add a new set of paths. Duplicates are automatically pruned.
-     *
-     * @param flags         @ref searchPathFlags
-     * @param paths         One or more paths.
-     * @param pathsCount    Number of elements in @a paths.
-     * @param callback      Callback to make for each path added to this directory.
-     * @param parameters    Passed to the callback.
-     */
-    void addPaths(int flags, uri_s const* const* searchPaths, uint searchPathsCount,
-                  int (*callback) (Node& node, void* parameters) = 0,
-                  void* parameters = 0);
-
-    /**
-     * Add a new set of paths from a path list. Duplicates are automatically pruned.
-     *
-     * @param flags         @ref searchPathFlags
-     * @param pathList      One or more paths separated by semicolons.
-     * @param callback      Callback to make for each path added to this directory.
-     * @param parameters    Passed to the callback.
-     */
-    void addPathList(int flags, char const* pathList,
-                     int (*callback) (Node& node, void* parameters) = 0, void* parameters = 0);
 
     /**
      * Collate all referenced paths in the hierarchy into a list.
