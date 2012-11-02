@@ -376,33 +376,10 @@ color-depth: Color depth
 color-depth-16: 16-bit
 color-depth-32: 32-bit
 
-run-in-window: Run game in a window
-
-window-size: Display resolution
-window-size-640x480: 640 x 480
-window-size-800x600: 800 x 600
-window-size-1024x768: 1024 x 768
-window-size-1152x864: 1152 x 864
-window-size-1280x960: 1280 x 960
-window-size-1280x1024: 1280 x 1024
-window-size-1400x1050: 1400 x 1050
-window-size-1600x1200: 1600 x 1200
-window-size-800x500: 800 x 500 (16:10)
-window-size-1024x640: 1024 x 640 (16:10)
-window-size-1280x800: 1280 x 800 (16:10)
-window-size-1600x1000: 1600 x 1000 (16:10)
-window-size-1680x1050: 1680 x 1050 (16:10)
-window-size-1920x1080: 1920 x 1080 (16:9)
-window-size-1920x1200: 1920 x 1200 (16:10)
-window-size-2560x1440: 2560 x 1440 (16:9)
-window-size-custom: Custom
-
-custom-window-group: Custom Window
-window-width: Width
-window-height: Height
+start-in-window: Always start in windowed mode
+start-in-fullscreen: Always start in fullscreen mode
+safe-resolution: Force a safe (640x480) resolution
 center-window: Center window
-window-pos-x: X position
-window-pos-y: Y position
 
 refresh-rate: Refresh rate (Hz)
 triple-buffering: Triple buffering

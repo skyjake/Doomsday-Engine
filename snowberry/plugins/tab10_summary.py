@@ -75,7 +75,7 @@ def init():
     area.setBorder(8, ui.BORDER_ALL)
     addonInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
     area.setWeight(0)
-    systemInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
+    #systemInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
     valuesInfo = area.createArea(alignment=ALIGN_HORIZONTAL)
 
     # Information about addons selected into the profile.
@@ -88,14 +88,14 @@ def init():
     addonListing = addonInfo.createText()
 
     # Values for the most important system settings.
-    systemInfo.setBorder(4, ui.BORDER_LEFT_RIGHT)
-    systemInfo.setWeight(1)
-    systemInfo.createText('system-settings', ':', align=wt.Text.RIGHT).setBoldStyle()
-    systemInfo.setWeight(2)
+    #systemInfo.setBorder(4, ui.BORDER_LEFT_RIGHT)
+    #systemInfo.setWeight(1)
+    #systemInfo.createText('system-settings', ':', align=wt.Text.RIGHT).setBoldStyle()
+    #systemInfo.setWeight(2)
 
-    global systemSummary
-    systemSummary = systemInfo.createText()
-    systemSummary.setText('800x600; run in window')
+    #global systemSummary
+    #systemSummary = systemInfo.createText()
+    #systemSummary.setText('800x600; run in window')
 
     # Information about settings that have a value in the profile.
     valuesInfo.setBorder(4, ui.BORDER_LEFT_RIGHT)
@@ -184,11 +184,9 @@ def updateSummary(profile):
 
     # These are displayed in another summary field or shouldn't be
     # shown at all.
-    ignoredValues = ['window-size', 'window-width', 'window-height',
-                     'color-depth', 'run-in-window']
+    ignoredValues = [] #'window-size', 'window-width', 'window-height', 'color-depth', 'run-in-window']
 
-    for value in profile.getAllValues():
-
+    for value in profile.getAllValues():      
         # Don't let the list get too long; there is no scrolling, the
         # extra text will just get clipped...
         if len(summary) >= 10:
@@ -226,26 +224,26 @@ def updateSummary(profile):
     summary = []
 
     # Begin with the resolution.
-    value = profile.getValue('window-size')
-    if value and value.getValue() != 'window-size-custom':
-        summary.append(language.translate(value.getValue()))
-    else:
-        w = profile.getValue('window-width')
-        h = profile.getValue('window-height')
-        if w and h:
-            summary.append(w.getValue() + ' x ' + h.getValue())
+    #value = profile.getValue('window-size')
+    #if value and value.getValue() != 'window-size-custom':
+    #    summary.append(language.translate(value.getValue()))
+    #else:
+    #    w = profile.getValue('window-width')
+    #    h = profile.getValue('window-height')
+    #    if w and h:
+    #        summary.append(w.getValue() + ' x ' + h.getValue())
 
     # Windowed mode is a special case.
-    value = profile.getValue('run-in-window')
-    if value and value.getValue() == 'yes':
-        summary.append(language.translate('summary-run-in-window'))
-    else:
-        value = profile.getValue('color-depth')
-        if value:
-            summary.append(language.translate('summary-' + \
-                                              value.getValue()))
+    #value = profile.getValue('run-in-window')
+    #if value and value.getValue() == 'yes':
+    #    summary.append(language.translate('summary-run-in-window'))
+    #else:
+    #    value = profile.getValue('color-depth')
+    #    if value:
+    #        summary.append(language.translate('summary-' + \
+    #                                          value.getValue()))
 
-    systemSummary.setText(string.join(summary, '\n'))
-    systemSummary.resizeToBestSize()
+    #systemSummary.setText(string.join(summary, '\n'))
+    #systemSummary.resizeToBestSize()
 
     ui.getArea(SUMMARY).updateLayout()

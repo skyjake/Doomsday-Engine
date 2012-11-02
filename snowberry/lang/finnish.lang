@@ -212,25 +212,10 @@ color-depth: Värisyvyys
 color-depth-16: 16-bit
 color-depth-32: 32-bit
 
-run-in-window: Aja peliä ikkunassa
-
-window-size: Näytön resoluutio
-window-size-640x480: 640 x 480
-window-size-800x600: 800 x 600
-window-size-1024x768: 1024 x 768
-window-size-1152x864: 1152 x 864
-window-size-1280x960: 1280 x 960
-window-size-1280x1024: 1280 x 1024
-window-size-1400x1050: 1400 x 1050
-window-size-1600x1200: 1600 x 1200
-window-size-custom: Omavalintainen
-
-custom-window-group: Itsemääritelty ikkuna
-window-width: Leveys
-window-height: Korkeus
-disable-window-centering: Ikkunan keskitys pois käytöstä
-window-pos-x: X-sijainti
-window-pos-y: Y-sijainti
+start-in-window: Käynnistä aina ikkunassa
+start-in-fullscreen: Käynnistä aina koko näytön tilassa
+safe-resolution: Pakota turvallinen (640x480) resoluutio
+center-window: Keskitä ikkuna näytöllä
 
 refresh-rate: Päivitystaajuus (Hz)
 triple-buffering: Triple buffering
