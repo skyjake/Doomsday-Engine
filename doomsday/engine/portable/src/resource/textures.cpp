@@ -795,7 +795,10 @@ textureid_t Textures_ResolveUriCString2(char const* path, boolean quiet)
 {
     if(path && path[0])
     {
-        return Textures_ResolveUri2(Uri_NewWithPath2(path, RC_NULL), quiet);
+        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
+        textureid_t id = Textures_ResolveUri2(uri, quiet);
+        Uri_Delete(uri);
+        return id;
     }
     return NOTEXTUREID;
 }
