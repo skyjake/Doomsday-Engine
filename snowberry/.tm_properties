@@ -1,0 +1,2 @@
+excludeDirectories = {build,template-image,dist}
+
