@@ -104,6 +104,9 @@
 
 #define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 
+#ifdef ABS
+#  undef ABS
+#endif
 #define ABS(x)              ((x) >= 0 ? (x) : -(x))
 
 /// Ceiling of integer quotient of @a a divided by @a b.

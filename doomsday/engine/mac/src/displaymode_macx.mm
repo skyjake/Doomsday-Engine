@@ -19,9 +19,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "displaymode_native.h"
-#include "dd_types.h"
-
 #include <assert.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <ApplicationServices/ApplicationServices.h>
@@ -31,6 +28,8 @@
 #endif
 #include <vector>
 
+#include "displaymode_native.h"
+#include "dd_types.h"
 #include "window.h"
 
 /// Returns -1 on error.
