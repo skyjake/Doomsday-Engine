@@ -1,11 +1,11 @@
-/**\file abstractresource.c
+/**\file abstractresource.cpp
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is M_Free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -51,7 +51,7 @@ struct AbstractResource_s {
     ddstring_t foundPath;
 };
 
-static __inline size_t countElements(ddstring_t** list)
+static inline size_t countElements(ddstring_t** list)
 {
     size_t n = 0;
     if(list)
@@ -66,12 +66,14 @@ static ddstring_t* buildNameStringList(AbstractResource* r, char delimiter)
     int i, requiredLength = 0;
     ddstring_t* list;
 
-    assert(r);
+    DENG_ASSERT(r);
 
     if(!r->namesCount) return 0;
 
     for(i = 0; i < r->namesCount; ++i)
+    {
         requiredLength += Str_Length(r->names[i]);
+    }
     requiredLength += r->namesCount - 1;
 
     if(!requiredLength) return 0;
@@ -84,15 +86,17 @@ static ddstring_t* buildNameStringList(AbstractResource* r, char delimiter)
     i = r->namesCount-1;
     Str_Set(list, Str_Text(r->names[i--]));
     for(; i >= 0; i--)
+    {
         Str_Appendf(list, "%c%s", delimiter, Str_Text(r->names[i]));
+    }
 
     return list;
 }
 
 AbstractResource* AbstractResource_NewWithName(resourceclass_t rclass, int flags,
-    const ddstring_t* name)
+    ddstring_t const* name)
 {
-    AbstractResource* r = (AbstractResource*)malloc(sizeof(*r));
+    AbstractResource* r = (AbstractResource*) M_Malloc(sizeof(*r));
     if(!r) Con_Error("AbstractResource::NewWithName: Failed on allocation of %lu bytes.", (unsigned long) sizeof(*r));
 
     r->rclass = rclass;
@@ -115,13 +119,13 @@ AbstractResource* AbstractResource_New(resourceclass_t rclass, int rflags)
 
 void AbstractResource_Delete(AbstractResource* r)
 {
-    assert(r);
+    DENG_ASSERT(r);
     if(r->namesCount != 0)
     {
         int i;
         for(i = 0; i < r->namesCount; ++i)
             Str_Delete(r->names[i]);
-        free(r->names);
+        M_Free(r->names);
     }
 
     if(r->identityKeys)
@@ -129,18 +133,18 @@ void AbstractResource_Delete(AbstractResource* r)
         size_t i;
         for(i = 0; r->identityKeys[i]; ++i)
             Str_Delete(r->identityKeys[i]);
-        free(r->identityKeys);
+        M_Free(r->identityKeys);
     }
 
     F_DestroyUriList(r->searchPaths);
     Str_Free(&r->foundPath);
-    free(r);
+    M_Free(r);
 }
 
-void AbstractResource_AddName(AbstractResource* r, const ddstring_t* name)
+void AbstractResource_AddName(AbstractResource* r, ddstring_t const* name)
 {
     int i;
-    assert(r);
+    DENG_ASSERT(r);
 
     if(name == 0 || Str_IsEmpty(name)) return;
 
@@ -152,7 +156,7 @@ void AbstractResource_AddName(AbstractResource* r, const ddstring_t* name)
     }
 
     // Add the new name.
-    r->names = (ddstring_t**)realloc(r->names, sizeof *r->names * ++r->namesCount);
+    r->names = (ddstring_t**) M_Realloc(r->names, sizeof *r->names * ++r->namesCount);
     if(!r->names)
         Con_Error("AbstractResource::AddName: Failed on (re)allocation of %lu bytes for names list.", (unsigned long) sizeof *r->names * r->namesCount);
 
@@ -167,13 +171,13 @@ void AbstractResource_AddName(AbstractResource* r, const ddstring_t* name)
     Str_Free(&r->foundPath);
 }
 
-void AbstractResource_AddIdentityKey(AbstractResource* r, const ddstring_t* identityKey)
+void AbstractResource_AddIdentityKey(AbstractResource* r, ddstring_t const* identityKey)
 {
     size_t num;
-    assert(r && identityKey);
+    DENG_ASSERT(r && identityKey);
 
     num = countElements(r->identityKeys);
-    r->identityKeys = (ddstring_t**)realloc(r->identityKeys, sizeof *r->identityKeys * MAX_OF(num+1, 2));
+    r->identityKeys = (ddstring_t**)M_Realloc(r->identityKeys, sizeof *r->identityKeys * MAX_OF(num+1, 2));
     if(!r->identityKeys)
         Con_Error("AbstractResource::AddIdentityKey: Failed on (re)allocation of %lu bytes for identitykey list.", (unsigned long) sizeof *r->identityKeys * MAX_OF(num+1, 2));
 
@@ -185,7 +189,7 @@ void AbstractResource_AddIdentityKey(AbstractResource* r, const ddstring_t* iden
 
 Uri* const* AbstractResource_SearchPaths(AbstractResource* r)
 {
-    assert(r);
+    DENG_ASSERT(r);
     if(!r->searchPaths)
     {
         ddstring_t* searchPaths = AbstractResource_NameStringList(r);
@@ -200,9 +204,9 @@ ddstring_t* AbstractResource_NameStringList(AbstractResource* r)
     return buildNameStringList(r, ';');
 }
 
-const ddstring_t* AbstractResource_ResolvedPath(AbstractResource* r, boolean canLocate)
+ddstring_t const* AbstractResource_ResolvedPath(AbstractResource* r, boolean canLocate)
 {
-    assert(r);
+    DENG_ASSERT(r);
     if(r->searchPathUsed == 0 && canLocate)
     {
         r->searchPathUsed = F_FindResourceForRecord(r, &r->foundPath);
@@ -215,11 +219,11 @@ const ddstring_t* AbstractResource_ResolvedPath(AbstractResource* r, boolean can
     return 0;
 }
 
-const ddstring_t* AbstractResource_ResolvedPathWithIndex(AbstractResource* r, int searchPathIndex, boolean canLocate)
+ddstring_t const* AbstractResource_ResolvedPathWithIndex(AbstractResource* r, int searchPathIndex, boolean canLocate)
 {
-    const Uri* list[2] = { AbstractResource_SearchPaths(r)[searchPathIndex], NULL };
+    uri_s const* list[2] = { AbstractResource_SearchPaths(r)[searchPathIndex], NULL };
 
-    assert(r);
+    DENG_ASSERT(r);
     if(canLocate)
     {
         int found = F_FindResourceForRecord2(r, &r->foundPath, list);
@@ -235,19 +239,19 @@ const ddstring_t* AbstractResource_ResolvedPathWithIndex(AbstractResource* r, in
 
 resourceclass_t AbstractResource_ResourceClass(AbstractResource* r)
 {
-    assert(r);
+    DENG_ASSERT(r);
     return r->rclass;
 }
 
 int AbstractResource_ResourceFlags(AbstractResource* r)
 {
-    assert(r);
+    DENG_ASSERT(r);
     return r->flags;
 }
 
 AbstractResource* AbstractResource_MarkAsFound(AbstractResource* r, boolean yes)
 {
-    assert(r);
+    DENG_ASSERT(r);
     if(yes) r->flags |= RF_FOUND;
     else    r->flags &= ~RF_FOUND;
     return r;
@@ -255,14 +259,14 @@ AbstractResource* AbstractResource_MarkAsFound(AbstractResource* r, boolean yes)
 
 ddstring_t* const* AbstractResource_IdentityKeys(AbstractResource* r)
 {
-    assert(r);
+    DENG_ASSERT(r);
     return (ddstring_t* const*) r->identityKeys;
 }
 
 void AbstractResource_Print(AbstractResource* r, boolean printStatus)
 {
     ddstring_t* searchPaths = AbstractResource_NameStringList(r);
-    const boolean markedFound = !!(r->flags & RF_FOUND);
+    bool const markedFound = !!(r->flags & RF_FOUND);
 
     if(printStatus)
         Con_Printf("%s", !markedFound? " ! ":"   ");
