@@ -499,7 +499,7 @@ SOURCES += \
     portable/src/filehandle.cpp \
     portable/src/fileid.cpp \
     portable/src/finaleinterpreter.c \
-    portable/src/fonts.c \
+    portable/src/fonts.cpp \
     portable/src/fs_main.cpp \
     portable/src/fs_util.cpp \
     portable/src/game.cpp \

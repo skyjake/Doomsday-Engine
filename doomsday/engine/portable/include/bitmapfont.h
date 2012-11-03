@@ -27,6 +27,10 @@
 
 #include "font.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texturevariant_s;
 
 // Data for a character.
@@ -113,5 +117,9 @@ void BitmapCompositeFont_ReleaseTextures(font_t* font);
 uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr);
 
 void BitmapCompositeFont_CharCoords(font_t* font, unsigned char chr, Point2Raw coords[4]);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_BITMAPFONT_H */
