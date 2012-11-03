@@ -436,9 +436,9 @@ fontnamespaceid_t Fonts_ParseNamespace(char const* str)
         fontnamespaceid_t id;
     } namespaces[FONTNAMESPACE_COUNT+1] = {
         // Ordered according to a best guess of occurance frequency.
-        { FN_GAME_NAME,     sizeof(FN_GAME_NAME)   - 1, FN_GAME },
+        { FN_GAME_NAME,     sizeof(FN_GAME_NAME)   - 1, FN_GAME   },
         { FN_SYSTEM_NAME,   sizeof(FN_SYSTEM_NAME) - 1, FN_SYSTEM },
-        { NULL }
+        { NULL,             0,                          FN_ANY    }
     };
     size_t len, n;
 

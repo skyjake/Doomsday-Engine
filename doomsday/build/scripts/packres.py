@@ -72,34 +72,34 @@ p.add_files(
       ('engine/data', 'data') ] )
 p.create('doomsday.pk3')
 
-# jdoom.pk3
+# libdoom.pk3
 p = Pack()
 p.add_files(
     [ ('plugins/jdoom/defs', 'defs/jdoom'),
       ('plugins/jdoom/data/conhelp.txt', 'data/jdoom/conhelp.txt'),
       ('plugins/jdoom/data/lumps', '#.basedata') ] )
-p.create('jdoom.pk3')
+p.create('libdoom.pk3')
 
-# jheretic.pk3
+# libheretic.pk3
 p = Pack()
 p.add_files(
     [ ('plugins/jheretic/defs', 'defs/jheretic'),
       ('plugins/jheretic/data/conhelp.txt', 'data/jheretic/conhelp.txt'),
       ('plugins/jheretic/data/lumps', '#.basedata') ] )
-p.create('jheretic.pk3')
+p.create('libheretic.pk3')
 
-# jhexen.pk3
+# libhexen.pk3
 p = Pack()
 p.add_files(
     [ ('plugins/jhexen/defs', 'defs/jhexen'),
       ('plugins/jhexen/data/conhelp.txt', 'data/jhexen/conhelp.txt'),
       ('plugins/jhexen/data/lumps', '#.basedata') ] )
-p.create('jhexen.pk3')
+p.create('libhexen.pk3')
 
-# jdoom64.pk3
+# libdoom64.pk3
 p = Pack()
 p.add_files(
     [ ('plugins/jdoom64/defs', 'defs/jdoom64'),
       ('plugins/jdoom64/data/conhelp.txt', 'data/jdoom64/conhelp.txt'),
       ('plugins/jdoom64/data/lumps', '#.basedata') ] )
-p.create('jdoom64.pk3')
+p.create('libdoom64.pk3')

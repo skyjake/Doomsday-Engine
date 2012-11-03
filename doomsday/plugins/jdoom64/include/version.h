@@ -46,11 +46,14 @@
 
 // Used to derive filepaths.
 #define PLUGIN_NAMETEXT     "jdoom64"
+#define PLUGIN_NAMETEXT2    "libdoom64" // for transitioning: for those
+                                        // resources that have been renamed
+                                        // to the new name
 
 // Presented to the user in dialogs, messages etc.
-#define PLUGIN_NICENAME     "jDoom64"
-#define PLUGIN_NICEAUTHOR   "deng team"
-#define PLUGIN_DETAILS      "jDoom64 is based on jDoom-1.15."
+#define PLUGIN_NICENAME     "libdoom64"
+#define PLUGIN_NICEAUTHOR   "Deng Team"
+#define PLUGIN_DETAILS      "libdoom64 is based on jDoom 1.15."
 
 #define PLUGIN_HOMEURL      DOOMSDAY_HOMEURL
 #define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL

@@ -65,7 +65,7 @@ static __inline gameid_t toGameId(int gamemode)
 int G_RegisterGames(int hookType, int param, void* data)
 {
 #define CONFIGDIR       "doom64"
-#define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
+#define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
 
     GameDef const doom64Def = {
         "doom64", CONFIGDIR, "Doom 64", "Midway Software"

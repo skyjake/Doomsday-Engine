@@ -5,9 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>jDoom64</string>
+	<string>libdoom64</string>
 	<key>CFBundleIdentifier</key>
-	<string>net.sourceforge.deng.jDoom64</string>
+	<string>net.sourceforge.deng.libdoom64</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>

@@ -12,7 +12,7 @@ VERSION  = $$JHERETIC_VERSION
 
 DEFINES += __JHERETIC__
 
-gamedata.files = $$OUT_PWD/../../jheretic.pk3
+gamedata.files = $$OUT_PWD/../../libheretic.pk3
 
 macx {
     gamedata.path = Contents/Resources

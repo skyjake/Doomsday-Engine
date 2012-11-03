@@ -12,7 +12,7 @@ VERSION  = $$JDOOM_VERSION
 
 DEFINES += __JDOOM__
 
-gamedata.files = $$OUT_PWD/../../jdoom.pk3
+gamedata.files = $$OUT_PWD/../../libdoom.pk3
 
 macx {
     gamedata.path = Contents/Resources

@@ -12,7 +12,7 @@ VERSION  = $$JHEXEN_VERSION
 
 DEFINES += __JHEXEN__
 
-gamedata.files = $$OUT_PWD/../../jhexen.pk3
+gamedata.files = $$OUT_PWD/../../libhexen.pk3
 
 macx {
     gamedata.path = Contents/Resources

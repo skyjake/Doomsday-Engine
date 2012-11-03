@@ -65,7 +65,7 @@ static __inline gameid_t toGameId(int gamemode)
 int G_RegisterGames(int hookType, int param, void* data)
 {
 #define CONFIGDIR       "hexen"
-#define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
+#define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
 
     GameDef const deathkingsDef = {
         "hexen-dk", CONFIGDIR,

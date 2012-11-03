@@ -5,9 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>jHexen</string>
+	<string>libhexen</string>
 	<key>CFBundleIdentifier</key>
-	<string>net.sourceforge.deng.jHexen</string>
+	<string>net.sourceforge.deng.libhexen</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>

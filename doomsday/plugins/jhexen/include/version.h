@@ -47,11 +47,14 @@
 
 // Used to derive filepaths.
 #define PLUGIN_NAMETEXT     "jhexen"
+#define PLUGIN_NAMETEXT2    "libhexen" // for transitioning: for those
+                                       // resources that have been renamed
+                                       // to the new name
 
 // Presented to the user in dialogs, messages etc.
-#define PLUGIN_NICENAME     "jHexen"
-#define PLUGIN_NICEAUTHOR   "deng team"
-#define PLUGIN_DETAILS      "jHexen is based on Hexen v1.1 by Raven Software."
+#define PLUGIN_NICENAME     "libhexen"
+#define PLUGIN_NICEAUTHOR   "Deng Team"
+#define PLUGIN_DETAILS      "libhexen is based on Hexen v1.1 by Raven Software."
 
 #define PLUGIN_HOMEURL      DOOMSDAY_HOMEURL
 #define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL

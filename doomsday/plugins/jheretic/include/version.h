@@ -47,11 +47,14 @@
 
 // Used to derive filepaths.
 #define PLUGIN_NAMETEXT     "jheretic"
+#define PLUGIN_NAMETEXT2    "libheretic" // for transitioning: for those
+                                         // resources that have been renamed
+                                         // to the new name
 
 // Presented to the user in dialogs, messages etc.
-#define PLUGIN_NICENAME     "jHeretic"
-#define PLUGIN_NICEAUTHOR   "deng team"
-#define PLUGIN_DETAILS      "jHeretic is based on Heretic v1.3 by Raven Software."
+#define PLUGIN_NICENAME     "libheretic"
+#define PLUGIN_NICEAUTHOR   "Deng Team"
+#define PLUGIN_DETAILS      "libheretic is based on Heretic v1.3 by Raven Software."
 
 #define PLUGIN_HOMEURL      DOOMSDAY_HOMEURL
 #define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL
