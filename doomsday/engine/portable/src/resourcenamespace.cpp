@@ -441,7 +441,7 @@ ddstring_t const* ResourceNamespace::name() const
 void ResourceNamespace::clear()
 {
     d->nameHash.clear();
-    d->directory.clear();
+    d->clearDirectory();
     d->nameHashIsDirty = true;
 }
 
