@@ -60,7 +60,7 @@ extern "C" {
  * @defgroup pathTreeFlags  Path Tree Flags
  */
 ///@{
-#define PDF_ALLOW_DUPLICATE_LEAF        0x1 ///< There can be more than one leaf with a given name.
+#define PATHTREE_MULTI_LEAF 0x1 ///< There can be more than one leaf with a given name.
 ///@}
 
 #ifdef __cplusplus
@@ -123,8 +123,8 @@ public:
     static ushort hashPathFragment(char const* fragment, size_t len, char delimiter = '/');
 
 #if _DEBUG
-    static void debugPrint(PathTree& pt, char delimiter = '/');
-    static void debugPrintHashDistribution(PathTree& pt);
+    static void debugPrint(PathTree& pathtree, char delimiter = '/');
+    static void debugPrintHashDistribution(PathTree& pathtree);
 #endif
 
     /**
@@ -142,15 +142,14 @@ public:
         /// @return PathTree which owns this node.
         PathTree& tree() const;
 
-        /// @return Parent of this node else @c NULL
+        /// @return Parent of this node else @c NULL.
         Node* parent() const;
 
         /// @return @c true iff this node is a leaf.
         bool isLeaf() const;
 
         /// @return Type of this node.
-        inline NodeType type() const
-        {
+        inline NodeType type() const {
             return isLeaf()? Leaf : Branch;
         }
 
@@ -159,22 +158,6 @@ public:
 
         /// @return Hash for this node's path fragment.
         ushort hash() const;
-
-        /// @return User-specified custom pointer.
-        void* userPointer() const;
-
-        /// @return User-specified custom value.
-        int userValue() const;
-
-        /**
-         * Sets the user-specified custom pointer.
-         */
-        Node& setUserPointer(void* ptr);
-
-        /**
-         * Sets the user-specified custom pointer.
-         */
-        Node& setUserValue(int value);
 
         /**
          * @param candidatePath  Mapped search pattern (path).
@@ -205,6 +188,22 @@ public:
          * @return Same as @a path for caller's convenience.
          */
         ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
+
+        /**
+         * Sets the user-specified custom pointer.
+         */
+        Node& setUserPointer(void* ptr);
+
+        /// @return User-specified custom pointer.
+        void* userPointer() const;
+
+        /**
+         * Sets the user-specified custom pointer.
+         */
+        Node& setUserValue(int value);
+
+        /// @return User-specified custom value.
+        int userValue() const;
 
         friend class PathTree;
         friend struct PathTree::Instance;
@@ -259,17 +258,6 @@ public:
 
     /**
      * Find a single node in the hierarchy.
-     *
-     * @note This method essentially amounts to "interface sugar". A convenient
-     *       shorthand of the call tree:
-     *
-     * <pre>
-     *    PathMap search;
-     *    PathMap_Initialize(&search, @a flags, @a searchPath, @a delimiter);
-     *    foundNode = PathTree_Search("this", &search, PathTreeNode_ComparePath);
-     *    PathMap_Destroy(&search);
-     *    return foundNode;
-     * </pre>
      *
      * @param flags         @ref pathComparisonFlags
      * @param path          Relative or absolute path to be searched for.
@@ -345,7 +333,7 @@ int PathTree_Size(PathTree* pt);
 void PathTree_Clear(PathTree* pt);
 
 PathTreeNode* PathTree_Insert2(PathTree* pt, char const* path, char delimiter/*, userData = 0*/);
-PathTreeNode* PathTree_Insert(PathTree* pt, char const* path/*, delimiter = '/'*/);
+PathTreeNode* PathTree_Insert (PathTree* pt, char const* path/*, delimiter = '/'*/);
 
 /**
  * Callback function type for PathTree::Iterate
@@ -372,29 +360,8 @@ typedef int (*pathtree_iterateconstcallback_t) (PathTreeNode const* node, void* 
  */
 typedef int (*pathtree_searchcallback_t) (PathTreeNode* node, int flags, PathMap* mappedSearchPath, void* parameters);
 
-/**
- * Perform a search of the nodes in the hierarchy making a callback for each.
- * Pre-selection of nodes is determined by @a mappedSearchPath. Iteration ends when
- * all selected nodes have been visited or a callback returns non-zero.
- *
- * This method essentially amounts to "interface sugar". A manual search of the
- * hierarchy can be performed using nodes pre-selected by the caller or using
- * @see PathTree_Iterate().
- *
- * @param pt                PathTree instance.
- * @param flags             @ref pathComparisonFlags
- * @param mappedSearchPath  Fragment mapped search path.
- * @param callback          Callback function ptr. The callback should only return
- *                          a non-zero value when the desired node has been found.
- * @param parameters        Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-PathTreeNode* PathTree_Search2(PathTree* pt, int flags, PathMap* mappedSearchPath, pathtree_searchcallback_t callback, void* parameters);
-PathTreeNode* PathTree_Search (PathTree* pt, int flags, PathMap* mappedSearchPath, pathtree_searchcallback_t callback/*, parameters = 0*/);
-
 PathTreeNode* PathTree_Find2(PathTree* pt, int flags, char const* path, char delimiter);
-PathTreeNode* PathTree_Find(PathTree* pt, int flags, char const* path/*, delimiter = '/'*/);
+PathTreeNode* PathTree_Find (PathTree* pt, int flags, char const* path/*, delimiter = '/'*/);
 
 /**
  * Iterate over nodes in the hierarchy making a callback for each. Iteration ends
@@ -419,7 +386,7 @@ int PathTree_Iterate2_Const(PathTree const* pt, int flags, PathTreeNode const* p
 int PathTree_Iterate_Const (PathTree const* pt, int flags, PathTreeNode const* parent, ushort hash, pathtree_iterateconstcallback_t callback/*, parameters = 0*/);
 
 ushort PathTree_HashPathFragment2(char const* fragment, size_t len, char delimiter);
-ushort PathTree_HashPathFragment(char const* fragment, size_t len/*, delimiter = '/'*/);
+ushort PathTree_HashPathFragment (char const* fragment, size_t len/*, delimiter = '/'*/);
 
 #if _DEBUG
 void PathTree_DebugPrint(PathTree* pt, char delimiter);
@@ -436,7 +403,7 @@ void PathTreeNode_SetUserPointer(PathTreeNode* node, void* ptr);
 void PathTreeNode_SetUserValue(PathTreeNode* node, int value);
 int PathTreeNode_ComparePath(PathTreeNode* node, int flags, PathMap* candidatePath);
 ddstring_t* PathTreeNode_ComposePath2(PathTreeNode const* node, ddstring_t* path, int* length, char delimiter);
-ddstring_t* PathTreeNode_ComposePath(PathTreeNode const* node, ddstring_t* path, int* length/*, delimiter = '/'*/);
+ddstring_t* PathTreeNode_ComposePath (PathTreeNode const* node, ddstring_t* path, int* length/*, delimiter = '/'*/);
 
 #ifdef __cplusplus
 } // extern "C"

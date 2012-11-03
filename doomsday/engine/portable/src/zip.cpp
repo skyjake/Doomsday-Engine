@@ -383,7 +383,7 @@ struct Zip::Instance
                 if(entryCount == 0) break;
 
                 // Intialize the directory.
-                lumpDirectory = new PathTree(PDF_ALLOW_DUPLICATE_LEAF);
+                lumpDirectory = new PathTree(PATHTREE_MULTI_LEAF);
             }
 
             // Position the read cursor at the start of the buffered central centralDirectory.

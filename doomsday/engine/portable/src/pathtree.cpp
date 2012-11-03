@@ -27,13 +27,10 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/stringpool.h>
-#include <de/memory.h>
 #if 0
 #  include "blockset.h"
 #endif
-#if 0
-#  include "de_console.h"
-#  include "de_system.h"
+#if _DEBUG
 #  include "m_misc.h" // For M_NumDigits()
 #endif
 
@@ -152,7 +149,7 @@ struct PathTree::Instance
                     if(parent     != node->parent()) continue;
                     if(fragmentId != node->fragmentId()) continue;
 
-                    if(nodeType == PathTree::Branch || !(flags & PDF_ALLOW_DUPLICATE_LEAF))
+                    if(nodeType == PathTree::Branch || !(flags & PATHTREE_MULTI_LEAF))
                         return node;
                 }
             }
@@ -275,7 +272,7 @@ struct PathTree::Instance
 #if _DEBUG
             if(node.userPointer())
             {
-                LOG_ERROR("Node %p has non-NULL user data.") << (void*)(&node);
+                LOG_ERROR("Node %p has non-NULL user data.") << de::dintptr(&node);
             }
 #endif
             deleteNode(node);
@@ -446,7 +443,7 @@ int PathTree::findAllPaths(FoundPaths& found, int flags, char delimiter)
 void PathTree::debugPrint(PathTree& pt, char delimiter)
 {
     LOG_AS("PathTree");
-    LOG_INFO("Directory [%p]:") << de::dintptr(&pt);
+    LOG_INFO("[%p]:") << de::dintptr(&pt);
     FoundPaths found;
     if(pt.findAllPaths(found, 0, delimiter))
     {
@@ -457,7 +454,7 @@ void PathTree::debugPrint(PathTree& pt, char delimiter)
             LOG_INFO("  %s") << *i;
         }
     }
-    LOG_INFO("  %i %s in directory.") << found.count() << (found.count() == 1? "path" : "paths");
+    LOG_INFO("  %i unique %s in the tree.") << found.count() << (found.count() == 1? "path" : "paths");
 }
 
 #if 0

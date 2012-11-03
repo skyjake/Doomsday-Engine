@@ -315,7 +315,7 @@ struct Wad::Instance
         Str_Reserve(Str_Init(&absPath), LUMPNAME_T_LASTINDEX + 4/*.lmp*/);
 
         // Intialize the directory.
-        lumpDirectory = new PathTree(PDF_ALLOW_DUPLICATE_LEAF);
+        lumpDirectory = new PathTree(PATHTREE_MULTI_LEAF);
 
         // Build our runtime representation from the archived lump directory.
         wadlumprecord_t const* arcRecord = arcRecords;
