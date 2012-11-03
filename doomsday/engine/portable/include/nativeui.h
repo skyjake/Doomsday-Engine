@@ -39,9 +39,9 @@ typedef enum {
 /**
  * Shows a native modal message dialog.
  *
- * @param type   Type of the dialog (which icon to show).
- * @param title  Title for the dialog.
- * @param msg    Message.
+ * @param type         Type of the dialog (which icon to show).
+ * @param title        Title for the dialog.
+ * @param msg          Message.
  * @param detailedMsg  Optional, possibly long extra content to show. Can be @c NULL.
  */
 void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg);
@@ -59,9 +59,11 @@ int Sys_MessageBoxWithButtons(messageboxtype_t type, const char* title, const ch
 /**
  * Shows a native modal message dialog. The "more detail" content is read from a file.
  *
- * @param type   Type of the dialog (which icon to show).
- * @param title  Title for the dialog.
- * @param msg    Message.
+ * @param type             Type of the dialog (which icon to show).
+ * @param title            Title for the dialog.
+ * @param msg              Message.
+ * @param informativeMsg   Additional information to show under the message
+ *                         (perhaps using a smaller font).
  * @param detailsFileName  Name of the file where to read details.
  */
 void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type, const char* title, const char* msg,

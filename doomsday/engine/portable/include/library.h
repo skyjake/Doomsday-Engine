@@ -102,6 +102,7 @@ const char* Library_Type(const Library* lib);
 /**
  * Looks up a symbol from the library.
  *
+ * @param lib         Library instance.
  * @param symbolName  Name of the symbol.
  *
  * @return @c NULL if the symbol is not defined. Otherwise the address of

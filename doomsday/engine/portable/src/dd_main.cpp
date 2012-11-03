@@ -581,8 +581,8 @@ static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t* path, char con
 }
 
 /**
- * <pre>LUMPNAM0 \Path\In\The\Base.ext
- * LUMPNAM1 Path\In\The\RuntimeDir.ext
+ * <pre> LUMPNAM0 \\Path\\In\\The\\Base.ext
+ * LUMPNAM1 Path\\In\\The\\RuntimeDir.ext
  *  :</pre>
  */
 static bool parsePathLumpMappings(char const* buffer)
@@ -1182,7 +1182,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
             DD_SetActivePluginId(0);
         }
 
-        /// @kludge Use more appropriate task names when unloading a game.
+        /// @todo Kludge: Use more appropriate task names when unloading a game.
         if(isNullGame(game))
         {
             gameChangeTasks[0].name = "Unloading game...";

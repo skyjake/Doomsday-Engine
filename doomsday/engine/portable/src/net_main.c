@@ -240,7 +240,7 @@ void Net_SendBuffer(int toPlayer, int spFlags)
 }
 
 /**
- * @return         @C false, if there are no packets waiting.
+ * @return @c false, if there are no packets waiting.
  */
 boolean Net_GetPacket(void)
 {

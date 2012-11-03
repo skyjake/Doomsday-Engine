@@ -192,6 +192,7 @@ void File::set(Offset /*at*/, const Byte* /*values*/, Size /*count*/)
 
 File::Accessor::Accessor(File& owner, Property prop) : _owner(owner), _prop(prop)
 {
+    /// @todo Accessor should listen for deletion of the owner file.
     update();
 }
 

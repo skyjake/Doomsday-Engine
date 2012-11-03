@@ -29,7 +29,13 @@
  * @defgroup fs File System
  *
  * The file system (de::FS) governs a tree of files and folders, and provides
- * the means to access all data in libdeng2.
+ * the means to access all data in libdeng2. It follows the metaphor of a UNIX
+ * file system, where not all files are "regular" files, but instead may
+ * represent non-file objects that still support serialization into byte arrays
+ * or have a byte-stream input/output interface. This way it provides a uniform
+ * interface to all public data that is compatible with network communications,
+ * persistence, hierarchical organization and lookup, item metadata (names,
+ * modification timestamps, custom key/values) and scripting.
  *
  * To facilitate efficient O(log n) searches over the entire file system,
  * de::FS maintains an index of all files and folders by name. There is

@@ -27,9 +27,10 @@ namespace de
     class Library;
     
     /**
-     * Provides a way to load a shared library. The Library will be loaded
-     * automatically when someone attempts to use it. Unloading the library occurs when
-     * the LibraryFile instance is deleted, or when unload() is called.
+     * Provides a way to load and unload a shared library. The Library will be
+     * loaded automatically when someone attempts to use it. Unloading the
+     * library occurs when the LibraryFile instance is deleted, or when
+     * unload() is called.
      *
      * @see Library
      *
@@ -76,7 +77,10 @@ namespace de
         void clear();
         
         /**
-         * Checks whether the name of the library file matches.
+         * Checks whether the name of the library file matches. An "underscore
+         * name" is a convention used for some plugins where the name of the
+         * plugin is prefixed by, e.g., "audio_". The "underscore name" is the
+         * part of the file that follows the underscore.
          *
          * @param nameAfterUnderscore  Part of the name following underscore.
          */
