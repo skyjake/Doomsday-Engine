@@ -173,17 +173,6 @@ static NameHash::key_type hashResourceName(ddstring_t const* name)
     return key % NameHash::hash_size;
 }
 
-static int addResourceWorker(PathTree::Node& node, void* parameters)
-{
-    // We are only interested in leafs (i.e., files and not directories).
-    if(node.type() == PathTree::Leaf)
-    {
-        ResourceNamespace& rnamespace = *((ResourceNamespace*) parameters);
-        rnamespace.add(node);
-    }
-    return 0; // Continue adding.
-}
-
 struct ResourceNamespace::Instance
 {
     ResourceNamespace& self;
@@ -249,26 +238,7 @@ struct ResourceNamespace::Instance
 
             // Add new nodes on this path and/or re-process previously seen nodes.
             addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, resolvedSearchPath, true/*is-directory*/,
-                                                       searchPath.flags(), addResourceWorker, (void*)&self);
-        }
-    }
-
-    /**
-     * Clear the file directory's contents.
-     */
-    void clearDirectory()
-    {
-        clearDirectoryNodeProcessedFlags(directory.leafNodes());
-        clearDirectoryNodeProcessedFlags(directory.branchNodes());
-        directory.clear();
-        rootNode = 0;
-    }
-
-    static void clearDirectoryNodeProcessedFlags(PathTree::Nodes const& nodes)
-    {
-        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, nodes)
-        {
-            (*i)->setUserValue(false);
+                                                       searchPath.flags());
         }
     }
 
@@ -312,11 +282,8 @@ struct ResourceNamespace::Instance
         return node;
     }
 
-    int addDirectoryChildNodes(PathTree::Node& node, int flags,
-        int (*callback) (PathTree::Node& node, void* parameters), void* parameters)
+    void addDirectoryChildNodes(PathTree::Node& node, int flags)
     {
-        int result = 0; // Continue iteration.
-
         if(PathTree::Branch == node.type())
         {
             // Compose the search pattern.
@@ -335,34 +302,23 @@ struct ResourceNamespace::Instance
                     ddstring_t foundPath; Str_InitStatic(&foundPath, foundPathUtf8.constData());
                     bool isDirectory = !!(i->attrib & A_SUBDIR);
 
-                    result = addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND), &foundPath, isDirectory,
-                                                                        flags, callback, parameters);
-                    if(result) break;
+                    addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND),
+                                                               &foundPath, isDirectory, flags);
                 }
             }
 
             Str_Free(&searchPattern);
         }
-
-        return result;
     }
 
     /**
      * @param filePath      Possibly-relative path to an element in the virtual file system.
      * @param isFolder      @c true if @a filePath is a folder in the virtual file system.
-     * @param callback      If not @c NULL the callback's logic dictates whether iteration continues.
-     * @param parameters    Passed to the callback.
      * @param nodeType      Type of element, either a branch (directory) or a leaf (file).
-     *
-     * @return  Non-zero if the current iteration should stop else @c 0.
      */
-    int addDirectoryPathNodesAndMaybeDescendBranch(bool descendBranches,
-        ddstring_t const* filePath, bool /*isFolder*/,
-        int flags, int (*callback) (PathTree::Node& node, void* parameters),
-        void* parameters)
+    void addDirectoryPathNodesAndMaybeDescendBranch(bool descendBranches,
+        ddstring_t const* filePath, bool /*isFolder*/, int flags)
     {
-        int result = 0; // Continue iteration.
-
         // Add this path to the directory.
         PathTree::Node* node = addDirectoryPathNodes(filePath);
         if(node)
@@ -375,34 +331,19 @@ struct ResourceNamespace::Instance
                     // Already processed?
                     if(node->userValue())
                     {
-                        // Does caller want to process it again?
-                        if(callback)
+                        // Process it again?
+                        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
                         {
-                            DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
+                            de::PathTree::Node& sibling = **i;
+                            if(sibling.parent() == node)
                             {
-                                if(node == (*i)->parent())
-                                {
-                                    result = callback(**i, parameters);
-                                    if(result) break;
-                                }
-                            }
-
-                            if(!result)
-                            {
-                                DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.branchNodes())
-                                {
-                                    if(node == (*i)->parent())
-                                    {
-                                        result = callback(**i, parameters);
-                                        if(result) break;
-                                    }
-                                }
+                                self.add(sibling);
                             }
                         }
                     }
                     else
                     {
-                        result = addDirectoryChildNodes(*node, flags, callback, parameters);
+                        addDirectoryChildNodes(*node, flags);
 
                         // This node is now considered processed.
                         node->setUserValue(true);
@@ -410,16 +351,14 @@ struct ResourceNamespace::Instance
                 }
             }
             // Node is a leaf.
-            else if(callback)
+            else
             {
-                result = callback(*node, parameters);
+                self.add(*node);
 
                 // This node is now considered processed (if it wasn't already).
                 node->setUserValue(true);
             }
         }
-
-        return result;
     }
 };
 
@@ -441,8 +380,9 @@ ddstring_t const* ResourceNamespace::name() const
 void ResourceNamespace::clear()
 {
     d->nameHash.clear();
-    d->clearDirectory();
     d->nameHashIsDirty = true;
+    d->directory.clear();
+    d->rootNode = 0;
 }
 
 void ResourceNamespace::rebuild()
@@ -475,6 +415,9 @@ void ResourceNamespace::rebuild()
 
 bool ResourceNamespace::add(PathTree::Node& resourceNode)
 {
+    // We are only interested in leafs (i.e., files and not folders).
+    if(resourceNode.type() == PathTree::Leaf) return false;
+
     AutoStr* name = composeResourceName(resourceNode.name());
     NameHash::key_type key = hashResourceName(name);
 
