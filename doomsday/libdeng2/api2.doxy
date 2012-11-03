@@ -7,11 +7,13 @@ PROJECT_BRIEF           = "Public API"
 OUTPUT_DIRECTORY        = ../apidoc/api2/
 
 INPUT                   = include src
-PREDEFINED              = __DENG2__ \ 
+FILE_PATTERNS           = *
+EXCLUDE_PATTERNS        = .DS_Store
+PREDEFINED              = __cplusplus __DENG2__ \ 
                           "DENG2_ERROR(N)=class N : public de::Error {};" \
                           "DENG2_SUB_ERROR(B,N)=class N : public B {};" 
 
-INCLUDED_BY_GRAPH       = YES
+INCLUDED_BY_GRAPH       = NO
 COLLABORATION_GRAPH     = NO
 REFERENCED_BY_RELATION  = NO
 OPTIMIZE_OUTPUT_FOR_C   = NO
