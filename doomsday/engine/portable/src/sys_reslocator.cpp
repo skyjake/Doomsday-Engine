@@ -207,21 +207,16 @@ static de::PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace
     if(rnamespace.findAll(searchPath, foundResources))
     {
         // There is at least one name-matched (perhaps partially) resource.
-        PathMap searchPattern;
-        PathMap_Initialize2(&searchPattern, de::PathTree::hashPathFragment, Str_Text(searchPath), delimiter);
+        PathMap searchPattern = PathMap(de::PathTree::hashPathFragment, Str_Text(searchPath), delimiter);
 
         DENG2_FOR_EACH_CONST(ResourceNamespace::ResourceList, i, foundResources)
         {
             de::PathTree::Node* node = *i;
-            if(!node->comparePath(&searchPattern, PCF_NO_BRANCH)) continue;
+            if(!node->comparePath(searchPattern, PCF_NO_BRANCH)) continue;
 
             // This is the resource we are looking for.
-            found = node;
-            break;
+            return node;
         }
-
-        // Cleanup.
-        PathMap_Destroy(&searchPattern);
     }
     return found;
 }

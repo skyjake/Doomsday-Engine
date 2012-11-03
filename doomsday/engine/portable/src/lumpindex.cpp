@@ -385,34 +385,24 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
     DENG_ASSERT(d->hashMap);
 
     // Perform the search.
-    bool builtSearchPattern = false;
-    PathMap searchPattern;
 
     int hash = PathTree::hashPathFragment(path, strlen(path)) % d->hashMap->size();
-    int idx;
-    for(idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
+    if((*d->hashMap)[hash].head == -1) return -1;
+
+    PathMap searchPattern = PathMap(PathTree::hashPathFragment, path);
+
+    for(int idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {
         File1 const& lump = *d->lumps[idx];
         PathTree::Node const& node = lump.directoryNode();
 
-        // Time to build the pattern?
-        if(!builtSearchPattern)
-        {
-            PathMap_Initialize(&searchPattern, PathTree::hashPathFragment, path);
-            builtSearchPattern = true;
-        }
+        if(!node.comparePath(searchPattern, 0)) continue;
 
-        if(node.comparePath(&searchPattern, 0))
-        {
-            // This is the lump we are looking for.
-            break;
-        }
+        // This is the lump we are looking for.
+        return idx;
     }
 
-    if(builtSearchPattern)
-        PathMap_Destroy(&searchPattern);
-
-    return idx;
+    return -1;
 }
 
 void LumpIndex::print(LumpIndex const& index)
