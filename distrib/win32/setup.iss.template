@@ -62,6 +62,9 @@ Type: files; Name: "{app}\bin\dsdirectsound.dll"
 Type: files; Name: "{app}\bin\dsfmod.dll"
 Type: files; Name: "{app}\bin\dpdehread.dll"
 Type: files; Name: "{app}\bin\dpwadmapconverter.dll"
+Type: files; Name: "{app}\data\jdoom\jDoom.pk3"
+Type: files; Name: "{app}\data\jheretic\jHeretic.pk3"
+Type: files; Name: "{app}\data\jhexen\jHexen.pk3"
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -135,9 +138,9 @@ Source: "data\fonts\normalbold24.dfn"; DestDir: "{app}\data\fonts"; Components: 
 Source: "data\fonts\normallight12.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "data\fonts\normallight18.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "data\fonts\normallight24.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
-Source: "data\jdoom\jdoom.pk3"; DestDir: "{app}\data\jdoom"; Components: Engine\Libdoom
-Source: "data\jheretic\jheretic.pk3"; DestDir: "{app}\data\jheretic"; Components: Engine\Libheretic
-Source: "data\jhexen\jhexen.pk3"; DestDir: "{app}\data\jhexen"; Components: Engine\Libhexen
+Source: "data\jdoom\libdoom.pk3"; DestDir: "{app}\data\jdoom"; Components: Engine\Libdoom
+Source: "data\jheretic\libheretic.pk3"; DestDir: "{app}\data\jheretic"; Components: Engine\Libheretic
+Source: "data\jhexen\libhexen.pk3"; DestDir: "{app}\data\jhexen"; Components: Engine\Libhexen
 
 [INI]
 Filename: "{app}\doomsday.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://sourceforge.net/projects/deng/"
