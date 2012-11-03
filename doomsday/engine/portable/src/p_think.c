@@ -56,15 +56,13 @@ boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id)
     return map->thinkers.idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
 }
 
-void GameMap_SetMobjID(GameMap* map, thid_t id, boolean state)
+void GameMap_SetMobjID(GameMap* map, thid_t id, boolean inUse)
 {
     int c = id >> 5, bit = 1 << (id & 31); //(id % 32);
     assert(map);
 
-    if(state)
-        map->thinkers.idtable[c] |= bit;
-    else
-        map->thinkers.idtable[c] &= ~bit;
+    if(inUse) map->thinkers.idtable[c] |= bit;
+    else      map->thinkers.idtable[c] &= ~bit;
 }
 
 typedef struct mobjidlookup_s {

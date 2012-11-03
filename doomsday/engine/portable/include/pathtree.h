@@ -375,6 +375,7 @@ typedef int (*pathtree_searchcallback_t) (PathTreeNode* node, int flags, PathMap
  * hierarchy can be performed using nodes pre-selected by the caller or using
  * @see PathTree_Iterate().
  *
+ * @param pt                PathTree instance.
  * @param flags             @ref pathComparisonFlags
  * @param mappedSearchPath  Fragment mapped search path.
  * @param callback          Callback function ptr. The callback should only return
@@ -393,10 +394,13 @@ PathTreeNode* PathTree_Find(PathTree* pt, int flags, char const* path/*, delimit
  * Iterate over nodes in the hierarchy making a callback for each. Iteration ends
  * when all nodes have been visited or a callback returns non-zero.
  *
+ * @param pt            PathTree instance.
  * @param flags         @ref pathComparisonFlags
  * @param parent        Parent node reference, used when restricting processing
  *                      to the child nodes of this node. Only used when the flag
  *                      PCF_MATCH_PARENT is set in @a flags.
+ * @param hash          If not @c PATHTREE_NOHASH only consider nodes whose hashed
+ *                      name matches this.
  * @param callback      Callback function ptr.
  * @param parameters    Passed to the callback.
  *

@@ -580,9 +580,10 @@ static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t* path, char con
 }
 
 /**
- * <pre>LUMPNAM0 \Path\In\The\Base.ext
- * LUMPNAM1 Path\In\The\RuntimeDir.ext
- *  :</pre>
+ * <pre>
+ *     LUMPNAM0 \Path\In\The\Base.ext
+ *     LUMPNAM1 Path\In\The\RuntimeDir.ext
+ * </pre>
  */
 static bool parsePathLumpMappings(char const* buffer)
 {

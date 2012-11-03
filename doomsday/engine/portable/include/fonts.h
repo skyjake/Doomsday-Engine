@@ -162,7 +162,7 @@ fontid_t Fonts_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
 
 /**
  * @copydoc Fonts_ResolveUri()
- * @param queit  Suppresses the console message that is printed if the Uri cannot be found.
+ * @param quiet  Suppresses the console message that is printed if the Uri cannot be found.
  */
 fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet);
 
