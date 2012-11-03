@@ -416,7 +416,7 @@ void ResourceNamespace::rebuild()
 bool ResourceNamespace::add(PathTree::Node& resourceNode)
 {
     // We are only interested in leafs (i.e., files and not folders).
-    if(resourceNode.type() == PathTree::Leaf) return false;
+    if(resourceNode.type() != PathTree::Leaf) return false;
 
     AutoStr* name = composeResourceName(resourceNode.name());
     NameHash::key_type key = hashResourceName(name);
