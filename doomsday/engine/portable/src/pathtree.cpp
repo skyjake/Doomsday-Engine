@@ -362,8 +362,7 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
     PathTree::Node* foundNode = NULL;
     if(searchPath && searchPath[0] && d->size)
     {
-        PathMap mappedSearchPath;
-        PathMap_Initialize2(&mappedSearchPath, PathTree_HashPathFragment2, searchPath, delimiter);
+        PathMap mappedSearchPath = PathMap(PathTree_HashPathFragment2, searchPath, delimiter);
 
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF))
@@ -372,7 +371,7 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
             PathTree::Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
-                if((*i)->comparePath(&mappedSearchPath, flags))
+                if((*i)->comparePath(mappedSearchPath, flags))
                 {
                     // This is the node we're looking for - stop iteration.
                     foundNode = *i;
@@ -388,7 +387,7 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
             PathTree::Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
-                if((*i)->comparePath(&mappedSearchPath, flags))
+                if((*i)->comparePath(mappedSearchPath, flags))
                 {
                     // This is the node we're looking for - stop iteration.
                     foundNode = *i;
@@ -396,8 +395,6 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
                 }
             }
         }
-
-        PathMap_Destroy(&mappedSearchPath);
     }
 
     if(!foundNode) throw NotFoundError("PathTree::find", String("No paths found matching \"") + searchPath + "\"");
@@ -1059,65 +1056,6 @@ int PathTree_Iterate_Const(const PathTree* pt, int flags, PathTreeNode const* pa
     pathtree_iterateconstcallback_t callback)
 {
     return PathTree_Iterate2_Const(pt, flags, parent, hash, callback, 0/* no params */);
-}
-
-typedef struct {
-    int flags; /// @see pathComparisonFlags
-    PathMap* mappedSearchPath;
-    void* parameters;
-    pathtree_searchcallback_t callback;
-    PathTreeNode* foundNode;
-} searchworker_params_t;
-
-static int searchWorker(PathTreeNode* node, void* parameters)
-{
-    searchworker_params_t* p = (searchworker_params_t*)parameters;
-    DENG2_ASSERT(node && parameters);
-    if(p->callback(node, p->flags, p->mappedSearchPath, p->parameters))
-    {
-        p->foundNode = node;
-        return 1; // Stop iteration.
-    }
-    return 0; // Continue iteration.
-}
-
-PathTreeNode* PathTree_Search2(PathTree* pt, int flags, PathMap* mappedSearchPath,
-    pathtree_searchcallback_t callback, void* parameters)
-{
-    DENG2_ASSERT(pt);
-    if(callback)
-    {
-        searchworker_params_t p;
-        p.flags = flags;
-        p.mappedSearchPath = mappedSearchPath;
-        p.parameters = parameters;
-        p.callback = callback;
-        p.foundNode = NULL;
-
-        ushort hash = PathMap_Fragment(mappedSearchPath, 0)->hash;
-        if(!(flags & PCF_NO_LEAF))
-        {
-            if(iteratePathsInHash(pt, hash, de::PathTree::Leaf, flags, NULL, searchWorker, (void*)&p))
-            {
-                return p.foundNode;
-            }
-        }
-
-        if(!(flags & PCF_NO_BRANCH))
-        {
-            if(iteratePathsInHash(pt, hash, de::PathTree::Branch, flags, NULL, searchWorker, (void*)&p))
-            {
-                return p.foundNode;
-            }
-        }
-    }
-    return 0; // Not found.
-}
-
-PathTreeNode* PathTree_Search(PathTree* pt, int flags,
-    PathMap* mappedSearchPath, pathtree_searchcallback_t callback)
-{
-    return PathTree_Search2(pt, flags, mappedSearchPath, callback, NULL);
 }
 
 PathTreeNode* PathTree_Find2(PathTree* pt, int flags, char const* searchPath, char delimiter)

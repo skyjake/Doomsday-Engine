@@ -65,7 +65,7 @@ typedef struct pathmapfragment_s {
  *
  * @return The resultant hash key.
  */
-typedef ushort (*hashpathfragmentcallback_t)(char const* path, size_t len, char delimiter);
+typedef ushort (*hashpathfragmentfunc_t)(char const* path, size_t len, char delimiter);
 
 typedef struct pathmap_s {
     char const* path; ///< The mapped path.
@@ -88,8 +88,13 @@ typedef struct pathmap_s {
     ///< Head of the linked list of "extra" fragments, in reverse order.
     PathMapFragment* extraFragments;
 
-    /// Path fragment hashing callback.
-    hashpathfragmentcallback_t hashFragmentCallback;
+    /// Fragment hashing function.
+    hashpathfragmentfunc_t hashFragmentFunc;
+
+#ifdef __cplusplus
+    pathmap_s(hashpathfragmentfunc_t hashFragmentFunc, char const* path, char delimiter = '/');
+    ~pathmap_s();
+#endif
 } PathMap;
 
 /**
@@ -108,8 +113,8 @@ typedef struct pathmap_s {
  *
  * @return  Pointer to "this" instance for caller convenience.
  */
-PathMap* PathMap_Initialize2(PathMap* pathMap, hashpathfragmentcallback_t hashFragmentCallback, char const* path, char delimiter);
-PathMap* PathMap_Initialize(PathMap* pathMap, hashpathfragmentcallback_t hashFragmentCallback, char const* path/*, delimiter = '/'*/);
+PathMap* PathMap_Initialize2(PathMap* pathMap, hashpathfragmentfunc_t hashFragmentFunc, char const* path, char delimiter);
+PathMap* PathMap_Initialize(PathMap* pathMap, hashpathfragmentfunc_t hashFragmentFunc, char const* path/*, delimiter = '/'*/);
 
 /**
  * Destroy @a pathMap releasing any resources acquired for it.

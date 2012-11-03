@@ -268,14 +268,14 @@ struct ResourceNamespace::Instance
             // This node is purely symbolic, its only necessary for our internal use.
             if(!rootNode)
             {
-                rootNode = directory.insert("./", '/');
+                rootNode = directory.insert("./");
             }
 
             if(path == &buf) Str_Free(&buf);
             return rootNode;
         }
 
-        PathTree::Node* node = directory.insert(Str_Text(path), '/');
+        PathTree::Node* node = directory.insert(Str_Text(path));
 
         if(path == &buf) Str_Free(&buf);
 
@@ -284,37 +284,34 @@ struct ResourceNamespace::Instance
 
     void addDirectoryChildNodes(PathTree::Node& node, int flags)
     {
-        if(PathTree::Branch == node.type())
+        if(!node.isLeaf())
         {
             // Compose the search pattern.
-            ddstring_t searchPattern; Str_InitStd(&searchPattern);
-            node.composePath(&searchPattern, NULL, '/');
+            AutoStr* searchPattern = node.composePath(AutoStr_NewStd(), NULL, '/');
             // We're interested in *everything*.
-            Str_AppendChar(&searchPattern, '*');
+            Str_AppendChar(searchPattern, '*');
 
             // Process this search.
             FS1::PathList found;
-            if(App_FileSystem()->findAllPaths(Str_Text(&searchPattern), flags, found))
+            if(App_FileSystem()->findAllPaths(Str_Text(searchPattern), flags, found))
             {
                 DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
                 {
                     QByteArray foundPathUtf8 = i->path.toUtf8();
                     ddstring_t foundPath; Str_InitStatic(&foundPath, foundPathUtf8.constData());
-                    bool isDirectory = !!(i->attrib & A_SUBDIR);
+                    bool isFolder = !!(i->attrib & A_SUBDIR);
 
                     addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND),
-                                                               &foundPath, isDirectory, flags);
+                                                               &foundPath, isFolder, flags);
                 }
             }
-
-            Str_Free(&searchPattern);
         }
     }
 
     /**
-     * @param filePath      Possibly-relative path to an element in the virtual file system.
-     * @param isFolder      @c true if @a filePath is a folder in the virtual file system.
-     * @param nodeType      Type of element, either a branch (directory) or a leaf (file).
+     * @param filePath  Possibly-relative path to an element in the virtual file system.
+     * @param isFolder  @c true if @a filePath is a folder in the virtual file system.
+     * @param nodeType  Type of element, either a branch (directory) or a leaf (file).
      */
     void addDirectoryPathNodesAndMaybeDescendBranch(bool descendBranches,
         ddstring_t const* filePath, bool /*isFolder*/, int flags)
@@ -323,7 +320,7 @@ struct ResourceNamespace::Instance
         PathTree::Node* node = addDirectoryPathNodes(filePath);
         if(node)
         {
-            if(PathTree::Branch == node->type())
+            if(!node->isLeaf())
             {
                 // Descend into this subdirectory?
                 if(descendBranches)
@@ -416,7 +413,7 @@ void ResourceNamespace::rebuild()
 bool ResourceNamespace::add(PathTree::Node& resourceNode)
 {
     // We are only interested in leafs (i.e., files and not folders).
-    if(resourceNode.type() != PathTree::Leaf) return false;
+    if(!resourceNode.isLeaf()) return false;
 
     AutoStr* name = composeResourceName(resourceNode.name());
     NameHash::key_type key = hashResourceName(name);

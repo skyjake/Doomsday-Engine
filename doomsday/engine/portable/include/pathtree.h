@@ -145,8 +145,14 @@ public:
         /// @return Parent of this node else @c NULL
         Node* parent() const;
 
+        /// @return @c true iff this node is a leaf.
+        bool isLeaf() const;
+
         /// @return Type of this node.
-        NodeType type() const;
+        inline NodeType type() const
+        {
+            return isLeaf()? Leaf : Branch;
+        }
 
         /// @return Name for this node's path fragment.
         ddstring_t const* name() const;
@@ -181,7 +187,7 @@ public:
          *       allow for further optimizations elsewhere (in the file system
          *       for example) -ds
          */
-        int comparePath(PathMap* candidatePath, int flags) const;
+        int comparePath(PathMap& candidatePath, int flags) const;
 
         /**
          * Composes and/or calculates the length of the composed path for this node.

@@ -556,7 +556,7 @@ SOURCES += \
     portable/src/p_sight.c \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
-    portable/src/pathmap.c \
+    portable/src/pathmap.cpp \
     portable/src/pathtree.cpp \
     portable/src/pathtreenode.cpp \
     portable/src/plane.c \

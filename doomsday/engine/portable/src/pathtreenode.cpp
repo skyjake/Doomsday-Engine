@@ -27,11 +27,11 @@ namespace de {
 
 struct PathTree::Node::Instance
 {
+    /// @c true = this is a leaf node.
+    bool isLeaf;
+
     /// PathTree which owns this node.
     PathTree& tree;
-
-    /// Symbolic node type.
-    PathTree::NodeType type;
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
@@ -46,9 +46,9 @@ struct PathTree::Node::Instance
     /// User-specified value associated with this node.
     int userValue;
 
-    Instance(PathTree& _tree, PathTree::NodeType _type, PathTree::FragmentId _fragmentId,
+    Instance(PathTree& _tree, bool _isLeaf, PathTree::FragmentId _fragmentId,
              PathTree::Node* _parent)
-        : tree(_tree), type(_type), fragmentId(_fragmentId), parent(_parent),
+        : isLeaf(_isLeaf), tree(_tree), fragmentId(_fragmentId), parent(_parent),
           userPointer(0), userValue(0)
     {}
 };
@@ -56,7 +56,7 @@ struct PathTree::Node::Instance
 PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, PathTree::FragmentId fragmentId,
     PathTree::Node* parent, void* userPointer, int userValue)
 {
-    d = new Instance(tree, type, fragmentId, parent);
+    d = new Instance(tree, type == PathTree::Leaf, fragmentId, parent);
     setUserPointer(userPointer);
     setUserValue(userValue);
 }
@@ -64,6 +64,11 @@ PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, PathTree::Fragment
 PathTree::Node::~Node()
 {
     delete d;
+}
+
+bool PathTree::Node::isLeaf() const
+{
+    return d->isLeaf;
 }
 
 PathTree& PathTree::Node::tree() const
@@ -76,9 +81,9 @@ PathTree::Node* PathTree::Node::parent() const
     return d->parent;
 }
 
-PathTree::NodeType PathTree::Node::type() const
+PathTree::FragmentId PathTree::Node::fragmentId() const
 {
-    return d->type;
+    return d->fragmentId;
 }
 
 ddstring_t const* PathTree::Node::name() const
@@ -91,9 +96,26 @@ ushort PathTree::Node::hash() const
     return tree().fragmentHash(d->fragmentId);
 }
 
-PathTree::FragmentId PathTree::Node::fragmentId() const
+void* PathTree::Node::userPointer() const
 {
-    return d->fragmentId;
+    return d->userPointer;
+}
+
+int PathTree::Node::userValue() const
+{
+    return d->userValue;
+}
+
+PathTree::Node& PathTree::Node::setUserPointer(void* ptr)
+{
+    d->userPointer = ptr;
+    return *this;
+}
+
+PathTree::Node& PathTree::Node::setUserValue(int value)
+{
+    d->userValue = value;
+    return *this;
 }
 
 static int matchPathFragment(char const* string, char const* pattern)
@@ -135,13 +157,13 @@ static int matchPathFragment(char const* string, char const* pattern)
 
 /// @note This routine is also used as an iteration callback, so only return
 ///       a non-zero value when the node is a match for the search term.
-int PathTree::Node::comparePath(PathMap* searchPattern, int flags) const
+int PathTree::Node::comparePath(PathMap& searchPattern, int flags) const
 {
-    if(((flags & PCF_NO_LEAF)   && type() == PathTree::Leaf) ||
-       ((flags & PCF_NO_BRANCH) && type() == PathTree::Branch))
+    if(((flags & PCF_NO_LEAF)   && isLeaf()) ||
+       ((flags & PCF_NO_BRANCH) && !isLeaf()))
         return false;
 
-    PathMapFragment const* sfragment = PathMap_Fragment(searchPattern, 0);
+    PathMapFragment const* sfragment = PathMap_Fragment(&searchPattern, 0);
     if(!sfragment) return false; // Hmm...
 
 //#ifdef _DEBUG
@@ -151,12 +173,12 @@ int PathTree::Node::comparePath(PathMap* searchPattern, int flags) const
 //#endif
 
     // In reverse order, compare path fragments in the search term.
-    uint fragmentCount = PathMap_Size(searchPattern);
+    uint fragmentCount = PathMap_Size(&searchPattern);
 
     PathTree::Node const* node = this;
     for(uint i = 0; i < fragmentCount; ++i)
     {
-        if(i == 0 && node->type() == PathTree::Leaf)
+        if(i == 0 && node->isLeaf())
         {
             char buf[256];
             qsnprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
@@ -206,7 +228,7 @@ int PathTree::Node::comparePath(PathMap* searchPattern, int flags) const
 
         // So far so good. Move one directory level upwards.
         node = node->parent();
-        sfragment = PathMap_Fragment(searchPattern, i+1);
+        sfragment = PathMap_Fragment(&searchPattern, i + 1);
     }
     EXIT_POINT(6);
     return false;
@@ -296,7 +318,7 @@ ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char deli
     parm.delimiter = delimiter;
 
     // Include a terminating path delimiter for branches.
-    if(delimiter && type() == PathTree::Branch)
+    if(delimiter && !isLeaf())
         parm.length += 1; // A single character.
 
     if(parm.composedPath)
@@ -308,7 +330,7 @@ ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char deli
     pathConstructor(parm, *this);
 
     // Terminating delimiter for branches.
-    if(parm.composedPath && delimiter && type() == PathTree::Branch)
+    if(parm.composedPath && delimiter && !isLeaf())
         Str_AppendCharWithoutAllocs(parm.composedPath, delimiter);
 
     DENG2_ASSERT(!parm.composedPath || Str_Size(parm.composedPath) == parm.length);
@@ -320,28 +342,6 @@ ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char deli
 
     if(length) *length = parm.length;
     return path;
-}
-
-void* PathTree::Node::userPointer() const
-{
-    return d->userPointer;
-}
-
-int PathTree::Node::userValue() const
-{
-    return d->userValue;
-}
-
-PathTree::Node& PathTree::Node::setUserPointer(void* ptr)
-{
-    d->userPointer = ptr;
-    return *this;
-}
-
-PathTree::Node& PathTree::Node::setUserValue(int value)
-{
-    d->userValue = value;
-    return *this;
 }
 
 } // namespace de
@@ -391,7 +391,8 @@ ushort PathTreeNode_Hash(PathTreeNode const* node)
 int PathTreeNode_ComparePath(PathTreeNode* node, PathMap* candidatePath, int flags)
 {
     SELF(node);
-    return self->comparePath(candidatePath, flags);
+    DENG_ASSERT(candidatePath);
+    return self->comparePath(*candidatePath, flags);
 }
 
 ddstring_t* PathTreeNode_ComposePath2(PathTreeNode const* node,

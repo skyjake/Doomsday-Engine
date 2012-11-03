@@ -926,8 +926,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     // if not already absolute.
     F_PrependBasePath(searchPattern, searchPattern);
 
-    PathMap patternMap;
-    PathMap_Initialize(&patternMap, PathTree::hashPathFragment, Str_Text(searchPattern));
+    PathMap patternMap = PathMap(PathTree::hashPathFragment, Str_Text(searchPattern));
 
     /*
      * Check the Zip directory.
@@ -946,7 +945,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         }
         else
         {
-            patternMatched = node.comparePath(&patternMap, PCF_MATCH_FULL);
+            patternMatched = node.comparePath(patternMap, PCF_MATCH_FULL);
         }
 
         if(!patternMatched) continue;
@@ -957,10 +956,8 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
             filePath = lump.composePath();
         }
 
-        found.push_back(PathListItem(Str_Text(filePath), node.type() == PathTree::Branch? A_SUBDIR : 0));
+        found.push_back(PathListItem(Str_Text(filePath), !node.isLeaf()? A_SUBDIR : 0));
     }
-
-    PathMap_Destroy(&patternMap);
 
     /*
      * Check the dir/WAD direcs.
