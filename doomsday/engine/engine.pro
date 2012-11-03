@@ -205,7 +205,6 @@ DENG_HEADERS += \
     portable/include/edit_map.h \
     portable/include/fi_main.h \
     portable/include/file.h \
-    portable/include/filedirectory.h \
     portable/include/filehandlebuilder.h \
     portable/include/fileinfo.h \
     portable/include/finaleinterpreter.h \
@@ -495,7 +494,6 @@ SOURCES += \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
     portable/src/file.cpp \
-    portable/src/filedirectory.cpp \
     portable/src/filehandle.cpp \
     portable/src/fileid.cpp \
     portable/src/finaleinterpreter.c \

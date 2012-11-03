@@ -31,9 +31,7 @@
 
 #include "dd_types.h"
 
-//#include "resourcenamespace.h"
 #include "abstractresource.h"
-#include "filedirectory.h"
 #include "uri.h"
 
 #ifdef __cplusplus

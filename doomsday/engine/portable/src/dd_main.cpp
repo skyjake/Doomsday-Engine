@@ -49,7 +49,6 @@
 
 #include "abstractresource.h"
 #include "displaymode.h"
-#include "filedirectory.h"
 #include "lumpindex.h"
 #include "m_misc.h"
 #include "resourcenamespace.h"

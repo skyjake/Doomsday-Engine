@@ -26,7 +26,6 @@
 #include "de_filesys.h"
 
 #include <de/Log>
-#include "filedirectory.h"
 #include "pathtree.h"
 
 #include "resourcenamespace.h"
@@ -35,16 +34,19 @@ extern "C" filename_t ddBasePath;
 
 namespace de {
 
-class Resource
+/**
+ * Reference to a resource or file in the virtual file system.
+ */
+class ResourceRef
 {
 public:
-    Resource(PathTree::Node& _directoryNode) : directoryNode_(&_directoryNode) {
+    ResourceRef(PathTree::Node& _directoryNode) : directoryNode_(&_directoryNode) {
 #if _DEBUG
         Str_Init(&name_);
 #endif
     }
 
-    ~Resource() {
+    ~ResourceRef() {
 #if _DEBUG
         Str_Free(&name_);
 #endif
@@ -54,7 +56,7 @@ public:
         return *directoryNode_;
     }
 
-    Resource& setDirectoryNode(PathTree::Node& newDirectoryNode) {
+    ResourceRef& setDirectoryNode(PathTree::Node& newDirectoryNode) {
         directoryNode_ = &newDirectoryNode;
         return *this;
     }
@@ -64,7 +66,7 @@ public:
         return name_;
     }
 
-    Resource& setName(char const* newName) {
+    ResourceRef& setName(char const* newName) {
         Str_Set(&name_, newName);
         return *this;
     }
@@ -95,7 +97,7 @@ public:
     struct Node
     {
         Node* next;
-        Resource resource;
+        ResourceRef resource;
 
         Node(PathTree::Node& resourceNode)
             : next(0), resource(resourceNode)
@@ -182,20 +184,22 @@ static int addResourceWorker(PathTree::Node& node, void* parameters)
     return 0; // Continue adding.
 }
 
-#define RNF_IS_DIRTY            0x80 // Filehash needs to be (re)built (avoid allocating an empty name hash).
-
 struct ResourceNamespace::Instance
 {
     ResourceNamespace& self;
 
     /// Associated path directory for this namespace.
     /// @todo It should not be necessary for a unique directory per namespace.
-    FileDirectory* directory;
+    PathTree directory;
 
-    byte flags;
+    /// As the directory is relative, this special node servers as the global root.
+    PathTree::Node* rootNode;
 
     /// Name hash table.
     NameHash nameHash;
+
+    /// Set to @c true when the name hash is obsolete/out-of-date and should be rebuilt.
+    byte nameHashIsDirty;
 
     /// Sets of search paths known by this namespace.
     /// Each set is in order of greatest-importance, right to left.
@@ -205,7 +209,7 @@ struct ResourceNamespace::Instance
     ddstring_t name;
 
     Instance(ResourceNamespace& d, char const* _name)
-        : self(d), directory(new FileDirectory(ddBasePath)), flags(RNF_IS_DIRTY)
+        : self(d), directory(), rootNode(0), nameHash(), nameHashIsDirty(true)
     {
         Str_InitStd(&name);
         if(_name) Str_Set(&name, _name);
@@ -214,7 +218,6 @@ struct ResourceNamespace::Instance
     ~Instance()
     {
         Str_Free(&name);
-        delete directory;
     }
 
     NameHash::Node* findResourceInNameHash(NameHash::key_type key,
@@ -228,14 +231,195 @@ struct ResourceNamespace::Instance
         return node;
     }
 
+    /**
+     * Add resources to this namespace by resolving each search path in @a group,
+     * searching the file system and populating our internal directory with the
+     * results. Duplicates are automatically pruned.
+     *
+     * @param group  Group of paths to search.
+     */
     void addFromSearchPaths(ResourceNamespace::PathGroup group)
     {
         for(ResourceNamespace::SearchPaths::const_iterator i = searchPaths.find(group);
             i != searchPaths.end() && i.key() == group; ++i)
         {
             ResourceNamespace::SearchPath const& searchPath = *i;
-            directory->addPath(searchPath.flags(), searchPath.uri(), addResourceWorker, (void*)&self);
+            ddstring_t const* resolvedSearchPath = searchPath.uri().resolvedConst();
+            if(!resolvedSearchPath) continue;
+
+            // Add new nodes on this path and/or re-process previously seen nodes.
+            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, resolvedSearchPath, true/*is-directory*/,
+                                                       searchPath.flags(), addResourceWorker, (void*)&self);
         }
+    }
+
+    /**
+     * Clear the file directory's contents.
+     */
+    void clearDirectory()
+    {
+        clearDirectoryNodeProcessedFlags(directory.leafNodes());
+        clearDirectoryNodeProcessedFlags(directory.branchNodes());
+        directory.clear();
+        rootNode = 0;
+    }
+
+    static void clearDirectoryNodeProcessedFlags(PathTree::Nodes const& nodes)
+    {
+        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, nodes)
+        {
+            (*i)->setUserValue(false);
+        }
+    }
+
+    PathTree::Node* addDirectoryPathNodes(ddstring_t const* rawPath)
+    {
+        if(!rawPath || Str_IsEmpty(rawPath)) return NULL;
+
+        ddstring_t const* path;
+        ddstring_t buf;
+
+        // Try to make it a relative path?
+        if(F_IsAbsolute(rawPath))
+        {
+            ddstring_t basePath; Str_InitStatic(&basePath, ddBasePath);
+            F_RemoveBasePath2(Str_InitStd(&buf), rawPath, &basePath);
+            path = &buf;
+        }
+        else
+        {
+            path = rawPath;
+        }
+
+        // If this is equal to the base path, return that node.
+        if(Str_IsEmpty(path))
+        {
+            // Time to construct the relative base node?
+            // This node is purely symbolic, its only necessary for our internal use.
+            if(!rootNode)
+            {
+                rootNode = directory.insert("./", '/');
+            }
+
+            if(path == &buf) Str_Free(&buf);
+            return rootNode;
+        }
+
+        PathTree::Node* node = directory.insert(Str_Text(path), '/');
+
+        if(path == &buf) Str_Free(&buf);
+
+        return node;
+    }
+
+    int addDirectoryChildNodes(PathTree::Node& node, int flags,
+        int (*callback) (PathTree::Node& node, void* parameters), void* parameters)
+    {
+        int result = 0; // Continue iteration.
+
+        if(PathTree::Branch == node.type())
+        {
+            // Compose the search pattern.
+            ddstring_t searchPattern; Str_InitStd(&searchPattern);
+            node.composePath(&searchPattern, NULL, '/');
+            // We're interested in *everything*.
+            Str_AppendChar(&searchPattern, '*');
+
+            // Process this search.
+            FS1::PathList found;
+            if(App_FileSystem()->findAllPaths(Str_Text(&searchPattern), flags, found))
+            {
+                DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
+                {
+                    QByteArray foundPathUtf8 = i->path.toUtf8();
+                    ddstring_t foundPath; Str_InitStatic(&foundPath, foundPathUtf8.constData());
+                    bool isDirectory = !!(i->attrib & A_SUBDIR);
+
+                    result = addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND), &foundPath, isDirectory,
+                                                                        flags, callback, parameters);
+                    if(result) break;
+                }
+            }
+
+            Str_Free(&searchPattern);
+        }
+
+        return result;
+    }
+
+    /**
+     * @param filePath      Possibly-relative path to an element in the virtual file system.
+     * @param isFolder      @c true if @a filePath is a folder in the virtual file system.
+     * @param callback      If not @c NULL the callback's logic dictates whether iteration continues.
+     * @param parameters    Passed to the callback.
+     * @param nodeType      Type of element, either a branch (directory) or a leaf (file).
+     *
+     * @return  Non-zero if the current iteration should stop else @c 0.
+     */
+    int addDirectoryPathNodesAndMaybeDescendBranch(bool descendBranches,
+        ddstring_t const* filePath, bool /*isFolder*/,
+        int flags, int (*callback) (PathTree::Node& node, void* parameters),
+        void* parameters)
+    {
+        int result = 0; // Continue iteration.
+
+        // Add this path to the directory.
+        PathTree::Node* node = addDirectoryPathNodes(filePath);
+        if(node)
+        {
+            if(PathTree::Branch == node->type())
+            {
+                // Descend into this subdirectory?
+                if(descendBranches)
+                {
+                    // Already processed?
+                    if(node->userValue())
+                    {
+                        // Does caller want to process it again?
+                        if(callback)
+                        {
+                            DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
+                            {
+                                if(node == (*i)->parent())
+                                {
+                                    result = callback(**i, parameters);
+                                    if(result) break;
+                                }
+                            }
+
+                            if(!result)
+                            {
+                                DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.branchNodes())
+                                {
+                                    if(node == (*i)->parent())
+                                    {
+                                        result = callback(**i, parameters);
+                                        if(result) break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        result = addDirectoryChildNodes(*node, flags, callback, parameters);
+
+                        // This node is now considered processed.
+                        node->setUserValue(true);
+                    }
+                }
+            }
+            // Node is a leaf.
+            else if(callback)
+            {
+                result = callback(*node, parameters);
+
+                // This node is now considered processed (if it wasn't already).
+                node->setUserValue(true);
+            }
+        }
+
+        return result;
     }
 };
 
@@ -257,14 +441,14 @@ ddstring_t const* ResourceNamespace::name() const
 void ResourceNamespace::clear()
 {
     d->nameHash.clear();
-    d->directory->clear();
-    d->flags |= RNF_IS_DIRTY;
+    d->directory.clear();
+    d->nameHashIsDirty = true;
 }
 
 void ResourceNamespace::rebuild()
 {
     // Is a rebuild necessary?
-    if(!(d->flags & RNF_IS_DIRTY)) return;
+    if(!d->nameHashIsDirty) return;
 
 /*#if _DEBUG
     uint startTime;
@@ -280,10 +464,10 @@ void ResourceNamespace::rebuild()
     d->addFromSearchPaths(ResourceNamespace::DefaultPaths);
     d->addFromSearchPaths(ResourceNamespace::FallbackPaths);
 
-    d->flags &= ~RNF_IS_DIRTY;
+    d->nameHashIsDirty = false;
 
 /*#if _DEBUG
-    VERBOSE2( FileDirectory::debugPrint(d->directory) )
+    VERBOSE2( PathTree::debugPrint(d->directory) )
     VERBOSE2( debugPrint() )
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 #endif*/
@@ -316,11 +500,11 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
 
         // We will need to rebuild this namespace (if we aren't already doing so,
         // in the case of auto-populated namespaces built from FileDirectorys).
-        d->flags |= RNF_IS_DIRTY;
+        d->nameHashIsDirty = true;
     }
 
     // (Re)configure this record.
-    Resource* res = &hashNode->resource;
+    ResourceRef* res = &hashNode->resource;
     res->setDirectoryNode(resourceNode);
 
     return isNewNode;
@@ -335,7 +519,7 @@ bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& uri, int f
         return false;
 
     // The addition of a new search path means the namespace is now dirty.
-    d->flags |= RNF_IS_DIRTY;
+    d->nameHashIsDirty = true;
 
     // Have we seen this path already (we don't want duplicates)?
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
@@ -396,7 +580,7 @@ void ResourceNamespace::debugPrint() const
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* node = bucket.first; node; node = node->next)
         {
-            Resource const& res = node->resource;
+            ResourceRef const& res = node->resource;
             AutoStr* path = res.directoryNode().composePath(AutoStr_NewStd(), NULL);
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
@@ -437,7 +621,7 @@ int ResourceNamespace::findAll(ddstring_t const* searchPath, ResourceList& found
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
-            Resource& resource = hashNode->resource;
+            ResourceRef& resource = hashNode->resource;
             if(name && qstrnicmp(Str_Text(name), Str_Text(resource.directoryNode().name()), Str_Length(name))) continue;
 
             found.push_back(&resource.directoryNode());
