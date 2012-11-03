@@ -376,14 +376,15 @@ static int findResource(resourceclass_t rclass, uri_s const* const* list,
 {
     DENG_ASSERT(inited && list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
 
-    uint result = 0, n = 1;
+    LOG_AS("findResource");
 
+    uint result = 0, n = 1;
     for(uri_s const* const* ptr = list; *ptr; ptr++, n++)
     {
-        uri_s const* searchPath = *ptr;
+        de::Uri const& searchPath = reinterpret_cast<de::Uri const&>(**ptr);
 
         // Ignore incomplete paths.
-        ddstring_t const* resolvedPath = Uri_ResolvedConst(searchPath);
+        ddstring_t const* resolvedPath = searchPath.resolvedConst();
         if(!resolvedPath) continue;
 
         // If this is an absolute path, locate using it.
@@ -395,9 +396,9 @@ static int findResource(resourceclass_t rclass, uri_s const* const* list,
         else
         {
             // Probably a relative path. Has a namespace identifier been included?
-            if(!Str_IsEmpty(Uri_Scheme(searchPath)))
+            if(!Str_IsEmpty(searchPath.scheme()))
             {
-                resourcenamespaceid_t rni = F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(searchPath)));
+                resourcenamespaceid_t rni = F_SafeResourceNamespaceForName(Str_Text(searchPath.scheme()));
                 if(rni)
                 {
                     ResourceNamespaceInfo* rnamespaceInfo = getNamespaceInfoForId(rni);
@@ -407,9 +408,8 @@ static int findResource(resourceclass_t rclass, uri_s const* const* list,
 #if _DEBUG
                 else
                 {
-                    AutoStr* rawPath = Uri_ToString(searchPath);
-                    Con_Message("Warning: findResource: Unknown namespace in searchPath \"%s\", using default for %s.\n",
-                                Str_Text(rawPath), F_ResourceClassStr(rclass));
+                    LOG_WARNING("Unknown namespace in searchPath \"%s\", using default for %s.")
+                        << searchPath << F_ResourceClassStr(rclass);
                 }
 #endif
             }
@@ -848,8 +848,9 @@ ddstring_t** F_ResolvePathList2(resourceclass_t /*defaultResourceClass*/,
     {
         for(uri_s** uriIt = uriList; *uriIt; ++uriIt)
         {
+            de::Uri& uri = reinterpret_cast<de::Uri&>(**uriIt);
             // Ignore incomplete paths.
-            ddstring_t const* resolvedPath = Uri_ResolvedConst(*uriIt);
+            ddstring_t const* resolvedPath = uri.resolvedConst();
             if(!resolvedPath) continue;
 
             ++resolvedPathCount;
@@ -863,8 +864,9 @@ ddstring_t** F_ResolvePathList2(resourceclass_t /*defaultResourceClass*/,
             uint n = 0;
             for(uri_s** uriIt = uriList; *uriIt; ++uriIt)
             {
+                de::Uri& uri = reinterpret_cast<de::Uri&>(**uriIt);
                 // Ignore incomplete paths.
-                ddstring_t* resolvedPath = Uri_Resolved(*uriIt);
+                ddstring_t* resolvedPath = uri.resolved();
                 if(!resolvedPath) continue;
 
                 paths[n++] = resolvedPath;
@@ -1096,29 +1098,4 @@ char const* F_ResourceClassStr(resourceclass_t rclass)
         "RC_FONT"
     };
     return Str_Text(resourceClassNames[(int)rclass]);
-}
-
-char const* F_ParseSearchPath2(uri_s* dst, char const* src, char delim,
-    resourceclass_t defaultResourceClass)
-{
-    Uri_Clear(dst);
-    if(src)
-    {
-        ddstring_t buf; Str_Init(&buf);
-        for(; *src && *src != delim; ++src)
-        {
-            Str_PartAppend(&buf, src, 0, 1);
-        }
-        Uri_SetUri2(dst, Str_Text(&buf), defaultResourceClass);
-        Str_Free(&buf);
-    }
-    if(!*src)
-        return 0; // It ended.
-    // Skip past the delimiter.
-    return src + 1;
-}
-
-char const* F_ParseSearchPath(uri_s* dst, char const* src, char delim)
-{
-    return F_ParseSearchPath2(dst, src, delim, RC_UNKNOWN);
 }

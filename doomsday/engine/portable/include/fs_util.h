@@ -181,13 +181,15 @@ int F_MatchFileName(const char* filePath, const char* pattern);
 /**
  * Write the data associated with the specified lump index to @a fileName.
  *
- * @param absolutelumpNum   Absolute index of the lump to open.
+ * @param lumpNum           Absolute index of the lump to open.
  * @param fileName          If not @c NULL write the associated data to this path.
  *                          Can be @c NULL in which case the fileName will be chosen automatically.
  *
  * @return  @c true iff successful.
  */
 boolean F_DumpLump2(lumpnum_t lumpNum, char const* fileName);
+
+/// @copydoc F_DumpLump2
 boolean F_DumpLump(lumpnum_t lumpNum/*, fileName = 0*/);
 
 /**

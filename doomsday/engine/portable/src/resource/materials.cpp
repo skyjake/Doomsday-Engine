@@ -267,13 +267,13 @@ static inline AutoStr* composePathForDirectoryNode(MaterialDirectoryNode const& 
     return node.composePath(AutoStr_NewStd(), NULL, delimiter);
 }
 
-/// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
-static Uri* composeUriForDirectoryNode(MaterialDirectoryNode const& node)
+/// @return  Newly composed Uri for @a node. Must be deleted when no longer needed.
+static de::Uri* composeUriForDirectoryNode(MaterialDirectoryNode const& node)
 {
     Str const* namespaceName = Materials_NamespaceName(namespaceIdForDirectory(node.tree()));
     AutoStr* path = composePathForDirectoryNode(node, MATERIALS_PATH_DELIMITER);
-    Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-    Uri_SetScheme(uri, Str_Text(namespaceName));
+    de::Uri* uri = new de::Uri(Str_Text(path), RC_NULL);
+    uri->setScheme(Str_Text(namespaceName));
     return uri;
 }
 
@@ -467,13 +467,13 @@ static void updateMaterialBindInfo(MaterialBind& mb, bool canCreateInfo)
     info->detailtextureDefs[1] = Def_GetDetailTex(matId, 1, isCustom);
 }
 
-static bool newMaterialBind(Uri const* uri, material_t* material)
+static bool newMaterialBind(de::Uri const& uri, material_t* material)
 {
-    MaterialDirectory& matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(Str_Text(Uri_Scheme(uri))));
+    MaterialDirectory& matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(Str_Text(uri.scheme())));
     MaterialDirectoryNode* node;
     MaterialBind* mb;
 
-    node = matDirectory.insert(Str_Text(Uri_Path(uri)), MATERIALS_PATH_DELIMITER);
+    node = matDirectory.insert(Str_Text(uri.path()), MATERIALS_PATH_DELIMITER);
 
     // Is this a new binding?
     mb = reinterpret_cast<MaterialBind*>(node->userPointer());
@@ -773,28 +773,26 @@ materialid_t Materials_Id(material_t* mat)
  * @param quiet  @c true= Do not output validation remarks to the log.
  * @return  @c true if @a Uri passes validation.
  */
-static boolean validateMaterialUri(const Uri* uri, int flags, boolean quiet=false)
+static bool validateMaterialUri(de::Uri const& uri, int flags, boolean quiet=false)
 {
     materialnamespaceid_t namespaceId;
 
-    if(!uri || Str_IsEmpty(Uri_Path(uri)))
+    if(Str_IsEmpty(uri.path()))
     {
         if(!quiet)
         {
-            AutoStr* uriStr = Uri_ToString(uri);
-            Con_Message("Invalid path '%s' in Material uri \"%s\".\n", Str_Text(Uri_Path(uri)), Str_Text(uriStr));
+            LOG_MSG("Invalid path in Material uri \"%s\".") <<uri;
         }
         return false;
     }
 
-    namespaceId = Materials_ParseNamespace(Str_Text(Uri_Scheme(uri)));
+    namespaceId = Materials_ParseNamespace(Str_Text(uri.scheme()));
     if(!((flags & VMUF_ALLOW_NAMESPACE_ANY) && namespaceId == MN_ANY) &&
        !VALID_MATERIALNAMESPACEID(namespaceId))
     {
         if(!quiet)
         {
-            AutoStr* uriStr = Uri_ToString(uri);
-            Con_Message("Unknown namespace '%s' in Material uri \"%s\".\n", Str_Text(Uri_Scheme(uri)), Str_Text(uriStr));
+            LOG_MSG("Unknown namespace in Material uri \"%s\".") << uri;
         }
         return false;
     }
@@ -809,7 +807,7 @@ static boolean validateMaterialUri(const Uri* uri, int flags, boolean quiet=fals
  * @param path  Path of the material to search for.
  * @return  Found Material else @c NULL
  */
-static MaterialBind* findMaterialBindForPath(MaterialDirectory& matDirectory, const char* path)
+static MaterialBind* findMaterialBindForPath(MaterialDirectory& matDirectory, char const* path)
 {
     try
     {
@@ -822,10 +820,10 @@ static MaterialBind* findMaterialBindForPath(MaterialDirectory& matDirectory, co
 }
 
 /// @pre @a uri has already been validated and is well-formed.
-static MaterialBind* findMaterialBindForUri(const Uri* uri)
+static MaterialBind* findMaterialBindForUri(de::Uri const& uri)
 {
-    materialnamespaceid_t namespaceId = Materials_ParseNamespace(Str_Text(Uri_Scheme(uri)));
-    const char* path = Str_Text(Uri_Path(uri));
+    materialnamespaceid_t namespaceId = Materials_ParseNamespace(Str_Text(uri.scheme()));
+    char const* path = Str_Text(uri.path());
     MaterialBind* bind = NULL;
     if(namespaceId != MN_ANY)
     {
@@ -848,39 +846,40 @@ static MaterialBind* findMaterialBindForUri(const Uri* uri)
     return bind;
 }
 
-materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
+materialid_t Materials_ResolveUri2(Uri const* _uri, boolean quiet)
 {
-    MaterialBind* bind;
-    if(!initedOk || !uri) return NOMATERIALID;
+    LOG_AS("Materials::resolveUri");
+
+    if(!initedOk || !_uri) return NOMATERIALID;
+
+    de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
     if(!validateMaterialUri(uri, VMUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
     {
 #if _DEBUG
-        AutoStr* uriStr = Uri_ToString(uri);
-        Con_Message("Warning: Materials::ResolveUri: \"%s\" failed to validate, returning NOMATERIALID.\n", Str_Text(uriStr));
+        LOG_WARNING("\"%s\" failed validation, returning NOMATERIALID.") << uri;
 #endif
         return NOMATERIALID;
     }
 
     // Perform the search.
-    bind = findMaterialBindForUri(uri);
+    MaterialBind* bind = findMaterialBindForUri(uri);
     if(bind) return bind->id();
 
     // Not found.
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
-        AutoStr* path = Uri_ToString(uri);
-        Con_Message("Warning: Materials::ResolveUri: \"%s\" not found, returning NOMATERIALID.\n", Str_Text(path));
+        LOG_DEBUG("\"%s\" not found, returning NOMATERIALID.") << uri;
     }
     return NOMATERIALID;
 }
 
 /// @note Part of the Doomsday public API.
-materialid_t Materials_ResolveUri(const Uri* uri)
+materialid_t Materials_ResolveUri(Uri const* uri)
 {
     return Materials_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-materialid_t Materials_ResolveUriCString2(const char* path, boolean quiet)
+materialid_t Materials_ResolveUriCString2(char const* path, boolean quiet)
 {
     if(path && path[0])
     {
@@ -893,75 +892,81 @@ materialid_t Materials_ResolveUriCString2(const char* path, boolean quiet)
 }
 
 /// @note Part of the Doomsday public API.
-materialid_t Materials_ResolveUriCString(const char* path)
+materialid_t Materials_ResolveUriCString(char const* path)
 {
     return Materials_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
 AutoStr* Materials_ComposePath(materialid_t id)
 {
+    LOG_AS("Materials::composePath");
+
     MaterialBind* bind = getMaterialBindForId(id);
-    if(!bind)
+    if(bind)
     {
-        DEBUG_Message(("Warning:Materials::ComposePath: Attempted with unbound materialId #%u, returning null-object.\n", id));
-        return AutoStr_New();
+        return composePathForDirectoryNode(bind->directoryNode(), MATERIALS_PATH_DELIMITER);
     }
-    return composePathForDirectoryNode(bind->directoryNode(), MATERIALS_PATH_DELIMITER);
+
+    LOG_WARNING("Attempted with unbound materialId #%u, returning null-object.") << id;
+    return AutoStr_New();
 }
 
 /// @note Part of the Doomsday public API.
 Uri* Materials_ComposeUri(materialid_t id)
 {
+    LOG_AS("Materials::composeuri");
+
     MaterialBind* bind = getMaterialBindForId(id);
-    if(!bind)
+    if(bind)
     {
-        DEBUG_Message(("Warning:Materials::ComposeUri: Attempted with unbound materialId #%u, returning null-object.\n", id));
-        return Uri_New();
+        return reinterpret_cast<Uri*>(composeUriForDirectoryNode(bind->directoryNode()));
     }
-    return composeUriForDirectoryNode(bind->directoryNode());
+
+#if _DEBUG
+    if(id != NOMATERIALID)
+    {
+        LOG_WARNING("Attempted with unbound materialId #%u, returning null-object.") << id;
+    }
+#endif
+    return Uri_New();
 }
 
 material_t* Materials_CreateFromDef(ded_material_t* def)
 {
-    const Uri* uri = def->uri;
-    MaterialBind* bind;
-    textureid_t texId;
-    material_t* mat;
     DENG2_ASSERT(def);
 
-    if(!initedOk) return NULL;
+    LOG_AS("Materials::createFromDef");
+
+    if(!initedOk || !def->uri) return NULL;
+    de::Uri const& uri = reinterpret_cast<de::Uri&>(*def->uri);
 
     // We require a properly formed uri.
     if(!validateMaterialUri(uri, 0, (verbose >= 1)))
     {
-        AutoStr* uriStr = Uri_ToString(uri);
-        Con_Message("Warning: Failed creating Material \"%s\" from definition %p, ignoring.\n", Str_Text(uriStr), (void*)def);
+        LOG_WARNING("Failed creating Material \"%s\" from definition %p, ignoring.") << uri << de::dintptr(def);
         return NULL;
     }
 
     // Have we already created a material for this?
-    bind = findMaterialBindForUri(uri);
+    MaterialBind* bind = findMaterialBindForUri(uri);
     if(bind && bind->material())
     {
-#if _DEBUG
-        AutoStr* path = Uri_ToString(uri);
-        Con_Message("Warning:Materials::CreateFromDef: A Material with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
-#endif
+        LOG_DEBUG("A Material with uri \"%s\" already exists, returning existing.") << uri;
         return bind->material();
     }
 
     // Ensure the primary layer has a valid texture reference.
-    texId = NOTEXTUREID;
+    textureid_t texId = NOTEXTUREID;
     if(def->layers[0].stageCount.num > 0)
     {
-        const ded_material_layer_t* l = &def->layers[0];
-        if(l->stages[0].texture) // Not unused.
+        ded_material_layer_t const& layer = def->layers[0];
+        if(layer.stages[0].texture) // Not unused.
         {
-            texId = Textures_ResolveUri2(l->stages[0].texture, true/*quiet please*/);
+            texId = Textures_ResolveUri2(layer.stages[0].texture, true/*quiet please*/);
             if(texId == NOTEXTUREID)
             {
                 AutoStr* materialPath = Uri_ToString(def->uri);
-                AutoStr* texturePath  = Uri_ToString(l->stages[0].texture);
+                AutoStr* texturePath  = Uri_ToString(layer.stages[0].texture);
                 Con_Message("Warning: Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).\n", Str_Text(texturePath), Str_Text(materialPath), 0, 0);
             }
         }
@@ -969,12 +974,12 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     if(texId == NOTEXTUREID) return NULL;
 
     // A new Material.
-    mat = linkMaterialToGlobalList(allocMaterial());
+    material_t* mat = linkMaterialToGlobalList(allocMaterial());
     mat->_flags = def->flags;
     mat->_isCustom = Texture_IsCustom(Textures_ToTexture(texId));
     mat->_def = def;
     Size2_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
-    mat->_envClass = S_MaterialEnvClassForUri(uri);
+    mat->_envClass = S_MaterialEnvClassForUri(reinterpret_cast<Uri const*>(&uri));
 
     if(!bind)
     {
@@ -1907,52 +1912,48 @@ D_CMD(ListMaterials)
 {
     DENG2_UNUSED(src);
 
-    materialnamespaceid_t namespaceId = MN_ANY;
-    const char* like = NULL;
-    Uri* uri = NULL;
-
     if(!Materials_Size())
     {
         Con_Message("There are currently no materials defined/loaded.\n");
         return true;
     }
 
+    materialnamespaceid_t namespaceId = MN_ANY;
+    char const* like = 0;
+    de::Uri uri;
+
     // "listmaterials [namespace] [name]"
     if(argc > 2)
     {
-        uri = Uri_New();
-        Uri_SetScheme(uri, argv[1]);
-        Uri_SetPath(uri, argv[2]);
+        uri.setScheme(argv[1]).setPath(argv[2]);
 
-        namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
+        namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.scheme()));
         if(!VALID_MATERIALNAMESPACEID(namespaceId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
-            Uri_Delete(uri);
+            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
             return false;
         }
-        like = Str_Text(Uri_Path(uri));
+        like = Str_Text(uri.path());
     }
     // "listmaterials [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
-        uri = Uri_NewWithPath2(argv[1], RC_NULL);
-        if(!Str_IsEmpty(Uri_Scheme(uri)))
+        uri.setUri(argv[1], RC_NULL);
+        if(!Str_IsEmpty(uri.scheme()))
         {
-            namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
+            namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.scheme()));
             if(!VALID_MATERIALNAMESPACEID(namespaceId))
             {
-                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
-                Uri_Delete(uri);
+                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
                 return false;
             }
 
-            if(!Str_IsEmpty(Uri_Path(uri)))
-                like = Str_Text(Uri_Path(uri));
+            if(!Str_IsEmpty(uri.path()))
+                like = Str_Text(uri.path());
         }
         else
         {
-            namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Path(uri)));
+            namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.path()));
 
             if(!VALID_MATERIALNAMESPACEID(namespaceId))
             {
@@ -1964,7 +1965,6 @@ D_CMD(ListMaterials)
 
     printMaterials(namespaceId, like);
 
-    if(uri) Uri_Delete(uri);
     return true;
 }
 
@@ -2031,49 +2031,42 @@ ded_reflection_t* MaterialBind::reflectionDef() const
 
 D_CMD(InspectMaterial)
 {
-    DENG2_UNUSED(src);
-    DENG2_UNUSED(argc);
-
-    Str path;
-    material_t* mat;
-    Uri* search;
+    DENG2_UNUSED(src); DENG2_UNUSED(argc);
 
     // Path is assumed to be in a human-friendly, non-encoded representation.
-    Str_Init(&path); Str_PercentEncode(Str_Set(&path, argv[1]));
-    search = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+    Str path; Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, argv[1]));
+
+    de::Uri search = de::Uri(Str_Text(&path), RC_NULL);
     Str_Free(&path);
 
-    if(!Str_IsEmpty(Uri_Scheme(search)))
+    if(!Str_IsEmpty(search.scheme()))
     {
-        materialnamespaceid_t namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(search)));
+        materialnamespaceid_t namespaceId = DD_ParseMaterialNamespace(Str_Text(search.scheme()));
         if(!VALID_MATERIALNAMESPACEID(namespaceId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(search)));
-            Uri_Delete(search);
+            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(search.scheme()));
             return false;
         }
     }
 
-    mat = Materials_ToMaterial(Materials_ResolveUri(search));
+    material_t* mat = Materials_ToMaterial(Materials_ResolveUri(reinterpret_cast<Uri*>(&search)));
     if(mat)
     {
         printMaterialInfo(mat);
     }
     else
     {
-        AutoStr* path = Uri_ToString(search);
+        AutoStr* path = Uri_ToString(reinterpret_cast<Uri*>(&search));
         Con_Printf("Unknown material \"%s\".\n", Str_Text(path));
     }
-    Uri_Delete(search);
     return true;
 }
 
 #if _DEBUG
 D_CMD(PrintMaterialStats)
 {
-    DENG2_UNUSED(src);
-    DENG2_UNUSED(argc);
-    DENG2_UNUSED(argv);
+    DENG2_UNUSED(src); DENG2_UNUSED(argc); DENG2_UNUSED(argv);
 
     Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
     for(uint i = uint(MATERIALNAMESPACE_FIRST); i <= uint(MATERIALNAMESPACE_LAST); ++i)

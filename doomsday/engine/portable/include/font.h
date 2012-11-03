@@ -27,6 +27,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Font types.
 typedef enum {
     FT_FIRST = 0,
@@ -92,5 +96,9 @@ int Font_Descent(font_t* font);
 int Font_Leading(font_t* font);
 
 boolean Font_IsPrepared(font_t* font);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_FONT_H */

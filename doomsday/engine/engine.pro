@@ -205,7 +205,6 @@ DENG_HEADERS += \
     portable/include/edit_map.h \
     portable/include/fi_main.h \
     portable/include/file.h \
-    portable/include/filedirectory.h \
     portable/include/filehandlebuilder.h \
     portable/include/fileinfo.h \
     portable/include/finaleinterpreter.h \
@@ -436,7 +435,7 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
-    portable/src/abstractresource.c \
+    portable/src/abstractresource.cpp \
     portable/src/animator.c \
     portable/src/audiodriver.cpp \
     portable/src/audiodriver_music.c \
@@ -495,11 +494,10 @@ SOURCES += \
     portable/src/edit_map.c \
     portable/src/fi_main.c \
     portable/src/file.cpp \
-    portable/src/filedirectory.cpp \
     portable/src/filehandle.cpp \
     portable/src/fileid.cpp \
     portable/src/finaleinterpreter.c \
-    portable/src/fonts.c \
+    portable/src/fonts.cpp \
     portable/src/fs_main.cpp \
     portable/src/fs_util.cpp \
     portable/src/game.cpp \

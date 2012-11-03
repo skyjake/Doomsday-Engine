@@ -467,16 +467,16 @@ Polyobj* GameMap_PolyobjByBase(GameMap* map, void* ddMobjBase);
 
 /**
  * Have the thinker lists been initialized yet?
- * @param map           GameMap instance.
+ * @param map       GameMap instance.
  */
 boolean GameMap_ThinkerListInited(GameMap* map);
 
 /**
  * Init the thinker lists.
  *
- * @param map  GameMap instance.
- * @params flags  0x1 = Init public thinkers.
- *                0x2 = Init private (engine-internal) thinkers.
+ * @param map       GameMap instance.
+ * @param flags     @c 0x1 = Init public thinkers.
+ *                  @c 0x2 = Init private (engine-internal) thinkers.
  */
 void GameMap_InitThinkerLists(GameMap* map, byte flags);
 
@@ -506,25 +506,30 @@ void GameMap_ThinkerAdd(GameMap* map, thinker_t* thinker, boolean makePublic);
  * Deallocation is lazy -- it will not actually be freed until its
  * thinking turn comes up.
  *
- * @param map  GameMap instance.
+ * @param map   GameMap instance.
  */
 void GameMap_ThinkerRemove(GameMap* map, thinker_t* thinker);
 
 /**
  * Locates a mobj by it's unique identifier in the map.
- * @param map  GameMap instance.
+ *
+ * @param map   GameMap instance.
+ * @param id    Unique id of the mobj to lookup.
  */
 struct mobj_s* GameMap_MobjByID(GameMap* map, int id);
 
 /**
- * @param map  GameMap instance.
+ * @param map   GameMap instance.
+ * @param id    Thinker id to test.
  */
 boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id);
 
 /**
- * @param map  GameMap instance.
+ * @param map   GameMap instance.
+ * @param id    New thinker id.
+ * @param inUse In-use state of @a id. @c true = the id is in use.
  */
-void GameMap_SetMobjID(GameMap* map, thid_t id, boolean state);
+void GameMap_SetMobjID(GameMap* map, thid_t id, boolean inUse);
 
 /**
  * @param map  GameMap instance.
@@ -555,7 +560,10 @@ void GameMap_ClMobjReset(GameMap* map);
  * Iterate the client mobj hash, exec the callback on each. Abort if callback
  * returns @c false.
  *
- * @param map  GameMap instance.
+ * @param map       GameMap instance.
+ * @param callback  Function to callback for each client mobj.
+ * @param context   Data pointer passed to the callback.
+ *
  * @return  If the callback returns @c false.
  */
 boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (struct mobj_s*, void*), void* context);
@@ -767,6 +775,7 @@ BspLeaf* GameMap_BspLeafAtPoint(GameMap* map, coord_t const point[2]);
 /**
  * Construct an initial (empty) Mobj Blockmap for this map.
  *
+ * @param map  GameMap instance.
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
@@ -775,6 +784,7 @@ void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_t m
 /**
  * Construct an initial (empty) LineDef Blockmap for this map.
  *
+ * @param map  GameMap instance.
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
@@ -783,6 +793,7 @@ void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_
 /**
  * Construct an initial (empty) BspLeaf Blockmap for this map.
  *
+ * @param map  GameMap instance.
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */
@@ -791,6 +802,7 @@ void GameMap_InitBspLeafBlockmap(GameMap* map, const_pvec2d_t min, const_pvec2d_
 /**
  * Construct an initial (empty) Polyobj Blockmap for this map.
  *
+ * @param map  GameMap instance.
  * @param min  Minimal coordinates for the map.
  * @param max  Maximal coordinates for the map.
  */

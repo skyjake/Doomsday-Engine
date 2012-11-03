@@ -54,10 +54,10 @@ struct PathTree::Node::Instance
 };
 
 PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, PathTree::FragmentId fragmentId,
-    PathTree::Node* parent, void* userData, int userValue)
+    PathTree::Node* parent, void* userPointer, int userValue)
 {
     d = new Instance(tree, type, fragmentId, parent);
-    setUserPointer(userData);
+    setUserPointer(userPointer);
     setUserValue(userValue);
 }
 
