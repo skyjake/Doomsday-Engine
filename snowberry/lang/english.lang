@@ -167,9 +167,9 @@ you must also load addons that provide these required resources:"
 # Profiles and Components
 #
 defaults-profile: Shared Settings
-game-jdoom: jDoom
-game-jheretic: jHeretic
-game-jhexen: jHexen
+game-jdoom: libdoom
+game-jheretic: libheretic
+game-jhexen: libhexen
 game-jdoom-icon: orb-doom
 game-jheretic-icon: orb-heretic
 game-jhexen-icon: orb-hexen

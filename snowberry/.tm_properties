@@ -1,2 +1,2 @@
-excludeDirectories = {build,template-image,dist}
-
+excludeDirectories    = {build,template-image,dist}
+excludeInFolderSearch = {build,template-image,dist}

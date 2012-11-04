@@ -95,9 +95,9 @@ sinun täytyy ladata myös ne lisäosat, jotka tarjoavat nämä vaaditut lisäosat."
 # Profiilit ja komponentit
 #
 defaults-profile: Oletusprofiili
-game-jdoom: jDoom
-game-jheretic: jHeretic
-game-jhexen: jHexen
+game-jdoom: libdoom
+game-jheretic: libheretic
+game-jhexen: libhexen
 
 #
 # Painikkeiden nimet
