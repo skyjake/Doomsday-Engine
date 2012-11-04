@@ -31,7 +31,7 @@
 
 #include "dd_types.h"
 
-#include "abstractresource.h"
+//#include "resourcerecord.h"
 #include "uri.h"
 
 #ifdef __cplusplus
@@ -146,22 +146,6 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
     struct uri_s const* searchPath);
 
 /**
- * Attempt to locate a known resource.
- *
- * @param record        Record of the resource being searched for.
- *
- * @param foundPath     If found, the fully qualified path is written back here.
- *                      Can be @c NULL, changing this routine to only check that
- *                      resource exists is readable.
- *
- * @return  The index+1 of the path in the list of search paths for this resource
- *     if found, else @c 0
- */
-uint F_FindResourceForRecord(struct AbstractResource_s* rec, ddstring_t* foundPath);
-
-uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, struct uri_s const* const* searchPaths);
-
-/**
  * Attempt to locate a named resource.
  *
  * @param rclass        Class of resource being searched for (if known).
@@ -185,14 +169,15 @@ uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, stru
  * @return  The index+1 of the path in @a searchPaths if found, else @c 0
  */
 uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
-uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath, int flags); /*optionalSuffix=NULL*/
-uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath); /*flags=RLF_DEFAULT*/
-uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* searchPaths); /*foundPath=NULL*/
+uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* searchPaths/*, foundPath = NULL*/);
 
+uint F_FindResource5(resourceclass_t rclass, struct uri_s const** searchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
 uint F_FindResource4(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
-uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags); /*optionalSuffix=NULL*/
-uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath); /*flags=RLF_DEFAULT*/
-uint F_FindResource(resourceclass_t rclass, char const* searchPaths); /*foundPath=NULL*/
+uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+uint F_FindResource(resourceclass_t rclass, char const* searchPaths/*, foundPath = NULL*/);
 
 /**
  * @return  Default class associated with resources of type @a type.

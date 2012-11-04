@@ -40,7 +40,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-#include "abstractresource.h"
+#include "resourcerecord.h"
 #include "resourcenamespace.h"
 
 #include <de/memory.h>
@@ -937,18 +937,6 @@ uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* searchPaths,
     int result = findResource(rclass, (uri_s const**)list, foundPath, flags, optionalSuffix);
     F_DestroyUriList(list);
     return result;
-}
-
-uint F_FindResourceForRecord2(AbstractResource* rec, ddstring_t* foundPath, uri_s const* const* searchPaths)
-{
-    return findResource(AbstractResource_ResourceClass(rec),
-                        searchPaths, foundPath, RLF_DEFAULT, NULL/*no optional suffix*/);
-}
-
-uint F_FindResourceForRecord(AbstractResource* rec, ddstring_t* foundPath)
-{
-    return F_FindResourceForRecord2(rec, foundPath,
-                                    (uri_s const* const*) AbstractResource_SearchPaths(rec));
 }
 
 uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* searchPaths,

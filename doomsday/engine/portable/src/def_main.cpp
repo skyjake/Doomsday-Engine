@@ -38,7 +38,7 @@
 
 #include "r_data.h"
 
-#include "abstractresource.h"
+#include "resourcerecord.h"
 #include "bitmapfont.h"
 #include "font.h"
 #include "lumpindex.h"
@@ -842,27 +842,26 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        AbstractResource* const* records = reinterpret_cast<de::Game*>(App_CurrentGame())->resources(RC_DEFINITION, 0);
-        AbstractResource* const* recordIt;
+        de::ResourceRecord* const* records = reinterpret_cast<de::Game*>(App_CurrentGame())->resources(RC_DEFINITION, 0);
+        de::ResourceRecord* const* recordIt;
 
         if(records)
         for(recordIt = records; *recordIt; recordIt++)
         {
-            AbstractResource* rec = *recordIt;
+            de::ResourceRecord& record = **recordIt;
             /// Try to locate this resource now.
-            ddstring_t const* path = AbstractResource_ResolvedPath(rec, true);
+            QString const& path = record.resolvedPath(true/*try to locate*/);
 
-            if(!path)//!(AbstractResource_ResourceFlags(rec) & RF_FOUND))
+            if(path.isEmpty())
             {
-                ddstring_t* names = AbstractResource_NameStringList(rec);
-                Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", Str_Text(names));
-                // Unreachable.
-                Str_Delete(names);
+                QByteArray names = record.names().join(";").toUtf8();
+                Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", names.constData());
             }
 
-            VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(path))) )
+            QByteArray pathUtf8 = path.toUtf8();
+            LOG_VERBOSE("  Processing '%s'...") << F_PrettyPath(pathUtf8.constData());
 
-            readDefinitionFile(Str_Text(path));
+            readDefinitionFile(pathUtf8.constData());
         }
     }
 

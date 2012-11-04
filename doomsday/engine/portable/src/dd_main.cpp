@@ -47,7 +47,7 @@
 #include "de_bsp.h"
 #include "de_edit.h"
 
-#include "abstractresource.h"
+#include "resourcerecord.h"
 #include "displaymode.h"
 #include "lumpindex.h"
 #include "m_misc.h"
@@ -375,18 +375,17 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-static void loadResource(AbstractResource* res)
+static void loadResource(ResourceRecord& record)
 {
-    if(!res) return;
-
-    switch(AbstractResource_ResourceClass(res))
+    switch(record.resourceClass())
     {
     case RC_PACKAGE: {
-        ddstring_t const* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
-        if(path)
+        QString const& path = record.resolvedPath(false/*do not locate resource*/);
+        if(!path.isEmpty())
         {
+            QByteArray pathUtf8 = path.toUtf8();
             de::File1* file;
-            if(tryLoadFile(Str_Text(path), 0/*base offset*/, &file))
+            if(tryLoadFile(pathUtf8.constData(), 0/*base offset*/, &file))
             {
                 // Mark this as an original game resource.
                 file->setCustom(false);
@@ -402,7 +401,7 @@ static void loadResource(AbstractResource* res)
         break; }
 
     default: Con_Error("loadGameResource: No resource loader found for %s.",
-                       F_ResourceClassStr(AbstractResource_ResourceClass(res)));
+                       F_ResourceClassStr(record.resourceClass()));
     }
 }
 
@@ -473,13 +472,14 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
     { int numResources;
-    AbstractResource* const* resources;
+    ResourceRecord* const* resources;
     if((resources = games->currentGame().resources(RC_PACKAGE, &numResources)))
     {
-        AbstractResource* const* resIt;
+        ResourceRecord* const* resIt;
         for(resIt = resources; *resIt; resIt++)
         {
-            loadResource(*resIt);
+            ResourceRecord& record = **resIt;
+            loadResource(record);
 
             // Update our progress.
             if(p->initiatedBusyMode)
@@ -871,9 +871,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Invalid name argument.");
 
-    AbstractResource* rec;
-    if(0 == (rec = AbstractResource_New(rclass, rflags)))
-        Con_Error("DD_AddGameResource: Unknown error occured during AbstractResource::Construct.");
+    ResourceRecord* rec = new ResourceRecord(rclass, rflags);
 
     // Add a name list to the game record.
     ddstring_t str; Str_InitStd(&str);
@@ -886,7 +884,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     ddstring_t name; Str_Init(&name);
     while((p = Str_CopyDelim2(&name, p, ';', CDF_OMIT_DELIMITER)))
     {
-        AbstractResource_AddName(rec, &name);
+        rec->addName(String(Str_Text(&name)));
     }
     Str_Free(&name);
 
@@ -907,7 +905,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
         p = Str_Text(&str);
         while((p = Str_CopyDelim2(&identityKey, p, ';', CDF_OMIT_DELIMITER)))
         {
-            AbstractResource_AddIdentityKey(rec, &identityKey);
+            rec->addIdentityKey(String(Str_Text(&identityKey)));
         }
 
         Str_Free(&identityKey);

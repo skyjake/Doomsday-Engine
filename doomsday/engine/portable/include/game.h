@@ -43,7 +43,7 @@ extern "C" {
 #define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
 ///@}
 
-struct AbstractResource_s;
+struct resourcerecord_s;
 struct gamedef_s;
 
 #ifdef __cplusplus
@@ -54,6 +54,7 @@ struct gamedef_s;
 
 namespace de {
 
+class ResourceRecord;
 class File1;
 class GameCollection;
 
@@ -111,7 +112,7 @@ public:
      *
      * @param rclass  Class of resource being added.
      */
-    Game& addResource(resourceclass_t rclass, struct AbstractResource_s& record);
+    Game& addResource(resourceclass_t rclass, ResourceRecord& record);
 
     bool allStartupResourcesFound() const;
 
@@ -121,7 +122,7 @@ public:
      * @param rclass  Class of resource to collect.
      * @return  Vector of selected resource records.
      */
-    struct AbstractResource_s* const* resources(resourceclass_t rclass, int* count) const;
+    ResourceRecord* const* resources(resourceclass_t rclass, int* count) const;
 
     /**
      * Is @a file required by this game? This decision is made by comparing the
@@ -190,7 +191,7 @@ public:
 public:
     NullGame();
 
-    Game& addResource(resourceclass_t /*rclass*/, struct AbstractResource_s& /*record*/) {
+    Game& addResource(resourceclass_t /*rclass*/, struct resourcerecord_s& /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 
@@ -202,7 +203,7 @@ public:
         return true; // Always.
     }
 
-    struct AbstractResource_s* const* resources(resourceclass_t /*rclass*/, int* /*count*/) const {
+    struct resourcerecord_s* const* resources(resourceclass_t /*rclass*/, int* /*count*/) const {
         return 0;
     }
 
@@ -234,7 +235,7 @@ void Game_Delete(Game* game);
 
 boolean Game_IsNullObject(Game const* game);
 
-struct game_s* Game_AddResource(Game* game, resourceclass_t rclass, struct AbstractResource_s* record);
+struct game_s* Game_AddResource(Game* game, resourceclass_t rclass, struct resourcerecord_s* record);
 
 boolean Game_AllStartupResourcesFound(Game const* game);
 
@@ -252,7 +253,7 @@ ddstring_t const* Game_MainConfig(Game const* game);
 
 ddstring_t const* Game_BindingConfig(Game const* game);
 
-struct AbstractResource_s* const* Game_Resources(Game const* game, resourceclass_t rclass, int* count);
+struct resourcerecord_s* const* Game_Resources(Game const* game, resourceclass_t rclass, int* count);
 
 Game* Game_FromDef(GameDef const* def);
 

@@ -25,12 +25,12 @@
 #include "de_filesys.h"
 #include "dd_games.h"
 
-#include "abstractresource.h"
+#include "resourcerecord.h"
 #include "zip.h"
 
 namespace de {
 
-static bool validateResource(AbstractResource* rec);
+static bool validateResource(ResourceRecord& rec);
 
 struct GameCollection::Instance
 {
@@ -187,95 +187,6 @@ GameCollection& GameCollection::add(Game& game)
     return *this;
 }
 
-/// @return  @c true, iff the resource appears to be what we think it is.
-static bool recognizeWAD(char const* filePath, void* parameters)
-{
-    lumpnum_t auxLumpBase = App_FileSystem()->openAuxiliary(filePath);
-    bool result = false;
-
-    if(auxLumpBase >= 0)
-    {
-        // Ensure all identity lumps are present.
-        if(parameters)
-        {
-            ddstring_t const* const* lumpNames = (ddstring_t const* const*) parameters;
-            result = true;
-            for(; result && *lumpNames; lumpNames++)
-            {
-                lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(Str_Text(*lumpNames));
-                if(lumpNum < 0)
-                {
-                    result = false;
-                }
-            }
-        }
-        else
-        {
-            // Matched.
-            result = true;
-        }
-
-        F_CloseAuxiliary();
-    }
-    return result;
-}
-
-/// @return  @c true, iff the resource appears to be what we think it is.
-static bool recognizeZIP(char const* filePath, void* parameters)
-{
-    DENG_UNUSED(parameters);
-    try
-    {
-        FileHandle& hndl = App_FileSystem()->openFile(filePath, "rbf");
-        bool result = Zip::recognise(hndl);
-        /// @todo Check files. We should implement an auxiliary zip lump index...
-        App_FileSystem()->releaseFile(hndl.file());
-        delete &hndl;
-        return result;
-    }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore error.
-    return false;
-}
-
-/// @todo This logic should be encapsulated by AbstractResource.
-static bool validateResource(AbstractResource* rec)
-{
-    DENG_ASSERT(rec);
-    bool validated = false;
-
-    if(AbstractResource_ResourceClass(rec) == RC_PACKAGE)
-    {
-        uri_s* const* uriList = AbstractResource_SearchPaths(rec);
-        uri_s* const* ptr;
-        int idx = 0;
-        for(ptr = uriList; *ptr; ptr++, idx++)
-        {
-            ddstring_t const* path = AbstractResource_ResolvedPathWithIndex(rec, idx, true/*locate resources*/);
-            if(!path) continue;
-
-            if(recognizeWAD(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
-            {
-                validated = true;
-                break;
-            }
-            if(recognizeZIP(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
-            {
-                validated = true;
-                break;
-            }
-        }
-    }
-    else
-    {
-        // Other resource types are not validated.
-        validated = true;
-    }
-
-    AbstractResource_MarkAsFound(rec, validated);
-    return validated;
-}
-
 GameCollection& GameCollection::locateStartupResources(Game& game)
 {
     Game* oldGame = d->currentGame;
@@ -291,17 +202,17 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
 
     for(uint rclass = RESOURCECLASS_FIRST; rclass < RESOURCECLASS_COUNT; ++rclass)
     {
-        AbstractResource* const* records = game.resources(resourceclass_t(rclass), 0);
+        ResourceRecord* const* records = game.resources(resourceclass_t(rclass), 0);
         if(!records) continue;
 
-        for(AbstractResource* const* i = records; *i; i++)
+        for(ResourceRecord* const* i = records; *i; i++)
         {
-            AbstractResource* rec = *i;
+            ResourceRecord& record = **i;
 
             // We are only interested in startup resources at this time.
-            if(!(AbstractResource_ResourceFlags(rec) & RF_STARTUP)) continue;
+            if(!(record.resourceFlags() & RF_STARTUP)) continue;
 
-            validateResource(rec);
+            record.locateResource();
         }
     }
 
@@ -325,7 +236,7 @@ static int locateAllResourcesWorker(void* parameters)
     {
         Game* game = *i;
 
-        Con_Message("Locating resources for \"%s\"...\n", Str_Text(&game->title()));
+        Con_Message("Locating \"%s\"...\n", Str_Text(&game->title()));
 
         gameCollection->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / gameCollection->count() - 1);

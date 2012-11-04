@@ -126,7 +126,6 @@ DENG_HEADERS += \
 
 # Private headers.
 DENG_HEADERS += \
-    portable/include/abstractresource.h \
     portable/include/audiodriver.h \
     portable/include/audiodriver_music.h \
     portable/include/b_command.h \
@@ -312,6 +311,7 @@ DENG_HEADERS += \
     portable/include/resource/texturevariant.h \
     portable/include/resource/texturevariantspecification.h \
     portable/include/resourcenamespace.h \
+    portable/include/resourcerecord.h \
     portable/include/s_cache.h \
     portable/include/s_environ.h \
     portable/include/s_logic.h \
@@ -435,7 +435,6 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
-    portable/src/abstractresource.cpp \
     portable/src/animator.c \
     portable/src/audiodriver.cpp \
     portable/src/audiodriver_music.c \
@@ -601,6 +600,7 @@ SOURCES += \
     portable/src/resource/textures.cpp \
     portable/src/resource/texturevariant.cpp \
     portable/src/resourcenamespace.cpp \
+    portable/src/resourcerecord.cpp \
     portable/src/s_cache.c \
     portable/src/s_environ.cpp \
     portable/src/s_logic.c \

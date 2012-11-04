@@ -25,7 +25,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 #include "updater/downloaddialog.h"
-#include "abstractresource.h"
+#include "resourcerecord.h"
 
 #include <de/Error>
 #include <de/Log>
@@ -36,7 +36,7 @@
 namespace de {
 
 typedef struct {
-    struct AbstractResource_s** records;
+    ResourceRecord** records;
     size_t numRecords;
 } resourcerecordset_t;
 
@@ -98,13 +98,11 @@ struct Game::Instance
         for(int i = 0; i < RESOURCECLASS_COUNT; ++i)
         {
             resourcerecordset_t* rset = &requiredResources[i];
-            AbstractResource** rec;
-
             if(!rset || rset->numRecords == 0) continue;
 
-            for(rec = rset->records; *rec; rec++)
+            for(ResourceRecord** rec = rset->records; *rec; rec++)
             {
-                AbstractResource_Delete(*rec);
+                delete *rec;
             }
             M_Free(rset->records); rset->records = 0;
             rset->numRecords = 0;
@@ -130,13 +128,13 @@ GameCollection& Game::collection() const
     return *reinterpret_cast<de::GameCollection*>(App_GameCollection());
 }
 
-Game& Game::addResource(resourceclass_t rclass, AbstractResource& record)
+Game& Game::addResource(resourceclass_t rclass, ResourceRecord& record)
 {
     if(!VALID_RESOURCE_CLASS(rclass))
         throw de::Error("Game::addResource", QString("Invalid resource class %1").arg(rclass));
 
     resourcerecordset_t* rset = &d->requiredResources[rclass];
-    rset->records = (AbstractResource**) M_Realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
+    rset->records = (ResourceRecord**) M_Realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
     rset->records[rset->numRecords] = &record;
     rset->records[rset->numRecords+1] = 0; // Terminate.
     rset->numRecords++;
@@ -147,13 +145,13 @@ bool Game::allStartupResourcesFound() const
 {
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        AbstractResource* const* records = resources(resourceclass_t(i), 0);
+        ResourceRecord* const* records = resources(resourceclass_t(i), 0);
         if(!records) continue;
 
-        for(AbstractResource* const* i = records; *i; i++)
+        for(ResourceRecord* const* i = records; *i; i++)
         {
-            AbstractResource* record = *i;
-            int const flags = AbstractResource_ResourceFlags(record);
+            ResourceRecord& record = **i;
+            int const flags = record.resourceFlags();
 
             if((flags & RF_STARTUP) && !(flags & RF_FOUND))
                 return false;
@@ -198,7 +196,7 @@ ddstring_t const& Game::author() const
     return d->author;
 }
 
-AbstractResource* const* Game::resources(resourceclass_t rclass, int* count) const
+ResourceRecord* const* Game::resources(resourceclass_t rclass, int* count) const
 {
     if(!VALID_RESOURCE_CLASS(rclass))
     {
@@ -214,7 +212,7 @@ bool Game::isRequiredFile(File1& file)
 {
     bool isRequired = false;
 
-    if(AbstractResource* const* records = resources(RC_PACKAGE, 0))
+    if(ResourceRecord* const* records = resources(RC_PACKAGE, 0))
     {
         // If this resource is from a container we must use the path of the
         // root file container instead.
@@ -224,13 +222,12 @@ bool Game::isRequiredFile(File1& file)
 
         AutoStr* absolutePath = rootFile.composePath();
 
-        for(AbstractResource* const* i = records; *i; i++)
+        for(ResourceRecord* const* i = records; *i; i++)
         {
-            AbstractResource* record = *i;
-            if(!(AbstractResource_ResourceFlags(record) & RF_STARTUP)) continue;
+            ResourceRecord& record = **i;
+            if(!(record.resourceFlags() & RF_STARTUP)) continue;
 
-            ddstring_t const* resolvedPath = AbstractResource_ResolvedPath(record, true);
-            if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, Str_Text(absolutePath)))
+            if(!record.resolvedPath(true/*try locate*/).compare(Str_Text(absolutePath), Qt::CaseInsensitive))
             {
                 isRequired = true;
                 break;
@@ -258,16 +255,16 @@ void Game::printResources(Game const& game, bool printStatus, int rflags)
     size_t count = 0;
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        AbstractResource* const* records = game.resources((resourceclass_t)i, 0);
+        ResourceRecord* const* records = game.resources((resourceclass_t)i, 0);
         if(!records) continue;
 
-        for(AbstractResource* const* recordIt = records; *recordIt; recordIt++)
+        for(ResourceRecord* const* recordIt = records; *recordIt; recordIt++)
         {
-            AbstractResource* rec = *recordIt;
+            ResourceRecord& record = **recordIt;
 
-            if(rflags >= 0 && (rflags & AbstractResource_ResourceFlags(rec)))
+            if(rflags >= 0 && (rflags & record.resourceFlags()))
             {
-                AbstractResource_Print(rec, printStatus);
+                ResourceRecord::consolePrint(record, printStatus);
                 count += 1;
             }
         }
@@ -361,11 +358,11 @@ boolean Game_IsNullObject(Game const* game)
     return de::isNullGame(*reinterpret_cast<de::Game const*>(game));
 }
 
-struct game_s* Game_AddResource(struct game_s* game, resourceclass_t rclass, struct AbstractResource_s* record)
+struct game_s* Game_AddResource(struct game_s* game, resourceclass_t rclass, struct resourcerecord_s* record)
 {
     SELF(game);
     DENG_ASSERT(record);
-    self->addResource(rclass, *record);
+    self->addResource(rclass, reinterpret_cast<de::ResourceRecord&>(*record));
     return game;
 }
 
@@ -417,10 +414,10 @@ ddstring_t const* Game_BindingConfig(struct game_s const* game)
     return &self->bindingConfig();
 }
 
-struct AbstractResource_s* const* Game_Resources(struct game_s const* game, resourceclass_t rclass, int* count)
+struct resourcerecord_s* const* Game_Resources(struct game_s const* game, resourceclass_t rclass, int* count)
 {
     SELF_CONST(game);
-    return self->resources(rclass, count);
+    return reinterpret_cast<resourcerecord_s* const*>(self->resources(rclass, count));
 }
 
 struct game_s* Game_FromDef(GameDef const* def)
