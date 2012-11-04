@@ -231,6 +231,7 @@ ResourceRecord& ResourceRecord::forgetResource()
     {
         d->foundPath.clear();
         d->searchPathUsed = 0;
+        d->flags &= ~RF_FOUND;
     }
     return *this;
 }
