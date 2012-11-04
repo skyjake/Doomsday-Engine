@@ -81,7 +81,7 @@ BEGIN
     "            VALUE ""FileVersion"",     PLUGIN_VERSION_TEXT ""\0""\r\n"
     "            VALUE ""InternalName"",    PLUGIN_NICENAME ""\0""\r\n"
     "            VALUE ""LegalCopyright"",  ""Copyright © "" PLUGIN_COPYRIGHT ""\0""\r\n"
-    "            VALUE ""OriginalFilename"", ""jHexen.dll\0""\r\n"
+    "            VALUE ""OriginalFilename"", ""libhexen.dll\0""\r\n"
     "            VALUE ""ProductName"",     PLUGIN_NICENAME ""\0""\r\n"
     "            VALUE ""ProductVersion"",  PLUGIN_VERSION_TEXT ""\0""\r\n"
     "        END\r\n"
@@ -126,7 +126,7 @@ BEGIN
             VALUE "FileVersion",    PLUGIN_VERSION_TEXT "\0"
             VALUE "InternalName",   PLUGIN_NICENAME "\0"
             VALUE "LegalCopyright", "Copyright © " PLUGIN_COPYRIGHT "\0"
-            VALUE "OriginalFilename", "jHexen.dll\0"
+            VALUE "OriginalFilename", "libhexen.dll\0"
             VALUE "ProductName",    PLUGIN_NICENAME "\0"
             VALUE "ProductVersion", PLUGIN_VERSION_TEXT "\0"
         END
