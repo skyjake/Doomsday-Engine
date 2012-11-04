@@ -154,26 +154,32 @@ gameid_t DD_DefineGame(GameDef const* definition);
 gameid_t DD_GameIdForKey(char const* identityKey);
 
 /**
- * Registers a new resource for the specified game.
+ * Adds a new resource to the list for the identified @a game.
  *
- * @param game          Unique identifier/name of the game.
- * @param rclass        Class of resource being added.
- * @param rflags        Resource flags (see @ref resourceFlags).
- * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
- *                      Names may include valid absolute, or relative file paths. These paths include
- *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
- * @param params        Additional parameters.
+ * @note Resource order defines the load order of resources (among those of
+ * the same type). Resources are loaded from most recently added to least
+ * recent.
  *
- * @note Resource registration order defines the load order of resources
- * (among those of the same type).
+ * @param game      Unique identifier/name of the game.
+ * @param rclass    Class of resource being added.
+ * @param rflags    Resource flags (see @ref resourceFlags).
+ * @param names     One or more known potential names, seperated by semicolon
+ *                  (e.g., <pre> "name1;name2" </pre>). Valid names include
+ *                  absolute or relative file paths, possibly with encoded
+ *                  symbolic tokens, or predefined symbols into the virtual
+ *                  file system.
+ * @param params    Additional parameters. Usage depends on resource type.
+ *                  For package resources this may be C-String containing a
+ *                  semicolon delimited list of identity keys.
  */
-void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const char* names, void* params);
+void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags,
+                        const char* names, void* params);
 
 /**
  * Retrieve extended info about the current game.
  *
- * @param info          Info structure to be populated.
- * @return              @c true if successful else @c false (i.e., no game loaded).
+ * @param info      Info structure to be populated.
+ * @return          @c true if successful else @c false (i.e., no game loaded).
  */
 boolean DD_GameInfo(GameInfo* info);
 

@@ -52,6 +52,8 @@ struct gamedef_s;
 
 #ifdef __cplusplus
 
+#include <QMultiMap>
+
 namespace de {
 
 class ResourceRecord;
@@ -66,6 +68,9 @@ class GameCollection;
  */
 class Game
 {
+public:
+    typedef QMultiMap<resourceclass_t, ResourceRecord*> Resources;
+
 public:
     /**
      * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
@@ -117,12 +122,9 @@ public:
     bool allStartupResourcesFound() const;
 
     /**
-     * Retrieve a subset of the resource collection associated with this.
-     *
-     * @param rclass  Class of resource to collect.
-     * @return  Vector of selected resource records.
+     * Provides access to resources for efficent traversals.
      */
-    ResourceRecord* const* resources(resourceclass_t rclass, int* count) const;
+    Resources const& resources() const;
 
     /**
      * Is @a file required by this game? This decision is made by comparing the
@@ -159,12 +161,12 @@ public:
      * Print the list of resources for @a Game.
      *
      * @param game          Game to list resources of.
-     * @param printStatus   @c true to  include the current availability/load status
-     *                      of each resource.
      * @param rflags        Only consider resources whose @ref resourceFlags match
      *                      this value. If @c <0 the flags are ignored.
+     * @param printStatus   @c true to  include the current availability/load status
+     *                      of each resource.
      */
-    static void printResources(Game const& game, bool printStatus, int rflags);
+    static void printResources(Game const& game, int rflags, bool printStatus = true);
 
     /**
      * Print extended information about game @a info.
@@ -252,8 +254,6 @@ ddstring_t const* Game_Author(Game const* game);
 ddstring_t const* Game_MainConfig(Game const* game);
 
 ddstring_t const* Game_BindingConfig(Game const* game);
-
-struct resourcerecord_s* const* Game_Resources(Game const* game, resourceclass_t rclass, int* count);
 
 Game* Game_FromDef(GameDef const* def);
 

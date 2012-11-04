@@ -200,20 +200,14 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
         F_ResetAllResourceNamespaces();
     }
 
-    for(uint rclass = RESOURCECLASS_FIRST; rclass < RESOURCECLASS_COUNT; ++rclass)
+    DENG2_FOR_EACH_CONST(Game::Resources, i, game.resources())
     {
-        ResourceRecord* const* records = game.resources(resourceclass_t(rclass), 0);
-        if(!records) continue;
+        ResourceRecord& record = **i;
 
-        for(ResourceRecord* const* i = records; *i; i++)
-        {
-            ResourceRecord& record = **i;
+        // We are only interested in startup resources at this time.
+        if(!(record.resourceFlags() & RF_STARTUP)) continue;
 
-            // We are only interested in startup resources at this time.
-            if(!(record.resourceFlags() & RF_STARTUP)) continue;
-
-            record.locateResource();
-        }
+        record.locateResource();
     }
 
     if(d->currentGame != oldGame)

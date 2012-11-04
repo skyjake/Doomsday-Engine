@@ -29,21 +29,18 @@
 
 #include <de/Error>
 #include <de/Log>
-#include <de/memory.h>
 
 #include "game.h"
 
 namespace de {
 
-typedef struct {
-    ResourceRecord** records;
-    size_t numRecords;
-} resourcerecordset_t;
-
 struct Game::Instance
 {
     /// Unique identifier of the plugin which registered this game.
     pluginid_t pluginId;
+
+    /// Records for required game resources (e.g., doomu.wad).
+    Game::Resources resources;
 
     /// Unique identifier string (e.g., "doom1-ultimate").
     ddstring_t identityKey;
@@ -60,11 +57,8 @@ struct Game::Instance
     /// Name of the file used for control bindings, set automatically at creation time.
     ddstring_t bindingConfig;
 
-    /// Vector of records for required game resources (e.g., doomu.wad).
-    resourcerecordset_t requiredResources[RESOURCECLASS_COUNT];
-
     Instance(char const* _identityKey, char const* configDir)
-        : pluginId(0)
+        : pluginId(0), resources()
     {
         Str_Set(Str_InitStd(&identityKey), _identityKey);
         DENG_ASSERT(!Str_IsEmpty(&identityKey));
@@ -83,30 +77,21 @@ struct Game::Instance
         F_FixSlashes(&bindingConfig, &bindingConfig);
         F_AppendMissingSlash(&bindingConfig);
         Str_Append(&bindingConfig, "player/bindings.cfg");
-
-        memset(requiredResources, 0, sizeof requiredResources);
     }
 
     ~Instance()
     {
+        DENG2_FOR_EACH(Game::Resources, i, resources)
+        {
+            ResourceRecord* record = *i;
+            delete record;
+        }
+
         Str_Free(&identityKey);
         Str_Free(&mainConfig);
         Str_Free(&bindingConfig);
         Str_Free(&title);
         Str_Free(&author);
-
-        for(int i = 0; i < RESOURCECLASS_COUNT; ++i)
-        {
-            resourcerecordset_t* rset = &requiredResources[i];
-            if(!rset || rset->numRecords == 0) continue;
-
-            for(ResourceRecord** rec = rset->records; *rec; rec++)
-            {
-                delete *rec;
-            }
-            M_Free(rset->records); rset->records = 0;
-            rset->numRecords = 0;
-        }
     }
 };
 
@@ -133,29 +118,24 @@ Game& Game::addResource(resourceclass_t rclass, ResourceRecord& record)
     if(!VALID_RESOURCE_CLASS(rclass))
         throw de::Error("Game::addResource", QString("Invalid resource class %1").arg(rclass));
 
-    resourcerecordset_t* rset = &d->requiredResources[rclass];
-    rset->records = (ResourceRecord**) M_Realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
-    rset->records[rset->numRecords] = &record;
-    rset->records[rset->numRecords+1] = 0; // Terminate.
-    rset->numRecords++;
+    // Ensure we don't add duplicates.
+    Resources::const_iterator found = d->resources.find(rclass, &record);
+    if(found == d->resources.end())
+    {
+        d->resources.insert(rclass, &record);
+    }
     return *this;
 }
 
 bool Game::allStartupResourcesFound() const
 {
-    for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
+    DENG2_FOR_EACH_CONST(Resources, i, d->resources)
     {
-        ResourceRecord* const* records = resources(resourceclass_t(i), 0);
-        if(!records) continue;
+        ResourceRecord& record = **i;
+        int const flags = record.resourceFlags();
 
-        for(ResourceRecord* const* i = records; *i; i++)
-        {
-            ResourceRecord& record = **i;
-            int const flags = record.resourceFlags();
-
-            if((flags & RF_STARTUP) && !(flags & RF_FOUND))
-                return false;
-        }
+        if((flags & RF_STARTUP) && !(flags & RF_FOUND))
+            return false;
     }
     return true;
 }
@@ -196,42 +176,32 @@ ddstring_t const& Game::author() const
     return d->author;
 }
 
-ResourceRecord* const* Game::resources(resourceclass_t rclass, int* count) const
+Game::Resources const& Game::resources() const
 {
-    if(!VALID_RESOURCE_CLASS(rclass))
-    {
-        if(count) *count = 0;
-        return 0;
-    }
-
-    if(count) *count = (int)d->requiredResources[rclass].numRecords;
-    return d->requiredResources[rclass].records? d->requiredResources[rclass].records : 0;
+    return d->resources;
 }
 
 bool Game::isRequiredFile(File1& file)
 {
+    // If this resource is from a container we must use the path of the
+    // root file container instead.
+    File1& rootFile = file;
+    while(rootFile.isContained())
+    { rootFile = rootFile.container(); }
+    AutoStr* absolutePath = rootFile.composePath();
+
     bool isRequired = false;
 
-    if(ResourceRecord* const* records = resources(RC_PACKAGE, 0))
+    for(Resources::const_iterator i = d->resources.find(RC_PACKAGE);
+        i != d->resources.end() && i.key() == RC_PACKAGE; ++i)
     {
-        // If this resource is from a container we must use the path of the
-        // root file container instead.
-        File1& rootFile = file;
-        while(rootFile.isContained())
-        { rootFile = rootFile.container(); }
+        ResourceRecord& record = **i;
+        if(!(record.resourceFlags() & RF_STARTUP)) continue;
 
-        AutoStr* absolutePath = rootFile.composePath();
-
-        for(ResourceRecord* const* i = records; *i; i++)
+        if(!record.resolvedPath(true/*try locate*/).compare(Str_Text(absolutePath), Qt::CaseInsensitive))
         {
-            ResourceRecord& record = **i;
-            if(!(record.resourceFlags() & RF_STARTUP)) continue;
-
-            if(!record.resolvedPath(true/*try locate*/).compare(Str_Text(absolutePath), Qt::CaseInsensitive))
-            {
-                isRequired = true;
-                break;
-            }
+            isRequired = true;
+            break;
         }
     }
 
@@ -250,28 +220,31 @@ void Game::printBanner(Game const& game)
     Con_PrintRuler();
 }
 
-void Game::printResources(Game const& game, bool printStatus, int rflags)
+void Game::printResources(Game const& game, int rflags, bool printStatus)
 {
-    size_t count = 0;
+    int numPrinted = 0;
+
+    // Group output by resource class.
+    Resources const& resources = game.resources();
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        ResourceRecord* const* records = game.resources((resourceclass_t)i, 0);
-        if(!records) continue;
-
-        for(ResourceRecord* const* recordIt = records; *recordIt; recordIt++)
+        resourceclass_t const rclass = resourceclass_t(i);
+        for(Resources::const_iterator i = resources.find(rclass);
+            i != resources.end() && i.key() == rclass; ++i)
         {
-            ResourceRecord& record = **recordIt;
-
+            ResourceRecord& record = **i;
             if(rflags >= 0 && (rflags & record.resourceFlags()))
             {
                 ResourceRecord::consolePrint(record, printStatus);
-                count += 1;
+                numPrinted += 1;
             }
         }
     }
 
-    if(count == 0)
+    if(numPrinted == 0)
+    {
         Con_Printf(" None\n");
+    }
 }
 
 void Game::print(Game const& game, int flags)
@@ -296,14 +269,14 @@ void Game::print(Game const& game, int flags)
     if(flags & PGF_LIST_STARTUP_RESOURCES)
     {
         Con_Printf("Startup resources:\n");
-        printResources(game, (flags & PGF_STATUS) != 0, RF_STARTUP);
+        printResources(game, RF_STARTUP, (flags & PGF_STATUS) != 0);
     }
 
     if(flags & PGF_LIST_OTHER_RESOURCES)
     {
         Con_Printf("Other resources:\n");
         Con_Printf("   ");
-        printResources(game, /*(flags & PGF_STATUS) != 0*/false, 0);
+        printResources(game, 0, /*(flags & PGF_STATUS) != 0*/false);
     }
 
     if(flags & PGF_STATUS)
@@ -414,12 +387,6 @@ ddstring_t const* Game_BindingConfig(struct game_s const* game)
     return &self->bindingConfig();
 }
 
-struct resourcerecord_s* const* Game_Resources(struct game_s const* game, resourceclass_t rclass, int* count)
-{
-    SELF_CONST(game);
-    return reinterpret_cast<resourcerecord_s* const*>(self->resources(rclass, count));
-}
-
 struct game_s* Game_FromDef(GameDef const* def)
 {
     if(!def) return 0;
@@ -435,7 +402,7 @@ void Game_PrintBanner(Game const* game)
 void Game_PrintResources(Game const* game, boolean printStatus, int rflags)
 {
     if(!game) return;
-    de::Game::printResources(*reinterpret_cast<de::Game const*>(game), CPP_BOOL(printStatus), rflags);
+    de::Game::printResources(*reinterpret_cast<de::Game const*>(game), rflags, CPP_BOOL(printStatus));
 }
 
 void Game_Print(Game const* game, int flags)

@@ -74,8 +74,8 @@ int G_RegisterGames(int hookType, int param, void* data)
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     gameIds[doom64] = DD_DefineGame(&doom64Def);
-    DD_AddGameResource(GID(doom64), RC_PACKAGE, RF_STARTUP, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
     DD_AddGameResource(GID(doom64), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom64), RC_PACKAGE, RF_STARTUP, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
     DD_AddGameResource(GID(doom64), RC_DEFINITION, 0, PLUGIN_NAMETEXT ".ded", 0);
     return true;
 

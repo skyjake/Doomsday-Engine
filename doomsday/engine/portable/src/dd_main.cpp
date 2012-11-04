@@ -471,23 +471,21 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
-    { int numResources;
-    ResourceRecord* const* resources;
-    if((resources = games->currentGame().resources(RC_PACKAGE, &numResources)))
+    de::Game::Resources const& gameResources = games->currentGame().resources();
+    int const numPackages = gameResources.count(RC_PACKAGE);
+    int packageIdx = 0;
+    for(de::Game::Resources::const_iterator i = gameResources.find(RC_PACKAGE);
+        i != gameResources.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
-        ResourceRecord* const* resIt;
-        for(resIt = resources; *resIt; resIt++)
-        {
-            ResourceRecord& record = **resIt;
-            loadResource(record);
+        ResourceRecord& record = **i;
+        loadResource(record);
 
-            // Update our progress.
-            if(p->initiatedBusyMode)
-            {
-                Con_SetProgress(((resIt - resources)+1) * (200-50)/numResources -1);
-            }
+        // Update our progress.
+        if(p->initiatedBusyMode)
+        {
+            Con_SetProgress((packageIdx + 1) * (200 - 50) / numPackages - 1);
         }
-    }}
+    }
 
     if(p->initiatedBusyMode)
     {
@@ -2319,7 +2317,7 @@ D_CMD(Load)
         if(!game.allStartupResourcesFound())
         {
             Con_Message("Failed to locate all required startup resources:\n");
-            de::Game::printResources(game, true, RF_STARTUP);
+            de::Game::printResources(game, RF_STARTUP);
             Con_Message("%s (%s) cannot be loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
             Str_Free(&searchPath);
             return true;
