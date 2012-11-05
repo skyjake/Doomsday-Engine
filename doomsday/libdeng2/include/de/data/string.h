@@ -176,8 +176,15 @@ public:
      * Expands the relative path directives '>' and '}' at the start of
      * the path, replacing them with the application path.
      *
-     * @note Also handles '~' on UNIX-based platforms so that the user
-     *       specific home path (or
+     * @note Also handles '~' on UNIX-based platforms so that a user
+     *       specific home path (taken from passwd) may also be used.
+     *
+     * @param didExpand  If specified, this value will be set to true if
+     *                   path expansion was done.
+     *
+     * @return A copy of the path with directives expanded.
+     *
+     * @throws UnknownUserError  If the user is not known.
      *
      * @see App::nativeBasePath()
      */
