@@ -48,6 +48,9 @@ public:
     /// Invalid record member name. @ingroup errors
     DENG2_SUB_ERROR(Error, InvalidMemberError);
 
+    /// An unknown user name was encounterd in the string. @ingroup errors
+    DENG2_SUB_ERROR(Error, UnknownUserError);
+
     /**
      * Data argument for the pattern formatter.
      * @see String::patternFormat()
@@ -168,6 +171,17 @@ public:
 
     /// Extracts the path of the string, using native directory separators.
     String fileNameNativePath() const;
+
+    /**
+     * Expands the relative path directives '>' and '}' at the start of
+     * the path, replacing them with the application path.
+     *
+     * @note Also handles '~' on UNIX-based platforms so that the user
+     *       specific home path (or
+     *
+     * @see App::nativeBasePath()
+     */
+    String expandNativePath(bool* didExpand = 0) const;
 
     /**
      * Compare two strings (case sensitive).

@@ -17,6 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "de/App"
 #include "de/String"
 #include "de/Block"
 
@@ -366,6 +367,42 @@ String String::fileNameNativePath() const
 #else
     return fileNamePath();
 #endif
+}
+
+String String::expandNativePath(bool* didExpand) const
+{
+    if(first() == '>' || first() == '}')
+    {
+        if(didExpand) *didExpand = true;
+        String result = DENG2_APP->nativeBasePath();
+        return result.concatenateNativePath(mid(1));
+    }
+#ifdef Q_OS_UNIX
+    else if(first() == '~')
+    {
+        if(didExpand) *didExpand = true;
+
+        int firstSlash = indexOf('/');
+        if(firstSlash > 1)
+        {
+            // Parse the user's home directory (from passwd).
+            QByteArray userName = left(firstSlash - 1).toLatin1();
+            struct passwd* pw = getpwnam(userName);
+            if(!pw) throw UnknownUserError("String::expandBasePath", String("Unknown user '%1'").arg(QString(userName)));
+
+            String result = String::fromNativePath(pw->pw_dir);
+            return result.concatenateNativePath(mid(firstSlash));
+        }
+
+        // Replace with the HOME path.
+        String result = DENG2_APP->nativeHomePath();
+        return result.concatenateNativePath(mid(1));
+    }
+#endif
+
+    // No expansion done.
+    if(didExpand) *didExpand = false;
+    return *this;
 }
 
 dint String::compareWithCase(const String& str) const

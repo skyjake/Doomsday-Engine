@@ -105,6 +105,11 @@ namespace de
         String nativeHomePath();
 
         /**
+         * Returns the native path where the application is currently working.
+         */
+        String nativeWorkPath();
+
+        /**
          * Returns the application's file system.
          */
         static FS& fileSystem();

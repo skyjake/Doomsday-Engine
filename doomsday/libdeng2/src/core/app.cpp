@@ -26,7 +26,9 @@
 #include "de/Module"
 #include "de/Version"
 #include "de/math.h"
+
 #include <QDesktopServices>
+#include <QDir>
 
 using namespace de;
 
@@ -125,6 +127,11 @@ String App::nativeBasePath()
     _unixInfo.path("basedir", path);
 #endif
     return path;
+}
+
+String App::nativeWorkPath()
+{
+    return QDir::currentPath();
 }
 
 void App::initSubsystems(SubsystemInitFlags flags)
