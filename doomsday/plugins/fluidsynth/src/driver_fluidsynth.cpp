@@ -23,6 +23,7 @@
 #include "sys_audiod.h"
 #include <stdio.h>
 #include <string.h>
+#include <de/c_wrapper.h>
 
 #include "doomsday.h"
 
@@ -72,7 +73,11 @@ int DS_Init(void)
 
 #ifndef FLUIDSYNTH_NOT_A_DLL
     // Create the output driver that will play the music.
-    const char* driverName = FLUIDSYNTH_DEFAULT_DRIVER_NAME;
+    char driverName[50];
+    if(!UnixInfo_GetConfigValue("defaults", "fluidsynth:driver", driverName, sizeof(driverName) - 1))
+    {
+        strcpy(driverName, FLUIDSYNTH_DEFAULT_DRIVER_NAME);
+    }
     fluid_settings_setstr(fsConfig, "audio.driver", driverName);
     fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
     if(!fsDriver)

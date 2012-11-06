@@ -62,6 +62,16 @@ public:
      */
     bool path(const String& key, String& value) const;
 
+    /**
+     * Returns a defaults preference.
+     *
+     * @param key    Path identifier.
+     * @param value  The value is returned here.
+     *
+     * @return  Value from a 'defaults' info file.
+     */
+    bool defaults(const String& key, String& value) const;
+
 private:
     struct Instance;
     Instance* d;

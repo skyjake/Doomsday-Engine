@@ -26,14 +26,14 @@
 
 using namespace de;
 
-struct UnixInfo::Instance
+class Infos
 {
     Info* etcInfo;
     Info* userInfo;
 
-    Instance(String fileName) : etcInfo(0), userInfo(0)
+public:
+    Infos(String fileName) : etcInfo(0), userInfo(0)
     {
-#ifdef UNIX
         String fn = "/etc/doomsday/" + fileName;
         if(QFile::exists(fn))
         {
@@ -47,26 +47,57 @@ struct UnixInfo::Instance
             userInfo = new Info;
             userInfo->parseNativeFile(fn);
         }
-#else
-        DENG2_UNUSED(fileName);
-#endif
     }
 
-    ~Instance()
+    ~Infos()
     {
         delete userInfo;
         delete etcInfo;
+    }
+
+    bool find(const String& key, String& value) const
+    {
+        // User-specific info overrides the system-level info.
+        if(userInfo && userInfo->findValueForKey(key, value))
+        {
+            return true;
+        }
+        if(etcInfo && etcInfo->findValueForKey(key, value))
+        {
+            return true;
+        }
+        return false;
+    }
+};
+
+struct UnixInfo::Instance
+{
+    Infos* paths;
+    Infos* defaults;
+
+    Instance() : paths(0), defaults(0)
+    {}
+
+    ~Instance()
+    {
+        delete paths;
+        delete defaults;
     }
 };
 
 UnixInfo::UnixInfo()
 {
+    d = new Instance;
+
+#ifdef UNIX
     /**
-     * @note There is only the "paths" config file for now; more could be added
-     * for different purposes. There could also be .de scripts for
-     * configuration.
+     * @note There is only the "paths" and "plugins" config files for now; more
+     * could be added for different purposes. There could also be .de scripts
+     * for configuration.
      */
-    d = new Instance("paths");
+    d->paths    = new Infos("paths");
+    d->defaults = new Infos("defaults");
+#endif
 }
 
 UnixInfo::~UnixInfo()
@@ -76,16 +107,18 @@ UnixInfo::~UnixInfo()
 
 bool UnixInfo::path(const String& key, String& value) const
 {
-    // User-specific info overrides the system-level info.
-    if(d->userInfo && d->userInfo->findValueForKey(key, value))
+    if(d->paths)
     {
-        return true;
+        return d->paths->find(key, value);
     }
+    return false;
+}
 
-    if(d->etcInfo && d->etcInfo->findValueForKey(key, value))
+bool UnixInfo::defaults(const String& key, String& value) const
+{
+    if(d->defaults)
     {
-        return true;
+        return d->defaults->find(key, value);
     }
-
     return false;
 }
