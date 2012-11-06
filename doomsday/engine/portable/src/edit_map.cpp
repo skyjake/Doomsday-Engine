@@ -55,7 +55,7 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri);
  * The pointer user value holds a pointer to the resolved Material (if found).
  * The integer user value tracks the number of times a reference occurs.
  */
-static StringPool* materialDict;
+static de::StringPool* materialDict;
 
 editmap_t editMap;
 static boolean editMapInited = false;
@@ -1750,10 +1750,10 @@ static int printMissingMaterialWorker(StringPoolId internId, void* parameters)
     uint* count = (uint*)parameters;
 
     // A valid id?
-    if(StringPool_String(materialDict, internId))
+    if(materialDict->string(internId))
     {
         // Have we resolved this reference yet?
-        if(!StringPool_UserPointer(materialDict, internId))
+        if(!materialDict->userPointer(internId))
         {
             // An unresolved reference.
             if(count)
@@ -1764,8 +1764,8 @@ static int printMissingMaterialWorker(StringPoolId internId, void* parameters)
             else
             {
                 // Print mode.
-                const int refCount = StringPool_UserValue(materialDict, internId);
-                const ddstring_t* materialUri = StringPool_String(materialDict, internId);
+                int const refCount = materialDict->userValue(internId);
+                ddstring_t const* materialUri = materialDict->string(internId);
                 Con_Message(" %4u x \"%s\"\n", refCount, Str_Text(materialUri));
             }
         }
@@ -1778,63 +1778,54 @@ static int printMissingMaterialWorker(StringPoolId internId, void* parameters)
  */
 static void printMissingMaterials(void)
 {
-    uint numMissing;
-
     if(!materialDict) return;
 
     // Count missing materials.
-    numMissing = 0;
-    StringPool_Iterate(materialDict, printMissingMaterialWorker, &numMissing);
+    uint numMissing = 0;
+    materialDict->iterate(printMissingMaterialWorker, &numMissing);
     if(!numMissing) return;
 
     Con_Message("  [110] Warning: Found %u unknown %s:\n", numMissing, numMissing == 1? "material":"materials");
     // List the missing materials.
-    StringPool_Iterate(materialDict, printMissingMaterialWorker, 0);
+    materialDict->iterate(printMissingMaterialWorker, 0);
 }
 
 static void clearMaterialDict(void)
 {
     if(!materialDict) return;
-    StringPool_Clear(materialDict);
-    StringPool_Delete(materialDict);
-    materialDict = 0;
+    materialDict->clear();
+    delete materialDict; materialDict = 0;
 }
 
 static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
 {
-    material_t* material = 0;
-
     DENG_ASSERT(suf);
 
+    material_t* material = 0;
     if(materialUri && !Str_IsEmpty(materialUri))
     {
-        StringPoolId internId;
-        uint refCount;
-
         // Are we yet to instantiate the dictionary?
         if(!materialDict)
         {
-            materialDict = StringPool_New();
+            materialDict = new de::StringPool;
             if(!materialDict) Con_Error("assignSurfaceMaterial: Failed to instantiate the material dictionary.");
         }
 
         // Intern this reference.
-        internId = StringPool_Intern(materialDict, materialUri);
+        StringPoolId internId = materialDict->intern(materialUri);
 
         // Have we previously encountered this?.
-        refCount = StringPool_UserValue(materialDict, internId);
+        uint refCount = materialDict->userValue(internId);
         if(refCount)
         {
             // Yes, if resolved the user pointer holds the found material.
-            material = (material_t*) StringPool_UserPointer(materialDict, internId);
+            material = (material_t*) materialDict->userPointer(internId);
         }
         else
         {
             // No, attempt to resolve this URI and update the dictionary.
-            materialid_t materialId = NOMATERIALID;
-
             // First try the preferred namespace, then any.
-            materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
+            materialid_t materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
             if(materialId == NOMATERIALID)
             {
                 Uri* tmp = Uri_NewWithPath2(Str_Text(materialUri), RC_NULL);
@@ -1845,12 +1836,12 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
             material = Materials_ToMaterial(materialId);
 
             // Insert the possibly resolved material into the dictionary.
-            StringPool_SetUserPointer(materialDict, internId, material);
+            materialDict->setUserPointer(internId, material);
         }
 
         // There is now one more reference.
         refCount++;
-        StringPool_SetUserValue(materialDict, internId, refCount);
+        materialDict->setUserValue(internId, refCount);
     }
 
     // Assign the resolved material if found.
