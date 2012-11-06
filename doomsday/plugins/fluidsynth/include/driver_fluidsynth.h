@@ -43,6 +43,7 @@ int     DS_Set(int prop, const void* ptr);
 }
 
 fluid_synth_t* DMFluid_Synth();
+fluid_audio_driver_t* DMFluid_Driver();
 audiointerface_sfx_generic_t* DMFluid_Sfx();
 
 #ifdef DENG_DSFLUIDSYNTH_DEBUG

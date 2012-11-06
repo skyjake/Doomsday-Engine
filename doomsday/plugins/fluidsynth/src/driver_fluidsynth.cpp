@@ -29,11 +29,17 @@
 static fluid_settings_t* fsConfig;
 static fluid_synth_t* fsSynth;
 static audiointerface_sfx_t* fsSfx;
+static fluid_audio_driver_t* fsDriver;
 
 fluid_synth_t* DMFluid_Synth()
 {
     DENG_ASSERT(fsSynth != 0);
     return fsSynth;
+}
+
+fluid_audio_driver_t* DMFluid_Driver()
+{
+    return fsDriver;
 }
 
 audiointerface_sfx_generic_t* DMFluid_Sfx()
@@ -64,6 +70,18 @@ int DS_Init(void)
         return false;
     }
 
+#ifndef FLUIDSYNTH_NOT_A_DLL
+    // Create the output driver that will play the music.
+    const char* driverName = FLUIDSYNTH_DEFAULT_DRIVER_NAME;
+    fluid_settings_setstr(fsConfig, "audio.driver", driverName);
+    fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
+    if(!fsDriver)
+    {
+        Con_Message("Failed to create FluidSynth audio driver '%s'.\n", driverName);
+        return false;
+    }
+#endif
+
     DSFLUIDSYNTH_TRACE("DS_Init: FluidSynth initialized.");
     return true;
 }
@@ -79,6 +97,10 @@ void DS_Shutdown(void)
 
     DSFLUIDSYNTH_TRACE("DS_Shutdown.");
 
+    if(fsDriver)
+    {
+        delete_fluid_audio_driver(fsDriver);
+    }
     delete_fluid_synth(fsSynth);
     delete_fluid_settings(fsConfig);
 

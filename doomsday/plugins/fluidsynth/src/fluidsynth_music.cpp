@@ -238,6 +238,7 @@ static int streamOutSamples(sfxbuffer_t* buf, void* data, unsigned int size)
 
 static void startWorker()
 {
+    DENG_ASSERT(DMFluid_Driver() == NULL);
     DENG_ASSERT(worker == NULL);
 
     workerShouldStop = false;
@@ -249,6 +250,8 @@ static void startWorker()
  */
 static void startPlayer()
 {
+    if(DMFluid_Driver()) return;
+
     DENG_ASSERT(!worker);
     DENG_ASSERT(sfxBuf == NULL);
 
@@ -278,6 +281,8 @@ static void startPlayer()
 
 static void stopWorker()
 {
+    DENG_ASSERT(DMFluid_Driver() == NULL);
+
     if(worker)
     {
         DSFLUIDSYNTH_TRACE("stopWorker: Stopping thread " << worker);
@@ -292,6 +297,8 @@ static void stopWorker()
 
 static void stopPlayer()
 {
+    if(DMFluid_Driver()) return;
+
     DSFLUIDSYNTH_TRACE("stopPlayer: fsPlayer " << fsPlayer);
 
     if(!fsPlayer) return;

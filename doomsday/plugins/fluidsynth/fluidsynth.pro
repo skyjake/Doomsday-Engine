@@ -35,10 +35,22 @@ unix:!macx {
     target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
+INCLUDEPATH += include
+
+HEADERS += \
+    include/driver_fluidsynth.h \
+    include/fluidsynth_music.h \
+    include/version.h
+
+SOURCES += \
+    src/driver_fluidsynth.cpp \
+    src/fluidsynth_music.cpp
+
 # libfluidsynth config ------------------------------------------------------
 
 !deng_embedfluidsynth {
     include(../../dep_fluidsynth.pri)
+    DEFINES += FLUIDSYNTH_DEFAULT_DRIVER_NAME=\"\\\"pulseaudio\\\"\"
 }
 
 deng_embedfluidsynth {
@@ -66,20 +78,6 @@ unix {
         HAVE_NETINET_TCP_H HAVE_FCNTL_H HAVE_ERRNO_H
 }
 
-# Sources -------------------------------------------------------------------
-
-INCLUDEPATH += include
-
-HEADERS += \
-    include/driver_fluidsynth.h \
-    include/fluidsynth_music.h \
-    include/version.h
-
-SOURCES += \
-    src/driver_fluidsynth.cpp \
-    src/fluidsynth_music.cpp
-
-# libfluidsynth
 FS_DIR = ../../external/fluidsynth
 
 INCLUDEPATH += \
