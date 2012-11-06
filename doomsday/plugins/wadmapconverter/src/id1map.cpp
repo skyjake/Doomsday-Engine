@@ -25,44 +25,32 @@
 #include <de/libdeng2.h>
 #include <de/Log>
 #include <de/Error>
+#include <de/memory.h>
 
 static Reader* bufferLump(MapLumpInfo* info);
 static void clearReadBuffer(void);
 
 Id1Map::Id1Map(MapFormatId format)
-    : mapFormat(format), numVertexes(0), vertexes(0), materials(0)
+    : mapFormat(format), numVertexes(0), vertexes(0)
 {}
 
 Id1Map::~Id1Map()
 {
     if(vertexes)
     {
-        free(vertexes);
+        M_Free(vertexes);
         vertexes = 0;
     }
 
     DENG2_FOR_EACH(Polyobjs, i, polyobjs)
     {
-        free((i)->lineIndices);
-    }
-
-    if(materials)
-    {
-        StringPool_Clear(materials);
-        StringPool_Delete(materials);
-        materials = 0;
+        M_Free((i)->lineIndices);
     }
 }
 
-MaterialDictId Id1Map::addMaterialToDictionary(const char* name, MaterialDictGroup group)
+MaterialDictId Id1Map::addMaterialToDictionary(char const* name, MaterialDictGroup group)
 {
     DENG2_ASSERT(name);
-
-    // Are we yet to instantiate the dictionary itself?
-    if(!materials)
-    {
-        materials = StringPool_New();
-    }
 
     // Prepare the encoded URI for insertion into the dictionary.
     AutoStr* uriCString;
@@ -96,7 +84,7 @@ MaterialDictId Id1Map::addMaterialToDictionary(const char* name, MaterialDictGro
     }
 
     // Intern this material URI in the dictionary.
-    MaterialDictId internId = StringPool_Intern(materials, uriCString);
+    MaterialDictId internId = materials.intern(uriCString);
 
     // We're done (phew!).
     return internId;
@@ -279,7 +267,7 @@ void Id1Map::load(MapLumpInfos& lumpInfos)
     size_t elementSize = ElementSizeForMapLumpType(mapFormat, ML_VERTEXES);
     uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
     numVertexes = numElements;
-    vertexes = (coord_t*)malloc(numVertexes * 2 * sizeof(*vertexes));
+    vertexes = (coord_t*)M_Malloc(numVertexes * 2 * sizeof(*vertexes));
 
     DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
     {
@@ -544,7 +532,7 @@ static Reader* bufferLump(MapLumpInfo* info)
     // Need to enlarge our read buffer?
     if(info->length > readBufferSize)
     {
-        readBuffer = (uint8_t*)realloc(readBuffer, info->length);
+        readBuffer = (uint8_t*)M_Realloc(readBuffer, info->length);
         if(!readBuffer)
         {
             throw Id1Map::LumpBufferError("Id1Map::bufferLump",
@@ -565,7 +553,7 @@ static Reader* bufferLump(MapLumpInfo* info)
 static void clearReadBuffer(void)
 {
     if(!readBuffer) return;
-    free(readBuffer);
+    M_Free(readBuffer);
     readBuffer = 0;
     readBufferSize = 0;
 }

@@ -84,7 +84,7 @@ public:
 private:
     inline const Str* findMaterialInDictionary(MaterialDictId id)
     {
-        return StringPool_String(materials, id);
+        return materials.string(id);
     }
 
     bool loadVertexes(Reader* reader, uint numElements);
@@ -139,7 +139,7 @@ private:
     SurfaceTints surfaceTints;
     Polyobjs polyobjs;
 
-    StringPool* materials; ///< Material dictionary.
+    de::StringPool materials; ///< Material dictionary.
 };
 
 #endif /* __WADMAPCONVERTER_ID1MAP_H__ */
