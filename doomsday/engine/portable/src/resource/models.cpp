@@ -49,11 +49,8 @@ typedef struct {
 
 float rModelAspectMod = 1 / 1.2f; //.833334f;
 
-static StringPool* modelRepository; // owns model_t instances
+static de::StringPool* modelRepository; // Owns model_t instances.
 
-// The dummy is used for model zero.
-//model_t dummy = { true, "Dummy-Dummy" };
-//model_t* modellist[MAX_MODELS] = { &dummy };
 byte useModels = true;
 
 modeldef_t* modefs = NULL;
@@ -86,16 +83,7 @@ static void UnpackVector(unsigned short packed, float vec[3])
  */
 static uint findModelFor(const ddstring_t* filename)
 {
-    return StringPool_IsInterned(modelRepository, filename);
-
-    /*
-    int                 i;
-
-    for(i = 0; i < MAX_MODELS; ++i)
-        if(modellist[i] && !stricmp(modellist[i]->fileName, filename))
-            return i;
-    return -1;*/
-
+    return modelRepository->isInterned(filename);
 }
 
 /**
@@ -103,22 +91,10 @@ static uint findModelFor(const ddstring_t* filename)
  */
 static uint newModelFor(const ddstring_t* filename)
 {
-/*    int                 i;
+    StringPoolId id = modelRepository->intern(filename);
+    DENG_ASSERT(modelRepository->userPointer(id) == NULL);
 
-    // Take the first empty spot.
-    for(i = 0; i < MAX_MODELS; ++i)
-        if(!modellist[i])
-        {
-            modellist[i] = M_Calloc(sizeof(model_t));
-            return i;
-        }
-    // Dang, we're out of models.
-    return -1;*/
-
-    StringPoolId id = StringPool_Intern(modelRepository, filename);
-    assert(StringPool_UserPointer(modelRepository, id) == NULL);
-
-    StringPool_SetUserPointer(modelRepository, id, M_Calloc(sizeof(model_t)));
+    modelRepository->setUserPointer(id, M_Calloc(sizeof(model_t)));
     return id;
 }
 
@@ -190,9 +166,8 @@ static void R_VertexNormals(model_t *mdl)
 
 static void* AllocAndLoad(FileHandle* file, int offset, int len)
 {
-    uint8_t* ptr = (uint8_t*)malloc(len);
-    if(!ptr)
-        Con_Error("AllocAndLoad: Failed on allocation of %lu bytes for load buffer.", (unsigned long)len);
+    uint8_t* ptr = (uint8_t*) M_Malloc(len);
+    if(!ptr) Con_Error("AllocAndLoad: Failed on allocation of %lu bytes for load buffer.", (unsigned long)len);
     FileHandle_Seek(file, offset, SeekSet);
     FileHandle_Read(file, ptr, len);
     return ptr;
@@ -242,16 +217,16 @@ static void R_LoadModelMD2(FileHandle* file, model_t* mdl)
     inf->offsetEnd = LONG(oldhd.offsetEnd);
 
     // The frames need to be unpacked.
-    frames = (byte*)AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
-    mdl->frames = (model_frame_t*)M_Malloc(sizeof(model_frame_t) * inf->numFrames);
+    frames = (byte*) AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
+    mdl->frames = (model_frame_t*) M_Malloc(sizeof(model_frame_t) * inf->numFrames);
     for(i = 0, frame = mdl->frames; i < inf->numFrames; ++i, frame++)
     {
         md2_packedFrame_t* pfr = (md2_packedFrame_t*) (frames + inf->frameSize * i);
         md2_triangleVertex_t* pVtx;
 
         memcpy(frame->name, pfr->name, sizeof(pfr->name));
-        frame->vertices = (model_vertex_t*)M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
-        frame->normals = (model_vertex_t*)M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
+        frame->vertices = (model_vertex_t*) M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
+        frame->normals = (model_vertex_t*) M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
 
         // Translate each vertex.
         for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; ++k, pVtx++)
@@ -281,8 +256,8 @@ static void R_LoadModelMD2(FileHandle* file, model_t* mdl)
     }
     M_Free(frames);
 
-    mdl->lods[0].glCommands = (int*)AllocAndLoad(file, mdl->lodInfo[0].offsetGlCommands,
-                                                 sizeof(int) * mdl->lodInfo[0].numGlCommands);
+    mdl->lods[0].glCommands = (int*) AllocAndLoad(file, mdl->lodInfo[0].offsetGlCommands,
+                                                  sizeof(int) * mdl->lodInfo[0].numGlCommands);
 
     // Load skins.
     mdl->skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl->skins) * inf->numSkins);
@@ -426,8 +401,8 @@ static boolean registerModelSkin(model_t* mdl, int index)
 
 model_t* R_ModelForId(uint modelRepositoryId)
 {
-    assert(modelRepository);
-    return (model_t*) StringPool_UserPointer(modelRepository, modelRepositoryId);
+    DENG_ASSERT(modelRepository);
+    return (model_t*) modelRepository->userPointer(modelRepositoryId);
 }
 
 /**
@@ -479,7 +454,7 @@ static int R_LoadModel(const Uri* uri)
         return 0;
     }
 
-    mdl = (model_t*) StringPool_UserPointer(modelRepository, index);
+    mdl = (model_t*) modelRepository->userPointer(index);
     if(mdl->loaded)
     {
         if(file) F_Delete(file);
@@ -504,7 +479,7 @@ static int R_LoadModel(const Uri* uri)
     {
         // Cancel the loading.
         M_Free(mdl);
-        StringPool_SetUserPointer(modelRepository, index, 0);
+        modelRepository->setUserPointer(index, 0);
         //modellist[index] = 0;
         F_Delete(file);
         Str_Free(&foundPath);
@@ -515,8 +490,7 @@ static int R_LoadModel(const Uri* uri)
     mdl->loaded = true;
     mdl->allowTexComp = true;
     F_Delete(file);
-    //strncpy(mdl->fileName, Str_Text(&foundPath), FILENAME_T_MAXLEN);
-    mdl->fileName = Str_Text(StringPool_String(modelRepository, index));
+    mdl->fileName = Str_Text(modelRepository->string(index));
 
     // Determine the actual (full) paths.
     foundSkins = 0;
@@ -1195,7 +1169,7 @@ static void setupModel(ded_model_t* def)
 
 static int destroyModelInRepository(StringPoolId id, void* /*parm*/)
 {
-    model_t* m = (model_t*) StringPool_UserPointer(modelRepository, id);
+    model_t* m = (model_t*) modelRepository->userPointer(id);
     int k;
 
     M_Free(m->skins);
@@ -1222,7 +1196,7 @@ static void clearModelList(void)
 {
     if(!modelRepository) return;
 
-    StringPool_Iterate(modelRepository, destroyModelInRepository, 0);
+    modelRepository->iterate(destroyModelInRepository, 0);
 }
 
 /**
@@ -1239,9 +1213,9 @@ void R_InitModels(void)
     if(isDedicated || CommandLine_Check("-nomd2"))
         return;
 
-    modelRepository = StringPool_New();
+    modelRepository = new de::StringPool();
 
-    VERBOSE( Con_Message("Initializing Models...\n") )
+    LOG_VERBOSE("Initializing Models...");
     usedTime = Sys_GetRealTime();
 
     clearModelList();
@@ -1342,8 +1316,7 @@ void R_ShutdownModels(void)
 
     if(modelRepository)
     {
-        StringPool_Delete(modelRepository);
-        modelRepository = 0;
+        delete modelRepository; modelRepository = 0;
     }
 }
 
