@@ -56,7 +56,7 @@ struct PathTree::Instance
     PathTree& self;
 
     /// Path name fragment intern pool.
-    StringPool* fragments;
+    StringPool fragments;
 
     /// @see pathTreeFlags
     int flags;
@@ -69,7 +69,7 @@ struct PathTree::Instance
     PathTree::Nodes branchHash;
 
     Instance(PathTree& d, int _flags)
-        : self(d), fragments(0), flags(_flags), size(0)
+        : self(d), fragments(), flags(_flags), size(0)
     {
 #if 0
         // We'll block-allocate nodes and maintain a list of unused ones
@@ -90,6 +90,7 @@ struct PathTree::Instance
 
     ~Instance()
     {
+        clear();
 #if 0
         if(--pathTreeInstanceCount == 0)
         {
@@ -103,24 +104,17 @@ struct PathTree::Instance
 #endif
     }
 
-    void clearFragments()
+    void clear()
     {
-        if(fragments)
-        {
-            StringPool_Delete(fragments);
-            fragments = NULL;
-        }
+        clearPathHash(leafHash);
+        clearPathHash(branchHash);
+        size = 0;
     }
 
     PathTree::FragmentId internFragmentAndUpdateIdHashMap(ddstring_t const* fragment, ushort hash)
     {
-        if(!fragments)
-        {
-            fragments = StringPool_New();
-        }
-
-        PathTree::FragmentId internId = StringPool_Intern(fragments, fragment);
-        StringPool_SetUserValue(fragments, internId, hash);
+        PathTree::FragmentId internId = fragments.intern(fragment);
+        fragments.setUserValue(internId, hash);
         return internId;
     }
 
@@ -134,24 +128,20 @@ struct PathTree::Instance
         DENG2_ASSERT(fragment);
 
         // Have we already encountered this?
-        PathTree::FragmentId fragmentId = 0;
-        if(fragments)
+        PathTree::FragmentId fragmentId = fragments.isInterned(fragment);
+        if(fragmentId)
         {
-            fragmentId = StringPool_IsInterned(fragments, fragment);
-            if(fragmentId)
+            // The name is known. Perhaps we have.
+            PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
+            ushort hashKey = fragments.userValue(fragmentId);
+            for(PathTree::Nodes::const_iterator i = hash.find(hashKey); i != hash.end() && i.key() == hashKey; ++i)
             {
-                // The name is known. Perhaps we have.
-                PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
-                ushort hashKey = StringPool_UserValue(fragments, fragmentId);
-                for(PathTree::Nodes::const_iterator i = hash.find(hashKey); i != hash.end() && i.key() == hashKey; ++i)
-                {
-                    PathTree::Node* node = *i;
-                    if(parent     != node->parent()) continue;
-                    if(fragmentId != node->fragmentId()) continue;
+                PathTree::Node* node = *i;
+                if(parent     != node->parent()) continue;
+                if(fragmentId != node->fragmentId()) continue;
 
-                    if(nodeType == PathTree::Branch || !(flags & PATHTREE_MULTI_LEAF))
-                        return node;
-                }
+                if(nodeType == PathTree::Branch || !(flags & PATHTREE_MULTI_LEAF))
+                    return node;
             }
         }
 
@@ -323,7 +313,6 @@ PathTree::PathTree(int flags)
 
 PathTree::~PathTree()
 {
-    clear();
     delete d;
 }
 
@@ -348,10 +337,7 @@ bool PathTree::empty() const
 
 void PathTree::clear()
 {
-    d->clearPathHash(d->leafHash);
-    d->clearPathHash(d->branchHash);
-    d->clearFragments();
-    d->size = 0;
+    d->clear();
 }
 
 PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter)
@@ -400,12 +386,12 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
 
 ddstring_t const* PathTree::fragmentName(FragmentId fragmentId) const
 {
-    return StringPool_String(d->fragments, fragmentId);
+    return d->fragments.string(fragmentId);
 }
 
 ushort PathTree::fragmentHash(FragmentId fragmentId) const
 {
-    return StringPool_UserValue(d->fragments, fragmentId);
+    return d->fragments.userValue(fragmentId);
 }
 
 PathTree::Nodes const& PathTree::nodes(NodeType type) const
