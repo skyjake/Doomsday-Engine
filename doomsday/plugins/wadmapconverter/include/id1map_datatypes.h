@@ -25,7 +25,7 @@
 #include "dd_types.h"
 
 /// Type used to identify references to materials in the material dictionary.
-typedef StringPoolId MaterialDictId;
+typedef de::StringPool::Id MaterialDictId;
 
 /// Sizes of the map data structures in the arrived map formats (in bytes).
 #define SIZEOF_64VERTEX         (4 * 2)

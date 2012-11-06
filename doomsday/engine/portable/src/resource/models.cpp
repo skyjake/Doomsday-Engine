@@ -91,7 +91,7 @@ static uint findModelFor(const ddstring_t* filename)
  */
 static uint newModelFor(const ddstring_t* filename)
 {
-    StringPoolId id = modelRepository->intern(filename);
+    de::StringPool::Id id = modelRepository->intern(filename);
     DENG_ASSERT(modelRepository->userPointer(id) == NULL);
 
     modelRepository->setUserPointer(id, M_Calloc(sizeof(model_t)));
@@ -1167,7 +1167,7 @@ static void setupModel(ded_model_t* def)
     }
 }
 
-static int destroyModelInRepository(StringPoolId id, void* /*parm*/)
+static int destroyModelInRepository(de::StringPool::Id id, void* /*parm*/)
 {
     model_t* m = (model_t*) modelRepository->userPointer(id);
     int k;

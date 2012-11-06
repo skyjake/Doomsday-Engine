@@ -50,7 +50,7 @@ using de::FS1;
 
 // Map entity definitions.
 static de::StringPool* entityDefs;
-typedef std::map<int, StringPoolId> EntityDefIdMap;
+typedef std::map<int, de::StringPool::Id> EntityDefIdMap;
 static EntityDefIdMap entityDefIdMap;
 
 extern boolean mapSetup;
@@ -262,7 +262,7 @@ boolean P_LoadMap(const char* uriCString)
     return false;
 }
 
-static int clearEntityDefsWorker(StringPoolId id, void* /*parameters*/)
+static int clearEntityDefsWorker(de::StringPool::Id id, void* /*parameters*/)
 {
     MapEntityDef* def = static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     DENG2_ASSERT(def);
@@ -290,7 +290,7 @@ MapEntityDef* P_MapEntityDef(int id)
     EntityDefIdMap::iterator i = entityDefIdMap.find(id);
     if(i != entityDefIdMap.end())
     {
-        StringPoolId id = i->second;
+        de::StringPool::Id id = i->second;
         return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
@@ -300,15 +300,14 @@ MapEntityDef* P_MapEntityDefByName(char const* _name)
 {
     if(entityDefs)
     {
-        ddstring_t name;
-        Str_InitStatic(&name, _name);
-        StringPoolId id = entityDefs->isInterned(&name);
+        ddstring_t name; Str_InitStatic(&name, _name);
+        de::StringPool::Id id = entityDefs->isInterned(&name);
         return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
 }
 
-static int P_NameForMapEntityDefWorker(StringPoolId id, void* parameters)
+static int P_NameForMapEntityDefWorker(de::StringPool::Id id, void* parameters)
 {
     MapEntityDef* def = static_cast<MapEntityDef*>( parameters );
     if(entityDefs->userPointer(id) == def) return id;
@@ -319,7 +318,7 @@ Str const* P_NameForMapEntityDef(MapEntityDef* def)
 {
     if(def)
     {
-        StringPoolId id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
+        de::StringPool::Id id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
         return entityDefs->string(id);
     }
     static de::Str zeroLengthString;
@@ -468,11 +467,11 @@ static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, bo
     }
 
     Str name; Str_InitStatic(&name, entityName);
-    StringPoolId id = entityDefs->intern(&name);
+    de::StringPool::Id id = entityDefs->intern(&name);
     MapEntityDef* def = new MapEntityDef(identifier);
     entityDefs->setUserPointer(id, def);
 
-    entityDefIdMap.insert(std::pair<int, StringPoolId>(identifier, id));
+    entityDefIdMap.insert(std::pair<int, de::StringPool::Id>(identifier, id));
 
     return def;
 }

@@ -46,9 +46,9 @@
 #  define STRINGPOOL_FREE(x)    M_Free(x)
 #endif
 
-/// Macro used for converting internal ids to externally visible StringPoolIds.
+/// Macro used for converting internal ids to externally visible Ids.
 #define EXPORT_ID(i)    (uint(i) + 1)
-#define IMPORT_ID(i)    (StringPoolId((i) - 1))
+#define IMPORT_ID(i)    (Id((i) - 1))
 
 namespace de {
 
@@ -321,7 +321,7 @@ uint StringPool::size() const
     return uint(d->count);
 }
 
-StringPoolId StringPool::intern(ddstring_t const* str)
+StringPool::Id StringPool::intern(ddstring_t const* str)
 {
     Interns::iterator found = d->findIntern(Str_Text(str)); // O(log n)
     if(found != d->interns.end())
@@ -338,7 +338,7 @@ ddstring_t const* StringPool::internAndRetrieve(ddstring_t const* str)
     return *d->idMap[id];
 }
 
-void StringPool::setUserValue(StringPoolId id, uint value)
+void StringPool::setUserValue(Id id, uint value)
 {
     if(id == 0) return;
 
@@ -350,7 +350,7 @@ void StringPool::setUserValue(StringPoolId id, uint value)
     d->idMap[internalId]->setUserValue(value); // O(1)
 }
 
-uint StringPool::userValue(StringPoolId id) const
+uint StringPool::userValue(Id id) const
 {
     if(id == 0) return 0;
 
@@ -362,7 +362,7 @@ uint StringPool::userValue(StringPoolId id) const
     return d->idMap[internalId]->userValue(); // O(1)
 }
 
-void StringPool::setUserPointer(StringPoolId id, void* ptr)
+void StringPool::setUserPointer(Id id, void* ptr)
 {
     if(id == 0) return;
 
@@ -374,7 +374,7 @@ void StringPool::setUserPointer(StringPoolId id, void* ptr)
     d->idMap[internalId]->setUserPointer(ptr); // O(1)
 }
 
-void* StringPool::userPointer(StringPoolId id) const
+void* StringPool::userPointer(Id id) const
 {
     if(id == 0) return NULL;
 
@@ -386,7 +386,7 @@ void* StringPool::userPointer(StringPoolId id) const
     return d->idMap[internalId]->userPointer(); // O(1)
 }
 
-StringPoolId StringPool::isInterned(ddstring_t const* str) const
+StringPool::Id StringPool::isInterned(ddstring_t const* str) const
 {
     Interns::const_iterator found = d->findIntern(Str_Text(str)); // O(log n)
     if(found != d->interns.end())
@@ -397,7 +397,7 @@ StringPoolId StringPool::isInterned(ddstring_t const* str) const
     return 0;
 }
 
-ddstring_t const* StringPool::string(StringPoolId id) const
+ddstring_t const* StringPool::string(Id id) const
 {
     if(id == 0) return NULL;
 
@@ -417,7 +417,7 @@ bool StringPool::remove(ddstring_t const* str)
     return false;
 }
 
-bool StringPool::removeById(StringPoolId id)
+bool StringPool::removeById(Id id)
 {
     if(id == 0) return false;
 
@@ -432,7 +432,7 @@ bool StringPool::removeById(StringPoolId id)
     return true;
 }
 
-int StringPool::iterate(int (*callback)(StringPoolId, void*), void* data) const
+int StringPool::iterate(int (*callback)(Id, void*), void* data) const
 {
     if(!callback) return 0;
     for(uint i = 0; i < d->idMap.size(); ++i)
@@ -499,7 +499,7 @@ typedef struct {
     StringPool const* pool; ///< StringPool instance being printed.
 } printinternedstring_params_t;
 
-static int printInternedString(StringPoolId internId, void* params)
+static int printInternedString(StringPool::Id internId, void* params)
 {
     printinternedstring_params_t* p = (printinternedstring_params_t*)params;
     ddstring_t const* string = p->pool->string(internId);
@@ -524,147 +524,6 @@ void StringPool::print() const
 
 } // namespace de
 
-/*
- * C wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::StringPool*>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::StringPool const*>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    de::StringPool* self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    de::StringPool const* self = TOINTERNAL_CONST(inst)
-
-StringPool* StringPool_New(void)
-{
-    return reinterpret_cast<StringPool*>(new de::StringPool());
-}
-
-StringPool* StringPool_NewWithStrings(ddstring_t const* strings, uint count)
-{
-    return reinterpret_cast<StringPool*>(new de::StringPool(strings, count));
-}
-
-void StringPool_Delete(StringPool* pool)
-{
-    if(pool)
-    {
-        SELF(pool);
-        delete self;
-    }
-}
-
-void StringPool_Clear(StringPool* pool)
-{
-    SELF(pool);
-    self->clear();
-}
-
-boolean StringPool_Empty(StringPool const* pool)
-{
-    SELF_CONST(pool);
-    return self->empty();
-}
-
-uint StringPool_Size(StringPool const* pool)
-{
-    SELF_CONST(pool);
-    return self->size();
-}
-
-StringPoolId StringPool_Intern(StringPool* pool, ddstring_t const* str)
-{
-    SELF(pool);
-    return self->intern(str);
-}
-
-ddstring_t const* StringPool_InternAndRetrieve(StringPool* pool, ddstring_t const* str)
-{
-    SELF(pool);
-    return self->internAndRetrieve(str);
-}
-
-void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value)
-{
-    SELF(pool);
-    self->setUserValue(id, value);
-}
-
-uint StringPool_UserValue(StringPool const* pool, StringPoolId id)
-{
-    SELF_CONST(pool);
-    return self->userValue(id);
-}
-
-void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr)
-{
-    SELF(pool);
-    self->setUserPointer(id, ptr);
-}
-
-void* StringPool_UserPointer(StringPool const* pool, StringPoolId id)
-{
-    SELF_CONST(pool);
-    return self->userPointer(id);
-}
-
-StringPoolId StringPool_IsInterned(StringPool const* pool, ddstring_t const* str)
-{
-    SELF_CONST(pool);
-    return self->isInterned(str);
-}
-
-ddstring_t const* StringPool_String(StringPool const* pool, StringPoolId id)
-{
-    SELF_CONST(pool);
-    return self->string(id);
-}
-
-boolean StringPool_Remove(StringPool* pool, ddstring_t const* str)
-{
-    SELF(pool);
-    return self->remove(str);
-}
-
-boolean StringPool_RemoveById(StringPool* pool, StringPoolId id)
-{
-    SELF(pool);
-    return self->removeById(id);
-}
-
-int StringPool_Iterate(StringPool const* pool, int (*callback)(StringPoolId, void*), void* data)
-{
-    SELF_CONST(pool);
-    return self->iterate(callback, data);
-}
-
-void StringPool_Write(StringPool const* pool, Writer* writer)
-{
-    SELF_CONST(pool);
-    self->write(writer);
-}
-
-void StringPool_Read(StringPool* pool, Reader* reader)
-{
-    SELF(pool);
-    self->read(reader);
-}
-
-#if _DEBUG
-void StringPool_Print(StringPool const* pool)
-{
-    SELF_CONST(pool);
-    self->print();
-}
-#endif
-
 #ifdef _DEBUG
 LIBDENG_DEFINE_UNITTEST(StringPool)
 {
@@ -672,83 +531,81 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
     return 0; // Zone is not available yet.
 #endif
 
-    StringPool* p = StringPool_New();
+    de::StringPool p;
     ddstring_t* s = Str_NewStd();
     ddstring_t* s2 = Str_NewStd();
 
     Str_Set(s, "Hello");
-    DENG_ASSERT(!StringPool_IsInterned(p, s));
-    DENG_ASSERT(StringPool_Empty(p));
+    DENG_ASSERT(!p.isInterned(s));
+    DENG_ASSERT(p.empty());
 
     // First string.
-    StringPool_Intern(p, s);
-    DENG_ASSERT(StringPool_IsInterned(p, s) == 1);
+    p.intern(s);
+    DENG_ASSERT(p.isInterned(s) == 1);
 
     // Re-insertion.
-    DENG_ASSERT(StringPool_Intern(p, s) == 1);
+    DENG_ASSERT(p.intern(s) == 1);
 
     // Case insensitivity.
     Str_Set(s, "heLLO");
-    DENG_ASSERT(StringPool_Intern(p, s) == 1);
+    DENG_ASSERT(p.intern(s) == 1);
 
     // Another string.
     Str_Set(s, "abc");
-    const ddstring_t* is = StringPool_InternAndRetrieve(p, s);
+    ddstring_t const* is = p.internAndRetrieve(s);
     DENG_ASSERT(!Str_Compare(is, Str_Text(s)));
 
     Str_Set(s2, "ABC");
-    is = StringPool_InternAndRetrieve(p, s2);
+    is = p.internAndRetrieve(s2);
     DENG_ASSERT(!Str_Compare(is, Str_Text(s)));
 
-    DENG_ASSERT(StringPool_Intern(p, is) == 2);
+    DENG_ASSERT(p.intern(is) == 2);
 
-    DENG_ASSERT(StringPool_Size(p) == 2);
-    //StringPool_Print(p);
+    DENG_ASSERT(p.size() == 2);
+    //p.print();
 
-    DENG_ASSERT(!StringPool_Empty(p));
+    DENG_ASSERT(!p.empty());
 
-    StringPool_SetUserValue(p, 1, 1234);
-    DENG_ASSERT(StringPool_UserValue(p, 1) == 1234);
+    p.setUserValue(1, 1234);
+    DENG_ASSERT(p.userValue(1) == 1234);
 
-    DENG_ASSERT(StringPool_UserValue(p, 2) == 0);
+    DENG_ASSERT(p.userValue(2) == 0);
 
     Str_Set(s, "HELLO");
-    StringPool_Remove(p, s);
-    DENG_ASSERT(!StringPool_IsInterned(p, s));
-    DENG_ASSERT(StringPool_Size(p) == 1);
-    DENG_ASSERT(!Str_Compare(StringPool_String(p, 2), "abc"));
+    p.remove(s);
+    DENG_ASSERT(!p.isInterned(s));
+    DENG_ASSERT(p.size() == 1);
+    DENG_ASSERT(!Str_Compare(p.string(2), "abc"));
 
     Str_Set(s, "Third!");
-    DENG_ASSERT(StringPool_Intern(p, s) == 1);
-    DENG_ASSERT(StringPool_Size(p) == 2);
+    DENG_ASSERT(p.intern(s) == 1);
+    DENG_ASSERT(p.size() == 2);
 
     Str_Set(s, "FOUR");
-    StringPool_Intern(p, s);
-    StringPool_RemoveById(p, 1); // "Third!"
+    p.intern(s);
+    p.removeById(1); // "Third!"
 
     // Serialize.
     Writer* w = Writer_NewWithDynamicBuffer(0);
-    StringPool_Write(p, w);
+    p.write(w);
 
     // Deserialize.
     Reader* r = Reader_NewWithBuffer(Writer_Data(w), Writer_Size(w));
-    StringPool* p2 = StringPool_New();
-    StringPool_Read(p2, r);
-    //StringPool_Print(p2);
-    DENG_ASSERT(StringPool_Size(p2) == 2);
-    DENG_ASSERT(!Str_Compare(StringPool_String(p2, 2), "abc"));
-    DENG_ASSERT(!Str_Compare(StringPool_String(p2, 3), "FOUR"));
+    de::StringPool p2;
+    p2.read(r);
+    //p2.print();
+    DENG_ASSERT(p2.size() == 2);
+    DENG_ASSERT(!Str_Compare(p2.string(2), "abc"));
+    DENG_ASSERT(!Str_Compare(p2.string(3), "FOUR"));
     Str_Set(s, "hello again");
-    DENG_ASSERT(StringPool_Intern(p2, s) == 1);
+    DENG_ASSERT(p2.intern(s) == 1);
 
-    StringPool_Delete(p2);
     Reader_Delete(r);
     Writer_Delete(w);
 
-    StringPool_Clear(p);
-    DENG_ASSERT(StringPool_Empty(p));
+    p.clear();
+    DENG_ASSERT(p.empty());
 
-    StringPool_Delete(p);
     Str_Delete(s);
     Str_Delete(s2);
 

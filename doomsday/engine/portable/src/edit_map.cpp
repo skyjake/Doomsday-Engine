@@ -1745,7 +1745,7 @@ boolean MPE_VertexCreatev(size_t num, coord_t* values, uint* indices)
  *                    Else operate in "print" mode.
  * @return Always @c 0 (for use as an iterator).
  */
-static int printMissingMaterialWorker(StringPoolId internId, void* parameters)
+static int printMissingMaterialWorker(de::StringPool::Id internId, void* parameters)
 {
     uint* count = (uint*)parameters;
 
@@ -1812,7 +1812,7 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
         }
 
         // Intern this reference.
-        StringPoolId internId = materialDict->intern(materialUri);
+        de::StringPool::Id internId = materialDict->intern(materialUri);
 
         // Have we previously encountered this?.
         uint refCount = materialDict->userValue(internId);
