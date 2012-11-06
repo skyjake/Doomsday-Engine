@@ -29,7 +29,7 @@
 #ifndef LIBDENG_REFRESH_SKY_H
 #define LIBDENG_REFRESH_SKY_H
 
-#include "r_model.h"
+#include "models.h"
 
 #define MAX_SKY_LAYERS                   ( 2 )
 #define MAX_SKY_MODELS                   ( 32 )

@@ -23,6 +23,10 @@
 #ifndef LIBDENG_RENDER_MODEL_H
 #define LIBDENG_RENDER_MODEL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct texturevariantspecification_s;
 
 /// Absolute maximum number of vertices per submodel supported by this module.
@@ -123,5 +127,9 @@ struct texturevariantspecification_s* Rend_ModelShinyTextureSpec(void);
  * Render a submodel according to paramaters.
  */
 void Rend_RenderModel(const rendmodelparams_t* params);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_RENDER_MODEL_H

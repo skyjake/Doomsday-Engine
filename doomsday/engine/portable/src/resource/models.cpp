@@ -242,16 +242,16 @@ static void R_LoadModelMD2(FileHandle* file, model_t* mdl)
     inf->offsetEnd = LONG(oldhd.offsetEnd);
 
     // The frames need to be unpacked.
-    frames = AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
-    mdl->frames = M_Malloc(sizeof(model_frame_t) * inf->numFrames);
+    frames = (byte*)AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
+    mdl->frames = (model_frame_t*)M_Malloc(sizeof(model_frame_t) * inf->numFrames);
     for(i = 0, frame = mdl->frames; i < inf->numFrames; ++i, frame++)
     {
         md2_packedFrame_t* pfr = (md2_packedFrame_t*) (frames + inf->frameSize * i);
         md2_triangleVertex_t* pVtx;
 
         memcpy(frame->name, pfr->name, sizeof(pfr->name));
-        frame->vertices = M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
-        frame->normals = M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
+        frame->vertices = (model_vertex_t*)M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
+        frame->normals = (model_vertex_t*)M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
 
         // Translate each vertex.
         for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; ++k, pVtx++)
@@ -281,15 +281,14 @@ static void R_LoadModelMD2(FileHandle* file, model_t* mdl)
     }
     M_Free(frames);
 
-    mdl->lods[0].glCommands =
-        AllocAndLoad(file, mdl->lodInfo[0].offsetGlCommands,
-                     sizeof(int) * mdl->lodInfo[0].numGlCommands);
+    mdl->lods[0].glCommands = (int*)AllocAndLoad(file, mdl->lodInfo[0].offsetGlCommands,
+                                                 sizeof(int) * mdl->lodInfo[0].numGlCommands);
 
     // Load skins.
-    mdl->skins = (dmd_skin_t*) calloc(1, sizeof(*mdl->skins) * inf->numSkins);
-    if(NULL == mdl->skins)
+    mdl->skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl->skins) * inf->numSkins);
+    if(!mdl->skins)
         Con_Error("R_LoadModelMD2: Failed on allocation of %lu bytes for skin list.",
-            (unsigned long) (sizeof(*mdl->skins) * inf->numSkins));
+                  (unsigned long) (sizeof(*mdl->skins) * inf->numSkins));
 
     FileHandle_Seek(file, inf->offsetSkins, SeekSet);
     for(i = 0; i < inf->numSkins; ++i)
@@ -340,14 +339,13 @@ static void R_LoadModelDMD(FileHandle* file, model_t* mo)
     }
 
     // Allocate and load in the data.
-    mo->skins = M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
+    mo->skins = (dmd_skin_t*) M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
     FileHandle_Seek(file, inf->offsetSkins, SeekSet);
     for(i = 0; i < inf->numSkins; ++i)
         FileHandle_Read(file, (uint8_t*)mo->skins[i].name, 64);
 
-    temp = AllocAndLoad(file, inf->offsetFrames,
-        inf->frameSize * inf->numFrames);
-    mo->frames = M_Malloc(sizeof(model_frame_t) * inf->numFrames);
+    temp = (char*) AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
+    mo->frames = (model_frame_t*) M_Malloc(sizeof(model_frame_t) * inf->numFrames);
     for(i = 0, frame = mo->frames; i < inf->numFrames; ++i, frame++)
     {
         dmd_packedFrame_t *pfr =
@@ -355,8 +353,8 @@ static void R_LoadModelDMD(FileHandle* file, model_t* mo)
         dmd_packedVertex_t *pVtx;
 
         memcpy(frame->name, pfr->name, sizeof(pfr->name));
-        frame->vertices = M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
-        frame->normals = M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
+        frame->vertices = (model_vertex_t*) M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
+        frame->normals = (model_vertex_t*) M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
 
         // Translate each vertex.
         for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; ++k, pVtx++)
@@ -392,22 +390,24 @@ static void R_LoadModelDMD(FileHandle* file, model_t* mo)
         mo->lodInfo[i].offsetTriangles = LONG(mo->lodInfo[i].offsetTriangles);
         mo->lodInfo[i].offsetGlCommands = LONG(mo->lodInfo[i].offsetGlCommands);
 
-        triangles[i] =
-            AllocAndLoad(file, mo->lodInfo[i].offsetTriangles,
-                         sizeof(dmd_triangle_t) * mo->lodInfo[i].numTriangles);
-        mo->lods[i].glCommands =
-            AllocAndLoad(file, mo->lodInfo[i].offsetGlCommands,
-                         sizeof(int) * mo->lodInfo[i].numGlCommands);
+        triangles[i] = (dmd_triangle_t*) AllocAndLoad(file, mo->lodInfo[i].offsetTriangles,
+                                                      sizeof(dmd_triangle_t) * mo->lodInfo[i].numTriangles);
+
+        mo->lods[i].glCommands = (int*) AllocAndLoad(file, mo->lodInfo[i].offsetGlCommands,
+                                                     sizeof(int) * mo->lodInfo[i].numGlCommands);
     }
 
     // Determine vertex usage at each LOD level.
     // This code assumes there will never be more than 8 LOD levels.
-    mo->vertexUsage = M_Calloc(inf->numVertices);
+    mo->vertexUsage = (char*) M_Calloc(inf->numVertices);
     for(i = 0; i < inf->numLODs; ++i)
+    {
         for(k = 0; k < mo->lodInfo[i].numTriangles; ++k)
+        {
             for(c = 0; c < 3; ++c)
-                mo->vertexUsage[SHORT(triangles[i][k].vertexIndices[c])]
-                    |= 1 << i;
+                mo->vertexUsage[SHORT(triangles[i][k].vertexIndices[c])] |= 1 << i;
+        }
+    }
 
     // We don't need the triangles any more.
     for(i = 0; i < inf->numLODs; ++i)
@@ -427,7 +427,7 @@ static boolean registerModelSkin(model_t* mdl, int index)
 model_t* R_ModelForId(uint modelRepositoryId)
 {
     assert(modelRepository);
-    return StringPool_UserPointer(modelRepository, modelRepositoryId);
+    return (model_t*) StringPool_UserPointer(modelRepository, modelRepositoryId);
 }
 
 /**
@@ -479,7 +479,7 @@ static int R_LoadModel(const Uri* uri)
         return 0;
     }
 
-    mdl = StringPool_UserPointer(modelRepository, index);
+    mdl = (model_t*) StringPool_UserPointer(modelRepository, index);
     if(mdl->loaded)
     {
         if(file) F_Delete(file);
@@ -1193,9 +1193,9 @@ static void setupModel(ded_model_t* def)
     }
 }
 
-static int destroyModelInRepository(StringPoolId id, void* parm)
+static int destroyModelInRepository(StringPoolId id, void* /*parm*/)
 {
-    model_t* m = StringPool_UserPointer(modelRepository, id);
+    model_t* m = (model_t*) StringPool_UserPointer(modelRepository, id);
     int k;
 
     M_Free(m->skins);
@@ -1251,11 +1251,11 @@ void R_InitModels(void)
     // There can't be more modeldefs than there are DED Models.
     // There can be fewer, though.
     maxModelDefs = defs.count.models.num;
-    modefs = M_Malloc(sizeof(modeldef_t) * maxModelDefs);
+    modefs = (modeldef_t*) M_Malloc(sizeof(modeldef_t) * maxModelDefs);
     numModelDefs = 0;
 
     // Clear the modef pointers of all States.
-    stateModefs = M_Realloc(stateModefs, countStates.num * sizeof(*stateModefs));
+    stateModefs = (modeldef_t**) M_Realloc(stateModefs, countStates.num * sizeof(*stateModefs));
     memset(stateModefs, 0, countStates.num * sizeof(*stateModefs));
 
     // Read in the model files and their data.
@@ -1404,7 +1404,7 @@ void R_PrecacheModelsForState(int stateIndex)
     R_PrecacheModel(stateModefs[stateIndex]);
 }
 
-int R_PrecacheModelsForMobj(thinker_t* th, void* context)
+int R_PrecacheModelsForMobj(thinker_t* th, void* /*context*/)
 {
     mobj_t* mo = (mobj_t*) th;
     modeldef_t* modef;

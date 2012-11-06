@@ -280,7 +280,6 @@ DENG_HEADERS += \
     portable/include/r_lgrid.h \
     portable/include/r_lumobjs.h \
     portable/include/r_main.h \
-    portable/include/r_model.h \
     portable/include/r_shadow.h \
     portable/include/r_sky.h \
     portable/include/r_things.h \
@@ -306,6 +305,7 @@ DENG_HEADERS += \
     portable/include/resource/material.h \
     portable/include/resource/materials.h \
     portable/include/resource/materialvariant.h \
+    portable/include/resource/models.h \
     portable/include/resource/texture.h \
     portable/include/resource/textures.h \
     portable/include/resource/texturevariant.h \
@@ -569,7 +569,6 @@ SOURCES += \
     portable/src/r_lgrid.c \
     portable/src/r_lumobjs.c \
     portable/src/r_main.c \
-    portable/src/r_model.c \
     portable/src/r_shadow.c \
     portable/src/r_sky.c \
     portable/src/r_things.c \
@@ -596,6 +595,7 @@ SOURCES += \
     portable/src/resource/material.cpp \
     portable/src/resource/materials.cpp \
     portable/src/resource/materialvariant.cpp \
+    portable/src/resource/models.cpp \
     portable/src/resource/texture.cpp \
     portable/src/resource/textures.cpp \
     portable/src/resource/texturevariant.cpp \

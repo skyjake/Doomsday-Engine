@@ -39,7 +39,7 @@
 #include "r_lgrid.h"
 #include "r_lumobjs.h"
 #include "r_main.h"
-#include "r_model.h"
+#include "models.h"
 #include "r_shadow.h"
 #include "r_sky.h"
 #include "rend_dynlight.h"

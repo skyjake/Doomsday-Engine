@@ -1,33 +1,30 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * r_model.h: 3D Model Resources
+ * @file models.h
+ *
+ * 3D Model Resources.
+ *
+ * @ingroup resource
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_REFRESH_MODEL_H__
-#define __DOOMSDAY_REFRESH_MODEL_H__
+#ifndef LIBDENG_RESOURCE_MODELS_H
+#define LIBDENG_RESOURCE_MODELS_H
 
 #include "gl_model.h"
 
@@ -70,35 +67,35 @@ extern "C" {
 #define MFF_WORLD_TIME_ANIM     0x20000000
 
 typedef struct {
-    short           model;
-    short           frame;
-    char            frameRange;
-    int             flags;
-    short           skin;
-    char            skinRange;
-    float           offset[3];
-    byte            alpha;
+    short model;
+    short frame;
+    char frameRange;
+    int flags;
+    short skin;
+    char skinRange;
+    float offset[3];
+    byte alpha;
     struct texture_s* shinySkin;
-    blendmode_t     blendMode;
+    blendmode_t blendMode;
 } submodeldef_t;
 
 #define MODELDEF_ID_MAXLEN      32
 
 typedef struct modeldef_s {
-    char            id[MODELDEF_ID_MAXLEN + 1];
+    char id[MODELDEF_ID_MAXLEN + 1];
 
-    state_t*        state; // Pointer to the states list (in dd_defns.c).
-    int             flags;
-    unsigned int    group;
-    int             select;
-    short           skinTics;
-    float           interMark; // [0,1) When is this frame in effect?
-    float           interRange[2];
-    float           offset[3];
-    float           resize, scale[3];
-    float           ptcOffset[MAX_FRAME_MODELS][3];
-    float           visualRadius;
-    ded_model_t*    def;
+    state_t* state; // Pointer to the states list (in dd_defns.c).
+    int flags;
+    unsigned int group;
+    int select;
+    short skinTics;
+    float interMark; // [0,1) When is this frame in effect?
+    float interRange[2];
+    float offset[3];
+    float resize, scale[3];
+    float ptcOffset[MAX_FRAME_MODELS][3];
+    float visualRadius;
+    ded_model_t* def;
 
     // Points to next inter-frame, or NULL.
     struct modeldef_s* interNext;
@@ -107,22 +104,22 @@ typedef struct modeldef_s {
     struct modeldef_s* selectNext;
 
     // Submodels.
-    submodeldef_t   sub[MAX_FRAME_MODELS];
+    submodeldef_t sub[MAX_FRAME_MODELS];
 } modeldef_t;
 
-extern modeldef_t *modefs;
+extern modeldef_t* modefs;
 extern int numModelDefs;
 extern byte useModels;
 extern float rModelAspectMod;
 
-void            R_InitModels(void);
-void            R_ShutdownModels(void);
-model_t*        R_ModelForId(uint modelRepositoryId);
-float           R_CheckModelFor(struct mobj_s* mo, modeldef_t** mdef, modeldef_t** nextmdef);
-modeldef_t*     R_CheckIDModelFor(const char* id);
-int             R_ModelFrameNumForName(int modelnum, char* fname);
-void            R_SetModelFrame(modeldef_t* modef, int frame);
-void            R_SetSpriteReplacement(int sprite, char* modelname);
+void R_InitModels(void);
+void R_ShutdownModels(void);
+model_t* R_ModelForId(uint modelRepositoryId);
+float R_CheckModelFor(struct mobj_s* mo, modeldef_t** mdef, modeldef_t** nextmdef);
+modeldef_t* R_CheckIDModelFor(const char* id);
+int R_ModelFrameNumForName(int modelnum, char* fname);
+void R_SetModelFrame(modeldef_t* modef, int frame);
+void R_SetSpriteReplacement(int sprite, char* modelname);
 
 void R_PrecacheModelsForState(int stateIndex);
 
@@ -138,4 +135,4 @@ void R_PrecacheModel(modeldef_t* modef);
 } extern "C"
 #endif
 
-#endif
+#endif /// LIBDENG_RESOURCE_MODELS_H
