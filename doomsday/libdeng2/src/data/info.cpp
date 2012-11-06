@@ -459,7 +459,7 @@ Info::Element* Info::BlockElement::findByPath(const String &path) const
     if(pos >= 0)
     {
         name = path.left(pos);
-        remainder = path.right(pos + 1);
+        remainder = path.mid(pos + 1);
     }
     else
     {
