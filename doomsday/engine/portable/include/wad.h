@@ -31,12 +31,12 @@
 
 #include "fileinfo.h"
 #include "file.h"
+#include "pathtree.h"
 
 namespace de {
 
 class FileHandle;
 class LumpIndex;
-class PathTree::Node;
 
 /**
  * Wad. Runtime representation of an opened WAD file.

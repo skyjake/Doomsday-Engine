@@ -21,6 +21,11 @@
 #include "de/String"
 #include "de/Block"
 
+#ifdef Q_OS_UNIX
+#  include <sys/types.h>
+#  include <pwd.h>
+#endif
+
 #include <QDir>
 #include <QTextStream>
 

@@ -33,12 +33,12 @@
 
 #include "file.h"
 #include "fileinfo.h"
+#include "pathtree.h"
 
 namespace de {
 
 class FileHandle;
 class LumpIndex;
-class PathTree::Node;
 
 /**
  * Zip. Runtime representation of an opened ZIP file.
