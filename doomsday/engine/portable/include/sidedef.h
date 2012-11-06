@@ -26,6 +26,10 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Update the SideDef's map space surface base origins according to the points
  * defined by the associated LineDef's vertices and the plane heights of the
@@ -61,5 +65,9 @@ int SideDef_GetProperty(const SideDef* sideDef, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int SideDef_SetProperty(SideDef* sideDef, const setargs_t* args);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_SIDEDEF

@@ -30,6 +30,10 @@
 
 #include "de_play.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Check if a map in the archive is up to date. The source data must not be
  * newer than the cached map data.
@@ -45,5 +49,9 @@ boolean DAM_MapWrite(GameMap* map, const char* path);
  * Load a map from a Doomsday Archived Map.
  */
 boolean DAM_MapRead(GameMap* map, const char* path);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_ARCHIVED_MAP_FILE_H */

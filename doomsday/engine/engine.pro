@@ -490,7 +490,7 @@ SOURCES += \
     portable/src/displaymode.cpp \
     portable/src/edit_bias.c \
     portable/src/edit_bsp.cpp \
-    portable/src/edit_map.c \
+    portable/src/edit_map.cpp \
     portable/src/fi_main.c \
     portable/src/file.cpp \
     portable/src/filehandle.cpp \

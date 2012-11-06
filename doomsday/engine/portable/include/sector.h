@@ -26,6 +26,10 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Update the Sector's map space axis-aligned bounding box to encompass the points
  * defined by it's LineDefs' vertices.
@@ -70,5 +74,9 @@ int Sector_GetProperty(const Sector* sector, setargs_t* args);
  * @return  Always @c 0 (can be used as an iterator).
  */
 int Sector_SetProperty(Sector* sector, const setargs_t* args);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_SECTOR
