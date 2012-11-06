@@ -6,7 +6,7 @@ include(config_unix_any.pri)
 
 DEFINES += MACOSX
 
-CONFIG += deng_nofixedasm
+CONFIG += deng_nofixedasm deng_embedfluidsynth
 
 # The native SDK option assumes the build is not for distribution.
 !deng_nativesdk {

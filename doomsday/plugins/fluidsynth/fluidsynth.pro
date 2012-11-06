@@ -37,6 +37,12 @@ unix:!macx {
 
 # libfluidsynth config ------------------------------------------------------
 
+!deng_embedfluidsynth {
+    include(../../dep_fluidsynth.pri)
+}
+
+deng_embedfluidsynth {
+
 DEFINES += FLUIDSYNTH_NOT_A_DLL WITH_FLOAT \
     HAVE_MATH_H HAVE_STDIO_H HAVE_STDLIB_H HAVE_STRING_H
 
@@ -59,12 +65,6 @@ unix {
         HAVE_PTHREAD_H HAVE_LIMITS_H HAVE_UNISTD_H HAVE_NETINET_IN_H \
         HAVE_NETINET_TCP_H HAVE_FCNTL_H HAVE_ERRNO_H
 }
-#unix:!macx {
-#    INSTALLS += target fsh headers
-#    target.path = /usr/local/lib
-#    fsh.path = /usr/local/include
-#    headers.path = /usr/local/include/fluidsynth
-#}
 
 # Sources -------------------------------------------------------------------
 
@@ -186,3 +186,5 @@ SOURCES += \
     $${FS_DIR}/src/drivers/fluid_aufile.c \
     $${FS_DIR}/src/bindings/fluid_cmd.c \
     $${FS_DIR}/src/bindings/fluid_filerenderer.c
+
+} # deng_embedfluidsynth
