@@ -16,6 +16,7 @@
 # - deng_fluidsynth             Build the FluidSynth sound driver
 # - deng_fmod                   Build the FMOD Ex sound driver
 # - deng_nativesdk              (Mac) Use current OS's SDK for non-distrib use
+# - deng_nodirectsound          (Windows) Disable the DirectSound sound driver
 # - deng_nodisplaymode          Disable native display mode changes
 # - deng_nofixedasm             Disable assembler fixed-point math
 # - deng_noopenal               Disable building of the OpenAL sound driver

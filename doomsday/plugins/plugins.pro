@@ -20,4 +20,7 @@ deng_fmod: SUBDIRS += fmod
 deng_fluidsynth: SUBDIRS += fluidsynth
 
 # Platform-specific plugins.
-win32: SUBDIRS += directsound winmm
+win32 {
+    !deng_nodirectsound: SUBDIRS += directsound
+    SUBDIRS += winmm
+}
