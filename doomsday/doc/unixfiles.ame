@@ -1,13 +1,21 @@
 @deflist{
     
+@item{@file{/etc/doomsday/defaults}} System-level default configuration.
+This is checked after @file{~/.doomsday/defaults}. For example:
+@samp{@pre{audio fluidsynth @{
+    driver: pulseaudio
+@}}}
+
 @item{@file{/etc/doomsday/paths}} System-level paths configuration (basedir,
 libdir, iwaddir). This is checked after @file{~/.doomsday/paths}. See the 
-Doomsday Wiki for a description of the syntax.
+Doomsday Wiki for details (@dquote{Configuration}).
 
 @item{@file{/usr/share/doomsday/}} Read-only files for the launcher, engine
 and game plugins.
     
 @item{@file{~/.doomsday/}} Location for the user-specific files.
+
+@item{@file{~/.doomsday/defaults}} User's own defaults (see above).
 
 @item{@file{~/.doomsday/paths}} User's paths configuration (basedir, libdir,
 iwaddir).
