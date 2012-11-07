@@ -59,7 +59,7 @@ bool File1::isContained() const
 
 File1& File1::container() const
 {
-    if(!container_) throw NotContainedError("File1::container", QString("%s is not contained").arg(Str_Text(composePath())));
+    if(!container_) throw NotContainedError("File1::container", String(Str_Text(composePath())) + " is not contained");
     return *container_;
 }
 

@@ -147,20 +147,12 @@ static inline texturenamespaceid_t namespaceIdForDirectoryNode(TextureRepository
     return namespaceIdForDirectory(node.tree());
 }
 
-/// @return  Newly composed path for @a node.
-static inline AutoStr* composePathForDirectoryNode(TextureRepository::Node const& node, char delimiter)
-{
-    return node.composePath(AutoStr_NewStd(), NULL, delimiter);
-}
-
 /// @return  Newly composed Uri for @a node. Must be delete'd when no longer needed.
-static de::Uri* composeUriForDirectoryNode(TextureRepository::Node const& node)
+static de::Uri composeUriForDirectoryNode(TextureRepository::Node const& node)
 {
     Str const* namespaceName = Textures_NamespaceName(namespaceIdForDirectoryNode(node));
-    AutoStr* path = composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
-    de::Uri* uri = new de::Uri(Str_Text(path), RC_NULL);
-    uri->setScheme(Str_Text(namespaceName));
-    return uri;
+    AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, TEXTURES_PATH_DELIMITER);
+    return de::Uri(Str_Text(path), RC_NULL).setScheme(Str_Text(namespaceName));
 }
 
 /// @pre textureIdMap has been initialized and is large enough!
@@ -403,9 +395,8 @@ static void destroyRecord(TextureRepository::Node& node)
         if(record->texture)
         {
 #if _DEBUG
-            de::Uri* uri = composeUriForDirectoryNode(node);
+            de::Uri uri = composeUriForDirectoryNode(node);
             LOG_WARNING("Record for \"%s\" still has Texture data!") << uri;
-            delete uri;
 #endif
             destroyTexture(record->texture);
         }
@@ -1061,7 +1052,7 @@ AutoStr* Textures_ComposePath(textureid_t id)
     TextureRepository::Node* node = directoryNodeForBindId(id);
     if(node)
     {
-        return composePathForDirectoryNode(*node, TEXTURES_PATH_DELIMITER);
+        return node->composePath(AutoStr_NewStd(), NULL, TEXTURES_PATH_DELIMITER);
     }
 
     LOG_WARNING("Attempted with unbound textureId #%u, returning null-object.") << id;
@@ -1075,7 +1066,7 @@ Uri* Textures_ComposeUri(textureid_t id)
     TextureRepository::Node* node = directoryNodeForBindId(id);
     if(node)
     {
-        return reinterpret_cast<Uri*>(composeUriForDirectoryNode(*node));
+        return reinterpret_cast<Uri*>(new de::Uri(composeUriForDirectoryNode(*node)));
     }
 
 #if _DEBUG
@@ -1296,7 +1287,7 @@ static TextureRepository::Node** collectDirectoryNodes(texturenamespaceid_t name
             TextureRepository::Node& node = **nodeIt;
             if(like && like[0])
             {
-                AutoStr* path = composePathForDirectoryNode(node, delimiter);
+                AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, delimiter);
                 int delta = qstrnicmp(Str_Text(path), like, strlen(like));
                 if(delta) continue; // Continue iteration.
             }
@@ -1337,12 +1328,14 @@ static TextureRepository::Node** collectDirectoryNodes(texturenamespaceid_t name
     return collectDirectoryNodes(namespaceId, like, count, storage);
 }
 
-static int composeAndCompareDirectoryNodePaths(void const* nodeA, void const* nodeB)
+static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
 {
     // Decode paths before determining a lexicographical delta.
-    AutoStr* a = Str_PercentDecode(composePathForDirectoryNode(**(TextureRepository::Node const**)nodeA, TEXTURES_PATH_DELIMITER));
-    AutoStr* b = Str_PercentDecode(composePathForDirectoryNode(**(TextureRepository::Node const**)nodeB, TEXTURES_PATH_DELIMITER));
-    return qstricmp(Str_Text(a), Str_Text(b));
+    TextureRepository::Node const& nodeA = **(TextureRepository::Node const**)a;
+    TextureRepository::Node const& nodeB = **(TextureRepository::Node const**)b;
+    AutoStr* pathA = Str_PercentDecode(nodeA.composePath(AutoStr_NewStd(), NULL, TEXTURES_PATH_DELIMITER));
+    AutoStr* pathB = Str_PercentDecode(nodeB.composePath(AutoStr_NewStd(), NULL, TEXTURES_PATH_DELIMITER));
+    return qstricmp(Str_Text(pathA), Str_Text(pathB));
 }
 
 /**

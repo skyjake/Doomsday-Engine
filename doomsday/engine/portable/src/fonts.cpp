@@ -1,25 +1,26 @@
-/**\file fonts.cpp
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file fonts.cpp
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * Font resource repositories.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @ingroup resource
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <stdlib.h>
@@ -92,13 +93,13 @@ void Fonts_Register(void)
 #endif
 }
 
-static inline FontRepository* getDirectoryForNamespaceId(fontnamespaceid_t id)
+static inline FontRepository* repositoryByNamespaceId(fontnamespaceid_t id)
 {
     DENG_ASSERT(VALID_FONTNAMESPACEID(id));
     return namespaces[id - FONTNAMESPACE_FIRST].repository;
 }
 
-static fontnamespaceid_t namespaceIdForDirectory(FontRepository& pt)
+static fontnamespaceid_t namespaceIdForRepository(FontRepository& pt)
 {
     for(uint i = uint(FONTNAMESPACE_FIRST); i <= uint(FONTNAMESPACE_LAST); ++i)
     {
@@ -107,7 +108,7 @@ static fontnamespaceid_t namespaceIdForDirectory(FontRepository& pt)
     }
     // Only reachable if attempting to find the id for a Font that is not
     // in the collection, or the collection has not yet been initialized.
-    Con_Error("Fonts::namespaceIdForDirectory: Failed to determine id for directory %p.", (void*)&pt);
+    Con_Error("Fonts::namespaceIdForRepository: Failed to determine id for directory %p.", (void*)&pt);
     exit(1); // Unreachable.
 }
 
@@ -116,7 +117,7 @@ static inline bool validFontId(fontid_t id)
     return (id != NOFONTID && id <= fontIdMapSize);
 }
 
-static FontRepository::Node* getDirectoryNodeForBindId(fontid_t id)
+static FontRepository::Node* findDirectoryNodeForBindId(fontid_t id)
 {
     if(!validFontId(id)) return NULL;
     return fontIdMap[id-1/*1-based index*/];
@@ -135,23 +136,15 @@ static fontid_t findBindIdForDirectoryNode(FontRepository::Node const& node)
 
 static inline fontnamespaceid_t namespaceIdForDirectoryNode(FontRepository::Node const& node)
 {
-    return namespaceIdForDirectory(node.tree());
-}
-
-/// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static inline AutoStr* composePathForDirectoryNode(FontRepository::Node const& node, char delimiter)
-{
-    return node.composePath(AutoStr_NewStd(), NULL, delimiter);
+    return namespaceIdForRepository(node.tree());
 }
 
 /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
-static de::Uri* composeUriForDirectoryNode(FontRepository::Node const& node)
+static de::Uri composeUriForDirectoryNode(FontRepository::Node const& node)
 {
     Str const* namespaceName = Fonts_NamespaceName(namespaceIdForDirectoryNode(node));
-    AutoStr* path = composePathForDirectoryNode(node, FONTS_PATH_DELIMITER);
-    de::Uri* uri = new de::Uri(Str_Text(path), RC_NULL);
-    uri->setScheme(Str_Text(namespaceName));
-    return uri;
+    AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER);
+    return de::Uri(Str_Text(path), RC_NULL).setScheme(Str_Text(namespaceName));
 }
 
 /// @pre fontIdMap has been initialized and is large enough!
@@ -168,7 +161,7 @@ static int linkRecordInUniqueIdMap(FontRepository::Node& node, void* parameters)
     DENG_UNUSED(parameters);
 
     FontRecord const* record = (FontRecord*) node.userPointer();
-    fontnamespaceid_t const namespaceId = namespaceIdForDirectory(node.tree());
+    fontnamespaceid_t const namespaceId = namespaceIdForRepository(node.tree());
     FontNamespace& fn = namespaces[namespaceId - FONTNAMESPACE_FIRST];
     fn.uniqueIdMap[record->uniqueId - fn.uniqueIdBase] = findBindIdForDirectoryNode(node);
     return 0; // Continue iteration.
@@ -180,7 +173,7 @@ static int unlinkRecordInUniqueIdMap(FontRepository::Node& node, void* parameter
     DENG_UNUSED(parameters);
 
     FontRecord const* record = (FontRecord*) node.userPointer();
-    fontnamespaceid_t const namespaceId = namespaceIdForDirectory(node.tree());
+    fontnamespaceid_t const namespaceId = namespaceIdForRepository(node.tree());
     FontNamespace& fn = namespaces[namespaceId - FONTNAMESPACE_FIRST];
     if(fn.uniqueIdMap)
     {
@@ -276,7 +269,7 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
             fontid_t id = Fonts_FontForUniqueId(namespaceId, strtol(uid + 1/*skip namespace delimiter*/, 0, 0));
             if(id != NOFONTID)
             {
-                return getDirectoryNodeForBindId(id);
+                return findDirectoryNodeForBindId(id);
             }
         }
         return NULL;
@@ -288,7 +281,7 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     if(namespaceId != FN_ANY)
     {
         // Caller wants a font in a specific namespace.
-        return findDirectoryNodeForPath(*getDirectoryForNamespaceId(namespaceId), path);
+        return findDirectoryNodeForPath(*repositoryByNamespaceId(namespaceId), path);
     }
 
     // Caller does not care which namespace.
@@ -301,7 +294,7 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     int n = 0;
     do
     {
-        node = findDirectoryNodeForPath(*getDirectoryForNamespaceId(order[n]), path);
+        node = findDirectoryNodeForPath(*repositoryByNamespaceId(order[n]), path);
     } while(!node && order[++n] != FN_ANY);
     return node;
 }
@@ -337,9 +330,8 @@ static void destroyRecord(FontRepository::Node& node)
         if(record->font)
         {
 #if _DEBUG
-            de::Uri* uri = composeUriForDirectoryNode(node);
+            de::Uri uri = composeUriForDirectoryNode(node);
             LOG_WARNING("destroyRecord: Record for \"%s\" still has Font data!") << uri;
-            delete uri;
 #endif
             destroyFont(record->font);
         }
@@ -479,7 +471,7 @@ uint Fonts_Count(fontnamespaceid_t namespaceId)
 {
     if(!VALID_FONTNAMESPACEID(namespaceId) || !Fonts_Size()) return 0;
 
-    FontRepository* directory = getDirectoryForNamespaceId(namespaceId);
+    FontRepository* directory = repositoryByNamespaceId(namespaceId);
     if(!directory) return 0;
     return directory->size();
 }
@@ -642,7 +634,7 @@ font_t* Fonts_ToFont(fontid_t id)
         return NULL;
     }
 
-    FontRepository::Node* node = getDirectoryNodeForBindId(id);
+    FontRepository::Node* node = findDirectoryNodeForBindId(id);
     if(!node) return NULL;
     return ((FontRecord*) node->userPointer())->font;
 }
@@ -852,7 +844,7 @@ fontid_t Fonts_Declare(Uri const* _uri, int uniqueId)//, const Uri* resourcePath
         releaseFont = true;
 
         // We'll need to rebuild the id map too.
-        fontnamespaceid_t namespaceId = namespaceIdForDirectory(node->tree());
+        fontnamespaceid_t namespaceId = namespaceIdForRepository(node->tree());
         FontNamespace& fn = namespaces[namespaceId - FONTNAMESPACE_FIRST];
         fn.uniqueIdMapDirty = true;
     }
@@ -943,7 +935,7 @@ font_t* Fonts_CreateFromDef(fontid_t id, ded_compositefont_t* def)
 {
     LOG_AS("Fonts::createFromDef");
 
-    FontRepository::Node* node = getDirectoryNodeForBindId(id);
+    FontRepository::Node* node = findDirectoryNodeForBindId(id);
     if(!node)
     {
         LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
@@ -999,7 +991,7 @@ font_t* Fonts_CreateFromFile(fontid_t id, char const* resourcePath)
 {
     LOG_AS("Fonts::createFromFile");
 
-    FontRepository::Node* node = getDirectoryNodeForBindId(id);
+    FontRepository::Node* node = findDirectoryNodeForBindId(id);
     if(!node)
     {
         LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
@@ -1043,7 +1035,7 @@ font_t* Fonts_CreateFromFile(fontid_t id, char const* resourcePath)
 
 int Fonts_UniqueId(fontid_t id)
 {
-    FontRepository::Node* node = getDirectoryNodeForBindId(id);
+    FontRepository::Node* node = findDirectoryNodeForBindId(id);
     if(!node) Con_Error("Fonts::UniqueId: Passed invalid fontId #%u.", id);
     return ((FontRecord*) node->userPointer())->uniqueId;
 }
@@ -1064,7 +1056,7 @@ fontid_t Fonts_Id(font_t* font)
 fontnamespaceid_t Fonts_Namespace(fontid_t id)
 {
     LOG_AS("Fonts::namespace");
-    FontRepository::Node* node = getDirectoryNodeForBindId(id);
+    FontRepository::Node* node = findDirectoryNodeForBindId(id);
     if(!node)
     {
 #if _DEBUG
@@ -1081,7 +1073,7 @@ fontnamespaceid_t Fonts_Namespace(fontid_t id)
 AutoStr* Fonts_ComposePath(fontid_t id)
 {
     LOG_AS("Fonts::composePath");
-    FontRepository::Node* node = getDirectoryNodeForBindId(id);
+    FontRepository::Node* node = findDirectoryNodeForBindId(id);
     if(!node)
     {
 #if _DEBUG
@@ -1089,13 +1081,13 @@ AutoStr* Fonts_ComposePath(fontid_t id)
 #endif
         return AutoStr_NewStd();
     }
-    return composePathForDirectoryNode(*node, FONTS_PATH_DELIMITER);
+    return node->composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER);
 }
 
 Uri* Fonts_ComposeUri(fontid_t id)
 {
     LOG_AS("Fonts::composeUri");
-    FontRepository::Node* node = getDirectoryNodeForBindId(id);
+    FontRepository::Node* node = findDirectoryNodeForBindId(id);
     if(!node)
     {
 #if _DEBUG
@@ -1106,14 +1098,14 @@ Uri* Fonts_ComposeUri(fontid_t id)
 #endif
         return Uri_New();
     }
-    return reinterpret_cast<Uri*>(composeUriForDirectoryNode(*node));
+    return reinterpret_cast<Uri*>(new de::Uri(composeUriForDirectoryNode(*node)));
 }
 
 Uri* Fonts_ComposeUrn(fontid_t id)
 {
     LOG_AS("Fonts::composeUrn");
 
-    FontRepository::Node* node = getDirectoryNodeForBindId(id);
+    FontRepository::Node* node = findDirectoryNodeForBindId(id);
     if(!node)
     {
 #if _DEBUG
@@ -1203,7 +1195,7 @@ static int iterateDirectory(fontnamespaceid_t namespaceId,
     int result = 0;
     for(uint i = uint(from); i <= uint(to); ++i)
     {
-        FontRepository* directory = getDirectoryForNamespaceId(fontnamespaceid_t(i));
+        FontRepository* directory = repositoryByNamespaceId(fontnamespaceid_t(i));
         if(!directory) continue;
 
         result = directory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, callback, parameters);
@@ -1297,7 +1289,7 @@ static int collectDirectoryNodeWorker(FontRepository::Node& node, void* paramete
 
     if(p->like && p->like[0])
     {
-        AutoStr* path = composePathForDirectoryNode(node, p->delimiter);
+        AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, p->delimiter);
         int delta = strnicmp(Str_Text(path), p->like, strlen(p->like));
         if(delta) return 0; // Continue iteration.
     }
@@ -1338,7 +1330,7 @@ static FontRepository::Node** collectDirectoryNodes(fontnamespaceid_t namespaceI
 
     for(uint i = uint(fromId); i <= uint(toId); ++i)
     {
-        FontRepository* fontDirectory = getDirectoryForNamespaceId(fontnamespaceid_t(i));
+        FontRepository* fontDirectory = repositoryByNamespaceId(fontnamespaceid_t(i));
         if(!fontDirectory) continue;
 
         fontDirectory->iterate(PCF_NO_BRANCH | PCF_MATCH_FULL, NULL, PATHTREE_NOHASH, collectDirectoryNodeWorker, (void*)&p);
@@ -1363,12 +1355,14 @@ static FontRepository::Node** collectDirectoryNodes(fontnamespaceid_t namespaceI
     return collectDirectoryNodes(namespaceId, like, count, storage);
 }
 
-static int composeAndCompareDirectoryNodePaths(void const* nodeA, void const* nodeB)
+static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
 {
     // Decode paths before determining a lexicographical delta.
-    AutoStr* a = Str_PercentDecode(composePathForDirectoryNode(**(FontRepository::Node const**)nodeA, FONTS_PATH_DELIMITER));
-    AutoStr* b = Str_PercentDecode(composePathForDirectoryNode(**(FontRepository::Node const**)nodeB, FONTS_PATH_DELIMITER));
-    return stricmp(Str_Text(a), Str_Text(b));
+    FontRepository::Node const& nodeA = **(FontRepository::Node const**)a;
+    FontRepository::Node const& nodeB = **(FontRepository::Node const**)b;
+    AutoStr* pathA = Str_PercentDecode(nodeA.composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER));
+    AutoStr* pathB = Str_PercentDecode(nodeB.composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER));
+    return stricmp(Str_Text(pathA), Str_Text(pathB));
 }
 
 /**
@@ -1535,14 +1529,15 @@ ddstring_t** Fonts_CollectNames(int* rCount)
     {
         qsort(foundFonts, (size_t)count, sizeof *foundFonts, composeAndCompareDirectoryNodePaths);
 
-        list = (ddstring_t**)malloc(sizeof *list * (count+1));
+        list = (ddstring_t**) M_Malloc(sizeof *list * (count+1));
         if(!list)
             Con_Error("Fonts::CollectNames: Failed on allocation of %lu bytes for name list.", sizeof *list * (count+1));
 
         int idx = 0;
         for(FontRepository::Node** iter = foundFonts; *iter; ++iter)
         {
-            list[idx++] = Str_FromAutoStr(composePathForDirectoryNode(**iter, FONTS_PATH_DELIMITER));
+            FontRepository::Node& node = **iter;
+            list[idx++] = Str_FromAutoStr(node.composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER));
         }
         list[idx] = NULL; // Terminate.
     }
@@ -1630,7 +1625,7 @@ D_CMD(PrintFontStats)
     Con_FPrintf(CPF_YELLOW, "Font Statistics:\n");
     for(uint i = uint(FONTNAMESPACE_FIRST); i <= uint(FONTNAMESPACE_LAST); ++i)
     {
-        FontRepository* fontDirectory = getDirectoryForNamespaceId(fontnamespaceid_t(i));
+        FontRepository* fontDirectory = repositoryByNamespaceId(fontnamespaceid_t(i));
         uint size;
 
         if(!fontDirectory) continue;

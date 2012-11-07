@@ -33,6 +33,7 @@
 #include <QList>
 #include <QMultiHash>
 #include <de/Error>
+#include <de/String>
 #include <de/str.h>
 #include "pathmap.h"
 
@@ -213,7 +214,7 @@ namespace de
         DENG2_ERROR(NotFoundError);
 
         typedef QMultiHash<ushort, Node*> Nodes;
-        typedef QList<QString> FoundPaths;
+        typedef QList<String> FoundPaths;
 
     public:
         explicit PathTree(int flags = 0);
