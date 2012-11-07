@@ -17,6 +17,9 @@ implementation and former maintainer of the jDoom Resource Pack.
 high-resolution texture packs, and contributor to the
 @link{dengine.net}{http://dengine.net} website implementation.
 
+@strong{Kees Meijs} packaged Doomsday for Debian and hosted an Apt repository
+of Debian packages.
+
 @strong{Abbs} maintained the jDoom model pack and did wonderful work on the
 models and particle effects.
 

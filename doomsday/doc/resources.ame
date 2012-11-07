@@ -237,19 +237,17 @@ example the contents of the PK3 might be:
 
 @section{ Textures and flats }
 
-Normal wall textures and flats can be replaced with PNG (Portable Network
-Graphics), TGA (Truevision Targa), or PCX (Zsoft Paintbrush) images. The
-engine currently supports these image formats:
-
-$ TODO: Is this information up to date?
+Normal wall textures and flats can be replaced with PNG, JPG, TGA (Truevision
+Targa), or PCX (Zsoft Paintbrush) images. The engine currently supports these
+image formats:
 
 @table{40 20 20 20}{
-	@header{Pixel size} @tab @header{PCX} @tab @header{PNG} @tab @header{TGA}
+	@header{Pixel size} @tab @header{PCX} @tab @header{PNG} @tab @header{JPG} @tab @header{TGA}
 	@row{single}
-	8-bit (paletted)*      @tab Yes @tab Yes @tab - @row
-	16-bit                 @tab -   @tab -   @tab - @row
-	24-bit                 @tab -   @tab Yes @tab Yes** @row
-	32-bit (alpha channel) @tab -   @tab Yes @tab Yes**
+	8-bit (paletted)*      @tab Yes @tab Yes @tab -   @tab -     @row
+	16-bit                 @tab -   @tab -   @tab -   @tab -     @row
+	24-bit                 @tab -   @tab Yes @tab Yes @tab Yes** @row
+	32-bit (alpha channel) @tab -   @tab Yes @tab -   @tab Yes**
 }
 
 @caption{* = the palette does not have to match the palette of the game @br
