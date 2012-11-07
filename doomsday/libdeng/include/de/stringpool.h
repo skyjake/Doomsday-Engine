@@ -3,10 +3,6 @@
  *
  * String pool (case insensitive). @ingroup base
  *
- * @par Build Options
- * Define the macro @c DENG_STRINGPOOL_ZONE_ALLOCS to make StringPool allocate
- * memory from the memory zone instead of with system malloc().
- *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,8 +23,6 @@
 
 #ifndef LIBDENG_STRINGPOOL_H
 #define LIBDENG_STRINGPOOL_H
-
-//#define DENG_STRINGPOOL_ZONE_ALLOCS
 
 #ifdef __cplusplus
 #ifndef DENG2_C_API_ONLY

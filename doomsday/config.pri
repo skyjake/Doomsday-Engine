@@ -27,7 +27,6 @@
 # - deng_nopackres              Do not package the Doomsday resources
 # - deng_rangecheck             Parameter range checking/value assertions
 # - deng_snowberry              (Unix) Include Snowberry in installation
-# - deng_stringpoolzoneallocs   Use the memory Zone for allocs in StringPool
 # - deng_tests                  Build and deploy the test suite
 # - deng_writertypecheck        Enable type checking in Writer/Reader
 #

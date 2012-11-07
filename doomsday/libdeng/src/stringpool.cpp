@@ -21,7 +21,6 @@
  */
 
 #include "de/memory.h"
-#include "de/memoryzone.h"
 #include "de/str.hh"
 #include "de/stringpool.h"
 #include "de/unittest.h"
@@ -36,14 +35,6 @@
 #if WIN32
 # define strcasecmp _stricmp
 # define strdup _strdup
-#endif
-
-#ifdef DENG_STRINGPOOL_ZONE_ALLOCS
-#  define STRINGPOOL_STRDUP(x)  Z_StrDup(x)
-#  define STRINGPOOL_FREE(x)    Z_Free(x)
-#else
-#  define STRINGPOOL_STRDUP(x)  strdup(x)
-#  define STRINGPOOL_FREE(x)    M_Free(x)
 #endif
 
 /// Macro used for converting internal ids to externally visible Ids.
@@ -221,7 +212,7 @@ struct StringPool::Instance
      */
     InternalId copyAndAssignUniqueId(char const* text)
     {
-        CaselessStr* str = new CaselessStr(STRINGPOOL_STRDUP(text));
+        CaselessStr* str = new CaselessStr(strdup(text));
 
         // This is a new string that is added to the pool.
         interns.insert(str); // O(log n)
@@ -231,7 +222,7 @@ struct StringPool::Instance
 
     void destroyStr(CaselessStr* str)
     {
-        STRINGPOOL_FREE(str->toCString()); // duplicated cstring
+        M_Free(str->toCString()); // duplicated cstring
         delete str; // CaselessStr instance
     }
 
@@ -473,7 +464,7 @@ void StringPool::read(Reader* reader)
         CaselessStr* str = new CaselessStr;
         str->deserialize(reader, &text);
         // Create a copy of the string whose ownership StringPool controls.
-        str->setText(STRINGPOOL_STRDUP(Str_Text(&text)));
+        str->setText(strdup(Str_Text(&text)));
         d->interns.insert(str);
         Str_Free(&text);
 
@@ -527,10 +518,6 @@ void StringPool::print() const
 #ifdef _DEBUG
 LIBDENG_DEFINE_UNITTEST(StringPool)
 {
-#ifdef DENG_STRINGPOOL_ZONE_ALLOCS
-    return 0; // Zone is not available yet.
-#endif
-
     de::StringPool p;
     ddstring_t* s = Str_NewStd();
     ddstring_t* s2 = Str_NewStd();

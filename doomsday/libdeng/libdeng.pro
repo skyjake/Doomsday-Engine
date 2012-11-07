@@ -46,10 +46,6 @@ deng_writertypecheck {
     DEFINES += DENG_WRITER_TYPECHECK
 }
 
-deng_stringpoolzoneallocs {
-    DEFINES += DENG_STRINGPOOL_ZONE_ALLOCS
-}
-
 # Source Files ---------------------------------------------------------------
 
 # Public headers
