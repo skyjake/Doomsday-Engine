@@ -193,7 +193,7 @@ static void resetAllNamespaces(void)
  *
  * @return  The found PathTree node which represents the resource else @c NULL.
  */
-static de::PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
+static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
     ddstring_t const* searchPath, char delimiter)
 {
     if(!searchPath || Str_IsEmpty(searchPath)) return 0;
@@ -202,16 +202,16 @@ static de::PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace
     rnamespace.rebuild();
 
     // Perform the search.
-    de::PathTree::Node* found = 0;
+    PathTree::Node* found = 0;
     ResourceNamespace::ResourceList foundResources;
     if(rnamespace.findAll(searchPath, foundResources))
     {
         // There is at least one name-matched (perhaps partially) resource.
-        PathMap searchPattern = PathMap(de::PathTree::hashPathFragment, Str_Text(searchPath), delimiter);
+        PathMap searchPattern = PathMap(PathTree::hashPathFragment, Str_Text(searchPath), delimiter);
 
         DENG2_FOR_EACH_CONST(ResourceNamespace::ResourceList, i, foundResources)
         {
-            de::PathTree::Node* node = *i;
+            PathTree::Node* node = *i;
             if(!node->comparePath(searchPattern, PCF_NO_BRANCH)) continue;
 
             // This is the resource we are looking for.
@@ -234,7 +234,7 @@ static bool tryFindResource2(resourceclass_t rclass, ddstring_t const* rawSearch
     if(rnInfo)
     {
         ResourceNamespace& rnamespace = *rnInfo->rnamespace;
-        if(de::PathTree::Node* found = findResourceInNamespace(rnamespace, searchPath, '/'))
+        if(PathTree::Node* found = findResourceInNamespace(rnamespace, searchPath, '/'))
         {
             // Does the caller want to know the matched path?
             if(foundPath)

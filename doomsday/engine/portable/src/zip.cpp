@@ -569,7 +569,7 @@ bool Zip::empty()
     return !lumpCount();
 }
 
-de::PathTree::Node& Zip::lumpDirectoryNode(int lumpIdx) const
+PathTree::Node& Zip::lumpDirectoryNode(int lumpIdx) const
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();

@@ -39,6 +39,8 @@
 // Substrings in CVar names are delimited by this character.
 #define CVARDIRECTORY_DELIMITER         '-'
 
+typedef de::PathTree CVarDirectory;
+
 D_CMD(HelpWhat);
 D_CMD(HelpApropos);
 D_CMD(ListAliases);
@@ -51,7 +53,7 @@ D_CMD(PrintVarStats);
 static bool inited = false;
 
 /// Console variable directory.
-static de::PathTree* cvarDirectory;
+static CVarDirectory* cvarDirectory;
 
 static ccmd_t* ccmdListHead;
 /// @todo Replace with a data structure that allows for deletion of elements.
@@ -84,7 +86,7 @@ void Con_DataRegister(void)
 #endif
 }
 
-static int markVariableUserDataFreed(de::PathTree::Node& node, void* parameters)
+static int markVariableUserDataFreed(CVarDirectory::Node& node, void* parameters)
 {
     DENG_ASSERT(parameters);
 
@@ -104,7 +106,7 @@ static int markVariableUserDataFreed(de::PathTree::Node& node, void* parameters)
     return 0; // Continue iteration.
 }
 
-static int clearVariable(de::PathTree::Node& node, void* parameters)
+static int clearVariable(CVarDirectory::Node& node, void* parameters)
 {
     DENG_UNUSED(parameters);
 
@@ -168,7 +170,7 @@ static void clearVariables(void)
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(cvartemplate_t const* tpl)
 {
-    de::PathTree::Node* node = cvarDirectory->insert(tpl->path, CVARDIRECTORY_DELIMITER);
+    CVarDirectory::Node* node = cvarDirectory->insert(tpl->path, CVARDIRECTORY_DELIMITER);
     cvar_t* newVar;
 
     if(node->userPointer())
@@ -302,7 +304,7 @@ typedef struct {
     boolean ignoreHidden;
 } countvariableparams_t;
 
-static int countVariable(de::PathTree::Node& node, void* parameters)
+static int countVariable(CVarDirectory::Node& node, void* parameters)
 {
     DENG_ASSERT(parameters);
 
@@ -325,7 +327,7 @@ static int countVariable(de::PathTree::Node& node, void* parameters)
     return 0; // Continue iteration.
 }
 
-static int addVariableToKnownWords(de::PathTree::Node& node, void* parameters)
+static int addVariableToKnownWords(CVarDirectory::Node& node, void* parameters)
 {
     DENG_ASSERT(parameters);
 
@@ -441,7 +443,7 @@ int CVar_Flags(const cvar_t* var)
 AutoStr* CVar_ComposePath(cvar_t const* var)
 {
     DENG_ASSERT(var);
-    return reinterpret_cast<de::PathTree::Node*>(var->directoryNode)->composePath(AutoStr_NewStd(), NULL, CVARDIRECTORY_DELIMITER);
+    return reinterpret_cast<CVarDirectory::Node*>(var->directoryNode)->composePath(AutoStr_NewStd(), NULL, CVARDIRECTORY_DELIMITER);
 }
 
 void CVar_SetUri2(cvar_t* var, Uri const* uri, int svFlags)
@@ -773,10 +775,10 @@ cvar_t* Con_FindVariable(char const* path)
     DENG_ASSERT(inited);
     try
     {
-        de::PathTree::Node& node = cvarDirectory->find(PCF_NO_BRANCH | PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
+        CVarDirectory::Node& node = cvarDirectory->find(PCF_NO_BRANCH | PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
         return (cvar_t*) node.userPointer();
     }
-    catch(de::PathTree::NotFoundError const&)
+    catch(CVarDirectory::NotFoundError const&)
     {} // Ignore this error.
     return 0;
 }
@@ -1376,7 +1378,7 @@ void Con_InitDatabases(void)
     if(inited) return;
 
     // Create the empty variable directory now.
-    cvarDirectory = new de::PathTree();
+    cvarDirectory = new CVarDirectory();
 
     ccmdListHead = 0;
     ccmdBlockSet = 0;
@@ -1771,8 +1773,8 @@ D_CMD(PrintVarStats)
 
     if(cvarDirectory)
     {
-        de::PathTree::debugPrintHashDistribution(*cvarDirectory);
-        de::PathTree::debugPrint(*cvarDirectory, CVARDIRECTORY_DELIMITER);
+        CVarDirectory::debugPrintHashDistribution(*cvarDirectory);
+        CVarDirectory::debugPrint(*cvarDirectory, CVARDIRECTORY_DELIMITER);
     }
     return true;
 }

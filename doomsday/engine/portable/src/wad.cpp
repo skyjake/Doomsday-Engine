@@ -156,7 +156,7 @@ public:
     {
         crc_ = uint(info_.size);
 
-        de::PathTree::Node const& node = directoryNode();
+        PathTree::Node const& node = directoryNode();
         ddstring_t const* name = node.name();
         int const nameLen = Str_Length(name);
         for(int k = 0; k < nameLen; ++k)
@@ -397,7 +397,7 @@ bool Wad::empty()
     return !lumpCount();
 }
 
-de::PathTree::Node& Wad::lumpDirectoryNode(int lumpIdx) const
+PathTree::Node& Wad::lumpDirectoryNode(int lumpIdx) const
 {
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();

@@ -331,7 +331,7 @@ struct ResourceNamespace::Instance
                         // Process it again?
                         DENG2_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
                         {
-                            de::PathTree::Node& sibling = **i;
+                            PathTree::Node& sibling = **i;
                             if(sibling.parent() == node)
                             {
                                 self.add(sibling);
