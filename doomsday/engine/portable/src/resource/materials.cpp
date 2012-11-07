@@ -260,20 +260,12 @@ static materialnamespaceid_t namespaceIdForDirectory(MaterialRepository& directo
                     de::String().sprintf("Failed to determine id for directory %p.", (void*)&directory));
 }
 
-/// @return  Newly composed path for @a node.
-static inline AutoStr* composePathForDirectoryNode(MaterialRepository::Node const& node, char delimiter)
-{
-    return node.composePath(AutoStr_NewStd(), NULL, delimiter);
-}
-
 /// @return  Newly composed Uri for @a node. Must be deleted when no longer needed.
-static de::Uri* composeUriForDirectoryNode(MaterialRepository::Node const& node)
+static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
     Str const* namespaceName = Materials_NamespaceName(namespaceIdForDirectory(node.tree()));
-    AutoStr* path = composePathForDirectoryNode(node, MATERIALS_PATH_DELIMITER);
-    de::Uri* uri = new de::Uri(Str_Text(path), RC_NULL);
-    uri->setScheme(Str_Text(namespaceName));
-    return uri;
+    AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, MATERIALS_PATH_DELIMITER);
+    return de::Uri(Str_Text(path), RC_NULL).setScheme(Str_Text(namespaceName));
 }
 
 static MaterialAnim* getAnimGroup(int number)
@@ -903,7 +895,8 @@ AutoStr* Materials_ComposePath(materialid_t id)
     MaterialBind* bind = getMaterialBindForId(id);
     if(bind)
     {
-        return composePathForDirectoryNode(bind->directoryNode(), MATERIALS_PATH_DELIMITER);
+        MaterialRepository::Node& node = bind->directoryNode();
+        return node.composePath(AutoStr_NewStd(), NULL, MATERIALS_PATH_DELIMITER);
     }
 
     LOG_WARNING("Attempted with unbound materialId #%u, returning null-object.") << id;
@@ -918,7 +911,8 @@ Uri* Materials_ComposeUri(materialid_t id)
     MaterialBind* bind = getMaterialBindForId(id);
     if(bind)
     {
-        return reinterpret_cast<Uri*>(composeUriForDirectoryNode(bind->directoryNode()));
+        MaterialRepository::Node& node = bind->directoryNode();
+        return reinterpret_cast<Uri*>(new de::Uri(composeUriForDirectoryNode(node)));
     }
 
 #if _DEBUG
@@ -1523,9 +1517,10 @@ static MaterialRepository::Node** collectDirectoryNodes(materialnamespaceid_t na
 
         DENG2_FOR_EACH_CONST(MaterialRepository::Nodes, nodeIt, matDirectory.leafNodes())
         {
+            MaterialRepository::Node& node = **nodeIt;
             if(like && like[0])
             {
-                AutoStr* path = composePathForDirectoryNode(**nodeIt, delimiter);
+                AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, delimiter);
                 int delta = qstrnicmp(Str_Text(path), like, strlen(like));
                 if(delta) continue; // Continue iteration.
             }
@@ -1533,7 +1528,7 @@ static MaterialRepository::Node** collectDirectoryNodes(materialnamespaceid_t na
             if(storage)
             {
                 // Store mode.
-                storage[idx++] = *nodeIt;
+                storage[idx++] = &node;
             }
             else
             {
@@ -1562,12 +1557,14 @@ static MaterialRepository::Node** collectDirectoryNodes(materialnamespaceid_t na
     return collectDirectoryNodes(namespaceId, like, count, storage);
 }
 
-static int composeAndCompareDirectoryNodePaths(void const* nodeA, void const* nodeB)
+static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
 {
     // Decode paths before determining a lexicographical delta.
-    AutoStr* a = Str_PercentDecode(composePathForDirectoryNode(**(MaterialRepository::Node const**)nodeA, MATERIALS_PATH_DELIMITER));
-    AutoStr* b = Str_PercentDecode(composePathForDirectoryNode(**(MaterialRepository::Node const**)nodeB, MATERIALS_PATH_DELIMITER));
-    return qstricmp(Str_Text(a), Str_Text(b));
+    MaterialRepository::Node const& nodeA = **(MaterialRepository::Node const**)a;
+    MaterialRepository::Node const& nodeB = **(MaterialRepository::Node const**)b;
+    AutoStr* pathA = Str_PercentDecode(nodeA.composePath(AutoStr_NewStd(), NULL, MATERIALS_PATH_DELIMITER));
+    AutoStr* pathB = Str_PercentDecode(nodeB.composePath(AutoStr_NewStd(), NULL, MATERIALS_PATH_DELIMITER));
+    return qstricmp(Str_Text(pathA), Str_Text(pathB));
 }
 
 static size_t printMaterials2(materialnamespaceid_t namespaceId, char const* like,

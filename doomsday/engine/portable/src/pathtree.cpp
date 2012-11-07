@@ -407,7 +407,7 @@ static void collectPathsInHash(PathTree::FoundPaths& found, PathTree::Nodes cons
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
         PathTree::Node& node = **i;
-        found.push_back(QString(Str_Text(node.composePath(path, NULL, delimiter))));
+        found.push_back(String(Str_Text(node.composePath(path, NULL, delimiter))));
     }
 }
 

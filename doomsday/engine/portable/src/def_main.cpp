@@ -760,7 +760,7 @@ void Def_ReadLumpDefs(void)
 
         if(!DED_ReadLump(&defs, lump.info().lumpIdx))
         {
-            Con_Error("DD_ReadLumpDefs: Parse error when reading \"%s:DD_DEFNS\".\n", Str_Text(lump.container().composePath()));
+            Con_Error("DD_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", Str_Text(lump.container().composePath()));
         }
     }
 
