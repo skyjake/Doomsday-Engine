@@ -410,6 +410,40 @@ String String::expandNativePath(bool* didExpand) const
     return *this;
 }
 
+String String::prettyPath() const
+{
+    if(empty()) return *this;
+
+    String result = *this;
+
+    // Hide relative directives like '}'
+    if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
+    {
+        result = result.mid(1);
+    }
+
+    // If within our the base directory cut out the base path.
+    if(QDir::isAbsolutePath(result))
+    {
+        String basePath = String::fromNativePath(DENG2_APP->nativeBasePath());
+        if(result.beginsWith(basePath))
+        {
+            result = result.mid(basePath.length());
+        }
+    }
+
+    return result;
+}
+
+String String::prettyNativePath() const
+{
+#ifdef Q_OS_WIN32
+    return String::fromNativePath(prettyPath());
+#else
+    return prettyPath();
+#endif
+}
+
 dint String::compareWithCase(const String& str) const
 {
     return compare(str, Qt::CaseSensitive);

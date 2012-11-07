@@ -190,6 +190,12 @@ public:
      */
     String expandNativePath(bool* didExpand = 0) const;
 
+    /// Returns a prettier version of the path.
+    String prettyPath() const;
+
+    /// Returns a prettier version of the path with native separators.
+    String prettyNativePath() const;
+
     /**
      * Compare two strings (case sensitive).
      *
