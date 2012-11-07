@@ -8,6 +8,8 @@ The following environment variables are recognized by Doomsday.
 @item{DOOMWADDIR} DOOM WAD directory. Doomsday looks for WAD files in this
 directory.
 
-@item{DOOMWADPATH} Delimited set of DOOM WAD directories. Use @ifdef{WIN32}{semicolon (;)}@else{colon (:)} to separate directories. Supported WAD files are searched for in each directory.
+@item{DOOMWADPATH} Delimited set of DOOM WAD directories. Use
+@ifdef{WIN32}{semicolon (;)}@else{colon (:)} to separate directories. Supported
+WAD files are searched for in each directory.
 
 }
