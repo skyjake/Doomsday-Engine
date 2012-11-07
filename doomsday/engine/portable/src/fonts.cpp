@@ -143,8 +143,8 @@ static inline fontnamespaceid_t namespaceIdForDirectoryNode(FontRepository::Node
 static de::Uri composeUriForDirectoryNode(FontRepository::Node const& node)
 {
     Str const* namespaceName = Fonts_NamespaceName(namespaceIdForDirectoryNode(node));
-    AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER);
-    return de::Uri(Str_Text(path), RC_NULL).setScheme(Str_Text(namespaceName));
+    QByteArray path = node.composePath(FONTS_PATH_DELIMITER).toUtf8();
+    return de::Uri(path.constData(), RC_NULL).setScheme(Str_Text(namespaceName));
 }
 
 /// @pre fontIdMap has been initialized and is large enough!
@@ -1081,7 +1081,8 @@ AutoStr* Fonts_ComposePath(fontid_t id)
 #endif
         return AutoStr_NewStd();
     }
-    return node->composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER);
+    QByteArray path = node->composePath(FONTS_PATH_DELIMITER).toUtf8();
+    return AutoStr_FromTextStd(path.constData());
 }
 
 Uri* Fonts_ComposeUri(fontid_t id)
@@ -1278,7 +1279,7 @@ static void printFontOverview(FontRepository::Node& node, bool printNamespace)
  */
 typedef struct {
     char delimiter;
-    const char* like;
+    de::String like;
     int idx;
     FontRepository::Node** storage;
 } collectdirectorynodeworker_params_t;
@@ -1287,11 +1288,10 @@ static int collectDirectoryNodeWorker(FontRepository::Node& node, void* paramete
 {
     collectdirectorynodeworker_params_t* p = (collectdirectorynodeworker_params_t*)parameters;
 
-    if(p->like && p->like[0])
+    if(!p->like.isEmpty())
     {
-        AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, p->delimiter);
-        int delta = strnicmp(Str_Text(path), p->like, strlen(p->like));
-        if(delta) return 0; // Continue iteration.
+        de::String path = node.composePath(p->delimiter);
+        if(!path.beginsWith(p->like, Qt::CaseInsensitive)) return 0; // Continue iteration.
     }
 
     if(p->storage)
@@ -1307,7 +1307,7 @@ static int collectDirectoryNodeWorker(FontRepository::Node& node, void* paramete
 }
 
 static FontRepository::Node** collectDirectoryNodes(fontnamespaceid_t namespaceId,
-    char const * like, uint* count, FontRepository::Node** storage)
+    de::String like, uint* count, FontRepository::Node** storage)
 {
     fontnamespaceid_t fromId, toId;
     if(VALID_FONTNAMESPACEID(namespaceId))
@@ -1360,8 +1360,10 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     FontRepository::Node const& nodeA = **(FontRepository::Node const**)a;
     FontRepository::Node const& nodeB = **(FontRepository::Node const**)b;
-    AutoStr* pathA = Str_PercentDecode(nodeA.composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER));
-    AutoStr* pathB = Str_PercentDecode(nodeB.composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER));
+    QByteArray pathAUtf8 = nodeA.composePath(FONTS_PATH_DELIMITER).toUtf8();
+    QByteArray pathBUtf8 = nodeB.composePath(FONTS_PATH_DELIMITER).toUtf8();
+    AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
+    AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
     return stricmp(Str_Text(pathA), Str_Text(pathB));
 }
 
@@ -1524,7 +1526,7 @@ ddstring_t** Fonts_CollectNames(int* rCount)
     uint count = 0;
     ddstring_t** list = NULL;
 
-    FontRepository::Node** foundFonts = collectDirectoryNodes(FN_ANY, NULL, &count, 0);
+    FontRepository::Node** foundFonts = collectDirectoryNodes(FN_ANY, "", &count, 0);
     if(foundFonts)
     {
         qsort(foundFonts, (size_t)count, sizeof *foundFonts, composeAndCompareDirectoryNodePaths);
@@ -1537,7 +1539,8 @@ ddstring_t** Fonts_CollectNames(int* rCount)
         for(FontRepository::Node** iter = foundFonts; *iter; ++iter)
         {
             FontRepository::Node& node = **iter;
-            list[idx++] = Str_FromAutoStr(node.composePath(AutoStr_NewStd(), NULL, FONTS_PATH_DELIMITER));
+            QByteArray path = node.composePath(FONTS_PATH_DELIMITER).toUtf8();
+            list[idx++] = Str_Set(Str_NewStd(), path.constData());
         }
         list[idx] = NULL; // Terminate.
     }

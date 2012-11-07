@@ -129,14 +129,14 @@ struct LumpIndex::Instance
     struct LumpSortInfo
     {
         File1 const* lump;
-        AutoStr* path;
+        String* path;
         int origIndex;
     };
     static int lumpSorter(void const* a, void const* b)
     {
         LumpSortInfo const* infoA = (LumpSortInfo const*)a;
         LumpSortInfo const* infoB = (LumpSortInfo const*)b;
-        int result = Str_CompareIgnoreCase(infoA->path, Str_Text(infoB->path));
+        int result = infoA->path->compare(infoB->path, Qt::CaseInsensitive);
         if(0 != result) return result;
 
         // Still matched; try the file load order indexes.
@@ -172,7 +172,7 @@ struct LumpIndex::Instance
 
             sortInfo.lump = lump;
             sortInfo.origIndex = i;
-            sortInfo.path = lump->composePath();
+            sortInfo.path = new String(lump->composePath());
         }
         qsort(sortInfos, numRecords, sizeof(*sortInfos), lumpSorter);
 
@@ -181,12 +181,17 @@ struct LumpIndex::Instance
         for(int i = 1; i < numRecords; ++i)
         {
             if(pruneFlags.testBit(i)) continue;
-            if(Str_CompareIgnoreCase(sortInfos[i - 1].path, Str_Text(sortInfos[i].path))) continue;
+            if(sortInfos[i - 1].path->compare(sortInfos[i].path, Qt::CaseInsensitive)) continue;
             pruneFlags.setBit(sortInfos[i].origIndex, true);
             numFlagged += 1;
         }
 
         // Free temporary sort data.
+        for(int i = 0; i < numRecords; ++i)
+        {
+            LumpSortInfo& sortInfo = sortInfos[i];
+            delete sortInfo.path;
+        }
         delete[] sortInfos;
 
         return numFlagged;
@@ -416,9 +421,11 @@ void LumpIndex::print(LumpIndex const& index)
     DENG2_FOR_EACH_CONST(Lumps, i, index.lumps())
     {
         File1 const& lump = **i;
+        QByteArray containerPath = lump.container().composePath().prettyNativePath().toUtf8();
+        QByteArray lumpPath = lump.composePath().prettyNativePath().toUtf8();
         Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
-                   F_PrettyPath(Str_Text(lump.container().composePath())),
-                   F_PrettyPath(Str_Text(lump.composePath())),
+                   containerPath.constData(),
+                   lumpPath.constData(),
                    (unsigned long) lump.info().size,
                    (lump.info().isCompressed()? " compressed" : ""));
     }

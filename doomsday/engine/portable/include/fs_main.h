@@ -79,7 +79,7 @@ namespace de
             String path;
             int attrib;
 
-            PathListItem(QString const& _path, int _attrib = 0)
+            PathListItem(String const& _path, int _attrib = 0)
                 : path(_path), attrib(_attrib)
             {}
 

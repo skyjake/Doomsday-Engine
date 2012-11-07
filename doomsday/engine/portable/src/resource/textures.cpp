@@ -151,8 +151,8 @@ static inline texturenamespaceid_t namespaceIdForDirectoryNode(TextureRepository
 static de::Uri composeUriForDirectoryNode(TextureRepository::Node const& node)
 {
     Str const* namespaceName = Textures_NamespaceName(namespaceIdForDirectoryNode(node));
-    AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, TEXTURES_PATH_DELIMITER);
-    return de::Uri(Str_Text(path), RC_NULL).setScheme(Str_Text(namespaceName));
+    QByteArray path = node.composePath(TEXTURES_PATH_DELIMITER).toUtf8();
+    return de::Uri(path.constData(), RC_NULL).setScheme(Str_Text(namespaceName));
 }
 
 /// @pre textureIdMap has been initialized and is large enough!
@@ -1052,7 +1052,8 @@ AutoStr* Textures_ComposePath(textureid_t id)
     TextureRepository::Node* node = directoryNodeForBindId(id);
     if(node)
     {
-        return node->composePath(AutoStr_NewStd(), NULL, TEXTURES_PATH_DELIMITER);
+        QByteArray path = node->composePath(TEXTURES_PATH_DELIMITER).toUtf8();
+        return AutoStr_FromTextStd(path.constData());
     }
 
     LOG_WARNING("Attempted with unbound textureId #%u, returning null-object.") << id;
@@ -1260,9 +1261,9 @@ static void printTextureOverview(TextureRepository::Node& node, bool printNamesp
  * so is not hugely important right now.
  */
 static TextureRepository::Node** collectDirectoryNodes(texturenamespaceid_t namespaceId,
-    const char* like, uint* count, TextureRepository::Node** storage)
+    de::String like, uint* count, TextureRepository::Node** storage)
 {
-    const char delimiter = TEXTURES_PATH_DELIMITER;
+    char const delimiter = TEXTURES_PATH_DELIMITER;
     texturenamespaceid_t fromId, toId;
 
     if(VALID_TEXTURENAMESPACEID(namespaceId))
@@ -1285,11 +1286,10 @@ static TextureRepository::Node** collectDirectoryNodes(texturenamespaceid_t name
         DENG2_FOR_EACH_CONST(TextureRepository::Nodes, nodeIt, directory.leafNodes())
         {
             TextureRepository::Node& node = **nodeIt;
-            if(like && like[0])
+            if(!like.isEmpty())
             {
-                AutoStr* path = node.composePath(AutoStr_NewStd(), NULL, delimiter);
-                int delta = qstrnicmp(Str_Text(path), like, strlen(like));
-                if(delta) continue; // Continue iteration.
+                de::String path = node.composePath(delimiter);
+                if(!path.beginsWith(like)) continue; // Continue iteration.
             }
 
             if(storage)
@@ -1333,9 +1333,11 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     TextureRepository::Node const& nodeA = **(TextureRepository::Node const**)a;
     TextureRepository::Node const& nodeB = **(TextureRepository::Node const**)b;
-    AutoStr* pathA = Str_PercentDecode(nodeA.composePath(AutoStr_NewStd(), NULL, TEXTURES_PATH_DELIMITER));
-    AutoStr* pathB = Str_PercentDecode(nodeB.composePath(AutoStr_NewStd(), NULL, TEXTURES_PATH_DELIMITER));
-    return qstricmp(Str_Text(pathA), Str_Text(pathB));
+    QByteArray pathAUtf8 = nodeA.composePath(TEXTURES_PATH_DELIMITER).toUtf8();
+    QByteArray pathBUtf8 = nodeB.composePath(TEXTURES_PATH_DELIMITER).toUtf8();
+    AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8));
+    AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8));
+    return Str_CompareIgnoreCase(pathA, Str_Text(pathB));
 }
 
 /**

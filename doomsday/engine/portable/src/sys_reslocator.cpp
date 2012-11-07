@@ -239,7 +239,8 @@ static bool tryFindResource2(resourceclass_t rclass, ddstring_t const* rawSearch
             // Does the caller want to know the matched path?
             if(foundPath)
             {
-                found->composePath(foundPath, NULL, '/');
+                QByteArray path = found->composePath('/').toUtf8();
+                Str_Set(foundPath, path.constData());
                 F_PrependBasePath(foundPath, foundPath);
             }
             return true;

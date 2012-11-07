@@ -166,21 +166,16 @@ namespace de
             int comparePath(PathMap& candidatePath, int flags) const;
 
             /**
-             * Composes and/or calculates the length of the composed path for this node.
-             * 'Composing' the path of a node is to downwardly reconstruct the whole path
-             * for a given node toward the root of the hierarchy.
+             * Composes the full path for this node. 'Composing' the path of a node is
+             * to upwardly reconstruct the whole path toward the root of the hierarchy.
              *
-             * @param path          If not @c NULL the composed path is written here.
-             *                      Previous contents are discarded.
-             * @param length        If not @c NULL the length of the composed path is
-             *                      written here.
-             * @param delimiter     Names in the composed path hierarchy will be delimited
-             *                      with this character. Paths to branches always include
-             *                      a terminating delimiter.
+             * @param delimiter Names in the composed path hierarchy will be delimited
+             *                  with this character. Paths to branches always include
+             *                  a terminating delimiter.
              *
-             * @return Same as @a path for caller's convenience.
+             * @return The composed path.
              */
-            ddstring_t* composePath(ddstring_t* path, int* length, char delimiter = '/') const;
+            String composePath(char delimiter = '/') const;
 
             /**
              * Sets the user-specified custom pointer.

@@ -139,44 +139,40 @@ void P_SetCurrentMap(GameMap* map)
 }
 
 /// @note Part of the Doomsday public API.
-boolean P_MapExists(const char* uriCString)
+boolean P_MapExists(char const* uriCString)
 {
-    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
-    Uri_Delete(uri);
+    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(uri.path()), true/*quiet please*/);
     return (lumpNum >= 0);
 }
 
 /// @note Part of the Doomsday public API.
-boolean P_MapIsCustom(const char* uriCString)
+boolean P_MapIsCustom(char const* uriCString)
 {
-    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
-    Uri_Delete(uri);
+    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(uri.path()), true/*quiet please*/);
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
 /// @note Part of the Doomsday public API.
-const char* P_MapSourceFile(const char* uriCString)
+AutoStr* P_MapSourceFile(char const* uriCString)
 {
-    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
-    Uri_Delete(uri);
+    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(uri.path()), true/*quiet please*/);
     if(lumpNum < 0) return NULL;
     return W_LumpSourceFile(lumpNum);
 }
 
 /// @note Part of the Doomsday public API.
-boolean P_LoadMap(const char* uriCString)
+boolean P_LoadMap(char const* uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
         LegacyCore_FatalError("P_LoadMap: Invalid Uri argument.");
     }
 
-    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
-    AutoStr* path = Uri_ToString(uri);
-    LOG_MSG("Loading Map \"%s\"...") << Str_Text(path);
+    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    LOG_MSG("Loading Map \"%s\"...") << uri;
 
     // It would be very cool if map loading happened in another
     // thread. That way we could be keeping ourselves busy while
@@ -203,7 +199,7 @@ boolean P_LoadMap(const char* uriCString)
         }
     }
 
-    if(DAM_AttemptMapLoad(uri))
+    if(DAM_AttemptMapLoad(reinterpret_cast<uri_s*>(&uri)))
     {
         GameMap* map = theMap;
 
@@ -254,11 +250,9 @@ boolean P_LoadMap(const char* uriCString)
         if(!isDedicated)
             R_InitRendVerticesPool();
 
-        Uri_Delete(uri);
         return true;
     }
 
-    Uri_Delete(uri);
     return false;
 }
 

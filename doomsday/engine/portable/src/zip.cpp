@@ -158,7 +158,7 @@ public:
      *
      * @return String containing the absolute path.
      */
-    AutoStr* composePath(char delimiter = '/') const
+    String composePath(char delimiter = '/') const
     {
         return dynamic_cast<Zip&>(container()).composeLumpPath(info_.lumpIdx, delimiter);
     }
@@ -347,7 +347,7 @@ struct Zip::Instance
 
         // Scan the end of the file for the central directory end record.
         if(!locateCentralDirectory())
-            throw FormatError("Zip::readLumpDirectory", QString("Central directory in %1 not found").arg(Str_Text(self->composePath())));
+            throw FormatError("Zip::readLumpDirectory", String("Central directory in %1 not found").arg(self->composePath().prettyNativePath()));
 
         // Read the central directory end record.
         centralend_t summary;
@@ -355,13 +355,13 @@ struct Zip::Instance
 
         // Does the summary say something we don't like?
         if(summary.diskEntryCount != summary.totalEntryCount)
-            throw FormatError("Zip::readLumpDirectory", QString("Multipart zip file \"%1\" not supported").arg(Str_Text(self->composePath())));
+            throw FormatError("Zip::readLumpDirectory", String("Multipart zip file \"%1\" not supported").arg(self->composePath().prettyNativePath()));
 
         // We'll load the file directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
         // Read the entire central directory into memory.
         void* centralDirectory = M_Malloc(summary.size);
-        if(!centralDirectory) throw FormatError("Zip::readLumpDirectory", QString("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
+        if(!centralDirectory) throw FormatError("Zip::readLumpDirectory", String("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
 
         self->handle_->seek(summary.offset, SeekSet);
         self->handle_->read((uint8_t*)centralDirectory, summary.size);
@@ -414,14 +414,14 @@ struct Zip::Instance
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' uses an unsupported compression algorithm, ignoring.")
-                        << Str_Text(self->composePath()) << Str_Text(&entryPath);
+                        << self->composePath().prettyNativePath() << Str_Text(&entryPath);
                 }
 
                 if(USHORT(header->flags) & ZFH_ENCRYPTED)
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' is encrypted.\n  Encryption is not supported, ignoring.")
-                        << Str_Text(self->composePath()) << Str_Text(&entryPath);
+                        << self->composePath().prettyNativePath() << Str_Text(&entryPath);
                 }
 
                 if(pass == 0)
@@ -576,10 +576,10 @@ PathTree::Node& Zip::lumpDirectoryNode(int lumpIdx) const
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
-AutoStr* Zip::composeLumpPath(int lumpIdx, char delimiter)
+String Zip::composeLumpPath(int lumpIdx, char delimiter)
 {
-    if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
-    return lump(lumpIdx).directoryNode().composePath(AutoStr_NewStd(), NULL, delimiter);
+    if(!isValidIndex(lumpIdx)) return String();
+    return lump(lumpIdx).directoryNode().composePath(delimiter);
 }
 
 File1& Zip::lump(int lumpIdx)
@@ -630,8 +630,8 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
 
     ZipFile& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
     LOG_TRACE("\"%s:%s\" (%u bytes%s)")
-        << F_PrettyPath(Str_Text(composePath()))
-        << F_PrettyPath(Str_Text(file.composePath()))
+        << composePath().prettyNativePath()
+        << file.composePath().prettyNativePath()
         << (unsigned long) file.info().size
         << (file.info().isCompressed()? ", compressed" : "");
 
@@ -656,8 +656,7 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
 Zip& Zip::unlockLump(int lumpIdx)
 {
     LOG_AS("Zip::unlockLump");
-    LOG_TRACE("\"%s:%s\"")
-        << F_PrettyPath(Str_Text(composePath())) << F_PrettyPath(Str_Text(lump(lumpIdx).composePath()));
+    LOG_TRACE("\"%s:%s\"") << composePath().prettyNativePath() << lump(lumpIdx).composePath();
 
     if(isValidIndex(lumpIdx))
     {
@@ -692,8 +691,8 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     ZipFile const& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
 
     LOG_TRACE("\"%s:%s\" (%u bytes%s) [%lu +%lu]")
-        << F_PrettyPath(Str_Text(composePath()))
-        << F_PrettyPath(Str_Text(file.composePath()))
+        << composePath().prettyNativePath()
+        << file.composePath().prettyNativePath()
         << (unsigned long) file.size()
         << (file.isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset

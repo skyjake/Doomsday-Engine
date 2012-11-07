@@ -2964,7 +2964,7 @@ AutoStr* G_GenerateSaveGameName(void)
     baseName = NULL;
     if(P_MapIsCustom(Str_Text(mapPath)))
     {
-        F_ExtractFileBase(baseNameBuf, P_MapSourceFile(Str_Text(mapPath)), 256);
+        F_ExtractFileBase(baseNameBuf, Str_Text(P_MapSourceFile(Str_Text(mapPath))), 256);
         baseName = baseNameBuf;
     }
 
@@ -3590,7 +3590,7 @@ void G_PrintMapList(void)
         {
             Uri* uri = G_ComposeMapUri(episode, map);
             AutoStr* path = Uri_Compose(uri);
-            sourceList[map] = P_MapSourceFile(Str_Text(path));
+            sourceList[map] = Str_Text(P_MapSourceFile(Str_Text(path)));
             Uri_Delete(uri);
         }
         G_PrintFormattedMapList(episode, sourceList, 99);

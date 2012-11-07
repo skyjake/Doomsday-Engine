@@ -243,7 +243,7 @@ static size_t maxStackDepth;
 
 typedef struct pathconstructorparams_s {
     size_t length;
-    ddstring_t* composedPath;
+    String& composedPath;
     char delimiter;
 } pathconstructorparams_t;
 
@@ -274,21 +274,18 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
         pathConstructor(parm, *trav.parent());
 
         // Append the separator.
-        if(parm.composedPath && parm.delimiter)
-            Str_AppendCharWithoutAllocs(parm.composedPath, parm.delimiter);
+        if(parm.delimiter)
+            parm.composedPath.append(parm.delimiter);
     }
     // We've arrived at the deepest level. The full length is now known.
     // Ensure there's enough memory for the string.
     else if(parm.composedPath)
     {
-        Str_ReserveNotPreserving(parm.composedPath, parm.length);
+        parm.composedPath.reserve(parm.length);
     }
 
-    if(parm.composedPath)
-    {
-        // Assemble the path by appending the fragment.
-        Str_AppendWithoutAllocs(parm.composedPath, fragment);
-    }
+    // Assemble the path by appending the fragment.
+    parm.composedPath.append(String(Str_Text(fragment)));
 }
 
 /**
@@ -305,43 +302,34 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
  *
  * Perhaps a fixed size MRU cache? -ds
  */
-ddstring_t* PathTree::Node::composePath(ddstring_t* path, int* length, char delimiter) const
+String PathTree::Node::composePath(char delimiter) const
 {
-    pathconstructorparams_t parm;
+    String result;
 
+    pathconstructorparams_t parm = { 0, result, delimiter };
 #ifdef LIBDENG_STACK_MONITOR
     stackStart = &parm;
 #endif
-
-    parm.composedPath = path;
-    parm.length = 0;
-    parm.delimiter = delimiter;
 
     // Include a terminating path delimiter for branches.
     if(delimiter && !isLeaf())
         parm.length += 1; // A single character.
 
-    if(parm.composedPath)
-    {
-        Str_Clear(parm.composedPath);
-    }
-
     // Recursively construct the path from fragments and delimiters.
     pathConstructor(parm, *this);
 
     // Terminating delimiter for branches.
-    if(parm.composedPath && delimiter && !isLeaf())
-        Str_AppendCharWithoutAllocs(parm.composedPath, delimiter);
+    if(delimiter && !isLeaf())
+        result.append(delimiter);
 
-    DENG2_ASSERT(!parm.composedPath || Str_Size(parm.composedPath) == parm.length);
+    DENG2_ASSERT(result.size() == parm.length);
 
 #ifdef LIBDENG_STACK_MONITOR
     LOG_AS("pathConstructor");
     LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
-    if(length) *length = parm.length;
-    return path;
+    return result;
 }
 
 } // namespace de

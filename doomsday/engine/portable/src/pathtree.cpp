@@ -402,12 +402,10 @@ PathTree::Nodes const& PathTree::nodes(NodeType type) const
 static void collectPathsInHash(PathTree::FoundPaths& found, PathTree::Nodes const& ph, char delimiter)
 {
     if(ph.empty()) return;
-
-    AutoStr* path = AutoStr_NewStd();
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
         PathTree::Node& node = **i;
-        found.push_back(String(Str_Text(node.composePath(path, NULL, delimiter))));
+        found.push_back(node.composePath(delimiter));
     }
 }
 

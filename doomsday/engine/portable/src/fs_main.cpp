@@ -467,21 +467,17 @@ static FS1::FileList::iterator findListFile(FS1::FileList& list, de::File1& file
  * @note Performance is O(n).
  * @return @c iterator pointing to list->end() if not found.
  */
-static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, char const* path_)
+static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, String path)
 {
     if(list.empty()) return list.end();
-    if(!path_ || !path_[0]) return list.end();
-
-    // Transform the path into one we can process.
-    AutoStr* path = AutoStr_FromTextStd(path_);
-    F_FixSlashes(path, path);
+    if(path.isEmpty()) return list.end();
 
     // Perform the search.
     FS1::FileList::iterator i;
     for(i = list.begin(); i != list.end(); ++i)
     {
         de::File1& file = (*i)->file();
-        if(!Str_CompareIgnoreCase(file.composePath(), Str_Text(path)))
+        if(!file.composePath().compare(path, Qt::CaseInsensitive))
         {
             break; // This is the node we are looking for.
         }
@@ -495,7 +491,7 @@ FS1& FS1::index(de::File1& file)
     // Ensure this hasn't yet been indexed.
     FileList::const_iterator found = findListFile(d->loadedFiles, file);
     if(found != d->loadedFiles.end())
-        throw de::Error("FS1::index", "File \"" + String(Str_Text(file.composePath())) + "\" has already been indexed");
+        throw de::Error("FS1::index", "File \"" + file.composePath() + "\" has already been indexed");
 #endif
 
     // Publish lumps to one or more indexes?
@@ -531,7 +527,8 @@ FS1& FS1::deindex(de::File1& file)
     FileList::iterator found = findListFile(d->loadedFiles, file);
     if(found == d->loadedFiles.end()) return *this; // Most peculiar..
 
-    d->releaseFileId(Str_Text(file.composePath()));
+    QByteArray path = file.composePath().toUtf8();
+    d->releaseFileId(path.constData());
 
     d->zipFileIndex.pruneByFile(file);
     d->primaryIndex.pruneByFile(file);
@@ -574,9 +571,12 @@ static void printFileList(FS1::FileList& list)
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, list)
     {
-        de::FileHandle* hndl = *i;
-        de::File1& file = hndl->file();
-        FileId fileId = FileId::fromPath(Str_Text(file.composePath()));
+        de::FileHandle& hndl = **i;
+        de::File1& file = hndl.file();
+
+        QByteArray path = file.composePath().toUtf8();
+        FileId fileId = FileId::fromPath(path.constData());
+
         LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
             << (file.hasStartup()? '*' : ' ') << idx
             << fileId << fileId.path() << (void*)&hndl;
@@ -936,12 +936,13 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         File1 const& lump = **i;
         PathTree::Node const& node = lump.directoryNode();
 
-        AutoStr* filePath = 0;
+        String* filePath = 0;
         bool patternMatched;
         if(!(flags & SPF_NO_DESCEND))
         {
-            filePath       = lump.composePath();
-            patternMatched = F_MatchFileName(Str_Text(filePath), Str_Text(searchPattern));
+            filePath = new String(lump.composePath());
+            QByteArray filePathUtf8 = filePath->toUtf8();
+            patternMatched = F_MatchFileName(filePathUtf8.constData(), Str_Text(searchPattern));
         }
         else
         {
@@ -953,10 +954,12 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         // Not yet composed the path?
         if(!filePath)
         {
-            filePath = lump.composePath();
+            filePath = new String(lump.composePath());
         }
 
-        found.push_back(PathListItem(Str_Text(filePath), !node.isLeaf()? A_SUBDIR : 0));
+        found.push_back(PathListItem(*filePath, !node.isLeaf()? A_SUBDIR : 0));
+
+        delete filePath;
     }
 
     /*
@@ -1340,7 +1343,8 @@ D_CMD(ListFiles)
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
             }
 
-            Con_Printf("\"%s\" (%i %s%s)", F_PrettyPath(Str_Text(file.composePath())),
+            QByteArray path = file.composePath().prettyNativePath().toUtf8();
+            Con_Printf("\"%s\" (%i %s%s)", path.constData(),
                        fileCount, fileCount != 1 ? "files" : "file",
                        (file.hasStartup()? ", startup" : ""));
             if(0 != crc)
@@ -1547,10 +1551,12 @@ void F_Delete(struct filehandle_s* _hndl)
     delete &hndl;
 }
 
-AutoStr* F_ComposePath(struct file1_s const* file)
+AutoStr* F_ComposePath(struct file1_s const* _file)
 {
-    if(file) return reinterpret_cast<de::File1 const*>(file)->composePath();
-    return AutoStr_NewStd();
+    if(!_file) return AutoStr_NewStd();
+    de::File1 const& file = reinterpret_cast<de::File1 const&>(*_file);
+    QByteArray path = file.composePath().toUtf8();
+    return AutoStr_FromTextStd(path.constData());
 }
 
 void F_SetCustom(struct file1_s* file, boolean yes)
@@ -1616,7 +1622,9 @@ AutoStr* F_ComposeLumpFilePath(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).container().composePath();
+        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        QByteArray path = lump.container().composePath().toUtf8();
+        return AutoStr_FromTextStd(path.constData());
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1639,13 +1647,14 @@ boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 AutoStr* F_ComposeLumpPath2(struct file1_s* _file, int lumpIdx, char delimiter)
 {
     if(!_file) return AutoStr_NewStd();
-    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).composePath(delimiter);
+    de::File1& file = reinterpret_cast<de::File1&>(*_file);
+    QByteArray path = file.lump(lumpIdx).composePath(delimiter).toUtf8();
+    return AutoStr_FromTextStd(path.constData());
 }
 
-AutoStr* F_ComposeLumpPath(struct file1_s* _file, int lumpIdx)
+AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx)
 {
-    if(!_file) return AutoStr_NewStd();
-    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).composePath();
+    return F_ComposeLumpPath2(file, lumpIdx, '/');
 }
 
 /**
@@ -1685,22 +1694,25 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
         if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
             // Caller wants the whole path plus name and extension (if present).
-            maxLength += Str_Length(file.composePath());
+            maxLength += file.composePath().length();
         }
         else
         {
+            ddstring_t const* name;
+            QByteArray path;
+
             if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
             {
                 // Caller does not want the directory hierarchy.
-                ddstring_t const* name = file.name();
+                name = file.name();
                 p = Str_Text(name);
                 pLength = Str_Length(name);
             }
             else
             {
-                AutoStr* path = file.composePath();
-                p = Str_Text(path);
-                pLength = Str_Length(path);
+                path = file.composePath().toUtf8();
+                p = path.constData();
+                pLength = path.length();
             }
 
             if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
@@ -1739,25 +1751,29 @@ static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAU
         if(flags & PTSF_QUOTED)
             Str_AppendChar(str, '"');
 
-        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
+        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR | PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
             // Caller wants the whole path plus name and extension (if present).
-            Str_Append(str, Str_Text(file.composePath()));
+            QByteArray path = file.composePath().toUtf8();
+            Str_Append(str, path.constData());
         }
         else
         {
+            ddstring_t const* name;
+            QByteArray path;
+
             if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
             {
                 // Caller does not want the directory hierarchy.
-                ddstring_t const* name = file.name();
+                name = file.name();
                 p = Str_Text(name);
                 pLength = Str_Length(name);
             }
             else
             {
-                AutoStr* path = file.composePath();
-                p = Str_Text(path);
-                pLength = Str_Length(path);
+                path = file.composePath().toUtf8();
+                p = path.constData();
+                pLength = path.length();
             }
 
             if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)

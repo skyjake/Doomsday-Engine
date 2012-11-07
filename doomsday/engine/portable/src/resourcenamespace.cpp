@@ -287,7 +287,8 @@ struct ResourceNamespace::Instance
         if(!node.isLeaf())
         {
             // Compose the search pattern.
-            AutoStr* searchPattern = node.composePath(AutoStr_NewStd(), NULL, '/');
+            QByteArray path = node.composePath('/').toUtf8();
+            AutoStr* searchPattern = AutoStr_FromTextStd(path.constData());
             // We're interested in *everything*.
             Str_AppendChar(searchPattern, '*');
 
@@ -521,10 +522,9 @@ void ResourceNamespace::debugPrint() const
         for(NameHash::Node* node = bucket.first; node; node = node->next)
         {
             ResourceRef const& res = node->resource;
-            AutoStr* path = res.directoryNode().composePath(AutoStr_NewStd(), NULL);
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
-                    << resIdx << key << Str_Text(&res.name()) << Str_Text(path);
+                    << resIdx << key << Str_Text(&res.name()) << res.directoryNode().composePath();
 
             ++resIdx;
         }

@@ -70,7 +70,7 @@ static void readLump(lumpnum_t lumpNum)
     W_UnlockLump(lumpNum);
 
     Con_Message("Applying DeHackEd patch lump #%i \"%s:%s\"...\n", lumpNum,
-                F_PrettyPath(W_LumpSourceFile(lumpNum)), W_LumpName(lumpNum));
+                F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum))), W_LumpName(lumpNum));
 
     readDehPatch(deh, NoInclude | IgnoreEOF);
 }

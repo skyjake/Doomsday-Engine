@@ -81,19 +81,20 @@ uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
-char const* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
+AutoStr* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
         de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
-        return Str_Text(lump.container().composePath());
+        QByteArray path = lump.container().composePath().toUtf8();
+        return AutoStr_FromText(path.constData());
     }
     catch(LumpIndex::NotFoundError const&)
     {
         W_Error("W_LumpSourceFile: Invalid lumpnum %i.", absoluteLumpNum);
     }
-    return "";
+    return AutoStr_NewStd();
 }
 
 boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
