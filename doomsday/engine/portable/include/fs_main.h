@@ -34,12 +34,12 @@
 
 #include "file.h"
 #include "filehandle.h"
-#include "pathtree.h"
 
 #ifdef __cplusplus
 
 #include <QList>
 #include <de/String>
+#include "pathtree.h"
 #include "fileinfo.h"
 
 /**

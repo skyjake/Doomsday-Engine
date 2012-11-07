@@ -213,8 +213,7 @@ struct Wad::Instance
     {
         if(lumpDirectory)
         {
-            PathTree_Iterate(reinterpret_cast<pathtree_s*>(lumpDirectory), PCF_NO_BRANCH,
-                                  NULL, PATHTREE_NOHASH, clearWadFileWorker);
+            lumpDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, clearWadFileWorker);
             delete lumpDirectory;
         }
 
@@ -222,14 +221,13 @@ struct Wad::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    static int clearWadFileWorker(pathtreenode_s* _node, void* /*parameters*/)
+    static int clearWadFileWorker(PathTree::Node& node, void* /*parameters*/)
     {
-        PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
-        WadFile* lump = reinterpret_cast<WadFile*>(node->userPointer());
+        WadFile* lump = reinterpret_cast<WadFile*>(node.userPointer());
         if(lump)
         {
             // Detach our user data from this node.
-            node->setUserPointer(0);
+            node.setUserPointer(0);
             delete lump;
         }
         return 0; // Continue iteration.
@@ -344,13 +342,12 @@ struct Wad::Instance
         delete[] arcRecords;
     }
 
-    static int buildLumpNodeLutWorker(pathtreenode_s* _node, void* parameters)
+    static int buildLumpNodeLutWorker(PathTree::Node& node, void* parameters)
     {
-        PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
         Instance* wadInst = (Instance*)parameters;
-        WadFile* lump = reinterpret_cast<WadFile*>(node->userPointer());
+        WadFile* lump = reinterpret_cast<WadFile*>(node.userPointer());
         DENG2_ASSERT(lump && wadInst->self->isValidIndex(lump->info().lumpIdx)); // Sanity check.
-        (*wadInst->lumpNodeLut)[lump->info().lumpIdx] = node;
+        (*wadInst->lumpNodeLut)[lump->info().lumpIdx] = &node;
         return 0; // Continue iteration.
     }
 
@@ -363,8 +360,7 @@ struct Wad::Instance
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         if(!lumpDirectory) return;
 
-        PathTree_Iterate2(reinterpret_cast<pathtree_s*>(lumpDirectory), PCF_NO_BRANCH,
-                               NULL, PATHTREE_NOHASH, buildLumpNodeLutWorker, (void*)this);
+        lumpDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, buildLumpNodeLutWorker, (void*)this);
     }
 };
 

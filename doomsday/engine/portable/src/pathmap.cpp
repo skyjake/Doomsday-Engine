@@ -23,6 +23,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "pathmap.h"
+#include "pathtree.h"
 
 #include <ctype.h>
 #include <de/memory.h>

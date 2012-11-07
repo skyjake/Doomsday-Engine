@@ -340,18 +340,18 @@ void PathTree::clear()
     d->clear();
 }
 
-PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter)
+PathTree::Node& PathTree::find(int flags, char const* searchPath, char delimiter)
 {
-    PathTree::Node* foundNode = NULL;
+    Node* foundNode = NULL;
     if(searchPath && searchPath[0] && d->size)
     {
-        PathMap mappedSearchPath = PathMap(PathTree_HashPathFragment2, searchPath, delimiter);
+        PathMap mappedSearchPath = PathMap(hashPathFragment, searchPath, delimiter);
 
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF))
         {
-            PathTree::Nodes& nodes = d->leafHash;
-            PathTree::Nodes::iterator i = nodes.find(hash);
+            Nodes& nodes = d->leafHash;
+            Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
                 if((*i)->comparePath(mappedSearchPath, flags))
@@ -366,8 +366,8 @@ PathTree::Node& PathTree::find(int flags, const char* searchPath, char delimiter
         if(!foundNode)
         if(!(flags & PCF_NO_BRANCH))
         {
-            PathTree::Nodes& nodes = d->branchHash;
-            PathTree::Nodes::iterator i = nodes.find(hash);
+            Nodes& nodes = d->branchHash;
+            Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
                 if((*i)->comparePath(mappedSearchPath, flags))
@@ -423,6 +423,62 @@ int PathTree::findAllPaths(FoundPaths& found, int flags, char delimiter)
         collectPathsInHash(found, leafNodes(), delimiter);
     }
     return found.count() - numFoundSoFar;
+}
+
+static int iteratePathsInHash(PathTree& pathTree, ushort hash, PathTree::NodeType type, int flags,
+    PathTree::Node* parent, int (*callback) (PathTree::Node&, void*), void* parameters)
+{
+    int result = 0;
+
+    if(hash != PATHTREE_NOHASH && hash >= PATHTREE_PATHHASH_SIZE)
+    {
+        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1 (valid range is [0..%2]).").arg(hash).arg(PATHTREE_PATHHASH_SIZE-1));
+    }
+
+    PathTree::Nodes const& nodes = pathTree.nodes(type);
+
+    // Are we iterating nodes with a known hash?
+    if(hash != PATHTREE_NOHASH)
+    {
+        // Yes.
+        PathTree::Nodes::const_iterator i = nodes.constFind(hash);
+        for(; i != nodes.end() && i.key() == hash; ++i)
+        {
+            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
+            {
+                result = callback(**i, parameters);
+                if(result) break;
+            }
+        }
+    }
+    else
+    {
+        // No - iterate all nodes.
+        DENG2_FOR_EACH_CONST(PathTree::Nodes, i, nodes)
+        {
+            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
+            {
+                result = callback(**i, parameters);
+                if(result) break;
+            }
+        }
+    }
+    return result;
+}
+
+int PathTree::iterate(int flags, PathTree::Node* parent, ushort hash,
+    int (*callback) (PathTree::Node&, void*), void* parameters)
+{
+    int result = 0;
+    if(callback)
+    {
+        if(!(flags & PCF_NO_LEAF))
+            result = iteratePathsInHash(*this, hash, Leaf, flags, parent, callback, parameters);
+
+        if(!result && !(flags & PCF_NO_BRANCH))
+            result = iteratePathsInHash(*this, hash, Branch, flags, parent, callback, parameters);
+    }
+    return result;
 }
 
 #if _DEBUG
@@ -776,7 +832,7 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
 
                 ++nodeCount[PT_LEAF];
 
-                while((other = PathTreeNode_Parent(other))) { ++height; }
+                while((other = other->parent())) { ++height; }
 
                 if(height > chainHeight)
                     chainHeight = height;
@@ -839,245 +895,3 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
 #endif
 
 } // namespace de
-
-/**
- * C wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::PathTree*>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::PathTree const*>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    de::PathTree* self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    de::PathTree const* self = TOINTERNAL_CONST(inst)
-
-PathTree* PathTree_NewWithFlags(int flags)
-{
-    return reinterpret_cast<PathTree*>(new de::PathTree(flags));
-}
-
-PathTree* PathTree_New(void)
-{
-    return reinterpret_cast<PathTree*>(new de::PathTree());
-}
-
-void PathTree_Delete(PathTree* pt)
-{
-    if(pt)
-    {
-        SELF(pt);
-        delete self;
-    }
-}
-
-int PathTree_Size(PathTree* pt)
-{
-    SELF(pt);
-    return self->size();
-}
-
-void PathTree_Clear(PathTree* pt)
-{
-    SELF(pt);
-    self->clear();
-}
-
-PathTreeNode* PathTree_Insert2(PathTree* pt, char const* path, char delimiter)
-{
-    SELF(pt);
-    return reinterpret_cast<PathTreeNode*>(self->insert(path, delimiter));
-}
-
-PathTreeNode* PathTree_Insert(PathTree* pt, char const* path)
-{
-    SELF(pt);
-    return reinterpret_cast<PathTreeNode*>(self->insert(path));
-}
-
-static int iteratePathsInHash(PathTree* pt,
-    ushort hash, de::PathTree::NodeType type, int flags, PathTreeNode* parent_,
-    int (*callback) (PathTreeNode* node, void* parameters), void* parameters)
-{
-    int result = 0;
-    SELF(pt);
-
-    if(hash != PATHTREE_NOHASH && hash >= PATHTREE_PATHHASH_SIZE)
-    {
-        throw de::Error("iteratePathsInHash",
-                        de::String("Invalid hash %1 (valid range is [0..%2]).")
-                            .arg(hash).arg(PATHTREE_PATHHASH_SIZE-1));
-    }
-
-    de::PathTree::Nodes const& nodes = self->nodes(type);
-    de::PathTree::Node* parent = reinterpret_cast<de::PathTree::Node*>(parent_);
-
-    // Are we iterating nodes with a known hash?
-    if(hash != PATHTREE_NOHASH)
-    {
-        // Yes.
-        de::PathTree::Nodes::const_iterator i = nodes.constFind(hash);
-        for(; i != nodes.end() && i.key() == hash; ++i)
-        {
-            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
-            {
-                result = callback(reinterpret_cast<PathTreeNode*>(*i), parameters);
-                if(result) break;
-            }
-        }
-    }
-    else
-    {
-        // No - iterate all nodes.
-        DENG2_FOR_EACH_CONST(de::PathTree::Nodes, i, nodes)
-        {
-            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
-            {
-                result = callback(reinterpret_cast<PathTreeNode*>(*i), parameters);
-                if(result) break;
-            }
-        }
-    }
-    return result;
-}
-
-static int iteratePathsInHash_Const(PathTree const* pt,
-    ushort hash, de::PathTree::NodeType type, int flags, PathTreeNode const* parent_,
-    int (*callback) (PathTreeNode const* node, void* parameters), void* parameters)
-{
-    SELF_CONST(pt);
-
-    if(hash != PATHTREE_NOHASH && hash >= PATHTREE_PATHHASH_SIZE)
-    {
-        throw de::Error("iteratePathsInHash_Const",
-                        de::String("Invalid hash %1 (valid range is [0..%2]).")
-                            .arg(hash).arg(PATHTREE_PATHHASH_SIZE-1));
-    }
-
-    int result = 0;
-    de::PathTree::Nodes const& nodes = self->nodes(type);
-    de::PathTree::Node const* parent = reinterpret_cast<de::PathTree::Node const*>(parent_);
-
-    // Are we iterating nodes with a known hash?
-    if(hash != PATHTREE_NOHASH)
-    {
-        // Yes.
-        de::PathTree::Nodes::const_iterator i = nodes.find(hash);
-        for(; i != nodes.end() && i.key() == hash; ++i)
-        {
-            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
-            {
-                result = callback(reinterpret_cast<PathTreeNode const*>(*i), parameters);
-                if(result) break;
-            }
-        }
-    }
-    else
-    {
-        // No - iterate all nodes.
-        DENG2_FOR_EACH_CONST(de::PathTree::Nodes, i, nodes)
-        {
-            if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
-            {
-                result = callback(reinterpret_cast<PathTreeNode const*>(*i), parameters);
-                if(result) break;
-            }
-        }
-    }
-    return result;
-}
-
-int PathTree_Iterate2(PathTree* pt, int flags, PathTreeNode* parent, ushort hash,
-    pathtree_iteratecallback_t callback, void* parameters)
-{
-    DENG_ASSERT(pt);
-    int result = 0;
-    if(callback)
-    {
-        if(!(flags & PCF_NO_LEAF))
-            result = iteratePathsInHash(pt, hash, de::PathTree::Leaf, flags, parent,
-                                        callback, parameters);
-
-        if(!result && !(flags & PCF_NO_BRANCH))
-            result = iteratePathsInHash(pt, hash, de::PathTree::Branch, flags, parent,
-                                        callback, parameters);
-    }
-    return result;
-}
-
-int PathTree_Iterate(PathTree* pt, int flags, PathTreeNode* parent, ushort hash,
-    pathtree_iteratecallback_t callback)
-{
-    return PathTree_Iterate2(pt, flags, parent, hash, callback, 0/* no params */);
-}
-
-int PathTree_Iterate2_Const(PathTree const* pt, int flags, PathTreeNode const* parent, ushort hash,
-    pathtree_iterateconstcallback_t callback, void* parameters)
-{
-    DENG_ASSERT(pt);
-    int result = 0;
-    if(callback)
-    {
-        if(!(flags & PCF_NO_LEAF))
-            result = iteratePathsInHash_Const(pt, hash, de::PathTree::Leaf, flags, parent,
-                                              callback, parameters);
-
-        if(!result && !(flags & PCF_NO_BRANCH))
-            result = iteratePathsInHash_Const(pt, hash, de::PathTree::Branch, flags, parent,
-                                              callback, parameters);
-    }
-    return result;
-}
-
-int PathTree_Iterate_Const(const PathTree* pt, int flags, PathTreeNode const* parent, ushort hash,
-    pathtree_iterateconstcallback_t callback)
-{
-    return PathTree_Iterate2_Const(pt, flags, parent, hash, callback, 0/* no params */);
-}
-
-PathTreeNode* PathTree_Find2(PathTree* pt, int flags, char const* searchPath, char delimiter)
-{
-    SELF(pt);
-    try
-    {
-        return reinterpret_cast<PathTreeNode*>(&self->find(flags, searchPath, delimiter));
-    }
-    catch(de::PathTree::NotFoundError const&)
-    {} // Ignore this error.
-    return 0;
-}
-
-PathTreeNode* PathTree_Find(PathTree* pt, int flags, char const* searchPath)
-{
-    return PathTree_Find2(pt, flags, searchPath, '/');
-}
-
-ushort PathTree_HashPathFragment2(char const* fragment, size_t len, char delimiter)
-{
-    return de::PathTree::hashPathFragment(fragment, len, delimiter);
-}
-
-ushort PathTree_HashPathFragment(char const* fragment, size_t len)
-{
-    return de::PathTree::hashPathFragment(fragment, len);
-}
-
-#if _DEBUG
-void PathTree_DebugPrint(PathTree* pt, char delimiter)
-{
-    if(!pt) return;
-    de::PathTree::debugPrint(*(TOINTERNAL(pt)), delimiter);
-}
-
-void PathTree_DebugPrintHashDistribution(PathTree* pt)
-{
-    if(!pt) return;
-    de::PathTree::debugPrintHashDistribution(*(TOINTERNAL(pt)));
-}
-#endif

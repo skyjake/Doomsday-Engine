@@ -68,7 +68,15 @@
 #define strdup _strdup
 #define spawnlp _spawnlp
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const char* strcasestr(const char* text, const char* sub);
+
+#ifdef __cplusplus
+} extern "C"
+#endif
 
 #endif                          // WIN32
 

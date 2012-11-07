@@ -248,8 +248,7 @@ struct Zip::Instance
     {
         if(lumpDirectory)
         {
-            PathTree_Iterate(reinterpret_cast<pathtree_s*>(lumpDirectory), PCF_NO_BRANCH,
-                                  NULL, PATHTREE_NOHASH, clearZipFileWorker);
+            lumpDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, clearZipFileWorker);
             delete lumpDirectory;
         }
 
@@ -257,14 +256,13 @@ struct Zip::Instance
         if(lumpCache) delete lumpCache;
     }
 
-    static int clearZipFileWorker(pathtreenode_s* _node, void* /*parameters*/)
+    static int clearZipFileWorker(PathTree::Node& node, void* /*parameters*/)
     {
-        PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
-        ZipFile* rec = reinterpret_cast<ZipFile*>(node->userPointer());
+        ZipFile* rec = reinterpret_cast<ZipFile*>(node.userPointer());
         if(rec)
         {
             // Detach our user data from this node.
-            node->setUserPointer(0);
+            node.setUserPointer(0);
             delete rec;
         }
         return 0; // Continue iteration.
@@ -482,13 +480,12 @@ struct Zip::Instance
         Str_Free(&entryPath);
     }
 
-    static int buildLumpNodeLutWorker(pathtreenode_s* _node, void* parameters)
+    static int buildLumpNodeLutWorker(PathTree::Node& node, void* parameters)
     {
-        PathTree::Node* node = reinterpret_cast<PathTree::Node*>(_node);
         Instance* zipInst = (Instance*)parameters;
-        ZipFile* lumpRecord = reinterpret_cast<ZipFile*>(node->userPointer());
+        ZipFile* lumpRecord = reinterpret_cast<ZipFile*>(node.userPointer());
         DENG2_ASSERT(lumpRecord && zipInst->self->isValidIndex(lumpRecord->info().lumpIdx)); // Sanity check.
-        (*zipInst->lumpNodeLut)[lumpRecord->info().lumpIdx] = node;
+        (*zipInst->lumpNodeLut)[lumpRecord->info().lumpIdx] = &node;
         return 0; // Continue iteration.
     }
 
@@ -501,8 +498,7 @@ struct Zip::Instance
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         if(!lumpDirectory) return;
 
-        PathTree_Iterate2(reinterpret_cast<pathtree_s*>(lumpDirectory), PCF_NO_BRANCH,
-                               NULL, PATHTREE_NOHASH, buildLumpNodeLutWorker, (void*)this);
+        lumpDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, buildLumpNodeLutWorker, (void*)this);
     }
 
     /**

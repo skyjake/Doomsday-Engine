@@ -25,6 +25,10 @@
 #ifndef LIBDENG_CONSOLE_BUFFER_H
 #define LIBDENG_CONSOLE_BUFFER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @defgroup consoleBufferLineFlags Console Buffer Line Flags.
  *
@@ -140,4 +144,9 @@ const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx);
  */
 uint CBuffer_GetLines2(CBuffer* cb, uint reqCount, int firstIdx, cbline_t const** list, int blflags);
 uint CBuffer_GetLines(CBuffer* cb, uint reqCount, int firstIdx, cbline_t const** list); /* blflags = 0 */
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif /* LIBDENG_CONSOLE_BUFFER_H */

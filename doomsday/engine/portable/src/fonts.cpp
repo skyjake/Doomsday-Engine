@@ -71,7 +71,7 @@ D_CMD(PrintFontStats);
 #endif
 
 static int iterateDirectory(fontnamespaceid_t namespaceId,
-    int (*callback)(PathTreeNode* node, void* parameters), void* parameters);
+    int (*callback)(de::PathTree::Node& node, void* parameters), void* parameters);
 
 static de::Uri* emptyUri;
 
@@ -161,9 +161,8 @@ static void unlinkDirectoryNodeFromBindIdMap(de::PathTree::Node const& node)
 }
 
 /// @pre uniqueIdMap has been initialized and is large enough!
-static int linkRecordInUniqueIdMap(PathTreeNode* _node, void* parameters)
+static int linkRecordInUniqueIdMap(de::PathTree::Node& node, void* parameters)
 {
-    de::PathTree::Node& node = reinterpret_cast<de::PathTree::Node&>(*_node);
     DENG_UNUSED(parameters);
 
     FontRecord const* record = (FontRecord*) node.userPointer();
@@ -384,11 +383,9 @@ void Fonts_Init(void)
     }
 }
 
-static int destroyRecordWorker(PathTreeNode* _node, void* parameters)
+static int destroyRecordWorker(de::PathTree::Node& node, void* parameters)
 {
-    DENG_ASSERT(_node);
     DENG_UNUSED(parameters);
-    de::PathTree::Node& node = reinterpret_cast<de::PathTree::Node&>(*_node);
     destroyRecord(node);
     return 0; // Continue iteration.
 }
@@ -403,7 +400,7 @@ void Fonts_Shutdown(void)
 
         if(fn.directory)
         {
-            PathTree_Iterate(reinterpret_cast<PathTree*>(fn.directory), PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, destroyRecordWorker);
+            fn.directory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, destroyRecordWorker);
             delete fn.directory; fn.directory = 0;
         }
 
@@ -509,11 +506,8 @@ void Fonts_ClearSystem(void)
     GL_PruneTextureVariantSpecifications();
 }
 
-static int destroyFontAndRecordWorker(PathTreeNode* _node, void* parameters)
+static int destroyFontAndRecordWorker(de::PathTree::Node& node, void* /*parameters*/)
 {
-    DENG_ASSERT(_node);
-    DENG_UNUSED(parameters);
-    de::PathTree::Node& node = reinterpret_cast<de::PathTree::Node&>(*_node);
     destroyFontAndRecord(node);
     return 0; // Continue iteration.
 }
@@ -544,7 +538,7 @@ void Fonts_ClearNamespace(fontnamespaceid_t namespaceId)
 
         if(fn.directory)
         {
-            PathTree_Iterate(reinterpret_cast<PathTree*>(fn.directory), PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, destroyFontAndRecordWorker);
+            fn.directory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, destroyFontAndRecordWorker);
             fn.directory->clear();
         }
 
@@ -655,9 +649,8 @@ typedef struct {
     int minId, maxId;
 } finduniqueidbounds_params_t;
 
-static int findUniqueIdBounds(PathTreeNode* _node, void* parameters)
+static int findUniqueIdBounds(de::PathTree::Node& node, void* parameters)
 {
-    de::PathTree::Node& node = reinterpret_cast<de::PathTree::Node&>(*_node);
     FontRecord const* record = (FontRecord*) node.userPointer();
     finduniqueidbounds_params_t* p = (finduniqueidbounds_params_t*)parameters;
     if(record->uniqueId < p->minId) p->minId = record->uniqueId;
@@ -1153,9 +1146,8 @@ typedef struct {
     void* parameters;
 } iteratedirectoryworker_params_t;
 
-static int iterateDirectoryWorker(PathTreeNode* _node, void* parameters)
+static int iterateDirectoryWorker(de::PathTree::Node& node, void* parameters)
 {
-    de::PathTree::Node& node = reinterpret_cast<de::PathTree::Node&>(*_node);
     DENG_ASSERT(parameters);
     iteratedirectoryworker_params_t* p = (iteratedirectoryworker_params_t*)parameters;
 
@@ -1193,7 +1185,7 @@ static int iterateDirectoryWorker(PathTreeNode* _node, void* parameters)
 }
 
 static int iterateDirectory(fontnamespaceid_t namespaceId,
-    int (*callback)(PathTreeNode* node, void* parameters), void* parameters)
+    int (*callback)(de::PathTree::Node& node, void* parameters), void* parameters)
 {
     fontnamespaceid_t from, to;
     if(VALID_FONTNAMESPACEID(namespaceId))
@@ -1212,7 +1204,7 @@ static int iterateDirectory(fontnamespaceid_t namespaceId,
         de::PathTree* directory = getDirectoryForNamespaceId(fontnamespaceid_t(i));
         if(!directory) continue;
 
-        result = PathTree_Iterate2(reinterpret_cast<PathTree*>(directory), PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, callback, parameters);
+        result = directory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, callback, parameters);
         if(result) break;
     }
     return result;
@@ -1297,9 +1289,8 @@ typedef struct {
     de::PathTree::Node** storage;
 } collectdirectorynodeworker_params_t;
 
-static int collectDirectoryNodeWorker(PathTreeNode* _node, void* parameters)
+static int collectDirectoryNodeWorker(de::PathTree::Node& node, void* parameters)
 {
-    de::PathTree::Node& node = reinterpret_cast<de::PathTree::Node&>(*_node);
     collectdirectorynodeworker_params_t* p = (collectdirectorynodeworker_params_t*)parameters;
 
     if(p->like && p->like[0])
@@ -1348,8 +1339,7 @@ static de::PathTree::Node** collectDirectoryNodes(fontnamespaceid_t namespaceId,
         de::PathTree* fontDirectory = getDirectoryForNamespaceId(fontnamespaceid_t(i));
         if(!fontDirectory) continue;
 
-        PathTree_Iterate2(reinterpret_cast<PathTree*>(fontDirectory), PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
-                          PATHTREE_NOHASH, collectDirectoryNodeWorker, (void*)&p);
+        fontDirectory->iterate(PCF_NO_BRANCH | PCF_MATCH_FULL, NULL, PATHTREE_NOHASH, collectDirectoryNodeWorker, (void*)&p);
     }
 
     if(storage)
