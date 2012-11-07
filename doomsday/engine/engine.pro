@@ -469,7 +469,7 @@ SOURCES += \
     portable/src/colorpalette.c \
     portable/src/con_bar.c \
     portable/src/con_config.c \
-    portable/src/con_data.c \
+    portable/src/con_data.cpp \
     portable/src/con_main.c \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
