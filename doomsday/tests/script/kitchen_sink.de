@@ -213,6 +213,8 @@ print 'z =', z
 const z = 10
 print 'z has been consted to', z
 try
+    print 'It is allowed to reassign the same value...'
+    z = 10
     z = 5
 catch ReadOnlyError
     print 'Have to delete z before its value can change.'
