@@ -36,6 +36,10 @@
 #  error "Attempted to include internal Doomsday p_object.h from a game"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // This macro can be used to calculate a mobj-specific 'random' number.
 #define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
 
@@ -81,5 +85,9 @@ void Mobj_OriginSmoothed(mobj_t* mobj, coord_t origin[3]);
 angle_t Mobj_AngleSmoothed(mobj_t* mobj);
 
 coord_t Mobj_ApproxPointDistance(mobj_t* start, coord_t const* point);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_MOBJ

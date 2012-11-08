@@ -44,10 +44,10 @@ ded_t* ded;
 
 static bool recognisePatchLumpByName(lumpnum_t lumpNum)
 {
-    const char* lumpName = W_LumpName(lumpNum);
-    if(!lumpName) return false;
+    AutoStr* lumpName = W_LumpName(lumpNum);
+    if(Str_IsEmpty(lumpName)) return false;
 
-    const char* ext = F_FindFileExtension(lumpName);
+    const char* ext = F_FindFileExtension(Str_Text(lumpName));
     return (ext && !qstricmp(ext, "deh"));
 }
 
@@ -70,7 +70,7 @@ static void readLump(lumpnum_t lumpNum)
     W_UnlockLump(lumpNum);
 
     Con_Message("Applying DeHackEd patch lump #%i \"%s:%s\"...\n", lumpNum,
-                F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum))), W_LumpName(lumpNum));
+                F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum))), Str_Text(W_LumpName(lumpNum)));
 
     readDehPatch(deh, NoInclude | IgnoreEOF);
 }

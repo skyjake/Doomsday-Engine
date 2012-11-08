@@ -151,7 +151,7 @@ NativePath NativePath::pretty() const
         NativePath basePath = App::app().nativeBasePath();
         if(result.beginsWith(basePath))
         {
-            result = result.mid(basePath.length());
+            result = result.mid(basePath.length() + 1);
         }
     }
 

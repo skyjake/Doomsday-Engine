@@ -141,10 +141,10 @@ public:
 
 //unsigned short const NameHash::hash_size;
 
-static AutoStr* composeResourceName(ddstring_t const* filePath)
+static AutoStr* composeResourceName(char const* filePath)
 {
     AutoStr* name = AutoStr_NewStd();
-    F_FileName(name, Str_Text(filePath));
+    F_FileName(name, filePath);
     return name;
 }
 
@@ -416,7 +416,9 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
 
-    AutoStr* name = composeResourceName(resourceNode.name());
+    String const& name_ = resourceNode.name();
+    QByteArray name_Utf8 = name_.toUtf8();
+    AutoStr* name = composeResourceName(name_Utf8.constData());
     NameHash::key_type key = hashResourceName(name);
 
     // Is this a new resource?
@@ -541,7 +543,7 @@ int ResourceNamespace::findAll(ddstring_t const* searchPath, ResourceList& found
     AutoStr* name = 0;
     if(searchPath && !Str_IsEmpty(searchPath))
     {
-        name = composeResourceName(searchPath);
+        name = composeResourceName(Str_Text(searchPath));
     }
 
     NameHash::key_type from, to;
@@ -562,7 +564,7 @@ int ResourceNamespace::findAll(ddstring_t const* searchPath, ResourceList& found
         for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
             ResourceRef& resource = hashNode->resource;
-            if(name && qstrnicmp(Str_Text(name), Str_Text(resource.directoryNode().name()), Str_Length(name))) continue;
+            if(name && !resource.directoryNode().name().beginsWith(String(Str_Text(name))), Qt::CaseInsensitive) continue;
 
             found.push_back(&resource.directoryNode());
         }

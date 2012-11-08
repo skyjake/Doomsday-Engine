@@ -195,7 +195,7 @@ MapEntityDef* P_MapEntityDefByName(char const* name);
  *
  * @return Unique name associated with @a def if found, else a zero-length string.
  */
-Str const* P_NameForMapEntityDef(MapEntityDef* def);
+AutoStr* P_NameForMapEntityDef(MapEntityDef* def);
 
 #include <EntityDatabase>
 
@@ -232,15 +232,6 @@ extern GameMap* theMap;
  * Change the global "current" map.
  */
 void P_SetCurrentMap(GameMap* map);
-
-/**
- * Generate a 'unique' identifier for the map.  This identifier
- * contains information about the map tag (E3M3), the WAD that
- * contains the map (DOOM.IWAD), and the game mode (doom-ultimate).
- *
- * The entire ID string will be in lowercase letters.
- */
-const char* P_GenerateUniqueMapId(const char* mapId);
 
 /**
  * Is there a known map referenced by @a uri and if so, is it available for loading?

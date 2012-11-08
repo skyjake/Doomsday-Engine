@@ -212,7 +212,7 @@ static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
         DENG2_FOR_EACH_CONST(ResourceNamespace::ResourceList, i, foundResources)
         {
             PathTree::Node* node = *i;
-            if(!node->comparePath(searchPattern, PCF_NO_BRANCH)) continue;
+            if(node->comparePath(searchPattern, PCF_NO_BRANCH)) continue;
 
             // This is the resource we are looking for.
             return node;

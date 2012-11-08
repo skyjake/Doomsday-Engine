@@ -31,10 +31,12 @@
 #include "de_refresh.h"
 #include "de_render.h"
 
+#include "lumpindex.h"
+
 static void freeArchivedMap(archivedmap_t* dam);
 
 // Should we be caching successfully loaded maps?
-byte mapCache = true;
+extern "C" byte mapCache = true;
 
 static const char* mapCacheDir = "mapcache/";
 
@@ -75,19 +77,17 @@ void DAM_Shutdown(void)
 /**
  * Allocate memory for a new archived map record.
  */
-static archivedmap_t* allocArchivedMap(void)
+static archivedmap_t* allocArchivedMap()
 {
-    archivedmap_t* dam = Z_Calloc(sizeof(*dam), PU_APPSTATIC, 0);
-    if(!dam)
-        Con_Error("allocArchivedMap: Failed on allocation of %lu bytes for new ArchivedMap.",
-                  (unsigned long) sizeof(*dam));
+    archivedmap_t* dam = (archivedmap_t*) Z_Calloc(sizeof(*dam), PU_APPSTATIC, 0);
+    if(!dam) Con_Error("allocArchivedMap: Failed on allocation of %lu bytes for new ArchivedMap.", (unsigned long) sizeof(*dam));
     return dam;
 }
 
 /// Free all memory acquired for an archived map record.
 static void freeArchivedMap(archivedmap_t* dam)
 {
-    assert(dam);
+    DENG_ASSERT(dam);
     Uri_Delete(dam->uri);
     Str_Free(&dam->cachedMapPath);
     Z_Free(dam);
@@ -144,7 +144,7 @@ static archivedmap_t* findArchivedMap(const Uri* uri)
  */
 static void addArchivedMap(archivedmap_t* dam)
 {
-    archivedMaps = Z_Realloc(archivedMaps, sizeof(archivedmap_t*) * (++numArchivedMaps + 1), PU_APPSTATIC);
+    archivedMaps = (archivedmap_t**) Z_Realloc(archivedMaps, sizeof(archivedmap_t*) * (++numArchivedMaps + 1), PU_APPSTATIC);
     archivedMaps[numArchivedMaps - 1] = dam;
     archivedMaps[numArchivedMaps] = NULL; // Terminate.
 }
@@ -228,6 +228,16 @@ static boolean convertMap(GameMap** map, archivedmap_t* dam)
     return converted;
 }
 
+static de::String DAM_ComposeUniqueId(de::File1& markerLump)
+{
+    return de::String("%1|%2|%3|%4")
+                   .arg(markerLump.name().fileNameWithoutExtension())
+                   .arg(markerLump.container().name().fileNameWithoutExtension())
+                   .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
+                   .arg(Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()))
+                   .toLower();
+}
+
 /**
  * Attempt to load the map associated with the specified identifier.
  */
@@ -247,21 +257,21 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
     if(!dam)
     {
         // We've not yet attempted to load this map.
-        const char* mapId = Str_Text(Uri_Path(uri));
-        lumpnum_t markerLump;
+        char const* markerLumpName = Str_Text(Uri_Path(uri));
+        lumpnum_t markerLumpNum;
         AutoStr* cachedMapDir;
         Str cachedMapPath;
 
-        markerLump = F_LumpNumForName(mapId);
-        if(0 > markerLump) return false;
+        markerLumpNum = F_LumpNumForName(markerLumpName);
+        if(0 > markerLumpNum) return false;
 
         // Compose the cache directory path and ensure it exists.
-        cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLump)));
+        cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
         F_MakePath(Str_Text(cachedMapDir));
 
         // Compose the full path to the cached map data file.
         Str_InitStd(&cachedMapPath);
-        F_FileName(&cachedMapPath, Str_Text(F_LumpName(markerLump)));
+        F_FileName(&cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
         Str_Append(&cachedMapPath, ".dcm");
         Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
 
@@ -323,7 +333,14 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             }
 
             map->uri = Uri_Dup(dam->uri);
-            strncpy(map->uniqueId, P_GenerateUniqueMapId(Str_Text(Uri_Path(map->uri))), sizeof(map->uniqueId));
+
+            // Generate the unique map id.
+            lumpnum_t markerLumpNum = App_FileSystem()->lumpNumForName(Str_Text(Uri_Path(map->uri)));
+            de::File1& markerLump   = App_FileSystem()->nameIndexForLump(markerLumpNum).lump(markerLumpNum);
+
+            de::String uniqueId     = DAM_ComposeUniqueId(markerLump);
+            QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
+            qstrncpy(map->uniqueId, uniqueIdUtf8.constData(), sizeof(map->uniqueId));
 
             // See what mapinfo says about this map.
             mapInfo = Def_GetMapInfo(map->uri);

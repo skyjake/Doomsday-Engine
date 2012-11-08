@@ -29,7 +29,7 @@
 
 #include "libdeng.h"
 #include "types.h"
-#include "de/ddstring.h"
+#include <de/String>
 
 namespace de
 {
@@ -49,10 +49,11 @@ namespace de
      * of the container: if a string is removed from the pool, its id is free to be
      * reassigned to the next new string. Zero is not a valid id.
      *
-     * Each string can also have an associated, custom user-defined uint32 value.
+     * Each string can also have an associated, custom user-defined uint32 value
+     * and/or void* data pointer.
      *
      * The implementation has, at worst, O(log n) complexity for addition, removal,
-     * string lookup, and user value set/get.
+     * string lookup, and user value/pointer set/get.
      *
      * @todo Add case-sensitive mode.
      */
@@ -64,23 +65,20 @@ namespace de
 
     public:
         /**
-         * Constructs an empty StringPool. The pool must be destroyed with
-         * StringPool_Delete() when no longer needed.
+         * Constructs an empty StringPool.
          */
         StringPool();
 
         /**
-         * Constructs an empty StringPool and interns a number of strings. The pool
-         * must be destroyed with StringPool_Delete() when no longer needed.
+         * Constructs an empty StringPool and interns a number of strings.
          *
          * @param strings  Array of strings to be interned (must contain at least @a count strings).
          * @param count  Number of strings to be interned.
          */
-        StringPool(ddstring_t const* strings, uint count);
+        StringPool(String* strings, uint count);
 
         /**
          * Destroys the stringpool.
-         * @param pool  StringPool instance.
          */
         ~StringPool();
 
@@ -91,14 +89,12 @@ namespace de
 
         /**
          * Is the pool empty?
-         * @param pool  StringPool instance.
          * @return  @c true if there are no strings present in the pool.
          */
         bool empty() const;
 
         /**
          * Determines the number of strings in the pool.
-         * @param pool  StringPool instance.
          * @return Number of strings in the pool.
          */
         uint size() const;
@@ -113,7 +109,7 @@ namespace de
          *
          * @return  Unique Id associated with the internal copy of @a str.
          */
-        Id intern(ddstring_t const* str);
+        Id intern(String str);
 
         /**
          * Interns string @a str. If this string is not already in the pool, a new
@@ -125,7 +121,7 @@ namespace de
          *
          * @return The interned copy of the string owned by the pool.
          */
-        ddstring_t const* internAndRetrieve(ddstring_t const* str);
+        String const& internAndRetrieve(String str);
 
         /**
          * Sets the user-specified custom value associated with the string @a id.
@@ -134,7 +130,7 @@ namespace de
          * @param id     Id of a string.
          * @param value  User value.
          */
-        void setUserValue(Id id, uint value);
+        StringPool& setUserValue(Id id, uint value);
 
         /**
          * Retrieves the user-specified custom value associated with the string @a id.
@@ -155,12 +151,11 @@ namespace de
          * @param id     Id of a string.
          * @param ptr    User pointer.
          */
-        void setUserPointer(Id id, void* ptr);
+        StringPool& setUserPointer(Id id, void* ptr);
 
         /**
          * Retrieves the user-specified custom pointer associated with the string @a id.
          *
-         * @param pool   StringPool instance.
          * @param id     Id of a string.
          *
          * @return User pointer.
@@ -174,7 +169,7 @@ namespace de
          *
          * @return  Id of the matching string; else @c 0.
          */
-        Id isInterned(ddstring_t const* str) const;
+        Id isInterned(String str) const;
 
         /**
          * Retrieve an immutable copy of the interned string associated with the
@@ -184,23 +179,23 @@ namespace de
          *
          * @return  Interned string associated with @a internId. Owned by the pool.
          */
-        ddstring_t const* string(Id id) const;
+        String const& string(Id id) const;
 
         /**
          * Removes a string from the pool.
          *
          * @param str   String to be removed.
          *
-         * @return  @c true, if string @a str was found and removed.
+         * @return  @c true iff a string was removed.
          */
-        bool remove(ddstring_t const* str);
+        bool remove(String str);
 
         /**
          * Removes a string from the pool.
          *
          * @param id    Id of the string to remove.
          *
-         * @return  @c true if the string was found and removed.
+         * @return  @c true iff a string was removed.
          */
         bool removeById(Id id);
 
@@ -211,8 +206,8 @@ namespace de
          * @param callback  Callback to make for each iteration.
          * @param data      User data to be passed to the callback.
          *
-         * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value returned
-         *          by @a callback.
+         * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value
+         *          returned by @a callback.
          */
         int iterate(int (*callback)(Id, void*), void* data) const;
 
@@ -221,14 +216,14 @@ namespace de
          *
          * @param writer  Writer instance.
          */
-        void write(Writer* writer) const;
+        //void write(Writer& writer) const;
 
         /**
          * Deserializes the pool from @a reader.
          *
          * @param reader  Reader instance.
          */
-        void read(Reader* reader);
+        //void read(Reader& reader);
 
 #if _DEBUG
         /**

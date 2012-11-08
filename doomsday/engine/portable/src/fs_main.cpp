@@ -947,7 +947,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         }
         else
         {
-            patternMatched = node.comparePath(patternMap, PCF_MATCH_FULL);
+            patternMatched = !node.comparePath(patternMap, PCF_MATCH_FULL);
         }
 
         if(!patternMatched) continue;
@@ -1507,17 +1507,18 @@ lumpnum_t F_LumpNumForName(char const* name)
     return -1;
 }
 
-ddstring_t const* F_LumpName(lumpnum_t absoluteLumpNum)
+AutoStr* F_LumpName(lumpnum_t absoluteLumpNum)
 {
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name();
+        String const& name = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name();
+        QByteArray nameUtf8 = name.toUtf8();
+        return AutoStr_FromTextStd(nameUtf8.constData());
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
-    static de::Str zeroLengthString;
-    return zeroLengthString;
+    return AutoStr_NewStd();
 }
 
 size_t F_LumpLength(lumpnum_t absoluteLumpNum)
@@ -1662,152 +1663,60 @@ AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx)
  * @defgroup pathToStringFlags  Path To String Flags.
  */
 ///@{
-#define PTSF_QUOTED                 0x1 ///< Add double quotes around the path.
-#define PTSF_TRANSFORM_EXCLUDE_DIR  0x2 ///< Exclude the directory; e.g., c:/doom/myaddon.wad -> myaddon.wad
-#define PTSF_TRANSFORM_EXCLUDE_EXT  0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad -> c:/doom/myaddon
+#define PTSF_QUOTED                     0x1 ///< Add double quotes around the path.
+#define PTSF_TRANSFORM_EXCLUDE_PATH     0x2 ///< Exclude the path; e.g., c:/doom/myaddon.wad => myaddon.wad
+#define PTSF_TRANSFORM_EXCLUDE_EXT      0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad => c:/doom/myaddon
 ///@}
 
-#define DEFAULT_PATHTOSTRINGFLAGS (PTSF_QUOTED)
+#define DEFAULT_PATHTOSTRINGFLAGS       (PTSF_QUOTED)
 
 /**
- * @param flags         @ref pathToStringFlags
- * @param delimiter     If not @c NULL, path fragments in the resultant string
- *                      will be delimited by this.
+ * @param flags      @ref pathToStringFlags
+ * @param delimiter  If not @c NULL, path fragments in the resultant string
+ *                   will be delimited by this.
  *
- * @return  New string containing a concatenated, possibly delimited set of all
- *      file paths in the list. Ownership of the string passes to the caller who
- *      should ensure to release it with Str_Delete() when no longer needed.
- *      Always returns a valid (but perhaps zero-length) string object.
+ * @return  New string containing a concatenated, possibly delimited set of
+ *          all file paths in the list.
  */
-static ddstring_t* composeFilePathString(FS1::FileList& files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
-                                         char const* delimiter = " ")
+static String composeFilePathString(FS1::FileList& files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
+                                    String const& delimiter = ";")
 {
-    int delimiterLength = (delimiter? (int)strlen(delimiter) : 0);
-    int pLength;
-    char const* p, *ext;
-
-    // Determine the maximum number of characters we'll need.
-    int maxLength = 0;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
-    {
-        de::File1& file = (*i)->file();
-
-        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
-        {
-            // Caller wants the whole path plus name and extension (if present).
-            maxLength += file.composePath().length();
-        }
-        else
-        {
-            ddstring_t const* name;
-            QByteArray path;
-
-            if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
-            {
-                // Caller does not want the directory hierarchy.
-                name = file.name();
-                p = Str_Text(name);
-                pLength = Str_Length(name);
-            }
-            else
-            {
-                path = file.composePath().toUtf8();
-                p = path.constData();
-                pLength = path.length();
-            }
-
-            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-            {
-                // Caller does not want the file extension.
-                ext = F_FindFileExtension(p);
-                if(ext) ext -= 1/*dot separator*/;
-            }
-            else
-            {
-                ext = NULL;
-            }
-
-            if(ext)
-            {
-                maxLength += pLength - (pLength - (ext - p));
-            }
-            else
-            {
-                maxLength += pLength;
-            }
-        }
-
-        if(flags & PTSF_QUOTED)
-            maxLength += 1;
-    }
-    maxLength += files.count() * delimiterLength;
-
-    // Composite final string.
-    ddstring_t* str = Str_Reserve(Str_NewStd(), maxLength);
-    int n = 0;
+    String result;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
     {
         de::File1& file = (*i)->file();
 
         if(flags & PTSF_QUOTED)
-            Str_AppendChar(str, '"');
+            result.append('"');
 
-        if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR | PTSF_TRANSFORM_EXCLUDE_EXT)))
+        if(flags & PTSF_TRANSFORM_EXCLUDE_PATH)
         {
-            // Caller wants the whole path plus name and extension (if present).
-            QByteArray path = file.composePath().toUtf8();
-            Str_Append(str, path.constData());
+            if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
+                result.append(file.name().fileNameWithoutExtension());
+            else
+                result.append(file.name());
         }
         else
         {
-            ddstring_t const* name;
-            QByteArray path;
-
-            if(flags & PTSF_TRANSFORM_EXCLUDE_DIR)
-            {
-                // Caller does not want the directory hierarchy.
-                name = file.name();
-                p = Str_Text(name);
-                pLength = Str_Length(name);
-            }
-            else
-            {
-                path = file.composePath().toUtf8();
-                p = path.constData();
-                pLength = path.length();
-            }
-
+            String path = file.composePath();
             if(flags & PTSF_TRANSFORM_EXCLUDE_EXT)
             {
-                // Caller does not want the file extension.
-                ext = F_FindFileExtension(p);
-                if(ext) ext -= 1/*dot separator*/;
+                result.append(path.fileNamePath() + '/' + path.fileNameWithoutExtension());
             }
             else
             {
-                ext = NULL;
-            }
-
-            if(ext)
-            {
-                Str_PartAppend(str, p, 0, pLength - (pLength - (ext - p)));
-                maxLength += pLength - (pLength - (ext - p));
-            }
-            else
-            {
-                Str_Append(str, p);
+                result.append(path);
             }
         }
 
         if(flags & PTSF_QUOTED)
-            Str_AppendChar(str, '"');
+            result.append('"');
 
-        ++n;
-        if(n != files.count())
-            Str_Append(str, delimiter);
+        if(*i != files.last())
+            result.append(delimiter);
     }
 
-    return str;
+    return result;
 }
 
 static bool findCustomFilesPredicate(de::File1& file, void* /*parameters*/)
@@ -1818,7 +1727,7 @@ static bool findCustomFilesPredicate(de::File1& file, void* /*parameters*/)
 /**
  * Compiles a list of file names, separated by @a delimiter.
  */
-void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimiter)
+void F_ComposePWADFileList(char* outBuf, size_t outBufSize, char const* delimiter)
 {
     if(!outBuf || 0 == outBufSize) return;
     memset(outBuf, 0, outBufSize);
@@ -1826,9 +1735,9 @@ void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimite
     FS1::FileList foundFiles;
     if(!App_FileSystem()->findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
 
-    ddstring_t* str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_DIR, delimiter);
-    strncpy(outBuf, Str_Text(str), outBufSize);
-    Str_Delete(str);
+    String str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_PATH, delimiter);
+    QByteArray strUtf8 = str.toUtf8();
+    strncpy(outBuf, strUtf8.constData(), outBufSize);
 }
 
 uint F_CRCNumber(void)

@@ -84,7 +84,7 @@ static void collectMapLumps(MapLumpInfos& lumpInfos, lumpnum_t startLump)
     for(lumpnum_t i = startLump; i < numLumps; ++i)
     {
         // Lump name determines whether this lump should be included.
-        MapLumpType lumpType = MapLumpTypeForName(W_LumpName(i));
+        MapLumpType lumpType = MapLumpTypeForName(Str_Text(W_LumpName(i)));
 
         // If this lump is of an invalid type then we *should* have found all
         // the required map data lumps.

@@ -20,22 +20,17 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/memory.h"
-#include "de/str.hh"
-#include "de/stringpool.h"
-#include "de/unittest.h"
 #include <de/c_wrapper.h>
+#include "de/memory.h"
+#include "de/unittest.h"
 
-#include <stdio.h>
+#include <QString>
+#include "de/stringpool.h"
+
 #include <vector>
 #include <list>
 #include <set>
 #include <algorithm>
-
-#if WIN32
-# define strcasecmp _stricmp
-# define strdup _strdup
-#endif
 
 /// Macro used for converting internal ids to externally visible Ids.
 #define EXPORT_ID(i)    (uint(i) + 1)
@@ -43,35 +38,39 @@
 
 namespace de {
 
-static de::Str const nullString = "(nullptr)";
+static String const nullString = "(nullptr)";
 
 typedef uint InternalId;
 
 /**
- * Case-insensitive reference to a text string (ddstring).
- * Does not take copies or retain ownership of the string.
+ * Case-insensitive text string (String).
  */
 class CaselessStr
 {
 public:
-    CaselessStr(char const* text = 0) : _id(0), _userValue(0), _userPointer(0) {
-        setText(text);
-    }
+    CaselessStr(QString text)
+        : _str(text), _id(0), _userValue(0), _userPointer(0)
+    {}
+
     CaselessStr(CaselessStr const& other)
-        : _id(other._id), _userValue(other._userValue), _userPointer(0) {
-        setText(other._str.str);
+        : _str(other._str), _id(other._id), _userValue(other._userValue), _userPointer(0)
+    {}
+
+    void setText(String& text)
+    {
+        _str = text;
     }
-    void setText(char const* text) {
-        Str_InitStatic(&_str, text); // no ownership taken; not copied
-    }
-    char* toCString() const {
-        return const_cast<char*>(_str.str);
-    }
-    operator const char* () const {
-        return _str.str;
-    }
-    operator const ddstring_t* () const {
+    operator String const* () const {
         return &_str;
+    }
+    operator String const& () const {
+        return _str;
+    }
+    bool operator < (CaselessStr const& other) const {
+        return _str.compare(other, Qt::CaseInsensitive) < 0;
+    }
+    bool operator == (CaselessStr const& other) const {
+        return !_str.compare(other, Qt::CaseInsensitive);
     }
     InternalId id() const {
         return _id;
@@ -91,6 +90,7 @@ public:
     void setUserPointer(void* ptr) {
         _userPointer = ptr;
     }
+#if 0
     void serialize(Writer* writer) const {
         Str_Write(&_str, writer);
         Writer_WritePackedUInt32(writer, _id);
@@ -102,8 +102,10 @@ public:
         _id = Reader_ReadPackedUInt32(reader);
         _userValue = Reader_ReadUInt32(reader);
     }
+#endif
+
 private:
-    ddstring_t _str;
+    String _str;
     InternalId _id; ///< The id that refers to this string.
     uint _userValue;
     void* _userPointer;
@@ -132,15 +134,15 @@ public:
     bool operator < (CaselessStrRef const& other) const {
         DENG_ASSERT(_str);
         DENG_ASSERT(other._str);
-        return strcasecmp(*_str, *other._str) < 0;
+        return *_str < *other._str;
     }
     bool operator == (CaselessStrRef const& other) const {
         DENG_ASSERT(_str);
         DENG_ASSERT(other._str);
-        return !strcasecmp(*_str, *other._str);
+        return *_str == *other._str;
     }
 private:
-    const CaselessStr* _str;
+    CaselessStr const* _str;
 };
 
 typedef std::set<CaselessStrRef> Interns;
@@ -175,7 +177,7 @@ struct StringPool::Instance
         for(uint i = 0; i < idMap.size(); ++i)
         {
             if(!idMap[i]) continue; // Unused slot.
-            destroyStr(idMap[i]);
+            delete idMap[i];
         }
         count = 0;
         interns.clear();
@@ -191,39 +193,33 @@ struct StringPool::Instance
         DENG_ASSERT(count == idMap.size() - available.size());
     }
 
-    Interns::iterator findIntern(char const* text)
+    Interns::iterator findIntern(String text)
     {
         CaselessStr const key(text);
         return interns.find(CaselessStrRef(&key)); // O(log n)
     }
 
-    Interns::const_iterator findIntern(char const* text) const
+    Interns::const_iterator findIntern(String text) const
     {
         CaselessStr const key(text);
         return interns.find(CaselessStrRef(&key)); // O(log n)
     }
 
     /**
-     * Before this is called make sure there is no duplicate of @a text in the
-     * interns set.
+     * Before this is called make sure there is no duplicate of @a text in
+     * the interns set.
      *
-     * @param text  Text string to add to the interned strings.
-     *              A copy is made of this.
+     * @param text  Text string to add to the interned strings. A copy is
+     *              made of this.
      */
-    InternalId copyAndAssignUniqueId(char const* text)
+    InternalId copyAndAssignUniqueId(String const& text)
     {
-        CaselessStr* str = new CaselessStr(strdup(text));
+        CaselessStr* str = new CaselessStr(text);
 
         // This is a new string that is added to the pool.
         interns.insert(str); // O(log n)
 
         return assignUniqueId(str);
-    }
-
-    void destroyStr(CaselessStr* str)
-    {
-        M_Free(str->toCString()); // duplicated cstring
-        delete str; // CaselessStr instance
     }
 
     InternalId assignUniqueId(CaselessStr* str) // O(1)
@@ -263,7 +259,7 @@ struct StringPool::Instance
         available.push_back(id);
 
         // Delete the string itself, no one refers to it any more.
-        destroyStr(interned);
+        delete interned;
 
         // If the caller already located the interned string, let's use it
         // to erase the string in O(1) time. Otherwise it's up to the
@@ -281,12 +277,12 @@ StringPool::StringPool()
     d = new Instance();
 }
 
-StringPool::StringPool(ddstring_t const* strings, uint count)
+StringPool::StringPool(String* strings, uint count)
 {
     d = new Instance();
     for(uint i = 0; strings && i < count; ++i)
     {
-        intern(strings + i);
+        intern(strings[i]);
     }
 }
 
@@ -312,26 +308,26 @@ uint StringPool::size() const
     return uint(d->count);
 }
 
-StringPool::Id StringPool::intern(ddstring_t const* str)
+StringPool::Id StringPool::intern(String str)
 {
-    Interns::iterator found = d->findIntern(Str_Text(str)); // O(log n)
+    Interns::iterator found = d->findIntern(str); // O(log n)
     if(found != d->interns.end())
     {
         // Already got this one.
         return EXPORT_ID(found->id());
     }
-    return EXPORT_ID(d->copyAndAssignUniqueId(Str_Text(str))); // O(log n)
+    return EXPORT_ID(d->copyAndAssignUniqueId(str)); // O(log n)
 }
 
-ddstring_t const* StringPool::internAndRetrieve(ddstring_t const* str)
+String const& StringPool::internAndRetrieve(String str)
 {
     InternalId id = IMPORT_ID(intern(str));
     return *d->idMap[id];
 }
 
-void StringPool::setUserValue(Id id, uint value)
+StringPool& StringPool::setUserValue(Id id, uint value)
 {
-    if(id == 0) return;
+    if(id == 0) return *this;
 
     InternalId const internalId = IMPORT_ID(id);
 
@@ -339,6 +335,7 @@ void StringPool::setUserValue(Id id, uint value)
     DENG_ASSERT(d->idMap[internalId] != 0);
 
     d->idMap[internalId]->setUserValue(value); // O(1)
+    return *this;
 }
 
 uint StringPool::userValue(Id id) const
@@ -353,9 +350,9 @@ uint StringPool::userValue(Id id) const
     return d->idMap[internalId]->userValue(); // O(1)
 }
 
-void StringPool::setUserPointer(Id id, void* ptr)
+StringPool& StringPool::setUserPointer(Id id, void* ptr)
 {
-    if(id == 0) return;
+    if(id == 0) return *this;
 
     InternalId const internalId = IMPORT_ID(id);
 
@@ -363,6 +360,7 @@ void StringPool::setUserPointer(Id id, void* ptr)
     DENG_ASSERT(d->idMap[internalId] != 0);
 
     d->idMap[internalId]->setUserPointer(ptr); // O(1)
+    return *this;
 }
 
 void* StringPool::userPointer(Id id) const
@@ -377,9 +375,9 @@ void* StringPool::userPointer(Id id) const
     return d->idMap[internalId]->userPointer(); // O(1)
 }
 
-StringPool::Id StringPool::isInterned(ddstring_t const* str) const
+StringPool::Id StringPool::isInterned(String str) const
 {
-    Interns::const_iterator found = d->findIntern(Str_Text(str)); // O(log n)
+    Interns::const_iterator found = d->findIntern(str); // O(log n)
     if(found != d->interns.end())
     {
         return EXPORT_ID(found->id());
@@ -388,18 +386,18 @@ StringPool::Id StringPool::isInterned(ddstring_t const* str) const
     return 0;
 }
 
-ddstring_t const* StringPool::string(Id id) const
+String const& StringPool::string(Id id) const
 {
-    if(id == 0) return NULL;
+    if(id == 0) return nullString; /// @todo Should error?
 
     InternalId const internalId = IMPORT_ID(id);
     DENG_ASSERT(internalId < d->idMap.size());
     return *d->idMap[internalId];
 }
 
-bool StringPool::remove(ddstring_t const* str)
+bool StringPool::remove(String str)
 {
-    Interns::iterator found = d->findIntern(Str_Text(str)); // O(log n)
+    Interns::iterator found = d->findIntern(str); // O(log n)
     if(found != d->interns.end())
     {
         d->releaseAndDestroy(found->id(), &found); // O(1) (amortized)
@@ -435,6 +433,7 @@ int StringPool::iterate(int (*callback)(Id, void*), void* data) const
     return 0;
 }
 
+#if 0
 void StringPool::write(Writer* writer) const
 {
     // Number of strings altogether (includes unused ids).
@@ -482,6 +481,7 @@ void StringPool::read(Reader* reader)
 
     d->assertCount();
 }
+#endif
 
 #if _DEBUG
 typedef struct {
@@ -493,8 +493,8 @@ typedef struct {
 static int printInternedString(StringPool::Id internId, void* params)
 {
     printinternedstring_params_t* p = (printinternedstring_params_t*)params;
-    ddstring_t const* string = p->pool->string(internId);
-    fprintf(stderr, "%*u %5u %s\n", p->padding, p->count++, internId, Str_Text(string));
+    QByteArray stringUtf8 = p->pool->string(internId).toUtf8();
+    fprintf(stderr, "%*u %5u %s\n", p->padding, p->count++, internId, stringUtf8.constData());
     return 0; // Continue iteration.
 }
 
@@ -513,16 +513,12 @@ void StringPool::print() const
 }
 #endif
 
-} // namespace de
-
 #ifdef _DEBUG
 LIBDENG_DEFINE_UNITTEST(StringPool)
 {
-    de::StringPool p;
-    ddstring_t* s = Str_NewStd();
-    ddstring_t* s2 = Str_NewStd();
+    StringPool p;
 
-    Str_Set(s, "Hello");
+    String s = String("Hello");
     DENG_ASSERT(!p.isInterned(s));
     DENG_ASSERT(p.empty());
 
@@ -534,19 +530,19 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
     DENG_ASSERT(p.intern(s) == 1);
 
     // Case insensitivity.
-    Str_Set(s, "heLLO");
+    s = String("heLLO");
     DENG_ASSERT(p.intern(s) == 1);
 
     // Another string.
-    Str_Set(s, "abc");
-    ddstring_t const* is = p.internAndRetrieve(s);
-    DENG_ASSERT(!Str_Compare(is, Str_Text(s)));
+    s = String("abc");
+    String const& is = p.internAndRetrieve(s);
+    DENG_ASSERT(!is.compare(s));
 
-    Str_Set(s2, "ABC");
-    is = p.internAndRetrieve(s2);
-    DENG_ASSERT(!Str_Compare(is, Str_Text(s)));
+    String s2 = String("ABC");
+    String const& is2 = p.internAndRetrieve(s2);
+    DENG_ASSERT(!is2.compare(s));
 
-    DENG_ASSERT(p.intern(is) == 2);
+    DENG_ASSERT(p.intern(is2) == 2);
 
     DENG_ASSERT(p.size() == 2);
     //p.print();
@@ -558,43 +554,42 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
 
     DENG_ASSERT(p.userValue(2) == 0);
 
-    Str_Set(s, "HELLO");
+    s = String("HELLO");
     p.remove(s);
     DENG_ASSERT(!p.isInterned(s));
     DENG_ASSERT(p.size() == 1);
-    DENG_ASSERT(!Str_Compare(p.string(2), "abc"));
+    DENG_ASSERT(!p.string(2).compare("abc"));
 
-    Str_Set(s, "Third!");
+    s = String("Third!");
     DENG_ASSERT(p.intern(s) == 1);
     DENG_ASSERT(p.size() == 2);
 
-    Str_Set(s, "FOUR");
+    s = String("FOUR");
     p.intern(s);
     p.removeById(1); // "Third!"
 
+#if 0
     // Serialize.
     Writer* w = Writer_NewWithDynamicBuffer(0);
     p.write(w);
 
     // Deserialize.
     Reader* r = Reader_NewWithBuffer(Writer_Data(w), Writer_Size(w));
-    de::StringPool p2;
+    StringPool p2;
     p2.read(r);
     //p2.print();
     DENG_ASSERT(p2.size() == 2);
-    DENG_ASSERT(!Str_Compare(p2.string(2), "abc"));
-    DENG_ASSERT(!Str_Compare(p2.string(3), "FOUR"));
-    Str_Set(s, "hello again");
+    DENG_ASSERT(!p2.string(2).compare("abc"));
+    DENG_ASSERT(!p2.string(3).compare("FOUR"));
+    s = String("hello again");
     DENG_ASSERT(p2.intern(s) == 1);
 
     Reader_Delete(r);
     Writer_Delete(w);
+#endif
 
     p.clear();
     DENG_ASSERT(p.empty());
-
-    Str_Delete(s);
-    Str_Delete(s2);
 
     //exit(123);
     return true;
@@ -602,3 +597,5 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
 #endif
 
 LIBDENG_RUN_UNITTEST(StringPool)
+
+} // namespace de

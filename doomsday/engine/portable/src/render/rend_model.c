@@ -484,7 +484,7 @@ static model_frame_t* Mod_GetVisibleFrame(modeldef_t* mf, int subnumber, int mob
     if(index >= mdl->info.numFrames)
     {
         Con_Error("Mod_GetVisibleFrame: Frame index out of bounds.\n"
-                  "  (Model: %s)\n", mdl->fileName);
+                  "  (Model: %s)\n", Str_Text(R_ComposePathForModelId(mdl->model)));
     }
     return mdl->frames + index;
 }

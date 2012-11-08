@@ -84,7 +84,7 @@ MaterialDictId Id1Map::addMaterialToDictionary(char const* name, MaterialDictGro
     }
 
     // Intern this material URI in the dictionary.
-    MaterialDictId internId = materials.intern(uriCString);
+    MaterialDictId internId = materials.intern(de::String(Str_Text(uriCString)));
 
     // We're done (phew!).
     return internId;
@@ -313,9 +313,9 @@ void Id1Map::transferSectors(void)
     {
         uint idx = MPE_SectorCreate(float((i)->lightLevel) / 255.0f, 1, 1, 1);
 
-        MPE_PlaneCreate(idx, (i)->floorHeight, findMaterialInDictionary((i)->floorMaterial),
+        MPE_PlaneCreate(idx, (i)->floorHeight, composeMaterialRef((i)->floorMaterial),
                         0, 0, 1, 1, 1, 1, 0, 0, 1);
-        MPE_PlaneCreate(idx, (i)->ceilHeight, findMaterialInDictionary((i)->ceilMaterial),
+        MPE_PlaneCreate(idx, (i)->ceilHeight, composeMaterialRef((i)->ceilMaterial),
                         0, 0, 1, 1, 1, 1, 0, 0, -1);
 
         MPE_GameObjProperty("XSector", idx-1, "Tag",    DDVT_SHORT, &(i)->tag);
@@ -344,11 +344,11 @@ void Id1Map::transferLinesAndSides(void)
         {
             frontIdx =
                 MPE_SidedefCreate((mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                                  findMaterialInDictionary(front->topMaterial),
+                                  composeMaterialRef(front->topMaterial),
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
-                                  findMaterialInDictionary(front->middleMaterial),
+                                  composeMaterialRef(front->middleMaterial),
                                   front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                                  findMaterialInDictionary(front->bottomMaterial),
+                                  composeMaterialRef(front->bottomMaterial),
                                   front->offset[VX], front->offset[VY], 1, 1, 1);
         }
 
@@ -358,11 +358,11 @@ void Id1Map::transferLinesAndSides(void)
         {
             backIdx =
                 MPE_SidedefCreate((mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                                  findMaterialInDictionary(back->topMaterial),
+                                  composeMaterialRef(back->topMaterial),
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
-                                  findMaterialInDictionary(back->middleMaterial),
+                                  composeMaterialRef(back->middleMaterial),
                                   back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                                  findMaterialInDictionary(back->bottomMaterial),
+                                  composeMaterialRef(back->bottomMaterial),
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }
 

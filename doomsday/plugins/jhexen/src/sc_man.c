@@ -103,7 +103,7 @@ static void openScriptLump(lumpnum_t lumpNum)
     ScriptBuffer = (const char*) region; }
 
     memset(ScriptName, 0, sizeof(*ScriptName));
-    strncpy(ScriptName, W_LumpName(lumpNum), sizeof(*ScriptName)-1);
+    strncpy(ScriptName, Str_Text(W_LumpName(lumpNum)), sizeof(*ScriptName)-1);
 
     ScriptPtr = ScriptBuffer;
     ScriptEndPtr = ScriptPtr + ScriptSize;
