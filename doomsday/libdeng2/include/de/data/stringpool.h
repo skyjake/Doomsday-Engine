@@ -1,7 +1,7 @@
 /**
- * @file de/stringpool.h
+ * @file stringpool.h
  *
- * String pool (case insensitive). @ingroup base
+ * Pool of String (case insensitive). @ingroup data
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,15 +21,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_STRINGPOOL_H
-#define LIBDENG_STRINGPOOL_H
+#ifndef LIBDENG2_STRINGPOOL_H
+#define LIBDENG2_STRINGPOOL_H
 
-#ifdef __cplusplus
-#ifndef DENG2_C_API_ONLY
-
-#include "libdeng.h"
-#include "types.h"
-#include <de/String>
+#include "../libdeng2.h"
+#include "de/String"
 
 namespace de
 {
@@ -57,7 +53,7 @@ namespace de
      *
      * @todo Add case-sensitive mode.
      */
-    class DENG_PUBLIC StringPool
+    class DENG2_PUBLIC StringPool
     {
     public:
         /// String identifier. Each string is assigned its own Id.
@@ -239,7 +235,5 @@ namespace de
     };
 
 } // namespace de
-#endif // DENG2_C_API_ONLY
-#endif //__cplusplus
 
-#endif /* LIBDENG_STRINGPOOL_H */
+#endif /* LIBDENG2_STRINGPOOL_H */

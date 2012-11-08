@@ -92,7 +92,6 @@ struct font_s;
 #include <de/writer.h>
 #include <de/memoryzone.h>
 #include <de/smoother.h>
-#include <de/stringpool.h>
 
 #ifdef __cplusplus
 extern "C" {

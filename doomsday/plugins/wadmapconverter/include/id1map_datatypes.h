@@ -18,11 +18,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __WADMAPCONVERTER_ID1MAP_DATATYPES_H__
-#define __WADMAPCONVERTER_ID1MAP_DATATYPES_H__
+#ifndef WADMAPCONVERTER_ID1MAP_DATATYPES_H
+#define WADMAPCONVERTER_ID1MAP_DATATYPES_H
 
 #include "doomsday.h"
 #include "dd_types.h"
+
+#include <de/StringPool>
 
 /// Type used to identify references to materials in the material dictionary.
 typedef de::StringPool::Id MaterialDictId;
@@ -146,4 +148,4 @@ typedef struct mlight_s {
     int8_t          xx[3];
 } surfacetint_t;
 
-#endif /* __WADMAPCONVERTER_ID1MAP_DATATYPES_H__ */
+#endif /* WADMAPCONVERTER_ID1MAP_DATATYPES_H */

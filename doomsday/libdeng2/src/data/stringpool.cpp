@@ -1,9 +1,10 @@
 /**
- * @file src/stringpool.cpp
- * String pool (case insensitive) implementation. @ingroup base
+ * @file stringpool.cpp
  *
- * @authors Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Pool of String (case insensitive). @ingroup data
+ *
+ * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,12 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/c_wrapper.h>
-#include "de/memory.h"
-#include "de/unittest.h"
-
-#include <QString>
-#include "de/stringpool.h"
+#include "de/StringPool"
+#include "de/Reader"
+#include "de/Writer"
 
 #include <vector>
 #include <list>
@@ -45,14 +43,14 @@ typedef uint InternalId;
 /**
  * Case-insensitive text string (String).
  */
-class CaselessStr
+class CaselessString
 {
 public:
-    CaselessStr(QString text)
+    CaselessString(QString text)
         : _str(text), _id(0), _userValue(0), _userPointer(0)
     {}
 
-    CaselessStr(CaselessStr const& other)
+    CaselessString(CaselessString const& other)
         : _str(other._str), _id(other._id), _userValue(other._userValue), _userPointer(0)
     {}
 
@@ -66,10 +64,10 @@ public:
     operator String const& () const {
         return _str;
     }
-    bool operator < (CaselessStr const& other) const {
+    bool operator < (CaselessString const& other) const {
         return _str.compare(other, Qt::CaseInsensitive) < 0;
     }
-    bool operator == (CaselessStr const& other) const {
+    bool operator == (CaselessString const& other) const {
         return !_str.compare(other, Qt::CaseInsensitive);
     }
     InternalId id() const {
@@ -113,48 +111,48 @@ private:
 
 /**
  * Utility class that acts as the value type for the std::set of interned
- * strings. Only points to CaselessStr instances. The less-than operator is
- * needed by std::set to keep the strings ordered.
+ * strings. Only points to CaselessString instances. The less-than operator
+ * is needed by std::set to keep the strings ordered.
  */
-class CaselessStrRef {
+class CaselessStringRef {
 public:
-    CaselessStrRef(CaselessStr const* s = 0) {
+    CaselessStringRef(CaselessString const* s = 0) {
         _str = s;
     }
-    CaselessStrRef(CaselessStrRef const& other) {
+    CaselessStringRef(CaselessStringRef const& other) {
         _str = other._str;
     }
-    CaselessStr* toStr() const {
-        return const_cast<CaselessStr*>(_str);
+    CaselessString* toStr() const {
+        return const_cast<CaselessString*>(_str);
     }
     InternalId id() const {
-        DENG_ASSERT(_str);
+        DENG2_ASSERT(_str);
         return _str->id();
     }
-    bool operator < (CaselessStrRef const& other) const {
-        DENG_ASSERT(_str);
-        DENG_ASSERT(other._str);
+    bool operator < (CaselessStringRef const& other) const {
+        DENG2_ASSERT(_str);
+        DENG2_ASSERT(other._str);
         return *_str < *other._str;
     }
-    bool operator == (CaselessStrRef const& other) const {
-        DENG_ASSERT(_str);
-        DENG_ASSERT(other._str);
+    bool operator == (CaselessStringRef const& other) const {
+        DENG2_ASSERT(_str);
+        DENG2_ASSERT(other._str);
         return *_str == *other._str;
     }
 private:
-    CaselessStr const* _str;
+    CaselessString const* _str;
 };
 
-typedef std::set<CaselessStrRef> Interns;
-typedef std::vector<CaselessStr*> IdMap;
+typedef std::set<CaselessStringRef> Interns;
+typedef std::vector<CaselessString*> IdMap;
 typedef std::list<InternalId> AvailableIds;
 
 struct StringPool::Instance
 {
-    /// Interned strings (owns the CaselessStr instances).
+    /// Interned strings (owns the CaselessString instances).
     Interns interns;
 
-    /// InternId => CaselessStr*. Only one id can refer to the each CaselessStr*.
+    /// InternId => CaselessString*. Only one id can refer to the each CaselessString*.
     IdMap idMap;
 
     /// Number of strings in the pool (must always be idMap.size() - available.size()).
@@ -189,20 +187,20 @@ struct StringPool::Instance
 
     void inline assertCount() const
     {
-        DENG_ASSERT(count == interns.size());
-        DENG_ASSERT(count == idMap.size() - available.size());
+        DENG2_ASSERT(count == interns.size());
+        DENG2_ASSERT(count == idMap.size() - available.size());
     }
 
     Interns::iterator findIntern(String text)
     {
-        CaselessStr const key(text);
-        return interns.find(CaselessStrRef(&key)); // O(log n)
+        CaselessString const key(text);
+        return interns.find(CaselessStringRef(&key)); // O(log n)
     }
 
     Interns::const_iterator findIntern(String text) const
     {
-        CaselessStr const key(text);
-        return interns.find(CaselessStrRef(&key)); // O(log n)
+        CaselessString const key(text);
+        return interns.find(CaselessStringRef(&key)); // O(log n)
     }
 
     /**
@@ -214,7 +212,7 @@ struct StringPool::Instance
      */
     InternalId copyAndAssignUniqueId(String const& text)
     {
-        CaselessStr* str = new CaselessStr(text);
+        CaselessString* str = new CaselessString(text);
 
         // This is a new string that is added to the pool.
         interns.insert(str); // O(log n)
@@ -222,7 +220,7 @@ struct StringPool::Instance
         return assignUniqueId(str);
     }
 
-    InternalId assignUniqueId(CaselessStr* str) // O(1)
+    InternalId assignUniqueId(CaselessString* str) // O(1)
     {
         InternalId idx;
 
@@ -250,10 +248,10 @@ struct StringPool::Instance
 
     void releaseAndDestroy(InternalId id, Interns::iterator* iterToErase = 0)
     {
-        DENG_ASSERT(id < idMap.size());
+        DENG2_ASSERT(id < idMap.size());
 
-        CaselessStr* interned = idMap[id];
-        DENG_ASSERT(interned != 0);
+        CaselessString* interned = idMap[id];
+        DENG2_ASSERT(interned != 0);
 
         idMap[id] = 0;
         available.push_back(id);
@@ -331,8 +329,8 @@ StringPool& StringPool::setUserValue(Id id, uint value)
 
     InternalId const internalId = IMPORT_ID(id);
 
-    DENG_ASSERT(internalId < d->idMap.size());
-    DENG_ASSERT(d->idMap[internalId] != 0);
+    DENG2_ASSERT(internalId < d->idMap.size());
+    DENG2_ASSERT(d->idMap[internalId] != 0);
 
     d->idMap[internalId]->setUserValue(value); // O(1)
     return *this;
@@ -344,8 +342,8 @@ uint StringPool::userValue(Id id) const
 
     InternalId const internalId = IMPORT_ID(id);
 
-    DENG_ASSERT(internalId < d->idMap.size());
-    DENG_ASSERT(d->idMap[internalId] != 0);
+    DENG2_ASSERT(internalId < d->idMap.size());
+    DENG2_ASSERT(d->idMap[internalId] != 0);
 
     return d->idMap[internalId]->userValue(); // O(1)
 }
@@ -356,8 +354,8 @@ StringPool& StringPool::setUserPointer(Id id, void* ptr)
 
     InternalId const internalId = IMPORT_ID(id);
 
-    DENG_ASSERT(internalId < d->idMap.size());
-    DENG_ASSERT(d->idMap[internalId] != 0);
+    DENG2_ASSERT(internalId < d->idMap.size());
+    DENG2_ASSERT(d->idMap[internalId] != 0);
 
     d->idMap[internalId]->setUserPointer(ptr); // O(1)
     return *this;
@@ -369,8 +367,8 @@ void* StringPool::userPointer(Id id) const
 
     InternalId const internalId = IMPORT_ID(id);
 
-    DENG_ASSERT(internalId < d->idMap.size());
-    DENG_ASSERT(d->idMap[internalId] != 0);
+    DENG2_ASSERT(internalId < d->idMap.size());
+    DENG2_ASSERT(d->idMap[internalId] != 0);
 
     return d->idMap[internalId]->userPointer(); // O(1)
 }
@@ -391,7 +389,7 @@ String const& StringPool::string(Id id) const
     if(id == 0) return nullString; /// @todo Should error?
 
     InternalId const internalId = IMPORT_ID(id);
-    DENG_ASSERT(internalId < d->idMap.size());
+    DENG2_ASSERT(internalId < d->idMap.size());
     return *d->idMap[internalId];
 }
 
@@ -413,7 +411,7 @@ bool StringPool::removeById(Id id)
     InternalId const internalId = IMPORT_ID(id);
     if(id >= d->idMap.size()) return false;
 
-    CaselessStr* str = d->idMap[internalId];
+    CaselessString* str = d->idMap[internalId];
     if(!str) return false;
 
     d->interns.erase(str); // O(log n)
@@ -460,7 +458,7 @@ void StringPool::read(Reader* reader)
         ddstring_t text;
         Str_InitStd(&text);
 
-        CaselessStr* str = new CaselessStr;
+        CaselessString* str = new CaselessString;
         str->deserialize(reader, &text);
         // Create a copy of the string whose ownership StringPool controls.
         str->setText(strdup(Str_Text(&text)));
@@ -513,56 +511,57 @@ void StringPool::print() const
 }
 #endif
 
+#if 0
 #ifdef _DEBUG
 LIBDENG_DEFINE_UNITTEST(StringPool)
 {
     StringPool p;
 
     String s = String("Hello");
-    DENG_ASSERT(!p.isInterned(s));
-    DENG_ASSERT(p.empty());
+    DENG2_ASSERT(!p.isInterned(s));
+    DENG2_ASSERT(p.empty());
 
     // First string.
     p.intern(s);
-    DENG_ASSERT(p.isInterned(s) == 1);
+    DENG2_ASSERT(p.isInterned(s) == 1);
 
     // Re-insertion.
-    DENG_ASSERT(p.intern(s) == 1);
+    DENG2_ASSERT(p.intern(s) == 1);
 
     // Case insensitivity.
     s = String("heLLO");
-    DENG_ASSERT(p.intern(s) == 1);
+    DENG2_ASSERT(p.intern(s) == 1);
 
     // Another string.
     s = String("abc");
     String const& is = p.internAndRetrieve(s);
-    DENG_ASSERT(!is.compare(s));
+    DENG2_ASSERT(!is.compare(s));
 
     String s2 = String("ABC");
     String const& is2 = p.internAndRetrieve(s2);
-    DENG_ASSERT(!is2.compare(s));
+    DENG2_ASSERT(!is2.compare(s));
 
-    DENG_ASSERT(p.intern(is2) == 2);
+    DENG2_ASSERT(p.intern(is2) == 2);
 
-    DENG_ASSERT(p.size() == 2);
+    DENG2_ASSERT(p.size() == 2);
     //p.print();
 
-    DENG_ASSERT(!p.empty());
+    DENG2_ASSERT(!p.empty());
 
     p.setUserValue(1, 1234);
-    DENG_ASSERT(p.userValue(1) == 1234);
+    DENG2_ASSERT(p.userValue(1) == 1234);
 
-    DENG_ASSERT(p.userValue(2) == 0);
+    DENG2_ASSERT(p.userValue(2) == 0);
 
     s = String("HELLO");
     p.remove(s);
-    DENG_ASSERT(!p.isInterned(s));
-    DENG_ASSERT(p.size() == 1);
-    DENG_ASSERT(!p.string(2).compare("abc"));
+    DENG2_ASSERT(!p.isInterned(s));
+    DENG2_ASSERT(p.size() == 1);
+    DENG2_ASSERT(!p.string(2).compare("abc"));
 
     s = String("Third!");
-    DENG_ASSERT(p.intern(s) == 1);
-    DENG_ASSERT(p.size() == 2);
+    DENG2_ASSERT(p.intern(s) == 1);
+    DENG2_ASSERT(p.size() == 2);
 
     s = String("FOUR");
     p.intern(s);
@@ -578,18 +577,18 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
     StringPool p2;
     p2.read(r);
     //p2.print();
-    DENG_ASSERT(p2.size() == 2);
-    DENG_ASSERT(!p2.string(2).compare("abc"));
-    DENG_ASSERT(!p2.string(3).compare("FOUR"));
+    DENG2_ASSERT(p2.size() == 2);
+    DENG2_ASSERT(!p2.string(2).compare("abc"));
+    DENG2_ASSERT(!p2.string(3).compare("FOUR"));
     s = String("hello again");
-    DENG_ASSERT(p2.intern(s) == 1);
+    DENG2_ASSERT(p2.intern(s) == 1);
 
     Reader_Delete(r);
     Writer_Delete(w);
 #endif
 
     p.clear();
-    DENG_ASSERT(p.empty());
+    DENG2_ASSERT(p.empty());
 
     //exit(123);
     return true;
@@ -597,5 +596,6 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
 #endif
 
 LIBDENG_RUN_UNITTEST(StringPool)
+#endif
 
 } // namespace de

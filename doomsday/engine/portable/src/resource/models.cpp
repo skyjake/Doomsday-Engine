@@ -39,7 +39,7 @@
 
 #include "def_main.h"
 #include <de/NativePath>
-#include <de/stringpool.h>
+#include <de/StringPool>
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"

@@ -43,7 +43,7 @@
 #include <de/LegacyCore>
 #include <de/Log>
 #include <de/String>
-#include <de/stringpool.h>
+#include <de/StringPool>
 #include <de/memory.h>
 
 using de::FS1;

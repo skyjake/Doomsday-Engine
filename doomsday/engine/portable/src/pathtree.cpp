@@ -23,7 +23,7 @@
 #include <QStringList>
 #include <de/Error>
 #include <de/Log>
-#include <de/stringpool.h>
+#include <de/StringPool>
 #if _DEBUG
 #  include "m_misc.h" // For M_NumDigits()
 #endif

@@ -29,6 +29,7 @@ HEADERS += \
     include/de/RecordValue \
     include/de/RefValue \
     include/de/String \
+    include/de/StringPool \
     include/de/TextValue \
     include/de/Time \
     include/de/Value \
@@ -66,6 +67,7 @@ HEADERS += \
     include/de/data/recordvalue.h \
     include/de/data/refvalue.h \
     include/de/data/string.h \
+    include/de/data/stringpool.h \
     include/de/data/textvalue.h \
     include/de/data/time.h \
     include/de/data/value.h \
@@ -99,10 +101,10 @@ SOURCES += \
     src/data/recordvalue.cpp \
     src/data/refvalue.cpp \
     src/data/string.cpp \
+    src/data/stringpool.cpp \
     src/data/textvalue.cpp \
     src/data/time.cpp \
     src/data/value.cpp \
     src/data/variable.cpp \
     src/data/waitable.cpp \
     src/data/writer.cpp
-

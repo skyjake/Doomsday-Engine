@@ -34,7 +34,7 @@
 #include "de_dam.h"
 #include "de_filesys.h"
 
-#include <de/stringpool.h>
+#include <de/StringPool>
 #include "s_environ.h"
 
 typedef struct {
