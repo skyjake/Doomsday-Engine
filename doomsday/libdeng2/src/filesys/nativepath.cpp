@@ -36,20 +36,27 @@
 
 namespace de {
 
+static QString toNative(const QString& s)
+{
+    // This will resolve parent references (".."), multiple separators
+    // (hello//world), and self-references (".").
+    return QDir::toNativeSeparators(QDir::cleanPath(s));
+}
+
 NativePath::NativePath()
 {}
 
-NativePath::NativePath(const QString &str) : String(QDir::toNativeSeparators(str))
+NativePath::NativePath(const QString &str) : String(toNative(str))
 {}
 
 NativePath::NativePath(const char *nullTerminatedCStr)
-    : String(QDir::toNativeSeparators(nullTerminatedCStr))
+    : String(toNative(nullTerminatedCStr))
 {
 }
 
 NativePath& NativePath::operator = (const QString& str)
 {
-    *static_cast<String*>(this) = QDir::toNativeSeparators(str);
+    *static_cast<String*>(this) = toNative(str);
     return *this;
 }
 
@@ -60,7 +67,7 @@ NativePath& NativePath::operator = (const char *nullTerminatedCStr)
 
 NativePath NativePath::concatenatePath(const NativePath& nativePath) const
 {
-    return String::concatenatePath(nativePath, DIR_SEPARATOR);
+    return String::concatenatePath(nativePath, QChar(DIR_SEPARATOR));
 }
 
 NativePath NativePath::concatenatePath(const QString& nativePath) const

@@ -37,7 +37,7 @@ namespace de {
  * String::fileNamePath(), so that they operate using native separator
  * characters.
  */
-class NativePath : public String
+class DENG2_PUBLIC NativePath : public String
 {
 public:
     /// An unknown user name was encounterd in the string. @ingroup errors

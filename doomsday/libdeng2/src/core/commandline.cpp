@@ -19,6 +19,7 @@
 
 #include "de/CommandLine"
 #include "de/String"
+#include "de/NativePath"
 #include "de/Log"
 
 #include <QFile>
@@ -274,6 +275,7 @@ void CommandLine::makeAbsolutePath(duint pos)
 
     if(!isOption(pos) && !arg.startsWith("}"))
     {
+        bool converted = false;
         QDir dir(arg); // note: strips trailing slash
 
         /// @todo The path expansion logic here should match the native shell's behavior.
@@ -281,12 +283,14 @@ void CommandLine::makeAbsolutePath(duint pos)
         if(dir.path().startsWith("~/"))
         {
             dir.setPath(QDir::home().filePath(dir.path().mid(2)));
+            converted = true;
         }
         else
 #endif
         if(!QDir::isAbsolutePath(arg))
         {
             dir.setPath(d->initialDir.filePath(dir.path()));
+            converted = true;
         }
 
         // Update the argument string.
@@ -299,11 +303,16 @@ void CommandLine::makeAbsolutePath(duint pos)
             d->arguments[pos] += '/';
         }
 
+        d->arguments[pos] = NativePath(d->arguments[pos]);
+
         // Replace the pointer string.
         free(d->pointers[pos]);
         d->pointers[pos] = duplicateStringAsUtf8(d->arguments[pos]);
 
-        LOG_DEBUG("Argument %i converted to absolute path: \"%s\"") << pos << d->pointers[pos];
+        if(converted)
+        {
+            LOG_DEBUG("Argument %i converted to absolute path: \"%s\"") << pos << d->pointers[pos];
+        }
     }
 }
 
