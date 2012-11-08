@@ -146,7 +146,7 @@ public:
     {}
 
     /// @return  Name of this file.
-    String /*const&*/ name() const
+    String const& name() const
     {
         return directoryNode().name();
     }

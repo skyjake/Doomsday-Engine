@@ -288,7 +288,7 @@ PathTree::Node& PathTree::find(int flags, char const* searchPath, char delimiter
     return *foundNode;
 }
 
-String /*const&*/ PathTree::fragmentName(FragmentId fragmentId) const
+String const& PathTree::fragmentName(FragmentId fragmentId) const
 {
     return d->fragments.string(fragmentId);
 }

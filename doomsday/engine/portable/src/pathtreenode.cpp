@@ -86,7 +86,7 @@ PathTree::FragmentId PathTree::Node::fragmentId() const
     return d->fragmentId;
 }
 
-String /*const&*/ PathTree::Node::name() const
+String const& PathTree::Node::name() const
 {
     return tree().fragmentName(d->fragmentId);
 }
@@ -184,7 +184,7 @@ int PathTree::Node::comparePath(PathMap& searchPattern, int flags) const
             int sfragmentLength = sfragment->length();
             qstrncpy(buf, sfragment->from, sfragmentLength + 1);
 
-            String /*const&*/ fragment = node->name();
+            String const& fragment = node->name();
             QByteArray fragmentUtf8 = fragment.toUtf8();
             if(!matchPathFragment(fragmentUtf8.constData(), buf))
             {
@@ -230,7 +230,7 @@ typedef struct pathconstructorparams_s {
  */
 static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const& trav)
 {
-    String /*const&*/ fragment = trav.name();
+    String const& fragment = trav.name();
 
 #ifdef LIBDENG_STACK_MONITOR
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);

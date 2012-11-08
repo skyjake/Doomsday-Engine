@@ -63,7 +63,7 @@ public:
     {}
 
     /// @return  Name of this file.
-    String /*const&*/ name() const
+    String const& name() const
     {
         return directoryNode().name();
     }
@@ -157,7 +157,7 @@ public:
         crc_ = uint(info_.size);
 
         PathTree::Node const& node = directoryNode();
-        String /*const&*/ name = node.name();
+        String const& name = node.name();
         int const nameLen = name.length();
         for(int k = 0; k < nameLen; ++k)
         {

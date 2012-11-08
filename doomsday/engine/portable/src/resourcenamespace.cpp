@@ -416,7 +416,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
 
-    String /*const&*/ name_ = resourceNode.name();
+    String const& name_ = resourceNode.name();
     QByteArray name_Utf8 = name_.toUtf8();
     AutoStr* name = composeResourceName(name_Utf8.constData());
     NameHash::key_type key = hashResourceName(name);

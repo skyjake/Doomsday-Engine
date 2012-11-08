@@ -411,7 +411,7 @@ model_t* R_ModelForId(uint modelRepositoryId)
 AutoStr* R_ComposePathForModelId(uint modelRepositoryId)
 {
     DENG_ASSERT(modelRepository);
-    de::String /*const&*/ path = modelRepository->string(modelRepositoryId);
+    de::String const& path = modelRepository->string(modelRepositoryId);
     QByteArray pathUtf8 = path.toUtf8();
     return AutoStr_FromTextStd(pathUtf8.constData());
 }
@@ -510,7 +510,7 @@ static int R_LoadModel(de::Uri const& uri)
     if(!numFoundSkins)
     {
         // Lastly try a skin named similarly to the model in the same directory.
-        de::String /*const&*/ mdlFileName = modelRepository->string(index);
+        de::String const& mdlFileName = modelRepository->string(index);
         de::String skinSearchPath = mdlFileName.fileNamePath() / "/" / mdlFileName.fileNameWithoutExtension();
 
         QByteArray skinSearchPathUtf8 = skinSearchPath.toUtf8();

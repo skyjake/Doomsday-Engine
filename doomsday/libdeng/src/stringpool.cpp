@@ -319,7 +319,7 @@ StringPool::Id StringPool::intern(String str)
     return EXPORT_ID(d->copyAndAssignUniqueId(str)); // O(log n)
 }
 
-String /*const&*/ StringPool::internAndRetrieve(String str)
+String const& StringPool::internAndRetrieve(String str)
 {
     InternalId id = IMPORT_ID(intern(str));
     return *d->idMap[id];
@@ -386,9 +386,9 @@ StringPool::Id StringPool::isInterned(String str) const
     return 0;
 }
 
-String /*const&*/ StringPool::string(Id id) const
+String const& StringPool::string(Id id) const
 {
-    if(id == 0) return "";
+    if(id == 0) return nullString; /// @todo Should error?
 
     InternalId const internalId = IMPORT_ID(id);
     DENG_ASSERT(internalId < d->idMap.size());
@@ -535,14 +535,14 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
 
     // Another string.
     s = String("abc");
-    String /*const&*/ is = p.internAndRetrieve(s);
+    String const& is = p.internAndRetrieve(s);
     DENG_ASSERT(!is.compare(s));
 
     String s2 = String("ABC");
-    is = p.internAndRetrieve(s2);
-    DENG_ASSERT(!is.compare(s));
+    String const& is2 = p.internAndRetrieve(s2);
+    DENG_ASSERT(!is2.compare(s));
 
-    DENG_ASSERT(p.intern(is) == 2);
+    DENG_ASSERT(p.intern(is2) == 2);
 
     DENG_ASSERT(p.size() == 2);
     //p.print();

@@ -80,7 +80,7 @@ public:
     virtual ~File1();
 
     /// @return  Name of this file.
-    virtual String /*const&*/ name() const;
+    virtual String const& name() const;
 
     /**
      * Compose the absolute VFS path to this file.
@@ -263,8 +263,11 @@ private:
     /// Categorization flags.
     Flags flags;
 
-    /// Absolute variable-length path in the vfs.
-    ddstring_t path_;
+    /// Absolute path (including name) in the vfs.
+    String path_;
+
+    /// Name of this file.
+    String name_;
 
     /// Load order depth index.
     uint order;

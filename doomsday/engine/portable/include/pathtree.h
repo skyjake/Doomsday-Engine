@@ -147,7 +147,7 @@ namespace de
             }
 
             /// @return Name for this node's path fragment.
-            String /*const&*/ name() const;
+            String const& name() const;
 
             /// @return Hash for this node's path fragment.
             ushort hash() const;
@@ -306,7 +306,7 @@ namespace de
          */
 
         /// @return The path fragment associated with @a fragmentId.
-        String /*const&*/ fragmentName(FragmentId fragmentId) const;
+        String const& fragmentName(FragmentId fragmentId) const;
 
         /// @return Hash associated with @a fragmentId.
         ushort fragmentHash(FragmentId fragmentId) const;

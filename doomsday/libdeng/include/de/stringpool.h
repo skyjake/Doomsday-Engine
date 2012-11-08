@@ -121,7 +121,7 @@ namespace de
          *
          * @return The interned copy of the string owned by the pool.
          */
-        String /*const&*/ internAndRetrieve(String str);
+        String const& internAndRetrieve(String str);
 
         /**
          * Sets the user-specified custom value associated with the string @a id.
@@ -179,7 +179,7 @@ namespace de
          *
          * @return  Interned string associated with @a internId. Owned by the pool.
          */
-        String /*const&*/ string(Id id) const;
+        String const& string(Id id) const;
 
         /**
          * Removes a string from the pool.

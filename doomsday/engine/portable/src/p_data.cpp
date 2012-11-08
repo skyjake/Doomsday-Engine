@@ -289,7 +289,7 @@ AutoStr* P_NameForMapEntityDef(MapEntityDef* def)
     if(def)
     {
         de::StringPool::Id id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
-        de::String /*const&*/ name = entityDefs->string(id);
+        de::String const& name = entityDefs->string(id);
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromText(nameUtf8.constData());
     }

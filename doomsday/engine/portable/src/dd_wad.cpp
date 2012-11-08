@@ -58,7 +58,7 @@ AutoStr* W_LumpName(lumpnum_t absoluteLumpNum)
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        String /*const&*/ name = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name();
+        String const& name = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name();
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromTextStd(nameUtf8.constData());
     }

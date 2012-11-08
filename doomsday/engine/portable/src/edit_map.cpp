@@ -1766,7 +1766,7 @@ static int printMissingMaterialWorker(de::StringPool::Id internId, void* paramet
             {
                 // Print mode.
                 int const refCount = materialDict->userValue(internId);
-                de::String /*const&*/ materialUri = materialDict->string(internId);
+                de::String const& materialUri = materialDict->string(internId);
                 QByteArray materialUriUtf8 = materialUri.toUtf8();
                 Con_Message(" %4u x \"%s\"\n", refCount, materialUriUtf8.constData());
             }
