@@ -20,7 +20,6 @@
 #include "de/DirectoryFeed"
 #include "de/Folder"
 #include "de/NativeFile"
-#include "de/String"
 #include "de/FS"
 #include "de/Date"
 #include "de/Log"
@@ -30,7 +29,7 @@
 
 using namespace de;
 
-DirectoryFeed::DirectoryFeed(const String& nativePath, const Flags& mode)
+DirectoryFeed::DirectoryFeed(const NativePath &nativePath, const Flags& mode)
     : _nativePath(nativePath), _mode(mode) {}
 
 DirectoryFeed::~DirectoryFeed()
@@ -75,7 +74,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
 
     if(entryName != "." && entryName != "..")
     {
-        String subFeedPath = _nativePath.concatenateNativePath(entryName);
+        NativePath subFeedPath = _nativePath / entryName;
         Folder& subFolder = folder.fileSystem().makeFolder(folder.path() / entryName);
 
         if(_mode & AllowWrite)
@@ -109,7 +108,7 @@ void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
         return;
     }
     
-    String entryPath = _nativePath.concatenateNativePath(entryName);
+    NativePath entryPath = _nativePath / entryName;
 
     // Open the native file.
     std::auto_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
@@ -177,7 +176,7 @@ bool DirectoryFeed::prune(File& file) const
 
 File* DirectoryFeed::newFile(const String& name)
 {
-    String newPath = _nativePath.concatenateNativePath(name);
+    NativePath newPath = _nativePath / name;
     if(exists(newPath))
     {
         /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
@@ -190,7 +189,7 @@ File* DirectoryFeed::newFile(const String& name)
 
 void DirectoryFeed::removeFile(const String& name)
 {
-    String path = _nativePath.concatenateNativePath(name);
+    NativePath path = _nativePath / name;
     if(!exists(path))
     {
         /// @throw NotFoundError  The file @a name does not exist in the native directory.
@@ -200,7 +199,7 @@ void DirectoryFeed::removeFile(const String& name)
     QDir::current().remove(path);
 }
 
-void DirectoryFeed::changeWorkingDir(const String& nativePath)
+void DirectoryFeed::changeWorkingDir(const NativePath& nativePath)
 {
     if(!QDir::setCurrent(nativePath))
     {
@@ -210,9 +209,9 @@ void DirectoryFeed::changeWorkingDir(const String& nativePath)
     }
 }
 
-void DirectoryFeed::createDir(const String& nativePath)
+void DirectoryFeed::createDir(const NativePath& nativePath)
 {
-    String parentPath = nativePath.fileNameNativePath();
+    NativePath parentPath = nativePath.fileNamePath();
     if(!parentPath.empty() && !exists(parentPath))
     {
         createDir(parentPath);
@@ -225,12 +224,12 @@ void DirectoryFeed::createDir(const String& nativePath)
     }
 }
 
-bool DirectoryFeed::exists(const String& nativePath)
+bool DirectoryFeed::exists(const NativePath& nativePath)
 {
     return QDir::current().exists(nativePath);
 }
 
-File::Status DirectoryFeed::fileStatus(const String& nativePath)
+File::Status DirectoryFeed::fileStatus(const NativePath& nativePath)
 {
     QFileInfo info(nativePath);
 

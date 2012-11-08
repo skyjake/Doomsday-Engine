@@ -48,9 +48,6 @@ public:
     /// Invalid record member name. @ingroup errors
     DENG2_SUB_ERROR(Error, InvalidMemberError);
 
-    /// An unknown user name was encounterd in the string. @ingroup errors
-    DENG2_SUB_ERROR(Error, UnknownUserError);
-
     /**
      * Data argument for the pattern formatter.
      * @see String::patternFormat()
@@ -120,13 +117,6 @@ public:
     /// Does a path concatenation on this string and the argument.
     String operator / (const String& path) const;
 
-    /// Converts path separators to native separators.
-    String toNativePath() const;
-
-    /// Does a path concatenation on a native path. The directory separator
-    /// character depends on the platform.
-    String concatenateNativePath(const String& nativePath) const;
-
     /// Does a record member concatenation on a variable name.
     String concatenateMember(const String& member) const;
 
@@ -168,27 +158,6 @@ public:
 
     /// Extracts the path of the string.
     String fileNamePath(char dirChar = '/') const;
-
-    /// Extracts the path of the string, using native directory separators.
-    String fileNameNativePath() const;
-
-    /**
-     * Expands the relative path directives '>' and '}' at the start of
-     * the path, replacing them with the application path.
-     *
-     * @note Also handles '~' on UNIX-based platforms so that a user
-     *       specific home path (taken from passwd) may also be used.
-     *
-     * @param didExpand  If specified, this value will be set to true if
-     *                   path expansion was done.
-     *
-     * @return A copy of the path with directives expanded.
-     *
-     * @throws UnknownUserError  If the user is not known.
-     *
-     * @see App::nativeBasePath()
-     */
-    String expandNativePath(bool* didExpand = 0) const;
 
     /**
      * Compare two strings (case sensitive).
@@ -239,13 +208,6 @@ public:
      * Builds a String out of an array of bytes that contains a Latin1 string.
      */
     static String fromLatin1(const IByteArray& byteArray);
-
-    /**
-     * Builds a String out of a native path. Path separators are converted to slashes.
-     * @param nativePath  Native path.
-     * @return String with a platform-independent path.
-     */
-    static String fromNativePath(const de::String& nativePath);
 
     static dint compareWithCase(const QChar* a, const QChar* b, dsize count);
 

@@ -22,7 +22,7 @@
 
 #include "../File"
 #include "../Feed"
-#include "../String"
+#include "../NativePath"
 
 #include <QFlags>
 
@@ -68,7 +68,7 @@ namespace de
          * @param nativePath  Path of the native directory.
          * @param mode        Feed mode.
          */
-        DirectoryFeed(const String& nativePath, const Flags& mode = 0);
+        DirectoryFeed(const NativePath& nativePath, const Flags& mode = 0);
         
         virtual ~DirectoryFeed();
         
@@ -83,14 +83,14 @@ namespace de
          *
          * @param nativePath  New path to use as the working directory.
          */
-        static void changeWorkingDir(const String& nativePath);
+        static void changeWorkingDir(const NativePath& nativePath);
 
         /**
          * Creates a native directory relative to the current working directory.
          *
          * @param nativePath  Native directory to create.
          */
-        static void createDir(const String& nativePath);
+        static void createDir(const NativePath& nativePath);
 
         /**
          * Determines whether a native path exists.
@@ -99,7 +99,7 @@ namespace de
          *
          * @return @c true if the path exists, @c false otherwise.
          */
-        static bool exists(const String& nativePath);
+        static bool exists(const NativePath& nativePath);
 
         /**
          * Determines the status of a file in the directory.
@@ -110,14 +110,14 @@ namespace de
          *
          * @return  Status of the file.
          */
-        static File::Status fileStatus(const String& nativePath);
+        static File::Status fileStatus(const NativePath& nativePath);
 
     protected:
         void populateSubFolder(Folder& folder, const String& entryName);
         void populateFile(Folder& folder, const String& entryName);
 
     private:
-        const String _nativePath;
+        const NativePath _nativePath;
         Flags _mode;
     };
 

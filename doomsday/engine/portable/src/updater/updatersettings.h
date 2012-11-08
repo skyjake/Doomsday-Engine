@@ -28,6 +28,7 @@
 
 #include <de/Time>
 #include <de/String>
+#include <de/NativePath>
 
 /**
  * Convenient interface to the Updater settings. All changes to the settings
@@ -59,8 +60,8 @@ public:
     bool onlyCheckManually() const;
     bool deleteAfterUpdate() const;
     bool isDefaultDownloadPath() const;
-    de::String downloadPath() const;
-    de::String pathToDeleteAtStartup() const;
+    de::NativePath downloadPath() const;
+    de::NativePath pathToDeleteAtStartup() const;
 
     /**
      * @return Human-readable description of when the latest update
@@ -73,11 +74,11 @@ public:
     void setLastCheckTime(const de::Time& time);
     void setOnlyCheckManually(bool onlyManually);
     void setDeleteAfterUpdate(bool deleteAfter);
-    void setDownloadPath(de::String downloadPath);
+    void setDownloadPath(de::NativePath downloadPath);
     void useDefaultDownloadPath();
-    void setPathToDeleteAtStartup(de::String deletePath);
+    void setPathToDeleteAtStartup(de::NativePath deletePath);
 
-    static de::String defaultDownloadPath();
+    static de::NativePath defaultDownloadPath();
 };
 
 #endif // LIBDENG_UPDATERSETTINGS_H

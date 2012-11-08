@@ -22,6 +22,7 @@
 
 #include "../libdeng2.h"
 #include "../CommandLine"
+#include "../NativePath"
 #include "../LogBuffer"
 #include "../FS"
 #include "../Module"
@@ -85,29 +86,24 @@ namespace de
         /**
          * Returns the absolute native path of the application executable.
          */
-        static String executablePath();
+        static NativePath executablePath();
 
         /**
          * Returns the native path of the data base directory.
          */
-        String nativeBasePath();
+        NativePath nativeBasePath();
 
         /**
          * Returns the native path of where to load binaries (plugins).
          */
-        String nativeBinaryPath();
+        NativePath nativeBinaryPath();
 
         /**
          * Returns the native path where user-specific runtime files should be
          * placed. The user can override the location using the @em -userdir
          * command line option.
          */
-        String nativeHomePath();
-
-        /**
-         * Returns the native path where the application is currently working.
-         */
-        String nativeWorkPath();
+        NativePath nativeHomePath();
 
         /**
          * Returns the application's file system.
@@ -165,7 +161,7 @@ namespace de
         LogBuffer _logBuffer;
 
         /// Path of the application executable.
-        String _appPath;
+        NativePath _appPath;
 
         /// The file system.
         FS _fs;

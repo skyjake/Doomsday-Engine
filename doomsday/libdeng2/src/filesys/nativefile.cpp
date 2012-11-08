@@ -22,7 +22,7 @@
 
 using namespace de;
 
-NativeFile::NativeFile(const String& name, const String& nativePath)
+NativeFile::NativeFile(const String& name, const NativePath& nativePath)
     : File(name), _nativePath(nativePath), _in(0), _out(0)
 {}
 

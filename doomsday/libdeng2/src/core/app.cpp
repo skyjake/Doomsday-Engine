@@ -44,7 +44,7 @@ App::App(int& argc, char** argv, GUIMode guiMode)
 #endif
     //_logBuffer.enable(Log::TRACE);
 
-    _appPath = String(applicationFilePath()).toNativePath();
+    _appPath = applicationFilePath();
 
     LOG_INFO("Application path: ") << _appPath;
 
@@ -66,14 +66,14 @@ App::~App()
     _config = 0;
 }
 
-String App::nativeBinaryPath()
+NativePath App::nativeBinaryPath()
 {
-    String path;
+    NativePath path;
 #ifdef WIN32
-    path = _appPath.fileNameNativePath().concatenateNativePath("plugins");
+    path = _appPath.fileNamePath() / "plugins";
 #else
 # ifdef MACOSX
-    path = _appPath.fileNameNativePath() / "../DengPlugins";
+    path = _appPath.fileNamePath() / "../DengPlugins";
 # else
     path = DENG_LIBRARY_DIR;
 # endif
@@ -83,7 +83,7 @@ String App::nativeBinaryPath()
     return path;
 }
 
-String App::nativeHomePath()
+NativePath App::nativeHomePath()
 {
     int i;
     if((i = _cmdLine.check("-userdir", 1)))
@@ -93,19 +93,19 @@ String App::nativeHomePath()
     }
 
 #ifdef MACOSX
-    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    NativePath nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
     nativeHome = nativeHome / "Library/Application Support/Doomsday Engine/runtime";
 #elif WIN32
-    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
-    nativeHome = nativeHome.concatenateNativePath("runtime");
+    NativePath nativeHome = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    nativeHome = nativeHome / "runtime";
 #else // UNIX
-    String nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
+    NativePath nativeHome = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
     nativeHome = nativeHome / ".doomsday/runtime";
 #endif
     return nativeHome;
 }
 
-String App::nativeBasePath()
+NativePath App::nativeBasePath()
 {
     int i;
     if((i = _cmdLine.check("-basedir", 1)))
@@ -114,9 +114,9 @@ String App::nativeBasePath()
         return _cmdLine.at(i + 1);
     }
 
-    String path;
+    NativePath path;
 #ifdef WIN32
-    path = _appPath.fileNameNativePath().concatenateNativePath("..");
+    path = _appPath.fileNamePath() / "..";
 #else
 # ifdef MACOSX
     path = ".";
@@ -129,11 +129,6 @@ String App::nativeBasePath()
     return path;
 }
 
-String App::nativeWorkPath()
-{
-    return QDir::currentPath();
-}
-
 void App::initSubsystems(SubsystemInitFlags flags)
 {
     bool allowPlugins = !flags.testFlag(DisablePlugins);
@@ -144,7 +139,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     // directories into the appropriate places in the file system.
     // All of these are in read-only mode.
 #ifdef MACOSX
-    String appDir = _appPath.fileNameNativePath();
+    NativePath appDir = _appPath.fileNamePath();
     binFolder.attach(new DirectoryFeed(appDir));
     if(allowPlugins)
     {
@@ -159,9 +154,9 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         binFolder.attach(new DirectoryFeed(nativeBinaryPath()));
     }
-    String appDir = _appPath.fileNameNativePath();
-    _fs.makeFolder("/data").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\data")));
-    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir.concatenateNativePath("..\\config")));
+    NativePath appDir = _appPath.fileNamePath();
+    _fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
+    _fs.makeFolder("/config").attach(new DirectoryFeed(appDir / "..\\config"));
     //fs_->makeFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 
 #else // UNIX
@@ -237,7 +232,7 @@ CommandLine& App::commandLine()
     return DENG2_APP->_cmdLine;
 }
 
-String App::executablePath()
+NativePath App::executablePath()
 {
     return DENG2_APP->_appPath;
 }

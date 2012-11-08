@@ -44,6 +44,7 @@
 #include <QtAlgorithms>
 
 #include <de/Log>
+#include <de/NativePath>
 #include <de/memory.h>
 
 using namespace de;
@@ -1122,7 +1123,7 @@ void FS1::mapPathToLump(char const* symbolicPath, char const* lumpName)
 
     // Since the path might be relative, let's explicitly make the path absolute.
     char* full = _fullpath(0, Str_Text(path), 0);
-    de::String fullPath = de::String::fromNativePath(full);
+    de::NativePath fullPath(full);
     free(full);
 
     // Have already mapped this path?

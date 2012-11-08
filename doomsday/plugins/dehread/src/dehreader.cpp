@@ -647,12 +647,12 @@ public:
 
             if(!arg.isEmpty())
             {
-                const String filePath = String::fromNativePath(arg);
+                const NativePath filePath(arg);
                 QFile file(filePath);
                 if(!file.open(QFile::ReadOnly | QFile::Text))
                 {
                     LOG_AS("parseInclude");
-                    LOG_WARNING("Failed opening \"%s\" for read, aborting...") << QDir::toNativeSeparators(filePath);
+                    LOG_WARNING("Failed opening \"%s\" for read, aborting...") << filePath;
                 }
                 else
                 {
