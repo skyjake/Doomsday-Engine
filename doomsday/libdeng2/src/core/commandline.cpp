@@ -276,9 +276,9 @@ void CommandLine::makeAbsolutePath(duint pos)
     if(!isOption(pos) && !arg.startsWith("}"))
     {
         bool converted = false;
-        QDir dir(arg); // note: strips trailing slash
+        QDir dir(NativePath(arg).expand()); // note: strips trailing slash
 
-        /// @todo The path expansion logic here should match the native shell's behavior.
+        /*
 #ifdef UNIX
         if(dir.path().startsWith("~/"))
         {
@@ -286,7 +286,7 @@ void CommandLine::makeAbsolutePath(duint pos)
             converted = true;
         }
         else
-#endif
+#endif*/
         if(!QDir::isAbsolutePath(arg))
         {
             dir.setPath(d->initialDir.filePath(dir.path()));
@@ -294,7 +294,7 @@ void CommandLine::makeAbsolutePath(duint pos)
         }
 
         // Update the argument string.
-        d->arguments[pos] = dir.path();
+        d->arguments[pos] = NativePath(dir.path());
 
         QFileInfo info(dir.path());
         if(info.isDir())
@@ -302,8 +302,6 @@ void CommandLine::makeAbsolutePath(duint pos)
             // Append a slash so libdeng1 will treat it as a directory.
             d->arguments[pos] += '/';
         }
-
-        d->arguments[pos] = NativePath(d->arguments[pos]);
 
         // Replace the pointer string.
         free(d->pointers[pos]);

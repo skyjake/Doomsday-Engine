@@ -1177,7 +1177,7 @@ static Window* createWindow(ddwindowtype_t type, const char* title)
         // Set an icon for the window.
         AutoStr* iconPath = AutoStr_FromText("data\\graphics\\doomsday.ico");
         F_PrependBasePath(iconPath, iconPath);
-        LOG_DEBUG("Window icon: ") << Str_Text(iconPath);
+        LOG_DEBUG("Window icon: ") << de::NativePath(Str_Text(iconPath)).pretty();
         mainWindow.widget->setWindowIcon(QIcon(Str_Text(iconPath)));
 #endif
 
