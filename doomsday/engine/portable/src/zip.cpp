@@ -146,7 +146,7 @@ public:
     {}
 
     /// @return  Name of this file.
-    ddstring_t const* name() const
+    String /*const&*/ name() const
     {
         return directoryNode().name();
     }

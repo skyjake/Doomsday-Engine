@@ -31,6 +31,10 @@
 
 #include "models.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_SKY_LAYERS                   ( 2 )
 #define MAX_SKY_MODELS                   ( 32 )
 
@@ -132,5 +136,9 @@ void R_SkyLayerSetOffset(int layerId, float offset);
  * Alternative interface for manipulating Sky (layer) properties by name/id.
  */
 void R_SkyParams(int layer, int param, void* data);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_SKY_H */

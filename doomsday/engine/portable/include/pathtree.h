@@ -147,7 +147,7 @@ namespace de
             }
 
             /// @return Name for this node's path fragment.
-            ddstring_t const* name() const;
+            String /*const&*/ name() const;
 
             /// @return Hash for this node's path fragment.
             ushort hash() const;
@@ -156,7 +156,7 @@ namespace de
              * @param candidatePath  Mapped search pattern (path).
              * @param flags          @ref pathComparisonFlags
              *
-             * @return Non-zero iff the candidate path matched this.
+             * @return Zero iff the candidate path matched this.
              *
              * @todo An alternative version of this whose candidate path is specified
              *       using another tree node (possibly from another PathTree), would
@@ -306,7 +306,7 @@ namespace de
          */
 
         /// @return The path fragment associated with @a fragmentId.
-        ddstring_t const* fragmentName(FragmentId fragmentId) const;
+        String /*const&*/ fragmentName(FragmentId fragmentId) const;
 
         /// @return Hash associated with @a fragmentId.
         ushort fragmentHash(FragmentId fragmentId) const;

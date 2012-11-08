@@ -354,7 +354,8 @@ PathTree::Node& PathTree::find(int flags, char const* searchPath, char delimiter
             Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
-                if((*i)->comparePath(mappedSearchPath, flags))
+                Node& node = **i;
+                if(!node.comparePath(mappedSearchPath, flags))
                 {
                     // This is the node we're looking for - stop iteration.
                     foundNode = *i;
@@ -370,7 +371,8 @@ PathTree::Node& PathTree::find(int flags, char const* searchPath, char delimiter
             Nodes::iterator i = nodes.find(hash);
             for(; i != nodes.end() && i.key() == hash; ++i)
             {
-                if((*i)->comparePath(mappedSearchPath, flags))
+                Node& node = **i;
+                if(!node.comparePath(mappedSearchPath, flags))
                 {
                     // This is the node we're looking for - stop iteration.
                     foundNode = *i;
@@ -384,9 +386,9 @@ PathTree::Node& PathTree::find(int flags, char const* searchPath, char delimiter
     return *foundNode;
 }
 
-ddstring_t const* PathTree::fragmentName(FragmentId fragmentId) const
+String /*const&*/ PathTree::fragmentName(FragmentId fragmentId) const
 {
-    return d->fragments.string(fragmentId);
+    return String(Str_Text(d->fragments.string(fragmentId)));
 }
 
 ushort PathTree::fragmentHash(FragmentId fragmentId) const

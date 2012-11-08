@@ -636,7 +636,7 @@ static void initPathLumpMappings()
         de::File1& lump = **i;
         FileInfo const& lumpInfo = lump.info();
 
-        if(strnicmp(Str_Text(lump.name()), "DD_DIREC", 8)) continue;
+        if(!lump.name().beginsWith("DD_DIREC", Qt::CaseInsensitive)) continue;
 
         // Make a copy of it so we can ensure it ends in a null.
         if(bufSize < lumpInfo.size + 1)

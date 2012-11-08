@@ -86,7 +86,7 @@ PathTree::FragmentId PathTree::Node::fragmentId() const
     return d->fragmentId;
 }
 
-ddstring_t const* PathTree::Node::name() const
+String /*const&*/ PathTree::Node::name() const
 {
     return tree().fragmentName(d->fragmentId);
 }
@@ -155,22 +155,14 @@ static int matchPathFragment(char const* string, char const* pattern)
     return *st == 0;
 }
 
-/// @note This routine is also used as an iteration callback, so only return
-///       a non-zero value when the node is a match for the search term.
 int PathTree::Node::comparePath(PathMap& searchPattern, int flags) const
 {
     if(((flags & PCF_NO_LEAF)   && isLeaf()) ||
        ((flags & PCF_NO_BRANCH) && !isLeaf()))
-        return false;
+        return 1;
 
     PathMapFragment const* sfragment = PathMap_Fragment(&searchPattern, 0);
-    if(!sfragment) return false; // Hmm...
-
-//#ifdef _DEBUG
-//#  define EXIT_POINT(ep) fprintf(stderr, "MatchDirectory exit point %i\n", ep)
-//#else
-#  define EXIT_POINT(ep)
-//#endif
+    if(!sfragment) return 1; // Hmm...
 
     // In reverse order, compare path fragments in the search term.
     uint fragmentCount = PathMap_Size(&searchPattern);
@@ -178,62 +170,46 @@ int PathTree::Node::comparePath(PathMap& searchPattern, int flags) const
     PathTree::Node const* node = this;
     for(uint i = 0; i < fragmentCount; ++i)
     {
-        if(i == 0 && node->isLeaf())
+        if(!sfragment->isWild())
         {
-            char buf[256];
-            qsnprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
-
-            ddstring_t const* fragment = node->name();
-            if(!matchPathFragment(Str_Text(fragment), buf))
+            // If the hashes don't match it can't possibly be this.
+            if(sfragment->hash != node->hash())
             {
-                EXIT_POINT(1);
-                return false;
+                return 1;
             }
-        }
-        else
-        {
-            if(!sfragment->isWild())
-            {
-                // If the hashes don't match it can't possibly be this.
-                if(sfragment->hash != node->hash())
-                {
-                    EXIT_POINT(2);
-                    return false;
-                }
 
-                // Compare the path fragment to that of the search term.
-                ddstring_t const* fragment = node->name();
-                if(Str_Length(fragment) < sfragment->length() ||
-                   qstrnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
-                {
-                    EXIT_POINT(3);
-                    return false;
-                }
+            // Compare the path fragment to that of the search term.
+            /// @todo Optimize: copying sfragment is unnecessary.
+            char buf[256];
+            int sfragmentLength = sfragment->length();
+            qstrncpy(buf, sfragment->from, sfragmentLength + 1);
+
+            String /*const&*/ fragment = node->name();
+            QByteArray fragmentUtf8 = fragment.toUtf8();
+            if(!matchPathFragment(fragmentUtf8.constData(), buf))
+            {
+                return 1;
             }
         }
 
         // Have we arrived at the search target?
-        if(i == fragmentCount-1)
+        if(i == fragmentCount - 1)
         {
-            EXIT_POINT(4);
-            return (!(flags & PCF_MATCH_FULL) || !node->parent());
+            return !(!(flags & PCF_MATCH_FULL) || !node->parent());
         }
 
-        // Are there no more parent directories?
+        // Is the hierarchy too shallow?
         if(!node->parent())
         {
-            EXIT_POINT(5);
-            return false;
+            return 1;
         }
 
-        // So far so good. Move one directory level upwards.
+        // So far so good. Move one level up the hierarchy.
         node = node->parent();
         sfragment = PathMap_Fragment(&searchPattern, i + 1);
     }
-    EXIT_POINT(6);
-    return false;
 
-#undef EXIT_POINT
+    return 1;
 }
 
 #ifdef LIBDENG_STACK_MONITOR
@@ -254,13 +230,13 @@ typedef struct pathconstructorparams_s {
  */
 static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const& trav)
 {
-    ddstring_t const* fragment = trav.name();
+    String /*const&*/ fragment = trav.name();
 
 #ifdef LIBDENG_STACK_MONITOR
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void*)&fragment);
 #endif
 
-    parm.length += Str_Length(fragment);
+    parm.length += fragment.length();
 
     if(trav.parent())
     {
@@ -285,7 +261,7 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
     }
 
     // Assemble the path by appending the fragment.
-    parm.composedPath.append(String(Str_Text(fragment)));
+    parm.composedPath.append(fragment);
 }
 
 /**

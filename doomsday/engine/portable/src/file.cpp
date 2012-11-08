@@ -105,13 +105,11 @@ File1& File1::setCustom(bool yes)
     return *this;
 }
 
-ddstring_t const* File1::name() const
+String /*const&*/ File1::name() const
 {
     /// @todo Contained files will be able to provide the name without needing to
     ///       extract it from the virtual path.
-    AutoStr* name_ = AutoStr_NewStd();
-    F_FileNameAndExtension(name_, Str_Text(&path_));
-    return name_;
+    return String(Str_Text(&path_)).fileName();
 }
 
 size_t File1::read(uint8_t* /*buffer*/, bool /*tryCache*/)

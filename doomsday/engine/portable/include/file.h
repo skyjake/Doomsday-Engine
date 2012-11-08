@@ -80,7 +80,7 @@ public:
     virtual ~File1();
 
     /// @return  Name of this file.
-    virtual ddstring_t const* name() const;
+    virtual String /*const&*/ name() const;
 
     /**
      * Compose the absolute VFS path to this file.

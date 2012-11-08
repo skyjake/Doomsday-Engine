@@ -228,6 +228,16 @@ static boolean convertMap(GameMap** map, archivedmap_t* dam)
     return converted;
 }
 
+static de::String DAM_ComposeUniqueId(de::File1& markerLump)
+{
+    return de::String("%1|%2|%3|%4")
+                   .arg(markerLump.name().fileNameWithoutExtension())
+                   .arg(markerLump.container().name().fileNameWithoutExtension())
+                   .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
+                   .arg(Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()))
+                   .toLower();
+}
+
 /**
  * Attempt to load the map associated with the specified identifier.
  */
@@ -247,21 +257,21 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
     if(!dam)
     {
         // We've not yet attempted to load this map.
-        const char* mapId = Str_Text(Uri_Path(uri));
-        lumpnum_t markerLump;
+        char const* markerLumpName = Str_Text(Uri_Path(uri));
+        lumpnum_t markerLumpNum;
         AutoStr* cachedMapDir;
         Str cachedMapPath;
 
-        markerLump = F_LumpNumForName(mapId);
-        if(0 > markerLump) return false;
+        markerLumpNum = F_LumpNumForName(markerLumpName);
+        if(0 > markerLumpNum) return false;
 
         // Compose the cache directory path and ensure it exists.
-        cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLump)));
+        cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
         F_MakePath(Str_Text(cachedMapDir));
 
         // Compose the full path to the cached map data file.
         Str_InitStd(&cachedMapPath);
-        F_FileName(&cachedMapPath, Str_Text(F_LumpName(markerLump)));
+        F_FileName(&cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
         Str_Append(&cachedMapPath, ".dcm");
         Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
 
@@ -325,17 +335,12 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             map->uri = Uri_Dup(dam->uri);
 
             // Generate the unique map id.
-            char const* markerLumpName  = Str_Text(Uri_Path(map->uri));
-            lumpnum_t markerLumpNum     = App_FileSystem()->lumpNumForName(markerLumpName);
-            de::File1 const& markerLump = App_FileSystem()->nameIndexForLump(markerLumpNum).lump(markerLumpNum);
+            lumpnum_t markerLumpNum = App_FileSystem()->lumpNumForName(Str_Text(Uri_Path(map->uri)));
+            de::File1& markerLump   = App_FileSystem()->nameIndexForLump(markerLumpNum).lump(markerLumpNum);
 
-            AutoStr* fileName = AutoStr_NewStd();
-            F_FileName(fileName, Str_Text(markerLump.container().name()));
-
-            qsnprintf(map->uniqueId, 255, "%s|%s|%s|%s", markerLumpName, Str_Text(fileName),
-                      (!markerLump.container().hasCustom()? "iwad" : "pwad"),
-                      Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()));
-            strlwr(map->uniqueId);
+            de::String uniqueId     = DAM_ComposeUniqueId(markerLump);
+            QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
+            qstrncpy(map->uniqueId, uniqueIdUtf8.constData(), sizeof(map->uniqueId));
 
             // See what mapinfo says about this map.
             mapInfo = Def_GetMapInfo(map->uri);

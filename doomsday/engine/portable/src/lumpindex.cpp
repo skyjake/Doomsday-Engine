@@ -401,7 +401,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
         File1 const& lump = *d->lumps[idx];
         PathTree::Node const& node = lump.directoryNode();
 
-        if(!node.comparePath(searchPattern, 0)) continue;
+        if(node.comparePath(searchPattern, 0)) continue;
 
         // This is the lump we are looking for.
         return idx;

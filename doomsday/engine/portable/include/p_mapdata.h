@@ -234,15 +234,6 @@ extern GameMap* theMap;
 void P_SetCurrentMap(GameMap* map);
 
 /**
- * Generate a 'unique' identifier for the map.  This identifier
- * contains information about the map tag (E3M3), the WAD that
- * contains the map (DOOM.IWAD), and the game mode (doom-ultimate).
- *
- * The entire ID string will be in lowercase letters.
- */
-const char* P_GenerateUniqueMapId(const char* mapId);
-
-/**
  * Is there a known map referenced by @a uri and if so, is it available for loading?
  *
  * @param  Uri identifying the map to be searched for.

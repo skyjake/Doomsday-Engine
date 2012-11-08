@@ -63,7 +63,7 @@ public:
     {}
 
     /// @return  Name of this file.
-    ddstring_t const* name() const
+    String /*const&*/ name() const
     {
         return directoryNode().name();
     }
@@ -157,11 +157,11 @@ public:
         crc_ = uint(info_.size);
 
         PathTree::Node const& node = directoryNode();
-        ddstring_t const* name = node.name();
-        int const nameLen = Str_Length(name);
+        String /*const&*/ name = node.name();
+        int const nameLen = name.length();
         for(int k = 0; k < nameLen; ++k)
         {
-            crc_ += Str_At(name, k);
+            crc_ += name.at(k).unicode();
         }
         return *this;
     }

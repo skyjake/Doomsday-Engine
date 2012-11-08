@@ -2500,10 +2500,10 @@ static void SV_ReadSector(Sector* sec)
     {
         // The flat numbers are absolute lump indices.
         Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
-        Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
+        Uri_SetPath(uri, Str_Text(W_LumpName(SV_ReadShort())));
         floorMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
-        Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
+        Uri_SetPath(uri, Str_Text(W_LumpName(SV_ReadShort())));
         ceilingMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
     }
@@ -3238,7 +3238,7 @@ static int SV_ReadFloor(floor_t* floor)
             Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
             ddstring_t name;
             Str_Init(&name);
-            F_FileName(&name, W_LumpName(SV_ReadShort()));
+            F_FileName(&name, Str_Text(W_LumpName(SV_ReadShort())));
             Uri_SetPath(uri, Str_Text(&name));
             floor->material = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
             Uri_Delete(uri);
@@ -3291,7 +3291,7 @@ static int SV_ReadFloor(floor_t* floor)
         { Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
         ddstring_t name;
         Str_Init(&name);
-        F_FileName(&name, W_LumpName(SV_ReadShort()));
+        F_FileName(&name, Str_Text(W_LumpName(SV_ReadShort())));
         Uri_SetPath(uri, Str_Text(&name));
         floor->material = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
