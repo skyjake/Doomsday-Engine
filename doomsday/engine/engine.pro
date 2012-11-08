@@ -472,7 +472,7 @@ SOURCES += \
     portable/src/con_data.cpp \
     portable/src/con_main.c \
     portable/src/dam_file.c \
-    portable/src/dam_main.c \
+    portable/src/dam_main.cpp \
     portable/src/dd_games.cpp \
     portable/src/dd_help.c \
     portable/src/dd_init.cpp \

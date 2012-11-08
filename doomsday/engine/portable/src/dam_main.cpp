@@ -31,10 +31,12 @@
 #include "de_refresh.h"
 #include "de_render.h"
 
+#include "lumpindex.h"
+
 static void freeArchivedMap(archivedmap_t* dam);
 
 // Should we be caching successfully loaded maps?
-byte mapCache = true;
+extern "C" byte mapCache = true;
 
 static const char* mapCacheDir = "mapcache/";
 
@@ -75,19 +77,17 @@ void DAM_Shutdown(void)
 /**
  * Allocate memory for a new archived map record.
  */
-static archivedmap_t* allocArchivedMap(void)
+static archivedmap_t* allocArchivedMap()
 {
-    archivedmap_t* dam = Z_Calloc(sizeof(*dam), PU_APPSTATIC, 0);
-    if(!dam)
-        Con_Error("allocArchivedMap: Failed on allocation of %lu bytes for new ArchivedMap.",
-                  (unsigned long) sizeof(*dam));
+    archivedmap_t* dam = (archivedmap_t*) Z_Calloc(sizeof(*dam), PU_APPSTATIC, 0);
+    if(!dam) Con_Error("allocArchivedMap: Failed on allocation of %lu bytes for new ArchivedMap.", (unsigned long) sizeof(*dam));
     return dam;
 }
 
 /// Free all memory acquired for an archived map record.
 static void freeArchivedMap(archivedmap_t* dam)
 {
-    assert(dam);
+    DENG_ASSERT(dam);
     Uri_Delete(dam->uri);
     Str_Free(&dam->cachedMapPath);
     Z_Free(dam);
@@ -144,7 +144,7 @@ static archivedmap_t* findArchivedMap(const Uri* uri)
  */
 static void addArchivedMap(archivedmap_t* dam)
 {
-    archivedMaps = Z_Realloc(archivedMaps, sizeof(archivedmap_t*) * (++numArchivedMaps + 1), PU_APPSTATIC);
+    archivedMaps = (archivedmap_t**) Z_Realloc(archivedMaps, sizeof(archivedmap_t*) * (++numArchivedMaps + 1), PU_APPSTATIC);
     archivedMaps[numArchivedMaps - 1] = dam;
     archivedMaps[numArchivedMaps] = NULL; // Terminate.
 }
@@ -323,7 +323,19 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             }
 
             map->uri = Uri_Dup(dam->uri);
-            strncpy(map->uniqueId, P_GenerateUniqueMapId(Str_Text(Uri_Path(map->uri))), sizeof(map->uniqueId));
+
+            // Generate the unique map id.
+            char const* markerLumpName  = Str_Text(Uri_Path(map->uri));
+            lumpnum_t markerLumpNum     = App_FileSystem()->lumpNumForName(markerLumpName);
+            de::File1 const& markerLump = App_FileSystem()->nameIndexForLump(markerLumpNum).lump(markerLumpNum);
+
+            AutoStr* fileName = AutoStr_NewStd();
+            F_FileName(fileName, Str_Text(markerLump.container().name()));
+
+            qsnprintf(map->uniqueId, 255, "%s|%s|%s|%s", markerLumpName, Str_Text(fileName),
+                      (!markerLump.container().hasCustom()? "iwad" : "pwad"),
+                      Str_Text(&reinterpret_cast<de::Game*>(App_CurrentGame())->identityKey()));
+            strlwr(map->uniqueId);
 
             // See what mapinfo says about this map.
             mapInfo = Def_GetMapInfo(map->uri);
