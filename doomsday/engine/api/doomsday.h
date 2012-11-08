@@ -486,9 +486,9 @@ void P_Impulse(int playerNum, int control);
 /// @addtogroup map
 ///@{
 // Play: Setup.
-boolean P_MapExists(const char* uri);
-boolean P_MapIsCustom(const char* uri);
-const char* P_MapSourceFile(const char* uri);
+boolean P_MapExists(char const* uri);
+boolean P_MapIsCustom(char const* uri);
+AutoStr* P_MapSourceFile(char const* uri);
 
 boolean P_LoadMap(const char* uri);
 ///@}

@@ -89,7 +89,7 @@ public:
      *
      * @return String containing the absolute path.
      */
-    AutoStr* composeLumpPath(int lumpIdx, char delimiter = '/');
+    String composeLumpPath(int lumpIdx, char delimiter = '/');
 
     /**
      * Retrieve a lump contained by this file.

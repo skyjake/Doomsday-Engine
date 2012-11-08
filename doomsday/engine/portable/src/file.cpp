@@ -59,7 +59,7 @@ bool File1::isContained() const
 
 File1& File1::container() const
 {
-    if(!container_) throw NotContainedError("File1::container", String(Str_Text(composePath())) + " is not contained");
+    if(!container_) throw NotContainedError("File1::container", "File \"" + composePath() + " is not contained");
     return *container_;
 }
 
@@ -68,12 +68,12 @@ de::FileHandle& File1::handle()
     return *handle_;
 }
 
-AutoStr* File1::composePath(char delimiter) const
+String File1::composePath(char delimiter) const
 {
-    AutoStr* path = Str_Copy(AutoStr_NewStd(), &path_);
+    String result = String(Str_Text(&path_));
     if(delimiter != '/')
         throw de::Error("File1::composePath", "Non '/' delimiter not yet implemented");
-    return path;
+    return result;
 }
 
 uint File1::loadOrderIndex() const

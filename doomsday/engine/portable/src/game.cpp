@@ -188,7 +188,7 @@ bool Game::isRequiredFile(File1& file)
     File1& rootFile = file;
     while(rootFile.isContained())
     { rootFile = rootFile.container(); }
-    AutoStr* absolutePath = rootFile.composePath();
+    String absolutePath = rootFile.composePath();
 
     bool isRequired = false;
 
@@ -198,7 +198,7 @@ bool Game::isRequiredFile(File1& file)
         ResourceRecord& record = **i;
         if(!(record.resourceFlags() & RF_STARTUP)) continue;
 
-        if(!record.resolvedPath(true/*try locate*/).compare(Str_Text(absolutePath), Qt::CaseInsensitive))
+        if(!record.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
         {
             isRequired = true;
             break;

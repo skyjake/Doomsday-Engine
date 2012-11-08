@@ -33,6 +33,7 @@
 
 #include <de/ByteOrder>
 #include <de/Error>
+#include <de/NativePath>
 #include <de/Log>
 #include <de/memoryzone.h>
 
@@ -75,7 +76,7 @@ public:
      *
      * @return String containing the absolute path.
      */
-    AutoStr* composePath(char delimiter = '/') const
+    String composePath(char delimiter = '/') const
     {
         return dynamic_cast<Wad&>(container()).composeLumpPath(info_.lumpIdx, delimiter);
     }
@@ -404,10 +405,10 @@ PathTree::Node& Wad::lumpDirectoryNode(int lumpIdx) const
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
-AutoStr* Wad::composeLumpPath(int lumpIdx, char delimiter)
+String Wad::composeLumpPath(int lumpIdx, char delimiter)
 {
-    if(!isValidIndex(lumpIdx)) return AutoStr_NewStd();
-    return lump(lumpIdx).directoryNode().composePath(AutoStr_NewStd(), NULL, delimiter);
+    if(!isValidIndex(lumpIdx)) return String();
+    return lump(lumpIdx).directoryNode().composePath(delimiter);
 }
 
 File1& Wad::lump(int lumpIdx)
@@ -458,8 +459,8 @@ uint8_t const* Wad::cacheLump(int lumpIdx)
 
     WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
     LOG_TRACE("\"%s:%s\" (%u bytes%s)")
-        << F_PrettyPath(Str_Text(composePath()))
-        << F_PrettyPath(Str_Text(file.composePath()))
+        << de::NativePath(composePath()).pretty()
+        << de::NativePath(file.composePath()).pretty()
         << (unsigned long) file.info().size
         << (file.info().isCompressed()? ", compressed" : "");
 
@@ -484,8 +485,7 @@ uint8_t const* Wad::cacheLump(int lumpIdx)
 Wad& Wad::unlockLump(int lumpIdx)
 {
     LOG_AS("Wad::unlockLump");
-    LOG_TRACE("\"%s:%s\"")
-        << F_PrettyPath(Str_Text(composePath())) << F_PrettyPath(Str_Text(lump(lumpIdx).composePath()));
+    LOG_TRACE("\"%s:%s\"") << de::NativePath(composePath()).pretty() << de::NativePath(lump(lumpIdx).composePath()).pretty();
 
     if(isValidIndex(lumpIdx))
     {
@@ -520,8 +520,8 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
 
     LOG_TRACE("\"%s:%s\" (%u bytes%s) [%lu +%lu]")
-        << F_PrettyPath(Str_Text(composePath()))
-        << F_PrettyPath(Str_Text(file.composePath()))
+        << de::NativePath(composePath()).pretty()
+        << de::NativePath(file.composePath()).pretty()
         << (unsigned long) file.size()
         << (file.isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset

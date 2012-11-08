@@ -257,7 +257,7 @@ void P_LoadACScripts(int lump)
     int i;
 
     VERBOSE( Con_Message("Loading ACS bytecode lump %s:%s (#%i)...\n",
-                         F_PrettyPath(W_LumpSourceFile(lump)), W_LumpName(lump), lump) )
+                         F_PrettyPath(Str_Text(W_LumpSourceFile(lump))), W_LumpName(lump), lump) )
     ACScriptCount = 0;
 
     if(lumpLength >= sizeof(acsheader_t))

@@ -29,6 +29,8 @@
 #  include <objbase.h>
 #endif
 
+#include <de/NativePath>
+
 #include "de_platform.h"
 
 #ifdef UNIX
@@ -2359,7 +2361,8 @@ static bool tryLoadFile(char const* path, size_t baseOffset, de::File1** file)
     {
         de::FileHandle& hndl = App_FileSystem()->openFile(path, "rb", baseOffset, false /* no duplicates */);
 
-        VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(hndl.file().composePath()))) )
+        QByteArray pathUtf8 = de::NativePath(hndl.file().composePath()).pretty().toUtf8();
+        VERBOSE( Con_Message("Loading \"%s\"...\n", pathUtf8.constData()) )
         App_FileSystem()->index(hndl.file());
 
         if(file) *file = &hndl.file();
@@ -2382,20 +2385,21 @@ static bool tryUnloadFile(char const* path)
     try
     {
         de::File1& file = App_FileSystem()->find(path);
+        QByteArray pathUtf8 = de::NativePath(file.composePath()).pretty().toUtf8();
 
         // Do not attempt to unload a resource required by the current game.
         if(games->currentGame().isRequiredFile(file))
         {
             Con_Message("\"%s\" is required by the current game.\n"
                         "Required game files cannot be unloaded in isolation.\n",
-                        F_PrettyPath(Str_Text(file.composePath())));
+                        pathUtf8.constData());
             return false;
         }
 
-        VERBOSE2( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(Str_Text(file.composePath()))) )
+        VERBOSE2( Con_Message("Unloading \"%s\"...\n", pathUtf8.constData()) )
         App_FileSystem()->deindex(file);
         delete &file;
-        VERBOSE2( Con_Message("Done unloading \"%s\".\n", F_PrettyPath(Str_Text(file.composePath()))) )
+        VERBOSE2( Con_Message("Done unloading \"%s\".\n", pathUtf8.constData()) )
         return true;
     }
     catch(FS1::NotFoundError const&)

@@ -70,7 +70,7 @@ NativePath NativePath::concatenatePath(const QString& nativePath) const
 
 NativePath NativePath::operator / (const NativePath& nativePath) const
 {
-    return String::operator / (nativePath);
+    return concatenatePath(nativePath);
 }
 
 NativePath NativePath::operator / (const QString& str) const
@@ -124,6 +124,31 @@ NativePath NativePath::expand(bool* didExpand) const
     // No expansion done.
     if(didExpand) *didExpand = false;
     return *this;
+}
+
+NativePath NativePath::pretty() const
+{
+    if(empty()) return *this;
+
+    NativePath result = *this;
+
+    // Hide relative directives like '}'
+    if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
+    {
+        result = result.mid(1);
+    }
+
+    // If within our the base directory cut out the base path.
+    if(QDir::isAbsolutePath(result))
+    {
+        NativePath basePath = App::app().nativeBasePath();
+        if(result.beginsWith(basePath))
+        {
+            result = result.mid(basePath.length());
+        }
+    }
+
+    return result;
 }
 
 NativePath NativePath::workPath()

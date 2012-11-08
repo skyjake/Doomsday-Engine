@@ -221,7 +221,7 @@ void P_InitSwitchList(void)
     // Has a custom SWITCHES lump been loaded?
     if(lumpNum >= 0)
     {
-        VERBOSE( Con_Message("Processing lump %s::SWITCHES...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))) );
+        VERBOSE( Con_Message("Processing lump %s::SWITCHES...\n", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))) )
         sList = (switchlist_t*) W_CacheLump(lumpNum);
     }
     else

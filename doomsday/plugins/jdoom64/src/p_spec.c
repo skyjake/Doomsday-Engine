@@ -227,7 +227,7 @@ void P_InitPicAnims(void)
          * Support for this extension should be considered depreciated.
          * All new features should be added, accessed via DED.
          */
-        VERBOSE( Con_Message("Processing lump %s::ANIMATED...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))));
+        VERBOSE( Con_Message("Processing lump %s::ANIMATED...\n", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))) )
         loadAnimDefs((animdef_t*)W_CacheLump(lumpNum), true);
         W_UnlockLump(lumpNum);
         return;

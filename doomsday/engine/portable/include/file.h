@@ -89,7 +89,7 @@ public:
      *
      * @return String containing the absolute path.
      */
-    virtual AutoStr* composePath(char delimiter = '/') const;
+    virtual String composePath(char delimiter = '/') const;
 
     /// @return  @c true iff this file is contained by another.
     bool isContained() const;

@@ -35,6 +35,7 @@
 #include "filehandle.h"
 
 #include <de/memory.h>
+#include <de/NativePath>
 
 namespace de {
 
@@ -138,11 +139,8 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
             Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
                 (unsigned long) hndl->d->size);
 #if _DEBUG
-        VERBOSE2(
-            Con_Printf("FileHandle [%p] buffering \"%s:%s\"...\n", (void*)hndl,
-                       F_PrettyPath(Str_Text(container.composePath())),
-                       F_PrettyPath(Str_Text(file.composePath())));
-        )
+        LOG_VERBOSE("FileHandle [%p] buffering \"%s:%s\"...")
+            << de::dintptr(hndl) << de::NativePath(container.composePath()).pretty() << file.composePath();
 #endif
         file.read((uint8_t*)hndl->d->data, 0, file.size());
     }

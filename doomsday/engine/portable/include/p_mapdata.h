@@ -259,7 +259,7 @@ boolean P_MapIsCustom(const char* uri);
  * @param  Uri identifying the map to be searched for.
  * @return  Fully qualified (i.e., absolute) path to the source file.
  */
-const char* P_MapSourceFile(const char* uri);
+AutoStr* P_MapSourceFile(char const* uri);
 
 /**
  * Begin the process of loading a new map.

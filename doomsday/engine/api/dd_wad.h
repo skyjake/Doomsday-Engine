@@ -48,7 +48,7 @@ uint W_LumpLastModified(lumpnum_t lumpNum);
 
 /// @return  Name of the WAD file where the data associated with @a lumpNum resides.
 ///     Always returns a valid filename (or an empty string).
-char const* W_LumpSourceFile(lumpnum_t lumpNum);
+AutoStr* W_LumpSourceFile(lumpnum_t lumpNum);
 
 /// @return  @c true iff the data associated with @a lumpNum does not originate from the current game.
 boolean W_LumpIsCustom(lumpnum_t lumpNum);

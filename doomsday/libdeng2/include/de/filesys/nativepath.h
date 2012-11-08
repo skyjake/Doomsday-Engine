@@ -111,6 +111,17 @@ public:
     NativePath expand(bool* didExpand = 0) const;
 
     /**
+     * Returns a prettier version of the path, where the base path is omitted
+     * from the path if it is present in the beginning. Also omits the legacy
+     * native path directives '>' and '}', which expand to the base path.
+     *
+     * @return Simplified version of the path, for humans. As the path may turn
+     * from absolute to relative, the result should only be used for paths
+     * appearing in messages intended for the user.
+     */
+    NativePath pretty() const;
+
+    /**
      * Returns the current native working path.
      */
     static NativePath workPath();
