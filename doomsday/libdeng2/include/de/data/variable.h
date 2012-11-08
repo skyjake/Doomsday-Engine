@@ -212,8 +212,10 @@ namespace de
         
         /**
          * Verifies that the variable can be assigned a new value.
+         *
+         * @param attemptedNewValue  The new value that is being assigned.
          */
-        void verifyWritable();
+        void verifyWritable(const Value& attemptedNewValue);
         
         /**
          * Verifies that a string is a valid name for the variable. If not,
