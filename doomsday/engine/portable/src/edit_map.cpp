@@ -1665,12 +1665,13 @@ boolean MPE_End(void)
     if(gamemap->uri && !Str_IsEmpty(Uri_Path(gamemap->uri)))
     {
         // Yes, write the cached map data file.
-        lumpnum_t markerLumpNum = F_LumpNumForName(Str_Text(Uri_Path(gamemap->uri)));
+        char const* markerLumpName = Str_Text(Uri_Path(gamemap->uri));
+        lumpnum_t markerLumpNum = F_LumpNumForName(markerLumpName);
         AutoStr* cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
         Str cachedMapPath;
 
         Str_InitStd(&cachedMapPath);
-        F_FileName(&cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
+        F_FileName(&cachedMapPath, markerLumpName);
         Str_Append(&cachedMapPath, ".dcm");
         Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
         F_ExpandBasePath(&cachedMapPath, &cachedMapPath);
@@ -1765,8 +1766,9 @@ static int printMissingMaterialWorker(de::StringPool::Id internId, void* paramet
             {
                 // Print mode.
                 int const refCount = materialDict->userValue(internId);
-                ddstring_t const* materialUri = materialDict->string(internId);
-                Con_Message(" %4u x \"%s\"\n", refCount, Str_Text(materialUri));
+                de::String const& materialUri = materialDict->string(internId);
+                QByteArray materialUriUtf8 = materialUri.toUtf8();
+                Con_Message(" %4u x \"%s\"\n", refCount, materialUriUtf8.constData());
             }
         }
     }
@@ -1797,7 +1799,7 @@ static void clearMaterialDict(void)
     delete materialDict; materialDict = 0;
 }
 
-static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
+static void assignSurfaceMaterial(Surface* suf, ddstring_t const* materialUri)
 {
     DENG_ASSERT(suf);
 
@@ -1808,11 +1810,10 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
         if(!materialDict)
         {
             materialDict = new de::StringPool;
-            if(!materialDict) Con_Error("assignSurfaceMaterial: Failed to instantiate the material dictionary.");
         }
 
         // Intern this reference.
-        de::StringPool::Id internId = materialDict->intern(materialUri);
+        de::StringPool::Id internId = materialDict->intern(de::String(Str_Text(materialUri)));
 
         // Have we previously encountered this?.
         uint refCount = materialDict->userValue(internId);
@@ -1828,10 +1829,8 @@ static void assignSurfaceMaterial(Surface* suf, const ddstring_t* materialUri)
             materialid_t materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
             if(materialId == NOMATERIALID)
             {
-                Uri* tmp = Uri_NewWithPath2(Str_Text(materialUri), RC_NULL);
-                Uri_SetScheme(tmp, "");
-                materialId = Materials_ResolveUri(tmp);
-                Uri_Delete(tmp);
+                de::Uri tmp = de::Uri(Str_Text(materialUri), RC_NULL).setScheme("");
+                materialId = Materials_ResolveUri(reinterpret_cast<uri_s*>(&tmp));
             }
             material = Materials_ToMaterial(materialId);
 

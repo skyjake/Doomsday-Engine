@@ -237,7 +237,7 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
         Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
         ddstring_t name;
         Str_Init(&name);
-        F_FileName(&name, W_LumpName(SV_ReadLong()));
+        F_FileName(&name, Str_Text(W_LumpName(SV_ReadLong())));
         Uri_SetPath(uri, Str_Text(&name));
         mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);

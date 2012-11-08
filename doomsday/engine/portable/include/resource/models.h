@@ -67,7 +67,7 @@ extern "C" {
 #define MFF_WORLD_TIME_ANIM     0x20000000
 
 typedef struct {
-    short model;
+    uint model;
     short frame;
     char frameRange;
     int flags;
@@ -115,6 +115,8 @@ extern float rModelAspectMod;
 void R_InitModels(void);
 void R_ShutdownModels(void);
 model_t* R_ModelForId(uint modelRepositoryId);
+AutoStr* R_ComposePathForModelId(uint modelRepositoryId);
+
 float R_CheckModelFor(struct mobj_s* mo, modeldef_t** mdef, modeldef_t** nextmdef);
 modeldef_t* R_CheckIDModelFor(const char* id);
 int R_ModelFrameNumForName(int modelnum, char* fname);

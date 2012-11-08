@@ -754,7 +754,7 @@ void Def_ReadLumpDefs(void)
     DENG2_FOR_EACH_CONST(de::LumpIndex::Lumps, i, App_FileSystem()->nameIndex().lumps())
     {
         de::File1 const& lump = **i;
-        if(strnicmp(Str_Text(lump.name()), "DD_DEFNS", 8)) continue;
+        if(!lump.name().beginsWith("DD_DEFNS", Qt::CaseInsensitive)) continue;
 
         numProcessedLumps += 1;
 

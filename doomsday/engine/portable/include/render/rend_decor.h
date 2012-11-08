@@ -29,6 +29,10 @@
 #ifndef LIBDENG_RENDER_DECOR_H
 #define LIBDENG_RENDER_DECOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern byte     useLightDecorations;
 extern float    decorMaxDist;  // No decorations are visible beyond this.
 extern float    decorLightBrightFactor;
@@ -41,5 +45,9 @@ void            Rend_DecorInit(void);
 void            Rend_InitDecorationsForFrame(void);
 void            Rend_AddLuminousDecorations(void);
 void            Rend_ProjectDecorations(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_RENDER_DECOR_H */

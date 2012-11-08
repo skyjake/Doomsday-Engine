@@ -41,7 +41,7 @@ extern "C" {
 size_t W_LumpLength(lumpnum_t lumpNum);
 
 /// @return  Name of the lump associated with @a lumpNum.
-char const* W_LumpName(lumpnum_t lumpNum);
+AutoStr* W_LumpName(lumpnum_t lumpNum);
 
 /// @return  "Last modified" timestamp of the zip entry.
 uint W_LumpLastModified(lumpnum_t lumpNum);

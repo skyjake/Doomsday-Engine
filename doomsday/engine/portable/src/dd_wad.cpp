@@ -53,18 +53,20 @@ size_t W_LumpLength(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
-char const* W_LumpName(lumpnum_t absoluteLumpNum)
+AutoStr* W_LumpName(lumpnum_t absoluteLumpNum)
 {
     try
     {
         lumpnum_t lumpNum = absoluteLumpNum;
-        return Str_Text(App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name());
+        String const& name = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name();
+        QByteArray nameUtf8 = name.toUtf8();
+        return AutoStr_FromTextStd(nameUtf8.constData());
     }
     catch(FS1::NotFoundError const&)
     {
         W_Error("W_LumpName: Invalid lumpnum %i.", absoluteLumpNum);
     }
-    return "";
+    return AutoStr_NewStd();
 }
 
 uint W_LumpLastModified(lumpnum_t absoluteLumpNum)

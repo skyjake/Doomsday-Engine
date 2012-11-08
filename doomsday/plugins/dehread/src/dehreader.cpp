@@ -1223,7 +1223,7 @@ public:
                     }
                     else
                     {
-                        qstrncpy(sound->lumpName, W_LumpName(lumpNum), DED_STRINGID_LEN + 1);
+                        qstrncpy(sound->lumpName, Str_Text(W_LumpName(lumpNum)), DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
                             << soundIdx << sound->id << sound->lumpName;
                     }

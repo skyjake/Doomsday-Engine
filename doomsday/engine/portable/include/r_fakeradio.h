@@ -43,6 +43,10 @@
 #ifndef LIBDENG_REFRESH_FAKERADIO_H
 #define LIBDENG_REFRESH_FAKERADIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * To be called after map load to perform necessary initialization within this module.
  */
@@ -50,5 +54,9 @@ void R_InitFakeRadioForMap(void);
 
 /// @return  @c true if @a lineDef qualifies as a (edge) shadow caster.
 boolean R_IsShadowingLinedef(LineDef* lineDef);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_REFRESH_FAKERADIO_H */

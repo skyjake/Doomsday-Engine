@@ -194,7 +194,7 @@ typedef struct model_frame_s {
 
 typedef struct model_s {
     boolean loaded;
-    const char* fileName; ///< Name of the md2 file.
+    uint model; ///< Id of the model in the repository.
     dmd_header_t header;
     dmd_info_t info;
     dmd_skin_t* skins;

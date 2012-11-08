@@ -398,7 +398,7 @@ AutoStr* F_ComposeLumpFilePath(lumpnum_t absoluteLumpNum);
 
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
 
-ddstring_t const* F_LumpName(lumpnum_t absoluteLumpNum);
+AutoStr* F_LumpName(lumpnum_t absoluteLumpNum);
 
 size_t F_LumpLength(lumpnum_t absoluteLumpNum);
 

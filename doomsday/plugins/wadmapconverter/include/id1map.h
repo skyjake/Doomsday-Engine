@@ -26,6 +26,7 @@
 #include "maplumpinfo.h"
 #include "id1map_datatypes.h"
 #include <de/Error>
+#include <de/String>
 #include <vector>
 #include <list>
 
@@ -82,9 +83,19 @@ public:
     MaterialDictId addMaterialToDictionary(const char* name, MaterialDictGroup group);
 
 private:
-    inline const Str* findMaterialInDictionary(MaterialDictId id)
+    inline de::String const& findMaterialInDictionary(MaterialDictId id)
     {
         return materials.string(id);
+    }
+
+    /// @todo fixme: A real performance killer...
+    AutoStr* composeMaterialRef(MaterialDictId id)
+    {
+        AutoStr* ref = AutoStr_NewStd();
+        de::String const& material = findMaterialInDictionary(id);
+        QByteArray materialUtf8 = material.toUtf8();
+        Str_Set(ref, materialUtf8.constData());
+        return ref;
     }
 
     bool loadVertexes(Reader* reader, uint numElements);
