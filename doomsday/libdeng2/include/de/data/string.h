@@ -157,7 +157,7 @@ public:
     String fileNameExtension() const;
 
     /// Extracts the path of the string.
-    String fileNamePath(char dirChar = '/') const;
+    String fileNamePath(QChar dirChar = '/') const;
 
     /**
      * Compare two strings (case sensitive).
@@ -186,17 +186,36 @@ public:
     Block toLatin1() const;
 
     /**
-     * Emulates the behavior of the standard C library's atoi(). Parses a number
-     * by reading characters from @a src until the first non-digit, non-sign
-     * character is encountered. The read substring is then decoded, making use
-     * of @see QString::toInt() into an integer. Whitespace at the beginning of
-     * the string is ignored.
-     *
-     * @return Returns the string converted to an int using base @a base, else
-     *         @c 0 if the conversion fails. If @c 0 is expected in the input
-               then the @a ok argument may be used to disambiguate this case.
+     * Flags for controlling how string-to-integer conversion works.
+     * See de::String::toInt(ok, base, flags)
      */
-    dint toIntLeft(bool* ok = 0, int base = 0) const;
+    enum IntConversionFlag {
+        AllowOnlyWhitespace = 0x0,
+        AllowSuffix = 0x1
+    };
+    Q_DECLARE_FLAGS(IntConversionFlags, IntConversionFlag)
+
+    /**
+     * Converts the string to an integer. The default behavior is identical to
+     * QString::toInt(). With the @a flags parameter the conversion behavior can
+     * be modified.
+     *
+     * Whitespace at the beginning of the string is always ignored.
+     *
+     * With the @c AllowSuffix conversion flag, the conversion emulates the
+     * behavior of the standard C library's @c atoi(): the number is converted
+     * successfully even when it is followed by characters that do not parse
+     * into a valid number (a non-digit and non-sign character).
+     *
+     * @param ok     @c true is returned via this pointer if the conversion was
+     *               successful.
+     * @param base   Base for the number.
+     * @param flags  Conversion flags, see IntConversionFlag.
+     *
+     * @return Integer parsed from the string (@c *ok set to true). @c 0 if
+     * the conversion fails (@c *ok set to @c false).
+     */
+    dint toInt(bool* ok = 0, int base = 10, IntConversionFlags flags = AllowOnlyWhitespace) const;
 
 public:
     /**

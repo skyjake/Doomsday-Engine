@@ -398,7 +398,7 @@ public:
                                                   .arg(currentLineNumber));
                         }
                         bool isNumber;
-                        const int oldSize = args.toIntLeft(&isNumber, 10);
+                        const int oldSize = args.toInt(&isNumber, 10, String::AllowSuffix);
                         if(!isNumber)
                         {
                             throw SyntaxError(String("Expected old text size but encountered \"%1\" on line #%2")
@@ -407,7 +407,7 @@ public:
 
                         args.remove(0, firstArgEnd + 1);
 
-                        const int newSize = args.toIntLeft(&isNumber, 10);
+                        const int newSize = args.toInt(&isNumber, 10, String::AllowSuffix);
                         if(!isNumber)
                         {
                             throw SyntaxError(String("Expected new text size but encountered \"%1\" on line #%2")
@@ -518,49 +518,49 @@ public:
 
     bool parseAmmoNum(const String& str, int* ammoNum)
     {
-        int result = str.toIntLeft();
+        int result = str.toInt(0, 0, String::AllowSuffix);
         if(ammoNum) *ammoNum = result;
         return (result >= 0 && result < 4);
     }
 
     bool parseMobjType(const String& str, int* mobjType)
     {
-        int result = str.toIntLeft() - 1; // Patch indices are 1-based.
+        int result = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
         if(mobjType) *mobjType = result;
         return (result >= 0 && result < ded->count.mobjs.num);
     }
 
     bool parseSoundNum(const String& str, int* soundNum)
     {
-        int result = str.toIntLeft();
+        int result = str.toInt(0, 0, String::AllowSuffix);
         if(soundNum) *soundNum = result;
         return (result >= 0 && result < ded->count.sounds.num);
     }
 
     bool parseSpriteNum(const String& str, int* spriteNum)
     {
-        int result = str.toIntLeft();
+        int result = str.toInt(0, 0, String::AllowSuffix);
         if(spriteNum) *spriteNum = result;
         return (result >= 0 && result < NUMSPRITES);
     }
 
     bool parseStateNum(const String& str, int* stateNum)
     {
-        int result = str.toIntLeft();
+        int result = str.toInt(0, 0, String::AllowSuffix);
         if(stateNum) *stateNum = result;
         return (result >= 0 && result < ded->count.states.num);
     }
 
     bool parseStateNumFromActionOffset(const String& str, int* stateNum)
     {
-        int result = stateIndexForActionOffset(str.toIntLeft());
+        int result = stateIndexForActionOffset(str.toInt(0, 0, String::AllowSuffix));
         if(stateNum) *stateNum = result;
         return (result >= 0 && result < ded->count.states.num);
     }
 
     bool parseWeaponNum(const String& str, int* weaponNum)
     {
-        int result = str.toIntLeft();
+        int result = str.toInt(0, 0, String::AllowSuffix);
         if(weaponNum) *weaponNum = result;
         return (weaponNum >= 0);
     }
@@ -599,11 +599,11 @@ public:
 
             if(!var.compareWithoutCase("Doom version"))
             {
-                doomVersion = expr.toIntLeft(0, 10);
+                doomVersion = expr.toInt(0, 10, String::AllowSuffix);
             }
             else if(!var.compareWithoutCase("Patch format"))
             {
-                patchVersion = expr.toIntLeft(0, 10);
+                patchVersion = expr.toInt(0, 10, String::AllowSuffix);
             }
             else
             {
@@ -724,7 +724,7 @@ public:
             const String& token = *i;
             bool tokenIsNumber;
 
-            int flagsValue = token.toIntLeft(&tokenIsNumber, 10);
+            int flagsValue = token.toInt(&tokenIsNumber, 10, String::AllowSuffix);
             if(tokenIsNumber)
             {
                 // Force the top 4 bits to 0 so that the user is forced to use
@@ -781,7 +781,7 @@ public:
                 }
                 else
                 {
-                    const int value = expr.toIntLeft();
+                    const int value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
                         if(value < 0 || value >= ded->count.states.num)
@@ -813,7 +813,7 @@ public:
                 }
                 else
                 {
-                    const int value = expr.toIntLeft();
+                    const int value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
                         if(value < 0 || value >= ded->count.sounds.num)
@@ -903,7 +903,7 @@ public:
             }
             else if(!var.compareWithoutCase("ID #"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->doomEdNum = value;
@@ -912,7 +912,7 @@ public:
             }
             else if(!var.compareWithoutCase("Height"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->height = value / float(0x10000);
@@ -922,7 +922,7 @@ public:
             }
             else if(!var.compareWithoutCase("Hit points"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->spawnHealth = value;
@@ -931,7 +931,7 @@ public:
             }
             else if(!var.compareWithoutCase("Mass"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->mass = value;
@@ -940,7 +940,7 @@ public:
             }
             else if(!var.compareWithoutCase("Missile damage"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->damage = value;
@@ -949,7 +949,7 @@ public:
             }
             else if(!var.compareWithoutCase("Pain chance"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->painChance = value;
@@ -958,7 +958,7 @@ public:
             }
             else if(!var.compareWithoutCase("Reaction time"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->reactionTime = value;
@@ -967,7 +967,7 @@ public:
             }
             else if(!var.compareWithoutCase("Speed"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     /// @todo Is this right??
@@ -977,14 +977,14 @@ public:
             }
             else if(!var.compareWithoutCase("Translucency")) // Eternity
             {
-                //const int value = expr.toIntLeft(0, 10);
+                //const int value = expr.toInt(0, 10, String::AllowSuffix);
                 //const float opacity = MINMAX_OF(0, value, 65536) / 65536.f;
                 /// @todo Support this extension.
                 LOG_WARNING("Thing - \"Translucency\" patches are not supported.");
             }
             else if(!var.compareWithoutCase("Width"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj->radius = value / float(0x10000);
@@ -1015,7 +1015,7 @@ public:
 
             if(!var.compareWithoutCase("Duration"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     state->tics = value;
@@ -1024,7 +1024,7 @@ public:
             }
             else if(!var.compareWithoutCase("Next frame"))
             {
-                const int value = expr.toIntLeft();
+                const int value = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value >= ded->count.states.num)
@@ -1047,7 +1047,7 @@ public:
             }
             else if(!var.compareWithoutCase("Sprite number"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value > ded->count.sprites.num)
@@ -1066,7 +1066,7 @@ public:
             }
             else if(!var.compareWithoutCase("Sprite subnumber"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     const int FF_FULLBRIGHT = 0x8000;
@@ -1081,8 +1081,8 @@ public:
             }
             else if(var.startsWith("Unknown ", Qt::CaseInsensitive))
             {
-                const int miscIdx = var.substr(8).toIntLeft(0, 10);
-                const int value   = expr.toIntLeft(0, 10);
+                const int miscIdx = var.substr(8).toInt(0, 10, String::AllowSuffix);
+                const int value   = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
@@ -1118,7 +1118,7 @@ public:
 
             if(!var.compareWithoutCase("Offset"))
             {
-                const int value = expr.toIntLeft();
+                const int value = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     // Calculate offset from beginning of sprite names.
@@ -1165,7 +1165,7 @@ public:
             }
             else if(!var.compareWithoutCase("Zero/One"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->group = value;
@@ -1174,7 +1174,7 @@ public:
             }
             else if(!var.compareWithoutCase("Value"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->priority = value;
@@ -1187,7 +1187,7 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 2"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->linkPitch = value;
@@ -1196,7 +1196,7 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 3"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->linkVolume = value;
@@ -1213,7 +1213,7 @@ public:
             }
             else if(!var.compareWithoutCase("Neg. One 2"))
             {
-                const int lumpNum = expr.toIntLeft();
+                const int lumpNum = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
@@ -1248,12 +1248,12 @@ public:
 
             if(!var.compareWithoutCase("Max ammo"))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore) createValueDef(String("Player|Max ammo|%1").arg(theAmmo), QString::number(value));
             }
             else if(!var.compareWithoutCase("Per ammo"))
             {
-                int per = expr.toIntLeft(0, 10);
+                int per = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore) createValueDef(String("Player|Clip ammo|%1").arg(theAmmo), QString::number(per));
             }
             else
@@ -1274,7 +1274,7 @@ public:
             if(var.endsWith(" frame", Qt::CaseInsensitive))
             {
                 const String dehStateName = var.left(var.size() - 6);
-                const int value = expr.toIntLeft();
+                const int value = expr.toInt(0, 0, String::AllowSuffix);
                 const WeaponStateMapping* weapon;
                 if(!parseWeaponState(dehStateName, &weapon))
                 {
@@ -1302,7 +1302,7 @@ public:
             else if(!var.compareWithoutCase("Ammo type"))
             {
                 const String ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value >= 6)
@@ -1317,7 +1317,7 @@ public:
             }
             else if(!var.compareWithoutCase("Ammo per shot")) // Eternity
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), QString::number(value));
             }
             else
@@ -1338,7 +1338,7 @@ public:
 
             if(!var.compareWithoutCase("Codep Frame"))
             {
-                const int actionIdx = expr.toIntLeft();
+                const int actionIdx = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(actionIdx < 0 || actionIdx >= NUMSTATES)
@@ -1372,7 +1372,7 @@ public:
             const ValueMapping* mapping;
             if(parseMiscValue(var, &mapping))
             {
-                const int value = expr.toIntLeft(0, 10);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 createValueDef(mapping->valuePath, QString::number(value));
             }
             else
@@ -1423,7 +1423,7 @@ public:
                     int arg = 0;
                     int episode   = (args.size() > 2? args.at(arg++).toInt(0, 10) : 0);
                     int map       = args.at(arg++).toInt(0, 10);
-                    float parTime = float(String(args.at(arg++)).toIntLeft(0, 10));
+                    float parTime = float(String(args.at(arg++)).toInt(0, 10, String::AllowSuffix));
 
                     // Apply.
                     uri_s* uri    = composeMapUri(episode, map);
@@ -1542,7 +1542,7 @@ public:
 
             if(var.startsWith("Frame ", Qt::CaseInsensitive))
             {
-                const int stateNum = var.substr(6).toIntLeft();
+                const int stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
                 if(stateNum < 0 || stateNum >= ded->count.states.num)
                 {
                     LOG_WARNING("Frame #%d out of range, ignoring. (Create more State defs!)") << stateNum;

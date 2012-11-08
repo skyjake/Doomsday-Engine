@@ -330,7 +330,7 @@ String String::fileNameExtension() const
     return "";
 }
 
-String String::fileNamePath(char dirChar) const
+String String::fileNamePath(QChar dirChar) const
 {
     size_type pos = lastIndexOf(dirChar);
     if(pos >= 0)
@@ -366,20 +366,25 @@ static inline bool isSign(const QChar& ch)
     return ch == '-' || ch == '+';
 }
 
-dint String::toIntLeft(bool* ok, int base) const
+dint String::toInt(bool* ok, int base, IntConversionFlags flags) const
 {
     String token = leftStrip();
 
-    // Truncate at the first non-numeric, non-notation or sign character.
-    int endOfNumber = 0;
-    while(endOfNumber < token.size() &&
-          (token.at(endOfNumber).isDigit() || (endOfNumber == 0 && isSign(token.at(endOfNumber))) ||
-           ((base == 0 || base == 16) && endOfNumber <= 1 &&
-            (token.at(endOfNumber) == QChar('x') || token.at(endOfNumber) == QChar('X')))))
-    { ++endOfNumber; }
-    token.truncate(endOfNumber);
+    if(flags & AllowSuffix)
+    {
+        // Truncate at the first non-numeric, non-notation or sign character.
+        int endOfNumber = 0;
+        while(endOfNumber < token.size() &&
+              (token.at(endOfNumber).isDigit() || (endOfNumber == 0 && isSign(token.at(endOfNumber))) ||
+               ((base == 0 || base == 16) && endOfNumber <= 1 &&
+                (token.at(endOfNumber) == QChar('x') || token.at(endOfNumber) == QChar('X')))))
+        {
+            ++endOfNumber;
+        }
+        token.truncate(endOfNumber);
+    }
 
-    return token.toInt(ok, base);
+    return token.QString::toInt(ok, base);
 }
 
 void String::advanceFormat(String::const_iterator& i, const String::const_iterator& end)
