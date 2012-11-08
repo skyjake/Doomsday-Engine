@@ -38,6 +38,7 @@
 #include "de_misc.h"
 
 #include "def_main.h"
+#include <de/NativePath>
 #include <de/stringpool.h>
 #include "texture.h"
 #include "texturevariant.h"
@@ -523,21 +524,23 @@ static int R_LoadModel(de::Uri const& uri)
             numFoundSkins = 1;
 
             LOG_INFO("Assigned fallback skin \"%s\" to slot #0 for model \"%s\".")
-                << F_PrettyPath(Str_Text(&foundPath)) << modelRepository->string(index).prettyPath();
+                << de::NativePath(Str_Text(&foundPath)).pretty()
+                << de::NativePath(modelRepository->string(index)).pretty();
         }
     }
 
     if(!numFoundSkins)
     {
         LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
-            << modelRepository->string(index).prettyPath();
+            << de::NativePath(modelRepository->string(index)).pretty();
     }
 
     // Enlarge the vertex buffers to enable drawing of this model.
     if(!Rend_ModelExpandVertexBuffers(mdl->info.numVertices))
     {
         LOG_WARNING("Model \"%s\" contains more than %u vertices (%u), it will not be rendered.")
-            << modelRepository->string(index).prettyPath() << uint(RENDER_MAX_MODEL_VERTS) << uint(mdl->info.numVertices);
+            << de::NativePath(modelRepository->string(index)).pretty()
+            << uint(RENDER_MAX_MODEL_VERTS) << uint(mdl->info.numVertices);
     }
 
     Str_Free(&foundPath);

@@ -119,9 +119,7 @@ static void processPatchFiles()
         while(++p != cmdLine.count() && !cmdLine.isOption(p))
         {
             cmdLine.makeAbsolutePath(p);
-            const String filePath = String::fromNativePath(*(cmdLine.argv() + p));
-
-            readFile(filePath);
+            readFile(NativePath(*(cmdLine.argv() + p)));
         }
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */

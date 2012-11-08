@@ -21,11 +21,6 @@
 #include "de/String"
 #include "de/Block"
 
-#ifdef Q_OS_UNIX
-#  include <sys/types.h>
-#  include <pwd.h>
-#endif
-
 #include <QDir>
 #include <QTextStream>
 
@@ -103,17 +98,6 @@ String String::operator / (const String& path) const
     return concatenatePath(path);
 }
 
-String String::toNativePath() const
-{
-    String native = *this;
-#ifdef WIN32
-    native.replace('/', '\\');
-#else
-    native.replace('\\', '/');
-#endif
-    return native;
-}
-
 String String::concatenatePath(const String& other, QChar dirChar) const
 {
     if(other.first() == dirChar)
@@ -132,15 +116,6 @@ String String::concatenatePath(const String& other, QChar dirChar) const
     }
     result += other;
     return result;
-}
-
-String String::concatenateNativePath(const String& nativePath) const
-{
-#ifdef WIN32
-    return concatenatePath(nativePath, '\\');
-#else
-    return concatenatePath(nativePath, '/');
-#endif
 }
 
 String String::concatenateMember(const String& member) const
@@ -365,81 +340,6 @@ String String::fileNamePath(char dirChar) const
     return "";
 }
 
-String String::fileNameNativePath() const
-{
-#ifdef Q_OS_WIN32
-    return fileNamePath('\\');
-#else
-    return fileNamePath();
-#endif
-}
-
-String String::expandNativePath(bool* didExpand) const
-{
-    if(first() == '>' || first() == '}')
-    {
-        if(didExpand) *didExpand = true;
-        String result = DENG2_APP->nativeBasePath();
-        return result.concatenateNativePath(mid(1));
-    }
-#ifdef Q_OS_UNIX
-    else if(first() == '~')
-    {
-        if(didExpand) *didExpand = true;
-
-        int firstSlash = indexOf('/');
-        if(firstSlash > 1)
-        {
-            // Parse the user's home directory (from passwd).
-            QByteArray userName = left(firstSlash - 1).toLatin1();
-            struct passwd* pw = getpwnam(userName);
-            if(!pw) throw UnknownUserError("String::expandBasePath", String("Unknown user '%1'").arg(QString(userName)));
-
-            String result = String::fromNativePath(pw->pw_dir);
-            return result.concatenateNativePath(mid(firstSlash));
-        }
-
-        // Replace with the HOME path.
-        String result = DENG2_APP->nativeHomePath();
-        return result.concatenateNativePath(mid(1));
-    }
-#endif
-
-    // No expansion done.
-    if(didExpand) *didExpand = false;
-    return *this;
-}
-
-String String::prettyPath() const
-{
-    if(empty()) return *this;
-
-    String result = *this;
-
-    // Hide relative directives like '}'
-    if(result.length() > 1 && (result.first() == '}' || result.first() == '>'))
-    {
-        result = result.mid(1);
-    }
-
-    // If within our the base directory cut out the base path.
-    if(QDir::isAbsolutePath(result))
-    {
-        String basePath = String::fromNativePath(DENG2_APP->nativeBasePath());
-        if(result.beginsWith(basePath))
-        {
-            result = result.mid(basePath.length());
-        }
-    }
-
-    return result;
-}
-
-String String::prettyNativePath() const
-{
-    return prettyPath().toNativePath();
-}
-
 dint String::compareWithCase(const String& str) const
 {
     return compare(str, Qt::CaseSensitive);
@@ -625,15 +525,6 @@ String String::fromUtf8(const IByteArray& byteArray)
 String String::fromLatin1(const IByteArray& byteArray)
 {
     return QString::fromLatin1(reinterpret_cast<const char*>(Block(byteArray).data()));
-}
-
-String String::fromNativePath(const String& nativePath)
-{
-    String s = nativePath;
-#ifdef Q_OS_WIN32
-    s.replace("\\", "/");
-#endif
-    return s;
 }
 
 size_t de::qchar_strlen(const QChar* str)

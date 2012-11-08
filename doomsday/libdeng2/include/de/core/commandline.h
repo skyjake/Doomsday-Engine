@@ -146,7 +146,7 @@ namespace de
         const char* const* argv() const;
 
         /**
-         * Converts the argument at position @a pos into an absolute path.
+         * Converts the argument at position @a pos into an absolute native path.
          * Relative paths are converted relative to the directory that was
          * current at the time the CommandLine was created.
          *

@@ -44,6 +44,7 @@
 #include <QtAlgorithms>
 
 #include <de/Log>
+#include <de/NativePath>
 #include <de/memory.h>
 
 using namespace de;
@@ -1125,7 +1126,7 @@ void FS1::mapPathToLump(char const* symbolicPath, char const* lumpName)
 
     // Since the path might be relative, let's explicitly make the path absolute.
     char* full = _fullpath(0, Str_Text(path), 0);
-    de::String fullPath = de::String::fromNativePath(full);
+    de::NativePath fullPath(full);
     free(full);
 
     // Have already mapped this path?
@@ -1343,7 +1344,7 @@ D_CMD(ListFiles)
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
             }
 
-            QByteArray path = file.composePath().prettyNativePath().toUtf8();
+            QByteArray path = de::NativePath(file.composePath()).pretty().toUtf8();
             Con_Printf("\"%s\" (%i %s%s)", path.constData(),
                        fileCount, fileCount != 1 ? "files" : "file",
                        (file.hasStartup()? ", startup" : ""));

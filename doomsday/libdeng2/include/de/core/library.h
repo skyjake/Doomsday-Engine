@@ -21,7 +21,7 @@
 #define LIBDENG2_LIBRARY_H
 
 #include "../libdeng2.h"
-#include "../String"
+#include "../NativePath"
 
 #include <QLibrary>
 #include <QMap>
@@ -125,7 +125,7 @@ namespace de
          * 
          * @param nativePath  Path of the shared library to load.
          */
-        Library(const String& nativePath);
+        Library(const NativePath& nativePath);
         
         /**
          * Unloads the shared library.

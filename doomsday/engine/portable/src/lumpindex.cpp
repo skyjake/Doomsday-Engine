@@ -38,6 +38,7 @@
 #include <QVector>
 
 #include <de/Log>
+#include <de/NativePath>
 
 namespace de {
 
@@ -421,8 +422,8 @@ void LumpIndex::print(LumpIndex const& index)
     DENG2_FOR_EACH_CONST(Lumps, i, index.lumps())
     {
         File1 const& lump = **i;
-        QByteArray containerPath = lump.container().composePath().prettyNativePath().toUtf8();
-        QByteArray lumpPath = lump.composePath().prettyNativePath().toUtf8();
+        QByteArray containerPath = de::NativePath(lump.container().composePath()).pretty().toUtf8();
+        QByteArray lumpPath = de::NativePath(lump.composePath()).pretty().toUtf8();
         Con_Printf("%0*i - \"%s:%s\" (size: %lu bytes%s)\n", numIndexDigits, idx++,
                    containerPath.constData(),
                    lumpPath.constData(),

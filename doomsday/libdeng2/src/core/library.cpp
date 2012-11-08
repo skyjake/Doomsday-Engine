@@ -49,11 +49,11 @@ struct Library::Instance
     {}
 
 #ifdef DENG2_USE_DLOPEN
-    String fileName;
-    String nativePath() { return fileName; }
+    NativePath fileName;
+    NativePath nativePath() { return fileName; }
     bool isLoaded() const { return library != 0; }
 #else
-    String nativePath() {
+    NativePath nativePath() {
         DENG2_ASSERT(library);
         return library->fileName();
     }
@@ -61,7 +61,7 @@ struct Library::Instance
 #endif
 };
 
-Library::Library(const String& nativePath) : d(0)
+Library::Library(const NativePath& nativePath) : d(0)
 {
     d = new Instance;
 

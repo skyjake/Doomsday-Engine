@@ -27,6 +27,7 @@
 #include "de/BlockValue"
 #include "de/Reader"
 #include "de/Writer"
+#include "de/Log"
 
 using namespace de;
 
@@ -62,7 +63,8 @@ Variable& Variable::operator = (Value* v)
 void Variable::set(Value* v)
 {
     std::auto_ptr<Value> val(v);
-    verifyWritable();
+    // If the value would change, must check if this is allowed.
+    verifyWritable(*v);
     verifyValid(*v);
     delete _value;
     _value = val.release();
@@ -72,7 +74,7 @@ void Variable::set(Value* v)
 
 void Variable::set(const Value& v)
 {
-    verifyWritable();
+    verifyWritable(v);
     verifyValid(v);
     delete _value;
     _value = v.duplicate();
@@ -128,10 +130,17 @@ void Variable::verifyValid(const Value& v) const
     }
 }
 
-void Variable::verifyWritable()
+void Variable::verifyWritable(const Value& attemptedNewValue)
 {
     if(_mode & ReadOnly)
     {
+        if(_value && typeid(*_value) == typeid(attemptedNewValue) &&
+           !_value->compare(attemptedNewValue))
+        {
+            // This is ok: the value doesn't change.
+            return;
+        }
+
         /// @throw ReadOnlyError  The variable is in read-only mode.
         throw ReadOnlyError("Variable::verifyWritable", 
             "Variable '" + _name + "' is in read-only mode");

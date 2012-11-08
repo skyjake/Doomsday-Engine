@@ -298,7 +298,7 @@ String PathTree::Node::composePath(char delimiter) const
     if(delimiter && !isLeaf())
         result.append(delimiter);
 
-    DENG2_ASSERT(result.size() == parm.length);
+    DENG2_ASSERT(result.size() == (int)parm.length);
 
 #ifdef LIBDENG_STACK_MONITOR
     LOG_AS("pathConstructor");

@@ -35,6 +35,7 @@
 #include "filehandle.h"
 
 #include <de/memory.h>
+#include <de/NativePath>
 
 namespace de {
 
@@ -138,7 +139,7 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
 
 #if _DEBUG
         LOG_VERBOSE("FileHandle [%p] buffering \"%s:%s\"...")
-            << de::dintptr(hndl) << container.composePath().prettyNativePath() << file.composePath().prettyNativePath();
+            << de::dintptr(hndl) << de::NativePath(container.composePath()).pretty() << de::NativePath(file.composePath()).pretty();
 #endif
         file.read((uint8_t*)hndl->d->data, 0, file.size());
     }

@@ -22,7 +22,7 @@
 
 #include "../libdeng2.h"
 #include "../File"
-#include "../String"
+#include "../NativePath"
 
 #include <QFile>
 
@@ -51,7 +51,7 @@ namespace de
          * @param nativePath  Path in the native file system to access. Relative to the
          *                    current working directory.
          */
-        NativeFile(const String& name, const String& nativePath);
+        NativeFile(const String& name, const NativePath& nativePath);
         
         virtual ~NativeFile();
 
@@ -61,7 +61,7 @@ namespace de
         /**
          * Returns the native path of the file.
          */
-        const String& nativePath() const { return _nativePath; }
+        const NativePath& nativePath() const { return _nativePath; }
 
         void setMode(const Flags& newMode);
 
@@ -82,7 +82,7 @@ namespace de
         
     private:
         /// Path of the native file in the OS file system.
-        String _nativePath;
+        NativePath _nativePath;
         
         /// Input stream.
         mutable QFile* _in;

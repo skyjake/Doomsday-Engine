@@ -29,6 +29,8 @@
 #  include <objbase.h>
 #endif
 
+#include <de/NativePath>
+
 #include "de_platform.h"
 
 #ifdef UNIX
@@ -2359,7 +2361,7 @@ static bool tryLoadFile(char const* path, size_t baseOffset, de::File1** file)
     {
         de::FileHandle& hndl = App_FileSystem()->openFile(path, "rb", baseOffset, false /* no duplicates */);
 
-        QByteArray pathUtf8 = hndl.file().composePath().prettyNativePath().toUtf8();
+        QByteArray pathUtf8 = de::NativePath(hndl.file().composePath()).pretty().toUtf8();
         VERBOSE( Con_Message("Loading \"%s\"...\n", pathUtf8.constData()) )
         App_FileSystem()->index(hndl.file());
 
@@ -2383,7 +2385,7 @@ static bool tryUnloadFile(char const* path)
     try
     {
         de::File1& file = App_FileSystem()->find(path);
-        QByteArray pathUtf8 = file.composePath().prettyNativePath().toUtf8();
+        QByteArray pathUtf8 = de::NativePath(file.composePath()).pretty().toUtf8();
 
         // Do not attempt to unload a resource required by the current game.
         if(games->currentGame().isRequiredFile(file))

@@ -44,6 +44,7 @@
 
 #include "lumpindex.h"
 #include <de/Log>
+#include <de/NativePath>
 
 using namespace de;
 
@@ -687,7 +688,7 @@ static bool dumpLump(de::File1& lump, String path)
     bool dumpedOk = F_Dump(lump.cache(), lump.info().size, dumpPathUtf8.constData());
     lump.unlock();
     if(!dumpedOk) return false;
-    LOG_VERBOSE("%s dumped to \"%s\"") << lump.name() << dumpPath.prettyNativePath();
+    LOG_VERBOSE("%s dumped to \"%s\"") << lump.name() << NativePath(dumpPath).pretty();
     return true;
 }
 

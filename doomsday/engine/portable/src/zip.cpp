@@ -37,6 +37,7 @@
 #include <de/ByteOrder>
 #include <de/Error>
 #include <de/Log>
+#include <de/NativePath>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
@@ -347,7 +348,7 @@ struct Zip::Instance
 
         // Scan the end of the file for the central directory end record.
         if(!locateCentralDirectory())
-            throw FormatError("Zip::readLumpDirectory", String("Central directory in %1 not found").arg(self->composePath().prettyNativePath()));
+            throw FormatError("Zip::readLumpDirectory", String("Central directory in %1 not found").arg(de::NativePath(self->composePath()).pretty()));
 
         // Read the central directory end record.
         centralend_t summary;
@@ -355,7 +356,7 @@ struct Zip::Instance
 
         // Does the summary say something we don't like?
         if(summary.diskEntryCount != summary.totalEntryCount)
-            throw FormatError("Zip::readLumpDirectory", String("Multipart zip file \"%1\" not supported").arg(self->composePath().prettyNativePath()));
+            throw FormatError("Zip::readLumpDirectory", String("Multipart zip file \"%1\" not supported").arg(de::NativePath(self->composePath()).pretty()));
 
         // We'll load the file directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
@@ -414,14 +415,14 @@ struct Zip::Instance
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' uses an unsupported compression algorithm, ignoring.")
-                        << self->composePath().prettyNativePath() << Str_Text(&entryPath);
+                        << de::NativePath(self->composePath()).pretty() << Str_Text(&entryPath);
                 }
 
                 if(USHORT(header->flags) & ZFH_ENCRYPTED)
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' is encrypted.\n  Encryption is not supported, ignoring.")
-                        << self->composePath().prettyNativePath() << Str_Text(&entryPath);
+                        << de::NativePath(self->composePath()).pretty() << Str_Text(&entryPath);
                 }
 
                 if(pass == 0)
@@ -630,8 +631,8 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
 
     ZipFile& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
     LOG_TRACE("\"%s:%s\" (%u bytes%s)")
-        << composePath().prettyNativePath()
-        << file.composePath().prettyNativePath()
+        << de::NativePath(composePath()).pretty()
+        << de::NativePath(file.composePath()).pretty()
         << (unsigned long) file.info().size
         << (file.info().isCompressed()? ", compressed" : "");
 
@@ -656,7 +657,7 @@ uint8_t const* Zip::cacheLump(int lumpIdx)
 Zip& Zip::unlockLump(int lumpIdx)
 {
     LOG_AS("Zip::unlockLump");
-    LOG_TRACE("\"%s:%s\"") << composePath().prettyNativePath() << lump(lumpIdx).composePath();
+    LOG_TRACE("\"%s:%s\"") << de::NativePath(composePath()).pretty() << lump(lumpIdx).composePath();
 
     if(isValidIndex(lumpIdx))
     {
@@ -691,8 +692,8 @@ size_t Zip::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     ZipFile const& file = reinterpret_cast<ZipFile&>(lump(lumpIdx));
 
     LOG_TRACE("\"%s:%s\" (%u bytes%s) [%lu +%lu]")
-        << composePath().prettyNativePath()
-        << file.composePath().prettyNativePath()
+        << de::NativePath(composePath()).pretty()
+        << de::NativePath(file.composePath()).pretty()
         << (unsigned long) file.size()
         << (file.isCompressed()? ", compressed" : "")
         << (unsigned long) startOffset
