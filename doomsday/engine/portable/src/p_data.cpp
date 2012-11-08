@@ -267,12 +267,11 @@ MapEntityDef* P_MapEntityDef(int id)
     return 0; // Not found.
 }
 
-MapEntityDef* P_MapEntityDefByName(char const* _name)
+MapEntityDef* P_MapEntityDefByName(char const* name)
 {
-    if(entityDefs)
+    if(name && entityDefs)
     {
-        ddstring_t name; Str_InitStatic(&name, _name);
-        de::StringPool::Id id = entityDefs->isInterned(&name);
+        de::StringPool::Id id = entityDefs->isInterned(de::String(name));
         return static_cast<MapEntityDef*>( entityDefs->userPointer(id) );
     }
     return 0; // Not found.
@@ -285,15 +284,16 @@ static int P_NameForMapEntityDefWorker(de::StringPool::Id id, void* parameters)
     return 0; // Continue iteration.
 }
 
-Str const* P_NameForMapEntityDef(MapEntityDef* def)
+AutoStr* P_NameForMapEntityDef(MapEntityDef* def)
 {
     if(def)
     {
         de::StringPool::Id id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
-        return entityDefs->string(id);
+        de::String /*const&*/ name = entityDefs->string(id);
+        QByteArray nameUtf8 = name.toUtf8();
+        return AutoStr_FromText(nameUtf8.constData());
     }
-    static de::Str zeroLengthString;
-    return zeroLengthString;
+    return AutoStr_NewStd();
 }
 
 int MapEntityDef_Property2(MapEntityDef* def, int propertyId, MapEntityPropertyDef** retDef)
@@ -437,8 +437,7 @@ static MapEntityDef* findMapEntityDef(int identifier, const char* entityName, bo
         entityDefs = new de::StringPool;
     }
 
-    Str name; Str_InitStatic(&name, entityName);
-    de::StringPool::Id id = entityDefs->intern(&name);
+    de::StringPool::Id id = entityDefs->intern(de::String(entityName));
     MapEntityDef* def = new MapEntityDef(identifier);
     entityDefs->setUserPointer(id, def);
 

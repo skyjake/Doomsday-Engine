@@ -20,16 +20,10 @@
  * 02110-1301 USA</small>
  */
 
-#if _DEBUG
-#  include <cstdlib>
-#endif
-
+#include <QStringList>
 #include <de/Error>
 #include <de/Log>
 #include <de/stringpool.h>
-#if 0
-#  include "blockset.h"
-#endif
 #if _DEBUG
 #  include "m_misc.h" // For M_NumDigits()
 #endif
@@ -37,19 +31,6 @@
 #include "pathtree.h"
 
 namespace de {
-
-#if 0
-static volatile uint pathTreeInstanceCount;
-
-/// A mutex is used to prevent Data races in the node allocator.
-static mutex_t nodeAllocator_Mutex;
-
-/// Threaded access to the following Data is protected by nodeAllocator_Mutex:
-/// Nodes are block-allocated from this set.
-static blockset_t* NodeBlockSet;
-/// Linked list of used directory nodes for re-use. Linked with PathTreeNode::next
-static PathTreeNode* UsedNodes;
-#endif
 
 struct PathTree::Instance
 {
@@ -70,38 +51,11 @@ struct PathTree::Instance
 
     Instance(PathTree& d, int _flags)
         : self(d), fragments(), flags(_flags), size(0)
-    {
-#if 0
-        // We'll block-allocate nodes and maintain a list of unused ones
-        // to accelerate directory construction/population.
-        if(!nodeAllocator_Mutex)
-        {
-            nodeAllocator_Mutex = Sys_CreateMutex("PathTreeNodeAllocator_MUTEX");
-
-            Sys_Lock(nodeAllocator_Mutex);
-            NodeBlockSet = BlockSet_New(sizeof(PathTreeNode), 128);
-            UsedNodes = NULL;
-            Sys_Unlock(nodeAllocator_Mutex);
-        }
-
-        pathTreeInstanceCount += 1;
-#endif
-    }
+    {}
 
     ~Instance()
     {
         clear();
-#if 0
-        if(--pathTreeInstanceCount == 0)
-        {
-            Sys_Lock(nodeAllocator_Mutex);
-            BlockSet_Delete(NodeBlockSet);
-            NodeBlockSet = NULL;
-            UsedNodes = NULL;
-            Sys_DestroyMutex(nodeAllocator_Mutex);
-            nodeAllocator_Mutex = 0;
-        }
-#endif
     }
 
     void clear()
@@ -111,7 +65,7 @@ struct PathTree::Instance
         size = 0;
     }
 
-    PathTree::FragmentId internFragmentAndUpdateIdHashMap(ddstring_t const* fragment, ushort hash)
+    PathTree::FragmentId internFragmentAndUpdateIdHashMap(String fragment, ushort hash)
     {
         PathTree::FragmentId internId = fragments.intern(fragment);
         fragments.setUserValue(internId, hash);
@@ -123,10 +77,8 @@ struct PathTree::Instance
      * which has the specified parent node.
      */
     PathTree::Node* direcNode(PathTree::Node* parent, PathTree::NodeType nodeType,
-        ddstring_t const* fragment, char delimiter)
+        String fragment, char delimiter)
     {
-        DENG2_ASSERT(fragment);
-
         // Have we already encountered this?
         PathTree::FragmentId fragmentId = fragments.isInterned(fragment);
         if(fragmentId)
@@ -153,7 +105,8 @@ struct PathTree::Instance
         ushort hash;
         if(!fragmentId)
         {
-            hash = hashPathFragment(Str_Text(fragment), Str_Length(fragment), delimiter);
+            QByteArray fragmentUtf8 = fragment.toUtf8();
+            hash = hashPathFragment(fragmentUtf8.constData(), fragmentUtf8.length(), delimiter);
             fragmentId = internFragmentAndUpdateIdHashMap(fragment, hash);
         }
         else
@@ -164,8 +117,7 @@ struct PathTree::Instance
         // Are we out of indices?
         if(!fragmentId) return NULL;
 
-        PathTree::Node* node = newNode(self, nodeType, parent, fragmentId);
-
+        PathTree::Node* node = new PathTree::Node(self, nodeType, fragmentId, parent);
         // Insert the new node into the hash.
         if(nodeType == PathTree::Leaf)
         {
@@ -184,72 +136,22 @@ struct PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    PathTree::Node* buildDirecNodes(char const* path, char delimiter)
+    PathTree::Node* buildDirecNodes(String path, char delimiter)
     {
-        DENG2_ASSERT(path);
+        PathTree::Node* node = 0, *parent = 0;
 
-        PathTree::Node* node = NULL, *parent = NULL;
-
-        // Continue splitting as long as there are parts.
-        AutoStr* part = AutoStr_NewStd();
-        char const* p = path;
-        while((p = Str_CopyDelim2(part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
+        QStringList parts = path.split(delimiter);
+        for(int i = 0; i < parts.count() - 1; ++i)
         {
-            node = direcNode(parent, PathTree::Branch, part, delimiter);
+            node = direcNode(parent, PathTree::Branch, parts[i], delimiter);
             parent = node;
         }
 
-        if(!Str_IsEmpty(part))
+        if(!parts.last().isEmpty())
         {
-            node = direcNode(parent, PathTree::Leaf, part, delimiter);
+            node = direcNode(parent, PathTree::Leaf, parts.last(), delimiter);
         }
-
         return node;
-    }
-
-    static PathTree::Node* newNode(PathTree& pt, PathTree::NodeType type,
-        PathTree::Node* parent, PathTree::FragmentId fragmentId)
-    {
-        PathTree::Node* node;
-#if 0
-        // Acquire a new node, either from the used list or the block allocator.
-        Sys_Lock(nodeAllocator_Mutex);
-        if(UsedNodes)
-        {
-            node = UsedNodes;
-            UsedNodes = node->next;
-
-            // Reconfigure the node.
-            node->next = NULL;
-            node->directory_ = directory;
-            node->type_ = type;
-            node->parent_ = parent;
-            node->pair.internId = internId;
-            node->pair.data = userData;
-        }
-        else
-#endif
-        {
-            //void* element = BlockSet_Allocate(NodeBlockSet);
-            node = new /*(element)*/ PathTree::Node(pt, type, fragmentId, parent);
-        }
-#if 0
-        Sys_Unlock(nodeAllocator_Mutex);
-#endif
-
-        return node;
-    }
-
-    static void deleteNode(PathTree::Node& node)
-    {
-        delete &node;
-#if 0
-        // Add this node to the list of used nodes for re-use.
-        Sys_Lock(nodeAllocator_Mutex);
-        next = UsedNodes;
-        UsedNodes = this;
-        Sys_Unlock(nodeAllocator_Mutex);
-#endif
     }
 
     static void clearPathHash(PathTree::Nodes& ph)
@@ -258,14 +160,14 @@ struct PathTree::Instance
 
         DENG2_FOR_EACH(PathTree::Nodes, i, ph)
         {
-            PathTree::Node& node = **i;
+            PathTree::Node* node = *i;
 #if _DEBUG
-            if(node.userPointer())
+            if(node->userPointer())
             {
-                LOG_ERROR("Node %p has non-NULL user data.") << de::dintptr(&node);
+                LOG_ERROR("Node %p has non-NULL user data.") << de::dintptr(node);
             }
 #endif
-            deleteNode(node);
+            delete node;
         }
         ph.clear();
     }
@@ -388,7 +290,7 @@ PathTree::Node& PathTree::find(int flags, char const* searchPath, char delimiter
 
 String /*const&*/ PathTree::fragmentName(FragmentId fragmentId) const
 {
-    return String(Str_Text(d->fragments.string(fragmentId)));
+    return d->fragments.string(fragmentId);
 }
 
 ushort PathTree::fragmentHash(FragmentId fragmentId) const

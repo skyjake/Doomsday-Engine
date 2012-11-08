@@ -81,7 +81,7 @@ static void UnpackVector(unsigned short packed, float vec[3])
  * Returns an id if the specified model has already been loaded.
  * Otherwise returns 0.
  */
-static uint findModelFor(const ddstring_t* filename)
+static uint findModelFor(de::String filename)
 {
     return modelRepository->isInterned(filename);
 }
@@ -89,7 +89,7 @@ static uint findModelFor(const ddstring_t* filename)
 /**
  * Allocates a new model. Returns the id.
  */
-static uint newModelFor(const ddstring_t* filename)
+static uint newModelFor(de::String filename)
 {
     de::StringPool::Id id = modelRepository->intern(filename);
     DENG_ASSERT(modelRepository->userPointer(id) == NULL);
@@ -389,13 +389,16 @@ static void R_LoadModelDMD(FileHandle* file, model_t* mo)
         M_Free(triangles[i]);
 }
 
-static boolean registerModelSkin(model_t* mdl, int index)
+static bool registerModelSkin(model_t* mdl, int index)
 {
-    mdl->skins[index].texture = R_RegisterModelSkin(0, mdl->skins[index].name, mdl->fileName, false);
+    LOG_AS("registerModelSkin");
+
+    AutoStr* modelFilePath = R_ComposePathForModelId(mdl->model);
+    mdl->skins[index].texture = R_RegisterModelSkin(0, mdl->skins[index].name, Str_Text(modelFilePath), false);
     if(mdl->skins[index].texture) return true;
 
-    Con_Message("Warning: Failed locating skin \"%s\" (#%i) for model \"%s\".\n",
-                mdl->skins[index].name, index, F_PrettyPath(mdl->fileName));
+    LOG_WARNING("Failed to locate skin \"%s\" (#%i) for model \"%s\".")
+        << mdl->skins[index].name << index << F_PrettyPath(Str_Text(modelFilePath));
     return false;
 }
 
@@ -405,56 +408,58 @@ model_t* R_ModelForId(uint modelRepositoryId)
     return (model_t*) modelRepository->userPointer(modelRepositoryId);
 }
 
+AutoStr* R_ComposePathForModelId(uint modelRepositoryId)
+{
+    DENG_ASSERT(modelRepository);
+    de::String /*const&*/ path = modelRepository->string(modelRepositoryId);
+    QByteArray pathUtf8 = path.toUtf8();
+    return AutoStr_FromTextStd(pathUtf8.constData());
+}
+
 /**
  * Finds the existing model or loads in a new one.
  */
-static int R_LoadModel(const Uri* uri)
+static int R_LoadModel(de::Uri const& uri)
 {
-    const char* searchPath;
-    ddstring_t foundPath;
-    FileHandle* file = NULL;
-    model_t* mdl;
-    int i, foundSkins;
-    uint index;
+    LOG_AS("R_LoadModel");
 
-    if(!uri) return 0;
-    searchPath = Str_Text(Uri_Path(uri));
+    char const* searchPath = Str_Text(uri.path());
     if(!searchPath || !searchPath[0]) return 0;
 
-    Str_Init(&foundPath);
-    if(F_FindResource2(RC_MODEL, searchPath, &foundPath) != 0)
-    {
-        // Has this been already loaded?
-        index = findModelFor(&foundPath);
-        if(!index)
-        {
-            // Not loaded yet, try to open the file.
-            file = F_Open(Str_Text(&foundPath), "rb");
-            if(!file)
-            {
-                R_MissingModel(Str_Text(&foundPath));
-                Str_Free(&foundPath);
-                return 0;
-            }
-
-            // Allocate a new model_t.
-            index = newModelFor(&foundPath);
-            if(!index)
-            {
-                F_Delete(file);
-                Str_Free(&foundPath);
-                return 0;
-            }
-        }
-    }
-    else
+    ddstring_t foundPath; Str_Init(&foundPath);
+    if(!F_FindResource2(RC_MODEL, searchPath, &foundPath))
     {
         R_MissingModel(searchPath);
         Str_Free(&foundPath);
         return 0;
     }
 
-    mdl = (model_t*) modelRepository->userPointer(index);
+    // Has this been already loaded?
+    FileHandle* file = NULL;
+    de::String foundPathStr = de::String(Str_Text(&foundPath));
+    uint index = findModelFor(foundPathStr);
+    if(!index)
+    {
+        // Not loaded yet, try to open the file.
+        file = F_Open(Str_Text(&foundPath), "rb");
+        if(!file)
+        {
+            R_MissingModel(Str_Text(&foundPath));
+            Str_Free(&foundPath);
+            return 0;
+        }
+
+        // Allocate a new model_t.
+        index = newModelFor(foundPathStr);
+        if(!index)
+        {
+            F_Delete(file);
+            Str_Free(&foundPath);
+            return 0;
+        }
+    }
+
+    model_t* mdl = (model_t*) modelRepository->userPointer(index);
     if(mdl->loaded)
     {
         if(file) F_Delete(file);
@@ -480,66 +485,59 @@ static int R_LoadModel(const Uri* uri)
         // Cancel the loading.
         M_Free(mdl);
         modelRepository->setUserPointer(index, 0);
-        //modellist[index] = 0;
         F_Delete(file);
         Str_Free(&foundPath);
         return 0;
     }
 
     // We're done.
+    F_Delete(file);
     mdl->loaded = true;
     mdl->allowTexComp = true;
-    F_Delete(file);
-    mdl->fileName = Str_Text(modelRepository->string(index));
+    mdl->model = index;
 
     // Determine the actual (full) paths.
-    foundSkins = 0;
-    for(i = 0; i < mdl->info.numSkins; ++i)
+    int numFoundSkins = 0;
+    for(int i = 0; i < mdl->info.numSkins; ++i)
     {
         if(registerModelSkin(mdl, i))
         {
             // We have found one more skin for this model.
-            foundSkins += 1;
+            numFoundSkins += 1;
         }
     }
 
-    if(!foundSkins)
+    if(!numFoundSkins)
     {
         // Lastly try a skin named similarly to the model in the same directory.
-        directory_t* mydir = Dir_FromText(mdl->fileName);
-        AutoStr* skinSearchPath = AutoStr_NewStd();
+        de::String /*const&*/ mdlFileName = modelRepository->string(index);
+        de::String skinSearchPath = mdlFileName.fileNamePath() / "/" / mdlFileName.fileNameWithoutExtension();
 
-        F_FileName(skinSearchPath, mdl->fileName);
-        Str_Prepend(skinSearchPath, mydir->path);
-        if(F_FindResourceStr2(RC_GRAPHIC, skinSearchPath, &foundPath))
+        QByteArray skinSearchPathUtf8 = skinSearchPath.toUtf8();
+        if(F_FindResource2(RC_GRAPHIC, skinSearchPathUtf8.constData(), &foundPath))
         {
             // Huzzah! we found a skin.
-            Uri* uri = Uri_NewWithPath2(Str_Text(&foundPath), RC_NULL);
-            mdl->skins[0].texture = R_CreateSkinTex(uri, false/*not a shiny skin*/);
-            Uri_Delete(uri);
+            de::Uri uri = de::Uri(Str_Text(&foundPath), RC_NULL);
+            mdl->skins[0].texture = R_CreateSkinTex(reinterpret_cast<uri_s const*>(&uri), false/*not a shiny skin*/);
 
-            foundSkins = 1;
+            numFoundSkins = 1;
 
-            VERBOSE(
-                Con_Message("Note: Assigned fallback skin \"%s\" to slot #0 for model \"%s\".\n",
-                            F_PrettyPath(Str_Text(&foundPath)), F_PrettyPath(mdl->fileName));
-            )
+            LOG_INFO("Assigned fallback skin \"%s\" to slot #0 for model \"%s\".")
+                << F_PrettyPath(Str_Text(&foundPath)) << modelRepository->string(index).prettyPath();
         }
-        Dir_Delete(mydir);
     }
 
-    if(!foundSkins)
+    if(!numFoundSkins)
     {
-        Con_Message("Warning: Failed to locate a skin for model \"%s\".\n"
-                    "  This model will be rendered without a skin.\n",
-                    F_PrettyPath(mdl->fileName));
+        LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
+            << modelRepository->string(index).prettyPath();
     }
 
     // Enlarge the vertex buffers to enable drawing of this model.
     if(!Rend_ModelExpandVertexBuffers(mdl->info.numVertices))
     {
-        Con_Message("Warning: Model \"%s\" contains more than %u vertices (%u), it will not be rendered.\n",
-                    Str_Text(&foundPath), (uint)RENDER_MAX_MODEL_VERTS, (uint)mdl->info.numVertices);
+        LOG_WARNING("Model \"%s\" contains more than %u vertices (%u), it will not be rendered.")
+            << modelRepository->string(index).prettyPath() << uint(RENDER_MAX_MODEL_VERTS) << uint(mdl->info.numVertices);
     }
 
     Str_Free(&foundPath);
@@ -1015,12 +1013,10 @@ static void setupModel(ded_model_t* def)
     for(i = 0, subdef = def->sub, sub = modef->sub; i < MAX_FRAME_MODELS;
         ++i, subdef++, sub++)
     {
-        if(!subdef->filename)
-            continue;
+        if(!subdef->filename) continue;
 
-        sub->model = R_LoadModel(subdef->filename);
-        if(!sub->model)
-            continue;
+        sub->model = R_LoadModel(reinterpret_cast<de::Uri&>(*subdef->filename));
+        if(!sub->model) continue;
 
         sub->frame = R_ModelFrameNumForName(sub->model, subdef->frame);
         sub->frameRange = subdef->frameRange;
@@ -1086,7 +1082,7 @@ static void setupModel(ded_model_t* def)
         for(k = 0; k < 3; ++k)
             sub->offset[k] = subdef->offset[k];
 
-        sub->shinySkin = R_RegisterModelSkin(NULL, subdef->shinySkin, R_ModelForId(sub->model)->fileName, true);
+        sub->shinySkin = R_RegisterModelSkin(NULL, subdef->shinySkin, Str_Text(R_ComposePathForModelId(sub->model)), true);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)

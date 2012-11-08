@@ -195,7 +195,7 @@ MapEntityDef* P_MapEntityDefByName(char const* name);
  *
  * @return Unique name associated with @a def if found, else a zero-length string.
  */
-Str const* P_NameForMapEntityDef(MapEntityDef* def);
+AutoStr* P_NameForMapEntityDef(MapEntityDef* def);
 
 #include <EntityDatabase>
 

@@ -134,12 +134,11 @@ FileHandle* FileHandleBuilder::fromFileLump(File1& container, int lumpIdx, bool 
     {
         hndl->d->size = file.size();
         hndl->d->pos = hndl->d->data = (uint8_t*) M_Malloc(hndl->d->size);
-        if(!hndl->d->data)
-            Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.",
-                (unsigned long) hndl->d->size);
+        if(!hndl->d->data) Con_Error("FileHandleBuilder::fromFileLump: Failed on allocation of %lu bytes for data buffer.", (unsigned long) hndl->d->size);
+
 #if _DEBUG
         LOG_VERBOSE("FileHandle [%p] buffering \"%s:%s\"...")
-            << de::dintptr(hndl) << container.composePath().prettyNativePath() << file.composePath();
+            << de::dintptr(hndl) << container.composePath().prettyNativePath() << file.composePath().prettyNativePath();
 #endif
         file.read((uint8_t*)hndl->d->data, 0, file.size());
     }

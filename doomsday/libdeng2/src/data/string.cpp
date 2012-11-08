@@ -437,11 +437,7 @@ String String::prettyPath() const
 
 String String::prettyNativePath() const
 {
-#ifdef Q_OS_WIN32
-    return String::fromNativePath(prettyPath());
-#else
-    return prettyPath();
-#endif
+    return prettyPath().toNativePath();
 }
 
 dint String::compareWithCase(const String& str) const
