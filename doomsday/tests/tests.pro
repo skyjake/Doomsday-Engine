@@ -9,5 +9,6 @@ deng_tests: SUBDIRS += \
     archive \
     record \
     script \
+    stringpool \
     vectors
     #basiclink
