@@ -106,9 +106,19 @@ namespace de
         NativePath nativeHomePath();
 
         /**
-         * Returns the process's current native working path.
+         * Returns the application's current native working directory.
          */
         static NativePath currentWorkPath();
+
+        /**
+         * Changes the application's current native working directory.
+         *
+         * @param cwd  New working directory for the application.
+         *
+         * @return @c true, if the current working directory was changed,
+         * otherwise @c false.
+         */
+        static bool setCurrentWorkPath(const NativePath& cwd);
 
         /**
          * Returns the application's file system.

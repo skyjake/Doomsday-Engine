@@ -22,7 +22,7 @@
 #include "de/NativeFile"
 #include "de/FS"
 #include "de/Date"
-#include "de/Log"
+#include "de/App"
 
 #include <QDir>
 #include <QFileInfo>
@@ -201,7 +201,7 @@ void DirectoryFeed::removeFile(const String& name)
 
 void DirectoryFeed::changeWorkingDir(const NativePath& nativePath)
 {
-    if(!QDir::setCurrent(nativePath))
+    if(!App::setCurrentWorkPath(nativePath))
     {
         /// @throw WorkingDirError Changing to @a nativePath failed.
         throw WorkingDirError("DirectoryFeed::changeWorkingDir",

@@ -30,7 +30,7 @@
 #include <QDesktopServices>
 #include <QDir>
 
-using namespace de;
+namespace de {
 
 App::App(int& argc, char** argv, GUIMode guiMode)
     : QApplication(argc, argv, guiMode == GUIEnabled),
@@ -108,6 +108,11 @@ NativePath App::nativeHomePath()
 NativePath App::currentWorkPath()
 {
     return NativePath::workPath();
+}
+
+bool App::setCurrentWorkPath(const NativePath &cwd)
+{
+    return QDir::setCurrent(cwd);
 }
 
 NativePath App::nativeBasePath()
@@ -359,3 +364,5 @@ void App::notifyDisplayModeChanged()
 {
     emit displayModeChanged();
 }
+
+} // namespace de
