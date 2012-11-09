@@ -650,7 +650,7 @@ typedef enum lumpsizecondition_e {
 /**
  * Modifies the name so that the size condition is removed.
  */
-static void checkSizeConditionInName(String name, lumpsizecondition_t* pCond, size_t* pSize)
+static void checkSizeConditionInName(String& name, lumpsizecondition_t* pCond, size_t* pSize)
 {
     DENG_ASSERT(pCond != 0);
     DENG_ASSERT(pSize != 0);
