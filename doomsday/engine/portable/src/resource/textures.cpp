@@ -151,8 +151,7 @@ static inline texturenamespaceid_t namespaceIdForDirectoryNode(TextureRepository
 static de::Uri composeUriForDirectoryNode(TextureRepository::Node const& node)
 {
     Str const* namespaceName = Textures_NamespaceName(namespaceIdForDirectoryNode(node));
-    QByteArray path = node.composePath(TEXTURES_PATH_DELIMITER).toUtf8();
-    return de::Uri(path.constData(), RC_NULL).setScheme(Str_Text(namespaceName));
+    return node.composeUri(TEXTURES_PATH_DELIMITER).setScheme(Str_Text(namespaceName));
 }
 
 /// @pre textureIdMap has been initialized and is large enough!

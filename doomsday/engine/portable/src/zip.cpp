@@ -153,15 +153,15 @@ public:
     }
 
     /**
-     * Compose the absolute VFS path to this file.
+     * Compose an absolute URI to this file.
      *
      * @param delimiter     Delimit directory using this character.
      *
-     * @return String containing the absolute path.
+     * @return The absolute URI.
      */
-    String composePath(char delimiter = '/') const
+    Uri composePath(QChar delimiter = '/') const
     {
-        return dynamic_cast<Zip&>(container()).composeLumpPath(info_.lumpIdx, delimiter);
+        return dynamic_cast<Zip&>(container()).composeLumpUri(info_.lumpIdx, delimiter);
     }
 
     /**
@@ -348,7 +348,7 @@ struct Zip::Instance
 
         // Scan the end of the file for the central directory end record.
         if(!locateCentralDirectory())
-            throw FormatError("Zip::readLumpDirectory", String("Central directory in %1 not found").arg(de::NativePath(self->composePath()).pretty()));
+            throw FormatError("Zip::readLumpDirectory", "Central directory in \"" + NativePath(self->composePath()).pretty() + "\" not found");
 
         // Read the central directory end record.
         centralend_t summary;
@@ -356,7 +356,7 @@ struct Zip::Instance
 
         // Does the summary say something we don't like?
         if(summary.diskEntryCount != summary.totalEntryCount)
-            throw FormatError("Zip::readLumpDirectory", String("Multipart zip file \"%1\" not supported").arg(de::NativePath(self->composePath()).pretty()));
+            throw FormatError("Zip::readLumpDirectory", "Multipart zip file \"" + NativePath(self->composePath()).pretty() + "\" not supported");
 
         // We'll load the file directory using one continous read into a temporary
         // local buffer before we process it into our runtime representation.
@@ -577,10 +577,10 @@ PathTree::Node& Zip::lumpDirectoryNode(int lumpIdx) const
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
-String Zip::composeLumpPath(int lumpIdx, char delimiter)
+de::Uri Zip::composeLumpUri(int lumpIdx, QChar delimiter)
 {
-    if(!isValidIndex(lumpIdx)) return String();
-    return lump(lumpIdx).directoryNode().composePath(delimiter);
+    if(!isValidIndex(lumpIdx)) return de::Uri();
+    return lump(lumpIdx).directoryNode().composeUri(delimiter);
 }
 
 File1& Zip::lump(int lumpIdx)

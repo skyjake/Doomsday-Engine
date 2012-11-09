@@ -461,7 +461,7 @@ FS1& FS1::index(de::File1& file)
     // Ensure this hasn't yet been indexed.
     FileList::const_iterator found = findListFile(d->loadedFiles, file);
     if(found != d->loadedFiles.end())
-        throw de::Error("FS1::index", "File \"" + file.composePath() + "\" has already been indexed");
+        throw de::Error("FS1::index", "File \"" + NativePath(file.composePath()).pretty() + "\" has already been indexed");
 #endif
 
     // Publish lumps to one or more indexes?

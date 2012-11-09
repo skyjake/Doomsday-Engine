@@ -264,8 +264,7 @@ static materialnamespaceid_t namespaceIdForDirectory(MaterialRepository& directo
 static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
     Str const* namespaceName = Materials_NamespaceName(namespaceIdForDirectory(node.tree()));
-    QByteArray path = node.composePath(MATERIALS_PATH_DELIMITER).toUtf8();
-    return de::Uri(path.constData(), RC_NULL).setScheme(Str_Text(namespaceName));
+    return node.composeUri(MATERIALS_PATH_DELIMITER).setScheme(Str_Text(namespaceName));
 }
 
 static MaterialAnim* getAnimGroup(int number)

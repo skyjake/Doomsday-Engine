@@ -373,21 +373,22 @@ Uri& Uri::setUri(ddstring_t const* path)
     return setUri(path != 0? Str_Text(path) : 0);
 }
 
-AutoStr* Uri::compose() const
+String Uri::compose() const
 {
-    AutoStr* out = AutoStr_New();
     if(!Str_IsEmpty(&d->scheme))
-        Str_Appendf(out, "%s:", Str_Text(&d->scheme));
-    Str_Append(out, Str_Text(&d->path));
-    return out;
+    {
+        return String(Str_Text(&d->scheme)) + ":" + String(Str_Text(&d->path));
+    }
+    return String(Str_Text(&d->path));
 }
 
 String Uri::asText() const
 {
     // Just compose it for now, we can worry about making it 'pretty' later.
-    AutoStr* path = compose();
+    QByteArray composed = compose().toUtf8();
+    AutoStr* path = AutoStr_FromTextStd(composed.constData());
     Str_PercentDecode(path);
-    return QString::fromUtf8(Str_Text(path));
+    return String(Str_Text(path));
 }
 
 static void writeUri(ddstring_t const* scheme, ddstring_t const* path, struct writer_s& writer)
@@ -572,7 +573,8 @@ Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path)
 AutoStr* Uri_Compose(Uri const* uri)
 {
     SELF_CONST(uri);
-    return self->compose();
+    QByteArray composed = self->compose().toUtf8();
+    return AutoStr_FromTextStd(composed.constData());
 }
 
 AutoStr* Uri_ToString(Uri const* uri)

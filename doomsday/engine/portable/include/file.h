@@ -84,13 +84,26 @@ public:
     virtual String const& name() const;
 
     /**
+     * Compose the a URI to this file.
+     *
+     * @param delimiter     Delimit directory using this character.
+     *
+     * @return The composed URI.
+     */
+    virtual de::Uri composeUri(QChar delimiter = '/') const;
+
+    /**
      * Compose the absolute VFS path to this file.
      *
      * @param delimiter     Delimit directory using this character.
      *
      * @return String containing the absolute path.
+     *
+     * @deprecated Prefer to use @ref composeUri() instead.
      */
-    virtual String composePath(char delimiter = '/') const;
+    String composePath(QChar delimiter = '/') const {
+        return composeUri(delimiter).compose();
+    }
 
     /// @return  @c true iff this file is contained by another.
     bool isContained() const;

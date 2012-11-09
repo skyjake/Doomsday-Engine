@@ -70,15 +70,15 @@ public:
     }
 
     /**
-     * Compose the absolute VFS path to this file.
+     * Compose an absolute URI to this file.
      *
      * @param delimiter     Delimit directory using this character.
      *
-     * @return String containing the absolute path.
+     * @return The absolute URI.
      */
-    String composePath(char delimiter = '/') const
+    Uri composeUri(QChar delimiter = '/') const
     {
-        return dynamic_cast<Wad&>(container()).composeLumpPath(info_.lumpIdx, delimiter);
+        return dynamic_cast<Wad&>(container()).composeLumpUri(info_.lumpIdx, delimiter);
     }
 
     /**
@@ -407,10 +407,10 @@ PathTree::Node& Wad::lumpDirectoryNode(int lumpIdx) const
     return *((*d->lumpNodeLut)[lumpIdx]);
 }
 
-String Wad::composeLumpPath(int lumpIdx, char delimiter)
+de::Uri Wad::composeLumpUri(int lumpIdx, QChar delimiter)
 {
-    if(!isValidIndex(lumpIdx)) return String();
-    return lump(lumpIdx).directoryNode().composePath(delimiter);
+    if(!isValidIndex(lumpIdx)) return de::Uri();
+    return lump(lumpIdx).directoryNode().composeUri(delimiter);
 }
 
 File1& Wad::lump(int lumpIdx)

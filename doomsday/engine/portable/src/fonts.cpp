@@ -143,8 +143,7 @@ static inline fontnamespaceid_t namespaceIdForDirectoryNode(FontRepository::Node
 static de::Uri composeUriForDirectoryNode(FontRepository::Node const& node)
 {
     Str const* namespaceName = Fonts_NamespaceName(namespaceIdForDirectoryNode(node));
-    QByteArray path = node.composePath(FONTS_PATH_DELIMITER).toUtf8();
-    return de::Uri(path.constData(), RC_NULL).setScheme(Str_Text(namespaceName));
+    return node.composeUri(FONTS_PATH_DELIMITER).setScheme(Str_Text(namespaceName));
 }
 
 /// @pre fontIdMap has been initialized and is large enough!
@@ -1357,7 +1356,7 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     QByteArray pathBUtf8 = nodeB.composePath(FONTS_PATH_DELIMITER).toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
-    return stricmp(Str_Text(pathA), Str_Text(pathB));
+    return qstricmp(Str_Text(pathA), Str_Text(pathB));
 }
 
 /**

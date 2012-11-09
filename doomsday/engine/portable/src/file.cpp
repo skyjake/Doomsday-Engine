@@ -21,6 +21,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/NativePath>
+
 #include "de_base.h"
 #include "de_filesys.h"
 
@@ -57,7 +59,7 @@ bool File1::isContained() const
 
 File1& File1::container() const
 {
-    if(!container_) throw NotContainedError("File1::container", "File \"" + composePath() + " is not contained");
+    if(!container_) throw NotContainedError("File1::container", "File \"" + NativePath(composePath()).pretty() + " is not contained");
     return *container_;
 }
 
@@ -66,10 +68,11 @@ de::FileHandle& File1::handle()
     return *handle_;
 }
 
-String File1::composePath(char delimiter) const
+de::Uri File1::composeUri(QChar delimiter) const
 {
-    String result = path_;
-    if(delimiter != '/') throw Error("File1::composePath", "Non '/' delimiter not yet implemented");
+    QByteArray pathUtf8 = path_.toUtf8();
+    de::Uri result = de::Uri(pathUtf8.constData(), RC_NULL);
+    if(delimiter != '/') throw Error("File1::composeUri", "Non '/' delimiter not yet implemented");
     return result;
 }
 

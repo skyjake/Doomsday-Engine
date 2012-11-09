@@ -25,6 +25,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <de/NativePath>
+
 #include "de_base.h"
 #include "de_system.h"
 #include "de_platform.h"
@@ -760,7 +762,7 @@ void Def_ReadLumpDefs(void)
 
         if(!DED_ReadLump(&defs, lump.info().lumpIdx))
         {
-            QByteArray path = lump.container().composePath().toUtf8();
+            QByteArray path = de::NativePath(lump.container().composePath()).pretty().toUtf8();
             Con_Error("DD_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
         }
     }

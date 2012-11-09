@@ -2338,7 +2338,8 @@ static bool tryLoadFile(String path, size_t baseOffset, de::File1** file)
     {
         de::FileHandle& hndl = App_FileSystem()->openFile(path, "rb", baseOffset, false /* no duplicates */);
 
-        QByteArray pathUtf8 = NativePath(hndl.file().composePath()).pretty().toUtf8();
+        de::Uri uri = hndl.file().composeUri();
+        QByteArray pathUtf8 = NativePath(uri.asText()).pretty().toUtf8();
         VERBOSE( Con_Message("Loading \"%s\"...\n", pathUtf8.constData()) )
         App_FileSystem()->index(hndl.file());
 
@@ -2363,7 +2364,8 @@ static bool tryUnloadFile(String path)
     try
     {
         de::File1& file = App_FileSystem()->find(path);
-        QByteArray pathUtf8 = de::NativePath(file.composePath()).pretty().toUtf8();
+        de::Uri uri = file.composeUri();
+        QByteArray pathUtf8 = NativePath(uri.asText()).pretty().toUtf8();
 
         // Do not attempt to unload a resource required by the current game.
         if(games->currentGame().isRequiredFile(file))

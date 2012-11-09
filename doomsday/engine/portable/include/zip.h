@@ -81,17 +81,17 @@ public:
     PathTree::Node& lumpDirectoryNode(int lumpIdx) const;
 
     /**
-     * Compose the absolute VFS path to a lump contained by this file.
+     * Compose an absolute URI to a lump contained by this file.
      *
-     * @note Always returns a valid string object. If @a lumpIdx is not valid a
-     *       zero-length string is returned.
+     * @note Always returns a valid Uri object. If @a lumpIdx is not valid a
+     *       zero-length Uri is returned.
      *
      * @param lumpIdx       Logical index for the lump.
      * @param delimiter     Delimit directory separators using this character.
      *
-     * @return String containing the absolute path.
+     * @return The absolute URI.
      */
-    String composeLumpPath(int lumpIdx, char delimiter = '/');
+    de::Uri composeLumpUri(int lumpIdx, QChar delimiter = '/');
 
     /**
      * Retrieve a lump contained by this file.

@@ -443,7 +443,8 @@ int CVar_Flags(const cvar_t* var)
 AutoStr* CVar_ComposePath(cvar_t const* var)
 {
     DENG_ASSERT(var);
-    QByteArray path = reinterpret_cast<CVarDirectory::Node*>(var->directoryNode)->composePath(CVARDIRECTORY_DELIMITER).toUtf8();
+    CVarDirectory::Node& node = *reinterpret_cast<CVarDirectory::Node*>(var->directoryNode);
+    QByteArray path = node.composePath(CVARDIRECTORY_DELIMITER).toUtf8();
     return AutoStr_FromTextStd(path.constData());
 }
 

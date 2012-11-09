@@ -191,7 +191,7 @@ namespace de
          *
          * @return  Plain-text String representation.
          */
-        AutoStr* compose() const;
+        String compose() const;
 
         /**
          * Transform the uri into a human-friendly representation. Percent decoding done.

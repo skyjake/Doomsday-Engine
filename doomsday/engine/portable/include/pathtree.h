@@ -36,6 +36,7 @@
 #include <de/String>
 #include <de/str.h>
 #include "pathmap.h"
+#include "uri.h"
 
 /**
  * @defgroup pathComparisonFlags  Path Comparison Flags
@@ -166,6 +167,18 @@ namespace de
             int comparePath(PathMap& candidatePath, int flags) const;
 
             /**
+             * Composes the URI for this node. 'Composing' the path of a node is to
+             * upwardly reconstruct the whole path toward the root of the hierarchy.
+             *
+             * @param delimiter Names in the composed path hierarchy will be delimited
+             *                  with this character. Paths to branches always include
+             *                  a terminating delimiter.
+             *
+             * @return The composed uri.
+             */
+            Uri composeUri(QChar delimiter = '/') const;
+
+            /**
              * Composes the full path for this node. 'Composing' the path of a node is
              * to upwardly reconstruct the whole path toward the root of the hierarchy.
              *
@@ -174,8 +187,12 @@ namespace de
              *                  a terminating delimiter.
              *
              * @return The composed path.
+             *
+             * @deprecated Prefer to use @ref composeUri() instead.
              */
-            String composePath(QChar delimiter = '/') const;
+            String composePath(QChar delimiter = '/') const {
+                return composeUri(delimiter).compose();
+            }
 
             /**
              * Sets the user-specified custom pointer.

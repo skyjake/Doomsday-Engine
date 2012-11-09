@@ -219,7 +219,7 @@ static size_t maxStackDepth;
 
 typedef struct pathconstructorparams_s {
     size_t length;
-    String& composedPath;
+    String composedPath;
     QChar delimiter;
 } pathconstructorparams_t;
 
@@ -278,11 +278,9 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
  *
  * Perhaps a fixed size MRU cache? -ds
  */
-String PathTree::Node::composePath(QChar delimiter) const
+Uri PathTree::Node::composeUri(QChar delimiter) const
 {
-    String result;
-
-    pathconstructorparams_t parm = { 0, result, delimiter };
+    pathconstructorparams_t parm = { 0, String(), delimiter };
 #ifdef LIBDENG_STACK_MONITOR
     stackStart = &parm;
 #endif
@@ -296,16 +294,17 @@ String PathTree::Node::composePath(QChar delimiter) const
 
     // Terminating delimiter for branches.
     if(!delimiter.isNull() && !isLeaf())
-        result.append(delimiter);
+        parm.composedPath += delimiter;
 
-    DENG2_ASSERT(result.size() == (int)parm.length);
+    DENG2_ASSERT(parm.composedPath.length() == (int)parm.length);
 
 #ifdef LIBDENG_STACK_MONITOR
     LOG_AS("pathConstructor");
     LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
-    return result;
+    QByteArray pathUtf8 = parm.composedPath.toUtf8();
+    return Uri(pathUtf8.constData(), RC_NULL);
 }
 
 } // namespace de
