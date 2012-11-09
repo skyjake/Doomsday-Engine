@@ -38,9 +38,6 @@ win32 {
 }
 else:macx {
     fixPluginInstallId($$TARGET, 1)
-    # Bundle the FMOD shared library under Frameworks.
-    doPostLink("cp -f \"$$FMOD_DIR/api/lib/libfmodex.dylib\" ../../engine/Doomsday.app/Contents/Frameworks/libfmodex.dylib")
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libfmodex.dylib ../../engine/Doomsday.app/Contents/Frameworks/libfmodex.dylib")
     doPostLink("install_name_tool -change ./libfmodex.dylib @executable_path/../Frameworks/libfmodex.dylib audio_fmod.bundle/audio_fmod")
 }
 else {

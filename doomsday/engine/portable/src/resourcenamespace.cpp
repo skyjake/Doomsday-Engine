@@ -513,7 +513,7 @@ int ResourceNamespace::findAll(String searchPath, ResourceList& found)
         {
             ResourceRef& resource = hashNode->resource;
             PathTree::Node& node = resource.directoryNode();
-            if(!name.isEmpty() && !node.name().beginsWith(name), Qt::CaseInsensitive) continue;
+            if(!name.isEmpty() && !node.name().beginsWith(name, Qt::CaseInsensitive)) continue;
 
             found.push_back(&node);
         }
