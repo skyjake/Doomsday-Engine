@@ -275,7 +275,7 @@ struct ResourceNamespace::Instance
             return rootNode;
         }
 
-        PathTree::Node* node = directory.insert(Str_Text(path));
+        PathTree::Node* node = directory.insert(String(Str_Text(path)));
 
         if(path == &buf) Str_Free(&buf);
 

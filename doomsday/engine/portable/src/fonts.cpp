@@ -243,7 +243,7 @@ static bool validateUri(de::Uri const& uri, int flags, bool quiet = false)
  * @param path  Path of the font to search for.
  * @return  Found DirectoryNode else @c NULL
  */
-static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory, char const* path)
+static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory, de::String path)
 {
     try
     {
@@ -801,12 +801,7 @@ fontid_t Fonts_Declare(Uri const* _uri, int uniqueId)//, const Uri* resourcePath
          */
 
         // Ensure the path is lowercase.
-        int pathLen = Str_Length(uri.path());
-        ddstring_t path; Str_Reserve(Str_Init(&path), pathLen);
-        for(int i = 0; i < pathLen; ++i)
-        {
-            Str_AppendChar(&path, tolower(Str_At(uri.path(), i)));
-        }
+        de::String path = de::String(Str_Text(uri.path())).toLower();
 
         record = (FontRecord*) M_Malloc(sizeof *record);
         if(!record) Con_Error("Fonts::Declare: Failed on allocation of %lu bytes for new FontRecord.", (unsigned long) sizeof *record);
@@ -816,7 +811,7 @@ fontid_t Fonts_Declare(Uri const* _uri, int uniqueId)//, const Uri* resourcePath
         fontnamespaceid_t namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
         FontNamespace& fn = namespaces[namespaceId - FONTNAMESPACE_FIRST];
 
-        node = fn.repository->insert(Str_Text(&path), FONTS_PATH_DELIMITER);
+        node = fn.repository->insert(path, FONTS_PATH_DELIMITER);
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
@@ -827,8 +822,6 @@ fontid_t Fonts_Declare(Uri const* _uri, int uniqueId)//, const Uri* resourcePath
         fontIdMap = (FontRepository::Node**) M_Realloc(fontIdMap, sizeof *fontIdMap * ++fontIdMapSize);
         if(!fontIdMap) Con_Error("Fonts::Declare: Failed on (re)allocation of %lu bytes enlarging bindId to PathTreeNode LUT.", (unsigned long) sizeof *fontIdMap * fontIdMapSize);
         fontIdMap[id - 1] = node;
-
-        Str_Free(&path);
     }
 
     /**

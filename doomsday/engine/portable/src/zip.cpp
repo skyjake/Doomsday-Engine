@@ -469,7 +469,7 @@ struct Zip::Instance
                                          lumpIdx, baseOffset, ULONG(header->size),
                                          compressedSize),
                                 self);
-                PathTree::Node* node = lumpDirectory->insert(Str_Text(&entryPath));
+                PathTree::Node* node = lumpDirectory->insert(String(Str_Text(&entryPath)));
                 node->setUserPointer(record);
 
                 lumpIdx++;

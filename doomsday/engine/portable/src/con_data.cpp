@@ -168,26 +168,26 @@ static void clearVariables(void)
 }
 
 /// Construct a new variable from the specified template and add it to the database.
-static cvar_t* addVariable(cvartemplate_t const* tpl)
+static cvar_t* addVariable(cvartemplate_t const& tpl)
 {
-    CVarDirectory::Node* node = cvarDirectory->insert(tpl->path, CVARDIRECTORY_DELIMITER);
+    de::String path = de::String(tpl.path);
+    CVarDirectory::Node* node = cvarDirectory->insert(path, CVARDIRECTORY_DELIMITER);
     cvar_t* newVar;
 
     if(node->userPointer())
     {
-        Con_Error("Con_AddVariable: A variable with path '%s' is already known!", tpl->path);
-        return NULL; // Unreachable.
+        throw de::Error("Con_AddVariable", "A variable with path '" + path + "' is already known!");
     }
 
     newVar = (cvar_t*) M_Malloc(sizeof *newVar);
-    if(!newVar) Con_Error("Con_AddVariable: Failed on allocation of %lu bytes for new CVar.", (unsigned long) sizeof *newVar);
+    if(!newVar) throw de::Error("Con_AddVariable", QString("Failed on allocation of %u bytes for new CVar.").arg(sizeof *newVar));
 
-    newVar->flags = tpl->flags;
-    newVar->type = tpl->type;
-    newVar->ptr = tpl->ptr;
-    newVar->min = tpl->min;
-    newVar->max = tpl->max;
-    newVar->notifyChanged = tpl->notifyChanged;
+    newVar->flags = tpl.flags;
+    newVar->type = tpl.type;
+    newVar->ptr = tpl.ptr;
+    newVar->min = tpl.min;
+    newVar->max = tpl.max;
+    newVar->notifyChanged = tpl.notifyChanged;
     newVar->directoryNode = node;
     node->setUserPointer(newVar);
 
@@ -734,23 +734,22 @@ Uri* CVar_Uri(cvar_t const* var)
 
 void Con_AddVariable(cvartemplate_t const* tpl)
 {
+    LOG_AS("Con_AddVariable");
+
     DENG_ASSERT(inited);
     if(!tpl)
     {
-        Con_Message("Warning: Con_AddVariable: Passed invalid value for argument 'tpl', ignoring.\n");
+        LOG_WARNING("Passed invalid value for argument 'tpl', ignoring.");
         return;
     }
     if(CVT_NULL == tpl->type)
     {
-        Con_Message("Warning: Con_AddVariable: Attempt to register variable '%s' as type "
-                    "%s, ignoring.\n", Str_Text(CVar_TypeName(CVT_NULL)), tpl->path);
+        LOG_WARNING("Attempt to register variable '%s' as type %s, ignoring.")
+            << tpl->path << Str_Text(CVar_TypeName(CVT_NULL));
         return;
     }
 
-    if(Con_FindVariable(tpl->path))
-        Con_Error("A CVAR with the name '%s' is already registered.", tpl->path);
-
-    addVariable(tpl);
+    addVariable(*tpl);
 }
 
 void Con_AddVariableList(cvartemplate_t const* tplList)
@@ -767,16 +766,18 @@ void Con_AddVariableList(cvartemplate_t const* tplList)
         if(Con_FindVariable(tplList->path))
             Con_Error("A CVAR with the name '%s' is already registered.", tplList->path);
 
-        addVariable(tplList);
+        addVariable(*tplList);
     }
 }
 
 cvar_t* Con_FindVariable(char const* path)
 {
     DENG_ASSERT(inited);
+    if(!path || !path[0]) return 0;
+
     try
     {
-        CVarDirectory::Node& node = cvarDirectory->find(PCF_NO_BRANCH | PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
+        CVarDirectory::Node& node = cvarDirectory->find(PCF_NO_BRANCH | PCF_MATCH_FULL, de::String(path), CVARDIRECTORY_DELIMITER);
         return (cvar_t*) node.userPointer();
     }
     catch(CVarDirectory::NotFoundError const&)

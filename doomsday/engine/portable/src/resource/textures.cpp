@@ -246,7 +246,7 @@ static bool validateTextureUri(de::Uri const& uri, int flags, bool quiet = false
  *
  * @return  Found DirectoryNode else @c NULL
  */
-static TextureRepository::Node* findDirectoryNodeForPath(TextureRepository& texDirectory, const char* path)
+static TextureRepository::Node* findDirectoryNodeForPath(TextureRepository& texDirectory, de::String path)
 {
     try
     {
@@ -826,21 +826,10 @@ static textureid_t Textures_Declare2(de::Uri const& uri, int uniqueId, de::Uri c
          */
 
         // Ensure the path is lowercase.
-        int pathLen = Str_Length(uri.path());
-        Str path; Str_Init(&path);
-        Str_Reserve(&path, pathLen);
-        for(int i = 0; i < pathLen; ++i)
-        {
-            Str_AppendChar(&path, tolower(Str_At(uri.path(), i)));
-        }
+        de::String path = de::String(Str_Text(uri.path())).toLower();
 
         record = (TextureRecord*)M_Malloc(sizeof *record);
-        if(!record)
-        {
-            throw de::Error("Textures::Declare",
-                            de::String("Failed on allocation of %1 bytes for new TextureRecord.")
-                                .arg((unsigned long) sizeof *record));
-        }
+        if(!record) throw de::Error("Textures::Declare", de::String("Failed on allocation of %1 bytes for new TextureRecord.").arg((unsigned long) sizeof *record));
 
         record->texture      = NULL;
         record->resourcePath = NULL;
@@ -849,7 +838,7 @@ static textureid_t Textures_Declare2(de::Uri const& uri, int uniqueId, de::Uri c
         texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(uri.scheme()));
         TextureNamespace* tn = &namespaces[namespaceId - TEXTURENAMESPACE_FIRST];
 
-        node = tn->directory->insert(Str_Text(&path), TEXTURES_PATH_DELIMITER);
+        node = tn->directory->insert(path, TEXTURES_PATH_DELIMITER);
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
@@ -858,15 +847,9 @@ static textureid_t Textures_Declare2(de::Uri const& uri, int uniqueId, de::Uri c
         id = textureIdMapSize + 1; // 1-based identfier
         // Link it into the id map.
         textureIdMap = (TextureRepository::Node**) M_Realloc(textureIdMap, sizeof *textureIdMap * ++textureIdMapSize);
-        if(!textureIdMap)
-        {
-            throw de::Error("Textures::Declare",
-                            de::String("Failed on (re)allocation of %1 bytes enlarging bindId => TextureRepository::Node LUT.")
-                                .arg((unsigned long) sizeof *textureIdMap * textureIdMapSize));
-        }
-        textureIdMap[id - 1] = node;
+        if(!textureIdMap) throw de::Error("Textures::Declare", de::String("Failed on (re)allocation of %1 bytes enlarging bindId => TextureRepository::Node LUT.").arg((unsigned long) sizeof *textureIdMap * textureIdMapSize));
 
-        Str_Free(&path);
+        textureIdMap[id - 1] = node;
     }
 
     /**

@@ -77,7 +77,7 @@ struct PathTree::Instance
      * which has the specified parent node.
      */
     PathTree::Node* direcNode(PathTree::Node* parent, PathTree::NodeType nodeType,
-        String fragment, char delimiter)
+        String fragment, QChar delimiter)
     {
         // Have we already encountered this?
         PathTree::FragmentId fragmentId = fragments.isInterned(fragment);
@@ -106,7 +106,7 @@ struct PathTree::Instance
         if(!fragmentId)
         {
             QByteArray fragmentUtf8 = fragment.toUtf8();
-            hash = hashPathFragment(fragmentUtf8.constData(), fragmentUtf8.length(), delimiter);
+            hash = hashPathFragment(fragmentUtf8.constData(), fragmentUtf8.length(), delimiter.toLatin1());
             fragmentId = internFragmentAndUpdateIdHashMap(fragment, hash);
         }
         else
@@ -136,7 +136,7 @@ struct PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    PathTree::Node* buildDirecNodes(String path, char delimiter)
+    PathTree::Node* buildDirecNodes(String path, QChar delimiter)
     {
         PathTree::Node* node = 0, *parent = 0;
 
@@ -197,7 +197,7 @@ ushort PathTree::hashPathFragment(const char* fragment, size_t len, char delimit
     return key % PATHTREE_PATHHASH_SIZE;
 }
 
-PathTree::Node* PathTree::insert(const char* path, char delimiter)
+PathTree::Node* PathTree::insert(String path, QChar delimiter)
 {
     PathTree::Node* node = d->buildDirecNodes(path, delimiter);
     if(node)
@@ -218,9 +218,9 @@ PathTree::~PathTree()
     delete d;
 }
 
-ddstring_t const* PathTree::nodeTypeName(NodeType type)
+String const& PathTree::nodeTypeName(NodeType type)
 {
-    static Str const nodeNames[] = {
+    static String const nodeNames[] = {
         "branch",
         "leaf"
     };
@@ -242,12 +242,13 @@ void PathTree::clear()
     d->clear();
 }
 
-PathTree::Node& PathTree::find(int flags, char const* searchPath, char delimiter)
+PathTree::Node& PathTree::find(int flags, String searchPath, QChar delimiter)
 {
     Node* foundNode = NULL;
-    if(searchPath && searchPath[0] && d->size)
+    if(!searchPath.isEmpty() && d->size)
     {
-        PathMap mappedSearchPath = PathMap(hashPathFragment, searchPath, delimiter);
+        QByteArray searchPathUtf8 = searchPath.toUtf8();
+        PathMap mappedSearchPath = PathMap(hashPathFragment, searchPathUtf8.constData(), delimiter.toLatin1());
 
         ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
         if(!(flags & PCF_NO_LEAF))
@@ -303,7 +304,7 @@ PathTree::Nodes const& PathTree::nodes(NodeType type) const
     return (type == Leaf? d->leafHash : d->branchHash);
 }
 
-static void collectPathsInHash(PathTree::FoundPaths& found, PathTree::Nodes const& ph, char delimiter)
+static void collectPathsInHash(PathTree::FoundPaths& found, PathTree::Nodes const& ph, QChar delimiter)
 {
     if(ph.empty()) return;
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
@@ -313,7 +314,7 @@ static void collectPathsInHash(PathTree::FoundPaths& found, PathTree::Nodes cons
     }
 }
 
-int PathTree::findAllPaths(FoundPaths& found, int flags, char delimiter)
+int PathTree::findAllPaths(FoundPaths& found, int flags, QChar delimiter)
 {
     int numFoundSoFar = found.count();
     if(!(flags & PCF_NO_BRANCH))
@@ -384,7 +385,7 @@ int PathTree::iterate(int flags, PathTree::Node* parent, ushort hash,
 }
 
 #if _DEBUG
-void PathTree::debugPrint(PathTree& pt, char delimiter)
+void PathTree::debugPrint(PathTree& pt, QChar delimiter)
 {
     LOG_AS("PathTree");
     LOG_INFO("[%p]:") << de::dintptr(&pt);

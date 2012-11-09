@@ -322,7 +322,9 @@ struct Wad::Instance
         {
             // Determine the name for this lump in the VFS.
             normalizeName(*arcRecord, &absPath);
-            F_PrependBasePath(&absPath, &absPath); // Make it absolute.
+
+            // Make it absolute.
+            F_PrependBasePath(&absPath, &absPath);
 
             WadFile* lump =
                 new WadFile(*FileHandleBuilder::fromFileLump(*self, i, true/*don't buffer*/),
@@ -333,7 +335,7 @@ struct Wad::Instance
                                      littleEndianByteOrder.toNative(arcRecord->size),
                                      littleEndianByteOrder.toNative(arcRecord->size)),
                             self);
-            PathTree::Node* node = lumpDirectory->insert(Str_Text(&absPath));
+            PathTree::Node* node = lumpDirectory->insert(String(Str_Text(&absPath)));
             node->setUserPointer(lump);
         }
 

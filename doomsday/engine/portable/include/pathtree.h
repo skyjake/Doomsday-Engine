@@ -105,7 +105,7 @@ namespace de
         };
 
         /// @return  Print-ready name for node @a type.
-        static ddstring_t const* nodeTypeName(NodeType type);
+        static String const& nodeTypeName(NodeType type);
 
         /**
          * This is a hash function. It uses the path fragment string to generate a
@@ -116,7 +116,7 @@ namespace de
         static ushort hashPathFragment(char const* fragment, size_t len, char delimiter = '/');
 
 #if _DEBUG
-        static void debugPrint(PathTree& pathtree, char delimiter = '/');
+        static void debugPrint(PathTree& pathtree, QChar delimiter = '/');
         static void debugPrintHashDistribution(PathTree& pathtree);
 #endif
 
@@ -175,7 +175,7 @@ namespace de
              *
              * @return The composed path.
              */
-            String composePath(char delimiter = '/') const;
+            String composePath(QChar delimiter = '/') const;
 
             /**
              * Sets the user-specified custom pointer.
@@ -237,7 +237,7 @@ namespace de
          *         the path @c "c:/somewhere/something" and @a delimiter @c = '/'
          *         this is the node for the path fragment "something".
          */
-        Node* insert(char const* path, char delimiter = '/');
+        Node* insert(String path, QChar delimiter = '/');
 
         /**
          * Destroy the tree's contents, free'ing all nodes.
@@ -256,7 +256,7 @@ namespace de
          *
          * @throws NotFoundError if the referenced node could not be found.
          */
-        Node& find(int flags, char const* path, char delimiter = '/');
+        Node& find(int flags, String path, QChar delimiter = '/');
 
         /**
          * Collate all referenced paths in the hierarchy into a list.
@@ -269,7 +269,7 @@ namespace de
          *
          * @return Number of paths found.
          */
-        int findAllPaths(FoundPaths& found, int flags = 0, char delimiter = '/');
+        int findAllPaths(FoundPaths& found, int flags = 0, QChar delimiter = '/');
 
         /**
          * Iterate over nodes in the hierarchy making a callback for each. Iteration ends

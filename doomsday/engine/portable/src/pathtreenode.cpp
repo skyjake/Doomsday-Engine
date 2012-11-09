@@ -220,7 +220,7 @@ static size_t maxStackDepth;
 typedef struct pathconstructorparams_s {
     size_t length;
     String& composedPath;
-    char delimiter;
+    QChar delimiter;
 } pathconstructorparams_t;
 
 /**
@@ -240,7 +240,7 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
 
     if(trav.parent())
     {
-        if(parm.delimiter)
+        if(!parm.delimiter.isNull())
         {
             // There also needs to be a delimiter (a single character).
             parm.length += 1;
@@ -250,7 +250,7 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
         pathConstructor(parm, *trav.parent());
 
         // Append the separator.
-        if(parm.delimiter)
+        if(!parm.delimiter.isNull())
             parm.composedPath.append(parm.delimiter);
     }
     // We've arrived at the deepest level. The full length is now known.
@@ -278,7 +278,7 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
  *
  * Perhaps a fixed size MRU cache? -ds
  */
-String PathTree::Node::composePath(char delimiter) const
+String PathTree::Node::composePath(QChar delimiter) const
 {
     String result;
 
@@ -288,14 +288,14 @@ String PathTree::Node::composePath(char delimiter) const
 #endif
 
     // Include a terminating path delimiter for branches.
-    if(delimiter && !isLeaf())
+    if(!delimiter.isNull() && !isLeaf())
         parm.length += 1; // A single character.
 
     // Recursively construct the path from fragments and delimiters.
     pathConstructor(parm, *this);
 
     // Terminating delimiter for branches.
-    if(delimiter && !isLeaf())
+    if(!delimiter.isNull() && !isLeaf())
         result.append(delimiter);
 
     DENG2_ASSERT(result.size() == (int)parm.length);

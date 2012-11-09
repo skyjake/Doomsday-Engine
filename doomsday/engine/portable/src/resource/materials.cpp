@@ -464,7 +464,7 @@ static bool newMaterialBind(de::Uri const& uri, material_t* material)
     MaterialRepository::Node* node;
     MaterialBind* mb;
 
-    node = matDirectory.insert(Str_Text(uri.path()), MATERIALS_PATH_DELIMITER);
+    node = matDirectory.insert(de::String(Str_Text(uri.path())), MATERIALS_PATH_DELIMITER);
 
     // Is this a new binding?
     mb = reinterpret_cast<MaterialBind*>(node->userPointer());
@@ -798,7 +798,7 @@ static bool validateMaterialUri(de::Uri const& uri, int flags, boolean quiet=fal
  * @param path  Path of the material to search for.
  * @return  Found Material else @c NULL
  */
-static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, char const* path)
+static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, de::String path)
 {
     try
     {
