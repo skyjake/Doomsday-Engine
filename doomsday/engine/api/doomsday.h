@@ -246,42 +246,42 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 
 /// @addtogroup console
 ///@{
-    void            Con_Open(int yes);
-    void            Con_AddCommand(const ccmdtemplate_t* cmd);
-    void            Con_AddVariable(const cvartemplate_t* var);
-    void            Con_AddCommandList(const ccmdtemplate_t* cmdList);
-    void            Con_AddVariableList(const cvartemplate_t* varList);
+void Con_Open(int yes);
+void Con_AddCommand(ccmdtemplate_t const* cmd);
+void Con_AddVariable(cvartemplate_t const* var);
+void Con_AddCommandList(ccmdtemplate_t const* cmdList);
+void Con_AddVariableList(cvartemplate_t const* varList);
 
-cvartype_t Con_GetVariableType(const char* name);
+cvartype_t Con_GetVariableType(char const* name);
 
-byte Con_GetByte(const char* name);
-int Con_GetInteger(const char* name);
-float Con_GetFloat(const char* name);
-char* Con_GetString(const char* name);
-Uri* Con_GetUri(const char* name);
+byte Con_GetByte(char const* name);
+int Con_GetInteger(char const* name);
+float Con_GetFloat(char const* name);
+char const* Con_GetString(char const* name);
+Uri const* Con_GetUri(char const* name);
 
-void Con_SetInteger2(const char* name, int value, int svflags);
-void Con_SetInteger(const char* name, int value);
+void Con_SetInteger2(char const* name, int value, int svflags);
+void Con_SetInteger(char const* name, int value);
 
-void Con_SetFloat2(const char* name, float value, int svflags);
-void Con_SetFloat(const char* name, float value);
+void Con_SetFloat2(char const* name, float value, int svflags);
+void Con_SetFloat(char const* name, float value);
 
-void Con_SetString2(const char* name, const char* text, int svflags);
-void Con_SetString(const char* name, const char* text);
+void Con_SetString2(char const* name, char const* text, int svflags);
+void Con_SetString(char const* name, char const* text);
 
-void Con_SetUri2(const char* name, const Uri* uri, int svflags);
-void Con_SetUri(const char* name, const Uri* uri);
+void Con_SetUri2(char const* name, Uri const* uri, int svflags);
+void Con_SetUri(char const* name, Uri const* uri);
 
-void Con_Printf(const char* format, ...) PRINTF_F(1,2);
-void Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
+void Con_Printf(char const* format, ...) PRINTF_F(1,2);
+void Con_FPrintf(int flags, char const* format, ...) PRINTF_F(2,3);
 void Con_PrintRuler(void);
-void Con_Message(const char* message, ...) PRINTF_F(1,2);
-void Con_Error(const char* error, ...) PRINTF_F(1,2);
+void Con_Message(char const* message, ...) PRINTF_F(1,2);
+void Con_Error(char const* error, ...) PRINTF_F(1,2);
 
 void Con_SetPrintFilter(con_textfilter_t filter);
 
-    int             DD_Execute(int silent, const char* command);
-    int             DD_Executef(int silent, const char* command, ...);
+int DD_Execute(int silent, char const* command);
+int DD_Executef(int silent, char const* command, ...);
 ///@}
 
 /// @addtogroup bindings

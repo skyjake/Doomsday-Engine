@@ -103,22 +103,22 @@ typedef struct cvar_s {
     void (*notifyChanged)(void);
 } cvar_t;
 
-const ddstring_t* CVar_TypeName(cvartype_t type);
+ddstring_t const* CVar_TypeName(cvartype_t type);
 
 /// @return  @see consoleVariableFlags
-int CVar_Flags(const cvar_t* var);
+int CVar_Flags(cvar_t const* var);
 
 /// @return  Type of the variable.
-cvartype_t CVar_Type(const cvar_t* var);
+cvartype_t CVar_Type(cvar_t const* var);
 
 /// @return  Symbolic name/path-to the variable.
-AutoStr* CVar_ComposePath(const cvar_t* var);
+AutoStr* CVar_ComposePath(cvar_t const* var);
 
-int CVar_Integer(const cvar_t* var);
-float CVar_Float(const cvar_t* var);
-byte CVar_Byte(const cvar_t* var);
-char* CVar_String(const cvar_t* var);
-Uri* CVar_Uri(const cvar_t* var);
+int CVar_Integer(cvar_t const* var);
+float CVar_Float(cvar_t const* var);
+byte CVar_Byte(cvar_t const* var);
+char const* CVar_String(cvar_t const* var);
+Uri const* CVar_Uri(cvar_t const* var);
 
 /**
  * Changes the value of an integer variable.
@@ -138,11 +138,11 @@ void CVar_SetInteger2(cvar_t* var, int value, int svflags);
 void CVar_SetFloat2(cvar_t* var, float value, int svflags);
 void CVar_SetFloat(cvar_t* var, float value);
 
-void CVar_SetString2(cvar_t* var, const char* text, int svflags);
-void CVar_SetString(cvar_t* var, const char* text);
+void CVar_SetString2(cvar_t* var, char const* text, int svflags);
+void CVar_SetString(cvar_t* var, char const* text);
 
-void CVar_SetUri2(cvar_t* var, const Uri* uri, int svflags);
-void CVar_SetUri(cvar_t* var, const Uri* uri);
+void CVar_SetUri2(cvar_t* var, Uri const* uri, int svflags);
+void CVar_SetUri(cvar_t* var, Uri const* uri);
 
 typedef enum {
     WT_ANY = -1,
@@ -258,25 +258,25 @@ void Con_AddVariableList(const cvartemplate_t* tplList);
 cvar_t* Con_FindVariable(const char* path);
 
 /// @return  Type of the variable associated with @a path if found else @c CVT_NULL
-cvartype_t Con_GetVariableType(const char* path);
+cvartype_t Con_GetVariableType(char const* path);
 
-int Con_GetInteger(const char* path);
-float Con_GetFloat(const char* path);
-byte Con_GetByte(const char* path);
-char* Con_GetString(const char* path);
-Uri* Con_GetUri(const char* path);
+int Con_GetInteger(char const* path);
+float Con_GetFloat(char const* path);
+byte Con_GetByte(char const* path);
+char const* Con_GetString(char const* path);
+Uri const* Con_GetUri(char const* path);
 
-void Con_SetInteger2(const char* path, int value, int svflags);
-void Con_SetInteger(const char* path, int value);
+void Con_SetInteger2(char const* path, int value, int svflags);
+void Con_SetInteger(char const* path, int value);
 
-void Con_SetFloat2(const char* path, float value, int svflags);
-void Con_SetFloat(const char* path, float value);
+void Con_SetFloat2(char const* path, float value, int svflags);
+void Con_SetFloat(char const* path, float value);
 
-void Con_SetString2(const char* path, const char* text, int svflags);
-void Con_SetString(const char* path, const char* text);
+void Con_SetString2(char const* path, char const* text, int svflags);
+void Con_SetString(char const* path, char const* text);
 
-void Con_SetUri2(const char* path, const Uri* uri, int svflags);
-void Con_SetUri(const char* path, const Uri* uri);
+void Con_SetUri2(char const* path, Uri const* uri, int svflags);
+void Con_SetUri(char const* path, Uri const* uri);
 
 calias_t* Con_AddAlias(const char* name, const char* command);
 

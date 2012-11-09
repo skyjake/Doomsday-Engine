@@ -37,7 +37,7 @@
 static void freeArchivedMap(archivedmap_t* dam);
 
 // Should we be caching successfully loaded maps?
-extern "C" byte mapCache = true;
+byte mapCache = true;
 
 static const char* mapCacheDir = "mapcache/";
 

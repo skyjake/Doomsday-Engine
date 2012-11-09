@@ -56,7 +56,7 @@ public:
     {}
 
     CaselessString(CaselessString const& other)
-        : _str(other._str), _id(other._id), _userValue(other._userValue), _userPointer(0)
+        : ISerializable(), _str(other._str), _id(other._id), _userValue(other._userValue), _userPointer(0)
     {}
 
     void setText(String& text)

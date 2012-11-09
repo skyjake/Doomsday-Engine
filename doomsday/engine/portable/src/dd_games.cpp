@@ -30,8 +30,6 @@
 
 namespace de {
 
-static bool validateResource(ResourceRecord& rec);
-
 struct GameCollection::Instance
 {
     GameCollection& self;

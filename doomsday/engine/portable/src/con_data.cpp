@@ -71,7 +71,7 @@ static knownword_t* knownWords;
 static uint numKnownWords;
 static boolean knownWordsNeedUpdate;
 
-static char* emptyString = "";
+static Str* emptyStr;
 static Uri* emptyUri;
 
 void Con_DataRegister(void)
@@ -127,7 +127,7 @@ static int clearVariable(CVarDirectory::Node& node, void* parameters)
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
                 cvarDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, markVariableUserDataFreed, ptr);
-                M_Free(*ptr); *ptr = emptyString;
+                M_Free(*ptr); *ptr = Str_Text(emptyStr);
                 break;
 
             case CVT_URIPTR:
@@ -696,7 +696,7 @@ byte CVar_Byte(cvar_t const* var)
     }
 }
 
-char* CVar_String(cvar_t const* var)
+char const* CVar_String(cvar_t const* var)
 {
     DENG_ASSERT(var);
     /// @todo Why not implement in-place value to string conversion?
@@ -709,12 +709,11 @@ char* CVar_String(cvar_t const* var)
         Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyString\n",
                     Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
-        return emptyString;
-      }
+        return Str_Text(emptyStr); }
     }
 }
 
-Uri* CVar_Uri(cvar_t const* var)
+Uri const* CVar_Uri(cvar_t const* var)
 {
     DENG_ASSERT(var);
     /// @todo Why not implement in-place string to uri conversion?
@@ -727,8 +726,7 @@ Uri* CVar_Uri(cvar_t const* var)
         Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyUri\n",
                     Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
-        return emptyUri;
-      }
+        return emptyUri; }
     }
 }
 
@@ -1328,9 +1326,9 @@ int Con_IterateKnownWords(char const* pattern, knownwordtype_t type,
     return result;
 }
 
-static int countMatchedWordWorker(knownword_t const* word, void* parameters)
+static int countMatchedWordWorker(knownword_t const* /*word*/, void* parameters)
 {
-    DENG_ASSERT(word && parameters);
+    DENG_ASSERT(parameters);
     uint* count = (uint*) parameters;
     ++(*count);
     return 0; // Continue iteration.
@@ -1393,6 +1391,7 @@ void Con_InitDatabases(void)
     numKnownWords = 0;
     knownWordsNeedUpdate = false;
 
+    emptyStr = Str_NewStd();
     emptyUri = Uri_New();
 
     inited = true;
@@ -1412,8 +1411,9 @@ void Con_ShutdownDatabases(void)
     if(!inited) return;
 
     Con_ClearDatabases();
-    delete cvarDirectory; cvarDirectory = NULL;
-    Uri_Delete(emptyUri); emptyUri = NULL;
+    delete cvarDirectory; cvarDirectory = 0;
+    Str_Delete(emptyStr); emptyStr = 0;
+    Uri_Delete(emptyUri); emptyUri = 0;
     inited = false;
 }
 
@@ -1706,15 +1706,15 @@ byte Con_GetByte(char const* path)
 }
 
 /// @note Part of the Doomsday public API.
-char* Con_GetString(char const* path)
+char const* Con_GetString(char const* path)
 {
     cvar_t* var = Con_FindVariable(path);
-    if(!var) return emptyString;
+    if(!var) return Str_Text(emptyStr);
     return CVar_String(var);
 }
 
 /// @note Part of the Doomsday public API.
-Uri* Con_GetUri(char const* path)
+Uri const* Con_GetUri(char const* path)
 {
     cvar_t* var = Con_FindVariable(path);
     if(!var) return emptyUri;

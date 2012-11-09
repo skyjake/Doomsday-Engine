@@ -56,33 +56,6 @@ D_CMD(ListLumps);
 
 static FS1* fileSystem;
 
-struct FileInterpreter
-{
-    resourcetype_t resourceType;
-    de::File1* (*interpret)(de::FileHandle& hndl, String path, FileInfo const& info);
-};
-
-static de::File1* interpretAsZipFile(de::FileHandle& hndl, String path, FileInfo const& info)
-{
-    if(!Zip::recognise(hndl)) return 0;
-    LOG_VERBOSE("Interpreted \"") << NativePath(path).pretty() << "\" as a Zip (archive)";
-    return new Zip(hndl, path, info);
-}
-
-static de::File1* interpretAsWadFile(de::FileHandle& hndl, String path, FileInfo const& info)
-{
-    if(!Wad::recognise(hndl)) return 0;
-    LOG_VERBOSE("Interpreted \"") << NativePath(path).pretty() << "\" as a Wad (archive)";
-    return new Wad(hndl, path, info);
-}
-
-/// @todo Order here should be determined by the resource locator.
-static FileInterpreter interpreters[] = {
-    { RT_ZIP,  interpretAsZipFile },
-    { RT_WAD,  interpretAsWadFile },
-    { RT_NONE, NULL }
-};
-
 typedef QList<FileId> FileIds;
 
 /**
@@ -721,8 +694,9 @@ static void checkSizeConditionInName(ddstring_t* name, lumpsizecondition_t* pCon
 
 lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
 {
-    lumpnum_t lumpNum = -1;
+    LOG_AS("FS1::lumpNumForName");
 
+    lumpnum_t lumpNum = -1;
     if(name && name[0])
     {
         lumpsizecondition_t sizeCond;
@@ -782,8 +756,7 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
             if(lumpSize > refSize) lumpNum = -1;
             break;
 
-        default:
-            break;
+        default: break;
         }
 
         // If still not found, warn the user.
@@ -791,13 +764,16 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
         {
             if(sizeCond == LSCOND_NONE)
             {
-                Con_Message("Warning: FS1::lumpNumForName: Lump \"%s\" not found.\n", name);
+                LOG_WARNING("Lump \"%s\" not found.") << name;
             }
             else
             {
-                Con_Message("Warning: FS1::lumpNumForName: Lump \"%s\" with size%s%i not found.\n",
-                            Str_Text(&searchPath), sizeCond==LSCOND_EQUAL? "==" :
-                            sizeCond==LSCOND_GREATER_OR_EQUAL? ">=" : "<=", (int)refSize);
+                LOG_WARNING("Lump \"%s\" with size%s%i not found.")
+                    << Str_Text(&searchPath)
+                    << (           sizeCond == LSCOND_EQUAL? "==" :
+                        sizeCond == LSCOND_GREATER_OR_EQUAL? ">=" :
+                                                             "<=" )
+                    << int(refSize);
             }
         }
 
@@ -805,7 +781,7 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
     }
     else if(!silent)
     {
-        Con_Message("Warning: FS1::lumpNumForName: Empty name, returning invalid lumpnum.\n");
+        LOG_WARNING("Empty name, returning invalid lumpnum.");
     }
     return d->logicalLumpNum(lumpNum);
 }
@@ -813,8 +789,7 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
 lumpnum_t FS1::openAuxiliary(String path, size_t baseOffset)
 {
     /// @todo Allow opening Zip files too.
-    QByteArray pathUtf8 = path.toUtf8();
-    File1* file = d->tryOpenFile(pathUtf8.constData(), "rb", baseOffset, true /*allow duplicates*/);
+    File1* file = d->tryOpenFile(path, "rb", baseOffset, true /*allow duplicates*/);
     if(Wad* wad = dynamic_cast<Wad*>(file))
     {
         // Add a handle to the open files list.
@@ -1036,9 +1011,36 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     return found.count() - numFoundSoFar;
 }
 
+struct FileInterpreter
+{
+    resourcetype_t resourceType;
+    de::File1* (*interpret)(de::FileHandle& hndl, String path, FileInfo const& info);
+};
+
+static de::File1* interpretAsZipFile(de::FileHandle& hndl, String path, FileInfo const& info)
+{
+    if(!Zip::recognise(hndl)) return 0;
+    LOG_VERBOSE("Interpreted \"") << NativePath(path).pretty() << "\" as a Zip (archive)";
+    return new Zip(hndl, path, info);
+}
+
+static de::File1* interpretAsWadFile(de::FileHandle& hndl, String path, FileInfo const& info)
+{
+    if(!Wad::recognise(hndl)) return 0;
+    LOG_VERBOSE("Interpreted \"") << NativePath(path).pretty() << "\" as a Wad (archive)";
+    return new Wad(hndl, path, info);
+}
+
 de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& info)
 {
     DENG_ASSERT(!path.isEmpty());
+
+    /// @todo Order here should be determined by the resource locator.
+    static FileInterpreter interpreters[] = {
+        { RT_ZIP,  interpretAsZipFile },
+        { RT_WAD,  interpretAsWadFile },
+        { RT_NONE, NULL }
+    };
 
     de::File1* interpretedFile = 0;
 

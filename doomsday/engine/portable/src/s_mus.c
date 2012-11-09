@@ -426,7 +426,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
 static void Mus_UpdateSoundFont(void)
 {
-    AudioDriver_Music_Set(AUDIOP_SOUNDFONT_FILENAME, Con_GetString("music-soundfont"));
+    AudioDriver_Music_Set(AUDIOP_SOUNDFONT_FILENAME, (void*)Con_GetString("music-soundfont"));
 }
 
 /**
