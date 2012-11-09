@@ -251,8 +251,7 @@ struct FS1::Instance
                 LumpMapping const& mapping = *i;
                 if(mapping.first.compare(path)) continue;
 
-                QByteArray foundLumpNameUtf8 = mapping.second.toUtf8();
-                lumpnum_t absoluteLumpNum = self->lumpNumForName(foundLumpNameUtf8.constData());
+                lumpnum_t absoluteLumpNum = self->lumpNumForName(mapping.second);
                 if(absoluteLumpNum < 0) continue;
 
                 found = &self->nameIndexForLump(absoluteLumpNum).lump(absoluteLumpNum);
@@ -651,7 +650,7 @@ typedef enum lumpsizecondition_e {
 /**
  * Modifies the name so that the size condition is removed.
  */
-static void checkSizeConditionInName(ddstring_t* name, lumpsizecondition_t* pCond, size_t* pSize)
+static void checkSizeConditionInName(String name, lumpsizecondition_t* pCond, size_t* pSize)
 {
     DENG_ASSERT(pCond != 0);
     DENG_ASSERT(pSize != 0);
@@ -659,67 +658,59 @@ static void checkSizeConditionInName(ddstring_t* name, lumpsizecondition_t* pCon
     *pCond = LSCOND_NONE;
     *pSize = 0;
 
-    int i, argPos = 0;
-    int len = Str_Length(name);
-    char const* txt = Str_Text(name);
-    for(i = 0; i < len - 2; ++i, ++txt)
+    int condPos = -1;
+    int argPos  = -1;
+    if((condPos = name.indexOf("==")) >= 0)
     {
-        if(!strncmp(txt, "==", 2))
-        {
-            *pCond = LSCOND_EQUAL;
-            argPos = i + 2;
-            break;
-        }
-        if(!strncmp(txt, ">=", 2))
-        {
-            *pCond = LSCOND_GREATER_OR_EQUAL;
-            argPos = i + 2;
-            break;
-        }
-        if(!strncmp(txt, "<=", 2))
-        {
-            *pCond = LSCOND_LESS_OR_EQUAL;
-            argPos = i + 2;
-            break;
-        }
+        *pCond = LSCOND_EQUAL;
+        argPos = condPos + 2;
     }
-    if(!argPos) return;
+    else if((condPos = name.indexOf(">=")) >= 0)
+    {
+        *pCond = LSCOND_GREATER_OR_EQUAL;
+        argPos = condPos + 2;
+    }
+    else if((condPos = name.indexOf("<=")) >= 0)
+    {
+        *pCond = LSCOND_LESS_OR_EQUAL;
+        argPos = condPos + 2;
+    }
+
+    if(condPos < 0) return;
 
     // Get the argument.
-    *pSize = strtoul(txt + 2, NULL, 10);
+    *pSize = name.mid(argPos).toULong();
 
     // Remove it from the name.
-    Str_Truncate(name, i);
+    name.truncate(condPos);
 }
 
-lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
+lumpnum_t FS1::lumpNumForName(String name, bool silent)
 {
     LOG_AS("FS1::lumpNumForName");
 
     lumpnum_t lumpNum = -1;
-    if(name && name[0])
+    if(!name.isEmpty())
     {
         lumpsizecondition_t sizeCond;
         size_t lumpSize = 0, refSize;
-        ddstring_t searchPath;
-
-        Str_InitStd(&searchPath); Str_Set(&searchPath, name);
 
         // The name may contain a size condition (==, >=, <=).
-        checkSizeConditionInName(&searchPath, &sizeCond, &refSize);
+        checkSizeConditionInName(name, &sizeCond, &refSize);
 
         // Append a .lmp extension if none is specified.
-        if(!F_FindFileExtension(name))
+        if(name.fileNameExtension().isEmpty())
         {
-            Str_Append(&searchPath, ".lmp");
+            name += ".lmp";
         }
 
         // We have to check both the primary and auxiliary lump indexes
         // because we've only got a name and don't know where it is located.
         // Start with the auxiliary lumps because they have precedence.
+        QByteArray nameUtf8 = name.toUtf8();
         if(d->useAuxiliaryPrimaryIndex())
         {
-            lumpNum = d->activePrimaryIndex->indexForPath(Str_Text(&searchPath));
+            lumpNum = d->activePrimaryIndex->indexForPath(nameUtf8.constData());
 
             if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
             {
@@ -732,7 +723,7 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
         if(lumpNum < 0)
         {
             d->usePrimaryIndex();
-            lumpNum = d->activePrimaryIndex->indexForPath(Str_Text(&searchPath));
+            lumpNum = d->activePrimaryIndex->indexForPath(nameUtf8.constData());
 
             if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
             {
@@ -769,15 +760,13 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
             else
             {
                 LOG_WARNING("Lump \"%s\" with size%s%i not found.")
-                    << Str_Text(&searchPath)
+                    << name.fileNameWithoutExtension()
                     << (           sizeCond == LSCOND_EQUAL? "==" :
                         sizeCond == LSCOND_GREATER_OR_EQUAL? ">=" :
                                                              "<=" )
                     << int(refSize);
             }
         }
-
-        Str_Free(&searchPath);
     }
     else if(!silent)
     {
@@ -888,22 +877,19 @@ int FS1::findAll(bool (*predicate)(de::File1& file, void* parameters), void* par
     return numFound;
 }
 
-int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& found)
+int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
 {
     int const numFoundSoFar = found.count();
 
-    // First normalize the raw search pattern into one we can process.
-    AutoStr* searchPattern = AutoStr_NewStd();
-    Str_Set(searchPattern, rawSearchPattern);
-    Str_Strip(searchPattern);
-    F_FixSlashes(searchPattern, searchPattern);
-    F_ExpandBasePath(searchPattern, searchPattern);
+    // We must have an absolute path - prepend the base path if necessary.
+    if(!QDir::isAbsolutePath(searchPattern))
+    {
+        String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+        searchPattern = basePath / searchPattern;
+    }
 
-    // An absolute path is required so resolve relative to the base path.
-    // if not already absolute.
-    F_PrependBasePath(searchPattern, searchPattern);
-
-    PathMap patternMap = PathMap(PathTree::hashPathFragment, Str_Text(searchPattern));
+    QByteArray searchPatternUtf8 = searchPattern.toUtf8();
+    PathMap patternMap = PathMap(PathTree::hashPathFragment, searchPatternUtf8.constData());
 
     /*
      * Check the Zip directory.
@@ -919,7 +905,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
         {
             filePath = new String(lump.composePath());
             QByteArray filePathUtf8 = filePath->toUtf8();
-            patternMatched = F_MatchFileName(filePathUtf8.constData(), Str_Text(searchPattern));
+            patternMatched = F_MatchFileName(filePathUtf8.constData(), searchPatternUtf8.constData());
         }
         else
         {
@@ -946,7 +932,7 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     {
         DENG2_FOR_EACH_CONST(LumpMappings, i, d->lumpMappings)
         {
-            if(!F_MatchFileName(i->first.toUtf8().constData(), Str_Text(searchPattern))) continue;
+            if(!F_MatchFileName(i->first.toUtf8().constData(), searchPatternUtf8.constData())) continue;
 
             found.push_back(PathListItem(i->first, 0 /*only filepaths (i.e., leaves) can be mapped to lumps*/));
         }
@@ -957,32 +943,27 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     /*
      * Check native paths.
      */
-    // Extract the directory path.
-    AutoStr* searchDirectory = AutoStr_NewStd();
-    F_FileDir(searchDirectory, searchPattern);
-
-    if(!Str_IsEmpty(searchDirectory))
+    String searchDirectory = searchPattern.fileNamePath();
+    if(!searchDirectory.isEmpty())
     {
-        PathList nativePaths;
+        QByteArray searchDirectoryUtf8 = searchDirectory.toUtf8();
+        PathList nativeFilePaths;
         AutoStr* wildPath = AutoStr_NewStd();
-        finddata_t fd;
+        Str_Reserve(wildPath, searchDirectory.length() + 2 + 16); // Conservative estimate.
 
         for(int i = -1; i < (int)d->pathMappings.count(); ++i)
         {
-            if(i == -1)
-            {
-                Str_Clear(wildPath);
-                Str_Appendf(wildPath, "%s*", Str_Text(searchDirectory));
-            }
-            else
+            Str_Clear(wildPath);
+            Str_Appendf(wildPath, "%s/", searchDirectoryUtf8.constData());
+
+            if(i > -1)
             {
                 // Possible mapping?
-                Str_Copy(wildPath, searchDirectory);
                 if(!applyPathMapping(wildPath, d->pathMappings[i])) continue;
-
-                Str_AppendChar(wildPath, '*');
             }
+            Str_AppendChar(wildPath, '*');
 
+            finddata_t fd;
             if(!myfindfirst(Str_Text(wildPath), &fd))
             {
                 // First path found.
@@ -991,21 +972,22 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
                     // Ignore relative directory symbolics.
                     if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                     {
-                        QString foundPath = QString("%1%2").arg(Str_Text(searchDirectory)).arg(Str_Text(&fd.name));
-                        if(!F_MatchFileName(foundPath.toUtf8().constData(), Str_Text(searchPattern))) continue;
+                        String foundPath = searchDirectory / QDir::fromNativeSeparators(NativePath(Str_Text(&fd.name)));
+                        QByteArray foundPathUtf8 = foundPath.toUtf8();
+                        if(!F_MatchFileName(foundPathUtf8.constData(), searchPatternUtf8.constData())) continue;
 
-                        nativePaths.push_back(PathListItem(foundPath, fd.attrib));
+                        nativeFilePaths.push_back(PathListItem(foundPath, fd.attrib));
                     }
                 } while(!myfindnext(&fd));
             }
             myfindend(&fd);
         }
 
-        // Sort the native paths.
-        qSort(nativePaths.begin(), nativePaths.end());
+        // Sort the native file paths.
+        qSort(nativeFilePaths.begin(), nativeFilePaths.end());
 
-        // Add the native paths to the found results.
-        found.append(nativePaths);
+        // Add the native file paths to the found results.
+        found.append(nativeFilePaths);
     }
 
     return found.count() - numFoundSoFar;
@@ -1119,25 +1101,23 @@ bool FS1::accessFile(String path)
     return true;
 }
 
-void FS1::mapPathToLump(char const* symbolicPath, char const* lumpName)
+void FS1::mapPathToLump(String lumpName, String destination)
 {
-    if(!symbolicPath || !symbolicPath[0] || !lumpName || !lumpName[0]) return;
+    if(lumpName.isEmpty() || destination.isEmpty()) return;
 
-    // Convert the symbolic path into a real path.
-    AutoStr* path = AutoStr_FromTextStd(symbolicPath);
-    F_ResolveSymbolicPath(path, path);
-
-    // Since the path might be relative, let's explicitly make the path absolute.
-    char* full = _fullpath(0, Str_Text(path), 0);
-    de::NativePath fullPath(full);
-    free(full);
+    // We require an absolute path - prepend the CWD if necessary.
+    if(QDir::isRelativePath(destination))
+    {
+        String workPath = QDir::fromNativeSeparators(DENG2_APP->currentWorkPath());
+        destination = workPath / destination;
+    }
 
     // Have already mapped this path?
     LumpMappings::iterator found = d->lumpMappings.begin();
     for(; found != d->lumpMappings.end(); ++found)
     {
         LumpMapping const& ldm = *found;
-        if(!ldm.first.compare(fullPath, Qt::CaseInsensitive))
+        if(!ldm.first.compare(destination, Qt::CaseInsensitive))
             break;
     }
 
@@ -1145,7 +1125,7 @@ void FS1::mapPathToLump(char const* symbolicPath, char const* lumpName)
     if(found == d->lumpMappings.end())
     {
         // No. Acquire another mapping.
-        d->lumpMappings.push_back(LumpMapping(fullPath, lumpName));
+        d->lumpMappings.push_back(LumpMapping(destination, lumpName));
         ldm = &d->lumpMappings.back();
     }
     else
@@ -1155,8 +1135,7 @@ void FS1::mapPathToLump(char const* symbolicPath, char const* lumpName)
         ldm->second = lumpName;
     }
 
-    QByteArray pathUtf8 = ldm->first.toUtf8();
-    LOG_VERBOSE("Path \"%s\" now mapped to lump \"%s\"") << F_PrettyPath(pathUtf8.constData()) << ldm->second;
+    LOG_VERBOSE("Path \"%s\" now mapped to lump \"%s\"") << NativePath(ldm->first).pretty() << ldm->second;
 }
 
 FS1& FS1::clearPathLumpMappings()
@@ -1181,30 +1160,16 @@ static bool applyPathMapping(ddstring_t* path, PathMapping const& pm)
     return true;
 }
 
-void FS1::mapPath(char const* source, char const* destination)
+void FS1::mapPath(String source, String destination)
 {
-    if(!source || !source[0] || !destination || !destination[0]) return;
-
-    AutoStr* dest = AutoStr_FromTextStd(destination);
-    Str_Strip(dest);
-    F_FixSlashes(dest, dest);
-    F_ExpandBasePath(dest, dest);
-    F_PrependWorkPath(dest, dest);
-    F_AppendMissingSlash(dest);
-
-    AutoStr* src = AutoStr_FromTextStd(source);
-    Str_Strip(src);
-    F_FixSlashes(src, src);
-    F_ExpandBasePath(src, src);
-    F_PrependWorkPath(src, src);
-    F_AppendMissingSlash(src);
+    if(source.isEmpty() || destination.isEmpty()) return;
 
     // Have already mapped this source path?
     PathMappings::iterator found = d->pathMappings.begin();
     for(; found != d->pathMappings.end(); ++found)
     {
         PathMapping const& pm = *found;
-        if(!pm.second.compare(Str_Text(src), Qt::CaseInsensitive))
+        if(!pm.second.compare(source, Qt::CaseInsensitive))
             break;
     }
 
@@ -1212,20 +1177,18 @@ void FS1::mapPath(char const* source, char const* destination)
     if(found == d->pathMappings.end())
     {
         // No. Acquire another mapping.
-        d->pathMappings.push_back(PathMapping(Str_Text(dest), Str_Text(src)));
+        d->pathMappings.push_back(PathMapping(destination, source));
         pm = &d->pathMappings.back();
     }
     else
     {
         // Remap to another destination.
         pm = &*found;
-        pm->first = Str_Text(dest);
+        pm->first = destination;
     }
 
-    QByteArray sourceUtf8 = pm->second.toUtf8();
-    QByteArray destUtf8   = pm->first.toUtf8();
     LOG_VERBOSE("Path \"%s\" now mapped to \"%s\"")
-            << F_PrettyPath(sourceUtf8.constData()) << F_PrettyPath(destUtf8.constData());
+        << NativePath(pm->second).pretty() << NativePath(pm->first).pretty();
 }
 
 FS1& FS1::clearPathMappings()
@@ -1234,33 +1197,23 @@ FS1& FS1::clearPathMappings()
     return *this;
 }
 
-void FS1::printDirectory(ddstring_t const* path)
+void FS1::printDirectory(String path)
 {
-    AutoStr* searchPattern = AutoStr_FromTextStd(Str_Text(path));
+    QByteArray pathUtf8 = NativePath(path).pretty().toUtf8();
+    Con_Message("Directory: %s\n", pathUtf8.constData());
 
-    Str_Strip(searchPattern);
-    F_FixSlashes(searchPattern, searchPattern);
-    // Ensure it ends in a directory separator character.
-    F_AppendMissingSlash(searchPattern);
-    if(!F_ExpandBasePath(searchPattern, searchPattern))
-        F_PrependBasePath(searchPattern, searchPattern);
-
-    Con_Printf("Directory: %s\n", F_PrettyPath(Str_Text(searchPattern)));
-
-    // Make the pattern.
-    Str_AppendChar(searchPattern, '*');
+    // We are interested in *everything*.
+    path = path / "*";
 
     PathList found;
-    if(findAllPaths(Str_Text(searchPattern), 0, found))
+    if(findAllPaths(path, 0, found))
     {
         qSort(found.begin(), found.end());
 
         DENG2_FOR_EACH_CONST(PathList, i, found)
         {
-            QByteArray foundPath = i->path.toUtf8();
-            bool const makePretty = CPP_BOOL( F_IsRelativeToBase(foundPath, ddBasePath) );
-
-            Con_Printf("  %s\n", makePretty? F_PrettyPath(foundPath.constData()) : foundPath.constData());
+            QByteArray foundPath = NativePath(i->path).pretty().toUtf8();
+            Con_Message("  %s\n", foundPath.constData());
         }
     }
 }
@@ -1269,22 +1222,18 @@ void FS1::printDirectory(ddstring_t const* path)
 D_CMD(Dir)
 {
     DENG_UNUSED(src);
-
-    ddstring_t path; Str_InitStd(&path);
     if(argc > 1)
     {
         for(int i = 1; i < argc; ++i)
         {
-            Str_Set(&path, argv[i]);
-            App_FileSystem()->printDirectory(&path);
+            String path = QDir::fromNativeSeparators(NativePath(argv[i]).expand());
+            App_FileSystem()->printDirectory(path);
         }
     }
     else
     {
-        Str_Set(&path, "/");
-        App_FileSystem()->printDirectory(&path);
+        App_FileSystem()->printDirectory(String("/"));
     }
-    Str_Free(&path);
     return true;
 }
 
@@ -1400,14 +1349,17 @@ void F_UnloadAllNonStartupFiles(int* numUnloaded)
     App_FileSystem()->unloadAllNonStartupFiles(numUnloaded);
 }
 
-void F_AddVirtualDirectoryMapping(char const* source, char const* destination)
+void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath)
 {
+    String source      = QDir::fromNativeSeparators(NativePath(nativeSourcePath).expand());
+    String destination = QDir::fromNativeSeparators(NativePath(nativeDestinationPath).expand());
     App_FileSystem()->mapPath(source, destination);
 }
 
-void F_AddLumpDirectoryMapping(char const* symbolicPath, char const* lumpName)
+void F_AddLumpDirectoryMapping(char const* lumpName, char const* nativeDestinationPath)
 {
-    App_FileSystem()->mapPathToLump(symbolicPath, lumpName);
+    String destination = QDir::fromNativeSeparators(NativePath(nativeDestinationPath).expand());
+    App_FileSystem()->mapPathToLump(destination, String(lumpName));
 }
 
 void F_ResetFileIds(void)
@@ -1450,11 +1402,11 @@ void F_ReleaseFile(struct file1_s* file)
     App_FileSystem()->releaseFile(*reinterpret_cast<de::File1*>(file));
 }
 
-struct filehandle_s* F_Open3(char const* _path, char const* mode, size_t baseOffset, boolean allowDuplicate)
+struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, boolean allowDuplicate)
 {
     try
     {
-        String path = QDir::fromNativeSeparators(NativePath(_path).expand());
+        String path = QDir::fromNativeSeparators(NativePath(nativePath).expand());
         return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
     }
     catch(FS1::NotFoundError const&)
@@ -1462,14 +1414,14 @@ struct filehandle_s* F_Open3(char const* _path, char const* mode, size_t baseOff
     return 0;
 }
 
-struct filehandle_s* F_Open2(char const* path, char const* mode, size_t baseOffset)
+struct filehandle_s* F_Open2(char const* nativePath, char const* mode, size_t baseOffset)
 {
-    return F_Open3(path, mode, baseOffset, true/*allow duplicates*/);
+    return F_Open3(nativePath, mode, baseOffset, true/*allow duplicates*/);
 }
 
-struct filehandle_s* F_Open(char const* path, char const* mode)
+struct filehandle_s* F_Open(char const* nativePath, char const* mode)
 {
-    return F_Open2(path, mode, 0/*base offset*/);
+    return F_Open2(nativePath, mode, 0/*base offset*/);
 }
 
 struct filehandle_s* F_OpenLump(lumpnum_t absoluteLumpNum)
@@ -1740,14 +1692,15 @@ uint F_CRCNumber(void)
     return App_FileSystem()->loadedFilesCRC();
 }
 
-lumpnum_t F_OpenAuxiliary2(char const* path, size_t baseOffset)
+lumpnum_t F_OpenAuxiliary2(char const* nativePath, size_t baseOffset)
 {
+    String path = QDir::fromNativeSeparators(NativePath(nativePath).expand());
     return App_FileSystem()->openAuxiliary(path, baseOffset);
 }
 
-lumpnum_t F_OpenAuxiliary(char const* path)
+lumpnum_t F_OpenAuxiliary(char const* nativePath)
 {
-    return App_FileSystem()->openAuxiliary(path);
+    return F_OpenAuxiliary2(nativePath, 0/*base offset*/);
 }
 
 void F_CloseAuxiliary(void)

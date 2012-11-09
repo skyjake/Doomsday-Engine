@@ -868,8 +868,8 @@ static void readAllDefinitions(void)
     // Next up are definition files in the Games' /auto directory.
     if(!CommandLine_Exists("-noauto") && DD_GameLoaded())
     {
-        Uri* pattern = Uri_NewWithPath2("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL);
-        if(ddstring_t const* resolvedPath = Uri_ResolvedConst(pattern))
+        de::Uri pattern = de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL);
+        if(ddstring_t const* resolvedPath = pattern.resolvedConst())
         {
             de::FS1::PathList found;
             if(App_FileSystem()->findAllPaths(Str_Text(resolvedPath), 0, found))
@@ -884,7 +884,6 @@ static void readAllDefinitions(void)
                 }
             }
         }
-        Uri_Delete(pattern);
     }
 
     // Any definition files on the command line?

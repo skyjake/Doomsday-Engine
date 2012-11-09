@@ -112,7 +112,7 @@ namespace de
          * Add a new path mapping from source to destination in the vfs.
          * @note Paths will be transformed into absolute paths if needed.
          */
-        void mapPath(char const* source, char const* destination);
+        void mapPath(String source, String destination);
 
         /**
          * Clears all virtual path mappings.
@@ -122,11 +122,9 @@ namespace de
         FS1& clearPathMappings();
 
         /**
-         * Add a new lump mapping so that @a lumpName becomes visible as @a symbolicPath
-         * throughout the vfs.
-         * @note @a symbolicPath will be transformed into an absolute path if needed.
+         * Add a new lump mapping so that @a lumpName becomes visible at @a destination.
          */
-        void mapPathToLump(char const* symbolicPath, char const* lumpName);
+        void mapPathToLump(String lumpName, String destination);
 
         /**
          * Clears all path => lump mappings.
@@ -171,7 +169,7 @@ namespace de
          */
         FS1& deindex(File1& file);
 
-        lumpnum_t lumpNumForName(char const* name, bool silent = true);
+        lumpnum_t lumpNumForName(String name, bool silent = true);
 
         /**
          * Provides access to the currently active Wad lump name index. This can
@@ -296,12 +294,12 @@ namespace de
          *
          * @return  Number of paths found.
          */
-        int findAllPaths(char const* searchPattern, int flags, PathList& found);
+        int findAllPaths(String searchPattern, int flags, PathList& found);
 
         /**
          * Print contents of the specified directory of the virtual file system.
          */
-        void printDirectory(ddstring_t const* path);
+        void printDirectory(String path);
 
         /**
          * Calculate a CRC for the loaded file list.
@@ -367,9 +365,9 @@ void F_EndStartup(void);
 
 void F_UnloadAllNonStartupFiles(int* numUnloaded);
 
-void F_AddVirtualDirectoryMapping(char const* source, char const* destination);
+void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath);
 
-void F_AddLumpDirectoryMapping(char const* lumpName, char const* symbolicPath);
+void F_AddLumpDirectoryMapping(char const* lumpName, char const* nativeDestinationPath);
 
 void F_ResetFileIds(void);
 
@@ -383,9 +381,9 @@ void F_Index(struct file1_s* file);
 
 void F_Deindex(struct file1_s* file);
 
-FileHandle* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate);
-FileHandle* F_Open2(char const* path, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
-FileHandle* F_Open(char const* path, char const* mode/*, baseOffset = 0 */);
+FileHandle* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, boolean allowDuplicate);
+FileHandle* F_Open2(char const* nativePath, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
+FileHandle* F_Open(char const* nativePath, char const* mode/*, baseOffset = 0 */);
 
 FileHandle* F_OpenLump(lumpnum_t absoluteLumpNum);
 
@@ -431,8 +429,8 @@ void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimite
 
 uint F_CRCNumber(void);
 
-lumpnum_t F_OpenAuxiliary2(char const* fileName, size_t baseOffset);
-lumpnum_t F_OpenAuxiliary(char const* fileName/*, baseOffset = 0 */);
+lumpnum_t F_OpenAuxiliary2(char const* nativePath, size_t baseOffset);
+lumpnum_t F_OpenAuxiliary(char const* nativePath/*, baseOffset = 0 */);
 
 void F_CloseAuxiliary(void);
 

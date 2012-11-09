@@ -29,6 +29,9 @@
 #  include <objbase.h>
 #endif
 
+#include <QDir>
+#include <QStringList>
+
 #include <de/NativePath>
 
 #include "de_platform.h"
@@ -57,8 +60,6 @@
 #include "texture.h"
 #include "updater.h"
 #include "wad.h"
-
-#include <QStringList>
 
 using namespace de;
 
@@ -532,7 +533,9 @@ static void initPathMappings()
 
         if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
         {
-            App_FileSystem()->mapPath(CommandLine_PathAt(i + 1), CommandLine_At(i + 2));
+            String source      = QDir::fromNativeSeparators(NativePath(CommandLine_PathAt(i + 1)).expand());
+            String destination = QDir::fromNativeSeparators(NativePath(CommandLine_PathAt(i + 2)).expand());
+            App_FileSystem()->mapPath(source, destination);
             i += 2;
         }
     }
@@ -607,7 +610,8 @@ static bool parsePathLumpMappings(char const* buffer)
         }
         else
         {
-            App_FileSystem()->mapPathToLump(Str_Text(&path), lumpName);
+            String destination = QDir::fromNativeSeparators(NativePath(Str_Text(&path)).expand());
+            App_FileSystem()->mapPathToLump(lumpName, destination);
         }
     } while(*ch);
 

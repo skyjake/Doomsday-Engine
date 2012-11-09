@@ -259,8 +259,7 @@ struct ResourceNamespace::Instance
 
         // Process this search.
         FS1::PathList found;
-        QByteArray searchPatternUtf8 = searchPattern.toUtf8();
-        if(App_FileSystem()->findAllPaths(searchPatternUtf8.constData(), flags, found))
+        if(App_FileSystem()->findAllPaths(searchPattern, flags, found))
         {
             DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
             {
