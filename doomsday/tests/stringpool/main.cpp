@@ -22,6 +22,8 @@
  */
 
 #include <de/StringPool>
+#include <de/Reader>
+#include <de/Writer>
 #include <QDebug>
 
 using namespace de;
@@ -82,25 +84,20 @@ int main(int, char**)
         p.intern(s);
         p.removeById(1); // "Third!"
 
-#if 0
         // Serialize.
-        Writer* w = Writer_NewWithDynamicBuffer(0);
-        p.write(w);
+        Block b;
+        Writer(b) << p;
+        qDebug() << "Serialized stringpool to " << b.size() << " bytes.";
 
         // Deserialize.
-        Reader* r = Reader_NewWithBuffer(Writer_Data(w), Writer_Size(w));
         StringPool p2;
-        p2.read(r);
+        Reader(b) >> p2;
         //p2.print();
         DENG2_ASSERT(p2.size() == 2);
         DENG2_ASSERT(!p2.string(2).compare("abc"));
         DENG2_ASSERT(!p2.string(3).compare("FOUR"));
         s = String("hello again");
         DENG2_ASSERT(p2.intern(s) == 1);
-
-        Reader_Delete(r);
-        Writer_Delete(w);
-#endif
 
         p.clear();
         DENG2_ASSERT(p.empty());

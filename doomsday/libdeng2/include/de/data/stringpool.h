@@ -25,7 +25,8 @@
 #define LIBDENG2_STRINGPOOL_H
 
 #include "../libdeng2.h"
-#include "de/String"
+#include "../ISerializable"
+#include "../String"
 
 namespace de
 {
@@ -53,7 +54,7 @@ namespace de
      *
      * @todo Add case-sensitive mode.
      */
-    class DENG2_PUBLIC StringPool
+    class DENG2_PUBLIC StringPool : public ISerializable
     {
     public:
         /// String identifier. Each string is assigned its own Id.
@@ -207,19 +208,9 @@ namespace de
          */
         int iterate(int (*callback)(Id, void*), void* data) const;
 
-        /**
-         * Serializes the pool using @a writer.
-         *
-         * @param writer  Writer instance.
-         */
-        //void write(Writer& writer) const;
-
-        /**
-         * Deserializes the pool from @a reader.
-         *
-         * @param reader  Reader instance.
-         */
-        //void read(Reader& reader);
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);
 
 #if _DEBUG
         /**

@@ -43,9 +43,13 @@ typedef uint InternalId;
 /**
  * Case-insensitive text string (String).
  */
-class CaselessString
+class CaselessString : public ISerializable
 {
 public:
+    CaselessString()
+        : _str(), _id(0), _userValue(0), _userPointer(0)
+    {}
+
     CaselessString(QString text)
         : _str(text), _id(0), _userValue(0), _userPointer(0)
     {}
@@ -88,19 +92,13 @@ public:
     void setUserPointer(void* ptr) {
         _userPointer = ptr;
     }
-#if 0
-    void serialize(Writer* writer) const {
-        Str_Write(&_str, writer);
-        Writer_WritePackedUInt32(writer, _id);
-        Writer_WriteUInt32(writer, _userValue);
+    // Implements ISerializable.
+    void operator >> (Writer& to) const {
+        to << _str << duint32(_id) << duint32(_userValue);
     }
-    void deserialize(Reader* reader, ddstring_t* text) {
-        Str_Read(text, reader);
-        _str.str = 0; // caller must handle this; we don't take ownership
-        _id = Reader_ReadPackedUInt32(reader);
-        _userValue = Reader_ReadUInt32(reader);
+    void operator << (Reader& from) {
+        from >> _str >> _id >> _userValue;
     }
-#endif
 
 private:
     String _str;
@@ -431,39 +429,37 @@ int StringPool::iterate(int (*callback)(Id, void*), void* data) const
     return 0;
 }
 
-#if 0
-void StringPool::write(Writer* writer) const
+// Implements ISerializable.
+void StringPool::operator >> (Writer& to) const
 {
     // Number of strings altogether (includes unused ids).
-    Writer_WriteUInt32(writer, d->idMap.size());
+    to << duint32(d->idMap.size());
 
     // Write the interns.
-    Writer_WriteUInt32(writer, d->interns.size());
+    to << duint32(d->interns.size());
     for(Interns::const_iterator i = d->interns.begin(); i != d->interns.end(); ++i)
     {
-        i->toStr()->serialize(writer);
+        to << *i->toStr();
     }
 }
 
-void StringPool::read(Reader* reader)
+void StringPool::operator << (Reader& from)
 {
     clear();
 
-    uint numStrings = Reader_ReadUInt32(reader);
+    // Read the number of total number of strings.
+    uint numStrings;
+    from >> numStrings;
     d->idMap.resize(numStrings, 0);
 
-    uint numInterns = Reader_ReadUInt32(reader);
+    // Read the interns.
+    uint numInterns;
+    from >> numInterns;
     while(numInterns--)
     {
-        ddstring_t text;
-        Str_InitStd(&text);
-
         CaselessString* str = new CaselessString;
-        str->deserialize(reader, &text);
-        // Create a copy of the string whose ownership StringPool controls.
-        str->setText(strdup(Str_Text(&text)));
+        from >> *str;
         d->interns.insert(str);
-        Str_Free(&text);
 
         // Update the id map.
         d->idMap[str->id()] = str;
@@ -479,7 +475,6 @@ void StringPool::read(Reader* reader)
 
     d->assertCount();
 }
-#endif
 
 #if _DEBUG
 typedef struct {
