@@ -223,7 +223,7 @@ class State:
         args += sv.options + commonOptions 
 
         timestamp = '%s-' % todaysBuild() + time.strftime('%H%M%S')
-        args += ['-out', os.path.join(sv.runtime, 'doomsday-%s.out' % timestamp)]
+        args += ['-out', 'doomsday-%s.out' % timestamp]
 
         # Join the -parse arguments.
         i = args.index('-parse')

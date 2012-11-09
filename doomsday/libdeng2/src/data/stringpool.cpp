@@ -29,6 +29,9 @@
 #include <list>
 #include <set>
 #include <algorithm>
+#ifdef _DEBUG
+#  include <stdio.h> /// @todo should use C++
+#endif
 
 /// Macro used for converting internal ids to externally visible Ids.
 #define EXPORT_ID(i)    (uint(i) + 1)
