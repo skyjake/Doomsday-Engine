@@ -21,16 +21,16 @@
  * 02110-1301 USA</small>
  */
 
-#include <cctype>
-
 #include "de_filesys.h"
 
+#include <QDir>
+
+#include <de/App>
 #include <de/Log>
+#include <de/NativePath>
 #include "pathtree.h"
 
 #include "resourcenamespace.h"
-
-extern "C" filename_t ddBasePath;
 
 namespace de {
 
@@ -40,17 +40,9 @@ namespace de {
 class ResourceRef
 {
 public:
-    ResourceRef(PathTree::Node& _directoryNode) : directoryNode_(&_directoryNode) {
-#if _DEBUG
-        Str_Init(&name_);
-#endif
-    }
-
-    ~ResourceRef() {
-#if _DEBUG
-        Str_Free(&name_);
-#endif
-    }
+    ResourceRef(PathTree::Node& _directoryNode)
+        : directoryNode_(&_directoryNode)
+    {}
 
     PathTree::Node& directoryNode() const {
         return *directoryNode_;
@@ -62,12 +54,12 @@ public:
     }
 
 #if _DEBUG
-    ddstring_t const& name() const {
+    String const& name() const {
         return name_;
     }
 
-    ResourceRef& setName(char const* newName) {
-        Str_Set(&name_, newName);
+    ResourceRef& setName(String const& newName) {
+        name_ = newName;
         return *this;
     }
 #endif
@@ -78,7 +70,7 @@ private:
 
 #if _DEBUG
     /// Symbolic name of this resource.
-    ddstring_t name_;
+    String name_;
 #endif
 };
 
@@ -139,13 +131,9 @@ public:
     }
 };
 
-//unsigned short const NameHash::hash_size;
-
-static AutoStr* composeResourceName(char const* filePath)
+static inline String composeResourceName(String const& filePath)
 {
-    AutoStr* name = AutoStr_NewStd();
-    F_FileName(name, filePath);
-    return name;
+    return filePath.fileNameWithoutExtension();
 }
 
 /**
@@ -154,14 +142,14 @@ static AutoStr* composeResourceName(char const* filePath)
  *
  * @return  The generated hash key.
  */
-static NameHash::key_type hashResourceName(ddstring_t const* name)
+static NameHash::key_type hashResourceName(char const* name)
 {
     DENG_ASSERT(name);
 
     NameHash::key_type key = 0;
     byte op = 0;
 
-    for(char const* c = Str_Text(name); *c; c++)
+    for(char const* c = name; *c; c++)
     {
         switch(op)
         {
@@ -228,32 +216,27 @@ struct ResourceNamespace::Instance
             if(!resolvedSearchPath) continue;
 
             // Add new nodes on this path and/or re-process previously seen nodes.
-            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, resolvedSearchPath, true/*is-directory*/,
-                                                       searchPath.flags());
+            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, String(Str_Text(resolvedSearchPath)),
+                                                       true/*is-directory*/, searchPath.flags());
         }
     }
 
-    PathTree::Node* addDirectoryPathNodes(ddstring_t const* rawPath)
+    PathTree::Node* addDirectoryPathNodes(String path)
     {
-        if(!rawPath || Str_IsEmpty(rawPath)) return NULL;
+        if(path.isEmpty()) return 0;
 
-        ddstring_t const* path;
-        ddstring_t buf;
-
-        // Try to make it a relative path?
-        if(F_IsAbsolute(rawPath))
+        // Try to make it a relative path.
+        if(QDir::isAbsolutePath(path))
         {
-            ddstring_t basePath; Str_InitStatic(&basePath, ddBasePath);
-            F_RemoveBasePath2(Str_InitStd(&buf), rawPath, &basePath);
-            path = &buf;
-        }
-        else
-        {
-            path = rawPath;
+            String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+            if(path.beginsWith(basePath))
+            {
+                path = path.mid(basePath.length() + 1);
+            }
         }
 
         // If this is equal to the base path, return that node.
-        if(Str_IsEmpty(path))
+        if(path.isEmpty())
         {
             // Time to construct the relative base node?
             // This node is purely symbolic, its only necessary for our internal use.
@@ -261,41 +244,29 @@ struct ResourceNamespace::Instance
             {
                 rootNode = directory.insert("./");
             }
-
-            if(path == &buf) Str_Free(&buf);
             return rootNode;
         }
 
-        PathTree::Node* node = directory.insert(String(Str_Text(path)));
-
-        if(path == &buf) Str_Free(&buf);
-
-        return node;
+        return directory.insert(path);
     }
 
     void addDirectoryChildNodes(PathTree::Node& node, int flags)
     {
-        if(!node.isLeaf())
+        if(node.isLeaf()) return;
+
+        // Compose the search pattern. We're interested in *everything*.
+        String searchPattern = node.composePath() / "*";
+
+        // Process this search.
+        FS1::PathList found;
+        QByteArray searchPatternUtf8 = searchPattern.toUtf8();
+        if(App_FileSystem()->findAllPaths(searchPatternUtf8.constData(), flags, found))
         {
-            // Compose the search pattern.
-            QByteArray path = node.composePath('/').toUtf8();
-            AutoStr* searchPattern = AutoStr_FromTextStd(path.constData());
-            // We're interested in *everything*.
-            Str_AppendChar(searchPattern, '*');
-
-            // Process this search.
-            FS1::PathList found;
-            if(App_FileSystem()->findAllPaths(Str_Text(searchPattern), flags, found))
+            DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
             {
-                DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
-                {
-                    QByteArray foundPathUtf8 = i->path.toUtf8();
-                    ddstring_t foundPath; Str_InitStatic(&foundPath, foundPathUtf8.constData());
-                    bool isFolder = !!(i->attrib & A_SUBDIR);
-
-                    addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND),
-                                                               &foundPath, isFolder, flags);
-                }
+                addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND),
+                                                           i->path, !!(i->attrib & A_SUBDIR),
+                                                           flags);
             }
         }
     }
@@ -307,7 +278,7 @@ struct ResourceNamespace::Instance
      * @param flags             @ref searchPathFlags
      */
     void addDirectoryPathNodesAndMaybeDescendBranch(bool descendBranch,
-        ddstring_t const* filePath, bool /*isFolder*/, int flags)
+        String filePath, bool /*isFolder*/, int flags)
     {
         // Add this path to the directory.
         PathTree::Node* node = addDirectoryPathNodes(filePath);
@@ -377,13 +348,14 @@ void ResourceNamespace::clear()
 
 void ResourceNamespace::rebuild()
 {
-    // Is a rebuild necessary?
+    // Is a rebuild not necessary?
     if(!d->nameHashIsDirty) return;
 
+    LOG_AS("ResourceNamespace::rebuild");
+
 /*#if _DEBUG
-    uint startTime;
-    VERBOSE( Con_Message("Rebuilding ResourceNamespace '%s'...\n", Str_Text(d->name)) )
-    VERBOSE2( startTime = Sys_GetRealTime() )
+    LOG_DEBUG("Rebuilding Namespace '%s'...") << d->name;
+    uint startTime = Sys_GetRealTime();
 #endif*/
 
     // (Re)populate the directory and add found resources.
@@ -396,9 +368,9 @@ void ResourceNamespace::rebuild()
     d->nameHashIsDirty = false;
 
 /*#if _DEBUG
-    VERBOSE2( PathTree::debugPrint(d->directory) )
-    VERBOSE2( debugPrint() )
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+    PathTree::debugPrint(d->directory);
+    debugPrint();
+    LOG_INFO("Done in %.2f seconds.") << (Sys_GetRealTime() - startTime) / 1000.0f;
 #endif*/
 }
 
@@ -407,10 +379,9 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
 
-    String const& name_ = resourceNode.name();
-    QByteArray name_Utf8 = name_.toUtf8();
-    AutoStr* name = composeResourceName(name_Utf8.constData());
-    NameHash::key_type key = hashResourceName(name);
+    String name = composeResourceName(resourceNode.name());
+    QByteArray nameUtf8 = name.toUtf8();
+    NameHash::key_type key = hashResourceName(nameUtf8.constData());
 
     // Is this a new resource?
     bool isNewNode = false;
@@ -423,7 +394,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
         hashNode = new NameHash::Node(resourceNode);
 #if _DEBUG
         // Take a copy of the name to aid in tracing bugs, etc...
-        hashNode->resource.setName(Str_Text(name));
+        hashNode->resource.setName(name);
 #endif
 
         // Link it to the list for this bucket.
@@ -502,7 +473,7 @@ void ResourceNamespace::debugPrint() const
             ResourceRef const& res = node->resource;
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
-                    << resIdx << key << Str_Text(&res.name()) << res.directoryNode().composePath();
+                    << resIdx << key << res.name() << NativePath(res.directoryNode().composePath()).pretty();
 
             ++resIdx;
         }
@@ -516,17 +487,17 @@ int ResourceNamespace::findAll(String searchPath, ResourceList& found)
 {
     int numFoundSoFar = found.count();
 
-    AutoStr* name = 0;
+    String name;
     if(!searchPath.isEmpty())
     {
-        QByteArray searchPathUtf8 = searchPath.toUtf8();
-        name = composeResourceName(searchPathUtf8.constData());
+        name = composeResourceName(searchPath);
     }
 
     NameHash::key_type from, to;
-    if(name)
+    if(!name.isEmpty())
     {
-        from = hashResourceName(name);
+        QByteArray nameUtf8 = name.toUtf8();
+        from = hashResourceName(nameUtf8.constData());
         to   = from;
     }
     else
@@ -541,9 +512,10 @@ int ResourceNamespace::findAll(String searchPath, ResourceList& found)
         for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
             ResourceRef& resource = hashNode->resource;
-            if(name && !resource.directoryNode().name().beginsWith(String(Str_Text(name))), Qt::CaseInsensitive) continue;
+            PathTree::Node& node = resource.directoryNode();
+            if(!name.isEmpty() && !node.name().beginsWith(name), Qt::CaseInsensitive) continue;
 
-            found.push_back(&resource.directoryNode());
+            found.push_back(&node);
         }
     }
 
