@@ -105,6 +105,11 @@ NativePath App::nativeHomePath()
     return nativeHome;
 }
 
+NativePath App::currentWorkPath()
+{
+    return NativePath::workPath();
+}
+
 NativePath App::nativeBasePath()
 {
     int i;

@@ -106,6 +106,11 @@ namespace de
         NativePath nativeHomePath();
 
         /**
+         * Returns the process's current native working path.
+         */
+        static NativePath currentWorkPath();
+
+        /**
          * Returns the application's file system.
          */
         static FS& fileSystem();
