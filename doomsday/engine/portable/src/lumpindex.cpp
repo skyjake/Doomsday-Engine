@@ -109,6 +109,8 @@ struct LumpIndex::Instance
 
     /**
      * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
+     * @param file        Flag only those lumps contained by this file.
+     *
      * @return Number of lumps newly flagged during this op.
      */
     int flagContainedLumps(QBitArray& pruneFlags, File1& file)

@@ -1671,6 +1671,7 @@ AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx)
 #define DEFAULT_PATHTOSTRINGFLAGS       (PTSF_QUOTED)
 
 /**
+ * @param files      List of files from which to compose the path string.
  * @param flags      @ref pathToStringFlags
  * @param delimiter  If not @c NULL, path fragments in the resultant string
  *                   will be delimited by this.

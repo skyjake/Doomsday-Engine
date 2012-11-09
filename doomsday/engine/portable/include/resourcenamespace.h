@@ -144,7 +144,7 @@ namespace de
         /**
          * Finds all resources in this namespace.
          *
-         * @param searchpath    If not @c NULL, only consider resources whose
+         * @param searchPath    If not @c NULL, only consider resources whose
          *                      name matches that which will be extracted from
          *                      this path.
          * @param found         Set of resources that match the result.

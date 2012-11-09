@@ -1,11 +1,12 @@
 /**
- * @file edit_map.c
+ * @file edit_map.cpp
+
  * Map Editor interface. @ingroup map
  *
- * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
- * @authors Copyright &copy; 1998-2000 Colin Reed <cph@moria.org.uk>
- * @authors Copyright &copy; 1998-2000 Lee Killough <killough@rsn.hp.com>
+ * @author Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2000-2007 Andrew Apted <ajapted@gmail.com>
+ * @author Copyright &copy; 1998-2000 Colin Reed <cph@moria.org.uk>
+ * @author Copyright &copy; 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

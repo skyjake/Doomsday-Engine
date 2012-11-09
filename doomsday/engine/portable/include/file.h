@@ -193,7 +193,10 @@ public:
      * the file and therefore *this* is that lump. Subclasses with multiple lumps
      * should override this function accordingly.
      */
-    virtual File1& lump(int /*lumpIdx*/) { return *this; }
+    virtual File1& lump(int lumpIdx) {
+        DENG_UNUSED(lumpIdx);
+        return *this;
+    }
 
     /**
      * Read the file data into @a buffer.

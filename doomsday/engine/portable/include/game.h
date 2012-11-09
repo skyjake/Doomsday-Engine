@@ -116,6 +116,7 @@ public:
      *       type are loaded.
      *
      * @param rclass  Class of resource being added.
+     * @param record  ResourceRecord to add.
      */
     Game& addResource(resourceclass_t rclass, ResourceRecord& record);
 

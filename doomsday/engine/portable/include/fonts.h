@@ -1,54 +1,47 @@
-/**\file fonts.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Fonts Collection.
- * @ingroup refresh
+ * @file fonts.h
  *
- * 'Runtime' fonts are not loaded until precached or actually needed.
- * They may be cleared, in which case they will be reloaded when needed.
+ * Font Resources. @ingroup resource
  *
- * 'System' fonts are loaded at startup and remain in memory all the time.
- * After clearing they must be manually reloaded.
+ * 'Runtime' fonts are not loaded until precached or actually needed. They may
+ * be cleared, in which case they will be reloaded when needed.
  *
- * 'Clear'ing a Font is to "undefine" it - any names bound to it are
- * deleted, any GL textures acquired for it are 'released'. The Font
- * instance record used to represent it is also deleted.
+ * 'System' fonts are loaded at startup and remain in memory all the time. After
+ * clearing they must be manually reloaded.
  *
- * 'Release'ing a Font will leave it defined (any names bound to it
- * will persist) and any GL textures acquired for it are so too released.
- * Note that the Font instance record used to represent it will NOT
- * be deleted.
+ * 'Clear'ing a Font is to "undefine" it - any names bound to it are deleted,
+ * any GL textures acquired for it are 'released'. The Font instance record used
+ * to represent it is also deleted.
+ *
+ * 'Release'ing a Font will leave it defined (any names bound to it will persist)
+ * and any GL textures acquired for it are so too released. Note that the Font
+ * instance record used to represent it will NOT be deleted.
  *
  * Thus there are two general states for fonts in the collection:
  *
  *   1) Declared but not defined.
  *   2) Declared and defined.
+ *
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_REFRESH_FONTS_H
-#define LIBDENG_REFRESH_FONTS_H
+#ifndef LIBDENG_RESOURCE_FONTS_H
+#define LIBDENG_RESOURCE_FONTS_H
 
 #include "uri.h"
 #include "def_data.h"
@@ -158,13 +151,15 @@ void Fonts_RebuildFromFile(struct font_s* font, const char* resourcePath);
  *
  * @return  Unique identifier of the found texture else @c NOFONTID.
  */
-fontid_t Fonts_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
+fontid_t Fonts_ResolveUri(Uri const * uri); /*quiet=!(verbose >= 1)*/
 
 /**
  * @copydoc Fonts_ResolveUri()
- * @param quiet  Suppresses the console message that is printed if the Uri cannot be found.
+ *
+ * @param uri       Either a path or URN to the font.
+ * @param quiet     @c true = suppress the console message that is printed if the Uri cannot be found.
  */
-fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet);
+fontid_t Fonts_ResolveUri2(Uri const* uri, boolean quiet);
 
 /// Same as Fonts::ResolveUri except @a uri is a C-string.
 fontid_t Fonts_ResolveUriCString2(const char* uri, boolean quiet);
@@ -217,7 +212,7 @@ int Fonts_Iterate(fontnamespaceid_t namespaceId, int (*callback)(struct font_s* 
 int Fonts_IterateDeclared2(fontnamespaceid_t namespaceId, int (*callback)(fontid_t textureId, void* paramaters), void* paramaters);
 int Fonts_IterateDeclared(fontnamespaceid_t namespaceId, int (*callback)(fontid_t textureId, void* paramaters)); /*paramaters=NULL*/
 
-/**
+/*
  * Here follows miscellaneous routines currently awaiting refactoring into the
  * revised resource and texture management APIs.
  */
@@ -227,8 +222,8 @@ int Fonts_IterateDeclared(fontnamespaceid_t namespaceId, int (*callback)(fontid_
  * acquired from the GL subsystem (v-buffers, d-lists, textures, etc...)
  * for fonts.
  *
- * \note Called automatically prior to module shutdown.
- * \todo Define new texture namespaces for font textures and refactor away.
+ * @note Called automatically prior to module shutdown.
+ * @todo Define new texture namespaces for font textures and refactor away.
  */
 void Fonts_ReleaseRuntimeTextures(void);
 void Fonts_ReleaseSystemTextures(void);
@@ -251,4 +246,4 @@ int Fonts_CharWidth(struct font_s* font, unsigned char ch);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_REFRESH_FONTS_H */
+#endif /* LIBDENG_RESOURCE_FONTS_H */

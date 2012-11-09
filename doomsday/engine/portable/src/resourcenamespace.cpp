@@ -310,11 +310,12 @@ struct ResourceNamespace::Instance
     }
 
     /**
-     * @param filePath  Possibly-relative path to an element in the virtual file system.
-     * @param isFolder  @c true if @a filePath is a folder in the virtual file system.
-     * @param nodeType  Type of element, either a branch (directory) or a leaf (file).
+     * @param descendBranch     @c true = descend this branch (if it is a branch).
+     * @param filePath          Possibly-relative path to an element in the virtual file system.
+     * param isFolder           @c true = @a filePath is a folder in the virtual file system.
+     * @param flags             @ref searchPathFlags
      */
-    void addDirectoryPathNodesAndMaybeDescendBranch(bool descendBranches,
+    void addDirectoryPathNodesAndMaybeDescendBranch(bool descendBranch,
         ddstring_t const* filePath, bool /*isFolder*/, int flags)
     {
         // Add this path to the directory.
@@ -324,7 +325,7 @@ struct ResourceNamespace::Instance
             if(!node->isLeaf())
             {
                 // Descend into this subdirectory?
-                if(descendBranches)
+                if(descendBranch)
                 {
                     // Already processed?
                     if(node->userValue())
@@ -453,12 +454,12 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     return isNewNode;
 }
 
-bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& uri, int flags)
+bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flags)
 {
     // Ensure this is a well formed path.
-    if(Str_IsEmpty(uri.path()) ||
-       !Str_CompareIgnoreCase(uri.path(), "/") ||
-       Str_RAt(uri.path(), 0) != '/')
+    if(Str_IsEmpty(path.path()) ||
+       !Str_CompareIgnoreCase(path.path(), "/") ||
+       Str_RAt(path.path(), 0) != '/')
         return false;
 
     // The addition of a new search path means the namespace is now dirty.
@@ -467,7 +468,7 @@ bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& uri, int f
     // Have we seen this path already (we don't want duplicates)?
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
-        if(i->uri() == uri)
+        if(i->uri() == path)
         {
             i->setFlags(flags);
             return true;
@@ -475,7 +476,7 @@ bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& uri, int f
     }
 
     // Prepend to the path list - newer paths have priority.
-    de::Uri* uriCopy = new de::Uri(uri);
+    de::Uri* uriCopy = new de::Uri(path);
     d->searchPaths.insert(group, SearchPath(flags, *uriCopy));
 
     return true;

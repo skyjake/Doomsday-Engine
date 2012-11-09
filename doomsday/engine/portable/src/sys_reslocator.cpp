@@ -124,6 +124,7 @@ static uint numNamespaces = 0;
 /**
  * @param name      Unique symbolic name of this namespace. Must be at least
  *                  @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
+ * @param flags     @ref resourceNamespaceFlags
  */
 ResourceNamespace* F_CreateResourceNamespace(char const* name, byte flags);
 
@@ -255,9 +256,6 @@ static bool tryFindResource2(resourceclass_t rclass, ddstring_t const* rawSearch
     return false;
 }
 
-/**
- * @param flags  @see resourceLocationFlags
- */
 static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const* searchPath,
     ddstring_t* foundPath, ResourceNamespaceInfo* rnamespaceInfo)
 {
@@ -316,9 +314,6 @@ static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const*
     return found;
 }
 
-/**
- * @param flags  @see resourceLocationFlags
- */
 static bool findResource2(resourceclass_t rclass, ddstring_t const* searchPath,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix,
     ResourceNamespaceInfo* rnamespaceInfo)
@@ -364,9 +359,6 @@ static bool findResource2(resourceclass_t rclass, ddstring_t const* searchPath,
     return found;
 }
 
-/**
- * @param flags  @see resourceLocationFlags
- */
 static int findResource(resourceclass_t rclass, uri_s const* const* list,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
 {
