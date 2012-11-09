@@ -58,6 +58,8 @@
 #include "updater.h"
 #include "wad.h"
 
+#include <QStringList>
+
 using namespace de;
 
 typedef struct ddvalue_s {
@@ -860,63 +862,34 @@ boolean DD_GameInfo(GameInfo* info)
 
 /// @note Part of the Doomsday public API.
 void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
-    char const* _names, void* params)
+    char const* names, void* params)
 {
     DENG_ASSERT(games);
 
+    if(!VALID_RESOURCE_CLASS(rclass)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
+    if(!names || !names[0]) Con_Error("DD_AddGameResource: Invalid name argument.");
+
+    // Construct and attach the new resource record.
     de::Game& game = games->byId(gameId);
+    ResourceRecord* record = new ResourceRecord(rclass, rflags);
+    game.addResource(rclass, *record);
 
-    if(!VALID_RESOURCE_CLASS(rclass))
-        Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
-    if(!_names || !_names[0] || !strcmp(_names, ";"))
-        Con_Error("DD_AddGameResource: Invalid name argument.");
-
-    ResourceRecord* rec = new ResourceRecord(rclass, rflags);
-
-    // Add a name list to the game record.
-    ddstring_t str; Str_InitStd(&str);
-    Str_Set(&str, _names);
-    // Ensure the name list has the required terminating semicolon.
-    if(Str_RAt(&str, 0) != ';')
-        Str_Append(&str, ";");
-
-    char const* p = Str_Text(&str);
-    ddstring_t name; Str_Init(&name);
-    while((p = Str_CopyDelim2(&name, p, ';', CDF_OMIT_DELIMITER)))
+    // Add the name list to the resource record.
+    QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
+    DENG2_FOR_EACH_CONST(QStringList, i, nameList)
     {
-        rec->addName(String(Str_Text(&name)));
+        record->addName(*i);
     }
-    Str_Free(&name);
 
-    if(params)
-    switch(rclass)
+    if(params && rclass == RC_PACKAGE)
     {
-    case RC_PACKAGE: {
-        // Add an auto-identification file identityKey list to the game record.
-        ddstring_t identityKey;
-        const char* p;
-
-        // Ensure the identityKey list has the required terminating semicolon.
-        Str_Set(&str, (const char*) params);
-        if(Str_RAt(&str, 0) != ';')
-            Str_Append(&str, ";");
-
-        Str_Init(&identityKey);
-        p = Str_Text(&str);
-        while((p = Str_CopyDelim2(&identityKey, p, ';', CDF_OMIT_DELIMITER)))
+        // Add the identityKey list to the resource record.
+        QStringList idKeys = String((char const*) params).split(";", QString::SkipEmptyParts);
+        DENG2_FOR_EACH_CONST(QStringList, i, idKeys)
         {
-            rec->addIdentityKey(String(Str_Text(&identityKey)));
+            record->addIdentityKey(*i);
         }
-
-        Str_Free(&identityKey);
-        break;
-      }
-    default: break;
     }
-
-    game.addResource(rclass, *rec);
-
-    Str_Free(&str);
 }
 
 /// @note Part of the Doomsday public API.
