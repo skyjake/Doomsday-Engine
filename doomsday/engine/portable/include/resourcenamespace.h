@@ -30,10 +30,10 @@
 
 /**
  * @defgroup searchPathFlags  Search Path Flags
- * @{
  */
+///@{
 #define SPF_NO_DESCEND                  0x1 ///< Do not decend into branches when populating paths.
-/**@}*/
+///@}
 
 namespace de
 {
@@ -111,11 +111,11 @@ namespace de
         typedef QList<PathTree::Node*> ResourceList;
 
     public:
-        explicit ResourceNamespace(char const* symbolicName = "");
+        explicit ResourceNamespace(String symbolicName);
         ~ResourceNamespace();
 
         /// @return  Symbolic name of this namespace (e.g., "Models").
-        ddstring_t const* name() const;
+        String const& name() const;
 
         /**
          * Rebuild this namespace by re-scanning for resources on all search
@@ -151,7 +151,7 @@ namespace de
          *
          * @return  Number of found resources.
          */
-        int findAll(ddstring_t const* searchPath, ResourceList& found);
+        int findAll(String searchPath, ResourceList& found);
 
         /**
          * Add a new search path to this namespace. Newer paths have priority
@@ -178,39 +178,7 @@ namespace de
         void clearSearchPaths();
 
         /**
-         * Append to @a pathList all resolved search paths in @a group, in
-         * descending (i.e., most recent) order.
-         *
-         * @param group         Group of paths to append.
-         * @param pathList      String to receive the search path list.
-         * @param delimiter     Discreet paths will be delimited by this character.
-         *
-         * @return  Same as @a pathList for caller convenience.
-         */
-        ddstring_t* listSearchPaths(PathGroup group, ddstring_t* pathList,
-                                    char delimiter = ';') const;
-
-        /**
-         * Append to @a pathList all resolved search paths from all groups,
-         * firstly in priority group order (from Override to Fallback) and
-         * secondly in descending (i.e., most recent) order.
-         *
-         * @param pathList      String to receive the search paths.
-         * @param delimiter     Discreet paths will be delimited by this character.
-         *
-         * @return  Same as @a pathList for caller convenience.
-         */
-        ddstring_t* listSearchPaths(ddstring_t* pathList, char delimiter = ';') const
-        {
-            listSearchPaths(OverridePaths, pathList, delimiter);
-            listSearchPaths(ExtraPaths,    pathList, delimiter);
-            listSearchPaths(DefaultPaths,  pathList, delimiter);
-            listSearchPaths(FallbackPaths, pathList, delimiter);
-            return pathList;
-        }
-
-        /**
-         * Provides access to the search paths for efficent traversals.
+         * Provides access to the search paths for efficient traversals.
          */
         SearchPaths const& searchPaths() const;
 

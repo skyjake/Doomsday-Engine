@@ -26,6 +26,7 @@
 
 #ifdef __cplusplus
 
+#include "dd_share.h"
 #include <de/Error>
 #include <de/str.h>
 #include "filehandle.h"

@@ -26,6 +26,7 @@
 #include "de_base.h"
 #include "fs_util.h"
 #include "game.h"
+#include "resourcenamespace.h"
 #include "sys_reslocator.h"
 
 #include <de/Error>
@@ -33,6 +34,8 @@
 #include <de/String>
 
 #include "uri.h"
+
+extern de::ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 namespace de {
 
@@ -99,8 +102,10 @@ struct Uri::Instance
 
         if(VALID_RESOURCE_CLASS(defaultResourceClass))
         {
-            ddstring_t const* name = F_ResourceNamespaceName(F_DefaultResourceNamespaceForClass(defaultResourceClass));
-            Str_Copy(&scheme, name);
+            ResourceNamespace* rnamespace = F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(defaultResourceClass));
+            DENG_ASSERT(rnamespace);
+            QByteArray rnamespaceName = rnamespace->name().toUtf8();
+            Str_Set(&scheme, rnamespaceName.constData());
         }
     }
 

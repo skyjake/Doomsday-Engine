@@ -177,6 +177,8 @@ struct ResourceNamespace::Instance
 {
     ResourceNamespace& self;
 
+    /// Symbolic name of this namespace.
+    String name;
     /// Associated path directory for this namespace.
     /// @todo It should not be necessary for a unique directory per namespace.
     PathTree directory;
@@ -194,20 +196,9 @@ struct ResourceNamespace::Instance
     /// Each set is in order of greatest-importance, right to left.
     ResourceNamespace::SearchPaths searchPaths;
 
-    /// Symbolic name of this namespace.
-    ddstring_t name;
-
-    Instance(ResourceNamespace& d, char const* _name)
-        : self(d), directory(), rootNode(0), nameHash(), nameHashIsDirty(true)
-    {
-        Str_InitStd(&name);
-        if(_name) Str_Set(&name, _name);
-    }
-
-    ~Instance()
-    {
-        Str_Free(&name);
-    }
+    Instance(ResourceNamespace& d, String _name)
+        : self(d), name(_name), directory(), rootNode(0), nameHash(), nameHashIsDirty(true)
+    {}
 
     NameHash::Node* findResourceInNameHash(NameHash::key_type key,
         PathTree::Node const& ptNode)
@@ -361,7 +352,7 @@ struct ResourceNamespace::Instance
     }
 };
 
-ResourceNamespace::ResourceNamespace(char const* symbolicName)
+ResourceNamespace::ResourceNamespace(String symbolicName)
 {
     d = new Instance(*this, symbolicName);
 }
@@ -371,9 +362,9 @@ ResourceNamespace::~ResourceNamespace()
     delete d;
 }
 
-ddstring_t const* ResourceNamespace::name() const
+String const& ResourceNamespace::name() const
 {
-    return &d->name;
+    return d->name;
 }
 
 void ResourceNamespace::clear()
@@ -393,7 +384,6 @@ void ResourceNamespace::rebuild()
     uint startTime;
     VERBOSE( Con_Message("Rebuilding ResourceNamespace '%s'...\n", Str_Text(d->name)) )
     VERBOSE2( startTime = Sys_GetRealTime() )
-    VERBOSE2( Con_PrintPathList(Str_Text(listSearchPaths(AutoStr_NewStd()))) )
 #endif*/
 
     // (Re)populate the directory and add found resources.
@@ -492,21 +482,6 @@ void ResourceNamespace::clearSearchPaths()
     d->searchPaths.clear();
 }
 
-ddstring_t* ResourceNamespace::listSearchPaths(PathGroup group, ddstring_t* pathList,
-    char delimiter) const
-{
-    if(pathList)
-    {
-        for(ResourceNamespace::SearchPaths::const_iterator i = d->searchPaths.find(group);
-            i != d->searchPaths.end() && i.key() == group; ++i)
-        {
-            AutoStr* path = i.value().uri().compose();
-            Str_Appendf(pathList, "%s%c", Str_Text(path), delimiter);
-        }
-    }
-    return pathList;
-}
-
 ResourceNamespace::SearchPaths const& ResourceNamespace::searchPaths() const
 {
     return d->searchPaths;
@@ -537,14 +512,15 @@ void ResourceNamespace::debugPrint() const
 }
 #endif
 
-int ResourceNamespace::findAll(ddstring_t const* searchPath, ResourceList& found)
+int ResourceNamespace::findAll(String searchPath, ResourceList& found)
 {
     int numFoundSoFar = found.count();
 
     AutoStr* name = 0;
-    if(searchPath && !Str_IsEmpty(searchPath))
+    if(!searchPath.isEmpty())
     {
-        name = composeResourceName(Str_Text(searchPath));
+        QByteArray searchPathUtf8 = searchPath.toUtf8();
+        name = composeResourceName(searchPathUtf8.constData());
     }
 
     NameHash::key_type from, to;

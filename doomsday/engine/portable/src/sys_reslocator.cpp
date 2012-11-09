@@ -150,14 +150,14 @@ static inline ResourceNamespaceInfo* getNamespaceInfoForId(resourcenamespaceid_t
     return &namespaces[((uint)rni)-1];
 }
 
-static resourcenamespaceid_t findNamespaceForName(char const* name)
+static resourcenamespaceid_t findNamespaceForName(String name)
 {
-    if(name && name[0])
+    if(!name.isEmpty())
     {
         for(uint i = 0; i < numNamespaces; ++i)
         {
             ResourceNamespaceInfo* info = &namespaces[i];
-            if(!stricmp(Str_Text(info->rnamespace->name()), name))
+            if(!info->rnamespace->name().compareWithoutCase(name))
                 return (resourcenamespaceid_t)(i+1);
         }
     }
@@ -195,9 +195,9 @@ static void resetAllNamespaces(void)
  * @return  The found PathTree node which represents the resource else @c NULL.
  */
 static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
-    ddstring_t const* searchPath, char delimiter)
+    String searchPath, QChar delimiter = '/')
 {
-    if(!searchPath || Str_IsEmpty(searchPath)) return 0;
+    if(searchPath.isEmpty()) return 0;
 
     // Ensure the namespace is up to date.
     rnamespace.rebuild();
@@ -208,7 +208,8 @@ static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
     if(rnamespace.findAll(searchPath, foundResources))
     {
         // There is at least one name-matched (perhaps partially) resource.
-        PathMap searchPattern = PathMap(PathTree::hashPathFragment, Str_Text(searchPath), delimiter);
+        QByteArray searchPathUtf8 = searchPath.toUtf8();
+        PathMap searchPattern = PathMap(PathTree::hashPathFragment, searchPathUtf8.constData(), delimiter.toLatin1());
 
         DENG2_FOR_EACH_CONST(ResourceNamespace::ResourceList, i, foundResources)
         {
@@ -235,7 +236,7 @@ static bool tryFindResource2(resourceclass_t rclass, ddstring_t const* rawSearch
     if(rnInfo)
     {
         ResourceNamespace& rnamespace = *rnInfo->rnamespace;
-        if(PathTree::Node* found = findResourceInNamespace(rnamespace, searchPath, '/'))
+        if(PathTree::Node* found = findResourceInNamespace(rnamespace, Str_Text(searchPath), '/'))
         {
             // Does the caller want to know the matched path?
             if(foundPath)
@@ -320,9 +321,8 @@ static bool findResource2(resourceclass_t rclass, ddstring_t const* searchPath,
 {
     DENG_ASSERT(inited && searchPath && !Str_IsEmpty(searchPath));
 
-#if _DEBUG
-    VERBOSE2( Con_Message("Using rnamespace '%s'...\n", rnamespaceInfo? Str_Text(rnamespaceInfo->rnamespace->name()) : "None") )
-#endif
+    LOG_AS("findResource2");
+    LOG_TRACE("Using namespace '%s'...") << (rnamespaceInfo? rnamespaceInfo->rnamespace->name() : "None");
 
     bool found = false;
 
@@ -694,16 +694,14 @@ ResourceNamespace* F_CreateResourceNamespace(char const* name,  byte flags)
     DENG_ASSERT(name);
     errorIfNotInited("F_CreateResourceNamespace");
 
-    if(strlen(name) < RESOURCENAMESPACE_MINNAMELENGTH)
+    if(qstrlen(name) < RESOURCENAMESPACE_MINNAMELENGTH)
         Con_Error("F_CreateResourceNamespace: Invalid name '%s' (min length:%i)", name, (int)RESOURCENAMESPACE_MINNAMELENGTH);
 
-    ResourceNamespace* rn = new ResourceNamespace(name);
+    ResourceNamespace* rn = new ResourceNamespace(String(name));
 
     // Add this new namespace to the global list.
     namespaces = (ResourceNamespaceInfo*) M_Realloc(namespaces, sizeof *namespaces * ++numNamespaces);
-    if(!namespaces)
-        Con_Error("F_CreateResourceNamespace: Failed on (re)allocation of %lu bytes for new resource namespace\n",
-            (unsigned long) sizeof *namespaces * numNamespaces);
+    if(!namespaces) Con_Error("F_CreateResourceNamespace: Failed on (re)allocation of %lu bytes for new resource namespace\n", (unsigned long) sizeof *namespaces * numNamespaces);
     ResourceNamespaceInfo* info = &namespaces[numNamespaces-1];
 
     info->rnamespace = rn;
@@ -721,11 +719,6 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
     ResourceNamespaceInfo* info = getNamespaceInfoForId(rni);
     ResourceNamespace& rnamespace = *info->rnamespace;
     return rnamespace.addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(*searchPath), flags);
-}
-
-ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni)
-{
-    return (getNamespaceInfoForId(rni))->rnamespace->name();
 }
 
 uri_s** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count)
@@ -1035,11 +1028,12 @@ boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
         ResourceNamespace& rnamespace = *info->rnamespace;
         if(info->flags & RNF_USE_VMAP)
         {
-            int const nameLen = Str_Length(rnamespace.name());
+            QByteArray rnamespaceName = rnamespace.name().toUtf8();
+            int const nameLen = rnamespaceName.length();
             int const pathLen = Str_Length(path);
 
             if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
-               !strnicmp(Str_Text(rnamespace.name()), Str_Text(path), nameLen))
+               !qstrnicmp(rnamespaceName.constData(), Str_Text(path), nameLen))
             {
                 Str_Prepend(path, "$(App.DataPath)/$(GamePlugin.Name)/");
                 return true;

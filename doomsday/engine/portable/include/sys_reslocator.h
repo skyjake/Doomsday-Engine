@@ -122,8 +122,6 @@ void F_ResetResourceNamespace(resourcenamespaceid_t rni);
 
 void F_CreateNamespacesForFileResourcePaths(void);
 
-ddstring_t const* F_ResourceNamespaceName(resourcenamespaceid_t rni);
-
 /// @return  Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
 
