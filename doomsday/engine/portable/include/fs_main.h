@@ -147,12 +147,12 @@ namespace de
          * @return  @c true if the given file can be opened, or
          *          @c false if it has already been opened.
          */
-        bool checkFileId(char const* path);
+        bool checkFileId(String path);
 
         /**
          * @return  @c true if a file exists at @a path which can be opened for reading.
          */
-        bool accessFile(char const* path);
+        bool accessFile(String path);
 
         /**
          * Indexes @a file (which must have been opened with this file system) into
@@ -209,7 +209,7 @@ namespace de
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        FileHandle& openFile(char const* path, char const* mode, size_t baseOffset = 0,
+        FileHandle& openFile(String const& path, String const& mode, size_t baseOffset = 0,
                              bool allowDuplicate = true);
 
         /**
@@ -233,7 +233,7 @@ namespace de
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        File1& find(char const* path);
+        File1& find(String path);
 
         /**
          * Finds all files.
@@ -313,12 +313,18 @@ namespace de
          *
          * @return  Base index for lumps in this archive.
          */
-        lumpnum_t openAuxiliary(char const* filePath, size_t baseOffset = 0);
+        lumpnum_t openAuxiliary(String path, size_t baseOffset = 0);
 
         /**
          * Close the auxiliary lump index if open.
          */
         void closeAuxiliaryPrimaryIndex();
+
+        /**
+         * Unload all files loaded after startup.
+         * @return  Number of files unloaded.
+         */
+        FS1& unloadAllNonStartupFiles(int* numUnloaded = 0);
 
     private:
         struct Instance;
@@ -332,14 +338,7 @@ namespace de
          *
          * @return  The interpreted File file instance.
          */
-        File1& interpret(FileHandle& hndl, char const* path, FileInfo const& info);
-
-    public:
-        /**
-         * Unload all files loaded after startup.
-         * @return  Number of files unloaded.
-         */
-        FS1& unloadAllNonStartupFiles(int* numUnloaded = 0);
+        File1& interpret(FileHandle& hndl, String path, FileInfo const& info);
     };
 
 } // namespace de
@@ -374,11 +373,11 @@ void F_AddLumpDirectoryMapping(char const* lumpName, char const* symbolicPath);
 
 void F_ResetFileIds(void);
 
-boolean F_CheckFileId(char const* path);
+boolean F_CheckFileId(char const* nativePath);
 
 int F_LumpCount(void);
 
-int F_Access(char const* path);
+int F_Access(char const* nativePath);
 
 void F_Index(struct file1_s* file);
 

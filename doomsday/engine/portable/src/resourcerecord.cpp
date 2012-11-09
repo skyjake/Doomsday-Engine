@@ -120,10 +120,9 @@ ResourceRecord& ResourceRecord::addIdentityKey(QString newIdentityKey, bool* did
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool recognizeWAD(QString const& filePath, QStringList const& identityKeys)
+static bool recognizeWAD(String const& filePath, QStringList const& identityKeys)
 {
-    QByteArray filePathUtf8 = filePath.toUtf8();
-    lumpnum_t auxLumpBase = App_FileSystem()->openAuxiliary(filePathUtf8.constData());
+    lumpnum_t auxLumpBase = App_FileSystem()->openAuxiliary(filePath);
     bool result = false;
 
     if(auxLumpBase >= 0)
@@ -155,12 +154,11 @@ static bool recognizeWAD(QString const& filePath, QStringList const& identityKey
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool recognizeZIP(QString const& filePath, QStringList const& /*identityKeys*/)
+static bool recognizeZIP(String const& filePath, QStringList const& /*identityKeys*/)
 {
     try
     {
-        QByteArray filePathUtf8 = filePath.toUtf8();
-        FileHandle& hndl = App_FileSystem()->openFile(filePathUtf8.constData(), "rbf");
+        FileHandle& hndl = App_FileSystem()->openFile(filePath, "rbf");
         bool result = Zip::recognise(hndl);
         /// @todo Check files. We should implement an auxiliary zip lump index...
         App_FileSystem()->releaseFile(hndl.file());

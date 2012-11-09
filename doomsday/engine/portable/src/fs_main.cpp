@@ -23,9 +23,16 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstdlib>
-#include <cctype>
 #include <ctime>
+
+#include <QDir>
+#include <QList>
+#include <QtAlgorithms>
+
+#include <de/App>
+#include <de/Log>
+#include <de/NativePath>
+#include <de/memory.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -40,13 +47,6 @@
 #include "wad.h"
 #include "zip.h"
 
-#include <QList>
-#include <QtAlgorithms>
-
-#include <de/Log>
-#include <de/NativePath>
-#include <de/memory.h>
-
 using namespace de;
 
 D_CMD(Dir);
@@ -59,20 +59,20 @@ static FS1* fileSystem;
 struct FileInterpreter
 {
     resourcetype_t resourceType;
-    de::File1* (*interpret)(de::FileHandle& hndl, char const* path, FileInfo const& info);
+    de::File1* (*interpret)(de::FileHandle& hndl, String path, FileInfo const& info);
 };
 
-static de::File1* interpretAsZipFile(de::FileHandle& hndl, char const* path, FileInfo const& info)
+static de::File1* interpretAsZipFile(de::FileHandle& hndl, String path, FileInfo const& info)
 {
     if(!Zip::recognise(hndl)) return 0;
-    LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Zip (archive)";
+    LOG_VERBOSE("Interpreted \"") << NativePath(path).pretty() << "\" as a Zip (archive)";
     return new Zip(hndl, path, info);
 }
 
-static de::File1* interpretAsWadFile(de::FileHandle& hndl, char const* path, FileInfo const& info)
+static de::File1* interpretAsWadFile(de::FileHandle& hndl, String path, FileInfo const& info)
 {
     if(!Wad::recognise(hndl)) return 0;
-    LOG_VERBOSE("Interpreted \"") << F_PrettyPath(path) << "\" as a Wad (archive)";
+    LOG_VERBOSE("Interpreted \"") << NativePath(path).pretty() << "\" as a Wad (archive)";
     return new Wad(hndl, path, info);
 }
 
@@ -163,9 +163,9 @@ struct FS1::Instance
     }
 
     /// @return  @c true if the FileId associated with @a path was released.
-    bool releaseFileId(char const* path)
+    bool releaseFileId(String path)
     {
-        if(path && path[0])
+        if(!path.isEmpty())
         {
             FileId fileId = FileId::fromPath(path);
             FileIds::iterator place = qLowerBound(fileIds.begin(), fileIds.end(), fileId);
@@ -249,19 +249,23 @@ struct FS1::Instance
         }
     }
 
-    de::FileHandle* tryOpenLump(char const* path, char const* /*mode*/, size_t /*baseOffset*/,
+    de::FileHandle* tryOpenLump(String path, String const& /*mode*/, size_t /*baseOffset*/,
                                 bool allowDuplicate, FileInfo& retInfo)
     {
-        DENG_ASSERT(path && path[0]);
+        if(path.isEmpty()) return 0;
 
-        // Convert to an absolute path.
-        AutoStr* absSearchPath = AutoStr_FromTextStd(path);
-        F_PrependBasePath(absSearchPath, absSearchPath);
+        // We must have an absolute path - prepend the base path if necessary.
+        if(QDir::isRelativePath(path))
+        {
+            String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+            path = basePath / path;
+        }
 
         File1 const* found = 0;
 
         // First check the Zip lump index.
-        lumpnum_t lumpNum = zipFileIndex.indexForPath(Str_Text(absSearchPath));
+        QByteArray pathUtf8 = path.toUtf8();
+        lumpnum_t lumpNum = zipFileIndex.indexForPath(pathUtf8.constData());
         if(lumpNum >= 0)
         {
             found = &zipFileIndex.lump(lumpNum);
@@ -269,15 +273,10 @@ struct FS1::Instance
         // Nope. Any applicable dir/WAD redirects?
         else if(!lumpMappings.empty())
         {
-            // We must have an absolute path - prepend the CWD if necessary.
-            Str_Set(absSearchPath, path);
-            F_PrependWorkPath(absSearchPath, absSearchPath);
-
             DENG2_FOR_EACH_CONST(LumpMappings, i, lumpMappings)
             {
                 LumpMapping const& mapping = *i;
-                QByteArray foundPathUtf8 = mapping.first.toUtf8();
-                if(qstricmp(foundPathUtf8.constData(), Str_Text(absSearchPath))) continue;
+                if(mapping.first.compare(path)) continue;
 
                 QByteArray foundLumpNameUtf8 = mapping.second.toUtf8();
                 lumpnum_t absoluteLumpNum = self->lumpNumForName(foundLumpNameUtf8.constData());
@@ -304,50 +303,45 @@ struct FS1::Instance
         return hndl;
     }
 
-    de::FileHandle* tryOpenNativeFile(char const* path, char const* mymode, size_t baseOffset,
+    de::FileHandle* tryOpenNativeFile(String path, String const& mymode, size_t baseOffset,
                                       bool allowDuplicate, FileInfo& info)
     {
-        DENG_ASSERT(path && path[0]);
+        DENG_ASSERT(!path.isEmpty());
+
+        // We must have an absolute path - prepend the CWD if necessary.
+        if(QDir::isRelativePath(path))
+        {
+            path = NativePath::workPath() / path;
+        }
 
         // Translate mymode to the C-lib's fopen() mode specifiers.
         char mode[8] = "";
-        if(strchr(mymode, 'r'))      strcat(mode, "r");
-        else if(strchr(mymode, 'w')) strcat(mode, "w");
-        if(strchr(mymode, 'b'))      strcat(mode, "b");
-        else if(strchr(mymode, 't')) strcat(mode, "t");
-
-        AutoStr* nativePath = AutoStr_FromTextStd(path);
-        F_ExpandBasePath(nativePath, nativePath);
-        // We must have an absolute path - prepend the CWD if necessary.
-        F_PrependWorkPath(nativePath, nativePath);
-        F_ToNativeSlashes(nativePath, nativePath);
-
-        AutoStr* foundPath = 0;
+        if(mymode.contains('r'))      strcat(mode, "r");
+        else if(mymode.contains('w')) strcat(mode, "w");
+        if(mymode.contains('b'))      strcat(mode, "b");
+        else if(mymode.contains('t')) strcat(mode, "t");
 
         // First try a real native file at this absolute path.
-        FILE* nativeFile = fopen(Str_Text(nativePath), mode);
-        if(nativeFile)
+        NativePath nativePath = NativePath(path);
+        QByteArray nativePathUtf8 = nativePath.toUtf8();
+        FILE* nativeFile = fopen(nativePathUtf8.constData(), mode);
+        if(!nativeFile)
         {
-            foundPath = nativePath;
-        }
-        // Nope. Any applicable virtual directory mappings?
-        else if(!pathMappings.empty())
-        {
-            AutoStr* mapped = AutoStr_NewStd();
-            DENG2_FOR_EACH_CONST(PathMappings, i, pathMappings)
+            // Nope. Any applicable virtual directory mappings?
+            if(!pathMappings.empty())
             {
-                Str_Set(mapped, path);
-                if(!applyPathMapping(mapped, *i)) continue;
-                // The mapping was successful.
-
-                F_ToNativeSlashes(nativePath, mapped);
-                nativeFile = fopen(Str_Text(nativePath), mode);
-                if(nativeFile)
+                QByteArray pathUtf8 = path.toUtf8();
+                AutoStr* mapped = AutoStr_NewStd();
+                DENG2_FOR_EACH_CONST(PathMappings, i, pathMappings)
                 {
-                    LOG_DEBUG("FS::tryOpenNativeFile: \"%s\" opened as %s.")
-                        << F_PrettyPath(Str_Text(mapped)) << path;
-                    foundPath = mapped;
-                    break;
+                    Str_Set(mapped, pathUtf8.constData());
+                    if(!applyPathMapping(mapped, *i)) continue;
+                    // The mapping was successful.
+
+                    nativePath = NativePath(Str_Text(mapped));
+                    nativePathUtf8 = nativePath.toUtf8();
+                    nativeFile = fopen(nativePathUtf8.constData(), mode);
+                    if(nativeFile) break;
                 }
             }
         }
@@ -356,7 +350,7 @@ struct FS1::Instance
         if(!nativeFile) return 0;
 
         // Do not read files twice.
-        if(!allowDuplicate && !self->checkFileId(Str_Text(foundPath)))
+        if(!allowDuplicate && !self->checkFileId(QDir::fromNativeSeparators(nativePath)))
         {
             fclose(nativeFile);
             return 0;
@@ -366,25 +360,28 @@ struct FS1::Instance
         FileHandle* hndl = FileHandleBuilder::fromNativeFile(*nativeFile, baseOffset);
 
         // Prepare the temporary info descriptor.
-        info = FileInfo(F_GetLastModified(Str_Text(foundPath)));
+        info = FileInfo(F_GetLastModified(nativePathUtf8.constData()));
 
         return hndl;
     }
 
-    de::File1* tryOpenFile(char const* path, char const* mode, size_t baseOffset,
+    de::File1* tryOpenFile(String path, String const& mode, size_t baseOffset,
                            bool allowDuplicate)
     {
-        if(!path || !path[0]) return 0;
-        if(!mode) mode = "";
+        LOG_AS("FS1::tryOpenFile");
 
-        bool const reqNativeFile = !!strchr(mode, 'f');
+        if(path.isEmpty()) return 0;
 
-        // Make it a full path.
-        AutoStr* searchPath = AutoStr_FromTextStd(path);
-        F_FixSlashes(searchPath, searchPath);
-        F_ExpandBasePath(searchPath, searchPath);
+        // We must have an absolute path.
+        if(QDir::isRelativePath(path))
+        {
+            String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+            path = basePath / path;
+        }
 
-        DEBUG_VERBOSE2_Message(("FS1::tryOpenFile: trying to open %s\n", Str_Text(searchPath)));
+        LOG_TRACE("Trying %s...") << NativePath(path).pretty();
+
+        bool const reqNativeFile = mode.contains('f');
 
         FileHandle* hndl = 0;
         FileInfo info; // The temporary info descriptor.
@@ -392,13 +389,13 @@ struct FS1::Instance
         // First check for lumps?
         if(!reqNativeFile)
         {
-            hndl = tryOpenLump(Str_Text(searchPath), mode, baseOffset, allowDuplicate, info);
+            hndl = tryOpenLump(path, mode, baseOffset, allowDuplicate, info);
         }
 
         // Not found? - try a native file.
         if(!hndl)
         {
-            hndl = tryOpenNativeFile(Str_Text(searchPath), mode, baseOffset, allowDuplicate, info);
+            hndl = tryOpenNativeFile(path, mode, baseOffset, allowDuplicate, info);
         }
 
         // Nothing?
@@ -408,7 +405,7 @@ struct FS1::Instance
         // been mapped to another location. We want the file to be attributed with
         // the path it is to be known by throughout the virtual file system.
 
-        File1& file = self->interpret(*hndl, Str_Text(searchPath), info);
+        File1& file = self->interpret(*hndl, path, info);
 
         if(loadingForStartup)
         {
@@ -542,14 +539,17 @@ FS1& FS1::deindex(de::File1& file)
     return *this;
 }
 
-de::File1& FS1::find(char const* path)
+de::File1& FS1::find(String path)
 {
     // Convert to an absolute path.
-    AutoStr* absolutePath = AutoStr_FromTextStd(path);
-    F_PrependBasePath(absolutePath, absolutePath);
+    if(!QDir::isAbsolutePath(path))
+    {
+        String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+        path = basePath / path;
+    }
 
-    FileList::iterator found = findListFileByPath(d->loadedFiles, Str_Text(absolutePath));
-    if(found == d->loadedFiles.end()) throw NotFoundError("FS1::findFile", "No files found matching '" + QString(path) + "'");
+    FileList::iterator found = findListFileByPath(d->loadedFiles, path);
+    if(found == d->loadedFiles.end()) throw NotFoundError("FS1::findFile", "No files found matching '" + path + "'");
     DENG_ASSERT((*found)->hasFile());
     return (*found)->file();
 }
@@ -623,7 +623,7 @@ FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
     return *this;
 }
 
-bool FS1::checkFileId(char const* path)
+bool FS1::checkFileId(String path)
 {
     DENG_ASSERT(path);
     if(!accessFile(path)) return false;
@@ -810,10 +810,11 @@ lumpnum_t FS1::lumpNumForName(char const* name, bool silent)
     return d->logicalLumpNum(lumpNum);
 }
 
-lumpnum_t FS1::openAuxiliary(char const* filePath, size_t baseOffset)
+lumpnum_t FS1::openAuxiliary(String path, size_t baseOffset)
 {
     /// @todo Allow opening Zip files too.
-    File1* file = d->tryOpenFile(filePath, "rb", baseOffset, true /*allow duplicates*/);
+    QByteArray pathUtf8 = path.toUtf8();
+    File1* file = d->tryOpenFile(pathUtf8.constData(), "rb", baseOffset, true /*allow duplicates*/);
     if(Wad* wad = dynamic_cast<Wad*>(file))
     {
         // Add a handle to the open files list.
@@ -1035,14 +1036,15 @@ int FS1::findAllPaths(char const* rawSearchPattern, int flags, FS1::PathList& fo
     return found.count() - numFoundSoFar;
 }
 
-de::File1& FS1::interpret(de::FileHandle& hndl, char const* path, FileInfo const& info)
+de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& info)
 {
-    DENG_ASSERT(path && path[0]);
+    DENG_ASSERT(!path.isEmpty());
 
     de::File1* interpretedFile = 0;
 
     // Firstly try interpreter(s) for guessed resource types.
-    resourcetype_t resTypeGuess = F_GuessResourceTypeByName(path);
+    QByteArray pathUtf8 = path.toUtf8();
+    resourcetype_t resTypeGuess = F_GuessResourceTypeByName(pathUtf8.constData());
     if(resTypeGuess != RT_NONE)
     {
         for(FileInterpreter* intper = interpreters; intper->interpret; ++intper)
@@ -1080,19 +1082,18 @@ de::File1& FS1::interpret(de::FileHandle& hndl, char const* path, FileInfo const
     return *interpretedFile;
 }
 
-de::FileHandle& FS1::openFile(char const* path, char const* mode, size_t baseOffset, bool allowDuplicate)
+de::FileHandle& FS1::openFile(String const& path, String const& mode, size_t baseOffset, bool allowDuplicate)
 {
 #if _DEBUG
-    DENG_ASSERT(path && mode);
-    for(uint i = 0; mode[i]; ++i)
+    for(int i = 0; i < mode.length(); ++i)
     {
         if(mode[i] != 'r' && mode[i] != 't' && mode[i] != 'b' && mode[i] != 'f')
-            Con_Error("FS1::openFile: Unsupported file open-op in mode string %s for path \"%s\"\n", mode, path);
+            throw Error("FS1::openFile", "Unknown argument in mode string '" + mode + "'");
     }
 #endif
 
     File1* file = d->tryOpenFile(path, mode, baseOffset, allowDuplicate);
-    if(!file) throw NotFoundError("FS1::openFile", "No files found matching '" + QString(path) + "'");
+    if(!file) throw NotFoundError("FS1::openFile", "No files found matching '" + path + "'");
 
     // Add a handle to the opened files list.
     FileHandle& openFilesHndl = *FileHandleBuilder::fromFile(*file);
@@ -1108,7 +1109,7 @@ de::FileHandle& FS1::openLump(de::File1& lump)
     return openFilesHndl;
 }
 
-bool FS1::accessFile(char const* path)
+bool FS1::accessFile(String path)
 {
     de::File1* file = d->tryOpenFile(path, "rb", 0, true /* allow duplicates */);
     if(!file) return false;
@@ -1412,8 +1413,9 @@ void F_ResetFileIds(void)
     App_FileSystem()->resetFileIds();
 }
 
-boolean F_CheckFileId(char const* path)
+boolean F_CheckFileId(char const* nativePath)
 {
+    String path = QDir::fromNativeSeparators(NativePath(nativePath).expand());
     return App_FileSystem()->checkFileId(path);
 }
 
@@ -1422,8 +1424,9 @@ int F_LumpCount(void)
     return App_FileSystem()->nameIndex().size();
 }
 
-int F_Access(char const* path)
+int F_Access(char const* nativePath)
 {
+    String path = QDir::fromNativeSeparators(NativePath(nativePath).expand());
     return App_FileSystem()->accessFile(path)? 1 : 0;
 }
 
@@ -1445,10 +1448,11 @@ void F_ReleaseFile(struct file1_s* file)
     App_FileSystem()->releaseFile(*reinterpret_cast<de::File1*>(file));
 }
 
-struct filehandle_s* F_Open3(char const* path, char const* mode, size_t baseOffset, boolean allowDuplicate)
+struct filehandle_s* F_Open3(char const* _path, char const* mode, size_t baseOffset, boolean allowDuplicate)
 {
     try
     {
+        String path = QDir::fromNativeSeparators(NativePath(_path).expand());
         return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
     }
     catch(FS1::NotFoundError const&)
@@ -1458,24 +1462,12 @@ struct filehandle_s* F_Open3(char const* path, char const* mode, size_t baseOffs
 
 struct filehandle_s* F_Open2(char const* path, char const* mode, size_t baseOffset)
 {
-    try
-    {
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset));
-    }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
+    return F_Open3(path, mode, baseOffset, true/*allow duplicates*/);
 }
 
 struct filehandle_s* F_Open(char const* path, char const* mode)
 {
-    try
-    {
-        return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode));
-    }
-    catch(FS1::NotFoundError const&)
-    {} // Ignore error.
-    return 0;
+    return F_Open2(path, mode, 0/*base offset*/);
 }
 
 struct filehandle_s* F_OpenLump(lumpnum_t absoluteLumpNum)

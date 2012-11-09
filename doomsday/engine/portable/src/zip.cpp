@@ -142,7 +142,7 @@ static void ApplyGamePathMappings(ddstring_t* dest, const ddstring_t* src);
 class ZipFile : public File1
 {
 public:
-    ZipFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+    ZipFile(FileHandle& hndl, String path, FileInfo const& info, File1* container)
         : File1(hndl, path, info, container)
     {}
 
@@ -537,7 +537,7 @@ struct Zip::Instance
     }
 };
 
-Zip::Zip(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+Zip::Zip(FileHandle& hndl, String path, FileInfo const& info, File1* container)
     : File1(hndl, path, info, container)
 {
     d = new Instance(this);

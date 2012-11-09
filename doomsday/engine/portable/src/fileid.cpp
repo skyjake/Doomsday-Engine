@@ -23,11 +23,12 @@
  * 02110-1301 USA</small>
  */
 
+#include <QDir>
 #include <QCryptographicHash>
-#include <de/Log>
 
 #include "de_platform.h"
-#include "fs_util.h"
+#include <de/App>
+#include <de/Log>
 
 #include "fileid.h"
 
@@ -77,7 +78,7 @@ String FileId::asText() const
     return txt;
 }
 
-FileId FileId::fromPath(char const* path)
+FileId FileId::fromPath(String path)
 {
     FileId fileId = FileId(hash(path));
 #ifdef DENG_DEBUG
@@ -86,15 +87,18 @@ FileId FileId::fromPath(char const* path)
     return fileId;
 }
 
-FileId::Md5Hash FileId::hash(char const* path)
+FileId::Md5Hash FileId::hash(String path)
 {
-    // First normalize the name.
-    AutoStr* absPath = AutoStr_FromTextStd(path);
-    F_MakeAbsolute(absPath, absPath);
-    F_FixSlashes(absPath, absPath);
+    // Ensure we've a normalized path.
+    if(QDir::isRelativePath(path))
+    {
+        String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+        path = basePath / path;
+    }
+
 #if defined(WIN32) || defined(MACOSX)
     // This is a case insensitive operation.
-    strupr(Str_Text(absPath));
+    path = path.toUpper();
 #endif
-    return QCryptographicHash::hash(QByteArray(Str_Text(absPath)), QCryptographicHash::Md5);
+    return QCryptographicHash::hash(path.toUtf8(), QCryptographicHash::Md5);
 }

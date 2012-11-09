@@ -59,7 +59,7 @@ typedef struct {
 class WadFile : public File1
 {
 public:
-    WadFile(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+    WadFile(FileHandle& hndl, String path, FileInfo const& info, File1* container)
         : File1(hndl, path, info, container), crc_(0)
     {}
 
@@ -191,7 +191,7 @@ struct Wad::Instance
     /// Lump data cache.
     LumpCache* lumpCache;
 
-    Instance(Wad* d, FileHandle& file, const char* path)
+    Instance(Wad* d, FileHandle& file, String path)
         : self(d),
           arcRecordsCount(0),
           arcRecordsOffset(0),
@@ -367,7 +367,7 @@ struct Wad::Instance
     }
 };
 
-Wad::Wad(FileHandle& hndl, char const* path, FileInfo const& info, File1* container)
+Wad::Wad(FileHandle& hndl, String path, FileInfo const& info, File1* container)
     : File1(hndl, path, info, container)
 {
     d = new Instance(this, hndl, path);

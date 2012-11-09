@@ -24,18 +24,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifdef WIN32
-#  include <direct.h>
-#endif
-
-#ifdef UNIX
-#  include <pwd.h>
-#  include <limits.h>
-#  include <unistd.h>
-#  include <sys/stat.h>
-#endif
-
-#include <cctype>
+#include <QDir>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -43,6 +32,7 @@
 #include "resourcerecord.h"
 #include "resourcenamespace.h"
 
+#include <de/c_wrapper.h>
 #include <de/memory.h>
 
 using namespace de;
@@ -203,7 +193,6 @@ static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
     rnamespace.rebuild();
 
     // Perform the search.
-    PathTree::Node* found = 0;
     ResourceNamespace::ResourceList foundResources;
     if(rnamespace.findAll(searchPath, foundResources))
     {
@@ -220,23 +209,19 @@ static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
             return node;
         }
     }
-    return found;
+    return 0; // Not found.
 }
 
-static bool tryFindResource2(resourceclass_t rclass, ddstring_t const* rawSearchPath,
-    ddstring_t* foundPath, ResourceNamespaceInfo* rnInfo)
+static bool tryFindResource2(resourceclass_t rclass, String searchPath,
+    ddstring_t* foundPath, ResourceNamespace* rnamespace)
 {
-    DENG_ASSERT(inited && rawSearchPath && !Str_IsEmpty(rawSearchPath));
+    DENG_ASSERT(inited);
     DENG_UNUSED(rclass);
 
-    AutoStr* searchPath = AutoStr_NewStd();
-    F_FixSlashes(searchPath, rawSearchPath);
-
     // Is there a namespace we should use?
-    if(rnInfo)
+    if(rnamespace)
     {
-        ResourceNamespace& rnamespace = *rnInfo->rnamespace;
-        if(PathTree::Node* found = findResourceInNamespace(rnamespace, Str_Text(searchPath), '/'))
+        if(PathTree::Node* found = findResourceInNamespace(*rnamespace, searchPath))
         {
             // Does the caller want to know the matched path?
             if(foundPath)
@@ -249,24 +234,31 @@ static bool tryFindResource2(resourceclass_t rclass, ddstring_t const* rawSearch
         }
     }
 
-    if(App_FileSystem()->accessFile(Str_Text(searchPath)))
+    if(App_FileSystem()->accessFile(searchPath))
     {
-        if(foundPath) F_PrependBasePath(foundPath, searchPath);
+        if(foundPath)
+        {
+            QByteArray searchPathUtf8 = searchPath.toUtf8();
+            Str_Set(foundPath, searchPathUtf8.constData());
+            F_PrependBasePath(foundPath, foundPath);
+        }
         return true;
     }
     return false;
 }
 
-static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const* searchPath,
-    ddstring_t* foundPath, ResourceNamespaceInfo* rnamespaceInfo)
+static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const* rawSearchPath,
+    ddstring_t* foundPath, ResourceNamespace* rnamespace)
 {
-    DENG_ASSERT(inited && searchPath && !Str_IsEmpty(searchPath));
+    DENG_ASSERT(inited && rawSearchPath && !Str_IsEmpty(rawSearchPath));
+
+    String searchPath = QDir::fromNativeSeparators(String(Str_Text(rawSearchPath)));
 
     // If an extension was specified, first look for resources of the same type.
-    char const* ptr = F_FindFileExtension(Str_Text(searchPath));
-    if(ptr && *ptr != '*')
+    String ext = searchPath.fileNameExtension();
+    if(!ext.isEmpty() && ext.compare(".*"))
     {
-        if(tryFindResource2(rclass, searchPath, foundPath, rnamespaceInfo)) return true;
+        if(tryFindResource2(rclass, searchPath, foundPath, rnamespace)) return true;
 
         // If we are looking for a particular resource type, get out of here.
         if(flags & RLF_MATCH_EXTENSION) return false;
@@ -274,25 +266,15 @@ static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const*
 
     if(!(VALID_RESOURCE_CLASS(rclass) && searchTypeOrder[rclass][0] != RT_NONE)) return false;
 
-    /**
-     * Lets try some different name patterns (i.e., resource types) known to us.
+    /*
+     * Try some different name patterns (i.e., resource types) known to us.
      */
 
     // Create a copy of the searchPath minus file extension.
-    ddstring_t path2; Str_Init(&path2);
-    Str_Reserve(&path2, Str_Length(searchPath)+1/*period*/);
-    if(ptr)
-    {
-        Str_PartAppend(&path2, Str_Text(searchPath), 0, ptr - Str_Text(searchPath));
-    }
-    else
-    {
-        Str_Copy(&path2, searchPath);
-        Str_AppendChar(&path2, '.');
-    }
+    String path2 = searchPath.fileNamePath() / searchPath.fileNameWithoutExtension() + ".";
 
-    ddstring_t tmp; Str_Init(&tmp);
-    Str_Reserve(&tmp, Str_Length(&path2) +5/*max expected extension length*/);
+    path2.reserve(path2.length() + 5 /*max expected extension length*/);
+
     bool found = false;
     resourcetype_t const* typeIter = searchTypeOrder[rclass];
     do
@@ -303,26 +285,21 @@ static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const*
             char const* const* ext = typeInfo->knownFileNameExtensions;
             do
             {
-                Str_Clear(&tmp);
-                Str_Appendf(&tmp, "%s%s", Str_Text(&path2), *ext);
-                found = tryFindResource2(rclass, &tmp, foundPath, rnamespaceInfo);
+                found = tryFindResource2(rclass, path2 + *ext, foundPath, rnamespace);
             } while(!found && *(++ext));
         }
     } while(!found && *(++typeIter) != RT_NONE);
 
-    Str_Free(&tmp);
-    Str_Free(&path2);
     return found;
 }
 
 static bool findResource2(resourceclass_t rclass, ddstring_t const* searchPath,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix,
-    ResourceNamespaceInfo* rnamespaceInfo)
+    ResourceNamespace* rnamespace)
 {
     DENG_ASSERT(inited && searchPath && !Str_IsEmpty(searchPath));
 
-    LOG_AS("findResource2");
-    LOG_TRACE("Using namespace '%s'...") << (rnamespaceInfo? rnamespaceInfo->rnamespace->name() : "None");
+    LOG_TRACE("Using namespace '%s'...") << (rnamespace? rnamespace->name() : "None");
 
     bool found = false;
 
@@ -346,14 +323,14 @@ static bool findResource2(resourceclass_t rclass, ddstring_t const* searchPath,
             Str_Appendf(&fn, "%s%s", Str_Text(searchPath), Str_Text(optionalSuffix));
         }
 
-        found = tryFindResource(flags, rclass, &fn, foundPath, rnamespaceInfo);
+        found = tryFindResource(flags, rclass, &fn, foundPath, rnamespace);
         Str_Free(&fn);
     }
 
     // Try without a suffix.
     if(!found)
     {
-        found = tryFindResource(flags, rclass, searchPath, foundPath, rnamespaceInfo);
+        found = tryFindResource(flags, rclass, searchPath, foundPath, rnamespace);
     }
 
     return found;
@@ -390,7 +367,7 @@ static int findResource(resourceclass_t rclass, uri_s const* const* list,
                 if(rni)
                 {
                     ResourceNamespaceInfo* rnamespaceInfo = getNamespaceInfoForId(rni);
-                    if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, rnamespaceInfo))
+                    if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, rnamespaceInfo->rnamespace))
                         result = n;
                 }
 #if _DEBUG

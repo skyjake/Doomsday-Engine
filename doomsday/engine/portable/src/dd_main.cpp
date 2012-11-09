@@ -80,9 +80,9 @@ static void initPathMappings();
  *
  * @return  @c true iff the referenced file was loaded.
  */
-static bool tryLoadFile(char const* path, size_t baseOffset = 0, de::File1** file = 0);
+static bool tryLoadFile(String path, size_t baseOffset = 0, de::File1** file = 0);
 
-static bool tryUnloadFile(char const* path);
+static bool tryUnloadFile(String path);
 
 extern int renderTextures;
 extern int monochrome;
@@ -2328,13 +2328,13 @@ D_CMD(Load)
     return (didLoadGame || didLoadResource);
 }
 
-static bool tryLoadFile(char const* path, size_t baseOffset, de::File1** file)
+static bool tryLoadFile(String path, size_t baseOffset, de::File1** file)
 {
     try
     {
         de::FileHandle& hndl = App_FileSystem()->openFile(path, "rb", baseOffset, false /* no duplicates */);
 
-        QByteArray pathUtf8 = de::NativePath(hndl.file().composePath()).pretty().toUtf8();
+        QByteArray pathUtf8 = NativePath(hndl.file().composePath()).pretty().toUtf8();
         VERBOSE( Con_Message("Loading \"%s\"...\n", pathUtf8.constData()) )
         App_FileSystem()->index(hndl.file());
 
@@ -2346,14 +2346,15 @@ static bool tryLoadFile(char const* path, size_t baseOffset, de::File1** file)
         if(App_FileSystem()->accessFile(path))
         {
             // Must already be loaded.
-            Con_Message("\"%s\" already loaded.\n", F_PrettyPath(path));
+            QByteArray pathUtf8 = NativePath(path).pretty().toUtf8();
+            Con_Message("\"%s\" already loaded.\n", pathUtf8.constData());
         }
     }
     if(file) *file = 0;
     return false;
 }
 
-static bool tryUnloadFile(char const* path)
+static bool tryUnloadFile(String path)
 {
     try
     {

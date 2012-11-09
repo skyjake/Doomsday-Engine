@@ -73,7 +73,7 @@ public:
      * @param _info         Info descriptor for the file. A copy is made.
      * @param container     Container of this file. Can be @c NULL.
      */
-    File1(FileHandle& hndl, char const* _path, FileInfo const& _info, File1* container = 0);
+    File1(FileHandle& hndl, String _path, FileInfo const& _info, File1* container = 0);
 
     /**
      * Release all memory acquired for objects linked with this resource.

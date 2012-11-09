@@ -100,13 +100,13 @@ public:
      * @param path  Path to be hashed.
      * @return Newly construced FileId.
      */
-    static FileId fromPath(char const* path);
+    static FileId fromPath(String path);
 
     /**
      * Calculate an MD5 identifier for the absolute @a path.
      * @return MD5 hash of the path.
      */
-    static Md5Hash hash(char const* path);
+    static Md5Hash hash(String path);
 
 private:
     Md5Hash md5_;

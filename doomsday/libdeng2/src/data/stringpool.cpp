@@ -37,6 +37,7 @@
 namespace de {
 
 static String const nullString = "(nullptr)";
+static String const emptyString = "";
 
 typedef uint InternalId;
 
@@ -384,7 +385,7 @@ StringPool::Id StringPool::isInterned(String str) const
 
 String const& StringPool::string(Id id) const
 {
-    if(id == 0) return nullString; /// @todo Should error?
+    if(id == 0) return emptyString; /// @todo Should error?
 
     InternalId const internalId = IMPORT_ID(id);
     DENG2_ASSERT(internalId < d->idMap.size());

@@ -53,7 +53,7 @@ public:
     DENG2_ERROR(NotFoundError);
 
 public:
-    Zip(FileHandle& hndl, char const* path, FileInfo const& info,
+    Zip(FileHandle& hndl, String path, FileInfo const& info,
         File1* container = 0);
     ~Zip();
 

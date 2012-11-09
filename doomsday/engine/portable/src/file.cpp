@@ -28,9 +28,9 @@
 
 namespace de {
 
-File1::File1(FileHandle& hndl, char const* _path, FileInfo const& _info, File1* _container)
+File1::File1(FileHandle& hndl, String _path, FileInfo const& _info, File1* _container)
     : handle_(&hndl), info_(_info), container_(_container),
-      flags(DefaultFlags), path_(String(_path)), name_(String(_path).fileName())
+      flags(DefaultFlags), path_(_path), name_(_path.fileName())
 {
     // Used to favor newer files when duplicates are pruned.
     /// @todo Does not belong at this level. Load order should be determined
