@@ -159,7 +159,7 @@ public:
      *
      * @return The absolute URI.
      */
-    Uri composePath(QChar delimiter = '/') const
+    Uri composeUri(QChar delimiter = '/') const
     {
         return dynamic_cast<Zip&>(container()).composeLumpUri(info_.lumpIdx, delimiter);
     }
