@@ -338,13 +338,12 @@ int Def_GetActionNum(const char* name)
     return -1; // Not found.
 }
 
-ded_value_t* Def_GetValueById(const char* id)
+ded_value_t* Def_GetValueById(char const* id)
 {
-    int i;
     if(!id || !id[0]) return NULL;
 
     // Read backwards to allow patching.
-    for(i = defs.count.values.num - 1; i >= 0; i--)
+    for(int i = defs.count.values.num - 1; i >= 0; i--)
     {
         if(!stricmp(defs.values[i].id, id))
             return defs.values + i;
@@ -352,31 +351,33 @@ ded_value_t* Def_GetValueById(const char* id)
     return 0;
 }
 
-ded_value_t* Def_GetValueByUri(const Uri* uri)
+ded_value_t* Def_GetValueByUri(Uri const* _uri)
 {
-    if(!uri || stricmp("Values", Str_Text(Uri_Scheme(uri)))) return 0; // Not found.
-    return Def_GetValueById(Str_Text(Uri_Path(uri)));
+    if(!_uri) return 0;
+    de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
+
+    if(qstricmp("Values", Str_Text(uri.scheme()))) return 0;
+    return Def_GetValueById(Str_Text(uri.path()));
 }
 
-ded_mapinfo_t* Def_GetMapInfo(const Uri* uri)
+ded_mapinfo_t* Def_GetMapInfo(Uri const* _uri)
 {
-    int i;
-    if(!uri) return 0;
+    if(!_uri) return 0;
+    de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
 
-    for(i = defs.count.mapInfo.num - 1; i >= 0; i--)
+    for(int i = defs.count.mapInfo.num - 1; i >= 0; i--)
     {
-        if(defs.mapInfo[i].uri && Uri_Equality(defs.mapInfo[i].uri, uri))
+        if(defs.mapInfo[i].uri && uri == reinterpret_cast<de::Uri const&>(*defs.mapInfo[i].uri))
             return defs.mapInfo + i;
     }
     return 0;
 }
 
-ded_sky_t* Def_GetSky(const char* id)
+ded_sky_t* Def_GetSky(char const* id)
 {
-    int i;
     if(!id || !id[0]) return NULL;
 
-    for(i = defs.count.skies.num - 1; i >= 0; i--)
+    for(int i = defs.count.skies.num - 1; i >= 0; i--)
     {
         if(!stricmp(defs.skies[i].id, id))
             return defs.skies + i;
@@ -384,93 +385,87 @@ ded_sky_t* Def_GetSky(const char* id)
     return NULL;
 }
 
-static ded_material_t* findMaterialDef(const Uri* uri)
+static ded_material_t* findMaterialDef(de::Uri const& uri)
 {
-    int i;
-    for(i = defs.count.materials.num - 1; i >= 0; i--)
+    for(int i = defs.count.materials.num - 1; i >= 0; i--)
     {
         ded_material_t* def = &defs.materials[i];
-        if(!def->uri || !Uri_Equality(def->uri, uri)) continue;
+        if(!def->uri || uri != reinterpret_cast<de::Uri&>(*def->uri)) continue;
         return def;
     }
     return NULL;
 }
 
-ded_material_t* Def_GetMaterial(const char* uriCString)
+ded_material_t* Def_GetMaterial(char const* uriCString)
 {
     ded_material_t* def = NULL;
     if(uriCString && uriCString[0])
     {
-        Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+        de::Uri uri = de::Uri(uriCString, RC_NULL);
 
-        if(Str_IsEmpty(Uri_Scheme(uri)))
+        if(Str_IsEmpty(uri.scheme()))
         {
             // Caller doesn't care which namespace - use a priority search order.
-            Uri* temp = Uri_Dup(uri);
+            de::Uri temp = de::Uri(uri);
 
-            Uri_SetScheme(temp, MN_SPRITES_NAME);
+            temp.setScheme(MN_SPRITES_NAME);
             def = findMaterialDef(temp);
             if(!def)
             {
-                Uri_SetScheme(temp, MN_TEXTURES_NAME);
+                temp.setScheme(MN_TEXTURES_NAME);
                 def = findMaterialDef(temp);
             }
             if(!def)
             {
-                Uri_SetScheme(temp, MN_FLATS_NAME);
+                temp.setScheme(MN_FLATS_NAME);
                 def = findMaterialDef(temp);
             }
-            Uri_Delete(temp);
         }
 
         if(!def)
         {
             def = findMaterialDef(uri);
         }
-        Uri_Delete(uri);
     }
     return def;
 }
 
-static ded_compositefont_t* findCompositeFontDef(const Uri* uri)
+static ded_compositefont_t* findCompositeFontDef(de::Uri const& uri)
 {
-    int i;
-    for(i = defs.count.compositeFonts.num - 1; i >= 0; i--)
+    for(int i = defs.count.compositeFonts.num - 1; i >= 0; i--)
     {
         ded_compositefont_t* def = &defs.compositeFonts[i];
-        if(!def->uri || !Uri_Equality(def->uri, uri)) continue;
+        if(!def->uri || uri != reinterpret_cast<de::Uri&>(*def->uri)) continue;
         return def;
     }
     return NULL;
 }
 
-ded_compositefont_t* Def_GetCompositeFont(const char* uriCString)
+ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
 {
     ded_compositefont_t* def = NULL;
     if(uriCString && uriCString[0])
     {
-        Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+        de::Uri uri = de::Uri(uriCString, RC_NULL);
 
-        if(Str_IsEmpty(Uri_Scheme(uri)))
+        if(Str_IsEmpty(uri.scheme()))
         {
             // Caller doesn't care which namespace - use a priority search order.
-            Uri* temp = Uri_Dup(uri);
+            de::Uri temp = de::Uri(uri);
 
-            Uri_SetScheme(temp, FN_GAME_NAME);
+            temp.setScheme(FN_GAME_NAME);
             def = findCompositeFontDef(temp);
             if(!def)
             {
-                Uri_SetScheme(temp, FN_SYSTEM_NAME);
+                temp.setScheme(FN_SYSTEM_NAME);
                 def = findCompositeFontDef(temp);
             }
-            Uri_Delete(temp);
         }
 
         if(!def)
         {
             def = findCompositeFontDef(uri);
         }
-        Uri_Delete(uri);
     }
     return def;
 }
@@ -870,20 +865,16 @@ static void readAllDefinitions(void)
     // Next up are definition files in the Games' /auto directory.
     if(!CommandLine_Exists("-noauto") && DD_GameLoaded())
     {
-        de::Uri pattern = de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL);
-        if(ddstring_t const* resolvedPath = pattern.resolvedConst())
+        de::FS1::PathList found;
+        if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, found))
         {
-            de::FS1::PathList found;
-            if(App_FileSystem()->findAllPaths(Str_Text(resolvedPath), 0, found))
+            DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
             {
-                DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
-                {
-                    // Ignore directories.
-                    if(i->attrib & A_SUBDIR) continue;
+                // Ignore directories.
+                if(i->attrib & A_SUBDIR) continue;
 
-                    QByteArray foundPathUtf8 = i->path.toUtf8();
-                    readDefinitionFile(foundPathUtf8.constData());
-                }
+                QByteArray foundPathUtf8 = i->path.toUtf8();
+                readDefinitionFile(foundPathUtf8.constData());
             }
         }
     }

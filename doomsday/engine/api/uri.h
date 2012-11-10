@@ -66,7 +66,9 @@
 #ifdef __cplusplus
 #ifndef DENG2_C_API_ONLY
 
+#include <de/Error>
 #include <de/Log>
+#include <de/String>
 
 namespace de
 {
@@ -75,7 +77,6 @@ namespace de
      * managed resources. This class is based on the semantics defined for the
      * QUrl class, a component of the Qt GUI Toolkit.
      *
-     * @todo All path arguments and return values should use de::String
      * @todo Derive from Qt::QUrl
      *
      * @ingroup base
@@ -83,13 +84,23 @@ namespace de
     class Uri : public LogEntry::Arg::Base
     {
     public:
+        /// Base class for resolve-related errors. @ingroup errors
+        DENG2_ERROR(ResolveError);
+
+        /// An unknown symbol was encountered in the embedded expression. @ingroup errors
+        DENG2_SUB_ERROR(ResolveError, UnknownSymbolError);
+
+        /// An unresolveable symbol was encountered in the embedded expression. @ingroup errors
+        DENG2_SUB_ERROR(ResolveError, ResolveSymbolError);
+
+    public:
         /**
-         * Constructs a default (empty) Uri instance.
+         * Construct a default (empty) Uri instance.
          */
         Uri();
 
         /**
-         * Constructs a Uri instance from @a path.
+         * Construct a Uri instance from @a path.
          *
          * @param path      Path to be parsed. Assumed to be in percent-encoded representation.
          *
@@ -100,7 +111,7 @@ namespace de
         Uri(String path, resourceclass_t defaultResourceClass = RC_UNKNOWN);
 
         /**
-         * Constructs a Uri instance by duplicating @a other.
+         * Construct a Uri instance by duplicating @a other.
          */
         Uri(Uri const& other);
 
@@ -133,24 +144,13 @@ namespace de
         Uri& clear();
 
         /**
-         * Attempt to compose a resolved copy of this Uri. Substitutes known symbolics
-         * in the possibly templated path. Resulting path is a well-formed, filesys
-         * compatible path (perhaps base-relative). Only use this if you want to keep
-         * a copy of the resolved Uri. If not, use Uri_ResolvedConst().
+         * Attempt to resolve this Uri. Substitutes known symbolics in the possibly
+         * templated path. Resulting path is a well-formed, filesys compatible path
+         * (perhaps base-relative).
          *
-         * @return  Resolved path else @c NULL if non-resolvable. Caller should ensure
-         *          to Str_Delete() when no longer needed.
+         * @return  Resolved path.
          */
-        ddstring_t* resolved() const;
-
-        /**
-         * Same as @ref resolved(), but the returned string is non-modifiable and must
-         * not be deleted. Always use this when you don't need to keep a copy of the
-         * resolved Uri.
-         *
-         * @return  Resolved path else @c NULL if non-resolvable.
-         */
-        ddstring_t const* resolvedConst() const;
+        String const& resolved() const;
 
         /**
          * @return  Plain-text String representation of the current scheme.
@@ -163,26 +163,25 @@ namespace de
         ddstring_t const* path() const;
 
         /**
-         * @param scheme  New scheme to be parsed.
+         * Change the scheme to @a newScheme.
          */
-        Uri& setScheme(char const* scheme);
+        Uri& setScheme(String newScheme);
 
         /**
-         * @param path  New path to be parsed.
+         * Change the path to @a newPath.
          */
-        Uri& setPath(char const* path);
+        Uri& setPath(String newPath);
 
         /**
          * Update this uri by parsing new values from the specified arguments.
          *
-         * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
+         * @param newUri    URI to be parsed. Assumed to be in percent-encoded representation.
          *
-         * @param defaultResourceClass  If no scheme is defined in @a path and this
+         * @param defaultResourceClass  If no scheme is defined in @a newUri and this
          *      is not @c RC_NULL, ask the resource locator whether it knows of an
          *      appropriate default scheme for this class of resource.
          */
-        Uri& setUri(char const* path, resourceclass_t defaultResourceClass = RC_UNKNOWN);
-        Uri& setUri(ddstring_t const* path);
+        Uri& setUri(String newUri, resourceclass_t defaultResourceClass = RC_UNKNOWN);
 
         /**
          * Compose from this uri a plain-text representation. Any internal encoding
@@ -219,7 +218,7 @@ namespace de
          * @param reader            Reader instance.
          * @param defaultScheme     Default scheme.
          */
-        Uri& read(reader_s& reader, char const* defaultScheme = 0);
+        Uri& read(reader_s& reader, String defaultScheme = "");
 
         /**
          * Print debug ouput for this uri.
@@ -229,7 +228,7 @@ namespace de
          * @param unresolvedText    Text string to be printed if not resolvable.
          */
         void debugPrint(int indent, int flags = DEFAULT_PRINTURIFLAGS,
-                        char const* unresolvedText = 0) const;
+                        String unresolvedText = "") const;
 
     private:
         struct Instance;
@@ -307,26 +306,13 @@ Uri* Uri_Copy(Uri* uri, Uri const* other);
 /**
  * Attempt to compose a resolved copy of this Uri. Substitutes known symbolics
  * in the possibly templated path. Resulting path is a well-formed, filesys
- * compatible path (perhaps base-relative). Only use this if you want to keep
- * a copy of the resolved Uri. If not, use Uri_ResolvedConst().
- *
- * @param uri  Uri instance.
- *
- * @return  Resolved path else @c NULL if non-resolvable. Caller should ensure
- *          to Str_Delete() when no longer needed.
- */
-ddstring_t* Uri_Resolved(Uri const* uri);
-
-/**
- * Same as Uri_Resolved(), but the returned string is non-modifiable and must
- * not be deleted. Always use this when you don't need to keep a copy of the
- * resolved Uri.
+ * compatible path (perhaps base-relative).
  *
  * @param uri  Uri instance.
  *
  * @return  Resolved path else @c NULL if non-resolvable.
  */
-ddstring_t const* Uri_ResolvedConst(Uri const* uri);
+AutoStr* Uri_Resolved(Uri const* uri);
 
 /**
  * @param uri  Uri instance.

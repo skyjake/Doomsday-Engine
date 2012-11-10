@@ -212,12 +212,16 @@ struct ResourceNamespace::Instance
             i != searchPaths.end() && i.key() == group; ++i)
         {
             ResourceNamespace::SearchPath const& searchPath = *i;
-            ddstring_t const* resolvedSearchPath = searchPath.uri().resolvedConst();
-            if(!resolvedSearchPath) continue;
-
-            // Add new nodes on this path and/or re-process previously seen nodes.
-            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, String(Str_Text(resolvedSearchPath)),
-                                                       true/*is-directory*/, searchPath.flags());
+            try
+            {
+                // Add new nodes on this path and/or re-process previously seen nodes.
+                addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath.uri().resolved(),
+                                                           true/*is-directory*/, searchPath.flags());
+            }
+            catch(de::Uri::ResolveError const& er)
+            {
+                LOG_DEBUG(er.asText());
+            }
         }
     }
 
@@ -428,7 +432,8 @@ bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int 
     // Have we seen this path already (we don't want duplicates)?
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
-        if(i->uri() == path)
+        // Compare using the unresolved textual representations.
+        if(!i->uri().asText().compareWithoutCase(path.asText()))
         {
             i->setFlags(flags);
             return true;

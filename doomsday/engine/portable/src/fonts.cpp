@@ -755,10 +755,8 @@ fontid_t Fonts_ResolveUriCString2(char const* path, boolean quiet)
 {
     if(path && path[0])
     {
-        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        fontid_t id = Fonts_ResolveUri2(uri, quiet);
-        Uri_Delete(uri);
-        return id;
+        de::Uri uri = de::Uri(path, RC_NULL);
+        return Fonts_ResolveUri2(reinterpret_cast<uri_s*>(&uri), quiet);
     }
     return NOFONTID;
 }
@@ -867,18 +865,22 @@ static font_t* createFontFromDef(fontid_t bindId, ded_compositefont_t* def)
 {
     DENG_ASSERT(def);
 
+    LOG_AS("Fonts::createFontFromDef");
+
     font_t* font = createFont(FT_BITMAPCOMPOSITE, bindId);
     BitmapCompositeFont_SetDefinition(font, def);
 
     for(int i = 0; i < def->charMapCount.num; ++i)
     {
-        ddstring_t const* path;
         if(!def->charMap[i].path) continue;
-
-        path = Uri_ResolvedConst(def->charMap[i].path);
-        if(path)
+        try
         {
-            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
+            QByteArray path = reinterpret_cast<de::Uri&>(*def->charMap[i].path).resolved().toUtf8();
+            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, path.constData());
+        }
+        catch(de::Uri::ResolveError const& er)
+        {
+            LOG_WARNING(er.asText());
         }
     }
 
@@ -901,6 +903,8 @@ static font_t* createFontFromFile(fontid_t bindId, char const* resourcePath)
 
 void Fonts_RebuildFromDef(font_t* font, ded_compositefont_t* def)
 {
+    LOG_AS("Fonts::rebuildFromDef");
+
     if(Font_Type(font) != FT_BITMAPCOMPOSITE)
     {
         Con_Error("Fonts::RebuildFromDef: Font is of invalid type %i.", (int) Font_Type(font));
@@ -912,13 +916,16 @@ void Fonts_RebuildFromDef(font_t* font, ded_compositefont_t* def)
 
     for(int i = 0; i < def->charMapCount.num; ++i)
     {
-        ddstring_t const* path;
         if(!def->charMap[i].path) continue;
 
-        path = Uri_ResolvedConst(def->charMap[i].path);
-        if(path)
+        try
         {
-            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
+            QByteArray path = reinterpret_cast<de::Uri&>(*def->charMap[i].path).resolved().toUtf8();
+            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, path.constData());
+        }
+        catch(de::Uri::ResolveError const& er)
+        {
+            LOG_WARNING(er.asText());
         }
     }
 }
@@ -1546,8 +1553,8 @@ D_CMD(ListFonts)
     DENG_UNUSED(src);
 
     fontnamespaceid_t namespaceId = FN_ANY;
-    const char* like = NULL;
-    Uri* uri = NULL;
+    char const* like = NULL;
+    de::Uri uri;
 
     if(!Fonts_Size())
     {
@@ -1558,39 +1565,35 @@ D_CMD(ListFonts)
     // "listfonts [namespace] [name]"
     if(argc > 2)
     {
-        uri = Uri_New();
-        Uri_SetScheme(uri, argv[1]);
-        Uri_SetPath(uri, argv[2]);
+        uri.setScheme(argv[1]).setPath(argv[2]);
 
-        namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
+        namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
         if(!VALID_FONTNAMESPACEID(namespaceId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
-            Uri_Delete(uri);
+            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
             return false;
         }
-        like = Str_Text(Uri_Path(uri));
+        like = Str_Text(uri.path());
     }
     // "listfonts [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
-        uri = Uri_NewWithPath2(argv[1], RC_NULL);
-        if(!Str_IsEmpty(Uri_Scheme(uri)))
+        uri.setUri(argv[1], RC_NULL);
+        if(!Str_IsEmpty(uri.scheme()))
         {
-            namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
+            namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
             if(!VALID_FONTNAMESPACEID(namespaceId))
             {
-                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
-                Uri_Delete(uri);
+                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
                 return false;
             }
 
-            if(!Str_IsEmpty(Uri_Path(uri)))
-                like = Str_Text(Uri_Path(uri));
+            if(!Str_IsEmpty(uri.path()))
+                like = Str_Text(uri.path());
         }
         else
         {
-            namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Path(uri)));
+            namespaceId = Fonts_ParseNamespace(Str_Text(uri.path()));
 
             if(!VALID_FONTNAMESPACEID(namespaceId))
             {
@@ -1602,7 +1605,6 @@ D_CMD(ListFonts)
 
     printFonts(namespaceId, like);
 
-    if(uri) Uri_Delete(uri);
     return true;
 }
 

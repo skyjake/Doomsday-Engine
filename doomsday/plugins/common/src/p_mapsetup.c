@@ -966,13 +966,13 @@ const char* P_GetMapAuthor(boolean supressGameAuthor)
     const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
     boolean mapIsCustom;
     GameInfo gameInfo;
-    ddstring_t const* path;
+    AutoStr* path;
     Uri* uri;
 
     if(!author || !author[0]) return NULL;
 
     uri = G_ComposeMapUri(gameEpisode, gameMap);
-    path = Uri_ResolvedConst(uri);
+    path = Uri_Resolved(uri);
 
     mapIsCustom = P_MapIsCustom(Str_Text(path));
 

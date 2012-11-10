@@ -34,24 +34,23 @@
 
 #include "lumpindex.h"
 
-static void freeArchivedMap(archivedmap_t* dam);
-
 // Should we be caching successfully loaded maps?
 byte mapCache = true;
 
 static const char* mapCacheDir = "mapcache/";
 
-static archivedmap_t** archivedMaps = NULL;
-static uint numArchivedMaps = 0;
+static archivedmap_t** archivedMaps;
+static uint numArchivedMaps;
 
-static void clearArchivedMaps(void)
+static void freeArchivedMap(archivedmap_t& dam);
+
+static void clearArchivedMaps()
 {
     if(archivedMaps)
     {
-        uint i;
-        for(i = 0; i < numArchivedMaps; ++i)
+        for(uint i = 0; i < numArchivedMaps; ++i)
         {
-            freeArchivedMap(archivedMaps[i]);
+            freeArchivedMap(*archivedMaps[i]);
         }
         Z_Free(archivedMaps);
         archivedMaps = NULL;
@@ -59,18 +58,18 @@ static void clearArchivedMaps(void)
     numArchivedMaps = 0;
 }
 
-void DAM_Register(void)
+void DAM_Register()
 {
     C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
 }
 
-void DAM_Init(void)
+void DAM_Init()
 {
     // Allow re-init.
     clearArchivedMaps();
 }
 
-void DAM_Shutdown(void)
+void DAM_Shutdown()
 {
     clearArchivedMaps();
 }
@@ -86,32 +85,28 @@ static archivedmap_t* allocArchivedMap()
 }
 
 /// Free all memory acquired for an archived map record.
-static void freeArchivedMap(archivedmap_t* dam)
+static void freeArchivedMap(archivedmap_t& dam)
 {
-    DENG_ASSERT(dam);
-    Uri_Delete(dam->uri);
-    Str_Free(&dam->cachedMapPath);
-    Z_Free(dam);
+    Uri_Delete(dam.uri);
+    Str_Free(&dam.cachedMapPath);
+    Z_Free(&dam);
 }
 
 /// Create a new archived map record.
-static archivedmap_t* createArchivedMap(const Uri* uri, const ddstring_t* cachedMapPath)
+static archivedmap_t* createArchivedMap(de::Uri const& uri, ddstring_t const* cachedMapPath)
 {
-    const char* mapId = Str_Text(Uri_Path(uri));
+    char const* mapId = Str_Text(uri.path());
     archivedmap_t* dam = allocArchivedMap();
 
-    VERBOSE(
-        AutoStr* path = Uri_ToString(uri);
-        Con_Message("createArchivedMap: Add record for map '%s'.\n", Str_Text(path));
-        )
-
-    dam->uri = Uri_Dup(uri);
+    dam->uri = reinterpret_cast<uri_s*>(new de::Uri(uri));
     dam->lastLoadAttemptFailed = false;
     Str_Init(&dam->cachedMapPath);
     Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
 
     if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), F_LumpNumForName(mapId)))
         dam->cachedMapFound = true;
+
+    LOG_DEBUG("Added record for map '%s'.") << uri;
 
     return dam;
 }
@@ -122,19 +117,17 @@ static archivedmap_t* createArchivedMap(const Uri* uri, const ddstring_t* cached
  * @param uri  Identifier of the map to be searched for.
  * @return  The found map else @c NULL.
  */
-static archivedmap_t* findArchivedMap(const Uri* uri)
+static archivedmap_t* findArchivedMap(de::Uri const& uri)
 {
     if(numArchivedMaps)
     {
-        archivedmap_t** p = archivedMaps;
-        while(*p)
+        for(archivedmap_t** p = archivedMaps; *p; p++)
         {
             archivedmap_t *dam = *p;
-            if(Uri_Equality(dam->uri, uri))
+            if(uri == reinterpret_cast<de::Uri&>(*dam->uri))
             {
                 return dam;
             }
-            p++;
         }
     }
     return 0;
@@ -151,53 +144,45 @@ static void addArchivedMap(archivedmap_t* dam)
 }
 
 /// Calculate the identity key for maps loaded from this path.
-static ushort calculateIdentifierForMapPath(const char* path)
+static ushort calculateIdentifierForMapPath(char const* path)
 {
-    if(path && path[0])
+    DENG_ASSERT(path && path[0]);
+
+    ushort identifier = 0;
+    for(uint i = 0; path[i]; ++i)
     {
-        ushort identifier = 0;
-        size_t i;
-        for(i = 0; path[i]; ++i)
-            identifier ^= path[i] << ((i * 3) % 11);
-        return identifier;
+        identifier ^= path[i] << ((i * 3) % 11);
     }
-    Con_Error("calculateMapIdentifier: Empty/NULL path given.");
-    return 0; // Unreachable.
+    return identifier;
 }
 
-AutoStr* DAM_ComposeCacheDir(const char* sourcePath)
+AutoStr* DAM_ComposeCacheDir(char const* sourcePath)
 {
-    const Str* gameIdentityKey;
-    ushort mapPathIdentifier;
-    Str mapFileName;
-    AutoStr* path;
-
     if(!sourcePath || !sourcePath[0]) return NULL;
 
-    gameIdentityKey = Game_IdentityKey(App_CurrentGame());
-    mapPathIdentifier = calculateIdentifierForMapPath(sourcePath);
-    Str_InitStd(&mapFileName);
-    F_FileName(&mapFileName, sourcePath);
+    Str const* gameIdentityKey = Game_IdentityKey(App_CurrentGame());
+    ushort mapPathIdentifier   = calculateIdentifierForMapPath(sourcePath);
+
+    AutoStr* mapFileName = AutoStr_NewStd();
+    F_FileName(mapFileName, sourcePath);
 
     // Compose the final path.
-    path = AutoStr_NewStd();
+    AutoStr* path = AutoStr_NewStd();
     Str_Appendf(path, "%s%s/%s-%04X/", mapCacheDir, Str_Text(gameIdentityKey),
-        Str_Text(&mapFileName), mapPathIdentifier);
+                                       Str_Text(mapFileName), mapPathIdentifier);
     F_ExpandBasePath(path, path);
 
-    Str_Free(&mapFileName);
     return path;
 }
 
-static boolean loadMap(GameMap** map, archivedmap_t* dam)
+static bool loadMap(GameMap** map, archivedmap_t* dam)
 {
     *map = (GameMap*) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
-    if(!*map)
-        Con_Error("loadMap: Failed on allocation of %lu bytes for new Map.", (unsigned long) sizeof(**map));
+    if(!*map) Con_Error("loadMap: Failed on allocation of %lu bytes for new Map.", (unsigned long) sizeof(**map));
     return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
 }
 
-static boolean convertMap(GameMap** map, archivedmap_t* dam)
+static bool convertMap(GameMap** map, archivedmap_t* dam)
 {
     boolean converted = false;
 
@@ -242,45 +227,37 @@ static de::String DAM_ComposeUniqueId(de::File1& markerLump)
 /**
  * Attempt to load the map associated with the specified identifier.
  */
-boolean DAM_AttemptMapLoad(const Uri* uri)
+boolean DAM_AttemptMapLoad(Uri const* _uri)
 {
-    boolean loadedOK = false;
+    DENG_ASSERT(_uri);
+    de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
+
+    bool loadedOK = false;
     archivedmap_t* dam;
 
-    assert(uri);
-
-    VERBOSE2(
-        AutoStr* path = Uri_ToString(uri);
-        Con_Message("DAM_AttemptMapLoad: Loading '%s'...\n", Str_Text(path));
-        )
+    LOG_VERBOSE("Attempting to load map '%s'...") << uri;
 
     dam = findArchivedMap(uri);
     if(!dam)
     {
         // We've not yet attempted to load this map.
-        char const* markerLumpName = Str_Text(Uri_Path(uri));
-        lumpnum_t markerLumpNum;
-        AutoStr* cachedMapDir;
-        Str cachedMapPath;
-
-        markerLumpNum = F_LumpNumForName(markerLumpName);
+        char const* markerLumpName = Str_Text(uri.path());
+        lumpnum_t markerLumpNum   = F_LumpNumForName(markerLumpName);
         if(0 > markerLumpNum) return false;
 
         // Compose the cache directory path and ensure it exists.
-        cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
+        AutoStr* cachedMapDir = DAM_ComposeCacheDir(Str_Text(F_ComposeLumpFilePath(markerLumpNum)));
         F_MakePath(Str_Text(cachedMapDir));
 
         // Compose the full path to the cached map data file.
-        Str_InitStd(&cachedMapPath);
-        F_FileName(&cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
-        Str_Append(&cachedMapPath, ".dcm");
-        Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
+        AutoStr* cachedMapPath = AutoStr_NewStd();
+        F_FileName(cachedMapPath, Str_Text(F_LumpName(markerLumpNum)));
+        Str_Append(cachedMapPath, ".dcm");
+        Str_Prepend(cachedMapPath, Str_Text(cachedMapDir));
 
         // Create an archived map record for this.
-        dam = createArchivedMap(uri, &cachedMapPath);
+        dam = createArchivedMap(uri, cachedMapPath);
         addArchivedMap(dam);
-
-        Str_Free(&cachedMapPath);
     }
 
     // Load it in.
@@ -347,9 +324,8 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             mapInfo = Def_GetMapInfo(map->uri);
             if(!mapInfo)
             {
-                Uri* mapUri = Uri_NewWithPath2("*", RC_NULL);
-                mapInfo = Def_GetMapInfo(mapUri);
-                Uri_Delete(mapUri);
+                de::Uri mapUri = de::Uri("*", RC_NULL);
+                mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s*>(&mapUri));
             }
 
             if(mapInfo)

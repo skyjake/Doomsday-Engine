@@ -287,7 +287,7 @@ void DD_StartTitle(void)
  */
 static int findAllGameDataPaths(FS1::PathList& found)
 {
-    static const char* extensions[] = {
+    static char const* extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
 #ifdef UNIX
         "WAD", "LMP", "PK3", "ZIP", "DEH", // upper case alternatives
@@ -297,13 +297,8 @@ static int findAllGameDataPaths(FS1::PathList& found)
     int const numFoundSoFar = found.count();
     for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
     {
-        String pattern = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]);
-        ddstring_t* resolvedPattern = de::Uri(pattern, RC_NULL).resolved();
-        if(resolvedPattern)
-        {
-            App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found);
-            Str_Delete(resolvedPattern);
-        }
+        String pattern = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.") + extensions[extIdx];
+        App_FileSystem()->findAllPaths(de::Uri(pattern, RC_NULL).resolved(), 0, found);
     }
     return found.count() - numFoundSoFar;
 }
@@ -455,18 +450,10 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
         // Create default Auto mappings in the runtime directory.
 
         // Data class resources.
-        de::Uri dataPath = de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL);
-        if(ddstring_t const* resolvedPath = dataPath.resolvedConst())
-        {
-            F_AddVirtualDirectoryMapping("auto/", Str_Text(resolvedPath));
-        }
+        App_FileSystem()->mapPath("auto/", de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
 
         // Definition class resources.
-        de::Uri defsPath = de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL);
-        if(ddstring_t const* resolvedPath = defsPath.resolvedConst())
-        {
-            F_AddVirtualDirectoryMapping("auto/", Str_Text(resolvedPath));
-        }
+        App_FileSystem()->mapPath("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
     }
 
     /**
@@ -2213,10 +2200,12 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 
     if(texId == NOTEXTUREID) return NOMATERIALID;
 
-    uri_s* uri = Textures_ComposeUri(texId);
-    Uri_SetScheme(uri, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespaceId)));
-    materialid_t matId = Materials_ResolveUri2(uri, true/*quiet please*/);
-    Uri_Delete(uri);
+    de::Uri* uri = reinterpret_cast<de::Uri*>(Textures_ComposeUri(texId));
+    if(!uri) return NOMATERIALID;
+
+    uri->setScheme(Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespaceId)));
+    materialid_t matId = Materials_ResolveUri2(reinterpret_cast<uri_s*>(uri), true/*quiet please*/);
+    delete uri;
     return matId;
 }
 

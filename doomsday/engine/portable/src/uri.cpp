@@ -31,6 +31,7 @@
 
 #include <de/Error>
 #include <de/Log>
+#include <de/NativePath>
 #include <de/String>
 
 #include "uri.h"
@@ -45,7 +46,7 @@ struct Uri::Instance
     ddstring_t path;
 
     /// Cached copy of the resolved Uri.
-    ddstring_t resolved;
+    String resolved;
 
     /// The cached copy only applies when this game is loaded. Add any other
     /// conditions here that result in different results for resolveUri().
@@ -55,7 +56,6 @@ struct Uri::Instance
     {
         Str_InitStd(&scheme);
         Str_InitStd(&path);
-        Str_InitStd(&resolved);
         resolvedForGame = 0;
     }
 
@@ -63,12 +63,11 @@ struct Uri::Instance
     {
         Str_Free(&scheme);
         Str_Free(&path);
-        Str_Free(&resolved);
     }
 
     void clearCachedResolved()
     {
-        Str_Clear(&resolved);
+        resolved.clear();
         resolvedForGame = 0;
     }
 
@@ -109,102 +108,97 @@ struct Uri::Instance
         }
     }
 
-    bool resolve(ddstring_t* dest)
+    String resolveSymbol(QStringRef const& symbol)
+    {
+        if(!symbol.compare("App.DataPath", Qt::CaseInsensitive))
+        {
+            return "data";
+        }
+        else if(!symbol.compare("App.DefsPath", Qt::CaseInsensitive))
+        {
+            return "defs";
+        }
+        else if(!symbol.compare("Game.IdentityKey", Qt::CaseInsensitive))
+        {
+            de::Game& game = *reinterpret_cast<de::Game*>(App_CurrentGame());
+            if(isNullGame(game))
+            {
+                /// @throw ResolveSymbolError  An unresolveable symbol was encountered.
+                throw ResolveSymbolError("Uri::resolveSymbol", "Symbol 'Game' did not resolve (no game loaded)");
+            }
+
+            return Str_Text(&game.identityKey());
+        }
+        else if(!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
+        {
+            if(!DD_GameLoaded() || !gx.GetVariable)
+            {
+                /// @throw ResolveSymbolError  An unresolveable symbol was encountered.
+                throw ResolveSymbolError("Uri::resolveSymbol", "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
+            }
+
+            return String((char*)gx.GetVariable(DD_PLUGIN_NAME));
+        }
+        else
+        {
+            /// @throw UnknownSymbolError  An unknown symbol was encountered.
+            throw UnknownSymbolError("Uri::resolveSymbol", "Symbol '" + symbol.toString() + "' is unknown");
+        }
+    }
+
+    inline String parseExpression(QStringRef const& expression)
+    {
+        // Presently the expression consists of a single symbol.
+        return resolveSymbol(expression);
+    }
+
+    void resolve(String& result)
     {
         LOG_AS("Uri::resolve");
 
-        bool successful = false;
-        ddstring_t part; Str_Init(&part);
+        String const pathStr = String(Str_Text(&path));
 
-        // Copy the first part of the string as-is up to first '$' if present.
-        char const* p;
-        if((p = Str_CopyDelim2(dest, Str_Text(&path), '$', CDF_OMIT_DELIMITER)))
+        // Keep scanning the path for embedded expressions.
+        QStringRef expression;
+        int expEnd = 0, expBegin;
+        while((expBegin = pathStr.indexOf('$', expEnd)) >= 0)
         {
-            int depth = 0;
-
-            if(*p != '(')
+            // Is the next char the start-of-expression character?
+            if(pathStr.at(expBegin + 1) == '(')
             {
-                LOG_WARNING("Invalid character '%c' in \"%s\" at %u, cannot resolve.")
-                    << *p << Str_Text(&path) << (p - Str_Text(&path));
-                goto parseEnded;
+                // Copy everything up to the '$'.
+                result += pathStr.mid(expEnd, expBegin - expEnd);
+
+                // Skip over the '$'.
+                ++expBegin;
+
+                // Find the end-of-expression character.
+                expEnd = pathStr.indexOf(')', expBegin);
+                if(expEnd < 0)
+                {
+                    LOG_WARNING("Missing closing ')' in expression \"" + pathStr + "\", ignoring.");
+                    expEnd = pathStr.length();
+                }
+
+                // Skip over the '('.
+                ++expBegin;
+
+                // The range of the expression substring is now known.
+                expression = pathStr.midRef(expBegin, expEnd - expBegin);
+
+                result += parseExpression(expression);
+            }
+            else
+            {
+                // No - copy the '$' and continue.
+                result += '$';
             }
 
-            // Skip over the opening brace.
-            p++;
-            depth++;
-
-            // Now grab everything up to the closing ')' (it *should* be present).
-            while((p = Str_CopyDelim2(&part, p, ')', CDF_OMIT_DELIMITER)))
-            {
-                if(!Str_CompareIgnoreCase(&part, "App.DataPath"))
-                {
-                    Str_Append(dest, "data");
-                }
-                else if(!Str_CompareIgnoreCase(&part, "App.DefsPath"))
-                {
-                    Str_Append(dest, "defs");
-                }
-                else if(!Str_CompareIgnoreCase(&part, "Game.IdentityKey"))
-                {
-                    de::Game& game = *reinterpret_cast<de::Game*>(App_CurrentGame());
-                    if(isNullGame(game))
-                    {
-                        LOG_DEBUG("Cannot resolve 'Game' in \"%s\", no game loaded.") << Str_Text(&path);
-                        goto parseEnded;
-                    }
-
-                    Str_Append(dest, Str_Text(&game.identityKey()));
-                }
-                else if(!Str_CompareIgnoreCase(&part, "GamePlugin.Name"))
-                {
-                    if(!DD_GameLoaded() || !gx.GetVariable)
-                    {
-                        LOG_DEBUG("Cannot resolve 'GamePlugin' in \"%s\", no game plugin loaded.") << Str_Text(&path);
-                        goto parseEnded;
-                    }
-
-                    Str_Append(dest, (char*)gx.GetVariable(DD_PLUGIN_NAME));
-                }
-                else
-                {
-                    LOG_DEBUG("Cannot resolve '%s' in \"%s\", unknown identifier.") << Str_Text(&part) << Str_Text(&path);
-                    goto parseEnded;
-                }
-                depth--;
-
-                // Is there another '$' present?
-                if(!(p = Str_CopyDelim2(&part, p, '$', CDF_OMIT_DELIMITER)))
-                    break;
-
-                // Copy everything up to the next '$'.
-                Str_Append(dest, Str_Text(&part));
-                if(*p != '(')
-                {
-                    LOG_WARNING("Invalid character '%c' in \"%s\" at %u, cannot resolve.")
-                        << *p << Str_Text(&path) << (p - Str_Text(&path));
-                    goto parseEnded;
-                }
-
-                // Skip over the opening brace.
-                p++;
-                depth++;
-            }
-
-            if(depth != 0)
-            {
-                goto parseEnded;
-            }
-
-            // Copy anything remaining.
-            Str_Append(dest, Str_Text(&part));
+            ++expEnd;
         }
 
-        // No errors detected.
-        successful = true;
-
-parseEnded:
-        Str_Free(&part);
-        return successful;
+        // Copy anything remaining.
+        result += pathStr.mid(expEnd);
     }
 };
 
@@ -213,8 +207,7 @@ Uri::Uri(String path, resourceclass_t defaultResourceClass)
     d = new Instance();
     if(!path.isEmpty())
     {
-        QByteArray pathUtf8 = path.toUtf8();
-        setUri(pathUtf8.constData(), defaultResourceClass);
+        setUri(path, defaultResourceClass);
     }
 }
 
@@ -228,6 +221,8 @@ Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
     d = new Instance();
     Str_Copy(&d->scheme, other.scheme());
     Str_Copy(&d->path,   other.path());
+    d->resolved = other.d->resolved;
+    d->resolvedForGame = other.d->resolvedForGame;
 }
 
 Uri* Uri::fromReader(struct reader_s& reader)
@@ -259,17 +254,20 @@ bool Uri::operator == (Uri const& other) const
     // Is resolving not necessary?
     if(!Str_CompareIgnoreCase(&d->path, Str_Text(other.path()))) return true;
 
-    // For comparison purposes we must be able to resolve both paths.
-    ddstring_t const* thisPath;
-    if(!(thisPath  = resolvedConst())) return false;
-    ddstring_t const* otherPath;
-    if(!(otherPath = other.resolvedConst())) return false;
+    // We must be able to resolve both paths to compare.
+    try
+    {
+        String const& thisPath = resolved();
+        String const& otherPath = other.resolved();
 
-    // Do not match on partial paths.
-    if(Str_Length(thisPath) != Str_Length(otherPath)) return false;
+        // Do not match partial paths.
+        if(thisPath.length() != otherPath.length()) return false;
 
-    int result = Str_CompareIgnoreCase(thisPath, Str_Text(otherPath));
-    return (result == 0);
+        return thisPath.compareWithoutCase(otherPath) == 0;
+    }
+    catch(ResolveError const&)
+    {} // Ignore the error.
+    return false;
 }
 
 bool Uri::operator != (Uri const& other) const
@@ -282,7 +280,11 @@ void swap(Uri& first, Uri& second)
     /// @todo Is it valid to std::swap a ddstring_t ?
     std::swap(first.d->scheme,          second.d->scheme);
     std::swap(first.d->path,            second.d->path);
+#ifdef DENG2_QT_4_8_OR_NEWER
+    first.d->resolved.swap(second.d->resolved);
+#else
     std::swap(first.d->resolved,        second.d->resolved);
+#endif
     std::swap(first.d->resolvedForGame, second.d->resolvedForGame);
 }
 
@@ -304,74 +306,53 @@ ddstring_t const* Uri::path() const
     return &d->path;
 }
 
-ddstring_t* Uri::resolved() const
-{
-    ddstring_t const* resolved = resolvedConst();
-    if(resolved)
-    {
-        return Str_Set(Str_New(), Str_Text(resolved));
-    }
-    return 0;
-}
-
-ddstring_t const* Uri::resolvedConst() const
+String const& Uri::resolved() const
 {
 #ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
     if(d->resolvedForGame && d->resolvedForGame == (void*) App_CurrentGame())
     {
         // We can just return the previously prepared resolved URI.
-        return &d->resolved;
+        return d->resolved;
     }
 #endif
 
     d->clearCachedResolved();
 
+    String result;
+    d->resolve(result);
+
     // Keep a copy of this, we'll likely need it many, many times.
-    if(d->resolve(&d->resolved))
-    {
-        d->resolvedForGame = (void*) App_CurrentGame();
-        return &d->resolved;
-    }
-    else
-    {
-        d->clearCachedResolved();
-        return 0;
-    }
+    d->resolved = result;
+    d->resolvedForGame = (void*) App_CurrentGame();
+
+    return d->resolved;
 }
 
-Uri& Uri::setScheme(char const* scheme)
+Uri& Uri::setScheme(String newScheme)
 {
-    Str_Set(&d->scheme, scheme);
+    QByteArray newSchemeUtf8 = newScheme.toUtf8();
+    Str_Set(&d->scheme, newSchemeUtf8.constData());
     d->clearCachedResolved();
     return *this;
 }
 
-Uri& Uri::setPath(char const* path)
+Uri& Uri::setPath(String newPath)
 {
-    Str_Set(&d->path, path);
+    QByteArray newPathUtf8 = newPath.toUtf8();
+    Str_Set(&d->path, newPathUtf8.constData());
     d->clearCachedResolved();
     return *this;
 }
 
-Uri& Uri::setUri(char const* path, resourceclass_t defaultResourceClass)
+Uri& Uri::setUri(String rawUri, resourceclass_t defaultResourceClass)
 {
-    LOG_AS("Uri::SetUri");
-    if(!path)
-    {
-        LOG_DEBUG("Attempted with invalid path, will clear.");
-        clear();
-        return *this;
-    }
-
-    Str_Set(&d->path, path);
+    LOG_AS("Uri::setUri");
+    QByteArray rawUriUtf8 = rawUri.toUtf8();
+    Str_Set(&d->path, rawUriUtf8.constData());
     Str_Strip(&d->path);
     d->parseScheme(defaultResourceClass);
+    d->clearCachedResolved();
     return *this;
-}
-
-Uri& Uri::setUri(ddstring_t const* path)
-{
-    return setUri(path != 0? Str_Text(path) : 0);
 }
 
 String Uri::compose() const
@@ -415,29 +396,31 @@ void Uri::write(writer_s& writer, int omitComponents) const
     writeUri(scheme, &d->path, writer);
 }
 
-Uri& Uri::read(reader_s& reader, char const* defaultScheme)
+Uri& Uri::read(reader_s& reader, String defaultScheme)
 {
     Str_Read(&d->scheme, &reader);
     Str_Read(&d->path,   &reader);
-    if(Str_IsEmpty(&d->scheme) && defaultScheme)
+    if(Str_IsEmpty(&d->scheme) && !defaultScheme.isEmpty())
     {
-        Str_Set(&d->scheme, defaultScheme);
+        QByteArray defaultSchemeUtf8 = defaultScheme.toUtf8();
+        Str_Set(&d->scheme, defaultSchemeUtf8.constData());
     }
     return *this;
 }
 
-void Uri::debugPrint(int indent, int flags, char const* unresolvedText) const
+void Uri::debugPrint(int indent, int flags, String unresolvedText) const
 {
     indent = MAX_OF(0, indent);
 
-    String raw = asText();
-    char const* resolvedPath = (flags & UPF_OUTPUT_RESOLVED)? Str_Text(resolvedConst()) : "";
-    if(!unresolvedText) unresolvedText = "--(!)incomplete";
+    bool resolvedPath = (flags & UPF_OUTPUT_RESOLVED) && !d->resolved.isEmpty();
+    if(unresolvedText.isEmpty()) unresolvedText = "--(!)incomplete";
 
     LOG_DEBUG("%*s\"%s\"%s%s") << indent << ""
-      << ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(raw.toUtf8().constData()) : raw)
+      << ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? NativePath(asText()).pretty() : asText())
       << ((flags & UPF_OUTPUT_RESOLVED)? (resolvedPath? "=> " : unresolvedText) : "")
-      << ((flags & UPF_OUTPUT_RESOLVED) && resolvedPath? ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(resolvedPath) : resolvedPath) : "");
+      << ((flags & UPF_OUTPUT_RESOLVED) && resolvedPath? ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)?
+                                                                NativePath(d->resolved).pretty() : NativePath(d->resolved))
+                                                       : "");
 }
 
 } // namespace de
@@ -529,16 +512,20 @@ ddstring_t const* Uri_Path(Uri const* uri)
     return self->path();
 }
 
-ddstring_t* Uri_Resolved(Uri const* uri)
+AutoStr* Uri_Resolved(Uri const* uri)
 {
     SELF_CONST(uri);
-    return self->resolved();
-}
-
-ddstring_t const* Uri_ResolvedConst(Uri const* uri)
-{
-    SELF_CONST(uri);
-    return self->resolvedConst();
+    try
+    {
+        de::String const& resolved = self->resolved();
+        QByteArray resolvedUtf8 = resolved.toUtf8();
+        return AutoStr_FromTextStd(resolvedUtf8.constData());
+    }
+    catch(de::Uri::ResolveError const& er)
+    {
+        LOG_WARNING(er.asText());
+    }
+    return AutoStr_NewStd();
 }
 
 Uri* Uri_SetScheme(Uri* uri, char const* scheme)
@@ -568,7 +555,7 @@ Uri* Uri_SetUri(Uri* uri, char const* path)
 Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path)
 {
     SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setUri(path));
+    return reinterpret_cast<Uri*>(&self->setUri(Str_Text(path)));
 }
 
 AutoStr* Uri_Compose(Uri const* uri)

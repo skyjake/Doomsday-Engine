@@ -1519,7 +1519,7 @@ void R_SetupMap(int mode, int flags)
         }
 
         // Run the special map setup command, which the user may alias to do something useful.
-        { ddstring_t const* mapPath = Uri_ResolvedConst(GameMap_Uri(theMap));
+        { AutoStr* mapPath = Uri_Resolved(GameMap_Uri(theMap));
         sprintf(cmd, "init-%s", Str_Text(mapPath));
         if(Con_IsValidCommand(cmd))
         {

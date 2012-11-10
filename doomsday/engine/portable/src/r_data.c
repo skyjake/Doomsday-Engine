@@ -2270,7 +2270,7 @@ void R_DefineSpriteTexture(textureid_t texId)
 
     if(tex && resourceUri)
     {
-        ddstring_t const* resourcePath = Uri_ResolvedConst(resourceUri);
+        AutoStr* resourcePath = Uri_Resolved(resourceUri);
         lumpnum_t lumpNum = F_LumpNumForName(Str_Text(resourcePath));
         int lumpIdx;
         struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);

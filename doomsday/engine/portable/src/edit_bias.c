@@ -349,7 +349,7 @@ static boolean SBE_Save(const char* name)
     Str_Init(&fileName);
     if(!name || !name[0])
     {
-        ddstring_t const* mapPath = Uri_ResolvedConst(GameMap_Uri(map));
+        AutoStr* mapPath = Uri_Resolved(GameMap_Uri(map));
         Str_Appendf(&fileName, "%s.ded", Str_Text(mapPath));
     }
     else

@@ -877,14 +877,13 @@ float R_GetModelVisualRadius(modeldef_t* mf)
  * Allocate room for a new skin file name. This allows using more than
  * the maximum number of skins.
  */
-static short R_NewModelSkin(model_t* mdl, const Uri* path)
+static short R_NewModelSkin(model_t* mdl, de::Uri const& skinUri)
 {
     int added = mdl->info.numSkins, i;
-    const char* fileName = Str_Text(Uri_Path(path));
+    char const* fileName = Str_Text(skinUri.path());
 
     mdl->skins = (dmd_skin_t*)realloc(mdl->skins, sizeof *mdl->skins * ++mdl->info.numSkins);
-    if(!mdl->skins)
-        Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes enlarging DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);
+    if(!mdl->skins) Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes enlarging DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);
     memset(mdl->skins + added, 0, sizeof(dmd_skin_t));
 
     strncpy(mdl->skins[added].name, fileName, 64);
@@ -897,8 +896,7 @@ static short R_NewModelSkin(model_t* mdl, const Uri* path)
 
         // This is the same skin file. We did a lot of unnecessary work...
         mdl->skins = (dmd_skin_t*)realloc(mdl->skins, sizeof *mdl->skins * --mdl->info.numSkins);
-        if(!mdl->skins)
-            Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes shrinking DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);
+        if(!mdl->skins) Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes shrinking DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);
         return i;
     }
 
@@ -1070,7 +1068,7 @@ static void setupModel(ded_model_t* def)
         if(subdef->skinFilename && !Str_IsEmpty(Uri_Path(subdef->skinFilename)))
         {
             // A specific file name has been given for the skin.
-            sub->skin = R_NewModelSkin(R_ModelForId(sub->model), subdef->skinFilename);
+            sub->skin = R_NewModelSkin(R_ModelForId(sub->model), reinterpret_cast<de::Uri&>(*subdef->skinFilename));
         }
         else
         {

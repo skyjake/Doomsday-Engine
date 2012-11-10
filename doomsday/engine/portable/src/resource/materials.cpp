@@ -873,10 +873,8 @@ materialid_t Materials_ResolveUriCString2(char const* path, boolean quiet)
 {
     if(path && path[0])
     {
-        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        materialid_t matId = Materials_ResolveUri2(uri, quiet);
-        Uri_Delete(uri);
-        return matId;
+        de::Uri uri = de::Uri(path, RC_NULL);
+        return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), quiet);
     }
     return NOMATERIALID;
 }
@@ -958,9 +956,10 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             texId = Textures_ResolveUri2(layer.stages[0].texture, true/*quiet please*/);
             if(texId == NOTEXTUREID)
             {
-                AutoStr* materialPath = Uri_ToString(def->uri);
-                AutoStr* texturePath  = Uri_ToString(layer.stages[0].texture);
-                Con_Message("Warning: Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).\n", Str_Text(texturePath), Str_Text(materialPath), 0, 0);
+                LOG_WARNING("Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).")
+                    << reinterpret_cast<de::Uri*>(layer.stages[0].texture)
+                    << reinterpret_cast<de::Uri*>(def->uri)
+                    << 0 << 0;
             }
         }
     }
@@ -1982,12 +1981,13 @@ MaterialBind& MaterialBind::setMaterial(material_t* newMaterial)
 
 MaterialBind& MaterialBind::attachInfo(MaterialBindInfo& info)
 {
+    LOG_AS("MaterialBind::attachInfo");
     if(extInfo)
     {
 #if _DEBUG
-        Uri* uri = Materials_ComposeUri(guid);
-        LOG_DEBUG("MaterialBind::attachInfo: Info already present for \"%s\", will replace.") << Str_Text(Uri_ToString(uri));
-        Uri_Delete(uri);
+        de::Uri* uri = reinterpret_cast<de::Uri*>(Materials_ComposeUri(guid));
+        LOG_DEBUG("Info already present for \"%s\", will replace.") << uri;
+        delete uri;
 #endif
         M_Free(extInfo);
     }

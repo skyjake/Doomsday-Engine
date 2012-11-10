@@ -950,7 +950,7 @@ static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
         path.remove(0, 1);
         if(path.at(0) == '/') path.remove(0, 1);
 
-        path.prepend("$(App.DefsPath)/$(GamePlugin.Name)/auto/");
+        path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
     }
     // Manually mapped to Data?
     else if(path.beginsWith('#'))
@@ -970,7 +970,7 @@ static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
             }
         }
 
-        path.prepend("$(App.DataPath)/$(GamePlugin.Name)/auto/");
+        path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
     }
     // Implicitly mapped to another location?
     else if(!path.contains('/'))
@@ -1009,11 +1009,11 @@ static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
         switch(rclass)
         {
         case RC_PACKAGE: // Mapped to the Data directory.
-            path.prepend("$(App.DataPath)/$(GamePlugin.Name)/auto/");
+            path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
             break;
 
         case RC_DEFINITION: // Mapped to the Defs directory.
-            path.prepend("$(App.DefsPath)/$(GamePlugin.Name)/auto/");
+            path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
             break;
 
         default: /* Not mapped */ break;
@@ -1030,11 +1030,18 @@ static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
     }
 
     // Resolve all symbolic references in the path.
-    Uri pathUri = Uri(path, RC_NULL);
-    if(ddstring_t const* resolvedPath = pathUri.resolvedConst())
+    try
     {
-        Str_Copy(dest, resolvedPath);
+        QByteArray resolvedPath = Uri(path, RC_NULL).resolved().toUtf8();
+        Str_Set(dest, resolvedPath.constData());
+        return;
     }
+    catch(de::Uri::ResolveError const& er)
+    {
+        LOG_WARNING(er.asText());
+    }
+
+    Str_Copy(dest, src);
 }
 
 } // namespace de

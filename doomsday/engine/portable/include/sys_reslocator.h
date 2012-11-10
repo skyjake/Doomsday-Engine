@@ -148,8 +148,8 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
  *
  * @param rclass        Class of resource being searched for (if known).
  *
- * @param searchPaths   Paths/names of the resource being searched for. Note that
- *                      the resource class (@a rclass) specified significantly
+ * @param nativeSearchPaths  Paths/names of the resource being searched for. Note
+ *                      that the resource class (@a rclass) specified significantly
  *                      alters search behavior. This allows text replacements of
  *                      symbolic escape sequences in the path, allowing access to
  *                      the engine's view of the virtual file system.
@@ -166,16 +166,16 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
  *
  * @return  The index+1 of the path in @a searchPaths if found, else @c 0
  */
-uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
-uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
-uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* searchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
-uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* searchPaths/*, foundPath = NULL*/);
+uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
+uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* nativeSearchPaths/*, foundPath = NULL*/);
 
-uint F_FindResource5(resourceclass_t rclass, struct uri_s const** searchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
-uint F_FindResource4(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
-uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
-uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
-uint F_FindResource(resourceclass_t rclass, char const* searchPaths/*, foundPath = NULL*/);
+uint F_FindResource5(resourceclass_t rclass, struct uri_s const** nativeSearchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
+uint F_FindResource4(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
+uint F_FindResource3(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+uint F_FindResource2(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+uint F_FindResource(resourceclass_t rclass, char const* nativeSearchPaths/*, foundPath = NULL*/);
 
 /**
  * @return  Default class associated with resources of type @a type.
@@ -236,22 +236,13 @@ char const* F_ResourceClassStr(resourceclass_t rclass);
 /**
  * Construct a new NULL terminated Uri list from the specified search path list.
  */
-struct uri_s** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count);
-struct uri_s** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* searchPaths);
+struct uri_s** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, int* count);
+struct uri_s** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* nativeSearchPaths);
 
-struct uri_s** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count);
-struct uri_s** F_CreateUriList(resourceclass_t rclass, char const* searchPaths);
+struct uri_s** F_CreateUriList2(resourceclass_t rclass, char const* nativeSearchPaths, int* count);
+struct uri_s** F_CreateUriList(resourceclass_t rclass, char const* nativeSearchPaths);
 
 void F_DestroyUriList(struct uri_s** list);
-
-ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass, ddstring_t const* pathList, size_t* count, char delimiter);
-ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass, ddstring_t const* pathList, size_t* count);
-
-void F_DestroyStringList(ddstring_t** list);
-
-#if _DEBUG
-void F_PrintStringList(ddstring_t const** strings, size_t stringsCount);
-#endif
 
 #ifdef __cplusplus
 } // extern "C"

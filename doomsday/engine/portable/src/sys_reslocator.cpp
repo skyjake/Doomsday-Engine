@@ -49,7 +49,7 @@ typedef struct {
 } resourcetypeinfo_t;
 
 /**
- * @defgroup ResourceNamespaceFlags Resource Namespace Flags
+ * @defgroup resourceNamespaceFlags Resource Namespace Flags
  * @ingroup core
  * @{
  */
@@ -180,8 +180,9 @@ static void resetAllNamespaces(void)
 /**
  * Find a named resource in this namespace.
  *
- * @param searchPath        Relative or absolute path to the resource.
- * @param searchDelimiter   Fragments of @a searchPath are delimited by this character.
+ * @param rnamespace    ResourceNamespace to be searched.
+ * @param searchPath    Relative or absolute path to the resource.
+ * @param delimiter     Fragments of @a searchPath are delimited by this character.
  *
  * @return  The found PathTree node which represents the resource else @c NULL.
  */
@@ -189,6 +190,8 @@ static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
     String searchPath, QChar delimiter = '/')
 {
     if(searchPath.isEmpty()) return 0;
+
+    LOG_TRACE("Using namespace '%s'...") << rnamespace.name();
 
     // Ensure the namespace is up to date.
     rnamespace.rebuild();
@@ -213,11 +216,10 @@ static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
     return 0; // Not found.
 }
 
-static bool tryFindResource2(resourceclass_t rclass, String searchPath,
+static bool tryFindResource2(resourceclass_t /*rclass*/, String searchPath,
     ddstring_t* foundPath, ResourceNamespace* rnamespace)
 {
-    DENG_ASSERT(inited);
-    DENG_UNUSED(rclass);
+    if(searchPath.isEmpty()) return false;
 
     // Is there a namespace we should use?
     if(rnamespace)
@@ -248,12 +250,10 @@ static bool tryFindResource2(resourceclass_t rclass, String searchPath,
     return false;
 }
 
-static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const* rawSearchPath,
+static bool tryFindResource(int flags, resourceclass_t rclass, String searchPath,
     ddstring_t* foundPath, ResourceNamespace* rnamespace)
 {
-    DENG_ASSERT(inited && rawSearchPath && !Str_IsEmpty(rawSearchPath));
-
-    String searchPath = QDir::fromNativeSeparators(String(Str_Text(rawSearchPath)));
+    if(searchPath.isEmpty()) return false;
 
     // If an extension was specified, first look for resources of the same type.
     String ext = searchPath.fileNameExtension();
@@ -294,53 +294,30 @@ static bool tryFindResource(int flags, resourceclass_t rclass, ddstring_t const*
     return found;
 }
 
-static bool findResource2(resourceclass_t rclass, ddstring_t const* searchPath,
+static bool findResource2(resourceclass_t rclass, String searchPath,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix,
     ResourceNamespace* rnamespace)
 {
-    DENG_ASSERT(inited && searchPath && !Str_IsEmpty(searchPath));
-
-    LOG_TRACE("Using namespace '%s'...") << (rnamespace? rnamespace->name() : "None");
-
-    bool found = false;
+    if(searchPath.isEmpty()) return false;
 
     // First try with the optional suffix.
-    if(optionalSuffix)
+    if(optionalSuffix && !Str_IsEmpty(optionalSuffix))
     {
-        ddstring_t fn; Str_Init(&fn);
+        String searchPath2 = searchPath.fileNamePath()
+                           / searchPath.fileNameWithoutExtension() + Str_Text(optionalSuffix) + searchPath.fileNameExtension();
 
-        // Has an extension been specified?
-        char const* ptr = F_FindFileExtension(Str_Text(searchPath));
-        if(ptr && *ptr != '*')
-        {
-            char ext[10];
-            strncpy(ext, ptr, 10);
-
-            Str_PartAppend(&fn, Str_Text(searchPath), 0, ptr - 1 - Str_Text(searchPath));
-            Str_Appendf(&fn, "%s%s", Str_Text(optionalSuffix), ext);
-        }
-        else
-        {
-            Str_Appendf(&fn, "%s%s", Str_Text(searchPath), Str_Text(optionalSuffix));
-        }
-
-        found = tryFindResource(flags, rclass, &fn, foundPath, rnamespace);
-        Str_Free(&fn);
+        if(tryFindResource(flags, rclass, searchPath2, foundPath, rnamespace))
+            return true;
     }
 
     // Try without a suffix.
-    if(!found)
-    {
-        found = tryFindResource(flags, rclass, searchPath, foundPath, rnamespace);
-    }
-
-    return found;
+    return tryFindResource(flags, rclass, searchPath, foundPath, rnamespace);
 }
 
 static int findResource(resourceclass_t rclass, uri_s const* const* list,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
 {
-    DENG_ASSERT(inited && list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
+    DENG_ASSERT(list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
 
     LOG_AS("findResource");
 
@@ -349,36 +326,29 @@ static int findResource(resourceclass_t rclass, uri_s const* const* list,
     {
         de::Uri const& searchPath = reinterpret_cast<de::Uri const&>(**ptr);
 
-        // Ignore incomplete paths.
-        ddstring_t const* resolvedPath = searchPath.resolvedConst();
-        if(!resolvedPath) continue;
+        try
+        {
+            String const& resolvedPath = searchPath.resolved();
 
-        // If this is an absolute path, locate using it.
-        if(F_IsAbsolute(resolvedPath))
-        {
-            if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, NULL/*no namespace*/))
-                result = n;
-        }
-        else
-        {
-            // Probably a relative path. Has a namespace identifier been included?
-            if(!Str_IsEmpty(searchPath.scheme()))
+            // If this is an absolute path, locate using it.
+            if(QDir::isAbsolutePath(resolvedPath))
             {
-                resourcenamespaceid_t rni = F_SafeResourceNamespaceForName(Str_Text(searchPath.scheme()));
-                if(rni)
-                {
-                    ResourceNamespaceInfo* rnamespaceInfo = getNamespaceInfoForId(rni);
-                    if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, rnamespaceInfo->rnamespace))
-                        result = n;
-                }
-#if _DEBUG
-                else
-                {
-                    LOG_WARNING("Unknown namespace in searchPath \"%s\", using default for %s.")
-                        << searchPath << F_ResourceClassStr(rclass);
-                }
-#endif
+                if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, NULL/*no namespace*/))
+                    result = n;
             }
+            // Probably a relative path. Has a namespace identifier been included?
+            else if(!Str_IsEmpty(searchPath.scheme()))
+            {
+                resourcenamespaceid_t rni = F_ResourceNamespaceForName(Str_Text(searchPath.scheme()));
+                ResourceNamespaceInfo* rnamespaceInfo = getNamespaceInfoForId(rni);
+                if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, rnamespaceInfo->rnamespace))
+                    result = n;
+            }
+        }
+        catch(de::Uri::ResolveError const& er)
+        {
+            LOG_DEBUG(er.asText());
+            // Ignore incomplete paths.
         }
 
         if(result) break;
@@ -699,9 +669,9 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
     return rnamespace.addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(*searchPath), flags);
 }
 
-uri_s** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* count)
+uri_s** F_CreateUriList2(resourceclass_t rclass, char const* nativeSearchPaths, int* count)
 {
-    if(!searchPaths || !searchPaths[0])
+    if(!nativeSearchPaths || !nativeSearchPaths[0])
     {
         if(count) *count = 0;
         return 0;
@@ -712,7 +682,7 @@ uri_s** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* c
 
     ddstring_t buf; Str_Init(&buf);
     int numPaths = 0, n = 0;
-    char const* p = searchPaths;
+    char const* p = nativeSearchPaths;
     do
     {
         if(numPaths)
@@ -738,7 +708,9 @@ uri_s** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* c
                 memcpy(list + (numPaths - FIXEDSIZE), localFixedList, sizeof(*list) * FIXEDSIZE);
                 n = 0;
             }
-            localFixedList[n++] = Uri_NewWithPath2(Str_Text(&buf), rclass);
+
+            String path = QDir::fromNativeSeparators(String(Str_Text(&buf)));
+            localFixedList[n++] = reinterpret_cast<uri_s*>(new de::Uri(path, rclass));
             ++numPaths;
         }
     } while(*p);
@@ -765,24 +737,24 @@ uri_s** F_CreateUriList2(resourceclass_t rclass, char const* searchPaths, int* c
     return list;
 }
 
-uri_s** F_CreateUriList(resourceclass_t rclass, char const* searchPaths)
+uri_s** F_CreateUriList(resourceclass_t rclass, char const* nativeSearchPaths)
 {
-    return F_CreateUriList2(rclass, searchPaths, 0);
+    return F_CreateUriList2(rclass, nativeSearchPaths, 0);
 }
 
-uri_s** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* searchPaths, int* count)
+uri_s** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, int* count)
 {
-    if(!searchPaths)
+    if(!nativeSearchPaths)
     {
         if(count) *count = 0;
         return 0;
     }
-    return F_CreateUriList2(rclass, Str_Text(searchPaths), count);
+    return F_CreateUriList2(rclass, Str_Text(nativeSearchPaths), count);
 }
 
-uri_s** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* searchPaths)
+uri_s** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* nativeSearchPaths)
 {
-    return F_CreateUriListStr2(rclass, searchPaths, 0);
+    return F_CreateUriListStr2(rclass, nativeSearchPaths, 0);
 }
 
 void F_DestroyUriList(uri_s** list)
@@ -791,84 +763,10 @@ void F_DestroyUriList(uri_s** list)
 
     for(uri_s** ptr = list; *ptr; ptr++)
     {
-        Uri_Delete(*ptr);
+        delete reinterpret_cast<de::Uri*>(*ptr);
     }
     M_Free(list);
 }
-
-ddstring_t** F_ResolvePathList2(resourceclass_t /*defaultResourceClass*/,
-    ddstring_t const* pathList, size_t* count, char /*delimiter*/)
-{
-    uri_s** uriList = F_CreateUriListStr(RC_NULL, pathList);
-    size_t resolvedPathCount = 0;
-    ddstring_t** paths = NULL;
-
-    if(uriList)
-    {
-        for(uri_s** uriIt = uriList; *uriIt; ++uriIt)
-        {
-            de::Uri& uri = reinterpret_cast<de::Uri&>(**uriIt);
-            // Ignore incomplete paths.
-            ddstring_t const* resolvedPath = uri.resolvedConst();
-            if(!resolvedPath) continue;
-
-            ++resolvedPathCount;
-        }
-
-        if(resolvedPathCount)
-        {
-            paths = (ddstring_t**) M_Malloc(sizeof(*paths) * (resolvedPathCount+1));
-            if(!paths) Con_Error("F_ResolvePathList: Failed on allocation of %lu bytes for new path list.", (unsigned long) sizeof(*paths) * (resolvedPathCount+1));
-
-            uint n = 0;
-            for(uri_s** uriIt = uriList; *uriIt; ++uriIt)
-            {
-                de::Uri& uri = reinterpret_cast<de::Uri&>(**uriIt);
-                // Ignore incomplete paths.
-                ddstring_t* resolvedPath = uri.resolved();
-                if(!resolvedPath) continue;
-
-                paths[n++] = resolvedPath;
-            }
-            paths[n] = NULL; // Terminate.
-        }
-
-        F_DestroyUriList(uriList);
-    }
-
-    if(count) *count = resolvedPathCount;
-    return paths;
-}
-
-ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass,
-    ddstring_t const* pathList, size_t* count)
-{
-    return F_ResolvePathList2(defaultResourceClass, pathList, count, PATH_DELIMIT_CHAR);
-}
-
-void F_DestroyStringList(ddstring_t** list)
-{
-    if(!list) return;
-
-    for(ddstring_t** ptr = list; *ptr; ptr++)
-    {
-        Str_Delete(*ptr);
-    }
-    M_Free(list);
-}
-
-#if _DEBUG
-void F_PrintStringList(ddstring_t const** strings, size_t stringsCount)
-{
-    if(!strings || stringsCount == 0) return;
-
-    ddstring_t const** ptr = strings;
-    for(size_t i = 0; i < stringsCount && *ptr; ++i, ptr++)
-    {
-        Con_Printf("  \"%s\"\n", Str_Text(*ptr));
-    }
-}
-#endif
 
 uint F_FindResource5(resourceclass_t rclass, uri_s const** searchPaths,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
@@ -880,14 +778,14 @@ uint F_FindResource5(resourceclass_t rclass, uri_s const** searchPaths,
     return findResource(rclass, searchPaths, foundPath, flags, optionalSuffix);
 }
 
-uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* searchPaths,
+uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* nativeSearchPaths,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
 {
     errorIfNotInited("F_FindResourceStr3");
     if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
         Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
 
-    if(!searchPaths || Str_IsEmpty(searchPaths))
+    if(!nativeSearchPaths || Str_IsEmpty(nativeSearchPaths))
     {
 #if _DEBUG
         Con_Message("F_FindResource: Invalid (NULL) search path, returning not-found.\n");
@@ -895,7 +793,7 @@ uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* searchPaths,
         return 0;
     }
 
-    uri_s** list = F_CreateUriListStr(rclass, searchPaths);
+    uri_s** list = F_CreateUriListStr(rclass, nativeSearchPaths);
     if(!list) return 0;
 
     int result = findResource(rclass, (uri_s const**)list, foundPath, flags, optionalSuffix);
@@ -903,54 +801,54 @@ uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* searchPaths,
     return result;
 }
 
-uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* searchPaths,
+uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* nativeSearchPaths,
     ddstring_t* foundPath, int flags)
 {
-    return F_FindResourceStr4(rclass, searchPaths, foundPath, flags, NULL/*no optional suffix*/);
+    return F_FindResourceStr4(rclass, nativeSearchPaths, foundPath, flags, NULL/*no optional suffix*/);
 }
 
-uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* searchPath, ddstring_t* foundPath)
+uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* nativeSearchPath, ddstring_t* foundPath)
 {
-    return F_FindResourceStr3(rclass, searchPath, foundPath, RLF_DEFAULT);
+    return F_FindResourceStr3(rclass, nativeSearchPath, foundPath, RLF_DEFAULT);
 }
 
-uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* searchPath)
+uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* nativeSearchPath)
 {
-    return F_FindResourceStr2(rclass, searchPath, NULL/*no found path*/);
+    return F_FindResourceStr2(rclass, nativeSearchPath, NULL/*no found path*/);
 }
 
-uint F_FindResource4(resourceclass_t rclass, char const* _searchPaths,
+uint F_FindResource4(resourceclass_t rclass, char const* _nativeSearchPaths,
     ddstring_t* foundPath, int flags, char const* _optionalSuffix)
 {
-    ddstring_t searchPaths, optionalSuffix;
+    ddstring_t nativeSearchPaths, optionalSuffix;
     bool hasOptionalSuffix = false;
     uint result;
-    Str_Init(&searchPaths); Str_Set(&searchPaths, _searchPaths);
+    Str_Init(&nativeSearchPaths); Str_Set(&nativeSearchPaths, _nativeSearchPaths);
     if(_optionalSuffix && _optionalSuffix[0])
     {
         Str_Init(&optionalSuffix); Str_Set(&optionalSuffix, _optionalSuffix);
         hasOptionalSuffix = true;
     }
-    result = F_FindResourceStr4(rclass, &searchPaths, foundPath, flags, hasOptionalSuffix? &optionalSuffix : NULL);
+    result = F_FindResourceStr4(rclass, &nativeSearchPaths, foundPath, flags, hasOptionalSuffix? &optionalSuffix : NULL);
     if(hasOptionalSuffix)
         Str_Free(&optionalSuffix);
-    Str_Free(&searchPaths);
+    Str_Free(&nativeSearchPaths);
     return result;
 }
 
-uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags)
+uint F_FindResource3(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags)
 {
-    return F_FindResource4(rclass, searchPaths, foundPath, flags, NULL/*no optional suffix*/);
+    return F_FindResource4(rclass, nativeSearchPaths, foundPath, flags, NULL/*no optional suffix*/);
 }
 
-uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath)
+uint F_FindResource2(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath)
 {
-    return F_FindResource3(rclass, searchPaths, foundPath, RLF_DEFAULT);
+    return F_FindResource3(rclass, nativeSearchPaths, foundPath, RLF_DEFAULT);
 }
 
-uint F_FindResource(resourceclass_t rclass, char const* searchPaths)
+uint F_FindResource(resourceclass_t rclass, char const* nativeSearchPaths)
 {
-    return F_FindResource2(rclass, searchPaths, NULL/*no found path*/);
+    return F_FindResource2(rclass, nativeSearchPaths, NULL/*no found path*/);
 }
 
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
