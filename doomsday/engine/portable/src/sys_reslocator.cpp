@@ -32,6 +32,7 @@
 #include "resourcerecord.h"
 #include "resourcenamespace.h"
 
+#include <de/NativePath>
 #include <de/c_wrapper.h>
 #include <de/memory.h>
 
@@ -586,10 +587,9 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
         {
-            char const* path = CommandLine_NextAsPath();
+            String path = QDir::fromNativeSeparators(NativePath(CommandLine_NextAsPath()).expand());
 
-            QByteArray path2 = String("%1$(Game.IdentityKey)/").arg(path).toUtf8();
-            de::Uri uri2 = de::Uri(path2.constData(), RC_NULL);
+            de::Uri uri2 = de::Uri(path / "$(Game.IdentityKey)/", RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri2, def->searchPathFlags);
 
             de::Uri uri = de::Uri(path, RC_NULL);
@@ -598,7 +598,8 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
-            de::Uri uri = de::Uri(CommandLine_NextAsPath(), RC_NULL);
+            String path = QDir::fromNativeSeparators(NativePath(CommandLine_NextAsPath()).expand());
+            de::Uri uri = de::Uri(path, RC_NULL);
             rnamespace->addSearchPath(ResourceNamespace::FallbackPaths, uri, def->searchPathFlags);
         }
     }

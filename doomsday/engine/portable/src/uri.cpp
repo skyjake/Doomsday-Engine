@@ -208,12 +208,13 @@ parseEnded:
     }
 };
 
-Uri::Uri(char const* path, resourceclass_t defaultResourceClass)
+Uri::Uri(String path, resourceclass_t defaultResourceClass)
 {
     d = new Instance();
-    if(path)
+    if(!path.isEmpty())
     {
-        setUri(path, defaultResourceClass);
+        QByteArray pathUtf8 = path.toUtf8();
+        setUri(pathUtf8.constData(), defaultResourceClass);
     }
 }
 

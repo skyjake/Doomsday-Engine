@@ -303,8 +303,7 @@ Uri PathTree::Node::composeUri(QChar delimiter) const
     LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
-    QByteArray pathUtf8 = parm.composedPath.toUtf8();
-    return Uri(pathUtf8.constData(), RC_NULL);
+    return Uri(parm.composedPath, RC_NULL);
 }
 
 } // namespace de

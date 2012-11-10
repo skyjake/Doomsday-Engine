@@ -297,8 +297,8 @@ static int findAllGameDataPaths(FS1::PathList& found)
     int const numFoundSoFar = found.count();
     for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
     {
-        QByteArray pattern = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]).toUtf8();
-        ddstring_t* resolvedPattern = de::Uri(pattern.constData(), RC_NULL).resolved();
+        String pattern = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.%1").arg(extensions[extIdx]);
+        ddstring_t* resolvedPattern = de::Uri(pattern, RC_NULL).resolved();
         if(resolvedPattern)
         {
             App_FileSystem()->findAllPaths(Str_Text(resolvedPattern), 0, found);

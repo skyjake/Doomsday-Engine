@@ -1030,8 +1030,7 @@ static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
     }
 
     // Resolve all symbolic references in the path.
-    QByteArray pathUtf8 = path.toUtf8();
-    Uri pathUri = Uri(pathUtf8.constData(), RC_NULL);
+    Uri pathUri = Uri(path, RC_NULL);
     if(ddstring_t const* resolvedPath = pathUri.resolvedConst())
     {
         Str_Copy(dest, resolvedPath);

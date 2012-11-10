@@ -97,7 +97,7 @@ namespace de
          *      is not @c RC_NULL, ask the resource locator whether it knows of an
          *      appropriate default scheme for this class of resource.
          */
-        Uri(char const* path, resourceclass_t defaultResourceClass = RC_UNKNOWN);
+        Uri(String path, resourceclass_t defaultResourceClass = RC_UNKNOWN);
 
         /**
          * Constructs a Uri instance by duplicating @a other.
