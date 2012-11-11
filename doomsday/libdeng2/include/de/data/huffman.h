@@ -41,7 +41,7 @@ Block huffmanEncode(const Block& data);
 
 /**
  * Decodes the coded message using the Huffman tree.
- * @param data  Block of Huffman-coded data.
+ * @param codedData  Block of Huffman-coded data.
  *
  * @return Decoded block of data.
  */
