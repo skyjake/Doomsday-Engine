@@ -241,7 +241,7 @@ Normal wall textures and flats can be replaced with PNG, JPG, TGA (Truevision
 Targa), or PCX (Zsoft Paintbrush) images. The engine currently supports these
 image formats:
 
-@table{40 20 20 20}{
+@table{40 15 15 15 15}{
 	@header{Pixel size} @tab @header{PCX} @tab @header{PNG} @tab @header{JPG} @tab @header{TGA}
 	@row{single}
 	8-bit (paletted)*      @tab Yes @tab Yes @tab -   @tab -     @row
