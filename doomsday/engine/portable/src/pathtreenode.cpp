@@ -173,7 +173,7 @@ int PathTree::Node::comparePath(de::Uri& searchPattern, int flags) const
         PathTree::Node const* node = this;
         for(int i = 0; i < pathNodeCount; ++i)
         {
-            bool const snameIsWild = !!snode->toString().compare("*");
+            bool const snameIsWild = !snode->toString().compare("*");
             if(!snameIsWild)
             {
                 // If the hashes don't match it can't possibly be this.
