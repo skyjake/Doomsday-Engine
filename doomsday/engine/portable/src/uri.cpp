@@ -24,26 +24,74 @@
  */
 
 #include "de_base.h"
-#include "fs_util.h"
 #include "game.h"
 #include "resourcenamespace.h"
 #include "sys_reslocator.h"
+
+#include <QDebug>
 
 #include <de/Error>
 #include <de/Log>
 #include <de/NativePath>
 #include <de/String>
+#include "de/unittest.h"
 
 #include "uri.h"
+
+/// Size of the fixed-size path node buffer.
+#define PATHNODEBUFFER_SIZE         24
 
 extern de::ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 namespace de {
 
+Uri::PathNode* Uri::PathNode::parent() const
+{
+    return parent_;
+}
+
+ushort Uri::PathNode::hash()
+{
+    // Is it time to compute the hash?
+    if(!haveHash)
+    {
+        size_t len = (to - from) + 1;
+        hash_ = de::Uri::hashPathNodeName(from, len);
+        haveHash = true;
+    }
+    return hash_;
+}
+
+int Uri::PathNode::length() const
+{
+    if(!qstrcmp(to, "") && !qstrcmp(from, ""))
+        return 0;
+    return (to - from) + 1;
+}
+
+String Uri::PathNode::toString() const
+{
+    return String(from, length());
+}
+
 struct Uri::Instance
 {
-    ddstring_t scheme;
-    ddstring_t path;
+    /// Total number of nodes in the path.
+    int pathNodeCount;
+
+    /// Head of the linked list of "extra" path nodes, in reverse order.
+    Uri::PathNode* extraPathNodes;
+
+    /**
+     * Node map of the path. The map is composed of two components; the first
+     * PATHNODEBUFFER_SIZE elements are placed into a fixed-size buffer which
+     * is allocated along with *this* instance. Additional nodes are allocated
+     * dynamically and linked in the @ref extraPathNodes list.
+     *
+     * This optimized representation should mean that the majority of paths
+     * can be represented without dynamically allocating memory from the heap.
+     */
+    Uri::PathNode pathNodeBuffer[PATHNODEBUFFER_SIZE];
 
     /// Cached copy of the resolved Uri.
     String resolved;
@@ -52,17 +100,137 @@ struct Uri::Instance
     /// conditions here that result in different results for resolveUri().
     void* resolvedForGame;
 
+    ddstring_t scheme;
+    ddstring_t path;
+
     Instance()
+        : pathNodeCount(-1), extraPathNodes(0), resolved(), resolvedForGame(0)
     {
         Str_InitStd(&scheme);
         Str_InitStd(&path);
-        resolvedForGame = 0;
+        memset(pathNodeBuffer, 0, sizeof(pathNodeBuffer));
     }
 
     ~Instance()
     {
+        clearPathMap();
         Str_Free(&scheme);
         Str_Free(&path);
+    }
+
+    /// @return  @c true iff @a node comes from the "static" buffer.
+    inline bool isStaticPathNode(Uri::PathNode const& node)
+    {
+        return &node >= pathNodeBuffer &&
+               &node < (pathNodeBuffer + sizeof(*pathNodeBuffer) * PATHNODEBUFFER_SIZE);
+    }
+
+    /**
+     * Return the path name map to an empty state.
+     *
+     * @post The map will need to be rebuilt with @ref mapPath().
+     */
+    void clearPathMap()
+    {
+        while(extraPathNodes)
+        {
+            Uri::PathNode* next = extraPathNodes->parent();
+            delete extraPathNodes; extraPathNodes = next;
+        }
+        memset(pathNodeBuffer, 0, sizeof(pathNodeBuffer));
+        pathNodeCount = -1;
+    }
+
+    /**
+     * Allocate another path node, from either the "static" buffer if one is
+     * available or dynamically from the heap.
+     *
+     * @see isStaticPathNode() to determine if the node is "static".
+     *
+     * @return  New path node.
+     */
+    Uri::PathNode* allocPathNode()
+    {
+        Uri::PathNode* node;
+        if(pathNodeCount < PATHNODEBUFFER_SIZE)
+        {
+            node = pathNodeBuffer + pathNodeCount;
+        }
+        else
+        {
+            // Allocate an "extra" node.
+            node = new Uri::PathNode();
+        }
+
+        // There is now one more node in the path map.
+        pathNodeCount += 1;
+
+        return node;
+    }
+
+    /**
+     * Build the path name map.
+     */
+    void mapPath()
+    {
+        // Already been here?
+        if(pathNodeCount >= 0) return;
+
+        pathNodeCount = 0;
+        extraPathNodes = 0;
+
+        //if(Str_IsEmpty(&path)) return;
+
+        char const* nameBegin = Str_Text(&path);
+        char const* nameEnd = nameBegin + Str_Length(&path) - 1;
+
+        // Skip over any trailing delimiters.
+        for(int i = Str_Length(&path); *nameEnd && *nameEnd == '/' && i-- > 0; nameEnd--)
+        {}
+
+        // Scan the path hierarchy for node names, in reverse order.
+        Uri::PathNode* node;
+        char const* from;
+        forever
+        {
+            // Find the start of the next name.
+            for(from = nameEnd; from > nameBegin && !(*from == '/'); from--)
+            {}
+
+            Uri::PathNode* newNode = allocPathNode();
+
+            // "extra" nodes are linked to the tail of the extraPathNodes list.
+            if(!isStaticPathNode(*newNode))
+            {
+                if(!extraPathNodes)
+                {
+                    extraPathNodes = newNode;
+                }
+                else
+                {
+                    node->parent_ = extraPathNodes;
+                }
+            }
+
+            node = newNode;
+
+            node->from = (*from == '/'? from + 1 : from);
+            node->to   = nameEnd;
+
+            // Are there no more parent directories?
+            if(from == nameBegin) break;
+
+            // So far so good. Move one directory level upwards.
+            // The next name ends here.
+            nameEnd = from-1;
+        }
+
+        // Deal with the special case of a Unix style zero-length root name.
+        if(*nameBegin == '/')
+        {
+            node = allocPathNode();
+            node->from = node->to = "";
+        }
     }
 
     void clearCachedResolved()
@@ -202,12 +370,12 @@ struct Uri::Instance
     }
 };
 
-Uri::Uri(String path, resourceclass_t defaultResourceClass)
+Uri::Uri(String path, resourceclass_t defaultResourceClass, QChar delimiter)
 {
     d = new Instance();
     if(!path.isEmpty())
     {
-        setUri(path, defaultResourceClass);
+        setUri(path, defaultResourceClass, delimiter);
     }
 }
 
@@ -219,10 +387,10 @@ Uri::Uri()
 Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
 {
     d = new Instance();
-    Str_Copy(&d->scheme, other.scheme());
-    Str_Copy(&d->path,   other.path());
     d->resolved = other.d->resolved;
     d->resolvedForGame = other.d->resolvedForGame;
+    Str_Copy(&d->scheme, other.scheme());
+    Str_Copy(&d->path,   other.path());
 }
 
 Uri* Uri::fromReader(struct reader_s& reader)
@@ -235,6 +403,60 @@ Uri* Uri::fromReader(struct reader_s& reader)
 Uri::~Uri()
 {
     delete d;
+}
+
+int Uri::pathNodeCount() const
+{
+    d->mapPath();
+    return d->pathNodeCount;
+}
+
+Uri::PathNode& Uri::pathNode(int index) const
+{
+    d->mapPath();
+
+    if(index < 0 || index >= d->pathNodeCount)
+    {
+        /// @throw NotPathNodeError  Attempt to reference a nonexistent fragment.
+        throw NotPathNodeError("Uri::fragment", String("Index #%1 references a nonexistent fragment").arg(index));
+    }
+
+    // Is this in the static buffer?
+    if(index < PATHNODEBUFFER_SIZE)
+    {
+        return d->pathNodeBuffer[index];
+    }
+
+    // No - an extra fragment.
+    DENG_ASSERT(d->extraPathNodes);
+    Uri::PathNode* fragment = d->extraPathNodes;
+    int n = PATHNODEBUFFER_SIZE;
+    while(n++ < index)
+    {
+        fragment = fragment->parent();
+    }
+    DENG_ASSERT(fragment);
+    return *fragment;
+}
+
+ushort Uri::hashPathNodeName(char const* fragment, int len)
+{
+    DENG2_ASSERT(fragment);
+
+    // Compose the hash key.
+    char const* c = fragment + len - 1;
+    ushort key = 0;
+    int op = 0;
+    for(int i = 0; i < len && c >= fragment && *c; ++i, c--)
+    {
+        switch(op)
+        {
+        case 0: key ^= tolower(*c); ++op;   break;
+        case 1: key *= tolower(*c); ++op;   break;
+        case 2: key -= tolower(*c);   op=0; break;
+        }
+    }
+    return key % URI_PATHNODE_NAMEHASH_SIZE;
 }
 
 Uri& Uri::operator = (Uri other)
@@ -277,15 +499,18 @@ bool Uri::operator != (Uri const& other) const
 
 void swap(Uri& first, Uri& second)
 {
-    /// @todo Is it valid to std::swap a ddstring_t ?
-    std::swap(first.d->scheme,          second.d->scheme);
-    std::swap(first.d->path,            second.d->path);
+    std::swap(first.d->pathNodeCount,   second.d->pathNodeCount);
+    std::swap(first.d->extraPathNodes,  second.d->extraPathNodes);
+    //std::swap(first.d->pathNodeBuffer,  second.d->pathNodeBuffer);
 #ifdef DENG2_QT_4_8_OR_NEWER
     first.d->resolved.swap(second.d->resolved);
 #else
     std::swap(first.d->resolved,        second.d->resolved);
 #endif
     std::swap(first.d->resolvedForGame, second.d->resolvedForGame);
+    /// @todo Is it valid to std::swap a ddstring_t ?
+    std::swap(first.d->scheme,          second.d->scheme);
+    std::swap(first.d->path,            second.d->path);
 }
 
 Uri& Uri::clear()
@@ -293,6 +518,7 @@ Uri& Uri::clear()
     Str_Clear(&d->scheme);
     Str_Clear(&d->path);
     d->clearCachedResolved();
+    d->clearPathMap();
     return *this;
 }
 
@@ -336,32 +562,53 @@ Uri& Uri::setScheme(String newScheme)
     return *this;
 }
 
-Uri& Uri::setPath(String newPath)
+Uri& Uri::setPath(String newPath, QChar delimiter)
 {
+    if(delimiter != '/')
+    {
+        newPath = newPath.replace(delimiter, QString("/"), Qt::CaseInsensitive);
+    }
     QByteArray newPathUtf8 = newPath.toUtf8();
     Str_Set(&d->path, newPathUtf8.constData());
     d->clearCachedResolved();
+    d->clearPathMap();
     return *this;
 }
 
-Uri& Uri::setUri(String rawUri, resourceclass_t defaultResourceClass)
+Uri& Uri::setUri(String rawUri, resourceclass_t defaultResourceClass, QChar delimiter)
 {
     LOG_AS("Uri::setUri");
+
+    if(delimiter != '/')
+    {
+        rawUri = rawUri.replace(delimiter, QString("/"), Qt::CaseInsensitive);
+    }
+
     QByteArray rawUriUtf8 = rawUri.toUtf8();
     Str_Set(&d->path, rawUriUtf8.constData());
     Str_Strip(&d->path);
     d->parseScheme(defaultResourceClass);
     d->clearCachedResolved();
+    d->clearPathMap();
     return *this;
 }
 
-String Uri::compose() const
+String Uri::compose(QChar delimiter) const
 {
+    String result;
     if(!Str_IsEmpty(&d->scheme))
     {
-        return String(Str_Text(&d->scheme)) + ":" + String(Str_Text(&d->path));
+        result += String(Str_Text(&d->scheme)) + ":" + String(Str_Text(&d->path));
     }
-    return String(Str_Text(&d->path));
+    else
+    {
+        result += String(Str_Text(&d->path));
+    }
+    if(delimiter != '/')
+    {
+        result = result.replace('/', delimiter, Qt::CaseInsensitive);
+    }
+    return result;
 }
 
 String Uri::asText() const
@@ -398,6 +645,8 @@ void Uri::write(writer_s& writer, int omitComponents) const
 
 Uri& Uri::read(reader_s& reader, String defaultScheme)
 {
+    clear();
+
     Str_Read(&d->scheme, &reader);
     Str_Read(&d->path,   &reader);
     if(Str_IsEmpty(&d->scheme) && !defaultScheme.isEmpty())
@@ -422,6 +671,83 @@ void Uri::debugPrint(int indent, int flags, String unresolvedText) const
                                                                 NativePath(d->resolved).pretty() : NativePath(d->resolved))
                                                        : "");
 }
+
+#if 0 //#ifdef _DEBUG
+LIBDENG_DEFINE_UNITTEST(Uri)
+{
+    try
+    {
+        Uri::PathNode const* fragment;
+        int len;
+
+        // Test a zero-length path.
+        {
+        Uri u = Uri("", RC_NULL);
+        DENG_ASSERT(u.pathNodeCount() == 0);
+        }
+
+        // Test a Windows style path with a drive plus file path.
+        {
+        Uri u = Uri("c:/something.ext", RC_NULL);
+        DENG_ASSERT(u.pathNodeCount() == 2);
+
+        fragment = u.pathNode(0);
+        len = fragment->to - fragment->from;
+        DENG_ASSERT(len == 12);
+        DENG_ASSERT(!qstrncmp(fragment->from, "something.ext", len+1));
+
+        fragment = u.pathNode(1);
+        len = fragment->to - fragment->from;
+        DENG_ASSERT(len == 1);
+        DENG_ASSERT(!qstrncmp(fragment->from, "c:", len+1));
+        }
+
+        // Test a Unix style path with a zero-length root node name.
+        {
+        Uri u = Uri("/something.ext", RC_NULL);
+        DENG_ASSERT(u.pathNodeCount() == 2);
+
+        fragment = u.pathNode(0);
+        len = fragment->to - fragment->from;
+        DENG_ASSERT(len == 12);
+        DENG_ASSERT(!qstrncmp(fragment->from, "something.ext", len+1));
+
+        fragment = u.pathNode(1);
+        len = fragment->to - fragment->from;
+        DENG_ASSERT(len == 0);
+        DENG_ASSERT(!qstrncmp(fragment->from, "", len));
+        }
+
+        // Test a relative directory.
+        {
+        Uri u = Uri("some/dir/structure/", RC_NULL);
+        DENG_ASSERT(u.pathNodeCount() == 3);
+
+        fragment = u.pathNode(0);
+        len = fragment->to - fragment->from;
+        DENG_ASSERT(len == 8);
+        DENG_ASSERT(!qstrncmp(fragment->from, "structure", len+1));
+
+        fragment = u.pathNode(1);
+        len = fragment->to - fragment->from;
+        DENG_ASSERT(len == 2);
+        DENG_ASSERT(!qstrncmp(fragment->from, "dir", len+1));
+
+        fragment = u.pathNode(2);
+        len = fragment->to - fragment->from;
+        DENG_ASSERT(len == 3);
+        DENG_ASSERT(!qstrncmp(fragment->from, "some", len+1));
+        }
+    }
+    catch(Error const& er)
+    {
+        qWarning() << er.asText();
+    }
+}
+
+LIBDENG_RUN_UNITTEST(Uri)
+
+#endif
 
 } // namespace de
 

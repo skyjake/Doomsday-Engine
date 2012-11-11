@@ -268,7 +268,6 @@ DENG_HEADERS += \
     portable/include/p_polyobjs.h \
     portable/include/p_sight.h \
     portable/include/p_ticker.h \
-    portable/include/pathmap.h \
     portable/include/pathtree.h \
     portable/include/plane.h \
     portable/include/polyobj.h \
@@ -555,7 +554,6 @@ SOURCES += \
     portable/src/p_sight.c \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
-    portable/src/pathmap.cpp \
     portable/src/pathtree.cpp \
     portable/src/pathtreenode.cpp \
     portable/src/plane.c \

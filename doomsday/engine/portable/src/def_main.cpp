@@ -720,10 +720,12 @@ static void Def_InitTextDef(ddtext_t* txt, char const* str)
 
 void Def_ReadProcessDED(char const* fileName)
 {
+    LOG_AS("Def_ReadProcessDED");
+
     if(!fileName || !fileName[0]) return;
 
     if(!App_FileSystem()->checkFileId(fileName))
-        Con_Message("Warning: Def_ReadProcessDED \"%s\" not found!\n", fileName);
+        LOG_WARNING("\"%s\" not found!") << de::NativePath(fileName).pretty();
 
     if(!DED_Read(&defs, fileName))
     {

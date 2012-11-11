@@ -73,11 +73,11 @@ struct PathTree::Instance
     }
 
     /**
-     * @return  [ a new | the ] directory node that matches the name and type and
-     * which has the specified parent node.
+     * @return  [ a new | the ] directory node that matches the name
+     * and type and which has the specified parent node.
      */
-    PathTree::Node* direcNode(PathTree::Node* parent, PathTree::NodeType nodeType,
-        String fragment, QChar delimiter)
+    PathTree::Node* direcNode(String fragment, PathTree::NodeType nodeType,
+        PathTree::Node* parent)
     {
         // Have we already encountered this?
         PathTree::FragmentId fragmentId = fragments.isInterned(fragment);
@@ -106,7 +106,7 @@ struct PathTree::Instance
         if(!fragmentId)
         {
             QByteArray fragmentUtf8 = fragment.toUtf8();
-            hash = hashPathFragment(fragmentUtf8.constData(), fragmentUtf8.length(), delimiter.toLatin1());
+            hash = Uri::hashPathNodeName(fragmentUtf8.constData(), fragmentUtf8.length());
             fragmentId = internFragmentAndUpdateIdHashMap(fragment, hash);
         }
         else
@@ -143,13 +143,13 @@ struct PathTree::Instance
         QStringList parts = path.split(delimiter);
         for(int i = 0; i < parts.count() - 1; ++i)
         {
-            node = direcNode(parent, PathTree::Branch, parts[i], delimiter);
+            node = direcNode(parts[i], PathTree::Branch, parent);
             parent = node;
         }
 
         if(!parts.last().isEmpty())
         {
-            node = direcNode(parent, PathTree::Leaf, parts.last(), delimiter);
+            node = direcNode(parts.last(), PathTree::Leaf, parent);
         }
         return node;
     }
@@ -172,30 +172,6 @@ struct PathTree::Instance
         ph.clear();
     }
 };
-
-ushort PathTree::hashPathFragment(const char* fragment, size_t len, char delimiter)
-{
-    ushort key = 0;
-
-    DENG2_ASSERT(fragment);
-
-    // Skip over any trailing delimiters.
-    const char* c = fragment + len - 1;
-    while(c >= fragment && *c && *c == delimiter) c--;
-
-    // Compose the hash.
-    int op = 0;
-    for(; c >= fragment && *c && *c != delimiter; c--)
-    {
-        switch(op)
-        {
-        case 0: key ^= tolower(*c); ++op;   break;
-        case 1: key *= tolower(*c); ++op;   break;
-        case 2: key -= tolower(*c);   op=0; break;
-        }
-    }
-    return key % PATHTREE_PATHHASH_SIZE;
-}
 
 PathTree::Node* PathTree::insert(String path, QChar delimiter)
 {
@@ -247,10 +223,9 @@ PathTree::Node& PathTree::find(int flags, String searchPath, QChar delimiter)
     Node* foundNode = NULL;
     if(!searchPath.isEmpty() && d->size)
     {
-        QByteArray searchPathUtf8 = searchPath.toUtf8();
-        PathMap mappedSearchPath = PathMap(hashPathFragment, searchPathUtf8.constData(), delimiter.toLatin1());
+        de::Uri mappedSearchPath = de::Uri(searchPath, RC_NULL, delimiter.toLatin1());
 
-        ushort hash = PathMap_Fragment(&mappedSearchPath, 0)->hash;
+        ushort hash = mappedSearchPath.pathNode(0).hash();
         if(!(flags & PCF_NO_LEAF))
         {
             Nodes& nodes = d->leafHash;
@@ -333,9 +308,9 @@ static int iteratePathsInHash(PathTree& pathTree, ushort hash, PathTree::NodeTyp
 {
     int result = 0;
 
-    if(hash != PATHTREE_NOHASH && hash >= PATHTREE_PATHHASH_SIZE)
+    if(hash != PATHTREE_NOHASH && hash >= URI_PATHNODE_NAMEHASH_SIZE)
     {
-        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1 (valid range is [0..%2]).").arg(hash).arg(PATHTREE_PATHHASH_SIZE-1));
+        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1 (valid range is [0..%2]).").arg(hash).arg(URI_PATHNODE_NAMEHASH_SIZE-1));
     }
 
     PathTree::Nodes const& nodes = pathTree.nodes(type);
@@ -369,7 +344,7 @@ static int iteratePathsInHash(PathTree& pathTree, ushort hash, PathTree::NodeTyp
     return result;
 }
 
-int PathTree::iterate(int flags, PathTree::Node* parent, ushort hash,
+int PathTree::traverse(int flags, PathTree::Node* parent, ushort hash,
     int (*callback) (PathTree::Node&, void*), void* parameters)
 {
     int result = 0;
@@ -416,7 +391,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
         float mean = (signed)sum / total;
         variance = ((signed)sumSqr - (signed)sum * mean) / (((signed)total)-1);
 
-        coverage  = 100 / (float)PATHTREE_PATHHASH_SIZE * (PATHTREE_PATHHASH_SIZE - numEmpty);
+        coverage  = 100 / (float)URI_PATHNODE_NAMEHASH_SIZE * (URI_PATHNODE_NAMEHASH_SIZE - numEmpty);
         collision = 100 / (float) total * numCollisions;
     }
     else
@@ -427,7 +402,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     const int* col = colWidths;
     Con_Printf("%*s ",    *col++, name);
     Con_Printf("%*lu ",   *col++, (unsigned long)total);
-    Con_Printf("%*lu",    *col++, PATHTREE_PATHHASH_SIZE - (unsigned long)numEmpty);
+    Con_Printf("%*lu",    *col++, URI_PATHNODE_NAMEHASH_SIZE - (unsigned long)numEmpty);
     Con_Printf(":%-*lu ", *col++, (unsigned long)numEmpty);
     Con_Printf("%*lu ",   *col++, (unsigned long)maxCollisions);
     Con_Printf("%*lu ",   *col++, (unsigned long)numCollisions);
@@ -557,7 +532,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     if(0 == total) return;
 
     // Calculate minimum field widths:
-    hashIndexDigits = M_NumDigits(PATHTREE_PATHHASH_SIZE);
+    hashIndexDigits = M_NumDigits(URI_PATHNODE_NAMEHASH_SIZE);
     col = 0;
     if(size != 0)
         colWidths[col] = 2/*braces*/+hashIndexDigits*2+3/*elipses*/;
@@ -597,10 +572,10 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     Con_Printf("\n");
     Con_PrintRuler();
 
-    { ushort from = 0, n = 0, range = (size != 0? PATHTREE_PATHHASH_SIZE / size: 0);
+    { ushort from = 0, n = 0, range = (size != 0? URI_PATHNODE_NAMEHASH_SIZE / size: 0);
     memset(nodeCount, 0, sizeof(nodeCount));
 
-    for(ushort i = 0; i < PATHTREE_PATHHASH_SIZE; ++i)
+    for(ushort i = 0; i < URI_PATHNODE_NAMEHASH_SIZE; ++i)
     {
         pathtree_pathhash_t** phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
@@ -613,7 +588,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
         for(node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PT_LEAF];
 
-        if(size != 0 && (++n != range && i != PATHTREE_PATHHASH_SIZE-1))
+        if(size != 0 && (++n != range && i != URI_PATHNODE_NAMEHASH_SIZE-1))
             continue;
 
         totalForRange = 0;
@@ -714,7 +689,7 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
     memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
     memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
 
-    for(ushort i = 0; i < PATHTREE_PATHHASH_SIZE; ++i)
+    for(ushort i = 0; i < URI_PATHNODE_NAMEHASH_SIZE; ++i)
     {
         pathtree_pathhash_t** phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);

@@ -35,7 +35,6 @@
 #include <de/Error>
 #include <de/String>
 #include <de/str.h>
-#include "pathmap.h"
 #include "uri.h"
 
 /**
@@ -51,19 +50,16 @@
                                      (i.e., relative) matches. */
 ///@}
 
-// Number of buckets in the hash table.
-#define PATHTREE_PATHHASH_SIZE          512
-
-/// Identifier used with the search and iteration algorithms in place of a
-/// hash when the caller does not wish to narrow the set of considered nodes.
-#define PATHTREE_NOHASH                 PATHTREE_PATHHASH_SIZE
-
 /**
  * @defgroup pathTreeFlags  Path Tree Flags
  */
 ///@{
 #define PATHTREE_MULTI_LEAF 0x1 ///< There can be more than one leaf with a given name.
 ///@}
+
+/// Identifier used with the search and iteration algorithms in place of a
+/// hash when the caller does not wish to narrow the set of considered nodes.
+#define PATHTREE_NOHASH                 URI_PATHNODE_NAMEHASH_SIZE
 
 namespace de
 {
@@ -107,14 +103,6 @@ namespace de
 
         /// @return  Print-ready name for node @a type.
         static String const& nodeTypeName(NodeType type);
-
-        /**
-         * This is a hash function. It uses the path fragment string to generate a
-         * somewhat-random number between @c 0 and @c PATHTREE_PATHHASH_SIZE
-         *
-         * @return  The generated hash key.
-         */
-        static ushort hashPathFragment(char const* fragment, size_t len, char delimiter = '/');
 
 #if _DEBUG
         static void debugPrint(PathTree& pathtree, QChar delimiter = '/');
@@ -164,7 +152,7 @@ namespace de
              *       allow for further optimizations elsewhere (in the file system
              *       for example) -ds
              */
-            int comparePath(PathMap& candidatePath, int flags) const;
+            int comparePath(de::Uri& candidatePath, int flags) const;
 
             /**
              * Composes the URI for this node. 'Composing' the path of a node is to
@@ -289,21 +277,23 @@ namespace de
         int findAllPaths(FoundPaths& found, int flags = 0, QChar delimiter = '/');
 
         /**
-         * Iterate over nodes in the hierarchy making a callback for each. Iteration ends
-         * when all nodes have been visited or a callback returns non-zero.
+         * Traverse the node hierarchy making a callback for visited node. Traversal
+         * ends when all selected nodes have been visited or a callback returns a
+         * non-zero value.
          *
          * @param flags         @ref pathComparisonFlags
-         * @param parent        Parent node reference, used when restricting processing
-         *                      to the child nodes of this node. Only used when the flag
-         *                      PCF_MATCH_PARENT is set in @a flags.
-         * @param hash          If not @c PATHTREE_NOHASH only consider nodes whose hashed
-         *                      name matches this.
+         * @param parent        Used in combination with @a flags= PCF_MATCH_PARENT
+         *                      to limit the traversal to only the child nodes of
+         *                      this node.
+         * @param hash          If not @c PATHTREE_NOHASH only consider nodes whose
+         *                      hashed name matches this.
          * @param callback      Callback function ptr.
          * @param parameters    Passed to the callback.
          *
          * @return  @c 0 iff iteration completed wholly.
          */
-        int iterate(int flags, Node* parent, ushort hash, int (*callback) (Node& node, void* parameters), void* parameters = 0);
+        int traverse(int flags, Node* parent, ushort hash, int (*callback) (Node& node, void* parameters),
+                     void* parameters = 0);
 
         /**
          * Provides access to the nodes for efficent traversals.

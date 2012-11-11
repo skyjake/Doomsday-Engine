@@ -393,11 +393,9 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
     DENG_ASSERT(d->hashMap);
 
     // Perform the search.
-
-    int hash = PathTree::hashPathFragment(path, strlen(path)) % d->hashMap->size();
+    de::Uri searchPattern = de::Uri(path, RC_NULL);
+    ushort hash = searchPattern.pathNode(0).hash() % d->hashMap->size();
     if((*d->hashMap)[hash].head == -1) return -1;
-
-    PathMap searchPattern = PathMap(PathTree::hashPathFragment, path);
 
     for(int idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
     {

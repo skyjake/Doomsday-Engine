@@ -63,6 +63,9 @@
 #define DEFAULT_PRINTURIFLAGS (UPF_OUTPUT_RESOLVED|UPF_TRANSFORM_PATH_MAKEPRETTY)
 ///@}
 
+// Range of the fragment hash.
+#define URI_PATHNODE_NAMEHASH_SIZE    512
+
 #ifdef __cplusplus
 #ifndef DENG2_C_API_ONLY
 
@@ -83,7 +86,12 @@ namespace de
      */
     class Uri : public LogEntry::Arg::Base
     {
+        struct Instance; // needs to be friended by PathNode
+
     public:
+        /// A nonexistent path node was referenced. @ingroup errors
+        DENG2_ERROR(NotPathNodeError);
+
         /// Base class for resolve-related errors. @ingroup errors
         DENG2_ERROR(ResolveError);
 
@@ -92,6 +100,40 @@ namespace de
 
         /// An unresolveable symbol was encountered in the embedded expression. @ingroup errors
         DENG2_SUB_ERROR(ResolveError, ResolveSymbolError);
+
+        /**
+         * This is a hash function. It generates from @a name a somewhat-random
+         * number between @c 0 and @c URI_PATHNODE_NAMEHASH_SIZE
+         *
+         * @return  The generated hash key.
+         */
+        static ushort hashPathNodeName(char const* name, int len);
+
+        /**
+         * Path Node represents a name in the URI path hierarchy.
+         */
+        struct PathNode
+        {
+            /// @return Hash for this node's name.
+            ushort hash();
+
+            /// @return  Length of this node's name in characters.
+            int length() const;
+
+            /// @return Parent of this node else @c NULL.
+            PathNode* parent() const;
+
+            String toString() const;
+
+            friend class Uri;
+            friend struct Uri::Instance;
+
+        private:
+            bool haveHash;
+            ushort hash_;
+            char const* from, *to;
+            struct PathNode* parent_;
+        };
 
     public:
         /**
@@ -108,7 +150,7 @@ namespace de
          *      is not @c RC_NULL, ask the resource locator whether it knows of an
          *      appropriate default scheme for this class of resource.
          */
-        Uri(String path, resourceclass_t defaultResourceClass = RC_UNKNOWN);
+        Uri(String path, resourceclass_t defaultResourceClass = RC_UNKNOWN, QChar delimiter = '/');
 
         /**
          * Construct a Uri instance by duplicating @a other.
@@ -170,7 +212,7 @@ namespace de
         /**
          * Change the path to @a newPath.
          */
-        Uri& setPath(String newPath);
+        Uri& setPath(String newPath, QChar delimiter = '/');
 
         /**
          * Update this uri by parsing new values from the specified arguments.
@@ -181,7 +223,8 @@ namespace de
          *      is not @c RC_NULL, ask the resource locator whether it knows of an
          *      appropriate default scheme for this class of resource.
          */
-        Uri& setUri(String newUri, resourceclass_t defaultResourceClass = RC_UNKNOWN);
+        Uri& setUri(String newUri, resourceclass_t defaultResourceClass = RC_UNKNOWN,
+                    QChar delimiter = '/');
 
         /**
          * Compose from this uri a plain-text representation. Any internal encoding
@@ -190,7 +233,27 @@ namespace de
          *
          * @return  Plain-text String representation.
          */
-        String compose() const;
+        String compose(QChar delimiter = '/') const;
+
+        /// @return  Number of nodes in the path.
+        int pathNodeCount() const;
+
+        /**
+         * Retrieve the path node with index @a idx. Note that path nodes are indexed
+         * in reverse order (right to left) and NOT the autological left to right order.
+         *
+         * For example, if the path is "c:/mystuff/myaddon.addon" the corresponding
+         * path node map is arranged as follows:
+         * <pre>
+         *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
+         * </pre>
+         *
+         * @param index     Reverse-index of the path node to be retrieved. Note that
+         *                  index @c 0 is always valid.
+         *
+         * @return  Referenced path node.
+         */
+        PathNode& pathNode(int index) const;
 
         /**
          * Transform the uri into a human-friendly representation. Percent decoding done.
@@ -231,7 +294,6 @@ namespace de
                         String unresolvedText = "") const;
 
     private:
-        struct Instance;
         Instance* d;
     };
 

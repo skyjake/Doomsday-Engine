@@ -118,7 +118,8 @@ PathTree::Node& PathTree::Node::setUserValue(int value)
     return *this;
 }
 
-static int matchPathFragment(char const* string, char const* pattern)
+/// @todo This logic should be encapsulated in Uri/Uri::PathNode
+static int matchName(char const* string, char const* pattern)
 {
     char const* in = string, *st = pattern;
 
@@ -155,59 +156,62 @@ static int matchPathFragment(char const* string, char const* pattern)
     return *st == 0;
 }
 
-int PathTree::Node::comparePath(PathMap& searchPattern, int flags) const
+/// @todo This logic should be encapsulated in Uri/Uri::PathNode
+int PathTree::Node::comparePath(de::Uri& searchPattern, int flags) const
 {
     if(((flags & PCF_NO_LEAF)   && isLeaf()) ||
        ((flags & PCF_NO_BRANCH) && !isLeaf()))
         return 1;
 
-    PathMapFragment const* sfragment = PathMap_Fragment(&searchPattern, 0);
-    if(!sfragment) return 1; // Hmm...
-
-    // In reverse order, compare path fragments in the search term.
-    uint fragmentCount = PathMap_Size(&searchPattern);
-
-    PathTree::Node const* node = this;
-    for(uint i = 0; i < fragmentCount; ++i)
+    try
     {
-        if(!sfragment->isWild())
+        de::Uri::PathNode* snode = &searchPattern.pathNode(0);
+
+        // In reverse order, compare each path node in the search term.
+        int pathNodeCount = searchPattern.pathNodeCount();
+
+        PathTree::Node const* node = this;
+        for(int i = 0; i < pathNodeCount; ++i)
         {
-            // If the hashes don't match it can't possibly be this.
-            if(sfragment->hash != node->hash())
+            bool const snameIsWild = !!snode->toString().compare("*");
+            if(!snameIsWild)
+            {
+                // If the hashes don't match it can't possibly be this.
+                if(snode->hash() != node->hash())
+                {
+                    return 1;
+                }
+
+                // Compare the names.
+                /// @todo Optimize: conversion to string is unnecessary.
+                QByteArray name  = node->name().toUtf8();
+                QByteArray sname = snode->toString().toUtf8();
+
+                if(!matchName(name.constData(), sname.constData()))
+                {
+                    return 1;
+                }
+            }
+
+            // Have we arrived at the search target?
+            if(i == pathNodeCount - 1)
+            {
+                return !(!(flags & PCF_MATCH_FULL) || !node->parent());
+            }
+
+            // Is the hierarchy too shallow?
+            if(!node->parent())
             {
                 return 1;
             }
 
-            // Compare the path fragment to that of the search term.
-            /// @todo Optimize: copying sfragment is unnecessary.
-            char buf[256];
-            int sfragmentLength = sfragment->length();
-            qstrncpy(buf, sfragment->from, sfragmentLength + 1);
-
-            String const& fragment = node->name();
-            QByteArray fragmentUtf8 = fragment.toUtf8();
-            if(!matchPathFragment(fragmentUtf8.constData(), buf))
-            {
-                return 1;
-            }
+            // So far so good. Move one level up the hierarchy.
+            node  = node->parent();
+            snode = &searchPattern.pathNode(i + 1);
         }
-
-        // Have we arrived at the search target?
-        if(i == fragmentCount - 1)
-        {
-            return !(!(flags & PCF_MATCH_FULL) || !node->parent());
-        }
-
-        // Is the hierarchy too shallow?
-        if(!node->parent())
-        {
-            return 1;
-        }
-
-        // So far so good. Move one level up the hierarchy.
-        node = node->parent();
-        sfragment = PathMap_Fragment(&searchPattern, i + 1);
     }
+    catch(de::Uri::NotPathNodeError const&)
+    {} // Ignore this error.
 
     return 1;
 }

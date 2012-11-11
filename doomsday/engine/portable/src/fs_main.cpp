@@ -888,8 +888,8 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         searchPattern = basePath / searchPattern;
     }
 
+    de::Uri patternMap = de::Uri(searchPattern, RC_NULL);
     QByteArray searchPatternUtf8 = searchPattern.toUtf8();
-    PathMap patternMap = PathMap(PathTree::hashPathFragment, searchPatternUtf8.constData());
 
     /*
      * Check the Zip directory.

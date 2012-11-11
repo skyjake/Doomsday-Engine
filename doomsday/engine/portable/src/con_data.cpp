@@ -126,7 +126,7 @@ static int clearVariable(CVarDirectory::Node& node, void* parameters)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                cvarDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, markVariableUserDataFreed, ptr);
+                cvarDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, markVariableUserDataFreed, ptr);
                 M_Free(*ptr); *ptr = Str_Text(emptyStr);
                 break;
 
@@ -135,7 +135,7 @@ static int clearVariable(CVarDirectory::Node& node, void* parameters)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                cvarDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, markVariableUserDataFreed, ptr);
+                cvarDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, markVariableUserDataFreed, ptr);
                 Uri_Delete((Uri*)*ptr); *ptr = emptyUri;
                 break;
 
@@ -163,7 +163,7 @@ static void clearVariables(void)
 #endif
     if(!cvarDirectory) return;
 
-    cvarDirectory->iterate(flags, NULL, PATHTREE_NOHASH, clearVariable);
+    cvarDirectory->traverse(flags, NULL, PATHTREE_NOHASH, clearVariable);
     cvarDirectory->clear();
 }
 
@@ -358,7 +358,7 @@ static void updateKnownWords(void)
     countCVarParams.ignoreHidden = true;
     if(cvarDirectory)
     {
-        cvarDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &countCVarParams);
+        cvarDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &countCVarParams);
     }
 
     // Build the known words table.
@@ -385,7 +385,7 @@ static void updateKnownWords(void)
     if(0 != countCVarParams.count)
     {
         /// @note cvars are NOT sorted.
-        cvarDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, addVariableToKnownWords, &knownWordIdx);
+        cvarDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, addVariableToKnownWords, &knownWordIdx);
     }
 
     // Add aliases?
@@ -1761,14 +1761,14 @@ D_CMD(PrintVarStats)
         {
             p.count = 0;
             p.type = cvartype_t(i);
-            cvarDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &p);
+            cvarDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &p);
             Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(p.type)), p.count);
         }
         p.count = 0;
         p.type = cvartype_t(-1);
         p.hidden = true;
 
-        cvarDirectory->iterate(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &p);
+        cvarDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, countVariable, &p);
         numCVars = cvarDirectory->size();
         numCVarsHidden = p.count;
     }

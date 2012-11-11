@@ -70,9 +70,7 @@ de::FileHandle& File1::handle()
 
 de::Uri File1::composeUri(QChar delimiter) const
 {
-    de::Uri result = de::Uri(path_, RC_NULL);
-    if(delimiter != '/') throw Error("File1::composeUri", "Non '/' delimiter not yet implemented");
-    return result;
+    return de::Uri(path_, RC_NULL, delimiter);
 }
 
 uint File1::loadOrderIndex() const

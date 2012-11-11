@@ -201,8 +201,7 @@ static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
     if(rnamespace.findAll(searchPath, foundResources))
     {
         // There is at least one name-matched (perhaps partially) resource.
-        QByteArray searchPathUtf8 = searchPath.toUtf8();
-        PathMap searchPattern = PathMap(PathTree::hashPathFragment, searchPathUtf8.constData(), delimiter.toLatin1());
+        de::Uri searchPattern = de::Uri(searchPath, RC_NULL, delimiter.toLatin1());
 
         DENG2_FOR_EACH_CONST(ResourceNamespace::ResourceList, i, foundResources)
         {
