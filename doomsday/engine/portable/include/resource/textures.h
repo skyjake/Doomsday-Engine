@@ -48,9 +48,6 @@ typedef uint textureid_t;
 /// Special value used to signify an invalid texture id.
 #define NOTEXTUREID                 0
 
-/// Components within a Texture path hierarchy are delimited by this character.
-#define TEXTURES_PATH_DELIMITER     '/'
-
 enum texturenamespaceid_e; // Defined in dd_share.h
 struct texture_s;
 

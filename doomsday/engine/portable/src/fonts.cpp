@@ -143,7 +143,7 @@ static inline fontnamespaceid_t namespaceIdForDirectoryNode(FontRepository::Node
 static de::Uri composeUriForDirectoryNode(FontRepository::Node const& node)
 {
     Str const* namespaceName = Fonts_NamespaceName(namespaceIdForDirectoryNode(node));
-    return node.composeUri(FONTS_PATH_DELIMITER).setScheme(Str_Text(namespaceName));
+    return node.composeUri().setScheme(Str_Text(namespaceName));
 }
 
 /// @pre fontIdMap has been initialized and is large enough!
@@ -246,7 +246,7 @@ static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory,
 {
     try
     {
-        FontRepository::Node& node = directory.find(PCF_NO_BRANCH | PCF_MATCH_FULL, path, FONTS_PATH_DELIMITER);
+        FontRepository::Node& node = directory.find(PCF_NO_BRANCH | PCF_MATCH_FULL, path);
         return &node;
     }
     catch(FontRepository::NotFoundError const&)
@@ -808,7 +808,7 @@ fontid_t Fonts_Declare(Uri const* _uri, int uniqueId)//, const Uri* resourcePath
         fontnamespaceid_t namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
         FontNamespace& fn = namespaces[namespaceId - FONTNAMESPACE_FIRST];
 
-        node = fn.repository->insert(path, FONTS_PATH_DELIMITER);
+        node = fn.repository->insert(path);
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
@@ -1080,7 +1080,7 @@ AutoStr* Fonts_ComposePath(fontid_t id)
 #endif
         return AutoStr_NewStd();
     }
-    QByteArray path = node->composePath(FONTS_PATH_DELIMITER).toUtf8();
+    QByteArray path = node->composePath().toUtf8();
     return AutoStr_FromTextStd(path.constData());
 }
 
@@ -1277,7 +1277,6 @@ static void printFontOverview(FontRepository::Node& node, bool printNamespace)
  * is not hugely important right now.
  */
 typedef struct {
-    char delimiter;
     de::String like;
     int idx;
     FontRepository::Node** storage;
@@ -1289,7 +1288,7 @@ static int collectDirectoryNodeWorker(FontRepository::Node& node, void* paramete
 
     if(!p->like.isEmpty())
     {
-        de::String path = node.composePath(p->delimiter);
+        de::String path = node.composePath();
         if(!path.beginsWith(p->like, Qt::CaseInsensitive)) return 0; // Continue iteration.
     }
 
@@ -1322,7 +1321,6 @@ static FontRepository::Node** collectDirectoryNodes(fontnamespaceid_t namespaceI
     }
 
     collectdirectorynodeworker_params_t p;
-    p.delimiter = FONTS_PATH_DELIMITER;
     p.like = like;
     p.idx = 0;
     p.storage = storage;
@@ -1359,8 +1357,8 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     FontRepository::Node const& nodeA = **(FontRepository::Node const**)a;
     FontRepository::Node const& nodeB = **(FontRepository::Node const**)b;
-    QByteArray pathAUtf8 = nodeA.composePath(FONTS_PATH_DELIMITER).toUtf8();
-    QByteArray pathBUtf8 = nodeB.composePath(FONTS_PATH_DELIMITER).toUtf8();
+    QByteArray pathAUtf8 = nodeA.composePath().toUtf8();
+    QByteArray pathBUtf8 = nodeB.composePath().toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
     return qstricmp(Str_Text(pathA), Str_Text(pathB));
@@ -1538,7 +1536,7 @@ ddstring_t** Fonts_CollectNames(int* rCount)
         for(FontRepository::Node** iter = foundFonts; *iter; ++iter)
         {
             FontRepository::Node& node = **iter;
-            QByteArray path = node.composePath(FONTS_PATH_DELIMITER).toUtf8();
+            QByteArray path = node.composePath().toUtf8();
             list[idx++] = Str_Set(Str_NewStd(), path.constData());
         }
         list[idx] = NULL; // Terminate.
@@ -1630,7 +1628,7 @@ D_CMD(PrintFontStats)
         size = fontDirectory->size();
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Fonts_NamespaceName(fontnamespaceid_t(i))), size, size==1? "font":"fonts");
         FontRepository::debugPrintHashDistribution(*fontDirectory);
-        FontRepository::debugPrint(*fontDirectory, FONTS_PATH_DELIMITER);
+        FontRepository::debugPrint(*fontDirectory);
     }
     return true;
 }

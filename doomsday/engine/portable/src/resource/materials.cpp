@@ -264,7 +264,7 @@ static materialnamespaceid_t namespaceIdForDirectory(MaterialRepository& directo
 static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
     Str const* namespaceName = Materials_NamespaceName(namespaceIdForDirectory(node.tree()));
-    return node.composeUri(MATERIALS_PATH_DELIMITER).setScheme(Str_Text(namespaceName));
+    return node.composeUri().setScheme(Str_Text(namespaceName));
 }
 
 static MaterialAnim* getAnimGroup(int number)
@@ -463,7 +463,7 @@ static bool newMaterialBind(de::Uri const& uri, material_t* material)
     MaterialRepository::Node* node;
     MaterialBind* mb;
 
-    node = matDirectory.insert(de::String(Str_Text(uri.path())), MATERIALS_PATH_DELIMITER);
+    node = matDirectory.insert(Str_Text(uri.path()));
 
     // Is this a new binding?
     mb = reinterpret_cast<MaterialBind*>(node->userPointer());
@@ -801,7 +801,7 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 {
     try
     {
-        MaterialRepository::Node& node = matDirectory.find(PCF_NO_BRANCH | PCF_MATCH_FULL, path, MATERIALS_PATH_DELIMITER);
+        MaterialRepository::Node& node = matDirectory.find(PCF_NO_BRANCH | PCF_MATCH_FULL, path);
         return reinterpret_cast<MaterialBind*>(node.userPointer());
     }
     catch(MaterialRepository::NotFoundError const&)
@@ -893,7 +893,7 @@ AutoStr* Materials_ComposePath(materialid_t id)
     if(bind)
     {
         MaterialRepository::Node& node = bind->directoryNode();
-        QByteArray path = node.composePath(MATERIALS_PATH_DELIMITER).toUtf8();
+        QByteArray path = node.composePath().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
 
@@ -1494,7 +1494,6 @@ static void printMaterialOverview(material_t* mat, bool printNamespace)
 static MaterialRepository::Node** collectDirectoryNodes(materialnamespaceid_t namespaceId,
     de::String like, int* count, MaterialRepository::Node** storage)
 {
-    char const delimiter = MATERIALS_PATH_DELIMITER;
     materialnamespaceid_t fromId, toId;
 
     if(VALID_MATERIALNAMESPACEID(namespaceId))
@@ -1519,7 +1518,7 @@ static MaterialRepository::Node** collectDirectoryNodes(materialnamespaceid_t na
             MaterialRepository::Node& node = **nodeIt;
             if(!like.isEmpty())
             {
-                de::String path = node.composePath(delimiter);
+                de::String path = node.composePath();
                 if(!path.beginsWith(like, Qt::CaseInsensitive)) continue;
             }
 
@@ -1560,8 +1559,8 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
     // Decode paths before determining a lexicographical delta.
     MaterialRepository::Node const& nodeA = **(MaterialRepository::Node const**)a;
     MaterialRepository::Node const& nodeB = **(MaterialRepository::Node const**)b;
-    QByteArray pathAUtf8 = nodeA.composePath(MATERIALS_PATH_DELIMITER).toUtf8();
-    QByteArray pathBUtf8 = nodeB.composePath(MATERIALS_PATH_DELIMITER).toUtf8();
+    QByteArray pathAUtf8 = nodeA.composePath().toUtf8();
+    QByteArray pathBUtf8 = nodeB.composePath().toUtf8();
     AutoStr* pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
     AutoStr* pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
     return Str_CompareIgnoreCase(pathA, Str_Text(pathB));
@@ -2074,7 +2073,7 @@ D_CMD(PrintMaterialStats)
 
         Con_Printf("Namespace: %s (%u %s)\n", Str_Text(Materials_NamespaceName(namespaceId)), size, size==1? "material":"materials");
         MaterialRepository::debugPrintHashDistribution(matDirectory);
-        MaterialRepository::debugPrint(matDirectory, MATERIALS_PATH_DELIMITER);
+        MaterialRepository::debugPrint(matDirectory);
     }
     return true;
 }

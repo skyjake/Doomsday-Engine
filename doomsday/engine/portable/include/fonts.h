@@ -53,9 +53,6 @@ extern "C" {
 /// Special value used to signify an invalid font id.
 #define NOFONTID                    0
 
-/// Components within a Font path hierarchy are delimited by this character.
-#define FONTS_PATH_DELIMITER        '/'
-
 enum fontnamespaceid_e; // Defined in dd_share.h
 struct font_s;
 

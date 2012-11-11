@@ -54,9 +54,6 @@ typedef enum {
 /// @c true= val can be interpreted as a valid material context identifier.
 #define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
 
-/// Components within a Material path hierarchy are delimited by this character.
-#define MATERIALS_PATH_DELIMITER      '/'
-
 /// To be called during init to register the cvars and ccmds for this module.
 void Materials_Register(void);
 
