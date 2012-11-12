@@ -23,10 +23,10 @@
 
 #include "de_base.h"
 #include "con_main.h"
-#include "sys_input.h"
-#include "window.h"
-#include "mouse_qt.h"
-#include "canvas.h"
+#include "ui/sys_input.h"
+#include "ui/window.h"
+#include "ui/mouse_qt.h"
+#include "ui/canvas.h"
 #include <string.h>
 
 #include <QWidget>

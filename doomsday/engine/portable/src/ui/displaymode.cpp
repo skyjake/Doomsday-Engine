@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "displaymode.h"
-#include "displaymode_native.h"
+#include "ui/displaymode.h"
+#include "ui/displaymode_native.h"
 
 #include <vector>
 #include <set>

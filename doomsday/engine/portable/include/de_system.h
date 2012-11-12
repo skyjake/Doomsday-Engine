@@ -29,7 +29,7 @@
 
 #include "sys_system.h"
 #include "sys_console.h"
-#include "sys_input.h"
+#include "ui/sys_input.h"
 #include "network/sys_network.h"
 #include "network/masterserver.h"
 #include "timer.h"
@@ -41,6 +41,6 @@
 #  include "../../unix/include/sys_path.h"
 #endif
 
-#include "window.h"
+#include "ui/window.h"
 
 #endif /* LIBDENG_SYSTEM_H */

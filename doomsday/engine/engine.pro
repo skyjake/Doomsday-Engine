@@ -137,21 +137,14 @@ DENG_HEADERS += \
     portable/include/audio/s_wav.h \
     portable/include/audio/sys_audio.h \
     portable/include/audio/sys_audiod_dummy.h \
-    portable/include/b_command.h \
-    portable/include/b_context.h \
-    portable/include/b_device.h \
-    portable/include/b_main.h \
-    portable/include/b_util.h \
     portable/include/binarytree.h \
     portable/include/bitmapfont.h \
     portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
-    portable/include/busymode.h \
     portable/include/bspleaf.h \
     portable/include/bspnode.h \
-    portable/include/canvas.h \
-    portable/include/canvaswindow.h \
+    portable/include/busymode.h \
     portable/include/cbuffer.h \
     portable/include/cl_def.h \
     portable/include/cl_frame.h \
@@ -171,7 +164,6 @@ DENG_HEADERS += \
     portable/include/dd_def.h \
     portable/include/dd_games.h \
     portable/include/dd_help.h \
-    portable/include/dd_input.h \
     portable/include/dd_loop.h \
     portable/include/dd_main.h \
     portable/include/dd_pinit.h \
@@ -196,16 +188,12 @@ DENG_HEADERS += \
     portable/include/de_ui.h \
     portable/include/def_data.h \
     portable/include/def_main.h \
-    portable/include/displaymode.h \
-    portable/include/displaymode_native.h \
     portable/include/edit_bias.h \
     portable/include/edit_bsp.h \
     portable/include/edit_map.h \
-    portable/include/fi_main.h \
     portable/include/file.h \
     portable/include/filehandlebuilder.h \
     portable/include/fileinfo.h \
-    portable/include/finaleinterpreter.h \
     portable/include/font.h \
     portable/include/fonts.h \
     portable/include/fs_main.h \
@@ -226,10 +214,8 @@ DENG_HEADERS += \
     portable/include/gridmap.h \
     portable/include/hedge.h \
     portable/include/image.h \
-    portable/include/joystick.h \
     portable/include/json.h \
     portable/include/kdtree.h \
-    portable/include/keycode.h \
     portable/include/library.h \
     portable/include/linedef.h \
     portable/include/lumpcache.h \
@@ -244,8 +230,6 @@ DENG_HEADERS += \
     portable/include/m_profiler.h \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
-    portable/include/map/bspbuilder.h \
-    portable/include/map/entitydatabase.h \
     portable/include/map/bsp/hedgeinfo.h \
     portable/include/map/bsp/hedgeintercept.h \
     portable/include/map/bsp/hedgetip.h \
@@ -254,8 +238,8 @@ DENG_HEADERS += \
     portable/include/map/bsp/partitioncost.h \
     portable/include/map/bsp/partitioner.h \
     portable/include/map/bsp/superblockmap.h \
-    portable/include/mouse_qt.h \
-    portable/include/nativeui.h \
+    portable/include/map/bspbuilder.h \
+    portable/include/map/entitydatabase.h \
     portable/include/network/masterserver.h \
     portable/include/network/monitor.h \
     portable/include/network/net_buf.h \
@@ -266,8 +250,6 @@ DENG_HEADERS += \
     portable/include/network/protocol.h \
     portable/include/network/sys_network.h \
     portable/include/network/ui_mpi.h \
-    portable/include/p_cmd.h \
-    portable/include/p_control.h \
     portable/include/p_dmu.h \
     portable/include/p_intercept.h \
     portable/include/p_mapdata.h \
@@ -336,20 +318,37 @@ DENG_HEADERS += \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
     portable/include/sys_findfile.h \
-    portable/include/sys_input.h \
     portable/include/sys_opengl.h \
     portable/include/sys_reslocator.h \
     portable/include/sys_system.h \
     portable/include/tab_anorms.h \
     portable/include/texturecontent.h \
     portable/include/timer.h \
-    portable/include/ui2_main.h \
-    portable/include/ui_main.h \
-    portable/include/ui_panel.h \
+    portable/include/ui/b_command.h \
+    portable/include/ui/b_context.h \
+    portable/include/ui/b_device.h \
+    portable/include/ui/b_main.h \
+    portable/include/ui/b_util.h \
+    portable/include/ui/canvas.h \
+    portable/include/ui/canvaswindow.h \
+    portable/include/ui/dd_input.h \
+    portable/include/ui/displaymode.h \
+    portable/include/ui/displaymode_native.h \
+    portable/include/ui/fi_main.h \
+    portable/include/ui/finaleinterpreter.h \
+    portable/include/ui/joystick.h \
+    portable/include/ui/keycode.h \
+    portable/include/ui/mouse_qt.h \
+    portable/include/ui/nativeui.h \
+    portable/include/ui/p_control.h \
+    portable/include/ui/sys_input.h \
+    portable/include/ui/ui2_main.h \
+    portable/include/ui/ui_main.h \
+    portable/include/ui/ui_panel.h \
+    portable/include/ui/window.h \
     portable/include/updater.h \
     portable/include/vertex.h \
     portable/include/wad.h \
-    portable/include/window.h \
     portable/include/zip.h \
     portable/include/zonedebug.h \
     portable/src/updater/downloaddialog.h \
@@ -445,21 +444,14 @@ SOURCES += \
     portable/src/audio/s_sfx.c \
     portable/src/audio/s_wav.c \
     portable/src/audio/sys_audiod_dummy.c \
-    portable/src/b_command.c \
-    portable/src/b_context.c \
-    portable/src/b_device.c \
-    portable/src/b_main.c \
-    portable/src/b_util.c \
     portable/src/binarytree.cpp \
     portable/src/bitmapfont.c \
     portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
     portable/src/blockset.c \
-    portable/src/busymode.cpp \
     portable/src/bspleaf.cpp \
     portable/src/bspnode.c \
-    portable/src/canvas.cpp \
-    portable/src/canvaswindow.cpp \
+    portable/src/busymode.cpp \
     portable/src/cbuffer.c \
     portable/src/cl_frame.c \
     portable/src/cl_infine.c \
@@ -478,7 +470,6 @@ SOURCES += \
     portable/src/dd_games.cpp \
     portable/src/dd_help.c \
     portable/src/dd_init.cpp \
-    portable/src/dd_input.c \
     portable/src/dd_loop.c \
     portable/src/dd_main.cpp \
     portable/src/dd_pinit.c \
@@ -489,15 +480,12 @@ SOURCES += \
     portable/src/def_read.c \
     portable/src/dgl_common.c \
     portable/src/dgl_draw.c \
-    portable/src/displaymode.cpp \
     portable/src/edit_bias.c \
     portable/src/edit_bsp.cpp \
     portable/src/edit_map.cpp \
-    portable/src/fi_main.c \
     portable/src/file.cpp \
     portable/src/filehandle.cpp \
     portable/src/fileid.cpp \
-    portable/src/finaleinterpreter.c \
     portable/src/fonts.cpp \
     portable/src/fs_main.cpp \
     portable/src/fs_util.cpp \
@@ -519,7 +507,6 @@ SOURCES += \
     portable/src/image.cpp \
     portable/src/json.cpp \
     portable/src/kdtree.c \
-    portable/src/keycode.cpp \
     portable/src/library.cpp \
     portable/src/linedef.c \
     portable/src/lumpindex.cpp \
@@ -532,14 +519,12 @@ SOURCES += \
     portable/src/m_nodepile.c \
     portable/src/m_stack.c \
     portable/src/m_vector.c \
-    portable/src/map/bspbuilder.cpp \
     portable/src/map/bsp/hplane.cpp \
     portable/src/map/bsp/partitioner.cpp \
     portable/src/map/bsp/superblockmap.cpp \
+    portable/src/map/bspbuilder.cpp \
     portable/src/map/entitydatabase.cpp \
     portable/src/materialarchive.c \
-    portable/src/mouse_qt.cpp \
-    portable/src/nativeui.cpp \
     portable/src/network/masterserver.cpp \
     portable/src/network/monitor.c \
     portable/src/network/net_buf.c \
@@ -551,8 +536,6 @@ SOURCES += \
     portable/src/network/protocol.c \
     portable/src/network/sys_network.c \
     portable/src/network/ui_mpi.c \
-    portable/src/p_cmd.c \
-    portable/src/p_control.c \
     portable/src/p_data.cpp \
     portable/src/p_dmu.c \
     portable/src/p_intercept.c \
@@ -622,26 +605,41 @@ SOURCES += \
     portable/src/sv_sound.cpp \
     portable/src/svg.c \
     portable/src/sys_direc.c \
-    portable/src/sys_input.c \
     portable/src/sys_opengl.c \
     portable/src/sys_reslocator.cpp \
     portable/src/sys_system.c \
     portable/src/tab_tables.c \
     portable/src/timer.cpp \
-    portable/src/ui2_main.c \
-    portable/src/ui_main.c \
-    portable/src/ui_panel.c \
-    portable/src/updater.cpp \
+    portable/src/ui/b_command.c \
+    portable/src/ui/b_context.c \
+    portable/src/ui/b_device.c \
+    portable/src/ui/b_main.c \
+    portable/src/ui/b_util.c \
+    portable/src/ui/canvas.cpp \
+    portable/src/ui/canvaswindow.cpp \
+    portable/src/ui/dd_input.c \
+    portable/src/ui/displaymode.cpp \
+    portable/src/ui/fi_main.c \
+    portable/src/ui/finaleinterpreter.c \
+    portable/src/ui/keycode.cpp \
+    portable/src/ui/mouse_qt.cpp \
+    portable/src/ui/nativeui.cpp \
+    portable/src/ui/p_control.c \
+    portable/src/ui/sys_input.c \
+    portable/src/ui/ui2_main.c \
+    portable/src/ui/ui_main.c \
+    portable/src/ui/ui_panel.c \
+    portable/src/ui/window.cpp \
     portable/src/updater/downloaddialog.cpp \
     portable/src/updater/processcheckdialog.cpp \
     portable/src/updater/updateavailabledialog.cpp \
+    portable/src/updater/updater.cpp \
     portable/src/updater/updaterdialog.cpp \
     portable/src/updater/updatersettings.cpp \
     portable/src/updater/updatersettingsdialog.cpp \
     portable/src/uri.cpp \
     portable/src/vertex.cpp \
     portable/src/wad.cpp \
-    portable/src/window.cpp \
     portable/src/zip.cpp \
     portable/src/zonedebug.c
 

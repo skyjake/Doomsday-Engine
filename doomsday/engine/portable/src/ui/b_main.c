@@ -36,9 +36,9 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-#include "b_command.h"
-#include "p_control.h"
-#include "ui_main.h"
+#include "ui/b_command.h"
+#include "ui/p_control.h"
+#include "ui/ui_main.h"
 
 #include <ctype.h>
 

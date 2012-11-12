@@ -57,7 +57,7 @@
 #include "de_defs.h"
 #include "de_filesys.h"
 
-#include "displaymode.h"
+#include "ui/displaymode.h"
 #include "render/busyvisual.h"
 #include "updater/downloaddialog.h"
 #include "cbuffer.h"

@@ -29,6 +29,6 @@
 #define LIBDENG_INFINE
 
 #include "dd_infine.h"
-#include "fi_main.h"
+#include "ui/fi_main.h"
 
 #endif /* LIBDENG_INFINE */

@@ -37,7 +37,7 @@
 static int x11ScancodeToDDKey(int scancode);
 #endif
 
-#include "keycode.h"
+#include "ui/keycode.h"
 #include "dd_share.h"
 
 #ifdef WIN32

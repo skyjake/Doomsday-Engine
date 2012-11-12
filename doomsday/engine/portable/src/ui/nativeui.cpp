@@ -31,7 +31,7 @@
 #include <QVBoxLayout>
 #include <QDebug>
 
-#include "nativeui.h"
+#include "ui/nativeui.h"
 
 void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg)
 {

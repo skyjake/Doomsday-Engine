@@ -81,7 +81,7 @@ extern "C" {
 
 #include <string.h>
 
-#include "window.h"
+#include "ui/window.h"
 
 /**
  * Configure available features

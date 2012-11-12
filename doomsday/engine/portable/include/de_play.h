@@ -51,8 +51,7 @@
 #include "p_sight.h"
 #include "p_ticker.h"
 #include "p_players.h"
-#include "p_control.h"
-#include "p_cmd.h"
+#include "ui/p_control.h"
 #include "p_objlink.h"
 
 #endif

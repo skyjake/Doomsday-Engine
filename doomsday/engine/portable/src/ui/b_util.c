@@ -34,9 +34,9 @@
 #include "de_console.h"
 #include "de_misc.h"
 
-#include "b_main.h"
-#include "b_util.h"
-#include "b_context.h"
+#include "ui/b_main.h"
+#include "ui/b_util.h"
+#include "ui/b_context.h"
 
 #include "network/net_main.h" // netGame
 

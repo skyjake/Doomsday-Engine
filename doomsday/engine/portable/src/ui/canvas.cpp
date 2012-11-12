@@ -41,11 +41,11 @@
 #endif
 
 #include "sys_opengl.h"
-#include "sys_input.h"
-#include "mouse_qt.h"
-#include "displaymode.h"
-#include "keycode.h"
-#include "canvas.h"
+#include "ui/sys_input.h"
+#include "ui/mouse_qt.h"
+#include "ui/displaymode.h"
+#include "ui/keycode.h"
+#include "ui/canvas.h"
 
 #ifdef MACOS_10_4
 #  include <ApplicationServices/ApplicationServices.h>

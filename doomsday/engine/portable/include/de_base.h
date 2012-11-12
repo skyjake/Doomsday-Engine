@@ -47,11 +47,11 @@
 #include "dd_games.h"
 #include "dd_plugin.h"
 #include "dd_main.h"
-#include "dd_input.h"
 #include "dd_loop.h"
 #include "dd_help.h"
+#include "ui/dd_input.h"
+#include "ui/nativeui.h"
 #include "library.h"
-#include "nativeui.h"
 #include "busymode.h"
 #include "zonedebug.h"
 

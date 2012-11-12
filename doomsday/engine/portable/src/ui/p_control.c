@@ -38,8 +38,8 @@
 #include "de_system.h"
 #include "de_graphics.h"
 
-#include "b_main.h"
-#include "b_device.h"
+#include "ui/b_main.h"
+#include "ui/b_device.h"
 
 // MACROS ------------------------------------------------------------------
 

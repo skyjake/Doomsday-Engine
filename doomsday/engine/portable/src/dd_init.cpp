@@ -71,8 +71,8 @@
 #include "de_platform.h"
 #include "dd_loop.h"
 #include "con_main.h"
-#include "window.h"
-#include "displaymode.h"
+#include "ui/window.h"
+#include "ui/displaymode.h"
 #include "updater.h"
 #include "sys_system.h"
 

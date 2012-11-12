@@ -56,22 +56,22 @@
 #include <de/App>
 
 #ifdef MACOSX
-#  include "displaymode_native.h"
+#  include "ui/displaymode_native.h"
 #endif
 
 #include "de_platform.h"
 
-#include "window.h"
+#include "ui/window.h"
 #include "consolewindow.h"
-#include "canvaswindow.h"
-#include "displaymode.h"
-#include "updater/downloaddialog.h"
+#include "ui/canvaswindow.h"
+#include "ui/displaymode.h"
+#include "../updater/downloaddialog.h"
 #include "sys_system.h"
 #include "busymode.h"
 #include "dd_main.h"
 #include "con_main.h"
 #include "gl_main.h"
-#include "ui_main.h"
+#include "ui/ui_main.h"
 #include "fs_util.h"
 
 #include <de/c_wrapper.h>

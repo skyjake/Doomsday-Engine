@@ -53,7 +53,7 @@
 #include "de_edit.h"
 
 #include "resourcerecord.h"
-#include "displaymode.h"
+#include "ui/displaymode.h"
 #include "lumpindex.h"
 #include "m_misc.h"
 #include "resourcenamespace.h"

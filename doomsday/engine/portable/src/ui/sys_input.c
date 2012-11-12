@@ -34,7 +34,7 @@
 #include "de_system.h"
 #include "de_misc.h"
 
-#include "mouse_qt.h" // portable
+#include "ui/mouse_qt.h" // portable
 
 #define EVBUFSIZE       64
 #define KEYBUFSIZE      32

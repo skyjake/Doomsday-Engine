@@ -50,7 +50,7 @@
 #include "texturecontent.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
-#include "displaymode.h"
+#include "ui/displaymode.h"
 
 /*
 #if defined(WIN32) && defined(WIN32_GAMMA)

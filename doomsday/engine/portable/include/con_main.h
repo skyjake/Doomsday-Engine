@@ -33,7 +33,7 @@
 #include "dd_share.h"
 #include "dd_types.h"
 #include "de_system.h"
-#include "dd_input.h"
+#include "ui/dd_input.h"
 
 #ifdef __cplusplus
 extern "C" {

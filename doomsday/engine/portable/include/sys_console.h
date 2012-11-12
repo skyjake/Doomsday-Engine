@@ -30,8 +30,8 @@
 
 struct consolewindow_s; // opaque type
 
-#include "window.h"
-#include "sys_input.h"
+#include "ui/window.h"
+#include "ui/sys_input.h"
 
 #ifdef __cplusplus
 extern "C" {

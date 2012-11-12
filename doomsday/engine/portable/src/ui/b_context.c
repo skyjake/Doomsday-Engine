@@ -32,9 +32,9 @@
 #include "de_console.h"
 #include "de_misc.h"
 
-#include "b_main.h"
-#include "b_context.h"
-#include "p_control.h"
+#include "ui/b_main.h"
+#include "ui/b_context.h"
+#include "ui/p_control.h"
 
 #include <string.h>
 

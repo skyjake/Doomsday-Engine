@@ -33,8 +33,8 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-#include "b_main.h"
-#include "b_command.h"
+#include "ui/b_main.h"
+#include "ui/b_command.h"
 
 // MACROS ------------------------------------------------------------------
 

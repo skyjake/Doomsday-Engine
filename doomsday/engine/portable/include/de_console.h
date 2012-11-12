@@ -32,7 +32,7 @@
 #include "con_main.h"
 #include "con_config.h"
 #include "con_bar.h"
-#include "b_main.h"
-#include "b_context.h"
+#include "ui/b_main.h"
+#include "ui/b_context.h"
 
 #endif /* LIBDENG_CONSOLE */

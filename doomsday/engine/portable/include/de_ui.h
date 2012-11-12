@@ -29,10 +29,10 @@
 #ifndef LIBDENG_USER_INTERFACE_H
 #define LIBDENG_USER_INTERFACE_H
 
-#include "ui_main.h"
-#include "network/ui_mpi.h"
-#include "ui_panel.h"
+#include "ui/ui_main.h"
+#include "ui/ui2_main.h"
+#include "ui/ui_panel.h"
 
-#include "ui2_main.h"
+#include "network/ui_mpi.h"
 
 #endif /* LIBDENG_USER_INTERFACE_H */

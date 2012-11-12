@@ -36,7 +36,7 @@
 #include "de_infine.h"
 #include "de_misc.h"
 
-#include "finaleinterpreter.h"
+#include "ui/finaleinterpreter.h"
 
 // MACROS ------------------------------------------------------------------
 

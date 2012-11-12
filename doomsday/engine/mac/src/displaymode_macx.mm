@@ -28,9 +28,9 @@
 #endif
 #include <vector>
 
-#include "displaymode_native.h"
 #include "dd_types.h"
-#include "window.h"
+#include "ui/displaymode_native.h"
+#include "ui/window.h"
 
 /// Returns -1 on error.
 static int intFromDict(CFDictionaryRef dict, CFStringRef key)

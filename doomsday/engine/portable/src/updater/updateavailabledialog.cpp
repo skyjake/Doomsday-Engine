@@ -24,7 +24,7 @@
 #include "updatersettings.h"
 #include "updatersettingsdialog.h"
 #include "versioninfo.h"
-#include "window.h"
+#include "ui/window.h"
 #include <de/App>
 #include <de/Log>
 #include <QUrl>
