@@ -91,7 +91,7 @@ String const& PathTree::Node::name() const
     return tree().fragmentName(d->fragmentId);
 }
 
-ushort PathTree::Node::hash() const
+Uri::hash_type PathTree::Node::hash() const
 {
     return tree().fragmentHash(d->fragmentId);
 }

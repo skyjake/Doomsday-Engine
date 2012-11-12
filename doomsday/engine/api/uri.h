@@ -101,13 +101,16 @@ namespace de
         /// An unresolveable symbol was encountered in the embedded expression. @ingroup errors
         DENG2_SUB_ERROR(ResolveError, ResolveSymbolError);
 
+        /// Type used to represent a path name hash key.
+        typedef ushort hash_type;
+
         /**
          * This is a hash function. It generates from @a name a somewhat-random
          * number between @c 0 and @c URI_PATHNODE_NAMEHASH_SIZE
          *
          * @return  The generated hash key.
          */
-        static ushort hashPathNodeName(char const* name, int len);
+        static hash_type hashPathNodeName(String const& name);
 
         /**
          * Path Node represents a name in the URI path hierarchy.
@@ -115,7 +118,7 @@ namespace de
         struct PathNode
         {
             /// @return Hash for this node's name.
-            ushort hash();
+            hash_type hash();
 
             /// @return  Length of this node's name in characters.
             int length() const;
@@ -129,8 +132,8 @@ namespace de
             friend struct Uri::Instance;
 
         private:
-            bool haveHash;
-            ushort hash_;
+            bool haveHashKey;
+            hash_type hashKey;
             char const* from, *to;
             struct PathNode* parent_;
         };
