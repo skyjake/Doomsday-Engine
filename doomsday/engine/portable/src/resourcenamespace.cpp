@@ -81,10 +81,10 @@ struct NameHash
 {
 public:
     /// Type used to represent hash keys.
-    typedef Uri::hash_type hash_type;
+    typedef ushort hash_type;
 
     /// Number of buckets in the hash table.
-    static hash_type const hash_size = 512;
+    static hash_type const hash_range = 512;
 
     struct Node
     {
@@ -103,7 +103,7 @@ public:
     };
 
 public:
-    Bucket buckets[hash_size];
+    Bucket buckets[hash_range];
 
 public:
     NameHash()
@@ -118,7 +118,7 @@ public:
 
     void clear()
     {
-        for(hash_type hashKey = 0; hashKey < hash_size; ++hashKey)
+        for(hash_type hashKey = 0; hashKey < hash_range; ++hashKey)
         {
             while(buckets[hashKey].first)
             {
@@ -128,6 +128,23 @@ public:
             }
             buckets[hashKey].last = 0;
         }
+    }
+
+    static hash_type hashName(String const& str)
+    {
+        hash_type hashKey = 0;
+        int op = 0;
+        for(int i = 0; i < str.length(); ++i)
+        {
+            ushort unicode = str.at(i).toLower().unicode();
+            switch(op)
+            {
+            case 0: hashKey ^= unicode; ++op;   break;
+            case 1: hashKey *= unicode; ++op;   break;
+            case 2: hashKey -= unicode;   op=0; break;
+            }
+        }
+        return hashKey % hash_range;
     }
 };
 
@@ -359,7 +376,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     if(!resourceNode.isLeaf()) return false;
 
     String name = composeResourceName(resourceNode.name());
-    NameHash::hash_type hashKey = Uri::hashPathNodeName(name) % NameHash::hash_size;
+    NameHash::hash_type hashKey = NameHash::hashName(name);
 
     // Is this a new resource?
     bool isNewNode = false;
@@ -444,7 +461,7 @@ void ResourceNamespace::debugPrint() const
     LOG_DEBUG("[%p]:") << de::dintptr(this);
 
     uint resIdx = 0;
-    for(NameHash::hash_type key = 0; key < NameHash::hash_size; ++key)
+    for(NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)
     {
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* node = bucket.first; node; node = node->next)
@@ -475,13 +492,13 @@ int ResourceNamespace::findAll(String searchPath, ResourceList& found)
     NameHash::hash_type fromKey, toKey;
     if(!name.isEmpty())
     {
-        fromKey = Uri::hashPathNodeName(name) % NameHash::hash_size;
+        fromKey = NameHash::hashName(name);
         toKey   = fromKey;
     }
     else
     {
         fromKey = 0;
-        toKey   = NameHash::hash_size - 1;
+        toKey   = NameHash::hash_range - 1;
     }
 
     for(NameHash::hash_type key = fromKey; key < toKey + 1; ++key)

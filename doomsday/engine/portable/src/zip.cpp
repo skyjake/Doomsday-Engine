@@ -249,7 +249,7 @@ struct Zip::Instance
     {
         if(lumpDirectory)
         {
-            lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, clearZipFileWorker);
+            lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PathTree::no_hash, clearZipFileWorker);
             delete lumpDirectory;
         }
 
@@ -499,7 +499,7 @@ struct Zip::Instance
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         if(!lumpDirectory) return;
 
-        lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, buildLumpNodeLutWorker, (void*)this);
+        lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PathTree::no_hash, buildLumpNodeLutWorker, (void*)this);
     }
 
     /**

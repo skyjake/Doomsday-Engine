@@ -214,7 +214,7 @@ struct Wad::Instance
     {
         if(lumpDirectory)
         {
-            lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, clearWadFileWorker);
+            lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PathTree::no_hash, clearWadFileWorker);
             delete lumpDirectory;
         }
 
@@ -363,7 +363,7 @@ struct Wad::Instance
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         if(!lumpDirectory) return;
 
-        lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, buildLumpNodeLutWorker, (void*)this);
+        lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PathTree::no_hash, buildLumpNodeLutWorker, (void*)this);
     }
 };
 

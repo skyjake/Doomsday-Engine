@@ -55,7 +55,20 @@ ushort Uri::PathNode::hash()
     // Is it time to compute the hash?
     if(!haveHashKey)
     {
-        hashKey = de::Uri::hashPathNodeName(String(from, length()));
+        String str = String(from, length());
+        hashKey = 0;
+        int op = 0;
+        for(int i = 0; i < str.length(); ++i)
+        {
+            ushort unicode = str.at(i).toLower().unicode();
+            switch(op)
+            {
+            case 0: hashKey ^= unicode; ++op;   break;
+            case 1: hashKey *= unicode; ++op;   break;
+            case 2: hashKey -= unicode;   op=0; break;
+            }
+        }
+        hashKey %= hash_range;
         haveHashKey = true;
     }
     return hashKey;
@@ -454,23 +467,6 @@ Uri::PathNode& Uri::pathNode(int index) const
     return *fragment;
 }
 
-Uri::hash_type Uri::hashPathNodeName(String const& str)
-{
-    hash_type hashKey = 0;
-    int op = 0;
-    for(int i = 0; i < str.length(); ++i)
-    {
-        ushort unicode = str.at(i).toLower().unicode();
-        switch(op)
-        {
-        case 0: hashKey ^= unicode; ++op;   break;
-        case 1: hashKey *= unicode; ++op;   break;
-        case 2: hashKey -= unicode;   op=0; break;
-        }
-    }
-    return hashKey % URI_PATHNODE_NAMEHASH_SIZE;
-}
-
 Uri& Uri::operator = (Uri other)
 {
     swap(*this, other);
@@ -688,6 +684,8 @@ void Uri::debugPrint(int indent, int flags, String unresolvedText) const
                                                                 NativePath(d->resolved).pretty() : NativePath(d->resolved))
                                                        : "");
 }
+
+Uri::hash_type const Uri::hash_range = 512;
 
 #if 0 //#ifdef _DEBUG
 LIBDENG_DEFINE_UNITTEST(Uri)
