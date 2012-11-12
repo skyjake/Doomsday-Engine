@@ -254,10 +254,10 @@ DENG_HEADERS += \
     portable/include/m_profiler.h \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
-    portable/include/monitor.h \
     portable/include/mouse_qt.h \
     portable/include/nativeui.h \
     portable/include/network/masterserver.h \
+    portable/include/network/monitor.h \
     portable/include/network/net_buf.h \
     portable/include/network/net_demo.h \
     portable/include/network/net_event.h \
@@ -538,10 +538,10 @@ SOURCES += \
     portable/src/m_stack.c \
     portable/src/m_vector.c \
     portable/src/materialarchive.c \
-    portable/src/monitor.c \
     portable/src/mouse_qt.cpp \
     portable/src/nativeui.cpp \
     portable/src/network/masterserver.cpp \
+    portable/src/network/monitor.c \
     portable/src/network/net_buf.c \
     portable/src/network/net_demo.c \
     portable/src/network/net_event.c \
