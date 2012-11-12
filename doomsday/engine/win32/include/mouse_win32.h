@@ -24,7 +24,7 @@
 #ifndef LIBDENG_MOUSE_WIN32_H
 #define LIBDENG_MOUSE_WIN32_H
 
-#include "sys_input.h"
+#include "ui/sys_input.h"
 
 #ifdef __cplusplus
 extern "C" {

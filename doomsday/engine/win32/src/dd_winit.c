@@ -56,7 +56,7 @@
 
 #include "fs_util.h"
 #include "dd_winit.h"
-#include "displaymode.h"
+#include "ui/displaymode.h"
 
 // MACROS ------------------------------------------------------------------
 

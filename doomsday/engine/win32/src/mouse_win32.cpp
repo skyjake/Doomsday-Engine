@@ -22,10 +22,10 @@
  */
 
 #include "directinput.h"
-#include "sys_input.h"
+#include "ui/sys_input.h"
 #include "sys_system.h"
 #include "con_main.h"
-#include "window.h"
+#include "ui/window.h"
 #include <de/c_wrapper.h>
 
 static LPDIRECTINPUTDEVICE8 didMouse;

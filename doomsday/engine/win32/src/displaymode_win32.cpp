@@ -26,8 +26,8 @@
 #include <icm.h>
 #include <math.h>
 
-#include "displaymode_native.h"
-#include "window.h"
+#include "ui/displaymode_native.h"
+#include "ui/window.h"
 
 #include <assert.h>
 #include <vector>
