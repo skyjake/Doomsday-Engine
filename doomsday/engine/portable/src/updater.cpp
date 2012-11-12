@@ -1,6 +1,6 @@
 /**
  * @file updater.cpp
- * Automatic updater that works with dengine.net. @ingroup base
+ * Automatic updater that works with dengine.net. @ingroup updater
  *
  * When one of the updater dialogs is shown, the main window is automatically
  * switched to windowed mode. This is because the dialogs would be hidden
