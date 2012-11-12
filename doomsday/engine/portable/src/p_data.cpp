@@ -136,7 +136,7 @@ AutoStr* P_MapSourceFile(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(uri.path()), true/*quiet please*/);
-    if(lumpNum < 0) return NULL;
+    if(lumpNum < 0) return AutoStr_NewStd();
     return W_LumpSourceFile(lumpNum);
 }
 

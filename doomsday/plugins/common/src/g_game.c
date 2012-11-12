@@ -3494,9 +3494,9 @@ const char* P_GetMapName(uint episode, uint map)
 /**
  * Print a list of maps and the WAD files where they are from.
  */
-void G_PrintFormattedMapList(uint episode, const char** files, uint count)
+void G_PrintFormattedMapList(uint episode, char const** files, uint count)
 {
-    const char* current = NULL;
+    char const* current = NULL;
     uint i, k, rangeStart = 0, len;
 
     for(i = 0; i < count; ++i)
@@ -3517,7 +3517,7 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
                 {
                     Uri* mapUri = G_ComposeMapUri(episode, k);
                     AutoStr* path = Uri_ToString(mapUri);
-                    Con_Printf("%s%s", Str_Text(path), (k != i-1) ? "," : "");
+                    Con_Printf("%s%s", Str_Text(path), (k != i - 1) ? "," : "");
                     Uri_Delete(mapUri);
                 }
             }
@@ -3589,8 +3589,11 @@ void G_PrintMapList(void)
         for(map = 0; map < maxMapsPerEpisode; ++map)
         {
             Uri* uri = G_ComposeMapUri(episode, map);
-            AutoStr* path = Uri_Compose(uri);
-            sourceList[map] = Str_Text(P_MapSourceFile(Str_Text(path)));
+            AutoStr* path = P_MapSourceFile(Str_Text(Uri_Compose(uri)));
+            if(!Str_IsEmpty(path))
+            {
+                sourceList[map] = Str_Text(path);
+            }
             Uri_Delete(uri);
         }
         G_PrintFormattedMapList(episode, sourceList, 99);

@@ -380,11 +380,17 @@ Uri* Uri_FromReader(Reader* reader);
 void Uri_Delete(Uri* uri);
 
 /**
+ * Returns true if the path component of the URI is empty; otherwise false.
+ * @param uri  Uri instance.
+ */
+boolean Uri_IsEmpty(Uri const* uri);
+
+/**
  * Clears the uri, returning it to an empty state.
  * @param uri  Uri instance.
  * @return  Same as @a uri, for caller convenience.
  */
-Uri* Uri_Clear(Uri* uri);
+Uri* Uri_Clear(Uri const* uri);
 
 /**
  * Copy the contents of @a other into this uri.

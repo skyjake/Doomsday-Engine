@@ -306,7 +306,7 @@ EXPORTS
     Uri_SetUri                  @328 NONAME
     Uri_SetUri2                 @332 NONAME
     Uri_Resolved                @405 NONAME
-;   Uri_ResolvedConst           @760 NONAME
+    Uri_IsEmpty                 @760 NONAME
     Uri_Clear                   @406 NONAME
     Uri_Scheme                  @486 NONAME
     Uri_Path                    @487 NONAME

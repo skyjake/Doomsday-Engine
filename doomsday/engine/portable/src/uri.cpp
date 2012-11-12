@@ -835,6 +835,12 @@ boolean Uri_Equality(Uri const* uri, Uri const* other)
     return *self == (*(TOINTERNAL_CONST(other)));
 }
 
+boolean Uri_IsEmpty(Uri const* uri)
+{
+    SELF_CONST(uri);
+    return self->isEmpty();
+}
+
 Uri* Uri_Clear(Uri* uri)
 {
     SELF(uri);
