@@ -187,7 +187,7 @@ public:
 
     /**
      * Flags for controlling how string-to-integer conversion works.
-     * See de::String::toInt(ok, base, flags)
+     * See de::String::toInt().
      */
     enum IntConversionFlag {
         AllowOnlyWhitespace = 0x0,
@@ -210,7 +210,7 @@ public:
      * @param ok     @c true is returned via this pointer if the conversion was
      *               successful.
      * @param base   Base for the number.
-     * @param flags  Conversion flags, see IntConversionFlag.
+     * @param flags  Conversion flags, see de::String::IntConversionFlag.
      *
      * @return Integer parsed from the string (@c *ok set to true). @c 0 if
      * the conversion fails (@c *ok set to @c false).
