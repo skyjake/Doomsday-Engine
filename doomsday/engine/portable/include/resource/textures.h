@@ -149,7 +149,7 @@ textureid_t Textures_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)
  * @return  Unique identifier for this texture unless @a uri is invalid, in which case
  *          @c NOTEXTUREID is returned.
  */
-textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePath);
+textureid_t Textures_Declare(Uri* uri, int uniqueId, Uri const* resourcePath);
 
 /**
  * Create/update a Texture instance in the collection.

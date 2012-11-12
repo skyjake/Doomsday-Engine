@@ -246,7 +246,7 @@ static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory,
 {
     try
     {
-        FontRepository::Node& node = directory.find(PCF_NO_BRANCH | PCF_MATCH_FULL, path);
+        FontRepository::Node& node = directory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
         return &node;
     }
     catch(FontRepository::NotFoundError const&)
@@ -766,13 +766,12 @@ fontid_t Fonts_ResolveUriCString(char const* path)
     return Fonts_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-fontid_t Fonts_Declare(Uri const* _uri, int uniqueId)//, const Uri* resourcePath)
+fontid_t Fonts_Declare(Uri* _uri, int uniqueId)//, const Uri* resourcePath)
 {
-    DENG_ASSERT(_uri);
-
     LOG_AS("Fonts::declare");
 
-    de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
+    DENG_ASSERT(_uri);
+    de::Uri& uri = reinterpret_cast<de::Uri&>(*_uri);
 
     // We require a properly formed uri (but not a urn - this is a path).
     if(!validateUri(uri, VFUF_NO_URN, (verbose >= 1)))
@@ -797,9 +796,6 @@ fontid_t Fonts_Declare(Uri const* _uri, int uniqueId)//, const Uri* resourcePath
          * A new binding.
          */
 
-        // Ensure the path is lowercase.
-        de::String path = de::String(Str_Text(uri.path())).toLower();
-
         record = (FontRecord*) M_Malloc(sizeof *record);
         if(!record) Con_Error("Fonts::Declare: Failed on allocation of %lu bytes for new FontRecord.", (unsigned long) sizeof *record);
         record->font = 0;
@@ -808,7 +804,7 @@ fontid_t Fonts_Declare(Uri const* _uri, int uniqueId)//, const Uri* resourcePath
         fontnamespaceid_t namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
         FontNamespace& fn = namespaces[namespaceId - FONTNAMESPACE_FIRST];
 
-        node = fn.repository->insert(path);
+        node = fn.repository->insert(uri);
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.

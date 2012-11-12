@@ -3154,7 +3154,7 @@ boolean R_IsTextureInAnimGroup(const Uri* texture, int groupNum)
     return isInAnimGroup(group, Textures_ResolveUri2(texture, true/*quiet please*/));
 }
 
-font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
+font_t* R_CreateFontFromFile(Uri* uri, char const* resourcePath)
 {
     fontnamespaceid_t namespaceId;
     fontid_t fontId;

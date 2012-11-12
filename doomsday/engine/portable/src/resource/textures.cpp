@@ -249,7 +249,7 @@ static TextureRepository::Node* findDirectoryNodeForPath(TextureRepository& texD
 {
     try
     {
-        TextureRepository::Node& node = texDirectory.find(PCF_NO_BRANCH | PCF_MATCH_FULL, path);
+        TextureRepository::Node& node = texDirectory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
         return &node;
     }
     catch(TextureRepository::NotFoundError const&)
@@ -795,7 +795,7 @@ textureid_t Textures_ResolveUriCString(char const* path)
     return Textures_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-static textureid_t Textures_Declare2(de::Uri const& uri, int uniqueId, de::Uri const* resourcePath)
+static textureid_t Textures_Declare2(de::Uri& uri, int uniqueId, de::Uri const* resourcePath)
 {
     LOG_AS("Textures::declare");
 
@@ -822,9 +822,6 @@ static textureid_t Textures_Declare2(de::Uri const& uri, int uniqueId, de::Uri c
          * A new binding.
          */
 
-        // Ensure the path is lowercase.
-        de::String path = de::String(Str_Text(uri.path())).toLower();
-
         record = (TextureRecord*)M_Malloc(sizeof *record);
         if(!record) throw de::Error("Textures::Declare", de::String("Failed on allocation of %1 bytes for new TextureRecord.").arg((unsigned long) sizeof *record));
 
@@ -835,7 +832,7 @@ static textureid_t Textures_Declare2(de::Uri const& uri, int uniqueId, de::Uri c
         texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(uri.scheme()));
         TextureNamespace* tn = &namespaces[namespaceId - TEXTURENAMESPACE_FIRST];
 
-        node = tn->directory->insert(path);
+        node = tn->directory->insert(uri);
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
@@ -897,10 +894,10 @@ static textureid_t Textures_Declare2(de::Uri const& uri, int uniqueId, de::Uri c
     return id;
 }
 
-textureid_t Textures_Declare(Uri const* uri, int uniqueId, Uri const* resourcePath)
+textureid_t Textures_Declare(Uri* uri, int uniqueId, Uri const* resourcePath)
 {
     if(!uri) return NOTEXTUREID;
-    return Textures_Declare2(reinterpret_cast<de::Uri const&>(*uri), uniqueId, reinterpret_cast<de::Uri const*>(resourcePath));
+    return Textures_Declare2(reinterpret_cast<de::Uri&>(*uri), uniqueId, reinterpret_cast<de::Uri const*>(resourcePath));
 }
 
 Texture* Textures_CreateWithSize(textureid_t id, boolean custom, const Size2Raw* size,

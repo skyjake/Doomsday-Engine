@@ -171,7 +171,7 @@ fontid_t Fonts_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
  * @return  Unique identifier for this font unless @a uri is invalid, in
  *     which case @c NOFONTID is returned.
  */
-fontid_t Fonts_Declare(const Uri* uri, int uniqueId);
+fontid_t Fonts_Declare(Uri* uri, int uniqueId);
 
 /// Load an external font from a local file.
 struct font_s* Fonts_CreateFromFile(fontid_t id, const char* filePath);

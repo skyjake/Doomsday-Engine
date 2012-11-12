@@ -233,16 +233,17 @@ namespace de
 
         /**
          * Add a new path into the hierarchy. Duplicates are automatically pruned.
+         * Delimiters in the path are completely ignored.
          *
-         * @param path          New path to be added to the tree.
-         * @param delimiter     Names in the composed @a path hierarchy are delimited
-         *                      with this character.
+         * @param path  New path to be added to the tree. Note that this path is
+         *              NOT resolved before insertion, so any symbolics contained
+         *              within will also be present in the name hierarchy.
          *
          * @return Tail node for the inserted path else @c NULL. For example, given
-         *         the path @c "c:/somewhere/something" and @a delimiter @c = '/'
-         *         this is the node for the path fragment "something".
+         *         the path @c "c:/somewhere/something" this is the node for the
+         *         path fragment "something".
          */
-        Node* insert(String path, QChar delimiter = '/');
+        Node* insert(Uri& path);
 
         /**
          * Destroy the tree's contents, free'ing all nodes.
@@ -252,25 +253,24 @@ namespace de
         /**
          * Find a single node in the hierarchy.
          *
-         * @param flags         @ref pathComparisonFlags
-         * @param path          Relative or absolute path to be searched for.
-         * @param delimiter     Names in the composed @a path hierarchy are delimited
-         *                      with this character.
+         * @param path   Relative or absolute path to be searched for. Note that
+         *               this path is NOT resolved before searching. This means
+         *               that any symbolics contained within must also be present
+         *               in the tree's name hierarchy.
+         * @param flags  @ref pathComparisonFlags
          *
          * @return Found node.
-         *
-         * @throws NotFoundError if the referenced node could not be found.
          */
-        Node& find(int flags, String path, QChar delimiter = '/');
+        Node& find(Uri& path, int flags);
 
         /**
          * Collate all referenced paths in the hierarchy into a list.
          *
-         * @param found         Set of paths that match the result.
-         * @param flags         @ref pathComparisonFlags
-         * @param delimiter     Names in the composed path hierarchy will be delimited
-         *                      with this character. Paths to branches always include
-         *                      a terminating delimiter.
+         * @param found      Set of paths that match the result.
+         * @param flags      @ref pathComparisonFlags
+         * @param delimiter  Names in the composed path hierarchy will be delimited
+         *                   with this character. Paths to branches always include
+         *                   a terminating delimiter.
          *
          * @return Number of paths found.
          */
@@ -281,14 +281,14 @@ namespace de
          * ends when all selected nodes have been visited or a callback returns a
          * non-zero value.
          *
-         * @param flags         @ref pathComparisonFlags
-         * @param parent        Used in combination with @a flags= PCF_MATCH_PARENT
-         *                      to limit the traversal to only the child nodes of
-         *                      this node.
-         * @param hash          If not @c PATHTREE_NOHASH only consider nodes whose
-         *                      hashed name matches this.
-         * @param callback      Callback function ptr.
-         * @param parameters    Passed to the callback.
+         * @param flags       @ref pathComparisonFlags
+         * @param parent      Used in combination with @a flags= PCF_MATCH_PARENT
+         *                    to limit the traversal to only the child nodes of
+         *                    this node.
+         * @param hash        If not @c PATHTREE_NOHASH only consider nodes whose
+         *                    hashed name matches this.
+         * @param callback    Callback function ptr.
+         * @param parameters  Passed to the callback.
          *
          * @return  @c 0 iff iteration completed wholly.
          */

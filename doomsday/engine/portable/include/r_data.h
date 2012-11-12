@@ -557,7 +557,7 @@ void R_AddAnimGroupFrame(int animGroupNum, const Uri* texture, int tics, int ran
 /// @return  @c true iff @a texture is linked to the identified @a animGroupNum.
 boolean R_IsTextureInAnimGroup(const Uri* texture, int animGroupNum);
 
-struct font_s* R_CreateFontFromFile(const Uri* uri, const char* resourcePath);
+struct font_s* R_CreateFontFromFile(Uri* uri, char const* resourcePath);
 struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 #ifdef __cplusplus

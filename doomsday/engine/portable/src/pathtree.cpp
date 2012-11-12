@@ -20,6 +20,7 @@
  * 02110-1301 USA</small>
  */
 
+#include <QDebug>
 #include <QStringList>
 #include <de/Error>
 #include <de/Log>
@@ -76,10 +77,11 @@ struct PathTree::Instance
      * @return  [ a new | the ] directory node that matches the name
      * and type and which has the specified parent node.
      */
-    PathTree::Node* direcNode(String fragment, PathTree::NodeType nodeType,
+    PathTree::Node* direcNode(Uri::PathNode& pathNode, PathTree::NodeType nodeType,
         PathTree::Node* parent)
     {
         // Have we already encountered this?
+        String fragment = pathNode.toString();
         PathTree::FragmentId fragmentId = fragments.isInterned(fragment);
         if(fragmentId)
         {
@@ -105,7 +107,7 @@ struct PathTree::Instance
         Uri::hash_type hashKey;
         if(!fragmentId)
         {
-            hashKey    = Uri::hashPathNodeName(fragment);
+            hashKey    = pathNode.hash();
             fragmentId = internFragmentAndUpdateIdHashMap(fragment, hashKey);
         }
         else
@@ -135,20 +137,24 @@ struct PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    PathTree::Node* buildDirecNodes(String path, QChar delimiter)
+    PathTree::Node* buildDirecNodes(Uri& uri)
     {
-        PathTree::Node* node = 0, *parent = 0;
+        bool const hasLeaf = Str_RAt(uri.path(), 0) != '/';
 
-        QStringList parts = path.split(delimiter);
-        for(int i = 0; i < parts.count() - 1; ++i)
+        PathTree::Node* node = 0, *parent = 0;
+        for(int i = uri.pathNodeCount() - 1; i >= (hasLeaf? 1 : 0); --i)
         {
-            node = direcNode(parts[i], PathTree::Branch, parent);
+            Uri::PathNode& pn = uri.pathNode(i);
+            //qDebug() << "Add branch: " << pn.toString();
+            node = direcNode(pn, PathTree::Branch, parent);
             parent = node;
         }
 
-        if(!parts.last().isEmpty())
+        if(hasLeaf)
         {
-            node = direcNode(parts.last(), PathTree::Leaf, parent);
+            Uri::PathNode& pn = uri.firstPathNode();
+            //qDebug() << "Add leaf: " << pn.toString();
+            node = direcNode(pn, PathTree::Leaf, parent);
         }
         return node;
     }
@@ -172,9 +178,9 @@ struct PathTree::Instance
     }
 };
 
-PathTree::Node* PathTree::insert(String path, QChar delimiter)
+PathTree::Node* PathTree::insert(Uri& path)
 {
-    PathTree::Node* node = d->buildDirecNodes(path, delimiter);
+    PathTree::Node* node = d->buildDirecNodes(path);
     if(node)
     {
         // There is now one more unique path in the directory.
@@ -217,50 +223,43 @@ void PathTree::clear()
     d->clear();
 }
 
-PathTree::Node& PathTree::find(int flags, String searchPath, QChar delimiter)
+PathTree::Node& PathTree::find(Uri& searchPath, int flags)
 {
-    Node* foundNode = NULL;
     if(!searchPath.isEmpty() && d->size)
     {
-        de::Uri mappedSearchPath = de::Uri(searchPath, RC_NULL, delimiter.toLatin1());
-
-        Uri::hash_type hashKey = mappedSearchPath.firstPathNode().hash();
+        Uri::hash_type hashKey = searchPath.firstPathNode().hash();
         if(!(flags & PCF_NO_LEAF))
         {
             Nodes& nodes = d->leafHash;
-            Nodes::iterator i = nodes.find(hashKey);
-            for(; i != nodes.end() && i.key() == hashKey; ++i)
+            for(Nodes::iterator i = nodes.find(hashKey);
+                i != nodes.end() && i.key() == hashKey; ++i)
             {
                 Node& node = **i;
-                if(!node.comparePath(mappedSearchPath, flags))
+                if(!node.comparePath(searchPath, flags))
                 {
-                    // This is the node we're looking for - stop iteration.
-                    foundNode = *i;
-                    break;
+                    // This is the node we're looking for.
+                    return node;
                 }
             }
         }
 
-        if(!foundNode)
         if(!(flags & PCF_NO_BRANCH))
         {
             Nodes& nodes = d->branchHash;
-            Nodes::iterator i = nodes.find(hashKey);
-            for(; i != nodes.end() && i.key() == hashKey; ++i)
+            for(Nodes::iterator i = nodes.find(hashKey); i != nodes.end() && i.key() == hashKey; ++i)
             {
                 Node& node = **i;
-                if(!node.comparePath(mappedSearchPath, flags))
+                if(!node.comparePath(searchPath, flags))
                 {
-                    // This is the node we're looking for - stop iteration.
-                    foundNode = *i;
-                    break;
+                    // This is the node we're looking for.
+                    return node;
                 }
             }
         }
     }
 
-    if(!foundNode) throw NotFoundError("PathTree::find", String("No paths found matching \"") + searchPath + "\"");
-    return *foundNode;
+    /// @throw NotFoundError  The referenced node could not be found.
+    throw NotFoundError("PathTree::find", "No paths found matching \"" + searchPath + "\"");
 }
 
 String const& PathTree::fragmentName(FragmentId fragmentId) const

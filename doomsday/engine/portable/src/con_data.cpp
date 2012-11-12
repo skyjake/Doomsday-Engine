@@ -170,13 +170,13 @@ static void clearVariables(void)
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(cvartemplate_t const& tpl)
 {
-    de::String path = de::String(tpl.path);
-    CVarDirectory::Node* node = cvarDirectory->insert(path, CVARDIRECTORY_DELIMITER);
+    de::Uri path = de::Uri(tpl.path, RC_NULL, CVARDIRECTORY_DELIMITER);
+    CVarDirectory::Node* node = cvarDirectory->insert(path);
     cvar_t* newVar;
 
     if(node->userPointer())
     {
-        throw de::Error("Con_AddVariable", "A variable with path '" + path + "' is already known!");
+        throw de::Error("Con_AddVariable", "A variable with path '" + de::String(tpl.path) + "' is already known!");
     }
 
     newVar = (cvar_t*) M_Malloc(sizeof *newVar);
@@ -776,7 +776,8 @@ cvar_t* Con_FindVariable(char const* path)
 
     try
     {
-        CVarDirectory::Node& node = cvarDirectory->find(PCF_NO_BRANCH | PCF_MATCH_FULL, de::String(path), CVARDIRECTORY_DELIMITER);
+        CVarDirectory::Node& node = cvarDirectory->find(de::Uri(path, RC_NULL, CVARDIRECTORY_DELIMITER),
+                                                        PCF_NO_BRANCH | PCF_MATCH_FULL);
         return (cvar_t*) node.userPointer();
     }
     catch(CVarDirectory::NotFoundError const&)

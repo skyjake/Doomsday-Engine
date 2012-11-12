@@ -335,7 +335,7 @@ struct Wad::Instance
                                      littleEndianByteOrder.toNative(arcRecord->size),
                                      littleEndianByteOrder.toNative(arcRecord->size)),
                             self);
-            PathTree::Node* node = lumpDirectory->insert(String(Str_Text(&absPath)));
+            PathTree::Node* node = lumpDirectory->insert(Uri(Str_Text(&absPath), RC_NULL));
             node->setUserPointer(lump);
         }
 

@@ -222,12 +222,12 @@ struct ResourceNamespace::Instance
             // This node is purely symbolic, its only necessary for our internal use.
             if(!rootNode)
             {
-                rootNode = directory.insert("./");
+                rootNode = directory.insert(Uri("./", RC_NULL));
             }
             return rootNode;
         }
 
-        return directory.insert(path);
+        return directory.insert(Uri(path, RC_NULL));
     }
 
     void addDirectoryChildNodes(PathTree::Node& node, int flags)

@@ -457,13 +457,13 @@ static void updateMaterialBindInfo(MaterialBind& mb, bool canCreateInfo)
     info->detailtextureDefs[1] = Def_GetDetailTex(matId, 1, isCustom);
 }
 
-static bool newMaterialBind(de::Uri const& uri, material_t* material)
+static bool newMaterialBind(de::Uri& uri, material_t* material)
 {
     MaterialRepository& matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(Str_Text(uri.scheme())));
     MaterialRepository::Node* node;
     MaterialBind* mb;
 
-    node = matDirectory.insert(Str_Text(uri.path()));
+    node = matDirectory.insert(uri);
 
     // Is this a new binding?
     mb = reinterpret_cast<MaterialBind*>(node->userPointer());
@@ -801,7 +801,7 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 {
     try
     {
-        MaterialRepository::Node& node = matDirectory.find(PCF_NO_BRANCH | PCF_MATCH_FULL, path);
+        MaterialRepository::Node& node = matDirectory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
         return reinterpret_cast<MaterialBind*>(node.userPointer());
     }
     catch(MaterialRepository::NotFoundError const&)
@@ -929,7 +929,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     LOG_AS("Materials::createFromDef");
 
     if(!initedOk || !def->uri) return NULL;
-    de::Uri const& uri = reinterpret_cast<de::Uri&>(*def->uri);
+    de::Uri& uri = reinterpret_cast<de::Uri&>(*def->uri);
 
     // We require a properly formed uri.
     if(!validateMaterialUri(uri, 0, (verbose >= 1)))
