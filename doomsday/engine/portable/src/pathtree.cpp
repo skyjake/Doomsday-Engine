@@ -21,7 +21,6 @@
  */
 
 #include <QDebug>
-#include <QStringList>
 #include <de/Error>
 #include <de/Log>
 #include <de/StringPool>
@@ -88,7 +87,8 @@ struct PathTree::Instance
             // The name is known. Perhaps we have.
             PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
             Uri::hash_type hashKey = fragments.userValue(fragmentId);
-            for(PathTree::Nodes::const_iterator i = hash.find(hashKey); i != hash.end() && i.key() == hashKey; ++i)
+            for(PathTree::Nodes::const_iterator i = hash.find(hashKey);
+                i != hash.end() && i.key() == hashKey; ++i)
             {
                 PathTree::Node* node = *i;
                 if(parent     != node->parent()) continue;
@@ -119,6 +119,7 @@ struct PathTree::Instance
         if(!fragmentId) return NULL;
 
         PathTree::Node* node = new PathTree::Node(self, nodeType, fragmentId, parent);
+
         // Insert the new node into the hash.
         if(nodeType == PathTree::Leaf)
         {
@@ -139,6 +140,10 @@ struct PathTree::Instance
      */
     PathTree::Node* buildDirecNodes(Uri& uri)
     {
+        /// @todo This messy logic could be addressed by improving Uri's API.
+        ///       Now that the names of a path can be accessed randomly with no
+        ///       impact on performance - there is no need to index the nodes in
+        ///       reverse (right to left) order. -ds
         bool const hasLeaf = Str_RAt(uri.path(), 0) != '/';
 
         PathTree::Node* node = 0, *parent = 0;
