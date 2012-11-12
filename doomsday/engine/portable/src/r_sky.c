@@ -27,7 +27,7 @@
 #include "de_graphics.h"
 #include "de_refresh.h"
 
-#include "cl_def.h"
+#include "client/cl_def.h"
 #include "m_vector.h"
 #include "texture.h"
 #include "texturevariant.h"

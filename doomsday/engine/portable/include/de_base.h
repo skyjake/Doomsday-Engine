@@ -49,10 +49,10 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "dd_help.h"
-#include "ui/dd_input.h"
-#include "ui/nativeui.h"
 #include "library.h"
 #include "busymode.h"
-#include "zonedebug.h"
+#include "ui/dd_input.h"
+#include "ui/nativeui.h"
+#include "ui/zonedebug.h"
 
 #endif /* LIBDENG_BASE_H */

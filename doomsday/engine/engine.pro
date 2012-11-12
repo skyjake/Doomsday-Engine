@@ -146,13 +146,13 @@ DENG_HEADERS += \
     portable/include/bspnode.h \
     portable/include/busymode.h \
     portable/include/cbuffer.h \
-    portable/include/cl_def.h \
-    portable/include/cl_frame.h \
-    portable/include/cl_infine.h \
-    portable/include/cl_mobj.h \
-    portable/include/cl_player.h \
-    portable/include/cl_sound.h \
-    portable/include/cl_world.h \
+    portable/include/client/cl_def.h \
+    portable/include/client/cl_frame.h \
+    portable/include/client/cl_infine.h \
+    portable/include/client/cl_mobj.h \
+    portable/include/client/cl_player.h \
+    portable/include/client/cl_sound.h \
+    portable/include/client/cl_world.h \
     portable/include/colorpalette.h \
     portable/include/con_bar.h \
     portable/include/con_bind.h \
@@ -308,12 +308,12 @@ DENG_HEADERS += \
     portable/include/sidedef.h \
     portable/include/stringarray.h \
     portable/include/surface.h \
-    portable/include/sv_def.h \
-    portable/include/sv_frame.h \
-    portable/include/sv_infine.h \
-    portable/include/sv_missile.h \
-    portable/include/sv_pool.h \
-    portable/include/sv_sound.h \
+    portable/include/server/sv_def.h \
+    portable/include/server/sv_frame.h \
+    portable/include/server/sv_infine.h \
+    portable/include/server/sv_missile.h \
+    portable/include/server/sv_pool.h \
+    portable/include/server/sv_sound.h \
     portable/include/svg.h \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
@@ -346,11 +346,11 @@ DENG_HEADERS += \
     portable/include/ui/ui_main.h \
     portable/include/ui/ui_panel.h \
     portable/include/ui/window.h \
+    portable/include/ui/zonedebug.h \
     portable/include/updater.h \
     portable/include/vertex.h \
     portable/include/wad.h \
     portable/include/zip.h \
-    portable/include/zonedebug.h \
     portable/src/updater/downloaddialog.h \
     portable/src/updater/processcheckdialog.h \
     portable/src/updater/updateavailabledialog.h \
@@ -453,13 +453,13 @@ SOURCES += \
     portable/src/bspnode.c \
     portable/src/busymode.cpp \
     portable/src/cbuffer.c \
-    portable/src/cl_frame.c \
-    portable/src/cl_infine.c \
-    portable/src/cl_main.c \
-    portable/src/cl_mobj.c \
-    portable/src/cl_player.c \
-    portable/src/cl_sound.c \
-    portable/src/cl_world.c \
+    portable/src/client/cl_frame.c \
+    portable/src/client/cl_infine.c \
+    portable/src/client/cl_main.c \
+    portable/src/client/cl_mobj.c \
+    portable/src/client/cl_player.c \
+    portable/src/client/cl_sound.c \
+    portable/src/client/cl_world.c \
     portable/src/colorpalette.c \
     portable/src/con_bar.c \
     portable/src/con_config.c \
@@ -597,12 +597,12 @@ SOURCES += \
     portable/src/size.c \
     portable/src/stringarray.cpp \
     portable/src/surface.c \
-    portable/src/sv_frame.c \
-    portable/src/sv_infine.c \
-    portable/src/sv_main.c \
-    portable/src/sv_missile.c \
-    portable/src/sv_pool.c \
-    portable/src/sv_sound.cpp \
+    portable/src/server/sv_frame.c \
+    portable/src/server/sv_infine.c \
+    portable/src/server/sv_main.c \
+    portable/src/server/sv_missile.c \
+    portable/src/server/sv_pool.c \
+    portable/src/server/sv_sound.cpp \
     portable/src/svg.c \
     portable/src/sys_direc.c \
     portable/src/sys_opengl.c \
@@ -630,6 +630,7 @@ SOURCES += \
     portable/src/ui/ui_main.c \
     portable/src/ui/ui_panel.c \
     portable/src/ui/window.cpp \
+    portable/src/ui/zonedebug.c \
     portable/src/updater/downloaddialog.cpp \
     portable/src/updater/processcheckdialog.cpp \
     portable/src/updater/updateavailabledialog.cpp \
@@ -640,8 +641,7 @@ SOURCES += \
     portable/src/uri.cpp \
     portable/src/vertex.cpp \
     portable/src/wad.cpp \
-    portable/src/zip.cpp \
-    portable/src/zonedebug.c
+    portable/src/zip.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += portable/include/audio/sys_audiod_sdlmixer.h
