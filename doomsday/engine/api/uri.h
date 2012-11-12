@@ -109,7 +109,12 @@ namespace de
          */
         struct PathNode
         {
-            /// @return Hash for this node's name.
+            /**
+             * This is a hash function. It generates from the node's name a
+             * somewhat-random number in the range [0..Uri::hash_range)
+             *
+             * @return  The generated hash key.
+             */
             hash_type hash();
 
             /// @return  Length of this node's name in characters.
@@ -390,7 +395,7 @@ boolean Uri_IsEmpty(Uri const* uri);
  * @param uri  Uri instance.
  * @return  Same as @a uri, for caller convenience.
  */
-Uri* Uri_Clear(Uri const* uri);
+Uri* Uri_Clear(Uri* uri);
 
 /**
  * Copy the contents of @a other into this uri.
