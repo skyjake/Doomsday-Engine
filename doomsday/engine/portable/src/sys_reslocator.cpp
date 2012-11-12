@@ -50,7 +50,7 @@ typedef struct {
 
 /**
  * @defgroup resourceNamespaceFlags Resource Namespace Flags
- * @ingroup core
+ * @ingroup core flags
  * @{
  */
 #define RNF_USE_VMAP            0x01 // Map resources in packages.

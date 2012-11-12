@@ -52,6 +52,7 @@
 /**
  * @defgroup soundOriginFlags  Sound Origin Flags
  * Flags for use with the sound origin debug display.
+ * @ingroup flags
  */
 ///@{
 #define SOF_SECTOR              0x01
@@ -1574,6 +1575,7 @@ static void Rend_RenderPlane(planetype_t type, coord_t height,
 /**
  * @defgroup rendHEdgeFlags Rend Half-edge Flags
  * Flags for rendHEdgeSection()
+ * @ingroup flags
  */
 ///@{
 #define RHF_ADD_DYNLIGHTS       0x01 ///< Write geometry for dynamic lights.

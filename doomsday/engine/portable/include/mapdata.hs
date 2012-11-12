@@ -107,7 +107,7 @@ end
 internal
 /**
  * @defgroup bspLeafFlags  Bsp Leaf Flags
- * @addtogroup map
+ * @ingroup flags
  */
 ///@{
 #define BLF_UPDATE_FANBASE      0x1 ///< The tri-fan base requires an update.

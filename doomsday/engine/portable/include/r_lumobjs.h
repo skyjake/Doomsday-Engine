@@ -189,7 +189,8 @@ int LO_LumobjsRadiusIterator(BspLeaf* bspLeaf, coord_t x, coord_t y, coord_t rad
     int (*callback) (const lumobj_t* lum, coord_t distance, void* paramaters)); /* paramaters = NULL */
 
 /**
- * @defgroup projectLightFlags  Flags for LO_ProjectToSurface.
+ * @defgroup projectLightFlags  Flags for LO_ProjectToSurface
+ * @ingroup flags
  */
 ///@{
 #define PLF_SORT_LUMINOSITY_DESC    0x1 ///< Sort by descending luminosity, brightest to dullest.

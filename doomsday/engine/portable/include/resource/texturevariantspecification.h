@@ -59,6 +59,7 @@ typedef enum {
 
 /**
  * @defgroup textureVariantSpecificationFlags  Texture Variant Specification Flags
+ * @ingroup flags
  */
 /*@{*/
 #define TSF_ZEROMASK                0x1 // Set pixel alpha to fully opaque.

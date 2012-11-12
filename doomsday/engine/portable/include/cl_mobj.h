@@ -31,7 +31,7 @@
 
 /**
  * @defgroup clMobjFlags Client Mobj Flags
- * @ingroup client flags
+ * @ingroup flags
  */
 ///@{
 #define CLMF_HIDDEN         0x01 ///< Not officially created yet

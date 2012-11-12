@@ -752,6 +752,7 @@ materialid_t Materials_Id(material_t* mat)
 
 /**
  * @defgroup validateMaterialUriFlags  Validate Material Uri Flags
+ * @ingroup flags
  */
 ///@{
 #define VMUF_ALLOW_NAMESPACE_ANY        0x1 ///< The Scheme component of the uri may be of zero-length; signifying "any namespace".

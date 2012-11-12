@@ -35,6 +35,7 @@
 
 /**
  * @defgroup skyLayerFlags  Sky Layer Flags
+ * @ingroup flags
  * @{
  */
 #define SLF_ACTIVE              0x1 /// Layer is active and will be rendered.

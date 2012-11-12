@@ -364,6 +364,7 @@ void Con_PrintRuler(void);
 
 /**
  * @defgroup printPathFlags Print Path Flags
+ * @ingroup flags
  */
 /*{@*/
 #define PPF_MULTILINE           0x1 // Use multiple lines.

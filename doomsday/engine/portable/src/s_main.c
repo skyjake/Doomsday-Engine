@@ -220,12 +220,6 @@ mobj_t* S_GetListenerMobj(void)
     return ddPlayers[displayPlayer].shared.mo;
 }
 
-/**
- * \note freq and volume may be NULL(they will be modified by sound links).
- *
- * @param freq          May be @c NULL.
- * @param volume        May be @c NULL.
- */
 sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
 {
     float               dummy = 0;
@@ -472,8 +466,8 @@ int S_ConsoleSound(int soundID, mobj_t* origin, int targetConsole)
 }
 
 /**
- * @param sec  Sector in which to stop sounds.
- * @param soundID  Unique identifier of the sound to be stopped. @c= 0 (do not match).
+ * @param sectorEmitter  Sector in which to stop sounds.
+ * @param soundID  Unique identifier of the sound to be stopped. If @c 0, ID not checked.
  * @param flags  @ref soundStopFlags
  */
 static void stopSectorSounds(ddmobj_base_t* sectorEmitter, int soundID, int flags)

@@ -30,7 +30,8 @@ extern "C" {
 #endif
 
 /**
- * @defgroup consoleBufferLineFlags Console Buffer Line Flags.
+ * @defgroup consoleBufferLineFlags Console Buffer Line Flags
+ * @ingroup flags
  *
  * These correspond to the good old text mode VGA colors.
  * @{
@@ -55,7 +56,8 @@ typedef struct cbline_s {
 } cbline_t;
 
 /**
- * @defgroup consoleBufferFlags Console Buffer Flags.
+ * @defgroup consoleBufferFlags Console Buffer Flags
+ * @ingroup flags
  * @{
  */
 #define CBF_ALWAYSFLUSH  0x00000001 // don't leave data in the write buffer.
@@ -120,12 +122,13 @@ uint CBuffer_NumLines(CBuffer* cb);
 const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx);
 
 /**
- * @defgroup bufferLineFlags Buffer Line Flags.
+ * @defgroup bufferLineFlags Buffer Line Flags
+ * @ingroup flags
+ * @{
  */
-/*@{*/
 #define BLF_OMIT_RULER      0x1 /// Ignore rulers.
 #define BLF_OMIT_EMPTYLINE  0x2 /// Ignore empty lines.
-/*@}*/
+/// @}
 
 /**
  * Collate an array of ptrs to the immutable @c cbline_t objects owned by

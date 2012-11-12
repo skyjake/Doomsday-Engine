@@ -32,7 +32,8 @@ extern "C" {
 #endif
 
 /**
- * @defgroup printGameFlags  Print Game Flags.
+ * @defgroup printGameFlags  Print Game Flags
+ * @ingroup flags
  */
 ///@{
 #define PGF_BANNER                 0x1

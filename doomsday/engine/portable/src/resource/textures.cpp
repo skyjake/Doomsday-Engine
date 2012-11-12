@@ -185,6 +185,7 @@ static void unlinkRecordInUniqueIdMap(TextureRecord const* record, TextureNamesp
 
 /**
  * @defgroup validateTextureUriFlags  Validate Texture Uri Flags
+ * @ingroup flags
  */
 ///@{
 #define VTUF_ALLOW_NAMESPACE_ANY    0x1 ///< The namespace of the uri may be of zero-length; signifying "any namespace".
@@ -1318,6 +1319,7 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
 
 /**
  * @defgroup printTextureFlags  Print Texture Flags
+ * @ingroup flags
  */
 ///@{
 #define PTF_TRANSFORM_PATH_NO_NAMESPACE     0x1 ///< Do not print the namespace.

@@ -57,6 +57,7 @@ struct ClipNode
 
 /**
  * @defgroup occlussionNodeFlags  OcclussionNodeFlags
+ * @ingroup flags
  */
 ///@{
 #define OCNF_TOPHALF                0x1 ///< Otherwise bottom half.

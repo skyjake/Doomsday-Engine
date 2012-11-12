@@ -76,8 +76,25 @@ void            Sfx_StartFrame(void);
 void            Sfx_EndFrame(void);
 void            Sfx_PurgeCache(void);
 void            Sfx_RefreshChannels(void);
-int             Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
-                               mobj_t* emitter, coord_t* fixedpos, int flags);
+
+/**
+ * Used by the high-level sound interface to play sounds on the local system.
+ *
+ * @param sample        Sample to play. Ptr must be stored persistently!
+ *                      No copying is done here.
+ * @param volume        Volume at which the sample should be played.
+ * @param freq          Relative and modifies the sample's rate.
+ * @param emitter       If @c NULL, @a fixedpos is checked for a position.
+ *                      If both @a emitter and @a fixedpos are @c NULL, then
+ *                      the sound is played as centered 2D.
+ * @param fixedpos      Fixed position where the sound if emitted, or @c NULL.
+ * @param flags         Additional flags (@ref soundPlayFlags).
+ *
+ * @return              @c true, if a sound is started.
+ */
+int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
+                   mobj_t* emitter, coord_t* fixedpos, int flags);
+
 int             Sfx_StopSound(int id, mobj_t* emitter);
 int             Sfx_StopSoundWithLowerPriority(int id, mobj_t* emitter, ddboolean_t byPriority);
 void            Sfx_StopSoundGroup(int group, mobj_t* emitter);

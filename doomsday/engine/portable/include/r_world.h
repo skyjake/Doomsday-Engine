@@ -233,6 +233,7 @@ LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
 
 /**
  * @defgroup skyCapFlags  Sky Cap Flags
+ * @ingroup flags
  */
 ///@{
 #define SKYCAP_LOWER                0x1

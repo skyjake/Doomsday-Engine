@@ -41,14 +41,15 @@ namespace de {
 
 /**
  * @defgroup lumpIndexFlags Lump Index Flags
+ * @ingroup flags
+ * @{
  */
-///{
 
 /// Lumps in the index must have unique paths. Inserting a lump with the same
 /// path as one which already exists will result in the earlier lump being pruned.
 #define LIF_UNIQUE_PATHS                0x1
 
-///}
+/// @}
 
 class LumpIndex
 {

@@ -94,6 +94,7 @@ typedef uint resourcenamespaceid_t;
  *
  * Flags used with the F_FindResource family of functions which dictate the
  * logic used during resource location.
+ * @ingroup flags
  */
 ///@{
 #define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have it too.

@@ -31,7 +31,8 @@ extern "C" {
 #endif
 
 /**
- * @defgroup imageConversionFlags Image Conversion Flags.
+ * @defgroup imageConversionFlags Image Conversion Flags
+ * @ingroup flags
  */
 /*@{*/
 #define ICF_UPSCALE_SAMPLE_WRAPH    (0x1)
@@ -41,6 +42,7 @@ extern "C" {
 
 /**
  * @defgroup imageFlags Image Flags
+ * @ingroup flags
  */
 /*@{*/
 #define IMGF_IS_MASKED              (0x1)

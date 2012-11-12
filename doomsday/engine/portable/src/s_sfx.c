@@ -650,17 +650,6 @@ sfxchannel_t* Sfx_ChannelFindVacant(boolean use3D, int bytes, int rate,
     return NULL;
 }
 
-/**
- * Used by the high-level sound interface to play sounds on this system.
- *
- * @param sample        Ptr must be persistent! No copying is done here.
- * @param volume        Volume at which the sample should be played.
- * @param freq          Relative and modifies the sample's rate.
- * @param emitter       @c NULL = 'fixedPos' is checked for a position.
- *                      If both 'emitter' and 'fixedPos' are @c NULL, then
- *                      the sound is played as centered 2D.
- * @return              @c true, if a sound is started.
- */
 int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
                    mobj_t* emitter, coord_t* fixedOrigin, int flags)
 {
@@ -981,9 +970,11 @@ void Sfx_EndFrame(void)
 /**
  * Creates the buffers for the channels.
  *
- * @param num2D         Number of 2D the rest will be 3D.
+ * @param num2D     Number of 2D the rest will be 3D.
+ * @param bits      Bits per sample.
+ * @param rate      Sample rate (Hz).
  */
-void Sfx_CreateChannels(int num2D, int bits, int rate)
+static void createChannels(int num2D, int bits, int rate)
 {
     int                 i;
     sfxchannel_t*       ch;
@@ -1046,8 +1037,7 @@ void Sfx_InitChannels(void)
     channels = Z_Calloc(sizeof(*channels) * numChannels, PU_APPSTATIC, 0);
 
     // Create channels according to the current mode.
-    Sfx_CreateChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits,
-                       sfxRate);
+    createChannels(sfx3D? sfxDedicated2D : numChannels, sfxBits, sfxRate);
 }
 
 /**
@@ -1183,7 +1173,7 @@ void Sfx_Reset(void)
 void Sfx_RecreateChannels(void)
 {
     Sfx_DestroyChannels();
-    Sfx_CreateChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits, sfxRate);
+    createChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits, sfxRate);
 }
 
 /**

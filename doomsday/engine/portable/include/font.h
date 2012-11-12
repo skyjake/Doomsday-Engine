@@ -42,7 +42,8 @@ typedef enum {
 #define VALID_FONTTYPE(v)       ((v) >= FT_FIRST && (v) <= FT_LAST)
 
 /**
- * @defgroup fontFlags  Font Flags.
+ * @defgroup fontFlags  Font Flags
+ * @ingroup flags
  */
 /*@{*/
 #define FF_COLORIZE             0x1 /// Font can be colored.

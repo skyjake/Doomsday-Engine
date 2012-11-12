@@ -66,6 +66,7 @@ struct font_s;
 
 /**
  * @defgroup textureUnitFlags  Texture Unit Flags
+ * @ingroup flags
  */
 ///@{
 #define TUF_TEXTURE_IS_MANAGED    0x1 ///< A managed texture is bound to this unit.

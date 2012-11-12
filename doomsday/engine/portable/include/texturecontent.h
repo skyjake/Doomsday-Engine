@@ -26,7 +26,8 @@
 #define LIBDENG_TEXTURECONTENT_H
 
 /**
- * @defgroup textureContentFlags  Texture Content Flags.
+ * @defgroup textureContentFlags  Texture Content Flags
+ * @ingroup flags
  */
 /*@{*/
 #define TXCF_NO_COMPRESSION             0x1

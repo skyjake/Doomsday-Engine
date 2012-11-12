@@ -32,6 +32,7 @@
 
 /**
  * @defgroup finaleInterpreterCommandDirective Finale Interpreter Command Directive
+ * @ingroup infine
  */
 /*@{*/
 #define FID_NORMAL          0

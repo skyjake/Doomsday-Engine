@@ -30,6 +30,7 @@
 
 /**
  * @defgroup searchPathFlags  Search Path Flags
+ * @ingroup flags
  */
 ///@{
 #define SPF_NO_DESCEND                  0x1 ///< Do not decend into branches when populating paths.

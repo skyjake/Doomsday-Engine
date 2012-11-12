@@ -36,6 +36,7 @@
 
 /**
  * @defgroup skySphereRenderFlags  Sky Render Flags
+ * @ingroup flags
  * @{
  */
 #define SKYHEMI_UPPER       0x1

@@ -56,6 +56,7 @@ typedef struct listnode_s {
 
 /**
  * @defgroup lightProjectionListFlags  Light Projection List Flags
+ * @ingroup flags
  * @{
  */
 #define SPLF_SORT_LUMINOUS_DESC  0x1 /// Sort by luminosity in descending order.

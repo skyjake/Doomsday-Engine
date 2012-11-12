@@ -49,7 +49,8 @@ typedef enum primtype_e {
 } primtype_t;
 
 /**
- * @defgroup rendpolyFlags  Rendpoly Flags.
+ * @defgroup rendpolyFlags  Rendpoly Flags
+ * @ingroup flags
  * @{
  */
 #define RPF_SKYMASK                 0x1 /// This primitive is to be added to the sky mask.

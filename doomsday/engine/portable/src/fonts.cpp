@@ -183,6 +183,7 @@ static int unlinkRecordInUniqueIdMap(FontRepository::Node& node, void* parameter
 
 /**
  * @defgroup validateFontUriFlags  Validate Font Uri Flags
+ * @ingroup flags
  */
 ///@{
 #define VFUF_ALLOW_NAMESPACE_ANY    0x1 ///< The namespace of the uri may be of zero-length; signifying "any namespace".
@@ -1362,6 +1363,7 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
 
 /**
  * @defgroup printFontFlags  Print Font Flags
+ * @ingroup flags
  */
 ///@{
 #define PFF_TRANSFORM_PATH_NO_NAMESPACE 0x1 /// Do not print the namespace.

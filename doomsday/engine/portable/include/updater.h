@@ -21,7 +21,7 @@
  */
 
 /**
- * @defgroup updater Automatic updater
+ * @defgroup updater Automatic Updater
  */
 
 #ifndef LIBDENG_UPDATER_H

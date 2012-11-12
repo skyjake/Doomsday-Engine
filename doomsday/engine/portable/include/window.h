@@ -39,7 +39,8 @@ typedef enum {
 #define WINDOW_MIN_HEIGHT       240
 
 /**
- * @defgroup consoleCommandlineFlags Console Commandline flags
+ * @defgroup consoleCommandlineFlags Console Command Line Flags
+ * @ingroup flags
  * @{
  */
 #define CLF_CURSOR_LARGE        0x1 // Use the large command line cursor.

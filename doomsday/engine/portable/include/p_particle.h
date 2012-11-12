@@ -33,6 +33,7 @@
 
 /**
  * @defgroup generatorFlags  Generator Flags
+ * @ingroup flags
  */
 ///@{
 #define PGF_STATIC              0x1 ///< Can't be replaced by anything.
@@ -70,6 +71,7 @@ typedef enum {
 
 /**
  * @defgroup particleFlags  Particle Flags
+ * @ingroup flags
  */
 ///@{
 #define PTCF_STAGE_TOUCH        0x1 ///< Touching ends current stage.

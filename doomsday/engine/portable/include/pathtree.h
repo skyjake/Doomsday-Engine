@@ -52,6 +52,7 @@
 
 /**
  * @defgroup pathTreeFlags  Path Tree Flags
+ * @ingroup flags
  */
 ///@{
 #define PATHTREE_MULTI_LEAF 0x1 ///< There can be more than one leaf with a given name.

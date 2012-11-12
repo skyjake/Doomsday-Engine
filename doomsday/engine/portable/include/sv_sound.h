@@ -32,6 +32,7 @@ extern "C" {
 /**
  * @defgroup soundPacketFlags  Sound Packet Flags
  * Used with PSV_SOUND packets.
+ * @ingroup flags
  */
 ///@{
 #define SNDF_ORIGIN             0x01 ///< Sound has an origin.
@@ -46,6 +47,7 @@ extern "C" {
 /**
  * @defgroup stopSoundPacketFlags  Stop Sound Packet Flags
  * Used with PSV_STOP_SOUND packets.
+ * @ingroup flags
  */
 ///@{
 #define STOPSNDF_SOUND_ID       0x01
@@ -56,6 +58,7 @@ extern "C" {
 /**
  * @defgroup svsoundFlags  Flags for Sv_Sound
  * Used to select the target audience for a sound delta.
+ * @ingroup flags
  */
 ///@{
 #define SVSF_TO_ALL             0x01000000

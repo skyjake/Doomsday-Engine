@@ -1606,7 +1606,8 @@ AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx)
 }
 
 /**
- * @defgroup pathToStringFlags  Path To String Flags.
+ * @defgroup pathToStringFlags  Path To String Flags
+ * @ingroup flags
  */
 ///@{
 #define PTSF_QUOTED                     0x1 ///< Add double quotes around the path.

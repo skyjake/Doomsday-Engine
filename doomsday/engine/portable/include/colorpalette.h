@@ -26,6 +26,7 @@
 
 /**
  * @defgroup colorPaletteFlags  Color Palette Flags
+ * @ingroup flags
  * @{
  */
 #define CPF_UPDATE_18TO8        0x1 /// The 18To8 LUT needs updating.
