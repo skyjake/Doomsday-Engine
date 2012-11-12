@@ -53,13 +53,12 @@ Uri::PathNode* Uri::PathNode::parent() const
 ushort Uri::PathNode::hash()
 {
     // Is it time to compute the hash?
-    if(!haveHash)
+    if(!haveHashKey)
     {
-        size_t len = (to - from) + 1;
-        hash_ = de::Uri::hashPathNodeName(from, len);
-        haveHash = true;
+        hashKey = de::Uri::hashPathNodeName(String(from, length()));
+        haveHashKey = true;
     }
-    return hash_;
+    return hashKey;
 }
 
 int Uri::PathNode::length() const
@@ -149,12 +148,13 @@ struct Uri::Instance
      *
      * @return  New path node.
      */
-    Uri::PathNode* allocPathNode()
+    Uri::PathNode* allocPathNode(char const* from, char const* to)
     {
         Uri::PathNode* node;
         if(pathNodeCount < PATHNODEBUFFER_SIZE)
         {
             node = pathNodeBuffer + pathNodeCount;
+            memset(node, 0, sizeof(*node));
         }
         else
         {
@@ -162,8 +162,8 @@ struct Uri::Instance
             node = new Uri::PathNode();
         }
 
-        // There is now one more node in the path map.
-        pathNodeCount += 1;
+        node->from = from;
+        node->to   = to;
 
         return node;
     }
@@ -197,7 +197,10 @@ struct Uri::Instance
             for(from = nameEnd; from > nameBegin && !(*from == '/'); from--)
             {}
 
-            Uri::PathNode* newNode = allocPathNode();
+            Uri::PathNode* newNode = allocPathNode(*from == '/'? from + 1 : from, nameEnd);
+
+            // There is now one more node in the path map.
+            pathNodeCount += 1;
 
             // "extra" nodes are linked to the tail of the extraPathNodes list.
             if(!isStaticPathNode(*newNode))
@@ -214,22 +217,34 @@ struct Uri::Instance
 
             node = newNode;
 
-            node->from = (*from == '/'? from + 1 : from);
-            node->to   = nameEnd;
-
             // Are there no more parent directories?
             if(from == nameBegin) break;
 
             // So far so good. Move one directory level upwards.
             // The next name ends here.
-            nameEnd = from-1;
+            nameEnd = from - 1;
         }
 
         // Deal with the special case of a Unix style zero-length root name.
         if(*nameBegin == '/')
         {
-            node = allocPathNode();
-            node->from = node->to = "";
+            Uri::PathNode* newNode = allocPathNode("", "");
+
+            // There is now one more node in the path map.
+            pathNodeCount += 1;
+
+            // "extra" nodes are linked to the tail of the extraPathNodes list.
+            if(!isStaticPathNode(*newNode))
+            {
+                if(!extraPathNodes)
+                {
+                    extraPathNodes = newNode;
+                }
+                else
+                {
+                    node->parent_ = extraPathNodes;
+                }
+            }
         }
     }
 
@@ -439,24 +454,21 @@ Uri::PathNode& Uri::pathNode(int index) const
     return *fragment;
 }
 
-ushort Uri::hashPathNodeName(char const* fragment, int len)
+Uri::hash_type Uri::hashPathNodeName(String const& str)
 {
-    DENG2_ASSERT(fragment);
-
-    // Compose the hash key.
-    char const* c = fragment + len - 1;
-    ushort key = 0;
+    hash_type hashKey = 0;
     int op = 0;
-    for(int i = 0; i < len && c >= fragment && *c; ++i, c--)
+    for(int i = 0; i < str.length(); ++i)
     {
+        ushort unicode = str.at(i).toLower().unicode();
         switch(op)
         {
-        case 0: key ^= tolower(*c); ++op;   break;
-        case 1: key *= tolower(*c); ++op;   break;
-        case 2: key -= tolower(*c);   op=0; break;
+        case 0: hashKey ^= unicode; ++op;   break;
+        case 1: hashKey *= unicode; ++op;   break;
+        case 2: hashKey -= unicode;   op=0; break;
         }
     }
-    return key % URI_PATHNODE_NAMEHASH_SIZE;
+    return hashKey % URI_PATHNODE_NAMEHASH_SIZE;
 }
 
 Uri& Uri::operator = (Uri other)
@@ -511,6 +523,11 @@ void swap(Uri& first, Uri& second)
     /// @todo Is it valid to std::swap a ddstring_t ?
     std::swap(first.d->scheme,          second.d->scheme);
     std::swap(first.d->path,            second.d->path);
+}
+
+bool Uri::isEmpty() const
+{
+    return Str_IsEmpty(&d->path);
 }
 
 Uri& Uri::clear()

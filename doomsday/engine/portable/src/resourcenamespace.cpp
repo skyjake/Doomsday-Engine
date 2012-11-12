@@ -81,10 +81,10 @@ struct NameHash
 {
 public:
     /// Type used to represent hash keys.
-    typedef unsigned short key_type;
+    typedef Uri::hash_type hash_type;
 
     /// Number of buckets in the hash table.
-    static unsigned short const hash_size = 512;
+    static hash_type const hash_size = 512;
 
     struct Node
     {
@@ -118,15 +118,15 @@ public:
 
     void clear()
     {
-        for(uint i = 0; i < hash_size; ++i)
+        for(hash_type hashKey = 0; hashKey < hash_size; ++hashKey)
         {
-            while(buckets[i].first)
+            while(buckets[hashKey].first)
             {
-                NameHash::Node* nextNode = buckets[i].first->next;
-                delete buckets[i].first;
-                buckets[i].first = nextNode;
+                NameHash::Node* nextNode = buckets[hashKey].first->next;
+                delete buckets[hashKey].first;
+                buckets[hashKey].first = nextNode;
             }
-            buckets[i].last = 0;
+            buckets[hashKey].last = 0;
         }
     }
 };
@@ -136,37 +136,13 @@ static inline String composeResourceName(String const& filePath)
     return filePath.fileNameWithoutExtension();
 }
 
-/**
- * This is a hash function. It uses the resource name to generate a
- * somewhat-random number between 0 and NameHash::hash_size.
- *
- * @return  The generated hash key.
- */
-static NameHash::key_type hashResourceName(char const* name)
-{
-    DENG_ASSERT(name);
-
-    NameHash::key_type key = 0;
-    byte op = 0;
-
-    for(char const* c = name; *c; c++)
-    {
-        switch(op)
-        {
-        case 0: key ^= tolower(*c); ++op;   break;
-        case 1: key *= tolower(*c); ++op;   break;
-        case 2: key -= tolower(*c);   op=0; break;
-        }
-    }
-    return key % NameHash::hash_size;
-}
-
 struct ResourceNamespace::Instance
 {
     ResourceNamespace& self;
 
     /// Symbolic name of this namespace.
     String name;
+
     /// Associated path directory for this namespace.
     /// @todo It should not be necessary for a unique directory per namespace.
     PathTree directory;
@@ -188,10 +164,10 @@ struct ResourceNamespace::Instance
         : self(d), name(_name), directory(), rootNode(0), nameHash(), nameHashIsDirty(true)
     {}
 
-    NameHash::Node* findResourceInNameHash(NameHash::key_type key,
+    NameHash::Node* findResourceInNameHash(NameHash::hash_type hashKey,
         PathTree::Node const& ptNode)
     {
-        NameHash::Node* node = nameHash.buckets[key].first;
+        NameHash::Node* node = nameHash.buckets[hashKey].first;
         while(node && &node->resource.directoryNode() != &ptNode)
         {
             node = node->next;
@@ -383,12 +359,11 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     if(!resourceNode.isLeaf()) return false;
 
     String name = composeResourceName(resourceNode.name());
-    QByteArray nameUtf8 = name.toUtf8();
-    NameHash::key_type key = hashResourceName(nameUtf8.constData());
+    NameHash::hash_type hashKey = Uri::hashPathNodeName(name) % NameHash::hash_size;
 
     // Is this a new resource?
     bool isNewNode = false;
-    NameHash::Node* hashNode = d->findResourceInNameHash(key, resourceNode);
+    NameHash::Node* hashNode = d->findResourceInNameHash(hashKey, resourceNode);
     if(!hashNode)
     {
         isNewNode = true;
@@ -401,7 +376,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
 #endif
 
         // Link it to the list for this bucket.
-        NameHash::Bucket& bucket = d->nameHash.buckets[key];
+        NameHash::Bucket& bucket = d->nameHash.buckets[hashKey];
         if(bucket.last) bucket.last->next = hashNode;
         bucket.last = hashNode;
         if(!bucket.first) bucket.first = hashNode;
@@ -421,7 +396,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
 bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flags)
 {
     // Ensure this is a well formed path.
-    if(Str_IsEmpty(path.path()) ||
+    if(path.isEmpty() ||
        !Str_CompareIgnoreCase(path.path(), "/") ||
        Str_RAt(path.path(), 0) != '/')
         return false;
@@ -469,7 +444,7 @@ void ResourceNamespace::debugPrint() const
     LOG_DEBUG("[%p]:") << de::dintptr(this);
 
     uint resIdx = 0;
-    for(NameHash::key_type key = 0; key < NameHash::hash_size; ++key)
+    for(NameHash::hash_type key = 0; key < NameHash::hash_size; ++key)
     {
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* node = bucket.first; node; node = node->next)
@@ -497,20 +472,19 @@ int ResourceNamespace::findAll(String searchPath, ResourceList& found)
         name = composeResourceName(searchPath);
     }
 
-    NameHash::key_type from, to;
+    NameHash::hash_type fromKey, toKey;
     if(!name.isEmpty())
     {
-        QByteArray nameUtf8 = name.toUtf8();
-        from = hashResourceName(nameUtf8.constData());
-        to   = from;
+        fromKey = Uri::hashPathNodeName(name) % NameHash::hash_size;
+        toKey   = fromKey;
     }
     else
     {
-        from = 0;
-        to   = NameHash::hash_size - 1;
+        fromKey = 0;
+        toKey   = NameHash::hash_size - 1;
     }
 
-    for(NameHash::key_type key = from; key < to + 1; ++key)
+    for(NameHash::hash_type key = fromKey; key < toKey + 1; ++key)
     {
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)

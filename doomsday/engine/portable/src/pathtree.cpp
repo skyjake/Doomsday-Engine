@@ -65,10 +65,10 @@ struct PathTree::Instance
         size = 0;
     }
 
-    PathTree::FragmentId internFragmentAndUpdateIdHashMap(String fragment, ushort hash)
+    PathTree::FragmentId internFragmentAndUpdateIdHashMap(String fragment, Uri::hash_type hashKey)
     {
         PathTree::FragmentId internId = fragments.intern(fragment);
-        fragments.setUserValue(internId, hash);
+        fragments.setUserValue(internId, hashKey);
         return internId;
     }
 
@@ -85,7 +85,7 @@ struct PathTree::Instance
         {
             // The name is known. Perhaps we have.
             PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
-            ushort hashKey = fragments.userValue(fragmentId);
+            Uri::hash_type hashKey = fragments.userValue(fragmentId);
             for(PathTree::Nodes::const_iterator i = hash.find(hashKey); i != hash.end() && i.key() == hashKey; ++i)
             {
                 PathTree::Node* node = *i;
@@ -102,16 +102,15 @@ struct PathTree::Instance
          */
 
         // Do we need a new identifier (and hash)?
-        ushort hash;
+        Uri::hash_type hashKey;
         if(!fragmentId)
         {
-            QByteArray fragmentUtf8 = fragment.toUtf8();
-            hash = Uri::hashPathNodeName(fragmentUtf8.constData(), fragmentUtf8.length());
-            fragmentId = internFragmentAndUpdateIdHashMap(fragment, hash);
+            hashKey    = Uri::hashPathNodeName(fragment);
+            fragmentId = internFragmentAndUpdateIdHashMap(fragment, hashKey);
         }
         else
         {
-            hash = self.fragmentHash(fragmentId);
+            hashKey = self.fragmentHash(fragmentId);
         }
 
         // Are we out of indices?
@@ -121,11 +120,11 @@ struct PathTree::Instance
         // Insert the new node into the hash.
         if(nodeType == PathTree::Leaf)
         {
-            leafHash.insert(hash, node);
+            leafHash.insert(hashKey, node);
         }
         else // Branch
         {
-            branchHash.insert(hash, node);
+            branchHash.insert(hashKey, node);
         }
 
         return node;
@@ -225,12 +224,12 @@ PathTree::Node& PathTree::find(int flags, String searchPath, QChar delimiter)
     {
         de::Uri mappedSearchPath = de::Uri(searchPath, RC_NULL, delimiter.toLatin1());
 
-        ushort hash = mappedSearchPath.pathNode(0).hash();
+        Uri::hash_type hashKey = mappedSearchPath.firstPathNode().hash();
         if(!(flags & PCF_NO_LEAF))
         {
             Nodes& nodes = d->leafHash;
-            Nodes::iterator i = nodes.find(hash);
-            for(; i != nodes.end() && i.key() == hash; ++i)
+            Nodes::iterator i = nodes.find(hashKey);
+            for(; i != nodes.end() && i.key() == hashKey; ++i)
             {
                 Node& node = **i;
                 if(!node.comparePath(mappedSearchPath, flags))
@@ -246,8 +245,8 @@ PathTree::Node& PathTree::find(int flags, String searchPath, QChar delimiter)
         if(!(flags & PCF_NO_BRANCH))
         {
             Nodes& nodes = d->branchHash;
-            Nodes::iterator i = nodes.find(hash);
-            for(; i != nodes.end() && i.key() == hash; ++i)
+            Nodes::iterator i = nodes.find(hashKey);
+            for(; i != nodes.end() && i.key() == hashKey; ++i)
             {
                 Node& node = **i;
                 if(!node.comparePath(mappedSearchPath, flags))
@@ -269,7 +268,7 @@ String const& PathTree::fragmentName(FragmentId fragmentId) const
     return d->fragments.string(fragmentId);
 }
 
-ushort PathTree::fragmentHash(FragmentId fragmentId) const
+Uri::hash_type PathTree::fragmentHash(FragmentId fragmentId) const
 {
     return d->fragments.userValue(fragmentId);
 }
@@ -303,24 +302,24 @@ int PathTree::findAllPaths(FoundPaths& found, int flags, QChar delimiter)
     return found.count() - numFoundSoFar;
 }
 
-static int iteratePathsInHash(PathTree& pathTree, ushort hash, PathTree::NodeType type, int flags,
+static int iteratePathsInHash(PathTree& pathTree, Uri::hash_type hashKey, PathTree::NodeType type, int flags,
     PathTree::Node* parent, int (*callback) (PathTree::Node&, void*), void* parameters)
 {
     int result = 0;
 
-    if(hash != PATHTREE_NOHASH && hash >= URI_PATHNODE_NAMEHASH_SIZE)
+    if(hashKey != PATHTREE_NOHASH && hashKey >= URI_PATHNODE_NAMEHASH_SIZE)
     {
-        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1 (valid range is [0..%2]).").arg(hash).arg(URI_PATHNODE_NAMEHASH_SIZE-1));
+        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1 (valid range is [0..%2]).").arg(hashKey).arg(URI_PATHNODE_NAMEHASH_SIZE-1));
     }
 
     PathTree::Nodes const& nodes = pathTree.nodes(type);
 
     // Are we iterating nodes with a known hash?
-    if(hash != PATHTREE_NOHASH)
+    if(hashKey != PATHTREE_NOHASH)
     {
         // Yes.
-        PathTree::Nodes::const_iterator i = nodes.constFind(hash);
-        for(; i != nodes.end() && i.key() == hash; ++i)
+        PathTree::Nodes::const_iterator i = nodes.constFind(hashKey);
+        for(; i != nodes.end() && i.key() == hashKey; ++i)
         {
             if(!((flags & PCF_MATCH_PARENT) && parent != (*i)->parent()))
             {
@@ -344,17 +343,17 @@ static int iteratePathsInHash(PathTree& pathTree, ushort hash, PathTree::NodeTyp
     return result;
 }
 
-int PathTree::traverse(int flags, PathTree::Node* parent, ushort hash,
+int PathTree::traverse(int flags, PathTree::Node* parent, Uri::hash_type hashKey,
     int (*callback) (PathTree::Node&, void*), void* parameters)
 {
     int result = 0;
     if(callback)
     {
         if(!(flags & PCF_NO_LEAF))
-            result = iteratePathsInHash(*this, hash, Leaf, flags, parent, callback, parameters);
+            result = iteratePathsInHash(*this, hashKey, Leaf, flags, parent, callback, parameters);
 
         if(!result && !(flags & PCF_NO_BRANCH))
-            result = iteratePathsInHash(*this, hash, Branch, flags, parent, callback, parameters);
+            result = iteratePathsInHash(*this, hashKey, Branch, flags, parent, callback, parameters);
     }
     return result;
 }
@@ -572,10 +571,10 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     Con_Printf("\n");
     Con_PrintRuler();
 
-    { ushort from = 0, n = 0, range = (size != 0? URI_PATHNODE_NAMEHASH_SIZE / size: 0);
+    { Uri::hash_type from = 0, n = 0, range = (size != 0? URI_PATHNODE_NAMEHASH_SIZE / size: 0);
     memset(nodeCount, 0, sizeof(nodeCount));
 
-    for(ushort i = 0; i < URI_PATHNODE_NAMEHASH_SIZE; ++i)
+    for(Uri::hash_type i = 0; i < URI_PATHNODE_NAMEHASH_SIZE; ++i)
     {
         pathtree_pathhash_t** phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
@@ -689,7 +688,7 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
     memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
     memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
 
-    for(ushort i = 0; i < URI_PATHNODE_NAMEHASH_SIZE; ++i)
+    for(Uri::hash_type i = 0; i < URI_PATHNODE_NAMEHASH_SIZE; ++i)
     {
         pathtree_pathhash_t** phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);

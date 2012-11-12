@@ -200,7 +200,7 @@ static bool validateUri(de::Uri const& uri, int flags, bool quiet = false)
 {
     LOG_AS("Fonts::validateUri");
 
-    if(Str_IsEmpty(uri.path()))
+    if(uri.isEmpty())
     {
         if(!quiet)
         {

@@ -202,7 +202,7 @@ static bool validateTextureUri(de::Uri const& uri, int flags, bool quiet = false
 {
     LOG_AS("validateTextureUri");
 
-    if(Str_IsEmpty(uri.path()))
+    if(uri.isEmpty())
     {
         if(!quiet)
         {

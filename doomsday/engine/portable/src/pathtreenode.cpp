@@ -91,7 +91,7 @@ String const& PathTree::Node::name() const
     return tree().fragmentName(d->fragmentId);
 }
 
-ushort PathTree::Node::hash() const
+Uri::hash_type PathTree::Node::hash() const
 {
     return tree().fragmentHash(d->fragmentId);
 }
@@ -165,7 +165,7 @@ int PathTree::Node::comparePath(de::Uri& searchPattern, int flags) const
 
     try
     {
-        de::Uri::PathNode* snode = &searchPattern.pathNode(0);
+        de::Uri::PathNode* snode = &searchPattern.firstPathNode();
 
         // In reverse order, compare each path node in the search term.
         int pathNodeCount = searchPattern.pathNodeCount();
