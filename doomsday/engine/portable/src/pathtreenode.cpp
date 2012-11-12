@@ -157,7 +157,7 @@ static int matchName(char const* string, char const* pattern)
 }
 
 /// @todo This logic should be encapsulated in Uri/Uri::PathNode
-int PathTree::Node::comparePath(de::Uri& searchPattern, int flags) const
+int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 {
     if(((flags & PCF_NO_LEAF)   && isLeaf()) ||
        ((flags & PCF_NO_BRANCH) && !isLeaf()))

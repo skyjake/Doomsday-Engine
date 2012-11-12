@@ -153,7 +153,7 @@ namespace de
              *       allow for further optimizations elsewhere (in the file system
              *       for example) -ds
              */
-            int comparePath(de::Uri& candidatePath, int flags) const;
+            int comparePath(de::Uri const& candidatePath, int flags) const;
 
             /**
              * Composes the URI for this node. 'Composing' the path of a node is to
@@ -244,7 +244,7 @@ namespace de
          *         the path @c "c:/somewhere/something" this is the node for the
          *         path fragment "something".
          */
-        Node* insert(Uri& path);
+        Node* insert(Uri const& path);
 
         /**
          * Destroy the tree's contents, free'ing all nodes.
@@ -262,7 +262,7 @@ namespace de
          *
          * @return Found node.
          */
-        Node& find(Uri& path, int flags);
+        Node& find(Uri const& path, int flags);
 
         /**
          * Collate all referenced paths in the hierarchy into a list.

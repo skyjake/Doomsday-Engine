@@ -138,7 +138,7 @@ struct PathTree::Instance
      *
      * @return  The node that identifies the given path.
      */
-    PathTree::Node* buildDirecNodes(Uri& uri)
+    PathTree::Node* buildDirecNodes(Uri const& uri)
     {
         /// @todo This messy logic could be addressed by improving Uri's API.
         ///       Now that the names of a path can be accessed randomly with no
@@ -183,7 +183,7 @@ struct PathTree::Instance
     }
 };
 
-PathTree::Node* PathTree::insert(Uri& path)
+PathTree::Node* PathTree::insert(Uri const& path)
 {
     PathTree::Node* node = d->buildDirecNodes(path);
     if(node)
@@ -228,7 +228,7 @@ void PathTree::clear()
     d->clear();
 }
 
-PathTree::Node& PathTree::find(Uri& searchPath, int flags)
+PathTree::Node& PathTree::find(Uri const& searchPath, int flags)
 {
     if(!searchPath.isEmpty() && d->size)
     {
