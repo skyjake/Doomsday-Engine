@@ -148,16 +148,6 @@ DENG_HEADERS += \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
     portable/include/busymode.h \
-    portable/include/map/bspbuilder.h \
-    portable/include/map/entitydatabase.h \
-    portable/include/map/bsp/hedgeinfo.h \
-    portable/include/map/bsp/hedgeintercept.h \
-    portable/include/map/bsp/hedgetip.h \
-    portable/include/map/bsp/hplane.h \
-    portable/include/map/bsp/linedefinfo.h \
-    portable/include/map/bsp/partitioncost.h \
-    portable/include/map/bsp/partitioner.h \
-    portable/include/map/bsp/superblockmap.h \
     portable/include/bspleaf.h \
     portable/include/bspnode.h \
     portable/include/canvas.h \
@@ -254,6 +244,16 @@ DENG_HEADERS += \
     portable/include/m_profiler.h \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
+    portable/include/map/bspbuilder.h \
+    portable/include/map/entitydatabase.h \
+    portable/include/map/bsp/hedgeinfo.h \
+    portable/include/map/bsp/hedgeintercept.h \
+    portable/include/map/bsp/hedgetip.h \
+    portable/include/map/bsp/hplane.h \
+    portable/include/map/bsp/linedefinfo.h \
+    portable/include/map/bsp/partitioncost.h \
+    portable/include/map/bsp/partitioner.h \
+    portable/include/map/bsp/superblockmap.h \
     portable/include/mouse_qt.h \
     portable/include/nativeui.h \
     portable/include/network/masterserver.h \
@@ -456,11 +456,6 @@ SOURCES += \
     portable/src/blockmapvisual.c \
     portable/src/blockset.c \
     portable/src/busymode.cpp \
-    portable/src/map/bspbuilder.cpp \
-    portable/src/map/bsp/hplane.cpp \
-    portable/src/map/bsp/partitioner.cpp \
-    portable/src/map/bsp/superblockmap.cpp \
-    portable/src/map/entitydatabase.cpp \
     portable/src/bspleaf.cpp \
     portable/src/bspnode.c \
     portable/src/canvas.cpp \
@@ -537,6 +532,11 @@ SOURCES += \
     portable/src/m_nodepile.c \
     portable/src/m_stack.c \
     portable/src/m_vector.c \
+    portable/src/map/bspbuilder.cpp \
+    portable/src/map/bsp/hplane.cpp \
+    portable/src/map/bsp/partitioner.cpp \
+    portable/src/map/bsp/superblockmap.cpp \
+    portable/src/map/entitydatabase.cpp \
     portable/src/materialarchive.c \
     portable/src/mouse_qt.cpp \
     portable/src/nativeui.cpp \
