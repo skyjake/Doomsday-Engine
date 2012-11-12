@@ -30,7 +30,7 @@
 #define __DOOMSDAY_SERVER_H__
 
 #include "dd_def.h"
-#include "sys_network.h"
+#include "network/sys_network.h"
 
 struct material_s;
 

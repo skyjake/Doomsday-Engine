@@ -254,15 +254,18 @@ DENG_HEADERS += \
     portable/include/m_profiler.h \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
-    portable/include/masterserver.h \
     portable/include/monitor.h \
     portable/include/mouse_qt.h \
     portable/include/nativeui.h \
-    portable/include/net_buf.h \
-    portable/include/net_demo.h \
-    portable/include/net_event.h \
-    portable/include/net_main.h \
-    portable/include/net_msg.h \
+    portable/include/network/masterserver.h \
+    portable/include/network/net_buf.h \
+    portable/include/network/net_demo.h \
+    portable/include/network/net_event.h \
+    portable/include/network/net_main.h \
+    portable/include/network/net_msg.h \
+    portable/include/network/protocol.h \
+    portable/include/network/sys_network.h \
+    portable/include/network/ui_mpi.h \
     portable/include/p_cmd.h \
     portable/include/p_control.h \
     portable/include/p_dmu.h \
@@ -281,7 +284,6 @@ DENG_HEADERS += \
     portable/include/plane.h \
     portable/include/polyobj.h \
     portable/include/propertyvalue.h \
-    portable/include/protocol.h \
     portable/include/r_data.h \
     portable/include/r_draw.h \
     portable/include/r_fakeradio.h \
@@ -335,7 +337,6 @@ DENG_HEADERS += \
     portable/include/sys_direc.h \
     portable/include/sys_findfile.h \
     portable/include/sys_input.h \
-    portable/include/sys_network.h \
     portable/include/sys_opengl.h \
     portable/include/sys_reslocator.h \
     portable/include/sys_system.h \
@@ -344,7 +345,6 @@ DENG_HEADERS += \
     portable/include/timer.h \
     portable/include/ui2_main.h \
     portable/include/ui_main.h \
-    portable/include/ui_mpi.h \
     portable/include/ui_panel.h \
     portable/include/updater.h \
     portable/include/vertex.h \
@@ -537,17 +537,20 @@ SOURCES += \
     portable/src/m_nodepile.c \
     portable/src/m_stack.c \
     portable/src/m_vector.c \
-    portable/src/masterserver.cpp \
     portable/src/materialarchive.c \
     portable/src/monitor.c \
     portable/src/mouse_qt.cpp \
     portable/src/nativeui.cpp \
-    portable/src/net_buf.c \
-    portable/src/net_demo.c \
-    portable/src/net_event.c \
-    portable/src/net_main.c \
-    portable/src/net_msg.c \
-    portable/src/net_ping.c \
+    portable/src/network/masterserver.cpp \
+    portable/src/network/net_buf.c \
+    portable/src/network/net_demo.c \
+    portable/src/network/net_event.c \
+    portable/src/network/net_main.c \
+    portable/src/network/net_msg.c \
+    portable/src/network/net_ping.c \
+    portable/src/network/protocol.c \
+    portable/src/network/sys_network.c \
+    portable/src/network/ui_mpi.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
     portable/src/p_data.cpp \
@@ -567,7 +570,6 @@ SOURCES += \
     portable/src/plane.c \
     portable/src/point.c \
     portable/src/polyobj.c \
-    portable/src/protocol.c \
     portable/src/propertyvalue.cpp \
     portable/src/r_data.c \
     portable/src/r_draw.c \
@@ -621,7 +623,6 @@ SOURCES += \
     portable/src/svg.c \
     portable/src/sys_direc.c \
     portable/src/sys_input.c \
-    portable/src/sys_network.c \
     portable/src/sys_opengl.c \
     portable/src/sys_reslocator.cpp \
     portable/src/sys_system.c \
@@ -629,7 +630,6 @@ SOURCES += \
     portable/src/timer.cpp \
     portable/src/ui2_main.c \
     portable/src/ui_main.c \
-    portable/src/ui_mpi.c \
     portable/src/ui_panel.c \
     portable/src/updater.cpp \
     portable/src/updater/downloaddialog.cpp \

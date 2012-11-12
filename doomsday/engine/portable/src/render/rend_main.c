@@ -38,7 +38,7 @@
 #include "de_ui.h"
 #include "de_system.h"
 
-#include "net_main.h"
+#include "network/net_main.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
 #include "blockmapvisual.h"

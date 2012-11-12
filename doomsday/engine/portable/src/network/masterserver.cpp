@@ -27,11 +27,11 @@
 #include "de_platform.h"
 #include <vector>
 #include <list>
-#include "masterserver.h"
+#include "network/masterserver.h"
 #include "dd_main.h"
 #include "con_main.h"
 #include "m_misc.h"
-#include "net_main.h"
+#include "network/net_main.h"
 #include "sv_def.h"
 
 // Maximum time allowed time for a master server operation to take (seconds).

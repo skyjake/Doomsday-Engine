@@ -37,7 +37,6 @@
 #include "de_play.h"
 
 #include <de/c_wrapper.h> // using LegacyNetwork
-#include "protocol.h"
 
 #define MAX_NODES                   32
 

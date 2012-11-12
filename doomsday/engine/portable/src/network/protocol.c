@@ -21,8 +21,8 @@
 #include "de_console.h"
 #include "de_network.h"
 #include "de_misc.h"
-#include "protocol.h"
-#include "sys_network.h"
+
+#include "network/sys_network.h"
 
 boolean Protocol_Receive(nodeid_t from)
 {

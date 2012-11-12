@@ -29,18 +29,20 @@
 #ifndef LIBDENG_NETWORK
 #define LIBDENG_NETWORK
 
-#include "net_main.h"
-#include "net_event.h"
-#include "net_msg.h"
-#include "net_buf.h"
-#include "net_demo.h"
-#include "protocol.h"
+#include "network/net_main.h"
+#include "network/net_event.h"
+#include "network/net_msg.h"
+#include "network/net_buf.h"
+#include "network/net_demo.h"
+#include "network/protocol.h"
+
 #include "sv_def.h"
 #include "sv_pool.h"
 #include "sv_frame.h"
 #include "sv_sound.h"
 #include "sv_missile.h"
 #include "sv_infine.h"
+
 #include "cl_def.h"
 #include "cl_player.h"
 #include "cl_mobj.h"

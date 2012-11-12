@@ -38,7 +38,7 @@
 #include "b_util.h"
 #include "b_context.h"
 
-#include "net_main.h" // netGame
+#include "network/net_main.h" // netGame
 
 // MACROS ------------------------------------------------------------------
 

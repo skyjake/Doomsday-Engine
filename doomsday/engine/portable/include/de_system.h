@@ -30,8 +30,8 @@
 #include "sys_system.h"
 #include "sys_console.h"
 #include "sys_input.h"
-#include "sys_network.h"
-#include "masterserver.h"
+#include "network/sys_network.h"
+#include "network/masterserver.h"
 #include "timer.h"
 #include "sys_opengl.h"
 

@@ -41,7 +41,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
-#include "net_main.h" // for gametic
+#include "network/net_main.h" // for gametic
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
