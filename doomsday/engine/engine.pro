@@ -267,10 +267,8 @@ DENG_HEADERS += \
     portable/include/polyobj.h \
     portable/include/propertyvalue.h \
     portable/include/r_data.h \
-    portable/include/r_draw.h \
     portable/include/r_fakeradio.h \
     portable/include/r_lgrid.h \
-    portable/include/r_lumobjs.h \
     portable/include/r_main.h \
     portable/include/r_shadow.h \
     portable/include/r_sky.h \
@@ -278,6 +276,8 @@ DENG_HEADERS += \
     portable/include/r_util.h \
     portable/include/r_world.h \
     portable/include/render/busyvisual.h \
+    portable/include/render/r_draw.h \
+    portable/include/render/r_lumobjs.h \
     portable/include/render/rend_bias.h \
     portable/include/render/rend_clip.h \
     portable/include/render/rend_console.h \
@@ -555,10 +555,8 @@ SOURCES += \
     portable/src/polyobj.c \
     portable/src/propertyvalue.cpp \
     portable/src/r_data.c \
-    portable/src/r_draw.c \
     portable/src/r_fakeradio.c \
     portable/src/r_lgrid.c \
-    portable/src/r_lumobjs.c \
     portable/src/r_main.c \
     portable/src/r_shadow.c \
     portable/src/r_sky.c \
@@ -567,6 +565,8 @@ SOURCES += \
     portable/src/r_world.c \
     portable/src/rect.c \
     portable/src/render/busyvisual.c \
+    portable/src/render/r_draw.c \
+    portable/src/render/r_lumobjs.c \
     portable/src/render/rend_bias.c \
     portable/src/render/rend_clip.cpp \
     portable/src/render/rend_console.c \
