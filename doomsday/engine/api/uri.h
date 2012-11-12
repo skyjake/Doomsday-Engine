@@ -180,8 +180,7 @@ namespace de
         static Uri* fromReader(reader_s& reader);
 
         /**
-         * Clears the uri, returning it to an empty state.
-         * @param uri  Uri instance.
+         * Clear the uri returning it to an empty state.
          */
         Uri& clear();
 

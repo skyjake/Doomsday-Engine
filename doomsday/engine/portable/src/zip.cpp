@@ -161,7 +161,7 @@ public:
      */
     Uri composeUri(QChar delimiter = '/') const
     {
-        return dynamic_cast<Zip&>(container()).composeLumpUri(info_.lumpIdx, delimiter);
+        return directoryNode().composeUri(delimiter);
     }
 
     /**
@@ -503,7 +503,8 @@ struct Zip::Instance
     }
 
     /**
-     * @param buffer  Must be large enough to hold the entire uncompressed data lump.
+     * @param lump      Lump/file to be buffered.
+     * @param buffer    Must be large enough to hold the entire uncompressed data lump.
      */
     size_t bufferLump(ZipFile const& lump, uint8_t* buffer)
     {
@@ -575,12 +576,6 @@ PathTree::Node& Zip::lumpDirectoryNode(int lumpIdx) const
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Zip::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
     return *((*d->lumpNodeLut)[lumpIdx]);
-}
-
-de::Uri Zip::composeLumpUri(int lumpIdx, QChar delimiter)
-{
-    if(!isValidIndex(lumpIdx)) return de::Uri();
-    return lump(lumpIdx).directoryNode().composeUri(delimiter);
 }
 
 File1& Zip::lump(int lumpIdx)

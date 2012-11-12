@@ -78,7 +78,7 @@ public:
      */
     Uri composeUri(QChar delimiter = '/') const
     {
-        return dynamic_cast<Wad&>(container()).composeLumpUri(info_.lumpIdx, delimiter);
+        return directoryNode().composeUri(delimiter);
     }
 
     /**
@@ -405,12 +405,6 @@ PathTree::Node& Wad::lumpDirectoryNode(int lumpIdx) const
     if(!isValidIndex(lumpIdx)) throw NotFoundError("Wad::lumpDirectoryNode", invalidIndexMessage(lumpIdx, lastIndex()));
     d->buildLumpNodeLut();
     return *((*d->lumpNodeLut)[lumpIdx]);
-}
-
-de::Uri Wad::composeLumpUri(int lumpIdx, QChar delimiter)
-{
-    if(!isValidIndex(lumpIdx)) return de::Uri();
-    return lump(lumpIdx).directoryNode().composeUri(delimiter);
 }
 
 File1& Wad::lump(int lumpIdx)
