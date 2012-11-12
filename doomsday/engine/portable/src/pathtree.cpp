@@ -224,7 +224,7 @@ PathTree::Node& PathTree::find(int flags, String searchPath, QChar delimiter)
     {
         de::Uri mappedSearchPath = de::Uri(searchPath, RC_NULL, delimiter.toLatin1());
 
-        Uri::hash_type hashKey = mappedSearchPath.pathNode(0).hash();
+        Uri::hash_type hashKey = mappedSearchPath.firstPathNode().hash();
         if(!(flags & PCF_NO_LEAF))
         {
             Nodes& nodes = d->leafHash;

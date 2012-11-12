@@ -767,7 +767,7 @@ static bool validateMaterialUri(de::Uri const& uri, int flags, boolean quiet=fal
 {
     materialnamespaceid_t namespaceId;
 
-    if(Str_IsEmpty(uri.path()))
+    if(uri.isEmpty())
     {
         if(!quiet)
         {

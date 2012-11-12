@@ -396,7 +396,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
 bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flags)
 {
     // Ensure this is a well formed path.
-    if(Str_IsEmpty(path.path()) ||
+    if(path.isEmpty() ||
        !Str_CompareIgnoreCase(path.path(), "/") ||
        Str_RAt(path.path(), 0) != '/')
         return false;

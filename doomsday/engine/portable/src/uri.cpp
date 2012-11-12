@@ -525,6 +525,11 @@ void swap(Uri& first, Uri& second)
     std::swap(first.d->path,            second.d->path);
 }
 
+bool Uri::isEmpty() const
+{
+    return Str_IsEmpty(&d->path);
+}
+
 Uri& Uri::clear()
 {
     Str_Clear(&d->scheme);

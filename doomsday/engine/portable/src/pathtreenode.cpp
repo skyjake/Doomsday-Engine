@@ -165,7 +165,7 @@ int PathTree::Node::comparePath(de::Uri& searchPattern, int flags) const
 
     try
     {
-        de::Uri::PathNode* snode = &searchPattern.pathNode(0);
+        de::Uri::PathNode* snode = &searchPattern.firstPathNode();
 
         // In reverse order, compare each path node in the search term.
         int pathNodeCount = searchPattern.pathNodeCount();

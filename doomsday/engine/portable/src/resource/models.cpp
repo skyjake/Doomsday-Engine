@@ -425,8 +425,9 @@ static int R_LoadModel(de::Uri const& uri)
 {
     LOG_AS("R_LoadModel");
 
+    if(uri.isEmpty()) return 0;
+
     char const* searchPath = Str_Text(uri.path());
-    if(!searchPath || !searchPath[0]) return 0;
 
     ddstring_t foundPath; Str_Init(&foundPath);
     if(!F_FindResource2(RC_MODEL, searchPath, &foundPath))
