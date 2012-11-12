@@ -40,7 +40,7 @@
 #include "de_misc.h"
 #include "de_render.h"
 
-#include "sys_audio.h"
+#include "audio/sys_audio.h"
 
 // MACROS ------------------------------------------------------------------
 

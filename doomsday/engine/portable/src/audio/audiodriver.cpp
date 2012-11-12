@@ -24,8 +24,7 @@
 #include "de_console.h"
 #include "de_misc.h"
 #include "de_audio.h"
-#include "sys_audio.h"
-#include "audiodriver.h"
+#include "audio/sys_audio.h"
 
 #include <de/Library>
 #include <de/LibraryFile>

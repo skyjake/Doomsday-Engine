@@ -41,7 +41,7 @@
 #include "de_play.h"
 
 #include "m_misc.h"
-#include "s_main.h"
+#include "audio/s_main.h"
 #include "timer.h"
 
 // MACROS ------------------------------------------------------------------

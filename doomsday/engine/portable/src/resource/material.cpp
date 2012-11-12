@@ -26,9 +26,10 @@
 #include "m_misc.h"
 
 #include "texture.h"
-#include "s_environ.h"
 #include "materialvariant.h"
 #include "material.h"
+#include "audio/s_environ.h"
+
 #include <de/memory.h>
 
 typedef struct material_variantlist_node_s {

@@ -26,8 +26,8 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_network.h"
-#include "s_main.h"
 
+#include "audio/s_main.h"
 #include "render/busyvisual.h"
 
 #include "de/c_wrapper.h"

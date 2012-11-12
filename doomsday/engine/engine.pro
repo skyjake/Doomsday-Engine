@@ -126,8 +126,17 @@ DENG_HEADERS += \
 
 # Private headers.
 DENG_HEADERS += \
-    portable/include/audiodriver.h \
-    portable/include/audiodriver_music.h \
+    portable/include/audio/audiodriver.h \
+    portable/include/audio/audiodriver_music.h \
+    portable/include/audio/s_cache.h \
+    portable/include/audio/s_environ.h \
+    portable/include/audio/s_logic.h \
+    portable/include/audio/s_main.h \
+    portable/include/audio/s_mus.h \
+    portable/include/audio/s_sfx.h \
+    portable/include/audio/s_wav.h \
+    portable/include/audio/sys_audio.h \
+    portable/include/audio/sys_audiod_dummy.h \
     portable/include/b_command.h \
     portable/include/b_context.h \
     portable/include/b_device.h \
@@ -311,13 +320,6 @@ DENG_HEADERS += \
     portable/include/resource/texturevariantspecification.h \
     portable/include/resourcenamespace.h \
     portable/include/resourcerecord.h \
-    portable/include/s_cache.h \
-    portable/include/s_environ.h \
-    portable/include/s_logic.h \
-    portable/include/s_main.h \
-    portable/include/s_mus.h \
-    portable/include/s_sfx.h \
-    portable/include/s_wav.h \
     portable/include/sector.h \
     portable/include/sidedef.h \
     portable/include/stringarray.h \
@@ -329,8 +331,6 @@ DENG_HEADERS += \
     portable/include/sv_pool.h \
     portable/include/sv_sound.h \
     portable/include/svg.h \
-    portable/include/sys_audio.h \
-    portable/include/sys_audiod_dummy.h \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
     portable/include/sys_findfile.h \
@@ -435,8 +435,16 @@ deng_nodisplaymode {
 # Platform-independent sources.
 SOURCES += \
     portable/src/animator.c \
-    portable/src/audiodriver.cpp \
-    portable/src/audiodriver_music.c \
+    portable/src/audio/audiodriver.cpp \
+    portable/src/audio/audiodriver_music.c \
+    portable/src/audio/s_cache.c \
+    portable/src/audio/s_environ.cpp \
+    portable/src/audio/s_logic.c \
+    portable/src/audio/s_main.c \
+    portable/src/audio/s_mus.c \
+    portable/src/audio/s_sfx.c \
+    portable/src/audio/s_wav.c \
+    portable/src/audio/sys_audiod_dummy.c \
     portable/src/b_command.c \
     portable/src/b_context.c \
     portable/src/b_device.c \
@@ -599,13 +607,6 @@ SOURCES += \
     portable/src/resource/texturevariant.cpp \
     portable/src/resourcenamespace.cpp \
     portable/src/resourcerecord.cpp \
-    portable/src/s_cache.c \
-    portable/src/s_environ.cpp \
-    portable/src/s_logic.c \
-    portable/src/s_main.c \
-    portable/src/s_mus.c \
-    portable/src/s_sfx.c \
-    portable/src/s_wav.c \
     portable/src/sector.c \
     portable/src/sidedef.c \
     portable/src/size.c \
@@ -618,7 +619,6 @@ SOURCES += \
     portable/src/sv_pool.c \
     portable/src/sv_sound.cpp \
     portable/src/svg.c \
-    portable/src/sys_audiod_dummy.c \
     portable/src/sys_direc.c \
     portable/src/sys_input.c \
     portable/src/sys_network.c \
@@ -646,8 +646,8 @@ SOURCES += \
     portable/src/zonedebug.c
 
 !deng_nosdlmixer:!deng_nosdl {
-    HEADERS += portable/include/sys_audiod_sdlmixer.h
-    SOURCES += portable/src/sys_audiod_sdlmixer.c
+    HEADERS += portable/include/audio/sys_audiod_sdlmixer.h
+    SOURCES += portable/src/audio/sys_audiod_sdlmixer.c
 }
 
 # Use the fixed-point math from libcommon.

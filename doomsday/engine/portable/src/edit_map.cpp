@@ -36,7 +36,7 @@
 #include "de_filesys.h"
 
 #include <de/StringPool>
-#include "s_environ.h"
+#include "audio/s_environ.h"
 
 typedef struct {
     ddstring_t uri;
