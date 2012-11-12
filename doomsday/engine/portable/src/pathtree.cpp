@@ -311,15 +311,15 @@ static int iteratePathsInHash(PathTree& pathTree, Uri::hash_type hashKey, PathTr
 {
     int result = 0;
 
-    if(hashKey != PATHTREE_NOHASH && hashKey >= URI_PATHNODE_NAMEHASH_SIZE)
+    if(hashKey != PathTree::no_hash && hashKey >= Uri::hash_range)
     {
-        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1 (valid range is [0..%2]).").arg(hashKey).arg(URI_PATHNODE_NAMEHASH_SIZE-1));
+        throw Error("PathTree::iteratePathsInHash", String("Invalid hash %1, valid range is [0..%2).").arg(hashKey).arg(Uri::hash_range-1));
     }
 
     PathTree::Nodes const& nodes = pathTree.nodes(type);
 
     // Are we iterating nodes with a known hash?
-    if(hashKey != PATHTREE_NOHASH)
+    if(hashKey != PathTree::no_hash)
     {
         // Yes.
         PathTree::Nodes::const_iterator i = nodes.constFind(hashKey);
@@ -394,7 +394,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
         float mean = (signed)sum / total;
         variance = ((signed)sumSqr - (signed)sum * mean) / (((signed)total)-1);
 
-        coverage  = 100 / (float)URI_PATHNODE_NAMEHASH_SIZE * (URI_PATHNODE_NAMEHASH_SIZE - numEmpty);
+        coverage  = 100 / (float)Uri::hash_range * (Uri::hash_range - numEmpty);
         collision = 100 / (float) total * numCollisions;
     }
     else
@@ -405,7 +405,7 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     const int* col = colWidths;
     Con_Printf("%*s ",    *col++, name);
     Con_Printf("%*lu ",   *col++, (unsigned long)total);
-    Con_Printf("%*lu",    *col++, URI_PATHNODE_NAMEHASH_SIZE - (unsigned long)numEmpty);
+    Con_Printf("%*lu",    *col++, Uri::hash_range - (unsigned long)numEmpty);
     Con_Printf(":%-*lu ", *col++, (unsigned long)numEmpty);
     Con_Printf("%*lu ",   *col++, (unsigned long)maxCollisions);
     Con_Printf("%*lu ",   *col++, (unsigned long)numCollisions);
@@ -535,7 +535,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     if(0 == total) return;
 
     // Calculate minimum field widths:
-    hashIndexDigits = M_NumDigits(URI_PATHNODE_NAMEHASH_SIZE);
+    hashIndexDigits = M_NumDigits(Uri::hash_range);
     col = 0;
     if(size != 0)
         colWidths[col] = 2/*braces*/+hashIndexDigits*2+3/*elipses*/;
@@ -575,10 +575,10 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
     Con_Printf("\n");
     Con_PrintRuler();
 
-    { Uri::hash_type from = 0, n = 0, range = (size != 0? URI_PATHNODE_NAMEHASH_SIZE / size: 0);
+    { Uri::hash_type from = 0, n = 0, range = (size != 0? Uri::hash_range / size: 0);
     memset(nodeCount, 0, sizeof(nodeCount));
 
-    for(Uri::hash_type i = 0; i < URI_PATHNODE_NAMEHASH_SIZE; ++i)
+    for(Uri::hash_type i = 0; i < Uri::hash_range; ++i)
     {
         pathtree_pathhash_t** phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
@@ -591,7 +591,7 @@ static void printDistributionHistogram(PathTree* pt, ushort size,
         for(node = (**phAdr)[i].head; node; node = node->next)
             ++nodeCount[PT_LEAF];
 
-        if(size != 0 && (++n != range && i != URI_PATHNODE_NAMEHASH_SIZE-1))
+        if(size != 0 && (++n != range && i != Uri::hash_range-1))
             continue;
 
         totalForRange = 0;
@@ -692,7 +692,7 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
     memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
     memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
 
-    for(Uri::hash_type i = 0; i < URI_PATHNODE_NAMEHASH_SIZE; ++i)
+    for(Uri::hash_type i = 0; i < Uri::hash_range; ++i)
     {
         pathtree_pathhash_t** phAdr;
         phAdr = hashAddressForNodeType(pt, PathTree::Node::Branch);
@@ -774,5 +774,7 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
 #endif
 }
 #endif
+
+Uri::hash_type const PathTree::no_hash = Uri::hash_range;
 
 } // namespace de

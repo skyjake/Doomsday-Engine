@@ -393,7 +393,7 @@ void Fonts_Shutdown(void)
 
         if(fn.repository)
         {
-            fn.repository->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, destroyRecordWorker);
+            fn.repository->traverse(PCF_NO_BRANCH, NULL, FontRepository::no_hash, destroyRecordWorker);
             delete fn.repository; fn.repository = 0;
         }
 
@@ -531,7 +531,7 @@ void Fonts_ClearNamespace(fontnamespaceid_t namespaceId)
 
         if(fn.repository)
         {
-            fn.repository->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, destroyFontAndRecordWorker);
+            fn.repository->traverse(PCF_NO_BRANCH, NULL, FontRepository::no_hash, destroyFontAndRecordWorker);
             fn.repository->clear();
         }
 
@@ -1194,7 +1194,7 @@ static int iterateDirectory(fontnamespaceid_t namespaceId,
         FontRepository* directory = repositoryByNamespaceId(fontnamespaceid_t(i));
         if(!directory) continue;
 
-        result = directory->traverse(PCF_NO_BRANCH, NULL, PATHTREE_NOHASH, callback, parameters);
+        result = directory->traverse(PCF_NO_BRANCH, NULL, FontRepository::no_hash, callback, parameters);
         if(result) break;
     }
     return result;
@@ -1326,7 +1326,7 @@ static FontRepository::Node** collectDirectoryNodes(fontnamespaceid_t namespaceI
         FontRepository* fontDirectory = repositoryByNamespaceId(fontnamespaceid_t(i));
         if(!fontDirectory) continue;
 
-        fontDirectory->traverse(PCF_NO_BRANCH | PCF_MATCH_FULL, NULL, PATHTREE_NOHASH, collectDirectoryNodeWorker, (void*)&p);
+        fontDirectory->traverse(PCF_NO_BRANCH | PCF_MATCH_FULL, NULL, FontRepository::no_hash, collectDirectoryNodeWorker, (void*)&p);
     }
 
     if(storage)

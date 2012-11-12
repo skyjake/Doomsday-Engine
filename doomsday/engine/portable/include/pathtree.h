@@ -57,10 +57,6 @@
 #define PATHTREE_MULTI_LEAF 0x1 ///< There can be more than one leaf with a given name.
 ///@}
 
-/// Identifier used with the search and iteration algorithms in place of a
-/// hash when the caller does not wish to narrow the set of considered nodes.
-#define PATHTREE_NOHASH                 URI_PATHNODE_NAMEHASH_SIZE
-
 namespace de
 {
     /**
@@ -103,6 +99,10 @@ namespace de
 
         /// @return  Print-ready name for node @a type.
         static String const& nodeTypeName(NodeType type);
+
+        /// Identifier used with the search and iteration algorithms in place of a
+        /// hash when the user does not wish to narrow the set of considered nodes.
+        static Uri::hash_type const no_hash;
 
 #if _DEBUG
         static void debugPrint(PathTree& pathtree, QChar delimiter = '/');
@@ -285,7 +285,7 @@ namespace de
          * @param parent      Used in combination with @a flags= PCF_MATCH_PARENT
          *                    to limit the traversal to only the child nodes of
          *                    this node.
-         * @param hash        If not @c PATHTREE_NOHASH only consider nodes whose
+         * @param hash        If not @c PathTree::no_hash only consider nodes whose
          *                    hashed name matches this.
          * @param callback    Callback function ptr.
          * @param parameters  Passed to the callback.

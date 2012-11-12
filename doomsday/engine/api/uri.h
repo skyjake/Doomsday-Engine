@@ -63,9 +63,6 @@
 #define DEFAULT_PRINTURIFLAGS (UPF_OUTPUT_RESOLVED|UPF_TRANSFORM_PATH_MAKEPRETTY)
 ///@}
 
-// Range of the fragment hash.
-#define URI_PATHNODE_NAMEHASH_SIZE    512
-
 #ifdef __cplusplus
 #ifndef DENG2_C_API_ONLY
 
@@ -104,13 +101,8 @@ namespace de
         /// Type used to represent a path name hash key.
         typedef ushort hash_type;
 
-        /**
-         * This is a hash function. It generates from @a name a somewhat-random
-         * number between @c 0 and @c URI_PATHNODE_NAMEHASH_SIZE
-         *
-         * @return  The generated hash key.
-         */
-        static hash_type hashPathNodeName(String const& name);
+        /// Range of a path name hash key; [0..hash_range)
+        static hash_type const hash_range;
 
         /**
          * Path Node represents a name in the URI path hierarchy.
