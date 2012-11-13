@@ -446,13 +446,13 @@ const Point2f* Rectf_Origin(const Rectf* r)
     return r->origin;
 }
 
-int Rectf_X(const Rectf* r)
+double Rectf_X(const Rectf* r)
 {
     DENG_ASSERT(r);
     return Point2f_X(r->origin);
 }
 
-int Rectf_Y(const Rectf* r)
+double Rectf_Y(const Rectf* r)
 {
     DENG_ASSERT(r);
     return Point2f_Y(r->origin);

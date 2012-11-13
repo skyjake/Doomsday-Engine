@@ -132,8 +132,8 @@ DENG_PUBLIC RectRawf* Rectf_Raw(const Rectf* rect, RectRawf* rawRect);
 DENG_PUBLIC boolean Rectf_IsNull(const Rectf* rect);
 
 DENG_PUBLIC const Point2f* Rectf_Origin(const Rectf* rect);
-DENG_PUBLIC int Rectf_X(const Rectf* rect);
-DENG_PUBLIC int Rectf_Y(const Rectf* rect);
+DENG_PUBLIC double Rectf_X(const Rectf* rect);
+DENG_PUBLIC double Rectf_Y(const Rectf* rect);
 
 DENG_PUBLIC void Rectf_SetOrigin(Rectf* rect, const Point2f* origin);
 DENG_PUBLIC void Rectf_SetX(Rectf* rect, double x);
