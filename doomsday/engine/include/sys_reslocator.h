@@ -142,7 +142,7 @@ boolean F_FindResourcePath(resourceclass_t rclass, struct uri_s const* searchPat
  *
  * @param rclass        Class of resource being searched for (if known).
  *
- * @param nativeSearchPaths  Paths/names of the resource being searched for. Note
+ * @param searchPaths   Paths/names of the resource being searched for. Note
  *                      that the resource class (@a rclass) specified significantly
  *                      alters search behavior. This allows text replacements of
  *                      symbolic escape sequences in the path, allowing access to
@@ -160,10 +160,10 @@ boolean F_FindResourcePath(resourceclass_t rclass, struct uri_s const* searchPat
  *
  * @return  The index+1 of the path in @a searchPaths if found, else @c 0
  */
-uint F_FindResource4(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
-uint F_FindResource3(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
-uint F_FindResource2(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
-uint F_FindResource(resourceclass_t rclass, char const* nativeSearchPaths/*, foundPath = NULL*/);
+uint F_FindResource4(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
+uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+uint F_FindResource(resourceclass_t rclass, char const* searchPaths/*, foundPath = NULL*/);
 
 /**
  * @return  Default class associated with resources of type @a type.

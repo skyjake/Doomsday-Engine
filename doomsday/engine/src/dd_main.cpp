@@ -1628,13 +1628,11 @@ static int DD_StartupWorker(void* parm)
     }
 
     // Add required engine resource files.
-    { ddstring_t foundPath; Str_Init(&foundPath);
-    if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) ||
-       !tryLoadFile(Str_Text(&foundPath)))
+    AutoStr* foundPath = AutoStr_NewStd();
+    if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", foundPath) ||
+       !tryLoadFile(Str_Text(foundPath)))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
-    }
-    Str_Free(&foundPath);
     }
 
     // No more lumps/packages will be loaded in startup mode after this point.
@@ -2250,7 +2248,7 @@ D_CMD(Load)
     DENG_UNUSED(src);
 
     boolean didLoadGame = false, didLoadResource = false;
-    ddstring_t foundPath, searchPath;
+    ddstring_t searchPath;
     int arg = 1;
 
     Str_Init(&searchPath);
@@ -2295,17 +2293,17 @@ D_CMD(Load)
     {} // Ignore the error.
 
     // Try the resource locator.
-    Str_Init(&foundPath);
+    AutoStr* foundPath = AutoStr_NewStd();
     for(; arg < argc; ++arg)
     {
-        Str_Set(&searchPath, argv[arg]);
-        Str_Strip(&searchPath);
+        QByteArray searchPath = QDir::fromNativeSeparators(NativePath(argv[arg]).expand()).toUtf8();
+        if(!F_FindResource3(RC_PACKAGE, searchPath.constData(), foundPath, RLF_MATCH_EXTENSION)) continue;
 
-        if(F_FindResource3(RC_PACKAGE, Str_Text(&searchPath), &foundPath, RLF_MATCH_EXTENSION) != 0 &&
-           tryLoadFile(Str_Text(&foundPath)))
+        if(tryLoadFile(Str_Text(foundPath)))
+        {
             didLoadResource = true;
+        }
     }
-    Str_Free(&foundPath);
 
     if(didLoadResource)
         DD_UpdateEngineState();
@@ -2426,11 +2424,13 @@ D_CMD(Unload)
 
     // Try the resource locator.
     bool didUnloadFiles = false;
+    AutoStr* foundPath = AutoStr_NewStd();
     for(i = 1; i < argc; ++i)
     {
-        if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath)) continue;
+        QByteArray searchPath = QDir::fromNativeSeparators(NativePath(argv[1]).expand()).toUtf8();
+        if(!F_FindResource2(RC_PACKAGE, searchPath.constData(), foundPath)) continue;
 
-        if(tryUnloadFile(Str_Text(&searchPath)))
+        if(tryUnloadFile(Str_Text(foundPath)))
         {
             didUnloadFiles = true;
         }

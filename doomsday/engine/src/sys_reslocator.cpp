@@ -620,18 +620,18 @@ boolean F_FindResourcePath(resourceclass_t rclass, uri_s const* searchPath,
     return findResource(rclass, reinterpret_cast<de::Uri const&>(*searchPath), foundPath, flags, optionalSuffix);
 }
 
-uint F_FindResource4(resourceclass_t rclass, char const* nativeSearchPaths,
+uint F_FindResource4(resourceclass_t rclass, char const* searchPaths,
     ddstring_t* foundPath, int flags, char const* optionalSuffix)
 {
     DENG_ASSERT(rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass));
 
-    if(!nativeSearchPaths || !nativeSearchPaths[0]) return 0;
+    if(!searchPaths || !searchPaths[0]) return 0;
 
-    QStringList paths = String(nativeSearchPaths).split(';', QString::SkipEmptyParts);
+    QStringList paths = String(searchPaths).split(';', QString::SkipEmptyParts);
     int pathIndex = 0;
     for(QStringList::const_iterator i = paths.constBegin(); i != paths.constEnd(); ++i, ++pathIndex)
     {
-        de::Uri searchPath = de::Uri(QDir::fromNativeSeparators(*i), rclass);
+        de::Uri searchPath = de::Uri(*i, rclass);
         if(findResource(rclass, searchPath, foundPath, flags, optionalSuffix))
         {
             return pathIndex + 1; // 1-based index.
@@ -641,19 +641,19 @@ uint F_FindResource4(resourceclass_t rclass, char const* nativeSearchPaths,
     return 0; // Not found.
 }
 
-uint F_FindResource3(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags)
+uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags)
 {
-    return F_FindResource4(rclass, nativeSearchPaths, foundPath, flags, NULL/*no optional suffix*/);
+    return F_FindResource4(rclass, searchPaths, foundPath, flags, NULL/*no optional suffix*/);
 }
 
-uint F_FindResource2(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath)
+uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath)
 {
-    return F_FindResource3(rclass, nativeSearchPaths, foundPath, RLF_DEFAULT);
+    return F_FindResource3(rclass, searchPaths, foundPath, RLF_DEFAULT);
 }
 
-uint F_FindResource(resourceclass_t rclass, char const* nativeSearchPaths)
+uint F_FindResource(resourceclass_t rclass, char const* searchPaths)
 {
-    return F_FindResource2(rclass, nativeSearchPaths, NULL/*no found path*/);
+    return F_FindResource2(rclass, searchPaths, NULL/*no found path*/);
 }
 
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
