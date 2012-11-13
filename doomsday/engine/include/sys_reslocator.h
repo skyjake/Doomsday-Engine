@@ -182,6 +182,8 @@ resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 resourcenamespaceid_t F_SafeResourceNamespaceForName(char const* name);
 
 #ifdef __cplusplus
+} // extern "C"
+
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
  * by examining the name (e.g., a file name/path).
@@ -209,10 +211,6 @@ bool F_MapGameResourcePath(resourcenamespaceid_t rnamespaceId, de::String& path)
  */
 de::String const& F_ResourceClassStr(resourceclass_t rclass);
 
-#endif
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+#endif // __cplusplus
 
 #endif /* LIBDENG_SYSTEM_RESOURCE_LOCATOR_H */
