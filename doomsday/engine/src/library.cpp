@@ -182,7 +182,6 @@ int Library_IterateAvailableLibraries(int (*func)(void *, const char *, const ch
 
     DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
     {
-        // For now we are not using libdeng2 to actually load the library.
         de::LibraryFile* lib = static_cast<de::LibraryFile*>(i->second);
         const de::NativeFile* src = dynamic_cast<const de::NativeFile*>(lib->source());
         if(src)
