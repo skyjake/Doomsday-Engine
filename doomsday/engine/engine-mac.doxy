@@ -6,7 +6,8 @@ PROJECT_NUMBER      = 1.9.10
 PROJECT_BRIEF       = "Internal documentation (Mac OS X)"
 OUTPUT_DIRECTORY    = ../apidoc/mac/
 
-INPUT               = api mac portable unix
+INPUT               = api include src
+EXCLUDE             = include/windows src/windows
 
 MACRO_EXPANSION     = YES
 PREDEFINED          = __DOOMSDAY__ UNIX MACOSX __cplusplus "C_DECL=" "GL_CALL="
