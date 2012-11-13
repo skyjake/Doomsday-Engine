@@ -68,6 +68,7 @@
 
 #include <de/Error>
 #include <de/Log>
+#include <de/NativePath>
 #include <de/String>
 
 namespace de
@@ -166,9 +167,15 @@ namespace de
         bool operator != (Uri const& other) const;
 
         /**
+         * Constructs a Uri instance from a NativePath. The resultant Uri will have
+         * an empty/zero-length scheme (because file paths do not include one).
+         */
+        static Uri fromNativePath(NativePath const& path);
+
+        /**
          * Constructs a Uri instance by reading it from @a reader.
          */
-        static Uri* fromReader(reader_s& reader);
+        static Uri fromReader(reader_s& reader);
 
         /**
          * Convert this URI to a text string.

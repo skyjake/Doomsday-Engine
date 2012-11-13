@@ -23,17 +23,14 @@
  * 02110-1301 USA</small>
  */
 
+#include <QDebug>
+#include <QDir>
+
 #include "de_base.h"
 #include "game.h"
 #include "resourcenamespace.h"
 #include "sys_reslocator.h"
 
-#include <QDebug>
-
-#include <de/Error>
-#include <de/Log>
-#include <de/NativePath>
-#include <de/String>
 #include <de/unittest.h>
 
 #include "uri.h"
@@ -421,11 +418,14 @@ Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
     Str_Copy(&d->path,   other.path());
 }
 
-Uri* Uri::fromReader(struct reader_s& reader)
+Uri Uri::fromNativePath(NativePath const& path)
 {
-    Uri* uri = new Uri();
-    uri->read(reader);
-    return uri;
+    return Uri(QDir::fromNativeSeparators(path), RC_NULL);
+}
+
+Uri Uri::fromReader(struct reader_s& reader)
+{
+    return Uri().read(reader);
 }
 
 Uri::~Uri()
@@ -808,7 +808,7 @@ Uri* Uri_Dup(Uri const* other)
 Uri* Uri_FromReader(struct reader_s* reader)
 {
     DENG_ASSERT(reader);
-    return reinterpret_cast<Uri*>( de::Uri::fromReader(*reader) );
+    return reinterpret_cast<Uri*>( new de::Uri(de::Uri::fromReader(*reader)) );
 }
 
 void Uri_Delete(Uri* uri)
