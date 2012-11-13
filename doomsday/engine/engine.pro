@@ -412,9 +412,9 @@ macx {
         $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
 
     OBJECTIVE_SOURCES += \
-        mac/src/MusicPlayer.m
+        src/macx/MusicPlayer.m
 
-    !deng_nodisplaymode: OBJECTIVE_SOURCES += mac/src/displaymode_macx.mm
+    !deng_nodisplaymode: OBJECTIVE_SOURCES += src/macx/displaymode_macx.mm
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
 }
@@ -691,8 +691,8 @@ startupgfx.files = \
 macx {
     res.path = Contents/Resources
     res.files = \
-        mac/res/English.lproj \
-        mac/res/deng.icns
+        res/macx/English.lproj \
+        res/macx/deng.icns
 
     cfg.path          = $${res.path}/config
     data.path         = $${res.path}
