@@ -25,7 +25,7 @@
 #ifndef LIBDENG_GRAPHICS_DRAW_H
 #define LIBDENG_GRAPHICS_DRAW_H
 
-#include "rect.h"
+#include <de/rect.h>
 
 #ifdef __cplusplus
 extern "C" {

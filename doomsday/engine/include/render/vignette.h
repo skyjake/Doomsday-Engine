@@ -22,7 +22,7 @@
 #ifndef LIBDENG_RENDER_VIGNETTE_H
 #define LIBDENG_RENDER_VIGNETTE_H
 
-#include "rect.h"
+#include <de/rect.h>
 
 #ifdef __cplusplus
 extern "C" {

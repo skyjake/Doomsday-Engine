@@ -26,7 +26,7 @@
 #ifndef LIBDENG_DGL_H
 #define LIBDENG_DGL_H
 
-#include "rect.h"
+#include <de/rect.h>
 
 #ifdef __cplusplus
 extern "C" {

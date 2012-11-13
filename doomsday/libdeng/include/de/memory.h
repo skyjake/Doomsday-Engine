@@ -24,6 +24,7 @@
 #define LIBDENG_SYSTEM_MEMORY_H
 
 #include <de/libdeng.h>
+#include <string.h> // memcpy
 
 #ifdef __cplusplus
 extern "C" {

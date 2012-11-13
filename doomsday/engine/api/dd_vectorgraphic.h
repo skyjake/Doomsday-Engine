@@ -28,7 +28,7 @@
 
 typedef uint32_t svgid_t;
 
-#include "point.h"
+#include <de/point.h>
 
 typedef struct def_svgline_s {
     uint numPoints;

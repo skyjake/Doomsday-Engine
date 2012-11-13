@@ -24,7 +24,7 @@
 #define LIBDENG_IMAGE_H
 
 #include "filehandle.h"
-#include "size.h"
+#include <de/size.h>
 
 #ifdef __cplusplus
 extern "C" {

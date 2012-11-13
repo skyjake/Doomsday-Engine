@@ -29,7 +29,7 @@
 #ifndef LIBDENG_CONSOLE_RENDER_H
 #define LIBDENG_CONSOLE_RENDER_H
 
-#include "point.h"
+#include <de/point.h>
 
 #ifdef __cplusplus
 extern "C" {

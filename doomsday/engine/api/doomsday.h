@@ -85,9 +85,9 @@ struct font_s;
 #include "dd_share.h"
 #include "dd_plugin.h"
 #include "filehandle.h"
-#include "point.h"
-#include "rect.h"
-#include "size.h"
+#include <de/point.h>
+#include <de/rect.h>
+#include <de/size.h>
 #include <de/reader.h>
 #include <de/writer.h>
 #include <de/memoryzone.h>

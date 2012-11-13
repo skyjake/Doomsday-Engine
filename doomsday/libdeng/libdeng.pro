@@ -27,6 +27,9 @@ win32 {
     QMAKE_CFLAGS_WARN_ON   *= $$warnOpts
     QMAKE_CXXFLAGS_WARN_ON *= $$warnOpts
 }
+*-clang* {
+    QMAKE_CFLAGS_WARN_ON *= -Wno-c11-extensions
+}
 win32-msvc* {
     #QMAKE_CXXFLAGS_WARN_ON ~= s/-W3/-W4/
 }
@@ -52,13 +55,17 @@ deng_writertypecheck {
 
 # Public headers
 HEADERS += \
+    include/de/animator.h \
     include/de/concurrency.h \
     include/de/ddstring.h \
     include/de/garbage.h \
     include/de/libdeng.h \
     include/de/memory.h \
     include/de/memoryzone.h \
+    include/de/point.h \
     include/de/reader.h \
+    include/de/rect.h \
+    include/de/size.h \
     include/de/smoother.h \
     include/de/str.h \
     include/de/str.hh \
@@ -70,13 +77,17 @@ HEADERS += \
 
 # Sources and private headers
 SOURCES += \
+    src/animator.c \
     src/concurrency.cpp \
     src/garbage.cpp \
     src/libdeng.c \
     src/memory.c \
     src/memoryzone.c \
     src/memoryzone_private.h \
+    src/point.c \
     src/reader.c \
+    src/rect.c \
+    src/size.c \
     src/smoother.cpp \
     src/str.c \
     src/stringarray.cpp \

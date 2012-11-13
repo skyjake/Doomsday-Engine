@@ -35,7 +35,7 @@
 #include <de/ddstring.h>
 
 #if _DEBUG
-#  include "point.h" // For the debug visual.
+#  include <de/point.h> // For the debug visual.
 #endif
 
 #ifdef __cplusplus

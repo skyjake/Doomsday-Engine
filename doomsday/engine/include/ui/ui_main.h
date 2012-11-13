@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#include "rect.h"
+#include <de/rect.h>
 
 #define IS_ACTKEY(x)    (x == ' ' || x == DDKEY_RETURN)
 

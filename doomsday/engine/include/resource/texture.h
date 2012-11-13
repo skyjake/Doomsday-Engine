@@ -23,7 +23,7 @@
 #ifndef LIBDENG_RESOURCE_TEXTURE_H
 #define LIBDENG_RESOURCE_TEXTURE_H
 
-#include "size.h"
+#include <de/size.h>
 #include "textures.h"
 #include "texturevariant.h"
 

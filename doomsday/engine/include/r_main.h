@@ -29,7 +29,7 @@
 #ifndef LIBDENG_REFRESH_MAIN_H
 #define LIBDENG_REFRESH_MAIN_H
 
-#include "rect.h"
+#include <de/rect.h>
 
 #ifdef __cplusplus
 extern "C" {

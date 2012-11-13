@@ -92,7 +92,6 @@ else {
 
 DENG_API_HEADERS = \
     api/busytask.h \
-    api/dd_animator.h \
     api/dd_api.h \
     api/dd_fontrenderer.h \
     api/dd_gl.h \
@@ -111,9 +110,6 @@ DENG_API_HEADERS = \
     api/doomsday.h \
     api/filehandle.h \
     api/materialarchive.h \
-    api/point.h \
-    api/rect.h \
-    api/size.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
@@ -431,7 +427,6 @@ deng_nodisplaymode {
 
 # Platform-independent sources.
 SOURCES += \
-    src/animator.c \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.c \
     src/audio/s_cache.c \
@@ -547,13 +542,11 @@ SOURCES += \
     src/network/ui_mpi.c \
     src/pathtree.cpp \
     src/pathtreenode.cpp \
-    src/point.c \
     src/propertyvalue.cpp \
     src/r_main.c \
     src/r_things.c \
     src/r_util.c \
     src/r_world.c \
-    src/rect.c \
     src/render/r_draw.c \
     src/render/r_fakeradio.c \
     src/render/r_lgrid.c \
@@ -599,7 +592,6 @@ SOURCES += \
     src/server/sv_missile.c \
     src/server/sv_pool.c \
     src/server/sv_sound.cpp \
-    src/size.c \
     src/svg.c \
     src/sys_direc.c \
     src/sys_opengl.c \

@@ -1,5 +1,5 @@
 /**
- * @file dd_animator.h
+ * @file animator.h
  * Moves a value gradually from a start value to a target value.
  * @ingroup math
  *
@@ -26,6 +26,8 @@
 #ifndef LIBDENG_ANIMATOR_H
 #define LIBDENG_ANIMATOR_H
 
+#include "libdeng.h"
+
 /// @addtogroup math
 ///@{
 
@@ -38,36 +40,36 @@ typedef struct {
     int             steps;
 } animator_t;
 
-void            Animator_Init(animator_t* v, float val);
-void            Animator_Set(animator_t* v, float val, int steps);
-void            Animator_Think(animator_t* v);
+DENG_PUBLIC void Animator_Init(animator_t* v, float val);
+DENG_PUBLIC void Animator_Set(animator_t* v, float val, int steps);
+DENG_PUBLIC void Animator_Think(animator_t* v);
 
 /**
  * 2D vector animator.
  */
 typedef animator_t animatorvector2_t[2];
 
-void            AnimatorVector2_Init(animatorvector2_t v, float x, float y);
-void            AnimatorVector2_Set(animatorvector2_t v, float x, float y, int steps);
-void            AnimatorVector2_Think(animatorvector2_t v);
+DENG_PUBLIC void AnimatorVector2_Init(animatorvector2_t v, float x, float y);
+DENG_PUBLIC void AnimatorVector2_Set(animatorvector2_t v, float x, float y, int steps);
+DENG_PUBLIC void AnimatorVector2_Think(animatorvector2_t v);
 
 /**
  * 3D vector animator.
  */
 typedef animator_t animatorvector3_t[3];
 
-void            AnimatorVector3_Init(animatorvector3_t v, float x, float y, float z);
-void            AnimatorVector3_Set(animatorvector3_t v, float x, float y, float z, int steps);
-void            AnimatorVector3_Think(animatorvector3_t v);
+DENG_PUBLIC void AnimatorVector3_Init(animatorvector3_t v, float x, float y, float z);
+DENG_PUBLIC void AnimatorVector3_Set(animatorvector3_t v, float x, float y, float z, int steps);
+DENG_PUBLIC void AnimatorVector3_Think(animatorvector3_t v);
 
 /**
  * 4D vector animator.
  */
 typedef animator_t animatorvector4_t[4];
 
-void            AnimatorVector4_Init(animatorvector4_t v, float x, float y, float z, float w);
-void            AnimatorVector4_Set(animatorvector4_t v, float x, float y, float z, float w, int steps);
-void            AnimatorVector4_Think(animatorvector4_t v);
+DENG_PUBLIC void AnimatorVector4_Init(animatorvector4_t v, float x, float y, float z, float w);
+DENG_PUBLIC void AnimatorVector4_Set(animatorvector4_t v, float x, float y, float z, float w, int steps);
+DENG_PUBLIC void AnimatorVector4_Think(animatorvector4_t v);
 
 ///@}
 

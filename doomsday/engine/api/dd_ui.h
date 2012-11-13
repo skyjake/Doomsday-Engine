@@ -26,7 +26,7 @@
 #ifndef LIBDENG_API_GUI_H
 #define LIBDENG_API_GUI_H
 
-#include "dd_animator.h"
+#include <de/animator.h>
 #include "dd_fontrenderer.h"
 #include "dd_vectorgraphic.h"
 
