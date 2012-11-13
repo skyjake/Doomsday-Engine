@@ -76,7 +76,7 @@ win32 {
         /DEF:\"$$DENG_API_DIR/doomsday.def\" \
         /IMPLIB:\"$$DENG_EXPORT_LIB\"
 
-    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lwinmm \
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
         -lopengl32 -lglu32
 }
 else:macx {

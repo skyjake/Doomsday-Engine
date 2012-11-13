@@ -32,6 +32,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <de/timer.h>
 
 #include "dswinmm.h"
 

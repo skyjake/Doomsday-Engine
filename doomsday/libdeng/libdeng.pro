@@ -16,6 +16,8 @@ VERSION = $$DENG_VERSION
 include(../dep_deng2.pri)
 
 win32 {
+    LIBS += -lwinmm
+
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
 }
