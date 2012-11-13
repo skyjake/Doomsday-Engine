@@ -32,7 +32,7 @@
 #  include <QX11Info>
 #  include <X11/keysym.h>
 #  include <X11/Xlib.h>
-#  include "../unix/src/imKStoUCS.c"
+#  include "../unix/imKStoUCS.c"
 #  define XFREE_KEYMAPPING
 static int x11ScancodeToDDKey(int scancode);
 #endif

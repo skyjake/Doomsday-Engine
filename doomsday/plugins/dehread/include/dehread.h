@@ -33,7 +33,7 @@
  * This dependency should be removed entirely, by making this plugin modify the
  * definitions via a public API provided by the engine.
  */
-#include "../../../engine/portable/include/def_data.h"
+#include "../../../engine/include/def_data.h"
 struct font_s;
 
 #define __INTERNAL_MAP_DATA_ACCESS__

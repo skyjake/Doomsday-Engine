@@ -34,7 +34,7 @@
 #include "sys_findfile.h"
 
 #ifdef UNIX
-#  include "../../unix/include/sys_path.h"
+#  include "unix/sys_path.h"
 #endif
 
 #endif /* LIBDENG_FILESYS_H */

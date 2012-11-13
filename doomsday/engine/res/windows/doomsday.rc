@@ -25,12 +25,12 @@
  * doomsday.rc: Doomsday.exe resource script.
  */
 
-#include "../../win32/include/resource.h"
+#include "../../include/windows/resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 
 #include "windows.h"
-#include "../../portable/include/dd_version.h"
+#include "../../api/dd_version.h"
 
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -51,13 +51,13 @@ END
 2 TEXTINCLUDE
 BEGIN
     "#include ""windows.h""\r\n"
-    "#include ""../../portable/include/dd_version.h""\0"
+    "#include ""../../api/dd_version.h""\0"
 END
 
 3 TEXTINCLUDE
 BEGIN
     "#ifndef NO_MANIFEST\r\n"
-    "   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""../../win32/res/doomsday.exe.manifest""\r\n"
+    "   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""doomsday.exe.manifest""\r\n"
     "#endif\r\n"
     "\r\n"
     "VS_VERSION_INFO VERSIONINFO\r\n"
@@ -105,7 +105,7 @@ END
  * Icon with lowest ID value placed first to ensure application icon
  * remains consistent on all systems.
  */
-IDI_GAME_ICON       ICON    DISCARDABLE     "../../win32/res/doomsday.ico"
+IDI_GAME_ICON       ICON    DISCARDABLE     "doomsday.ico"
 
 #endif // English (U.S.) resources
 

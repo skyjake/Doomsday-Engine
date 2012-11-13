@@ -40,7 +40,7 @@
 #include <stdarg.h>
 
 #include "dengproject.h"
-#include "../portable/include/dd_version.h"
+#include "dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
 #include "dd_wad.h"
@@ -54,10 +54,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/** @file
- * @todo dd_version.h is not officially a public header file!
- */
 
 //------------------------------------------------------------------------
 //
