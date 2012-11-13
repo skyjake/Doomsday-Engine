@@ -13,7 +13,7 @@ defineReplace(findVersion) {
 }
 
 defineReplace(dengReleaseType) {
-    info = $$system(python \"$$PWD/../distrib/build_version.py\"  \"$$PWD/engine/portable/include/dd_version.h\")
+    info = $$system(python \"$$PWD/../distrib/build_version.py\"  \"$$PWD/engine/include/dd_version.h\")
     return($$member(info, 2))
 }
 
@@ -23,7 +23,7 @@ defineTest(isStableRelease) {
     else: return(false)
 }
 
-DENG_VERSION            = $$findVersion(engine/portable/include/dd_version.h)
+DENG_VERSION            = $$findVersion(engine/include/dd_version.h)
 
 JDOOM_VERSION           = $$findVersion(plugins/jdoom/include/version.h)
 JHERETIC_VERSION        = $$findVersion(plugins/jheretic/include/version.h)
