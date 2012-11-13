@@ -38,11 +38,11 @@ CONFIG *= thread
 
 # Directories ----------------------------------------------------------------
 
-DENG_API_DIR = $$PWD/engine/api
-DENG_INCLUDE_DIR = $$PWD/engine/include
-DENG_UNIX_INCLUDE_DIR = $$PWD/engine/include/unix
-DENG_MAC_INCLUDE_DIR = $$PWD/engine/include/macx
-DENG_WIN_INCLUDE_DIR = $$PWD/engine/win32/include
+DENG_API_DIR          = $$PWD/engine/api
+DENG_INCLUDE_DIR      = $$PWD/engine/include
+DENG_UNIX_INCLUDE_DIR = $$DENG_INCLUDE_DIR/unix
+DENG_MAC_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/macx
+DENG_WIN_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/windows
 
 # Binaries and generated files are placed here.
 DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products

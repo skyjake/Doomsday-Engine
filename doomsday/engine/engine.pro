@@ -39,7 +39,7 @@ DEFINES += __DOOMSDAY__
 }
 
 win32 {
-    RC_FILE = win32/res/doomsday.rc
+    RC_FILE = res/windows/doomsday.rc
     OTHER_FILES += api/doomsday.def
 }
 else:macx {
@@ -381,14 +381,14 @@ win32 {
     INCLUDEPATH += $$DENG_WIN_INCLUDE_DIR
 
     SOURCES += \
-        win32/src/dd_winit.c \
-        win32/src/directinput.cpp \
-        win32/src/sys_console.c \
-        win32/src/sys_findfile.c \
-        win32/src/joystick_win32.cpp \
-        win32/src/mouse_win32.cpp
+        src/windows/dd_winit.c \
+        src/windows/directinput.cpp \
+        src/windows/sys_console.c \
+        src/windows/sys_findfile.c \
+        src/windows/joystick_win32.cpp \
+        src/windows/mouse_win32.cpp
 
-    !deng_nodisplaymode: SOURCES += win32/src/displaymode_win32.cpp
+    !deng_nodisplaymode: SOURCES += src/windows/displaymode_win32.cpp
 }
 else:unix {
     # Common Unix (including Mac OS X).
@@ -754,7 +754,7 @@ macx {
         license.files = doc/LICENSE
         license.path = $$DENG_DOCS_DIR
 
-        icon.files = win32/res/doomsday.ico
+        icon.files = res/windows/doomsday.ico
         icon.path = $$DENG_DATA_DIR/graphics
     }
     else {
