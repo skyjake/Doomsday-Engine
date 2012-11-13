@@ -196,10 +196,8 @@ DENG_HEADERS += \
     include/gl_hq2x.h \
     include/gl_main.h \
     include/gl_model.h \
-    include/gl_pcx.h \
     include/gl_tex.h \
     include/gl_texmanager.h \
-    include/gl_tga.h \
     include/gridmap.h \
     include/image.h \
     include/json.h \
@@ -300,11 +298,13 @@ DENG_HEADERS += \
     include/resource/materials.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
+    include/resource/pcx.h \
     include/resource/r_data.h \
     include/resource/texture.h \
     include/resource/textures.h \
     include/resource/texturevariant.h \
     include/resource/texturevariantspecification.h \
+    include/resource/tga.h \
     include/resourcenamespace.h \
     include/resourcerecord.h \
     include/server/sv_def.h \
@@ -488,10 +488,8 @@ SOURCES += \
     src/gl_drawvectorgraphic.c \
     src/gl_hq2x.c \
     src/gl_main.c \
-    src/gl_pcx.c \
     src/gl_tex.c \
     src/gl_texmanager.c \
-    src/gl_tga.c \
     src/gridmap.c \
     src/image.cpp \
     src/json.cpp \
@@ -589,10 +587,12 @@ SOURCES += \
     src/resource/materials.cpp \
     src/resource/materialvariant.cpp \
     src/resource/models.cpp \
+    src/resource/pcx.c \
     src/resource/r_data.c \
     src/resource/texture.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
+    src/resource/tga.c \
     src/resourcenamespace.cpp \
     src/resourcerecord.cpp \
     src/server/sv_frame.c \

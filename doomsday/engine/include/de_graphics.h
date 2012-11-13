@@ -35,8 +35,9 @@
 #include "gl_tex.h"
 #include "gl_hq2x.h"
 #include "gl_model.h"
-#include "gl_pcx.h"
-#include "gl_tga.h"
 #include "gl_defer.h"
+
+#include "resource/pcx.h"
+#include "resource/tga.h"
 
 #endif /* LIBDENG_GRAPHICS */
