@@ -1405,7 +1405,7 @@ void GL_PruneTextureVariantSpecifications(void)
 #endif
 }
 
-void GL_InitImage(image_t* img)
+void Image_Init(image_t* img)
 {
     assert(img);
     img->size.width = 0;
@@ -1416,7 +1416,7 @@ void GL_InitImage(image_t* img)
     img->pixels = 0;
 }
 
-void GL_PrintImageMetadata(const image_t* image)
+void Image_PrintMetadata(const image_t* image)
 {
     assert(image);
     Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->size.width, image->size.height,
@@ -1427,7 +1427,7 @@ void GL_PrintImageMetadata(const image_t* image)
 static boolean tryLoadPCX(image_t* img, FileHandle* file)
 {
     assert(img && file);
-    GL_InitImage(img);
+    Image_Init(img);
     img->pixels = PCX_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
@@ -1442,7 +1442,7 @@ static boolean tryLoadPNG(image_t* img, FileHandle* file)
 {
     assert(img && file);
     /*
-    GL_InitImage(img);
+    Image_Init(img);
     img->pixels = PNG_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
     */
@@ -1452,7 +1452,7 @@ static boolean tryLoadPNG(image_t* img, FileHandle* file)
 static boolean tryLoadTGA(image_t* img, FileHandle* file)
 {
     assert(img && file);
-    GL_InitImage(img);
+    Image_Init(img);
     img->pixels = TGA_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
@@ -1497,7 +1497,7 @@ uint8_t* Image_LoadFromFile(image_t* img, FileHandle* file)
     const char* fileName;
     assert(img && file);
 
-    GL_InitImage(img);
+    Image_Init(img);
 
     fileName = Str_Text(F_ComposePath(FileHandle_File_const(file)));
 
@@ -1571,7 +1571,7 @@ uint8_t* GL_LoadImageStr(image_t* img, const ddstring_t* filePath)
     return GL_LoadImage(img, Str_Text(filePath));
 }
 
-void GL_DestroyImage(image_t* img)
+void Image_Destroy(image_t* img)
 {
     assert(img);
     if(!img->pixels) return;
@@ -2367,7 +2367,7 @@ TexSource GL_LoadDetailTextureLump(image_t* image, FileHandle* file)
     {   // It must be an old-fashioned "raw" image.
         size_t bufSize, fileLength = FileHandle_Length(file);
 
-        GL_InitImage(image);
+        Image_Init(image);
 
         /**
          * @todo Do not fatal error here if the not a known format!
@@ -2418,7 +2418,7 @@ TexSource GL_LoadFlatLump(image_t* image, FileHandle* file)
 
         size_t bufSize, fileLength = FileHandle_Length(file);
 
-        GL_InitImage(image);
+        Image_Init(image);
 
         /// @todo not all flats are 64x64!
         image->size.width  = FLAT_WIDTH;
@@ -2463,7 +2463,7 @@ static TexSource loadPatchLump(image_t* image, FileHandle* file, int tclass, int
 
             if(validPatch((const uint8_t*)patch, fileLength))
             {
-                GL_InitImage(image);
+                Image_Init(image);
                 image->size.width  = SHORT(patch->width)  + border*2;
                 image->size.height = SHORT(patch->height) + border*2;
                 image->pixelSize = 1;
@@ -2531,7 +2531,7 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
             0, (useMipmap ? glmode[mipmapping] : GL_LINEAR),
             magFilter, texAniso, wrapS, wrapT);
 
-        GL_DestroyImage(&image);
+        Image_Destroy(&image);
     }
 
     return texture;
@@ -2550,7 +2550,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
     assert(texDef);
 
-    GL_InitImage(image);
+    Image_Init(image);
     image->pixelSize = 1;
     image->size.width = texDef->size.width;
     image->size.height = texDef->size.height;
@@ -2626,7 +2626,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
         F_UnlockLump(file, lumpIdx);
     }
 
-    GL_InitImage(image);
+    Image_Init(image);
     image->pixelSize = 1;
     image->size.width  = width;
     image->size.height = height;
@@ -2705,7 +2705,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
                 size_t fileLength = FileHandle_Length(file);
                 size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
 
-                GL_InitImage(image);
+                Image_Init(image);
                 image->pixels = malloc(bufSize);
                 if(fileLength < bufSize)
                     memset(image->pixels, 0, bufSize);
@@ -2764,7 +2764,7 @@ DGLuint GL_PrepareRawTexture(rawtex_t* raw)
 
         raw->width  = image.size.width;
         raw->height = image.size.height;
-        GL_DestroyImage(&image);
+        Image_Destroy(&image);
     }
 
     return raw->tex;
@@ -3356,7 +3356,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     }
 
     // We're done with the image data.
-    GL_DestroyImage(&image);
+    Image_Destroy(&image);
 
 #ifdef _DEBUG
     VERBOSE(
@@ -3369,7 +3369,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
         )
     VERBOSE2(
         Con_Printf("  Content: ");
-        GL_PrintImageMetadata(&image);
+        Image_PrintMetadata(&image);
         Con_Printf("  Specification: ");
         GL_PrintTextureVariantSpecification(spec);
         )
@@ -3660,7 +3660,7 @@ boolean GL_DumpImage(const image_t* origImg, const char* filePath)
     const image_t* img = origImg;
     if(img->pixelSize != 4 || img->paletteId)
     {
-        GL_InitImage(&imgABGR32);
+        Image_Init(&imgABGR32);
         imgABGR32.pixels = GL_ConvertBuffer(img->pixels, img->size.width, img->size.height,
                                             ((img->flags & IMGF_IS_MASKED)? 2 : 1),
                                             R_ToColorPalette(img->paletteId), 4);
@@ -3674,7 +3674,7 @@ boolean GL_DumpImage(const image_t* origImg, const char* filePath)
 
     if(img == &imgABGR32)
     {
-        GL_DestroyImage(&imgABGR32);
+        Image_Destroy(&imgABGR32);
     }
     return savedOK;
 }}

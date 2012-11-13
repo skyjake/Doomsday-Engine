@@ -153,13 +153,13 @@ void BusyVisual_LoadTextures(void)
     if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
     {
         texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-        GL_DestroyImage(&image);
+        Image_Destroy(&image);
     }
 
     if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
     {
         texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
-        GL_DestroyImage(&image);
+        Image_Destroy(&image);
     }
 }
 

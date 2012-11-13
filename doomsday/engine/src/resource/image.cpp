@@ -145,7 +145,7 @@ boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandl
     // It is assumed that file's position stays the same (could be trying multiple loaders).
     size_t initPos = hndl.tell();
 
-    GL_InitImage(img);
+    Image_Init(img);
 
     // Load the file contents to a memory buffer.
     QByteArray data;

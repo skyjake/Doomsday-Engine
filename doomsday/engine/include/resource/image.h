@@ -1,6 +1,6 @@
 /**
  * @file image.h
- * Image objects and relates routines. @ingroup gl
+ * Image objects and relates routines. @ingroup resource
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -65,9 +65,19 @@ typedef struct image_s {
     uint8_t* pixels;
 } image_t;
 
-void GL_InitImage(image_t* image);
+/**
+ * Initializes the previously allocated @a image for use.
+ * @param image  Image instance.
+ */
+void Image_Init(image_t* image);
 
-void GL_PrintImageMetadata(const image_t* image);
+/**
+ * Releases image pixel data, but does not delete @a image.
+ * @param image  Image instance.
+ */
+void Image_Destroy(image_t* image);
+
+void Image_PrintMetadata(const image_t* image);
 
 /**
  * Loads PCX, TGA and PNG images. The returned buffer must be freed
@@ -80,9 +90,6 @@ uint8_t* Image_LoadFromFile(image_t* image, FileHandle* file);
 boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandle* file);
 
 boolean Image_Save(const image_t *image, const char* filePath);
-
-/// Release image pixel data.
-void GL_DestroyImage(image_t* image);
 
 /// @return  @c true if the image pixel data contains alpha information.
 boolean Image_HasAlpha(const image_t* image);

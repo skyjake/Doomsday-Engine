@@ -198,7 +198,6 @@ DENG_HEADERS += \
     include/gl_tex.h \
     include/gl_texmanager.h \
     include/gridmap.h \
-    include/image.h \
     include/json.h \
     include/kdtree.h \
     include/library.h \
@@ -294,6 +293,7 @@ DENG_HEADERS += \
     include/resource/colorpalette.h \
     include/resource/font.h \
     include/resource/fonts.h \
+    include/resource/image.h \
     include/resource/material.h \
     include/resource/materials.h \
     include/resource/materialvariant.h \
@@ -488,7 +488,6 @@ SOURCES += \
     src/gl_tex.c \
     src/gl_texmanager.c \
     src/gridmap.c \
-    src/image.cpp \
     src/json.cpp \
     src/kdtree.c \
     src/library.cpp \
@@ -580,6 +579,7 @@ SOURCES += \
     src/resource/bitmapfont.c \
     src/resource/colorpalette.c \
     src/resource/fonts.cpp \
+    src/resource/image.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.c \
     src/resource/materials.cpp \

@@ -235,7 +235,7 @@ void Canvas::grab(image_t* img, const QSize& outputSize)
 {
     QImage grabbed = grabImage(outputSize);
 
-    GL_InitImage(img);
+    Image_Init(img);
     img->size.width = grabbed.width();
     img->size.height = grabbed.height();
     img->pixels = (uint8_t*) malloc(grabbed.byteCount());
