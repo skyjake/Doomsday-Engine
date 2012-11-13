@@ -40,7 +40,7 @@ DEFINES += __DOOMSDAY__
 
 win32 {
     RC_FILE = res/windows/doomsday.rc
-    OTHER_FILES += api/doomsday.def
+    OTHER_FILES += api/doomsday.def $$RC_FILE
 }
 else:macx {
     useFramework(Cocoa)
