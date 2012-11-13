@@ -1063,7 +1063,7 @@ void SBE_DrawCursor(void)
 {
 #define SET_COL(x, r, g, b, a) {x[0]=(r); x[1]=(g); x[2]=(b); x[3]=(a);}
 
-    double t = Sys_GetRealTime()/100.0f;
+    double t = Timer_RealMilliseconds()/100.0f;
     source_t* s;
     coord_t hand[3];
     float size = 10000;

@@ -23,6 +23,7 @@
 
 #include "wadmapconverter.h"
 #include <de/Log>
+#include <de/timer.h>
 
 static uint validCount = 0; // Used for Polyobj LineDef collection.
 
@@ -229,7 +230,7 @@ void Id1Map::findPolyobjs(void)
 
 void Id1Map::analyze(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = Timer_RealMilliseconds();
 
     LOG_AS("Id1Map");
     if(mapFormat == MF_HEXEN)
@@ -237,5 +238,5 @@ void Id1Map::analyze(void)
         findPolyobjs();
     }
 
-    LOG_VERBOSE("Analyses completed in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
+    LOG_VERBOSE("Analyses completed in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
 }

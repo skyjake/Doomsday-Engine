@@ -22,10 +22,12 @@
 #include "de/libdeng.h"
 #include "de/garbage.h"
 #include "de/concurrency.h"
+#include "de/timer.h"
 #include "memoryzone_private.h"
 
 void Libdeng_Init(void)
 {
+    Timer_Init();
     Z_Init();
     Garbage_Init();
     Sys_MarkAsMainThread();
@@ -35,4 +37,5 @@ void Libdeng_Shutdown(void)
 {
     Garbage_Shutdown();
     Z_Shutdown();
+    Timer_Shutdown();
 }

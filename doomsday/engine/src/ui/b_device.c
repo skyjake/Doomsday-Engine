@@ -278,7 +278,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
     float       devicePos;
     float       deviceOffset;
     uint        deviceTime;
-    uint        nowTime = Sys_GetRealTime();
+    uint        nowTime = Timer_RealMilliseconds();
     boolean     conflicted[NUM_CBD_TYPES] = { false, false, false };
     boolean     appliedState[NUM_CBD_TYPES] = { false, false, false };
 

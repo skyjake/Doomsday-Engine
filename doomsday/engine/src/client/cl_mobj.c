@@ -397,7 +397,7 @@ void GameMap_ClMobjReset(GameMap* map)
 
 void GameMap_ExpireClMobjs(GameMap* map)
 {
-    uint nowTime = Sys_GetRealTime();
+    uint nowTime = Timer_RealMilliseconds();
     clmoinfo_t* info;
     clmoinfo_t* next = 0;
     mobj_t* mo;
@@ -451,7 +451,7 @@ void Cl_PredictMovement(void)
     clmobj_t           *cmo, *next = NULL;
     int                 i;
     int                 moCount = 0;
-    uint                nowTime = Sys_GetRealTime();
+    uint                nowTime = Timer_RealMilliseconds();
 
     predicted_tics++;
 
@@ -550,7 +550,7 @@ mobj_t* ClMobj_Create(thid_t id)
     mo = (mobj_t*) ((char*)data + sizeof(clmoinfo_t));
 
     // Initialize the data.
-    info->time = Sys_GetRealTime();
+    info->time = Timer_RealMilliseconds();
     info->startMagic = CLM_MAGIC1;
     info->endMagic = CLM_MAGIC2;
     mo->ddFlags = DDMF_REMOTE;
@@ -793,7 +793,7 @@ void ClMobj_ReadDelta2(boolean skip)
             info->flags &= ~CLMF_UNPREDICTABLE;
 
             // This clmobj is evidently alive.
-            info->time = Sys_GetRealTime();
+            info->time = Timer_RealMilliseconds();
         }
 
         d = mo;
@@ -1064,7 +1064,7 @@ void ClMobj_ReadNullDelta2(boolean skip)
 
     // This'll allow playing sounds from the mobj for a little while.
     // The mobj will soon time out and be permanently removed.
-    info->time = Sys_GetRealTime();
+    info->time = Timer_RealMilliseconds();
     info->flags |= CLMF_UNPREDICTABLE | CLMF_NULLED;
 
 #ifdef _DEBUG

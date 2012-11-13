@@ -220,7 +220,7 @@ void DS_Dummy_SFX_Play(sfxbuffer_t* buf)
     if(!(buf->flags & SFXBF_PLAYING))
     {
         // Calculate the end time (milliseconds).
-        buf->endTime = Sys_GetRealTime() + DS_DummyBufferLength(buf);
+        buf->endTime = Timer_RealMilliseconds() + DS_DummyBufferLength(buf);
     }
 
     // The buffer is now playing.
@@ -250,7 +250,7 @@ void DS_Dummy_SFX_Refresh(sfxbuffer_t* buf)
         return;
 
     // Have we passed the predicted end of sample?
-    if(!(buf->flags & SFXBF_REPEAT) && Sys_GetRealTime() >= buf->endTime)
+    if(!(buf->flags & SFXBF_REPEAT) && Timer_RealMilliseconds() >= buf->endTime)
     {
         // Time for the sound to stop.
         DS_Dummy_SFX_Stop(buf);

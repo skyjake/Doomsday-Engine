@@ -22,6 +22,8 @@
 #ifndef LIBCOMMON_GAME_INCLUDES
 #define LIBCOMMON_GAME_INCLUDES
 
+#include <de/timer.h>
+
 #define WEAPONBOTTOM            (128)   // from p_pspr.c
 
 #define IS_NETWORK_SERVER       (DD_GetInteger(DD_SERVER) && DD_GetInteger(DD_NETGAME))

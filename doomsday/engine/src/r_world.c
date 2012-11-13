@@ -1502,10 +1502,10 @@ void R_SetupMap(int mode, int flags)
         R_MapInitSurfaces(true);
         R_MapInitSurfaceLists();
 
-        startTime = Sys_GetSeconds();
+        startTime = Timer_Seconds();
         R_PrecacheForMap();
         Materials_ProcessCacheQueue();
-        VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Sys_GetSeconds() - startTime) )
+        VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Timer_Seconds() - startTime) )
 
         S_SetupForChangedMap();
 

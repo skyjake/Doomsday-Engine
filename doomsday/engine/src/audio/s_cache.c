@@ -441,7 +441,7 @@ void Sfx_PurgeCache(void)
 
     int                 totalSize = 0, maxSize = sfxMaxCacheKB * 1024;
     sfxcache_t*         it, *next, *lowest;
-    int                 i, lowHits = 0, nowTime = Sys_GetTime();
+    int                 i, lowHits = 0, nowTime = Timer_Ticks();
 
     if(!sfxAvail)
         return;
@@ -531,7 +531,7 @@ void Sfx_CacheHit(int id)
     if(node)
     {
         node->hits++;
-        node->lastUsed = Sys_GetTime();
+        node->lastUsed = Timer_Ticks();
     }
 }
 

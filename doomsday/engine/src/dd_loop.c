@@ -256,7 +256,7 @@ void DD_GameLoopDrawer(void)
 
 static void startFrame(void)
 {
-    //frameStartAt = Sys_GetRealTime();
+    //frameStartAt = Timer_RealMilliseconds();
 
     S_StartFrame();
     if(gx.BeginFrame)
@@ -271,7 +271,7 @@ static void endFrame(void)
 {
     static uint lastFpsTime = 0;
 
-    uint nowTime = Sys_GetRealTime();
+    uint nowTime = Timer_RealMilliseconds();
 
     /*
     Con_Message("endFrame with %i ms (%i render)\n", nowTime - lastShowAt, nowTime - frameStartAt);
@@ -515,7 +515,7 @@ void DD_WaitForOptimalUpdateTime(void)
     targetUpdateTime = prevUpdateTime + optimalDelta;
 
     // Check the current time.
-    nowTime = Sys_GetRealTime();
+    nowTime = Timer_RealMilliseconds();
     elapsed = nowTime - prevUpdateTime;
 
     if(elapsed < optimalDelta)
@@ -532,7 +532,7 @@ void DD_WaitForOptimalUpdateTime(void)
         // Attempt to make sure we really wait until the optimal time.
         Sys_BlockUntilRealTime(targetUpdateTime);
 
-        nowTime = Sys_GetRealTime();
+        nowTime = Timer_RealMilliseconds();
         elapsed = nowTime - prevUpdateTime;
     }
 
@@ -544,7 +544,7 @@ void DD_WaitForOptimalUpdateTime(void)
 
 timespan_t DD_LatestRunTicsStartTime(void)
 {
-    if(BusyMode_Active()) return Sys_GetSeconds();
+    if(BusyMode_Active()) return Timer_Seconds();
     return lastRunTicsTime;
 }
 
@@ -566,12 +566,12 @@ static void runTics(void)
     {
         // On the first tic, no time actually passes.
         firstTic = false;
-        lastRunTicsTime = Sys_GetSeconds();
+        lastRunTicsTime = Timer_Seconds();
         return;
     }
 
     // Let's see how much time has passed. This is affected by "settics".
-    nowTime = Sys_GetSeconds();
+    nowTime = Timer_Seconds();
     elapsedTime = nowTime - lastRunTicsTime;
 
     // Remember when this frame started.

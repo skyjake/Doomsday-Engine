@@ -822,7 +822,7 @@ static __inline void readDefinitionFile(const char* fileName)
 
 static void readAllDefinitions(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = Timer_RealMilliseconds();
     ddstring_t foundPath, buf;
     int p;
 
@@ -911,7 +911,7 @@ static void readAllDefinitions(void)
     // Read DD_DEFNS definition lumps.
     Def_ReadLumpDefs();
 
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
 }
 
 void Def_GenerateGroupsFromAnims(void)

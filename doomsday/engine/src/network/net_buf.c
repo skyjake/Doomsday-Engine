@@ -130,7 +130,7 @@ void N_PostMessage(netmessage_t *msg)
     msg->next = NULL;
 
     // Set the timestamp for reception.
-    msg->receivedAt = Sys_GetRealSeconds();
+    msg->receivedAt = Timer_RealSeconds();
 
     if(msgTail)
     {
@@ -173,7 +173,7 @@ netmessage_t *N_GetMessage(void)
 
         // Check for simulated latency.
         if(netSimulatedLatencySeconds > 0 &&
-           (Sys_GetRealSeconds() - msg->receivedAt < netSimulatedLatencySeconds))
+           (Timer_RealSeconds() - msg->receivedAt < netSimulatedLatencySeconds))
         {
             // This message has not been received yet.
             msg = NULL;

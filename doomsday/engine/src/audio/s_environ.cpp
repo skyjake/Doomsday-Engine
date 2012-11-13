@@ -201,7 +201,7 @@ static void findBspLeafsAffectingSector(GameMap* map, uint secIDX)
 
 void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = Timer_RealMilliseconds();
 
     /// @todo optimize: Make use of the BSP leaf blockmap.
     uint numSectors = GameMap_SectorCount(map);
@@ -214,7 +214,7 @@ void S_DetermineBspLeafsAffectingSectorReverb(GameMap* map)
 
     // How much time did we spend?
     LOG_VERBOSE("S_DetermineBspLeafsAffectingSectorReverb: Done in %.2f seconds.")
-        << (Sys_GetRealTime() - startTime) / 1000.0f;
+        << (Timer_RealMilliseconds() - startTime) / 1000.0f;
 }
 
 static boolean calcBspLeafReverb(BspLeaf* bspLeaf)

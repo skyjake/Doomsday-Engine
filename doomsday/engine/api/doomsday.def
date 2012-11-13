@@ -422,9 +422,9 @@ EXPORTS
     B_SetContextFallback        @440 NONAME
 ; System.
 ;   Sys_TicksPerSecond          @46 NONAME
-    Sys_GetTime                 @47 NONAME
-    Sys_GetSeconds              @48 NONAME
-    Sys_GetRealTime             @49 NONAME
+;    Sys_GetTime                 @47 NONAME
+;    Sys_GetSeconds              @48 NONAME
+;    Timer_RealMilliseconds             @49 NONAME
     Sys_Sleep                   @50 NONAME
     Sys_CriticalMessage         @51 NONAME
     Sys_Quit                    @52 NONAME

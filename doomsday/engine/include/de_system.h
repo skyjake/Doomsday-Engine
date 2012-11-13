@@ -26,13 +26,13 @@
 #define LIBDENG_SYSTEM_H
 
 #include <de/concurrency.h>
+#include <de/timer.h>
 
 #include "sys_system.h"
 #include "sys_console.h"
 #include "ui/sys_input.h"
 #include "network/sys_network.h"
 #include "network/masterserver.h"
-#include "timer.h"
 #include "sys_opengl.h"
 
 // Use SDL for window management under *nix

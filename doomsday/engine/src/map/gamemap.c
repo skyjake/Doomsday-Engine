@@ -459,7 +459,7 @@ void GameMap_InitNodePiles(GameMap* map)
     assert(map);
 
     VERBOSE( Con_Message("GameMap::InitNodePiles: Initializing...\n") )
-    VERBOSE2( starttime = Sys_GetRealTime() )
+    VERBOSE2( starttime = Timer_RealMilliseconds() )
 
     // Initialize node piles and line rings.
     NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
@@ -474,7 +474,7 @@ void GameMap_InitNodePiles(GameMap* map)
     }
 
     // How much time did we spend?
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - starttime) / 1000.0f) )
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - starttime) / 1000.0f) )
 }
 
 void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2d_t min_, const_pvec2d_t max_)

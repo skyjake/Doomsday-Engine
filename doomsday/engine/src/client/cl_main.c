@@ -93,7 +93,7 @@ void Cl_InitID(void)
     }
     // Ah-ha, we need to generate a new ID.
     clientID = (ident_t)
-        ULONG(Sys_GetRealTime() * rand() + (rand() & 0xfff) +
+        ULONG(Timer_RealMilliseconds() * rand() + (rand() & 0xfff) +
               ((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24));
     // Write it to the file.
     if((file = fopen("client.id", "wb")) != NULL)

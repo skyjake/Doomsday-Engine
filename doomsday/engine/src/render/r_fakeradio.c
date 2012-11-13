@@ -239,7 +239,7 @@ boolean R_IsShadowingLinedef(LineDef* line)
 
 void R_InitFakeRadioForMap(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = Timer_RealMilliseconds();
 
     shadowlinkerparms_t data;
     Vertex* vtx0, *vtx1;
@@ -301,5 +301,5 @@ void R_InitFakeRadioForMap(void)
         }
     }
 
-    VERBOSE2( Con_Message("R_InitFakeRadioForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+    VERBOSE2( Con_Message("R_InitFakeRadioForMap: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
 }

@@ -150,7 +150,7 @@ static void AddIndexBit(int x, int y, uint *bitfield, int *count)
  */
 void LG_InitForMap(void)
 {
-    uint        startTime = Sys_GetRealTime();
+    uint        startTime = Timer_RealMilliseconds();
 
 #define MSFACTORS 7
     typedef struct lgsamplepoint_s {
@@ -550,7 +550,7 @@ Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
     // How much time did we spend?
     VERBOSE(Con_Message
             ("LG_InitForMap: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+             (Timer_RealMilliseconds() - startTime) / 1000.0f));
 }
 
 /**

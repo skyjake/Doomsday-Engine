@@ -69,7 +69,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 
     LOG_INFO("Converting blockmap...");
 
-    startTime = Sys_GetRealTime();
+    startTime = Timer_RealMilliseconds();
 
     blockmapLump = (short*) W_CacheLump(lumpInfo->lump, PU_GAMESTATIC);
 
@@ -176,7 +176,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
     map->blockMap = blockmap;
 
     // How much time did we spend?
-    LOG_INFO("  Done in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
+    LOG_INFO("  Done in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
 
     return true;
 

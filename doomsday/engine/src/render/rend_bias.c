@@ -321,7 +321,7 @@ void SB_Clear(void)
  */
 void SB_InitForMap(const char* uniqueID)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = Timer_RealMilliseconds();
     ded_light_t* def;
     int i;
 
@@ -461,7 +461,7 @@ void SB_InitForMap(const char* uniqueID)
     }
     }
 
-    VERBOSE2( Con_Message("SB_InitForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+    VERBOSE2( Con_Message("SB_InitForMap: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
 }
 
 void SB_SetColor(float* dest, float* src)
@@ -761,7 +761,7 @@ void SB_BeginFrame(void)
 BEGIN_PROF( PROF_BIAS_UPDATE );
 
     // The time that applies on this frame.
-    currentTimeSB = Sys_GetRealTime();
+    currentTimeSB = Timer_RealMilliseconds();
 
     // Check which sources have changed.
     memset(&allChanges, 0, sizeof(allChanges));

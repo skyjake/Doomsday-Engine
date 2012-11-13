@@ -1524,7 +1524,7 @@ void G_DoQuitGame(void)
     if(!quitInProgress)
     {
         quitInProgress = true;
-        quitTime = Sys_GetRealTime();
+        quitTime = Timer_RealMilliseconds();
 
         Hu_MenuCommand(MCMD_CLOSEFAST);
 
@@ -1578,13 +1578,13 @@ void G_DoQuitGame(void)
         }
     }
 
-    if(Sys_GetRealTime() > quitTime + QUITWAIT_MILLISECONDS)
+    if(Timer_RealMilliseconds() > quitTime + QUITWAIT_MILLISECONDS)
     {
         Sys_Quit();
     }
     else
     {
-        float t = (Sys_GetRealTime() - quitTime) / (float) QUITWAIT_MILLISECONDS;
+        float t = (Timer_RealMilliseconds() - quitTime) / (float) QUITWAIT_MILLISECONDS;
         quitDarkenOpacity = t*t*t;
     }
 

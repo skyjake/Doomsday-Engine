@@ -62,13 +62,13 @@ static void acquireScreenshotTexture(void)
     }
 
 #ifdef _DEBUG
-    startTime = Sys_GetRealSeconds();
+    startTime = Timer_RealSeconds();
 #endif
 
     texScreenshot = Window_GrabAsTexture(Window_Main(), true /*halfsized*/);
 
     DEBUG_Message(("Busy Mode: Took %.2f seconds acquiring screenshot texture #%i.\n",
-                   Sys_GetRealSeconds() - startTime, texScreenshot));
+                   Timer_RealSeconds() - startTime, texScreenshot));
 }
 
 void BusyVisual_ReleaseTextures(void)
@@ -347,7 +347,7 @@ static void drawConsoleOutput(void)
     if(!buffer) return;
 
     newCount = GetBufLines(buffer, visibleBusyLines);
-    nowTime = Sys_GetRealSeconds();
+    nowTime = Timer_RealSeconds();
     if(newCount > 0)
     {
         timeSinceLastNew = nowTime - lastNewTime;
@@ -514,7 +514,7 @@ void Con_TransitionConfigure(void)
 
 void Con_TransitionBegin(void)
 {
-    transition.startTime = Sys_GetTime();
+    transition.startTime = Timer_Ticks();
     transition.position = 0;
 }
 
@@ -540,7 +540,7 @@ void Con_TransitionTicker(timespan_t ticLength)
     if(isDedicated) return;
     if(!Con_TransitionInProgress()) return;
 
-    transition.position = (float)(Sys_GetTime() - transition.startTime) / transition.tics;
+    transition.position = (float)(Timer_Ticks() - transition.startTime) / transition.tics;
     if(transition.position >= 1)
     {
         Con_EndTransition();

@@ -281,7 +281,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     }
 
     // We have an activation!
-    nowTime = Sys_GetRealTime();
+    nowTime = Timer_RealMilliseconds();
 
     if(newState == db->previousClickState &&
        nowTime - db->previousClickTime < (uint) MAX_OF(0, doubleClickThresholdMilliseconds))

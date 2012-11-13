@@ -25,24 +25,16 @@
 
 #include <QTime>
 
-#include "de_platform.h"
-
 #ifdef WIN32
-#   include <mmsystem.h>
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  include <mmsystem.h>
 #endif
 
-/*
-#ifdef UNIX
-#   include <SDL.h>
-#endif
-*/
+#include "de/timer.h"
+#include "de/concurrency.h"
 
-#include "de_base.h"
-#include "de_console.h"
-#include <de/concurrency.h>
-
-float ticsPerSecond = TICSPERSEC;
-
+static float ticksPerSecond = TICSPERSEC;
 static double timeOffset = 0;
 static mutex_t timerMutex;         // To prevent Data races in the timer
 static QTime startedAt;
@@ -50,7 +42,7 @@ static uint timerOffset = 0;
 
 const static uint TIMER_WARP_INTERVAL = 12*60*60*1000;
 
-void Sys_ShutdownTimer(void)
+void Timer_Shutdown(void)
 {
 #ifdef WIN32
     timeEndPeriod(1);
@@ -60,7 +52,7 @@ void Sys_ShutdownTimer(void)
     Sys_DestroyMutex(m);
 }
 
-void Sys_InitTimer(void)
+void Timer_Init(void)
 {
     assert(timerMutex == 0);
     timerMutex = Sys_CreateMutex("TIMER_MUTEX");
@@ -71,13 +63,10 @@ void Sys_InitTimer(void)
     timerOffset = 0;
 }
 
-/**
- * @return The time in milliseconds.
- */
-unsigned int Sys_GetRealTime(void)
+unsigned int Timer_RealMilliseconds(void)
 {
     static boolean first = true;
-    static DWORD start;
+    static unsigned int start;
 #ifdef WIN32
     DWORD return_time, now;
 #else
@@ -128,52 +117,41 @@ unsigned int Sys_GetRealTime(void)
     return return_time;
 }
 
-/**
- * @return The timer value in seconds. Affected by the ticsPerSecond modifier.
- */
-double Sys_GetSeconds(void)
+double Timer_Seconds(void)
 {
-    return (double) ((Sys_GetRealTime() / 1000.0) * (ticsPerSecond / 35)) +
-        timeOffset;
+    return (double) ((Timer_RealMilliseconds() / 1000.0) * (ticksPerSecond / 35)) + timeOffset;
 }
 
-/**
- * @return The real timer value in seconds.
- */
-double Sys_GetRealSeconds(void)
+double Timer_RealSeconds(void)
 {
-    return (double) (Sys_GetRealTime() / 1000.0);
+    return (double) (Timer_RealMilliseconds() / 1000.0);
 }
 
-/**
- * @return The time in 35 Hz floating point tics.
- */
-double Sys_GetTimef(void)
+double Timer_Ticksf(void)
 {
-    return Sys_GetSeconds() * 35;
+    return Timer_Seconds() * 35;
 }
 
-/**
- * @return The time in 35 Hz tics.
- */
-int Sys_GetTime(void)
+int Timer_Ticks(void)
 {
-    return (int) Sys_GetTimef();
+    return (int) Timer_Ticksf();
 }
 
-/**
- * @return Set the number of game tics per second.
- */
-void Sys_TicksPerSecond(float newTics)
+void Timer_SetTicksPerSecond(float newTics)
 {
-    double  nowTime = Sys_GetRealTime() / 1000.0;
+    double  nowTime = Timer_RealMilliseconds() / 1000.0;
 
     if(newTics <= 0)
         newTics = TICSPERSEC;
 
     // Update the time offset so that after the change time will
     // continue from the same value.
-    timeOffset += nowTime * (ticsPerSecond - newTics) / 35;
+    timeOffset += nowTime * (ticksPerSecond - newTics) / 35;
 
-    ticsPerSecond = newTics;
+    ticksPerSecond = newTics;
+}
+
+float Timer_TicksPerSecond(void)
+{
+    return ticksPerSecond;
 }

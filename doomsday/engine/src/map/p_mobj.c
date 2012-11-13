@@ -321,7 +321,7 @@ D_CMD(InspectMobj)
     Con_Printf("Tics:%i ddFlags:%08x\n", mo->tics, mo->ddFlags);
     if(info)
     {
-        Con_Printf("Cltime:%i (now:%i) Flags:%04x\n", info->time, Sys_GetRealTime(), info->flags);
+        Con_Printf("Cltime:%i (now:%i) Flags:%04x\n", info->time, Timer_RealMilliseconds(), info->flags);
     }
     Con_Printf("Flags:%08x Flags2:%08x Flags3:%08x\n", mo->flags, mo->flags2, mo->flags3);
     Con_Printf("Height:%f Radius:%f\n", mo->height, mo->radius);

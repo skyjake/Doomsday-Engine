@@ -1136,7 +1136,7 @@ static playerheader_t* getPlayerHeader(void)
 
 uint SV_GenerateGameId(void)
 {
-    return Sys_GetRealTime() + (mapTime << 24);
+    return Timer_RealMilliseconds() + (mapTime << 24);
 }
 
 /**

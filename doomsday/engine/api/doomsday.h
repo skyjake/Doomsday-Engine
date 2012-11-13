@@ -303,10 +303,6 @@ int DD_Executef(int silent, char const* command, ...);
  * Functionality provided by or related to the operating system.
  */
 ///@{
-    void            Sys_TicksPerSecond(float num);
-    int             Sys_GetTime(void);
-    double          Sys_GetSeconds(void);
-    uint            Sys_GetRealTime(void);
     void            Sys_Sleep(int millisecs);
     int             Sys_CriticalMessage(char* msg);
     void            Sys_Quit(void);

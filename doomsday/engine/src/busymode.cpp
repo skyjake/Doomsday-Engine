@@ -146,7 +146,7 @@ static void beginTask(BusyTask* task)
 
     Window_SetDrawFunc(Window_Main(), BusyVisual_Render);
 
-    busyTask->_startTime = Sys_GetRealSeconds();
+    busyTask->_startTime = Timer_RealSeconds();
 }
 
 /**
@@ -440,7 +440,7 @@ static void BusyMode_Loop(void)
     // We accumulate time in the busy loop so that the animation of a task
     // sequence doesn't jump around but remains continuous.
     oldTime = busyTime;
-    busyTime = Sys_GetRealSeconds() - busyTask->_startTime;
+    busyTime = Timer_RealSeconds() - busyTask->_startTime;
     if(busyTime > oldTime)
     {
         accumulatedBusyTime += busyTime - oldTime;

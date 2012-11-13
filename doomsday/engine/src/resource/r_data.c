@@ -2101,7 +2101,7 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
 
 void R_InitPatchComposites(void)
 {
-    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
     patchcompositetex_t** defs;
     int defsCount;
 
@@ -2115,7 +2115,7 @@ void R_InitPatchComposites(void)
         free(defs);
     }
 
-    VERBOSE2( Con_Message("R_InitPatchComposites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitPatchComposites: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
 }
 
 /// @todo Do this in the lump directory where we can make use of the hash!
@@ -2162,7 +2162,7 @@ static Uri* composeFlatResourceUrn(lumpnum_t lumpNum)
 
 void R_InitFlatTextures(void)
 {
-    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
     lumpnum_t firstFlatMarkerLumpNum;
 
     VERBOSE( Con_Message("Initializing Flat textures...\n") )
@@ -2229,7 +2229,7 @@ void R_InitFlatTextures(void)
         }
     }
 
-    VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
 }
 
 static boolean validSpriteName(const ddstring_t* name)
@@ -2301,7 +2301,7 @@ static void defineAllSpriteTextures(void)
 
 void R_InitSpriteTextures(void)
 {
-    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
     int i, numLumps, uniqueId = 1/*1-based index*/;
     ddstring_t spriteName, decodedSpriteName;
     Uri* uri, *resourcePath;
@@ -2372,7 +2372,7 @@ void R_InitSpriteTextures(void)
     // Define any as yet undefined sprite textures.
     defineAllSpriteTextures();
 
-    VERBOSE2( Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+    VERBOSE2( Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
 }
 
 Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)

@@ -730,7 +730,7 @@ void I_TrackInput(ddevent_t *ev)
         // Mark down the time when the change occurs.
         if(ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_UP)
         {
-            key->time = Sys_GetRealTime();
+            key->time = Timer_RealMilliseconds();
         }
 
         if(key->isDown)
@@ -751,7 +751,7 @@ void I_TrackInput(ddevent_t *ev)
         hat->pos = ev->angle.pos;
 
         // Mark down the time when the change occurs.
-        hat->time = Sys_GetRealTime();
+        hat->time = Timer_RealMilliseconds();
 
         // We can clear the expiration when the hat is centered.
         if(hat->pos < 0)
@@ -1379,7 +1379,7 @@ void DD_ReadMouse(void)
     if(mouseFreq > 0)
     {
         static uint lastTime = 0;
-        uint nowTime = Sys_GetRealTime();
+        uint nowTime = Timer_RealMilliseconds();
 
         if(nowTime - lastTime < 1000/mouseFreq)
         {

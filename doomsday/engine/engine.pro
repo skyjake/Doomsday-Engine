@@ -323,7 +323,6 @@ DENG_HEADERS += \
     include/sys_system.h \
     include/tab_anorms.h \
     include/texturecontent.h \
-    include/timer.h \
     include/ui/b_command.h \
     include/ui/b_context.h \
     include/ui/b_device.h \
@@ -609,7 +608,6 @@ SOURCES += \
     src/sys_reslocator.cpp \
     src/sys_system.c \
     src/tab_tables.c \
-    src/timer.cpp \
     src/ui/b_command.c \
     src/ui/b_context.c \
     src/ui/b_device.c \

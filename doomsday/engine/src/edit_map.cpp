@@ -1378,7 +1378,7 @@ static boolean buildBsp(GameMap* gamemap)
         "Building BSP using tunable split factor of %d...\n", bspFactor);
 
     // It begins...
-    startTime = Sys_GetRealTime();
+    startTime = Timer_RealMilliseconds();
 
     bspBuilder = BspBuilder_New(gamemap, &map->numVertexes, &map->vertexes);
     BspBuilder_SetSplitCostFactor(bspBuilder, bspFactor);
@@ -1393,7 +1393,7 @@ static boolean buildBsp(GameMap* gamemap)
 
     // How much time did we spend?
     LegacyCore_PrintfLogFragmentAtLevel(DE2_LOG_INFO,
-        "BSP built in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f);
+        "BSP built in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f);
     return builtOK;
 }
 

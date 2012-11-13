@@ -30,7 +30,7 @@
 #define __DOOMSDAY_MISC_PROFILER_H__
 
 #include "dd_types.h"
-#include "timer.h"
+#include "de/timer.h"
 
 /*
  * This header defines some handy macros for profiling.
@@ -47,8 +47,8 @@ typedef struct profiler_s {
 
 #ifdef DD_PROFILE                  // Profiling is enabled.
 # define END_PROF_TIMERS()  ,NUM_PROFS }; static profiler_t profiler_[NUM_PROFS];
-# define BEGIN_PROF(x)      (profiler_[x].startCount++, profiler_[x].startTime = Sys_GetRealTime())
-# define END_PROF(x)        (profiler_[x].totalTime += Sys_GetRealTime() - profiler_[x].startTime)
+# define BEGIN_PROF(x)      (profiler_[x].startCount++, profiler_[x].startTime = Timer_RealMilliseconds())
+# define END_PROF(x)        (profiler_[x].totalTime += Timer_RealMilliseconds() - profiler_[x].startTime)
 # define PRINT_PROF(x)      Con_Message("[%f ms] " #x ": %i ms (%i starts)\n", \
                                 profiler_[x].startCount? profiler_[x].totalTime / \
                                 (float) profiler_[x].startCount : 0, \

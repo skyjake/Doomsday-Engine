@@ -218,7 +218,7 @@ void DM_CDAudio_Update(void)
 
     // Check for looping.
     if(cdCurrentTrack && cdLooping &&
-       Sys_GetSeconds() - cdStartTime > cdTrackLength)
+       Timer_Seconds() - cdStartTime > cdTrackLength)
     {
         // Restart the track.
         DM_CDAudio_Play(cdCurrentTrack, true);
@@ -247,7 +247,7 @@ int DM_CDAudio_Play(int track, int looped)
 
     // Success!
     cdLooping = (looped? true:false);
-    cdStartTime = Sys_GetSeconds();
+    cdStartTime = Timer_Seconds();
     return cdCurrentTrack = track;
 }
 
@@ -261,9 +261,9 @@ void DM_CDAudio_Pause(int pause)
 
     sendMCICmd(0, 0, "%s " DEVICEID, pause ? "pause" : "play");
     if(pause)
-        cdPauseTime = Sys_GetSeconds();
+        cdPauseTime = Timer_Seconds();
     else
-        cdStartTime += Sys_GetSeconds() - cdPauseTime;
+        cdStartTime += Timer_Seconds() - cdPauseTime;
 }
 
 /**

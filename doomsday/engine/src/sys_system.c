@@ -76,9 +76,7 @@ void Sys_Init(void)
 
     Con_Message("Setting up platform state...\n");
 
-    VERBOSE( Con_Message("Initializing Timing subsystem...\n") )
-    Sys_InitTimer();
-    startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
     if(!isDedicated)
     {
@@ -112,7 +110,7 @@ void Sys_Init(void)
     VERBOSE( Con_Message("Initializing Network subsystem...\n") )
     N_Init();
 
-    VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
 }
 
 boolean Sys_IsShuttingDown(void)
@@ -133,8 +131,6 @@ void Sys_Shutdown(void)
         Con_Execute(CMDS_DDAY, "unload", true, false);
 
     B_Shutdown();
-    Sys_ShutdownTimer();
-
     Net_Shutdown();
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
@@ -232,7 +228,7 @@ void Sys_Sleep(int millisecs)
 
 void Sys_BlockUntilRealTime(uint realTimeMs)
 {
-    uint remaining = realTimeMs - Sys_GetRealTime();
+    uint remaining = realTimeMs - Timer_RealMilliseconds();
     if(remaining > 50)
     {
         // Target time is in the past; or the caller is attempting to wait for
@@ -240,7 +236,7 @@ void Sys_BlockUntilRealTime(uint realTimeMs)
         return;
     }
 
-    while(Sys_GetRealTime() < realTimeMs)
+    while(Timer_RealMilliseconds() < realTimeMs)
     {
         // Do nothing; don't yield execution. We want to exit here at the
         // precise right moment.

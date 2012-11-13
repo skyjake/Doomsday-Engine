@@ -26,6 +26,7 @@
 #include <de/Log>
 #include <de/Error>
 #include <de/memory.h>
+#include <de/timer.h>
 
 static Reader* bufferLump(MapLumpInfo* info);
 static void clearReadBuffer(void);
@@ -465,7 +466,7 @@ void Id1Map::transferThings(void)
 
 int Id1Map::transfer(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = Timer_RealMilliseconds();
 
     LOG_AS("Id1Map");
 
@@ -476,7 +477,7 @@ int Id1Map::transfer(void)
     transferPolyobjs();
     transferThings();
 
-    LOG_VERBOSE("Transfer completed in %.2f seconds.") << ((Sys_GetRealTime() - startTime) / 1000.0f);
+    LOG_VERBOSE("Transfer completed in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
 
     return false; // Success.
 }

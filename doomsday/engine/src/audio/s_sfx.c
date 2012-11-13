@@ -339,7 +339,7 @@ int Sfx_CountPlaying(int id)
 float Sfx_Priority(mobj_t* emitter, coord_t* point, float volume, int startTic)
 {
     // In five seconds all priority of a sound is gone.
-    float timeoff = 1000 * (Sys_GetTime() - startTic) / (5.0f * TICSPERSEC);
+    float timeoff = 1000 * (Timer_Ticks() - startTic) / (5.0f * TICSPERSEC);
     coord_t* origin;
 
     if(!listener || (!emitter && !point))
@@ -678,7 +678,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     }
 
     // Calculate the new sound's priority.
-    nowTime = Sys_GetTime();
+    nowTime = Timer_Ticks();
     myPrio = Sfx_Priority(emitter, fixedOrigin, volume, nowTime);
 
     // Ensure there aren't already too many channels playing this sample.

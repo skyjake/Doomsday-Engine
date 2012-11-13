@@ -42,7 +42,6 @@
 
 #include "m_misc.h"
 #include "audio/s_main.h"
-#include "timer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -138,7 +137,7 @@ void Sv_InitPools(void)
     // Clients don't register anything.
     if(isClient) return;
 
-    startTime = Sys_GetRealTime();
+    startTime = Timer_RealMilliseconds();
 
     // Set base priority scores for all the delta types.
     for(i = 0; i < NUM_DELTA_TYPES; ++i)
@@ -181,7 +180,7 @@ void Sv_InitPools(void)
 
     // How much time did we spend?
     DEBUG_Message(("Sv_InitPools: World registered, done in %.2f seconds.\n",
-                   (Sys_GetRealTime() - startTime) / 1000.0f));
+                   (Timer_RealMilliseconds() - startTime) / 1000.0f));
 }
 
 /**
@@ -1018,7 +1017,7 @@ void Sv_UpdateOwnerInfo(pool_t* pool)
  */
 uint Sv_GetTimeStamp(void)
 {
-    return Sys_GetRealTime();
+    return Timer_RealMilliseconds();
 }
 
 /**

@@ -1473,7 +1473,7 @@ boolean DD_Init(void)
     {
         uint startTime;
         Con_Message("Parsing additional (pre-init) config files:\n");
-        startTime = Sys_GetRealTime();
+        startTime = Timer_RealMilliseconds();
         for(;;)
         {
             const char* arg = CommandLine_Next();
@@ -1482,7 +1482,7 @@ boolean DD_Init(void)
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
             Con_ParseCommands(arg);
         }
-        VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+        VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
     }
 
     // A console command on the command line?
@@ -1615,7 +1615,7 @@ static int DD_StartupWorker(void* parm)
     {
         uint startTime;
         Con_Message("Parsing additional (pre-init) config files:\n");
-        startTime = Sys_GetRealTime();
+        startTime = Timer_RealMilliseconds();
         for(;;)
         {
             const char* arg = CommandLine_NextAsPath();
@@ -1624,7 +1624,7 @@ static int DD_StartupWorker(void* parm)
             Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
             Con_ParseCommands(arg);
         }
-        VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+        VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
     }
 
     // Add required engine resource files.

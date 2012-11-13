@@ -60,6 +60,7 @@ HEADERS += \
     include/de/smoother.h \
     include/de/str.h \
     include/de/str.hh \
+    include/de/timer.h \
     include/de/types.h \
     include/de/unittest.h \
     include/de/writer.h
@@ -75,6 +76,7 @@ SOURCES += \
     src/reader.c \
     src/smoother.cpp \
     src/str.c \
+    src/timer.cpp \
     src/writer.c
 
 # Installation ---------------------------------------------------------------

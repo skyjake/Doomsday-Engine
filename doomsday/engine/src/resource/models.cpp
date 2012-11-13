@@ -1215,7 +1215,7 @@ void R_InitModels(void)
     modelRepository = new de::StringPool();
 
     LOG_VERBOSE("Initializing Models...");
-    usedTime = Sys_GetRealTime();
+    usedTime = Timer_RealMilliseconds();
 
     clearModelList();
     if(modefs)
@@ -1295,7 +1295,7 @@ if(closest)
 #endif*/
     }
 
-    VERBOSE2( Con_Message("R_InitModels: Done in %.2f seconds.\n", (Sys_GetRealTime() - usedTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitModels: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - usedTime) / 1000.0f) );
 }
 
 /**

@@ -685,7 +685,7 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     if(!(buf->flags & SFXBF_PLAYING))
     {
         // Calculate the end time (milliseconds).
-        buf->endTime = Sys_GetRealTime() + getBufLength(buf);
+        buf->endTime = Timer_RealMilliseconds() + getBufLength(buf);
     }
 
     if(FAILED(hr = DSBUF(buf)->Play(0, 0, DSBPLAY_LOOPING)))
@@ -745,7 +745,7 @@ void DS_SFX_Refresh(sfxbuffer_t* buf)
     if(!buf || !buf->sample || !(buf->flags & SFXBF_PLAYING))
         return;
 
-    nowTime = Sys_GetRealTime();
+    nowTime = Timer_RealMilliseconds();
 
     /**
      * Have we passed the predicted end of sample?

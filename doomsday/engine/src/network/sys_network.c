@@ -940,7 +940,7 @@ void N_PrintNetworkStatus(void)
                             cl->handshake? '*' : ' ',
                             cl->ready? '*' : ' ',
                             plr->shared.inGame? '*' : ' ',
-                            Sys_GetRealSeconds() - cl->enterTime);
+                            Timer_RealSeconds() - cl->enterTime);
             }
         }
         if(first)

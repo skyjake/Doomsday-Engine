@@ -79,7 +79,7 @@ void Con_ShutdownProgress(void)
 
 static int currentProgress(void)
 {
-    timespan_t nowTime = Sys_GetRealSeconds();
+    timespan_t nowTime = Timer_RealSeconds();
     timespan_t span = target.time - last.time;
 
     if(nowTime >= target.time || span <= 0)
@@ -99,7 +99,7 @@ boolean Con_IsProgressAnimationCompleted(void)
     boolean done;
 
     lockProgress(true);
-    done = (Sys_GetRealSeconds() >= target.time);
+    done = (Timer_RealSeconds() >= target.time);
     lockProgress(false);
 
     return done;
@@ -112,7 +112,7 @@ void Con_SetProgress(int progress)
     lockProgress(true);
 
     // Continue animation from the current value.
-    nowTime = Sys_GetRealSeconds();
+    nowTime = Timer_RealSeconds();
     last.value = currentProgress();
     last.time = nowTime;
 

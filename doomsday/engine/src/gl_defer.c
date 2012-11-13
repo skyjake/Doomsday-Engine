@@ -416,14 +416,14 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
     LIBDENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    startTime = Sys_GetRealTime();
+    startTime = Timer_RealMilliseconds();
 
     // We'll reserve names multiple times, because the worker thread may be
     // needing new texture names while we are uploading.
     GL_ReserveNames();
 
     while((!timeOutMilliSeconds ||
-           Sys_GetRealTime() - startTime < timeOutMilliSeconds) &&
+           Timer_RealMilliseconds() - startTime < timeOutMilliSeconds) &&
           (d = GL_NextDeferredTask()) != NULL)
     {
         processTask(d);

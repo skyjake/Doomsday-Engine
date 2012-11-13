@@ -392,7 +392,7 @@ void DS_SDLMixer_SFX_Play(sfxbuffer_t* buf)
     Mix_PlayChannel(buf->cursor, buf->ptr, (buf->flags & SFXBF_REPEAT ? -1 : 0));
 
     // Calculate the end time (milliseconds).
-    buf->endTime = Sys_GetRealTime() + getBufLength(buf);
+    buf->endTime = Timer_RealMilliseconds() + getBufLength(buf);
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
@@ -416,7 +416,7 @@ void DS_SDLMixer_SFX_Refresh(sfxbuffer_t* buf)
     if(!buf || !buf->sample || !(buf->flags & SFXBF_PLAYING))
         return;
 
-    nowTime = Sys_GetRealTime();
+    nowTime = Timer_RealMilliseconds();
 
     /**
      * Have we passed the predicted end of sample?

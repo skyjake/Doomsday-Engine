@@ -112,7 +112,7 @@ void Net_SendPing(int player, int count)
 
     // Send a new ping.
     Msg_Begin(PKT_PING);
-    cl->ping.sent = Sys_GetRealTime();
+    cl->ping.sent = Timer_RealMilliseconds();
     Writer_WriteUInt32(msgWriter, cl->ping.sent);
     Msg_End();
 
@@ -132,7 +132,7 @@ void Net_PingResponse(void)
     {
         // Record the time and send the next ping.
         cl->ping.times[cl->ping.current] =
-            (Sys_GetRealTime() - time) / 1000.0f;
+            (Timer_RealMilliseconds() - time) / 1000.0f;
         // Show a notification.
         /*Con_Printf( "Ping to plr %i: %.0f ms.\n", netbuffer.player,
            cl->ping.times[cl->ping.current] * 1000); */

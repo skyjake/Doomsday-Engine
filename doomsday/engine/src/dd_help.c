@@ -294,7 +294,7 @@ void DD_InitHelp(void)
     if(helpInited) return; // Already inited.
 
     VERBOSE( Con_Message("Initializing Help subsystem...\n") )
-    starttime = (verbose >= 2? Sys_GetSeconds() : 0);
+    starttime = (verbose >= 2? Timer_Seconds() : 0);
 
     // Init the links.
     helpRoot.next = helpRoot.prev = &helpRoot;
@@ -312,7 +312,7 @@ void DD_InitHelp(void)
     // Help is now available.
     helpInited = true;
 
-    VERBOSE2( Con_Message("DD_InitHelp: Done in %.2f seconds.\n", Sys_GetSeconds() - starttime) );
+    VERBOSE2( Con_Message("DD_InitHelp: Done in %.2f seconds.\n", Timer_Seconds() - starttime) );
 }
 
 /**

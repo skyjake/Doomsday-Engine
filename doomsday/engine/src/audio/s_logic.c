@@ -38,7 +38,7 @@
 #include "de_console.h"
 #include "de_audio.h"
 
-#include "timer.h"
+#include "de/timer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -163,7 +163,7 @@ void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
     node = Sfx_CreateLogical(id);
     node->origin = origin;
     node->isRepeating = isRepeating;
-    node->endTime = Sys_GetRealTime() + length;
+    node->endTime = Timer_RealMilliseconds() + length;
 }
 
 /*
@@ -217,7 +217,7 @@ int Sfx_StopLogical(int id, mobj_t *origin)
 void Sfx_PurgeLogical(void)
 {
     static uint lastTime = 0;
-    uint    i, nowTime = Sys_GetRealTime();
+    uint    i, nowTime = Timer_RealMilliseconds();
     logicsound_t *it, *next;
 
     if(nowTime - lastTime < PURGE_INTERVAL)
@@ -255,7 +255,7 @@ void Sfx_PurgeLogical(void)
  */
 boolean Sfx_IsPlaying(int id, mobj_t *origin)
 {
-    uint    nowTime = Sys_GetRealTime();
+    uint    nowTime = Timer_RealMilliseconds();
     logicsound_t *it;
     int     i;
 

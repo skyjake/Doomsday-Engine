@@ -421,7 +421,7 @@ void Sv_HandlePacket(void)
             Sv_Handshake(from, true);
 
             // Note the time when the player entered.
-            sender->enterTime = Sys_GetRealSeconds();
+            sender->enterTime = Timer_RealSeconds();
         }
         else if(ddpl->inGame)
         {
@@ -619,7 +619,7 @@ void Sv_GetPackets(void)
             if(netconsole >= 0 && netconsole < DDMAXPLAYERS)
             {
                 sender = &clients[netconsole];
-                sender->shakePing = Sys_GetRealTime() - sender->shakePing;
+                sender->shakePing = Timer_RealMilliseconds() - sender->shakePing;
                 Con_Printf("Cl%i handshake ping: %i ms\n", netconsole,
                            sender->shakePing);
 
@@ -756,7 +756,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 
     // Print a little something in the console.
     Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left, was connected for %f seconds.\n",
-                cl->name, plrNum, Sys_GetRealSeconds() - cl->enterTime);
+                cl->name, plrNum, Timer_RealSeconds() - cl->enterTime);
 
     wasInGame = plr->shared.inGame;
     plr->shared.inGame = false;
@@ -839,7 +839,7 @@ void Sv_Handshake(int plrNum, boolean newPlayer)
     if(newPlayer)
     {
         // Note the time when the handshake was sent.
-        clients[plrNum].shakePing = Sys_GetRealTime();
+        clients[plrNum].shakePing = Timer_RealMilliseconds();
     }
 
     // The game DLL wants to shake hands as well?

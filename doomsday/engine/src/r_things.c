@@ -421,7 +421,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
  */
 static void buildSpriteRotations(void)
 {
-    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
     numSpriteRecords = 0;
     spriteRecords = 0;
@@ -430,7 +430,7 @@ static void buildSpriteRotations(void)
 
     Textures_IterateDeclared(TN_SPRITES, buildSpriteRotationsWorker);
 
-    VERBOSE2( Con_Message("buildSpriteRotations: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+    VERBOSE2( Con_Message("buildSpriteRotations: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
 }
 
 /**
@@ -534,7 +534,7 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
 
 void R_InitSprites(void)
 {
-    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    uint startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
     VERBOSE( Con_Message("Initializing Sprites...\n") )
 
@@ -584,7 +584,7 @@ void R_InitSprites(void)
     spriteRecordFrameBlockSet = NULL;
     numSpriteRecords = 0;
 
-    VERBOSE2( Con_Message("R_InitSprites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitSprites: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
 }
 
 void R_ShutdownSprites(void)

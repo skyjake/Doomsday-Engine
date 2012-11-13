@@ -390,7 +390,7 @@ static void Net_DoUpdate(void)
      */
 
     // Check time.
-    nowTime = Sys_GetTime();
+    nowTime = Timer_Ticks();
 
     // Clock reset?
     if(firstNetUpdate)
@@ -860,7 +860,7 @@ void Net_Ticker(timespan_t time)
             if(cl->ping.sent)
             {
                 // The pinger is active.
-                if(Sys_GetRealTime() - cl->ping.sent > PING_TIMEOUT)    // Timed out?
+                if(Timer_RealMilliseconds() - cl->ping.sent > PING_TIMEOUT)    // Timed out?
                 {
                     cl->ping.times[cl->ping.current] = -1;
                     Net_SendPing(i, 0);
@@ -1074,7 +1074,7 @@ D_CMD(SetTicks)
 //  extern double lastSharpFrameTime;
 
     firstNetUpdate = true;
-    Sys_TicksPerSecond(strtod(argv[1], 0));
+    Timer_SetTicksPerSecond(strtod(argv[1], 0));
 //  lastSharpFrameTime = Sys_GetTimef();
     return true;
 }

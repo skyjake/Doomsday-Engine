@@ -154,14 +154,14 @@ static ptcgen_t* P_NewGenerator(void)
 
 void P_PtcInitForMap(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = Timer_RealMilliseconds();
 
     // Spawn all type-triggered particle generators.
     // Let's hope there aren't too many...
     P_SpawnTypeParticleGens();
     P_SpawnMapParticleGens();
 
-    VERBOSE2( Con_Message("P_PtcInitForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+    VERBOSE2( Con_Message("P_PtcInitForMap: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
 }
 
 void P_MapSpawnPlaneParticleGens(void)
