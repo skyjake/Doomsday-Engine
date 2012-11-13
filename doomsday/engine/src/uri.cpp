@@ -420,7 +420,7 @@ Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
 
 Uri Uri::fromNativePath(NativePath const& path)
 {
-    return Uri(QDir::fromNativeSeparators(path), RC_NULL);
+    return Uri(QDir::fromNativeSeparators(path).expand(), RC_NULL);
 }
 
 Uri Uri::fromReader(struct reader_s& reader)

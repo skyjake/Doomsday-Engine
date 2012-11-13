@@ -167,8 +167,9 @@ namespace de
         bool operator != (Uri const& other) const;
 
         /**
-         * Constructs a Uri instance from a NativePath. The resultant Uri will have
-         * an empty/zero-length scheme (because file paths do not include one).
+         * Constructs a Uri instance from a NativePath. All path directives such
+         * as '~' are expanded. The resultant Uri will have an empty/zero-length
+         * scheme (because file paths do not include one).
          */
         static Uri fromNativePath(NativePath const& path);
 
