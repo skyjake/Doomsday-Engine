@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_SYSTEM_TIMER_H__
-#define __DOOMSDAY_SYSTEM_TIMER_H__
+#ifndef LIBDENG_SYSTEM_TIMER_H
+#define LIBDENG_SYSTEM_TIMER_H
 
 #include "types.h"
 
@@ -87,4 +87,4 @@ DENG_PUBLIC float Timer_TicksPerSecond(void);
 } // extern "C"
 #endif
 
-#endif
+#endif // LIBDENG_SYSTEM_TIMER_H
