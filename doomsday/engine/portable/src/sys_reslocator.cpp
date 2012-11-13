@@ -110,8 +110,6 @@ static de::Str const defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
 static ResourceNamespaceInfo* namespaces = 0;
 static uint numNamespaces = 0;
 
-#define RESOURCENAMESPACE_MINNAMELENGTH URI_MINSCHEMELENGTH
-
 /**
  * @param name      Unique symbolic name of this namespace. Must be at least
  *                  @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
@@ -722,41 +720,27 @@ resourcetype_t F_GuessResourceTypeByName(char const* path)
     return RT_NONE; // Unrecognizable.
 }
 
-boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
+bool F_MapGameResourcePath(resourcenamespaceid_t rni, String& path)
 {
     ResourceNamespace* rnamespace = namespaceById(rni);
-    if(!rnamespace) return false;
+    if(!rnamespace)    return false;
+    if(path.isEmpty()) return false;
 
-    if(!path || Str_IsEmpty(path)) return false;
-
+    // Are virtual path mappings in effect for this namespace?
     ResourceNamespaceInfo* info = namespaceInfoById(rni);
     DENG_ASSERT(info);
+    if(!(info->flags & RNF_USE_VMAP)) return false;
 
-    if(info->flags & RNF_USE_VMAP)
-    {
-        QByteArray rnamespaceName = rnamespace->name().toUtf8();
-        int const nameLen = rnamespaceName.length();
-        int const pathLen = Str_Length(path);
+    String const& namespaceName = rnamespace->name();
 
-        if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
-           !qstrnicmp(rnamespaceName.constData(), Str_Text(path), nameLen))
-        {
-            Str_Prepend(path, "$(App.DataPath)/$(GamePlugin.Name)/");
-            return true;
-        }
-    }
+    // Does this path qualify for mapping?
+    if(path.length() <= namespaceName.length()) return false;
+    if(path.at(namespaceName.length()) != '/')  return false;
+    if(!path.beginsWith(namespaceName, Qt::CaseInsensitive)) return false;
 
-    return false;
-}
-
-boolean F_ApplyGamePathMapping(ddstring_t* path)
-{
-    DENG_ASSERT(path);
-    uint i = 1;
-    boolean result = false;
-    while(i < numNamespaces + 1 && !(result = F_MapGameResourcePath(i++, path)))
-    {}
-    return result;
+    // Yes.
+    path = String("$(App.DataPath)/$(GamePlugin.Name)") / path;
+    return true;
 }
 
 char const* F_ResourceClassStr(resourceclass_t rclass)

@@ -271,11 +271,11 @@ bool LumpIndex::isValidIndex(lumpnum_t lumpNum) const
     return (lumpNum >= 0 && lumpNum < d->lumps.size());
 }
 
-static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
+static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
-    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
-    if(lastValidIdx < 0) msg += "(file is empty)";
-    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
+    String msg = String("Invalid lump index %1").arg(invalidIdx);
+    if(lastValidIdx < 0) msg += " (file is empty)";
+    else                 msg += String(", valid range: [0..%2)").arg(lastValidIdx);
     return msg;
 }
 

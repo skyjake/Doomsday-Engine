@@ -58,6 +58,7 @@ public:
     NativePath(const QString& str);
 
     NativePath(const char* nullTerminatedCStr);
+    NativePath(const char* cStr, size_type length);
 
     /**
      * Assignment.

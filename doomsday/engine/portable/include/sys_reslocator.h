@@ -35,6 +35,8 @@
 #include "uri.h"
 
 #ifdef __cplusplus
+#include <de/String>
+
 extern "C" {
 #endif
 
@@ -193,6 +195,7 @@ resourcenamespaceid_t F_ResourceNamespaceForName(char const* name);
  */
 resourcetype_t F_GuessResourceTypeByName(char const* name);
 
+#ifdef __cplusplus
 /**
  * Apply mapping for this namespace to the specified path (if enabled).
  *
@@ -201,18 +204,12 @@ resourcetype_t F_GuessResourceTypeByName(char const* name);
  *
  *  e.g.: "Models/my/cool/model.dmd" => "$(App.DataPath)/$(GamePlugin.Name)/models/my/cool/model.dmd"
  *
- * @param rni  Unique identifier of the namespace whose mappings to apply.
+ * @param rnamespaceId  Unique identifier of the namespace whose mappings to apply.
  * @param path  The path to be mapped (applied in-place).
  * @return  @c true iff mapping was applied to the path.
  */
-boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path);
-
-/**
- * Apply all resource namespace mappings to the specified path.
- *
- * @return  @c true iff the path was mapped.
- */
-boolean F_ApplyGamePathMapping(ddstring_t* path);
+bool F_MapGameResourcePath(resourcenamespaceid_t rnamespaceId, de::String& path);
+#endif
 
 /**
  * Convert a resourceclass_t constant into a string for error/debug messages.
