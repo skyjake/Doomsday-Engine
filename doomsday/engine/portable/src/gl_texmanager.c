@@ -2575,6 +2575,12 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
             loadDoomPatch(image->pixels, image->size.width, image->size.height,
                 (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
         }
+        else
+        {
+            AutoStr* path = Uri_ToString(Textures_ComposeUri(Textures_Id(tex)));
+            Con_Message("Warning: Lump %s (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".\n",
+                        Str_Text(F_LumpName(patchDef->lumpNum)), patchDef->lumpNum, Str_Text(path));
+        }
         F_UnlockLump(file, lumpIdx);
     }
 
@@ -2651,6 +2657,12 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
                 offX = offY = 0;
             }
             loadDoomPatch(image->pixels, image->size.width, image->size.height, patch, offX, offY, 0, 0, zeroMask);
+        }
+        else
+        {
+            AutoStr* path = Uri_ToString(Textures_ComposeUri(Textures_Id(tex)));
+            Con_Message("Warning: Lump %s (#%u) does not appear to be a valid Patch. It will be missing from texture \"%s\".\n",
+                        Str_Text(F_LumpName(patchDef->lumpNum)), patchDef->lumpNum, Str_Text(path));
         }
         F_UnlockLump(file, lumpIdx);
     }
