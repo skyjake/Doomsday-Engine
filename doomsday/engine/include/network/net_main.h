@@ -34,7 +34,7 @@
 #include "dd_share.h"
 #include "sys_network.h"
 #include "net_msg.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 #include <de/smoother.h>
 
 #ifdef __cplusplus

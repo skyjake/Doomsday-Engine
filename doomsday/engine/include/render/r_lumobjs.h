@@ -31,7 +31,7 @@
 
 #include "dd_types.h"
 #include "m_vector.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 #ifdef __cplusplus
 extern "C" {

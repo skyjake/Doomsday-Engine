@@ -29,7 +29,7 @@
 #ifndef __DOOMSDAY_CLIENT_H__
 #define __DOOMSDAY_CLIENT_H__
 
-#include "p_object.h"
+#include "map/p_object.h"
 
 #ifdef __cplusplus
 extern "C" {

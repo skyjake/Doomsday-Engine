@@ -30,7 +30,7 @@
 #define LIBDENG_REFRESH_UTIL_H
 
 #include "m_vector.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 /**
  * Which side of the partition does the point lie?

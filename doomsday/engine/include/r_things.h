@@ -29,7 +29,7 @@
 #ifndef LIBDENG_REFRESH_THINGS_H
 #define LIBDENG_REFRESH_THINGS_H
 
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 #include "r_data.h"
 #include "materials.h"
 #include "rend_model.h"

@@ -38,7 +38,7 @@
 #include <de/memory.h>
 
 #include "de_base.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 #include "map/bspleaf.h"
 #include "map/bspnode.h"

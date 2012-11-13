@@ -28,7 +28,7 @@
 #ifndef LIBDENG_BSP_PARTITIONER
 #define LIBDENG_BSP_PARTITIONER
 
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 #include "map/bsp/bsptreenode.h"
 
 namespace de {

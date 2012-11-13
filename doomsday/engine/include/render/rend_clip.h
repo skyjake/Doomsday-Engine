@@ -31,7 +31,7 @@
 #ifndef LIBDENG_RENDER_CLIP_H
 #define LIBDENG_RENDER_CLIP_H
 
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 #include "m_bams.h"
 
 #ifdef __cplusplus

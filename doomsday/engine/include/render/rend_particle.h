@@ -23,7 +23,7 @@
 #ifndef LIBDENG_REND_PARTICLE_H
 #define LIBDENG_REND_PARTICLE_H
 
-#include "p_particle.h"
+#include "map/p_particle.h"
 
 #ifdef __cplusplus
 extern "C" {

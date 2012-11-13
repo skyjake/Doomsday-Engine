@@ -197,7 +197,7 @@ MapEntityDef* P_MapEntityDefByName(char const* name);
  */
 AutoStr* P_NameForMapEntityDef(MapEntityDef* def);
 
-#include <EntityDatabase>
+#include "../EntityDatabase"
 
 boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef, uint elementIndex, valuetype_t valueType, void* valueAdr);
 

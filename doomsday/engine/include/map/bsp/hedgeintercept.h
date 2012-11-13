@@ -29,7 +29,7 @@
 #define LIBDENG_BSP_HEDGEINTERCEPT
 
 #include "dd_types.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 #include <de/Log>
 

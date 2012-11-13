@@ -48,8 +48,6 @@
 #include "de_ui.h"
 
 #include "def_main.h"
-#include "p_particle.h"
-
 #include "colorpalette.h"
 #include "image.h"
 #include "texturecontent.h"

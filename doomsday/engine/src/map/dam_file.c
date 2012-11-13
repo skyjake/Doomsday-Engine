@@ -36,7 +36,7 @@
 #include "de_refresh.h"
 #include "de_filesys.h"
 
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 // Global archived map format version identifier. Increment when making
 // changes to the structure of the format.

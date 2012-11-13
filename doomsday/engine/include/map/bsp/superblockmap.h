@@ -32,7 +32,7 @@
 
 #include "dd_def.h"
 #include "dd_types.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 #include <de/Log>
 #include <list>

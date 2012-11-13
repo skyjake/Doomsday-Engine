@@ -30,7 +30,7 @@
 #define __DOOMSDAY_SERVER_POOL_H__
 
 #include "dd_share.h"
-#include "p_object.h"
+#include "map/p_object.h"
 #include "r_data.h"
 #include "materials.h"
 

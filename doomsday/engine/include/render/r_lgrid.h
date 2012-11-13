@@ -30,7 +30,7 @@
 #define LIBDENG_REFRESH_LIGHT_GRID_H
 
 #include "dd_types.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -30,7 +30,7 @@
 
 #include "m_misc.h"
 #include "m_vector.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 namespace de {
 namespace bsp {

@@ -22,8 +22,8 @@
 #ifndef LIBDENG_RESOURCE_MATERIAL_H
 #define LIBDENG_RESOURCE_MATERIAL_H
 
-#include "p_maptypes.h"
-#include "p_dmu.h"
+#include "map/p_maptypes.h"
+#include "map/p_dmu.h"
 
 #ifdef __cplusplus
 extern "C" {

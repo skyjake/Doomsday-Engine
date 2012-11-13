@@ -90,7 +90,7 @@ typedef struct ded_ptcstage_s {
     ded_embsound_t  sound, hitSound;
 } ded_ptcstage_t;
 
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 typedef struct ded_count_s {
     int             num, max;

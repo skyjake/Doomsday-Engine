@@ -189,7 +189,6 @@ DENG_HEADERS += \
     include/fs_main.h \
     include/fs_util.h \
     include/game.h \
-    include/gamemap.h \
     include/gl_defer.h \
     include/gl_deferredapi.h \
     include/gl_draw.h \
@@ -231,9 +230,22 @@ DENG_HEADERS += \
     include/map/dam_file.h \
     include/map/dam_main.h \
     include/map/entitydatabase.h \
+    include/map/gamemap.h \
     include/map/generators.h \
     include/map/hedge.h \
     include/map/linedef.h \
+    include/map/p_dmu.h \
+    include/map/p_intercept.h \
+    include/map/p_mapdata.h \
+    include/map/p_maptypes.h \
+    include/map/p_maputil.h \
+    include/map/p_object.h \
+    include/map/p_objlink.h \
+    include/map/p_particle.h \
+    include/map/p_players.h \
+    include/map/p_polyobjs.h \
+    include/map/p_sight.h \
+    include/map/p_ticker.h \
     include/map/plane.h \
     include/map/polyobj.h \
     include/map/sector.h \
@@ -250,18 +262,6 @@ DENG_HEADERS += \
     include/network/protocol.h \
     include/network/sys_network.h \
     include/network/ui_mpi.h \
-    include/p_dmu.h \
-    include/p_intercept.h \
-    include/p_mapdata.h \
-    include/p_maptypes.h \
-    include/p_maputil.h \
-    include/p_object.h \
-    include/p_objlink.h \
-    include/p_particle.h \
-    include/p_players.h \
-    include/p_polyobjs.h \
-    include/p_sight.h \
-    include/p_ticker.h \
     include/pathtree.h \
     include/propertyvalue.h \
     include/r_main.h \
@@ -481,7 +481,6 @@ SOURCES += \
     src/fs_main.cpp \
     src/fs_util.cpp \
     src/game.cpp \
-    src/gamemap.c \
     src/gl_defer.c \
     src/gl_deferredapi.c \
     src/gl_draw.c \
@@ -516,9 +515,22 @@ SOURCES += \
     src/map/dam_file.c \
     src/map/dam_main.cpp \
     src/map/entitydatabase.cpp \
+    src/map/gamemap.c \
     src/map/generators.c \
     src/map/hedge.cpp \
     src/map/linedef.c \
+    src/map/p_data.cpp \
+    src/map/p_dmu.c \
+    src/map/p_intercept.c \
+    src/map/p_maputil.c \
+    src/map/p_mobj.c \
+    src/map/p_objlink.c \
+    src/map/p_particle.c \
+    src/map/p_players.c \
+    src/map/p_polyobjs.c \
+    src/map/p_sight.c \
+    src/map/p_think.c \
+    src/map/p_ticker.c \
     src/map/plane.c \
     src/map/polyobj.c \
     src/map/sector.c \
@@ -536,18 +548,6 @@ SOURCES += \
     src/network/protocol.c \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
-    src/p_data.cpp \
-    src/p_dmu.c \
-    src/p_intercept.c \
-    src/p_maputil.c \
-    src/p_mobj.c \
-    src/p_objlink.c \
-    src/p_particle.c \
-    src/p_players.c \
-    src/p_polyobjs.c \
-    src/p_sight.c \
-    src/p_think.c \
-    src/p_ticker.c \
     src/pathtree.cpp \
     src/pathtreenode.cpp \
     src/point.c \

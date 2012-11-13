@@ -30,7 +30,7 @@
 
 #include "map/blockmap.h"
 #include "map/generators.h"
-#include "gamemap.h"
+#include "map/gamemap.h"
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)

@@ -22,7 +22,7 @@
 #ifndef LIBDENG_BSPBUILDER_BSPTREENODE
 #define LIBDENG_BSPBUILDER_BSPTREENODE
 
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 #include "binarytree.h"
 
 /// Nodes in BspBuilder's internal tree are modelled with this type.

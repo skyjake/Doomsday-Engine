@@ -23,7 +23,7 @@
 #ifndef LIBDENG_SOUND_ENVIRON_H
 #define LIBDENG_SOUND_ENVIRON_H
 
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 #ifdef __cplusplus
 extern "C" {

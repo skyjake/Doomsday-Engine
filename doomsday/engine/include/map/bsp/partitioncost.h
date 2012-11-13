@@ -28,7 +28,7 @@
 #ifndef LIBDENG_BSP_PARTITIONCOST
 #define LIBDENG_BSP_PARTITIONCOST
 
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 
 namespace de {
 namespace bsp {

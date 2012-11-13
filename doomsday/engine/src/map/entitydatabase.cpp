@@ -20,7 +20,7 @@
  */
 
 #include "de_base.h"
-#include "p_mapdata.h"
+#include "map/p_mapdata.h"
 #include "propertyvalue.h"
 
 #include <map>
