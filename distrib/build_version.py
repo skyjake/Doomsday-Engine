@@ -50,7 +50,7 @@ def find_version(quiet = False):
     if not quiet: print "Determining Doomsday version...",
     
     versionMajor, versionMinor, versionRevision, versionName, releaseType = \
-        parse_header_for_version(os.path.join(DOOMSDAY_DIR, 'engine', 'include', 'dd_version.h'))
+        parse_header_for_version(os.path.join(DOOMSDAY_DIR, 'engine', 'api', 'dd_version.h'))
     if not releaseType: releaseType = "Unstable"
 
     versionBase = "%s.%s.%s" % (versionMajor, versionMinor, versionRevision)

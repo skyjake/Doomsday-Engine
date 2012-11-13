@@ -30,7 +30,7 @@
  */
 ///@{
 
-#include "../portable/include/dd_version.h"
+#include "dd_version.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -28,7 +28,7 @@
    Later modified for use in the Allegro filesystem by Shawn Hargreaves.
 
    Later still, modified to function as a stand-alone Win32 DLL by
-   Jaakko Ker‰nen.  Currently used as a part of the Doomsday Engine:
+   Jaakko Ker√§nen.  Currently used as a part of the Doomsday Engine:
    http://sf.net/projects/deng/
 
 
@@ -43,9 +43,9 @@
 *
 * This code does not build on Win32.
 *
-* For now LZSS compression is used by FileReader in engine/portable/src/m_misc.c
+* For now LZSS compression is used by FileReader in engine/src/m_misc.c
 * by plugins/jhexen/src/sv_save.c in many routines, and by
-* engine/portable/include/net_main.h in the Demo_* rouines.
+* engine/include/net_main.h in the Demo_* rouines.
 */
 
 // HEADER FILES ------------------------------------------------------------
@@ -59,7 +59,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include "../../../engine/portable/include/sys_findfile.h"
+#include "../../../engine/include/sys_findfile.h"
 #include "lzss.h"
 
 // MACROS ------------------------------------------------------------------

@@ -123,7 +123,7 @@ static void calculateSkyAmbientColor(void)
 
         /**
          * \note Ensure that this specification matches that used when
-         * preparing the sky for render (see ./engine/portable/src/rend_sky.c
+         * preparing the sky for render (see ./engine/src/rend_sky.c
          * configureRenderHemisphereStateForLayer) else an unnecessary
          * GL texture will be uploaded as a consequence of this call.
          */

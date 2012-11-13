@@ -31,7 +31,7 @@
 
 #include "dd_share.h"
 #include "map/dam_main.h"
-#include "rend_bias.h"
+#include "render/rend_bias.h"
 #include "m_nodepile.h"
 #include "m_vector.h"
 

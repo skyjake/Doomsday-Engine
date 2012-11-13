@@ -103,6 +103,7 @@ DENG_API_HEADERS = \
     api/dd_types.h \
     api/dd_ui.h \
     api/dd_vectorgraphic.h \
+    api/dd_version.h \
     api/dd_wad.h \
     api/dd_world.h \
     api/def_share.h \
@@ -159,7 +160,6 @@ DENG_HEADERS += \
     include/dd_loop.h \
     include/dd_main.h \
     include/dd_pinit.h \
-    include/dd_version.h \
     include/de_audio.h \
     include/de_base.h \
     include/de_bsp.h \
