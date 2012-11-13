@@ -145,22 +145,21 @@ namespace de
         /**
          * Finds all resources in this namespace.
          *
-         * @param searchPath    If not @c NULL, only consider resources whose
-         *                      name matches that which will be extracted from
-         *                      this path.
-         * @param found         Set of resources that match the result.
+         * @param name    If not an empty string, only consider resources whose
+         *                name begins with this. Case insensitive.
+         * @param found   Set of resources which match the search.
          *
          * @return  Number of found resources.
          */
-        int findAll(String searchPath, ResourceList& found);
+        int findAll(String name, ResourceList& found);
 
         /**
          * Add a new search path to this namespace. Newer paths have priority
          * over previously added paths.
          *
-         * @param group         Group to add this path to. @see PathGroup
-         * @param path          New unresolved path to add. A copy is made.
-         * @param flags         @see searchPathFlags
+         * @param group     Group to add this path to. @see PathGroup
+         * @param path      New unresolved path to add. A copy is made.
+         * @param flags     @see searchPathFlags
          *
          * @return  @c true if @a path was well-formed and subsequently added.
          */

@@ -25,8 +25,9 @@
 #ifndef LIBDENG_RESOURCERECORD_H
 #define LIBDENG_RESOURCERECORD_H
 
-#include <QString>
 #include <QStringList>
+
+#include <de/String>
 #include "uri.h"
 
 namespace de
@@ -44,7 +45,7 @@ namespace de
          * @param rFlags    @ref resourceFlags
          * @param name      An expected name for the associated resource.
          */
-        ResourceRecord(resourceclass_t rClass, int rFlags, QString* name = 0);
+        ResourceRecord(resourceclass_t rClass, int rFlags, String* name = 0);
         ~ResourceRecord();
 
         /// @return Class of resource.
@@ -79,7 +80,7 @@ namespace de
          *
          * @see locateResource()
          */
-        QString const& resolvedPath(bool tryLocate = true);
+        String const& resolvedPath(bool tryLocate = true);
 
         /**
          * Add a new sub-resource identity key to the list for this record.
@@ -87,7 +88,7 @@ namespace de
          * @param newIdentityKey    New identity key (e.g., a lump/file name).
          * @param didAdd            If not @c =0, the outcome will be written here.
          */
-        ResourceRecord& addIdentityKey(QString newIdentityKey, bool* didAdd = 0);
+        ResourceRecord& addIdentityKey(String newIdentityKey, bool* didAdd = 0);
 
         /**
          * Add a new resource name to the list of names for this record.
@@ -95,7 +96,7 @@ namespace de
          * @param newName       New name for this resource. Newer names have precedence.
          * @param didAdd        If not @c =0, the outcome will be written here.
          */
-        ResourceRecord& addName(QString newName, bool* didAdd = 0);
+        ResourceRecord& addName(String newName, bool* didAdd = 0);
 
         /**
          * Print information about a resource to the console.

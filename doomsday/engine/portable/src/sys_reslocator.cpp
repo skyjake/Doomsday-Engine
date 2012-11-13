@@ -119,29 +119,25 @@ static uint numNamespaces = 0;
  */
 ResourceNamespace* F_CreateResourceNamespace(char const* name, byte flags);
 
-static void errorIfNotInited(const char* callerName)
-{
-    if(inited) return;
-    Con_Error("%s: resource locator module is not presently initialized.", callerName);
-    // Unreachable. Prevents static analysers from getting rather confused, poor things.
-    exit(1);
-}
-
-static inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t type)
+static inline const resourcetypeinfo_t* resourceTypeInfo(resourcetype_t type)
 {
     DENG_ASSERT(VALID_RESOURCE_TYPE(type));
     return &typeInfo[((uint)type)-1];
 }
 
-static inline ResourceNamespaceInfo* getNamespaceInfoForId(resourcenamespaceid_t rni)
+static inline ResourceNamespaceInfo* namespaceInfoById(resourcenamespaceid_t rni)
 {
-    errorIfNotInited("getNamespaceForId");
-    if(!F_IsValidResourceNamespaceId(rni))
-        Con_Error("getNamespaceForId: Invalid namespace id %i.", (int)rni);
-    return &namespaces[((uint)rni)-1];
+    if(!F_IsValidResourceNamespaceId(rni)) Con_Error("namespaceInfoById: Invalid namespace id %i.", (int)rni);
+    return &namespaces[uint(rni)-1];
 }
 
-static resourcenamespaceid_t findNamespaceForName(String name)
+static ResourceNamespace* namespaceById(resourcenamespaceid_t id)
+{
+    if(!F_IsValidResourceNamespaceId(id)) return 0;
+    return namespaceInfoById(id)->rnamespace;
+}
+
+static resourcenamespaceid_t findResourceNamespaceIdForName(String name)
 {
     if(!name.isEmpty())
     {
@@ -149,10 +145,17 @@ static resourcenamespaceid_t findNamespaceForName(String name)
         {
             ResourceNamespaceInfo* info = &namespaces[i];
             if(!info->rnamespace->name().compareWithoutCase(name))
-                return (resourcenamespaceid_t)(i+1);
+                return resourcenamespaceid_t(i + 1);
         }
     }
     return 0;
+}
+
+static ResourceNamespace* namespaceByName(ddstring_t const* name)
+{
+    resourcenamespaceid_t rni = findResourceNamespaceIdForName(Str_Text(name));
+    if(!F_IsValidResourceNamespaceId(rni)) return 0;
+    return namespaceInfoById(rni)->rnamespace;
 }
 
 static void destroyAllNamespaces(void)
@@ -177,17 +180,7 @@ static void resetAllNamespaces(void)
     }
 }
 
-/**
- * Find a named resource in this namespace.
- *
- * @param rnamespace    ResourceNamespace to be searched.
- * @param searchPath    Relative or absolute path to the resource.
- * @param delimiter     Fragments of @a searchPath are delimited by this character.
- *
- * @return  The found PathTree node which represents the resource else @c NULL.
- */
-static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
-    String searchPath, QChar delimiter = '/')
+static bool findResourceInNamespace(ResourceNamespace& rnamespace, de::Uri const& searchPath, ddstring_t* foundPath)
 {
     if(searchPath.isEmpty()) return 0;
 
@@ -196,60 +189,65 @@ static PathTree::Node* findResourceInNamespace(ResourceNamespace& rnamespace,
     // Ensure the namespace is up to date.
     rnamespace.rebuild();
 
+    // A resource name is the file name sans extension.
+    String name = searchPath.firstPathNode().toString().fileNameWithoutExtension();
+
     // Perform the search.
     ResourceNamespace::ResourceList foundResources;
-    if(rnamespace.findAll(searchPath, foundResources))
+    if(rnamespace.findAll(name, foundResources))
     {
         // There is at least one name-matched (perhaps partially) resource.
-        de::Uri searchPattern = de::Uri(searchPath, RC_NULL, delimiter.toLatin1());
-
         DENG2_FOR_EACH_CONST(ResourceNamespace::ResourceList, i, foundResources)
         {
-            PathTree::Node* node = *i;
-            if(node->comparePath(searchPattern, PCF_NO_BRANCH)) continue;
-
-            // This is the resource we are looking for.
-            return node;
+            PathTree::Node& node = **i;
+            if(!node.comparePath(searchPath, PCF_NO_BRANCH))
+            {
+                // This is the resource we are looking for.
+                // Does the caller want to know the matched path?
+                if(foundPath)
+                {
+                    QByteArray path = node.composePath().toUtf8();
+                    Str_Set(foundPath, path.constData());
+                    F_PrependBasePath(foundPath, foundPath);
+                }
+                return true;
+            }
         }
     }
-    return 0; // Not found.
+    return false; // Not found.
 }
 
-static bool tryFindResource2(resourceclass_t /*rclass*/, String searchPath,
-    ddstring_t* foundPath, ResourceNamespace* rnamespace)
+static bool findResourceFile(de::Uri const& searchPath, ddstring_t* foundPath)
 {
-    if(searchPath.isEmpty()) return false;
-
-    // Is there a namespace we should use?
-    if(rnamespace)
+    try
     {
-        if(PathTree::Node* found = findResourceInNamespace(*rnamespace, searchPath))
-        {
-            // Does the caller want to know the matched path?
-            if(foundPath)
-            {
-                QByteArray path = found->composePath().toUtf8();
-                Str_Set(foundPath, path.constData());
-                F_PrependBasePath(foundPath, foundPath);
-            }
-            return true;
-        }
-    }
-
-    if(App_FileSystem()->accessFile(searchPath))
-    {
+        de::File1& file = App_FileSystem()->find(searchPath.compose());
+        // Does the caller want to know the matched path?
         if(foundPath)
         {
-            QByteArray searchPathUtf8 = searchPath.toUtf8();
+            QByteArray searchPathUtf8 = file.composePath().toUtf8();
             Str_Set(foundPath, searchPathUtf8.constData());
             F_PrependBasePath(foundPath, foundPath);
         }
         return true;
     }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
     return false;
 }
 
-static bool tryFindResource(int flags, resourceclass_t rclass, String searchPath,
+static bool findResource3(ResourceNamespace* rnamespace, de::Uri const& searchPath,
+    ddstring_t* foundPath)
+{
+    // Is there a namespace we should use?
+    if(rnamespace)
+    {
+        return findResourceInNamespace(*rnamespace, searchPath, foundPath);
+    }
+    return findResourceFile(searchPath, foundPath);
+}
+
+static bool findResource2(int flags, resourceclass_t rclass, String searchPath,
     ddstring_t* foundPath, ResourceNamespace* rnamespace)
 {
     if(searchPath.isEmpty()) return false;
@@ -258,7 +256,7 @@ static bool tryFindResource(int flags, resourceclass_t rclass, String searchPath
     String ext = searchPath.fileNameExtension();
     if(!ext.isEmpty() && ext.compare(".*"))
     {
-        if(tryFindResource2(rclass, searchPath, foundPath, rnamespace)) return true;
+        if(findResource3(rnamespace, de::Uri(searchPath, RC_NULL), foundPath)) return true;
 
         // If we are looking for a particular resource type, get out of here.
         if(flags & RLF_MATCH_EXTENSION) return false;
@@ -279,80 +277,56 @@ static bool tryFindResource(int flags, resourceclass_t rclass, String searchPath
     resourcetype_t const* typeIter = searchTypeOrder[rclass];
     do
     {
-        resourcetypeinfo_t const* typeInfo = getInfoForResourceType(*typeIter);
-        if(typeInfo->knownFileNameExtensions[0])
+        resourcetypeinfo_t const* typeInfo = resourceTypeInfo(*typeIter);
+        if(!typeInfo->knownFileNameExtensions[0]) continue;
+
+        char const* const* ext = typeInfo->knownFileNameExtensions;
+        do
         {
-            char const* const* ext = typeInfo->knownFileNameExtensions;
-            do
-            {
-                found = tryFindResource2(rclass, path2 + *ext, foundPath, rnamespace);
-            } while(!found && *(++ext));
-        }
+            found = findResource3(rnamespace, de::Uri(path2 + *ext, RC_NULL), foundPath);
+
+        } while(!found && *(++ext));
+
     } while(!found && *(++typeIter) != RT_NONE);
 
     return found;
 }
 
-static bool findResource2(resourceclass_t rclass, String searchPath,
-    ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix,
-    ResourceNamespace* rnamespace)
-{
-    if(searchPath.isEmpty()) return false;
-
-    // First try with the optional suffix.
-    if(optionalSuffix && !Str_IsEmpty(optionalSuffix))
-    {
-        String searchPath2 = searchPath.fileNamePath()
-                           / searchPath.fileNameWithoutExtension() + Str_Text(optionalSuffix) + searchPath.fileNameExtension();
-
-        if(tryFindResource(flags, rclass, searchPath2, foundPath, rnamespace))
-            return true;
-    }
-
-    // Try without a suffix.
-    return tryFindResource(flags, rclass, searchPath, foundPath, rnamespace);
-}
-
-static int findResource(resourceclass_t rclass, uri_s const* const* list,
+static bool findResource(resourceclass_t rclass, de::Uri const& searchPath,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
 {
-    DENG_ASSERT(list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
+    DENG_ASSERT(rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass));
 
     LOG_AS("findResource");
 
-    uint result = 0, n = 1;
-    for(uri_s const* const* ptr = list; *ptr; ptr++, n++)
+    if(searchPath.isEmpty()) return false;
+
+    try
     {
-        de::Uri const& searchPath = reinterpret_cast<de::Uri const&>(**ptr);
+        String const& resolvedPath = searchPath.resolved();
 
-        try
-        {
-            String const& resolvedPath = searchPath.resolved();
+        // Is a namespace specified?
+        ResourceNamespace* rnamespace = namespaceByName(searchPath.scheme());
 
-            // If this is an absolute path, locate using it.
-            if(QDir::isAbsolutePath(resolvedPath))
-            {
-                if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, NULL/*no namespace*/))
-                    result = n;
-            }
-            // Probably a relative path. Has a namespace identifier been included?
-            else if(!Str_IsEmpty(searchPath.scheme()))
-            {
-                resourcenamespaceid_t rni = F_ResourceNamespaceForName(Str_Text(searchPath.scheme()));
-                ResourceNamespaceInfo* rnamespaceInfo = getNamespaceInfoForId(rni);
-                if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, rnamespaceInfo->rnamespace))
-                    result = n;
-            }
-        }
-        catch(de::Uri::ResolveError const& er)
+        // First try with the optional suffix.
+        if(optionalSuffix && !Str_IsEmpty(optionalSuffix))
         {
-            LOG_DEBUG(er.asText());
-            // Ignore incomplete paths.
+            String resolvedPath2 = resolvedPath.fileNamePath()
+                                 / resolvedPath.fileNameWithoutExtension() + Str_Text(optionalSuffix) + resolvedPath.fileNameExtension();
+
+            if(findResource2(flags, rclass, resolvedPath2, foundPath, rnamespace))
+                return true;
         }
 
-        if(result) break;
+        // Try without a suffix.
+        return findResource2(flags, rclass, resolvedPath, foundPath, rnamespace);
     }
-    return result;
+    catch(de::Uri::ResolveError const& er)
+    {
+        // Log but otherwise ignore incomplete paths.
+        LOG_DEBUG(er.asText());
+    }
+    return false;
 }
 
 static void createPackagesResourceNamespace(void)
@@ -591,34 +565,31 @@ void F_ShutdownResourceLocator(void)
 
 void F_ResetAllResourceNamespaces(void)
 {
-    errorIfNotInited("F_ResetAllResourceNamespaces");
     resetAllNamespaces();
 }
 
 void F_ResetResourceNamespace(resourcenamespaceid_t rni)
 {
-    if(!F_IsValidResourceNamespaceId(rni)) return;
+    ResourceNamespace* rnamespace = namespaceById(rni);
+    if(!rnamespace) return;
 
-    ResourceNamespaceInfo* info = getNamespaceInfoForId(rni);
-    ResourceNamespace& rnamespace = *info->rnamespace;
-    rnamespace.clearSearchPaths(ResourceNamespace::ExtraPaths);
-    rnamespace.clear();
+    rnamespace->clearSearchPaths(ResourceNamespace::ExtraPaths);
+    rnamespace->clear();
 }
 
 ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni)
 {
-    return getNamespaceInfoForId(rni)->rnamespace;
+    return namespaceInfoById(rni)->rnamespace;
 }
 
 resourcenamespaceid_t F_SafeResourceNamespaceForName(char const* name)
 {
-    errorIfNotInited("F_SafeResourceNamespaceForName");
-    return findNamespaceForName(name);
+    return findResourceNamespaceIdForName(name);
 }
 
 resourcenamespaceid_t F_ResourceNamespaceForName(char const* name)
 {
-    resourcenamespaceid_t result = F_SafeResourceNamespaceForName(name);
+    resourcenamespaceid_t result = findResourceNamespaceIdForName(name);
     if(result == 0)
         Con_Error("F_ResourceNamespaceForName: Failed to locate resource namespace \"%s\".", name);
     return result;
@@ -626,20 +597,17 @@ resourcenamespaceid_t F_ResourceNamespaceForName(char const* name)
 
 uint F_NumResourceNamespaces(void)
 {
-    errorIfNotInited("F_NumResourceNamespaces");
     return numNamespaces;
 }
 
 boolean F_IsValidResourceNamespaceId(int val)
 {
-    errorIfNotInited("F_IsValidResourceNamespaceId");
     return (boolean)(val > 0 && (unsigned)val < (F_NumResourceNamespaces() + 1)? 1 : 0);
 }
 
 ResourceNamespace* F_CreateResourceNamespace(char const* name,  byte flags)
 {
     DENG_ASSERT(name);
-    errorIfNotInited("F_CreateResourceNamespace");
 
     if(qstrlen(name) < RESOURCENAMESPACE_MINNAMELENGTH)
         Con_Error("F_CreateResourceNamespace: Invalid name '%s' (min length:%i)", name, (int)RESOURCENAMESPACE_MINNAMELENGTH);
@@ -661,11 +629,11 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
     uri_s const* searchPath)
 {
     if(!searchPath) return false;
-    errorIfNotInited("F_AddSearchPathToResourceNamespace");
 
-    ResourceNamespaceInfo* info = getNamespaceInfoForId(rni);
-    ResourceNamespace& rnamespace = *info->rnamespace;
-    return rnamespace.addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(*searchPath), flags);
+    ResourceNamespace* rnamespace = namespaceById(rni);
+    if(!rnamespace) return false;
+
+    return rnamespace->addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(*searchPath), flags);
 }
 
 uri_s** F_CreateUriList2(resourceclass_t rclass, char const* nativeSearchPaths, int* count)
@@ -767,20 +735,18 @@ void F_DestroyUriList(uri_s** list)
     M_Free(list);
 }
 
-uint F_FindResource5(resourceclass_t rclass, uri_s const** searchPaths,
+boolean F_FindResourcePath(resourceclass_t rclass, uri_s const* searchPath,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
 {
-    errorIfNotInited("F_FindResource4");
     if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
-        Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
-    if(!searchPaths) return 0;
-    return findResource(rclass, searchPaths, foundPath, flags, optionalSuffix);
+        Con_Error("F_FindResourcepath: Invalid resource class %i.\n", rclass);
+    if(!searchPath) return 0;
+    return findResource(rclass, reinterpret_cast<de::Uri const&>(*searchPath), foundPath, flags, optionalSuffix);
 }
 
 uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* nativeSearchPaths,
     ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix)
 {
-    errorIfNotInited("F_FindResourceStr3");
     if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
         Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
 
@@ -795,7 +761,21 @@ uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* nativeSearchPa
     uri_s** list = F_CreateUriListStr(rclass, nativeSearchPaths);
     if(!list) return 0;
 
-    int result = findResource(rclass, (uri_s const**)list, foundPath, flags, optionalSuffix);
+    int result = 0;
+
+    uint searchPathIdx = 0;
+    for(uri_s** ptr = list; *ptr; ++ptr, ++searchPathIdx)
+    {
+        de::Uri const& searchPath = reinterpret_cast<de::Uri const&>(**ptr);
+
+        bool found = findResource(rclass, searchPath, foundPath, flags, optionalSuffix);
+        if(found)
+        {
+            result = searchPathIdx + 1;
+            break;
+        }
+    }
+
     F_DestroyUriList(list);
     return result;
 }
@@ -852,16 +832,14 @@ uint F_FindResource(resourceclass_t rclass, char const* nativeSearchPaths)
 
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
 {
-    errorIfNotInited("F_DefaultResourceClassForType");
     if(type == RT_NONE)
         return RC_UNKNOWN;
-    return getInfoForResourceType(type)->defaultClass;
+    return resourceTypeInfo(type)->defaultClass;
 }
 
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 {
     DENG_ASSERT(VALID_RESOURCE_CLASS(rclass));
-    errorIfNotInited("F_DefaultResourceNamespaceForClass");
     return F_ResourceNamespaceForName(Str_Text(defaultNamespaceForClass[rclass]));
 }
 
@@ -877,7 +855,7 @@ resourcetype_t F_GuessResourceTypeByName(char const* path)
         ++ext;
         for(uint i = RT_FIRST; i < NUM_RESOURCE_TYPES; ++i)
         {
-            resourcetypeinfo_t const* info = getInfoForResourceType((resourcetype_t)i);
+            resourcetypeinfo_t const* info = resourceTypeInfo((resourcetype_t)i);
             // Check the extension.
             if(info->knownFileNameExtensions[0])
             {
@@ -897,32 +875,34 @@ resourcetype_t F_GuessResourceTypeByName(char const* path)
 
 boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
 {
-    if(path && !Str_IsEmpty(path))
-    {
-        ResourceNamespaceInfo* info = getNamespaceInfoForId(rni);
-        ResourceNamespace& rnamespace = *info->rnamespace;
-        if(info->flags & RNF_USE_VMAP)
-        {
-            QByteArray rnamespaceName = rnamespace.name().toUtf8();
-            int const nameLen = rnamespaceName.length();
-            int const pathLen = Str_Length(path);
+    ResourceNamespace* rnamespace = namespaceById(rni);
+    if(!rnamespace) return false;
 
-            if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
-               !qstrnicmp(rnamespaceName.constData(), Str_Text(path), nameLen))
-            {
-                Str_Prepend(path, "$(App.DataPath)/$(GamePlugin.Name)/");
-                return true;
-            }
+    if(!path || Str_IsEmpty(path)) return false;
+
+    ResourceNamespaceInfo* info = namespaceInfoById(rni);
+    DENG_ASSERT(info);
+
+    if(info->flags & RNF_USE_VMAP)
+    {
+        QByteArray rnamespaceName = rnamespace->name().toUtf8();
+        int const nameLen = rnamespaceName.length();
+        int const pathLen = Str_Length(path);
+
+        if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
+           !qstrnicmp(rnamespaceName.constData(), Str_Text(path), nameLen))
+        {
+            Str_Prepend(path, "$(App.DataPath)/$(GamePlugin.Name)/");
+            return true;
         }
     }
+
     return false;
 }
 
 boolean F_ApplyGamePathMapping(ddstring_t* path)
 {
     DENG_ASSERT(path);
-    errorIfNotInited("F_ApplyGamePathMapping");
-
     uint i = 1;
     boolean result = false;
     while(i < numNamespaces + 1 && !(result = F_MapGameResourcePath(i++, path)))

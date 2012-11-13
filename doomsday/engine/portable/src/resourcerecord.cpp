@@ -46,34 +46,21 @@ struct ResourceRecord::Instance
     /// Used for identification purposes.
     QStringList identityKeys;
 
-    /// Paths to use when attempting to locate this resource.
-    Uri** searchPaths;
-
-    /// Id+1 of the search path used to locate this resource (in _searchPaths) if found.
+    /// Index (in ::names) of the name used to locate this resource if found.
     /// Set during resource location.
-    uint searchPathUsed;
+    int foundNameIndex;
 
     /// Fully resolved absolute path to the located resource if found.
     /// Set during resource location.
-    QString foundPath;
+    String foundPath;
 
     Instance(resourceclass_t _rclass, int rflags)
         : rclass(_rclass), flags(rflags & ~RF_FOUND), names(),
-          identityKeys(), searchPaths(0), searchPathUsed(0), foundPath()
+          identityKeys(), foundNameIndex(-1), foundPath()
     {}
-
-    ~Instance()
-    {
-        clearSearchPaths();
-    }
-
-    inline void clearSearchPaths()
-    {
-        F_DestroyUriList(reinterpret_cast<uri_s**>(searchPaths)); searchPaths = 0;
-    }
 };
 
-ResourceRecord::ResourceRecord(resourceclass_t rclass, int rflags, QString* name)
+ResourceRecord::ResourceRecord(resourceclass_t rclass, int rflags, String* name)
 {
     d = new Instance(rclass, rflags);
     if(name) addName(*name);
@@ -84,7 +71,7 @@ ResourceRecord::~ResourceRecord()
     delete d;
 }
 
-ResourceRecord& ResourceRecord::addName(QString newName, bool* didAdd)
+ResourceRecord& ResourceRecord::addName(String newName, bool* didAdd)
 {
     // Is this name unique? We don't want duplicates.
     if(newName.isEmpty() || d->names.contains(newName, Qt::CaseInsensitive))
@@ -96,14 +83,11 @@ ResourceRecord& ResourceRecord::addName(QString newName, bool* didAdd)
     // Add the new name.
     d->names.prepend(newName);
 
-    // A new name means we may now be able to locate it - clear the cached paths.
-    d->clearSearchPaths();
-
     if(didAdd) *didAdd = true;
     return *this;
 }
 
-ResourceRecord& ResourceRecord::addIdentityKey(QString newIdentityKey, bool* didAdd)
+ResourceRecord& ResourceRecord::addIdentityKey(String newIdentityKey, bool* didAdd)
 {
     // Is this key unique? We don't want duplicates.
     if(newIdentityKey.isEmpty() || d->identityKeys.contains(newIdentityKey, Qt::CaseInsensitive))
@@ -175,23 +159,16 @@ ResourceRecord& ResourceRecord::locateResource()
     // Already found?
     if(d->flags & RF_FOUND) return *this;
 
-    // Collate search paths.
-    if(!d->searchPaths)
-    {
-        QByteArray nameString = d->names.join(";").toUtf8();
-        d->searchPaths = reinterpret_cast<de::Uri**>(F_CreateUriList(d->rclass, nameString.constData()));
-    }
-
     // Perform the search.
-    int searchPathIdx = 0;
-    for(Uri* const* ptr = d->searchPaths; *ptr; ptr++, searchPathIdx++)
+    AutoStr* found = AutoStr_NewStd();
+    int nameIndex = 0;
+    for(QStringList::const_iterator i = d->names.constBegin(); i != d->names.constEnd(); ++i, ++nameIndex)
     {
-        de::Uri const* list[2] = { *ptr, NULL };
+        Uri path = Uri(*i, d->rclass);
 
         // Attempt to resolve a path to the named resource.
-        AutoStr* found = AutoStr_NewStd();
-        if(!F_FindResource5(d->rclass, reinterpret_cast<uri_s const**>(list), found,
-                            RLF_DEFAULT, NULL/*no optional suffix*/)) continue;
+        if(!F_FindResourcePath(d->rclass, reinterpret_cast<uri_s*>(&path), found,
+                               RLF_DEFAULT, NULL/*no optional suffix*/)) continue;
 
         // We've found *something*.
         String foundPath = String(Str_Text(found));
@@ -216,7 +193,7 @@ ResourceRecord& ResourceRecord::locateResource()
         // This is the resource we've been looking for.
         d->flags |= RF_FOUND;
         d->foundPath = foundPath;
-        d->searchPathUsed = searchPathIdx + 1;
+        d->foundNameIndex = nameIndex;
         break;
     }
 
@@ -228,13 +205,13 @@ ResourceRecord& ResourceRecord::forgetResource()
     if(d->flags & RF_FOUND)
     {
         d->foundPath.clear();
-        d->searchPathUsed = 0;
+        d->foundNameIndex = -1;
         d->flags &= ~RF_FOUND;
     }
     return *this;
 }
 
-QString const& ResourceRecord::resolvedPath(bool tryLocate)
+String const& ResourceRecord::resolvedPath(bool tryLocate)
 {
     if(tryLocate)
     {

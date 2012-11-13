@@ -144,6 +144,9 @@ ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
 boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
     struct uri_s const* searchPath);
 
+boolean F_FindResourcePath(resourceclass_t rclass, struct uri_s const* searchPath,
+    ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
+
 /**
  * Attempt to locate a named resource.
  *
@@ -172,7 +175,6 @@ uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* nativeSearchPa
 uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
 uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* nativeSearchPaths/*, foundPath = NULL*/);
 
-uint F_FindResource5(resourceclass_t rclass, struct uri_s const** nativeSearchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
 uint F_FindResource4(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
 uint F_FindResource3(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
 uint F_FindResource2(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
