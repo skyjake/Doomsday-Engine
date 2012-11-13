@@ -202,7 +202,7 @@ struct Uri::Instance
         {}
 
         // Scan the path hierarchy for node names, in reverse order.
-        Uri::PathNode* node;
+        Uri::PathNode* node = 0;
         char const* from;
         forever
         {
