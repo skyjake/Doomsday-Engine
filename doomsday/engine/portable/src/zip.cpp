@@ -24,16 +24,15 @@
 
 #include <zlib.h>
 
+#include <QDir>
+#include <vector>
+
 #include "de_base.h"
 #include "de_filesys.h"
-#include "game.h"
 #include "lumpcache.h"
 #include "pathtree.h"
 
-#include "zip.h"
-
-#include <vector>
-
+#include <de/App>
 #include <de/ByteOrder>
 #include <de/Error>
 #include <de/Log>
@@ -41,7 +40,7 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
-static QString invalidIndexMessage(int invalidIdx, int lastValidIdx);
+#include "zip.h"
 
 namespace de {
 
@@ -137,7 +136,8 @@ typedef struct centralend_s {
 } centralend_t;
 #pragma pack()
 
-static void ApplyGamePathMappings(ddstring_t* dest, const ddstring_t* src);
+static String invalidIndexMessage(int invalidIdx, int lastValidIdx);
+static bool applyGamePathMappings(String& path);
 
 class ZipFile : public File1
 {
@@ -373,8 +373,6 @@ struct Zip::Instance
          */
         char* pos;
         int entryCount = 0;
-        ddstring_t entryPath;
-        Str_Init(&entryPath);
         for(int pass = 0; pass < 2; ++pass)
         {
             if(pass == 1)
@@ -399,15 +397,10 @@ struct Zip::Instance
                 // Advance the cursor past the variable sized fields.
                 pos += USHORT(header->fileNameSize) + USHORT(header->extraFieldSize) + USHORT(header->commentSize);
 
-                // Copy characters up to fileNameSize.
-                Str_Clear(&entryPath);
-                Str_PartAppend(&entryPath, nameStart, 0, USHORT(header->fileNameSize));
+                String filePath = QDir::fromNativeSeparators(NativePath(nameStart, USHORT(header->fileNameSize)));
 
-                // Directories are skipped.
-                if(ULONG(header->size) == 0 && Str_RAt(&entryPath, 0) == '/')
-                {
-                    continue;
-                }
+                // Skip directories (we don't presently model these).
+                if(ULONG(header->size) == 0 && filePath.last() == '/') continue;
 
                 // Do we support the format of this lump?
                 if(USHORT(header->compression) != ZFC_NO_COMPRESSION &&
@@ -415,14 +408,14 @@ struct Zip::Instance
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' uses an unsupported compression algorithm, ignoring.")
-                        << de::NativePath(self->composePath()).pretty() << Str_Text(&entryPath);
+                        << NativePath(self->composePath()).pretty() << NativePath(filePath).pretty();
                 }
 
                 if(USHORT(header->flags) & ZFH_ENCRYPTED)
                 {
                     if(pass != 0) continue;
                     LOG_WARNING("Zip %s:'%s' is encrypted.\n  Encryption is not supported, ignoring.")
-                        << de::NativePath(self->composePath()).pretty() << Str_Text(&entryPath);
+                        << NativePath(self->composePath()).pretty() << NativePath(filePath).pretty();
                 }
 
                 if(pass == 0)
@@ -450,26 +443,39 @@ struct Zip::Instance
                     compressedSize = ULONG(header->size);
                 }
 
-                // Convert all slashes to our internal separator.
-                F_FixSlashes(&entryPath, &entryPath);
-
                 if(DD_GameLoaded())
                 {
-                    // In some cases the path inside the file is mapped to another virtual location.
-                    ApplyGamePathMappings(&entryPath, &entryPath);
+                    // In some cases the path to the file is mapped to some
+                    // other location in the virtual file system.
+                    String filePathCopy = filePath;
+                    if(applyGamePathMappings(filePathCopy))
+                    {
+                        try
+                        {
+                            // Resolve all symbolic references in the path.
+                            filePath = Uri(filePathCopy, RC_NULL).resolved();
+                        }
+                        catch(de::Uri::ResolveError const& er)
+                        {
+                            LOG_WARNING(er.asText());
+                        }
+                    }
                 }
 
                 // Make it absolute.
-                F_PrependBasePath(&entryPath, &entryPath);
+                String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+                filePath = basePath / filePath;
+
+                QByteArray filePathUtf8 = filePath.toUtf8();
 
                 ZipFile* record =
                     new ZipFile(*FileHandleBuilder::fromFileLump(*self, lumpIdx, true/*don't buffer*/),
-                                Str_Text(&entryPath),
+                                filePathUtf8.constData(),
                                 FileInfo(self->lastModified(), // Inherited from the file (note recursion).
                                          lumpIdx, baseOffset, ULONG(header->size),
                                          compressedSize),
                                 self);
-                PathTree::Node* node = lumpDirectory->insert(Uri(Str_Text(&entryPath), RC_NULL));
+                PathTree::Node* node = lumpDirectory->insert(Uri(filePath, RC_NULL));
                 node->setUserPointer(record);
 
                 lumpIdx++;
@@ -478,7 +484,6 @@ struct Zip::Instance
 
         // The file central directory is no longer needed.
         M_Free(centralDirectory);
-        Str_Free(&entryPath);
     }
 
     static int buildLumpNodeLutWorker(PathTree::Node& node, void* parameters)
@@ -926,19 +931,13 @@ bool Zip::uncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize
 /**
  * The path inside the zip might be mapped to another virtual location.
  *
+ * @return  @c true= iff @a path was mapped to another location.
+ *
  * @todo This is clearly implemented in the wrong place. Path mapping
  *       should be done at a higher level.
- *
- * Data files (pk3, zip, lmp, wad, deh) in the root are mapped to Data/Game/Auto.
- * Definition files (ded) in the root are mapped to Defs/Game/Auto.
- * Paths that begin with a '@' are mapped to Defs/Game/Auto.
- * Paths that begin with a '#' are mapped to Data/Game/Auto.
- * Key-named directories at the root are mapped to another location.
  */
-static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
+static bool applyGamePathMappings(String& path)
 {
-    String path = String(Str_Text(src));
-
     // Manually mapped to Defs?
     if(path.beginsWith('@'))
     {
@@ -946,9 +945,11 @@ static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
         if(path.at(0) == '/') path.remove(0, 1);
 
         path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
+        return true;
     }
+
     // Manually mapped to Data?
-    else if(path.beginsWith('#'))
+    if(path.beginsWith('#'))
     {
         path.remove(0, 1);
         if(path.at(0) == '/') path.remove(0, 1);
@@ -966,9 +967,11 @@ static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
         }
 
         path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
+        return true;
     }
+
     // Implicitly mapped to another location?
-    else if(!path.contains('/'))
+    if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
         QByteArray fileName = path.fileName().toUtf8();
@@ -1001,50 +1004,41 @@ static void ApplyGamePathMappings(ddstring_t* dest, ddstring_t const* src)
         }
         // Kludge end
 
-        switch(rclass)
+        // Mapped to the Data directory?
+        if(rclass == RC_PACKAGE)
         {
-        case RC_PACKAGE: // Mapped to the Data directory.
             path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
-            break;
-
-        case RC_DEFINITION: // Mapped to the Defs directory.
-            path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
-            break;
-
-        default: /* Not mapped */ break;
+            return true;
         }
-    }
-    // Key-named directories in the root might be mapped to another location.
-    else
-    {
-        AutoStr* temp = AutoStr_FromTextStd(Str_Text(src));
-        if(F_ApplyGamePathMapping(temp))
+
+        // Mapped to the Defs directory?
+        if(rclass == RC_DEFINITION)
         {
-            path = String(Str_Text(temp));
+            path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
+            return true;
+        }
+
+        return false;
+    }
+
+    // Key-named directories in the root might be mapped to another location.
+    uint const numNamespaces = F_NumResourceNamespaces();
+    for(uint i = 0; i < numNamespaces; ++i)
+    {
+        if(F_MapGameResourcePath(resourcenamespaceid_t(i + 1), path))
+        {
+            return true;
         }
     }
+    return false;
+}
 
-    // Resolve all symbolic references in the path.
-    try
-    {
-        QByteArray resolvedPath = Uri(path, RC_NULL).resolved().toUtf8();
-        Str_Set(dest, resolvedPath.constData());
-        return;
-    }
-    catch(de::Uri::ResolveError const& er)
-    {
-        LOG_WARNING(er.asText());
-    }
-
-    Str_Copy(dest, src);
+static String invalidIndexMessage(int invalidIdx, int lastValidIdx)
+{
+    String msg = String("Invalid lump index %1").arg(invalidIdx);
+    if(lastValidIdx < 0) msg += " (file is empty)";
+    else                 msg += String(", valid range: [0..%2)").arg(lastValidIdx);
+    return msg;
 }
 
 } // namespace de
-
-static QString invalidIndexMessage(int invalidIdx, int lastValidIdx)
-{
-    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
-    if(lastValidIdx < 0) msg += "(file is empty)";
-    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
-    return msg;
-}

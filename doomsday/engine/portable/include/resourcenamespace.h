@@ -28,6 +28,9 @@
 #include "pathtree.h"
 #include "uri.h"
 
+/// ResourceNamespace names must be at least this number of characters.
+#define RESOURCENAMESPACE_MINNAMELENGTH URI_MINSCHEMELENGTH
+
 /**
  * @defgroup searchPathFlags  Search Path Flags
  * @ingroup flags

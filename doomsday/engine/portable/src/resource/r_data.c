@@ -1080,10 +1080,10 @@ void R_InitSystemTextures(void)
         const char* texPath;
         const char* resourcePath; ///< Percent-encoded.
     } defs[] = {
-        { "unknown", GRAPHICS_RESOURCE_NAMESPACE_NAME":unknown" },
-        { "missing", GRAPHICS_RESOURCE_NAMESPACE_NAME":missing" },
-        { "bbox",    GRAPHICS_RESOURCE_NAMESPACE_NAME":bbox" },
-        { "gray",    GRAPHICS_RESOURCE_NAMESPACE_NAME":gray" },
+        { "unknown", "Graphics:unknown" },
+        { "missing", "Graphics:missing" },
+        { "bbox",    "Graphics:bbox" },
+        { "gray",    "Graphics:gray" },
         { NULL, NULL }
     };
     Uri* uri = Uri_New(), *resourcePath = Uri_New();
@@ -2449,7 +2449,7 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
     if(!found)
     {
         // Try the resource locator.
-        Str_Clear(&searchPath); Str_Appendf(&searchPath, MODELS_RESOURCE_NAMESPACE_NAME":%s", skin);
+        Str_Clear(&searchPath); Str_Appendf(&searchPath, "Models:%s", skin);
         found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath) != 0;
     }
 

@@ -98,19 +98,17 @@ static resourcetype_t const searchTypeOrder[RESOURCECLASS_COUNT][MAX_TYPEORDER] 
 };
 
 static de::Str const defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
-    /* RC_PACKAGE */    PACKAGES_RESOURCE_NAMESPACE_NAME,
-    /* RC_DEFINITION */ DEFINITIONS_RESOURCE_NAMESPACE_NAME,
-    /* RC_GRAPHIC */    GRAPHICS_RESOURCE_NAMESPACE_NAME,
-    /* RC_MODEL */      MODELS_RESOURCE_NAMESPACE_NAME,
-    /* RC_SOUND */      SOUNDS_RESOURCE_NAMESPACE_NAME,
-    /* RC_MUSIC */      MUSIC_RESOURCE_NAMESPACE_NAME,
-    /* RC_FONT */       FONTS_RESOURCE_NAMESPACE_NAME
+    /* RC_PACKAGE */    "Packages",
+    /* RC_DEFINITION */ "Defs",
+    /* RC_GRAPHIC */    "Graphics",
+    /* RC_MODEL */      "Models",
+    /* RC_SOUND */      "Sfx",
+    /* RC_MUSIC */      "Music",
+    /* RC_FONT */       "Fonts"
 };
 
 static ResourceNamespaceInfo* namespaces = 0;
 static uint numNamespaces = 0;
-
-#define RESOURCENAMESPACE_MINNAMELENGTH URI_MINSCHEMELENGTH
 
 /**
  * @param name      Unique symbolic name of this namespace. Must be at least
@@ -446,7 +444,7 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    ResourceNamespace* rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, 0);
+    ResourceNamespace* rnamespace = F_CreateResourceNamespace("Packages", 0);
     if(searchPathsCount != 0)
     {
         for(uint i = 0; i < searchPathsCount; ++i)
@@ -475,34 +473,34 @@ void F_CreateNamespacesForFileResourcePaths(void)
         /// Priority is right to left.
         char const* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
-        { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0, 0,
+        { "Defs",  NULL,           NULL,           0, 0,
             { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
         },
-        { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0, 0,
+        { "Graphics",     "-gfxdir2",     "-gfxdir",      0, 0,
             { "$(App.DataPath)/graphics/" }
         },
-        { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
+        { "Models",       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
             { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
         },
-        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Sfx",       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
         },
-        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Music",        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
         },
-        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Textures",     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
         },
-        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Flats",        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
         },
-        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Patches",      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
         },
-        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
+        { "LightMaps",    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
             { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
         },
-        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Fonts",        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
         },
     { 0, 0, 0, 0, 0, { 0 } }
@@ -722,41 +720,27 @@ resourcetype_t F_GuessResourceTypeByName(char const* path)
     return RT_NONE; // Unrecognizable.
 }
 
-boolean F_MapGameResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
+bool F_MapGameResourcePath(resourcenamespaceid_t rni, String& path)
 {
     ResourceNamespace* rnamespace = namespaceById(rni);
-    if(!rnamespace) return false;
+    if(!rnamespace)    return false;
+    if(path.isEmpty()) return false;
 
-    if(!path || Str_IsEmpty(path)) return false;
-
+    // Are virtual path mappings in effect for this namespace?
     ResourceNamespaceInfo* info = namespaceInfoById(rni);
     DENG_ASSERT(info);
+    if(!(info->flags & RNF_USE_VMAP)) return false;
 
-    if(info->flags & RNF_USE_VMAP)
-    {
-        QByteArray rnamespaceName = rnamespace->name().toUtf8();
-        int const nameLen = rnamespaceName.length();
-        int const pathLen = Str_Length(path);
+    String const& namespaceName = rnamespace->name();
 
-        if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
-           !qstrnicmp(rnamespaceName.constData(), Str_Text(path), nameLen))
-        {
-            Str_Prepend(path, "$(App.DataPath)/$(GamePlugin.Name)/");
-            return true;
-        }
-    }
+    // Does this path qualify for mapping?
+    if(path.length() <= namespaceName.length()) return false;
+    if(path.at(namespaceName.length()) != '/')  return false;
+    if(!path.beginsWith(namespaceName, Qt::CaseInsensitive)) return false;
 
-    return false;
-}
-
-boolean F_ApplyGamePathMapping(ddstring_t* path)
-{
-    DENG_ASSERT(path);
-    uint i = 1;
-    boolean result = false;
-    while(i < numNamespaces + 1 && !(result = F_MapGameResourcePath(i++, path)))
-    {}
-    return result;
+    // Yes.
+    path = String("$(App.DataPath)/$(GamePlugin.Name)") / path;
+    return true;
 }
 
 char const* F_ResourceClassStr(resourceclass_t rclass)

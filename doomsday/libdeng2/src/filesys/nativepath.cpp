@@ -54,6 +54,10 @@ NativePath::NativePath(const char *nullTerminatedCStr)
 {
 }
 
+NativePath::NativePath(const char* cStr, size_type length)
+    : String(toNative(QString::fromUtf8(cStr, length)))
+{}
+
 NativePath& NativePath::operator = (const QString& str)
 {
     *static_cast<String*>(this) = toNative(str);

@@ -177,7 +177,7 @@ static fontid_t loadSystemFont(const char* name)
 
     // Compose the resource data path.
     Str_InitStd(&resourcePath);
-    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
+    Str_Appendf(&resourcePath, "}data/Fonts/%s.dfn", name);
 #if defined(UNIX) && !defined(MACOSX)
     // Case-sensitive file system.
     /// @todo Unkludge this: handle in a more generic manner.
