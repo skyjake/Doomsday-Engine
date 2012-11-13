@@ -2684,7 +2684,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
     Str_Init(&searchPath); Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&r->name));
     Str_Init(&foundPath);
 
-    if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         // "External" image loaded.

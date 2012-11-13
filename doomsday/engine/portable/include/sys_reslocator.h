@@ -145,7 +145,7 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
     struct uri_s const* searchPath);
 
 boolean F_FindResourcePath(resourceclass_t rclass, struct uri_s const* searchPath,
-    ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
+    ddstring_t* foundPath, int flags, char const* optionalSuffix);
 
 /**
  * Attempt to locate a named resource.
@@ -170,11 +170,6 @@ boolean F_FindResourcePath(resourceclass_t rclass, struct uri_s const* searchPat
  *
  * @return  The index+1 of the path in @a searchPaths if found, else @c 0
  */
-uint F_FindResourceStr4(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, ddstring_t* foundPath, int flags, ddstring_t const* optionalSuffix);
-uint F_FindResourceStr3(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
-uint F_FindResourceStr2(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
-uint F_FindResourceStr(resourceclass_t rclass, ddstring_t const* nativeSearchPaths/*, foundPath = NULL*/);
-
 uint F_FindResource4(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
 uint F_FindResource3(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
 uint F_FindResource2(resourceclass_t rclass, char const* nativeSearchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
@@ -235,17 +230,6 @@ boolean F_ApplyGamePathMapping(ddstring_t* path);
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
 char const* F_ResourceClassStr(resourceclass_t rclass);
-
-/**
- * Construct a new NULL terminated Uri list from the specified search path list.
- */
-struct uri_s** F_CreateUriListStr2(resourceclass_t rclass, ddstring_t const* nativeSearchPaths, int* count);
-struct uri_s** F_CreateUriListStr(resourceclass_t rclass, ddstring_t const* nativeSearchPaths);
-
-struct uri_s** F_CreateUriList2(resourceclass_t rclass, char const* nativeSearchPaths, int* count);
-struct uri_s** F_CreateUriList(resourceclass_t rclass, char const* nativeSearchPaths);
-
-void F_DestroyUriList(struct uri_s** list);
 
 #ifdef __cplusplus
 } // extern "C"

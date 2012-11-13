@@ -103,7 +103,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
 {
     assert(particleTex < MAX_PTC_TEXTURES);
     {
-    ddstring_t foundPath, searchPath, suffix = { "-ck" };
+    ddstring_t foundPath, searchPath;
     image_t image;
     byte result = 0;
 
@@ -112,7 +112,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
     Str_Init(&searchPath);
     Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":Particle%02i", particleTex);
 
-    if(F_FindResourceStr4(RC_GRAPHIC, &searchPath, &foundPath, RLF_DEFAULT, &suffix) != 0 &&
+    if(F_FindResource4(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, RLF_DEFAULT, "-ck") != 0 &&
        GL_LoadImage(&image, Str_Text(&foundPath)))
     {
         result = 2;
