@@ -399,11 +399,11 @@ else:unix {
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
 
     SOURCES += \
-        unix/src/dd_uinit.c \
-        unix/src/joystick.c \
-        unix/src/sys_console.c \
-        unix/src/sys_findfile.c \
-        unix/src/sys_path.c
+        src/unix/dd_uinit.c \
+        src/unix/joystick.c \
+        src/unix/sys_console.c \
+        src/unix/sys_findfile.c \
+        src/unix/sys_path.c
 }
 
 macx {
@@ -422,8 +422,8 @@ else:unix {
     !deng_nodisplaymode {
         # Unix (non-Mac) only.
         SOURCES += \
-            unix/src/displaymode_x11.cpp \
-            unix/src/imKStoUCS.c
+            src/unix/displaymode_x11.cpp \
+            src/unix/imKStoUCS.c
     }
 }
 
