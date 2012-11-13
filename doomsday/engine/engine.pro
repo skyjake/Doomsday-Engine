@@ -266,18 +266,17 @@ DENG_HEADERS += \
     portable/include/plane.h \
     portable/include/polyobj.h \
     portable/include/propertyvalue.h \
-    portable/include/r_data.h \
-    portable/include/r_fakeradio.h \
-    portable/include/r_lgrid.h \
     portable/include/r_main.h \
-    portable/include/r_shadow.h \
-    portable/include/r_sky.h \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
     portable/include/render/busyvisual.h \
     portable/include/render/r_draw.h \
+    portable/include/render/r_fakeradio.h \
+    portable/include/render/r_lgrid.h \
     portable/include/render/r_lumobjs.h \
+    portable/include/render/r_shadow.h \
+    portable/include/render/r_sky.h \
     portable/include/render/rend_bias.h \
     portable/include/render/rend_clip.h \
     portable/include/render/rend_console.h \
@@ -298,6 +297,7 @@ DENG_HEADERS += \
     portable/include/resource/materials.h \
     portable/include/resource/materialvariant.h \
     portable/include/resource/models.h \
+    portable/include/resource/r_data.h \
     portable/include/resource/texture.h \
     portable/include/resource/textures.h \
     portable/include/resource/texturevariant.h \
@@ -554,19 +554,18 @@ SOURCES += \
     portable/src/point.c \
     portable/src/polyobj.c \
     portable/src/propertyvalue.cpp \
-    portable/src/r_data.c \
-    portable/src/r_fakeradio.c \
-    portable/src/r_lgrid.c \
     portable/src/r_main.c \
-    portable/src/r_shadow.c \
-    portable/src/r_sky.c \
     portable/src/r_things.c \
     portable/src/r_util.c \
     portable/src/r_world.c \
     portable/src/rect.c \
     portable/src/render/busyvisual.c \
     portable/src/render/r_draw.c \
+    portable/src/render/r_fakeradio.c \
+    portable/src/render/r_lgrid.c \
     portable/src/render/r_lumobjs.c \
+    portable/src/render/r_shadow.c \
+    portable/src/render/r_sky.c \
     portable/src/render/rend_bias.c \
     portable/src/render/rend_clip.cpp \
     portable/src/render/rend_console.c \
@@ -587,6 +586,7 @@ SOURCES += \
     portable/src/resource/materials.cpp \
     portable/src/resource/materialvariant.cpp \
     portable/src/resource/models.cpp \
+    portable/src/resource/r_data.c \
     portable/src/resource/texture.cpp \
     portable/src/resource/textures.cpp \
     portable/src/resource/texturevariant.cpp \
