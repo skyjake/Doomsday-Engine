@@ -98,13 +98,13 @@ static resourcetype_t const searchTypeOrder[RESOURCECLASS_COUNT][MAX_TYPEORDER] 
 };
 
 static de::Str const defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
-    /* RC_PACKAGE */    PACKAGES_RESOURCE_NAMESPACE_NAME,
-    /* RC_DEFINITION */ DEFINITIONS_RESOURCE_NAMESPACE_NAME,
-    /* RC_GRAPHIC */    GRAPHICS_RESOURCE_NAMESPACE_NAME,
-    /* RC_MODEL */      MODELS_RESOURCE_NAMESPACE_NAME,
-    /* RC_SOUND */      SOUNDS_RESOURCE_NAMESPACE_NAME,
-    /* RC_MUSIC */      MUSIC_RESOURCE_NAMESPACE_NAME,
-    /* RC_FONT */       FONTS_RESOURCE_NAMESPACE_NAME
+    /* RC_PACKAGE */    "Packages",
+    /* RC_DEFINITION */ "Defs",
+    /* RC_GRAPHIC */    "Graphics",
+    /* RC_MODEL */      "Models",
+    /* RC_SOUND */      "Sfx",
+    /* RC_MUSIC */      "Music",
+    /* RC_FONT */       "Fonts"
 };
 
 static ResourceNamespaceInfo* namespaces = 0;
@@ -446,7 +446,7 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    ResourceNamespace* rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, 0);
+    ResourceNamespace* rnamespace = F_CreateResourceNamespace("Packages", 0);
     if(searchPathsCount != 0)
     {
         for(uint i = 0; i < searchPathsCount; ++i)
@@ -475,34 +475,34 @@ void F_CreateNamespacesForFileResourcePaths(void)
         /// Priority is right to left.
         char const* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
-        { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0, 0,
+        { "Defs",  NULL,           NULL,           0, 0,
             { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
         },
-        { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0, 0,
+        { "Graphics",     "-gfxdir2",     "-gfxdir",      0, 0,
             { "$(App.DataPath)/graphics/" }
         },
-        { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
+        { "Models",       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
             { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
         },
-        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Sfx",       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
         },
-        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Music",        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
         },
-        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Textures",     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
         },
-        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Flats",        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
         },
-        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Patches",      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
         },
-        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
+        { "LightMaps",    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
             { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
         },
-        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Fonts",        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
             { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
         },
     { 0, 0, 0, 0, 0, { 0 } }

@@ -38,18 +38,6 @@
 extern "C" {
 #endif
 
-#define PACKAGES_RESOURCE_NAMESPACE_NAME    "Packages"
-#define DEFINITIONS_RESOURCE_NAMESPACE_NAME "Defs"
-#define GRAPHICS_RESOURCE_NAMESPACE_NAME    "Graphics"
-#define MODELS_RESOURCE_NAMESPACE_NAME      "Models"
-#define SOUNDS_RESOURCE_NAMESPACE_NAME      "Sfx"
-#define MUSIC_RESOURCE_NAMESPACE_NAME       "Music"
-#define TEXTURES_RESOURCE_NAMESPACE_NAME    "Textures"
-#define FLATS_RESOURCE_NAMESPACE_NAME       "Flats"
-#define PATCHES_RESOURCE_NAMESPACE_NAME     "Patches"
-#define LIGHTMAPS_RESOURCE_NAMESPACE_NAME   "LightMaps"
-#define FONTS_RESOURCE_NAMESPACE_NAME       "Fonts"
-
 /**
  * Resource Type. Unique identifer attributable to resources (e.g., files).
  *

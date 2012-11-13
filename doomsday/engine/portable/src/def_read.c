@@ -1162,10 +1162,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else
                 RV_FLAGS("Flags", lig->flags, "lgf_")
-                RV_URI("Top map", &lig->up, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
-                RV_URI("Bottom map", &lig->down, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
-                RV_URI("Side map", &lig->sides, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
-                RV_URI("Flare map", &lig->flare, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("Top map", &lig->up, "LightMaps")
+                RV_URI("Bottom map", &lig->down, "LightMaps")
+                RV_URI("Side map", &lig->sides, "LightMaps")
+                RV_URI("Flare map", &lig->flare, "LightMaps")
                 RV_FLT("Halo radius", lig->haloRadius)
                 RV_END
                 CHECKSC;
@@ -1401,12 +1401,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     for(;;)
                     {
                         READLABEL;
-                        RV_URI("File", &mdl->sub[sub].filename, MODELS_RESOURCE_NAMESPACE_NAME)
+                        RV_URI("File", &mdl->sub[sub].filename, "Models")
                         RV_STR("Frame", mdl->sub[sub].frame)
                         RV_INT("Frame range", mdl->sub[sub].frameRange)
                         RV_BLENDMODE("Blending mode", mdl->sub[sub].blendMode)
                         RV_INT("Skin", mdl->sub[sub].skin)
-                        RV_URI("Skin file", &mdl->sub[sub].skinFilename, MODELS_RESOURCE_NAMESPACE_NAME)
+                        RV_URI("Skin file", &mdl->sub[sub].skinFilename, "Models")
                         RV_INT("Skin range", mdl->sub[sub].skinRange)
                         RV_VEC("Offset XYZ", mdl->sub[sub].offset, 3)
                         RV_FLAGS("Flags", mdl->sub[sub].flags, "df_")
@@ -1484,9 +1484,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_INT("Max channels", snd->channels)
                 RV_INT("Group", snd->group)
                 RV_FLAGS("Flags", snd->flags, "sf_")
-                RV_URI("Ext", &snd->ext, SOUNDS_RESOURCE_NAMESPACE_NAME)
-                RV_URI("File", &snd->ext, SOUNDS_RESOURCE_NAMESPACE_NAME)
-                RV_URI("File name", &snd->ext, SOUNDS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("Ext", &snd->ext, "Sfx")
+                RV_URI("File", &snd->ext, "Sfx")
+                RV_URI("File name", &snd->ext, "Sfx")
                 RV_END
                 CHECKSC;
             }
@@ -1505,9 +1505,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 READLABEL;
                 RV_STR("ID", mus->id)
                 RV_STR("Lump", mus->lumpName)
-                RV_URI("File name", &mus->path, MUSIC_RESOURCE_NAMESPACE_NAME)
-                RV_URI("File", &mus->path, MUSIC_RESOURCE_NAMESPACE_NAME)
-                RV_URI("Ext", &mus->path, MUSIC_RESOURCE_NAMESPACE_NAME) // Both work.
+                RV_URI("File name", &mus->path, "Music")
+                RV_URI("File", &mus->path, "Music")
+                RV_URI("Ext", &mus->path, "Music") // Both work.
                 RV_INT("CD track", mus->cdTrack)
                 RV_END
                 CHECKSC;
@@ -1832,7 +1832,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         for(;;)
                         {
                             READLABEL;
-                            RV_URI("Texture", &mc->path, PATCHES_RESOURCE_NAMESPACE_NAME)
+                            RV_URI("Texture", &mc->path, "Patches")
                             RV_END
                             CHECKSC;
                         }
@@ -2020,8 +2020,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_FLT("Shininess", ref->shininess)
                 RV_VEC("Min color", ref->minColor, 3)
                 RV_BLENDMODE("Blending mode", ref->blendMode)
-                RV_URI("Shiny map", &ref->shinyMap, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
-                RV_URI("Mask map", &ref->maskMap, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                RV_URI("Shiny map", &ref->shinyMap, "LightMaps")
+                RV_URI("Mask map", &ref->maskMap, "LightMaps")
                 RV_FLT("Mask width", ref->maskWidth)
                 RV_FLT("Mask height", ref->maskHeight)
                 if(ISLABEL("Material"))
@@ -2290,10 +2290,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         }
                         else
                         RV_INT("Flare texture", dl->flareTexture)
-                        RV_URI("Flare map", &dl->flare, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
-                        RV_URI("Top map", &dl->up, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
-                        RV_URI("Bottom map", &dl->down, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
-                        RV_URI("Side map", &dl->sides, LIGHTMAPS_RESOURCE_NAMESPACE_NAME)
+                        RV_URI("Flare map", &dl->flare, "LightMaps")
+                        RV_URI("Top map", &dl->up, "LightMaps")
+                        RV_URI("Bottom map", &dl->down, "LightMaps")
+                        RV_URI("Side map", &dl->sides, "LightMaps")
                         RV_END
                         CHECKSC;
                     }

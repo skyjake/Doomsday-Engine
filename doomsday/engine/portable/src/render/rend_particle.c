@@ -110,7 +110,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
     Str_Init(&foundPath);
 
     Str_Init(&searchPath);
-    Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":Particle%02i", particleTex);
+    Str_Appendf(&searchPath, "Textures:Particle%02i", particleTex);
 
     if(F_FindResource4(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, RLF_DEFAULT, "-ck") != 0 &&
        GL_LoadImage(&image, Str_Text(&foundPath)))

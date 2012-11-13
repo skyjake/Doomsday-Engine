@@ -710,8 +710,8 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
             // First try the flats namespace then the old-fashioned "flat-name"
             // in the textures namespace.
             AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(),
-                                              FLATS_RESOURCE_NAMESPACE_NAME":%s;"
-                                              TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(path), Str_Text(path));
+                                              "Flats:%s;Textures:flat-%s",
+                                              Str_Text(path), Str_Text(path));
 
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
@@ -752,7 +752,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         {
             const Str suffix = { "-ck" };
             AutoStr* path = Textures_ComposePath(Textures_Id(tex));
-            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(), PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(path));
+            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(), "Patches:%s", Str_Text(path));
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
 
@@ -791,14 +791,14 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
             AutoStr* searchPath = AutoStr_NewStd();
             if(TC_PSPRITE_DIFFUSE == spec->context)
             {
-                Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", Str_Text(path));
+                Str_Appendf(searchPath, "Patches:%s-hud;", Str_Text(path));
             }
             else if(tclass || tmap)
             {
-                Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
+                Str_Appendf(searchPath, "Patches:%s-table%i%i;",
                                         Str_Text(path), tclass, tmap);
             }
-            Str_Appendf(searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(path));
+            Str_Appendf(searchPath, "Patches:%s", Str_Text(path));
 
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
@@ -2681,7 +2681,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
     assert(image);
 
     // First try to find an external resource.
-    Str_Init(&searchPath); Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&r->name));
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s", Str_Text(&r->name));
     Str_Init(&foundPath);
 
     if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
@@ -3285,7 +3285,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
             assert(texDef);
 
             Str_Init(&searchPath);
-            Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&texDef->name));
+            Str_Appendf(&searchPath, "Textures:%s", Str_Text(&texDef->name));
             source = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
