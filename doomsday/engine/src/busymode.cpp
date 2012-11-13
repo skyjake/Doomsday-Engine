@@ -28,7 +28,7 @@
 #include "de_network.h"
 
 #include "audio/s_main.h"
-#include "render/busyvisual.h"
+#include "ui/busyvisual.h"
 
 #include "de/c_wrapper.h"
 #include <de/Log>

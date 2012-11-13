@@ -35,7 +35,7 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
-#include "render/busyvisual.h"
+#include "ui/busyvisual.h"
 
 /// Development utility: on sharp tics, print player 0 movement state.
 //#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS

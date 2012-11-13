@@ -36,7 +36,7 @@
 #include "cbuffer.h"
 #include "font.h"
 
-#include "render/busyvisual.h"
+#include "ui/busyvisual.h"
 
 static fontid_t busyFont = 0;
 static int busyFontHgt; // Height of the font.

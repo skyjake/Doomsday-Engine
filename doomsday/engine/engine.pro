@@ -270,7 +270,6 @@ DENG_HEADERS += \
     include/r_things.h \
     include/r_util.h \
     include/r_world.h \
-    include/render/busyvisual.h \
     include/render/r_draw.h \
     include/render/r_fakeradio.h \
     include/render/r_lgrid.h \
@@ -330,6 +329,7 @@ DENG_HEADERS += \
     include/ui/b_device.h \
     include/ui/b_main.h \
     include/ui/b_util.h \
+    include/ui/busyvisual.h \
     include/ui/canvas.h \
     include/ui/canvaswindow.h \
     include/ui/dd_input.h \
@@ -559,7 +559,6 @@ SOURCES += \
     src/r_util.c \
     src/r_world.c \
     src/rect.c \
-    src/render/busyvisual.c \
     src/render/r_draw.c \
     src/render/r_fakeradio.c \
     src/render/r_lgrid.c \
@@ -616,6 +615,7 @@ SOURCES += \
     src/ui/b_device.c \
     src/ui/b_main.c \
     src/ui/b_util.c \
+    src/ui/busyvisual.c \
     src/ui/canvas.cpp \
     src/ui/canvaswindow.cpp \
     src/ui/dd_input.c \
