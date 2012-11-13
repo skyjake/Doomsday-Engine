@@ -313,7 +313,6 @@ DENG_HEADERS += \
     include/server/sv_missile.h \
     include/server/sv_pool.h \
     include/server/sv_sound.h \
-    include/stringarray.h \
     include/svg.h \
     include/sys_console.h \
     include/sys_direc.h \
@@ -601,7 +600,6 @@ SOURCES += \
     src/server/sv_pool.c \
     src/server/sv_sound.cpp \
     src/size.c \
-    src/stringarray.cpp \
     src/svg.c \
     src/sys_direc.c \
     src/sys_opengl.c \

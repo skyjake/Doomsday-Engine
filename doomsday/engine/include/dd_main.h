@@ -35,7 +35,7 @@
 #  include "textures.h"
 #endif
 #include "sys_direc.h"
-#include "de/c_wrapper.h"
+#include <de/c_wrapper.h>
 
 #ifdef __cplusplus
 extern "C" {

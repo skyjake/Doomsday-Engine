@@ -30,7 +30,7 @@
 #include "audio/s_main.h"
 #include "ui/busyvisual.h"
 
-#include "de/c_wrapper.h"
+#include <de/c_wrapper.h>
 #include <de/Log>
 #include <QEventLoop>
 

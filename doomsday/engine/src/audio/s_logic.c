@@ -38,7 +38,7 @@
 #include "de_console.h"
 #include "de_audio.h"
 
-#include "de/timer.h"
+#include <de/timer.h>
 
 // MACROS ------------------------------------------------------------------
 

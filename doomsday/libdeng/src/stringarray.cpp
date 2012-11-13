@@ -19,11 +19,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "stringarray.h"
+#include "de/stringarray.h"
+#include "de/str.hh"
 #include <assert.h>
 #include <vector>
 #include <string.h>
-#include <de/str.hh>
 
 struct stringarray_s {
     typedef std::vector<de::Str*> Strings;
@@ -155,7 +155,7 @@ const char* StringArray_At(const StringArray *ar, int index)
     return Str_Text(*ar->array[index]);
 }
 
-ddstring_t* StringArray_StringAt(StringArray* ar, int index)
+Str* StringArray_StringAt(StringArray* ar, int index)
 {
     assert(ar);
     ar->assertValidIndex(index);

@@ -26,7 +26,7 @@
 #ifndef ENGINE_TYPES_H
 #define ENGINE_TYPES_H
 
-#include "de/types.h" // libdeng types
+#include <de/types.h> // libdeng types
 
 /** In Win32 TCHAR and related macros change size depending on if they are
  using wide characters (unicode utf-16le) or ansi for functions and strings.
@@ -120,7 +120,7 @@ struct plane_s;
 struct surface_s;
 struct material_s;
 
-#include "de/ddstring.h"
+#include <de/str.h>
 #include "uri.h"
 
 #endif /* ENGINE_TYPES_H */

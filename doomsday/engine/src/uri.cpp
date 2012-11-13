@@ -34,7 +34,7 @@
 #include <de/Log>
 #include <de/NativePath>
 #include <de/String>
-#include "de/unittest.h"
+#include <de/unittest.h>
 
 #include "uri.h"
 

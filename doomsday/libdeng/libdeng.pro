@@ -62,6 +62,7 @@ HEADERS += \
     include/de/smoother.h \
     include/de/str.h \
     include/de/str.hh \
+    include/de/stringarray.h \
     include/de/timer.h \
     include/de/types.h \
     include/de/unittest.h \
@@ -78,6 +79,7 @@ SOURCES += \
     src/reader.c \
     src/smoother.cpp \
     src/str.c \
+    src/stringarray.cpp \
     src/timer.cpp \
     src/writer.c
 
