@@ -25,9 +25,9 @@
 #include "de_base.h"
 #include "de_console.h"
 
+#include "map/blockmap.h"
 #include "m_vector.h"
 #include "gridmap.h"
-#include "blockmap.h"
 
 typedef struct blockmap_ringnode_s {
     void* object;

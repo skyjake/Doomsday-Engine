@@ -28,8 +28,8 @@
 #include "de_system.h"
 #include "de_refresh.h"
 
-#include "blockmap.h"
-#include "generators.h"
+#include "map/blockmap.h"
+#include "map/generators.h"
 #include "gamemap.h"
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.

@@ -31,7 +31,7 @@
 #include "de_ui.h"
 
 #include <de/concurrency.h>
-#include "blockmap.h"
+#include "map/blockmap.h"
 
 byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = BSP leafs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;

@@ -138,12 +138,7 @@ DENG_HEADERS += \
     portable/include/audio/sys_audio.h \
     portable/include/audio/sys_audiod_dummy.h \
     portable/include/binarytree.h \
-    portable/include/bitmapfont.h \
-    portable/include/blockmap.h \
-    portable/include/blockmapvisual.h \
     portable/include/blockset.h \
-    portable/include/bspleaf.h \
-    portable/include/bspnode.h \
     portable/include/busymode.h \
     portable/include/cbuffer.h \
     portable/include/client/cl_def.h \
@@ -153,14 +148,11 @@ DENG_HEADERS += \
     portable/include/client/cl_player.h \
     portable/include/client/cl_sound.h \
     portable/include/client/cl_world.h \
-    portable/include/colorpalette.h \
     portable/include/con_bar.h \
     portable/include/con_bind.h \
     portable/include/con_config.h \
     portable/include/con_main.h \
     portable/include/consolewindow.h \
-    portable/include/dam_file.h \
-    portable/include/dam_main.h \
     portable/include/dd_def.h \
     portable/include/dd_games.h \
     portable/include/dd_help.h \
@@ -194,13 +186,10 @@ DENG_HEADERS += \
     portable/include/file.h \
     portable/include/filehandlebuilder.h \
     portable/include/fileinfo.h \
-    portable/include/font.h \
-    portable/include/fonts.h \
     portable/include/fs_main.h \
     portable/include/fs_util.h \
     portable/include/game.h \
     portable/include/gamemap.h \
-    portable/include/generators.h \
     portable/include/gl_defer.h \
     portable/include/gl_deferredapi.h \
     portable/include/gl_draw.h \
@@ -212,12 +201,10 @@ DENG_HEADERS += \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
     portable/include/gridmap.h \
-    portable/include/hedge.h \
     portable/include/image.h \
     portable/include/json.h \
     portable/include/kdtree.h \
     portable/include/library.h \
-    portable/include/linedef.h \
     portable/include/lumpcache.h \
     portable/include/lumpindex.h \
     portable/include/m_bams.h \
@@ -230,6 +217,8 @@ DENG_HEADERS += \
     portable/include/m_profiler.h \
     portable/include/m_stack.h \
     portable/include/m_vector.h \
+    portable/include/map/blockmap.h \
+    portable/include/map/blockmapvisual.h \
     portable/include/map/bsp/hedgeinfo.h \
     portable/include/map/bsp/hedgeintercept.h \
     portable/include/map/bsp/hedgetip.h \
@@ -239,7 +228,20 @@ DENG_HEADERS += \
     portable/include/map/bsp/partitioner.h \
     portable/include/map/bsp/superblockmap.h \
     portable/include/map/bspbuilder.h \
+    portable/include/map/bspleaf.h \
+    portable/include/map/bspnode.h \
+    portable/include/map/dam_file.h \
+    portable/include/map/dam_main.h \
     portable/include/map/entitydatabase.h \
+    portable/include/map/generators.h \
+    portable/include/map/hedge.h \
+    portable/include/map/linedef.h \
+    portable/include/map/plane.h \
+    portable/include/map/polyobj.h \
+    portable/include/map/sector.h \
+    portable/include/map/sidedef.h \
+    portable/include/map/surface.h \
+    portable/include/map/vertex.h \
     portable/include/network/masterserver.h \
     portable/include/network/monitor.h \
     portable/include/network/net_buf.h \
@@ -263,8 +265,6 @@ DENG_HEADERS += \
     portable/include/p_sight.h \
     portable/include/p_ticker.h \
     portable/include/pathtree.h \
-    portable/include/plane.h \
-    portable/include/polyobj.h \
     portable/include/propertyvalue.h \
     portable/include/r_main.h \
     portable/include/r_things.h \
@@ -293,6 +293,10 @@ DENG_HEADERS += \
     portable/include/render/rend_sky.h \
     portable/include/render/rend_sprite.h \
     portable/include/render/vignette.h \
+    portable/include/resource/bitmapfont.h \
+    portable/include/resource/colorpalette.h \
+    portable/include/resource/font.h \
+    portable/include/resource/fonts.h \
     portable/include/resource/material.h \
     portable/include/resource/materials.h \
     portable/include/resource/materialvariant.h \
@@ -304,16 +308,13 @@ DENG_HEADERS += \
     portable/include/resource/texturevariantspecification.h \
     portable/include/resourcenamespace.h \
     portable/include/resourcerecord.h \
-    portable/include/sector.h \
-    portable/include/sidedef.h \
-    portable/include/stringarray.h \
-    portable/include/surface.h \
     portable/include/server/sv_def.h \
     portable/include/server/sv_frame.h \
     portable/include/server/sv_infine.h \
     portable/include/server/sv_missile.h \
     portable/include/server/sv_pool.h \
     portable/include/server/sv_sound.h \
+    portable/include/stringarray.h \
     portable/include/svg.h \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
@@ -348,7 +349,6 @@ DENG_HEADERS += \
     portable/include/ui/window.h \
     portable/include/ui/zonedebug.h \
     portable/include/updater.h \
-    portable/include/vertex.h \
     portable/include/wad.h \
     portable/include/zip.h \
     portable/src/updater/downloaddialog.h \
@@ -445,12 +445,7 @@ SOURCES += \
     portable/src/audio/s_wav.c \
     portable/src/audio/sys_audiod_dummy.c \
     portable/src/binarytree.cpp \
-    portable/src/bitmapfont.c \
-    portable/src/blockmap.c \
-    portable/src/blockmapvisual.c \
     portable/src/blockset.c \
-    portable/src/bspleaf.cpp \
-    portable/src/bspnode.c \
     portable/src/busymode.cpp \
     portable/src/cbuffer.c \
     portable/src/client/cl_frame.c \
@@ -460,13 +455,10 @@ SOURCES += \
     portable/src/client/cl_player.c \
     portable/src/client/cl_sound.c \
     portable/src/client/cl_world.c \
-    portable/src/colorpalette.c \
     portable/src/con_bar.c \
     portable/src/con_config.c \
     portable/src/con_data.cpp \
     portable/src/con_main.c \
-    portable/src/dam_file.c \
-    portable/src/dam_main.cpp \
     portable/src/dd_games.cpp \
     portable/src/dd_help.c \
     portable/src/dd_init.cpp \
@@ -486,12 +478,10 @@ SOURCES += \
     portable/src/file.cpp \
     portable/src/filehandle.cpp \
     portable/src/fileid.cpp \
-    portable/src/fonts.cpp \
     portable/src/fs_main.cpp \
     portable/src/fs_util.cpp \
     portable/src/game.cpp \
     portable/src/gamemap.c \
-    portable/src/generators.c \
     portable/src/gl_defer.c \
     portable/src/gl_deferredapi.c \
     portable/src/gl_draw.c \
@@ -503,12 +493,10 @@ SOURCES += \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
     portable/src/gridmap.c \
-    portable/src/hedge.cpp \
     portable/src/image.cpp \
     portable/src/json.cpp \
     portable/src/kdtree.c \
     portable/src/library.cpp \
-    portable/src/linedef.c \
     portable/src/lumpindex.cpp \
     portable/src/m_bams.c \
     portable/src/m_decomp64.c \
@@ -519,12 +507,26 @@ SOURCES += \
     portable/src/m_nodepile.c \
     portable/src/m_stack.c \
     portable/src/m_vector.c \
+    portable/src/map/blockmap.c \
+    portable/src/map/blockmapvisual.c \
     portable/src/map/bsp/hplane.cpp \
     portable/src/map/bsp/partitioner.cpp \
     portable/src/map/bsp/superblockmap.cpp \
     portable/src/map/bspbuilder.cpp \
+    portable/src/map/bspleaf.cpp \
+    portable/src/map/bspnode.c \
+    portable/src/map/dam_file.c \
+    portable/src/map/dam_main.cpp \
     portable/src/map/entitydatabase.cpp \
-    portable/src/materialarchive.c \
+    portable/src/map/generators.c \
+    portable/src/map/hedge.cpp \
+    portable/src/map/linedef.c \
+    portable/src/map/plane.c \
+    portable/src/map/polyobj.c \
+    portable/src/map/sector.c \
+    portable/src/map/sidedef.c \
+    portable/src/map/surface.c \
+    portable/src/map/vertex.cpp \
     portable/src/network/masterserver.cpp \
     portable/src/network/monitor.c \
     portable/src/network/net_buf.c \
@@ -550,9 +552,7 @@ SOURCES += \
     portable/src/p_ticker.c \
     portable/src/pathtree.cpp \
     portable/src/pathtreenode.cpp \
-    portable/src/plane.c \
     portable/src/point.c \
-    portable/src/polyobj.c \
     portable/src/propertyvalue.cpp \
     portable/src/r_main.c \
     portable/src/r_things.c \
@@ -582,7 +582,11 @@ SOURCES += \
     portable/src/render/rend_sky.c \
     portable/src/render/rend_sprite.c \
     portable/src/render/vignette.c \
+    portable/src/resource/bitmapfont.c \
+    portable/src/resource/colorpalette.c \
+    portable/src/resource/fonts.cpp \
     portable/src/resource/material.cpp \
+    portable/src/resource/materialarchive.c \
     portable/src/resource/materials.cpp \
     portable/src/resource/materialvariant.cpp \
     portable/src/resource/models.cpp \
@@ -592,17 +596,14 @@ SOURCES += \
     portable/src/resource/texturevariant.cpp \
     portable/src/resourcenamespace.cpp \
     portable/src/resourcerecord.cpp \
-    portable/src/sector.c \
-    portable/src/sidedef.c \
-    portable/src/size.c \
-    portable/src/stringarray.cpp \
-    portable/src/surface.c \
     portable/src/server/sv_frame.c \
     portable/src/server/sv_infine.c \
     portable/src/server/sv_main.c \
     portable/src/server/sv_missile.c \
     portable/src/server/sv_pool.c \
     portable/src/server/sv_sound.cpp \
+    portable/src/size.c \
+    portable/src/stringarray.cpp \
     portable/src/svg.c \
     portable/src/sys_direc.c \
     portable/src/sys_opengl.c \
@@ -639,7 +640,6 @@ SOURCES += \
     portable/src/updater/updatersettings.cpp \
     portable/src/updater/updatersettingsdialog.cpp \
     portable/src/uri.cpp \
-    portable/src/vertex.cpp \
     portable/src/wad.cpp \
     portable/src/zip.cpp
 

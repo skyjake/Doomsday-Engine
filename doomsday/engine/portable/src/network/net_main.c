@@ -46,7 +46,7 @@
 #include "rend_bias.h"
 #include "rend_console.h"
 #include "r_lgrid.h"
-#include "blockmapvisual.h"
+#include "map/blockmapvisual.h"
 
 // MACROS ------------------------------------------------------------------
 

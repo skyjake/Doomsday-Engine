@@ -23,7 +23,7 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "generators.h"
+#include "map/generators.h"
 
 typedef struct listnode_s {
     struct listnode_s* next;

@@ -31,7 +31,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-#include "generators.h"
+#include "map/generators.h"
 
 #define ORDER(x,y,a,b)      ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 #define DOT2F(a,b)          ( FIX2FLT(a[VX])*FIX2FLT(b[VX]) + FIX2FLT(a[VY])*FIX2FLT(b[VY]) )

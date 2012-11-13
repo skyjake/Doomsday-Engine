@@ -34,7 +34,7 @@
 
 #include "image.h"
 #include "texturecontent.h"
-#include "generators.h"
+#include "map/generators.h"
 
 // Point + custom textures.
 #define NUM_TEX_NAMES           (MAX_PTC_TEXTURES)

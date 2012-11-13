@@ -41,7 +41,7 @@
 #include "network/net_main.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
-#include "blockmapvisual.h"
+#include "map/blockmapvisual.h"
 #include "vignette.h"
 
 // Surface (tangent-space) Vector Flags.

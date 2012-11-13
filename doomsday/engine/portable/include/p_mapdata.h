@@ -30,7 +30,7 @@
 #endif
 
 #include "dd_share.h"
-#include "dam_main.h"
+#include "map/dam_main.h"
 #include "rend_bias.h"
 #include "m_nodepile.h"
 #include "m_vector.h"
@@ -113,7 +113,7 @@ typedef struct biassurface_s {
     struct biassurface_s* next;
 } biassurface_t;
 
-#include "polyobj.h"
+#include "map/polyobj.h"
 #include "p_maptypes.h"
 
 // Map entity definitions.
