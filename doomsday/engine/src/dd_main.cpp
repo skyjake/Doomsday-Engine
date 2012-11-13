@@ -377,31 +377,24 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
 
 static void loadResource(ResourceRecord& record)
 {
-    switch(record.resourceClass())
+    DENG_ASSERT(record.resourceClass() == RC_PACKAGE);
+
+    QString const& path = record.resolvedPath(false/*do not locate resource*/);
+    if(!path.isEmpty())
     {
-    case RC_PACKAGE: {
-        QString const& path = record.resolvedPath(false/*do not locate resource*/);
-        if(!path.isEmpty())
+        QByteArray pathUtf8 = path.toUtf8();
+        de::File1* file;
+        if(tryLoadFile(pathUtf8.constData(), 0/*base offset*/, &file))
         {
-            QByteArray pathUtf8 = path.toUtf8();
-            de::File1* file;
-            if(tryLoadFile(pathUtf8.constData(), 0/*base offset*/, &file))
+            // Mark this as an original game resource.
+            file->setCustom(false);
+
+            // Print the 'CRC' number of IWADs, so they can be identified.
+            if(Wad* wad = dynamic_cast<Wad*>(file))
             {
-                // Mark this as an original game resource.
-                file->setCustom(false);
-
-                // Print the 'CRC' number of IWADs, so they can be identified.
-                if(Wad* wad = dynamic_cast<Wad*>(file))
-                {
-                    Con_Message("  IWAD identification: %08x\n", wad->calculateCRC());
-                }
-
+                Con_Message("  IWAD identification: %08x\n", wad->calculateCRC());
             }
         }
-        break; }
-
-    default: Con_Error("loadGameResource: No resource loader found for %s.",
-                       F_ResourceClassStr(record.resourceClass()));
     }
 }
 

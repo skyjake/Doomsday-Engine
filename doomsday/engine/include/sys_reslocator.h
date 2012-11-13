@@ -181,21 +181,15 @@ resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
  */
 resourcenamespaceid_t F_SafeResourceNamespaceForName(char const* name);
 
-/**
- * Same as F_SafeResourceNamespaceForName except will throw a fatal error if not
- * found and won't return.
- */
-resourcenamespaceid_t F_ResourceNamespaceForName(char const* name);
-
+#ifdef __cplusplus
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
  * by examining the name (e.g., a file name/path).
  *
- * @return  Type determined for this resource else @c RT_NONE.
+ * @return  Type determined for this resource else @c RT_NONE if not recognizable.
  */
-resourcetype_t F_GuessResourceTypeByName(char const* name);
+resourcetype_t F_GuessResourceTypeByName(de::String name);
 
-#ifdef __cplusplus
 /**
  * Apply mapping for this namespace to the specified path (if enabled).
  *
@@ -209,12 +203,13 @@ resourcetype_t F_GuessResourceTypeByName(char const* name);
  * @return  @c true iff mapping was applied to the path.
  */
 bool F_MapGameResourcePath(resourcenamespaceid_t rnamespaceId, de::String& path);
-#endif
 
 /**
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
-char const* F_ResourceClassStr(resourceclass_t rclass);
+de::String const& F_ResourceClassStr(resourceclass_t rclass);
+
+#endif
 
 #ifdef __cplusplus
 } // extern "C"

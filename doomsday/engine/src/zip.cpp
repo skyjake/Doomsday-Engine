@@ -974,8 +974,7 @@ static bool applyGamePathMappings(String& path)
     if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        QByteArray fileName = path.fileName().toUtf8();
-        resourcetype_t type = F_GuessResourceTypeByName(fileName.constData());
+        resourcetype_t type = F_GuessResourceTypeByName(path.fileName());
         resourceclass_t rclass;
 
         // Certain resource files require special handling.

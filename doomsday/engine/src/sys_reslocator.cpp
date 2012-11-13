@@ -32,21 +32,21 @@
 #include "resourcerecord.h"
 #include "resourcenamespace.h"
 
+#include <de/Error>
 #include <de/NativePath>
 #include <de/c_wrapper.h>
 #include <de/memory.h>
 
 using namespace de;
 
-#define PATH_DELIMIT_CHAR       ';'
-#define PATH_DELIMIT_STR        ";"
+struct ResourceTypeInfo
+{
+    static int const max_extensions = 3;
 
-#define MAX_EXTENSIONS          (3)
-typedef struct {
     /// Default class attributed to resources of this type.
     resourceclass_t defaultClass;
-    char const* knownFileNameExtensions[MAX_EXTENSIONS];
-} resourcetypeinfo_t;
+    char const* knownFileNameExtensions[max_extensions];
+};
 
 /**
  * @defgroup resourceNamespaceFlags Resource Namespace Flags
@@ -66,23 +66,23 @@ struct ResourceNamespaceInfo
 
 static bool inited = false;
 
-static resourcetypeinfo_t const typeInfo[NUM_RESOURCE_TYPES] = {
-    /* RT_ZIP */        { RC_PACKAGE,      {"pk3", "zip", 0} },
-    /* RT_WAD */        { RC_PACKAGE,      {"wad", 0} },
-    /* RT_DED */        { RC_DEFINITION,   {"ded", 0} },
-    /* RT_PNG */        { RC_GRAPHIC,      {"png", 0} },
-    /* RT_JPG */        { RC_GRAPHIC,      {"jpg", 0} },
-    /* RT_TGA */        { RC_GRAPHIC,      {"tga", 0} },
-    /* RT_PCX */        { RC_GRAPHIC,      {"pcx", 0} },
-    /* RT_DMD */        { RC_MODEL,        {"dmd", 0} },
-    /* RT_MD2 */        { RC_MODEL,        {"md2", 0} },
-    /* RT_WAV */        { RC_SOUND,        {"wav", 0} },
-    /* RT_OGG */        { RC_MUSIC,        {"ogg", 0} },
-    /* RT_MP3 */        { RC_MUSIC,        {"mp3", 0} },
-    /* RT_MOD */        { RC_MUSIC,        {"mod", 0} },
-    /* RT_MID */        { RC_MUSIC,        {"mid", 0} },
-    /* RT_DEH */        { RC_UNKNOWN,      {"deh", 0} },
-    /* RT_DFN */        { RC_FONT,         {"dfn", 0} }
+static ResourceTypeInfo const typeInfo[NUM_RESOURCE_TYPES] = {
+    /* RT_ZIP */        { RC_PACKAGE,      { ".pk3", ".zip", 0 } },
+    /* RT_WAD */        { RC_PACKAGE,      { ".wad", 0 } },
+    /* RT_DED */        { RC_DEFINITION,   { ".ded", 0 } },
+    /* RT_PNG */        { RC_GRAPHIC,      { ".png", 0 } },
+    /* RT_JPG */        { RC_GRAPHIC,      { ".jpg", 0 } },
+    /* RT_TGA */        { RC_GRAPHIC,      { ".tga", 0 } },
+    /* RT_PCX */        { RC_GRAPHIC,      { ".pcx", 0 } },
+    /* RT_DMD */        { RC_MODEL,        { ".dmd", 0 } },
+    /* RT_MD2 */        { RC_MODEL,        { ".md2", 0 } },
+    /* RT_WAV */        { RC_SOUND,        { ".wav", 0 } },
+    /* RT_OGG */        { RC_MUSIC,        { ".ogg", 0 } },
+    /* RT_MP3 */        { RC_MUSIC,        { ".mp3", 0 } },
+    /* RT_MOD */        { RC_MUSIC,        { ".mod", 0 } },
+    /* RT_MID */        { RC_MUSIC,        { ".mid", 0 } },
+    /* RT_DEH */        { RC_UNKNOWN,      { ".deh", 0 } },
+    /* RT_DFN */        { RC_FONT,         { ".dfn", 0 } }
 };
 
 // Recognized resource types (in order of importance, left to right).
@@ -97,36 +97,19 @@ static resourcetype_t const searchTypeOrder[RESOURCECLASS_COUNT][MAX_TYPEORDER] 
     /* RC_FONT */       { RT_DFN, RT_NONE } // Only DFN fonts.
 };
 
-static de::Str const defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
-    /* RC_PACKAGE */    "Packages",
-    /* RC_DEFINITION */ "Defs",
-    /* RC_GRAPHIC */    "Graphics",
-    /* RC_MODEL */      "Models",
-    /* RC_SOUND */      "Sfx",
-    /* RC_MUSIC */      "Music",
-    /* RC_FONT */       "Fonts"
-};
-
 static ResourceNamespaceInfo* namespaces = 0;
 static uint numNamespaces = 0;
 
-/**
- * @param name      Unique symbolic name of this namespace. Must be at least
- *                  @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
- * @param flags     @ref resourceNamespaceFlags
- */
-ResourceNamespace* F_CreateResourceNamespace(char const* name, byte flags);
-
-static inline const resourcetypeinfo_t* resourceTypeInfo(resourcetype_t type)
+static inline ResourceTypeInfo const& resourceTypeInfo(resourcetype_t type)
 {
-    DENG_ASSERT(VALID_RESOURCE_TYPE(type));
-    return &typeInfo[((uint)type)-1];
+    if(!VALID_RESOURCE_TYPE(type)) throw Error("resourceTypeInfo", String("Invalid type %1").arg(type));
+    return typeInfo[uint(type) - 1];
 }
 
-static inline ResourceNamespaceInfo* namespaceInfoById(resourcenamespaceid_t rni)
+static inline ResourceNamespaceInfo* namespaceInfoById(resourcenamespaceid_t id)
 {
-    if(!F_IsValidResourceNamespaceId(rni)) Con_Error("namespaceInfoById: Invalid namespace id %i.", (int)rni);
-    return &namespaces[uint(rni)-1];
+    if(!F_IsValidResourceNamespaceId(id)) throw Error("namespaceInfoById", String("Invalid namespace id %1").arg(id));
+    return &namespaces[uint(id) - 1];
 }
 
 static ResourceNamespace* namespaceById(resourcenamespaceid_t id)
@@ -156,7 +139,29 @@ static ResourceNamespace* namespaceByName(ddstring_t const* name)
     return namespaceInfoById(rni)->rnamespace;
 }
 
-static void destroyAllNamespaces(void)
+/**
+ * @param name      Unique symbolic name of this namespace. Must be at least
+ *                  @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
+ * @param flags     @ref resourceNamespaceFlags
+ */
+static ResourceNamespace& createResourceNamespace(char const* name, byte flags = 0)
+{
+    DENG_ASSERT(name && qstrlen(name) >= RESOURCENAMESPACE_MINNAMELENGTH);
+
+    ResourceNamespace* rnamespace = new ResourceNamespace(String(name));
+
+    // Add this new namespace to the global list.
+    namespaces = (ResourceNamespaceInfo*) M_Realloc(namespaces, sizeof *namespaces * ++numNamespaces);
+    if(!namespaces) Con_Error("newResourceNamespace: Failed on (re)allocation of %lu bytes for new resource namespace\n", (unsigned long) sizeof *namespaces * numNamespaces);
+
+    ResourceNamespaceInfo* info = &namespaces[numNamespaces - 1];
+    info->rnamespace = rnamespace;
+    info->flags = flags;
+
+    return *rnamespace;
+}
+
+static void destroyAllNamespaces()
 {
     if(numNamespaces == 0) return;
 
@@ -169,7 +174,7 @@ static void destroyAllNamespaces(void)
     namespaces = 0;
 }
 
-static void resetAllNamespaces(void)
+static void resetAllNamespaces()
 {
     resourcenamespaceid_t rni;
     for(rni = 1; rni < numNamespaces+1; ++rni)
@@ -178,7 +183,8 @@ static void resetAllNamespaces(void)
     }
 }
 
-static bool findResourceInNamespace(ResourceNamespace& rnamespace, de::Uri const& searchPath, ddstring_t* foundPath)
+static bool findResourceInNamespace(ResourceNamespace& rnamespace, de::Uri const& searchPath,
+    ddstring_t* foundPath)
 {
     if(searchPath.isEmpty()) return 0;
 
@@ -267,7 +273,7 @@ static bool findResource2(int flags, resourceclass_t rclass, String searchPath,
      */
 
     // Create a copy of the searchPath minus file extension.
-    String path2 = searchPath.fileNamePath() / searchPath.fileNameWithoutExtension() + ".";
+    String path2 = searchPath.fileNamePath() / searchPath.fileNameWithoutExtension();
 
     path2.reserve(path2.length() + 5 /*max expected extension length*/);
 
@@ -275,10 +281,10 @@ static bool findResource2(int flags, resourceclass_t rclass, String searchPath,
     resourcetype_t const* typeIter = searchTypeOrder[rclass];
     do
     {
-        resourcetypeinfo_t const* typeInfo = resourceTypeInfo(*typeIter);
-        if(!typeInfo->knownFileNameExtensions[0]) continue;
+        ResourceTypeInfo const& typeInfo = resourceTypeInfo(*typeIter);
+        if(!typeInfo.knownFileNameExtensions[0]) continue;
 
-        char const* const* ext = typeInfo->knownFileNameExtensions;
+        char const* const* ext = typeInfo.knownFileNameExtensions;
         do
         {
             found = findResource3(rnamespace, de::Uri(path2 + *ext, RC_NULL), foundPath);
@@ -360,8 +366,7 @@ static void createPackagesResourceNamespace(void)
         ddstring_t* pathCopy = Str_New(); \
         F_FixSlashes(pathCopy, path); \
         F_AppendMissingSlash(pathCopy); \
-        if(verbose >= 1) \
-            Con_Message(" %i: %s\n", n, F_PrettyPath(Str_Text(pathCopy))); \
+        LOG_INFO(" %i: %s") << n << NativePath(Str_Text(pathCopy)).pretty(); \
         doomWadPaths = (ddstring_t**) M_Realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \
         doomWadPaths[doomWadPathsCount-1] = pathCopy; \
     } \
@@ -373,7 +378,7 @@ static void createPackagesResourceNamespace(void)
         Str_Strip(&fullString);
         if(!Str_IsEmpty(&fullString))
         {
-            VERBOSE( Con_Message("Using DOOMWADPATH:\n") )
+            LOG_INFO("Using DOOMWADPATH:");
 
             // Split into paths.
             char const* c = Str_Text(&fullString);
@@ -401,7 +406,7 @@ static void createPackagesResourceNamespace(void)
     // Is the DOOMWADDIR environment variable in use?
     if(!doomWadDir && !CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
-        doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
+        doomWadDir = Str_Set(Str_New(), getenv("DOOMWADDIR"));
         Str_Strip(doomWadDir);
         F_FixSlashes(doomWadDir, doomWadDir);
         if(Str_IsEmpty(doomWadDir) || !F_IsAbsolute(doomWadDir))
@@ -412,7 +417,7 @@ static void createPackagesResourceNamespace(void)
         else
         {
             F_AppendMissingSlash(doomWadDir);
-            VERBOSE( Con_Message("Using DOOMWADDIR: %s\n", F_PrettyPath(Str_Text(doomWadDir))) )
+            LOG_INFO("Using DOOMWADDIR: %s") << NativePath(Str_Text(doomWadDir)).pretty();
         }
     }
 
@@ -427,7 +432,7 @@ static void createPackagesResourceNamespace(void)
     searchPaths[idx++] = new de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL);
 
     // Add any paths from the DOOMWADPATH environment variable.
-    if(doomWadPaths != 0)
+    if(doomWadPaths)
     {
         for(uint i = 0; i < doomWadPathsCount; ++i)
         {
@@ -438,19 +443,16 @@ static void createPackagesResourceNamespace(void)
     }
 
     // Add the path from the DOOMWADDIR environment variable.
-    if(doomWadDir != 0)
+    if(doomWadDir)
     {
         searchPaths[idx++] = new de::Uri(Str_Text(doomWadDir), RC_NULL);
         Str_Delete(doomWadDir);
     }
 
-    ResourceNamespace* rnamespace = F_CreateResourceNamespace("Packages", 0);
-    if(searchPathsCount != 0)
+    ResourceNamespace& rnamespace = createResourceNamespace("Packages");
+    for(uint i = 0; i < searchPathsCount; ++i)
     {
-        for(uint i = 0; i < searchPathsCount; ++i)
-        {
-            rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, *searchPaths[i], SPF_NO_DESCEND);
-        }
+        rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, *searchPaths[i], SPF_NO_DESCEND);
     }
 
     for(uint i = 0; i < searchPathsCount; ++i)
@@ -514,7 +516,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
     {
         uint j, searchPathCount;
         struct namespacedef_s* def = &defs[i];
-        ResourceNamespace* rnamespace = F_CreateResourceNamespace(def->name, def->flags);
+        ResourceNamespace& rnamespace = createResourceNamespace(def->name, def->flags);
 
         searchPathCount = 0;
         while(def->searchPaths[searchPathCount] && ++searchPathCount < NAMESPACEDEF_MAX_SEARCHPATHS)
@@ -523,7 +525,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
         for(j = 0; j < searchPathCount; ++j)
         {
             de::Uri uri = de::Uri(def->searchPaths[j], RC_NULL);
-            rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, uri, def->searchPathFlags);
+            rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, uri, def->searchPathFlags);
         }
 
         if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
@@ -531,17 +533,17 @@ void F_CreateNamespacesForFileResourcePaths(void)
             String path = QDir::fromNativeSeparators(NativePath(CommandLine_NextAsPath()).expand());
 
             de::Uri uri2 = de::Uri(path / "$(Game.IdentityKey)/", RC_NULL);
-            rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri2, def->searchPathFlags);
+            rnamespace.addSearchPath(ResourceNamespace::OverridePaths, uri2, def->searchPathFlags);
 
             de::Uri uri = de::Uri(path, RC_NULL);
-            rnamespace->addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
+            rnamespace.addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
         }
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
             String path = QDir::fromNativeSeparators(NativePath(CommandLine_NextAsPath()).expand());
             de::Uri uri = de::Uri(path, RC_NULL);
-            rnamespace->addSearchPath(ResourceNamespace::FallbackPaths, uri, def->searchPathFlags);
+            rnamespace.addSearchPath(ResourceNamespace::FallbackPaths, uri, def->searchPathFlags);
         }
     }
 
@@ -585,14 +587,6 @@ resourcenamespaceid_t F_SafeResourceNamespaceForName(char const* name)
     return findResourceNamespaceIdForName(name);
 }
 
-resourcenamespaceid_t F_ResourceNamespaceForName(char const* name)
-{
-    resourcenamespaceid_t result = findResourceNamespaceIdForName(name);
-    if(result == 0)
-        Con_Error("F_ResourceNamespaceForName: Failed to locate resource namespace \"%s\".", name);
-    return result;
-}
-
 uint F_NumResourceNamespaces(void)
 {
     return numNamespaces;
@@ -605,22 +599,7 @@ boolean F_IsValidResourceNamespaceId(int val)
 
 ResourceNamespace* F_CreateResourceNamespace(char const* name,  byte flags)
 {
-    DENG_ASSERT(name);
-
-    if(qstrlen(name) < RESOURCENAMESPACE_MINNAMELENGTH)
-        Con_Error("F_CreateResourceNamespace: Invalid name '%s' (min length:%i)", name, (int)RESOURCENAMESPACE_MINNAMELENGTH);
-
-    ResourceNamespace* rn = new ResourceNamespace(String(name));
-
-    // Add this new namespace to the global list.
-    namespaces = (ResourceNamespaceInfo*) M_Realloc(namespaces, sizeof *namespaces * ++numNamespaces);
-    if(!namespaces) Con_Error("F_CreateResourceNamespace: Failed on (re)allocation of %lu bytes for new resource namespace\n", (unsigned long) sizeof *namespaces * numNamespaces);
-    ResourceNamespaceInfo* info = &namespaces[numNamespaces-1];
-
-    info->rnamespace = rn;
-    info->flags = flags;
-
-    return rn;
+    return &createResourceNamespace(name, flags);
 }
 
 boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
@@ -679,45 +658,48 @@ uint F_FindResource(resourceclass_t rclass, char const* nativeSearchPaths)
 
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
 {
-    if(type == RT_NONE)
-        return RC_UNKNOWN;
-    return resourceTypeInfo(type)->defaultClass;
+    if(type == RT_NONE) return RC_UNKNOWN;
+    return resourceTypeInfo(type).defaultClass;
 }
 
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 {
     DENG_ASSERT(VALID_RESOURCE_CLASS(rclass));
-    return F_ResourceNamespaceForName(Str_Text(defaultNamespaceForClass[rclass]));
+    static String const defaultNamespaces[RESOURCECLASS_COUNT] = {
+        /* RC_PACKAGE */    "Packages",
+        /* RC_DEFINITION */ "Defs",
+        /* RC_GRAPHIC */    "Graphics",
+        /* RC_MODEL */      "Models",
+        /* RC_SOUND */      "Sfx",
+        /* RC_MUSIC */      "Music",
+        /* RC_FONT */       "Fonts"
+    };
+    return findResourceNamespaceIdForName(defaultNamespaces[rclass]);
 }
 
-resourcetype_t F_GuessResourceTypeByName(char const* path)
+resourcetype_t F_GuessResourceTypeByName(String path)
 {
-    if(!path || !path[0])
-        return RT_NONE; // Unrecognizable.
+    if(path.isEmpty()) return RT_NONE;
 
     // We require a file extension for this.
-    char const* ext = strrchr(path, '.');
-    if(ext)
+    String ext = path.fileNameExtension();
+    if(ext.isEmpty()) return RT_NONE;
+
+    for(uint i = RT_FIRST; i < NUM_RESOURCE_TYPES; ++i)
     {
-        ++ext;
-        for(uint i = RT_FIRST; i < NUM_RESOURCE_TYPES; ++i)
+        ResourceTypeInfo const& info = resourceTypeInfo(resourcetype_t(i));
+        if(!info.knownFileNameExtensions) continue;
+
+        for(char const* const* cand = info.knownFileNameExtensions; *cand; ++cand)
         {
-            resourcetypeinfo_t const* info = resourceTypeInfo((resourcetype_t)i);
-            // Check the extension.
-            if(info->knownFileNameExtensions[0])
+            if(!ext.compareWithoutCase(ext))
             {
-                char const* const* cand = info->knownFileNameExtensions;
-                do
-                {
-                    if(!stricmp(*cand, ext))
-                    {
-                        return (resourcetype_t)i;
-                    }
-                } while(*(++cand));
+                return resourcetype_t(i);
             }
         }
     }
-    return RT_NONE; // Unrecognizable.
+
+    return RT_NONE;
 }
 
 bool F_MapGameResourcePath(resourcenamespaceid_t rni, String& path)
@@ -743,10 +725,10 @@ bool F_MapGameResourcePath(resourcenamespaceid_t rni, String& path)
     return true;
 }
 
-char const* F_ResourceClassStr(resourceclass_t rclass)
+String const& F_ResourceClassStr(resourceclass_t rclass)
 {
     DENG_ASSERT(VALID_RESOURCE_CLASS(rclass));
-    static de::Str const resourceClassNames[RESOURCECLASS_COUNT] = {
+    static String const resourceClassNames[RESOURCECLASS_COUNT] = {
         "RC_PACKAGE",
         "RC_DEFINITION",
         "RC_GRAPHIC",
@@ -755,5 +737,5 @@ char const* F_ResourceClassStr(resourceclass_t rclass)
         "RC_MUSIC",
         "RC_FONT"
     };
-    return Str_Text(resourceClassNames[(int)rclass]);
+    return resourceClassNames[uint(rclass)];
 }
