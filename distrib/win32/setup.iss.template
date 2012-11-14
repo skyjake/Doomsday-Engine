@@ -21,11 +21,11 @@ SetupIconFile=..\..\snowberry\graphics\snowberry.ico
 UninstallIconFile=..\..\snowberry\graphics\snowberry.ico
 SourceDir=..\products
 OutputDir=..\releases
-LicenseFile=doc\LICENSE
+LicenseFile=..\win32\license.txt
 Compression=lzma/max
 ;Compression=zip/1
 SolidCompression=yes
-WizardImageFile=..\..\doomsday\build\win32\installerbg.bmp
+WizardImageFile=..\win32\installerbg.bmp
 
 [Components]
 Name: "Engine"; Description: "Doomsday Engine"; Types: full compact custom; Flags: fixed checkablealone;
