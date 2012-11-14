@@ -73,15 +73,13 @@
 #  define GL_OPERAND3_ALPHA_NV          0x859B
 #endif
 
+#include <string.h>
+#include "gl_deferredapi.h"
+#include "ui/window.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "gl_deferredapi.h"
-
-#include <string.h>
-
-#include "ui/window.h"
 
 /**
  * Configure available features
