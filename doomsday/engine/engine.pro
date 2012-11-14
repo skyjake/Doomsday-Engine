@@ -460,7 +460,7 @@ SOURCES += \
     src/dd_wad.cpp \
     src/def_data.c \
     src/def_main.cpp \
-    src/def_read.c \
+    src/def_read.cpp \
     src/edit_bias.c \
     src/edit_bsp.cpp \
     src/edit_map.cpp \

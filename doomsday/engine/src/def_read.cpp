@@ -1,29 +1,7 @@
-/**\file def_read.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Doomsday Engine Definition File Reader
+ * @file def_read.cpp
+ *
+ * Doomsday Engine Definition File Reader.
  *
  * A GHASTLY MESS!!! This should be rewritten.
  *
@@ -39,9 +17,24 @@
  * the read tokens. A true parser would have syntax definitions for
  * a bunch of tokens, and the same parsing rules would be applied for
  * everything.
+ *
+ * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,7 +54,7 @@
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 
-// MACROS ------------------------------------------------------------------
+#include <de/memory.h>
 
 #define MAX_RECUR_DEPTH     30
 #define MAX_TOKEN_LEN       128
@@ -105,6 +98,7 @@
 #define READNBYTEVEC(X,N) if(!ReadNByteVector(X, N)) { FAILURE }
 #define READFLAGS(X,P) if(!ReadFlags(&X, P)) { FAILURE }
 #define READBLENDMODE(X) if(!ReadBlendmode(&X)) { FAILURE }
+#define READSTRING(S,I) if(!ReadString(S,sizeof(S))) { I = strtol(token,0,0); }
 
 #define RV_BYTE(lab, X) if(ISLABEL(lab)) { READBYTE(X); } else
 #define RV_INT(lab, X)  if(ISLABEL(lab)) { READINT(X); } else
@@ -124,16 +118,6 @@
 #define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
 #define RV_END          { SetError2("Unknown label.", label); retVal = false; goto ded_end_read; }
 
-#define RV_XGIPARM(lab, S, I, IP) if(ISLABEL(lab)) { \
-                   if(xgClassLinks[l->lineClass].iparm[IP].flagPrefix && \
-                      xgClassLinks[l->lineClass].iparm[IP].flagPrefix[0]) { \
-                   if(!ReadFlags(&I, xgClassLinks[l->lineClass].iparm[IP].flagPrefix)) { \
-                     FAILURE } } \
-                   else { if(!ReadString(S,sizeof(S))) { \
-                     I = strtol(token,0,0); } } } else
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct dedsource_s {
     const char*     buffer;
     const char*     pos;
@@ -143,19 +127,7 @@ typedef struct dedsource_s {
     int             version; // v6 does not require semicolons.
 } dedsource_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 char dedReadError[512];
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static dedsource_t sourceStack[MAX_RECUR_DEPTH];
 static dedsource_t* source; // Points to the current source.
@@ -163,16 +135,11 @@ static dedsource_t* source; // Points to the current source.
 static char token[MAX_TOKEN_LEN+1];
 static char unreadToken[MAX_TOKEN_LEN+1];
 
-// CODE --------------------------------------------------------------------
-
-static char* sdup(const char* str)
+static char* sdup(char const* str)
 {
-    char*               newstr;
+    if(!str) return NULL;
 
-    if(!str)
-        return NULL;
-
-    newstr = M_Malloc(strlen(str) + 1);
+    char* newstr = (char*) M_Malloc(strlen(str) + 1);
     strcpy(newstr, str);
     return newstr;
 }
@@ -397,7 +364,7 @@ static int ReadString(char* dest, int maxlen)
  */
 static int ReadAnyString(char** dest)
 {
-    char                buffer[0x20000];
+    char buffer[0x20000];
 
     if(!ReadString(buffer, sizeof(buffer)))
         return false;
@@ -410,7 +377,7 @@ static int ReadAnyString(char** dest)
     buffer[sizeof(buffer) - 1] = 0;
 
     // Make a copy.
-    *dest = M_Malloc(strlen(buffer) + 1);
+    *dest = (char*) M_Malloc(strlen(buffer) + 1);
     strcpy(*dest, buffer);
 
     return true;
@@ -1045,7 +1012,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     // Make a copy of the execute command string.
                     size_t len = strlen(st->execute);
-                    char* newCmdStr = M_Malloc(len+1);
+                    char* newCmdStr = (char*) M_Malloc(len+1);
                     memcpy(newCmdStr, st->execute, len+1);
                     st->execute = newCmdStr;
                 }
@@ -1726,13 +1693,13 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 if(ISLABEL("Text"))
                 {
                     // Allocate a 'huge' buffer.
-                    char*           temp = M_Malloc(0x10000);
+                    char* temp = (char*) M_Malloc(0x10000);
 
                     if(ReadString(temp, 0xffff))
                     {
-                        size_t          len = strlen(temp) + 1;
+                        size_t len = strlen(temp) + 1;
 
-                        txt->text = M_Realloc(temp, len);
+                        txt->text = (char*) M_Realloc(temp, len);
                         //memcpy(ded->text[idx].text, temp, len);
                     }
                     else
@@ -1769,7 +1736,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {   // A new material path.
                         ddstring_t mnamespace; Str_Init(&mnamespace);
                         Str_Set(&mnamespace, ISLABEL("Material")? "" : ISLABEL("Texture")? MN_TEXTURES_NAME : MN_FLATS_NAME);
-                        mn = DED_NewEntry((void**)&tenv->materials, &tenv->count, sizeof(*mn));
+                        mn = (Uri**) DED_NewEntry((void**)&tenv->materials, &tenv->count, sizeof(*mn));
                         FINDBEGIN;
                         for(;;)
                         {
@@ -1824,7 +1791,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                         if(mc == 0)
                         {
-                            mc = DED_NewEntry((void**)&cfont->charMap, &cfont->charMapCount, sizeof(*mc));
+                            mc = (ded_compositefont_mappedcharacter_t*) DED_NewEntry((void**)&cfont->charMap, &cfont->charMapCount, sizeof(*mc));
                             mc->ch = ascii;
                         }
 
@@ -1846,7 +1813,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
         if(ISTOKEN("Values")) // String Values
         {
             depth = 0;
-            rootStr = M_Calloc(1); // A null string.
+            rootStr = (char*) M_Calloc(1); // A null string.
 
             FINDBEGIN;
             for(;;)
@@ -1863,14 +1830,14 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 if(ISTOKEN("="))
                 {
                     // Define a new string.
-                    char*               temp = M_Malloc(0x1000); // A 'huge' buffer.
+                    char* temp = (char*) M_Malloc(0x1000); // A 'huge' buffer.
 
                     if(ReadString(temp, 0xffff))
                     {
-                        ded_value_t*        val;
+                        ded_value_t* val;
 
                         // Resize the buffer down to actual string length.
-                        temp = M_Realloc(temp, strlen(temp) + 1);
+                        temp = (char*) M_Realloc(temp, strlen(temp) + 1);
 
                         // Get a new value entry.
                         idx = DED_AddValue(ded, 0);
@@ -1878,7 +1845,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         val->text = temp;
 
                         // Compose the identifier.
-                        val->id = M_Malloc(strlen(rootStr) + strlen(label) + 1);
+                        val->id = (char*) M_Malloc(strlen(rootStr) + strlen(label) + 1);
                         strcpy(val->id, rootStr);
                         strcat(val->id, label);
                     }
@@ -1893,8 +1860,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 else if(ISTOKEN("{"))
                 {
                     // Begin a new group.
-                    rootStr = M_Realloc(rootStr, strlen(rootStr)
-                        + strlen(label) + 2);
+                    rootStr = (char*) M_Realloc(rootStr, strlen(rootStr) + strlen(label) + 2);
                     strcat(rootStr, label);
                     strcat(rootStr, "|");   // The separator.
                     // Increase group level.
@@ -1903,7 +1869,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISTOKEN("}"))
                 {
-                    size_t                  len;
+                    size_t len;
 
                     // End group.
                     if(!depth)
@@ -1917,12 +1883,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     if(ptr)
                     {
                         ptr[1] = 0;
-                        rootStr = M_Realloc(rootStr, strlen(rootStr) + 1);
+                        rootStr = (char*) M_Realloc(rootStr, strlen(rootStr) + 1);
                     }
                     else
                     {
                         // Back to level zero.
-                        rootStr = M_Realloc(rootStr, 1);
+                        rootStr = (char*) M_Realloc(rootStr, 1);
                         *rootStr = 0;
                     }
                 }
@@ -2063,7 +2029,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 // Duplicate the stages array.
                 if(gen->stages)
                 {
-                    gen->stages = M_Malloc(sizeof(ded_ptcstage_t) * gen->stageCount.max);
+                    gen->stages = (ded_ptcstage_t*) M_Malloc(sizeof(ded_ptcstage_t) * gen->stageCount.max);
                     memcpy(gen->stages, prevGen->stages, sizeof(ded_ptcstage_t) * gen->stageCount.num);
                 }
             }
@@ -2177,7 +2143,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 if(ISLABEL("Script"))
                 {
                     // Allocate an "enormous" 64K buffer.
-                    char* temp = M_Calloc(0x10000), *ptr;
+                    char* temp = (char*) M_Calloc(0x10000), *ptr;
 
                     if(fin->script) M_Free(fin->script);
 
@@ -2199,7 +2165,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                         }
                         ReadToken();
                     }
-                    fin->script = M_Realloc(temp, strlen(temp) + 1);
+                    fin->script = (char*) M_Realloc(temp, strlen(temp) + 1);
                 }
                 else RV_END
                 CHECKSC;
@@ -2526,48 +2492,27 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 if(l->lineClass)
                 {
                     // IpX Alt names can only be used if the class is defined first!
-                    // they also support the DED v6 flags format
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[0].name,
-                               l->iparmStr[0], l->iparm[0], 0)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[1].name,
-                               l->iparmStr[1], l->iparm[1], 1)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[2].name,
-                               l->iparmStr[2], l->iparm[2], 2)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[3].name,
-                               l->iparmStr[3], l->iparm[3], 3)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[4].name,
-                               l->iparmStr[4], l->iparm[4], 4)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[5].name,
-                               l->iparmStr[5], l->iparm[5], 5)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[6].name,
-                               l->iparmStr[6], l->iparm[6], 6)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[7].name,
-                               l->iparmStr[7], l->iparm[7], 7)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[8].name,
-                               l->iparmStr[8], l->iparm[8], 8)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[9].name,
-                               l->iparmStr[9], l->iparm[9], 9)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[10].name,
-                               l->iparmStr[10], l->iparm[10], 10)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[11].name,
-                               l->iparmStr[11], l->iparm[11], 11)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[12].name,
-                               l->iparmStr[12], l->iparm[12], 12)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[13].name,
-                               l->iparmStr[13], l->iparm[13], 13)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[14].name,
-                               l->iparmStr[14], l->iparm[14], 14)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[15].name,
-                               l->iparmStr[15], l->iparm[15], 15)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[16].name,
-                               l->iparmStr[16], l->iparm[16], 16)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[17].name,
-                               l->iparmStr[17], l->iparm[17], 17)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[18].name,
-                               l->iparmStr[18], l->iparm[18], 18)
-                    RV_XGIPARM(xgClassLinks[l->lineClass].iparm[19].name,
-                               l->iparmStr[19], l->iparm[19], 19)
-                    RV_END
+                    // they also support the DED v6 flags format.
+                    int i;
+                    for(i = 0; i < 20; ++i)
+                    {
+                        xgclassparm_t const& iParm = xgClassLinks[l->lineClass].iparm[i];
+
+                        if(!ISLABEL(iParm.name)) continue;
+
+                        if(iParm.flagPrefix && iParm.flagPrefix[0])
+                        {
+                            READFLAGS(l->iparm[i], iParm.flagPrefix)
+                        }
+                        else
+                        {
+                            READSTRING(l->iparmStr[i], l->iparm[i])
+                        }
+                        break;
+                    }
+
+                    // Not a known label?
+                    if(i == 20) RV_END
 
                 } else
                 RV_END
