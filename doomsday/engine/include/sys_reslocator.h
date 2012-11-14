@@ -188,20 +188,6 @@ resourcenamespaceid_t F_SafeResourceNamespaceForName(de::String name);
 resourcetype_t F_GuessResourceTypeByName(de::String name);
 
 /**
- * Apply mapping for this namespace to the specified path (if enabled).
- *
- * This mapping will translate directives and symbolic identifiers into their default paths,
- * which themselves are determined using the current Game.
- *
- *  e.g.: "Models/my/cool/model.dmd" => "$(App.DataPath)/$(GamePlugin.Name)/models/my/cool/model.dmd"
- *
- * @param rnamespaceId  Unique identifier of the namespace whose mappings to apply.
- * @param path  The path to be mapped (applied in-place).
- * @return  @c true iff mapping was applied to the path.
- */
-bool F_MapGameResourcePath(resourcenamespaceid_t rnamespaceId, de::String& path);
-
-/**
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
 de::String const& F_ResourceClassStr(resourceclass_t rclass);

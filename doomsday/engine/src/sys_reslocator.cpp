@@ -48,20 +48,10 @@ struct ResourceTypeInfo
     char const* knownFileNameExtensions[max_extensions];
 };
 
-/**
- * @defgroup resourceNamespaceFlags Resource Namespace Flags
- * @ingroup core flags
- * @{
- */
-#define RNF_USE_VMAP            0x01 // Map resources in packages.
-///@}
-
 struct ResourceNamespaceInfo
 {
     /// ResourceNamespace.
     ResourceNamespace* rnamespace;
-
-    byte flags; // @see resourceNamespaceFlags
 };
 
 static bool inited = false;
@@ -142,13 +132,13 @@ static ResourceNamespace* namespaceByName(ddstring_t const* name)
 /**
  * @param name      Unique symbolic name of this namespace. Must be at least
  *                  @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
- * @param flags     @ref resourceNamespaceFlags
+ * @param flags     @ref ResourceNamespace::Flag
  */
-static ResourceNamespace& createResourceNamespace(char const* name, byte flags = 0)
+static ResourceNamespace& createResourceNamespace(char const* name, ResourceNamespace::Flags flags = 0)
 {
     DENG_ASSERT(name && qstrlen(name) >= RESOURCENAMESPACE_MINNAMELENGTH);
 
-    ResourceNamespace* rnamespace = new ResourceNamespace(String(name));
+    ResourceNamespace* rnamespace = new ResourceNamespace(name, flags);
 
     // Add this new namespace to the global list.
     namespaces = (ResourceNamespaceInfo*) M_Realloc(namespaces, sizeof *namespaces * ++numNamespaces);
@@ -156,7 +146,6 @@ static ResourceNamespace& createResourceNamespace(char const* name, byte flags =
 
     ResourceNamespaceInfo* info = &namespaces[numNamespaces - 1];
     info->rnamespace = rnamespace;
-    info->flags = flags;
 
     return *rnamespace;
 }
@@ -470,42 +459,42 @@ void F_CreateNamespacesForFileResourcePaths(void)
         char const* name;
         char const* optOverridePath;
         char const* optFallbackPath;
-        byte flags; /// @see resourceNamespaceFlags
+        ResourceNamespace::Flags flags;
         int searchPathFlags; /// @see searchPathFlags
         /// Priority is right to left.
         char const* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
-        { "Defs",  NULL,           NULL,           0, 0,
+        { "Defs",         NULL,           NULL,           ResourceNamespace::Flag(0), 0,
             { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
         },
-        { "Graphics",     "-gfxdir2",     "-gfxdir",      0, 0,
+        { "Graphics",     "-gfxdir2",     "-gfxdir",      ResourceNamespace::Flag(0), 0,
             { "$(App.DataPath)/graphics/" }
         },
-        { "Models",       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
+        { "Models",       "-modeldir2",   "-modeldir",    ResourceNamespace::MappedInPackages, 0,
             { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
         },
-        { "Sfx",       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Sfx",          "-sfxdir2",     "-sfxdir",      ResourceNamespace::MappedInPackages, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
         },
-        { "Music",        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Music",        "-musdir2",     "-musdir",      ResourceNamespace::MappedInPackages, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
         },
-        { "Textures",     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Textures",     "-texdir2",     "-texdir",      ResourceNamespace::MappedInPackages, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
         },
-        { "Flats",        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Flats",        "-flatdir2",    "-flatdir",     ResourceNamespace::MappedInPackages, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
         },
-        { "Patches",      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Patches",      "-patdir2",     "-patdir",      ResourceNamespace::MappedInPackages, SPF_NO_DESCEND,
             { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
         },
-        { "LightMaps",    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
+        { "LightMaps",    "-lmdir2",      "-lmdir",       ResourceNamespace::MappedInPackages, 0,
             { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
         },
-        { "Fonts",        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
+        { "Fonts",        "-fontdir2",    "-fontdir",     ResourceNamespace::MappedInPackages, SPF_NO_DESCEND,
             { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
         },
-    { 0, 0, 0, 0, 0, { 0 } }
+        { 0, 0, 0, ResourceNamespace::Flag(0), 0, { 0 } }
     };
 
     // Setup of the Packages namespace is somewhat more involved...
@@ -595,11 +584,6 @@ uint F_NumResourceNamespaces(void)
 boolean F_IsValidResourceNamespaceId(int val)
 {
     return (boolean)(val > 0 && (unsigned)val < (F_NumResourceNamespaces() + 1)? 1 : 0);
-}
-
-ResourceNamespace* F_CreateResourceNamespace(char const* name,  byte flags)
-{
-    return &createResourceNamespace(name, flags);
 }
 
 boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
@@ -700,29 +684,6 @@ resourcetype_t F_GuessResourceTypeByName(String path)
     }
 
     return RT_NONE;
-}
-
-bool F_MapGameResourcePath(resourcenamespaceid_t rni, String& path)
-{
-    ResourceNamespace* rnamespace = namespaceById(rni);
-    if(!rnamespace)    return false;
-    if(path.isEmpty()) return false;
-
-    // Are virtual path mappings in effect for this namespace?
-    ResourceNamespaceInfo* info = namespaceInfoById(rni);
-    DENG_ASSERT(info);
-    if(!(info->flags & RNF_USE_VMAP)) return false;
-
-    String const& namespaceName = rnamespace->name();
-
-    // Does this path qualify for mapping?
-    if(path.length() <= namespaceName.length()) return false;
-    if(path.at(namespaceName.length()) != '/')  return false;
-    if(!path.beginsWith(namespaceName, Qt::CaseInsensitive)) return false;
-
-    // Yes.
-    path = String("$(App.DataPath)/$(GamePlugin.Name)") / path;
-    return true;
 }
 
 String const& F_ResourceClassStr(resourceclass_t rclass)

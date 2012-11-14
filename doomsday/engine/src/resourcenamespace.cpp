@@ -162,14 +162,17 @@ struct ResourceNamespace::Instance
 {
     ResourceNamespace& self;
 
-    /// Symbolic name of this namespace.
+    /// Symbolic name.
     String name;
 
-    /// Associated path directory for this namespace.
+    /// Flags which govern behavior.
+    ResourceNamespace::Flags flags;
+
+    /// Associated path directory.
     /// @todo It should not be necessary for a unique directory per namespace.
     PathTree directory;
 
-    /// As the directory is relative, this special node servers as the root.
+    /// As the directory is relative, this special node serves as the root.
     PathTree::Node* rootNode;
 
     /// Name hash table.
@@ -178,12 +181,13 @@ struct ResourceNamespace::Instance
     /// Set to @c true when the name hash is obsolete/out-of-date and should be rebuilt.
     byte nameHashIsDirty;
 
-    /// Sets of search paths known by this namespace.
+    /// Sets of search paths to look for resources to be included.
     /// Each set is in order of greatest-importance, right to left.
     ResourceNamespace::SearchPaths searchPaths;
 
-    Instance(ResourceNamespace& d, String _name)
-        : self(d), name(_name), directory(), rootNode(0), nameHash(), nameHashIsDirty(true)
+    Instance(ResourceNamespace& d, String _name, ResourceNamespace::Flags _flags)
+        : self(d), name(_name), flags(_flags), directory(), rootNode(0),
+          nameHash(), nameHashIsDirty(true)
     {}
 
     /**
@@ -318,9 +322,9 @@ struct ResourceNamespace::Instance
     }
 };
 
-ResourceNamespace::ResourceNamespace(String symbolicName)
+ResourceNamespace::ResourceNamespace(String symbolicName, Flags flags)
 {
-    d = new Instance(*this, symbolicName);
+    d = new Instance(*this, symbolicName, flags);
 }
 
 ResourceNamespace::~ResourceNamespace()
@@ -488,6 +492,23 @@ int ResourceNamespace::findAll(String name, ResourceList& found)
     }
 
     return found.count() - numFoundSoFar;
+}
+
+bool ResourceNamespace::applyPathMappings(String& path) const
+{
+    if(path.isEmpty()) return false;
+
+    // Are virtual path mappings in effect for this namespace?
+    if(!(d->flags & MappedInPackages)) return false;
+
+    // Does this path qualify for mapping?
+    if(path.length() <= name().length()) return false;
+    if(path.at(name().length()) != '/')  return false;
+    if(!path.beginsWith(name(), Qt::CaseInsensitive)) return false;
+
+    // Yes.
+    path = String("$(App.DataPath)/$(GamePlugin.Name)") / path;
+    return true;
 }
 
 #if _DEBUG

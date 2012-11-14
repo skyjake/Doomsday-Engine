@@ -49,6 +49,16 @@ namespace de
     class ResourceNamespace
     {
     public:
+        enum Flag
+        {
+            /// Packages may include virtual file mappings to the namespace with a
+            /// root directory which matches the symbolic name of the namespace.
+            ///
+            /// @see applyPathMappings()
+            MappedInPackages    = 0x01
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
         /**
          * (Search) path groupings in descending priority.
          */
@@ -115,7 +125,7 @@ namespace de
         typedef QList<PathTree::Node*> ResourceList;
 
     public:
-        explicit ResourceNamespace(String symbolicName);
+        explicit ResourceNamespace(String symbolicName, Flags flags = 0);
         ~ResourceNamespace();
 
         /// @return  Symbolic name of this namespace (e.g., "Models").
@@ -185,6 +195,24 @@ namespace de
          */
         SearchPaths const& searchPaths() const;
 
+        /**
+         * Apply mapping for this namespace to the specified path. Mapping must
+         * be enabled (with @ref MappedInPackages) otherwise this does nothing.
+         *
+         * For example, given the namespace name "models":
+         *
+         * <pre>
+         *     "models/mymodel.dmd" => "$(App.DataPath)/$(GamePlugin.Name)/models/mymodel.dmd"
+         * </pre>
+         *
+         * @param path  The path to be mapped (applied in-place).
+         *
+         * @return  @c true iff mapping was applied to the path.
+         *
+         * @todo The mapping template should be defined externally.
+         */
+        bool applyPathMappings(String& path) const;
+
 #if _DEBUG
         void debugPrint() const;
 #endif
@@ -193,6 +221,8 @@ namespace de
         struct Instance;
         Instance* d;
     };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(ResourceNamespace::Flags)
 
 } // namespace de
 

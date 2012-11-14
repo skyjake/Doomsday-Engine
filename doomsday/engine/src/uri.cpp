@@ -31,6 +31,7 @@
 #include "resourcenamespace.h"
 #include "sys_reslocator.h"
 
+#include <de/NativePath>
 #include <de/unittest.h>
 
 #include "uri.h"
@@ -418,7 +419,7 @@ Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
     Str_Copy(&d->path,   other.path());
 }
 
-Uri Uri::fromNativePath(NativePath const& path)
+/*Uri Uri::fromNativePath(NativePath const& path)
 {
     return Uri(QDir::fromNativeSeparators(path.expand()), RC_NULL);
 }
@@ -426,7 +427,7 @@ Uri Uri::fromNativePath(NativePath const& path)
 Uri Uri::fromReader(struct reader_s& reader)
 {
     return Uri().read(reader);
-}
+}*/
 
 Uri::~Uri()
 {
@@ -808,7 +809,9 @@ Uri* Uri_Dup(Uri const* other)
 Uri* Uri_FromReader(struct reader_s* reader)
 {
     DENG_ASSERT(reader);
-    return reinterpret_cast<Uri*>( new de::Uri(de::Uri::fromReader(*reader)) );
+    de::Uri* uri = new de::Uri;
+    uri->read(*reader);
+    return reinterpret_cast<Uri*>(uri);
 }
 
 void Uri_Delete(Uri* uri)
