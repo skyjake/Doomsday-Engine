@@ -26,7 +26,7 @@
 #ifndef LIBDENG_RESOURCE_MODELS_H
 #define LIBDENG_RESOURCE_MODELS_H
 
-#include "gl_model.h"
+#include "gl/gl_model.h"
 
 #ifdef __cplusplus
 extern "C" {

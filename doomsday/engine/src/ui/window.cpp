@@ -70,7 +70,7 @@
 #include "busymode.h"
 #include "dd_main.h"
 #include "con_main.h"
-#include "gl_main.h"
+#include "gl/gl_main.h"
 #include "ui/ui_main.h"
 #include "fs_util.h"
 

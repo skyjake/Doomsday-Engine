@@ -40,7 +40,7 @@
 #  include <X11/Xlib.h>
 #endif
 
-#include "sys_opengl.h"
+#include "gl/sys_opengl.h"
 #include "ui/sys_input.h"
 #include "ui/mouse_qt.h"
 #include "ui/displaymode.h"

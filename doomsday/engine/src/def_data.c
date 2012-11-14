@@ -39,7 +39,6 @@
 #include "de_refresh.h"
 
 #include "def_data.h"
-#include "gl_main.h"
 
 // Helper Routines -------------------------------------------------------
 

@@ -34,7 +34,7 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-#include "sys_opengl.h"
+#include "gl/sys_opengl.h"
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"

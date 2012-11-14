@@ -30,8 +30,8 @@
 #include "de_misc.h"
 #include "de_play.h"
 
+#include "gl/sys_opengl.h"
 #include "m_vector.h"
-#include "sys_opengl.h"
 #include "materialvariant.h"
 
 #define MIN_OPEN                (.1f)

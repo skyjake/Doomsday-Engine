@@ -39,7 +39,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
-#include "sys_opengl.h"
+#include "gl/sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 

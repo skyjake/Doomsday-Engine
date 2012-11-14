@@ -32,7 +32,7 @@
 #include "materials.h"
 #include "textures.h"
 #include "fonts.h"
-#include "svg.h"
+#include "gl/svg.h"
 #include "r_data.h"
 #include "r_draw.h"
 #include "r_fakeradio.h"

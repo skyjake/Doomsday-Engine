@@ -23,7 +23,7 @@
 #define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
 #include "de_system.h"
-#include "gl_defer.h"
+#include "gl/gl_defer.h"
 
 static boolean __inline mustDefer(void)
 {

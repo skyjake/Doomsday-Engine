@@ -184,14 +184,15 @@ DENG_HEADERS += \
     include/fs_main.h \
     include/fs_util.h \
     include/game.h \
-    include/gl_defer.h \
-    include/gl_deferredapi.h \
-    include/gl_draw.h \
-    include/gl_hq2x.h \
-    include/gl_main.h \
-    include/gl_model.h \
-    include/gl_tex.h \
-    include/gl_texmanager.h \
+    include/gl/gl_defer.h \
+    include/gl/gl_deferredapi.h \
+    include/gl/gl_draw.h \
+    include/gl/gl_main.h \
+    include/gl/gl_model.h \
+    include/gl/gl_tex.h \
+    include/gl/gl_texmanager.h \
+    include/gl/svg.h \
+    include/gl/sys_opengl.h \
     include/gridmap.h \
     include/json.h \
     include/kdtree.h \
@@ -288,6 +289,7 @@ DENG_HEADERS += \
     include/resource/colorpalette.h \
     include/resource/font.h \
     include/resource/fonts.h \
+    include/resource/hq2x.h \
     include/resource/image.h \
     include/resource/material.h \
     include/resource/materials.h \
@@ -308,11 +310,9 @@ DENG_HEADERS += \
     include/server/sv_missile.h \
     include/server/sv_pool.h \
     include/server/sv_sound.h \
-    include/svg.h \
     include/sys_console.h \
     include/sys_direc.h \
     include/sys_findfile.h \
-    include/sys_opengl.h \
     include/sys_reslocator.h \
     include/sys_system.h \
     include/tab_anorms.h \
@@ -461,8 +461,6 @@ SOURCES += \
     src/def_data.c \
     src/def_main.cpp \
     src/def_read.c \
-    src/dgl_common.c \
-    src/dgl_draw.c \
     src/edit_bias.c \
     src/edit_bsp.cpp \
     src/edit_map.cpp \
@@ -472,14 +470,17 @@ SOURCES += \
     src/fs_main.cpp \
     src/fs_util.cpp \
     src/game.cpp \
-    src/gl_defer.c \
-    src/gl_deferredapi.c \
-    src/gl_draw.c \
-    src/gl_drawvectorgraphic.c \
-    src/gl_hq2x.c \
-    src/gl_main.c \
-    src/gl_tex.c \
-    src/gl_texmanager.c \
+    src/gl/dgl_common.c \
+    src/gl/dgl_draw.c \
+    src/gl/gl_defer.c \
+    src/gl/gl_deferredapi.c \
+    src/gl/gl_draw.c \
+    src/gl/gl_drawvectorgraphic.c \
+    src/gl/gl_main.c \
+    src/gl/gl_tex.c \
+    src/gl/gl_texmanager.c \
+    src/gl/svg.c \
+    src/gl/sys_opengl.c \
     src/gridmap.c \
     src/json.cpp \
     src/kdtree.c \
@@ -570,6 +571,7 @@ SOURCES += \
     src/resource/bitmapfont.c \
     src/resource/colorpalette.c \
     src/resource/fonts.cpp \
+    src/resource/hq2x.c \
     src/resource/image.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.c \
@@ -590,9 +592,7 @@ SOURCES += \
     src/server/sv_missile.c \
     src/server/sv_pool.c \
     src/server/sv_sound.cpp \
-    src/svg.c \
     src/sys_direc.c \
-    src/sys_opengl.c \
     src/sys_reslocator.cpp \
     src/sys_system.c \
     src/tab_tables.c \

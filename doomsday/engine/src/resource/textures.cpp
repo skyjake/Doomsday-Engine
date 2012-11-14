@@ -26,10 +26,10 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "m_misc.h" // For M_NumDigits
-#include "fs_util.h" // For F_PrettyPath
-#include "r_world.h" // For ddMapSetup
-#include "gl_texmanager.h"
+#include "m_misc.h"     // for M_NumDigits
+#include "fs_util.h"    // for F_PrettyPath
+#include "r_world.h"    // for ddMapSetup
+#include "gl/gl_texmanager.h"
 #include "pathtree.h"
 #include "texturevariant.h"
 #include "textures.h"

@@ -27,7 +27,7 @@
 #include "de_refresh.h"
 #include "de_render.h"
 
-#include "svg.h"
+#include "gl/svg.h"
 
 typedef struct svglinepoint_s {
     /// Next and previous points on this line.

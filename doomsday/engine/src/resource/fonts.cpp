@@ -34,7 +34,7 @@
 
 #include "m_misc.h"
 
-#include "gl_texmanager.h"
+#include "gl/gl_texmanager.h"
 #include "pathtree.h"
 
 #include "font.h"

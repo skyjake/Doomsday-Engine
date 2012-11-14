@@ -30,7 +30,7 @@
 #define LIBDENG_REFRESH_DATA_H
 
 #include "dd_types.h"
-#include "gl_main.h"
+#include "gl/gl_main.h"
 #include "dd_def.h"
 #include "thinker.h"
 #include "m_nodepile.h"

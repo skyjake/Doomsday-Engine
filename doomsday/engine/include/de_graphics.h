@@ -29,15 +29,15 @@
 #ifndef LIBDENG_GRAPHICS
 #define LIBDENG_GRAPHICS
 
-#include "gl_main.h"
-#include "gl_draw.h"
-#include "gl_texmanager.h"
-#include "gl_tex.h"
-#include "gl_hq2x.h"
-#include "gl_model.h"
-#include "gl_defer.h"
+#include "gl/gl_main.h"
+#include "gl/gl_draw.h"
+#include "gl/gl_texmanager.h"
+#include "gl/gl_tex.h"
+#include "gl/gl_model.h"
+#include "gl/gl_defer.h"
 
 #include "resource/pcx.h"
 #include "resource/tga.h"
+#include "resource/hq2x.h"
 
 #endif /* LIBDENG_GRAPHICS */

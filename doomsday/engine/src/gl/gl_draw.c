@@ -40,7 +40,7 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-#include "sys_opengl.h"
+#include "gl/sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 

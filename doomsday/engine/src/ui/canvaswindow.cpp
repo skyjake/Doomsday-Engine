@@ -29,7 +29,7 @@
 
 #include "de_platform.h"
 #include "con_main.h"
-#include "gl_main.h"
+#include "gl/gl_main.h"
 #include "ui/canvaswindow.h"
 
 #include <assert.h>

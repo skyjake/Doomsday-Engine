@@ -25,7 +25,7 @@
 
 #include "de_base.h"
 #if _DEBUG
-#  include "gl_texmanager.h" // For GL_PrintTextureVariantSpecification()
+#  include "gl/gl_texmanager.h" // For GL_PrintTextureVariantSpecification()
 #endif
 #include "texturevariant.h"
 #include "texture.h"
