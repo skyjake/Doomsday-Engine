@@ -147,14 +147,14 @@ static char* sdup(char const* str)
     return newstr;
 }
 
-static void SetError(char* str)
+static void SetError(char const* str)
 {
     sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
             source ? source->fileName : "?", source ? source->lineNumber : 0,
             str);
 }
 
-static void SetError2(char* str, char* more)
+static void SetError2(char const* str, char const* more)
 {
     sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)",
             source ? source->fileName : "?", source ? source->lineNumber : 0,
@@ -167,7 +167,7 @@ static void SetError2(char* str, char* more)
  */
 static int FGetC(void)
 {
-    int                 ch = (unsigned char) *source->pos;
+    int ch = (unsigned char) *source->pos;
 
     if(ch)
         source->pos++;
