@@ -417,8 +417,22 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     return isNewNode;
 }
 
+static String const& nameForPathGroup(ResourceNamespace::PathGroup group)
+{
+    static String const names[] = {
+        "Override",
+        "Extra",
+        "Default",
+        "Fallback"
+    };
+    DENG_ASSERT(int(group) >= ResourceNamespace::OverridePaths && int(group) <= ResourceNamespace::FallbackPaths);
+    return names[int(group)];
+}
+
 bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flags)
 {
+    LOG_AS("ResourceNamespace::addSearchPath");
+
     // Ensure this is a well formed path.
     if(path.isEmpty() ||
        !Str_CompareIgnoreCase(path.path(), "/") ||
@@ -442,6 +456,9 @@ bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int 
     // Prepend to the path list - newer paths have priority.
     de::Uri* uriCopy = new de::Uri(path);
     d->searchPaths.insert(group, SearchPath(flags, *uriCopy));
+
+    LOG_DEBUG("'%s' path \"%s\" added to namespace '%s'.")
+        << nameForPathGroup(group) << path << name();
 
     return true;
 }
