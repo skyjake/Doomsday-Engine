@@ -973,7 +973,7 @@ static bool applyGamePathMappings(String& path)
     if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        resourcetype_t type = F_GuessResourceTypeByName(path.fileName());
+        resourcetype_t type = F_GuessResourceTypeFromFileName(path.fileName());
         resourceclass_t rclass;
 
         // Certain resource files require special handling.

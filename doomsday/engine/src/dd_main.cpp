@@ -486,7 +486,7 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, resourcetype_t res
     if(!list || !listSize) return 0;
     for(i = 0; i < *listSize; ++i)
     {
-        if(resType != F_GuessResourceTypeByName(Str_Text((*list)[i]))) continue;
+        if(resType != F_GuessResourceTypeFromFileName(Str_Text((*list)[i]))) continue;
         if(tryLoadFile(Str_Text((*list)[i])))
         {
             count += 1;
@@ -1568,7 +1568,7 @@ static void DD_InitResourceSystem(void)
     Con_Message("Initializing Resource subsystem...\n");
 
     F_InitResourceLocator();
-    F_CreateNamespacesForFileResourcePaths();
+    F_CreateResourceNamespaces();
 
     initPathMappings();
 

@@ -288,7 +288,7 @@ struct Uri::Instance
 
         // Attempt to guess the scheme by interpreting the path?
         if(defaultResourceClass == RC_UNKNOWN)
-            defaultResourceClass = F_DefaultResourceClassForType(F_GuessResourceTypeByName(Str_Text(&path)));
+            defaultResourceClass = F_DefaultResourceClassForType(F_GuessResourceTypeFromFileName(Str_Text(&path)));
 
         if(VALID_RESOURCE_CLASS(defaultResourceClass))
         {

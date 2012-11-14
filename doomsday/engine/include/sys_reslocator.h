@@ -101,7 +101,7 @@ void F_ShutdownResourceLocator(void);
 
 void F_ResetAllResourceNamespaces(void);
 
-void F_CreateNamespacesForFileResourcePaths(void);
+void F_CreateResourceNamespaces(void);
 
 /**
  * Attempt to locate a named resource.
@@ -171,12 +171,12 @@ de::ResourceNamespace* F_ResourceNamespaceByName(de::String name);
  *
  * @return  Type determined for this resource else @c RT_NONE if not recognizable.
  */
-resourcetype_t F_GuessResourceTypeByName(de::String name);
+resourcetype_t F_GuessResourceTypeFromFileName(de::String name);
 
 /**
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
-de::String const& F_ResourceClassStr(resourceclass_t rclass);
+de::String const& F_ResourceClassName(resourceclass_t rclass);
 
 #endif // __cplusplus
 

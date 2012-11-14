@@ -1027,7 +1027,7 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& inf
     de::File1* interpretedFile = 0;
 
     // Firstly try interpreter(s) for guessed resource types.
-    resourcetype_t resTypeGuess = F_GuessResourceTypeByName(path);
+    resourcetype_t resTypeGuess = F_GuessResourceTypeFromFileName(path);
     if(resTypeGuess != RT_NONE)
     {
         for(FileInterpreter* intper = interpreters; intper->interpret; ++intper)

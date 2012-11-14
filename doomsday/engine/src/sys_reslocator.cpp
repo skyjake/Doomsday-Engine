@@ -47,6 +47,8 @@ struct ResourceTypeInfo
 
     /// Default class attributed to resources of this type.
     resourceclass_t defaultClass;
+
+    /// List of known extensions for this resource type.
     String const knownFileNameExtensions[max_extensions];
 };
 
@@ -272,7 +274,7 @@ static bool findResource(resourceclass_t rclass, de::Uri const& searchPath,
     return false;
 }
 
-static void createPackagesResourceNamespace(void)
+static void createPackagesNamespace(void)
 {
     ResourceNamespace& rnamespace = createResourceNamespace("Packages");
 
@@ -335,7 +337,7 @@ static void createPackagesResourceNamespace(void)
     rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SPF_NO_DESCEND);
 }
 
-void F_CreateNamespacesForFileResourcePaths(void)
+void F_CreateResourceNamespaces(void)
 {
 #define NAMESPACEDEF_MAX_SEARCHPATHS        5
 
@@ -381,8 +383,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
         { 0, 0, 0, ResourceNamespace::Flag(0), 0, { 0 } }
     };
 
-    // Setup of the Packages namespace is somewhat more involved...
-    createPackagesResourceNamespace();
+    createPackagesNamespace();
 
     // Setup the rest...
     for(size_t i = 0; defs[i].name; ++i)
@@ -403,20 +404,16 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
         {
-            String path = NativePath(CommandLine_NextAsPath()).expand().withSeparators('/');
-
-            de::Uri uri2 = de::Uri(path / "$(Game.IdentityKey)/", RC_NULL);
-            rnamespace.addSearchPath(ResourceNamespace::OverridePaths, uri2, def->searchPathFlags);
-
-            de::Uri uri = de::Uri(path, RC_NULL);
-            rnamespace.addSearchPath(ResourceNamespace::OverridePaths, uri, def->searchPathFlags);
+            NativePath path = NativePath(CommandLine_NextAsPath());
+            rnamespace.addSearchPath(ResourceNamespace::OverridePaths, de::Uri::fromNativeDirPath(path), def->searchPathFlags);
+            path = path / "$(Game.IdentityKey)";
+            rnamespace.addSearchPath(ResourceNamespace::OverridePaths, de::Uri::fromNativeDirPath(path), def->searchPathFlags);
         }
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
-            String path = NativePath(CommandLine_NextAsPath()).expand().withSeparators('/');
-            de::Uri uri = de::Uri(path, RC_NULL);
-            rnamespace.addSearchPath(ResourceNamespace::FallbackPaths, uri, def->searchPathFlags);
+            NativePath path = NativePath(CommandLine_NextAsPath());
+            rnamespace.addSearchPath(ResourceNamespace::FallbackPaths, de::Uri::fromNativeDirPath(path), def->searchPathFlags);
         }
     }
 
@@ -499,12 +496,6 @@ uint F_FindResourceFromList(resourceclass_t rclass, char const* searchPaths,
     return 0; // Not found.
 }
 
-resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
-{
-    if(type == RT_NONE) return RC_UNKNOWN;
-    return resourceTypeInfo(type).defaultClass;
-}
-
 ResourceNamespace* F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 {
     DENG_ASSERT(VALID_RESOURCE_CLASS(rclass));
@@ -520,7 +511,22 @@ ResourceNamespace* F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
     return namespaceByName(defaultNamespaces[rclass]);
 }
 
-resourcetype_t F_GuessResourceTypeByName(String path)
+String const& F_ResourceClassName(resourceclass_t rclass)
+{
+    DENG_ASSERT(VALID_RESOURCE_CLASS(rclass));
+    static String const resourceClassNames[RESOURCECLASS_COUNT] = {
+        "RC_PACKAGE",
+        "RC_DEFINITION",
+        "RC_GRAPHIC",
+        "RC_MODEL",
+        "RC_SOUND",
+        "RC_MUSIC",
+        "RC_FONT"
+    };
+    return resourceClassNames[uint(rclass)];
+}
+
+resourcetype_t F_GuessResourceTypeFromFileName(String path)
 {
     if(path.isEmpty()) return RT_NONE;
 
@@ -543,17 +549,8 @@ resourcetype_t F_GuessResourceTypeByName(String path)
     return RT_NONE;
 }
 
-String const& F_ResourceClassStr(resourceclass_t rclass)
+resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
 {
-    DENG_ASSERT(VALID_RESOURCE_CLASS(rclass));
-    static String const resourceClassNames[RESOURCECLASS_COUNT] = {
-        "RC_PACKAGE",
-        "RC_DEFINITION",
-        "RC_GRAPHIC",
-        "RC_MODEL",
-        "RC_SOUND",
-        "RC_MUSIC",
-        "RC_FONT"
-    };
-    return resourceClassNames[uint(rclass)];
+    if(type == RT_NONE) return RC_UNKNOWN;
+    return resourceTypeInfo(type).defaultClass;
 }
