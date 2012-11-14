@@ -1,5 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# License: GPLv2 + exception to link against FMOD Ex
 
 include(../config_plugin.pri)
 include(../../dep_fmod.pri)
@@ -27,6 +28,8 @@ SOURCES += \
     src/fmod_sfx.cpp \
     src/fmod_util.cpp
 
+OTHER_FILES += doc/LICENSE
+
 win32 {
     RC_FILE = res/fmod.rc
 
@@ -49,4 +52,3 @@ macx {
     linkToBundledLibdeng2(audio_fmod)
     linkToBundledLibdeng(audio_fmod)
 }
-

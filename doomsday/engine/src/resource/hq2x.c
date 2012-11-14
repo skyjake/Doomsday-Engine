@@ -1,37 +1,23 @@
-/**\file gl_hq2x.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003 Maxim Stepin <maxst@hiend3d.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * High-Quality 2x Graphics Resizing.
+ * @file hq2x.c
+ * High-Quality 2x Graphics Resizing. @ingroup resource
  *
- * Based on the routine by Maxim Stepin <maxst@hiend3d.com>
- * For more information, see: http://hiend3d.com/hq2x.html
+ * @authors Copyright © 2003 Maxim Stepin <maxst@hiend3d.com>
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
- * Now uses 32-bit data and our native ABGR8888 pixel format.
- * Alpha is taken into account in the processing to preserve edges.
- * Not quite as efficient as the original version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #include <stdlib.h>
@@ -41,7 +27,7 @@
 #include "de_console.h"
 #include "image.h"
 
-/**
+/*
  * RGB color space.
  */
 #define BGR888_PACK(b, g, r) ( ((uint32_t)(b) << 16) | ((uint32_t)(g) << 8) | (uint32_t)(r) )
@@ -60,7 +46,7 @@
 #define ABGR8888_Rmask      BGR888_Rmask
 #define ABGR8888_RGBmask    ((int)0x00FFFFFF)
 
-/// Y'uv conversion.
+// YUV conversion.
 #define BGR888toYUV888(v)   (lutBGR888toYUV888[BGR888toBGR565(v)])
 #define ABGR8888toYUV888(v) (BGR888toYUV888(v & ABGR8888_RGBmask))
 #define ABGR8888toAYUV8888(v) (ABGR8888toYUV888(v) | (((v) & ABGR8888_Amask) << 24))
@@ -81,7 +67,7 @@
 #define ARGB8888_Bmask      RGB888_Bmask
 #define ARGB8888_RGBmask    ((int)0x00FFFFFF)
 
-/// Y'uv conversion.
+// YUV conversion.
 #define RGB888toYUV888(v)   (BGR888toYUV888(RGB888toBGR888(v)))
 #define ARGB8888toYUV888(v) (RGB888toYUV888((v) & ARGB8888_RGBmask])
 #define ARGB8888toAYUV8888(v) (ARGB8888toYUV888(v) | (((v) & ARGB8888_Amask) << 24))
@@ -91,8 +77,8 @@
 #define BGR565_Gmask        ((int)0x7E0)
 #define BGR565_Rmask        ((int)0x1F)
 
-/**
- * Y'uv color space.
+/*
+ * YUV color space.
  */
 #define YUV888_PACK(y, u, v) ( ((uint32_t)(y) << 16) | ((uint32_t)(u) << 8) | (uint32_t)(v) )
 #define YUV888_COMP(n, c)   ( ((c) >> ((n) << 3)) & 0xFF )
