@@ -153,7 +153,7 @@ namespace de
          * @ref ExtraPaths which have been registered since its construction.
          */
         inline void reset() {
-            clearSearchPaths(ResourceNamespace::ExtraPaths);
+            clearSearchPaths(ExtraPaths);
             clear();
         }
 
