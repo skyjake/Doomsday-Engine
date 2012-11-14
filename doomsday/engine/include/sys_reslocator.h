@@ -30,8 +30,6 @@
 #define LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
 
 #include "dd_types.h"
-
-//#include "resourcerecord.h"
 #include "uri.h"
 
 #ifdef __cplusplus
@@ -119,13 +117,6 @@ uint F_NumResourceNamespaces(void);
 /// @return  @c true iff @a value can be interpreted as a valid resource namespace id.
 boolean F_IsValidResourceNamespaceId(int value);
 
-#if 0
-/**
- * Given an id return the associated resource namespace object.
- */
-ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
-#endif
-
 /**
  * @param rni  Unique identifier of the namespace to add to.
  * @param flags  @see searchPathFlags
@@ -134,23 +125,20 @@ ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
 boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
     struct uri_s const* searchPath);
 
-boolean F_FindResourcePath(resourceclass_t rclass, struct uri_s const* searchPath,
-    ddstring_t* foundPath, int flags, char const* optionalSuffix);
-
 /**
  * Attempt to locate a named resource.
  *
  * @param rclass        Class of resource being searched for (if known).
  *
- * @param searchPaths   Paths/names of the resource being searched for. Note
- *                      that the resource class (@a rclass) specified significantly
+ * @param searchPath    Path/name of the resource being searched for. Note that
+ *                      the resource class (@a rclass) specified significantly
  *                      alters search behavior. This allows text replacements of
  *                      symbolic escape sequences in the path, allowing access to
  *                      the engine's view of the virtual file system.
  *
  * @param foundPath     If found, the fully qualified path is written back here.
  *                      Can be @c NULL, changing this routine to only check that
- *                      resource exists is readable.
+ *                      the resource exists is readable.
  *
  * @param flags         @see resourceLocationFlags
  *
@@ -158,12 +146,19 @@ boolean F_FindResourcePath(resourceclass_t rclass, struct uri_s const* searchPat
  *                      look for matches. If not found or not specified then search
  *                      for matches without a suffix.
  *
- * @return  The index+1 of the path in @a searchPaths if found, else @c 0
+ * @return  @c true iff a resource was found.
  */
-uint F_FindResource4(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags, char const* optionalSuffix);
-uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
-uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
-uint F_FindResource(resourceclass_t rclass, char const* searchPaths/*, foundPath = NULL*/);
+boolean F_FindResource4(resourceclass_t rclass, struct uri_s const* searchPath, ddstring_t* foundPath, int flags, char const* optionalSuffix);
+boolean F_FindResource3(resourceclass_t rclass, struct uri_s const* searchPath, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+boolean F_FindResource2(resourceclass_t rclass, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+boolean F_FindResource(resourceclass_t rclass, struct uri_s const* searchPath/*, foundPath = NULL*/);
+
+/**
+ * @return  If a resource is found, the index + 1 of the path from @a searchPaths
+ *          that was used to find it; otherwise @c 0.
+ */
+uint F_FindResourceFromList(resourceclass_t rclass, char const* searchPaths,
+    ddstring_t* foundPath, int flags, char const* optionalSuffix);
 
 /**
  * @return  Default class associated with resources of type @a type.
@@ -175,14 +170,14 @@ resourceclass_t F_DefaultResourceClassForType(resourcetype_t type);
  */
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
 
+#ifdef __cplusplus
+} // extern "C"
+
 /**
  * @return  Unique identifier of the resource namespace associated with @a name,
  *      else @c 0 (not found).
  */
-resourcenamespaceid_t F_SafeResourceNamespaceForName(char const* name);
-
-#ifdef __cplusplus
-} // extern "C"
+resourcenamespaceid_t F_SafeResourceNamespaceForName(de::String name);
 
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely

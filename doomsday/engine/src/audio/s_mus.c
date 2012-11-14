@@ -227,6 +227,9 @@ boolean Mus_IsMUSLump(lumpnum_t lumpNum)
  */
 int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
 {
+    Uri* searchPath;
+    int result;
+
     if(!musAvail || !AudioDriver_Music_Available()) return false;
 
     // All external music files are specified relative to the base path.
@@ -246,7 +249,10 @@ int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
     }
 
     // Try the resource locator.
-    return F_FindResource2(RC_MUSIC, def->lumpName, retPath);
+    searchPath = Uri_NewWithPath2(def->lumpName, RC_MUSIC);
+    result = F_FindResource2(RC_MUSIC, searchPath, retPath);
+    Uri_Delete(searchPath);
+    return result;
 }
 
 /**

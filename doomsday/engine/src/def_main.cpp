@@ -823,21 +823,21 @@ static __inline void readDefinitionFile(const char* fileName)
 static void readAllDefinitions(void)
 {
     uint startTime = Timer_RealMilliseconds();
-    ddstring_t foundPath, buf;
+    ddstring_t buf;
     int p;
 
     // Start with engine's own top-level definition file, it is always read first.
-    Str_Init(&foundPath);
-    if(0 != F_FindResource2(RC_DEFINITION, "doomsday.ded", &foundPath))
+    de::Uri searchPath = de::Uri("doomsday.ded", RC_DEFINITION);
+    AutoStr* foundPath = AutoStr_NewStd();
+    if(F_FindResource2(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
     {
-        VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(&foundPath))) )
-        readDefinitionFile(Str_Text(&foundPath));
+        VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(foundPath))) )
+        readDefinitionFile(Str_Text(foundPath));
     }
     else
     {
         Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
     }
-    Str_Free(&foundPath);
 
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())

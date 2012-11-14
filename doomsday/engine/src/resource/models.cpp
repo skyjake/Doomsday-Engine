@@ -421,34 +421,30 @@ AutoStr* R_ComposePathForModelId(uint modelRepositoryId)
 /**
  * Finds the existing model or loads in a new one.
  */
-static int R_LoadModel(de::Uri const& uri)
+static int R_LoadModel(de::Uri const& searchPath)
 {
     LOG_AS("R_LoadModel");
 
-    if(uri.isEmpty()) return 0;
+    if(searchPath.isEmpty()) return 0;
 
-    char const* searchPath = Str_Text(uri.path());
-
-    ddstring_t foundPath; Str_Init(&foundPath);
-    if(!F_FindResource2(RC_MODEL, searchPath, &foundPath))
+    AutoStr* foundPath = AutoStr_NewStd();
+    if(!F_FindResource2(RC_MODEL, reinterpret_cast<uri_s const*>(&searchPath), foundPath))
     {
-        R_MissingModel(searchPath);
-        Str_Free(&foundPath);
+        R_MissingModel(Str_Text(searchPath.path()));
         return 0;
     }
 
     // Has this been already loaded?
-    FileHandle* file = NULL;
-    de::String foundPathStr = de::String(Str_Text(&foundPath));
+    FileHandle* file = 0;
+    de::String foundPathStr = de::String(Str_Text(foundPath));
     uint index = findModelFor(foundPathStr);
     if(!index)
     {
         // Not loaded yet, try to open the file.
-        file = F_Open(Str_Text(&foundPath), "rb");
+        file = F_Open(Str_Text(foundPath), "rb");
         if(!file)
         {
-            R_MissingModel(Str_Text(&foundPath));
-            Str_Free(&foundPath);
+            R_MissingModel(Str_Text(foundPath));
             return 0;
         }
 
@@ -457,7 +453,6 @@ static int R_LoadModel(de::Uri const& uri)
         if(!index)
         {
             F_Delete(file);
-            Str_Free(&foundPath);
             return 0;
         }
     }
@@ -466,7 +461,6 @@ static int R_LoadModel(de::Uri const& uri)
     if(mdl->loaded)
     {
         if(file) F_Delete(file);
-        Str_Free(&foundPath);
         return index; // Already loaded.
     }
 
@@ -489,7 +483,6 @@ static int R_LoadModel(de::Uri const& uri)
         M_Free(mdl);
         modelRepository->setUserPointer(index, 0);
         F_Delete(file);
-        Str_Free(&foundPath);
         return 0;
     }
 
@@ -514,19 +507,18 @@ static int R_LoadModel(de::Uri const& uri)
     {
         // Lastly try a skin named similarly to the model in the same directory.
         de::String const& mdlFileName = modelRepository->string(index);
-        de::String skinSearchPath = mdlFileName.fileNamePath() / "/" / mdlFileName.fileNameWithoutExtension();
+        de::Uri skinSearchPath = de::Uri(mdlFileName.fileNamePath() / mdlFileName.fileNameWithoutExtension(), RC_GRAPHIC);
 
-        QByteArray skinSearchPathUtf8 = skinSearchPath.toUtf8();
-        if(F_FindResource2(RC_GRAPHIC, skinSearchPathUtf8.constData(), &foundPath))
+        if(F_FindResource2(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundPath))
         {
             // Huzzah! we found a skin.
-            de::Uri uri = de::Uri(Str_Text(&foundPath), RC_NULL);
+            de::Uri uri = de::Uri(Str_Text(foundPath), RC_NULL);
             mdl->skins[0].texture = R_CreateSkinTex(reinterpret_cast<uri_s const*>(&uri), false/*not a shiny skin*/);
 
             numFoundSkins = 1;
 
             LOG_INFO("Assigned fallback skin \"%s\" to slot #0 for model \"%s\".")
-                << de::NativePath(Str_Text(&foundPath)).pretty()
+                << de::NativePath(Str_Text(foundPath)).pretty()
                 << de::NativePath(modelRepository->string(index)).pretty();
         }
     }
@@ -545,7 +537,6 @@ static int R_LoadModel(de::Uri const& uri)
             << uint(RENDER_MAX_MODEL_VERTS) << uint(mdl->info.numVertices);
     }
 
-    Str_Free(&foundPath);
     return index;
 }
 

@@ -1628,8 +1628,9 @@ static int DD_StartupWorker(void* parm)
     }
 
     // Add required engine resource files.
+    de::Uri searchPath = de::Uri("Packages:doomsday.pk3");
     AutoStr* foundPath = AutoStr_NewStd();
-    if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", foundPath) ||
+    if(!F_FindResource2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
        !tryLoadFile(Str_Text(foundPath)))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
@@ -2296,8 +2297,8 @@ D_CMD(Load)
     AutoStr* foundPath = AutoStr_NewStd();
     for(; arg < argc; ++arg)
     {
-        QByteArray searchPath = QDir::fromNativeSeparators(NativePath(argv[arg]).expand()).toUtf8();
-        if(!F_FindResource3(RC_PACKAGE, searchPath.constData(), foundPath, RLF_MATCH_EXTENSION)) continue;
+        de::Uri searchPath = de::Uri(QDir::fromNativeSeparators(NativePath(argv[arg]).expand()), RC_PACKAGE);
+        if(!F_FindResource3(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
 
         if(tryLoadFile(Str_Text(foundPath)))
         {
@@ -2427,8 +2428,8 @@ D_CMD(Unload)
     AutoStr* foundPath = AutoStr_NewStd();
     for(i = 1; i < argc; ++i)
     {
-        QByteArray searchPath = QDir::fromNativeSeparators(NativePath(argv[1]).expand()).toUtf8();
-        if(!F_FindResource2(RC_PACKAGE, searchPath.constData(), foundPath)) continue;
+        de::Uri searchPath = de::Uri(QDir::fromNativeSeparators(NativePath(argv[1]).expand()), RC_PACKAGE);
+        if(!F_FindResource2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
 
         if(tryUnloadFile(Str_Text(foundPath)))
         {

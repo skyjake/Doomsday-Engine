@@ -167,8 +167,7 @@ ResourceRecord& ResourceRecord::locateResource()
         Uri path = Uri(*i, d->rclass);
 
         // Attempt to resolve a path to the named resource.
-        if(!F_FindResourcePath(d->rclass, reinterpret_cast<uri_s*>(&path), found,
-                               RLF_DEFAULT, NULL/*no optional suffix*/)) continue;
+        if(!F_FindResource2(d->rclass, reinterpret_cast<uri_s*>(&path), found)) continue;
 
         // We've found *something*.
         String foundPath = String(Str_Text(found));

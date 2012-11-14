@@ -101,25 +101,18 @@ static float pointDist(fixed_t c[3])
 // Try to load the texture.
 static byte loadParticleTexture(uint particleTex, boolean silent)
 {
-    assert(particleTex < MAX_PTC_TEXTURES);
-    {
-    ddstring_t foundPath, searchPath;
-    image_t image;
+    DENG_ASSERT(particleTex < MAX_PTC_TEXTURES);
+{
     byte result = 0;
+    image_t image;
+    AutoStr* foundPath  = AutoStr_NewStd();
+    Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex)));
 
-    Str_Init(&foundPath);
-
-    Str_Init(&searchPath);
-    Str_Appendf(&searchPath, "Textures:Particle%02i", particleTex);
-
-    if(F_FindResource4(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, RLF_DEFAULT, "-ck") != 0 &&
-       GL_LoadImage(&image, Str_Text(&foundPath)))
+    if(F_FindResource4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, "-ck") &&
+       GL_LoadImage(&image, Str_Text(foundPath)))
     {
         result = 2;
     }
-
-    Str_Free(&searchPath);
-    Str_Free(&foundPath);
 
     if(result != 0)
     {
@@ -141,9 +134,10 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
     {
         Con_Message("Warning: Texture \"Particle%02i\" not found.\n", particleTex);
     }
+
+    Uri_Delete(searchPath);
     return result;
-    }
-}
+}}
 
 void Rend_ParticleLoadSystemTextures(void)
 {

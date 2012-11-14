@@ -2431,29 +2431,34 @@ Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
 static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const char* modelfn)
 {
     boolean found = false;
-    ddstring_t searchPath;
-    assert(foundPath && skin && skin[0]);
 
-    Str_Init(&searchPath);
+    DENG_ASSERT(foundPath && skin && skin[0]);
 
     // Try the "first choice" directory first.
     if(modelfn)
     {
         // The "first choice" directory is that in which the model file resides.
         directory_t* mydir = Dir_FromText(modelfn);
-        Str_Appendf(&searchPath, "%s%s", mydir->path, skin);
-        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath) != 0;
+        AutoStr* path = Str_Appendf(AutoStr_NewStd(), "%s%s", mydir->path, skin);
+        Uri* searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
+
+        found = F_FindResource2(RC_GRAPHIC, searchPath, foundPath);
+
+        Uri_Delete(searchPath);
         Dir_Delete(mydir);
     }
 
     if(!found)
     {
         // Try the resource locator.
-        Str_Clear(&searchPath); Str_Appendf(&searchPath, "Models:%s", skin);
-        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath) != 0;
+        AutoStr* path = Str_Appendf(AutoStr_NewStd(), "Models:%s", skin);
+        Uri* searchPath = Uri_NewWithPath(Str_Text(path));
+
+        found = F_FindResource2(RC_GRAPHIC, searchPath, foundPath);
+
+        Uri_Delete(searchPath);
     }
 
-    Str_Free(&searchPath);
     return found;
 }
 

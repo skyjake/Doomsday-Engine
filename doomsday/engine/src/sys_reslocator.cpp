@@ -582,7 +582,7 @@ ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni)
     return namespaceInfoById(rni)->rnamespace;
 }
 
-resourcenamespaceid_t F_SafeResourceNamespaceForName(char const* name)
+resourcenamespaceid_t F_SafeResourceNamespaceForName(String name)
 {
     return findResourceNamespaceIdForName(name);
 }
@@ -613,18 +613,33 @@ boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int f
     return rnamespace->addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(*searchPath), flags);
 }
 
-boolean F_FindResourcePath(resourceclass_t rclass, uri_s const* searchPath,
+boolean F_FindResource4(resourceclass_t rclass, uri_s const* searchPath,
     ddstring_t* foundPath, int flags, char const* optionalSuffix)
 {
-    if(!searchPath) return 0;
+    DENG_ASSERT(searchPath);
     return findResource(rclass, reinterpret_cast<de::Uri const&>(*searchPath), foundPath, flags, optionalSuffix);
 }
 
-uint F_FindResource4(resourceclass_t rclass, char const* searchPaths,
+boolean F_FindResource3(resourceclass_t rclass, uri_s const* searchPath,
+    ddstring_t* foundPath, int flags)
+{
+    return F_FindResource4(rclass, searchPath, foundPath, flags, NULL);
+}
+
+boolean F_FindResource2(resourceclass_t rclass, uri_s const* searchPath,
+    ddstring_t* foundPath)
+{
+    return F_FindResource3(rclass, searchPath, foundPath, RLF_DEFAULT);
+}
+
+boolean F_FindResource(resourceclass_t rclass, uri_s const* searchPath)
+{
+    return F_FindResource2(rclass, searchPath, NULL);
+}
+
+uint F_FindResourceFromList(resourceclass_t rclass, char const* searchPaths,
     ddstring_t* foundPath, int flags, char const* optionalSuffix)
 {
-    DENG_ASSERT(rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass));
-
     if(!searchPaths || !searchPaths[0]) return 0;
 
     QStringList paths = String(searchPaths).split(';', QString::SkipEmptyParts);
@@ -639,21 +654,6 @@ uint F_FindResource4(resourceclass_t rclass, char const* searchPaths,
     }
 
     return 0; // Not found.
-}
-
-uint F_FindResource3(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath, int flags)
-{
-    return F_FindResource4(rclass, searchPaths, foundPath, flags, NULL/*no optional suffix*/);
-}
-
-uint F_FindResource2(resourceclass_t rclass, char const* searchPaths, ddstring_t* foundPath)
-{
-    return F_FindResource3(rclass, searchPaths, foundPath, RLF_DEFAULT);
-}
-
-uint F_FindResource(resourceclass_t rclass, char const* searchPaths)
-{
-    return F_FindResource2(rclass, searchPaths, NULL/*no found path*/);
 }
 
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)

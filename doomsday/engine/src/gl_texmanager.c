@@ -705,13 +705,18 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         {
             const Str suffix = { "-ck" };
             AutoStr* path = Textures_ComposePath(Textures_Id(tex));
+
             // First try the flats namespace then the old-fashioned "flat-name"
             // in the textures namespace.
-            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(),
-                                              "Flats:%s;Textures:flat-%s",
-                                              Str_Text(path), Str_Text(path));
-
+            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(), "Flats:%s", Str_Text(path));
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
+
+            if(!source)
+            {
+                Str_Clear(searchPath);
+                Str_Appendf(searchPath, "Textures:flat-%s", Str_Text(path));
+                source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
+            }
         }
 
         if(source == TEXS_NONE)
@@ -749,8 +754,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
             const Str suffix = { "-ck" };
-            AutoStr* path = Textures_ComposePath(Textures_Id(tex));
-            AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(), "Patches:%s", Str_Text(path));
+            AutoStr* searchPath = Str_Prepend(Textures_ComposePath(Textures_Id(tex)), "Patches:");
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
         }
 
@@ -789,16 +793,21 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
             AutoStr* searchPath = AutoStr_NewStd();
             if(TC_PSPRITE_DIFFUSE == spec->context)
             {
-                Str_Appendf(searchPath, "Patches:%s-hud;", Str_Text(path));
+                Str_Appendf(searchPath, "Patches:%s-hud", Str_Text(path));
+                source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
             }
             else if(tclass || tmap)
             {
-                Str_Appendf(searchPath, "Patches:%s-table%i%i;",
-                                        Str_Text(path), tclass, tmap);
+                Str_Appendf(searchPath, "Patches:%s-table%i%i", Str_Text(path), tclass, tmap);
+                source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
             }
-            Str_Appendf(searchPath, "Patches:%s", Str_Text(path));
 
-            source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
+            if(!source)
+            {
+                Str_Clear(searchPath);
+                Str_Appendf(searchPath, "Patches:%s", Str_Text(path));
+                source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
+            }
         }
 
         if(source == TEXS_NONE)
@@ -2113,29 +2122,25 @@ void GL_UploadTextureContent(const texturecontent_t* content)
     }
 }
 
-TexSource GL_LoadExtTextureEX(image_t* image, const char* searchPath,
-    const char* optionalSuffix, boolean silent)
+TexSource GL_LoadExtTextureEX(image_t* image, char const* _searchPath,
+    char const* optionalSuffix, boolean silent)
 {
-    ddstring_t foundPath;
-    assert(image && searchPath);
+    DENG_ASSERT(image && _searchPath);
+{
+    Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
+    AutoStr* foundPath = AutoStr_NewStd();
 
-    Str_Init(&foundPath);
-    if(!F_FindResource4(RC_GRAPHIC, searchPath, &foundPath, RLF_DEFAULT, optionalSuffix))
-    {
-        Str_Free(&foundPath);
-        if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", searchPath);
+    boolean found = F_FindResource4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, optionalSuffix);
+    Uri_Delete(searchPath);
+
+    if(!found || !GL_LoadImage(image, Str_Text(foundPath)))
+    {       
+        if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", _searchPath);
         return TEXS_NONE;
     }
 
-    if(GL_LoadImage(image, Str_Text(&foundPath)))
-    {
-        Str_Free(&foundPath);
-        return TEXS_EXTERNAL;
-    }
-    Str_Free(&foundPath);
-    if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to load \"%s\"\n", F_PrettyPath(searchPath));
-    return TEXS_NONE;
-}
+    return TEXS_EXTERNAL;
+}}
 
 DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 {
@@ -2180,14 +2185,14 @@ DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
     return sysFlareTextures[flare].tex;
 }
 
-TexSource GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
+TexSource GL_LoadExtTexture(image_t* image, char const* _searchPath, gfxmode_t mode)
 {
     TexSource source = TEXS_NONE;
-    ddstring_t foundPath;
+    Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
+    AutoStr* foundPath = AutoStr_NewStd();
 
-    Str_Init(&foundPath);
-    if(F_FindResource2(RC_GRAPHIC, name, &foundPath) != 0 &&
-       GL_LoadImage(image, Str_Text(&foundPath)))
+    if(F_FindResource2(RC_GRAPHIC, searchPath, foundPath) &&
+       GL_LoadImage(image, Str_Text(foundPath)))
     {
         // Force it to grayscale?
         if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
@@ -2200,7 +2205,8 @@ TexSource GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
         }
         source = TEXS_EXTERNAL;
     }
-    Str_Free(&foundPath);
+
+    Uri_Delete(searchPath);
     return source;
 }
 
@@ -2673,17 +2679,16 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
 
 TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
 {
-    ddstring_t searchPath, foundPath;
+    DENG_ASSERT(image);
+{
+    AutoStr* foundPath = AutoStr_NewStd();
     TexSource source = TEXS_NONE;
 
-    assert(image);
-
     // First try to find an external resource.
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s", Str_Text(&r->name));
-    Str_Init(&foundPath);
+    Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Patches:%s", Str_Text(&r->name))));
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
-       GL_LoadImage(image, Str_Text(&foundPath)))
+    if(F_FindResource2(RC_GRAPHIC, searchPath, foundPath) &&
+       GL_LoadImage(image, Str_Text(foundPath)))
     {
         // "External" image loaded.
         source = TEXS_EXTERNAL;
@@ -2724,11 +2729,9 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
         }
     }
 
-    Str_Free(&searchPath);
-    Str_Free(&foundPath);
-
+    Uri_Delete(searchPath);
     return source;
-}
+}}
 
 DGLuint GL_PrepareRawTexture(rawtex_t* raw)
 {
