@@ -115,7 +115,7 @@ NativePath NativePath::expand(bool* didExpand) const
         if(firstSlash > 1)
         {
             // Parse the user's home directory (from passwd).
-            QByteArray userName = left(firstSlash - 1).toLatin1();
+            QByteArray userName = mid(1, firstSlash - 1).toLatin1();
             struct passwd* pw = getpwnam(userName);
             if(!pw)
             {
@@ -124,11 +124,11 @@ NativePath NativePath::expand(bool* didExpand) const
                                        String("Unknown user '%1'").arg(QLatin1String(userName)));
             }
 
-            return NativePath(pw->pw_dir) / mid(firstSlash);
+            return NativePath(pw->pw_dir) / mid(firstSlash + 1);
         }
 
         // Replace with the HOME path.
-        return App::app().nativeHomePath() / mid(1);
+        return NativePath(QDir::homePath()) / mid(2);
     }
 #endif
 
