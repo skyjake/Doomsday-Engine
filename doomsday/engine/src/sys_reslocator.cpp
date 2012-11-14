@@ -24,7 +24,9 @@
  * 02110-1301 USA</small>
  */
 
+#include <QDir>
 #include <QList>
+#include <QStringList>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -272,131 +274,65 @@ static bool findResource(resourceclass_t rclass, de::Uri const& searchPath,
 
 static void createPackagesResourceNamespace(void)
 {
-    ddstring_t** doomWadPaths = 0, *doomWadDir = 0;
-    uint doomWadPathsCount = 0, idx;
+    ResourceNamespace& rnamespace = createResourceNamespace("Packages");
+
+    /*
+     * Add default search paths.
+     *
+     * Note that the order here defines the order in which these paths are searched
+     * thus paths must be added in priority order (newer paths have priority).
+     */
 
 #ifdef UNIX
+    // There may be an iwadir specified in a system-level config file.
+    filename_t fn;
+    if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
     {
-        // Check the system-level config files.
-        filename_t fn;
-        if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+        NativePath path = NativePath(fn);
+        if(QDir::isAbsolutePath(path))
         {
-            doomWadDir = Str_Set(Str_New(), fn);
+            rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
+            LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
         }
     }
 #endif
 
-    // Is the DOOMWADPATH environment variable in use?
+    // Add the path from the DOOMWADDIR environment variable.
+    if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
+    {
+        NativePath path = NativePath(getenv("DOOMWADDIR"));
+        if(QDir::isAbsolutePath(path))
+        {
+            rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
+            LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
+        }
+    }
+
+    // Add any paths from the DOOMWADPATH environment variable.
     if(!CommandLine_Check("-nodoomwadpath") && getenv("DOOMWADPATH"))
     {
 #if WIN32
-# define PATH_DELIMITER_CHAR    ';'
+#  define SEP_CHAR      ';'
 #else
-# define PATH_DELIMITER_CHAR    ':'
+#  define SEP_CHAR      ':'
 #endif
 
-#define ADDDOOMWADPATH(path) \
-{ \
-    Str_Strip(path); \
-    if(!Str_IsEmpty(path) && F_IsAbsolute(path)) \
-    { \
-        ddstring_t* pathCopy = Str_New(); \
-        F_FixSlashes(pathCopy, path); \
-        F_AppendMissingSlash(pathCopy); \
-        LOG_INFO(" %i: %s") << n << NativePath(Str_Text(pathCopy)).pretty(); \
-        doomWadPaths = (ddstring_t**) M_Realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \
-        doomWadPaths[doomWadPathsCount-1] = pathCopy; \
-    } \
-}
-
-        ddstring_t fullString; Str_Init(&fullString);
-
-        Str_Set(&fullString, getenv("DOOMWADPATH"));
-        Str_Strip(&fullString);
-        if(!Str_IsEmpty(&fullString))
+        QStringList allPaths = QString(getenv("DOOMWADPATH")).split(SEP_CHAR, QString::SkipEmptyParts);
+        for(int i = allPaths.count(); i--> 0; )
         {
-            LOG_INFO("Using DOOMWADPATH:");
-
-            // Split into paths.
-            char const* c = Str_Text(&fullString);
-            ddstring_t path; Str_Init(&path);
-            int n = 0;
-            while((c = Str_CopyDelim2(&path, c, PATH_DELIMITER_CHAR, CDF_OMIT_DELIMITER))) // Get the next path.
+            NativePath path = NativePath(allPaths[i]);
+            if(QDir::isAbsolutePath(path))
             {
-                ADDDOOMWADPATH(&path)
-                n++;
+                rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
+                LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
             }
-            // Add the last path.
-            if(!Str_IsEmpty(&path))
-            {
-                ADDDOOMWADPATH(&path)
-            }
-            Str_Free(&path);
         }
 
-        Str_Free(&fullString);
-
-#undef ADDDOOMWADPATH
-#undef PATH_DELIMITER_CHAR
+#undef SEP_CHAR
     }
 
-    // Is the DOOMWADDIR environment variable in use?
-    if(!doomWadDir && !CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
-    {
-        doomWadDir = Str_Set(Str_New(), getenv("DOOMWADDIR"));
-        Str_Strip(doomWadDir);
-        F_FixSlashes(doomWadDir, doomWadDir);
-        if(Str_IsEmpty(doomWadDir) || !F_IsAbsolute(doomWadDir))
-        {
-            Str_Delete(doomWadDir);
-            doomWadDir = 0;
-        }
-        else
-        {
-            F_AppendMissingSlash(doomWadDir);
-            LOG_INFO("Using DOOMWADDIR: %s") << NativePath(Str_Text(doomWadDir)).pretty();
-        }
-    }
-
-    // Construct the search path list.
-    uint searchPathsCount = 2 + doomWadPathsCount + (doomWadDir != 0? 1 : 0);
-    de::Uri** searchPaths = (de::Uri**) M_Malloc(sizeof(*searchPaths) * searchPathsCount);
-    if(!searchPaths) Con_Error("createPackagesResourceNamespace: Failed on allocation of %lu bytes.", (unsigned long) (sizeof(*searchPaths) * searchPathsCount));
-
-    idx = 0;
-    // Add the default paths.
-    searchPaths[idx++] = new de::Uri("$(App.DataPath)/", RC_NULL);
-    searchPaths[idx++] = new de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL);
-
-    // Add any paths from the DOOMWADPATH environment variable.
-    if(doomWadPaths)
-    {
-        for(uint i = 0; i < doomWadPathsCount; ++i)
-        {
-            searchPaths[idx++] = new de::Uri(de::Uri::fromNativeDirPath(Str_Text(doomWadPaths[i])));
-            Str_Delete(doomWadPaths[i]);
-        }
-        M_Free(doomWadPaths);
-    }
-
-    // Add the path from the DOOMWADDIR environment variable.
-    if(doomWadDir)
-    {
-        searchPaths[idx++] = new de::Uri(de::Uri::fromNativeDirPath(Str_Text(doomWadDir)));
-        Str_Delete(doomWadDir);
-    }
-
-    ResourceNamespace& rnamespace = createResourceNamespace("Packages");
-    for(uint i = 0; i < searchPathsCount; ++i)
-    {
-        rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, *searchPaths[i], SPF_NO_DESCEND);
-    }
-
-    for(uint i = 0; i < searchPathsCount; ++i)
-    {
-        delete searchPaths[i];
-    }
-    M_Free(searchPaths);
+    rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri("$(App.DataPath)/", RC_NULL), SPF_NO_DESCEND);
+    rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SPF_NO_DESCEND);
 }
 
 void F_CreateNamespacesForFileResourcePaths(void)
