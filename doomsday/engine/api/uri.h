@@ -68,7 +68,7 @@
 
 #include <de/Error>
 #include <de/Log>
-//#include <de/NativePath>
+#include <de/NativePath>
 #include <de/String>
 
 namespace de
@@ -160,18 +160,32 @@ namespace de
 
         ~Uri();
 
-        Uri& operator = (Uri other);
+        Uri& operator = (Uri const& other);
 
         bool operator == (Uri const& other) const;
 
         bool operator != (Uri const& other) const;
 
         /**
-         * Constructs a Uri instance from a NativePath. All path directives such
-         * as '~' are expanded. The resultant Uri will have an empty/zero-length
-         * scheme (because file paths do not include one).
+         * Constructs a Uri instance from a NativePath that refers to a file in
+         * the native file system. All path directives such as '~' are
+         * expanded. The resultant Uri will have an empty/zero-length scheme
+         * (because file paths do not include one).
+         *
+         * @param path  Native path to a file in the native file system.
          */
-        //static Uri fromNativePath(NativePath const& path);
+        static Uri fromNativePath(NativePath const& path);
+
+        /**
+         * Constructs a Uri instance from a NativePath that refers to a native
+         * directory. All path directives such as '~' are expanded. The
+         * resultant Uri will have an empty/zero-length scheme (because file
+         * paths do not include one).
+         *
+         * @param nativeDirPath  Native path to a directory in the native
+         *                       file system.
+         */
+        static Uri fromNativeDirPath(NativePath const& nativeDirPath);
 
         /**
          * Constructs a Uri instance by reading it from @a reader.

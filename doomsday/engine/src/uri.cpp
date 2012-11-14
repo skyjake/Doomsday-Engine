@@ -416,11 +416,18 @@ Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
     Str_Copy(&d->path,   other.path());
 }
 
-/*Uri Uri::fromNativePath(NativePath const& path)
+Uri Uri::fromNativePath(NativePath const& path)
 {
-    return Uri(path.expand().withSeparators('/), RC_NULL);
+    return Uri(path.expand().withSeparators('/'), RC_NULL);
 }
 
+Uri Uri::fromNativeDirPath(NativePath const& nativeDirPath)
+{
+    // Uri follows the convention of having a slash at the end for directories.
+    return Uri(nativeDirPath.expand().withSeparators('/') + '/', RC_NULL);
+}
+
+/*
 Uri Uri::fromReader(struct reader_s& reader)
 {
     return Uri().read(reader);
@@ -465,9 +472,10 @@ Uri::PathNode& Uri::pathNode(int index) const
     return *fragment;
 }
 
-Uri& Uri::operator = (Uri other)
+Uri& Uri::operator = (Uri const& other)
 {
-    swap(*this, other);
+    Uri copy(other);
+    swap(*this, copy);
     return *this;
 }
 

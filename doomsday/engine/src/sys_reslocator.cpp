@@ -376,7 +376,7 @@ static void createPackagesResourceNamespace(void)
     {
         for(uint i = 0; i < doomWadPathsCount; ++i)
         {
-            searchPaths[idx++] = new de::Uri(Str_Text(doomWadPaths[i]), RC_NULL);
+            searchPaths[idx++] = new de::Uri(de::Uri::fromNativeDirPath(Str_Text(doomWadPaths[i])));
             Str_Delete(doomWadPaths[i]);
         }
         M_Free(doomWadPaths);
@@ -385,7 +385,7 @@ static void createPackagesResourceNamespace(void)
     // Add the path from the DOOMWADDIR environment variable.
     if(doomWadDir)
     {
-        searchPaths[idx++] = new de::Uri(Str_Text(doomWadDir), RC_NULL);
+        searchPaths[idx++] = new de::Uri(de::Uri::fromNativeDirPath(Str_Text(doomWadDir)));
         Str_Delete(doomWadDir);
     }
 
