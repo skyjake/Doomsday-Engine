@@ -162,6 +162,13 @@ NativePath NativePath::pretty() const
     return result;
 }
 
+String NativePath::withSeparators(QChar sep) const
+{
+    String s = *this;
+    s.replace(QChar(DIR_SEPARATOR), sep);
+    return s;
+}
+
 NativePath NativePath::workPath()
 {
     return QDir::currentPath();

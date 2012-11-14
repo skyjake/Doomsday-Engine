@@ -80,7 +80,7 @@ public:
 
     NativePath concatenatePath(const QString& nativePath) const;
 
-    /// A more convenient way to concatenate().
+    /// A more convenient way to invoke concatenatePath().
     NativePath operator / (const NativePath& nativePath) const;
 
     /**
@@ -121,6 +121,16 @@ public:
      * appearing in messages intended for the user.
      */
     NativePath pretty() const;
+
+    /**
+     * Converts all separator characters in the path to @a sep and returns the
+     * updated path.
+     *
+     * @param sep  Character to use to replace all separators.
+     *
+     * @return Path with separators replaced.
+     */
+    String withSeparators(QChar sep) const;
 
     /**
      * Returns the current native working path.
