@@ -135,7 +135,6 @@ DENG_HEADERS += \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
     include/binarytree.h \
-    include/blockset.h \
     include/busymode.h \
     include/cbuffer.h \
     include/client/cl_def.h \
@@ -438,7 +437,6 @@ SOURCES += \
     src/audio/s_wav.c \
     src/audio/sys_audiod_dummy.c \
     src/binarytree.cpp \
-    src/blockset.c \
     src/busymode.cpp \
     src/cbuffer.c \
     src/client/cl_frame.c \

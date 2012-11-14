@@ -1,42 +1,31 @@
-/**\file blockset.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file memoyblockset.c
+ * Set of memory blocks allocated from the zone. @ingroup system
  *
- *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <assert.h> // Define NDEBUG in release builds.
-
-#include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-
-#include "blockset.h"
+#include "de/memoryblockset.h"
+#include "de/memory.h"
 
 typedef struct blockset_block_s {
-    /// Number of used elements.
-    size_t count;
-
-    /// Block of memory where elements are.
-    void* elements;
+    size_t count;   ///< Number of used elements.
+    void* elements; ///< Block of memory where elements are.
 } blockset_block_t;
 
 /**
@@ -46,24 +35,23 @@ typedef struct blockset_block_s {
  */
 static void addBlockToSet(blockset_t* set)
 {
-    assert(set);
-    {
     blockset_block_t* block = 0;
+
+    DENG_ASSERT(set);
 
     // Get a new block by resizing the blocks array. This is done relatively
     // seldom, since there is a large number of elements per each block.
-    set->_blocks = realloc(set->_blocks, sizeof(blockset_block_t) * ++set->_blockCount);
+    set->_blocks = M_Realloc(set->_blocks, sizeof(blockset_block_t) * ++set->_blockCount);
 
     // Initialize the block's data.
     block = &set->_blocks[set->_blockCount - 1];
-    block->elements = malloc(set->_elementSize * set->_elementsPerBlock);
+    block->elements = M_Malloc(set->_elementSize * set->_elementsPerBlock);
     block->count = 0;
-    }
 }
 
 void* BlockSet_Allocate(blockset_t* set)
 {
-    assert(set);
+    DENG_ASSERT(set);
     {
     blockset_block_t* block = &set->_blocks[set->_blockCount - 1];
 
@@ -95,14 +83,11 @@ blockset_t* BlockSet_New(size_t sizeOfElement, size_t batchSize)
 {
     blockset_t* set;
 
-    if(sizeOfElement == 0)
-        Con_Error("Attempted BlockSet::Construct with invalid sizeOfElement (==0).");
-
-    if(batchSize == 0)
-        Con_Error("Attempted BlockSet::Construct with invalid batchSize (==0).");
+    DENG_ASSERT(sizeOfElement > 0);
+    DENG_ASSERT(batchSize > 0);
 
     // Allocate the blockset.
-    set = calloc(1, sizeof(*set));
+    set = M_Calloc(sizeof(*set));
     set->_elementsPerBlock = batchSize;
     set->_elementSize = sizeOfElement;
     set->_elementsInUse = 0;
@@ -115,20 +100,21 @@ blockset_t* BlockSet_New(size_t sizeOfElement, size_t batchSize)
 
 size_t BlockSet_Count(blockset_t* set)
 {
-    assert(set);
+    DENG_ASSERT(set);
+
     return set->_elementsInUse;
 }
 
 void BlockSet_Delete(blockset_t* set)
 {
-    assert(set);
+    size_t i;
+
+    DENG_ASSERT(set);
 
     // Free the elements from each block.
-    { size_t i;
     for(i = 0; i < set->_blockCount; ++i)
-        free(set->_blocks[i].elements);
-    }
+        M_Free(set->_blocks[i].elements);
 
-    free(set->_blocks);
-    free(set);
+    M_Free(set->_blocks);
+    M_Free(set);
 }

@@ -52,12 +52,12 @@
 #include "de_misc.h"
 
 #include "def_main.h"
-
-#include "blockset.h"
 #include "m_stack.h"
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
+
+#include <de/memoryblockset.h>
 
 // MACROS ------------------------------------------------------------------
 

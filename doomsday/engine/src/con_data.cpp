@@ -33,8 +33,9 @@
 
 #include "cbuffer.h"
 #include "m_misc.h"
-#include "blockset.h"
 #include "pathtree.h"
+
+#include <de/memoryblockset.h>
 
 // Substrings in CVar names are delimited by this character.
 #define CVARDIRECTORY_DELIMITER         '-'

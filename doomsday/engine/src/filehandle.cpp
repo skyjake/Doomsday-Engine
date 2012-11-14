@@ -31,10 +31,10 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "blockset.h"
 #include "filehandle.h"
 
 #include <de/memory.h>
+#include <de/memoryblockset.h>
 #include <de/NativePath>
 
 namespace de {

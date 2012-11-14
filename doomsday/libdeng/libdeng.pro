@@ -61,6 +61,7 @@ HEADERS += \
     include/de/garbage.h \
     include/de/libdeng.h \
     include/de/memory.h \
+    include/de/memoryblockset.h \
     include/de/memoryzone.h \
     include/de/point.h \
     include/de/reader.h \
@@ -82,6 +83,7 @@ SOURCES += \
     src/garbage.cpp \
     src/libdeng.c \
     src/memory.c \
+    src/memoryblockset.c \
     src/memoryzone.c \
     src/memoryzone_private.h \
     src/point.c \
@@ -92,7 +94,7 @@ SOURCES += \
     src/str.c \
     src/stringarray.cpp \
     src/timer.cpp \
-    src/writer.c
+    src/writer.c \
 
 # Installation ---------------------------------------------------------------
 

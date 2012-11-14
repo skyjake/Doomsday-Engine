@@ -31,14 +31,15 @@
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
 
-#include "blockset.h"
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
 #include "pathtree.h"
+
 #include <de/Error>
 #include <de/Log>
 #include <de/memory.h>
+#include <de/memoryblockset.h>
 #include <de/memoryzone.h>
 
 /// Number of materials to block-allocate.
