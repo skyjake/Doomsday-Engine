@@ -94,14 +94,15 @@ namespace de
         NativePath nativeBasePath();
 
         /**
-         * Returns the native path of where to load binaries (plugins).
+         * Returns the native path of where to load binaries (plugins). This
+         * is where "/bin" points to.
          */
         NativePath nativeBinaryPath();
 
         /**
          * Returns the native path where user-specific runtime files should be
-         * placed. The user can override the location using the @em -userdir
-         * command line option.
+         * placed (this is where "/home" points to). The user can override the
+         * location using the @em -userdir command line option.
          */
         NativePath nativeHomePath();
 
