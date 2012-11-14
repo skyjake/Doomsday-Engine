@@ -31,6 +31,7 @@
 #include "de_filesys.h"
 #include "lumpcache.h"
 #include "pathtree.h"
+#include "resourcenamespace.h"
 
 #include <de/App>
 #include <de/ByteOrder>
@@ -41,6 +42,8 @@
 #include <de/memoryzone.h>
 
 #include "zip.h"
+
+extern de::ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 namespace de {
 
@@ -1024,7 +1027,10 @@ static bool applyGamePathMappings(String& path)
     uint const numNamespaces = F_NumResourceNamespaces();
     for(uint i = 0; i < numNamespaces; ++i)
     {
-        if(F_MapGameResourcePath(resourcenamespaceid_t(i + 1), path))
+        ResourceNamespace* rnamespace = F_ToResourceNamespace(resourcenamespaceid_t(i + 1));
+        DENG_ASSERT(rnamespace);
+
+        if(rnamespace->applyPathMappings(path))
         {
             return true;
         }
