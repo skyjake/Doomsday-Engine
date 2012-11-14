@@ -24,7 +24,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <QDir>
+#include <QList>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -46,12 +46,6 @@ struct ResourceTypeInfo
     /// Default class attributed to resources of this type.
     resourceclass_t defaultClass;
     char const* knownFileNameExtensions[max_extensions];
-};
-
-struct ResourceNamespaceInfo
-{
-    /// ResourceNamespace.
-    ResourceNamespace* rnamespace;
 };
 
 static bool inited = false;
@@ -87,8 +81,7 @@ static resourcetype_t const searchTypeOrder[RESOURCECLASS_COUNT][MAX_TYPEORDER] 
     /* RC_FONT */       { RT_DFN, RT_NONE } // Only DFN fonts.
 };
 
-static ResourceNamespaceInfo* namespaces = 0;
-static uint numNamespaces = 0;
+static ResourceNamespaces namespaces;
 
 static inline ResourceTypeInfo const& resourceTypeInfo(resourcetype_t type)
 {
@@ -96,37 +89,26 @@ static inline ResourceTypeInfo const& resourceTypeInfo(resourcetype_t type)
     return typeInfo[uint(type) - 1];
 }
 
-static inline ResourceNamespaceInfo* namespaceInfoById(resourcenamespaceid_t id)
-{
-    if(!F_IsValidResourceNamespaceId(id)) throw Error("namespaceInfoById", String("Invalid namespace id %1").arg(id));
-    return &namespaces[uint(id) - 1];
-}
-
-static ResourceNamespace* namespaceById(resourcenamespaceid_t id)
-{
-    if(!F_IsValidResourceNamespaceId(id)) return 0;
-    return namespaceInfoById(id)->rnamespace;
-}
-
-static resourcenamespaceid_t findResourceNamespaceIdForName(String name)
+static ResourceNamespace* namespaceByName(String name)
 {
     if(!name.isEmpty())
     {
-        for(uint i = 0; i < numNamespaces; ++i)
+        for(int i = 0; i < namespaces.count(); ++i)
         {
-            ResourceNamespaceInfo* info = &namespaces[i];
-            if(!info->rnamespace->name().compareWithoutCase(name))
-                return resourcenamespaceid_t(i + 1);
+            ResourceNamespace& rnamespace = *namespaces[i];
+            if(!rnamespace.name().compareWithoutCase(name))
+                return &rnamespace;
         }
     }
-    return 0;
+    return 0; // Not found.
 }
 
-static ResourceNamespace* namespaceByName(ddstring_t const* name)
+static void resetAllNamespaces()
 {
-    resourcenamespaceid_t rni = findResourceNamespaceIdForName(Str_Text(name));
-    if(!F_IsValidResourceNamespaceId(rni)) return 0;
-    return namespaceInfoById(rni)->rnamespace;
+    DENG2_FOR_EACH(ResourceNamespaces, i, namespaces)
+    {
+        (*i)->reset();
+    }
 }
 
 /**
@@ -134,42 +116,11 @@ static ResourceNamespace* namespaceByName(ddstring_t const* name)
  *                  @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
  * @param flags     @ref ResourceNamespace::Flag
  */
-static ResourceNamespace& createResourceNamespace(char const* name, ResourceNamespace::Flags flags = 0)
+static ResourceNamespace& createResourceNamespace(String name, ResourceNamespace::Flags flags = 0)
 {
-    DENG_ASSERT(name && qstrlen(name) >= RESOURCENAMESPACE_MINNAMELENGTH);
-
-    ResourceNamespace* rnamespace = new ResourceNamespace(name, flags);
-
-    // Add this new namespace to the global list.
-    namespaces = (ResourceNamespaceInfo*) M_Realloc(namespaces, sizeof *namespaces * ++numNamespaces);
-    if(!namespaces) Con_Error("newResourceNamespace: Failed on (re)allocation of %lu bytes for new resource namespace\n", (unsigned long) sizeof *namespaces * numNamespaces);
-
-    ResourceNamespaceInfo* info = &namespaces[numNamespaces - 1];
-    info->rnamespace = rnamespace;
-
-    return *rnamespace;
-}
-
-static void destroyAllNamespaces()
-{
-    if(numNamespaces == 0) return;
-
-    for(uint i = 0; i < numNamespaces; ++i)
-    {
-        ResourceNamespaceInfo* info = &namespaces[i];
-        delete info->rnamespace;
-    }
-    M_Free(namespaces);
-    namespaces = 0;
-}
-
-static void resetAllNamespaces()
-{
-    resourcenamespaceid_t rni;
-    for(rni = 1; rni < numNamespaces+1; ++rni)
-    {
-        F_ResetResourceNamespace(rni);
-    }
+    DENG_ASSERT(name.length() >= RESOURCENAMESPACE_MINNAMELENGTH);
+    namespaces.push_back(new ResourceNamespace(name, flags));
+    return *namespaces.back();
 }
 
 static bool findResourceInNamespace(ResourceNamespace& rnamespace, de::Uri const& searchPath,
@@ -299,7 +250,7 @@ static bool findResource(resourceclass_t rclass, de::Uri const& searchPath,
         String const& resolvedPath = searchPath.resolved();
 
         // Is a namespace specified?
-        ResourceNamespace* rnamespace = namespaceByName(searchPath.scheme());
+        ResourceNamespace* rnamespace = namespaceByName(Str_Text(searchPath.scheme()));
 
         // First try with the optional suffix.
         if(!optionalSuffix.isEmpty())
@@ -519,7 +470,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
         {
-            String path = QDir::fromNativeSeparators(NativePath(CommandLine_NextAsPath()).expand());
+            String path = NativePath(CommandLine_NextAsPath()).expand().withSeparators('/');
 
             de::Uri uri2 = de::Uri(path / "$(Game.IdentityKey)/", RC_NULL);
             rnamespace.addSearchPath(ResourceNamespace::OverridePaths, uri2, def->searchPathFlags);
@@ -530,7 +481,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
-            String path = QDir::fromNativeSeparators(NativePath(CommandLine_NextAsPath()).expand());
+            String path = NativePath(CommandLine_NextAsPath()).expand().withSeparators('/');
             de::Uri uri = de::Uri(path, RC_NULL);
             rnamespace.addSearchPath(ResourceNamespace::FallbackPaths, uri, def->searchPathFlags);
         }
@@ -548,7 +499,11 @@ void F_InitResourceLocator(void)
 void F_ShutdownResourceLocator(void)
 {
     if(!inited) return;
-    destroyAllNamespaces();
+    DENG2_FOR_EACH(ResourceNamespaces, i, namespaces)
+    {
+        delete *i;
+    }
+    namespaces.clear();
     inited = false;
 }
 
@@ -557,44 +512,15 @@ void F_ResetAllResourceNamespaces(void)
     resetAllNamespaces();
 }
 
-void F_ResetResourceNamespace(resourcenamespaceid_t rni)
+ResourceNamespace* F_ResourceNamespaceByName(String name)
 {
-    ResourceNamespace* rnamespace = namespaceById(rni);
-    if(!rnamespace) return;
-
-    rnamespace->clearSearchPaths(ResourceNamespace::ExtraPaths);
-    rnamespace->clear();
+    return namespaceByName(name);
 }
 
-ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni)
+ResourceNamespaces const& F_ResourceNamespaces()
 {
-    return namespaceInfoById(rni)->rnamespace;
-}
-
-resourcenamespaceid_t F_SafeResourceNamespaceForName(String name)
-{
-    return findResourceNamespaceIdForName(name);
-}
-
-uint F_NumResourceNamespaces(void)
-{
-    return numNamespaces;
-}
-
-boolean F_IsValidResourceNamespaceId(int val)
-{
-    return (boolean)(val > 0 && (unsigned)val < (F_NumResourceNamespaces() + 1)? 1 : 0);
-}
-
-boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
-    uri_s const* searchPath)
-{
-    if(!searchPath) return false;
-
-    ResourceNamespace* rnamespace = namespaceById(rni);
-    if(!rnamespace) return false;
-
-    return rnamespace->addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(*searchPath), flags);
+    DENG_ASSERT(inited);
+    return namespaces;
 }
 
 boolean F_FindResource4(resourceclass_t rclass, uri_s const* searchPath,
@@ -646,7 +572,7 @@ resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
     return resourceTypeInfo(type).defaultClass;
 }
 
-resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
+ResourceNamespace* F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 {
     DENG_ASSERT(VALID_RESOURCE_CLASS(rclass));
     static String const defaultNamespaces[RESOURCECLASS_COUNT] = {
@@ -658,7 +584,7 @@ resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
         /* RC_MUSIC */      "Music",
         /* RC_FONT */       "Fonts"
     };
-    return findResourceNamespaceIdForName(defaultNamespaces[rclass]);
+    return namespaceByName(defaultNamespaces[rclass]);
 }
 
 resourcetype_t F_GuessResourceTypeByName(String path)

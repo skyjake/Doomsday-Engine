@@ -29,7 +29,6 @@
 #  include <objbase.h>
 #endif
 
-#include <QDir>
 #include <QStringList>
 
 #include <de/NativePath>
@@ -513,8 +512,8 @@ static void initPathMappings()
 
         if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
         {
-            String source      = QDir::fromNativeSeparators(NativePath(CommandLine_PathAt(i + 1)).expand());
-            String destination = QDir::fromNativeSeparators(NativePath(CommandLine_PathAt(i + 2)).expand());
+            String source      = NativePath(CommandLine_PathAt(i + 1)).expand().withSeparators('/');
+            String destination = NativePath(CommandLine_PathAt(i + 2)).expand().withSeparators('/');
             App_FileSystem()->mapPath(source, destination);
             i += 2;
         }
@@ -590,7 +589,7 @@ static bool parsePathLumpMappings(char const* buffer)
         }
         else
         {
-            String destination = QDir::fromNativeSeparators(NativePath(Str_Text(&path)).expand());
+            String destination = NativePath(Str_Text(&path)).expand().withSeparators('/');
             App_FileSystem()->mapPathToLump(lumpName, destination);
         }
     } while(*ch);
@@ -1282,8 +1281,6 @@ void DD_FinishInitializationAfterWindowReady(void)
     Window_SetDrawFunc(Window_Main(), DD_GameLoopDrawer);
 }
 
-extern ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
-
 /**
  * Engine initialization. After completed, the game loop is ready to be started.
  * Called from the app entrypoint function.
@@ -1369,7 +1366,8 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    ResourceNamespace* rnamespace = F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_PACKAGE));
+    ResourceNamespace* rnamespace = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
+    DENG_ASSERT(rnamespace);
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -2297,7 +2295,7 @@ D_CMD(Load)
     AutoStr* foundPath = AutoStr_NewStd();
     for(; arg < argc; ++arg)
     {
-        de::Uri searchPath = de::Uri(QDir::fromNativeSeparators(NativePath(argv[arg]).expand()), RC_PACKAGE);
+        de::Uri searchPath = de::Uri(NativePath(argv[arg]).expand().withSeparators('/'), RC_PACKAGE);
         if(!F_FindResource3(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
 
         if(tryLoadFile(Str_Text(foundPath)))
@@ -2428,7 +2426,7 @@ D_CMD(Unload)
     AutoStr* foundPath = AutoStr_NewStd();
     for(i = 1; i < argc; ++i)
     {
-        de::Uri searchPath = de::Uri(QDir::fromNativeSeparators(NativePath(argv[1]).expand()), RC_PACKAGE);
+        de::Uri searchPath = de::Uri(NativePath(argv[1]).expand().withSeparators('/'), RC_PACKAGE);
         if(!F_FindResource2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
 
         if(tryUnloadFile(Str_Text(foundPath)))

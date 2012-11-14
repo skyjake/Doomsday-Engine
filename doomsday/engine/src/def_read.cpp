@@ -54,7 +54,10 @@
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 
+#include <de/NativePath>
 #include <de/memory.h>
+
+using namespace de;
 
 #define MAX_RECUR_DEPTH     30
 #define MAX_TOKEN_LEN       128
@@ -383,7 +386,7 @@ static int ReadAnyString(char** dest)
     return true;
 }
 
-static int ReadUri(Uri** dest, const char* defaultScheme)
+static int ReadUri(uri_s** dest, const char* defaultScheme)
 {
     char* buf = 0;
     int result;
@@ -806,18 +809,15 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("ModelPath"))
         {
-            Uri* newSearchPath;
-            AutoStr* path;
-
             READSTR(label);
             CHECKSC;
 
-            path = AutoStr_FromTextStd(label);
-            F_AppendMissingSlash(path);
-            newSearchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-            F_AddExtraSearchPathToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL),
-                                                    0, newSearchPath);
-            Uri_Delete(newSearchPath);
+            String modelPath = NativePath(label).withSeparators('/') / "/"; // Ensure it has a terminating separator.
+            de::Uri newSearchPath = de::Uri(modelPath, RC_NULL);
+
+            ResourceNamespace* rnamespace = F_DefaultResourceNamespaceForClass(RC_MODEL);
+            DENG_ASSERT(rnamespace);
+            rnamespace->addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath), 0);
         }
 
         if(ISTOKEN("Header"))
@@ -1156,7 +1156,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             }
             else if(!bCopyNext)
             {
-                Uri* otherMat = NULL;
+                uri_s* otherMat = NULL;
                 AutoStr* otherMatPath;
 
                 READURI(&otherMat, NULL);
@@ -1195,7 +1195,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
                 const ded_material_t* prevMaterial = ded->materials + prevMaterialDefIdx;
-                Uri* uri = mat->uri;
+                uri_s* uri = mat->uri;
 
                 memcpy(mat, prevMaterial, sizeof(*mat));
                 mat->uri = uri;
@@ -1579,7 +1579,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             if(prevMapInfoDefIdx >= 0 && bCopyNext)
             {
                 const ded_mapinfo_t* prevMapInfo = ded->mapInfo + prevMapInfoDefIdx;
-                Uri* uri = mi->uri;
+                uri_s* uri = mi->uri;
                 int i;
 
                 memcpy(mi, prevMapInfo, sizeof(*mi));
@@ -1728,7 +1728,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 FINDBEGIN;
                 for(;;)
                 {
-                    Uri** mn;
+                    uri_s** mn;
 
                     READLABEL;
                     RV_STR("ID", tenv->id)
@@ -1736,7 +1736,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     {   // A new material path.
                         ddstring_t mnamespace; Str_Init(&mnamespace);
                         Str_Set(&mnamespace, ISLABEL("Material")? "" : ISLABEL("Texture")? MN_TEXTURES_NAME : MN_FLATS_NAME);
-                        mn = (Uri**) DED_NewEntry((void**)&tenv->materials, &tenv->count, sizeof(*mn));
+                        mn = (uri_s**) DED_NewEntry((void**)&tenv->materials, &tenv->count, sizeof(*mn));
                         FINDBEGIN;
                         for(;;)
                         {
@@ -2633,10 +2633,10 @@ ded_end_read:
 
 int DED_Read(ded_t* ded, const char* path)
 {
-    Str transPath;
+    ddstring_t transPath;
     size_t bufferedDefSize;
     char* bufferedDef;
-    FileHandle* file;
+    filehandle_s* file;
     int result;
 
     // Compose the (possibly-translated) path.

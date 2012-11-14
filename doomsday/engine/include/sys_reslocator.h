@@ -33,6 +33,9 @@
 #include "uri.h"
 
 #ifdef __cplusplus
+#include <QList>
+
+#include "resourcenamespace.h"
 #include <de/String>
 
 extern "C" {
@@ -69,15 +72,6 @@ typedef enum {
 #define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
 
 /**
- * Unique identifier associated with resource namespaces managed by the
- * resource locator.
- *
- * @ingroup core
- * @see ResourceNamespace
- */
-typedef uint resourcenamespaceid_t;
-
-/**
  * @defgroup resourceLocationFlags  Resource Location Flags
  *
  * Flags used with the F_FindResource family of functions which dictate the
@@ -107,23 +101,7 @@ void F_ShutdownResourceLocator(void);
 
 void F_ResetAllResourceNamespaces(void);
 
-void F_ResetResourceNamespace(resourcenamespaceid_t rni);
-
 void F_CreateNamespacesForFileResourcePaths(void);
-
-/// @return  Number of resource namespaces.
-uint F_NumResourceNamespaces(void);
-
-/// @return  @c true iff @a value can be interpreted as a valid resource namespace id.
-boolean F_IsValidResourceNamespaceId(int value);
-
-/**
- * @param rni  Unique identifier of the namespace to add to.
- * @param flags  @see searchPathFlags
- * @param searchPath  Uri representing the search path to be added.
- */
-boolean F_AddExtraSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
-    struct uri_s const* searchPath);
 
 /**
  * Attempt to locate a named resource.
@@ -165,19 +143,27 @@ uint F_FindResourceFromList(resourceclass_t rclass, char const* searchPaths,
  */
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type);
 
-/**
- * @return  Unique identifier of the default namespace associated with @a rclass.
- */
-resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
-
 #ifdef __cplusplus
 } // extern "C"
 
+namespace de {
+typedef QList<ResourceNamespace*> ResourceNamespaces;
+}
+
+de::ResourceNamespaces const& F_ResourceNamespaces();
+
 /**
- * @return  Unique identifier of the resource namespace associated with @a name,
- *      else @c 0 (not found).
+ * @return  Unique identifier of the default namespace associated with @a rclass.
  */
-resourcenamespaceid_t F_SafeResourceNamespaceForName(de::String name);
+de::ResourceNamespace* F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
+
+/**
+ * Lookup a ResourceNamespace by symbolic name.
+ *
+ * @param name  Symbolic name of the namespace.
+ * @return  ResourceNamespace associated with @a name; otherwise @c 0 (not found).
+ */
+de::ResourceNamespace* F_ResourceNamespaceByName(de::String name);
 
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely

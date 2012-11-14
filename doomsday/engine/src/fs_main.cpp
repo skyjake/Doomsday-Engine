@@ -230,7 +230,7 @@ struct FS1::Instance
         // We must have an absolute path - prepend the base path if necessary.
         if(QDir::isRelativePath(path))
         {
-            String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+            String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
             path = basePath / path;
         }
 
@@ -322,7 +322,7 @@ struct FS1::Instance
         if(!nativeFile) return 0;
 
         // Do not read files twice.
-        if(!allowDuplicate && !self->checkFileId(QDir::fromNativeSeparators(nativePath)))
+        if(!allowDuplicate && !self->checkFileId(nativePath.withSeparators('/')))
         {
             fclose(nativeFile);
             return 0;
@@ -347,7 +347,7 @@ struct FS1::Instance
         // We must have an absolute path.
         if(QDir::isRelativePath(path))
         {
-            String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+            String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
             path = basePath / path;
         }
 
@@ -516,7 +516,7 @@ de::File1& FS1::find(String path)
     // Convert to an absolute path.
     if(!QDir::isAbsolutePath(path))
     {
-        String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+        String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
         path = basePath / path;
     }
 
@@ -884,7 +884,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     // We must have an absolute path - prepend the base path if necessary.
     if(!QDir::isAbsolutePath(searchPattern))
     {
-        String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+        String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
         searchPattern = basePath / searchPattern;
     }
 
@@ -972,7 +972,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
                     // Ignore relative directory symbolics.
                     if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                     {
-                        String foundPath = searchDirectory / QDir::fromNativeSeparators(NativePath(Str_Text(&fd.name)));
+                        String foundPath = searchDirectory / NativePath(Str_Text(&fd.name)).withSeparators('/');
                         QByteArray foundPathUtf8 = foundPath.toUtf8();
                         if(!F_MatchFileName(foundPathUtf8.constData(), searchPatternUtf8.constData())) continue;
 
@@ -1107,7 +1107,7 @@ void FS1::mapPathToLump(String lumpName, String destination)
     // We require an absolute path - prepend the CWD if necessary.
     if(QDir::isRelativePath(destination))
     {
-        String workPath = QDir::fromNativeSeparators(DENG2_APP->currentWorkPath());
+        String workPath = DENG2_APP->currentWorkPath().withSeparators('/');
         destination = workPath / destination;
     }
 
@@ -1225,7 +1225,7 @@ D_CMD(Dir)
     {
         for(int i = 1; i < argc; ++i)
         {
-            String path = QDir::fromNativeSeparators(NativePath(argv[i]).expand());
+            String path = NativePath(argv[i]).expand().withSeparators('/');
             App_FileSystem()->printDirectory(path);
         }
     }
@@ -1350,14 +1350,14 @@ void F_UnloadAllNonStartupFiles(int* numUnloaded)
 
 void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath)
 {
-    String source      = QDir::fromNativeSeparators(NativePath(nativeSourcePath).expand());
-    String destination = QDir::fromNativeSeparators(NativePath(nativeDestinationPath).expand());
+    String source      = NativePath(nativeSourcePath).expand().withSeparators('/');
+    String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
     App_FileSystem()->mapPath(source, destination);
 }
 
 void F_AddLumpDirectoryMapping(char const* lumpName, char const* nativeDestinationPath)
 {
-    String destination = QDir::fromNativeSeparators(NativePath(nativeDestinationPath).expand());
+    String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
     App_FileSystem()->mapPathToLump(destination, String(lumpName));
 }
 
@@ -1368,7 +1368,7 @@ void F_ResetFileIds(void)
 
 boolean F_CheckFileId(char const* nativePath)
 {
-    String path = QDir::fromNativeSeparators(NativePath(nativePath).expand());
+    String path = NativePath(nativePath).expand().withSeparators('/');
     return App_FileSystem()->checkFileId(path);
 }
 
@@ -1379,7 +1379,7 @@ int F_LumpCount(void)
 
 int F_Access(char const* nativePath)
 {
-    String path = QDir::fromNativeSeparators(NativePath(nativePath).expand());
+    String path = NativePath(nativePath).expand().withSeparators('/');
     return App_FileSystem()->accessFile(path)? 1 : 0;
 }
 
@@ -1405,7 +1405,7 @@ struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t ba
 {
     try
     {
-        String path = QDir::fromNativeSeparators(NativePath(nativePath).expand());
+        String path = NativePath(nativePath).expand().withSeparators('/');
         return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openFile(path, mode, baseOffset, CPP_BOOL(allowDuplicate)));
     }
     catch(FS1::NotFoundError const&)
@@ -1694,7 +1694,7 @@ uint F_CRCNumber(void)
 
 lumpnum_t F_OpenAuxiliary2(char const* nativePath, size_t baseOffset)
 {
-    String path = QDir::fromNativeSeparators(NativePath(nativePath).expand());
+    String path = NativePath(nativePath).expand().withSeparators('/');
     return App_FileSystem()->openAuxiliary(path, baseOffset);
 }
 

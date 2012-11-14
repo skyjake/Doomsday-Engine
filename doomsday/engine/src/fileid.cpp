@@ -92,7 +92,7 @@ FileId::Md5Hash FileId::hash(String path)
     // Ensure we've a normalized path.
     if(QDir::isRelativePath(path))
     {
-        String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+        String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
         path = basePath / path;
     }
 

@@ -24,7 +24,6 @@
  */
 
 #include <QDebug>
-#include <QDir>
 
 #include "de_base.h"
 #include "game.h"
@@ -38,8 +37,6 @@
 
 /// Size of the fixed-size path node buffer.
 #define PATHNODEBUFFER_SIZE         24
-
-extern de::ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 namespace de {
 
@@ -277,7 +274,7 @@ struct Uri::Instance
         {
             Str_Clear(&scheme);
         }
-        else if(defaultResourceClass != RC_NULL && F_SafeResourceNamespaceForName(Str_Text(&scheme)) == 0)
+        else if(defaultResourceClass != RC_NULL && !F_ResourceNamespaceByName(Str_Text(&scheme)))
         {
             LOG_WARNING("Unknown scheme in path \"%s\", using default.") << Str_Text(&path);
             //Str_Clear(&_scheme);
@@ -295,7 +292,7 @@ struct Uri::Instance
 
         if(VALID_RESOURCE_CLASS(defaultResourceClass))
         {
-            ResourceNamespace* rnamespace = F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(defaultResourceClass));
+            ResourceNamespace* rnamespace = F_DefaultResourceNamespaceForClass(defaultResourceClass);
             DENG_ASSERT(rnamespace);
             QByteArray rnamespaceName = rnamespace->name().toUtf8();
             Str_Set(&scheme, rnamespaceName.constData());
@@ -421,7 +418,7 @@ Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
 
 /*Uri Uri::fromNativePath(NativePath const& path)
 {
-    return Uri(QDir::fromNativeSeparators(path.expand()), RC_NULL);
+    return Uri(path.expand().withSeparators('/), RC_NULL);
 }
 
 Uri Uri::fromReader(struct reader_s& reader)

@@ -24,7 +24,6 @@
 
 #include <zlib.h>
 
-#include <QDir>
 #include <vector>
 
 #include "de_base.h"
@@ -42,8 +41,6 @@
 #include <de/memoryzone.h>
 
 #include "zip.h"
-
-extern de::ResourceNamespace* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 namespace de {
 
@@ -400,7 +397,7 @@ struct Zip::Instance
                 // Advance the cursor past the variable sized fields.
                 pos += USHORT(header->fileNameSize) + USHORT(header->extraFieldSize) + USHORT(header->commentSize);
 
-                String filePath = QDir::fromNativeSeparators(NativePath(nameStart, USHORT(header->fileNameSize)));
+                String filePath = NativePath(nameStart, USHORT(header->fileNameSize)).withSeparators('/');
 
                 // Skip directories (we don't presently model these).
                 if(ULONG(header->size) == 0 && filePath.last() == '/') continue;
@@ -466,8 +463,7 @@ struct Zip::Instance
                 }
 
                 // Make it absolute.
-                String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
-                filePath = basePath / filePath;
+                filePath = DENG2_APP->nativeBasePath().withSeparators('/') / filePath;
 
                 QByteArray filePathUtf8 = filePath.toUtf8();
 
@@ -1024,13 +1020,10 @@ static bool applyGamePathMappings(String& path)
     }
 
     // Key-named directories in the root might be mapped to another location.
-    uint const numNamespaces = F_NumResourceNamespaces();
-    for(uint i = 0; i < numNamespaces; ++i)
+    ResourceNamespaces const& namespaces = F_ResourceNamespaces();
+    DENG2_FOR_EACH_CONST(ResourceNamespaces, i, namespaces)
     {
-        ResourceNamespace* rnamespace = F_ToResourceNamespace(resourcenamespaceid_t(i + 1));
-        DENG_ASSERT(rnamespace);
-
-        if(rnamespace->applyPathMappings(path))
+        if((*i)->applyPathMappings(path))
         {
             return true;
         }

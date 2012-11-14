@@ -45,6 +45,9 @@ namespace de
      * Resource Namespace.
      *
      * @ingroup resource
+     *
+     * @todo The symbolic name of the namespace and the path mapping template
+     *       (@see applyPathMappings) should be defined externally. -ds
      */
     class ResourceNamespace
     {
@@ -140,10 +143,19 @@ namespace de
         void rebuild();
 
         /**
-         * Reset this namespace back to it's "empty" state (i.e., no resources).
+         * Clear this namespace back to it's "empty" state (i.e., no resources).
          * The search path groups are unaffected.
          */
         void clear();
+
+        /**
+         * Reset this namespace, returning it to an empty state and clearing any
+         * @ref ExtraPaths which have been registered since its construction.
+         */
+        inline void reset() {
+            clearSearchPaths(ResourceNamespace::ExtraPaths);
+            clear();
+        }
 
         /**
          * Manually add a resource to this namespace. Duplicates are pruned
@@ -208,8 +220,6 @@ namespace de
          * @param path  The path to be mapped (applied in-place).
          *
          * @return  @c true iff mapping was applied to the path.
-         *
-         * @todo The mapping template should be defined externally.
          */
         bool applyPathMappings(String& path) const;
 

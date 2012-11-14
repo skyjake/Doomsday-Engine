@@ -232,7 +232,7 @@ struct ResourceNamespace::Instance
         // Try to make it a relative path.
         if(QDir::isAbsolutePath(path))
         {
-            String basePath = QDir::fromNativeSeparators(DENG2_APP->nativeBasePath());
+            String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
             if(path.beginsWith(basePath))
             {
                 path = path.mid(basePath.length() + 1);
