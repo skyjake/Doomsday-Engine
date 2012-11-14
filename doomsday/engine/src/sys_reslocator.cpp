@@ -45,28 +45,28 @@ struct ResourceTypeInfo
 
     /// Default class attributed to resources of this type.
     resourceclass_t defaultClass;
-    char const* knownFileNameExtensions[max_extensions];
+    String const knownFileNameExtensions[max_extensions];
 };
 
 static bool inited = false;
 
 static ResourceTypeInfo const typeInfo[NUM_RESOURCE_TYPES] = {
-    /* RT_ZIP */        { RC_PACKAGE,      { ".pk3", ".zip", 0 } },
-    /* RT_WAD */        { RC_PACKAGE,      { ".wad", 0 } },
-    /* RT_DED */        { RC_DEFINITION,   { ".ded", 0 } },
-    /* RT_PNG */        { RC_GRAPHIC,      { ".png", 0 } },
-    /* RT_JPG */        { RC_GRAPHIC,      { ".jpg", 0 } },
-    /* RT_TGA */        { RC_GRAPHIC,      { ".tga", 0 } },
-    /* RT_PCX */        { RC_GRAPHIC,      { ".pcx", 0 } },
-    /* RT_DMD */        { RC_MODEL,        { ".dmd", 0 } },
-    /* RT_MD2 */        { RC_MODEL,        { ".md2", 0 } },
-    /* RT_WAV */        { RC_SOUND,        { ".wav", 0 } },
-    /* RT_OGG */        { RC_MUSIC,        { ".ogg", 0 } },
-    /* RT_MP3 */        { RC_MUSIC,        { ".mp3", 0 } },
-    /* RT_MOD */        { RC_MUSIC,        { ".mod", 0 } },
-    /* RT_MID */        { RC_MUSIC,        { ".mid", 0 } },
-    /* RT_DEH */        { RC_UNKNOWN,      { ".deh", 0 } },
-    /* RT_DFN */        { RC_FONT,         { ".dfn", 0 } }
+    /* RT_ZIP */        { RC_PACKAGE,      { ".pk3", ".zip", "" } },
+    /* RT_WAD */        { RC_PACKAGE,      { ".wad", "" } },
+    /* RT_DED */        { RC_DEFINITION,   { ".ded", "" } },
+    /* RT_PNG */        { RC_GRAPHIC,      { ".png", "" } },
+    /* RT_JPG */        { RC_GRAPHIC,      { ".jpg", "" } },
+    /* RT_TGA */        { RC_GRAPHIC,      { ".tga", "" } },
+    /* RT_PCX */        { RC_GRAPHIC,      { ".pcx", "" } },
+    /* RT_DMD */        { RC_MODEL,        { ".dmd", "" } },
+    /* RT_MD2 */        { RC_MODEL,        { ".md2", "" } },
+    /* RT_WAV */        { RC_SOUND,        { ".wav", "" } },
+    /* RT_OGG */        { RC_MUSIC,        { ".ogg", "" } },
+    /* RT_MP3 */        { RC_MUSIC,        { ".mp3", "" } },
+    /* RT_MOD */        { RC_MUSIC,        { ".mod", "" } },
+    /* RT_MID */        { RC_MUSIC,        { ".mid", "" } },
+    /* RT_DEH */        { RC_UNKNOWN,      { ".deh", "" } },
+    /* RT_DFN */        { RC_FONT,         { ".dfn", "" } }
 };
 
 // Recognized resource types (in order of importance, left to right).
@@ -217,23 +217,20 @@ static bool findResource2(int flags, resourceclass_t rclass, String searchPath,
 
     path2.reserve(path2.length() + 5 /*max expected extension length*/);
 
-    bool found = false;
-    resourcetype_t const* typeIter = searchTypeOrder[rclass];
-    do
+    for(resourcetype_t const* type = searchTypeOrder[rclass]; *type != RT_NONE; ++type)
     {
-        ResourceTypeInfo const& typeInfo = resourceTypeInfo(*typeIter);
-        if(!typeInfo.knownFileNameExtensions[0]) continue;
-
-        char const* const* ext = typeInfo.knownFileNameExtensions;
-        do
+        ResourceTypeInfo const& typeInfo = resourceTypeInfo(*type);
+        for(int i = 0; !typeInfo.knownFileNameExtensions[i].isEmpty(); ++i)
         {
-            found = findResource3(rnamespace, de::Uri(path2 + *ext, RC_NULL), foundPath);
+            String const& ext = typeInfo.knownFileNameExtensions[i];
+            if(findResource3(rnamespace, de::Uri(path2 + ext, RC_NULL), foundPath))
+            {
+                return true;
+            }
+        }
+    };
 
-        } while(!found && *(++ext));
-
-    } while(!found && *(++typeIter) != RT_NONE);
-
-    return found;
+    return false; // Not found.
 }
 
 static bool findResource(resourceclass_t rclass, de::Uri const& searchPath,
@@ -597,12 +594,10 @@ resourcetype_t F_GuessResourceTypeByName(String path)
 
     for(uint i = RT_FIRST; i < NUM_RESOURCE_TYPES; ++i)
     {
-        ResourceTypeInfo const& info = resourceTypeInfo(resourcetype_t(i));
-        if(!info.knownFileNameExtensions) continue;
-
-        for(char const* const* cand = info.knownFileNameExtensions; *cand; ++cand)
+        ResourceTypeInfo const& typeInfo = resourceTypeInfo(resourcetype_t(i));
+        for(int j = 0; !typeInfo.knownFileNameExtensions[j].isEmpty(); ++j)
         {
-            if(!ext.compareWithoutCase(ext))
+            if(!ext.compareWithoutCase(typeInfo.knownFileNameExtensions[j]))
             {
                 return resourcetype_t(i);
             }
