@@ -46,8 +46,8 @@ struct ResourceRecord::Instance
     /// Used for identification purposes.
     QStringList identityKeys;
 
-    /// Index (in ::names) of the name used to locate this resource if found.
-    /// Set during resource location.
+    /// Index (in ResourceRecord::Instance::names) of the name used to locate
+    /// this resource if found. Set during resource location.
     int foundNameIndex;
 
     /// Fully resolved absolute path to the located resource if found.

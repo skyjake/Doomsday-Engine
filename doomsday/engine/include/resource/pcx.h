@@ -1,4 +1,4 @@
-/**\file gl_pcx.h
+/**\file pcx.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
