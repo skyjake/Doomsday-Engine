@@ -66,12 +66,6 @@ extern "C" {
 /// Maximum number of players supported by the engine.
 #define DDMAXPLAYERS        16
 
-/// Base default paths for data files.
-#define DD_BASEPATH_DATA    "}data/"
-
-/// Base default paths for definition files.
-#define DD_BASEPATH_DEFS    "}defs/"
-
 // The case-independent strcmps have different names.
 #if WIN32
 # define strcasecmp _stricmp

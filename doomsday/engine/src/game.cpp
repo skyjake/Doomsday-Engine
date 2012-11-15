@@ -113,16 +113,16 @@ GameCollection& Game::collection() const
     return *reinterpret_cast<de::GameCollection*>(App_GameCollection());
 }
 
-Game& Game::addResource(resourceclass_t rclass, ResourceRecord& record)
+Game& Game::addResource(resourceclassid_t classId, ResourceRecord& record)
 {
-    if(!VALID_RESOURCE_CLASS(rclass))
-        throw de::Error("Game::addResource", QString("Invalid resource class %1").arg(rclass));
+    if(!VALID_RESOURCE_CLASSID(classId))
+        throw de::Error("Game::addResource", QString("Invalid resource class %1").arg(classId));
 
     // Ensure we don't add duplicates.
-    Resources::const_iterator found = d->resources.find(rclass, &record);
+    Resources::const_iterator found = d->resources.find(classId, &record);
     if(found == d->resources.end())
     {
-        d->resources.insert(rclass, &record);
+        d->resources.insert(classId, &record);
     }
     return *this;
 }
@@ -228,9 +228,9 @@ void Game::printResources(Game const& game, int rflags, bool printStatus)
     Resources const& resources = game.resources();
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        resourceclass_t const rclass = resourceclass_t(i);
-        for(Resources::const_iterator i = resources.find(rclass);
-            i != resources.end() && i.key() == rclass; ++i)
+        resourceclassid_t const classId = resourceclassid_t(i);
+        for(Resources::const_iterator i = resources.find(classId);
+            i != resources.end() && i.key() == classId; ++i)
         {
             ResourceRecord& record = **i;
             if(rflags >= 0 && (rflags & record.resourceFlags()))
@@ -331,11 +331,11 @@ boolean Game_IsNullObject(Game const* game)
     return de::isNullGame(*reinterpret_cast<de::Game const*>(game));
 }
 
-struct game_s* Game_AddResource(struct game_s* game, resourceclass_t rclass, struct resourcerecord_s* record)
+struct game_s* Game_AddResource(struct game_s* game, resourceclassid_t classId, struct resourcerecord_s* record)
 {
     SELF(game);
     DENG_ASSERT(record);
-    self->addResource(rclass, reinterpret_cast<de::ResourceRecord&>(*record));
+    self->addResource(classId, reinterpret_cast<de::ResourceRecord&>(*record));
     return game;
 }
 

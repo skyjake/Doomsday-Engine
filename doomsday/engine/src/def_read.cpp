@@ -815,7 +815,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             String modelPath = NativePath(label).withSeparators('/') / "/"; // Ensure it has a terminating separator.
             de::Uri newSearchPath = de::Uri(modelPath, RC_NULL);
 
-            ResourceNamespace* rnamespace = F_DefaultResourceNamespaceForClass(RC_MODEL);
+            ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassByName("RC_MODEL").defaultNamespace());
             DENG_ASSERT(rnamespace);
             rnamespace->addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath), 0);
         }

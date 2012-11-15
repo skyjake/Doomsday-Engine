@@ -995,7 +995,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
 
 struct FileInterpreter
 {
-    resourcetype_t resourceType;
+    resourcetypeid_t resourceType;
     de::File1* (*interpret)(de::FileHandle& hndl, String path, FileInfo const& info);
 };
 
@@ -1017,7 +1017,6 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& inf
 {
     DENG_ASSERT(!path.isEmpty());
 
-    /// @todo Order here should be determined by the resource locator.
     static FileInterpreter interpreters[] = {
         { RT_ZIP,  interpretAsZipFile },
         { RT_WAD,  interpretAsWadFile },
@@ -1027,13 +1026,13 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& inf
     de::File1* interpretedFile = 0;
 
     // Firstly try interpreter(s) for guessed resource types.
-    resourcetype_t resTypeGuess = F_GuessResourceTypeFromFileName(path);
-    if(resTypeGuess != RT_NONE)
+    ResourceType const& rtypeGuess = F_GuessResourceTypeFromFileName(path);
+    if(!isNullResourceType(rtypeGuess))
     {
         for(FileInterpreter* intper = interpreters; intper->interpret; ++intper)
         {
             // Not applicable for this resource type?
-            if(intper->resourceType != resTypeGuess) continue;
+            if(F_ResourceTypeById(intper->resourceType) != &rtypeGuess) continue;
 
             interpretedFile = intper->interpret(hndl, path, info);
             if(interpretedFile) break;
@@ -1041,12 +1040,13 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& inf
     }
 
     // If not yet interpreted - try each recognisable format in order.
+    /// @todo Order here should be determined by the resource locator.
     if(!interpretedFile)
     {
         for(FileInterpreter* intper = interpreters; intper->interpret; ++intper)
         {
             // Already tried this?
-            if(resTypeGuess && intper->resourceType == resTypeGuess) continue;
+            if(F_ResourceTypeById(intper->resourceType) == &rtypeGuess) continue;
 
             interpretedFile = intper->interpret(hndl, path, info);
             if(interpretedFile) break;
@@ -1330,12 +1330,16 @@ void F_Init(void)
 {
     DENG_ASSERT(!fileSystem);
     fileSystem = new de::FS1();
+
+    F_InitResourceLocator();
 }
 
 void F_Shutdown(void)
 {
     if(!fileSystem) return;
     delete fileSystem; fileSystem = 0;
+
+    F_ShutdownResourceLocator();
 }
 
 void F_EndStartup(void)

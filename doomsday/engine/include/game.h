@@ -70,7 +70,7 @@ class GameCollection;
 class Game
 {
 public:
-    typedef QMultiMap<resourceclass_t, ResourceRecord*> Resources;
+    typedef QMultiMap<resourceclassid_t, ResourceRecord*> Resources;
 
 public:
     /**
@@ -116,10 +116,10 @@ public:
      * @note Resource registration order defines the order in which resources of each
      *       type are loaded.
      *
-     * @param rclass  Class of resource being added.
+     * @param classId  Class of resource being added.
      * @param record  ResourceRecord to add.
      */
-    Game& addResource(resourceclass_t rclass, ResourceRecord& record);
+    Game& addResource(resourceclassid_t classId, ResourceRecord& record);
 
     bool allStartupResourcesFound() const;
 
@@ -195,7 +195,7 @@ public:
 public:
     NullGame();
 
-    Game& addResource(resourceclass_t /*rclass*/, struct resourcerecord_s& /*record*/) {
+    Game& addResource(resourceclassid_t /*classId*/, struct resourcerecord_s& /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 
@@ -207,7 +207,7 @@ public:
         return true; // Always.
     }
 
-    struct resourcerecord_s* const* resources(resourceclass_t /*rclass*/, int* /*count*/) const {
+    struct resourcerecord_s* const* resources(resourceclassid_t /*classId*/, int* /*count*/) const {
         return 0;
     }
 
@@ -239,7 +239,7 @@ void Game_Delete(Game* game);
 
 boolean Game_IsNullObject(Game const* game);
 
-struct game_s* Game_AddResource(Game* game, resourceclass_t rclass, struct resourcerecord_s* record);
+struct game_s* Game_AddResource(Game* game, resourceclassid_t classId, struct resourcerecord_s* record);
 
 boolean Game_AllStartupResourcesFound(Game const* game);
 

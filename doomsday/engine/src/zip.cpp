@@ -973,50 +973,23 @@ static bool applyGamePathMappings(String& path)
     if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        resourcetype_t type = F_GuessResourceTypeFromFileName(path.fileName());
-        resourceclass_t rclass;
+        ResourceType const& rtype = F_GuessResourceTypeFromFileName(path.fileName());
 
-        // Certain resource files require special handling.
-        // Something of a kludge, at this level.
-        switch(type)
+        switch(rtype.defaultClass())
         {
-        case RT_DEH: // Treat DeHackEd patches as packages so they are mapped to Data.
-            rclass = RC_PACKAGE;
-            break;
-
-        case RT_NONE: { // *.lmp files must be mapped to Data.
-            String ext = path.fileNameExtension();
-            if(!ext.empty() && !ext.compareWithoutCase(".lmp"))
-            {
-                rclass = RC_PACKAGE;
-            }
-            else
-            {
-                rclass = RC_UNKNOWN;
-            }
-            break; }
-
-        default:
-            rclass = F_DefaultResourceClassForType(type);
-            break;
-        }
-        // Kludge end
-
-        // Mapped to the Data directory?
-        if(rclass == RC_PACKAGE)
-        {
+        case RC_PACKAGE:
+            // Mapped to the Data directory.
             path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
             return true;
-        }
 
-        // Mapped to the Defs directory?
-        if(rclass == RC_DEFINITION)
-        {
+        case RC_DEFINITION:
+            // Mapped to the Defs directory?
             path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
             return true;
-        }
 
-        return false;
+        default:
+            return false;
+        }
     }
 
     // Key-named directories in the root might be mapped to another location.

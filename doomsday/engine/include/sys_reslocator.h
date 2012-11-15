@@ -42,36 +42,6 @@ extern "C" {
 #endif
 
 /**
- * Resource Type. Unique identifer attributable to resources (e.g., files).
- *
- * @ingroup core
- */
-typedef enum {
-    RT_NONE = 0,
-    RT_FIRST = 1,
-    RT_ZIP = RT_FIRST,
-    RT_WAD,
-    RT_DED,
-    RT_PNG,
-    RT_JPG,
-    RT_TGA,
-    RT_PCX,
-    RT_DMD,
-    RT_MD2,
-    RT_WAV,
-    RT_OGG,
-    RT_MP3,
-    RT_MOD,
-    RT_MID,
-    RT_DEH,
-    RT_DFN,
-    RT_LAST_INDEX
-} resourcetype_t;
-
-#define NUM_RESOURCE_TYPES          (RT_LAST_INDEX-1)
-#define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
-
-/**
  * @defgroup resourceLocationFlags  Resource Location Flags
  *
  * Flags used with the F_FindResource family of functions which dictate the
@@ -88,8 +58,6 @@ typedef enum {
 /**
  * @post Initial/default search paths registered, namespaces initialized and
  *       queries may begin.
- *
- * @note May be called to re-initialize the locator back to default state.
  */
 void F_InitResourceLocator(void);
 
@@ -101,15 +69,13 @@ void F_ShutdownResourceLocator(void);
 
 void F_ResetAllResourceNamespaces(void);
 
-void F_CreateResourceNamespaces(void);
-
 /**
  * Attempt to locate a named resource.
  *
- * @param rclass        Class of resource being searched for (if known).
+ * @param classId        Class of resource being searched for (if known).
  *
  * @param searchPath    Path/name of the resource being searched for. Note that
- *                      the resource class (@a rclass) specified significantly
+ *                      the resource class (@a classId) specified significantly
  *                      alters search behavior. This allows text replacements of
  *                      symbolic escape sequences in the path, allowing access to
  *                      the engine's view of the virtual file system.
@@ -126,36 +92,28 @@ void F_CreateResourceNamespaces(void);
  *
  * @return  @c true iff a resource was found.
  */
-boolean F_FindResource4(resourceclass_t rclass, struct uri_s const* searchPath, ddstring_t* foundPath, int flags, char const* optionalSuffix);
-boolean F_FindResource3(resourceclass_t rclass, struct uri_s const* searchPath, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
-boolean F_FindResource2(resourceclass_t rclass, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
-boolean F_FindResource(resourceclass_t rclass, struct uri_s const* searchPath/*, foundPath = NULL*/);
+boolean F_FindResource4(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags, char const* optionalSuffix);
+boolean F_FindResource3(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+boolean F_FindResource2(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+boolean F_FindResource(resourceclassid_t classId, struct uri_s const* searchPath/*, foundPath = NULL*/);
 
 /**
  * @return  If a resource is found, the index + 1 of the path from @a searchPaths
  *          that was used to find it; otherwise @c 0.
  */
-uint F_FindResourceFromList(resourceclass_t rclass, char const* searchPaths,
+uint F_FindResourceFromList(resourceclassid_t classId, char const* searchPaths,
     ddstring_t* foundPath, int flags, char const* optionalSuffix);
-
-/**
- * @return  Default class associated with resources of type @a type.
- */
-resourceclass_t F_DefaultResourceClassForType(resourcetype_t type);
 
 #ifdef __cplusplus
 } // extern "C"
 
 namespace de {
+
+typedef QList<ResourceClass*> ResourceClasses;
+typedef QList<ResourceType*> ResourceTypes;
 typedef QList<ResourceNamespace*> ResourceNamespaces;
+
 }
-
-de::ResourceNamespaces const& F_ResourceNamespaces();
-
-/**
- * @return  Unique identifier of the default namespace associated with @a rclass.
- */
-de::ResourceNamespace* F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
 
 /**
  * Lookup a ResourceNamespace by symbolic name.
@@ -165,18 +123,51 @@ de::ResourceNamespace* F_DefaultResourceNamespaceForClass(resourceclass_t rclass
  */
 de::ResourceNamespace* F_ResourceNamespaceByName(de::String name);
 
+de::ResourceNamespaces const& F_ResourceNamespaces();
+
+/**
+ * Lookup a ResourceClass by id.
+ *
+ * @todo Refactor away.
+ *
+ * @param classId  Unique identifier of the class.
+ * @return  ResourceClass associated with @a id; otherwise @c 0 (not found).
+ */
+de::ResourceClass const* F_ResourceClassById(resourceclassid_t classId);
+
+/**
+ * Lookup a ResourceClass by symbolic name.
+ *
+ * @param name  Symbolic name of the class.
+ * @return  ResourceClass associated with @a name; otherwise @c 0 (not found).
+ */
+de::ResourceClass const& F_ResourceClassByName(de::String name);
+
+/**
+ * Lookup a ResourceType by id.
+ *
+ * @todo Refactor away.
+ *
+ * @param typeId  Unique identifier of the type.
+ * @return  ResourceType associated with @a id; otherwise @c 0 (not found).
+ */
+de::ResourceType const* F_ResourceTypeById(resourcetypeid_t typeId);
+
+/**
+ * Lookup a ResourceType by symbolic name.
+ *
+ * @param name  Symbolic name of the type.
+ * @return  ResourceType associated with @a name. May return a null-object.
+ */
+de::ResourceType const& F_ResourceTypeByName(de::String name);
+
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
  * by examining the name (e.g., a file name/path).
  *
- * @return  Type determined for this resource else @c RT_NONE if not recognizable.
+ * @return  Type determined for this resource. May return a null-object.
  */
-resourcetype_t F_GuessResourceTypeFromFileName(de::String name);
-
-/**
- * Convert a resourceclass_t constant into a string for error/debug messages.
- */
-de::String const& F_ResourceClassName(resourceclass_t rclass);
+de::ResourceType const& F_GuessResourceTypeFromFileName(de::String name);
 
 #endif // __cplusplus
 

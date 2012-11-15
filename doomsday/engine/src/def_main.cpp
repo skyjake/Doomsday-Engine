@@ -1077,7 +1077,7 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        de::ResourceNamespace* rnamespace = F_DefaultResourceNamespaceForClass(RC_MODEL);
+        de::ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassByName("RC_MODEL").defaultNamespace());
         DENG_ASSERT(rnamespace);
         rnamespace->reset();
 

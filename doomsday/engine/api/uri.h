@@ -151,7 +151,7 @@ namespace de
          *      is not @c RC_NULL, ask the resource locator whether it knows of an
          *      appropriate default scheme for this class of resource.
          */
-        Uri(String path, resourceclass_t defaultResourceClass = RC_UNKNOWN, QChar delimiter = '/');
+        Uri(String path, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar delimiter = '/');
 
         /**
          * Construct a Uri instance by duplicating @a other.
@@ -249,7 +249,7 @@ namespace de
          *      this is not @c RC_NULL, ask the resource locator whether it knows
          *      of an appropriate default scheme for this class of resource.
          */
-        Uri& setUri(String newUri, resourceclass_t defaultResourceClass = RC_UNKNOWN,
+        Uri& setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN,
                     QChar delimiter = '/');
 
         /**
@@ -386,7 +386,7 @@ Uri* Uri_New(void);
  * @param defaultResourceClass  If no scheme is defined in @a path and this is not @c RC_NULL,
  *      look for an appropriate default scheme for this class of resource.
  */
-Uri* Uri_NewWithPath2(char const* path, resourceclass_t defaultResourceClass);
+Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass);
 Uri* Uri_NewWithPath(char const* path);
 
 /**
@@ -476,7 +476,7 @@ Uri* Uri_SetPath(Uri* uri, char const* path);
  *
  * @return  Same as @a uri, for caller convenience.
  */
-Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclass_t defaultResourceClass);
+Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defaultResourceClass);
 Uri* Uri_SetUri(Uri* uri, char const* path/* defaultResourceClass = RC_UNKNOWN*/);
 
 Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path);
