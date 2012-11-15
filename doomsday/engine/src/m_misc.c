@@ -500,6 +500,26 @@ slopetype_t M_SlopeTypeXY(double dx, double dy)
     }
 }
 
+slopetype_t M_SlopeTypeXYFixedPrecision(fixed_t dx, fixed_t dy)
+{
+    if(!dx)
+    {
+        return ST_VERTICAL;
+    }
+    else if(!dy)
+    {
+        return ST_HORIZONTAL;
+    }
+    else if(FixedDiv(dy, dx) > 0)
+    {
+        return ST_POSITIVE;
+    }
+    else
+    {
+        return ST_NEGATIVE;
+    }
+}
+
 slopetype_t M_SlopeType(double const direction[])
 {
     return M_SlopeTypeXY(direction[VX], direction[VY]);
@@ -598,6 +618,51 @@ int M_BoxOnLineSide(const AABoxd* box, double const linePoint[], double const li
 
     if(a == b) return a;
     return 0;
+}
+
+int M_BoxOnLineSideFixedPrecision(const fixed_t box[], const fixed_t linePoint[], const fixed_t lineDirection[])
+{
+    int a, b;
+
+    switch(M_SlopeTypeXYFixedPrecision(lineDirection[0], lineDirection[1]))
+    {
+    case ST_HORIZONTAL:
+        a = box[BOXTOP]    > linePoint[VY]? -1 : 1;
+        b = box[BOXBOTTOM] > linePoint[VY]? -1 : 1;
+        if(lineDirection[VX] < 0)
+        {
+            a = -a;
+            b = -b;
+        }
+        break;
+
+    case ST_VERTICAL:
+        a = box[BOXRIGHT] < linePoint[VX]? -1 : 1;
+        b = box[BOXLEFT]  < linePoint[VX]? -1 : 1;
+        if(lineDirection[VY] < 0)
+        {
+            a = -a;
+            b = -b;
+        }
+        break;
+
+    case ST_POSITIVE: {
+        fixed_t topLeft[2]     = { box[BOXLEFT],  box[BOXTOP]    };
+        fixed_t bottomRight[2] = { box[BOXRIGHT], box[BOXBOTTOM] };
+        a = V2x_PointOnLineSide(topLeft,     linePoint, lineDirection)? -1 : 1;
+        b = V2x_PointOnLineSide(bottomRight, linePoint, lineDirection)? -1 : 1;
+        break; }
+
+    case ST_NEGATIVE: {
+        fixed_t boxMax[2] = { box[BOXRIGHT], box[BOXTOP]    };
+        fixed_t boxMin[2] = { box[BOXLEFT],  box[BOXBOTTOM] };
+        a = V2x_PointOnLineSide(boxMax, linePoint, lineDirection)? -1 : 1;
+        b = V2x_PointOnLineSide(boxMin, linePoint, lineDirection)? -1 : 1;
+        break; }
+    }
+
+    if(a == b) return a;
+    return 0; // on the line
 }
 
 int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const lineDirection[],

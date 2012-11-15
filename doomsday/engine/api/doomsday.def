@@ -451,6 +451,7 @@ EXPORTS
 
 ; Play.
     LineDef_BoxOnSide           @60 NONAME
+    LineDef_BoxOnSideFixedPrecision     @46 NONAME
     LineDef_PointDistance       @208 NONAME
     LineDef_PointXYDistance     @209 NONAME
     LineDef_PointOnSide         @695 NONAME
