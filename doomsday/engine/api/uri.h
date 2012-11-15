@@ -160,7 +160,7 @@ namespace de
 
         ~Uri();
 
-        Uri& operator = (Uri const& other);
+        Uri& operator = (Uri other);
 
         bool operator == (Uri const& other) const;
 

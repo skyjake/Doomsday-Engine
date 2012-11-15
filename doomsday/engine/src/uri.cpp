@@ -472,10 +472,9 @@ Uri::PathNode& Uri::pathNode(int index) const
     return *fragment;
 }
 
-Uri& Uri::operator = (Uri const& other)
+Uri& Uri::operator = (Uri other)
 {
-    Uri copy(other);
-    swap(*this, copy);
+    swap(*this, other);
     return *this;
 }
 
