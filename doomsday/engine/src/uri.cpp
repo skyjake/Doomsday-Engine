@@ -421,10 +421,10 @@ Uri Uri::fromNativePath(NativePath const& path)
     return Uri(path.expand().withSeparators('/'), RC_NULL);
 }
 
-Uri Uri::fromNativeDirPath(NativePath const& nativeDirPath)
+Uri Uri::fromNativeDirPath(NativePath const& nativeDirPath, resourceclass_t defaultResourceClass)
 {
     // Uri follows the convention of having a slash at the end for directories.
-    return Uri(nativeDirPath.expand().withSeparators('/') + '/', RC_NULL);
+    return Uri(nativeDirPath.expand().withSeparators('/') + '/', defaultResourceClass);
 }
 
 /*

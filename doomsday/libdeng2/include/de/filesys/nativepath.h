@@ -72,7 +72,8 @@ public:
 
     /**
      * Does a path concatenation on a native path. The directory separator
-     * character depends on the platform.
+     * character depends on the platform. Note that if @a nativePath is an
+     * absolute path, the result of the concatenation is just @a nativePath.
      *
      * @param nativePath  Native path to concatenate.
      */
@@ -94,6 +95,12 @@ public:
 
     /// Extracts the path of the string, using native directory separators.
     NativePath fileNamePath() const;
+
+    /**
+     * Determines if the path is an absolute path.
+     * @return @c true if absolute, otherwise it's a relative path.
+     */
+    bool isAbsolute() const;
 
     /**
      * Expands the legacy native path directives '>' and '}' at the start of

@@ -111,13 +111,31 @@ public:
         return mid(position, n);
     }
 
-    /// Does a path concatenation on this string and the argument.
+    /**
+     * Does a path concatenation on this string and the argument. Note that if
+     * @a path is an absolute path (starts with @a dirChar), the result of the
+     * concatenation is just @a path.
+     *
+     * @param path     Path to concatenate.
+     * @param dirChar  Directory/folder separator character.
+     */
     String concatenatePath(const String& path, QChar dirChar = '/') const;
 
-    /// Does a path concatenation on this string and the argument.
+    /**
+     * Does a path concatenation on this string and the argument. Note that if
+     * @a path is an absolute path (starts with '/'), the result of the
+     * concatenation is just @a path.
+     *
+     * @param path  Path to concatenate.
+     */
     String operator / (const String& path) const;
 
-    /// Does a record member concatenation on a variable name.
+    /**
+     * Does a record member concatenation on a variable name. Record members
+     * use '.' as the separator character.
+     *
+     * @param member  Identifier to append to this string.
+     */
     String concatenateMember(const String& member) const;
 
     /// Removes whitespace from the beginning and end of the string.

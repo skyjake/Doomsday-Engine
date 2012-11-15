@@ -31,7 +31,8 @@
 
 #include <QStringList>
 
-#include <de/NativePath>
+#include <de/App>
+#include <de/CommandLine>
 
 #include "de_platform.h"
 
@@ -1378,8 +1379,9 @@ boolean DD_Init(void)
             /// @todo Do not add these as search paths, publish them directly
             ///       to the "packages" ResourceNamespace.
 
+            // CommandLine_PathAt() always returns an absolute path.
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
-            de::Uri uri = de::Uri(Dir_Path(dir), RC_PACKAGE);
+            de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
             rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, uri, SPF_NO_DESCEND);
 

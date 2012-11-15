@@ -71,6 +71,7 @@ NativePath& NativePath::operator = (const char *nullTerminatedCStr)
 
 NativePath NativePath::concatenatePath(const NativePath& nativePath) const
 {
+    if(nativePath.isAbsolute()) return nativePath;
     return String::concatenatePath(nativePath, QChar(DIR_SEPARATOR));
 }
 
@@ -97,6 +98,11 @@ NativePath NativePath::operator / (const char *nullTerminatedCStr) const
 NativePath NativePath::fileNamePath() const
 {
     return String::fileNamePath(DIR_SEPARATOR);
+}
+
+bool NativePath::isAbsolute() const
+{
+    return QDir::isAbsolutePath(expand());
 }
 
 NativePath NativePath::expand(bool* didExpand) const
