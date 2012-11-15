@@ -30,9 +30,7 @@
 #endif
 
 #include <QStringList>
-
-#include <de/App>
-#include <de/CommandLine>
+#include <de/NativePath>
 
 #include "de_platform.h"
 
