@@ -56,6 +56,10 @@
 #include "p_player.h"
 #include "p_mapsetup.h"
 
+#ifdef __JDOOM__
+#  include "vanillablockmap.h"
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 #if __JHEXEN__
@@ -1269,6 +1273,13 @@ boolean P_CheckPositionXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
     tmBoxExpanded.minY = tmBox.minY;
     tmBoxExpanded.maxX = tmBox.maxX;
     tmBoxExpanded.maxY = tmBox.maxY;
+
+#ifdef __JDOOM__
+    if(true /* TODO:conditions */ && Vanilla_IsBlockmapAvailable())
+    {
+        return Vanilla_BlockLinesIterator(&tmBoxExpanded, PIT_CheckLine);
+    }
+#endif
 
     return !P_AllLinesBoxIterator(&tmBoxExpanded, PIT_CheckLine, 0);
 }

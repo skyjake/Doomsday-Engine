@@ -61,7 +61,8 @@ HEADERS += \
     $$common_inc/r_common.h \
     $$common_inc/saveinfo.h \
     $$common_inc/x_hair.h \
-    $$common_inc/xgclass.h
+    $$common_inc/xgclass.h \
+    ../common/include/vanillablockmap.h
 
 SOURCES += \
     $$common_src/am_map.c \
@@ -116,4 +117,5 @@ SOURCES += \
     $$common_src/p_xgsec.c \
     $$common_src/r_common.c \
     $$common_src/saveinfo.c \
+    $$common_src/vanillablockmap.c \
     $$common_src/x_hair.c

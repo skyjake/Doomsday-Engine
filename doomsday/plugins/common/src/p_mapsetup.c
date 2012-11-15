@@ -42,6 +42,10 @@
 #include "hu_pspr.h"
 #include "hu_stuff.h"
 
+#ifdef __JDOOM__
+#  include "vanillablockmap.h"
+#endif
+
 #if __JDOOM64__
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
@@ -685,7 +689,16 @@ void P_SetupMap(Uri* mapUri, uint episode, uint map)
         exit(1); // Unreachable.
     }
 
+#ifdef __JDOOM__
+    if(Vanilla_LoadBlockmap(Str_Text(Uri_ToString(mapUri))))
+    {
+        Con_Message("Vanilla BLOCKMAP data available for map \"%s\".\n",
+                    Str_Text(Uri_ToString(mapUri)));
+    }
+#endif
+
     DD_InitThinkers();
+
 #if __JHERETIC__
     P_InitAmbientSound();
 #endif
