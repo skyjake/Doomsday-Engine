@@ -1085,9 +1085,9 @@ char* M_StrCatQuoted(char* dest, const char* src, size_t len)
 /**
  * Somewhat similar to strtok().
  */
-char* M_StrTok(char** cursor, char* delimiters)
+char* M_StrTok(char** cursor, const char* delimiters)
 {
-    char*               begin = *cursor;
+    char* begin = *cursor;
 
     while(**cursor && !strchr(delimiters, **cursor))
         (*cursor)++;

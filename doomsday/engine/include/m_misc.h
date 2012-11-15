@@ -94,7 +94,7 @@ char*           M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufS
 char*           M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
                                 char separator, size_t bufLength);
 char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
-char*           M_StrTok(char** cursor, char* delimiters);
+char*           M_StrTok(char** cursor, const char *delimiters);
 char*           M_TrimmedFloat(float val);
 
 // Random numbers.
