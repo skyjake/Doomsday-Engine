@@ -34,6 +34,8 @@ extern "C" {
  * Resource Class Identifier.
  *
  * @ingroup base
+ *
+ * @todo Refactor away. These identifiers are no longer needed.
  */
 typedef enum resourceclassid_e {
     RC_NULL = -2,           ///< Not a real class, used internally during resource locator init.
@@ -65,7 +67,8 @@ typedef enum resourceclassid_e {
 namespace de
 {
     /**
-     * ResourceClass.
+     * ResourceClass encapsulates the properties and logics belonging to a logical
+     * class of resource (e.g., Graphic, Model, Sound, etc...)
      *
      * @ingroup base
      */
@@ -75,31 +78,61 @@ namespace de
         typedef QList<resourcetypeid_e> Types;
 
     public:
-        String name_;
-
-        String defaultNamespace_;
-
-        /// Recognized resource types (in order of importance, left to right).
-        Types searchTypeOrder;
-
         ResourceClass(String _name, String _defaultNamespace)
             : name_(_name), defaultNamespace_(_defaultNamespace)
         {}
 
         virtual ~ResourceClass() {};
 
-        String const& name() const {
+        /// Return the symbolic name of this resource class.
+        String const& name() const
+        {
             return name_;
         }
 
-        String const& defaultNamespace() const {
+        /// Return the symbolic name of the default namespace for this class of resource.
+        String const& defaultNamespace() const
+        {
             return defaultNamespace_;
         }
 
-        ResourceClass& addResourceType(resourcetypeid_e rtype) {
+        /// Return the number of resource types for this class.
+        int resourceTypeCount() const
+        {
+            return searchTypeOrder.count();
+        }
+
+        /**
+         * Add a new type of resource to this class. Earlier types have priority.
+         *
+         * @param rtype  Identifier of the resourceType to add.
+         * @return  This instance.
+         */
+        ResourceClass& addResourceType(resourcetypeid_e rtype)
+        {
             searchTypeOrder.push_back(rtype);
             return *this;
         }
+
+        /**
+         * Provides access to the resource type list for efficient iteration.
+         *
+         * @return  List of resource types of this class.
+         */
+        Types const& resourceTypes() const
+        {
+            return searchTypeOrder;
+        }
+
+    private:
+        /// Symbolic name for this class.
+        String name_;
+
+        /// Symbolic name of the default namespace.
+        String defaultNamespace_;
+
+        /// Recognized resource types (in order of importance, left to right).
+        Types searchTypeOrder;
     };
 
     /**
