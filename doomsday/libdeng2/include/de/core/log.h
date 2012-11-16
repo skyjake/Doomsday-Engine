@@ -365,8 +365,13 @@ public:
     DENG2_ERROR(IllegalFormatError);
 
 public:
+    /**
+     * Constructs a disabled log entry.
+     */
     LogEntry();
+
     LogEntry(Log::LogLevel level, const String& section, const String& format);
+
     ~LogEntry();
 
     /// Appends a new argument to the entry.
