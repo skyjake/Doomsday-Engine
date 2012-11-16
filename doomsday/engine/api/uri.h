@@ -186,7 +186,7 @@ namespace de
          *                       file system.
          * @param defaultResourceClass  Default resource class.
          */
-        static Uri fromNativeDirPath(NativePath const& nativeDirPath, resourceclass_t defaultResourceClass = RC_NULL);
+        static Uri fromNativeDirPath(NativePath const& nativeDirPath, resourceclassid_t defaultResourceClass = RC_NULL);
 
         /**
          * Constructs a Uri instance by reading it from @a reader.
