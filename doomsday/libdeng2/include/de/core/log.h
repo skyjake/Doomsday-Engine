@@ -144,6 +144,32 @@ public:
         MAX_LOG_LEVELS
     };
 
+    static String levelToText(LogLevel level)
+    {
+        switch(level)
+        {
+        case TRACE:     return "TRACE";
+        case DEBUG:     return "DEBUG";
+        case VERBOSE:   return "VERBOSE";
+        case MESSAGE:   return "MESSAGE";
+        case INFO:      return "INFO";
+        case WARNING:   return "WARNING";
+        case ERROR:     return "ERROR";
+        case CRITICAL:  return "CRITICAL";
+        default:        return "";
+        }
+    }
+
+    static LogLevel textToLevel(String text)
+    {
+        for(LogLevel i = TRACE; i < MAX_LOG_LEVELS; ++i)
+        {
+            if(!levelToText(i).compareWithoutCase(text))
+                return i;
+        }
+        throw Error("Log::textToLevel", "'" + text + "' is not a valid log level");
+    }
+
     class DENG2_PUBLIC Section
     {
     public:

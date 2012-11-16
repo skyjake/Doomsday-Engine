@@ -39,14 +39,33 @@ App::App(int& argc, char** argv, GUIMode guiMode)
 {
     // This instance of LogBuffer is used globally.
     LogBuffer::setAppBuffer(_logBuffer);
+
+    // Set the log message level.
 #ifdef DENG2_DEBUG
-    _logBuffer.enable(Log::DEBUG);
+    Log::LogLevel level = Log::DEBUG;
+#else
+    Log::LogLevel level = Log::MESSAGE;
 #endif
-    //_logBuffer.enable(Log::TRACE);
+    try
+    {
+        int pos;
+        if((pos = _cmdLine.check("-loglevel", 1)) > 0)
+        {
+            level = Log::textToLevel(_cmdLine.at(pos + 1));
+        }
+    }
+    catch(const Error& er)
+    {
+        qWarning("%s", er.asText().toAscii().constData());
+    }
+    // Aliases have not been defined at this point.
+    level = qMax(Log::TRACE, Log::LogLevel(level - _cmdLine.has("-verbose") - _cmdLine.has("-v")));
+    _logBuffer.enable(level);
 
     _appPath = applicationFilePath();
 
     LOG_INFO("Application path: ") << _appPath;
+    LOG_INFO("Enabled log entry level: ") << Log::levelToText(level);
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command
