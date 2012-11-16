@@ -175,7 +175,7 @@ static bool findResource2(int flags, resourceclassid_t classId, String searchPat
     DENG2_FOR_EACH_CONST(ResourceClass::Types, typeIt, rclass.resourceTypes())
     {
         ResourceType const& rtype = resourceType(*typeIt);
-        DENG2_FOR_EACH_CONST(QStringList, i, rtype.knownFileNameExtensions)
+        DENG2_FOR_EACH_CONST(QStringList, i, rtype.knownFileNameExtensions())
         {
             String const& ext = *i;
             if(findResource3(rnamespace, de::Uri(path2 + ext, RC_NULL), foundPath))

@@ -76,49 +76,86 @@ enum resourceclassid_e;
 namespace de
 {
     /**
-     * ResourceType.
+     * ResourceType encapsulates the properties and logics belonging to a logical
+     * type of resource (e.g., Zip, PNG, WAV, etc...)
      *
      * @ingroup core
      */
     struct ResourceType
     {
-        String name_;
-
-        /// Default class attributed to resources of this type.
-        resourceclassid_e defaultClass_;
-
-        /// List of known extensions for this resource type.
-        QStringList knownFileNameExtensions;
-
+    public:
         ResourceType(String _name, resourceclassid_e _defaultClass)
             : name_(_name), defaultClass_(_defaultClass)
         {}
 
         virtual ~ResourceType() {};
 
-        String const& name() const {
+        /// Return the symbolic name of this resource type.
+        String const& name() const
+        {
             return name_;
         }
 
-        resourceclassid_e defaultClass() const {
+        /// Return the unique identifier of the default class for this type of resource.
+        resourceclassid_e defaultClass() const
+        {
             return defaultClass_;
         }
 
-        ResourceType& addKnownExtension(String ext) {
-            knownFileNameExtensions.push_back(ext);
+        /// Return the number of known extensions for this type of resource.
+        int knownExtensionCount() const
+        {
+            return knownFileNameExtensions_.count();
+        }
+
+        /**
+         * Add a new known extension to this resource type. Earlier extensions have priority.
+         *
+         * @param ext  Extension to add (including period).
+         * @return  This instance.
+         */
+        ResourceType& addKnownExtension(String ext)
+        {
+            knownFileNameExtensions_.push_back(ext);
             return *this;
         }
 
+        /**
+         * Provides access to the known file name extensionlist for efficient iteration.
+         *
+         * @return  List of known extensions.
+         */
+        QStringList const& knownFileNameExtensions() const
+        {
+            return knownFileNameExtensions_;
+        }
+
+        /**
+         * Does the file name in @a path match a known extension?
+         *
+         * @param path  File name/path to test.
+         * @return  @c true if matched.
+         */
         bool fileNameIsKnown(String path) const
         {
             // We require an extension for this.
             String ext = path.fileNameExtension();
             if(!ext.isEmpty())
             {
-                return knownFileNameExtensions.contains(ext, Qt::CaseInsensitive);
+                return knownFileNameExtensions_.contains(ext, Qt::CaseInsensitive);
             }
             return false;
         }
+
+    private:
+        /// Symbolic name for this type of resource.
+        String name_;
+
+        /// Default class attributed to resources of this type.
+        resourceclassid_e defaultClass_;
+
+        /// List of known extensions for this resource type.
+        QStringList knownFileNameExtensions_;
     };
 
     /**
