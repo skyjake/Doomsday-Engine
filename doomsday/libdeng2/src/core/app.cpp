@@ -199,7 +199,12 @@ void App::initSubsystems(SubsystemInitFlags flags)
     logBuf.setOutputFile(conf->gets("log.file"));
 
     // The level of enabled messages.
-    logBuf.enable(Log::LogLevel(conf->getui("log.level")));
+    /**
+     * @todo We are presently controlling the log levels depending on build
+     * configuration, so ignore what the config says.
+     */
+    logBuf.enable(Log::MESSAGE);
+    //logBuf.enable(Log::LogLevel(conf->getui("log.level")));
 
     if(allowPlugins)
     {

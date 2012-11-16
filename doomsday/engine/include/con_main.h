@@ -389,7 +389,7 @@ void Con_PrintPathList3(const char* pathList, char delimiter, const char* separa
 void Con_PrintPathList2(const char* pathList, char delimiter); /* separator = " " */
 void Con_PrintPathList(const char* pathList); /* delimiter = ';' */
 
-void Con_PrintCVar(cvar_t* cvar, char* prefix);
+void Con_PrintCVar(cvar_t* cvar, const char* prefix);
 
 /**
  * Outputs the usage information for the given ccmd to the console if the

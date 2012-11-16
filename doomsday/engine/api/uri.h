@@ -160,7 +160,7 @@ namespace de
 
         ~Uri();
 
-        Uri& operator = (Uri const& other);
+        Uri& operator = (Uri other);
 
         bool operator == (Uri const& other) const;
 
@@ -184,8 +184,9 @@ namespace de
          *
          * @param nativeDirPath  Native path to a directory in the native
          *                       file system.
+         * @param defaultResourceClass  Default resource class.
          */
-        static Uri fromNativeDirPath(NativePath const& nativeDirPath);
+        static Uri fromNativeDirPath(NativePath const& nativeDirPath, resourceclass_t defaultResourceClass = RC_NULL);
 
         /**
          * Constructs a Uri instance by reading it from @a reader.

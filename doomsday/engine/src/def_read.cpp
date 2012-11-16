@@ -209,7 +209,7 @@ static void SkipComment(void)
 
     if(ch != '>') // Single-line comment?
     {
-        while(FGetC() != '\n' && !source->atEnd);
+        while(FGetC() != '\n' && !source->atEnd) {}
     }
     else // Multiline comment?
     {

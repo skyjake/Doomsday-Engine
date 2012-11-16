@@ -27,6 +27,11 @@ win32 {
     QMAKE_CFLAGS_WARN_ON   *= $$warnOpts
     QMAKE_CXXFLAGS_WARN_ON *= $$warnOpts
 }
+*-g++|*-gcc {
+    # We are using code that is not ISO C compliant (anonymous structs/unions)
+    # so disable the warnings about it.
+    QMAKE_CFLAGS_WARN_ON -= -pedantic
+}
 *-clang* {
     QMAKE_CFLAGS_WARN_ON *= -Wno-c11-extensions
 }

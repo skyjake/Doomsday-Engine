@@ -28,6 +28,7 @@
 
 #include "../libdeng2.h"
 #include "../String"
+#include "../NativePath"
 
 namespace de
 {
@@ -61,6 +62,12 @@ namespace de
         CommandLine(const CommandLine& other);
 
         virtual ~CommandLine();
+
+        /**
+         * Returns the native path where the command line was started in.
+         * @return Native startup location.
+         */
+        NativePath startupPath();
 
         /**
          * Returns the number of arguments. This includes the program name, which

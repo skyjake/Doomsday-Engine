@@ -794,7 +794,7 @@ cvartype_t Con_GetVariableType(char const* path)
     return var->type;
 }
 
-void Con_PrintCVar(cvar_t* var, char* prefix)
+void Con_PrintCVar(cvar_t* var, const char* prefix)
 {
     DENG_ASSERT(inited);
 

@@ -160,6 +160,11 @@ CommandLine::~CommandLine()
     delete d;
 }
 
+NativePath CommandLine::startupPath()
+{
+    return d->initialDir.path();
+}
+
 dint CommandLine::count() const
 {
     return d->arguments.size();

@@ -217,7 +217,7 @@ Log::Section::~Section()
 
 Log::Log() : _throwawayEntry(0)
 {
-    _throwawayEntry = new LogEntry;
+    _throwawayEntry = new LogEntry; // disabled LogEntry, so doesn't accept arguments
     _sectionStack.push_back(MAIN_SECTION);
 }
 

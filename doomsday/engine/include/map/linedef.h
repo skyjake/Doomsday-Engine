@@ -39,6 +39,8 @@ extern "C" {
  */
 int LineDef_BoxOnSide(LineDef* lineDef, const AABoxd* box);
 
+int LineDef_BoxOnSideFixedPrecision(LineDef* line, const AABoxd* box);
+
 /**
  * @param offset  Returns the position of the nearest point along the line [0..1].
  */

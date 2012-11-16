@@ -35,6 +35,8 @@
 #include "resourcetype.h"
 
 #include <de/Error>
+#include <de/App>
+#include <de/CommandLine>
 #include <de/NativePath>
 #include <de/memory.h>
 
@@ -239,24 +241,18 @@ static void createPackagesNamespace()
     filename_t fn;
     if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
     {
-        NativePath path = NativePath(fn);
-        if(QDir::isAbsolutePath(path))
-        {
-            rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
-            LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
-        }
+        NativePath path = de::App::app().commandLine().startupPath() / fn;
+        rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
+        LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
     }
 #endif
 
     // Add the path from the DOOMWADDIR environment variable.
     if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
-        NativePath path = NativePath(getenv("DOOMWADDIR"));
-        if(QDir::isAbsolutePath(path))
-        {
-            rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
-            LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
-        }
+        NativePath path = de::App::app().commandLine().startupPath() / getenv("DOOMWADDIR");
+        rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
+        LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
     }
 
     // Add any paths from the DOOMWADPATH environment variable.
@@ -271,12 +267,9 @@ static void createPackagesNamespace()
         QStringList allPaths = QString(getenv("DOOMWADPATH")).split(SEP_CHAR, QString::SkipEmptyParts);
         for(int i = allPaths.count(); i--> 0; )
         {
-            NativePath path = NativePath(allPaths[i]);
-            if(QDir::isAbsolutePath(path))
-            {
-                rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
-                LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
-            }
+            NativePath path = de::App::app().commandLine().startupPath() / allPaths[i];
+            rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
+            LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
         }
 
 #undef SEP_CHAR
