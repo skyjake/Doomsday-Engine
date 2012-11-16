@@ -162,10 +162,11 @@ public:
 
     static LogLevel textToLevel(String text)
     {
-        for(LogLevel i = TRACE; i < MAX_LOG_LEVELS; ++i)
+        for(uint i = uint(TRACE); i < uint(MAX_LOG_LEVELS); ++i)
         {
-            if(!levelToText(i).compareWithoutCase(text))
-                return i;
+            LogLevel level = LogLevel(i);
+            if(!levelToText(level).compareWithoutCase(text))
+                return level;
         }
         throw Error("Log::textToLevel", "'" + text + "' is not a valid log level");
     }
