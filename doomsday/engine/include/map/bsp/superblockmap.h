@@ -127,7 +127,7 @@ public:
     /**
      * Retrieve the axis-aligned bounding box defined for this superblock
      * during instantiation. Note that this is NOT the bounds defined by
-     * the linked HEdges' vertices (@see SuperBlock::findHEdgeBounds()).
+     * the linked HEdges' vertices (see SuperBlock::findHEdgeBounds()).
      *
      * @return  Axis-aligned bounding box.
      */

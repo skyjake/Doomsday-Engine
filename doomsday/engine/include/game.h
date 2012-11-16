@@ -62,8 +62,8 @@ class File1;
 class GameCollection;
 
 /**
- * Game.  Used to record top-level game configurations registered by
- * the loaded game plugin(s).
+ * Records top-level game configurations registered by the loaded game
+ * plugin(s).
  *
  * @ingroup core
  */

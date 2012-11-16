@@ -74,11 +74,14 @@
 namespace de
 {
     /**
-     * Convenient interface class designed to assist working with URIs to engine
-     * managed resources. This class is based on the semantics defined for the
-     * QUrl class, a component of the Qt GUI Toolkit.
+     * Assists working with URIs and maps them to engine-managed resources.
      *
-     * @todo Derive from Qt::QUrl?
+     * Universal resource identifiers (URIs) are a way to identify specific
+     * entities in a hierarchy.
+     *
+     * @todo Derive from Qt::QUrl, which implements the official URI
+     * specification more fully? Do we really need all the parts of an URI for
+     * our needs?
      *
      * @ingroup base
      */

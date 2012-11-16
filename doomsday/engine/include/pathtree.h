@@ -61,14 +61,14 @@
 namespace de
 {
     /**
-     * PathTree. Data structure for modelling a hierarchical relationship tree of
+     * Data structure for modelling a hierarchical relationship tree of
      * string + data value pairs.
      *
-     * 'fragment' is the term given to a name in a hierarchical path. For example,
+     * @em Fragment is the term given to a name in a hierarchical path. For example,
      * the path <pre>"c:/somewhere/something"</pre> contains three path fragments:
      * <pre>[ 0: "c:", 1: "somewhere", 2: "something" ]</pre>
      *
-     * 'delimiter' is the term given to the separators between fragments. (Such as
+     * @em Delimiter is the term given to the separators between fragments. (Such as
      * forward slashes in a file path).
      *
      * Internally, fragments are "pooled" such that only one instance of a fragment

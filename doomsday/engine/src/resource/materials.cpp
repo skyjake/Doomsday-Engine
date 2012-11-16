@@ -51,7 +51,8 @@
 typedef de::PathTree MaterialRepository;
 
 /**
- * POD object. Contains extended info about a material binding (@see MaterialBind).
+ * Contains extended info about a material binding (see MaterialBind).
+ * @note POD object.
  */
 struct MaterialBindInfo
 {

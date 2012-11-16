@@ -42,12 +42,12 @@
 namespace de
 {
     /**
-     * Resource Namespace.
+     * (TODO: describe ResourceNamespace)
      *
      * @ingroup resource
      *
      * @todo The symbolic name of the namespace and the path mapping template
-     *       (@see applyPathMappings) should be defined externally. -ds
+     *       (see applyPathMappings()) should be defined externally. -ds
      */
     class ResourceNamespace
     {
