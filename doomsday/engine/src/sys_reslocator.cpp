@@ -161,7 +161,7 @@ static bool findResource2(int flags, resourceclassid_t classId, String searchPat
     }
 
     ResourceClass const& rclass = resourceClass(classId);
-    if(rclass.searchTypeOrder[0] == RT_NONE) return false;
+    if(!rclass.resourceTypeCount()) return false;
 
     /*
      * Try some different name patterns (i.e., resource types) known to us.
@@ -172,7 +172,7 @@ static bool findResource2(int flags, resourceclassid_t classId, String searchPat
 
     path2.reserve(path2.length() + 5 /*max expected extension length*/);
 
-    DENG2_FOR_EACH_CONST(ResourceClass::Types, typeIt, rclass.searchTypeOrder)
+    DENG2_FOR_EACH_CONST(ResourceClass::Types, typeIt, rclass.resourceTypes())
     {
         ResourceType const& rtype = resourceType(*typeIt);
         DENG2_FOR_EACH_CONST(QStringList, i, rtype.knownFileNameExtensions)
