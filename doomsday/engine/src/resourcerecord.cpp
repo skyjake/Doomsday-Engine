@@ -34,7 +34,7 @@ namespace de {
 struct ResourceRecord::Instance
 {
     /// Class of resource.
-    resourceclass_t rclass;
+    resourceclassid_t classId;
 
     /// @see resourceFlags.
     int flags;
@@ -54,15 +54,15 @@ struct ResourceRecord::Instance
     /// Set during resource location.
     String foundPath;
 
-    Instance(resourceclass_t _rclass, int rflags)
-        : rclass(_rclass), flags(rflags & ~RF_FOUND), names(),
+    Instance(resourceclassid_t _rclass, int rflags)
+        : classId(_rclass), flags(rflags & ~RF_FOUND), names(),
           identityKeys(), foundNameIndex(-1), foundPath()
     {}
 };
 
-ResourceRecord::ResourceRecord(resourceclass_t rclass, int rflags, String* name)
+ResourceRecord::ResourceRecord(resourceclassid_t classId, int rflags, String* name)
 {
-    d = new Instance(rclass, rflags);
+    d = new Instance(classId, rflags);
     if(name) addName(*name);
 }
 
@@ -164,17 +164,17 @@ ResourceRecord& ResourceRecord::locateResource()
     int nameIndex = 0;
     for(QStringList::const_iterator i = d->names.constBegin(); i != d->names.constEnd(); ++i, ++nameIndex)
     {
-        Uri path = Uri(*i, d->rclass);
+        Uri path = Uri(*i, d->classId);
 
         // Attempt to resolve a path to the named resource.
-        if(!F_FindResource2(d->rclass, reinterpret_cast<uri_s*>(&path), found)) continue;
+        if(!F_FindResource2(d->classId, reinterpret_cast<uri_s*>(&path), found)) continue;
 
         // We've found *something*.
         String foundPath = String(Str_Text(found));
 
         // Perform identity validation.
         bool validated = false;
-        if(d->rclass == RC_PACKAGE)
+        if(d->classId == RC_PACKAGE)
         {
             /// @todo The identity configuration should declare the type of resource...
                 validated = recognizeWAD(foundPath, d->identityKeys);
@@ -219,9 +219,9 @@ String const& ResourceRecord::resolvedPath(bool tryLocate)
     return d->foundPath;
 }
 
-resourceclass_t ResourceRecord::resourceClass() const
+resourceclassid_t ResourceRecord::resourceClass() const
 {
-    return d->rclass;
+    return d->classId;
 }
 
 int ResourceRecord::resourceFlags() const

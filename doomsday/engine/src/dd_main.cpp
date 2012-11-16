@@ -478,14 +478,14 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     return 0;
 }
 
-static int addListFiles(ddstring_t*** list, size_t* listSize, resourcetype_t resType)
+static int addListFiles(ddstring_t*** list, size_t* listSize, ResourceType const& rtype)
 {
     size_t i;
     int count = 0;
     if(!list || !listSize) return 0;
     for(i = 0; i < *listSize; ++i)
     {
-        if(resType != F_GuessResourceTypeFromFileName(Str_Text((*list)[i]))) continue;
+        if(&rtype != &F_GuessResourceTypeFromFileName(Str_Text((*list)[i]))) continue;
         if(tryLoadFile(Str_Text((*list)[i])))
         {
             count += 1;
@@ -664,9 +664,9 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
         listFilesFromDataGameAuto(&sessionResourceFileList, &numSessionResourceFileList);
         if(numSessionResourceFileList > 0)
         {
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, RT_ZIP);
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, F_ResourceTypeByName("RT_ZIP"));
 
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, RT_WAD);
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, F_ResourceTypeByName("RT_WAD"));
         }
 
         // Final autoload round.
@@ -843,18 +843,18 @@ boolean DD_GameInfo(GameInfo* info)
 }
 
 /// @note Part of the Doomsday public API.
-void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
+void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     char const* names, void* params)
 {
     DENG_ASSERT(games);
 
-    if(!VALID_RESOURCE_CLASS(rclass)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
+    if(!VALID_RESOURCE_CLASSID(classId)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
     if(!names || !names[0]) Con_Error("DD_AddGameResource: Invalid name argument.");
 
     // Construct and attach the new resource record.
     de::Game& game = games->byId(gameId);
-    ResourceRecord* record = new ResourceRecord(rclass, rflags);
-    game.addResource(rclass, *record);
+    ResourceRecord* record = new ResourceRecord(classId, rflags);
+    game.addResource(classId, *record);
 
     // Add the name list to the resource record.
     QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
@@ -863,7 +863,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
         record->addName(*i);
     }
 
-    if(params && rclass == RC_PACKAGE)
+    if(params && classId == RC_PACKAGE)
     {
         // Add the identityKey list to the resource record.
         QStringList idKeys = String((char const*) params).split(";", QString::SkipEmptyParts);
@@ -1365,8 +1365,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    ResourceNamespace* rnamespace = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
-    DENG_ASSERT(rnamespace);
+    ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassByName("RC_PACKAGE").defaultNamespace());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -1566,9 +1565,6 @@ boolean DD_Init(void)
 static void DD_InitResourceSystem(void)
 {
     Con_Message("Initializing Resource subsystem...\n");
-
-    F_InitResourceLocator();
-    F_CreateResourceNamespaces();
 
     initPathMappings();
 

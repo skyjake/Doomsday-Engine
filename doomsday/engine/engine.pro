@@ -110,6 +110,8 @@ DENG_API_HEADERS = \
     api/doomsday.h \
     api/filehandle.h \
     api/materialarchive.h \
+    api/resourceclass.h \
+    api/resourcetype.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \

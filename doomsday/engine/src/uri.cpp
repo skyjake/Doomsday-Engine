@@ -262,7 +262,7 @@ struct Uri::Instance
         resolvedForGame = 0;
     }
 
-    void parseScheme(resourceclass_t defaultResourceClass)
+    void parseScheme(resourceclassid_t defaultResourceClass)
     {
         LOG_AS("Uri::parseScheme");
 
@@ -288,11 +288,13 @@ struct Uri::Instance
 
         // Attempt to guess the scheme by interpreting the path?
         if(defaultResourceClass == RC_UNKNOWN)
-            defaultResourceClass = F_DefaultResourceClassForType(F_GuessResourceTypeFromFileName(Str_Text(&path)));
-
-        if(VALID_RESOURCE_CLASS(defaultResourceClass))
         {
-            ResourceNamespace* rnamespace = F_DefaultResourceNamespaceForClass(defaultResourceClass);
+            defaultResourceClass = F_GuessResourceTypeFromFileName(Str_Text(&path)).defaultClass();
+        }
+
+        if(VALID_RESOURCE_CLASSID(defaultResourceClass))
+        {
+            ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassById(defaultResourceClass)->defaultNamespace());
             DENG_ASSERT(rnamespace);
             QByteArray rnamespaceName = rnamespace->name().toUtf8();
             Str_Set(&scheme, rnamespaceName.constData());
@@ -393,7 +395,7 @@ struct Uri::Instance
     }
 };
 
-Uri::Uri(String path, resourceclass_t defaultResourceClass, QChar delimiter)
+Uri::Uri(String path, resourceclassid_t defaultResourceClass, QChar delimiter)
 {
     d = new Instance();
     if(!path.isEmpty())
@@ -593,7 +595,7 @@ Uri& Uri::setPath(String newPath, QChar delimiter)
     return *this;
 }
 
-Uri& Uri::setUri(String rawUri, resourceclass_t defaultResourceClass, QChar delimiter)
+Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar delimiter)
 {
     LOG_AS("Uri::setUri");
 
@@ -789,7 +791,7 @@ LIBDENG_RUN_UNITTEST(Uri)
     DENG2_ASSERT(inst); \
     de::Uri const* self = TOINTERNAL_CONST(inst)
 
-Uri* Uri_NewWithPath2(char const* path, resourceclass_t defaultResourceClass)
+Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass)
 {
     return reinterpret_cast<Uri*>( new de::Uri(path, defaultResourceClass) );
 }
@@ -894,7 +896,7 @@ Uri* Uri_SetPath(Uri* uri, char const* path)
     return reinterpret_cast<Uri*>(&self->setPath(path));
 }
 
-Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclass_t defaultResourceClass)
+Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defaultResourceClass)
 {
     SELF(uri);
     return reinterpret_cast<Uri*>(&self->setUri(path, defaultResourceClass));
