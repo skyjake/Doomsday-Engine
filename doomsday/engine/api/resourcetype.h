@@ -34,6 +34,8 @@ extern "C" {
  * Resource Type identifer attributable to resources (e.g., files).
  *
  * @ingroup core
+ *
+ * @todo Refactor away. These identifiers are no longer needed.
  */
 typedef enum resourcetypeid_e {
     RT_NONE = 0,
@@ -109,7 +111,8 @@ namespace de
         }
 
         /**
-         * Add a new known extension to this resource type. Earlier extensions have priority.
+         * Add a new known extension to this resource type. Earlier extensions
+         * have priority.
          *
          * @param ext  Extension to add (including period).
          * @return  This instance.
@@ -121,7 +124,8 @@ namespace de
         }
 
         /**
-         * Provides access to the known file name extensionlist for efficient iteration.
+         * Provides access to the known file name extension list for efficient
+         * iteration.
          *
          * @return  List of known extensions.
          */
