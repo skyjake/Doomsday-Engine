@@ -42,16 +42,12 @@
 #include "de_filesys.h"
 #include "de_graphics.h"
 #include "de_render.h"
-#include "de_refresh.h"
+#include "de_resource.h"
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_ui.h"
 
 #include "def_main.h"
-#include "colorpalette.h"
-#include "image.h"
-#include "gl/texturecontent.h"
-#include "texturevariant.h"
 
 typedef enum {
     METHOD_IMMEDIATE = 0,

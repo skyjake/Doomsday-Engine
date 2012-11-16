@@ -22,7 +22,6 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_play.h"
 
 void SideDef_UpdateBaseOrigins(SideDef* side)

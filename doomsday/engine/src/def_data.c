@@ -36,8 +36,8 @@
 #include "de_console.h"
 #include "de_misc.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 
+#include "render/r_sky.h"
 #include "def_data.h"
 
 // Helper Routines -------------------------------------------------------

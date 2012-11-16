@@ -26,15 +26,14 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_render.h"
-#include "de_refresh.h"
 #include "de_system.h"
 #include "de_filesys.h"
 
 #include "game.h"
-#include "lumpindex.h"
-#include "m_bams.h"
 #include "map/propertyvalue.h"
-#include "rend_bias.h"
+#include "resource/lumpindex.h"
+#include "render/rend_bias.h"
+#include "m_bams.h"
 
 #include <map>
 #include <EntityDatabase>

@@ -31,13 +31,12 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 #include "de_play.h"
 
 #include "gl/sys_opengl.h"
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 

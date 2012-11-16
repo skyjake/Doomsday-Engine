@@ -24,7 +24,6 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
@@ -32,7 +31,7 @@
 
 #include "gl/sys_opengl.h"
 #include "m_vector.h"
-#include "materialvariant.h"
+#include "resource/materialvariant.h"
 
 #define MIN_OPEN                (.1f)
 #define EDGE_OPEN_THRESHOLD     (8) // world units (Z axis)

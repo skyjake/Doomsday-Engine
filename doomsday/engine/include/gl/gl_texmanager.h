@@ -36,10 +36,9 @@
 #define LIBDENG_GLTEXTURE_MANAGER_H
 
 #include "filehandle.h"
-#include "r_data.h" /// @todo should not be included here.
-
-#include "texture.h"
-#include "texturevariantspecification.h"
+#include "resource/r_data.h" // should not be included here
+#include "resource/texture.h"
+#include "resource/texturevariantspecification.h"
 
 #ifdef __cplusplus
 extern "C" {

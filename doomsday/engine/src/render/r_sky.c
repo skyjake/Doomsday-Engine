@@ -25,13 +25,15 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 
+#include "map/r_world.h"
+#include "render/r_sky.h"
+#include "def_data.h"
 #include "client/cl_def.h"
 #include "m_vector.h"
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 /**
  * @defgroup skyLayerFlags  Sky Layer Flags

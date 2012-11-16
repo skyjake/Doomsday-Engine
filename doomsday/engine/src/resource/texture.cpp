@@ -27,8 +27,9 @@
 #if _DEBUG
 #  include "gl/gl_texmanager.h" // For GL_PrintTextureVariantSpecification()
 #endif
-#include "texturevariant.h"
-#include "texture.h"
+#include "resource/texturevariant.h"
+#include "resource/texture.h"
+
 #include <de/Error>
 #include <de/Log>
 #include <de/LegacyCore>

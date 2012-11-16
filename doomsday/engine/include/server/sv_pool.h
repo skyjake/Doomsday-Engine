@@ -31,8 +31,8 @@
 
 #include "dd_share.h"
 #include "map/p_object.h"
-#include "r_data.h"
-#include "materials.h"
+#include "resource/r_data.h"
+#include "resource/materials.h"
 
 #ifdef __cplusplus
 extern "C" {

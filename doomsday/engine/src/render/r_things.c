@@ -45,7 +45,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_play.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -53,9 +52,9 @@
 
 #include "def_main.h"
 #include "m_stack.h"
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 #include <de/memoryblockset.h>
 

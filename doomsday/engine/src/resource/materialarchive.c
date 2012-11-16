@@ -24,7 +24,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "materials.h"
+#include "resource/materials.h"
 #include "materialarchive.h"
 
 /// For identifying the archived format version. Written to disk.

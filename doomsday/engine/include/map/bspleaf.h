@@ -23,7 +23,7 @@
 #ifndef LIBDENG_MAP_BSPLEAF
 #define LIBDENG_MAP_BSPLEAF
 
-#include "r_data.h"
+#include "resource/r_data.h"
 #include "p_dmu.h"
 
 #ifdef __cplusplus

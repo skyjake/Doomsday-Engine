@@ -43,9 +43,9 @@
 #include "filesys/fileinfo.h"
 #include "filesys/wad.h"
 #include "filesys/zip.h"
+#include "resource/lumpindex.h"
+#include "resource/resourcenamespace.h"
 #include "game.h"
-#include "lumpindex.h"
-#include "resourcenamespace.h"
 #include "resource/sys_reslocator.h"
 
 using namespace de;

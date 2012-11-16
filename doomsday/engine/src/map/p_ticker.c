@@ -30,12 +30,11 @@
 
 #include "de_base.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
 
-#include "r_sky.h"
+#include "render/r_sky.h"
 
 // MACROS ------------------------------------------------------------------
 

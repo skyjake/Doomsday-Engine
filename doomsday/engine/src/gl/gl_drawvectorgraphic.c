@@ -26,7 +26,8 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
+
+#include "gl/svg.h"
 
 #define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)

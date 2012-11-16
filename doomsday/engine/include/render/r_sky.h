@@ -29,7 +29,7 @@
 #ifndef LIBDENG_REFRESH_SKY_H
 #define LIBDENG_REFRESH_SKY_H
 
-#include "models.h"
+#include "resource/models.h"
 
 #ifdef __cplusplus
 extern "C" {

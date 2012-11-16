@@ -40,7 +40,7 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-#include "r_main.h"
+#include "render/r_main.h"
 
 // MACROS ------------------------------------------------------------------
 

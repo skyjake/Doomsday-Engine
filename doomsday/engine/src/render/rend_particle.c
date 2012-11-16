@@ -27,12 +27,11 @@
 #include "de_filesys.h"
 #include "de_render.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "image.h"
+#include "resource/image.h"
 #include "gl/texturecontent.h"
 #include "map/generators.h"
 

@@ -29,7 +29,7 @@
 #ifndef LIBDENG_REFRESH_WORLD_H
 #define LIBDENG_REFRESH_WORLD_H
 
-#include "r_data.h"
+#include "resource/r_data.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -36,12 +36,12 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_system.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_ui.h"
 
-#include "font.h"
-#include "bitmapfont.h"
+#include "resource/font.h"
+#include "resource/fonts.h"
+#include "resource/bitmapfont.h"
 #include "m_misc.h"
 
 /**

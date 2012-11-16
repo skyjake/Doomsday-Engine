@@ -26,11 +26,11 @@
 #include "de_console.h"
 #include "de_play.h"
 #include "de_system.h"
-#include "de_refresh.h"
 
 #include "map/blockmap.h"
 #include "map/generators.h"
 #include "map/gamemap.h"
+#include "r_util.h"
 
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)

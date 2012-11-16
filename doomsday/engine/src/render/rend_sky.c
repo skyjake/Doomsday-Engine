@@ -29,10 +29,10 @@
 #include "de_graphics.h"
 #include "de_render.h"
 
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
-#include "r_sky.h"
+#include "render/r_sky.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 /**
  * @defgroup skySphereRenderFlags  Sky Render Flags

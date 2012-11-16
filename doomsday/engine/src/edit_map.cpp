@@ -29,13 +29,13 @@
 #include "de_console.h"
 #include "de_play.h"
 #include "de_bsp.h"
-#include "de_refresh.h"
 #include "de_misc.h"
 #include "de_edit.h"
 #include "de_dam.h"
 #include "de_filesys.h"
 
 #include <de/StringPool>
+
 #include "audio/s_environ.h"
 
 typedef struct {

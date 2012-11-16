@@ -37,13 +37,12 @@
 #include "de_system.h"
 #include "de_network.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
 
-#include "materialvariant.h"
+#include "resource/materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 

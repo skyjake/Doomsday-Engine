@@ -34,7 +34,6 @@
 #include "de_system.h"
 #include "de_play.h"
 #include "de_defs.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"

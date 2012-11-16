@@ -24,13 +24,12 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
-#include "lumpcache.h"
+
+#include "resource/lumpcache.h"
+#include "filesys/wad.h"
 #include "pathtree.h"
 
-#include "filesys/wad.h"
-
 #include <vector>
-
 #include <de/ByteOrder>
 #include <de/Error>
 #include <de/NativePath>

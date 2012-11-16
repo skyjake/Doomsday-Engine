@@ -29,10 +29,9 @@
 #include "de_edit.h"
 #include "de_filesys.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_render.h"
 
-#include "lumpindex.h"
+#include "resource/lumpindex.h"
 
 // Should we be caching successfully loaded maps?
 byte mapCache = true;

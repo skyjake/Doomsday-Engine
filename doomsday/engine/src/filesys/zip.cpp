@@ -28,10 +28,8 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
-#include "lumpcache.h"
 #include "pathtree.h"
-#include "resourcenamespace.h"
-#include "sys_reslocator.h"
+#include "resource/lumpcache.h"
 
 #include <de/App>
 #include <de/ByteOrder>

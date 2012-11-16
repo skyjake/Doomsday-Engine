@@ -28,9 +28,9 @@
 #include <de/App>
 #include <de/Log>
 #include <de/NativePath>
-#include "pathtree.h"
 
-#include "resourcenamespace.h"
+#include "pathtree.h"
+#include "resource/resourcenamespace.h"
 
 namespace de {
 

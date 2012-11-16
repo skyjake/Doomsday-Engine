@@ -24,7 +24,6 @@
 #ifndef LIBDENG_RESOURCENAMESPACE_H
 #define LIBDENG_RESOURCENAMESPACE_H
 
-#include <QMultiMap>
 #include "pathtree.h"
 #include "uri.h"
 
@@ -38,6 +37,10 @@
 ///@{
 #define SPF_NO_DESCEND                  0x1 ///< Do not decend into branches when populating paths.
 ///@}
+
+#ifdef __cplusplus
+
+#include <QMultiMap>
 
 namespace de
 {
@@ -235,5 +238,7 @@ namespace de
     Q_DECLARE_OPERATORS_FOR_FLAGS(ResourceNamespace::Flags)
 
 } // namespace de
+
+#endif // __cplusplus
 
 #endif /* LIBDENG_RESOURCENAMESPACE_H */

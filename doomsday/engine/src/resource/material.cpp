@@ -22,12 +22,11 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "m_misc.h"
 
-#include "texture.h"
-#include "materialvariant.h"
-#include "material.h"
+#include "resource/texture.h"
+#include "resource/materialvariant.h"
+#include "resource/material.h"
 #include "audio/s_environ.h"
 
 #include <de/memory.h>

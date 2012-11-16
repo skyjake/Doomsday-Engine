@@ -22,8 +22,8 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "m_misc.h"
-#include "texture.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/materialvariant.h"
 #include <de/Error>
 #include <de/LegacyCore>
 #include <de/Log>

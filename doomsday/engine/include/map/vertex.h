@@ -23,8 +23,8 @@
 #ifndef LIBDENG_MAP_VERTEX
 #define LIBDENG_MAP_VERTEX
 
-#include "r_data.h"
-#include "p_dmu.h"
+#include "resource/r_data.h"
+#include "map/p_dmu.h"
 
 #ifdef __cplusplus
 extern "C" {

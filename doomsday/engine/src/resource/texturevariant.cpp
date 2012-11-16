@@ -20,8 +20,8 @@
  */
 
 #include "de_base.h"
-#include "texture.h"
-#include "texturevariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
 #include <de/LegacyCore>
 
 de::TextureVariant::TextureVariant(struct texture_s& generalCase,

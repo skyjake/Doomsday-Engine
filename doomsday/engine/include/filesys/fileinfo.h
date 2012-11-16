@@ -26,6 +26,8 @@
 #ifndef LIBDENG_FILESYS_FILEINFO_H
 #define LIBDENG_FILESYS_FILEINFO_H
 
+#ifdef __cplusplus
+
 #include <algorithm>
 
 #include <de/types.h>
@@ -79,5 +81,7 @@ struct FileInfo
 };
 
 } // namespace de
+
+#endif // __cplusplus
 
 #endif /* LIBDENG_FILESYS_FILEINFO_H */
