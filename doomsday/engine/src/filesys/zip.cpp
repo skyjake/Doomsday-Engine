@@ -31,6 +31,7 @@
 #include "lumpcache.h"
 #include "pathtree.h"
 #include "resourcenamespace.h"
+#include "sys_reslocator.h"
 
 #include <de/App>
 #include <de/ByteOrder>

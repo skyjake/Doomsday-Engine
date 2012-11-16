@@ -58,6 +58,7 @@
 #include "texture.h"
 #include "updater.h"
 #include "filesys/wad.h"
+#include "resource/sys_reslocator.h"
 
 using namespace de;
 

@@ -46,6 +46,7 @@
 #include "game.h"
 #include "lumpindex.h"
 #include "resourcenamespace.h"
+#include "resource/sys_reslocator.h"
 
 using namespace de;
 
@@ -1002,63 +1003,33 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     return found.count() - numFoundSoFar;
 }
 
-struct FileInterpreter
-{
-    resourcetypeid_t resourceType;
-    de::File1* (*interpret)(de::FileHandle& hndl, String path, FileInfo const& info);
-};
-
-static de::File1* interpretAsZipFile(de::FileHandle& hndl, String path, FileInfo const& info)
-{
-    if(!Zip::recognise(hndl)) return 0;
-    LOG_VERBOSE("Interpreted \"") << NativePath(path).pretty() << "\" as a Zip (archive)";
-    return new Zip(hndl, path, info);
-}
-
-static de::File1* interpretAsWadFile(de::FileHandle& hndl, String path, FileInfo const& info)
-{
-    if(!Wad::recognise(hndl)) return 0;
-    LOG_VERBOSE("Interpreted \"") << NativePath(path).pretty() << "\" as a Wad (archive)";
-    return new Wad(hndl, path, info);
-}
-
 de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& info)
 {
     DENG_ASSERT(!path.isEmpty());
-
-    static FileInterpreter interpreters[] = {
-        { RT_ZIP,  interpretAsZipFile },
-        { RT_WAD,  interpretAsWadFile },
-        { RT_NONE, NULL }
-    };
 
     de::File1* interpretedFile = 0;
 
     // Firstly try interpreter(s) for guessed resource types.
     ResourceType const& rtypeGuess = F_GuessResourceTypeFromFileName(path);
-    if(!isNullResourceType(rtypeGuess))
+    if(FileResourceType const* fileType = dynamic_cast<FileResourceType const*>(&rtypeGuess))
     {
-        for(FileInterpreter* intper = interpreters; intper->interpret; ++intper)
-        {
-            // Not applicable for this resource type?
-            if(F_ResourceTypeById(intper->resourceType) != &rtypeGuess) continue;
-
-            interpretedFile = intper->interpret(hndl, path, info);
-            if(interpretedFile) break;
-        }
+        interpretedFile = fileType->interpret(hndl, path, info);
     }
 
     // If not yet interpreted - try each recognisable format in order.
-    /// @todo Order here should be determined by the resource locator.
     if(!interpretedFile)
     {
-        for(FileInterpreter* intper = interpreters; intper->interpret; ++intper)
+        ResourceTypes const& rtypes = F_ResourceTypes();
+        DENG2_FOR_EACH_CONST(ResourceTypes, i, rtypes)
         {
-            // Already tried this?
-            if(F_ResourceTypeById(intper->resourceType) == &rtypeGuess) continue;
+            if(FileResourceType const* fileType = dynamic_cast<FileResourceType const*>(*i))
+            {
+                // Already tried this?
+                if(fileType == &rtypeGuess) continue;
 
-            interpretedFile = intper->interpret(hndl, path, info);
-            if(interpretedFile) break;
+                interpretedFile = fileType->interpret(hndl, path, info);
+                if(interpretedFile) break;
+            }
         }
     }
 
