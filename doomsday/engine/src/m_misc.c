@@ -500,7 +500,7 @@ slopetype_t M_SlopeTypeXY(double dx, double dy)
     }
 }
 
-slopetype_t M_SlopeTypeXYFixedPrecision(fixed_t dx, fixed_t dy)
+slopetype_t M_SlopeTypeXY_FixedPrecision(fixed_t dx, fixed_t dy)
 {
     if(!dx)
     {
@@ -620,11 +620,11 @@ int M_BoxOnLineSide(const AABoxd* box, double const linePoint[], double const li
     return 0;
 }
 
-int M_BoxOnLineSideFixedPrecision(const fixed_t box[], const fixed_t linePoint[], const fixed_t lineDirection[])
+int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_t linePoint[], const fixed_t lineDirection[])
 {
     int a, b;
 
-    switch(M_SlopeTypeXYFixedPrecision(lineDirection[0], lineDirection[1]))
+    switch(M_SlopeTypeXY_FixedPrecision(lineDirection[0], lineDirection[1]))
     {
     case ST_HORIZONTAL:
         a = box[BOXTOP]    > linePoint[VY]? -1 : 1;
