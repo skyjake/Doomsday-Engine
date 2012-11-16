@@ -21,7 +21,7 @@
 
 #include <de/Error>
 
-#include "propertyvalue.h"
+#include "map/propertyvalue.h"
 
 PropertyValue* BuildPropertyValue(valuetype_t type, void* valueAdr)
 {

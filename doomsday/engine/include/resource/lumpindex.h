@@ -31,8 +31,8 @@
 #define LIBDENG_FILESYS_LUMPINDEX_H
 
 #include "de_base.h" /// For lumpnum_t (@todo which should be moved here)
-#include "file.h"
-#include "fileinfo.h"
+#include "filesys/file.h"
+#include "filesys/fileinfo.h"
 
 #include <QList>
 #include <de/Error>

@@ -26,7 +26,7 @@
 #include "de_base.h"
 #include "de_filesys.h"
 
-#include "file.h"
+#include "filesys/file.h"
 
 namespace de {
 

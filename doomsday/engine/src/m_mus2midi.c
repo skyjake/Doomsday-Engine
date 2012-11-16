@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include "doomsday.h"
-#include "fs_util.h"
+#include "filesys/fs_util.h"
 
 // MUS event types.
 enum {

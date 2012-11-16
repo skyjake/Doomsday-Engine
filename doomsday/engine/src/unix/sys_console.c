@@ -28,7 +28,7 @@
 #include "de_system.h"
 #include "de_console.h"
 #include "de_misc.h"
-#include "consolewindow.h"
+#include "ui/consolewindow.h"
 
 #include <curses.h>
 

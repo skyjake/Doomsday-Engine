@@ -38,14 +38,14 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "file.h"
-#include "fileid.h"
-#include "fileinfo.h"
+#include "filesys/file.h"
+#include "filesys/fileid.h"
+#include "filesys/fileinfo.h"
+#include "filesys/wad.h"
+#include "filesys/zip.h"
 #include "game.h"
 #include "lumpindex.h"
 #include "resourcenamespace.h"
-#include "wad.h"
-#include "zip.h"
 
 using namespace de;
 

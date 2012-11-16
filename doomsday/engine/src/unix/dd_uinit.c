@@ -53,7 +53,7 @@
 #include "de_misc.h"
 
 #include "ui/displaymode.h"
-#include "fs_util.h"
+#include "filesys/fs_util.h"
 #include "dd_uinit.h"
 
 // MACROS ------------------------------------------------------------------

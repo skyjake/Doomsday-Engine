@@ -26,7 +26,7 @@
 #include "dd_games.h"
 
 #include "resourcerecord.h"
-#include "zip.h"
+#include "filesys/zip.h"
 
 namespace de {
 

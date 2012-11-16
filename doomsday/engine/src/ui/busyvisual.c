@@ -32,7 +32,7 @@
 #include "de_ui.h"
 
 #include "image.h"
-#include "texturecontent.h"
+#include "gl/texturecontent.h"
 #include "cbuffer.h"
 #include "font.h"
 

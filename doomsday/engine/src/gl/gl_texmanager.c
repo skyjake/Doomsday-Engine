@@ -50,7 +50,7 @@
 #include "def_main.h"
 #include "colorpalette.h"
 #include "image.h"
-#include "texturecontent.h"
+#include "gl/texturecontent.h"
 #include "texturevariant.h"
 
 typedef enum {

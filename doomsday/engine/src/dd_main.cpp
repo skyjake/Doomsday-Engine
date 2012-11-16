@@ -57,7 +57,7 @@
 #include "resourcenamespace.h"
 #include "texture.h"
 #include "updater.h"
-#include "wad.h"
+#include "filesys/wad.h"
 
 using namespace de;
 

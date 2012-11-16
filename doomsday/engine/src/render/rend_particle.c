@@ -33,7 +33,7 @@
 #include "de_ui.h"
 
 #include "image.h"
-#include "texturecontent.h"
+#include "gl/texturecontent.h"
 #include "map/generators.h"
 
 // Point + custom textures.

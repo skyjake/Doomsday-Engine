@@ -27,7 +27,7 @@
 #include "lumpcache.h"
 #include "pathtree.h"
 
-#include "wad.h"
+#include "filesys/wad.h"
 
 #include <vector>
 

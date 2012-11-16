@@ -42,7 +42,7 @@
 #include "de_misc.h"
 
 #include "image.h"
-#include "texturecontent.h"
+#include "gl/texturecontent.h"
 #include "rend_console.h" // \todo Move Rend_ConsoleUpdateTitle somewhere more suitable.
 
 // MACROS ------------------------------------------------------------------

@@ -40,8 +40,6 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
-#include "zip.h"
-
 namespace de {
 
 #define SIG_LOCAL_FILE_HEADER   0x04034b50

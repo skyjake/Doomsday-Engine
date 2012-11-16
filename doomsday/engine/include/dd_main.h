@@ -34,7 +34,7 @@
 #ifndef __cplusplus // Kludge: this isn't yet C++ compatible
 #  include "textures.h"
 #endif
-#include "sys_direc.h"
+#include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
 
 #ifdef __cplusplus

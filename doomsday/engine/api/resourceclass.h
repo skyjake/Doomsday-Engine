@@ -60,8 +60,7 @@ typedef enum resourceclassid_e {
 
 #include <QList>
 #include <de/String>
-
-enum resourcetypeid_e;
+#include "resourcetype.h"
 
 namespace de
 {

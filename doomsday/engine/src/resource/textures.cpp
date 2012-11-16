@@ -26,9 +26,9 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "m_misc.h"     // for M_NumDigits
-#include "fs_util.h"    // for F_PrettyPath
-#include "r_world.h"    // for ddMapSetup
+#include "m_misc.h"             // for M_NumDigits
+#include "r_world.h"            // for ddMapSetup
+#include "filesys/fs_util.h"    // for F_PrettyPath
 #include "gl/gl_texmanager.h"
 #include "pathtree.h"
 #include "texturevariant.h"

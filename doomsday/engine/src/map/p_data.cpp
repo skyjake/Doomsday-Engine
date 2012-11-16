@@ -33,7 +33,7 @@
 #include "game.h"
 #include "lumpindex.h"
 #include "m_bams.h"
-#include "propertyvalue.h"
+#include "map/propertyvalue.h"
 #include "rend_bias.h"
 
 #include <map>

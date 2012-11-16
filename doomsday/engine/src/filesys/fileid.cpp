@@ -30,7 +30,7 @@
 #include <de/App>
 #include <de/Log>
 
-#include "fileid.h"
+#include "filesys/fileid.h"
 
 using namespace de;
 

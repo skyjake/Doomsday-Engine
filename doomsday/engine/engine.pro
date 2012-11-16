@@ -150,7 +150,6 @@ DENG_HEADERS += \
     include/con_bind.h \
     include/con_config.h \
     include/con_main.h \
-    include/consolewindow.h \
     include/dd_def.h \
     include/dd_games.h \
     include/dd_help.h \
@@ -180,11 +179,15 @@ DENG_HEADERS += \
     include/edit_bias.h \
     include/edit_bsp.h \
     include/edit_map.h \
-    include/file.h \
-    include/filehandlebuilder.h \
-    include/fileinfo.h \
-    include/fs_main.h \
-    include/fs_util.h \
+    include/filesys/file.h \
+    include/filesys/filehandlebuilder.h \
+    include/filesys/fileinfo.h \
+    include/filesys/fs_main.h \
+    include/filesys/fs_util.h \
+    include/filesys/sys_direc.h \
+    include/filesys/sys_findfile.h \
+    include/filesys/wad.h \
+    include/filesys/zip.h \
     include/game.h \
     include/gl/gl_defer.h \
     include/gl/gl_deferredapi.h \
@@ -195,12 +198,11 @@ DENG_HEADERS += \
     include/gl/gl_texmanager.h \
     include/gl/svg.h \
     include/gl/sys_opengl.h \
+    include/gl/texturecontent.h \
     include/gridmap.h \
     include/json.h \
     include/kdtree.h \
     include/library.h \
-    include/lumpcache.h \
-    include/lumpindex.h \
     include/m_bams.h \
     include/m_decomp64.h \
     include/m_linkedlist.h \
@@ -245,6 +247,7 @@ DENG_HEADERS += \
     include/map/p_ticker.h \
     include/map/plane.h \
     include/map/polyobj.h \
+    include/map/propertyvalue.h \
     include/map/sector.h \
     include/map/sidedef.h \
     include/map/surface.h \
@@ -260,7 +263,6 @@ DENG_HEADERS += \
     include/network/sys_network.h \
     include/network/ui_mpi.h \
     include/pathtree.h \
-    include/propertyvalue.h \
     include/r_main.h \
     include/r_things.h \
     include/r_util.h \
@@ -293,19 +295,22 @@ DENG_HEADERS += \
     include/resource/fonts.h \
     include/resource/hq2x.h \
     include/resource/image.h \
+    include/resource/lumpcache.h \
+    include/resource/lumpindex.h \
     include/resource/material.h \
     include/resource/materials.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
     include/resource/pcx.h \
     include/resource/r_data.h \
+    include/resource/resourcenamespace.h \
+    include/resource/resourcerecord.h \
+    include/resource/sys_reslocator.h \
     include/resource/texture.h \
     include/resource/textures.h \
     include/resource/texturevariant.h \
     include/resource/texturevariantspecification.h \
     include/resource/tga.h \
-    include/resourcenamespace.h \
-    include/resourcerecord.h \
     include/server/sv_def.h \
     include/server/sv_frame.h \
     include/server/sv_infine.h \
@@ -313,12 +318,8 @@ DENG_HEADERS += \
     include/server/sv_pool.h \
     include/server/sv_sound.h \
     include/sys_console.h \
-    include/sys_direc.h \
-    include/sys_findfile.h \
-    include/sys_reslocator.h \
     include/sys_system.h \
     include/tab_anorms.h \
-    include/texturecontent.h \
     include/ui/b_command.h \
     include/ui/b_context.h \
     include/ui/b_device.h \
@@ -327,6 +328,7 @@ DENG_HEADERS += \
     include/ui/busyvisual.h \
     include/ui/canvas.h \
     include/ui/canvaswindow.h \
+    include/ui/consolewindow.h \
     include/ui/dd_input.h \
     include/ui/displaymode.h \
     include/ui/displaymode_native.h \
@@ -344,8 +346,6 @@ DENG_HEADERS += \
     include/ui/window.h \
     include/ui/zonedebug.h \
     include/updater.h \
-    include/wad.h \
-    include/zip.h \
     src/updater/downloaddialog.h \
     src/updater/processcheckdialog.h \
     src/updater/updateavailabledialog.h \
@@ -459,18 +459,20 @@ SOURCES += \
     src/dd_main.cpp \
     src/dd_pinit.c \
     src/dd_plugin.c \
-    src/dd_wad.cpp \
     src/def_data.c \
     src/def_main.cpp \
     src/def_read.cpp \
     src/edit_bias.c \
     src/edit_bsp.cpp \
     src/edit_map.cpp \
-    src/file.cpp \
-    src/filehandle.cpp \
-    src/fileid.cpp \
-    src/fs_main.cpp \
-    src/fs_util.cpp \
+    src/filesys/file.cpp \
+    src/filesys/filehandle.cpp \
+    src/filesys/fileid.cpp \
+    src/filesys/fs_main.cpp \
+    src/filesys/fs_util.cpp \
+    src/filesys/sys_direc.c \
+    src/filesys/wad.cpp \
+    src/filesys/zip.cpp \
     src/game.cpp \
     src/gl/dgl_common.c \
     src/gl/dgl_draw.c \
@@ -487,7 +489,6 @@ SOURCES += \
     src/json.cpp \
     src/kdtree.c \
     src/library.cpp \
-    src/lumpindex.cpp \
     src/m_bams.c \
     src/m_decomp64.c \
     src/m_linkedlist.c \
@@ -526,6 +527,7 @@ SOURCES += \
     src/map/p_ticker.c \
     src/map/plane.c \
     src/map/polyobj.c \
+    src/map/propertyvalue.cpp \
     src/map/sector.c \
     src/map/sidedef.c \
     src/map/surface.c \
@@ -543,7 +545,6 @@ SOURCES += \
     src/network/ui_mpi.c \
     src/pathtree.cpp \
     src/pathtreenode.cpp \
-    src/propertyvalue.cpp \
     src/r_main.c \
     src/r_things.c \
     src/r_util.c \
@@ -572,9 +573,11 @@ SOURCES += \
     src/render/vignette.c \
     src/resource/bitmapfont.c \
     src/resource/colorpalette.c \
+    src/resource/dd_wad.cpp \
     src/resource/fonts.cpp \
     src/resource/hq2x.c \
     src/resource/image.cpp \
+    src/resource/lumpindex.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.c \
     src/resource/materials.cpp \
@@ -582,20 +585,19 @@ SOURCES += \
     src/resource/models.cpp \
     src/resource/pcx.c \
     src/resource/r_data.c \
+    src/resource/resourcenamespace.cpp \
+    src/resource/resourcerecord.cpp \
+    src/resource/sys_reslocator.cpp \
     src/resource/texture.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.c \
-    src/resourcenamespace.cpp \
-    src/resourcerecord.cpp \
     src/server/sv_frame.c \
     src/server/sv_infine.c \
     src/server/sv_main.c \
     src/server/sv_missile.c \
     src/server/sv_pool.c \
     src/server/sv_sound.cpp \
-    src/sys_direc.c \
-    src/sys_reslocator.cpp \
     src/sys_system.c \
     src/tab_tables.c \
     src/ui/b_command.c \
@@ -627,9 +629,7 @@ SOURCES += \
     src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp \
-    src/wad.cpp \
-    src/zip.cpp
+    src/uri.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

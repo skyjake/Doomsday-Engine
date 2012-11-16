@@ -26,12 +26,16 @@
 #define LIBDENG_FILESYS_H
 
 #include "dd_types.h"
-#include "filehandlebuilder.h"
-#include "fs_main.h"
-#include "fs_util.h"
-#include "sys_reslocator.h" /// \todo Does not belong here (higher level abstraction).
-#include "sys_direc.h"
-#include "sys_findfile.h"
+
+#include "filesys/filehandlebuilder.h"
+#include "filesys/fs_main.h"
+#include "filesys/fs_util.h"
+#include "filesys/sys_direc.h"
+#include "filesys/sys_findfile.h"
+#include "filesys/wad.h"
+#include "filesys/zip.h"
+
+#include "resource/sys_reslocator.h" /// \todo Does not belong here (higher level abstraction).
 
 #ifdef UNIX
 #  include "unix/sys_path.h"

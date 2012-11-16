@@ -47,7 +47,7 @@
 #include "r_draw.h"
 
 #include "colorpalette.h"
-#include "texturecontent.h"
+#include "gl/texturecontent.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
 #include "ui/displaymode.h"
