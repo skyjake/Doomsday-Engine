@@ -1002,7 +1002,7 @@ int PIT_CheckLine(LineDef* ld, void* data)
        tmBox.maxY <= aaBox->minY)
         return false;
 
-    if(LineDef_BoxOnSideFixedPrecision(ld, &tmBox))
+    if(LineDef_BoxOnSide_FixedPrecision(ld, &tmBox))
         return false;
 
     /*

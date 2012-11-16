@@ -121,29 +121,38 @@ int LineDef_BoxOnSide(LineDef* line, const AABoxd* box)
     return M_BoxOnLineSide(box, line->L_v1origin, line->direction);
 }
 
-int LineDef_BoxOnSideFixedPrecision(LineDef* line, const AABoxd* box)
+int LineDef_BoxOnSide_FixedPrecision(LineDef* line, const AABoxd* box)
 {
     fixed_t xbox[4];
     fixed_t pos[2];
     fixed_t delta[2];
+    double offset[2];
 
     DENG_ASSERT(line);
 
-    /// @todo Apply a suitable offset to both the box and the origin
-    /// to bring everything into the 16.16 fixed-point range.
+    /*
+     * Apply an offset to both the box and the line to bring everything into
+     * the 16.16 fixed-point range. We'll use the midpoint of the line as the
+     * origin, as typically this test is called when a bounding box is
+     * somewhere in the vicinity of the line. The offset is floored to integers
+     * so we won't change the discretization of the fractional part into 16-bit
+     * precision.
+     */
+    offset[VX] = floor(line->L_v1origin[VX] + line->direction[VX]/2);
+    offset[VY] = floor(line->L_v1origin[VY] + line->direction[VY]/2);
 
-    xbox[BOXLEFT]   = FLT2FIX(box->minX);
-    xbox[BOXRIGHT]  = FLT2FIX(box->maxX);
-    xbox[BOXBOTTOM] = FLT2FIX(box->minY);
-    xbox[BOXTOP]    = FLT2FIX(box->maxY);
+    xbox[BOXLEFT]   = FLT2FIX(box->minX - offset[VX]);
+    xbox[BOXRIGHT]  = FLT2FIX(box->maxX - offset[VX]);
+    xbox[BOXBOTTOM] = FLT2FIX(box->minY - offset[VY]);
+    xbox[BOXTOP]    = FLT2FIX(box->maxY - offset[VY]);
 
-    pos[VX]         = FLT2FIX(line->L_v1origin[VX]);
-    pos[VY]         = FLT2FIX(line->L_v1origin[VY]);
+    pos[VX]         = FLT2FIX(line->L_v1origin[VX] - offset[VX]);
+    pos[VY]         = FLT2FIX(line->L_v1origin[VY] - offset[VY]);
 
     delta[VX]       = FLT2FIX(line->direction[VX]);
     delta[VY]       = FLT2FIX(line->direction[VY]);
 
-    return M_BoxOnLineSideFixedPrecision(xbox, pos, delta);
+    return M_BoxOnLineSide_FixedPrecision(xbox, pos, delta);
 }
 
 void LineDef_SetDivline(const LineDef* line, divline_t* dl)
