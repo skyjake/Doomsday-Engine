@@ -459,6 +459,7 @@ SOURCES += \
     src/dd_main.cpp \
     src/dd_pinit.c \
     src/dd_plugin.c \
+    src/dd_wad.cpp \
     src/def_data.c \
     src/def_main.cpp \
     src/def_read.cpp \
@@ -573,7 +574,6 @@ SOURCES += \
     src/render/vignette.c \
     src/resource/bitmapfont.c \
     src/resource/colorpalette.c \
-    src/resource/dd_wad.cpp \
     src/resource/fonts.cpp \
     src/resource/hq2x.c \
     src/resource/image.cpp \

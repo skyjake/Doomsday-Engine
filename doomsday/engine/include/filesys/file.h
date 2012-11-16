@@ -38,7 +38,7 @@ namespace de {
 class LumpIndex;
 
 /**
- * File.  File is a core component of the filesystem intended for use as the base
+ * File1 is a core component of the filesystem intended for use as the base
  * for all types of (pseudo-)file resources.
  *
  * @ingroup fs

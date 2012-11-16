@@ -41,7 +41,7 @@ void GL_InitSmartFilterHQ2x(void);
  * @param src  R8G8B8A8 source image to be scaled.
  * @param width  Width of the source image in pixels.
  * @param height  Height of the source image in pixels.
- * @param flags  @see imageConversionFlags
+ * @param flags  @ref imageConversionFlags
  */
 uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags);
 

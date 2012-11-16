@@ -295,7 +295,7 @@ boolean Con_IsValidCommand(const char* name);
 /**
  * Attempt to execute a console command.
  *
- * @param src               The source of the command @see commandSource
+ * @param src               The source of the command (@ref commandSource)
  * @param command           The command to be executed.
  * @param silent            Non-zero indicates not to log execution of the command.
  * @param netCmd            If @c true, command was sent over the net.
