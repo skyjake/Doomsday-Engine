@@ -40,23 +40,52 @@
 
 using namespace de;
 
+class ZipResourceType : public de::FileResourceType
+{
+public:
+    ZipResourceType() : FileResourceType("RT_ZIP", RC_PACKAGE)
+    {}
+
+    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
+    {
+        if(Zip::recognise(hndl))
+        {
+            LOG_AS("ZipResourceType");
+            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            return new Zip(hndl, path, info);
+        }
+        return 0;
+    }
+};
+
+class WadResourceType : public de::FileResourceType
+{
+public:
+    WadResourceType() : FileResourceType("RT_WAD", RC_PACKAGE)
+    {}
+
+    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
+    {
+        if(Wad::recognise(hndl))
+        {
+            LOG_AS("WadResourceType");
+            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            return new Wad(hndl, path, info);
+        }
+        return 0;
+    }
+};
+
 static bool inited = false;
 
-static NullResourceClass const nullClass;
-static NullResourceType const nullType;
+static NullResourceClass nullClass;
+static NullResourceType nullType;
 
 static ResourceTypes types;
 static ResourceClasses classes;
 static ResourceNamespaces namespaces;
 
-static inline ResourceType const& resourceType(resourcetypeid_t id)
-{
-    if(id == RT_NONE) return nullType;
-    if(!VALID_RESOURCE_TYPEID(id)) throw Error("resourceType", String("Invalid id %1").arg(id));
-    return *types[uint(id) - 1];
-}
-
-static inline ResourceClass const& resourceClass(resourceclassid_t id)
+static inline ResourceClass& resourceClass(resourceclassid_t id)
 {
     if(id == RC_NULL) return nullClass;
     if(!VALID_RESOURCE_CLASSID(id)) throw Error("resourceClass", String("Invalid id %1").arg(id));
@@ -172,8 +201,7 @@ static bool findResource2(int flags, resourceclassid_t classId, String searchPat
 
     DENG2_FOR_EACH_CONST(ResourceClass::Types, typeIt, rclass.resourceTypes())
     {
-        ResourceType const& rtype = resourceType(*typeIt);
-        DENG2_FOR_EACH_CONST(QStringList, i, rtype.knownFileNameExtensions())
+        DENG2_FOR_EACH_CONST(QStringList, i, (*typeIt)->knownFileNameExtensions())
         {
             String const& ext = *i;
             if(findResource3(rnamespace, de::Uri(path2 + ext, RC_NULL), foundPath))
@@ -358,118 +386,134 @@ static void createResourceNamespaces()
 
 static void createResourceClasses()
 {
-    ResourceClass* rclass;
-
-    classes.push_back(new ResourceClass("RC_PACKAGE", "Packages"));
-    rclass = classes.back();
-    rclass->addResourceType(RT_ZIP); // Favor ZIP over WAD.
-    rclass->addResourceType(RT_WAD);
-
-    classes.push_back(new ResourceClass("RC_DEFINITION", "Defs"));
-    rclass = classes.back();
-    rclass->addResourceType(RT_DED);
-
-    classes.push_back(new ResourceClass("RC_GRAPHIC", "Graphics"));
-    rclass = classes.back();
-    rclass->addResourceType(RT_PNG); // Favour quality.
-    rclass->addResourceType(RT_TGA);
-    rclass->addResourceType(RT_JPG);
-    rclass->addResourceType(RT_PCX);
-
-    classes.push_back(new ResourceClass("RC_MODEL", "Models"));
-    rclass = classes.back();
-    rclass->addResourceType(RT_DMD); // Favour DMD over MD2.
-    rclass->addResourceType(RT_MD2);
-
-    classes.push_back(new ResourceClass("RC_SOUND", "Sfx"));
-    rclass = classes.back();
-    rclass->addResourceType(RT_WAV);
-
-    classes.push_back(new ResourceClass("RC_MUSIC", "Music"));
-    rclass = classes.back();
-    rclass->addResourceType(RT_OGG); // Favour quality.
-    rclass->addResourceType(RT_MP3);
-    rclass->addResourceType(RT_WAV);
-    rclass->addResourceType(RT_MOD);
-    rclass->addResourceType(RT_MID);
-
-    classes.push_back(new ResourceClass("RC_FONT", "Fonts"));
-    rclass = classes.back();
-    rclass->addResourceType(RT_DFN);
+    classes.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
+    classes.push_back(new ResourceClass("RC_DEFINITION",    "Defs"));
+    classes.push_back(new ResourceClass("RC_GRAPHIC",       "Graphics"));
+    classes.push_back(new ResourceClass("RC_MODEL",         "Models"));
+    classes.push_back(new ResourceClass("RC_SOUND",         "Sfx"));
+    classes.push_back(new ResourceClass("RC_MUSIC",         "Music"));
+    classes.push_back(new ResourceClass("RC_FONT",          "Fonts"));
 }
 
 static void createResourceTypes()
 {
     ResourceType* rtype;
 
-    types.push_back(new ResourceType("RT_ZIP", RC_PACKAGE));
+    /*
+     * Packages types:
+     */
+    ResourceClass& packageClass = F_ResourceClassByName("RC_PACKAGE");
+
+    types.push_back(new ZipResourceType());
     rtype = types.back();
     rtype->addKnownExtension(".pk3");
     rtype->addKnownExtension(".zip");
+    packageClass.addResourceType(rtype);
 
-    types.push_back(new ResourceType("RT_WAD", RC_PACKAGE));
+    types.push_back(new WadResourceType());
     rtype = types.back();
     rtype->addKnownExtension(".wad");
+    packageClass.addResourceType(rtype);
 
     types.push_back(new ResourceType("RT_LMP", RC_PACKAGE)); ///< Treat lumps as packages so they are mapped to $App.DataPath.
     rtype = types.back();
     rtype->addKnownExtension(".lmp");
 
+    /*
+     * Definition types:
+     */
     types.push_back(new ResourceType("RT_DED", RC_DEFINITION));
     rtype = types.back();
     rtype->addKnownExtension(".ded");
+    F_ResourceClassByName("RC_DEFINITION").addResourceType(rtype);
+
+    /*
+     * Graphic types:
+     */
+    ResourceClass& graphicClass = F_ResourceClassByName("RC_GRAPHIC");
 
     types.push_back(new ResourceType("RT_PNG", RC_GRAPHIC));
     rtype = types.back();
     rtype->addKnownExtension(".png");
-
-    types.push_back(new ResourceType("RT_JPG", RC_GRAPHIC));
-    rtype = types.back();
-    rtype->addKnownExtension(".jpg");
+    graphicClass.addResourceType(rtype);
 
     types.push_back(new ResourceType("RT_TGA", RC_GRAPHIC));
     rtype = types.back();
     rtype->addKnownExtension(".tga");
+    graphicClass.addResourceType(rtype);
+
+    types.push_back(new ResourceType("RT_JPG", RC_GRAPHIC));
+    rtype = types.back();
+    rtype->addKnownExtension(".jpg");
+    graphicClass.addResourceType(rtype);
 
     types.push_back(new ResourceType("RT_PCX", RC_GRAPHIC));
     rtype = types.back();
     rtype->addKnownExtension(".pcx");
+    graphicClass.addResourceType(rtype);
+
+    /*
+     * Model types:
+     */
+    ResourceClass& modelClass = F_ResourceClassByName("RC_MODEL");
 
     types.push_back(new ResourceType("RT_DMD", RC_MODEL));
     rtype = types.back();
     rtype->addKnownExtension(".dmd");
+    modelClass.addResourceType(rtype);
 
     types.push_back(new ResourceType("RT_MD2", RC_MODEL));
     rtype = types.back();
     rtype->addKnownExtension(".md2");
+    modelClass.addResourceType(rtype);
 
+    /*
+     * Sound types:
+     */
     types.push_back(new ResourceType("RT_WAV", RC_SOUND));
     rtype = types.back();
     rtype->addKnownExtension(".wav");
+    F_ResourceClassByName("RC_SOUND").addResourceType(rtype);
+
+    /*
+     * Music types:
+     */
+    ResourceClass& musicClass = F_ResourceClassByName("RC_MUSIC");
 
     types.push_back(new ResourceType("RT_OGG", RC_MUSIC));
     rtype = types.back();
     rtype->addKnownExtension(".ogg");
+    musicClass.addResourceType(rtype);
 
     types.push_back(new ResourceType("RT_MP3", RC_MUSIC));
     rtype = types.back();
     rtype->addKnownExtension(".mp3");
+    musicClass.addResourceType(rtype);
 
     types.push_back(new ResourceType("RT_MOD", RC_MUSIC));
     rtype = types.back();
     rtype->addKnownExtension(".mod");
+    musicClass.addResourceType(rtype);
 
     types.push_back(new ResourceType("RT_MID", RC_MUSIC));
     rtype = types.back();
     rtype->addKnownExtension(".mid");
+    musicClass.addResourceType(rtype);
 
-    types.push_back(new ResourceType("RT_DEH", RC_PACKAGE)); ///< Treat DeHackEd patches as packages so they are mapped to $App.DataPath.
-    rtype = types.back();
-    rtype->addKnownExtension(".deh");
-
+    /*
+     * Font types:
+     */
     types.push_back(new ResourceType("RT_DFN", RC_FONT));
     rtype = types.back();
     rtype->addKnownExtension(".dfn");
+    F_ResourceClassByName("RC_FONT").addResourceType(rtype);
+
+    /*
+     * Misc types:
+     */
+    types.push_back(new ResourceType("RT_DEH", RC_PACKAGE)); ///< Treat DeHackEd patches as packages so they are mapped to $App.DataPath.
+    rtype = types.back();
+    rtype->addKnownExtension(".deh");
 }
 
 void F_InitResourceLocator()
@@ -529,13 +573,13 @@ ResourceNamespace* F_ResourceNamespaceByName(String name)
     return 0; // Not found.
 }
 
-ResourceClass const& F_ResourceClassByName(String name)
+ResourceClass& F_ResourceClassByName(String name)
 {
     if(!name.isEmpty())
     {
         DENG2_FOR_EACH_CONST(ResourceClasses, i, classes)
         {
-            ResourceClass const& rclass = **i;
+            ResourceClass& rclass = **i;
             if(!rclass.name().compareWithoutCase(name))
                 return rclass;
         }
@@ -543,13 +587,13 @@ ResourceClass const& F_ResourceClassByName(String name)
     return nullClass; // Not found.
 }
 
-ResourceType const& F_ResourceTypeByName(String name)
+ResourceType& F_ResourceTypeByName(String name)
 {
     if(!name.isEmpty())
     {
         DENG2_FOR_EACH_CONST(ResourceTypes, i, types)
         {
-            ResourceType const& rtype = **i;
+            ResourceType& rtype = **i;
             if(!rtype.name().compareWithoutCase(name))
                 return rtype;
         }
@@ -557,13 +601,13 @@ ResourceType const& F_ResourceTypeByName(String name)
     return nullType; // Not found.
 }
 
-ResourceType const& F_GuessResourceTypeFromFileName(String path)
+ResourceType& F_GuessResourceTypeFromFileName(String path)
 {
     if(!path.isEmpty())
     {
         DENG2_FOR_EACH_CONST(ResourceTypes, i, types)
         {
-            ResourceType const& rtype = **i;
+            ResourceType& rtype = **i;
             if(rtype.fileNameIsKnown(path))
                 return rtype;
         }
@@ -571,16 +615,16 @@ ResourceType const& F_GuessResourceTypeFromFileName(String path)
     return nullType;
 }
 
-ResourceType const* F_ResourceTypeById(resourcetypeid_t id)
-{
-    if(!VALID_RESOURCE_TYPEID(id)) return 0;
-    return &resourceType(id);
-}
-
-ResourceClass const* F_ResourceClassById(resourceclassid_t id)
+ResourceClass* F_ResourceClassById(resourceclassid_t id)
 {
     if(!VALID_RESOURCE_CLASSID(id)) return 0;
     return &resourceClass(id);
+}
+
+ResourceTypes const& F_ResourceTypes()
+{
+    DENG_ASSERT(inited);
+    return types;
 }
 
 ResourceNamespaces const& F_ResourceNamespaces()

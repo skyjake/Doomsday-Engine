@@ -437,7 +437,8 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     {
         // The original string has no memory allocated; it's a static string.
         allocateString(str, other->length, false);
-        strcpy(str->str, other->str);
+        if(other->str)
+            strcpy(str->str, other->str);
         str->length = other->length;
     }
     else

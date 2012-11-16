@@ -65,6 +65,7 @@
 #define DBITS           (FRACBITS-SLOPEBITS)
 
 #if defined(WIN32)
+#define close _close
 #define read _read
 #define write _write
 #endif

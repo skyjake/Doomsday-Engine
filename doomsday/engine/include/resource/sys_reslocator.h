@@ -123,6 +123,8 @@ typedef QList<ResourceNamespace*> ResourceNamespaces;
  */
 de::ResourceNamespace* F_ResourceNamespaceByName(de::String name);
 
+de::ResourceTypes const& F_ResourceTypes();
+
 de::ResourceNamespaces const& F_ResourceNamespaces();
 
 /**
@@ -133,7 +135,7 @@ de::ResourceNamespaces const& F_ResourceNamespaces();
  * @param classId  Unique identifier of the class.
  * @return  ResourceClass associated with @a id; otherwise @c 0 (not found).
  */
-de::ResourceClass const* F_ResourceClassById(resourceclassid_t classId);
+de::ResourceClass* F_ResourceClassById(resourceclassid_t classId);
 
 /**
  * Lookup a ResourceClass by symbolic name.
@@ -141,17 +143,7 @@ de::ResourceClass const* F_ResourceClassById(resourceclassid_t classId);
  * @param name  Symbolic name of the class.
  * @return  ResourceClass associated with @a name; otherwise @c 0 (not found).
  */
-de::ResourceClass const& F_ResourceClassByName(de::String name);
-
-/**
- * Lookup a ResourceType by id.
- *
- * @todo Refactor away.
- *
- * @param typeId  Unique identifier of the type.
- * @return  ResourceType associated with @a id; otherwise @c 0 (not found).
- */
-de::ResourceType const* F_ResourceTypeById(resourcetypeid_t typeId);
+de::ResourceClass& F_ResourceClassByName(de::String name);
 
 /**
  * Lookup a ResourceType by symbolic name.
@@ -159,7 +151,7 @@ de::ResourceType const* F_ResourceTypeById(resourcetypeid_t typeId);
  * @param name  Symbolic name of the type.
  * @return  ResourceType associated with @a name. May return a null-object.
  */
-de::ResourceType const& F_ResourceTypeByName(de::String name);
+de::ResourceType& F_ResourceTypeByName(de::String name);
 
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
@@ -167,7 +159,7 @@ de::ResourceType const& F_ResourceTypeByName(de::String name);
  *
  * @return  Type determined for this resource. May return a null-object.
  */
-de::ResourceType const& F_GuessResourceTypeFromFileName(de::String name);
+de::ResourceType& F_GuessResourceTypeFromFileName(de::String name);
 
 #endif // __cplusplus
 

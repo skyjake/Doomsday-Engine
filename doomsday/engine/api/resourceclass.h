@@ -75,7 +75,7 @@ namespace de
     struct ResourceClass
     {
     public:
-        typedef QList<resourcetypeid_e> Types;
+        typedef QList<ResourceType*> Types;
 
     public:
         ResourceClass(String _name, String _defaultNamespace)
@@ -108,7 +108,7 @@ namespace de
          * @param rtype  Identifier of the resourceType to add.
          * @return  This instance.
          */
-        ResourceClass& addResourceType(resourcetypeid_e rtype)
+        ResourceClass& addResourceType(ResourceType* rtype)
         {
             searchTypeOrder.push_back(rtype);
             return *this;

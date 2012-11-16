@@ -27,64 +27,31 @@
 #define LIBDENG_RESOURCETYPE_H
 
 #ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Resource Type identifer attributable to resources (e.g., files).
- *
- * @ingroup core
- *
- * @todo Refactor away. These identifiers are no longer needed.
- */
-typedef enum resourcetypeid_e {
-    RT_NONE = 0,
-    RT_FIRST = 1,
-    RT_ZIP = RT_FIRST,
-    RT_WAD,
-    RT_LMP,
-    RT_DED,
-    RT_PNG,
-    RT_JPG,
-    RT_TGA,
-    RT_PCX,
-    RT_DMD,
-    RT_MD2,
-    RT_WAV,
-    RT_OGG,
-    RT_MP3,
-    RT_MOD,
-    RT_MID,
-    RT_DEH,
-    RT_DFN,
-    RT_LAST_INDEX
-} resourcetypeid_t;
-
-#define RESOURCETYPE_COUNT          (RT_LAST_INDEX - 1)
-#define VALID_RESOURCE_TYPEID(v)    ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#ifdef __cplusplus
 #ifndef DENG2_C_API_ONLY
 
 #include <QStringList>
+#include <de/Log>
+#include <de/NativePath>
 #include <de/String>
+#include "filehandle.h"
 
 enum resourceclassid_e;
 
 namespace de
 {
+    struct FileInfo;
+
     /**
      * Encapsulates the properties and logics belonging to a logical
      * type of resource (e.g., Zip, PNG, WAV, etc...)
      *
      * @ingroup core
      */
-    struct ResourceType
+    class ResourceType
     {
+    public:
+        typedef de::File1* (*InterpretFunc)(de::FileHandle& hndl, String path, FileInfo const& info);
+
     public:
         ResourceType(String _name, resourceclassid_e _defaultClass)
             : name_(_name), defaultClass_(_defaultClass)
@@ -102,12 +69,6 @@ namespace de
         resourceclassid_e defaultClass() const
         {
             return defaultClass_;
-        }
-
-        /// Return the number of known extensions for this type of resource.
-        int knownExtensionCount() const
-        {
-            return knownFileNameExtensions_.count();
         }
 
         /**
@@ -167,8 +128,9 @@ namespace de
      *
      * @ingroup core
      */
-    struct NullResourceType : public ResourceType
+    class NullResourceType : public ResourceType
     {
+    public:
         NullResourceType() : ResourceType("RT_NONE",  RC_UNKNOWN)
         {}
     };
@@ -176,6 +138,33 @@ namespace de
     /// @return  @c true= @a rtype is a "null-resourcetype" object (not a real resource type).
     inline bool isNullResourceType(ResourceType const& rtype) {
         return !!dynamic_cast<NullResourceType const*>(&rtype);
+    }
+
+    /**
+     * Base class for all file resource types.
+     */
+    class FileResourceType : public ResourceType
+    {
+    public:
+        FileResourceType(String name, resourceclassid_t rclassId)
+            : ResourceType(name, rclassId)
+        {}
+
+        /**
+         * Attempt to interpret a file resource of this type.
+         *
+         * @param hndl  Handle to the file to be interpreted.
+         * @param path  VFS path to associate with the file.
+         * @param info  File metadata info to attach to the file.
+         *
+         * @return  The interpreted file; otherwise @c 0.
+         */
+        virtual de::File1* interpret(de::FileHandle& /*hndl*/, String /*path*/, FileInfo const& /*info*/) const = 0;
+    };
+
+    /// @return  @c true= @a rtype is a FileResourceType object.
+    inline bool isFileResourceType(ResourceType const& rtype) {
+        return !!dynamic_cast<FileResourceType const*>(&rtype);
     }
 
 } // namespace de

@@ -30,7 +30,6 @@
 #include "de_filesys.h"
 #include "pathtree.h"
 #include "resource/lumpcache.h"
-#include "resource/resourcenamespace.h"
 
 #include <de/App>
 #include <de/ByteOrder>
