@@ -851,7 +851,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     // Construct and attach the new resource record.
     de::Game& game = games->byId(gameId);
     ResourceRecord* record = new ResourceRecord(classId, rflags);
-    game.addResource(classId, *record);
+    game.addResource(*record);
 
     // Add the name list to the resource record.
     QStringList nameList = String(names).split(";", QString::SkipEmptyParts);

@@ -116,10 +116,9 @@ public:
      * @note Resource registration order defines the order in which resources of each
      *       type are loaded.
      *
-     * @param classId  Class of resource being added.
      * @param record  ResourceRecord to add.
      */
-    Game& addResource(resourceclassid_t classId, ResourceRecord& record);
+    Game& addResource(ResourceRecord& record);
 
     bool allStartupResourcesFound() const;
 
@@ -195,7 +194,7 @@ public:
 public:
     NullGame();
 
-    Game& addResource(resourceclassid_t /*classId*/, struct resourcerecord_s& /*record*/) {
+    Game& addResource(struct resourcerecord_s& /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 
@@ -239,7 +238,7 @@ void Game_Delete(Game* game);
 
 boolean Game_IsNullObject(Game const* game);
 
-struct game_s* Game_AddResource(Game* game, resourceclassid_t classId, struct resourcerecord_s* record);
+struct game_s* Game_AddResource(Game* game, struct resourcerecord_s* record);
 
 boolean Game_AllStartupResourcesFound(Game const* game);
 

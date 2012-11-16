@@ -114,16 +114,13 @@ GameCollection& Game::collection() const
     return *reinterpret_cast<de::GameCollection*>(App_GameCollection());
 }
 
-Game& Game::addResource(resourceclassid_t classId, ResourceRecord& record)
+Game& Game::addResource(ResourceRecord& record)
 {
-    if(!VALID_RESOURCE_CLASSID(classId))
-        throw de::Error("Game::addResource", QString("Invalid resource class %1").arg(classId));
-
     // Ensure we don't add duplicates.
-    Resources::const_iterator found = d->resources.find(classId, &record);
+    Resources::const_iterator found = d->resources.find(record.resourceClass(), &record);
     if(found == d->resources.end())
     {
-        d->resources.insert(classId, &record);
+        d->resources.insert(record.resourceClass(), &record);
     }
     return *this;
 }
@@ -332,11 +329,11 @@ boolean Game_IsNullObject(Game const* game)
     return de::isNullGame(*reinterpret_cast<de::Game const*>(game));
 }
 
-struct game_s* Game_AddResource(struct game_s* game, resourceclassid_t classId, struct resourcerecord_s* record)
+struct game_s* Game_AddResource(struct game_s* game, struct resourcerecord_s* record)
 {
     SELF(game);
     DENG_ASSERT(record);
-    self->addResource(classId, reinterpret_cast<de::ResourceRecord&>(*record));
+    self->addResource(reinterpret_cast<de::ResourceRecord&>(*record));
     return game;
 }
 

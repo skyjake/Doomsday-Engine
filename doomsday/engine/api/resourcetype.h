@@ -50,9 +50,6 @@ namespace de
     class ResourceType
     {
     public:
-        typedef de::File1* (*InterpretFunc)(de::FileHandle& hndl, String path, FileInfo const& info);
-
-    public:
         ResourceType(String _name, resourceclassid_e _defaultClass)
             : name_(_name), defaultClass_(_defaultClass)
         {}
