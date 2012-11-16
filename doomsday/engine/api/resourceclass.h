@@ -146,7 +146,7 @@ namespace de
         {}
     };
 
-    /// @return  @c true= @a rtype is a "null-resourceclass" object (not a real resource class).
+    /// @return  @c true= @a rclass is a "null-resourceclass" object (not a real resource class).
     inline bool isNullResourceClass(ResourceClass const& rclass) {
         return !!dynamic_cast<NullResourceClass const*>(&rclass);
     }
