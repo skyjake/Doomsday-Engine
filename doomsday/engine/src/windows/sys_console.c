@@ -37,7 +37,7 @@
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
-#include "consolewindow.h"
+#include "ui/consolewindow.h"
 
 #define WINDOWEDSTYLE (WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | \
                        WS_CLIPCHILDREN | WS_CLIPSIBLINGS)

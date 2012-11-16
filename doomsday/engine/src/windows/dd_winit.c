@@ -54,7 +54,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "fs_util.h"
+#include "filesys/fs_util.h"
 #include "dd_winit.h"
 #include "ui/displaymode.h"
 
