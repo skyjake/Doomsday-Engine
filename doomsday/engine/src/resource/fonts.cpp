@@ -192,7 +192,7 @@ static int unlinkRecordInUniqueIdMap(FontRepository::Node& node, void* parameter
 
 /**
  * @param uri       Uri to be validated.
- * @param flags     @see validateFontUriFlags
+ * @param flags     @ref validateFontUriFlags
  * @param quiet     @c true= Do not output validation remarks to the log.
  *
  * @return  @c true if @a Uri passes validation.
@@ -1372,7 +1372,7 @@ static int composeAndCompareDirectoryNodePaths(void const* a, void const* b)
 #define DEFAULT_PRINTFONTFLAGS          0
 
 /**
- * @param flags  @see printFontFlags
+ * @param flags  @ref printFontFlags
  */
 static size_t printFonts3(fontnamespaceid_t namespaceId, char const* like, int flags)
 {

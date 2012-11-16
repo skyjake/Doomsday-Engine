@@ -43,7 +43,7 @@ typedef enum mapformatid_e {
 
 /**
  * Helper macro for determining whether a value can be interpreted as a logical
- * map format identifier (@see mapformatid_t).
+ * map format identifier (see mapformatid_t).
  */
 #define VALID_MAPFORMATID(v)        ((v) >= MF_DOOM && (v) < NUM_MAPFORMATS)
 

@@ -144,7 +144,7 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName);
 
 /**
  * @param primType  Type of primitive being written.
- * @param flags  @see rendpolyFlags
+ * @param flags  @ref rendpolyFlags
  * @param colors  Color data values for the primitive. If @c NULL the default
  *                value set [R:255, G:255, B:255, A:255] will be used for all
  *                vertices of the primitive.
@@ -158,7 +158,7 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
 
 /**
  * @param primType  Type of primitive being written.
- * @param flags  @see rendpolyFlags
+ * @param flags  @ref rendpolyFlags
  * @param colors  Color data values for the primitive. If @c NULL the default
  *                value set [R:255, G:255, B:255, A:255] will be used for all
  *                vertices of the primitive.
@@ -170,7 +170,7 @@ void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
 
 /**
  * @param primType  Type of primitive being written.
- * @param flags  @see rendpolyFlags
+ * @param flags  @ref rendpolyFlags
  * @param colors  Color data values for the primitive. If @c NULL the default
  *                value set [R:255, G:255, B:255, A:255] will be used for all
  *                vertices of the primitive.
@@ -181,7 +181,7 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
 
 /**
  * @param primType  Type of primitive being written.
- * @param flags  @see rendpolyFlags
+ * @param flags  @ref rendpolyFlags
  * @param colors  Color data values for the primitive. If @c NULL the default
  *                value set [R:255, G:255, B:255, A:255] will be used for all
  *                vertices of the primitive.
@@ -192,7 +192,7 @@ void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
 
 /**
  * @param primType  Type of primitive being written.
- * @param flags  @see rendpolyFlags
+ * @param flags  @ref rendpolyFlags
  * @param colors  Color data values for the primitive. If @c NULL the default
  *                value set [R:255, G:255, B:255, A:255] will be used for all
  *                vertices of the primitive.

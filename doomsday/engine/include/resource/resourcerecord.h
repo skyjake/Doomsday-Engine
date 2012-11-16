@@ -33,7 +33,7 @@
 namespace de
 {
     /**
-     * ResourceRecord. Stores high-level metadata for and manages a logical resource.
+     * Stores high-level metadata for and manages a logical resource.
      *
      * @ingroup core
      */

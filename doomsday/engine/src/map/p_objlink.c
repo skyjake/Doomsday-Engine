@@ -326,7 +326,7 @@ int RIT_LinkObjToBspLeaf(BspLeaf* bspLeaf, void* paramaters)
  * BspLeaf and into the (relative) back BspLeaf.
  *
  * @param bspLeaf  BspLeaf to attempt to spread over to.
- * @param parameters  @see contactfinderparams_t
+ * @param parameters  @ref contactfinderparams_t
  *
  * @return  Always @c true. (This function is also used as an iterator.)
  */

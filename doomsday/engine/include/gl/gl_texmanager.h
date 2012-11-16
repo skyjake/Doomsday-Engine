@@ -227,7 +227,7 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
  * context information is supplied, suitable defaults are chosen in their place.
  *
  * @param tc  Usage context.
- * @param flags  @see textureVariantSpecificationFlags
+ * @param flags  @ref textureVariantSpecificationFlags
  * @param border  Border size in pixels (all edges).
  * @param tClass  Color palette translation class.
  * @param tMap  Color palette translation map.

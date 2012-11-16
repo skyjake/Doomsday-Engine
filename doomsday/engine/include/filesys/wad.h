@@ -39,7 +39,7 @@ class FileHandle;
 class LumpIndex;
 
 /**
- * Wad. Runtime representation of an opened WAD file.
+ * Runtime representation of an opened WAD file.
  */
 class Wad : public File1
 {

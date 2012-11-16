@@ -74,7 +74,7 @@ boolean ST_ChatIsActive(int player);
  * Post a message to the specified player's log.
  *
  * @param player  Player (local) number whose log to post to.
- * @param flags  @see logMessageFlags
+ * @param flags  @ref logMessageFlags
  * @param text  Message Text to be posted. Messages may use the same
  *      paramater control blocks as with the engine's Text rendering API.
  */

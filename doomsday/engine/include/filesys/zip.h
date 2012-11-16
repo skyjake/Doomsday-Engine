@@ -41,7 +41,7 @@ class FileHandle;
 class LumpIndex;
 
 /**
- * Zip. Runtime representation of an opened ZIP file.
+ * Runtime representation of an opened ZIP file.
  */
 class Zip : public File1
 {

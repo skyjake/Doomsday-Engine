@@ -51,7 +51,8 @@
 typedef de::PathTree MaterialRepository;
 
 /**
- * POD object. Contains extended info about a material binding (@see MaterialBind).
+ * Contains extended info about a material binding (see MaterialBind).
+ * @note POD object.
  */
 struct MaterialBindInfo
 {
@@ -761,7 +762,7 @@ materialid_t Materials_Id(material_t* mat)
 
 /**
  * @param uri  Uri to be validated.
- * @param flags  @see validateMaterialUriFlags
+ * @param flags  @ref validateMaterialUriFlags
  * @param quiet  @c true= Do not output validation remarks to the log.
  * @return  @c true if @a Uri passes validation.
  */

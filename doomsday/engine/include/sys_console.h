@@ -44,7 +44,7 @@ void Sys_ConShutdown(Window *window);
 void ConsoleWindow_SetTitle(const Window *window, const char* title);
 
 /**
- * @param flags  @see consolePrintFlags
+ * @param flags  @ref consolePrintFlags
  */
 void Sys_ConPrint(uint idx, const char* text, int flags);
 
@@ -54,7 +54,7 @@ void Sys_ConPrint(uint idx, const char* text, int flags);
  * @param idx  Console window identifier.
  * @param text  Text string to copy.
  * @param cursorPos  Position to set the cursor on the command line.
- * @param flags  @see consoleCommandlineFlags
+ * @param flags  @ref consoleCommandlineFlags
  */
 void Sys_SetConWindowCmdLine(uint idx, const char* text, unsigned int cursorPos, int flags);
 

@@ -295,7 +295,7 @@ boolean Con_IsValidCommand(const char* name);
 /**
  * Attempt to execute a console command.
  *
- * @param src               The source of the command @see commandSource
+ * @param src               The source of the command (@ref commandSource)
  * @param command           The command to be executed.
  * @param silent            Non-zero indicates not to log execution of the command.
  * @param netCmd            If @c true, command was sent over the net.
@@ -353,7 +353,7 @@ void Con_Message(const char* message, ...) PRINTF_F(1,2);
 /**
  * Print into the console.
  *
- * @param flags   @see consolePrintFlags
+ * @param flags   @ref consolePrintFlags
  * @param format  Format for the output using printf() formatting syntax.
  */
 void Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
@@ -382,7 +382,7 @@ void Con_PrintRuler(void);
  * @param pathList   A series of file/resource names/paths separated by @a delimiter.
  * @param delimiter  Path delimiter character.
  * @param separator  Text printed between list entries.
- * @param flags      @see printPathFlags.
+ * @param flags      @ref printPathFlags.
  */
 void Con_PrintPathList4(const char* pathList, char delimiter, const char* separator, int flags);
 void Con_PrintPathList3(const char* pathList, char delimiter, const char* separator); /* flags = DEFAULT_PRINTPATHFLAGS */

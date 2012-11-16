@@ -95,7 +95,7 @@ void SaveInfo_Read(SaveInfo* info, Reader* reader);
 
 #if __JHEXEN__
 /**
- * @brief libhexen specific version of @see SaveInfo_Read() for deserializing
+ * @brief libhexen specific version of @ref SaveInfo_Read() for deserializing
  * legacy version 9 save state info.
  */
 void SaveInfo_Read_Hx_v9(SaveInfo* info, Reader* reader);

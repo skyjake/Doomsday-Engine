@@ -57,8 +57,6 @@ typedef enum {
 namespace de {
 
 /**
- * Texture
- *
  * Presents an abstract interface to all supported texture types so that
  * they may be managed transparently.
  */

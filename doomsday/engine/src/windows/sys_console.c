@@ -92,7 +92,7 @@ static void scrollLine(consolewindow_t *win)
 }
 
 /**
- * @param flags  @see consolePrintFlags
+ * @param flags  @ref consolePrintFlags
  */
 static void setAttrib(consolewindow_t* win, int flags)
 {

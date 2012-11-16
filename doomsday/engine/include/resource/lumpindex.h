@@ -9,6 +9,8 @@
  * lumps. A single index may include lumps originating from many different
  * file containers.
  *
+ * @todo Move the definition of lumpnum_t into this header.
+ *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -30,7 +32,7 @@
 #ifndef LIBDENG_FILESYS_LUMPINDEX_H
 #define LIBDENG_FILESYS_LUMPINDEX_H
 
-#include "de_base.h" /// For lumpnum_t (@todo which should be moved here)
+#include "de_base.h" // for lumpnum_t
 #include "filesys/file.h"
 #include "filesys/fileinfo.h"
 

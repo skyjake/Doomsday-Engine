@@ -84,7 +84,7 @@ void F_ResetAllResourceNamespaces(void);
  *                      Can be @c NULL, changing this routine to only check that
  *                      the resource exists is readable.
  *
- * @param flags         @see resourceLocationFlags
+ * @param flags         @ref resourceLocationFlags
  *
  * @param optionalSuffix  If not @c NULL, append this suffix to search paths and
  *                      look for matches. If not found or not specified then search

@@ -78,7 +78,7 @@ enum resourceclassid_e;
 namespace de
 {
     /**
-     * ResourceType encapsulates the properties and logics belonging to a logical
+     * Encapsulates the properties and logics belonging to a logical
      * type of resource (e.g., Zip, PNG, WAV, etc...)
      *
      * @ingroup core
