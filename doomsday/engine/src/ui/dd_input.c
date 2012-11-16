@@ -34,7 +34,6 @@
 // For the debug visuals:
 #if _DEBUG
 #  include "de_graphics.h"
-#  include "de_refresh.h"
 #  include "de_render.h"
 #endif
 

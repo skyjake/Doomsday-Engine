@@ -43,9 +43,9 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "rend_bias.h"
-#include "rend_console.h"
-#include "r_lgrid.h"
+#include "render/rend_bias.h"
+#include "render/rend_console.h"
+#include "render/r_lgrid.h"
 #include "map/blockmapvisual.h"
 
 // MACROS ------------------------------------------------------------------

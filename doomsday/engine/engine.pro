@@ -170,7 +170,7 @@ DENG_HEADERS += \
     include/de_network.h \
     include/de_platform.h \
     include/de_play.h \
-    include/de_refresh.h \
+    include/de_resource.h \
     include/de_render.h \
     include/de_system.h \
     include/de_ui.h \
@@ -248,6 +248,7 @@ DENG_HEADERS += \
     include/map/plane.h \
     include/map/polyobj.h \
     include/map/propertyvalue.h \
+    include/map/r_world.h \
     include/map/sector.h \
     include/map/sidedef.h \
     include/map/surface.h \
@@ -263,16 +264,15 @@ DENG_HEADERS += \
     include/network/sys_network.h \
     include/network/ui_mpi.h \
     include/pathtree.h \
-    include/r_main.h \
-    include/r_things.h \
     include/r_util.h \
-    include/r_world.h \
     include/render/r_draw.h \
     include/render/r_fakeradio.h \
+    include/render/r_main.h \
     include/render/r_lgrid.h \
     include/render/r_lumobjs.h \
     include/render/r_shadow.h \
     include/render/r_sky.h \
+    include/render/r_things.h \
     include/render/rend_bias.h \
     include/render/rend_clip.h \
     include/render/rend_console.h \
@@ -356,8 +356,6 @@ DENG_HEADERS += \
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
-    $$DENG_INCLUDE_DIR/render \
-    $$DENG_INCLUDE_DIR/resource \
     $$DENG_API_DIR
 
 HEADERS += \
@@ -529,6 +527,7 @@ SOURCES += \
     src/map/plane.c \
     src/map/polyobj.c \
     src/map/propertyvalue.cpp \
+    src/map/r_world.c \
     src/map/sector.c \
     src/map/sidedef.c \
     src/map/surface.c \
@@ -546,16 +545,15 @@ SOURCES += \
     src/network/ui_mpi.c \
     src/pathtree.cpp \
     src/pathtreenode.cpp \
-    src/r_main.c \
-    src/r_things.c \
     src/r_util.c \
-    src/r_world.c \
     src/render/r_draw.c \
     src/render/r_fakeradio.c \
+    src/render/r_main.c \
     src/render/r_lgrid.c \
     src/render/r_lumobjs.c \
     src/render/r_shadow.c \
     src/render/r_sky.c \
+    src/render/r_things.c \
     src/render/rend_bias.c \
     src/render/rend_clip.cpp \
     src/render/rend_console.c \

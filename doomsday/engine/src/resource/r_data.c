@@ -36,16 +36,13 @@
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
+#include "de_resource.h"
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
 
-#include "colorpalette.h"
-#include "texture.h"
-#include "materialvariant.h"
-#include "texturevariant.h"
-#include "font.h"
+#include "render/r_things.h"
+#include "render/r_sky.h"
 
 // MACROS ------------------------------------------------------------------
 

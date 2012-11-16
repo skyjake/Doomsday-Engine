@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#include "r_main.h"
+#include "render/r_main.h"
 
 struct colorpalette_s;
 struct material_s;

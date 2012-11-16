@@ -24,8 +24,9 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
+
 #include "updater/downloaddialog.h"
-#include "resourcerecord.h"
+#include "resource/resourcerecord.h"
 
 #include <de/Error>
 #include <de/Log>

@@ -26,7 +26,6 @@
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_filesys.h"
 #include "de_defs.h"
 #include "de_misc.h"

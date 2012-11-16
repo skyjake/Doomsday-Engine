@@ -30,6 +30,8 @@
 #ifndef LIBDENG_PATHTREE_H
 #define LIBDENG_PATHTREE_H
 
+#ifdef __cplusplus
+
 #include <QList>
 #include <QMultiHash>
 #include <de/Error>
@@ -324,5 +326,7 @@ namespace de
     };
 
 } // namespace de
+
+#endif // __cplusplus
 
 #endif /* LIBDENG_PATHTREE_H */

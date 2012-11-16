@@ -29,7 +29,6 @@
 #include "de_play.h"
 #include "de_defs.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_network.h"
 #include "de_audio.h"
@@ -38,6 +37,7 @@
 #include "de_infine.h"
 #include "de_ui.h"
 #include "de_filesys.h"
+#include "de_resource.h"
 
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
 

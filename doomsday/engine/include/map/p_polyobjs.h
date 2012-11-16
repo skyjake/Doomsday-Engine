@@ -25,7 +25,7 @@
 #ifndef LIBDENG_P_POLYOBJS_H
 #define LIBDENG_P_POLYOBJS_H
 
-#include "r_data.h"
+#include "resource/r_data.h"
 
 /**
  * Action the callback if set, otherwise this is no-op.

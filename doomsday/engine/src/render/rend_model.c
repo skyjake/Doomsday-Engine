@@ -37,14 +37,13 @@
 #include "de_console.h"
 #include "de_render.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 
 #include "network/net_main.h" // for gametic
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)

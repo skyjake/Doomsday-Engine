@@ -31,7 +31,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_misc.h"
 
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )

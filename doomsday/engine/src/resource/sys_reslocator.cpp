@@ -30,9 +30,7 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
-#include "resourceclass.h"
-#include "resourcenamespace.h"
-#include "resourcetype.h"
+#include "de_resource.h"
 
 #include <de/Error>
 #include <de/App>

@@ -23,13 +23,12 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_render.h"
 
 #include "m_bams.h"
 #include "m_misc.h"
-#include "materialvariant.h"
-#include "materials.h"
+#include "resource/materialvariant.h"
+#include "resource/materials.h"
 
 #include "map/linedef.h"
 

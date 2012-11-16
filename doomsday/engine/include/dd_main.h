@@ -32,7 +32,7 @@
 #include "dd_types.h"
 #include "dd_plugin.h"
 #ifndef __cplusplus // Kludge: this isn't yet C++ compatible
-#  include "textures.h"
+#  include "resource/textures.h"
 #endif
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>

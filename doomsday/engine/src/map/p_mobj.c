@@ -38,11 +38,11 @@
 #include "de_system.h"
 #include "de_network.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_misc.h"
 #include "de_audio.h"
 
 #include "def_main.h"
+#include "render/r_things.h" // useSRVO
 
 // MACROS ------------------------------------------------------------------
 

@@ -30,22 +30,13 @@
 #include "de_base.h"
 #include "de_system.h"
 #include "de_platform.h"
-#include "de_refresh.h"
 #include "de_console.h"
 #include "de_audio.h"
 #include "de_misc.h"
 #include "de_graphics.h"
 #include "de_ui.h"
 #include "de_filesys.h"
-
-#include "r_data.h"
-
-#include "resourcerecord.h"
-#include "bitmapfont.h"
-#include "font.h"
-#include "lumpindex.h"
-#include "resourcenamespace.h"
-#include "texture.h"
+#include "de_resource.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"

@@ -23,7 +23,7 @@
 #ifndef LIBDENG_MAP_HEDGE
 #define LIBDENG_MAP_HEDGE
 
-#include "r_data.h"
+#include "resource/r_data.h"
 #include "p_dmu.h"
 
 #ifdef __cplusplus

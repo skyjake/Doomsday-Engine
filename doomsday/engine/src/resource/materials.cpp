@@ -25,16 +25,15 @@
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
 
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
 #include "pathtree.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 
 #include <de/Error>
 #include <de/Log>

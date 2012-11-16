@@ -26,9 +26,10 @@
 #include <QDebug>
 
 #include "de_base.h"
+
 #include "game.h"
-#include "resourcenamespace.h"
-#include "sys_reslocator.h"
+#include "resource/resourcenamespace.h"
+#include "resource/sys_reslocator.h"
 
 #include <de/NativePath>
 #include <de/unittest.h>

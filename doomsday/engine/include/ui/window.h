@@ -24,7 +24,7 @@
 #define LIBDENG_SYS_WINDOW_H
 
 #include "dd_types.h"
-#include "image.h"
+#include "resource/image.h"
 
 #ifdef __cplusplus
 extern "C" {

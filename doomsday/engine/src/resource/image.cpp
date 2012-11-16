@@ -24,7 +24,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 #include "m_misc.h"
-#include "image.h"
+#include "resource/image.h"
 
 #include <de/Log>
 #include <QByteArray>

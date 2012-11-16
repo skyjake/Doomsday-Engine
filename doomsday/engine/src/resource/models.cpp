@@ -34,16 +34,20 @@
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_graphics.h"
-#include "de_refresh.h"
 #include "de_play.h"
 #include "de_misc.h"
 
 #include "def_main.h"
+
 #include <de/NativePath>
 #include <de/StringPool>
-#include "texture.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+
+#include "resource/models.h"
+#include "resource/texture.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
+#include "render/r_things.h"
+#include "render/rend_model.h"
 
 typedef struct {
     float           pos[3];

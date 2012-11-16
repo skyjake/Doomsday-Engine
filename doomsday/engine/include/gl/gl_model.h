@@ -32,7 +32,7 @@
 #define LIBDENG_MODEL_H
 
 #include "dd_types.h"
-#include "r_data.h"
+#include "resource/r_data.h"
 
 #define MD2_MAGIC           0x32504449
 #define NUMVERTEXNORMALS    162

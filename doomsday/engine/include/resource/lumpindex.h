@@ -32,6 +32,8 @@
 #ifndef LIBDENG_FILESYS_LUMPINDEX_H
 #define LIBDENG_FILESYS_LUMPINDEX_H
 
+#ifdef __cplusplus
+
 #include "de_base.h" // for lumpnum_t
 #include "filesys/file.h"
 #include "filesys/fileinfo.h"
@@ -145,5 +147,7 @@ private:
 };
 
 } // namespace de
+
+#endif // __cplusplus
 
 #endif // LIBDENG_FILESYS_LUMPINDEX_H

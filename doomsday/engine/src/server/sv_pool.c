@@ -37,7 +37,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_play.h"
 
 #include "m_misc.h"

@@ -30,8 +30,8 @@
 #define LIBDENG_REFRESH_THINGS_H
 
 #include "map/p_mapdata.h"
-#include "r_data.h"
-#include "materials.h"
+#include "resource/r_data.h"
+#include "resource/materials.h"
 #include "rend_model.h"
 
 #ifdef __cplusplus

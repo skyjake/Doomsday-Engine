@@ -29,10 +29,8 @@
 #include "de_base.h"
 #include "de_audio.h"
 #include "de_play.h"
-#include "de_refresh.h"
+#include "de_resource.h"
 #include "de_system.h"
-
-#include "materialvariant.h"
 
 #include <de/Log>
 

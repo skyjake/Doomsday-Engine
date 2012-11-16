@@ -26,13 +26,13 @@
 #include "de_base.h"
 #include "de_console.h"
 
+#include "pathtree.h"
 #include "m_misc.h"             // for M_NumDigits
-#include "r_world.h"            // for ddMapSetup
+#include "map/r_world.h"        // for ddMapSetup
 #include "filesys/fs_util.h"    // for F_PrettyPath
 #include "gl/gl_texmanager.h"
-#include "pathtree.h"
-#include "texturevariant.h"
-#include "textures.h"
+#include "resource/texturevariant.h"
+#include "resource/textures.h"
 #include <de/Error>
 #include <de/Log>
 #include <de/memory.h>

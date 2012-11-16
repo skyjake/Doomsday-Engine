@@ -25,6 +25,8 @@
 #ifndef LIBDENG_RESOURCERECORD_H
 #define LIBDENG_RESOURCERECORD_H
 
+#ifdef __cplusplus
+
 #include <QStringList>
 
 #include <de/String>
@@ -113,5 +115,7 @@ namespace de
     };
 
 } // namespace de
+
+#endif // __cplusplus
 
 #endif /* LIBDENG_RESOURCERECORD_H */

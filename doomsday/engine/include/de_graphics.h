@@ -32,6 +32,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_draw.h"
 #include "gl/gl_texmanager.h"
+#include "gl/texturecontent.h"
 #include "gl/gl_tex.h"
 #include "gl/gl_model.h"
 #include "gl/gl_defer.h"

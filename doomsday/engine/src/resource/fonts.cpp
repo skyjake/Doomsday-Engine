@@ -37,9 +37,9 @@
 #include "gl/gl_texmanager.h"
 #include "pathtree.h"
 
-#include "font.h"
-#include "bitmapfont.h"
-#include "fonts.h"
+#include "resource/font.h"
+#include "resource/fonts.h"
+#include "resource/bitmapfont.h"
 
 typedef de::PathTree FontRepository;
 

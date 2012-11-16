@@ -38,8 +38,7 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-#include "r_main.h"
-//#include "gl_main.h" // For r_framecounter.
+#include "render/r_main.h"
 
 // MACROS ------------------------------------------------------------------
 

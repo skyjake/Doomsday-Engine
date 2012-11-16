@@ -42,22 +42,18 @@
 #include "de_console.h"
 #include "de_filesys.h"
 #include "de_network.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_render.h"
 #include "de_audio.h"
 #include "de_ui.h"
 #include "de_bsp.h"
 #include "de_edit.h"
+#include "de_filesys.h"
+#include "de_resource.h"
 
-#include "resourcerecord.h"
 #include "ui/displaymode.h"
-#include "lumpindex.h"
-#include "m_misc.h"
-#include "resourcenamespace.h"
-#include "texture.h"
 #include "updater.h"
-#include "filesys/wad.h"
+#include "m_misc.h"
 
 using namespace de;
 

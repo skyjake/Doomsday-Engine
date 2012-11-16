@@ -31,7 +31,6 @@
 #include "de_console.h"
 #include "de_edit.h"
 #include "de_render.h"
-#include "de_refresh.h"
 #include "de_play.h"
 #include "de_graphics.h"
 #include "de_misc.h"
@@ -39,10 +38,9 @@
 #include "de_system.h"
 
 #include "network/net_main.h"
-#include "texturevariant.h"
-#include "materialvariant.h"
+#include "resource/texturevariant.h"
+#include "resource/materialvariant.h"
 #include "map/blockmapvisual.h"
-#include "vignette.h"
 
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01

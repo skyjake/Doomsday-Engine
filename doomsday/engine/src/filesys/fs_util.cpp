@@ -42,7 +42,8 @@
 #include "de_filesys.h"
 #include "de_misc.h"
 
-#include "lumpindex.h"
+#include "resource/lumpindex.h"
+
 #include <de/Log>
 #include <de/NativePath>
 

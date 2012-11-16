@@ -22,10 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh Subsystem.
- */
-
 #ifndef LIBDENG_REFRESH_MAIN_H
 #define LIBDENG_REFRESH_MAIN_H
 
