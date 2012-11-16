@@ -161,57 +161,6 @@ public:
         throw de::Error("File1::directoryNode", "No owner directory");
     }
 
-    /*
-     * Access interfaces:
-     *
-     * @todo Extract these into one or more interface classes/subcomponents?
-     */
-
-    /**
-     * @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
-     *
-     * @attention This default implementation assumes there is only one lump in
-     * the file. Subclasses with multiple lumps should override this function
-     * accordingly.
-     */
-    virtual bool isValidIndex(int lumpIdx) const { return lumpIdx == 0; }
-
-    /**
-     * @return Logical index of the last lump in this file's directory or @c -1 if empty.
-     *
-     * @attention This default implementation assumes there is only one lump in
-     * the file. Subclasses with multiple lumps should override this function
-     * accordingly.
-     */
-    virtual int lastIndex() const { return 0; }
-
-    /**
-     * @return  Number of "lumps" contained within this resource.
-     *
-     * @attention This default implementation assumes there is only one lump in
-     * the file. Subclasses with multiple lumps should override this function
-     * accordingly.
-     */
-    virtual int lumpCount() const { return 1; }
-
-    /**
-     * Retrieve a lump contained by this file.
-     *
-     * @param lumpIdx       Logical index for the lump in this file's directory.
-     *
-     * @return The lump.
-     *
-     * @throws de::Error    If @a lumpIdx is not valid.
-     *
-     * @attention This default implementation assumes there is only one lump in
-     * the file and therefore *this* is that lump. Subclasses with multiple lumps
-     * should override this function accordingly.
-     */
-    virtual File1& lump(int lumpIdx) {
-        DENG_UNUSED(lumpIdx);
-        return *this;
-    }
-
     /**
      * Read the file data into @a buffer.
      *

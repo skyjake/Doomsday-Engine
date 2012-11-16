@@ -234,7 +234,7 @@ struct FS1::Instance
             path = basePath / path;
         }
 
-        File1 const* found = 0;
+        File1* found = 0;
 
         // First check the Zip lump index.
         QByteArray pathUtf8 = path.toUtf8();
@@ -267,7 +267,7 @@ struct FS1::Instance
         // Get a handle to the lump we intend to open.
         /// @todo The way this buffering works is nonsensical it should not be done here
         ///        but should instead be deferred until the content of the lump is read.
-        FileHandle* hndl = FileHandleBuilder::fromFileLump(found->container(), found->info().lumpIdx, false/*dontBuffer*/);
+        FileHandle* hndl = FileHandleBuilder::fromLump(*found, false/*dontBuffer*/);
 
         // Prepare a temporary info descriptor.
         retInfo = found->info();
@@ -461,7 +461,7 @@ FS1& FS1::index(de::File1& file)
     // Ensure this hasn't yet been indexed.
     FileList::const_iterator found = findListFile(d->loadedFiles, file);
     if(found != d->loadedFiles.end())
-        throw de::Error("FS1::index", "File \"" + NativePath(file.composePath()).pretty() + "\" has already been indexed");
+        throw Error("FS1::index", "File \"" + NativePath(file.composePath()).pretty() + "\" has already been indexed");
 #endif
 
     // Publish lumps to one or more indexes?
@@ -470,10 +470,15 @@ FS1& FS1::index(de::File1& file)
         if(!zip->empty())
         {
             // Insert the lumps into their rightful places in the index.
-            d->activePrimaryIndex->catalogLumps(*zip, 0, zip->lumpCount());
+            for(int i = 0; i < zip->lumpCount(); ++i)
+            {
+                File1& lump = zip->lump(i);
 
-            // Zip files also go into a special ZipFile index as well.
-            d->zipFileIndex.catalogLumps(*zip, 0, zip->lumpCount());
+                d->activePrimaryIndex->catalogLump(lump);
+
+                // Zip files also go into a special ZipFile index as well.
+                d->zipFileIndex.catalogLump(lump);
+            }
         }
     }
     else if(Wad* wad = dynamic_cast<Wad*>(&file))
@@ -481,7 +486,11 @@ FS1& FS1::index(de::File1& file)
         if(!wad->empty())
         {
             // Insert the lumps into their rightful places in the index.
-            d->activePrimaryIndex->catalogLumps(*wad, 0, wad->lumpCount());
+            for(int i = 0; i < wad->lumpCount(); ++i)
+            {
+                File1& lump = wad->lump(i);
+                d->activePrimaryIndex->catalogLump(lump);
+            }
         }
     }
 
@@ -1087,7 +1096,7 @@ de::FileHandle& FS1::openFile(String const& path, String const& mode, size_t bas
 de::FileHandle& FS1::openLump(de::File1& lump)
 {
     // Add a handle to the opened files list.
-    FileHandle& openFilesHndl = *FileHandleBuilder::fromFileLump(lump.container(), lump.info().lumpIdx, false/*do buffer*/);
+    FileHandle& openFilesHndl = *FileHandleBuilder::fromLump(lump, false/*do buffer*/);
     d->openFiles.push_back(&openFilesHndl); openFilesHndl.setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
     return openFilesHndl;
 }
@@ -1289,9 +1298,14 @@ D_CMD(ListFiles)
             de::File1& file = (*i)->file();
             uint crc = 0;
 
-            int fileCount = file.lumpCount();
-            if(de::Wad* wad = dynamic_cast<de::Wad*>(&file))
+            int fileCount = 1;
+            if(de::Zip* zip = dynamic_cast<de::Zip*>(&file))
             {
+                fileCount = zip->lumpCount();
+            }
+            else if(de::Wad* wad = dynamic_cast<de::Wad*>(&file))
+            {
+                fileCount = wad->lumpCount();
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
             }
 
@@ -1519,26 +1533,64 @@ void F_SetCustom(struct file1_s* file, boolean yes)
 size_t F_ReadLump(struct file1_s* _file, int lumpIdx, uint8_t* buffer)
 {
     if(!_file) return 0;
-    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).read(buffer);
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
+    if(Wad* wad = dynamic_cast<Wad*>(file))
+    {
+        return wad->lump(lumpIdx).read(buffer);
+    }
+    if(Zip* zip = dynamic_cast<Zip*>(file))
+    {
+        return zip->lump(lumpIdx).read(buffer);
+    }
+    return file->read(buffer);
 }
 
 size_t F_ReadLumpSection(struct file1_s* _file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
     if(!_file) return 0;
-    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).read(buffer, startOffset, length);
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
+    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    {
+        return wad->lump(lumpIdx).read(buffer, startOffset, length);
+    }
+    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    {
+        return zip->lump(lumpIdx).read(buffer, startOffset, length);
+    }
+    return file->read(buffer, startOffset, length);
 }
 
 uint8_t const* F_CacheLump(struct file1_s* _file, int lumpIdx)
 {
     if(!_file) return 0;
-    return reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).cache();
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
+    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    {
+        return wad->lump(lumpIdx).cache();
+    }
+    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    {
+        return zip->lump(lumpIdx).cache();
+    }
+    return file->cache();
 }
 
 void F_UnlockLump(struct file1_s* _file, int lumpIdx)
 {
     if(!_file) return;
-    reinterpret_cast<de::File1*>(_file)->lump(lumpIdx).unlock();
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
+    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    {
+        wad->unlockLump(lumpIdx);
+        return;
+    }
+    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    {
+        zip->unlockLump(lumpIdx);
+        return;
+    }
+    file->unlock();
 }
 
 struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
@@ -1598,8 +1650,18 @@ boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 AutoStr* F_ComposeLumpPath2(struct file1_s* _file, int lumpIdx, char delimiter)
 {
     if(!_file) return AutoStr_NewStd();
-    de::File1& file = reinterpret_cast<de::File1&>(*_file);
-    QByteArray path = file.lump(lumpIdx).composePath(delimiter).toUtf8();
+    de::File1* file = reinterpret_cast<de::File1*>(_file);
+    if(de::Wad* wad = dynamic_cast<de::Wad*>(file))
+    {
+        QByteArray path = wad->lump(lumpIdx).composePath(delimiter).toUtf8();
+        return AutoStr_FromTextStd(path.constData());
+    }
+    if(de::Zip* zip = dynamic_cast<de::Zip*>(file))
+    {
+        QByteArray path = zip->lump(lumpIdx).composePath(delimiter).toUtf8();
+        return AutoStr_FromTextStd(path.constData());
+    }
+    QByteArray path = file->composePath(delimiter).toUtf8();
     return AutoStr_FromTextStd(path.constData());
 }
 

@@ -38,24 +38,23 @@ public:
     /**
      * Create a new handle on the File @a file.
      *
-     * @param af            VFS object representing the file being opened.
+     * @param file  The file being opened.
      */
     static FileHandle* fromFile(File1& file);
 
     /**
-     * Create a new handle on a lump of File @a file.
+     * Create a new handle on @a lump.
      *
-     * @param af            VFS object representing the container of the lump to be opened.
-     * @param lumpIdx       Logical index of the lump within @a file to be opened.
-     * @param dontBuffer    @c true= do not buffer a copy of the lump.
+     * @param lump  The lump to be opened.
+     * @param dontBuffer  @c true= do not buffer a copy of the lump.
      */
-    static FileHandle* fromFileLump(File1& file, int lumpIdx, bool dontBuffer);
+    static FileHandle* fromLump(File1& lump, bool dontBuffer);
 
     /**
      * Create a new handle on the specified native file.
      *
-     * @param nativeFile    Native file system handle to the file being opened.
-     * @param baseOffset    Offset from the start of the file in bytes to begin.
+     * @param nativeFile  Native file system handle to the file being opened.
+     * @param baseOffset  Offset from the start of the file in bytes to begin.
      */
     static FileHandle* fromNativeFile(FILE& nativeFile, size_t baseOffset);
 
@@ -64,7 +63,7 @@ public:
      * fact a "reference" to the original, so all changes to the file which they
      * represent are implicitly shared.
      *
-     * @param hndl          Handle to be duplicated.
+     * @param hndl  Handle to be duplicated.
      */
     static FileHandle* dup(FileHandle const& hndl);
 };

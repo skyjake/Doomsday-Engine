@@ -332,11 +332,11 @@ static void createResourceNamespaces()
     {
         ResourceNamespace& rnamespace = createResourceNamespace(def->name, def->flags);
 
-        uint searchPathCount = 0;
+        int searchPathCount = 0;
         while(def->searchPaths[searchPathCount] && ++searchPathCount < namespacedef_max_searchpaths)
         {}
 
-        for(uint j = 0; j < searchPathCount; ++j)
+        for(int j = 0; j < searchPathCount; ++j)
         {
             de::Uri uri = de::Uri(def->searchPaths[j], RC_NULL);
             rnamespace.addSearchPath(ResourceNamespace::DefaultPaths, uri, def->searchPathFlags);

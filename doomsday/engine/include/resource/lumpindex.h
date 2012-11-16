@@ -106,15 +106,13 @@ public:
     bool catalogues(File1& file);
 
     /**
-     * Append a new set of lumps to the index.
+     * Append a lump to the index.
      *
      * @post Lump name hashes may be invalidated (will be rebuilt upon next search).
      *
-     * @param file          File from which lumps are to be being added.
-     * @param lumpIdxBase   Base index for the range of lumps being added.
-     * @param lumpIdxCount  Number of lumps in the range being added.
+     * @param lump      Lump to be being added.
      */
-    void catalogLumps(File1& file, int lumpIdxBase, int lumpIdxCount);
+    void catalogLump(File1& lump);
 
     /**
      * Prune all lumps catalogued from @a file.

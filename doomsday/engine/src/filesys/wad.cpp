@@ -326,8 +326,9 @@ struct Wad::Instance
             // Make it absolute.
             F_PrependBasePath(&absPath, &absPath);
 
+            FileHandle* dummy = 0; /// @todo Fixme!
             WadFile* lump =
-                new WadFile(*FileHandleBuilder::fromFileLump(*self, i, true/*don't buffer*/),
+                new WadFile(*dummy,
                             Str_Text(&absPath),
                             FileInfo(self->lastModified(), // Inherited from the container (note recursion).
                                      i,

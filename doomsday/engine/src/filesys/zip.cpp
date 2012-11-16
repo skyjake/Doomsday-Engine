@@ -465,9 +465,9 @@ struct Zip::Instance
 
                 QByteArray filePathUtf8 = filePath.toUtf8();
 
+                FileHandle* dummy = 0; /// @todo Fixme!
                 ZipFile* record =
-                    new ZipFile(*FileHandleBuilder::fromFileLump(*self, lumpIdx, true/*don't buffer*/),
-                                filePathUtf8.constData(),
+                    new ZipFile(*dummy, filePathUtf8.constData(),
                                 FileInfo(self->lastModified(), // Inherited from the file (note recursion).
                                          lumpIdx, baseOffset, ULONG(header->size),
                                          compressedSize),

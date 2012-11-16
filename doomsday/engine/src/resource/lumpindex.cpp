@@ -338,19 +338,9 @@ bool LumpIndex::pruneLump(File1& lump)
     return true;
 }
 
-void LumpIndex::catalogLumps(File1& file, int lumpIdxBase, int numLumps)
+void LumpIndex::catalogLump(File1& lump)
 {
-    if(numLumps <= 0) return;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    // Allocate more memory for the new records.
-    d->lumps.reserve(d->lumps.size() + numLumps);
-#endif
-
-    for(int i = 0; i < numLumps; ++i)
-    {
-        d->lumps.push_back(&file.lump(lumpIdxBase + i));
-    }
+    d->lumps.push_back(&lump);
 
     // We'll need to rebuild the name hash chains.
     d->flags |= LIF_NEED_REBUILD_HASH;
