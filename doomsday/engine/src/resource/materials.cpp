@@ -761,7 +761,7 @@ materialid_t Materials_Id(material_t* mat)
 
 /**
  * @param uri  Uri to be validated.
- * @param flags  @see validateMaterialUriFlags
+ * @param flags  @ref validateMaterialUriFlags
  * @param quiet  @c true= Do not output validation remarks to the log.
  * @return  @c true if @a Uri passes validation.
  */

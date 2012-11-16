@@ -182,9 +182,9 @@ namespace de
          * Add a new search path to this namespace. Newer paths have priority
          * over previously added paths.
          *
-         * @param group     Group to add this path to. @see PathGroup
+         * @param group     Group to add this path to. @ref PathGroup
          * @param path      New unresolved path to add. A copy is made.
-         * @param flags     @see searchPathFlags
+         * @param flags     @ref searchPathFlags
          *
          * @return  @c true if @a path was well-formed and subsequently added.
          */

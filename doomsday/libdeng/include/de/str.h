@@ -212,22 +212,24 @@ DENG_PUBLIC Str* Str_Prepend(Str* ds, const char* prependText);
 DENG_PUBLIC Str* Str_PrependChar(Str* ds, char ch);
 
 /**
- * Determines the length of the string in characters.
- * This is safe for all strings. @see Str_Size()
+ * Determines the length of the string in characters. This is safe for all
+ * strings.
  *
  * @param ds  String instance.
  *
  * @return Length of the string as an integer.
+ * @see Str_Size()
  */
 DENG_PUBLIC int Str_Length(const Str* ds);
 
 /**
- * Determines the length of the string in characters.
- * This is safe for all strings. @see Str_Length()
+ * Determines the length of the string in characters. This is safe for all
+ * strings.
  *
  * @param ds  String instance.
  *
  * @return Length of the string.
+ * @see Str_Length()
  */
 DENG_PUBLIC size_t Str_Size(const Str* ds);
 

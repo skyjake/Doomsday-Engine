@@ -33,7 +33,7 @@ class IByteArray;
  * Network communications for the legacy engine implementation. Implements
  * simple socket networking for streaming blocks of data.
  *
- * There is a C wrapper for LegacyNetwork, @see c_wrapper.h
+ * There is a C wrapper for LegacyNetwork (see c_wrapper.h).
  */
 class LegacyNetwork
 {

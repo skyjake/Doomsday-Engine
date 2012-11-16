@@ -1164,7 +1164,7 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName)
 
 /**
  * Choose a specialised polytype from the specified primitive configuration.
- * @param flags  @see rendpolyFlags
+ * @param flags  @ref rendpolyFlags
  */
 static __inline rendpolytype_t choosePolyType(int flags)
 {

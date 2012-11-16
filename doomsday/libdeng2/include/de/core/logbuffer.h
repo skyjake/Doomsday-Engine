@@ -52,9 +52,11 @@ public:
 public:
     /**
      * Constructs a new log buffer. By default log levels starting with MESSAGE
-     * are enabled. Output goes to stdout/stderr. @see enableStandardOutput().
+     * are enabled. Output goes to stdout/stderr.
      *
      * @param maxEntryCount  Maximum number of entries to keep in memory.
+     *
+     * @see enableStandardOutput()
      */
     LogBuffer(duint maxEntryCount = 1000);
 
@@ -96,7 +98,8 @@ public:
     void enable(Log::LogLevel overLevel = Log::MESSAGE);
 
     /**
-     * Disables the log. @see enable()
+     * Disables the log.
+     * @see enable()
      */
     void disable() { enable(Log::MAX_LOG_LEVELS); }
 

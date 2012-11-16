@@ -124,7 +124,7 @@ mn_page_t* Hu_MenuFindPageByName(const char* name);
 /**
  * @param name  Symbolic name.
  * @param origin  Topleft corner.
- * @param flags  @see menuPageFlags.
+ * @param flags  @ref menuPageFlags.
  * @param ticker  Ticker callback.
  * @param drawer  Page drawing routine.
  * @param cmdResponder  Menu-command responder routine.

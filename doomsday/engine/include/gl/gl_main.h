@@ -159,7 +159,7 @@ unsigned char*  GL_GrabScreen(void);
 /**
  * @param width  Width of the image in pixels.
  * @param height  Height of the image in pixels.
- * @param flags  @see imageConversionFlags.
+ * @param flags  @ref imageConversionFlags.
  */
 int GL_ChooseSmartFilter(int width, int height, int flags);
 
@@ -178,7 +178,7 @@ uint8_t* GL_ConvertBuffer(const uint8_t* src, int width, int height,
  * @param src  Source image to be filtered.
  * @param width  Width of the source image in pixels.
  * @param height  Height of the source image in pixels.
- * @param flags  @see imageConversionFlags.
+ * @param flags  @ref imageConversionFlags.
  * @param outWidth  Width of resultant image in pixels.
  * @param outHeight  Height of resultant image in pixels.
  *

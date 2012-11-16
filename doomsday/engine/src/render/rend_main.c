@@ -366,7 +366,7 @@ void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertic
  * @param line          Line to determine the potentially visible sections of.
  * @param backSide      If non-zero consider the back side, else the front.
  *
- * @return @see sideSectionFlags denoting which sections are potentially visible.
+ * @return @ref sideSectionFlags denoting which sections are potentially visible.
  */
 static byte pvisibleLineSections(LineDef* line, int backSide)
 {
@@ -2174,7 +2174,7 @@ static boolean hedgeBackClosedForSkyFix(const HEdge* hedge)
 /**
  * Determine which sky fixes are necessary for the specified @a hedge.
  * @param hedge  HEdge to be evaluated.
- * @param skyCap  The fixes we are interested in. @see skyCapFlags.
+ * @param skyCap  The fixes we are interested in. @ref skyCapFlags.
  * @return
  */
 static int chooseHEdgeSkyFixes(HEdge* hedge, int skyCap)

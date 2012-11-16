@@ -51,7 +51,8 @@
  * a large collection of resources as an archive and treat it at runtime just
  * like a tree of native files. Files within archives can be read and written
  * just like native files, and the containing archives will be updated as
- * needed. @see de::ArchiveFile, de::ArchiveFeed, and de::FS::interpret()
+ * needed.
+ * @see de::ArchiveFile, de::ArchiveFeed, and de::FS::interpret()
  */
 
 namespace de

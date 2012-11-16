@@ -30,7 +30,7 @@
  *
  * @param from          World position, trace origin coordinates.
  * @param to            World position, trace target coordinates.
- * @param flags         Line Sight Flags (LS_*) @see lineSightFlags
+ * @param flags         Line Sight Flags (LS_*) @ref lineSightFlags
  *
  * @return              @c true if the traverser function returns @c true
  *                      for all visited lines.

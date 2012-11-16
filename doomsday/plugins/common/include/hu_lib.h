@@ -414,7 +414,7 @@ void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj);
 /**
  * Retrieve an object on this page in the specified object group.
  * @param flags  Flags used to locate the object. All specified flags must
- *      must be set @see mnobjectFlags
+ *      must be set @ref mnobjectFlags
  * @return  Found MNObject else @c NULL
  */
 mn_object_t* MNPage_FindObject(mn_page_t* page, int group, int flags);
@@ -591,7 +591,7 @@ const ddstring_t* MNEdit_Text(mn_object_t* ob);
 
 /**
  * Change the current contents of the edit field.
- * @param flags  @see mneditSetTextFlags
+ * @param flags  @ref mneditSetTextFlags
  * @param string  New text string which will replace the existing string.
  */
 void MNEdit_SetText(mn_object_t* ob, int flags, const char* string);
@@ -658,7 +658,7 @@ void MNListInline_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /**
  * Change the currently selected item.
- * @param flags  @see mnlistSelectItemFlags
+ * @param flags  @ref mnlistSelectItemFlags
  * @param itemIndex  Index of the new selection.
  * @return  @c true if the selected item changed.
  */
@@ -666,7 +666,7 @@ boolean MNList_SelectItem(mn_object_t* ob, int flags, int itemIndex);
 
 /**
  * Change the currently selected item by looking up its data value.
- * @param flags  @see mnlistSelectItemFlags
+ * @param flags  @ref mnlistSelectItemFlags
  * @param dataValue  Value associated to the candidate item being selected.
  * @return  @c true if the selected item changed.
  */
@@ -723,7 +723,7 @@ float MNColorBox_Alphaf(const mn_object_t* ob);
 
 /**
  * Change the current color of the color box.
- * @param flags  @see mncolorboxSetColorFlags
+ * @param flags  @ref mncolorboxSetColorFlags
  * @param rgba  New color and alpha. Note: will be NOP if this colorbox
  *              is not operating in "rgba mode".
  * @return  @c true if the current color changed.
@@ -751,7 +751,7 @@ boolean MNColorBox_SetAlphaf(mn_object_t* ob, int flags, float alpha);
 
 /**
  * Copy the current color from @a other.
- * @param flags  @see mncolorboxSetColorFlags
+ * @param flags  @ref mncolorboxSetColorFlags
  * @return  @c true if the current color changed.
  */
 boolean MNColorBox_CopyColor(mn_object_t* ob, int flags, const mn_object_t* otherObj);
@@ -813,7 +813,7 @@ float MNSlider_Value(const mn_object_t* ob);
 
 /**
  * Change the current value represented by the slider.
- * @param flags  @see mnsliderSetValueFlags
+ * @param flags  @ref mnsliderSetValueFlags
  * @param value  New value.
  */
 void MNSlider_SetValue(mn_object_t* ob, int flags, float value);
@@ -987,7 +987,7 @@ void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength);
 void UIWidget_SetOpacity(uiwidget_t* obj, float alpha);
 
 /**
- * @param alignFlags  @see alignmentFlags
+ * @param alignFlags  @ref alignmentFlags
  */
 void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags);
 

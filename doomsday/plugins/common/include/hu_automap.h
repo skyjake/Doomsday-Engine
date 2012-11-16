@@ -171,7 +171,7 @@ void UIAutomap_ClearPoints(uiwidget_t* obj);
 int UIAutomap_Flags(const uiwidget_t* obj);
 
 /**
- * @param flags  @see AutomapFlags.
+ * @param flags  @ref AutomapFlags.
  */
 void UIAutomap_SetFlags(uiwidget_t* obj, int flags);
 

@@ -200,7 +200,8 @@ namespace de
         void setOriginFeed(Feed* feed);
         
         /**
-         * Returns the origin Feed of the File. @see setOriginFeed()
+         * Returns the origin Feed of the File.
+         * @see setOriginFeed()
          */
         Feed* originFeed() const { return _originFeed; }
         
@@ -217,16 +218,18 @@ namespace de
         void setSource(File* source);
         
         /**
-         * Returns the source file. @see setSource()
+         * Returns the source file.
          *
          * @return  Source file. Always returns a valid pointer.
+         * @see setSource()
          */
         const File* source() const;
         
         /**
-         * Returns the source file. @see setSource()
+         * Returns the source file.
          *
          * @return  Source file. Always returns a valid pointer.
+         * @see setSource()
          */
         File* source();
         

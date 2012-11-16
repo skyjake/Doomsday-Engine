@@ -34,7 +34,7 @@
 #include "de_refresh.h"
 
 typedef struct losdata_s {
-    int flags; // LS_* flags @see lineSightFlags
+    int flags; // LS_* flags @ref lineSightFlags
     divline_t trace;
     float startZ; // Eye z of looker.
     float topSlope; // Slope to top of target.

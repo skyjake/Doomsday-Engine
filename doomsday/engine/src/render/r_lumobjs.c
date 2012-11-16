@@ -200,7 +200,7 @@ static void clearProjectionLists(void)
 /**
  * Create a new projection list.
  *
- * @param flags  @see lightProjectionListFlags
+ * @param flags  @ref lightProjectionListFlags
  * @return  Unique identifier attributed to the new list.
  */
 static uint newProjectionList(int flags)
@@ -228,7 +228,7 @@ static uint newProjectionList(int flags)
  * @param listIdx  Address holding the list index to retrieve.
  *      If the referenced list index is non-zero return the associated list.
  *      Otherwise allocate a new list and write it's index back to this address.
- * @param flags  @see ProjectionListFlags
+ * @param flags  @ref ProjectionListFlags
  * @return  ProjectionList associated with the (possibly newly attributed) index.
  */
 static lightprojectionlist_t* getProjectionList(uint* listIdx, int flags)
@@ -331,7 +331,7 @@ static listnode_t* linkProjectionToList(listnode_t* node, lightprojectionlist_t*
  * @param listIdx  Address holding the list index to retrieve.
  *      If the referenced list index is non-zero return the associated list.
  *      Otherwise allocate a new list and write it's index back to this address.
- * @param flags  @see ProjectionListFlags
+ * @param flags  @ref ProjectionListFlags
  *      Used when constructing a new projection list to configure it.
  * @param texture  GL identifier to texture attributed to the new projection.
  * @param s  GL texture coordinates on the S axis [left, right] in texture space.

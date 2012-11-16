@@ -97,7 +97,7 @@ void UILog_Empty(uiwidget_t* obj);
 /**
  * Post a message to this log.
  *
- * @param flags  @see logMessageFlags
+ * @param flags  @ref logMessageFlags
  * @param text  Message Text to be posted. Messages may use the same
  *      paramater control blocks as with the engine's Text rendering API.
  */

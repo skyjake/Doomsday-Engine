@@ -170,14 +170,14 @@ public:
     SuperBlock* child(ChildId childId) const;
 
     /**
-     * Retrieve the right sub-block. @see SuperBlock::child()
-     * @return  Right sub-block.
+     * Returns the right sub-block.
+     * @see SuperBlock::child()
      */
     inline SuperBlock* right() const { return child(RIGHT); }
 
     /**
-     * Retrieve the right sub-block. @see SuperBlock::child()
-     * @return  Left sub-block else @c NULL.
+     * Returns the left sub-block.
+     * @see SuperBlock::child()
      */
     inline SuperBlock* left()  const { return child(LEFT); }
 
