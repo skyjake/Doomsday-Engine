@@ -421,7 +421,7 @@ else:unix {
 }
 
 deng_nodisplaymode {
-    SOURCES += src/displaymode_dummy.c
+    SOURCES += src/ui/displaymode_dummy.c
 }
 
 # Platform-independent sources.
