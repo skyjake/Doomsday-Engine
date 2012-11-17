@@ -346,6 +346,7 @@ DENG_HEADERS += \
     include/ui/window.h \
     include/ui/zonedebug.h \
     include/updater.h \
+    include/uri.hh \
     src/updater/downloaddialog.h \
     src/updater/processcheckdialog.h \
     src/updater/updateavailabledialog.h \
