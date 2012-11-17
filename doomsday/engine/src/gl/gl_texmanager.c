@@ -55,11 +55,16 @@ typedef enum {
 } uploadcontentmethod_t;
 
 typedef struct {
-    const char* name; // Format/handler name.
-    const char* ext; // Expected file extension.
-    boolean (*loadFunc)(image_t* img, FileHandle* file);
-    const char* (*getLastErrorFunc) (void); // Can be NULL.
-} imagehandler_t;
+    /// Symbolic name of the resource type.
+    char const* name;
+
+    /// Known file extension.
+    char const* ext;
+
+    boolean (*interpretFunc)(FileHandle* hndl, char const* filePath, image_t* img);
+
+    char const* (*getLastErrorFunc) (void); ///< Can be NULL.
+} GraphicResourceType;
 
 typedef struct texturevariantspecificationlist_node_s {
     struct texturevariantspecificationlist_node_s* next;
@@ -81,10 +86,10 @@ static int hashDetailVariantSpecification(const detailvariantspecification_t* sp
 
 static void calcGammaTable(void);
 
-static boolean tryLoadPCX(image_t* img, FileHandle* file);
-static boolean tryLoadPNG(image_t* img, FileHandle* file);
-static boolean tryLoadJPG(image_t* img, FileHandle* file);
-static boolean tryLoadTGA(image_t* img, FileHandle* file);
+static boolean interpretPcx(FileHandle* hndl, char const* filePath, image_t* img);
+static boolean interpretPng(FileHandle* hndl, char const* filePath, image_t* img);
+static boolean interpretJpg(FileHandle* hndl, char const* filePath, image_t* img);
+static boolean interpretTga(FileHandle* hndl, char const* filePath, image_t* img);
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
@@ -122,12 +127,12 @@ ddtexture_t sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
 static boolean initedOk = false; // Init done.
 
-// Image file handlers.
-static const imagehandler_t handlers[] = {
-    { "PNG",    "png",      tryLoadPNG, 0 },
-    { "JPG",    "jpg",      tryLoadJPG, 0 }, // TODO: add alternate "jpeg" extension
-    { "TGA",    "tga",      tryLoadTGA, TGA_LastError },
-    { "PCX",    "pcx",      tryLoadPCX, PCX_LastError },
+// Graphic resource types.
+static GraphicResourceType const graphicTypes[] = {
+    { "PNG",    "png",      interpretPng, 0 },
+    { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
+    { "TGA",    "tga",      interpretTga, TGA_LastError },
+    { "PCX",    "pcx",      interpretPcx, PCX_LastError },
     { 0 } // Terminate.
 };
 
@@ -1421,7 +1426,7 @@ void Image_Init(image_t* img)
     img->pixels = 0;
 }
 
-void Image_PrintMetadata(const image_t* image)
+void Image_PrintMetadata(image_t const* image)
 {
     assert(image);
     Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->size.width, image->size.height,
@@ -1429,54 +1434,90 @@ void Image_PrintMetadata(const image_t* image)
         0 != image->paletteId? image->paletteId : image->pixelSize);
 }
 
-static boolean tryLoadPCX(image_t* img, FileHandle* file)
+static boolean interpretPcx(FileHandle* hndl, char const* filePath, image_t* img)
 {
-    assert(img && file);
+    DENG_ASSERT(hndl && img);
+    DENG_UNUSED(filePath);
     Image_Init(img);
-    img->pixels = PCX_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
+    img->pixels = PCX_Load(hndl, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
-static boolean tryLoadJPG(image_t* img, FileHandle* file)
+static boolean interpretJpg(FileHandle* hndl, char const* filePath, image_t* img)
 {
-    assert(img && file);
-    return Image_LoadFromFileWithFormat(img, "JPG", file);
+    DENG_ASSERT(hndl && img);
+    DENG_UNUSED(filePath);
+    return Image_LoadFromFileWithFormat(img, "JPG", hndl);
 }
 
-static boolean tryLoadPNG(image_t* img, FileHandle* file)
+static boolean interpretPng(FileHandle* hndl, char const* filePath, image_t* img)
 {
-    assert(img && file);
+    DENG_ASSERT(hndl && img);
+    DENG_UNUSED(filePath);
     /*
     Image_Init(img);
-    img->pixels = PNG_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
+    img->pixels = PNG_Load(hndl, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
     */
-    return Image_LoadFromFileWithFormat(img, "PNG", file);
+    return Image_LoadFromFileWithFormat(img, "PNG", hndl);
 }
 
-static boolean tryLoadTGA(image_t* img, FileHandle* file)
+static boolean interpretTga(FileHandle* hndl, char const* filePath, image_t* img)
 {
-    assert(img && file);
+    DENG_ASSERT(hndl && img);
+    DENG_UNUSED(filePath);
     Image_Init(img);
-    img->pixels = TGA_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
+    img->pixels = TGA_Load(hndl, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
-const imagehandler_t* findHandlerFromFileName(const char* filePath)
+GraphicResourceType const* guessGraphicResourceTypeFromFileName(char const* filePath)
 {
-    const imagehandler_t* hdlr = 0; // No handler for this format.
-    const char* p = F_FindFileExtension(filePath);
+    char const* p = F_FindFileExtension(filePath);
     if(p)
     {
-        int i = 0;
-        do
+        int i;
+        for(i = 0; graphicTypes[i].ext; ++i)
         {
-            if(!stricmp(p, handlers[i].ext))
-                hdlr = &handlers[i];
-        } while(0 == hdlr && 0 != handlers[++i].ext);
+            GraphicResourceType const* type = &graphicTypes[i];
+            if(!stricmp(p, type->ext))
+            {
+                return type;
+            }
+        }
     }
-    return hdlr;
+    return 0; // Unknown.
 }
+
+static void interpretGraphic(FileHandle* hndl, char const* filePath, image_t* img)
+{
+    DENG_ASSERT(img && hndl);
+{
+    // Firstly try the interpreter for the guessed resource types.
+    GraphicResourceType const* rtypeGuess = guessGraphicResourceTypeFromFileName(filePath);
+    if(rtypeGuess)
+    {
+        rtypeGuess->interpretFunc(hndl, filePath, img);
+    }
+
+    // If not yet interpreted - try each recognisable format in order.
+    if(!img->pixels)
+    {
+        // Try each recognisable format instead.
+        /// @todo Order here should be determined by the resource locator.
+        int i;
+        for(i = 0; graphicTypes[i].name; ++i)
+        {
+            GraphicResourceType const* graphicType = &graphicTypes[i];
+
+            // Already tried this?
+            if(graphicType == rtypeGuess) continue;
+
+            graphicTypes[i].interpretFunc(hndl, filePath, img);
+            if(img->pixels) break;
+        }
+    }
+}}
 
 /// @return  @c true if the given path name is formed with the "color keyed" suffix.
 static boolean isColorKeyed(const char* path)
@@ -1498,42 +1539,23 @@ static boolean isColorKeyed(const char* path)
 
 uint8_t* Image_LoadFromFile(image_t* img, FileHandle* file)
 {
-    const imagehandler_t* hdlr;
-    const char* fileName;
-    assert(img && file);
+    DENG_ASSERT(img && file);
+{
+    char const* filePath = Str_Text(F_ComposePath(FileHandle_File_const(file)));
 
     Image_Init(img);
+    interpretGraphic(file, filePath, img);
 
-    fileName = Str_Text(F_ComposePath(FileHandle_File_const(file)));
-
-    // Firstly try the expected format given the file name.
-    hdlr = findHandlerFromFileName(fileName);
-    if(hdlr)
-    {
-        hdlr->loadFunc(img, file);
-    }
-
-    if(!img->pixels)
-    {
-        // Try each recognisable format instead.
-        /// \todo Order here should be determined by the resource locator.
-        int i;
-        for(i = 0; handlers[i].name && !img->pixels; ++i)
-        {
-            if(&handlers[i] == hdlr) continue; // We already know its not in this format.
-            handlers[i].loadFunc(img, file);
-        }
-    }
-
+    // Still not interpreted?
     if(!img->pixels)
     {
         VERBOSE2( Con_Message("Image_LoadFromFile: \"%s\" unrecognized, trying fallback loader...\n",
-                              F_PrettyPath(fileName)) )
+                              F_PrettyPath(filePath)) )
         return NULL; // Not a recognised format. It may still be loadable, however.
     }
 
     // How about some color-keying?
-    if(isColorKeyed(fileName))
+    if(isColorKeyed(filePath))
     {
         uint8_t* out = ApplyColorKeying(img->pixels, img->size.width, img->size.height, img->pixelSize);
         if(out != img->pixels)
@@ -1551,10 +1573,10 @@ uint8_t* Image_LoadFromFile(image_t* img, FileHandle* file)
         img->flags |= IMGF_IS_MASKED;
 
     VERBOSE( Con_Message("Image_LoadFromFile: \"%s\" (%ix%i)\n",
-                         F_PrettyPath(fileName), img->size.width, img->size.height) )
+                         F_PrettyPath(filePath), img->size.width, img->size.height) )
 
     return img->pixels;
-}
+}}
 
 uint8_t* GL_LoadImage(image_t* img, const char* filePath)
 {
