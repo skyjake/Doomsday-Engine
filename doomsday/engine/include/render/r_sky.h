@@ -31,10 +31,6 @@
 
 #include "resource/models.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define MAX_SKY_LAYERS                   ( 2 )
 #define MAX_SKY_MODELS                   ( 32 )
 
@@ -53,9 +49,13 @@ typedef struct skymodel_s {
     float yaw;
 } skymodel_t;
 
-extern boolean alwaysDrawSphere;
-extern boolean skyModelsInited;
-extern skymodel_t skyModels[MAX_SKY_MODELS];
+DENG_EXTERN_C boolean alwaysDrawSphere;
+DENG_EXTERN_C boolean skyModelsInited;
+DENG_EXTERN_C skymodel_t skyModels[MAX_SKY_MODELS];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// Initialize this module.
 void R_SkyInit(void);
