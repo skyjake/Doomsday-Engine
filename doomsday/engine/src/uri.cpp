@@ -1,9 +1,6 @@
 /**
  * @file uri.cpp
- *
- * Universal Resource Identifier.
- *
- * @ingroup base
+ * Universal Resource Identifier. @ingroup base
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -23,18 +20,17 @@
  * 02110-1301 USA</small>
  */
 
+#include "uri.hh"
+#include <de/str.h>
+#include <de/unittest.h>
+#include <de/NativePath>
 #include <QDebug>
 
 #include "de_base.h"
-
+#include "dualstring.h"
 #include "game.h"
 #include "resource/resourcenamespace.h"
 #include "resource/sys_reslocator.h"
-
-#include <de/NativePath>
-#include <de/unittest.h>
-
-#include "uri.h"
 
 /// Size of the fixed-size path node buffer.
 #define PATHNODEBUFFER_SIZE         24
@@ -108,22 +104,22 @@ struct Uri::Instance
     /// conditions here that result in different results for resolveUri().
     void* resolvedForGame;
 
-    ddstring_t scheme;
-    ddstring_t path;
+    DualString scheme;
+    DualString path;
 
     Instance()
         : pathNodeCount(-1), extraPathNodes(0), resolved(), resolvedForGame(0)
     {
-        Str_InitStd(&scheme);
-        Str_InitStd(&path);
+        //Str_InitStd(&scheme);
+        //Str_InitStd(&path);
         memset(pathNodeBuffer, 0, sizeof(pathNodeBuffer));
     }
 
     ~Instance()
     {
         clearPathMap();
-        Str_Free(&scheme);
-        Str_Free(&path);
+        //Str_Free(&scheme);
+        //Str_Free(&path);
     }
 
     /// @return  @c true iff @a node comes from the "static" buffer.
@@ -190,11 +186,11 @@ struct Uri::Instance
 
         //if(Str_IsEmpty(&path)) return;
 
-        char const* nameBegin = Str_Text(&path);
-        char const* nameEnd = nameBegin + Str_Length(&path) - 1;
+        char const* nameBegin = path.utf8CStr();
+        char const* nameEnd = nameBegin + path.length() - 1;
 
         // Skip over any trailing delimiters.
-        for(int i = Str_Length(&path); *nameEnd && *nameEnd == '/' && i-- > 0; nameEnd--)
+        for(int i = path.length(); *nameEnd && *nameEnd == '/' && i-- > 0; nameEnd--)
         {}
 
         // Scan the path hierarchy for node names, in reverse order.
@@ -267,38 +263,41 @@ struct Uri::Instance
     {
         LOG_AS("Uri::parseScheme");
 
-        clearCachedResolved();
-        Str_Clear(&scheme);
+        const char* pathUtf8 = path.utf8CStr();
 
-        char const* p = Str_CopyDelim2(&scheme, Str_Text(&path), ':', CDF_OMIT_DELIMITER);
-        if(!p || p - Str_Text(&path) < URI_MINSCHEMELENGTH + 1) // +1 for ':' delimiter.
+        clearCachedResolved();
+        scheme.clear();
+
+        char const* p = Str_CopyDelim2(scheme.toStr(), pathUtf8, ':', CDF_OMIT_DELIMITER);
+        scheme.update();
+
+        if(!p || p - pathUtf8 < URI_MINSCHEMELENGTH + 1) // +1 for ':' delimiter.
         {
-            Str_Clear(&scheme);
+            scheme.clear();
         }
-        else if(defaultResourceClass != RC_NULL && !F_ResourceNamespaceByName(Str_Text(&scheme)))
+        else if(defaultResourceClass != RC_NULL && !F_ResourceNamespaceByName(scheme.utf8CStr()))
         {
-            LOG_WARNING("Unknown scheme in path \"%s\", using default.") << Str_Text(&path);
+            LOG_WARNING("Unknown scheme in path \"%s\", using default.") << path;
             //Str_Clear(&_scheme);
-            Str_Set(&path, p);
+            path = p;
         }
         else
         {
-            Str_Set(&path, p);
+            path = p;
             return;
         }
 
         // Attempt to guess the scheme by interpreting the path?
         if(defaultResourceClass == RC_UNKNOWN)
         {
-            defaultResourceClass = F_GuessResourceTypeFromFileName(Str_Text(&path)).defaultClass();
+            defaultResourceClass = F_GuessResourceTypeFromFileName(path.utf8CStr()).defaultClass();
         }
 
         if(VALID_RESOURCE_CLASSID(defaultResourceClass))
         {
             ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassById(defaultResourceClass)->defaultNamespace());
             DENG_ASSERT(rnamespace);
-            QByteArray rnamespaceName = rnamespace->name().toUtf8();
-            Str_Set(&scheme, rnamespaceName.constData());
+            scheme = rnamespace->name();
         }
     }
 
@@ -350,7 +349,7 @@ struct Uri::Instance
     {
         LOG_AS("Uri::resolve");
 
-        String const pathStr = String(Str_Text(&path));
+        String const pathStr = path;
 
         // Keep scanning the path for embedded expressions.
         QStringRef expression;
@@ -413,10 +412,11 @@ Uri::Uri()
 Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
 {
     d = new Instance();
-    d->resolved = other.d->resolved;
+
+    d->resolved        = other.d->resolved;
     d->resolvedForGame = other.d->resolvedForGame;
-    Str_Copy(&d->scheme, other.scheme());
-    Str_Copy(&d->path,   other.path());
+    d->scheme          = other.scheme();
+    d->path            = other.path();
 }
 
 Uri Uri::fromNativePath(NativePath const& path)
@@ -486,11 +486,11 @@ bool Uri::operator == (Uri const& other) const
     if(this == &other) return true;
 
     // First, lets check if the scheme differs.
-    if(Str_Length(&d->scheme) != Str_Length(other.scheme())) return false;
-    if(Str_CompareIgnoreCase(&d->scheme, Str_Text(other.scheme()))) return false;
+    if(d->scheme.length() != other.scheme().length()) return false;
+    if(d->scheme.compareWithoutCase(other.scheme())) return false;
 
     // Is resolving not necessary?
-    if(!Str_CompareIgnoreCase(&d->path, Str_Text(other.path()))) return true;
+    if(!d->path.compareWithoutCase(other.path())) return true;
 
     // We must be able to resolve both paths to compare.
     try
@@ -531,29 +531,39 @@ void swap(Uri& first, Uri& second)
 
 bool Uri::isEmpty() const
 {
-    return Str_IsEmpty(&d->path);
+    return d->path.isEmpty();
 }
 
 Uri& Uri::clear()
 {
-    Str_Clear(&d->scheme);
-    Str_Clear(&d->path);
+    d->scheme.clear();
+    d->path.clear();
     d->clearCachedResolved();
     d->clearPathMap();
     return *this;
 }
 
-ddstring_t const* Uri::scheme() const
+String Uri::scheme() const
 {
-    return &d->scheme;
+    return d->scheme;
 }
 
-ddstring_t const* Uri::path() const
+String Uri::path() const
 {
-    return &d->path;
+    return d->path;
 }
 
-String const& Uri::resolved() const
+const char* Uri::schemeCStr() const
+{
+    return d->scheme.utf8CStr();
+}
+
+const char* Uri::pathCStr() const
+{
+    return d->path.utf8CStr();
+}
+
+String Uri::resolved() const
 {
 #ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
     if(d->resolvedForGame && d->resolvedForGame == (void*) App_CurrentGame())
@@ -577,8 +587,7 @@ String const& Uri::resolved() const
 
 Uri& Uri::setScheme(String newScheme)
 {
-    QByteArray newSchemeUtf8 = newScheme.toUtf8();
-    Str_Set(&d->scheme, newSchemeUtf8.constData());
+    d->scheme = newScheme;
     d->clearCachedResolved();
     return *this;
 }
@@ -589,8 +598,7 @@ Uri& Uri::setPath(String newPath, QChar delimiter)
     {
         newPath = newPath.replace(delimiter, QString("/"), Qt::CaseInsensitive);
     }
-    QByteArray newPathUtf8 = newPath.toUtf8();
-    Str_Set(&d->path, newPathUtf8.constData());
+    d->path = newPath;
     d->clearCachedResolved();
     d->clearPathMap();
     return *this;
@@ -605,9 +613,7 @@ Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar de
         rawUri = rawUri.replace(delimiter, QString("/"), Qt::CaseInsensitive);
     }
 
-    QByteArray rawUriUtf8 = rawUri.toUtf8();
-    Str_Set(&d->path, rawUriUtf8.constData());
-    Str_Strip(&d->path);
+    d->path = rawUri.trimmed();
     d->parseScheme(defaultResourceClass);
     d->clearCachedResolved();
     d->clearPathMap();
@@ -617,13 +623,13 @@ Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar de
 String Uri::compose(QChar delimiter) const
 {
     String result;
-    if(!Str_IsEmpty(&d->scheme))
+    if(!d->scheme.isEmpty())
     {
-        result += String(Str_Text(&d->scheme)) + ":" + String(Str_Text(&d->path));
+        result += d->scheme + ":" + d->path;
     }
     else
     {
-        result += String(Str_Text(&d->path));
+        result += d->path;
     }
     if(delimiter != '/')
     {
@@ -641,56 +647,18 @@ String Uri::asText() const
     return String(Str_Text(path));
 }
 
-static void writeUri(ddstring_t const* scheme, ddstring_t const* path, struct writer_s& writer)
-{
-    Str_Write(scheme, &writer);
-    Str_Write(path,   &writer);
-}
-
-void Uri::write(writer_s& writer, int omitComponents) const
-{
-    ddstring_t emptyString;
-    ddstring_t const* scheme;
-
-    if(omitComponents & UCF_SCHEME)
-    {
-        Str_InitStatic(&emptyString, "");
-        scheme = &emptyString;
-    }
-    else
-    {
-        scheme = &d->scheme;
-    }
-    writeUri(scheme, &d->path, writer);
-}
-
-Uri& Uri::read(reader_s& reader, String defaultScheme)
-{
-    clear();
-
-    Str_Read(&d->scheme, &reader);
-    Str_Read(&d->path,   &reader);
-    if(Str_IsEmpty(&d->scheme) && !defaultScheme.isEmpty())
-    {
-        QByteArray defaultSchemeUtf8 = defaultScheme.toUtf8();
-        Str_Set(&d->scheme, defaultSchemeUtf8.constData());
-    }
-    return *this;
-}
-
-void Uri::debugPrint(int indent, int flags, String unresolvedText) const
+void Uri::debugPrint(int indent, PrintFlags flags, String unresolvedText) const
 {
     indent = MAX_OF(0, indent);
 
-    bool resolvedPath = (flags & UPF_OUTPUT_RESOLVED) && !d->resolved.isEmpty();
+    bool resolvedPath = (flags & OutputResolved) && !d->resolved.isEmpty();
     if(unresolvedText.isEmpty()) unresolvedText = "--(!)incomplete";
 
     LOG_DEBUG("%*s\"%s\"%s%s") << indent << ""
-      << ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? NativePath(asText()).pretty() : asText())
-      << ((flags & UPF_OUTPUT_RESOLVED)? (resolvedPath? "=> " : unresolvedText) : "")
-      << ((flags & UPF_OUTPUT_RESOLVED) && resolvedPath? ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)?
-                                                                NativePath(d->resolved).pretty() : NativePath(d->resolved))
-                                                       : "");
+      << ((flags & TransformPathPrettify)? NativePath(asText()).pretty() : asText())
+      << ((flags & OutputResolved)? (resolvedPath? "=> " : unresolvedText) : "")
+      << ((flags & OutputResolved) && resolvedPath? ((flags & TransformPathPrettify)?
+                                                      NativePath(d->resolved).pretty() : NativePath(d->resolved)) : "");
 }
 
 Uri::hash_type const Uri::hash_range = 512;
@@ -773,204 +741,3 @@ LIBDENG_RUN_UNITTEST(Uri)
 #endif
 
 } // namespace de
-
-/*
- * C Wrapper API:
- */
-
-#define TOINTERNAL(inst) \
-    (inst) != 0? reinterpret_cast<de::Uri*>(inst) : NULL
-
-#define TOINTERNAL_CONST(inst) \
-    (inst) != 0? reinterpret_cast<de::Uri const*>(inst) : NULL
-
-#define SELF(inst) \
-    DENG2_ASSERT(inst); \
-    de::Uri* self = TOINTERNAL(inst)
-
-#define SELF_CONST(inst) \
-    DENG2_ASSERT(inst); \
-    de::Uri const* self = TOINTERNAL_CONST(inst)
-
-Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass)
-{
-    return reinterpret_cast<Uri*>( new de::Uri(path, defaultResourceClass) );
-}
-
-Uri* Uri_NewWithPath(char const* path)
-{
-    return reinterpret_cast<Uri*>( new de::Uri(path) );
-}
-
-Uri* Uri_New(void)
-{
-    return reinterpret_cast<Uri*>( new de::Uri() );
-}
-
-Uri* Uri_Dup(Uri const* other)
-{
-    DENG_ASSERT(other);
-    return reinterpret_cast<Uri*>( new de::Uri(*(TOINTERNAL_CONST(other))) );
-}
-
-Uri* Uri_FromReader(struct reader_s* reader)
-{
-    DENG_ASSERT(reader);
-    de::Uri* uri = new de::Uri;
-    uri->read(*reader);
-    return reinterpret_cast<Uri*>(uri);
-}
-
-void Uri_Delete(Uri* uri)
-{
-    if(uri)
-    {
-        SELF(uri);
-        delete self;
-    }
-}
-
-Uri* Uri_Copy(Uri* uri, Uri const* other)
-{
-    SELF(uri);
-    DENG_ASSERT(other);
-    *self = *(TOINTERNAL_CONST(other));
-    return reinterpret_cast<Uri*>(self);
-}
-
-boolean Uri_Equality(Uri const* uri, Uri const* other)
-{
-    SELF_CONST(uri);
-    DENG_ASSERT(other);
-    return *self == (*(TOINTERNAL_CONST(other)));
-}
-
-boolean Uri_IsEmpty(Uri const* uri)
-{
-    SELF_CONST(uri);
-    return self->isEmpty();
-}
-
-Uri* Uri_Clear(Uri* uri)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->clear());
-}
-
-ddstring_t const* Uri_Scheme(Uri const* uri)
-{
-    SELF_CONST(uri);
-    return self->scheme();
-}
-
-ddstring_t const* Uri_Path(Uri const* uri)
-{
-    SELF_CONST(uri);
-    return self->path();
-}
-
-AutoStr* Uri_Resolved(Uri const* uri)
-{
-    SELF_CONST(uri);
-    try
-    {
-        de::String const& resolved = self->resolved();
-        QByteArray resolvedUtf8 = resolved.toUtf8();
-        return AutoStr_FromTextStd(resolvedUtf8.constData());
-    }
-    catch(de::Uri::ResolveError const& er)
-    {
-        LOG_WARNING(er.asText());
-    }
-    return AutoStr_NewStd();
-}
-
-Uri* Uri_SetScheme(Uri* uri, char const* scheme)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setScheme(scheme));
-}
-
-Uri* Uri_SetPath(Uri* uri, char const* path)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setPath(path));
-}
-
-Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defaultResourceClass)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setUri(path, defaultResourceClass));
-}
-
-Uri* Uri_SetUri(Uri* uri, char const* path)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setUri(path));
-}
-
-Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path)
-{
-    SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setUri(Str_Text(path)));
-}
-
-AutoStr* Uri_Compose(Uri const* uri)
-{
-    SELF_CONST(uri);
-    QByteArray composed = self->compose().toUtf8();
-    return AutoStr_FromTextStd(composed.constData());
-}
-
-AutoStr* Uri_ToString(Uri const* uri)
-{
-    SELF_CONST(uri);
-    QByteArray text = self->asText().toUtf8();
-    return AutoStr_FromTextStd(text.constData());
-}
-
-void Uri_Write2(Uri const* uri, struct writer_s* writer, int omitComponents)
-{
-    SELF_CONST(uri);
-    DENG_ASSERT(writer);
-    self->write(*writer, omitComponents);
-}
-
-void Uri_Write(Uri const* uri, struct writer_s* writer)
-{
-    SELF_CONST(uri);
-    DENG_ASSERT(writer);
-    self->write(*writer);
-}
-
-Uri* Uri_Read(Uri* uri, struct reader_s* reader)
-{
-    SELF(uri);
-    DENG_ASSERT(reader);
-    return reinterpret_cast<Uri*>(&self->read(*reader));
-}
-
-void Uri_ReadWithDefaultScheme(Uri* uri, struct reader_s* reader, char const* defaultScheme)
-{
-    SELF(uri);
-    DENG_ASSERT(reader);
-    self->read(*reader, defaultScheme);
-}
-
-void Uri_DebugPrint3(Uri const* uri, int indent, int flags, char const* unresolvedText)
-{
-    SELF_CONST(uri);
-    self->debugPrint(indent, flags, unresolvedText);
-}
-
-void Uri_DebugPrint2(Uri const* uri, int indent, int flags)
-{
-    SELF_CONST(uri);
-    self->debugPrint(indent, flags);
-}
-
-void Uri_DebugPrint(Uri const* uri, int indent)
-{
-    SELF_CONST(uri);
-    self->debugPrint(indent);
-}

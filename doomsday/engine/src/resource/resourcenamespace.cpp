@@ -435,8 +435,8 @@ bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int 
 
     // Ensure this is a well formed path.
     if(path.isEmpty() ||
-       !Str_CompareIgnoreCase(path.path(), "/") ||
-       Str_RAt(path.path(), 0) != '/')
+       !path.path().compareWithoutCase("/") ||
+       !path.path().endsWith("/"))
         return false;
 
     // The addition of a new search path means the namespace is now dirty.

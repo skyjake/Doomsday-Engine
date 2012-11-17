@@ -434,7 +434,7 @@ static int R_LoadModel(de::Uri const& searchPath)
     AutoStr* foundPath = AutoStr_NewStd();
     if(!F_FindResource2(RC_MODEL, reinterpret_cast<uri_s const*>(&searchPath), foundPath))
     {
-        R_MissingModel(Str_Text(searchPath.path()));
+        R_MissingModel(searchPath.pathCStr());
         return 0;
     }
 
@@ -876,7 +876,7 @@ float R_GetModelVisualRadius(modeldef_t* mf)
 static short R_NewModelSkin(model_t* mdl, de::Uri const& skinUri)
 {
     int added = mdl->info.numSkins, i;
-    char const* fileName = Str_Text(skinUri.path());
+    char const* fileName = skinUri.pathCStr();
 
     mdl->skins = (dmd_skin_t*)realloc(mdl->skins, sizeof *mdl->skins * ++mdl->info.numSkins);
     if(!mdl->skins) Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes enlarging DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);

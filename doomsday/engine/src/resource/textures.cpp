@@ -213,8 +213,8 @@ static bool validateTextureUri(de::Uri const& uri, int flags, bool quiet = false
     }
 
     // If this is a URN we extract the namespace from the path.
-    Str const* namespaceString;
-    if(!Str_CompareIgnoreCase(uri.scheme(), "urn"))
+    de::String namespaceString;
+    if(!uri.scheme().compareWithoutCase("urn"))
     {
         if(flags & VTUF_NO_URN) return false;
         namespaceString = uri.path();
@@ -224,7 +224,7 @@ static bool validateTextureUri(de::Uri const& uri, int flags, bool quiet = false
         namespaceString = uri.scheme();
     }
 
-    texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(namespaceString));
+    texturenamespaceid_t namespaceId = Textures_ParseNamespace(namespaceString.toUtf8().constData());
     if(!((flags & VTUF_ALLOW_NAMESPACE_ANY) && namespaceId == TN_ANY) &&
        !VALID_TEXTURENAMESPACEID(namespaceId))
     {
@@ -261,11 +261,11 @@ static TextureRepository::Node* findDirectoryNodeForPath(TextureRepository& texD
 /// @pre @a uri has already been validated and is well-formed.
 static TextureRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
 {
-    if(!Str_CompareIgnoreCase(uri.scheme(), "urn"))
+    if(!uri.scheme().compareWithoutCase("urn"))
     {
         // This is a URN of the form; urn:namespacename:uniqueid
-        texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(uri.path()));
-        char* uidStr = strchr(Str_Text(uri.path()), ':');
+        texturenamespaceid_t namespaceId = Textures_ParseNamespace(uri.pathCStr());
+        char* uidStr = strchr(uri.pathCStr(), ':');
         if(uidStr)
         {
             int uid = strtol(uidStr +1/*skip namespace delimiter*/, 0, 0);
@@ -279,8 +279,8 @@ static TextureRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     }
 
     // This is a URI.
-    texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(uri.scheme()));
-    const char* path = Str_Text(uri.path());
+    texturenamespaceid_t namespaceId = Textures_ParseNamespace(uri.schemeCStr());
+    const char* path = uri.pathCStr();
 
     TextureRepository::Node* node = NULL;
     if(namespaceId != TN_ANY)
@@ -830,7 +830,7 @@ static textureid_t Textures_Declare2(de::Uri& uri, int uniqueId, de::Uri const* 
         record->resourcePath = NULL;
         record->uniqueId     = uniqueId;
 
-        texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(uri.scheme()));
+        texturenamespaceid_t namespaceId = Textures_ParseNamespace(uri.schemeCStr());
         TextureNamespace* tn = &namespaces[namespaceId - TEXTURENAMESPACE_FIRST];
 
         node = tn->directory->insert(uri);
@@ -1426,34 +1426,34 @@ D_CMD(ListTextures)
     {
         uri.setScheme(argv[1]).setPath(argv[2]);
 
-        namespaceId = Textures_ParseNamespace(Str_Text(uri.scheme()));
+        namespaceId = Textures_ParseNamespace(uri.schemeCStr());
         if(!VALID_TEXTURENAMESPACEID(namespaceId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
+            Con_Printf("Invalid namespace \"%s\".\n", uri.schemeCStr());
             return false;
         }
-        like = Str_Text(uri.path());
+        like = uri.pathCStr();
     }
     // "listtextures [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
         uri = uri.setUri(argv[1], RC_NULL);
 
-        if(!Str_IsEmpty(uri.scheme()))
+        if(!uri.scheme().isEmpty())
         {
-            namespaceId = Textures_ParseNamespace(Str_Text(uri.scheme()));
+            namespaceId = Textures_ParseNamespace(uri.schemeCStr());
             if(!VALID_TEXTURENAMESPACEID(namespaceId))
             {
-                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
+                Con_Printf("Invalid namespace \"%s\".\n", uri.schemeCStr());
                 return false;
             }
 
-            if(!Str_IsEmpty(uri.path()))
-                like = Str_Text(uri.path());
+            if(!uri.path().isEmpty())
+                like = uri.pathCStr();
         }
         else
         {
-            namespaceId = Textures_ParseNamespace(Str_Text(uri.path()));
+            namespaceId = Textures_ParseNamespace(uri.pathCStr());
             if(!VALID_TEXTURENAMESPACEID(namespaceId))
             {
                 namespaceId = TN_ANY;
@@ -1479,12 +1479,12 @@ D_CMD(InspectTexture)
     de::Uri search = de::Uri(Str_Text(&path), RC_NULL);
     Str_Free(&path);
 
-    if(!Str_IsEmpty(search.scheme()))
+    if(!search.scheme().isEmpty())
     {
-        texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(search.scheme()));
+        texturenamespaceid_t namespaceId = Textures_ParseNamespace(search.schemeCStr());
         if(!VALID_TEXTURENAMESPACEID(namespaceId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(search.scheme()));
+            Con_Printf("Invalid namespace \"%s\".\n", search.schemeCStr());
             return false;
         }
     }

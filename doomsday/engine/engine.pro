@@ -176,6 +176,7 @@ DENG_HEADERS += \
     include/de_ui.h \
     include/def_data.h \
     include/def_main.h \
+    include/dualstring.h \
     include/edit_bias.h \
     include/edit_bsp.h \
     include/edit_map.h \
@@ -462,6 +463,7 @@ SOURCES += \
     src/def_data.c \
     src/def_main.cpp \
     src/def_read.cpp \
+    src/dualstring.cpp \
     src/edit_bias.c \
     src/edit_bsp.cpp \
     src/edit_map.cpp \
@@ -628,7 +630,8 @@ SOURCES += \
     src/updater/updaterdialog.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp
+    src/uri.cpp \
+    src/uri_wrapper.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

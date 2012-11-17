@@ -54,5 +54,6 @@
 #include "ui/dd_input.h"
 #include "ui/nativeui.h"
 #include "ui/zonedebug.h"
+#include "uri.hh"
 
 #endif /* LIBDENG_BASE_H */

@@ -211,8 +211,8 @@ static bool validateUri(de::Uri const& uri, int flags, bool quiet = false)
     }
 
     // If this is a URN we extract the namespace from the path.
-    ddstring_t const* namespaceString;
-    if(!Str_CompareIgnoreCase(uri.scheme(), "urn"))
+    de::String namespaceString;
+    if(!uri.scheme().compareWithoutCase("urn"))
     {
         if(flags & VFUF_NO_URN) return false;
         namespaceString = uri.path();
@@ -222,7 +222,7 @@ static bool validateUri(de::Uri const& uri, int flags, bool quiet = false)
         namespaceString = uri.scheme();
     }
 
-    fontnamespaceid_t namespaceId = Fonts_ParseNamespace(Str_Text(namespaceString));
+    fontnamespaceid_t namespaceId = Fonts_ParseNamespace(namespaceString.toUtf8().constData());
     if(!((flags & VFUF_ALLOW_NAMESPACE_ANY) && namespaceId == FN_ANY) &&
        !VALID_FONTNAMESPACEID(namespaceId))
     {
@@ -258,12 +258,12 @@ static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory,
 /// @pre @a uri has already been validated and is well-formed.
 static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
 {
-    if(!Str_CompareIgnoreCase(uri.scheme(), "urn"))
+    if(!uri.scheme().compareWithoutCase("urn"))
     {
         // This is a URN of the form; urn:namespacename:uniqueid
-        fontnamespaceid_t namespaceId = Fonts_ParseNamespace(Str_Text(uri.path()));
+        fontnamespaceid_t namespaceId = Fonts_ParseNamespace(uri.path().toUtf8().constData());
 
-        char* uid = strchr(Str_Text(uri.path()), ':');
+        char* uid = strchr(uri.pathCStr(), ':');
         if(uid)
         {
             fontid_t id = Fonts_FontForUniqueId(namespaceId, strtol(uid + 1/*skip namespace delimiter*/, 0, 0));
@@ -276,8 +276,8 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     }
 
     // This is a URI.
-    fontnamespaceid_t namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
-    char const* path = Str_Text(uri.path());
+    fontnamespaceid_t namespaceId = Fonts_ParseNamespace(uri.schemeCStr());
+    char const* path = uri.pathCStr();
     if(namespaceId != FN_ANY)
     {
         // Caller wants a font in a specific namespace.
@@ -802,7 +802,7 @@ fontid_t Fonts_Declare(Uri* _uri, int uniqueId)//, const Uri* resourcePath)
         record->font = 0;
         record->uniqueId = uniqueId;
 
-        fontnamespaceid_t namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
+        fontnamespaceid_t namespaceId = Fonts_ParseNamespace(uri.schemeCStr());
         FontNamespace& fn = namespaces[namespaceId - FONTNAMESPACE_FIRST];
 
         node = fn.repository->insert(uri);
@@ -1563,33 +1563,33 @@ D_CMD(ListFonts)
     {
         uri.setScheme(argv[1]).setPath(argv[2]);
 
-        namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
+        namespaceId = Fonts_ParseNamespace(uri.schemeCStr());
         if(!VALID_FONTNAMESPACEID(namespaceId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
+            Con_Printf("Invalid namespace \"%s\".\n", uri.schemeCStr());
             return false;
         }
-        like = Str_Text(uri.path());
+        like = uri.pathCStr();
     }
     // "listfonts [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
         uri.setUri(argv[1], RC_NULL);
-        if(!Str_IsEmpty(uri.scheme()))
+        if(!uri.scheme().isEmpty())
         {
-            namespaceId = Fonts_ParseNamespace(Str_Text(uri.scheme()));
+            namespaceId = Fonts_ParseNamespace(uri.schemeCStr());
             if(!VALID_FONTNAMESPACEID(namespaceId))
             {
-                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
+                Con_Printf("Invalid namespace \"%s\".\n", uri.schemeCStr());
                 return false;
             }
 
-            if(!Str_IsEmpty(uri.path()))
-                like = Str_Text(uri.path());
+            if(!uri.path().isEmpty())
+                like = uri.pathCStr();
         }
         else
         {
-            namespaceId = Fonts_ParseNamespace(Str_Text(uri.path()));
+            namespaceId = Fonts_ParseNamespace(uri.pathCStr());
 
             if(!VALID_FONTNAMESPACEID(namespaceId))
             {

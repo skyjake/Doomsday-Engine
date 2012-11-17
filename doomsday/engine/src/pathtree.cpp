@@ -144,7 +144,7 @@ struct PathTree::Instance
         ///       Now that the names of a path can be accessed randomly with no
         ///       impact on performance - there is no need to index the nodes in
         ///       reverse (right to left) order. -ds
-        bool const hasLeaf = Str_RAt(uri.path(), 0) != '/';
+        bool const hasLeaf = !uri.path().endsWith("/");
 
         PathTree::Node* node = 0, *parent = 0;
         for(int i = uri.pathNodeCount() - 1; i >= (hasLeaf? 1 : 0); --i)

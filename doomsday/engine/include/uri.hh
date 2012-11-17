@@ -28,6 +28,8 @@
 #include <de/libdeng2.h>
 #include <de/ISerializable>
 
+#include "resourceclass.h"
+
 /// Schemes must be at least this many characters.
 #define DENG2_URI_MIN_SCHEME_LENGTH     2
 
@@ -36,286 +38,297 @@
 #include <de/NativePath>
 #include <de/String>
 
-namespace de
+namespace de {
+
+/**
+ * Assists working with URIs and maps them to engine-managed resources.
+ *
+ * Universal resource identifiers (URIs) are a way to identify specific
+ * entities in a hierarchy.
+ *
+ * @todo Derive from Qt::QUrl, which implements the official URI
+ * specification more fully? Do we really need all the parts of an URI for
+ * our needs?
+ *
+ * @ingroup base
+ */
+class Uri : public ISerializable, public LogEntry::Arg::Base
 {
+    struct Instance; // needs to be friended by PathNode
+
+public:
+    /// A nonexistent path node was referenced. @ingroup errors
+    DENG2_ERROR(NotPathNodeError);
+
+    /// Base class for resolve-related errors. @ingroup errors
+    DENG2_ERROR(ResolveError);
+
+    /// An unknown symbol was encountered in the embedded expression. @ingroup errors
+    DENG2_SUB_ERROR(ResolveError, UnknownSymbolError);
+
+    /// An unresolveable symbol was encountered in the embedded expression. @ingroup errors
+    DENG2_SUB_ERROR(ResolveError, ResolveSymbolError);
+
+    /// Type used to represent a path name hash key.
+    typedef ushort hash_type;
+
+    /// Range of a path name hash key; [0..hash_range)
+    static hash_type const hash_range;
+
     /**
-     * Assists working with URIs and maps them to engine-managed resources.
-     *
-     * Universal resource identifiers (URIs) are a way to identify specific
-     * entities in a hierarchy.
-     *
-     * @todo Derive from Qt::QUrl, which implements the official URI
-     * specification more fully? Do we really need all the parts of an URI for
-     * our needs?
-     *
-     * @ingroup base
+     * Flags for printing URIs.
+     * @ingroup flags base
      */
-    class Uri : public ISerializable, public LogEntry::Arg::Base
+    enum PrintFlag
     {
-        struct Instance; // needs to be friended by PathNode
+        OutputResolved = 0x1,           ///< Include the resolved path in the output.
+        TransformPathPrettify = 0x2,    ///< Transform paths making them "pretty".
+        DefaultPrintFlags = OutputResolved | TransformPathPrettify
+    };
+    Q_DECLARE_FLAGS(PrintFlags, PrintFlag)
 
-    public:
-        /// A nonexistent path node was referenced. @ingroup errors
-        DENG2_ERROR(NotPathNodeError);
-
-        /// Base class for resolve-related errors. @ingroup errors
-        DENG2_ERROR(ResolveError);
-
-        /// An unknown symbol was encountered in the embedded expression. @ingroup errors
-        DENG2_SUB_ERROR(ResolveError, UnknownSymbolError);
-
-        /// An unresolveable symbol was encountered in the embedded expression. @ingroup errors
-        DENG2_SUB_ERROR(ResolveError, ResolveSymbolError);
-
-        /// Type used to represent a path name hash key.
-        typedef ushort hash_type;
-
-        /// Range of a path name hash key; [0..hash_range)
-        static hash_type const hash_range;
-
+    /**
+     * Represents a name in the URI path hierarchy.
+     * @todo Rename to "Segment" (cf. URI RFC section 3.3, paths are composed of segments).
+     */
+    struct PathNode
+    {
         /**
-         * Flags for printing URIs.
-         * @ingroup flags base
-         */
-        enum PrintFlag
-        {
-            OutputResolved = 0x1,           ///< Include the resolved path in the output.
-            TransformPathPrettify = 0x2,    ///< Transform paths making them "pretty".
-            DefaultPrintFlags = OutputResolved | TransformPathPrettify
-        };
-        Q_DECLARE_FLAGS(PrintFlags, PrintFlag)
-
-        /**
-         * Represents a name in the URI path hierarchy.
-         */
-        struct PathNode
-        {
-            /**
-             * Hash function that generates a somewhat-random number in the
-             * range [0..Uri::hash_range) from the node's name.
-             *
-             * @return  The generated hash key.
-             */
-            hash_type hash();
-
-            /// @return  Length of this node's name in characters.
-            int length() const;
-
-            /// @return Parent of this node else @c NULL.
-            PathNode* parent() const;
-
-            String toString() const;
-
-            friend class Uri;
-            friend struct Uri::Instance;
-
-        private:
-            bool haveHashKey;
-            hash_type hashKey;
-            char const* from, *to;
-            struct PathNode* parent_;
-        };
-
-    public:
-        /**
-         * Construct a default (empty) Uri instance.
-         */
-        Uri();
-
-        /**
-         * Construct a Uri instance from @a path.
+         * Hash function that generates a somewhat-random number in the
+         * range [0..Uri::hash_range) from the node's name.
          *
-         * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
-         *
-         * @param defaultResourceClass  If no scheme is defined in @a path and this
-         *      is not @c RC_NULL, ask the resource locator whether it knows of an
-         *      appropriate default scheme for this class of resource.
+         * @return  The generated hash key.
          */
-        Uri(String path, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar delimiter = '/');
+        hash_type hash();
 
-        /**
-         * Construct a Uri instance by duplicating @a other.
-         */
-        Uri(Uri const& other);
+        /// @return  Length of this node's name in characters.
+        int length() const;
 
-        ~Uri();
+        /// @return Parent of this node else @c NULL.
+        PathNode* parent() const;
 
-        Uri& operator = (Uri other);
+        String toString() const;
 
-        bool operator == (Uri const& other) const;
-
-        bool operator != (Uri const& other) const;
-
-        /**
-         * Constructs a Uri instance from a NativePath that refers to a file in
-         * the native file system. All path directives such as '~' are
-         * expanded. The resultant Uri will have an empty/zero-length scheme
-         * (because file paths do not include one).
-         *
-         * @param path  Native path to a file in the native file system.
-         */
-        static Uri fromNativePath(NativePath const& path);
-
-        /**
-         * Constructs a Uri instance from a NativePath that refers to a native
-         * directory. All path directives such as '~' are expanded. The
-         * resultant Uri will have an empty/zero-length scheme (because file
-         * paths do not include one).
-         *
-         * @param nativeDirPath  Native path to a directory in the native
-         *                       file system.
-         * @param defaultResourceClass  Default resource class.
-         */
-        static Uri fromNativeDirPath(NativePath const& nativeDirPath,
-                                     resourceclassid_t defaultResourceClass = RC_NULL);
-
-        /**
-         * Convert this URI to a text string.
-         *
-         * @see asText()
-         */
-        operator String () const {
-            return asText();
-        }
-
-        /**
-         * Returns true if the path component of the URI is empty; otherwise false.
-         */
-        bool isEmpty() const;
-
-        /**
-         * Clear the URI returning it to an empty state.
-         */
-        Uri& clear();
-
-        /**
-         * Attempt to resolve this URI. Substitutes known symbolics in the possibly
-         * templated path. Resulting path is a well-formed, filesys compatible path
-         * (perhaps base-relative).
-         *
-         * @return  The resolved path.
-         */
-        String resolved() const;
-
-        /**
-         * @return  Plain-text string representation of the current scheme.
-         */
-        String scheme() const;
-
-        /**
-         * @return  Plain-text string representation of the current path.
-         */
-        String path() const;
-
-        /**
-         * Change the scheme of the URI to @a newScheme.
-         */
-        Uri& setScheme(String newScheme);
-
-        /**
-         * Change the path of the URI to @a newPath.
-         */
-        Uri& setPath(String newPath, QChar delimiter = '/');
-
-        /**
-         * Update this URI by parsing new values from the specified arguments.
-         *
-         * @param newUri  URI to be parsed. Assumed to be in percent-encoded representation.
-         *
-         * @param defaultResourceClass  If no scheme is defined in @a newUri and
-         *      this is not @c RC_NULL, ask the resource locator whether it knows
-         *      of an appropriate default scheme for this class of resource.
-         */
-        Uri& setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN,
-                    QChar delimiter = '/');
-
-        /**
-         * Compose from this URI a plain-text representation. Any internal encoding
-         * method or symbolic identifiers will be left unchanged in the resultant
-         * string (not decoded, not resolved).
-         *
-         * @return  Plain-text String representation.
-         */
-        String compose(QChar delimiter = '/') const;
-
-        /**
-         * Retrieve the path node with index @a index. Note that nodes are indexed
-         * in reverse order (right to left) and NOT the autological left to right
-         * order.
-         *
-         * For example, if the path is "c:/mystuff/myaddon.addon" the corresponding
-         * path node map is arranged as follows:
-         * <pre>
-         *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
-         * </pre>
-         *
-         * @note The zero-length name in relative paths is also treated as a node.
-         *       For example, the path "/Users/username" has three nodes.
-         *
-         * @param index  Reverse-index of the path node to lookup. All paths have
-         *               at least one node (even empty ones) thus index @c 0 will
-         *               always be valid.
-         *
-         * @return  Referenced path node.
-         */
-        PathNode& pathNode(int index) const;
-
-        /**
-         * @return  Total number of nodes in the URI path name map.
-         * @see pathNode()
-         */
-        int pathNodeCount() const;
-
-        /**
-         * @return  First node in the URI path name map.
-         * @see pathNode()
-         */
-        inline PathNode& firstPathNode() const {
-            return pathNode(0);
-        }
-
-        /**
-         * @return  Last node in the URI path name map.
-         * @see pathNode()
-         */
-        inline PathNode& lastPathNode() const {
-            return pathNode(pathNodeCount() - 1);
-        }
-
-        /**
-         * Transform the URI into a human-friendly representation. Percent decoding done.
-         *
-         * @return  Human-friendly String representation.
-         */
-        String asText() const;
-
-        /**
-         * Swaps URI @a second with URI @a first.
-         */
-        friend void swap(Uri& first, Uri& second); // nothrow
-
-        /**
-         * Print debug ouput for the URI.
-         *
-         * @param indent            Number of characters to indent the print output.
-         * @param flags             @ref printUriFlags
-         * @param unresolvedText    Text string to be printed if not resolvable.
-         */
-        void debugPrint(int indent, PrintFlags flags = DefaultPrintFlags,
-                        String unresolvedText = "") const;
-
-        // Implements LogEntry::Arg::Base.
-        LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
-
-        // Implements ISerializable.
-        void operator >> (Writer& to) const;
-        void operator << (Reader& from);
+        friend class Uri;
+        friend struct Uri::Instance;
 
     private:
-        Instance* d;
+        bool haveHashKey;
+        hash_type hashKey;
+        char const* from, *to;
+        struct PathNode* parent_;
     };
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::PrintFlags)
+public:
+    /**
+     * Construct a default (empty) Uri instance.
+     */
+    Uri();
+
+    /**
+     * Construct a Uri instance from @a path.
+     *
+     * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
+     *
+     * @param defaultResourceClass  If no scheme is defined in @a path and this
+     *      is not @c RC_NULL, ask the resource locator whether it knows of an
+     *      appropriate default scheme for this class of resource.
+     */
+    Uri(String path, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar delimiter = '/');
+
+    /**
+     * Construct a Uri instance by duplicating @a other.
+     */
+    Uri(Uri const& other);
+
+    ~Uri();
+
+    Uri& operator = (Uri other);
+
+    bool operator == (Uri const& other) const;
+
+    bool operator != (Uri const& other) const;
+
+    /**
+     * Constructs a Uri instance from a NativePath that refers to a file in
+     * the native file system. All path directives such as '~' are
+     * expanded. The resultant Uri will have an empty/zero-length scheme
+     * (because file paths do not include one).
+     *
+     * @param path  Native path to a file in the native file system.
+     */
+    static Uri fromNativePath(NativePath const& path);
+
+    /**
+     * Constructs a Uri instance from a NativePath that refers to a native
+     * directory. All path directives such as '~' are expanded. The
+     * resultant Uri will have an empty/zero-length scheme (because file
+     * paths do not include one).
+     *
+     * @param nativeDirPath  Native path to a directory in the native
+     *                       file system.
+     * @param defaultResourceClass  Default resource class.
+     */
+    static Uri fromNativeDirPath(NativePath const& nativeDirPath,
+                                 resourceclassid_t defaultResourceClass = RC_NULL);
+
+    /**
+     * Convert this URI to a text string.
+     *
+     * @see asText()
+     */
+    operator String () const {
+        return asText();
+    }
+
+    /**
+     * Returns true if the path component of the URI is empty; otherwise false.
+     */
+    bool isEmpty() const;
+
+    /**
+     * Clear the URI returning it to an empty state.
+     */
+    Uri& clear();
+
+    /**
+     * Attempt to resolve this URI. Substitutes known symbolics in the possibly
+     * templated path. Resulting path is a well-formed, filesys compatible path
+     * (perhaps base-relative).
+     *
+     * @return  The resolved path.
+     */
+    String resolved() const;
+
+    /**
+     * @return  Scheme of the URI.
+     */
+    String scheme() const;
+
+    /**
+     * @return  Path of the URI.
+     */
+    String path() const;
+
+    /**
+     * @return  Scheme of the URI as plain text (ASCII encoding).
+     */
+    const char* schemeCStr() const;
+
+    /**
+     * @return  Path of the URI as plain text (UTF-8 encoding).
+     */
+    const char* pathCStr() const;
+
+    /**
+     * Change the scheme of the URI to @a newScheme.
+     */
+    Uri& setScheme(String newScheme);
+
+    /**
+     * Change the path of the URI to @a newPath.
+     */
+    Uri& setPath(String newPath, QChar delimiter = '/');
+
+    /**
+     * Update this URI by parsing new values from the specified arguments.
+     *
+     * @param newUri  URI to be parsed. Assumed to be in percent-encoded representation.
+     *
+     * @param defaultResourceClass  If no scheme is defined in @a newUri and
+     *      this is not @c RC_NULL, ask the resource locator whether it knows
+     *      of an appropriate default scheme for this class of resource.
+     */
+    Uri& setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN,
+                QChar delimiter = '/');
+
+    /**
+     * Compose from this URI a plain-text representation. Any internal encoding
+     * method or symbolic identifiers will be left unchanged in the resultant
+     * string (not decoded, not resolved).
+     *
+     * @return  Plain-text String representation.
+     */
+    String compose(QChar delimiter = '/') const;
+
+    /**
+     * Retrieve the path node with index @a index. Note that nodes are indexed
+     * in reverse order (right to left) and NOT the autological left to right
+     * order.
+     *
+     * For example, if the path is "c:/mystuff/myaddon.addon" the corresponding
+     * path node map is arranged as follows:
+     * <pre>
+     *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
+     * </pre>
+     *
+     * @note The zero-length name in relative paths is also treated as a node.
+     *       For example, the path "/Users/username" has three nodes.
+     *
+     * @param index  Reverse-index of the path node to lookup. All paths have
+     *               at least one node (even empty ones) thus index @c 0 will
+     *               always be valid.
+     *
+     * @return  Referenced path node.
+     */
+    PathNode& pathNode(int index) const;
+
+    /**
+     * @return  Total number of nodes in the URI path name map.
+     * @see pathNode()
+     */
+    int pathNodeCount() const;
+
+    /**
+     * @return  First node in the URI path name map.
+     * @see pathNode()
+     */
+    inline PathNode& firstPathNode() const {
+        return pathNode(0);
+    }
+
+    /**
+     * @return  Last node in the URI path name map.
+     * @see pathNode()
+     */
+    inline PathNode& lastPathNode() const {
+        return pathNode(pathNodeCount() - 1);
+    }
+
+    /**
+     * Transform the URI into a human-friendly representation. Percent decoding done.
+     *
+     * @return  Human-friendly String representation.
+     */
+    String asText() const;
+
+    /**
+     * Swaps URI @a second with URI @a first.
+     */
+    friend void swap(Uri& first, Uri& second); // nothrow
+
+    /**
+     * Print debug ouput for the URI.
+     *
+     * @param indent            Number of characters to indent the print output.
+     * @param flags             @ref printUriFlags
+     * @param unresolvedText    Text string to be printed if not resolvable.
+     */
+    void debugPrint(int indent, PrintFlags flags = DefaultPrintFlags,
+                    String unresolvedText = "") const;
+
+    // Implements LogEntry::Arg::Base.
+    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+
+    // Implements ISerializable.
+    void operator >> (Writer& to) const;
+    void operator << (Reader& from);
+
+private:
+    Instance* d;
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::PrintFlags)
 
 } // namespace de
 

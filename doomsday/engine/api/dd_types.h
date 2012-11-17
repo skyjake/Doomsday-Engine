@@ -102,6 +102,6 @@ struct material_s;
 #include <de/str.h>
 #include "resourceclass.h"
 #include "resourcetype.h"
-#include "uri.h"
+#include "uri.h" // C wrapper for de::Uri
 
 #endif /* ENGINE_TYPES_H */

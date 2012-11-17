@@ -460,7 +460,7 @@ static void updateMaterialBindInfo(MaterialBind& mb, bool canCreateInfo)
 
 static bool newMaterialBind(de::Uri& uri, material_t* material)
 {
-    MaterialRepository& matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(Str_Text(uri.scheme())));
+    MaterialRepository& matDirectory = getDirectoryForNamespaceId(Materials_ParseNamespace(uri.schemeCStr()));
     MaterialRepository::Node* node;
     MaterialBind* mb;
 
@@ -778,7 +778,7 @@ static bool validateMaterialUri(de::Uri const& uri, int flags, boolean quiet=fal
         return false;
     }
 
-    namespaceId = Materials_ParseNamespace(Str_Text(uri.scheme()));
+    namespaceId = Materials_ParseNamespace(uri.schemeCStr());
     if(!((flags & VMUF_ALLOW_NAMESPACE_ANY) && namespaceId == MN_ANY) &&
        !VALID_MATERIALNAMESPACEID(namespaceId))
     {
@@ -814,8 +814,8 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 /// @pre @a uri has already been validated and is well-formed.
 static MaterialBind* findMaterialBindForUri(de::Uri const& uri)
 {
-    materialnamespaceid_t namespaceId = Materials_ParseNamespace(Str_Text(uri.scheme()));
-    char const* path = Str_Text(uri.path());
+    materialnamespaceid_t namespaceId = Materials_ParseNamespace(uri.schemeCStr());
+    char const* path = uri.pathCStr();
     MaterialBind* bind = NULL;
     if(namespaceId != MN_ANY)
     {
@@ -1924,33 +1924,33 @@ D_CMD(ListMaterials)
     {
         uri.setScheme(argv[1]).setPath(argv[2]);
 
-        namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.scheme()));
+        namespaceId = DD_ParseMaterialNamespace(uri.schemeCStr());
         if(!VALID_MATERIALNAMESPACEID(namespaceId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
+            Con_Printf("Invalid namespace \"%s\".\n", uri.schemeCStr());
             return false;
         }
-        like = Str_Text(uri.path());
+        like = uri.pathCStr();
     }
     // "listmaterials [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
         uri.setUri(argv[1], RC_NULL);
-        if(!Str_IsEmpty(uri.scheme()))
+        if(!uri.scheme().isEmpty())
         {
-            namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.scheme()));
+            namespaceId = DD_ParseMaterialNamespace(uri.schemeCStr());
             if(!VALID_MATERIALNAMESPACEID(namespaceId))
             {
-                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(uri.scheme()));
+                Con_Printf("Invalid namespace \"%s\".\n", uri.schemeCStr());
                 return false;
             }
 
-            if(!Str_IsEmpty(uri.path()))
-                like = Str_Text(uri.path());
+            if(!uri.path().isEmpty())
+                like = uri.pathCStr();
         }
         else
         {
-            namespaceId = DD_ParseMaterialNamespace(Str_Text(uri.path()));
+            namespaceId = DD_ParseMaterialNamespace(uri.pathCStr());
 
             if(!VALID_MATERIALNAMESPACEID(namespaceId))
             {
@@ -2038,12 +2038,12 @@ D_CMD(InspectMaterial)
     de::Uri search = de::Uri(Str_Text(&path), RC_NULL);
     Str_Free(&path);
 
-    if(!Str_IsEmpty(search.scheme()))
+    if(!search.scheme().isEmpty())
     {
-        materialnamespaceid_t namespaceId = DD_ParseMaterialNamespace(Str_Text(search.scheme()));
+        materialnamespaceid_t namespaceId = DD_ParseMaterialNamespace(search.schemeCStr());
         if(!VALID_MATERIALNAMESPACEID(namespaceId))
         {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(search.scheme()));
+            Con_Printf("Invalid namespace \"%s\".\n", search.schemeCStr());
             return false;
         }
     }

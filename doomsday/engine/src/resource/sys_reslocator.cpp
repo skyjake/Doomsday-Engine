@@ -228,7 +228,7 @@ static bool findResource(resourceclassid_t classId, de::Uri const& searchPath,
         String const& resolvedPath = searchPath.resolved();
 
         // Is a namespace specified?
-        ResourceNamespace* rnamespace = F_ResourceNamespaceByName(Str_Text(searchPath.scheme()));
+        ResourceNamespace* rnamespace = F_ResourceNamespaceByName(searchPath.schemeCStr());
 
         // First try with the optional suffix.
         if(!optionalSuffix.isEmpty())
