@@ -164,11 +164,11 @@ namespace de
          * Manually add a resource to this namespace. Duplicates are pruned
          * automatically.
          *
-         * @param node          PathTree node which represents the resource.
+         * @param resourceNode  Node which represents the resource.
          *
          * @return  @c true iff this namespace did not already contain the resource.
          */
-        bool add(PathTree::Node& node);
+        bool add(PathTree::Node& resourceNode);
 
         /**
          * Finds all resources in this namespace.
