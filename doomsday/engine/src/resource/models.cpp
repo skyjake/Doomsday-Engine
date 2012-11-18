@@ -585,10 +585,10 @@ static ModelResourceType const* guessModelResourceTypeFromFileName(String filePa
     String ext = filePath.fileNameExtension();
     if(!ext.isEmpty())
     {
-        for(int i = 0; !modelTypes[i].ext.isEmpty(); ++i)
+        for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
         {
             ModelResourceType const& type = modelTypes[i];
-            if(!type.name.compareWithoutCase(ext))
+            if(!type.ext.compareWithoutCase(ext))
             {
                 return &type;
             }
