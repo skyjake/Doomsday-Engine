@@ -261,9 +261,9 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     if(!uri.scheme().compareWithoutCase("urn"))
     {
         // This is a URN of the form; urn:namespacename:uniqueid
-        fontnamespaceid_t namespaceId = Fonts_ParseNamespace(uri.path().toUtf8().constData());
+        fontnamespaceid_t namespaceId = Fonts_ParseNamespace(uri.pathCStr());
 
-        char* uid = strchr(uri.pathCStr(), ':');
+        char* uid = strchr((char*)uri.pathCStr(), ':');
         if(uid)
         {
             fontid_t id = Fonts_FontForUniqueId(namespaceId, strtol(uid + 1/*skip namespace delimiter*/, 0, 0));

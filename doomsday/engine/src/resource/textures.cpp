@@ -265,7 +265,7 @@ static TextureRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     {
         // This is a URN of the form; urn:namespacename:uniqueid
         texturenamespaceid_t namespaceId = Textures_ParseNamespace(uri.pathCStr());
-        char* uidStr = strchr(uri.pathCStr(), ':');
+        char* uidStr = strchr((char*)uri.pathCStr(), ':');
         if(uidStr)
         {
             int uid = strtol(uidStr +1/*skip namespace delimiter*/, 0, 0);
