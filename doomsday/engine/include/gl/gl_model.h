@@ -220,6 +220,5 @@ typedef struct model_s {
 } model_t;
 
 //extern model_t* modellist[MAX_MODELS];
-extern float avertexnormals[NUMVERTEXNORMALS][3];
 
 #endif /* LIBDENG_MODEL_H */
