@@ -37,6 +37,7 @@
 
 #include "def_main.h"
 
+#include <de/ByteOrder>
 #include <de/NativePath>
 #include <de/StringPool>
 #include <de/memory.h>
@@ -164,6 +165,44 @@ static void* allocAndLoad(de::FileHandle& file, int offset, int len)
     return ptr;
 }
 
+static bool readMd2Header(de::FileHandle& file, md2_header_t& hdr)
+{
+    size_t readBytes = file.read((uint8_t*)&hdr, sizeof(md2_header_t));
+    if(readBytes < sizeof(md2_header_t)) return false;
+
+    hdr.magic            = littleEndianByteOrder.toNative(hdr.magic);
+    hdr.version          = littleEndianByteOrder.toNative(hdr.version);
+    hdr.skinWidth        = littleEndianByteOrder.toNative(hdr.skinWidth);
+    hdr.skinHeight       = littleEndianByteOrder.toNative(hdr.skinHeight);
+    hdr.frameSize        = littleEndianByteOrder.toNative(hdr.frameSize);
+    hdr.numSkins         = littleEndianByteOrder.toNative(hdr.numSkins);
+    hdr.numVertices      = littleEndianByteOrder.toNative(hdr.numVertices);
+    hdr.numTexCoords     = littleEndianByteOrder.toNative(hdr.numTexCoords);
+    hdr.numTriangles     = littleEndianByteOrder.toNative(hdr.numTriangles);
+    hdr.numGlCommands    = littleEndianByteOrder.toNative(hdr.numGlCommands);
+    hdr.numFrames        = littleEndianByteOrder.toNative(hdr.numFrames);
+    hdr.offsetSkins      = littleEndianByteOrder.toNative(hdr.offsetSkins);
+    hdr.offsetTexCoords  = littleEndianByteOrder.toNative(hdr.offsetTexCoords);
+    hdr.offsetTriangles  = littleEndianByteOrder.toNative(hdr.offsetTriangles);
+    hdr.offsetFrames     = littleEndianByteOrder.toNative(hdr.offsetFrames);
+    hdr.offsetGlCommands = littleEndianByteOrder.toNative(hdr.offsetGlCommands);
+    hdr.offsetEnd        = littleEndianByteOrder.toNative(hdr.offsetEnd);
+    return true;
+}
+
+/// @todo We only really need to read the magic bytes and the version here.
+static bool recogniseMd2(de::FileHandle& file)
+{
+    md2_header_t hdr;
+    size_t initPos = file.tell();
+    // Seek to the start of the header.
+    file.seek(0, SeekSet);
+    bool result = (readMd2Header(file, hdr) && LONG(hdr.magic) == MD2_MAGIC);
+    // Return the stream to its original position.
+    file.seek(initPos, SeekSet);
+    return result;
+}
+
 static void loadMd2(de::FileHandle& file, model_t& mdl)
 {
     int const axis[3] = { 0, 2, 1 };
@@ -173,7 +212,7 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
     dmd_info_t&   inf = mdl.info;
 
     // Read the header.
-    file.read((uint8_t*)&oldHdr, sizeof(oldHdr));
+    DENG_ASSERT( readMd2Header(file, oldHdr) );
 
     // Convert it to DMD.
     hdr.magic = MD2_MAGIC;
@@ -181,24 +220,24 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
     hdr.flags = 0;
     mdl.vertexUsage = NULL;
 
-    inf.skinWidth       = LONG(oldHdr.skinWidth);
-    inf.skinHeight      = LONG(oldHdr.skinHeight);
-    inf.frameSize       = LONG(oldHdr.frameSize);
+    inf.skinWidth       = oldHdr.skinWidth;
+    inf.skinHeight      = oldHdr.skinHeight;
+    inf.frameSize       = oldHdr.frameSize;
+    inf.numSkins        = oldHdr.numSkins;
+    inf.numTexCoords    = oldHdr.numTexCoords;
+    inf.numVertices     = oldHdr.numVertices;
+    inf.numFrames       = oldHdr.numFrames;
+    inf.offsetSkins     = oldHdr.offsetSkins;
+    inf.offsetTexCoords = oldHdr.offsetTexCoords;
+    inf.offsetFrames    = oldHdr.offsetFrames;
+    inf.offsetLODs      = oldHdr.offsetEnd;    // Doesn't exist.
     inf.numLODs         = 1;
-    inf.numSkins        = LONG(oldHdr.numSkins);
-    inf.numTexCoords    = LONG(oldHdr.numTexCoords);
-    inf.numVertices     = LONG(oldHdr.numVertices);
-    inf.numFrames       = LONG(oldHdr.numFrames);
-    inf.offsetSkins     = LONG(oldHdr.offsetSkins);
-    inf.offsetTexCoords = LONG(oldHdr.offsetTexCoords);
-    inf.offsetFrames    = LONG(oldHdr.offsetFrames);
-    inf.offsetLODs      = LONG(oldHdr.offsetEnd);    // Doesn't exist.
 
-    mdl.lodInfo[0].numTriangles     = LONG(oldHdr.numTriangles);
-    mdl.lodInfo[0].numGlCommands    = LONG(oldHdr.numGlCommands);
-    mdl.lodInfo[0].offsetTriangles  = LONG(oldHdr.offsetTriangles);
-    mdl.lodInfo[0].offsetGlCommands = LONG(oldHdr.offsetGlCommands);
-    inf.offsetEnd = LONG(oldHdr.offsetEnd);
+    mdl.lodInfo[0].numTriangles     = oldHdr.numTriangles;
+    mdl.lodInfo[0].numGlCommands    = oldHdr.numGlCommands;
+    mdl.lodInfo[0].offsetTriangles  = oldHdr.offsetTriangles;
+    mdl.lodInfo[0].offsetGlCommands = oldHdr.offsetGlCommands;
+    inf.offsetEnd = oldHdr.offsetEnd;
 
     // The frames need to be unpacked.
     byte* frames = (byte*) allocAndLoad(file, inf.offsetFrames, inf.frameSize * inf.numFrames);
@@ -257,9 +296,35 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
     }
 }
 
+static bool readHeaderDmd(de::FileHandle& file, dmd_header_t& hdr)
+{
+    size_t readBytes = file.read((uint8_t*)&hdr, sizeof(dmd_header_t));
+    if(readBytes < sizeof(dmd_header_t)) return false;
+
+    hdr.magic   = littleEndianByteOrder.toNative(hdr.magic);
+    hdr.version = littleEndianByteOrder.toNative(hdr.version);
+    hdr.flags   = littleEndianByteOrder.toNative(hdr.flags);
+    return true;
+}
+
+static bool recogniseDmd(de::FileHandle& file)
+{
+    dmd_header_t hdr;
+    size_t initPos = file.tell();
+    // Seek to the start of the header.
+    file.seek(0, SeekSet);
+    bool result = (readHeaderDmd(file, hdr) && LONG(hdr.magic) == DMD_MAGIC);
+    // Return the stream to its original position.
+    file.seek(initPos, SeekSet);
+    return result;
+}
+
 static void loadDmd(de::FileHandle& file, model_t& mdl)
 {
     int const axis[3] = { 0, 2, 1 };
+
+    // Read the header.
+    DENG_ASSERT( readHeaderDmd(file, mdl.header) );
 
     dmd_info_t& inf = mdl.info;
 
@@ -381,6 +446,37 @@ static void loadDmd(de::FileHandle& file, model_t& mdl)
     }
 }
 
+static model_t* modelForId(modelid_t modelId, bool canCreate = false)
+{
+    DENG_ASSERT(modelRepository);
+    model_t* mdl = reinterpret_cast<model_t*>(modelRepository->userPointer(modelId));
+    if(!mdl && canCreate)
+    {
+        // Allocate a new model_t.
+        mdl = (model_t*) M_Calloc(sizeof(model_t));
+        modelRepository->setUserPointer(modelId, mdl);
+    }
+    return mdl;
+}
+
+model_t* Models_ToModel(modelid_t id)
+{
+    return modelForId(id);
+}
+
+AutoStr* Models_ComposePath(modelid_t id)
+{
+    DENG_ASSERT(modelRepository);
+    String const& filePath = modelRepository->string(id);
+    QByteArray filePathUtf8 = filePath.toUtf8();
+    return AutoStr_FromTextStd(filePathUtf8.constData());
+}
+
+static inline String const& findModelPath(modelid_t id)
+{
+    return modelRepository->string(id);
+}
+
 static bool registerSkin(model_t& mdl, int skinIndex)
 {
     LOG_AS("registerSkin");
@@ -397,110 +493,45 @@ static bool registerSkin(model_t& mdl, int skinIndex)
     return false;
 }
 
-model_t* Models_ToModel(modelid_t id)
-{
-    DENG_ASSERT(modelRepository);
-    return (model_t*) modelRepository->userPointer(id);
-}
-
-AutoStr* Models_ComposePath(modelid_t id)
-{
-    DENG_ASSERT(modelRepository);
-    String const& filePath = modelRepository->string(id);
-    QByteArray filePathUtf8 = filePath.toUtf8();
-    return AutoStr_FromTextStd(filePathUtf8.constData());
-}
-
-static inline String const& findModelPath(modelid_t id)
-{
-    return modelRepository->string(id);
-}
-
-/**
- * Returns a repository id if the specified model has already been loaded.
- * Otherwise returns 0.
- */
-static inline modelid_t findModelForPath(String filePath)
-{
-    return modelRepository->isInterned(filePath);
-}
-
-/**
- * Allocates a new model. Returns the repository id.
- */
-static modelid_t newModelForPath(String filePath)
-{
-    StringPool::Id id = modelRepository->intern(filePath);
-    DENG_ASSERT(modelRepository->userPointer(id) == NULL);
-
-    modelRepository->setUserPointer(id, M_Calloc(sizeof(model_t)));
-    return id;
-}
-
 /**
  * Finds the existing model or loads in a new one.
  */
-static int loadModel(de::Uri const& searchPath)
+static modelid_t loadModel(String path)
 {
     LOG_AS("loadModel");
 
-    if(searchPath.isEmpty()) return 0;
+    // Have we already loaded this?
+    modelid_t modelId = modelRepository->intern(path);
+    model_t* mdl = Models_ToModel(modelId);
+    if(mdl) return modelId; // Yes.
 
-    AutoStr* foundPath = AutoStr_NewStd();
-    if(!F_FindResource2(RC_MODEL, reinterpret_cast<uri_s const*>(&searchPath), foundPath))
+    // Not yet - try to open the file.
+    QByteArray pathUtf8 = path.toUtf8();
+    de::FileHandle* file = reinterpret_cast<de::FileHandle*>(F_Open(pathUtf8.constData(), "rb"));
+    if(!file)
     {
-        LOG_WARNING("Failed to locate \"%s\", ignoring.") << searchPath;
+        // Huh?? Should never happen.
+        LOG_WARNING("Failed to locate \"%s\", ignoring.") << NativePath(path).pretty();
         return 0;
     }
 
-    // Has this been already loaded?
-    de::FileHandle* file = 0;
-    String foundPathStr = String(Str_Text(foundPath));
-    modelid_t modelId = findModelForPath(foundPathStr);
-    if(modelId == NOMODELID)
-    {
-        // Not loaded yet, try to open the file.
-        file = reinterpret_cast<de::FileHandle*>(F_Open(Str_Text(foundPath), "rb"));
-        if(!file)
-        {
-            LOG_WARNING("Failed to locate \"%s\", ignoring.") << Str_Text(foundPath);
-            return 0;
-        }
-
-        // Allocate a new model_t.
-        modelId = newModelForPath(foundPathStr);
-        if(modelId == NOMODELID)
-        {
-            F_Delete(reinterpret_cast<filehandle_s*>(file));
-            return 0;
-        }
-    }
-
-    model_t* mdl = reinterpret_cast<model_t*>(modelRepository->userPointer(modelId));
-    if(mdl->loaded)
-    {
-        if(file) F_Delete(reinterpret_cast<filehandle_s*>(file));
-        return modelId; // Already loaded.
-    }
-
     // Now we can load in the data.
-    file->read((uint8_t*)&mdl->header, sizeof(mdl->header));
-    if(LONG(mdl->header.magic) == MD2_MAGIC)
-    {
-        // Load as MD2.
-        file->rewind();
-        loadMd2(*file, *mdl);
-    }
-    else if(LONG(mdl->header.magic) == DMD_MAGIC)
+    /// @todo Order here should be determined by the resource locator.
+    if(recogniseDmd(*file))
     {
         // Load as DMD.
+        mdl = modelForId(modelId, true/*create*/);
         loadDmd(*file, *mdl);
     }
-    else // Bad magic!
+    else if(recogniseMd2(*file))
+    {
+        // Load as MD2.
+        mdl = modelForId(modelId, true/*create*/);
+        loadMd2(*file, *mdl);
+    }
+    else // Unrecognised format.
     {
         // Cancel the loading.
-        M_Free(mdl);
-        modelRepository->setUserPointer(modelId, 0);
         F_Delete(reinterpret_cast<filehandle_s*>(file));
         return 0;
     }
@@ -508,7 +539,6 @@ static int loadModel(de::Uri const& searchPath)
     // We're done.
     F_Delete(reinterpret_cast<filehandle_s*>(file));
 
-    mdl->loaded = true;
     mdl->allowTexComp = true;
     mdl->modelId = modelId;
 
@@ -529,6 +559,7 @@ static int loadModel(de::Uri const& searchPath)
         String const& mdlFilePath = findModelPath(modelId);
         de::Uri skinSearchPath = de::Uri(mdlFilePath.fileNamePath() / mdlFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
 
+        AutoStr* foundPath = AutoStr_NewStd();
         if(F_FindResource2(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundPath))
         {
             // Huzzah! we found a skin.
@@ -737,10 +768,10 @@ float Models_ModelForMobj(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef
     return interp;
 }
 
-static model_frame_t* getModelFrame(int model, int frame)
+static model_frame_t* getModelFrame(modelid_t modelId, int frame)
 {
-    model_t* mdl = Models_ToModel(model);
-    DENG_ASSERT(mdl != 0);
+    model_t* mdl = Models_ToModel(modelId);
+    DENG_ASSERT(mdl);
     return mdl->frames + frame;
 }
 
@@ -814,7 +845,7 @@ static void scaleModelToSprite(modeldef_t& mf, int sprite, int frame)
     scaleModel(mf, ms->size.height, off);
 }
 
-float R_GetModelVisualRadius(modeldef_t* mf)
+static float calcModelVisualRadius(modeldef_t* mf)
 {
     if(!mf || !mf->sub[0].modelId) return 0;
 
@@ -928,6 +959,8 @@ static modeldef_t* getModelDef(int state, float interMark, int select)
  */
 static void setupModel(ded_model_t& def)
 {
+    LOG_AS("setupModel");
+
     int const modelScopeFlags = def.flags | defs.modelFlags;
     int const statenum = Def_GetStateNum(def.state);
 
@@ -967,12 +1000,23 @@ static void setupModel(ded_model_t& def)
     submodeldef_t*  sub    = modef->sub;
     for(int i = 0; i < MAX_FRAME_MODELS; ++i, ++subdef, ++sub)
     {
-        if(!subdef->filename) continue;
+        sub->modelId = 0;
 
-        sub->modelId = loadModel(reinterpret_cast<de::Uri&>(*subdef->filename));
-        if(!sub->modelId) continue;
+        if(!subdef->filename || Uri_IsEmpty(subdef->filename)) continue;
+
+        AutoStr* foundPath = AutoStr_NewStd();
+        if(!F_FindResource2(RC_MODEL, subdef->filename, foundPath))
+        {
+            LOG_WARNING("Failed to locate \"%s\", ignoring.") << reinterpret_cast<de::Uri&>(*subdef->filename);
+            continue;
+        }
+
+        sub->modelId = loadModel(Str_Text(foundPath));
+        if(sub->modelId == NOMODELID) continue;
 
         model_t* mdl = Models_ToModel(sub->modelId);
+        DENG_ASSERT(mdl);
+
         sub->frame = mdl->frameNumForName(subdef->frame);
         sub->frameRange = subdef->frameRange;
         // Frame range must always be greater than zero.
@@ -1021,7 +1065,7 @@ static void setupModel(ded_model_t& def)
         if(subdef->skinFilename && !Str_IsEmpty(Uri_Path(subdef->skinFilename)))
         {
             // A specific file name has been given for the skin.
-            sub->skin = newModelSkin(*Models_ToModel(sub->modelId), reinterpret_cast<de::Uri&>(*subdef->skinFilename));
+            sub->skin = newModelSkin(*mdl, reinterpret_cast<de::Uri&>(*subdef->skinFilename));
         }
         else
         {
@@ -1046,7 +1090,7 @@ static void setupModel(ded_model_t& def)
         if(sub->flags & MFF_NO_TEXCOMP)
         {
             // All skins of this model will no longer use compression.
-            Models_ToModel(sub->modelId)->allowTexComp = false;
+            mdl->allowTexComp = false;
         }
     }
 
@@ -1120,30 +1164,30 @@ static void setupModel(ded_model_t& def)
     }
     else
     {
-        modef->visualRadius = R_GetModelVisualRadius(modef);
+        modef->visualRadius = calcModelVisualRadius(modef);
     }
 }
 
 static int destroyModelInRepository(StringPool::Id id, void* /*parm*/)
 {
-    model_t* m = reinterpret_cast<model_t*>(modelRepository->userPointer(id));
-    if(!m) return 0;
+    model_t* mdl = reinterpret_cast<model_t*>(modelRepository->userPointer(id));
+    if(!mdl) return 0;
 
-    M_Free(m->skins);
-    for(int i = 0; i < m->info.numFrames; ++i)
+    M_Free(mdl->skins);
+    for(int i = 0; i < mdl->info.numFrames; ++i)
     {
-        M_Free(m->frames[i].vertices);
-        M_Free(m->frames[i].normals);
+        M_Free(mdl->frames[i].vertices);
+        M_Free(mdl->frames[i].normals);
     }
-    M_Free(m->frames);
+    M_Free(mdl->frames);
 
-    for(int i = 0; i < m->info.numLODs; ++i)
+    for(int i = 0; i < mdl->info.numLODs; ++i)
     {
         //M_Free(modellist[i]->lods[k].triangles);
-        M_Free(m->lods[i].glCommands);
+        M_Free(mdl->lods[i].glCommands);
     }
-    M_Free(m->vertexUsage);
-    M_Free(m);
+    M_Free(mdl->vertexUsage);
+    M_Free(mdl);
 
     return 0;
 }
@@ -1276,17 +1320,16 @@ void Models_Cache(modeldef_t* modef)
     for(int sub = 0; sub < MAX_FRAME_MODELS; ++sub)
     {
         submodeldef_t& subdef = modef->sub[sub];
-        if(!subdef.modelId) continue;
-
-        model_t& mdl = *Models_ToModel(subdef.modelId);
+        model_t* mdl = Models_ToModel(subdef.modelId);
+        if(!mdl) continue;
 
         // Load all skins.
-        for(int k = 0; k < mdl.info.numSkins; ++k)
+        for(int k = 0; k < mdl->info.numSkins; ++k)
         {
-            texture_s* tex = mdl.skins[k].texture;
+            texture_s* tex = mdl->skins[k].texture;
             if(tex)
             {
-                GL_PrepareTexture(tex, Rend_ModelDiffuseTextureSpec(!mdl.allowTexComp));
+                GL_PrepareTexture(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
             }
         }
 

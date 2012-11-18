@@ -1434,6 +1434,7 @@ void Def_PostInit(void)
             }
 
             model_t* mdl = Models_ToModel(modef->sub[0].modelId);
+            DENG_ASSERT(mdl);
 
             st->model = modef - modefs;
             st->frame = mdl->frameNumForName(st->frameName);

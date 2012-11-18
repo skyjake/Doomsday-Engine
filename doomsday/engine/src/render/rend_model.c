@@ -144,10 +144,13 @@ void Rend_ModelSetFrame(modeldef_t* modef, int frame)
     for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
     {
         submodeldef_t* subdef = &modef->sub[i];
+        model_t* mdl;
         if(!subdef->modelId) continue;
 
         // Modify the modeldef itself: set the current frame.
-        subdef->frame = frame % Models_ToModel(subdef->modelId)->info.numFrames;
+        mdl = Models_ToModel(subdef->modelId);
+        DENG_ASSERT(mdl);
+        subdef->frame = frame % mdl->info.numFrames;
     }
 }
 
@@ -493,6 +496,8 @@ static model_frame_t* Mod_GetVisibleFrame(modeldef_t* mf, int subnumber, int mob
     {
         index += mobjid % mf->sub[subnumber].frameRange;
     }
+
+    DENG_ASSERT(mdl);
     if(index >= mdl->info.numFrames)
     {
         Con_Error("Mod_GetVisibleFrame: Frame index out of bounds.\n"
@@ -841,6 +846,7 @@ static int chooseSkin(modeldef_t* mf, int submodel, int id, int selector, int tm
     if(smf->flags & MFF_SKINTRANS)
         skin = tmap;
 
+    DENG_ASSERT(mdl);
     if(skin < 0 || skin >= mdl->info.numSkins)
         skin = 0;
 

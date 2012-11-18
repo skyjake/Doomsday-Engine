@@ -193,7 +193,6 @@ typedef struct model_frame_s {
 } model_frame_t;
 
 typedef struct model_s {
-    boolean loaded;
     uint modelId; ///< Id of the model in the repository.
     dmd_header_t header;
     dmd_info_t info;
