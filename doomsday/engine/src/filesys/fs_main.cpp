@@ -1003,17 +1003,17 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     return found.count() - numFoundSoFar;
 }
 
-de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& info)
+de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const& info)
 {
-    DENG_ASSERT(!path.isEmpty());
+    DENG_ASSERT(!filePath.isEmpty());
 
     de::File1* interpretedFile = 0;
 
-    // Firstly try interpreter(s) for guessed resource types.
-    ResourceType const& rtypeGuess = F_GuessResourceTypeFromFileName(path);
+    // Firstly try the interpreter for the guessed resource types.
+    ResourceType const& rtypeGuess = F_GuessResourceTypeFromFileName(filePath);
     if(FileResourceType const* fileType = dynamic_cast<FileResourceType const*>(&rtypeGuess))
     {
-        interpretedFile = fileType->interpret(hndl, path, info);
+        interpretedFile = fileType->interpret(hndl, filePath, info);
     }
 
     // If not yet interpreted - try each recognisable format in order.
@@ -1027,7 +1027,7 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& inf
                 // Already tried this?
                 if(fileType == &rtypeGuess) continue;
 
-                interpretedFile = fileType->interpret(hndl, path, info);
+                interpretedFile = fileType->interpret(hndl, filePath, info);
                 if(interpretedFile) break;
             }
         }
@@ -1038,7 +1038,7 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String path, FileInfo const& inf
     {
         // Use a generic file.
         File1* container = (hndl.hasFile() && hndl.file().isContained())? &hndl.file().container() : 0;
-        interpretedFile = new File1(hndl, path, info, container);
+        interpretedFile = new File1(hndl, filePath, info, container);
     }
 
     DENG_ASSERT(interpretedFile);

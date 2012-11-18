@@ -146,15 +146,18 @@ static bool findResourceFile(de::Uri const& searchPath, ddstring_t* foundPath)
 {
     try
     {
-        de::File1& file = App_FileSystem()->find(searchPath.compose());
-        // Does the caller want to know the matched path?
-        if(foundPath)
+        String searchPathStr = searchPath.compose();
+        if(App_FileSystem()->accessFile(searchPathStr))
         {
-            QByteArray searchPathUtf8 = file.composePath().toUtf8();
-            Str_Set(foundPath, searchPathUtf8.constData());
-            F_PrependBasePath(foundPath, foundPath);
+            // Does the caller want to know the matched path?
+            if(foundPath)
+            {
+                QByteArray searchPathUtf8 = searchPathStr.toUtf8();
+                Str_Set(foundPath, searchPathUtf8.constData());
+                F_PrependBasePath(foundPath, foundPath);
+            }
+            return true;
         }
-        return true;
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore this error.
@@ -167,7 +170,8 @@ static bool findResource3(ResourceNamespace* rnamespace, de::Uri const& searchPa
     // Is there a namespace we should use?
     if(rnamespace)
     {
-        return findResourceInNamespace(*rnamespace, searchPath, foundPath);
+        if(findResourceInNamespace(*rnamespace, searchPath, foundPath))
+            return true;
     }
     return findResourceFile(searchPath, foundPath);
 }
