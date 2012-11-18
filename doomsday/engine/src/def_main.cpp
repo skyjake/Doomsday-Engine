@@ -715,9 +715,17 @@ void Def_ReadProcessDED(char const* fileName)
 
     if(!fileName || !fileName[0]) return;
 
-    if(!App_FileSystem()->checkFileId(fileName))
+    if(!App_FileSystem()->accessFile(fileName))
     {
         LOG_WARNING("\"%s\" not found!") << de::NativePath(fileName).pretty();
+        return;
+    }
+
+    // We use the File Ids to prevent loading the same files multiple times.
+    if(!App_FileSystem()->checkFileId(fileName))
+    {
+        // Already handled.
+        LOG_DEBUG("\"%s\" has already been read.") << de::NativePath(fileName).pretty();
         return;
     }
 
