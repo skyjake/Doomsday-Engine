@@ -212,7 +212,8 @@ static void loadMd2(de::FileHandle& file, model_t& mdl)
     dmd_info_t&   inf = mdl.info;
 
     // Read the header.
-    DENG_ASSERT( readMd2Header(file, oldHdr) );
+    bool readHeaderOk = readMd2Header(file, oldHdr);
+    DENG_ASSERT(readHeaderOk);
 
     // Convert it to DMD.
     hdr.magic = MD2_MAGIC;
@@ -324,7 +325,8 @@ static void loadDmd(de::FileHandle& file, model_t& mdl)
     int const axis[3] = { 0, 2, 1 };
 
     // Read the header.
-    DENG_ASSERT( readHeaderDmd(file, mdl.header) );
+    bool readHeaderOk = readHeaderDmd(file, mdl.header);
+    DENG_ASSERT(readHeaderOk);
 
     dmd_info_t& inf = mdl.info;
 
@@ -481,7 +483,7 @@ static bool registerSkin(model_t& mdl, int skinIndex)
 {
     LOG_AS("registerSkin");
 
-    String const& modelFilePath = modelRepository->string(mdl.modelId);
+    String const& modelFilePath = findModelPath(mdl.modelId);
     dmd_skin_t& skin = mdl.skins[skinIndex];
 
     QByteArray modelFilePathUtf8 = modelFilePath.toUtf8();
@@ -493,59 +495,12 @@ static bool registerSkin(model_t& mdl, int skinIndex)
     return false;
 }
 
-/**
- * Finds the existing model or loads in a new one.
- */
-static modelid_t loadModel(String path)
+static void registerAllSkins(model_t& mdl)
 {
-    LOG_AS("loadModel");
-
-    // Have we already loaded this?
-    modelid_t modelId = modelRepository->intern(path);
-    model_t* mdl = Models_ToModel(modelId);
-    if(mdl) return modelId; // Yes.
-
-    // Not yet - try to open the file.
-    de::FileHandle* file = reinterpret_cast<de::FileHandle*>(F_Open(path.toUtf8().constData(), "rb"));
-    if(!file)
-    {
-        // Huh?? Should never happen.
-        LOG_WARNING("Failed to locate \"%s\", ignoring.") << NativePath(path).pretty();
-        return 0;
-    }
-
-    // Now we can load in the data.
-    /// @todo Order here should be determined by the resource locator.
-    if(recogniseDmd(*file))
-    {
-        // Load as DMD.
-        mdl = modelForId(modelId, true/*create*/);
-        loadDmd(*file, *mdl);
-    }
-    else if(recogniseMd2(*file))
-    {
-        // Load as MD2.
-        mdl = modelForId(modelId, true/*create*/);
-        loadMd2(*file, *mdl);
-    }
-    else // Unrecognised format.
-    {
-        // Cancel the loading.
-        F_Delete(reinterpret_cast<filehandle_s*>(file));
-        return 0;
-    }
-
-    // We're done.
-    F_Delete(reinterpret_cast<filehandle_s*>(file));
-
-    mdl->allowTexComp = true;
-    mdl->modelId = modelId;
-
-    // Determine the actual (full) paths.
     int numFoundSkins = 0;
-    for(int i = 0; i < mdl->info.numSkins; ++i)
+    for(int i = 0; i < mdl.info.numSkins; ++i)
     {
-        if(registerSkin(*mdl, i))
+        if(registerSkin(mdl, i))
         {
             // We have found one more skin for this model.
             numFoundSkins += 1;
@@ -555,39 +510,172 @@ static modelid_t loadModel(String path)
     if(!numFoundSkins)
     {
         // Lastly try a skin named similarly to the model in the same directory.
-        String const& mdlFilePath = findModelPath(modelId);
-        de::Uri skinSearchPath = de::Uri(mdlFilePath.fileNamePath() / mdlFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
+        String const& modelFilePath = findModelPath(mdl.modelId);
+        de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
 
-        AutoStr* foundPath = AutoStr_NewStd();
-        if(F_FindResource2(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundPath))
+        AutoStr* foundSkinPath = AutoStr_NewStd();
+        if(F_FindResource2(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundSkinPath))
         {
             // Huzzah! we found a skin.
-            de::Uri uri = de::Uri(Str_Text(foundPath), RC_NULL);
-            mdl->skins[0].texture = R_CreateSkinTex(reinterpret_cast<uri_s const*>(&uri), false/*not a shiny skin*/);
+            de::Uri uri = de::Uri(Str_Text(foundSkinPath), RC_NULL);
+            mdl.skins[0].texture = R_CreateSkinTex(reinterpret_cast<uri_s const*>(&uri), false/*not a shiny skin*/);
 
             numFoundSkins = 1;
 
             LOG_INFO("Assigned fallback skin \"%s\" to index #0 for model \"%s\".")
-                << NativePath(Str_Text(foundPath)).pretty()
-                << NativePath(mdlFilePath).pretty();
+                << NativePath(Str_Text(foundSkinPath)).pretty()
+                << NativePath(modelFilePath).pretty();
         }
     }
 
     if(!numFoundSkins)
     {
         LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
-            << NativePath(findModelPath(modelId)).pretty();
+                << NativePath(findModelPath(mdl.modelId)).pretty();
     }
+}
 
-    // Enlarge the vertex buffers to enable drawing of this model.
-    if(!Rend_ModelExpandVertexBuffers(mdl->info.numVertices))
+static model_t* interpretDmd(de::FileHandle& hndl, String path, modelid_t modelId)
+{
+    if(recogniseDmd(hndl))
     {
-        LOG_WARNING("Model \"%s\" contains more than %u max vertices (%u), it will not be rendered.")
-            << NativePath(findModelPath(modelId)).pretty()
-            << uint(RENDER_MAX_MODEL_VERTS) << uint(mdl->info.numVertices);
+        LOG_AS("DmdResourceType");
+        LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+        model_t* mdl = modelForId(modelId, true/*create*/);
+        loadDmd(hndl, *mdl);
+        return mdl;
+    }
+    return 0;
+}
+
+static model_t* interpretMd2(de::FileHandle& hndl, String path, modelid_t modelId)
+{
+    if(recogniseMd2(hndl))
+    {
+        LOG_AS("Md2ResourceType");
+        LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+        model_t* mdl = modelForId(modelId, true/*create*/);
+        loadMd2(hndl, *mdl);
+        return mdl;
+    }
+    return 0;
+}
+
+struct ModelResourceType
+{
+    /// Symbolic name of the resource type.
+    String const name;
+
+    /// Known file extension.
+    String const ext;
+
+    model_t* (*interpretFunc)(de::FileHandle& hndl, String path, modelid_t modelId);
+};
+
+// Model resource types.
+static ModelResourceType const modelTypes[] = {
+    { "DMD",    ".dmd",     interpretDmd },
+    { "MD2",    ".md2",     interpretMd2 },
+    { "",       "",         0 } // Terminate.
+};
+
+static ModelResourceType const* guessModelResourceTypeFromFileName(String filePath)
+{
+    // An extension is required for this.
+    String ext = filePath.fileNameExtension();
+    if(!ext.isEmpty())
+    {
+        for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
+        {
+            ModelResourceType const& type = modelTypes[i];
+            if(!type.ext.compareWithoutCase(ext))
+            {
+                return &type;
+            }
+        }
+    }
+    return 0; // Unknown.
+}
+
+static model_t* interpretModel(de::FileHandle& hndl, String path, modelid_t modelId)
+{
+    model_t* mdl = 0;
+
+    // Firstly try the interpreter for the guessed resource types.
+    ModelResourceType const* rtypeGuess = guessModelResourceTypeFromFileName(path);
+    if(rtypeGuess)
+    {
+        mdl = rtypeGuess->interpretFunc(hndl, path, modelId);
     }
 
-    return modelId;
+    // If not yet interpreted - try each recognisable format in order.
+    if(!mdl)
+    {
+        // Try each recognisable format instead.
+        for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
+        {
+            ModelResourceType const& modelType = modelTypes[i];
+
+            // Already tried this?
+            if(&modelType == rtypeGuess) continue;
+
+            mdl = modelType.interpretFunc(hndl, path, modelId);
+            if(mdl) break;
+        }
+    }
+
+    return mdl;
+}
+
+/**
+ * Finds the existing model or loads in a new one.
+ */
+static model_t* loadModel(String path)
+{
+    LOG_AS("loadModel");
+
+    // Have we already loaded this?
+    modelid_t modelId = modelRepository->intern(path);
+    model_t* mdl = Models_ToModel(modelId);
+    if(mdl) return mdl; // Yes.
+
+    try
+    {
+        // Attempt to interpret and load this model file.
+        de::FileHandle& hndl = App_FileSystem()->openFile(path, "rb");
+
+        mdl = interpretModel(hndl, path, modelId);
+
+        // We're done with the file.
+        App_FileSystem()->releaseFile(hndl.file());
+        delete &hndl;
+
+        // Loaded?
+        if(mdl)
+        {
+            mdl->modelId = modelId;
+            mdl->allowTexComp = true;
+
+            registerAllSkins(*mdl);
+
+            // Enlarge the vertex buffers in preparation for drawing of this model.
+            if(!Rend_ModelExpandVertexBuffers(mdl->info.numVertices))
+            {
+                LOG_WARNING("Model \"%s\" contains more than %u max vertices (%u), it will not be rendered.")
+                    << NativePath(path).pretty()
+                    << uint(RENDER_MAX_MODEL_VERTS) << uint(mdl->info.numVertices);
+            }
+
+            return mdl;
+        }
+    }
+    catch(FS1::NotFoundError const& er)
+    {
+        // Huh?? Should never happen.
+        LOG_WARNING(er.asText() + ", ignoring.");
+    }
+
+    return 0;
 }
 
 /**
@@ -1010,17 +1098,12 @@ static void setupModel(ded_model_t& def)
             continue;
         }
 
-        sub->modelId = loadModel(Str_Text(foundPath));
-        if(sub->modelId == NOMODELID) continue;
+        model_t* mdl = loadModel(Str_Text(foundPath));
+        if(!mdl) continue;
 
-        model_t* mdl = Models_ToModel(sub->modelId);
-        DENG_ASSERT(mdl);
-
+        sub->modelId = mdl->modelId;
         sub->frame = mdl->frameNumForName(subdef->frame);
-        sub->frameRange = subdef->frameRange;
-        // Frame range must always be greater than zero.
-        if(sub->frameRange < 1)
-            sub->frameRange = 1;
+        sub->frameRange = MAX_OF(1, subdef->frameRange); // Frame range must always be greater than zero.
 
         sub->alpha = byte(255 - subdef->alpha * 255);
         sub->blendMode = subdef->blendMode;
