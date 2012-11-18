@@ -41,10 +41,12 @@
 
 namespace de {
 
+Uri::hash_type const Uri::hash_range = 512;
+
 ushort Uri::Segment::hash() const
 {
     // Is it time to compute the hash?
-    if(!haveHashKey)
+    if(!gotHashKey)
     {
         String str = String(from, length());
         hashKey = 0;
@@ -60,7 +62,7 @@ ushort Uri::Segment::hash() const
             }
         }
         hashKey %= hash_range;
-        haveHashKey = true;
+        gotHashKey = true;
     }
     return hashKey;
 }
@@ -654,8 +656,6 @@ void Uri::operator << (Reader& from)
     setPath(String::fromUtf8(b));
 }
 
-Uri::hash_type const Uri::hash_range = 512;
-
 #ifdef _DEBUG
 
 LIBDENG_DEFINE_UNITTEST(Uri)
@@ -666,6 +666,22 @@ LIBDENG_DEFINE_UNITTEST(Uri)
         {
             Uri u("", RC_NULL);
             DENG_ASSERT(u.segmentCount() == 0);
+        }
+
+        // Equality and copying.
+        {
+            Uri a("some/thing", RC_NULL);
+            Uri b("/other/thing", RC_NULL);
+
+            DENG_ASSERT(a != b);
+
+            Uri c = a;
+            DENG_ASSERT(c == a);
+            DENG_ASSERT(c.segment(1).toString() == "some");
+
+            b = a;
+            DENG_ASSERT(b == a);
+            DENG_ASSERT(b.segment(1).toString() == "some");
         }
 
         // Test a Windows style path with a drive plus file path.

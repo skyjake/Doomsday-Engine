@@ -121,9 +121,10 @@ public:
         friend struct Uri::Instance;
 
     private:
-        mutable bool haveHashKey;
+        mutable bool gotHashKey;
         mutable hash_type hashKey;
-        char const* from, *to;
+        const char* from;
+        const char* to;
     };
 
 public:

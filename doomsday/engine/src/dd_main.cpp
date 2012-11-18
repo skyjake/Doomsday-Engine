@@ -804,6 +804,7 @@ struct gamecollection_s* App_GameCollection()
 
 struct game_s* App_CurrentGame()
 {
+    if(!games) return 0;
     return reinterpret_cast<struct game_s*>(&games->currentGame());
 }
 
