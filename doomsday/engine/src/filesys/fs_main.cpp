@@ -1302,7 +1302,8 @@ de::FS1* App_FileSystem()
 
 de::String App_BasePath()
 {
-    return de::App::app().nativeBasePath().withSeparators('/') + '/';
+    /// @todo Shouldn't this end in '/'? It causes failure to locate doomsday.pk3...
+    return de::App::app().nativeBasePath().withSeparators('/'); // + '/';
 }
 
 void F_Register(void)
