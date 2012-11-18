@@ -25,6 +25,7 @@
 
 #ifdef __cplusplus
 
+#include <algorithm> // std::swap
 #include <de/libdeng2.h>
 #include <de/ISerializable>
 
@@ -151,7 +152,13 @@ public:
 
     ~Uri();
 
-    Uri& operator = (Uri const& other);
+    Uri& operator = (Uri other);
+
+    /**
+     * Swaps this Uri with @a other.
+     * @param other  Uri.
+     */
+    void swap(Uri& other);
 
     bool operator == (Uri const& other) const;
 
@@ -346,6 +353,14 @@ private:
 Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::PrintFlags)
 
 } // namespace de
+
+namespace std {
+    // std::swap specialization for de::Uri
+    template <>
+    inline void swap<de::Uri>(de::Uri& a, de::Uri& b) {
+        a.swap(b);
+    }
+}
 
 #endif // __cplusplus
 

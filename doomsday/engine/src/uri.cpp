@@ -116,7 +116,7 @@ struct Uri::Instance
     DualString path;
 
     Instance()
-        : segmentCount(-1), resolved(), resolvedForGame(0)
+        : segmentCount(-1), resolvedForGame(0)
     {
         memset(segmentBuffer, 0, sizeof(segmentBuffer));
     }
@@ -368,6 +368,10 @@ struct Uri::Instance
         // Copy anything remaining.
         result += pathStr.mid(expEnd);
     }
+
+private:
+    Instance& operator = (const Instance&); // no assignment
+    Instance(const Instance&); // no copying
 };
 
 Uri::Uri(String path, resourceclassid_t defaultResourceClass, QChar delimiter)
@@ -436,17 +440,15 @@ const Uri::Segment& Uri::segment(int index) const
     return *d->extraSegments[index - SEGMENT_BUFFER_SIZE];
 }
 
-Uri& Uri::operator = (const Uri& other)
+Uri& Uri::operator = (Uri other)
 {
-    clear();
-
-    d->scheme = other.d->scheme;
-    d->path   = other.d->path;
-
-    // Can't copy segment map directly because it contains direct pointers to
-    // the contents of the other Uri -- map needs to be rebuilt when needed.
-
+    swap(other);
     return *this;
+}
+
+void Uri::swap(Uri& other)
+{
+    std::swap(d, other.d);
 }
 
 bool Uri::operator == (Uri const& other) const
@@ -682,6 +684,22 @@ LIBDENG_DEFINE_UNITTEST(Uri)
             b = a;
             DENG_ASSERT(b == a);
             DENG_ASSERT(b.segment(1).toString() == "some");
+        }
+
+        // Swapping.
+        {
+            Uri a("a/b/c", RC_NULL);
+            Uri b("d/e", RC_NULL);
+
+            DENG_ASSERT(a.segmentCount() == 3);
+            DENG_ASSERT(a.segment(1).toString() == "b");
+
+            std::swap(a, b);
+
+            DENG_ASSERT(a.segmentCount() == 2);
+            DENG_ASSERT(a.segment(1).toString() == "d");
+            DENG_ASSERT(b.segmentCount() == 3);
+            DENG_ASSERT(b.segment(1).toString() == "b");
         }
 
         // Test a Windows style path with a drive plus file path.
