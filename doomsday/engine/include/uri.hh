@@ -102,23 +102,20 @@ public:
     struct Segment
     {
         /**
+         * Returns the segment as a string.
+         */
+        String toString() const;
+
+        /// @return  Length of the segment in characters.
+        int length() const;
+
+        /**
          * Returns a somewhat-random number in the range [0..Uri::hash_range)
          * generated from the segment.
          *
          * @return  The generated hash key.
          */
         hash_type hash() const;
-
-        /// @return  Length of the segment in characters.
-        int length() const;
-
-        /// @return Parent (previous) segment or @c NULL.
-        Segment* parent() const;
-
-        /**
-         * Returns the segment as a string.
-         */
-        String toString() const;
 
         friend class Uri;
         friend struct Uri::Instance;
@@ -127,7 +124,6 @@ public:
         mutable bool haveHashKey;
         mutable hash_type hashKey;
         char const* from, *to;
-        struct Segment* parent_;
     };
 
 public:

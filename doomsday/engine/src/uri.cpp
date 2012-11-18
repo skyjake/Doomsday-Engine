@@ -41,11 +41,6 @@
 
 namespace de {
 
-Uri::Segment* Uri::Segment::parent() const
-{
-    return parent_;
-}
-
 ushort Uri::Segment::hash() const
 {
     // Is it time to compute the hash?
