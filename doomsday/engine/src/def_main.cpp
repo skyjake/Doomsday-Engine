@@ -716,7 +716,10 @@ void Def_ReadProcessDED(char const* fileName)
     if(!fileName || !fileName[0]) return;
 
     if(!App_FileSystem()->checkFileId(fileName))
+    {
         LOG_WARNING("\"%s\" not found!") << de::NativePath(fileName).pretty();
+        return;
+    }
 
     if(!DED_Read(&defs, fileName))
     {
