@@ -138,6 +138,19 @@ boolean Rend_ModelExpandVertexBuffers(uint numVertices)
     return true;
 }
 
+void Rend_ModelSetFrame(modeldef_t* modef, int frame)
+{
+    int i;
+    for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
+    {
+        submodeldef_t* subdef = &modef->sub[i];
+        if(!subdef->modelId) continue;
+
+        // Modify the modeldef itself: set the current frame.
+        subdef->frame = frame % Models_ToModel(subdef->modelId)->info.numFrames;
+    }
+}
+
 /// @return  @c true= Vertex buffer is large enough to handle @a numVertices.
 static boolean Mod_ExpandVertexBuffer(uint numVertices)
 {
@@ -473,7 +486,7 @@ static __inline float Mod_Lerp(float start, float end, float pos)
  */
 static model_frame_t* Mod_GetVisibleFrame(modeldef_t* mf, int subnumber, int mobjid)
 {
-    model_t* mdl = R_ModelForId(mf->sub[subnumber].model);
+    model_t* mdl = Models_ToModel(mf->sub[subnumber].modelId);
     int index = mf->sub[subnumber].frame;
 
     if(mf->flags & MFF_IDFRAME)
@@ -483,7 +496,7 @@ static model_frame_t* Mod_GetVisibleFrame(modeldef_t* mf, int subnumber, int mob
     if(index >= mdl->info.numFrames)
     {
         Con_Error("Mod_GetVisibleFrame: Frame index out of bounds.\n"
-                  "  (Model: %s)\n", Str_Text(R_ComposePathForModelId(mdl->model)));
+                  "  (Model: %s)\n", Str_Text(Models_ComposePath(mdl->modelId)));
     }
     return mdl->frames + index;
 }
@@ -796,7 +809,7 @@ static int chooseSelSkin(modeldef_t* mf, int submodel, int selector)
 static int chooseSkin(modeldef_t* mf, int submodel, int id, int selector, int tmap)
 {
     submodeldef_t* smf = &mf->sub[submodel];
-    model_t* mdl = R_ModelForId(smf->model);
+    model_t* mdl = Models_ToModel(smf->modelId);
     int skin = smf->skin;
 
     // Selskin overrides the skin range.
@@ -857,7 +870,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 {
     modeldef_t* mf = params->mf, *mfNext = params->nextMF;
     submodeldef_t* smf = &mf->sub[number];
-    model_t* mdl = R_ModelForId(smf->model);
+    model_t* mdl = Models_ToModel(smf->modelId);
     model_frame_t* frame = Mod_GetVisibleFrame(mf, number, params->id);
     model_frame_t* nextFrame = NULL;
 
@@ -922,7 +935,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // Check for possible interpolation.
         if(frameInter && mfNext && !(smf->flags & MFF_DONT_INTERPOLATE))
         {
-            if(mfNext->sub[number].model == smf->model)
+            if(mfNext->sub[number].modelId == smf->modelId)
             {
                 nextFrame = Mod_GetVisibleFrame(mfNext, number, params->id);
             }
@@ -1359,7 +1372,7 @@ void Rend_RenderModel(const rendmodelparams_t* params)
     // Render all the submodels of this model.
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
     {
-        if(params->mf->sub[i].model)
+        if(params->mf->sub[i].modelId)
         {
             boolean disableZ = (params->mf->flags & MFF_DISABLE_Z_WRITE ||
                                 params->mf->sub[i].flags & MFF_DISABLE_Z_WRITE);

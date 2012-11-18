@@ -646,7 +646,7 @@ EXPORTS
     R_SetupFog                  @855 NONAME
 
     R_PrecacheMobjNum           @427 NONAME
-    R_PrecacheModelsForState    @240 NONAME
+    Models_CacheForState        @240 NONAME
 
     R_RenderPlayerView          @90 NONAME
 

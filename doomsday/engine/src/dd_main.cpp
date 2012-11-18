@@ -755,7 +755,7 @@ static int DD_ActivateGameWorker(void* parameters)
         Con_SetProgress(130);
 
     R_InitSprites(); // Fully initialize sprites.
-    R_InitModels();
+    Models_Init();
 
     Def_PostInit();
 
@@ -1542,7 +1542,7 @@ boolean DD_Init(void)
         Def_Read();
 
         R_InitSprites();
-        R_InitModels();
+        Models_Init();
 
         Def_PostInit();
 

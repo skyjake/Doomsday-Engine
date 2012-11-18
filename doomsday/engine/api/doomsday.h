@@ -601,7 +601,7 @@ void R_SetupFogDefaults(void);
 void R_SetupFog(float start, float end, float density, float* rgb);
 
 void R_PrecacheMobjNum(int mobjtypeNum);
-void R_PrecacheModelsForState(int stateIndex);
+void Models_CacheForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
 

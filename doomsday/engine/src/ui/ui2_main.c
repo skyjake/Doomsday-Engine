@@ -814,7 +814,7 @@ fontid_t FIPage_PredefinedFont(fi_page_t* p, uint idx)
 static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* modelId, const float worldOffset[3])
 {
     float pos[] = { SCREENWIDTH/2, SCREENHEIGHT/2, 0 };
-    modeldef_t* mf = R_CheckIDModelFor(modelId);
+    modeldef_t* mf = Models_Definition(modelId);
 
     if(!mf)
         return;

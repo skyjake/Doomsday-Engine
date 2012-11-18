@@ -532,7 +532,7 @@ void R_Update(void)
 
     R_UpdateData();
     R_InitSprites(); // Fully reinitialize sprites.
-    R_InitModels(); // Defs might've changed.
+    Models_Init(); // Defs might've changed.
 
     R_UpdateTranslationTables();
 
@@ -606,7 +606,7 @@ void R_Shutdown(void)
 {
     R_ClearAnimGroups();
     R_ShutdownSprites();
-    R_ShutdownModels();
+    Models_Shutdown();
     R_ShutdownSvgs();
     R_ShutdownViewWindow();
     Fonts_Shutdown();

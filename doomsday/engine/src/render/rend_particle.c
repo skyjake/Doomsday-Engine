@@ -386,7 +386,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         params->inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
     }
 
-    R_SetModelFrame(params->mf, frame);
+    Rend_ModelSetFrame(params->mf, frame);
     // Set the correct orientation for the particle.
     if(params->mf->sub[0].flags & MFF_MOVEMENT_YAW)
     {

@@ -682,7 +682,7 @@ static modeldef_t* currentModelDefForMobj(mobj_t* mo)
     if(useModels)
     {
         modeldef_t* mf, *nextmf;
-        R_CheckModelFor(mo, &mf, &nextmf);
+        Models_ModelForMobj(mo, &mf, &nextmf);
         return mf;
     }
     return NULL;
@@ -878,7 +878,7 @@ void R_ProjectPlayerSprites(void)
             dummy.state = psp->statePtr;
             dummy.tics = psp->tics;
 
-            inter = R_CheckModelFor(&dummy, &mf, &nextmf);
+            inter = Models_ModelForMobj(&dummy, &mf, &nextmf);
             if(mf)
                 isModel = true;
         }
@@ -1149,13 +1149,6 @@ void getLightingParams(coord_t x, coord_t y, coord_t z, BspLeaf* bspLeaf,
     }
 }
 
-const materialvariantspecification_t* Rend_SpriteMaterialSpec(int tclass, int tmap)
-{
-    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tclass, tmap,
-                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                                    1, -2, -1, true, true, true, false);
-}
-
 /**
  * Generates a vissprite for a mobj if it might be visible.
  */
@@ -1232,7 +1225,7 @@ void R_ProjectSprite(mobj_t* mo)
     // Should we use a 3D model?
     if(useModels)
     {
-        interp = R_CheckModelFor(mo, &mf, &nextmf);
+        interp = Models_ModelForMobj(mo, &mf, &nextmf);
         if(mf && !(mf->flags & MFF_NO_DISTANCE_CHECK) && maxModelDistance &&
            distance > maxModelDistance)
         {

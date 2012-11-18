@@ -140,7 +140,7 @@ static void renderSkyModels(void)
         params.inter = inter;
         params.mf = sky->model;
         params.alwaysInterpolate = true;
-        R_SetModelFrame(sky->model, sky->frame);
+        Rend_ModelSetFrame(sky->model, sky->frame);
         params.yaw = sky->yaw;
         for(c = 0; c < 4; ++c)
         {

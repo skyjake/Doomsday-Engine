@@ -194,7 +194,7 @@ typedef struct model_frame_s {
 
 typedef struct model_s {
     boolean loaded;
-    uint model; ///< Id of the model in the repository.
+    uint modelId; ///< Id of the model in the repository.
     dmd_header_t header;
     dmd_info_t info;
     dmd_skin_t* skins;
@@ -203,6 +203,21 @@ typedef struct model_s {
     dmd_lod_t lods[MAX_LODS];
     char* vertexUsage; ///< Bitfield for each vertex.
     boolean allowTexComp; ///< Allow texture compression with this.
+
+#ifdef __cplusplus
+    int frameNumForName(char* fname)
+    {
+        if(fname && fname[0])
+        {
+            for(int i = 0; i < info.numFrames; ++i)
+            {
+                if(!stricmp(frames[i].name, fname))
+                    return i;
+            }
+        }
+        return 0;
+    }
+#endif
 } model_t;
 
 //extern model_t* modellist[MAX_MODELS];

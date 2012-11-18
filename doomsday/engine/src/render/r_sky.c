@@ -254,7 +254,7 @@ static void R_SetupSkyModels(ded_sky_t* def)
         ++i, modef++, sm++)
     {
         // Is the model ID set?
-        sm->model = R_CheckIDModelFor(modef->id);
+        sm->model = Models_Definition(modef->id);
         if(!sm->model) continue;
 
         // There is a model here.
@@ -282,7 +282,7 @@ void R_SkyPrecache(void)
         for(i = 0, sky = skyModels; i < MAX_SKY_MODELS; ++i, sky++)
         {
             if(!sky->def) continue;
-            R_PrecacheModel(sky->model);
+            Models_Cache(sky->model);
         }
     }
 }

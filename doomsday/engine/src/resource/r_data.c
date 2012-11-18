@@ -2636,7 +2636,7 @@ void R_PrecacheMobjNum(int num)
     {
         if(stateOwners[i] != &mobjInfo[num]) continue;
 
-        R_PrecacheModelsForState(i);
+        Models_CacheForState(i);
 
         if(precacheSprites)
         {
@@ -2720,7 +2720,7 @@ void R_PrecacheForMap(void)
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, R_PrecacheModelsForMobj, NULL);
+        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, Models_CacheForMobj, NULL);
     }
 }
 

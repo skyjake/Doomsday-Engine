@@ -1413,35 +1413,33 @@ static void initAnimGroup(ded_group_t* def)
 
 void Def_PostInit(void)
 {
-    ded_ptcstage_t* st;
-    ded_ptcgen_t* gen;
-    modeldef_t* modef;
     char name[40];
-    int i, k;
 
     // Particle generators: model setup.
-    for(i = 0, gen = defs.ptcGens; i < defs.count.ptcGens.num; ++i, gen++)
+    ded_ptcgen_t* gen = defs.ptcGens;
+    for(int i = 0; i < defs.count.ptcGens.num; ++i, gen++)
     {
-        for(k = 0, st = gen->stages; k < gen->stageCount.num; ++k, st++)
+        ded_ptcstage_t* st = gen->stages;
+        for(int k = 0; k < gen->stageCount.num; ++k, st++)
         {
             if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
                 continue;
 
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
-            if(!(modef = R_CheckIDModelFor(name)) || modef->sub[0].model <= 0)
+            modeldef_t* modef;
+            if(!(modef = Models_Definition(name)) || modef->sub[0].modelId <= 0)
             {
                 st->model = -1;
                 continue;
             }
 
+            model_t* mdl = Models_ToModel(modef->sub[0].modelId);
+
             st->model = modef - modefs;
-            st->frame =
-                R_ModelFrameNumForName(modef->sub[0].model, st->frameName);
+            st->frame = mdl->frameNumForName(st->frameName);
             if(st->endFrameName[0])
             {
-                st->endFrame =
-                    R_ModelFrameNumForName(modef->sub[0].model,
-                                           st->endFrameName);
+                st->endFrame = mdl->frameNumForName(st->endFrameName);
             }
             else
             {
@@ -1452,7 +1450,7 @@ void Def_PostInit(void)
 
     // Detail textures.
     Textures_ClearNamespace(TN_DETAILS);
-    for(i = 0; i < defs.count.details.num; ++i)
+    for(int i = 0; i < defs.count.details.num; ++i)
     {
         R_CreateDetailTextureFromDef(&defs.details[i]);
     }
@@ -1460,7 +1458,7 @@ void Def_PostInit(void)
     // Lightmaps and flare textures.
     Textures_ClearNamespace(TN_LIGHTMAPS);
     Textures_ClearNamespace(TN_FLAREMAPS);
-    for(i = 0; i < defs.count.lights.num; ++i)
+    for(int i = 0; i < defs.count.lights.num; ++i)
     {
         ded_light_t* lig = &defs.lights[i];
 
@@ -1471,11 +1469,11 @@ void Def_PostInit(void)
         R_CreateFlareTexture(lig->flare);
     }
 
-    for(i = 0; i < defs.count.decorations.num; ++i)
+    for(int i = 0; i < defs.count.decorations.num; ++i)
     {
         ded_decor_t* decor = &defs.decorations[i];
 
-        for(k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
             ded_decorlight_t* lig = &decor->lights[k];
 
@@ -1492,7 +1490,7 @@ void Def_PostInit(void)
     // Surface reflections.
     Textures_ClearNamespace(TN_REFLECTIONS);
     Textures_ClearNamespace(TN_MASKS);
-    for(i = 0; i < defs.count.reflections.num; ++i)
+    for(int i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
         Size2Raw size;
@@ -1506,7 +1504,7 @@ void Def_PostInit(void)
 
     // Animation groups.
     Materials_ClearAnimGroups();
-    for(i = 0; i < defs.count.groups.num; ++i)
+    for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initAnimGroup(&defs.groups[i]);
     }

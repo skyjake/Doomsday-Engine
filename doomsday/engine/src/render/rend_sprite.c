@@ -512,11 +512,6 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         glDisable(GL_TEXTURE_2D);
 }
 
-/**
- * Draws 2D HUD sprites.
- *
- * \note If they were already drawn 3D, this won't do anything.
- */
 void Rend_Draw2DPlayerSprites(void)
 {
     int                 i;
@@ -838,16 +833,6 @@ static boolean generateHaloForVisSprite(const vissprite_t* spr, boolean primary)
                         (spr->data.flare.flags & RFF_NO_TURN));
 }
 
-/**
- * Render sprites, 3D models, masked wall segments and halos, ordered
- * back to front. Halos are rendered with Z-buffer tests and writes
- * disabled, so they don't go into walls or interfere with real objects.
- * It means that halos can be partly occluded by objects that are closer
- * to the viewpoint, but that's the price to pay for not having access to
- * the actual Z-buffer per-pixel depth information. The other option would
- * be for halos to shine through masked walls, sprites and models, which
- * looks even worse. (Plus, they are *halos*, not real lens flares...)
- */
 void Rend_DrawMasked(void)
 {
     boolean flareDrawn = false;
@@ -934,6 +919,13 @@ static MaterialVariant* chooseSpriteMaterial(const rendspriteparams_t* p)
 
     // Use the pre-chosen sprite.
     return p->material;
+}
+
+materialvariantspecification_t const* Rend_SpriteMaterialSpec(int tclass, int tmap)
+{
+    return Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tclass, tmap,
+                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                    1, -2, -1, true, true, true, false);
 }
 
 void Rend_RenderSprite(const rendspriteparams_t* params)
