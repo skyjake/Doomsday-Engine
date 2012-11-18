@@ -30,6 +30,7 @@
 #include <de/App>
 #include <de/Log>
 
+#include "filesys/fs_main.h"
 #include "filesys/fileid.h"
 
 using namespace de;
@@ -92,8 +93,7 @@ FileId::Md5Hash FileId::hash(String path)
     // Ensure we've a normalized path.
     if(QDir::isRelativePath(path))
     {
-        String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
-        path = basePath / path;
+        path = App_BasePath() / path;
     }
 
 #if defined(WIN32) || defined(MACOSX)

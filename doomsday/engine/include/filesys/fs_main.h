@@ -343,6 +343,12 @@ namespace de
 
 de::FS1* App_FileSystem();
 
+/**
+ * Returns the application's data base path in the format expected by FS1.
+ * @return Base path.
+ */
+de::String App_BasePath();
+
 extern "C" {
 #endif // __cplusplus
 

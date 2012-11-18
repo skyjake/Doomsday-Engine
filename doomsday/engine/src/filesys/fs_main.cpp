@@ -231,8 +231,7 @@ struct FS1::Instance
         // We must have an absolute path - prepend the base path if necessary.
         if(QDir::isRelativePath(path))
         {
-            String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
-            path = basePath / path;
+            path = App_BasePath() / path;
         }
 
         File1* found = 0;
@@ -348,8 +347,7 @@ struct FS1::Instance
         // We must have an absolute path.
         if(QDir::isRelativePath(path))
         {
-            String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
-            path = basePath / path;
+            path = App_BasePath() / path;
         }
 
         LOG_TRACE("Trying %s...") << NativePath(path).pretty();
@@ -526,8 +524,7 @@ de::File1& FS1::find(String path)
     // Convert to an absolute path.
     if(!QDir::isAbsolutePath(path))
     {
-        String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
-        path = basePath / path;
+        path = App_BasePath() / path;
     }
 
     FileList::iterator found = findListFileByPath(d->loadedFiles, path);
@@ -892,8 +889,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
     // We must have an absolute path - prepend the base path if necessary.
     if(!QDir::isAbsolutePath(searchPattern))
     {
-        String basePath = DENG2_APP->nativeBasePath().withSeparators('/');
-        searchPattern = basePath / searchPattern;
+        searchPattern = App_BasePath() / searchPattern;
     }
 
     de::Uri patternMap = de::Uri(searchPattern, RC_NULL);
@@ -1302,6 +1298,11 @@ de::FS1* App_FileSystem()
 {
     if(!fileSystem) throw de::Error("App_FileSystem", "File system not yet initialized");
     return fileSystem;
+}
+
+de::String App_BasePath()
+{
+    return de::App::app().nativeBasePath().withSeparators('/') + '/';
 }
 
 void F_Register(void)

@@ -460,7 +460,7 @@ struct Zip::Instance
                 }
 
                 // Make it absolute.
-                filePath = DENG2_APP->nativeBasePath().withSeparators('/') / filePath;
+                filePath = App_BasePath() / filePath;
 
                 QByteArray filePathUtf8 = filePath.toUtf8();
 
