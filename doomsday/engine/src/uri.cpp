@@ -616,8 +616,7 @@ String Uri::compose(QChar delimiter) const
 String Uri::asText() const
 {
     // Just compose it for now, we can worry about making it 'pretty' later.
-    QByteArray composed = compose().toUtf8();
-    AutoStr* path = AutoStr_FromTextStd(composed.constData());
+    AutoStr* path = AutoStr_FromTextStd(compose().toUtf8().constData());
     Str_PercentDecode(path);
     return String(Str_Text(path));
 }
