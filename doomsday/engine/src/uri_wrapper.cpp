@@ -144,32 +144,30 @@ Uri* Uri_Clear(Uri* uri)
     return reinterpret_cast<Uri*>(&self->clear());
 }
 
-const char* Uri_Scheme(Uri const* uri)
-{
-    SELF_CONST(uri);
-    return self->schemeCStr();
-}
-
-const char* Uri_Path(Uri const* uri)
-{
-    SELF_CONST(uri);
-    return self->pathCStr();
-}
-
 AutoStr* Uri_Resolved(Uri const* uri)
 {
     SELF_CONST(uri);
     try
     {
-        de::String const& resolved = self->resolved();
-        QByteArray resolvedUtf8 = resolved.toUtf8();
-        return AutoStr_FromTextStd(resolvedUtf8.constData());
+        return AutoStr_FromTextStd(self->resolved().toUtf8().constData());
     }
     catch(de::Uri::ResolveError const& er)
     {
         LOG_WARNING(er.asText());
     }
     return AutoStr_NewStd();
+}
+
+const Str* Uri_Scheme(Uri const* uri)
+{
+    SELF_CONST(uri);
+    return self->schemeStr();
+}
+
+const Str* Uri_Path(Uri const* uri)
+{
+    SELF_CONST(uri);
+    return self->pathStr();
 }
 
 Uri* Uri_SetScheme(Uri* uri, char const* scheme)
@@ -205,15 +203,13 @@ Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path)
 AutoStr* Uri_Compose(Uri const* uri)
 {
     SELF_CONST(uri);
-    QByteArray composed = self->compose().toUtf8();
-    return AutoStr_FromTextStd(composed.constData());
+    return AutoStr_FromTextStd(self->compose().toUtf8().constData());
 }
 
 AutoStr* Uri_ToString(Uri const* uri)
 {
     SELF_CONST(uri);
-    QByteArray text = self->asText().toUtf8();
-    return AutoStr_FromTextStd(text.constData());
+    return AutoStr_FromTextStd(self->asText().toUtf8().constData());
 }
 
 void Uri_Write2(Uri const* uri, struct writer_s* writer, int omitComponents)

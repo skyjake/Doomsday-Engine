@@ -563,6 +563,16 @@ const char* Uri::pathCStr() const
     return d->path.utf8CStr();
 }
 
+const ddstring_s* Uri::schemeStr() const
+{
+    return d->scheme.toStr();
+}
+
+const ddstring_s* Uri::pathStr() const
+{
+    return d->path.toStr();
+}
+
 String Uri::resolved() const
 {
 #ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING

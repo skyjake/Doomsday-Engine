@@ -38,6 +38,8 @@
 #include <de/NativePath>
 #include <de/String>
 
+struct ddstring_s; // libdeng Str
+
 namespace de {
 
 /**
@@ -211,7 +213,7 @@ public:
     String path() const;
 
     /**
-     * @return  Scheme of the URI as plain text (ASCII encoding).
+     * @return  Scheme of the URI as plain text (UTF-8 encoding).
      */
     const char* schemeCStr() const;
 
@@ -219,6 +221,16 @@ public:
      * @return  Path of the URI as plain text (UTF-8 encoding).
      */
     const char* pathCStr() const;
+
+    /**
+     * @return  Scheme of the URI as plain text (UTF-8 encoding).
+     */
+    const struct ddstring_s* schemeStr() const;
+
+    /**
+     * @return  Path of the URI as plain text (UTF-8 encoding).
+     */
+    const struct ddstring_s* pathStr() const;
 
     /**
      * Change the scheme of the URI to @a newScheme.

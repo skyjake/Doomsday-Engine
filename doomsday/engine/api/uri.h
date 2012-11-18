@@ -142,13 +142,13 @@ AutoStr* Uri_Resolved(Uri const* uri);
  * @param uri  Uri instance.
  * @return  Plain-text String representation of the current scheme.
  */
-const char* Uri_Scheme(Uri const* uri);
+const Str* Uri_Scheme(Uri const* uri);
 
 /**
  * @param uri  Uri instance.
  * @return  Plain-text String representation of the current path.
  */
-const char* Uri_Path(Uri const* uri);
+const Str* Uri_Path(Uri const* uri);
 
 /**
  * @param uri     Uri instance.
