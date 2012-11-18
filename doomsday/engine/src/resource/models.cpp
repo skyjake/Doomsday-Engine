@@ -456,6 +456,8 @@ static model_t* modelForId(modelid_t modelId, bool canCreate = false)
     {
         // Allocate a new model_t.
         mdl = (model_t*) M_Calloc(sizeof(model_t));
+        mdl->modelId = modelId;
+        mdl->allowTexComp = true;
         modelRepository->setUserPointer(modelId, mdl);
     }
     return mdl;
@@ -653,9 +655,6 @@ static model_t* loadModel(String path)
         // Loaded?
         if(mdl)
         {
-            mdl->modelId = modelId;
-            mdl->allowTexComp = true;
-
             registerAllSkins(*mdl);
 
             // Enlarge the vertex buffers in preparation for drawing of this model.
