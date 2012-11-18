@@ -56,11 +56,11 @@ namespace de {
  */
 class Uri : public ISerializable, public LogEntry::Arg::Base
 {
-    struct Instance; // needs to be friended by PathNode
+    struct Instance; // needs to be friended by Uri::Segment
 
 public:
-    /// A nonexistent path node was referenced. @ingroup errors
-    DENG2_ERROR(NotPathNodeError);
+    /// A nonexistent path segment was referenced. @ingroup errors
+    DENG2_ERROR(NotSegmentError);
 
     /// Base class for resolve-related errors. @ingroup errors
     DENG2_ERROR(ResolveError);
@@ -90,35 +90,44 @@ public:
     Q_DECLARE_FLAGS(PrintFlags, PrintFlag)
 
     /**
-     * Represents a name in the URI path hierarchy.
-     * @todo Rename to "Segment" (cf. URI RFC section 3.3, paths are composed of segments).
+     * Marks a segment in the URI's path. Makes no copy of the segments in the
+     * path, only stores the location within the URI where they begin and end.
+     *
+     * Note that only the path is broken down to segments. The other parts of a
+     * URI are not processed in this fashion.
+     *
+     * @see URI paths are composed of segments:
+     * http://tools.ietf.org/html/rfc3986#section-3.3
      */
-    struct PathNode
+    struct Segment
     {
         /**
-         * Hash function that generates a somewhat-random number in the
-         * range [0..Uri::hash_range) from the node's name.
+         * Returns a somewhat-random number in the range [0..Uri::hash_range)
+         * generated from the segment.
          *
          * @return  The generated hash key.
          */
-        hash_type hash();
+        hash_type hash() const;
 
-        /// @return  Length of this node's name in characters.
+        /// @return  Length of the segment in characters.
         int length() const;
 
-        /// @return Parent of this node else @c NULL.
-        PathNode* parent() const;
+        /// @return Parent (previous) segment or @c NULL.
+        Segment* parent() const;
 
+        /**
+         * Returns the segment as a string.
+         */
         String toString() const;
 
         friend class Uri;
         friend struct Uri::Instance;
 
     private:
-        bool haveHashKey;
-        hash_type hashKey;
+        mutable bool haveHashKey;
+        mutable hash_type hashKey;
         char const* from, *to;
-        struct PathNode* parent_;
+        struct Segment* parent_;
     };
 
 public:
@@ -145,7 +154,7 @@ public:
 
     ~Uri();
 
-    Uri& operator = (Uri other);
+    Uri& operator = (Uri const& other);
 
     bool operator == (Uri const& other) const;
 
@@ -264,60 +273,57 @@ public:
     String compose(QChar delimiter = '/') const;
 
     /**
-     * Retrieve the path node with index @a index. Note that nodes are indexed
+     * Retrieve the segment with index @a index. Note that segments are indexed
      * in reverse order (right to left) and NOT the autological left to right
      * order.
      *
      * For example, if the path is "c:/mystuff/myaddon.addon" the corresponding
-     * path node map is arranged as follows:
+     * segment map is arranged as follows:
      * <pre>
      *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
      * </pre>
      *
-     * @note The zero-length name in relative paths is also treated as a node.
-     *       For example, the path "/Users/username" has three nodes.
+     * @note The zero-length name in relative paths is also treated as a segment.
+     *       For example, the path "/Users/username" has three segments.
+     *       (FIXME: "/Users/username" is NOT a relative path; "Users/username" is. -jk)
      *
-     * @param index  Reverse-index of the path node to lookup. All paths have
-     *               at least one node (even empty ones) thus index @c 0 will
+     * @param index  Reverse-index of the segment to lookup. All paths have
+     *               at least one segment (even empty ones) thus index @c 0 will
      *               always be valid.
      *
-     * @return  Referenced path node.
+     * @return  Referenced segment.
      */
-    PathNode& pathNode(int index) const;
+    const Segment& segment(int index) const;
 
     /**
-     * @return  Total number of nodes in the URI path name map.
-     * @see pathNode()
+     * @return  Total number of segments in the URI segment map.
+     * @see segment()
      */
-    int pathNodeCount() const;
+    int segmentCount() const;
 
     /**
-     * @return  First node in the URI path name map.
-     * @see pathNode()
+     * @return  First segment in the path.
+     * @see segment()
      */
-    inline PathNode& firstPathNode() const {
-        return pathNode(0);
+    inline const Segment& firstSegment() const {
+        return segment(0);
     }
 
     /**
-     * @return  Last node in the URI path name map.
-     * @see pathNode()
+     * @return  Last segment in the path.
+     * @see segment()
      */
-    inline PathNode& lastPathNode() const {
-        return pathNode(pathNodeCount() - 1);
+    inline const Segment& lastSegment() const {
+        return segment(segmentCount() - 1);
     }
 
     /**
-     * Transform the URI into a human-friendly representation. Percent decoding done.
+     * Transform the URI into a human-friendly representation. Percent-encoded
+     * symbols are decoded.
      *
-     * @return  Human-friendly String representation.
+     * @return  Human-friendly representation of the URI.
      */
     String asText() const;
-
-    /**
-     * Swaps URI @a second with URI @a first.
-     */
-    friend void swap(Uri& first, Uri& second); // nothrow
 
     /**
      * Print debug ouput for the URI.

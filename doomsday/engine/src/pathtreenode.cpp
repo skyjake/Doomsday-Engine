@@ -165,10 +165,10 @@ int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 
     try
     {
-        de::Uri::PathNode* snode = &searchPattern.firstPathNode();
+        const de::Uri::Segment* snode = &searchPattern.firstSegment();
 
         // In reverse order, compare each path node in the search term.
-        int pathNodeCount = searchPattern.pathNodeCount();
+        int pathNodeCount = searchPattern.segmentCount();
 
         PathTree::Node const* node = this;
         for(int i = 0; i < pathNodeCount; ++i)
@@ -207,10 +207,10 @@ int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 
             // So far so good. Move one level up the hierarchy.
             node  = node->parent();
-            snode = &searchPattern.pathNode(i + 1);
+            snode = &searchPattern.segment(i + 1);
         }
     }
-    catch(de::Uri::NotPathNodeError const&)
+    catch(de::Uri::NotSegmentError const&)
     {} // Ignore this error.
 
     return 1;

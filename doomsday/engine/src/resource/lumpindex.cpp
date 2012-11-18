@@ -384,7 +384,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path)
 
     // Perform the search.
     de::Uri searchPattern = de::Uri(path, RC_NULL);
-    ushort hash = searchPattern.firstPathNode().hash() % d->hashMap->size();
+    ushort hash = searchPattern.firstSegment().hash() % d->hashMap->size();
     if((*d->hashMap)[hash].head == -1) return -1;
 
     for(int idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)

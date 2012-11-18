@@ -28,6 +28,8 @@
 #include <de/Writer>
 #include <QDebug>
 
+#include <QList>
+
 #include "de_base.h"
 #include "dualstring.h"
 #include "game.h"
@@ -35,16 +37,16 @@
 #include "resource/sys_reslocator.h"
 
 /// Size of the fixed-size path node buffer.
-#define PATHNODEBUFFER_SIZE         24
+#define SEGMENT_BUFFER_SIZE         24
 
 namespace de {
 
-Uri::PathNode* Uri::PathNode::parent() const
+Uri::Segment* Uri::Segment::parent() const
 {
     return parent_;
 }
 
-ushort Uri::PathNode::hash()
+ushort Uri::Segment::hash() const
 {
     // Is it time to compute the hash?
     if(!haveHashKey)
@@ -68,190 +70,164 @@ ushort Uri::PathNode::hash()
     return hashKey;
 }
 
-int Uri::PathNode::length() const
+int Uri::Segment::length() const
 {
     if(!qstrcmp(to, "") && !qstrcmp(from, ""))
         return 0;
     return (to - from) + 1;
 }
 
-String Uri::PathNode::toString() const
+String Uri::Segment::toString() const
 {
     return String(from, length());
 }
 
 struct Uri::Instance
 {
-    /// Total number of nodes in the path.
-    int pathNodeCount;
-
-    /// Head of the linked list of "extra" path nodes, in reverse order.
-    Uri::PathNode* extraPathNodes;
+    /// Total number of segments in the path.
+    int segmentCount;
 
     /**
-     * Node map of the path. The map is composed of two components; the first
-     * PATHNODEBUFFER_SIZE elements are placed into a fixed-size buffer which
-     * is allocated along with *this* instance. Additional nodes are allocated
-     * dynamically and linked in the @ref extraPathNodes list.
+     * Segment map of the path. The map is composed of two parts: the first
+     * SEGMENT_BUFFER_SIZE elements are placed into a fixed-size buffer which is
+     * allocated along with the Instance, and additional segments are allocated
+     * dynamically and linked in the @ref extraSegments list.
      *
      * This optimized representation should mean that the majority of paths
      * can be represented without dynamically allocating memory from the heap.
      */
-    Uri::PathNode pathNodeBuffer[PATHNODEBUFFER_SIZE];
+    Uri::Segment segmentBuffer[SEGMENT_BUFFER_SIZE];
+
+    /**
+     * List of the extra segments that don't fit in segmentBuffer, in reverse
+     * order.
+     */
+    QList<Uri::Segment*> extraSegments;
 
     /// Cached copy of the resolved Uri.
     String resolved;
 
-    /// The cached copy only applies when this game is loaded. Add any other
-    /// conditions here that result in different results for resolveUri().
+    /**
+     * The cached copy only applies when this game is loaded.
+     *
+     * @note Add any other conditions here that result in different results for
+     * resolveUri().
+     */
     void* resolvedForGame;
 
     DualString scheme;
     DualString path;
 
     Instance()
-        : pathNodeCount(-1), extraPathNodes(0), resolved(), resolvedForGame(0)
+        : segmentCount(-1), resolved(), resolvedForGame(0)
     {
-        //Str_InitStd(&scheme);
-        //Str_InitStd(&path);
-        memset(pathNodeBuffer, 0, sizeof(pathNodeBuffer));
+        memset(segmentBuffer, 0, sizeof(segmentBuffer));
     }
 
     ~Instance()
     {
-        clearPathMap();
-        //Str_Free(&scheme);
-        //Str_Free(&path);
+        clearMap();
     }
 
-    /// @return  @c true iff @a node comes from the "static" buffer.
-    inline bool isStaticPathNode(Uri::PathNode const& node)
+    /// @return  @c true iff @a node comes from the fixed-size
+    /// Uri::Instance::segmentBuffer.
+    inline bool isStaticSegment(Uri::Segment const& node)
     {
-        return &node >= pathNodeBuffer &&
-               &node < (pathNodeBuffer + sizeof(*pathNodeBuffer) * PATHNODEBUFFER_SIZE);
+        return &node >= segmentBuffer &&
+               &node < (segmentBuffer + sizeof(*segmentBuffer) * SEGMENT_BUFFER_SIZE);
     }
 
     /**
-     * Return the path name map to an empty state.
+     * Return the segment map to an empty state.
      *
-     * @post The map will need to be rebuilt with @ref mapPath().
+     * @post The map will need to be rebuilt with mapPath().
      */
-    void clearPathMap()
+    void clearMap()
     {
-        while(extraPathNodes)
+        while(!extraSegments.isEmpty())
         {
-            Uri::PathNode* next = extraPathNodes->parent();
-            delete extraPathNodes; extraPathNodes = next;
+            delete extraSegments.takeFirst();
         }
-        memset(pathNodeBuffer, 0, sizeof(pathNodeBuffer));
-        pathNodeCount = -1;
+        memset(segmentBuffer, 0, sizeof(segmentBuffer));
+        segmentCount = -1;
     }
 
     /**
-     * Allocate another path node, from either the "static" buffer if one is
-     * available or dynamically from the heap.
+     * Allocate a new segment, from either the fixed-size segmentBuffer if it
+     * isn't full, or dynamically from the heap.
      *
-     * @see isStaticPathNode() to determine if the node is "static".
+     * Use isStaticSegment() to determine if the segment is from segmentBuffer.
      *
-     * @return  New path node.
+     * @return  New segment.
      */
-    Uri::PathNode* allocPathNode(char const* from, char const* to)
+    Uri::Segment* allocSegment(char const* from, char const* to)
     {
-        Uri::PathNode* node;
-        if(pathNodeCount < PATHNODEBUFFER_SIZE)
+        Uri::Segment* segment;
+        if(segmentCount < SEGMENT_BUFFER_SIZE)
         {
-            node = pathNodeBuffer + pathNodeCount;
-            memset(node, 0, sizeof(*node));
+            segment = segmentBuffer + segmentCount;
+            memset(segment, 0, sizeof(*segment));
         }
         else
         {
             // Allocate an "extra" node.
-            node = new Uri::PathNode();
+            segment = new Uri::Segment();
+            extraSegments.append(segment);
         }
 
-        node->from = from;
-        node->to   = to;
+        segment->from = from;
+        segment->to   = to;
 
-        return node;
+        // There is now one more segment in the map.
+        segmentCount++;
+
+        return segment;
     }
 
     /**
-     * Build the path name map.
+     * Build the path segment map.
+     * If the URI is modified (path changed), the existing map is invalidated and
+     * needs to be remapped.
      */
     void mapPath()
     {
         // Already been here?
-        if(pathNodeCount >= 0) return;
+        if(segmentCount >= 0) return;
 
-        pathNodeCount = 0;
-        extraPathNodes = 0;
+        segmentCount = 0;
+        extraSegments.clear();
 
-        //if(Str_IsEmpty(&path)) return;
+        if(path.isEmpty()) return; // Nothing to do.
 
-        char const* nameBegin = path.utf8CStr();
-        char const* nameEnd = nameBegin + path.length() - 1;
+        char const* segBegin = path.utf8CStr();
+        char const* segEnd = segBegin + path.length() - 1;
 
         // Skip over any trailing delimiters.
-        for(int i = path.length(); *nameEnd && *nameEnd == '/' && i-- > 0; nameEnd--)
+        for(int i = path.length(); *segEnd && *segEnd == '/' && i-- > 0; segEnd--)
         {}
 
-        // Scan the path hierarchy for node names, in reverse order.
-        Uri::PathNode* node = 0;
+        // Scan the path for segments, in reverse order.
         char const* from;
         forever
         {
-            // Find the start of the next name.
-            for(from = nameEnd; from > nameBegin && !(*from == '/'); from--)
+            // Find the start of the next segment.
+            for(from = segEnd; from > segBegin && !(*from == '/'); from--)
             {}
 
-            Uri::PathNode* newNode = allocPathNode(*from == '/'? from + 1 : from, nameEnd);
-
-            // There is now one more node in the path map.
-            pathNodeCount += 1;
-
-            // "extra" nodes are linked to the tail of the extraPathNodes list.
-            if(!isStaticPathNode(*newNode))
-            {
-                if(!extraPathNodes)
-                {
-                    extraPathNodes = newNode;
-                }
-                else
-                {
-                    node->parent_ = extraPathNodes;
-                }
-            }
-
-            node = newNode;
+            allocSegment(*from == '/'? from + 1 : from, segEnd);
 
             // Are there no more parent directories?
-            if(from == nameBegin) break;
+            if(from == segBegin) break;
 
             // So far so good. Move one directory level upwards.
             // The next name ends here.
-            nameEnd = from - 1;
+            segEnd = from - 1;
         }
 
         // Deal with the special case of a Unix style zero-length root name.
-        if(*nameBegin == '/')
+        if(*segBegin == '/')
         {
-            Uri::PathNode* newNode = allocPathNode("", "");
-
-            // There is now one more node in the path map.
-            pathNodeCount += 1;
-
-            // "extra" nodes are linked to the tail of the extraPathNodes list.
-            if(!isStaticPathNode(*newNode))
-            {
-                if(!extraPathNodes)
-                {
-                    extraPathNodes = newNode;
-                }
-                else
-                {
-                    node->parent_ = extraPathNodes;
-                }
-            }
+            allocSegment("", "");
         }
     }
 
@@ -432,54 +408,47 @@ Uri Uri::fromNativeDirPath(NativePath const& nativeDirPath, resourceclassid_t de
     return Uri(nativeDirPath.expand().withSeparators('/') + '/', defaultResourceClass);
 }
 
-/*
-Uri Uri::fromReader(struct reader_s& reader)
-{
-    return Uri().read(reader);
-}*/
-
 Uri::~Uri()
 {
     delete d;
 }
 
-int Uri::pathNodeCount() const
+int Uri::segmentCount() const
 {
     d->mapPath();
-    return d->pathNodeCount;
+    return d->segmentCount;
 }
 
-Uri::PathNode& Uri::pathNode(int index) const
+const Uri::Segment& Uri::segment(int index) const
 {
     d->mapPath();
 
-    if(index < 0 || index >= d->pathNodeCount)
+    if(index < 0 || index >= d->segmentCount)
     {
-        /// @throw NotPathNodeError  Attempt to reference a nonexistent fragment.
-        throw NotPathNodeError("Uri::fragment", String("Index #%1 references a nonexistent fragment").arg(index));
+        /// @throw NotSegmentError  Attempt to reference a nonexistent segment.
+        throw NotSegmentError("Uri::segment", String("Index #%1 references a nonexistent segment").arg(index));
     }
 
     // Is this in the static buffer?
-    if(index < PATHNODEBUFFER_SIZE)
+    if(index < SEGMENT_BUFFER_SIZE)
     {
-        return d->pathNodeBuffer[index];
+        return d->segmentBuffer[index];
     }
 
-    // No - an extra fragment.
-    DENG_ASSERT(d->extraPathNodes);
-    Uri::PathNode* fragment = d->extraPathNodes;
-    int n = PATHNODEBUFFER_SIZE;
-    while(n++ < index)
-    {
-        fragment = fragment->parent();
-    }
-    DENG_ASSERT(fragment);
-    return *fragment;
+    // No - an extra segment.
+    return *d->extraSegments[index - SEGMENT_BUFFER_SIZE];
 }
 
-Uri& Uri::operator = (Uri other)
+Uri& Uri::operator = (const Uri& other)
 {
-    swap(*this, other);
+    clear();
+
+    d->scheme = other.d->scheme;
+    d->path   = other.d->path;
+
+    // Can't copy segment map directly because it contains direct pointers to
+    // the contents of the other Uri -- map needs to be rebuilt when needed.
+
     return *this;
 }
 
@@ -488,7 +457,6 @@ bool Uri::operator == (Uri const& other) const
     if(this == &other) return true;
 
     // First, lets check if the scheme differs.
-    if(d->scheme.length() != other.scheme().length()) return false;
     if(d->scheme.compareWithoutCase(other.scheme())) return false;
 
     // Is resolving not necessary?
@@ -515,11 +483,11 @@ bool Uri::operator != (Uri const& other) const
     return !(*this == other);
 }
 
+/*
 void swap(Uri& first, Uri& second)
 {
-    std::swap(first.d->pathNodeCount,   second.d->pathNodeCount);
-    std::swap(first.d->extraPathNodes,  second.d->extraPathNodes);
-    //std::swap(first.d->pathNodeBuffer,  second.d->pathNodeBuffer);
+    std::swap(first.d->segmentCount,   second.d->segmentCount);
+    std::swap(first.d->extraSegments,  second.d->extraSegments);
 #ifdef DENG2_QT_4_8_OR_NEWER
     first.d->resolved.swap(second.d->resolved);
 #else
@@ -529,6 +497,7 @@ void swap(Uri& first, Uri& second)
     std::swap(first.d->scheme,          second.d->scheme);
     std::swap(first.d->path,            second.d->path);
 }
+*/
 
 bool Uri::isEmpty() const
 {
@@ -540,7 +509,7 @@ Uri& Uri::clear()
     d->scheme.clear();
     d->path.clear();
     d->clearCachedResolved();
-    d->clearPathMap();
+    d->clearMap();
     return *this;
 }
 
@@ -611,7 +580,7 @@ Uri& Uri::setPath(String newPath, QChar delimiter)
     }
     d->path = newPath;
     d->clearCachedResolved();
-    d->clearPathMap();
+    d->clearMap();
     return *this;
 }
 
@@ -627,7 +596,7 @@ Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar de
     d->path = rawUri.trimmed();
     d->parseScheme(defaultResourceClass);
     d->clearCachedResolved();
-    d->clearPathMap();
+    d->clearMap();
     return *this;
 }
 
@@ -665,11 +634,13 @@ void Uri::debugPrint(int indent, PrintFlags flags, String unresolvedText) const
     bool resolvedPath = (flags & OutputResolved) && !d->resolved.isEmpty();
     if(unresolvedText.isEmpty()) unresolvedText = "--(!)incomplete";
 
-    LOG_DEBUG("%*s\"%s\"%s%s") << indent << ""
-      << ((flags & TransformPathPrettify)? NativePath(asText()).pretty() : asText())
-      << ((flags & OutputResolved)? (resolvedPath? "=> " : unresolvedText) : "")
-      << ((flags & OutputResolved) && resolvedPath? ((flags & TransformPathPrettify)?
-                                                         NativePath(d->resolved).pretty() : NativePath(d->resolved)) : "");
+    LOG_DEBUG("%s\"%s\"%s%s")
+        << String(indent, ' ') << ""
+        << ((flags & TransformPathPrettify)? NativePath(asText()).pretty() : asText())
+        << ((flags & OutputResolved)? (resolvedPath? "=> " : unresolvedText) : "")
+        << ((flags & OutputResolved) && resolvedPath?
+                ((flags & TransformPathPrettify)? NativePath(d->resolved).pretty() : NativePath(d->resolved))
+              : "");
 }
 
 void Uri::operator >> (Writer& to) const
@@ -691,81 +662,78 @@ void Uri::operator << (Reader& from)
 
 Uri::hash_type const Uri::hash_range = 512;
 
-#if 0 //#ifdef _DEBUG
+#ifdef _DEBUG
+
 LIBDENG_DEFINE_UNITTEST(Uri)
 {
     try
     {
-        Uri::PathNode const* fragment;
-        int len;
-
         // Test a zero-length path.
         {
-        Uri u = Uri("", RC_NULL);
-        DENG_ASSERT(u.pathNodeCount() == 0);
+            Uri u("", RC_NULL);
+            DENG_ASSERT(u.segmentCount() == 0);
         }
 
         // Test a Windows style path with a drive plus file path.
         {
-        Uri u = Uri("c:/something.ext", RC_NULL);
-        DENG_ASSERT(u.pathNodeCount() == 2);
+            Uri u("c:/something.ext", RC_NULL);
+            DENG_ASSERT(u.segmentCount() == 2);
 
-        fragment = u.pathNode(0);
-        len = fragment->to - fragment->from;
-        DENG_ASSERT(len == 12);
-        DENG_ASSERT(!qstrncmp(fragment->from, "something.ext", len+1));
+            DENG_ASSERT(u.segment(0).length() == 13);
+            DENG_ASSERT(u.segment(0).toString() == "something.ext");
 
-        fragment = u.pathNode(1);
-        len = fragment->to - fragment->from;
-        DENG_ASSERT(len == 1);
-        DENG_ASSERT(!qstrncmp(fragment->from, "c:", len+1));
+            DENG_ASSERT(u.segment(1).length() == 2);
+            DENG_ASSERT(u.segment(1).toString() == "c:");
         }
 
         // Test a Unix style path with a zero-length root node name.
         {
-        Uri u = Uri("/something.ext", RC_NULL);
-        DENG_ASSERT(u.pathNodeCount() == 2);
+            Uri u("/something.ext", RC_NULL);
+            DENG_ASSERT(u.segmentCount() == 2);
 
-        fragment = u.pathNode(0);
-        len = fragment->to - fragment->from;
-        DENG_ASSERT(len == 12);
-        DENG_ASSERT(!qstrncmp(fragment->from, "something.ext", len+1));
+            DENG_ASSERT(u.segment(0).length() == 13);
+            DENG_ASSERT(u.segment(0).toString() == "something.ext");
 
-        fragment = u.pathNode(1);
-        len = fragment->to - fragment->from;
-        DENG_ASSERT(len == 0);
-        DENG_ASSERT(!qstrncmp(fragment->from, "", len));
+            DENG_ASSERT(u.segment(1).length() == 0);
+            DENG_ASSERT(u.segment(1).toString() == "");
         }
 
         // Test a relative directory.
         {
-        Uri u = Uri("some/dir/structure/", RC_NULL);
-        DENG_ASSERT(u.pathNodeCount() == 3);
+            Uri u("some/dir/structure/", RC_NULL);
+            DENG_ASSERT(u.segmentCount() == 3);
 
-        fragment = u.pathNode(0);
-        len = fragment->to - fragment->from;
-        DENG_ASSERT(len == 8);
-        DENG_ASSERT(!qstrncmp(fragment->from, "structure", len+1));
+            DENG_ASSERT(u.segment(0).length() == 9);
+            DENG_ASSERT(u.segment(0).toString() == "structure");
 
-        fragment = u.pathNode(1);
-        len = fragment->to - fragment->from;
-        DENG_ASSERT(len == 2);
-        DENG_ASSERT(!qstrncmp(fragment->from, "dir", len+1));
+            DENG_ASSERT(u.segment(1).length() == 3);
+            DENG_ASSERT(u.segment(1).toString() == "dir");
 
-        fragment = u.pathNode(2);
-        len = fragment->to - fragment->from;
-        DENG_ASSERT(len == 3);
-        DENG_ASSERT(!qstrncmp(fragment->from, "some", len+1));
+            DENG_ASSERT(u.segment(2).length() == 4);
+            DENG_ASSERT(u.segment(2).toString() == "some");
+        }
+
+        // Test the extra segments.
+        {
+            Uri u("/30/29/28/27/26/25/24/23/22/21/20/19/18/17/16/15/14/13/12/11/10/9/8/7/6/5/4/3/2/1/0", RC_NULL);
+            DENG_ASSERT(u.segmentCount() == 32);
+
+            DENG_ASSERT(u.segment(0).toString()  == "0");
+            DENG_ASSERT(u.segment(23).toString() == "23");
+            DENG_ASSERT(u.segment(24).toString() == "24");
+            DENG_ASSERT(u.segment(30).toString() == "30");
         }
     }
     catch(Error const& er)
     {
         qWarning() << er.asText();
+        return false;
     }
+    return true;
 }
 
 LIBDENG_RUN_UNITTEST(Uri)
 
-#endif
+#endif // _DEBUG
 
 } // namespace de
