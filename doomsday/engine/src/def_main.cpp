@@ -347,8 +347,8 @@ ded_value_t* Def_GetValueByUri(Uri const* _uri)
     if(!_uri) return 0;
     de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
 
-    if(qstricmp("Values", Str_Text(uri.scheme()))) return 0;
-    return Def_GetValueById(Str_Text(uri.path()));
+    if(qstricmp("Values", uri.schemeCStr())) return 0;
+    return Def_GetValueById(uri.pathCStr());
 }
 
 ded_mapinfo_t* Def_GetMapInfo(Uri const* _uri)
@@ -394,7 +394,7 @@ ded_material_t* Def_GetMaterial(char const* uriCString)
     {
         de::Uri uri = de::Uri(uriCString, RC_NULL);
 
-        if(Str_IsEmpty(uri.scheme()))
+        if(uri.scheme().isEmpty())
         {
             // Caller doesn't care which namespace - use a priority search order.
             de::Uri temp = de::Uri(uri);
@@ -439,7 +439,7 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     {
         de::Uri uri = de::Uri(uriCString, RC_NULL);
 
-        if(Str_IsEmpty(uri.scheme()))
+        if(uri.scheme().isEmpty())
         {
             // Caller doesn't care which namespace - use a priority search order.
             de::Uri temp = de::Uri(uri);

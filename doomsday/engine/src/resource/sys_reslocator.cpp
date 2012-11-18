@@ -115,7 +115,7 @@ static bool findResourceInNamespace(ResourceNamespace& rnamespace, de::Uri const
     rnamespace.rebuild();
 
     // A resource name is the file name sans extension.
-    String name = searchPath.firstPathNode().toString().fileNameWithoutExtension();
+    String name = searchPath.firstSegment().toString().fileNameWithoutExtension();
 
     // Perform the search.
     ResourceNamespace::ResourceList foundResources;
@@ -232,7 +232,7 @@ static bool findResource(resourceclassid_t classId, de::Uri const& searchPath,
         String const& resolvedPath = searchPath.resolved();
 
         // Is a namespace specified?
-        ResourceNamespace* rnamespace = F_ResourceNamespaceByName(Str_Text(searchPath.scheme()));
+        ResourceNamespace* rnamespace = F_ResourceNamespaceByName(searchPath.schemeCStr());
 
         // First try with the optional suffix.
         if(!optionalSuffix.isEmpty())

@@ -118,7 +118,7 @@ void P_SetCurrentMap(GameMap* map)
 boolean P_MapExists(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(uri.path()), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0);
 }
 
@@ -126,7 +126,7 @@ boolean P_MapExists(char const* uriCString)
 boolean P_MapIsCustom(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(uri.path()), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
@@ -134,7 +134,7 @@ boolean P_MapIsCustom(char const* uriCString)
 AutoStr* P_MapSourceFile(char const* uriCString)
 {
     de::Uri uri = de::Uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(uri.path()), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toAscii().constData(), true/*quiet please*/);
     if(lumpNum < 0) return AutoStr_NewStd();
     return W_LumpSourceFile(lumpNum);
 }

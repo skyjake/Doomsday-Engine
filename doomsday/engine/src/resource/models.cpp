@@ -506,8 +506,7 @@ static modelid_t loadModel(String path)
     if(mdl) return modelId; // Yes.
 
     // Not yet - try to open the file.
-    QByteArray pathUtf8 = path.toUtf8();
-    de::FileHandle* file = reinterpret_cast<de::FileHandle*>(F_Open(pathUtf8.constData(), "rb"));
+    de::FileHandle* file = reinterpret_cast<de::FileHandle*>(F_Open(path.toUtf8().constData(), "rb"));
     if(!file)
     {
         // Huh?? Should never happen.
@@ -874,7 +873,7 @@ static float calcModelVisualRadius(modeldef_t* mf)
 static short newModelSkin(model_t& mdl, de::Uri const& skinUri)
 {
     int added = mdl.info.numSkins;
-    char const* fileName = Str_Text(skinUri.path());
+    char const* fileName = skinUri.pathCStr();
 
     mdl.skins = (dmd_skin_t*) M_Realloc(mdl.skins, sizeof(*mdl.skins) * ++mdl.info.numSkins);
     if(!mdl.skins) throw Error("newModelSkin", String("Failed on (re)allocation of %1 bytes enlarging DmdSkin list").arg(sizeof(*mdl.skins) * mdl.info.numSkins));

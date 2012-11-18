@@ -37,7 +37,7 @@
 #include <de/Error>
 #include <de/String>
 #include <de/str.h>
-#include "uri.h"
+#include "uri.hh"
 
 /**
  * @defgroup pathComparisonFlags  Path Comparison Flags

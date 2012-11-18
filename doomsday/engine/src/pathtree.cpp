@@ -73,11 +73,11 @@ struct PathTree::Instance
     }
 
     /**
-     * @return  [ a new | the ] directory node that matches the name
-     * and type and which has the specified parent node.
+     * @return Tree node that matches the name and type and which has the
+     * specified parent node.
      */
-    PathTree::Node* direcNode(Uri::PathNode& pathNode, PathTree::NodeType nodeType,
-        PathTree::Node* parent)
+    PathTree::Node* direcNode(const Uri::Segment& pathNode, PathTree::NodeType nodeType,
+                              PathTree::Node* parent)
     {
         // Have we already encountered this?
         String fragment = pathNode.toString();
@@ -144,12 +144,13 @@ struct PathTree::Instance
         ///       Now that the names of a path can be accessed randomly with no
         ///       impact on performance - there is no need to index the nodes in
         ///       reverse (right to left) order. -ds
-        bool const hasLeaf = Str_RAt(uri.path(), 0) != '/';
+
+        bool const hasLeaf = !uri.path().endsWith("/");
 
         PathTree::Node* node = 0, *parent = 0;
-        for(int i = uri.pathNodeCount() - 1; i >= (hasLeaf? 1 : 0); --i)
+        for(int i = uri.segmentCount() - 1; i >= (hasLeaf? 1 : 0); --i)
         {
-            Uri::PathNode& pn = uri.pathNode(i);
+            const Uri::Segment& pn = uri.segment(i);
             //qDebug() << "Add branch: " << pn.toString();
             node = direcNode(pn, PathTree::Branch, parent);
             parent = node;
@@ -157,7 +158,7 @@ struct PathTree::Instance
 
         if(hasLeaf)
         {
-            Uri::PathNode& pn = uri.firstPathNode();
+            const Uri::Segment& pn = uri.firstSegment();
             //qDebug() << "Add leaf: " << pn.toString();
             node = direcNode(pn, PathTree::Leaf, parent);
         }
@@ -232,7 +233,7 @@ PathTree::Node& PathTree::find(Uri const& searchPath, int flags)
 {
     if(!searchPath.isEmpty() && d->size)
     {
-        Uri::hash_type hashKey = searchPath.firstPathNode().hash();
+        Uri::hash_type hashKey = searchPath.firstSegment().hash();
         if(!(flags & PCF_NO_LEAF))
         {
             Nodes& nodes = d->leafHash;
