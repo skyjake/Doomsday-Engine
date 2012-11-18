@@ -29,6 +29,12 @@ DualString::DualString()
     _str = Str_NewStd();
 }
 
+DualString::DualString(const DualString& other) : String(other)
+{
+    _str = Str_NewStd();
+    Str_Copy(_str, other._str);
+}
+
 DualString::DualString(const String& other) : String(other)
 {
     _str = Str_NewStd();
@@ -43,6 +49,13 @@ void DualString::clear()
 DualString::~DualString()
 {
     Str_Delete(_str);
+}
+
+DualString& DualString::operator = (const DualString& other)
+{
+    static_cast<String&>(*this) = other;
+    Str_Copy(_str, other._str);
+    return *this;
 }
 
 DualString& DualString::operator = (const char* cStr)
@@ -77,7 +90,7 @@ const ::Str* DualString::toStrUtf8() const
 
 void DualString::update()
 {
-    *static_cast<String*>(this) = QString::fromUtf8(Str_Text(_str));
+    static_cast<String&>(*this) = QString::fromUtf8(Str_Text(_str));
 }
 
 const char* DualString::asciiCStr()

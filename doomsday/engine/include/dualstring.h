@@ -29,47 +29,62 @@
 namespace de {
 
 /**
- * Maintains a secondary, read-only C-style string side-by-side with a full
- * de::String. This class should only be used to support legacy code.
+ * Maintains a secondary, read-only C-style string (Str instance) side-by-side
+ * with a full de::String. The secondary Str is only updated on demand, when
+ * someone needs access to the C-style string (or Str). There are no guarantees
+ * that a previously returned pointer to the Str contents remains valid or is
+ * up to date after making changes to the de::String side.
  *
- * The secondary Str is only updated on demand.
+ * The only allowed situation where the string is modified via the Str side is
+ * when one calls DualString::toStr() and then DualString::update() after the
+ * changes have been done via Str.
+ *
+ * This class should only be used to support legacy code.
  */
 class DualString : public String
 {
 public:
     DualString();
 
+    DualString(const DualString& other);
+
     DualString(const String& other);
 
     virtual ~DualString();
 
-    DualString& operator = (const char* cStr);
+    DualString& operator = (const DualString& other);
 
     DualString& operator = (const String& str);
 
+    DualString& operator = (const char* cStr);
+
+    /**
+     * Empties the contents of both the de::String string and the secondary
+     * Str instance. Existing const char* pointers remain valid.
+     */
     void clear();
 
     /**
-     * Returns a read-only pointer to the string's other half (ASCII encoding).
-     * @return Str instance.
+     * Returns a read-only pointer to the string's secondary side (ASCII
+     * encoding). @return Str instance.
      */
     const ::Str* toStrAscii() const;
 
     /**
-     * Returns a read-only pointer to the string's other half (UTF-8 encoding).
-     * @return Str instance.
+     * Returns a read-only pointer to the string's secondary side (UTF-8
+     * encoding). @return Str instance.
      */
     const ::Str* toStrUtf8() const;
 
     /**
      * Returns a modifiable Str (UTF-8). After making changes, you have to call
-     * update() to copy the new contents to the de::String half.
+     * update() to copy the new contents to the de::String side.
      */
     ::Str* toStr();
 
     /**
-     * Copies the Str contents, assumed to be in UTF-8 encoding, to the
-     * de::String side.
+     * Copies the contents of the Str side, assumed to be in UTF-8 encoding, to
+     * the de::String side.
      */
     void update();
 
@@ -77,7 +92,7 @@ public:
      * Converts the contents of the string to ASCII and returns a read-only
      * pointer to the ASCII, null-terminated C style string. Ownership of the
      * returned string is kept by DualString. The returned pointer is only
-     * valid until contents of the DualString remain unchanged; until that
+     * valid while contents of the DualString remain unchanged; during this
      * time, the caller may hang on to the returned string pointer.
      *
      * @return String contents as ASCII.

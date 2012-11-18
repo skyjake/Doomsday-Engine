@@ -24,6 +24,8 @@
 #include <de/str.h>
 #include <de/unittest.h>
 #include <de/NativePath>
+#include <de/Reader>
+#include <de/Writer>
 #include <QDebug>
 
 #include "de_base.h"
@@ -524,7 +526,6 @@ void swap(Uri& first, Uri& second)
     std::swap(first.d->resolved,        second.d->resolved);
 #endif
     std::swap(first.d->resolvedForGame, second.d->resolvedForGame);
-    /// @todo Is it valid to std::swap a ddstring_t ?
     std::swap(first.d->scheme,          second.d->scheme);
     std::swap(first.d->path,            second.d->path);
 }
@@ -668,7 +669,24 @@ void Uri::debugPrint(int indent, PrintFlags flags, String unresolvedText) const
       << ((flags & TransformPathPrettify)? NativePath(asText()).pretty() : asText())
       << ((flags & OutputResolved)? (resolvedPath? "=> " : unresolvedText) : "")
       << ((flags & OutputResolved) && resolvedPath? ((flags & TransformPathPrettify)?
-                                                      NativePath(d->resolved).pretty() : NativePath(d->resolved)) : "");
+                                                         NativePath(d->resolved).pretty() : NativePath(d->resolved)) : "");
+}
+
+void Uri::operator >> (Writer& to) const
+{
+    to << d->scheme.toUtf8() << d->path.toUtf8();
+}
+
+void Uri::operator << (Reader& from)
+{
+    clear();
+
+    Block b;
+    from >> b;
+    setScheme(String::fromUtf8(b));
+
+    from >> b;
+    setPath(String::fromUtf8(b));
 }
 
 Uri::hash_type const Uri::hash_range = 512;
