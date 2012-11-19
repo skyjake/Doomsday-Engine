@@ -133,9 +133,9 @@ de::ResourceNamespaces const& F_ResourceNamespaces();
  * @todo Refactor away.
  *
  * @param classId  Unique identifier of the class.
- * @return  ResourceClass associated with @a id; otherwise @c 0 (not found).
+ * @return  ResourceClass associated with @a id.
  */
-de::ResourceClass* F_ResourceClassById(resourceclassid_t classId);
+de::ResourceClass& F_ResourceClassById(resourceclassid_t classId);
 
 /**
  * Lookup a ResourceClass by symbolic name.

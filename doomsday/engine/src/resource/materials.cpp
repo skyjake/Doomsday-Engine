@@ -815,8 +815,8 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 static MaterialBind* findMaterialBindForUri(de::Uri const& uri)
 {
     materialnamespaceid_t namespaceId = Materials_ParseNamespace(uri.schemeCStr());
-    char const* path = uri.pathCStr();
-    MaterialBind* bind = NULL;
+    de::String const& path = uri.path();
+    MaterialBind* bind = 0;
     if(namespaceId != MN_ANY)
     {
         // Caller wants a material in a specific namespace.

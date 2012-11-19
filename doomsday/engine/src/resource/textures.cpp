@@ -265,10 +265,10 @@ static TextureRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     {
         // This is a URN of the form; urn:namespacename:uniqueid
         texturenamespaceid_t namespaceId = Textures_ParseNamespace(uri.pathCStr());
-        char* uidStr = strchr((char*)uri.pathCStr(), ':');
-        if(uidStr)
+        int uidPos = uri.path().indexOf(':');
+        if(uidPos >= 0)
         {
-            int uid = strtol(uidStr +1/*skip namespace delimiter*/, 0, 0);
+            int uid = uri.path().mid(uidPos + 1 /*skip namespace delimiter*/).toInt();
             textureid_t id = Textures_TextureForUniqueId(namespaceId, uid);
             if(id != NOTEXTUREID)
             {
@@ -280,7 +280,7 @@ static TextureRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
 
     // This is a URI.
     texturenamespaceid_t namespaceId = Textures_ParseNamespace(uri.schemeCStr());
-    const char* path = uri.pathCStr();
+    de::String const& path = uri.path();
 
     TextureRepository::Node* node = NULL;
     if(namespaceId != TN_ANY)

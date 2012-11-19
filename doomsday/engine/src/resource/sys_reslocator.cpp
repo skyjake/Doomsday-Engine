@@ -232,7 +232,7 @@ static bool findResource(resourceclassid_t classId, de::Uri const& searchPath,
         String const& resolvedPath = searchPath.resolved();
 
         // Is a namespace specified?
-        ResourceNamespace* rnamespace = F_ResourceNamespaceByName(searchPath.schemeCStr());
+        ResourceNamespace* rnamespace = F_ResourceNamespaceByName(searchPath.scheme());
 
         // First try with the optional suffix.
         if(!optionalSuffix.isEmpty())
@@ -619,10 +619,10 @@ ResourceType& F_GuessResourceTypeFromFileName(String path)
     return nullType;
 }
 
-ResourceClass* F_ResourceClassById(resourceclassid_t id)
+ResourceClass& F_ResourceClassById(resourceclassid_t id)
 {
-    if(!VALID_RESOURCE_CLASSID(id)) return 0;
-    return &resourceClass(id);
+    if(!VALID_RESOURCE_CLASSID(id)) throw Error("F_ResourceClassById", String("Invalid id '%1'").arg(int(id)));
+    return resourceClass(id);
 }
 
 ResourceTypes const& F_ResourceTypes()

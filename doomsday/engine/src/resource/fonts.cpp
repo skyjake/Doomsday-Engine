@@ -262,11 +262,11 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
     {
         // This is a URN of the form; urn:namespacename:uniqueid
         fontnamespaceid_t namespaceId = Fonts_ParseNamespace(uri.pathCStr());
-
-        char* uid = strchr((char*)uri.pathCStr(), ':');
-        if(uid)
+        int uidPos = uri.path().indexOf(':');
+        if(uidPos >= 0)
         {
-            fontid_t id = Fonts_FontForUniqueId(namespaceId, strtol(uid + 1/*skip namespace delimiter*/, 0, 0));
+            int uid = uri.path().mid(uidPos + 1/*skip namespace delimiter*/).toInt();
+            fontid_t id = Fonts_FontForUniqueId(namespaceId, uid);
             if(id != NOFONTID)
             {
                 return findDirectoryNodeForBindId(id);
@@ -277,7 +277,7 @@ static FontRepository::Node* findDirectoryNodeForUri(de::Uri const& uri)
 
     // This is a URI.
     fontnamespaceid_t namespaceId = Fonts_ParseNamespace(uri.schemeCStr());
-    char const* path = uri.pathCStr();
+    de::String const& path = uri.path();
     if(namespaceId != FN_ANY)
     {
         // Caller wants a font in a specific namespace.
