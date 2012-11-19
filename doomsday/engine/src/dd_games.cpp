@@ -195,7 +195,7 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
         DD_ExchangeGamePluginEntryPoints(game.pluginId());
 
         // Re-init the resource locator using the search paths of this Game.
-        F_ResetAllResourceNamespaces();
+        F_ResetAllFileNamespaces();
     }
 
     DENG2_FOR_EACH_CONST(Game::Resources, i, game.resources())
@@ -215,7 +215,7 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
         DD_ExchangeGamePluginEntryPoints(oldGame->pluginId());
 
         // Re-init the resource locator using the search paths of this Game.
-        F_ResetAllResourceNamespaces();
+        F_ResetAllFileNamespaces();
     }
     return *this;
 }

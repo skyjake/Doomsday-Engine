@@ -117,10 +117,10 @@ GameCollection& Game::collection() const
 Game& Game::addResource(ResourceRecord& record)
 {
     // Ensure we don't add duplicates.
-    Resources::const_iterator found = d->resources.find(record.resourceClass(), &record);
+    Resources::const_iterator found = d->resources.find(record.fileClass(), &record);
     if(found == d->resources.end())
     {
-        d->resources.insert(record.resourceClass(), &record);
+        d->resources.insert(record.fileClass(), &record);
     }
     return *this;
 }
@@ -190,8 +190,8 @@ bool Game::isRequiredFile(File1& file)
 
     bool isRequired = false;
 
-    for(Resources::const_iterator i = d->resources.find(RC_PACKAGE);
-        i != d->resources.end() && i.key() == RC_PACKAGE; ++i)
+    for(Resources::const_iterator i = d->resources.find(FC_PACKAGE);
+        i != d->resources.end() && i.key() == FC_PACKAGE; ++i)
     {
         ResourceRecord& record = **i;
         if(!(record.resourceFlags() & RF_STARTUP)) continue;
@@ -224,9 +224,9 @@ void Game::printResources(Game const& game, int rflags, bool printStatus)
 
     // Group output by resource class.
     Resources const& resources = game.resources();
-    for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
+    for(uint i = 0; i < FILECLASS_COUNT; ++i)
     {
-        resourceclassid_t const classId = resourceclassid_t(i);
+        fileclassid_t const classId = fileclassid_t(i);
         for(Resources::const_iterator i = resources.find(classId);
             i != resources.end() && i.key() == classId; ++i)
         {

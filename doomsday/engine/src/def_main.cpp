@@ -392,7 +392,7 @@ ded_material_t* Def_GetMaterial(char const* uriCString)
     ded_material_t* def = NULL;
     if(uriCString && uriCString[0])
     {
-        de::Uri uri = de::Uri(uriCString, RC_NULL);
+        de::Uri uri = de::Uri(uriCString, FC_NONE);
 
         if(uri.scheme().isEmpty())
         {
@@ -437,7 +437,7 @@ ded_compositefont_t* Def_GetCompositeFont(char const* uriCString)
     ded_compositefont_t* def = NULL;
     if(uriCString && uriCString[0])
     {
-        de::Uri uri = de::Uri(uriCString, RC_NULL);
+        de::Uri uri = de::Uri(uriCString, FC_NONE);
 
         if(uri.scheme().isEmpty())
         {
@@ -829,9 +829,9 @@ static void readAllDefinitions(void)
     int p;
 
     // Start with engine's own top-level definition file, it is always read first.
-    de::Uri searchPath = de::Uri("doomsday.ded", RC_DEFINITION);
+    de::Uri searchPath = de::Uri("doomsday.ded", FC_DEFINITION);
     AutoStr* foundPath = AutoStr_NewStd();
-    if(F_FindResource2(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
+    if(F_Find2(FC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
     {
         VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(foundPath))) )
         readDefinitionFile(Str_Text(foundPath));
@@ -846,8 +846,8 @@ static void readAllDefinitions(void)
     {
         de::Game::Resources const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->resources();
         int packageIdx = 0;
-        for(de::Game::Resources::const_iterator i = gameResources.find(RC_DEFINITION);
-            i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
+        for(de::Game::Resources::const_iterator i = gameResources.find(FC_DEFINITION);
+            i != gameResources.end() && i.key() == FC_DEFINITION; ++i, ++packageIdx)
         {
             de::ResourceRecord& record = **i;
             /// Try to locate this resource now.
@@ -870,7 +870,7 @@ static void readAllDefinitions(void)
     if(!CommandLine_Exists("-noauto") && DD_GameLoaded())
     {
         de::FS1::PathList found;
-        if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, found))
+        if(App_FileSystem()->findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", FC_NONE).resolved(), 0, found))
         {
             DENG2_FOR_EACH_CONST(de::FS1::PathList, i, found)
             {
@@ -1079,9 +1079,9 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        de::ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassByName("RC_MODEL").defaultNamespace());
-        DENG_ASSERT(rnamespace);
-        rnamespace->reset();
+        de::FileNamespace* fnamespace = F_FileNamespaceByName(F_FileClassByName("FC_MODEL").defaultNamespace());
+        DENG_ASSERT(fnamespace);
+        fnamespace->reset();
 
         Materials_ClearDefinitionLinks();
         Fonts_ClearDefinitionLinks();
@@ -1749,7 +1749,7 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_MAP_INFO: {
         ddmapinfo_t* mout;
-        Uri* mapUri = Uri_NewWithPath2(id, RC_NULL);
+        Uri* mapUri = Uri_NewWithPath2(id, FC_NONE);
         ded_mapinfo_t* map = Def_GetMapInfo(mapUri);
 
         Uri_Delete(mapUri);
@@ -1824,7 +1824,7 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_FINALE_BEFORE: {
         finalescript_t* fin = (finalescript_t*) out;
-        Uri* uri = Uri_NewWithPath2(id, RC_NULL);
+        Uri* uri = Uri_NewWithPath2(id, FC_NONE);
         for(i = defs.count.finales.num - 1; i >= 0; i--)
         {
             if(!defs.finales[i].before || !Uri_Equality(defs.finales[i].before, uri)) continue;
@@ -1843,7 +1843,7 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_FINALE_AFTER: {
         finalescript_t* fin = (finalescript_t*) out;
-        Uri* uri = Uri_NewWithPath2(id, RC_NULL);
+        Uri* uri = Uri_NewWithPath2(id, FC_NONE);
         for(i = defs.count.finales.num - 1; i >= 0; i--)
         {
             if(!defs.finales[i].after || !Uri_Equality(defs.finales[i].after, uri)) continue;

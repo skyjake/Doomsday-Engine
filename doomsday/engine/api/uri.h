@@ -82,10 +82,10 @@ Uri* Uri_New(void);
  * Uri_Delete() once it is no longer needed.
  *
  * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
- * @param defaultResourceClass  If no scheme is defined in @a path and this is not @c RC_NULL,
+ * @param defaultFileClass  If no scheme is defined in @a path and this is not @c FC_NULL,
  *      look for an appropriate default scheme for this class of resource.
  */
-Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass);
+Uri* Uri_NewWithPath2(char const* path, fileclassid_t defaultFileClass);
 Uri* Uri_NewWithPath(char const* path);
 
 /**
@@ -169,14 +169,14 @@ Uri* Uri_SetPath(Uri* uri, char const* path);
  *
  * @param uri   Uri instance.
  * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
- * @param defaultResourceClass  If no scheme is defined in @a path and this is not
- *              @c RC_NULL, look for an appropriate default scheme for this class
+ * @param defaultFileClass  If no scheme is defined in @a path and this is not
+ *              @c FC_NULL, look for an appropriate default scheme for this class
  *              of resource.
  *
  * @return  Same as @a uri, for caller convenience.
  */
-Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defaultResourceClass);
-Uri* Uri_SetUri(Uri* uri, char const* path/* defaultResourceClass = RC_UNKNOWN*/);
+Uri* Uri_SetUri2(Uri* uri, char const* path, fileclassid_t defaultFileClass);
+Uri* Uri_SetUri(Uri* uri, char const* path/* defaultFileClass = FC_UNKNOWN*/);
 
 Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path);
 

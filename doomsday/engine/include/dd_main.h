@@ -161,7 +161,7 @@ void DD_DestroyGames(void);
 
 boolean DD_GameInfo(struct gameinfo_s* info);
 
-void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int rflags, char const* names, void* params);
+void DD_AddGameResource(gameid_t game, fileclassid_t classId, int rflags, char const* names, void* params);
 
 gameid_t DD_DefineGame(struct gamedef_s const* def);
 

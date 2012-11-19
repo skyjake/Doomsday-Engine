@@ -44,7 +44,7 @@ extern "C" {
 /**
  * @defgroup resourceLocationFlags  Resource Location Flags
  *
- * Flags used with the F_FindResource family of functions which dictate the
+ * Flags used with the F_Find family of functions which dictate the
  * logic used during resource location.
  * @ingroup flags
  */
@@ -67,7 +67,7 @@ void F_InitResourceLocator(void);
  */
 void F_ShutdownResourceLocator(void);
 
-void F_ResetAllResourceNamespaces(void);
+void F_ResetAllFileNamespaces(void);
 
 /**
  * Attempt to locate a named resource.
@@ -92,16 +92,16 @@ void F_ResetAllResourceNamespaces(void);
  *
  * @return  @c true iff a resource was found.
  */
-boolean F_FindResource4(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags, char const* optionalSuffix);
-boolean F_FindResource3(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
-boolean F_FindResource2(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
-boolean F_FindResource(resourceclassid_t classId, struct uri_s const* searchPath/*, foundPath = NULL*/);
+boolean F_Find4(fileclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags, char const* optionalSuffix);
+boolean F_Find3(fileclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+boolean F_Find2(fileclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+boolean F_Find(fileclassid_t classId, struct uri_s const* searchPath/*, foundPath = NULL*/);
 
 /**
  * @return  If a resource is found, the index + 1 of the path from @a searchPaths
  *          that was used to find it; otherwise @c 0.
  */
-uint F_FindResourceFromList(resourceclassid_t classId, char const* searchPaths,
+uint F_FindFromList(fileclassid_t classId, char const* searchPaths,
     ddstring_t* foundPath, int flags, char const* optionalSuffix);
 
 #ifdef __cplusplus
@@ -109,49 +109,49 @@ uint F_FindResourceFromList(resourceclassid_t classId, char const* searchPaths,
 
 namespace de {
 
-typedef QList<ResourceClass*> ResourceClasses;
-typedef QList<ResourceType*> ResourceTypes;
-typedef QList<ResourceNamespace*> ResourceNamespaces;
+typedef QList<FileClass*> FileClasses;
+typedef QList<FileType*> FileTypes;
+typedef QList<FileNamespace*> FileNamespaces;
 
 }
 
 /**
- * Lookup a ResourceNamespace by symbolic name.
+ * Lookup a FileNamespace by symbolic name.
  *
  * @param name  Symbolic name of the namespace.
- * @return  ResourceNamespace associated with @a name; otherwise @c 0 (not found).
+ * @return  FileNamespace associated with @a name; otherwise @c 0 (not found).
  */
-de::ResourceNamespace* F_ResourceNamespaceByName(de::String name);
+de::FileNamespace* F_FileNamespaceByName(de::String name);
 
-de::ResourceTypes const& F_ResourceTypes();
+de::FileTypes const& F_FileTypes();
 
-de::ResourceNamespaces const& F_ResourceNamespaces();
+de::FileNamespaces const& F_FileNamespaces();
 
 /**
- * Lookup a ResourceClass by id.
+ * Lookup a FileClass by id.
  *
  * @todo Refactor away.
  *
  * @param classId  Unique identifier of the class.
- * @return  ResourceClass associated with @a id.
+ * @return  FileClass associated with @a id.
  */
-de::ResourceClass& F_ResourceClassById(resourceclassid_t classId);
+de::FileClass& F_FileClassById(fileclassid_t classId);
 
 /**
- * Lookup a ResourceClass by symbolic name.
+ * Lookup a FileClass by symbolic name.
  *
  * @param name  Symbolic name of the class.
- * @return  ResourceClass associated with @a name; otherwise @c 0 (not found).
+ * @return  FileClass associated with @a name; otherwise @c 0 (not found).
  */
-de::ResourceClass& F_ResourceClassByName(de::String name);
+de::FileClass& F_FileClassByName(de::String name);
 
 /**
- * Lookup a ResourceType by symbolic name.
+ * Lookup a FileType by symbolic name.
  *
  * @param name  Symbolic name of the type.
- * @return  ResourceType associated with @a name. May return a null-object.
+ * @return  FileType associated with @a name. May return a null-object.
  */
-de::ResourceType& F_ResourceTypeByName(de::String name);
+de::FileType& F_FileTypeByName(de::String name);
 
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
@@ -159,7 +159,7 @@ de::ResourceType& F_ResourceTypeByName(de::String name);
  *
  * @return  Type determined for this resource. May return a null-object.
  */
-de::ResourceType& F_GuessResourceTypeFromFileName(de::String name);
+de::FileType& F_GuessFileTypeFromFileName(de::String name);
 
 #endif // __cplusplus
 

@@ -117,7 +117,7 @@ void P_SetCurrentMap(GameMap* map)
 /// @note Part of the Doomsday public API.
 boolean P_MapExists(char const* uriCString)
 {
-    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    de::Uri uri = de::Uri(uriCString, FC_NONE);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0);
 }
@@ -125,7 +125,7 @@ boolean P_MapExists(char const* uriCString)
 /// @note Part of the Doomsday public API.
 boolean P_MapIsCustom(char const* uriCString)
 {
-    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    de::Uri uri = de::Uri(uriCString, FC_NONE);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toAscii().constData(), true/*quiet please*/);
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
@@ -133,7 +133,7 @@ boolean P_MapIsCustom(char const* uriCString)
 /// @note Part of the Doomsday public API.
 AutoStr* P_MapSourceFile(char const* uriCString)
 {
-    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    de::Uri uri = de::Uri(uriCString, FC_NONE);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toAscii().constData(), true/*quiet please*/);
     if(lumpNum < 0) return AutoStr_NewStd();
     return W_LumpSourceFile(lumpNum);
@@ -147,7 +147,7 @@ boolean P_LoadMap(char const* uriCString)
         LegacyCore_FatalError("P_LoadMap: Invalid Uri argument.");
     }
 
-    de::Uri uri = de::Uri(uriCString, RC_NULL);
+    de::Uri uri = de::Uri(uriCString, FC_NONE);
     LOG_MSG("Loading Map \"%s\"...") << uri;
 
     // It would be very cool if map loading happened in another

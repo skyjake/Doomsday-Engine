@@ -125,7 +125,7 @@ void BusyVisual_PrepareFont(void)
             { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
         };
         int fontIdx = !(Window_Width(theWindow) > 640)? 0 : 1;
-        Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
+        Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, FC_NONE);
         font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
         Uri_Delete(uri);
 

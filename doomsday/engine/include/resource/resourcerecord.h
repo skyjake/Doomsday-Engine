@@ -47,11 +47,11 @@ namespace de
          * @param rFlags    @ref resourceFlags
          * @param name      An expected name for the associated resource.
          */
-        ResourceRecord(resourceclassid_t rClass, int rFlags, String* name = 0);
+        ResourceRecord(fileclassid_t rClass, int rFlags, String* name = 0);
         ~ResourceRecord();
 
         /// @return Class of resource.
-        resourceclassid_t resourceClass() const;
+        fileclassid_t fileClass() const;
 
         /// @return Flags for this resource.
         int resourceFlags() const;

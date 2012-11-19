@@ -307,7 +307,7 @@ Uri PathTree::Node::composeUri(QChar delimiter) const
     LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
-    return Uri(parm.composedPath, RC_NULL);
+    return Uri(parm.composedPath, FC_NONE);
 }
 
 } // namespace de

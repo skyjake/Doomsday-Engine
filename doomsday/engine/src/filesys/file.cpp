@@ -70,7 +70,7 @@ de::FileHandle& File1::handle()
 
 de::Uri File1::composeUri(QChar delimiter) const
 {
-    return de::Uri(path_, RC_NULL, delimiter);
+    return de::Uri(path_, FC_NONE, delimiter);
 }
 
 uint File1::loadOrderIndex() const

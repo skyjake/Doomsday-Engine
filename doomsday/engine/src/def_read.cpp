@@ -392,9 +392,9 @@ static int ReadUri(uri_s** dest, const char* defaultScheme)
     if((result = ReadAnyString(&buf)) != 0)
     {
         if(!*dest)
-            *dest = Uri_NewWithPath2(buf, RC_NULL);
+            *dest = Uri_NewWithPath2(buf, FC_NONE);
         else
-            Uri_SetUri2(*dest, buf, RC_NULL);
+            Uri_SetUri2(*dest, buf, FC_NONE);
 
         if(defaultScheme && defaultScheme[0] && Str_Length(Uri_Scheme(*dest)) == 0)
             Uri_SetScheme(*dest, defaultScheme);
@@ -812,9 +812,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             CHECKSC;
 
             de::Uri newSearchPath = de::Uri::fromNativeDirPath(NativePath(label));
-            ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassByName("RC_MODEL").defaultNamespace());
-            DENG_ASSERT(rnamespace);
-            rnamespace->addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath), 0);
+            FileNamespace* fnamespace = F_FileNamespaceByName(F_FileClassByName("FC_MODEL").defaultNamespace());
+            DENG_ASSERT(fnamespace);
+            fnamespace->addSearchPath(FileNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath), 0);
         }
 
         if(ISTOKEN("Header"))

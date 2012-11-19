@@ -877,7 +877,7 @@ void R_LoadVectorGraphics(void)
  */
 fontid_t R_MustFindFontForName(const char* name)
 {
-    Uri* uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri* uri = Uri_NewWithPath2(name, FC_NONE);
     fontid_t fontId = Fonts_ResolveUri(uri);
     Uri_Delete(uri);
     if(fontId) return fontId;
@@ -896,7 +896,7 @@ void R_InitRefresh(void)
     { Uri* paths[9];
     uint i;
     for(i = 0; i < 9; ++i)
-        paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_NewWithPath2(borderGraphics[i], RC_NULL) : 0);
+        paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_NewWithPath2(borderGraphics[i], FC_NONE) : 0);
     R_SetBorderGfx((const Uri**)paths);
     for(i = 0; i < 9; ++i)
         if(paths[i])
@@ -3217,7 +3217,7 @@ Uri* G_ComposeMapUri(uint episode, uint map)
 #else
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #endif
-    return Uri_NewWithPath2(mapId, RC_NULL);
+    return Uri_NewWithPath2(mapId, FC_NONE);
 }
 
 boolean G_ValidateMap(uint* episode, uint* map)

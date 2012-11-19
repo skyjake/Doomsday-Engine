@@ -372,7 +372,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
         link = true;
     }
 
-    uri = Uri_NewWithPath2(MN_SPRITES_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2(MN_SPRITES_NAME":", FC_NONE);
     Uri_SetPath(uri, Str_Text(path));
     frame->mat = Materials_ToMaterial(Materials_ResolveUri(uri));
     Uri_Delete(uri);

@@ -21,14 +21,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCENAMESPACE_H
-#define LIBDENG_RESOURCENAMESPACE_H
+#ifndef LIBDENG_FILENAMESPACE_H
+#define LIBDENG_FILENAMESPACE_H
 
 #include "pathtree.h"
 #include "uri.h"
 
-/// ResourceNamespace names must be at least this number of characters.
-#define RESOURCENAMESPACE_MINNAMELENGTH URI_MINSCHEMELENGTH
+/// FileNamespace names must be at least this number of characters.
+#define FILENAMESPACE_MINNAMELENGTH URI_MINSCHEMELENGTH
 
 /**
  * @defgroup searchPathFlags  Search Path Flags
@@ -45,14 +45,14 @@
 namespace de
 {
     /**
-     * (TODO: describe ResourceNamespace)
+     * (TODO: describe FileNamespace)
      *
      * @ingroup resource
      *
      * @todo The symbolic name of the namespace and the path mapping template
      *       (see applyPathMappings()) should be defined externally. -ds
      */
-    class ResourceNamespace
+    class FileNamespace
     {
     public:
         enum Flag
@@ -128,11 +128,11 @@ namespace de
         };
 
         typedef QMultiMap<PathGroup, SearchPath> SearchPaths;
-        typedef QList<PathTree::Node*> ResourceList;
+        typedef QList<PathTree::Node*> FileList;
 
     public:
-        explicit ResourceNamespace(String symbolicName, Flags flags = 0);
-        ~ResourceNamespace();
+        explicit FileNamespace(String symbolicName, Flags flags = 0);
+        ~FileNamespace();
 
         /// @return  Symbolic name of this namespace (e.g., "Models").
         String const& name() const;
@@ -179,7 +179,7 @@ namespace de
          *
          * @return  Number of found resources.
          */
-        int findAll(String name, ResourceList& found);
+        int findAll(String name, FileList& found);
 
         /**
          * Add a new search path to this namespace. Newer paths have priority
@@ -235,10 +235,10 @@ namespace de
         Instance* d;
     };
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(ResourceNamespace::Flags)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(FileNamespace::Flags)
 
 } // namespace de
 
 #endif // __cplusplus
 
-#endif /* LIBDENG_RESOURCENAMESPACE_H */
+#endif /* LIBDENG_FILENAMESPACE_H */

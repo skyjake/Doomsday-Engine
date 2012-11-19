@@ -322,7 +322,7 @@ void DD_ReadGameHelp(void)
 {
     if(helpInited && DD_GameLoaded())
     {
-        Uri* helpFileUri = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt", RC_NULL);
+        Uri* helpFileUri = Uri_NewWithPath2("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt", FC_NONE);
         AutoStr* resolvedPath = Uri_Resolved(helpFileUri);
         if(resolvedPath)
         {

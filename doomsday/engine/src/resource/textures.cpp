@@ -250,7 +250,7 @@ static TextureRepository::Node* findDirectoryNodeForPath(TextureRepository& texD
 {
     try
     {
-        TextureRepository::Node& node = texDirectory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
+        TextureRepository::Node& node = texDirectory.find(de::Uri(path, FC_NONE), PCF_NO_BRANCH | PCF_MATCH_FULL);
         return &node;
     }
     catch(TextureRepository::NotFoundError const&)
@@ -785,7 +785,7 @@ textureid_t Textures_ResolveUriCString2(char const* path, boolean quiet)
 {
     if(path && path[0])
     {
-        de::Uri uri = de::Uri(path, RC_NULL);
+        de::Uri uri = de::Uri(path, FC_NONE);
         return Textures_ResolveUri2(reinterpret_cast<uri_s*>(&uri), quiet);
     }
     return NOTEXTUREID;
@@ -1437,7 +1437,7 @@ D_CMD(ListTextures)
     // "listtextures [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
-        uri = uri.setUri(argv[1], RC_NULL);
+        uri = uri.setUri(argv[1], FC_NONE);
 
         if(!uri.scheme().isEmpty())
         {
@@ -1476,7 +1476,7 @@ D_CMD(InspectTexture)
     Str path; Str_Init(&path);
     Str_PercentEncode(Str_Set(&path, argv[1]));
 
-    de::Uri search = de::Uri(Str_Text(&path), RC_NULL);
+    de::Uri search = de::Uri(Str_Text(&path), FC_NONE);
     Str_Free(&path);
 
     if(!search.scheme().isEmpty())

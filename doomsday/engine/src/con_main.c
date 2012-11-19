@@ -991,7 +991,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     break;
                 case CVT_URIPTR: {
                     /// @todo Sanitize and validate against known schemas.
-                    Uri* uri = Uri_NewWithPath2(argptr, RC_NULL);
+                    Uri* uri = Uri_NewWithPath2(argptr, FC_NONE);
                     CVar_SetUri(cvar, uri);
                     Uri_Delete(uri);
                     break;
@@ -2553,7 +2553,7 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "default"))
     {
-        Uri* uri = Uri_NewWithPath2(R_ChooseFixedFont(), RC_NULL);
+        Uri* uri = Uri_NewWithPath2(R_ChooseFixedFont(), FC_NONE);
         fontid_t newFont = Fonts_ResolveUri(uri);
         Uri_Delete(uri);
         if(newFont)
@@ -2568,7 +2568,7 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "name") && argc == 3)
     {
-        Uri* uri = Uri_SetUri2(Uri_New(), argv[2], RC_NULL);
+        Uri* uri = Uri_SetUri2(Uri_New(), argv[2], FC_NONE);
         fontid_t newFont = Fonts_ResolveUri2(uri, true/*quiet please*/);
         Uri_Delete(uri);
         if(newFont)

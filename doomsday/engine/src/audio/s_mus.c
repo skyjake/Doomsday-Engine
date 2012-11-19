@@ -249,8 +249,8 @@ int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
     }
 
     // Try the resource locator.
-    searchPath = Uri_NewWithPath2(def->lumpName, RC_MUSIC);
-    result = F_FindResource2(RC_MUSIC, searchPath, retPath);
+    searchPath = Uri_NewWithPath2(def->lumpName, FC_MUSIC);
+    result = F_Find2(FC_MUSIC, searchPath, retPath);
     Uri_Delete(searchPath);
     return result;
 }

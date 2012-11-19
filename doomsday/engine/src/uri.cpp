@@ -239,7 +239,7 @@ struct Uri::Instance
         resolvedForGame = 0;
     }
 
-    void parseScheme(resourceclassid_t defaultResourceClass)
+    void parseScheme(fileclassid_t defaultFileClass)
     {
         LOG_AS("Uri::parseScheme");
 
@@ -250,7 +250,7 @@ struct Uri::Instance
         {
             scheme = path.left(sepPos);
 
-            if(defaultResourceClass == RC_NULL || F_ResourceNamespaceByName(scheme))
+            if(defaultFileClass == FC_NONE || F_FileNamespaceByName(scheme))
             {
                 path = path.mid(sepPos + 1);
                 return;
@@ -265,16 +265,16 @@ struct Uri::Instance
         }
 
         // Attempt to guess the scheme by interpreting the path?
-        if(defaultResourceClass == RC_UNKNOWN)
+        if(defaultFileClass == FC_UNKNOWN)
         {
-            defaultResourceClass = F_GuessResourceTypeFromFileName(path).defaultClass();
+            defaultFileClass = F_GuessFileTypeFromFileName(path).defaultClass();
         }
 
-        if(VALID_RESOURCE_CLASSID(defaultResourceClass))
+        if(VALID_FILECLASSID(defaultFileClass))
         {
-            ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassById(defaultResourceClass).defaultNamespace());
-            DENG_ASSERT(rnamespace);
-            scheme = rnamespace->name();
+            FileNamespace* fnamespace = F_FileNamespaceByName(F_FileClassById(defaultFileClass).defaultNamespace());
+            DENG_ASSERT(fnamespace);
+            scheme = fnamespace->name();
         }
     }
 
@@ -376,12 +376,12 @@ private:
     Instance(const Instance&); // no copying
 };
 
-Uri::Uri(String path, resourceclassid_t defaultResourceClass, QChar delimiter)
+Uri::Uri(String path, fileclassid_t defaultFileClass, QChar delimiter)
 {
     d = new Instance();
     if(!path.isEmpty())
     {
-        setUri(path, defaultResourceClass, delimiter);
+        setUri(path, defaultFileClass, delimiter);
     }
 }
 
@@ -402,13 +402,13 @@ Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
 
 Uri Uri::fromNativePath(NativePath const& path)
 {
-    return Uri(path.expand().withSeparators('/'), RC_NULL);
+    return Uri(path.expand().withSeparators('/'), FC_NONE);
 }
 
-Uri Uri::fromNativeDirPath(NativePath const& nativeDirPath, resourceclassid_t defaultResourceClass)
+Uri Uri::fromNativeDirPath(NativePath const& nativeDirPath, fileclassid_t defaultFileClass)
 {
     // Uri follows the convention of having a slash at the end for directories.
-    return Uri(nativeDirPath.expand().withSeparators('/') + '/', defaultResourceClass);
+    return Uri(nativeDirPath.expand().withSeparators('/') + '/', defaultFileClass);
 }
 
 Uri::~Uri()
@@ -558,7 +558,7 @@ Uri& Uri::setPath(String newPath, QChar delimiter)
     return *this;
 }
 
-Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar delimiter)
+Uri& Uri::setUri(String rawUri, fileclassid_t defaultFileClass, QChar delimiter)
 {
     LOG_AS("Uri::setUri");
 
@@ -568,7 +568,7 @@ Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar de
     }
 
     d->path = rawUri.trimmed();
-    d->parseScheme(defaultResourceClass);
+    d->parseScheme(defaultFileClass);
     d->clearCachedResolved();
     d->clearMap();
     return *this;
@@ -648,15 +648,15 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 
         // Test a zero-length path.
         {
-            Uri u("", RC_NULL);
+            Uri u("", FC_NONE);
             DENG_ASSERT(u.isEmpty());
             DENG_ASSERT(u.segmentCount() == 1);
         }
 
         // Equality and copying.
         {
-            Uri a("some/thing", RC_NULL);
-            Uri b("/other/thing", RC_NULL);
+            Uri a("some/thing", FC_NONE);
+            Uri b("/other/thing", FC_NONE);
 
             DENG_ASSERT(a != b);
 
@@ -671,8 +671,8 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 
         // Swapping.
         {
-            Uri a("a/b/c", RC_NULL);
-            Uri b("d/e", RC_NULL);
+            Uri a("a/b/c", FC_NONE);
+            Uri b("d/e", FC_NONE);
 
             DENG_ASSERT(a.segmentCount() == 3);
             DENG_ASSERT(a.segment(1).toString() == "b");
@@ -687,7 +687,7 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 
         // Test a Windows style path with a drive plus file path.
         {
-            Uri u("c:/something.ext", RC_NULL);
+            Uri u("c:/something.ext", FC_NONE);
             DENG_ASSERT(u.segmentCount() == 2);
 
             DENG_ASSERT(u.segment(0).length() == 13);
@@ -699,7 +699,7 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 
         // Test a Unix style path with a zero-length root node name.
         {
-            Uri u("/something.ext", RC_NULL);
+            Uri u("/something.ext", FC_NONE);
             DENG_ASSERT(u.segmentCount() == 2);
 
             DENG_ASSERT(u.segment(0).length() == 13);
@@ -711,7 +711,7 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 
         // Test a relative directory.
         {
-            Uri u("some/dir/structure/", RC_NULL);
+            Uri u("some/dir/structure/", FC_NONE);
             DENG_ASSERT(u.segmentCount() == 3);
 
             DENG_ASSERT(u.segment(0).length() == 9);
@@ -726,7 +726,7 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 
         // Test the extra segments.
         {
-            Uri u("/30/29/28/27/26/25/24/23/22/21/20/19/18/17/16/15/14/13/12/11/10/9/8/7/6/5/4/3/2/1/0", RC_NULL);
+            Uri u("/30/29/28/27/26/25/24/23/22/21/20/19/18/17/16/15/14/13/12/11/10/9/8/7/6/5/4/3/2/1/0", FC_NONE);
             DENG_ASSERT(u.segmentCount() == 32);
 
             DENG_ASSERT(u.segment(0).toString()  == "0");

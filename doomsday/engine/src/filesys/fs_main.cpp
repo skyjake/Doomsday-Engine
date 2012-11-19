@@ -894,7 +894,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         searchPattern = App_BasePath() / searchPattern;
     }
 
-    de::Uri patternMap = de::Uri(searchPattern, RC_NULL);
+    de::Uri patternMap = de::Uri(searchPattern, FC_NONE);
     QByteArray searchPatternUtf8 = searchPattern.toUtf8();
 
     /*
@@ -1006,8 +1006,8 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const&
     de::File1* interpretedFile = 0;
 
     // Firstly try the interpreter for the guessed resource types.
-    ResourceType const& rtypeGuess = F_GuessResourceTypeFromFileName(filePath);
-    if(FileResourceType const* fileType = dynamic_cast<FileResourceType const*>(&rtypeGuess))
+    FileType const& rtypeGuess = F_GuessFileTypeFromFileName(filePath);
+    if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(&rtypeGuess))
     {
         interpretedFile = fileType->interpret(hndl, filePath, info);
     }
@@ -1015,10 +1015,10 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const&
     // If not yet interpreted - try each recognisable format in order.
     if(!interpretedFile)
     {
-        ResourceTypes const& rtypes = F_ResourceTypes();
-        DENG2_FOR_EACH_CONST(ResourceTypes, i, rtypes)
+        FileTypes const& rtypes = F_FileTypes();
+        DENG2_FOR_EACH_CONST(FileTypes, i, rtypes)
         {
-            if(FileResourceType const* fileType = dynamic_cast<FileResourceType const*>(*i))
+            if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(*i))
             {
                 // Already tried this?
                 if(fileType == &rtypeGuess) continue;

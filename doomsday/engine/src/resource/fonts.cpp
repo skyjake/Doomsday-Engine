@@ -247,7 +247,7 @@ static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory,
 {
     try
     {
-        FontRepository::Node& node = directory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
+        FontRepository::Node& node = directory.find(de::Uri(path, FC_NONE), PCF_NO_BRANCH | PCF_MATCH_FULL);
         return &node;
     }
     catch(FontRepository::NotFoundError const&)
@@ -756,7 +756,7 @@ fontid_t Fonts_ResolveUriCString2(char const* path, boolean quiet)
 {
     if(path && path[0])
     {
-        de::Uri uri = de::Uri(path, RC_NULL);
+        de::Uri uri = de::Uri(path, FC_NONE);
         return Fonts_ResolveUri2(reinterpret_cast<uri_s*>(&uri), quiet);
     }
     return NOFONTID;
@@ -1574,7 +1574,7 @@ D_CMD(ListFonts)
     // "listfonts [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
-        uri.setUri(argv[1], RC_NULL);
+        uri.setUri(argv[1], FC_NONE);
         if(!uri.scheme().isEmpty())
         {
             namespaceId = Fonts_ParseNamespace(uri.schemeCStr());

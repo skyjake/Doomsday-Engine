@@ -34,7 +34,7 @@ namespace de {
 struct ResourceRecord::Instance
 {
     /// Class of resource.
-    resourceclassid_t classId;
+    fileclassid_t classId;
 
     /// @see resourceFlags.
     int flags;
@@ -54,13 +54,13 @@ struct ResourceRecord::Instance
     /// Set during resource location.
     String foundPath;
 
-    Instance(resourceclassid_t _rclass, int rflags)
+    Instance(fileclassid_t _rclass, int rflags)
         : classId(_rclass), flags(rflags & ~RF_FOUND), names(),
           identityKeys(), foundNameIndex(-1), foundPath()
     {}
 };
 
-ResourceRecord::ResourceRecord(resourceclassid_t classId, int rflags, String* name)
+ResourceRecord::ResourceRecord(fileclassid_t classId, int rflags, String* name)
 {
     d = new Instance(classId, rflags);
     if(name) addName(*name);
@@ -167,14 +167,14 @@ ResourceRecord& ResourceRecord::locateResource()
         Uri path = Uri(*i, d->classId);
 
         // Attempt to resolve a path to the named resource.
-        if(!F_FindResource2(d->classId, reinterpret_cast<uri_s*>(&path), found)) continue;
+        if(!F_Find2(d->classId, reinterpret_cast<uri_s*>(&path), found)) continue;
 
         // We've found *something*.
         String foundPath = String(Str_Text(found));
 
         // Perform identity validation.
         bool validated = false;
-        if(d->classId == RC_PACKAGE)
+        if(d->classId == FC_PACKAGE)
         {
             /// @todo The identity configuration should declare the type of resource...
                 validated = recognizeWAD(foundPath, d->identityKeys);
@@ -219,7 +219,7 @@ String const& ResourceRecord::resolvedPath(bool tryLocate)
     return d->foundPath;
 }
 
-resourceclassid_t ResourceRecord::resourceClass() const
+fileclassid_t ResourceRecord::fileClass() const
 {
     return d->classId;
 }

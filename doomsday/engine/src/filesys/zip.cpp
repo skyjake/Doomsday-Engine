@@ -450,7 +450,7 @@ struct Zip::Instance
                         try
                         {
                             // Resolve all symbolic references in the path.
-                            filePath = Uri(filePathCopy, RC_NULL).resolved();
+                            filePath = Uri(filePathCopy, FC_NONE).resolved();
                         }
                         catch(de::Uri::ResolveError const& er)
                         {
@@ -471,7 +471,7 @@ struct Zip::Instance
                                          lumpIdx, baseOffset, ULONG(header->size),
                                          compressedSize),
                                 self);
-                PathTree::Node* node = lumpDirectory->insert(Uri(filePath, RC_NULL));
+                PathTree::Node* node = lumpDirectory->insert(Uri(filePath, FC_NONE));
                 node->setUserPointer(record);
 
                 lumpIdx++;
@@ -970,16 +970,16 @@ static bool applyGamePathMappings(String& path)
     if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        ResourceType const& rtype = F_GuessResourceTypeFromFileName(path.fileName());
+        FileType const& ftype = F_GuessFileTypeFromFileName(path.fileName());
 
-        switch(rtype.defaultClass())
+        switch(ftype.defaultClass())
         {
-        case RC_PACKAGE:
+        case FC_PACKAGE:
             // Mapped to the Data directory.
             path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
             return true;
 
-        case RC_DEFINITION:
+        case FC_DEFINITION:
             // Mapped to the Defs directory?
             path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
             return true;
@@ -990,8 +990,8 @@ static bool applyGamePathMappings(String& path)
     }
 
     // Key-named directories in the root might be mapped to another location.
-    ResourceNamespaces const& namespaces = F_ResourceNamespaces();
-    DENG2_FOR_EACH_CONST(ResourceNamespaces, i, namespaces)
+    FileNamespaces const& namespaces = F_FileNamespaces();
+    DENG2_FOR_EACH_CONST(FileNamespaces, i, namespaces)
     {
         if((*i)->applyPathMappings(path))
         {

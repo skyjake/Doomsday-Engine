@@ -39,12 +39,12 @@ Uri* composeMapUri(int episode, int map)
     if(episode > 0) // ExMy format.
     {
         de::Block pathUtf8 = QString("E%1M%2").arg(episode).arg(map).toUtf8();
-        return Uri_NewWithPath2(pathUtf8.constData(), RC_NULL);
+        return Uri_NewWithPath2(pathUtf8.constData(), FC_NONE);
     }
     else // MAPxx format.
     {
         de::Block pathUtf8 = QString("MAP%1").arg(map % 100, 2, 10, QChar('0')).toUtf8();
-        return Uri_NewWithPath2(pathUtf8.constData(), RC_NULL);
+        return Uri_NewWithPath2(pathUtf8.constData(), FC_NONE);
     }
 }
 

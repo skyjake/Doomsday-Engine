@@ -107,7 +107,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
     AutoStr* foundPath  = AutoStr_NewStd();
     Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex)));
 
-    if(F_FindResource4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, "-ck") &&
+    if(F_Find4(FC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, "-ck") &&
        GL_LoadImage(&image, Str_Text(foundPath)))
     {
         result = 2;

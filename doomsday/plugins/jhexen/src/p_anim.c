@@ -88,7 +88,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
 
                 if(!ignore)
                 {
-                    Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
+                    Uri* frameUrn = Uri_NewWithPath2("urn:", FC_NONE);
                     ddstring_t framePath;
 
                     Str_Init(&framePath);

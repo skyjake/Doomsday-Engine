@@ -1117,7 +1117,7 @@ static textureid_t findPatchTextureIdByName(const char* encodedName)
     Uri* uri;
     assert(encodedName && encodedName[0]);
 
-    uri = Uri_NewWithPath2(encodedName, RC_NULL);
+    uri = Uri_NewWithPath2(encodedName, FC_NONE);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
     texId = Textures_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
@@ -1168,12 +1168,12 @@ patchid_t R_DeclarePatch(const char* name)
     }
 
     // Compose the resource name
-    uri = Uri_NewWithPath2(TN_PATCHES_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2(TN_PATCHES_NAME":", FC_NONE);
     Uri_SetPath(uri, Str_Text(&encodedName));
     Str_Free(&encodedName);
 
     // Compose the path to the data resource.
-    resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
+    resourcePath = Uri_NewWithPath2("Lumps:", FC_NONE);
     Uri_SetPath(resourcePath, Str_Text(F_LumpName(lumpNum)));
 
     uniqueId = Textures_Count(TN_PATCHES)+1; // 1-based index.
@@ -2135,7 +2135,7 @@ static Uri* composeFlatUri(char const* lumpName)
     Uri* uri;
     AutoStr* flatName = AutoStr_NewStd();
     F_FileName(flatName, lumpName);
-    uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2(TN_FLATS_NAME":", FC_NONE);
     Uri_SetPath(uri, Str_Text(flatName));
     return uri;
 }
@@ -2152,7 +2152,7 @@ static Uri* composeFlatResourceUrn(lumpnum_t lumpNum)
     Uri* uri;
     char name[9];
     dd_snprintf(name, 9, "%i", lumpNum);
-    uri = Uri_NewWithPath2("LumpDir:", RC_NULL);
+    uri = Uri_NewWithPath2("LumpDir:", FC_NONE);
     Uri_SetPath(uri, name);
     return uri;
 }
@@ -2306,8 +2306,8 @@ void R_InitSpriteTextures(void)
 
     VERBOSE( Con_Message("Initializing Sprite textures...\n") )
 
-    uri = Uri_NewWithPath2(TN_SPRITES_NAME":", RC_NULL);
-    resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
+    uri = Uri_NewWithPath2(TN_SPRITES_NAME":", FC_NONE);
+    resourcePath = Uri_NewWithPath2("Lumps:", FC_NONE);
 
     Str_Init(&spriteName);
     Str_Init(&decodedSpriteName);
@@ -2403,7 +2403,7 @@ Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
     }
 
     dd_snprintf(name, 9, "%-*i", 8, uniqueId);
-    uri = Uri_NewWithPath2(name, RC_NULL);
+    uri = Uri_NewWithPath2(name, FC_NONE);
     Uri_SetScheme(uri, (isShinySkin? TN_MODELREFLECTIONSKINS_NAME : TN_MODELSKINS_NAME));
 
     texId = Textures_Declare(uri, uniqueId, filePath);
@@ -2437,9 +2437,9 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         // The "first choice" directory is that in which the model file resides.
         directory_t* mydir = Dir_FromText(modelfn);
         AutoStr* path = Str_Appendf(AutoStr_NewStd(), "%s%s", mydir->path, skin);
-        Uri* searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
+        Uri* searchPath = Uri_NewWithPath2(Str_Text(path), FC_NONE);
 
-        found = F_FindResource2(RC_GRAPHIC, searchPath, foundPath);
+        found = F_Find2(FC_GRAPHIC, searchPath, foundPath);
 
         Uri_Delete(searchPath);
         Dir_Delete(mydir);
@@ -2451,7 +2451,7 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         AutoStr* path = Str_Appendf(AutoStr_NewStd(), "Models:%s", skin);
         Uri* searchPath = Uri_NewWithPath(Str_Text(path));
 
-        found = F_FindResource2(RC_GRAPHIC, searchPath, foundPath);
+        found = F_Find2(FC_GRAPHIC, searchPath, foundPath);
 
         Uri_Delete(searchPath);
     }
@@ -2470,7 +2470,7 @@ Texture* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char
 
         if(expandSkinName(foundPath ? foundPath : &buf, skin, modelfn))
         {
-            Uri* uri = Uri_NewWithPath2(foundPath ? Str_Text(foundPath) : Str_Text(&buf), RC_NULL);
+            Uri* uri = Uri_NewWithPath2(foundPath ? Str_Text(foundPath) : Str_Text(&buf), FC_NONE);
             tex = R_CreateSkinTex(uri, isShinySkin);
             Uri_Delete(uri);
         }
@@ -2744,7 +2744,7 @@ Texture* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     }
 
     dd_snprintf(name, 9, "%-*i", 8, uniqueId);
-    uri = Uri_NewWithPath2(name, RC_NULL);
+    uri = Uri_NewWithPath2(name, FC_NONE);
     Uri_SetScheme(uri, TN_DETAILS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, def->detailTex);
@@ -2803,7 +2803,7 @@ Texture* R_CreateLightMap(const Uri* resourcePath)
     }
 
     dd_snprintf(name, 9, "%-*i", 8, uniqueId);
-    uri = Uri_NewWithPath2(name, RC_NULL);
+    uri = Uri_NewWithPath2(name, FC_NONE);
     Uri_SetScheme(uri, TN_LIGHTMAPS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, resourcePath);
@@ -2873,7 +2873,7 @@ Texture* R_CreateFlareTexture(const Uri* resourcePath)
 
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, uniqueId);
-    uri = Uri_NewWithPath2(name, RC_NULL);
+    uri = Uri_NewWithPath2(name, FC_NONE);
     Uri_SetScheme(uri, TN_FLAREMAPS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, resourcePath);
@@ -2933,7 +2933,7 @@ Texture* R_CreateReflectionTexture(const Uri* resourcePath)
     }
 
     dd_snprintf(name, 9, "%-*i", 8, uniqueId);
-    uri = Uri_NewWithPath2(name, RC_NULL);
+    uri = Uri_NewWithPath2(name, FC_NONE);
     Uri_SetScheme(uri, TN_REFLECTIONS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, resourcePath);
@@ -2995,7 +2995,7 @@ Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
     }
 
     dd_snprintf(name, 9, "%-*i", 8, uniqueId);
-    uri = Uri_NewWithPath2(name, RC_NULL);
+    uri = Uri_NewWithPath2(name, FC_NONE);
     Uri_SetScheme(uri, TN_MASKS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, resourcePath);

@@ -5766,7 +5766,7 @@ int Hu_MenuCvarEdit(mn_object_t* ob, mn_actionid_t action, void* parameters)
         break;
     case CVT_URIPTR: {
         /// @todo Sanitize and validate against known schemas.
-        Uri* uri = Uri_NewWithPath2(Str_Text(MNEdit_Text(ob)), RC_NULL);
+        Uri* uri = Uri_NewWithPath2(Str_Text(MNEdit_Text(ob)), FC_NONE);
         Con_SetUri2(edit->data1, uri, SVF_WRITE_OVERRIDE);
         Uri_Delete(uri);
         break;

@@ -158,15 +158,15 @@ public:
     }
 };
 
-struct ResourceNamespace::Instance
+struct FileNamespace::Instance
 {
-    ResourceNamespace& self;
+    FileNamespace& self;
 
     /// Symbolic name.
     String name;
 
     /// Flags which govern behavior.
-    ResourceNamespace::Flags flags;
+    FileNamespace::Flags flags;
 
     /// Associated path directory.
     /// @todo It should not be necessary for a unique directory per namespace.
@@ -183,9 +183,9 @@ struct ResourceNamespace::Instance
 
     /// Sets of search paths to look for resources to be included.
     /// Each set is in order of greatest-importance, right to left.
-    ResourceNamespace::SearchPaths searchPaths;
+    FileNamespace::SearchPaths searchPaths;
 
-    Instance(ResourceNamespace& d, String _name, ResourceNamespace::Flags _flags)
+    Instance(FileNamespace& d, String _name, FileNamespace::Flags _flags)
         : self(d), name(_name), flags(_flags), directory(), rootNode(0),
           nameHash(), nameHashIsDirty(true)
     {}
@@ -197,7 +197,7 @@ struct ResourceNamespace::Instance
      *
      * @param searchPath  The path to resolve and search.
      */
-    void addFromSearchPath(ResourceNamespace::SearchPath const& searchPath)
+    void addFromSearchPath(FileNamespace::SearchPath const& searchPath)
     {
         try
         {
@@ -216,9 +216,9 @@ struct ResourceNamespace::Instance
      *
      * @param group  Group of paths to search.
      */
-    void addFromSearchPaths(ResourceNamespace::PathGroup group)
+    void addFromSearchPaths(FileNamespace::PathGroup group)
     {
-        for(ResourceNamespace::SearchPaths::const_iterator i = searchPaths.find(group);
+        for(FileNamespace::SearchPaths::const_iterator i = searchPaths.find(group);
             i != searchPaths.end() && i.key() == group; ++i)
         {
             addFromSearchPath(*i);
@@ -245,12 +245,12 @@ struct ResourceNamespace::Instance
             // Time to construct the relative base node?
             if(!rootNode)
             {
-                rootNode = directory.insert(Uri("./", RC_NULL));
+                rootNode = directory.insert(Uri("./", FC_NONE));
             }
             return rootNode;
         }
 
-        return directory.insert(Uri(path, RC_NULL));
+        return directory.insert(Uri(path, FC_NONE));
     }
 
     void addDirectoryChildNodes(PathTree::Node& node, int flags)
@@ -322,22 +322,22 @@ struct ResourceNamespace::Instance
     }
 };
 
-ResourceNamespace::ResourceNamespace(String symbolicName, Flags flags)
+FileNamespace::FileNamespace(String symbolicName, Flags flags)
 {
     d = new Instance(*this, symbolicName, flags);
 }
 
-ResourceNamespace::~ResourceNamespace()
+FileNamespace::~FileNamespace()
 {
     delete d;
 }
 
-String const& ResourceNamespace::name() const
+String const& FileNamespace::name() const
 {
     return d->name;
 }
 
-void ResourceNamespace::clear()
+void FileNamespace::clear()
 {
     d->nameHash.clear();
     d->nameHashIsDirty = true;
@@ -345,22 +345,22 @@ void ResourceNamespace::clear()
     d->rootNode = 0;
 }
 
-void ResourceNamespace::rebuild()
+void FileNamespace::rebuild()
 {
     // Is a rebuild not necessary?
     if(!d->nameHashIsDirty) return;
 
-    LOG_AS("ResourceNamespace::rebuild");
+    LOG_AS("FileNamespace::rebuild");
     LOG_DEBUG("Rebuilding '%s'...") << d->name;
 
     // uint startTime = Timer_RealMilliseconds();
 
     // (Re)populate the directory and add found resources.
     clear();
-    d->addFromSearchPaths(ResourceNamespace::OverridePaths);
-    d->addFromSearchPaths(ResourceNamespace::ExtraPaths);
-    d->addFromSearchPaths(ResourceNamespace::DefaultPaths);
-    d->addFromSearchPaths(ResourceNamespace::FallbackPaths);
+    d->addFromSearchPaths(FileNamespace::OverridePaths);
+    d->addFromSearchPaths(FileNamespace::ExtraPaths);
+    d->addFromSearchPaths(FileNamespace::DefaultPaths);
+    d->addFromSearchPaths(FileNamespace::FallbackPaths);
 
     d->nameHashIsDirty = false;
 
@@ -377,7 +377,7 @@ static inline String composeResourceName(String const& filePath)
     return filePath.fileNameWithoutExtension();
 }
 
-bool ResourceNamespace::add(PathTree::Node& resourceNode)
+bool FileNamespace::add(PathTree::Node& resourceNode)
 {
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
@@ -417,7 +417,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     return isNewNode;
 }
 
-static String const& nameForPathGroup(ResourceNamespace::PathGroup group)
+static String const& nameForPathGroup(FileNamespace::PathGroup group)
 {
     static String const names[] = {
         "Override",
@@ -425,13 +425,13 @@ static String const& nameForPathGroup(ResourceNamespace::PathGroup group)
         "Default",
         "Fallback"
     };
-    DENG_ASSERT(int(group) >= ResourceNamespace::OverridePaths && int(group) <= ResourceNamespace::FallbackPaths);
+    DENG_ASSERT(int(group) >= FileNamespace::OverridePaths && int(group) <= FileNamespace::FallbackPaths);
     return names[int(group)];
 }
 
-bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flags)
+bool FileNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flags)
 {
-    LOG_AS("ResourceNamespace::addSearchPath");
+    LOG_AS("FileNamespace::addSearchPath");
 
     // Ensure this is a well formed path.
     if(path.isEmpty() ||
@@ -463,22 +463,22 @@ bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int 
     return true;
 }
 
-void ResourceNamespace::clearSearchPaths(PathGroup group)
+void FileNamespace::clearSearchPaths(PathGroup group)
 {
     d->searchPaths.remove(group);
 }
 
-void ResourceNamespace::clearSearchPaths()
+void FileNamespace::clearSearchPaths()
 {
     d->searchPaths.clear();
 }
 
-ResourceNamespace::SearchPaths const& ResourceNamespace::searchPaths() const
+FileNamespace::SearchPaths const& FileNamespace::searchPaths() const
 {
     return d->searchPaths;
 }
 
-int ResourceNamespace::findAll(String name, ResourceList& found)
+int FileNamespace::findAll(String name, FileList& found)
 {
     int numFoundSoFar = found.count();
 
@@ -511,7 +511,7 @@ int ResourceNamespace::findAll(String name, ResourceList& found)
     return found.count() - numFoundSoFar;
 }
 
-bool ResourceNamespace::applyPathMappings(String& path) const
+bool FileNamespace::applyPathMappings(String& path) const
 {
     if(path.isEmpty()) return false;
 
@@ -529,9 +529,9 @@ bool ResourceNamespace::applyPathMappings(String& path) const
 }
 
 #if _DEBUG
-void ResourceNamespace::debugPrint() const
+void FileNamespace::debugPrint() const
 {
-    LOG_AS("ResourceNamespace::debugPrint");
+    LOG_AS("FileNamespace::debugPrint");
     LOG_DEBUG("[%p]:") << de::dintptr(this);
 
     uint resIdx = 0;
@@ -554,42 +554,42 @@ void ResourceNamespace::debugPrint() const
 }
 #endif
 
-ResourceNamespace::SearchPath::SearchPath(int _flags, de::Uri& _uri)
+FileNamespace::SearchPath::SearchPath(int _flags, de::Uri& _uri)
     : flags_(_flags), uri_(&_uri)
 {}
 
-ResourceNamespace::SearchPath::SearchPath(SearchPath const& other)
+FileNamespace::SearchPath::SearchPath(SearchPath const& other)
     : flags_(other.flags_), uri_(new de::Uri(*other.uri_))
 {}
 
-ResourceNamespace::SearchPath::~SearchPath()
+FileNamespace::SearchPath::~SearchPath()
 {
     delete uri_;
 }
 
-ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::operator = (SearchPath other)
+FileNamespace::SearchPath& FileNamespace::SearchPath::operator = (SearchPath other)
 {
     swap(*this, other);
     return *this;
 }
 
-int ResourceNamespace::SearchPath::flags() const
+int FileNamespace::SearchPath::flags() const
 {
     return flags_;
 }
 
-ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::setFlags(int newFlags)
+FileNamespace::SearchPath& FileNamespace::SearchPath::setFlags(int newFlags)
 {
     flags_ = newFlags;
     return *this;
 }
 
-de::Uri const& ResourceNamespace::SearchPath::uri() const
+de::Uri const& FileNamespace::SearchPath::uri() const
 {
     return *uri_;
 }
 
-void swap(ResourceNamespace::SearchPath& first, ResourceNamespace::SearchPath& second)
+void swap(FileNamespace::SearchPath& first, FileNamespace::SearchPath& second)
 {
     std::swap(first.flags_,  second.flags_);
     std::swap(first.uri_,    second.uri_);
