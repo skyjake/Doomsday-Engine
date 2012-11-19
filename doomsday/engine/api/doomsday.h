@@ -160,8 +160,8 @@ gameid_t DD_GameIdForKey(char const* identityKey);
  * recent.
  *
  * @param game      Unique identifier/name of the game.
- * @param classId   Class of resource being added.
- * @param rflags    Resource flags (see @ref resourceFlags).
+ * @param classId   Class of resource being defined.
+ * @param fFlags    File flags (see @ref fileFlags).
  * @param names     One or more known potential names, seperated by semicolon
  *                  (e.g., <pre> "name1;name2" </pre>). Valid names include
  *                  absolute or relative file paths, possibly with encoded
@@ -171,7 +171,7 @@ gameid_t DD_GameIdForKey(char const* identityKey);
  *                  For package resources this may be C-String containing a
  *                  semicolon delimited list of identity keys.
  */
-void DD_AddGameResource(gameid_t game, fileclassid_t classId, int rflags,
+void DD_AddGameResource(gameid_t game, fileclassid_t classId, int fFlags,
                         const char* names, void* params);
 
 /**

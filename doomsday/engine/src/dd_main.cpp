@@ -370,7 +370,7 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-static void loadResource(ResourceRecord& record)
+static void loadResource(MetaFile& record)
 {
     DENG_ASSERT(record.fileClass() == FC_PACKAGE);
 
@@ -451,13 +451,13 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
-    de::Game::Resources const& gameResources = games->currentGame().resources();
-    int const numPackages = gameResources.count(FC_PACKAGE);
+    de::Game::MetaFiles const& gameMetafiles = games->currentGame().metafiles();
+    int const numPackages = gameMetafiles.count(FC_PACKAGE);
     int packageIdx = 0;
-    for(de::Game::Resources::const_iterator i = gameResources.find(FC_PACKAGE);
-        i != gameResources.end() && i.key() == FC_PACKAGE; ++i, ++packageIdx)
+    for(de::Game::MetaFiles::const_iterator i = gameMetafiles.find(FC_PACKAGE);
+        i != gameMetafiles.end() && i.key() == FC_PACKAGE; ++i, ++packageIdx)
     {
-        ResourceRecord& record = **i;
+        MetaFile& record = **i;
         loadResource(record);
 
         // Update our progress.
@@ -851,8 +851,8 @@ void DD_AddGameResource(gameid_t gameId, fileclassid_t classId, int rflags,
 
     // Construct and attach the new resource record.
     de::Game& game = games->byId(gameId);
-    ResourceRecord* record = new ResourceRecord(classId, rflags);
-    game.addResource(*record);
+    MetaFile* record = new MetaFile(classId, rflags);
+    game.addMetafile(*record);
 
     // Add the name list to the resource record.
     QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
@@ -1201,7 +1201,7 @@ de::Game* DD_AutoselectGame(void)
         try
         {
             de::Game& game = games->byIdentityKey(identityKey);
-            if(game.allStartupResourcesFound())
+            if(game.allStartupFilesFound())
             {
                 return &game;
             }
@@ -2266,10 +2266,10 @@ D_CMD(Load)
     try
     {
         de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
-        if(!game.allStartupResourcesFound())
+        if(!game.allStartupFilesFound())
         {
             Con_Message("Failed to locate all required startup resources:\n");
-            de::Game::printResources(game, RF_STARTUP);
+            de::Game::printFiles(game, FF_STARTUP);
             Con_Message("%s (%s) cannot be loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
             Str_Free(&searchPath);
             return true;

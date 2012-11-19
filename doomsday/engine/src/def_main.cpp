@@ -844,12 +844,12 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        de::Game::Resources const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->resources();
+        de::Game::MetaFiles const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->metafiles();
         int packageIdx = 0;
-        for(de::Game::Resources::const_iterator i = gameResources.find(FC_DEFINITION);
+        for(de::Game::MetaFiles::const_iterator i = gameResources.find(FC_DEFINITION);
             i != gameResources.end() && i.key() == FC_DEFINITION; ++i, ++packageIdx)
         {
-            de::ResourceRecord& record = **i;
+            de::MetaFile& record = **i;
             /// Try to locate this resource now.
             QString const& path = record.resolvedPath(true/*try to locate*/);
 

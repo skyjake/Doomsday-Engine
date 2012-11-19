@@ -25,18 +25,18 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-#include "filesys/zip.h"
 
-#include "resource/resourcerecord.h"
+#include "filesys/zip.h"
+#include "filesys/metafile.h"
 
 namespace de {
 
-struct ResourceRecord::Instance
+struct MetaFile::Instance
 {
     /// Class of resource.
     fileclassid_t classId;
 
-    /// @see resourceFlags.
+    /// @see fileFlags.
     int flags;
 
     /// Potential names for this resource. In precedence order - high (newest) to lowest.
@@ -46,7 +46,7 @@ struct ResourceRecord::Instance
     /// Used for identification purposes.
     QStringList identityKeys;
 
-    /// Index (in ResourceRecord::Instance::names) of the name used to locate
+    /// Index (in MetaFile::Instance::names) of the name used to locate
     /// this resource if found. Set during resource location.
     int foundNameIndex;
 
@@ -55,23 +55,23 @@ struct ResourceRecord::Instance
     String foundPath;
 
     Instance(fileclassid_t _rclass, int rflags)
-        : classId(_rclass), flags(rflags & ~RF_FOUND), names(),
+        : classId(_rclass), flags(rflags & ~FF_FOUND), names(),
           identityKeys(), foundNameIndex(-1), foundPath()
     {}
 };
 
-ResourceRecord::ResourceRecord(fileclassid_t classId, int rflags, String* name)
+MetaFile::MetaFile(fileclassid_t fClass, int fFlags, String* name)
 {
-    d = new Instance(classId, rflags);
+    d = new Instance(fClass, fFlags);
     if(name) addName(*name);
 }
 
-ResourceRecord::~ResourceRecord()
+MetaFile::~MetaFile()
 {
     delete d;
 }
 
-ResourceRecord& ResourceRecord::addName(String newName, bool* didAdd)
+MetaFile& MetaFile::addName(String newName, bool* didAdd)
 {
     // Is this name unique? We don't want duplicates.
     if(newName.isEmpty() || d->names.contains(newName, Qt::CaseInsensitive))
@@ -87,7 +87,7 @@ ResourceRecord& ResourceRecord::addName(String newName, bool* didAdd)
     return *this;
 }
 
-ResourceRecord& ResourceRecord::addIdentityKey(String newIdentityKey, bool* didAdd)
+MetaFile& MetaFile::addIdentityKey(String newIdentityKey, bool* didAdd)
 {
     // Is this key unique? We don't want duplicates.
     if(newIdentityKey.isEmpty() || d->identityKeys.contains(newIdentityKey, Qt::CaseInsensitive))
@@ -154,10 +154,10 @@ static bool recognizeZIP(String const& filePath, QStringList const& /*identityKe
     return false;
 }
 
-ResourceRecord& ResourceRecord::locateResource()
+MetaFile& MetaFile::locateFile()
 {
     // Already found?
-    if(d->flags & RF_FOUND) return *this;
+    if(d->flags & FF_FOUND) return *this;
 
     // Perform the search.
     AutoStr* found = AutoStr_NewStd();
@@ -190,7 +190,7 @@ ResourceRecord& ResourceRecord::locateResource()
         if(!validated) continue;
 
         // This is the resource we've been looking for.
-        d->flags |= RF_FOUND;
+        d->flags |= FF_FOUND;
         d->foundPath = foundPath;
         d->foundNameIndex = nameIndex;
         break;
@@ -199,50 +199,50 @@ ResourceRecord& ResourceRecord::locateResource()
     return *this;
 }
 
-ResourceRecord& ResourceRecord::forgetResource()
+MetaFile& MetaFile::forgetFile()
 {
-    if(d->flags & RF_FOUND)
+    if(d->flags & FF_FOUND)
     {
         d->foundPath.clear();
         d->foundNameIndex = -1;
-        d->flags &= ~RF_FOUND;
+        d->flags &= ~FF_FOUND;
     }
     return *this;
 }
 
-String const& ResourceRecord::resolvedPath(bool tryLocate)
+String const& MetaFile::resolvedPath(bool tryLocate)
 {
     if(tryLocate)
     {
-        locateResource();
+        locateFile();
     }
     return d->foundPath;
 }
 
-fileclassid_t ResourceRecord::fileClass() const
+fileclassid_t MetaFile::fileClass() const
 {
     return d->classId;
 }
 
-int ResourceRecord::resourceFlags() const
+int MetaFile::fileFlags() const
 {
     return d->flags;
 }
 
-QStringList const& ResourceRecord::identityKeys() const
+QStringList const& MetaFile::identityKeys() const
 {
     return d->identityKeys;
 }
 
-QStringList const& ResourceRecord::names() const
+QStringList const& MetaFile::names() const
 {
     return d->names;
 }
 
-void ResourceRecord::consolePrint(ResourceRecord& record, bool showStatus)
+void MetaFile::consolePrint(MetaFile& metafile, bool showStatus)
 {
-    QByteArray names = record.names().join(";").toUtf8();
-    bool const resourceFound = !!(record.resourceFlags() & RF_FOUND);
+    QByteArray names = metafile.names().join(";").toUtf8();
+    bool const resourceFound = !!(metafile.fileFlags() & FF_FOUND);
 
     if(showStatus)
         Con_Printf("%s", !resourceFound? " ! ":"   ");
@@ -251,7 +251,7 @@ void ResourceRecord::consolePrint(ResourceRecord& record, bool showStatus)
 
     if(showStatus)
     {
-        QByteArray foundPath = resourceFound? record.resolvedPath(false/*don't try to locate*/).toUtf8() : QByteArray("");
+        QByteArray foundPath = resourceFound? metafile.resolvedPath(false/*don't try to locate*/).toUtf8() : QByteArray("");
         Con_Printf(" %s%s", !resourceFound? "- missing" : "- found ", F_PrettyPath(foundPath.constData()));
     }
     Con_Printf("\n");

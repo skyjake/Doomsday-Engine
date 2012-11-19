@@ -26,7 +26,7 @@
 #include "de_filesys.h"
 
 #include "updater/downloaddialog.h"
-#include "resource/resourcerecord.h"
+#include "filesys/metafile.h"
 
 #include <de/Error>
 #include <de/Log>
@@ -40,8 +40,8 @@ struct Game::Instance
     /// Unique identifier of the plugin which registered this game.
     pluginid_t pluginId;
 
-    /// Records for required game resources (e.g., doomu.wad).
-    Game::Resources resources;
+    /// Records for required game files (e.g., doomu.wad).
+    Game::MetaFiles metafiles;
 
     /// Unique identifier string (e.g., "doom1-ultimate").
     ddstring_t identityKey;
@@ -59,7 +59,7 @@ struct Game::Instance
     ddstring_t bindingConfig;
 
     Instance(char const* _identityKey, char const* configDir)
-        : pluginId(0), resources()
+        : pluginId(0), metafiles()
     {
         Str_Set(Str_InitStd(&identityKey), _identityKey);
         DENG_ASSERT(!Str_IsEmpty(&identityKey));
@@ -82,10 +82,10 @@ struct Game::Instance
 
     ~Instance()
     {
-        DENG2_FOR_EACH(Game::Resources, i, resources)
+        DENG2_FOR_EACH(Game::MetaFiles, i, metafiles)
         {
-            ResourceRecord* record = *i;
-            delete record;
+            MetaFile* metafile = *i;
+            delete metafile;
         }
 
         Str_Free(&identityKey);
@@ -114,25 +114,25 @@ GameCollection& Game::collection() const
     return *reinterpret_cast<de::GameCollection*>(App_GameCollection());
 }
 
-Game& Game::addResource(ResourceRecord& record)
+Game& Game::addMetafile(MetaFile& metafile)
 {
     // Ensure we don't add duplicates.
-    Resources::const_iterator found = d->resources.find(record.fileClass(), &record);
-    if(found == d->resources.end())
+    MetaFiles::const_iterator found = d->metafiles.find(metafile.fileClass(), &metafile);
+    if(found == d->metafiles.end())
     {
-        d->resources.insert(record.fileClass(), &record);
+        d->metafiles.insert(metafile.fileClass(), &metafile);
     }
     return *this;
 }
 
-bool Game::allStartupResourcesFound() const
+bool Game::allStartupFilesFound() const
 {
-    DENG2_FOR_EACH_CONST(Resources, i, d->resources)
+    DENG2_FOR_EACH_CONST(MetaFiles, i, d->metafiles)
     {
-        ResourceRecord& record = **i;
-        int const flags = record.resourceFlags();
+        MetaFile& metafile = **i;
+        int const flags = metafile.fileFlags();
 
-        if((flags & RF_STARTUP) && !(flags & RF_FOUND))
+        if((flags & FF_STARTUP) && !(flags & FF_FOUND))
             return false;
     }
     return true;
@@ -174,9 +174,9 @@ ddstring_t const& Game::author() const
     return d->author;
 }
 
-Game::Resources const& Game::resources() const
+Game::MetaFiles const& Game::metafiles() const
 {
-    return d->resources;
+    return d->metafiles;
 }
 
 bool Game::isRequiredFile(File1& file)
@@ -190,13 +190,13 @@ bool Game::isRequiredFile(File1& file)
 
     bool isRequired = false;
 
-    for(Resources::const_iterator i = d->resources.find(FC_PACKAGE);
-        i != d->resources.end() && i.key() == FC_PACKAGE; ++i)
+    for(MetaFiles::const_iterator i = d->metafiles.find(FC_PACKAGE);
+        i != d->metafiles.end() && i.key() == FC_PACKAGE; ++i)
     {
-        ResourceRecord& record = **i;
-        if(!(record.resourceFlags() & RF_STARTUP)) continue;
+        MetaFile& metafile = **i;
+        if(!(metafile.fileFlags() & FF_STARTUP)) continue;
 
-        if(!record.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
+        if(!metafile.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
         {
             isRequired = true;
             break;
@@ -218,22 +218,22 @@ void Game::printBanner(Game const& game)
     Con_PrintRuler();
 }
 
-void Game::printResources(Game const& game, int rflags, bool printStatus)
+void Game::printFiles(Game const& game, int rflags, bool printStatus)
 {
     int numPrinted = 0;
 
     // Group output by resource class.
-    Resources const& resources = game.resources();
+    MetaFiles const& metafiles = game.metafiles();
     for(uint i = 0; i < FILECLASS_COUNT; ++i)
     {
         fileclassid_t const classId = fileclassid_t(i);
-        for(Resources::const_iterator i = resources.find(classId);
-            i != resources.end() && i.key() == classId; ++i)
+        for(MetaFiles::const_iterator i = metafiles.find(classId);
+            i != metafiles.end() && i.key() == classId; ++i)
         {
-            ResourceRecord& record = **i;
-            if(rflags >= 0 && (rflags & record.resourceFlags()))
+            MetaFile& metafile = **i;
+            if(rflags >= 0 && (rflags & metafile.fileFlags()))
             {
-                ResourceRecord::consolePrint(record, printStatus);
+                MetaFile::consolePrint(metafile, printStatus);
                 numPrinted += 1;
             }
         }
@@ -267,21 +267,21 @@ void Game::print(Game const& game, int flags)
     if(flags & PGF_LIST_STARTUP_RESOURCES)
     {
         Con_Printf("Startup resources:\n");
-        printResources(game, RF_STARTUP, (flags & PGF_STATUS) != 0);
+        printFiles(game, FF_STARTUP, (flags & PGF_STATUS) != 0);
     }
 
     if(flags & PGF_LIST_OTHER_RESOURCES)
     {
         Con_Printf("Other resources:\n");
         Con_Printf("   ");
-        printResources(game, 0, /*(flags & PGF_STATUS) != 0*/false);
+        printFiles(game, 0, /*(flags & PGF_STATUS) != 0*/false);
     }
 
     if(flags & PGF_STATUS)
         Con_Printf("Status: %s\n",
                    game.collection().isCurrentGame(game)? "Loaded" :
-                         game.allStartupResourcesFound()? "Complete/Playable" :
-                                                          "Incomplete/Not playable");
+                         game.allStartupFilesFound()? "Complete/Playable" :
+                                                      "Incomplete/Not playable");
 }
 
 NullGame::NullGame()
@@ -329,18 +329,18 @@ boolean Game_IsNullObject(Game const* game)
     return de::isNullGame(*reinterpret_cast<de::Game const*>(game));
 }
 
-struct game_s* Game_AddResource(struct game_s* game, struct resourcerecord_s* record)
+struct game_s* Game_AddMetafile(struct game_s* game, struct metafile_s* metafile)
 {
     SELF(game);
-    DENG_ASSERT(record);
-    self->addResource(reinterpret_cast<de::ResourceRecord&>(*record));
+    DENG_ASSERT(metafile);
+    self->addMetafile(reinterpret_cast<de::MetaFile&>(*metafile));
     return game;
 }
 
-boolean Game_AllStartupResourcesFound(struct game_s const* game)
+boolean Game_AllStartupFilesFound(struct game_s const* game)
 {
     SELF_CONST(game);
-    return self->allStartupResourcesFound();
+    return self->allStartupFilesFound();
 }
 
 struct game_s* Game_SetPluginId(struct game_s* game, pluginid_t pluginId)
@@ -400,7 +400,7 @@ void Game_PrintBanner(Game const* game)
 void Game_PrintResources(Game const* game, boolean printStatus, int rflags)
 {
     if(!game) return;
-    de::Game::printResources(*reinterpret_cast<de::Game const*>(game), rflags, CPP_BOOL(printStatus));
+    de::Game::printFiles(*reinterpret_cast<de::Game const*>(game), rflags, CPP_BOOL(printStatus));
 }
 
 void Game_Print(Game const* game, int flags)

@@ -1,11 +1,10 @@
 /**
- * @file resourcerecord.h
+ * @file metafile.h
  *
- * Resource Record.
- *
- * @ingroup resource
+ * Metafile. @ingroup fs
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCERECORD_H
-#define LIBDENG_RESOURCERECORD_H
+#ifndef LIBDENG_METAFILE_H
+#define LIBDENG_METAFILE_H
 
 #ifdef __cplusplus
 
@@ -35,79 +34,79 @@
 namespace de
 {
     /**
-     * Stores high-level metadata for and manages a logical resource.
+     * Stores high-level metadata for and manages a logical file resource.
      *
      * @ingroup core
      */
-    class ResourceRecord
+    class MetaFile
     {
     public:
         /**
-         * @param rClass    Class of resource.
-         * @param rFlags    @ref resourceFlags
-         * @param name      An expected name for the associated resource.
+         * @param fClass    Class of file.
+         * @param fFlags    @ref fileFlags
+         * @param name      An expected name for the associated file.
          */
-        ResourceRecord(fileclassid_t rClass, int rFlags, String* name = 0);
-        ~ResourceRecord();
+        MetaFile(fileclassid_t fClass, int fFlags, String* name = 0);
+        ~MetaFile();
 
-        /// @return Class of resource.
+        /// @return Class of file.
         fileclassid_t fileClass() const;
 
-        /// @return Flags for this resource.
-        int resourceFlags() const;
+        /// @return Flags for this file.
+        int fileFlags() const;
 
-        /// @return List of "identity keys" used to identify the resource.
+        /// @return List of "identity keys" used to identify the file.
         QStringList const& identityKeys() const;
 
-        /// @return List of names for the associated resource.
+        /// @return List of names for the associated file.
         QStringList const& names() const;
 
         /**
-         * Attempt to locate this resource by systematically resolving and then
+         * Attempt to locate this file by systematically resolving and then
          * checking each search path.
          */
-        ResourceRecord& locateResource();
+        MetaFile& locateFile();
 
         /**
-         * "Forget" the currently located resource if one has been found.
+         * "Forget" the currently located file if one has been found.
          */
-        ResourceRecord& forgetResource();
+        MetaFile& forgetFile();
 
         /**
-         * Attempt to resolve a path to (and maybe locate) this resource.
+         * Attempt to resolve a path to (and maybe locate) this file.
          *
-         * @param tryLocate  Attempt to locate the resource now.
+         * @param tryLocate  @c true= Attempt to locate the file now.
          *
-         * @return Path to the found resource or an empty string.
+         * @return Path to the found file or an empty string.
          *
-         * @see locateResource()
+         * @see locateFile()
          */
         String const& resolvedPath(bool tryLocate = true);
 
         /**
-         * Add a new sub-resource identity key to the list for this record.
+         * Add a new file segment identity key to the list for this metafile.
          *
          * @param newIdentityKey    New identity key (e.g., a lump/file name).
          * @param didAdd            If not @c =0, the outcome will be written here.
          */
-        ResourceRecord& addIdentityKey(String newIdentityKey, bool* didAdd = 0);
+        MetaFile& addIdentityKey(String newIdentityKey, bool* didAdd = 0);
 
         /**
-         * Add a new resource name to the list of names for this record.
+         * Add a new file name to the list of names for this metafile.
          *
-         * @param newName       New name for this resource. Newer names have precedence.
+         * @param newName       New name for this file. Newer names have precedence.
          * @param didAdd        If not @c =0, the outcome will be written here.
          */
-        ResourceRecord& addName(String newName, bool* didAdd = 0);
+        MetaFile& addName(String newName, bool* didAdd = 0);
 
         /**
-         * Print information about a resource to the console.
+         * Print information about a file to the console.
          *
-         * @param record        Record for the resource.
+         * @param metafile      Metafile for the file.
          * @param showStatus    @c true = print loaded/located status for the
-         *                      associated resource.
+         *                      associated file.
          */
-        static void consolePrint(ResourceRecord& record, bool showStatus = true);
+        static void consolePrint(MetaFile& metafile, bool showStatus = true);
 
     private:
         struct Instance;
@@ -118,4 +117,4 @@ namespace de
 
 #endif // __cplusplus
 
-#endif /* LIBDENG_RESOURCERECORD_H */
+#endif /* LIBDENG_METAFILE_H */

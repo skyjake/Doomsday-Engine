@@ -30,6 +30,5 @@
 #include "resource/font.h"
 #include "resource/fonts.h"
 #include "resource/models.h"
-#include "resource/resourcerecord.h"
 
 #endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */
