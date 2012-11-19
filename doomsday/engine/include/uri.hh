@@ -94,6 +94,13 @@ public:
      * Marks a segment in the URI's path. Makes no copy of the segments in the
      * path, only stores the location within the URI where they begin and end.
      *
+     * Examples:
+     * - Empty path (as produced by the default Uri constructor) => one empty segment ""
+     * - Unix-style root directory "/" => two empty segments "", ""
+     * - Windows-style root directory "c:/" => "c:", ""
+     * - relative path "some/dir/file.ext" => "some", "dir", file.ext"
+     * - Unix-style absolute "/some/file.ext" => "", "some", file.ext"
+     *
      * Note that only the path is broken down to segments. The other parts of a
      * URI are not processed in this fashion.
      *
@@ -172,7 +179,7 @@ public:
     /**
      * Constructs a Uri instance from a NativePath that refers to a file in
      * the native file system. All path directives such as '~' are
-     * expanded. The resultant Uri will have an empty/zero-length scheme
+     * expanded. The resultant Uri will have an empty (zero-length) scheme
      * (because file paths do not include one).
      *
      * @param path  Native path to a file in the native file system.
@@ -182,7 +189,7 @@ public:
     /**
      * Constructs a Uri instance from a NativePath that refers to a native
      * directory. All path directives such as '~' are expanded. The
-     * resultant Uri will have an empty/zero-length scheme (because file
+     * resultant Uri will have an empty (zero-length) scheme (because file
      * paths do not include one).
      *
      * @param nativeDirPath  Native path to a directory in the native
@@ -284,7 +291,7 @@ public:
     /**
      * Retrieve the segment with index @a index. Note that segments are indexed
      * in reverse order (right to left) and NOT the autological left to right
-     * order.
+     * order. There is always at least one segment (index 0).
      *
      * For example, if the path is "c:/mystuff/myaddon.addon" the corresponding
      * segment map is arranged as follows:
@@ -294,7 +301,7 @@ public:
      *
      * @note The zero-length name in UNIX-style absolute paths is also treated
      *       as a segment. For example, the path "/Users/username" has three
-     *       segments.
+     *       segments ("username", "Users", "").
      *
      * @param index  Reverse-index of the segment to lookup. All paths have
      *               at least one segment (even empty ones) thus index @c 0 will
@@ -305,13 +312,15 @@ public:
     Segment const& segment(int index) const;
 
     /**
-     * @return  Total number of segments in the URI segment map.
+     * @return  Total number of segments in the URI segment map. There is always
+     * at least one segment.
      * @see segment()
      */
     int segmentCount() const;
 
     /**
-     * @return  First segment in the path.
+     * @return  First segment in the path. If the path is empty, the returned
+     * segment is an empty (zero-length) segment.
      * @see segment()
      */
     inline Segment const& firstSegment() const {
@@ -319,7 +328,8 @@ public:
     }
 
     /**
-     * @return  Last segment in the path.
+     * @return  Last segment in the path. If the path is empty, the returned
+     * segment is an empty (zero-length) segment.
      * @see segment()
      */
     inline Segment const& lastSegment() const {
