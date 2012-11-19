@@ -26,8 +26,8 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "filesys/zip.h"
 #include "filesys/metafile.h"
+#include "resource/zip.h"
 
 namespace de {
 

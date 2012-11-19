@@ -1,6 +1,6 @@
 /**
  * @file wad.cpp
- * WAD archives. @ingroup fs
+ * WAD archives. @ingroup resource
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -28,7 +28,7 @@
 #include "pathtree.h"
 #include "resource/lumpcache.h"
 
-#include "filesys/wad.h"
+#include "resource/wad.h"
 
 #include <vector>
 #include <de/ByteOrder>

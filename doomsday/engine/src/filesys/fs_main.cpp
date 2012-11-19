@@ -45,8 +45,8 @@
 #include "filesys/locator.h"
 #include "filesys/lumpindex.h"
 
-#include "filesys/wad.h"
-#include "filesys/zip.h"
+#include "resource/wad.h"
+#include "resource/zip.h"
 #include "game.h"
 
 using namespace de;

@@ -37,8 +37,6 @@
 #include "filesys/metafile.h"
 #include "filesys/sys_direc.h"
 #include "filesys/sys_findfile.h"
-#include "filesys/wad.h"
-#include "filesys/zip.h"
 
 #ifdef UNIX
 #  include "unix/sys_path.h"

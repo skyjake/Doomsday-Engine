@@ -1,7 +1,6 @@
 /**
  * @file zip.cpp
- *
- * Zip archives. @ingroup fs
+ * Zip archives. @ingroup resource
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -30,6 +29,7 @@
 #include "de_filesys.h"
 #include "pathtree.h"
 #include "resource/lumpcache.h"
+#include "resource/zip.h"
 
 #include <de/App>
 #include <de/ByteOrder>

@@ -26,7 +26,7 @@
 #include "dd_games.h"
 
 #include "filesys/metafile.h"
-#include "filesys/zip.h"
+#include "resource/zip.h"
 
 namespace de {
 

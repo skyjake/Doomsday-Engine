@@ -191,8 +191,6 @@ DENG_HEADERS += \
     include/filesys/metafile.h \
     include/filesys/sys_direc.h \
     include/filesys/sys_findfile.h \
-    include/filesys/wad.h \
-    include/filesys/zip.h \
     include/game.h \
     include/gl/gl_defer.h \
     include/gl/gl_deferredapi.h \
@@ -312,6 +310,8 @@ DENG_HEADERS += \
     include/resource/texturevariant.h \
     include/resource/texturevariantspecification.h \
     include/resource/tga.h \
+    include/resource/wad.h \
+    include/resource/zip.h \
     include/server/sv_def.h \
     include/server/sv_frame.h \
     include/server/sv_infine.h \
@@ -477,8 +477,6 @@ SOURCES += \
     src/filesys/lumpindex.cpp \
     src/filesys/metafile.cpp \
     src/filesys/sys_direc.c \
-    src/filesys/wad.cpp \
-    src/filesys/zip.cpp \
     src/game.cpp \
     src/gl/dgl_common.c \
     src/gl/dgl_draw.c \
@@ -593,6 +591,8 @@ SOURCES += \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.c \
+    src/resource/wad.cpp \
+    src/resource/zip.cpp \
     src/server/sv_frame.c \
     src/server/sv_infine.c \
     src/server/sv_main.c \
