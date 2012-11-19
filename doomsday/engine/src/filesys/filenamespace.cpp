@@ -1,7 +1,7 @@
 /**
- * @file resourcenamespace.cpp
+ * @file filenamespace.cpp
  *
- * Resource namespace. @ingroup resource
+ * File namespace. @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -21,9 +21,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_filesys.h"
-
 #include <QDir>
+
+#include "de_base.h"
+#include "de_filesys.h"
 
 #include <de/App>
 #include <de/Log>
@@ -35,12 +36,12 @@
 namespace de {
 
 /**
- * Reference to a resource or file in the virtual file system.
+ * Reference to a file in the virtual file system.
  */
-class ResourceRef
+class FileRef
 {
 public:
-    ResourceRef(PathTree::Node& _directoryNode)
+    FileRef(PathTree::Node& _directoryNode)
         : directoryNode_(&_directoryNode)
     {}
 
@@ -48,7 +49,7 @@ public:
         return *directoryNode_;
     }
 
-    ResourceRef& setDirectoryNode(PathTree::Node& newDirectoryNode) {
+    FileRef& setDirectoryNode(PathTree::Node& newDirectoryNode) {
         directoryNode_ = &newDirectoryNode;
         return *this;
     }
@@ -58,7 +59,7 @@ public:
         return name_;
     }
 
-    ResourceRef& setName(String const& newName) {
+    FileRef& setName(String const& newName) {
         name_ = newName;
         return *this;
     }
@@ -89,10 +90,10 @@ public:
     struct Node
     {
         Node* next;
-        ResourceRef resource;
+        FileRef fileRef;
 
         Node(PathTree::Node& resourceNode)
-            : next(0), resource(resourceNode)
+            : next(0), fileRef(resourceNode)
         {}
     };
 
@@ -133,7 +134,7 @@ public:
     Node* findDirectoryNode(hash_type hashKey, PathTree::Node const& directoryNode)
     {
         Node* node = buckets[hashKey].first;
-        while(node && &node->resource.directoryNode() != &directoryNode)
+        while(node && &node->fileRef.directoryNode() != &directoryNode)
         {
             node = node->next;
         }
@@ -181,7 +182,7 @@ struct FileNamespace::Instance
     /// Set to @c true when the name hash is obsolete/out-of-date and should be rebuilt.
     byte nameHashIsDirty;
 
-    /// Sets of search paths to look for resources to be included.
+    /// Sets of search paths to look for files to be included.
     /// Each set is in order of greatest-importance, right to left.
     FileNamespace::SearchPaths searchPaths;
 
@@ -191,7 +192,7 @@ struct FileNamespace::Instance
     {}
 
     /**
-     * Add resources to this namespace by resolving search path, searching the
+     * Add files to this namespace by resolving search path, searching the
      * file system and populating our internal directory with the results.
      * Duplicates are automatically pruned.
      *
@@ -212,7 +213,7 @@ struct FileNamespace::Instance
     }
 
     /**
-     * Add resources to this namespace by resolving each search path in @a group.
+     * Add files to this namespace by resolving each search path in @a group.
      *
      * @param group  Group of paths to search.
      */
@@ -355,7 +356,7 @@ void FileNamespace::rebuild()
 
     // uint startTime = Timer_RealMilliseconds();
 
-    // (Re)populate the directory and add found resources.
+    // (Re)populate the directory and add found files.
     clear();
     d->addFromSearchPaths(FileNamespace::OverridePaths);
     d->addFromSearchPaths(FileNamespace::ExtraPaths);
@@ -372,7 +373,7 @@ void FileNamespace::rebuild()
 #endif*/
 }
 
-static inline String composeResourceName(String const& filePath)
+static inline String composeNamespaceName(String const& filePath)
 {
     return filePath.fileNameWithoutExtension();
 }
@@ -382,10 +383,10 @@ bool FileNamespace::add(PathTree::Node& resourceNode)
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
 
-    String name = composeResourceName(resourceNode.name());
+    String name = composeNamespaceName(resourceNode.name());
     NameHash::hash_type hashKey = NameHash::hashName(name);
 
-    // Is this a new resource?
+    // Is this a new file?
     bool isNewNode = false;
     NameHash::Node* hashNode = d->nameHash.findDirectoryNode(hashKey, resourceNode);
     if(!hashNode)
@@ -396,7 +397,7 @@ bool FileNamespace::add(PathTree::Node& resourceNode)
         hashNode = new NameHash::Node(resourceNode);
 #if _DEBUG
         // Take a copy of the name to aid in tracing bugs, etc...
-        hashNode->resource.setName(name);
+        hashNode->fileRef.setName(name);
 #endif
 
         // Link it to the list for this bucket.
@@ -411,8 +412,8 @@ bool FileNamespace::add(PathTree::Node& resourceNode)
     }
 
     // (Re)configure this record.
-    ResourceRef* res = &hashNode->resource;
-    res->setDirectoryNode(resourceNode);
+    FileRef* fileRef = &hashNode->fileRef;
+    fileRef->setDirectoryNode(resourceNode);
 
     return isNewNode;
 }
@@ -499,8 +500,8 @@ int FileNamespace::findAll(String name, FileList& found)
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
-            ResourceRef& resource = hashNode->resource;
-            PathTree::Node& node = resource.directoryNode();
+            FileRef& fileRef = hashNode->fileRef;
+            PathTree::Node& node = fileRef.directoryNode();
 
             if(!name.isEmpty() && !node.name().beginsWith(name, Qt::CaseInsensitive)) continue;
 
@@ -534,23 +535,23 @@ void FileNamespace::debugPrint() const
     LOG_AS("FileNamespace::debugPrint");
     LOG_DEBUG("[%p]:") << de::dintptr(this);
 
-    uint resIdx = 0;
+    uint namespaceIdx = 0;
     for(NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)
     {
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* node = bucket.first; node; node = node->next)
         {
-            ResourceRef const& res = node->resource;
+            FileRef const& fileRef = node->fileRef;
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
-                << resIdx << key << res.name()
-                << NativePath(res.directoryNode().composePath()).pretty();
+                << namespaceIdx << key << fileRef.name()
+                << NativePath(fileRef.directoryNode().composePath()).pretty();
 
-            ++resIdx;
+            ++namespaceIdx;
         }
     }
 
-    LOG_DEBUG("  %u %s in namespace.") << resIdx << (resIdx == 1? "resource" : "resources");
+    LOG_DEBUG("  %u %s in namespace.") << namespaceIdx << (namespaceIdx == 1? "file" : "files");
 }
 #endif
 

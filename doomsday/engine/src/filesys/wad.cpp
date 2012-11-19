@@ -25,9 +25,10 @@
 #include "de_base.h"
 #include "de_filesys.h"
 
-#include "resource/lumpcache.h"
-#include "filesys/wad.h"
 #include "pathtree.h"
+#include "resource/lumpcache.h"
+
+#include "filesys/wad.h"
 
 #include <vector>
 #include <de/ByteOrder>
