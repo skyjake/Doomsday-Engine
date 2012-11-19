@@ -99,7 +99,7 @@ public:
      * - Unix-style root directory "/" => two empty segments "", ""
      * - Windows-style root directory "c:/" => "c:", ""
      * - relative path "some/dir/file.ext" => "some", "dir", file.ext"
-     * - Unix-style absolute "/some/file.ext" => "", "some", file.ext"
+     * - Unix-style absolute path "/some/file.ext" => "", "some", file.ext"
      *
      * Note that only the path is broken down to segments. The other parts of a
      * URI are not processed in this fashion.
