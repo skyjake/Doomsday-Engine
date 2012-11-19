@@ -46,11 +46,11 @@ namespace de
          * @param fFlags    @ref fileFlags
          * @param name      An expected name for the associated file.
          */
-        MetaFile(fileclassid_t fClass, int fFlags, String* name = 0);
+        MetaFile(resourceclassid_t fClass, int fFlags, String* name = 0);
         ~MetaFile();
 
         /// @return Class of file.
-        fileclassid_t fileClass() const;
+        resourceclassid_t fileClass() const;
 
         /// @return Flags for this file.
         int fileFlags() const;

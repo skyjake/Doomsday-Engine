@@ -33,7 +33,7 @@
 #include <de/String>
 #include "filehandle.h"
 
-enum fileclassid_e;
+enum resourceclassid_e;
 
 namespace de
 {
@@ -48,7 +48,7 @@ namespace de
     class FileType
     {
     public:
-        FileType(String _name, fileclassid_e _defaultClass)
+        FileType(String _name, resourceclassid_e _defaultClass)
             : name_(_name), defaultClass_(_defaultClass)
         {}
 
@@ -61,7 +61,7 @@ namespace de
         }
 
         /// Return the unique identifier of the default class for this type of file.
-        fileclassid_e defaultClass() const
+        resourceclassid_e defaultClass() const
         {
             return defaultClass_;
         }
@@ -112,7 +112,7 @@ namespace de
         String name_;
 
         /// Default class attributed to files of this type.
-        fileclassid_e defaultClass_;
+        resourceclassid_e defaultClass_;
 
         /// List of known extensions for this file type.
         QStringList knownFileNameExtensions_;
@@ -126,7 +126,7 @@ namespace de
     class NullFileType : public FileType
     {
     public:
-        NullFileType() : FileType("FT_NONE",  FC_UNKNOWN)
+        NullFileType() : FileType("FT_NONE",  RC_UNKNOWN)
         {}
     };
 
@@ -141,7 +141,7 @@ namespace de
     class NativeFileType : public FileType
     {
     public:
-        NativeFileType(String name, fileclassid_t rclassId)
+        NativeFileType(String name, resourceclassid_t rclassId)
             : FileType(name, rclassId)
         {}
 

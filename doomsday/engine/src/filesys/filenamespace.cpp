@@ -246,12 +246,12 @@ struct FileNamespace::Instance
             // Time to construct the relative base node?
             if(!rootNode)
             {
-                rootNode = directory.insert(Uri("./", FC_NONE));
+                rootNode = directory.insert(Uri("./", RC_NULL));
             }
             return rootNode;
         }
 
-        return directory.insert(Uri(path, FC_NONE));
+        return directory.insert(Uri(path, RC_NULL));
     }
 
     void addDirectoryChildNodes(PathTree::Node& node, int flags)

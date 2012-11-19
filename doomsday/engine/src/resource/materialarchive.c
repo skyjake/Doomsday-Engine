@@ -153,7 +153,7 @@ static material_t* materialForSerialId(const MaterialArchive* mArc,
  */
 static void populate(MaterialArchive* mArc)
 {
-    Uri* unknownMaterial = Uri_NewWithPath2(UNKNOWN_MATERIALNAME, FC_NONE);
+    Uri* unknownMaterial = Uri_NewWithPath2(UNKNOWN_MATERIALNAME, RC_NULL);
     insertSerialId(mArc, 1, unknownMaterial, 0);
     Uri_Delete(unknownMaterial);
 
@@ -186,7 +186,7 @@ static int readRecord(MaterialArchive* mArc, materialarchive_record_t* rec, Read
     else if(mArc->version >= 2)
     {
         ddstring_t* path = Str_NewFromReader(reader);
-        Uri_SetUri2(rec->uri, Str_Text(path), FC_NONE);
+        Uri_SetUri2(rec->uri, Str_Text(path), RC_NULL);
         if(mArc->version == 2)
         {
             // We must encode the path.

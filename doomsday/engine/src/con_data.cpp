@@ -171,7 +171,7 @@ static void clearVariables(void)
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(cvartemplate_t const& tpl)
 {
-    de::Uri path = de::Uri(tpl.path, FC_NONE, CVARDIRECTORY_DELIMITER);
+    de::Uri path = de::Uri(tpl.path, RC_NULL, CVARDIRECTORY_DELIMITER);
     CVarDirectory::Node* node = cvarDirectory->insert(path);
     cvar_t* newVar;
 
@@ -777,7 +777,7 @@ cvar_t* Con_FindVariable(char const* path)
 
     try
     {
-        CVarDirectory::Node& node = cvarDirectory->find(de::Uri(path, FC_NONE, CVARDIRECTORY_DELIMITER),
+        CVarDirectory::Node& node = cvarDirectory->find(de::Uri(path, RC_NULL, CVARDIRECTORY_DELIMITER),
                                                         PCF_NO_BRANCH | PCF_MATCH_FULL);
         return (cvar_t*) node.userPointer();
     }

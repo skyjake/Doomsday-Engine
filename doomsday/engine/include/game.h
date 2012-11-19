@@ -70,7 +70,7 @@ class GameCollection;
 class Game
 {
 public:
-    typedef QMultiMap<fileclassid_t, MetaFile*> MetaFiles;
+    typedef QMultiMap<resourceclassid_t, MetaFile*> MetaFiles;
 
 public:
     /**
@@ -205,7 +205,7 @@ public:
         return true; // Always.
     }
 
-    struct metafile_s* const* metafiles(fileclassid_t /*classId*/, int* /*count*/) const {
+    struct metafile_s* const* metafiles(resourceclassid_t /*classId*/, int* /*count*/) const {
         return 0;
     }
 

@@ -92,16 +92,16 @@ void F_ResetAllFileNamespaces(void);
  *
  * @return  @c true iff a resource was found.
  */
-boolean F_Find4(fileclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags, char const* optionalSuffix);
-boolean F_Find3(fileclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
-boolean F_Find2(fileclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
-boolean F_Find(fileclassid_t classId, struct uri_s const* searchPath/*, foundPath = NULL*/);
+boolean F_Find4(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags, char const* optionalSuffix);
+boolean F_Find3(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags/*, optionalSuffix = NULL*/);
+boolean F_Find2(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+boolean F_Find(resourceclassid_t classId, struct uri_s const* searchPath/*, foundPath = NULL*/);
 
 /**
  * @return  If a resource is found, the index + 1 of the path from @a searchPaths
  *          that was used to find it; otherwise @c 0.
  */
-uint F_FindFromList(fileclassid_t classId, char const* searchPaths,
+uint F_FindFromList(resourceclassid_t classId, char const* searchPaths,
     ddstring_t* foundPath, int flags, char const* optionalSuffix);
 
 #ifdef __cplusplus
@@ -109,7 +109,7 @@ uint F_FindFromList(fileclassid_t classId, char const* searchPaths,
 
 namespace de {
 
-typedef QList<FileClass*> FileClasses;
+typedef QList<ResourceClass*> ResourceClasses;
 typedef QList<FileType*> FileTypes;
 typedef QList<FileNamespace*> FileNamespaces;
 
@@ -128,22 +128,22 @@ de::FileTypes const& F_FileTypes();
 de::FileNamespaces const& F_FileNamespaces();
 
 /**
- * Lookup a FileClass by id.
+ * Lookup a ResourceClass by id.
  *
  * @todo Refactor away.
  *
  * @param classId  Unique identifier of the class.
- * @return  FileClass associated with @a id.
+ * @return  ResourceClass associated with @a id.
  */
-de::FileClass& F_FileClassById(fileclassid_t classId);
+de::ResourceClass& F_ResourceClassById(resourceclassid_t classId);
 
 /**
- * Lookup a FileClass by symbolic name.
+ * Lookup a ResourceClass by symbolic name.
  *
  * @param name  Symbolic name of the class.
- * @return  FileClass associated with @a name; otherwise @c 0 (not found).
+ * @return  ResourceClass associated with @a name; otherwise @c 0 (not found).
  */
-de::FileClass& F_FileClassByName(de::String name);
+de::ResourceClass& F_ResourceClassByName(de::String name);
 
 /**
  * Lookup a FileType by symbolic name.

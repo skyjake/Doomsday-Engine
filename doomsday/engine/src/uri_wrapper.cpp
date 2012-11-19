@@ -75,9 +75,9 @@ static void readUri(Uri* uri, Reader* reader, de::String defaultScheme = "")
     Uri_SetPath  (uri, Str_Text(&path  ));
 }
 
-Uri* Uri_NewWithPath2(char const* path, fileclassid_t defaultFileClass)
+Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass)
 {
-    return reinterpret_cast<Uri*>( new de::Uri(path, defaultFileClass) );
+    return reinterpret_cast<Uri*>( new de::Uri(path, defaultResourceClass) );
 }
 
 Uri* Uri_NewWithPath(char const* path)
@@ -182,10 +182,10 @@ Uri* Uri_SetPath(Uri* uri, char const* path)
     return reinterpret_cast<Uri*>(&self->setPath(path));
 }
 
-Uri* Uri_SetUri2(Uri* uri, char const* path, fileclassid_t defaultFileClass)
+Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defaultResourceClass)
 {
     SELF(uri);
-    return reinterpret_cast<Uri*>(&self->setUri(path, defaultFileClass));
+    return reinterpret_cast<Uri*>(&self->setUri(path, defaultResourceClass));
 }
 
 Uri* Uri_SetUri(Uri* uri, char const* path)

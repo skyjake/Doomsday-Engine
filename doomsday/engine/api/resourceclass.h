@@ -1,7 +1,7 @@
 /**
- * @file fileclass.h
+ * @file resourceclass.h
  *
- * File Class. @ingroup fs
+ * Resource Class. @ingroup resource
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -21,35 +21,35 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILECLASS_H
-#define LIBDENG_FILECLASS_H
+#ifndef LIBDENG_RESOURCECLASS_H
+#define LIBDENG_RESOURCECLASS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * File Class Identifier.
+ * Resource Class Identifier.
  *
  * @ingroup base
  *
  * @todo Refactor away. These identifiers are no longer needed.
  */
-typedef enum fileclassid_e {
-    FC_NONE = -2,           ///< Not a real class.
-    FC_UNKNOWN = -1,        ///< Attempt to guess the class through evaluation of the path.
-    FILECLASS_FIRST = 0,
-    FC_PACKAGE = FILECLASS_FIRST,
-    FC_DEFINITION,
-    FC_GRAPHIC,
-    FC_MODEL,
-    FC_SOUND,
-    FC_MUSIC,
-    FC_FONT,
-    FILECLASS_COUNT
-} fileclassid_t;
+typedef enum resourceclassid_e {
+    RC_NULL = -2,           ///< Not a real class.
+    RC_UNKNOWN = -1,        ///< Attempt to guess the class through evaluation of the path.
+    RESOURCECLASS_FIRST = 0,
+    RC_PACKAGE = RESOURCECLASS_FIRST,
+    RC_DEFINITION,
+    RC_GRAPHIC,
+    RC_MODEL,
+    RC_SOUND,
+    RC_MUSIC,
+    RC_FONT,
+    RESOURCECLASS_COUNT
+} resourceclassid_t;
 
-#define VALID_FILECLASSID(n)   ((n) >= FILECLASS_FIRST && (n) < FILECLASS_COUNT)
+#define VALID_RESOURCECLASSID(n)   ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
 
 #ifdef __cplusplus
 } // extern "C"
@@ -65,48 +65,48 @@ typedef enum fileclassid_e {
 namespace de
 {
     /**
-     * FileClass encapsulates the properties and logics belonging to a logical
-     * class of resource file (e.g., Graphic, Model, Sound, etc...)
+     * ResourceClass encapsulates the properties and logics belonging to a logical
+     * class of resource (e.g., Graphic, Model, Sound, etc...)
      *
      * @ingroup base
      */
-    struct FileClass
+    struct ResourceClass
     {
     public:
         typedef QList<FileType*> Types;
 
     public:
-        FileClass(String _name, String _defaultNamespace)
+        ResourceClass(String _name, String _defaultNamespace)
             : name_(_name), defaultNamespace_(_defaultNamespace)
         {}
 
-        virtual ~FileClass() {};
+        virtual ~ResourceClass() {};
 
-        /// Return the symbolic name of this file class.
+        /// Return the symbolic name of this resource class.
         String const& name() const
         {
             return name_;
         }
 
-        /// Return the symbolic name of the default namespace for this class of file.
+        /// Return the symbolic name of the default namespace for this class of resource.
         String const& defaultNamespace() const
         {
             return defaultNamespace_;
         }
 
-        /// Return the number of file types for this class.
+        /// Return the number of file types for this class of resource.
         int fileTypeCount() const
         {
             return searchTypeOrder.count();
         }
 
         /**
-         * Add a new type of file to this class. Earlier types have priority.
+         * Add a new file type to this resource class. Earlier types have priority.
          *
          * @param ftype  File type to add.
          * @return  This instance.
          */
-        FileClass& addFileType(FileType* ftype)
+        ResourceClass& addFileType(FileType* ftype)
         {
             searchTypeOrder.push_back(ftype);
             return *this;
@@ -115,7 +115,7 @@ namespace de
         /**
          * Provides access to the file type list for efficient iteration.
          *
-         * @return  List of file types of this class.
+         * @return  List of file types for this class of resource.
          */
         Types const& fileTypes() const
         {
@@ -134,23 +134,23 @@ namespace de
     };
 
     /**
-     * The special "null" FileClass object.
+     * The special "null" ResourceClass object.
      *
      * @ingroup core
      */
-    struct NullFileClass : public FileClass
+    struct NullResourceClass : public ResourceClass
     {
-        NullFileClass() : FileClass("FC_NONE",  "")
+        NullResourceClass() : ResourceClass("FC_NONE",  "")
         {}
     };
 
-    /// @return  @c true= @a fclass is a "null-fileclass" object (not a real class).
-    inline bool isNullFileClass(FileClass const& fclass) {
-        return !!dynamic_cast<NullFileClass const*>(&fclass);
+    /// @return  @c true= @a rclass is a "null-resourceclass" object (not a real class).
+    inline bool isNullResourceClass(ResourceClass const& rclass) {
+        return !!dynamic_cast<NullResourceClass const*>(&rclass);
     }
 
 } // namespace de
 #endif // DENG2_C_API_ONLY
 #endif // __cplusplus
 
-#endif /* LIBDENG_FILECLASS_H */
+#endif /* LIBDENG_RESOURCECLASS_H */

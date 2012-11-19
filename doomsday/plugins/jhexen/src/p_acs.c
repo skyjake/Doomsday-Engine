@@ -1304,7 +1304,7 @@ static int CmdChangeFloor(void)
 
     Str_Init(&path);
     Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
-    uri = Uri_NewWithPath2(MN_FLATS_NAME":", FC_NONE);
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
     Str_Free(&path);
 
@@ -1340,7 +1340,7 @@ static int CmdChangeFloorDirect(void)
     Str_Init(&path);
     Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
 
-    uri = Uri_NewWithPath2(MN_FLATS_NAME":", FC_NONE);
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1372,7 +1372,7 @@ static int CmdChangeCeiling(void)
     Str_Init(&path);
     Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
 
-    uri = Uri_NewWithPath2(MN_FLATS_NAME":", FC_NONE);
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1407,7 +1407,7 @@ static int CmdChangeCeilingDirect(void)
     Str_Init(&path);
     Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
 
-    uri = Uri_NewWithPath2(MN_FLATS_NAME":", FC_NONE);
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1761,7 +1761,7 @@ static int CmdSetLineTexture(void)
     Str_Init(&path);
     Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
 
-    uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", FC_NONE);
+    uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);

@@ -803,7 +803,7 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 {
     try
     {
-        MaterialRepository::Node& node = matDirectory.find(de::Uri(path, FC_NONE), PCF_NO_BRANCH | PCF_MATCH_FULL);
+        MaterialRepository::Node& node = matDirectory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
         return reinterpret_cast<MaterialBind*>(node.userPointer());
     }
     catch(MaterialRepository::NotFoundError const&)
@@ -875,7 +875,7 @@ materialid_t Materials_ResolveUriCString2(char const* path, boolean quiet)
 {
     if(path && path[0])
     {
-        de::Uri uri = de::Uri(path, FC_NONE);
+        de::Uri uri = de::Uri(path, RC_NULL);
         return Materials_ResolveUri2(reinterpret_cast<uri_s*>(&uri), quiet);
     }
     return NOMATERIALID;
@@ -1935,7 +1935,7 @@ D_CMD(ListMaterials)
     // "listmaterials [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
-        uri.setUri(argv[1], FC_NONE);
+        uri.setUri(argv[1], RC_NULL);
         if(!uri.scheme().isEmpty())
         {
             namespaceId = DD_ParseMaterialNamespace(uri.schemeCStr());
@@ -2035,7 +2035,7 @@ D_CMD(InspectMaterial)
     Str path; Str_Init(&path);
     Str_PercentEncode(Str_Set(&path, argv[1]));
 
-    de::Uri search = de::Uri(Str_Text(&path), FC_NONE);
+    de::Uri search = de::Uri(Str_Text(&path), RC_NULL);
     Str_Free(&path);
 
     if(!search.scheme().isEmpty())

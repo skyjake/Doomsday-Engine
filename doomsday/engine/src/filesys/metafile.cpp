@@ -34,7 +34,7 @@ namespace de {
 struct MetaFile::Instance
 {
     /// Class of resource.
-    fileclassid_t classId;
+    resourceclassid_t classId;
 
     /// @see fileFlags.
     int flags;
@@ -54,13 +54,13 @@ struct MetaFile::Instance
     /// Set during resource location.
     String foundPath;
 
-    Instance(fileclassid_t _rclass, int rflags)
+    Instance(resourceclassid_t _rclass, int rflags)
         : classId(_rclass), flags(rflags & ~FF_FOUND), names(),
           identityKeys(), foundNameIndex(-1), foundPath()
     {}
 };
 
-MetaFile::MetaFile(fileclassid_t fClass, int fFlags, String* name)
+MetaFile::MetaFile(resourceclassid_t fClass, int fFlags, String* name)
 {
     d = new Instance(fClass, fFlags);
     if(name) addName(*name);
@@ -174,7 +174,7 @@ MetaFile& MetaFile::locateFile()
 
         // Perform identity validation.
         bool validated = false;
-        if(d->classId == FC_PACKAGE)
+        if(d->classId == RC_PACKAGE)
         {
             /// @todo The identity configuration should declare the type of resource...
                 validated = recognizeWAD(foundPath, d->identityKeys);
@@ -219,7 +219,7 @@ String const& MetaFile::resolvedPath(bool tryLocate)
     return d->foundPath;
 }
 
-fileclassid_t MetaFile::fileClass() const
+resourceclassid_t MetaFile::fileClass() const
 {
     return d->classId;
 }

@@ -562,7 +562,7 @@ void DED_RemoveLight(ded_t* ded, int index)
 int DED_AddMaterial(ded_t* ded, char const* uri)
 {
     ded_material_t* mat = DED_NewEntry((void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
-    if(uri) mat->uri = Uri_NewWithPath2(uri, FC_NONE);
+    if(uri) mat->uri = Uri_NewWithPath2(uri, RC_NULL);
     return mat - ded->materials;
 }
 
@@ -608,7 +608,7 @@ int DED_AddMapInfo(ded_t* ded, char const* uri)
     ded_mapinfo_t* inf = DED_NewEntry((void**) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
     int i;
 
-    if(uri) inf->uri = Uri_NewWithPath2(uri, FC_NONE);
+    if(uri) inf->uri = Uri_NewWithPath2(uri, RC_NULL);
     inf->gravity = 1;
     inf->parTime = -1; // unknown
 
@@ -681,7 +681,7 @@ int DED_AddCompositeFont(ded_t* ded, char const* uri)
 {
     ded_compositefont_t* cfont = DED_NewEntry((void **) &ded->compositeFonts, &ded->count.compositeFonts, sizeof(ded_compositefont_t));
 
-    if(uri) cfont->uri = Uri_NewWithPath2(uri, FC_NONE);
+    if(uri) cfont->uri = Uri_NewWithPath2(uri, RC_NULL);
     return cfont - ded->compositeFonts;
 }
 
@@ -725,7 +725,7 @@ int DED_AddDetail(ded_t* ded, char const* lumpname)
     ded_detailtexture_t* dtl = DED_NewEntry((void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
 
     if(lumpname && lumpname[0])
-        dtl->detailTex = Uri_NewWithPath2(lumpname, FC_NONE);
+        dtl->detailTex = Uri_NewWithPath2(lumpname, RC_NULL);
     dtl->scale = 1;
     dtl->strength = 1;
     // Default usage is allowed with custom textures and external replacements.

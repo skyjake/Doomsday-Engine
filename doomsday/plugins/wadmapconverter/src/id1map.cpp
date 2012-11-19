@@ -78,7 +78,7 @@ MaterialDictId Id1Map::addMaterialToDictionary(char const* name, MaterialDictGro
 
         // Material paths must be encoded.
         AutoStr* path = Str_PercentEncode(AutoStr_FromText(name));
-        Uri* uri = Uri_NewWithPath2(Str_Text(path), FC_NONE);
+        Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
         Uri_SetScheme(uri, group == MG_PLANE? MN_FLATS_NAME : MN_TEXTURES_NAME);
         uriCString = Uri_Compose(uri);
         Uri_Delete(uri);

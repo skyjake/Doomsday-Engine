@@ -2145,10 +2145,10 @@ TexSource GL_LoadExtTextureEX(image_t* image, char const* _searchPath,
 {
     DENG_ASSERT(image && _searchPath);
 {
-    Uri* searchPath = Uri_NewWithPath2(_searchPath, FC_GRAPHIC);
+    Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
     AutoStr* foundPath = AutoStr_NewStd();
 
-    boolean found = F_Find4(FC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, optionalSuffix);
+    boolean found = F_Find4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, optionalSuffix);
     Uri_Delete(searchPath);
 
     if(!found || !GL_LoadImage(image, Str_Text(foundPath)))
@@ -2206,10 +2206,10 @@ DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
 TexSource GL_LoadExtTexture(image_t* image, char const* _searchPath, gfxmode_t mode)
 {
     TexSource source = TEXS_NONE;
-    Uri* searchPath = Uri_NewWithPath2(_searchPath, FC_GRAPHIC);
+    Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
     AutoStr* foundPath = AutoStr_NewStd();
 
-    if(F_Find2(FC_GRAPHIC, searchPath, foundPath) &&
+    if(F_Find2(RC_GRAPHIC, searchPath, foundPath) &&
        GL_LoadImage(image, Str_Text(foundPath)))
     {
         // Force it to grayscale?
@@ -2705,7 +2705,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
     // First try to find an external resource.
     Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Patches:%s", Str_Text(&r->name))));
 
-    if(F_Find2(FC_GRAPHIC, searchPath, foundPath) &&
+    if(F_Find2(RC_GRAPHIC, searchPath, foundPath) &&
        GL_LoadImage(image, Str_Text(foundPath)))
     {
         // "External" image loaded.

@@ -450,7 +450,7 @@ struct Zip::Instance
                         try
                         {
                             // Resolve all symbolic references in the path.
-                            filePath = Uri(filePathCopy, FC_NONE).resolved();
+                            filePath = Uri(filePathCopy, RC_NULL).resolved();
                         }
                         catch(de::Uri::ResolveError const& er)
                         {
@@ -471,7 +471,7 @@ struct Zip::Instance
                                          lumpIdx, baseOffset, ULONG(header->size),
                                          compressedSize),
                                 self);
-                PathTree::Node* node = lumpDirectory->insert(Uri(filePath, FC_NONE));
+                PathTree::Node* node = lumpDirectory->insert(Uri(filePath, RC_NULL));
                 node->setUserPointer(record);
 
                 lumpIdx++;
@@ -974,12 +974,12 @@ static bool applyGamePathMappings(String& path)
 
         switch(ftype.defaultClass())
         {
-        case FC_PACKAGE:
+        case RC_PACKAGE:
             // Mapped to the Data directory.
             path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
             return true;
 
-        case FC_DEFINITION:
+        case RC_DEFINITION:
             // Mapped to the Defs directory?
             path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
             return true;

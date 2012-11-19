@@ -895,7 +895,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         searchPattern = App_BasePath() / searchPattern;
     }
 
-    de::Uri patternMap = de::Uri(searchPattern, FC_NONE);
+    de::Uri patternMap = de::Uri(searchPattern, RC_NULL);
     QByteArray searchPatternUtf8 = searchPattern.toUtf8();
 
     /*

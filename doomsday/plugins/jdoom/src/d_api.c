@@ -97,51 +97,51 @@ int G_RegisterGames(int hookType, int param, void* data)
 
     /* HacX */
     gameIds[doom2_hacx] = DD_DefineGame(&hacxDef);
-    DD_AddGameResource(GID(doom2_hacx), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2_hacx), FC_PACKAGE, FF_STARTUP, "hacx.wad", "HACX-R;PLAYPAL");
-    DD_AddGameResource(GID(doom2_hacx), FC_DEFINITION, 0, "hacx.ded", 0);
+    DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, FF_STARTUP, "hacx.wad", "HACX-R;PLAYPAL");
+    DD_AddGameResource(GID(doom2_hacx), RC_DEFINITION, 0, "hacx.ded", 0);
 
     /* Chex Quest */
     gameIds[doom_chex] = DD_DefineGame(&chexDef);
-    DD_AddGameResource(GID(doom_chex), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom_chex), FC_PACKAGE, FF_STARTUP, "chex.wad", "E1M1;E4M1;_DEUTEX_;POSSH0M0");
-    DD_AddGameResource(GID(doom_chex), FC_DEFINITION, 0, "chex.ded", 0);
+    DD_AddGameResource(GID(doom_chex), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom_chex), RC_PACKAGE, FF_STARTUP, "chex.wad", "E1M1;E4M1;_DEUTEX_;POSSH0M0");
+    DD_AddGameResource(GID(doom_chex), RC_DEFINITION, 0, "chex.ded", 0);
 
     /* DOOM2 (TNT) */
     gameIds[doom2_tnt] = DD_DefineGame(&doom2TntDef);
-    DD_AddGameResource(GID(doom2_tnt), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2_tnt), FC_PACKAGE, FF_STARTUP, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
-    DD_AddGameResource(GID(doom2_tnt), FC_DEFINITION, 0, "doom2-tnt.ded", 0);
+    DD_AddGameResource(GID(doom2_tnt), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom2_tnt), RC_PACKAGE, FF_STARTUP, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
+    DD_AddGameResource(GID(doom2_tnt), RC_DEFINITION, 0, "doom2-tnt.ded", 0);
 
     /* DOOM2 (Plutonia) */
     gameIds[doom2_plut] = DD_DefineGame(&doom2PlutDef);
-    DD_AddGameResource(GID(doom2_plut), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2_plut), FC_PACKAGE, FF_STARTUP, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
-    DD_AddGameResource(GID(doom2_plut), FC_DEFINITION, 0, "doom2-plut.ded", 0);
+    DD_AddGameResource(GID(doom2_plut), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom2_plut), RC_PACKAGE, FF_STARTUP, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
+    DD_AddGameResource(GID(doom2_plut), RC_DEFINITION, 0, "doom2-plut.ded", 0);
 
     /* DOOM2 */
     gameIds[doom2] = DD_DefineGame(&doom2Def);
-    DD_AddGameResource(GID(doom2), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2), FC_PACKAGE, FF_STARTUP, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
-    DD_AddGameResource(GID(doom2), FC_DEFINITION, 0, "doom2.ded", 0);
+    DD_AddGameResource(GID(doom2), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom2), RC_PACKAGE, FF_STARTUP, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
+    DD_AddGameResource(GID(doom2), RC_DEFINITION, 0, "doom2.ded", 0);
 
     /* DOOM (Ultimate) */
     gameIds[doom_ultimate] = DD_DefineGame(&doomUltimateDef);
-    DD_AddGameResource(GID(doom_ultimate), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom_ultimate), FC_PACKAGE, FF_STARTUP, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
-    DD_AddGameResource(GID(doom_ultimate), FC_DEFINITION, 0, "doom1-ultimate.ded", 0);
+    DD_AddGameResource(GID(doom_ultimate), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom_ultimate), RC_PACKAGE, FF_STARTUP, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
+    DD_AddGameResource(GID(doom_ultimate), RC_DEFINITION, 0, "doom1-ultimate.ded", 0);
 
     /* DOOM */
     gameIds[doom] = DD_DefineGame(&doomDef);
-    DD_AddGameResource(GID(doom), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom), FC_PACKAGE, FF_STARTUP, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
-    DD_AddGameResource(GID(doom), FC_DEFINITION, 0, "doom1.ded", 0);
+    DD_AddGameResource(GID(doom), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom), RC_PACKAGE, FF_STARTUP, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
+    DD_AddGameResource(GID(doom), RC_DEFINITION, 0, "doom1.ded", 0);
 
     /* DOOM (Shareware) */
     gameIds[doom_shareware] = DD_DefineGame(&doomShareDef);
-    DD_AddGameResource(GID(doom_shareware), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom_shareware), FC_PACKAGE, FF_STARTUP, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
-    DD_AddGameResource(GID(doom_shareware), FC_DEFINITION, 0, "doom1-share.ded", 0);
+    DD_AddGameResource(GID(doom_shareware), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom_shareware), RC_PACKAGE, FF_STARTUP, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
+    DD_AddGameResource(GID(doom_shareware), RC_DEFINITION, 0, "doom1-share.ded", 0);
     return true;
 
 #undef STARTUPPK3

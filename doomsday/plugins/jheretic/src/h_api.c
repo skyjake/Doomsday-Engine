@@ -84,21 +84,21 @@ int G_RegisterGames(int hookType, int param, void* data)
 
     /* Heretic (Extended) */
     gameIds[heretic_extended] = DD_DefineGame(&hereticExtDef);
-    DD_AddGameResource(GID(heretic_extended), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(heretic_extended), FC_PACKAGE, FF_STARTUP, "heretic.wad", "EXTENDED;E5M2;E5M7;E6M2;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
-    DD_AddGameResource(GID(heretic_extended), FC_DEFINITION, 0, "heretic-ext.ded", 0);
+    DD_AddGameResource(GID(heretic_extended), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(heretic_extended), RC_PACKAGE, FF_STARTUP, "heretic.wad", "EXTENDED;E5M2;E5M7;E6M2;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
+    DD_AddGameResource(GID(heretic_extended), RC_DEFINITION, 0, "heretic-ext.ded", 0);
 
     /* Heretic */
     gameIds[heretic] = DD_DefineGame(&hereticDef);
-    DD_AddGameResource(GID(heretic), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(heretic), FC_PACKAGE, FF_STARTUP, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
-    DD_AddGameResource(GID(heretic), FC_DEFINITION, 0, "heretic.ded", 0);
+    DD_AddGameResource(GID(heretic), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(heretic), RC_PACKAGE, FF_STARTUP, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
+    DD_AddGameResource(GID(heretic), RC_DEFINITION, 0, "heretic.ded", 0);
 
     /* Heretic (Shareware) */
     gameIds[heretic_shareware] = DD_DefineGame(&hereticShareDef);
-    DD_AddGameResource(GID(heretic_shareware), FC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(heretic_shareware), FC_PACKAGE, FF_STARTUP, "heretic1.wad", "E1M1;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
-    DD_AddGameResource(GID(heretic_shareware), FC_DEFINITION, 0, "heretic-share.ded", 0);
+    DD_AddGameResource(GID(heretic_shareware), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(heretic_shareware), RC_PACKAGE, FF_STARTUP, "heretic1.wad", "E1M1;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
+    DD_AddGameResource(GID(heretic_shareware), RC_DEFINITION, 0, "heretic-share.ded", 0);
     return true;
 
 #undef STARTUPPK3

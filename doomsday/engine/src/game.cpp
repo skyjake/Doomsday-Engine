@@ -190,8 +190,8 @@ bool Game::isRequiredFile(File1& file)
 
     bool isRequired = false;
 
-    for(MetaFiles::const_iterator i = d->metafiles.find(FC_PACKAGE);
-        i != d->metafiles.end() && i.key() == FC_PACKAGE; ++i)
+    for(MetaFiles::const_iterator i = d->metafiles.find(RC_PACKAGE);
+        i != d->metafiles.end() && i.key() == RC_PACKAGE; ++i)
     {
         MetaFile& metafile = **i;
         if(!(metafile.fileFlags() & FF_STARTUP)) continue;
@@ -224,9 +224,9 @@ void Game::printFiles(Game const& game, int rflags, bool printStatus)
 
     // Group output by resource class.
     MetaFiles const& metafiles = game.metafiles();
-    for(uint i = 0; i < FILECLASS_COUNT; ++i)
+    for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        fileclassid_t const classId = fileclassid_t(i);
+        resourceclassid_t const classId = resourceclassid_t(i);
         for(MetaFiles::const_iterator i = metafiles.find(classId);
             i != metafiles.end() && i.key() == classId; ++i)
         {

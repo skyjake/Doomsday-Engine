@@ -268,7 +268,7 @@ void P_InitMapInfo(void)
                 Str_Init(&path);
                 Str_PercentEncode(Str_Set(&path, sc_String));
 
-                uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", FC_NONE);
+                uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
                 Uri_SetPath(uri, Str_Text(&path));
                 info->sky1Material = Materials_ResolveUri(uri);
                 Uri_Delete(uri);
@@ -286,7 +286,7 @@ void P_InitMapInfo(void)
                 Str_Init(&path);
                 Str_PercentEncode(Str_Set(&path, sc_String));
 
-                uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", FC_NONE);
+                uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
                 Uri_SetPath(uri, Str_Text(&path));
                 info->sky2Material = Materials_ResolveUri(uri);
                 Uri_Delete(uri);

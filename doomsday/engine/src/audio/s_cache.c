@@ -577,10 +577,10 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
          */
         if(info->lumpNum < 0 || !F_LumpIsCustom(info->lumpNum))
         {
-            Uri* searchPath = Uri_NewWithPath2(info->lumpName, FC_SOUND);
+            Uri* searchPath = Uri_NewWithPath2(info->lumpName, RC_SOUND);
             AutoStr* foundPath = AutoStr_NewStd();
 
-            if(F_Find2(FC_SOUND, searchPath, foundPath) &&
+            if(F_Find2(RC_SOUND, searchPath, foundPath) &&
                (data = WAV_Load(Str_Text(foundPath), &bytesPer, &rate, &numSamples)))
             {
                 // Loading was successful.

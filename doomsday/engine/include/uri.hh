@@ -29,7 +29,7 @@
 #include <de/libdeng2.h>
 #include <de/ISerializable>
 
-#include "fileclass.h"
+#include "resourceclass.h"
 
 /// Schemes must be at least this many characters.
 #define DENG2_URI_MIN_SCHEME_LENGTH     2
@@ -146,11 +146,11 @@ public:
      *
      * @param path  Path to be parsed. Assumed to be in percent-encoded representation.
      *
-     * @param defaultFileClass  If no scheme is defined in @a path and this
-     *      is not @c FC_NONE, ask the resource locator whether it knows of an
+     * @param defaultResourceClass  If no scheme is defined in @a path and this
+     *      is not @c RC_NULL, ask the resource locator whether it knows of an
      *      appropriate default scheme for this class of resource.
      */
-    Uri(String path, fileclassid_t defaultFileClass = FC_UNKNOWN, QChar delimiter = '/');
+    Uri(String path, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar delimiter = '/');
 
     /**
      * Construct a Uri instance by duplicating @a other.
@@ -194,10 +194,10 @@ public:
      *
      * @param nativeDirPath  Native path to a directory in the native
      *                       file system.
-     * @param defaultFileClass  Default resource class.
+     * @param defaultResourceClass  Default resource class.
      */
     static Uri fromNativeDirPath(NativePath const& nativeDirPath,
-                                 fileclassid_t defaultFileClass = FC_NONE);
+                                 resourceclassid_t defaultResourceClass = RC_NULL);
 
     /**
      * Convert this URI to a text string.
@@ -272,11 +272,11 @@ public:
      *
      * @param newUri  URI to be parsed. Assumed to be in percent-encoded representation.
      *
-     * @param defaultFileClass  If no scheme is defined in @a newUri and
-     *      this is not @c FC_NONE, ask the resource locator whether it knows
+     * @param defaultResourceClass  If no scheme is defined in @a newUri and
+     *      this is not @c RC_NULL, ask the resource locator whether it knows
      *      of an appropriate default scheme for this class of resource.
      */
-    Uri& setUri(String newUri, fileclassid_t defaultFileClass = FC_UNKNOWN,
+    Uri& setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN,
                 QChar delimiter = '/');
 
     /**

@@ -293,7 +293,7 @@ static int findAllGameDataPaths(FS1::PathList& found)
     for(uint extIdx = 0; extensions[extIdx]; ++extIdx)
     {
         String pattern = String("$(App.DataPath)/$(GamePlugin.Name)/auto/*.") + extensions[extIdx];
-        App_FileSystem()->findAllPaths(de::Uri(pattern, FC_NONE).resolved(), 0, found);
+        App_FileSystem()->findAllPaths(de::Uri(pattern, RC_NULL).resolved(), 0, found);
     }
     return found.count() - numFoundSoFar;
 }
@@ -372,7 +372,7 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
 
 static void loadResource(MetaFile& record)
 {
-    DENG_ASSERT(record.fileClass() == FC_PACKAGE);
+    DENG_ASSERT(record.fileClass() == RC_PACKAGE);
 
     QString const& path = record.resolvedPath(false/*do not locate resource*/);
     if(!path.isEmpty())
@@ -438,10 +438,10 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
         // Create default Auto mappings in the runtime directory.
 
         // Data class resources.
-        App_FileSystem()->mapPath("auto/", de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", FC_NONE).resolved());
+        App_FileSystem()->mapPath("auto/", de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
 
         // Definition class resources.
-        App_FileSystem()->mapPath("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", FC_NONE).resolved());
+        App_FileSystem()->mapPath("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
     }
 
     /**
@@ -452,10 +452,10 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
     de::Game::MetaFiles const& gameMetafiles = games->currentGame().metafiles();
-    int const numPackages = gameMetafiles.count(FC_PACKAGE);
+    int const numPackages = gameMetafiles.count(RC_PACKAGE);
     int packageIdx = 0;
-    for(de::Game::MetaFiles::const_iterator i = gameMetafiles.find(FC_PACKAGE);
-        i != gameMetafiles.end() && i.key() == FC_PACKAGE; ++i, ++packageIdx)
+    for(de::Game::MetaFiles::const_iterator i = gameMetafiles.find(RC_PACKAGE);
+        i != gameMetafiles.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
         MetaFile& record = **i;
         loadResource(record);
@@ -841,12 +841,12 @@ boolean DD_GameInfo(GameInfo* info)
 }
 
 /// @note Part of the Doomsday public API.
-void DD_AddGameResource(gameid_t gameId, fileclassid_t classId, int rflags,
+void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
     char const* names, void* params)
 {
     DENG_ASSERT(games);
 
-    if(!VALID_FILECLASSID(classId)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
+    if(!VALID_RESOURCECLASSID(classId)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
     if(!names || !names[0]) Con_Error("DD_AddGameResource: Invalid name argument.");
 
     // Construct and attach the new resource record.
@@ -861,7 +861,7 @@ void DD_AddGameResource(gameid_t gameId, fileclassid_t classId, int rflags,
         record->addName(*i);
     }
 
-    if(params && classId == FC_PACKAGE)
+    if(params && classId == RC_PACKAGE)
     {
         // Add the identityKey list to the resource record.
         QStringList idKeys = String((char const*) params).split(";", QString::SkipEmptyParts);
@@ -1363,7 +1363,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FileNamespace* fnamespace = F_FileNamespaceByName(F_FileClassByName("FC_PACKAGE").defaultNamespace());
+    FileNamespace* fnamespace = F_FileNamespaceByName(F_ResourceClassByName("RC_PACKAGE").defaultNamespace());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -1376,7 +1376,7 @@ boolean DD_Init(void)
 
             // CommandLine_PathAt() always returns an absolute path.
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
-            de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), FC_PACKAGE);
+            de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
             fnamespace->addSearchPath(FileNamespace::DefaultPaths, uri, SPF_NO_DESCEND);
 
@@ -1622,7 +1622,7 @@ static int DD_StartupWorker(void* parm)
     // Add required engine resource files.
     de::Uri searchPath = de::Uri("Packages:doomsday.pk3");
     AutoStr* foundPath = AutoStr_NewStd();
-    if(!F_Find2(FC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
+    if(!F_Find2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
        !tryLoadFile(Str_Text(foundPath)))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
@@ -2289,8 +2289,8 @@ D_CMD(Load)
     AutoStr* foundPath = AutoStr_NewStd();
     for(; arg < argc; ++arg)
     {
-        de::Uri searchPath = de::Uri(NativePath(argv[arg]).expand().withSeparators('/'), FC_PACKAGE);
-        if(!F_Find3(FC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
+        de::Uri searchPath = de::Uri(NativePath(argv[arg]).expand().withSeparators('/'), RC_PACKAGE);
+        if(!F_Find3(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
 
         if(tryLoadFile(Str_Text(foundPath)))
         {
@@ -2420,8 +2420,8 @@ D_CMD(Unload)
     AutoStr* foundPath = AutoStr_NewStd();
     for(i = 1; i < argc; ++i)
     {
-        de::Uri searchPath = de::Uri(NativePath(argv[1]).expand().withSeparators('/'), FC_PACKAGE);
-        if(!F_Find2(FC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
+        de::Uri searchPath = de::Uri(NativePath(argv[1]).expand().withSeparators('/'), RC_PACKAGE);
+        if(!F_Find2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
 
         if(tryUnloadFile(Str_Text(foundPath)))
         {

@@ -2499,7 +2499,7 @@ static void SV_ReadSector(Sector* sec)
     if(hdr->version == 1)
     {
         // The flat numbers are absolute lump indices.
-        Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", FC_NONE);
+        Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
         Uri_SetPath(uri, Str_Text(W_LumpName(SV_ReadShort())));
         floorMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
@@ -3235,7 +3235,7 @@ static int SV_ReadFloor(floor_t* floor)
         else
         {
             // Flat number is an absolute lump index.
-            Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", FC_NONE);
+            Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
             ddstring_t name;
             Str_Init(&name);
             F_FileName(&name, Str_Text(W_LumpName(SV_ReadShort())));
@@ -3288,7 +3288,7 @@ static int SV_ReadFloor(floor_t* floor)
         floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
         // Flat number is an absolute lump index.
-        { Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", FC_NONE);
+        { Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
         ddstring_t name;
         Str_Init(&name);
         F_FileName(&name, Str_Text(W_LumpName(SV_ReadShort())));

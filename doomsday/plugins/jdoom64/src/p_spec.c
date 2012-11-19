@@ -133,7 +133,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
     boolean lastIsTexture = false; // Shut up compiler!
     ddstring_t framePath, startPath, endPath;
-    Uri* frameUrn = Uri_NewWithPath2("urn:", FC_NONE);
+    Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
     Uri* startUri = Uri_New();
     Uri* endUri = Uri_New();
     int i;

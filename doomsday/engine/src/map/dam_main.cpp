@@ -319,7 +319,7 @@ boolean DAM_AttemptMapLoad(Uri const* _uri)
             mapInfo = Def_GetMapInfo(map->uri);
             if(!mapInfo)
             {
-                de::Uri mapUri = de::Uri("*", FC_NONE);
+                de::Uri mapUri = de::Uri("*", RC_NULL);
                 mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s*>(&mapUri));
             }
 

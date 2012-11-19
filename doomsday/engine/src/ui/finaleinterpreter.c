@@ -641,11 +641,11 @@ static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const comma
             {
                 const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
                 AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
-                Uri_SetUri2(uri, Str_Text(defaultValue), FC_NONE);
+                Uri_SetUri2(uri, Str_Text(defaultValue), RC_NULL);
             }
             if(haveValue)
             {
-                Uri_SetUri2(uri, fi->_token, FC_NONE);
+                Uri_SetUri2(uri, fi->_token, RC_NULL);
             }
             op->data.uri = uri;
             break; }

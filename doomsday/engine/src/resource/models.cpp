@@ -513,13 +513,13 @@ static void registerAllSkins(model_t& mdl)
     {
         // Lastly try a skin named similarly to the model in the same directory.
         String const& modelFilePath = findModelPath(mdl.modelId);
-        de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), FC_GRAPHIC);
+        de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
 
         AutoStr* foundSkinPath = AutoStr_NewStd();
-        if(F_Find2(FC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundSkinPath))
+        if(F_Find2(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundSkinPath))
         {
             // Huzzah! we found a skin.
-            de::Uri uri = de::Uri(Str_Text(foundSkinPath), FC_NONE);
+            de::Uri uri = de::Uri(Str_Text(foundSkinPath), RC_NULL);
             mdl.skins[0].texture = R_CreateSkinTex(reinterpret_cast<uri_s const*>(&uri), false/*not a shiny skin*/);
 
             numFoundSkins = 1;
@@ -1091,7 +1091,7 @@ static void setupModel(ded_model_t& def)
         if(!subdef->filename || Uri_IsEmpty(subdef->filename)) continue;
 
         AutoStr* foundPath = AutoStr_NewStd();
-        if(!F_Find2(FC_MODEL, subdef->filename, foundPath))
+        if(!F_Find2(RC_MODEL, subdef->filename, foundPath))
         {
             LOG_WARNING("Failed to locate \"%s\", ignoring.") << reinterpret_cast<de::Uri&>(*subdef->filename);
             continue;

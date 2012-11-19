@@ -25,7 +25,7 @@
 
 #include "dd_types.h"
 
-#include "fileclass.h"
+#include "resourceclass.h"
 #include "filetype.h"
 
 #include "filesys/filehandlebuilder.h"

@@ -171,7 +171,7 @@ gameid_t DD_GameIdForKey(char const* identityKey);
  *                  For package resources this may be C-String containing a
  *                  semicolon delimited list of identity keys.
  */
-void DD_AddGameResource(gameid_t game, fileclassid_t classId, int fFlags,
+void DD_AddGameResource(gameid_t game, resourceclassid_t classId, int fFlags,
                         const char* names, void* params);
 
 /**
