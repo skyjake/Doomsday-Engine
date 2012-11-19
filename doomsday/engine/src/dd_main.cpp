@@ -56,6 +56,9 @@
 #include "m_misc.h"
 #include "filesys/locator.h"
 
+extern int renderTextures;
+extern int monochrome;
+
 using namespace de;
 
 typedef struct ddvalue_s {
@@ -80,9 +83,6 @@ static bool tryLoadFile(String path, size_t baseOffset = 0, de::File1** file = 0
 
 static bool tryUnloadFile(String path);
 
-extern int renderTextures;
-extern int monochrome;
-
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
 filename_t ddRuntimePath, ddBinPath;
 
@@ -95,6 +95,9 @@ char* startupFiles = "";
 
 // Id of the currently running title finale if playing, else zero.
 finaleid_t titleFinale;
+
+static NullResourceClass nullClass;
+static ResourceClasses classes;
 
 // List of session data files (specified via the command line or in a cfg, or
 // found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
@@ -141,6 +144,51 @@ D_CMD(ShowUpdateSettings)
 
     Updater_ShowSettings();
     return true;
+}
+
+void DD_CreateResourceClasses()
+{
+    classes.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
+    classes.push_back(new ResourceClass("RC_DEFINITION",    "Defs"));
+    classes.push_back(new ResourceClass("RC_GRAPHIC",       "Graphics"));
+    classes.push_back(new ResourceClass("RC_MODEL",         "Models"));
+    classes.push_back(new ResourceClass("RC_SOUND",         "Sfx"));
+    classes.push_back(new ResourceClass("RC_MUSIC",         "Music"));
+    classes.push_back(new ResourceClass("RC_FONT",          "Fonts"));
+}
+
+void DD_ClearResourceClasses()
+{
+    DENG2_FOR_EACH(ResourceClasses, i, classes)
+    {
+        delete *i;
+    }
+    classes.clear();
+}
+
+ResourceClass& DD_ResourceClassByName(String name)
+{
+    if(!name.isEmpty())
+    {
+        DENG2_FOR_EACH_CONST(ResourceClasses, i, classes)
+        {
+            ResourceClass& rclass = **i;
+            if(!rclass.name().compareWithoutCase(name))
+                return rclass;
+        }
+    }
+    return nullClass; // Not found.
+}
+
+ResourceClass& DD_ResourceClassById(resourceclassid_t id)
+{
+    if(id == RC_NULL) return nullClass;
+    if(!VALID_RESOURCECLASSID(id))
+    {
+        QByteArray msg = String("DD_ResourceClassById: Invalid id '%1'").arg(int(id)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+    }
+    return *classes[uint(id)];
 }
 
 /**
@@ -1342,6 +1390,7 @@ boolean DD_Init(void)
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
+    DD_CreateResourceClasses();
     F_Init();
 
     Fonts_Init();
@@ -1363,7 +1412,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FileNamespace* fnamespace = F_FileNamespaceByName(F_ResourceClassByName("RC_PACKAGE").defaultNamespace());
+    FileNamespace* fnamespace = F_FileNamespaceByName(DD_ResourceClassByName("RC_PACKAGE").defaultNamespace());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))

@@ -812,7 +812,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             CHECKSC;
 
             de::Uri newSearchPath = de::Uri::fromNativeDirPath(NativePath(label));
-            FileNamespace* fnamespace = F_FileNamespaceByName(F_ResourceClassByName("RC_MODEL").defaultNamespace());
+            FileNamespace* fnamespace = F_FileNamespaceByName(DD_ResourceClassByName("RC_MODEL").defaultNamespace());
             DENG_ASSERT(fnamespace);
             fnamespace->addSearchPath(FileNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath), 0);
         }

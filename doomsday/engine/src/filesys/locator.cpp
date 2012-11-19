@@ -78,19 +78,10 @@ public:
 
 static bool inited = false;
 
-static NullResourceClass nullClass;
 static NullFileType nullType;
 
 static FileTypes types;
-static ResourceClasses classes;
 static FileNamespaces namespaces;
-
-static inline ResourceClass& resourceClass(resourceclassid_t id)
-{
-    if(id == RC_NULL) return nullClass;
-    if(!VALID_RESOURCECLASSID(id)) throw Error("resourceClass", String("Invalid id %1").arg(id));
-    return *classes[uint(id)];
-}
 
 /**
  * @param name      Unique symbolic name of this namespace. Must be at least
@@ -192,7 +183,7 @@ static bool findFile2(int flags, resourceclassid_t classId, String searchPath,
         if(flags & RLF_MATCH_EXTENSION) return false;
     }
 
-    ResourceClass const& rclass = resourceClass(classId);
+    ResourceClass const& rclass = DD_ResourceClassById(classId);
     if(!rclass.fileTypeCount()) return false;
 
     /*
@@ -389,17 +380,6 @@ static void createFileNamespaces()
     }
 }
 
-static void createResourceClasses()
-{
-    classes.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
-    classes.push_back(new ResourceClass("RC_DEFINITION",    "Defs"));
-    classes.push_back(new ResourceClass("RC_GRAPHIC",       "Graphics"));
-    classes.push_back(new ResourceClass("RC_MODEL",         "Models"));
-    classes.push_back(new ResourceClass("RC_SOUND",         "Sfx"));
-    classes.push_back(new ResourceClass("RC_MUSIC",         "Music"));
-    classes.push_back(new ResourceClass("RC_FONT",          "Fonts"));
-}
-
 static void createFileTypes()
 {
     FileType* ftype;
@@ -407,7 +387,7 @@ static void createFileTypes()
     /*
      * Packages types:
      */
-    ResourceClass& packageClass = F_ResourceClassByName("RC_PACKAGE");
+    ResourceClass& packageClass = DD_ResourceClassByName("RC_PACKAGE");
 
     types.push_back(new ZipFileType());
     ftype = types.back();
@@ -430,12 +410,12 @@ static void createFileTypes()
     types.push_back(new FileType("FT_DED", RC_DEFINITION));
     ftype = types.back();
     ftype->addKnownExtension(".ded");
-    F_ResourceClassByName("RC_DEFINITION").addFileType(ftype);
+    DD_ResourceClassByName("RC_DEFINITION").addFileType(ftype);
 
     /*
      * Graphic types:
      */
-    ResourceClass& graphicClass = F_ResourceClassByName("RC_GRAPHIC");
+    ResourceClass& graphicClass = DD_ResourceClassByName("RC_GRAPHIC");
 
     types.push_back(new FileType("FT_PNG", RC_GRAPHIC));
     ftype = types.back();
@@ -460,7 +440,7 @@ static void createFileTypes()
     /*
      * Model types:
      */
-    ResourceClass& modelClass = F_ResourceClassByName("RC_MODEL");
+    ResourceClass& modelClass = DD_ResourceClassByName("RC_MODEL");
 
     types.push_back(new FileType("FT_DMD", RC_MODEL));
     ftype = types.back();
@@ -478,12 +458,12 @@ static void createFileTypes()
     types.push_back(new FileType("FT_WAV", RC_SOUND));
     ftype = types.back();
     ftype->addKnownExtension(".wav");
-    F_ResourceClassByName("RC_SOUND").addFileType(ftype);
+    DD_ResourceClassByName("RC_SOUND").addFileType(ftype);
 
     /*
      * Music types:
      */
-    ResourceClass& musicClass = F_ResourceClassByName("RC_MUSIC");
+    ResourceClass& musicClass = DD_ResourceClassByName("RC_MUSIC");
 
     types.push_back(new FileType("FT_OGG", RC_MUSIC));
     ftype = types.back();
@@ -511,7 +491,7 @@ static void createFileTypes()
     types.push_back(new FileType("FT_DFN", RC_FONT));
     ftype = types.back();
     ftype->addKnownExtension(".dfn");
-    F_ResourceClassByName("RC_FONT").addFileType(ftype);
+    DD_ResourceClassByName("RC_FONT").addFileType(ftype);
 
     /*
      * Misc types:
@@ -525,7 +505,6 @@ void F_InitResourceLocator()
 {
     if(inited) return;
 
-    createResourceClasses();
     createFileTypes();
     createFileNamespaces();
     inited = true;
@@ -546,12 +525,6 @@ void F_ShutdownResourceLocator()
         delete *i;
     }
     types.clear();
-
-    DENG2_FOR_EACH(ResourceClasses, i, classes)
-    {
-        delete *i;
-    }
-    classes.clear();
 
     inited = false;
 }
@@ -576,20 +549,6 @@ FileNamespace* F_FileNamespaceByName(String name)
         }
     }
     return 0; // Not found.
-}
-
-ResourceClass& F_ResourceClassByName(String name)
-{
-    if(!name.isEmpty())
-    {
-        DENG2_FOR_EACH_CONST(ResourceClasses, i, classes)
-        {
-            ResourceClass& rclass = **i;
-            if(!rclass.name().compareWithoutCase(name))
-                return rclass;
-        }
-    }
-    return nullClass; // Not found.
 }
 
 FileType& F_FileTypeByName(String name)
@@ -618,12 +577,6 @@ FileType& F_GuessFileTypeFromFileName(String path)
         }
     }
     return nullType;
-}
-
-ResourceClass& F_ResourceClassById(resourceclassid_t id)
-{
-    if(!VALID_RESOURCECLASSID(id)) throw Error("F_ResourceClassById", String("Invalid id '%1'").arg(int(id)));
-    return resourceClass(id);
 }
 
 FileTypes const& F_FileTypes()

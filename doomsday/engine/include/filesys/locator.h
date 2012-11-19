@@ -109,7 +109,6 @@ uint F_FindFromList(resourceclassid_t classId, char const* searchPaths,
 
 namespace de {
 
-typedef QList<ResourceClass*> ResourceClasses;
 typedef QList<FileType*> FileTypes;
 typedef QList<FileNamespace*> FileNamespaces;
 
@@ -126,24 +125,6 @@ de::FileNamespace* F_FileNamespaceByName(de::String name);
 de::FileTypes const& F_FileTypes();
 
 de::FileNamespaces const& F_FileNamespaces();
-
-/**
- * Lookup a ResourceClass by id.
- *
- * @todo Refactor away.
- *
- * @param classId  Unique identifier of the class.
- * @return  ResourceClass associated with @a id.
- */
-de::ResourceClass& F_ResourceClassById(resourceclassid_t classId);
-
-/**
- * Lookup a ResourceClass by symbolic name.
- *
- * @param name  Symbolic name of the class.
- * @return  ResourceClass associated with @a name; otherwise @c 0 (not found).
- */
-de::ResourceClass& F_ResourceClassByName(de::String name);
 
 /**
  * Lookup a FileType by symbolic name.

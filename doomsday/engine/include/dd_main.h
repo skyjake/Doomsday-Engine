@@ -38,6 +38,11 @@
 #include <de/c_wrapper.h>
 
 #ifdef __cplusplus
+
+#include <Qlist>
+#include <de/String>
+#include "resourceclass.h"
+
 extern "C" {
 #endif
 
@@ -139,6 +144,37 @@ void DD_SetVariable(int ddvalue, void* ptr);
 void* DD_GetVariable(int ddvalue);
 
 ddplayer_t* DD_GetPlayer(int number);
+
+void DD_CreateResourceClasses();
+void DD_ClearResourceClasses();
+
+#ifdef __cplusplus
+
+namespace de {
+
+typedef QList<ResourceClass*> ResourceClasses;
+
+}
+
+/**
+ * Lookup a ResourceClass by id.
+ *
+ * @todo Refactor away.
+ *
+ * @param classId  Unique identifier of the class.
+ * @return  ResourceClass associated with @a id.
+ */
+de::ResourceClass& DD_ResourceClassById(resourceclassid_t classId);
+
+/**
+ * Lookup a ResourceClass by symbolic name.
+ *
+ * @param name  Symbolic name of the class.
+ * @return  ResourceClass associated with @a name; otherwise @c 0 (not found).
+ */
+de::ResourceClass& DD_ResourceClassByName(de::String name);
+
+#endif // __cplusplus
 
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
 

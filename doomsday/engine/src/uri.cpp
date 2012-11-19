@@ -272,7 +272,7 @@ struct Uri::Instance
 
         if(VALID_RESOURCECLASSID(defaultResourceClass))
         {
-            FileNamespace* fnamespace = F_FileNamespaceByName(F_ResourceClassById(defaultResourceClass).defaultNamespace());
+            FileNamespace* fnamespace = F_FileNamespaceByName(DD_ResourceClassById(defaultResourceClass).defaultNamespace());
             DENG_ASSERT(fnamespace);
             scheme = fnamespace->name();
         }
