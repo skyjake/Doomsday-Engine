@@ -1,9 +1,6 @@
 /**
- * @file resourcerecord.h
- *
- * Resource Record.
- *
- * @ingroup resource
+ * @file resourcemanifest.h
+ * Manifest of a resource. @ingroup resource
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  *
@@ -17,9 +14,8 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG_RESOURCERECORD_H
@@ -35,79 +31,102 @@
 namespace de
 {
     /**
-     * Stores high-level metadata for and manages a logical resource.
+     * Stores metadata about a resource and provides a way to locate the actual
+     * file(s) containing the resource. @ingroup resource
      *
-     * @ingroup core
+     * Resources are identified both by identity keys and names:
+     * - identity key might be <tt>PLAYPAL>=2048</tt>, or <tt>E1M1</tt>
+     * - name might be <tt>doom.wad</tt> (the containing file)
+     *
+     * @todo The definition and usage of identity key and name are too
+     * WAD container centric. Some more generic should be used instead,
+     * perhaps URI-related/based?
+     *
+     * @see The term @em manifest is used with this meaning:
+     * http://en.wikipedia.org/wiki/Manifest_file
      */
-    class ResourceRecord
+    class ResourceManifest
     {
     public:
         /**
+         * Construct a new resource manifest.
+         *
          * @param rClass    Class of resource.
          * @param rFlags    @ref resourceFlags
          * @param name      An expected name for the associated resource.
+         *                  The manifest must define at least one name because
+         *                  the resource can be located. Use addName() to
+         *                  define more names.
          */
-        ResourceRecord(resourceclassid_t rClass, int rFlags, String* name = 0);
-        ~ResourceRecord();
+        ResourceManifest(resourceclassid_t rClass, int rFlags, const String& name = String());
+
+        ~ResourceManifest();
 
         /// @return Class of resource.
         resourceclassid_t resourceClass() const;
 
-        /// @return Flags for this resource.
+        /// @return Flags for this resource (see @ref resourceFlags).
         int resourceFlags() const;
 
         /// @return List of "identity keys" used to identify the resource.
-        QStringList const& identityKeys() const;
+        QStringList identityKeys() const;
 
         /// @return List of names for the associated resource.
-        QStringList const& names() const;
+        QStringList names() const;
 
         /**
          * Attempt to locate this resource by systematically resolving and then
          * checking each search path.
          */
-        ResourceRecord& locateResource();
+        void locate();
 
         /**
          * "Forget" the currently located resource if one has been found.
          */
-        ResourceRecord& forgetResource();
+        void forgetLocation();
 
         /**
          * Attempt to resolve a path to (and maybe locate) this resource.
          *
-         * @param tryLocate  Attempt to locate the resource now.
+         * @param tryLocate  @c true, to attempt locating the resource now
+         *                   (by calling locate()).
          *
          * @return Path to the found resource or an empty string.
          *
-         * @see locateResource()
+         * @see locate()
          */
-        String const& resolvedPath(bool tryLocate = true);
+        String resolvedPath(bool tryLocate = true);
 
         /**
-         * Add a new sub-resource identity key to the list for this record.
+         * Add a new resource identity key to the list for this record.
+         * The key is only added if a matching one hasn't been added yet
+         * (duplicates not allowed).
          *
-         * @param newIdentityKey    New identity key (e.g., a lump/file name).
-         * @param didAdd            If not @c =0, the outcome will be written here.
+         * @param newIdentityKey  New identity key (e.g., a lump/file name).
+         *
+         * @return @c true, if the key was added. @c false, if it was invalid
+         * or already present.
          */
-        ResourceRecord& addIdentityKey(String newIdentityKey, bool* didAdd = 0);
+        bool addIdentityKey(String newIdentityKey);
 
         /**
          * Add a new resource name to the list of names for this record.
+         * Duplicate names are not allowed.
          *
-         * @param newName       New name for this resource. Newer names have precedence.
-         * @param didAdd        If not @c =0, the outcome will be written here.
+         * @param newName   New name for this resource. Newer names have precedence.
+         *
+         * @return @c true, if the name was added. @c false, if it was invalid
+         * or already present.
          */
-        ResourceRecord& addName(String newName, bool* didAdd = 0);
+        bool addName(String newName);
 
         /**
-         * Print information about a resource to the console.
+         * Print information about the resource to the console.
          *
-         * @param record        Record for the resource.
          * @param showStatus    @c true = print loaded/located status for the
          *                      associated resource.
          */
-        static void consolePrint(ResourceRecord& record, bool showStatus = true);
+        void print(bool showStatus = true);
 
     private:
         struct Instance;

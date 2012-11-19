@@ -849,7 +849,7 @@ static void readAllDefinitions(void)
         for(de::Game::Resources::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
         {
-            de::ResourceRecord& record = **i;
+            de::ResourceManifest& record = **i;
             /// Try to locate this resource now.
             QString const& path = record.resolvedPath(true/*try to locate*/);
 
