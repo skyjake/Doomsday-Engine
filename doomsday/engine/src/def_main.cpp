@@ -347,7 +347,7 @@ ded_value_t* Def_GetValueByUri(Uri const* _uri)
     if(!_uri) return 0;
     de::Uri const& uri = reinterpret_cast<de::Uri const&>(*_uri);
 
-    if(qstricmp("Values", uri.schemeCStr())) return 0;
+    if(uri.scheme().compareWithoutCase("Values")) return 0;
     return Def_GetValueById(uri.pathCStr());
 }
 

@@ -124,8 +124,8 @@ public:
     private:
         mutable bool gotHashKey;
         mutable hash_type hashKey;
-        const char* from;
-        const char* to;
+        char const* from;
+        char const* to;
     };
 
 public:
@@ -218,32 +218,32 @@ public:
     /**
      * @return  Scheme of the URI.
      */
-    String scheme() const;
+    String const& scheme() const;
 
     /**
      * @return  Path of the URI.
      */
-    String path() const;
+    String const& path() const;
 
     /**
      * @return  Scheme of the URI as plain text (UTF-8 encoding).
      */
-    const char* schemeCStr() const;
+    char const* schemeCStr() const;
 
     /**
      * @return  Path of the URI as plain text (UTF-8 encoding).
      */
-    const char* pathCStr() const;
+    char const* pathCStr() const;
 
     /**
      * @return  Scheme of the URI as plain text (UTF-8 encoding).
      */
-    const struct ddstring_s* schemeStr() const;
+    struct ddstring_s const* schemeStr() const;
 
     /**
      * @return  Path of the URI as plain text (UTF-8 encoding).
      */
-    const struct ddstring_s* pathStr() const;
+    struct ddstring_s const* pathStr() const;
 
     /**
      * Change the scheme of the URI to @a newScheme.
@@ -287,9 +287,9 @@ public:
      *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
      * </pre>
      *
-     * @note The zero-length name in relative paths is also treated as a segment.
-     *       For example, the path "/Users/username" has three segments.
-     *       (FIXME: "/Users/username" is NOT a relative path; "Users/username" is. -jk)
+     * @note The zero-length name in UNIX-style absolute paths is also treated
+     *       as a segment. For example, the path "/Users/username" has three
+     *       segments.
      *
      * @param index  Reverse-index of the segment to lookup. All paths have
      *               at least one segment (even empty ones) thus index @c 0 will
@@ -297,7 +297,7 @@ public:
      *
      * @return  Referenced segment.
      */
-    const Segment& segment(int index) const;
+    Segment const& segment(int index) const;
 
     /**
      * @return  Total number of segments in the URI segment map.
@@ -309,7 +309,7 @@ public:
      * @return  First segment in the path.
      * @see segment()
      */
-    inline const Segment& firstSegment() const {
+    inline Segment const& firstSegment() const {
         return segment(0);
     }
 
@@ -317,7 +317,7 @@ public:
      * @return  Last segment in the path.
      * @see segment()
      */
-    inline const Segment& lastSegment() const {
+    inline Segment const& lastSegment() const {
         return segment(segmentCount() - 1);
     }
 

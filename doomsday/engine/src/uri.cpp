@@ -238,39 +238,36 @@ struct Uri::Instance
     {
         LOG_AS("Uri::parseScheme");
 
-        const char* pathUtf8 = path.utf8CStr();
-
         clearCachedResolved();
-        scheme.clear();
 
-        char const* p = Str_CopyDelim2(scheme.toStr(), pathUtf8, ':', CDF_OMIT_DELIMITER);
-        scheme.update();
+        int sepPos = path.indexOf(':');
+        if(sepPos > URI_MINSCHEMELENGTH)
+        {
+            scheme = path.left(sepPos);
 
-        if(!p || p - pathUtf8 < URI_MINSCHEMELENGTH + 1) // +1 for ':' delimiter.
-        {
-            scheme.clear();
-        }
-        else if(defaultResourceClass != RC_NULL && !F_ResourceNamespaceByName(scheme.utf8CStr()))
-        {
+            if(defaultResourceClass == RC_NULL || F_ResourceNamespaceByName(scheme))
+            {
+                path = path.mid(sepPos + 1);
+                return;
+            }
+
             LOG_WARNING("Unknown scheme in path \"%s\", using default.") << path;
-            //Str_Clear(&_scheme);
-            path = p;
+            path = path.mid(sepPos + 1);
         }
         else
         {
-            path = p;
-            return;
+            scheme.clear();
         }
 
         // Attempt to guess the scheme by interpreting the path?
         if(defaultResourceClass == RC_UNKNOWN)
         {
-            defaultResourceClass = F_GuessResourceTypeFromFileName(path.utf8CStr()).defaultClass();
+            defaultResourceClass = F_GuessResourceTypeFromFileName(path).defaultClass();
         }
 
         if(VALID_RESOURCE_CLASSID(defaultResourceClass))
         {
-            ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassById(defaultResourceClass)->defaultNamespace());
+            ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassById(defaultResourceClass).defaultNamespace());
             DENG_ASSERT(rnamespace);
             scheme = rnamespace->name();
         }
@@ -420,7 +417,7 @@ int Uri::segmentCount() const
     return d->segmentCount;
 }
 
-const Uri::Segment& Uri::segment(int index) const
+Uri::Segment const& Uri::segment(int index) const
 {
     d->mapPath();
 
@@ -482,22 +479,6 @@ bool Uri::operator != (Uri const& other) const
     return !(*this == other);
 }
 
-/*
-void swap(Uri& first, Uri& second)
-{
-    std::swap(first.d->segmentCount,   second.d->segmentCount);
-    std::swap(first.d->extraSegments,  second.d->extraSegments);
-#ifdef DENG2_QT_4_8_OR_NEWER
-    first.d->resolved.swap(second.d->resolved);
-#else
-    std::swap(first.d->resolved,        second.d->resolved);
-#endif
-    std::swap(first.d->resolvedForGame, second.d->resolvedForGame);
-    std::swap(first.d->scheme,          second.d->scheme);
-    std::swap(first.d->path,            second.d->path);
-}
-*/
-
 bool Uri::isEmpty() const
 {
     return d->path.isEmpty();
@@ -512,32 +493,32 @@ Uri& Uri::clear()
     return *this;
 }
 
-String Uri::scheme() const
+String const& Uri::scheme() const
 {
     return d->scheme;
 }
 
-String Uri::path() const
+String const& Uri::path() const
 {
     return d->path;
 }
 
-const char* Uri::schemeCStr() const
+char const* Uri::schemeCStr() const
 {
     return d->scheme.utf8CStr();
 }
 
-const char* Uri::pathCStr() const
+char const* Uri::pathCStr() const
 {
     return d->path.utf8CStr();
 }
 
-const ddstring_s* Uri::schemeStr() const
+ddstring_s const* Uri::schemeStr() const
 {
     return d->scheme.toStr();
 }
 
-const ddstring_s* Uri::pathStr() const
+ddstring_s const* Uri::pathStr() const
 {
     return d->path.toStr();
 }
