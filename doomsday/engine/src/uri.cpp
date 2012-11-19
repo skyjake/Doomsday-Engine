@@ -194,7 +194,12 @@ struct Uri::Instance
         segmentCount = 0;
         extraSegments.clear();
 
-        if(path.isEmpty()) return; // Nothing to do.
+        if(path.isEmpty())
+        {
+            // There always has to be at least one segment.
+            allocSegment("", "");
+            return;
+        }
 
         char const* segBegin = path.utf8CStr();
         char const* segEnd = segBegin + path.length() - 1;
@@ -634,10 +639,18 @@ LIBDENG_DEFINE_UNITTEST(Uri)
 {
     try
     {
+        // Test emptiness.
+        {
+            Uri u;
+            DENG_ASSERT(u.isEmpty());
+            DENG_ASSERT(u.segmentCount() == 1);
+        }
+
         // Test a zero-length path.
         {
             Uri u("", RC_NULL);
-            DENG_ASSERT(u.segmentCount() == 0);
+            DENG_ASSERT(u.isEmpty());
+            DENG_ASSERT(u.segmentCount() == 1);
         }
 
         // Equality and copying.
