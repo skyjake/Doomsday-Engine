@@ -31,7 +31,6 @@
 
 #include "game.h"
 #include "map/propertyvalue.h"
-#include "resource/lumpindex.h"
 #include "render/rend_bias.h"
 #include "m_bams.h"
 

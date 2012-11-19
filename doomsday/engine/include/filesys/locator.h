@@ -35,7 +35,7 @@
 #ifdef __cplusplus
 #include <QList>
 
-#include "resourcenamespace.h"
+#include "filenamespace.h"
 #include <de/String>
 
 extern "C" {

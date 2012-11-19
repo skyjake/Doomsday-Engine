@@ -1,5 +1,5 @@
 /**
- * @file resourceclass.h
+ * @file fileclass.h
  *
  * File Class. @ingroup fs
  *
@@ -60,7 +60,7 @@ typedef enum fileclassid_e {
 
 #include <QList>
 #include <de/String>
-#include "resourcetype.h"
+#include "filetype.h"
 
 namespace de
 {

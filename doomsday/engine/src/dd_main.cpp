@@ -54,7 +54,7 @@
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
-#include "resource/sys_reslocator.h"
+#include "filesys/locator.h"
 
 using namespace de;
 

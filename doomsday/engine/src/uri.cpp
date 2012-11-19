@@ -33,8 +33,8 @@
 #include "de_base.h"
 #include "dualstring.h"
 #include "game.h"
-#include "resource/resourcenamespace.h"
-#include "resource/sys_reslocator.h"
+#include "filesys/filenamespace.h"
+#include "filesys/locator.h"
 
 /// Size of the fixed-size path node buffer.
 #define SEGMENT_BUFFER_SIZE         24

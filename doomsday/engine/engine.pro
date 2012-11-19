@@ -108,10 +108,10 @@ DENG_API_HEADERS = \
     api/def_share.h \
     api/dengproject.h \
     api/doomsday.h \
+    api/fileclass.h \
     api/filehandle.h \
+    api/filetype.h \
     api/materialarchive.h \
-    api/resourceclass.h \
-    api/resourcetype.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
@@ -183,8 +183,11 @@ DENG_HEADERS += \
     include/filesys/file.h \
     include/filesys/filehandlebuilder.h \
     include/filesys/fileinfo.h \
+    include/filesys/filenamespace.h \
     include/filesys/fs_main.h \
     include/filesys/fs_util.h \
+    include/filesys/locator.h \
+    include/filesys/lumpindex.h \
     include/filesys/sys_direc.h \
     include/filesys/sys_findfile.h \
     include/filesys/wad.h \
@@ -297,16 +300,13 @@ DENG_HEADERS += \
     include/resource/hq2x.h \
     include/resource/image.h \
     include/resource/lumpcache.h \
-    include/resource/lumpindex.h \
     include/resource/material.h \
     include/resource/materials.h \
     include/resource/materialvariant.h \
     include/resource/models.h \
     include/resource/pcx.h \
     include/resource/r_data.h \
-    include/resource/resourcenamespace.h \
     include/resource/resourcerecord.h \
-    include/resource/sys_reslocator.h \
     include/resource/texture.h \
     include/resource/textures.h \
     include/resource/texturevariant.h \
@@ -470,8 +470,11 @@ SOURCES += \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \
     src/filesys/fileid.cpp \
+    src/filesys/filenamespace.cpp \
     src/filesys/fs_main.cpp \
     src/filesys/fs_util.cpp \
+    src/filesys/locator.cpp \
+    src/filesys/lumpindex.cpp \
     src/filesys/sys_direc.c \
     src/filesys/wad.cpp \
     src/filesys/zip.cpp \
@@ -578,7 +581,6 @@ SOURCES += \
     src/resource/fonts.cpp \
     src/resource/hq2x.c \
     src/resource/image.cpp \
-    src/resource/lumpindex.cpp \
     src/resource/material.cpp \
     src/resource/materialarchive.c \
     src/resource/materials.cpp \
@@ -586,9 +588,7 @@ SOURCES += \
     src/resource/models.cpp \
     src/resource/pcx.c \
     src/resource/r_data.c \
-    src/resource/resourcenamespace.cpp \
     src/resource/resourcerecord.cpp \
-    src/resource/sys_reslocator.cpp \
     src/resource/texture.cpp \
     src/resource/textures.cpp \
     src/resource/texturevariant.cpp \

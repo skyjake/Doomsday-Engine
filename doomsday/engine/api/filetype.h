@@ -1,5 +1,5 @@
 /**
- * @file resourcetype.h
+ * @file filetype.h
  *
  * File Type. @ingroup fs
  *

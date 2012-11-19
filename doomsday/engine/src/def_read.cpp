@@ -48,7 +48,7 @@
 #include "de_misc.h"
 #include "de_defs.h"
 
-//#include "resourcenamespace.h"
+//#include "filenamespace.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"

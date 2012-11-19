@@ -30,7 +30,7 @@
 #include <de/NativePath>
 
 #include "pathtree.h"
-#include "resource/resourcenamespace.h"
+#include "filesys/filenamespace.h"
 
 namespace de {
 

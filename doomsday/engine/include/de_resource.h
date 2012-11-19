@@ -2,8 +2,8 @@
  * @file de_resource.h
  * Resource subsystem. @ingroup resource
  *
- * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,19 +22,14 @@
 #ifndef LIBDENG_RESOURCE_SUBSYSTEM_H
 #define LIBDENG_RESOURCE_SUBSYSTEM_H
 
-#include "resourceclass.h"
-#include "resourcetype.h"
-
 #include "resource/colorpalette.h"
 #include "resource/r_data.h"
 #include "resource/materials.h"
 #include "resource/materialvariant.h"
-#include "resource/resourcenamespace.h"
 #include "resource/textures.h"
 #include "resource/font.h"
 #include "resource/fonts.h"
 #include "resource/models.h"
 #include "resource/resourcerecord.h"
-#include "resource/lumpindex.h"
 
 #endif /* LIBDENG_RESOURCE_SUBSYSTEM_H */

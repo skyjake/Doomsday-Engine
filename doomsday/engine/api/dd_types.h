@@ -100,8 +100,8 @@ struct surface_s;
 struct material_s;
 
 #include <de/str.h>
-#include "resourceclass.h"
-#include "resourcetype.h"
+#include "fileclass.h"
+#include "filetype.h"
 #include "uri.h" // C wrapper for de::Uri
 
 #endif /* ENGINE_TYPES_H */

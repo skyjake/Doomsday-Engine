@@ -41,12 +41,13 @@
 #include "filesys/file.h"
 #include "filesys/fileid.h"
 #include "filesys/fileinfo.h"
+#include "filesys/filenamespace.h"
+#include "filesys/locator.h"
+#include "filesys/lumpindex.h"
+
 #include "filesys/wad.h"
 #include "filesys/zip.h"
-#include "resource/lumpindex.h"
-#include "resource/resourcenamespace.h"
 #include "game.h"
-#include "resource/sys_reslocator.h"
 
 using namespace de;
 

@@ -29,7 +29,7 @@
 #include <de/libdeng2.h>
 #include <de/ISerializable>
 
-#include "resourceclass.h"
+#include "fileclass.h"
 
 /// Schemes must be at least this many characters.
 #define DENG2_URI_MIN_SCHEME_LENGTH     2
