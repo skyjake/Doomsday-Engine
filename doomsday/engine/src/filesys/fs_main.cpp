@@ -612,7 +612,9 @@ bool FS1::checkFileId(String path)
     FileIds::iterator place = qLowerBound(d->fileIds.begin(), d->fileIds.end(), fileId);
     if(place != d->fileIds.end() && *place == fileId) return false;
 
-    LOG_DEBUG("Added FileId %s - \"%s\"") << fileId << fileId.path();
+#ifdef _DEBUG
+    LOG_DEBUG("Added FileId %s - \"%s\"") << fileId << fileId.path(); /* path() is debug-only */
+#endif
 
     d->fileIds.insert(place, fileId);
     return true;
