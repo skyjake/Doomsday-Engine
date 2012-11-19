@@ -34,7 +34,8 @@
 namespace de
 {
     /**
-     * Stores high-level metadata for and manages a logical file resource.
+     * Stores high-level metadata for and arbitrates/facilitates
+     * access to the associated "physical" resource.
      *
      * @ingroup core
      */
@@ -42,15 +43,15 @@ namespace de
     {
     public:
         /**
-         * @param fClass    Class of file.
+         * @param rClass    Class for the associated resource.
          * @param fFlags    @ref fileFlags
          * @param name      An expected name for the associated file.
          */
-        MetaFile(resourceclassid_t fClass, int fFlags, String* name = 0);
+        MetaFile(resourceclassid_t rClass, int fFlags, String* name = 0);
         ~MetaFile();
 
-        /// @return Class of file.
-        resourceclassid_t fileClass() const;
+        /// @return Class of the associated resource.
+        resourceclassid_t resourceClass() const;
 
         /// @return Flags for this file.
         int fileFlags() const;

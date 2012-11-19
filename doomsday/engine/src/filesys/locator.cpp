@@ -85,10 +85,10 @@ static FileTypes types;
 static ResourceClasses classes;
 static FileNamespaces namespaces;
 
-static inline ResourceClass& fileClass(resourceclassid_t id)
+static inline ResourceClass& resourceClass(resourceclassid_t id)
 {
     if(id == RC_NULL) return nullClass;
-    if(!VALID_RESOURCECLASSID(id)) throw Error("fileClass", String("Invalid id %1").arg(id));
+    if(!VALID_RESOURCECLASSID(id)) throw Error("resourceClass", String("Invalid id %1").arg(id));
     return *classes[uint(id)];
 }
 
@@ -192,7 +192,7 @@ static bool findFile2(int flags, resourceclassid_t classId, String searchPath,
         if(flags & RLF_MATCH_EXTENSION) return false;
     }
 
-    ResourceClass const& rclass = fileClass(classId);
+    ResourceClass const& rclass = resourceClass(classId);
     if(!rclass.fileTypeCount()) return false;
 
     /*
@@ -623,7 +623,7 @@ FileType& F_GuessFileTypeFromFileName(String path)
 ResourceClass& F_ResourceClassById(resourceclassid_t id)
 {
     if(!VALID_RESOURCECLASSID(id)) throw Error("F_ResourceClassById", String("Invalid id '%1'").arg(int(id)));
-    return fileClass(id);
+    return resourceClass(id);
 }
 
 FileTypes const& F_FileTypes()

@@ -372,7 +372,7 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
 
 static void loadResource(MetaFile& record)
 {
-    DENG_ASSERT(record.fileClass() == RC_PACKAGE);
+    DENG_ASSERT(record.resourceClass() == RC_PACKAGE);
 
     QString const& path = record.resolvedPath(false/*do not locate resource*/);
     if(!path.isEmpty())

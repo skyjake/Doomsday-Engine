@@ -117,10 +117,10 @@ GameCollection& Game::collection() const
 Game& Game::addMetafile(MetaFile& metafile)
 {
     // Ensure we don't add duplicates.
-    MetaFiles::const_iterator found = d->metafiles.find(metafile.fileClass(), &metafile);
+    MetaFiles::const_iterator found = d->metafiles.find(metafile.resourceClass(), &metafile);
     if(found == d->metafiles.end())
     {
-        d->metafiles.insert(metafile.fileClass(), &metafile);
+        d->metafiles.insert(metafile.resourceClass(), &metafile);
     }
     return *this;
 }

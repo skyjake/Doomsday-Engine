@@ -219,7 +219,7 @@ String const& MetaFile::resolvedPath(bool tryLocate)
     return d->foundPath;
 }
 
-resourceclassid_t MetaFile::fileClass() const
+resourceclassid_t MetaFile::resourceClass() const
 {
     return d->classId;
 }
