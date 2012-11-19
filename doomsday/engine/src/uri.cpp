@@ -440,17 +440,6 @@ const Uri::Segment& Uri::segment(int index) const
     return *d->extraSegments[index - SEGMENT_BUFFER_SIZE];
 }
 
-Uri& Uri::operator = (Uri other)
-{
-    swap(other);
-    return *this;
-}
-
-void Uri::swap(Uri& other)
-{
-    std::swap(d, other.d);
-}
-
 bool Uri::operator == (Uri const& other) const
 {
     if(this == &other) return true;
