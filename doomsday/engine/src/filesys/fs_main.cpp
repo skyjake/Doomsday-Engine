@@ -1606,12 +1606,12 @@ static void createPackagesNamespace(FS1& fs)
      */
 
 #ifdef UNIX
-    // There may be an iwadir specified in a system-level config file.
+    // There may be an iwaddir specified in a system-level config file.
     filename_t fn;
     if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
     {
         NativePath path = de::App::app().commandLine().startupPath() / fn;
-        fnamespace.addSearchPath(Namespace::DefaultPaths, de::Uri::fromNativeDirPath(path), NoDescend);
+        fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
     }
 #endif
