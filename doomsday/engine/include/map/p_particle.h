@@ -129,6 +129,10 @@ typedef struct ptcgen_s {
     ptcstage_t*     stages;
 } ptcgen_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void P_PtcInitForMap(void);
 
 /**
@@ -187,5 +191,9 @@ float P_GetParticleRadius(const ded_ptcstage_t* stageDef, int ptcIndex);
  * A particle may be attached to the floor or ceiling of the sector.
  */
 float P_GetParticleZ(const particle_t* pt);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_GENERATORS_H
