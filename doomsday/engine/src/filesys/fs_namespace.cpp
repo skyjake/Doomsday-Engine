@@ -31,7 +31,9 @@
 #include <de/NativePath>
 
 #include "pathtree.h"
-#include "filesys/filenamespace.h"
+
+#include "filesys/searchpath.h"
+#include "filesys/fs_main.h"
 
 namespace de {
 
@@ -159,15 +161,15 @@ public:
     }
 };
 
-struct FileNamespace::Instance
+struct FS1::Namespace::Instance
 {
-    FileNamespace& self;
+    FS1::Namespace& self;
 
     /// Symbolic name.
     String name;
 
     /// Flags which govern behavior.
-    FileNamespace::Flags flags;
+    FS1::Namespace::Flags flags;
 
     /// Associated path directory.
     /// @todo It should not be necessary for a unique directory per namespace.
@@ -184,9 +186,9 @@ struct FileNamespace::Instance
 
     /// Sets of search paths to look for files to be included.
     /// Each set is in order of greatest-importance, right to left.
-    FileNamespace::SearchPaths searchPaths;
+    FS1::Namespace::SearchPaths searchPaths;
 
-    Instance(FileNamespace& d, String _name, FileNamespace::Flags _flags)
+    Instance(FS1::Namespace& d, String _name, FS1::Namespace::Flags _flags)
         : self(d), name(_name), flags(_flags), directory(), rootNode(0),
           nameHash(), nameHashIsDirty(true)
     {}
@@ -198,12 +200,12 @@ struct FileNamespace::Instance
      *
      * @param searchPath  The path to resolve and search.
      */
-    void addFromSearchPath(FileNamespace::SearchPath const& searchPath)
+    void addFromSearchPath(SearchPath const& searchPath)
     {
         try
         {
             // Add new nodes on this path and/or re-process previously seen nodes.
-            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath.uri().resolved(),
+            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath.resolved(),
                                                        true/*is-directory*/, searchPath.flags());
         }
         catch(de::Uri::ResolveError const& er)
@@ -217,9 +219,9 @@ struct FileNamespace::Instance
      *
      * @param group  Group of paths to search.
      */
-    void addFromSearchPaths(FileNamespace::PathGroup group)
+    void addFromSearchPaths(FS1::PathGroup group)
     {
-        for(FileNamespace::SearchPaths::const_iterator i = searchPaths.find(group);
+        for(FS1::Namespace::SearchPaths::const_iterator i = searchPaths.find(group);
             i != searchPaths.end() && i.key() == group; ++i)
         {
             addFromSearchPath(*i);
@@ -266,7 +268,7 @@ struct FileNamespace::Instance
         App_FileSystem()->findAllPaths(searchPattern, flags, found);
         DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
         {
-            addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND),
+            addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SearchPath::NoDescend),
                                                        i->path, !!(i->attrib & A_SUBDIR),
                                                        flags);
         }
@@ -323,22 +325,22 @@ struct FileNamespace::Instance
     }
 };
 
-FileNamespace::FileNamespace(String symbolicName, Flags flags)
+FS1::Namespace::Namespace(String symbolicName, Flags flags)
 {
     d = new Instance(*this, symbolicName, flags);
 }
 
-FileNamespace::~FileNamespace()
+FS1::Namespace::~Namespace()
 {
     delete d;
 }
 
-String const& FileNamespace::name() const
+String const& FS1::Namespace::name() const
 {
     return d->name;
 }
 
-void FileNamespace::clear()
+void FS1::Namespace::clear()
 {
     d->nameHash.clear();
     d->nameHashIsDirty = true;
@@ -346,22 +348,22 @@ void FileNamespace::clear()
     d->rootNode = 0;
 }
 
-void FileNamespace::rebuild()
+void FS1::Namespace::rebuild()
 {
     // Is a rebuild not necessary?
     if(!d->nameHashIsDirty) return;
 
-    LOG_AS("FileNamespace::rebuild");
+    LOG_AS("FS1::Namespace::rebuild");
     LOG_DEBUG("Rebuilding '%s'...") << d->name;
 
     // uint startTime = Timer_RealMilliseconds();
 
     // (Re)populate the directory and add found files.
     clear();
-    d->addFromSearchPaths(FileNamespace::OverridePaths);
-    d->addFromSearchPaths(FileNamespace::ExtraPaths);
-    d->addFromSearchPaths(FileNamespace::DefaultPaths);
-    d->addFromSearchPaths(FileNamespace::FallbackPaths);
+    d->addFromSearchPaths(FS1::OverridePaths);
+    d->addFromSearchPaths(FS1::ExtraPaths);
+    d->addFromSearchPaths(FS1::DefaultPaths);
+    d->addFromSearchPaths(FS1::FallbackPaths);
 
     d->nameHashIsDirty = false;
 
@@ -378,7 +380,7 @@ static inline String composeNamespaceName(String const& filePath)
     return filePath.fileNameWithoutExtension();
 }
 
-bool FileNamespace::add(PathTree::Node& resourceNode)
+bool FS1::Namespace::add(PathTree::Node& resourceNode)
 {
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
@@ -418,7 +420,7 @@ bool FileNamespace::add(PathTree::Node& resourceNode)
     return isNewNode;
 }
 
-static String const& nameForPathGroup(FileNamespace::PathGroup group)
+static String const& nameForPathGroup(FS1::PathGroup group)
 {
     static String const names[] = {
         "Override",
@@ -426,18 +428,18 @@ static String const& nameForPathGroup(FileNamespace::PathGroup group)
         "Default",
         "Fallback"
     };
-    DENG_ASSERT(int(group) >= FileNamespace::OverridePaths && int(group) <= FileNamespace::FallbackPaths);
+    DENG_ASSERT(int(group) >= FS1::OverridePaths && int(group) <= FS1::FallbackPaths);
     return names[int(group)];
 }
 
-bool FileNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flags)
+bool FS1::Namespace::addSearchPath(PathGroup group, SearchPath const& search)
 {
-    LOG_AS("FileNamespace::addSearchPath");
+    LOG_AS("FS1::Namespace::addSearchPath");
 
     // Ensure this is a well formed path.
-    if(path.isEmpty() ||
-       !path.path().compareWithoutCase("/") ||
-       !path.path().endsWith("/"))
+    if(search.isEmpty() ||
+       !search.path().compareWithoutCase("/") ||
+       !search.path().endsWith("/"))
         return false;
 
     // The addition of a new search path means the namespace is now dirty.
@@ -447,39 +449,38 @@ bool FileNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flag
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
         // Compare using the unresolved textual representations.
-        if(!i->uri().asText().compareWithoutCase(path.asText()))
+        if(!i->asText().compareWithoutCase(search.asText()))
         {
-            i->setFlags(flags);
+            i->setFlags(search.flags());
             return true;
         }
     }
 
     // Prepend to the path list - newer paths have priority.
-    de::Uri* uriCopy = new de::Uri(path);
-    d->searchPaths.insert(group, SearchPath(flags, *uriCopy));
+    d->searchPaths.insert(group, search);
 
     LOG_DEBUG("'%s' path \"%s\" added to namespace '%s'.")
-        << nameForPathGroup(group) << path << name();
+        << nameForPathGroup(group) << search << name();
 
     return true;
 }
 
-void FileNamespace::clearSearchPaths(PathGroup group)
+void FS1::Namespace::clearSearchPaths(PathGroup group)
 {
     d->searchPaths.remove(group);
 }
 
-void FileNamespace::clearSearchPaths()
+void FS1::Namespace::clearSearchPaths()
 {
     d->searchPaths.clear();
 }
 
-FileNamespace::SearchPaths const& FileNamespace::searchPaths() const
+FS1::Namespace::SearchPaths const& FS1::Namespace::searchPaths() const
 {
     return d->searchPaths;
 }
 
-int FileNamespace::findAll(String name, FileList& found)
+int FS1::Namespace::findAll(String name, FileList& found)
 {
     int numFoundSoFar = found.count();
 
@@ -512,7 +513,7 @@ int FileNamespace::findAll(String name, FileList& found)
     return found.count() - numFoundSoFar;
 }
 
-bool FileNamespace::applyPathMappings(String& path) const
+bool FS1::Namespace::applyPathMappings(String& path) const
 {
     if(path.isEmpty()) return false;
 
@@ -530,9 +531,9 @@ bool FileNamespace::applyPathMappings(String& path) const
 }
 
 #if _DEBUG
-void FileNamespace::debugPrint() const
+void FS1::Namespace::debugPrint() const
 {
-    LOG_AS("FileNamespace::debugPrint");
+    LOG_AS("FS1::Namespace::debugPrint");
     LOG_DEBUG("[%p]:") << de::dintptr(this);
 
     uint namespaceIdx = 0;
@@ -554,46 +555,5 @@ void FileNamespace::debugPrint() const
     LOG_DEBUG("  %u %s in namespace.") << namespaceIdx << (namespaceIdx == 1? "file" : "files");
 }
 #endif
-
-FileNamespace::SearchPath::SearchPath(int _flags, de::Uri& _uri)
-    : flags_(_flags), uri_(&_uri)
-{}
-
-FileNamespace::SearchPath::SearchPath(SearchPath const& other)
-    : flags_(other.flags_), uri_(new de::Uri(*other.uri_))
-{}
-
-FileNamespace::SearchPath::~SearchPath()
-{
-    delete uri_;
-}
-
-FileNamespace::SearchPath& FileNamespace::SearchPath::operator = (SearchPath other)
-{
-    swap(*this, other);
-    return *this;
-}
-
-int FileNamespace::SearchPath::flags() const
-{
-    return flags_;
-}
-
-FileNamespace::SearchPath& FileNamespace::SearchPath::setFlags(int newFlags)
-{
-    flags_ = newFlags;
-    return *this;
-}
-
-de::Uri const& FileNamespace::SearchPath::uri() const
-{
-    return *uri_;
-}
-
-void swap(FileNamespace::SearchPath& first, FileNamespace::SearchPath& second)
-{
-    std::swap(first.flags_,  second.flags_);
-    std::swap(first.uri_,    second.uri_);
-}
 
 } // namespace de

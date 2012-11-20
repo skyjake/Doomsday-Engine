@@ -40,100 +40,28 @@
 
 using namespace de;
 
-class ZipFileType : public de::NativeFileType
-{
-public:
-    ZipFileType() : NativeFileType("FT_ZIP", RC_PACKAGE)
-    {}
-
-    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
-    {
-        if(Zip::recognise(hndl))
-        {
-            LOG_AS("ZipFileType");
-            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
-            return new Zip(hndl, path, info);
-        }
-        return 0;
-    }
-};
-
-class WadFileType : public de::NativeFileType
-{
-public:
-    WadFileType() : NativeFileType("FT_WAD", RC_PACKAGE)
-    {}
-
-    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
-    {
-        if(Wad::recognise(hndl))
-        {
-            LOG_AS("WadFileType");
-            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
-            return new Wad(hndl, path, info);
-        }
-        return 0;
-    }
-};
-
-static bool inited = false;
-
-static NullFileType nullType;
-
-static FileTypes types;
-static FileNamespaces namespaces;
-
-/**
- * @param name      Unique symbolic name of this namespace. Must be at least
- *                  @c FILENAMESPACE_MINNAMELENGTH characters long.
- * @param flags     @ref FileNamespace::Flag
- */
-static FileNamespace& createFileNamespace(String name, FileNamespace::Flags flags = 0)
-{
-    DENG_ASSERT(name.length() >= FILENAMESPACE_MINNAMELENGTH);
-    namespaces.push_back(new FileNamespace(name, flags));
-    return *namespaces.back();
-}
-
-static bool findFileInNamespace(FileNamespace& fnamespace, de::Uri const& searchPath,
+static bool tryFindInNamespace(de::Uri const& searchPath, FS1::Namespace& fnamespace,
     ddstring_t* foundPath)
 {
-    if(searchPath.isEmpty()) return 0;
-
-    LOG_TRACE("Using namespace '%s'...") << fnamespace.name();
-
-    // Ensure the namespace is up to date.
-    fnamespace.rebuild();
-
-    // The in-namespace name is the file name sans extension.
-    String name = searchPath.firstSegment().toString().fileNameWithoutExtension();
-
-    // Perform the search.
-    FileNamespace::FileList foundFiles;
-    if(fnamespace.findAll(name, foundFiles))
+    try
     {
-        // There is at least one name-matched (perhaps partially) file.
-        DENG2_FOR_EACH_CONST(FileNamespace::FileList, i, foundFiles)
+        PathTree::Node& node = App_FileSystem()->find(searchPath, fnamespace);
+        // Does the caller want to know the matched path?
+        if(foundPath)
         {
-            PathTree::Node& node = **i;
-            if(!node.comparePath(searchPath, PCF_NO_BRANCH))
-            {
-                // This is the file we are looking for.
-                // Does the caller want to know the matched path?
-                if(foundPath)
-                {
-                    QByteArray path = node.composePath().toUtf8();
-                    Str_Set(foundPath, path.constData());
-                    F_PrependBasePath(foundPath, foundPath);
-                }
-                return true;
-            }
+            QByteArray path = node.composePath().toUtf8();
+            Str_Set(foundPath, path.constData());
+            F_PrependBasePath(foundPath, foundPath);
         }
+        return true;
     }
-    return false; // Not found.
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+
+    return false;
 }
 
-static bool findFile4(de::Uri const& searchPath, ddstring_t* foundPath)
+static bool tryFind(de::Uri const& searchPath, ddstring_t* foundPath)
 {
     try
     {
@@ -152,24 +80,25 @@ static bool findFile4(de::Uri const& searchPath, ddstring_t* foundPath)
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore this error.
+
     return false;
 }
 
-static bool findFile3(FileNamespace* fnamespace, de::Uri const& searchPath,
+static bool findFile3(FS1::Namespace* fnamespace, de::Uri const& searchPath,
     ddstring_t* foundPath)
 {
     // Is there a namespace we should use?
     if(fnamespace)
     {
-        if(findFileInNamespace(*fnamespace, searchPath, foundPath))
+        if(tryFindInNamespace(searchPath, *fnamespace, foundPath))
             return true;
     }
 
-    return findFile4(searchPath, foundPath);
+    return tryFind(searchPath, foundPath);
 }
 
 static bool findFile2(int flags, resourceclassid_t classId, String searchPath,
-    ddstring_t* foundPath, FileNamespace* fnamespace)
+    ddstring_t* foundPath, FS1::Namespace* fnamespace)
 {
     if(searchPath.isEmpty()) return false;
 
@@ -224,7 +153,7 @@ static bool findFile(resourceclassid_t classId, de::Uri const& searchPath,
         String const& resolvedPath = searchPath.resolved();
 
         // Is a namespace specified?
-        FileNamespace* fnamespace = F_FileNamespaceByName(searchPath.scheme());
+        FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(searchPath.scheme());
 
         // First try with the optional suffix.
         if(!optionalSuffix.isEmpty())
@@ -245,350 +174,6 @@ static bool findFile(resourceclassid_t classId, de::Uri const& searchPath,
         LOG_DEBUG(er.asText());
     }
     return false;
-}
-
-static void createPackagesNamespace()
-{
-    FileNamespace& fnamespace = createFileNamespace("Packages");
-
-    /*
-     * Add default search paths.
-     *
-     * Note that the order here defines the order in which these paths are searched
-     * thus paths must be added in priority order (newer paths have priority).
-     */
-
-#ifdef UNIX
-    // There may be an iwadir specified in a system-level config file.
-    filename_t fn;
-    if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
-    {
-        NativePath path = de::App::app().commandLine().startupPath() / fn;
-        fnamespace.addSearchPath(FileNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
-        LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
-    }
-#endif
-
-    // Add the path from the DOOMWADDIR environment variable.
-    if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
-    {
-        NativePath path = de::App::app().commandLine().startupPath() / getenv("DOOMWADDIR");
-        fnamespace.addSearchPath(FileNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
-        LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
-    }
-
-    // Add any paths from the DOOMWADPATH environment variable.
-    if(!CommandLine_Check("-nodoomwadpath") && getenv("DOOMWADPATH"))
-    {
-#if WIN32
-#  define SEP_CHAR      ';'
-#else
-#  define SEP_CHAR      ':'
-#endif
-
-        QStringList allPaths = QString(getenv("DOOMWADPATH")).split(SEP_CHAR, QString::SkipEmptyParts);
-        for(int i = allPaths.count(); i--> 0; )
-        {
-            NativePath path = de::App::app().commandLine().startupPath() / allPaths[i];
-            fnamespace.addSearchPath(FileNamespace::DefaultPaths, de::Uri::fromNativeDirPath(path), SPF_NO_DESCEND);
-            LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
-        }
-
-#undef SEP_CHAR
-    }
-
-    fnamespace.addSearchPath(FileNamespace::DefaultPaths, de::Uri("$(App.DataPath)/", RC_NULL), SPF_NO_DESCEND);
-    fnamespace.addSearchPath(FileNamespace::DefaultPaths, de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SPF_NO_DESCEND);
-}
-
-static void createFileNamespaces()
-{
-    int const namespacedef_max_searchpaths = 5;
-    struct namespacedef_s {
-        char const* name;
-        char const* optOverridePath;
-        char const* optFallbackPath;
-        FileNamespace::Flags flags;
-        int searchPathFlags; /// @see searchPathFlags
-        /// Priority is right to left.
-        char const* searchPaths[namespacedef_max_searchpaths];
-    } defs[] = {
-        { "Defs",         NULL,           NULL,           FileNamespace::Flag(0), 0,
-            { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
-        },
-        { "Graphics",     "-gfxdir2",     "-gfxdir",      FileNamespace::Flag(0), 0,
-            { "$(App.DataPath)/graphics/" }
-        },
-        { "Models",       "-modeldir2",   "-modeldir",    FileNamespace::MappedInPackages, 0,
-            { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
-        },
-        { "Sfx",          "-sfxdir2",     "-sfxdir",      FileNamespace::MappedInPackages, SPF_NO_DESCEND,
-            { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
-        },
-        { "Music",        "-musdir2",     "-musdir",      FileNamespace::MappedInPackages, SPF_NO_DESCEND,
-            { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
-        },
-        { "Textures",     "-texdir2",     "-texdir",      FileNamespace::MappedInPackages, SPF_NO_DESCEND,
-            { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
-        },
-        { "Flats",        "-flatdir2",    "-flatdir",     FileNamespace::MappedInPackages, SPF_NO_DESCEND,
-            { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
-        },
-        { "Patches",      "-patdir2",     "-patdir",      FileNamespace::MappedInPackages, SPF_NO_DESCEND,
-            { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
-        },
-        { "LightMaps",    "-lmdir2",      "-lmdir",       FileNamespace::MappedInPackages, 0,
-            { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
-        },
-        { "Fonts",        "-fontdir2",    "-fontdir",     FileNamespace::MappedInPackages, SPF_NO_DESCEND,
-            { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
-        },
-        { 0, 0, 0, FileNamespace::Flag(0), 0, { 0 } }
-    };
-
-    createPackagesNamespace();
-
-    // Setup the rest...
-    struct namespacedef_s const* def = defs;
-    for(int i = 0; defs[i].name; ++i, ++def)
-    {
-        FileNamespace& fnamespace = createFileNamespace(def->name, def->flags);
-
-        int searchPathCount = 0;
-        while(def->searchPaths[searchPathCount] && ++searchPathCount < namespacedef_max_searchpaths)
-        {}
-
-        for(int j = 0; j < searchPathCount; ++j)
-        {
-            de::Uri uri = de::Uri(def->searchPaths[j], RC_NULL);
-            fnamespace.addSearchPath(FileNamespace::DefaultPaths, uri, def->searchPathFlags);
-        }
-
-        if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
-        {
-            NativePath path = NativePath(CommandLine_NextAsPath());
-            fnamespace.addSearchPath(FileNamespace::OverridePaths, de::Uri::fromNativeDirPath(path), def->searchPathFlags);
-            path = path / "$(Game.IdentityKey)";
-            fnamespace.addSearchPath(FileNamespace::OverridePaths, de::Uri::fromNativeDirPath(path), def->searchPathFlags);
-        }
-
-        if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
-        {
-            NativePath path = NativePath(CommandLine_NextAsPath());
-            fnamespace.addSearchPath(FileNamespace::FallbackPaths, de::Uri::fromNativeDirPath(path), def->searchPathFlags);
-        }
-    }
-}
-
-static void createFileTypes()
-{
-    FileType* ftype;
-
-    /*
-     * Packages types:
-     */
-    ResourceClass& packageClass = DD_ResourceClassByName("RC_PACKAGE");
-
-    types.push_back(new ZipFileType());
-    ftype = types.back();
-    ftype->addKnownExtension(".pk3");
-    ftype->addKnownExtension(".zip");
-    packageClass.addFileType(ftype);
-
-    types.push_back(new WadFileType());
-    ftype = types.back();
-    ftype->addKnownExtension(".wad");
-    packageClass.addFileType(ftype);
-
-    types.push_back(new FileType("FT_LMP", RC_PACKAGE)); ///< Treat lumps as packages so they are mapped to $App.DataPath.
-    ftype = types.back();
-    ftype->addKnownExtension(".lmp");
-
-    /*
-     * Definition types:
-     */
-    types.push_back(new FileType("FT_DED", RC_DEFINITION));
-    ftype = types.back();
-    ftype->addKnownExtension(".ded");
-    DD_ResourceClassByName("RC_DEFINITION").addFileType(ftype);
-
-    /*
-     * Graphic types:
-     */
-    ResourceClass& graphicClass = DD_ResourceClassByName("RC_GRAPHIC");
-
-    types.push_back(new FileType("FT_PNG", RC_GRAPHIC));
-    ftype = types.back();
-    ftype->addKnownExtension(".png");
-    graphicClass.addFileType(ftype);
-
-    types.push_back(new FileType("FT_TGA", RC_GRAPHIC));
-    ftype = types.back();
-    ftype->addKnownExtension(".tga");
-    graphicClass.addFileType(ftype);
-
-    types.push_back(new FileType("FT_JPG", RC_GRAPHIC));
-    ftype = types.back();
-    ftype->addKnownExtension(".jpg");
-    graphicClass.addFileType(ftype);
-
-    types.push_back(new FileType("FT_PCX", RC_GRAPHIC));
-    ftype = types.back();
-    ftype->addKnownExtension(".pcx");
-    graphicClass.addFileType(ftype);
-
-    /*
-     * Model types:
-     */
-    ResourceClass& modelClass = DD_ResourceClassByName("RC_MODEL");
-
-    types.push_back(new FileType("FT_DMD", RC_MODEL));
-    ftype = types.back();
-    ftype->addKnownExtension(".dmd");
-    modelClass.addFileType(ftype);
-
-    types.push_back(new FileType("FT_MD2", RC_MODEL));
-    ftype = types.back();
-    ftype->addKnownExtension(".md2");
-    modelClass.addFileType(ftype);
-
-    /*
-     * Sound types:
-     */
-    types.push_back(new FileType("FT_WAV", RC_SOUND));
-    ftype = types.back();
-    ftype->addKnownExtension(".wav");
-    DD_ResourceClassByName("RC_SOUND").addFileType(ftype);
-
-    /*
-     * Music types:
-     */
-    ResourceClass& musicClass = DD_ResourceClassByName("RC_MUSIC");
-
-    types.push_back(new FileType("FT_OGG", RC_MUSIC));
-    ftype = types.back();
-    ftype->addKnownExtension(".ogg");
-    musicClass.addFileType(ftype);
-
-    types.push_back(new FileType("FT_MP3", RC_MUSIC));
-    ftype = types.back();
-    ftype->addKnownExtension(".mp3");
-    musicClass.addFileType(ftype);
-
-    types.push_back(new FileType("FT_MOD", RC_MUSIC));
-    ftype = types.back();
-    ftype->addKnownExtension(".mod");
-    musicClass.addFileType(ftype);
-
-    types.push_back(new FileType("FT_MID", RC_MUSIC));
-    ftype = types.back();
-    ftype->addKnownExtension(".mid");
-    musicClass.addFileType(ftype);
-
-    /*
-     * Font types:
-     */
-    types.push_back(new FileType("FT_DFN", RC_FONT));
-    ftype = types.back();
-    ftype->addKnownExtension(".dfn");
-    DD_ResourceClassByName("RC_FONT").addFileType(ftype);
-
-    /*
-     * Misc types:
-     */
-    types.push_back(new FileType("FT_DEH", RC_PACKAGE)); ///< Treat DeHackEd patches as packages so they are mapped to $App.DataPath.
-    ftype = types.back();
-    ftype->addKnownExtension(".deh");
-}
-
-void F_InitResourceLocator()
-{
-    if(inited) return;
-
-    createFileTypes();
-    createFileNamespaces();
-    inited = true;
-}
-
-void F_ShutdownResourceLocator()
-{
-    if(!inited) return;
-
-    DENG2_FOR_EACH(FileNamespaces, i, namespaces)
-    {
-        delete *i;
-    }
-    namespaces.clear();
-
-    DENG2_FOR_EACH(FileTypes, i, types)
-    {
-        delete *i;
-    }
-    types.clear();
-
-    inited = false;
-}
-
-void F_ResetAllFileNamespaces()
-{
-    DENG2_FOR_EACH(FileNamespaces, i, namespaces)
-    {
-        (*i)->reset();
-    }
-}
-
-FileNamespace* F_FileNamespaceByName(String name)
-{
-    if(!name.isEmpty())
-    {
-        DENG2_FOR_EACH(FileNamespaces, i, namespaces)
-        {
-            FileNamespace& fnamespace = **i;
-            if(!fnamespace.name().compareWithoutCase(name))
-                return &fnamespace;
-        }
-    }
-    return 0; // Not found.
-}
-
-FileType& F_FileTypeByName(String name)
-{
-    if(!name.isEmpty())
-    {
-        DENG2_FOR_EACH_CONST(FileTypes, i, types)
-        {
-            FileType& ftype = **i;
-            if(!ftype.name().compareWithoutCase(name))
-                return ftype;
-        }
-    }
-    return nullType; // Not found.
-}
-
-FileType& F_GuessFileTypeFromFileName(String path)
-{
-    if(!path.isEmpty())
-    {
-        DENG2_FOR_EACH_CONST(FileTypes, i, types)
-        {
-            FileType& ftype = **i;
-            if(ftype.fileNameIsKnown(path))
-                return ftype;
-        }
-    }
-    return nullType;
-}
-
-FileTypes const& F_FileTypes()
-{
-    DENG_ASSERT(inited);
-    return types;
-}
-
-FileNamespaces const& F_FileNamespaces()
-{
-    DENG_ASSERT(inited);
-    return namespaces;
 }
 
 boolean F_Find4(resourceclassid_t classId, uri_s const* searchPath,

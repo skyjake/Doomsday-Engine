@@ -970,7 +970,7 @@ static bool applyGamePathMappings(String& path)
     if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        FileType const& ftype = F_GuessFileTypeFromFileName(path.fileName());
+        FileType const& ftype = App_FileSystem()->guessFileTypeFromFileName(path.fileName());
 
         switch(ftype.defaultClass())
         {
@@ -990,8 +990,8 @@ static bool applyGamePathMappings(String& path)
     }
 
     // Key-named directories in the root might be mapped to another location.
-    FileNamespaces const& namespaces = F_FileNamespaces();
-    DENG2_FOR_EACH_CONST(FileNamespaces, i, namespaces)
+    FS1::Namespaces const& namespaces = App_FileSystem()->namespaces();
+    DENG2_FOR_EACH_CONST(FS1::Namespaces, i, namespaces)
     {
         if((*i)->applyPathMappings(path))
         {

@@ -1079,7 +1079,7 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        de::FileNamespace* fnamespace = F_FileNamespaceByName(DD_ResourceClassByName("RC_MODEL").defaultNamespace());
+        de::FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassByName("RC_MODEL").defaultNamespace());
         DENG_ASSERT(fnamespace);
         fnamespace->reset();
 

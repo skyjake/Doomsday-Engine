@@ -41,7 +41,6 @@
 #include "filesys/file.h"
 #include "filesys/fileid.h"
 #include "filesys/fileinfo.h"
-#include "filesys/filenamespace.h"
 #include "filesys/locator.h"
 #include "filesys/lumpindex.h"
 
@@ -56,7 +55,45 @@ D_CMD(DumpLump);
 D_CMD(ListFiles);
 D_CMD(ListLumps);
 
+static NullFileType nullType;
+
 static FS1* fileSystem;
+
+class ZipFileType : public de::NativeFileType
+{
+public:
+    ZipFileType() : NativeFileType("FT_ZIP", RC_PACKAGE)
+    {}
+
+    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
+    {
+        if(Zip::recognise(hndl))
+        {
+            LOG_AS("ZipFileType");
+            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            return new Zip(hndl, path, info);
+        }
+        return 0;
+    }
+};
+
+class WadFileType : public de::NativeFileType
+{
+public:
+    WadFileType() : NativeFileType("FT_WAD", RC_PACKAGE)
+    {}
+
+    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
+    {
+        if(Wad::recognise(hndl))
+        {
+            LOG_AS("WadFileType");
+            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            return new Wad(hndl, path, info);
+        }
+        return 0;
+    }
+};
 
 typedef QList<FileId> FileIds;
 
@@ -118,12 +155,18 @@ struct FS1::Instance
     /// Virtual file-directory mapping.
     PathMappings pathMappings;
 
+    FileTypes types;
+
+    Namespaces namespaces;
+
     Instance(FS1* d) : self(d), loadingForStartup(true),
         openFiles(), loadedFiles(), fileIds(),
         zipFileIndex(LIF_UNIQUE_PATHS), primaryIndex(),
         auxiliaryPrimaryIndex(), auxiliaryPrimaryIndexInUse(false),
         activePrimaryIndex(&primaryIndex)
-    {}
+    {
+        createFileTypes();
+    }
 
     ~Instance()
     {
@@ -135,6 +178,148 @@ struct FS1::Instance
 
         pathMappings.clear();
         lumpMappings.clear();
+
+        clearNamespaces();
+        clearFileTypes();
+    }
+
+    void createFileTypes()
+    {
+        FileType* ftype;
+
+        /*
+         * Packages types:
+         */
+        ResourceClass& packageClass = DD_ResourceClassByName("RC_PACKAGE");
+
+        types.push_back(new ZipFileType());
+        ftype = types.back();
+        ftype->addKnownExtension(".pk3");
+        ftype->addKnownExtension(".zip");
+        packageClass.addFileType(ftype);
+
+        types.push_back(new WadFileType());
+        ftype = types.back();
+        ftype->addKnownExtension(".wad");
+        packageClass.addFileType(ftype);
+
+        types.push_back(new FileType("FT_LMP", RC_PACKAGE)); ///< Treat lumps as packages so they are mapped to $App.DataPath.
+        ftype = types.back();
+        ftype->addKnownExtension(".lmp");
+
+        /*
+         * Definition types:
+         */
+        types.push_back(new FileType("FT_DED", RC_DEFINITION));
+        ftype = types.back();
+        ftype->addKnownExtension(".ded");
+        DD_ResourceClassByName("RC_DEFINITION").addFileType(ftype);
+
+        /*
+         * Graphic types:
+         */
+        ResourceClass& graphicClass = DD_ResourceClassByName("RC_GRAPHIC");
+
+        types.push_back(new FileType("FT_PNG", RC_GRAPHIC));
+        ftype = types.back();
+        ftype->addKnownExtension(".png");
+        graphicClass.addFileType(ftype);
+
+        types.push_back(new FileType("FT_TGA", RC_GRAPHIC));
+        ftype = types.back();
+        ftype->addKnownExtension(".tga");
+        graphicClass.addFileType(ftype);
+
+        types.push_back(new FileType("FT_JPG", RC_GRAPHIC));
+        ftype = types.back();
+        ftype->addKnownExtension(".jpg");
+        graphicClass.addFileType(ftype);
+
+        types.push_back(new FileType("FT_PCX", RC_GRAPHIC));
+        ftype = types.back();
+        ftype->addKnownExtension(".pcx");
+        graphicClass.addFileType(ftype);
+
+        /*
+         * Model types:
+         */
+        ResourceClass& modelClass = DD_ResourceClassByName("RC_MODEL");
+
+        types.push_back(new FileType("FT_DMD", RC_MODEL));
+        ftype = types.back();
+        ftype->addKnownExtension(".dmd");
+        modelClass.addFileType(ftype);
+
+        types.push_back(new FileType("FT_MD2", RC_MODEL));
+        ftype = types.back();
+        ftype->addKnownExtension(".md2");
+        modelClass.addFileType(ftype);
+
+        /*
+         * Sound types:
+         */
+        types.push_back(new FileType("FT_WAV", RC_SOUND));
+        ftype = types.back();
+        ftype->addKnownExtension(".wav");
+        DD_ResourceClassByName("RC_SOUND").addFileType(ftype);
+
+        /*
+         * Music types:
+         */
+        ResourceClass& musicClass = DD_ResourceClassByName("RC_MUSIC");
+
+        types.push_back(new FileType("FT_OGG", RC_MUSIC));
+        ftype = types.back();
+        ftype->addKnownExtension(".ogg");
+        musicClass.addFileType(ftype);
+
+        types.push_back(new FileType("FT_MP3", RC_MUSIC));
+        ftype = types.back();
+        ftype->addKnownExtension(".mp3");
+        musicClass.addFileType(ftype);
+
+        types.push_back(new FileType("FT_MOD", RC_MUSIC));
+        ftype = types.back();
+        ftype->addKnownExtension(".mod");
+        musicClass.addFileType(ftype);
+
+        types.push_back(new FileType("FT_MID", RC_MUSIC));
+        ftype = types.back();
+        ftype->addKnownExtension(".mid");
+        musicClass.addFileType(ftype);
+
+        /*
+         * Font types:
+         */
+        types.push_back(new FileType("FT_DFN", RC_FONT));
+        ftype = types.back();
+        ftype->addKnownExtension(".dfn");
+        DD_ResourceClassByName("RC_FONT").addFileType(ftype);
+
+        /*
+         * Misc types:
+         */
+        types.push_back(new FileType("FT_DEH", RC_PACKAGE)); ///< Treat DeHackEd patches as packages so they are mapped to $App.DataPath.
+        ftype = types.back();
+        ftype->addKnownExtension(".deh");
+    }
+
+    void clearFileTypes()
+    {
+        DENG2_FOR_EACH(FileTypes, i, types)
+        {
+            delete *i;
+        }
+        types.clear();
+    }
+
+    void clearNamespaces()
+    {
+        DENG2_FOR_EACH(Namespaces, i, namespaces)
+        {
+            delete *i;
+        }
+        namespaces.clear();
     }
 
     /// @return  @c true if the FileId associated with @a path was released.
@@ -402,6 +587,13 @@ FS1::~FS1()
     FileHandleBuilder::shutdown();
 }
 
+FS1::Namespace& FS1::createNamespace(String name, Namespace::Flags flags)
+{
+    DENG_ASSERT(name.length() >= Namespace::min_name_length);
+    d->namespaces.push_back(new Namespace(name, flags));
+    return *d->namespaces.back();
+}
+
 void FS1::consoleRegister()
 {
     C_CMD("dir", "", Dir);
@@ -529,9 +721,38 @@ de::File1& FS1::find(String path)
     }
 
     FileList::iterator found = findListFileByPath(d->loadedFiles, path);
-    if(found == d->loadedFiles.end()) throw NotFoundError("FS1::findFile", "No files found matching '" + path + "'");
+    if(found == d->loadedFiles.end()) throw NotFoundError("FS1::find", "No files found matching '" + path + "'");
     DENG_ASSERT((*found)->hasFile());
     return (*found)->file();
+}
+
+PathTree::Node& FS1::find(de::Uri const& path, Namespace& fnamespace)
+{
+    LOG_TRACE("Using namespace '%s'...") << fnamespace.name();
+
+    // Ensure the namespace is up to date.
+    fnamespace.rebuild();
+
+    // The in-namespace name is the file name sans extension.
+    String name = path.firstSegment().toString().fileNameWithoutExtension();
+
+    // Perform the search.
+    Namespace::FileList foundFiles;
+    if(fnamespace.findAll(name, foundFiles))
+    {
+        // There is at least one name-matched (perhaps partially) file.
+        DENG2_FOR_EACH_CONST(Namespace::FileList, i, foundFiles)
+        {
+            PathTree::Node& node = **i;
+            if(!node.comparePath(path, PCF_NO_BRANCH))
+            {
+                // This is the file we are looking for.
+                return node;
+            }
+        }
+    }
+
+    throw NotFoundError("FS1::find", "No files found matching '" + path + "' in namespace '" + fnamespace.name() + "'");
 }
 
 #if _DEBUG
@@ -908,7 +1129,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
 
         String* filePath = 0;
         bool patternMatched;
-        if(!(flags & SPF_NO_DESCEND))
+        if(!(flags & SearchPath::NoDescend))
         {
             filePath = new String(lump.composePath());
             QByteArray filePathUtf8 = filePath->toUtf8();
@@ -1007,8 +1228,8 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const&
     de::File1* interpretedFile = 0;
 
     // Firstly try the interpreter for the guessed resource types.
-    FileType const& rtypeGuess = F_GuessFileTypeFromFileName(filePath);
-    if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(&rtypeGuess))
+    FileType const& ftypeGuess = guessFileTypeFromFileName(filePath);
+    if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(&ftypeGuess))
     {
         interpretedFile = fileType->interpret(hndl, filePath, info);
     }
@@ -1016,13 +1237,12 @@ de::File1& FS1::interpret(de::FileHandle& hndl, String filePath, FileInfo const&
     // If not yet interpreted - try each recognisable format in order.
     if(!interpretedFile)
     {
-        FileTypes const& rtypes = F_FileTypes();
-        DENG2_FOR_EACH_CONST(FileTypes, i, rtypes)
+        DENG2_FOR_EACH_CONST(FileTypes, i, d->types)
         {
             if(NativeFileType const* fileType = dynamic_cast<NativeFileType const*>(*i))
             {
                 // Already tried this?
-                if(fileType == &rtypeGuess) continue;
+                if(fileType == &ftypeGuess) continue;
 
                 interpretedFile = fileType->interpret(hndl, filePath, info);
                 if(interpretedFile) break;
@@ -1194,6 +1414,66 @@ void FS1::printDirectory(String path)
     }
 }
 
+void FS1::resetAllNamespaces()
+{
+    DENG2_FOR_EACH(Namespaces, i, d->namespaces)
+    {
+        (*i)->reset();
+    }
+}
+
+FS1::Namespace* FS1::namespaceByName(String name)
+{
+    if(!name.isEmpty())
+    {
+        DENG2_FOR_EACH(Namespaces, i, d->namespaces)
+        {
+            Namespace& fnamespace = **i;
+            if(!fnamespace.name().compareWithoutCase(name))
+                return &fnamespace;
+        }
+    }
+    return 0; // Not found.
+}
+
+FileType& FS1::fileTypeByName(String name)
+{
+    if(!name.isEmpty())
+    {
+        DENG2_FOR_EACH_CONST(FileTypes, i, d->types)
+        {
+            FileType& ftype = **i;
+            if(!ftype.name().compareWithoutCase(name))
+                return ftype;
+        }
+    }
+    return nullType; // Not found.
+}
+
+FileType& FS1::guessFileTypeFromFileName(String path)
+{
+    if(!path.isEmpty())
+    {
+        DENG2_FOR_EACH_CONST(FileTypes, i, d->types)
+        {
+            FileType& ftype = **i;
+            if(ftype.fileNameIsKnown(path))
+                return ftype;
+        }
+    }
+    return nullType;
+}
+
+FS1::FileTypes const& FS1::fileTypes()
+{
+    return d->types;
+}
+
+FS1::Namespaces const& FS1::namespaces()
+{
+    return d->namespaces;
+}
+
 /// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
@@ -1297,16 +1577,16 @@ D_CMD(ListFiles)
  * C Wrapper API
  */
 
-de::FS1* App_FileSystem()
+FS1* App_FileSystem()
 {
-    if(!fileSystem) throw de::Error("App_FileSystem", "File system not yet initialized");
+    if(!fileSystem) throw Error("App_FileSystem", "File system not yet initialized");
     return fileSystem;
 }
 
-de::String App_BasePath()
+String App_BasePath()
 {
     /// @todo Shouldn't this end in '/'? It causes failure to locate doomsday.pk3...
-    return de::App::app().nativeBasePath().withSeparators('/'); // + '/';
+    return App::app().nativeBasePath().withSeparators('/'); // + '/';
 }
 
 void F_Register(void)
@@ -1314,20 +1594,152 @@ void F_Register(void)
     FS1::consoleRegister();
 }
 
+static void createPackagesNamespace(FS1& fs)
+{
+    FS1::Namespace& fnamespace = fs.createNamespace("Packages");
+
+    /*
+     * Add default search paths.
+     *
+     * Note that the order here defines the order in which these paths are searched
+     * thus paths must be added in priority order (newer paths have priority).
+     */
+
+#ifdef UNIX
+    // There may be an iwadir specified in a system-level config file.
+    filename_t fn;
+    if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+    {
+        NativePath path = de::App::app().commandLine().startupPath() / fn;
+        fnamespace.addSearchPath(Namespace::DefaultPaths, de::Uri::fromNativeDirPath(path), NoDescend);
+        LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
+    }
+#endif
+
+    // Add the path from the DOOMWADDIR environment variable.
+    if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
+    {
+        NativePath path = App::app().commandLine().startupPath() / getenv("DOOMWADDIR");
+        fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+        LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
+    }
+
+    // Add any paths from the DOOMWADPATH environment variable.
+    if(!CommandLine_Check("-nodoomwadpath") && getenv("DOOMWADPATH"))
+    {
+#if WIN32
+#  define SEP_CHAR      ';'
+#else
+#  define SEP_CHAR      ':'
+#endif
+
+        QStringList allPaths = QString(getenv("DOOMWADPATH")).split(SEP_CHAR, QString::SkipEmptyParts);
+        for(int i = allPaths.count(); i--> 0; )
+        {
+            NativePath path = App::app().commandLine().startupPath() / allPaths[i];
+            fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+            LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
+        }
+
+#undef SEP_CHAR
+    }
+
+    fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri("$(App.DataPath)/", RC_NULL), SearchPath::NoDescend));
+    fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SearchPath::NoDescend));
+}
+
+static void createNamespaces(FS1& fs)
+{
+    int const namespacedef_max_searchpaths = 5;
+    struct namespacedef_s {
+        char const* name;
+        char const* optOverridePath;
+        char const* optFallbackPath;
+        FS1::Namespace::Flags flags;
+        SearchPath::Flags searchPathFlags;
+        /// Priority is right to left.
+        char const* searchPaths[namespacedef_max_searchpaths];
+    } defs[] = {
+        { "Defs",         NULL,           NULL,           FS1::Namespace::Flag(0), 0,
+            { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
+        },
+        { "Graphics",     "-gfxdir2",     "-gfxdir",      FS1::Namespace::Flag(0), 0,
+            { "$(App.DataPath)/graphics/" }
+        },
+        { "Models",       "-modeldir2",   "-modeldir",    FS1::Namespace::MappedInPackages, 0,
+            { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
+        },
+        { "Sfx",          "-sfxdir2",     "-sfxdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+            { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
+        },
+        { "Music",        "-musdir2",     "-musdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+            { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
+        },
+        { "Textures",     "-texdir2",     "-texdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+            { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
+        },
+        { "Flats",        "-flatdir2",    "-flatdir",     FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+            { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
+        },
+        { "Patches",      "-patdir2",     "-patdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+            { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
+        },
+        { "LightMaps",    "-lmdir2",      "-lmdir",       FS1::Namespace::MappedInPackages, 0,
+            { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
+        },
+        { "Fonts",        "-fontdir2",    "-fontdir",     FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+            { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
+        },
+        { 0, 0, 0, FS1::Namespace::Flag(0), 0, { 0 } }
+    };
+
+    createPackagesNamespace(fs);
+
+    // Setup the rest...
+    struct namespacedef_s const* def = defs;
+    for(int i = 0; defs[i].name; ++i, ++def)
+    {
+        FS1::Namespace& fnamespace = fs.createNamespace(def->name, def->flags);
+
+        int searchPathCount = 0;
+        while(def->searchPaths[searchPathCount] && ++searchPathCount < namespacedef_max_searchpaths)
+        {}
+
+        for(int j = 0; j < searchPathCount; ++j)
+        {
+            SearchPath path = SearchPath(de::Uri(def->searchPaths[j], RC_NULL), def->searchPathFlags);
+            fnamespace.addSearchPath(FS1::DefaultPaths, path);
+        }
+
+        if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
+        {
+            NativePath path = NativePath(CommandLine_NextAsPath());
+            fnamespace.addSearchPath(FS1::OverridePaths, SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags));
+            path = path / "$(Game.IdentityKey)";
+            fnamespace.addSearchPath(FS1::OverridePaths, SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags));
+        }
+
+        if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
+        {
+            NativePath path = NativePath(CommandLine_NextAsPath());
+            fnamespace.addSearchPath(FS1::FallbackPaths, SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags));
+        }
+    }
+}
+
 void F_Init(void)
 {
     DENG_ASSERT(!fileSystem);
     fileSystem = new de::FS1();
 
-    F_InitResourceLocator();
+    /// @todo Does not belong here.
+    createNamespaces(*fileSystem);
 }
 
 void F_Shutdown(void)
 {
     if(!fileSystem) return;
     delete fileSystem; fileSystem = 0;
-
-    F_ShutdownResourceLocator();
 }
 
 void F_EndStartup(void)

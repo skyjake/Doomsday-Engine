@@ -33,11 +33,6 @@
 #include "uri.h"
 
 #ifdef __cplusplus
-#include <QList>
-
-#include "filenamespace.h"
-#include <de/String>
-
 extern "C" {
 #endif
 
@@ -54,20 +49,6 @@ extern "C" {
 /// Default flags.
 #define RLF_DEFAULT             0
 ///@}
-
-/**
- * @post Initial/default search paths registered, namespaces initialized and
- *       queries may begin.
- */
-void F_InitResourceLocator(void);
-
-/**
- * @post All resource namespaces are emptied, search paths are cleared and
- *       queries are no longer possible.
- */
-void F_ShutdownResourceLocator(void);
-
-void F_ResetAllFileNamespaces(void);
 
 /**
  * Attempt to locate a named resource.
@@ -106,42 +87,6 @@ uint F_FindFromList(resourceclassid_t classId, char const* searchPaths,
 
 #ifdef __cplusplus
 } // extern "C"
-
-namespace de {
-
-typedef QList<FileType*> FileTypes;
-typedef QList<FileNamespace*> FileNamespaces;
-
-}
-
-/**
- * Lookup a FileNamespace by symbolic name.
- *
- * @param name  Symbolic name of the namespace.
- * @return  FileNamespace associated with @a name; otherwise @c 0 (not found).
- */
-de::FileNamespace* F_FileNamespaceByName(de::String name);
-
-de::FileTypes const& F_FileTypes();
-
-de::FileNamespaces const& F_FileNamespaces();
-
-/**
- * Lookup a FileType by symbolic name.
- *
- * @param name  Symbolic name of the type.
- * @return  FileType associated with @a name. May return a null-object.
- */
-de::FileType& F_FileTypeByName(de::String name);
-
-/**
- * Attempts to determine which "type" should be attributed to a resource, solely
- * by examining the name (e.g., a file name/path).
- *
- * @return  Type determined for this resource. May return a null-object.
- */
-de::FileType& F_GuessFileTypeFromFileName(de::String name);
-
-#endif // __cplusplus
+#endif
 
 #endif /* LIBDENG_SYSTEM_RESOURCE_LOCATOR_H */

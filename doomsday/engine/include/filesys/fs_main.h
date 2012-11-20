@@ -38,9 +38,12 @@
 #ifdef __cplusplus
 
 #include <QList>
+#include <QMultiMap>
 #include <de/String>
 #include "pathtree.h"
 #include "fileinfo.h"
+#include "filetype.h"
+#include "searchpath.h"
 
 /**
  * @defgroup fs File System
@@ -63,8 +66,8 @@ namespace de
      * with lumps from loaded data files) and the Auxiliary index (used to temporarily
      * open a file that is not considered part of the filesystem).
      *
-     * Functions that don't know the absolute/logical lumpnum of file will have to check
-     * both indexes (e.g., FS1::lumpNumForName()).
+     * Functions that don't know the absolute/logical lumpnum of file will have to
+     * check both indexes (e.g., FS1::lumpNumForName()).
      *
      * @ingroup fs
      */
@@ -74,6 +77,172 @@ namespace de
         /// No files found. @ingroup errors
         DENG2_ERROR(NotFoundError);
 
+        /**
+         * (Search) path groupings in descending priority.
+         */
+        enum PathGroup
+        {
+            /// 'Override' paths have the highest priority. These are usually
+            /// set according to user specified paths, e.g., via the command line.
+            OverridePaths,
+
+            /// 'Extra' paths are those which are determined dynamically when some
+            /// runtime resources are loaded. The DED module utilizes these to add
+            /// new model search paths found when parsing definition files.
+            ExtraPaths,
+
+            /// Default paths are those which are known a priori. These are usually
+            /// determined at compile time and are implicit paths relative to the
+            /// virtual file system.
+            DefaultPaths,
+
+            /// Fallback (i.e., last-resort) paths have the lowest priority. These
+            /// are usually set according to user specified paths, e.g., via the
+            /// command line.
+            FallbackPaths
+        };
+
+        /**
+         * @todo The symbolic name of the namespace and the path mapping template
+         *       (see applyPathMappings()) should be defined externally. -ds
+         */
+        class Namespace
+        {
+        public:
+            /// Symbolic names must be at least this number of characters.
+            static int const min_name_length = URI_MINSCHEMELENGTH;
+
+            enum Flag
+            {
+                /// Packages may include virtual file mappings to the namespace with a
+                /// root directory which matches the symbolic name of the namespace.
+                ///
+                /// @see applyPathMappings()
+                MappedInPackages    = 0x01
+            };
+            Q_DECLARE_FLAGS(Flags, Flag)
+
+            /// Groups of search paths ordered by priority.
+            typedef QMultiMap<PathGroup, SearchPath> SearchPaths;
+
+            /// List of found files.
+            typedef QList<PathTree::Node*> FileList;
+
+        public:
+            explicit Namespace(String symbolicName, Flags flags = 0);
+            ~Namespace();
+
+            /// @return  Symbolic name of this namespace (e.g., "Models").
+            String const& name() const;
+
+            /**
+             * Rebuild this namespace by re-scanning for resources on all search
+             * paths and re-populating the internal database.
+             *
+             * @note Any manually added resources will not be present after this.
+             *
+             * @todo Namespace population should be implemented externally. -ds
+             */
+            void rebuild();
+
+            /**
+             * Clear this namespace back to it's "empty" state (i.e., no resources).
+             * The search path groups are unaffected.
+             */
+            void clear();
+
+            /**
+             * Reset this namespace, returning it to an empty state and clearing any
+             * @ref ExtraPaths which have been registered since its construction.
+             */
+            inline void reset() {
+                clearSearchPaths(ExtraPaths);
+                clear();
+            }
+
+            /**
+             * Manually add a resource to this namespace. Duplicates are pruned
+             * automatically.
+             *
+             * @param resourceNode  Node which represents the resource.
+             *
+             * @return  @c true iff this namespace did not already contain the resource.
+             */
+            bool add(PathTree::Node& resourceNode);
+
+            /**
+             * Finds all resources in this namespace.
+             *
+             * @param name    If not an empty string, only consider resources whose
+             *                name begins with this. Case insensitive.
+             * @param found   Set of resources which match the search.
+             *
+             * @return  Number of found resources.
+             */
+            int findAll(String name, FileList& found);
+
+            /**
+             * Add a new search path to this namespace. Newer paths have priority
+             * over previously added paths.
+             *
+             * @param group     Group to add this path to. @ref PathGroup
+             * @param path      New unresolved search path to add. A copy is made.
+             *
+             * @return  @c true if @a path was well-formed and subsequently added.
+             */
+            bool addSearchPath(PathGroup group, SearchPath const& path);
+
+            /**
+             * Clear search paths in @a group from this namespace.
+             *
+             * @param group  Search path group to be cleared.
+             */
+            void clearSearchPaths(PathGroup group);
+
+            /**
+             * Clear all search paths in all groups in this namespace.
+             */
+            void clearSearchPaths();
+
+            /**
+             * Provides access to the search paths for efficient traversals.
+             */
+            SearchPaths const& searchPaths() const;
+
+            /**
+             * Apply mapping for this namespace to the specified path. Mapping must
+             * be enabled (with @ref MappedInPackages) otherwise this does nothing.
+             *
+             * For example, given the namespace name "models":
+             *
+             * <pre>
+             *     "models/mymodel.dmd" => "$(App.DataPath)/$(GamePlugin.Name)/models/mymodel.dmd"
+             * </pre>
+             *
+             * @param path  The path to be mapped (applied in-place).
+             *
+             * @return  @c true iff mapping was applied to the path.
+             */
+            bool applyPathMappings(String& path) const;
+
+#if _DEBUG
+            void debugPrint() const;
+#endif
+
+        private:
+            struct Instance;
+            Instance* d;
+        };
+
+        /// Types of interpretable file which the file system organizes.
+        typedef QList<FileType*> FileTypes;
+
+        /// Namespaces within the file system.
+        typedef QList<Namespace*> Namespaces;
+
+        /**
+         * PathListItem represents a found path for find file search results.
+         */
         struct PathListItem
         {
             String path;
@@ -88,8 +257,11 @@ namespace de
                 return path.compareWithoutCase(other.path) < 0;
             }
         };
+
+        /// List of found path search results.
         typedef QList<PathListItem> PathList;
 
+        /// List of file search results.
         typedef QList<FileHandle*> FileList;
 
     public:
@@ -102,6 +274,49 @@ namespace de
 
         /// Register the console commands, variables, etc..., of this module.
         static void consoleRegister();
+
+        /**
+         * @param name      Unique symbolic name of this namespace. Must be at least
+         *                  @c Namespace::min_name_length characters long.
+         * @param flags     @ref Namespace::Flag
+         */
+        Namespace& createNamespace(String name, Namespace::Flags flags = 0);
+
+        /**
+         * Reset all the namespaces, returning them to an empty state and clearing
+         * any @ref ExtraPaths which have been registered since construction.
+         */
+        void resetAllNamespaces();
+
+        /**
+         * Lookup a Namespace by symbolic name.
+         *
+         * @param name  Symbolic name of the namespace.
+         * @return  Namespace associated with @a name; otherwise @c 0 (not found).
+         */
+        Namespace* namespaceByName(String name);
+
+        /// Returns the namespaces for efficient traversal.
+        Namespaces const& namespaces();
+
+        /**
+         * Lookup a FileType by symbolic name.
+         *
+         * @param name  Symbolic name of the type.
+         * @return  FileType associated with @a name. May return a null-object.
+         */
+        FileType& fileTypeByName(de::String name);
+
+        /**
+         * Attempts to determine which "type" should be attributed to a resource, solely
+         * by examining the name (e.g., a file name/path).
+         *
+         * @return  Type determined for this resource. May return a null-object.
+         */
+        FileType& guessFileTypeFromFileName(de::String name);
+
+        /// Returns the registered file types for efficient traversal.
+        FileTypes const& fileTypes();
 
         /**
          * @post No more WADs will be loaded in startup mode.
@@ -169,6 +384,15 @@ namespace de
          */
         FS1& deindex(File1& file);
 
+        /**
+         * Lookup a lump by name.
+         *
+         * @param name  Name of the lump to lookup (may include a size condition).
+         * @param silent  @c true= do not log a warning if no lump is found.
+         * @return  Logical lump number for the found lump; otherwise @c -1.
+         *
+         * @todo At this level there should be no distinction between lumps. -ds
+         */
         lumpnum_t lumpNumForName(String name, bool silent = true);
 
         /**
@@ -213,7 +437,7 @@ namespace de
         /**
          * Try to open the specified lump for reading.
          *
-         * @param lump       The file to be opened.
+         * @param lump  The file to be opened.
          *
          * @return  Handle to the opened file.
          *
@@ -232,6 +456,17 @@ namespace de
          * @throws NotFoundError If the requested file could not be found.
          */
         File1& find(String path);
+
+        /**
+         * Find a single file within the specified namespace.
+         *
+         * @param path          Path to search on.
+         * @param fnamespace    Namespace to be searched.
+         * @return  The found file.
+         *
+         * @throws NotFoundError If the requested file could not be found.
+         */
+        PathTree::Node& find(Uri const& path, Namespace& fnamespace);
 
         /**
          * Finds all files.
@@ -338,6 +573,8 @@ namespace de
          */
         File1& interpret(FileHandle& hndl, String path, FileInfo const& info);
     };
+
+    Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Namespace::Flags)
 
 } // namespace de
 

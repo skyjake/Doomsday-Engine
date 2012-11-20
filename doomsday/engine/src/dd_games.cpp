@@ -194,8 +194,8 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
         d->currentGame = &game;
         DD_ExchangeGamePluginEntryPoints(game.pluginId());
 
-        // Re-init the resource locator using the search paths of this Game.
-        F_ResetAllFileNamespaces();
+        // Re-init the namespaces using the search paths of this Game.
+        App_FileSystem()->resetAllNamespaces();
     }
 
     DENG2_FOR_EACH_CONST(Game::MetaFiles, i, game.metafiles())
@@ -214,8 +214,8 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
         d->currentGame = oldGame;
         DD_ExchangeGamePluginEntryPoints(oldGame->pluginId());
 
-        // Re-init the resource locator using the search paths of this Game.
-        F_ResetAllFileNamespaces();
+        // Re-init the namespaces using the search paths of this Game.
+        App_FileSystem()->resetAllNamespaces();
     }
     return *this;
 }

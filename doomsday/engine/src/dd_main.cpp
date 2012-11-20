@@ -475,8 +475,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     // Reset file Ids so previously seen files can be processed again.
     App_FileSystem()->resetFileIds();
     initPathMappings();
-
-    F_ResetAllFileNamespaces();
+    App_FileSystem()->resetAllNamespaces();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -530,7 +529,7 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, FileType const& ft
     if(!list || !listSize) return 0;
     for(i = 0; i < *listSize; ++i)
     {
-        if(&ftype != &F_GuessFileTypeFromFileName(Str_Text((*list)[i]))) continue;
+        if(&ftype != &App_FileSystem()->guessFileTypeFromFileName(Str_Text((*list)[i]))) continue;
         if(tryLoadFile(Str_Text((*list)[i])))
         {
             count += 1;
@@ -709,9 +708,9 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
         listFilesFromDataGameAuto(&sessionResourceFileList, &numSessionResourceFileList);
         if(numSessionResourceFileList > 0)
         {
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, F_FileTypeByName("FT_ZIP"));
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, App_FileSystem()->fileTypeByName("FT_ZIP"));
 
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, F_FileTypeByName("FT_WAD"));
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, App_FileSystem()->fileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.
@@ -725,7 +724,7 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
 
     // Re-initialize the resource locator as there are now new resources to be found
     // on existing search paths (probably that is).
-    F_ResetAllFileNamespaces();
+    App_FileSystem()->resetAllNamespaces();
 
     if(p->initiatedBusyMode)
     {
@@ -1091,7 +1090,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         initPathLumpMappings();
         initPathMappings();
 
-        F_ResetAllFileNamespaces();
+        App_FileSystem()->resetAllNamespaces();
     }
 
     FI_Shutdown();
@@ -1412,7 +1411,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FileNamespace* fnamespace = F_FileNamespaceByName(DD_ResourceClassByName("RC_PACKAGE").defaultNamespace());
+    FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassByName("RC_PACKAGE").defaultNamespace());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -1421,13 +1420,13 @@ boolean DD_Init(void)
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
             /// @todo Do not add these as search paths, publish them directly
-            ///       to the "packages" FileNamespace.
+            ///       to the "packages" Namespace.
 
             // CommandLine_PathAt() always returns an absolute path.
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
-            fnamespace->addSearchPath(FileNamespace::DefaultPaths, uri, SPF_NO_DESCEND);
+            fnamespace->addSearchPath(FS1::DefaultPaths, SearchPath(uri, SearchPath::NoDescend));
 
             Dir_Delete(dir);
         }
@@ -1483,9 +1482,9 @@ boolean DD_Init(void)
 
     initPathLumpMappings();
 
-    // Re-initialize the resource locator as there are now new resources to be found
+    // Re-initialize the namespaces as there are now new resources to be found
     // on existing search paths (probably that is).
-    F_ResetAllFileNamespaces();
+    App_FileSystem()->resetAllNamespaces();
 
     // One-time execution of various command line features available during startup.
     if(CommandLine_CheckWith("-dumplump", 1))
@@ -1579,11 +1578,9 @@ boolean DD_Init(void)
         // Lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
         App_FileSystem()->resetFileIds();
-
         initPathLumpMappings();
         initPathMappings();
-
-        F_ResetAllFileNamespaces();
+        App_FileSystem()->resetAllNamespaces();
 
         R_InitPatchComposites();
         R_InitFlatTextures();
@@ -1615,7 +1612,7 @@ static void DD_InitResourceSystem(void)
 
     initPathMappings();
 
-    F_ResetAllFileNamespaces();
+    App_FileSystem()->resetAllNamespaces();
 
     // Initialize the definition databases.
     Def_Init();
@@ -1812,8 +1809,8 @@ void DD_UpdateEngineState(void)
     initPathLumpMappings();
     initPathMappings();
 
-    // Re-initialize the resource locator as there may now be new resources to be found.
-    F_ResetAllFileNamespaces();
+    // Re-build the namespaces as there may now be new resources to be found.
+    App_FileSystem()->resetAllNamespaces();
 
     R_InitPatchComposites();
     R_InitFlatTextures();

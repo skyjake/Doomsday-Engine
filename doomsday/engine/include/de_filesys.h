@@ -29,7 +29,6 @@
 #include "filetype.h"
 
 #include "filesys/filehandlebuilder.h"
-#include "filesys/filenamespace.h"
 #include "filesys/fs_main.h"
 #include "filesys/fs_util.h"
 #include "filesys/locator.h"

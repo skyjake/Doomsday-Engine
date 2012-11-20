@@ -183,12 +183,12 @@ DENG_HEADERS += \
     include/filesys/file.h \
     include/filesys/filehandlebuilder.h \
     include/filesys/fileinfo.h \
-    include/filesys/filenamespace.h \
     include/filesys/fs_main.h \
     include/filesys/fs_util.h \
     include/filesys/locator.h \
     include/filesys/lumpindex.h \
     include/filesys/metafile.h \
+    include/filesys/searchpath.h \
     include/filesys/sys_direc.h \
     include/filesys/sys_findfile.h \
     include/game.h \
@@ -470,12 +470,13 @@ SOURCES += \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \
     src/filesys/fileid.cpp \
-    src/filesys/filenamespace.cpp \
     src/filesys/fs_main.cpp \
+    src/filesys/fs_namespace.cpp \
     src/filesys/fs_util.cpp \
     src/filesys/locator.cpp \
     src/filesys/lumpindex.cpp \
     src/filesys/metafile.cpp \
+    src/filesys/searchpath.cpp \
     src/filesys/sys_direc.c \
     src/game.cpp \
     src/gl/dgl_common.c \
