@@ -25,6 +25,10 @@
 
 #include "def_data.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        32
 
@@ -187,5 +191,9 @@ float P_GetParticleRadius(const ded_ptcstage_t* stageDef, int ptcIndex);
  * A particle may be attached to the floor or ceiling of the sector.
  */
 float P_GetParticleZ(const particle_t* pt);
+
+#ifdef __cplusplus
+} extern "C"
+#endif
 
 #endif /// LIBDENG_MAP_GENERATORS_H
