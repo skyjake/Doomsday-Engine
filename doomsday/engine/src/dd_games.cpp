@@ -200,12 +200,12 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
 
     DENG2_FOR_EACH_CONST(Game::Resources, i, game.resources())
     {
-        ResourceManifest& record = **i;
+        ResourceRecord& record = **i;
 
         // We are only interested in startup resources at this time.
         if(!(record.resourceFlags() & RF_STARTUP)) continue;
 
-        record.locate();
+        record.locateResource();
     }
 
     if(d->currentGame != oldGame)

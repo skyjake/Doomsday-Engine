@@ -370,7 +370,7 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-static void loadResource(ResourceManifest& record)
+static void loadResource(ResourceRecord& record)
 {
     DENG_ASSERT(record.resourceClass() == RC_PACKAGE);
 
@@ -457,7 +457,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     for(de::Game::Resources::const_iterator i = gameResources.find(RC_PACKAGE);
         i != gameResources.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
-        ResourceManifest& record = **i;
+        ResourceRecord& record = **i;
         loadResource(record);
 
         // Update our progress.
@@ -851,7 +851,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
 
     // Construct and attach the new resource record.
     de::Game& game = games->byId(gameId);
-    ResourceManifest* record = new ResourceManifest(classId, rflags);
+    ResourceRecord* record = new ResourceRecord(classId, rflags);
     game.addResource(*record);
 
     // Add the name list to the resource record.

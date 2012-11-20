@@ -31,7 +31,7 @@
 
 namespace de {
 
-struct ResourceManifest::Instance
+struct ResourceRecord::Instance
 {
     /// Class of resource.
     resourceclassid_t classId;
@@ -60,43 +60,47 @@ struct ResourceManifest::Instance
     {}
 };
 
-ResourceManifest::ResourceManifest(resourceclassid_t classId, int rflags, const String& name)
+ResourceRecord::ResourceRecord(resourceclassid_t classId, int rflags, String* name)
 {
     d = new Instance(classId, rflags);
-    if(!name.isEmpty()) addName(name);
+    if(name) addName(*name);
 }
 
-ResourceManifest::~ResourceManifest()
+ResourceRecord::~ResourceRecord()
 {
     delete d;
 }
 
-bool ResourceManifest::addName(String newName)
+ResourceRecord& ResourceRecord::addName(String newName, bool* didAdd)
 {
     // Is this name unique? We don't want duplicates.
     if(newName.isEmpty() || d->names.contains(newName, Qt::CaseInsensitive))
     {
-        return false;
+        if(didAdd) *didAdd = false;
+        return *this;
     }
 
     // Add the new name.
     d->names.prepend(newName);
 
-    return true;
+    if(didAdd) *didAdd = true;
+    return *this;
 }
 
-bool ResourceManifest::addIdentityKey(String newIdentityKey)
+ResourceRecord& ResourceRecord::addIdentityKey(String newIdentityKey, bool* didAdd)
 {
     // Is this key unique? We don't want duplicates.
     if(newIdentityKey.isEmpty() || d->identityKeys.contains(newIdentityKey, Qt::CaseInsensitive))
     {
-        return false;
+        if(didAdd) *didAdd = false;
+        return *this;
     }
 
     // Add the new key.
     d->identityKeys.append(newIdentityKey);
 
-    return true;
+    if(didAdd) *didAdd = true;
+    return *this;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
@@ -150,10 +154,10 @@ static bool recognizeZIP(String const& filePath, QStringList const& /*identityKe
     return false;
 }
 
-void ResourceManifest::locate()
+ResourceRecord& ResourceRecord::locateResource()
 {
     // Already found?
-    if(d->flags & RF_FOUND) return;
+    if(d->flags & RF_FOUND) return *this;
 
     // Perform the search.
     AutoStr* found = AutoStr_NewStd();
@@ -173,7 +177,7 @@ void ResourceManifest::locate()
         if(d->classId == RC_PACKAGE)
         {
             /// @todo The identity configuration should declare the type of resource...
-            validated = recognizeWAD(foundPath, d->identityKeys);
+                validated = recognizeWAD(foundPath, d->identityKeys);
             if(!validated)
                 validated = recognizeZIP(foundPath, d->identityKeys);
         }
@@ -191,9 +195,11 @@ void ResourceManifest::locate()
         d->foundNameIndex = nameIndex;
         break;
     }
+
+    return *this;
 }
 
-void ResourceManifest::forgetLocation()
+ResourceRecord& ResourceRecord::forgetResource()
 {
     if(d->flags & RF_FOUND)
     {
@@ -201,50 +207,51 @@ void ResourceManifest::forgetLocation()
         d->foundNameIndex = -1;
         d->flags &= ~RF_FOUND;
     }
+    return *this;
 }
 
-String ResourceManifest::resolvedPath(bool tryLocate)
+String const& ResourceRecord::resolvedPath(bool tryLocate)
 {
     if(tryLocate)
     {
-        locate();
+        locateResource();
     }
     return d->foundPath;
 }
 
-resourceclassid_t ResourceManifest::resourceClass() const
+resourceclassid_t ResourceRecord::resourceClass() const
 {
     return d->classId;
 }
 
-int ResourceManifest::resourceFlags() const
+int ResourceRecord::resourceFlags() const
 {
     return d->flags;
 }
 
-QStringList ResourceManifest::identityKeys() const
+QStringList const& ResourceRecord::identityKeys() const
 {
     return d->identityKeys;
 }
 
-QStringList ResourceManifest::names() const
+QStringList const& ResourceRecord::names() const
 {
     return d->names;
 }
 
-void ResourceManifest::print(bool showStatus)
+void ResourceRecord::consolePrint(ResourceRecord& record, bool showStatus)
 {
-    QByteArray names_ = names().join(";").toUtf8();
-    bool const resourceFound = !!(resourceFlags() & RF_FOUND);
+    QByteArray names = record.names().join(";").toUtf8();
+    bool const resourceFound = !!(record.resourceFlags() & RF_FOUND);
 
     if(showStatus)
         Con_Printf("%s", !resourceFound? " ! ":"   ");
 
-    Con_PrintPathList4(names_.constData(), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
+    Con_PrintPathList4(names.constData(), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
 
     if(showStatus)
     {
-        QByteArray foundPath = resourceFound? resolvedPath(false/*don't try to locate*/).toUtf8() : QByteArray("");
+        QByteArray foundPath = resourceFound? record.resolvedPath(false/*don't try to locate*/).toUtf8() : QByteArray("");
         Con_Printf(" %s%s", !resourceFound? "- missing" : "- found ", F_PrettyPath(foundPath.constData()));
     }
     Con_Printf("\n");

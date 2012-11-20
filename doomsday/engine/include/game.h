@@ -57,7 +57,7 @@ struct gamedef_s;
 
 namespace de {
 
-class ResourceManifest;
+class ResourceRecord;
 class File1;
 class GameCollection;
 
@@ -70,7 +70,7 @@ class GameCollection;
 class Game
 {
 public:
-    typedef QMultiMap<resourceclassid_t, ResourceManifest*> Resources;
+    typedef QMultiMap<resourceclassid_t, ResourceRecord*> Resources;
 
 public:
     /**
@@ -118,7 +118,7 @@ public:
      *
      * @param record  ResourceRecord to add.
      */
-    Game& addResource(ResourceManifest& record);
+    Game& addResource(ResourceRecord& record);
 
     bool allStartupResourcesFound() const;
 

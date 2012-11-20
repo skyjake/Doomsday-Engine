@@ -84,7 +84,7 @@ struct Game::Instance
     {
         DENG2_FOR_EACH(Game::Resources, i, resources)
         {
-            ResourceManifest* record = *i;
+            ResourceRecord* record = *i;
             delete record;
         }
 
@@ -114,7 +114,7 @@ GameCollection& Game::collection() const
     return *reinterpret_cast<de::GameCollection*>(App_GameCollection());
 }
 
-Game& Game::addResource(ResourceManifest& record)
+Game& Game::addResource(ResourceRecord& record)
 {
     // Ensure we don't add duplicates.
     Resources::const_iterator found = d->resources.find(record.resourceClass(), &record);
@@ -129,7 +129,7 @@ bool Game::allStartupResourcesFound() const
 {
     DENG2_FOR_EACH_CONST(Resources, i, d->resources)
     {
-        ResourceManifest& record = **i;
+        ResourceRecord& record = **i;
         int const flags = record.resourceFlags();
 
         if((flags & RF_STARTUP) && !(flags & RF_FOUND))
@@ -193,7 +193,7 @@ bool Game::isRequiredFile(File1& file)
     for(Resources::const_iterator i = d->resources.find(RC_PACKAGE);
         i != d->resources.end() && i.key() == RC_PACKAGE; ++i)
     {
-        ResourceManifest& record = **i;
+        ResourceRecord& record = **i;
         if(!(record.resourceFlags() & RF_STARTUP)) continue;
 
         if(!record.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
@@ -230,11 +230,11 @@ void Game::printResources(Game const& game, int rflags, bool printStatus)
         for(Resources::const_iterator i = resources.find(classId);
             i != resources.end() && i.key() == classId; ++i)
         {
-            ResourceManifest& record = **i;
+            ResourceRecord& record = **i;
             if(rflags >= 0 && (rflags & record.resourceFlags()))
             {
-                record.print(printStatus);
-                numPrinted++;
+                ResourceRecord::consolePrint(record, printStatus);
+                numPrinted += 1;
             }
         }
     }
@@ -333,7 +333,7 @@ struct game_s* Game_AddResource(struct game_s* game, struct resourcerecord_s* re
 {
     SELF(game);
     DENG_ASSERT(record);
-    self->addResource(reinterpret_cast<de::ResourceManifest&>(*record));
+    self->addResource(reinterpret_cast<de::ResourceRecord&>(*record));
     return game;
 }
 
