@@ -48,8 +48,6 @@
 #include "de_misc.h"
 #include "de_defs.h"
 
-//#include "resourcenamespace.h"
-
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 
@@ -812,9 +810,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             CHECKSC;
 
             de::Uri newSearchPath = de::Uri::fromNativeDirPath(NativePath(label));
-            ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassByName("RC_MODEL").defaultNamespace());
-            DENG_ASSERT(rnamespace);
-            rnamespace->addSearchPath(ResourceNamespace::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath), 0);
+            FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassByName("RC_MODEL").defaultNamespace());
+            DENG_ASSERT(fnamespace);
+            fnamespace->addSearchPath(FS1::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath));
         }
 
         if(ISTOKEN("Header"))

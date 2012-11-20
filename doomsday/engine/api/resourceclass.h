@@ -1,9 +1,7 @@
 /**
  * @file resourceclass.h
  *
- * Resource Class.
- *
- * @ingroup base
+ * Resource Class. @ingroup resource
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -38,8 +36,8 @@ extern "C" {
  * @todo Refactor away. These identifiers are no longer needed.
  */
 typedef enum resourceclassid_e {
-    RC_NULL = -2,           ///< Not a real class, used internally during resource locator init.
-    RC_UNKNOWN = -1,        ///< Attempt to guess the class using heuristic evaluation of the path.
+    RC_NULL = -2,           ///< Not a real class.
+    RC_UNKNOWN = -1,        ///< Attempt to guess the class through evaluation of the path.
     RESOURCECLASS_FIRST = 0,
     RC_PACKAGE = RESOURCECLASS_FIRST,
     RC_DEFINITION,
@@ -51,7 +49,7 @@ typedef enum resourceclassid_e {
     RESOURCECLASS_COUNT
 } resourceclassid_t;
 
-#define VALID_RESOURCE_CLASSID(n)   ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
+#define VALID_RESOURCECLASSID(n)   ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
 
 #ifdef __cplusplus
 } // extern "C"
@@ -62,7 +60,7 @@ typedef enum resourceclassid_e {
 
 #include <QList>
 #include <de/String>
-#include "resourcetype.h"
+#include "filetype.h"
 
 namespace de
 {
@@ -75,7 +73,7 @@ namespace de
     struct ResourceClass
     {
     public:
-        typedef QList<ResourceType*> Types;
+        typedef QList<FileType*> Types;
 
     public:
         ResourceClass(String _name, String _defaultNamespace)
@@ -96,30 +94,30 @@ namespace de
             return defaultNamespace_;
         }
 
-        /// Return the number of resource types for this class.
-        int resourceTypeCount() const
+        /// Return the number of file types for this class of resource.
+        int fileTypeCount() const
         {
             return searchTypeOrder.count();
         }
 
         /**
-         * Add a new type of resource to this class. Earlier types have priority.
+         * Add a new file type to this resource class. Earlier types have priority.
          *
-         * @param rtype  Identifier of the resourceType to add.
+         * @param ftype  File type to add.
          * @return  This instance.
          */
-        ResourceClass& addResourceType(ResourceType* rtype)
+        ResourceClass& addFileType(FileType* ftype)
         {
-            searchTypeOrder.push_back(rtype);
+            searchTypeOrder.push_back(ftype);
             return *this;
         }
 
         /**
-         * Provides access to the resource type list for efficient iteration.
+         * Provides access to the file type list for efficient iteration.
          *
-         * @return  List of resource types of this class.
+         * @return  List of file types for this class of resource.
          */
-        Types const& resourceTypes() const
+        Types const& fileTypes() const
         {
             return searchTypeOrder;
         }
@@ -131,7 +129,7 @@ namespace de
         /// Symbolic name of the default namespace.
         String defaultNamespace_;
 
-        /// Recognized resource types (in order of importance, left to right).
+        /// Recognized file types (in order of importance, left to right).
         Types searchTypeOrder;
     };
 
@@ -142,11 +140,11 @@ namespace de
      */
     struct NullResourceClass : public ResourceClass
     {
-        NullResourceClass() : ResourceClass("RC_NULL",  "")
+        NullResourceClass() : ResourceClass("FC_NONE",  "")
         {}
     };
 
-    /// @return  @c true= @a rclass is a "null-resourceclass" object (not a real resource class).
+    /// @return  @c true= @a rclass is a "null-resourceclass" object (not a real class).
     inline bool isNullResourceClass(ResourceClass const& rclass) {
         return !!dynamic_cast<NullResourceClass const*>(&rclass);
     }

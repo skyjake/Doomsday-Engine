@@ -1,9 +1,7 @@
 /**
- * @file resourcetype.h
+ * @file filetype.h
  *
- * Resource Type.
- *
- * @ingroup core
+ * File Type. @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -23,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCETYPE_H
-#define LIBDENG_RESOURCETYPE_H
+#ifndef LIBDENG_FILETYPE_H
+#define LIBDENG_FILETYPE_H
 
 #ifdef __cplusplus
 #ifndef DENG2_C_API_ONLY
@@ -43,39 +41,39 @@ namespace de
 
     /**
      * Encapsulates the properties and logics belonging to a logical
-     * type of resource (e.g., Zip, PNG, WAV, etc...)
+     * type of file file (e.g., Zip, PNG, WAV, etc...)
      *
      * @ingroup core
      */
-    class ResourceType
+    class FileType
     {
     public:
-        ResourceType(String _name, resourceclassid_e _defaultClass)
+        FileType(String _name, resourceclassid_e _defaultClass)
             : name_(_name), defaultClass_(_defaultClass)
         {}
 
-        virtual ~ResourceType() {};
+        virtual ~FileType() {};
 
-        /// Return the symbolic name of this resource type.
+        /// Return the symbolic name of this file type.
         String const& name() const
         {
             return name_;
         }
 
-        /// Return the unique identifier of the default class for this type of resource.
+        /// Return the unique identifier of the default class for this type of file.
         resourceclassid_e defaultClass() const
         {
             return defaultClass_;
         }
 
         /**
-         * Add a new known extension to this resource type. Earlier extensions
+         * Add a new known extension to this file type. Earlier extensions
          * have priority.
          *
          * @param ext  Extension to add (including period).
          * @return  This instance.
          */
-        ResourceType& addKnownExtension(String ext)
+        FileType& addKnownExtension(String ext)
         {
             knownFileNameExtensions_.push_back(ext);
             return *this;
@@ -110,45 +108,45 @@ namespace de
         }
 
     private:
-        /// Symbolic name for this type of resource.
+        /// Symbolic name for this type of file.
         String name_;
 
-        /// Default class attributed to resources of this type.
+        /// Default class attributed to files of this type.
         resourceclassid_e defaultClass_;
 
-        /// List of known extensions for this resource type.
+        /// List of known extensions for this file type.
         QStringList knownFileNameExtensions_;
     };
 
     /**
-     * The special "null" ResourceType object.
+     * The special "null" FileType object.
      *
      * @ingroup core
      */
-    class NullResourceType : public ResourceType
+    class NullFileType : public FileType
     {
     public:
-        NullResourceType() : ResourceType("RT_NONE",  RC_UNKNOWN)
+        NullFileType() : FileType("FT_NONE",  RC_UNKNOWN)
         {}
     };
 
-    /// @return  @c true= @a rtype is a "null-resourcetype" object (not a real resource type).
-    inline bool isNullResourceType(ResourceType const& rtype) {
-        return !!dynamic_cast<NullResourceType const*>(&rtype);
+    /// @return  @c true= @a ftype is a "null-filetype" object (not a real file type).
+    inline bool isNullFileType(FileType const& ftype) {
+        return !!dynamic_cast<NullFileType const*>(&ftype);
     }
 
     /**
-     * Base class for all file resource types.
+     * Base class for all native-file types.
      */
-    class FileResourceType : public ResourceType
+    class NativeFileType : public FileType
     {
     public:
-        FileResourceType(String name, resourceclassid_t rclassId)
-            : ResourceType(name, rclassId)
+        NativeFileType(String name, resourceclassid_t rclassId)
+            : FileType(name, rclassId)
         {}
 
         /**
-         * Attempt to interpret a file resource of this type.
+         * Attempt to interpret a file file of this type.
          *
          * @param hndl  Handle to the file to be interpreted.
          * @param path  VFS path to associate with the file.
@@ -159,13 +157,13 @@ namespace de
         virtual de::File1* interpret(de::FileHandle& /*hndl*/, String /*path*/, FileInfo const& /*info*/) const = 0;
     };
 
-    /// @return  @c true= @a rtype is a FileResourceType object.
-    inline bool isFileResourceType(ResourceType const& rtype) {
-        return !!dynamic_cast<FileResourceType const*>(&rtype);
+    /// @return  @c true= @a ftype is a NativeFileType object.
+    inline bool isNativeFileType(FileType const& ftype) {
+        return !!dynamic_cast<NativeFileType const*>(&ftype);
     }
 
 } // namespace de
 #endif // DENG2_C_API_ONLY
 #endif // __cplusplus
 
-#endif /* LIBDENG_RESOURCETYPE_H */
+#endif /* LIBDENG_FILETYPE_H */

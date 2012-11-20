@@ -1,9 +1,7 @@
 /**
  * @file lumpindex.h
  *
- * Index of lumps.
- *
- * @ingroup fs
+ * Index of lumps. @ingroup fs
  *
  * Virtual file system component used to model an indexable collection of
  * lumps. A single index may include lumps originating from many different

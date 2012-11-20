@@ -831,7 +831,7 @@ static void readAllDefinitions(void)
     // Start with engine's own top-level definition file, it is always read first.
     de::Uri searchPath = de::Uri("doomsday.ded", RC_DEFINITION);
     AutoStr* foundPath = AutoStr_NewStd();
-    if(F_FindResource2(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
+    if(F_Find2(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
     {
         VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(foundPath))) )
         readDefinitionFile(Str_Text(foundPath));
@@ -844,12 +844,12 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        de::Game::Resources const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->resources();
+        de::Game::MetaFiles const& gameResources = reinterpret_cast<de::Game*>(App_CurrentGame())->metafiles();
         int packageIdx = 0;
-        for(de::Game::Resources::const_iterator i = gameResources.find(RC_DEFINITION);
+        for(de::Game::MetaFiles::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
         {
-            de::ResourceRecord& record = **i;
+            de::MetaFile& record = **i;
             /// Try to locate this resource now.
             QString const& path = record.resolvedPath(true/*try to locate*/);
 
@@ -1079,9 +1079,9 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        de::ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassByName("RC_MODEL").defaultNamespace());
-        DENG_ASSERT(rnamespace);
-        rnamespace->reset();
+        de::FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassByName("RC_MODEL").defaultNamespace());
+        DENG_ASSERT(fnamespace);
+        fnamespace->reset();
 
         Materials_ClearDefinitionLinks();
         Fonts_ClearDefinitionLinks();

@@ -2439,7 +2439,7 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         AutoStr* path = Str_Appendf(AutoStr_NewStd(), "%s%s", mydir->path, skin);
         Uri* searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
 
-        found = F_FindResource2(RC_GRAPHIC, searchPath, foundPath);
+        found = F_Find2(RC_GRAPHIC, searchPath, foundPath);
 
         Uri_Delete(searchPath);
         Dir_Delete(mydir);
@@ -2451,7 +2451,7 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         AutoStr* path = Str_Appendf(AutoStr_NewStd(), "Models:%s", skin);
         Uri* searchPath = Uri_NewWithPath(Str_Text(path));
 
-        found = F_FindResource2(RC_GRAPHIC, searchPath, foundPath);
+        found = F_Find2(RC_GRAPHIC, searchPath, foundPath);
 
         Uri_Delete(searchPath);
     }

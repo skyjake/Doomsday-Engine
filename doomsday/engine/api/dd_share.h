@@ -362,12 +362,12 @@ typedef struct gameinfo_s {
 void Game_Notify(int notification, void* param);
 
 /**
- * @defgroup resourceFlags Resource Flags
- * @ingroup apiFlags resource
+ * @defgroup fileFlags File Flags
+ * @ingroup apiFlags fs
  */
 ///@{
-#define RF_STARTUP          0x1 ///< A required resource needed for and loaded during game start up (can't be a virtual file).
-#define RF_FOUND            0x2 ///< Resource has been located.
+#define FF_STARTUP          0x1 ///< A required file needed for and loaded during game start up (can't be a virtual file).
+#define FF_FOUND            0x2 ///< File has been located.
 ///@}
 
 /**

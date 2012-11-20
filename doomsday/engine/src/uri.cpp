@@ -31,10 +31,9 @@
 #include <QList>
 
 #include "de_base.h"
+#include "de_filesys.h"
 #include "dualstring.h"
 #include "game.h"
-#include "resource/resourcenamespace.h"
-#include "resource/sys_reslocator.h"
 
 /// Size of the fixed-size path node buffer.
 #define SEGMENT_BUFFER_SIZE         24
@@ -250,7 +249,7 @@ struct Uri::Instance
         {
             scheme = path.left(sepPos);
 
-            if(defaultResourceClass == RC_NULL || F_ResourceNamespaceByName(scheme))
+            if(defaultResourceClass == RC_NULL || App_FileSystem()->namespaceByName(scheme))
             {
                 path = path.mid(sepPos + 1);
                 return;
@@ -267,14 +266,14 @@ struct Uri::Instance
         // Attempt to guess the scheme by interpreting the path?
         if(defaultResourceClass == RC_UNKNOWN)
         {
-            defaultResourceClass = F_GuessResourceTypeFromFileName(path).defaultClass();
+            defaultResourceClass = App_FileSystem()->guessFileTypeFromFileName(path).defaultClass();
         }
 
-        if(VALID_RESOURCE_CLASSID(defaultResourceClass))
+        if(VALID_RESOURCECLASSID(defaultResourceClass))
         {
-            ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassById(defaultResourceClass).defaultNamespace());
-            DENG_ASSERT(rnamespace);
-            scheme = rnamespace->name();
+            FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassById(defaultResourceClass).defaultNamespace());
+            DENG_ASSERT(fnamespace);
+            scheme = fnamespace->name();
         }
     }
 

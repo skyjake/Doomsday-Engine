@@ -1,7 +1,7 @@
 /**
- * @file resourcenamespace.cpp
+ * @file filenamespace.cpp
  *
- * Resource namespace. @ingroup resource
+ * File namespace. @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -21,26 +21,29 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_filesys.h"
-
 #include <QDir>
+
+#include "de_base.h"
+#include "de_filesys.h"
 
 #include <de/App>
 #include <de/Log>
 #include <de/NativePath>
 
 #include "pathtree.h"
-#include "resource/resourcenamespace.h"
+
+#include "filesys/searchpath.h"
+#include "filesys/fs_main.h"
 
 namespace de {
 
 /**
- * Reference to a resource or file in the virtual file system.
+ * Reference to a file in the virtual file system.
  */
-class ResourceRef
+class FileRef
 {
 public:
-    ResourceRef(PathTree::Node& _directoryNode)
+    FileRef(PathTree::Node& _directoryNode)
         : directoryNode_(&_directoryNode)
     {}
 
@@ -48,7 +51,7 @@ public:
         return *directoryNode_;
     }
 
-    ResourceRef& setDirectoryNode(PathTree::Node& newDirectoryNode) {
+    FileRef& setDirectoryNode(PathTree::Node& newDirectoryNode) {
         directoryNode_ = &newDirectoryNode;
         return *this;
     }
@@ -58,7 +61,7 @@ public:
         return name_;
     }
 
-    ResourceRef& setName(String const& newName) {
+    FileRef& setName(String const& newName) {
         name_ = newName;
         return *this;
     }
@@ -89,10 +92,10 @@ public:
     struct Node
     {
         Node* next;
-        ResourceRef resource;
+        FileRef fileRef;
 
         Node(PathTree::Node& resourceNode)
-            : next(0), resource(resourceNode)
+            : next(0), fileRef(resourceNode)
         {}
     };
 
@@ -133,7 +136,7 @@ public:
     Node* findDirectoryNode(hash_type hashKey, PathTree::Node const& directoryNode)
     {
         Node* node = buckets[hashKey].first;
-        while(node && &node->resource.directoryNode() != &directoryNode)
+        while(node && &node->fileRef.directoryNode() != &directoryNode)
         {
             node = node->next;
         }
@@ -158,15 +161,15 @@ public:
     }
 };
 
-struct ResourceNamespace::Instance
+struct FS1::Namespace::Instance
 {
-    ResourceNamespace& self;
+    FS1::Namespace& self;
 
     /// Symbolic name.
     String name;
 
     /// Flags which govern behavior.
-    ResourceNamespace::Flags flags;
+    FS1::Namespace::Flags flags;
 
     /// Associated path directory.
     /// @todo It should not be necessary for a unique directory per namespace.
@@ -181,28 +184,28 @@ struct ResourceNamespace::Instance
     /// Set to @c true when the name hash is obsolete/out-of-date and should be rebuilt.
     byte nameHashIsDirty;
 
-    /// Sets of search paths to look for resources to be included.
+    /// Sets of search paths to look for files to be included.
     /// Each set is in order of greatest-importance, right to left.
-    ResourceNamespace::SearchPaths searchPaths;
+    FS1::Namespace::SearchPaths searchPaths;
 
-    Instance(ResourceNamespace& d, String _name, ResourceNamespace::Flags _flags)
+    Instance(FS1::Namespace& d, String _name, FS1::Namespace::Flags _flags)
         : self(d), name(_name), flags(_flags), directory(), rootNode(0),
           nameHash(), nameHashIsDirty(true)
     {}
 
     /**
-     * Add resources to this namespace by resolving search path, searching the
+     * Add files to this namespace by resolving search path, searching the
      * file system and populating our internal directory with the results.
      * Duplicates are automatically pruned.
      *
      * @param searchPath  The path to resolve and search.
      */
-    void addFromSearchPath(ResourceNamespace::SearchPath const& searchPath)
+    void addFromSearchPath(SearchPath const& searchPath)
     {
         try
         {
             // Add new nodes on this path and/or re-process previously seen nodes.
-            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath.uri().resolved(),
+            addDirectoryPathNodesAndMaybeDescendBranch(true/*do descend*/, searchPath.resolved(),
                                                        true/*is-directory*/, searchPath.flags());
         }
         catch(de::Uri::ResolveError const& er)
@@ -212,13 +215,13 @@ struct ResourceNamespace::Instance
     }
 
     /**
-     * Add resources to this namespace by resolving each search path in @a group.
+     * Add files to this namespace by resolving each search path in @a group.
      *
      * @param group  Group of paths to search.
      */
-    void addFromSearchPaths(ResourceNamespace::PathGroup group)
+    void addFromSearchPaths(FS1::PathGroup group)
     {
-        for(ResourceNamespace::SearchPaths::const_iterator i = searchPaths.find(group);
+        for(FS1::Namespace::SearchPaths::const_iterator i = searchPaths.find(group);
             i != searchPaths.end() && i.key() == group; ++i)
         {
             addFromSearchPath(*i);
@@ -265,7 +268,7 @@ struct ResourceNamespace::Instance
         App_FileSystem()->findAllPaths(searchPattern, flags, found);
         DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
         {
-            addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SPF_NO_DESCEND),
+            addDirectoryPathNodesAndMaybeDescendBranch(!(flags & SearchPath::NoDescend),
                                                        i->path, !!(i->attrib & A_SUBDIR),
                                                        flags);
         }
@@ -322,22 +325,22 @@ struct ResourceNamespace::Instance
     }
 };
 
-ResourceNamespace::ResourceNamespace(String symbolicName, Flags flags)
+FS1::Namespace::Namespace(String symbolicName, Flags flags)
 {
     d = new Instance(*this, symbolicName, flags);
 }
 
-ResourceNamespace::~ResourceNamespace()
+FS1::Namespace::~Namespace()
 {
     delete d;
 }
 
-String const& ResourceNamespace::name() const
+String const& FS1::Namespace::name() const
 {
     return d->name;
 }
 
-void ResourceNamespace::clear()
+void FS1::Namespace::clear()
 {
     d->nameHash.clear();
     d->nameHashIsDirty = true;
@@ -345,22 +348,22 @@ void ResourceNamespace::clear()
     d->rootNode = 0;
 }
 
-void ResourceNamespace::rebuild()
+void FS1::Namespace::rebuild()
 {
     // Is a rebuild not necessary?
     if(!d->nameHashIsDirty) return;
 
-    LOG_AS("ResourceNamespace::rebuild");
+    LOG_AS("FS1::Namespace::rebuild");
     LOG_DEBUG("Rebuilding '%s'...") << d->name;
 
     // uint startTime = Timer_RealMilliseconds();
 
-    // (Re)populate the directory and add found resources.
+    // (Re)populate the directory and add found files.
     clear();
-    d->addFromSearchPaths(ResourceNamespace::OverridePaths);
-    d->addFromSearchPaths(ResourceNamespace::ExtraPaths);
-    d->addFromSearchPaths(ResourceNamespace::DefaultPaths);
-    d->addFromSearchPaths(ResourceNamespace::FallbackPaths);
+    d->addFromSearchPaths(FS1::OverridePaths);
+    d->addFromSearchPaths(FS1::ExtraPaths);
+    d->addFromSearchPaths(FS1::DefaultPaths);
+    d->addFromSearchPaths(FS1::FallbackPaths);
 
     d->nameHashIsDirty = false;
 
@@ -372,20 +375,20 @@ void ResourceNamespace::rebuild()
 #endif*/
 }
 
-static inline String composeResourceName(String const& filePath)
+static inline String composeNamespaceName(String const& filePath)
 {
     return filePath.fileNameWithoutExtension();
 }
 
-bool ResourceNamespace::add(PathTree::Node& resourceNode)
+bool FS1::Namespace::add(PathTree::Node& resourceNode)
 {
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
 
-    String name = composeResourceName(resourceNode.name());
+    String name = composeNamespaceName(resourceNode.name());
     NameHash::hash_type hashKey = NameHash::hashName(name);
 
-    // Is this a new resource?
+    // Is this a new file?
     bool isNewNode = false;
     NameHash::Node* hashNode = d->nameHash.findDirectoryNode(hashKey, resourceNode);
     if(!hashNode)
@@ -396,7 +399,7 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
         hashNode = new NameHash::Node(resourceNode);
 #if _DEBUG
         // Take a copy of the name to aid in tracing bugs, etc...
-        hashNode->resource.setName(name);
+        hashNode->fileRef.setName(name);
 #endif
 
         // Link it to the list for this bucket.
@@ -411,13 +414,13 @@ bool ResourceNamespace::add(PathTree::Node& resourceNode)
     }
 
     // (Re)configure this record.
-    ResourceRef* res = &hashNode->resource;
-    res->setDirectoryNode(resourceNode);
+    FileRef* fileRef = &hashNode->fileRef;
+    fileRef->setDirectoryNode(resourceNode);
 
     return isNewNode;
 }
 
-static String const& nameForPathGroup(ResourceNamespace::PathGroup group)
+static String const& nameForPathGroup(FS1::PathGroup group)
 {
     static String const names[] = {
         "Override",
@@ -425,18 +428,18 @@ static String const& nameForPathGroup(ResourceNamespace::PathGroup group)
         "Default",
         "Fallback"
     };
-    DENG_ASSERT(int(group) >= ResourceNamespace::OverridePaths && int(group) <= ResourceNamespace::FallbackPaths);
+    DENG_ASSERT(int(group) >= FS1::OverridePaths && int(group) <= FS1::FallbackPaths);
     return names[int(group)];
 }
 
-bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int flags)
+bool FS1::Namespace::addSearchPath(PathGroup group, SearchPath const& search)
 {
-    LOG_AS("ResourceNamespace::addSearchPath");
+    LOG_AS("FS1::Namespace::addSearchPath");
 
     // Ensure this is a well formed path.
-    if(path.isEmpty() ||
-       !path.path().compareWithoutCase("/") ||
-       !path.path().endsWith("/"))
+    if(search.isEmpty() ||
+       !search.path().compareWithoutCase("/") ||
+       !search.path().endsWith("/"))
         return false;
 
     // The addition of a new search path means the namespace is now dirty.
@@ -446,39 +449,38 @@ bool ResourceNamespace::addSearchPath(PathGroup group, de::Uri const& path, int 
     DENG2_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
         // Compare using the unresolved textual representations.
-        if(!i->uri().asText().compareWithoutCase(path.asText()))
+        if(!i->asText().compareWithoutCase(search.asText()))
         {
-            i->setFlags(flags);
+            i->setFlags(search.flags());
             return true;
         }
     }
 
     // Prepend to the path list - newer paths have priority.
-    de::Uri* uriCopy = new de::Uri(path);
-    d->searchPaths.insert(group, SearchPath(flags, *uriCopy));
+    d->searchPaths.insert(group, search);
 
     LOG_DEBUG("'%s' path \"%s\" added to namespace '%s'.")
-        << nameForPathGroup(group) << path << name();
+        << nameForPathGroup(group) << search << name();
 
     return true;
 }
 
-void ResourceNamespace::clearSearchPaths(PathGroup group)
+void FS1::Namespace::clearSearchPaths(PathGroup group)
 {
     d->searchPaths.remove(group);
 }
 
-void ResourceNamespace::clearSearchPaths()
+void FS1::Namespace::clearSearchPaths()
 {
     d->searchPaths.clear();
 }
 
-ResourceNamespace::SearchPaths const& ResourceNamespace::searchPaths() const
+FS1::Namespace::SearchPaths const& FS1::Namespace::searchPaths() const
 {
     return d->searchPaths;
 }
 
-int ResourceNamespace::findAll(String name, ResourceList& found)
+int FS1::Namespace::findAll(String name, FileList& found)
 {
     int numFoundSoFar = found.count();
 
@@ -499,8 +501,8 @@ int ResourceNamespace::findAll(String name, ResourceList& found)
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* hashNode = bucket.first; hashNode; hashNode = hashNode->next)
         {
-            ResourceRef& resource = hashNode->resource;
-            PathTree::Node& node = resource.directoryNode();
+            FileRef& fileRef = hashNode->fileRef;
+            PathTree::Node& node = fileRef.directoryNode();
 
             if(!name.isEmpty() && !node.name().beginsWith(name, Qt::CaseInsensitive)) continue;
 
@@ -511,7 +513,7 @@ int ResourceNamespace::findAll(String name, ResourceList& found)
     return found.count() - numFoundSoFar;
 }
 
-bool ResourceNamespace::applyPathMappings(String& path) const
+bool FS1::Namespace::applyPathMappings(String& path) const
 {
     if(path.isEmpty()) return false;
 
@@ -529,70 +531,29 @@ bool ResourceNamespace::applyPathMappings(String& path) const
 }
 
 #if _DEBUG
-void ResourceNamespace::debugPrint() const
+void FS1::Namespace::debugPrint() const
 {
-    LOG_AS("ResourceNamespace::debugPrint");
+    LOG_AS("FS1::Namespace::debugPrint");
     LOG_DEBUG("[%p]:") << de::dintptr(this);
 
-    uint resIdx = 0;
+    uint namespaceIdx = 0;
     for(NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)
     {
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
         for(NameHash::Node* node = bucket.first; node; node = node->next)
         {
-            ResourceRef const& res = node->resource;
+            FileRef const& fileRef = node->fileRef;
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
-                << resIdx << key << res.name()
-                << NativePath(res.directoryNode().composePath()).pretty();
+                << namespaceIdx << key << fileRef.name()
+                << NativePath(fileRef.directoryNode().composePath()).pretty();
 
-            ++resIdx;
+            ++namespaceIdx;
         }
     }
 
-    LOG_DEBUG("  %u %s in namespace.") << resIdx << (resIdx == 1? "resource" : "resources");
+    LOG_DEBUG("  %u %s in namespace.") << namespaceIdx << (namespaceIdx == 1? "file" : "files");
 }
 #endif
-
-ResourceNamespace::SearchPath::SearchPath(int _flags, de::Uri& _uri)
-    : flags_(_flags), uri_(&_uri)
-{}
-
-ResourceNamespace::SearchPath::SearchPath(SearchPath const& other)
-    : flags_(other.flags_), uri_(new de::Uri(*other.uri_))
-{}
-
-ResourceNamespace::SearchPath::~SearchPath()
-{
-    delete uri_;
-}
-
-ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::operator = (SearchPath other)
-{
-    swap(*this, other);
-    return *this;
-}
-
-int ResourceNamespace::SearchPath::flags() const
-{
-    return flags_;
-}
-
-ResourceNamespace::SearchPath& ResourceNamespace::SearchPath::setFlags(int newFlags)
-{
-    flags_ = newFlags;
-    return *this;
-}
-
-de::Uri const& ResourceNamespace::SearchPath::uri() const
-{
-    return *uri_;
-}
-
-void swap(ResourceNamespace::SearchPath& first, ResourceNamespace::SearchPath& second)
-{
-    std::swap(first.flags_,  second.flags_);
-    std::swap(first.uri_,    second.uri_);
-}
 
 } // namespace de

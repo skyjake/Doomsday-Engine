@@ -64,7 +64,7 @@ typedef struct {
     boolean (*interpretFunc)(FileHandle* hndl, char const* filePath, image_t* img);
 
     char const* (*getLastErrorFunc) (void); ///< Can be NULL.
-} GraphicResourceType;
+} GraphicFileType;
 
 typedef struct texturevariantspecificationlist_node_s {
     struct texturevariantspecificationlist_node_s* next;
@@ -128,7 +128,7 @@ ddtexture_t sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 static boolean initedOk = false; // Init done.
 
 // Graphic resource types.
-static GraphicResourceType const graphicTypes[] = {
+static GraphicFileType const graphicTypes[] = {
     { "PNG",    "png",      interpretPng, 0 },
     { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
     { "TGA",    "tga",      interpretTga, TGA_LastError },
@@ -1471,7 +1471,7 @@ static boolean interpretTga(FileHandle* hndl, char const* filePath, image_t* img
     return (0 != img->pixels);
 }
 
-GraphicResourceType const* guessGraphicResourceTypeFromFileName(char const* filePath)
+GraphicFileType const* guessGraphicFileTypeFromFileName(char const* filePath)
 {
     char const* p = F_FindFileExtension(filePath);
     if(p)
@@ -1479,7 +1479,7 @@ GraphicResourceType const* guessGraphicResourceTypeFromFileName(char const* file
         int i;
         for(i = 0; graphicTypes[i].ext; ++i)
         {
-            GraphicResourceType const* type = &graphicTypes[i];
+            GraphicFileType const* type = &graphicTypes[i];
             if(!stricmp(p, type->ext))
             {
                 return type;
@@ -1494,7 +1494,7 @@ static void interpretGraphic(FileHandle* hndl, char const* filePath, image_t* im
     DENG_ASSERT(img && hndl);
 {
     // Firstly try the interpreter for the guessed resource types.
-    GraphicResourceType const* rtypeGuess = guessGraphicResourceTypeFromFileName(filePath);
+    GraphicFileType const* rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
     if(rtypeGuess)
     {
         rtypeGuess->interpretFunc(hndl, filePath, img);
@@ -1508,7 +1508,7 @@ static void interpretGraphic(FileHandle* hndl, char const* filePath, image_t* im
         int i;
         for(i = 0; graphicTypes[i].name; ++i)
         {
-            GraphicResourceType const* graphicType = &graphicTypes[i];
+            GraphicFileType const* graphicType = &graphicTypes[i];
 
             // Already tried this?
             if(graphicType == rtypeGuess) continue;
@@ -2148,7 +2148,7 @@ TexSource GL_LoadExtTextureEX(image_t* image, char const* _searchPath,
     Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
     AutoStr* foundPath = AutoStr_NewStd();
 
-    boolean found = F_FindResource4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, optionalSuffix);
+    boolean found = F_Find4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, optionalSuffix);
     Uri_Delete(searchPath);
 
     if(!found || !GL_LoadImage(image, Str_Text(foundPath)))
@@ -2209,7 +2209,7 @@ TexSource GL_LoadExtTexture(image_t* image, char const* _searchPath, gfxmode_t m
     Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
     AutoStr* foundPath = AutoStr_NewStd();
 
-    if(F_FindResource2(RC_GRAPHIC, searchPath, foundPath) &&
+    if(F_Find2(RC_GRAPHIC, searchPath, foundPath) &&
        GL_LoadImage(image, Str_Text(foundPath)))
     {
         // Force it to grayscale?
@@ -2705,7 +2705,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
     // First try to find an external resource.
     Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Patches:%s", Str_Text(&r->name))));
 
-    if(F_FindResource2(RC_GRAPHIC, searchPath, foundPath) &&
+    if(F_Find2(RC_GRAPHIC, searchPath, foundPath) &&
        GL_LoadImage(image, Str_Text(foundPath)))
     {
         // "External" image loaded.

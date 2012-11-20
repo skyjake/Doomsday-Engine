@@ -1,7 +1,6 @@
 /**
  * @file zip.cpp
- *
- * Zip archives. @ingroup fs
+ * Zip archives. @ingroup resource
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -30,6 +29,7 @@
 #include "de_filesys.h"
 #include "pathtree.h"
 #include "resource/lumpcache.h"
+#include "resource/zip.h"
 
 #include <de/App>
 #include <de/ByteOrder>
@@ -970,9 +970,9 @@ static bool applyGamePathMappings(String& path)
     if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        ResourceType const& rtype = F_GuessResourceTypeFromFileName(path.fileName());
+        FileType const& ftype = App_FileSystem()->guessFileTypeFromFileName(path.fileName());
 
-        switch(rtype.defaultClass())
+        switch(ftype.defaultClass())
         {
         case RC_PACKAGE:
             // Mapped to the Data directory.
@@ -990,8 +990,8 @@ static bool applyGamePathMappings(String& path)
     }
 
     // Key-named directories in the root might be mapped to another location.
-    ResourceNamespaces const& namespaces = F_ResourceNamespaces();
-    DENG2_FOR_EACH_CONST(ResourceNamespaces, i, namespaces)
+    FS1::Namespaces const& namespaces = App_FileSystem()->namespaces();
+    DENG2_FOR_EACH_CONST(FS1::Namespaces, i, namespaces)
     {
         if((*i)->applyPathMappings(path))
         {

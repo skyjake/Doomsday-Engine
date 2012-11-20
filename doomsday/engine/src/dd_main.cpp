@@ -54,7 +54,10 @@
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
-#include "resource/sys_reslocator.h"
+#include "filesys/locator.h"
+
+extern int renderTextures;
+extern int monochrome;
 
 using namespace de;
 
@@ -80,9 +83,6 @@ static bool tryLoadFile(String path, size_t baseOffset = 0, de::File1** file = 0
 
 static bool tryUnloadFile(String path);
 
-extern int renderTextures;
-extern int monochrome;
-
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
 filename_t ddRuntimePath, ddBinPath;
 
@@ -95,6 +95,9 @@ char* startupFiles = "";
 
 // Id of the currently running title finale if playing, else zero.
 finaleid_t titleFinale;
+
+static NullResourceClass nullClass;
+static ResourceClasses classes;
 
 // List of session data files (specified via the command line or in a cfg, or
 // found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
@@ -141,6 +144,51 @@ D_CMD(ShowUpdateSettings)
 
     Updater_ShowSettings();
     return true;
+}
+
+void DD_CreateResourceClasses()
+{
+    classes.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
+    classes.push_back(new ResourceClass("RC_DEFINITION",    "Defs"));
+    classes.push_back(new ResourceClass("RC_GRAPHIC",       "Graphics"));
+    classes.push_back(new ResourceClass("RC_MODEL",         "Models"));
+    classes.push_back(new ResourceClass("RC_SOUND",         "Sfx"));
+    classes.push_back(new ResourceClass("RC_MUSIC",         "Music"));
+    classes.push_back(new ResourceClass("RC_FONT",          "Fonts"));
+}
+
+void DD_ClearResourceClasses()
+{
+    DENG2_FOR_EACH(ResourceClasses, i, classes)
+    {
+        delete *i;
+    }
+    classes.clear();
+}
+
+ResourceClass& DD_ResourceClassByName(String name)
+{
+    if(!name.isEmpty())
+    {
+        DENG2_FOR_EACH_CONST(ResourceClasses, i, classes)
+        {
+            ResourceClass& rclass = **i;
+            if(!rclass.name().compareWithoutCase(name))
+                return rclass;
+        }
+    }
+    return nullClass; // Not found.
+}
+
+ResourceClass& DD_ResourceClassById(resourceclassid_t id)
+{
+    if(id == RC_NULL) return nullClass;
+    if(!VALID_RESOURCECLASSID(id))
+    {
+        QByteArray msg = String("DD_ResourceClassById: Invalid id '%1'").arg(int(id)).toUtf8();
+        LegacyCore_FatalError(msg.constData());
+    }
+    return *classes[uint(id)];
 }
 
 /**
@@ -370,7 +418,7 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-static void loadResource(ResourceRecord& record)
+static void loadResource(MetaFile& record)
 {
     DENG_ASSERT(record.resourceClass() == RC_PACKAGE);
 
@@ -427,8 +475,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     // Reset file Ids so previously seen files can be processed again.
     App_FileSystem()->resetFileIds();
     initPathMappings();
-
-    F_ResetAllResourceNamespaces();
+    App_FileSystem()->resetAllNamespaces();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -451,13 +498,13 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
-    de::Game::Resources const& gameResources = games->currentGame().resources();
-    int const numPackages = gameResources.count(RC_PACKAGE);
+    de::Game::MetaFiles const& gameMetafiles = games->currentGame().metafiles();
+    int const numPackages = gameMetafiles.count(RC_PACKAGE);
     int packageIdx = 0;
-    for(de::Game::Resources::const_iterator i = gameResources.find(RC_PACKAGE);
-        i != gameResources.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
+    for(de::Game::MetaFiles::const_iterator i = gameMetafiles.find(RC_PACKAGE);
+        i != gameMetafiles.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
-        ResourceRecord& record = **i;
+        MetaFile& record = **i;
         loadResource(record);
 
         // Update our progress.
@@ -475,14 +522,14 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     return 0;
 }
 
-static int addListFiles(ddstring_t*** list, size_t* listSize, ResourceType const& rtype)
+static int addListFiles(ddstring_t*** list, size_t* listSize, FileType const& ftype)
 {
     size_t i;
     int count = 0;
     if(!list || !listSize) return 0;
     for(i = 0; i < *listSize; ++i)
     {
-        if(&rtype != &F_GuessResourceTypeFromFileName(Str_Text((*list)[i]))) continue;
+        if(&ftype != &App_FileSystem()->guessFileTypeFromFileName(Str_Text((*list)[i]))) continue;
         if(tryLoadFile(Str_Text((*list)[i])))
         {
             count += 1;
@@ -661,9 +708,9 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
         listFilesFromDataGameAuto(&sessionResourceFileList, &numSessionResourceFileList);
         if(numSessionResourceFileList > 0)
         {
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, F_ResourceTypeByName("RT_ZIP"));
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, App_FileSystem()->fileTypeByName("FT_ZIP"));
 
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, F_ResourceTypeByName("RT_WAD"));
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, App_FileSystem()->fileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.
@@ -677,7 +724,7 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
 
     // Re-initialize the resource locator as there are now new resources to be found
     // on existing search paths (probably that is).
-    F_ResetAllResourceNamespaces();
+    App_FileSystem()->resetAllNamespaces();
 
     if(p->initiatedBusyMode)
     {
@@ -846,13 +893,13 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
 {
     DENG_ASSERT(games);
 
-    if(!VALID_RESOURCE_CLASSID(classId)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
+    if(!VALID_RESOURCECLASSID(classId)) Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)classId);
     if(!names || !names[0]) Con_Error("DD_AddGameResource: Invalid name argument.");
 
     // Construct and attach the new resource record.
     de::Game& game = games->byId(gameId);
-    ResourceRecord* record = new ResourceRecord(classId, rflags);
-    game.addResource(*record);
+    MetaFile* record = new MetaFile(classId, rflags);
+    game.addMetafile(*record);
 
     // Add the name list to the resource record.
     QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
@@ -1043,7 +1090,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         initPathLumpMappings();
         initPathMappings();
 
-        F_ResetAllResourceNamespaces();
+        App_FileSystem()->resetAllNamespaces();
     }
 
     FI_Shutdown();
@@ -1201,7 +1248,7 @@ de::Game* DD_AutoselectGame(void)
         try
         {
             de::Game& game = games->byIdentityKey(identityKey);
-            if(game.allStartupResourcesFound())
+            if(game.allStartupFilesFound())
             {
                 return &game;
             }
@@ -1342,6 +1389,7 @@ boolean DD_Init(void)
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
+    DD_CreateResourceClasses();
     F_Init();
 
     Fonts_Init();
@@ -1363,7 +1411,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    ResourceNamespace* rnamespace = F_ResourceNamespaceByName(F_ResourceClassByName("RC_PACKAGE").defaultNamespace());
+    FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassByName("RC_PACKAGE").defaultNamespace());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -1372,13 +1420,13 @@ boolean DD_Init(void)
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
             /// @todo Do not add these as search paths, publish them directly
-            ///       to the "packages" ResourceNamespace.
+            ///       to the "packages" Namespace.
 
             // CommandLine_PathAt() always returns an absolute path.
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
-            rnamespace->addSearchPath(ResourceNamespace::DefaultPaths, uri, SPF_NO_DESCEND);
+            fnamespace->addSearchPath(FS1::DefaultPaths, SearchPath(uri, SearchPath::NoDescend));
 
             Dir_Delete(dir);
         }
@@ -1434,9 +1482,9 @@ boolean DD_Init(void)
 
     initPathLumpMappings();
 
-    // Re-initialize the resource locator as there are now new resources to be found
+    // Re-initialize the namespaces as there are now new resources to be found
     // on existing search paths (probably that is).
-    F_ResetAllResourceNamespaces();
+    App_FileSystem()->resetAllNamespaces();
 
     // One-time execution of various command line features available during startup.
     if(CommandLine_CheckWith("-dumplump", 1))
@@ -1530,11 +1578,9 @@ boolean DD_Init(void)
         // Lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
         App_FileSystem()->resetFileIds();
-
         initPathLumpMappings();
         initPathMappings();
-
-        F_ResetAllResourceNamespaces();
+        App_FileSystem()->resetAllNamespaces();
 
         R_InitPatchComposites();
         R_InitFlatTextures();
@@ -1566,7 +1612,7 @@ static void DD_InitResourceSystem(void)
 
     initPathMappings();
 
-    F_ResetAllResourceNamespaces();
+    App_FileSystem()->resetAllNamespaces();
 
     // Initialize the definition databases.
     Def_Init();
@@ -1622,7 +1668,7 @@ static int DD_StartupWorker(void* parm)
     // Add required engine resource files.
     de::Uri searchPath = de::Uri("Packages:doomsday.pk3");
     AutoStr* foundPath = AutoStr_NewStd();
-    if(!F_FindResource2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
+    if(!F_Find2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
        !tryLoadFile(Str_Text(foundPath)))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
@@ -1763,8 +1809,8 @@ void DD_UpdateEngineState(void)
     initPathLumpMappings();
     initPathMappings();
 
-    // Re-initialize the resource locator as there may now be new resources to be found.
-    F_ResetAllResourceNamespaces();
+    // Re-build the namespaces as there may now be new resources to be found.
+    App_FileSystem()->resetAllNamespaces();
 
     R_InitPatchComposites();
     R_InitFlatTextures();
@@ -2266,10 +2312,10 @@ D_CMD(Load)
     try
     {
         de::Game& game = games->byIdentityKey(Str_Text(&searchPath));
-        if(!game.allStartupResourcesFound())
+        if(!game.allStartupFilesFound())
         {
             Con_Message("Failed to locate all required startup resources:\n");
-            de::Game::printResources(game, RF_STARTUP);
+            de::Game::printFiles(game, FF_STARTUP);
             Con_Message("%s (%s) cannot be loaded.\n", Str_Text(&game.title()), Str_Text(&game.identityKey()));
             Str_Free(&searchPath);
             return true;
@@ -2290,7 +2336,7 @@ D_CMD(Load)
     for(; arg < argc; ++arg)
     {
         de::Uri searchPath = de::Uri(NativePath(argv[arg]).expand().withSeparators('/'), RC_PACKAGE);
-        if(!F_FindResource3(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
+        if(!F_Find3(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
 
         if(tryLoadFile(Str_Text(foundPath)))
         {
@@ -2421,7 +2467,7 @@ D_CMD(Unload)
     for(i = 1; i < argc; ++i)
     {
         de::Uri searchPath = de::Uri(NativePath(argv[1]).expand().withSeparators('/'), RC_PACKAGE);
-        if(!F_FindResource2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
+        if(!F_Find2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
 
         if(tryUnloadFile(Str_Text(foundPath)))
         {

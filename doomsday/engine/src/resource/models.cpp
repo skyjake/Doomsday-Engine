@@ -516,7 +516,7 @@ static void registerAllSkins(model_t& mdl)
         de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
 
         AutoStr* foundSkinPath = AutoStr_NewStd();
-        if(F_FindResource2(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundSkinPath))
+        if(F_Find2(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundSkinPath))
         {
             // Huzzah! we found a skin.
             de::Uri uri = de::Uri(Str_Text(foundSkinPath), RC_NULL);
@@ -541,7 +541,7 @@ static model_t* interpretDmd(de::FileHandle& hndl, String path, modelid_t modelI
 {
     if(recogniseDmd(hndl))
     {
-        LOG_AS("DmdResourceType");
+        LOG_AS("DmdFileType");
         LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
         model_t* mdl = modelForId(modelId, true/*create*/);
         loadDmd(hndl, *mdl);
@@ -554,7 +554,7 @@ static model_t* interpretMd2(de::FileHandle& hndl, String path, modelid_t modelI
 {
     if(recogniseMd2(hndl))
     {
-        LOG_AS("Md2ResourceType");
+        LOG_AS("Md2FileType");
         LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
         model_t* mdl = modelForId(modelId, true/*create*/);
         loadMd2(hndl, *mdl);
@@ -563,7 +563,7 @@ static model_t* interpretMd2(de::FileHandle& hndl, String path, modelid_t modelI
     return 0;
 }
 
-struct ModelResourceType
+struct ModelFileType
 {
     /// Symbolic name of the resource type.
     String const name;
@@ -575,13 +575,13 @@ struct ModelResourceType
 };
 
 // Model resource types.
-static ModelResourceType const modelTypes[] = {
+static ModelFileType const modelTypes[] = {
     { "DMD",    ".dmd",     interpretDmd },
     { "MD2",    ".md2",     interpretMd2 },
     { "",       "",         0 } // Terminate.
 };
 
-static ModelResourceType const* guessModelResourceTypeFromFileName(String filePath)
+static ModelFileType const* guessModelFileTypeFromFileName(String filePath)
 {
     // An extension is required for this.
     String ext = filePath.fileNameExtension();
@@ -589,7 +589,7 @@ static ModelResourceType const* guessModelResourceTypeFromFileName(String filePa
     {
         for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
         {
-            ModelResourceType const& type = modelTypes[i];
+            ModelFileType const& type = modelTypes[i];
             if(!type.ext.compareWithoutCase(ext))
             {
                 return &type;
@@ -604,7 +604,7 @@ static model_t* interpretModel(de::FileHandle& hndl, String path, modelid_t mode
     model_t* mdl = 0;
 
     // Firstly try the interpreter for the guessed resource types.
-    ModelResourceType const* rtypeGuess = guessModelResourceTypeFromFileName(path);
+    ModelFileType const* rtypeGuess = guessModelFileTypeFromFileName(path);
     if(rtypeGuess)
     {
         mdl = rtypeGuess->interpretFunc(hndl, path, modelId);
@@ -616,7 +616,7 @@ static model_t* interpretModel(de::FileHandle& hndl, String path, modelid_t mode
         // Try each recognisable format instead.
         for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
         {
-            ModelResourceType const& modelType = modelTypes[i];
+            ModelFileType const& modelType = modelTypes[i];
 
             // Already tried this?
             if(&modelType == rtypeGuess) continue;
@@ -1091,7 +1091,7 @@ static void setupModel(ded_model_t& def)
         if(!subdef->filename || Uri_IsEmpty(subdef->filename)) continue;
 
         AutoStr* foundPath = AutoStr_NewStd();
-        if(!F_FindResource2(RC_MODEL, subdef->filename, foundPath))
+        if(!F_Find2(RC_MODEL, subdef->filename, foundPath))
         {
             LOG_WARNING("Failed to locate \"%s\", ignoring.") << reinterpret_cast<de::Uri&>(*subdef->filename);
             continue;

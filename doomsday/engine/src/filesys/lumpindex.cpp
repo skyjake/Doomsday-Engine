@@ -31,7 +31,7 @@
 #include "de_filesys.h"
 
 #include "m_misc.h" // for M_NumDigits()
-#include "resource/lumpindex.h"
+#include "filesys/lumpindex.h"
 
 #include <QBitArray>
 #include <QList>

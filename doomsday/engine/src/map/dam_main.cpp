@@ -31,8 +31,6 @@
 #include "de_network.h"
 #include "de_render.h"
 
-#include "resource/lumpindex.h"
-
 // Should we be caching successfully loaded maps?
 byte mapCache = true;
 

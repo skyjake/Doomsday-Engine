@@ -30,8 +30,6 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "resource/lumpindex.h"
-
 using namespace de;
 
 #if _DEBUG

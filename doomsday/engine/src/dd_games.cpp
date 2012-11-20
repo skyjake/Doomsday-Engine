@@ -25,8 +25,8 @@
 #include "de_filesys.h"
 #include "dd_games.h"
 
-#include "resource/resourcerecord.h"
-#include "filesys/zip.h"
+#include "filesys/metafile.h"
+#include "resource/zip.h"
 
 namespace de {
 
@@ -103,7 +103,7 @@ int GameCollection::numPlayable() const
     DENG2_FOR_EACH_CONST(Games, i, d->games)
     {
         Game* game = *i;
-        if(!game->allStartupResourcesFound()) continue;
+        if(!game->allStartupFilesFound()) continue;
         ++count;
     }
     return count;
@@ -114,7 +114,7 @@ Game* GameCollection::firstPlayable() const
     DENG2_FOR_EACH_CONST(Games, i, d->games)
     {
         Game* game = *i;
-        if(game->allStartupResourcesFound()) return game;
+        if(game->allStartupFilesFound()) return game;
     }
     return NULL;
 }
@@ -194,18 +194,18 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
         d->currentGame = &game;
         DD_ExchangeGamePluginEntryPoints(game.pluginId());
 
-        // Re-init the resource locator using the search paths of this Game.
-        F_ResetAllResourceNamespaces();
+        // Re-init the namespaces using the search paths of this Game.
+        App_FileSystem()->resetAllNamespaces();
     }
 
-    DENG2_FOR_EACH_CONST(Game::Resources, i, game.resources())
+    DENG2_FOR_EACH_CONST(Game::MetaFiles, i, game.metafiles())
     {
-        ResourceRecord& record = **i;
+        MetaFile& record = **i;
 
         // We are only interested in startup resources at this time.
-        if(!(record.resourceFlags() & RF_STARTUP)) continue;
+        if(!(record.fileFlags() & FF_STARTUP)) continue;
 
-        record.locateResource();
+        record.locateFile();
     }
 
     if(d->currentGame != oldGame)
@@ -214,8 +214,8 @@ GameCollection& GameCollection::locateStartupResources(Game& game)
         d->currentGame = oldGame;
         DD_ExchangeGamePluginEntryPoints(oldGame->pluginId());
 
-        // Re-init the resource locator using the search paths of this Game.
-        F_ResetAllResourceNamespaces();
+        // Re-init the namespaces using the search paths of this Game.
+        App_FileSystem()->resetAllNamespaces();
     }
     return *this;
 }
@@ -275,11 +275,11 @@ D_CMD(ListGames)
         de::Game* game = i->game;
 
         Con_Printf(" %s %-16s %s (%s)\n", games->isCurrentGame(*game)? "*" :
-                                   !game->allStartupResourcesFound()? "!" : " ",
+                                   !game->allStartupFilesFound()? "!" : " ",
                    Str_Text(&game->identityKey()), Str_Text(&game->title()),
                    Str_Text(&game->author()));
 
-        if(game->allStartupResourcesFound())
+        if(game->allStartupFilesFound())
             numCompleteGames++;
     }
 

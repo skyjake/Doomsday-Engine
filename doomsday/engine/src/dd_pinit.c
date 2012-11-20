@@ -189,6 +189,7 @@ void DD_ShutdownAll(void)
     Materials_Shutdown();
     Def_Destroy();
     F_Shutdown();
+    DD_ClearResourceClasses();
     Libdeng_Shutdown();
     Sys_ShutdownWindowManager();
 }

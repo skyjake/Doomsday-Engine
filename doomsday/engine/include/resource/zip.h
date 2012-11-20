@@ -1,13 +1,15 @@
 /**
- * @file wad.h
- * Specialization of File for working with Wad archives.
+ * @file zip.h
+ * Specialization of File for working with Zip archives.
  *
- * @ingroup fs
+ * @note Presently only the zlib method (Deflate) of compression is supported.
+ *
+ * @ingroup resource
  *
  * @see file.h, File
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,13 +26,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_FILESYS_WAD_H
-#define LIBDENG_FILESYS_WAD_H
+#ifndef LIBDENG_RESOURCE_ZIP_H
+#define LIBDENG_RESOURCE_ZIP_H
 
 #ifdef __cplusplus
 
-#include "fileinfo.h"
-#include "file.h"
+#include "filesys/file.h"
+#include "filesys/fileinfo.h"
 #include "pathtree.h"
 
 namespace de {
@@ -39,20 +41,21 @@ class FileHandle;
 class LumpIndex;
 
 /**
- * Runtime representation of an opened WAD file.
+ * Runtime representation of an opened ZIP file.
  */
-class Wad : public File1
+class Zip : public File1
 {
 public:
     /// Base class for format-related errors. @ingroup errors
     DENG2_ERROR(FormatError);
 
-    /// The requested entry does not exist in the wad. @ingroup errors
+    /// The requested entry does not exist in the zip. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
 public:
-    Wad(FileHandle& hndl, String path, FileInfo const& info, File1* container = 0);
-    ~Wad();
+    Zip(FileHandle& hndl, String path, FileInfo const& info,
+        File1* container = 0);
+    ~Zip();
 
     /// @return @c true= @a lumpIdx is a valid logical index for a lump in this file.
     bool isValidIndex(int lumpIdx) const;
@@ -126,8 +129,6 @@ public:
      * @param lumpIdx   Lump index associated with the data to be cached.
      *
      * @return Pointer to the cached copy of the associated data.
-     *
-     * @throws NotFoundError  If @a lumpIdx is not valid.
      */
     uint8_t const* cacheLump(int lumpIdx);
 
@@ -138,7 +139,7 @@ public:
      *
      * @return This instance.
      */
-    Wad& unlockLump(int lumpIdx);
+    Zip& unlockLump(int lumpIdx);
 
     /**
      * Clear any cached data for lump @a lumpIdx from the lump cache.
@@ -149,31 +150,88 @@ public:
      *
      * @return This instance.
      */
-    Wad& clearCachedLump(int lumpIdx, bool* retCleared = 0);
+    Zip& clearCachedLump(int lumpIdx, bool* retCleared = 0);
 
     /**
      * Purge the lump cache, clearing all cached data lumps.
      *
      * @return This instance.
      */
-    Wad& clearLumpCache();
-
-    /**
-     * @attention Uses an extremely simple formula which does not conform to any CRC
-     *            standard. Should not be used for anything critical.
-     */
-    uint calculateCRC();
+    Zip& clearLumpCache();
 
 // Static members ------------------------------------------------------------------
 
     /**
-     * Does @a file appear to be in a format which can be represented with Wad?
+     * Determines whether the specified file appears to be in a format recognised by
+     * Zip.
      *
-     * @param file      Stream file handle/wrapper to be recognised.
+     * @param file      Stream file handle/wrapper to the file being interpreted.
      *
-     * @return @c true= @a file can be represented with Wad.
+     * @return  @c true= this is a file that can be represented using Zip.
      */
     static bool recognise(FileHandle& file);
+
+    /**
+     * Inflates a block of data compressed using ZipFile_Compress() (i.e., zlib
+     * deflate algorithm).
+     *
+     * @param in        Pointer to compressed data.
+     * @param inSize    Size of the compressed data.
+     * @param outSize   Size of the uncompressed data is written here. Must not be @c NULL.
+     *
+     * @return  Pointer to the uncompressed data. Caller gets ownership of the
+     * returned memory and must free it with M_Free().
+     *
+     * @see compress()
+     */
+    static uint8_t* uncompress(uint8_t* in, size_t inSize, size_t* outSize);
+
+    /**
+     * Inflates a compressed block of data using zlib. The caller must figure out
+     * the uncompressed size of the data before calling this.
+     *
+     * zlib will expect raw deflate data, not looking for a zlib or gzip header,
+     * not generating a check value, and not looking for any check values for
+     * comparison at the end of the stream.
+     *
+     * @param in        Pointer to compressed data.
+     * @param inSize    Size of the compressed data.
+     * @param out       Pointer to output buffer.
+     * @param outSize   Size of the output buffer. This must match the size of the
+     *                  decompressed data.
+     *
+     * @return  @c true if successful.
+     */
+    static bool uncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize);
+
+    /**
+     * Compresses a block of data using zlib with the default/balanced compression level.
+     *
+     * @param in        Pointer to input data to compress.
+     * @param inSize    Size of the input data.
+     * @param outSize   Pointer where the size of the compressed data will be written.
+     *                  Cannot be @c NULL.
+     *
+     * @return  Compressed data. The caller gets ownership of this memory and must
+     *          free it with M_Free(). If an error occurs, returns @c NULL and
+     *          @a outSize is set to zero.
+     */
+    static uint8_t* compress(uint8_t* in, size_t inSize, size_t* outSize);
+
+    /**
+     * Compresses a block of data using zlib.
+     *
+     * @param in        Pointer to input data to compress.
+     * @param inSize    Size of the input data.
+     * @param outSize   Pointer where the size of the compressed data will be written.
+     *                  Cannot be @c NULL.
+     * @param level     Compression level: 0=none/fastest ... 9=maximum/slowest.
+     *
+     * @return  Compressed data. The caller gets ownership of this memory and must
+     *          free it with M_Free(). If an error occurs, returns @c NULL and
+     *          @a outSize is set to zero.
+     */
+    static uint8_t* compressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level);
 
 private:
     struct Instance;
@@ -185,11 +243,11 @@ private:
 extern "C" {
 #endif // __cplusplus
 
-struct wad_s; // The wad instance (opaque)
-//typedef struct wad_s Wad;
+struct zip_s; // The  zip instance (opaque)
+//typedef struct zip_s Zip;
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_FILESYS_WAD_H */
+#endif /* LIBDENG_RESOURCE_ZIP_H */
