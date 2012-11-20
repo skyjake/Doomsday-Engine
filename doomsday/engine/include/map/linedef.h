@@ -169,7 +169,7 @@ int LineDef_GetProperty(const LineDef* lineDef, setargs_t* args);
 int LineDef_SetProperty(LineDef* lineDef, const setargs_t* args);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_LINEDEF

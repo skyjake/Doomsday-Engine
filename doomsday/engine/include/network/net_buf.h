@@ -100,7 +100,7 @@ void            N_PostMessage(netmessage_t *msg);
 void            N_AddSentBytes(size_t bytes);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_NETWORK_BUFFER_H */

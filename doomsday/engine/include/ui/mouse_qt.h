@@ -36,7 +36,7 @@ void Mouse_Qt_SubmitMotion(int axis, int deltaX, int deltaY);
 void Mouse_Qt_SubmitWindowPosition(int x, int y);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // MOUSE_QT_H

@@ -39,7 +39,7 @@
 
 #ifdef __cplusplus
 
-#include <Qlist>
+#include <QList>
 #include <de/String>
 #include "resourceclass.h"
 

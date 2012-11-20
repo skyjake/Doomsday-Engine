@@ -73,7 +73,7 @@ LPCSTR  ToAnsiString(const wchar_t* wstr);
 #endif
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_WINIT_H */

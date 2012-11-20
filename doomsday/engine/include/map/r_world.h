@@ -243,7 +243,7 @@ LineDef* R_FindLineBackNeighbor(const Sector* sector, const LineDef* line,
 coord_t R_SkyCapZ(BspLeaf* bspLeaf, int skyCap);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_REFRESH_WORLD_H */

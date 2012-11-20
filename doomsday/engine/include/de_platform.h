@@ -75,7 +75,7 @@ extern "C" {
 const char* strcasestr(const char* text, const char* sub);
 
 #ifdef __cplusplus
-} extern "C"
+} // extern "C"
 #endif
 
 #endif                          // WIN32

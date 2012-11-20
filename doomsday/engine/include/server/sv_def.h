@@ -89,7 +89,7 @@ boolean         Sv_CanTrustClientPos(int plrNum);
 unsigned int Sv_IdForMaterial(struct material_s* mat);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif

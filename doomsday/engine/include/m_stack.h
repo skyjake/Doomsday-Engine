@@ -42,6 +42,7 @@ void            Stack_Push(ddstack_t* stack, void* data);
 void*           Stack_Pop(ddstack_t* stack);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
+
 #endif

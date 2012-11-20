@@ -192,7 +192,7 @@ int Textures_IterateDeclared2(texturenamespaceid_t namespaceId, int (*callback)(
 int Textures_IterateDeclared(texturenamespaceid_t namespaceId, int (*callback)(textureid_t textureId, void* parameters)); /*parameters=NULL*/
 
 #ifdef __cplusplus
-} //extern "C"
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_RESOURCE_TEXTURES_H */

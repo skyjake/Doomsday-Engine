@@ -172,7 +172,7 @@ int Models_CacheForMobj(thinker_t* th, void* context);
 void Models_CacheForState(int stateIndex);
 
 #ifdef __cplusplus
-} extern "C"
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_RESOURCE_MODELS_H

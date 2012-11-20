@@ -33,7 +33,7 @@ extern "C" {
 extern mouseinterface_t win32Mouse;
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // LIBDENG_MOUSE_WIN32_H

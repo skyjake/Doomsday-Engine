@@ -203,7 +203,7 @@ void RL_AddPoly(primtype_t primType, int flags, uint numElements,
 void RL_RenderAllLists(void);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_REND_LIST_H */

@@ -77,10 +77,6 @@
 #include "gl_deferredapi.h"
 #include "ui/window.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Configure available features
  * \todo Move out of this header.
@@ -149,6 +145,10 @@ typedef enum arraytype_e {
     AR_TEXCOORD7
 } arraytype_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern gl_state_t GL_state;
 
 #ifdef WIN32
@@ -204,7 +204,7 @@ boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions);
 boolean Sys_GLCheckError(void);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_SYSTEM_OPENGL_H */

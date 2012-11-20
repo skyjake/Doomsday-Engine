@@ -27,70 +27,69 @@
 #include "net_buf.h"
 #include "monitor.h"
 
+#define DEFAULT_TCP_PORT    13209
+#define DEFAULT_UDP_PORT    13209
+
+typedef void (*expectedresponder_t)(int, const byte*, int);
+
+// If a master action fails, the action queue is emptied.
+typedef enum {
+    MAC_REQUEST, // Retrieve the list of servers from the master.
+    MAC_WAIT, // Wait for the server list to arrive.
+    MAC_LIST // Print the server list in the console.
+} masteraction_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define DEFAULT_TCP_PORT    13209
-#define DEFAULT_UDP_PORT    13209
+extern boolean  allowSending;
+extern int      maxQueuePackets;
 
-    typedef void (*expectedresponder_t)(int, const byte*, int);
+extern boolean  netServerMode;
 
-    // If a master action fails, the action queue is emptied.
-    typedef enum {
-        MAC_REQUEST, // Retrieve the list of servers from the master.
-        MAC_WAIT, // Wait for the server list to arrive.
-        MAC_LIST // Print the server list in the console.
-    } masteraction_t;
+extern char    *nptIPAddress;
+extern int      nptIPPort;
 
-    extern boolean  allowSending;
-    extern int      maxQueuePackets;
+extern char    *serverName, *serverInfo, *playerName;
+extern int      serverData[];
 
-    extern boolean  netServerMode;
+extern char    *masterAddress;
+extern int      masterPort;
+extern char    *masterPath;
 
-    extern char    *nptIPAddress;
-    extern int      nptIPPort;
-    //extern int      nptUDPPort;
+void            N_Register(void);
+void            N_SystemInit(void);
+void            N_SystemShutdown(void);
+boolean         N_InitService(boolean inServerMode);
+void            N_ShutdownService(void);
+boolean         N_IsAvailable(void);
+boolean         N_UsingInternet(void);
+void            N_PrintInfo(void);
+boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
+void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
+void            N_Listen(void);
+void            N_ListenNodes(void);
 
-    extern char    *serverName, *serverInfo, *playerName;
-    extern int      serverData[];
+boolean         N_Connect(int index);
+boolean         N_Disconnect(void);
+boolean         N_ServerOpen(void);
+boolean         N_ServerClose(void);
 
-    extern char    *masterAddress;
-    extern int      masterPort;
-    extern char    *masterPath;
+void            N_TerminateNode(nodeid_t id);
 
-    void            N_Register(void);
-    void            N_SystemInit(void);
-    void            N_SystemShutdown(void);
-    boolean         N_InitService(boolean inServerMode);
-    void            N_ShutdownService(void);
-    boolean         N_IsAvailable(void);
-    boolean         N_UsingInternet(void);
-    void            N_PrintInfo(void);
-    boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
-    void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
-    void            N_Listen(void);
-    void            N_ListenNodes(void);
+int             N_GetNodeSocket(nodeid_t id);
+boolean         N_HasNodeJoined(nodeid_t id);
+boolean         N_GetNodeName(nodeid_t id, char *name);
+const char     *N_GetProtocolName(void);
 
-    boolean         N_Connect(int index);
-    boolean         N_Disconnect(void);
-    boolean         N_ServerOpen(void);
-    boolean         N_ServerClose(void);
+int             N_GetHostCount(void);
+boolean         N_GetHostInfo(int index, struct serverinfo_s *info);
 
-    void            N_TerminateNode(nodeid_t id);
-
-    int             N_GetNodeSocket(nodeid_t id);
-    boolean         N_HasNodeJoined(nodeid_t id);
-    boolean         N_GetNodeName(nodeid_t id, char *name);
-    const char     *N_GetProtocolName(void);
-
-    int             N_GetHostCount(void);
-    boolean         N_GetHostInfo(int index, struct serverinfo_s *info);
-
-    void            N_PrintNetworkStatus(void);
+void            N_PrintNetworkStatus(void);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_SYSTEM_NETWORK_H */

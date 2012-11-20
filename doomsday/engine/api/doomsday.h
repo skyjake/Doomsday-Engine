@@ -93,6 +93,9 @@ struct font_s;
 #include <de/memoryzone.h>
 #include <de/smoother.h>
 
+// Play: World data access (Map Data Updates and access to other information).
+#include "dd_world.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -489,9 +492,6 @@ AutoStr* P_MapSourceFile(char const* uri);
 
 boolean P_LoadMap(const char* uri);
 ///@}
-
-// Play: World data access (Map Data Updates and access to other information).
-#include "dd_world.h"
 
 /// @addtogroup playsim
 ///@{

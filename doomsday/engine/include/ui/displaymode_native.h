@@ -53,7 +53,7 @@ void DisplayMode_Native_Raise(void* handle);
 #endif
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // LIBDENG_DISPLAYMODE_NATIVE_H

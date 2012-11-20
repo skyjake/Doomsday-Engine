@@ -29,11 +29,11 @@
 #ifndef LIBDENG_GRAPHICS_H
 #define LIBDENG_GRAPHICS_H
 
+#include "render/r_main.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "render/r_main.h"
 
 struct colorpalette_s;
 struct material_s;
@@ -201,7 +201,7 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int comps,
 D_CMD(UpdateGammaRamp);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_GRAPHICS_H */

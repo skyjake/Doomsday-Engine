@@ -52,7 +52,7 @@ boolean DD_Unix_Init(void);
 void DD_Shutdown(void);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* LIBDENG_UINIT_H */

@@ -113,8 +113,16 @@ typedef struct biassurface_s {
     struct biassurface_s* next;
 } biassurface_t;
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #include "map/polyobj.h"
 #include "p_maptypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Map entity definitions.
 struct mapentitydef_s;
@@ -197,7 +205,15 @@ MapEntityDef* P_MapEntityDefByName(char const* name);
  */
 AutoStr* P_NameForMapEntityDef(MapEntityDef* def);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #include "../EntityDatabase"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 boolean P_SetMapEntityProperty(EntityDatabase* db, MapEntityPropertyDef* propertyDef, uint elementIndex, valuetype_t valueType, void* valueAdr);
 
@@ -223,7 +239,15 @@ extern BspNode** bspNodes;
 extern BspLeaf** bspLeafs;
 extern HEdge** hedges;
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #include "gamemap.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // The current map.
 extern GameMap* theMap;

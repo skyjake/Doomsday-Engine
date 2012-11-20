@@ -26,10 +26,6 @@
 #ifndef LIBDENG_LINKEDLIST_H
 #define LIBDENG_LINKEDLIST_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // The C_DECL macro, used with compare functions.
 #ifndef C_DECL
 #  if defined(WIN32)
@@ -45,6 +41,10 @@ typedef int listindex_t;
 #define COMPAREFUNC(name)   int C_DECL name(const void *a, const void *b)
 
 typedef int (C_DECL *comparefunc) (const void *a, const void *b);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Premade compare functions:
 COMPAREFUNC( compareInt );
@@ -121,7 +121,7 @@ void            List_Test(void);
 #endif
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // LIBDENG_LINKEDLIST_H

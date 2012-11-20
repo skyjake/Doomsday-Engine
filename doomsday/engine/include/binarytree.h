@@ -478,7 +478,7 @@ int BinaryTree_InOrder(BinaryTree* tree, int (*callback) (BinaryTree*, void*), v
 int BinaryTree_PostOrder(BinaryTree* tree, int (*callback) (BinaryTree*, void*), void* parameters);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_DATA_BINARYTREE

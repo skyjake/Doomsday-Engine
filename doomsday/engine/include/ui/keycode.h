@@ -38,7 +38,7 @@ extern "C" {
 int Keycode_TranslateFromQt(int qtKey, int nativeVirtualKey, int nativeScanCode);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // LIBDENG_INPUT_KEYCODE_H

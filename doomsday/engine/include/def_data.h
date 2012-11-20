@@ -34,10 +34,6 @@
 #include "def_share.h"
 #include "uri.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // Version 6 does not require semicolons.
 #define DED_VERSION                 6
 
@@ -602,6 +598,10 @@ typedef struct ded_s {
     ded_compositefont_t* compositeFonts;
 } ded_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Routines for managing DED files.
 void            DED_Init(ded_t* ded);
 void            DED_Clear(ded_t* ded);
@@ -679,9 +679,10 @@ void            DED_DelEntry(int index, void** ptr, ded_count_t* cnt, size_t ele
 void            DED_DelArray(void** ptr, ded_count_t* cnt);
 void            DED_ZCount(ded_count_t* c);
 
-extern char dedReadError[];
-
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
+
+DENG_EXTERN_C char dedReadError[];
+
 #endif /* LIBDENG_DEFINITION_FILE_H */

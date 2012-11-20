@@ -83,7 +83,7 @@ int BspLeaf_GetProperty(const BspLeaf* bspLeaf, setargs_t* args);
 int BspLeaf_SetProperty(BspLeaf* bspLeaf, const setargs_t* args);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_BSPLEAF

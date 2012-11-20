@@ -62,7 +62,7 @@ int Vertex_GetProperty(const Vertex* vertex, setargs_t* args);
 int Vertex_SetProperty(Vertex* vertex, const setargs_t* args);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /// LIBDENG_MAP_VERTEX
