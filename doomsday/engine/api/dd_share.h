@@ -1727,7 +1727,7 @@ typedef struct serverinfo_s {
     char            gameConfig[40];
     char            map[20];
     char            clientNames[128];
-    unsigned int    wadNumber;
+    unsigned int    loadedFilesCRC;
     char            iwad[32];   ///< Obsolete.
     char            pwads[128];
     int             data[3];

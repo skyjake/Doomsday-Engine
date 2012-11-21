@@ -273,17 +273,16 @@ namespace de
         static void consoleRegister();
 
         /**
+         * @post No more WADs will be loaded in startup mode.
+         */
+        void endStartup();
+
+        /**
          * @param name      Unique symbolic name of this namespace. Must be at least
          *                  @c Namespace::min_name_length characters long.
          * @param flags     @ref Namespace::Flag
          */
         Namespace& createNamespace(String name, Namespace::Flags flags = 0);
-
-        /**
-         * Reset all the namespaces, returning them to an empty state and clearing
-         * any @ref ExtraPaths which have been registered since construction.
-         */
-        void resetAllNamespaces();
 
         /**
          * Lookup a Namespace by symbolic name.
@@ -293,13 +292,14 @@ namespace de
          */
         Namespace* namespaceByName(String name);
 
+        /**
+         * Reset all the namespaces, returning them to an empty state and clearing
+         * any @ref ExtraPaths which have been registered since construction.
+         */
+        void resetAllNamespaces();
+
         /// Returns the namespaces for efficient traversal.
         Namespaces const& namespaces();
-
-        /**
-         * @post No more WADs will be loaded in startup mode.
-         */
-        void endStartup();
 
         /**
          * Add a new path mapping from source to destination in the vfs.
@@ -309,10 +309,8 @@ namespace de
 
         /**
          * Clears all virtual path mappings.
-         *
-         * @return  This instance.
          */
-        FS1& clearPathMappings();
+        void clearPathMappings();
 
         /**
          * Add a new lump mapping so that @a lumpName becomes visible at @a destination.
@@ -324,13 +322,12 @@ namespace de
          *
          * @return  This instance.
          */
-        FS1& clearPathLumpMappings();
+        void clearPathLumpMappings();
 
         /**
-         * Reset known fileId records so that the next time checkFileId() is called for
-         * a filepath, it will pass.
+         * @return  @c true if a file exists at @a path which can be opened for reading.
          */
-        void resetFileIds();
+        bool accessFile(Uri const& path);
 
         /**
          * Maintains a list of identifiers already seen.
@@ -341,26 +338,28 @@ namespace de
         bool checkFileId(Uri const& path);
 
         /**
-         * @return  @c true if a file exists at @a path which can be opened for reading.
+         * Reset known fileId records so that the next time checkFileId() is called for
+         * a filepath, it will pass.
          */
-        bool accessFile(Uri const& path);
+        void resetFileIds();
 
         /**
          * Indexes @a file (which must have been opened with this file system) into
          * this file system and adds it to the list of loaded files.
          *
          * @param file      The file to index. Assumed to have not yet been indexed!
-         *
-         * @return  This instance.
          */
-        FS1& index(File1& file);
+        void index(File1& file);
 
         /**
          * Removes a file from any lump indexes.
          *
          * @param file  File to remove from the index.
          */
-        FS1& deindex(File1& file);
+        void deindex(File1& file);
+
+        /// Clear all references to this file.
+        void releaseFile(File1& file);
 
         /**
          * Lookup a lump by name.
@@ -424,9 +423,6 @@ namespace de
          * method of the file system itself (bad OO design).
          */
         FileHandle& openLump(File1& lump);
-
-        /// Clear all references to this file.
-        void releaseFile(File1& file);
 
         /**
          * Find a single file.
@@ -530,11 +526,6 @@ namespace de
         void printDirectory(String path);
 
         /**
-         * Calculate a CRC for the loaded file list.
-         */
-        uint loadedFilesCRC();
-
-        /**
          * Try to open the specified WAD archive into the auxiliary lump index.
          *
          * @return  Base index for lumps in this archive.
@@ -547,10 +538,15 @@ namespace de
         void closeAuxiliaryPrimaryIndex();
 
         /**
+         * Calculate a CRC for the loaded file list.
+         */
+        uint loadedFilesCRC();
+
+        /**
          * Unload all files loaded after startup.
          * @return  Number of files unloaded.
          */
-        FS1& unloadAllNonStartupFiles(int* numUnloaded = 0);
+        int unloadAllNonStartupFiles();
 
     private:
         struct Instance;
@@ -599,7 +595,7 @@ void F_Shutdown(void);
 
 void F_EndStartup(void);
 
-void F_UnloadAllNonStartupFiles(int* numUnloaded);
+int F_UnloadAllNonStartupFiles();
 
 void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath);
 
@@ -663,7 +659,7 @@ void F_UnlockLump(struct file1_s* file, int lumpIdx);
  */
 void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimiter);
 
-uint F_CRCNumber(void);
+uint F_LoadedFilesCRC(void);
 
 lumpnum_t F_OpenAuxiliary2(char const* nativePath, size_t baseOffset);
 lumpnum_t F_OpenAuxiliary(char const* nativePath/*, baseOffset = 0 */);

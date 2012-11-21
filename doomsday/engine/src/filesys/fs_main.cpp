@@ -460,7 +460,13 @@ FS1::~FS1()
 FS1::Namespace& FS1::createNamespace(String name, Namespace::Flags flags)
 {
     DENG_ASSERT(name.length() >= Namespace::min_name_length);
-    Namespace* fnamespace = new Namespace(name, flags);
+
+    // Ensure this is a unique name.
+    Namespace* fnamespace = namespaceByName(name);
+    if(fnamespace) return *fnamespace;
+
+    // Create a new namespace.
+    fnamespace = new Namespace(name, flags);
     d->namespaces.insert(name.toLower(), fnamespace);
     return *fnamespace;
 }
@@ -518,7 +524,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList& list, String pa
     return i;
 }
 
-FS1& FS1::index(de::File1& file)
+void FS1::index(de::File1& file)
 {
 #ifdef DENG_DEBUG
     // Ensure this hasn't yet been indexed.
@@ -560,14 +566,12 @@ FS1& FS1::index(de::File1& file)
     // Add a handle to the loaded files list.
     FileHandle* loadedFilesHndl = FileHandleBuilder::fromFile(file);
     d->loadedFiles.push_back(loadedFilesHndl); loadedFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->loadedFiles));
-
-    return *this;
 }
 
-FS1& FS1::deindex(de::File1& file)
+void FS1::deindex(de::File1& file)
 {
     FileList::iterator found = findListFile(d->loadedFiles, file);
-    if(found == d->loadedFiles.end()) return *this; // Most peculiar..
+    if(found == d->loadedFiles.end()) return; // Most peculiar..
 
     QByteArray path = file.composePath().toUtf8();
     d->releaseFileId(path.constData());
@@ -579,8 +583,6 @@ FS1& FS1::deindex(de::File1& file)
 
     d->loadedFiles.erase(found);
     delete *found;
-
-    return *this;
 }
 
 de::File1& FS1::find(de::Uri const& search)
@@ -701,7 +703,7 @@ static void printFileList(FS1::FileList& list)
 }
 #endif
 
-FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
+int FS1::unloadAllNonStartupFiles()
 {
 #if _DEBUG
     // List all open files with their identifiers.
@@ -734,8 +736,7 @@ FS1& FS1::unloadAllNonStartupFiles(int* retNumUnloaded)
     }
 #endif
 
-    if(retNumUnloaded) *retNumUnloaded = numUnloadedFiles;
-    return *this;
+    return numUnloadedFiles;
 }
 
 bool FS1::checkFileId(de::Uri const& path)
@@ -1260,10 +1261,9 @@ void FS1::mapPathToLump(String lumpName, String destination)
     LOG_VERBOSE("Path \"%s\" now mapped to lump \"%s\"") << NativePath(ldm->first).pretty() << ldm->second;
 }
 
-FS1& FS1::clearPathLumpMappings()
+void FS1::clearPathLumpMappings()
 {
     d->lumpMappings.clear();
-    return *this;
 }
 
 /// @return  @c true iff the mapping matched the path.
@@ -1313,10 +1313,9 @@ void FS1::mapPath(String source, String destination)
         << NativePath(pm->second).pretty() << NativePath(pm->first).pretty();
 }
 
-FS1& FS1::clearPathMappings()
+void FS1::clearPathMappings()
 {
     d->pathMappings.clear();
-    return *this;
 }
 
 void FS1::printDirectory(String path)
@@ -1636,9 +1635,9 @@ void F_EndStartup(void)
     App_FileSystem()->endStartup();
 }
 
-void F_UnloadAllNonStartupFiles(int* numUnloaded)
+int F_UnloadAllNonStartupFiles(void)
 {
-    App_FileSystem()->unloadAllNonStartupFiles(numUnloaded);
+    return App_FileSystem()->unloadAllNonStartupFiles();
 }
 
 void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath)
@@ -2027,7 +2026,7 @@ void F_ComposePWADFileList(char* outBuf, size_t outBufSize, char const* delimite
     strncpy(outBuf, strUtf8.constData(), outBufSize);
 }
 
-uint F_CRCNumber(void)
+uint F_LoadedFilesCRC(void)
 {
     return App_FileSystem()->loadedFilesCRC();
 }
