@@ -156,7 +156,7 @@ namespace de
              * @ref ExtraPaths which have been registered since its construction.
              */
             inline void reset() {
-                clearSearchPaths(ExtraPaths);
+                clearSearchPathGroup(ExtraPaths);
                 clear();
             }
 
@@ -185,24 +185,24 @@ namespace de
              * Add a new search path to this namespace. Newer paths have priority
              * over previously added paths.
              *
-             * @param group     Group to add this path to. @ref PathGroup
              * @param path      New unresolved search path to add. A copy is made.
+             * @param group     Group to add this path to. @ref PathGroup
              *
              * @return  @c true if @a path was well-formed and subsequently added.
              */
-            bool addSearchPath(PathGroup group, SearchPath const& path);
+            bool addSearchPath(SearchPath const& path, PathGroup group = DefaultPaths);
+
+            /**
+             * Clear all search paths in all groups in this namespace.
+             */
+            void clearAllSearchPaths();
 
             /**
              * Clear search paths in @a group from this namespace.
              *
              * @param group  Search path group to be cleared.
              */
-            void clearSearchPaths(PathGroup group);
-
-            /**
-             * Clear all search paths in all groups in this namespace.
-             */
-            void clearSearchPaths();
+            void clearSearchPathGroup(PathGroup group);
 
             /**
              * Provides access to the search paths for efficient traversals.
@@ -223,7 +223,7 @@ namespace de
              *
              * @return  @c true iff mapping was applied to the path.
              */
-            bool applyPathMappings(String& path) const;
+            bool mapPath(String& path) const;
 
 #if _DEBUG
             void debugPrint() const;
@@ -296,7 +296,11 @@ namespace de
          * Reset all the namespaces, returning them to an empty state and clearing
          * any @ref ExtraPaths which have been registered since construction.
          */
-        void resetAllNamespaces();
+        inline void resetAllNamespaces()
+        {
+            Namespaces allNamespaces = namespaces();
+            DENG2_FOR_EACH(Namespaces, i, allNamespaces){ (*i)->reset(); }
+        }
 
         /// Returns the namespaces for efficient traversal.
         Namespaces const& namespaces();
@@ -305,7 +309,7 @@ namespace de
          * Add a new path mapping from source to destination in the vfs.
          * @note Paths will be transformed into absolute paths if needed.
          */
-        void mapPath(String source, String destination);
+        void addPathMapping(String source, String destination);
 
         /**
          * Clears all virtual path mappings.
@@ -315,7 +319,7 @@ namespace de
         /**
          * Add a new lump mapping so that @a lumpName becomes visible at @a destination.
          */
-        void mapPathToLump(String lumpName, String destination);
+        void addPathLumpMapping(String lumpName, String destination);
 
         /**
          * Clears all path => lump mappings.
@@ -342,6 +346,16 @@ namespace de
          * a filepath, it will pass.
          */
         void resetFileIds();
+
+        /**
+         * @param hndl  Handle to the file to be interpreted. Ownership is passed to
+         *              the interpreted file instance.
+         * @param path  Absolute VFS path by which the interpreted file will be known.
+         * @param info  Prepared info metadata for the file.
+         *
+         * @return  The interpreted File file instance.
+         */
+        File1& interpret(FileHandle& hndl, String path, FileInfo const& info);
 
         /**
          * Indexes @a file (which must have been opened with this file system) into
@@ -551,16 +565,6 @@ namespace de
     private:
         struct Instance;
         Instance* d;
-
-        /**
-         * @param hndl  Handle to the file to be interpreted. Ownership is passed to
-         *              the interpreted file instance.
-         * @param path  Absolute VFS path by which the interpreted file will be known.
-         * @param info  Prepared info metadata for the file.
-         *
-         * @return  The interpreted File file instance.
-         */
-        File1& interpret(FileHandle& hndl, String path, FileInfo const& info);
     };
 
     Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Namespace::Flags)

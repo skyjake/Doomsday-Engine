@@ -432,7 +432,7 @@ static String const& nameForPathGroup(FS1::PathGroup group)
     return names[int(group)];
 }
 
-bool FS1::Namespace::addSearchPath(PathGroup group, SearchPath const& search)
+bool FS1::Namespace::addSearchPath(SearchPath const& search, FS1::PathGroup group)
 {
     LOG_AS("FS1::Namespace::addSearchPath");
 
@@ -465,12 +465,12 @@ bool FS1::Namespace::addSearchPath(PathGroup group, SearchPath const& search)
     return true;
 }
 
-void FS1::Namespace::clearSearchPaths(PathGroup group)
+void FS1::Namespace::clearSearchPathGroup(PathGroup group)
 {
     d->searchPaths.remove(group);
 }
 
-void FS1::Namespace::clearSearchPaths()
+void FS1::Namespace::clearAllSearchPaths()
 {
     d->searchPaths.clear();
 }
@@ -513,7 +513,7 @@ int FS1::Namespace::findAll(String name, FoundNodes& found)
     return found.count() - numFoundSoFar;
 }
 
-bool FS1::Namespace::applyPathMappings(String& path) const
+bool FS1::Namespace::mapPath(String& path) const
 {
     if(path.isEmpty()) return false;
 

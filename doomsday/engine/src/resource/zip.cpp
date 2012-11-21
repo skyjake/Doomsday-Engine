@@ -993,7 +993,7 @@ static bool applyGamePathMappings(String& path)
     FS1::Namespaces const& namespaces = App_FileSystem()->namespaces();
     DENG2_FOR_EACH_CONST(FS1::Namespaces, i, namespaces)
     {
-        if((*i)->applyPathMappings(path))
+        if((*i)->mapPath(path))
         {
             return true;
         }

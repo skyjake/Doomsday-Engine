@@ -1224,7 +1224,7 @@ bool FS1::accessFile(de::Uri const& search)
     return false;
 }
 
-void FS1::mapPathToLump(String lumpName, String destination)
+void FS1::addPathLumpMapping(String lumpName, String destination)
 {
     if(lumpName.isEmpty() || destination.isEmpty()) return;
 
@@ -1282,7 +1282,7 @@ static bool applyPathMapping(ddstring_t* path, PathMapping const& pm)
     return true;
 }
 
-void FS1::mapPath(String source, String destination)
+void FS1::addPathMapping(String source, String destination)
 {
     if(source.isEmpty() || destination.isEmpty()) return;
 
@@ -1336,14 +1336,6 @@ void FS1::printDirectory(String path)
             QByteArray foundPath = NativePath(i->path).pretty().toUtf8();
             Con_Message("  %s\n", foundPath.constData());
         }
-    }
-}
-
-void FS1::resetAllNamespaces()
-{
-    DENG2_FOR_EACH(Namespaces, i, d->namespaces)
-    {
-        (*i)->reset();
     }
 }
 
@@ -1482,146 +1474,10 @@ void F_Register(void)
     FS1::consoleRegister();
 }
 
-static void createPackagesNamespace(FS1& fs)
-{
-    FS1::Namespace& fnamespace = fs.createNamespace("Packages");
-
-    /*
-     * Add default search paths.
-     *
-     * Note that the order here defines the order in which these paths are searched
-     * thus paths must be added in priority order (newer paths have priority).
-     */
-
-#ifdef UNIX
-    // There may be an iwaddir specified in a system-level config file.
-    filename_t fn;
-    if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
-    {
-        NativePath path = de::App::app().commandLine().startupPath() / fn;
-        fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-        LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
-    }
-#endif
-
-    // Add the path from the DOOMWADDIR environment variable.
-    if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
-    {
-        NativePath path = App::app().commandLine().startupPath() / getenv("DOOMWADDIR");
-        fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-        LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
-    }
-
-    // Add any paths from the DOOMWADPATH environment variable.
-    if(!CommandLine_Check("-nodoomwadpath") && getenv("DOOMWADPATH"))
-    {
-#if WIN32
-#  define SEP_CHAR      ';'
-#else
-#  define SEP_CHAR      ':'
-#endif
-
-        QStringList allPaths = QString(getenv("DOOMWADPATH")).split(SEP_CHAR, QString::SkipEmptyParts);
-        for(int i = allPaths.count(); i--> 0; )
-        {
-            NativePath path = App::app().commandLine().startupPath() / allPaths[i];
-            fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-            LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
-        }
-
-#undef SEP_CHAR
-    }
-
-    fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri("$(App.DataPath)/", RC_NULL), SearchPath::NoDescend));
-    fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SearchPath::NoDescend));
-}
-
-static void createNamespaces(FS1& fs)
-{
-    int const namespacedef_max_searchpaths = 5;
-    struct namespacedef_s {
-        char const* name;
-        char const* optOverridePath;
-        char const* optFallbackPath;
-        FS1::Namespace::Flags flags;
-        SearchPath::Flags searchPathFlags;
-        /// Priority is right to left.
-        char const* searchPaths[namespacedef_max_searchpaths];
-    } defs[] = {
-        { "Defs",         NULL,           NULL,           FS1::Namespace::Flag(0), 0,
-            { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
-        },
-        { "Graphics",     "-gfxdir2",     "-gfxdir",      FS1::Namespace::Flag(0), 0,
-            { "$(App.DataPath)/graphics/" }
-        },
-        { "Models",       "-modeldir2",   "-modeldir",    FS1::Namespace::MappedInPackages, 0,
-            { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
-        },
-        { "Sfx",          "-sfxdir2",     "-sfxdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
-            { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
-        },
-        { "Music",        "-musdir2",     "-musdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
-            { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
-        },
-        { "Textures",     "-texdir2",     "-texdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
-            { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
-        },
-        { "Flats",        "-flatdir2",    "-flatdir",     FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
-            { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
-        },
-        { "Patches",      "-patdir2",     "-patdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
-            { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
-        },
-        { "LightMaps",    "-lmdir2",      "-lmdir",       FS1::Namespace::MappedInPackages, 0,
-            { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
-        },
-        { "Fonts",        "-fontdir2",    "-fontdir",     FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
-            { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
-        },
-        { 0, 0, 0, FS1::Namespace::Flag(0), 0, { 0 } }
-    };
-
-    createPackagesNamespace(fs);
-
-    // Setup the rest...
-    struct namespacedef_s const* def = defs;
-    for(int i = 0; defs[i].name; ++i, ++def)
-    {
-        FS1::Namespace& fnamespace = fs.createNamespace(def->name, def->flags);
-
-        int searchPathCount = 0;
-        while(def->searchPaths[searchPathCount] && ++searchPathCount < namespacedef_max_searchpaths)
-        {}
-
-        for(int j = 0; j < searchPathCount; ++j)
-        {
-            SearchPath path = SearchPath(de::Uri(def->searchPaths[j], RC_NULL), def->searchPathFlags);
-            fnamespace.addSearchPath(FS1::DefaultPaths, path);
-        }
-
-        if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
-        {
-            NativePath path = NativePath(CommandLine_NextAsPath());
-            fnamespace.addSearchPath(FS1::OverridePaths, SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags));
-            path = path / "$(Game.IdentityKey)";
-            fnamespace.addSearchPath(FS1::OverridePaths, SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags));
-        }
-
-        if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
-        {
-            NativePath path = NativePath(CommandLine_NextAsPath());
-            fnamespace.addSearchPath(FS1::FallbackPaths, SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags));
-        }
-    }
-}
-
 void F_Init(void)
 {
     DENG_ASSERT(!fileSystem);
     fileSystem = new de::FS1();
-
-    /// @todo Does not belong here.
-    createNamespaces(*fileSystem);
 }
 
 void F_Shutdown(void)
@@ -1644,13 +1500,13 @@ void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nati
 {
     String source      = NativePath(nativeSourcePath).expand().withSeparators('/');
     String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
-    App_FileSystem()->mapPath(source, destination);
+    App_FileSystem()->addPathMapping(source, destination);
 }
 
 void F_AddLumpDirectoryMapping(char const* lumpName, char const* nativeDestinationPath)
 {
     String destination = NativePath(nativeDestinationPath).expand().withSeparators('/');
-    App_FileSystem()->mapPathToLump(destination, String(lumpName));
+    App_FileSystem()->addPathLumpMapping(destination, String(lumpName));
 }
 
 void F_ResetFileIds(void)

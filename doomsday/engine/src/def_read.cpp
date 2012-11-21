@@ -812,7 +812,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             de::Uri newSearchPath = de::Uri::fromNativeDirPath(NativePath(label));
             FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassByName("RC_MODEL").defaultNamespace());
             DENG_ASSERT(fnamespace);
-            fnamespace->addSearchPath(FS1::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath));
+            fnamespace->addSearchPath(reinterpret_cast<de::Uri const&>(newSearchPath), FS1::ExtraPaths);
         }
 
         if(ISTOKEN("Header"))
