@@ -105,10 +105,18 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
     byte result = 0;
     image_t image;
     AutoStr* foundPath  = AutoStr_NewStd();
-    Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex)));
+    AutoStr* texName = Str_Appendf(AutoStr_NewStd(), "Textures:Particle%02i", particleTex);
 
-    if(F_Find4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, "-ck") &&
-       GL_LoadImage(&image, Str_Text(foundPath)))
+    // First look for a colorkeyed version.
+    Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "%s-ck", Str_Text(texName))));
+    boolean found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
+    if(!found)
+    {
+        Uri_SetUri(searchPath, Str_Text(texName));
+        found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
+    }
+
+    if(found && GL_LoadImage(&image, Str_Text(foundPath)))
     {
         result = 2;
     }

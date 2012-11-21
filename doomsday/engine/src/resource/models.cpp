@@ -516,7 +516,7 @@ static void registerAllSkins(model_t& mdl)
         de::Uri skinSearchPath = de::Uri(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
 
         AutoStr* foundSkinPath = AutoStr_NewStd();
-        if(F_Find2(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundSkinPath))
+        if(F_FindPath(RC_GRAPHIC, reinterpret_cast<uri_s*>(&skinSearchPath), foundSkinPath))
         {
             // Huzzah! we found a skin.
             de::Uri uri = de::Uri(Str_Text(foundSkinPath), RC_NULL);
@@ -1091,7 +1091,7 @@ static void setupModel(ded_model_t& def)
         if(!subdef->filename || Uri_IsEmpty(subdef->filename)) continue;
 
         AutoStr* foundPath = AutoStr_NewStd();
-        if(!F_Find2(RC_MODEL, subdef->filename, foundPath))
+        if(!F_FindPath(RC_MODEL, subdef->filename, foundPath))
         {
             LOG_WARNING("Failed to locate \"%s\", ignoring.") << reinterpret_cast<de::Uri&>(*subdef->filename);
             continue;

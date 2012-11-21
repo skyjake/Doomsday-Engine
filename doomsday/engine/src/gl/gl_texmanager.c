@@ -2140,20 +2140,25 @@ void GL_UploadTextureContent(const texturecontent_t* content)
     }
 }
 
-TexSource GL_LoadExtTextureEX(image_t* image, char const* _searchPath,
+TexSource GL_LoadExtTextureEX(image_t* image, char const* searchPath,
     char const* optionalSuffix, boolean silent)
 {
-    DENG_ASSERT(image && _searchPath);
+    DENG_ASSERT(image && searchPath);
 {
-    Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
     AutoStr* foundPath = AutoStr_NewStd();
-
-    boolean found = F_Find4(RC_GRAPHIC, searchPath, foundPath, RLF_DEFAULT, optionalSuffix);
-    Uri_Delete(searchPath);
+    // First look for a version with an optional suffix.
+    Uri* search = Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "%s%s", searchPath, optionalSuffix? optionalSuffix : "")), RC_GRAPHIC);
+    boolean found = F_FindPath(RC_GRAPHIC, search, foundPath);
+    if(!found)
+    {
+        Uri_SetUri2(search, searchPath, RC_GRAPHIC);
+        found = F_FindPath(RC_GRAPHIC, search, foundPath);
+    }
+    Uri_Delete(search);
 
     if(!found || !GL_LoadImage(image, Str_Text(foundPath)))
     {       
-        if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", _searchPath);
+        if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", searchPath);
         return TEXS_NONE;
     }
 
@@ -2209,7 +2214,7 @@ TexSource GL_LoadExtTexture(image_t* image, char const* _searchPath, gfxmode_t m
     Uri* searchPath = Uri_NewWithPath2(_searchPath, RC_GRAPHIC);
     AutoStr* foundPath = AutoStr_NewStd();
 
-    if(F_Find2(RC_GRAPHIC, searchPath, foundPath) &&
+    if(F_FindPath(RC_GRAPHIC, searchPath, foundPath) &&
        GL_LoadImage(image, Str_Text(foundPath)))
     {
         // Force it to grayscale?
@@ -2705,7 +2710,7 @@ TexSource GL_LoadRawTex(image_t* image, const rawtex_t* r)
     // First try to find an external resource.
     Uri* searchPath = Uri_NewWithPath(Str_Text(Str_Appendf(AutoStr_NewStd(), "Patches:%s", Str_Text(&r->name))));
 
-    if(F_Find2(RC_GRAPHIC, searchPath, foundPath) &&
+    if(F_FindPath(RC_GRAPHIC, searchPath, foundPath) &&
        GL_LoadImage(image, Str_Text(foundPath)))
     {
         // "External" image loaded.

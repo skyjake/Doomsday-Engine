@@ -73,14 +73,19 @@ namespace de
     struct ResourceClass
     {
     public:
-        typedef QList<FileType*> Types;
+        typedef QList<FileType*> FileTypes;
 
     public:
         ResourceClass(String _name, String _defaultNamespace)
             : name_(_name), defaultNamespace_(_defaultNamespace)
         {}
 
-        virtual ~ResourceClass() {};
+        virtual ~ResourceClass() {
+            DENG2_FOR_EACH(FileTypes, i, fileTypes_)
+            {
+                delete *i;
+            }
+        }
 
         /// Return the symbolic name of this resource class.
         String const& name() const
@@ -97,18 +102,19 @@ namespace de
         /// Return the number of file types for this class of resource.
         int fileTypeCount() const
         {
-            return searchTypeOrder.count();
+            return fileTypes_.count();
         }
 
         /**
-         * Add a new file type to this resource class. Earlier types have priority.
+         * Add a new file type to the resource class. ResourceClass takes ownership.
+         * Earlier types have priority.
          *
          * @param ftype  File type to add.
          * @return  This instance.
          */
-        ResourceClass& addFileType(FileType* ftype)
+        ResourceClass& addFileType(FileType& ftype)
         {
-            searchTypeOrder.push_back(ftype);
+            fileTypes_.push_back(&ftype);
             return *this;
         }
 
@@ -117,9 +123,9 @@ namespace de
          *
          * @return  List of file types for this class of resource.
          */
-        Types const& fileTypes() const
+        FileTypes const& fileTypes() const
         {
-            return searchTypeOrder;
+            return fileTypes_;
         }
 
     private:
@@ -130,7 +136,7 @@ namespace de
         String defaultNamespace_;
 
         /// Recognized file types (in order of importance, left to right).
-        Types searchTypeOrder;
+        FileTypes fileTypes_;
     };
 
     /**

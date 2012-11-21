@@ -480,7 +480,7 @@ FS1::Namespace::SearchPaths const& FS1::Namespace::searchPaths() const
     return d->searchPaths;
 }
 
-int FS1::Namespace::findAll(String name, FileList& found)
+int FS1::Namespace::findAll(String name, FoundNodes& found)
 {
     int numFoundSoFar = found.count();
 

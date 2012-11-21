@@ -2402,7 +2402,7 @@ Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
+    dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, (isShinySkin? TN_MODELREFLECTIONSKINS_NAME : TN_MODELSKINS_NAME));
 
@@ -2439,7 +2439,7 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         AutoStr* path = Str_Appendf(AutoStr_NewStd(), "%s%s", mydir->path, skin);
         Uri* searchPath = Uri_NewWithPath2(Str_Text(path), RC_NULL);
 
-        found = F_Find2(RC_GRAPHIC, searchPath, foundPath);
+        found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
 
         Uri_Delete(searchPath);
         Dir_Delete(mydir);
@@ -2447,11 +2447,10 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
 
     if(!found)
     {
-        // Try the resource locator.
         AutoStr* path = Str_Appendf(AutoStr_NewStd(), "Models:%s", skin);
         Uri* searchPath = Uri_NewWithPath(Str_Text(path));
 
-        found = F_Find2(RC_GRAPHIC, searchPath, foundPath);
+        found = F_FindPath(RC_GRAPHIC, searchPath, foundPath);
 
         Uri_Delete(searchPath);
     }
@@ -2732,6 +2731,8 @@ Texture* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     int uniqueId;
     Uri* uri;
 
+    if(!def->detailTex || Uri_IsEmpty(def->detailTex)) return 0;
+
     // Have we already created one for this?
     tex = R_FindDetailTextureForResourcePath(def->detailTex);
     if(tex) return tex;
@@ -2743,7 +2744,7 @@ Texture* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
+    dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_DETAILS_NAME);
 
@@ -2788,7 +2789,7 @@ Texture* R_CreateLightMap(const Uri* resourcePath)
     int uniqueId;
     Uri* uri;
 
-    if(!resourcePath || Str_IsEmpty(Uri_Path(resourcePath)) || !Str_CompareIgnoreCase(Uri_Path(resourcePath), "-"))
+    if(!resourcePath || Uri_IsEmpty(resourcePath) || !Str_CompareIgnoreCase(Uri_Path(resourcePath), "-"))
         return NULL;
 
     // Have we already created one for this?
@@ -2802,7 +2803,7 @@ Texture* R_CreateLightMap(const Uri* resourcePath)
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
+    dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_LIGHTMAPS_NAME);
 
@@ -2852,7 +2853,7 @@ Texture* R_CreateFlareTexture(const Uri* resourcePath)
     int uniqueId;
     Uri* uri;
 
-    if(!resourcePath || Str_IsEmpty(Uri_Path(resourcePath)) || !Str_CompareIgnoreCase(Uri_Path(resourcePath), "-"))
+    if(!resourcePath || Uri_IsEmpty(resourcePath) || !Str_CompareIgnoreCase(Uri_Path(resourcePath), "-"))
         return NULL;
 
     // Perhaps a "built-in" flare texture id?
@@ -2872,7 +2873,7 @@ Texture* R_CreateFlareTexture(const Uri* resourcePath)
     }
 
     // Create a texture for it.
-    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
+    dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_FLAREMAPS_NAME);
 
@@ -2921,6 +2922,8 @@ Texture* R_CreateReflectionTexture(const Uri* resourcePath)
     int uniqueId;
     Uri* uri;
 
+    if(!resourcePath || Uri_IsEmpty(resourcePath)) return 0;
+
     // Have we already created one for this?
     tex = R_FindReflectionTextureForResourcePath(resourcePath);
     if(tex) return tex;
@@ -2932,7 +2935,7 @@ Texture* R_CreateReflectionTexture(const Uri* resourcePath)
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
+    dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_REFLECTIONS_NAME);
 
@@ -2983,6 +2986,8 @@ Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
     int uniqueId;
     Uri* uri;
 
+    if(!resourcePath || Uri_IsEmpty(resourcePath)) return 0;
+
     // Have we already created one for this?
     tex = R_FindMaskTextureForResourcePath(resourcePath);
     if(tex) return tex;
@@ -2994,7 +2999,7 @@ Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
+    dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_MASKS_NAME);
 

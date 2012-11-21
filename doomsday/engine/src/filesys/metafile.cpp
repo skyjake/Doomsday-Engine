@@ -167,7 +167,7 @@ MetaFile& MetaFile::locateFile()
         Uri path = Uri(*i, d->classId);
 
         // Attempt to resolve a path to the named resource.
-        if(!F_Find2(d->classId, reinterpret_cast<uri_s*>(&path), found)) continue;
+        if(!F_FindPath(d->classId, reinterpret_cast<uri_s*>(&path), found)) continue;
 
         // We've found *something*.
         String foundPath = String(Str_Text(found));

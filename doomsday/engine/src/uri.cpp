@@ -266,7 +266,7 @@ struct Uri::Instance
         // Attempt to guess the scheme by interpreting the path?
         if(defaultResourceClass == RC_UNKNOWN)
         {
-            defaultResourceClass = App_FileSystem()->guessFileTypeFromFileName(path).defaultClass();
+            defaultResourceClass = DD_GuessFileTypeFromFileName(path).defaultClass();
         }
 
         if(VALID_RESOURCECLASSID(defaultResourceClass))
@@ -399,9 +399,9 @@ Uri::Uri(Uri const& other) : LogEntry::Arg::Base()
     d->path            = other.path();
 }
 
-Uri Uri::fromNativePath(NativePath const& path)
+Uri Uri::fromNativePath(NativePath const& path, resourceclassid_t defaultResourceClass)
 {
-    return Uri(path.expand().withSeparators('/'), RC_NULL);
+    return Uri(path.expand().withSeparators('/'), defaultResourceClass);
 }
 
 Uri Uri::fromNativeDirPath(NativePath const& nativeDirPath, resourceclassid_t defaultResourceClass)

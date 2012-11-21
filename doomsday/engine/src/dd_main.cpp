@@ -54,12 +54,47 @@
 #include "ui/displaymode.h"
 #include "updater.h"
 #include "m_misc.h"
-#include "filesys/locator.h"
 
 extern int renderTextures;
 extern int monochrome;
 
 using namespace de;
+
+class ZipFileType : public de::NativeFileType
+{
+public:
+    ZipFileType() : NativeFileType("FT_ZIP", RC_PACKAGE)
+    {}
+
+    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
+    {
+        if(Zip::recognise(hndl))
+        {
+            LOG_AS("ZipFileType");
+            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            return new Zip(hndl, path, info);
+        }
+        return 0;
+    }
+};
+
+class WadFileType : public de::NativeFileType
+{
+public:
+    WadFileType() : NativeFileType("FT_WAD", RC_PACKAGE)
+    {}
+
+    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
+    {
+        if(Wad::recognise(hndl))
+        {
+            LOG_AS("WadFileType");
+            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            return new Wad(hndl, path, info);
+        }
+        return 0;
+    }
+};
 
 typedef struct ddvalue_s {
     int*            readPtr;
@@ -79,9 +114,9 @@ static void initPathMappings();
  *
  * @return  @c true iff the referenced file was loaded.
  */
-static bool tryLoadFile(String path, size_t baseOffset = 0, de::File1** file = 0);
+static bool tryLoadFile(de::Uri const& path, size_t baseOffset = 0, de::File1** file = 0);
 
-static bool tryUnloadFile(String path);
+static bool tryUnloadFile(de::Uri const& path);
 
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
 filename_t ddRuntimePath, ddBinPath;
@@ -96,8 +131,12 @@ char* startupFiles = "";
 // Id of the currently running title finale if playing, else zero.
 finaleid_t titleFinale;
 
-static NullResourceClass nullClass;
-static ResourceClasses classes;
+static NullFileType nullFileType;
+static NullResourceClass nullResourceClass;
+static ResourceClasses resourceClasses;
+
+/// A symbolic name => file type map.
+static FileTypes fileTypeMap;
 
 // List of session data files (specified via the command line or in a cfg, or
 // found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
@@ -148,47 +187,197 @@ D_CMD(ShowUpdateSettings)
 
 void DD_CreateResourceClasses()
 {
-    classes.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
-    classes.push_back(new ResourceClass("RC_DEFINITION",    "Defs"));
-    classes.push_back(new ResourceClass("RC_GRAPHIC",       "Graphics"));
-    classes.push_back(new ResourceClass("RC_MODEL",         "Models"));
-    classes.push_back(new ResourceClass("RC_SOUND",         "Sfx"));
-    classes.push_back(new ResourceClass("RC_MUSIC",         "Music"));
-    classes.push_back(new ResourceClass("RC_FONT",          "Fonts"));
+    resourceClasses.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
+    resourceClasses.push_back(new ResourceClass("RC_DEFINITION",    "Defs"));
+    resourceClasses.push_back(new ResourceClass("RC_GRAPHIC",       "Graphics"));
+    resourceClasses.push_back(new ResourceClass("RC_MODEL",         "Models"));
+    resourceClasses.push_back(new ResourceClass("RC_SOUND",         "Sfx"));
+    resourceClasses.push_back(new ResourceClass("RC_MUSIC",         "Music"));
+    resourceClasses.push_back(new ResourceClass("RC_FONT",          "Fonts"));
 }
 
 void DD_ClearResourceClasses()
 {
-    DENG2_FOR_EACH(ResourceClasses, i, classes)
+    DENG2_FOR_EACH(ResourceClasses, i, resourceClasses)
     {
         delete *i;
     }
-    classes.clear();
+    resourceClasses.clear();
 }
 
 ResourceClass& DD_ResourceClassByName(String name)
 {
     if(!name.isEmpty())
     {
-        DENG2_FOR_EACH_CONST(ResourceClasses, i, classes)
+        DENG2_FOR_EACH_CONST(ResourceClasses, i, resourceClasses)
         {
             ResourceClass& rclass = **i;
             if(!rclass.name().compareWithoutCase(name))
                 return rclass;
         }
     }
-    return nullClass; // Not found.
+    return nullResourceClass; // Not found.
 }
 
 ResourceClass& DD_ResourceClassById(resourceclassid_t id)
 {
-    if(id == RC_NULL) return nullClass;
+    if(id == RC_NULL) return nullResourceClass;
     if(!VALID_RESOURCECLASSID(id))
     {
         QByteArray msg = String("DD_ResourceClassById: Invalid id '%1'").arg(int(id)).toUtf8();
         LegacyCore_FatalError(msg.constData());
     }
-    return *classes[uint(id)];
+    return *resourceClasses[uint(id)];
+}
+
+void DD_CreateFileTypes()
+{
+    FileType* ftype;
+
+    /*
+     * Packages types:
+     */
+    ResourceClass& packageClass = DD_ResourceClassByName("RC_PACKAGE");
+
+    ftype = new ZipFileType();
+    ftype->addKnownExtension(".pk3");
+    ftype->addKnownExtension(".zip");
+    packageClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new WadFileType();
+    ftype->addKnownExtension(".wad");
+    packageClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new FileType("FT_LMP", RC_PACKAGE); ///< Treat lumps as packages so they are mapped to $App.DataPath.
+    ftype->addKnownExtension(".lmp");
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    /*
+     * Definition fileTypes:
+     */
+    ftype = new FileType("FT_DED", RC_DEFINITION);
+    ftype->addKnownExtension(".ded");
+    DD_ResourceClassByName("RC_DEFINITION").addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    /*
+     * Graphic fileTypes:
+     */
+    ResourceClass& graphicClass = DD_ResourceClassByName("RC_GRAPHIC");
+
+    ftype = new FileType("FT_PNG", RC_GRAPHIC);
+    ftype->addKnownExtension(".png");
+    graphicClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new FileType("FT_TGA", RC_GRAPHIC);
+    ftype->addKnownExtension(".tga");
+    graphicClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new FileType("FT_JPG", RC_GRAPHIC);
+    ftype->addKnownExtension(".jpg");
+    graphicClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new FileType("FT_PCX", RC_GRAPHIC);
+    ftype->addKnownExtension(".pcx");
+    graphicClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    /*
+     * Model fileTypes:
+     */
+    ResourceClass& modelClass = DD_ResourceClassByName("RC_MODEL");
+
+    ftype = new FileType("FT_DMD", RC_MODEL);
+    ftype->addKnownExtension(".dmd");
+    modelClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new FileType("FT_MD2", RC_MODEL);
+    ftype->addKnownExtension(".md2");
+    modelClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    /*
+     * Sound fileTypes:
+     */
+    ftype = new FileType("FT_WAV", RC_SOUND);
+    ftype->addKnownExtension(".wav");
+    DD_ResourceClassByName("RC_SOUND").addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    /*
+     * Music fileTypes:
+     */
+    ResourceClass& musicClass = DD_ResourceClassByName("RC_MUSIC");
+
+    ftype = new FileType("FT_OGG", RC_MUSIC);
+    ftype->addKnownExtension(".ogg");
+    musicClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new FileType("FT_MP3", RC_MUSIC);
+    ftype->addKnownExtension(".mp3");
+    musicClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new FileType("FT_MOD", RC_MUSIC);
+    ftype->addKnownExtension(".mod");
+    musicClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    ftype = new FileType("FT_MID", RC_MUSIC);
+    ftype->addKnownExtension(".mid");
+    musicClass.addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    /*
+     * Font fileTypes:
+     */
+    ftype = new FileType("FT_DFN", RC_FONT);
+    ftype->addKnownExtension(".dfn");
+    DD_ResourceClassByName("RC_FONT").addFileType(*ftype);
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+
+    /*
+     * Misc fileTypes:
+     */
+    ftype = new FileType("FT_DEH", RC_PACKAGE); ///< Treat DeHackEd patches as packages so they are mapped to $App.DataPath.
+    ftype->addKnownExtension(".deh");
+    fileTypeMap.insert(ftype->name().toLower(), ftype);
+}
+
+FileType& DD_FileTypeByName(String name)
+{
+    if(!name.isEmpty())
+    {
+        FileTypes::iterator found = fileTypeMap.find(name.toLower());
+        if(found != fileTypeMap.end()) return **found;
+    }
+    return nullFileType; // Not found.
+}
+
+FileType& DD_GuessFileTypeFromFileName(String path)
+{
+    if(!path.isEmpty())
+    {
+        DENG2_FOR_EACH_CONST(FileTypes, i, fileTypeMap)
+        {
+            FileType& ftype = **i;
+            if(ftype.fileNameIsKnown(path))
+                return ftype;
+        }
+    }
+    return nullFileType;
+}
+
+FileTypes const& DD_FileTypes()
+{
+    return fileTypeMap;
 }
 
 /**
@@ -253,7 +442,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        tryLoadFile(token);
+        tryLoadFile(de::Uri(token, RC_NULL));
         token = strtok(NULL, ATWSEPS);
     }
     free(buffer);
@@ -362,8 +551,7 @@ static int loadFilesFromDataGameAuto()
         // Ignore directories.
         if(i->attrib & A_SUBDIR) continue;
 
-        QByteArray foundPath = i->path.toUtf8();
-        if(tryLoadFile(foundPath.constData()))
+        if(tryLoadFile(de::Uri(i->path, RC_NULL)))
         {
             numLoaded += 1;
         }
@@ -422,12 +610,11 @@ static void loadResource(MetaFile& record)
 {
     DENG_ASSERT(record.resourceClass() == RC_PACKAGE);
 
-    QString const& path = record.resolvedPath(false/*do not locate resource*/);
+    de::Uri path = de::Uri(record.resolvedPath(false/*do not locate resource*/), RC_NULL);
     if(!path.isEmpty())
     {
-        QByteArray pathUtf8 = path.toUtf8();
         de::File1* file;
-        if(tryLoadFile(pathUtf8.constData(), 0/*base offset*/, &file))
+        if(tryLoadFile(path, 0/*base offset*/, &file))
         {
             // Mark this as an original game resource.
             file->setCustom(false);
@@ -529,8 +716,8 @@ static int addListFiles(ddstring_t*** list, size_t* listSize, FileType const& ft
     if(!list || !listSize) return 0;
     for(i = 0; i < *listSize; ++i)
     {
-        if(&ftype != &App_FileSystem()->guessFileTypeFromFileName(Str_Text((*list)[i]))) continue;
-        if(tryLoadFile(Str_Text((*list)[i])))
+        if(&ftype != &DD_GuessFileTypeFromFileName(Str_Text((*list)[i]))) continue;
+        if(tryLoadFile(de::Uri(Str_Text((*list)[i]), RC_NULL)))
         {
             count += 1;
         }
@@ -708,9 +895,9 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
         listFilesFromDataGameAuto(&sessionResourceFileList, &numSessionResourceFileList);
         if(numSessionResourceFileList > 0)
         {
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, App_FileSystem()->fileTypeByName("FT_ZIP"));
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, DD_FileTypeByName("FT_ZIP"));
 
-            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, App_FileSystem()->fileTypeByName("FT_WAD"));
+            addListFiles(&sessionResourceFileList, &numSessionResourceFileList, DD_FileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.
@@ -1390,6 +1577,7 @@ boolean DD_Init(void)
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
     DD_CreateResourceClasses();
+    DD_CreateFileTypes();
     F_Init();
 
     Fonts_Init();
@@ -1668,8 +1856,8 @@ static int DD_StartupWorker(void* parm)
     // Add required engine resource files.
     de::Uri searchPath = de::Uri("Packages:doomsday.pk3");
     AutoStr* foundPath = AutoStr_NewStd();
-    if(!F_Find2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
-       !tryLoadFile(Str_Text(foundPath)))
+    if(!F_FindPath(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath) ||
+       !tryLoadFile(de::Uri(Str_Text(foundPath), RC_NULL)))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
     }
@@ -2335,10 +2523,10 @@ D_CMD(Load)
     AutoStr* foundPath = AutoStr_NewStd();
     for(; arg < argc; ++arg)
     {
-        de::Uri searchPath = de::Uri(NativePath(argv[arg]).expand().withSeparators('/'), RC_PACKAGE);
-        if(!F_Find3(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
+        de::Uri searchPath = de::Uri::fromNativePath(argv[arg], RC_PACKAGE);
+        if(!F_FindPath2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath, RLF_MATCH_EXTENSION)) continue;
 
-        if(tryLoadFile(Str_Text(foundPath)))
+        if(tryLoadFile(de::Uri(Str_Text(foundPath), RC_NULL)))
         {
             didLoadResource = true;
         }
@@ -2351,11 +2539,11 @@ D_CMD(Load)
     return (didLoadGame || didLoadResource);
 }
 
-static bool tryLoadFile(String path, size_t baseOffset, de::File1** file)
+static bool tryLoadFile(de::Uri const& path, size_t baseOffset, de::File1** file)
 {
     try
     {
-        de::FileHandle& hndl = App_FileSystem()->openFile(path, "rb", baseOffset, false /* no duplicates */);
+        de::FileHandle& hndl = App_FileSystem()->openFile(path.compose(), "rb", baseOffset, false /* no duplicates */);
 
         de::Uri uri = hndl.file().composeUri();
         QByteArray pathUtf8 = NativePath(uri.asText()).pretty().toUtf8();
@@ -2370,7 +2558,7 @@ static bool tryLoadFile(String path, size_t baseOffset, de::File1** file)
         if(App_FileSystem()->accessFile(path))
         {
             // Must already be loaded.
-            QByteArray pathUtf8 = NativePath(path).pretty().toUtf8();
+            QByteArray pathUtf8 = NativePath(path.asText()).pretty().toUtf8();
             Con_Message("\"%s\" already loaded.\n", pathUtf8.constData());
         }
     }
@@ -2378,7 +2566,7 @@ static bool tryLoadFile(String path, size_t baseOffset, de::File1** file)
     return false;
 }
 
-static bool tryUnloadFile(String path)
+static bool tryUnloadFile(de::Uri const& path)
 {
     try
     {
@@ -2467,9 +2655,9 @@ D_CMD(Unload)
     for(i = 1; i < argc; ++i)
     {
         de::Uri searchPath = de::Uri(NativePath(argv[1]).expand().withSeparators('/'), RC_PACKAGE);
-        if(!F_Find2(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
+        if(!F_FindPath(RC_PACKAGE, reinterpret_cast<uri_s*>(&searchPath), foundPath)) continue;
 
-        if(tryUnloadFile(Str_Text(foundPath)))
+        if(tryUnloadFile(de::Uri(Str_Text(foundPath), RC_NULL)))
         {
             didUnloadFiles = true;
         }

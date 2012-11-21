@@ -183,8 +183,10 @@ public:
      * (because file paths do not include one).
      *
      * @param path  Native path to a file in the native file system.
+     * @param defaultResourceClass  Default resource class.
      */
-    static Uri fromNativePath(NativePath const& path);
+    static Uri fromNativePath(NativePath const& path,
+                              resourceclassid_t defaultResourceClass = RC_NULL);
 
     /**
      * Constructs a Uri instance from a NativePath that refers to a native

@@ -940,7 +940,7 @@ static bool applyGamePathMappings(String& path)
         path.remove(0, 1);
         if(path.at(0) == '/') path.remove(0, 1);
 
-        path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
+        path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto") / path;
         return true;
     }
 
@@ -962,7 +962,7 @@ static bool applyGamePathMappings(String& path)
             }
         }
 
-        path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
+        path = String("$(App.DataPath)/$(GamePlugin.Name)/auto") / path;
         return true;
     }
 
@@ -970,18 +970,18 @@ static bool applyGamePathMappings(String& path)
     if(!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        FileType const& ftype = App_FileSystem()->guessFileTypeFromFileName(path.fileName());
+        FileType const& ftype = DD_GuessFileTypeFromFileName(path.fileName());
 
         switch(ftype.defaultClass())
         {
         case RC_PACKAGE:
             // Mapped to the Data directory.
-            path = String("$(App.DataPath)/$(GamePlugin.Name)/auto/") / path;
+            path = String("$(App.DataPath)/$(GamePlugin.Name)/auto") / path;
             return true;
 
         case RC_DEFINITION:
             // Mapped to the Defs directory?
-            path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto/") / path;
+            path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto") / path;
             return true;
 
         default:

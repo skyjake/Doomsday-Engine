@@ -125,8 +125,8 @@ namespace de
             /// Groups of search paths ordered by priority.
             typedef QMultiMap<PathGroup, SearchPath> SearchPaths;
 
-            /// List of found files.
-            typedef QList<PathTree::Node*> FileList;
+            /// List of found file nodes.
+            typedef QList<PathTree::Node*> FoundNodes;
 
         public:
             explicit Namespace(String symbolicName, Flags flags = 0);
@@ -179,7 +179,7 @@ namespace de
              *
              * @return  Number of found resources.
              */
-            int findAll(String name, FileList& found);
+            int findAll(String name, FoundNodes& found);
 
             /**
              * Add a new search path to this namespace. Newer paths have priority
@@ -234,11 +234,8 @@ namespace de
             Instance* d;
         };
 
-        /// Types of interpretable file which the file system organizes.
-        typedef QList<FileType*> FileTypes;
-
         /// Namespaces within the file system.
-        typedef QList<Namespace*> Namespaces;
+        typedef QMap<String, Namespace*> Namespaces;
 
         /**
          * PathListItem represents a found path for find file search results.
@@ -300,25 +297,6 @@ namespace de
         Namespaces const& namespaces();
 
         /**
-         * Lookup a FileType by symbolic name.
-         *
-         * @param name  Symbolic name of the type.
-         * @return  FileType associated with @a name. May return a null-object.
-         */
-        FileType& fileTypeByName(de::String name);
-
-        /**
-         * Attempts to determine which "type" should be attributed to a resource, solely
-         * by examining the name (e.g., a file name/path).
-         *
-         * @return  Type determined for this resource. May return a null-object.
-         */
-        FileType& guessFileTypeFromFileName(de::String name);
-
-        /// Returns the registered file types for efficient traversal.
-        FileTypes const& fileTypes();
-
-        /**
          * @post No more WADs will be loaded in startup mode.
          */
         void endStartup();
@@ -360,12 +338,12 @@ namespace de
          * @return  @c true if the given file can be opened, or
          *          @c false if it has already been opened.
          */
-        bool checkFileId(String path);
+        bool checkFileId(Uri const& path);
 
         /**
          * @return  @c true if a file exists at @a path which can be opened for reading.
          */
-        bool accessFile(String path);
+        bool accessFile(Uri const& path);
 
         /**
          * Indexes @a file (which must have been opened with this file system) into
@@ -453,25 +431,17 @@ namespace de
         /**
          * Find a single file.
          *
-         * @throws NotFoundError If the requested file could not be found.
-         */
-        File1& find(String path);
-
-        /**
-         * Find a single file within the specified namespace.
-         *
-         * @param path          Path to search on.
-         * @param fnamespace    Namespace to be searched.
-         * @return  The found file.
+         * @param search  The search term.
+         * @return Found file.
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        PathTree::Node& find(Uri const& path, Namespace& fnamespace);
+        File1& find(Uri const& search);
 
         /**
          * Finds all files.
          *
-         * @param found         Set of files that match the result.
+         * @param found  Set of files that match the result.
          *
          * @return  Number of files found.
          */
@@ -518,6 +488,29 @@ namespace de
             }
             return found.count();
         }
+
+        /**
+         * Search the file system for a path to a file.
+         *
+         * @param search        The search term. If a scheme is specified, first check
+         *                      for a similarly named namespace with which to limit the
+         *                      search. If not found within the namespace then perform
+         *                      a wider search of the whole file system.
+         * @param flags         @ref resourceLocationFlags
+         * @param rclass        Class of resource being searched for. If no file is found
+         *                      which matches the search term and a non-null resource class
+         *                      is specified try alternative names for the file according
+         *                      to the list of known file extensions for each file type
+         *                      associated with this class of resource.
+         *
+         * @return  The found path.
+         *
+         * @throws NotFoundError If the requested file could not be found.
+         *
+         * @todo Fold into @ref find() -ds
+         */
+        String findPath(Uri const& search, int flags, ResourceClass& rclass);
+        String findPath(Uri const& search, int flags);
 
         /**
          * Finds all paths which match the search criteria. Will search the Zip
@@ -676,6 +669,47 @@ lumpnum_t F_OpenAuxiliary2(char const* nativePath, size_t baseOffset);
 lumpnum_t F_OpenAuxiliary(char const* nativePath/*, baseOffset = 0 */);
 
 void F_CloseAuxiliary(void);
+
+/**
+ * @defgroup resourceLocationFlags  Resource Location Flags
+ *
+ * Flags used with the F_Find family of functions which dictate the
+ * logic used during resource location.
+ * @ingroup flags
+ */
+///@{
+#define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have it too.
+
+/// Default flags.
+#define RLF_DEFAULT             0
+///@}
+
+/**
+ * Attempt to locate a named resource.
+ *
+ * @param classId        Class of resource being searched for (if known).
+ *
+ * @param searchPath    Path/name of the resource being searched for. Note that
+ *                      the resource class (@a classId) specified significantly
+ *                      alters search behavior. This allows text replacements of
+ *                      symbolic escape sequences in the path, allowing access to
+ *                      the engine's view of the virtual file system.
+ *
+ * @param foundPath     If found, the fully qualified path is written back here.
+ *
+ * @param flags         @ref resourceLocationFlags
+ *
+ * @return  @c true iff a resource was found.
+ */
+boolean F_FindPath2(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags);
+boolean F_FindPath(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+
+/**
+ * @return  If a resource is found, the index + 1 of the path from @a searchPaths
+ *          that was used to find it; otherwise @c 0.
+ */
+uint F_FindPathInList(resourceclassid_t classId, char const* searchPaths,
+    ddstring_t* foundPath, int flags);
 
 #ifdef __cplusplus
 } // extern "C"
