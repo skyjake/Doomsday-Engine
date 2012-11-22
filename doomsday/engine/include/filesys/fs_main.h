@@ -77,6 +77,9 @@ namespace de
         /// No files found. @ingroup errors
         DENG2_ERROR(NotFoundError);
 
+        /// An unknown scheme was referenced. @ingroup errors
+        DENG2_ERROR(UnknownSchemeError);
+
         /**
          * (Search) path groupings in descending priority.
          */
@@ -277,6 +280,11 @@ namespace de
         void endStartup();
 
         /**
+         * Returns @c true iff a Scheme exists with the symbolic @a name.
+         */
+        bool knownScheme(String name);
+
+        /**
          * @param name      Unique symbolic name of the new scheme. Must be at least
          *                  @c Scheme::min_name_length characters long.
          * @param flags     @ref Scheme::Flag
@@ -284,12 +292,12 @@ namespace de
         Scheme& createScheme(String name, Scheme::Flags flags = 0);
 
         /**
-         * Lookup a Scheme by symbolic name.
+         * Find a Scheme by symbolic name.
          *
          * @param name  Symbolic name of the scheme.
-         * @return  Scheme associated with @a name; otherwise @c 0 (not found).
+         * @return  Scheme associated with @a name.
          */
-        Scheme* schemeByName(String name);
+        Scheme& scheme(String name);
 
         /**
          * Reset all the schemes, returning their indexes to an empty state and clearing
@@ -297,12 +305,12 @@ namespace de
          */
         inline void resetAllSchemes()
         {
-            Schemes allSchemes = schemes();
-            DENG2_FOR_EACH(Schemes, i, allSchemes){ (*i)->reset(); }
+            Schemes schemes = allSchemes();
+            DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->reset(); }
         }
 
         /// Returns the schemes for efficient traversal.
-        Schemes const& schemes();
+        Schemes const& allSchemes();
 
         /**
          * Add a new path mapping from source to destination.
