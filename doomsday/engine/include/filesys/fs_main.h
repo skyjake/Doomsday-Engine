@@ -141,6 +141,12 @@ namespace de
             String const& name() const;
 
             /**
+             * Clear this scheme back to it's "empty" state (i.e., no resources).
+             * The search path groups are unaffected.
+             */
+            void clear();
+
+            /**
              * Rebuild this scheme by re-scanning for resources on all search paths
              * and re-populating the scheme's index.
              *
@@ -149,16 +155,11 @@ namespace de
             void rebuild();
 
             /**
-             * Clear this scheme back to it's "empty" state (i.e., no resources).
-             * The search path groups are unaffected.
-             */
-            void clear();
-
-            /**
              * Reset this scheme, returning it to an empty state and clearing any
              * @ref ExtraPaths which have been registered since its construction.
              */
-            inline void reset() {
+            inline void reset()
+            {
                 clearSearchPathGroup(ExtraPaths);
                 clear();
             }
@@ -195,11 +196,6 @@ namespace de
             bool addSearchPath(SearchPath const& path, PathGroup group = DefaultPaths);
 
             /**
-             * Clear all search paths in all groups in the scheme.
-             */
-            void clearAllSearchPaths();
-
-            /**
              * Clear search paths in @a group from the scheme.
              *
              * @param group  Search path group to be cleared.
@@ -209,7 +205,12 @@ namespace de
             /**
              * Provides access to the search paths for efficient traversals.
              */
-            SearchPaths const& searchPaths() const;
+            SearchPaths const& allSearchPaths() const;
+
+            /**
+             * Clear all search paths in all groups in the scheme.
+             */
+            void clearAllSearchPaths();
 
             /**
              * Apply mapping for this scheme to the specified path. Mapping must be
@@ -280,9 +281,12 @@ namespace de
         void endStartup();
 
         /**
-         * Returns @c true iff a Scheme exists with the symbolic @a name.
+         * Find a Scheme by symbolic name.
+         *
+         * @param name  Symbolic name of the scheme.
+         * @return  Scheme associated with @a name.
          */
-        bool knownScheme(String name);
+        Scheme& scheme(String name);
 
         /**
          * @param name      Unique symbolic name of the new scheme. Must be at least
@@ -292,12 +296,14 @@ namespace de
         Scheme& createScheme(String name, Scheme::Flags flags = 0);
 
         /**
-         * Find a Scheme by symbolic name.
-         *
-         * @param name  Symbolic name of the scheme.
-         * @return  Scheme associated with @a name.
+         * Returns @c true iff a Scheme exists with the symbolic @a name.
          */
-        Scheme& scheme(String name);
+        bool knownScheme(String name);
+
+        /**
+         * Returns the schemes for efficient traversal.
+         */
+        Schemes const& allSchemes();
 
         /**
          * Reset all the schemes, returning their indexes to an empty state and clearing
@@ -308,9 +314,6 @@ namespace de
             Schemes schemes = allSchemes();
             DENG2_FOR_EACH(Schemes, i, schemes){ (*i)->reset(); }
         }
-
-        /// Returns the schemes for efficient traversal.
-        Schemes const& allSchemes();
 
         /**
          * Add a new path mapping from source to destination.

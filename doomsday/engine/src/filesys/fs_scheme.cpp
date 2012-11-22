@@ -475,7 +475,7 @@ void FS1::Scheme::clearAllSearchPaths()
     d->searchPaths.clear();
 }
 
-FS1::Scheme::SearchPaths const& FS1::Scheme::searchPaths() const
+FS1::Scheme::SearchPaths const& FS1::Scheme::allSearchPaths() const
 {
     return d->searchPaths;
 }
