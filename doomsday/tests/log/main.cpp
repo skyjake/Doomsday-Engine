@@ -40,9 +40,9 @@ int main(int argc, char** argv)
             for(int k = 0; k < Log::MAX_LOG_LEVELS; ++k)
             {
                 Log::LogLevel other = Log::LogLevel(k);
-                LOG().enter(other, "- entry at level %s (currently enabled %s): visible: %b")
-                        << Log::levelToText(other)
+                LOG().enter(other, "- (currently enabled %8s) entry at level %8s: visible: %b")
                         << Log::levelToText(level)
+                        << Log::levelToText(other)
                         << LogBuffer::appBuffer().isEnabled(other);
             }
         }

@@ -24,8 +24,6 @@
 #include "../File"
 
 #include <QObject>
-#include <QTimer>
-#include <QList>
 
 namespace de {
 
@@ -103,9 +101,7 @@ public:
      */
     void disable() { enable(Log::MAX_LOG_LEVELS); }
 
-    bool isEnabled(Log::LogLevel overLevel = Log::MESSAGE) const {
-        return _enabledOverLevel <= overLevel;
-    }
+    bool isEnabled(Log::LogLevel overLevel = Log::MESSAGE) const;
 
     /**
      * Enables or disables standard output of log messages. When enabled,
@@ -114,9 +110,7 @@ public:
      *
      * @param yes  @c true or @c false.
      */
-    void enableStandardOutput(bool yes = true) {
-        _standardOutput = yes;
-    }
+    void enableStandardOutput(bool yes = true);
 
     /**
      * Sets the path of the file used for writing log entries to.
@@ -146,16 +140,8 @@ public slots:
     void flush();
 
 private:
-    typedef QList<LogEntry*> EntryList;
-
-    dint _enabledOverLevel;
-    dint _maxEntryCount;
-    bool _standardOutput;
-    File* _outputFile;
-    EntryList _entries;
-    EntryList _toBeFlushed;
-    Time _lastFlushedAt;
-    QTimer* _autoFlushTimer;
+    struct Instance;
+    Instance* d;
 
     /// The globally available application buffer.
     static LogBuffer* _appBuffer;

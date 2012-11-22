@@ -26,119 +26,13 @@
 #include <stdio.h>
 #include <QTextStream>
 #include <QCoreApplication>
+#include <QList>
 #include <QTimer>
 #include <QDebug>
 
-using namespace de;
+namespace de {
 
-const Time::Delta FLUSH_INTERVAL = .2;
-
-LogBuffer* LogBuffer::_appBuffer = 0;
-
-LogBuffer::LogBuffer(duint maxEntryCount) 
-    : _enabledOverLevel(Log::MESSAGE), 
-      _maxEntryCount(maxEntryCount),
-      _standardOutput(true),
-      _outputFile(0),
-      _autoFlushTimer(0)
-{
-    _autoFlushTimer = new QTimer(this);
-    connect(_autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
-
-#ifdef WIN32
-    _standardOutput = false;
-#endif
-}
-
-LogBuffer::~LogBuffer()
-{
-    setOutputFile("");
-    clear();
-}
-
-void LogBuffer::clear()
-{
-    DENG2_GUARD(this);
-
-    // Flush first, we don't want to miss any messages.
-    flush();
-
-    DENG2_FOR_EACH(EntryList, i, _entries)
-    {
-        delete *i;
-    }
-    _entries.clear();
-}
-
-dsize LogBuffer::size() const
-{
-    DENG2_GUARD(this);
-    return _entries.size();
-}
-
-void LogBuffer::latestEntries(Entries& entries, int count) const
-{
-    DENG2_GUARD(this);
-    entries.clear();
-    for(int i = _entries.size() - 1; i >= 0; --i)
-    {
-        entries.append(_entries[i]);
-        if(count && entries.size() >= count)
-        {
-            return;
-        }
-    }
-}
-
-void LogBuffer::setMaxEntryCount(duint maxEntryCount)
-{
-    _maxEntryCount = maxEntryCount;
-}
-
-void LogBuffer::add(LogEntry* entry)
-{       
-    DENG2_GUARD(this);
-
-    // We will not flush the new entry as it likely has not yet been given
-    // all its arguments.
-    if(_lastFlushedAt.since() > FLUSH_INTERVAL)
-    {
-        flush();
-    }
-
-    _entries.push_back(entry);
-    _toBeFlushed.push_back(entry);
-
-    // Should we start autoflush?
-    if(!_autoFlushTimer->isActive() && qApp)
-    {
-        // Every now and then the buffer will be flushed.
-        _autoFlushTimer->start(FLUSH_INTERVAL * 1000);
-    }
-}
-
-void LogBuffer::enable(Log::LogLevel overLevel)
-{
-    _enabledOverLevel = overLevel;
-}
-
-void LogBuffer::setOutputFile(const String& path)
-{
-    flush();
-
-    if(_outputFile)
-    {
-        _outputFile->audienceForDeletion -= this;
-        _outputFile = 0;
-    }
-
-    if(!path.isEmpty())
-    {
-        _outputFile = &App::rootFolder().replaceFile(path);
-        _outputFile->setMode(File::Write);
-        _outputFile->audienceForDeletion += this;
-    }
-}
+const Time::Delta FLUSH_INTERVAL = .2; // seconds
 
 /**
  * @internal
@@ -152,7 +46,7 @@ public:
     virtual IOutputStream& operator << (const QString& text) = 0;
 };
 
-/// Stream that outputs to a de::File.
+/// @internal Stream that outputs to a de::File.
 class FileOutputStream : public IOutputStream
 {
 public:
@@ -168,7 +62,7 @@ private:
     File* _file;
 };
 
-/// Stream that outputs to a QTextStream.
+/// @internal Stream that outputs to a QTextStream.
 class TextOutputStream : public IOutputStream
 {
 public:
@@ -189,7 +83,7 @@ private:
     QTextStream* _ts;
 };
 
-/// Stream that outputs to QDebug.
+/// @internal Stream that outputs to QDebug.
 class DebugOutputStream : public IOutputStream
 {
 public:
@@ -209,16 +103,153 @@ private:
     QDebug* _qs;
 };
 
+struct LogBuffer::Instance
+{
+    typedef QList<LogEntry*> EntryList;
+
+    dint enabledOverLevel;
+    dint maxEntryCount;
+    bool standardOutput;
+    File* outputFile;
+    EntryList entries;
+    EntryList toBeFlushed;
+    Time lastFlushedAt;
+    QTimer* autoFlushTimer;
+
+    Instance(duint maxEntryCount)
+        : enabledOverLevel(Log::MESSAGE),
+          maxEntryCount(maxEntryCount),
+          standardOutput(true),
+          outputFile(0),
+          autoFlushTimer(0)
+    {}
+};
+
+LogBuffer* LogBuffer::_appBuffer = 0;
+
+LogBuffer::LogBuffer(duint maxEntryCount) 
+    : d(new Instance(maxEntryCount))
+{
+    d->autoFlushTimer = new QTimer(this);
+    connect(d->autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
+
+#ifdef WIN32
+    d->standardOutput = false;
+#endif
+}
+
+LogBuffer::~LogBuffer()
+{
+    setOutputFile("");
+    clear();
+
+    delete d;
+}
+
+void LogBuffer::clear()
+{
+    DENG2_GUARD(this);
+
+    // Flush first, we don't want to miss any messages.
+    flush();
+
+    DENG2_FOR_EACH(Instance::EntryList, i, d->entries)
+    {
+        delete *i;
+    }
+    d->entries.clear();
+}
+
+dsize LogBuffer::size() const
+{
+    DENG2_GUARD(this);
+    return d->entries.size();
+}
+
+void LogBuffer::latestEntries(Entries& entries, int count) const
+{
+    DENG2_GUARD(this);
+    entries.clear();
+    for(int i = d->entries.size() - 1; i >= 0; --i)
+    {
+        entries.append(d->entries[i]);
+        if(count && entries.size() >= count)
+        {
+            return;
+        }
+    }
+}
+
+void LogBuffer::setMaxEntryCount(duint maxEntryCount)
+{
+    d->maxEntryCount = maxEntryCount;
+}
+
+void LogBuffer::add(LogEntry* entry)
+{       
+    DENG2_GUARD(this);
+
+    // We will not flush the new entry as it likely has not yet been given
+    // all its arguments.
+    if(d->lastFlushedAt.since() > FLUSH_INTERVAL)
+    {
+        flush();
+    }
+
+    d->entries.push_back(entry);
+    d->toBeFlushed.push_back(entry);
+
+    // Should we start autoflush?
+    if(!d->autoFlushTimer->isActive() && qApp)
+    {
+        // Every now and then the buffer will be flushed.
+        d->autoFlushTimer->start(FLUSH_INTERVAL * 1000);
+    }
+}
+
+void LogBuffer::enable(Log::LogLevel overLevel)
+{
+    d->enabledOverLevel = overLevel;
+}
+
+bool LogBuffer::isEnabled(Log::LogLevel overLevel) const
+{
+    return d->enabledOverLevel <= overLevel;
+}
+
+void LogBuffer::enableStandardOutput(bool yes)
+{
+    d->standardOutput = yes;
+}
+
+void LogBuffer::setOutputFile(const String& path)
+{
+    flush();
+
+    if(d->outputFile)
+    {
+        d->outputFile->audienceForDeletion -= this;
+        d->outputFile = 0;
+    }
+
+    if(!path.isEmpty())
+    {
+        d->outputFile = &App::rootFolder().replaceFile(path);
+        d->outputFile->setMode(File::Write);
+        d->outputFile->audienceForDeletion += this;
+    }
+}
+
 void LogBuffer::flush()
 {
     DENG2_GUARD(this);
 
-    if(!_toBeFlushed.isEmpty())
+    if(!d->toBeFlushed.isEmpty())
     {
-        FileOutputStream fs(_outputFile? _outputFile : 0);
+        FileOutputStream fs(d->outputFile? d->outputFile : 0);
 #ifndef WIN32
-        TextOutputStream outs(_standardOutput? new QTextStream(stdout) : 0);
-        TextOutputStream errs(_standardOutput? new QTextStream(stderr) : 0);
+        TextOutputStream outs(d->standardOutput? new QTextStream(stdout) : 0);
+        TextOutputStream errs(d->standardOutput? new QTextStream(stderr) : 0);
 #else
         DebugOutputStream outs(QtDebugMsg);
         DebugOutputStream errs(QtWarningMsg);
@@ -232,7 +263,7 @@ void LogBuffer::flush()
             const duint MAX_LENGTH = 89;
 #endif
 
-            DENG2_FOR_EACH(EntryList, i, _toBeFlushed)
+            DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
             {
                 // Error messages will go to stderr instead of stdout.
                 QList<IOutputStream*> os;
@@ -363,29 +394,29 @@ void LogBuffer::flush()
             }
         }
 
-        _toBeFlushed.clear();
+        d->toBeFlushed.clear();
 
         // Make sure it really gets written now.
         fs.flush();
     }
 
-    _lastFlushedAt = Time();
+    d->lastFlushedAt = Time();
 
     // Too many entries? Now they can be destroyed since we have flushed everything.
-    while(_entries.size() > _maxEntryCount)
+    while(d->entries.size() > d->maxEntryCount)
     {
-        LogEntry* old = _entries.front();
-        _entries.pop_front();
+        LogEntry* old = d->entries.front();
+        d->entries.pop_front();
         delete old;
     }
 }
 
 void LogBuffer::fileBeingDeleted(const File& file)
 {
-    DENG2_ASSERT(_outputFile == &file);
+    DENG2_ASSERT(d->outputFile == &file);
     DENG2_UNUSED(file);
     flush();
-    _outputFile = 0;
+    d->outputFile = 0;
 }
 
 void LogBuffer::setAppBuffer(LogBuffer &appBuffer)
@@ -398,3 +429,5 @@ LogBuffer& LogBuffer::appBuffer()
     DENG2_ASSERT(_appBuffer != 0);
     return *_appBuffer;
 }
+
+} // namespace de
