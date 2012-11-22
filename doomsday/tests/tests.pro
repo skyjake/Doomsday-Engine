@@ -7,6 +7,7 @@ TEMPLATE = subdirs
 
 deng_tests: SUBDIRS += \
     archive \
+    log \
     record \
     script \
     stringpool \
