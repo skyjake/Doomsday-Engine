@@ -149,6 +149,7 @@ void DD_CreateResourceClasses();
 void DD_ClearResourceClasses();
 
 #ifdef __cplusplus
+} // extern "C"
 
 namespace de {
 
@@ -174,6 +175,7 @@ de::ResourceClass& DD_ResourceClassById(resourceclassid_t classId);
  */
 de::ResourceClass& DD_ResourceClassByName(de::String name);
 
+extern "C" {
 #endif // __cplusplus
 
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
