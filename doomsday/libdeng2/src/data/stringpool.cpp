@@ -393,7 +393,9 @@ const String& StringPool::stringRef(StringPool::Id id) const
     if(id == 0)
     {
         /// @throws InvalidIdError Provided identifier is not in use.
-        throw InvalidIdError("StringPool::stringRef", "Invalid identifier");
+        //throw InvalidIdError("StringPool::stringRef", "Invalid identifier");
+        static String emptyString;
+        return emptyString;
     }
 
     InternalId const internalId = IMPORT_ID(id);
