@@ -56,10 +56,14 @@ struct ArchiveFeed::Instance
         // Open the archive.
         if(bytes)
         {
+            LOG_TRACE("Source %s is a byte array") << f.name();
+
             arch = new Archive(*bytes);
         }
         else
         {
+            LOG_TRACE("Source %s is a stream") << f.name();
+
             // The file is just a stream, so we can't rely on the file
             // acting as the physical storage location for Archive.
             f >> serializedArchive;
