@@ -397,7 +397,7 @@ static void createPackagesNamespace()
     if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
     {
         NativePath path = de::App::app().commandLine().startupPath() / fn;
-        fnamespace.addSearchPath(FS1::DefaultPaths, SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+        fnamespace.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
     }
 #endif
