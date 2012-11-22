@@ -18,7 +18,7 @@
  */
 
 #include <de/App>
-#include <de/Archive>
+#include <de/ZipArchive>
 #include <de/Block>
 #include <de/Date>
 #include <de/FixedByteArray>
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         // makes a plain file.
         File& zip2 = app.homeFolder().replaceFile("test2.zip");
         zip2.setMode(File::Write | File::Truncate);
-        Archive arch;
+        ZipArchive arch;
         arch.add("world.txt", content.toUtf8());
         Writer(zip2) << arch;
         LOG_MSG("Wrote ") << zip2.path();

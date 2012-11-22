@@ -17,6 +17,7 @@ HEADERS += \
     include/de/IBlock \
     include/de/IByteArray \
     include/de/IIOStream \
+    include/de/IIStream \
     include/de/IOStream \
     include/de/IReadable \
     include/de/ISerializable \
@@ -40,6 +41,7 @@ HEADERS += \
     include/de/WaitableFIFO \
     include/de/Writer \
     include/de/Zeroed \
+    include/de/ZipArchive \
     include/de/data/accessorvalue.h \
     include/de/data/archive.h \
     include/de/data/arrayvalue.h \
@@ -57,8 +59,9 @@ HEADERS += \
     include/de/data/iblock.h \
     include/de/data/ibytearray.h \
     include/de/data/iiostream.h \
-    include/de/data/iostream.h \
+    include/de/data/iistream.h \
     include/de/data/info.h \
+    include/de/data/iostream.h \
     include/de/data/ireadable.h \
     include/de/data/iserializable.h \
     include/de/data/iwritable.h \
@@ -80,7 +83,7 @@ HEADERS += \
     include/de/data/waitablefifo.h \
     include/de/data/writer.h \
     include/de/data/zeroed.h \
-    include/de/data/iistream.h
+    include/de/data/ziparchive.h
 
 SOURCES += \
     src/data/accessorvalue.cpp \
@@ -112,4 +115,5 @@ SOURCES += \
     src/data/value.cpp \
     src/data/variable.cpp \
     src/data/waitable.cpp \
-    src/data/writer.cpp
+    src/data/writer.cpp \
+    src/data/ziparchive.cpp

@@ -21,7 +21,7 @@
 #include "de/LibraryFile"
 #include "de/DirectoryFeed"
 #include "de/ArchiveFeed"
-#include "de/Archive"
+#include "de/ZipArchive"
 #include "de/Log"
 
 using namespace de;
@@ -93,7 +93,7 @@ File* FS::interpret(File* sourceData)
             // It is a shared library intended for Doomsday.
             return new LibraryFile(sourceData);
         }
-        if(Archive::recognize(*sourceData))
+        if(ZipArchive::recognize(*sourceData))
         {
             try
             {

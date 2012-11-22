@@ -20,7 +20,7 @@
 #include "de/ArchiveFeed"
 #include "de/ArchiveFile"
 #include "de/ByteArrayFile"
-#include "de/Archive"
+#include "de/ZipArchive"
 #include "de/Writer"
 #include "de/Folder"
 #include "de/FS"
@@ -58,7 +58,7 @@ struct ArchiveFeed::Instance
         {
             LOG_TRACE("Source %s is a byte array") << f.name();
 
-            arch = new Archive(*bytes);
+            arch = new ZipArchive(*bytes);
         }
         else
         {
@@ -67,7 +67,7 @@ struct ArchiveFeed::Instance
             // The file is just a stream, so we can't rely on the file
             // acting as the physical storage location for Archive.
             f >> serializedArchive;
-            arch = new Archive(serializedArchive);
+            arch = new ZipArchive(serializedArchive);
         }
     }
 
@@ -79,7 +79,7 @@ struct ArchiveFeed::Instance
     {
         if(arch)
         {
-            // If modified, the archive is written.
+            // If modified, the archive is written back to the file.
             if(arch->modified())
             {
                 LOG_MSG("Updating archive in ") << file.name();
@@ -110,12 +110,10 @@ struct ArchiveFeed::Instance
 
     void populate(Folder& folder)
     {
-        Archive::Names names;
-
         // Get a list of the files in this directory.
-        archive().listFiles(names, basePath);
+        Archive::Names names = archive().listFiles(basePath);
 
-        for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
+        DENG2_FOR_EACH(Archive::Names, i, names)
         {
             if(folder.has(*i))
             {
@@ -141,7 +139,7 @@ struct ArchiveFeed::Instance
         }
 
         // Also populate subfolders.
-        archive().listFolders(names, basePath);
+        names = archive().listFolders(basePath);
 
         for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
         {
