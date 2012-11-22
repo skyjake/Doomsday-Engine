@@ -28,7 +28,7 @@ using namespace de;
 Transmitter::~Transmitter()
 {}
 
-Transmitter& Transmitter::operator << (const IByteArray& data)
+IOStream& Transmitter::operator << (const IByteArray& data)
 {
     send(data);
     return *this;

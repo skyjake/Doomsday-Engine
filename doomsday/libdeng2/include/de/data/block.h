@@ -27,8 +27,10 @@
 
 namespace de {
 
+class IIStream;
+
 /**
- * Simple data buffer that implements the byte array interface.
+ * Data buffer that implements the byte array interface.
  *
  * @ingroup data
  */
@@ -39,6 +41,24 @@ public:
     Block(const IByteArray& array);
     Block(const Block& other);
     Block(const QByteArray& byteArray);
+
+    /**
+     * Constructs a block by reading the contents of an input stream. The block
+     * will contain all the data that is available immediately; will not wait
+     * for additional data to become available later.
+     *
+     * @param stream  Stream to read from.
+     */
+    Block(IIStream& stream);
+
+    /**
+     * Constructs a block by reading the contents of an input stream in const
+     * mode. The block will contain all the data that is available immediately;
+     * will not wait for additional data to become available later.
+     *
+     * @param stream  Stream to read from.
+     */
+    Block(const IIStream& stream);
 
     /**
      * Construct a new block and copy its contents from the specified

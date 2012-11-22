@@ -21,6 +21,7 @@
 #include "de/ISerializable"
 #include "de/ByteSubArray"
 #include "de/FixedByteArray"
+#include "de/ByteArrayFile"
 #include "de/Reader"
 #include "de/Writer"
 #include "de/LittleEndianByteOrder"

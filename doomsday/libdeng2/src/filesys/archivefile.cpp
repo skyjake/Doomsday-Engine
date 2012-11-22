@@ -24,7 +24,7 @@
 using namespace de;
 
 ArchiveFile::ArchiveFile(const String& name, Archive& archive, const String& entryPath)
-    : File(name), _archive(archive), _entryPath(entryPath)
+    : ByteArrayFile(name), _archive(archive), _entryPath(entryPath)
 {}
 
 ArchiveFile::~ArchiveFile()
@@ -46,6 +46,11 @@ void ArchiveFile::clear()
     st.size = 0;
     st.modifiedAt = Time();
     setStatus(st);
+}
+
+IByteArray::Size ArchiveFile::size() const
+{
+    return archive().entryBlock(_entryPath).size();
 }
 
 void ArchiveFile::get(Offset at, Byte* values, Size count) const

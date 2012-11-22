@@ -32,12 +32,11 @@ File::File(const String& fileName)
     _source = this;
     
     // Create the default set of info variables common to all files.
-    _info.add(new Variable("name", new Accessor(*this, Accessor::NAME), Accessor::VARIABLE_MODE));
-    _info.add(new Variable("path", new Accessor(*this, Accessor::PATH), Accessor::VARIABLE_MODE));
-    _info.add(new Variable("type", new Accessor(*this, Accessor::TYPE), Accessor::VARIABLE_MODE));
-    _info.add(new Variable("size", new Accessor(*this, Accessor::SIZE), Accessor::VARIABLE_MODE));
-    _info.add(new Variable("modifiedAt", new Accessor(*this, Accessor::MODIFIED_AT),
-        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("name",       new Accessor(*this, Accessor::NAME),        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("path",       new Accessor(*this, Accessor::PATH),        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("type",       new Accessor(*this, Accessor::TYPE),        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("size",       new Accessor(*this, Accessor::SIZE),        Accessor::VARIABLE_MODE));
+    _info.add(new Variable("modifiedAt", new Accessor(*this, Accessor::MODIFIED_AT), Accessor::VARIABLE_MODE));
 }
 
 File::~File()
@@ -172,22 +171,27 @@ void File::verifyWriteAccess()
     }
 }
 
-File::Size File::size() const
+IOStream& File::operator << (const IByteArray& bytes)
+{
+    DENG2_UNUSED(bytes);
+    throw OutputError("File::operator <<", "File does not accept a byte stream");
+}
+
+IIStream& File::operator >> (IByteArray& bytes)
+{
+    DENG2_UNUSED(bytes);
+    throw InputError("File::operator >>", "File does not produce a byte stream");
+}
+
+const IIStream& File::operator >> (IByteArray& bytes) const
+{
+    DENG2_UNUSED(bytes);
+    throw InputError("File::operator >>", "File does not produce a byte stream");
+}
+
+dsize File::size() const
 {
     return status().size;
-}
-
-void File::get(Offset at, Byte* /*values*/, Size count) const
-{
-    if(at >= size() || at + count > size())
-    {
-        throw OffsetError("File::get", "Out of range");
-    }
-}
-
-void File::set(Offset /*at*/, const Byte* /*values*/, Size /*count*/)
-{
-    verifyWriteAccess();
 }
 
 File::Accessor::Accessor(File& owner, Property prop) : _owner(owner), _prop(prop)

@@ -52,7 +52,7 @@ int main(int argc, char** argv)
         File::Status stats = hello.status();
         LOG_MSG("hello.txt size: %i bytes, modified at %s") << stats.size << Date(stats.modifiedAt);
         
-        String content = String::fromUtf8(hello);
+        String content = String::fromUtf8(Block(hello));
         LOG_MSG("The contents: \"%s\"") << content;
 
         try
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
             File& worldTxt = zip.newFile("world.txt");
             Writer(worldTxt) << FixedByteArray(content.toUtf8());
         }
-        catch(const File::IOError&)
+        catch(const File::OutputError&)
         {
             LOG_WARNING("Cannot change files in read-only mode.");
         }

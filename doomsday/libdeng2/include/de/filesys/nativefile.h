@@ -21,7 +21,7 @@
 #define LIBDENG2_NATIVEFILE_H
 
 #include "../libdeng2.h"
-#include "../File"
+#include "../ByteArrayFile"
 #include "../NativePath"
 
 #include <QFile>
@@ -29,19 +29,13 @@
 namespace de
 {
     /**
-     * Reads from and writes to files in the native file system.
+     * Reads from and writes to files in the native file system. The contents
+     * of the native file are available as a byte array.
      *
      * @ingroup fs
      */
-    class DENG2_PUBLIC NativeFile : public File
+    class DENG2_PUBLIC NativeFile : public ByteArrayFile
     {
-    public:
-        /// Input from the native file failed. @ingroup errors
-        DENG2_SUB_ERROR(IOError, InputError);
-        
-        /// Output to the native file failed. @ingroup errors
-        DENG2_SUB_ERROR(IOError, OutputError);
-        
     public:
         /**
          * Constructs a NativeFile that accesses a file in the native file system

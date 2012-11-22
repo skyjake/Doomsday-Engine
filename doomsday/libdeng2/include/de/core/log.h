@@ -88,7 +88,7 @@ public:
          * to log which methods are entered and exited, and mark certain points within
          * methods. Intended only for developers and debug builds.
          */
-        TRACE,
+        TRACE = 0,
 
         /**
          * Debug messages are intended for normal debugging. They should be enabled
@@ -96,7 +96,7 @@ public:
          * a ZIP archive's file count and size once an archive has been successfully
          * opened. Intended only for developers and debug builds.
          */
-        DEBUG,
+        DEBUG = 1,
 
         /**
          * Verbose messages should be used to log technical information that is only
@@ -106,40 +106,40 @@ public:
          * number of log entries, such as an entry about reading the contents of a
          * file within a ZIP archive (which would be suitable for the DEBUG level).
          */
-        VERBOSE,
+        VERBOSE = 2,
 
         /**
          * Normal log entries are intended for regular users. An example: message about
          * which map is being loaded.
          */
-        MESSAGE,
+        MESSAGE = 3,
 
         /**
          * Info messages are intended for situations that are particularly noteworthy.
          * An info message should be used for instance when a script has been stopped
          * because of an uncaught exception occurred during its execution.
          */
-        INFO,
+        INFO = 4,
 
         /**
          * Warning messages are reserved for recoverable error situations. A warning
          * might be logged for example when the expected resource could not be found,
          * and a fallback resource was used instead.
          */
-        WARNING,
+        WARNING = 5,
 
         /**
          * Error messages are intended for nonrecoverable errors. The error is grave
          * enough to cause the shutting down of the current game, but the engine can
          * still remain running.
          */
-        ERROR,
+        ERROR = 6,
 
         /**
          * Critical messages are intended for fatal errors that cause the engine to be
          * shut down.
          */
-        CRITICAL,
+        CRITICAL = 7,
 
         MAX_LOG_LEVELS
     };

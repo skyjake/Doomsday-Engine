@@ -29,7 +29,9 @@ namespace de {
 class IWritable;
 class String;
 class Block;
+class ByteArrayFile;
 class FixedByteArray;
+class IOStream;
 
 /**
  * Provides a protocol for writing data in a specific byte order into a byte
@@ -40,6 +42,10 @@ class FixedByteArray;
  */
 class DENG2_PUBLIC Writer
 {
+public:
+    /// Seeking is not possible, e.g., when writing to a stream. @ingroup errors
+    DENG2_ERROR(SeekError);
+
 public:
     /**
      * Constructs a new writer.
@@ -60,6 +66,24 @@ public:
     Writer(IByteArray& destination, IByteArray::Offset offset);
 
     /**
+     * Constructs a new writer for writing to an I/O stream.
+     *
+     * @param stream     Stream to write to.
+     * @param byteOrder  Byte order to use.
+     */
+    Writer(IOStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
+
+    /**
+     * Constructs a new writer for writing into a byte array file.
+     *
+     * @param destination  Byte array file to write to.
+     * @param byteOrder    Byte order to use.
+     * @param offset       Offset in @a destination where to start writing.
+     */
+    Writer(ByteArrayFile& destination, const ByteOrder& byteOrder = littleEndianByteOrder,
+           IByteArray::Offset offset = 0);
+
+    /**
      * Constructs a new writer that uses the current offset of @a other as its
      * zero offset.
      *
@@ -67,6 +91,8 @@ public:
      * @param byteOrder  Byte order. Defaults to little-endian.
      */
     Writer(const Writer& other, const ByteOrder& byteOrder = littleEndianByteOrder);
+
+    virtual ~Writer();
 
     //@{ Write a number to the destination buffer, in the chosen byte order.
     Writer& operator << (const char& byte);
@@ -117,47 +143,35 @@ public:
     /**
      * Returns the destination byte array used by the writer.
      */
-    const IByteArray& destination() const {
-        return _destination;
-    }
+    const IByteArray* destination() const;
 
     /**
      * Returns the destination byte array used by the writer.
      */
-    IByteArray& destination() {
-        return _destination;
-    }
+    IByteArray* destination();
 
     /**
      * Returns the offset used by the writer.
      */
-    IByteArray::Offset offset() const {
-        return _offset;
-    }
+    IByteArray::Offset offset() const;
 
-    void setOffset(IByteArray::Offset offset) {
-        _offset = offset;
-    }
+    void setOffset(IByteArray::Offset offset);
 
     /**
      * Returns the byte order of the writer.
      */
-    const ByteOrder& byteOrder() const {
-        return _convert;
-    }
+    const ByteOrder& byteOrder() const;
 
     /**
      * Moves the writer offset forward by a number of bytes.
      *
-     * @param count  Number of bytes to move forward.
+     * @param count Number of bytes to move forward (negative to move backward).
      */
     void seek(dint count);
 
 private:
-    IByteArray& _destination;
-    IByteArray::Offset _offset;
-    const IByteArray::Offset _fixedOffset;
-    const ByteOrder& _convert;
+    struct Instance;
+    Instance* d;
 };
 
 } // namespace de

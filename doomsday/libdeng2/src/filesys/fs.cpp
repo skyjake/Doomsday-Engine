@@ -95,21 +95,43 @@ File* FS::interpret(File* sourceData)
         }
         if(Archive::recognize(*sourceData))
         {
-            LOG_VERBOSE("Interpreted ") << sourceData->name() << " as a ZIP archive";
-        
-            // It is a ZIP archive. The folder will own the source file.
-            std::auto_ptr<Folder> zip(new Folder(sourceData->name()));
-            zip->setSource(sourceData);    
-            zip->attach(new ArchiveFeed(*sourceData));
-            return zip.release();
+            try
+            {
+                LOG_VERBOSE("Interpreted %s as a ZIP archive") << sourceData->name();
+
+                // It is a ZIP archive: we will represent it as a folder.
+                std::auto_ptr<Folder> zip(new Folder(sourceData->name()));
+                // Create the feed.
+                zip->attach(new ArchiveFeed(*sourceData));
+                // Archive opened successfully, give ownership of the source to the folder.
+                zip->setSource(sourceData);
+                sourceData = 0;
+                return zip.release();
+            }
+            catch(const Archive::FormatError&)
+            {
+                // Even though it was recognized as an archive, the file
+                // contents may still provide to be corrupted.
+                LOG_WARNING("Archive in %s is invalid") << sourceData->name();
+            }
+            catch(const IByteArray::OffsetError&)
+            {
+                LOG_WARNING("Archive in %s is truncated") << sourceData->name();
+            }
+            catch(const IIStream::InputError&)
+            {
+                LOG_WARNING("%s cannot be read") << sourceData->name();
+            }
         }
     }
     catch(const Error& err)
     {
         LOG_ERROR("") << err.asText();
 
-        // We were given responsibility of the source file.
+        // The error is one we don't know how to handle. We were given
+        // responsibility of the source file, so it has to be deleted.
         delete sourceData;
+
         throw;
     }
     return sourceData;

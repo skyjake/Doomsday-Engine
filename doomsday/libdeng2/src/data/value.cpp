@@ -163,8 +163,9 @@ void Value::call(Process& /*process*/, const Value& /*arguments*/) const
 Value* Value::constructFrom(Reader& reader)
 {
     SerialId id;
+    reader.mark();
     reader >> id;
-    reader.rewind(sizeof(id));
+    reader.rewind();
     
     std::auto_ptr<Value> result;
     switch(id)

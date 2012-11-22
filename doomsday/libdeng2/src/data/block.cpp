@@ -18,6 +18,7 @@
  */
 
 #include "de/Block"
+#include "de/File"
 
 using namespace de;
 
@@ -39,6 +40,16 @@ Block::Block(const Block& other) : QByteArray(other), IByteArray(), IBlock()
 Block::Block(const QByteArray& byteArray)
     : QByteArray(byteArray)
 {}
+
+Block::Block(IIStream& stream)
+{
+    stream >> *this;
+}
+
+Block::Block(const IIStream& stream)
+{
+    stream >> *this;
+}
 
 Block::Block(const IByteArray& other, Offset at, Size count) : IByteArray()
 {

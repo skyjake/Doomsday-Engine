@@ -38,6 +38,7 @@ typedef uint modelid_t;
 
 /**
  * @defgroup modelFrameFlags Model frame flags
+ * @ingroup flags
  */
 ///@{
 #define MFF_FULLBRIGHT          0x00000001

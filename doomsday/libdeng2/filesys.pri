@@ -1,6 +1,7 @@
 HEADERS += \
     include/de/ArchiveFeed \
     include/de/ArchiveFile \
+    include/de/ByteArrayFile \
     include/de/DirectoryFeed \
     include/de/Feed \
     include/de/File \
@@ -11,6 +12,7 @@ HEADERS += \
     include/de/NativePath \
     include/de/filesys/archivefeed.h \
     include/de/filesys/archivefile.h \
+    include/de/filesys/bytearrayfile.h \
     include/de/filesys/directoryfeed.h \
     include/de/filesys/feed.h \
     include/de/filesys/file.h \
@@ -23,6 +25,7 @@ HEADERS += \
 SOURCES += \
     src/filesys/archivefeed.cpp \
     src/filesys/archivefile.cpp \
+    src/filesys/bytearrayfile.cpp \
     src/filesys/directoryfeed.cpp \
     src/filesys/feed.cpp \
     src/filesys/file.cpp \

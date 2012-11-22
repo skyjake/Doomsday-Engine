@@ -30,6 +30,7 @@ class Block;
 class String;
 class IReadable;
 class FixedByteArray;
+class IIStream;
 
 /**
  * Provides a protocol for reading data from a byte array object (anything with
@@ -41,16 +42,35 @@ class FixedByteArray;
 class DENG2_PUBLIC Reader
 {
 public:
+    /// Seeking is not possible, e.g., when reading from a stream. @ingroup errors
+    DENG2_ERROR(SeekError);
+
+public:
     /**
      * Constructs a new reader.
      *
      * @param source     Byte array containing the data to be read.
-     * @param byteOrder  Byte order to use. The byte order defaults to network
-     *                   (big-endian) byte order.
+     * @param byteOrder  Byte order to use.
      * @param offset     Offset in @a source where to start reading.
      */
     Reader(const IByteArray& source, const ByteOrder& byteOrder = littleEndianByteOrder,
-        IByteArray::Offset offset = 0);
+           IByteArray::Offset offset = 0);
+
+    /**
+     * Constructs a new reader that reads from a stream.
+     *
+     * @param stream     Stream where input is read.
+     * @param byteOrder  Byte order to use.
+     */
+    Reader(IIStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
+
+    /**
+     * Constructs a new reader that reads from a const stream.
+     *
+     * @param stream     Const stream where input is read.
+     * @param byteOrder  Byte order to use.
+     */
+    Reader(const IIStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
 
     //@{ Read a number from the source buffer, in network byte order.
     Reader& operator >> (char& byte);
@@ -102,51 +122,52 @@ public:
     /**
      * Returns the source byte array of the reader.
      */
-    const IByteArray& source() const {
-        return _source;
-    }
+    const IByteArray* source() const;
 
     /**
      * Returns the offset used by the reader.
      */
-    IByteArray::Offset offset() const {
-        return _offset;
-    }
+    IByteArray::Offset offset() const;
 
     /**
      * Move to a specific position in the source data.
      *
      * @param offset  Offset to move to.
      */
-    void setOffset(IByteArray::Offset offset) {
-        _offset = offset;
-    }
+    void setOffset(IByteArray::Offset offset);
 
     /**
-     * Moves the reader offset forward by a number of bytes.
+     * Moves the reader offset forward by a number of bytes. This is a random
+     * access seek: it is only possible if the source supports random access
+     * (e.g., it is impossible to seek in streams).
      *
-     * @param count  Number of bytes to move forward.
+     * @param count  Number of bytes to move forward. Negative values move
+     *               the reader offset backward.
      */
     void seek(dint count);
 
     /**
-     * Rewinds the read offset by a number of bytes.
-     *
-     * @param count  Number of bytes to move backward.
+     * Marks the current position for rewinding later. After setting the mark,
+     * you are expected to call rewind() to return to the marked position. This
+     * method can be used even when reading from streams.
      */
-    void rewind(dint count);
+    void mark();
+
+    /**
+     * Rewinds the read offset to the mark set previously (using mark()).
+     * Rewinding can be done with all readers, regardless of where the data
+     * comes from.
+     */
+    void rewind();
 
     /**
      * Returns the byte order of the writer.
      */
-    const ByteOrder& byteOrder() const {
-        return _convert;
-    }
+    const ByteOrder& byteOrder() const;
 
 private:
-    const IByteArray& _source;
-    IByteArray::Offset _offset;
-    const ByteOrder& _convert;
+    struct Instance;
+    Instance* d;
 };
 
 } // namespace de

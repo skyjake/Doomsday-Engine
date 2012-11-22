@@ -87,7 +87,7 @@ int main(int, char**)
         // Serialize.
         Block b;
         Writer(b) << p;
-        qDebug() << "Serialized stringpool to " << b.size() << " bytes.";
+        qDebug() << "Serialized stringpool to" << b.size() << "bytes.";
 
         // Deserialize.
         StringPool p2;

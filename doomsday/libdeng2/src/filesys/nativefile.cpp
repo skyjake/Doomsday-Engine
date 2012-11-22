@@ -23,7 +23,7 @@
 using namespace de;
 
 NativeFile::NativeFile(const String& name, const NativePath& nativePath)
-    : File(name), _nativePath(nativePath), _in(0), _out(0)
+    : ByteArrayFile(name), _nativePath(nativePath), _in(0), _out(0)
 {}
 
 NativeFile::~NativeFile()
@@ -99,6 +99,7 @@ void NativeFile::set(Offset at, const Byte* values, Size count)
     out.write(reinterpret_cast<const char*>(values), count);
     if(out.error() != QFile::NoError)
     {
+        /// @throw OutputError  Failure to write to the native file.
         throw OutputError("NativeFile::set", "Error writing to file:" +
                           out.errorString());
     }
