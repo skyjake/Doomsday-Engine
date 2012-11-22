@@ -1730,7 +1730,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FS1::Scheme* scheme = App_FileSystem()->schemeByName(DD_ResourceClassByName("RC_PACKAGE").defaultScheme());
+    FS1::Scheme& scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_PACKAGE").defaultScheme());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -1745,7 +1745,7 @@ boolean DD_Init(void)
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
-            scheme->addSearchPath(SearchPath(uri, SearchPath::NoDescend));
+            scheme.addSearchPath(SearchPath(uri, SearchPath::NoDescend));
 
             Dir_Delete(dir);
         }

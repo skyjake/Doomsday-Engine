@@ -188,19 +188,20 @@ struct FS1::Instance
     String findPath(de::Uri const& search)
     {
         // Within a subspace scheme?
-        if(FS1::Scheme* scheme = self.schemeByName(search.scheme()))
+        try
         {
-            LOG_TRACE("Using scheme '%s'...") << scheme->name();
+            FS1::Scheme& scheme = self.scheme(search.scheme());
+            LOG_TRACE("Using scheme '%s'...") << scheme.name();
 
             // Ensure the scheme's index is up to date.
-            scheme->rebuild();
+            scheme.rebuild();
 
             // The in-scheme name is the file name sans extension.
             String name = search.firstSegment().toString().fileNameWithoutExtension();
 
             // Perform the search.
             FS1::Scheme::FoundNodes foundNodes;
-            if(scheme->findAll(name, foundNodes))
+            if(scheme.findAll(name, foundNodes))
             {
                 // At least one node name was matched (perhaps partially).
                 DENG2_FOR_EACH_CONST(FS1::Scheme::FoundNodes, i, foundNodes)
@@ -217,6 +218,8 @@ struct FS1::Instance
             /// @todo Should return not-found here but some searches are still dependent
             ///       on falling back to a wider search. -ds
         }
+        catch(FS1::UnknownSchemeError const&)
+        {} // Ignore this error.
 
         // Try a wider search of the whole virtual file system.
         de::File1* file = openFile(search.path(), "rb", 0, true /* allow duplicates */);
@@ -410,13 +413,12 @@ FS1::Scheme& FS1::createScheme(String name, Scheme::Flags flags)
     DENG_ASSERT(name.length() >= Scheme::min_name_length);
 
     // Ensure this is a unique name.
-    Scheme* scheme = schemeByName(name);
-    if(scheme) return *scheme;
+    if(knownScheme(name)) return scheme(name);
 
     // Create a new scheme.
-    scheme = new Scheme(name, flags);
-    d->schemes.insert(name.toLower(), scheme);
-    return *scheme;
+    Scheme* newScheme = new Scheme(name, flags);
+    d->schemes.insert(name.toLower(), newScheme);
+    return *newScheme;
 }
 
 void FS1::consoleRegister()
@@ -609,7 +611,7 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
     }
 
     /// @throw NotFoundError  No files found matching the search term.
-    throw FS1::NotFoundError("FS1::findPath", "No paths found matching '" + search.compose() + "'");
+    throw NotFoundError("FS1::findPath", "No paths found matching '" + search.compose() + "'");
 }
 
 String FS1::findPath(de::Uri const& search, int flags)
@@ -1130,17 +1132,28 @@ void FS1::printDirectory(String path)
     }
 }
 
-FS1::Scheme* FS1::schemeByName(String name)
+bool FS1::knownScheme(String name)
 {
     if(!name.isEmpty())
     {
         Schemes::iterator found = d->schemes.find(name.toLower());
-        if(found != d->schemes.end()) return *found;
+        if(found != d->schemes.end()) return true;
     }
-    return 0; // Not found.
+    return false;
 }
 
-FS1::Schemes const& FS1::schemes()
+FS1::Scheme& FS1::scheme(String name)
+{
+    if(!name.isEmpty())
+    {
+        Schemes::iterator found = d->schemes.find(name.toLower());
+        if(found != d->schemes.end()) return **found;
+    }
+    /// @throw UnknownSchemeError An unknown scheme was referenced.
+    throw UnknownSchemeError("FS1::scheme", "No scheme found matching '" + name + "'");
+}
+
+FS1::Schemes const& FS1::allSchemes()
 {
     return d->schemes;
 }

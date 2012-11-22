@@ -1080,9 +1080,8 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        de::FS1::Scheme* scheme = App_FileSystem()->schemeByName(DD_ResourceClassByName("RC_MODEL").defaultScheme());
-        DENG_ASSERT(scheme);
-        scheme->reset();
+        de::FS1::Scheme& scheme = App_FileSystem()->scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
+        scheme.reset();
 
         Materials_ClearDefinitionLinks();
         Fonts_ClearDefinitionLinks();
