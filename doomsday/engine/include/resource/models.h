@@ -37,7 +37,7 @@ typedef uint modelid_t;
 #define MAX_FRAME_MODELS        DED_MAX_SUB_MODELS
 
 /**
- * @def modelFrameFlags Model frame flags
+ * @defgroup modelFrameFlags Model frame flags
  */
 ///@{
 #define MFF_FULLBRIGHT          0x00000001

@@ -154,7 +154,7 @@ namespace de
          *
          * @return  The interpreted file; otherwise @c 0.
          */
-        virtual de::File1* interpret(de::FileHandle& /*hndl*/, String /*path*/, FileInfo const& /*info*/) const = 0;
+        virtual de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const = 0;
     };
 
     /// @return  @c true= @a ftype is a NativeFileType object.

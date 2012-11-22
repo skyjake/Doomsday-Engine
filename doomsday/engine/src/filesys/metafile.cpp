@@ -1,11 +1,10 @@
 /**
- * @file resourcerecord.cpp
+ * @file metafile.cpp
  *
- * Resource Record.
- *
- * @ingroup resource
+ * MetaFile. @ingroup fs
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

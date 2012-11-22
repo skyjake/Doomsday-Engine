@@ -87,7 +87,7 @@ struct Uri::Instance
      * Segment map of the path. The map is composed of two parts: the first
      * SEGMENT_BUFFER_SIZE elements are placed into a fixed-size buffer which is
      * allocated along with the Instance, and additional segments are allocated
-     * dynamically and linked in the @ref extraSegments list.
+     * dynamically and linked in the extraSegments list.
      *
      * This optimized representation should mean that the majority of paths
      * can be represented without dynamically allocating memory from the heap.
@@ -375,12 +375,12 @@ private:
     Instance(const Instance&); // no copying
 };
 
-Uri::Uri(String path, resourceclassid_t defaultResourceClass, QChar delimiter)
+Uri::Uri(String path, resourceclassid_t defaultResourceClass, QChar sep)
 {
     d = new Instance();
     if(!path.isEmpty())
     {
-        setUri(path, defaultResourceClass, delimiter);
+        setUri(path, defaultResourceClass, sep);
     }
 }
 
@@ -545,11 +545,11 @@ Uri& Uri::setScheme(String newScheme)
     return *this;
 }
 
-Uri& Uri::setPath(String newPath, QChar delimiter)
+Uri& Uri::setPath(String newPath, QChar sep)
 {
-    if(delimiter != '/')
+    if(sep != '/')
     {
-        newPath = newPath.replace(delimiter, QString("/"), Qt::CaseInsensitive);
+        newPath = newPath.replace(sep, QString("/"), Qt::CaseInsensitive);
     }
     d->path = newPath;
     d->clearCachedResolved();
@@ -557,13 +557,13 @@ Uri& Uri::setPath(String newPath, QChar delimiter)
     return *this;
 }
 
-Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar delimiter)
+Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar sep)
 {
     LOG_AS("Uri::setUri");
 
-    if(delimiter != '/')
+    if(sep != '/')
     {
-        rawUri = rawUri.replace(delimiter, QString("/"), Qt::CaseInsensitive);
+        rawUri = rawUri.replace(sep, QString("/"), Qt::CaseInsensitive);
     }
 
     d->path = rawUri.trimmed();
@@ -573,7 +573,7 @@ Uri& Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar de
     return *this;
 }
 
-String Uri::compose(QChar delimiter) const
+String Uri::compose(QChar sep) const
 {
     String result;
     if(!d->scheme.isEmpty())
@@ -584,9 +584,9 @@ String Uri::compose(QChar delimiter) const
     {
         result += d->path;
     }
-    if(delimiter != '/')
+    if(sep != '/')
     {
-        result = result.replace('/', delimiter, Qt::CaseInsensitive);
+        result = result.replace('/', sep, Qt::CaseInsensitive);
     }
     return result;
 }
