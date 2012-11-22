@@ -31,10 +31,8 @@ IOStream& ByteArrayFile::operator << (const IByteArray& bytes)
 
 IIStream& ByteArrayFile::operator >> (IByteArray& bytes)
 {
-    // Read the entire contents of the file.
-    Block block(File::size());
-    get(0, block.data(), block.size());
-    bytes.set(0, block.data(), block.size());
+    // Behave as a const stream.
+    *const_cast<const ByteArrayFile*>(this) >> bytes;
     return *this;
 }
 

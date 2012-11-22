@@ -161,7 +161,7 @@ public:
         if(_file) _file->flush();
     }
     IOutputStream& operator << (const QString& text) {
-        if(_file) *_file << FixedByteArray(Block(text.toUtf8()));
+        if(_file) *_file << Block(text.toUtf8());
         return *this;
     }
 private:
