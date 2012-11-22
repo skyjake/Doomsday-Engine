@@ -41,8 +41,9 @@ void Expression::push(Evaluator& evaluator, Record* names) const
 Expression* Expression::constructFrom(Reader& reader)
 {
     SerialId id;
+    reader.mark();
     reader >> id;
-    reader.rewind(sizeof(id));
+    reader.rewind();
     
     std::auto_ptr<Expression> result;
     switch(id)

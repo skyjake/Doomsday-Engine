@@ -21,6 +21,7 @@
 #define LIBDENG2_ARCHIVEFEED_H
 
 #include "../Feed"
+#include "../ByteArrayFile"
 #include "../String"
 
 namespace de
@@ -34,6 +35,10 @@ namespace de
      */
     class ArchiveFeed : public Feed
     {
+    public:
+        /// Provided source file cannot be used as a feed source. @ingroup errors
+        DENG2_ERROR(InvalidSourceError);
+
     public:
         /**
          * Constructs a new archive feed.
@@ -66,19 +71,11 @@ namespace de
         /**
          * Returns the base path within the archive.
          */
-        const String& basePath() const { return _basePath; }
+        const String& basePath() const;
                     
     private:
-        /// File where the archive is stored.
-        File& _file;
-        
-        Archive* _archive;
-        
-        /// Mount point within the archive for this feed.
-        String _basePath;
-        
-        /// The feed whose archive this feed is using.
-        ArchiveFeed* _parentFeed;
+        struct Instance;
+        Instance* d;
     };
 }
 

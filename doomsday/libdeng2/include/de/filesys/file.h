@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_FILE_H
 #define LIBDENG2_FILE_H
 
-#include "../IByteArray"
+#include "../IIOStream"
 #include "../String"
 #include "../Time"
 #include "../Record"
@@ -37,7 +37,15 @@ namespace de
     
     /**
      * Base class for all files stored in the file system.
-     * 
+     *
+     * Implements the IIOStream interface to allow files to receive and send
+     * out a stream of bytes. The default implementation only throws an
+     * IIOStream::IOError -- it is up to subclasses to implement the stream in
+     * the context suitable for the concrete file class.
+     *
+     * Note that the constructor of File is protected: only subclasses can be
+     * instantiated.
+     *
      * Subclasses have some special requirements for their destructors:
      * - deindex() must be called in all subclass destructors so that the instances 
      *   indexed under the subclasses' type are removed from the file system's index also.
@@ -47,15 +55,9 @@ namespace de
      *
      * @ingroup fs
      */
-    class DENG2_PUBLIC File : public IByteArray
+    class DENG2_PUBLIC File : public IIOStream
     {
-    public:
-        /// I/O to the native file failed. @ingroup errors
-        DENG2_ERROR(IOError);
-
-        /// Only reading is allowed from the file. @ingroup errors
-        DENG2_SUB_ERROR(IOError, ReadOnlyError);
-        
+    public:       
         // Mode flags.
         enum Flag
         {
@@ -246,6 +248,14 @@ namespace de
         const Status& status() const;
                         
         /**
+         * Returns the size of the file.
+         *
+         * @return Size in bytes. If the file does not have a size (purely
+         * stream-based file), the size is zero.
+         */
+        dsize size() const;
+
+        /**
          * Forms the complete path of this file object.
          *
          * @return Path of the object. This is not a native path, but instead 
@@ -278,11 +288,11 @@ namespace de
          */
         void verifyWriteAccess();
 
-        // Implements IByteArray.
-        Size size() const;
-        void get(Offset at, Byte* values, Size count) const;
-        void set(Offset at, const Byte* values, Size count);
-    
+        // Implements IIOStream.
+        IIOStream& operator << (const IByteArray& bytes);
+        IIOStream& operator >> (IByteArray& bytes);
+        const IIOStream& operator >> (IByteArray& bytes) const;
+
     protected:
         /**
          * Constructs a new file. By default files are in read-only mode.

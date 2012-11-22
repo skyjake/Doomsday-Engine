@@ -20,8 +20,7 @@
 #ifndef LIBDENG2_ARCHIVEFILE_H
 #define LIBDENG2_ARCHIVEFILE_H
 
-#include "../File"
-#include "../String"
+#include "../ByteArrayFile"
 
 namespace de
 {
@@ -32,7 +31,7 @@ namespace de
      *
      * @ingroup fs
      */
-    class ArchiveFile : public File
+    class ArchiveFile : public ByteArrayFile
     {
     public:
         /**
@@ -55,6 +54,7 @@ namespace de
         const Archive& archive() const { return _archive; }
 
         // Implements IByteArray.
+        Size size() const;
         void get(Offset at, Byte* values, Size count) const;
         void set(Offset at, const Byte* values, Size count);
         

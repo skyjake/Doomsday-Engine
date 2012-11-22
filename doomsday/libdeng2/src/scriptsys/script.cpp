@@ -33,7 +33,7 @@ Script::Script(const String& source)
 
 Script::Script(const File& file) : _path(file.path())
 {
-    Parser().parse(String::fromUtf8(file), *this);
+    Parser().parse(String::fromUtf8(Block(file)), *this);
 }
 
 Script::~Script()

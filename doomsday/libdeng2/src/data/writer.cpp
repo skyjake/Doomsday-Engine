@@ -21,43 +21,101 @@
 #include "de/String"
 #include "de/Block"
 #include "de/ISerializable"
+#include "de/IIOStream"
 #include "de/FixedByteArray"
+#include "de/ByteRefArray"
+#include "de/ByteArrayFile"
 #include "de/data/byteorder.h"
 #include <QScopedPointer>
 
-using namespace de;
+namespace de {
+
+struct Writer::Instance
+{
+    const ByteOrder& convert;
+    IByteArray* destination;
+    IIOStream* stream;
+    IByteArray::Offset offset;
+    const IByteArray::Offset fixedOffset;
+
+    Instance(const ByteOrder& order, IByteArray* dest, IByteArray::Offset off)
+        : convert(order), destination(dest), stream(0), offset(off), fixedOffset(0) {}
+
+    Instance(const ByteOrder& order, IIOStream* str)
+        : convert(order), destination(0), stream(str), offset(0), fixedOffset(0)
+    {
+        destination = dynamic_cast<IByteArray*>(str);
+        if(destination)
+        {
+            // The object that implements the stream may also implement a byte
+            // array interface -- that provides us more freedom to write, so
+            // prefer to use it instead.
+            stream = 0;
+        }
+    }
+
+    Instance(const Instance& other, const ByteOrder& order)
+        : convert    (order            ),
+          destination(other.destination),
+          stream     (other.stream     ),
+          offset     (other.offset     ),
+          fixedOffset(other.fixedOffset)
+    {}
+
+    void write(const IByteArray::Byte* ptr, dsize size)
+    {
+        if(destination)
+        {
+            destination->set(fixedOffset + offset, ptr, size);
+            offset += size;
+        }
+        else if(stream)
+        {
+            *stream << ByteRefArray(ptr, size);
+        }
+    }
+};
 
 Writer::Writer(IByteArray& destination, const ByteOrder& byteOrder, IByteArray::Offset offset)
-    : _destination(destination), _offset(offset), _fixedOffset(0), _convert(byteOrder)
+    : d(new Instance(byteOrder, &destination, offset))
 {}
 
 Writer::Writer(IByteArray& destination, IByteArray::Offset offset)
-    : _destination(destination), _offset(offset), _fixedOffset(0), _convert(littleEndianByteOrder)
+    : d(new Instance(littleEndianByteOrder, &destination, offset))
+{}
+
+Writer::Writer(IIOStream& stream, const ByteOrder& byteOrder)
+    : d(new Instance(byteOrder, &stream))
+{}
+
+Writer::Writer(ByteArrayFile& destination, const ByteOrder& byteOrder, IByteArray::Offset offset)
+    : d(new Instance(byteOrder, static_cast<IByteArray*>(&destination), offset))
 {}
 
 Writer::Writer(const Writer& other, const ByteOrder& byteOrder)
-    : _destination(other._destination), _offset(0), 
-      _fixedOffset(other._fixedOffset + other._offset), _convert(byteOrder)
+    : d(new Instance(*other.d, byteOrder))
 {}
+
+Writer::~Writer()
+{
+    delete d;
+}
 
 Writer& Writer::operator << (const char& byte)
 {
-    _destination.set(_fixedOffset + _offset, reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
-    ++_offset;
+    d->write(reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
     return *this;
 }
 
 Writer& Writer::operator << (const dchar& byte)
 {
-    _destination.set(_fixedOffset + _offset, reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
-    ++_offset;
+    d->write(reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
     return *this;
 }
 
 Writer& Writer::operator << (const duchar& byte)
 {
-    _destination.set(_fixedOffset + _offset, &byte, 1);
-    ++_offset;
+    d->write(&byte, 1);
     return *this;
 }
 
@@ -69,9 +127,8 @@ Writer& Writer::operator << (const dint16& word)
 Writer& Writer::operator << (const duint16& word)
 {
     duint16 netWord;
-    _convert.nativeToForeign(word, netWord);
-    _destination.set(_fixedOffset + _offset, reinterpret_cast<IByteArray::Byte*>(&netWord), 2);
-    _offset += 2;
+    d->convert.nativeToForeign(word, netWord);
+    d->write(reinterpret_cast<IByteArray::Byte*>(&netWord), 2);
     return *this;
 }
 
@@ -83,9 +140,8 @@ Writer& Writer::operator << (const dint32& dword)
 Writer& Writer::operator << (const duint32& dword)
 {
     duint32 netDword;
-    _convert.nativeToForeign(dword, netDword);
-    _destination.set(_fixedOffset + _offset, reinterpret_cast<IByteArray::Byte*>(&netDword), 4);
-    _offset += 4;
+    d->convert.nativeToForeign(dword, netDword);
+    d->write(reinterpret_cast<IByteArray::Byte*>(&netDword), 4);
     return *this;
 }
 
@@ -97,9 +153,8 @@ Writer& Writer::operator << (const dint64& qword)
 Writer& Writer::operator << (const duint64& qword)
 {
     duint64 netQword;
-    _convert.nativeToForeign(qword, netQword);
-    _destination.set(_fixedOffset + _offset, reinterpret_cast<IByteArray::Byte*>(&netQword), 8);
-    _offset += 8;
+    d->convert.nativeToForeign(qword, netQword);
+    d->write(reinterpret_cast<IByteArray::Byte*>(&netQword), 8);
     return *this;
 }
 
@@ -121,10 +176,7 @@ Writer& Writer::operator << (const String& text)
     duint size = bytes.size();
     *this << size;
 
-    _destination.set(_fixedOffset + _offset,
-                     bytes.data(),
-                     size);
-    _offset += size;
+    d->write(bytes.data(), size);
     return *this;
 }
 
@@ -146,8 +198,7 @@ Writer& Writer::operator << (const FixedByteArray& fixedByteArray)
     const dsize size = fixedByteArray.size();
     QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
     fixedByteArray.get(0, data.data(), size);
-    _destination.set(_fixedOffset + _offset, data.data(), size);
-    _offset += size;
+    d->write(data.data(), size);
     return *this;
 }
 
@@ -157,8 +208,7 @@ Writer& Writer::operator << (const Block& block)
     duint size = block.size();
     *this << size;
 
-    _destination.set(_fixedOffset + _offset, block.data(), size);
-    _offset += size;
+    d->write(block.data(), size);
     return *this;
 }
 
@@ -168,11 +218,48 @@ Writer& Writer::operator << (const IWritable& writable)
     return *this;
 }
 
+const IByteArray* Writer::destination() const
+{
+    return d->destination;
+}
+
+IByteArray* Writer::destination()
+{
+    return d->destination;
+}
+
+IByteArray::Offset Writer::offset() const
+{
+    return d->offset;
+}
+
+void Writer::setOffset(IByteArray::Offset offset)
+{
+    if(d->stream)
+    {
+        throw SeekError("Writer::setOffset", "Cannot change offset when writing to a stream");
+    }
+
+    d->offset = offset;
+}
+
+const ByteOrder& Writer::byteOrder() const
+{
+    return d->convert;
+}
+
 void Writer::seek(dint count)
 {
-    if(dint(_fixedOffset + _offset) + count < 0)
+    if(d->stream)
+    {
+        throw SeekError("Writer::seek", "Cannot seek when writing to a stream");
+    }
+
+    if(dint(d->fixedOffset + d->offset) + count < 0)
     {
         throw IByteArray::OffsetError("Writer::seek", "Seek past beginning of destination");
     }
-    _offset += count;
+    d->offset += count;
 }
+
+} // namespace de

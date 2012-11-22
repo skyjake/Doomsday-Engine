@@ -63,8 +63,9 @@ void Packet::execute() const
 bool Packet::checkType(Reader& from, const String& type)
 {
     char ident[5];
+    from.mark();
     from >> ident[0] >> ident[1] >> ident[2] >> ident[3];
     ident[4] = 0;
-    from.rewind(4);
+    from.rewind();
     return !type.compareWithCase(ident);
 }

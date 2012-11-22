@@ -52,7 +52,7 @@ int main(int argc, char** argv)
         File::Status stats = hello.status();
         LOG_MSG("hello.txt size: %i bytes, modified at %s") << stats.size << Date(stats.modifiedAt);
         
-        String content = String::fromUtf8(hello);
+        String content = String::fromUtf8(Block(hello));
         LOG_MSG("The contents: \"%s\"") << content;
 
         try

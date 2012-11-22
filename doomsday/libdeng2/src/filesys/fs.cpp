@@ -99,8 +99,11 @@ File* FS::interpret(File* sourceData)
         
             // It is a ZIP archive. The folder will own the source file.
             std::auto_ptr<Folder> zip(new Folder(sourceData->name()));
-            zip->setSource(sourceData);    
-            zip->attach(new ArchiveFeed(*sourceData));
+            // Give ownership of the source to the folder.
+            zip->setSource(sourceData);
+            sourceData = 0;
+            // Create the feed.
+            zip->attach(new ArchiveFeed(*zip->source()));
             return zip.release();
         }
     }

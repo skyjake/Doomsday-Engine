@@ -19,108 +19,170 @@
 
 #include "de/ArchiveFeed"
 #include "de/ArchiveFile"
+#include "de/ByteArrayFile"
 #include "de/Archive"
 #include "de/Writer"
 #include "de/Folder"
 #include "de/FS"
 #include "de/Log"
 
-using namespace de;
+namespace de {
 
-ArchiveFeed::ArchiveFeed(File& archiveFile) : _file(archiveFile), _archive(0), _parentFeed(0)
+struct ArchiveFeed::Instance
 {
-    // Open the archive.
-    _archive = new Archive(archiveFile);
-}
+    ArchiveFeed& self;
+
+    /// File where the archive is stored (in a serialized format).
+    File& file;
+
+    /// The archive can be physically stored here, as Archive doesn't make a
+    /// copy of the buffer.
+    Block serializedArchive;
+
+    Archive* arch;
+
+    /// Mount point within the archive for this feed.
+    String basePath;
+
+    /// The feed whose archive this feed is using.
+    ArchiveFeed* parentFeed;
+
+    Instance(ArchiveFeed* feed, File& f) : self(*feed), file(f), arch(0), parentFeed(0)
+    {
+        // If the file happens to be a byte array file, we can use it
+        // directly to store the Archive.
+        IByteArray* bytes = dynamic_cast<IByteArray*>(&f);
+
+        // Open the archive.
+        if(bytes)
+        {
+            arch = new Archive(*bytes);
+        }
+        else
+        {
+            // The file is just a stream, so we can't rely on the file
+            // acting as the physical storage location for Archive.
+            f >> serializedArchive;
+            arch = new Archive(serializedArchive);
+        }
+    }
+
+    Instance(ArchiveFeed* feed, ArchiveFeed& parentFeed, const String& path)
+        : self(*feed), file(parentFeed.d->file), arch(0), basePath(path), parentFeed(&parentFeed)
+    {}
+
+    ~Instance()
+    {
+        if(arch)
+        {
+            // If modified, the archive is written.
+            if(arch->modified())
+            {
+                LOG_MSG("Updating archive in ") << file.name();
+
+                // Make sure we have either a compressed or uncompressed version of
+                // each entry in memory before destroying the source file.
+                arch->cache();
+
+                file.clear();
+                Writer(file) << *arch;
+            }
+            else
+            {
+                LOG_VERBOSE("Not updating archive in %s (not changed)") << file.name();
+            }
+            delete arch;
+        }
+    }
+
+    Archive& archive()
+    {
+        if(parentFeed)
+        {
+            return parentFeed->archive();
+        }
+        return *arch;
+    }
+
+    void populate(Folder& folder)
+    {
+        Archive::Names names;
+
+        // Get a list of the files in this directory.
+        archive().listFiles(names, basePath);
+
+        for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
+        {
+            if(folder.has(*i))
+            {
+                // Already has an entry for this, skip it (wasn't pruned so it's OK).
+                return;
+            }
+
+            String entry = basePath / *i;
+
+            std::auto_ptr<ArchiveFile> archFile(new ArchiveFile(*i, archive(), entry));
+            // Use the status of the entry within the archive.
+            archFile->setStatus(archive().status(entry));
+
+            // Create a new file that accesses this feed's archive and interpret the contents.
+            File* file = folder.fileSystem().interpret(archFile.release());
+            folder.add(file);
+
+            // We will decide on pruning this.
+            file->setOriginFeed(&self);
+
+            // Include the file in the main index.
+            folder.fileSystem().index(*file);
+        }
+
+        // Also populate subfolders.
+        archive().listFolders(names, basePath);
+
+        for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
+        {
+            String subBasePath = basePath / *i;
+            Folder& subFolder = folder.fileSystem().makeFolder(folder.path() / *i);
+
+            // Does it already have the appropriate feed?
+            for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
+                i != subFolder.feeds().end(); ++i)
+            {
+                ArchiveFeed* archFeed = const_cast<ArchiveFeed*>(dynamic_cast<const ArchiveFeed*>(*i));
+                if(archFeed && &archFeed->archive() == &archive() && archFeed->basePath() == subBasePath)
+                {
+                    // It's got it.
+                    LOG_DEBUG("Feed for ") << archFeed->basePath() << " already there.";
+                    return;
+                }
+            }
+
+            // Create a new feed.
+            subFolder.attach(new ArchiveFeed(self, subBasePath));
+        }
+    }
+};
+
+ArchiveFeed::ArchiveFeed(File &archiveFile)
+    : d(new Instance(this, archiveFile))
+{}
 
 ArchiveFeed::ArchiveFeed(ArchiveFeed& parentFeed, const String& basePath)
-    : _file(parentFeed._file), _archive(0), _basePath(basePath), _parentFeed(&parentFeed)
+    : d(new Instance(this, parentFeed, basePath))
 {}
 
 ArchiveFeed::~ArchiveFeed()
 {
     LOG_AS("~ArchiveFeed");
-    
-    if(_archive)
-    {
-        // If modified, the archive is written.
-        if(_archive->modified())
-        {
-            LOG_MSG("Updating archive in ") << _file.name();
 
-            // Make sure we have either a compressed or uncompressed version of
-            // each entry in memory before destroying the source file.
-            _archive->cache();
-
-            _file.clear();
-            Writer(_file) << *_archive;
-        }        
-        else
-        {
-            LOG_VERBOSE("Not updating archive in %s (not changed)") << _file.name();
-        }
-        delete _archive;
-    }
+    delete d;
 }
 
 void ArchiveFeed::populate(Folder& folder)
 {
     LOG_AS("ArchiveFeed::populate");
 
-    Archive::Names names;
-    
-    // Get a list of the files in this directory.
-    archive().listFiles(names, _basePath);
-    
-    for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
-    {
-        if(folder.has(*i))
-        {
-            // Already has an entry for this, skip it (wasn't pruned so it's OK).
-            return;
-        }
-        
-        String entry = _basePath / *i;
-        
-        std::auto_ptr<ArchiveFile> archFile(new ArchiveFile(*i, archive(), entry));
-        // Use the status of the entry within the archive.
-        archFile->setStatus(archive().status(entry));
-        
-        // Create a new file that accesses this feed's archive and interpret the contents.
-        File* file = folder.fileSystem().interpret(archFile.release());
-        folder.add(file);
-
-        // We will decide on pruning this.
-        file->setOriginFeed(this);
-        
-        // Include the file in the main index.
-        folder.fileSystem().index(*file);
-    }
-    
-    // Also populate subfolders.
-    archive().listFolders(names, _basePath);
-    
-    for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
-    {
-        String subBasePath = _basePath / *i;
-        Folder& subFolder = folder.fileSystem().makeFolder(folder.path() / *i);
-        
-        // Does it already have the appropriate feed?
-        for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
-            i != subFolder.feeds().end(); ++i)
-        {
-            ArchiveFeed* archFeed = const_cast<ArchiveFeed*>(dynamic_cast<const ArchiveFeed*>(*i));
-            if(archFeed && &archFeed->archive() == &archive() && archFeed->basePath() == subBasePath)
-            {
-                // It's got it.
-                LOG_DEBUG("Feed for ") << archFeed->basePath() << " already there.";
-                return;
-            }
-        }
-        
-        // Create a new feed.
-        subFolder.attach(new ArchiveFeed(*this, subBasePath));
-    }
+    d->populate(folder);
 }
 
 bool ArchiveFeed::prune(File& /*file*/) const
@@ -131,7 +193,7 @@ bool ArchiveFeed::prune(File& /*file*/) const
 
 File* ArchiveFeed::newFile(const String& name)
 {
-    String newEntry = _basePath / name;
+    String newEntry = d->basePath / name;
     if(archive().has(newEntry))
     {
         /// @throw AlreadyExistsError  The entry @a name already exists in the archive.
@@ -146,15 +208,17 @@ File* ArchiveFeed::newFile(const String& name)
 
 void ArchiveFeed::removeFile(const String& name)
 {
-    String entryPath = _basePath / name;
-    archive().remove(entryPath);
+    archive().remove(d->basePath / name);
 }
 
 Archive& ArchiveFeed::archive()
 {
-    if(_parentFeed)
-    {
-        return _parentFeed->archive();
-    }
-    return *_archive;
+    return d->archive();
 }
+
+const String& ArchiveFeed::basePath() const
+{
+    return d->basePath;
+}
+
+} // namespace de

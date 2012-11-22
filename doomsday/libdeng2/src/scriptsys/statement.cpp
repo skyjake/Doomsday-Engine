@@ -35,8 +35,9 @@ using namespace de;
 Statement* Statement::constructFrom(Reader& reader)
 {
     SerialId id;
+    reader.mark();
     reader >> id;
-    reader.rewind(sizeof(id));
+    reader.rewind();
     
     std::auto_ptr<Statement> result;
     switch(id)

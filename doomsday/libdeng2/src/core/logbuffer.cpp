@@ -156,27 +156,16 @@ public:
 class FileOutputStream : public IOutputStream
 {
 public:
-    FileOutputStream(File* f) : _file(f), _writer(0) {
-        if(f) {
-            // New content is added to the end of the file.
-            _writer = new Writer(*_file, _file->size());
-        }
-    }
-    ~FileOutputStream() {
-        if(_writer) {
-            delete _writer;
-        }
-    }
+    FileOutputStream(File* f) : _file(f) {}
     void flush() {
         if(_file) _file->flush();
     }
     IOutputStream& operator << (const QString& text) {
-        if(_writer) (*_writer) << FixedByteArray(Block(text.toUtf8()));
+        if(_file) *_file << FixedByteArray(Block(text.toUtf8()));
         return *this;
     }
 private:
     File* _file;
-    Writer* _writer;
 };
 
 /// Stream that outputs to a QTextStream.
