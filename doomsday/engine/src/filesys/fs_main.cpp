@@ -322,9 +322,9 @@ struct FS1::Instance
     de::File1* openFile(String path, String const& mode, size_t baseOffset,
                         bool allowDuplicate)
     {
-        LOG_AS("FS1::tryOpenFile");
-
         if(path.isEmpty()) return 0;
+
+        LOG_AS("FS1::openFile");
 
         // We must have an absolute path.
         if(QDir::isRelativePath(path))
@@ -332,7 +332,7 @@ struct FS1::Instance
             path = App_BasePath() / path;
         }
 
-        LOG_TRACE("Trying %s...") << NativePath(path).pretty();
+        LOG_TRACE("Trying \"%s\"...") << NativePath(path).pretty();
 
         bool const reqNativeFile = mode.contains('f');
 

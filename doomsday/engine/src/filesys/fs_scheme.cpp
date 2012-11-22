@@ -353,7 +353,7 @@ void FS1::Scheme::rebuild()
     // Is a rebuild not necessary?
     if(!d->nameHashIsDirty) return;
 
-    LOG_AS("FS1::Scheme::rebuild");
+    LOG_AS("Scheme::rebuild");
     LOG_DEBUG("Rebuilding '%s'...") << d->name;
 
     // uint startTime = Timer_RealMilliseconds();
@@ -434,7 +434,7 @@ static String const& nameForPathGroup(FS1::PathGroup group)
 
 bool FS1::Scheme::addSearchPath(SearchPath const& search, FS1::PathGroup group)
 {
-    LOG_AS("FS1::Scheme::addSearchPath");
+    LOG_AS("Scheme::addSearchPath");
 
     // Ensure this is a well formed path.
     if(search.isEmpty() ||
@@ -533,7 +533,7 @@ bool FS1::Scheme::mapPath(String& path) const
 #if _DEBUG
 void FS1::Scheme::debugPrint() const
 {
-    LOG_AS("FS1::Scheme::debugPrint");
+    LOG_AS("Scheme::debugPrint");
     LOG_DEBUG("[%p]:") << de::dintptr(this);
 
     uint schemeIdx = 0;

@@ -1022,7 +1022,7 @@ font_t* Fonts_CreateFromFile(fontid_t id, char const* resourcePath)
     if(record->font && verbose >= 1)
     {
         de::Uri* uri = reinterpret_cast<de::Uri*>(Fonts_ComposeUri(id));
-        LOG_VERBOSE("New font \"%s\"") << uri;
+        LOG_VERBOSE("New font \"%s\"") << *uri;
         delete uri;
     }
 
