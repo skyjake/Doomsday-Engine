@@ -103,7 +103,7 @@ public:
      */
     void disable() { enable(Log::MAX_LOG_LEVELS); }
 
-    bool enabled(Log::LogLevel overLevel = Log::MESSAGE) const {
+    bool isEnabled(Log::LogLevel overLevel = Log::MESSAGE) const {
         return _enabledOverLevel <= overLevel;
     }
 

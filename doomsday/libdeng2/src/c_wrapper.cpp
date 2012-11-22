@@ -136,7 +136,7 @@ void LegacyCore_PrintfLogFragmentAtLevel(legacycore_loglevel_t level, const char
     }
 
     // If this level is not enabled, just ignore.
-    if(!de::LogBuffer::appBuffer().enabled(logLevel)) return;
+    if(!de::LogBuffer::appBuffer().isEnabled(logLevel)) return;
 
     char buffer[2048];
     va_list args;

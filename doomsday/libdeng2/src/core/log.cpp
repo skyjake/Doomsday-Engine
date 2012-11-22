@@ -58,7 +58,7 @@ LogEntry::LogEntry() : _level(Log::TRACE), _disabled(true)
 LogEntry::LogEntry(Log::LogLevel level, const String& section, const String& format)
     : _level(level), _section(section), _format(format), _disabled(false)
 {
-    if(!LogBuffer::appBuffer().enabled(level))
+    if(!LogBuffer::appBuffer().isEnabled(level))
     {
         _disabled = true;
     }
@@ -244,7 +244,7 @@ LogEntry& Log::enter(const String& format)
 
 LogEntry& Log::enter(Log::LogLevel level, const String& format)
 {
-    if(!LogBuffer::appBuffer().enabled(level))
+    if(!LogBuffer::appBuffer().isEnabled(level))
     {
         // If the level is disabled, no messages are entered into it.
         return *_throwawayEntry;
