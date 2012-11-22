@@ -1,7 +1,6 @@
 /**
  * @file stringpool.h
- *
- * Pool of String (case insensitive). @ingroup data
+ * Pool of strings (case insensitive).
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -53,10 +52,15 @@ namespace de
      * string lookup, and user value/pointer set/get.
      *
      * @todo Add case-sensitive mode.
+     *
+     * @ingroup data
      */
     class DENG2_PUBLIC StringPool : public ISerializable
     {
     public:
+        /// String identifier was invalid. @ingroup errors
+        DENG2_ERROR(InvalidIdError);
+
         /// String identifier. Each string is assigned its own Id.
         typedef uint Id;
 
@@ -118,7 +122,7 @@ namespace de
          *
          * @return The interned copy of the string owned by the pool.
          */
-        String const& internAndRetrieve(String str);
+        String internAndRetrieve(String str);
 
         /**
          * Sets the user-specified custom value associated with the string @a id.
@@ -127,7 +131,7 @@ namespace de
          * @param id     Id of a string.
          * @param value  User value.
          */
-        StringPool& setUserValue(Id id, uint value);
+        void setUserValue(Id id, uint value);
 
         /**
          * Retrieves the user-specified custom value associated with the string @a id.
@@ -148,7 +152,7 @@ namespace de
          * @param id     Id of a string.
          * @param ptr    User pointer.
          */
-        StringPool& setUserPointer(Id id, void* ptr);
+        void setUserPointer(Id id, void* ptr);
 
         /**
          * Retrieves the user-specified custom pointer associated with the string @a id.
@@ -174,9 +178,21 @@ namespace de
          *
          * @param id    Id of the string to retrieve.
          *
-         * @return  Interned string associated with @a internId. Owned by the pool.
+         * @return  Interned string associated with @a internId.
          */
-        String const& string(Id id) const;
+        String string(Id id) const;
+
+        /**
+         * Returns a reference to an interned string. Only use this when the
+         * pool is being accessed as a const object -- the returned references
+         * may become invalid when the pool is changed.
+         *
+         * @param id  Id of the string to retrieve.
+         *
+         * @return Reference to interned string. Do not change the contents of
+         * the pool while retaining the returned reference.
+         */
+        const String& stringRef(Id id) const;
 
         /**
          * Removes a string from the pool.

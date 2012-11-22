@@ -270,7 +270,7 @@ PathTree::Node& PathTree::find(Uri const& searchPath, int flags)
 
 String const& PathTree::fragmentName(FragmentId fragmentId) const
 {
-    return d->fragments.string(fragmentId);
+    return d->fragments.stringRef(fragmentId);
 }
 
 Uri::hash_type PathTree::fragmentHash(FragmentId fragmentId) const

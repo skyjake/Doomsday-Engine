@@ -1,7 +1,6 @@
 /**
  * @file stringpool.cpp
- *
- * Pool of String (case insensitive). @ingroup data
+ * Pool of strings (case insensitive).
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -40,7 +39,6 @@
 namespace de {
 
 static String const nullString = "(nullptr)";
-static String const emptyString = "";
 
 typedef uint InternalId;
 
@@ -319,15 +317,15 @@ StringPool::Id StringPool::intern(String str)
     return EXPORT_ID(d->copyAndAssignUniqueId(str)); // O(log n)
 }
 
-String const& StringPool::internAndRetrieve(String str)
+String StringPool::internAndRetrieve(String str)
 {
     InternalId id = IMPORT_ID(intern(str));
     return *d->idMap[id];
 }
 
-StringPool& StringPool::setUserValue(Id id, uint value)
+void StringPool::setUserValue(Id id, uint value)
 {
-    if(id == 0) return *this;
+    if(id == 0) return;
 
     InternalId const internalId = IMPORT_ID(id);
 
@@ -335,7 +333,6 @@ StringPool& StringPool::setUserValue(Id id, uint value)
     DENG2_ASSERT(d->idMap[internalId] != 0);
 
     d->idMap[internalId]->setUserValue(value); // O(1)
-    return *this;
 }
 
 uint StringPool::userValue(Id id) const
@@ -350,9 +347,9 @@ uint StringPool::userValue(Id id) const
     return d->idMap[internalId]->userValue(); // O(1)
 }
 
-StringPool& StringPool::setUserPointer(Id id, void* ptr)
+void StringPool::setUserPointer(Id id, void* ptr)
 {
-    if(id == 0) return *this;
+    if(id == 0) return;
 
     InternalId const internalId = IMPORT_ID(id);
 
@@ -360,7 +357,6 @@ StringPool& StringPool::setUserPointer(Id id, void* ptr)
     DENG2_ASSERT(d->idMap[internalId] != 0);
 
     d->idMap[internalId]->setUserPointer(ptr); // O(1)
-    return *this;
 }
 
 void* StringPool::userPointer(Id id) const
@@ -386,9 +382,19 @@ StringPool::Id StringPool::isInterned(String str) const
     return 0;
 }
 
-String const& StringPool::string(Id id) const
+String StringPool::string(Id id) const
 {
-    if(id == 0) return emptyString; /// @todo Should error?
+    /// @throws InvalidIdError Provided identifier is not in use.
+    return stringRef(id);
+}
+
+const String& StringPool::stringRef(StringPool::Id id) const
+{
+    if(id == 0)
+    {
+        /// @throws InvalidIdError Provided identifier is not in use.
+        throw InvalidIdError("StringPool::stringRef", "Invalid identifier");
+    }
 
     InternalId const internalId = IMPORT_ID(id);
     DENG2_ASSERT(internalId < d->idMap.size());

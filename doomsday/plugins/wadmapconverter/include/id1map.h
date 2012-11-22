@@ -85,7 +85,7 @@ public:
 private:
     inline de::String const& findMaterialInDictionary(MaterialDictId id)
     {
-        return materials.string(id);
+        return materials.stringRef(id);
     }
 
     /// @todo fixme: A real performance killer...

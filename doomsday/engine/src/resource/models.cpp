@@ -478,7 +478,7 @@ AutoStr* Models_ComposePath(modelid_t id)
 
 static inline String const& findModelPath(modelid_t id)
 {
-    return modelRepository->string(id);
+    return modelRepository->stringRef(id);
 }
 
 static bool registerSkin(model_t& mdl, int skinIndex)
