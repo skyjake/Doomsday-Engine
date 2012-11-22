@@ -371,7 +371,7 @@ bool LumpIndex::catalogues(File1& file)
     return false;
 }
 
-lumpnum_t LumpIndex::indexForPath(char const* path)
+lumpnum_t LumpIndex::indexForPath(char const* path) const
 {
     if(!path || !path[0] || d->lumps.empty()) return -1;
 

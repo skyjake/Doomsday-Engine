@@ -83,10 +83,7 @@ static bool applyPathMapping(ddstring_t* path, PathMapping const& vdm);
 
 struct FS1::Instance
 {
-    /// Base for indicies in the auxiliary lump index.
-    static int const AUXILIARY_BASE = 100000000;
-
-    FS1* self;
+    FS1& self;
 
     /// @c true= Flag newly opened files as "startup".
     bool loadingForStartup;
@@ -94,21 +91,17 @@ struct FS1::Instance
     /// List of currently opened files.
     FileList openFiles;
 
-    /// List of all loaded files present in the file system.
+    /// List of all loaded files present in the system.
     FileList loadedFiles;
 
     /// Database of unique identifiers for all loaded/opened files.
     FileIds fileIds;
 
-    LumpIndex zipFileIndex;
-
+    /// Primary index of all files in the system.
     LumpIndex primaryIndex;
-    LumpIndex auxiliaryPrimaryIndex;
-    // @c true = one or more files have been opened using the auxiliary index.
-    bool auxiliaryPrimaryIndexInUse;
 
-    // Currently selected primary index.
-    LumpIndex* activePrimaryIndex;
+    /// Type-specific index for ZipFiles.
+    LumpIndex zipFileIndex;
 
     /// Virtual (file) path => Lump name mapping.
     LumpMappings lumpMappings;
@@ -116,13 +109,12 @@ struct FS1::Instance
     /// Virtual file-directory mapping.
     PathMappings pathMappings;
 
+    /// System subspaces containing a subset of the total files.
     Namespaces namespaces;
 
-    Instance(FS1* d) : self(d), loadingForStartup(true),
+    Instance(FS1* d) : self(*d), loadingForStartup(true),
         openFiles(), loadedFiles(), fileIds(),
-        zipFileIndex(LIF_UNIQUE_PATHS), primaryIndex(),
-        auxiliaryPrimaryIndex(), auxiliaryPrimaryIndexInUse(false),
-        activePrimaryIndex(&primaryIndex)
+        primaryIndex(), zipFileIndex(LIF_UNIQUE_PATHS)
     {}
 
     ~Instance()
@@ -175,7 +167,7 @@ struct FS1::Instance
             File1& file = loadedFiles[i]->file();
             if(!index || index->catalogues(file))
             {
-                self->deindex(file);
+                self.deindex(file);
                 delete &file;
             }
         }
@@ -187,58 +179,16 @@ struct FS1::Instance
         { delete openFiles.back(); }
     }
 
-    /**
-     * Handles conversion to a logical index that is independent of the lump index currently in use.
-     */
-    inline lumpnum_t logicalLumpNum(lumpnum_t lumpNum)
-    {
-        return (lumpNum < 0 ? -1 :
-                activePrimaryIndex == &auxiliaryPrimaryIndex? lumpNum += AUXILIARY_BASE : lumpNum);
-    }
-
     void clearIndexes()
     {
         primaryIndex.clear();
-        auxiliaryPrimaryIndex.clear();
         zipFileIndex.clear();
-
-        activePrimaryIndex = 0;
-    }
-
-    void usePrimaryIndex()
-    {
-        activePrimaryIndex = &primaryIndex;
-    }
-
-    bool useAuxiliaryPrimaryIndex()
-    {
-        if(!auxiliaryPrimaryIndexInUse) return false;
-        activePrimaryIndex = &auxiliaryPrimaryIndex;
-        return true;
-    }
-
-    /**
-     * Selects which lump index to use, given a logical lump number.
-     * The lump number is then translated into range for the selected index.
-     * This should be called in all functions that access lumps by logical lump number.
-     */
-    void selectPrimaryIndex(lumpnum_t& lumpNum)
-    {
-        if(lumpNum >= AUXILIARY_BASE)
-        {
-            useAuxiliaryPrimaryIndex();
-            lumpNum -= AUXILIARY_BASE;
-        }
-        else
-        {
-            usePrimaryIndex();
-        }
     }
 
     String findPath(de::Uri const& search)
     {
         // Within a namespace?
-        if(FS1::Namespace* fnamespace = self->namespaceByName(search.scheme()))
+        if(FS1::Namespace* fnamespace = self.namespaceByName(search.scheme()))
         {
             LOG_TRACE("Using namespace '%s'...") << fnamespace->name();
 
@@ -306,10 +256,10 @@ struct FS1::Instance
                 LumpMapping const& mapping = *i;
                 if(mapping.first.compare(path)) continue;
 
-                lumpnum_t absoluteLumpNum = self->lumpNumForName(mapping.second);
-                if(absoluteLumpNum < 0) continue;
+                lumpnum_t lumpNum = self.lumpNumForName(mapping.second);
+                if(lumpNum < 0) continue;
 
-                return &self->nameIndexForLump(absoluteLumpNum).lump(absoluteLumpNum);
+                return &self.nameIndex().lump(lumpNum);
             }
         }
 
@@ -392,7 +342,7 @@ struct FS1::Instance
             if(File1* found = findLump(path, mode))
             {
                 // Do not read files twice.
-                if(!allowDuplicate && !self->checkFileId(found->composeUri())) return 0;
+                if(!allowDuplicate && !self.checkFileId(found->composeUri())) return 0;
 
                 // Get a handle to the lump we intend to open.
                 /// @todo The way this buffering works is nonsensical it should not be done here
@@ -411,7 +361,7 @@ struct FS1::Instance
             if(FILE* found = findAndOpenNativeFile(path, mode, foundPath))
             {
                 // Do not read files twice.
-                if(!allowDuplicate && !self->checkFileId(de::Uri(foundPath, RC_NULL)))
+                if(!allowDuplicate && !self.checkFileId(de::Uri(foundPath, RC_NULL)))
                 {
                     fclose(found);
                     return 0;
@@ -432,7 +382,7 @@ struct FS1::Instance
         // been mapped to another location. We want the file to be attributed with
         // the path it is to be known by throughout the virtual file system.
 
-        File1& file = self->interpret(*hndl, path, info);
+        File1& file = self.interpret(*hndl, path, info);
 
         if(loadingForStartup)
         {
@@ -451,9 +401,7 @@ FS1::FS1()
 
 FS1::~FS1()
 {
-    closeAuxiliaryPrimaryIndex();
     delete d;
-
     FileHandleBuilder::shutdown();
 }
 
@@ -543,9 +491,9 @@ void FS1::index(de::File1& file)
             {
                 File1& lump = zip->lump(i);
 
-                d->activePrimaryIndex->catalogLump(lump);
+                d->primaryIndex.catalogLump(lump);
 
-                // Zip files also go into a special ZipFile index as well.
+                // Zip files go into a special ZipFile index as well.
                 d->zipFileIndex.catalogLump(lump);
             }
         }
@@ -558,7 +506,7 @@ void FS1::index(de::File1& file)
             for(int i = 0; i < wad->lumpCount(); ++i)
             {
                 File1& lump = wad->lump(i);
-                d->activePrimaryIndex->catalogLump(lump);
+                d->primaryIndex.catalogLump(lump);
             }
         }
     }
@@ -578,8 +526,6 @@ void FS1::deindex(de::File1& file)
 
     d->zipFileIndex.pruneByFile(file);
     d->primaryIndex.pruneByFile(file);
-    if(d->auxiliaryPrimaryIndexInUse)
-        d->auxiliaryPrimaryIndex.pruneByFile(file);
 
     d->loadedFiles.erase(found);
     delete *found;
@@ -764,68 +710,11 @@ void FS1::resetFileIds()
 void FS1::endStartup()
 {
     d->loadingForStartup = false;
-    d->usePrimaryIndex();
 }
 
 LumpIndex const& FS1::nameIndex() const
 {
-    DENG_ASSERT(d->activePrimaryIndex);
-    return *d->activePrimaryIndex;
-}
-
-LumpIndex const& FS1::nameIndexForLump(lumpnum_t& absoluteLumpNum) const
-{
-    if(absoluteLumpNum >= Instance::AUXILIARY_BASE)
-    {
-        absoluteLumpNum -= Instance::AUXILIARY_BASE;
-        return d->auxiliaryPrimaryIndex;
-    }
     return d->primaryIndex;
-}
-
-typedef enum lumpsizecondition_e {
-    LSCOND_NONE,
-    LSCOND_EQUAL,
-    LSCOND_GREATER_OR_EQUAL,
-    LSCOND_LESS_OR_EQUAL
-} lumpsizecondition_t;
-
-/**
- * Modifies the name so that the size condition is removed.
- */
-static void checkSizeConditionInName(String& name, lumpsizecondition_t* pCond, size_t* pSize)
-{
-    DENG_ASSERT(pCond != 0);
-    DENG_ASSERT(pSize != 0);
-
-    *pCond = LSCOND_NONE;
-    *pSize = 0;
-
-    int condPos = -1;
-    int argPos  = -1;
-    if((condPos = name.indexOf("==")) >= 0)
-    {
-        *pCond = LSCOND_EQUAL;
-        argPos = condPos + 2;
-    }
-    else if((condPos = name.indexOf(">=")) >= 0)
-    {
-        *pCond = LSCOND_GREATER_OR_EQUAL;
-        argPos = condPos + 2;
-    }
-    else if((condPos = name.indexOf("<=")) >= 0)
-    {
-        *pCond = LSCOND_LESS_OR_EQUAL;
-        argPos = condPos + 2;
-    }
-
-    if(condPos < 0) return;
-
-    // Get the argument.
-    *pSize = name.mid(argPos).toULong();
-
-    // Remove it from the name.
-    name.truncate(condPos);
 }
 
 lumpnum_t FS1::lumpNumForName(String name, bool silent)
@@ -835,125 +724,27 @@ lumpnum_t FS1::lumpNumForName(String name, bool silent)
     lumpnum_t lumpNum = -1;
     if(!name.isEmpty())
     {
-        lumpsizecondition_t sizeCond;
-        size_t lumpSize = 0, refSize;
-
-        // The name may contain a size condition (==, >=, <=).
-        checkSizeConditionInName(name, &sizeCond, &refSize);
-
         // Append a .lmp extension if none is specified.
         if(name.fileNameExtension().isEmpty())
         {
             name += ".lmp";
         }
 
-        // We have to check both the primary and auxiliary lump indexes
-        // because we've only got a name and don't know where it is located.
-        // Start with the auxiliary lumps because they have precedence.
-        QByteArray nameUtf8 = name.toUtf8();
-        if(d->useAuxiliaryPrimaryIndex())
+        // Perform the search.
+        lumpNum = d->primaryIndex.indexForPath(name.toUtf8().constData());
+
+        // Not found? - warn the user
+        if(lumpNum < 0 && !silent)
         {
-            lumpNum = d->activePrimaryIndex->indexForPath(nameUtf8.constData());
-
-            if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
-            {
-                // Get the size as well for the condition check.
-                lumpSize = d->activePrimaryIndex->lump(lumpNum).info().size;
-            }
-        }
-
-        // Found it yet?
-        if(lumpNum < 0)
-        {
-            d->usePrimaryIndex();
-            lumpNum = d->activePrimaryIndex->indexForPath(nameUtf8.constData());
-
-            if(lumpNum >= 0 && sizeCond != LSCOND_NONE)
-            {
-                // Get the size as well for the condition check.
-                lumpSize = d->activePrimaryIndex->lump(lumpNum).info().size;
-            }
-        }
-
-        // Check the condition.
-        switch(sizeCond)
-        {
-        case LSCOND_EQUAL:
-            if(lumpSize != refSize) lumpNum = -1;
-            break;
-
-        case LSCOND_GREATER_OR_EQUAL:
-            if(lumpSize < refSize) lumpNum = -1;
-            break;
-
-        case LSCOND_LESS_OR_EQUAL:
-            if(lumpSize > refSize) lumpNum = -1;
-            break;
-
-        default: break;
-        }
-
-        // If still not found, warn the user.
-        if(!silent && lumpNum < 0)
-        {
-            if(sizeCond == LSCOND_NONE)
-            {
-                LOG_WARNING("Lump \"%s\" not found.") << name;
-            }
-            else
-            {
-                LOG_WARNING("Lump \"%s\" with size%s%i not found.")
-                    << name.fileNameWithoutExtension()
-                    << (           sizeCond == LSCOND_EQUAL? "==" :
-                        sizeCond == LSCOND_GREATER_OR_EQUAL? ">=" :
-                                                             "<=" )
-                    << int(refSize);
-            }
+            LOG_WARNING("Lump \"%s\" not found.")
+                << name.fileNameWithoutExtension();
         }
     }
     else if(!silent)
     {
         LOG_WARNING("Empty name, returning invalid lumpnum.");
     }
-    return d->logicalLumpNum(lumpNum);
-}
-
-lumpnum_t FS1::openAuxiliary(String path, size_t baseOffset)
-{
-    /// @todo Allow opening Zip files too.
-    File1* file = d->openFile(path, "rb", baseOffset, true /*allow duplicates*/);
-    if(Wad* wad = dynamic_cast<Wad*>(file))
-    {
-        // Add a handle to the open files list.
-        FileHandle* openFilesHndl = FileHandleBuilder::fromFile(*wad);
-        d->openFiles.push_back(openFilesHndl); openFilesHndl->setList(reinterpret_cast<struct filelist_s*>(&d->openFiles));
-
-        // Select the auxiliary index.
-        if(d->auxiliaryPrimaryIndexInUse)
-        {
-            closeAuxiliaryPrimaryIndex();
-        }
-        d->activePrimaryIndex = &d->auxiliaryPrimaryIndex;
-        d->auxiliaryPrimaryIndexInUse = true;
-
-        // Index this file into the file system.
-        index(*wad);
-
-        return Instance::AUXILIARY_BASE;
-    }
-
-    delete file;
-    return -1;
-}
-
-void FS1::closeAuxiliaryPrimaryIndex()
-{
-    if(d->useAuxiliaryPrimaryIndex())
-    {
-        d->clearLoadedFiles(&d->auxiliaryPrimaryIndex);
-        d->auxiliaryPrimaryIndexInUse = false;
-    }
-    d->usePrimaryIndex();
+    return lumpNum;
 }
 
 void FS1::releaseFile(de::File1& file)
@@ -1381,10 +1172,10 @@ D_CMD(DumpLump)
 
     if(fileSystem)
     {
-        lumpnum_t absoluteLumpNum = App_FileSystem()->lumpNumForName(argv[1]);
-        if(absoluteLumpNum >= 0)
+        lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(argv[1]);
+        if(lumpNum >= 0)
         {
-            return F_DumpLump(absoluteLumpNum);
+            return F_DumpLump(lumpNum);
         }
         Con_Printf("No such lump.\n");
         return false;
@@ -1570,12 +1361,11 @@ struct filehandle_s* F_Open(char const* nativePath, char const* mode)
     return F_Open2(nativePath, mode, 0/*base offset*/);
 }
 
-struct filehandle_s* F_OpenLump(lumpnum_t absoluteLumpNum)
+struct filehandle_s* F_OpenLump(lumpnum_t lumpNum)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        de::File1& lump = App_FileSystem()->nameIndex().lump(lumpNum);
         return reinterpret_cast<struct filehandle_s*>(&App_FileSystem()->openLump(lump));
     }
     catch(LumpIndex::NotFoundError const&)
@@ -1583,9 +1373,9 @@ struct filehandle_s* F_OpenLump(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
-boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
+boolean F_IsValidLumpNum(lumpnum_t lumpNum)
 {
-    return App_FileSystem()->nameIndexForLump(absoluteLumpNum).isValidIndex(absoluteLumpNum);
+    return App_FileSystem()->nameIndex().isValidIndex(lumpNum);
 }
 
 lumpnum_t F_LumpNumForName(char const* name)
@@ -1599,12 +1389,11 @@ lumpnum_t F_LumpNumForName(char const* name)
     return -1;
 }
 
-AutoStr* F_LumpName(lumpnum_t absoluteLumpNum)
+AutoStr* F_LumpName(lumpnum_t lumpNum)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        String const& name = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).name();
+        String const& name = App_FileSystem()->nameIndex().lump(lumpNum).name();
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromTextStd(nameUtf8.constData());
     }
@@ -1613,24 +1402,22 @@ AutoStr* F_LumpName(lumpnum_t absoluteLumpNum)
     return AutoStr_NewStd();
 }
 
-size_t F_LumpLength(lumpnum_t absoluteLumpNum)
+size_t F_LumpLength(lumpnum_t lumpNum)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).size();
+        return App_FileSystem()->nameIndex().lump(lumpNum).size();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
     return 0;
 }
 
-uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
+uint F_LumpLastModified(lumpnum_t lumpNum)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        return App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum).lastModified();
+        return App_FileSystem()->nameIndex().lump(lumpNum).lastModified();
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore this error.
@@ -1722,12 +1509,11 @@ void F_UnlockLump(struct file1_s* _file, int lumpIdx)
     file->unlock();
 }
 
-struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
+struct file1_s* F_FindFileForLumpNum2(lumpnum_t lumpNum, int* lumpIdx)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        de::File1 const& lump = App_FileSystem()->nameIndex().lump(lumpNum);
         if(lumpIdx) *lumpIdx = lump.info().lumpIdx;
         return reinterpret_cast<struct file1_s*>(&lump.container());
     }
@@ -1736,12 +1522,11 @@ struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
     return 0;
 }
 
-struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
+struct file1_s* F_FindFileForLumpNum(lumpnum_t lumpNum)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        de::File1 const& lump = App_FileSystem()->nameIndex().lump(lumpNum);
         return reinterpret_cast<struct file1_s*>(&lump.container());
     }
     catch(LumpIndex::NotFoundError const&)
@@ -1749,12 +1534,11 @@ struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
-AutoStr* F_ComposeLumpFilePath(lumpnum_t absoluteLumpNum)
+AutoStr* F_ComposeLumpFilePath(lumpnum_t lumpNum)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        de::File1 const& lump = App_FileSystem()->nameIndex().lump(lumpNum);
         QByteArray path = lump.container().composePath().toUtf8();
         return AutoStr_FromTextStd(path.constData());
     }
@@ -1763,12 +1547,11 @@ AutoStr* F_ComposeLumpFilePath(lumpnum_t absoluteLumpNum)
     return AutoStr_NewStd();
 }
 
-boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
+boolean F_LumpIsCustom(lumpnum_t lumpNum)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1 const& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        de::File1 const& lump = App_FileSystem()->nameIndex().lump(lumpNum);
         return lump.container().hasCustom();
     }
     catch(LumpIndex::NotFoundError const&)
@@ -1885,22 +1668,6 @@ void F_ComposePWADFileList(char* outBuf, size_t outBufSize, char const* delimite
 uint F_LoadedFilesCRC(void)
 {
     return App_FileSystem()->loadedFilesCRC();
-}
-
-lumpnum_t F_OpenAuxiliary2(char const* nativePath, size_t baseOffset)
-{
-    String path = NativePath(nativePath).expand().withSeparators('/');
-    return App_FileSystem()->openAuxiliary(path, baseOffset);
-}
-
-lumpnum_t F_OpenAuxiliary(char const* nativePath)
-{
-    return F_OpenAuxiliary2(nativePath, 0/*base offset*/);
-}
-
-void F_CloseAuxiliary(void)
-{
-    App_FileSystem()->closeAuxiliaryPrimaryIndex();
 }
 
 boolean F_FindPath2(resourceclassid_t classId, uri_s const* searchPath,

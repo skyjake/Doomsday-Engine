@@ -611,7 +611,7 @@ void            DED_Clear(ded_t* ded);
  */
 int DED_Read(ded_t* ded, const char* path);
 
-int             DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum);
+int             DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
 
 int             DED_AddFlag(ded_t* ded, char const* name, char const* text, int value);
 int             DED_AddMobj(ded_t* ded, char const* idStr);

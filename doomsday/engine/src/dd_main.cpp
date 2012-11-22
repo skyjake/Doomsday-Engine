@@ -1809,10 +1809,10 @@ boolean DD_Init(void)
     if(CommandLine_CheckWith("-dumplump", 1))
     {
         const char* name = CommandLine_Next();
-        lumpnum_t absoluteLumpNum = App_FileSystem()->lumpNumForName(name);
-        if(absoluteLumpNum >= 0)
+        lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(name);
+        if(lumpNum >= 0)
         {
-            F_DumpLump(absoluteLumpNum);
+            F_DumpLump(lumpNum);
         }
         else
         {

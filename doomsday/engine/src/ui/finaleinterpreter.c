@@ -2009,16 +2009,16 @@ DEFFC(TextFromDef)
 DEFFC(TextFromLump)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    lumpnum_t absoluteLumpNum;
+    lumpnum_t lumpNum;
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
 
-    absoluteLumpNum = F_LumpNumForName(OP_CSTRING(3));
-    if(absoluteLumpNum >= 0)
+    lumpNum = F_LumpNumForName(OP_CSTRING(3));
+    if(lumpNum >= 0)
     {
         int lumpIdx;
-        size_t lumpSize = F_LumpLength(absoluteLumpNum);
-        struct file1_s* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+        size_t lumpSize = F_LumpLength(lumpNum);
+        struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
         const uint8_t* lumpPtr = F_CacheLump(file, lumpIdx);
         size_t bufSize = 2 * lumpSize + 1, i;
         char* str, *out;

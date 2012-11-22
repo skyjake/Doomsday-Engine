@@ -387,21 +387,10 @@ namespace de
         lumpnum_t lumpNumForName(String name, bool silent = true);
 
         /**
-         * Provides access to the currently active Wad lump name index. This can
-         * be used for efficiently looking up files based on name.
+         * Provides access to the main index of the file system. This can be
+         * used for efficiently looking up files based on name.
          */
         LumpIndex const& nameIndex() const;
-
-        /**
-         * Provides access to the Wad lump name index which is applicable to the
-         * specified @a absoluteLumpNum. This can be used for efficiently looking
-         * up files based on name.
-         *
-         * @param absoluteLumpNum   Determines which lump index to return. This
-         *                          number is then translated into the range for
-         *                          the selected index.
-         */
-        LumpIndex const& nameIndexForLump(lumpnum_t& absoluteLumpNum) const;
 
         /**
          * Opens the given file (will be translated) for reading.
@@ -540,18 +529,6 @@ namespace de
         void printDirectory(String path);
 
         /**
-         * Try to open the specified WAD archive into the auxiliary lump index.
-         *
-         * @return  Base index for lumps in this archive.
-         */
-        lumpnum_t openAuxiliary(String path, size_t baseOffset = 0);
-
-        /**
-         * Close the auxiliary lump index if open.
-         */
-        void closeAuxiliaryPrimaryIndex();
-
-        /**
          * Calculate a CRC for the loaded file list.
          */
         uint loadedFilesCRC();
@@ -621,24 +598,24 @@ FileHandle* F_Open3(char const* nativePath, char const* mode, size_t baseOffset,
 FileHandle* F_Open2(char const* nativePath, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
 FileHandle* F_Open(char const* nativePath, char const* mode/*, baseOffset = 0 */);
 
-FileHandle* F_OpenLump(lumpnum_t absoluteLumpNum);
+FileHandle* F_OpenLump(lumpnum_t lumpNum);
 
-boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
+boolean F_IsValidLumpNum(lumpnum_t lumpNum);
 
 lumpnum_t F_LumpNumForName(char const* name);
 
-AutoStr* F_ComposeLumpFilePath(lumpnum_t absoluteLumpNum);
+AutoStr* F_ComposeLumpFilePath(lumpnum_t lumpNum);
 
-boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
+boolean F_LumpIsCustom(lumpnum_t lumpNum);
 
-AutoStr* F_LumpName(lumpnum_t absoluteLumpNum);
+AutoStr* F_LumpName(lumpnum_t lumpNum);
 
-size_t F_LumpLength(lumpnum_t absoluteLumpNum);
+size_t F_LumpLength(lumpnum_t lumpNum);
 
-uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
+uint F_LumpLastModified(lumpnum_t lumpNum);
 
-struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0 */);
+struct file1_s* F_FindFileForLumpNum2(lumpnum_t lumpNum, int* lumpIdx);
+struct file1_s* F_FindFileForLumpNum(lumpnum_t lumpNum/*, lumpIdx = 0 */);
 
 void F_Delete(struct filehandle_s* file);
 
@@ -664,11 +641,6 @@ void F_UnlockLump(struct file1_s* file, int lumpIdx);
 void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimiter);
 
 uint F_LoadedFilesCRC(void);
-
-lumpnum_t F_OpenAuxiliary2(char const* nativePath, size_t baseOffset);
-lumpnum_t F_OpenAuxiliary(char const* nativePath/*, baseOffset = 0 */);
-
-void F_CloseAuxiliary(void);
 
 /**
  * @defgroup resourceLocationFlags  Resource Location Flags
