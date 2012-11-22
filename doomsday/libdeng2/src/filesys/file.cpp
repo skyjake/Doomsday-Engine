@@ -186,7 +186,7 @@ IIStream& File::operator >> (IByteArray& bytes)
 const IIStream& File::operator >> (IByteArray& bytes) const
 {
     DENG2_UNUSED(bytes);
-    throw InputError("File::operator >>", "File does not produce a byte stream");
+    throw InputError("File::operator >>", "File does not offer an immutable byte stream");
 }
 
 dsize File::size() const

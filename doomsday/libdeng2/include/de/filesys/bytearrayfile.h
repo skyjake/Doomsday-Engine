@@ -33,7 +33,9 @@ namespace de
      *
      * When used as an I/O stream: reading from the stream outputs the entire
      * contents of the file, and writing to the stream appends new content to
-     * the end of the file.
+     * the end of the file. There is no difference whether the file is const or
+     * not, the stream is considered immutable in both cases (i.e., when, say,
+     * a native file is read, the bytes aren't removed from the file).
      *
      * @ingroup fs
      */
