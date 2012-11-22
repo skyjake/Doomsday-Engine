@@ -50,6 +50,7 @@ class SearchPath : public Uri
 {
 public:
     /// @defgroup searchPathFlags Search Path Flags
+    /// @ingroup flags
     enum Flag
     {
         /// Interpreters should not decend into branches.
