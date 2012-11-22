@@ -812,7 +812,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             de::Uri newSearchPath = de::Uri::fromNativeDirPath(NativePath(label));
             FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassByName("RC_MODEL").defaultNamespace());
             DENG_ASSERT(fnamespace);
-            fnamespace->addSearchPath(FS1::ExtraPaths, reinterpret_cast<de::Uri const&>(newSearchPath));
+            fnamespace->addSearchPath(reinterpret_cast<de::Uri const&>(newSearchPath), FS1::ExtraPaths);
         }
 
         if(ISTOKEN("Header"))
@@ -2675,13 +2675,13 @@ int DED_Read(ded_t* ded, const char* path)
 /**
  * Reads definitions from the given lump.
  */
-int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
+int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
 {
     int lumpIdx;
-    struct file1_s* file = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    struct file1_s* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
     if(file)
     {
-        if(F_LumpLength(absoluteLumpNum) != 0)
+        if(F_LumpLength(lumpNum) != 0)
         {
             uint8_t const* lumpPtr = F_CacheLump(file, lumpIdx);
             DED_ReadData(ded, (char const*)lumpPtr, Str_Text(F_ComposePath(file)));

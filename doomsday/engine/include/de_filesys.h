@@ -31,7 +31,6 @@
 #include "filesys/filehandlebuilder.h"
 #include "filesys/fs_main.h"
 #include "filesys/fs_util.h"
-#include "filesys/locator.h"
 #include "filesys/lumpindex.h"
 #include "filesys/metafile.h"
 #include "filesys/sys_direc.h"

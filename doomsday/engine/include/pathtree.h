@@ -145,7 +145,7 @@ namespace de
             Uri::hash_type hash() const;
 
             /**
-             * @param candidatePath  Mapped search pattern (path).
+             * @param searchPattern  Mapped search pattern (path).
              * @param flags          @ref pathComparisonFlags
              *
              * @return Zero iff the candidate path matched this.
@@ -154,8 +154,10 @@ namespace de
              *       using another tree node (possibly from another PathTree), would
              *       allow for further optimizations elsewhere (in the file system
              *       for example) -ds
+             *
+             * @todo This logic should be encapsulated in Uri/Uri::PathNode -ds
              */
-            int comparePath(de::Uri const& candidatePath, int flags) const;
+            int comparePath(de::Uri const& searchPattern, int flags) const;
 
             /**
              * Composes the URI for this node. 'Composing' the path of a node is to
@@ -288,7 +290,7 @@ namespace de
          * @param parent      Used in combination with @a flags= PCF_MATCH_PARENT
          *                    to limit the traversal to only the child nodes of
          *                    this node.
-         * @param hash        If not @c PathTree::no_hash only consider nodes whose
+         * @param hashKey     If not @c PathTree::no_hash only consider nodes whose
          *                    hashed name matches this.
          * @param callback    Callback function ptr.
          * @param parameters  Passed to the callback.

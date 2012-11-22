@@ -185,7 +185,6 @@ DENG_HEADERS += \
     include/filesys/fileinfo.h \
     include/filesys/fs_main.h \
     include/filesys/fs_util.h \
-    include/filesys/locator.h \
     include/filesys/lumpindex.h \
     include/filesys/metafile.h \
     include/filesys/searchpath.h \
@@ -473,7 +472,6 @@ SOURCES += \
     src/filesys/fs_main.cpp \
     src/filesys/fs_namespace.cpp \
     src/filesys/fs_util.cpp \
-    src/filesys/locator.cpp \
     src/filesys/lumpindex.cpp \
     src/filesys/metafile.cpp \
     src/filesys/searchpath.cpp \

@@ -85,7 +85,7 @@ Uri* Uri_New(void);
  * @param defaultResourceClasslasslass  If no scheme is defined in @a path and this is not @c FC_NULL,
  *      look for an appropriate default scheme for this class of resource.
  */
-Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defResourceClasslasslasslass);
+Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass);
 Uri* Uri_NewWithPath(char const* path);
 
 /**
@@ -175,8 +175,8 @@ Uri* Uri_SetPath(Uri* uri, char const* path);
  *
  * @return  Same as @a uri, for caller convenience.
  */
-Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defResourceClasslasslasslass);
-Uri* Uri_SetUri(Uri* uri, char const* path/* defaultResourceClasslasslass = RC_UNKNOWN*/);
+Uri* Uri_SetUri2(Uri* uri, char const* path, resourceclassid_t defaultResourceClass);
+Uri* Uri_SetUri(Uri* uri, char const* path/* defaultResourceClass = RC_UNKNOWN*/);
 
 Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path);
 

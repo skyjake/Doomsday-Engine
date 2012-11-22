@@ -691,12 +691,11 @@ static bool dumpLump(de::File1& lump, String path)
     return true;
 }
 
-boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* _path)
+boolean F_DumpLump2(lumpnum_t lumpNum, char const* _path)
 {
     try
     {
-        lumpnum_t lumpNum = absoluteLumpNum;
-        de::File1& lump = App_FileSystem()->nameIndexForLump(lumpNum).lump(lumpNum);
+        de::File1& lump = App_FileSystem()->nameIndex().lump(lumpNum);
         String path = String(_path? _path : "");
         return dumpLump(lump, path);
     }
@@ -705,7 +704,7 @@ boolean F_DumpLump2(lumpnum_t absoluteLumpNum, char const* _path)
     return false;
 }
 
-boolean F_DumpLump(lumpnum_t absoluteLumpNum)
+boolean F_DumpLump(lumpnum_t lumpNum)
 {
-    return F_DumpLump2(absoluteLumpNum, 0);
+    return F_DumpLump2(lumpNum, 0);
 }

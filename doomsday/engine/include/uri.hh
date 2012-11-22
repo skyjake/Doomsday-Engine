@@ -80,7 +80,6 @@ public:
 
     /**
      * Flags for printing URIs.
-     * @ingroup flags base
      */
     enum PrintFlag
     {
@@ -149,8 +148,10 @@ public:
      * @param defaultResourceClass  If no scheme is defined in @a path and this
      *      is not @c RC_NULL, ask the resource locator whether it knows of an
      *      appropriate default scheme for this class of resource.
+     *
+     * @param sep  Character used to separate path segments in @a path.
      */
-    Uri(String path, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar delimiter = '/');
+    Uri(String path, resourceclassid_t defaultResourceClass = RC_UNKNOWN, QChar sep = '/');
 
     /**
      * Construct a Uri instance by duplicating @a other.
@@ -183,8 +184,10 @@ public:
      * (because file paths do not include one).
      *
      * @param path  Native path to a file in the native file system.
+     * @param defaultResourceClass  Default resource class.
      */
-    static Uri fromNativePath(NativePath const& path);
+    static Uri fromNativePath(NativePath const& path,
+                              resourceclassid_t defaultResourceClass = RC_NULL);
 
     /**
      * Constructs a Uri instance from a NativePath that refers to a native
@@ -264,8 +267,10 @@ public:
 
     /**
      * Change the path of the URI to @a newPath.
+     *
+     * @param sep  Character used to separate path segments in @a path.
      */
-    Uri& setPath(String newPath, QChar delimiter = '/');
+    Uri& setPath(String newPath, QChar sep = '/');
 
     /**
      * Update this URI by parsing new values from the specified arguments.
@@ -275,18 +280,22 @@ public:
      * @param defaultResourceClass  If no scheme is defined in @a newUri and
      *      this is not @c RC_NULL, ask the resource locator whether it knows
      *      of an appropriate default scheme for this class of resource.
+     *
+     * @param sep  Character used to separate path segments in @a path.
      */
     Uri& setUri(String newUri, resourceclassid_t defaultResourceClass = RC_UNKNOWN,
-                QChar delimiter = '/');
+                QChar sep = '/');
 
     /**
      * Compose from this URI a plain-text representation. Any internal encoding
      * method or symbolic identifiers will be left unchanged in the resultant
      * string (not decoded, not resolved).
      *
+     * @param sep  Character to use to replace path segment separators.
+     *
      * @return  Plain-text String representation.
      */
-    String compose(QChar delimiter = '/') const;
+    String compose(QChar sep = '/') const;
 
     /**
      * Retrieve the segment with index @a index. Note that segments are indexed

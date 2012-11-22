@@ -25,7 +25,7 @@
 
 namespace de {
 
-SearchPath::SearchPath(Uri const& _uri, SearchPath::Flags _flags)
+SearchPath::SearchPath(de::Uri const& _uri, SearchPath::Flags _flags)
     : Uri(_uri), flags_(_flags)
 {}
 

@@ -40,6 +40,7 @@
 #ifdef __cplusplus
 
 #include <QList>
+#include <QMap>
 #include <de/String>
 #include "resourceclass.h"
 
@@ -155,7 +156,29 @@ namespace de {
 
 typedef QList<ResourceClass*> ResourceClasses;
 
+/// Map of symbolic file type names to file types.
+typedef QMap<String, FileType*> FileTypes;
+
 }
+
+/**
+ * Lookup a FileType by symbolic name.
+ *
+ * @param name  Symbolic name of the type.
+ * @return  FileType associated with @a name. May return a null-object.
+ */
+de::FileType& DD_FileTypeByName(de::String name);
+
+/**
+ * Attempts to determine which "type" should be attributed to a resource, solely
+ * by examining the name (e.g., a file name/path).
+ *
+ * @return  Type determined for this resource. May return a null-object.
+ */
+de::FileType& DD_GuessFileTypeFromFileName(de::String name);
+
+/// Returns the registered file types for efficient traversal.
+de::FileTypes const& DD_FileTypes();
 
 /**
  * Lookup a ResourceClass by id.

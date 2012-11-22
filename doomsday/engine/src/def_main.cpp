@@ -709,27 +709,28 @@ static void Def_InitTextDef(ddtext_t* txt, char const* str)
     txt->text = (char*) M_Realloc(txt->text, strlen(txt->text) + 1);
 }
 
-void Def_ReadProcessDED(char const* fileName)
+void Def_ReadProcessDED(char const* path)
 {
     LOG_AS("Def_ReadProcessDED");
 
-    if(!fileName || !fileName[0]) return;
+    if(!path || !path[0]) return;
 
-    if(!App_FileSystem()->accessFile(fileName))
+    de::Uri path_ = de::Uri(path, RC_NULL);
+    if(!App_FileSystem()->accessFile(path_))
     {
-        LOG_WARNING("\"%s\" not found!") << de::NativePath(fileName).pretty();
+        LOG_WARNING("\"%s\" not found!") << de::NativePath(path_.asText()).pretty();
         return;
     }
 
     // We use the File Ids to prevent loading the same files multiple times.
-    if(!App_FileSystem()->checkFileId(fileName))
+    if(!App_FileSystem()->checkFileId(path_))
     {
         // Already handled.
-        LOG_DEBUG("\"%s\" has already been read.") << de::NativePath(fileName).pretty();
+        LOG_DEBUG("\"%s\" has already been read.") << de::NativePath(path_.asText()).pretty();
         return;
     }
 
-    if(!DED_Read(&defs, fileName))
+    if(!DED_Read(&defs, path))
     {
         Con_Error("Def_ReadProcessDED: %s\n", dedReadError);
     }
@@ -831,7 +832,7 @@ static void readAllDefinitions(void)
     // Start with engine's own top-level definition file, it is always read first.
     de::Uri searchPath = de::Uri("doomsday.ded", RC_DEFINITION);
     AutoStr* foundPath = AutoStr_NewStd();
-    if(F_Find2(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
+    if(F_FindPath(RC_DEFINITION, reinterpret_cast<uri_s*>(&searchPath), foundPath))
     {
         VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(foundPath))) )
         readDefinitionFile(Str_Text(foundPath));

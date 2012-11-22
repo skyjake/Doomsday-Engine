@@ -49,6 +49,7 @@ namespace de {
 class SearchPath : public Uri
 {
 public:
+    /// @defgroup searchPathFlags Search Path Flags
     enum Flag
     {
         /// Interpreters should not decend into branches.

@@ -1,11 +1,10 @@
 /**
- * @file resourcerecord.cpp
+ * @file metafile.cpp
  *
- * Resource Record.
- *
- * @ingroup resource
+ * MetaFile. @ingroup fs
  *
  * @author Copyright &copy; 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @author Copyright &copy; 2010-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,6 +26,7 @@
 #include "de_filesys.h"
 
 #include "filesys/metafile.h"
+#include "resource/wad.h"
 #include "resource/zip.h"
 
 namespace de {
@@ -103,42 +103,150 @@ MetaFile& MetaFile::addIdentityKey(String newIdentityKey, bool* didAdd)
     return *this;
 }
 
-/// @return  @c true, iff the resource appears to be what we think it is.
-static bool recognizeWAD(String const& filePath, QStringList const& identityKeys)
-{
-    lumpnum_t auxLumpBase = App_FileSystem()->openAuxiliary(filePath);
-    bool result = false;
+typedef enum lumpsizecondition_e {
+    LSCOND_NONE,
+    LSCOND_EQUAL,
+    LSCOND_GREATER_OR_EQUAL,
+    LSCOND_LESS_OR_EQUAL
+} lumpsizecondition_t;
 
-    if(auxLumpBase >= 0)
+/**
+ * Modifies the idKey so that the size condition is removed.
+ */
+static void checkSizeConditionInIdentityKey(String& idKey, lumpsizecondition_t* pCond, size_t* pSize)
+{
+    DENG_ASSERT(pCond != 0);
+    DENG_ASSERT(pSize != 0);
+
+    *pCond = LSCOND_NONE;
+    *pSize = 0;
+
+    int condPos = -1;
+    int argPos  = -1;
+    if((condPos = idKey.indexOf("==")) >= 0)
     {
-        // Ensure all identity lumps are present.
-        if(identityKeys.count())
+        *pCond = LSCOND_EQUAL;
+        argPos = condPos + 2;
+    }
+    else if((condPos = idKey.indexOf(">=")) >= 0)
+    {
+        *pCond = LSCOND_GREATER_OR_EQUAL;
+        argPos = condPos + 2;
+    }
+    else if((condPos = idKey.indexOf("<=")) >= 0)
+    {
+        *pCond = LSCOND_LESS_OR_EQUAL;
+        argPos = condPos + 2;
+    }
+
+    if(condPos < 0) return;
+
+    // Get the argument.
+    *pSize = idKey.mid(argPos).toULong();
+
+    // Remove it from the name.
+    idKey.truncate(condPos);
+}
+
+static lumpnum_t lumpNumForIdentityKey(LumpIndex const& lumpIndex, String idKey)
+{
+    if(idKey.isEmpty()) return -1;
+
+    // The key may contain a size condition (==, >=, <=).
+    lumpsizecondition_t sizeCond;
+    size_t refSize;
+    checkSizeConditionInIdentityKey(idKey, &sizeCond, &refSize);
+
+    // We should now be left with just the name.
+    String name = idKey;
+
+    // Append a .lmp extension if none is specified.
+    if(idKey.fileNameExtension().isEmpty())
+    {
+        name += ".lmp";
+    }
+
+    lumpnum_t lumpNum = lumpIndex.indexForPath(name.toUtf8().constData());
+    if(lumpNum < 0) return -1;
+
+    // Check the condition.
+    size_t lumpSize = lumpIndex.lump(lumpNum).info().size;
+    switch(sizeCond)
+    {
+    case LSCOND_EQUAL:
+        if(lumpSize != refSize) return -1;
+        break;
+
+    case LSCOND_GREATER_OR_EQUAL:
+        if(lumpSize < refSize) return -1;
+        break;
+
+    case LSCOND_LESS_OR_EQUAL:
+        if(lumpSize > refSize) return -1;
+        break;
+
+    default: break;
+    }
+
+    return lumpNum;
+}
+
+/// @return  @c true, iff the resource appears to be what we think it is.
+static bool validateWad(String const& filePath, QStringList const& identityKeys)
+{
+    bool validated = true;
+    try
+    {
+        de::FileHandle& hndl = App_FileSystem()->openFile(filePath, "rb", 0/*baseOffset*/, true /*allow duplicates*/);
+
+        if(de::Wad* wad = dynamic_cast<de::Wad*>(&hndl.file()))
         {
-            result = true;
-            DENG2_FOR_EACH_CONST(QStringList, i, identityKeys)
+            // Ensure all identity lumps are present.
+            if(identityKeys.count())
             {
-                QByteArray identityKey = i->toUtf8();
-                lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(identityKey.constData());
-                if(lumpNum < 0)
+                if(wad->empty())
                 {
-                    result = false;
-                    break;
+                    // Clear not what we are looking for.
+                    validated = false;
+                }
+                else
+                {
+                    // Publish lumps to a temporary index.
+                    LumpIndex lumpIndex;
+                    for(int i = 0; i < wad->lumpCount(); ++i)
+                    {
+                        lumpIndex.catalogLump(wad->lump(i));
+                    }
+
+                    // Check each lump.
+                    DENG2_FOR_EACH_CONST(QStringList, i, identityKeys)
+                    {
+                        if(lumpNumForIdentityKey(lumpIndex, *i) < 0)
+                        {
+                            validated = false;
+                            break;
+                        }
+                    }
                 }
             }
         }
         else
         {
-            // Matched.
-            result = true;
+            validated = false;
         }
 
-        F_CloseAuxiliary();
+        // We're done with the file.
+        App_FileSystem()->releaseFile(hndl.file());
+        delete &hndl;
     }
-    return result;
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+
+    return validated;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool recognizeZIP(String const& filePath, QStringList const& /*identityKeys*/)
+static bool validateZip(String const& filePath, QStringList const& /*identityKeys*/)
 {
     try
     {
@@ -167,7 +275,7 @@ MetaFile& MetaFile::locateFile()
         Uri path = Uri(*i, d->classId);
 
         // Attempt to resolve a path to the named resource.
-        if(!F_Find2(d->classId, reinterpret_cast<uri_s*>(&path), found)) continue;
+        if(!F_FindPath(d->classId, reinterpret_cast<uri_s*>(&path), found)) continue;
 
         // We've found *something*.
         String foundPath = String(Str_Text(found));
@@ -177,9 +285,9 @@ MetaFile& MetaFile::locateFile()
         if(d->classId == RC_PACKAGE)
         {
             /// @todo The identity configuration should declare the type of resource...
-                validated = recognizeWAD(foundPath, d->identityKeys);
+                validated = validateWad(foundPath, d->identityKeys);
             if(!validated)
-                validated = recognizeZIP(foundPath, d->identityKeys);
+                validated = validateZip(foundPath, d->identityKeys);
         }
         else
         {

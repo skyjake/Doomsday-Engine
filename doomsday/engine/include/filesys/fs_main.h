@@ -125,8 +125,8 @@ namespace de
             /// Groups of search paths ordered by priority.
             typedef QMultiMap<PathGroup, SearchPath> SearchPaths;
 
-            /// List of found files.
-            typedef QList<PathTree::Node*> FileList;
+            /// List of found file nodes.
+            typedef QList<PathTree::Node*> FoundNodes;
 
         public:
             explicit Namespace(String symbolicName, Flags flags = 0);
@@ -156,7 +156,7 @@ namespace de
              * @ref ExtraPaths which have been registered since its construction.
              */
             inline void reset() {
-                clearSearchPaths(ExtraPaths);
+                clearSearchPathGroup(ExtraPaths);
                 clear();
             }
 
@@ -179,30 +179,30 @@ namespace de
              *
              * @return  Number of found resources.
              */
-            int findAll(String name, FileList& found);
+            int findAll(String name, FoundNodes& found);
 
             /**
              * Add a new search path to this namespace. Newer paths have priority
              * over previously added paths.
              *
-             * @param group     Group to add this path to. @ref PathGroup
              * @param path      New unresolved search path to add. A copy is made.
+             * @param group     Group to add this path to. @ref PathGroup
              *
              * @return  @c true if @a path was well-formed and subsequently added.
              */
-            bool addSearchPath(PathGroup group, SearchPath const& path);
+            bool addSearchPath(SearchPath const& path, PathGroup group = DefaultPaths);
+
+            /**
+             * Clear all search paths in all groups in this namespace.
+             */
+            void clearAllSearchPaths();
 
             /**
              * Clear search paths in @a group from this namespace.
              *
              * @param group  Search path group to be cleared.
              */
-            void clearSearchPaths(PathGroup group);
-
-            /**
-             * Clear all search paths in all groups in this namespace.
-             */
-            void clearSearchPaths();
+            void clearSearchPathGroup(PathGroup group);
 
             /**
              * Provides access to the search paths for efficient traversals.
@@ -223,7 +223,7 @@ namespace de
              *
              * @return  @c true iff mapping was applied to the path.
              */
-            bool applyPathMappings(String& path) const;
+            bool mapPath(String& path) const;
 
 #if _DEBUG
             void debugPrint() const;
@@ -234,11 +234,8 @@ namespace de
             Instance* d;
         };
 
-        /// Types of interpretable file which the file system organizes.
-        typedef QList<FileType*> FileTypes;
-
         /// Namespaces within the file system.
-        typedef QList<Namespace*> Namespaces;
+        typedef QMap<String, Namespace*> Namespaces;
 
         /**
          * PathListItem represents a found path for find file search results.
@@ -276,17 +273,16 @@ namespace de
         static void consoleRegister();
 
         /**
+         * @post No more WADs will be loaded in startup mode.
+         */
+        void endStartup();
+
+        /**
          * @param name      Unique symbolic name of this namespace. Must be at least
          *                  @c Namespace::min_name_length characters long.
          * @param flags     @ref Namespace::Flag
          */
         Namespace& createNamespace(String name, Namespace::Flags flags = 0);
-
-        /**
-         * Reset all the namespaces, returning them to an empty state and clearing
-         * any @ref ExtraPaths which have been registered since construction.
-         */
-        void resetAllNamespaces();
 
         /**
          * Lookup a Namespace by symbolic name.
@@ -296,57 +292,54 @@ namespace de
          */
         Namespace* namespaceByName(String name);
 
+        /**
+         * Reset all the namespaces, returning them to an empty state and clearing
+         * any @ref ExtraPaths which have been registered since construction.
+         */
+        inline void resetAllNamespaces()
+        {
+            Namespaces allNamespaces = namespaces();
+            DENG2_FOR_EACH(Namespaces, i, allNamespaces){ (*i)->reset(); }
+        }
+
         /// Returns the namespaces for efficient traversal.
         Namespaces const& namespaces();
-
-        /**
-         * Lookup a FileType by symbolic name.
-         *
-         * @param name  Symbolic name of the type.
-         * @return  FileType associated with @a name. May return a null-object.
-         */
-        FileType& fileTypeByName(de::String name);
-
-        /**
-         * Attempts to determine which "type" should be attributed to a resource, solely
-         * by examining the name (e.g., a file name/path).
-         *
-         * @return  Type determined for this resource. May return a null-object.
-         */
-        FileType& guessFileTypeFromFileName(de::String name);
-
-        /// Returns the registered file types for efficient traversal.
-        FileTypes const& fileTypes();
-
-        /**
-         * @post No more WADs will be loaded in startup mode.
-         */
-        void endStartup();
 
         /**
          * Add a new path mapping from source to destination in the vfs.
          * @note Paths will be transformed into absolute paths if needed.
          */
-        void mapPath(String source, String destination);
+        void addPathMapping(String source, String destination);
 
         /**
          * Clears all virtual path mappings.
-         *
-         * @return  This instance.
          */
-        FS1& clearPathMappings();
+        void clearPathMappings();
 
         /**
          * Add a new lump mapping so that @a lumpName becomes visible at @a destination.
          */
-        void mapPathToLump(String lumpName, String destination);
+        void addPathLumpMapping(String lumpName, String destination);
 
         /**
          * Clears all path => lump mappings.
          *
          * @return  This instance.
          */
-        FS1& clearPathLumpMappings();
+        void clearPathLumpMappings();
+
+        /**
+         * @return  @c true if a file exists at @a path which can be opened for reading.
+         */
+        bool accessFile(Uri const& path);
+
+        /**
+         * Maintains a list of identifiers already seen.
+         *
+         * @return  @c true if the given file can be opened, or
+         *          @c false if it has already been opened.
+         */
+        bool checkFileId(Uri const& path);
 
         /**
          * Reset known fileId records so that the next time checkFileId() is called for
@@ -355,34 +348,32 @@ namespace de
         void resetFileIds();
 
         /**
-         * Maintains a list of identifiers already seen.
+         * @param hndl  Handle to the file to be interpreted. Ownership is passed to
+         *              the interpreted file instance.
+         * @param path  Absolute VFS path by which the interpreted file will be known.
+         * @param info  Prepared info metadata for the file.
          *
-         * @return  @c true if the given file can be opened, or
-         *          @c false if it has already been opened.
+         * @return  The interpreted File file instance.
          */
-        bool checkFileId(String path);
-
-        /**
-         * @return  @c true if a file exists at @a path which can be opened for reading.
-         */
-        bool accessFile(String path);
+        File1& interpret(FileHandle& hndl, String path, FileInfo const& info);
 
         /**
          * Indexes @a file (which must have been opened with this file system) into
          * this file system and adds it to the list of loaded files.
          *
          * @param file      The file to index. Assumed to have not yet been indexed!
-         *
-         * @return  This instance.
          */
-        FS1& index(File1& file);
+        void index(File1& file);
 
         /**
          * Removes a file from any lump indexes.
          *
          * @param file  File to remove from the index.
          */
-        FS1& deindex(File1& file);
+        void deindex(File1& file);
+
+        /// Clear all references to this file.
+        void releaseFile(File1& file);
 
         /**
          * Lookup a lump by name.
@@ -396,21 +387,10 @@ namespace de
         lumpnum_t lumpNumForName(String name, bool silent = true);
 
         /**
-         * Provides access to the currently active Wad lump name index. This can
-         * be used for efficiently looking up files based on name.
+         * Provides access to the main index of the file system. This can be
+         * used for efficiently looking up files based on name.
          */
         LumpIndex const& nameIndex() const;
-
-        /**
-         * Provides access to the Wad lump name index which is applicable to the
-         * specified @a absoluteLumpNum. This can be used for efficiently looking
-         * up files based on name.
-         *
-         * @param absoluteLumpNum   Determines which lump index to return. This
-         *                          number is then translated into the range for
-         *                          the selected index.
-         */
-        LumpIndex const& nameIndexForLump(lumpnum_t& absoluteLumpNum) const;
 
         /**
          * Opens the given file (will be translated) for reading.
@@ -447,31 +427,20 @@ namespace de
          */
         FileHandle& openLump(File1& lump);
 
-        /// Clear all references to this file.
-        void releaseFile(File1& file);
-
         /**
          * Find a single file.
          *
-         * @throws NotFoundError If the requested file could not be found.
-         */
-        File1& find(String path);
-
-        /**
-         * Find a single file within the specified namespace.
-         *
-         * @param path          Path to search on.
-         * @param fnamespace    Namespace to be searched.
-         * @return  The found file.
+         * @param search  The search term.
+         * @return Found file.
          *
          * @throws NotFoundError If the requested file could not be found.
          */
-        PathTree::Node& find(Uri const& path, Namespace& fnamespace);
+        File1& find(Uri const& search);
 
         /**
          * Finds all files.
          *
-         * @param found         Set of files that match the result.
+         * @param found  Set of files that match the result.
          *
          * @return  Number of files found.
          */
@@ -520,6 +489,29 @@ namespace de
         }
 
         /**
+         * Search the file system for a path to a file.
+         *
+         * @param search        The search term. If a scheme is specified, first check
+         *                      for a similarly named namespace with which to limit the
+         *                      search. If not found within the namespace then perform
+         *                      a wider search of the whole file system.
+         * @param flags         @ref resourceLocationFlags
+         * @param rclass        Class of resource being searched for. If no file is found
+         *                      which matches the search term and a non-null resource class
+         *                      is specified try alternative names for the file according
+         *                      to the list of known file extensions for each file type
+         *                      associated with this class of resource.
+         *
+         * @return  The found path.
+         *
+         * @throws NotFoundError If the requested file could not be found.
+         *
+         * @todo Fold into @ref find() -ds
+         */
+        String findPath(Uri const& search, int flags, ResourceClass& rclass);
+        String findPath(Uri const& search, int flags);
+
+        /**
          * Finds all paths which match the search criteria. Will search the Zip
          * lump index, lump => path mappings and native files in the local system.
          *
@@ -542,36 +534,14 @@ namespace de
         uint loadedFilesCRC();
 
         /**
-         * Try to open the specified WAD archive into the auxiliary lump index.
-         *
-         * @return  Base index for lumps in this archive.
-         */
-        lumpnum_t openAuxiliary(String path, size_t baseOffset = 0);
-
-        /**
-         * Close the auxiliary lump index if open.
-         */
-        void closeAuxiliaryPrimaryIndex();
-
-        /**
          * Unload all files loaded after startup.
          * @return  Number of files unloaded.
          */
-        FS1& unloadAllNonStartupFiles(int* numUnloaded = 0);
+        int unloadAllNonStartupFiles();
 
     private:
         struct Instance;
         Instance* d;
-
-        /**
-         * @param hndl  Handle to the file to be interpreted. Ownership is passed to
-         *              the interpreted file instance.
-         * @param path  Absolute VFS path by which the interpreted file will be known.
-         * @param info  Prepared info metadata for the file.
-         *
-         * @return  The interpreted File file instance.
-         */
-        File1& interpret(FileHandle& hndl, String path, FileInfo const& info);
     };
 
     Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Namespace::Flags)
@@ -606,7 +576,7 @@ void F_Shutdown(void);
 
 void F_EndStartup(void);
 
-void F_UnloadAllNonStartupFiles(int* numUnloaded);
+int F_UnloadAllNonStartupFiles();
 
 void F_AddVirtualDirectoryMapping(char const* nativeSourcePath, char const* nativeDestinationPath);
 
@@ -628,24 +598,24 @@ FileHandle* F_Open3(char const* nativePath, char const* mode, size_t baseOffset,
 FileHandle* F_Open2(char const* nativePath, char const* mode, size_t baseOffset/*, allowDuplicate = true */);
 FileHandle* F_Open(char const* nativePath, char const* mode/*, baseOffset = 0 */);
 
-FileHandle* F_OpenLump(lumpnum_t absoluteLumpNum);
+FileHandle* F_OpenLump(lumpnum_t lumpNum);
 
-boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
+boolean F_IsValidLumpNum(lumpnum_t lumpNum);
 
 lumpnum_t F_LumpNumForName(char const* name);
 
-AutoStr* F_ComposeLumpFilePath(lumpnum_t absoluteLumpNum);
+AutoStr* F_ComposeLumpFilePath(lumpnum_t lumpNum);
 
-boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
+boolean F_LumpIsCustom(lumpnum_t lumpNum);
 
-AutoStr* F_LumpName(lumpnum_t absoluteLumpNum);
+AutoStr* F_LumpName(lumpnum_t lumpNum);
 
-size_t F_LumpLength(lumpnum_t absoluteLumpNum);
+size_t F_LumpLength(lumpnum_t lumpNum);
 
-uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
+uint F_LumpLastModified(lumpnum_t lumpNum);
 
-struct file1_s* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-struct file1_s* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum/*, lumpIdx = 0 */);
+struct file1_s* F_FindFileForLumpNum2(lumpnum_t lumpNum, int* lumpIdx);
+struct file1_s* F_FindFileForLumpNum(lumpnum_t lumpNum/*, lumpIdx = 0 */);
 
 void F_Delete(struct filehandle_s* file);
 
@@ -670,12 +640,48 @@ void F_UnlockLump(struct file1_s* file, int lumpIdx);
  */
 void F_ComposePWADFileList(char* outBuf, size_t outBufSize, const char* delimiter);
 
-uint F_CRCNumber(void);
+uint F_LoadedFilesCRC(void);
 
-lumpnum_t F_OpenAuxiliary2(char const* nativePath, size_t baseOffset);
-lumpnum_t F_OpenAuxiliary(char const* nativePath/*, baseOffset = 0 */);
+/**
+ * @defgroup resourceLocationFlags  Resource Location Flags
+ *
+ * Flags used with the F_Find family of functions which dictate the
+ * logic used during resource location.
+ * @ingroup flags
+ */
+///@{
+#define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have it too.
 
-void F_CloseAuxiliary(void);
+/// Default flags.
+#define RLF_DEFAULT             0
+///@}
+
+/**
+ * Attempt to locate a named resource.
+ *
+ * @param classId        Class of resource being searched for (if known).
+ *
+ * @param searchPath    Path/name of the resource being searched for. Note that
+ *                      the resource class (@a classId) specified significantly
+ *                      alters search behavior. This allows text replacements of
+ *                      symbolic escape sequences in the path, allowing access to
+ *                      the engine's view of the virtual file system.
+ *
+ * @param foundPath     If found, the fully qualified path is written back here.
+ *
+ * @param flags         @ref resourceLocationFlags
+ *
+ * @return  @c true iff a resource was found.
+ */
+boolean F_FindPath2(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath, int flags);
+boolean F_FindPath(resourceclassid_t classId, struct uri_s const* searchPath, ddstring_t* foundPath/*, flags = RLF_DEFAULT*/);
+
+/**
+ * @return  If a resource is found, the index + 1 of the path from @a searchPaths
+ *          that was used to find it; otherwise @c 0.
+ */
+uint F_FindPathInList(resourceclassid_t classId, char const* searchPaths,
+    ddstring_t* foundPath, int flags);
 
 #ifdef __cplusplus
 } // extern "C"

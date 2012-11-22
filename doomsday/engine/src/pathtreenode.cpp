@@ -118,7 +118,7 @@ PathTree::Node& PathTree::Node::setUserValue(int value)
     return *this;
 }
 
-/// @todo This logic should be encapsulated in Uri/Uri::PathNode
+/// @todo This logic should be encapsulated in Uri/Uri::Segment
 static int matchName(char const* string, char const* pattern)
 {
     char const* in = string, *st = pattern;
@@ -156,7 +156,6 @@ static int matchName(char const* string, char const* pattern)
     return *st == 0;
 }
 
-/// @todo This logic should be encapsulated in Uri/Uri::PathNode
 int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 {
     if(((flags & PCF_NO_LEAF)   && isLeaf()) ||
@@ -165,7 +164,7 @@ int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 
     try
     {
-        const de::Uri::Segment* snode = &searchPattern.firstSegment();
+        de::Uri::Segment const* snode = &searchPattern.firstSegment();
 
         // In reverse order, compare each path node in the search term.
         int pathNodeCount = searchPattern.segmentCount();
