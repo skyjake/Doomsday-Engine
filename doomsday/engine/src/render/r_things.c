@@ -372,7 +372,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* parameters)
         link = true;
     }
 
-    uri = Uri_NewWithPath2(MN_SPRITES_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2(MS_SPRITES_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(path));
     frame->mat = Materials_ToMaterial(Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -427,7 +427,7 @@ static void buildSpriteRotations(void)
     spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
     spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
-    Textures_IterateDeclared(TN_SPRITES, buildSpriteRotationsWorker);
+    Textures_IterateDeclared(TS_SPRITES, buildSpriteRotationsWorker);
 
     VERBOSE2( Con_Message("buildSpriteRotations: Done in %.2f seconds.\n", (Timer_RealMilliseconds() - startTime) / 1000.0f) )
 }
@@ -647,7 +647,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     ms = Materials_Prepare(mat, spec, false);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
+    if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES)
         Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
@@ -1256,7 +1256,7 @@ void R_ProjectSprite(mobj_t* mo)
     ms   = Materials_Prepare(mat, spec, true);
 
     // An invalid sprite texture?
-    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES) return;
+    if(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TS_SPRITES) return;
 
     pTex = (patchtex_t*) Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
     assert(pTex);

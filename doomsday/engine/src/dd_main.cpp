@@ -380,9 +380,9 @@ FileTypes const& DD_FileTypes()
     return fileTypeMap;
 }
 
-static void createPackagesNamespace()
+static void createPackagesScheme()
 {
-    FS1::Namespace& fnamespace = App_FileSystem()->createNamespace("Packages");
+    FS1::Scheme& scheme = App_FileSystem()->createScheme("Packages");
 
     /*
      * Add default search paths.
@@ -397,7 +397,7 @@ static void createPackagesNamespace()
     if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
     {
         NativePath path = de::App::app().commandLine().startupPath() / fn;
-        fnamespace.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
     }
 #endif
@@ -406,7 +406,7 @@ static void createPackagesNamespace()
     if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
         NativePath path = App::app().commandLine().startupPath() / getenv("DOOMWADDIR");
-        fnamespace.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
     }
 
@@ -423,91 +423,91 @@ static void createPackagesNamespace()
         for(int i = allPaths.count(); i--> 0; )
         {
             NativePath path = App::app().commandLine().startupPath() / allPaths[i];
-            fnamespace.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
             LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
         }
 
 #undef SEP_CHAR
     }
 
-    fnamespace.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/", RC_NULL), SearchPath::NoDescend));
-    fnamespace.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/", RC_NULL), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SearchPath::NoDescend));
 }
 
-void DD_CreateFileSystemNamespaces()
+void DD_CreateFileSystemSchemes()
 {
-    int const namespacedef_max_searchpaths = 5;
-    struct namespacedef_s {
+    int const schemedef_max_searchpaths = 5;
+    struct schemedef_s {
         char const* name;
         char const* optOverridePath;
         char const* optFallbackPath;
-        FS1::Namespace::Flags flags;
+        FS1::Scheme::Flags flags;
         SearchPath::Flags searchPathFlags;
         /// Priority is right to left.
-        char const* searchPaths[namespacedef_max_searchpaths];
+        char const* searchPaths[schemedef_max_searchpaths];
     } defs[] = {
-        { "Defs",         NULL,           NULL,           FS1::Namespace::Flag(0), 0,
+        { "Defs",         NULL,           NULL,           FS1::Scheme::Flag(0), 0,
             { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
         },
-        { "Graphics",     "-gfxdir2",     "-gfxdir",      FS1::Namespace::Flag(0), 0,
+        { "Graphics",     "-gfxdir2",     "-gfxdir",      FS1::Scheme::Flag(0), 0,
             { "$(App.DataPath)/graphics/" }
         },
-        { "Models",       "-modeldir2",   "-modeldir",    FS1::Namespace::MappedInPackages, 0,
+        { "Models",       "-modeldir2",   "-modeldir",    FS1::Scheme::MappedInPackages, 0,
             { "$(App.DataPath)/$(GamePlugin.Name)/models/", "$(App.DataPath)/$(GamePlugin.Name)/models/$(Game.IdentityKey)/" }
         },
-        { "Sfx",          "-sfxdir2",     "-sfxdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+        { "Sfx",          "-sfxdir2",     "-sfxdir",      FS1::Scheme::MappedInPackages, SearchPath::NoDescend,
             { "$(App.DataPath)/$(GamePlugin.Name)/sfx/", "$(App.DataPath)/$(GamePlugin.Name)/sfx/$(Game.IdentityKey)/" }
         },
-        { "Music",        "-musdir2",     "-musdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+        { "Music",        "-musdir2",     "-musdir",      FS1::Scheme::MappedInPackages, SearchPath::NoDescend,
             { "$(App.DataPath)/$(GamePlugin.Name)/music/", "$(App.DataPath)/$(GamePlugin.Name)/music/$(Game.IdentityKey)/" }
         },
-        { "Textures",     "-texdir2",     "-texdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+        { "Textures",     "-texdir2",     "-texdir",      FS1::Scheme::MappedInPackages, SearchPath::NoDescend,
             { "$(App.DataPath)/$(GamePlugin.Name)/textures/", "$(App.DataPath)/$(GamePlugin.Name)/textures/$(Game.IdentityKey)/" }
         },
-        { "Flats",        "-flatdir2",    "-flatdir",     FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+        { "Flats",        "-flatdir2",    "-flatdir",     FS1::Scheme::MappedInPackages, SearchPath::NoDescend,
             { "$(App.DataPath)/$(GamePlugin.Name)/flats/", "$(App.DataPath)/$(GamePlugin.Name)/flats/$(Game.IdentityKey)/" }
         },
-        { "Patches",      "-patdir2",     "-patdir",      FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+        { "Patches",      "-patdir2",     "-patdir",      FS1::Scheme::MappedInPackages, SearchPath::NoDescend,
             { "$(App.DataPath)/$(GamePlugin.Name)/patches/", "$(App.DataPath)/$(GamePlugin.Name)/patches/$(Game.IdentityKey)/" }
         },
-        { "LightMaps",    "-lmdir2",      "-lmdir",       FS1::Namespace::MappedInPackages, 0,
+        { "LightMaps",    "-lmdir2",      "-lmdir",       FS1::Scheme::MappedInPackages, 0,
             { "$(App.DataPath)/$(GamePlugin.Name)/lightmaps/" }
         },
-        { "Fonts",        "-fontdir2",    "-fontdir",     FS1::Namespace::MappedInPackages, SearchPath::NoDescend,
+        { "Fonts",        "-fontdir2",    "-fontdir",     FS1::Scheme::MappedInPackages, SearchPath::NoDescend,
             { "$(App.DataPath)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/", "$(App.DataPath)/$(GamePlugin.Name)/fonts/$(Game.IdentityKey)/" }
         },
-        { 0, 0, 0, FS1::Namespace::Flag(0), 0, { 0 } }
+        { 0, 0, 0, FS1::Scheme::Flag(0), 0, { 0 } }
     };
 
-    createPackagesNamespace();
+    createPackagesScheme();
 
     // Setup the rest...
-    struct namespacedef_s const* def = defs;
+    struct schemedef_s const* def = defs;
     for(int i = 0; defs[i].name; ++i, ++def)
     {
-        FS1::Namespace& fnamespace = App_FileSystem()->createNamespace(def->name, def->flags);
+        FS1::Scheme& scheme = App_FileSystem()->createScheme(def->name, def->flags);
 
         int searchPathCount = 0;
-        while(def->searchPaths[searchPathCount] && ++searchPathCount < namespacedef_max_searchpaths)
+        while(def->searchPaths[searchPathCount] && ++searchPathCount < schemedef_max_searchpaths)
         {}
 
         for(int j = 0; j < searchPathCount; ++j)
         {
-            fnamespace.addSearchPath(SearchPath(de::Uri(def->searchPaths[j], RC_NULL), def->searchPathFlags));
+            scheme.addSearchPath(SearchPath(de::Uri(def->searchPaths[j], RC_NULL), def->searchPathFlags));
         }
 
         if(def->optOverridePath && CommandLine_CheckWith(def->optOverridePath, 1))
         {
             NativePath path = NativePath(CommandLine_NextAsPath());
-            fnamespace.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags), FS1::OverridePaths);
+            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags), FS1::OverridePaths);
             path = path / "$(Game.IdentityKey)";
-            fnamespace.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags), FS1::OverridePaths);
+            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags), FS1::OverridePaths);
         }
 
         if(def->optFallbackPath && CommandLine_CheckWith(def->optFallbackPath, 1))
         {
             NativePath path = NativePath(CommandLine_NextAsPath());
-            fnamespace.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags), FS1::FallbackPaths);
+            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def->searchPathFlags), FS1::FallbackPaths);
         }
     }
 }
@@ -792,7 +792,7 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
     // Reset file Ids so previously seen files can be processed again.
     App_FileSystem()->resetFileIds();
     initPathMappings();
-    App_FileSystem()->resetAllNamespaces();
+    App_FileSystem()->resetAllSchemes();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -1041,7 +1041,7 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
 
     // Re-initialize the resource locator as there are now new resources to be found
     // on existing search paths (probably that is).
-    App_FileSystem()->resetAllNamespaces();
+    App_FileSystem()->resetAllSchemes();
 
     if(p->initiatedBusyMode)
     {
@@ -1407,7 +1407,7 @@ bool DD_ChangeGame(de::Game& game, bool allowReload = false)
         initPathLumpMappings();
         initPathMappings();
 
-        App_FileSystem()->resetAllNamespaces();
+        App_FileSystem()->resetAllSchemes();
     }
 
     FI_Shutdown();
@@ -1709,7 +1709,7 @@ boolean DD_Init(void)
     DD_CreateResourceClasses();
     DD_CreateFileTypes();
     F_Init();
-    DD_CreateFileSystemNamespaces();
+    DD_CreateFileSystemSchemes();
 
     Fonts_Init();
     FR_Init();
@@ -1730,7 +1730,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassByName("RC_PACKAGE").defaultNamespace());
+    FS1::Scheme* scheme = App_FileSystem()->schemeByName(DD_ResourceClassByName("RC_PACKAGE").defaultScheme());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -1738,14 +1738,14 @@ boolean DD_Init(void)
 
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
-            /// @todo Do not add these as search paths, publish them directly
-            ///       to the "packages" Namespace.
+            /// @todo Do not add these as search paths, publish them directly to
+            ///       the "Packages" scheme.
 
             // CommandLine_PathAt() always returns an absolute path.
             directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
-            fnamespace->addSearchPath(SearchPath(uri, SearchPath::NoDescend));
+            scheme->addSearchPath(SearchPath(uri, SearchPath::NoDescend));
 
             Dir_Delete(dir);
         }
@@ -1801,9 +1801,9 @@ boolean DD_Init(void)
 
     initPathLumpMappings();
 
-    // Re-initialize the namespaces as there are now new resources to be found
-    // on existing search paths (probably that is).
-    App_FileSystem()->resetAllNamespaces();
+    // Re-initialize the filesystem subspace schemess as there are now new
+    // resources to be found on existing search paths (probably that is).
+    App_FileSystem()->resetAllSchemes();
 
     // One-time execution of various command line features available during startup.
     if(CommandLine_CheckWith("-dumplump", 1))
@@ -1899,7 +1899,7 @@ boolean DD_Init(void)
         App_FileSystem()->resetFileIds();
         initPathLumpMappings();
         initPathMappings();
-        App_FileSystem()->resetAllNamespaces();
+        App_FileSystem()->resetAllSchemes();
 
         R_InitPatchComposites();
         R_InitFlatTextures();
@@ -1931,7 +1931,7 @@ static void DD_InitResourceSystem(void)
 
     initPathMappings();
 
-    App_FileSystem()->resetAllNamespaces();
+    App_FileSystem()->resetAllSchemes();
 
     // Initialize the definition databases.
     Def_Init();
@@ -2128,8 +2128,8 @@ void DD_UpdateEngineState(void)
     initPathLumpMappings();
     initPathMappings();
 
-    // Re-build the namespaces as there may now be new resources to be found.
-    App_FileSystem()->resetAllNamespaces();
+    // Re-build the filesystem subspace schemes as there may be new resources to be found.
+    App_FileSystem()->resetAllSchemes();
 
     R_InitPatchComposites();
     R_InitFlatTextures();
@@ -2502,57 +2502,57 @@ void DD_SetVariable(int ddvalue, void *parm)
 }
 
 /// @note Part of the Doomsday public API.
-materialnamespaceid_t DD_ParseMaterialNamespace(const char* str)
+materialschemeid_t DD_ParseMaterialSchemeName(const char* str)
 {
-    return Materials_ParseNamespace(str);
+    return Materials_ParseSchemeName(str);
 }
 
 /// @note Part of the Doomsday public API.
-texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
+textureschemeid_t DD_ParseTextureSchemeName(const char* str)
 {
-    return Textures_ParseNamespace(str);
+    return Textures_ParseSchemeName(str);
 }
 
 /// @note Part of the Doomsday public API.
-fontnamespaceid_t DD_ParseFontNamespace(const char* str)
+fontschemeid_t DD_ParseFontSchemeName(const char* str)
 {
-    return Fonts_ParseNamespace(str);
+    return Fonts_ParseScheme(str);
 }
 
-const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace)
+const ddstring_t* DD_MaterialSchemeNameForTextureScheme(textureschemeid_t texSchemeId)
 {
-    static const materialnamespaceid_t namespaceIds[TEXTURENAMESPACE_COUNT] = {
-        /* TN_SYSTEM */    MN_SYSTEM,
-        /* TN_FLATS */     MN_FLATS,
-        /* TN_TEXTURES */  MN_TEXTURES,
-        /* TN_SPRITES */   MN_SPRITES,
-        /* TN_PATCHES */   MN_ANY, // No materials for these yet.
+    static const materialschemeid_t schemeIds[TEXTURESCHEME_COUNT] = {
+        /* TS_SYSTEM */    MS_SYSTEM,
+        /* TS_FLATS */     MS_FLATS,
+        /* TS_TEXTURES */  MS_TEXTURES,
+        /* TS_SPRITES */   MS_SPRITES,
+        /* TS_PATCHES */   MS_ANY, // No materials for these yet.
 
         // -- No Materials for these --
-        /* TN_DETAILS */   MN_INVALID,
-        /* TN_REFLECTIONS */ MN_INVALID,
-        /* TN_MASKS */      MN_INVALID,
-        /* TN_MODELSKINS */ MN_INVALID,
-        /* TN_MODELREFLECTIONSKINS */ MN_INVALID,
-        /* TN_LIGHTMAPS */ MN_INVALID,
-        /* TN_FLAREMAPS */ MN_INVALID
+        /* TS_DETAILS */              MS_INVALID,
+        /* TS_REFLECTIONS */          MS_INVALID,
+        /* TS_MASKS */                MS_INVALID,
+        /* TS_MODELSKINS */           MS_INVALID,
+        /* TS_MODELREFLECTIONSKINS */ MS_INVALID,
+        /* TS_LIGHTMAPS */            MS_INVALID,
+        /* TS_FLAREMAPS */            MS_INVALID
     };
-    materialnamespaceid_t namespaceId = MN_INVALID; // Unknown.
-    if(VALID_TEXTURENAMESPACEID(texNamespace))
-        namespaceId = namespaceIds[texNamespace-TEXTURENAMESPACE_FIRST];
-    return Materials_NamespaceName(namespaceId);
+    materialschemeid_t schemeId = MS_INVALID; // Unknown.
+    if(VALID_TEXTURESCHEMEID(texSchemeId))
+        schemeId = schemeIds[texSchemeId-TEXTURESCHEME_FIRST];
+    return Materials_SchemeName(schemeId);
 }
 
-materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId)
+materialid_t DD_MaterialForTextureUniqueId(textureschemeid_t schemeId, int uniqueId)
 {
-    textureid_t texId = Textures_TextureForUniqueId(texNamespaceId, uniqueId);
+    textureid_t texId = Textures_TextureForUniqueId(schemeId, uniqueId);
 
     if(texId == NOTEXTUREID) return NOMATERIALID;
 
     de::Uri* uri = reinterpret_cast<de::Uri*>(Textures_ComposeUri(texId));
     if(!uri) return NOMATERIALID;
 
-    uri->setScheme(Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespaceId)));
+    uri->setScheme(Str_Text(DD_MaterialSchemeNameForTextureScheme(schemeId)));
     materialid_t matId = Materials_ResolveUri2(reinterpret_cast<uri_s*>(uri), true/*quiet please*/);
     delete uri;
     return matId;

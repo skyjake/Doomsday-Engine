@@ -108,7 +108,7 @@ void GL_UpdateTexParams(int mipMode);
  */
 void GL_SetTextureParams(int minMode, int gameTex, int uiTex);
 
-/// Release all textures in all namespaces.
+/// Release all textures in all schemes.
 void GL_ReleaseTextures(void);
 
 /// Release all textures flagged 'runtime'.
@@ -118,12 +118,12 @@ void GL_ReleaseRuntimeTextures(void);
 void GL_ReleaseSystemTextures(void);
 
 /**
- * Release all textures in the identified namespace(s).
+ * Release all textures in the identified scheme(s).
  *
- * @param namespaceId  Unique identifier of the namespace to process or @c TN_ANY
- *     to release all textures in any namespace.
+ * @param schemeId  Unique identifier of the scheme to process or @c TS_ANY
+ *     to release all textures in any scheme.
  */
-void GL_ReleaseTexturesByNamespace(texturenamespaceid_t namespaceId);
+void GL_ReleaseTexturesByScheme(textureschemeid_t schemeId);
 
 /**
  * Release all textures associated with the specified @a texture.

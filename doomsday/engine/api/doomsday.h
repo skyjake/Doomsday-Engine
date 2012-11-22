@@ -192,10 +192,10 @@ boolean DD_GameInfo(GameInfo* info);
     ddplayer_t*     DD_GetPlayer(int number);
 ///@}
 
-/// @addtogroup namespace
+/// @addtogroup scheme
 ///@{
-texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
-materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
+textureschemeid_t DD_ParseTextureSchemeName(const char* str);
+materialschemeid_t DD_ParseMaterialSchemeName(const char* str);
 ///@}
 
 /**
@@ -203,7 +203,7 @@ materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
  * @ingroup resource
  */
 ///@{
-materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
+materialid_t DD_MaterialForTextureUniqueId(textureschemeid_t texSchemeId, int uniqueId);
 ///@}
 
 /// @addtogroup defs

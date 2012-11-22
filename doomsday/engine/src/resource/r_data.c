@@ -1090,7 +1090,7 @@ void R_InitSystemTextures(void)
 
     VERBOSE( Con_Message("Initializing System textures...\n") )
 
-    Uri_SetScheme(uri, TN_SYSTEM_NAME);
+    Uri_SetScheme(uri, TS_SYSTEM_NAME);
     for(i = 0; defs[i].texPath; ++i)
     {
         Uri_SetPath(uri, defs[i].texPath);
@@ -1118,7 +1118,7 @@ static textureid_t findPatchTextureIdByName(const char* encodedName)
     assert(encodedName && encodedName[0]);
 
     uri = Uri_NewWithPath2(encodedName, RC_NULL);
-    Uri_SetScheme(uri, TN_PATCHES_NAME);
+    Uri_SetScheme(uri, TS_PATCHES_NAME);
     texId = Textures_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
     return texId;
@@ -1168,7 +1168,7 @@ patchid_t R_DeclarePatch(const char* name)
     }
 
     // Compose the resource name
-    uri = Uri_NewWithPath2(TN_PATCHES_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2(TS_PATCHES_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(&encodedName));
     Str_Free(&encodedName);
 
@@ -1176,7 +1176,7 @@ patchid_t R_DeclarePatch(const char* name)
     resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
     Uri_SetPath(resourcePath, Str_Text(F_LumpName(lumpNum)));
 
-    uniqueId = Textures_Count(TN_PATCHES)+1; // 1-based index.
+    uniqueId = Textures_Count(TS_PATCHES)+1; // 1-based index.
     texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(resourcePath);
     Uri_Delete(uri);
@@ -1244,7 +1244,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
 
     memset(info, 0, sizeof *info);
-    tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
+    tex = Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, id));
     if(tex)
     {
         const patchtex_t* pTex = (patchtex_t*)Texture_UserDataPointer(tex);
@@ -1281,13 +1281,13 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 /// @note Part of the Doomsday public API.
 Uri* R_ComposePatchUri(patchid_t id)
 {
-    return Textures_ComposeUri(Textures_TextureForUniqueId(TN_PATCHES, id));
+    return Textures_ComposeUri(Textures_TextureForUniqueId(TS_PATCHES, id));
 }
 
 /// @note Part of the Doomsday public API.
 AutoStr* R_ComposePatchPath(patchid_t id)
 {
-    textureid_t texId = Textures_TextureForUniqueId(TN_PATCHES, id);
+    textureid_t texId = Textures_TextureForUniqueId(TS_PATCHES, id);
     if(texId == NOTEXTUREID) return AutoStr_NewStd();
     return Textures_ComposePath(texId);
 }
@@ -2061,7 +2061,7 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
     int i;
     assert(defs);
 
-    Uri_SetScheme(uri, TN_TEXTURES_NAME);
+    Uri_SetScheme(uri, TS_TEXTURES_NAME);
     for(i = 0; i < count; ++i)
     {
         patchcompositetex_t* pcTex = defs[i];
@@ -2135,7 +2135,7 @@ static Uri* composeFlatUri(char const* lumpName)
     Uri* uri;
     AutoStr* flatName = AutoStr_NewStd();
     F_FileName(flatName, lumpName);
-    uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2(TS_FLATS_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(flatName));
     return uri;
 }
@@ -2293,7 +2293,7 @@ int RIT_DefineSpriteTexture(textureid_t texId, void* paramaters)
 /// @todo Defer until necessary (sprite is first de-referenced).
 static void defineAllSpriteTextures(void)
 {
-    Textures_IterateDeclared(TN_SPRITES, RIT_DefineSpriteTexture);
+    Textures_IterateDeclared(TS_SPRITES, RIT_DefineSpriteTexture);
 }
 
 void R_InitSpriteTextures(void)
@@ -2306,7 +2306,7 @@ void R_InitSpriteTextures(void)
 
     VERBOSE( Con_Message("Initializing Sprite textures...\n") )
 
-    uri = Uri_NewWithPath2(TN_SPRITES_NAME":", RC_NULL);
+    uri = Uri_NewWithPath2(TS_SPRITES_NAME":", RC_NULL);
     resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
 
     Str_Init(&spriteName);
@@ -2393,7 +2393,7 @@ Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
     }
     if(tex) return tex;
 
-    uniqueId = Textures_Count(isShinySkin? TN_MODELREFLECTIONSKINS : TN_MODELSKINS)+1;
+    uniqueId = Textures_Count(isShinySkin? TS_MODELREFLECTIONSKINS : TS_MODELSKINS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
 #if _DEBUG
@@ -2404,7 +2404,7 @@ Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
 
     dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, (isShinySkin? TN_MODELREFLECTIONSKINS_NAME : TN_MODELSKINS_NAME));
+    Uri_SetScheme(uri, (isShinySkin? TS_MODELREFLECTIONSKINS_NAME : TS_MODELSKINS_NAME));
 
     texId = Textures_Declare(uri, uniqueId, filePath);
     Uri_Delete(uri);
@@ -2494,7 +2494,7 @@ Texture* R_FindModelSkinForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
-    result = Textures_IterateDeclared2(TN_MODELSKINS, findModelSkinForResourcePathWorker, (void*)path);
+    result = Textures_IterateDeclared2(TS_MODELSKINS, findModelSkinForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
 }
@@ -2503,7 +2503,7 @@ Texture* R_FindModelReflectionSkinForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
-    result = Textures_IterateDeclared2(TN_MODELREFLECTIONSKINS, findModelSkinForResourcePathWorker, (void*)path);
+    result = Textures_IterateDeclared2(TS_MODELREFLECTIONSKINS, findModelSkinForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
 }
@@ -2737,7 +2737,7 @@ Texture* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     tex = R_FindDetailTextureForResourcePath(def->detailTex);
     if(tex) return tex;
 
-    uniqueId = Textures_Count(TN_DETAILS)+1;
+    uniqueId = Textures_Count(TS_DETAILS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning: failed to create new detail texture (max:%i).\n", DDMAXINT);
@@ -2746,7 +2746,7 @@ Texture* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
 
     dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_DETAILS_NAME);
+    Uri_SetScheme(uri, TS_DETAILS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, def->detailTex);
     Uri_Delete(uri);
@@ -2776,7 +2776,7 @@ Texture* R_FindDetailTextureForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
-    result = Textures_IterateDeclared2(TN_DETAILS, findDetailTextureForResourcePathWorker, (void*)path);
+    result = Textures_IterateDeclared2(TS_DETAILS, findDetailTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
 }
@@ -2796,7 +2796,7 @@ Texture* R_CreateLightMap(const Uri* resourcePath)
     tex = R_FindLightMapForResourcePath(resourcePath);
     if(tex) return tex;
 
-    uniqueId = Textures_Count(TN_LIGHTMAPS)+1;
+    uniqueId = Textures_Count(TS_LIGHTMAPS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning: Failed declaring new LightMap (max:%i), ignoring.\n", DDMAXINT);
@@ -2805,7 +2805,7 @@ Texture* R_CreateLightMap(const Uri* resourcePath)
 
     dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_LIGHTMAPS_NAME);
+    Uri_SetScheme(uri, TS_LIGHTMAPS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(uri);
@@ -2840,7 +2840,7 @@ Texture* R_FindLightMapForResourcePath(const Uri* path)
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-")) return NULL;
 
-    result = Textures_IterateDeclared2(TN_LIGHTMAPS, findLightMapTextureForResourcePathWorker, (void*)path);
+    result = Textures_IterateDeclared2(TS_LIGHTMAPS, findLightMapTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
 }
@@ -2865,7 +2865,7 @@ Texture* R_CreateFlareTexture(const Uri* resourcePath)
     tex = R_FindFlareTextureForResourcePath(resourcePath);
     if(tex) return tex;
 
-    uniqueId = Textures_Count(TN_FLAREMAPS)+1;
+    uniqueId = Textures_Count(TS_FLAREMAPS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning: Failed declaring new FlareTex (max:%i), ignoring.\n", DDMAXINT);
@@ -2875,7 +2875,7 @@ Texture* R_CreateFlareTexture(const Uri* resourcePath)
     // Create a texture for it.
     dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_FLAREMAPS_NAME);
+    Uri_SetScheme(uri, TS_FLAREMAPS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(uri);
@@ -2909,7 +2909,7 @@ Texture* R_FindFlareTextureForResourcePath(const Uri* path)
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-")) return NULL;
 
-    result = Textures_IterateDeclared2(TN_FLAREMAPS, findFlareTextureForResourcePathWorker, (void*)path);
+    result = Textures_IterateDeclared2(TS_FLAREMAPS, findFlareTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
 }
@@ -2928,7 +2928,7 @@ Texture* R_CreateReflectionTexture(const Uri* resourcePath)
     tex = R_FindReflectionTextureForResourcePath(resourcePath);
     if(tex) return tex;
 
-    uniqueId = Textures_Count(TN_REFLECTIONS)+1;
+    uniqueId = Textures_Count(TS_REFLECTIONS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning: Failed declaring new ShinyTex (max:%i), ignoring.\n", DDMAXINT);
@@ -2937,7 +2937,7 @@ Texture* R_CreateReflectionTexture(const Uri* resourcePath)
 
     dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_REFLECTIONS_NAME);
+    Uri_SetScheme(uri, TS_REFLECTIONS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(uri);
@@ -2973,7 +2973,7 @@ Texture* R_FindReflectionTextureForResourcePath(const Uri* path)
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
 
-    result = Textures_IterateDeclared2(TN_REFLECTIONS, findReflectionTextureForResourcePathWorker, (void*)path);
+    result = Textures_IterateDeclared2(TS_REFLECTIONS, findReflectionTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
 }
@@ -2992,7 +2992,7 @@ Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
     tex = R_FindMaskTextureForResourcePath(resourcePath);
     if(tex) return tex;
 
-    uniqueId = Textures_Count(TN_MASKS)+1;
+    uniqueId = Textures_Count(TS_MASKS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning: Failed declaring Mask texture (max:%i), ignoring.\n", DDMAXINT);
@@ -3001,7 +3001,7 @@ Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
 
     dd_snprintf(name, 9, "%0*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_MASKS_NAME);
+    Uri_SetScheme(uri, TS_MASKS_NAME);
 
     texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(uri);
@@ -3042,7 +3042,7 @@ Texture* R_FindMaskTextureForResourcePath(const Uri* path)
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
 
-    result = Textures_IterateDeclared2(TN_MASKS, findMaskTextureForResourcePathWorker, (void*)path);
+    result = Textures_IterateDeclared2(TS_MASKS, findMaskTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
 }
@@ -3163,7 +3163,7 @@ boolean R_IsTextureInAnimGroup(const Uri* texture, int groupNum)
 
 font_t* R_CreateFontFromFile(Uri* uri, char const* resourcePath)
 {
-    fontnamespaceid_t namespaceId;
+    fontschemeid_t schemeId;
     fontid_t fontId;
     int uniqueId;
     font_t* font;
@@ -3177,15 +3177,15 @@ font_t* R_CreateFontFromFile(Uri* uri, char const* resourcePath)
         return NULL;
     }
 
-    namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
-    if(!VALID_FONTNAMESPACEID(namespaceId))
+    schemeId = Fonts_ParseScheme(Str_Text(Uri_Scheme(uri)));
+    if(!VALID_FONTSCHEMEID(schemeId))
     {
         AutoStr* path = Uri_ToString(uri);
-        Con_Message("Warning: Invalid font namespace in Font Uri \"%s\", ignoring.\n", Str_Text(path));
+        Con_Message("Warning: Invalid font scheme in Font Uri \"%s\", ignoring.\n", Str_Text(path));
         return NULL;
     }
 
-    uniqueId = Fonts_Count(namespaceId)+1; // 1-based index.
+    uniqueId = Fonts_Count(schemeId)+1; // 1-based index.
     fontId = Fonts_Declare(uri, uniqueId/*, resourcePath*/);
     if(fontId == NOFONTID) return NULL; // Invalid uri?
 
@@ -3210,7 +3210,7 @@ font_t* R_CreateFontFromFile(Uri* uri, char const* resourcePath)
 
 font_t* R_CreateFontFromDef(ded_compositefont_t* def)
 {
-    fontnamespaceid_t namespaceId;
+    fontschemeid_t schemeId;
     fontid_t fontId;
     int uniqueId;
     font_t* font;
@@ -3218,20 +3218,20 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
     if(!def || !def->uri)
     {
 #if _DEBUG
-        Con_Message("Warning:R_CreateFontFromDef: Invalid Definition or Uri reference, ignoring.\n");
+        Con_Message("Warning: R_CreateFontFromDef: Invalid Definition or Uri reference, ignoring.\n");
 #endif
         return NULL;
     }
 
-    namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(def->uri)));
-    if(!VALID_FONTNAMESPACEID(namespaceId))
+    schemeId = Fonts_ParseScheme(Str_Text(Uri_Scheme(def->uri)));
+    if(!VALID_FONTSCHEMEID(schemeId))
     {
         AutoStr* path = Uri_ToString(def->uri);
-        Con_Message("Warning: Invalid font namespace in Font Definition Uri \"%s\", ignoring.\n", Str_Text(path));
+        Con_Message("Warning: Invalid URI scheme in font definition \"%s\", ignoring.\n", Str_Text(path));
         return NULL;
     }
 
-    uniqueId = Fonts_Count(namespaceId)+1; // 1-based index.
+    uniqueId = Fonts_Count(schemeId)+1; // 1-based index.
     fontId = Fonts_Declare(def->uri, uniqueId);
     if(fontId == NOFONTID) return NULL; // Invalid uri?
 

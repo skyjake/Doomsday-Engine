@@ -37,7 +37,7 @@
 #define DEFAULT_SKY_HEIGHT               ( .666667f )
 #define DEFAULT_SKY_HORIZON_OFFSET       ( 0 )
 #define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
-#define DEFAULT_SKY_SPHERE_MATERIAL      ( MN_TEXTURES_NAME":SKY1" )
+#define DEFAULT_SKY_SPHERE_MATERIAL      ( MS_TEXTURES_NAME":SKY1" )
 #define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
 
 typedef struct skymodel_s {

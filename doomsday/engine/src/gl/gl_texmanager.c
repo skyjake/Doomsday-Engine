@@ -530,7 +530,7 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t* li
     while(node)
     {
         texturevariantspecificationlist_node_t* next = node->next;
-        if(!Textures_Iterate2(TN_ANY, findTextureUsingVariantSpecificationWorker, (void*)node->spec))
+        if(!Textures_Iterate2(TS_ANY, findTextureUsingVariantSpecificationWorker, (void*)node->spec))
         {
             destroyVariantSpecification(node->spec);
             ++numPruned;
@@ -698,17 +698,17 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
     assert(tex && baseSpec && image);
 
     spec = TS_GENERAL(baseSpec);
-    switch(Textures_Namespace(Textures_Id(tex)))
+    switch(Textures_Scheme(Textures_Id(tex)))
     {
-    case TN_FLATS:
+    case TS_FLATS:
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
             const Str suffix = { "-ck" };
             AutoStr* path = Textures_ComposePath(Textures_Id(tex));
 
-            // First try the flats namespace then the old-fashioned "flat-name"
-            // in the textures namespace.
+            // First try the flats scheme then the old-fashioned "flat-name"
+            // in the textures scheme.
             AutoStr* searchPath = Str_Appendf(AutoStr_NewStd(), "Flats:%s", Str_Text(path));
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), Str_Text(&suffix), true/*quiet please*/);
 
@@ -742,7 +742,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         break;
 
-    case TN_PATCHES: {
+    case TS_PATCHES: {
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
@@ -775,7 +775,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         break; }
 
-    case TN_SPRITES: {
+    case TS_SPRITES: {
         int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
@@ -827,7 +827,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         break; }
 
-    case TN_DETAILS: {
+    case TS_DETAILS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         if(Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
         {
@@ -846,20 +846,20 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         }
         break; }
 
-    case TN_SYSTEM:
-    case TN_REFLECTIONS:
-    case TN_MASKS:
-    case TN_LIGHTMAPS:
-    case TN_FLAREMAPS:
-    case TN_MODELSKINS:
-    case TN_MODELREFLECTIONSKINS: {
+    case TS_SYSTEM:
+    case TS_REFLECTIONS:
+    case TS_MASKS:
+    case TS_LIGHTMAPS:
+    case TS_FLAREMAPS:
+    case TS_MODELSKINS:
+    case TS_MODELREFLECTIONSKINS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         AutoStr* path = Uri_Compose(resourcePath);
         source = GL_LoadExtTextureEX(image, Str_Text(path), NULL, true/*quiet please*/);
         break; }
 
     default:
-        Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.", (int) Textures_Namespace(Textures_Id(tex)));
+        Con_Error("Textures::loadSourceImage: Unknown texture scheme %i.", (int) Textures_Scheme(Textures_Id(tex)));
         exit(1); // Unreachable.
     }
     return source;
@@ -1357,7 +1357,7 @@ void GL_ReleaseSystemTextures(void)
     }
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    GL_ReleaseTexturesByNamespace(TN_SYSTEM);
+    GL_ReleaseTexturesByScheme(TS_SYSTEM);
 
     UI_ReleaseTextures();
     Rend_ParticleReleaseSystemTextures();
@@ -1377,17 +1377,17 @@ void GL_ReleaseRuntimeTextures(void)
     RL_DeleteLists();
 
     // texture-wrapped GL textures; textures, flats, sprites...
-    GL_ReleaseTexturesByNamespace(TN_FLATS);
-    GL_ReleaseTexturesByNamespace(TN_TEXTURES);
-    GL_ReleaseTexturesByNamespace(TN_PATCHES);
-    GL_ReleaseTexturesByNamespace(TN_SPRITES);
-    GL_ReleaseTexturesByNamespace(TN_DETAILS);
-    GL_ReleaseTexturesByNamespace(TN_REFLECTIONS);
-    GL_ReleaseTexturesByNamespace(TN_MASKS);
-    GL_ReleaseTexturesByNamespace(TN_MODELSKINS);
-    GL_ReleaseTexturesByNamespace(TN_MODELREFLECTIONSKINS);
-    GL_ReleaseTexturesByNamespace(TN_LIGHTMAPS);
-    GL_ReleaseTexturesByNamespace(TN_FLAREMAPS);
+    GL_ReleaseTexturesByScheme(TS_FLATS);
+    GL_ReleaseTexturesByScheme(TS_TEXTURES);
+    GL_ReleaseTexturesByScheme(TS_PATCHES);
+    GL_ReleaseTexturesByScheme(TS_SPRITES);
+    GL_ReleaseTexturesByScheme(TS_DETAILS);
+    GL_ReleaseTexturesByScheme(TS_REFLECTIONS);
+    GL_ReleaseTexturesByScheme(TS_MASKS);
+    GL_ReleaseTexturesByScheme(TS_MODELSKINS);
+    GL_ReleaseTexturesByScheme(TS_MODELREFLECTIONSKINS);
+    GL_ReleaseTexturesByScheme(TS_LIGHTMAPS);
+    GL_ReleaseTexturesByScheme(TS_FLAREMAPS);
     GL_ReleaseTexturesForRawImages();
 
     Rend_ParticleReleaseExtraTextures();
@@ -2573,7 +2573,7 @@ TexSource GL_LoadPatchComposite(image_t* image, Texture* tex)
     assert(image && tex);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
+    if(Textures_Scheme(Textures_Id(tex)) != TS_TEXTURES)
         Con_Error("GL_LoadPatchComposite: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
     texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
@@ -2627,7 +2627,7 @@ TexSource GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroM
     assert(image && tex);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
+    if(Textures_Scheme(Textures_Id(tex)) != TS_TEXTURES)
         Con_Error("GL_LoadPatchCompositeAsSky: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
     texDef = (patchcompositetex_t*)Texture_UserDataPointer(tex);
@@ -2851,7 +2851,7 @@ TextureVariant* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT)
     texturevariantspecification_t* texSpec;
     patchtex_t* pTex;
     if(novideo || !tex) return 0;
-    if(Textures_Namespace(Textures_Id(tex)) != TN_PATCHES)
+    if(Textures_Scheme(Textures_Id(tex)) != TS_PATCHES)
     {
 #if _DEBUG
         Con_Message("Warning:GL_PreparePatchTexture: Attempted to prepare non-patch [%p].\n", (void*)tex);
@@ -3039,7 +3039,7 @@ void GL_DoTexReset(void)
 
 void GL_DoResetDetailTextures(void)
 {
-    GL_ReleaseTexturesByNamespace(TN_DETAILS);
+    GL_ReleaseTexturesByScheme(TS_DETAILS);
 }
 
 void GL_ReleaseTexturesForRawImages(void)
@@ -3085,7 +3085,7 @@ void GL_SetAllTexturesMinFilter(int minFilter)
     /// @todo This is no longer correct logic. Changing the global minification
     ///        filter should not modify the uploaded texture content.
 #if 0
-    Textures_Iterate2(TN_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
+    Textures_Iterate2(TS_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
 #endif
 }
 
@@ -3298,7 +3298,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     assert(initedOk && spec);
 
     // Load the source image data.
-    if(TN_TEXTURES == Textures_Namespace(Textures_Id(tex)))
+    if(TS_TEXTURES == Textures_Scheme(Textures_Id(tex)))
     {
         // Try to load a replacement version of this texture?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
@@ -3542,9 +3542,9 @@ int GL_ReleaseGLTexturesByTexture(Texture* tex)
     return GL_ReleaseGLTexturesByTexture2(tex, NULL);
 }
 
-void GL_ReleaseTexturesByNamespace(texturenamespaceid_t texNamespace)
+void GL_ReleaseTexturesByScheme(textureschemeid_t schemeId)
 {
-    Textures_Iterate(texNamespace, GL_ReleaseGLTexturesByTexture2);
+    Textures_Iterate(schemeId, GL_ReleaseGLTexturesByTexture2);
 }
 
 void GL_ReleaseVariantTexturesBySpec(Texture* tex, texturevariantspecification_t* spec)
@@ -3574,7 +3574,7 @@ static int releaseGLTexturesByColorPaletteWorker(Texture* tex, void* paramaters)
 
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
 {
-    Textures_Iterate2(TN_ANY, releaseGLTexturesByColorPaletteWorker, (void*)&paletteId);
+    Textures_Iterate2(TS_ANY, releaseGLTexturesByColorPaletteWorker, (void*)&paletteId);
 }
 
 void GL_InitTextureContent(texturecontent_t* content)
@@ -3671,7 +3671,7 @@ AutoStr* GL_ComposeCacheNameForTexture(Texture* tex)
     textureid_t texId = Textures_Id(tex);
     AutoStr* path = Textures_ComposePath(texId);
     AutoStr* cacheName = Str_Appendf(AutoStr_NewStd(), "texcache/%s/%s.png",
-                                     Str_Text(Textures_NamespaceName(Textures_Namespace(texId))), Str_Text(path));
+                                     Str_Text(Textures_SchemeName(Textures_Scheme(texId))), Str_Text(path));
     return cacheName;
 }
 

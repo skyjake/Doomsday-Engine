@@ -76,8 +76,8 @@ namespace de
         typedef QList<FileType*> FileTypes;
 
     public:
-        ResourceClass(String _name, String _defaultNamespace)
-            : name_(_name), defaultNamespace_(_defaultNamespace)
+        ResourceClass(String _name, String _defaultScheme)
+            : name_(_name), defaultScheme_(_defaultScheme)
         {}
 
         virtual ~ResourceClass() {
@@ -93,10 +93,11 @@ namespace de
             return name_;
         }
 
-        /// Return the symbolic name of the default namespace for this class of resource.
-        String const& defaultNamespace() const
+        /// Return the symbolic name of the default filesystem subspace scheme
+        /// for this class of resource.
+        String const& defaultScheme() const
         {
-            return defaultNamespace_;
+            return defaultScheme_;
         }
 
         /// Return the number of file types for this class of resource.
@@ -132,8 +133,8 @@ namespace de
         /// Symbolic name for this class.
         String name_;
 
-        /// Symbolic name of the default namespace.
-        String defaultNamespace_;
+        /// Symbolic name of the default filesystem subspace scheme.
+        String defaultScheme_;
 
         /// Recognized file types (in order of importance, left to right).
         FileTypes fileTypes_;

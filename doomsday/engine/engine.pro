@@ -470,7 +470,7 @@ SOURCES += \
     src/filesys/filehandle.cpp \
     src/filesys/fileid.cpp \
     src/filesys/fs_main.cpp \
-    src/filesys/fs_namespace.cpp \
+    src/filesys/fs_scheme.cpp \
     src/filesys/fs_util.cpp \
     src/filesys/lumpindex.cpp \
     src/filesys/metafile.cpp \

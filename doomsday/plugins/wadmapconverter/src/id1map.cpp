@@ -62,7 +62,7 @@ MaterialDictId Id1Map::addMaterialToDictionary(char const* name, MaterialDictGro
         //char name[9];
         //sprintf(name, "UNK%05i", uniqueId); name[8] = '\0';
 
-        Uri* uri = Materials_ComposeUri(DD_MaterialForTextureUniqueId((group == MG_PLANE? TN_FLATS : TN_TEXTURES), uniqueId));
+        Uri* uri = Materials_ComposeUri(DD_MaterialForTextureUniqueId((group == MG_PLANE? TS_FLATS : TS_TEXTURES), uniqueId));
         uriCString = Uri_Compose(uri);
         Uri_Delete(uri);
     }
@@ -79,7 +79,7 @@ MaterialDictId Id1Map::addMaterialToDictionary(char const* name, MaterialDictGro
         // Material paths must be encoded.
         AutoStr* path = Str_PercentEncode(AutoStr_FromText(name));
         Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-        Uri_SetScheme(uri, group == MG_PLANE? MN_FLATS_NAME : MN_TEXTURES_NAME);
+        Uri_SetScheme(uri, group == MG_PLANE? MS_FLATS_NAME : MS_TEXTURES_NAME);
         uriCString = Uri_Compose(uri);
         Uri_Delete(uri);
     }

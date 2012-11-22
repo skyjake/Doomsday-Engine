@@ -210,10 +210,10 @@ static int readRecord(MaterialArchive* mArc, materialarchive_record_t* rec, Read
         oldMNI = Reader_ReadByte(reader);
         switch(oldMNI % 4)
         {
-        case 0: Uri_SetScheme(rec->uri, MN_TEXTURES_NAME); break;
-        case 1: Uri_SetScheme(rec->uri, MN_FLATS_NAME);    break;
-        case 2: Uri_SetScheme(rec->uri, MN_SPRITES_NAME);  break;
-        case 3: Uri_SetScheme(rec->uri, MN_SYSTEM_NAME);   break;
+        case 0: Uri_SetScheme(rec->uri, MS_TEXTURES_NAME); break;
+        case 1: Uri_SetScheme(rec->uri, MS_FLATS_NAME);    break;
+        case 2: Uri_SetScheme(rec->uri, MS_SPRITES_NAME);  break;
+        case 3: Uri_SetScheme(rec->uri, MS_SYSTEM_NAME);   break;
         }
         Uri_SetPath(rec->uri, Str_Text(&path));
         Str_Free(&path);
@@ -225,7 +225,7 @@ static int readRecord(MaterialArchive* mArc, materialarchive_record_t* rec, Read
  * Same as readRecord except we are reading the old record format used
  * by Doomsday 1.8.6 and earlier.
  */
-static int readRecord_v186(materialarchive_record_t* rec, const char* mnamespace, Reader* reader)
+static int readRecord_v186(materialarchive_record_t* rec, const char* scheme, Reader* reader)
 {
     char buf[9];
     ddstring_t path;
@@ -236,12 +236,12 @@ static int readRecord_v186(materialarchive_record_t* rec, const char* mnamespace
     Str_Init(&path);
     Str_PercentEncode(Str_StripRight(Str_Appendf(&path, "%s", buf)));
     Uri_SetPath(rec->uri, Str_Text(&path));
-    Uri_SetScheme(rec->uri, mnamespace);
+    Uri_SetScheme(rec->uri, scheme);
     Str_Free(&path);
     return true; // Continue iteration.
 }
 
-static void readMaterialGroup(MaterialArchive* mArc, const char* defaultNamespace, Reader *reader)
+static void readMaterialGroup(MaterialArchive* mArc, const char* defaultScheme, Reader *reader)
 {
     // Read the group header.
     uint num = Reader_ReadUInt16(reader);
@@ -254,7 +254,7 @@ static void readMaterialGroup(MaterialArchive* mArc, const char* defaultNamespac
         if(mArc->version >= 1)
             readRecord(mArc, &temp, reader);
         else
-            readRecord_v186(&temp, mArc->version <= 1? defaultNamespace : 0, reader);
+            readRecord_v186(&temp, mArc->version <= 1? defaultScheme : 0, reader);
 
         insertSerialId(mArc, mArc->count+1, temp.uri, 0);
         if(temp.uri)
@@ -371,12 +371,12 @@ void MaterialArchive_Read(MaterialArchive* arc, int forcedVersion, Reader* reade
     }
 
     arc->count = 0;
-    readMaterialGroup(arc, (forcedVersion >= 1? "" : MN_FLATS_NAME":"), reader);
+    readMaterialGroup(arc, (forcedVersion >= 1? "" : MS_FLATS_NAME":"), reader);
 
     if(arc->version == 0)
     {
         // The old format saved flats and textures in seperate groups.
         arc->numFlats = arc->count;
-        readMaterialGroup(arc, (forcedVersion >= 1? "" : MN_TEXTURES_NAME":"), reader);
+        readMaterialGroup(arc, (forcedVersion >= 1? "" : MS_TEXTURES_NAME":"), reader);
     }
 }

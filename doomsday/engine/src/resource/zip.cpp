@@ -990,8 +990,8 @@ static bool applyGamePathMappings(String& path)
     }
 
     // Key-named directories in the root might be mapped to another location.
-    FS1::Namespaces const& namespaces = App_FileSystem()->namespaces();
-    DENG2_FOR_EACH_CONST(FS1::Namespaces, i, namespaces)
+    FS1::Schemes const& schemes = App_FileSystem()->schemes();
+    DENG2_FOR_EACH_CONST(FS1::Schemes, i, schemes)
     {
         if((*i)->mapPath(path))
         {

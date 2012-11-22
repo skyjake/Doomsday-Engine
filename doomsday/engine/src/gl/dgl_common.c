@@ -760,7 +760,7 @@ void DGL_SetMaterialUI(material_t* mat, DGLint wrapS, DGLint wrapT)
 
 void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
-    Texture* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
+    Texture* tex = Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, id));
     if(!tex) return;
     GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
 }

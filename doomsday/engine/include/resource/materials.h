@@ -1,6 +1,6 @@
 /**
  * @file materials.h
- * Materials collection, namespaces, bindings and other management. @ingroup resource
+ * Materials collection, schemes, bindings and other management. @ingroup resource
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
@@ -34,7 +34,7 @@ struct texturevariantspecification_s;
 struct materialvariant_s;
 struct materialsnapshot_s;
 
-enum materialnamespaceid_e; // Defined in dd_share.h
+enum materialschemeid_e; // Defined in dd_share.h
 
 /// Material (Usage) Context identifiers.
 typedef enum {
@@ -79,21 +79,21 @@ void Materials_PurgeCacheQueue(void);
 void Materials_ClearDefinitionLinks(void);
 
 /**
- * Try to interpret a known material namespace identifier from @a str. If found to match
- * a known namespace name, return the associated identifier. If the reference @a str is
+ * Try to interpret a known material scheme identifier from @a str. If found to match
+ * a known scheme name, return the associated identifier. If the reference @a str is
  * not valid (i.e., equal to NULL or is a zero-length string) then the special identifier
- * @c MN_ANY is returned. Otherwise @c MN_INVALID.
+ * @c MS_ANY is returned. Otherwise @c MS_INVALID.
  */
-enum materialnamespaceid_e Materials_ParseNamespace(const char* str);
+enum materialschemeid_e Materials_ParseSchemeName(const char* str);
 
-/// @return  Name associated with the identified @a namespaceId else a zero-length string.
-const Str* Materials_NamespaceName(enum materialnamespaceid_e namespaceId);
+/// @return  Name associated with the identified @a schemeId else a zero-length string.
+const Str* Materials_SchemeName(enum materialschemeid_e schemeId);
 
 /// @return  Total number of unique Materials in the collection.
 uint Materials_Size(void);
 
-/// @return  Number of unique Materials in the identified @a namespaceId.
-uint Materials_Count(enum materialnamespaceid_e namespaceId);
+/// @return  Number of unique Materials in the identified @a schemeId.
+uint Materials_Count(enum materialschemeid_e schemeId);
 
 /// @return  Unique identifier associated with @a material else @c 0.
 materialid_t Materials_Id(material_t* material);
@@ -101,8 +101,8 @@ materialid_t Materials_Id(material_t* material);
 /// @return  Material associated with unique identifier @a materialId else @c NULL.
 material_t* Materials_ToMaterial(materialid_t materialId);
 
-/// @return  Unique identifier of the namespace this material is in.
-enum materialnamespaceid_e Materials_Namespace(materialid_t materialId);
+/// @return  Unique identifier of the scheme this material is in.
+enum materialschemeid_e Materials_Scheme(materialid_t materialId);
 
 /// @return  Symbolic name/path-to this material. Must be destroyed with Str_Delete().
 AutoStr* Materials_ComposePath(materialid_t materialId);
@@ -144,7 +144,7 @@ materialid_t Materials_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 
 
 /**
  * Create a new Material unless an existing Material is found at the path
- * (and within the same namespace) as that specified in @a def, in which case
+ * (and within the same scheme) as that specified in @a def, in which case
  * it is returned instead.
  *
  * @note: May fail on invalid definitions (return= @c NULL).
