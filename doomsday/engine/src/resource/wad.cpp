@@ -516,13 +516,13 @@ size_t Wad::readLump(int lumpIdx, uint8_t* buffer, size_t startOffset,
     LOG_AS("Wad::readLump");
     WadFile const& file = reinterpret_cast<WadFile&>(lump(lumpIdx));
 
-    LOG_TRACE("\"%s:%s\" (%u bytes%s) [%lu +%lu]")
+    LOG_TRACE("\"%s:%s\" (%u bytes%s) [%u +%u]")
         << de::NativePath(composePath()).pretty()
         << de::NativePath(file.composePath()).pretty()
         << (unsigned long) file.size()
         << (file.isCompressed()? ", compressed" : "")
-        << (unsigned long) startOffset
-        << (unsigned long) length;
+        << startOffset
+        << length;
 
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache)
