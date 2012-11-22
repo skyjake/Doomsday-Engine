@@ -37,13 +37,6 @@ namespace de
     class DENG2_PUBLIC NativeFile : public ByteArrayFile
     {
     public:
-        /// Input from the native file failed. @ingroup errors
-        DENG2_SUB_ERROR(IOError, NativeInputError);
-
-        /// Output to the native file failed. @ingroup errors
-        DENG2_SUB_ERROR(IOError, NativeOutputError);
-
-    public:
         /**
          * Constructs a NativeFile that accesses a file in the native file system
          * in read-only mode.

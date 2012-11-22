@@ -21,7 +21,7 @@
 #include "de/String"
 #include "de/Block"
 #include "de/ISerializable"
-#include "de/IIOStream"
+#include "de/IIStream"
 #include "de/FixedByteArray"
 #include "de/ByteRefArray"
 #include "de/data/byteorder.h"
@@ -41,8 +41,8 @@ struct Reader::Instance
     IByteArray::Offset markOffset;
 
     // Stream source:
-    IIOStream* stream;
-    const IIOStream* constStream;
+    IIStream* stream;
+    const IIStream* constStream;
     dsize numReceivedBytes;
     Block incoming;     ///< Buffer for bytes received so far from the stream.
     bool marking;       ///< @c true, if marking is occurring (mark() called).
@@ -53,12 +53,12 @@ struct Reader::Instance
           stream(0), constStream(0), numReceivedBytes(0), marking(false)
     {}
 
-    Instance(const ByteOrder& order, IIOStream* str)
+    Instance(const ByteOrder& order, IIStream* str)
         : convert(order), source(0), offset(0), markOffset(0),
           stream(str), constStream(0), numReceivedBytes(0), marking(false)
     {}
 
-    Instance(const ByteOrder& order, const IIOStream* str)
+    Instance(const ByteOrder& order, const IIStream* str)
         : convert(order), source(0), offset(0), markOffset(0),
           stream(0), constStream(str), numReceivedBytes(0), marking(false)
     {}
@@ -116,7 +116,7 @@ struct Reader::Instance
             }
             else
             {
-                throw IIOStream::IOError("Reader::readBytes",
+                throw IIStream::InputError("Reader::readBytes",
                         QString("Attempted to read %1 bytes from stream while only %2 "
                                 "bytes are available").arg(size).arg(incoming.size()));
             }
@@ -155,11 +155,11 @@ Reader::Reader(const IByteArray& source, const ByteOrder& byteOrder, IByteArray:
     : d(new Instance(byteOrder, &source, offset))
 {}
 
-Reader::Reader(IIOStream& stream, const ByteOrder& byteOrder)
+Reader::Reader(IIStream& stream, const ByteOrder& byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
 
-Reader::Reader(const IIOStream& stream, const ByteOrder& byteOrder)
+Reader::Reader(const IIStream& stream, const ByteOrder& byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
 

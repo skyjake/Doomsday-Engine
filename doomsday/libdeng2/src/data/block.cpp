@@ -41,12 +41,12 @@ Block::Block(const QByteArray& byteArray)
     : QByteArray(byteArray)
 {}
 
-Block::Block(IIOStream& stream)
+Block::Block(IIStream& stream)
 {
     stream >> *this;
 }
 
-Block::Block(const IIOStream& stream)
+Block::Block(const IIStream& stream)
 {
     stream >> *this;
 }

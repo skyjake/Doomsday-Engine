@@ -21,6 +21,7 @@
 #define LIBDENG2_TRANSMITTER_H
 
 #include "../libdeng2.h"
+#include "../IOStream"
 
 namespace de {
 
@@ -32,7 +33,7 @@ class Packet;
  *
  * @ingroup net
  */
-class DENG2_PUBLIC Transmitter
+class DENG2_PUBLIC Transmitter : public IOStream
 {
 public:
     virtual ~Transmitter();
@@ -52,18 +53,19 @@ public:
     virtual void sendPacket(const Packet& packet);
 
     /**
-     * Sends an array of data.
-     *
-     * @param data  Data to send.
-     */
-    virtual Transmitter& operator << (const IByteArray& data);
-
-    /**
      * Sends a packet. The packet is first serialized and then sent.
      *
      * @param packet  Packet.
      */
     virtual Transmitter& operator << (const Packet& packet);
+
+    // Implements IOStream.
+    /**
+     * Sends an array of data.
+     *
+     * @param data  Data to send.
+     */
+    virtual IOStream& operator << (const IByteArray& data);
 };
 
 } // namespace de

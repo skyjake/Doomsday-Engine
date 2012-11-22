@@ -1,6 +1,6 @@
 /**
- * @file iiostream.h
- * I/O stream interface. @ingroup data
+ * @file iostream.h
+ * Output-only stream interface. @ingroup data
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -18,25 +18,35 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_IIOSTREAM_H
-#define LIBDENG2_IIOSTREAM_H
+#ifndef LIBDENG2_IOSTREAM_H
+#define LIBDENG2_IOSTREAM_H
 
-#include "../IIStream"
-#include "../IOStream"
+#include "../IByteArray"
 
 namespace de {
 
 /**
- * Interface that allows communication via an input/output stream of bytes.
- * @see IIStream, IOStream
+ * Interface that allows communication via an output stream of bytes.
  */
-class IIOStream : public IIStream, public IOStream
+class IOStream
 {
 public:
-    /// Only reading is allowed from the stream. @ingroup errors
-    DENG2_SUB_ERROR(OutputError, ReadOnlyError);
+    /// Output to the stream failed. @ingroup errors
+    DENG2_ERROR(OutputError);
+
+public:
+    virtual ~IOStream() {}
+
+    /**
+     * Writes an array of bytes to the stream.
+     *
+     * @param bytes  Byte array to write.
+     *
+     * @return Reference to this IOStream object.
+     */
+    virtual IOStream& operator << (const IByteArray& bytes) = 0;
 };
 
 } // namespace de
 
-#endif // LIBDENG2_IIOSTREAM_H
+#endif // LIBDENG2_IOSTREAM_H

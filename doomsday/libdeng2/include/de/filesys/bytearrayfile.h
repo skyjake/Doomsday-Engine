@@ -44,9 +44,9 @@ namespace de
 
     public:
         // Implements IIOStream.
-        IIOStream& operator << (const IByteArray& bytes);
-        IIOStream& operator >> (IByteArray& bytes);
-        const IIOStream& operator >> (IByteArray& bytes) const;
+        IOStream& operator << (const IByteArray& bytes);
+        IIStream& operator >> (IByteArray& bytes);
+        const IIStream& operator >> (IByteArray& bytes) const;
     };
 }
 

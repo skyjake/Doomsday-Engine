@@ -40,8 +40,8 @@ namespace de
      *
      * Implements the IIOStream interface to allow files to receive and send
      * out a stream of bytes. The default implementation only throws an
-     * IIOStream::IOError -- it is up to subclasses to implement the stream in
-     * the context suitable for the concrete file class.
+     * exception -- it is up to subclasses to implement the stream in the
+     * context suitable for the concrete file class.
      *
      * Note that the constructor of File is protected: only subclasses can be
      * instantiated.
@@ -289,9 +289,9 @@ namespace de
         void verifyWriteAccess();
 
         // Implements IIOStream.
-        IIOStream& operator << (const IByteArray& bytes);
-        IIOStream& operator >> (IByteArray& bytes);
-        const IIOStream& operator >> (IByteArray& bytes) const;
+        IOStream& operator << (const IByteArray& bytes);
+        IIStream& operator >> (IByteArray& bytes);
+        const IIStream& operator >> (IByteArray& bytes) const;
 
     protected:
         /**

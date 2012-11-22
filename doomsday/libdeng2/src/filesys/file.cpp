@@ -171,22 +171,22 @@ void File::verifyWriteAccess()
     }
 }
 
-IIOStream& File::operator << (const IByteArray& bytes)
+IOStream& File::operator << (const IByteArray& bytes)
 {
     DENG2_UNUSED(bytes);
-    throw IOError("File::operator <<", "File does not access input");
+    throw OutputError("File::operator <<", "File does not accept a byte stream");
 }
 
-IIOStream& File::operator >> (IByteArray& bytes)
+IIStream& File::operator >> (IByteArray& bytes)
 {
     DENG2_UNUSED(bytes);
-    throw IOError("File::operator >>", "File does not produce output");
+    throw InputError("File::operator >>", "File does not produce a byte stream");
 }
 
-const IIOStream& File::operator >> (IByteArray& bytes) const
+const IIStream& File::operator >> (IByteArray& bytes) const
 {
     DENG2_UNUSED(bytes);
-    throw IOError("File::operator >>", "File does not produce output");
+    throw InputError("File::operator >>", "File does not produce a byte stream");
 }
 
 dsize File::size() const

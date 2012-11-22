@@ -99,9 +99,9 @@ void NativeFile::set(Offset at, const Byte* values, Size count)
     out.write(reinterpret_cast<const char*>(values), count);
     if(out.error() != QFile::NoError)
     {
-        /// @throw NativeOutputError  Failure to write to the native file.
-        throw NativeOutputError("NativeFile::set", "Error writing to file:" +
-                                out.errorString());
+        /// @throw OutputError  Failure to write to the native file.
+        throw OutputError("NativeFile::set", "Error writing to file:" +
+                          out.errorString());
     }
     // Update status.
     Status st = status();
@@ -126,8 +126,8 @@ QFile& NativeFile::input() const
         {
             delete _in;
             _in = 0;
-            /// @throw NativeInputError  Opening the input stream failed.
-            throw NativeInputError("NativeFile::input", "Failed to read " + _nativePath);
+            /// @throw InputError  Opening the input stream failed.
+            throw InputError("NativeFile::input", "Failed to read " + _nativePath);
         }
     }
     return *_in;
@@ -150,8 +150,8 @@ QFile& NativeFile::output()
         {
             delete _out;
             _out = 0;
-            /// @throw NativeOutputError  Opening the output stream failed.
-            throw NativeOutputError("NativeFile::output", "Failed to write " + _nativePath);
+            /// @throw OutputError  Opening the output stream failed.
+            throw OutputError("NativeFile::output", "Failed to write " + _nativePath);
         }
         if(mode() & Truncate)
         {

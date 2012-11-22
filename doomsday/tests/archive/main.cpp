@@ -61,7 +61,7 @@ int main(int argc, char** argv)
             File& worldTxt = zip.newFile("world.txt");
             Writer(worldTxt) << FixedByteArray(content.toUtf8());
         }
-        catch(const File::IOError&)
+        catch(const File::OutputError&)
         {
             LOG_WARNING("Cannot change files in read-only mode.");
         }

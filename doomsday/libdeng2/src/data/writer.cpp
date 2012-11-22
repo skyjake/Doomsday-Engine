@@ -21,7 +21,7 @@
 #include "de/String"
 #include "de/Block"
 #include "de/ISerializable"
-#include "de/IIOStream"
+#include "de/IOStream"
 #include "de/FixedByteArray"
 #include "de/ByteRefArray"
 #include "de/ByteArrayFile"
@@ -34,14 +34,14 @@ struct Writer::Instance
 {
     const ByteOrder& convert;
     IByteArray* destination;
-    IIOStream* stream;
+    IOStream* stream;
     IByteArray::Offset offset;
     const IByteArray::Offset fixedOffset;
 
     Instance(const ByteOrder& order, IByteArray* dest, IByteArray::Offset off)
         : convert(order), destination(dest), stream(0), offset(off), fixedOffset(0) {}
 
-    Instance(const ByteOrder& order, IIOStream* str)
+    Instance(const ByteOrder& order, IOStream* str)
         : convert(order), destination(0), stream(str), offset(0), fixedOffset(0)
     {
         destination = dynamic_cast<IByteArray*>(str);
@@ -84,7 +84,7 @@ Writer::Writer(IByteArray& destination, IByteArray::Offset offset)
     : d(new Instance(littleEndianByteOrder, &destination, offset))
 {}
 
-Writer::Writer(IIOStream& stream, const ByteOrder& byteOrder)
+Writer::Writer(IOStream& stream, const ByteOrder& byteOrder)
     : d(new Instance(byteOrder, &stream))
 {}
 

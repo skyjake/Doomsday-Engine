@@ -17,6 +17,7 @@ HEADERS += \
     include/de/IBlock \
     include/de/IByteArray \
     include/de/IIOStream \
+    include/de/IOStream \
     include/de/IReadable \
     include/de/ISerializable \
     include/de/IWritable \
@@ -56,6 +57,7 @@ HEADERS += \
     include/de/data/iblock.h \
     include/de/data/ibytearray.h \
     include/de/data/iiostream.h \
+    include/de/data/iostream.h \
     include/de/data/info.h \
     include/de/data/ireadable.h \
     include/de/data/iserializable.h \
@@ -77,7 +79,8 @@ HEADERS += \
     include/de/data/waitable.h \
     include/de/data/waitablefifo.h \
     include/de/data/writer.h \
-    include/de/data/zeroed.h
+    include/de/data/zeroed.h \
+    include/de/data/iistream.h
 
 SOURCES += \
     src/data/accessorvalue.cpp \

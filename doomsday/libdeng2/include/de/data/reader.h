@@ -30,7 +30,7 @@ class Block;
 class String;
 class IReadable;
 class FixedByteArray;
-class IIOStream;
+class IIStream;
 
 /**
  * Provides a protocol for reading data from a byte array object (anything with
@@ -62,7 +62,7 @@ public:
      * @param stream     Stream where input is read.
      * @param byteOrder  Byte order to use.
      */
-    Reader(IIOStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
+    Reader(IIStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
 
     /**
      * Constructs a new reader that reads from a const stream.
@@ -70,7 +70,7 @@ public:
      * @param stream     Const stream where input is read.
      * @param byteOrder  Byte order to use.
      */
-    Reader(const IIOStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
+    Reader(const IIStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
 
     //@{ Read a number from the source buffer, in network byte order.
     Reader& operator >> (char& byte);

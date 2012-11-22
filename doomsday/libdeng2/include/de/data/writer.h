@@ -31,7 +31,7 @@ class String;
 class Block;
 class ByteArrayFile;
 class FixedByteArray;
-class IIOStream;
+class IOStream;
 
 /**
  * Provides a protocol for writing data in a specific byte order into a byte
@@ -71,7 +71,7 @@ public:
      * @param stream     Stream to write to.
      * @param byteOrder  Byte order to use.
      */
-    Writer(IIOStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
+    Writer(IOStream& stream, const ByteOrder& byteOrder = littleEndianByteOrder);
 
     /**
      * Constructs a new writer for writing into a byte array file.
