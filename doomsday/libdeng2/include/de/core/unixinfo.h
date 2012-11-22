@@ -1,6 +1,6 @@
 /**
  * @file unixinfo.h
- * Unix system-level configuration. @ingroup core
+ * Unix system-level configuration.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>

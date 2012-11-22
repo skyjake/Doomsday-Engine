@@ -1,6 +1,6 @@
 /**
  * @file nativepath.h
- * File paths for the native file system. @ingroup fs
+ * File paths for the native file system.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>

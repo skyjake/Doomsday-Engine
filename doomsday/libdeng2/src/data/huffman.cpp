@@ -1,6 +1,6 @@
 /**
  * @file huffman.cpp
- * Implementation of Huffman codes. @ingroup math
+ * Huffman codes.
  *
  * Uses predetermined, fixed frequencies optimized for short (size < 128)
  * messages.

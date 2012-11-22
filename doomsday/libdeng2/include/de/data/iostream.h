@@ -1,6 +1,6 @@
 /**
  * @file iostream.h
- * Output-only stream interface. @ingroup data
+ * Output-only stream interface.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

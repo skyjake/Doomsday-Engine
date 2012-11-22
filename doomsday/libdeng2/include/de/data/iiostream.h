@@ -1,6 +1,6 @@
 /**
  * @file iiostream.h
- * I/O stream interface. @ingroup data
+ * I/O stream interface.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

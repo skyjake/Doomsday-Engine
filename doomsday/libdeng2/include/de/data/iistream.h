@@ -1,6 +1,6 @@
 /**
  * @file iistream.h
- * Input-only stream interface. @ingroup data
+ * Input-only stream interface.
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
