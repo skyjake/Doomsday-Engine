@@ -53,7 +53,7 @@ extern "C" {
 /// Special value used to signify an invalid font id.
 #define NOFONTID                    0
 
-enum fontnamespaceid_e; // Defined in dd_share.h
+enum fontschemeid_e; // Defined in dd_share.h
 struct font_s;
 
 /// Register the console commands, variables, etc..., of this module.
@@ -72,24 +72,24 @@ void Fonts_Shutdown(void);
 void Fonts_ClearDefinitionLinks(void);
 
 /**
- * Try to interpret a font namespace identifier from @a str.
- * If found to match a known namespace name, return the associated identifier.
+ * Try to interpret a font scheme identifier from @a str.
+ * If found to match a known scheme name, return the associated identifier.
  * If the reference @a str is not valid (i.e., NULL or a zero-length string)
- * then the special identifier @c FN_ANY is returned.
- * Otherwise @c FN_INVALID.
+ * then the special identifier @c FS_ANY is returned.
+ * Otherwise @c FS_INVALID.
  */
-fontnamespaceid_t Fonts_ParseNamespace(const char* str);
+fontschemeid_t Fonts_ParseScheme(const char* str);
 
-/// @return  Name associated with the identified @a namespaceId else a zero-length string.
-const ddstring_t* Fonts_NamespaceName(fontnamespaceid_t namespaceId);
+/// @return  Name associated with the identified @a schemeId else a zero-length string.
+const ddstring_t* Fonts_SchemeName(fontschemeid_t schemeId);
 
 /// @return  Total number of unique Fonts in the collection.
 uint Fonts_Size(void);
 
-/// @return  Number of unique Fonts in the identified @a namespaceId.
-uint Fonts_Count(fontnamespaceid_t namespaceId);
+/// @return  Number of unique Fonts in the identified @a schemeId.
+uint Fonts_Count(fontschemeid_t schemeId);
 
-/// Clear all fonts in all namespaces (and release any acquired GL-textures).
+/// Clear all fonts in all schemes (and release any acquired GL-textures).
 void Fonts_Clear(void);
 
 /// Clear all fonts flagged 'runtime' (and release any acquired GL-textures).
@@ -99,12 +99,12 @@ void Fonts_ClearRuntime(void);
 void Fonts_ClearSystem(void);
 
 /**
- * Clear all fonts in the identified namespace(s) (and release any acquired GL-textures).
+ * Clear all fonts in the identified scheme(s) (and release any acquired GL-textures).
  *
- * @param namespaceId  Unique identifier of the namespace to process
- *     or @c FN_ANY to clear all fonts in any namespace.
+ * @param schemeId  Unique identifier of the scheme to process
+ *     or @c FS_ANY to clear all fonts in any scheme.
  */
-void Fonts_ClearNamespace(fontnamespaceid_t namespaceId);
+void Fonts_ClearScheme(fontschemeid_t schemeId);
 
 /// @return  Unique identifier of the primary name for @a font else @c NOFONTID.
 fontid_t Fonts_Id(struct font_s* font);
@@ -112,14 +112,14 @@ fontid_t Fonts_Id(struct font_s* font);
 /// @return  Font associated with unique identifier @a fontId else @c NULL.
 struct font_s* Fonts_ToFont(fontid_t fontId);
 
-/// @return  Font associated with the namespace-unique identifier @a index else @c NOFONTID.
-textureid_t Fonts_FontForUniqueId(fontnamespaceid_t namespaceId, int uniqueId);
+/// @return  Font associated with the scheme-unique identifier @a index else @c NOFONTID.
+textureid_t Fonts_FontForUniqueId(fontschemeid_t schemeId, int uniqueId);
 
-/// @return  Namespace-unique identfier associated with the identified @a fontId.
+/// @return  Scheme-unique identfier associated with the identified @a fontId.
 int Fonts_UniqueId(fontid_t fontId);
 
-/// @return  Unique identifier of the namespace this name is in.
-fontnamespaceid_t Fonts_Namespace(fontid_t fontId);
+/// @return  Unique identifier of the scheme this name is in.
+fontschemeid_t Fonts_Scheme(fontid_t fontId);
 
 /// @return  Symbolic name/path-to this font as a string.
 AutoStr* Fonts_ComposePath(fontid_t fontId);
@@ -167,7 +167,7 @@ fontid_t Fonts_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
  * already exists, its unique identifier is returned..
  *
  * @param uri  Uri representing a path to the font in the virtual hierarchy.
- * @param uniqueId  Namespace-unique identifier to associate with the font.
+ * @param uniqueId  Scheme-unique identifier to associate with the font.
  * @return  Unique identifier for this font unless @a uri is invalid, in
  *     which case @c NOFONTID is returned.
  */
@@ -184,30 +184,30 @@ struct font_s* Fonts_CreateFromDef(fontid_t id, ded_compositefont_t* def);
  * each visited. Iteration ends when all fonts have been visited or a
  * callback returns non-zero.
  *
- * @param namespaceId  If a valid namespace identifier, only consider
- *     fonts in this namespace, otherwise visit all fonts.
+ * @param schemeId  If a valid scheme identifier, only consider
+ *     fonts in this scheme, otherwise visit all fonts.
  * @param callback  Callback function ptr.
  * @param paramaters  Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Fonts_Iterate2(fontnamespaceid_t namespaceId, int (*callback)(struct font_s* font, void* paramaters), void* paramaters);
-int Fonts_Iterate(fontnamespaceid_t namespaceId, int (*callback)(struct font_s* font, void* paramaters)); /*paramaters=NULL*/
+int Fonts_Iterate2(fontschemeid_t schemeId, int (*callback)(struct font_s* font, void* paramaters), void* paramaters);
+int Fonts_Iterate(fontschemeid_t schemeId, int (*callback)(struct font_s* font, void* paramaters)); /*paramaters=NULL*/
 
 /**
  * Iterate over declared fonts in the collection making a callback for
  * each visited. Iteration ends when all fonts have been visited or a
  * callback returns non-zero.
  *
- * @param namespaceId  If a valid namespace identifier, only consider
- *     fonts in this namespace, otherwise visit all fonts.
+ * @param schemeId  If a valid scheme identifier, only consider
+ *     fonts in this scheme, otherwise visit all fonts.
  * @param callback  Callback function ptr.
  * @param paramaters  Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Fonts_IterateDeclared2(fontnamespaceid_t namespaceId, int (*callback)(fontid_t textureId, void* paramaters), void* paramaters);
-int Fonts_IterateDeclared(fontnamespaceid_t namespaceId, int (*callback)(fontid_t textureId, void* paramaters)); /*paramaters=NULL*/
+int Fonts_IterateDeclared2(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void* paramaters), void* paramaters);
+int Fonts_IterateDeclared(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void* paramaters)); /*paramaters=NULL*/
 
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the
@@ -220,7 +220,7 @@ int Fonts_IterateDeclared(fontnamespaceid_t namespaceId, int (*callback)(fontid_
  * for fonts.
  *
  * @note Called automatically prior to module shutdown.
- * @todo Define new texture namespaces for font textures and refactor away.
+ * @todo Define new texture schemes for font textures and refactor away.
  */
 void Fonts_ReleaseRuntimeTextures(void);
 void Fonts_ReleaseSystemTextures(void);

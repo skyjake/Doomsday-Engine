@@ -1161,7 +1161,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
         if(mat)
         {
             const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(

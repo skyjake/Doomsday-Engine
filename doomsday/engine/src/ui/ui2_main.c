@@ -1053,9 +1053,9 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                        ms->size.height + TS_GENERAL(spec)->border*2, 0);
                 TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
 
-                switch(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))))
+                switch(Textures_Scheme(Textures_Id(MSU_texture(ms, MTU_PRIMARY))))
                 {
-                case TN_SPRITES: {
+                case TS_SPRITES: {
                     patchtex_t* sTex = (patchtex_t*)Texture_UserDataPointer(MSU_texture(ms, MTU_PRIMARY));
                     if(sTex)
                     {
@@ -1073,7 +1073,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             break;
           }
         case PFT_PATCH: {
-            Texture* texture = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, f->texRef.patch));
+            Texture* texture = Textures_ToTexture(Textures_TextureForUniqueId(TS_PATCHES, f->texRef.patch));
             if(texture)
             {
                 TextureVariant* tex = GL_PreparePatchTexture(texture);

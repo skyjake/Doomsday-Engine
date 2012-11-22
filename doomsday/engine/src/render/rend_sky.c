@@ -255,14 +255,14 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(renderTextures == 2)
         {
-            mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+            mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":gray"));
         }
         else
         {
             mat = R_SkyLayerMaterial(layer);
             if(!mat)
             {
-                mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
+                mat = Materials_ToMaterial(Materials_ResolveUriCString(MS_SYSTEM_NAME":missing"));
                 rs.texXFlip = false;
             }
         }

@@ -21,8 +21,8 @@ EXPORTS
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
     DD_MaterialForTextureUniqueId @234 NONAME
-    DD_ParseTextureNamespace    @502 NONAME
-    DD_ParseMaterialNamespace   @503 NONAME
+    DD_ParseTextureSchemeName    @502 NONAME
+    DD_ParseMaterialSchemeName   @503 NONAME
 
 ; Base: Types.
     ; Animator.

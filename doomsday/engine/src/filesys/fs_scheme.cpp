@@ -1,7 +1,7 @@
 /**
- * @file fs_namespace.cpp
+ * @file fs_scheme.cpp
  *
- * File system namespace. @ingroup fs
+ * File system (subspace) scheme. @ingroup fs
  *
  * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -161,18 +161,18 @@ public:
     }
 };
 
-struct FS1::Namespace::Instance
+struct FS1::Scheme::Instance
 {
-    FS1::Namespace& self;
+    FS1::Scheme& self;
 
     /// Symbolic name.
     String name;
 
     /// Flags which govern behavior.
-    FS1::Namespace::Flags flags;
+    FS1::Scheme::Flags flags;
 
     /// Associated path directory.
-    /// @todo It should not be necessary for a unique directory per namespace.
+    /// @todo It should not be necessary for a unique directory per scheme.
     PathTree directory;
 
     /// As the directory is relative, this special node serves as the root.
@@ -186,15 +186,15 @@ struct FS1::Namespace::Instance
 
     /// Sets of search paths to look for files to be included.
     /// Each set is in order of greatest-importance, right to left.
-    FS1::Namespace::SearchPaths searchPaths;
+    FS1::Scheme::SearchPaths searchPaths;
 
-    Instance(FS1::Namespace& d, String _name, FS1::Namespace::Flags _flags)
+    Instance(FS1::Scheme& d, String _name, FS1::Scheme::Flags _flags)
         : self(d), name(_name), flags(_flags), directory(), rootNode(0),
           nameHash(), nameHashIsDirty(true)
     {}
 
     /**
-     * Add files to this namespace by resolving search path, searching the
+     * Add files to this scheme by resolving search path, searching the
      * file system and populating our internal directory with the results.
      * Duplicates are automatically pruned.
      *
@@ -215,13 +215,13 @@ struct FS1::Namespace::Instance
     }
 
     /**
-     * Add files to this namespace by resolving each search path in @a group.
+     * Add files to this scheme by resolving each search path in @a group.
      *
      * @param group  Group of paths to search.
      */
     void addFromSearchPaths(FS1::PathGroup group)
     {
-        for(FS1::Namespace::SearchPaths::const_iterator i = searchPaths.find(group);
+        for(FS1::Scheme::SearchPaths::const_iterator i = searchPaths.find(group);
             i != searchPaths.end() && i.key() == group; ++i)
         {
             addFromSearchPath(*i);
@@ -325,22 +325,22 @@ struct FS1::Namespace::Instance
     }
 };
 
-FS1::Namespace::Namespace(String symbolicName, Flags flags)
+FS1::Scheme::Scheme(String symbolicName, Flags flags)
 {
     d = new Instance(*this, symbolicName, flags);
 }
 
-FS1::Namespace::~Namespace()
+FS1::Scheme::~Scheme()
 {
     delete d;
 }
 
-String const& FS1::Namespace::name() const
+String const& FS1::Scheme::name() const
 {
     return d->name;
 }
 
-void FS1::Namespace::clear()
+void FS1::Scheme::clear()
 {
     d->nameHash.clear();
     d->nameHashIsDirty = true;
@@ -348,12 +348,12 @@ void FS1::Namespace::clear()
     d->rootNode = 0;
 }
 
-void FS1::Namespace::rebuild()
+void FS1::Scheme::rebuild()
 {
     // Is a rebuild not necessary?
     if(!d->nameHashIsDirty) return;
 
-    LOG_AS("FS1::Namespace::rebuild");
+    LOG_AS("FS1::Scheme::rebuild");
     LOG_DEBUG("Rebuilding '%s'...") << d->name;
 
     // uint startTime = Timer_RealMilliseconds();
@@ -375,17 +375,17 @@ void FS1::Namespace::rebuild()
 #endif*/
 }
 
-static inline String composeNamespaceName(String const& filePath)
+static inline String composeSchemeName(String const& filePath)
 {
     return filePath.fileNameWithoutExtension();
 }
 
-bool FS1::Namespace::add(PathTree::Node& resourceNode)
+bool FS1::Scheme::add(PathTree::Node& resourceNode)
 {
     // We are only interested in leafs (i.e., files and not folders).
     if(!resourceNode.isLeaf()) return false;
 
-    String name = composeNamespaceName(resourceNode.name());
+    String name = composeSchemeName(resourceNode.name());
     NameHash::hash_type hashKey = NameHash::hashName(name);
 
     // Is this a new file?
@@ -408,8 +408,8 @@ bool FS1::Namespace::add(PathTree::Node& resourceNode)
         bucket.last = hashNode;
         if(!bucket.first) bucket.first = hashNode;
 
-        // We will need to rebuild this namespace (if we aren't already doing so,
-        // in the case of auto-populated namespaces built from FileDirectorys).
+        // We will need to rebuild this scheme (if we aren't already doing so,
+        // in the case of auto-populated schemes built from FileDirectorys).
         d->nameHashIsDirty = true;
     }
 
@@ -432,9 +432,9 @@ static String const& nameForPathGroup(FS1::PathGroup group)
     return names[int(group)];
 }
 
-bool FS1::Namespace::addSearchPath(SearchPath const& search, FS1::PathGroup group)
+bool FS1::Scheme::addSearchPath(SearchPath const& search, FS1::PathGroup group)
 {
-    LOG_AS("FS1::Namespace::addSearchPath");
+    LOG_AS("FS1::Scheme::addSearchPath");
 
     // Ensure this is a well formed path.
     if(search.isEmpty() ||
@@ -442,7 +442,7 @@ bool FS1::Namespace::addSearchPath(SearchPath const& search, FS1::PathGroup grou
        !search.path().endsWith("/"))
         return false;
 
-    // The addition of a new search path means the namespace is now dirty.
+    // The addition of a new search path means the scheme is now dirty.
     d->nameHashIsDirty = true;
 
     // Have we seen this path already (we don't want duplicates)?
@@ -459,28 +459,28 @@ bool FS1::Namespace::addSearchPath(SearchPath const& search, FS1::PathGroup grou
     // Prepend to the path list - newer paths have priority.
     d->searchPaths.insert(group, search);
 
-    LOG_DEBUG("'%s' path \"%s\" added to namespace '%s'.")
+    LOG_DEBUG("'%s' path \"%s\" added to scheme '%s'.")
         << nameForPathGroup(group) << search << name();
 
     return true;
 }
 
-void FS1::Namespace::clearSearchPathGroup(PathGroup group)
+void FS1::Scheme::clearSearchPathGroup(PathGroup group)
 {
     d->searchPaths.remove(group);
 }
 
-void FS1::Namespace::clearAllSearchPaths()
+void FS1::Scheme::clearAllSearchPaths()
 {
     d->searchPaths.clear();
 }
 
-FS1::Namespace::SearchPaths const& FS1::Namespace::searchPaths() const
+FS1::Scheme::SearchPaths const& FS1::Scheme::searchPaths() const
 {
     return d->searchPaths;
 }
 
-int FS1::Namespace::findAll(String name, FoundNodes& found)
+int FS1::Scheme::findAll(String name, FoundNodes& found)
 {
     int numFoundSoFar = found.count();
 
@@ -513,11 +513,11 @@ int FS1::Namespace::findAll(String name, FoundNodes& found)
     return found.count() - numFoundSoFar;
 }
 
-bool FS1::Namespace::mapPath(String& path) const
+bool FS1::Scheme::mapPath(String& path) const
 {
     if(path.isEmpty()) return false;
 
-    // Are virtual path mappings in effect for this namespace?
+    // Are virtual path mappings in effect for this scheme?
     if(!(d->flags & MappedInPackages)) return false;
 
     // Does this path qualify for mapping?
@@ -531,12 +531,12 @@ bool FS1::Namespace::mapPath(String& path) const
 }
 
 #if _DEBUG
-void FS1::Namespace::debugPrint() const
+void FS1::Scheme::debugPrint() const
 {
-    LOG_AS("FS1::Namespace::debugPrint");
+    LOG_AS("FS1::Scheme::debugPrint");
     LOG_DEBUG("[%p]:") << de::dintptr(this);
 
-    uint namespaceIdx = 0;
+    uint schemeIdx = 0;
     for(NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)
     {
         NameHash::Bucket& bucket = d->nameHash.buckets[key];
@@ -545,15 +545,15 @@ void FS1::Namespace::debugPrint() const
             FileRef const& fileRef = node->fileRef;
 
             LOG_DEBUG("  %u - %u:\"%s\" => %s")
-                << namespaceIdx << key << fileRef.name()
+                << schemeIdx << key << fileRef.name()
                 << NativePath(fileRef.directoryNode().composePath()).pretty();
 
-            ++namespaceIdx;
+            ++schemeIdx;
         }
     }
 
-    LOG_DEBUG("  %u %s in namespace.") << namespaceIdx << (namespaceIdx == 1? "file" : "files");
+    LOG_DEBUG("  %u %s in scheme.") << schemeIdx << (schemeIdx == 1? "file" : "files");
 }
 #endif
 
-} // namespace de
+} // scheme de

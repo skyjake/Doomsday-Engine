@@ -559,7 +559,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
         ch->geometry.size.height += font->_marginHeight * 2;
         ch->border = 0;
 
-        texId = Textures_TextureForUniqueId(TN_PATCHES, patch);
+        texId = Textures_TextureForUniqueId(TS_PATCHES, patch);
         ch->tex = GL_PrepareTextureVariant(Textures_ToTexture(texId), BitmapCompositeFont_CharSpec());
         if(ch->tex && TextureVariant_Source(ch->tex) == TEXS_ORIGINAL)
         {

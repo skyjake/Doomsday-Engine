@@ -109,8 +109,8 @@ struct FS1::Instance
     /// Virtual file-directory mapping.
     PathMappings pathMappings;
 
-    /// System subspaces containing a subset of the total files.
-    Namespaces namespaces;
+    /// System subspace schemes containing subsets of the total files.
+    Schemes schemes;
 
     Instance(FS1* d) : self(*d), loadingForStartup(true),
         openFiles(), loadedFiles(), fileIds(),
@@ -128,16 +128,16 @@ struct FS1::Instance
         pathMappings.clear();
         lumpMappings.clear();
 
-        clearNamespaces();
+        clearAllSchemes();
     }
 
-    void clearNamespaces()
+    void clearAllSchemes()
     {
-        DENG2_FOR_EACH(Namespaces, i, namespaces)
+        DENG2_FOR_EACH(Schemes, i, schemes)
         {
             delete *i;
         }
-        namespaces.clear();
+        schemes.clear();
     }
 
     /// @return  @c true if the FileId associated with @a path was released.
@@ -187,23 +187,23 @@ struct FS1::Instance
 
     String findPath(de::Uri const& search)
     {
-        // Within a namespace?
-        if(FS1::Namespace* fnamespace = self.namespaceByName(search.scheme()))
+        // Within a subspace scheme?
+        if(FS1::Scheme* scheme = self.schemeByName(search.scheme()))
         {
-            LOG_TRACE("Using namespace '%s'...") << fnamespace->name();
+            LOG_TRACE("Using scheme '%s'...") << scheme->name();
 
-            // Ensure the namespace is up to date.
-            fnamespace->rebuild();
+            // Ensure the scheme's index is up to date.
+            scheme->rebuild();
 
-            // The in-namespace name is the file name sans extension.
+            // The in-scheme name is the file name sans extension.
             String name = search.firstSegment().toString().fileNameWithoutExtension();
 
             // Perform the search.
-            FS1::Namespace::FoundNodes foundNodes;
-            if(fnamespace->findAll(name, foundNodes))
+            FS1::Scheme::FoundNodes foundNodes;
+            if(scheme->findAll(name, foundNodes))
             {
                 // At least one node name was matched (perhaps partially).
-                DENG2_FOR_EACH_CONST(FS1::Namespace::FoundNodes, i, foundNodes)
+                DENG2_FOR_EACH_CONST(FS1::Scheme::FoundNodes, i, foundNodes)
                 {
                     PathTree::Node& node = **i;
                     if(!node.comparePath(search, PCF_NO_BRANCH))
@@ -405,18 +405,18 @@ FS1::~FS1()
     FileHandleBuilder::shutdown();
 }
 
-FS1::Namespace& FS1::createNamespace(String name, Namespace::Flags flags)
+FS1::Scheme& FS1::createScheme(String name, Scheme::Flags flags)
 {
-    DENG_ASSERT(name.length() >= Namespace::min_name_length);
+    DENG_ASSERT(name.length() >= Scheme::min_name_length);
 
     // Ensure this is a unique name.
-    Namespace* fnamespace = namespaceByName(name);
-    if(fnamespace) return *fnamespace;
+    Scheme* scheme = schemeByName(name);
+    if(scheme) return *scheme;
 
-    // Create a new namespace.
-    fnamespace = new Namespace(name, flags);
-    d->namespaces.insert(name.toLower(), fnamespace);
-    return *fnamespace;
+    // Create a new scheme.
+    scheme = new Scheme(name, flags);
+    d->schemes.insert(name.toLower(), scheme);
+    return *scheme;
 }
 
 void FS1::consoleRegister()
@@ -1130,19 +1130,19 @@ void FS1::printDirectory(String path)
     }
 }
 
-FS1::Namespace* FS1::namespaceByName(String name)
+FS1::Scheme* FS1::schemeByName(String name)
 {
     if(!name.isEmpty())
     {
-        Namespaces::iterator found = d->namespaces.find(name.toLower());
-        if(found != d->namespaces.end()) return *found;
+        Schemes::iterator found = d->schemes.find(name.toLower());
+        if(found != d->schemes.end()) return *found;
     }
     return 0; // Not found.
 }
 
-FS1::Namespaces const& FS1::namespaces()
+FS1::Schemes const& FS1::schemes()
 {
-    return d->namespaces;
+    return d->schemes;
 }
 
 /// Print contents of directories as Doomsday sees them.

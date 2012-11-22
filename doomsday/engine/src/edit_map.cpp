@@ -1826,7 +1826,7 @@ static void assignSurfaceMaterial(Surface* suf, ddstring_t const* materialUri)
         else
         {
             // No, attempt to resolve this URI and update the dictionary.
-            // First try the preferred namespace, then any.
+            // First try the preferred scheme, then any.
             materialid_t materialId = Materials_ResolveUriCString2(Str_Text(materialUri), true/*quiet please*/);
             if(materialId == NOMATERIALID)
             {

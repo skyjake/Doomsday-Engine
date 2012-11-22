@@ -103,10 +103,12 @@ namespace de
         };
 
         /**
-         * @todo The symbolic name of the namespace and the path mapping template
-         *       (see applyPathMappings()) should be defined externally. -ds
+         * Scheme defines a file system subspace.
+         *
+         * @todo The symbolic name of the schme and the path mapping template
+         *       (@ref mapPath()) should be defined externally. -ds
          */
-        class Namespace
+        class Scheme
         {
         public:
             /// Symbolic names must be at least this number of characters.
@@ -114,10 +116,10 @@ namespace de
 
             enum Flag
             {
-                /// Packages may include virtual file mappings to the namespace with a
-                /// root directory which matches the symbolic name of the namespace.
+                /// Packages may include virtual file mappings to the scheme with a
+                /// root directory which matches the symbolic name of the scheme.
                 ///
-                /// @see applyPathMappings()
+                /// @see mapPath()
                 MappedInPackages    = 0x01
             };
             Q_DECLARE_FLAGS(Flags, Flag)
@@ -129,30 +131,28 @@ namespace de
             typedef QList<PathTree::Node*> FoundNodes;
 
         public:
-            explicit Namespace(String symbolicName, Flags flags = 0);
-            ~Namespace();
+            explicit Scheme(String symbolicName, Flags flags = 0);
+            ~Scheme();
 
-            /// @return  Symbolic name of this namespace (e.g., "Models").
+            /// @return  Symbolic name of this scheme (e.g., "Models").
             String const& name() const;
 
             /**
-             * Rebuild this namespace by re-scanning for resources on all search
-             * paths and re-populating the internal database.
+             * Rebuild this scheme by re-scanning for resources on all search paths
+             * and re-populating the scheme's index.
              *
              * @note Any manually added resources will not be present after this.
-             *
-             * @todo Namespace population should be implemented externally. -ds
              */
             void rebuild();
 
             /**
-             * Clear this namespace back to it's "empty" state (i.e., no resources).
+             * Clear this scheme back to it's "empty" state (i.e., no resources).
              * The search path groups are unaffected.
              */
             void clear();
 
             /**
-             * Reset this namespace, returning it to an empty state and clearing any
+             * Reset this scheme, returning it to an empty state and clearing any
              * @ref ExtraPaths which have been registered since its construction.
              */
             inline void reset() {
@@ -161,17 +161,16 @@ namespace de
             }
 
             /**
-             * Manually add a resource to this namespace. Duplicates are pruned
-             * automatically.
+             * Manually add a resource to this scheme. Duplicates are pruned automatically.
              *
              * @param resourceNode  Node which represents the resource.
              *
-             * @return  @c true iff this namespace did not already contain the resource.
+             * @return  @c true iff this scheme did not already contain the resource.
              */
             bool add(PathTree::Node& resourceNode);
 
             /**
-             * Finds all resources in this namespace.
+             * Finds all resources in this scheme.
              *
              * @param name    If not an empty string, only consider resources whose
              *                name begins with this. Case insensitive.
@@ -182,8 +181,8 @@ namespace de
             int findAll(String name, FoundNodes& found);
 
             /**
-             * Add a new search path to this namespace. Newer paths have priority
-             * over previously added paths.
+             * Add a new search path to this scheme. Newer paths have priority over
+             * previously added paths.
              *
              * @param path      New unresolved search path to add. A copy is made.
              * @param group     Group to add this path to. @ref PathGroup
@@ -193,12 +192,12 @@ namespace de
             bool addSearchPath(SearchPath const& path, PathGroup group = DefaultPaths);
 
             /**
-             * Clear all search paths in all groups in this namespace.
+             * Clear all search paths in all groups in the scheme.
              */
             void clearAllSearchPaths();
 
             /**
-             * Clear search paths in @a group from this namespace.
+             * Clear search paths in @a group from the scheme.
              *
              * @param group  Search path group to be cleared.
              */
@@ -210,10 +209,10 @@ namespace de
             SearchPaths const& searchPaths() const;
 
             /**
-             * Apply mapping for this namespace to the specified path. Mapping must
-             * be enabled (with @ref MappedInPackages) otherwise this does nothing.
+             * Apply mapping for this scheme to the specified path. Mapping must be
+             * enabled (with @ref MappedInPackages) otherwise this does nothing.
              *
-             * For example, given the namespace name "models":
+             * For example, given the scheme name "models":
              *
              * <pre>
              *     "models/mymodel.dmd" => "$(App.DataPath)/$(GamePlugin.Name)/models/mymodel.dmd"
@@ -234,8 +233,8 @@ namespace de
             Instance* d;
         };
 
-        /// Namespaces within the file system.
-        typedef QMap<String, Namespace*> Namespaces;
+        /// File system subspace schemes.
+        typedef QMap<String, Scheme*> Schemes;
 
         /**
          * PathListItem represents a found path for find file search results.
@@ -278,35 +277,35 @@ namespace de
         void endStartup();
 
         /**
-         * @param name      Unique symbolic name of this namespace. Must be at least
-         *                  @c Namespace::min_name_length characters long.
-         * @param flags     @ref Namespace::Flag
+         * @param name      Unique symbolic name of the new scheme. Must be at least
+         *                  @c Scheme::min_name_length characters long.
+         * @param flags     @ref Scheme::Flag
          */
-        Namespace& createNamespace(String name, Namespace::Flags flags = 0);
+        Scheme& createScheme(String name, Scheme::Flags flags = 0);
 
         /**
-         * Lookup a Namespace by symbolic name.
+         * Lookup a Scheme by symbolic name.
          *
-         * @param name  Symbolic name of the namespace.
-         * @return  Namespace associated with @a name; otherwise @c 0 (not found).
+         * @param name  Symbolic name of the scheme.
+         * @return  Scheme associated with @a name; otherwise @c 0 (not found).
          */
-        Namespace* namespaceByName(String name);
+        Scheme* schemeByName(String name);
 
         /**
-         * Reset all the namespaces, returning them to an empty state and clearing
-         * any @ref ExtraPaths which have been registered since construction.
+         * Reset all the schemes, returning their indexes to an empty state and clearing
+         * any @ref ExtraPaths which have been registered since creation.
          */
-        inline void resetAllNamespaces()
+        inline void resetAllSchemes()
         {
-            Namespaces allNamespaces = namespaces();
-            DENG2_FOR_EACH(Namespaces, i, allNamespaces){ (*i)->reset(); }
+            Schemes allSchemes = schemes();
+            DENG2_FOR_EACH(Schemes, i, allSchemes){ (*i)->reset(); }
         }
 
-        /// Returns the namespaces for efficient traversal.
-        Namespaces const& namespaces();
+        /// Returns the schemes for efficient traversal.
+        Schemes const& schemes();
 
         /**
-         * Add a new path mapping from source to destination in the vfs.
+         * Add a new path mapping from source to destination.
          * @note Paths will be transformed into absolute paths if needed.
          */
         void addPathMapping(String source, String destination);
@@ -361,12 +360,12 @@ namespace de
          * Indexes @a file (which must have been opened with this file system) into
          * this file system and adds it to the list of loaded files.
          *
-         * @param file      The file to index. Assumed to have not yet been indexed!
+         * @param file  The file to index. Assumed to have not yet been indexed!
          */
         void index(File1& file);
 
         /**
-         * Removes a file from any lump indexes.
+         * Removes a file from any indexes.
          *
          * @param file  File to remove from the index.
          */
@@ -492,15 +491,15 @@ namespace de
          * Search the file system for a path to a file.
          *
          * @param search        The search term. If a scheme is specified, first check
-         *                      for a similarly named namespace with which to limit the
-         *                      search. If not found within the namespace then perform
-         *                      a wider search of the whole file system.
+         *                      for a similarly named Scheme with which to limit the
+         *                      search. If not found within the scheme then perform a
+         *                      wider search of the whole file system.
          * @param flags         @ref resourceLocationFlags
          * @param rclass        Class of resource being searched for. If no file is found
-         *                      which matches the search term and a non-null resource class
-         *                      is specified try alternative names for the file according
-         *                      to the list of known file extensions for each file type
-         *                      associated with this class of resource.
+         *                      which matches the search term and a non-null resource
+         *                      class is specified try alternative names for the file
+         *                      according to the list of known file extensions for each
+         *                      file type associated with this class of resource.
          *
          * @return  The found path.
          *
@@ -544,7 +543,7 @@ namespace de
         Instance* d;
     };
 
-    Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Namespace::Flags)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Scheme::Flags)
 
 } // namespace de
 
@@ -624,7 +623,7 @@ AutoStr* F_ComposePath(struct file1_s const* file);
 void F_SetCustom(struct file1_s* file, boolean yes);
 
 AutoStr* F_ComposeLumpPath2(struct file1_s* file, int lumpIdx, char delimiter);
-AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx); /*delimiter='/'*/
+AutoStr* F_ComposeLumpPath(struct file1_s* file, int lumpIdx/*, delimiter ='/' */);
 
 size_t F_ReadLump(struct file1_s* file, int lumpIdx, uint8_t* buffer);
 

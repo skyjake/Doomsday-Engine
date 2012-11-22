@@ -249,7 +249,7 @@ struct Uri::Instance
         {
             scheme = path.left(sepPos);
 
-            if(defaultResourceClass == RC_NULL || App_FileSystem()->namespaceByName(scheme))
+            if(defaultResourceClass == RC_NULL || App_FileSystem()->schemeByName(scheme))
             {
                 path = path.mid(sepPos + 1);
                 return;
@@ -271,9 +271,9 @@ struct Uri::Instance
 
         if(VALID_RESOURCECLASSID(defaultResourceClass))
         {
-            FS1::Namespace* fnamespace = App_FileSystem()->namespaceByName(DD_ResourceClassById(defaultResourceClass).defaultNamespace());
-            DENG_ASSERT(fnamespace);
-            scheme = fnamespace->name();
+            FS1::Scheme* fsScheme = App_FileSystem()->schemeByName(DD_ResourceClassById(defaultResourceClass).defaultScheme());
+            DENG_ASSERT(fsScheme);
+            scheme = fsScheme->name();
         }
     }
 
