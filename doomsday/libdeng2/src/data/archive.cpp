@@ -56,7 +56,7 @@ struct Archive::Instance
             return;
         }
 
-        // Do we already have a deserialized copy of this entry already?
+        // Do we already have a deserialized copy of this entry?
         if(entry.data)
         {
             deserializedData.copyFrom(*entry.data, 0, entry.data->size());
