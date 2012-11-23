@@ -247,8 +247,12 @@ namespace de
             dsize sizeInArchive;    ///< Size within the archive (serialized).
             Time modifiedAt;        ///< Latest modification timestamp.
             bool maybeChanged;      ///< @c true, if the data must be re-serialized when writing.
-            Block* data;            ///< Deserialized data. Can be @c NULL.
-            mutable Block* dataInArchive; ///< Cached copy of the serialized data. Can be @c NULL.
+
+            /// Deserialized data. Can be @c NULL. Entry has ownership.
+            Block* data;
+
+            /// Cached copy of the serialized data. Can be @c NULL. Entry has ownership.
+            mutable Block* dataInArchive;
 
             Entry() : offset(0), size(0), sizeInArchive(0), maybeChanged(false),
                 data(0), dataInArchive(0)
@@ -273,8 +277,9 @@ namespace de
         virtual Entry* newEntry() = 0;
 
         /**
-         * Reads an entry from the source archive. The read data for the entry
-         * is kept cached in memory after the call.
+         * Reads an entry from the source archive. The implementation of this
+         * method is expected to cache the read data of the entry in its
+         * original, serialized format in Entry::dataInArchive.
          *
          * @param entry  Entry that is being read.
          * @param path   Path of the entry within the archive.

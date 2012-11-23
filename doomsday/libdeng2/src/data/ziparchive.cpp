@@ -381,7 +381,7 @@ void ZipArchive::readFromSource(const Entry* e, const String&, IBlock& uncompres
 
     if(entry.compression == NO_COMPRESSION)
     {
-        // Just read it, then.
+        // Data is not compressed so we can just read it.
         if(entry.dataInArchive)
         {
             uncompressedData.copyFrom(*entry.dataInArchive, 0, entry.size);
@@ -392,7 +392,7 @@ void ZipArchive::readFromSource(const Entry* e, const String&, IBlock& uncompres
             uncompressedData.copyFrom(*source(), entry.offset, entry.size);
         }
     }
-    else
+    else // Data is compressed.
     {
         // Prepare the output buffer for the decompressed data.
         uncompressedData.resize(entry.size);
