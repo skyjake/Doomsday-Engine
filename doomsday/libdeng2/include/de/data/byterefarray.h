@@ -29,7 +29,7 @@ namespace de {
  * ByteRefArray are fixed size: one cannot write past the end of
  * the array.
  */
-class ByteRefArray : public IByteArray
+class DENG2_PUBLIC ByteRefArray : public IByteArray
 {
 public:
     /// set() is attempted on a nonmodifiable array. @ingroup errors
