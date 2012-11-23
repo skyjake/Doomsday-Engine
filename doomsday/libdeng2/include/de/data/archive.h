@@ -29,6 +29,7 @@
 #include "../Zeroed"
 
 #include <QSet>
+#include <QMap>
 
 namespace de
 {

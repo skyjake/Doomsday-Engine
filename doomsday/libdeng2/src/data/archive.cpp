@@ -29,7 +29,7 @@ struct Archive::Instance
     const IByteArray* source;
 
     /// Index maps entry paths to their metadata.
-    Index index;
+    Archive::Index index;
 
     /// Contents of the archive have been modified.
     bool modified;
@@ -39,7 +39,7 @@ struct Archive::Instance
 
     void readEntry(const String& path, IBlock& deserializedData) const
     {
-        Index::const_iterator found = index.find(path);
+        Archive::Index::const_iterator found = index.find(path);
         if(found == index.end())
         {
             /// @throw NotFoundError @a path was not found in the archive.
