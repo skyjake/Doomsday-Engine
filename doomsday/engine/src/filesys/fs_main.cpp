@@ -244,8 +244,7 @@ struct FS1::Instance
         }
 
         // First check the Zip lump index.
-        QByteArray pathUtf8 = path.toUtf8();
-        lumpnum_t lumpNum = zipFileIndex.indexForPath(pathUtf8.constData());
+        lumpnum_t lumpNum = zipFileIndex.indexForPath(de::Uri(path, RC_NULL));
         if(lumpNum >= 0)
         {
             return &zipFileIndex.lump(lumpNum);
@@ -719,34 +718,20 @@ LumpIndex const& FS1::nameIndex() const
     return d->primaryIndex;
 }
 
-lumpnum_t FS1::lumpNumForName(String name, bool silent)
+lumpnum_t FS1::lumpNumForName(String name)
 {
     LOG_AS("FS1::lumpNumForName");
 
-    lumpnum_t lumpNum = -1;
-    if(!name.isEmpty())
-    {
-        // Append a .lmp extension if none is specified.
-        if(name.fileNameExtension().isEmpty())
-        {
-            name += ".lmp";
-        }
+    if(name.isEmpty()) return -1;
 
-        // Perform the search.
-        lumpNum = d->primaryIndex.indexForPath(name.toUtf8().constData());
-
-        // Not found? - warn the user
-        if(lumpNum < 0 && !silent)
-        {
-            LOG_WARNING("Lump \"%s\" not found.")
-                << name.fileNameWithoutExtension();
-        }
-    }
-    else if(!silent)
+    // Append a .lmp extension if none is specified.
+    if(name.fileNameExtension().isEmpty())
     {
-        LOG_WARNING("Empty name, returning invalid lumpnum.");
+        name += ".lmp";
     }
-    return lumpNum;
+
+    // Perform the search.
+    return d->primaryIndex.indexForPath(de::Uri(name, RC_NULL));
 }
 
 void FS1::releaseFile(de::File1& file)

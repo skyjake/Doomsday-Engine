@@ -371,9 +371,9 @@ bool LumpIndex::catalogues(File1& file)
     return false;
 }
 
-lumpnum_t LumpIndex::indexForPath(char const* path) const
+lumpnum_t LumpIndex::indexForPath(de::Uri const& search) const
 {
-    if(!path || !path[0] || d->lumps.empty()) return -1;
+    if(search.isEmpty() || d->lumps.empty()) return -1;
 
     // We may need to prune path-duplicate lumps.
     d->pruneDuplicates();
@@ -383,8 +383,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path) const
     DENG_ASSERT(d->hashMap);
 
     // Perform the search.
-    de::Uri searchPattern = de::Uri(path, RC_NULL);
-    ushort hash = searchPattern.firstSegment().hash() % d->hashMap->size();
+    ushort hash = search.firstSegment().hash() % d->hashMap->size();
     if((*d->hashMap)[hash].head == -1) return -1;
 
     for(int idx = (*d->hashMap)[hash].head; idx != -1; idx = (*d->hashMap)[idx].next)
@@ -392,7 +391,7 @@ lumpnum_t LumpIndex::indexForPath(char const* path) const
         File1 const& lump = *d->lumps[idx];
         PathTree::Node const& node = lump.directoryNode();
 
-        if(node.comparePath(searchPattern, 0)) continue;
+        if(node.comparePath(search, 0)) continue;
 
         // This is the lump we are looking for.
         return idx;

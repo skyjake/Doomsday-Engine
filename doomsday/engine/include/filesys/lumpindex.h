@@ -75,7 +75,7 @@ public:
     bool isValidIndex(lumpnum_t lumpNum) const;
 
     /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
-    lumpnum_t indexForPath(char const* path) const;
+    lumpnum_t indexForPath(Uri const& path) const;
 
     /**
      * Lookup a file at specific offset in the index.

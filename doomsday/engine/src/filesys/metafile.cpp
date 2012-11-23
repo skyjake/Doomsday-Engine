@@ -166,7 +166,7 @@ static lumpnum_t lumpNumForIdentityKey(LumpIndex const& lumpIndex, String idKey)
         name += ".lmp";
     }
 
-    lumpnum_t lumpNum = lumpIndex.indexForPath(name.toUtf8().constData());
+    lumpnum_t lumpNum = lumpIndex.indexForPath(de::Uri(name, RC_NULL));
     if(lumpNum < 0) return -1;
 
     // Check the condition.

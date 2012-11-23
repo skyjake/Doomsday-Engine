@@ -1808,7 +1808,7 @@ boolean DD_Init(void)
     // One-time execution of various command line features available during startup.
     if(CommandLine_CheckWith("-dumplump", 1))
     {
-        const char* name = CommandLine_Next();
+        String name = CommandLine_Next();
         lumpnum_t lumpNum = App_FileSystem()->lumpNumForName(name);
         if(lumpNum >= 0)
         {

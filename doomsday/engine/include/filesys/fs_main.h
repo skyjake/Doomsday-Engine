@@ -388,13 +388,12 @@ namespace de
         /**
          * Lookup a lump by name.
          *
-         * @param name  Name of the lump to lookup (may include a size condition).
-         * @param silent  @c true= do not log a warning if no lump is found.
+         * @param name  Name of the lump to lookup.
          * @return  Logical lump number for the found lump; otherwise @c -1.
          *
          * @todo At this level there should be no distinction between lumps. -ds
          */
-        lumpnum_t lumpNumForName(String name, bool silent = true);
+        lumpnum_t lumpNumForName(String name);
 
         /**
          * Provides access to the main index of the file system. This can be
