@@ -1816,7 +1816,7 @@ boolean DD_Init(void)
         }
         else
         {
-            Con_Message("Warning: Cannot dump unknown lump \"%s\", ignoring.\n", name);
+            Con_Message("Warning: Cannot dump unknown lump \"%s\", ignoring.\n", name.toAscii().constData());
         }
     }
 
