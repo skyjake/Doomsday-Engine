@@ -26,7 +26,8 @@
 #include <QThread>
 #include <QDataStream>
 
-using namespace de;
+namespace de {
+namespace internal {
 
 class SleeperThread : public QThread
 {
@@ -41,6 +42,8 @@ public:
         QThread::usleep(microseconds);
     }
 };
+
+} // namespace internal
 
 duint64 Time::Delta::asMilliSeconds() const
 {
@@ -66,11 +69,11 @@ void Time::Delta::sleep() const
 {
     if(_seconds < 60)
     {
-        SleeperThread::usleep((unsigned long)(_seconds * 1e6));
+        internal::SleeperThread::usleep((unsigned long)(_seconds * 1e6));
     }
     else
     {
-        SleeperThread::msleep((unsigned long)(_seconds * 1e3));
+        internal::SleeperThread::msleep((unsigned long)(_seconds * 1e3));
     }
 }
 
@@ -167,3 +170,5 @@ QTextStream& de::operator << (QTextStream& os, const Time& t)
     os << t.asText();
     return os;
 }
+
+} // namespace de

@@ -34,6 +34,8 @@ namespace de {
 
 const Time::Delta FLUSH_INTERVAL = .2; // seconds
 
+namespace internal {
+
 /**
  * @internal
  * Interface for output streams for printing log messages.
@@ -102,6 +104,8 @@ public:
 private:
     QDebug* _qs;
 };
+
+} // namespace internal
 
 struct LogBuffer::Instance
 {
@@ -242,6 +246,11 @@ void LogBuffer::setOutputFile(const String& path)
 
 void LogBuffer::flush()
 {
+    using internal::IOutputStream;
+    using internal::FileOutputStream;
+    using internal::TextOutputStream;
+    using internal::DebugOutputStream;
+
     DENG2_GUARD(this);
 
     if(!d->toBeFlushed.isEmpty())

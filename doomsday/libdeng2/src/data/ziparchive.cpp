@@ -33,7 +33,8 @@
 #include <cstring>
 #include <zlib.h>
 
-using namespace de;
+namespace de {
+namespace internal {
 
 // Marker signatures.
 #define SIG_LOCAL_FILE_HEADER   0x04034b50
@@ -250,6 +251,10 @@ struct CentralEnd : public ISerializable {
              >> commentSize;
     }
 };
+
+} // namespace internal
+
+using namespace internal;
 
 ZipArchive::ZipArchive() : Archive()
 {}
@@ -592,3 +597,5 @@ void ZipArchive::ZipEntry::update()
         crc32 = ::crc32(0L, data->data(), data->size());
     }
 }
+
+} // namespace de

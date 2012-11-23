@@ -27,13 +27,16 @@
 #include <QTextStream>
 #include <QThread>
 
-using namespace de;
+namespace de {
 
 const char* MAIN_SECTION = "";
 
+namespace internal {
+
 /**
- * The logs table is lockable so that multiple threads can access their
- * logs at the same time.
+ * @internal
+ * The logs table is lockable so that multiple threads can access their logs at
+ * the same time.
  */
 class Logs : public QMap<QThread*, Log*>, public Lockable
 {
@@ -49,8 +52,10 @@ public:
     }
 };
 
+} // namespace internal
+
 /// The logs table contains the log of each thread that uses logging.
-static Logs logs;
+static internal::Logs logs;
 
 LogEntry::LogEntry() : _level(Log::TRACE), _disabled(true)
 {}
@@ -283,7 +288,7 @@ Log& Log::threadLog()
     QThread* thread = QThread::currentThread();
     Log* theLog = 0;
     logs.lock();
-    Logs::iterator found = logs.find(thread);
+    internal::Logs::iterator found = logs.find(thread);
     if(found == logs.end())
     {
         // Create a new log.
@@ -302,7 +307,7 @@ void Log::disposeThreadLog()
 {
     QThread* thread = QThread::currentThread();
     logs.lock();
-    Logs::iterator found = logs.find(thread);
+    internal::Logs::iterator found = logs.find(thread);
     if(found != logs.end())
     {
         delete found.value();
@@ -310,3 +315,5 @@ void Log::disposeThreadLog()
     }
     logs.unlock();
 }
+
+} // namespace de

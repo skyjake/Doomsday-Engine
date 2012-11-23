@@ -24,7 +24,8 @@
 #include "de/Info"
 #include <QDir>
 
-using namespace de;
+namespace de {
+namespace internal {
 
 class Infos
 {
@@ -69,6 +70,10 @@ public:
         return false;
     }
 };
+
+} // namespace internal
+
+using namespace internal;
 
 struct UnixInfo::Instance
 {
@@ -122,3 +127,5 @@ bool UnixInfo::defaults(const String& key, String& value) const
     }
     return false;
 }
+
+} // namespace de

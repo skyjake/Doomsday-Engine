@@ -33,28 +33,9 @@
 #define HEAP_LEFT(i)    (2*(i) + 1)
 #define HEAP_RIGHT(i)   (2*(i) + 2)
 
-using namespace de;
+namespace de {
 
-typedef struct huffnode_s {
-    struct huffnode_s *left, *right;
-    double freq;
-    dbyte value;              // Only valid for leaves.
-} huffnode_t;
-
-typedef struct huffqueue_s {
-    huffnode_t *nodes[256];
-    int count;
-} huffqueue_t;
-
-typedef struct huffcode_s {
-    duint code;
-    duint length;
-} huffcode_t;
-
-typedef struct huffbuffer_s {
-    dbyte* data;
-    duint size;
-} huffbuffer_t;
+namespace internal {
 
 /*
  * Total number of bytes: 234457 (10217 packets)
@@ -127,13 +108,34 @@ static double freqs[256] = {
     0.0017103349, 0.0012496961, 0.0022903987, 0.0028619320
 };
 
+struct HuffNode {
+    HuffNode *left, *right;
+    double freq;
+    dbyte value;              // Only valid for leaves.
+};
+
+struct HuffQueue {
+    HuffNode *nodes[256];
+    int count;
+};
+
+struct HuffCode {
+    duint code;
+    duint length;
+};
+
+struct HuffBuffer {
+    dbyte* data;
+    duint size;
+};
+
 struct Huffman
 {
     // The root of the Huffman tree.
-    huffnode_t* huffRoot;
+    HuffNode* huffRoot;
 
     // The lookup table for encoding.
-    huffcode_t huffCodes[256];
+    HuffCode huffCodes[256];
 
     /**
      * Builds the Huffman tree and initializes the code lookup.
@@ -142,8 +144,8 @@ struct Huffman
     {
         memset(huffCodes, 0, sizeof(huffCodes));
 
-        huffqueue_t queue;
-        huffnode_t *node;
+        HuffQueue queue;
+        HuffNode *node;
         int i;
 
         // Initialize the priority queue that holds the remaining nodes.
@@ -151,7 +153,7 @@ struct Huffman
         for(i = 0; i < 256; ++i)
         {
             // These are the leaves of the tree.
-            node = (huffnode_t*) calloc(1, sizeof(huffnode_t));
+            node = (HuffNode*) calloc(1, sizeof(HuffNode));
             node->freq = freqs[i];
             node->value = i;
             Huff_QueueInsert(&queue, node);
@@ -160,7 +162,7 @@ struct Huffman
         // Build the tree.
         for(i = 0; i < 255; ++i)
         {
-            node = (huffnode_t*) calloc(1, sizeof(huffnode_t));
+            node = (HuffNode*) calloc(1, sizeof(HuffNode));
             node->left = Huff_QueueExtract(&queue);
             node->right = Huff_QueueExtract(&queue);
             node->freq = node->left->freq + node->right->freq;
@@ -210,9 +212,9 @@ struct Huffman
     /**
      * Exchange two nodes in the queue.
      */
-    void Huff_QueueExchange(huffqueue_t *queue, int index1, int index2)
+    void Huff_QueueExchange(HuffQueue *queue, int index1, int index2)
     {
-        huffnode_t *temp = queue->nodes[index1];
+        HuffNode *temp = queue->nodes[index1];
         queue->nodes[index1] = queue->nodes[index2];
         queue->nodes[index2] = temp;
     }
@@ -220,7 +222,7 @@ struct Huffman
     /**
      * Insert a node into a priority queue.
      */
-    void Huff_QueueInsert(huffqueue_t *queue, huffnode_t *node)
+    void Huff_QueueInsert(HuffQueue *queue, HuffNode *node)
     {
         int i, parent;
 
@@ -248,9 +250,9 @@ struct Huffman
     /**
      * Extract the smallest node from the queue.
      */
-    huffnode_t *Huff_QueueExtract(huffqueue_t *queue)
+    HuffNode *Huff_QueueExtract(HuffQueue *queue)
     {
-        huffnode_t *min;
+        HuffNode *min;
         int i, left, right, small;
 
         DENG2_ASSERT(queue->count > 0);
@@ -299,7 +301,7 @@ struct Huffman
     /**
      * Recursively builds the Huffman code lookup for the node's subtree.
      */
-    void Huff_BuildLookup(huffnode_t *node, uint code, uint length)
+    void Huff_BuildLookup(HuffNode *node, uint code, uint length)
     {
         if(!node->left && !node->right)
         {
@@ -329,7 +331,7 @@ struct Huffman
      * Checks if the encoding/decoding buffer can hold the given number of
      * bytes. If not, reallocates the buffer.
      */
-    void Huff_ResizeBuffer(huffbuffer_t *buffer, dsize neededSize)
+    void Huff_ResizeBuffer(HuffBuffer *buffer, dsize neededSize)
     {
         while(neededSize > buffer->size)
         {
@@ -344,7 +346,7 @@ struct Huffman
     /**
      * Recursively frees the node and its subtree.
      */
-    void Huff_DestroyNode(huffnode_t *node)
+    void Huff_DestroyNode(HuffNode *node)
     {
         if(node)
         {
@@ -357,7 +359,7 @@ struct Huffman
     /**
      * Free the buffer.
      */
-    void Huff_DestroyBuffer(huffbuffer_t *buffer)
+    void Huff_DestroyBuffer(HuffBuffer *buffer)
     {
         free(buffer->data);
         memset(buffer, 0, sizeof(*buffer));
@@ -365,7 +367,7 @@ struct Huffman
 
     dbyte* encode(const dbyte *data, dsize size, dsize *encodedSize)
     {
-        huffbuffer_t huffEnc;
+        HuffBuffer huffEnc;
         dsize i;
         duint code;
         int remaining, fits;
@@ -430,8 +432,8 @@ struct Huffman
 
     dbyte* decode(const dbyte *data, dsize size, dsize *decodedSize)
     {
-        huffbuffer_t huffDec;
-        huffnode_t* node;
+        HuffBuffer huffDec;
+        HuffNode* node;
         dsize outBytes = 0;
         const dbyte* in = data;
         const dbyte* lastIn = in + size - 1;
@@ -494,7 +496,9 @@ struct Huffman
     }
 };
 
-static Huffman huff;
+} // namespace internal
+
+static internal::Huffman huff;
 
 Block codec::huffmanEncode(const Block& data)
 {
@@ -521,3 +525,5 @@ Block codec::huffmanDecode(const Block& codedData)
     }
     return result;
 }
+
+} // namespace de

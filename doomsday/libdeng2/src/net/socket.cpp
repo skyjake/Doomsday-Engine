@@ -72,7 +72,7 @@
 #include "de/Reader"
 #include "de/data/huffman.h"
 
-using namespace de;
+namespace de {
 
 /// Version of the block transfer protocol.
 static const duint PROTOCOL_VERSION = 0;
@@ -96,6 +96,8 @@ static const int MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
 #define TRMF_SIZE_MASK          0x7f
 #define TRMF_SIZE_MASK_MEDIUM   0x3f
 #define TRMF_SIZE_SHIFT         7
+
+namespace internal {
 
 /**
  * Network message header.
@@ -178,6 +180,10 @@ struct Header : public ISerializable
         }
     }
 };
+
+} // namespace internal
+
+using namespace internal;
 
 struct Socket::Instance
 {
@@ -567,3 +573,5 @@ void Socket::bytesWereWritten(qint64 bytes)
     d->bytesToBeWritten -= bytes;
     DENG2_ASSERT(d->bytesToBeWritten >= 0);
 }
+
+} // namespace de

@@ -25,11 +25,8 @@
 #include <QList>
 #include <QTimer>
 
-using namespace de;
+namespace de {
 
-/**
- * @internal Private instance data for LegacyNetwork.
- */
 struct LegacyNetwork::Instance
 {
     int idGen;
@@ -242,3 +239,5 @@ bool LegacyNetwork::incomingForSocket(int socket)
     DENG2_ASSERT(d->sockets.contains(socket));
     return d->sockets[socket]->hasIncoming();
 }
+
+} // namespace de

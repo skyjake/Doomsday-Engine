@@ -29,13 +29,10 @@
 #include <QDebug>
 #include <string>
 
-using namespace de;
+namespace de {
 
 LegacyCore* LegacyCore::_appCore;
 
-/**
- * @internal Private instance data for LegacyCore.
- */
 struct LegacyCore::Instance
 {
     struct Loop {
@@ -242,3 +239,5 @@ void LegacyCore::handleUncaughtException(QString message)
 
     if(d->terminateFunc) d->terminateFunc(message.toUtf8().constData());
 }
+
+} // namespace de
