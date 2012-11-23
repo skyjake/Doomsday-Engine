@@ -27,6 +27,7 @@ HEADERS += \
     include/de/Lockable \
     include/de/NoneValue \
     include/de/NumberValue \
+    include/de/Path \
     include/de/Reader \
     include/de/Record \
     include/de/RecordValue \
@@ -69,6 +70,7 @@ HEADERS += \
     include/de/data/nonevalue.h \
     include/de/data/numbervalue.h \
     include/de/data/observers.h \
+    include/de/data/path.h \
     include/de/data/reader.h \
     include/de/data/record.h \
     include/de/data/recordvalue.h \
@@ -104,6 +106,7 @@ SOURCES += \
     src/data/lockable.cpp \
     src/data/nonevalue.cpp \
     src/data/numbervalue.cpp \
+    src/data/path.cpp \
     src/data/reader.cpp \
     src/data/record.cpp \
     src/data/recordvalue.cpp \
