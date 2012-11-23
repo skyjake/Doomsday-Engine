@@ -71,6 +71,11 @@ dsize Path::Segment::size() const
     return range.size();
 }
 
+Path::Segment::operator String () const
+{
+    return toString();
+}
+
 String Path::Segment::toString() const
 {
     return range.string()->mid(range.position(), range.size());
@@ -79,6 +84,8 @@ String Path::Segment::toString() const
 struct Path::Instance
 {
     String path;
+
+    /// The character in Instance::path that acts as the segment separator.
     QChar separator;
 
     /**
@@ -89,8 +96,10 @@ struct Path::Instance
     int segmentCount;
 
     /**
-     * Segments of the path. The array is composed of two parts: the first
-     * SEGMENT_BUFFER_SIZE elements are placed into a fixed-size buffer which is
+     * Fixed-size array for the segments of the path.
+     *
+     * The segments array is composed of two parts: the first
+     * SEGMENT_BUFFER_SIZE elements are placed into a fixed-size array which is
      * allocated along with the Instance, and additional segments are allocated
      * dynamically and linked in the extraSegments list.
      *
@@ -146,7 +155,6 @@ struct Path::Instance
         if(segmentCount < SEGMENT_BUFFER_SIZE)
         {
             segment = segments + segmentCount;
-            std::memset(segment, 0, sizeof(*segment));
         }
         else
         {
@@ -155,6 +163,7 @@ struct Path::Instance
             extraSegments.append(segment);
         }
 
+        std::memset(segment, 0, sizeof(*segment));
         segment->range = range;
 
         // There is now one more segment in the map.
@@ -188,8 +197,9 @@ struct Path::Instance
         const QChar* segEnd   = path.constData() + path.length() - 1;
 
         // Skip over any trailing delimiters.
-        for(int i = path.length(); segEnd->unicode() && *segEnd == separator && i-- > 0; segEnd--)
-        {}
+        for(int i = path.length();
+            segEnd->unicode() && *segEnd == separator && i-- > 0;
+            --segEnd) {}
 
         // Scan the path for segments, in reverse order.
         const QChar* from;
@@ -200,7 +210,7 @@ struct Path::Instance
             {}
 
             int startIndex = (*from == separator? from + 1 : from) - path.constData();
-            int length = (segEnd - path.constData()) - startIndex;
+            int length = (segEnd - path.constData()) - startIndex + 1;
             allocSegment(QStringRef(&path, startIndex, length));
 
             // Are there no more parent directories?
@@ -303,6 +313,12 @@ Path& Path::clear()
     return *this;
 }
 
+Path& Path::operator = (const String& newPath)
+{
+    set(newPath, '/');
+    return *this;
+}
+
 Path& Path::set(const String& newPath, QChar sep)
 {
     d->path = newPath; // implicitly shared
@@ -311,11 +327,11 @@ Path& Path::set(const String& newPath, QChar sep)
     return *this;
 }
 
-String Path::withSeparators(QChar sep) const
+Path Path::withSeparators(QChar sep) const
 {
-    String result;
-    result.replace(d->separator, sep);
-    return result;
+    String modPath = d->path;
+    modPath.replace(d->separator, sep);
+    return Path(modPath, sep);
 }
 
 String Path::asText() const

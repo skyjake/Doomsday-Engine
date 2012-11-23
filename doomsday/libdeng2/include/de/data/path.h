@@ -214,14 +214,14 @@ public:
     Path& set(const String& newPath, QChar sep = '/');
 
     /**
-     * Returns the path as a text string using @a sep as the segment separator
-     * character.
+     * Returns a copy of the path where all segment separators have been
+     * replaced with a new character.
      *
-     * @param sep  Character to use to replace path segment separators.
+     * @param sep  Character used to replace segment separators.
      *
-     * @return  Path as a string.
+     * @return  Path with new separators.
      */
-    String withSeparators(QChar sep = '/') const;
+    Path withSeparators(QChar sep = '/') const;
 
     /**
      * Retrieve a reference to the segment at @a index. In this method the
