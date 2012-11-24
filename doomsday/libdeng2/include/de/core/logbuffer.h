@@ -37,7 +37,7 @@ class LogEntry;
  *
  * @ingroup core
  */
-class LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(File, Deletion)
+class DENG2_PUBLIC LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(File, Deletion)
 {
     Q_OBJECT
 
