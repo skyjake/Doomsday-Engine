@@ -218,18 +218,20 @@ static void* stackStart;
 static size_t maxStackDepth;
 #endif
 
-typedef struct pathconstructorparams_s {
-    size_t length;
-    String composedPath;
-    QChar delimiter;
-} pathconstructorparams_t;
+namespace internal {
+    struct PathConstructorParams {
+        size_t length;
+        String composedPath;
+        QChar delimiter;
+    };
+}
 
 /**
  * Recursive path constructor. First finds the root and the full length of the
  * path (when descending), then allocates memory for the string, and finally
  * copies each fragment with the delimiters (on the way out).
  */
-static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const& trav)
+static void pathConstructor(internal::PathConstructorParams& parm, PathTree::Node const& trav)
 {
     String const& fragment = trav.name();
 
@@ -281,7 +283,7 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
  */
 Path PathTree::Node::composePath(QChar delimiter) const
 {
-    pathconstructorparams_t parm = { 0, String(), delimiter };
+    internal::PathConstructorParams parm = { 0, String(), delimiter };
 #ifdef LIBDENG_STACK_MONITOR
     stackStart = &parm;
 #endif
