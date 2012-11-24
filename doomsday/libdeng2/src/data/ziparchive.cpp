@@ -375,7 +375,7 @@ ZipArchive::ZipArchive(IByteArray const &archive) : Archive(archive)
 ZipArchive::~ZipArchive()
 {}
 
-void ZipArchive::readFromSource(Entry const *e, const String&, IBlock &uncompressedData) const
+void ZipArchive::readFromSource(Entry const *e, String const &, IBlock &uncompressedData) const
 {
     ZipEntry const &entry = *static_cast<ZipEntry const *>(e);
 

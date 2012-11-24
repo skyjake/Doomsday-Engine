@@ -313,7 +313,7 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, QChar delim
 
 static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
                               PathTree::NodeType type, int flags, PathTree::Node *parent,
-                              int (*callback) (PathTree::Node&, void *), void *parameters)
+                              int (*callback) (PathTree::Node &, void *), void *parameters)
 {
     int result = 0;
 
@@ -354,7 +354,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
 }
 
 int PathTree::traverse(ComparisonFlags flags, PathTree::Node *parent, Path::hash_type hashKey,
-                       int (*callback) (PathTree::Node&, void *), void *parameters) const
+                       int (*callback) (PathTree::Node &, void *), void *parameters) const
 {
     int result = 0;
     if(callback)

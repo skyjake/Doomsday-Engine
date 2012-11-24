@@ -46,7 +46,7 @@ namespace internal {
  * The logs table is lockable so that multiple threads can access their logs at
  * the same time.
  */
-class Logs : public QMap<QThread*, Log *>, public Lockable
+class Logs : public QMap<QThread *, Log *>, public Lockable
 {
 public:
     Logs() {}

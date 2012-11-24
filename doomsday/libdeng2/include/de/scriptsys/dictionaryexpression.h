@@ -65,7 +65,7 @@ namespace de
         void operator << (Reader &from);         
 
     private:
-        typedef std::pair<Expression*, Expression *> ExpressionPair;
+        typedef std::pair<Expression *, Expression *> ExpressionPair;
         typedef std::vector<ExpressionPair> Arguments;
         Arguments _arguments;
     };
