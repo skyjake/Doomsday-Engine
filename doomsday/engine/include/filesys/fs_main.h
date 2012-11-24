@@ -40,7 +40,7 @@
 #include <QList>
 #include <QMultiMap>
 #include <de/String>
-#include "pathtree.h"
+#include <de/PathTree>
 #include "fileinfo.h"
 #include "filetype.h"
 #include "searchpath.h"

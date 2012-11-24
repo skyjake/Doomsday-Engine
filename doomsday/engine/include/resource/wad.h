@@ -31,7 +31,7 @@
 
 #include "filesys/fileinfo.h"
 #include "filesys/file.h"
-#include "pathtree.h"
+#include <de/PathTree>
 
 namespace de {
 

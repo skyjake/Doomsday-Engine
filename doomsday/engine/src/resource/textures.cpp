@@ -26,15 +26,16 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "pathtree.h"
 #include "m_misc.h"             // for M_NumDigits
 #include "map/r_world.h"        // for ddMapSetup
 #include "filesys/fs_util.h"    // for F_PrettyPath
 #include "gl/gl_texmanager.h"
 #include "resource/texturevariant.h"
 #include "resource/textures.h"
+
 #include <de/Error>
 #include <de/Log>
+#include <de/PathTree>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
@@ -250,7 +251,7 @@ static TextureRepository::Node* findDirectoryNodeForPath(TextureRepository& texD
 {
     try
     {
-        TextureRepository::Node& node = texDirectory.find(path, PCF_NO_BRANCH | PCF_MATCH_FULL);
+        TextureRepository::Node &node = texDirectory.find(path, de::PathTree::NoBranch | de::PathTree::MatchFull);
         return &node;
     }
     catch(TextureRepository::NotFoundError const&)
@@ -1524,8 +1525,8 @@ D_CMD(PrintTextureStats)
 
         uint size = directory.size();
         Con_Printf("Scheme: %s (%u %s)\n", Str_Text(Textures_SchemeName(schemeId)), size, size==1? "texture":"textures");
-        TextureRepository::debugPrintHashDistribution(directory);
-        TextureRepository::debugPrint(directory);
+        directory.debugPrintHashDistribution();
+        directory.debugPrint();
     }
     return true;
 }

@@ -25,15 +25,14 @@
 #include "de_base.h"
 #include "de_filesys.h"
 
-#include "pathtree.h"
 #include "resource/lumpcache.h"
-
 #include "resource/wad.h"
 
 #include <vector>
 #include <de/ByteOrder>
 #include <de/Error>
 #include <de/NativePath>
+#include <de/PathTree>
 #include <de/Log>
 #include <de/memoryzone.h>
 
@@ -214,7 +213,7 @@ struct Wad::Instance
     {
         if(lumpDirectory)
         {
-            lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PathTree::no_hash, clearWadFileWorker);
+            lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, clearWadFileWorker);
             delete lumpDirectory;
         }
 
@@ -314,7 +313,7 @@ struct Wad::Instance
         Str_Reserve(Str_Init(&absPath), LUMPNAME_T_LASTINDEX + 4/*.lmp*/);
 
         // Intialize the directory.
-        lumpDirectory = new PathTree(PATHTREE_MULTI_LEAF);
+        lumpDirectory = new PathTree(PathTree::MultiLeaf);
 
         // Build our runtime representation from the archived lump directory.
         wadlumprecord_t const* arcRecord = arcRecords;
@@ -364,7 +363,7 @@ struct Wad::Instance
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         if(!lumpDirectory) return;
 
-        lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PathTree::no_hash, buildLumpNodeLutWorker, (void*)this);
+        lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, buildLumpNodeLutWorker, (void*)this);
     }
 };
 

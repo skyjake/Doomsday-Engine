@@ -28,10 +28,10 @@
 
 #include "dd_share.h"
 #include <de/Error>
+#include <de/PathTree>
 #include <de/str.h>
 #include "filehandle.h"
 #include "fileinfo.h"
-#include "pathtree.h"
 #include "uri.hh"
 
 namespace de {

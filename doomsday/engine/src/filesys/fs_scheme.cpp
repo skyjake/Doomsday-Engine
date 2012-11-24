@@ -29,8 +29,7 @@
 #include <de/App>
 #include <de/Log>
 #include <de/NativePath>
-
-#include "pathtree.h"
+#include <de/PathTree>
 
 #include "filesys/searchpath.h"
 #include "filesys/fs_main.h"

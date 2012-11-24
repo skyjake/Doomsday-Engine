@@ -207,7 +207,7 @@ struct FS1::Instance
                 DENG2_FOR_EACH_CONST(FS1::Scheme::FoundNodes, i, foundNodes)
                 {
                     PathTree::Node& node = **i;
-                    if(!node.comparePath(search.path(), PCF_NO_BRANCH))
+                    if(!node.comparePath(search.path(), PathTree::NoBranch))
                     {
                         // This is the file we are looking for.
                         return node.composePath();
@@ -829,7 +829,7 @@ int FS1::findAllPaths(String searchPattern, int flags, FS1::PathList& found)
         }
         else
         {
-            patternMatched = !node.comparePath(patternMap.path(), PCF_MATCH_FULL);
+            patternMatched = !node.comparePath(patternMap.path(), PathTree::MatchFull);
         }
 
         if(!patternMatched) continue;

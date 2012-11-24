@@ -27,15 +27,14 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
-#include "pathtree.h"
 #include "resource/lumpcache.h"
 #include "resource/zip.h"
 
 #include <de/App>
 #include <de/ByteOrder>
-#include <de/Error>
-#include <de/Log>
+#include <de/PathTree>
 #include <de/NativePath>
+#include <de/Log>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 
@@ -246,7 +245,7 @@ struct Zip::Instance
     {
         if(lumpDirectory)
         {
-            lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PathTree::no_hash, clearZipFileWorker);
+            lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, clearZipFileWorker);
             delete lumpDirectory;
         }
 
@@ -377,7 +376,7 @@ struct Zip::Instance
                 if(entryCount == 0) break;
 
                 // Intialize the directory.
-                lumpDirectory = new PathTree(PATHTREE_MULTI_LEAF);
+                lumpDirectory = new PathTree(PathTree::MultiLeaf);
             }
 
             // Position the read cursor at the start of the buffered central centralDirectory.
@@ -500,7 +499,7 @@ struct Zip::Instance
         lumpNodeLut = new LumpNodeLut(self->lumpCount());
         if(!lumpDirectory) return;
 
-        lumpDirectory->traverse(PCF_NO_BRANCH, NULL, PathTree::no_hash, buildLumpNodeLutWorker, (void*)this);
+        lumpDirectory->traverse(PathTree::NoBranch, NULL, PathTree::no_hash, buildLumpNodeLutWorker, (void*)this);
     }
 
     /**

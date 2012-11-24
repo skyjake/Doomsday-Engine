@@ -27,16 +27,15 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <de/PathTree>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
 
 #include "m_misc.h"
-
 #include "gl/gl_texmanager.h"
-#include "pathtree.h"
-
 #include "resource/font.h"
 #include "resource/fonts.h"
 #include "resource/bitmapfont.h"
@@ -247,7 +246,7 @@ static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory,
 {
     try
     {
-        FontRepository::Node& node = directory.find(de::Path(path), PCF_NO_BRANCH | PCF_MATCH_FULL);
+        FontRepository::Node &node = directory.find(de::Path(path), de::PathTree::NoBranch | de::PathTree::MatchFull);
         return &node;
     }
     catch(FontRepository::NotFoundError const&)
@@ -394,7 +393,7 @@ void Fonts_Shutdown(void)
 
         if(fn.repository)
         {
-            fn.repository->traverse(PCF_NO_BRANCH, NULL, FontRepository::no_hash, destroyRecordWorker);
+            fn.repository->traverse(de::PathTree::NoBranch, NULL, FontRepository::no_hash, destroyRecordWorker);
             delete fn.repository; fn.repository = 0;
         }
 
@@ -532,7 +531,7 @@ void Fonts_ClearScheme(fontschemeid_t schemeId)
 
         if(fn.repository)
         {
-            fn.repository->traverse(PCF_NO_BRANCH, NULL, FontRepository::no_hash, destroyFontAndRecordWorker);
+            fn.repository->traverse(de::PathTree::NoBranch, NULL, FontRepository::no_hash, destroyFontAndRecordWorker);
             fn.repository->clear();
         }
 
@@ -1195,7 +1194,7 @@ static int iterateDirectory(fontschemeid_t schemeId,
         FontRepository* directory = repositoryBySchemeId(fontschemeid_t(i));
         if(!directory) continue;
 
-        result = directory->traverse(PCF_NO_BRANCH, NULL, FontRepository::no_hash, callback, parameters);
+        result = directory->traverse(de::PathTree::NoBranch, NULL, FontRepository::no_hash, callback, parameters);
         if(result) break;
     }
     return result;
@@ -1327,7 +1326,8 @@ static FontRepository::Node** collectDirectoryNodes(fontschemeid_t schemeId,
         FontRepository* fontDirectory = repositoryBySchemeId(fontschemeid_t(i));
         if(!fontDirectory) continue;
 
-        fontDirectory->traverse(PCF_NO_BRANCH | PCF_MATCH_FULL, NULL, FontRepository::no_hash, collectDirectoryNodeWorker, (void*)&p);
+        fontDirectory->traverse(de::PathTree::NoBranch | de::PathTree::MatchFull,
+                                NULL, FontRepository::no_hash, collectDirectoryNodeWorker, (void*)&p);
     }
 
     if(storage)
@@ -1625,8 +1625,8 @@ D_CMD(PrintFontStats)
 
         size = fontDirectory->size();
         Con_Printf("Scheme: %s (%u %s)\n", Str_Text(Fonts_SchemeName(fontschemeid_t(i))), size, size==1? "font":"fonts");
-        FontRepository::debugPrintHashDistribution(*fontDirectory);
-        FontRepository::debugPrint(*fontDirectory);
+        fontDirectory->debugPrintHashDistribution();
+        fontDirectory->debugPrint();
     }
     return true;
 }

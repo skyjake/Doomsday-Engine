@@ -30,13 +30,13 @@
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
 
-#include "pathtree.h"
 #include "resource/texture.h"
 #include "resource/texturevariant.h"
 #include "resource/materialvariant.h"
 
 #include <de/Error>
 #include <de/Log>
+#include <de/PathTree>
 #include <de/memory.h>
 #include <de/memoryblockset.h>
 #include <de/memoryzone.h>
@@ -803,7 +803,7 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 {
     try
     {
-        MaterialRepository::Node& node = matDirectory.find(path, PCF_NO_BRANCH | PCF_MATCH_FULL);
+        MaterialRepository::Node& node = matDirectory.find(path, de::PathTree::NoBranch | de::PathTree::MatchFull);
         return reinterpret_cast<MaterialBind*>(node.userPointer());
     }
     catch(MaterialRepository::NotFoundError const&)
@@ -2074,8 +2074,8 @@ D_CMD(PrintMaterialStats)
         uint size = matDirectory.size();
 
         Con_Printf("Scheme: %s (%u %s)\n", Str_Text(Materials_SchemeName(schemeId)), size, size==1? "material":"materials");
-        MaterialRepository::debugPrintHashDistribution(matDirectory);
-        MaterialRepository::debugPrint(matDirectory);
+        matDirectory.debugPrintHashDistribution();
+        matDirectory.debugPrint();
     }
     return true;
 }
