@@ -36,8 +36,8 @@
 #include <QMultiHash>
 #include <de/Error>
 #include <de/String>
+#include <de/Path>
 #include <de/str.h>
-#include "uri.hh"
 
 /**
  * @defgroup pathComparisonFlags  Path Comparison Flags
@@ -64,34 +64,36 @@ namespace de
 {
     /**
      * Data structure for modelling a hierarchical relationship tree of
-     * string + data value pairs.
+     * Path + data value pairs.
      *
-     * @em Fragment is the term given to a name in a hierarchical path. For example,
-     * the path <pre>"c:/somewhere/something"</pre> contains three path fragments:
-     * <pre>[ 0: "c:", 1: "somewhere", 2: "something" ]</pre>
+     * @em Segment is the term given to a components of a hierarchical path.
+     * For example, the path <pre>"c:/somewhere/something"</pre> contains three
+     * path segments: <pre>[ 0: "c:", 1: "somewhere", 2: "something" ]</pre>
      *
-     * @em Delimiter is the term given to the separators between fragments. (Such as
-     * forward slashes in a file path).
+     * @em Delimiter is the term given to the separators between segments.
+     * (Such as forward slashes in an UNIX-style file path).
      *
-     * Internally, fragments are "pooled" such that only one instance of a fragment
-     * is included in the model of the whole tree. Potentially, this significantly
-     * reduces the memory overhead which would otherwise be necessary to represent
-     * the complete hierarchy as a set of fully composed paths.
+     * Internally, segments are "pooled" such that only one instance of a
+     * segment is included in the model of the whole tree. Potentially, this
+     * significantly reduces the memory overhead which would otherwise be
+     * necessary to represent the complete hierarchy as a set of fully composed
+     * paths.
      *
-     * Delimiters are not included in the hierarchy model. Not including the delimiters
-     * allows for optimal dynamic replacement when recomposing the original paths
-     * (also reducing the memory overhead for the whole data set). One potential use
-     * for this feature when representing file path hierarchies is "ambidextrously"
-     * recomposing paths with either forward or backward slashes, irrespective of
-     * the delimiter used at path insertion time.
+     * Delimiters are not included in the hierarchy model. Not including the
+     * delimiters allows for optimal dynamic replacement when recomposing the
+     * original paths (also reducing the memory overhead for the whole data
+     * set). One potential use for this feature when representing file path
+     * hierarchies is "ambidextrously" recomposing paths with either forward or
+     * backward slashes, irrespective of the delimiter used at path insertion
+     * time.
      */
     class PathTree
     {
         struct Instance; // needs to be friended by Node
 
     public:
-        /// Identifier associated with each unique path fragment.
-        typedef unsigned int FragmentId;
+        /// Identifier associated with each unique path segment.
+        typedef duint32 SegmentId;
 
         /// Node type identifiers.
         enum NodeType
@@ -103,8 +105,11 @@ namespace de
         /// @return  Print-ready name for node @a type.
         static String const& nodeTypeName(NodeType type);
 
-        /// Identifier used with the search and iteration algorithms in place of a
-        /// hash when the user does not wish to narrow the set of considered nodes.
+        /**
+         * Identifier used with the search and iteration algorithms in place of
+         * a hash when the user does not wish to narrow the set of considered
+         * nodes.
+         */
         static Path::hash_type const no_hash;
 
 #if _DEBUG
@@ -119,7 +124,7 @@ namespace de
         {
         private:
             Node();
-            Node(PathTree& tree, NodeType type, FragmentId fragmentId, Node* parent = 0,
+            Node(PathTree& tree, NodeType type, SegmentId segmentId, Node* parent = 0,
                  void* userPointer = 0, int userValue = 0);
             virtual ~Node();
 
@@ -138,10 +143,10 @@ namespace de
                 return isLeaf()? Leaf : Branch;
             }
 
-            /// @return Name for this node's path fragment.
+            /// @return Name for this node's path segment.
             String const& name() const;
 
-            /// @return Hash for this node's path fragment.
+            /// @return Hash for this node's path segment.
             Path::hash_type hash() const;
 
             /**
@@ -155,13 +160,13 @@ namespace de
              *       allow for further optimizations elsewhere (in the file system
              *       for example) -ds
              *
-             * @todo This logic should be encapsulated in Uri/Uri::PathNode -ds
+             * @todo This logic should be encapsulated in Path/Path::Segment. -ds
              */
-            int comparePath(de::Uri const& searchPattern, int flags) const;
+            int comparePath(de::Path const& searchPattern, int flags) const;
 
             /**
-             * Composes the URI for this node. 'Composing' the path of a node is to
-             * upwardly reconstruct the whole path toward the root of the hierarchy.
+             * Composes the path for this node. The whole path is upwardly
+             * reconstructed toward the root of the hierarchy.
              *
              * @param delimiter Names in the composed path hierarchy will be delimited
              *                  with this character. Paths to branches always include
@@ -169,23 +174,7 @@ namespace de
              *
              * @return The composed uri.
              */
-            Uri composeUri(QChar delimiter = '/') const;
-
-            /**
-             * Composes the full path for this node. 'Composing' the path of a node is
-             * to upwardly reconstruct the whole path toward the root of the hierarchy.
-             *
-             * @param delimiter Names in the composed path hierarchy will be delimited
-             *                  with this character. Paths to branches always include
-             *                  a terminating delimiter.
-             *
-             * @return The composed path.
-             *
-             * @deprecated Prefer to use @ref composeUri() instead.
-             */
-            String composePath(QChar delimiter = '/') const {
-                return composeUri(delimiter).compose();
-            }
+            Path composePath(QChar delimiter = '/') const;
 
             /**
              * Sets the user-specified custom pointer.
@@ -207,7 +196,7 @@ namespace de
             friend struct PathTree::Instance;
 
         private:
-            FragmentId fragmentId() const;
+            SegmentId segmentId() const;
 
         private:
             struct Instance;
@@ -246,9 +235,9 @@ namespace de
          *
          * @return Tail node for the inserted path else @c NULL. For example, given
          *         the path @c "c:/somewhere/something" this is the node for the
-         *         path fragment "something".
+         *         path segment "something".
          */
-        Node* insert(Uri const& path);
+        Node* insert(Path const& path);
 
         /**
          * Destroy the tree's contents, free'ing all nodes.
@@ -266,7 +255,7 @@ namespace de
          *
          * @return Found node.
          */
-        Node& find(Uri const& path, int flags);
+        Node& find(Path const& path, int flags);
 
         /**
          * Collate all referenced paths in the hierarchy into a list.
@@ -317,11 +306,11 @@ namespace de
          * Methods usually only needed by Node (or derivative classes).
          */
 
-        /// @return The path fragment associated with @a fragmentId.
-        String const& fragmentName(FragmentId fragmentId) const;
+        /// @return The path segment associated with @a segmentId.
+        String const& segmentName(SegmentId segmentId) const;
 
-        /// @return Hash associated with @a fragmentId.
-        Path::hash_type fragmentHash(FragmentId fragmentId) const;
+        /// @return Hash associated with @a segmentId.
+        Path::hash_type segmentHash(SegmentId segmentId) const;
 
     private:
         Instance* d;

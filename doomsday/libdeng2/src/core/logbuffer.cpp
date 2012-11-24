@@ -373,6 +373,7 @@ void LogBuffer::flush()
                         if(stream) *stream << lineText;
                     }
 
+                    // Advance to the next line.
                     wrapIndent = nextWrapIndent;
                     pos = next;
                     if(pos != String::npos && message[pos].isSpace())

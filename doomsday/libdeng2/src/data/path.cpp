@@ -301,6 +301,28 @@ bool Path::operator == (const Path& other) const
     return true;
 }
 
+Path Path::operator / (const Path& other) const
+{
+    // Unify the separators.
+    String otherPath = other.d->path;
+    if(other.separator() != d->separator)
+    {
+        otherPath.replace(other.d->separator, d->separator);
+    }
+
+    return Path(d->path.concatenatePath(otherPath, d->separator), d->separator);
+}
+
+Path Path::operator / (QString other) const
+{
+    return *this / Path(other);
+}
+
+Path Path::operator / (const char* otherNullTerminatedUtf8) const
+{
+    return *this / Path(otherNullTerminatedUtf8);
+}
+
 String Path::toString() const
 {
     return d->path;

@@ -188,6 +188,29 @@ public:
     }
 
     /**
+     * Concatenate paths together. This path's separator will be used for
+     * the resulting path. @see String::concatenatePath()
+     *
+     * @param other  Path to concatenate after this one.
+     *
+     * @return Concatenated path.
+     */
+    Path operator / (const Path& other) const;
+
+    /**
+     * Concatenate paths together. This path's separator will be used for
+     * the resulting path. @see String::concatenatePath()
+     *
+     * @param other  Path to concatenate after this one. '/' is used as
+     *               the separator.
+     *
+     * @return Concatenated path.
+     */
+    Path operator / (QString other) const;
+
+    Path operator / (const char* otherNullTerminatedUtf8) const;
+
+    /**
      * Convert this path to a text string.
      */
     operator String() const {

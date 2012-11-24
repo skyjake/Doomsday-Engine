@@ -143,7 +143,7 @@ static inline fontschemeid_t schemeIdForDirectoryNode(FontRepository::Node const
 static de::Uri composeUriForDirectoryNode(FontRepository::Node const& node)
 {
     Str const* schemeName = Fonts_SchemeName(schemeIdForDirectoryNode(node));
-    return node.composeUri().setScheme(Str_Text(schemeName));
+    return de::Uri(node.composePath()).setScheme(Str_Text(schemeName));
 }
 
 /// @pre fontIdMap has been initialized and is large enough!
@@ -247,7 +247,7 @@ static FontRepository::Node* findDirectoryNodeForPath(FontRepository& directory,
 {
     try
     {
-        FontRepository::Node& node = directory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
+        FontRepository::Node& node = directory.find(de::Path(path), PCF_NO_BRANCH | PCF_MATCH_FULL);
         return &node;
     }
     catch(FontRepository::NotFoundError const&)
@@ -805,7 +805,7 @@ fontid_t Fonts_Declare(Uri* _uri, int uniqueId)//, const Uri* resourcePath)
         fontschemeid_t schemeId = Fonts_ParseScheme(uri.schemeCStr());
         FontScheme& fn = schemes[schemeId - FONTSCHEME_FIRST];
 
-        node = fn.repository->insert(uri);
+        node = fn.repository->insert(uri.path());
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.

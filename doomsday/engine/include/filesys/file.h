@@ -32,6 +32,7 @@
 #include "filehandle.h"
 #include "fileinfo.h"
 #include "pathtree.h"
+#include "uri.hh"
 
 namespace de {
 

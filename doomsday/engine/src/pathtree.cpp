@@ -32,12 +32,14 @@
 
 namespace de {
 
+Path::hash_type const PathTree::no_hash = Path::hash_range;
+
 struct PathTree::Instance
 {
     PathTree& self;
 
-    /// Path name fragment intern pool.
-    StringPool fragments;
+    /// Path name segment intern pool.
+    StringPool segments;
 
     /// @see pathTreeFlags
     int flags;
@@ -50,7 +52,7 @@ struct PathTree::Instance
     PathTree::Nodes branchHash;
 
     Instance(PathTree& d, int _flags)
-        : self(d), fragments(), flags(_flags), size(0)
+        : self(d), flags(_flags), size(0)
     {}
 
     ~Instance()
@@ -65,10 +67,10 @@ struct PathTree::Instance
         size = 0;
     }
 
-    PathTree::FragmentId internFragmentAndUpdateIdHashMap(String fragment, Path::hash_type hashKey)
+    PathTree::SegmentId internSegmentAndUpdateIdHashMap(String segment, Path::hash_type hashKey)
     {
-        PathTree::FragmentId internId = fragments.intern(fragment);
-        fragments.setUserValue(internId, hashKey);
+        PathTree::SegmentId internId = segments.intern(segment);
+        segments.setUserValue(internId, hashKey);
         return internId;
     }
 
@@ -80,19 +82,19 @@ struct PathTree::Instance
                               PathTree::Node* parent)
     {
         // Have we already encountered this?
-        String fragment = pathNode.toString();
-        PathTree::FragmentId fragmentId = fragments.isInterned(fragment);
-        if(fragmentId)
+        String segment = pathNode.toString();
+        PathTree::SegmentId segmentId = segments.isInterned(segment);
+        if(segmentId)
         {
             // The name is known. Perhaps we have.
             PathTree::Nodes& hash = (nodeType == PathTree::Leaf? leafHash : branchHash);
-            Path::hash_type hashKey = fragments.userValue(fragmentId);
+            Path::hash_type hashKey = segments.userValue(segmentId);
             for(PathTree::Nodes::const_iterator i = hash.find(hashKey);
                 i != hash.end() && i.key() == hashKey; ++i)
             {
                 PathTree::Node* node = *i;
-                if(parent     != node->parent()) continue;
-                if(fragmentId != node->fragmentId()) continue;
+                if(parent    != node->parent()) continue;
+                if(segmentId != node->segmentId()) continue;
 
                 if(nodeType == PathTree::Branch || !(flags & PATHTREE_MULTI_LEAF))
                     return node;
@@ -105,20 +107,20 @@ struct PathTree::Instance
 
         // Do we need a new identifier (and hash)?
         Path::hash_type hashKey;
-        if(!fragmentId)
+        if(!segmentId)
         {
-            hashKey    = pathNode.hash();
-            fragmentId = internFragmentAndUpdateIdHashMap(fragment, hashKey);
+            hashKey   = pathNode.hash();
+            segmentId = internSegmentAndUpdateIdHashMap(segment, hashKey);
         }
         else
         {
-            hashKey = self.fragmentHash(fragmentId);
+            hashKey = self.segmentHash(segmentId);
         }
 
         // Are we out of indices?
-        if(!fragmentId) return NULL;
+        if(!segmentId) return NULL;
 
-        PathTree::Node* node = new PathTree::Node(self, nodeType, fragmentId, parent);
+        PathTree::Node* node = new PathTree::Node(self, nodeType, segmentId, parent);
 
         // Insert the new node into the hash.
         if(nodeType == PathTree::Leaf)
@@ -183,9 +185,9 @@ struct PathTree::Instance
     }
 };
 
-PathTree::Node* PathTree::insert(Uri const& path)
+PathTree::Node* PathTree::insert(Path const &path)
 {
-    PathTree::Node* node = d->buildDirecNodes(path.path());
+    PathTree::Node* node = d->buildDirecNodes(path);
     if(node)
     {
         // There is now one more unique path in the directory.
@@ -228,11 +230,11 @@ void PathTree::clear()
     d->clear();
 }
 
-PathTree::Node& PathTree::find(Uri const& searchPath, int flags)
+PathTree::Node& PathTree::find(Path const& searchPath, int flags)
 {
     if(!searchPath.isEmpty() && d->size)
     {
-        Path::hash_type hashKey = searchPath.path().lastSegment().hash();
+        Path::hash_type hashKey = searchPath.lastSegment().hash();
         if(!(flags & PCF_NO_LEAF))
         {
             Nodes& nodes = d->leafHash;
@@ -267,14 +269,14 @@ PathTree::Node& PathTree::find(Uri const& searchPath, int flags)
     throw NotFoundError("PathTree::find", "No paths found matching \"" + searchPath + "\"");
 }
 
-String const& PathTree::fragmentName(FragmentId fragmentId) const
+String const& PathTree::segmentName(SegmentId segmentId) const
 {
-    return d->fragments.stringRef(fragmentId);
+    return d->segments.stringRef(segmentId);
 }
 
-Path::hash_type PathTree::fragmentHash(FragmentId fragmentId) const
+Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
 {
-    return d->fragments.userValue(fragmentId);
+    return d->segments.userValue(segmentId);
 }
 
 PathTree::Nodes const& PathTree::nodes(NodeType type) const
@@ -285,6 +287,7 @@ PathTree::Nodes const& PathTree::nodes(NodeType type) const
 static void collectPathsInHash(PathTree::FoundPaths& found, PathTree::Nodes const& ph, QChar delimiter)
 {
     if(ph.empty()) return;
+
     DENG2_FOR_EACH_CONST(PathTree::Nodes, i, ph)
     {
         PathTree::Node& node = **i;
@@ -774,7 +777,5 @@ void PathTree::debugPrintHashDistribution(PathTree& /*pt*/)
 #endif
 }
 #endif
-
-Path::hash_type const PathTree::no_hash = Path::hash_range;
 
 } // namespace de

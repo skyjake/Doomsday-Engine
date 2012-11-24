@@ -78,7 +78,7 @@ public:
      */
     Uri composeUri(QChar delimiter = '/') const
     {
-        return directoryNode().composeUri(delimiter);
+        return directoryNode().composePath(delimiter);
     }
 
     /**
@@ -336,7 +336,7 @@ struct Wad::Instance
                                      littleEndianByteOrder.toNative(arcRecord->size),
                                      littleEndianByteOrder.toNative(arcRecord->size)),
                             self);
-            PathTree::Node* node = lumpDirectory->insert(Uri(Str_Text(&absPath), RC_NULL));
+            PathTree::Node* node = lumpDirectory->insert(Path(Str_Text(&absPath)));
             node->setUserPointer(lump);
         }
 

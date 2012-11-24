@@ -98,7 +98,8 @@ struct Uri::Instance
         clearCachedResolved();
 
         scheme = extractScheme(rawUri); // scheme removed
-        path.set(rawUri, sep);
+        if(sep != '/') rawUri.replace(sep, '/'); // force slashes as separator
+        path = rawUri;
         strPath = path.toString(); // for legacy code
 
         if(!scheme.isEmpty())
@@ -233,6 +234,16 @@ Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, Q
     {
         setUri(percentEncoded, defaultResourceClass, sep);
     }
+}
+
+Uri::Uri(resourceclassid_t resClass, Path const &path) : d(new Instance)
+{
+    setUri(path.toString(), resClass, path.separator());
+}
+
+Uri::Uri(Path const &path) : d(new Instance)
+{
+    setPath(path);
 }
 
 Uri::Uri(Uri const &other) : d(new Instance(*other.d))

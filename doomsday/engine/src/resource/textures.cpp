@@ -151,7 +151,7 @@ static inline textureschemeid_t schemeIdForDirectoryNode(TextureRepository::Node
 static de::Uri composeUriForDirectoryNode(TextureRepository::Node const& node)
 {
     Str const* schemeName = Textures_SchemeName(schemeIdForDirectoryNode(node));
-    return node.composeUri().setScheme(Str_Text(schemeName));
+    return de::Uri(node.composePath()).setScheme(Str_Text(schemeName));
 }
 
 /// @pre textureIdMap has been initialized and is large enough!
@@ -250,7 +250,7 @@ static TextureRepository::Node* findDirectoryNodeForPath(TextureRepository& texD
 {
     try
     {
-        TextureRepository::Node& node = texDirectory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
+        TextureRepository::Node& node = texDirectory.find(path, PCF_NO_BRANCH | PCF_MATCH_FULL);
         return &node;
     }
     catch(TextureRepository::NotFoundError const&)
@@ -833,7 +833,7 @@ static textureid_t Textures_Declare2(de::Uri& uri, int uniqueId, de::Uri const* 
         textureschemeid_t schemeId = Textures_ParseSchemeName(uri.schemeCStr());
         TextureScheme* tn = &schemes[schemeId - TEXTURESCHEME_FIRST];
 
-        node = tn->directory->insert(uri);
+        node = tn->directory->insert(uri.path());
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.

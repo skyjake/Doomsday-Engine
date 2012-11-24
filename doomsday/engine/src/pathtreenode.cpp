@@ -35,7 +35,7 @@ struct PathTree::Node::Instance
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
-    PathTree::FragmentId fragmentId;
+    PathTree::SegmentId segmentId;
 
     /// Parent node in the user's logical hierarchy.
     PathTree::Node* parent;
@@ -46,14 +46,14 @@ struct PathTree::Node::Instance
     /// User-specified value associated with this node.
     int userValue;
 
-    Instance(PathTree& _tree, bool _isLeaf, PathTree::FragmentId _fragmentId,
+    Instance(PathTree& _tree, bool _isLeaf, PathTree::SegmentId _segmentId,
              PathTree::Node* _parent)
-        : isLeaf(_isLeaf), tree(_tree), fragmentId(_fragmentId), parent(_parent),
+        : isLeaf(_isLeaf), tree(_tree), segmentId(_segmentId), parent(_parent),
           userPointer(0), userValue(0)
     {}
 };
 
-PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, PathTree::FragmentId fragmentId,
+PathTree::Node::Node(PathTree& tree, PathTree::NodeType type, PathTree::SegmentId fragmentId,
     PathTree::Node* parent, void* userPointer, int userValue)
 {
     d = new Instance(tree, type == PathTree::Leaf, fragmentId, parent);
@@ -81,19 +81,19 @@ PathTree::Node* PathTree::Node::parent() const
     return d->parent;
 }
 
-PathTree::FragmentId PathTree::Node::fragmentId() const
+PathTree::SegmentId PathTree::Node::segmentId() const
 {
-    return d->fragmentId;
+    return d->segmentId;
 }
 
 String const& PathTree::Node::name() const
 {
-    return tree().fragmentName(d->fragmentId);
+    return tree().segmentName(d->segmentId);
 }
 
 Path::hash_type PathTree::Node::hash() const
 {
-    return tree().fragmentHash(d->fragmentId);
+    return tree().segmentHash(d->segmentId);
 }
 
 void* PathTree::Node::userPointer() const
@@ -118,7 +118,7 @@ PathTree::Node& PathTree::Node::setUserValue(int value)
     return *this;
 }
 
-/// @todo This logic should be encapsulated in Uri/Uri::Segment
+/// @todo This logic should be encapsulated in Path/Path::Segment; use QChar.
 static int matchName(char const* string, char const* pattern)
 {
     char const* in = string, *st = pattern;
@@ -156,7 +156,7 @@ static int matchName(char const* string, char const* pattern)
     return *st == 0;
 }
 
-int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
+int PathTree::Node::comparePath(de::Path const& searchPattern, int flags) const
 {
     if(((flags & PCF_NO_LEAF)   && isLeaf()) ||
        ((flags & PCF_NO_BRANCH) && !isLeaf()))
@@ -164,10 +164,10 @@ int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 
     try
     {
-        de::Path::Segment const* snode = &searchPattern.path().lastSegment();
+        de::Path::Segment const* snode = &searchPattern.lastSegment();
 
         // In reverse order, compare each path node in the search term.
-        int pathNodeCount = searchPattern.path().segmentCount();
+        int pathNodeCount = searchPattern.segmentCount();
 
         PathTree::Node const* node = this;
         for(int i = 0; i < pathNodeCount; ++i)
@@ -206,7 +206,7 @@ int PathTree::Node::comparePath(de::Uri const& searchPattern, int flags) const
 
             // So far so good. Move one level up the hierarchy.
             node  = node->parent();
-            snode = &searchPattern.path().reverseSegment(i + 1);
+            snode = &searchPattern.reverseSegment(i + 1);
         }
     }
     catch(de::Path::OutOfBoundsError const &)
@@ -281,7 +281,7 @@ static void pathConstructor(pathconstructorparams_t& parm, PathTree::Node const&
  *
  * Perhaps a fixed size MRU cache? -ds
  */
-Uri PathTree::Node::composeUri(QChar delimiter) const
+Path PathTree::Node::composePath(QChar delimiter) const
 {
     pathconstructorparams_t parm = { 0, String(), delimiter };
 #ifdef LIBDENG_STACK_MONITOR
@@ -306,7 +306,7 @@ Uri PathTree::Node::composeUri(QChar delimiter) const
     LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
-    return Uri(parm.composedPath, RC_NULL);
+    return Path(parm.composedPath, delimiter);
 }
 
 } // namespace de

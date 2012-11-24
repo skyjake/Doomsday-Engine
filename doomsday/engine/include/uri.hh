@@ -79,16 +79,36 @@ public:
     /**
      * Construct a Uri instance from a text string.
      *
-     * @param percentEncoded   String to be parsed. Assumed to be in
-     *                         percent-encoded representation.
-     * @param defaultResClass  (TODO: define this. -jk)
-     *                         If no scheme is defined in @a percentEncoded and
-     *                         this is RC_UNKNOWN, the resource locator
-     *                         guesses an appropriate scheme for this class of resource.
-     * @param sep              Character used to separate path segments
-     *                         in @a path.
+     * @param percentEncoded  String to be parsed. Assumed to be in
+     *                        percent-encoded representation.
+     *
+     * @param defaultResClass Default scheme. Determines the scheme for the Uri
+     *                        if one is not specified in @a percentEncoded.
+     *                        @c RC_UNKNOWN: resource locator guesses an
+     *                        appropriate scheme for this type of file.
+     *
+     * @param sep             Character used to separate path segments
+     *                        in @a path.
      */
     Uri(String const &percentEncoded, resourceclassid_t defaultResClass = RC_UNKNOWN, QChar sep = '/');
+
+    /**
+     * Construct a Uri instance from a path. Note that Path instances can
+     * never contain a scheme as a prefix, so @a resClass is mandatory.
+     *
+     * @param resClass  Scheme for the URI. @c RC_UNKNOWN: resource locator
+     *                  guesses an appropriate scheme for this type of file.
+     *
+     * @param path      Path of the URI.
+     */
+    Uri(resourceclassid_t resClass, Path const &path);
+
+    /**
+     * Construct a Uri instance from a path without a scheme.
+     *
+     * @param path      Path of the URI.
+     */
+    Uri(Path const &path);
 
     /**
      * Construct a Uri instance by duplicating @a other.

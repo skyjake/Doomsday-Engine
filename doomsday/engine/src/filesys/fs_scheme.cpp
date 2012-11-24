@@ -248,12 +248,12 @@ struct FS1::Scheme::Instance
             // Time to construct the relative base node?
             if(!rootNode)
             {
-                rootNode = directory.insert(Uri("./", RC_NULL));
+                rootNode = directory.insert(Path("./"));
             }
             return rootNode;
         }
 
-        return directory.insert(Uri(path, RC_NULL));
+        return directory.insert(Path(path));
     }
 
     void addDirectoryChildNodes(PathTree::Node& node, int flags)

@@ -265,7 +265,7 @@ static materialschemeid_t schemeIdForDirectory(MaterialRepository& directory)
 static de::Uri composeUriForDirectoryNode(MaterialRepository::Node const& node)
 {
     Str const* schemeName = Materials_SchemeName(schemeIdForDirectory(node.tree()));
-    return node.composeUri().setScheme(Str_Text(schemeName));
+    return de::Uri(node.composePath()).setScheme(Str_Text(schemeName));
 }
 
 static MaterialAnim* getAnimGroup(int number)
@@ -464,7 +464,7 @@ static bool newMaterialBind(de::Uri& uri, material_t* material)
     MaterialRepository::Node* node;
     MaterialBind* mb;
 
-    node = matDirectory.insert(uri);
+    node = matDirectory.insert(uri.path());
 
     // Is this a new binding?
     mb = reinterpret_cast<MaterialBind*>(node->userPointer());
@@ -803,7 +803,7 @@ static MaterialBind* findMaterialBindForPath(MaterialRepository& matDirectory, d
 {
     try
     {
-        MaterialRepository::Node& node = matDirectory.find(de::Uri(path, RC_NULL), PCF_NO_BRANCH | PCF_MATCH_FULL);
+        MaterialRepository::Node& node = matDirectory.find(path, PCF_NO_BRANCH | PCF_MATCH_FULL);
         return reinterpret_cast<MaterialBind*>(node.userPointer());
     }
     catch(MaterialRepository::NotFoundError const&)
