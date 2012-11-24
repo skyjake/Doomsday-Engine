@@ -1,13 +1,4 @@
-/**
- * @file pathtree.h
- *
- * PathTree. Data structure for modelling a hierarchical relationship tree
- * of string+value data pairs.
- *
- * Somewhat similar to a Prefix Tree (Trie) representationally although that is
- * where the similarity ends.
- *
- * @ingroup base
+/** @file pathtree.h Tree of Path/data pairs.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
@@ -27,38 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_PATHTREE_H
-#define LIBDENG_PATHTREE_H
+#ifndef LIBDENG2_PATHTREE_H
+#define LIBDENG2_PATHTREE_H
 
-#ifdef __cplusplus
-
-#include <QList>
-#include <QMultiHash>
 #include <de/Error>
 #include <de/String>
 #include <de/Path>
-#include <de/str.h>
 
-/**
- * @defgroup pathComparisonFlags  Path Comparison Flags
- * @ingroup base apiFlags
- */
-///@{
-#define PCF_NO_BRANCH       0x1 ///< Do not consider branches as possible candidates.
-#define PCF_NO_LEAF         0x2 ///< Do not consider leaves as possible candidates.
-#define PCF_MATCH_PARENT    0x4 ///< Only consider nodes whose parent matches that referenced.
-#define PCF_MATCH_FULL      0x8 /**< Whole path must match completely (i.e., path begins
-                                     from the same root point) otherwise allow partial
-                                     (i.e., relative) matches. */
-///@}
-
-/**
- * @defgroup pathTreeFlags  Path Tree Flags
- * @ingroup flags
- */
-///@{
-#define PATHTREE_MULTI_LEAF 0x1 ///< There can be more than one leaf with a given name.
-///@}
+#include <QList>
+#include <QMultiHash>
 
 namespace de
 {
@@ -86,12 +54,38 @@ namespace de
      * hierarchies is "ambidextrously" recomposing paths with either forward or
      * backward slashes, irrespective of the delimiter used at path insertion
      * time.
+     *
+     * Somewhat similar to a Prefix Tree (Trie) representationally although
+     * that is where the similarity ends.
      */
     class PathTree
     {
         struct Instance; // needs to be friended by Node
 
     public:
+        /**
+         * Flags that affect the properties of the tree.
+         */
+        enum Flag
+        {
+            MultiLeaf = 0x1     ///< There can be more than one leaf with a given name.
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
+        /**
+         * Flags used to alter the behavior of path comparisons.
+         */
+        enum ComparisonFlag
+        {
+            NoBranch    = 0x1,  ///< Do not consider branches as possible candidates.
+            NoLeaf      = 0x2,  ///< Do not consider leaves as possible candidates.
+            MatchParent = 0x4,  ///< Only consider nodes whose parent matches that referenced.
+            MatchFull   = 0x8   /**< Whole path must match completely (i.e., path begins
+                                     from the same root point) otherwise allow partial
+                                     (i.e., relative) matches. */
+        };
+        Q_DECLARE_FLAGS(ComparisonFlags, ComparisonFlag)
+
         /// Identifier associated with each unique path segment.
         typedef duint32 SegmentId;
 
@@ -112,9 +106,9 @@ namespace de
          */
         static Path::hash_type const no_hash;
 
-#if _DEBUG
-        static void debugPrint(PathTree& pathtree, QChar delimiter = '/');
-        static void debugPrintHashDistribution(PathTree& pathtree);
+#ifdef DENG2_DEBUG
+        void debugPrint(QChar delimiter = '/') const;
+        void debugPrintHashDistribution() const;
 #endif
 
         /**
@@ -151,7 +145,7 @@ namespace de
 
             /**
              * @param searchPattern  Mapped search pattern (path).
-             * @param flags          @ref pathComparisonFlags
+             * @param flags          Path comparison flags.
              *
              * @return Zero iff the candidate path matched this.
              *
@@ -160,9 +154,9 @@ namespace de
              *       allow for further optimizations elsewhere (in the file system
              *       for example) -ds
              *
-             * @todo This logic should be encapsulated in Path/Path::Segment. -ds
+             * @todo This logic should be encapsulated in de::Path or de::Path::Segment. -ds
              */
-            int comparePath(de::Path const& searchPattern, int flags) const;
+            int comparePath(de::Path const& searchPattern, ComparisonFlags flags) const;
 
             /**
              * Composes the path for this node. The whole path is upwardly
@@ -211,7 +205,8 @@ namespace de
         typedef QList<String> FoundPaths;
 
     public:
-        explicit PathTree(int flags = 0);
+        explicit PathTree(Flags flags = 0);
+
         virtual ~PathTree();
 
         /// @return  @c true iff there are no paths in the hierarchy. Same as @c size() == 0
@@ -251,31 +246,36 @@ namespace de
          *               this path is NOT resolved before searching. This means
          *               that any symbolics contained within must also be present
          *               in the tree's name hierarchy.
-         * @param flags  @ref pathComparisonFlags
+         * @param flags  Comparison behavior flags.
          *
          * @return Found node.
          */
-        Node& find(Path const& path, int flags);
+        Node const& find(Path const& path, ComparisonFlags flags) const;
+
+        /**
+         * @copydoc Node const& find(Path const& path, ComparisonFlags flags) const
+         */
+        Node &find(Path const &path, ComparisonFlags flags);
 
         /**
          * Collate all referenced paths in the hierarchy into a list.
          *
          * @param found      Set of paths that match the result.
-         * @param flags      @ref pathComparisonFlags
+         * @param flags      Comparison behavior flags.
          * @param delimiter  Names in the composed path hierarchy will be delimited
          *                   with this character. Paths to branches always include
          *                   a terminating delimiter.
          *
          * @return Number of paths found.
          */
-        int findAllPaths(FoundPaths& found, int flags = 0, QChar delimiter = '/');
+        int findAllPaths(FoundPaths& found, ComparisonFlags flags = 0, QChar delimiter = '/') const;
 
         /**
          * Traverse the node hierarchy making a callback for visited node. Traversal
          * ends when all selected nodes have been visited or a callback returns a
          * non-zero value.
          *
-         * @param flags       @ref pathComparisonFlags
+         * @param flags       Path comparison flags.
          * @param parent      Used in combination with @a flags= PCF_MATCH_PARENT
          *                    to limit the traversal to only the child nodes of
          *                    this node.
@@ -286,8 +286,8 @@ namespace de
          *
          * @return  @c 0 iff iteration completed wholly.
          */
-        int traverse(int flags, Node* parent, Path::hash_type hashKey,
-                     int (*callback) (Node& node, void* parameters), void* parameters = 0);
+        int traverse(ComparisonFlags flags, Node* parent, Path::hash_type hashKey,
+                     int (*callback) (Node& node, void* parameters), void* parameters = 0) const;
 
         /**
          * Provides access to the nodes for efficent traversals.
@@ -316,8 +316,9 @@ namespace de
         Instance* d;
     };
 
+    Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::Flags)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(PathTree::ComparisonFlags)
+
 } // namespace de
 
-#endif // __cplusplus
-
-#endif /* LIBDENG_PATHTREE_H */
+#endif /* LIBDENG2_PATHTREE_H */

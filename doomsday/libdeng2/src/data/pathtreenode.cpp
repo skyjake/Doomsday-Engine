@@ -1,6 +1,4 @@
-/**
- * @file pathtreenode.cpp
- * @ingroup base
+/** @file pathtreenode.cpp PathTree::Node implementation.
  *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -20,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Log>
-#include "pathtree.h"
+#include "de/PathTree"
+#include "de/Log"
 
 namespace de {
 
@@ -118,7 +116,7 @@ PathTree::Node& PathTree::Node::setUserValue(int value)
     return *this;
 }
 
-/// @todo This logic should be encapsulated in Path/Path::Segment; use QChar.
+/// @todo This logic should be encapsulated in de::Path or de::Path::Segment; use QChar.
 static int matchName(char const* string, char const* pattern)
 {
     char const* in = string, *st = pattern;
@@ -156,10 +154,10 @@ static int matchName(char const* string, char const* pattern)
     return *st == 0;
 }
 
-int PathTree::Node::comparePath(de::Path const& searchPattern, int flags) const
+int PathTree::Node::comparePath(de::Path const& searchPattern, ComparisonFlags flags) const
 {
-    if(((flags & PCF_NO_LEAF)   && isLeaf()) ||
-       ((flags & PCF_NO_BRANCH) && !isLeaf()))
+    if(((flags & PathTree::NoLeaf)   && isLeaf()) ||
+       ((flags & PathTree::NoBranch) && !isLeaf()))
         return 1;
 
     try
@@ -195,7 +193,7 @@ int PathTree::Node::comparePath(de::Path const& searchPattern, int flags) const
             // Have we arrived at the search target?
             if(i == pathNodeCount - 1)
             {
-                return !(!(flags & PCF_MATCH_FULL) || !node->parent());
+                return !(!(flags & MatchFull) || !node->parent());
             }
 
             // Is the hierarchy too shallow?

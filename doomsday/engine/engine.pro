@@ -265,7 +265,6 @@ DENG_HEADERS += \
     include/network/protocol.h \
     include/network/sys_network.h \
     include/network/ui_mpi.h \
-    include/pathtree.h \
     include/r_util.h \
     include/render/r_draw.h \
     include/render/r_fakeradio.h \
@@ -547,8 +546,6 @@ SOURCES += \
     src/network/protocol.c \
     src/network/sys_network.c \
     src/network/ui_mpi.c \
-    src/pathtree.cpp \
-    src/pathtreenode.cpp \
     src/r_util.c \
     src/render/r_draw.c \
     src/render/r_fakeradio.c \
